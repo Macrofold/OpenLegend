@@ -5,6 +5,11 @@ import {
   selectTemporalHistory,
 } from '@open-legend/domain';
 import { captureSituation } from './situation-context.js';
+import {
+  prepareSupplyOpportunityContext,
+  renderSupplyOpportunityContext,
+} from './supply-opportunities.js';
+import { memorySourceProof } from './memory-repository.js';
 import { entityGet } from '@open-legend/domain';
 import {
   bindNativeChoice,
@@ -21,6 +26,7 @@ import {
   narrationTemplate,
   renderNarration,
   acquiredActivities,
+  experienceSourceKey,
   activityRequestChoices,
   activityRequestDescriptors,
   itemOutputFamilies,
@@ -37,7 +43,7 @@ import {
   projectEntityMarkers,
 } from './entity-references.js';
 import { digest } from './store.js';
-import { contextSections } from './perceived-context.js';
+import { contextSections, type SharedModelExperience } from './perceived-context.js';
 import { dreamStatus } from '@open-legend/domain';
 import { type AttemptBinding, currentGoal } from '@open-legend/domain';
 import {
@@ -80,7 +86,11 @@ import {
 } from './jev-questions.js';
 import { ACTION_RETRIEVAL_LIMIT } from './action-retrieval.js';
 import { navigationInstructions } from './navigation-contracts.js';
-import { buildConversationContext, type ConversationGenerate } from './conversation-context.js';
+import {
+  buildConversationContext,
+  CONVERSATION_PREPARATION_BYTES,
+  type ConversationGenerate,
+} from './conversation-context.js';
 import { decisionFeelings } from './appraisal-context.js';
 
 /** Reuse the same permitted perception used to select actions and budget the prompt. */
@@ -353,7 +363,6 @@ export async function prepareDecision(
   if (!observed) throw new Error('Actor unavailable.');
   let includeConversation =
     includeCurrentConversation ||
-    !!world.conversations?.active[actorId] ||
     requiredIds.some((id) => service.worldEvent(id)?.type === 'speech');
   const head = await service.store.records?.head();
   // The singular trigger can sit outside the coalesced list; keep its source binding.
@@ -400,6 +409,15 @@ export async function prepareDecision(
     if (generation !== service.generation || !capturedSituation.valid(service.world))
       throw new Error('Personal evidence changed during context validation.');
   };
+  const knownSupplyPlaces = await prepareSupplyOpportunityContext(
+    service.store.memories,
+    evidenceScope,
+    observed.supplyOpportunities,
+  );
+  const supplyOpportunities = renderSupplyOpportunityContext(
+    observed.supplyOpportunities,
+    knownSupplyPlaces,
+  );
   const bodies = new MemoryReadCache();
   const retainedEvidence =
     service.store.memories && evidenceScope
@@ -416,7 +434,7 @@ export async function prepareDecision(
       world,
       actorId,
     );
-  includeConversation ||= evidence.some((entry) => entry.eventType === 'speech');
+  includeConversation ||= evidence.some((entry) => !!entry.speech);
   const preparation: CognitionPreparation | undefined =
     service.store.memories && evidenceScope
       ? {
@@ -426,7 +444,7 @@ export async function prepareDecision(
             evidenceScope,
             evidenceIds,
             includeConversation,
-            world.conversations?.active[actorId],
+            CONVERSATION_PREPARATION_BYTES,
           ),
         }
       : undefined;
@@ -506,9 +524,8 @@ export async function prepareDecision(
   const conversationOutcomeIds = new Set(
     preparation?.conversation.sources.map((source) => source.id),
   );
-  const recallIds = [
-    ...new Set([...evidenceIds, ...outcomeIds.filter((id) => !conversationOutcomeIds.has(id))]),
-  ];
+  // Work results and current causes remain required independently of optional dialogue.
+  const recallIds = [...new Set([...evidenceIds, ...outcomeIds])];
   const candidates = await recall.candidates(
     world,
     actorId,
@@ -525,7 +542,6 @@ export async function prepareDecision(
   );
   const availableMemoryIds = new Set([
     ...candidates.flatMap((candidate) => candidate.sourceIds ?? [candidate.id]),
-    ...conversationOutcomeIds,
   ]);
   const missingOutcomes = outcomeIds.filter((id) => !availableMemoryIds.has(id)).length;
   const outcomeCoverage = missingOutcomes
@@ -537,6 +553,7 @@ export async function prepareDecision(
     situationQueries: mode !== 'native-only',
     receivedSituation: capturedSituation.packet,
     ...requiredActivity,
+    ...(supplyOpportunities.length ? { supplyOpportunities } : {}),
     capabilities: {
       speech: canSpeak(observed.actor),
       expressions: supportsManualWork(observed.actor),
@@ -649,29 +666,35 @@ export async function prepareDecision(
   const actionPromptBytes =
     Buffer.byteLength(readableDecisionContext(requiredContext, largestActionOffers, true)) +
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
-  const actionReserveBytes = requiredChoices
-    ? Math.max(0, actionPromptBytes - requiredBytes)
-    : Math.min(50000, Math.max(0, actionPromptBytes - requiredBytes));
-  const mandatoryRecallBytes = candidates
-    .filter((candidate) => candidate.required)
-    .reduce(
-      (sum, candidate) =>
-        sum +
-        Buffer.byteLength(candidate.text.replace(/\n/g, '\n  ')) +
-        Buffer.byteLength(candidate.id) +
-        8,
-      0,
-    );
+  const desiredActionBytes = Math.max(0, actionPromptBytes - requiredBytes);
+  // Ordinary action shortlists are optional. Reserve mandatory busy choices,
+  // then fit optional actions only after complete personal evidence/conversation.
+  // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
+  let actionReserveBytes = requiredChoices ? desiredActionBytes : 0;
+  const requiredRecallBytes = () =>
+    candidates
+      .filter((candidate) => candidate.required)
+      .reduce(
+        (sum, candidate) =>
+          sum +
+          Buffer.byteLength(candidate.text.replace(/\n/g, '\n  ')) +
+          Buffer.byteLength(JSON.stringify(candidate.experience ?? [])) +
+          Buffer.byteLength(candidate.id) +
+          8,
+        0,
+      );
+  const mandatoryRecallBytes = requiredRecallBytes();
   // Required facts may already exhaust the allowance. Do not attempt paid
   // conversation compaction with a negative budget or hide this as its failure.
-  if (requiredBytes + actionReserveBytes + mandatoryRecallBytes > CONTEXT_BYTE_LIMIT)
+  if (requiredBytes + actionReserveBytes + mandatoryRecallBytes > CONTEXT_BYTE_LIMIT) {
     throw new ContextBudgetError(
       'Complete accepted inner world and required context exceed the input budget.',
     );
+  }
   const conversation = await buildConversationContext({
     service,
     actorId,
-    requiredIds: evidenceIds,
+    requiredIds: recallIds,
     includeConversation,
     maxBytes: CONTEXT_BYTE_LIMIT - requiredBytes - actionReserveBytes - mandatoryRecallBytes,
     signal,
@@ -681,30 +704,40 @@ export async function prepareDecision(
   });
   const awarenessSequence = conversation.awarenessSequence;
   requiredContext['conversation'] = conversation.lines;
+  requiredContext['experience'] = conversation.experience;
   requiredBytes =
     Buffer.byteLength(readableDecisionContext(requiredContext, [], false)) +
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
-  // A duplicate group may retain another conversation's representative ID.
-  // Check every member so optional recall cannot reintroduce compacted speech.
+  // Check complete kind/ID keys across grouped sources so optional recall cannot
+  // duplicate admitted speech or hide an independent record sharing its native ID.
   // Recent-memory coverage can also mark a group required; only trigger,
   // commitment and correction evidence needs an independent raw-source path.
-  const conversationIds = new Set(conversation.sourceIds);
+  const conversationSources = new Set(conversation.sourceKeys);
   for (let index = candidates.length - 1; index >= 0; index--)
     if (
       !candidates[index]!.requiredSource &&
-      (candidates[index]!.sourceIds ?? [candidates[index]!.id]).some((id) =>
-        conversationIds.has(id),
-      )
+      candidates[index]!.sourceKeys?.some((key) => conversationSources.has(key))
     )
       candidates.splice(index, 1);
-  if (requiredBytes + actionReserveBytes > CONTEXT_BYTE_LIMIT)
+  const remainingRequiredRecallBytes = requiredRecallBytes();
+  if (!requiredChoices)
+    actionReserveBytes = Math.min(
+      50000,
+      desiredActionBytes,
+      Math.max(0, CONTEXT_BYTE_LIMIT - requiredBytes - remainingRequiredRecallBytes),
+    );
+  if (requiredBytes + actionReserveBytes + remainingRequiredRecallBytes > CONTEXT_BYTE_LIMIT)
     throw new ContextBudgetError(
       'Complete accepted inner world and required context exceed the input budget.',
     );
   // Plan vocabulary is optional: retain every option that fits, not an ID-count prefix.
   // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
   const planningAvailable = planOffers.length;
-  planOffers = fitActionCandidates(requiredContext, planOffers, actionReserveBytes);
+  planOffers = fitActionCandidates(
+    requiredContext,
+    planOffers,
+    actionReserveBytes + remainingRequiredRecallBytes,
+  );
   requiredContext['planOffers'] = planOffers.map(({ id, description }) => ({ id, description }));
   requiredBytes =
     Buffer.byteLength(readableDecisionContext(requiredContext, [], false)) +
@@ -765,12 +798,7 @@ export async function prepareDecision(
   await service.flushMemorySources(actorId, false);
   const sources = [
     ...recall.selectedSources(candidates, selection.selected),
-    ...(retainedEvidence ?? []).map((entry) => ({
-      id: entry.memory.id,
-      sourceKind: entry.sourceKind,
-      revision: entry.revision,
-      ...(entry.receipt ? { receipt: entry.receipt } : {}),
-    })),
+    ...(retainedEvidence ?? []).map(memorySourceProof),
   ];
   const outcomeBinding = JSON.stringify(outcomeIds);
   const rememberedSubjects = new Set(
@@ -834,10 +862,17 @@ export async function prepareDecision(
     ).values(),
   ];
   const currentActivity = activityDecisionFacts(currentWorld, actorId, currentObserved);
+  const currentSupplyOpportunities = renderSupplyOpportunityContext(
+    currentObserved.supplyOpportunities,
+    knownSupplyPlaces,
+  );
   const context: Record<string, unknown> = {
     situationQueries: mode !== 'native-only',
     receivedSituation: capturedSituation.packet,
     ...currentActivity,
+    ...(currentSupplyOpportunities.length
+      ? { supplyOpportunities: currentSupplyOpportunities }
+      : {}),
     ...(inspected
       ? {
           inspectedActions: inspected.entries.map((entry) => entry.text),
@@ -899,6 +934,10 @@ export async function prepareDecision(
       ),
     ),
   );
+  context['experience'] = [
+    ...((context['experience'] as unknown[]) ?? []),
+    ...conversation.experience,
+  ];
   if (currentWorld.innerWorlds?.[actorId]?.reconsiderationRequired)
     context['reconsideration'] =
       'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
@@ -1020,6 +1059,29 @@ export async function prepareDecision(
       dreamStatus(currentWorld, entityGet(currentWorld.entities, actorId))?.episode ?? null,
     actions: planActions,
   };
+  const experienceSlots = new Map(
+    ((context['experience'] as SharedModelExperience['experience'][]) ?? []).map(
+      (experience, index) => [experience, index],
+    ),
+  );
+  const sourceVersions = new Map(
+    sources.map((source) => [
+      experienceSourceKey({ kind: source.sourceKind, id: source.id }),
+      source.revision,
+    ]),
+  );
+  const sharedSlots = new Map<string, { index: number; revision: string }>();
+  for (const candidate of currentSelection) {
+    if (!candidate.experience || candidate.sourceKeys?.length !== candidate.experience.length)
+      continue;
+    candidate.experience.forEach((experience, index) => {
+      const key = candidate.sourceKeys![index]!,
+        slot = experienceSlots.get(experience),
+        revision = sourceVersions.get(key);
+      if (slot !== undefined && revision !== undefined)
+        sharedSlots.set(key, { index: slot, revision });
+    });
+  }
   const offered: { id: string; description: string }[] = [];
   for (const key of Object.keys(context)) {
     const value = context[key];
@@ -1036,6 +1098,15 @@ export async function prepareDecision(
             : entry,
       );
   }
+  // Projection preserves array order. Share only the record actually included,
+  // after observer references and wording have been projected for this request.
+  const projectedExperiences = context['experience'] as SharedModelExperience['experience'][];
+  const sharedExperiences = new Map<string, SharedModelExperience>(
+    [...sharedSlots].map(([key, slot]) => [
+      key,
+      { ...slot, experience: projectedExperiences[slot.index]! },
+    ]),
+  );
   const prompt = readableDecisionContext(context, offered, false);
   const bytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   if (bytes > CONTEXT_BYTE_LIMIT)
@@ -1071,6 +1142,7 @@ export async function prepareDecision(
     },
     context,
     prompt,
+    sharedExperiences,
     actionGuidance: structuredClone(currentWorld.cognitionPolicy.actionGuidance),
     // Entity handles were projected with the rest of the permitted context above;
     // retain their known producer type for the typed activity chooser.

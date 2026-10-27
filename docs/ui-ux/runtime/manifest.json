@@ -1614,7 +1614,7 @@
         "49": "After reload, an unknown two-branch move and Check result remain visible with carried branches at four. The other collection is empty in this image. The original commit is known to the native observer, but this screenshot precedes the player receipt check.",
         "50": "Adding fuel appears in the HUD; Current work names the watch, budget, stopping time, Stop and deliberate preparation. Native progress 0.5 is separately asserted; these pixels do not independently measure a visual progress fill.",
         "51": "At 390×844 the replacement task waits for low fuel, shows Used 0 of at most 2 and its stopping time, with Stop all work fully visible. The image precedes the actual focused-Enter Stop.",
-        "52": "The actual crafted/equipped Woven river sling has a readable W fallback symbol, equipped badge/strip and open item details including work and launcher properties. Crafting and exact input/output timing are native observations, not visible in this finished-item image."
+        "52": "The actual crafted/equipped Woven river sling has a readable W fallback symbol, equipped badge/strip and open item details including work and ranged-weapon properties. Crafting and exact input/output timing are native observations, not visible in this finished-item image."
       },
       "limits": [
         "Native fixture bag, four branches and supplied Sling declaration are prepared after actual App entry; no production recipe seed or generated invention.",

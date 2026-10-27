@@ -1,3 +1,4 @@
+import { toolHttp, toolStream } from '../network.ts';
 import { profilingOptions } from './profiling-options.ts';
 import { readFile, writeFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir, cpus, loadavg } from 'node:os';
@@ -7,14 +8,21 @@ import { fork } from 'node:child_process';
 import { once } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import { performance, monitorEventLoopDelay } from 'node:perf_hooks';
+import { Session } from 'node:inspector/promises';
 import { setTimeout as delay } from 'node:timers/promises';
-import { parseScenario, populateScenario } from './scenario.ts';
+import {
+  parseScenario,
+  populateScenario,
+  prepareNativePressure,
+  applyNativePressure,
+} from './scenario.ts';
 import {
   worldPosition,
   worldSupport,
   observeDomainCounters,
   entityGet,
   entityKeys,
+  entityValues,
 } from '../../packages/domain/src/index.js';
 import { initializeCollisionRuntime } from '../../packages/spatial/src/rapier.js';
 import { createGameServer } from '../../apps/server/src/http.ts';
@@ -38,11 +46,106 @@ const distribution = (values) => ({
   maxMs: values.length ? Math.max(...values) : null,
 });
 
+/** Required workload census, separate from optional timing/counters. */
+function nativePopulation(world, cohortIds) {
+  const result = { animals: 0, alarms: 0, cohortAnimals: 0, cohortAlarms: 0 };
+  for (const entity of entityValues(world.entities)) {
+    if (!entity.animal || !entity.actor?.alive || entity.actor.controller !== 'native') continue;
+    result.animals++;
+    if (entity.animal.episode) result.alarms++;
+    if (cohortIds.has(entity.id)) {
+      result.cohortAnimals++;
+      if (entity.animal.episode) result.cohortAlarms++;
+    }
+  }
+  return result;
+}
+
+/** Workload ownership is independent of optional timing. At most one edit can
+ * occupy the writer; cancellation drains it before server/database teardown. */
+async function startNativePressure(service, fixture, phase) {
+  if (!fixture) return;
+  const positions = () =>
+    fixture.kind === 'converging-people'
+      ? fixture.walkers.map(({ id }) => ({
+          id,
+          point: { ...worldPosition(entityGet(service.world.entities, id)) },
+          action: entityGet(service.world.entities, id)?.actor?.action?.type ?? null,
+        }))
+      : [];
+  const before = positions(),
+    stats = {
+      kind: fixture.kind,
+      scope: 'whole speed including warmup',
+      attempts: 0,
+      admitted: 0,
+      skippedOccupied: 0,
+    };
+  const controller = new AbortController();
+  let failure;
+  const apply = async (step) => {
+    stats.attempts++;
+    let changed = false;
+    const result = await service.transition((world) => {
+      const next = applyNativePressure(world, fixture, phase, step);
+      changed = next !== world;
+      return {
+        world: next,
+        events: next.events.slice(world.events.length),
+        outcome: { ok: true, code: 'profile-pressure', message: 'Explicit diagnostic workload' },
+      };
+    });
+    if (!result.ok) throw Error(`Native pressure publication refused: ${result.code}.`);
+    if (changed) stats.admitted++;
+    else stats.skippedOccupied++;
+  };
+  if (fixture.kind === 'converging-people') await apply(0);
+  const task = (async () => {
+    if (fixture.kind !== 'geometry-edits') return;
+    for (let step = 0; !controller.signal.aborted; step++) {
+      try {
+        await delay(500, undefined, { signal: controller.signal });
+      } catch (error) {
+        if (controller.signal.aborted) return;
+        throw error;
+      }
+      if (!controller.signal.aborted) await apply(step);
+    }
+  })().catch((error) => {
+    failure = error;
+  });
+  return {
+    snapshot: () => ({
+      ...stats,
+      before,
+      after: positions(),
+      ...(fixture.kind === 'geometry-edits'
+        ? {
+            screen: {
+              id: fixture.screen.id,
+              initialBounds: fixture.screen.bounds,
+              finalBounds: service.world.map.spatial.blockers.find(
+                (b) => b.id === fixture.screen.id,
+              )?.bounds,
+              geometryRevision: service.world.map.spatial.revision,
+            },
+          }
+        : {}),
+      failure: failure ? String(failure) : null,
+    }),
+    async stop() {
+      controller.abort();
+      await task;
+      if (failure) throw failure;
+    },
+  };
+}
+
 // Drive presence/control with the measured login's current lease. The process-local
 // setup lease can become stale when HTTP entry or a restart replaces control.
 async function controlWorld(base, cookie, input) {
-  const view = await (await fetch(base + '/api/state', { headers: { cookie } })).json();
-  const response = await fetch(base + '/api/control', {
+  const view = await (await toolHttp(base + '/api/state', { headers: { cookie } })).json();
+  const response = await toolHttp(base + '/api/control', {
     method: 'POST',
     headers: {
       cookie,
@@ -57,8 +160,8 @@ async function controlWorld(base, cookie, input) {
     throw Error(result.message ?? 'Could not control profiling world');
 }
 async function resumeWorld(base, cookie) {
-  const view = await (await fetch(base + '/api/state', { headers: { cookie } })).json();
-  const response = await fetch(base + '/api/embodiment', {
+  const view = await (await toolHttp(base + '/api/state', { headers: { cookie } })).json();
+  const response = await toolHttp(base + '/api/embodiment', {
     method: 'POST',
     headers: {
       cookie,
@@ -75,7 +178,7 @@ async function resumeWorld(base, cookie) {
   const result = await response.json();
   if (!response.ok || !result.ok)
     throw Error(result.message ?? 'Could not take control of profiling fixture');
-  return (await fetch(base + '/api/state', { headers: { cookie } })).json();
+  return (await toolHttp(base + '/api/state', { headers: { cookie } })).json();
 }
 
 // A separate process keeps a busy server event loop from silently delaying the load generator.
@@ -97,21 +200,17 @@ async function clientLoad() {
   };
   process.on('message', measurementMessage);
   const streamAbort = new AbortController();
-  const stream = await fetch(base + '/api/events', {
-    headers: { cookie },
-    signal: streamAbort.signal,
-  });
-  if (!stream.ok || !stream.body) throw Error('SSE connection failed: ' + stream.status);
   const chunks = [];
-  const reading = (async () => {
-    try {
-      for await (const chunk of stream.body) {
-        chunks.push({ at: timestamp(), bytes: chunk.byteLength });
-      }
-    } catch (error) {
-      if (!streamAbort.signal.aborted) throw error;
-    }
-  })();
+  const stream = toolStream(
+    base + '/api/events',
+    { headers: { cookie }, signal: streamAbort.signal },
+    (chunk) => chunks.push({ at: timestamp(), bytes: chunk.byteLength }),
+    Math.ceil((seconds + 180) * 1000),
+  );
+  await stream.ready;
+  const reading = stream.done.catch((error) => {
+    if (!streamAbort.signal.aborted) throw error;
+  });
   const go = once(process, 'message');
   process.send({ ready: true });
   const [begin] = await go;
@@ -145,7 +244,7 @@ async function clientLoad() {
   };
   await Promise.all([
     periodic(3000, async (i) => {
-      const response = await fetch(base + '/api/presence', {
+      const response = await toolHttp(base + '/api/presence', {
         method: 'POST',
         headers: {
           cookie,
@@ -165,7 +264,7 @@ async function clientLoad() {
         i % 3 === 2
           ? { type: 'cancel' }
           : { type: 'move', position: { ...position, x: position.x + (i % 2 ? 0 : 0.5) } };
-      const response = await fetch(base + '/api/command', {
+      const response = await toolHttp(base + '/api/command', {
         method: 'POST',
         headers: {
           cookie,
@@ -187,7 +286,7 @@ async function clientLoad() {
     }),
     periodic(250, async () => {
       const at = performance.now();
-      const response = await fetch(base + '/api/state', {
+      const response = await toolHttp(base + '/api/state', {
         headers: { cookie },
         signal: AbortSignal.timeout(15000),
       });
@@ -304,6 +403,8 @@ function metricDelta(before, after) {
 async function main() {
   const toolOptions = profilingOptions(process.argv.slice(2));
   const appProfiling = toolOptions.enabled;
+  const collectCpu = process.env.OPENLEGEND_CPU_PROFILE === '1';
+  if (collectCpu && !appProfiling) throw Error('CPU capture requires application profiling.');
   const [scenarioPath, output, secondsText = '15', speedText = '1,3,8', intervalText = '500'] =
     toolOptions.arguments;
   const seconds = Number(secondsText),
@@ -364,6 +465,7 @@ async function main() {
     paidModelCalls: 0,
     instrumentation: {
       appProfiling: appProfiling ? 'on' : 'off',
+      cpuSampling: collectCpu,
       runtimeMonitoring: appProfiling,
       domainCounters: appProfiling,
       externalProcessCuts: true,
@@ -372,7 +474,9 @@ async function main() {
     warmups: [],
     phases: [],
   };
-  let game, load, database, stopPhaseObserving, observedLoop, activePhase, capture;
+  let game, load, database, stopPhaseObserving, observedLoop, activePhase, capture, cpuProfiler;
+  let pressureFixture, pressureRun;
+  let cohortIds = new Set();
   // Retain the resource until the factory returns a closeable server. An initialization
   // failure otherwise leaves the database socket/worker alive with no returned handle.
   const startGame = async (tick) => {
@@ -388,6 +492,7 @@ async function main() {
     }
   };
   const beginPhase = () => {
+    const nativeStart = nativePopulation(game.service.world, cohortIds);
     const nativeCounters = {},
       stages = {};
     if (appProfiling) observeDomainCounters(nativeCounters);
@@ -405,6 +510,7 @@ async function main() {
     loop?.enable();
     return {
       before: performanceSnapshot(),
+      nativeStart,
       nativeCounters,
       stages,
       loop,
@@ -433,6 +539,10 @@ async function main() {
       advancedSimSeconds: advanced,
       expectedSimSeconds: elapsed * config.baseRatio * game.service.speed,
       achievedSpeed: advanced / elapsed / config.baseRatio,
+      nativeStart: phase.nativeStart,
+      nativeEnd: nativePopulation(game.service.world, cohortIds),
+      geometry: game.service.geometryStatistics,
+      ...(pressureRun ? { nativePressure: pressureRun.snapshot() } : {}),
       serverCpuMs: (used.user + used.system) / 1000,
       startingHostLoad: phase.startingHostLoad,
       endingHostLoad: loadavg(),
@@ -465,6 +575,7 @@ async function main() {
       heapUsedBytes: process.memoryUsage().heapUsed,
       rssBytes: process.memoryUsage().rss,
       storageError: game.service.storageError,
+      backgroundFailures: after.runtime.backgroundFailures,
       memoryBacklog: game.service.memoryBacklog,
       attribution: appProfiling
         ? { status: 'collected', ...metricDelta(phase.before, after) }
@@ -480,7 +591,7 @@ async function main() {
     game = await startGame(false);
     await new Promise((done) => game.server.listen(0, config.host, done));
     let base = 'http://' + config.host + ':' + game.server.address().port;
-    let response = await fetch(base + '/api/state');
+    let response = await toolHttp(base + '/api/state');
     let cookie = response.headers.get('set-cookie')?.split(';')[0];
     await response.arrayBuffer();
     if (!cookie) throw Error('No local session');
@@ -490,11 +601,19 @@ async function main() {
       clientId: 'profile-setup',
       presenceSequence: 1,
     });
-    await game.service.transition((world) => ({
-      world: populateScenario(structuredClone(world), scenario),
-      events: [],
-      outcome: { ok: true, code: 'profile-setup', message: 'Disposable profiling scene' },
-    }));
+    const setup = await game.service.transition((world) => {
+      const population = populateScenario(structuredClone(world), scenario);
+      const pressure = prepareNativePressure(population.world, scenario, population.addedAnimalIds);
+      pressureFixture = pressure.fixture;
+      cohortIds = new Set(population.addedAnimalIds);
+      return {
+        world: pressure.world,
+        events: [],
+        outcome: { ok: true, code: 'profile-setup', message: 'Disposable profiling scene' },
+      };
+    });
+    if (!setup.ok || cohortIds.size !== scenario.animals * (scenario.groupDistance ? 2 : 1))
+      throw Error('Generated native cohort did not match the requested workload.');
     await controlWorld(base, cookie, { paused: true });
     await game.service.flush();
     await game.close();
@@ -504,15 +623,28 @@ async function main() {
     game = await startGame(true);
     await new Promise((done) => game.server.listen(0, config.host, done));
     base = 'http://' + config.host + ':' + game.server.address().port;
-    response = await fetch(base + '/api/state');
+    response = await toolHttp(base + '/api/state');
     cookie = response.headers.get('set-cookie')?.split(';')[0];
     await response.arrayBuffer();
     if (!cookie) throw Error('No restarted local session');
     // The reopened fixture has a new login, while its setup login may still hold
     // control. Take control explicitly through the same endpoint used by a player.
     const state = await resumeWorld(base, cookie);
+    report.effectiveSettings = {
+      worldPreset: config.worldPreset,
+      worldSeed: game.service.world.seed,
+      baseRatio: config.baseRatio,
+    };
     const actor = entityGet(game.service.world.entities, game.service.controlledEntityId);
     const position = { ...worldPosition(actor), surfaceId: worldSupport(actor) };
+    if (collectCpu) {
+      cpuProfiler = new Session();
+      cpuProfiler.connect();
+      await cpuProfiler.post('Profiler.enable');
+      report.cpuProfileWindow = { startBeforeUs: Number(process.hrtime.bigint() / 1000n) };
+      await cpuProfiler.post('Profiler.start');
+      report.cpuProfileWindow.startAfterUs = Number(process.hrtime.bigint() / 1000n);
+    }
     // Keep warm-up and measured work continuous: an intervening pause can itself
     // fail the normal busy-admission gate in precisely the overloaded case measured here.
     // docs/maintainers/performance-profiling.md#full-server-workload
@@ -536,6 +668,7 @@ async function main() {
         clientId: presenceId,
         presenceSequence: 1,
       });
+      pressureRun = await startNativePressure(game.service, pressureFixture, index);
       load.child.send({
         go: true,
         ...(warmupSeconds ? {} : { measureAt: activePhase.startedAtUnixMs }),
@@ -548,8 +681,10 @@ async function main() {
         load.child.send({ measureAt: activePhase.startedAtUnixMs });
       }
       const client = await load.result;
+      await pressureRun?.stop();
       if (warmup) report.warmups.push({ speed, ...warmup, client: client.warmup });
       report.phases.push({ speed, ...finishPhase(activePhase), client: client.measured });
+      pressureRun = undefined;
       activePhase = undefined;
       load.child.kill();
       load = undefined;
@@ -565,6 +700,15 @@ async function main() {
         await game.service.flush();
       }
     }
+    if (cpuProfiler) {
+      report.cpuProfileWindow.stopBeforeUs = Number(process.hrtime.bigint() / 1000n);
+      const { profile } = await cpuProfiler.post('Profiler.stop');
+      report.cpuProfileWindow.stopAfterUs = Number(process.hrtime.bigint() / 1000n);
+      await writeFile(resolve(output) + '.cpuprofile', JSON.stringify(profile), {
+        flag: 'wx',
+        mode: 0o600,
+      });
+    }
     report.finalCounts = {
       entities: entityKeys(game.service.world.entities).length,
       events: game.service.world.events.length,
@@ -573,17 +717,35 @@ async function main() {
         0,
       ),
     };
+    // Explicit --expose-gc opts into a post-measurement retained-heap sample.
+    // Keep the server/world alive; do not confuse cleanup or a phase-end heap with
+    // retained runtime memory. Collection is outside every measured workload window.
+    if (typeof globalThis.gc === 'function') {
+      const started = performance.now();
+      globalThis.gc();
+      globalThis.gc();
+      report.retainedMemory = {
+        status: 'collected',
+        scope:
+          'Main isolate after two requested full collections, before server shutdown; includes resident world, in-flight work and profiling records. RSS includes worker memory and is not a retained-heap or peak measurement.',
+        collectionMs: performance.now() - started,
+        simTime: game.service.world.simTime,
+        ...process.memoryUsage(),
+      };
+    } else report.retainedMemory = { status: 'unavailable', reason: 'Run Node with --expose-gc.' };
   } catch (error) {
     if (activePhase) report.incompletePhase = finishPhase(activePhase);
     report.error = String(error);
     process.exitCode = 1;
   } finally {
+    cpuProfiler?.disconnect();
     stopPhaseObserving?.();
     observedLoop?.disable();
     observeDomainCounters();
     load?.child.kill();
     const cleanupErrors = [];
     for (const [name, cleanup] of [
+      ['native pressure', () => pressureRun?.stop()],
       ['server', () => game?.close()],
       ['database', () => database?.close()],
       ['directory', () => rm(dir, { recursive: true, force: true })],

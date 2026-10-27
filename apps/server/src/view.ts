@@ -1,4 +1,11 @@
+import { canSpeak } from '@open-legend/domain';
 import { receivedEventAccounts } from './received-event-accounts.js';
+import { attackSourceView } from './attack-execution-view.js';
+import { contributionWithdrawals } from './handover-actions.js';
+import { localWeatherView, installedActionMeaning } from '@open-legend/domain';
+import { gateUseLabel } from '@open-legend/domain';
+import { assemblyPhaseLabel } from '@open-legend/domain';
+import { selectedCreationProfileForWorld, definitionPin } from '@open-legend/domain';
 import {
   currentBodyObservation,
   currentObservedFacets,
@@ -9,6 +16,8 @@ import {
   currentContactReference,
   communicationReference,
   projectCommandContactReferences,
+  projectObservedAssembly,
+  perceivedParticipantReferences,
 } from './public-contact-references.js';
 import { permittedSourceHandle, evidenceSourceHandle } from './entity-references.js';
 import { entityGet } from '@open-legend/domain';
@@ -28,7 +37,7 @@ import {
   type PracticeView,
   type ActivityOccurrence,
 } from '@open-legend/domain';
-
+import { effectiveBodyProfile, visionFieldOfView } from '@open-legend/domain';
 import {
   basePlaytestMilestones,
   BASE_FAMILY_POLICY,
@@ -49,8 +58,8 @@ import {
 import { observerName } from '@open-legend/domain';
 import { handoverOptions, itemTradeView, tradeOwnLots } from './handover-actions.js';
 import { canHandleItems } from '@open-legend/domain';
-import { projectStatusEffects } from '@open-legend/domain';
-import { bodyPolicy } from '@open-legend/domain';
+import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
+import { attackSubject, bodyPolicy } from '@open-legend/domain';
 import { isConversationEvent } from '@open-legend/domain';
 
 import { actionAnimation } from './action-animation.js';
@@ -62,7 +71,7 @@ import {
   perceptionGuide,
   type ActorEvent,
 } from '@open-legend/domain';
-import { publicEvent } from './perceived-events.js';
+import { projectPerceivedSpeech, publicEvent } from './perceived-events.js';
 import { projectAttributes, attributeDefinition } from '@open-legend/domain';
 
 import type {
@@ -81,8 +90,9 @@ import {
   TRAIT_BANK,
   type WorldState,
 } from '@open-legend/domain';
-
-import { reincarnationPolicy } from '@open-legend/domain';
+import { entityBodyReference, contextActionRevision } from './entity-references.js';
+import { perceivedEncounterPreferenceBinding } from '@open-legend/domain';
+import { reincarnationPolicy, scarTreatmentProblem } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
 
 /** Private evidence changed during a read; discard and prepare a current view. */
@@ -188,10 +198,6 @@ export async function projectView(
   const milestones = service.milestonesFor(scope.actorId);
   const storageError = service.storageError;
   const telemetryRevision = service.telemetryRevision;
-  // Timed perception restrictions can expire without replacing any entity.
-  // Depend on their current result, not every clock tick between boundaries.
-  const observer = entityGet(world.entities, scope.actorId)!;
-  const sightRadius = visionRadius(world, observer);
   const observation = {
     inventory: memo(
       'ownedItems',
@@ -254,6 +260,18 @@ export async function projectView(
         worldName,
         locationName: nearest?.label ?? worldName,
         timeLabel: world.presentation?.timeLabel ?? 'World time',
+        ...(world.presentation?.introduction
+          ? { introduction: world.presentation.introduction }
+          : {}),
+        ...(world.presentation?.crafting
+          ? {
+              crafting: {
+                categoryLabel: world.presentation.crafting.categoryLabel,
+                allLabel: world.presentation.crafting.allLabel,
+                categories: world.presentation.crafting.categories,
+              },
+            }
+          : {}),
       };
     },
   );
@@ -423,6 +441,10 @@ export async function projectView(
     const pile = facets.find((facet) => facet.value.kind === 'pile-contents');
     const carried = facets.find((facet) => facet.value.kind === 'carried');
     const publicAttributes = facets.find((facet) => facet.value.kind === 'public-attributes');
+    const health =
+      publicAttributes?.value.kind === 'public-attributes'
+        ? publicAttributes.value.attributes.find((attribute) => attribute.bodyHealth)?.value
+        : undefined;
     const display = observerName(world, player.id, entity.id);
     const kind: EntityView['kind'] =
       body.kind === 'animal'
@@ -463,6 +485,27 @@ export async function projectView(
 
     return {
       id: currentContactReference(world, scope, entity),
+      bodyReference: entityBodyReference(scopeKey(scope), entity),
+      contextActionRevision: contextActionRevision(
+        scopeKey(scope),
+        world,
+        player,
+        entity,
+        perceivedEncounterPreferenceBinding(world, player, entity),
+      ),
+      ...(body.assembly
+        ? {
+            assembly: projectObservedAssembly(world, scope, entity.id, body.assembly),
+            actionRevision: permittedSourceHandle(world, player.id, [
+              'assembly-actions',
+              received.id,
+              body.assembly.revision,
+              body.assembly.implementation === 'grounded-panel-boundary'
+                ? body.assembly.materialRevision
+                : null,
+            ]),
+          }
+        : {}),
       ...(attentionKeys.has(entity.id)
         ? { attentionPreference: attentionPreferences.has(attentionKeys.get(entity.id)!) }
         : {}),
@@ -481,17 +524,36 @@ export async function projectView(
         }),
       },
       kind,
-      subtype: body.kind,
+      subtype: body.subtype ?? body.kind,
+      ...(body.icon ? { icon: body.icon } : {}),
+      ...(body.bodyPlan ? { bodyPlan: body.bodyPlan } : {}),
+      statusEffects: body.effects ?? [],
       position: body.position,
       supportSurfaceId: body.supportSurfaceId,
       heading: body.heading,
       appearance: body.appearance,
       radius: body.radius,
-      bodySize: { width: body.radius * 2, height: body.height },
+      bodySize: memo(`bodySize:${entity.id}`, [body.radius, body.height], () => ({
+        width: body.radius * 2,
+        height: body.height,
+      })),
+      actionAnimation: body.animation
+        ? {
+            ...body.animation,
+            id: permittedSourceHandle(world, player.id, [
+              'outward-action',
+              received.id,
+              body.animation.id,
+            ]),
+          }
+        : null,
       status: body.outward.filter(Boolean).join(', '),
       ...(body.description ? { description: body.description } : {}),
       ...(publicAttributes?.value.kind === 'public-attributes'
-        ? { attributes: publicAttributes.value.attributes }
+        ? {
+            attributes: publicAttributes.value.attributes,
+            ...(typeof health === 'number' ? { health } : {}),
+          }
         : {}),
       ...(body.quantity !== undefined ? { quantity: body.quantity } : {}),
       ...(body.heatLit !== undefined ? { heat: { lit: body.heatLit } } : {}),
@@ -511,7 +573,14 @@ export async function projectView(
         : {}),
       ...(entity.actor
         ? {
-            canTalk: body.outward[0] === 'alive',
+            canTalk:
+              body.outward[0] === 'alive' &&
+              canSpeak(player) &&
+              !capabilityBlocked(world, player, 'speech'),
+            talkRequiresAi: entity.actor.controller === 'npc',
+            ...(!canSpeak(player) || capabilityBlocked(world, player, 'speech')
+              ? { talkUnavailableReason: 'Your character cannot speak now.' }
+              : {}),
             ...(rememberedAddressee
               ? {
                   communicationReference: communicationReference(scope, {
@@ -627,11 +696,7 @@ export async function projectView(
     queueLatencyMs,
     totalLatencyMs,
   }));
-  const conversationId = world.conversations?.active[scope.actorId];
-  const conversationEntries = events
-    .filter((event) => !conversationId || event.conversationId === conversationId)
-    .filter((event) => isConversationEvent(event))
-    .slice(-30);
+  const conversationEntries = events.filter((event) => isConversationEvent(event)).slice(-30);
   // Text is authoritative in memory; optional job reads must never hide it while refreshing.
   // See docs/architecture.md#performance-critical-path.
   const replies = optional(
@@ -680,6 +745,16 @@ export async function projectView(
       pausedStop?.message ?? 'No work to stop.',
     ),
   ];
+  for (const option of contributionWithdrawals(
+    world,
+    scope.actorId,
+    service.store.authority!.constructionPermissions(world.id),
+  )) {
+    const checked = service.previewCommand(option.command, scope.actorId);
+    playerControls.push(
+      action(option.id, option.label, option.command, checked.ok, checked.message),
+    );
+  }
   if (canRecoverAtCamp(world, player))
     playerControls.push({
       id: 'recover',
@@ -701,22 +776,24 @@ export async function projectView(
       reason: 'Resume here before continuing.',
     });
   const work = actor.action;
+  const workTargetId = work?.ranged ? attackSubject(work)?.id : work?.targetId;
   const aimDetails =
     work?.type === 'aim'
       ? attackDetails({
           id: work.id,
           actorId: scope.actorId,
           type: 'aim',
-          targetId: work.targetId!,
+          targetId: workTargetId,
+          ...(work.ranged?.aimPoint ? { aimPoint: work.ranged.aimPoint } : {}),
           weaponItemId: work.weaponItemId,
           ammoItemId: work.ammoItemId,
         })
       : undefined;
 
   const targetName =
-    work?.targetId &&
-    observation.visibleEntities.some((entity) => entity.id === work.targetId) &&
-    observerName(world, player.id, work.targetId).name;
+    workTargetId &&
+    observation.visibleEntities.some((entity) => entity.id === workTargetId) &&
+    observerName(world, player.id, workTargetId).name;
   const workLabels: Record<string, string> = {
     'treat-scar':
       work?.scarId && reincarnation
@@ -748,8 +825,7 @@ export async function projectView(
         : work?.fireOperation === 'fuel'
           ? 'Adding fuel'
           : 'Putting out the fire',
-    prepare: work?.preparation === 'fiber' ? 'Cleaning fibers' : 'Twisting cord',
-    craft: `Crafting${work?.recipeId && world.recipes[work.recipeId] ? ` ${world.recipes[work.recipeId]!.output.name}` : ''}`,
+    craft: `Crafting${work?.recipeId && world.recipes[work.recipeId] ? ` ${world.recipes[work.recipeId]!.outputs.map((output) => world.itemDefinitions[output.definition.id]!.name).join(', ')}` : ''}`,
   };
   const guide = perceptionGuide(world, player);
   // Read the indexed latest passage before publishing the view. A temporary null
@@ -839,6 +915,17 @@ export async function projectView(
       seed: world.seed,
     })),
     clock: {
+      weather: localWeatherView(world, worldPosition(player)),
+      ...(world.presentation?.daylight
+        ? {
+            daylight: {
+              startHour:
+                world.statusEffectPolicy.namedTimes[world.presentation.daylight.startTime]!,
+              endHour: world.statusEffectPolicy.namedTimes[world.presentation.daylight.endTime]!,
+              noonElevationDegrees: world.presentation.daylight.noonElevationDegrees,
+            },
+          }
+        : {}),
       ...calendarFields(world),
       speed: speed,
       baseRatio: service.config.baseRatio,
@@ -849,6 +936,7 @@ export async function projectView(
       offsetHours: world.statusEffectPolicy.clockOffsetHours,
     },
     player: {
+      knowledgeRevision: world.knowledgeRevisions?.[player.id] ?? 0,
       appearance: player.appearance ?? 'sprite',
       participation: actor.participation?.phase ?? 'active',
       departureNotice: world.participationPolicy?.exitDescription,
@@ -859,18 +947,38 @@ export async function projectView(
       position: worldPosition(player),
       supportSurfaceId: worldSupport(player),
       heading: player.spatial.heading,
+      bodySize: {
+        width: effectiveBodyProfile(world, player).radius * 2,
+        height: effectiveBodyProfile(world, player).height,
+      },
       attributes: projectAttributes(world, player, 'owner').filter(
         (attribute) => !attributeDefinition(world, attribute.id)?.practice,
       ),
       practice,
       actionAnimation: actionAnimation(world, player),
       alive: actor.alive,
+      ...(service.currentScope(scope, 'play', true)
+        ? { inputScope: service.inputScope(scope) }
+        : {}),
+      ...(actor.attackModeNotice ? { attackModeNotice: actor.attackModeNotice } : {}),
+      ...(actor.alive
+        ? { attackSource: attackSourceView(world, player.id, observation.inventory) }
+        : {}),
       hasWork,
       life: actor.physicalLife ?? 0,
       death:
         actor.pendingDeath && reincarnation
           ? {
               message: reincarnation.deathText,
+              freshWorldReview:
+                service.config.godMode &&
+                service.currentScope(scope, 'create') &&
+                service.currentScope(scope, 'inspect') &&
+                !!selectedCreationProfileForWorld(world).recoveryOpeningId &&
+                !!service.config.creation.installationId &&
+                service.config.creation.targets.some((target) =>
+                  target.allowedCreatorAccountIds.includes(scope.accountId),
+                ),
               at: actor.pendingDeath.at,
               corpseId: actor.pendingDeath.corpseId,
               retained: actor.pendingDeath.retained,
@@ -909,6 +1017,9 @@ export async function projectView(
       action: actor.action
         ? {
             id: actor.action.id,
+            ...(actor.action.attackExecution
+              ? { execution: service.executionView(player.id) }
+              : {}),
             // Floating progress is opt-in; routine movement never gets a status.
             showStatus:
               actor.action.type === 'aim' ||
@@ -916,7 +1027,6 @@ export async function projectView(
               (actor.action.stage === 'working' &&
                 [
                   'gather',
-                  'prepare',
                   'craft',
                   'assemble',
                   'cook',
@@ -953,7 +1063,28 @@ export async function projectView(
                     {
                       id: `cancel:${actor.action.id}`,
                       label: BASE_RANGED_TEXT.cancelName,
-                      command: { type: 'cancel' as const },
+                      command: { type: 'cancel' as const, expectedActionId: actor.action.id },
+                      enabled: true,
+                    },
+                  ],
+                }
+              : {}),
+            ...(actor.action.attackExecution
+              ? {
+                  controls: [
+                    {
+                      id: `release:${actor.action.id}`,
+                      label: 'Attack normally',
+                      command:
+                        actor.action.type === 'aim'
+                          ? { type: 'release-shot' as const, aimId: actor.action.id }
+                          : { type: 'release-strike' as const, expectedActionId: actor.action.id },
+                      enabled: actor.action.attackExecution.ready && !paused,
+                    },
+                    {
+                      id: `cancel:${actor.action.id}`,
+                      label: 'Cancel',
+                      command: { type: 'cancel' as const, expectedActionId: actor.action.id },
                       enabled: true,
                     },
                   ],
@@ -971,11 +1102,11 @@ export async function projectView(
               !waitingForFeedback(world, player),
             label: actor.action.navigation
               ? 'Preparing route'
-              : actor.action.assemblyPhase
-                ? (world.assemblyFamilies?.[actor.action.assemblyPhase.familyId]?.labels[
-                    actor.action.assemblyPhase.operation
-                  ] ?? 'Working')
-                : (guardWorkLabel(world, player) ?? workLabels[actor.action.type] ?? 'Working'),
+              : actor.action.gateWork
+                ? gateUseLabel(world, actor.action.gateWork.intent)
+                : actor.action.assemblyPhase
+                  ? assemblyPhaseLabel(world, actor.action.assemblyPhase)
+                  : (guardWorkLabel(world, player) ?? workLabels[actor.action.type] ?? 'Working'),
             progress:
               actor.action.stage === 'approaching' || actor.action.type === 'follow'
                 ? 0
@@ -995,6 +1126,10 @@ export async function projectView(
       history: `Your time in this world began on Day 1. You have been here for ${Math.floor(world.simTime / 86400)} full days.`,
       inventory,
       inventoryRevision: player.inventoryRevision ?? 0,
+      constructionRevision: service.constructionReadRevision(player.id),
+      workBatchRevision: world.workBatchPolicy
+        ? JSON.stringify([definitionPin(world.workBatchPolicy), world.moduleManifest.bodyPolicyPin])
+        : undefined,
       canUseInventory: canUseInventory(service, scope),
       actionAttempts: memo('player-action-attempts', [actor.agency.attempts], () =>
         actor.agency.attempts.map((attempt) => ({
@@ -1056,6 +1191,7 @@ export async function projectView(
       'recipes',
       [
         observation.knownRecipes,
+        world.presentation,
         world.moduleManifest,
         world.itemDefinitions,
         world.declarationReceipts,
@@ -1104,21 +1240,7 @@ export async function projectView(
               selectedEventPresentation(world),
               player.id,
               JSON.stringify([world.id, `${service.timelineId}:${scopeKey(scope)}`]),
-              (body) => {
-                if (
-                  body.entityId === player.id &&
-                  body.physicalLife === (player.actor?.physicalLife ?? 0)
-                )
-                  return player.id;
-                const entity = entityGet(world.entities, body.entityId);
-                const received = entity && currentBodyObservation(world, player.id, entity.id);
-                return entity &&
-                  received &&
-                  body.leaseId === received.id &&
-                  body.physicalLife === (entity.actor?.physicalLife ?? 0)
-                  ? currentContactReference(world, scope, entity)
-                  : undefined;
-              },
+              (receivedEvent) => perceivedParticipantReferences(world, scope, receivedEvent),
             ),
           ),
     ),
@@ -1151,7 +1273,7 @@ export async function projectView(
             }
           : {}),
         ...(event.actorId === scope.actorId ? { speakerId: scope.actorId } : {}),
-        speech: event.speech,
+        ...(event.speech ? { speech: projectPerceivedSpeech(event.speech) } : {}),
         speaker: event.speech
           ? (event.speech.speaker?.nameAtTime ?? 'Someone')
           : (event.references?.find((reference) => reference.role === 'actor')?.label ?? 'Someone'),

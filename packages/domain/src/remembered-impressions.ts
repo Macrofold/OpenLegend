@@ -101,6 +101,7 @@ export function ensureExperienceAccounting(world: WorldState, actorId: string): 
     speech: { bytes: 0, count: 0 },
   };
   const add = (entry: ExperienceEntry) => {
+    if (entry.source === 'awareness' && entry.value.retentionClass === 'sensory') return;
     const account = actor.accounts![accountClass(entry)];
     account.bytes += encodedExperienceBytes(entry);
     account.count++;
@@ -139,6 +140,7 @@ export function adjustExperienceAccounting(
   entry: ExperienceEntry,
   delta: 1 | -1,
 ): void {
+  if (entry.source === 'awareness' && entry.value.retentionClass === 'sensory') return;
   ensureExperienceAccounting(world, actorId);
   const accounts = world.experience?.temporal?.actors[actorId]?.accounts;
   if (!accounts) return;

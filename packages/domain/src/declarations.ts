@@ -3,7 +3,11 @@ import { orderedRecordOwn, orderedRecordSet } from './ordered-record.js';
 import { subjectNarration } from './narration.js';
 import { canonicalName, namePhrase } from '@open-legend/language';
 import { learnRecipe } from './knowledge.js';
-import type { RecipeDefinition } from './types.js';
+import type {
+  RecipeDefinition,
+  FixedTransformDefinition,
+  AuthoredRecipeProvenance,
+} from './types.js';
 import { inventionAttribution } from './invention-attribution.js';
 import { inventionPermission } from './invention-policy.js';
 import {
@@ -22,10 +26,45 @@ import {
   compileRecipeCandidate,
   recipeDependencyReferences,
   validateRecipeCandidate,
+  compileFixedTransform,
+  FIXED_TRANSFORM_IMPLEMENTATION,
 } from './invention-families.js';
 import { recipeFamily } from './world-modules.js';
 
 export const validateDeclaration = validateRecipeCandidate;
+
+function recipeIdentity(world: WorldState, digest: string) {
+  const matching = Object.values(world.recipes).find((recipe) => recipe.digest === digest);
+  let id = matching?.id ?? `recipe-${contentLabel(digest)}`;
+  if (!matching) while (world.recipes[id]) id += '-v';
+  return { id, matching };
+}
+
+/** Trusted world installation only. No declaration request can select native outputs. */
+export function installFixedTransform(
+  world: WorldState,
+  definition: FixedTransformDefinition,
+  provenance: AuthoredRecipeProvenance,
+) {
+  const compiled = compileFixedTransform(world, definition);
+  const digest = canonicalJson({ kind: 'fixed-transform', definition });
+  const { id, matching } = recipeIdentity(world, digest);
+  if (!matching)
+    world.recipes[id] = {
+      ...cloneValue(compiled),
+      id,
+      version: 1,
+      digest,
+      source: {
+        kind: 'fixed-transform',
+        definition: cloneValue(definition),
+        implementationPin: definitionPin(FIXED_TRANSFORM_IMPLEMENTATION),
+      },
+      admittedAt: world.simTime,
+      provenance: cloneValue(provenance),
+    };
+  return { recipe: world.recipes[id]!, reused: !!matching };
+}
 
 /** Installed world content and actor inventions share exact compiler/admission semantics.
  * Installation alone teaches nobody and produces no physical item. */
@@ -35,11 +74,8 @@ export function installRecipe(
   provenance: RecipeDefinition['provenance'],
 ) {
   const digest = canonicalJson(draft);
-  let recipeId = `recipe-${contentLabel(digest)}`;
-  const matching = Object.values(world.recipes).find((recipe) => recipe.digest === digest);
-  if (matching) recipeId = matching.id;
-  else {
-    while (world.recipes[recipeId]) recipeId += '-v';
+  const { id: recipeId, matching } = recipeIdentity(world, digest);
+  if (!matching) {
     // Possession exposes the item identity without encoding its private manufacturing recipe.
     // docs/invention-composition.md#3-composition-contract
     let outputDefinitionId = `item-${contentLabel(`output:${digest}`)}`;
@@ -60,19 +96,25 @@ export function installRecipe(
       name: draft.name,
       description: draft.description,
       inputs: cloneValue(draft.inputs),
-      output: {
-        ...cloneValue(draft.output),
-        name: outputName,
-      },
+      outputs: [
+        {
+          port: 'product',
+          definition: definitionPin(world.itemDefinitions[outputDefinitionId]!),
+          quantity: 1,
+        },
+      ],
       workSeconds: compiled.workSeconds,
-      sourceCandidate: cloneValue(draft),
-      familyPin: definitionPin(family.definition),
+      source: {
+        kind: 'family',
+        candidate: cloneValue(draft),
+        familyPin: definitionPin(family.definition),
+      },
+      retainedTools: [],
       dependencyReferences: recipeDependencyReferences(world, draft, compiled),
       facts: cloneValue(compiled.facts),
       id: recipeId,
       version: 1,
       digest,
-      outputDefinitionId,
       admittedAt: world.simTime,
       provenance: cloneValue(provenance),
     };
@@ -227,15 +269,16 @@ export function admitAttributeDeclaration(
     !['attributes', 'practice'].includes(HOST_IMPLEMENTATIONS[previous.implementation].storage)
   )
     return reject('Body-backed bindings cannot be edited.');
+  const materialDefinitionUsesAttribute = Object.values(original.assemblyFamilies ?? {}).some(
+    (family) => Object.values(family.inventory).some((rule) => rule.stateAttributes.includes(id)),
+  );
   const users = entityValues(original.entities).filter(
     (e) =>
       e.actor?.attributes?.[id] ||
       e.actor?.practice?.[id] ||
       e.practiceTarget?.attributeId === id ||
       e.attributes?.[id] ||
-      Object.values(original.assemblyFamilies ?? {}).some(
-        (family) => family.conditionAttribute === id || family.moistureAttribute === id,
-      ) ||
+      materialDefinitionUsesAttribute ||
       e.replenisher?.attributeId === id ||
       e.actor?.action?.attributeId === id ||
       e.actor?.agency.plan?.steps.some(

@@ -10,6 +10,7 @@ import { digest } from './content-digest.js';
 import type { AppConfig } from './config.js';
 import { modelTokenPrices, type AiReceipt } from '@open-legend/ai';
 import { generationAllowance } from './cognition-budget.js';
+import { macrofoldJudgmentModel } from './generation-config.js';
 import {
   responseSchema,
   decisionAppraisalSchema,
@@ -49,7 +50,9 @@ Return only the requested structured answers. Use exact handles and supplied sca
 For each question return status answered with value and reason null, or status abstained with value null and an allowed reason. Required evidence cannot be omitted by a relevance selection.`;
 
 export function decisionOrigin(config: AppConfig): string {
-  return config.macrofoldKey ? `macrofold/${config.macrofoldJevModel}` : `jev/${config.jevModel}`;
+  return config.macrofoldKey
+    ? `macrofold/${macrofoldJudgmentModel(config)}`
+    : `jev/${config.jevModel}`;
 }
 export function decisionPolicyDigest(config: AppConfig): string {
   return digest({
@@ -57,6 +60,9 @@ export function decisionPolicyDigest(config: AppConfig): string {
     model: DECISION_MODEL,
     effort: DECISION_EFFORT,
     origin: decisionOrigin(config),
+    judgment: config.modelTargets?.purposes.judgment
+      ? { workspace: config.modelTargets.workspace_id, ...config.modelTargets.purposes.judgment }
+      : undefined,
     budget: config.budgetUsd,
     prices: config.llmModelPrices,
     directAccount: digest(config.llmKey),
@@ -170,7 +176,9 @@ export function prepareDecisionTask(
       DECISION_LIMITS.inputBytes ||
     Buffer.byteLength(JSON.stringify(prepared.schema)) > DECISION_LIMITS.schemaBytes
   )
-    throw new Error('Complete required decision input or schema exceeds its byte allowance.');
+    throw new Error(
+      `Complete required decision input or schema exceeds its byte allowance: ${Buffer.byteLength(prepared.instructions) + Buffer.byteLength(prepared.context)} input bytes; ${Buffer.byteLength(JSON.stringify(prepared.schema))} schema bytes.`,
+    );
   return prepared;
 }
 

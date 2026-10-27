@@ -1,4 +1,33 @@
-import { entityGet, entitySet } from './entity-collection.js';
+import { constructionPermissionCurrent } from './construction-contributions.js';
+import {
+  boundaryPermission,
+  boundaryWorkCandidates,
+  commitBoundaryParts,
+  evaluateBoundaryPhase,
+  compileBoundaryActivity,
+  boundaryRepairState,
+  commitBoundaryFailure,
+} from './boundary-assemblies.js';
+import {
+  boundaryPhaseHeldItems,
+  boundaryPhaseInputs,
+  validBoundaryPhase,
+} from './boundary-phase.js';
+import { defaultCoverProfile, materialCoverProfile } from './assembly-cover.js';
+import {
+  gateWorkProblem,
+  gateUseContext,
+  gateUseUnchanged,
+  gateUseLabel,
+  releaseGateWork,
+} from './gate-operations.js';
+import {
+  prepareGatePublication,
+  prepareStructuralPublication,
+  type CampAssetPermission,
+  type CampAssetPublication,
+} from './camp-asset-permissions.js';
+import { entityDelete, entityGet, entitySet } from './entity-collection.js';
 import {
   findPhysicalWorkApproach,
   physicalWorkPointAvailable,
@@ -9,7 +38,7 @@ import { captureObjectIndex } from './objects.js';
 import { captureReservationIndex } from './resource-claims.js';
 import { captureWorkAllocations } from './work-budget.js';
 import { seesEntity } from './perception.js';
-import { draftWorld, finishWorld, changedEntityIds } from './draft.js';
+import { draftWorld, finishWorld, changedEntityIds, cloneValue } from './draft.js';
 import { WorkBudgetError } from './work-budget.js';
 import { ResourceReservationError } from './resource-claims.js';
 import {
@@ -42,14 +71,22 @@ import {
   materialPostHeight,
   postHeightForSlot,
   postBounds,
+  boundaryGateLayout,
+  boundaryGateHandle,
 } from './assembly-geometry.js';
 import type {
-  AssemblyFamily,
+  AssemblyCoverProfile,
+  FlexibleBayFamily,
+  FlexibleBayPhase,
   AssemblyPhase,
   AssemblyPlan,
   ConstructionPermission,
+  ConstructionOperation,
 } from './assembly-types.js';
+import type { ProspectiveWork } from './action-capabilities.js';
+import type { ResourceAvailability } from './resource-claims.js';
 import type { ActivityNode, ActivityArgument } from './action-experience.js';
+import { nativeBindingKind } from './native-command-contracts.js';
 import { definitionPin } from './world-modules.js';
 import { readState, sameDefinitionPin, stateAddress } from './state-owners.js';
 import {
@@ -64,6 +101,7 @@ import {
   directChildIds,
   itemFor,
   assemblyMovesReason,
+  repositionAssemblyPart,
 } from './objects.js';
 import { accessiblePossession, canAccessContainer } from './object-access.js';
 import { canHandleItems } from './item-handling.js';
@@ -74,6 +112,7 @@ import {
   spatialMap,
   worldPlacement,
   worldPosition,
+  isAssemblyPlacement,
 } from './spatial-state.js';
 import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
 import { nextEntityId } from './data.js';
@@ -81,10 +120,13 @@ import { chargeWork } from './work-budget.js';
 import { emit, outcome } from './events.js';
 import { recordSemanticChange } from './dependencies.js';
 import { subjectNarration } from './narration.js';
+import { finishPlanAction } from './agency.js';
 import { isSafeRecordId } from './records.js';
 import type { Action, Command, Entity, Outcome, WorldEvent, WorldState } from './types.js';
 
 export function validAssemblyPhase(phase: AssemblyPhase): boolean {
+  if (phase.implementation === 'grounded-panel-boundary') return validBoundaryPhase(phase);
+  if (phase.implementation !== undefined) return false;
   return (
     ['post', 'cover', 'lower', 'reclaim-post', 'reclaim-lowered'].includes(phase.operation) &&
     [
@@ -171,8 +213,12 @@ export function assemblyRoot(
   // never an unchanged immutable record returned by the read-only root view.
   return id ? entityGet(world.entities, id) : undefined;
 }
-export function assemblyFamily(world: WorldState, id: string): AssemblyFamily | undefined {
-  return world.assemblyFamilies?.[id];
+export function flexibleAssemblyFamily(
+  world: WorldState,
+  id: string,
+): FlexibleBayFamily | undefined {
+  const family = world.assemblyFamilies?.[id];
+  return family?.implementation === 'four-corner-flexible-bays' ? family : undefined;
 }
 const postSlot = (column: number, row: number) => `${column}:${row}`;
 export const assemblySupportSlots = (bay: number) => [
@@ -182,12 +228,14 @@ export const assemblySupportSlots = (bay: number) => [
   postSlot(bay + 1, 0),
 ];
 const phaseInputs = (phase: AssemblyPhase) =>
-  phase.operation === 'post'
-    ? [phase.itemId]
-    : phase.operation === 'cover'
-      ? [phase.itemId, phase.binding1!, phase.binding2!, phase.binding3!, phase.binding4!]
-      : [];
-function releasedMaterials(world: WorldState, phase: AssemblyPhase): string[] {
+  phase.implementation === 'grounded-panel-boundary'
+    ? boundaryPhaseInputs(phase)
+    : phase.operation === 'post'
+      ? [phase.itemId]
+      : phase.operation === 'cover'
+        ? [phase.itemId, phase.binding1!, phase.binding2!, phase.binding3!, phase.binding4!]
+        : [];
+function releasedMaterials(world: WorldState, phase: FlexibleBayPhase): string[] {
   return phase.operation === 'lower'
     ? [
         phase.itemId,
@@ -197,12 +245,32 @@ function releasedMaterials(world: WorldState, phase: AssemblyPhase): string[] {
       ]
     : [phase.itemId];
 }
-function activeEdit(world: WorldState, root: Entity): string | undefined {
+export function activeAssemblyEdit(
+  world: WorldState,
+  root: Entity,
+  actorId?: string,
+  work?: ProspectiveWork,
+): string | undefined {
   const edit = root.assembly?.activeEdit;
   const actor = edit && entityGet(world.entities, edit.actorId)?.actor;
   const plan = actor?.agency.plan,
-    phase = actor?.action?.assemblyPhase;
-  return (plan && plan.id === edit?.invocationId && plan.status === 'active') ||
+    phase = actor?.action?.assemblyPhase,
+    gate = actor?.action?.gateWork,
+    currentGate =
+      !!gate && gate.intent.assemblyId === root.id && actor?.action?.id === edit?.invocationId;
+  if (
+    edit &&
+    edit.actorId === actorId &&
+    work &&
+    (work.mode === 'replace' || work.mode === 'interrupt') &&
+    ((plan?.id === edit.invocationId && work.expected.plan?.id === plan.id) ||
+      (actor?.action &&
+        (phase?.editId === edit.invocationId || currentGate) &&
+        work.releasedInvocations.includes(actor.action.id)))
+  )
+    return;
+  return currentGate ||
+    (plan && plan.id === edit?.invocationId && plan.status === 'active') ||
     (edit &&
       phase &&
       phase.editId === edit.invocationId &&
@@ -210,36 +278,82 @@ function activeEdit(world: WorldState, root: Entity): string | undefined {
     ? edit?.invocationId
     : undefined;
 }
+function phaseCoverProfile(world: WorldState, family: FlexibleBayFamily, phase: FlexibleBayPhase) {
+  return ['cover', 'lower'].includes(phase.operation)
+    ? materialCoverProfile(world, phase.itemId)
+    : defaultCoverProfile(family);
+}
 export function assemblyPermission(
   world: WorldState,
   actorId: string,
   phase: AssemblyPhase,
   permissions: readonly ConstructionPermission[],
 ): ConstructionPermission | undefined {
+  if (phase.implementation === 'grounded-panel-boundary')
+    return boundaryPermission(world, actorId, phase, permissions);
+  const family = flexibleAssemblyFamily(world, phase.familyId)!;
+  const profile = phaseCoverProfile(world, family, phase);
+  if (!profile) return undefined;
   const bounds = coverBounds(
-    assemblyFamily(world, phase.familyId)!,
+    family,
     phase.destination,
     phase.heading,
     phase.bay,
     phase.arrangementId,
+    profile,
   );
   const materials = phaseInputs(phase);
   if (!materials.length) materials.push(...releasedMaterials(world, phase));
+  return selectAssemblyPermission(
+    world,
+    actorId,
+    {
+      operation: phase.operation,
+      destination: phase.destination,
+      bounds,
+      materials,
+      rootId: phase.rootId,
+      requestId: phase.requestId,
+    },
+    permissions,
+  );
+}
+export interface AssemblyPermissionTarget {
+  operation: ConstructionOperation;
+  destination: SurfacePoint;
+  bounds: Bounds3;
+  materials: readonly string[];
+  rootId?: string;
+  requestId: string;
+}
+/** All construction families select one complete current grant. This read never
+ * combines partial origin lists or turns material custody into permission. */
+export function selectAssemblyPermission(
+  world: WorldState,
+  actorId: string,
+  target: AssemblyPermissionTarget,
+  permissions: readonly ConstructionPermission[],
+): ConstructionPermission | undefined {
   let sitePermission: ConstructionPermission | undefined;
+  let boundRoot: string | null | undefined;
   for (const p of permissions) {
     if (
-      !p.revoked &&
+      constructionPermissionCurrent(world, p) &&
       p.worldId === world.id &&
       p.actorId === actorId &&
-      p.operations.includes(phase.operation) &&
-      p.site.surfaceId === phase.destination.surfaceId &&
-      bounds.min.x >= p.site.minX &&
-      bounds.max.x <= p.site.maxX &&
-      bounds.min.z >= p.site.minZ &&
-      bounds.max.z <= p.site.maxZ
+      p.operations.includes(target.operation) &&
+      p.site.surfaceId === target.destination.surfaceId &&
+      target.bounds.min.x >= p.site.minX &&
+      target.bounds.max.x <= p.site.maxX &&
+      target.bounds.min.z >= p.site.minZ &&
+      target.bounds.max.z <= p.site.maxZ
     ) {
+      if (p.acquisition) {
+        if (boundRoot === undefined) boundRoot = assemblyRoot(world, target)?.id ?? null;
+        if (boundRoot && !p.acquisition.assemblyIds.includes(boundRoot)) continue;
+      }
       sitePermission ??= p;
-      if (materials.every((id) => materialAuthorized(world, id, p))) return p;
+      if (target.materials.every((id) => materialAuthorized(world, id, p))) return p;
     }
   }
   // Keep the precise material refusal when site rights exist. A phase must fit
@@ -252,12 +366,22 @@ export function materialAuthorized(
   permission: ConstructionPermission,
 ): boolean {
   const origins = entityGet(world.entities, id)?.item?.materialOriginIds;
-  return !!origins?.length && origins.every((source) => permission.materialIds.includes(source));
+  const item = entityGet(world.entities, id)?.item;
+  return (
+    constructionPermissionCurrent(world, permission) &&
+    !!origins?.length &&
+    origins.every((source) => permission.materialIds.includes(source)) &&
+    (!permission.contribution ||
+      !origins.some((source) => permission.contribution!.foreignOriginIds.includes(source)) ||
+      [permission.id, ...permission.contribution.priorContributionIds].some((id) =>
+        item?.materialContributionIds?.includes(id),
+      ))
+  );
 }
 export function materialUsable(
   world: WorldState,
   id: string,
-  family: AssemblyFamily,
+  family: FlexibleBayFamily,
   role: string,
 ): boolean {
   const material = entityGet(world.entities, id),
@@ -268,7 +392,8 @@ export function materialUsable(
     !definition ||
     !sameDefinitionPin(material.item.definitionPin, definitionPin(definition)) ||
     descriptor?.familyId !== family.id ||
-    descriptor.role !== role
+    descriptor.role !== role ||
+    (role === 'cover' && !materialCoverProfile(world, id))
   )
     return false;
   const condition = world.moduleManifest.definitions.find(
@@ -282,8 +407,13 @@ export function assemblyWorkCandidates(
   world: WorldState,
   phase: AssemblyPhase,
   corner: number,
+  actorId: string,
 ): PhysicalWorkPoint[] {
-  const family = assemblyFamily(world, phase.familyId)!;
+  if (phase.implementation === 'grounded-panel-boundary')
+    return boundaryWorkCandidates(world, phase, corner, actorId);
+  const family = flexibleAssemblyFamily(world, phase.familyId)!;
+  const cover = phaseCoverProfile(world, family, phase);
+  if (!cover) return [];
   const slot = ['post', 'reclaim-post'].includes(phase.operation)
     ? phase.slot
     : assemblySupportSlots(phase.bay)[corner]!;
@@ -306,7 +436,14 @@ export function assemblyWorkCandidates(
           ),
         }
       : phase.operation === 'cover'
-        ? coverGeometry(family, phase.destination, phase.heading, phase.bay, phase.arrangementId)
+        ? coverGeometry(
+            family,
+            phase.destination,
+            phase.heading,
+            phase.bay,
+            phase.arrangementId,
+            cover,
+          )
         : undefined;
   return [
     [0, -1],
@@ -338,7 +475,7 @@ export function assemblyStances(
   phase: AssemblyPhase,
   actorId: string,
 ): Array<SurfacePoint | undefined> {
-  if (phase.operation === 'reclaim-lowered') {
+  if (phase.operation === 'reclaim-lowered' && phase.implementation !== 'grounded-panel-boundary') {
     const placement = entityGet(world.entities, phase.itemId)?.placement;
     const pile =
       placement?.mode === 'contained'
@@ -348,14 +485,14 @@ export function assemblyStances(
       ? [{ ...pile.placement.position, surfaceId: pile.placement.supportSurfaceId }]
       : [];
   }
-  const count = ['cover', 'lower'].includes(phase.operation) ? 4 : 1;
+  const count = assemblyWorkPointCount(phase);
   return Array.from(
     { length: count },
     (_, corner) =>
       findPhysicalWorkApproach(
         world,
         entityGet(world.entities, actorId)!,
-        assemblyWorkCandidates(world, phase, corner),
+        assemblyWorkCandidates(world, phase, corner, actorId),
         world.itemHandling.reach,
       )?.candidate.stance,
   );
@@ -363,7 +500,7 @@ export function assemblyStances(
 /** The entire positive intersection must remain in the admitted post-tip band.
  * docs/worlds/base/editable-shelters.md#qualified-geometry-for-px05 */
 export function qualifiedAttachmentContact(
-  family: AssemblyFamily,
+  family: FlexibleBayFamily,
   cover: { bounds: Bounds3; panel?: import('@open-legend/spatial').FinitePanel },
   post: { bounds: Bounds3 },
 ): boolean {
@@ -378,17 +515,18 @@ export function qualifiedAttachmentContact(
 /** The same supported footprint is required by admission and current-format loading. */
 export function assemblySupportProblem(
   world: WorldState,
-  family: AssemblyFamily,
+  family: FlexibleBayFamily,
   site: SurfacePoint,
   heading: number,
   bay: number,
   arrangementId: string,
+  cover: AssemblyCoverProfile,
 ): string | undefined {
   const map = spatialMap(world),
     surface = surfaceById(map, site.surfaceId);
   if (!surface || surface.slopeX !== 0 || surface.slopeZ !== 0)
     return 'Choose one flat supported ground patch.';
-  const bounds = coverBounds(family, site, heading, bay, arrangementId);
+  const bounds = coverBounds(family, site, heading, bay, arrangementId, cover);
   if (
     !surfaceSupportsRectangle(map, surface, {
       minX: bounds.min.x,
@@ -418,13 +556,13 @@ export function assemblySupportProblem(
       )
         return 'The entire covering, including its overhang, needs supported clear ground.';
     }
-  return assemblySpanProblem(family, arrangementId);
+  return assemblySpanProblem(family, arrangementId, cover);
 }
 function geometryProblem(
   world: WorldState,
   actorId: string,
-  family: AssemblyFamily,
-  phase: AssemblyPhase,
+  family: FlexibleBayFamily,
+  phase: FlexibleBayPhase,
 ): string | undefined {
   const support = assemblySupportProblem(
     world,
@@ -433,6 +571,7 @@ function geometryProblem(
     phase.heading,
     phase.bay,
     phase.arrangementId,
+    phaseCoverProfile(world, family, phase)!,
   );
   if (support) return support;
   const map = spatialMap(world),
@@ -446,6 +585,7 @@ function geometryProblem(
     phase.heading,
     phase.bay,
     phase.arrangementId,
+    phaseCoverProfile(world, family, phase)!,
   );
   const root = assemblyRoot(world, phase);
   const prospective =
@@ -485,7 +625,7 @@ function geometryProblem(
 function assemblyWorkProblem(
   world: WorldState,
   actorId: string,
-  phase: AssemblyPhase,
+  phase: FlexibleBayPhase,
 ): string | undefined {
   const actor = entityGet(world.entities, actorId)!;
   const count = ['cover', 'lower'].includes(phase.operation) ? 4 : 1;
@@ -494,12 +634,21 @@ function assemblyWorkProblem(
       !findPhysicalWorkApproach(
         world,
         actor,
-        assemblyWorkCandidates(world, phase, corner),
+        assemblyWorkCandidates(world, phase, corner, actorId),
         world.itemHandling.reach,
       )
     )
       return 'A binding has no clear reachable exterior work face. Move obstructing belongings normally or choose another site.';
   }
+}
+export interface AssemblyPhasePreview {
+  work?: ProspectiveWork;
+  resources?: ResourceAvailability;
+  /** A planned future layout is physical intent, never an installed effect. */
+  deferExits?: true;
+  commitExits?: true;
+  boundaryExits?: import('./boundary-exits.js').BoundaryExitPreparations;
+  campAssets?: readonly CampAssetPermission[];
 }
 /** No IDs, holds, events, randomness or temporary execution are created by this evaluator. */
 export function evaluateAssemblyPhase(
@@ -508,9 +657,12 @@ export function evaluateAssemblyPhase(
   phase: AssemblyPhase,
   permissions: readonly ConstructionPermission[],
   invocationId?: string,
+  preview?: AssemblyPhasePreview,
 ): Outcome {
+  if (phase.implementation === 'grounded-panel-boundary')
+    return evaluateBoundaryPhase(world, actorId, phase, permissions, invocationId, preview);
   const refuse = (code: string, message: string) => outcome(false, code, message);
-  const family = assemblyFamily(world, phase.familyId),
+  const family = flexibleAssemblyFamily(world, phase.familyId),
     actor = entityGet(world.entities, actorId);
   if (!validAssemblyPhase(phase))
     return refuse('invalid-phase', 'Choose a complete supported construction phase.');
@@ -549,7 +701,7 @@ export function evaluateAssemblyPhase(
     const action = actor.actor!.action,
       corner = action?.assemblyCorner ?? 0;
     const actual = worldPosition(actor);
-    const candidate = assemblyWorkCandidates(world, phase, corner).find(
+    const candidate = assemblyWorkCandidates(world, phase, corner, actorId).find(
       (candidate) =>
         action?.destination &&
         ['x', 'y', 'z', 'surfaceId'].every(
@@ -597,8 +749,9 @@ export function evaluateAssemblyPhase(
     return refuse('missing-structure', 'The selected structure is no longer available.');
   if (
     root &&
-    activeEdit(world, root) &&
-    (activeEdit(world, root) !== phase.editId || component?.activeEdit?.actorId !== actorId)
+    activeAssemblyEdit(world, root, actorId, preview?.work) &&
+    (activeAssemblyEdit(world, root, actorId, preview?.work) !== phase.editId ||
+      component?.activeEdit?.actorId !== actorId)
   )
     return refuse(
       'competing-edit',
@@ -632,7 +785,7 @@ export function evaluateAssemblyPhase(
       'Choose intact qualified material with permission for construction. Carrying or declaring it yours is insufficient.',
     );
   for (const [id, count] of totals) {
-    if (availableItemQuantity(world, id, invocationId) < count)
+    if (availableItemQuantity(world, id, invocationId, preview?.resources) < count)
       return refuse(
         'missing-material',
         'The selected material is unavailable or held by other work.',
@@ -695,8 +848,14 @@ export function evaluateAssemblyPhase(
       );
     const incoming = {
       id: phase.itemId,
-      ...coverGeometry(family, phase.destination, phase.heading, phase.bay, phase.arrangementId),
-      transmission: family.cover.transmission,
+      ...coverGeometry(
+        family,
+        phase.destination,
+        phase.heading,
+        phase.bay,
+        phase.arrangementId,
+        phaseCoverProfile(world, family, phase)!,
+      ),
     };
     const panels = worldRootEntities(world, true).flatMap((r) =>
       r.assembly ? assemblyShapes(world, r).panels : [],
@@ -778,6 +937,12 @@ export function evaluateAssemblyPhase(
   );
 }
 
+/** Exact selected stock, including kept tools, is held before ordinary travel. */
+export function assemblyPhaseHeldItems(phase: AssemblyPhase): string[] {
+  return phase.implementation === 'grounded-panel-boundary'
+    ? boundaryPhaseHeldItems(phase)
+    : phaseInputs(phase);
+}
 export function reserveAssemblyPhase(
   world: WorldState,
   actorId: string,
@@ -785,7 +950,7 @@ export function reserveAssemblyPhase(
   invocationId: string,
 ): void {
   const totals = new Map<string, number>();
-  phaseInputs(phase).forEach((id) => totals.set(id, (totals.get(id) ?? 0) + 1));
+  assemblyPhaseHeldItems(phase).forEach((id) => totals.set(id, (totals.get(id) ?? 0) + 1));
   for (const [id, amount] of totals) {
     const lot = entityGet(world.entities, id)!.item!;
     const result = reserveResource(
@@ -805,11 +970,15 @@ export function reserveAssemblyPhase(
     );
     if (result.status !== 'applied') throw new ResourceReservationError();
   }
+  const root = assemblyRoot(world, phase),
+    edit = root?.assembly?.activeEdit;
+  if (root?.assembly && (edit?.actorId !== actorId || edit.invocationId !== phase.editId))
+    root.assembly.activeEdit = { actorId, invocationId: phase.editId };
 }
 export function assemblyGroundDestination(
   world: WorldState,
   site: SurfacePoint,
-  family: AssemblyFamily,
+  family: import('./assembly-types.js').AssemblyFamily,
 ): string {
   const id = nextEntityId(world, 'pile');
   entitySet(world.entities, id, {
@@ -819,7 +988,10 @@ export function assemblyGroundDestination(
     placement: worldPlacement(site, site.surfaceId),
     spatial: {
       ...groundedSpatial(world.itemHandling.objectBody),
-      softFootprint: family.exposure.folded,
+      softFootprint:
+        family.implementation === 'grounded-panel-boundary'
+          ? family.salvage.footprint
+          : family.exposure.folded,
     },
   });
   rootMembershipChanged(world, id);
@@ -831,9 +1003,12 @@ function commitAssemblyParts(
   actorId: string,
   phase: AssemblyPhase,
   invocationId: string,
-): { rootId: string; installed: string[]; released: string[]; retire: boolean } {
-  const family = assemblyFamily(world, phase.familyId)!;
+): { rootId: string; installed: string[]; released: string[]; retire: boolean; created: boolean } {
+  if (phase.implementation === 'grounded-panel-boundary')
+    return commitBoundaryParts(world, actorId, phase, invocationId);
+  const family = flexibleAssemblyFamily(world, phase.familyId)!;
   let root = assemblyRoot(world, phase);
+  const created = !root;
   if (!root) {
     const id = nextEntityId(world, 'assembly');
     root = {
@@ -844,6 +1019,7 @@ function commitAssemblyParts(
       placement: worldPlacement(phase.destination, phase.destination.surfaceId),
       spatial: { ...groundedSpatial(world.itemHandling.objectBody), heading: phase.heading },
       assembly: {
+        implementation: 'four-corner-flexible-bays',
         family: definitionPin(family),
         arrangementId: phase.arrangementId,
         requestId: phase.requestId,
@@ -947,7 +1123,121 @@ function commitAssemblyParts(
   });
   const retire =
     !Object.keys(component.parts).length && loweredAssemblyMaterials(world, root.id).length === 0;
-  return { rootId: root.id, installed, released, retire };
+  return { rootId: root.id, installed, released, retire, created };
+}
+
+/** Mechanical writer shared by an admitted compound and a private exit projection.
+ * Callers own permission, physical checks and publication; this never emits work
+ * or creates authority. Private projections must discard their complete world.
+ */
+export function applyGateMechanism(
+  world: WorldState,
+  intent: import('./boundary-types.js').GateUseIntent,
+): Outcome | undefined {
+  const details = gateUseContext(world, intent);
+  if (!details) return outcome(false, 'gate-changed', 'The gate or its exact supports changed.');
+  if (gateUseUnchanged(world, intent)) return;
+  if (intent.operation === 'open' || intent.operation === 'close') {
+    const position = intent.operation === 'open' ? 'open' : 'closed',
+      from = entityGet(world.entities, details.gate.postIds[0])!.placement,
+      to = entityGet(world.entities, details.gate.postIds[1])!.placement;
+    if (!isAssemblyPlacement(from) || !isAssemblyPlacement(to))
+      return outcome(false, 'gate-changed', 'The actual runner supports changed.');
+    const layout = boundaryGateLayout(
+      details.family.geometry,
+      from.local,
+      to.local,
+      details.root.spatial.heading,
+      position,
+      details.family.presentation.bindingSize,
+    )!;
+    repositionAssemblyPart(world, intent.itemId, details.root.id, layout.leaf);
+    details.gate.bindingIds.slice(4).forEach((id, index) => {
+      repositionAssemblyPart(world, id, details.root.id, layout.hangers[index]!);
+      details.component.joints[details.component.parts[id]!.slot]!.supportId =
+        details.gate.railIds[position === 'closed' ? 0 : 1];
+    });
+    details.gate.position = position;
+    world.assemblyGeometryRevision = (world.assemblyGeometryRevision ?? 0) + 1;
+    recordSemanticChange(world, {
+      kind: 'spatial',
+      entityId: details.root.id,
+      before: details.site,
+      after: details.site,
+    });
+  } else details.gate.barred = intent.operation === 'bar';
+  details.component.revision++;
+}
+
+export function commitGateUse(
+  world: WorldState,
+  actorId: string,
+  action: import('./types.js').Action,
+  permissions: readonly CampAssetPermission[],
+  events: WorldEvent[],
+): Outcome {
+  const problem = gateWorkProblem(world, actorId, action, permissions, true);
+  if (problem) return problem;
+  const work = action.gateWork!,
+    intent = work.intent,
+    details = gateUseContext(world, intent)!,
+    beforePosition = details.gate.position,
+    beforeBarred = details.gate.barred,
+    unchanged = gateUseUnchanged(world, intent),
+    label = gateUseLabel(world, intent),
+    candidate = draftWorld(world, { retainNativeValues: true });
+  const next = gateUseContext(candidate, intent)!;
+  if (!unchanged) {
+    const problem = applyGateMechanism(candidate, intent);
+    if (problem) {
+      finishWorld(candidate);
+      return problem;
+    }
+  }
+  releaseGateWork(candidate, actorId, action);
+  const position = next.gate.position,
+    barred = next.gate.barred,
+    origin = boundaryGateHandle(
+      next.family.geometry,
+      next.anchor,
+      next.heading,
+      position,
+      work.side,
+    );
+  publishAssemblyParts(world, candidate);
+  const message = unchanged
+    ? 'The gate is already in the requested state; no operation was needed.'
+    : label;
+  emit(
+    world,
+    events,
+    unchanged ? 'gate-checked' : 'gate-operated',
+    subjectNarration(
+      entityGet(world.entities, actorId)!,
+      unchanged
+        ? 'checked the gate; it was already in the requested state.'
+        : `completed: ${label.toLowerCase()}.`,
+    ),
+    entityGet(world.entities, actorId),
+    intent.assemblyId,
+    {
+      actionId: action.id,
+      itemId: intent.itemId,
+      operation: intent.operation,
+      beforePosition,
+      position,
+      beforeBarred,
+      barred,
+      changed: !unchanged,
+      gateUseGrantId: work.grant.id,
+      gateUseGrantRevision: work.grant.revision,
+      targetMustBeVisible: true,
+      effectMustBeVisible: intent.operation === 'bar' || intent.operation === 'unbar',
+    },
+    unchanged ? 'private' : 'external',
+    origin,
+  );
+  return outcome(true, unchanged ? 'gate-unchanged' : 'gate-operated', message);
 }
 
 export function commitAssemblyPhase(
@@ -957,13 +1247,38 @@ export function commitAssemblyPhase(
   invocationId: string,
   permissions: readonly ConstructionPermission[],
   events: WorldEvent[],
-): Outcome {
-  const checked = evaluateAssemblyPhase(world, actorId, phase, permissions, invocationId);
+  campAssets: readonly CampAssetPermission[],
+  boundaryExits?: import('./boundary-exits.js').BoundaryExitPreparations,
+): Outcome & {
+  gatePublication?: CampAssetPublication;
+  structuralPublications?: CampAssetPublication[];
+  assemblyChange?: {
+    id: string;
+    created: boolean;
+    retired: boolean;
+    permissionId: string;
+    permissionRevision: number;
+  };
+} {
+  const checked = evaluateAssemblyPhase(world, actorId, phase, permissions, invocationId, {
+    commitExits: true,
+    campAssets,
+    boundaryExits,
+  });
   if (!checked.ok) return checked;
   // Removing parts changes the materials a grant must cover. Keep the authority
   // checked before the transition for the completion record and server commit fence.
   const permission = assemblyPermission(world, actorId, phase, permissions)!;
-  const candidate = draftWorld(world);
+  const repairBefore =
+    phase.implementation === 'grounded-panel-boundary' &&
+    phase.operation === 'repair-boundary' &&
+    phase.rootId
+      ? boundaryRepairState(world, phase.rootId, phase.itemId)
+      : undefined;
+  // This compound publishes part/custody writes, not character arithmetic. Keep
+  // deferred native values with their owner rather than publish only half a flush.
+  // docs/save-and-load.md#continuation-and-identity
+  const candidate = draftWorld(world, { retainNativeValues: true });
   let parts: ReturnType<typeof commitAssemblyParts>;
   try {
     parts = commitAssemblyParts(candidate, actorId, phase, invocationId);
@@ -975,6 +1290,42 @@ export function commitAssemblyPhase(
       error instanceof Error ? error.message : 'The selected parts changed.',
     );
   }
+  let gatePublication: CampAssetPublication | undefined;
+  const structuralPublications: CampAssetPublication[] = [];
+  if (phase.implementation === 'grounded-panel-boundary' && permission.structuralExposure) {
+    const component = entityGet(candidate.entities, parts.rootId)?.assembly;
+    if (component?.implementation === 'grounded-panel-boundary')
+      for (const id of parts.installed) {
+        if (component.parts[id]?.role === 'binding') continue;
+        const publication = prepareStructuralPublication(
+          candidate,
+          permission,
+          parts.rootId,
+          id,
+          campAssets,
+        );
+        if (publication && 'ok' in publication) return publication;
+        if (publication) structuralPublications.push(publication);
+      }
+  }
+  if (phase.implementation === 'grounded-panel-boundary' && phase.operation === 'boundary-gate') {
+    const component = entityGet(candidate.entities, parts.rootId)?.assembly;
+    const gateId =
+      component?.implementation === 'grounded-panel-boundary'
+        ? parts.installed.find((id) => component.parts[id]?.role === 'gate')
+        : undefined;
+    if (!gateId)
+      return outcome(false, 'gate-registration', 'The actual completed gate is unavailable.');
+    const publication = prepareGatePublication(
+      candidate,
+      permission,
+      parts.rootId,
+      gateId,
+      campAssets,
+    );
+    if (publication && 'ok' in publication) return publication;
+    gatePublication = publication || undefined;
+  }
   publishAssemblyParts(world, candidate);
   recordSemanticChange(world, {
     kind: 'spatial',
@@ -982,15 +1333,31 @@ export function commitAssemblyPhase(
     before: phase.destination,
     after: phase.destination,
   });
-  const family = assemblyFamily(world, phase.familyId)!;
+  const label = assemblyPhaseLabel(world, phase);
+  if (repairBefore && phase.implementation === 'grounded-panel-boundary') {
+    recordSemanticChange(world, { kind: 'state', entityId: phase.itemId, field: 'attribute' });
+    emit(
+      world,
+      events,
+      'construction-repair',
+      subjectNarration(entityGet(world.entities, actorId)!, `completed: ${label.toLowerCase()}.`),
+      entityGet(world.entities, actorId),
+      phase.itemId,
+      {
+        itemId: phase.itemId,
+        integrityDefinition: repairBefore.definition.id,
+        integrityBefore: repairBefore.value,
+        integrityAfter: boundaryRepairState(world, parts.rootId, phase.itemId)!.value,
+        consumed: boundaryPhaseInputs(phase).join(','),
+      },
+      'private',
+    );
+  }
   emit(
     world,
     events,
     'construction-phase',
-    subjectNarration(
-      entityGet(world.entities, actorId)!,
-      `completed: ${family.labels[phase.operation].toLowerCase()}.`,
-    ),
+    subjectNarration(entityGet(world.entities, actorId)!, `completed: ${label.toLowerCase()}.`),
     entityGet(world.entities, actorId),
     parts.rootId,
     {
@@ -1011,12 +1378,45 @@ export function commitAssemblyPhase(
     delete root.placement;
     rootMembershipChanged(world, root.id);
   }
-  return outcome(true, 'construction-completed', family.labels[phase.operation]);
+  const result = {
+    ...outcome(true, 'construction-completed', label),
+    ...(gatePublication ? { gatePublication } : {}),
+    ...(structuralPublications.length ? { structuralPublications } : {}),
+  };
+  return parts.created || parts.retire
+    ? {
+        ...result,
+        assemblyChange: {
+          id: parts.rootId,
+          created: parts.created,
+          retired: parts.retire,
+          permissionId: permission.id,
+          permissionRevision: permission.revision,
+        },
+      }
+    : result;
 }
 
+export function assemblyPhaseSeconds(world: WorldState, phase: AssemblyPhase): number {
+  const family = world.assemblyFamilies![phase.familyId]!;
+  return Reflect.get(family.seconds, phase.operation);
+}
+export function assemblyPhaseLabel(world: WorldState, phase: AssemblyPhase): string {
+  return Reflect.get(world.assemblyFamilies![phase.familyId]!.labels, phase.operation);
+}
+export function assemblyWorkPointCount(phase: AssemblyPhase): number {
+  return phase.implementation === 'grounded-panel-boundary'
+    ? phase.operation === 'boundary-panel' || phase.operation === 'remove-boundary-panel'
+      ? 2
+      : phase.operation === 'boundary-gate' || phase.operation === 'remove-boundary-gate'
+        ? 6
+        : 1
+    : ['cover', 'lower'].includes(phase.operation)
+      ? 4
+      : 1;
+}
 export function assemblyWorkBoundary(action: Action): number {
-  const corners =
-    action.assemblyPhase && ['cover', 'lower'].includes(action.assemblyPhase.operation) ? 4 : 1;
+  const corners = action.assemblyPhase ? assemblyWorkPointCount(action.assemblyPhase) : 1;
   return (
     action.remainingSeconds -
     (action.totalSeconds * (corners - 1 - (action.assemblyCorner ?? 0))) / corners
@@ -1049,7 +1449,6 @@ function publishAssemblyParts(world: WorldState, candidate: WorldState): void {
     changes.filter(
       (p) =>
         [
-          'entities',
           'objectState',
           'objectLineage',
           'resourceReservations',
@@ -1060,6 +1459,19 @@ function publishAssemblyParts(world: WorldState, candidate: WorldState): void {
         (p.path[0] === 'actionExperience' && p.path[1] === 'items'),
     ),
   );
+  // Tree patches can replace a lookup path containing an already accessed actor.
+  // Publish semantic entity writes through the collection owner instead, keeping
+  // the caller's actor/action draft attached. Only bounded changed material records
+  // are copied so later moisture/status writes remain mutable in this same turn.
+  for (const id of changed) {
+    const entity = entityGet(committed.entities, id);
+    const existing = entityGet(world.entities, id);
+    if (!entity) entityDelete(world.entities, id);
+    else if (existing?.actor && entity.actor) {
+      if (existing.inventoryRevision !== entity.inventoryRevision)
+        existing.inventoryRevision = entity.inventoryRevision;
+    } else if (existing !== entity) entitySet(world.entities, id, cloneValue(entity));
+  }
   objects(world, changed);
   reservations(world);
   allocations(world);
@@ -1070,15 +1482,100 @@ function publishAssemblyParts(world: WorldState, candidate: WorldState): void {
   }
 }
 /** Condition changes invoke the same compound part/custody publisher as construction. */
-export function lowerUnsupportedCovers(
+export function lowerUnsupportedAssemblyParts(
   world: WorldState,
   changedId: string,
   events: WorldEvent[],
+  completingInvocationId?: string,
 ): void {
   const claim = entityGet(world.entities, changedId)?.item?.assemblyClaim,
     root = claim && entityGet(world.entities, claim.rootId),
     component = root?.assembly;
-  const family = component && assemblyFamily(world, component.family.id),
+  if (component?.implementation === 'grounded-panel-boundary') {
+    const candidate = draftWorld(world, { retainNativeValues: true }),
+      result = commitBoundaryFailure(candidate, root!.id, changedId);
+    if (!result) {
+      finishWorld(candidate);
+      return;
+    }
+    publishAssemblyParts(world, candidate);
+    // A removed/retired target cannot remain the subject of another saved
+    // windup. Preserve the completion currently committing this loss; all other
+    // affected actions end through the ordinary resource/experience owner.
+    const remaining = entityGet(world.entities, root!.id)!.assembly!;
+    for (const participant of worldRootEntities(world, true)) {
+      const action = participant.actor?.action,
+        impact = action?.boundaryImpact;
+      if (
+        !action ||
+        !impact ||
+        action.id === completingInvocationId ||
+        impact.intent.assemblyId !== root!.id ||
+        remaining.parts[impact.intent.itemId]
+      )
+        continue;
+      finishPlanAction(
+        world,
+        participant.id,
+        action.id,
+        outcome(
+          false,
+          'impact-changed',
+          'The selected structural part is no longer available. Completed consequences remain.',
+        ),
+      );
+      // Root discovery is read-only; acquire this exact character through the
+      // entity owner before writing, even if ending its work drafted it above.
+      entityGet(world.entities, participant.id)!.actor!.action = null;
+    }
+    // Structural loss may remove a gate handle or a construction attachment in
+    // this very transition. End the root's one edit through its existing action
+    // owner before saving, rather than retain an impossible working stance.
+    const current = entityGet(world.entities, root!.id)!.assembly!,
+      edit = current.activeEdit,
+      worker = edit && entityGet(world.entities, edit.actorId),
+      action = worker?.actor?.action;
+    if (
+      edit &&
+      worker?.actor &&
+      action &&
+      (action.gateWork?.intent.assemblyId === root!.id || action.assemblyPhase?.rootId === root!.id)
+    ) {
+      finishPlanAction(
+        world,
+        worker.id,
+        action.id,
+        outcome(
+          false,
+          'construction-changed',
+          'The selected construction work is no longer available. Completed consequences remain.',
+        ),
+      );
+      worker.actor.action = null;
+      delete current.activeEdit;
+    }
+    const site = assemblySite(root!)!,
+      family = world.assemblyFamilies![component.family.id]!;
+    recordSemanticChange(world, { kind: 'spatial', entityId: root!.id, before: site, after: site });
+    emit(
+      world,
+      events,
+      'structure-lowered',
+      family.presentation.failureText,
+      entityGet(world.entities, root!.id),
+      undefined,
+      {
+        assemblyId: root!.id,
+        changedMaterialId: changedId,
+        destroyed: result.destroyed.join(','),
+        lowered: result.lowered.join(','),
+        outputs: result.outputs.join(','),
+        destinationId: result.destination,
+      },
+    );
+    return;
+  }
+  const family = component && flexibleAssemblyFamily(world, component.family.id),
     site = root && assemblySite(root);
   if (!family || !component || !site || component.retired) return;
   const affected = Object.values(component.parts).filter(
@@ -1094,7 +1591,7 @@ export function lowerUnsupportedCovers(
           )),
   );
   if (!affected.length) return;
-  const candidate = draftWorld(world),
+  const candidate = draftWorld(world, { retainNativeValues: true }),
     next = entityGet(candidate.entities, root!.id)!.assembly!,
     destination = assemblyGroundDestination(candidate, site, family),
     lowered: string[] = [];
@@ -1141,7 +1638,9 @@ export function compileAssemblyActivity(
   plan: AssemblyPlan,
   permissions: readonly ConstructionPermission[],
 ): Command | Outcome {
-  const family = assemblyFamily(world, plan.familyId),
+  if (plan.implementation === 'grounded-panel-boundary')
+    return compileBoundaryActivity(world, actorId, id, plan, permissions);
+  const family = flexibleAssemblyFamily(world, plan.familyId),
     root = plan.rootId ? entityGet(world.entities, plan.rootId) : undefined,
     component = root?.assembly;
   if (
@@ -1160,7 +1659,7 @@ export function compileAssemblyActivity(
       'not-visible',
       'Move close enough to perceive the actual structure before changing it.',
     );
-  if (root && activeEdit(world, root))
+  if (root && activeAssemblyEdit(world, root))
     return outcome(
       false,
       'competing-edit',
@@ -1183,14 +1682,14 @@ export function compileAssemblyActivity(
       'This arrangement does not admit the selected work. Reclaim actual parts to build a different arrangement.',
     );
   const requestId = component?.requestId ?? id;
-  const phases: AssemblyPhase[] = [];
+  const phases: FlexibleBayPhase[] = [];
   let revision = component?.revision ?? 0;
   const phase = (
-    operation: AssemblyPhase['operation'],
+    operation: FlexibleBayPhase['operation'],
     itemId: string,
     bay: number,
     slot: string,
-  ): AssemblyPhase => ({
+  ): FlexibleBayPhase => ({
     operation,
     itemId,
     bay,
@@ -1407,8 +1906,14 @@ export function compileAssemblyActivity(
         );
       const incoming = {
         id: p.itemId,
-        ...coverGeometry(family, site, heading, p.bay, arrangementId),
-        transmission: family.cover.transmission,
+        ...coverGeometry(
+          family,
+          site,
+          heading,
+          p.bay,
+          arrangementId,
+          materialCoverProfile(world, p.itemId)!,
+        ),
       };
       if (!coverExposureSupported(incoming, panels))
         return outcome(
@@ -1430,6 +1935,26 @@ export function compileAssemblyActivity(
   // retain exact choices and may stop when current geometry/material/permission changes.
   const first = evaluateAssemblyPhase(world, actorId, phases[0]!, permissions);
   if (!first.ok) return first;
+  return assemblyActivityCommand(
+    actorId,
+    id,
+    family.name,
+    site,
+    phases,
+    (phase) => family.labels[phase.operation],
+  );
+}
+
+/** Shared finite representation for supported construction families; grants and
+ * geometry remain with native phase admission, never the activity compiler. */
+export function assemblyActivityCommand<P extends AssemblyPhase>(
+  actorId: string,
+  id: string,
+  name: string,
+  site: SurfacePoint,
+  phases: readonly P[],
+  label: (phase: P) => string,
+): Extract<Command, { type: 'compose' }> {
   const bindings: Record<string, string | SurfacePoint> = { site };
   const literal = (value: string | number | boolean): ActivityArgument => ({ literal: value });
   const nodes: ActivityNode[] = phases.map((p, index) => {
@@ -1440,17 +1965,7 @@ export function compileAssemblyActivity(
         args[key] = { role: 'site' };
         continue;
       }
-      if (
-        [
-          'itemId',
-          'binding1',
-          'binding2',
-          'binding3',
-          'binding4',
-          'destinationId',
-          'rootId',
-        ].includes(key)
-      ) {
+      if (nativeBindingKind(key) === 'object') {
         const role = `phase-${index}-${key}`;
         bindings[role] = String(value);
         args[key] = { role };
@@ -1459,7 +1974,7 @@ export function compileAssemblyActivity(
     return {
       kind: 'invoke',
       key: `phase-${index}`,
-      name: family.labels[p.operation],
+      name: label(p),
       command: 'assemble',
       args,
     };
@@ -1468,9 +1983,9 @@ export function compileAssemblyActivity(
     id,
     actorId,
     type: 'compose',
-    name: family.name,
+    name,
     mode: 'replace',
     bindings,
-    root: { kind: 'sequence', name: family.name, children: nodes },
+    root: { kind: 'sequence', name, children: nodes },
   };
 }

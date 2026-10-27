@@ -3,7 +3,8 @@ import { entitySet, entityValues } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { createItemLot } from '../../objects.js';
 import { hasRecordFields, isSafeRecordId } from '../../records.js';
-import { installRecipe } from '../../declarations.js';
+import { installRecipe, installFixedTransform } from '../../declarations.js';
+import { BASE_FIBER_CLEANING, BASE_CORD_TWISTING } from './material-methods.js';
 import { learnRecipe } from '../../knowledge.js';
 import { initializeIdentity } from '../../identity.js';
 import { migrateCognition } from '../../experience.js';
@@ -30,6 +31,7 @@ import { BASE_SOLO_CLEARING, STARTER_EXTENT, starterGroundAt } from './landscape
 import { BASE_RESOURCE_GATHERING_SECONDS } from './resources.js';
 import { reserveEntityId } from '../../data.js';
 import { baseConstructionProfile } from './canopy-scene.js';
+import { constructionProfile, boundaryConstructionProfile } from '../../construction-scene.js';
 import type { InitialWorldPreparation, OpeningEditorField } from '../../world-creation.js';
 import { resolveSupport, surfaceContains, surfaceHeight } from '@open-legend/spatial';
 
@@ -49,7 +51,7 @@ export const BASE_OPENING_PROFILE = {
       description:
         'The complete wilderness: camp residents, hunting and cooking, shelter, fishing, expeditions, a missing belonging and distant rivals.',
       activity:
-        'Start at camp, make useful equipment, obtain food and explore the surrounding people and places.',
+        'Arrive empty handed, gather food, make useful tools and a camp, and choose how to deal with the surrounding people and animals.',
       payoff:
         'All integrated wilderness scenarios share one persistent world; distant encounters are discovered through ordinary exploration.',
     },
@@ -66,7 +68,7 @@ export const BASE_OPENING_PROFILE = {
       id: 'solitary',
       label: 'Solo testing ground',
       description:
-        'A quiet player-only locality with basic resources, tools, a fire and a known container method. No residents or encounters.',
+        'A quiet player-only locality with basic resources, tools, a fire and known fiber, cord and container methods. No residents or encounters.',
       activity: 'Gather and prepare fibers, then make a known woven container.',
       payoff: 'A reusable container for gathered supplies, without relying on another person.',
     },
@@ -86,6 +88,8 @@ export const BASE_OPENING_PROFILE = {
 } as const;
 
 export const BASE_OPENING_METHODS = [
+  { id: 'clean-fibers', name: BASE_FIBER_CLEANING.name },
+  { id: 'twist-cord', name: BASE_CORD_TWISTING.name },
   { id: 'woven-container', name: 'Woven gathering container' },
   { id: 'river-line', name: 'River fishing line' },
   { id: 'wooden-shield', name: 'Wooden shield' },
@@ -287,7 +291,9 @@ export const BASE_OPENING_STOCK_DEFINITIONS = [
 
 // The world module and its starting recipes share imports with native execution.
 // Read a recipe when constructing an opening, after those modules have initialized.
-function openingMethod(method: BaseOpeningMethod): RecipeCandidate {
+function openingMethod(
+  method: Exclude<BaseOpeningMethod, 'clean-fibers' | 'twist-cord'>,
+): RecipeCandidate {
   switch (method) {
     case 'woven-container':
       return BASE_WOVEN_CONTAINER_METHOD;
@@ -615,7 +621,15 @@ export function createBaseOpeningCandidate(
     scene,
     stock,
     knowledge: [
+      { actorId: player.id, method: 'clean-fibers' },
+      { actorId: player.id, method: 'twist-cord' },
       { actorId: player.id, method: 'woven-container' },
+      ...(resident
+        ? [
+            { actorId: resident.id, method: 'clean-fibers' as const },
+            { actorId: resident.id, method: 'twist-cord' as const },
+          ]
+        : []),
       ...(resident ? [{ actorId: resident.id, method: 'woven-container' as const }] : []),
     ],
   };
@@ -674,7 +688,13 @@ export function buildBaseInitialWorld(
       },
       surface.id,
     )) || { ...candidate.player.position, surfaceId: candidate.player.supportSurfaceId };
-  world.constructionProfile = baseConstructionProfile(suggested);
+  const construction = constructionProfile(world);
+  if (construction)
+    world.constructionProfile = baseConstructionProfile(
+      suggested,
+      construction.family,
+      boundaryConstructionProfile(world)?.family,
+    );
   const people = [candidate.player, ...(candidate.resident ? [candidate.resident] : [])];
   for (const person of people) {
     reserveEntityId(world, person.id);
@@ -734,10 +754,15 @@ export function buildBaseInitialWorld(
   for (const knowledge of candidate.knowledge) {
     let recipeId = installed.get(knowledge.method);
     if (!recipeId) {
-      recipeId = installRecipe(world, openingMethod(knowledge.method), {
-        source: 'authored-world',
-        profile: { ...world.profile },
-      }).recipe.id;
+      const provenance = { source: 'authored-world' as const, profile: { ...world.profile } };
+      recipeId =
+        knowledge.method === 'clean-fibers' || knowledge.method === 'twist-cord'
+          ? installFixedTransform(
+              world,
+              knowledge.method === 'clean-fibers' ? BASE_FIBER_CLEANING : BASE_CORD_TWISTING,
+              provenance,
+            ).recipe.id
+          : installRecipe(world, openingMethod(knowledge.method), provenance).recipe.id;
       installed.set(knowledge.method, recipeId);
     }
     learnRecipe(world, knowledge.actorId, recipeId, 'authored', `opening:${knowledge.method}`);

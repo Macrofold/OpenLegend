@@ -1,3 +1,4 @@
+import { consumeEventStream, type NetworkOperation } from '@open-legend/network';
 import { InvalidData, MacrofoldHttpError, macrofoldObject } from '@open-legend/ai';
 
 export const WORLD_AGENT_PREVIEW_BYTES = 64 * 1024;
@@ -81,11 +82,11 @@ export function boundedPreview(text: string, fragment: string) {
   return { text: text + retained, omitted: Buffer.byteLength(fragment) - bytes };
 }
 
-/** A read-only transport deliberately avoids IntelligenceLog.fetch: that wrapper
- * waits for a complete cloned response and would capture unsanitized fragments.
- * The existing receipts and terminal-result owner still account for the Run.
+/** Private Run fragments use the admitted operation and omit optional raw diagnostics.
+ * Terminal events detach observation while exact Run/result accounting remains its owner.
  */
 export async function consumeProviderStream(
+  operation: NetworkOperation,
   baseUrl: string,
   key: string,
   runId: string,
@@ -98,97 +99,62 @@ export async function consumeProviderStream(
   if (!['http:', 'https:'].includes(base.protocol) || base.username || base.password || !key)
     throw new InvalidData('Invalid Macrofold stream configuration.');
   const url = new URL(`/v1/runs/${encodeURIComponent(runId)}/stream?after=${after}`, base);
-  const response = await fetch(url, {
-    method: 'GET',
-    redirect: 'error',
-    headers: {
-      Authorization: `Bearer ${key}`,
-      Accept: 'text/event-stream',
-      'Last-Event-ID': after,
+  await consumeEventStream<void>(
+    operation,
+    {
+      url,
+      diagnostics: 'omit',
+      init: {
+        method: 'GET',
+        redirect: 'error',
+        signal,
+        headers: {
+          Authorization: `Bearer ${key}`,
+          Accept: 'text/event-stream',
+          'Last-Event-ID': after,
+        },
+      },
+      framePolicy: { kind: 'bounded', maxFrameBytes: FRAME_BYTES },
     },
-    signal,
-  });
-  if (!response.ok) {
-    void response.body?.cancel();
-    throw new MacrofoldHttpError(response.status, '');
-  }
-  if (!response.headers.get('content-type')?.startsWith('text/event-stream') || !response.body) {
-    void response.body?.cancel();
-    throw new InvalidData('Macrofold did not return a Run event stream.');
-  }
-  const reader = response.body.getReader();
-  const decoder = new TextDecoder('utf-8', { fatal: true });
-  let buffer = '';
-  let pending: Promise<ReadableStreamReadResult<Uint8Array>> | undefined;
-  try {
-    for (;;) {
-      signal.throwIfAborted();
-      pending ??= reader.read();
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      const chunk = await Promise.race([
-        pending,
-        new Promise<undefined>((resolve) => (timer = setTimeout(() => resolve(undefined), 250))),
-      ]).finally(() => clearTimeout(timer));
-      if (!chunk) {
-        await idle();
-        continue;
-      }
-      pending = undefined;
-      if (chunk.done) break;
-      // Network chunks do not align with events. Decode bounded slices while
-      // enforcing the limit on each unfinished frame, never the transport batch.
-      for (let offset = 0; offset < chunk.value.byteLength; offset += 64 * 1024) {
-        signal.throwIfAborted();
-        buffer += decoder.decode(chunk.value.subarray(offset, offset + 64 * 1024), {
-          stream: true,
-        });
-        for (;;) {
-          const boundary = /\r?\n\r?\n/.exec(buffer);
-          if (!boundary) break;
-          const frame = buffer.slice(0, boundary.index);
-          buffer = buffer.slice(boundary.index + boundary[0].length);
-          if (Buffer.byteLength(frame) > FRAME_BYTES)
-            throw new InvalidData('Macrofold event frame exceeds its byte limit.');
-          let id: string | undefined;
-          let type: string | undefined;
-          const data: string[] = [];
-          for (const line of frame.split(/\r?\n/)) {
-            if (!line || line.startsWith(':')) continue;
-            const colon = line.indexOf(':');
-            const field = colon < 0 ? line : line.slice(0, colon);
-            const value = colon < 0 ? '' : line.slice(colon + 1).replace(/^ /, '');
-            if (field === 'id') id = value;
-            else if (field === 'event') type = value;
-            else if (field === 'data') data.push(value);
-          }
-          if (!data.length) continue;
-          if (type === 'transport.error')
-            throw new ProviderStreamInterrupted('Run stream interrupted.');
-          let raw: unknown;
-          try {
-            raw = JSON.parse(data.join('\n'));
-          } catch {
-            // JSON diagnostics may quote private provider content.
-            throw new InvalidData('Macrofold event frame is invalid JSON.');
-          }
-          const event = providerRunEvent(raw, runId);
-          if (id !== event.sequence || type !== event.type)
-            throw new InvalidData('Macrofold stream framing disagrees with its event.');
-          await consume(event);
-          // A proxy can keep the HTTP connection open after a terminal event.
-          // Detach so the existing owner can independently check result/usage;
-          // the event itself still cannot mark the outer turn complete.
-          if (/^run\.(succeeded|failed|cancelled|timed_out)$/.test(event.type)) return;
+    {
+      headers(metadata) {
+        if (metadata.status < 200 || metadata.status >= 300)
+          throw new MacrofoldHttpError(metadata.status, '');
+        if (
+          metadata.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() !==
+          'text/event-stream'
+        )
+          throw new InvalidData('Macrofold did not return a Run event stream.');
+      },
+      async event(frame, context) {
+        if (frame.kind !== 'event' || !frame.data) return { kind: 'continue' };
+        if (frame.event === 'transport.error')
+          throw new ProviderStreamInterrupted('Run stream interrupted.');
+        let raw: unknown;
+        try {
+          raw = JSON.parse(frame.data);
+        } catch {
+          throw new InvalidData('Macrofold event frame is invalid JSON.');
         }
-        if (Buffer.byteLength(buffer) > FRAME_BYTES)
-          throw new InvalidData('Macrofold event frame exceeds its byte limit.');
-      }
-      await idle();
-    }
-    buffer += decoder.decode();
-    // An interrupted frame is recovered from event history; it is never applied.
-    if (buffer.trim()) throw new ProviderStreamInterrupted('Run stream ended within a frame.');
-  } finally {
-    await reader.cancel().catch(() => {});
-  }
+        const event = providerRunEvent(raw, runId);
+        if (frame.id !== event.sequence || frame.event !== event.type)
+          throw new InvalidData('Macrofold stream framing disagrees with its event.');
+        await consume(event);
+        context.throwIfStopped();
+        if (/^run\.(succeeded|failed|cancelled|timed_out)$/.test(event.type))
+          return { kind: 'complete', value: undefined };
+        await idle();
+        context.throwIfStopped();
+        return { kind: 'continue' };
+      },
+      end() {},
+      idle: {
+        intervalMs: 250,
+        async consume(context) {
+          await idle();
+          context.throwIfStopped();
+        },
+      },
+    },
+  );
 }

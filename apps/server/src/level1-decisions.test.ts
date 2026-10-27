@@ -1,3 +1,4 @@
+import { entityHandle } from './entity-references.js';
 import { decisionFixtureResult } from '../../../tests/fixtures/actor-response.js';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
@@ -215,7 +216,7 @@ function addressees(schema: unknown): string[] {
     const found = addressees(child);
     if (found.length) return found;
   }
-  return [];
+  throw new Error('The fixture has no permitted speaker reference.');
 }
 
 /** Every action handle a generation schema permits (act and plan-step `actionId` enums). */
@@ -754,7 +755,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
               requiresAccepted: [],
               talk: {
                 text: 'Fixture reply from Ada.',
-                addresseeEntityId: addressees(request.schema)[0],
+                addresseeEntityId: entityHandle(h.service.world, NPC_ID, PLAYER_ID),
                 selfIntroduction: null,
                 volume: 'normal',
               },
@@ -773,7 +774,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     });
     const events = new Set(h.service.world.events.map((event) => event.id));
     const job = await h.chat('greeting', 'Hello Ada, how are you today?');
-    expect(job.status).toBe('completed');
+    expect(job.status, job.message).toBe('completed');
     expect(disposition(job)).toBe('responded');
     const dispatched = h.jobCalls(job.id);
     const ratings = dispatched.decisions.find((request) => request.requestId.endsWith(RATINGS));

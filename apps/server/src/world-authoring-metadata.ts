@@ -9,7 +9,7 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { declarationSchema } from './ai-schemas.js';
-import { commandInputSchema } from './world-service.js';
+import { commandInputSchema } from './command-input-schema.js';
 import type { AuthoringKind } from './world-authoring-contracts.js';
 
 /** Discovery guidance is not another validator. Kind adapters always invoke the native owner.

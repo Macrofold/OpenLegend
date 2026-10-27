@@ -14,7 +14,7 @@ Most execution policies in this inventory remain **Proposed**. PS-L02 has an imp
 
 **Not a new tunable limit:** PS-L13 selects no funding/retention amount; PS-L14 adopts no new rollback window; PS-L18 records the evidence boundary rather than a capacity restriction. Their independent existing storage, spending and durability controls still apply. Correct identity, privacy, accounting and truthful evidence are guardrails, not candidates to relax under these ratings.
 
-Material unresolved product choices are owned by [PS-D01–PS-D06](../../archive/05-project/open-decisions.md#product-scalability-integration-choices); this inventory owns restrictions, reasons and eventual values, not a competing decision register. The canonical topic linked through the suite index defines behavior at each boundary; the **Restriction** and **Select/revisit** fields below retain the initial disposition and evidence needed before enablement.
+Material unresolved product choices are owned by [PS-D01–PS-D06](../maintainers/decisions/world-and-play.md#product-scalability-integration-choices); this inventory owns restrictions, reasons and eventual values, not a competing decision register. The canonical topic linked through the suite index defines behavior at each boundary; the **Restriction** and **Select/revisit** fields below retain the initial disposition and evidence needed before enablement.
 
 ## Maintained records
 

@@ -247,6 +247,7 @@ export function ConversationComposer({
   onChange,
   onSubmit,
   disabled,
+  busy,
   inputDisabled,
   inputDisabledReason,
   submitLabel = 'Send',
@@ -262,6 +263,7 @@ export function ConversationComposer({
   onChange(value: string): void;
   onSubmit(): void | Promise<void>;
   disabled?: boolean;
+  busy?: boolean;
   inputDisabled?: boolean;
   inputDisabledReason?: string | null;
   submitLabel?: string;
@@ -274,7 +276,7 @@ export function ConversationComposer({
       className="ol-composer"
       onSubmit={(event) => {
         event.preventDefault();
-        if (composing.current || disabled || inputDisabled) return;
+        if (composing.current || disabled || busy || inputDisabled) return;
         void onSubmit();
       }}
     >
@@ -310,13 +312,13 @@ export function ConversationComposer({
                 !composing.current
               ) {
                 event.preventDefault();
-                if (!disabled && !inputDisabled) void onSubmit();
+                if (!disabled && !busy && !inputDisabled) void onSubmit();
               }
             }}
           />
         </span>
       </TextTooltip>
-      <Button type="submit" variant="primary" icon={submitIcon} disabled={disabled}>
+      <Button type="submit" variant="primary" icon={submitIcon} disabled={disabled} busy={busy}>
         {submitLabel}
       </Button>
     </form>

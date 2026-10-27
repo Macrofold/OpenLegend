@@ -1,12 +1,16 @@
 import { formatDisplayNumber } from '@open-legend/language';
 import {
   projectEventEvidence,
+  speechPresentation,
+  speechPerspective,
+  soundExperience,
   type ActorEvent,
   type WorldEvent,
   type EventPresentationPolicy,
 } from '@open-legend/domain';
 import type {
   PerceivedEventsPage,
+  PerceivedSpeech,
   PublicEvent,
   WorldEventSourceAcquisition,
   WorldEventSourceDetail,
@@ -20,6 +24,32 @@ import { HistoryCursorError } from './history-cursor-error.js';
 import { createHmac, randomBytes } from 'node:crypto';
 const historicalReferenceKey = randomBytes(32);
 export { HistoryCursorError } from './history-cursor-error.js';
+export type PublicEventRoleProjection = (event: ActorEvent) => Partial<
+  Record<
+    'actor' | 'target',
+    {
+      contactReference?: string;
+      communicationReference?: string;
+    }
+  >
+>;
+/** Preserve the current received speech union without exposing private routing. */
+export function projectPerceivedSpeech(speech: NonNullable<ActorEvent['speech']>): PerceivedSpeech {
+  return speech.perception === 'seen'
+    ? {
+        ...speech,
+        perception: 'seen',
+        addressing: null,
+        intelligibility: 'none',
+        segments: [],
+        addressee: null,
+      }
+    : {
+        ...speech,
+        perception: speech.perception,
+        addressing: speech.addressing === 'directed' ? 'directed' : 'ambient',
+      };
+}
 
 /** An event-time participant is a historical role, never a current action target. */
 export function historicalEntityReference(
@@ -53,8 +83,19 @@ export function publicEvent(
   presentation: EventPresentationPolicy | undefined,
   observerId: string,
   referenceScope: string,
-  currentContact?: (body: NonNullable<ActorEvent['sourceBody']>) => string | undefined,
+  currentRoles?: PublicEventRoleProjection,
 ): PublicEvent {
+  const speechEvidence = event.speech
+    ? {
+        actorId: observerId ?? event.audience[0]!,
+        sourceId: event.actorId,
+        targetId: event.targetId,
+        speech: event.speech,
+      }
+    : undefined;
+  const speechView =
+    speechEvidence &&
+    speechPresentation(speechEvidence, speechPerspective(speechEvidence), 'personal');
   const change = event.type === 'attribute-changed' ? event.data : undefined;
   const attributeChange =
     change &&
@@ -80,12 +121,14 @@ export function publicEvent(
             : {}),
         }
       : undefined;
+  const admittedRoles = currentRoles?.(event);
   const references: NonNullable<PublicEvent['references']> = (event.references ?? []).map(
     (ref) => ({
       id: historicalEntityReference(referenceScope, event.id, ref.id, ref.role),
       label: ref.label,
       role: ref.role,
       kind: 'historical',
+      ...(ref.role === 'actor' || ref.role === 'target' ? admittedRoles?.[ref.role] : {}),
     }),
   );
   const speakerReference = createHmac('sha256', historicalReferenceKey)
@@ -97,7 +140,32 @@ export function publicEvent(
       ]),
     )
     .digest('hex');
-  const speakerContact = event.sourceBody && currentContact?.(event.sourceBody);
+  const speakerContact = admittedRoles?.actor?.contactReference;
+  const presentedSpeech = speechView
+    ? {
+        ...speechView,
+        parts: speechView.parts.map((part) =>
+          part.kind === 'participant'
+            ? {
+                ...part,
+                id: historicalEntityReference(
+                  referenceScope,
+                  event.id,
+                  part.id,
+                  part.role === 'speaker' ? 'actor' : 'target',
+                ),
+                ...(admittedRoles?.[part.role === 'speaker' ? 'actor' : 'target']?.contactReference
+                  ? {
+                      contactReference:
+                        admittedRoles[part.role === 'speaker' ? 'actor' : 'target']!
+                          .contactReference,
+                    }
+                  : {}),
+              }
+            : part,
+        ),
+      }
+    : undefined;
   // Render only facts already granted to this observer. Older wording may be noisy,
   // but a missing cause must never be filled from today's body or world state.
   const subject =
@@ -154,19 +222,29 @@ export function publicEvent(
     ...(event.speech
       ? {
           speech: {
-            ...event.speech,
+            ...projectPerceivedSpeech(event.speech),
             speakerReference,
             ...(speakerContact ? { speakerContact } : {}),
           },
         }
       : {}),
+    ...(presentedSpeech ? { speechPresentation: presentedSpeech } : {}),
     ...(event.sound
       ? {
-          sound: {
-            kind: event.sound.kind,
-            direction: event.sound.direction,
-            listenerPosition: event.sound.listenerPosition,
-          },
+          sound: (() => {
+            const sample = soundExperience(event.sound, (id) =>
+              historicalEntityReference(referenceScope, event.id, id, 'sound-source'),
+            );
+            return {
+              ...sample,
+              visibleSource: sample.visibleSource
+                ? {
+                    reference: sample.visibleSource.entityId,
+                    description: sample.visibleSource.description,
+                  }
+                : null,
+            };
+          })(),
         }
       : {}),
   };
@@ -210,7 +288,8 @@ export async function initializePerceivedEventIndexes(db: SqlDatabase): Promise<
     CREATE INDEX IF NOT EXISTS history_perspective_order ON history_perspectives(world_id,actor_id,position,event_id);
     CREATE INDEX IF NOT EXISTS history_perspective_type_order ON history_perspectives(world_id,actor_id,event_type,position,event_id);
     CREATE INDEX IF NOT EXISTS history_perspective_time ON history_perspectives(world_id,actor_id,((payload::jsonb->>'time')::double precision),position,event_id);
-    CREATE INDEX IF NOT EXISTS history_perspective_peer_order ON history_perspectives(world_id,actor_id,speech_peer_id,position,event_id) WHERE speech_peer_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS history_perspective_speech_source ON history_perspectives(world_id,actor_id,source_id,position,event_id) WHERE event_type='speech' AND source_id IS NOT NULL;
+    CREATE INDEX IF NOT EXISTS history_perspective_speech_target ON history_perspectives(world_id,actor_id,target_id,position,event_id) WHERE event_type='speech' AND target_id IS NOT NULL;
     CREATE INDEX IF NOT EXISTS history_perspective_response_order ON history_perspectives(world_id,actor_id,position,event_id) WHERE response_action;
     CREATE INDEX IF NOT EXISTS history_perspective_source_response_order ON history_perspectives(world_id,actor_id,source_id,position,event_id) WHERE response_action;
   `);
@@ -242,6 +321,7 @@ export async function readPerceivedEvents(
   sourceScope = scope,
   corrections?: Record<string, string>,
   presentation?: EventPresentationPolicy,
+  currentRoles?: PublicEventRoleProjection,
 ): Promise<PerceivedEventsPage> {
   const type = options.type ?? 'all';
   const terms = searchTerms(options.q);
@@ -450,7 +530,13 @@ export async function readPerceivedEvents(
               )
             : undefined;
         return {
-          ...publicEvent(projected, presentation, actorId, JSON.stringify([worldId, sourceScope])),
+          ...publicEvent(
+            projected,
+            presentation,
+            actorId,
+            JSON.stringify([worldId, sourceScope]),
+            currentRoles,
+          ),
           ...(source ? { source } : {}),
         };
       }),
@@ -626,7 +712,7 @@ export async function readPerceivedEventSources(
         ...(exposure?.kind === 'inventory-item' && exposure.inscription
           ? { inscription: exposure.inscription }
           : {}),
-        ...(projected.speech ? { speech: projected.speech } : {}),
+        ...(projected.speech ? { speech: projectPerceivedSpeech(projected.speech) } : {}),
         ...(observedLocation ? { observedLocation } : {}),
         corrected,
         ...(correctionNote ? { correctionNote } : {}),

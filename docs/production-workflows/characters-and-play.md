@@ -4,9 +4,15 @@
 
 [Production workflows](README.md) · [Research principles](../../archive/02-research/ai-game-development/09-openlegend-principles.md) · [Task-specific research examples](../../archive/02-research/ai-game-development/10-openlegend-workflows.md)
 
+[Narrative and writing](../narrative/README.md) supplies complementary craft guidance for specific people, creative situations, humor, voice and consequence. This workflow owns turning that creative intention into playable content and evaluating the result.
+
 Use this route to turn an idea into a place, person or situation that somebody wants to engage with, then follow their choices into consequences worth discovering. It applies to a new authored encounter, an improvement to an existing resident, a supported invented object used in play, or a comparison between creative models. It also applies when the intended pleasure is quiet company, curiosity, observation or making something beautiful.
 
 The work can begin with a mechanical idea, a striking image, a person, a location or a player observation. Creative exploration can move between them. The final result still has to join actual world behavior, permitted knowledge and appropriate presentation. The [gameplay priorities](../repertoires/gameplay-priorities.md) choose the worthwhile activity; this route explains how to develop it.
+
+## Selected laboratory consumer
+
+The [Cognition Lab](../projects/cognition-lab-feature-spec.md) supplies the designed isolated rehearsal workspace for this route. Start from a worthwhile person/situation, use ordinary native speech and actions, inspect exact personal evidence and actual outcomes, then change one relevant factor. Its [repertoire map](../projects/cognition-lab-repertoire-review.md) supplies optional recipes for memory, independent help/refusal, humor, ordinary pleasure, invention, threat and interrupted work. Keep the intended experience and human review notes outside model input; let the character make the choice. A saved starting scenario, continuation checkpoint and retained evidence run have different purposes. [CL](../maintainers/cognition-lab.md) retains pending tool delivery; CE/IS/CTR/FPV retain actual character and player evidence.
 
 ## The route
 
@@ -54,6 +60,8 @@ Create a concise person with formative history, values, pleasures, attachments, 
 Follow [character authorship and changing personality](../projects/compelling-characters-feature-spec.md#character-authorship-and-changing-personality). Keep the person's tendencies distinct from present world conditions, revisable beliefs and chosen intentions. An explicitly seeded opening goal is legitimate authoring when that is the selected scenario; label it as setup. It cannot establish independently formed motivation. Do not hide instructions to thank, confess, stop work or invite someone in a personality description to obtain the hoped-for scene.
 
 When two authored people already know one another, use their existing personal knowledge and recognition owners as well as the prose. A name mentioned in a biography does not itself bind a perceived person. Preserve each participant's separate view of the relationship.
+
+For a situation involving an authored past, use [discoverable history](../narrative/authoring-discoverable-history.md) to give each surviving trace an immediate value, connect several possible entry orders, and develop what present action can change for later visitors. Its worked example remains hypothetical; this workflow still owns rehearsal and playable delivery.
 
 An author may inspect permitted design and world information that a resident should not receive. Supply runtime cognition with that resident's own allowed evidence. Shared [agent-content requirements](../agent-content-and-companion-safety.md) continue to govern generated characters and player-facing expression; a new persona or model does not replace them.
 
@@ -103,7 +111,7 @@ Let satisfying outcomes remain settled. Victory, quiet company, a useful creatio
 
 ## 7. Play, judge and revise the right part
 
-Apply the [existing playability questions](../projects/five-product-feature-specs.md#playability-gates) to the selected situation. The following are applications of that owner, not new mandatory acceptance categories:
+Apply the [existing playability questions](../projects/five-product-feature-specs.md#playability-gates) to the selected situation. For an opening or cast, also use the [selected scene-mix review](../repertoires/selection-and-scale.md#review-the-selected-scene-mix). The following are applications of those owners:
 
 - What did the player choose to try, and what made that possibility attractive?
 - Did the invention or approach make a useful difference the player recognized?
@@ -133,7 +141,7 @@ Keep evidence proportional to the claim. A script can verify an action path; a f
 
 **A person with an ordinary afternoon.** The [compelling-character design](../projects/compelling-characters-feature-spec.md) already describes identity, social contact, enjoyment, meaningful repetition and chosen solitude. Use its relevant complete episode to connect the authored person to actual action and later conduct. The [character-experience tracker](../maintainers/character-experience.md) retains open integrated quality; do not reset delivered foundations or claim a whole life from one successful exchange.
 
-**A useful invented object with a personal consequence.** The [existing invention scenarios](../invention-scenarios.md) and [gameplay priorities](../repertoires/gameplay-priorities.md) provide the starting scope. A selected exercise can connect a accepted invention to practical use and a person's informed response. The ordinary method stays available, the resident keeps their own choice, and the specific object or reaction is not preordained by this guide.
+**A useful invented object with a personal consequence.** The [existing invention scenarios](../invention-scenarios.md) and [gameplay priorities](../repertoires/gameplay-priorities.md) provide the starting scope. A selected exercise can connect an accepted invention to practical use and a person's informed response. The ordinary method stays available, the resident keeps their own choice, and the specific object or reaction is not preordained by this guide.
 
 ## Research rationale and maintained ownership
 

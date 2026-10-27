@@ -582,9 +582,9 @@ Conversation/required/correction preparation allows 8,192 unique sources and 4 M
 
 **Changed · Restrictiveness: Safe for awareness; Too liberal for remaining personal-memory growth.**
 
-Resident awareness: latest 256 records/actor, targeting 1 MiB while always preserving the latest 24 observation records. Startup selects the row-bounded tail; post-commit eviction applies bytes. Every evicted source remains eligible in SQL. Personal memory records still use the six-hour window plus protected commitments. Expiry compaction may lag eligibility by one game minute to amortize copying.
+Resident awareness: ordinary latest 256 records/actor, targeting 1 MiB while always preserving the latest 24 observation records and each latest eligible ongoing personally received agreement. Required agreement evidence is additional to the ordinary tail/byte target; unknown remote withdrawal does not erase remembered assent. Startup selects the indexed current agreement sources and row-bounded tail; post-commit eviction applies bytes to ordinary history. Every evicted source remains eligible in SQL. Personal memory records still use the six-hour window plus protected commitments. Expiry compaction may lag eligibility by one game minute to amortize copying.
 
-**Reason / tradeoff:** Automatic observation growth should not pin six hours of bodies and event dependencies. Native continuity retains its 24-record tail; explicit old-source reads use SQL. Required native personal records are not silently removed to achieve a global byte claim. Individual admitted transitions still retain complete output until commit. [Owner](../performance.md#inactive-history-residency); [C18](../maintainers/limits-audit.md#c18).
+**Reason / tradeoff:** Automatic observation growth should not pin six hours of bodies and event dependencies. Native continuity retains its 24-record tail; explicit old-source reads use SQL. Required native personal records are not silently removed to achieve a global byte claim. Individual admitted transitions still retain complete output until commit. [Owner](../performance/preparation.md#inactive-history-residency); [C18](../maintainers/limits-audit.md#c18).
 
 ## MH06
 

@@ -33,7 +33,11 @@ function requestState(prepared: Prepared, offered?: { id: string; description: s
   return {
     decisionContext: Object.fromEntries(
       Object.entries(prepared.context).filter(
-        ([key]) => !['knowledgeInstructions', 'navigation', 'planOffers'].includes(key),
+        // This closed strategy selects exact supplied invocations. Freeform
+        // activity forms belong to the independent generated-response route;
+        // current agreements and every offered physical choice remain here.
+        ([key]) =>
+          !['knowledgeInstructions', 'navigation', 'planOffers', 'activityRequests'].includes(key),
       ),
     ),
     // One full authored rubric is shared, rather than copied into every independent
@@ -53,11 +57,17 @@ export function preparedResponseRelevanceRequest(
 ) {
   if (prepared.choiceCoverage !== 'complete-required')
     throw new Error('This strategy requires complete supplied choices.');
+  const descriptions = new Map<string, string>();
+  for (const candidate of prepared.actionCandidates)
+    if (candidate.purposeHandle && candidate.purposeDescription)
+      descriptions.set(candidate.purposeHandle, candidate.purposeDescription);
   const questions: TypedQuestionMap = {};
   for (const [index, purpose] of catalogue.purposes.entries()) {
+    const description = descriptions.get(`p${index}`);
+    if (!description) throw new Error('The supplied purpose has no permitted descriptive meaning.');
     questions[`p${index}`] = {
       type: 'choice',
-      instructions: `${profile.relevance.question} Purpose p${index}: ${purpose.description} Consider its exact bound people and available first actions in this same supplied situation.`,
+      instructions: `${profile.relevance.question} Purpose p${index}: ${description} Consider its exact bound people and available first actions in this same supplied situation.`,
       criteria: {
         // Insertion and canonical order agree. Uncertainty wins a tie containing it;
         // relevant wins a relevant/irrelevant tie above uncertainty.
@@ -143,10 +153,13 @@ export function preparedResponseChoiceRequest(prepared: Prepared, relevance: Pur
         // control/cost facts and exact bindings; no offered alternative is removed.
         instructions: (() => {
           const candidate = retained[index]!;
-          if (candidate.purpose && !candidate.firstActionDescription)
+          if (
+            candidate.purpose &&
+            (!candidate.firstActionDescription || !candidate.purposeDescription)
+          )
             throw new Error('The supplied first action has no descriptive meaning.');
           return candidate.purpose
-            ? `${candidate.id}: ${candidate.purpose.description}. First action: ${candidate.firstActionDescription}. Would I choose this now?`
+            ? `${candidate.id}: ${candidate.purposeDescription}. First action: ${candidate.firstActionDescription}. Would I choose this now?`
             : `${candidate.description} Would I choose this now?`;
         })(),
       },

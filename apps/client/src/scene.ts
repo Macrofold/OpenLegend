@@ -52,12 +52,15 @@ import {
 } from './world-camera';
 import type {
   SceneCallbacks,
+  SceneLoadProgress,
   WorldRenderer,
   SpeechCaptionOptions,
   ShadowQuality,
   PerceptionOptions,
   ConstructionPlacement,
   ConstructionPreviewTransform,
+  AttackPointerControls,
+  PhysicalAimPoint,
 } from './world-renderer';
 import {
   birdArt,
@@ -225,7 +228,7 @@ export class WildernessScene implements WorldRenderer {
   private orientedYaw = NaN;
   private orientedPitch = NaN;
   private nextHoverAt = 0;
-  private lastHover?: { entity: EntityView | null; x: number; y: number };
+  private lastHover?: { entity: EntityView | null; x: number; y: number; primary: boolean };
   private initialized = false;
   private visionBlur: VisionBlur;
   private readonly perception: PerceptionOverlay;
@@ -241,7 +244,10 @@ export class WildernessScene implements WorldRenderer {
     orbit: boolean;
     moved: boolean;
     primaryAction: boolean;
+    primaryGesture?: string;
+    attack?: 'active' | 'ignored';
   } | null = null;
+  private attackInput: AttackPointerControls | null = null;
   // Some browsers emit contextmenu on press, others after release. Pointer
   // gestures own their menu; suppress that native duplicate until the next press.
   private pointerContextHandled = false;
@@ -253,7 +259,17 @@ export class WildernessScene implements WorldRenderer {
   private readonly frameRateMeter = new FrameRateMeter();
   private profiler?: ScenePerformance;
   private renderedFrames = 0;
-  private readyRequested = false;
+  private loadingScope = '';
+  private loadingGeneration = 0;
+  private loadingPhase: SceneLoadProgress['phase'] = 'loading';
+  private reportedLoading = '';
+  private preparingFrame = 0;
+  private sceneryPreparation?: Promise<boolean>;
+  private paintPreparation?: Promise<boolean>;
+  private readonly loadingTasks = new Map<
+    Promise<boolean>,
+    { done: boolean; ok: boolean; relevant(): boolean; visualReady?(): boolean }
+  >();
   private presentation!: WorldPresentation;
   private sceneProps!: ScenePropResources;
   private libraryScenery!: LibraryScenery;
@@ -459,26 +475,155 @@ export class WildernessScene implements WorldRenderer {
   private finishRender = (): void => {
     this.redrawPending = false;
     const device = this.app.graphicsDevice;
-    if (this.destroyed || !(device instanceof pc.WebglGraphicsDevice)) return;
+    if (this.destroyed) return;
+    const generation = this.loadingGeneration;
+    // Only this frame's fence can qualify this frame's installed artwork. An
+    // older frame finishing later cannot establish that the replacement drew.
+    const frameReady =
+      this.loadingPhase === 'preparing' &&
+      this.renderedFrames > this.preparingFrame &&
+      [...this.loadingTasks.values()].every(
+        (task) => !task.relevant() || !task.visualReady || task.visualReady(),
+      );
+    const finishLoading = () => {
+      if (frameReady) this.finishLoadingFrame(generation);
+    };
+    if (!(device instanceof pc.WebglGraphicsDevice)) {
+      finishLoading();
+      return;
+    }
     let fence: Promise<unknown>;
     try {
       fence = device.clientWaitAsync(0, 4);
     } catch {
       // Failed or lost contexts must not strand the renderer behind a pending slot.
+      this.failLoading();
       return;
     }
     this.pendingFrames.add(fence);
     const release = () => this.pendingFrames.delete(fence);
     // Completion owns only its own slot, even after context loss or scene disposal.
-    void fence.then(release, release);
+    void fence.then(
+      () => {
+        release();
+        finishLoading();
+      },
+      () => {
+        release();
+        if (generation === this.loadingGeneration) this.failLoading();
+      },
+    );
   };
   private resetRenderQueue = (): void => {
     this.pendingFrames.clear();
     this.redrawPending = true;
+    this.failLoading();
   };
+
+  private resetLoading(scope: string): void {
+    this.loadingScope = scope;
+    this.loadingGeneration++;
+    this.loadingPhase = 'loading';
+    this.reportedLoading = '';
+    this.loadingTasks.clear();
+    this.paintPreparation = this.mercenary?.artworkReady();
+    this.canvas.dataset.ready = 'false';
+  }
+  private reportLoading(): void {
+    if (this.destroyed || this.loadingPhase === 'failed' || this.loadingPhase === 'ready') return;
+    const tasks = [...this.loadingTasks.values()];
+    if (tasks.some((task) => task.relevant() && task.done && !task.ok)) {
+      this.failLoading();
+      return;
+    }
+    const completed = tasks.filter((task) => task.done || !task.relevant()).length;
+    const phase = completed === tasks.length ? 'preparing' : 'loading';
+    if (phase === 'preparing' && this.loadingPhase !== 'preparing')
+      this.preparingFrame = this.renderedFrames;
+    this.loadingPhase = phase;
+    const progress: SceneLoadProgress = { phase, completed, total: tasks.length + 1 };
+    const signature = JSON.stringify(progress);
+    if (signature !== this.reportedLoading) {
+      this.reportedLoading = signature;
+      this.callbacks.loadingChanged?.(progress);
+    }
+    this.app.renderNextFrame = true;
+  }
+  private trackLoading(
+    promise: Promise<boolean>,
+    relevant: () => boolean,
+    visualReady?: () => boolean,
+  ): void {
+    if (this.loadingTasks.has(promise)) return;
+    const generation = this.loadingGeneration;
+    const task = { done: false, ok: false, relevant, visualReady };
+    this.loadingTasks.set(promise, task);
+    const settled = (ok: boolean) => {
+      if (this.destroyed || generation !== this.loadingGeneration) return;
+      task.done = true;
+      task.ok = ok;
+      this.reportLoading();
+    };
+    void promise.then(settled, () => settled(false));
+  }
+  private collectLoading(): void {
+    if (this.loadingPhase === 'ready' || this.loadingPhase === 'failed') return;
+    if (this.sceneryPreparation) this.trackLoading(this.sceneryPreparation, () => true);
+    let hasMercenary = false;
+    for (const [id, entry] of this.actors) {
+      if (!entry.observed) continue;
+      const relevant = () => this.actors.get(id) === entry && entry.observed;
+      if (entry.model) {
+        const model = entry.model;
+        this.trackLoading(model.ready, relevant, () => model.presentationReady);
+        hasMercenary ||= entry.view.appearance === 'mercenary-model';
+      }
+      if (entry.sceneProp)
+        this.trackLoading(
+          entry.sceneProp.ready,
+          relevant,
+          () => !!entry.propInstalled || !entry.root.enabled,
+        );
+    }
+    if (hasMercenary && this.paintPreparation)
+      this.trackLoading(this.paintPreparation, () =>
+        [...this.actors.values()].some(
+          (entry) => entry.observed && !!entry.model && entry.view.appearance === 'mercenary-model',
+        ),
+      );
+    this.reportLoading();
+  }
+  private finishLoadingFrame(generation: number): void {
+    if (
+      this.destroyed ||
+      generation !== this.loadingGeneration ||
+      this.loadingPhase !== 'preparing' ||
+      this.renderedFrames <= this.preparingFrame ||
+      [...this.loadingTasks.values()].some(
+        (task) => task.relevant() && task.visualReady && !task.visualReady(),
+      )
+    )
+      return;
+    this.loadingPhase = 'ready';
+    this.canvas.dataset.ready = 'true';
+    const total = this.loadingTasks.size + 1;
+    this.callbacks.loadingChanged?.({ phase: 'ready', completed: total, total });
+  }
+  private failLoading(): void {
+    if (this.destroyed || this.loadingPhase === 'ready' || this.loadingPhase === 'failed') return;
+    this.loadingPhase = 'failed';
+    this.canvas.dataset.ready = 'false';
+    this.callbacks.loadingChanged?.({
+      phase: 'failed',
+      completed: [...this.loadingTasks.values()].filter((task) => task.done && task.ok).length,
+      total: this.loadingTasks.size + 1,
+      message: 'The game artwork could not be prepared. Retry loading the scene.',
+    });
+  }
 
   /** Developer comparison changes no DTO, world identity, actions or saved state. */
   setArtTreatment(style: ArtTreatment): void {
+    const treatmentChanged = JSON.stringify(this.requestedArt) !== JSON.stringify(style);
     this.requestedArt = { ...style };
     if (!this.externalAssetsAllowed)
       style = {
@@ -503,19 +648,24 @@ export class WildernessScene implements WorldRenderer {
     this.libraryScenery?.setTreatment(style);
     if (['natural', 'kenney', 'quaternius', 'study', 'canopy'].includes(style.environment)) {
       const family = style.environment as 'natural' | 'kenney' | 'quaternius' | 'study' | 'canopy';
-      void this.libraryScenery
+      this.sceneryPreparation = this.libraryScenery
         .load(family)
         .then((loaded) => {
-          if (!loaded || this.destroyed || this.artSettings.environment !== family || !this.view)
-            return;
-          this.buildLandscape(this.view.map);
-          this.updateEntityPresentation();
+          if (this.destroyed) return false;
+          // The boolean means newly installed, not success: cached/coalesced
+          // scenery returns false; download/decode failures reject this promise.
+          if (loaded && this.artSettings.environment === family && this.view) {
+            this.buildLandscape(this.view.map);
+            this.updateEntityPresentation();
+          }
+          return true;
         })
         .catch((error: unknown) => {
           if (!this.destroyed)
             console.warn('Library scenery could not load; retaining the authored fallback.', error);
+          return false;
         });
-    }
+    } else this.sceneryPreparation = undefined;
     this.mercenary?.setArtTreatment(style);
     this.presentation.setArtTreatment(style);
     if (relight && this.view) this.presentation.lighting(this.view);
@@ -531,7 +681,6 @@ export class WildernessScene implements WorldRenderer {
       this.updateEntityPresentation();
     }
     if ((replaceProp || replaceHares || replaceSources) && this.view) {
-      let replaced = false;
       for (const [id, entry] of this.actors)
         if (
           (replaceSources &&
@@ -542,10 +691,9 @@ export class WildernessScene implements WorldRenderer {
         ) {
           this.releaseEntity(entry);
           this.actors.delete(id);
-          replaced = true;
         }
-      if (replaced) this.setView(this.view);
     }
+    if (treatmentChanged && this.view) this.setView(this.view);
   }
   artDiagnostics() {
     const stats = this.app.stats;
@@ -668,6 +816,13 @@ export class WildernessScene implements WorldRenderer {
       view.player.id,
       view.access?.privateDraftScope,
     ]);
+    const loadingScope = JSON.stringify([
+      worldKey,
+      view.access?.scope,
+      view.presentationRelease,
+      this.artSettings,
+    ]);
+    if (loadingScope !== this.loadingScope) this.resetLoading(loadingScope);
     if (this.worldKey !== worldKey) {
       for (const entry of this.actors.values()) this.releaseEntity(entry);
       this.actors.clear();
@@ -748,12 +903,23 @@ export class WildernessScene implements WorldRenderer {
       if (entry?.observed && entry.view === entity) continue;
       if (entity.id === view.player.id) this.movingEntries.add(entity.id);
       else this.movingEntries.delete(entity.id);
-      const signature = `${
+      const baseSignature = `${
         entity.contents
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
       }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(studyAppearance(entity.appearance, this.artSettings.assetSources))?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      // Restoring another valid construction branch can retain the same edit
+      // count. The actual permitted pieces/palette decide appearance and picking.
+      const signature = entity.assembly
+        ? JSON.stringify([
+            baseSignature,
+            entity.assembly.familyId,
+            entity.assembly.implementation,
+            entity.assembly.presentation,
+            entity.assembly.shapes,
+          ])
+        : baseSignature;
       if (entry && entry.root.tags.list()[0] !== signature) {
         this.releaseEntity(entry);
         this.actors.delete(entity.id);
@@ -765,6 +931,21 @@ export class WildernessScene implements WorldRenderer {
         this.actors.set(entity.id, entry);
       }
       const card = this.cards.get(entry.sprite);
+      const horizontal = entity.statusEffects?.some((effect) => effect.pose === 'horizontal');
+      // Fit the visible painted extent, not transparent artwork padding. A native
+      // contraction updates the retained resource and its picking transform together.
+      const currentHeight = entity.bodySize?.height;
+      const heightChanged =
+        !!card &&
+        !entity.bodyState &&
+        !horizontal &&
+        currentHeight !== undefined &&
+        card.height !== currentHeight / (1 - card.padding.top - card.padding.bottom);
+      if (heightChanged && card && currentHeight !== undefined) {
+        entry.height = card.height = currentHeight / (1 - card.padding.top - card.padding.bottom);
+      }
+      if (currentHeight !== undefined && !entity.bodyState && !horizontal)
+        entry.model?.setBodyHeight(currentHeight);
       const groundPoseChanged =
         card &&
         (card.horizontalHeading !== entity.heading ||
@@ -775,10 +956,11 @@ export class WildernessScene implements WorldRenderer {
       }
       if (
         card &&
-        (card.horizontalHeight !==
-          (entity.statusEffects?.some((effect) => effect.pose === 'horizontal')
-            ? (entity.bodySize?.width ?? entry.width)
-            : undefined) ||
+        (heightChanged ||
+          card.horizontalHeight !==
+            (entity.statusEffects?.some((effect) => effect.pose === 'horizontal')
+              ? (entity.bodySize?.width ?? entry.width)
+              : undefined) ||
           (card.horizontalHeight !== undefined && groundPoseChanged))
       ) {
         // Use projected presentation, never action names or elapsed client time.
@@ -809,14 +991,7 @@ export class WildernessScene implements WorldRenderer {
     this.statusIndicators.observe(entities);
     this.speech.observe(view);
     this.profiler?.view(profileStarted, view, this.actors.size);
-    if (!this.readyRequested) {
-      this.readyRequested = true;
-      // An existing WebGL context alone does not prove that the world rendered.
-      this.app.renderNextFrame = true;
-      this.app.once('postrender', () => {
-        if (!this.destroyed) this.canvas.dataset.ready = 'true';
-      });
-    }
+    this.collectLoading();
   }
 
   setCaptionOptions(options: SpeechCaptionOptions): void {
@@ -827,7 +1002,10 @@ export class WildernessScene implements WorldRenderer {
   }
   select(id: string | null): boolean {
     const entry = id ? this.actors.get(id) : undefined;
-    if (id && (!entry || !this.identifiable(entry))) {
+    // A named entry in the server-permitted list can be inspected outside the
+    // camera's sharp focus. Pixel picking and the marker retain their narrower
+    // presentation checks; remembered or no-longer-observed entries still refuse.
+    if (id && !entry?.observed) {
       this.denySelection();
       return false;
     }
@@ -888,7 +1066,14 @@ export class WildernessScene implements WorldRenderer {
       entry.root
         .getPosition()
         .clone()
-        .add(new pc.Vec3(0, (entry.model?.visible ? entry.model.height : entry.height) + 0.1, 0)),
+        .add(
+          new pc.Vec3(
+            0,
+            (entry.view.bodySize?.height ??
+              (entry.model?.visible ? entry.model.height : entry.height)) + 0.1,
+            0,
+          ),
+        ),
     );
     return { x: point.x, y: point.y };
   }
@@ -898,12 +1083,17 @@ export class WildernessScene implements WorldRenderer {
     const entry = this.actors.get(id);
     if (!entry || !this.identifiable(entry)) return null;
     if (!entry.card || entry.model?.visible) return this.screenPosition(id);
-    const transform = entry.sprite.getWorldTransform();
+    const transform = entry.sprite.getWorldTransform(),
+      padding = this.cards.get(entry.sprite)!.padding;
+    const left = -0.5 + padding.left,
+      right = 0.5 - padding.right,
+      top = -0.5 + padding.top,
+      bottom = 0.5 - padding.bottom;
     const points = [
-      new pc.Vec3(-0.5, 0, -0.5),
-      new pc.Vec3(0.5, 0, -0.5),
-      new pc.Vec3(-0.5, 0, 0.5),
-      new pc.Vec3(0.5, 0, 0.5),
+      new pc.Vec3(left, 0, top),
+      new pc.Vec3(right, 0, top),
+      new pc.Vec3(left, 0, bottom),
+      new pc.Vec3(right, 0, bottom),
     ].map((corner) => this.camera.camera!.worldToScreen(transform.transformPoint(corner)));
     return {
       x:
@@ -937,7 +1127,7 @@ export class WildernessScene implements WorldRenderer {
         if (!p || p.x < 0 || p.x > width || p.y < 0 || p.y > height) return null;
         return { x: p.x, y: p.y - 54, source: p };
       },
-      direction: (speech, captionWidth, captionHeight) => {
+      direction: (speech, captionWidth, captionHeight, sourceId) => {
         const speaker = speech.speakerContact ? this.actors.get(speech.speakerContact) : undefined;
         let dx: number,
           dy: number,
@@ -1255,6 +1445,7 @@ export class WildernessScene implements WorldRenderer {
   }
   setConstructionPlacement(placement: ConstructionPlacement | null): void {
     const entering = placement && !this.constructionPlacement;
+    if (entering) this.cancelDrag();
     this.constructionPlacement = placement;
     this.updateCursor();
     if (entering) this.canvas.focus({ preventScroll: true });
@@ -1344,7 +1535,7 @@ export class WildernessScene implements WorldRenderer {
       b = shape.max;
     return this.primitive(
       shape.id,
-      'box',
+      shape.geometry ?? 'box',
       material,
       parent,
       (a.x + b.x) / 2 - origin.x,
@@ -1398,12 +1589,17 @@ export class WildernessScene implements WorldRenderer {
     this.app.root.addChild(root);
     root.setPosition(view.position.x, view.position.y, view.position.z);
     if (view.assembly) {
-      const key = `assembly:${view.assembly.familyId}`;
+      const key = JSON.stringify([
+        'assembly',
+        view.assembly.familyId,
+        view.assembly.implementation,
+        view.assembly.presentation,
+      ]);
       let asset = this.appearanceAssets.get(key);
       if (!asset) {
         const cloth = this.material(view.assembly.presentation.coverColor);
-        cloth.opacity = 0.64;
-        cloth.blendType = pc.BLEND_NORMAL;
+        cloth.opacity = view.assembly.presentation.coverOpacity;
+        cloth.blendType = cloth.opacity < 1 ? pc.BLEND_NORMAL : pc.BLEND_NONE;
         cloth.update();
         asset = {
           materials: [this.material(view.assembly.presentation.postColor), cloth],
@@ -1418,7 +1614,14 @@ export class WildernessScene implements WorldRenderer {
         this.constructionPart(
           shape,
           root,
-          asset!.materials[shape.role === 'cover' ? 1 : 0]!,
+          asset!.materials[
+            shape.role === 'cover' ||
+            shape.role === 'panel' ||
+            shape.role === 'access-panel' ||
+            shape.role === 'gate'
+              ? 1
+              : 0
+          ]!,
           view.position,
         ),
       );
@@ -1749,8 +1952,13 @@ export class WildernessScene implements WorldRenderer {
       { id: string; signature: string; build(resource: LandscapeResource): void }
     >();
     const authoredBlockers = new Set(map.spatial.blockers.map((blocker) => blocker.id));
+    const pieceOrdinals = new Map<string, number>();
     for (const blocker of spatialBlockers(map)) {
-      desired.set(JSON.stringify(['blocker', blocker.id]), {
+      const ordinal = pieceOrdinals.get(blocker.id) ?? 0;
+      pieceOrdinals.set(blocker.id, ordinal + 1);
+      // Several exact solids can belong to one physical object. Keep every
+      // render resource while picking still identifies that original object.
+      desired.set(JSON.stringify(['blocker', blocker.id, ordinal]), {
         id: blocker.id,
         signature: JSON.stringify([blocker, authoredBlockers.has(blocker.id)]),
         build: (resource) => {
@@ -2381,7 +2589,7 @@ export class WildernessScene implements WorldRenderer {
       this.updateReadThrough(entry, dt);
     }
     const selected = this.selected ? this.actors.get(this.selected) : undefined;
-    if (this.selected && (!selected || !this.identifiable(selected))) {
+    if (this.selected && !selected?.observed) {
       this.selected = null;
       this.callbacks.select(null);
     }
@@ -2534,7 +2742,7 @@ export class WildernessScene implements WorldRenderer {
     this.canvas.style.cursor =
       this.drag?.moved && this.drag.pan
         ? 'grabbing'
-        : this.targeting || this.constructionPlacement
+        : this.targeting || this.constructionPlacement || this.attackInput
           ? 'crosshair'
           : this.commandHeld
             ? 'pointer'
@@ -2543,7 +2751,15 @@ export class WildernessScene implements WorldRenderer {
   private setModifiers(command: boolean, reveal: boolean): void {
     if (this.commandHeld !== command) {
       this.commandHeld = command;
+      if (!command && this.drag?.primaryAction) this.cancelDrag();
       this.updateCursor();
+      if (this.hoverPoint && !this.drag) {
+        const rect = this.canvas.getBoundingClientRect();
+        this.publishHover(
+          this.hoverEntity(this.hoverPoint.x - rect.left, this.hoverPoint.y - rect.top),
+          this.hoverPoint,
+        );
+      }
     }
     if (this.revealHeld === reveal) return;
     this.revealHeld = reveal;
@@ -2597,6 +2813,7 @@ export class WildernessScene implements WorldRenderer {
     );
   }
   private publishHover(entity: EntityView | null, point: { x: number; y: number }): void {
+    const primary = this.commandHeld && !this.targeting && !this.constructionPlacement;
     const id = entity?.id ?? null;
     if (id !== this.hoveredId) {
       this.hoveredId = id;
@@ -2634,11 +2851,12 @@ export class WildernessScene implements WorldRenderer {
     if (
       this.lastHover?.entity === entity &&
       this.lastHover.x === point.x &&
-      this.lastHover.y === point.y
+      this.lastHover.y === point.y &&
+      this.lastHover.primary === primary
     )
       return;
-    this.lastHover = { entity, ...point };
-    this.callbacks.hover(entity, point);
+    this.lastHover = { entity, ...point, primary };
+    this.callbacks.hover(entity, point, primary);
   }
   private clearHover = (): void => {
     this.hoverPoint = null;
@@ -2765,7 +2983,123 @@ export class WildernessScene implements WorldRenderer {
   private denySelection(): void {
     this.callbacks.selectionDenied(`${this.view?.player.name ?? 'Your character'} can't see this.`);
   }
-  private pick(x: number, y: number): RenderedEntity | null {
+  /** Selection and physical aiming share displayed-geometry intersection. */
+  private entityPointerHit(
+    entry: RenderedEntity,
+    ray: { from: pc.Vec3; to: pc.Vec3 },
+  ): { fraction: number; point: pc.Vec3 } | null {
+    if (entry.view.assembly) {
+      let fraction: number | null = null;
+      for (const shape of entry.view.assembly.shapes) {
+        const hit = shape.panel
+          ? (panelRayFraction(shape.panel, ray.from, ray.to) ?? null)
+          : intersectBox(ray.from, ray.to, { min: shape.min, max: shape.max });
+        if (hit !== null && (fraction === null || hit < fraction)) fraction = hit;
+      }
+      return fraction === null
+        ? null
+        : { fraction, point: new pc.Vec3().lerp(ray.from, ray.to, fraction) };
+    }
+    if (entry.model?.visible) {
+      const hit = entry.model.hit(ray.from, ray.to);
+      return hit
+        ? { fraction: hit.fraction, point: new pc.Vec3(hit.point.x, hit.point.y, hit.point.z) }
+        : null;
+    }
+    if (entry.card) {
+      const image = entry.images[Math.max(0, entry.lastFrame) % entry.images.length];
+      return image ? this.cardHit(entry.sprite, image, ray) : null;
+    }
+    const p = entry.root.getPosition();
+    const fraction = intersectBox(ray.from, ray.to, {
+      min: { x: p.x - entry.width / 2, y: p.y, z: p.z - 0.4 },
+      max: { x: p.x + entry.width / 2, y: p.y + entry.height, z: p.z + 0.4 },
+    });
+    return fraction === null
+      ? null
+      : { fraction, point: new pc.Vec3().lerp(ray.from, ray.to, fraction) };
+  }
+  setAttackInput(controls: AttackPointerControls | null): void {
+    if (!controls && this.drag?.attack) this.cancelDrag();
+    this.attackInput = controls;
+    this.updateCursor();
+  }
+  aimScreenPosition(id: string): { x: number; y: number } | null {
+    const entry = this.actors.get(id);
+    if (!entry || !this.identifiable(entry)) return null;
+    const bodyPoint = entry.root
+      .getPosition()
+      .clone()
+      .add(
+        new pc.Vec3(
+          0,
+          (entry.view.bodySize?.height ??
+            (entry.model?.visible ? entry.model.height : entry.height)) * 0.5,
+          0,
+        ),
+      );
+    const card = this.cards.get(entry.sprite);
+    if (entry.card && !entry.model?.visible && card) {
+      // Choose the center of the painted card, including horizontal presentation;
+      // aimAt converts that visible pixel back through the same physical picker.
+      entry.sprite
+        .getWorldTransform()
+        .transformPoint(new pc.Vec3(0, 0, (card.padding.top - card.padding.bottom) / 2), bodyPoint);
+    }
+    const depth = bodyPoint.clone().sub(this.camera.getPosition()).dot(this.camera.forward);
+    const camera = this.camera.camera!;
+    if (depth < camera.nearClip || depth > camera.farClip) return null;
+    const point = entry.model?.visible
+      ? entry.model.screenPoint(bodyPoint)
+      : camera.worldToScreen(bodyPoint);
+    return this.aimScreenPointVisible(point) ? { x: point.x, y: point.y } : null;
+  }
+  private aimScreenPointVisible(screen: { x: number; y: number }): boolean {
+    return (
+      Number.isFinite(screen.x) &&
+      Number.isFinite(screen.y) &&
+      screen.x >= 0 &&
+      screen.y >= 0 &&
+      screen.x < this.app.graphicsDevice.clientRect.width &&
+      screen.y < this.app.graphicsDevice.clientRect.height
+    );
+  }
+  aimAt(screen: { x: number; y: number }): PhysicalAimPoint | null {
+    if (!this.view || this.suspended || !this.aimScreenPointVisible(screen)) return null;
+    const ray = this.screenRay(screen.x, screen.y);
+    const entity = this.pick(screen.x, screen.y, false);
+    if (entity && this.identifiable(entity)) {
+      const hit = this.entityPointerHit(entity, ray);
+      if (hit)
+        return {
+          position: { x: hit.point.x, y: hit.point.y, z: hit.point.z },
+          targetId: entity.view.id,
+          bodyReference: entity.view.bodyReference,
+          ...(entity.view.bodyReference && !entity.view.bodyState
+            ? {
+                livingBody:
+                  entity.view.kind === 'animal' ? ('animal' as const) : ('actor' as const),
+              }
+            : {}),
+        };
+    }
+    const surface = this.groundPoint(screen.x, screen.y);
+    const shape = rayHits(this.view.map, ray.from, ray.to, 'sight')[0];
+    if (surface) {
+      const surfaceDistance = ray.from.distance(new pc.Vec3(surface.x, surface.y, surface.z));
+      if (
+        !shape ||
+        ray.from.distance(new pc.Vec3(shape.point.x, shape.point.y, shape.point.z)) >=
+          surfaceDistance - 1e-4
+      )
+        return {
+          position: { x: surface.x, y: surface.y, z: surface.z },
+          surfaceId: surface.surfaceId,
+        };
+    }
+    return shape ? { position: { ...shape.point }, shapeId: shape.id } : null;
+  }
+  private pick(x: number, y: number, preferSelection = true): RenderedEntity | null {
     if (!this.view) return null;
     const ray = this.screenRay(x, y);
     const obstruction = this.cameraObstruction(ray);
@@ -2777,33 +3111,12 @@ export class WildernessScene implements WorldRenderer {
       nearestReveal = Infinity;
     for (const entry of this.actors.values()) {
       if (!entry.root.enabled) continue;
-      let fraction: number | null = null,
-        bodyPoint: pc.Vec3 | undefined;
-      if (entry.view.assembly) {
-        for (const shape of entry.view.assembly.shapes) {
-          const hit = shape.panel
-            ? (panelRayFraction(shape.panel, ray.from, ray.to) ?? null)
-            : intersectBox(ray.from, ray.to, { min: shape.min, max: shape.max });
-          if (hit !== null && (fraction === null || hit < fraction)) fraction = hit;
-        }
-      } else if (entry.model?.visible) {
-        const hit = entry.model.hit(ray.from, ray.to);
-        fraction = hit?.fraction ?? null;
-        bodyPoint = hit?.point;
-      } else if (!entry.card) {
-        const p = entry.root.getPosition();
-        fraction = intersectBox(ray.from, ray.to, {
-          min: { x: p.x - entry.width / 2, y: p.y, z: p.z - 0.4 },
-          max: { x: p.x + entry.width / 2, y: p.y + entry.height, z: p.z + 0.4 },
-        });
-      } else {
-        const image = entry.images[Math.max(0, entry.lastFrame) % entry.images.length]!;
-        const hit = this.cardHit(entry.sprite, image, ray);
-        fraction = hit?.fraction ?? null;
-        bodyPoint = hit?.point;
-      }
+      const contact = this.entityPointerHit(entry, ray);
+      const fraction = contact?.fraction ?? null;
+      const bodyPoint = contact?.point;
       if (fraction === null) continue;
-      if (entry.view.id === this.selected && this.identifiable(entry)) return entry;
+      if (preferSelection && entry.view.id === this.selected && this.identifiable(entry))
+        return entry;
       if (fraction <= obstruction + 1e-5 && fraction < nearest) {
         nearest = fraction;
         best = entry;
@@ -2864,6 +3177,7 @@ export class WildernessScene implements WorldRenderer {
       this.pointerContextHandled = true;
       return;
     }
+    if ((event.button !== 0 || event.ctrlKey) && this.drag?.attack) this.cancelDrag();
     if (event.button > 2 || this.drag) return;
     this.canvas.focus({ preventScroll: true });
     this.setModifiers(event.metaKey, event.altKey);
@@ -2881,6 +3195,25 @@ export class WildernessScene implements WorldRenderer {
       moved: false,
       primaryAction: event.button === 0 && event.metaKey,
     };
+    if (
+      event.button === 0 &&
+      !event.metaKey &&
+      !event.altKey &&
+      this.attackInput &&
+      !this.targeting &&
+      !this.constructionPlacement
+    ) {
+      const screen = this.local(event);
+      // Even a refused attack press owns this click, so its up cannot become an
+      // ordinary world action or release a preparation acknowledged meanwhile.
+      this.drag.attack = this.attackInput.begin(this.aimAt(screen), screen) ? 'active' : 'ignored';
+    }
+    if (this.drag.primaryAction && !this.targeting && !this.constructionPlacement) {
+      const point = this.local(event),
+        entry = this.pick(point.x, point.y);
+      if (entry && this.identifiable(entry))
+        this.drag.primaryGesture = this.callbacks.beginPrimaryAction(entry.view) ?? undefined;
+    }
     this.canvas.setPointerCapture(event.pointerId);
     this.publishHover(null, { x: event.clientX, y: event.clientY });
   };
@@ -2898,13 +3231,47 @@ export class WildernessScene implements WorldRenderer {
     }
     if (drag) {
       if (event.pointerId !== drag.pointerId) return;
+      // Chorded mouse buttons change `buttons` through pointermove; they do not
+      // start another pointerdown. End the attack while retaining this capture
+      // for the newly pressed camera button and its eventual release.
+      if (drag.attack && event.buttons & 6) {
+        if (drag.attack === 'active') this.attackInput?.cancel();
+        this.callbacks.cancelPrimaryAction();
+        delete drag.attack;
+        drag.button = event.buttons & 2 ? 2 : 1;
+        drag.pan = true;
+        drag.orbit = drag.button === 2 && !event.shiftKey;
+        drag.primaryAction = false;
+        drag.primaryGesture = undefined;
+        drag.moved = false;
+        drag.x = event.clientX;
+        drag.y = event.clientY;
+        this.pointerContextHandled = false;
+        this.publishHover(null, { x: event.clientX, y: event.clientY });
+        return;
+      }
       const heldButton = drag.button === 1 ? 4 : drag.button === 2 ? 2 : 1;
       if (!(event.buttons & heldButton)) {
-        this.cancelDrag();
+        // Releasing a camera button while another stays held also arrives as a
+        // move. Only that explicit button edge can finish camera/context work;
+        // missing primary input always cancels instead of releasing an attack.
+        if (drag.pan && event.button === drag.button) this.pointerUp(event);
+        else this.cancelDrag();
         return;
       }
       const dx = event.clientX - drag.x,
         dy = event.clientY - drag.y;
+      if (drag.attack) {
+        if (drag.attack === 'ignored') return;
+        const screen = this.local(event);
+        if (dx || dy) {
+          const aim = this.aimAt(screen);
+          this.attackInput?.move(aim, screen, aim?.targetId === this.view?.player.id);
+        }
+        drag.x = event.clientX;
+        drag.y = event.clientY;
+        return;
+      }
       // Accumulate small movements from the press before choosing a drag. Once
       // panning, track incremental motion even if the pointer returns to its start.
       if (!drag.moved && Math.hypot(dx, dy) <= 5) return;
@@ -2925,8 +3292,21 @@ export class WildernessScene implements WorldRenderer {
   private pointerUp = (event: PointerEvent): void => {
     const drag = this.drag;
     if (!drag || event.pointerId !== drag.pointerId) return;
-    this.cancelDrag();
-    if (drag.moved || event.button !== drag.button) return;
+    this.cancelDrag(true);
+    if (drag.attack) {
+      if (drag.attack === 'ignored') return;
+      const screen = this.local(event);
+      if (event.button === drag.button) {
+        // Release chooses the current scene beneath the cursor even when only
+        // the body or camera moved between down and up.
+        this.attackInput?.release(this.aimAt(screen), screen);
+      } else this.attackInput?.cancel();
+      return;
+    }
+    if (drag.moved || event.button !== drag.button) {
+      this.callbacks.cancelPrimaryAction();
+      return;
+    }
     if (drag.button === 2) {
       if (this.constructionPlacement) {
         this.constructionPlacement.cancel();
@@ -2935,7 +3315,10 @@ export class WildernessScene implements WorldRenderer {
       this.openContextMenu(event);
       return;
     }
-    if (drag.button !== 0 || event.ctrlKey) return;
+    if (drag.button !== 0 || event.ctrlKey) {
+      this.callbacks.cancelPrimaryAction();
+      return;
+    }
     const local = this.local(event);
     if (this.constructionPlacement) {
       const point = this.groundPoint(local.x, local.y);
@@ -2953,7 +3336,9 @@ export class WildernessScene implements WorldRenderer {
       return;
     }
     if (drag.primaryAction) {
-      if (entry) this.callbacks.primaryAction(entry.view);
+      if (entry && event.metaKey && drag.primaryGesture)
+        this.callbacks.commitPrimaryAction(drag.primaryGesture, entry.view);
+      else this.callbacks.cancelPrimaryAction();
       return;
     }
     if (entry) this.callbacks.select(entry.view);
@@ -3024,11 +3409,13 @@ export class WildernessScene implements WorldRenderer {
     event.preventDefault();
     event.stopPropagation();
   };
-  private cancelDrag(): void {
+  private cancelDrag(releasing = false): void {
     const drag = this.drag;
     this.drag = null;
     this.updateCursor();
     if (!drag) return;
+    if (drag.attack === 'active' && !releasing) this.attackInput?.cancel();
+    if (!releasing || drag.moved) this.callbacks.cancelPrimaryAction();
     if (drag.button === 2) this.pointerContextHandled = true;
     this.saveCameraPreferences();
     if (this.canvas.hasPointerCapture(drag.pointerId))
@@ -3098,6 +3485,8 @@ export class WildernessScene implements WorldRenderer {
     this.landscapeOcclusion.length = 0;
     if (this.destroyed) return;
     this.destroyed = true;
+    this.loadingGeneration++;
+    this.loadingTasks.clear();
     this.suspended = true;
     this.app.autoRender = false;
     pc.AppBase.cancelTick(this.app);

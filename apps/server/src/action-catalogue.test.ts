@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
@@ -15,7 +16,7 @@ import { readConfig } from '../../../tests/fixtures/database.js';
 
 const stores: SqlGameRepository[] = [];
 async function setup() {
-  const store = await testRepository();
+  const store = await testRepository(undefined, stockedCamp());
   stores.push(store);
   const service = new WorldService(store, readConfig({}));
   await enterLocalWorld(service);

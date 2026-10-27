@@ -1,8 +1,10 @@
 # Editable shelters — technical design
 
-| Status      | Current progress                                                                                                                                             | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Open shelters are delivered; reviewed natural camps, reachable gates and open-basket exposure are designed, with implementation and play qualification open. | 2026-10-17   |
+| Status      | Current progress                                                                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Walls, gates, repair, breach, reclaim, rain and baskets are connected; native small, ordinary and maximum layouts pass, with integrated/performance/player evidence open. | 2026-10-21   |
+
+**Implementation reference recorded:** `2026-10-22T02:13:05Z` (combined branch implementation/review).
 
 **PX05 design consumed by AV04; flat runtime delivered October 6 and corrected contact/single-bay slope October 7, 2026.** This is the counterpart to the [existing feature specification](editable-shelters-feature-spec.md), not a second product proposal. It completes [PX05](../maintainers/parallel-batch-04-expeditions-and-exchange.md#px05--editable-shelter-technical-design) for a useful open shelter and its ordinary alteration/reclaim journey. The selected flat canopy/two-bay operations and records below are implemented. The single-bay slope is implemented; explicitly gated extensions remain targets. PX05 itself ran no game, provider, browser or structural benchmark; [AV04 evidence](../verification/editable-shelters.md) separately records actual runtime qualification.
 
@@ -346,10 +348,10 @@ The following table distinguishes the now-selected camp extension from broader u
 | Affected later stage                                 | Owner decision required before dependent design/work                                                                                                            | Current disposition                                                                                    |
 | ---------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | Optional wet-tinder challenge / richer thermal ND08  | BW/INV owner selects whether this improves play, the usable-tinder boundary, real alternatives and recovery; heat/ignition/spread also need their own law/model | Preserve current lighting. SH03/SH04 never enable the challenge or general heat/spread.                |
-| Light camp walls/gate versus enclosed home           | §11 and the base-world profile select natural materials, exact slide, blocking, harmless light failure and displayed-occupant clearance.                        | SH07–SH12 implementation open; no thermal/acoustic privacy or broader room promise.                    |
+| Light camp walls/gate versus enclosed home           | §11 and the base-world profile select natural materials, exact slide, blocking, harmless light failure and displayed-occupant clearance.                        | SH07–SH12 runtime installed, qualification open; no thermal/acoustic privacy or broader room promise.  |
 | Granular cloth damage, patches and repair            | BW/INV/PO select represented damage regions, transmission, actual repair inputs/outcomes and bounded condition history                                          | Intact/whole-part unusable profile only; no spontaneous rain damage or invented patch refund.          |
-| Nested exposure/storage of active wet material       | §11.10 selects fully rain-transmitting contents in one directly placed/carried open basket; broader/closed containers remain unselected.                        | SH12 implementation open; SH-L13 remains the current refusal until SH-L20 qualifies.                   |
-| Exact camp contributions and helper phases           | §11.6 selects complete actor/site/material authorization, explicit contribution and revocation.                                                                 | SH08/SH12 implementation open; one active edit per assembly, no pooled inventory or conscription.      |
+| Nested exposure/storage of active wet material       | §11.10 selects fully rain-transmitting contents in one directly placed/carried open basket; broader/closed containers remain unselected.                        | SH12 open-basket consumer installed; SH-L13 still refuses unsupported containers.                      |
+| Exact camp contributions and helper phases           | §11.6 selects complete actor/site/material authorization, explicit contribution and revocation.                                                                 | SH08/SH12 runtime installed; one active edit per assembly, no pooled inventory or conscription.        |
 | Household/home psychology or remembered return       | Product/AG/CR/PO select association, disclosure and independent preference/household semantics                                                                  | Ordinary visits and return only. No home goal, exclusive bed, legal title, teleport or Recover change. |
 | Heavy, tall, moving or unsupported-ground structures | INV/SW/BW select load/failure/recovery family and participation/property harm policy                                                                            | Reject before stock/work; light-sheet failure grants no heavy collapse immunity.                       |
 | Live law conversion, broad weather/dormant regions   | INV-5/EWF07 and time/PS owners select a supported current-runtime conversion/process history and service envelope                                               | Exact pins retained; no silent hot swap, historic storm reconstruction or older-save compatibility.    |
@@ -358,7 +360,7 @@ These choices are recorded as residual D31/D32/ND07/ND08 scope through the exist
 
 ## 11. First-playable camp construction and defense
 
-**Selected design, October 17, 2026; not implemented.** This is the required ND07/DG13 camp extension, delivered through SH07–SH12. Sections 1–10 retain the qualified canopy baseline and its measured limits. This section changes the former wall/door/material-contribution deferral for the selected light family only. General buildings, heavy collapse, acoustically private rooms and household simulation remain separate. [The feature journeys](editable-shelters-feature-spec.md#18-required-first-playable-camp--selected-design-implementation-open) and [base-world profile](../worlds/base/editable-shelters.md#first-playable-natural-camp-profile) are the behavior and tuning owners.
+**Selected design, October 17, 2026; runtime installed, qualification open.** This is the required ND07/DG13 camp extension, delivered through SH07–SH12. Sections 1–10 retain the qualified canopy baseline and its measured limits. This section changes the former wall/door/material-contribution deferral for the selected light family only. General buildings, heavy collapse, acoustically private rooms and household simulation remain separate. [The feature journeys](editable-shelters-feature-spec.md#18-required-first-playable-camp--runtime-installed-qualification-open) and [base-world profile](../worlds/base/editable-shelters.md#first-playable-natural-camp-profile) are the behavior and tuning owners.
 
 ### 11.1 Computation, world policy and exact owners
 
@@ -391,6 +393,20 @@ Known manufacture creates physical parts with their true definitions and initial
 The local family admits at most sixteen sections, two gates, ninety-six protected parts including lowered salvage and one active geometry-changing edit. All section endpoints lie on the selected root's orthogonal two-metre layout, with continuous world anchor placement and one of four headings; snapped layout is this family, not a universal world grid. Cross-root sharing of a physical post is unsupported: neighboring roots may touch only through a qualified non-overlapping join. Another root cannot evade world work/geometry admission. Narrow limits and their expansion triggers are in SH-L15–SH-L18.
 
 ### 11.3 Authoring schema and consumer agreement
+
+Boundary construction requests use the existing scoped construction preview/Start
+and receipt path. They bind the exact reviewed family ID, version and digest;
+a changed definition requires a fresh review before work starts. The native
+post/panel sequence, ordinary Build controls and permitted prospective pieces are
+connected. Native gate installation uses real rails and all six physical cords. Timed gate
+operation, exact public-use permission and natural source-to-gate manufacture/Build
+are connected. Required occupant exits use the existing worker through saved
+admission/final-installation waits, with current native/server/PostgreSQL evidence.
+Simple occupied cycles now qualify through actual native work and current
+PostgreSQL restoration. Complete selected layouts and the remaining camp operations
+are unfinished;
+the exact gate-corner clearance decision remains open. Installed parts and previews share the physical
+shape producer and section-frame calculation; a preview grants no future effect.
 
 The following fragment defines field meaning; the world profile owns the selected complete values and the generated file owns executable data. This is not another runtime implementation or a copy of every recipe:
 
@@ -436,7 +452,10 @@ The parking panel definition supplies four finite boxes around its real hand ope
 
 `joints` explicitly declares panel-end ties, post/rail tie points, the rail overlap and two leaf hangers; each names participating roles and its local allowed contact box. `workPoints` declares bounded exact local action anchors and outward stance directions, not actor teleport destinations. `damage` binds qualified held-tool operations to integral impact and preparation time, then assigns per-role maxima and optional repair. `salvage` lists actual transformation outputs per destroyed role, using the same exact recipe-output schema as other manufacturing. `presentation` supplies installed names, verbs, symbols and consequence wording. All numeric fields are read from the selected family by admission, phase compilation, menu costs, material rendering, repair and restore validation. Recipe input/output cardinality remains the survival recipe owner's source; construction references manufactured items rather than repeating their recipes.
 
-A natural reed mat also becomes an admitted covering for the existing flexible-bay family. Extend its material interface to carry an exact cover-profile pin, so cover size, thickness, transmission and permitted shape are read from the selected material rather than silently inherited from weather cloth. Both existing cloths retain their exact current values and evidence; the selected reed-mat values are separate authored rows. Frame geometry still comes from the actual arrangement, and `coverExposureSupported` must qualify every new pair/layer before effects. Inventory, known-method offers, construction choices, exposed descriptions and current-format saves all resolve the same exact profile. No branch recognizes the words reed or cloak.
+A natural reed mat also becomes an admitted covering for the existing flexible-bay family. The flexible family retains installed `coverProfiles` and one exact `defaultCover`
+for an unselected layout preview. Each cover material carries its own exact
+`coverProfile` pin, resolved within that family; current-format validation checks
+all pins before publication. Extend its material interface to carry that pin, so cover size, thickness, transmission and permitted shape are read from the selected material rather than silently inherited from weather cloth. Both existing cloths retain their exact current values and evidence; the selected reed-mat values are separate authored rows. Frame geometry still comes from the actual arrangement, and `coverExposureSupported` must qualify every new pair/layer before effects. Inventory, known-method offers, construction choices, exposed descriptions and current-format saves all resolve the same exact profile. No branch recognizes the words reed or cloak.
 
 ### 11.4 Exact placement, contacts and useful space
 
@@ -455,6 +474,15 @@ Four-metre square preview: post centres at the four corners and four edge midpoi
 A gate action is a short finite existing native activity. Open requires closed/unbarred; close requires open; bar requires closed/unbarred and reached inside anchor; unbar requires closed/barred and reached inside anchor. An already satisfied request returns a truthful no-change result without spending work or generating a fictitious move. Open/close can use either physically reached handle while unbarred. The world-selected public-use grant is separate from structural edit, material-use and damage grants. It grants no stock access. The bar is a contained component of the manufactured gate item, not an infinitely generated tool.
 
 To move, form the exact translated sweep of **all three moving solids: the leaf and its two real cord hangers**. For each axial box, extend its interval along travel by the signed displacement; query the finite union of those three prisms, not their enclosing box. The world profile supplies exact bounds. A roof or object intersecting only a hanger above the leaf still blocks the slide; the empty space between hangers is not an invented solid. No sampled sweep, rotation approximation or general hinge solver is needed. Candidate search expands for whole bodies/anchors, then exact intersection checks include people, displayed resting extents, belongings, other gates and admitted supports. Ignore only those actual moving parts themselves and qualified exact runner/hanger contact; never ignore the whole root. The runner overlap is a real complementary half-depth lap joint, represented by the world profile's finite boxes; coincident boundary contact is permitted only inside its declared joint. Do not ignore whole rigid solids or overlap full-depth rails. Leaf/hanger contact remains limited to its declared contact boxes.
+
+Gate installation/removal considers two exposed sides, each with the normal
+standing point and two positions along that same face. The six candidates stay
+within the shared twelve-candidate limit and still require full current physical
+qualification. The along-face alternatives keep both runner-end joints reachable
+when perpendicular walls already complete the camp. Preparation evaluates six
+attachments against at most six candidates each; idle camps incur no added work.
+Current native recovery/removal checks qualify this behavior; full Main and maximum
+layout performance remain SH12 work.
 
 During the selected 120-game-second operate action the physical leaf remains at its original endpoint. The final atomic effect checks the complete sweep again and changes endpoint, attached transform, geometry revision and committed event together. The renderer may animate the acknowledged motion; its animation cannot collide, push or authorize passage. This coarse endpoint mechanic makes interruption clear: before commit, stop/death/revocation leaves the original gate; after commit, the actual new endpoint remains. A person who enters the strip during preparation causes the final move to refuse, with no crushing, partial position or material spend. There is no active sweep reservation that traps other actors while waiting.
 
@@ -482,7 +510,7 @@ On a positive remainder, shape stays unchanged; show coarse intact/damaged/nearl
 
 Destruction is not ordinary dismantling. A broken panel's fixed output cannot also leave the original panel live. Surviving lowered parts retain actual integrity and exact identity; a broken rail does not magically repair the leaf it lowers. Completed damage cannot be undone by canceling the attack's later work or losing its acknowledgement. Reclaim still checks destinations/capacity/authority, and a full inventory leaves material at the site. The target family has no rain/rot/fire-spread damage, automatic repair or general region damage loop.
 
-Repair targets one positive-integrity woven wall, access panel or gate. Repairing the access panel preserves its actual opening and shape pin; material strength is not a promise to fill a window. It requires exact permitted prepared fiber, a kept stone tool, reached work, no conflicting edit and one complete edit/material grant. The fixed repair amount is quoted before work. At completion, spend its exact fiber and apply `min(repairAmount, maximum - current)`; refuse a now-undamaged target without consuming held fiber. A broken target cannot be repaired. Posts/rails require dependency-aware replacement. New materials are initialized once through manufacturing; merging, renaming, attaching and restoring never resets integrity.
+Repair targets one positive-integrity woven wall, access panel or gate. Repairing the access panel preserves its actual opening and shape pin; material strength is not a promise to fill a window. It requires exact permitted prepared fiber, a kept stone tool, reached work, no conflicting edit and one complete edit/material grant. The fixed repair amount is quoted before work. At completion, spend its exact fiber and apply `min(repairAmount, maximum - current)`; refuse a now-undamaged target without consuming held fiber. A broken target cannot be repaired. Posts/rails require dependency-aware replacement. New materials are initialized once through manufacturing; merging, renaming, attaching and restoring never resets integrity. The registered repair phase binds two exact input units, including two units from one homogeneous lot. Current family validation rejects another input cardinality until its native phase contract is extended. Exact before/after repair evidence is private to the worker; the visible completion does not disclose canonical integrity values.
 
 ### 11.8 Persistence, work bounds and verification
 
@@ -495,6 +523,14 @@ Pre-admit complete requested parts/phases/bytes and all mandatory collision/supp
 SH12 must exercise exact material totals, tall posts and actual standing-body walk-through, outside open/close after leaving, real sight/projectile paths through the hand opening, body exclusion and smaller-body counterexamples, normal and high-hanger-only blocked gate sweeps in all headings, displayed-rest clearance, conservative large-body candidates, actual projectile interception, grant revocation and uncertain acknowledgements, save during work, zero-integrity dependencies, a materially different slider and omission. Measure complete preview→start→commit→projection and cold/warm navigation costs, concentrated edits and retained growth through actual callers. Qualify the selected sixteen-section maximum and neighboring roots against existing service/native targets before enabling it. Native arithmetic proves neither manageable collection effort nor compelling defense; FPV separately measures uncoached understanding, building effort, independent encounters and the desire to return.
 
 ### 11.9 Ordinary daily rain through existing exposure
+
+The installed sources live in `WorldState.dailyRainDefinitions`, with the selected
+exact pin in `ConstructionProfile.dailyRain`. Each definition retains its resolved,
+pinned opening-bounds record and exact local-clock offset. The clock reference pins
+the local-time behavior rather than unrelated status-effect revisions. Current
+admission refuses a clock-offset change while those definitions require it; fresh
+authored installation resolves the current clock and bounds together. The ordinary
+time display consumes the same observer-local incident field as material exposure.
 
 The [world rule](../worlds/base/editable-shelters.md#ordinary-daily-rain-and-the-roofs-benefit) selects ordinary Main rainfall so the cover's existing moisture behavior can occur without creator intervention. This extends only the finite incident-rain input and its boundary calculation. `material-exposure.ts` remains the sole moisture progression owner; `status-effects.ts::localHour` and the existing `dailyWindow` matcher/forecast remain the clock semantics owner; the existing simulation iterator remains the scheduler. There is no weather service, historical weather ledger, paid call, autonomous actor action or new physiological effect.
 

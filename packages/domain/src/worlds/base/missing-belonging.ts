@@ -1,8 +1,9 @@
+import type { BasePeopleConfiguration } from './people-config.js';
 import { entitySet } from '../../entity-collection.js';
 import { baseSpatial } from './spatial-definitions.js';
 import { addItem } from '../../data.js';
 import { worldPlacement } from '../../spatial-state.js';
-import { MARA_IDENTITY, TAVIN_IDENTITY } from './characters.js';
+import { BASE_PEOPLE } from './characters.js';
 import { assignGivenName } from './knowledge.js';
 import { starterGroundAt } from './landscape.js';
 import { createActor, PLAYER_ID } from './world.js';
@@ -22,13 +23,15 @@ export const MISSING_BELONGING_LOCATIONS = {
   reedSideStore: { x: 11, z: 22.5 },
 } as const;
 
-export const MARA_STARTING_BELIEFS =
-  '# Beliefs\nI left my red-stitched satchel at the Mending Clearing work spot beside the rough stone before a walk; when I returned, the bag was gone and a torn red fastening strap with blue cross-stitching remained. The satchel has “Mara Reed” stitched on the exterior flap and held two lengths of cord when I left it. I saw Tavin carrying a bundle earlier, though I did not see him take my satchel, and I suspect a connection.';
+export const MARA_STARTING_BELIEFS = BASE_PEOPLE.mara.startingKnowledge.generalBeliefs;
+export const TAVIN_STARTING_BELIEFS = BASE_PEOPLE.tavin.startingKnowledge.generalBeliefs;
 
-export const TAVIN_STARTING_BELIEFS =
-  '# Beliefs\nEarlier today I moved an unattended red-stitched bag from the Mending Clearing work spot beside the rough stone to the Reed-side Store beside the split stone while clearing room for my work, assuming it was shared equipment. Its red fastening strap snagged on the rough stone edge as I lifted it, and I left a sorting note at the work spot. I neither inspected the bag’s contents nor identified its owner.';
-
-export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID): void {
+export function installMissingBelonging(
+  world: WorldState,
+  playerId = PLAYER_ID,
+  people: BasePeopleConfiguration = BASE_PEOPLE,
+  conditions?: Record<'mara' | 'tavin', { fullness: number; energy: number }>,
+): void {
   const layout = world.map.spatial!;
   const maraPoint = starterGroundAt(
     layout,
@@ -59,25 +62,37 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
   const entities: Entity[] = [
     {
       id: MARA_ID,
-      name: 'Mara Reed',
+      name: people.mara.name,
       appearance: 'study:mara-travel-coat',
       nameForm: 'proper',
-      description: MARA_IDENTITY.description,
+      description: people.mara.description,
       kind: 'npc',
       spatial: baseSpatial('person'),
       placement: worldPlacement(maraPoint, maraPoint.surfaceId),
-      actor: createActor(world, 'npc', 72, MARA_IDENTITY),
+      actor: createActor(
+        world,
+        'npc',
+        conditions?.mara.fullness ?? 72,
+        people.mara.identity,
+        conditions?.mara.energy,
+      ),
     },
     {
       id: TAVIN_ID,
-      name: 'Tavin Vale',
+      name: people.tavin.name,
       appearance: 'study:tavin-work-vest',
       nameForm: 'proper',
-      description: TAVIN_IDENTITY.description,
+      description: people.tavin.description,
       kind: 'npc',
       spatial: baseSpatial('person'),
       placement: worldPlacement(tavinPoint, tavinPoint.surfaceId),
-      actor: createActor(world, 'npc', 74, TAVIN_IDENTITY),
+      actor: createActor(
+        world,
+        'npc',
+        conditions?.tavin.fullness ?? 74,
+        people.tavin.identity,
+        conditions?.tavin.energy,
+      ),
     },
     {
       id: 'mending-clearing-marker',
@@ -140,7 +155,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
     general: {
       origin: 'authored-starting',
       subjectId: null,
-      text: MARA_STARTING_BELIEFS,
+      text: people.mara.startingKnowledge.generalBeliefs,
       revision: 1,
       evidenceIds: [],
     },
@@ -149,7 +164,7 @@ export function installMissingBelonging(world: WorldState, playerId = PLAYER_ID)
     general: {
       origin: 'authored-starting',
       subjectId: null,
-      text: TAVIN_STARTING_BELIEFS,
+      text: people.tavin.startingKnowledge.generalBeliefs,
       revision: 1,
       evidenceIds: [],
     },

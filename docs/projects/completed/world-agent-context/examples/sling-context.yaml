@@ -11,14 +11,14 @@ capability:
   id: base:swing
   version: 1
   name: Stone-throwing sling
-  support: A new recipe can be designed within this native launcher family.
-  acts_on: A perceived living animal within the launcher's reach.
+  support: A new recipe can be designed within this native ranged weapon family.
+  acts_on: A perceived living animal within the ranged weapon's reach.
   requires:
     - The crafter knows the installed recipe and has its material inputs.
-    - Hunting needs an accessible launcher and compatible carried stone ammunition.
+    - Hunting needs an accessible ranged weapon and compatible carried stone ammunition.
   crafting:
     work_unit: simulation seconds
-    effect: Consume the specified inputs when crafting starts; produce one launcher when work completes.
+    effect: Consume the specified inputs when crafting starts; produce one ranged weapon when work completes.
     interruption: Consumed inputs are not refunded when crafting is interrupted.
   shot:
     work_seconds: 18
@@ -48,10 +48,10 @@ material_rules:
   cross_field_rule: At most 20 material units total across roles.
   note: These are material definitions, not a claim about current inventory quantities.
 output_rules:
-  kind: launcher
+  native_component: rangedWeapon
   mechanism: swing
   ammunition_kind: stone
   required_roles: [binding, pouch]
   field_bounds: The selected swing submission schema supplies the current numeric ranges.
-  derived_properties: The native family compiler derives supported input properties; the candidate does not submit properties, ammunition or launcher output blocks. No food, fuel or new effects.
+  derived_properties: The native family compiler derives supported input properties; the candidate does not submit properties, ammunition or ranged weapon output blocks. No food, fuel or new effects.
 completion: A ready_for_review receipt means preparation is complete. Briefly explain the tradeoff and finish.

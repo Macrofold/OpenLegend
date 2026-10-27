@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                         | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-16   |
+| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-19   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. Original foundation priority 3. [Technical design](persistent-objects-tech-design.md) defines storage and algorithms; [PO01–PO09](../../maintainers/persistent-objects.md) decomposes DF01/BW07 and coordinates INV-6/SL00. [Foundation package](foundations-1-5.md) applies.
 
@@ -50,7 +50,7 @@ The current `ownerId` field means custody and must not be migrated into a claim 
 
 ### E. Work is interrupted or contested
 
-A recipe reserves ingredients, then another request attempts to move or consume them. Current reservations and action policy decide admission, with one atomic result. Cancellation releases unused reservations; completed consumption is not refunded. A failed action cannot leave its ingredients debited and its output missing.
+A recipe reserves ingredients, then another request attempts to move or consume them. Current reservations and action policy decide admission, with one atomic result. Cancellation releases unused reservations; completed consumption is not refunded. A refused or failed atomic object transaction cannot publish only its ingredient debit. Once admitted work has consumed inputs, a later interruption follows its ordinary costs and may produce no output.
 
 Two humans pick up the last food or bag. One receives the real object; the other sees a stale/unavailable outcome. A lost response and retry cannot duplicate either the bag or its nested contents. P2 supplies current principals/control; the same mechanical transaction is used by native NPC actions.
 

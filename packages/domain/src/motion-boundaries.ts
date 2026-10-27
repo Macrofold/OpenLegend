@@ -1,5 +1,12 @@
-import { nativeResponseProfile } from './native-response.js';
-import { nativeDangerUncertainty } from './native-response-danger.js';
+import { routineSensePolicy } from './perception.js';
+import { routineObservationRelevant } from './perception-timing.js';
+import { actionHasMotion, strikeDefinition } from './strikes.js';
+import { nativeResponseProfile, nativeSensoryObserver } from './native-response.js';
+import {
+  nativeDangerUncertainty,
+  nativeDangerSource,
+  nativeResponseSightSelection,
+} from './native-response-danger.js';
 import { entityGet } from './entity-collection.js';
 import {
   canWalkSegment,
@@ -11,6 +18,7 @@ import {
   surfaceHeight,
   distance3D,
   interpolate,
+  horizontalCone,
   quadraticRoots,
   sightSweep,
   SPATIAL_LIMITS,
@@ -35,10 +43,11 @@ import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
 import { nextPerceptionWorkAt } from './perception-evidence.js';
 import { activelyParticipates } from './participation-state.js';
-import { sensesFor, SIGHT_BODY_FRACTIONS } from './perception.js';
+import { sensesFor, sightSampleSeconds, SIGHT_BODY_FRACTIONS } from './perception.js';
 import { spatialCandidates } from './spatial.js';
 import {
   bodyProfile,
+  effectiveBodyProfile,
   hasWorldPlacement,
   spatialMap,
   supportedPosition,
@@ -70,9 +79,7 @@ export function motionReach(world: WorldState, entity: Entity, seconds: number):
   if (entity.spatial.fallVelocity !== undefined) return TERMINAL_FALL_SPEED * seconds;
   if (!entity.actor?.alive || entity.actor.incapacitated) return 0;
   if (entity.actor.action)
-    return entity.actor.action.stage === 'approaching'
-      ? nativeMovementSpeed(world, entity) * seconds
-      : 0;
+    return actionHasMotion(entity.actor.action) ? nativeMovementSpeed(world, entity) * seconds : 0;
   if (entity.spatial.flight) return flightMaximumSpeed(world, entity) * seconds;
   return 0;
 }
@@ -159,6 +166,33 @@ export function nativeMotionInterval(
         );
       }
     }
+    const movingStrike = entity?.actor?.action;
+    if (
+      entity?.actor?.alive &&
+      !entity.actor.incapacitated &&
+      movingStrike?.strikeMotion &&
+      !capabilityBlocked(world, entity, 'locomotion')
+    ) {
+      const definition = strikeDefinition(
+        movingStrike.definitionId,
+        world,
+        movingStrike.weaponItemId,
+      );
+      const speed = nativeMovementSpeed(world, entity);
+      if (definition?.preparationMotion && speed > 0) {
+        // A living target can leave the recorded stance before the ordinary review.
+        // Sample within the actual contact margin, including while waiting in reach;
+        // the next boundary observes afresh, without predicting a hidden target path.
+        // A sampled route includes arrival/stopping; subdividing at its shrinking
+        // endpoint would converge on the moving stance without useful clock progress.
+        // docs/projects/first-playable-roaming-tech-design.md#moving-contact-strike
+        bound = Math.min(
+          bound,
+          Math.min(travelFor(id), definition.range - definition.preparationMotion.standOffRange) /
+            speed,
+        );
+      }
+    }
     // Only falls, flight, fleeing and small-sense wander can bound a slice; check those first.
     if (
       !entity ||
@@ -181,7 +215,7 @@ export function nativeMotionInterval(
     if (!entity.actor?.alive || entity.actor.incapacitated || entity.actor.action) continue;
     const flight = entity.spatial.flight;
     if (flight) {
-      if (flight.atRest) continue;
+      if (flight.atRest || flight.awaitingChoice) continue;
       if (flight.waitSeconds > 0) bound = Math.min(bound, flight.waitSeconds);
       else {
         const path = flightPathSeconds(world, entity, travelFor(id));
@@ -192,7 +226,7 @@ export function nativeMotionInterval(
         // game second away retries at the selected sensing cadence instead (PF13.16). So does
         // every landing on a route whose whole lap takes under a game second: such a flyer would
         // otherwise land again at every tiny slice. docs/worlds/base/time.md#spatial-fidelity
-        const cadence = travelFor(id) / route.speed;
+        const cadence = travelFor(id) / flightMaximumSpeed(world, entity);
         const held =
           path.landing &&
           path.stop < Math.min(requested, IMMINENT_LANDING_SECONDS, cadence) &&
@@ -206,9 +240,13 @@ export function nativeMotionInterval(
         bound = Math.min(bound, path.travel, held ? cadence : path.stop);
       }
     } else if (entity.animal && !entity.threat) {
-      const travel = travelFor(id);
-      const animal = entity.animal;
-      if (animalWanderRemaining(world, entity)! > TIME_EPSILON)
+      const clock = readOnlyDraftView(entity.animal.wander);
+      // A paused countdown is remaining work, not an approaching deadline. An
+      // alarm/forage wait must not slice the whole world at that frozen duration.
+      if (
+        ('dueAt' in clock || clock.running) &&
+        animalWanderRemaining(world, entity)! > TIME_EPSILON
+      )
         bound = Math.min(bound, animalWanderRemaining(world, entity)!);
     }
   }
@@ -228,7 +266,7 @@ function walkerTracks(
   seconds: number,
 ): MotionTrack[] | 'sampled' | undefined {
   const action = entity.actor?.action;
-  if (action?.stage !== 'approaching' || action.navigation || !action.path.length) return;
+  if (!actionHasMotion(action) || !action || action.navigation || !action.path.length) return;
   if (action.type !== 'move') return 'sampled';
   // The shared forecast may now span several private turns. Reuse the existing
   // complete certain-route preparation rather than a first-waypoint/start-end chord.
@@ -269,13 +307,20 @@ export function movingPointVisionRuns(
   point: MotionTrack,
   seconds: number,
 ): Run[] {
-  const radius =
-    sensesFor(world, observer).find((sense) => sense.implementation === 'vision-geometry-v1')
-      ?.radius ?? 0;
+  const vision = sensesFor(world, observer).find(
+      (sense) => sense.implementation === 'vision-geometry-v1',
+    ),
+    radius = vision?.radius ?? 0;
   return radius > 0 && activelyParticipates(observer)
     ? visionRuns(
         world,
-        { track: own, radius, eye: bodyProfile(observer).eyeHeight },
+        {
+          track: own,
+          radius,
+          eye: effectiveBodyProfile(world, observer).eyeHeight,
+          angle: vision?.fieldOfViewRadians,
+          heading: observer.spatial.heading,
+        },
         { track: point, height: 0 },
         seconds,
       )
@@ -336,7 +381,13 @@ function intervalGap(a: number, b: number): number {
 }
 function visionRuns(
   world: WorldState,
-  observer: { track: MotionTrack; radius: number; eye: number },
+  observer: {
+    track: MotionTrack;
+    radius: number;
+    eye: number;
+    angle?: number;
+    heading?: number;
+  },
   target: { track: MotionTrack; height: number },
   horizon: number,
 ): Run[] {
@@ -344,6 +395,9 @@ function visionRuns(
   const pieces = mergedCuts(observer.track, target.track);
   const cuts = [...pieces];
   const heights = SIGHT_BODY_FRACTIONS.map((f) => target.height * f);
+  const angle = observer.angle ?? 2 * Math.PI;
+  let heading = observer.heading ?? 0;
+  const cones: { until: number; accepts: ReturnType<typeof horizontalCone> }[] = [];
   // Obstacles per sample ray; each ray's own hull rejects far more shapes than their union.
   const blockers = heights.map((): SightObstacle[] => []);
   for (let i = 0; i + 1 < pieces.length; i++) {
@@ -359,6 +413,24 @@ function visionRuns(
     const r0 = { x: p0.x - f0.x, y: p0.y - f0.y, z: p0.z - f0.z };
     const dv = { x: p1.x - f1.x - r0.x, y: p1.y - f1.y - r0.y, z: p1.z - f1.z - r0.z };
     const roots: number[] = [];
+    if (angle < 2 * Math.PI) {
+      // Movement faces along each leg, then retains that heading while still,
+      // matching the authoritative positional writer. Cone edges are linear
+      // crossings of the relative path, including cones wider than a half-circle.
+      const dx = f1.x - f0.x,
+        dz = f1.z - f0.z;
+      if (Math.hypot(dx, dz) > 1e-8) heading = Math.atan2(dx, dz);
+      const accepts = horizontalCone({ x: 0, y: 0, z: 0 }, heading, angle);
+      cones.push({ until: b, accepts });
+      for (const edge of [heading - angle / 2, heading + angle / 2]) {
+        const x = Math.sin(edge),
+          z = Math.cos(edge),
+          change = x * dv.z - z * dv.x;
+        if (change) roots.push(-(x * r0.z - z * r0.x) / change);
+      }
+      const change = Math.sin(heading) * dv.x + Math.cos(heading) * dv.z;
+      if (change) roots.push(-(Math.sin(heading) * r0.x + Math.cos(heading) * r0.z) / change);
+    }
     quadraticRoots(
       dv.x * dv.x + dv.y * dv.y + dv.z * dv.z,
       2 * (r0.x * dv.x + r0.y * dv.y + r0.z * dv.z),
@@ -377,12 +449,17 @@ function visionRuns(
     if (!outside) {
       const e0 = lift(f0, observer.eye),
         e1 = lift(f1, observer.eye);
-      heights.forEach((h, k) => {
+      for (const [k, h] of heights.entries()) {
         const ray = [e0, e1, lift(p0, h), lift(p1, h)] as const;
         const sweep = sightSweep(map, ...ray);
         blockers[k]!.push(...sweep.obstacles);
         roots.push(...sweep.fractions);
-      });
+        // One sample clear throughout this linear piece proves body visibility
+        // throughout it. Other samples cannot add a sight transition; each later
+        // piece still collects every blocker it needs. Match ordinary sight's OR.
+        // docs/spatial-world.md#seeing-and-hearing-in-3d
+        if (!sweep.obstacles.length) break;
+      }
     } else countDomainWork('crossingSightPrunedPieces');
     for (const u of roots) if (u > 0 && u < 1) cuts.push(a + u * (b - a));
   }
@@ -390,6 +467,17 @@ function visionRuns(
     const f = poseAt(observer.track, t),
       p = poseAt(target.track, t);
     if (distance3D(f, p) > observer.radius) return false;
+    if (
+      cones.length &&
+      !cones
+        .find((cone) => t < cone.until)!
+        .accepts({
+          x: p.x - f.x,
+          y: p.y - f.y,
+          z: p.z - f.z,
+        })
+    )
+      return false;
     const eye = lift(f, observer.eye);
     return heights.some((h, k) => clearOf(blockers[k]!, eye, lift(p, h)));
   });
@@ -402,8 +490,8 @@ function contactRuns(
   horizon: number,
 ): Run[] {
   const map = spatialMap(world);
-  const a = bodyProfile(first.entity),
-    b = bodyProfile(second.entity);
+  const a = effectiveBodyProfile(world, first.entity),
+    b = effectiveBodyProfile(world, second.entity);
   const tolerance = SPATIAL_LIMITS.epsilon,
     reach = a.radius + b.radius + tolerance;
   const pieces = mergedCuts(first.track, second.track);
@@ -480,8 +568,8 @@ function reachRuns(
   horizon: number,
 ): Run[] {
   const map = spatialMap(world),
-    a = bodyProfile(first.entity).interactionHeight,
-    b = bodyProfile(second.entity).interactionHeight;
+    a = effectiveBodyProfile(world, first.entity).interactionHeight,
+    b = effectiveBodyProfile(world, second.entity).interactionHeight;
   const pieces = mergedCuts(first.track, second.track),
     cuts = [...pieces],
     blockers: SightObstacle[] = [];
@@ -579,6 +667,8 @@ interface BodyCertificate {
   ambient: boolean;
   object: boolean;
   radius: number;
+  angle: number;
+  heading: number;
   touch: boolean;
   height: number;
   bodyRadius: number;
@@ -688,11 +778,13 @@ function bodyCertificate(
   actors: ReadonlySet<string>,
   ambient: ReadonlySet<string>,
 ): BodyCertificate {
-  const body = bodyProfile(entity);
+  const body = effectiveBodyProfile(world, entity);
   const alive = !!entity.actor?.alive,
     memory = hasMemory(entity);
-  const nativeResponse = entity.actor?.controller === 'native' && !!entity.animal?.episode;
+  const nativeResponse = nativeSensoryObserver(entity);
   const senses = alive && (memory || nativeResponse) ? sensesFor(world, entity) : [];
+  const vision = senses.find((s) => s.implementation === 'vision-geometry-v1');
+  const angle = vision?.fieldOfViewRadians ?? 2 * Math.PI;
   return {
     alive,
     incapacitated: !!entity.actor?.incapacitated,
@@ -705,8 +797,12 @@ function bodyCertificate(
     actor: actors.has(entity.id),
     ambient: ambient.has(entity.id),
     object: !entity.actor && !entity.animal,
-    radius: senses.find((s) => s.implementation === 'vision-geometry-v1')?.radius ?? 0,
-    touch: senses.some((s) => s.implementation === 'body-contact-v1'),
+    radius: vision?.radius ?? 0,
+    angle,
+    heading: angle < 2 * Math.PI ? entity.spatial.heading : 0,
+    touch: senses.some(
+      (s) => s.implementation === 'body-contact-v1' && s.awarenessTiming === 'crossing',
+    ),
     height: body.height,
     bodyRadius: body.radius,
     eye: body.eyeHeight,
@@ -813,7 +909,7 @@ function freshCertainTrack(
       if (ahead?.length !== 1 || !poseMoves(ahead[0]!) || !(ahead[0]!.until! > 0)) return;
       return { at: now, until: now + ahead[0]!.until!, track: ahead[0]!, body };
     }
-    if (entity.actor?.action?.stage === 'approaching') {
+    if (actionHasMotion(entity.actor?.action)) {
       const track = walkerCertainTrack(world, entity, horizon);
       return track ? { at: now, until: now + horizon, track, body } : undefined;
     }
@@ -880,6 +976,7 @@ export function reconcileCrossings(
     ambient = new Set(ambientIds);
   const bodies = new Map<string, BodyCertificate>();
   const untilByBody = new Map<string, number>();
+  let nativeSightFilters: Map<string, (source: Entity) => boolean> | undefined;
   const readBody = (id: string) => {
     const entity = entityGet(entities, id);
     if (!entity || !hasWorldPlacement(entity)) return;
@@ -907,6 +1004,19 @@ export function reconcileCrossings(
       countDomainWork('crossingRetentionEligibility');
       removePair(cache, key);
       continue;
+    }
+    if (pair.kind === 'native-sight' && a.nativeResponse && !a.memory) {
+      nativeSightFilters ??= new Map();
+      let accepts = nativeSightFilters.get(pair.ids[0]);
+      if (!accepts) {
+        accepts = nativeResponseSightSelection(world, entityGet(entities, pair.ids[0])!).accepts;
+        nativeSightFilters.set(pair.ids[0], accepts);
+      }
+      if (!accepts(entityGet(entities, pair.ids[1])!)) {
+        countDomainWork('crossingRetentionEligibility');
+        removePair(cache, key);
+        continue;
+      }
     }
     for (const id of pair.ids)
       untilByBody.set(id, Math.max(untilByBody.get(id) ?? now, pair.until));
@@ -956,6 +1066,7 @@ export function sensoryCrossingBound(
   actorIds: readonly string[],
   ambientIds: readonly string[],
   cache: CrossingCache,
+  inputMotion?: ReadonlyMap<string, MotionTrack[]>,
 ): number {
   if (!(seconds > TIME_EPSILON)) return seconds;
   const entities = readOnlyDraftView(world.entities);
@@ -970,6 +1081,64 @@ export function sensoryCrossingBound(
     if (!body) bodies.set(entity.id, (body = bodyCertificate(world, entity, actors, ambient)));
     return body;
   };
+  // Routine sight can be sampled without constructing future tracks or solving
+  // visibility crossings. Contact and deliberately chosen watch/reach obligations
+  // retain their exact owners. Absolute sample times also agree after cold load.
+  let sampled = seconds,
+    exact = false;
+  const movingOrAlarmed = [...new Set([...actorIds, ...ambientIds])].some((id) => {
+    const entity = entityGet(entities, id);
+    return (
+      entity &&
+      (inputMotion?.has(id) ||
+        entity.spatial.flight ||
+        actionHasMotion(entity.actor?.action) ||
+        entity.animal?.episode)
+    );
+  });
+  for (const id of actorIds) {
+    const entity = entityGet(entities, id);
+    if (!entity) continue;
+    const body = certificate(entity);
+    if (!body.alive || !body.active || !body.perceiving) continue;
+    const cadence = sightSampleSeconds(world, entity),
+      policy = routineSensePolicy(world, entity),
+      contact = policy.contact,
+      observing = routineObservationRelevant(world, entity);
+    // A saved channel clock still owes its next check after movement stops.
+    // Quiet native animals without a sampled observation retain idle suspension.
+    if (
+      contact?.mode === 'sampled' &&
+      contact.seconds &&
+      observing &&
+      (movingOrAlarmed || entity.sensoryProgress?.incidentalContact)
+    ) {
+      const at = entity.sensoryProgress?.incidentalContact?.nextAt ?? now + contact.seconds;
+      sampled = Math.min(sampled, Math.max(TIME_EPSILON, at - now));
+    }
+    exact ||=
+      body.touch ||
+      (body.radius > 0 && cadence === undefined) ||
+      Object.values(entity.actor?.encounters?.pairs ?? {}).some((pair) => !!pair.watch) ||
+      (entity.actor?.agency.plan?.activity?.control?.kind === 'finite' &&
+        !!entity.actor.agency.plan.activity.control.stopWithin);
+    if (
+      cadence &&
+      body.radius > 0 &&
+      observing &&
+      (movingOrAlarmed ||
+        (policy.sight?.mode === 'cadence' && entity.sensoryProgress?.routineSight))
+    ) {
+      let at =
+        policy.sight?.mode === 'cadence'
+          ? (entity.sensoryProgress?.routineSight?.nextAt ?? now + cadence)
+          : (Math.floor(now / cadence) + 1) * cadence;
+      if (policy.sight?.mode !== 'cadence' && at - now <= TIME_EPSILON) at += cadence;
+      sampled = Math.min(sampled, Math.max(TIME_EPSILON, at - now));
+    }
+  }
+  if (!exact) return Math.max(TIME_EPSILON, sampled);
+  seconds = sampled;
   // A body that left its predicted track invalidates everything derived from it.
   for (const [id, certain] of cache.tracks) {
     const entity = entityGet(entities, id);
@@ -991,6 +1160,12 @@ export function sensoryCrossingBound(
   let growingNativeRegion = false;
   for (const id of new Set([...ambientIds, ...actorIds])) {
     const entity = entityGet(entities, id);
+    const inputTracks = inputMotion?.get(id);
+    if (inputTracks && entity) {
+      forgetCrossings(cache, [id]);
+      outcomes.set(id, inputTracks);
+      continue;
+    }
     const episode = entity?.animal?.episode,
       profile = episode && nativeResponseProfile(world, episode.profilePin);
     if (
@@ -1005,8 +1180,7 @@ export function sensoryCrossingBound(
     )
       growingNativeRegion = true;
     // Only flight, an approach or a flee can move a body continuously within the slice.
-    if (!entity || !(entity.spatial.flight || entity.actor?.action?.stage === 'approaching'))
-      continue;
+    if (!entity || !(entity.spatial.flight || actionHasMotion(entity.actor?.action))) continue;
     const body = certificate(entity);
     if (!body.alive || body.incapacitated || !body.active || !body.locomotion) continue;
     const cached = cache.tracks.get(id);
@@ -1125,9 +1299,46 @@ export function sensoryCrossingBound(
     reaches.set(id, value);
     return value;
   };
-  const index = spatialCandidates(
-    targets.map((entity) => ({ entity, position: { ...worldPosition(entity) } })),
-  );
+  const spatialTargets = targets.map((entity, order) => ({
+    entity,
+    order,
+    position: { ...worldPosition(entity) },
+  }));
+  const index = spatialCandidates(spatialTargets);
+  // Physical source eligibility is common to animals using the same installed
+  // profile. Select before the observer × candidate loop, then merge each
+  // animal's own retained sources; neither operation grants sight or evidence.
+  // All preparation expires at the end of this unchanged prediction query.
+  const dangerIndexes = new Map<
+    import('./native-response.js').NativeResponseProfile,
+    typeof index
+  >();
+  let potentialDangers: typeof spatialTargets | undefined;
+  let targetsById: Map<string, (typeof spatialTargets)[number]> | undefined;
+  let remainsBySource: Map<string, typeof spatialTargets> | undefined;
+  const retainedFor = (sourceIds: ReadonlySet<string>) => {
+    if (!sourceIds.size) return [];
+    if (!targetsById) {
+      targetsById = new Map();
+      remainsBySource = new Map();
+      for (const target of spatialTargets) {
+        targetsById.set(target.entity.id, target);
+        const original = target.entity.remains?.sourceId;
+        if (original && original !== target.entity.id) {
+          let bodies = remainsBySource.get(original);
+          if (!bodies) remainsBySource.set(original, (bodies = []));
+          bodies.push(target);
+        }
+      }
+    }
+    const selected: typeof spatialTargets = [];
+    for (const id of sourceIds) {
+      const target = targetsById.get(id);
+      if (target) selected.push(target);
+      for (const body of remainsBySource!.get(id) ?? []) selected.push(body);
+    }
+    return selected;
+  };
   const maximumReach = Math.max(0, ...targets.map((t) => reach(t.id)));
   const maximumBody = Math.max(
     0,
@@ -1201,20 +1412,57 @@ export function sensoryCrossingBound(
   };
   for (const observer of observers) {
     const body = certificate(observer.entity);
+    const nativeSources =
+      body.nativeResponse && !body.memory
+        ? nativeResponseSightSelection(world, observer.entity)
+        : undefined;
     const range =
       Math.max(observer.radius, body.bodyRadius + body.height + maximumBody) +
       reach(observer.entity.id) +
       maximumReach +
       maximumBody;
     const movingObserver = moving(observer.entity.id);
-    for (const { entity: target } of index({ ...worldPosition(observer.entity) }, range)) {
+    const position = { ...worldPosition(observer.entity) };
+    let candidates: typeof spatialTargets;
+    if (!nativeSources || nativeSources.kind === 'all' || observer.touch) {
+      candidates = index(position, range);
+    } else {
+      let common: typeof spatialTargets = [];
+      if (nativeSources.kind === 'danger') {
+        let selected = dangerIndexes.get(nativeSources.profile);
+        if (!selected) {
+          potentialDangers ??= spatialTargets.filter(({ entity }) => !!entity.actor);
+          selected = spatialCandidates(
+            potentialDangers.filter(({ entity }) => {
+              chargeWork({ tests: 1 });
+              countDomainWork('nativeResponseSharedSourceChecks');
+              return nativeDangerSource(nativeSources.profile, entity);
+            }),
+          );
+          dangerIndexes.set(nativeSources.profile, selected);
+        }
+        common = selected(position, range);
+      }
+      const known = retainedFor(nativeSources.sourceIds);
+      if (!known.length) candidates = common;
+      else {
+        candidates = [
+          ...new Map([...common, ...known].map((row) => [row.entity.id, row])).values(),
+        ];
+        candidates.sort((a, b) => a.order - b.order);
+      }
+    }
+    for (const { entity: target } of candidates) {
       if (target.id === observer.entity.id || (!movingObserver && !moving(target.id))) continue;
       const targetBody = certificate(target);
       if (
         observer.radius > 0 &&
-        (targetBody.alive ||
-          (body.nativeResponse && !!target.actor) ||
-          (targetBody.object && movingObserver))
+        sightSampleSeconds(world, observer.entity) === undefined &&
+        (nativeSources
+          ? nativeSources.accepts(target)
+          : targetBody.alive ||
+            (body.nativeResponse && !!target.actor) ||
+            (targetBody.object && movingObserver))
       )
         constrain(
           body.nativeResponse ? 'native-sight' : 'sight',
@@ -1223,7 +1471,13 @@ export function sensoryCrossingBound(
           (first, second, span) =>
             visionRuns(
               world,
-              { track: first, radius: observer.radius, eye: body.eye },
+              {
+                track: first,
+                radius: observer.radius,
+                eye: body.eye,
+                angle: body.angle,
+                heading: body.heading,
+              },
               { track: second, height: targetBody.height },
               span,
             ),
@@ -1242,7 +1496,7 @@ export function sensoryCrossingBound(
   for (const { entity: observer } of observers) {
     const episode = observer.animal?.episode,
       profile = episode && nativeResponseProfile(world, episode.profilePin);
-    if (!episode || !profile) continue;
+    if (!episode || !profile || sightSampleSeconds(world, observer) !== undefined) continue;
     const first =
       certain.get(observer.id) ?? (outcomes.has(observer.id) ? undefined : still(observer));
     for (const danger of Object.values(episode.dangers)) {
@@ -1265,7 +1519,7 @@ export function sensoryCrossingBound(
             (own, other, span) =>
               bodyDistanceRuns(
                 own,
-                bodyProfile(observer),
+                effectiveBodyProfile(world, observer),
                 other,
                 danger.extent,
                 distance - SPATIAL_LIMITS.epsilon,
@@ -1289,7 +1543,7 @@ export function sensoryCrossingBound(
           ]) {
             const runs = bodyDistanceRuns(
               own,
-              bodyProfile(observer),
+              effectiveBodyProfile(world, observer),
               other,
               extent,
               distance + uncertainty - SPATIAL_LIMITS.epsilon,
@@ -1335,7 +1589,13 @@ export function sensoryCrossingBound(
       constrain('watch-sight', observer, target, (first, second, span) =>
         visionRuns(
           world,
-          { track: first, radius: body.radius, eye: body.eye },
+          {
+            track: first,
+            radius: body.radius,
+            eye: body.eye,
+            angle: body.angle,
+            heading: body.heading,
+          },
           { track: second, height: certificate(target).height },
           span,
         ),

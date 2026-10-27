@@ -29,6 +29,17 @@ export function prepareRoutinePlan(
 ) {
   const observed = decisionObservation(service.world, actorId);
   if (!observed || observed.actor.actor?.controller !== 'npc') return;
+  const cleaning = observed.knownRecipes.find(
+    (recipe) =>
+      recipe.source.kind === 'fixed-transform' &&
+      recipe.source.definition.id === 'base:clean-fibers',
+  );
+  const twisting = observed.knownRecipes.find(
+    (recipe) =>
+      recipe.source.kind === 'fixed-transform' && recipe.source.definition.id === 'base:twist-cord',
+  );
+  if (kind === 'work' && (!cleaning || !twisting))
+    throw new Error('Routine workload requires both actual known material methods.');
   const origin = worldPosition(observed.actor);
   const resource = (definitionId: string, targetId?: string) =>
     observed.visibleEntities
@@ -67,8 +78,8 @@ export function prepareRoutinePlan(
       ? [rest!.id]
       : [
           `plan-gather:${fiber!.id}`,
-          'plan-prepare:fiber',
-          'plan-prepare:cord',
+          `plan-craft:${cleaning!.id}`,
+          `plan-craft:${twisting!.id}`,
           `plan-gather:${berries!.id}`,
         ];
   const selected = handles.map((handle) => offers.find((offer) => offer.id === handle));
@@ -127,16 +138,16 @@ export function prepareRoutinePlan(
           kind: 'invoke',
           key: `clean_${i}`,
           name: 'Prepare fibers',
-          command: 'prepare',
-          args: { preparation: { literal: 'fiber' } },
+          command: 'craft',
+          args: { recipeId: { literal: cleaning!.id } },
           outputs: [],
         },
         {
           kind: 'invoke',
           key: `cord_${i}`,
           name: 'Prepare cord',
-          command: 'prepare',
-          args: { preparation: { literal: 'cord' } },
+          command: 'craft',
+          args: { recipeId: { literal: twisting!.id } },
           outputs: [],
         },
         {

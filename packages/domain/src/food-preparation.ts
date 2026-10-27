@@ -1,3 +1,4 @@
+import { isMaterialInputRole } from './native-inputs.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { itemFor } from './objects.js';
 import { accessiblePossession } from './object-access.js';
@@ -39,9 +40,6 @@ export interface CookingPreparation {
   inputs: Record<string, string>;
 }
 export type CookCommand = Extract<Command, { type: 'cook' }>;
-export function isCookingInputRole(value: unknown): value is string {
-  return isSafeRecordId(value) && /^[a-z][a-z0-9_-]*$/.test(value);
-}
 /** A reviewed transformation includes the meanings of its referenced materials.
  * Keep cached individual pins; only compose the small dependency vector here.
  * docs/food-preparation.md#preparation-definitions-and-exact-choices */
@@ -292,21 +290,9 @@ export function validCookingInputs(value: unknown): value is Record<string, stri
     !!value &&
     typeof value === 'object' &&
     !Array.isArray(value) &&
-    Object.entries(value).every(([role, id]) => isCookingInputRole(role) && isSafeRecordId(id))
+    Object.entries(value).every(([role, id]) => isMaterialInputRole(role) && isSafeRecordId(id))
   );
 }
-/** Flatten private input identities only for the existing activity argument language.
- * The original command remains the sole executable representation. */
-export function activityCommandFields(command: Command): Record<string, unknown> {
-  if (command.type !== 'cook') return command as unknown as Record<string, unknown>;
-  const { inputs, ...fields } = command;
-  return {
-    ...fields,
-    ...Object.fromEntries(Object.entries(inputs).map(([role, id]) => [`input:${role}`, id])),
-  };
-}
-export const isCookingInputField = (field: string): boolean =>
-  field.startsWith('input:') && isCookingInputRole(field.slice(6));
 
 export function validateFoodPreparations(world: WorldState): void {
   if (
@@ -349,7 +335,7 @@ export function validateFoodPreparations(world: WorldState): void {
       definition.inputs.some(
         (input) =>
           !hasRecordFields(input, ['role', 'definitionId', 'quantity']) ||
-          !isCookingInputRole(input.role),
+          !isMaterialInputRole(input.role),
       ) ||
       definition.outputs.some((output) => !hasRecordFields(output, ['definitionId', 'quantity'])) ||
       definition.outputs.some(

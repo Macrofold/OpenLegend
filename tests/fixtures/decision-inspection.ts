@@ -96,6 +96,25 @@ export async function seedDecisionInspection(service: WorldService) {
     disposition: 'resolved',
     input: {},
   });
+  await log.save({
+    id: `${id}:provider-timing`,
+    parentId: id,
+    kind: 'LM · fixture · response',
+    startedAt: new Date(now).toISOString(),
+    status: 'completed',
+    input: {},
+    exchanges: [],
+    output: {
+      receipt: {
+        ...undispatchedReceipt(child, 'openai', now),
+        dispatched: true,
+        providerLatencyMs: 40,
+        intermediaryQueueLatencyMs: 10,
+        intermediaryRunLatencyMs: 90,
+        estimatedCostUsd: 0.001,
+      },
+    },
+  });
   await recordDecisionTiming(log, { id, decision }, 'immediate', now + 1000, 1000);
   await recordDecisionTiming(log, { id, decision }, 'final', now + 2500, 2500);
   await log.close();

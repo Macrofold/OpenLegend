@@ -1,0 +1,1223 @@
+/* Gildmoss reference component stylesheet, extracted from the final Claude Design boards
+ * (canvas version 1792999021-8ee1). Class names are the boards' own; the production
+ * implementation maps them onto the existing semantic components and tokens. One-off pieces the
+ * boards style inline are specified in tokens.json (component). The one picture link is
+ * relative to the production package's design-system folder: the parchment map is world art. */
+.kit-map-Q {
+  background-image: url(../art/world/base/map-starting-land-parchment.jpg);
+}
+
+.px {
+  image-rendering: pixelated;
+  display: block;
+  flex: none;
+}
+.ic {
+  display: block;
+  flex: none;
+  overflow: visible;
+}
+.sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+.nw {
+  white-space: nowrap;
+}
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+.world {
+  display: block;
+}
+button {
+  font: inherit;
+  color: inherit;
+}
+
+:root {
+  --g0: #0c110b;
+  --g1: #11180f;
+  --g2: #172014;
+  --g3: #1f2a1a;
+  --g4: #283420;
+  --tx: #efe8d2;
+  --tx2: #c3bda5;
+  --tx3: #9a967e;
+  --sv: #b9bdb3;
+  --gold: #dbbe7c;
+  --gl: #d0ba85;
+  --light: #efe1bb;
+  --red: #f08a76;
+  --grn: #a9cb8b;
+  --ln: rgba(208, 186, 133, 0.22);
+  --ln2: rgba(208, 186, 133, 0.42);
+  --lnh: rgba(208, 186, 133, 0.72);
+  --svl: rgba(196, 201, 190, 0.22);
+  --sel: #2c2e1d;
+}
+.sf {
+  font-family: 'Gelasio', Georgia, serif;
+  font-weight: 600;
+}
+.ui {
+  font-family: 'Figtree', system-ui, sans-serif;
+}
+.t2 {
+  color: var(--tx2);
+}
+.t3 {
+  color: var(--tx3);
+}
+.sv {
+  color: var(--sv);
+}
+.rd {
+  color: var(--red);
+}
+.gt {
+  background: linear-gradient(180deg, #f9efd8, #d0b47b);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.lab {
+  font:
+    700 12px/16px 'Figtree',
+    sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tx3);
+  white-space: nowrap;
+}
+.ic {
+  --im: rgba(9, 18, 11, 0.7);
+}
+/* surfaces: deepest olive with a little lantern light at the top and a metallic edge */
+.pan {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 10px;
+  color: var(--tx);
+  background:
+    radial-gradient(
+      ellipse 72% 52% at 50% 0%,
+      rgba(255, 222, 165, 0.15),
+      rgba(255, 222, 165, 0) 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(20, 28, 17, 0.86) 0%,
+      rgba(16, 23, 14, 0.86) 46%,
+      rgba(12, 17, 11, 0.86) 100%
+    );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 24px 56px rgba(0, 0, 0, 0.6),
+    0 2px 8px rgba(0, 0, 0, 0.5);
+}
+.pnl {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 8px;
+  color: var(--tx);
+  background:
+    radial-gradient(
+      ellipse 72% 52% at 50% 0%,
+      rgba(255, 222, 165, 0.15),
+      rgba(255, 222, 165, 0) 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(20, 28, 17, 0.86) 0%,
+      rgba(16, 23, 14, 0.86) 46%,
+      rgba(12, 17, 11, 0.86) 100%
+    );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow:
+    0 16px 40px rgba(0, 0, 0, 0.55),
+    0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.plate {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 8px;
+  color: var(--tx);
+  background:
+    radial-gradient(
+      ellipse 72% 52% at 50% 0%,
+      rgba(255, 222, 165, 0.15),
+      rgba(255, 222, 165, 0) 72%
+    ),
+    rgba(12, 17, 11, 0.84);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.hr {
+  height: 1px;
+  background: var(--svl);
+  flex: none;
+}
+.vr {
+  width: 1px;
+  background: var(--svl);
+  flex: none;
+}
+.seam {
+  position: absolute;
+  width: 1px;
+  background: var(--svl);
+}
+.kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 4px;
+  border-radius: 4px;
+  font:
+    700 12px/16px 'Figtree',
+    sans-serif;
+  color: var(--tx2);
+  box-shadow: inset 0 0 0 1px var(--ln2);
+  background: rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+}
+/* buttons: Wealdcrest's colours; the primary is a solid gold fill */
+.btn {
+  position: relative;
+  box-sizing: border-box;
+  height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font:
+    600 14px/20px 'Figtree',
+    sans-serif;
+  color: var(--tx);
+  background: var(--g2);
+  cursor: pointer;
+  white-space: nowrap;
+  flex: none;
+  box-shadow: inset 0 0 0 1px var(--ln2);
+}
+.btn.cmp {
+  height: 28px;
+  padding: 0 8px;
+  font-size: 13px;
+}
+.btn.ib {
+  width: 32px;
+  padding: 0;
+}
+.btn.ib.cmp {
+  width: 28px;
+}
+.btn.qt {
+  background: transparent;
+  box-shadow: none;
+  color: var(--tx2);
+}
+.btn.pri {
+  color: #211a0b;
+  background: #e9c264;
+  box-shadow: inset 0 0 0 1px #be933a;
+}
+.btn.pri .ic {
+  --im: rgba(255, 236, 196, 0.6);
+}
+.btn.hv {
+  background: var(--g3);
+  box-shadow: inset 0 0 0 1px var(--lnh);
+}
+.btn.qt.hv {
+  background: rgba(239, 232, 210, 0.06);
+  box-shadow: none;
+}
+.btn.pri.hv {
+  background: #f0cd77;
+  box-shadow: inset 0 0 0 1px #be933a;
+}
+.btn.pr {
+  background: #0e140c;
+  box-shadow: inset 0 0 0 1px var(--ln2);
+}
+.btn.pri.pr {
+  background: #d8aa46;
+  box-shadow: inset 0 0 0 1px #be933a;
+}
+.btn.fc {
+  outline: 2px solid #f4ead1;
+  outline-offset: 2px;
+}
+.btn.dis {
+  color: #8e8a72;
+  background: #121810;
+  box-shadow: inset 0 0 0 1px rgba(196, 201, 190, 0.12);
+  cursor: not-allowed;
+}
+.btn.un {
+  color: var(--tx3);
+  background: #141a11;
+  box-shadow: inset 0 0 0 1px rgba(196, 201, 190, 0.16);
+  cursor: not-allowed;
+}
+.btn.on {
+  background: var(--sel);
+  box-shadow: none;
+  color: var(--tx);
+}
+.btn.on::before,
+.stab.on::before,
+.nrow.on::before,
+.mrow.op::before,
+.lrow.on::before,
+.hot.on::before,
+.crow.on::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    #f0e5c7 0%,
+    #fffaee 8%,
+    #dac898 20%,
+    #b9a26f 50%,
+    #d1bd8b 74%,
+    #957f56 100%
+  );
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+/* inputs */
+.fld {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 6px;
+  background: #0a0f09;
+  box-shadow:
+    inset 0 0 0 1px var(--ln2),
+    inset 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.fld.fc {
+  box-shadow:
+    inset 0 0 0 1px #f4ead1,
+    0 0 0 2px rgba(244, 234, 209, 0.35);
+}
+.fld > input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--tx);
+  font:
+    500 14px/20px 'Figtree',
+    sans-serif;
+  outline: none;
+}
+.fld > input::placeholder {
+  color: var(--tx3);
+}
+.inp {
+  box-sizing: border-box;
+  height: 32px;
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 12px;
+  background: #0a0f09;
+  color: var(--tx);
+  font:
+    500 14px/20px 'Figtree',
+    sans-serif;
+  box-shadow:
+    inset 0 0 0 1px var(--ln2),
+    inset 0 2px 6px rgba(0, 0, 0, 0.45);
+}
+.inp::placeholder {
+  color: var(--tx3);
+}
+.inp.fc {
+  box-shadow:
+    inset 0 0 0 1px #f4ead1,
+    0 0 0 2px rgba(244, 234, 209, 0.35);
+}
+textarea.inp {
+  display: block;
+  height: 64px;
+  padding: 12px;
+  resize: none;
+  line-height: 20px;
+  font-family: 'Figtree', sans-serif;
+}
+/* tabs: gold metal for the chosen one, silver for the rest */
+.tabs {
+  display: flex;
+  gap: 4px;
+}
+.tab {
+  position: relative;
+  height: 40px;
+  padding: 0 16px;
+  border: 0;
+  background: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  font:
+    600 15px/20px 'Figtree',
+    sans-serif;
+  color: var(--sv);
+  white-space: nowrap;
+}
+.tab.on::after {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: 0;
+  height: 2px;
+  border-radius: 1px;
+  background: linear-gradient(
+    90deg,
+    #957f56 0%,
+    #b9a26f 22%,
+    #fffaee 50%,
+    #b9a26f 78%,
+    #957f56 100%
+  );
+}
+.stabs {
+  display: flex;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 8px;
+  background: #0a0f09;
+  box-shadow: inset 0 0 0 1px var(--svl);
+}
+.stab {
+  position: relative;
+  flex: 1 1 auto;
+  height: 28px;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font:
+    600 13px/16px 'Figtree',
+    sans-serif;
+  color: var(--sv);
+  white-space: nowrap;
+  padding: 0 12px;
+}
+.stab.on {
+  background: var(--sel);
+}
+.nrow,
+.crow {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  padding: 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  cursor: pointer;
+  font:
+    500 14px/20px 'Figtree',
+    sans-serif;
+  color: var(--sv);
+  white-space: nowrap;
+  text-align: left;
+}
+.nrow .lbl,
+.crow .lbl {
+  flex: 1;
+  min-width: 0;
+}
+.nrow .n,
+.crow .n {
+  font:
+    600 12px/16px 'Figtree',
+    sans-serif;
+  color: var(--tx3);
+  font-variant-numeric: tabular-nums;
+}
+.nrow.on,
+.crow.on {
+  background: var(--sel);
+}
+.lrow {
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  padding: 8px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: none;
+  cursor: pointer;
+  text-align: left;
+  color: var(--tx);
+}
+.lrow.on {
+  background: var(--sel);
+}
+/* slots: Flaxlight's square slot; a metallic ring when chosen */
+.slot {
+  position: relative;
+  box-sizing: border-box;
+  width: 48px;
+  height: 48px;
+  border: 0;
+  padding: 0;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+  background: radial-gradient(circle at 50% 38%, #1c2617, #121a10 70%);
+  box-shadow:
+    inset 0 0 0 1px rgba(196, 201, 190, 0.16),
+    inset 0 -8px 16px rgba(0, 0, 0, 0.24);
+}
+.slot.empty {
+  background: #0e140c;
+  box-shadow: inset 0 0 0 1px rgba(196, 201, 190, 0.09);
+  cursor: default;
+}
+.slot.hv {
+  background: radial-gradient(circle at 50% 38%, #26311d, #161f12 72%);
+  box-shadow: inset 0 0 0 1px var(--lnh);
+}
+.slot.sel {
+  background: radial-gradient(circle at 50% 40%, #373622, #141b0f 76%);
+  box-shadow: none;
+}
+.slot.sel::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    135deg,
+    #f0e5c7 0%,
+    #fffaee 8%,
+    #dac898 20%,
+    #b9a26f 50%,
+    #d1bd8b 74%,
+    #957f56 100%
+  );
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.slot.open {
+  box-shadow: inset 0 0 0 1px var(--lnh);
+}
+.slot.miss {
+  background: radial-gradient(
+    circle at 50% 38%,
+    rgba(222, 92, 74, 0.32),
+    rgba(222, 92, 74, 0.14) 72%
+  );
+  box-shadow: inset 0 0 0 1px rgba(242, 139, 120, 0.55);
+}
+.slot.ghost {
+  background: #0e140c;
+  box-shadow: inset 0 0 0 1px var(--lnh);
+}
+.slot.ghost > .px {
+  opacity: 0.3;
+}
+.slot.drop {
+  background: #18210f;
+  box-shadow: inset 0 0 0 1px var(--gold);
+}
+.slot.eq {
+  background: #0e140c;
+  box-shadow: inset 0 0 0 1px rgba(196, 201, 190, 0.14);
+}
+.cnt {
+  position: absolute;
+  right: 4px;
+  bottom: 4px;
+  font:
+    700 12px/12px 'Figtree',
+    sans-serif;
+  color: var(--tx);
+  font-variant-numeric: tabular-nums;
+  text-shadow:
+    0 1px 1px #000,
+    0 0 3px #000;
+}
+.cnt.need {
+  color: var(--red);
+}
+.slot .hand {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+}
+.slot .mk {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+/* menus: Wealdcrest's list; 8 px top and bottom, content on a 12 px edge */
+.menu {
+  position: absolute;
+  box-sizing: border-box;
+  padding: 8px 0;
+  display: flex;
+  flex-direction: column;
+}
+.mhead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 4px 12px 8px;
+}
+.well {
+  position: relative;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: radial-gradient(circle at 50% 40%, #22301b, #0e140c 75%);
+  box-shadow: inset 0 0 0 1px var(--svl);
+}
+.mrow {
+  position: relative;
+  box-sizing: border-box;
+  height: 32px;
+  margin: 0 4px;
+  padding: 0 8px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font:
+    500 14px/20px 'Figtree',
+    sans-serif;
+  color: var(--tx);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.mrow .lead {
+  width: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.mrow .lead.sp {
+  width: 40px;
+}
+.mrow .lbl {
+  flex: 1;
+  min-width: 0;
+}
+.mrow .tr {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--tx3);
+  font:
+    600 12px/16px 'Figtree',
+    sans-serif;
+}
+.mrow.hv {
+  background: var(--g3);
+}
+.mrow.op {
+  background: var(--sel);
+}
+.mrow.un {
+  height: auto;
+  min-height: 32px;
+  align-items: flex-start;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  cursor: not-allowed;
+}
+.mrow.un .lbl {
+  color: var(--tx3);
+}
+.mrow.un .lead {
+  opacity: 0.45;
+}
+.why {
+  display: block;
+  font:
+    500 12px/16px 'Figtree',
+    sans-serif;
+  color: var(--red);
+  white-space: nowrap;
+}
+.mlab {
+  box-sizing: border-box;
+  height: 32px;
+  padding: 12px 12px 4px;
+}
+.msep {
+  height: 1px;
+  margin: 4px 12px;
+  background: var(--svl);
+  flex: none;
+}
+/* meters */
+.bar {
+  position: relative;
+  height: 6px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: inset 0 0 0 1px rgba(196, 201, 190, 0.14);
+  overflow: hidden;
+  flex: none;
+}
+.bar > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 3px;
+}
+/* status icons: the border is the timer */
+.st {
+  position: relative;
+  box-sizing: border-box;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  background: #0d130b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+.st > svg.tm {
+  position: absolute;
+  left: 0;
+  top: 0;
+}
+.st.rd {
+  border-radius: 50%;
+}
+/* the hotbar: thin dividers between the quick slots, Speak / Act / Combat and the panel buttons; no background */
+.hbsep {
+  width: 1px;
+  height: 40px;
+  flex: none;
+  background: linear-gradient(
+    180deg,
+    #957f56 0%,
+    #b9a26f 22%,
+    #fffaee 50%,
+    #b9a26f 78%,
+    #957f56 100%
+  );
+}
+/* night: amber lantern light, and a soft, wide firelight glow on highlighted elements (none by day) */
+.night .pan,
+.night .pnl,
+.night .tip {
+  background:
+    radial-gradient(
+      ellipse 96% 80% at 50% 0%,
+      rgba(255, 186, 120, 0.15),
+      rgba(255, 186, 120, 0) 78%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(20, 28, 17, 0.86) 0%,
+      rgba(16, 23, 14, 0.86) 46%,
+      rgba(12, 17, 11, 0.86) 100%
+    );
+}
+.night .plate {
+  background:
+    radial-gradient(
+      ellipse 96% 80% at 50% 0%,
+      rgba(255, 186, 120, 0.15),
+      rgba(255, 186, 120, 0) 78%
+    ),
+    rgba(12, 17, 11, 0.84);
+}
+.night .btn.pri {
+  box-shadow:
+    inset 0 0 0 1px #be933a,
+    0 0 8px rgba(255, 186, 120, 0.24),
+    0 0 36px rgba(255, 168, 92, 0.2);
+}
+.night .btn.on,
+.night .stab.on,
+.night .nrow.on,
+.night .crow.on,
+.night .lrow.on,
+.night .mrow.op {
+  box-shadow:
+    0 0 8px rgba(255, 168, 92, 0.15),
+    0 0 32px rgba(255, 168, 92, 0.15);
+}
+.night .hot.on {
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.35),
+    0 0 8px rgba(255, 168, 92, 0.15),
+    0 0 36px rgba(255, 168, 92, 0.2);
+}
+.night .slot.sel {
+  box-shadow:
+    0 0 8px rgba(255, 168, 92, 0.15),
+    0 0 32px rgba(255, 168, 92, 0.2);
+}
+.night .tab.on::after {
+  box-shadow:
+    0 0 12px rgba(255, 186, 120, 0.24),
+    0 0 28px rgba(255, 168, 92, 0.2);
+}
+.night .fld.fc,
+.night .inp.fc {
+  box-shadow:
+    inset 0 0 0 1px #f4ead1,
+    0 0 0 2px rgba(244, 234, 209, 0.35),
+    0 0 28px rgba(255, 168, 92, 0.15);
+}
+/* over the world: text with a drop shadow, nothing behind it */
+.ow {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.ow-name {
+  font-family: 'Gelasio', Georgia, serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 20px;
+  color: #efe1bb;
+  white-space: nowrap;
+  text-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.7);
+}
+.ow-st {
+  font:
+    500 13px/18px 'Figtree',
+    sans-serif;
+  color: #f3efe3;
+  white-space: nowrap;
+  text-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.7);
+}
+.ow-ch {
+  font:
+    700 15px/20px 'Figtree',
+    sans-serif;
+  color: #ff9e8a;
+  white-space: nowrap;
+  text-shadow:
+    0 1px 1px rgba(0, 0, 0, 0.95),
+    0 2px 4px rgba(0, 0, 0, 0.7);
+}
+/* chips and pills */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 28px;
+  padding: 0 8px;
+  border-radius: 6px;
+  font:
+    500 13px/16px 'Figtree',
+    sans-serif;
+  color: var(--tx);
+  background: var(--g2);
+  box-shadow: inset 0 0 0 1px var(--svl);
+  white-space: nowrap;
+}
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 10px;
+  font:
+    600 12px/16px 'Figtree',
+    sans-serif;
+  white-space: nowrap;
+  color: var(--tx2);
+  background: rgba(239, 232, 210, 0.07);
+  box-shadow: inset 0 0 0 1px rgba(239, 232, 210, 0.14);
+}
+/* the hotbar: tiles only, no panel behind them */
+.hot {
+  position: relative;
+  box-sizing: border-box;
+  width: 52px;
+  height: 52px;
+  border-radius: 6px;
+  border: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+  background: rgba(10, 15, 9, 0.82);
+  box-shadow:
+    inset 0 0 0 1px rgba(196, 201, 190, 0.26),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.hot.empty {
+  background: rgba(10, 15, 9, 0.62);
+  box-shadow: inset 0 0 0 1px rgba(196, 201, 190, 0.16);
+  cursor: default;
+}
+.hot.on {
+  background: var(--sel);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+.hot.sm {
+  width: 40px;
+  height: 40px;
+}
+.hot .n {
+  position: absolute;
+  left: 4px;
+  top: 4px;
+  font:
+    700 12px/12px 'Figtree',
+    sans-serif;
+  color: var(--sv);
+  text-shadow: 0 1px 2px #000;
+}
+.hot .cnt {
+  right: 4px;
+  bottom: 4px;
+}
+/* tooltips */
+.tip {
+  position: absolute;
+  box-sizing: border-box;
+  border-radius: 8px;
+  padding: 12px;
+  color: var(--tx);
+  background:
+    radial-gradient(
+      ellipse 72% 52% at 50% 0%,
+      rgba(255, 222, 165, 0.15),
+      rgba(255, 222, 165, 0) 72%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(20, 28, 17, 0.86) 0%,
+      rgba(16, 23, 14, 0.86) 46%,
+      rgba(12, 17, 11, 0.86) 100%
+    );
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.tip::before {
+}
+.tip .tt {
+  font-family: 'Gelasio', Georgia, serif;
+  font-weight: 600;
+  font-size: 16px;
+  line-height: 20px;
+}
+.tip .td {
+  font:
+    500 13px/18px 'Figtree',
+    sans-serif;
+  color: var(--tx2);
+}
+/* progress */
+.pg {
+  position: relative;
+  display: block;
+  height: 6px;
+  border-radius: 2px;
+  background: rgba(0, 0, 0, 0.6);
+  box-shadow: inset 0 0 0 1px rgba(196, 201, 190, 0.16);
+  overflow: hidden;
+}
+.pg > i {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #bea875, #eadcb6 80%, #f7edd3);
+}
+.bar {
+  background: rgba(0, 0, 0, 0.9);
+}
+/* the hovered menu row is highlighted like the open row: the chosen fill and a gold edge */
+.mrow.hv {
+  background: var(--sel);
+}
+.mrow.hv::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    135deg,
+    #f0e5c7 0%,
+    #fffaee 8%,
+    #dac898 20%,
+    #b9a26f 50%,
+    #d1bd8b 74%,
+    #957f56 100%
+  );
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.night .mrow.hv {
+  box-shadow:
+    0 0 8px rgba(255, 168, 92, 0.15),
+    0 0 32px rgba(255, 168, 92, 0.15);
+}
+.hot.hv {
+  background: rgba(31, 42, 26, 0.9);
+  box-shadow:
+    inset 0 0 0 1px var(--lnh),
+    0 4px 12px rgba(0, 0, 0, 0.35);
+}
+/* the Events quick-view */
+.ev-view {
+  position: absolute;
+  left: 12px;
+  right: 28px;
+  top: 12px;
+  bottom: 12px;
+  overflow: hidden;
+}
+.ev-log {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.ev-row {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+.ev-row .tm {
+  width: 40px;
+  flex: none;
+  font:
+    600 12px/20px 'Figtree',
+    sans-serif;
+  color: var(--tx3);
+  font-variant-numeric: tabular-nums;
+}
+.ev-row .kd {
+  width: 16px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  flex: none;
+}
+.ev-row .ln {
+  flex: 1;
+  min-width: 0;
+  font:
+    500 14px/20px 'Figtree',
+    sans-serif;
+  color: var(--tx);
+}
+.ev-track {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  bottom: 12px;
+  width: 4px;
+  border-radius: 2px;
+  background: rgba(239, 232, 210, 0.1);
+}
+.ev-thumb {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 48px;
+  border-radius: 2px;
+  background: rgba(239, 232, 210, 0.42);
+}
+/* round 8g: while open, the panel has a header — its label and the minimize button — and the list starts beneath it */
+.ev-hd {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 12px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ev-open .ev-view,
+.ev-open .ev-track {
+  top: 52px;
+}
+/* round 8h: the Narrator as a caption, like a film subtitle — the line centred in Gelasio, the narrator's own voice; a thin gold line under it is the time left, shortening toward the centre; the X only on hover */
+.nar-in {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 32px;
+}
+.nar-in > p {
+  margin: 0;
+  font:
+    400 20px/28px 'Gelasio',
+    Georgia,
+    serif;
+  color: var(--tx);
+  text-align: center;
+}
+.nar.it .nar-in > p {
+  font-style: italic;
+}
+.nar-t {
+  align-self: stretch;
+  height: 2px;
+  display: flex;
+  justify-content: center;
+}
+.nar-t > i {
+  display: block;
+  height: 2px;
+  border-radius: 1px;
+  background: #dbbe7c;
+}
+.nar > .nar-x {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+}
+.nar.fade {
+  opacity: 0.4;
+}
+/* the reserved special shine: rewards, awards, achievements and special items only (from the component sheet) */
+.spc {
+  position: relative;
+}
+.spc::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: linear-gradient(
+    180deg,
+    #dac898 0,
+    #b9a26f calc(30% - min(16px, 20%)),
+    #fffaee calc(30% - 4px),
+    #fffff8 calc(30% - 1px),
+    #fffff8 calc(30% + 1px),
+    #fffaee calc(30% + 4px),
+    #b9a26f calc(30% + min(16px, 20%)),
+    #957f56 100%
+  );
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(#000 0 0) content-box exclude,
+    linear-gradient(#000 0 0);
+}
+.slot.spc {
+  background: radial-gradient(circle at 50% 40%, #3b3925, #141b0f 76%);
+  box-shadow: none;
+}
+.spc-seal {
+  position: relative;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: radial-gradient(circle at 50% 40%, #3f3d27, #10170e 76%);
+}

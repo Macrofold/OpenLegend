@@ -5,7 +5,15 @@ import {
   type ArtifactReference,
 } from '@open-legend/assets';
 import { createHash, randomUUID } from 'node:crypto';
-import { createReadStream } from 'node:fs';
+import { createReadStream, createWriteStream } from 'node:fs';
+import type { Writable } from 'node:stream';
+import {
+  createNetworkOwner,
+  NetworkError,
+  type NetworkOperation,
+  type NetworkOwner,
+} from '@open-legend/network';
+import { ownNodeStream, waitForOperationResources } from '@open-legend/network/node';
 import {
   chmod,
   lstat,
@@ -43,7 +51,8 @@ interface CachedFile {
 interface Transfer {
   reference: ArtifactReference;
   owner: string;
-  status: 'queued' | 'active' | 'failed';
+  status: 'queued' | 'active' | 'stopping' | 'failed';
+  attempt: string;
   interests: Record<string, number>;
 }
 interface CacheState {
@@ -54,14 +63,16 @@ interface CacheState {
 }
 export interface AssetCacheOptions extends CacheLimits {
   root: string;
+  transferTimeoutMs?: number;
 }
 export interface AssetCacheLease {
   path: string;
   reference: ArtifactReference;
   release(): Promise<void>;
 }
-/** Trusted exact-transfer adapters honor cancellation and never write beyond reference.bytes. */
-type FetchAsset = (temporaryPath: string, signal: AbortSignal) => Promise<void>;
+/** The exact adapter supplies its source through the reviewed streaming boundary.
+ * Cache exclusively owns the writable file, its pathname and publication. */
+export type FetchAsset = (operation: NetworkOperation, sink: Writable) => Promise<void>;
 const ownerPattern = /^[1-9][0-9]*-[a-f0-9-]{36}$/;
 const keyPattern = /^[a-f0-9]{64}$/;
 const own = (value: object, key: string) => Object.hasOwn(value, key);
@@ -141,8 +152,10 @@ function parseState(value: unknown, limits: CacheLimits): CacheState {
     if (
       !keyPattern.test(key) ||
       !record(transfer) ||
-      !['queued', 'active', 'failed'].includes(String(transfer['status'])) ||
+      !['queued', 'active', 'stopping', 'failed'].includes(String(transfer['status'])) ||
       typeof transfer['owner'] !== 'string' ||
+      typeof transfer['attempt'] !== 'string' ||
+      !/^[a-f0-9-]{36}$/.test(transfer['attempt']) ||
       own(value['files'], key)
     )
       throw new Error('Malformed asset-cache transfer.');
@@ -164,11 +177,15 @@ function parseState(value: unknown, limits: CacheLimits): CacheState {
 export class AssetCache {
   readonly root: string;
   private readonly limits: CacheLimits;
+  private readonly network: NetworkOwner;
+  private readonly readerNetwork: NetworkOwner;
+  private readonly transferTimeoutMs: number;
   private readonly owner = `${process.pid}-${randomUUID()}`;
   private readonly closing = new AbortController();
   private readonly readers = new Map<string, string>();
   private readonly readerCounts = new Map<string, number>();
   private readonly workers = new Map<string, Promise<void>>();
+  private readonly workerObservations = new Map<string, Promise<void>>();
   private readonly transferWaiters = new Set<() => void>();
   private transferSlots = 0;
   private readonly failures = new Map<string, unknown>();
@@ -179,6 +196,9 @@ export class AssetCache {
 
   constructor(options: AssetCacheOptions) {
     this.root = resolve(options.root);
+    this.transferTimeoutMs = options.transferTimeoutMs ?? 300_000;
+    if (!Number.isSafeInteger(this.transferTimeoutMs) || this.transferTimeoutMs < 1)
+      throw new Error('Asset transfer deadline must be a positive safe integer.');
     this.limits = {
       maxBytes: options.maxBytes,
       maxEntries: options.maxEntries,
@@ -190,6 +210,14 @@ export class AssetCache {
     }
     if (options.maxConcurrent > options.maxEntries)
       throw new Error('Cache concurrency cannot exceed its entry allowance.');
+    this.network = createNetworkOwner({
+      role: 'server-asset-transfer',
+      capacity: options.maxConcurrent,
+    });
+    this.readerNetwork = createNetworkOwner({
+      role: 'asset-cache-readers',
+      capacity: options.maxEntries,
+    });
     if (options.maxEntries > Math.floor(Number.MAX_SAFE_INTEGER / 4096))
       throw new Error('Cache metadata allowance exceeds supported integer accounting.');
   }
@@ -197,8 +225,8 @@ export class AssetCache {
   private file(key: string) {
     return join(this.root, 'files', key);
   }
-  private partial(key: string, owner: string) {
-    return join(this.root, 'partial', `${key}-${owner}`);
+  private partial(key: string, owner: string, attempt: string) {
+    return join(this.root, 'partial', `${key}-${owner}-${attempt}`);
   }
   private async remove(path: string) {
     await unlink(path).catch((error: unknown) => {
@@ -336,7 +364,7 @@ export class AssetCache {
       for (const owner of Object.keys(transfer.interests))
         if (dead.has(owner)) delete transfer.interests[owner];
       if (dead.has(transfer.owner)) {
-        await this.remove(this.partial(key, transfer.owner));
+        await this.remove(this.partial(key, transfer.owner, transfer.attempt));
         // A process may have died after rename but before committing the verified record.
         await this.remove(this.file(key));
         delete state.transfers[key];
@@ -435,7 +463,7 @@ export class AssetCache {
     let remainingReservations = 0;
     for (const [key, transfer] of Object.entries(state.transfers)) {
       if (transfer.status === 'failed') continue;
-      const written = await lstat(this.partial(key, transfer.owner))
+      const written = await lstat(this.partial(key, transfer.owner, transfer.attempt))
         .then((file) => file.size)
         .catch((error: unknown) => {
           if (codeIs(error, 'ENOENT')) return 0;
@@ -448,12 +476,19 @@ export class AssetCache {
   }
   private startWorker(key: string, fetch: FetchAsset) {
     if (this.workers.has(key)) return;
-    const work = this.withTransferSlot(() => this.runWorker(key, fetch))
+    let observed = () => {};
+    const observation = new Promise<void>((resolve) => {
+      observed = resolve;
+    });
+    this.workerObservations.set(key, observation);
+    const work = this.withTransferSlot(() => this.runWorker(key, fetch, observed))
       .catch((error: unknown) => {
         this.failures.set(key, error);
       })
       .finally(() => {
+        observed();
         this.workers.delete(key);
+        this.workerObservations.delete(key);
         if (!this.interestCount(key)) this.failures.delete(key);
       });
     this.workers.set(key, work);
@@ -489,20 +524,21 @@ export class AssetCache {
       if (abort) signal.removeEventListener('abort', abort);
     }
   }
-  private async runWorker(key: string, fetch: FetchAsset) {
+  private async runWorker(key: string, fetch: FetchAsset, observed: () => void) {
     let transfer: Transfer | undefined;
     for (;;) {
       const admission = await this.withState(async (state) => {
         const current = state.transfers[key];
         if (!current || current.owner !== this.owner || current.status === 'failed') return 'gone';
         if (this.closed || !count(current.interests)) {
-          await this.remove(this.partial(key, current.owner));
+          await this.remove(this.partial(key, current.owner, current.attempt));
           delete state.transfers[key];
           return 'gone';
         }
         if (
-          Object.values(state.transfers).filter((entry) => entry.status === 'active').length >=
-          this.limits.maxConcurrent
+          Object.values(state.transfers).filter(
+            (entry) => entry.status === 'active' || entry.status === 'stopping',
+          ).length >= this.limits.maxConcurrent
         )
           return 'waiting';
         current.status = 'active';
@@ -515,7 +551,7 @@ export class AssetCache {
     }
     if (!transfer) throw new Error('Asset-cache transfer admission was lost.');
     const admitted = transfer;
-    const temporary = this.partial(key, this.owner);
+    const temporary = this.partial(key, this.owner, admitted.attempt);
     const controller = new AbortController();
     const monitoring = new AbortController();
     const monitor = (async () => {
@@ -538,40 +574,121 @@ export class AssetCache {
     })().catch((error: unknown) => {
       if (!monitoring.signal.aborted) controller.abort(error);
     });
+    let operation: NetworkOperation | undefined;
+    let renamed = false;
     try {
-      await fetch(temporary, controller.signal);
-      controller.signal.throwIfAborted();
-      const before = await lstat(temporary);
-      if (!before.isFile() || before.size !== admitted.reference.bytes)
-        throw new Error('Downloaded asset size does not match its exact reference.');
-      const hash = createHash('sha256');
-      for await (const chunk of createReadStream(temporary, { signal: controller.signal }))
-        hash.update(chunk);
-      if (hash.digest('hex') !== admitted.reference.sha256)
-        throw new Error('Downloaded asset checksum does not match its exact reference.');
-      await chmod(temporary, 0o400);
-      await this.withState(async (state) => {
-        const current = state.transfers[key];
-        if (!current || current.owner !== this.owner || !count(current.interests))
-          throw new Error('Asset transfer was cancelled before finalization.');
-        await rename(temporary, this.file(key));
-        const file = await lstat(this.file(key));
-        state.files[key] = {
-          reference: admitted.reference,
-          stamp: { size: file.size, mtimeMs: file.mtimeMs, ctimeMs: file.ctimeMs, ino: file.ino },
-          used: Date.now(),
-          pins: current.interests,
-        };
-        delete state.transfers[key];
-      });
+      await this.network.run(
+        { timeoutMs: this.transferTimeoutMs, signal: controller.signal },
+        async (current) => {
+          operation = current;
+          current.throwIfStopped();
+          const sink = createWriteStream(temporary, { flags: 'wx', mode: 0o600 });
+          const owned = ownNodeStream(current, sink);
+          try {
+            await current.wait(
+              'body',
+              () =>
+                new Promise<void>((resolve, reject) => {
+                  const clear = () => {
+                    sink.off('open', opened);
+                    sink.off('error', failed);
+                    sink.off('close', closed);
+                  };
+                  const opened = () => {
+                    clear();
+                    resolve();
+                  };
+                  const failed = (error: Error) => {
+                    clear();
+                    reject(error);
+                  };
+                  const closed = () => {
+                    clear();
+                    reject(new Error('Asset cache sink closed before opening.'));
+                  };
+                  sink.once('open', opened);
+                  sink.once('error', failed);
+                  sink.once('close', closed);
+                }),
+            );
+            current.throwIfStopped();
+            await fetch(current, sink);
+            current.throwIfStopped();
+            await owned.closed;
+            current.throwIfStopped();
+            const before = await lstat(temporary);
+            if (!before.isFile() || before.size !== admitted.reference.bytes)
+              throw new Error('Downloaded asset size does not match its exact reference.');
+            const hash = createHash('sha256');
+            for await (const chunk of createReadStream(temporary, { signal: current.signal }))
+              hash.update(chunk);
+            current.throwIfStopped();
+            if (hash.digest('hex') !== admitted.reference.sha256)
+              throw new Error('Downloaded asset checksum does not match its exact reference.');
+            await chmod(temporary, 0o400);
+            current.throwIfStopped();
+            await this.withState(async (state) => {
+              const pending = state.transfers[key];
+              current.throwIfStopped();
+              if (
+                !pending ||
+                pending.owner !== this.owner ||
+                pending.attempt !== admitted.attempt ||
+                !count(pending.interests)
+              )
+                throw new Error('Asset transfer was cancelled before finalization.');
+              await rename(temporary, this.file(key));
+              renamed = true;
+              const file = await lstat(this.file(key));
+              // The same cross-process lock covers rename and this final fence.
+              // Once registration admits the atomic state save, that local commit
+              // may finish after observation ends; it must never be undone here.
+              try {
+                current.throwIfStopped();
+              } catch (error) {
+                await this.remove(this.file(key));
+                renamed = false;
+                throw error;
+              }
+              if (state.transfers[key] !== pending || !count(pending.interests))
+                throw new Error('Asset transfer lost final publication ownership.');
+              state.files[key] = {
+                reference: admitted.reference,
+                stamp: {
+                  size: file.size,
+                  mtimeMs: file.mtimeMs,
+                  ctimeMs: file.ctimeMs,
+                  ino: file.ino,
+                },
+                used: Date.now(),
+                pins: pending.interests,
+              };
+              delete state.transfers[key];
+            });
+          } finally {
+            owned.stop();
+            await owned.closed;
+          }
+        },
+      );
     } catch (error) {
       this.failures.set(key, error);
+      observed();
+      await this.withState((state) => {
+        const pending = state.transfers[key];
+        if (pending?.owner === this.owner && pending.attempt === admitted.attempt)
+          pending.status = 'stopping';
+      });
+      // A bounded caller wait is independent from physical cleanup. Retain the
+      // shared transfer reservation and local slot while a fetch/SDK/body ignores
+      // cancellation; a later attempt gets neither its bytes nor its pathname.
+      if (operation) await waitForOperationResources(operation);
       await this.withState(async (state) => {
-        const current = state.transfers[key];
-        if (current?.owner === this.owner) {
+        const pending = state.transfers[key];
+        if (pending?.owner === this.owner && pending.attempt === admitted.attempt) {
           await this.remove(temporary);
-          await this.remove(this.file(key));
-          current.status = 'failed';
+          if (renamed && !state.files[key]) await this.remove(this.file(key));
+          pending.status = 'failed';
         }
       });
     } finally {
@@ -621,6 +738,43 @@ export class AssetCache {
     fetch: FetchAsset,
     signal?: AbortSignal,
   ): Promise<AssetCacheLease> {
+    return this.readerNetwork.run(
+      { timeoutMs: this.transferTimeoutMs, signal },
+      async (operation) => {
+        let lease: AssetCacheLease | undefined;
+        // The final network guard can reject after this callback returns. Own
+        // that handoff cleanup before returning a pinned lease: success transfers
+        // it to the caller, while every other terminal cause releases it here.
+        const handoff = new Promise<void>((resolve, reject) => {
+          operation.signal.addEventListener(
+            'abort',
+            () => {
+              const cause: unknown = operation.signal.reason;
+              if (cause instanceof NetworkError && cause.kind === 'operation_closed') resolve();
+              else Promise.resolve(lease?.release()).then(resolve, reject);
+            },
+            { once: true },
+          );
+        });
+        void operation.wait('cleanup', () => handoff).catch(() => {});
+        const acquired = await this.acquireWithin(reference, fetch, operation.signal);
+        let released: Promise<void> | undefined;
+        lease = { ...acquired, release: () => (released ??= acquired.release()) };
+        try {
+          operation.throwIfStopped();
+          return lease;
+        } catch (error) {
+          await lease.release();
+          throw error;
+        }
+      },
+    );
+  }
+  private async acquireWithin(
+    reference: ArtifactReference,
+    fetch: FetchAsset,
+    signal: AbortSignal,
+  ): Promise<AssetCacheLease> {
     if (this.closed) throw new Error('Asset cache is closed.');
     assertArtifactReference(reference);
     if (reference.bytes > this.limits.maxBytes)
@@ -651,13 +805,24 @@ export class AssetCache {
           let transfer = state.transfers[key];
           if (!transfer) {
             await this.evictFor(state, exact);
-            transfer = { reference: exact, owner: this.owner, status: 'queued', interests: {} };
+            transfer = {
+              reference: exact,
+              owner: this.owner,
+              attempt: randomUUID(),
+              status: 'queued',
+              interests: {},
+            };
             state.transfers[key] = transfer;
             this.failures.delete(key);
           } else if (!sameArtifact(transfer.reference, exact))
             throw new Error('Conflicting pending artifact metadata.');
           this.setInterest(state, key);
-          if (transfer.status === 'failed') return { kind: 'failed' as const };
+          if (
+            transfer.status === 'failed' ||
+            transfer.status === 'stopping' ||
+            this.failures.has(key)
+          )
+            return { kind: 'failed' as const };
           if (transfer.owner === this.owner) this.startWorker(key, fetch);
           return { kind: 'waiting' as const, owned: transfer.owner === this.owner };
         });
@@ -672,7 +837,7 @@ export class AssetCache {
           acquired = true;
           return { path: this.file(key), reference: exact, release: () => this.release(reader) };
         }
-        const work = result.owned ? this.workers.get(key) : undefined;
+        const work = result.owned ? this.workerObservations.get(key) : undefined;
         if (work) await this.awaitWorker(work, interestSignal);
         else await delay(50, undefined, { signal: interestSignal });
       }
@@ -707,15 +872,24 @@ export class AssetCache {
       return { removedBytes, retainedBytes: this.reservedBytes(state) };
     });
   }
-  close(): Promise<void> {
+  async close(
+    budget: { timeoutMs: number; signal?: AbortSignal } = { timeoutMs: 30_000 },
+  ): Promise<void> {
     this.closePromise ??= this.finishClose();
-    return this.closePromise;
+    const result = await this.network.shutdown(budget, this.closePromise);
+    if (result.unresolved)
+      throw new Error(
+        'Asset cache shutdown ended with owned transfers or metadata still unsettled.',
+      );
+    await this.closePromise;
   }
   private async finishClose(): Promise<void> {
     this.closed = true;
     this.closing.abort(new Error('Asset cache closed.'));
+    this.readerNetwork.stop('shutdown');
     if (!this.initialization) return;
     await this.initialization;
+    await this.readerNetwork.whenIdle();
     this.readers.clear();
     this.readerCounts.clear();
     await this.withState((state) => {

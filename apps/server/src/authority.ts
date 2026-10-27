@@ -6,6 +6,19 @@ import {
   objectAncestors,
   type WorldState,
   type ConstructionPermission,
+  isDefinitionPin,
+  type DefinitionPin,
+  type ConstructionPermissionChanges,
+  constructionPermissionBatch,
+  immutableConstructionPermissions,
+  applyConstructionPermissionEffect,
+  canonicalJson,
+  CONSTRUCTION_PERMISSION_LIMITS,
+  CONSTRUCTION_OPERATIONS,
+  type CampAssetPermission,
+  structuralConstructionOperation,
+  definitionPin,
+  sameDefinitionPin,
 } from '@open-legend/domain';
 import type { SqlDatabase } from './store.js';
 
@@ -18,6 +31,9 @@ export const AUTHORITY_TABLES = [
   'auth_grants',
   'auth_construction_grants',
   'auth_construction_receipts',
+  'auth_construction_effect_receipts',
+  'auth_camp_asset_grants',
+  'auth_camp_asset_receipts',
   'auth_controls',
   'auth_exits',
   'auth_control_receipts',
@@ -53,12 +69,111 @@ export const constructionPermissionSchema = z
       })
       .strict()
       .refine((s) => s.minX < s.maxX && s.minZ < s.maxZ),
-    operations: z
-      .array(z.enum(['post', 'cover', 'lower', 'reclaim-post', 'reclaim-lowered']))
-      .max(5),
-    materialIds: z.array(z.string().refine(isSafeRecordId)).max(2048),
+    operations: z.array(z.enum(CONSTRUCTION_OPERATIONS)).max(CONSTRUCTION_OPERATIONS.length),
+    materialContributions: z.literal(true).optional(),
+    contribution: z
+      .object({
+        donorId: z.string().refine(isSafeRecordId),
+        offerId: z.string().refine(isSafeRecordId),
+        offerRevision: z.number().int().positive(),
+        parentPermissionId: z.string().refine(isSafeRecordId),
+        sourcePermissionId: z.string().refine(isSafeRecordId),
+        createdAt: z.number().finite().nonnegative(),
+        expiresAt: z.number().finite().nonnegative(),
+        priorContributionIds: z
+          .array(z.string().refine(isSafeRecordId))
+          .max(CONSTRUCTION_PERMISSION_LIMITS.materialOrigins)
+          .refine((ids) => new Set(ids).size === ids.length),
+        foreignOriginIds: z
+          .array(z.string().refine(isSafeRecordId))
+          .max(CONSTRUCTION_PERMISSION_LIMITS.materialOrigins),
+      })
+      .strict()
+      .refine(
+        (row) =>
+          row.expiresAt > row.createdAt &&
+          new Set(row.foreignOriginIds).size === row.foreignOriginIds.length,
+      )
+      .optional(),
+    materialIds: z
+      .array(z.string().refine(isSafeRecordId))
+      .max(CONSTRUCTION_PERMISSION_LIMITS.materialOrigins),
+    publicGateUse: z
+      .object({
+        family: z.custom<DefinitionPin>(isDefinitionPin),
+        operations: z
+          .array(z.enum(['open', 'close', 'bar', 'unbar']))
+          .min(1)
+          .max(4)
+          .refine((rows) => new Set(rows).size === rows.length),
+      })
+      .strict()
+      .optional(),
+    structuralExposure: z
+      .object({
+        family: z.custom<DefinitionPin>(isDefinitionPin),
+        operations: z.tuple([z.literal('held-tool-impact')]),
+      })
+      .strict()
+      .optional(),
+    acquisition: z
+      .object({
+        sources: z
+          .array(
+            z
+              .object({
+                entityId: z.string().refine(isSafeRecordId),
+                definition: z.custom<DefinitionPin>(isDefinitionPin),
+              })
+              .strict(),
+          )
+          .refine((rows) => new Set(rows.map((row) => row.entityId)).size === rows.length),
+        assemblyIds: z
+          .array(z.string().refine(isSafeRecordId))
+          .refine((ids) => new Set(ids).size === ids.length),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
+export const campAssetPermissionSchema = z
+  .object({
+    kind: z.enum(['gate-use', 'structural-impact']),
+    id: z.string().refine(isSafeRecordId),
+    worldId: z.string().refine(isSafeRecordId),
+    assemblyId: z.string().refine(isSafeRecordId),
+    revision: z.number().int().positive().safe(),
+    revoked: z.boolean(),
+    family: z.custom<DefinitionPin>(isDefinitionPin),
+    site: constructionPermissionSchema.shape.site,
+    operations: z
+      .array(z.enum(['open', 'close', 'bar', 'unbar', 'held-tool-impact']))
+      .min(1)
+      .max(4)
+      .refine((rows) => new Set(rows).size === rows.length),
+    assets: z
+      .array(
+        z
+          .object({
+            itemId: z.string().refine(isSafeRecordId),
+            definition: z.custom<DefinitionPin>(isDefinitionPin),
+            originIds: z
+              .array(z.string().refine(isSafeRecordId))
+              .min(1)
+              .max(CONSTRUCTION_PERMISSION_LIMITS.materialOrigins)
+              .refine((rows) => new Set(rows).size === rows.length),
+          })
+          .strict(),
+      )
+      .min(1)
+      .refine((rows) => new Set(rows.map((row) => row.itemId)).size === rows.length),
+  })
+  .strict()
+  .refine((permission) =>
+    permission.kind === 'structural-impact'
+      ? permission.operations.length === 1 && permission.operations[0] === 'held-tool-impact'
+      : !permission.operations.includes('held-tool-impact'),
+  );
 export type Capability = z.infer<typeof capabilitySchema>;
 /** Characterless grants share the one-grant-per-account row without a character. The marker
  * never leaves this repository; changing the existing NOT NULL column would convert saves.
@@ -239,6 +354,7 @@ const key = (worldId: string, id: string) => JSON.stringify([worldId, id]);
  */
 export class AuthorityRepository {
   private construction = new Map<string, readonly ConstructionPermission[]>();
+  private campAssets = new Map<string, readonly CampAssetPermission[]>();
   private sessions = new Map<string, LoginSession>();
   private publication = {};
   private grants = new Map<string, WorldGrant>();
@@ -253,6 +369,9 @@ export class AuthorityRepository {
       CREATE TABLE IF NOT EXISTS auth_grants (world_id TEXT NOT NULL, account_id TEXT NOT NULL REFERENCES auth_accounts(id), actor_id TEXT NOT NULL, revision BIGINT NOT NULL, capabilities TEXT NOT NULL, PRIMARY KEY(world_id,account_id), UNIQUE(world_id,actor_id));
       CREATE TABLE IF NOT EXISTS auth_construction_grants (world_id TEXT NOT NULL, id TEXT NOT NULL, revision BIGINT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,id));
       CREATE TABLE IF NOT EXISTS auth_construction_receipts (world_id TEXT NOT NULL, issuer_id TEXT NOT NULL, request_id TEXT NOT NULL, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,issuer_id,request_id));
+      CREATE TABLE IF NOT EXISTS auth_construction_effect_receipts (world_id TEXT NOT NULL, timeline_id TEXT NOT NULL, permission_id TEXT NOT NULL, effect_kind TEXT NOT NULL, action_id TEXT NOT NULL, fingerprint TEXT NOT NULL, PRIMARY KEY(world_id,timeline_id,permission_id,effect_kind,action_id));
+      CREATE TABLE IF NOT EXISTS auth_camp_asset_grants (world_id TEXT NOT NULL, id TEXT NOT NULL, revision BIGINT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,id));
+      CREATE TABLE IF NOT EXISTS auth_camp_asset_receipts (world_id TEXT NOT NULL, issuer_id TEXT NOT NULL, request_id TEXT NOT NULL, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,issuer_id,request_id));
       CREATE TABLE IF NOT EXISTS auth_controls (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, generation BIGINT NOT NULL, account_id TEXT NOT NULL, session_id TEXT NOT NULL, connection_id TEXT NOT NULL, PRIMARY KEY(world_id,actor_id));
       CREATE TABLE IF NOT EXISTS auth_exits (world_id TEXT NOT NULL, actor_id TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,actor_id));
       CREATE TABLE IF NOT EXISTS auth_control_receipts (world_id TEXT NOT NULL, account_id TEXT NOT NULL, request_id TEXT NOT NULL, fingerprint TEXT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,account_id,request_id));
@@ -264,6 +383,41 @@ export class AuthorityRepository {
   constructionPermissions(worldId: string): readonly ConstructionPermission[] {
     return this.construction.get(worldId) ?? [];
   }
+  campAssetPermissions(worldId: string): readonly CampAssetPermission[] {
+    return this.campAssets.get(worldId) ?? [];
+  }
+  async refreshPermissions(worldId: string): Promise<void> {
+    await Promise.all([this.refreshConstruction(worldId), this.refreshCampAssets(worldId)]);
+  }
+  private async refreshCampAssets(worldId: string): Promise<void> {
+    const rows = await this.db
+      .prepare('SELECT payload FROM auth_camp_asset_grants WHERE world_id=? ORDER BY id')
+      .all(worldId);
+    this.campAssets.set(
+      worldId,
+      rows.map((row) => campAssetPermissionSchema.parse(JSON.parse(String(row['payload'])))),
+    );
+  }
+  /** Hold the exact grant until the enclosing world commit finishes. A later
+   * revocation cannot overtake an already authorized physical effect. */
+  async assertCampAssets(
+    worldId: string,
+    fences: readonly { id: string; revision: number }[],
+  ): Promise<void> {
+    for (const fence of [...fences].sort((a, b) => a.id.localeCompare(b.id))) {
+      const row = await this.db
+        .prepare(
+          'SELECT revision,payload FROM auth_camp_asset_grants WHERE world_id=? AND id=? FOR SHARE',
+        )
+        .get(worldId, fence.id);
+      if (
+        !row ||
+        Number(row['revision']) !== fence.revision ||
+        campAssetPermissionSchema.parse(JSON.parse(String(row['payload']))).revoked
+      )
+        throw new AuthorityError('forbidden');
+    }
+  }
   async refreshConstruction(worldId: string): Promise<void> {
     const rows = await this.db
       .prepare('SELECT payload FROM auth_construction_grants WHERE world_id=? ORDER BY id')
@@ -271,7 +425,7 @@ export class AuthorityRepository {
     const grants = rows.map((row) =>
       constructionPermissionSchema.parse(JSON.parse(String(row['payload']))),
     );
-    this.construction.set(worldId, grants);
+    this.construction.set(worldId, immutableConstructionPermissions(grants));
   }
   async seedConstruction(permission: ConstructionPermission): Promise<void> {
     const grant = constructionPermissionSchema.parse(permission);
@@ -286,9 +440,11 @@ export class AuthorityRepository {
     worldId: string,
     fences: readonly { id: string; revision: number }[],
   ): Promise<void> {
-    for (const fence of fences) {
+    for (const fence of [...fences].sort((a, b) => a.id.localeCompare(b.id))) {
       const row = await this.db
-        .prepare('SELECT revision,payload FROM auth_construction_grants WHERE world_id=? AND id=?')
+        .prepare(
+          'SELECT revision,payload FROM auth_construction_grants WHERE world_id=? AND id=? FOR SHARE',
+        )
         .get(worldId, fence.id);
       if (
         !row ||
@@ -298,14 +454,326 @@ export class AuthorityRepository {
         throw new AuthorityError('forbidden');
     }
   }
+  /** Re-derive native proposals under locked operational grants. Both these rows
+   * and the physical world are published by the enclosing storage transaction. */
+  async applyConstructionChanges(
+    world: WorldState,
+    changes: ConstructionPermissionChanges,
+    fences: readonly { id: string; revision: number }[],
+    timelineId: string,
+  ): Promise<void> {
+    if (!this.db.transactionActive)
+      throw new Error('Construction publication requires a transaction.');
+    const worldId = world.id;
+    const ids = [
+      ...new Set([
+        ...changes.updates.map((update) => update.before.id),
+        ...changes.effects.map((effect) => effect.permissionId),
+        ...fences.map((fence) => fence.id),
+        ...changes.effects.flatMap((effect) =>
+          effect.kind === 'material-contributed'
+            ? [
+                effect.contribution.consent.donorGrant.id,
+                effect.contribution.consent.recipientGrant.id,
+              ]
+            : [],
+        ),
+      ]),
+    ].sort();
+    const rows = await this.db
+      .prepare(
+        'SELECT id,revision,payload FROM auth_construction_grants WHERE world_id=? AND id=ANY(?::text[]) ORDER BY id FOR UPDATE',
+      )
+      .all(worldId, ids);
+    const grants = rows.map((row) => {
+      const grant = constructionPermissionSchema.parse(JSON.parse(String(row['payload'])));
+      if (
+        grant.worldId !== worldId ||
+        grant.id !== row['id'] ||
+        grant.revision !== Number(row['revision'])
+      )
+        throw new AuthorityError('conflict');
+      return grant;
+    });
+    const initial = new Map(grants.map((grant) => [grant.id, grant]));
+    if (
+      new Set((changes.creations ?? []).map((grant) => grant.id)).size !==
+      (changes.creations?.length ?? 0)
+    )
+      throw new AuthorityError('conflict');
+    if (new Set(changes.updates.map((update) => update.before.id)).size !== changes.updates.length)
+      throw new AuthorityError('conflict');
+    for (const update of changes.updates)
+      if (canonicalJson(initial.get(update.before.id)) !== canonicalJson(update.before))
+        throw new AuthorityError('conflict');
+    const publications = changes.effects.flatMap((effect) =>
+      effect.kind === 'gate-published'
+        ? [effect.publication]
+        : effect.kind === 'structure-exposed'
+          ? effect.publications
+          : [],
+    );
+    const assetIds = [...new Set(publications.map((publication) => publication.after.id))].sort();
+    const assetRows = assetIds.length
+      ? await this.db
+          .prepare(
+            'SELECT id,revision,payload FROM auth_camp_asset_grants WHERE world_id=? AND id=ANY(?::text[]) ORDER BY id FOR UPDATE',
+          )
+          .all(worldId, assetIds)
+      : [];
+    const assets = assetRows.map((row) => {
+      const permission = campAssetPermissionSchema.parse(JSON.parse(String(row['payload'])));
+      if (
+        permission.worldId !== worldId ||
+        permission.id !== row['id'] ||
+        permission.revision !== Number(row['revision'])
+      )
+        throw new AuthorityError('conflict');
+      return permission;
+    });
+    const batch = constructionPermissionBatch(worldId, grants, assets);
+    const versions = new Map<string, Set<number>>();
+    const remember = () => {
+      for (const grant of batch.permissions) {
+        if (grant.revoked) continue;
+        const revisions = versions.get(grant.id) ?? new Set<number>();
+        revisions.add(grant.revision);
+        versions.set(grant.id, revisions);
+      }
+    };
+    remember();
+    for (const effect of changes.effects) {
+      if (effect.kind === 'gate-published' || effect.kind === 'structure-exposed') {
+        for (const publication of effect.kind === 'gate-published'
+          ? [effect.publication]
+          : effect.publications) {
+          const after = campAssetPermissionSchema.parse(publication.after),
+            family = world.assemblyFamilies?.[after.family.id],
+            asset = after.assets[0]!;
+          const source = batch.permissions.find(
+              (permission) => permission.id === effect.permissionId,
+            ),
+            operation =
+              effect.kind === 'gate-published'
+                ? 'boundary-gate'
+                : family?.implementation === 'grounded-panel-boundary'
+                  ? structuralConstructionOperation(family, asset.definition)
+                  : undefined;
+          if (
+            after.assets.length !== 1 ||
+            !operation ||
+            !source?.operations.includes(operation) ||
+            family?.implementation !== 'grounded-panel-boundary' ||
+            !sameDefinitionPin(definitionPin(family), after.family) ||
+            after.kind !== (effect.kind === 'gate-published' ? 'gate-use' : 'structural-impact') ||
+            !(
+              effect.kind === 'gate-published'
+                ? [family.roles.gate]
+                : [
+                    family.roles.post,
+                    family.roles.gatePost,
+                    family.roles.panel,
+                    family.roles.parkingPanel,
+                    family.roles.gate,
+                    family.roles.rail,
+                  ]
+            ).some((pin) => sameDefinitionPin(pin, asset.definition))
+          )
+            throw new AuthorityError('forbidden');
+          const item = entityGet(world.entities, asset.itemId)?.item,
+            origins = new Set(asset.originIds);
+          if (
+            item &&
+            (!sameDefinitionPin(item.definitionPin, asset.definition) ||
+              item.materialOriginIds?.length !== asset.originIds.length ||
+              !item.materialOriginIds.every((id) => origins.has(id)))
+          )
+            throw new AuthorityError('forbidden');
+        }
+      }
+      if (effect.kind === 'contribution-ended' && effect.at > world.simTime)
+        throw new AuthorityError('forbidden');
+      if (effect.kind === 'material-contributed') {
+        const fact = effect.contribution,
+          policy = world.constructionProfile?.materialContributions;
+        if (
+          !policy ||
+          !policy.operations.includes(fact.consent.terms.operation) ||
+          fact.at > world.simTime ||
+          fact.consent.terms.expiresAt - fact.at > policy.maximumSeconds ||
+          !isDefinitionPin(fact.transferred.definition) ||
+          !world.itemDefinitions[fact.transferred.definition.id] ||
+          !sameDefinitionPin(
+            definitionPin(world.itemDefinitions[fact.transferred.definition.id]!),
+            fact.transferred.definition,
+          )
+        )
+          throw new AuthorityError('forbidden');
+      }
+      applyConstructionPermissionEffect(batch, effect);
+      remember();
+    }
+    if (
+      batch.effects.length !== changes.effects.length ||
+      batch.updates.size !== changes.updates.length ||
+      batch.creations.size !== (changes.creations?.length ?? 0)
+    )
+      throw new AuthorityError('conflict');
+    for (const update of changes.updates)
+      if (canonicalJson(batch.updates.get(update.before.id)?.after) !== canonicalJson(update.after))
+        throw new AuthorityError('conflict');
+    for (const creation of changes.creations ?? [])
+      if (canonicalJson(batch.creations.get(creation.id)) !== canonicalJson(creation))
+        throw new AuthorityError('conflict');
+    for (const fence of fences)
+      if (!versions.get(fence.id)?.has(fence.revision)) throw new AuthorityError('forbidden');
+    // Restoring unfinished work can repeat its logical action on a new timeline.
+    // Preserve both receipts; only a repeated effect on the same timeline conflicts.
+    // docs/save-and-load.md#continuation-and-identity
+    for (const effect of changes.effects) {
+      const actionId =
+        effect.kind === 'material'
+          ? effect.acquisition.actionId
+          : effect.kind === 'material-contributed'
+            ? effect.contribution.actionId
+            : effect.actionId;
+      const prior = await this.db
+        .prepare(
+          'SELECT fingerprint FROM auth_construction_effect_receipts WHERE world_id=? AND timeline_id=? AND permission_id=? AND effect_kind=? AND action_id=?',
+        )
+        .get(worldId, timelineId, effect.permissionId, effect.kind, actionId);
+      if (prior) throw new AuthorityError('conflict');
+      await this.db
+        .prepare(
+          'INSERT INTO auth_construction_effect_receipts(world_id,timeline_id,permission_id,effect_kind,action_id,fingerprint) VALUES(?,?,?,?,?,?)',
+        )
+        .run(
+          worldId,
+          timelineId,
+          effect.permissionId,
+          effect.kind,
+          actionId,
+          hash(canonicalJson(effect)),
+        );
+    }
+    for (const { before, after } of publications) {
+      const result = before
+        ? await this.db
+            .prepare(
+              'UPDATE auth_camp_asset_grants SET revision=?,payload=? WHERE world_id=? AND id=? AND revision=? RETURNING id',
+            )
+            .get(after.revision, JSON.stringify(after), worldId, after.id, before.revision)
+        : await this.db
+            .prepare(
+              'INSERT INTO auth_camp_asset_grants(world_id,id,revision,payload) VALUES(?,?,?,?) ON CONFLICT(world_id,id) DO NOTHING RETURNING id',
+            )
+            .get(worldId, after.id, after.revision, JSON.stringify(after));
+      if (!result) throw new AuthorityError('conflict');
+    }
+    if (publications.length)
+      this.changed(() => {
+        const changed = new Map(batch.campAssets.map((permission) => [permission.id, permission]));
+        const current = this.campAssets.get(worldId) ?? [];
+        this.campAssets.set(worldId, [
+          ...current.filter((permission) => !changed.has(permission.id)),
+          ...changed.values(),
+        ]);
+      });
+    for (const update of batch.updates.values()) {
+      const grant = constructionPermissionSchema.parse(update.after);
+      await this.db
+        .prepare(
+          'UPDATE auth_construction_grants SET revision=?,payload=? WHERE world_id=? AND id=?',
+        )
+        .run(grant.revision, JSON.stringify(grant), worldId, grant.id);
+    }
+    for (const creation of batch.creations.values()) {
+      const grant = constructionPermissionSchema.parse(creation);
+      const inserted = await this.db
+        .prepare(
+          'INSERT INTO auth_construction_grants(world_id,id,revision,payload) VALUES(?,?,?,?) ON CONFLICT(world_id,id) DO NOTHING RETURNING id',
+        )
+        .get(worldId, grant.id, grant.revision, JSON.stringify(grant));
+      if (!inserted) throw new AuthorityError('conflict');
+    }
+    if (batch.updates.size || batch.creations.size)
+      this.changed(() => {
+        const current = this.construction.get(worldId) ?? [];
+        this.construction.set(
+          worldId,
+          immutableConstructionPermissions([
+            ...current.map((grant) => batch.updates.get(grant.id)?.after ?? grant),
+            ...batch.creations.values(),
+          ]),
+        );
+      });
+  }
   async changeConstruction(
     scope: RequestScope,
     permission: ConstructionPermission,
     expectedRevision: number,
     requestId: string,
     now: () => number,
+    validateCurrent: () => boolean | Promise<boolean>,
   ): Promise<ConstructionPermission> {
-    const grant = constructionPermissionSchema.parse(permission);
+    return this.changePermission(
+      scope,
+      constructionPermissionSchema.parse(permission),
+      expectedRevision,
+      requestId,
+      now,
+      {
+        table: 'auth_construction_grants',
+        receipts: 'auth_construction_receipts',
+        cache: this.construction,
+        immutable: immutableConstructionPermissions,
+        parse: (input) => constructionPermissionSchema.parse(input),
+        validateCurrent,
+      },
+    );
+  }
+  async changeCampAsset(
+    scope: RequestScope,
+    permission: CampAssetPermission,
+    expectedRevision: number,
+    requestId: string,
+    now: () => number,
+    validateCurrent: () => boolean,
+  ): Promise<CampAssetPermission> {
+    return this.changePermission(
+      scope,
+      campAssetPermissionSchema.parse(permission),
+      expectedRevision,
+      requestId,
+      now,
+      {
+        table: 'auth_camp_asset_grants',
+        receipts: 'auth_camp_asset_receipts',
+        cache: this.campAssets,
+        parse: (input) => campAssetPermissionSchema.parse(input),
+        validateCurrent,
+      },
+    );
+  }
+  /** Exact original receipts precede mutable asset eligibility. Cache publication
+   * belongs to the containing transaction, including rollback after a nested call. */
+  private async changePermission<
+    P extends { id: string; worldId: string; revision: number; revoked: boolean },
+  >(
+    scope: RequestScope,
+    grant: P,
+    expectedRevision: number,
+    requestId: string,
+    now: () => number,
+    owner: {
+      table: 'auth_construction_grants' | 'auth_camp_asset_grants';
+      receipts: 'auth_construction_receipts' | 'auth_camp_asset_receipts';
+      cache: Map<string, readonly P[]>;
+      parse: (input: unknown) => P;
+      immutable?: (permissions: readonly P[]) => readonly P[];
+      validateCurrent?: () => boolean | Promise<boolean>;
+    },
+  ): Promise<P> {
     return this.db.transaction(async () => {
       await this.assertFence({ scope, capability: 'manage-access', controlling: false, now });
       if (
@@ -317,31 +785,34 @@ export class AuthorityRepository {
       const fingerprint = JSON.stringify({ grant, expectedRevision });
       const prior = await this.db
         .prepare(
-          'SELECT fingerprint,payload FROM auth_construction_receipts WHERE world_id=? AND issuer_id=? AND request_id=?',
+          `SELECT fingerprint,payload FROM ${owner.receipts} WHERE world_id=? AND issuer_id=? AND request_id=?`,
         )
         .get(scope.worldId, scope.accountId, requestId);
       if (prior) {
         if (prior['fingerprint'] !== fingerprint) throw new AuthorityError('conflict');
-        return constructionPermissionSchema.parse(JSON.parse(String(prior['payload'])));
+        return owner.parse(JSON.parse(String(prior['payload'])));
       }
       const old = await this.db
-        .prepare('SELECT revision FROM auth_construction_grants WHERE world_id=? AND id=?')
+        .prepare(`SELECT revision FROM ${owner.table} WHERE world_id=? AND id=? FOR UPDATE`)
         .get(scope.worldId, grant.id);
       if ((old ? Number(old['revision']) : 0) !== expectedRevision)
         throw new AuthorityError('conflict');
+      if (owner.validateCurrent && !grant.revoked && !(await owner.validateCurrent()))
+        throw new AuthorityError('forbidden');
       await this.db
         .prepare(
-          'INSERT INTO auth_construction_grants(world_id,id,revision,payload) VALUES(?,?,?,?) ON CONFLICT(world_id,id) DO UPDATE SET revision=excluded.revision,payload=excluded.payload',
+          `INSERT INTO ${owner.table}(world_id,id,revision,payload) VALUES(?,?,?,?) ON CONFLICT(world_id,id) DO UPDATE SET revision=excluded.revision,payload=excluded.payload`,
         )
         .run(grant.worldId, grant.id, grant.revision, JSON.stringify(grant));
       await this.db
         .prepare(
-          'INSERT INTO auth_construction_receipts(world_id,issuer_id,request_id,fingerprint,payload) VALUES(?,?,?,?,?)',
+          `INSERT INTO ${owner.receipts}(world_id,issuer_id,request_id,fingerprint,payload) VALUES(?,?,?,?,?)`,
         )
         .run(scope.worldId, scope.accountId, requestId, fingerprint, JSON.stringify(grant));
       this.changed(() => {
-        const grants = this.construction.get(scope.worldId) ?? [];
-        this.construction.set(scope.worldId, [...grants.filter((p) => p.id !== grant.id), grant]);
+        const grants = owner.cache.get(scope.worldId) ?? [];
+        const next = [...grants.filter((p) => p.id !== grant.id), grant];
+        owner.cache.set(scope.worldId, owner.immutable ? owner.immutable(next) : next);
       });
       return grant;
     });

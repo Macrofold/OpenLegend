@@ -42,9 +42,9 @@ test('scaled themes, reduced motion and responsive controls persist across reloa
     await page.setViewportSize({ width: 390, height: 844 });
     await page.screenshot({ path: info.outputPath('mobile-scaled.png') });
     for (const locator of [
-      page.locator('.ol-timebar'),
+      page.getByRole('button', { name: 'Pause world', exact: true }),
       page.locator('#world-editorPanel'),
-      page.locator('#world-editorPanel').getByRole('button', { name: 'Send', exact: true }),
+      page.locator('#world-editorPanel').getByRole('button', { name: /\bSend$/ }),
     ]) {
       const bounds = await locator.boundingBox();
       expect(bounds).not.toBeNull();

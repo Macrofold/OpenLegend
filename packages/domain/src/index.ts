@@ -1,3 +1,4 @@
+export * from './observed-animation.js';
 export * from './entity-collection.js';
 export * from './ordered-record.js';
 export * from './world-creation.js';
@@ -25,6 +26,7 @@ export * from './finite-casts.js';
 export { BASE_DEATH_COMMAND_DESCRIPTIONS } from './worlds/base/death.js';
 export * from './reincarnation.js';
 export * from './combat-consent.js';
+export { attackSubject } from './combat-execution.js';
 export * from './combat-encounters.js';
 export * from './combat-means.js';
 export * from './native-response.js';
@@ -32,6 +34,7 @@ export * from './native-response-navigation.js';
 export { reconcileNativeControl } from './native-response-controller.js';
 export * from './ranged.js';
 export * from './worlds/base/ranged-counterplay.js';
+export { BASE_SKILLED_TEXT } from './worlds/base/skilled-execution.js';
 export { describeBodyRemains } from './worlds/base/bodies.js';
 export {
   activeStimuli,
@@ -62,8 +65,7 @@ export {
   BASE_ACTION_DESCRIPTIONS,
   nativeActionIcon,
   nativeGatherShortcut,
-  nativePreparationOptions,
-  nativeInventoryActions,
+  prepareNativeInventoryActions,
 } from './worlds/base/presentation.js';
 export * from './item-handling.js';
 export { BASE_ITEM_HANDLING } from './worlds/base/item-handling.js';
@@ -74,9 +76,11 @@ export {
   sensesFor,
   seesEntity,
   entityVisionQuery,
+  pointVisionQuery,
   hearsEntity,
   speechPerception,
   visionRadius,
+  visionFieldOfView,
   contactViews,
   bodiesTouch,
   DEFAULT_SENSES,
@@ -87,7 +91,6 @@ export {
   createActor,
   initializeActorTraits,
   NATIVE_ITEMS,
-  NATIVE_PREPARATIONS,
   PLAYER_ID,
   NPC_ID,
   TRAIT_BANK,
@@ -117,6 +120,7 @@ export {
   advanceWorld,
   projectWorldHistory,
   navigationBlocked,
+  navigationPending,
   observeActor,
   initializePerception,
   queryMemories,
@@ -125,7 +129,7 @@ export {
   quantityOf,
   SIMULATION_RULES,
 } from './kernel.js';
-export { admitDeclaration, validateDeclaration } from './declarations.js';
+export { admitDeclaration, validateDeclaration, installFixedTransform } from './declarations.js';
 export {
   distance,
   distance3D,
@@ -147,6 +151,7 @@ export * from './mind.js';
 export * from './experience.js';
 export * from './experience-manifest.js';
 export * from './known-place-evidence.js';
+export * from './experience-sources.js';
 export * from './status-effects.js';
 export * from './status-condition-references.js';
 export * from './status-effect-removal.js';
@@ -166,11 +171,7 @@ export {
 
 export * from './living.js';
 
-export * from './conversations.js';
-
 export * from './worlds/base/family.js';
-
-export { leaveConversation } from './conversations.js';
 
 export * from './identity.js';
 export * from './story-selection.js';
@@ -193,8 +194,10 @@ export * from './invention-policy.js';
 export * from './invention-attribution.js';
 
 export * from './invention-families.js';
+export * from './manufacture.js';
+export * from './manufacture-limits.js';
 export { BASE_RECIPE_FAMILIES } from './worlds/base/recipe-families.js';
-export { gatheringYield } from './gathering.js';
+export { gatheringYield, carriedGatheringChoices } from './gathering.js';
 export { gatheringDescription } from './worlds/base/actions.js';
 export { recordInventionFeedback } from './invention-feedback.js';
 
@@ -232,6 +235,8 @@ export {
   presentVerb,
   subjectNarration,
   renderNarration,
+  renderNarrationParts,
+  type NarrationPerspective,
   narrationTemplate,
   validateNarration,
   type Narration,
@@ -292,7 +297,11 @@ export * from './contribution-residency.js';
 export * from './object-access.js';
 
 export { advanceWorldSlices, ammoFor } from './kernel.js';
-export { completeNavigation } from './kernel.js';
+export {
+  completeNavigation,
+  completeNavigationBatch,
+  type NavigationCompletion,
+} from './kernel.js';
 
 export * from './action-targets.js';
 export * from './acoustics.js';
@@ -303,6 +312,7 @@ export {
   perceptionGuide,
 } from './perception.js';
 export * from './speech.js';
+export * from './sound.js';
 export * from './conditions.js';
 export * from './inventory-inspection.js';
 export * from './places.js';
@@ -326,8 +336,36 @@ export {
   BASE_PRACTICE_COMMAND_DESCRIPTIONS,
 } from './worlds/base/practical-competence.js';
 export * from './assembly-types.js';
+export * from './boundary-types.js';
+export {
+  compileBoundaryActivity,
+  boundaryPlanShapes,
+  boundaryEditCandidates,
+  boundaryMaterialIntact,
+  pendingBoundaryExitPreparation,
+  boundaryRemovalOperations,
+  boundaryReleasedMaterials,
+  boundaryRepairState,
+  boundaryIntegrityState,
+  boundaryMaterialWorkQuery,
+  prepareBoundaryPlan,
+} from './boundary-assemblies.js';
+export { boundaryPostSlot } from './boundary-phase.js';
+export type {
+  BoundaryExitBatch,
+  BoundaryExitPreparations,
+  PreparedBoundaryExits,
+} from './boundary-exits.js';
+export * from './assembly-cover.js';
+export * from './construction-permissions.js';
+export * from './camp-asset-permissions.js';
+export * from './boundary-impacts.js';
+export * from './gate-operations.js';
+export * from './hearths.js';
+export * from './work-batches.js';
 export * from './assemblies.js';
 export * from './assembly-geometry.js';
+export * from './assembly-presentation.js';
 export { BASE_CANOPY_SCENE } from './worlds/base/canopies.js';
 
 export * from './material-exposure.js';
@@ -366,3 +404,36 @@ export * from './received-scene.js';
 export * from './received-geometry.js';
 
 export * from './received-history-scene.js';
+export { tracksMaterialOrigins } from './material-inventory.js';
+
+export * from './meals.js';
+
+export * from './craft-catalogue.js';
+
+export * from './rain.js';
+export * from './contents-exposure.js';
+export * from './construction-contributions.js';
+
+export * from './social-offer-policy.js';
+export * from './social-offers.js';
+
+export * from './cooperation.js';
+
+export * from './social-compacts.js';
+
+export * from './native-foraging.js';
+
+export * from './native-feeding.js';
+
+export * from './personal-social.js';
+
+export { personallyKnownPlaceReports } from './outings.js';
+
+export { activityHostRequests } from './activity-hosts.js';
+
+export { isNativeInputField, isMaterialInputRole } from './native-inputs.js';
+export { BOUNDARY_REPAIR_INPUT_LIMIT } from './boundary-repair-inputs.js';
+export * from './execution-input.js';
+export { canSteer } from './player-steering.js';
+
+export { itemContainerCapacity } from './objects.js';

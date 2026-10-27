@@ -5,7 +5,7 @@ export interface ExecutionLease {
   readonly executionClass: ExecutionClass;
   readonly uncertainCompletion: boolean;
   /** Unknown remote execution keeps capacity occupied even after its caller ends. */
-  uncertain(): void;
+  uncertain(attemptId: string): void;
   release(): void;
 }
 interface Waiting {
@@ -20,12 +20,18 @@ interface Waiting {
   start: (lease: ExecutionLease) => Promise<void>;
   declined: (reason: 'expired' | 'cancelled') => Promise<void>;
 }
+interface Execution {
+  uncertainAttempts: Set<string>;
+  released: boolean;
+}
 
 /** Two bounded execution lanes shared across director replacement. No world/model policy. */
 export class CognitionExecution {
   readonly ready: Promise<void>;
-  private occupied = new Set<ExecutionClass>();
-  private uncertain = new Set<ExecutionClass>();
+  private executions: Record<ExecutionClass, Set<Execution>> = {
+    primary: new Set(),
+    background: new Set(),
+  };
   private idleWaiters = new Set<() => void>();
   private waiting = new Map<string, Waiting>();
   private pending = new Set<Promise<void>>();
@@ -39,15 +45,22 @@ export class CognitionExecution {
     store: GameRepository,
     private readonly now = Date.now,
   ) {
-    this.ready = store.occupiedDecisionSlots().then((classes) => {
-      for (const kind of classes) {
-        this.occupied.add(kind);
-        this.uncertain.add(kind);
-      }
+    this.ready = store.occupiedDecisionSlots().then((attempts) => {
+      for (const { attemptId, executionClass } of attempts)
+        this.executions[executionClass].add({
+          uncertainAttempts: new Set([attemptId]),
+          released: true,
+        });
     });
     this.unsubscribe = store.onSettlement(() => {
       void this.ready
-        .then(() => (this.uncertain.size ? this.reconcile(store) : undefined))
+        .then(() =>
+          Object.values(this.executions).some((entries) =>
+            [...entries].some((entry) => entry.uncertainAttempts.size),
+          )
+            ? this.reconcile(store)
+            : undefined,
+        )
         .catch(() => undefined);
     });
     // Reconstruction is a spending prerequisite. Observe failure immediately,
@@ -61,57 +74,55 @@ export class CognitionExecution {
   timestamp(): number {
     return this.now();
   }
-  async primaryAvailable(urgent = false): Promise<boolean> {
-    await this.ready;
+  private available(kind: ExecutionClass): boolean {
     return (
-      !this.closed &&
-      (!this.occupied.has('primary') || (urgent && !this.occupied.has('background')))
+      this.executions[kind].size < (kind === 'primary' ? 1 : DECISION_LIMITS.backgroundExecutions)
     );
   }
+  async primaryAvailable(urgent = false): Promise<boolean> {
+    await this.ready;
+    return !this.closed && (this.available('primary') || (urgent && this.available('background')));
+  }
   snapshot() {
+    const status = (kind: ExecutionClass) =>
+      [...this.executions[kind]].some((entry) => entry.uncertainAttempts.size)
+        ? 'unknown'
+        : this.executions[kind].size
+          ? 'occupied'
+          : 'available';
     return {
-      primary: this.uncertain.has('primary')
-        ? 'unknown'
-        : this.occupied.has('primary')
-          ? 'occupied'
-          : 'available',
-      background: this.uncertain.has('background')
-        ? 'unknown'
-        : this.occupied.has('background')
-          ? 'occupied'
-          : 'available',
+      primary: status('primary'),
+      background: status('background'),
       queuedDecisions: [...this.waiting.values()].filter((item) => item.kind === 'decision').length,
       queuedMaintenance: [...this.waiting.values()].filter((item) => item.kind === 'maintenance')
         .length,
     };
   }
   private lease(kind: ExecutionClass): ExecutionLease | undefined {
-    if (this.closed || this.occupied.has(kind)) return undefined;
-    this.occupied.add(kind);
-    let held = false,
-      released = false;
+    if (this.closed || !this.available(kind)) return undefined;
+    const entry: Execution = { uncertainAttempts: new Set(), released: false };
+    this.executions[kind].add(entry);
     return {
       executionClass: kind,
       get uncertainCompletion() {
-        return held;
+        return entry.uncertainAttempts.size > 0;
       },
-      uncertain: () => {
-        held = true;
-        this.uncertain.add(kind);
+      uncertain: (attemptId) => {
+        entry.uncertainAttempts.add(attemptId);
       },
       release: () => {
-        if (held || released) return;
-        released = true;
-        this.occupied.delete(kind);
+        if (entry.released) return;
+        entry.released = true;
+        if (!entry.uncertainAttempts.size) this.executions[kind].delete(entry);
         this.wake();
       },
     };
   }
   async primary(urgent = false): Promise<ExecutionLease | undefined> {
     await this.ready;
-    // Use the existing second execution capacity for urgent work, keeping the
-    // primary capacity available to one ordinary pipeline. Maintenance/higher
-    // work shares this same lease: no third provider execution is introduced.
+    // Urgent work shares the background allowance with maintenance/higher work,
+    // leaving primary capacity available to one ordinary pipeline. Per-world
+    // immediate pipeline admission remains owned by the director.
     // docs/projects/combat-and-threat-responses-tech-design.md#bounded-urgent-concurrency
     return (urgent && this.lease('background')) || this.lease('primary');
   }
@@ -156,7 +167,7 @@ export class CognitionExecution {
     this.track(
       this.pump().finally(() => {
         this.pumping = false;
-        if (this.waiting.size && !this.occupied.has('background')) this.wake();
+        if (this.waiting.size && this.available('background')) this.wake();
       }),
     );
   }
@@ -196,12 +207,24 @@ export class CognitionExecution {
   }
   /** Definitive reconciliation, never a timer, releases a recovered unknown execution. */
   async reconcile(store: GameRepository): Promise<void> {
-    const occupied = new Set(await store.occupiedDecisionSlots());
-    for (const kind of this.uncertain)
-      if (!occupied.has(kind)) {
-        this.occupied.delete(kind);
-        this.uncertain.delete(kind);
-      }
+    // Snapshot identities before awaiting SQL: a later uncertain attempt must not
+    // be released using an older read, nor may one completion free its neighbours.
+    const pending = Object.entries(this.executions).flatMap(([kind, entries]) =>
+      [...entries]
+        .filter((entry) => entry.uncertainAttempts.size)
+        .map((entry) => ({
+          kind: kind as ExecutionClass,
+          entry,
+          ids: [...entry.uncertainAttempts],
+        })),
+    );
+    const occupied = new Set(
+      (await store.occupiedDecisionSlots()).map(({ attemptId }) => attemptId),
+    );
+    for (const { kind, entry, ids } of pending) {
+      for (const id of ids) if (!occupied.has(id)) entry.uncertainAttempts.delete(id);
+      if (entry.released && !entry.uncertainAttempts.size) this.executions[kind].delete(entry);
+    }
     this.wake();
   }
   async idle(): Promise<void> {

@@ -1,6 +1,17 @@
+import { browserSubscription } from './browser-network';
+import type { Subscription } from '@open-legend/network';
+import { sunlightAtHour } from './sunlight';
+import { namePhrase } from '@open-legend/language';
 import { WorldComposer, type WorldIntent } from './ui/world-composer';
 import { NearbyEntities } from './ui/nearby-entities';
 import { AimControls } from './ui/aim-controls';
+import { useActionExecution } from './ui/action-execution';
+import { AttackControls, AttackReticle } from './ui/attack-controls';
+import {
+  DEFAULT_ACTION_INPUT,
+  isActionInputPreferences,
+  type ActionInputPreferences,
+} from './ui/action-input';
 import { modalOwnsInput, uiOwnsShortcut } from './ui/keyboard';
 import { Construction } from './ui/construction';
 import { FamilyEditor } from './ui/family-editor';
@@ -21,7 +32,7 @@ import { Journal } from './ui/journal';
 import { Settings } from './ui/settings';
 import { createRoot } from 'react-dom/client';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
-import { ClockOffsetContext, clockParts } from './ui/event-time';
+import { WorldClockProvider, clockParts } from './ui/event-time';
 import {
   useCallback,
   useEffect,
@@ -60,7 +71,13 @@ import {
 import type { CommandRequestIdentity } from './command-request';
 import { playerEntity } from './entity-view';
 import { createWorldRenderer } from './scene';
-import type { ScreenRect, WorldRenderer, ShadowQuality } from './world-renderer';
+import type {
+  ScreenRect,
+  WorldRenderer,
+  ShadowQuality,
+  SceneLoadProgress,
+  ConstructionPlacement,
+} from './world-renderer';
 import { observeHudLayout } from './ui/hud-layout';
 import { WorldHover } from './ui/world-hover';
 import { CaptionGapNotice, useMissedCaptions } from './ui/caption-gap-notice';
@@ -97,6 +114,7 @@ import { WorldAgent } from './ui/world-agent';
 import { EventTime } from './ui/event-time';
 import { AiSettings, Character, Crafting, EntityDetail, Inventory } from './ui/panels';
 import { CampActivity, type ActivityEntry } from './ui/camp-activity';
+import { WorkBatches, type WorkBatchEntry } from './ui/work-batches';
 import { ContainerOpening, useContainerOpening } from './ui/container-opening';
 import { Diagnostics, Mind, type DiagnosticSelection } from './ui/diagnostics';
 import { useLocal } from './ui/storage';
@@ -154,6 +172,16 @@ function taskScope(view: GameView) {
     view.player.id,
   ]);
 }
+function sceneLoadOwner(view: GameView) {
+  return JSON.stringify([
+    view.worldId,
+    view.saveTimeline,
+    view.access?.scope,
+    view.access?.privateDraftScope,
+    view.player.id,
+    view.presentationRelease,
+  ]);
+}
 function nearbyIdentity(view: GameView) {
   return JSON.stringify([
     view.worldId,
@@ -185,22 +213,38 @@ function equippedTargetIdentity(view: GameView) {
 function App({
   resetApplication,
   onCharacterless,
+  entryFailure,
+  authenticationRejected,
   tab,
 }: {
   resetApplication: () => void;
   onCharacterless: () => void;
+  entryFailure?: 'signed-out' | 'forbidden';
+  authenticationRejected: (failure: 'signed-out' | 'forbidden') => void;
   tab: TabControl;
 }) {
+  const blockedEntry = useRef(entryFailure);
   const [view, setView] = useState<GameView | null>(null),
     [transportReady, setConnected] = useState(false),
-    [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: 'loading' }),
+    [entryStatus, setEntryStatus] = useState<EntryStatus>({ kind: entryFailure ?? 'loading' }),
     [sceneError, setSceneError] = useState(''),
     [sceneCreated, setSceneCreated] = useState(false),
     [notice, setNotice] = useState('');
+  const [sceneLoad, setSceneLoad] = useState<{
+    owner: string;
+    progress: SceneLoadProgress;
+  } | null>(null);
+  const rendererViewOwner = useRef('');
   const [conditionPolicyRevision, setConditionPolicyRevision] = useState(0);
   const [inspectors, setInspectors] = useState<{ id: string; slot: number }[]>([]);
   const [activeInspector, setActiveInspector] = useState<string | null>(null);
   const [worldIntent, setWorldIntent] = useState<(WorldIntent & { owner: string }) | null>(null);
+  const [speechPreferenceNotice, setSpeechPreferenceNotice] = useState<{
+    scope: string;
+    targetId: string;
+    message: string;
+  } | null>(null);
+  const speechPreferenceRequest = useRef<object | null>(null);
   const [itemCreation, setItemCreation] = useState<{
     target: ItemCreationTarget;
     definitionId?: string;
@@ -221,12 +265,14 @@ function App({
     [hover, setHover] = useState<{
       entity: EntityView;
       point: { x: number; y: number };
+      primary: boolean;
     } | null>(null);
   const [lethalReview, setLethalReview] = useState<{
     review: NonNullable<ApiResult['lethalReview']>;
     action: ActionOption;
   } | null>(null);
-  const [lethalBusy, setLethalBusy] = useState(false);
+  const [lethalBusyReviewId, setLethalBusyReviewId] = useState<string | null>(null);
+  const lethalBusy = lethalBusyReviewId !== null && lethalBusyReviewId === lethalReview?.review.id;
   useEffect(
     () => setLethalReview(null),
     [
@@ -242,12 +288,14 @@ function App({
   const [inventoryOpened, setInventoryOpened] = useState(false);
   const [activityOpened, setActivityOpened] = useState(false);
   const [activityEntry, setActivityEntry] = useState<ActivityEntry>();
+  const [workBatchEntry, setWorkBatchEntry] = useState<WorkBatchEntry>();
   const [retainedPanels, setRetainedPanels] = useState<PanelId[]>([]);
   const [actionSubject, setActionSubject] = useState<EntityView | null>(null);
   const [actionEntry, setActionEntry] = useState(0);
   const [conditionEntry, setConditionEntry] = useState(0);
   const [workEntry, setWorkEntry] = useState(0);
   const [choosingActionSubject, setChoosingActionSubject] = useState(false);
+  const [placingConstruction, setPlacingConstruction] = useState(false);
   const subjectReturnPanels = useRef<PanelId[]>([]);
   const [storyRequest, setStoryRequest] = useState(0);
   const [settingsSection, setSettingsSection] = useState('reading');
@@ -256,6 +304,7 @@ function App({
   const [gameError, setGameError] = useState('');
   const [mindDirty, setMindDirty] = useState(false);
   const [mindSwitchMessage, setMindSwitchMessage] = useState('');
+  const [recoveryRequest, setRecoveryRequest] = useState<string | null>(null);
   const [inventionSeed, setInventionSeed] = useState<{
       id: string;
       text: string;
@@ -270,10 +319,16 @@ function App({
     } | null>(null),
     [godEditors, setGodEditors] = useState<GodEditorWindow[]>([]),
     [timeSettings, setTimeSettings] = useState(false),
+    [openingDisclosure, setOpeningDisclosure] = useState<{ owner: string; expanded: boolean }>(),
     [pausePending, setPausePending] = useState(false),
     [speedPending, setSpeedPending] = useState(false),
     [width, setWidth] = useState(innerWidth),
     [height, setHeight] = useState(innerHeight);
+  const [actionInput, setActionInput] = useLocal<ActionInputPreferences>(
+    'open-legend:action-input',
+    DEFAULT_ACTION_INPUT,
+    isActionInputPreferences,
+  );
   const [theme, setTheme] = useLocal('open-legend:theme', 'wilderness', (v): v is string =>
     ['wilderness', 'fantasy', 'scifi'].includes(String(v)),
   );
@@ -344,7 +399,9 @@ function App({
       nearbySelect: (_id: string) => {},
       nearbyContextMenu: (_id: string, _x: number, _y: number) => {},
       browseKnown: (_opener: HTMLElement) => {},
-      primaryAction: (_entity: EntityView) => {},
+      beginPrimaryAction: (_entity: EntityView): string | null => null,
+      commitPrimaryAction: (_id: string, _entity: EntityView) => {},
+      cancelPrimaryAction: () => {},
     }),
     retry = useRef(() => {});
   latest.current = view;
@@ -398,7 +455,12 @@ function App({
     document.title = view ? `Open Legend — ${view.presentation.worldName}` : 'Open Legend';
   }, [view?.presentation.worldName]);
   const { paused: tabPaused, acceptView, pause: pauseTab, isPaused, enter } = tab;
-  const connected = transportReady && !tabPaused && !!view?.access?.controlling;
+  const sceneProgress =
+    view && sceneLoad?.owner === sceneLoadOwner(view)
+      ? sceneLoad.progress
+      : { phase: 'loading' as const, completed: 0, total: 0 };
+  const sceneReady = sceneProgress.phase === 'ready' && !sceneError;
+  const connected = transportReady && !tabPaused && !!view?.access?.controlling && sceneReady;
   targetingAllowed.current =
     connected &&
     !picker &&
@@ -406,7 +468,14 @@ function App({
     !!view?.player.alive &&
     view.player.participation !== 'inactive';
   const creation = useCreationRequest(view, connected);
-  const showEntry = !view || (tabPaused && !tab.blocked && entryStatus.kind !== 'loading');
+  const showEntry =
+    !view || !sceneReady || (tabPaused && !tab.blocked && entryStatus.kind !== 'loading');
+  const visibleEntryStatus: EntryStatus =
+    view && sceneError
+      ? { kind: 'scene-failed', message: sceneError }
+      : view && !sceneReady && entryStatus.kind === 'loading'
+        ? { kind: 'scene-loading', progress: sceneProgress }
+        : entryStatus;
   const showFocusPause = !!view && tabPaused && !tab.blocked && !showEntry;
   const accept = useCallback(
     (next: GameView, reset = false) => {
@@ -476,11 +545,13 @@ function App({
     let streamView: GameView | undefined;
     let bootstrapVersion = 0;
     let active = true,
-      source: EventSource | undefined,
+      source: Subscription | undefined,
       timer: ReturnType<typeof setTimeout> | undefined;
     const schedule = (delay: number) => {
       if (!active || isPaused()) return;
-      source?.close();
+      const previous = source;
+      source = undefined;
+      previous?.close();
       setConnected(false);
       clearTimeout(timer);
       timer = setTimeout(() => void bootstrap(), delay);
@@ -490,57 +561,79 @@ function App({
       if (!active || !current || isPaused()) return;
       clearTimeout(timer);
       source?.close();
-      const connection = new EventSource(eventsUrl(current));
-      source = connection;
-      source.onopen = () => {
-        if (active && source === connection) {
+      const controller = new AbortController();
+      const connection = browserSubscription(
+        eventsUrl(current),
+        controller.signal,
+        'game',
+        (frame, context) => {
+          context.throwIfStopped();
+          if (!active || source !== connection) return;
           clearTimeout(timer);
           setConnected(true);
-        }
-      };
-      source.addEventListener('timeline-changed', () => {
-        if (!active || source !== connection) return;
-        // The server proved that only the saved timeline changed. Old gameplay
-        // commands and other private drafts still disappear; checkpoint recovery
-        // is read-only and fresh state rechecks the exact retained owner.
-        pauseTab();
-        clearAccess({ preserveCheckpointResultsFor: current.checkpoint?.recoveryScope });
-        resetApplication();
-      });
-      source.addEventListener('access-changed', () => {
-        if (!active || source !== connection) return;
-        pauseTab();
-        clearAccess();
-        resetApplication();
-      });
-      source.addEventListener('reset', (event) => {
-        try {
+          if (frame.kind === 'comment') return;
+          if (frame.event === 'timeline-changed') {
+            source = undefined;
+            connection.close();
+            pauseTab();
+            clearAccess({ preserveCheckpointResultsFor: current.checkpoint?.recoveryScope });
+            resetApplication();
+          } else if (frame.event === 'access-changed') {
+            source = undefined;
+            connection.close();
+            pauseTab();
+            clearAccess();
+            resetApplication();
+          } else if (frame.event === 'reset') {
+            try {
+              const reset = JSON.parse(frame.data) as GameView;
+              streamView = reset;
+              scene.current?.resetTransientCaptions();
+              accept(reset, true);
+            } catch {
+              notify('A world update could not be read. Reconnecting…');
+              schedule(250);
+            }
+          } else if (frame.event === 'patch') {
+            try {
+              if (!streamView) return;
+              const next = applyGamePatch(streamView, JSON.parse(frame.data) as GamePatch);
+              streamView = next;
+              accept(next);
+            } catch {
+              schedule(250);
+            }
+          }
+        },
+      );
+      source = connection;
+      void connection.done
+        .then((result) => {
           if (!active || source !== connection) return;
-          const reset = JSON.parse((event as MessageEvent<string>).data) as GameView;
-          streamView = reset;
-          scene.current?.resetTransientCaptions();
-          accept(reset, true);
-        } catch {
-          notify('A world update could not be read. Reconnecting…');
-          schedule(250);
-        }
-      });
-      source.addEventListener('patch', (event) => {
-        try {
-          if (!active || source !== connection || !streamView) return;
-          const patch = JSON.parse((event as MessageEvent<string>).data) as GamePatch;
-          const next = applyGamePatch(streamView, patch);
-          streamView = next;
-          accept(next);
-        } catch {
-          schedule(250);
-        }
-      });
-      source.onerror = () => {
-        if (source === connection) schedule(6000);
-      };
+          source = undefined;
+          setConnected(false);
+          if (result.reason === 'closed') return;
+          if (result.reason === 'connection_failed' && result.failure.kind === 'http_status') {
+            const status = result.failure.status;
+            if (status === 204) return;
+            if (status === 401 || status === 403) {
+              pauseTab();
+              clearAccess();
+              authenticationRejected(status === 401 ? 'signed-out' : 'forbidden');
+              return;
+            }
+          }
+          schedule(6000);
+        })
+        .catch(() => {
+          if (active && source === connection) schedule(6000);
+        });
     }
     async function bootstrap(foreground = false) {
+      if (blockedEntry.current) {
+        setEntryStatus({ kind: blockedEntry.current });
+        return;
+      }
       const attempt = ++bootstrapVersion;
       clearTimeout(timer);
       source?.close();
@@ -617,7 +710,10 @@ function App({
         }
       }
     }
-    retry.current = () => void bootstrap();
+    retry.current = () => {
+      blockedEntry.current = undefined;
+      void bootstrap();
+    };
     void bootstrap();
     const hide = () => {
         clearTimeout(timer);
@@ -642,7 +738,17 @@ function App({
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
     };
-  }, [accept, notify, onCharacterless, tabPaused, pauseTab, isPaused, enter, resetApplication]);
+  }, [
+    accept,
+    notify,
+    onCharacterless,
+    tabPaused,
+    pauseTab,
+    isPaused,
+    enter,
+    resetApplication,
+    authenticationRejected,
+  ]);
   // A wide, short window can leave less room than one action button below the
   // condition card. Reuse the existing sheet without shrinking text or drafts.
   // docs/projects/parallel-batch-01-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026
@@ -708,7 +814,7 @@ function App({
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
   }, [scale, narrow]);
-  const worldVisible = view !== null && (!tabPaused || tab.blocked);
+  const worldVisible = view !== null && sceneReady && (!tabPaused || tab.blocked);
   const aimPanel =
     view?.player.action?.controls &&
     ((narrow && open.length > 0) || expandedWorkspaces.some((id) => open.includes(id)))
@@ -910,7 +1016,16 @@ function App({
     setPicker(null);
     setTargetMode(false);
     const requestedLife = latest.current?.player.life;
-    const requestedScope = latest.current?.access?.scope;
+    const currentCommandOwner = () =>
+      JSON.stringify([
+        latest.current?.worldId,
+        latest.current?.saveTimeline,
+        latest.current?.player.id,
+        latest.current?.player.life,
+        latest.current?.access?.scope,
+        latest.current?.access?.controlGeneration,
+      ]);
+    const requestedOwner = currentCommandOwner();
     // A task switch replaces this group; its pending result still belongs to the original reader.
     const activityFeedback =
       acknowledgement === 'activity'
@@ -925,9 +1040,13 @@ function App({
       // The original caller may still recover its receipt, but a later character
       // or control session must not receive that action's notification or prompt.
       // docs/ui-ux/react.md#effects-asynchronous-work-and-mutations
-      if (latest.current?.access?.scope !== requestedScope) return r;
+      if (requestedOwner !== currentCommandOwner()) return r;
+      // Held input owns its gesture's lifetime; its hook opens a review only
+      // after checking that a late acknowledgement still belongs to that gesture.
+      if (r.lethalReview && action.command.execution) return r;
       if (
         r.lethalReview &&
+        !latest.current?.clock.paused &&
         !latest.current?.player.death &&
         latest.current?.player.life === requestedLife
       ) {
@@ -947,7 +1066,7 @@ function App({
       return r;
     } catch (e) {
       const message = `${String(e)} The action's outcome is unconfirmed. Check Events and the world before repeating it; a missing event does not prove it failed.`;
-      if (latest.current?.access?.scope === requestedScope) notify(message);
+      if (requestedOwner === currentCommandOwner()) notify(message);
       return {
         ok: false,
         code: 'unconfirmed',
@@ -973,21 +1092,28 @@ function App({
     containerOpening.open(entity);
   }
   function openActivity(entry?: ActivityEntry) {
+    setWorkBatchEntry(undefined);
     setActivityEntry(entry);
     show('activity');
     setPicker(null);
   }
   async function confirmLethalAttack() {
     if (!lethalReview || lethalBusy) return;
-    setLethalBusy(true);
+    const confirmingReviewId = lethalReview.review.id;
+    setLethalBusyReviewId(confirmingReviewId);
     try {
-      const result = await command({
-        ...lethalReview.action,
-        command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
-      });
-      if (!('lethalReview' in result) || !result.lethalReview) setLethalReview(null);
+      const result = lethalReview.action.command.execution
+        ? await attack.confirmReview(lethalReview.action, lethalReview.review.id)
+        : await command({
+            ...lethalReview.action,
+            command: { ...lethalReview.action.command, lethalReviewId: lethalReview.review.id },
+          });
+      if (!('lethalReview' in result) || !result.lethalReview)
+        setLethalReview((current) =>
+          current?.review.id === lethalReview.review.id ? null : current,
+        );
     } finally {
-      setLethalBusy(false);
+      setLethalBusyReviewId((current) => (current === confirmingReviewId ? null : current));
     }
   }
   function talk(id: string) {
@@ -997,10 +1123,23 @@ function App({
     setWorldIntent({
       mode: 'speak',
       targetId: recipient.communicationReference ?? id,
-      label: recipient.name,
+      label: namePhrase(recipient, 'indefinite'),
       owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
     });
     setPicker(null);
+  }
+  function addressPerson(id: string, label: string) {
+    const current = latest.current;
+    if (!current) return;
+    const visible = current.entities.find((entity) => entity.id === id);
+    setWorldIntent({
+      mode: 'speak',
+      targetId: id,
+      label: visible ? namePhrase(visible, 'indefinite') : label,
+      owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
+    });
+    setPicker(null);
+    hide('events');
   }
   function talkAbout(item: { itemId: string; name: string; recipientId?: string }) {
     const current = latest.current;
@@ -1011,7 +1150,10 @@ function App({
     setWorldIntent({
       mode: 'speak',
       ...(recipient
-        ? { targetId: recipient.communicationReference ?? recipient.id, label: recipient.name }
+        ? {
+            targetId: recipient.communicationReference ?? recipient.id,
+            label: namePhrase(recipient, 'indefinite'),
+          }
         : {}),
       item: { id: item.itemId, name: item.name },
       owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
@@ -1182,13 +1324,38 @@ function App({
       }
     }
   }
-  const primaryAction = usePrimaryAction(view, connected && !tabPaused, run, notify);
+  const attack = useActionExecution({
+    view,
+    connected: connected && !tabPaused,
+    scene,
+    preferences: actionInput,
+    blocked:
+      !!picker || targeting || choosingActionSubject || placingConstruction || !!lethalReview,
+    ownReview: !!lethalReview?.action.command.execution,
+    command,
+    onReview: (action, review) => setLethalReview({ action, review }),
+    notify,
+  });
+  const primaryAction = usePrimaryAction(
+    view,
+    connected && !tabPaused,
+    hover?.primary ? hover.entity : null,
+    run,
+    notify,
+  );
   handlers.current = {
-    primaryAction,
+    beginPrimaryAction: primaryAction.begin,
+    commitPrimaryAction: primaryAction.commit,
+    cancelPrimaryAction: primaryAction.cancel,
     browseKnown: (opener) => browseActions({ catalogue: true }, opener),
     nearbySelect: (id) => {
       const entity = latest.current?.entities.find((entry) => entry.id === id);
-      if (entity) choosingActionSubject ? finishActionSubject(entity) : inspect(entity);
+      if (entity)
+        choosingActionSubject
+          ? finishActionSubject(entity)
+          : attack.mode
+            ? attack.selectSubject(entity)
+            : inspect(entity);
     },
     nearbyContextMenu: (id, x, y) => {
       const entity = latest.current?.entities.find((entry) => entry.id === id);
@@ -1236,7 +1403,7 @@ function App({
     scene.current?.destroy();
     scene.current = null;
     setSceneCreated(false);
-    setSceneError(`${String(error)}. The In view list still provides interactions.`);
+    setSceneError(String(error));
   }, []);
   useEffect(() => {
     const initial = latest.current;
@@ -1246,6 +1413,7 @@ function App({
     let frame = 0;
     let task: number | undefined;
     let allocated: WorldRenderer | null = null;
+    let renderer: WorldRenderer | null = null;
     const discard = () => {
       allocated?.destroy();
       allocated = null;
@@ -1275,18 +1443,28 @@ function App({
       if (!current()) return;
       try {
         allocated = createWorldRenderer(surface, {
+          loadingChanged: (progress) => {
+            // The installed renderer survives focus/control changes. Its own
+            // preparation generation rejects old work after a new view is set.
+            if (!renderer || (scene.current !== renderer && allocated !== renderer)) return;
+            setSceneLoad({ owner: rendererViewOwner.current, progress });
+            if (progress.phase === 'failed') failScene(progress.message);
+          },
           select: (...args) => handlers.current.select(...args),
           move: (p) => handlers.current.move(p),
           target: (entity) => handlers.current.target(entity),
-          primaryAction: (entity) => handlers.current.primaryAction(entity),
-          hover: (entity, point) =>
+          beginPrimaryAction: (entity) => handlers.current.beginPrimaryAction(entity),
+          commitPrimaryAction: (id, entity) => handlers.current.commitPrimaryAction(id, entity),
+          cancelPrimaryAction: () => handlers.current.cancelPrimaryAction(),
+          hover: (entity, point, primary) =>
             setHover((previous) =>
               previous?.entity === entity &&
               previous.point.x === point.x &&
-              previous.point.y === point.y
+              previous.point.y === point.y &&
+              previous.primary === primary
                 ? previous
                 : entity
-                  ? { entity, point }
+                  ? { entity, point, primary }
                   : null,
             ),
           selectionDenied: notify,
@@ -1299,6 +1477,7 @@ function App({
                 : { projection, rotationLocked, following },
             ),
         });
+        renderer = allocated;
         allocated.setSuspended(true);
         schedule(() => {
           if (!current()) {
@@ -1339,6 +1518,7 @@ function App({
         vision: visionGuide,
         hearing: hearingGuide,
       });
+      rendererViewOwner.current = sceneLoadOwner(view);
       scene.current.setView(view);
     } catch (error) {
       failScene(error);
@@ -1465,6 +1645,18 @@ function App({
       }
       if (choosingActionSubject) return;
       if (uiOwnsShortcut(e) || e.metaKey || e.ctrlKey || e.altKey) return;
+      if (e.shiftKey && e.code === actionInput.attackMode) {
+        if (!view || !connected || e.repeat) return;
+        e.preventDefault();
+        attack.toggle();
+        return;
+      }
+      if (e.shiftKey && e.code === actionInput.create) {
+        if (!view || !connected || e.repeat) return;
+        e.preventDefault();
+        toggle('agent');
+        return;
+      }
       if (e.shiftKey && (e.code === 'KeyS' || e.code === 'KeyA')) {
         if (!view || !connected || e.repeat) return;
         e.preventDefault();
@@ -1475,7 +1667,7 @@ function App({
         setPicker(null);
         return;
       }
-      if (e.key.toLowerCase() === 't') {
+      if (!e.shiftKey && e.key.toLowerCase() === 't') {
         if (!view || picker || !connected || e.repeat) return;
         e.preventDefault();
         if (!view.player.equippedTargetItem) {
@@ -1507,7 +1699,6 @@ function App({
         i: 'inventory',
         c: 'crafting',
         k: 'character',
-        w: 'agent',
         v: 'nearby',
         j: 'events',
       };
@@ -1555,7 +1746,17 @@ function App({
         command: a.intent.command,
         reason: a.reason,
       });
-    else if (a.intent.kind === 'activity' && a.targetId && a.enabled) {
+    else if (a.intent.kind === 'work-batch' && a.enabled && view) {
+      setWorkBatchEntry({
+        id: a.id,
+        owner: taskScope(view),
+        label: a.label,
+        selection: a.intent.selection,
+      });
+      setActivityEntry(undefined);
+      show('activity');
+      setPicker(null);
+    } else if (a.intent.kind === 'activity' && a.targetId && a.enabled) {
       openActivity({
         familyId: a.intent.family,
         targetId: a.targetId,
@@ -1564,7 +1765,51 @@ function App({
       });
     } else if (a.intent.kind === 'compose') {
       if (a.intent.mode === 'invention') invent();
-      else talk(a.intent.npcId ?? '');
+      else {
+        const targetId = a.intent.npcId ?? '';
+        talk(targetId);
+        const preference = a.intent.preference,
+          scope = latest.current?.access?.scope;
+        if (preference && scope) {
+          const request = {};
+          speechPreferenceRequest.current = request;
+          setSpeechPreferenceNotice({
+            scope,
+            targetId,
+            message: 'Changing the shortcut preference…',
+          });
+          void command({
+            id: `${a.id}:preference`,
+            label: a.label,
+            enabled: true,
+            command: preference,
+          })
+            .then((result) => {
+              if (
+                speechPreferenceRequest.current !== request ||
+                latest.current?.access?.scope !== scope
+              )
+                return;
+              setSpeechPreferenceNotice({
+                scope,
+                targetId,
+                message: result.ok ? 'Shortcut preference updated.' : result.message,
+              });
+            })
+            .catch((error) => {
+              if (
+                speechPreferenceRequest.current !== request ||
+                latest.current?.access?.scope !== scope
+              )
+                return;
+              setSpeechPreferenceNotice({
+                scope,
+                targetId,
+                message: `The shortcut preference result is unconfirmed. ${String(error)}`,
+              });
+            });
+        }
+      }
     }
   }
   function browseActions(context: ActionContext, opener: Element) {
@@ -1759,7 +2004,7 @@ function App({
     const props = {
       view,
       connected,
-      command: (a: ActionOption) => command(a),
+      command,
     };
     switch (id) {
       case 'inventory':
@@ -1770,6 +2015,17 @@ function App({
               {...props}
               narrow={narrow}
               showHeading={false}
+              chooseWork={(item) => {
+                if (!item.workBatch) return;
+                setWorkBatchEntry({
+                  id: `meal:${item.id}`,
+                  owner: taskScope(view),
+                  label: item.workBatch.label,
+                  selection: item.workBatch.selection,
+                });
+                setActivityEntry(undefined);
+                show('activity');
+              }}
               browseActions={(item, opener, dispatchCommand) => {
                 const bounds = opener.getBoundingClientRect();
                 openPicker({
@@ -1810,13 +2066,26 @@ function App({
         );
       case 'activity':
         return (
-          <CampActivity
-            view={view}
-            connected={connected}
-            command={(action, request) => command(action, request, 'activity')}
-            entry={activityEntry}
-            visible={connected && panelVisible('activity')}
-          />
+          <>
+            <WorkBatches
+              key={taskScope(view)}
+              view={view}
+              connected={connected}
+              visible={panelVisible('activity')}
+              entry={workBatchEntry?.owner === taskScope(view) ? workBatchEntry : undefined}
+              command={(action, request) => command(action, request, 'activity')}
+              close={() => setWorkBatchEntry(undefined)}
+            />
+            {workBatchEntry?.owner !== taskScope(view) && (
+              <CampActivity
+                view={view}
+                connected={connected}
+                command={(action, request) => command(action, request, 'activity')}
+                entry={activityEntry}
+                visible={connected && panelVisible('activity')}
+              />
+            )}
+          </>
         );
       case 'crafting':
         return (
@@ -1834,7 +2103,10 @@ function App({
             connected={connected}
             visible={panelVisible('building')}
             command={command}
-            placement={(controls) => scene.current?.setConstructionPlacement(controls)}
+            placement={(controls: ConstructionPlacement | null) => {
+              scene.current?.setConstructionPlacement(controls);
+              setPlacingConstruction(!!controls);
+            }}
             preview={(shapes, valid, transform) =>
               scene.current?.setConstructionPreview(shapes, valid, transform)
             }
@@ -1905,6 +2177,7 @@ function App({
             browseRecipe={(recipeId, opener) => browseActions({ recipeId }, opener)}
             connected={connected}
             inventionSeed={inventionSeed}
+            recoveryRequest={recoveryRequest}
             invent={invent}
             visible={visible}
           />
@@ -1915,6 +2188,15 @@ function App({
         return (
           <WorldEvents
             view={view}
+            addressPerson={addressPerson}
+            inspectEntity={(id) => {
+              const target =
+                id === view.player.id
+                  ? playerEntity(view)
+                  : view.entities.find((entity) => entity.id === id);
+              if (target) inspect(target);
+              else notify('This person or object is not currently in view.');
+            }}
             key={eventsReset}
             visible={visible}
             scope={captionScope(view)}
@@ -2081,19 +2363,66 @@ function App({
             performance={performance}
             setPerformance={setPerformance}
             browseActions={browseSettingsActions}
+            actionInput={actionInput}
+            setActionInput={setActionInput}
           />
         );
     }
   }
+  const currentWorldIntent =
+    view && worldIntent?.owner === JSON.stringify([view.worldId, view.saveTimeline, view.player.id])
+      ? worldIntent
+      : null;
+  // Narrow reading panels and the speech bar cover the full clock. Keep its
+  // existing pause control in the utility row without closing the current task.
+  const clockInTopTools =
+    narrow && (open.length > 0 || inspectors.length > 0 || !!currentWorldIntent);
+  const pauseButton = view && (
+    <IconButton
+      id="pause"
+      icon={view.clock.paused ? 'ui.play' : 'ui.pause'}
+      label={view.clock.paused ? 'Resume world' : 'Pause world'}
+      disabled={!connected || pausePending || view.clock.pauseReason === 'maintenance'}
+      pressed={view.clock.paused}
+      onPress={() => void pause()}
+    />
+  );
+  const openingOwner = view ? JSON.stringify([view.worldId, view.player.id]) : '';
+  const openingInformation = view?.presentation.introduction && (
+    <details
+      className="ol-card ol-opening-information"
+      open={openingDisclosure?.owner === openingOwner ? openingDisclosure.expanded : true}
+      onToggle={(event) => {
+        const expanded = event.currentTarget.open;
+        setOpeningDisclosure((current) =>
+          current?.owner === openingOwner && current.expanded === expanded
+            ? current
+            : { owner: openingOwner, expanded },
+        );
+      }}
+      hidden={
+        open.length > 0 ||
+        inspectors.length > 0 ||
+        !!currentWorldIntent ||
+        !!picker ||
+        !!view.player.death
+      }
+      key={openingOwner}
+    >
+      <summary>Arriving here</summary>
+      <p>{view.presentation.introduction}</p>
+    </details>
+  );
   return (
-    <ClockOffsetContext.Provider value={view?.clock.offsetHours ?? 0}>
+    <WorldClockProvider clock={view?.clock}>
       <canvas
         id="world"
         ref={canvas}
-        tabIndex={view ? 0 : -1}
-        aria-hidden={!view}
+        data-entry-loading={!sceneReady}
+        tabIndex={view && sceneReady ? 0 : -1}
+        aria-hidden={!view || !sceneReady}
         aria-label={view?.presentation.worldName ?? 'World'}
-        inert={tabPaused}
+        inert={tabPaused || !sceneReady}
       />
       <div
         ref={hud}
@@ -2110,8 +2439,13 @@ function App({
       >
         {showEntry && (
           <EntryScreen
-            status={entryStatus}
+            status={visibleEntryStatus}
             onRetry={() => {
+              if (sceneError) {
+                setSceneLoad(null);
+                setSceneError('');
+                return;
+              }
               setEntryStatus({
                 kind: 'loading',
                 retryLabel:
@@ -2185,11 +2519,15 @@ function App({
                 </div>
               </section>
             )}
-            <div className="ol-clock-position">
+            <div className="ol-clock-position" hidden={clockInTopTools}>
               <div className="ol-card ol-timebar" aria-label="Time">
                 <div className="ol-timebar-when">
                   <Icon
-                    name={view.clock.hour < 6 || view.clock.hour >= 19 ? 'ui.night' : 'ui.day'}
+                    name={
+                      sunlightAtHour(view.clock.hour, view.clock.daylight).isDay
+                        ? 'ui.day'
+                        : 'ui.night'
+                    }
                   />
                   <div>
                     <span className="ol-timebar-day">Day {view.clock.day}</span>
@@ -2198,6 +2536,9 @@ function App({
                       {clockParts(view.clock.seconds, view.clock.offsetHours).minute}
                     </span>
                     <div className="ol-timebar-location">{view.presentation.locationName}</div>
+                    {view.clock.weather && (
+                      <div className="ol-timebar-status">{view.clock.weather.label}</div>
+                    )}
                     {(view.clock.paused || view.clock.preparingNavigation) && (
                       <div className="ol-timebar-status">
                         {view.clock.paused
@@ -2210,14 +2551,7 @@ function App({
                   </div>
                 </div>
                 <span className="ol-timebar-sep" />
-                <IconButton
-                  id="pause"
-                  icon={view.clock.paused ? 'ui.play' : 'ui.pause'}
-                  label={view.clock.paused ? 'Resume world' : 'Pause world'}
-                  disabled={!connected || pausePending || view.clock.pauseReason === 'maintenance'}
-                  pressed={view.clock.paused}
-                  onPress={() => void pause()}
-                />
+                {!clockInTopTools && pauseButton}
                 <SegmentedControl
                   label="Time speed"
                   options={timeSpeeds.map((n) => ({
@@ -2235,7 +2569,7 @@ function App({
                   onPress={() => setTimeSettings(!timeSettings)}
                 />
               </div>
-              {view.player.action?.controls && !aimPanel && (
+              {view.player.action?.controls && !view.player.action.execution && !aimPanel && (
                 <div className="ol-card ol-aim-status">
                   <AimControls
                     action={view.player.action}
@@ -2257,12 +2591,14 @@ function App({
                   </p>
                 </div>
               )}
+              {!narrow && openingInformation}
               <div className="ol-hud-notices">
                 <EntryNotice />
                 <MaintenanceNotice maintenance={view.maintenance} />
               </div>
             </div>
             <div className="ol-top-tools">
+              {clockInTopTools && pauseButton}
               <Button id="gameMenuButton" size="sm" variant="quiet" onPress={() => toggle('game')}>
                 Game
               </Button>
@@ -2290,6 +2626,7 @@ function App({
                   ).map((id) => (
                     <Launcher
                       key={id}
+                      id={`launcher-${id}`}
                       icon={
                         {
                           inventory: 'ui.inventory',
@@ -2312,7 +2649,7 @@ function App({
                           inventory: 'I',
                           crafting: 'C',
                           character: 'K',
-                          agent: 'W',
+                          agent: `Shift+${actionInput.create.replace('Key', '')}`,
                           nearby: 'V',
                           events: 'J',
                         }[id as 'inventory']
@@ -2423,7 +2760,9 @@ function App({
                             : undefined
                         }
                         footer={
-                          id === aimPanel && view.player.action?.controls ? (
+                          id === aimPanel &&
+                          view.player.action?.controls &&
+                          !view.player.action.execution ? (
                             <AimControls
                               action={view.player.action}
                               connected={connected}
@@ -2505,7 +2844,11 @@ function App({
                           command={command}
                           godControls={characterGodControls(inspected)}
                           actionBrowser={actionBrowser(
-                            { entity: inspected, context: { targetId: id }, point: { x: 0, y: 0 } },
+                            {
+                              entity: inspected,
+                              context: { targetId: id },
+                              point: { x: 0, y: 0 },
+                            },
                             'inspection',
                             !narrow || (raised && inspectorSheetVisible),
                           )}
@@ -2524,7 +2867,25 @@ function App({
               className="ol-world-controls"
               data-bounded={narrow && open.length === 0 ? '' : undefined}
             >
+              <div className="ol-execution-controls">
+                <AttackControls
+                  controller={attack}
+                  view={view}
+                  connected={connected}
+                  inView={() => show('nearby')}
+                />
+              </div>
               <div className="ol-quick-position">
+                <Button
+                  size="sm"
+                  variant={attack.mode ? 'primary' : 'secondary'}
+                  aria-pressed={attack.mode}
+                  data-attack-mode-toggle=""
+                  disabled={!connected || !view.access?.controlling}
+                  onPress={attack.toggle}
+                >
+                  Attack mode {attack.mode ? 'on' : 'off'}
+                </Button>
                 <Button
                   icon="ui.search"
                   disabled={!connected || choosingActionSubject}
@@ -2533,6 +2894,7 @@ function App({
                   Actions
                 </Button>
               </div>
+              {narrow && openingInformation}
               <CameraControls
                 overlays={{ vision: visionGuide, hearing: hearingGuide }}
                 toggleOverlay={(sense) =>
@@ -2560,6 +2922,19 @@ function App({
             {!tabPaused && performance && <FpsCounter renderer={scene} />}
             {!tabPaused && picker && !creation.visible && actionBrowser(picker)}
             <WorldComposer
+              notice={notice}
+              clearRecipient={() => {
+                setWorldIntent({
+                  mode: 'speak',
+                  owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
+                });
+              }}
+              preferenceNotice={
+                speechPreferenceNotice?.scope === view.access?.scope &&
+                speechPreferenceNotice?.targetId === worldIntent?.targetId
+                  ? speechPreferenceNotice?.message
+                  : undefined
+              }
               key={JSON.stringify([
                 view.worldId,
                 view.saveTimeline,
@@ -2568,12 +2943,7 @@ function App({
               ])}
               view={view}
               connected={connected}
-              intent={
-                worldIntent?.owner ===
-                JSON.stringify([view.worldId, view.saveTimeline, view.player.id])
-                  ? worldIntent
-                  : null
-              }
+              intent={currentWorldIntent}
               visible={!tabPaused && !picker}
               close={() => {
                 setWorldIntent(null);
@@ -2688,7 +3058,12 @@ function App({
               )}
           </div>
         )}
-        <div id="toast" role="status" className="ol-toast" hidden={!notice}>
+        <div
+          id="toast"
+          role="status"
+          className="ol-toast"
+          hidden={!notice || (!!currentWorldIntent && !tabPaused && !picker)}
+        >
           {notice}
         </div>
         {targeting && (
@@ -2724,28 +3099,19 @@ function App({
             }}
           />
         )}
-        {!connected && view && !tabPaused && (
+        {!transportReady && view && !tabPaused && sceneReady && (
           <div id="connection" role="status" className="ol-connection ol-card">
             Connection interrupted. Reconnecting to your saved world…
           </div>
         )}
-        {sceneError && (
-          <div className="ol-scene-error ol-card" role="alert">
-            <p>{sceneError}</p>
-            <Button
-              onPress={() => {
-                setSceneError('');
-                show('nearby');
-              }}
-            >
-              Retry scene
-            </Button>
-            <Button onPress={() => show('nearby')}>Open In view</Button>
-          </div>
-        )}
       </div>
-      {hover && !picker && !tabPaused && (
+      {hover && !picker && !tabPaused && sceneReady && (
         <WorldHover
+          primaryAction={
+            hover.primary && primaryAction.preview?.targetId === hover.entity.id
+              ? primaryAction.preview
+              : undefined
+          }
           key={hover?.entity.id}
           name={hover.entity.name}
           point={hover.point}
@@ -2763,7 +3129,14 @@ function App({
       )}
       {view?.player.death && (
         <div className="ol-play-workspace" inert={tabPaused}>
-          <DeathNotice view={view} command={command} />
+          <DeathNotice
+            view={view}
+            command={command}
+            reviewFreshWorld={() => {
+              setRecoveryRequest(crypto.randomUUID());
+              openGameTask('world-editor');
+            }}
+          />
         </div>
       )}
       {showFocusPause && (
@@ -2781,23 +3154,48 @@ function App({
           </Modal>
         </ModalOverlay>
       )}
+      {!tabPaused && !lethalReview && <AttackReticle controller={attack} />}
       {lethalReview && !tabPaused && (
         <LethalAttackDialog
           review={lethalReview.review}
           busy={lethalBusy}
-          cancel={() => setLethalReview(null)}
+          cancel={() => {
+            if (lethalReview.action.command.execution) attack.cancelReview(lethalReview.review.id);
+            else
+              void command({
+                id: `cancel-review:${lethalReview.review.id}`,
+                label: 'Cancel attack',
+                enabled: true,
+                command: {
+                  type: 'cancel',
+                  lethalReviewId: lethalReview.review.id,
+                  expectedActionId:
+                    lethalReview.action.command.aimId ??
+                    lethalReview.action.command.expectedActionId,
+                },
+              });
+            setLethalReview(null);
+          }}
           confirm={() => void confirmLethalAttack()}
         />
       )}
-    </ClockOffsetContext.Provider>
+    </WorldClockProvider>
   );
 }
 function ApplicationScope() {
   const [generation, setGeneration] = useState(0);
+  const [entryFailure, setEntryFailure] = useState<'signed-out' | 'forbidden'>();
   const [operations, setOperations] = useState(
     () => new URLSearchParams(location.search).get('view') === 'operations',
   );
-  const resetApplication = useCallback(() => setGeneration((value) => value + 1), []);
+  const resetApplication = useCallback(() => {
+    setEntryFailure(undefined);
+    setGeneration((value) => value + 1);
+  }, []);
+  const authenticationRejected = useCallback((failure: 'signed-out' | 'forbidden') => {
+    setEntryFailure(failure);
+    setGeneration((value) => value + 1);
+  }, []);
   const openOperations = useCallback(() => setOperations(true), []);
   const tab = useTabControl();
   // Characterless operator/spectator accounts, or an explicit ?view=operations tab.
@@ -2806,6 +3204,8 @@ function ApplicationScope() {
     <App
       key={generation}
       resetApplication={resetApplication}
+      entryFailure={entryFailure}
+      authenticationRejected={authenticationRejected}
       onCharacterless={openOperations}
       tab={tab}
     />

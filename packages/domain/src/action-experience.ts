@@ -1,10 +1,16 @@
+import { validAttackExecutionEvidence, validAimPointSubject } from './combat-execution.js';
+import { finitePoint } from '@open-legend/spatial';
+import { validTimedReleaseInput } from './execution-input.js';
+import { isNativeInputField } from './native-inputs.js';
+import { releaseGateWork } from './gate-operations.js';
+import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
 import { validActionTargets } from './action-targets.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { validResponsePurpose } from './action-capabilities.js';
 import { endOwnOffense } from './combat-encounters.js';
 import { validExactInventorySources } from './native-command-contracts.js';
 import {
-  invocationFields,
+  activityInvocationFields,
   commandEntityFields,
   nativeBindingKind,
   nativeOutputBinding,
@@ -12,7 +18,6 @@ import {
   validActivityBinding,
   exactFields,
 } from './native-command-contracts.js';
-import { activityCommandFields, isCookingInputField } from './food-preparation.js';
 import { person, personalText } from './narration.js';
 import type { Command, Outcome, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
@@ -33,7 +38,11 @@ import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import { cloneValue } from './draft.js';
 import { activityManifest } from './world-modules.js';
 
-import { validateCombatHelpReference } from './outings.js';
+import {
+  validateCombatHelpReference,
+  recordCooperationOutcome,
+  validateCooperationReference,
+} from './outings.js';
 
 /** Admission bounds, not promises about how much an actor remembers. Historical
  * records can live in the repository after leaving the resident working set.
@@ -100,8 +109,12 @@ export interface ActivityView {
   result?: string;
 }
 export interface ActivityOccurrence {
+  attackExecution?: import('./combat-execution.js').AttackExecutionEvidence;
+  /** Historical purpose attribution; it never requires or recreates live consent. */
+  cooperation?: import('./cooperation.js').CooperationPurposeBinding;
   release?: {
     eventId: string;
+    aimTarget?: import('./combat-execution.js').AimPointSubject;
     tool: import('./world-modules.js').DefinitionPin;
     family?: import('./world-modules.js').DefinitionPin;
     competence?: number;
@@ -165,7 +178,57 @@ export type ActivityArgument =
   | { role: string }
   | { output: string; port: string; quantity: number }
   | { literal: string | number | boolean };
-export type ActivityNode =
+/** Chosen future work retains exact meaning without claiming its future stock. */
+export type ActivityRequirement =
+  | { kind: 'recipe'; definition: import('./world-modules.js').DefinitionPin }
+  | { kind: 'work-policy'; definition: import('./world-modules.js').DefinitionPin }
+  | {
+      kind: 'body-policy';
+      definition: import('./world-modules.js').DefinitionPin;
+    }
+  | { kind: 'item-definition'; definition: import('./world-modules.js').DefinitionPin }
+  | {
+      kind: 'source';
+      role: string;
+      definition: import('./world-modules.js').DefinitionPin;
+      workSeconds: number;
+    }
+  | { kind: 'item'; role: string; definition: import('./world-modules.js').DefinitionPin };
+export interface ActivityQuantity {
+  command: 'eat' | 'gather' | 'craft';
+  requested: number;
+  unitLabel: string;
+}
+/** Progress describes actual matching native completions, not entered iterations. */
+export function validateActivityQuantity(root: ActivityNode, value: ActivityQuantity): void {
+  if (
+    !hasRecordFields(value, ['command', 'requested', 'unitLabel']) ||
+    !['eat', 'gather', 'craft'].includes(value.command) ||
+    !Number.isSafeInteger(value.requested) ||
+    value.requested < 1 ||
+    value.requested > ACTIVITY_LIMITS.iterations ||
+    typeof value.unitLabel !== 'string' ||
+    !value.unitLabel.trim() ||
+    value.unitLabel.length > ACTIVITY_LIMITS.text
+  )
+    throw new Error('Invalid selected activity quantity.');
+  const matches = (node: ActivityNode) => node.kind === 'invoke' && node.command === value.command;
+  if (
+    !(
+      root.kind === 'sequence' &&
+      root.children.length === value.requested &&
+      root.children.every(matches)
+    ) &&
+    !(
+      root.kind === 'repeat' &&
+      root.finishAtMaximum === true &&
+      root.maximum === value.requested &&
+      matches(root.body)
+    )
+  )
+    throw new Error('The selected quantity does not describe this finite activity.');
+}
+export type ActivityNode = { requirements?: ActivityRequirement[] } & (
   | {
       kind: 'invoke';
       key: string;
@@ -176,8 +239,16 @@ export type ActivityNode =
     }
   | { kind: 'sequence'; name: string; children: ActivityNode[] }
   | { kind: 'branch'; name: string; when: ActivityPredicate; yes: ActivityNode; no?: ActivityNode }
-  | { kind: 'repeat'; name: string; until: ActivityPredicate; maximum: number; body: ActivityNode }
-  | { kind: 'wait'; name: string; until: ActivityPredicate; seconds: number };
+  | {
+      kind: 'repeat';
+      name: string;
+      until: ActivityPredicate;
+      maximum: number;
+      finishAtMaximum?: true;
+      body: ActivityNode;
+    }
+  | { kind: 'wait'; name: string; until: ActivityPredicate; seconds: number }
+);
 export interface ActivityMethod {
   executable: boolean;
   id: string;
@@ -254,6 +325,21 @@ export const emptyActionExperience = (): ActionExperienceState => ({
 export function isRecordedActivityCommand(command: Command): boolean {
   if (isActivityCommand(command)) return true;
   if (!command || !isSafeRecordId(command.id) || !isSafeRecordId(command.actorId)) return false;
+  if (command.type === 'release-shot')
+    return (
+      isSafeRecordId(command.aimId) &&
+      (command.aimTarget === undefined ||
+        (!command.aimPoint && validAimPointSubject(command.aimTarget))) &&
+      (command.aimPoint === undefined || finitePoint(command.aimPoint)) &&
+      (command.aimPointSubject === undefined ||
+        (!!command.aimPoint && validAimPointSubject(command.aimPointSubject))) &&
+      (command.releaseInput === undefined || validTimedReleaseInput(command.releaseInput))
+    );
+  if (command.type === 'release-strike')
+    return (
+      isSafeRecordId(command.expectedActionId) &&
+      (command.releaseInput === undefined || validTimedReleaseInput(command.releaseInput))
+    );
   if (command.type === 'recover') return true;
   if (command.type === 'learn-record')
     return (
@@ -463,10 +549,17 @@ export function prepareActivity(
   parentId?: string,
 ): { record: ActivityOccurrence; existing: boolean } | Outcome {
   // A learned success may reproduce the physical action, never a human's one-attack consent.
-  const { humanInitiated: _human, combatHelpId: _help, ...recordable } = command;
+  const {
+    humanInitiated: _human,
+    combatHelpId: _help,
+    cooperation: _cooperation,
+    ...recordable
+  } = command;
   command = recordable;
   if (
-    ['strike', 'hunt', 'aim', 'shoot-once'].includes(command.type) &&
+    ['strike', 'hunt', 'aim', 'shoot-once', 'release-shot', 'release-strike'].includes(
+      command.type,
+    ) &&
     'lethalPermission' in command
   ) {
     const { lethalPermission: _permission, ...physical } = command;
@@ -512,7 +605,12 @@ export function prepareActivity(
     }
   }
   const record: ActivityOccurrence = {
-    ...(['practice-shot', 'coaching'].includes(command.type) ||
+    ...(_cooperation ? { cooperation: cloneValue(_cooperation) } : {}),
+    ...(('manualExecution' in command && command.manualExecution) ||
+    ('aimPoint' in command && command.aimPoint) ||
+    command.type === 'release-strike' ||
+    (command.type === 'release-shot' && !!command.releaseInput) ||
+    ['practice-shot', 'coaching'].includes(command.type) ||
     ('sources' in command && command.sources)
       ? { noLearningControl: true }
       : {}),
@@ -535,7 +633,7 @@ export function prepareActivity(
   if (
     parentId &&
     plan?.id === parentId &&
-    plan.activity?.control &&
+    (plan.activity?.control || plan.activity?.request?.quantity) &&
     plan.steps.some((step) => step.id === command.id && step.activityKey)
   )
     record.noLearningControl = true;
@@ -767,11 +865,14 @@ export function endActivity(
   actionId: string,
   result: Outcome,
 ): string | undefined {
+  const work = entityGet(world.entities, actorId)?.actor?.action;
+  if (work?.id === actionId && work.gateWork) releaseGateWork(world, actorId, work);
   const entry = occurrenceFor(world, actorId, actionId);
   if (!entry || entry.status !== 'running') return entry?.resultMemoryId;
   if ('targetId' in entry.command && entry.command.targetId !== undefined)
     endOwnOffense(world, actorId, entry.command.targetId, actionId);
   applyActivityResult(world, entry, result);
+  recordCooperationOutcome(world, actorId, entry);
   for (const output of entry.outputs) {
     const sources = (world.actionExperience.items[output.itemId] ??= []);
     if (sources.length < ACTIVITY_LIMITS.links)
@@ -935,9 +1036,38 @@ export function validateActivityNode(root: ActivityNode): void {
                 : ['test', 'role'],
       );
     };
+    if (node.requirements !== undefined) {
+      if (
+        !Array.isArray(node.requirements) ||
+        node.requirements.length > ACTIVITY_LIMITS.detailEntries
+      )
+        throw new Error('Invalid activity definition requirements.');
+      for (const requirement of node.requirements) {
+        if (
+          !requirement ||
+          !['recipe', 'work-policy', 'body-policy', 'item-definition', 'source', 'item'].includes(
+            requirement.kind,
+          ) ||
+          !isDefinitionPin(requirement.definition) ||
+          ((requirement.kind === 'source' || requirement.kind === 'item') &&
+            !isSafeRecordId(requirement.role)) ||
+          (requirement.kind === 'source' &&
+            (!Number.isFinite(requirement.workSeconds) || requirement.workSeconds <= 0))
+        )
+          throw new Error('Invalid activity definition requirement.');
+        exactFields(
+          requirement,
+          requirement.kind === 'source'
+            ? ['kind', 'role', 'definition', 'workSeconds']
+            : requirement.kind === 'item'
+              ? ['kind', 'role', 'definition']
+              : ['kind', 'definition'],
+        );
+      }
+    }
     switch (node.kind) {
       case 'invoke': {
-        exactFields(node, ['kind', 'key', 'name', 'command', 'args', 'outputs']);
+        exactFields(node, ['kind', 'key', 'name', 'command', 'args', 'outputs', 'requirements']);
         if (
           node.outputs &&
           (node.outputs.length > ACTIVITY_LIMITS.outputs ||
@@ -952,7 +1082,7 @@ export function validateActivityNode(root: ActivityNode): void {
           throw new Error('Invalid activity output description.');
         for (const output of node.outputs ?? [])
           exactFields(output, ['port', 'definitionId', 'quantity']);
-        const fields = invocationFields[node.command];
+        const fields = activityInvocationFields(node.command, node.args);
         if (
           !fields ||
           !isSafeRecordId(node.key) ||
@@ -962,10 +1092,17 @@ export function validateActivityNode(root: ActivityNode): void {
         )
           throw new Error('Invalid activity invocation.');
         const inputFields =
-          node.command === 'cook' ? Object.keys(node.args).filter(isCookingInputField) : [];
+          node.command === 'cook' ? Object.keys(node.args).filter(isNativeInputField) : [];
         if (node.command === 'cook' && !inputFields.length)
           throw new Error('Cooking needs exact input bindings.');
-        exactFields(node.args, [...fields.required, ...(fields.optional ?? []), ...inputFields]);
+        const toolFields =
+          node.command === 'craft' ? Object.keys(node.args).filter(isManufactureToolField) : [];
+        exactFields(node.args, [
+          ...fields.required,
+          ...(fields.optional ?? []),
+          ...inputFields,
+          ...toolFields,
+        ]);
         for (const [field, arg] of Object.entries(node.args)) {
           if (!arg || typeof arg !== 'object') throw new Error('Invalid activity argument.');
           if ('role' in arg) {
@@ -1000,19 +1137,29 @@ export function validateActivityNode(root: ActivityNode): void {
         break;
       }
       case 'sequence':
-        exactFields(node, ['kind', 'name', 'children']);
+        exactFields(node, ['kind', 'name', 'children', 'requirements']);
         if (!Array.isArray(node.children) || !node.children.length)
           throw new Error('Empty activity sequence.');
         for (const child of node.children) walk(child, depth + 1, multiplier);
         break;
       case 'branch':
-        exactFields(node, ['kind', 'name', 'when', 'yes', 'no']);
+        exactFields(node, ['kind', 'name', 'when', 'yes', 'no', 'requirements']);
         predicate(node.when);
         walk(node.yes, depth + 1, multiplier);
         if (node.no) walk(node.no, depth + 1, multiplier);
         break;
       case 'repeat':
-        exactFields(node, ['kind', 'name', 'until', 'maximum', 'body']);
+        exactFields(node, [
+          'kind',
+          'name',
+          'until',
+          'maximum',
+          'body',
+          'finishAtMaximum',
+          'requirements',
+        ]);
+        if (node.finishAtMaximum !== undefined && node.finishAtMaximum !== true)
+          throw new Error('Invalid successful repetition limit.');
         if (
           !Number.isInteger(node.maximum) ||
           node.maximum < 1 ||
@@ -1023,7 +1170,7 @@ export function validateActivityNode(root: ActivityNode): void {
         predicate(node.until);
         break;
       case 'wait':
-        exactFields(node, ['kind', 'name', 'until', 'seconds']);
+        exactFields(node, ['kind', 'name', 'until', 'seconds', 'requirements']);
         predicate(node.until);
         if (
           !Number.isFinite(node.seconds) ||
@@ -1047,6 +1194,13 @@ export function validateInstalledActivityConditions(
   bindings?: Record<string, ActivityBinding>,
   requireInstalled = true,
 ): void {
+  if (
+    bindings &&
+    root.requirements?.some(
+      (requirement) => 'role' in requirement && !Object.hasOwn(bindings, requirement.role),
+    )
+  )
+    throw new Error('Missing saved activity source binding.');
   if (root.kind === 'invoke') {
     if (
       bindings &&
@@ -1302,6 +1456,11 @@ export function validateActionExperience(world: WorldState): void {
     for (const entry of entries) {
       resident++;
       if (
+        (entry.cooperation !== undefined &&
+          (!hasRecordFields(entry.cooperation, ['id', 'revision']) ||
+            !isSafeRecordId(entry.cooperation.id) ||
+            !Number.isSafeInteger(entry.cooperation.revision) ||
+            entry.cooperation.revision < 1)) ||
         !isSafeRecordId(entry.id) ||
         ids.has(entry.id) ||
         entry.actorId !== actorId ||
@@ -1343,6 +1502,7 @@ export function validateActionExperience(world: WorldState): void {
         release &&
         (!['hunt', 'practice-shot', 'aim', 'shoot-once'].includes(entry.command.type) ||
           !isSafeRecordId(release.eventId) ||
+          (release.aimTarget !== undefined && !validAimPointSubject(release.aimTarget)) ||
           !isDefinitionPin(release.tool) ||
           (release.family !== undefined && !isDefinitionPin(release.family)) ||
           (release.competence !== undefined &&
@@ -1363,6 +1523,16 @@ export function validateActionExperience(world: WorldState): void {
             release.damage !== 0))
       )
         throw new Error('Invalid committed shot evidence.');
+      if (
+        entry.attackExecution !== undefined &&
+        (!['aim', 'strike'].includes(entry.command.type) ||
+          !entry.noLearningControl ||
+          !validAttackExecutionEvidence(entry.attackExecution) ||
+          entry.attackExecution.committedAt < entry.at ||
+          entry.attackExecution.committedAt > world.simTime ||
+          (entry.endedAt !== undefined && entry.attackExecution.committedAt > entry.endedAt))
+      )
+        throw new Error('Invalid committed attack execution evidence.');
       validateStockResolution(entry);
       for (const link of entry.connections) {
         const source = all.get(link.from);
@@ -1527,6 +1697,7 @@ function validateExecution(
   const state = world.actionExperience,
     simTime = world.simTime;
   exactFields(execution, [
+    'cooperation',
     'combatHelpId',
     'humanInitiated',
     'methodId',
@@ -1538,7 +1709,9 @@ function validateExecution(
     'serial',
     'processed',
     'archivedSteps',
+    'completedUnits',
     'activeKey',
+    'cancelledKeys',
     'reason',
     'control',
     'attempts',
@@ -1560,8 +1733,10 @@ function validateExecution(
     Array.isArray(execution.outputs)
   )
     throw new Error('Invalid saved activity execution shape.');
-  if (plan.status === 'active' || plan.status === 'blocked')
+  if (plan.status === 'active' || plan.status === 'blocked') {
     validateCombatHelpReference(world, actorId, execution);
+    validateCooperationReference(world, actorId, execution);
+  }
   {
     const method = execution.request
       ? undefined
@@ -1569,8 +1744,10 @@ function validateExecution(
         ? state.methods[execution.methodId]
         : undefined;
     const root = execution.request?.root ?? method?.root;
+    if (!execution.request && execution.completedUnits !== undefined)
+      throw new Error('Unrequested quantity progress.');
     if (execution.request !== undefined) {
-      if (!hasRecordFields(execution.request, ['name', 'root'], ['chosenPurpose']))
+      if (!hasRecordFields(execution.request, ['name', 'root'], ['chosenPurpose', 'quantity']))
         throw new Error('Invalid saved requested activity shape.');
       if (
         execution.methodId !== undefined ||
@@ -1582,6 +1759,17 @@ function validateExecution(
       )
         throw new Error('Invalid saved requested activity.');
       validateActivityNode(execution.request.root);
+      if (execution.request.quantity !== undefined)
+        validateActivityQuantity(execution.request.root, execution.request.quantity);
+      if (
+        execution.request.quantity
+          ? !Number.isSafeInteger(execution.completedUnits) ||
+            execution.completedUnits! < 0 ||
+            execution.completedUnits! > execution.request.quantity.requested ||
+            execution.completedUnits! > execution.serial
+          : execution.completedUnits !== undefined
+      )
+        throw new Error('Invalid actual completed quantity.');
       const roles = activityRoleKinds(execution.request.root);
       if (
         Object.keys(execution.bindings).length !== roles.size ||
@@ -1774,6 +1962,12 @@ function validateExecution(
     }
     if (
       (execution.activeKey && !keys.has(execution.activeKey)) ||
+      (execution.cancelledKeys !== undefined &&
+        (!Array.isArray(execution.cancelledKeys) ||
+          new Set(execution.cancelledKeys).size !== execution.cancelledKeys.length ||
+          (execution.activeKey !== undefined &&
+            execution.cancelledKeys.includes(execution.activeKey)) ||
+          execution.cancelledKeys.some((key) => !keys.has(key)))) ||
       Object.keys(execution.outputs).some((key) => !keys.has(key))
     )
       throw new Error('Invalid saved activity output key.');

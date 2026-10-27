@@ -203,9 +203,9 @@ The trusted implementation may use normal typed functions. Persist data and pins
 2. Make generic declaration admission resolve the installed family and call its validator/compiler. Keep authorization, deduplication, provenance, receipts and definition publication in their existing owners.
 3. Have native/NPC invention, supplied proposals, World Agent tools, review cards and selected-family response schemas consume this definition. Do not leave one path with a separate hard-coded enum or old output switch.
 4. Keep base-world positive material eligibility in the authored definition. The present `raw_meat`, nutrition and native-input exclusions are policy to relocate, not rules to drop from validation.
-5. Add the container using the same path. Its selected schema has no launcher/ammunition fields. Do not enumerate all family parameter blocks in every model request.
+5. Add the container using the same path. Its selected schema has no ranged weapon/ammunition fields. Do not enumerate all family parameter blocks in every model request.
 
-Generic structural capabilities such as an item's container component still have trusted engine semantics. This work does not make all current `MaterialProperty`, body, action or launcher types universally extensible. Inventory those remaining couplings under EWF/INV; don't widen a union to arbitrary strings and call the problem solved.
+Generic structural capabilities such as an item's container component still have trusted engine semantics. This work does not make all current `MaterialProperty`, body, action or ranged weapon types universally extensible. Inventory those remaining couplings under EWF/INV; don't widen a union to arbitrary strings and call the problem solved.
 
 ### Review, persistence and modification
 

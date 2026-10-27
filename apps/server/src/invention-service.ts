@@ -125,7 +125,13 @@ export async function inventSupportedTechnique(
       return;
     }
   }
-  const baseDraft = selected?.sourceCandidate;
+  const baseDraft = selected?.source.kind === 'family' ? selected.source.candidate : undefined;
+  if (selected && !baseDraft) {
+    await port.finish('completed', 'This authored transformation has no invention-family editor.', {
+      code: 'unsupported-base',
+    });
+    return;
+  }
   const context = {
     ...(await buildStoredContext(service, actorId, request.text)),
     ...(scope.previous ? { previousProposal: scope.previous } : {}),
@@ -173,7 +179,7 @@ export async function inventSupportedTechnique(
     execution: 'complex',
     maxOutputTokens: 1800,
     task: 'invent_supported_technique',
-    schema: selectedRecipeCandidateSchema(family),
+    schema: selectedRecipeCandidateSchema(family, service.world),
     context: {
       ...generationContext,
       ...(scope.previous ? { previousProposal: scope.previous } : {}),

@@ -6,6 +6,20 @@
 
 Each dossier owns its mechanics, worked interactions, source annotations, edition boundaries, review disagreements and access limitations. Read those qualifications before extracting a pattern.
 
+## Crimson Desert — October 2026 addition
+
+[Crimson Desert — G185](crimson-desert.md) covers the released game and Enhanced, major mechanics and lore, broad reception, development/marketing/commercial evidence and the community modding ecosystem. Start with its question-based reading routes; [Open Legend applications](crimson-desert/05-openlegend-lessons.md) connect research proposals to existing owners. The [scoped record](../research-progress-crimson-desert-2026-10-26.md) preserves completion and evidence limits.
+
+## Shared crews and persistent survival — October 2026 addition
+
+The [scoped ledger](../research-progress-pirate-games-2026-10-20.md) records the separately authorized Sea of Thieves and ATLAS passes and their completion commits. The earlier ARK research retains its own edition boundaries and audit history.
+
+| Dossier | Useful starting question |
+| --- | --- |
+| [Sea of Thieves — G179](sea-of-thieves.md) | How do a shared ship, carried treasure, partial information and temporary expedition risk create cooperation, stories and reasons to return? How do protected play and native Custom Seas change that bargain? |
+| [ARK: Survival Evolved — G133](ark-survival-evolved.md) | How do creature roles, taming, breeding, construction and persistent possessions turn preparation into a larger survival project? |
+| [ATLAS — G180](atlas.md) | How do built vessels, material variety, NPC crew, territorial ownership and upkeep make a voyage part of a persistent organization? What do external creators and private hosts inherit? |
+
 ## Dungeons & Dragons expansion — 2026-09-27
 
 These are two distinct tabletop subjects, not replacements for Baldur's Gate, Pathfinder, or any existing numbered game. Their [research hub](../games/dungeons-and-dragons.md) records this expansion's scope and evidence status without renumbering or certifying the unrelated roster.
@@ -35,7 +49,7 @@ Companions: [GM adjudication and simulation research](../mechanics/dungeons-and-
 | G72 | [The Witcher 3: Wild Hunt](the-witcher-3-wild-hunt.md)                               | How do investigation, contracts, preparation, relationships and choices reinforce a defined protagonist?              |
 | G73 | [The Legend of Zelda: Breath of the Wild](the-legend-of-zelda-breath-of-the-wild.md) | How do weather, surfaces, movement, durability, cooking and runes combine into alternative solutions?                 |
 | G74 | [Fallout 4](fallout-4.md)                                                            | How do crafting, settlements, companions, factions and Survival change the value of ordinary objects?                 |
-| G75 | [Elden Ring](elden-ring.md)                                                          | How do build variety, exploration, status, stance, summons and recovery shape difficult encounters?                   |
+| G75 | [Elden Ring](elden-ring.md)                                                          | How do combat, exploration, lore, loot and social systems reinforce one another—and where do players resist them? See the [deep chapters](elden-ring.md#read-by-question).                   |
 | G76 | [Black Myth: Wukong](black-myth-wukong.md)                                           | How do stances, spells, Spirits, transformations and healing configurations create distinct combat choices?           |
 | G77 | [Clair Obscur: Expedition 33](clair-obscur-expedition-33.md)                         | How do character-specific resources, Pictos/Lumina and timed defense reinforce—or compete with—turn-based planning?   |
 | G78 | [Final Fantasy I](final-fantasy.md)                                                  | How do initial class commitments, spell budgets, equipment and world-access chains produce expedition decisions?      |

@@ -299,28 +299,28 @@ These are desires a particular actor may have, not morally endorsed entitlements
 
 These entries become needs only when their underlying fictional premise is deliberately selected. They do not silently add physiology or magical laws to a seed world. A dependency can invite cooperation, trade, predation, care or refusal; it does not make another person an owed resource.
 
-| ID     | Idea                                           | Seed worlds | Use  | Priority     | Level | Specific behavior and payoff                                                                                                                                                                                     | Build scope / gap                                                            | Inspiration               |
-| ------ | ---------------------------------------------- | ----------- | ---- | ------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------- |
-| ND-221 | A basking place with reliable access           | SC FA       | Play | 5 Specialist | C     | A selected body needs an authored light or heat interval and wants a dependable place to receive it. Shared scheduling can make the requirement ordinary rather than permanently exotic or dangerous.            | Moderate · Extend; Bodies owns actual recovery rule.                         | Synthesis · [ME]          |
-| ND-222 | A material supply for a maintained body        | SC          | Play | 5 Specialist | C     | A fabricated citizen needs compatible replacement material or service access. Reliability creates independence; a supplier's technical usefulness does not entitle it to govern the person's choices.            | Moderate · Compose; Technology and Materials own compatibility.              | Synthesis · [CU]          |
-| ND-223 | A private interval during a vulnerable molt    | SC FA       | Play | 5 Specialist | C     | A selected species or individual needs protection and privacy during an authored bodily transition. The period has an end; support need not become permanent guardianship.                                       | Moderate · Extend; Bodies owns timing and vulnerability.                     | Synthesis · [ME]          |
-| ND-224 | A familiar signal after sensory replacement    | SC          | Play | 5 Specialist | C     | Wants one trusted reference while learning a new supported sense: a voice, tactile pattern or visible marker. Orientation can improve without turning the new sense into instant universal knowledge.            | Moderate · Compose; Bodies and Technology own sensory capabilities.          | Synthesis · [ME]          |
-| ND-225 | A place to put a very large body down          | FA          | Play | 5 Specialist | C     | A dragon or giant wants to rest comfortably without damaging nearby homes. A suitable terrace or reinforced common space can support ordinary visiting as well as strategic accommodation.                       | Moderate · Compose; Bodies and Architecture own loads and fit.               | Original synthesis        |
-| ND-226 | A chosen contact point with a collective       | SC FA       | Play | 5 Specialist | C     | A person connected to an authored collective wants control over when and how connection occurs. Solitude and participation can both be valuable under explicit membership rules.                                 | Large · Compose; Bodies and Technology own connection semantics.             | Synthesis · [CU]          |
-| ND-227 | Stories as a finite nourishment                | —           | Play | 5 Specialist | D     | A being needs genuinely new-to-them stories under a bounded feeding rule. Trade, listening and performance become useful, but coerced disclosure of private lives is not automatically justified.                | Large · New: explicit intake, novelty and satisfaction rules.                | Original synthesis        |
-| ND-228 | Applause that must be sincerely enjoyed        | —           | Play | 5 Specialist | D     | A theatrical creature is sustained by an audience's genuine delight rather than sheer noise. Small excellent performances can suffice, leaving room for a modest happy life instead of compulsory mass fame.     | Large · New: bounded audience response and nourishment coupling.             | Original synthesis        |
-| ND-229 | A regular supply of harmless surprise          | —           | Play | 5 Specialist | D     | A being whose vitality depends on surprise seeks unfamiliar games, jokes or gifts. Familiarity eventually changes what works, but the requirement can be met without escalating danger.                          | Large · New: scoped novelty memory and satiation.                            | Original synthesis        |
-| ND-230 | An anchor in the waking world                  | —           | Play | 5 Specialist | D     | A dream-bodied person needs a chosen object, place or relationship to remain present under explicit rules. Maintaining the anchor can be tender or practical without making its keeper the person's owner.       | Large · New: bounded persistence and anchor conditions.                      | Original synthesis        |
-| ND-231 | A consensual source for a predatory appetite   | —           | Play | 5 Specialist | D     | A selected supernatural hunger creates a need that can be met through freely agreed provision, alternatives or predation with real victims. The world must define limits rather than moralize away the appetite. | Large · New: explicit feeding effects, alternatives and independent agency.  | Original synthesis · [ME] |
-| ND-232 | A place to shed dangerous excess magic         | —           | Play | 5 Specialist | D     | A person accumulates a specified magical surplus and needs a bounded safe outlet. A ritual, useful task or designed refuge can make relief possible without inventing unlimited energy disposal.                 | Large · New: accumulation and release law; Magic owns effects.               | Original synthesis · [ME] |
-| ND-233 | A name spoken by someone who means this person | —           | Play | 5 Specialist | D     | A fragile spirit persists through particular recognition rather than arbitrary sound. A small number of willing relationships can be enough; fame and compulsory worship need not follow.                        | Large · New: explicit recognition-dependent continuity.                      | Original synthesis        |
-| ND-234 | A memory they may relinquish safely            | —           | Play | 5 Specialist | D     | A being with a selected memory-capacity limit needs a deliberate way to archive or release experience. Choosing what to retain becomes meaningful only with clear consequences and no surprise identity reset.   | Large · New: bounded memory capacity and preservation options.               | Original synthesis · [CU] |
-| ND-235 | An honest argument to keep a mind awake        | —           | Play | 5 Specialist | D     | A peculiar intellect needs occasional genuine disagreement rather than manufactured praise. A willing debate partner can help, while abuse and coerced opposition are not equivalent nourishment.                | Large · New: explicit cognitive-maintenance premise and sufficient interval. | Original synthesis        |
-| ND-236 | A dark interval for a living constellation     | —           | Play | 5 Specialist | D     | A sky-bodied person needs time unobserved to rest from maintaining a visible pattern. Clouds, privacy agreements or a bounded retreat can offer relief without extinguishing every star.                         | Large · New: authored observation and embodiment limits.                     | Original synthesis        |
-| ND-237 | A replacement echo before the old one fades    | —           | Play | 5 Specialist | D     | An echo-person needs a newly chosen sound pattern to sustain a bounded identity. A song, laugh or spoken phrase can be offered, with explicit rules for what changes and what remains.                           | Large · New: echo continuity and voluntary renewal.                          | Original synthesis        |
-| ND-238 | Soil that remembers a migrating grove-person   | —           | Play | 5 Specialist | D     | A rooted person needs periodic contact with a compatible living substrate but also wants travel. Portable support or planned resting places can reconcile the desires under finite rules.                        | Large · New: plant-person physiology and mobile support.                     | Original synthesis · [ME] |
-| ND-239 | A shared reference after realities diverge     | —           | Lab  | 5 Specialist | D     | Two versions of a person need a way to compare what each actually experienced before deciding on cooperation or reunion. Agreement about identity cannot substitute for missing event provenance.                | Large · New: explicit branch histories and communication semantics.          | Original synthesis        |
-| ND-240 | A finite ending for a world-sustaining duty    | —           | Play | 5 Specialist | D     | A being whose work sustains a bounded world wants a credible successor, alternative or permitted ending. The stakes can be immense without declaring endless forced service the only meaningful life.            | Large · New: explicit dependency, transfer and failure rules.                | Original synthesis · [ME] |
+| ID     | Idea                                                      | Seed worlds | Use  | Priority     | Level | Specific behavior and payoff                                                                                                                                                                                     | Build scope / gap                                                            | Inspiration               |
+| ------ | --------------------------------------------------------- | ----------- | ---- | ------------ | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | ------------------------- |
+| ND-221 | A basking place with reliable access                      | SC FA       | Play | 5 Specialist | C     | A selected body needs an authored light or heat interval and wants a dependable place to receive it. Shared scheduling can make the requirement ordinary rather than permanently exotic or dangerous.            | Moderate · Extend; Bodies owns actual recovery rule.                         | Synthesis · [ME]          |
+| ND-222 | A material supply for a maintained body                   | SC          | Play | 5 Specialist | C     | A fabricated citizen needs compatible replacement material or service access. Reliability creates independence; a supplier's technical usefulness does not entitle it to govern the person's choices.            | Moderate · Compose; Technology and Materials own compatibility.              | Synthesis · [CU]          |
+| ND-223 | A private interval during a vulnerable molt               | SC FA       | Play | 5 Specialist | C     | A selected species or individual needs protection and privacy during an authored bodily transition. The period has an end; support need not become permanent guardianship.                                       | Moderate · Extend; Bodies owns timing and vulnerability.                     | Synthesis · [ME]          |
+| ND-224 | A familiar signal after sensory replacement               | SC          | Play | 5 Specialist | C     | Wants one trusted reference while learning a new supported sense: a voice, tactile pattern or visible marker. Orientation can improve without turning the new sense into instant universal knowledge.            | Moderate · Compose; Bodies and Technology own sensory capabilities.          | Synthesis · [ME]          |
+| ND-225 | A place to put a very large body down                     | FA          | Play | 5 Specialist | C     | A dragon or giant wants to rest comfortably without damaging nearby homes. A suitable terrace or reinforced common space can support ordinary visiting as well as strategic accommodation.                       | Moderate · Compose; Bodies and Architecture own loads and fit.               | Original synthesis        |
+| ND-226 | A chosen contact point with a collective                  | SC FA       | Play | 5 Specialist | C     | A person connected to an authored collective wants control over when and how connection occurs. Solitude and participation can both be valuable under explicit membership rules.                                 | Large · Compose; Bodies and Technology own connection semantics.             | Synthesis · [CU]          |
+| ND-227 | Stories as a finite nourishment                           | —           | Play | 5 Specialist | D     | A being needs genuinely new-to-them stories under a bounded feeding rule. Trade, listening and performance become useful, but coerced disclosure of private lives is not automatically justified.                | Large · New: explicit intake, novelty and satisfaction rules.                | Original synthesis        |
+| ND-228 | Applause that must be sincerely enjoyed                   | —           | Play | 5 Specialist | D     | A theatrical creature is sustained by an audience's genuine delight rather than sheer noise. Small excellent performances can suffice, leaving room for a modest happy life instead of compulsory mass fame.     | Large · New: bounded audience response and nourishment coupling.             | Original synthesis        |
+| ND-229 | A regular supply of harmless surprise                     | —           | Play | 5 Specialist | D     | A being whose vitality depends on surprise seeks unfamiliar games, jokes or gifts. Familiarity eventually changes what works, but the requirement can be met without escalating danger.                          | Large · New: scoped novelty memory and satiation.                            | Original synthesis        |
+| ND-230 | An anchor in the waking world                             | —           | Play | 5 Specialist | D     | A dream-bodied person needs a chosen object, place or relationship to remain present under explicit rules. Maintaining the anchor can be tender or practical without making its keeper the person's owner.       | Large · New: bounded persistence and anchor conditions.                      | Original synthesis        |
+| ND-231 | A predatory appetite with willing alternatives or victims | —           | Play | 5 Specialist | D     | A selected supernatural hunger creates a need that can be met through freely agreed provision, alternatives or predation with real victims. The world must define limits rather than moralize away the appetite. | Large · New: explicit feeding effects, alternatives and independent agency.  | Original synthesis · [ME] |
+| ND-232 | A place to shed dangerous excess magic                    | —           | Play | 5 Specialist | D     | A person accumulates a specified magical surplus and needs a bounded safe outlet. A ritual, useful task or designed refuge can make relief possible without inventing unlimited energy disposal.                 | Large · New: accumulation and release law; Magic owns effects.               | Original synthesis · [ME] |
+| ND-233 | A name spoken by someone who means this person            | —           | Play | 5 Specialist | D     | A fragile spirit persists through particular recognition rather than arbitrary sound. A small number of willing relationships can be enough; fame and compulsory worship need not follow.                        | Large · New: explicit recognition-dependent continuity.                      | Original synthesis        |
+| ND-234 | A memory they may relinquish safely                       | —           | Play | 5 Specialist | D     | A being with a selected memory-capacity limit needs a deliberate way to archive or release experience. Choosing what to retain becomes meaningful only with clear consequences and no surprise identity reset.   | Large · New: bounded memory capacity and preservation options.               | Original synthesis · [CU] |
+| ND-235 | An honest argument to keep a mind awake                   | —           | Play | 5 Specialist | D     | A peculiar intellect needs occasional genuine disagreement rather than manufactured praise. A willing debate partner can help, while abuse and coerced opposition are not equivalent nourishment.                | Large · New: explicit cognitive-maintenance premise and sufficient interval. | Original synthesis        |
+| ND-236 | A dark interval for a living constellation                | —           | Play | 5 Specialist | D     | A sky-bodied person needs time unobserved to rest from maintaining a visible pattern. Clouds, privacy agreements or a bounded retreat can offer relief without extinguishing every star.                         | Large · New: authored observation and embodiment limits.                     | Original synthesis        |
+| ND-237 | A replacement echo before the old one fades               | —           | Play | 5 Specialist | D     | An echo-person needs a newly chosen sound pattern to sustain a bounded identity. A song, laugh or spoken phrase can be offered, with explicit rules for what changes and what remains.                           | Large · New: echo continuity and voluntary renewal.                          | Original synthesis        |
+| ND-238 | Soil that remembers a migrating grove-person              | —           | Play | 5 Specialist | D     | A rooted person needs periodic contact with a compatible living substrate but also wants travel. Portable support or planned resting places can reconcile the desires under finite rules.                        | Large · New: plant-person physiology and mobile support.                     | Original synthesis · [ME] |
+| ND-239 | A shared reference after realities diverge                | —           | Lab  | 5 Specialist | D     | Two versions of a person need a way to compare what each actually experienced before deciding on cooperation or reunion. Agreement about identity cannot substitute for missing event provenance.                | Large · New: explicit branch histories and communication semantics.          | Original synthesis        |
+| ND-240 | A finite ending for a world-sustaining duty               | —           | Play | 5 Specialist | D     | A being whose work sustains a bounded world wants a credible successor, alternative or permitted ending. The stakes can be immense without declaring endless forced service the only meaningful life.            | Large · New: explicit dependency, transfer and failure rules.                | Original synthesis · [ME] |
 
 ## Risk, victory and costly desires
 
@@ -418,15 +418,41 @@ Unlike a human motive expressed by a strange-looking actor, several of these ent
 | ND-299 | A promise that can finally be shed                          | —           | Play  | 5 Specialist | D     | Unfinished promises form palpable layers around this being. Fulfillment or a genuine release by the other party removes one layer, while pretending to forget does not. Agreeing to fewer promises can produce a light, contented life rather than an endless obligation machine.                         | Large · New: explicit promise state and bodily accumulation; Relationships owns agreements.         | Creative synthesis, not a sourced magical rule · [DD]    |
 | ND-300 | A conversation with someone who is not inside them          | —           | Play  | 5 Specialist | C     | A world-sized person wants to meet an independent interlocutor rather than address inhabitants who live within its body and depend on it. Establishing a bounded outside channel may provide companionship without granting access to the other being's interior or surrendering either world's autonomy. | Large · Compose; Unusual realities needs world-scale personhood and bounded external communication. | Creative synthesis · [CU] [ME]                           |
 
-## A dependable meal
+## Mastery with a stopping point
 
-**ALL · Play · Moderate/Extend.** Gap: food access, reliable delegation and optional dietary variation.
+**ALL · Play · Moderate/Extend.** Gap: milestone-based practice and chosen ambition.
 
-Early play may involve finding supper; later the reward is knowing supper will happen. Players then choose company, recipe or celebration rather than repeating hunger maintenance. A broken supply should create one understandable project with substitutes. Choose pressure that serves the selected experience: a harsh expedition can demand rationing, while a settled household can free time for decorating, exploring or conversation.
+A gardener wants to grow one difficult tree and enter its fruit in a respected public exhibition. The living tree, a desired commission and recognition from a demanding rival give the attempts a purpose beyond increasing a number. Players can investigate conditions, practice a supported method, seek advice or choose a different ambition; a rival may win fairly. Progress requires varied useful attempts and understandable feedback.
 
-Related entries: [ND-001](#bodily-basics-and-immediate-relief).
+Once the tree thrives, the gardener may teach, experiment or simply enjoy it. Winning can be a clean achievement and losing need not destroy the value of the garden. In a separate person, wanting the prize after already gaining wealth may become envy or an appetite for status; do not turn this gardener's fulfilled wish into compulsory insatiability. A character can be content, without a more expensive replacement wish manufactured for retention.
 
-Seeds and references: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Valheim](source-atlas.md#g31).
+Related entries: [ND-122](#competence-work-and-effective-action).
+
+Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+
+## Room for wonder
+
+**ALL · Play · Small/Compose.** Gap: authored novelty opportunities without compulsory consumption.
+
+A tired resident wants to see migrating lights from a hill or hear an unfamiliar instrument. Players can arrange a visit, bring a recording or leave the experience for another season. Anticipation matters as much as acquisition. Repetition need not always diminish value; do not reduce beauty to a consumable novelty meter that demands constant procedural content.
+
+An informed choice needs the perceived occasion, the person's actual interest and any relevant competing commitment, alongside current bodily conditions. Quiet or pleasant opportunities must not disappear merely because they have no danger score or productivity benefit. Compare the same scene before and after a pressing need has been relieved: the character should receive the real change and still be able to choose work, company, the view or rest. Neither visiting the lights nor announcing delight is a required outcome, and a return to a familiar pleasure need not trigger a new ambition.
+
+Related entries: [ND-164](#play-stimulation-and-wonder).
+
+Seeds and references: [No Man's Sky](source-atlas.md#g17), [Outer Wilds](source-atlas.md#g34), [Pokémon](source-atlas.md#w08).
+
+## To be useful without being used
+
+**ALL · Play · Moderate/Extend.** Gap: contribution recognition, workload choice and refusal.
+
+A resident wants meaningful work and a place on a coveted expedition, but a better-connected colleague takes public credit and avoids the dangerous preparation. The resident's wish to contribute can coexist with resentment and a demand for fair pay or responsibility. Offering training, sharing work, correcting credit or refusing an unfair arrangement can change who participates; a complaint may be dismissed and a deserved place may be lost.
+
+A chosen partnership can also succeed, with useful work, honest recognition and time left to enjoy the result. Care-minded players shape a community whose members retain priorities. Avoid a universal productivity happiness formula; some people want less work, and gratitude is neither payment nor consent to unlimited labor.
+
+Related entries: [ND-121](#competence-work-and-effective-action).
+
+Seeds and references: [Palworld](source-atlas.md#g41), [Assassin's Creed III](source-atlas.md#g99), [Spirited Away](source-atlas.md#w25).
 
 ## Somewhere to return
 
@@ -440,35 +466,17 @@ Related entries: [ND-021](#home-security-and-material-footing).
 
 Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Hades I](source-atlas.md#g22), [Valheim](source-atlas.md#g31).
 
-## To be useful without being used
+## A dependable meal
 
-**ALL · Play · Moderate/Extend.** Gap: contribution recognition, workload choice and refusal.
+**ALL · Play · Moderate/Extend.** Gap: food access, reliable delegation and optional dietary variation.
 
-A resident wants meaningful work but dislikes being assigned every unpleasant job. Offering training, rotating chores or recognizing expertise can change participation. Care-minded players shape a community whose members retain priorities. Avoid a universal productivity happiness formula; some people want less work, and gratitude is neither payment nor consent to unlimited labor.
+Early play may involve finding supper; later the reward is knowing supper will happen. Players then choose company, recipe or celebration rather than repeating hunger maintenance. Keep that secure supper as a real outcome.
 
-Related entries: [ND-121](#competence-work-and-effective-action).
+In a separately selected shortage, cook Lina has promised food to the expedition crew, carrier Oren needs provisions for a journey that pays his household's rent, and a comfortable storekeeper wants a higher price. Buying, sharing, finding a substitute or stealing changes who actually eats and who can depart. Hunger may explain a theft without erasing its victim's shortage. A broken supply should create one understandable project with substitutes; resolving it can settle the pressure. A harsh expedition can demand rationing while a settled household frees time for exploration or company.
 
-Seeds and references: [Palworld](source-atlas.md#g41), [Assassin's Creed III](source-atlas.md#g99), [Spirited Away](source-atlas.md#w25).
+Related entries: [ND-001](#bodily-basics-and-immediate-relief).
 
-## Privacy with a door
-
-**ALL · Blend · Moderate/Extend.** Gap: spatial access, interruption preferences and scoped disclosure.
-
-A crowded home has enough beds but no place for private letters or grief. Curtains, schedules and a lock can each help while creating different accessibility tradeoffs. Builders gain reasons to design rooms beyond size bonuses. A privacy need grants no hidden-state access. Supported fictional eavesdropping, stolen letters or telepathy may reveal bounded evidence under the world's rules; none grants access to real users' private data.
-
-Related entries: [ND-081](#agency-privacy-and-a-voice).
-
-Seeds and references: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [His Dark Materials](source-atlas.md#w20).
-
-## Mastery with a stopping point
-
-**ALL · Play · Moderate/Extend.** Gap: milestone-based practice and chosen ambition.
-
-A gardener wants to grow one difficult tree, not endlessly increase a gardening number. Once achieved, they may teach, experiment or simply enjoy it. Progress requires varied useful attempts and understandable feedback. A character can be content; do not automatically replace every fulfilled wish with a more expensive one to manufacture retention.
-
-Related entries: [ND-122](#competence-work-and-effective-action).
-
-Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Final Fantasy IX](source-atlas.md#g86), [Kingdom Come: Deliverance II](source-atlas.md#g114).
+Seeds and references: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Valheim](source-atlas.md#g31).
 
 ## To be remembered accurately
 
@@ -480,16 +488,6 @@ Related entries: [ND-181](#meaning-memory-and-an-account-of-ones-life).
 
 Seeds and references: [Dwarf Fortress](source-atlas.md#g23), [Middle-earth: Shadow of War](source-atlas.md#g116), [Macondo](source-atlas.md#w24).
 
-## Room for wonder
-
-**ALL · Play · Small/Compose.** Gap: authored novelty opportunities without compulsory consumption.
-
-A tired resident wants to see migrating lights from a hill or hear an unfamiliar instrument. Players can arrange a visit, bring a recording or leave the experience for another season. Anticipation matters as much as acquisition. Repetition need not always diminish value; do not reduce beauty to a consumable novelty meter that demands constant procedural content.
-
-Related entries: [ND-164](#play-stimulation-and-wonder).
-
-Seeds and references: [No Man's Sky](source-atlas.md#g17), [Outer Wilds](source-atlas.md#g34), [Pokémon](source-atlas.md#w08).
-
 ## Belonging across difference
 
 **ALL · Blend · Moderate/Extend.** Gap: overlapping memberships and context-specific welcome.
@@ -499,6 +497,26 @@ A newcomer feels at home in a repair circle but excluded from the river festival
 Related entries: [ND-101](#connection-affection-and-chosen-intimacy).
 
 Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Fire Emblem: Path of Radiance](source-atlas.md#g61), [Avatar: The Last Airbender](source-atlas.md#w13).
+
+## Continuity after change
+
+**ALL · Blend · Moderate/Extend.** Gap: goal renegotiation after role, body or household transitions.
+
+After an injury or a child's departure, a character wants some familiar purpose without pretending nothing changed. New tools, teaching or a different expedition role create alternatives. Players help reshape a life rather than restore a default state. Recovery is not a compulsory inspiration story, and adaptation should not require curing every difference.
+
+Related entries: [ND-201](#continuity-change-and-competing-obligations).
+
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Final Fantasy VI](source-atlas.md#g83), [XCOM 2](source-atlas.md#g125).
+
+## Privacy with a door
+
+**ALL · Blend · Moderate/Extend.** Gap: spatial access, interruption preferences and scoped disclosure.
+
+A crowded home has enough beds but no place for private letters or grief. Curtains, schedules and a lock can each help while creating different accessibility tradeoffs. Builders gain reasons to design rooms beyond size bonuses. A privacy need grants no hidden-state access. Supported fictional eavesdropping, stolen letters or telepathy may reveal bounded evidence under the world's rules; none grants access to real users' private data.
+
+Related entries: [ND-081](#agency-privacy-and-a-voice).
+
+Seeds and references: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [His Dark Materials](source-atlas.md#w20).
 
 ## Sensory refuge
 
@@ -511,16 +529,6 @@ Sensory needs also do not determine willingness to participate.
 Related entries: [ND-061](#sensory-refuge-and-physical-delight).
 
 Seeds and references: [Caves of Qud](source-atlas.md#g33), [Rain World](source-atlas.md#g123), [The Expanse](source-atlas.md#w15).
-
-## Continuity after change
-
-**ALL · Blend · Moderate/Extend.** Gap: goal renegotiation after role, body or household transitions.
-
-After an injury or a child's departure, a character wants some familiar purpose without pretending nothing changed. New tools, teaching or a different expedition role create alternatives. Players help reshape a life rather than restore a default state. Recovery is not a compulsory inspiration story, and adaptation should not require curing every difference.
-
-Related entries: [ND-201](#continuity-change-and-competing-obligations).
-
-Seeds and references: [Wildermyth](source-atlas.md#g25), [Final Fantasy VI](source-atlas.md#g83), [XCOM 2](source-atlas.md#g125).
 
 ## Research coverage
 

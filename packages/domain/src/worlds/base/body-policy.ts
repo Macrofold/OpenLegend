@@ -45,7 +45,7 @@ const lethalAttackDescription =
   'This attack could kill the target. Death leaves a body; ordinary animal and NPC revival is unavailable. Confirm one attack; a hit is not guaranteed. Choosing does not pause the world.';
 export const BASE_BODY_POLICY: BodyPolicy = {
   id: 'wilderness:body-policy',
-  version: 11,
+  version: 12,
   evasion: {
     bodyPlans: ['biped'],
     maximumDistance: 2,
@@ -71,6 +71,22 @@ export const BASE_BODY_POLICY: BodyPolicy = {
       ended: 'is no longer observed preparing an attack.',
       closing: 'is drawing closer.',
       withdrawing: 'is moving farther away.',
+      controls: {
+        speak: {
+          label: 'Prefer Speak',
+          description:
+            'Keep Speak as the shortcut for this person until a new observed attack or a newly chosen attack. Opening the draft does not stop physical work or say anything.',
+          success:
+            'Speak is preferred for this person. Existing physical work and incoming threats remain.',
+        },
+        stop: {
+          label: 'Stop attacking this person',
+          description:
+            'End only your unfinished attacks on this person and their queued or paused continuation. Spent materials, recovery and released shots remain.',
+          success:
+            'Stopped your unfinished attacks on this person. Other work, incoming threats and committed effects remain.',
+        },
+      },
     },
     // A perceived impact warrants prompt reconsideration, never a prescribed retaliation.
     // docs/worlds/base/lifecycle-and-protection.md#npc-combat-participation
@@ -83,6 +99,7 @@ export const BASE_BODY_POLICY: BodyPolicy = {
     description: lethalAttackDescription,
     rangedDescription: `${lethalAttackDescription} ${BASE_PROJECTILE_CONTACT_WARNING}`,
     confirmLabel: 'Attempt lethal blow',
+    prepareLabel: 'Prepare attack',
     cancelLabel: 'Cancel',
   },
   zeroHealth: {

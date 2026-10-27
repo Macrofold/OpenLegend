@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                       | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | The product proposal is prepared; offer adoption, technical design, runtime delivery, payment qualification and an actual paid validation remain open. | 2026-10-16   |
+| In progress | The product proposal is prepared; offer adoption, technical design, runtime delivery, payment qualification and an actual paid validation remain open. | 2026-10-26   |
 
 ## 1. Purpose and decision
 
@@ -221,7 +221,7 @@ The selected monthly/no-rollover policy sacrifices some flexibility for clear ob
 
 Product review and later delivery must demonstrate these outcomes with real state evidence where implementation is required:
 
-- A free guest joins a funded world and completes established native play without a second hosting purchase; premium entry does not require platform membership.
+- A free guest joins a funded world and completes established native play without a second hosting purchase, including when the payer has no active session within the adopted availability profile; premium entry does not require platform membership. This is attended guest play, not an entitlement to empty-world simulation.
 - A player can explain units, world AI, optional art and hosting from the offer and Billing. Exhausting each changes only its appropriate permission or service behavior.
 - Helpers, independent bundles, material revisions, repairs, rejected attempts and imports receive the stated classification before costly work; dispute correction is visible.
 - Two worlds requesting the last unit, a month boundary, permission revocation, late settlement and restore produce one reconciled request and no duplicated unit or charge.

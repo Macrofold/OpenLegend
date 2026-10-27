@@ -1,0 +1,166 @@
+id: base:first-playable-main
+revision: 1
+seed: 73
+extentMetres: { width: 128, depth: 112 }
+gathering: { bareHandQuantity: 1 }
+sourceApproachClearanceMetres: 1.5
+anchors:
+  arrival: { xMetres: 11, zMetres: 13, support: terrain }
+  food-near: { xMetres: 8, zMetres: 13, support: terrain }
+  food-river: { xMetres: 19, zMetres: 15, support: terrain }
+  pole-copse: { xMetres: 20, zMetres: 27, support: terrain }
+  fiber-bank: { xMetres: 9, zMetres: 38, support: terrain }
+  stone-bank: { xMetres: 17, zMetres: 31, support: terrain }
+  clay-bank: { xMetres: 7, zMetres: 43, support: terrain }
+  outer-forage-west: { xMetres: 20, zMetres: 61, support: terrain }
+  outer-forage-east: { xMetres: 71, zMetres: 54, support: terrain }
+  outer-fiber: { xMetres: 48, zMetres: 72, support: terrain }
+  outer-materials: { xMetres: 75, zMetres: 37, support: terrain }
+  central-fiber: { xMetres: 30, zMetres: 23, support: terrain }
+  wayside: { xMetres: 11, zMetres: 10, support: terrain }
+  southern-hearth: { xMetres: 15, zMetres: 58, support: terrain }
+campReservations:
+  - {
+      id: east-clearing,
+      revision: 1,
+      label: East clearing,
+      description: 'Near food and routes toward the lookout and workshop. Open approaches and a longer walk to the residents; no safety is promised.',
+      minX: 23,
+      maxX: 29,
+      minZ: 17,
+      maxZ: 23,
+    }
+  - {
+      id: western-supplies,
+      revision: 1,
+      label: Western supplies approach,
+      description: 'Near the Reed-side Store and river supply routes. Other people may travel through; materials farther south still require trips.',
+      minX: 14,
+      maxX: 20,
+      minZ: 19.5,
+      maxZ: 25.5,
+    }
+  - {
+      id: south-meadow,
+      revision: 1,
+      label: South meadow plateau,
+      description: 'Flat building ground near southern resource routes. Farther from the residents and wayside hearth, with roaming wildlife nearby.',
+      minX: 41,
+      maxX: 47,
+      minZ: 48,
+      maxZ: 54,
+    }
+
+construction:
+  id: base:first-playable-camp-building
+  site: { surfaceId: terrain, minX: 0, maxX: 127, minZ: 0, maxZ: 111 }
+  materialItems: [raw_fiber, wood, stone, straight_pole]
+  operations:
+    [
+      post,
+      cover,
+      lower,
+      reclaim-post,
+      reclaim-lowered,
+      place-hearth,
+      boundary-panel,
+      boundary-gate,
+      remove-boundary-panel,
+      remove-boundary-gate,
+      repair-boundary,
+    ]
+  boundaryFamily: base:light-camp-boundary
+  publicGateUseOperations: [open, close, bar, unbar]
+  structuralExposure: true
+  materialContributions: true
+
+content:
+  clockOffsetHours: 8
+  actorBindings:
+    player: { application: player }
+    ada: { application: resident }
+    mercenary: { entityId: peacock-mercenary }
+    mara: { entityId: mara }
+    tavin: { entityId: tavin }
+    kest: { entityId: kest }
+    orin: { entityId: orin }
+  conditions:
+    player: { fullness: 100, energy: 100 }
+    ada: { fullness: 35, energy: 85 }
+    mercenary: { fullness: 76, energy: 85 }
+    mara: { fullness: 72, energy: 85 }
+    tavin: { fullness: 74, energy: 85 }
+    kest: { fullness: 76, energy: 85 }
+    orin: { fullness: 76, energy: 85 }
+  watchpostOffset: { x: 56, z: 5 }
+  wildlife:
+    - { id: woodland-wolf-10, position: { x: 96, z: 80 } }
+    - { id: woodland-wolf-11, position: { x: 99, z: 82 } }
+    - { id: woodland-wolf-12, position: { x: 102, z: 78 } }
+    - { id: woodland-bear-13, position: { x: 88, z: 96 } }
+    - { id: woodland-bear-14, position: { x: 58, z: 94 } }
+  hearths:
+    - id: campfire
+      placeId: camp-hearth
+      name: Wayside hearth
+      description: An old cold public hearth. Bring real fuel and tinder to make a fire. This resting place supplies neither food nor safety.
+      position: { x: 11, z: 10 }
+    - id: southern-hearth
+      placeId: southern-hearth
+      name: Southern resting hearth
+      description: A cold public stone hearth beside the southern meadow. Its ring remains a possible resting place; no fuel, food or protection is promised.
+      position: { x: 15, z: 58 }
+  repairStock:
+    id: watchpost-repair-stock
+    name: Watchpost repair stock
+    description: Exposed repair supplies declared as Kest's possessions. The separate ground lots retain ordinary physical access, permission and transfer rules.
+    position: { x: 103, z: 29 }
+    ownerRole: kest
+    lots:
+      - {
+          id: 'repair:cloak',
+          definitionId: travel_cloak,
+          quantity: 1,
+          positions: [{ x: 100, z: 33 }],
+        }
+      - {
+          id: 'repair:cloth',
+          definitionId: weather_cloth,
+          quantity: 1,
+          positions: [{ x: 102, z: 33 }],
+        }
+      - id: 'repair:posts'
+        definitionId: canopy_post
+        quantity: 6
+        positions:
+          [
+            { x: 100, z: 35 },
+            { x: 102, z: 35 },
+            { x: 104, z: 35 },
+            { x: 106, z: 35 },
+            { x: 108, z: 35 },
+            { x: 110, z: 35 },
+          ]
+      - {
+          id: 'repair:tall-posts',
+          definitionId: canopy_tall_post,
+          quantity: 2,
+          positions: [{ x: 108, z: 33 }, { x: 110, z: 33 }],
+        }
+      - { id: 'repair:cord', definitionId: cord, quantity: 11, positions: [{ x: 104, z: 33 }] }
+      - {
+          id: 'repair:stone-tool',
+          definitionId: stone_tool,
+          quantity: 1,
+          positions: [{ x: 100, z: 37 }],
+        }
+      - { id: 'repair:knife', definitionId: knife, quantity: 1, positions: [{ x: 102, z: 37 }] }
+      - {
+          id: 'repair:fiber',
+          definitionId: prepared_fiber,
+          quantity: 4,
+          positions: [{ x: 104, z: 37 }],
+        }
+      - { id: 'repair:wood', definitionId: wood, quantity: 2, positions: [{ x: 106, z: 37 }] }
+      - { id: 'repair:stone', definitionId: stone, quantity: 6, positions: [{ x: 108, z: 37 }] }
+  introduction: Arrive empty handed beside the wayside hearth. Inspect nearby food and materials; Gather, Make and a chosen meal use real finite supplies. You can pause while reading, stop unfinished work, speak to anyone who can hear, or act while another person is busy. Other residents choose their own lives. If this body dies, Continue uses an actual reachable resting hearth; your lost belongings remain in the world.

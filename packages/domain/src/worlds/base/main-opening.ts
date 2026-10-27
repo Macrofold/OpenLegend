@@ -1,3 +1,6 @@
+import firstPlayable from './config/first-playable.generated.json' with { type: 'json' };
+import { baseOpeningContentManifest } from './opening-content.js';
+import type { PreparedBaseMaterialWorld } from './first-playable-config.js';
 import { entityGet, entityValues } from '../../entity-collection.js';
 import { hasRecordFields, isSafeRecordId } from '../../records.js';
 import { definitionPin } from '../../world-modules.js';
@@ -64,16 +67,17 @@ export function validateBaseMainWorldCandidate(
 
 export function createBaseMainWorldCandidate(
   identities: WorldOpeningIdentities,
+  seed = firstPlayable.opening.seed,
 ): BaseMainWorldCandidate {
   const candidate = {
     profile: { id: BASE_OPENING_PROFILE.id, version: BASE_OPENING_PROFILE.version },
     worldId: identities.worldId,
     opening: 'main' as const,
-    seed: 73,
-    rngState: 73,
+    seed,
+    rngState: seed || 0x6d2b79f5,
     title: 'Main world',
     premise:
-      'Begin at the wilderness camp and discover its people, resources and distant encounters.',
+      'Arrive empty handed at the wayside clearing. Gather food and materials, make useful tools, choose company and explore distant encounters.',
     playerId: identities.ids['player'],
     residentId: identities.ids['resident'],
   };
@@ -84,9 +88,10 @@ export function createBaseMainWorldCandidate(
 export function buildBaseMainWorld(
   candidate: BaseMainWorldCandidate,
   accounts: WorldCreationAccounts,
+  prepared: PreparedBaseMaterialWorld = firstPlayable as unknown as PreparedBaseMaterialWorld,
 ) {
   validateBaseMainWorldCandidate(candidate);
-  const world = createWorld(candidate.seed, accounts, candidate);
+  const world = createWorld(candidate.seed, accounts, candidate, prepared);
   // Detect a collision with a fixed authored person before any publication or grant.
   if (
     entityGet(world.entities, candidate.playerId)?.kind !== 'player' ||
@@ -96,6 +101,15 @@ export function buildBaseMainWorld(
   prepareBaseInitialWorldState(world);
   return {
     world,
+    ...(prepared
+      ? {
+          contentManifest: baseOpeningContentManifest(
+            world,
+            prepared.opening.content,
+            prepared.sources,
+          ),
+        }
+      : {}),
     accountRoles: [
       ...accounts.creatorAccountIds.map((accountId) => ({
         accountId,
@@ -104,7 +118,7 @@ export function buildBaseMainWorld(
       })),
       { accountId: accounts.playerAccountId, actorId: candidate.playerId, role: 'player' as const },
     ],
-    constructionSeeds: baseWorldInitialConstructionSeeds(world, candidate.playerId),
+    constructionSeeds: baseWorldInitialConstructionSeeds(world, candidate.playerId, prepared),
   };
 }
 
@@ -126,10 +140,7 @@ export function checkBaseMainWorldReadiness(
       position,
       supportSurfaceId: position.surfaceId,
     };
-    if (
-      entity.resource &&
-      ['raw_fiber', 'wood', 'stone', 'berries'].includes(entity.resource.definitionId)
-    )
+    if (entity.resource)
       scene.push({
         ...common,
         kind: 'resource',
@@ -146,12 +157,10 @@ export function checkBaseMainWorldReadiness(
   }
   const checked = checkBaseOpeningReadiness(
     {
-      opening: 'inhabited',
+      opening: 'main',
       player: { id: candidate.playerId },
       scene,
-      // The established main world starts without prepared food or stocked berries.
-      // Keep that deliberate survival circumstance; advertise its actual food work.
-      harsh: true,
+      harsh: false,
     },
     world,
     routes,

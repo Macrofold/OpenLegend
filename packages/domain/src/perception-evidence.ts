@@ -1,3 +1,11 @@
+import { observedActionAnimation, type ObservedActionAnimation } from './observed-animation.js';
+import { validatePerceivedSound } from './sound.js';
+import {
+  assemblyPresentation,
+  receiveAssemblyConditions,
+  validateObservedAssembly,
+  type ObservedAssembly,
+} from './assembly-presentation.js';
 import {
   validPerceivedPoint as validPoint,
   validateEvidenceSource,
@@ -12,7 +20,7 @@ import { personalFactAlias } from './experience-source.js';
 import { validateDetectionSupportState, type DetectionSupportState } from './perception-support.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
 import { entityGet } from './entity-collection.js';
-import { bodyProfile, worldPosition, worldSupport } from './spatial-state.js';
+import { effectiveBodyProfile, worldPosition, worldSupport } from './spatial-state.js';
 import { outwardStates } from './perception-frame.js';
 import { equippedItems } from './equipment.js';
 import { itemsForOwner } from './objects.js';
@@ -67,14 +75,10 @@ import {
   selectedAssociateBodyFamiliarity,
 } from './world-composition.js';
 import { freeze } from 'immer';
-import {
-  validatePerceivedSpeech,
-  validatePerceivedSound,
-  validateReceivedFeatures,
-} from './speech.js';
+import { validatePerceivedSpeech, validateReceivedFeatures } from './speech.js';
 import { validObserverSubject } from './knowledge.js';
 import { activelyParticipates } from './participation-state.js';
-import { capabilityBlocked } from './status-capabilities.js';
+import { capabilityBlocked, projectStatusEffects } from './status-capabilities.js';
 import { sensesFor, visionRadius } from './perception.js';
 import { projectAttributes, type AttributeView } from './world-modules.js';
 import type { Awareness } from './experience.js';
@@ -147,6 +151,12 @@ export interface ObservedBody {
   remainsPhase?: 'fresh' | 'rotting' | 'removed';
   /** Visible storage access only; inspection still owns the disclosure of contents. */
   storage?: { placementRevision: number };
+  assembly?: ObservedAssembly;
+  animation?: ObservedActionAnimation | null;
+  effects?: ReturnType<typeof projectStatusEffects>;
+  bodyPlan?: 'biped' | 'quadruped' | 'avian';
+  subtype?: string;
+  icon?: string;
 }
 export type SensoryFacet =
   | { kind: 'surface-patch'; patch: import('./received-geometry.js').ObservedSurfacePatch }
@@ -352,13 +362,14 @@ export function nextPerceptionWorkAt(world: WorldState, observerId: string): num
   )
     return;
   let next = nextAttentionWorkAt(world, observerId) ?? Infinity;
+  const nextSight = observer.sensoryProgress?.routineSight?.nextAt ?? world.simTime;
   if (
     geometry &&
     !geometry.finished &&
     geometry.fragments.length + geometry.boundaries.length <
       selectedAttentionPolicy(world).geometry.maxFragments
   )
-    next = Math.min(next, geometry.nextAt);
+    next = Math.min(next, Math.max(geometry.nextAt, nextSight));
   const current = readOnlyDraftView(state.current);
   for (const entry of currentDetailedAttention(world, observerId)) {
     const body = current[`${entry.sourceId}:body`];
@@ -368,14 +379,14 @@ export function nextPerceptionWorkAt(world: WorldState, observerId: string): num
     const through = state.visualConfirmation?.through ?? -Infinity;
     if (local?.kind === 'individual') {
       const at = selectedAttentionContactAt(world, observerId, local.individualId, through);
-      if (at !== undefined) next = Math.min(next, at);
+      if (at !== undefined) next = Math.min(next, Math.max(at, nextSight));
     }
     if (
       recognized?.kind === 'individual' &&
       (local?.kind !== 'individual' || local.individualId !== recognized.individualId)
     ) {
       const at = selectedAttentionContactAt(world, observerId, recognized.individualId, through);
-      if (at !== undefined) next = Math.min(next, at);
+      if (at !== undefined) next = Math.min(next, Math.max(at, nextSight));
     }
   }
   return Number.isFinite(next) ? next : undefined;
@@ -421,7 +432,7 @@ function prepareVisualSourceValues(
     return prior.values;
   }
   countDomainWork('visualSourcePreparations');
-  const profile = bodyProfile(subject),
+  const profile = effectiveBodyProfile(world, subject),
     placement = subject.placement!;
   const body: ObservedBody = {
     kind: subject.kind,
@@ -432,8 +443,29 @@ function prepareVisualSourceValues(
     height: profile.height,
     supportSurfaceId: worldSupport(subject),
     outward: outwardStates(subject),
+    ...(subject.actor
+      ? {
+          animation: observedActionAnimation(world, subject),
+          effects: cloneValue(projectStatusEffects(world, subject)),
+          ...(subject.actor.body?.plan ? { bodyPlan: subject.actor.body.plan } : {}),
+          subtype: subject.actor.species,
+        }
+      : {}),
+    ...(subject.resource ? { subtype: subject.resource.definitionId } : {}),
+    ...((
+      subject.resource ? world.itemDefinitions[subject.resource.definitionId]?.icon : subject.icon
+    )
+      ? {
+          icon: subject.resource
+            ? world.itemDefinitions[subject.resource.definitionId]!.icon
+            : subject.icon,
+        }
+      : {}),
     label: selectedOutwardBodyName(world, subject),
-    ...(!subject.actor && subject.description ? { description: subject.description } : {}),
+    ...((subject.actor?.description ?? subject.description)
+      ? { description: subject.actor?.description ?? subject.description }
+      : {}),
+    ...(subject.assembly ? { assembly: cloneValue(assemblyPresentation(world, subject.id)) } : {}),
     ...(subject.resource ? { quantity: subject.resource.quantity } : {}),
     ...(subject.heat ? { heatLit: subject.heat.lit } : {}),
     ...(subject.remains ? { remainsPhase: subject.remains.phase } : {}),
@@ -860,6 +892,22 @@ function eligibleBodyLease(
 ): LiveFacetSupport | undefined {
   return bodyReadScope(world, observerId)?.body(subjectId);
 }
+/** Eligible current bodies, without copying their retained fact payloads. */
+export function currentObservedBodyIds(world: WorldState, observerId: string): string[] {
+  const scope = bodyReadScope(world, observerId);
+  if (!scope) return [];
+  const ids: string[] = [];
+  for (const held of Object.values(scope.current)) {
+    const lease = readOnlyDraftView(held);
+    if (
+      lease.value.kind === 'body' &&
+      lease.subjectId !== observerId &&
+      scope.body(lease.subjectId)
+    )
+      ids.push(lease.subjectId);
+  }
+  return ids;
+}
 /** Owned values for the current scene, sharing observer checks within this
  * synchronous read only. Full event/cognition cuts retain their existing owner. */
 export function currentBodyGeometryInputs(
@@ -1198,6 +1246,14 @@ function semanticFacetChanged(before: SensoryFacet, after: SensoryFacet): boolea
       previous.radius !== current.radius ||
       previous.height !== current.height ||
       previous.description !== current.description ||
+      (previous.assembly ? jsonText(previous.assembly) : null) !==
+        (current.assembly ? jsonText(current.assembly) : null) ||
+      previous.animation?.id !== current.animation?.id ||
+      previous.animation?.phase !== current.animation?.phase ||
+      previous.bodyPlan !== current.bodyPlan ||
+      previous.subtype !== current.subtype ||
+      (previous.effects ? jsonText(previous.effects) : null) !==
+        (current.effects ? jsonText(current.effects) : null) ||
       previous.heatLit !== current.heatLit ||
       previous.remainsPhase !== current.remainsPhase ||
       !!previous.storage !== !!current.storage ||
@@ -1267,6 +1323,7 @@ export function reconcileVisualEvidence(
     if (
       token &&
       heldBody &&
+      !subject.assembly &&
       measuredSource?.leaseId === heldBody.id &&
       measuredSource.token === token
     ) {
@@ -1318,7 +1375,29 @@ export function reconcileVisualEvidence(
     const values: SensoryFacet[] = [
       prepared.facets[0]!,
       freeze({ kind: 'location', location: prepared.location, frame: observerFrame }, true),
-      ...prepared.facets.slice(1),
+      ...prepared.facets.slice(1).map((facet) =>
+        subject.assembly && facet.kind === 'body'
+          ? freeze(
+              {
+                ...facet,
+                body: {
+                  ...facet.body,
+                  assembly: facet.body.assembly
+                    ? cloneValue(
+                        receiveAssemblyConditions(
+                          world,
+                          subject.id,
+                          facet.body.assembly,
+                          observer.id,
+                        ),
+                      )
+                    : undefined,
+                },
+              },
+              true,
+            )
+          : facet,
+      ),
     ];
     const detected = state.current[`${subject.id}:detected`];
     let original = detected && readOnlyDraftView(detected).original;
@@ -1586,23 +1665,54 @@ export function reconcileVisualEvidence(
     through: world.simTime,
     revision: (state.visualConfirmation?.revision ?? 0) + 1,
   };
+  // Memoryless native reactions consume received bodies; no current consumer asks
+  // them for autobiographical scene geometry or detailed attention.
+  if (!hasMemory(observer)) return;
   const newGeometry = refreshReceivedGeometry(world, observer.id).acquired;
-  const priorCues = new Set(currentAttentionCues(world, observer.id).map((cue) => cue.id));
-  const recordedGeometry = reconcileAttendedTemporalEvidence(
+  reconcileReceivedAttention(
     world,
     observer.id,
     beforeAttention,
-    [],
     [...attentionChanges],
     true,
     newGeometry,
   );
-  evaluateAttentionRelations(world, observer.id);
-  const newCues = currentAttentionCues(world, observer.id).filter((cue) => !priorCues.has(cue.id));
+}
+
+/** Pending interpretation uses held received facts. It does not sense the world,
+ * refresh measurement times or credit another sensory contact. */
+export function continuePerceptionWork(world: WorldState, observerId: string): void {
+  const due = nextAttentionWorkAt(world, observerId);
+  if (due === undefined || due > world.simTime) return;
+  const before = new Set(
+    currentDetailedAttention(world, observerId).map((entry) => entry.sourceId),
+  );
+  reconcileReceivedAttention(world, observerId, before, [], false, []);
+}
+function reconcileReceivedAttention(
+  world: WorldState,
+  observerId: string,
+  beforeAttention: Set<string>,
+  attentionChanges: readonly string[],
+  creditContacts: boolean,
+  newGeometry: readonly ObservationContribution[],
+): void {
+  const priorCues = new Set(currentAttentionCues(world, observerId).map((cue) => cue.id));
+  const recordedGeometry = reconcileAttendedTemporalEvidence(
+    world,
+    observerId,
+    beforeAttention,
+    [],
+    attentionChanges,
+    creditContacts,
+    newGeometry,
+  );
+  evaluateAttentionRelations(world, observerId);
+  const newCues = currentAttentionCues(world, observerId).filter((cue) => !priorCues.has(cue.id));
   if (!newCues.length) return;
-  const geometry = currentReceivedGeometry(world, observer.id).observations;
+  const geometry = currentReceivedGeometry(world, observerId).observations;
   for (const cue of newCues) {
-    const anchor = currentDetailedAttention(world, observer.id).find(
+    const anchor = currentDetailedAttention(world, observerId).find(
       (entry) => entry.key === cue.anchorKey,
     );
     if (!anchor) continue;
@@ -1624,7 +1734,7 @@ export function reconcileVisualEvidence(
             if (original)
               captureTemporalObservation(
                 world,
-                observer.id,
+                observerId,
                 original,
                 [original.id, cue.id],
                 false,
@@ -1634,7 +1744,7 @@ export function reconcileVisualEvidence(
           }
       captureTemporalObservation(
         world,
-        observer.id,
+        observerId,
         observation,
         [observation.id, cue.id],
         false,
@@ -2086,7 +2196,7 @@ export function acquireAwarenessObservation(
       location: {
         kind: 'point',
         point: { ...readOnlyDraftView(worldPosition(observer)) },
-        errorRadius: bodyProfile(observer).radius,
+        errorRadius: effectiveBodyProfile(world, observer).radius,
       },
       frame: { positionAtObservation: { ...readOnlyDraftView(worldPosition(observer)) } },
     });
@@ -2801,6 +2911,40 @@ export function validateSensoryFacet(
         (body.label !== undefined && (typeof body.label.name !== 'string' || !body.label.name))
       )
         throw new Error('Invalid observed outward detail.');
+      if (body.assembly !== undefined) validateObservedAssembly(body.assembly);
+      if (
+        (body.subtype !== undefined && typeof body.subtype !== 'string') ||
+        (body.icon !== undefined && typeof body.icon !== 'string') ||
+        (body.bodyPlan !== undefined && !['biped', 'quadruped', 'avian'].includes(body.bodyPlan)) ||
+        (body.effects !== undefined &&
+          (!Array.isArray(body.effects) ||
+            body.effects.some(
+              (effect) =>
+                !effect ||
+                typeof effect.id !== 'string' ||
+                typeof effect.label !== 'string' ||
+                (effect.pose !== undefined && effect.pose !== 'horizontal') ||
+                (effect.particle !== undefined &&
+                  (typeof effect.particle.text !== 'string' ||
+                    effect.particle.anchor !== 'head' ||
+                    effect.particle.motion !== 'floatAway')),
+            )))
+      )
+        throw new Error('Invalid observed outward presentation.');
+      if (
+        body.animation !== undefined &&
+        body.animation !== null &&
+        (typeof body.animation.id !== 'string' ||
+          !['punch', 'melee'].includes(body.animation.kind) ||
+          !['windup', 'recovery'].includes(body.animation.phase) ||
+          !Number.isFinite(body.animation.progress) ||
+          body.animation.progress < 0 ||
+          body.animation.progress > 1 ||
+          !Number.isFinite(body.animation.direction?.x) ||
+          !Number.isFinite(body.animation.direction?.z) ||
+          (body.animation.tool !== undefined && typeof body.animation.tool !== 'string'))
+      )
+        throw new Error('Invalid observed action pose.');
       break;
     }
     case 'carried':

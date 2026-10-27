@@ -4,7 +4,7 @@ import { definitionPin } from '../../world-modules.js';
 import { worldPosition } from '../../spatial-state.js';
 import { supportedPosition } from '../../spatial-state.js';
 import { rememberedPlace } from '../../agency.js';
-import { activityCommandFields } from '../../food-preparation.js';
+import { activityCommandFields } from '../../native-command-contracts.js';
 import { nativeBindingKind } from '../../native-command-contracts.js';
 import { canSpeak } from '../../living.js';
 import { observerDescription, recognizesSubject, subjectReferenceCurrent } from './knowledge.js';
@@ -400,8 +400,12 @@ export function basePreparedThreatResponses(
       );
   }
   const purposes: PreparedResponsePurpose[] = [];
-  const unavailable: Array<{ purposeId: string; roles: Record<string, string>; reason: string }> =
-    [];
+  const unavailable: Array<{
+    purposeId: string;
+    roles: Record<string, string>;
+    description: string;
+    reason: string;
+  }> = [];
   const subjectsFor = (purpose: ResponsePurposeBinding, participants: readonly string[]) => {
     const hard = new Set(participants);
     return Object.fromEntries(
@@ -438,7 +442,9 @@ export function basePreparedThreatResponses(
         purpose,
         firstActionDescription: method.firstActionDescription ?? method.description,
       };
-    if (command.type === 'say')
+    // Releasing an already held shot must keep its exact preparation, rather
+    // than replacing it with the finite activity used for a fresh attack.
+    if (command.type === 'say' || command.type === 'release-shot')
       return {
         ...method,
         purpose,
@@ -545,10 +551,14 @@ export function basePreparedThreatResponses(
         continue;
       if (!definition.requires.every((requirement) => binding.flags.has(requirement))) continue;
       const roles = binding.roles;
-      const description = `${definition.label}${binding.lastSeen ? ` (where I saw ${binding.lastSeen.label} at game time ${binding.lastSeen.at})` : ''}${
+      const heading = `${definition.label}${binding.lastSeen ? ` (where I saw ${binding.lastSeen.label} at game time ${binding.lastSeen.at})` : ''}`;
+      const roleDescriptions = Object.fromEntries(
+        Object.entries(roles).map(([role, id]) => [role, label(id)]),
+      );
+      const description = `${heading}${
         Object.keys(roles).length
-          ? ` (${Object.entries(roles)
-              .map(([role, id]) => `${role}: ${label(id)}`)
+          ? ` (${Object.entries(roleDescriptions)
+              .map(([role, description]) => `${role}: ${description}`)
               .join('; ')})`
           : ''
       }`;
@@ -613,13 +623,18 @@ export function basePreparedThreatResponses(
       };
       for (const method of input.methods) {
         const command = method.invocation;
-        const target = command && 'targetId' in command ? command.targetId : undefined;
+        const target =
+          command?.type === 'release-shot' && actor.actor?.action?.id === command.aimId
+            ? actor.actor.action.targetId
+            : command && 'targetId' in command
+              ? command.targetId
+              : undefined;
         const approach =
           command?.type === 'move' && method.subjects?.includes(roles.assailant ?? '');
         if (
           definition.means.includes('attack') &&
           command &&
-          ['strike', 'shoot-once', 'hunt'].includes(command.type) &&
+          ['strike', 'shoot-once', 'hunt', 'release-shot'].includes(command.type) &&
           target !== undefined &&
           target === roles.assailant &&
           visible.has(target)
@@ -808,13 +823,16 @@ export function basePreparedThreatResponses(
               : []),
           ]),
           purpose,
-          description: `${description}. ${definition.meaning}`,
+          label: heading,
+          meaning: definition.meaning,
+          roleDescriptions,
           options,
         });
       else
         unavailable.push({
           purposeId: definition.id,
           roles: { ...roles },
+          description: `${description}. ${definition.meaning}`,
           reason:
             'No currently supplied native means supports this exact purpose and participants.',
         });

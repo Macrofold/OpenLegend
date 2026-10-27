@@ -10,6 +10,7 @@ import {
   updateWorld,
   projectWorldHistory,
   selectedTemporalPolicy,
+  retainedAgreementEvidence,
   type WorldState,
 } from '@open-legend/domain';
 
@@ -115,7 +116,11 @@ export function compactAppraisalHistory(world: WorldState): WorldState {
   compactedAppraisals.add(appraisals);
   return { ...world, appraisals };
 }
-export function compactHistory(world: WorldState, previous?: WorldState): WorldState {
+export function compactHistory(
+  world: WorldState,
+  previous?: WorldState,
+  options: { preview?: boolean } = {},
+): WorldState {
   const cutoff = world.simTime - EXPERIENCE_LIMITS.rawHours * 3600;
   const compact = <T>(
     entries: T[],
@@ -123,6 +128,7 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
     at: (entry: T, index: number, length: number) => number,
     tail = 0,
     maximum = Infinity,
+    pinned?: ReadonlySet<string>,
   ): T[] => {
     let startIndex = Math.max(0, entries.length - maximum);
     if (Number.isFinite(maximum)) {
@@ -159,9 +165,11 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
     const old = historyPositions.get(entries);
     const selected = new Map<string, number>();
     let nextExpiry = Infinity;
-    for (let i = startIndex; i < entries.length; i++) {
+    for (let i = 0; i < entries.length; i++) {
       const entry = entries[i]!,
-        expires = at(entry, i, entries.length);
+        required = pinned?.has(historyKey(entry)),
+        expires = required ? Infinity : at(entry, i, entries.length);
+      if (i < startIndex && !required) continue;
       if (expires < cutoff) continue;
       retained.push(entry);
       nextExpiry = Math.min(nextExpiry, expires);
@@ -184,12 +192,16 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
     changed ||= memories[actorId] !== entries;
   }
   for (const [actorId, entries] of Object.entries(awareness)) {
+    // Sensory rows must remain resident until their native absolute expiry; evicting
+    // them would strand their expiry in SQL. Native operation admission bounds intake.
+    if (entries.some((entry) => entry.retentionClass === 'sensory')) continue;
     awareness[actorId] = compact(
       entries,
       previous?.experience?.awareness[actorId],
       (entry, index, length) => (index >= length - 24 ? Infinity : entry.at),
       24,
       HOT_AWARENESS_ROWS,
+      retainedAgreementEvidence(world, actorId),
     );
     changed ||= awareness[actorId] !== entries;
   }
@@ -217,11 +229,15 @@ export function compactHistory(world: WorldState, previous?: WorldState): WorldS
     changed = true;
   }
   const projected = changed
-    ? projectWorldHistory(world, {
-        memories,
-        occurrences,
-        ...(world.experience ? { awareness, summaries } : {}),
-      })
+    ? projectWorldHistory(
+        world,
+        {
+          memories,
+          occurrences,
+          ...(world.experience ? { awareness, summaries } : {}),
+        },
+        options,
+      )
     : world;
   return compactTemporalHistory(projected);
 }

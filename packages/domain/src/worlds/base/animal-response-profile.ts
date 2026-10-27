@@ -1,16 +1,37 @@
 import type { NativeResponseProfile } from '../../native-response.js';
 import { installNativeResponseProfile, type NativeResponseState } from '../../native-response.js';
-import type { WorldState } from '../../types.js';
+import type { Entity, WorldState } from '../../types.js';
+import { namePhrase } from '@open-legend/language';
+
+/** Observable activity only; no danger identities or private needs. */
+export function baseAnimalActivity(entity: Entity): { status: string; description: string } {
+  const describe = (status: string, activity: string) => ({
+    status,
+    description: `${namePhrase(entity, 'indefinite', { capitalize: true })} of the clearing. ${activity}`,
+  });
+  if (!entity.actor?.alive) return describe('Dead', 'It is no longer alive.');
+  if (entity.animal?.episode?.mode === 'escaping' && !entity.animal.episode.proposal)
+    return describe('Fleeing', 'It is fleeing.');
+  if (entity.animal?.episode) return describe('Alert', 'It remains alert.');
+  if (entity.actor?.action?.type === 'feed') return describe('Feeding', 'It is eating.');
+  if (entity.animal?.foraging?.mode === 'resting') return describe('Resting', 'It is resting.');
+  return describe('Foraging', 'It is foraging nearby.');
+}
 
 export function baseAnimalResponse(
   world: WorldState,
   locomotion: string,
   remainingSeconds: number,
+  aerialRouteId?: string,
+  profile = BASE_ANIMAL_SOUND_PROFILES[locomotion],
 ): NativeResponseState {
+  if (!profile) throw new Error('No authored animal response profile for this locomotion.');
   return {
-    profile: installNativeResponseProfile(world, BASE_ANIMAL_RESPONSE_PROFILE),
+    acousticPatterns: {},
+    profile: installNativeResponseProfile(world, profile),
     locomotion,
     physicalLife: 0,
+    ...(aerialRouteId === undefined ? {} : { aerialRouteId }),
     wander: { remainingSeconds },
   };
 }
@@ -25,6 +46,7 @@ export const BASE_ANIMAL_RESPONSE_PROFILE: NativeResponseProfile = {
     species: ['human', 'construct', 'wolf', 'bear'],
     bodyPlans: ['biped'],
     currentNaturalAttack: true,
+    attackPreparation: false,
   },
   retentionSeconds: 480,
   uncertaintyPerSecond: 0.025,
@@ -35,13 +57,18 @@ export const BASE_ANIMAL_RESPONSE_PROFILE: NativeResponseProfile = {
   reviewSeconds: 12,
   blockedReviewSeconds: 60,
   passageDistance: 1.5,
+  soundAlarmMinimumBand: 0,
+  acousticChangeBandDb: 6,
+  acousticPatternIdleSeconds: 900,
   candidates: {
-    rings: [
-      { count: 8, distance: 12 },
-      { count: 4, distance: 24 },
-    ],
+    distance: { minimum: 10, maximum: 15 },
+    angles: [0, 5, -5, 30, -30, 60, -60, 90, -90, 180],
+    preferredProgress: 0.75,
+    minimumProgress: 0.5,
+    minimumAttempts: 3,
+    maximumDetourFactor: 1.5,
+    navigationWait: 'entity',
     maximumRouteLength: 24,
-    frontierMargin: 0.25,
     minimumAdvance: 0.5,
     worseningSlack: 0.25,
     arrivalMarginCap: 6,
@@ -56,6 +83,7 @@ export const BASE_ANIMAL_RESPONSE_PROFILE: NativeResponseProfile = {
     bear: { travel: 0.06, escape: 0.2 },
     bird: { travel: 0.04, escape: 0.075, flightEscape: 0.25 },
   },
+  movementFactors: { scars: true },
   wander: { distance: 0.4, minimumWaitSeconds: 120, waitChoices: 120 },
   wake: { attributeId: 'wilderness:energy', above: 0, reason: 'perceived-danger' },
   presentation: {
@@ -65,4 +93,22 @@ export const BASE_ANIMAL_RESPONSE_PROFILE: NativeResponseProfile = {
     blocked: 'remains alert but has no usable escape route.',
     routine: 'settled and resumed its ordinary activity.',
   },
+};
+
+const STEADIER_ANIMAL_RESPONSE_PROFILE: NativeResponseProfile = {
+  ...BASE_ANIMAL_RESPONSE_PROFILE,
+  id: 'wilderness:steadier-animal-responses',
+  soundAlarmMinimumBand: 2,
+};
+export const BASE_TERRITORIAL_RESPONSE_PROFILE: NativeResponseProfile = {
+  ...BASE_ANIMAL_RESPONSE_PROFILE,
+  id: 'wilderness:territorial-animal-responses',
+  soundAlarmMinimumBand: null,
+};
+const BASE_ANIMAL_SOUND_PROFILES: Record<string, NativeResponseProfile> = {
+  hare: BASE_ANIMAL_RESPONSE_PROFILE,
+  deer: BASE_ANIMAL_RESPONSE_PROFILE,
+  bird: BASE_ANIMAL_RESPONSE_PROFILE,
+  wolf: STEADIER_ANIMAL_RESPONSE_PROFILE,
+  bear: STEADIER_ANIMAL_RESPONSE_PROFILE,
 };

@@ -1,8 +1,14 @@
-import { entityGet, materializeNativeValues } from '@open-legend/domain';
+import { stockedCamp } from '../../../tests/fixtures/world.js';
+import { entityGet, materializeNativeEntity, type WorldState } from '@open-legend/domain';
 import { localHttpClient } from '../../../tests/fixtures/http.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { testRepository } from '../../../tests/fixtures/database.js';
-import { worldPosition, worldSupport } from '@open-legend/domain';
+import {
+  materializeNativeValues,
+  worldPosition,
+  worldSupport,
+  type Entity,
+} from '@open-legend/domain';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -14,10 +20,25 @@ import { createGameServer } from './http.js';
 import { SAVE_FORMAT } from './game-saves.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
 
+// Cold participation reconciliation may write out already-earned native meter
+// additions. Compare exact current entity meaning without mutating the live world.
+function currentEntity(world: WorldState, actorId: string) {
+  const current = structuredClone(world);
+  materializeNativeEntity(current, actorId);
+  return entityGet(current.entities, actorId);
+}
+
+function expectActiveBody(actual: Entity, expected: Entity): void {
+  const { participation, ...actor } = actual.actor!;
+  const { participation: _presence, ...expectedActor } = expected.actor!;
+  expect(participation?.phase ?? 'active').toBe('active');
+  expect({ ...actual, actor }).toEqual({ ...expected, actor: expectedActor });
+}
+
 it('requires exact 3D surface intentions and preserves the HTTP retry boundary', async () => {
   const game = await createGameServer({
     config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: await testRepository(),
+    store: await testRepository(undefined, stockedCamp()),
     production: true,
     tick: false,
   });
@@ -86,7 +107,7 @@ it('preserves elevated position and manual route snapshots while departure cance
   const now = () => 10_000;
   let game = await createGameServer({
     config,
-    store: await testRepository(config.dataDirectory),
+    store: await testRepository(config.dataDirectory, stockedCamp()),
     production: true,
     tick: false,
     now,
@@ -125,10 +146,9 @@ it('preserves elevated position and manual route snapshots while departure cance
     await game.service.createSave('On the ramp', id);
     const stored = await game.service.store.saves!.read(game.service.world.id, id);
     expect(stored.format).toBe(SAVE_FORMAT);
-    expect(entityGet(stored.state.world.entities, actorId)!.actor!.action).toEqual(
-      snapshot!.actor!.action,
-    );
+    expect(currentEntity(stored.state.world, actorId)).toEqual(snapshot);
     await game.close();
+    const departed = entityGet(materializeNativeValues(game.service.world).entities, actorId)!;
     game = await createGameServer({
       config,
       store: await testRepository(config.dataDirectory),
@@ -138,13 +158,7 @@ it('preserves elevated position and manual route snapshots while departure cance
     });
     await new Promise<void>((resolve) => game.server.listen(0, '127.0.0.1', resolve));
     await enterLocalWorld(game.service);
-    expect(entityGet(game.service.world.entities, actorId)).toEqual({
-      ...snapshot,
-      actor: {
-        ...snapshot!.actor,
-        participation: expect.objectContaining({ phase: 'active' }),
-      },
-    });
+    expectActiveBody(currentEntity(game.service.world, actorId)!, departed);
     // The slot retains the exact route, but returning does not restart a departed
     // player's unfinished walk: docs/worlds/base/player-danger.md.
     await game.service.control({ paused: false, clientId: 'save-fixture' });
@@ -167,10 +181,10 @@ it('preserves elevated position and manual route snapshots while departure cance
       randomUUID(),
       await game.service.store.saves!.read(game.service.world.id, id),
     );
-    expect(entityGet(game.service.world.entities, actorId)).toEqual({
-      ...snapshot,
-      actor: { ...snapshot!.actor, participation: expect.objectContaining({ phase: 'active' }) },
-    });
+    expectActiveBody(
+      currentEntity(game.service.world, actorId)!,
+      entityGet(materializeNativeValues(stored.state.world).entities, actorId)!,
+    );
     expect(game.service.world.paused).toBe(true);
     expect(game.service.generation).not.toBe(epoch);
     expect(entityGet(game.service.world.entities, 'bird-1')!.spatial).toEqual(
@@ -243,4 +257,4 @@ it('preserves elevated position and manual route snapshots while departure cance
     await game.close();
     await rm(directory, { recursive: true, force: true });
   }
-});
+}, 60_000);

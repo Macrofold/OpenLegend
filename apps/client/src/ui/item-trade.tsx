@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
+import { useSimulationClock, GameDeadline } from './event-time';
+import { useEffect, useId, useRef, useState } from 'react';
 import { useTradeDraft, type TradeDraft } from '../trade-drafts';
 import type { ActionOption, ApiResult, ItemTradeView, TradeLotView } from '@open-legend/protocol';
 import { Button, Section } from '../design-system/components';
@@ -20,7 +21,14 @@ export function ItemTrade({
   initialQuantity?: string;
   inventoryRequestKey?: string;
 }) {
+  const simTime = useSimulationClock().seconds;
+  const fieldId = useId();
   const labels = trade.labels;
+  const contributionText = (use: NonNullable<ItemTradeView['offers'][number]['constructionUse']>) =>
+    use.detail.replaceAll(
+      '{minutes}',
+      String(Math.max(0, Math.ceil((use.terms.expiresAt - simTime) / 60))),
+    );
   // The server scopes this key to account, character and save timeline, independent
   // of reconnect/Resume. Existing logout/access cleanup removes action drafts.
   const draftKey = 'open-legend:action-draft:trade:' + trade.scope;
@@ -150,6 +158,7 @@ export function ItemTrade({
           : String(give?.quantity ?? 1),
       receiveQuantity: String(receive?.quantity ?? 1),
       ...(prior ? { prior: { id: prior.id, revision: prior.revision } } : {}),
+      ...(prior?.constructionUse ? { constructionUse: prior.constructionUse } : {}),
     });
     setMessage('');
   }
@@ -163,6 +172,7 @@ export function ItemTrade({
         type: 'handover',
         handoverOperation: draft.prior ? 'counter' : 'offer',
         targetId: trade.personId,
+        ...(draft.constructionUse ? { constructionUse: draft.constructionUse.terms } : {}),
         itemId: draft.give.id,
         quantity: giveQuantity,
         expectedRevision: draft.give.revision,
@@ -215,6 +225,8 @@ export function ItemTrade({
               aria-label={offer.incoming ? labels.incoming : labels.waiting}
             >
               {terms(offer.give, offer.receive)}
+              <GameDeadline at={offer.expiresAt} label="Offer closes" />
+              {offer.constructionUse && <p>{contributionText(offer.constructionUse)}</p>}
               <p role="status">
                 {changed ? labels.changed : offer.incoming ? labels.incoming : labels.waiting}
               </p>
@@ -288,37 +300,83 @@ export function ItemTrade({
         {draft && (
           <div className="ol-trade-draft">
             <p className="ol-caption">{labels.selectionHint}</p>
+            {(!!trade.contributionChoices?.length || !!draft.constructionUse) && (
+              <div className="ol-trade-use">
+                <label htmlFor={fieldId + '-use'}>Material use</label>
+                <select
+                  id={fieldId + '-use'}
+                  disabled={pending}
+                  value={draft.constructionUse ? 'reviewed' : ''}
+                  onChange={(event) => {
+                    const choice = trade.contributionChoices?.find(
+                      (c) => c.id === event.target.value,
+                    );
+                    setDraft((value) =>
+                      value
+                        ? {
+                            ...value,
+                            constructionUse: choice
+                              ? {
+                                  terms: {
+                                    ...choice.terms,
+                                    expiresAt: simTime + choice.durationSeconds,
+                                  },
+                                  detail: choice.detail,
+                                }
+                              : undefined,
+                          }
+                        : value,
+                    );
+                  }}
+                >
+                  <option value="">Ordinary transfer</option>
+                  {draft.constructionUse && (
+                    <option value="reviewed">Reviewed construction use</option>
+                  )}
+                  {trade.contributionChoices?.map((choice) => (
+                    <option key={choice.id} value={choice.id}>
+                      {choice.label}
+                    </option>
+                  ))}
+                </select>
+                {draft.constructionUse && (
+                  <>
+                    <p>{contributionText(draft.constructionUse)}</p>
+                    <GameDeadline at={draft.constructionUse.terms.expiresAt} />
+                  </>
+                )}
+              </div>
+            )}
             <div className="ol-trade-terms">
               <div>
-                <label>
-                  {labels.give}
-                  <select
-                    value={draft.give?.id ?? ''}
-                    disabled={pending}
-                    onChange={(event) => {
-                      const give = ownLots.find((lot) => lot.id === event.target.value);
-                      setDraft((value) =>
-                        value
-                          ? {
-                              ...value,
-                              give,
-                              giveQuantity: String(give?.whole ? give.quantity : 1),
-                            }
-                          : value,
-                      );
-                    }}
-                  >
-                    <option value="">{labels.choose}</option>
-                    {draft.give && !ownLots.some((lot) => lot.id === draft.give!.id) && (
-                      <option value={draft.give.id}>{draft.give.label}</option>
-                    )}
-                    {ownLots.map((lot) => (
-                      <option key={lot.id} value={lot.id}>
-                        {lot.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <label htmlFor={fieldId + '-give'}>{labels.give}</label>
+                <select
+                  id={fieldId + '-give'}
+                  value={draft.give?.id ?? ''}
+                  disabled={pending}
+                  onChange={(event) => {
+                    const give = ownLots.find((lot) => lot.id === event.target.value);
+                    setDraft((value) =>
+                      value
+                        ? {
+                            ...value,
+                            give,
+                            giveQuantity: String(give?.whole ? give.quantity : 1),
+                          }
+                        : value,
+                    );
+                  }}
+                >
+                  <option value="">{labels.choose}</option>
+                  {draft.give && !ownLots.some((lot) => lot.id === draft.give!.id) && (
+                    <option value={draft.give.id}>{draft.give.label}</option>
+                  )}
+                  {ownLots.map((lot) => (
+                    <option key={lot.id} value={lot.id}>
+                      {lot.label}
+                    </option>
+                  ))}
+                </select>
                 <InventoryQuantity
                   label={labels.giveQuantity}
                   value={draft.giveQuantity}
@@ -335,36 +393,35 @@ export function ItemTrade({
                 {draft.give?.whole && <p className="ol-caption">{labels.whole}</p>}
               </div>
               <div>
-                <label>
-                  {labels.receive}
-                  <select
-                    value={draft.receive?.id ?? ''}
-                    disabled={pending}
-                    onChange={(event) => {
-                      const receive = trade.knownLots.find((lot) => lot.id === event.target.value);
-                      setDraft((value) =>
-                        value
-                          ? {
-                              ...value,
-                              receive,
-                              receiveQuantity: String(receive?.whole ? receive.quantity : 1),
-                            }
-                          : value,
-                      );
-                    }}
-                  >
-                    <option value="">{labels.gift}</option>
-                    {draft.receive &&
-                      !trade.knownLots.some((lot) => lot.id === draft.receive!.id) && (
-                        <option value={draft.receive.id}>{draft.receive.label}</option>
-                      )}
-                    {trade.knownLots.map((lot) => (
-                      <option key={lot.id} value={lot.id}>
-                        {lot.label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
+                <label htmlFor={fieldId + '-receive'}>{labels.receive}</label>
+                <select
+                  id={fieldId + '-receive'}
+                  value={draft.receive?.id ?? ''}
+                  disabled={pending}
+                  onChange={(event) => {
+                    const receive = trade.knownLots.find((lot) => lot.id === event.target.value);
+                    setDraft((value) =>
+                      value
+                        ? {
+                            ...value,
+                            receive,
+                            receiveQuantity: String(receive?.whole ? receive.quantity : 1),
+                          }
+                        : value,
+                    );
+                  }}
+                >
+                  <option value="">{labels.gift}</option>
+                  {draft.receive &&
+                    !trade.knownLots.some((lot) => lot.id === draft.receive!.id) && (
+                      <option value={draft.receive.id}>{draft.receive.label}</option>
+                    )}
+                  {trade.knownLots.map((lot) => (
+                    <option key={lot.id} value={lot.id}>
+                      {lot.label}
+                    </option>
+                  ))}
+                </select>
                 {draft.receive ? (
                   <>
                     <InventoryQuantity

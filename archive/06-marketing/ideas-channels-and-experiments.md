@@ -1,22 +1,24 @@
 # Marketing ideas, channels and experiments
 
-| Status | Current progress | Last updated |
-|---|---|---|
-| Untested hypotheses | Candidate material and measures distinguish player appeal, authoring interest and commercial preference; no outreach, accounts, ads or public promises are performed or authorized here. | 2026-10-17 |
+| Status              | Current progress                                                                                                                                                                         | Last updated |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Untested hypotheses | Candidate material and measures distinguish player appeal, authoring interest and commercial preference; no outreach, accounts, ads or public promises are performed or authorized here. | 2026-10-17   |
 
 [Execution brief](../02-research/indie-launch-commercials/execution-brief.md) · [Detailed guide](../02-research/indie-launch-commercials/execution-playbook.md) · [Positioning](positioning-and-copy.md)
 
 ## Campaign ideas
 
+[Showcasing the game](showcasing-the-game.md) explains how to turn these subjects into player stories and adapt the explanation to videos, articles, storefronts and crowdfunding pages.
+
 Lead with an enjoyable activity under the [gameplay priority](../../docs/repertoires/gameplay-priorities.md), not a feature list. The examples below are concepts to qualify against the actual build; they do not adopt new world laws or assert delivered behavior.
 
-| Idea | Material to show | What the viewer should understand |
-|---|---|---|
-| One obstacle, more than one useful approach | A readable challenge, a known method and a genuinely supported invented alternative | Choice and practical invention can change how the player succeeds |
-| A person with their own purpose | A resident or rival acts, accepts or refuses, and later responds to something they actually observed | Characters are not scripted agreement machines or omniscient narrators |
-| A consequence worth returning for | A reward, useful method or relationship outcome affects another activity | Persistence produces interesting play, not merely stored text |
-| A place worth exploring and using | A destination, opposition or discovery, useful reward and improvement to gear or home | The adventure has attractive activities and payoff alongside its distinctive systems |
-| Another run, another approach | Voluntary repeat play using an alternative tactic or invention | Continued interest can come from choice and consequences rather than compulsory daily chores |
+| Idea                                        | Material to show                                                                                     | What the viewer should understand                                                            |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| One obstacle, more than one useful approach | A readable challenge, a known method and a genuinely supported invented alternative                  | Choice and practical invention can change how the player succeeds                            |
+| A person with their own purpose             | A resident or rival acts, accepts or refuses, and later responds to something they actually observed | Characters are not scripted agreement machines or omniscient narrators                       |
+| A consequence worth returning for           | A reward, useful method or relationship outcome affects another activity                             | Persistence produces interesting play, not merely stored text                                |
+| A place worth exploring and using           | A destination, opposition or discovery, useful reward and improvement to gear or home                | The adventure has attractive activities and payoff alongside its distinctive systems         |
+| Another run, another approach               | Voluntary repeat play using an alternative tactic or invention                                       | Continued interest can come from choice and consequences rather than compulsory daily chores |
 
 Art, motion and sound should communicate why the activity is attractive as well as how it works. Disclose important waits and limitations; distinguish actual behavior from concept footage or edited time. Do not imply that every imagined solution or character reaction is already supported.
 
@@ -24,29 +26,29 @@ Art, motion and sound should communicate why the activity is attractive as well 
 
 These preserve useful creator directions without making authoring interest the default proxy for demand for the adventure.
 
-| Idea | Material to show | What the viewer should understand |
-|---|---|---|
-| One interaction becomes a rule | Magic-tree request through a saved, reusable mechanic | Authorized creation during play can have a persistent result |
+| Idea                            | Material to show                                                                  | What the viewer should understand                               |
+| ------------------------------- | --------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| One interaction becomes a rule  | Magic-tree request through a saved, reusable mechanic                             | Authorized creation during play can have a persistent result    |
 | One sentence changes a mechanic | Add “only mages can cast this,” then test qualifying and nonqualifying characters | Definitions remain editable, with visible enforced consequences |
-| Two worlds, one difference | Equivalent starting worlds with one selected rule changed | Chosen mechanics can lead to different histories |
-| A world's family tree | A starter template branches into curated worlds | Worlds can inherit chosen foundations and develop independently |
-| Follow an invention | Create, learn, reuse and observe supported consequences | A capability matters beyond its first demonstration |
-| Creator's workshop | A small hosted authoring session, including failed attempts | The interface supports understandable iteration |
-| The mechanic behind the moment | Gameplay paired with the exact definition responsible | The behavior is inspectable rather than unexplained narration |
+| Two worlds, one difference      | Equivalent starting worlds with one selected rule changed                         | Chosen mechanics can lead to different histories                |
+| A world's family tree           | A starter template branches into curated worlds                                   | Worlds can inherit chosen foundations and develop independently |
+| Follow an invention             | Create, learn, reuse and observe supported consequences                           | A capability matters beyond its first demonstration             |
+| Creator's workshop              | A small hosted authoring session, including failed attempts                       | The interface supports understandable iteration                 |
+| The mechanic behind the moment  | Gameplay paired with the exact definition responsible                             | The behavior is inspectable rather than unexplained narration   |
 
 “Two worlds” is a demonstration, not a controlled claim about real societies. Record initial conditions and do not attribute every difference to one rule when randomness and model responses also vary. Creator authority remains separate from character abilities and knowledge.
 
 ## Candidate channels
 
-| Channel | Suitable material | First small experiment | Useful measure |
-|---|---|---|---|
-| Short-form video | Actual choice, attraction and payoff | Compare two truthful presentations of the same playable moment | Relevant access/demo actions and expectation match, not only views |
-| Longer videos and devlogs | A whole activity, later consequence or substantive improvement | A transparent play session or focused development explanation | People who request access and voluntarily play again |
-| Relevant game creators | The adventure's demonstrated attraction | A manually checked batch based on coverage of comparable play | Coverage, qualified visitors/players and repeated response, with attribution limits |
-| Communities, forums and Discord groups | Useful progress and specific playable questions | Participate under local rules and invite an appropriate test | Informative feedback and returning testers, not post volume |
-| Project site and opt-in updates | Coherent promise, build status and actual next action | A simple page plus a working invitation | Signups becoming actual participants |
-| Worldbuilders and game masters | Qualified creator examples | A separate small authoring session | Useful creation, repeat authoring and preferences for that offer |
-| GitHub and developer communities | Runnable open project and focused contribution examples | A bounded contribution/setup exercise | Successful setup and useful contributions, not consumer demand |
+| Channel                                | Suitable material                                              | First small experiment                                         | Useful measure                                                                      |
+| -------------------------------------- | -------------------------------------------------------------- | -------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Short-form video                       | Actual choice, attraction and payoff                           | Compare two truthful presentations of the same playable moment | Relevant access/demo actions and expectation match, not only views                  |
+| Longer videos and devlogs              | A whole activity, later consequence or substantive improvement | A transparent play session or focused development explanation  | People who request access and voluntarily play again                                |
+| Relevant game creators                 | The adventure's demonstrated attraction                        | A manually checked batch based on coverage of comparable play  | Coverage, qualified visitors/players and repeated response, with attribution limits |
+| Communities, forums and Discord groups | Useful progress and specific playable questions                | Participate under local rules and invite an appropriate test   | Informative feedback and returning testers, not post volume                         |
+| Project site and opt-in updates        | Coherent promise, build status and actual next action          | A simple page plus a working invitation                        | Signups becoming actual participants                                                |
+| Worldbuilders and game masters         | Qualified creator examples                                     | A separate small authoring session                             | Useful creation, repeat authoring and preferences for that offer                    |
+| GitHub and developer communities       | Runnable open project and focused contribution examples        | A bounded contribution/setup exercise                          | Successful setup and useful contributions, not consumer demand                      |
 
 Game, audience and business experiments can overlap. Routine posting should be affordable; reveals, demos, appropriate festivals and release deserve coordinated preparation. Increase relevant outreach when responses repeat rather than waiting for a magic follower count. Broad promotion or paid scaling should not amplify known misleading, broken or unaffordable conditions. Advertising, when approved, begins as a bounded experiment; organic work also consumes founder time.
 
@@ -64,15 +66,15 @@ These are qualitative tests first. Record audience, wording, build and source. A
 
 ## Measures that connect marketing to the product
 
-| Evidence layer | Question |
-|---|---|
-| Attraction | Can a viewer explain why they would choose this instead of an existing alternative? |
-| Usability | Can a newcomer understand a goal, act and read the consequence without coaching? |
-| Enjoyment | Does the actual activity produce rewarding decisions, payoff and voluntary further play? |
-| Broader demand | Do additional relevant audiences respond and participate, rather than one friendly cohort? |
-| Offer preference | Do plausible customers prefer realistic terms, and does approved actual payment support their stated interest? |
-| Delivery | Do normal and costly sessions remain enjoyable, responsive and affordable to support? |
-| Authoring, when tested | Can a creator make a supported mechanic, find/refine it and verify reuse under the right permissions? |
+| Evidence layer         | Question                                                                                                       |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Attraction             | Can a viewer explain why they would choose this instead of an existing alternative?                            |
+| Usability              | Can a newcomer understand a goal, act and read the consequence without coaching?                               |
+| Enjoyment              | Does the actual activity produce rewarding decisions, payoff and voluntary further play?                       |
+| Broader demand         | Do additional relevant audiences respond and participate, rather than one friendly cohort?                     |
+| Offer preference       | Do plausible customers prefer realistic terms, and does approved actual payment support their stated interest? |
+| Delivery               | Do normal and costly sessions remain enjoyable, responsive and affordable to support?                          |
+| Authoring, when tested | Can a creator make a supported mechanic, find/refine it and verify reuse under the right permissions?          |
 
 Views, visits, signups, active players, authors, buyers and eligible renewals are different populations. Do not force every player through authoring or a hosting subscription to count as interested. Track actual repeat behavior appropriate to the promise; a satisfying finite game need not produce daily return.
 

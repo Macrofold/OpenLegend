@@ -8,11 +8,15 @@ Implementation starting points: [intelligence-log.ts](../../apps/server/src/inte
 
 ## LA198
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-18 · Restrictiveness: Very safe.**
 
-The PostgreSQL log targets the newest 1,000 records across top-level requests and their processing steps, pruning when writes cross a multiple of 25. This is approximate between pruning passes, not an exact admission ceiling or a complete retained archive. The separate recent-call cache tries to evict a non-running record above 1,000 entries but retains running records, so it can exceed that count and has no aggregate byte bound. Neither limit describes the independently bounded pending-write queue below.
+The PostgreSQL log targets the newest 1,000 records across top-level requests and their processing steps, pruning when writes cross a multiple of 25. This is approximate between pruning passes, not an exact admission ceiling or a complete retained archive.
 
-**Reason / tradeoff:** Separate saved debugging history from the small display cache, retaining failed requests long enough to investigate them.
+The logger shares one 16 MiB encoded-content budget and 1,000-entry allowance across unique recent, pending and actively written snapshots plus active capture reservations. A snapshot shared by recent lookup and pending storage is counted once; a write keeps its reference until it actually finishes. Each active capture reserves 3,000,000 bytes for its initial record/input, exchanges and final output. Completion or logger shutdown retires the capture and drops its content references; inherited late callbacks cannot record after that retirement. Capacity pressure evicts optional recent/pending snapshots, including running snapshots; active reservations and writes remain pinned. If capacity is still unavailable, the original operation runs without that optional capture. Logger-local counters distinguish omitted content, records and captures through the authorized performance endpoint.
+
+These counters describe admitted encoded content, not exact JavaScript heap use. Bounded temporary preparation, decoded object overhead and the original operation's own inputs/results remain separate costs.
+
+**Reason / tradeoff:** Keep debugging retention finite even with concurrent calls and stalled storage. The former recent-call cache had no aggregate byte allowance and exempted running records from its count target. Replacing that exception can omit useful running diagnostics sooner; required accounting, gameplay outcomes and their durable receipts remain independent.
 
 [Diagnostic storage](../../apps/server/src/store.ts) · [Recent-call cache](../../apps/server/src/intelligence-log.ts).
 
@@ -20,23 +24,25 @@ Original recommendation: **Replace**.
 
 ## LA199
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-18 · Restrictiveness: Safe.**
 
-After cleaning and serializing a diagnostic record, the logger replaces input above 500,000 UTF-8 bytes with an omission notice. If the complete serialized record exceeds 1,000,000 bytes, it removes captured exchanges, then replaces output with an omission notice if still oversized. It does not perform a final whole-record rejection after that replacement. These are capture-reduction thresholds, not a bound on the initial traversal/serialization work or a guaranteed maximum for arbitrary remaining metadata. Accounting receipts remain with their separate durable owner.
+The shared diagnostic preparation owner limits a call's captured input to 500,000 encoded UTF-8 bytes and every complete retained record to 1,000,000 bytes. Each newly prepared value has a 20,000-visit traversal allowance, including property and numeric-array classification work, and a maximum nesting depth of 32. String size is checked before parsing embedded JSON or preparing escaped output. Cumulative fresh source text, including property names and decoded embedded text, is limited to twice the encoded-byte allowance per preparation: 1,000,000 source UTF-8 bytes for input and 2,000,000 for a complete-record-sized value. The factor of two accommodates a JSON body plus its decoded strings while bounding repeated large text that redacts to tiny output; source text already owned by a prepared fragment is not examined again. Owned immutable fragments retain their sanitized value and encoding for reuse; caller-owned mutable inputs never qualify for that reuse.
 
-**Reason / tradeoff:** Keep full accepted inputs available for debugging or explicitly show what was omitted and how to retrieve it safely.
+Oversized, overly complex or malformed JSON-looking optional fields become omission notices. Incomplete JSON never falls back to prose redaction, which cannot safely interpret quoted or escaped secret keys. If a complete record still exceeds its allowance, preparation removes exchanges and then replaces output; a record that still cannot fit is omitted. Each omission is counted. The original operation's input/output and authoritative accounting are unaffected. These are per-preparation traversal and encoded-size limits, not a CPU preemption guarantee or a peak-memory measurement.
 
-[Implementation starting point](../../apps/server/src/intelligence-log.ts).
+**Reason / tradeoff:** Preserve the existing 500,000/1,000,000-byte content envelopes while enforcing them during preparation and before retention. This replaces full traversal followed by repeated serialization and the missing final complete-record refusal. The traversal, source-text and depth bounds can omit a complicated or heavily redacted but otherwise small diagnostic value; explicit omission is preferable to delaying the operation merely to record optional detail.
+
+[Shared preparation](../../apps/server/src/diagnostic-capture.ts) · [Logger admission](../../apps/server/src/intelligence-log.ts).
 
 Original recommendation: **Expand**.
 
 ## LA200
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-18 · Restrictiveness: Safe.**
 
-One Intelligence call retains at most 100 HTTP exchanges; overflow preferentially removes the oldest GET, otherwise the oldest exchange. The current array does not retain an omitted-exchange count. A non-streaming response clone is captured up to 1,000,000 bytes and marks truncation when larger; this does not limit the original response or independently bound each request body. Streaming event bodies are deliberately omitted without draining a clone, so capture does not delay live delivery; the final typed result is recorded separately. LA199 can remove the entire exchange list when the complete record is too large.
+One Intelligence call retains at most 100 HTTP exchanges within a conservative 1,000,000-byte encoded exchange allowance. To admit a newer exchange, the logger removes the oldest GET exchange first, or the oldest exchange when no GET remains, until both allowances fit; these omissions are counted. Request text passes through the same bounded sanitization owner. The network observer checks live content interest before retaining each diagnostic chunk and again before its final content copy. It retains a diagnostic prefix of already-consumed response bytes, capped at 1,000,000 bytes with explicit truncation. It opens no additional reader or response clone. Streaming event bodies remain omitted; the final typed result is recorded separately. LA199 can remove the entire exchange list when the complete record cannot fit.
 
-**Reason / tradeoff:** Keep useful failure exchanges and make any removed poll history or oversized body clearly visible to the person debugging the call.
+**Reason / tradeoff:** Bound optional capture before decoding and retention, and keep delivery independent of a second body reader. The existing preference for newer exchanges and removal of polling history now also applies when encoded bytes reach their allowance. The separately captured final outcome and omission counters remain available, but neither is a complete HTTP history.
 
 [Implementation starting point](../../apps/server/src/intelligence-log.ts).
 
@@ -138,11 +144,11 @@ Original recommendation: **Keep**.
 
 ## Diagnostic write backlog
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Very safe.**
+**Current — source inspected 2026-10-18 · Restrictiveness: Very safe.**
 
-Queued intelligence diagnostics retain the latest snapshot per call ID, with at most 1,000 pending IDs or 16 MiB of encoded records, plus an active drain batch of at most 64 IDs. Updates waiting within a 100 ms drain delay or behind storage coalesce. Each drain passes at most 64 distinct IDs to bounded multi-row SQL writes; adapters without that operation retain sequential writes. The inspector may therefore lag capture by about 100 ms plus storage wait. Distinct IDs stay distinct until capacity is exhausted; overflow omits the oldest pending diagnostic and reports a warning. Graceful shutdown drains pending records. A failed optional batch can be lost; in a sequential adapter, one failed record does not prevent attempts to save the later unrelated records. No automatic retry is added.
+Queued intelligence diagnostics retain the latest prepared snapshot per call ID within the shared [LA198](#la198) allowance. Updates waiting within a 100 ms drain delay or behind storage coalesce. Each drain passes at most 64 distinct IDs and their already-prepared JSON to bounded multi-row SQL writes. Moving a record from pending to active storage keeps it charged until the write settles. The inspector may therefore lag capture by about 100 ms plus storage wait. Capacity omissions are counted; graceful shutdown drains admitted pending records. A failed optional batch can be lost and is reported by the background-failure owner. No automatic retry is added.
 
-**Reason / tradeoff:** A slow database must not create an unlimited pending-write backlog or save every superseded inspector state. The queue bounds do not also bound the separate recent-call cache, running-call objects or capture traversal/serialization; LA198/LA199 retain those distinctions. This changes diagnostic completeness during overload, never command receipts, spending records, source evidence or accepted effects. The former write promise chain had no backlog bound. Revisit if ordinary supported workloads overflow; no higher value is recommended without evidence.
+**Reason / tradeoff:** A slow database must not create an unlimited backlog or save every superseded inspector state. The original unbounded promise chain was replaced by a 1,000-ID/16-MiB pending queue plus an independently retained active batch; the current shared allowance also covers recent records, active captures and writes. Sharing immutable prepared records removes repeated encoding without weakening their ownership. Overload can omit optional diagnostics, never command receipts, spending records, source evidence or accepted effects. Revisit if ordinary supported workloads overflow; no higher value is recommended without evidence.
 
 ## OB01 — Explicit browser performance capture
 

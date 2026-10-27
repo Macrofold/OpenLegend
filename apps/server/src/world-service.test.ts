@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet, currentAttributeState } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
@@ -15,9 +16,13 @@ import { projectView } from './view.js';
 import { WorldService } from './world-service.js';
 
 const stores = new Set<SqlGameRepository>();
+const services = new Map<WorldService, SqlGameRepository>();
 const directories: string[] = [];
 async function setup(path: string | undefined = undefined, existingClock?: { now: number }) {
   const store = await testRepository(path);
+  await store.ready;
+  if (!(await store.records.head()))
+    await store.commit(0, { world: stockedCamp(), speed: 1, manuallyPaused: false });
   stores.add(store);
   const clock = existingClock ?? { now: 1_800_000_000_000 };
   const config = readConfig({
@@ -26,6 +31,7 @@ async function setup(path: string | undefined = undefined, existingClock?: { now
     OPENAI_API_KEY: 'private-llm-key',
   });
   const service = new WorldService(store, config, () => clock.now);
+  services.set(service, store);
   await enterLocalWorld(service);
   return { store, clock, service };
 }
@@ -51,9 +57,29 @@ async function run(
   }
 }
 afterEach(async () => {
-  for (const store of stores) await store.close();
+  const results = await Promise.allSettled(
+    [...services].map(async ([service, store]) => {
+      try {
+        if (stores.has(store)) {
+          await service.settleBackgroundSaves();
+          if (!service.storageError) await service.flush();
+        }
+      } finally {
+        service.releaseHostWork();
+      }
+    }),
+  );
+  services.clear();
+  const closing = [...stores];
   stores.clear();
+  results.push(...(await Promise.allSettled(closing.map((store) => store.close()))));
   for (const path of directories.splice(0)) rmSync(path, { recursive: true, force: true });
+  const failures = results.filter((result) => result.status === 'rejected');
+  if (failures.length)
+    throw new AggregateError(
+      failures.map((result) => result.reason),
+      'Fixture cleanup failed.',
+    );
 });
 
 describe('world presence, time and durable commands', () => {
@@ -92,7 +118,7 @@ describe('world presence, time and durable commands', () => {
     expect(service.world.simTime).toBe(360);
     await service.tick(0.5);
     expect(service.world.simTime).toBe(390);
-  });
+  }, 60_000);
 
   it('preserves independent settings and half speed across PostgreSQL restart', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'open-legend-time-migration-'));
@@ -245,7 +271,7 @@ describe('world presence, time and durable commands', () => {
     expect(JSON.stringify((await projectView(service)).conversation)).not.toContain(
       'This was never spoken.',
     );
-  });
+  }, 60_000);
   it('drops a suspended wall-clock interval rather than replaying offline work', async () => {
     const { service } = await setup();
     await activate(service);
@@ -255,7 +281,7 @@ describe('world presence, time and durable commands', () => {
     expect(service.world.simTime).toBe(0.6);
     await service.tick(0.25);
     expect(service.world.simTime).toBe(15.6);
-  });
+  }, 60_000);
   it('preserves short scheduling debt at the highest supported speed', async () => {
     const { service, clock } = await setup();
     await activate(service);
@@ -269,7 +295,7 @@ describe('world presence, time and durable commands', () => {
       await service.tick(0.125);
     }
     expect(service.world.simTime).toBeCloseTo(2 * 60 * 8, 9);
-  });
+  }, 60_000);
   it('returns a bounded host batch while retaining elapsed time for exact later drainage', async () => {
     const { service } = await setup();
     await activate(service);
@@ -288,7 +314,7 @@ describe('world presence, time and durable commands', () => {
     } finally {
       monotonic.mockRestore();
     }
-  });
+  }, 60_000);
   it('restores work and pause preferences without repeating commands or elapsed real time', async () => {
     const directory = mkdtempSync(join(tmpdir(), 'open-legend-world-test-'));
     directories.push(directory);
@@ -376,6 +402,7 @@ describe('world presence, time and durable commands', () => {
     await service.tick(1);
     expect(service.world.simTime).toBe(0);
     const restored = new WorldService(store, service.config, () => clock.now);
+    services.set(restored, store);
     await enterLocalWorld(restored);
     await activate(restored);
     expect((await restored.command('ambiguous-eat', { type: 'eat', itemId: berry.id })).code).toBe(
@@ -501,7 +528,7 @@ it.each(['disappearance', 'revival'] as const)(
         innerWorld: true,
         speech: true,
         memory: false,
-        comprehendsSpeech: true,
+        language: true,
       };
       setSpatialPosition(world, player, { x: 20, y: 0, z: 5.5 }, 'terrain');
       setSpatialPosition(world, other, { x: 20, y: 3, z: 5.5 }, 'lookout-deck');

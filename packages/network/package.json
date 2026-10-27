@@ -1,0 +1,13 @@
+{
+  "name": "@open-legend/network",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./node": "./src/node.ts",
+    "./sdk": "./src/sdk.ts"
+  },
+  "types": "./src/index.ts",
+  "license": "AGPL-3.0-only"
+}

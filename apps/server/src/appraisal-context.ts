@@ -1,6 +1,9 @@
+import { memorySourceProof } from './memory-repository.js';
 import { entityGet } from '@open-legend/domain';
 import {
   activeAppraisals,
+  canonicalJson,
+  experienceEntryKey,
   scopedAppraisals,
   renderNarration,
   subjectNarration,
@@ -20,12 +23,19 @@ import type { WorldService } from './world-service.js';
 import type { DecisionAppraisalProposal, AppraisalProposal } from './cognition-contracts.js';
 import { decisionAppraisalSchema } from './cognition-contracts.js';
 import { z } from 'zod';
+import {
+  experienceForModel,
+  experienceModelBindings,
+  type SharedModelExperience,
+} from './perceived-context.js';
 
 interface AppraisalPreparation {
   requiredFeelings?: readonly AppraisalScope[];
   completeSources?: boolean;
   /** Only a closed supplied strategy may restrict its possible writes this way. */
   guard?: 'all' | 'required';
+  /** The caller includes the exact complete character.experience array. */
+  sharedExperiences?: ReadonlyMap<string, SharedModelExperience>;
 }
 
 /** Feelings are the actor's interpretation, not knowledge of somebody else's mind.
@@ -125,6 +135,7 @@ async function bindAppraisals(
             : 'remembered',
         actorId,
         sourceId: entry.memory.id,
+        sourceKind: entry.entry.source,
         sourceVersion: entry.revision,
         occurrenceId: entry.memory.eventId ?? entry.memory.id,
         coverage: entry.memory.source,
@@ -166,12 +177,7 @@ async function bindAppraisals(
       .filter(permitted)
       .map((definition, index) => [`policy${index + 1}`, definition]),
   );
-  const proof = selected.map((entry) => ({
-    id: entry.memory.id,
-    sourceKind: entry.sourceKind,
-    revision: entry.revision,
-    ...(entry.receipt ? { receipt: entry.receipt } : {}),
-  }));
+  const proof = selected.map(memorySourceProof);
   const sourceCurrent = async () =>
     generation === service.generation &&
     worldId === service.world.id &&
@@ -183,7 +189,13 @@ async function bindAppraisals(
     (!scope || !repository || (await repository.current(scope, proof)));
   const feelingsCurrent = () => {
     if (appraisalState === service.world.appraisals?.[actorId]) return true;
-    if (!requiredRevisions) return false;
+    // An unrelated publication may copy the same records. Exact contents, not
+    // allocation identity, determine whether this person's interpretation changed.
+    if (!requiredRevisions)
+      return (
+        canonicalJson(appraisalState ?? {}) ===
+        canonicalJson(service.world.appraisals?.[actorId] ?? {})
+      );
     // New bodily discomfort is not a changed interpretation of fear or anger.
     // Preserve actual subscribed revisions, including absence and native decay;
     // the native writer still validates every exact proposed operation.
@@ -195,7 +207,9 @@ async function bindAppraisals(
   };
   const sourcesCurrent = async () =>
     feelingsCurrent() &&
-    installed === service.world.moduleManifest.appraisals &&
+    (installed === service.world.moduleManifest.appraisals ||
+      canonicalJson(installed ?? null) ===
+        canonicalJson(service.world.moduleManifest.appraisals ?? null)) &&
     (await sourceCurrent());
   if (!(await sourcesCurrent()))
     throw new Error('Appraisal sources changed during context preparation.');
@@ -240,6 +254,12 @@ async function bindAppraisals(
         : variants[0];
     },
     context: {
+      ...(preparation.sharedExperiences?.size
+        ? {
+            sourceReferences:
+              'An experience.reference names the exact complete record at character.experience[index] in this same request. Read that record for the cause; each cause handle keeps its own native binding.',
+          }
+        : {}),
       feelings: [...records].map(([handle, record]) => ({
         handle,
         revision: record.revision,
@@ -259,12 +279,26 @@ async function bindAppraisals(
         value: definition.value,
         lifetime: definition.lifetime.kind,
       })),
-      sources: [...sources].map(([handle, source]) => ({
-        handle,
-        evidence: source.sourceId,
-        coverage: source.coverage,
-        subjects: source.subjectIds.flatMap((id) => (subjectRef(id) ? [subjectRef(id)] : [])),
-      })),
+      sources: [...sources].map(([handle, source], index) => {
+        const entry = selected[index]!,
+          experience = experienceForModel(
+            entry.entry,
+            experienceModelBindings(world, actorId, entry.entry, handle),
+          ),
+          shared = preparation.sharedExperiences?.get(experienceEntryKey(entry.entry));
+        // Exact private identity and revision are necessary but not enough: a
+        // changed observer projection must retain its own complete wording.
+        const same =
+          shared?.revision === entry.revision &&
+          canonicalJson({ ...shared.experience, handle: null }) ===
+            canonicalJson({ ...experience, handle: null });
+        return {
+          handle,
+          experience: same ? { reference: `character.experience[${shared.index}]` } : experience,
+          coverage: source.coverage,
+          subjects: source.subjectIds.flatMap((id) => (subjectRef(id) ? [subjectRef(id)] : [])),
+        };
+      }),
     },
     resolve(proposals: AppraisalProposal[]): AppraisalChange[] {
       const changes: AppraisalChange[] = proposals.map((proposal) => {

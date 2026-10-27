@@ -6,11 +6,18 @@ This page owns the bundled world's current social rules and their visible limits
 
 **Selected first-playable extension — design complete, runtime open:** [people and cooperation](first-playable-people.md), its [feature specification](../../projects/first-playable-cooperation-feature-spec.md), [technical design](../../projects/first-playable-cooperation-tech-design.md) and [CP01–CP10](../../maintainers/first-playable-cooperation.md) add four differentiated existing people, finite voluntary guide/help/hunt purposes, ordinary sharing of actual yields, a revocable mutual alliance and finite ceasefire. Existing gifts, barter, outings, goals, custody and physical actions remain their semantic owners. Acceptance grants neither obedience nor belongings/building rights; useful work, permission, changed minds and personally learned consequences remain real operations. [RW](../../maintainers/first-playable-roaming.md) supplies independent human trips and actual camp discovery, while [SV](../../maintainers/first-playable-survival.md) and [SH07–SH12](../../maintainers/editable-shelters.md#sh07--natural-material-roles-and-selected-world-definitions) supply practical work opportunities. The current delivered scopes below remain distinct from these targets.
 
-The [bundled social setup](../../../packages/domain/src/worlds/base/social.ts) supplies missing defaults: conversations end after 1,800 inactive world seconds, and the importance threshold for retaining events with no recorded witnesses is 8. Compatible saved worlds keep both authored values on restart. An explicitly supplied `CONVERSATION_INACTIVITY_SECONDS` operator setting overrides only the conversation timeout; absence preserves the authored timeout and unrelated settings. Conversation expiry and event recording read the same selected settings, preserving the existing rule that retains an unwitnessed event when its importance reaches that threshold.
+The [bundled social setup](../../../packages/domain/src/worlds/base/social.ts)
+sets the importance threshold for retaining unwitnessed events to 8. Current-format
+validation requires that finite threshold; it has no additional upper/lower bound.
+Ordinary speech has no social enrollment, group expiry or conversation-specific
+disconnect grace. The [speech lifecycle](../../narration-and-conversations.md#6-durable-conversation-lifecycle)
+retains personally heard evidence, source-owned choices and independent agreements.
 
-The current separate gift/barter/outing offer lifetime is also 1,800 game seconds. The selected first-playable profile changes **pending social offers** to one shared 7,200-game-second lifetime, giving two real minutes at the unchanged normal clock for reading, model response and assent. [CPL02](../../limits/first-playable-cooperation.md#cpl02--pending-offers-and-finite-deadlines) owns the rationale and unmeasured tuning; CP02 owns integration across participating families. **This is not a change to the conversation inactivity timeout or event-retention threshold above.** Offer expiry remains distinct from a deliberate refusal, and neither pause nor acceptance is inferred from silence.
-
-Current-format validation requires a finite, nonnegative inactivity duration and a finite event-retention threshold. Zero inactivity remains usable, and the threshold has no additional upper or lower bound. Missing fields use the selected world's defaults; malformed supplied values are refused. This corrects startup ownership, including behavior that predates fresh-opening extraction. [Requested-review evidence](../../verification/world-engine-boundaries.md#requested-full-review--october-14-2026) records actual conversation expiry, unwitnessed-event retention and saved-setting checks.
+The current gift/barter/outing offer lifetime remains 1,800 game seconds. The
+selected first-playable profile changes **pending social offers** to a shared
+7,200-game-second lifetime under CP02. [CPL02](../../limits/first-playable-cooperation.md#cpl02--pending-offers-and-finite-deadlines)
+owns the rationale and unmeasured tuning. Offer expiry is distinct from refusal;
+silence grants neither acceptance nor permission.
 
 ## Understanding another person
 
@@ -42,7 +49,7 @@ The mind panel displays permitted current feelings. God authoring exposes qualit
 
 This combat extension leaves long-term relationship dynamics for later design. Existing directional understanding, permitted memories, promises and voluntarily accepted help retain their owners. A recent hostile occurrence, the Command shortcut's grace, a feeling's decay or a chosen decision to stop chasing does not automatically create friendship, revenge, forgiveness, surrender, consent or a reciprocal relationship change. Current social rules are preserved until an explicitly selected consumer changes them; a speech option cannot silently create an agreement or perform its listener's response.
 
-The [general emotion design](../../projects/emotional-physiology-feature-spec.md) and [EP tracker](../../maintainers/emotional-physiology.md) add bodily reactions and independent reassessment as unimplemented targets. Existing experience-linked and authored grief retain distinct permissions. Joy, grief and useful activity can coexist without forced relief, trust or relationship change. [Psychological reactions](psychological-reactions.md) owns the selected profiles; SA-D01 retains the player-interpretation choice.
+The [general emotion design](../../projects/emotional-physiology-feature-spec.md) and [EP tracker](../../maintainers/emotional-physiology.md) add bodily reactions and independent reassessment as unimplemented targets. Existing experience-linked and authored grief retain distinct permissions; the selected directly controlled profile adds a separately granted native source-linked loss/reunion rule, without expanding ordinary decision or authored-grief permission. Joy, grief and useful activity can coexist without forced relief, trust or relationship change. [Psychological reactions](psychological-reactions.md) owns the selected profiles; the selected [SA-D01](../../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) target uses authored native player interpretation, with exact profile rules and qualification owned by emotional physiology.
 
 ## Proposed psychological needs and lived motives
 
@@ -87,7 +94,7 @@ Direct deposit into another person's carried inventory is refused ([items](items
 
 ## Delivery and evidence
 
-Current surfaces are summarized in [gameplay availability](../../../archive/05-project/implementation-status.md#gameplay-availability). The creator family editor and owner-only read-only Promises list are delivered within their recorded scopes. Promise amendment/cancellation controls and general feeling-process authoring remain future work; this review does not implement or qualify them. Existing [runtime evidence](../../verification.md) remains scoped to the journeys actually recorded; the reciprocal-barter and missing-belonging reports above qualify only their selected native, database, client and controlled live journeys.
+Current surfaces are summarized in [gameplay availability](../../features/README.md). The creator family editor and owner-only read-only Promises list are delivered within their recorded scopes. Promise amendment/cancellation controls and general feeling-process authoring remain future work; this review does not implement or qualify them. Existing [runtime evidence](../../verification.md) remains scoped to the journeys actually recorded; the reciprocal-barter and missing-belonging reports above qualify only their selected native, database, client and controlled live journeys.
 
 ## Maintained records
 

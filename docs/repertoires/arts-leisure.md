@@ -6,7 +6,7 @@
 
 **Proposal catalogue · September 28, 2026.** Pleasure need not justify itself through productivity. Making and enjoying art, food, games, fashion, music and shared occasions gives places a life of their own. People can savor a quiet garden, dance all night, fall in love, compete, perform or provoke an audience. Taste, mastery, intimacy, ambition and humor give these activities different meanings. See [world tone and scope](design-foundation.md#world-tone-and-scope) when selecting an experience.
 
-[The neighborhood sound](#the-neighborhood-sound) · [A garden for looking at](#a-garden-for-looking-at) · [The play about last winter](#the-play-about-last-winter) · [A game made from a constraint](#a-game-made-from-a-constraint) · [Cooking for a particular person](#cooking-for-a-particular-person) · [The amateur observatory](#the-amateur-observatory) · [Fashion with a social itinerary](#fashion-with-a-social-itinerary) · [The collecting club that lends](#the-collecting-club-that-lends) · [A holiday after completion](#a-holiday-after-completion) · [Make a place for mischief](#make-a-place-for-mischief)
+[The play about last winter](#the-play-about-last-winter) · [The amateur observatory](#the-amateur-observatory) · [A game made from a constraint](#a-game-made-from-a-constraint) · [Make a place for mischief](#make-a-place-for-mischief) · [A holiday after completion](#a-holiday-after-completion) · [The neighborhood sound](#the-neighborhood-sound) · [Cooking for a particular person](#cooking-for-a-particular-person) · [A garden for looking at](#a-garden-for-looking-at) · [Fashion with a social itinerary](#fashion-with-a-social-itinerary) · [The collecting club that lends](#the-collecting-club-that-lends)
 
 ## Coverage to develop
 
@@ -23,6 +23,54 @@ These domains broaden the catalogue base. The ten patterns below remain useful e
 | Patronage, satire and public taste    | Make a reputation, criticize authority, transgress a taboo or trade independence for support. | A patron funds a new production and helps an unknown artist find an audience, or demands a censored ending. Satire, rebellious rock, blasphemous art and horror can amuse, move or scandalize people; reception need not be unanimous. | ALL         | [W21](source-atlas.md#w21), [W22](source-atlas.md#w22)     |
 | Holidays, friendship and mischief     | Mark an achievement, make memories or play a clever joke.                                     | Celebrate a successful expedition with music and a feast; a fountain prank becomes a local story whose target can answer back.                                                                                                         | ALL         | [G124](source-atlas.md#g124), [W25](source-atlas.md#w25)   |
 
+## The play about last winter
+
+**ALL · Play · Moderate/Extend.** Gap: authored scenes, voluntary casting and selected historical callbacks.
+
+Residents want a successful premiere of their comic version of a recent power failure. A larger engagement could follow, and two capable performers want the mayor's part for different reasons: one loves the ridiculous speeches, the other wants the attention. A promised role, pointed casting choice or credit taken for another's scene can create actual disappointment without making the whole production fraudulent.
+
+Players can write, act, build a supported set, choose a cast, find an audience or watch. A funny performance, real payment and a new invitation can be legitimate successes; a rejected bid or offended spectator can remain a particular loss. Shared history becomes reinterpretation and laughter, not a new authoritative record of events. Distinguish stage action from actual injury. Satire and a broken promise may delight some spectators and genuinely offend others without requiring a public reconciliation afterward.
+
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Garry's Mod](source-atlas.md#g35), [Macondo](source-atlas.md#w24).
+
+## The amateur observatory
+
+**ALL · Play · Moderate/Extend.** Gap: observable cycles, shared notes and optional instruments.
+
+A club charts moons, migrating lights or city birds from a rooftop. In a selected opening, an unfamiliar returning light is beautiful to watch and might mark a seasonal route worth investigating. A proud amateur wants credit for noticing it; a skeptical friend wants a reliable observation before committing to an outing. Better instruments can reveal a useful pattern or simply a more astonishing view, rather than only filling a collection grid.
+
+Players can observe, compare shared notes, build or borrow a supported instrument, invite a rival or enjoy the evening. A sound discovery can earn recognition and suggest an expedition; an unconfirmed theory remains a reason to look again, not knowledge granted by enthusiasm. Keep phenomena repeatable and accessible so missing a rare real-time window does not permanently block discovery or require leaving the game running overnight.
+
+Seeds and references: [Outer Wilds](source-atlas.md#g34), [Star Trek](source-atlas.md#w04), [The Culture](source-atlas.md#w17).
+
+## A game made from a constraint
+
+**ALL · Play · Moderate/Extend.** Gap: supported scoring, boundaries and participant consent.
+
+Children invent a game where a lantern must reach the square without touching the ground. Builders add ramps, carriers or team roles using ordinary objects; rival teams want the cleverest successful crossing and the honor of carrying the lantern into the evening procession. The rules are what was announced, and a surprising legal method can earn a real victory. Boasting, nerves and a sore loser supply friction without requiring a rigged result.
+
+Players can inspect the route, prepare a method, practice, join or watch. Simple rules produce expressive play. Make scoring inspectable and optional, with resettable props; avoid requiring a general scripting language or treating every improvisation as cheating against a hidden rulebook. A lost match may remain a good afternoon, and a winning one need not immediately demand a harder contest.
+
+Seeds and references: [Garry's Mod](source-atlas.md#g35), [Balatro](source-atlas.md#g42), [Slay the Spire](source-atlas.md#g43).
+
+## Make a place for mischief
+
+**ALL · Play · Moderate/Extend.** Gap: bounded pranks, reversible props and social interpretation.
+
+Friends rig a fountain to play a tune when the mayor sits nearby, then decide whether to reveal the trick. Clever harmless mischief offers comedy beyond combat. Establish the playful tone and make the prank’s actual effects legible. The mayor may laugh, retaliate socially or demand restitution; the target retains agency. A harmless fountain trick should not secretly execute destructive effects, while a deliberately cruel prank belongs to a different, consequential choice.
+
+Personal comedy needs the relevant shared occasion, understood signal, perceived audience and known available props. Those details can matter more than a long catalogue of performance verbs. Different participants may understand different parts of the trick; the mayor's private reaction is not information the pranksters receive automatically. For a changed scene, vary who is present, what each person witnessed or an expressed boundary, and allow a different joke, an explanation, silence or abandoning the prank. Preserve the actual surprise and reception instead of awarding enjoyment because an action was labeled playful.
+
+Seeds and references: [Garry's Mod](source-atlas.md#g35), [Lethal Company](source-atlas.md#g38), [Discworld](source-atlas.md#w12).
+
+## A holiday after completion
+
+**ALL · Play · Small/Compose.** Gap: authored celebration and optional invitations.
+
+When a long bridge repair finishes, residents take a day off to cross it for pleasure. A race, picnic or quiet walk marks the change. The world acknowledges accomplishment without immediately replacing the project with a larger emergency. Let players choose how to celebrate and allow contentment to last; completion itself can be a satisfying session ending.
+
+Seeds and references: [Hades I](source-atlas.md#g22), [Stardew Valley](source-atlas.md#g30), [Final Fantasy XIV](source-atlas.md#g91).
+
 ## The neighborhood sound
 
 **ALL · Play · Small/Compose.** Gap: authored performances and ambient presentation.
@@ -30,30 +78,6 @@ These domains broaden the catalogue base. The ten patterns below remain useful e
 A district develops a sound from workshop rhythms, river bells and a small evening band. Players can join, build instruments or simply choose a favorite listening spot. Repeated music becomes familiarity rather than content exhaustion. Avoid making every performance a buff station; some residents may prefer quiet, and alternate arrangements can preserve both pleasures.
 
 Seeds and references: [Hades I](source-atlas.md#g22), [Final Fantasy XV](source-atlas.md#g92), [Discworld](source-atlas.md#w12).
-
-## A garden for looking at
-
-**ALL · Play · Small/Compose.** Gap: authored decoration and growth presentation; ecology optional.
-
-A player plants a garden for color, scent, shade and memories instead of maximum crop yield. Visitors might suggest a bench or bring a cutting without scoring the design. Builders get a legitimate nonindustrial goal. Offer forgiving upkeep and dormant beauty; a peaceful garden should not demand daily attendance or become worthless when it produces no sellable goods.
-
-Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30).
-
-## The play about last winter
-
-**ALL · Play · Moderate/Extend.** Gap: authored scenes, voluntary casting and selected historical callbacks.
-
-Residents stage a comic version of a recent power failure, disagreeing about who gets to play the mayor. Players write, act, build sets or watch. Shared history becomes reinterpretation and laughter. Performance is not a new authoritative record of events. Distinguish stage action from actual injury, while allowing satire, a pointed casting choice or a broken promise to delight some spectators and genuinely offend others.
-
-Seeds and references: [Wildermyth](source-atlas.md#g25), [Garry's Mod](source-atlas.md#g35), [Macondo](source-atlas.md#w24).
-
-## A game made from a constraint
-
-**ALL · Play · Moderate/Extend.** Gap: supported scoring, boundaries and participant consent.
-
-Children invent a game where a lantern must reach the square without touching the ground. Builders add ramps, carriers or team roles using ordinary objects. Simple rules produce expressive play. Make scoring inspectable and optional, with resettable props; avoid requiring a general scripting language or treating every improvisation as cheating against a hidden rulebook.
-
-Seeds and references: [Garry's Mod](source-atlas.md#g35), [Balatro](source-atlas.md#g42), [Slay the Spire](source-atlas.md#g43).
 
 ## Cooking for a particular person
 
@@ -63,13 +87,13 @@ A traveler misses a home dish whose key herb does not grow locally. Friends can 
 
 Seeds and references: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Final Fantasy XV](source-atlas.md#g92).
 
-## The amateur observatory
+## A garden for looking at
 
-**ALL · Play · Moderate/Extend.** Gap: observable cycles, shared notes and optional instruments.
+**ALL · Play · Small/Compose.** Gap: authored decoration and growth presentation; ecology optional.
 
-A club charts moons, migrating lights or city birds from a rooftop. Better instruments reveal new questions rather than simply filling a collection grid. Players can contribute observations at their own pace. Keep phenomena repeatable and accessible; missing a rare real-time window should not permanently block discovery or require leaving the game running overnight.
+A player plants a garden for color, scent, shade and memories instead of maximum crop yield. Visitors might suggest a bench or bring a cutting without scoring the design. Builders get a legitimate nonindustrial goal. Offer forgiving upkeep and dormant beauty; a peaceful garden should not demand daily attendance or become worthless when it produces no sellable goods.
 
-Seeds and references: [Outer Wilds](source-atlas.md#g34), [Star Trek](source-atlas.md#w04), [The Culture](source-atlas.md#w17).
+Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30).
 
 ## Fashion with a social itinerary
 
@@ -86,22 +110,6 @@ Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The
 Collectors of maps, unusual cups or seeds curate rotating exhibits and lend duplicates to beginners. A complete collection is optional; a good story about one object can be enough. Players create community around taste. Let loans and replicas satisfy ordinary display goals while originals retain meaningful provenance. A rare object can also provoke a purchase, expedition, rivalry or deliberate theft in a different story; completion need not force every collector into crime or daily chores.
 
 Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Old School RuneScape](source-atlas.md#g49), [Persona 5 Royal](source-atlas.md#g124).
-
-## A holiday after completion
-
-**ALL · Play · Small/Compose.** Gap: authored celebration and optional invitations.
-
-When a long bridge repair finishes, residents take a day off to cross it for pleasure. A race, picnic or quiet walk marks the change. The world acknowledges accomplishment without immediately replacing the project with a larger emergency. Let players choose how to celebrate and allow contentment to last; completion itself can be a satisfying session ending.
-
-Seeds and references: [Hades I](source-atlas.md#g22), [Stardew Valley](source-atlas.md#g30), [Final Fantasy XIV](source-atlas.md#g91).
-
-## Make a place for mischief
-
-**ALL · Play · Moderate/Extend.** Gap: bounded pranks, reversible props and social interpretation.
-
-Friends rig a fountain to play a tune when the mayor sits nearby, then decide whether to reveal the trick. Clever harmless mischief offers comedy beyond combat. Establish the playful tone and make the prank’s actual effects legible. The mayor may laugh, retaliate socially or demand restitution; the target retains agency. A harmless fountain trick should not secretly execute destructive effects, while a deliberately cruel prank belongs to a different, consequential choice.
-
-Seeds and references: [Garry's Mod](source-atlas.md#g35), [Lethal Company](source-atlas.md#g38), [Discworld](source-atlas.md#w12).
 
 ## Specific inventory
 
@@ -564,8 +572,12 @@ Arts is not a mandatory simulation gate before the first adventure, so no comple
 
 Archery and wrestling contests, readable races, chess, cards, puzzles, a murder-supper game (ARL275), a return-scoring caravan board game (ARL278) and the asymmetric escape match (ARL279) are Complete. Their Define labels describe how rules are supplied, not low importance. A staged monster is not a substitute for an actual opponent; the captive arena (ARL205) is an actual rescue or escape premise and requires the relevant combat and custody mechanics.
 
-The champion's victory lap (ARL257), a trophy worth displaying (ARL253), a homecoming without compulsory speeches (ARL131), a victory feast before all repairs are finished (ARL284) and a genuinely final farewell tour (ARL193) preserve enjoyable outcomes. Rewards need not turn immediately into a harder obligation. ARL270 lets a fictional monster remain cruel and be defeated; it does not require a hidden redemption system. A garden chosen for beauty rather than profit (ARL254) remains a legitimate substantial creative activity.
+The champion's victory lap (ARL257), a trophy worth displaying (ARL253), a homecoming without compulsory speeches (ARL131), a victory feast before all repairs are finished (ARL284) and a genuinely final farewell tour (ARL193) preserve enjoyable outcomes. Rewards need not turn immediately into a harder obligation. For a substantial fair contest, combine ARL097/117 with the [open championship](abilities-progression.md#the-open-championship): mastery can earn a prize, teaching or a coveted expedition place. ARL270 lets a fictional monster remain cruel and be defeated; it does not require a hidden redemption system. A garden chosen for beauty rather than profit (ARL254) remains a legitimate substantial creative activity.
+
+ARL047's tall tales and ARL051's rival tellings can inspire bard performances about a new journey or the founding bell, using the [existing narrative owner](../narrative/authored-worlds-and-personal-discovery.md). An openly fictional escape stays fiction; adapting a performance to actual history requires an attributed source and preserves what the teller witnessed, heard or invented. A compelling song may spread a claim without proving it or rewriting the underlying event.
 
 Repair-based monuments and clothing (ARL044/137), potluck attribution (ARL062), detailed seating and texture refinements (ARL070/071), repair-cup curation (ARL154), contribution-credit administration (ARL188) and a portrait's lighting complaints (ARL226) are Detail as their full additions. They can be Small or Moderate. Ordinary pleasant surroundings and basic display controls do not require those systems, and art should not become another reason to prioritize maintenance.
 
-Nuanced artistic interpretation and bounded magical performances follow as Depth. Separate industrial venues, highly specialized sensory constitutions, copied performers and pocket-universe concerts are Specialist for this game. Ordinary romance, friendship, adult humor and peaceful company are not automatically Specialist; a focused erotic venue is a different selected experience. All actual participants retain privacy, valid consent, working exits and the ability to stop. Fair declared game rules and honest outcomes remain mandatory whenever a game is selected.
+Nuanced artistic interpretation and bounded magical performances follow as Depth. Separate industrial venues, highly specialized sensory constitutions, copied performers and pocket-universe concerts are Specialist for this game. Ordinary romance, friendship, adult humor and peaceful company are not automatically Specialist; a focused erotic venue is a different selected experience. Voluntary activities and adult intimacy preserve valid consent and the stated participation boundaries. Coercive fictional events may contain unwilling participants through the selected world's combat, custody and social rules; narration must not relabel coercion as consent. Real players retain the applicable controls and privacy protections under the [adult-content and companion policy](../agent-content-and-companion-safety.md).
+
+The simulation must preserve the actual rules, actions and outcome. A fictional host or opponent may lie, cheat or rig play where the selected scenario supports it; distinguish advertised rules from what actually happened. ARL116 supplies a rigged game; ARL205 a captive arena; ARL201 a real execution presented as spectacle. Their consequences remain real. Fair championships, enjoyable performances and ordinary feasts need no concealed corruption.

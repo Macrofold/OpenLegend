@@ -1,4 +1,6 @@
 import { namePhrase } from '@open-legend/language';
+import { memoryForModel } from './experience-context.js';
+import { experienceReading, type ExperienceEntry } from '@open-legend/domain';
 import {
   currentBodyObservation,
   currentObservedFacets,
@@ -15,6 +17,52 @@ import {
 } from '@open-legend/domain';
 import { entityHandle } from './entity-references.js';
 import type { AttentionCandidate } from './recall.js';
+import { digest } from './content-digest.js';
+
+/** One complete selected personal source, projected through the shared evidence owner.
+ * The exact native key and revision remain in the request's server binding. */
+export interface ExperienceModelBindings {
+  source: string;
+  owner: string;
+  value: ReturnType<typeof memoryForModel>;
+}
+export interface SharedModelExperience {
+  index: number;
+  revision: string;
+  experience: ReturnType<typeof experienceForModel>;
+}
+export function experienceModelBindings(
+  world: WorldState,
+  ownerId: string,
+  entry: ExperienceEntry,
+  source: string,
+): ExperienceModelBindings {
+  return {
+    source,
+    owner: entityHandle(world, ownerId, ownerId),
+    value: memoryForModel(world, ownerId, experienceReading(entry, ownerId)),
+  };
+}
+export function experienceForModel(entry: ExperienceEntry, bindings: ExperienceModelBindings) {
+  return {
+    source: entry.source,
+    handle: bindings.source,
+    owner: bindings.owner,
+    timeUnit: 'game seconds',
+    value: bindings.value,
+  };
+}
+/** Retrieval ranks source-stable personal wording. Current body grants, later names
+ * and the observer's current pose must never change an unchanged source's index. */
+export function experienceEmbeddingText(entry: ExperienceEntry, ownerId: string): string {
+  const reading = experienceReading(entry, ownerId);
+  return JSON.stringify({
+    kind: reading.kind,
+    source: reading.source,
+    eventType: reading.eventType,
+    text: reading.summary,
+  });
+}
 
 /** One owned frame per decision, shared by presentation and fixed-point movement.
  * Native evidence keeps its original world coordinates and acquisition frame. */
@@ -243,7 +291,7 @@ export function relativeLocation(
 export { describePossession as possessionText } from '@open-legend/domain';
 
 /** The same category names reach attention and the final actor context; metadata stays server-side. */
-export function contextSections(candidates: AttentionCandidate[]): Record<string, string[]> {
+export function contextSections(candidates: AttentionCandidate[]): Record<string, unknown[]> {
   const names: Record<AttentionCandidate['kind'], string> = {
     conversation: 'conversation',
     memory: 'recall',
@@ -252,7 +300,10 @@ export function contextSections(candidates: AttentionCandidate[]): Record<string
     knowledge: 'knowledge',
     action: 'actions',
   };
-  const sections: Record<string, string[]> = {};
-  for (const candidate of candidates) (sections[names[candidate.kind]] ??= []).push(candidate.text);
+  const sections: Record<string, unknown[]> = {};
+  for (const candidate of candidates) {
+    (sections[names[candidate.kind]] ??= []).push(candidate.text);
+    if (candidate.experience) (sections['experience'] ??= []).push(...candidate.experience);
+  }
   return sections;
 }

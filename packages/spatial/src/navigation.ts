@@ -2,6 +2,7 @@ import {
   canStand,
   canWalkSegment,
   distance3D,
+  finitePoint,
   surfaceById,
   surfaceContains,
   surfaceHeight,
@@ -10,11 +11,71 @@ import {
 import {
   SPATIAL_LIMITS,
   type BodyProfile,
+  type Bounds3,
   type RoutePlan,
   type SpatialMap,
   type SurfacePoint,
   type WalkableSurface,
+  type WorldPoint,
 } from './types.js';
+
+/** The caller expands these foot-anchor bounds for its actual body/clearance.
+ * This is a route goal, not a claim that the surrounding region is traversable. */
+export function outsideNavigationBounds(point: WorldPoint, bounds: Bounds3): boolean {
+  return (['x', 'y', 'z'] as const).some(
+    (axis) => point[axis] < bounds.min[axis] || point[axis] > bounds.max[axis],
+  );
+}
+export function validOutsideNavigationBounds(bounds: Bounds3): boolean {
+  return (
+    !!bounds &&
+    finitePoint(bounds.min) &&
+    finitePoint(bounds.max) &&
+    (['x', 'y', 'z'] as const).every((axis) => bounds.min[axis] <= bounds.max[axis])
+  );
+}
+/** Preparation remains with the existing host planner. No guessed perimeter
+ * destinations can turn an unfinished search into a proof of no exit. */
+export function findOutsideSurfaceRoute(
+  map: SpatialMap,
+  from: SurfacePoint,
+  bounds: Bounds3,
+  body: BodyProfile,
+): RoutePlan {
+  if (!validOutsideNavigationBounds(bounds) || !canStand(map, from, body))
+    return { status: 'invalid-endpoint', path: [], expanded: 0 };
+  if (outsideNavigationBounds(from, bounds))
+    return { status: 'reached', path: [], length: 0, expanded: 0 };
+  // A fully checked straight exit is already a complete positive proof. Failed
+  // guesses never establish absence: the ordinary worker still searches the
+  // whole reachable exterior when none of these cheap routes succeeds.
+  const surface = surfaceById(map, from.surfaceId);
+  if (surface) {
+    for (const point of [
+      { x: bounds.min.x - SPATIAL_LIMITS.epsilon, z: from.z },
+      { x: bounds.max.x + SPATIAL_LIMITS.epsilon, z: from.z },
+      { x: from.x, z: bounds.min.z - SPATIAL_LIMITS.epsilon },
+      { x: from.x, z: bounds.max.z + SPATIAL_LIMITS.epsilon },
+    ]) {
+      const to = { ...point, y: surfaceHeight(surface, point.x, point.z), surfaceId: surface.id };
+      if (!outsideNavigationBounds(to, bounds)) continue;
+      const direct = findSurfaceRoute(map, from, to, body);
+      if (direct.status === 'reached') return direct;
+    }
+  }
+  return {
+    status: 'pending',
+    path: [],
+    expanded: 0,
+    request: {
+      from: { ...from },
+      destinations: [],
+      outsideBounds: { min: { ...bounds.min }, max: { ...bounds.max } },
+      body: { ...body },
+      geometryRevision: map.spatial.revision,
+    },
+  };
+}
 
 /** A short straight walk follows support through coincident patch edges. Every segment and
  * support change uses ordinary body admission; it cannot jump a gap or choose another floor.

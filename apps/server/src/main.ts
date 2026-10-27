@@ -17,7 +17,11 @@ game.server.on('error', (error) => {
   void game.close().finally(() => capture?.stop());
 });
 game.server.listen(config.port, config.host, () => {
-  console.log(`Open Legend · http://${config.host}:${config.port}`);
+  const gameOrigin =
+    config.authentication.mode === 'oidc'
+      ? config.authentication.origin
+      : `http://${config.host === '::1' ? '[::1]' : config.host}:${config.port}`;
+  console.log(`Open Legend · ${gameOrigin}`);
   console.log('Persistence: PostgreSQL');
   console.log(`Performance profiling: ${config.profiling ? 'on' : 'off'}`);
   console.log(

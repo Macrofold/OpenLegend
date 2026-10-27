@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Build qualification, participant sessions and findings remain open in the delivery tracker. | 2026-10-17   |
+| In progress | Build qualification, participant sessions and findings remain open in the delivery tracker. | 2026-10-26   |
 
 **Design origin:** [DG03 / ND26](../maintainers/needs-design.md#dg03--a-useful-demo-and-early-audience-learning). **Work owner:** [FPV01–FPV09](../maintainers/first-playable-validation.md). The [world specification](../worlds/base/playable-openings.md#first-playable-game-target) owns the required game, [gameplay priorities](../repertoires/gameplay-priorities.md) owns selection, and this plan owns how to learn from a named build. Applicable authorization, [verification/spending rules](../../.agents/rules/verification.md) and service requirements govern execution.
 
@@ -16,7 +16,7 @@ Use early partial tests to resolve specific uncertainties while the complete exp
 
 Pin the actual implementation revision and use the [capability map](../maintainers/first-playable-validation.md#required-capability-and-owner-map). Reuse valid owner evidence; distinguish missing design, undelivered behavior, unqualified integration and missing player evidence.
 
-Record the selected activity, source requirements, available capabilities, remaining prerequisite tasks and decision the test will inform. Reuse the shared Main initializer. The equipped Main setup and isolated Solo ground may support labeled component checks but do not qualify empty-handed survival or the complete camp-and-conflict experience.
+Record the selected activity, source requirements, available capabilities, remaining prerequisite tasks and decision the test will inform. Reuse the shared Main initializer. Earlier supplied-kit evidence and the isolated Solo ground support labeled component checks; complete-world acceptance uses the selected empty-handed Main and its actual camp-and-conflict paths.
 
 **Output:** a named build, a worthwhile test question and explicit missing coverage under FPV01. A participant session must not rely on unfinished dependencies arriving during play.
 
@@ -62,7 +62,13 @@ Choose group size and session duration for the question and operator capacity. S
 
 Do not require every person to experience every outcome. Labeled scenario checks can establish uncommon branches; ordinary sessions establish their exposure and practical value. Record no-contact sessions honestly. Distinguish deliberate avoidance or changed circumstances from broken travel, unreadable danger or pacing that leaves the world uneventful. Improve world opportunities and behavior rather than secretly forcing a visit.
 
+Use the [Elden Ring synthesis](../../archive/02-research/game-inspiration/dossiers/elden-ring/05-design-synthesis-and-openlegend.md) and [Crimson Desert applications](../../archive/02-research/game-inspiration/dossiers/crimson-desert/05-openlegend-lessons.md#how-to-use-these-observations) to sharpen the existing [selection questions](../repertoires/gameplay-priorities.md#keep-play-worthwhile-as-players-learn-and-return) within the capabilities actually offered. Compare the experience a new player expected with the defining possibilities they could actually reach. After a setback, does the player recognize an alternative they want to try, including another activity or a later return? Where progression matters, follow a wanted improvement through to an item or learned method actually used while relevant. Did a favorite tool change the chosen approach, and could the player read its preparation, commitment and recovery? If an attractive second approach is already supported but untried, distinguish preference from material, equipment-handling or learning costs under the world's actual commitment and recovery rules. If help occurred, what meaningful decision or contribution remained theirs? Distinguish an intriguing unanswered question from uncertainty about what a command does, why an attempt failed or how to act next. On a voluntary repeat, ask what remains enjoyable once the surprise or method is known. These are observation hypotheses, not claims that the build offers every situation; absent opportunities remain missing coverage. Let choices arise within the existing journeys rather than assigning a research checklist.
+
 Record both time spent and what happened during it. Long play can reflect enjoyment, confusion, waiting or compulsory chores. A requested QA revisit tests continuation; an optional return provides different evidence about interest.
+
+The [Enshrouded/Dragonwilds comparison](../../archive/02-research/game-inspiration/dossiers/enshrouded/05-comparison-with-dragonwilds.md#7-focused-openlegend-decisions-to-investigate) sharpens the same camp, cooperation and continuing-consequence journeys. Follow a player's chosen improvement through the complete acquisition, preparation, making and use cycle. Can they identify the next needed input from information they legitimately possess, make a useful partial or complete result, and explain what became possible? Where practice, equipment or invention helps, observe the benefit in the wanted activity instead of counting unlocks. Where someone contributes, follow actual use of the result and whether another participant can understand that contribution without receiving private or omniscient history.
+
+Observe a supported interruption or later return when relevant: can the person resume a wanted activity, or did compulsory recovery, upkeep or catch-up consume the opportunity? Record a satisfied stopping point as a possible success. These questions add detail to existing observations, not a fixed short-session duration, mandatory social outcome or new progression gate. Future payer-offline group play and world-rule variants belong to [the participation proposal](participants-and-world-travel-feature-spec.md); they are not presumed capabilities of the first-playable build.
 
 ## Step 5 — separate the questions being answered
 
@@ -73,6 +79,8 @@ Record both time spent and what happened during it. Long play can reflect enjoym
 | Broader demand               | Qualified actions after truthful material reaches additional relevant audiences               | A market merely from views, free signups or one friendly group |
 | Offer preference and payment | Understanding of realistic proposals; later authorized purchases or eligible renewals         | Sustainable sales from stated intent or patron donations       |
 | Delivery quality and cost    | Gameplay-affecting waits, useful/failed AI results, device problems, actual costs and support | An adequate service from a cheap call or prepared clip         |
+
+Reuse [CF05's ordinary-encounter evidence](../maintainers/parallel-batch-06-rivals-and-contested-ground.md#cf05--a-contested-ruin-and-a-victory-that-lasts) and [AV01's expedition/reward-use evidence](../maintainers/parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions) where applicable. Their existing completion and player gates still govern; these questions use ordinary session notes and do not change delivery status, establish enjoyment from a scripted demonstration or add a separate acceptance gate.
 
 Before observing results, state what evidence would justify the next commitment and what would call for rework. Retain numerator/denominator, recruitment source, build, session setup and timing. Small or selected groups can diagnose problems without estimating market demand. Measure [commercial offers](initial-commercial-offer-decision-brief.md) separately from whether the game itself is appealing.
 
@@ -95,3 +103,80 @@ Retest changed comprehension with fresh people where practical and continuing va
 [FPV](../maintainers/first-playable-validation.md) owns coordination and task status. Subsystem trackers and reports retain their detailed work/evidence. Record actual integrated/player findings in `docs/verification/first-playable-experience.md` when they exist and link it from [verification](../verification.md). Include exact revisions, setup, outcomes, costs and missing coverage; keep private raw material outside the repository.
 
 Full acceptance follows the [world's complete target](../worlds/base/playable-openings.md#full-experience-acceptance-and-scope), not whichever partial test ran first. Commercial adoption and public release retain their own owners.
+
+## Supervised session handoff for the complete Main
+
+**Prepared; participants unavailable.** The implementation branch is
+`codex/implement-complete-first-playable` in
+`/Users/mzw/.codex/worktrees/214c/OpenLegend`. Pin its final qualified commit and
+production build before a session. The [current delivery/evidence record](../verification/first-playable-world/2026/2026-10-24-residents-and-cooperation.md#complete-main-and-personal-agreement-integration)
+keeps remaining software, performance, independent-behavior and Ada acceptance
+gaps explicit. This packet schedules nothing, recruits nobody and grants no
+additional provider allowance.
+
+Use the ordinary `wilderness` preset and seed 73 through the normal production
+server and browser entry, on a fresh operator-owned disposable test database and
+save directory. The expected opening is 128 × 112 metres, day 1 08:00, full
+player needs and empty inventory, with cold wayside/southern hearths and the
+relocated Watchpost. Confirm these through ordinary entry and the current
+manifest; do not substitute a stocked feature fixture. Keep the chosen models,
+operator controls, effective simulation speed, active model allowances and
+remaining uncertain commitments in the session record. A zero-provider
+technical rehearsal does not qualify the intended character experience. Use
+only the existing authorized allowance; obtain any separately required funding
+before dispatching calls beyond it.
+
+Before participant use, complete the delivery gates that protect this specific
+session, including the ordinary controls, saving/recovery, private information,
+committed effects and a usable measured complete path. Retain contrary outcomes
+and the owner-preserved Ada counterattack gap. Explain that this is disposable
+development play and that progress may be replaced under the current save
+policy; promise no persistence service. The supervisor records the actual local
+browser URL and ordinary permitted entry, without exposing credentials or
+administrative controls. Start paused so setup and the initial explanation do
+not spend the participant's game time.
+
+The current operating envelope is not ready for that session. The retained
+resident continuation achieved about 5.135:1 with 60:1 requested; nine decisions
+expired while an uncertain execution occupied the former single background
+position. The owner has since expanded the allowance to 100, with each uncertain
+attempt retaining one position and its financial obligation under [DE-L02](../limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention).
+That historical blockage no longer establishes current saturation. Complete-path
+speed, independent conduct and actual human experience still need qualification;
+the allowance change alone does not establish participant readiness. The
+[current review](../verification/first-playable-world/2026/2026-10-24-construction-and-movement-review.md#current-barrier-navigation-and-resident-review--october-21)
+retains the earlier settings, costs, continuation and failures.
+
+Give this short brief, then let the participant choose:
+
+> You have arrived empty handed beside an old resting hearth. Find a way to live
+> here and make somewhere worth returning to. You can make useful things, meet
+> people, explore or keep to yourself. Other inhabitants make their own choices.
+> There is no required order or perfect camp. You may pause, ask for help or stop.
+
+Observe a 20–30 minute first session, or the participant's earlier chosen stop.
+Do not coach a recipe chain, name a preferred companion, assign a hunt or make
+God edits to rescue the outcome. Record every intervention separately. Capture
+what the player expected before a consequential action, what actually happened,
+time spent reading/waiting/travelling/making, mistaken assumptions, voluntary
+company/refusal, useful partial camps, independent encounters or quiet periods,
+and any loss/recovery. A moderator intervention preserves the run but cannot
+supply missing unassisted evidence.
+
+After play, ask what they were trying to achieve, which occurrence mattered,
+what they think the people knew or chose, what was confusing or tedious, and
+whether/why they would choose another visit. Offer a separate return session
+only with their actual agreement; do not infer retention from an expressed
+intention. Keep numerator/denominator and recruitment source when people are
+available. Record comprehension, effort/payoff, attraction and willingness to
+return separately from engineering correctness.
+
+The session record must name the commit/build, opening/database scope, adult
+participant count and recruitment source, actual duration and stopping reason,
+interventions, achieved game time, controls/command/render waits, provider
+preparation/queue/execution/admission/persistence times, retained memory and
+scoped/cumulative paid costs with uncertainty. Keep consent and identifying raw
+notes in authorized private storage; commit only the permitted anonymized
+findings to `docs/verification/first-playable-experience.md`. No participant has
+been recruited or observed in this assignment, and no comprehension, enjoyment
+or return-play acceptance is claimed.

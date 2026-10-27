@@ -1,5 +1,12 @@
 import type { NameArticle } from '@open-legend/language';
-import { observerDescription, recognizesSubject, currentBodyGrant } from '@open-legend/domain';
+import {
+  observerDescription,
+  recognizesSubject,
+  currentBodyGrant,
+  canonicalJson,
+} from '@open-legend/domain';
+import type { EncounterPreferenceBinding } from '@open-legend/domain';
+import type { CatalogueAction } from '@open-legend/protocol';
 import type {
   ActorResponse,
   ActivityRequestDescriptor,
@@ -12,6 +19,72 @@ import { createHmac, randomBytes } from 'node:crypto';
 // A life count has a small guessable range. A process-local key keeps the
 // presentation reference opaque; restart invalidation grants no authority.
 const bodyReferenceKey = randomBytes(32);
+/** Private life/recognition metadata never becomes wire fields. Restart invalidates
+ * previews; committed requests still recover through their original receipts. */
+export function encounterControlReference(
+  scope: string,
+  operation: 'speak' | 'stop',
+  binding: EncounterPreferenceBinding,
+): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(canonicalJson(['encounter-control', scope, operation, binding]))
+    .digest('hex');
+}
+export function primaryActionReference(
+  scope: string,
+  actor: Entity,
+  target: Entity,
+  binding: EncounterPreferenceBinding | undefined,
+  action: CatalogueAction,
+  bindingFacts: CatalogueAction['facts'],
+): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(
+      canonicalJson([
+        'primary-action',
+        scope,
+        actor.id,
+        actor.actor?.physicalLife ?? null,
+        target.id,
+        target.actor?.physicalLife ?? null,
+        target.actor?.alive ?? null,
+        target.actor?.incapacitated ?? null,
+        binding ?? null,
+        action.id,
+        action.label,
+        action.description,
+        bindingFacts ?? null,
+        action.intent,
+        action.enabled,
+        action.reason ?? null,
+      ]),
+    )
+    .digest('hex');
+}
+/** Constant-sized player-owned meaning only. No hidden target activity, location,
+ * inventory or meters invalidate the permitted hover preview. */
+export function contextActionRevision(
+  scope: string,
+  world: WorldState,
+  actor: Entity,
+  target: Entity,
+  binding: EncounterPreferenceBinding | undefined,
+): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(
+      canonicalJson([
+        'context-preview',
+        scope,
+        world.moduleManifest.revision,
+        actor.actor?.physicalLife ?? null,
+        target.actor?.physicalLife ?? null,
+        binding ?? null,
+        (actor.actor?.combatReadyAt ?? 0) > world.simTime,
+        actor.actor?.action?.ranged?.ready ?? null,
+      ]),
+    )
+    .digest('hex');
+}
 
 // These are display/binding tokens, not native source revisions. 144 keyed bits
 // keep them opaque while repeated exact evidence stays within existing context budgets.
@@ -111,6 +184,19 @@ export function entityReferenceMap(
       return [handle, id];
     }),
   );
+}
+
+/** Selected historical evidence can name a departed person or consumed item. These
+ * references bind that permitted identity only; they supply no current body facts. */
+export function experienceEntityReferences(
+  world: WorldState,
+  observerId: string,
+  ids: Iterable<string>,
+): Map<string, string> {
+  const references = new Map<string, string>();
+  for (const id of ids)
+    if (!references.has(id)) references.set(id, entityHandle(world, observerId, id));
+  return references;
 }
 
 export function resolveEntityMarkers(text: string, references: Record<string, string>): string {
@@ -274,9 +360,10 @@ export function awarenessBindsSubject(
 ): boolean {
   if (subjectId === observerId) return true;
   if (
-    aware.recognized &&
-    subjectId === aware.sourceId &&
-    recognizesSubject(world, observerId, subjectId)
+    recognizesSubject(world, observerId, subjectId) &&
+    (subjectId === aware.sourceId ||
+      subjectId === aware.targetId ||
+      aware.entityIds.includes(subjectId))
   )
     return true;
   const episode = aware.entityEpisodes?.[subjectId];

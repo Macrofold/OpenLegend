@@ -12,7 +12,7 @@ export const BASE_SPEAR_EQUIPMENT: EquipmentProfile = {
   uses: ['melee'],
 };
 export const BASE_GATHER_EQUIPMENT: EquipmentProfile = { ports: ['main-hand'], uses: ['gather'] };
-export const BASE_LAUNCHER_EQUIPMENT: EquipmentProfile = {
+export const BASE_RANGED_WEAPON_EQUIPMENT: EquipmentProfile = {
   ports: ['main-hand', 'off-hand'],
   uses: ['ranged'],
 };

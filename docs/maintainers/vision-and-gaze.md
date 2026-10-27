@@ -138,7 +138,7 @@ Implement through the existing spatial, action, observation, clock and view owne
 
 ## Integrated specialist dependencies
 
-The [technical integration contract](../projects/vision-and-gaze-tech-design.md#15-shared-contract-compatibility-decisions-and-handoff) fixes A’s exact source adapters and measured/acquired semantics, C’s posture/minimum locomotion caps, E’s voluntary work, F’s capture-only warning/preparedness use and G’s frozen measured projection. These are implementation dependencies, not pending shared technical choices. No consumer can substitute hidden live values for a sampled facet. SA-D01 remains the separate controlled-player psychological policy decision.
+The [technical integration contract](../projects/vision-and-gaze-tech-design.md#15-shared-contract-compatibility-decisions-and-handoff) fixes A’s exact source adapters and measured/acquired semantics, C’s posture/minimum locomotion caps, E’s voluntary work, F’s capture-only warning/preparedness use and G’s frozen measured projection. These are implementation dependencies, not pending shared technical choices. No consumer can substitute hidden live values for a sampled facet. The selected [SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) authored native controlled-player policy remains separate; emotional physiology owns its exact profile rules and qualification.
 
 ## Complete repertoire review coverage
 

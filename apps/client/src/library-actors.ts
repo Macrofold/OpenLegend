@@ -97,15 +97,18 @@ export class LibraryActors {
 }
 
 export class LibraryActor {
+  readonly ready: Promise<boolean>;
   state: 'loading' | 'ready' | 'failed' = 'loading';
   visible = false;
   get height(): number {
-    return this.source.height;
+    return this.bodyHeight ?? this.source.height;
   }
   get width(): number {
     return this.source.width;
   }
   private node?: pc.Entity;
+  private bodyHeight?: number;
+  private baseScale?: pc.Vec3;
   private meshes: pc.MeshInstance[] = [];
   private binding?: RevealBinding;
   private material?: pc.StandardMaterial;
@@ -125,17 +128,22 @@ export class LibraryActor {
     private readonly prepare: (source: pc.StandardMaterial) => pc.StandardMaterial,
     private readonly release: () => void,
   ) {
-    void loading
+    this.ready = loading
       .then((resource) => {
-        if (this.disposed) return;
+        if (this.disposed) return false;
         this.install(resource);
+        return true;
       })
       .catch((error: unknown) => {
-        if (this.disposed) return;
+        if (this.disposed) return false;
         this.clear();
         this.state = 'failed';
         console.warn('Library actor unavailable; keeping its sprite.', error);
+        return false;
       });
+  }
+  get presentationReady(): boolean {
+    return this.state === 'ready';
   }
   private install(resource: BundledModel): void {
     const node = (this.node = resource.instantiateRenderEntity({
@@ -143,6 +151,8 @@ export class LibraryActor {
       receiveShadows: true,
     }));
     this.parent.addChild(node);
+    this.baseScale = node.getLocalScale().clone();
+    this.applyBodyHeight();
     for (const component of node.findComponents('render')) {
       if (!(component instanceof pc.RenderComponent)) continue;
       for (const mesh of component.meshInstances) {
@@ -162,6 +172,19 @@ export class LibraryActor {
     // Loading never publishes appearance. The ordinary scene update admits the
     // current observed/pose/visibility state before replacing its sprite.
     this.setVisible(false);
+  }
+  setBodyHeight(height: number): void {
+    if (height === this.bodyHeight) return;
+    this.bodyHeight = height;
+    this.applyBodyHeight();
+  }
+  private applyBodyHeight(): void {
+    if (!this.node || !this.baseScale || this.bodyHeight === undefined) return;
+    this.node.setLocalScale(
+      this.baseScale.x,
+      (this.baseScale.y * this.bodyHeight) / this.source.height,
+      this.baseScale.z,
+    );
   }
   setVisible(visible: boolean): void {
     this.visible = visible && this.state === 'ready' && !this.disposed;

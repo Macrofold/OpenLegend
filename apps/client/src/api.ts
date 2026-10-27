@@ -1,3 +1,4 @@
+import { browserRequest } from './browser-network';
 import { pruneWorldRequests } from './retained-request';
 import type { AssetRevisionReference } from '@open-legend/assets';
 import type {
@@ -8,11 +9,20 @@ import type {
   WorldCreationHostStatus,
   WorldAgentWorkResult,
   WorldCreationOperationView,
+  WorldInputUpdate,
+  WorldInputResult,
 } from '@open-legend/protocol';
 
 import { clearTradeDrafts } from './trade-drafts';
 import { clearDraft } from './draft';
 import { announceLogout, tabClientId, tabIdentityReady } from './tab-session';
+
+async function prepareTabHeaders(): Promise<Record<string, string>> {
+  await tabIdentityReady;
+  // A duplicate selects a fresh identity while claiming its browser lock.
+  // Capture it after that preparation, while retaining the request's old scope.
+  return { 'X-OL-Client': tabClientId() };
+}
 
 let presenceSequence = 0;
 let worldGeneration = '';
@@ -58,7 +68,8 @@ function clearSessionDrafts(
           (key.startsWith('open-legend:action-request:') ||
             key.startsWith('open-legend:inventory-command:') ||
             key.startsWith('open-legend:invention-request:') ||
-            key.startsWith('open-legend:activity-command:')))
+            key.startsWith('open-legend:activity-command:') ||
+            key.startsWith('open-legend:agreement-command:')))
       )
         sessionStorage.removeItem(key);
   } catch {
@@ -100,7 +111,12 @@ export function clearAccess(options?: {
   }
 }
 export function acceptAccess(view: GameView): void {
-  currentContacts = new Set(view.entities.map((entity) => entity.id));
+  currentContacts = new Set(
+    view.entities.flatMap((entity) => [
+      entity.id,
+      ...(entity.assembly?.parts.map((part) => part.id) ?? []),
+    ]),
+  );
   const generation = view.historyEpoch?.split(':')[0] ?? '';
   const scope = view.access?.scope ?? '';
   if (generation === worldGeneration && scope === viewScope) return;
@@ -195,20 +211,24 @@ export function setWorldPaused(paused: boolean): Promise<ApiResult> {
 }
 
 export async function getState(signal?: AbortSignal): Promise<GameView> {
-  await tabIdentityReady;
-  const response = await fetch('/api/state', {
-    credentials: 'same-origin',
-    cache: 'no-store',
-    signal,
-    headers: { 'X-OL-Client': tabClientId() },
-  });
+  const response = await browserRequest(
+    '/api/state',
+    {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      signal,
+      headers: { 'X-OL-Client': tabClientId() },
+    },
+    undefined,
+    prepareTabHeaders,
+  );
   if (response.status === 409) {
-    const body: unknown = await response.json().catch(() => null);
+    const body = response.body;
     if (body && typeof body === 'object' && 'code' in body && body.code === 'loading')
       throw new WorldLoadingError('A saved world is loading. Please wait.');
   }
   if (response.status === 403) {
-    const body = (await response.json().catch(() => ({}))) as { code?: string; message?: string };
+    const body = (response.body ?? {}) as { code?: string; message?: string };
     if (body.code === 'characterless')
       throw new CharacterlessError(body.message ?? 'Open World operations.');
   }
@@ -216,7 +236,7 @@ export async function getState(signal?: AbortSignal): Promise<GameView> {
   if (response.status === 403)
     throw new AccessError('This account does not currently have access to this world.');
   if (response.status === 503) {
-    const body = (await response.json().catch(() => ({}))) as {
+    const body = (response.body ?? {}) as {
       code?: string;
       data?: WorldCreationHostStatus;
     };
@@ -228,7 +248,8 @@ export async function getState(signal?: AbortSignal): Promise<GameView> {
       throw new WorldCreationHostError(body.data);
   }
   if (!response.ok) throw new Error(`The world could not be loaded (${response.status}).`);
-  const view = (await response.json()) as GameView;
+  if (!response.body) throw new Error('The world could not be read. Refresh to reconnect.');
+  const view = response.body as GameView;
   return view;
 }
 /** Capture the authority of this page's intent. A late release must never use
@@ -238,37 +259,48 @@ export async function changeTabControl(
   operation: 'acquire' | 'replace' | 'release',
 ): Promise<ApiResult> {
   if (!view.access) throw new Error('Refresh your character before resuming.');
-  const response = await fetch('/api/embodiment', {
-    method: 'POST',
-    credentials: 'same-origin',
-    keepalive: operation === 'release',
-    signal: AbortSignal.timeout(15000),
-    headers: {
-      'Content-Type': 'application/json',
-      'X-OL-Client': tabClientId(),
-      'X-OL-Scope': view.access.scope,
-      'X-OL-Generation': view.historyEpoch?.split(':')[0] ?? '',
+  const body = {
+    id: crypto.randomUUID(),
+    expectedGeneration: view.access.controlGeneration,
+    operation,
+  };
+  const response = await browserRequest(
+    '/api/embodiment',
+    {
+      method: 'POST',
+      credentials: 'same-origin',
+      keepalive: operation === 'release',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-OL-Client': tabClientId(),
+        'X-OL-Scope': view.access.scope,
+        'X-OL-Generation': view.historyEpoch?.split(':')[0] ?? '',
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify({
-      id: crypto.randomUUID(),
-      expectedGeneration: view.access.controlGeneration,
-      operation,
-    }),
-  });
-  const result = (await response.json()) as ApiResult;
+    body,
+    prepareTabHeaders,
+  );
+  const result = response.body as ApiResult | undefined;
+  if (!result)
+    throw new Error('The character control change is unconfirmed. Refresh before continuing.');
   if (!result.ok) throw new Error(result.message || 'Your character could not resume here.');
   return result;
 }
 /** Operator/spectator console state. It opens no event stream and never counts as presence. */
 export async function getOperations(): Promise<OperationsView> {
   const generation = accessGeneration;
-  await tabIdentityReady;
-  const response = await fetch('/api/operations', {
-    credentials: 'same-origin',
-    cache: 'no-store',
-    headers: { 'X-OL-Client': tabClientId() },
-  });
-  const result = (await response.json().catch(() => ({}))) as Partial<OperationsView> & {
+  const response = await browserRequest(
+    '/api/operations',
+    {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: { 'X-OL-Client': tabClientId() },
+    },
+    undefined,
+    prepareTabHeaders,
+  );
+  const result = (response.body ?? {}) as Partial<OperationsView> & {
     message?: string;
   };
   if (generation !== accessGeneration)
@@ -290,22 +322,28 @@ export async function getOperations(): Promise<OperationsView> {
 }
 /** A remembered or inspected role is not a live body; only contact tokens expire here. */
 export const currentContactAvailable = (reference: string): boolean =>
-  !/^contact-[a-f0-9]{64}$/.test(reference) || currentContacts.has(reference);
+  !/^(contact|part)-[a-f0-9]{64}$/.test(reference) || currentContacts.has(reference);
 
 /** Private reads carry this tab's audience and discard responses from a prior scope. */
 export async function getScoped<T>(path: string, signal?: AbortSignal): Promise<T> {
   const scope = viewScope;
   const generation = accessGeneration;
-  const contactReferences = decodeURIComponent(path).match(/contact-[a-f0-9]{64}/g) ?? [];
-  const response = await fetch(path, {
-    credentials: 'same-origin',
-    cache: 'no-store',
-    signal,
-    headers: { 'X-OL-Client': tabClientId(), 'X-OL-Scope': scope },
-  });
+  const contactReferences = decodeURIComponent(path).match(/(?:contact|part)-[a-f0-9]{64}/g) ?? [];
+  const response = await browserRequest(
+    path,
+    {
+      credentials: 'same-origin',
+      cache: 'no-store',
+      signal,
+      headers: { 'X-OL-Client': tabClientId(), 'X-OL-Scope': scope },
+    },
+    undefined,
+    prepareTabHeaders,
+  );
   if (!response.ok)
     throw new Error(`The requested information is unavailable (${response.status}).`);
-  const result = (await response.json()) as T;
+  if (response.body === undefined) throw new Error('The requested information could not be read.');
+  const result = response.body as T;
   if (generation !== accessGeneration)
     throw new Error('Your access or world changed. Reload this information.');
   if (contactReferences.some((reference) => !currentContacts.has(reference)))
@@ -413,25 +451,27 @@ async function sendPost<T extends { ok: boolean; message?: string }>(
   path: string,
   body: unknown,
   signal?: AbortSignal,
-): Promise<{ response: Response; result: T }> {
-  const response = await fetch(path, {
-    method: 'POST',
-    signal,
-    credentials: 'same-origin',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-OL-Generation': worldGeneration,
-      'X-OL-Client': tabClientId(),
-      'X-OL-Scope': viewScope,
+): Promise<{ response: { ok: boolean; status: number }; result: T }> {
+  const response = await browserRequest(
+    path,
+    {
+      method: 'POST',
+      signal,
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-OL-Generation': worldGeneration,
+        'X-OL-Client': tabClientId(),
+        'X-OL-Scope': viewScope,
+      },
+      body: JSON.stringify(body),
     },
-    body: JSON.stringify(body),
-  });
-  let result: T;
-  try {
-    result = (await response.json()) as T;
-  } catch {
+    body,
+    prepareTabHeaders,
+  );
+  if (response.body === undefined)
     throw new Error(`The server returned an unreadable response (${response.status}).`);
-  }
+  const result = response.body as T;
   return { response, result };
 }
 export async function post<T extends { ok: boolean; message?: string } = ApiResult>(
@@ -452,17 +492,33 @@ export async function post<T extends { ok: boolean; message?: string } = ApiResu
 export async function postContactRead<T extends { ok: boolean; message?: string }>(
   path: string,
   body: unknown,
-  references: readonly (string | undefined)[],
+  references: readonly (string | undefined)[] = [],
   signal?: AbortSignal,
 ): Promise<T> {
+  const selected = new Set(references);
+  const collect = (value: unknown): void => {
+    if (typeof value === 'string' && /^(contact|part)-[a-f0-9]{64}$/.test(value))
+      selected.add(value);
+    else if (Array.isArray(value)) value.forEach(collect);
+    else if (value && typeof value === 'object') Object.values(value).forEach(collect);
+  };
+  collect(body);
   const result = await post<T>(path, body, signal);
   if (
-    references.some((reference) => reference !== undefined && !currentContactAvailable(reference))
+    [...selected].some(
+      (reference) => reference !== undefined && !currentContactAvailable(reference),
+    )
   )
     throw new Error('That observed target is no longer available.');
   return result;
 }
 
+export function updateWorldInput(
+  input: WorldInputUpdate,
+  signal?: AbortSignal,
+): Promise<WorldInputResult> {
+  return post<WorldInputResult>('/api/input', input, signal);
+}
 /** Loading intentionally replaces this timeline. Only the selected load's
  * non-disclosing success acknowledgment may cross that change; no old result
  * fields are adopted. Reload resolves the current account/session from scratch.
@@ -505,6 +561,36 @@ export function selectInstalledArtwork(
     message?: string;
   }>('/api/assets/' + operation, { id: requestId, ...selection }, signal);
 }
+let presenceSending = false;
+let latestPresence: { scope: string; visible: boolean } | undefined;
+function flushPresence(): void {
+  if (presenceSending || !latestPresence) return;
+  const desired = latestPresence;
+  latestPresence = undefined;
+  presenceSending = true;
+  // Allocate ordering at dispatch, rather than accumulating expired heartbeats.
+  const body = { clientId: tabClientId(), visible: desired.visible, sequence: ++presenceSequence };
+  void browserRequest(
+    '/api/presence',
+    {
+      method: 'POST',
+      credentials: 'same-origin',
+      keepalive: true,
+      headers: {
+        'Content-Type': 'application/json',
+        'X-OL-Client': tabClientId(),
+        'X-OL-Scope': desired.scope,
+      },
+      body: JSON.stringify(body),
+    },
+    body,
+  )
+    .catch(() => undefined)
+    .finally(() => {
+      presenceSending = false;
+      flushPresence();
+    });
+}
 /** Report foreground attention independently of the server's saved pause policy.
  * The open event stream proves connection even if background heartbeats stop.
  * Capture accepted control so cleanup cannot withdraw a successor's presence.
@@ -512,25 +598,21 @@ export function selectInstalledArtwork(
 export function startPresence(scope: string): () => void {
   let focused = document.hasFocus();
   const send = (visible: boolean, beacon = false): void => {
-    const body = { clientId: tabClientId(), visible, sequence: ++presenceSequence };
     if (beacon) {
+      const body = { clientId: tabClientId(), visible, sequence: ++presenceSequence };
       const queued = navigator.sendBeacon(
         `/api/presence?client=${tabClientId()}&scope=${scope}`,
         new Blob([JSON.stringify(body)], { type: 'application/json' }),
       );
-      if (queued) return;
+      // Browser queue acceptance is not a server acknowledgement. Its newer
+      // sequence also supersedes any older queued visible heartbeat locally.
+      if (queued) {
+        latestPresence = undefined;
+        return;
+      }
     }
-    void fetch('/api/presence', {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-OL-Client': tabClientId(),
-        'X-OL-Scope': scope,
-      },
-      body: JSON.stringify(body),
-      keepalive: true,
-    }).catch(() => undefined);
+    latestPresence = { scope, visible };
+    flushPresence();
   };
   const active = (): boolean => document.visibilityState === 'visible' && focused;
   const visibility = (): void => {
@@ -566,16 +648,38 @@ export function startPresence(scope: string): () => void {
 
 /** Logout needs no controlling lease: it must also work from a displaced tab. */
 export async function logOut(): Promise<void> {
-  const response = await fetch('/api/session/logout', {
-    method: 'POST',
-    credentials: 'same-origin',
-    headers: { 'Content-Type': 'application/json' },
-    body: '{}',
-    signal: AbortSignal.timeout(15000),
-  });
-  const result = (await response.json()) as ApiResult;
-  if (response.status !== 401 && (!response.ok || !result.ok))
-    throw new Error(result.message || 'Could not log out. Try again.');
+  try {
+    const response = await browserRequest(
+      '/api/session/logout',
+      {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}',
+      },
+      {},
+      prepareTabHeaders,
+    );
+    const result = response.body as ApiResult | undefined;
+    if (response.status !== 401 && (!response.ok || !result?.ok))
+      throw new Error(
+        result?.message || 'Logout is unconfirmed. Check your sign-in status before continuing.',
+      );
+  } catch (error) {
+    // State entry can establish a local-development session, so only this
+    // read-only authentication endpoint can reconcile a lost logout reply.
+    const session = await browserRequest(
+      '/api/session',
+      {
+        credentials: 'same-origin',
+        cache: 'no-store',
+        headers: { 'X-OL-Client': tabClientId() },
+      },
+      undefined,
+      prepareTabHeaders,
+    ).catch(() => undefined);
+    if (session?.status !== 401) throw error;
+  }
   clearAccess();
   announceLogout();
   window.location.reload();

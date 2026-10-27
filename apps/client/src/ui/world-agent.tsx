@@ -27,6 +27,7 @@ type Props = {
   godMode?: boolean;
   saveTimeline?: string;
   inventionSeed: { id: string; text: string } | null;
+  recoveryRequest?: string | null;
   invent(text: string): void;
   visible: boolean;
   recipes: RecipeView[];
@@ -93,7 +94,24 @@ function WorldAgentPanel(props: Props) {
   const alive = useRef(true);
   const listing = useRef(false);
   const [inventionTarget, setInventionTarget] = useState<string>();
-  const [creationTarget, setCreationTarget] = useState<{ id: string; native: boolean }>();
+  const [creationTarget, setCreationTarget] = useState<{
+    id: string;
+    native: boolean;
+    recovery?: boolean;
+  }>();
+  const handledRecovery = useRef<string | undefined>(undefined);
+  useEffect(() => {
+    if (
+      mode !== 'author' ||
+      !props.recoveryRequest ||
+      handledRecovery.current === props.recoveryRequest
+    )
+      return;
+    handledRecovery.current = props.recoveryRequest;
+    setActive(props.recoveryRequest);
+    setInventionTarget(undefined);
+    setCreationTarget({ id: props.recoveryRequest, native: true, recovery: true });
+  }, [mode, props.recoveryRequest]);
   const [inspectionReview, setInspectionReview] = useState<{ sessionId: string; planId: string }>();
   const inspectionTask = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -315,6 +333,7 @@ function WorldAgentPanel(props: Props) {
                 : undefined
           }
           nativeCreation={creationTarget?.id === active ? creationTarget.native : undefined}
+          freshRecovery={creationTarget?.id === active ? creationTarget.recovery : undefined}
           onCreated={() => void list()}
           controls={controls}
           onStatusPolicyChanged={onStatusPolicyChanged}

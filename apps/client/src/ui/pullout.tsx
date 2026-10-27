@@ -2,6 +2,7 @@ import { LoadingDialog } from '../design-system/loading';
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Button as AriaButton, ListBox, ListBoxItem, Popover } from 'react-aria-components';
 import { Icon } from '../design-system/components';
+import { movePickerFocus } from './keyboard';
 
 export type PulloutOption = {
   id: string;
@@ -249,19 +250,9 @@ export function Pullout({
               (event.target.getAttribute('role') === 'dialog' ||
                 event.target.hasAttribute('data-picker-row'))
             ) {
-              const rows = Array.from(
-                event.currentTarget.querySelectorAll<HTMLButtonElement>('[data-picker-row]'),
-              );
-              const index = rows.indexOf(document.activeElement as HTMLButtonElement);
               event.preventDefault();
               event.stopPropagation();
-              const next =
-                index < 0
-                  ? event.key === 'ArrowDown'
-                    ? 0
-                    : rows.length - 1
-                  : (index + (event.key === 'ArrowDown' ? 1 : rows.length - 1)) % rows.length;
-              rows[next]?.focus();
+              movePickerFocus(event.currentTarget, event.key);
             }
           }}
         >

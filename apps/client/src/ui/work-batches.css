@@ -1,0 +1,5 @@
+/* The flex gap already separates review blocks; native text margins would add
+ * a second gap and push Start below the ordinary desktop panel. */
+.ol-work-batches :is(p, h3, dl) {
+  margin-block: 0;
+}

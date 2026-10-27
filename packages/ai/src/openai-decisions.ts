@@ -4,11 +4,12 @@ import {
   InvalidData,
   record,
   serialize,
-  validateQuestions,
+  prepareQuestions,
 } from './validation.js';
 import { estimateCostUsd } from './usage.js';
 import { captureHttpErrorDiagnostics, captureResponseRateLimits } from './http-diagnostics.js';
-import { awaitWithSignal, readResponseBody } from './http-response.js';
+import { NetworkError, type NetworkOwner } from '@open-legend/network';
+import { providerOwner, providerText } from './provider-http.js';
 import type {
   AiReceipt,
   AiResult,
@@ -21,13 +22,15 @@ import type {
 
 /** Official /v1/decisions protocol; Noul is our probability-of-predicate representation. */
 export function openAiDecisionInput(request: Pick<JudgeRequest, 'state' | 'questions'>) {
-  validateQuestions(request.questions);
-  if (Object.keys(request.questions).length > 200)
-    throw new InvalidData('decisions_question_limit');
+  return decisionInput(request.state, prepareQuestions(request.questions, 500_000));
+}
+
+function decisionInput(state: unknown, questions: TypedQuestionMap) {
+  if (Object.keys(questions).length > 200) throw new InvalidData('decisions_question_limit');
   return {
     model: 'gpt-6-luna',
-    input: serialize(request.state, 480_000),
-    questions: Object.entries(request.questions).map(([name, q]) =>
+    input: serialize(state, 480_000),
+    questions: Object.entries(questions).map(([name, q]) =>
       q.type === 'noul'
         ? {
             type: 'predicate',
@@ -152,8 +155,10 @@ export function createOpenAiDecisionClient(configuration: {
   apiKey: string;
   timeoutMs?: number;
   fetch?: FetchTransport;
+  network?: NetworkOwner;
 }) {
   const config = Object.freeze({ ...configuration });
+  const network = providerOwner(config.network, config.fetch);
   const timeout = config.timeoutMs ?? 120_000;
   if (!Number.isSafeInteger(timeout) || timeout < 1 || timeout > 300_000)
     throw new Error('Invalid OpenAI decision timeout.');
@@ -173,14 +178,18 @@ export function createOpenAiDecisionClient(configuration: {
         dispatched: false,
         completionUncertain: false,
       };
-      const controller = new AbortController();
       let callerCancelled = false;
-      let timer: ReturnType<typeof setTimeout> | undefined;
-      const cancel = () => {
-        if (controller.signal.aborted) return;
-        callerCancelled = true;
-        controller.abort();
-      };
+      const httpFailure = (): AiResult<JudgeValue> => ({
+        outcome: [401, 403, 404, 429].includes(receipt.httpStatus!)
+          ? 'unavailable'
+          : [400, 413, 422].includes(receipt.httpStatus!)
+            ? 'invalid'
+            : receipt.completionUncertain
+              ? 'uncertain'
+              : 'failed',
+        reason: `openai_http_${receipt.httpStatus}`,
+        receipt,
+      });
       try {
         if (
           typeof request.requestId !== 'string' ||
@@ -192,10 +201,8 @@ export function createOpenAiDecisionClient(configuration: {
           { state: request.state, questions: request.questions },
           500_000,
         );
-        // Keep the submitted rubric through the provider wait without sorting
-        // offered choices; their insertion order determines exact ties.
-        const questions = structuredClone(request.questions);
-        const body = openAiDecisionInput({ state: request.state, questions });
+        const questions = prepareQuestions(request.questions, 500_000);
+        const body = decisionInput(request.state, questions);
         const serialized = serialize(body, 500_000);
         receipt.contextDigest = digest(contextJson);
         receipt.providerRequestDigest = digest(serialized);
@@ -210,88 +217,97 @@ export function createOpenAiDecisionClient(configuration: {
         const remaining = Math.min(timeout, (request.deadlineMs ?? started + timeout) - Date.now());
         if (!Number.isFinite(remaining) || remaining <= 0)
           return { outcome: 'unavailable', reason: 'deadline_expired', receipt };
-        request.signal?.addEventListener('abort', cancel, { once: true });
-        if (request.signal?.aborted) cancel();
-        timer = setTimeout(() => controller.abort(), remaining);
-        const signal = controller.signal;
-        signal.throwIfAborted();
-        receipt.dispatched = true;
-        receipt.completionUncertain = true;
-        const pending = (config.fetch ?? fetch)('https://api.openai.com/v1/decisions', {
-          method: 'POST',
-          redirect: 'error',
-          signal,
-          headers: {
-            Authorization: `Bearer ${config.apiKey}`,
-            'Content-Type': 'application/json',
-            'X-Client-Request-Id': digest(request.requestId),
+        return await network.run(
+          {
+            timeoutMs: Math.max(1, Math.floor(remaining)),
+            deadlineAtMs: request.deadlineMs,
+            signal: request.signal,
           },
-          body: serialized,
-        }).then((response) => {
-          if (signal.aborted) {
-            void response.body?.cancel().catch(() => undefined);
-            signal.throwIfAborted();
-          }
-          return response;
-        });
-        const response = await awaitWithSignal(pending, signal);
-        receipt.httpStatus = response.status;
-        captureResponseRateLimits(receipt, response.headers);
-        const traceId = response.headers.get('x-request-id');
-        if (traceId && /^[\w.:-]{1,256}$/.test(traceId)) receipt.providerRequestId = traceId;
-        if (!response.ok) {
-          await captureHttpErrorDiagnostics(response, receipt, signal);
-          if ([400, 401, 403, 404, 413, 422, 429].includes(response.status)) {
-            receipt.dispatched = false;
+          async (operation) => {
+            operation.throwIfStopped();
+            receipt.dispatched = true;
+            receipt.completionUncertain = true;
+            const raw = await providerText(
+              operation,
+              {
+                url: 'https://api.openai.com/v1/decisions',
+                init: {
+                  method: 'POST',
+                  redirect: 'error',
+                  headers: {
+                    Authorization: `Bearer ${config.apiKey}`,
+                    'Content-Type': 'application/json',
+                    'X-Client-Request-Id': digest(request.requestId),
+                  },
+                  body: serialized,
+                },
+                bodyPolicy: { kind: 'bounded', maxBytes: 1_000_000 },
+              },
+              (metadata) => {
+                receipt.httpStatus = metadata.status;
+                captureResponseRateLimits(receipt, metadata.headers);
+                const traceId = metadata.headers.get('x-request-id');
+                if (traceId && /^[\w.:-]{1,256}$/.test(traceId))
+                  receipt.providerRequestId = traceId;
+                if ([400, 401, 403, 404, 413, 422, 429].includes(metadata.status)) {
+                  receipt.dispatched = false;
+                  receipt.completionUncertain = false;
+                }
+              },
+            );
+            if (
+              receipt.httpStatus !== undefined &&
+              (receipt.httpStatus < 200 || receipt.httpStatus >= 300)
+            ) {
+              captureHttpErrorDiagnostics(raw, receipt);
+              return httpFailure();
+            }
             receipt.completionUncertain = false;
-          }
-          return {
-            outcome: [401, 403, 404, 429].includes(response.status)
-              ? 'unavailable'
-              : [400, 413, 422].includes(response.status)
-                ? 'invalid'
-                : receipt.completionUncertain
-                  ? 'uncertain'
-                  : 'failed',
-            reason: `openai_http_${response.status}`,
-            receipt,
-          };
-        }
-        const raw = await readResponseBody(response, 1_000_000, signal);
-        receipt.completionUncertain = false;
-        const data: unknown = JSON.parse(raw);
-        serialize(data, 1_000_000);
-        if (record(data)) {
-          if (typeof data.id === 'string' && /^[\w.:-]{1,256}$/.test(data.id))
-            receipt.providerRequestId = data.id;
-          if (typeof data.model === 'string' && /^[\w./:-]{1,128}$/.test(data.model)) {
-            receipt.model = data.model;
-            receipt.modelVersionStatus = 'reported';
-          }
-          receipt.usage = decodeUsage(data);
-          if (
-            !receipt.usage &&
-            record(data.usage) &&
-            Number.isSafeInteger(data.usage.input_tokens) &&
-            Number(data.usage.input_tokens) >= 0 &&
-            data.usage.output_tokens === undefined
-          )
-            receipt.usage = decodeUsage({ ...data, usage: { ...data.usage, output_tokens: 0 } });
-          // The exact Decisions rate is separate from Responses; no output/cache charges.
-          const usage = receipt.usage;
-          if (usage && (data.model === undefined || data.model === 'gpt-6-luna'))
-            receipt.estimatedCostUsd = estimateCostUsd(usage, {
-              inputUsdPerMillion: usage.inputTokens > 272_000 ? 0.2 : 0.1,
-              outputUsdPerMillion: 0,
-              cachedInputUsdPerMillion: 0,
-              cacheWriteInputUsdPerMillion: 0,
+            const data: unknown = JSON.parse(raw);
+            serialize(data, 1_000_000);
+            if (record(data)) {
+              if (typeof data.id === 'string' && /^[\w.:-]{1,256}$/.test(data.id))
+                receipt.providerRequestId = data.id;
+              if (typeof data.model === 'string' && /^[\w./:-]{1,128}$/.test(data.model)) {
+                receipt.model = data.model;
+                receipt.modelVersionStatus = 'reported';
+              }
+              receipt.usage = decodeUsage(data);
+              if (
+                !receipt.usage &&
+                record(data.usage) &&
+                Number.isSafeInteger(data.usage.input_tokens) &&
+                Number(data.usage.input_tokens) >= 0 &&
+                data.usage.output_tokens === undefined
+              )
+                receipt.usage = decodeUsage({
+                  ...data,
+                  usage: { ...data.usage, output_tokens: 0 },
+                });
+              // The exact Decisions rate is separate from Responses; no output/cache charges.
+              const usage = receipt.usage;
+              if (usage && (data.model === undefined || data.model === 'gpt-6-luna'))
+                receipt.estimatedCostUsd = estimateCostUsd(usage, {
+                  inputUsdPerMillion: usage.inputTokens > 272_000 ? 0.2 : 0.1,
+                  outputUsdPerMillion: 0,
+                  cachedInputUsdPerMillion: 0,
+                  cacheWriteInputUsdPerMillion: 0,
+                });
+            }
+            const value = decodeOpenAiDecision(data, questions, (questionId) => {
+              (receipt.questionRefusals ??= []).push(questionId);
             });
-        }
-        const value = decodeOpenAiDecision(data, questions, (questionId) => {
-          (receipt.questionRefusals ??= []).push(questionId);
-        });
-        return { outcome: 'value', value, receipt };
+            operation.throwIfStopped();
+            return { outcome: 'value' as const, value, receipt };
+          },
+        );
       } catch (error) {
+        if (
+          receipt.httpStatus !== undefined &&
+          (receipt.httpStatus < 200 || receipt.httpStatus >= 300)
+        )
+          return httpFailure();
+        callerCancelled = error instanceof NetworkError && error.kind === 'cancelled';
         return {
           outcome: callerCancelled
             ? 'cancelled'
@@ -304,7 +320,7 @@ export function createOpenAiDecisionClient(configuration: {
                   : 'failed',
           reason: callerCancelled
             ? 'caller_cancelled'
-            : controller.signal.aborted
+            : error instanceof NetworkError && error.kind === 'deadline_exceeded'
               ? 'deadline_exceeded'
               : error instanceof InvalidData
                 ? error.code
@@ -314,8 +330,6 @@ export function createOpenAiDecisionClient(configuration: {
           receipt,
         };
       } finally {
-        if (timer) clearTimeout(timer);
-        request.signal?.removeEventListener('abort', cancel);
         receipt.completedAt = new Date().toISOString();
         receipt.latencyMs = Date.now() - started;
       }

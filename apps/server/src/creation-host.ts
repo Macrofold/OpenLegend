@@ -24,6 +24,29 @@ import { AUTHORING_BODY_BYTES, readBoundedJson } from './http-json.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import type { ClientAssets } from './client-assets.js';
 import { digest } from './content-digest.js';
+import { macrofoldJudgmentModel } from './generation-config.js';
+
+type ConfiguredModelTarget = NonNullable<AppConfig['modelTargets']>['purposes'];
+function deploymentSetting(target: ConfiguredModelTarget[keyof ConfiguredModelTarget]): string {
+  if (!target) return 'Use existing provider settings';
+  const output = 'structured_output' in target ? target.structured_output : undefined;
+  const formats = {
+    auto: 'automatic JSON format',
+    json_schema: 'JSON Schema',
+    json_object: 'JSON object',
+    prompted_json: 'JSON requested in the prompt',
+  };
+  return [
+    `Deployment ${target.model_binding.deployment_id}`,
+    target.model_binding.deployment_revision_id
+      ? `revision ${target.model_binding.deployment_revision_id}`
+      : 'current serving revision',
+    target.max_output_tokens === undefined
+      ? 'current output allowance'
+      : `at most ${target.max_output_tokens} output tokens`,
+    output ? formats[output] : 'native decisions',
+  ].join('; ');
+}
 
 /** Existing game runtime resources. Type-only imports avoid a second server factory. */
 export interface CreationHostRuntime {
@@ -53,15 +76,19 @@ export function creationOperatingConfiguration(config: AppConfig) {
     authenticationMode: config.authentication.mode,
     monthlyActorAiBudgetUsd: config.budgetUsd,
     simulationSecondsPerRealSecond: config.baseRatio,
-    conversationInactivitySeconds:
-      config.conversationInactivitySeconds ?? 'Use the world’s authored setting',
     playerCapacity: config.capacity.players,
     departureGraceMs: config.exitGraceMs,
     creatorToolsEnabled: config.godMode,
     liveAiConfigured: Boolean(config.macrofoldKey || config.jevKey || config.llmKey),
     jevOnly: config.jevOnly,
     jevModel: config.jevModel,
-    macrofoldJevModel: config.macrofoldJevModel,
+    macrofoldJevModel: macrofoldJudgmentModel(config),
+    macrofoldDeploymentWorkspace: config.modelTargets?.workspace_id ?? 'Not configured',
+    macrofoldJudgmentDeployment: deploymentSetting(config.modelTargets?.purposes.judgment),
+    macrofoldFastDeployment: deploymentSetting(config.modelTargets?.purposes.npc_response_fast),
+    macrofoldComplexDeployment: deploymentSetting(
+      config.modelTargets?.purposes.npc_response_complex,
+    ),
     languageModel: config.llmModel,
     miniModel: config.miniModel,
     complexModel: config.complexModel,
@@ -95,14 +122,17 @@ export function creationOperatingSettings(values: Record<string, string | number
     authenticationMode: 'Sign-in mode',
     monthlyActorAiBudgetUsd: 'Monthly AI spending limit per character (USD)',
     simulationSecondsPerRealSecond: 'World seconds per real second',
-    conversationInactivitySeconds: 'Operator override: conversation inactivity (world seconds)',
     playerCapacity: 'Maximum simultaneous players',
     departureGraceMs: 'Departure grace (milliseconds)',
     creatorToolsEnabled: 'Creator tools enabled',
     liveAiConfigured: 'Live AI configured',
-    jevOnly: 'Only Jev inference enabled',
+    jevOnly: 'Only decision models enabled',
     jevModel: 'Jev model',
-    macrofoldJevModel: 'Jev model through Macrofold',
+    macrofoldJevModel: 'Decision model through Macrofold',
+    macrofoldDeploymentWorkspace: 'Macrofold workspace for configured models',
+    macrofoldJudgmentDeployment: 'Deployment for character decisions',
+    macrofoldFastDeployment: 'Deployment for routine character replies',
+    macrofoldComplexDeployment: 'Deployment for complex character replies',
     languageModel: 'Language model',
     miniModel: 'Routine character thinking model',
     complexModel: 'Complex character thinking model',
@@ -483,7 +513,9 @@ export async function createAwaitingCreationHost(
       });
       if (options.closeStore && !adopting) await stage('Creation storage', () => store.close());
     }
-    await stage('Client assets', () => options.assets.close());
+    await stage('Client assets', () =>
+      options.assets.close({ timeoutMs: Math.max(1, Math.floor(until - performance.now())) }),
+    );
     await stage(
       'Public listener',
       () =>

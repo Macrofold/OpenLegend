@@ -1,12 +1,21 @@
+import { validateNativeForaging } from './native-foraging.js';
 import { finitePoint, type SurfacePoint } from '@open-legend/spatial';
 import type { Entity, Position, WorldState } from './types.js';
 import type { DefinitionPin } from './world-modules.js';
 import { definitionPin } from './world-modules.js';
 import type { LivingBody } from './living.js';
 import { hasRecordFields, isSafeRecordId } from './records.js';
-import { cloneValue } from './draft.js';
+import { cloneValue, readOnlyDraftView } from './draft.js';
 import { sameDefinitionPin } from './state-owners.js';
 import { canonicalJson } from './events.js';
+import { worldPosition, bodyProfile, sameBodyProfile, flightRouteDigest } from './spatial-state.js';
+import { scarFactor } from './scar-effects.js';
+import {
+  validatePerceivedSound,
+  validAcousticDirection,
+  type PerceivedSound,
+  type AcousticDirection,
+} from './sound.js';
 
 /** Supported complete preparation envelope, independent of the world's ring tuning. */
 export const NATIVE_RESPONSE_LIMITS = { maximumCandidates: 64 } as const;
@@ -22,6 +31,7 @@ export interface NativeResponseProfile {
     species: string[];
     bodyPlans: LivingBody['plan'][];
     currentNaturalAttack: boolean;
+    attackPreparation: boolean;
   };
   retentionSeconds: number;
   uncertaintyPerSecond: number;
@@ -32,10 +42,18 @@ export interface NativeResponseProfile {
   reviewSeconds: number;
   blockedReviewSeconds: number;
   passageDistance: number;
+  soundAlarmMinimumBand: number | null;
+  acousticChangeBandDb: number;
+  acousticPatternIdleSeconds: number;
   candidates: {
-    rings: Array<{ count: number; distance: number }>;
+    distance: { minimum: number; maximum: number };
+    angles: number[];
+    preferredProgress: number;
+    minimumProgress: number;
+    minimumAttempts: number;
+    maximumDetourFactor: number;
+    navigationWait: 'world' | 'entity';
     maximumRouteLength: number;
-    frontierMargin: number;
     minimumAdvance: number;
     worseningSlack: number;
     arrivalMarginCap: number;
@@ -44,6 +62,7 @@ export interface NativeResponseProfile {
     distanceWeightScale: number;
   };
   locomotion: Record<string, { travel: number; escape: number; flightEscape?: number }>;
+  movementFactors: { scars: boolean };
   wander: { distance: number; minimumWaitSeconds: number; waitChoices: number };
   wake?: { attributeId: string; above: number; reason: 'perceived-danger' };
   presentation: {
@@ -83,17 +102,28 @@ export interface NativeRefugeProposal {
   at: number;
   origin: SurfacePoint;
   movementId: string | null;
+  wait?: 'world' | 'entity';
+  search?: {
+    distance: number;
+    bearing: number;
+    side: number;
+    attempted: number;
+    best?: { point: SurfacePoint; path: SurfacePoint[]; length: number; progress: number };
+  };
   body: { radius: number; height: number; maxSlope: number };
   candidates: Array<{ id: string; point: SurfacePoint; retained?: true; preferred?: true }>;
 }
 
 export interface NativeResponseEpisode {
+  acousticCue?: NativeAcousticCue;
+  acousticLegRequired?: true;
   id: string;
   startedAt: number;
   latestCause: { kind: 'event' | 'action'; id: string; at: number };
   preparations?: Record<string, string>;
   /** A prior owner's authored destination is an option, never an admitted route. */
   preferredRefuge?: SurfacePoint;
+  aerialRouteId?: string;
   /** Referenced installed definitions survive selection of future defaults. */
   profilePin: DefinitionPin;
   locomotion: string;
@@ -104,6 +134,7 @@ export interface NativeResponseEpisode {
   proposalGeneration: number;
   proposal?: NativeRefugeProposal;
   refuge?: {
+    acousticDirection?: AcousticDirection | null;
     point: SurfacePoint;
     selectedAt: number;
     generation: number;
@@ -123,14 +154,73 @@ export interface NativeLocomotion {
   episodeId?: string;
   generation?: number;
 }
+export interface NativeFlightLocomotion extends NativeLocomotion {
+  mode: 'escape';
+  episodeId: string;
+  generation: number;
+  id: string;
+  physicalLife: number;
+  routeDigest: string;
+  selectedAt: number;
+  geometryRevision: number;
+  draw?: number;
+  stopAt?: number;
+}
+
+export function nativeResponseMovementFactor(
+  world: WorldState,
+  entity: Entity,
+  profile: NativeResponseProfile,
+): number {
+  return profile.movementFactors.scars ? scarFactor(world, entity, 'movementFactor') : 1;
+}
 
 export interface NativeResponseState {
+  foraging?: import('./native-foraging.js').NativeForagingState;
+  acousticPatterns: Record<string, { idleExpiresAt: number; cue: NativeAcousticCue }>;
   profile: DefinitionPin;
   locomotion: string;
   physicalLife: number;
+  /** Explicit future flight-graph selection, independent of an active flight. */
+  aerialRouteId?: string;
   episode?: NativeResponseEpisode;
   /** Exactly one clock mode, shared with the existing routine due-work owner. */
   wander: { dueAt: number } | { remainingSeconds: number; running?: true };
+}
+
+export interface NativeAcousticCue {
+  eventId: string;
+  sequence: number;
+  at: number;
+  physicalLife: number;
+  sound: PerceivedSound;
+}
+/** Routine native bodies still maintain continuity of sources actually seen. */
+export function nativeSensoryObserver(entity: Entity): boolean {
+  return entity.actor?.controller === 'native' && !!entity.animal;
+}
+export function nativeAcousticPatternKey(
+  cue: NativeAcousticCue,
+  profile: NativeResponseProfile,
+): string {
+  const source = cue.sound.visibleSource;
+  return JSON.stringify([
+    source ? [source.entityId, source.physicalLife, source.episodeId] : null,
+    cue.sound.direction,
+    Math.floor(
+      (cue.sound.clarityMarginDb - cue.sound.detectThresholdDb) / profile.acousticChangeBandDb,
+    ),
+  ]);
+}
+export function nativeAcousticPreference(animal: Entity) {
+  const episode = animal.animal?.episode;
+  if (!episode?.acousticCue) return undefined;
+  const direction = episode.acousticCue.sound.direction;
+  return {
+    origin: worldPosition(animal),
+    direction,
+    retain: canonicalJson(episode.refuge?.acousticDirection ?? null) === canonicalJson(direction),
+  };
 }
 
 export function nativeResponseProfileKey(pin: DefinitionPin): string {
@@ -158,7 +248,9 @@ export function nativeResponseProfile(
   world: WorldState,
   pin: DefinitionPin,
 ): NativeResponseProfile | undefined {
-  const profile = world.nativeResponseProfiles?.[nativeResponseProfileKey(pin)];
+  const profiles = readOnlyDraftView(world).nativeResponseProfiles,
+    stored = profiles && readOnlyDraftView(profiles)[nativeResponseProfileKey(pin)],
+    profile = stored && readOnlyDraftView(stored);
   return profile && sameDefinitionPin(pin, definitionPin(profile)) ? profile : undefined;
 }
 
@@ -177,17 +269,28 @@ export function validateNativeResponseProfiles(world: WorldState): void {
 /** Current-format integrity, not an old-state reader. Stale physical preparation
  * can be cancelled at execution, but its identity and data must remain usable. */
 export function validateNativeResponse(world: WorldState, entity: Entity): void {
+  validateNativeForaging(world, entity);
   const state = entity.animal;
-  if (!state) return;
   const fail = (): never => {
     throw new Error('Invalid saved native animal response.');
   };
+  if (!state) {
+    // A physical continuation cannot lose the owner that validates its captured
+    // profile, life and episode merely by omitting that component from a save.
+    if (entity.actor?.action?.nativeLocomotion || entity.spatial.flight?.nativeLocomotion) fail();
+    return;
+  }
   const time = (value: number) => Number.isFinite(value) && value >= 0;
+  const past = (value: number) => time(value) && value <= world.simTime;
   const life = (value: number) => Number.isSafeInteger(value) && value >= 0;
   const point = (value: SurfacePoint) => finitePoint(value) && isSafeRecordId(value.surfaceId);
   const profile = nativeResponseProfile(world, state.profile);
   if (
-    !hasRecordFields(state, ['profile', 'locomotion', 'physicalLife', 'wander'], ['episode']) ||
+    !hasRecordFields(
+      state,
+      ['profile', 'locomotion', 'physicalLife', 'wander', 'acousticPatterns'],
+      ['episode', 'aerialRouteId', 'foraging'],
+    ) ||
     !entity.actor ||
     !profile?.locomotion[state.locomotion] ||
     !life(state.physicalLife) ||
@@ -198,6 +301,62 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
       : !hasRecordFields(state.wander, ['remainingSeconds'], ['running']) ||
         !Number.isFinite(state.wander.remainingSeconds) ||
         (state.wander.running !== undefined && state.wander.running !== true))
+  )
+    fail();
+  const cueValid = (cue: NativeAcousticCue): boolean => {
+    if (
+      !hasRecordFields(cue, ['eventId', 'sequence', 'at', 'physicalLife', 'sound']) ||
+      !isSafeRecordId(cue.eventId) ||
+      !life(cue.sequence) ||
+      !time(cue.at) ||
+      cue.at > world.simTime ||
+      cue.physicalLife !== state.physicalLife
+    )
+      return false;
+    try {
+      validatePerceivedSound(cue.sound);
+    } catch {
+      return false;
+    }
+    return (
+      cue.sound.acquisition === 'external' &&
+      cue.sound.physicalLife === state.physicalLife &&
+      cue.sound.acquiredAt === cue.at
+    );
+  };
+  if (
+    !state.acousticPatterns ||
+    typeof state.acousticPatterns !== 'object' ||
+    Array.isArray(state.acousticPatterns)
+  )
+    fail();
+  for (const [key, pattern] of Object.entries(state.acousticPatterns)) {
+    if (
+      !hasRecordFields(pattern, ['idleExpiresAt', 'cue']) ||
+      !cueValid(pattern.cue) ||
+      !time(pattern.idleExpiresAt) ||
+      pattern.idleExpiresAt !== pattern.cue.at + profile!.acousticPatternIdleSeconds ||
+      profile!.soundAlarmMinimumBand === null ||
+      Math.floor(
+        (pattern.cue.sound.clarityMarginDb - pattern.cue.sound.detectThresholdDb) /
+          profile!.acousticChangeBandDb,
+      ) < profile!.soundAlarmMinimumBand! ||
+      key !== nativeAcousticPatternKey(pattern.cue, profile!)
+    )
+      fail();
+  }
+  const validAerialRoot = (
+    id: string,
+    definition: NativeResponseProfile | undefined,
+    locomotion: string,
+  ) =>
+    isSafeRecordId(id) &&
+    Object.hasOwn(world.flightRoutes, id) &&
+    sameBodyProfile(world.flightRoutes[id]!.body, bodyProfile(entity)) &&
+    definition?.locomotion[locomotion]?.flightEscape !== undefined;
+  if (
+    state.aerialRouteId !== undefined &&
+    !validAerialRoot(state.aerialRouteId, profile, state.locomotion)
   )
     fail();
   const episode = state.episode;
@@ -225,18 +384,23 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
           'blocked',
           'preparations',
           'preferredRefuge',
+          'aerialRouteId',
+          'acousticCue',
+          'acousticLegRequired',
         ],
       ) ||
       !entity.actor?.alive ||
       entity.actor.controller !== 'native' ||
       !isSafeRecordId(episode.id) ||
+      (episode.aerialRouteId !== undefined &&
+        !validAerialRoot(episode.aerialRouteId, activeProfile, episode.locomotion)) ||
       (episode.preferredRefuge !== undefined && !point(episode.preferredRefuge)) ||
-      !time(episode.startedAt) ||
+      !past(episode.startedAt) ||
       !time(episode.reviewAt) ||
       !hasRecordFields(episode.latestCause, ['kind', 'id', 'at']) ||
       !['event', 'action'].includes(episode.latestCause.kind) ||
       !isSafeRecordId(episode.latestCause.id) ||
-      !time(episode.latestCause.at) ||
+      !past(episode.latestCause.at) ||
       !activeProfile?.locomotion[episode.locomotion] ||
       !['escaping', 'settling', 'blocked'].includes(episode.mode) ||
       !life(episode.proposalGeneration) ||
@@ -245,6 +409,12 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
       !episode.dangers ||
       typeof episode.dangers !== 'object' ||
       Array.isArray(episode.dangers)
+    )
+      fail();
+    if (
+      (episode.acousticCue !== undefined && !cueValid(episode.acousticCue)) ||
+      (episode.acousticLegRequired !== undefined &&
+        (episode.acousticLegRequired !== true || !episode.acousticCue))
     )
       fail();
     if (
@@ -273,7 +443,7 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
     for (const [key, danger] of Object.entries(episode.dangers)) {
       if (
         !finitePoint(danger.point) ||
-        !time(danger.observedAt) ||
+        !past(danger.observedAt) ||
         (danger.insideAvoidance !== undefined && typeof danger.insideAvoidance !== 'boolean')
       )
         fail();
@@ -292,7 +462,7 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
           !Number.isFinite(danger.extent.height) ||
           danger.extent.height <= 0 ||
           typeof danger.visible !== 'boolean' ||
-          (danger.visible ? danger.lostAt !== undefined : !time(danger.lostAt!)) ||
+          (danger.visible ? danger.lostAt !== undefined : !past(danger.lostAt!)) ||
           key !== JSON.stringify(['body', danger.sourceId, danger.physicalLife])
         )
           fail();
@@ -323,10 +493,14 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
           'movementId',
           'body',
           'candidates',
+          'wait',
+          'search',
         ]) ||
+        !proposal.search ||
+        !['world', 'entity'].includes(proposal.wait!) ||
         proposal.generation !== episode.proposalGeneration ||
         !life(proposal.geometryRevision) ||
-        !time(proposal.at) ||
+        !past(proposal.at) ||
         !point(proposal.origin) ||
         (proposal.movementId !== null && !isSafeRecordId(proposal.movementId)) ||
         !hasRecordFields(proposal.body, ['radius', 'height', 'maxSlope']) ||
@@ -357,16 +531,58 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
       )
         fail();
     }
+    if (episode.proposal?.search) {
+      const q = episode.proposal,
+        search = q.search!,
+        rule = activeProfile!.candidates;
+      if (
+        !hasRecordFields(search, ['distance', 'bearing', 'side', 'attempted'], ['best']) ||
+        !Number.isFinite(search.distance) ||
+        search.distance < rule.distance.minimum ||
+        search.distance > rule.distance.maximum ||
+        !Number.isFinite(search.bearing) ||
+        ![1, -1].includes(search.side) ||
+        !Number.isSafeInteger(search.attempted) ||
+        search.attempted < 0 ||
+        search.attempted > rule.angles.length ||
+        q.wait !== rule.navigationWait ||
+        q.candidates.length > 1
+      )
+        fail();
+      const best = search.best;
+      if (
+        best &&
+        (!hasRecordFields(best, ['point', 'path', 'length', 'progress']) ||
+          !point(best.point) ||
+          !Array.isArray(best.path) ||
+          !best.path.length ||
+          best.path.length > 2048 ||
+          !best.path.every(point) ||
+          !Number.isFinite(best.length) ||
+          best.length < 0 ||
+          !Number.isFinite(best.progress) ||
+          best.progress <= 0 ||
+          best.progress > search.distance + 1e-5)
+      )
+        fail();
+    }
+    if (
+      episode.proposal?.wait !== undefined &&
+      !['world', 'entity'].includes(episode.proposal.wait)
+    )
+      fail();
     if (
       episode.refuge &&
       (!hasRecordFields(
         episode.refuge,
         ['point', 'selectedAt', 'generation'],
-        ['draw', 'flightRouteId'],
+        ['draw', 'flightRouteId', 'acousticDirection'],
       ) ||
         !point(episode.refuge.point) ||
-        !time(episode.refuge.selectedAt) ||
+        !past(episode.refuge.selectedAt) ||
         !life(episode.refuge.generation) ||
+        (episode.refuge.acousticDirection !== undefined &&
+          !validAcousticDirection(episode.refuge.acousticDirection)) ||
         (episode.refuge.draw !== undefined &&
           (!Number.isFinite(episode.refuge.draw) ||
             episode.refuge.draw < 0 ||
@@ -392,6 +608,57 @@ export function validateNativeResponse(world: WorldState, entity: Entity): void 
   }
   const action = entity.actor!.action,
     binding = action?.nativeLocomotion;
+  const flight = entity.spatial.flight,
+    airborne = flight?.nativeLocomotion;
+  if (airborne) {
+    const route = world.flightRoutes[flight!.routeId],
+      profile = nativeResponseProfile(world, airborne.profile);
+    if (
+      !hasRecordFields(
+        airborne,
+        [
+          'profile',
+          'locomotion',
+          'mode',
+          'id',
+          'physicalLife',
+          'routeDigest',
+          'episodeId',
+          'generation',
+          'selectedAt',
+          'geometryRevision',
+        ],
+        ['stopAt', 'draw'],
+      ) ||
+      !profile?.locomotion[airborne.locomotion]?.flightEscape ||
+      airborne.mode !== 'escape' ||
+      !isSafeRecordId(airborne.id) ||
+      airborne.physicalLife !== (entity.actor!.physicalLife ?? 0) ||
+      !life(airborne.generation!) ||
+      !time(airborne.selectedAt) ||
+      airborne.selectedAt > world.simTime ||
+      !life(airborne.geometryRevision) ||
+      (airborne.draw !== undefined &&
+        (!Number.isFinite(airborne.draw) || airborne.draw < 0 || airborne.draw >= 1)) ||
+      !route ||
+      airborne.routeDigest !== flightRouteDigest(route) ||
+      (airborne.stopAt !== undefined &&
+        (!Number.isSafeInteger(airborne.stopAt) ||
+          airborne.stopAt !== flight!.next ||
+          !!route.points[airborne.stopAt]?.landingSurfaceId)) ||
+      (!flight!.stopAtLanding &&
+        (!episode ||
+          airborne.episodeId !== episode.id ||
+          episode.movement?.kind !== 'flight' ||
+          episode.movement.id !== airborne.id ||
+          (airborne.stopAt === undefined &&
+            (episode.refuge?.flightRouteId !== route.id ||
+              episode.refuge.generation !== airborne.generation)) ||
+          !sameDefinitionPin(airborne.profile, episode.profilePin) ||
+          airborne.locomotion !== episode.locomotion))
+    )
+      fail();
+  } else if (episode?.movement?.kind === 'flight') fail();
   if (
     binding &&
     (!hasRecordFields(binding, ['profile', 'locomotion', 'mode'], ['episodeId', 'generation']) ||
@@ -435,8 +702,12 @@ export function validateNativeResponseProfile(profile: NativeResponseProfile): v
         'reviewSeconds',
         'blockedReviewSeconds',
         'passageDistance',
+        'soundAlarmMinimumBand',
+        'acousticChangeBandDb',
+        'acousticPatternIdleSeconds',
         'candidates',
         'locomotion',
+        'movementFactors',
         'wander',
         'presentation',
       ],
@@ -449,12 +720,18 @@ export function validateNativeResponseProfile(profile: NativeResponseProfile): v
   )
     invalid();
   if (
-    !hasRecordFields(profile.dangers, ['species', 'bodyPlans', 'currentNaturalAttack']) ||
+    !hasRecordFields(profile.dangers, [
+      'species',
+      'bodyPlans',
+      'currentNaturalAttack',
+      'attackPreparation',
+    ]) ||
     !Array.isArray(profile.dangers.species) ||
     !profile.dangers.species.every(isSafeRecordId) ||
     !Array.isArray(profile.dangers.bodyPlans) ||
     !profile.dangers.bodyPlans.every((plan) => ['biped', 'quadruped', 'avian'].includes(plan)) ||
-    typeof profile.dangers.currentNaturalAttack !== 'boolean'
+    typeof profile.dangers.currentNaturalAttack !== 'boolean' ||
+    typeof profile.dangers.attackPreparation !== 'boolean'
   )
     invalid();
   if (
@@ -470,15 +747,24 @@ export function validateNativeResponseProfile(profile: NativeResponseProfile): v
       profile.maximumUncertainty,
       profile.clearanceMargin,
       profile.passageDistance,
-    ].every(nonnegative)
+    ].every(nonnegative) ||
+    !positive(profile.acousticChangeBandDb) ||
+    !positive(profile.acousticPatternIdleSeconds) ||
+    (profile.soundAlarmMinimumBand !== null &&
+      (!Number.isSafeInteger(profile.soundAlarmMinimumBand) || profile.soundAlarmMinimumBand < 0))
   )
     invalid();
   const candidates = profile.candidates;
   if (
     !hasRecordFields(candidates, [
-      'rings',
+      'distance',
+      'angles',
+      'preferredProgress',
+      'minimumProgress',
+      'minimumAttempts',
+      'maximumDetourFactor',
+      'navigationWait',
       'maximumRouteLength',
-      'frontierMargin',
       'minimumAdvance',
       'worseningSlack',
       'arrivalMarginCap',
@@ -486,24 +772,30 @@ export function validateNativeResponseProfile(profile: NativeResponseProfile): v
       'tieMargin',
       'distanceWeightScale',
     ]) ||
-    !Array.isArray(candidates.rings) ||
-    !candidates.rings.length ||
-    !candidates.rings.every(
-      (ring) =>
-        hasRecordFields(ring, ['count', 'distance']) &&
-        Number.isSafeInteger(ring.count) &&
-        ring.count > 0 &&
-        positive(ring.distance),
-    ) ||
-    candidates.rings.reduce((count, ring) => count + ring.count, 0) + 2 >
-      NATIVE_RESPONSE_LIMITS.maximumCandidates ||
+    !hasRecordFields(candidates.distance, ['minimum', 'maximum']) ||
+    !positive(candidates.distance.minimum) ||
+    !positive(candidates.distance.maximum) ||
+    candidates.distance.maximum < candidates.distance.minimum ||
+    !Array.isArray(candidates.angles) ||
+    !candidates.angles.length ||
+    candidates.angles.length > NATIVE_RESPONSE_LIMITS.maximumCandidates ||
+    !candidates.angles.every(Number.isFinite) ||
+    !Number.isSafeInteger(candidates.minimumAttempts) ||
+    candidates.minimumAttempts < 1 ||
+    candidates.minimumAttempts > candidates.angles.length ||
+    !positive(candidates.minimumProgress) ||
+    candidates.minimumProgress > 1 ||
+    !positive(candidates.preferredProgress) ||
+    candidates.preferredProgress > 1 ||
+    candidates.preferredProgress < candidates.minimumProgress ||
+    !positive(candidates.maximumDetourFactor) ||
+    !['world', 'entity'].includes(candidates.navigationWait) ||
     ![
       candidates.maximumRouteLength,
       candidates.minimumAdvance,
       candidates.distanceWeightScale,
     ].every(positive) ||
     ![
-      candidates.frontierMargin,
       candidates.worseningSlack,
       candidates.arrivalMarginCap,
       candidates.continuityImprovement,
@@ -527,6 +819,11 @@ export function validateNativeResponseProfile(profile: NativeResponseProfile): v
       (speed.flightEscape !== undefined && !positive(speed.flightEscape))
     )
       invalid();
+  if (
+    !hasRecordFields(profile.movementFactors, ['scars']) ||
+    typeof profile.movementFactors.scars !== 'boolean'
+  )
+    invalid();
   if (
     !hasRecordFields(profile.wander, ['distance', 'minimumWaitSeconds', 'waitChoices']) ||
     !positive(profile.wander.distance) ||

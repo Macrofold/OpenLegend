@@ -46,23 +46,30 @@ export function navigationTriangles(map: SpatialMap) {
   };
   for (const s of map.spatial.surfaces) {
     if (s.terrain) {
-      // Cell squares are centered on integer coordinates. Visit only squares touching
-      // this patch; exact clipping below retains its original edges and triangle order.
+      // One terrain patch is affine. Adjacent admitted cells in a row share the
+      // same plane, so exporting their union avoids rasterizing internal seams.
+      // Keep gaps and exact clipped edges; blockers still have their own solids.
       const minX = Math.max(0, Math.floor(s.minX + 0.5)),
         maxX = Math.min(map.width - 1, Math.ceil(s.maxX - 0.5)),
         minZ = Math.max(0, Math.floor(s.minZ + 0.5)),
         maxZ = Math.min(map.height - 1, Math.ceil(s.maxZ - 0.5));
-      for (let z = minZ; z <= maxZ; z++)
-        for (let x = minX; x <= maxX; x++) {
-          const tile = map.tiles[z]?.[x],
-            terrain = tile === undefined ? undefined : map.terrain[tile];
-          if (!terrain || (!terrain.walkable && !terrain.solid?.movement)) continue;
-          const x0 = Math.max(s.minX, x - 0.5),
-            x1 = Math.min(s.maxX, x + 0.5),
-            z0 = Math.max(s.minZ, z - 0.5),
-            z1 = Math.min(s.maxZ, z + 0.5);
-          if (x0 < x1 && z0 < z1) slab(x0, x1, z0, z1, (x, z) => surfaceHeight(s, x, z));
+      for (let z = minZ; z <= maxZ; z++) {
+        const z0 = Math.max(s.minZ, z - 0.5),
+          z1 = Math.min(s.maxZ, z + 0.5);
+        let run: number | undefined;
+        for (let x = minX; x <= maxX + 1; x++) {
+          const tile = x <= maxX ? map.tiles[z]?.[x] : undefined,
+            terrain = tile === undefined ? undefined : map.terrain[tile],
+            admitted = terrain && (terrain.walkable || terrain.solid?.movement);
+          if (admitted) run ??= x;
+          else if (run !== undefined) {
+            const x0 = Math.max(s.minX, run - 0.5),
+              x1 = Math.min(s.maxX, x - 0.5);
+            if (x0 < x1 && z0 < z1) slab(x0, x1, z0, z1, (x, z) => surfaceHeight(s, x, z));
+            run = undefined;
+          }
         }
+      }
     } else
       slab(
         s.minX,

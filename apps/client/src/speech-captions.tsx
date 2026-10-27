@@ -1,7 +1,11 @@
 import { createRoot, type Root } from 'react-dom/client';
-import type { GameView, PublicEvent, PerceivedSpeech } from '@open-legend/protocol';
+import type {
+  GameView,
+  PublicEvent,
+  PerceivedSpeech,
+  SpeechPresentation,
+} from '@open-legend/protocol';
 import { Icon } from './design-system/components';
-import { eventSpeechPresentation } from './speech-presentation';
 import { ProgressRing, progressFraction } from './design-system/progress-ring';
 import {
   PresentationClock,
@@ -20,14 +24,18 @@ export type CaptionPoint = {
 };
 export type CaptionProjection = {
   head(id: string): CaptionPoint | null;
-  direction(speech: PerceivedSpeech, width: number, height: number): CaptionPoint | null;
+  direction(
+    speech: PerceivedSpeech,
+    width: number,
+    height: number,
+    sourceId?: string,
+  ): CaptionPoint | null;
   neutral(index: number): CaptionPoint;
   width: number;
   height: number;
 };
 type Entry = {
-  event: PublicEvent & { speech: PerceivedSpeech };
-  wording: ReturnType<typeof eventSpeechPresentation>;
+  event: PublicEvent & { speech: PerceivedSpeech; speechPresentation: SpeechPresentation };
   chunks: string[];
   chunk: number;
   lifetime: PresentationLifetime;
@@ -59,7 +67,7 @@ function chunks(text: string): string[] {
           break;
         }
     }
-    result.push(graphemes.slice(start, end).join('').trim());
+    result.push(graphemes.slice(start, end).join(''));
     start = end;
   }
   return result.length ? result : [''];
@@ -74,6 +82,13 @@ export const captionScope = (view: GameView) =>
     view.player.life,
     view.historyEpoch,
   ]);
+const captionText = (event: Entry['event']) =>
+  event.speech.intelligibility === 'none'
+    ? event.speechPresentation.personalText
+    : event.speechPresentation.segments
+        .map((segment) => (segment.kind === 'heard' ? segment.text : '[…]'))
+        .join(' ');
+
 /** React owns text; the existing scene callback paints positions and fractions only. */
 export class SpeechCaptions {
   private readonly layer = document.createElement('div');
@@ -191,7 +206,7 @@ export class SpeechCaptions {
     for (const event of view.events) {
       if (this.seen.has(event.id)) continue;
       this.seen.add(event.id);
-      if (!event.speech || !this.options.enabled) continue;
+      if (!event.speech || !event.speechPresentation || !this.options.enabled) continue;
       if (document.hidden) {
         this.drop(event);
         continue;
@@ -218,11 +233,9 @@ export class SpeechCaptions {
         this.dropUnshown(this.pending.splice(evict, 1));
       }
       const perceived = event as Entry['event'];
-      const wording = eventSpeechPresentation(perceived, view.player.id);
-      const parts = chunks(wording.quotation ?? wording.detail);
+      const parts = chunks(captionText(perceived));
       const entry: Entry = {
         event: perceived,
-        wording,
         visible: false,
         lastVisibleAt: this.clock.now,
         priority,
@@ -315,20 +328,26 @@ export class SpeechCaptions {
         <>
           {this.active.map((entry) => {
             const speech = entry.event.speech;
-            const wording = entry.wording;
             return (
               <div
                 key={`${entry.event.id}:${entry.chunk}`}
                 className="ol-speech-caption"
                 role={entry.chunk === 0 ? 'status' : undefined}
-                aria-label={entry.chunk === 0 ? entry.event.text : undefined}
+                aria-label={
+                  entry.chunk === 0 ? entry.event.speechPresentation?.accessibilityText : undefined
+                }
                 aria-hidden={entry.chunk > 0 ? true : undefined}
                 ref={entry.attach}
               >
                 <div aria-hidden="true">
                   <div className="ol-speech-caption-meta">
                     <span>
-                      {wording.attribution}
+                      {entry.event.speechPresentation?.speakerLabel ?? 'Someone nearby'}
+                      {speech.delivery === 'whisper'
+                        ? ' (whispering)'
+                        : speech.delivery === 'shout'
+                          ? ' (shouting)'
+                          : ''}
                       {speech.intelligibility === 'partial' ? ' (partly heard)' : ''}
                       {entry.chunks.length > 1
                         ? ` (${entry.chunk + 1}/${entry.chunks.length})`
@@ -347,6 +366,11 @@ export class SpeechCaptions {
                       ➜
                     </span>
                   </div>
+                  {entry.event.speechPresentation?.directionLabel && (
+                    <div className="ol-speech-caption-recipient">
+                      {entry.event.speechPresentation.directionLabel}
+                    </div>
+                  )}
                   <span
                     className="ol-speech-direction-label"
                     ref={(node) => {
@@ -400,7 +424,7 @@ export class SpeechCaptions {
         point.x + width / 2 <= p.width - 8 &&
         point.y - height >= 8 &&
         point.y <= p.height - 8;
-      const direction = p.direction(speech, width, height);
+      const direction = p.direction(speech, width, height, speech.speakerContact);
       const candidates = [head, direction, p.neutral(index)].filter(
         (point): point is CaptionPoint => !!point && inBounds(point),
       );

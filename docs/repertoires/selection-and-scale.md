@@ -61,6 +61,12 @@ Use [world tone and scope](design-foundation.md#world-tone-and-scope) for subjec
 
 ## Complexity budgets that protect the experience
 
+**A represented subject is not a commitment to its complete supporting system.** A cruel creditor, dishonest host or captive worker can matter in a bounded authored encounter through existing supported speech, custody, combat and exchange. A detailed debt economy, gambling service or labor market can still be later scope. Specialist does not prohibit the subject, and mature content does not automatically become Core. Select the actual actions and consequences required by the scene; prose cannot supply an unsupported capability.
+
+Keep different scopes distinct when comparing catalogue tags. INS-190 describes a selected captive-labor institution, ARC-150 a selected market place and custody encounter, while ECON-175, ECON-274 and WORK-174 describe fuller economic or occupational practices without a seed selection. Likewise ARC-129 includes medieval adult-venue architecture, while ECON-108 and WORK-149 select modern and science-fiction services. Their existing priorities and world badges remain justified by those different capabilities; depicting one person or place does not promote the whole service. The owning [institution](institutions-politics.md), [architecture](settlements-architecture.md), [economy](economy-logistics.md) and [work](work-crafting.md) rows retain their exact selections.
+
+Catalogue Priority selects what to build; Level describes how the proposed behavior is realized. Neither ranks which of a character's existing facts may matter now. An old observation, a personally valued object, a compatible learned technique or an ordinary pleasure can be necessary to an informed present choice even when its optional supporting feature was originally Detail or Specialist. The [situation-aware cognition design](../projects/situation-aware-cognition-context-feature-spec.md) selects from the person's actual situation, permitted knowledge, commitments and discoverable opportunities, preserving the evidence needed to recognize alternatives and their costs. It does not send unused catalogue text, grant a capability because a proposal exists, or require a matching goal before something interesting can be noticed.
+
 The figures here remain **illustrative prototype bounds**, not measured capacities or accepted product limits. A first scene might use 3–8 named people, 3–5 interacting families, one locality and a finite objective. Do not treat those counts as requirements for every encounter. Expand when added scope creates an observable, worthwhile decision.
 
 | Kind of complexity         | Pay for it when                                                   | Contain it by                                                             | Warning sign                                                            |
@@ -89,6 +95,17 @@ Novel interpretation and consequential conversation may use models within permit
 **Persistent wars, lethal needs and severe injury:** choose an understandable loss/recovery contract, then add severity deliberately. Do not accidentally stack harsh systems until no interesting choices remain. Basic enemy combat does not need continental war or detailed lifelong injury.
 
 **Infinite generation, marketplaces and versioned packs:** first prove that another person can enjoy the authored game. General distribution, world compilation and portability are separate platform scope.
+
+## Review the selected scene mix
+
+Review the opening, recurring cast and promoted worked scenes together. Use the [foundation's emotional direction](design-foundation.md#world-tone-and-scope) without turning it into a numerical distribution or required sequence of moods.
+
+- **An enticing goal and a visible result.** Identify what is worth gaining, what the player can do, who else wants something, what can resist the attempt and what changes after success, a partial result or failure. Impact can be an intimate rupture, a coveted opportunity or a new route; scale and body count do not measure it.
+- **Varied activities and imperfect people.** Include ordinary friction, significant adversity, discovery, ambition, earned enjoyment and quiet aftermath across the selected experience. Competition, exploration, investigation, invention, rescue, confrontation, departure and celebration should not repeatedly resolve into the same polite repair meeting. Some enemies can cooperate; others may refuse, exploit or remain malicious.
+- **Continuing consequences and useful stopping points.** A clean victory, profitable wrong, broken promise or rejected apology can stand. Allies, victims and rivals retain their own purposes afterward. Success may retire a problem and make space for another freely chosen ambition; a calm interval need not conceal an emergency.
+- **Quiet life with a purpose of its own.** Keep pleasure, care, accessibility, rest and a familiar home available. Use mundane detail for attachment, preparation or selected life play rather than forcing every player through repeated administrative chores. Do not darken every modest scene to justify its place.
+
+The [25 combined situations](combinations.md) provide a reading order across world families, not an obligation to implement all of them. Preserve their world badges, capability gaps and priorities when choosing a smaller coherent opening. A catalogue experiment or appealing description is not runtime evidence.
 
 ## What would change our prioritization
 

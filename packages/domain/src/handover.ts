@@ -1,19 +1,50 @@
+import { takeNativeChanges } from './native-change-feed.js';
+import { isDraft, original } from 'immer';
+import {
+  itemOfferSnapshot,
+  perceivedItemOffers,
+  rememberedTradeLots,
+  mutualSocialReception,
+  type PerceivedItemOffer,
+} from './personal-social.js';
+import { EXPERIENCE_LIMITS } from './experience.js';
+import { countDomainWork } from './diagnostic-counters.js';
+import { carryingOffer, recordCarryingCustody } from './outings.js';
+import { socialOfferAdmissionProblem } from './social-offers.js';
+import { reconcileConstructionAuthority } from './assembly-use.js';
+import {
+  prepareConstructionContribution,
+  validContributionTerms,
+  validContributionConsent,
+  sameContributionConsent,
+  type ConstructionContributionConsent,
+} from './construction-contributions.js';
+import {
+  applyConstructionPermissionEffect,
+  type ConstructionPermissionBatch,
+} from './construction-permissions.js';
+import type { ConstructionPermission } from './assembly-types.js';
+import { cloneValue, entityChangesSince } from './draft.js';
 import { entityGet, entityOwn, entityValues } from './entity-collection.js';
+import { canonicalJson } from './events.js';
 import { subjectNarration } from './narration.js';
 import { emit, emitPrivateObservation, emitWitnessObservation, outcome } from './events.js';
 import { canHandleItems } from './item-handling.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
 import {
+  itemContainerCapacity,
+  recordMaterialContribution,
   directChildIds,
   itemFor,
   moveLot,
   moveLotsTogether,
   jointItemMoveReason,
   objectAncestors,
+  custodian,
 } from './objects.js';
 import { activelyParticipates } from './participation-state.js';
 import { seesEntity } from './perception.js';
-import { getOwn, hasRecordFields, isSafeRecordId } from './records.js';
+import { getOwn, hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
 import { availableItemQuantity } from './resource-claims.js';
 import { canReachEntity } from './spatial.js';
 import { nextId } from './data.js';
@@ -32,6 +63,7 @@ export interface RequestedLot {
   expectedContentsRevision?: number;
 }
 export interface OfferLot {
+  capacity?: number;
   itemId: string;
   definitionPin: DefinitionPin;
   quantity: number;
@@ -57,10 +89,18 @@ export interface ItemOffer {
   recipientId: string;
   offered: OfferLot;
   requested?: OfferLot;
+  constructionUse?: ConstructionContributionConsent;
   createdAt: number;
   expiresAt: number;
 }
-export const HANDOVER_OPERATIONS = ['offer', 'counter', 'accept', 'decline', 'withdraw'] as const;
+export const HANDOVER_OPERATIONS = [
+  'offer',
+  'counter',
+  'accept',
+  'decline',
+  'withdraw',
+  'withdraw-use',
+] as const;
 type HandoverCommand = Extract<Command, { type: 'handover' }>;
 type TermsCommand = Extract<HandoverCommand, { operation: 'offer' | 'counter' }>;
 const revision = (value: unknown) => Number.isSafeInteger(value) && Number(value) >= 0;
@@ -77,9 +117,12 @@ function validRequest(lot: RequestedLot): boolean {
 }
 export function isHandoverCommand(command: Command): boolean {
   if (command?.type !== 'handover' || !isSafeRecordId(command.targetId)) return false;
+  if (command.operation === 'withdraw-use')
+    return isSafeRecordId(command.permissionId) && revision(command.expectedRevision);
   if (command.operation === 'offer' || command.operation === 'counter')
     return (
       validRequest(command) &&
+      (command.constructionUse === undefined || validContributionTerms(command.constructionUse)) &&
       (command.requested === undefined || validRequest(command.requested)) &&
       (command.targetRevision === undefined || revision(command.targetRevision)) &&
       (command.operation !== 'counter' ||
@@ -98,13 +141,15 @@ interface OffersBetween {
 interface OfferIndex {
   between: Map<string, Map<string, { incoming: ItemOffer[]; outgoing: ItemOffer[] }>>;
   byItem: Map<string, ItemOffer>;
-  outgoingCount: Map<string, number>;
+  deadlines: ItemOffer[];
+  order: Map<string, number>;
 }
 const offerIndexes = new WeakMap<NonNullable<WorldState['itemOffers']>, OfferIndex>();
 const emptyOfferIndex: OfferIndex = {
   between: new Map(),
   byItem: new Map(),
-  outgoingCount: new Map(),
+  deadlines: [],
+  order: new Map(),
 };
 const noOffers: OffersBetween = Object.freeze({
   incoming: Object.freeze([]),
@@ -113,12 +158,13 @@ const noOffers: OffersBetween = Object.freeze({
 function offerIndex(world: WorldState): OfferIndex {
   if (!world.itemOffers) return emptyOfferIndex;
   const offers = readOnlyDraftView(world.itemOffers);
-  const cached = Object.isFrozen(offers) ? offerIndexes.get(offers) : undefined;
+  const cached = isImmutableData(offers) ? offerIndexes.get(offers) : undefined;
   if (cached) return cached;
   const index: OfferIndex = {
     between: new Map(),
     byItem: new Map(),
-    outgoingCount: new Map(),
+    deadlines: [],
+    order: new Map(),
   };
   const pair = (actorId: string, otherId: string) => {
     let people = index.between.get(actorId);
@@ -128,12 +174,14 @@ function offerIndex(world: WorldState): OfferIndex {
     return terms;
   };
   for (const offer of Object.values(offers ?? {})) {
+    index.order.set(offer.id, index.order.size);
+    index.deadlines.push(offer);
     pair(offer.offererId, offer.recipientId).outgoing.push(offer);
     pair(offer.recipientId, offer.offererId).incoming.push(offer);
     index.byItem.set(offer.offered.itemId, offer);
     if (offer.requested) index.byItem.set(offer.requested.itemId, offer);
-    index.outgoingCount.set(offer.offererId, (index.outgoingCount.get(offer.offererId) ?? 0) + 1);
   }
+  index.deadlines.sort((a, b) => a.expiresAt - b.expiresAt);
   for (const people of index.between.values())
     for (const terms of people.values()) {
       Object.freeze(terms.incoming);
@@ -142,7 +190,7 @@ function offerIndex(world: WorldState): OfferIndex {
     }
   // A published offer table has immutable terms. Draft edits/mutable builders rebuild;
   // deletion, replacement and restore therefore cannot inherit stale consent or membership.
-  if (offers && Object.isFrozen(offers)) offerIndexes.set(offers, index);
+  if (offers && isImmutableData(offers)) offerIndexes.set(offers, index);
   return index;
 }
 export function offersBetween(world: WorldState, actorId: string, otherId: string): OffersBetween {
@@ -155,14 +203,7 @@ export function knownTradeLots(
   otherId: string,
   limit: number = BASE_HANDOVER.candidateLots,
 ): KnownTradeLot[] {
-  const result: KnownTradeLot[] = [],
-    remembered = entityGet(world.entities, actorId)?.actor?.knownTradeLots?.[otherId] ?? {};
-  for (const id in remembered) {
-    const known = getOwn(remembered, id);
-    if (known) result.push(known);
-    if (result.length >= limit) break;
-  }
-  return result;
+  return rememberedTradeLots(world, actorId, otherId, limit);
 }
 const able = (entity: Entity | undefined): entity is Entity =>
   !!entity?.actor &&
@@ -200,19 +241,88 @@ function pinLot(world: WorldState, item: ItemInstance, quantity: number): OfferL
     placementRevision: entity.placement!.revision,
     ...(entity.container
       ? {
+          capacity: itemContainerCapacity(world, entity),
           contentsRevision: entity.inventoryRevision ?? 0,
           subtreeRevision: entity.container.subtreeRevision,
         }
       : {}),
   };
 }
-export function describeOfferLot(world: WorldState, lot: OfferLot): string {
-  return lot.quantity + ' ' + (world.itemDefinitions[lot.definitionPin.id]?.name ?? 'item');
+export function pendingItemOfferCounts(world: WorldState, actorId: string, excluding?: string) {
+  const result = { incoming: 0, outgoing: 0 };
+  for (const between of offerIndex(world).between.get(actorId)?.values() ?? []) {
+    for (const offer of between.incoming)
+      if (offer.id !== excluding && offer.expiresAt > world.simTime) result.incoming++;
+    for (const offer of between.outgoing)
+      if (offer.id !== excluding && offer.expiresAt > world.simTime) result.outgoing++;
+  }
+  return result;
 }
-export function describeItemOffer(world: WorldState, offer: ItemOffer): string {
-  return BASE_HANDOVER.text.terms(
-    describeOfferLot(world, offer.offered),
-    offer.requested && describeOfferLot(world, offer.requested),
+export function describeOfferLot(world: WorldState, lot: OfferLot): string {
+  return (
+    lot.quantity +
+    ' ' +
+    (world.itemDefinitions[lot.definitionPin.id]?.name ?? 'item') +
+    (lot.capacity === undefined ? '' : ` (capacity ${lot.capacity})`)
+  );
+}
+export function describeItemOffer(
+  world: WorldState,
+  offer: Pick<ItemOffer, 'offered' | 'requested'> & {
+    constructionUse?: {
+      terms: import('./construction-contributions.js').ConstructionContributionTerms;
+    };
+    descriptions?: PerceivedItemOffer['descriptions'];
+  },
+): string {
+  const ordinary = BASE_HANDOVER.text.terms(
+    offer.descriptions
+      ? `${offer.offered.quantity} ${offer.descriptions.offered.name}`
+      : describeOfferLot(world, offer.offered),
+    offer.requested &&
+      (offer.descriptions?.requested
+        ? `${offer.requested.quantity} ${offer.descriptions.requested.name}`
+        : describeOfferLot(world, offer.requested)),
+  );
+  if (!offer.constructionUse) return ordinary;
+  return ordinary + ' — ' + describeConstructionUse(world, offer.constructionUse.terms);
+}
+export function describeConstructionUse(
+  world: WorldState,
+  terms: import('./construction-contributions.js').ConstructionContributionTerms,
+  timePlaceholder = false,
+): string {
+  const policy = world.constructionProfile?.materialContributions;
+  if (!policy)
+    throw new Error('An active construction contribution requires its installed presentation.');
+  const family =
+      world.constructionProfile && world.assemblyFamilies?.[world.constructionProfile.family.id],
+    boundary =
+      world.constructionProfile?.boundary &&
+      world.assemblyFamilies?.[world.constructionProfile.boundary.id];
+  const operation =
+    boundary?.implementation === 'grounded-panel-boundary' && terms.operation in boundary.labels
+      ? boundary.labels[terms.operation as keyof typeof boundary.labels]
+      : family?.implementation === 'four-corner-flexible-bays' && terms.operation in family.labels
+        ? family.labels[terms.operation as keyof typeof family.labels]
+        : terms.operation === 'place-hearth'
+          ? Object.values(world.hearthDefinitions ?? {})[0]?.actionLabel
+          : undefined;
+  const values = {
+    operation: operation ?? policy.label,
+    site: policy.siteLabels[terms.site.surfaceId] ?? policy.label,
+    ...Object.fromEntries(
+      Object.entries(terms.site).map(([key, value]) => [
+        key,
+        typeof value === 'number' ? Number(value.toFixed(2)) : value,
+      ]),
+    ),
+    minutes: timePlaceholder
+      ? '{minutes}'
+      : Math.max(0, Math.ceil((terms.expiresAt - world.simTime) / 60)),
+  };
+  return policy.termsText.replace(/\{(\w+)\}/g, (_match, key) =>
+    String(values[key as keyof typeof values] ?? ''),
   );
 }
 function lotStillHeld(world: WorldState, holderId: string, lot: OfferLot, exact = true): boolean {
@@ -228,6 +338,8 @@ function lotStillHeld(world: WorldState, holderId: string, lot: OfferLot, exact 
     sameDefinitionPin(entityGet(world.entities, item.id)!.item!.definitionPin, lot.definitionPin) &&
     (!exact ||
       (item.revision === lot.revision && item.placementRevision === lot.placementRevision)) &&
+    (lot.capacity === undefined ||
+      itemContainerCapacity(world, entityGet(world.entities, item.id)!) === lot.capacity) &&
     definition.portable === true &&
     accessiblePossession(world, holderId, item.id) &&
     availableItemQuantity(world, item.id) >= lot.quantity &&
@@ -245,29 +357,6 @@ function offerStillHeld(world: WorldState, offer: ItemOffer): boolean {
     (!offer.requested || lotStillHeld(world, offer.recipientId, offer.requested))
   );
 }
-function remember(world: WorldState, learnerId: string, holderId: string, lot: OfferLot) {
-  const learner = entityGet(world.entities, learnerId)?.actor,
-    entity = entityGet(world.entities, lot.itemId);
-  const definition = world.itemDefinitions[lot.definitionPin.id];
-  if (!learner || !definition || !entity?.item) return;
-  const known = (learner.knownTradeLots ??= {});
-  const disclosed: KnownTradeLot = {
-    lot: { ...lot, definitionPin: { ...lot.definitionPin } },
-    name: definition.name,
-    description: definition.description,
-    disclosedAt: world.simTime,
-  };
-  // Recent executable references are bounded; ordinary memories retain older experiences.
-  // docs/limits/parallel-batch-04-expeditions-and-exchange.md#px-l01--one-exact-lot-on-each-side-of-an-immediate-barter
-  const recent = knownTradeLots(world, learnerId, holderId).filter(
-    (entry) => entry.lot.itemId !== lot.itemId,
-  );
-  known[holderId] = Object.fromEntries(
-    [disclosed, ...recent]
-      .slice(0, BASE_HANDOVER.candidateLots)
-      .map((entry) => [entry.lot.itemId, entry]),
-  );
-}
 /** Witnesses perceive the ordinary act; only parties receive exact reciprocal terms.
  * Private occurrences use existing awareness/memory, without disclosing bag interiors. */
 function notice(
@@ -280,53 +369,52 @@ function notice(
   targetId: string,
   trigger = false,
 ) {
-  if (!source) return;
-  if (!offer.requested) {
-    emit(
+  const ended = type !== 'item-offered',
+    automatic = type === 'offer-expired' || type === 'offer-lapsed';
+  if (source && !automatic)
+    emitWitnessObservation(
       world,
       events,
       type,
-      BASE_HANDOVER.text.giftEvent(source.id, verb, describeItemOffer(world, offer)),
+      subjectNarration(source, BASE_HANDOVER.text.witness(verb)),
       source,
       targetId,
-      {
-        offerId: offer.id,
-        offerRevision: offer.revision,
-        semanticTrigger: trigger,
-        urgency: trigger ? 4 : 0,
-      },
+      { offerId: offer.id },
     );
-    return;
-  }
-  emitWitnessObservation(
-    world,
-    events,
-    type,
-    subjectNarration(source, BASE_HANDOVER.text.witness(verb)),
-    source,
-    targetId,
-    { offerId: offer.id },
-  );
+  let receipt: string | undefined;
   for (const id of [offer.offererId, offer.recipientId]) {
     const receiver = entityGet(world.entities, id);
     if (!receiver?.actor) continue;
-    emitPrivateObservation(
-      world,
-      events,
-      type,
-      receiver,
-      BASE_HANDOVER.text.participantEvent(source.id, verb, describeItemOffer(world, offer)),
-      source,
-      targetId,
-      {
-        offerId: offer.id,
-        offerRevision: offer.revision,
-        semanticTrigger: trigger && id === targetId,
-        urgency: trigger && id === targetId ? 4 : 0,
-      },
+    const previous = perceivedItemOffers(world, id).find(
+      (known) => known.id === offer.id && known.revision === offer.revision,
     );
+    const delivered =
+      !ended ||
+      type === 'offer-expired' ||
+      source?.id === id ||
+      (source && mutualSocialReception(world, id, source.id));
+    if (!delivered || (ended && !previous)) continue;
+    const snapshot = itemOfferSnapshot(world, offer, id, ended ? type : undefined);
+    const text = automatic
+      ? `${type === 'offer-expired' ? 'The stated offer deadline has passed.' : 'Your previously offered terms are no longer available.'} ${describeItemOffer(world, snapshot)}`
+      : BASE_HANDOVER.text.participantEvent(source!.id, verb, describeItemOffer(world, snapshot));
+    const data = {
+      offerId: offer.id,
+      offerRevision: offer.revision,
+      personalAgreement: true,
+      agreement: canonicalJson(snapshot),
+      semanticTrigger: trigger && id === targetId,
+      urgency: trigger && id === targetId ? 4 : 0,
+      importance: EXPERIENCE_LIMITS.protectedImportance,
+    };
+    const event = automatic
+      ? emit(world, events, type, text, receiver, undefined, data, 'private')
+      : emitPrivateObservation(world, events, type, receiver, text, source!, targetId, data);
+    if (id === source?.id || !receipt) receipt = event.id;
   }
+  return receipt;
 }
+
 function close(
   world: WorldState,
   events: WorldEvent[],
@@ -338,7 +426,7 @@ function close(
 ) {
   delete world.itemOffers![offer.id];
   if (!Object.keys(world.itemOffers!).length) delete world.itemOffers;
-  notice(world, events, offer, type, verb, source, targetId);
+  return notice(world, events, offer, type, verb, source, targetId);
 }
 function matchingSelection(
   world: WorldState,
@@ -369,7 +457,16 @@ export function prepareItemOffer(
   world: WorldState,
   actor: Entity,
   command: TermsCommand,
-): Outcome | { item: ItemInstance; recipient: Entity; requested?: OfferLot; prior?: ItemOffer } {
+  permissions: readonly ConstructionPermission[] = [],
+):
+  | Outcome
+  | {
+      item: ItemInstance;
+      recipient: Entity;
+      requested?: OfferLot;
+      prior?: ItemOffer;
+      constructionUse?: ConstructionContributionConsent;
+    } {
   if (!isHandoverCommand(command))
     return outcome(false, 'invalid-command', 'Choose an offer and a person.');
   const other = entityOwn(world.entities, command.targetId);
@@ -415,8 +512,18 @@ export function prepareItemOffer(
   if (command.requested) {
     // Check knowledge before touching other stock. Guessed IDs and unavailable remembered
     // objects produce the same refusal, never where/why the other person's item changed.
-    const known = getOwn(actor.actor!.knownTradeLots?.[other.id] ?? {}, command.requested.itemId);
-    const previous = prior && (prior.offererId === other.id ? prior.offered : prior.requested);
+    const known = knownTradeLots(world, actor.id, other.id).find(
+      (entry) => entry.lot.itemId === command.requested!.itemId,
+    );
+    const receivedPrior =
+      prior &&
+      perceivedItemOffers(world, actor.id).find(
+        (known) =>
+          known.id === prior.id && known.revision === prior.revision && known.status === 'pending',
+      );
+    const previous =
+      receivedPrior &&
+      (receivedPrior.offererId === other.id ? receivedPrior.offered : receivedPrior.requested);
     // An open proposal is itself a permitted disclosure even after the compact memory
     // list ages it out. It grants only its exact lot/pins/quantity, never other stock.
     const disclosed =
@@ -456,14 +563,37 @@ export function prepareItemOffer(
     return outcome(false, 'already-offered', 'These items are already being offered.');
   if (requested && overlaps(requested.itemId))
     return outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable);
-  if (
-    (pending.outgoingCount.get(actor.id) ?? 0) - (prior?.offererId === actor.id ? 1 : 0) >=
-    BASE_HANDOVER.pendingPerOfferer
-  )
-    return outcome(false, 'offer-limit', 'Withdraw an earlier offer first.');
+  const admission = socialOfferAdmissionProblem(
+    world,
+    actor.id,
+    other.id,
+    prior ? { family: 'handover', id: prior.id } : undefined,
+  );
+  if (admission) return admission;
+  if (world.socialOfferPolicy!.onePendingPerPair) {
+    const between = offersBetween(world, actor.id, other.id);
+    if (
+      [...between.incoming, ...between.outgoing].some(
+        (offer) => offer.id !== prior?.id && offer.expiresAt > world.simTime,
+      )
+    )
+      return outcome(false, 'offer-pending', world.socialOfferPolicy!.messages.pair);
+  }
+  const constructionUse =
+    command.constructionUse &&
+    prepareConstructionContribution(
+      world,
+      permissions,
+      actor.id,
+      other.id,
+      item.id,
+      command.constructionUse,
+    );
+  if (constructionUse && 'ok' in constructionUse) return constructionUse;
   return {
     item,
     recipient: other,
+    ...(constructionUse ? { constructionUse } : {}),
     ...(requested ? { requested } : {}),
     ...(prior ? { prior } : {}),
   };
@@ -491,6 +621,7 @@ export function itemOfferReplyProblem(
   world: WorldState,
   actor: Entity,
   command: Extract<HandoverCommand, { operation: 'accept' | 'decline' | 'withdraw' }>,
+  permissions: readonly ConstructionPermission[] = [],
 ): Outcome | undefined {
   if (!isHandoverCommand(command))
     return outcome(false, 'invalid-command', 'Choose an offer and a person.');
@@ -499,8 +630,11 @@ export function itemOfferReplyProblem(
     command.operation === 'withdraw'
       ? offer?.offererId === actor.id && offer.recipientId === command.targetId
       : offer?.recipientId === actor.id && offer.offererId === command.targetId;
-  if (!offer || !own)
-    return outcome(false, 'no-offer', 'There is no such offer between you and that person.');
+  if (!offer || !own) {
+    const known = rememberedOfferExit(world, actor.id, command);
+    if (known) return;
+    return outcome(false, 'no-offer', 'These offer terms are no longer available.');
+  }
   if (offer.revision !== command.expectedOfferRevision)
     return outcome(false, 'stale-offer', BASE_HANDOVER.text.changed);
   if (command.operation !== 'accept') return;
@@ -518,6 +652,19 @@ export function itemOfferReplyProblem(
       'offer-lapsed',
       offer.requested ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
     );
+  if (offer.constructionUse) {
+    const current = prepareConstructionContribution(
+      world,
+      permissions,
+      offer.offererId,
+      offer.recipientId,
+      offer.offered.itemId,
+      offer.constructionUse.terms,
+    );
+    if ('ok' in current) return current;
+    if (!sameContributionConsent(current, offer.constructionUse))
+      return outcome(false, 'stale-offer', BASE_HANDOVER.text.changed);
+  }
   if (jointItemMoveReason(world, offerMoves(offer)))
     return outcome(
       false,
@@ -525,14 +672,72 @@ export function itemOfferReplyProblem(
       offer.requested ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
     );
 }
+export function contributionWithdrawalProblem(
+  world: WorldState,
+  actor: Entity,
+  command: Extract<HandoverCommand, { operation: 'withdraw-use' }>,
+  permissions: readonly ConstructionPermission[],
+): Outcome | undefined {
+  if (!isHandoverCommand(command))
+    return outcome(false, 'invalid-command', 'Choose the current material-use permission.');
+  const permission = permissions.find(
+    (p) => p.id === command.permissionId && p.worldId === world.id,
+  );
+  if (
+    !permission?.contribution ||
+    ![permission.actorId, permission.contribution.donorId].includes(actor.id)
+  )
+    return outcome(
+      false,
+      'construction-contribution',
+      'You cannot withdraw that material-use permission.',
+    );
+  const other =
+    permission.actorId === actor.id ? permission.contribution.donorId : permission.actorId;
+  if (
+    command.targetId !== other ||
+    permission.revision !== command.expectedRevision ||
+    permission.revoked
+  )
+    return outcome(false, 'stale', 'The material-use permission changed. Refresh it.');
+}
 export function executeHandover(
   world: WorldState,
   actor: Entity,
   command: HandoverCommand,
   events: WorldEvent[],
+  batch: ConstructionPermissionBatch,
 ): Outcome {
+  if (command.operation === 'withdraw-use') {
+    const problem = contributionWithdrawalProblem(world, actor, command, batch.permissions);
+    if (problem) return problem;
+    applyConstructionPermissionEffect(batch, {
+      kind: 'contribution-ended',
+      permissionId: command.permissionId,
+      permissionRevision: command.expectedRevision,
+      actionId: command.id,
+      at: world.simTime,
+      reason: 'withdrawn',
+      actorId: actor.id,
+    });
+    reconcileConstructionAuthority(world, batch.permissions);
+    const message = 'Material-use permission withdrawn. Completed work and possessions remain.';
+    emitPrivateObservation(
+      world,
+      events,
+      'contribution-withdrawn',
+      actor,
+      message,
+      actor,
+      command.targetId,
+      { permissionId: command.permissionId },
+    );
+    // Operational revocation is not remote sensory evidence. The other person
+    // discovers any interrupted work through its ordinary admitted outcome.
+    return outcome(true, 'contribution-withdrawn', message);
+  }
   if ('itemId' in command) {
-    const prepared = prepareItemOffer(world, actor, command);
+    const prepared = prepareItemOffer(world, actor, command, batch.permissions);
     if ('ok' in prepared) return prepared;
     const offer: ItemOffer = {
       id: prepared.prior?.id ?? nextId(world, 'offer'),
@@ -541,13 +746,15 @@ export function executeHandover(
       recipientId: prepared.recipient.id,
       offered: pinLot(world, prepared.item, command.quantity),
       ...(prepared.requested ? { requested: prepared.requested } : {}),
+      ...(prepared.constructionUse
+        ? { constructionUse: cloneValue(prepared.constructionUse) }
+        : {}),
       createdAt: world.simTime,
-      expiresAt: world.simTime + BASE_HANDOVER.offerSeconds,
+      expiresAt: world.simTime + world.socialOfferPolicy!.pendingSeconds,
     };
     if (!Number.isSafeInteger(offer.revision))
       return outcome(false, 'stale-offer', BASE_HANDOVER.text.changed);
     (world.itemOffers ??= {})[offer.id] = offer;
-    remember(world, offer.recipientId, offer.offererId, offer.offered);
     notice(
       world,
       events,
@@ -564,12 +771,35 @@ export function executeHandover(
       'Offered ' +
         describeItemOffer(world, offer) +
         '. Nothing moves unless they accept within ' +
-        BASE_HANDOVER.offerSeconds / 60 +
+        world.socialOfferPolicy!.pendingSeconds / 60 +
         ' game minutes; you can withdraw it.',
     );
   }
-  const problem = itemOfferReplyProblem(world, actor, command);
+  const problem = itemOfferReplyProblem(world, actor, command, batch.permissions);
   if (problem) return problem;
+  const remembered = rememberedOfferExit(world, actor.id, command);
+  if (!world.itemOffers?.[command.offerId] && remembered) {
+    emitPrivateObservation(
+      world,
+      events,
+      'offer-own-ending',
+      actor,
+      'You ended your own participation in the last received offer. No other person’s current choice is reported.',
+      actor,
+      command.targetId,
+      {
+        personalAgreement: true,
+        agreement: canonicalJson({ ...remembered, status: 'ended', cause: 'own-ending' }),
+        offerId: remembered.id,
+        importance: EXPERIENCE_LIMITS.protectedImportance,
+      },
+    );
+    return outcome(
+      true,
+      'offer-own-ending',
+      'Your remembered offer participation ended; nothing moved.',
+    );
+  }
   const offer = world.itemOffers![command.offerId]!;
   if (command.operation === 'withdraw' || command.operation === 'decline') {
     const withdrawn = command.operation === 'withdraw';
@@ -588,11 +818,19 @@ export function executeHandover(
       withdrawn ? 'Offer withdrawn; nothing moved.' : 'Offer declined; nothing moved.',
     );
   }
+  const carrying = carryingOffer(world, offer);
   let itemId: string;
   try {
     itemId = offer.requested
       ? moveLotsTogether(world, offerMoves(offer), command.id)[0]!
-      : moveLot(world, offer.offered.itemId, actor.id, offer.offered.quantity, command.id);
+      : moveLot(
+          world,
+          offer.offered.itemId,
+          actor.id,
+          offer.offered.quantity,
+          command.id,
+          !offer.constructionUse && !carrying,
+        );
   } catch (error) {
     if (error instanceof WorkBudgetError) throw error;
     return outcome(
@@ -601,7 +839,44 @@ export function executeHandover(
       offer.requested ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
     );
   }
-  close(world, events, offer, 'offer-accepted', 'accepted', actor, offer.offererId);
+  if (offer.constructionUse) {
+    let permissionId: string;
+    do {
+      permissionId = nextId(world, 'contribution-permission');
+    } while (batch.permissions.some((permission) => permission.id === permissionId));
+    const lot = entityGet(world.entities, itemId)!.item!;
+    applyConstructionPermissionEffect(batch, {
+      kind: 'material-contributed',
+      permissionId: offer.constructionUse.recipientGrant.id,
+      contribution: {
+        actionId: command.id,
+        at: world.simTime,
+        donorId: offer.offererId,
+        recipientId: offer.recipientId,
+        offerId: offer.id,
+        offerRevision: offer.revision,
+        permissionId,
+        consent: cloneValue(offer.constructionUse),
+        transferred: {
+          itemId,
+          definition: { ...lot.definitionPin },
+          quantity: offer.offered.quantity,
+          originIds: [...lot.materialOriginIds!],
+        },
+      },
+    });
+    recordMaterialContribution(world, itemId, permissionId);
+  }
+  const transferEvent = close(
+    world,
+    events,
+    offer,
+    'offer-accepted',
+    'accepted',
+    actor,
+    offer.offererId,
+  );
+  if (carrying) recordCarryingCustody(world, carrying.id, itemId, transferEvent!);
   return {
     ...outcome(
       true,
@@ -613,9 +888,61 @@ export function executeHandover(
     itemId,
   };
 }
-export function reconcileItemOffers(world: WorldState, events: WorldEvent[]): void {
-  if (!world.itemOffers) return;
-  for (const offer of Object.values(world.itemOffers)) {
+/** Current parties, items and their former/current custodians select eligibility.
+ * The index supplies no rights: each selected offer repeats the complete held guard. */
+function changedItemOfferIds(
+  world: WorldState,
+  baseline: WorldState | undefined,
+  local?: ReadonlySet<string>,
+): Set<string> | undefined {
+  const changes =
+    local ??
+    entityChangesSince(world, baseline, [
+      'itemOffers',
+      'itemDefinitions',
+      'itemHandling',
+      'moduleManifest',
+      'statusEffectPolicy',
+      'resourceReservations',
+    ]);
+  if (!changes || !baseline) return;
+  const candidates = new Set(changes),
+    index = offerIndex(world),
+    ids = new Set<string>();
+  for (const id of changes)
+    for (const snapshot of [baseline, world]) {
+      const entity = entityGet(readOnlyDraftView(snapshot).entities, id);
+      if (entity?.item || entity?.container) candidates.add(custodian(snapshot, id));
+    }
+  for (const id of candidates) {
+    const item = index.byItem.get(id);
+    if (item) ids.add(item.id);
+    for (const pair of index.between.get(id)?.values() ?? []) {
+      for (const offer of pair.incoming) ids.add(offer.id);
+      for (const offer of pair.outgoing) ids.add(offer.id);
+    }
+  }
+  for (const offer of index.deadlines) {
+    if (offer.expiresAt > world.simTime) break;
+    ids.add(offer.id);
+  }
+  return new Set([...ids].sort((a, b) => index.order.get(a)! - index.order.get(b)!));
+}
+const offerReconciliation = {};
+export function reconcileItemOffers(
+  world: WorldState,
+  events: WorldEvent[],
+  options: { baseline?: WorldState } = {},
+): void {
+  if (!world.itemOffers || !offerIndex(world).order.size) return;
+  const offers = readOnlyDraftView(world.itemOffers);
+  const local = takeNativeChanges(world, offerReconciliation);
+  const baseline = options.baseline ?? (isDraft(world) ? original(world)! : undefined);
+  const ids = changedItemOfferIds(world, baseline, local) ?? Object.keys(offers);
+  for (const id of ids) {
+    const offer = offers[id];
+    if (!offer) continue;
+    countDomainWork('itemOffersChecked');
     const expired = world.simTime >= offer.expiresAt;
     if (
       !expired &&
@@ -637,19 +964,20 @@ export function reconcileItemOffers(world: WorldState, events: WorldEvent[]): vo
   }
 }
 export function nextItemOfferDeadline(world: WorldState): number {
-  let deadline = Infinity;
-  for (const offer of Object.values(world.itemOffers ?? {}))
-    deadline = Math.min(deadline, offer.expiresAt);
-  return deadline;
+  return offerIndex(world).deadlines[0]?.expiresAt ?? Infinity;
 }
-function validLot(lot: OfferLot): boolean {
-  const pin = lot?.definitionPin;
-  return (
-    hasRecordFields(
-      lot,
+export function isOfferLot(value: unknown): value is OfferLot {
+  if (
+    !hasRecordFields(
+      value,
       ['itemId', 'definitionPin', 'quantity', 'whole', 'revision', 'placementRevision'],
-      ['contentsRevision', 'subtreeRevision'],
-    ) &&
+      ['contentsRevision', 'subtreeRevision', 'capacity'],
+    )
+  )
+    return false;
+  const lot = value as unknown as OfferLot;
+  const pin = lot.definitionPin;
+  return (
     isSafeRecordId(lot.itemId) &&
     !!pin &&
     hasRecordFields(pin, ['id', 'version', 'digest']) &&
@@ -664,69 +992,70 @@ function validLot(lot: OfferLot): boolean {
     typeof lot.whole === 'boolean' &&
     revision(lot.revision) &&
     revision(lot.placementRevision) &&
+    (lot.capacity === undefined || (Number.isSafeInteger(lot.capacity) && lot.capacity > 0)) &&
     (lot.contentsRevision === undefined || revision(lot.contentsRevision)) &&
     (lot.subtreeRevision === undefined || revision(lot.subtreeRevision))
   );
 }
 /** Validate current shapes; dangling terms/memories are not an old-format reader. */
 export function validateItemOffers(world: WorldState): void {
-  for (const entity of entityValues(world.entities)) {
-    const remembered = entity.actor?.knownTradeLots;
-    if (remembered === undefined) continue;
-    if (!remembered || typeof remembered !== 'object' || Array.isArray(remembered))
-      throw new Error('Invalid item disclosures.');
-    for (const [holderId, lots] of Object.entries(remembered)) {
-      if (
-        !isSafeRecordId(holderId) ||
-        !lots ||
-        typeof lots !== 'object' ||
-        Array.isArray(lots) ||
-        Object.keys(lots).length > BASE_HANDOVER.candidateLots
-      )
-        throw new Error('Invalid item disclosures.');
-      for (const [id, known] of Object.entries(lots))
-        if (
-          !hasRecordFields(known, ['lot', 'name', 'description', 'disclosedAt']) ||
-          !validLot(known.lot) ||
-          id !== known.lot.itemId ||
-          typeof known.name !== 'string' ||
-          typeof known.description !== 'string' ||
-          !Number.isFinite(known.disclosedAt)
-        )
-          throw new Error('Invalid item disclosure.');
-    }
-  }
   if (world.itemOffers === undefined) return;
   if (!world.itemOffers || typeof world.itemOffers !== 'object' || Array.isArray(world.itemOffers))
     throw new Error('Invalid item offers.');
-  const perOfferer = new Map<string, number>(),
-    items = new Set<string>();
+  const items = new Set<string>();
   for (const [id, offer] of Object.entries(world.itemOffers)) {
     if (
       !hasRecordFields(
         offer,
         ['id', 'revision', 'offererId', 'recipientId', 'offered', 'createdAt', 'expiresAt'],
-        ['requested'],
+        ['requested', 'constructionUse'],
       ) ||
       id !== offer.id ||
       ![id, offer.offererId, offer.recipientId].every(isSafeRecordId) ||
       offer.offererId === offer.recipientId ||
       !revision(offer.revision) ||
       offer.revision < 1 ||
-      !validLot(offer.offered) ||
-      (offer.requested !== undefined && !validLot(offer.requested)) ||
+      !isOfferLot(offer.offered) ||
+      (offer.requested !== undefined && !isOfferLot(offer.requested)) ||
+      (offer.constructionUse !== undefined &&
+        (!validContributionConsent(offer.constructionUse) ||
+          !world.constructionProfile?.materialContributions ||
+          !world.constructionProfile.materialContributions.operations.includes(
+            offer.constructionUse.terms.operation,
+          ) ||
+          !Object.hasOwn(
+            world.constructionProfile.materialContributions.siteLabels,
+            offer.constructionUse.terms.site.surfaceId,
+          ) ||
+          offer.constructionUse.terms.expiresAt >
+            offer.createdAt + world.constructionProfile.materialContributions.maximumSeconds)) ||
       !Number.isFinite(offer.createdAt) ||
       !Number.isFinite(offer.expiresAt) ||
       offer.expiresAt <= offer.createdAt ||
-      offer.expiresAt > offer.createdAt + BASE_HANDOVER.offerSeconds
+      !world.socialOfferPolicy ||
+      offer.expiresAt > offer.createdAt + world.socialOfferPolicy.pendingSeconds
     )
       throw new Error('Invalid item offer.');
     for (const lot of [offer.offered, ...(offer.requested ? [offer.requested] : [])]) {
       if (items.has(lot.itemId)) throw new Error('An item is promised twice.');
       items.add(lot.itemId);
     }
-    const count = (perOfferer.get(offer.offererId) ?? 0) + 1;
-    if (count > BASE_HANDOVER.pendingPerOfferer) throw new Error('Too many pending item offers.');
-    perOfferer.set(offer.offererId, count);
   }
+}
+
+function rememberedOfferExit(
+  world: WorldState,
+  actorId: string,
+  command: Extract<HandoverCommand, { operation: 'accept' | 'decline' | 'withdraw' }>,
+) {
+  if (command.operation === 'accept' || world.itemOffers?.[command.offerId]) return;
+  return perceivedItemOffers(world, actorId).find(
+    (known) =>
+      known.id === command.offerId &&
+      known.revision === command.expectedOfferRevision &&
+      known.status === 'pending' &&
+      (command.operation === 'withdraw'
+        ? known.offererId === actorId && known.recipientId === command.targetId
+        : known.recipientId === actorId && known.offererId === command.targetId),
+  );
 }

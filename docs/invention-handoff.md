@@ -6,7 +6,7 @@ This is a continuation guide and navigation map, not a competing specification o
 
 The foundation, World Agent context and structured-question implementations are delivered. Their agreed finite acceptance is complete; deployment and broader qualification remain separate below. The [integration plan](projects/invention-production-integration.md) preserves the original inputs and merge rationale; the later owner-requested [rebase](verification/invention-main-integration.md#main-rebase--october-1-2026) records its conflict resolutions and focused checks. These are historical operations, not instructions to repeat them or reconstruct old branches. Start future work from its explicitly selected current base under [repository branch policy](../AGENTS.md#work-discipline); leave merge decisions with the owner.
 
-1. Read [repository instructions](../AGENTS.md), [project overview](../README.md), [implemented architecture](architecture.md), and [implementation status](../archive/05-project/implementation-status.md).
+1. Read [repository instructions](../AGENTS.md), [project overview](../README.md), [implemented architecture](architecture.md), and [implementation status](architecture.md).
 2. Read [engine/world boundaries](engine-and-world-boundaries.md), [base-world ownership](worlds/base/README.md), and [current save-development policy](save-and-load.md#active-development-policy). These govern all later feature choices.
 3. Read [Invention foundation](invention-foundation.md), then the relevant canonical contracts in the decision map below.
 4. Read the [INV parent tracker](maintainers/inventions-and-world-evolution.md), [World Agent write detail](maintainers/world-agent-writes.md), and [deferred regression TODOs](maintainers/TODO.md). Follow links to AC, AG, EWF, EPR, CR, NC, PF and SL instead of creating duplicate task owners.
@@ -78,7 +78,7 @@ Before closing this delivery, retain the **WW07 deployable-build and uncertain-a
 
 For more complex inventions, continue only a bounded slice whose existing design establishes the relevant native owner, dependencies and acceptance. WW10/WW15 and INV-17/20 retain that work. The earlier instruction to keep implementing did not authorize inventing undesigned foundational mechanics; broader body models, information/agreements, joint physics, temporal methods, clocks and topology remain with their named design owners.
 
-Unresolved product choices belong in [Open decisions](../archive/05-project/open-decisions.md). The conversation is unified and the current owner-approved usage/economics split is settled in the runtime contract. A reachable authenticated deployment and qualified harness/model are operational enablement inputs. Do not treat their absence as an excuse to duplicate adapters or invent credentials.
+Unresolved product choices belong in [Open decisions](maintainers/decisions/README.md). The conversation is unified and the current owner-approved usage/economics split is settled in the runtime contract. A reachable authenticated deployment and qualified harness/model are operational enablement inputs. Do not treat their absence as an excuse to duplicate adapters or invent credentials.
 
 ## Continuing work discipline
 

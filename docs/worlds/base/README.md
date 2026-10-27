@@ -13,7 +13,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Held shields and chosen defense](shield-defense.md) — implemented compatible equipment and finite contact guard, with native, PostgreSQL and browser evidence under AV02.
 - [A river catch becomes a meal](river-fishing.md) — implemented finite fishing and world-defined cooking, with native, PostgreSQL, browser and separate live-choice evidence under AV05.
 - [Items, ground piles and possession](items.md)
-- [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the launcher, arrow and gathering-tool families; camp containers have their separate owner below.
+- [Inventable tools and ammunition](invention-families.md) — authored material rules, parameters and real consumers for the ranged weapon, arrow and gathering-tool families; camp containers have their separate owner below.
 - [Inventable camp containers](camp-containers.md) — implemented finite woven-container family and ordinary storage. A [published coached live journey](https://github.com/Macrofold/OpenLegend/blob/34233ae24365eb8911fe1995c9c232bd57f34616/docs/verification/camp-life.md#live-player-journey--october-4-2026) qualifies generated cord/pouch manufacture, packing/retrieval and reopening; voluntary NPC choices and unattended use remain separate.
 - [Chosen camp supplies and fire watches](camp-routines.md) — implemented finite methods and explicitly selected one-session care; uncoached/live integration remains open, with no automatic goals or learned conditional policies.
 - [Light canopies and useful shelter](editable-shelters.md) — implemented flat one/two-bay canopies, a single-bay lean-to, reversible work and nonpunitive moisture; wider homes and scale qualification remain open.
@@ -22,7 +22,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Optional connection-study outing](connection-study-outing.md) — proposed finite study-world preparation and ordinary self-care; no study operation or ordinary-world reset is authorized.
 - [Sleep and waking](sleep.md)
 - [Body, senses and survival](survival.md)
-- [Recover from harm](recovery-and-care.md) — DG21's proposed short camp recovery and separately selectable field dressing/help; uses the current death/scar rules as its baseline; ordinary recovery and care remain proposed.
+- [Injuries, recovery and care](recovery-and-care.md) — DG21's selected individual injuries, functional effects, harm-selection rules and treatment; authored targets awaiting runtime implementation, separate from current death scars.
 - [Combat](combat.md)
 - [Native animal alarm and refuge](animal-responses.md) — selected model-free multi-danger escape, species movement and continuous safety; CTR03–CTR04 implementation remains open.
 - [Personal threat-response options](threat-response-options.md) — selected 24-purpose two-stage repertoire, interpreted state and required independent Ada counterattack; CTR05–CTR08 and actual behavioral qualification remain open.
@@ -32,6 +32,7 @@ This directory owns the accepted rules and authored content of Open Legend's bun
 - [Player death, corpses and treatable scars](player-death.md)
 - [Lifecycle and inactive protection](lifecycle-and-protection.md)
 - [Knowledge and observer identity](knowledge.md)
+- [Ordinary speech and partial words](speech.md) — selected paired partial-word disclosure and fictional quotation wording; NST implementation and qualification remain pending.
 - [After you left at camp](story-perspectives.md) — proposed optional historical craft glimpse for DG15, with explicitly selected external disclosure; current cutaways remain disabled.
 - [Relationships, feelings and promises](social.md)
 - [Compact personal reactions](psychological-reactions.md) — selected numerical-reaction design, with installation, runtime and behavioral qualification still open.

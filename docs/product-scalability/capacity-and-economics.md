@@ -123,4 +123,4 @@ The [DG29 admission and travel proposal](../projects/participants-and-world-trav
 - Implementation: [PS01–PS08 delivery tracker](../maintainers/product-scalability.md).
 - Limits and constraints: [Product-scalability inventory](../limits/product-scalability.md).
 - Related design: [Feature specification](../projects/product-scalability-feature-spec.md) and [technical design](../projects/product-scalability-tech-design.md).
-- Unresolved product choices: [Central decision register](../../archive/05-project/open-decisions.md#product-scalability-integration-choices).
+- Unresolved product choices: [Central decision register](../maintainers/decisions/world-and-play.md#product-scalability-integration-choices).

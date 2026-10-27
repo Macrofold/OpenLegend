@@ -1,4 +1,4 @@
-import { acquireNativeResponseEvent } from './native-response-controller.js';
+import { acquireNativeResponseEvent, acquireNativeSound } from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
 import { observeEvent } from './event-observation.js';
 import { acquireAwarenessObservation, acquireOrdinaryWarning } from './perception-evidence.js';
@@ -27,9 +27,8 @@ import {
   acquireEventAwareness,
   type ExperienceMutation,
 } from './experience.js';
-import { engageConversation, reconcileConversations } from './conversations.js';
 import { hasMemory } from './living.js';
-import { finishWorld, cloneValue, appendEvents, readOnlyDraftView } from './draft.js';
+import { finishTransitionWorld, cloneValue, appendEvents, readOnlyDraftView } from './draft.js';
 import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
@@ -124,6 +123,35 @@ export function emit(
     targetId,
     data,
     scope,
+    undefined,
+    undefined,
+    origin,
+  );
+}
+
+/** A physical occurrence whose witnesses were proved by its native owner. Unlike
+ * an acting person's receipt, a passive result does not grant its source awareness. */
+export function emitObservedOccurrence(
+  world: WorldState,
+  events: WorldEvent[],
+  type: string,
+  text: string | Narration,
+  observers: string[],
+  source: Entity,
+  targetId: string,
+  data: WorldEvent['data'],
+  origin: WorldEvent['origin'],
+): WorldEvent {
+  return recordEvent(
+    world,
+    events,
+    type,
+    text,
+    observers,
+    source,
+    targetId,
+    data,
+    'external',
     undefined,
     undefined,
     origin,
@@ -347,7 +375,7 @@ function recordEvent(
             // Copy the committed pose without walking a live draft through proxy traps.
             origin:
               type === 'speech'
-                ? soundOrigin(source)
+                ? soundOrigin(world, source)
                 : { ...readOnlyDraftView(worldPosition(source)) },
           }
         : {}),
@@ -421,24 +449,6 @@ function recordEvent(
     }
     event.audience = [...audience];
   }
-  // Being addressed is not permission to join a conversation one could not perceive.
-  const conversationId =
-    type === 'speech' && source
-      ? engageConversation(
-          world,
-          source.id,
-          targetId && speechAwareness.get(targetId)?.triggerKind === 'addressed_speech'
-            ? targetId
-            : undefined,
-        )
-      : (type === 'expression' || data?.['conversationRelevant'] === true) && source
-        ? world.conversations?.active[source.id]
-        : undefined;
-  if (conversationId) {
-    event.conversationId = conversationId;
-    const conversation = world.conversations?.records[conversationId];
-    if (conversation) conversation.lastActivityAt = world.simTime;
-  }
   const acquired: Awareness[] = [];
   if (world.experience || audience.length) {
     for (const actorId of audience) {
@@ -465,6 +475,7 @@ function recordEvent(
       );
       const perceivedText = perceived.text;
       const awareness: Awareness = {
+        retentionClass: 'memory',
         ...(event.exposure ? { exposure: cloneValue(event.exposure) } : {}),
         eventId: event.id,
         actorId,
@@ -526,7 +537,6 @@ function recordEvent(
   chargeWork({ effects: 1, outputBytes: eventEncoder.encode(JSON.stringify(event)).byteLength });
   countDomainWork('eventsRecorded');
   events.push(event);
-  acquireNativeResponseEvent(world, event, events);
   if (
     [
       'action-started',
@@ -579,6 +589,10 @@ function recordEvent(
   // Finalize optional native metadata before handing an immutable record to persistence.
   if (audience.length || importance >= selectedSocialPolicy(world).notableThreshold)
     appendEvents(world, [cloneValue(event)]);
+  // Complete each receiver's original record before a native outward reaction
+  // emits its next occurrence. Receipt and retained-history order stay causal.
+  acquireNativeResponseEvent(world, event, events);
+  for (const cue of acquired) if (cue.sound) acquireNativeSound(world, cue, events);
   // Control notices are not occurrences characters can appraise, promise on or fulfil.
   if (scope !== 'system') {
     appraiseEvent(world, event);
@@ -592,11 +606,10 @@ function recordEvent(
 export function reconcileTransition(world: WorldState, events: WorldEvent[]): void {
   reconcileCoaching(world, events);
   advanceCommitments(world, events);
-  reconcileConversations(world);
 }
 /** Complete one admitted command's semantic/event boundary. Publication is separate
  * so a private native command can remain in its owning advance's working draft. */
-export function completeTransition(
+export function finishInDraft(
   world: WorldState,
   events: WorldEvent[],
   result: Outcome,
@@ -616,8 +629,8 @@ export function finish(
   result: Outcome,
   beforePublication?: () => void,
 ): Transition {
-  const completed = completeTransition(world, events, result, beforePublication);
-  return { ...completed, world: finishWorld(world) };
+  const completed = finishInDraft(world, events, result, beforePublication);
+  return { ...completed, world: finishTransitionWorld(world) };
 }
 
 /** Observed conversation events may be native state narration, not an actor reply. */

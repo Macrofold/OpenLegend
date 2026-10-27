@@ -84,12 +84,12 @@ it('measures retained body/edge history only through actually captured support i
     ),
   ).toBe(true);
   world.simTime = 2;
-  setSpatialPosition(world, anchor, { x: 18, y: 2, z: 2 }, null, 'physical');
+  setSpatialPosition(world, anchor, { x: 18, y: 2, z: 2 }, null, { continuity: 'physical' });
   initializePerception(world, []);
   const before = captureTemporalReceiptPrefix(world, PLAYER_ID);
   world.simTime = 3;
   world.map.spatial.revision++;
-  setSpatialPosition(world, other, { x: 100, y: 2, z: 2 }, null, 'physical');
+  setSpatialPosition(world, other, { x: 100, y: 2, z: 2 }, null, { continuity: 'physical' });
   initializePerception(world, []);
   expect(currentReceivedGeometry(world, PLAYER_ID).observations).toEqual([]);
   const query = {
@@ -154,7 +154,7 @@ it('uses an ongoing received geometry interval sealed at the decision cut withou
   const anchor = bodies[0]!,
     subject = currentBodyObservation(world, PLAYER_ID, anchor.id)!.exposure.episodeId;
   world.simTime = 2;
-  setSpatialPosition(world, anchor, { x: 18, y: 2, z: 2 }, null, 'physical');
+  setSpatialPosition(world, anchor, { x: 18, y: 2, z: 2 }, null, { continuity: 'physical' });
   initializePerception(world, []);
   captureCurrentGeometrySupport(world, PLAYER_ID);
   const prefix = captureTemporalReceiptPrefix(world, PLAYER_ID);
@@ -192,10 +192,10 @@ it('refuses a counterpart position when actual changes share one timestamp witho
   const first = currentBodyObservation(world, PLAYER_ID, anchor.id)!.exposure.episodeId;
   const second = currentBodyObservation(world, PLAYER_ID, other.id)!.exposure.episodeId;
   world.simTime = 2;
-  setSpatialPosition(world, anchor, { x: 18, y: 2, z: 2 }, null, 'physical');
-  setSpatialPosition(world, other, { x: 17, y: 2, z: 2 }, null, 'physical');
+  setSpatialPosition(world, anchor, { x: 18, y: 2, z: 2 }, null, { continuity: 'physical' });
+  setSpatialPosition(world, other, { x: 17, y: 2, z: 2 }, null, { continuity: 'physical' });
   initializePerception(world, []);
-  setSpatialPosition(world, other, { x: 19, y: 2, z: 2 }, null, 'physical');
+  setSpatialPosition(world, other, { x: 19, y: 2, z: 2 }, null, { continuity: 'physical' });
   initializePerception(world, []);
   const history = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
     subjects: [first, second],

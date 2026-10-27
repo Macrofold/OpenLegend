@@ -1,13 +1,19 @@
 import type { SurfacePoint } from '@open-legend/spatial';
-import type { ConstructionProfile } from '../../assembly-types.js';
+import type { FlexibleBayFamily, ConstructionProfile } from '../../assembly-types.js';
+import type { GroundedPanelFamily } from '../../boundary-types.js';
 import { definitionPin } from '../../world-modules.js';
 import { BASE_CANOPY, BASE_CANOPY_SCENE } from './canopies.js';
 
 /** The opening selects the construction family, location and optional comparison cue.
  * Permission to invoke the cue remains with the application. */
-export function baseConstructionProfile(suggested: SurfacePoint): ConstructionProfile {
+export function baseConstructionProfile(
+  suggested: SurfacePoint,
+  family: FlexibleBayFamily = BASE_CANOPY,
+  boundary?: GroundedPanelFamily,
+): ConstructionProfile {
   return {
-    family: definitionPin(BASE_CANOPY),
+    family: definitionPin(family),
+    ...(boundary ? { boundary: definitionPin(boundary) } : {}),
     suggested: { ...suggested },
     shower: {
       site: {
@@ -25,7 +31,7 @@ export function baseConstructionProfile(suggested: SurfacePoint): ConstructionPr
       actionLabel: 'Run a {minutes}-minute shower',
       remainingText:
         'The shower has {minutes} game minutes remaining. Drying continues during ordinary world time.',
-      endedText: 'The shower ended. Drying continues during ordinary world time.',
+      endedText: 'The comparison shower ended.',
     },
   };
 }

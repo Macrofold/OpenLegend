@@ -37,7 +37,9 @@ test('the player can read and search actual recent observations on desktop and a
       other.name = 'Unseen private name';
       initializePerception(world, []);
       world.simTime += 1;
-      setSpatialPosition(world, other, { x: 4, y: 0, z: 2 }, worldSupport(other), 'physical');
+      setSpatialPosition(world, other, { x: 4, y: 0, z: 2 }, worldSupport(other), {
+        continuity: 'physical',
+      });
       initializePerception(world, []);
     });
     await page.getByRole('button', { name: 'In view', exact: true }).click();

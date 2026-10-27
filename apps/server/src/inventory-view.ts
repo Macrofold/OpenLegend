@@ -1,15 +1,18 @@
+import { offerRecipientProblem } from '@open-legend/domain';
+import { itemContainerCapacity } from '@open-legend/domain';
+import { mealChoiceForItem } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import { inventoryDisplayGroups, inventoryGroupToken } from './inventory-groups.js';
 import { isEquipped, equipmentConflicts } from '@open-legend/domain';
 import { nativeCommandKind } from './native-command-kind.js';
 import {
-  nativeInventoryActions,
+  prepareNativeInventoryActions,
   nativeActionIcon,
   nativeCommandSupported,
   materialExposureView,
-  NATIVE_PREPARATIONS,
   quantityOf,
   activityRequestHost,
+  activityHostRequests,
   currentInventoryInspection,
   currentBodyObservation,
   currentBodyGrant,
@@ -322,7 +325,7 @@ export function containerPage(
         ? {
             restricted: !!entity.container.access,
             load: entity.container.load,
-            capacity: world.itemDefinitions[entity.container.definitionPin.id]!.container!.capacity,
+            capacity: itemContainerCapacity(world, entity)!,
           }
         : {}),
     },
@@ -568,9 +571,9 @@ export function activityStorageReader(
   const world = service.world,
     actor = entityGet(world.entities, scope.actorId)!;
   const host = activityRequestHost(world, activity.family);
-  const field = host?.definition.requests?.find((entry) => entry.id === activity.family)?.fields[
-    activity.field
-  ];
+  const field = (
+    host && activityHostRequests(world, host).find((entry) => entry.id === activity.family)
+  )?.fields[activity.field];
   if (field?.discovery?.source !== 'storage')
     throw new HistoryCursorError('Choose an installed storage field.');
   return (id) => {
@@ -620,7 +623,7 @@ export function activityStorageReader(
       ...(reachable && evidenced && target.container
         ? {
             load: target.container.load,
-            capacity: world.itemDefinitions[target.container.definitionPin.id]!.container!.capacity,
+            capacity: itemContainerCapacity(world, target)!,
           }
         : {}),
       ...(!allowed
@@ -808,7 +811,7 @@ export function inventoryDestinationPage(
       definition?.container &&
       (custodian(world, id) === scope.actorId ||
         currentInventoryInspection(world, scope.actorId)?.containerId === id)
-        ? { load: target.container.load, capacity: definition.container.capacity }
+        ? { load: target.container.load, capacity: itemContainerCapacity(world, target)! }
         : {}),
       ...(source
         ? {
@@ -922,8 +925,18 @@ export function inventoryDestinationPage(
           cursor.after = '';
         }
       } else if (target.actor && !target.remains) {
-        if (!currentBodyGrant(world, scope.actorId, target.id)) continue;
-        if (source && item && accessiblePossession(world, scope.actorId, item.id))
+        if (
+          !currentBodyGrant(world, scope.actorId, target.id) ||
+          !canReachEntity(world, actor, target, world.itemHandling.reach)
+        )
+          continue;
+        if (
+          world.socialOfferPolicy &&
+          source &&
+          item &&
+          accessiblePossession(world, scope.actorId, item.id) &&
+          !offerRecipientProblem(world, actor, target)
+        )
           add(target.id, true);
         if (canReachEntity(world, actor, target, world.itemHandling.reach)) {
           cursor.phase = 'granted';
@@ -1042,7 +1055,8 @@ export function inventoryItemsView(
     }
     return result;
   };
-  return items.map((item) => inventoryItemView(service, scope, item, preview));
+  const itemActions = prepareNativeInventoryActions(service.world, scope.actorId);
+  return items.map((item) => inventoryItemView(service, scope, item, preview, itemActions));
 }
 
 /** Deliberate inspection controls method disclosure for both facts and explicit choices. */
@@ -1061,6 +1075,7 @@ export function inventoryItemChoices(
   item: ItemInstance,
   preview: (command: CommandInput) => ReturnType<WorldService['previewCommand']> = (command) =>
     service.previewCommand(command, scope.actorId),
+  itemActions = prepareNativeInventoryActions(service.world, scope.actorId),
 ) {
   const world = service.world,
     player = entityGet(world.entities, scope.actorId)!,
@@ -1147,7 +1162,7 @@ export function inventoryItemChoices(
   // Cooking needs an exact perceived fire. Explore uses and targets offers that
   // choice rather than dispatching a shortcut that silently picks a world fire.
   if (accessiblePossession(world, player.id, item.id))
-    for (const option of nativeInventoryActions(world, item)) {
+    for (const option of itemActions(item)) {
       const availability = preview(option.command);
       actions.push(
         action(option.id, option.label, option.command, availability.ok, availability.message),
@@ -1201,9 +1216,14 @@ export function inventoryItemView(
   item: ItemInstance,
   preview: (command: CommandInput) => ReturnType<WorldService['previewCommand']> = (command) =>
     service.previewCommand(command, scope.actorId),
+  itemActions = prepareNativeInventoryActions(service.world, scope.actorId),
 ): InventoryItemView {
-  const { actions, recordRead } = inventoryItemChoices(service, scope, item, preview);
-  return { ...inventoryItemSummary(service, scope, item, recordRead), actions };
+  const { actions, recordRead } = inventoryItemChoices(service, scope, item, preview, itemActions);
+  return {
+    ...inventoryItemSummary(service, scope, item, recordRead),
+    actions,
+    workBatch: mealChoiceForItem(service.world, scope.actorId, item.id),
+  };
 }
 
 /** The same permitted item facts, without action availability or disposable execution. */
@@ -1276,7 +1296,7 @@ export function inventoryItemSummary(
     ...(item.container && canAccessContainer(world, scope.actorId, item.id)
       ? {
           container: {
-            capacity: definition.container!.capacity,
+            capacity: itemContainerCapacity(world, entityGet(world.entities, item.id)!)!,
             ...(contentsKnown
               ? {
                   load: item.container.load,

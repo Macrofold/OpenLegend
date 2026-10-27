@@ -1,3 +1,4 @@
+import { experienceRecordRevision } from './experience-sources.js';
 import { entityGet } from './entity-collection.js';
 import { subjectNarration, presentVerb, person } from './narration.js';
 import {
@@ -6,6 +7,7 @@ import {
   activeAppraisalIds,
   scopedAppraisalIds,
   nextDueAppraisal,
+  nextAppraisalProcessDeadline,
 } from './appraisal-index.js';
 import { canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { draftWorld } from './draft.js';
@@ -65,6 +67,7 @@ export interface AppraisalEvidence {
   kind: 'perceived-event' | 'remembered';
   actorId: string;
   sourceId: string;
+  sourceKind: 'event' | import('./types.js').ExperienceEntry['source'];
   sourceVersion: string;
   occurrenceId: string;
   coverage: string;
@@ -344,9 +347,19 @@ function validEvidence(source: AppraisalEvidence): boolean {
   return (
     hasRecordFields(
       source,
-      ['kind', 'actorId', 'sourceId', 'sourceVersion', 'occurrenceId', 'coverage', 'subjectIds'],
+      [
+        'kind',
+        'actorId',
+        'sourceId',
+        'sourceKind',
+        'sourceVersion',
+        'occurrenceId',
+        'coverage',
+        'subjectIds',
+      ],
       ['recallEpisodeId'],
     ) &&
+    ['event', 'awareness', 'memory', 'summary'].includes(source.sourceKind) &&
     isSafeRecordId(source.occurrenceId) &&
     typeof source.sourceVersion === 'string' &&
     source.sourceVersion.length <= 128 &&
@@ -763,8 +776,9 @@ export function appraisePerceivedEvent(
     kind: 'perceived-event',
     actorId,
     sourceId: event.id,
+    sourceKind: 'event',
     occurrenceId: event.id,
-    sourceVersion: contentLabel(canonicalJson(event)),
+    sourceVersion: experienceRecordRevision(event),
     coverage: 'personally experienced',
     subjectIds: targetId === null ? [] : [targetId],
   };
@@ -990,6 +1004,7 @@ export function advanceAppraisals(world: WorldState, events: WorldEvent[]): void
     indexAppraisal(world, record);
     privateChange(world, events, record, definition);
   }
+  if (nextAppraisalProcessDeadline(world) > world.simTime) return;
   for (const process of Object.values(world.appraisalProcesses ?? {})) {
     if (process.nextAt > world.simTime) continue;
     chargeWork({ tests: 1 });

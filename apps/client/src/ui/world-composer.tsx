@@ -7,10 +7,14 @@ import type {
   GameView,
   RequestRecoveryResult,
   SpeechVolume,
+  PlayerInteractionAvailability,
 } from '@open-legend/protocol';
-import { post } from '../api';
+import { post, getScoped } from '../api';
+import { playerActionStatusKey } from '../action-browser';
 import { Button, Icon, IconButton, SelectField } from '../design-system/components';
 import { ConversationComposer } from './conversation';
+import { LoadingScope, LoadingIndicator } from '../design-system/loading';
+import { namePhrase } from '@open-legend/language';
 import { useLocal } from './storage';
 import {
   composerDraftKey,
@@ -68,6 +72,9 @@ type WorldComposerProps = {
   connected: boolean;
   intent: WorldIntent | null;
   visible: boolean;
+  preferenceNotice?: string;
+  notice?: string;
+  clearRecipient(): void;
   close(): void;
   setup(): void;
   changeAddressee(targetId: string | undefined, label: string | undefined): void;
@@ -83,6 +90,9 @@ function ScopedWorldComposer({
   connected,
   intent,
   visible,
+  preferenceNotice,
+  notice,
+  clearRecipient,
   close,
   setup,
   changeAddressee,
@@ -153,43 +163,102 @@ function ScopedWorldComposer({
     setErrors((current) => ({ ...current, [errorKey]: message }));
   }
   const targetAvailable =
+    intent?.mode === 'speak' ||
     !intent?.targetId ||
     intent.possession ||
-    (intent.mode === 'speak' &&
-      view.communicationReferences.some((reference) => reference.id === intent.targetId)) ||
     view.entities.some((e) => e.id === intent.targetId) ||
     view.player.inventory.some((item) => item.id === intent.targetId);
-  const requestsReply = intent?.mode === 'speak' && !!intent.targetId;
-  const replyAccount = intent?.targetId ? view.ai.budget.accounts?.[intent.targetId] : undefined;
-  const replyUsage = view.ai.budget.perAgent ? replyAccount : view.ai.budget;
-  const replyAllowance =
-    view.ai.budget.limitUsd > (replyUsage?.spentUsd ?? 0) + (replyUsage?.reservedUsd ?? 0);
-  // The player's speech is native even when the addressed person cannot generate
-  // a reply. Never retry a refused paid request as a second spoken utterance.
-  const directReply =
-    requestsReply &&
-    replyAllowance &&
-    (view.ai.mode === 'fixture' || (view.ai.jevConfigured && view.ai.llmConfigured));
+  const recipient = intent?.targetId
+    ? view.entities.find(
+        (entity) =>
+          entity.id === intent.targetId || entity.communicationReference === intent.targetId,
+      )
+    : undefined;
+  const [availabilityRefresh, setAvailabilityRefresh] = useState(0);
+  const availabilityKey = JSON.stringify([
+    scope,
+    intent?.mode,
+    intent?.targetId,
+    visible,
+    connected,
+    view.clock.paused,
+    view.clock.pauseReason,
+    playerActionStatusKey(view.player),
+    view.player.knowledgeRevision,
+    recipient?.bodyReference,
+    recipient?.bodyState,
+    recipient?.canTalk,
+    recipient?.talkUnavailableReason,
+    view.ai.jevConfigured,
+    view.ai.llmConfigured,
+    view.ai.budget.limitUsd,
+    view.ai.budget.spentUsd,
+    view.ai.budget.reservedUsd,
+    view.ai.budget.period,
+    intent?.targetId ? view.ai.budget.accounts?.[intent.targetId] : undefined,
+    view.ai.jobs.map((job) => [job.id, job.status]),
+    availabilityRefresh,
+  ]);
+  const [availability, setAvailability] = useState<{
+    key: string;
+    value: PlayerInteractionAvailability;
+  }>();
+  const available = availability?.key === availabilityKey ? availability.value : undefined;
+  const checkingAvailability = visible && !!intent && connected && !available;
+  const recipientLabel =
+    available?.recipientName ??
+    (recipient ? namePhrase(recipient, 'indefinite') : intent?.label) ??
+    'Selected person';
+  useEffect(() => {
+    if (!visible || !intent || !connected) return;
+    let current = true;
+    const controller = new AbortController();
+    const query = new URLSearchParams({
+      mode: intent.mode,
+      ...(intent.targetId ? { targetId: intent.targetId } : {}),
+    });
+    void getScoped<PlayerInteractionAvailability>(
+      `/api/player-interaction/availability?${query}`,
+      controller.signal,
+    ).then(
+      (value) => {
+        if (current) setAvailability({ key: availabilityKey, value });
+      },
+      () => {
+        if (current)
+          setAvailability({
+            key: availabilityKey,
+            value: {
+              available: false,
+              code: 'unavailable',
+              reason:
+                'Interaction availability could not be confirmed. Check again before sending.',
+              reply: false,
+            },
+          });
+      },
+    );
+    return () => {
+      current = false;
+      controller.abort();
+    };
+  }, [availabilityKey]);
+  // The server selects native-only speech versus the source-bound reply request.
+  // Known unavailability never falls back to a second route that speaks anyway.
+  const directReply = available?.reply ?? (!!recipient && recipient.talkRequiresAi !== false);
   const spokenText = `${intent?.mode === 'speak' && mentionedItem ? `About ${mentionedItem.name}: ` : ''}${text.trim()}`;
-  const needsAi =
-    intent?.mode === 'act' &&
-    view.ai.mode !== 'fixture' &&
-    (!view.ai.llmConfigured || view.ai.budget.limitUsd <= 0);
+  const needsAi = available?.code === 'ai-unavailable';
   const blocked = !connected
     ? 'Reconnect to the world to send.'
-    : view.access?.controlling === false || view.player.participation === 'inactive'
-      ? 'Resume here to send.'
-      : view.clock.paused
-        ? 'Resume the game to send.'
-        : !view.player.alive
-          ? 'Your character cannot do this now.'
-          : !targetAvailable
-            ? 'The selected object is no longer available.'
-            : spokenText.length > (directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500)
-              ? 'Shorten these words before sending.'
-              : needsAi
-                ? 'This needs AI access and a spending allowance.'
-                : null;
+    : !targetAvailable
+      ? 'The selected object is no longer available.'
+      : !available
+        ? null
+        : !available.available
+          ? available.reason
+          : spokenText.length > (directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500)
+            ? 'Shorten these words before sending.'
+            : null;
   const currentSubmission = submitted[key];
   const failedReply = failedReplies[key];
   const waitingForAct = !!currentSubmission;
@@ -246,6 +315,7 @@ function ScopedWorldComposer({
   async function send(reconcile?: Attempt, recovery = false) {
     if (
       pendingRequest.current?.scope === scope ||
+      (!recovery && !available?.available) ||
       (!reconcile && (blocked || !text.trim() || !intent || waitingForAct || uncertain))
     )
       return;
@@ -263,6 +333,7 @@ function ScopedWorldComposer({
         key,
         intent: {
           ...intent,
+          ...(intent.mode === 'speak' && intent.targetId ? { label: recipientLabel } : {}),
           item: mentionedItem ? { id: mentionedItem.itemId, name: mentionedItem.name } : undefined,
         },
         directReply,
@@ -365,6 +436,17 @@ function ScopedWorldComposer({
       }
       setUncertain(null);
       if (!result.ok && !result.jobStatus) {
+        if (result.code === 'ai-unavailable')
+          setAvailability({
+            key: availabilityKey,
+            value: {
+              available: false,
+              code: result.code,
+              reason: result.message,
+              reply: false,
+              ...(available?.recipientName ? { recipientName: available.recipientName } : {}),
+            },
+          });
         setError(result.message);
         return;
       }
@@ -416,6 +498,7 @@ function ScopedWorldComposer({
       hidden={!visible || !intent}
       role="region"
       aria-label={intent?.mode === 'speak' ? 'Speak out loud' : 'Act'}
+      aria-busy={checkingAvailability}
       onKeyDown={(event) => {
         if (event.key === 'Escape' && event.nativeEvent.isComposing) {
           event.stopPropagation();
@@ -428,152 +511,179 @@ function ScopedWorldComposer({
         }
       }}
     >
-      <div className="ol-world-composer-head">
-        <strong>
-          {intent?.mode === 'speak'
-            ? intent.label
-              ? `Speak to ${intent.label}`
-              : 'Speak'
-            : intent?.label
-              ? `Act on ${intent.label}`
-              : 'Act'}
-        </strong>
-        <IconButton icon="ui.close" label="Close text bar" onPress={close} />
-      </div>
-      {intent?.mode === 'speak' && (
-        <SelectField
-          label="Address"
-          value={intent.targetId ?? 'ambient'}
-          placeholder="Choose an addressee"
-          disabled={sending}
-          options={[
-            { id: 'ambient', label: 'Anyone nearby' },
-            ...(intent.targetId && view.entities.some((entity) => entity.id === intent.targetId)
-              ? [{ id: intent.targetId, label: intent.label ?? 'Current person' }]
-              : []),
-            ...view.communicationReferences.map((reference) => ({
-              id: reference.id,
-              label: reference.label,
-            })),
-          ]}
-          onChange={(reference) => {
-            const targetId = reference === 'ambient' ? undefined : reference;
-            const label =
-              view.communicationReferences.find((entry) => entry.id === reference)?.label ??
-              view.entities.find((entity) => entity.id === reference)?.name;
-            changeAddressee(targetId, label);
-          }}
-        />
-      )}
-      {intent?.mode === 'speak' ? (
-        <Slider
-          className="ol-world-volume"
-          aria-label="Speech volume"
-          minValue={0}
-          maxValue={2}
-          step={1}
-          value={volumes.indexOf(volume)}
-          onChange={(value) => setVolume(volumes[Number(value)]!)}
-        >
-          <Label>Volume</Label>
-          <SliderOutput>{volume[0]!.toUpperCase() + volume.slice(1)}</SliderOutput>
-          <SliderTrack>
-            <SliderThumb aria-label={`Speech volume: ${volume}`} />
-          </SliderTrack>
-          <div className="ol-world-volume-labels" aria-hidden="true">
-            <span>Whisper</span>
-            <span>Normal</span>
-            <span>Shout</span>
-          </div>
-        </Slider>
-      ) : (
-        <p className="ol-caption">Descriptive only. No mechanical effects yet.</p>
-      )}
-      {mentionedItem && (
-        <div className="ol-world-item-mention">
-          <span>About {mentionedItem.name}</span>
-          <IconButton
-            icon="ui.close"
-            label={`Remove mention of ${mentionedItem.name}`}
-            onPress={() =>
-              writeDraft(key, { ...draft, item: undefined, revision: crypto.randomUUID() })
+      <LoadingScope region={surface}>
+        <div className="ol-world-composer-head">
+          <strong>
+            {intent?.mode === 'speak' ? 'Speak' : intent?.label ? `Act on ${intent.label}` : 'Act'}
+          </strong>
+          <IconButton icon="ui.close" label="Close text bar" onPress={close} />
+        </div>
+        {intent?.mode === 'speak' && (
+          <SelectField
+            label="Address"
+            value={intent.targetId ?? 'ambient'}
+            disabled={sending}
+            options={[
+              { id: 'ambient', label: 'Anyone nearby' },
+              ...(intent.targetId &&
+              !view.communicationReferences.some((person) => person.id === intent.targetId)
+                ? [{ id: intent.targetId, label: recipientLabel }]
+                : []),
+              ...view.communicationReferences.map((person) => ({
+                id: person.id,
+                label: person.label,
+              })),
+            ]}
+            onChange={(reference) =>
+              changeAddressee(
+                reference === 'ambient' ? undefined : reference,
+                view.communicationReferences.find((person) => person.id === reference)?.label,
+              )
             }
           />
+        )}
+        {intent?.mode === 'speak' && intent.targetId && (
+          <div className="ol-world-recipient">
+            <span>To {recipientLabel}</span>
+            <IconButton icon="ui.close" label="Clear recipient" onPress={clearRecipient} />
+          </div>
+        )}
+        {notice && !(intent?.mode === 'speak' && notice === preferenceNotice) && (
+          <p role="status" className="ol-meta">
+            {notice}
+          </p>
+        )}
+        {preferenceNotice && intent?.mode === 'speak' && (
+          <p role="status" className="ol-muted">
+            {preferenceNotice}
+          </p>
+        )}
+        {intent?.mode === 'speak' ? (
+          <Slider
+            className="ol-world-volume"
+            aria-label="Speech volume"
+            minValue={0}
+            maxValue={2}
+            step={1}
+            value={volumes.indexOf(volume)}
+            onChange={(value) => setVolume(volumes[Number(value)]!)}
+          >
+            <Label>Volume</Label>
+            <SliderOutput>{volume[0]!.toUpperCase() + volume.slice(1)}</SliderOutput>
+            <SliderTrack>
+              <SliderThumb aria-label={`Speech volume: ${volume}`} />
+            </SliderTrack>
+            <div className="ol-world-volume-labels" aria-hidden="true">
+              <span>Whisper</span>
+              <span>Normal</span>
+              <span>Shout</span>
+            </div>
+          </Slider>
+        ) : (
+          <p className="ol-caption">Descriptive only. No mechanical effects yet.</p>
+        )}
+        {mentionedItem && (
+          <div className="ol-world-item-mention">
+            <span>About {mentionedItem.name}</span>
+            <IconButton
+              icon="ui.close"
+              label={`Remove mention of ${mentionedItem.name}`}
+              onPress={() =>
+                writeDraft(key, { ...draft, item: undefined, revision: crypto.randomUUID() })
+              }
+            />
+          </div>
+        )}
+        <div className="ol-world-composer-input">
+          <WorldIntentIcon mode={intent?.mode ?? 'act'} />
+          <ConversationComposer
+            inputRef={input}
+            ariaLabel={intent?.mode === 'speak' ? 'Words to say out loud' : 'Describe your action'}
+            placeholder={intent?.mode === 'speak' ? 'Say something…' : 'Do a jig…'}
+            maxLength={directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500}
+            value={text}
+            onChange={(value) =>
+              writeDraft(key, { ...draft, text: value, revision: crypto.randomUUID() })
+            }
+            onSubmit={() => send()}
+            inputDisabled={!!uncertain}
+            busy={sending}
+            disabled={
+              !available?.available ||
+              !!blocked ||
+              !text.trim() ||
+              sending ||
+              waitingForAct ||
+              !!uncertain
+            }
+            submitLabel={intent?.mode === 'speak' ? 'Speak' : 'Act'}
+          />
         </div>
-      )}
-      <div className="ol-world-composer-input">
-        <WorldIntentIcon mode={intent?.mode ?? 'act'} />
-        <ConversationComposer
-          inputRef={input}
-          ariaLabel={intent?.mode === 'speak' ? 'Words to say out loud' : 'Describe your action'}
-          placeholder={intent?.mode === 'speak' ? 'Say something…' : 'Do a jig…'}
-          maxLength={directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500}
-          value={text}
-          onChange={(value) =>
-            writeDraft(key, { ...draft, text: value, revision: crypto.randomUUID() })
-          }
-          onSubmit={() => send()}
-          inputDisabled={!!uncertain}
-          disabled={!!blocked || !text.trim() || sending || waitingForAct || !!uncertain}
-          submitLabel={sending ? 'Sending…' : intent?.mode === 'speak' ? 'Speak' : 'Act'}
-        />
-      </div>
-      {(blocked || error || waitingForAct || uncertain) && (
-        <p role="status" className="ol-meta">
-          {uncertain
-            ? 'A previous send is unconfirmed. Check it before sending again.'
-            : error ||
-              blocked ||
-              (currentSubmission?.attempt.directReply
-                ? `${currentSubmission.attempt.intent.label ?? 'The listener'} is considering a reply…`
-                : 'Describing your action…')}
-        </p>
-      )}
-      {uncertain && (
-        <Button
-          size="sm"
-          onPress={() => void send(uncertain, true)}
-          disabled={sending || !connected}
-        >
-          Check previous send
-        </Button>
-      )}
-      {failedReply && (
-        <Button
-          size="sm"
-          variant="secondary"
-          isPending={sending}
-          isDisabled={!!blocked || sending || !!uncertain}
-          onPress={() =>
-            void send({
-              ...failedReply.attempt,
-              scope,
-              id: failedReply.retryId,
-              retryOf: failedReply.jobId,
-            })
-          }
-        >
-          Retry their reply
-        </Button>
-      )}
-      {currentSubmission && !view.ai.jobs.some((job) => job.id === currentSubmission.jobId) && (
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={sending || !connected || !!uncertain}
-          onPress={() => void send(currentSubmission.attempt, true)}
-        >
-          Check {currentSubmission.attempt.directReply ? 'reply' : 'action'} status
-        </Button>
-      )}
-      {requestsReply && !directReply && !blocked && (
-        <p className="ol-caption">You can still speak. A reply is unavailable right now.</p>
-      )}
-      {needsAi && (
-        <Button size="sm" onPress={setup}>
-          AI settings and allowance
-        </Button>
-      )}
+        {(blocked || error || waitingForAct || uncertain) && (
+          <p role="status" className="ol-meta">
+            {uncertain
+              ? 'A previous send is unconfirmed. Check it before sending again.'
+              : error ||
+                (waitingForAct
+                  ? currentSubmission?.attempt.directReply
+                    ? `${currentSubmission.attempt.intent.label ?? 'The listener'} is considering a reply…`
+                    : 'Describing your action…'
+                  : blocked)}
+          </p>
+        )}
+        {uncertain && (
+          <Button
+            size="sm"
+            onPress={() => void send(uncertain, true)}
+            disabled={sending || !connected}
+          >
+            Check previous send
+          </Button>
+        )}
+        {failedReply && (
+          <Button
+            size="sm"
+            variant="secondary"
+            isPending={sending}
+            isDisabled={!available?.available || !!blocked || sending || !!uncertain}
+            onPress={() =>
+              void send({
+                ...failedReply.attempt,
+                scope,
+                id: failedReply.retryId,
+                retryOf: failedReply.jobId,
+              })
+            }
+          >
+            Retry their reply
+          </Button>
+        )}
+        {currentSubmission && !view.ai.jobs.some((job) => job.id === currentSubmission.jobId) && (
+          <Button
+            size="sm"
+            variant="secondary"
+            disabled={sending || !connected || !!uncertain}
+            onPress={() => void send(currentSubmission.attempt, true)}
+          >
+            Check {currentSubmission.attempt.directReply ? 'reply' : 'action'} status
+          </Button>
+        )}
+        {needsAi && (
+          <Button size="sm" onPress={setup}>
+            AI settings and allowance
+          </Button>
+        )}
+        {available && !available.available && connected && !sending && !uncertain && (
+          <Button
+            size="sm"
+            variant="secondary"
+            onPress={() => setAvailabilityRefresh((n) => n + 1)}
+          >
+            Check availability
+          </Button>
+        )}
+        <LoadingIndicator active={checkingAvailability} label="Checking interaction availability" />
+      </LoadingScope>
     </section>
   );
 }

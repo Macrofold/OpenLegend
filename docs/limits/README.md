@@ -4,11 +4,19 @@ A limit is a chosen restriction on capacity, access to supported features, selec
 
 The selected first-playable design has linked inventories for [shared integration](first-playable-world.md), [survival/making](first-playable-survival.md), [camp construction](editable-shelters.md), [cooperation](first-playable-cooperation.md) and [roaming](first-playable-roaming.md). Their authored numbers are selected starting values, with runtime/player qualification still open.
 
+The selected [ND38 combat design](../projects/action-execution-and-skill-expression-feature-spec.md) has [ASE-L01–ASE-L10](action-execution-and-skill-expression.md) for animated timing, native weapon recovery, actual local posture, input lifetime and faster world clocks. Its withdrawn restrictions retain their stable IDs. Practical balance, device response and independent combat enjoyment remain tracked by [ASE](../maintainers/action-execution-and-skill-expression.md).
+
+The selected standalone [Cognition Lab](../projects/cognition-lab-feature-spec.md) has proposed [CLL01–CLL09](cognition-lab.md) for runtime isolation, compact navigation, paging, explicit run bounds and retained capture. Shared provider, cognition, native action and save constraints keep their existing owners; no runtime capacity claim follows from the design.
+
 The integrated [stealth and awareness inventory](stealth-awareness.md) routes shared boundaries to the A–G inventories, including [vision/gaze](vision-and-gaze.md), [evidence/recognition](perspective-perception.md), [attention](attention-and-investigation.md), [emotions](feelings.md), [preparedness](preparedness-and-surprise.md) and [player controls/presentation](stealth-player-experience.md). These are selected design limits with runtime and player qualification still open; each owner retains its actual constants, overflow behavior and evidence.
 
 The selected [acoustic-stealth inventory](acoustic-stealth.md) owns physical-source, quiet-movement, real-overlap and acoustic-work constraints. It consumes the existing [hearing/speech inventory](hearing-and-speech.md) for shared quantities, speech and native sound-response boundaries; it does not duplicate those limits or imply runtime qualification.
 
 ## One owner per purpose
+
+The accepted [shared NPC text design](../projects/npc-speech-streaming-feature-spec.md) is inventoried in [NST-L01–NST-L09](npc-speech-streaming.md). Shared hearing, cognition, memory, response and HTTP/caption limits retain their existing owners; the new inventory distinguishes selected batching/presentation constraints from unmeasured multiplayer capacity.
+
+The designed [character and map additions](../projects/character-and-map-additions-feature-spec.md) propose [CMA-L01–CMA-L06](character-and-map-additions.md) for map markers, label lengths, the stat scale, carrying weight, Spirit and armour.
 
 - The feature specification owns behavior and accepted requirements.
 - `docs/limits/<feature>.md` owns that feature’s limit inventory, reason and restrictiveness. A shared mechanism belongs to its owning feature once; consumers link to it. Do not create a second inventory in each project that touches it.

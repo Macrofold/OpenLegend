@@ -6,7 +6,7 @@
 
 **Proposal catalogue · September 29, 2026.** Belief can offer awe, love, courage, consolation and belonging; it can also authorize conquest, demand sacrifice, exclude dissenters or challenge rulers. Traditions contain sincere believers, opportunists, skeptics and reformers. A real miracle does not settle every moral argument, and ordinary devotion need not conceal a fraud. See the [design foundation](design-foundation.md) for the shared creative direction.
 
-[Keepers of the open table](#keepers-of-the-open-table) · [The shrine that measures the river](#the-shrine-that-measures-the-river) · [A festival of unfinished repairs](#a-festival-of-unfinished-repairs) · [Two readings of mercy](#two-readings-of-mercy) · [Pilgrimage by useful stages](#pilgrimage-by-useful-stages) · [A sacred silence with exceptions](#a-sacred-silence-with-exceptions) · [Relics that need caretakers](#relics-that-need-caretakers) · [The doubter who keeps the choir](#the-doubter-who-keeps-the-choir) · [Divinity with a jurisdiction](#divinity-with-a-jurisdiction) · [A calendar people can amend](#a-calendar-people-can-amend)
+[Pilgrimage by useful stages](#pilgrimage-by-useful-stages) · [Divinity with a jurisdiction](#divinity-with-a-jurisdiction) · [Two readings of mercy](#two-readings-of-mercy) · [The doubter who keeps the choir](#the-doubter-who-keeps-the-choir) · [Keepers of the open table](#keepers-of-the-open-table) · [Relics that need caretakers](#relics-that-need-caretakers) · [The shrine that measures the river](#the-shrine-that-measures-the-river) · [A festival of unfinished repairs](#a-festival-of-unfinished-repairs) · [A sacred silence with exceptions](#a-sacred-silence-with-exceptions) · [A calendar people can amend](#a-calendar-people-can-amend)
 
 ## Coverage to develop
 
@@ -23,6 +23,42 @@ These domains orient the expanded inventory. The ten retained patterns remain us
 | Relics, memory and competing claims | Preserve, wield, steal, return or reinterpret an inherited object.                                              | A revered cloak can still warm a refugee; its custodians argue whether using it honors or destroys its history.                                                                                         | ALL         | [G113](source-atlas.md#g113), [W24](source-atlas.md#w24)   |
 | Reform, doubt and coexistence       | Keep a relationship while changing a belief or a shared practice.                                               | A doubter still leads the choir; rival congregations negotiate a festival date without merging their theology.                                                                                          | ALL         | [W22](source-atlas.md#w22), [W23](source-atlas.md#w23)     |
 
+## Pilgrimage by useful stages
+
+**MD SC FA · Play · Moderate/Extend.** Gap: route milestones, hospitality and optional return travel abstraction.
+
+An ancestral garden above a long-closed pass is flowering again. Reaching it offers a magnificent sight, a useful route and a public occasion at which a pilgrim may fulfill a freely chosen vow. A proud guide wants recognition for finding the approach; a younger traveler wants to see the garden before accepting a distant apprenticeship; a caretaker fears losing control of the shrine. Their devotion, ambition, affection and doubt need not converge on one interpretation.
+
+Players can prepare, inspect routes, seek hospitality, travel with willing company or turn back with useful observations. If the passage is genuinely reopened, later travelers can use it; a beautiful visit can end without a revelation of fraud or a new compulsory duty. Other selected pilgrimages can visit wells or observatories by useful stages, contribute a small service, or cross hostile territory as an ordeal. State the central attraction and actual hazards. Summarize familiar uneventful travel rather than requiring repeated errands at every shrine.
+
+Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Elden Ring](source-atlas.md#g75), [Middle-earth](source-atlas.md#w01).
+
+## Divinity with a jurisdiction
+
+**FA · Play · Large/New.** Gap: bounded fictional agents and powers with explicit knowledge limits.
+
+A small river deity can redirect water within its basin but cannot read minds, settle distant wars or create rain. Worshippers negotiate practical requests and disagree about fairness. It might generously protect a village, exact an unjust offering, or aid one army against another; demonstrable power does not make its demands morally correct. Limited powers invite ingenuity. In one selected encounter, a ferry operator seeks a safe crossing for a valued expedition while an orchard keeper wants the same water retained upstream. A generous intervention can work and inspire real awe; the deity can also prefer a flatterer's petition or reject a request. Petitioners can bargain, refuse, prepare another route or pursue their own supported response. The resulting passage or loss remains real without certifying anyone's moral authority. Use the [divine-personality direction](../narrative/gods-death-and-personal-mythology.md) without choosing its unresolved gifts or Beyond rules. The deity remains an in-world participant; divine language cannot grant platform authority, access private records or justify arbitrary success outside admitted mechanics.
+
+Seeds and references: [Hades II](source-atlas.md#g01), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Narnia](source-atlas.md#w19).
+
+## Two readings of mercy
+
+**ALL · Play · Moderate/Extend.** Gap: distinct ethical commitments and practical alternatives.
+
+Two members of one faith disagree about sheltering a dangerous exile: one emphasizes refuge, the other responsibility to neighbors. A supervised arrangement or mediated hearing may help, but the exile may reject the terms or endanger someone the player loves. Shelter, expulsion and armed defense can remain consequential choices rather than converge on a guaranteed compromise. Players engage with a living tradition rather than a single moral switch. Avoid making one interpretation automatically the deity's certified answer unless that is an explicitly chosen world premise.
+
+Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Earthsea](source-atlas.md#w11).
+
+## The doubter who keeps the choir
+
+**ALL · Play · Small/Compose.** Gap: authored belief differences and durable social participation.
+
+A choir organizer no longer shares the literal doctrine but loves the music, friendships and care network. They may speak honestly, remain private or help a newcomer find their own relationship to it. Belonging has more than one dimension. Avoid forcing every doubt into exposure, exile or conversion; a community can make room for unresolved questions.
+
+For a selected rehearsal or feast, the person's own doubt, attachment to particular people and pleasure in the music can all inform the choice. Other participants know those reasons only when they have acquired them. A role label or single belief score would lose the tension that makes staying, changing the ceremony, joking or leaving meaningful. Preserve the relevant occasion and lived associations without sending the whole theology; an observed miracle and an interpretation of it remain distinct, and neither prescribes the character's next allegiance.
+
+Seeds and references: [Disco Elysium](source-atlas.md#g66), [Earthsea](source-atlas.md#w11), [Austen’s social worlds](source-atlas.md#w23).
+
 ## Keepers of the open table
 
 **ALL · Play · Small/Compose.** Gap: authored practices and voluntary participation; service routines optional.
@@ -30,6 +66,14 @@ These domains orient the expanded inventory. The ten retained patterns remain us
 A tradition asks households to keep one place available for an unexpected guest. Some followers offer food, others quiet shelter or tools. Players can participate without adopting the theology. The custom creates welcome and practical limits: hosts may be exhausted or poor. This welcoming tradition relies on human choices and practical support. A host may ask neighbors to share the work, and some followers may disagree about what the duty requires; neither response erases the value of the welcome.
 
 Seeds and references: [The Sims](source-atlas.md#g24), [Assassin's Creed III](source-atlas.md#g99), [Discworld](source-atlas.md#w12).
+
+## Relics that need caretakers
+
+**MD FA · Play · Moderate/Extend.** Gap: provenance, care commitments and competing access claims.
+
+A worn traveling cloak is revered because generations used it to shelter strangers. Its fabric now needs conservation, creating tension between public use and preservation. Players can commission a successor, document stories or design gentle display. Sacred value need not mean superior equipment stats, and theft should not automatically transfer community recognition to the thief. The [founding bell](history-myth.md#the-founding-bell) supplies a separate consequential example: craft, sincere public attachment and evidence of dispossession can coexist, with present access or commemoration at stake.
+
+Seeds and references: [Black Myth: Wukong](source-atlas.md#g76), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [A Song of Ice and Fire](source-atlas.md#w10).
 
 ## The shrine that measures the river
 
@@ -47,22 +91,6 @@ Once a season, people bring broken objects and tell why they kept them. Repairer
 
 Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Spirited Away](source-atlas.md#w25).
 
-## Two readings of mercy
-
-**ALL · Play · Moderate/Extend.** Gap: distinct ethical commitments and practical alternatives.
-
-Two members of one faith disagree about sheltering a dangerous exile: one emphasizes refuge, the other responsibility to neighbors. A supervised arrangement or mediated hearing may help, but the exile may reject the terms or endanger someone the player loves. Shelter, expulsion and armed defense can remain consequential choices rather than converge on a guaranteed compromise. Players engage with a living tradition rather than a single moral switch. Avoid making one interpretation automatically the deity's certified answer unless that is an explicitly chosen world premise.
-
-Seeds and references: [Dragon Age: Origins](source-atlas.md#g51), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Earthsea](source-atlas.md#w11).
-
-## Pilgrimage by useful stages
-
-**MD SC FA · Play · Moderate/Extend.** Gap: route milestones, hospitality and optional return travel abstraction.
-
-Travelers visit wells, observatories or ancestral gardens, contributing a small service at each stop. The journey teaches geography and connects communities. Different people travel for devotion, curiosity or company. A particular pilgrimage may be contemplative or an ordeal through hostile territory. Once a route is familiar, summarize uneventful travel instead of adding repetitive encounters; state whether danger, devotion or discovery is the central promise.
-
-Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Elden Ring](source-atlas.md#g75), [Middle-earth](source-atlas.md#w01).
-
 ## A sacred silence with exceptions
 
 **ALL · Play · Moderate/Extend.** Gap: local communication customs and accessible alternatives.
@@ -70,30 +98,6 @@ Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Elden Ring](
 An observatory keeps a quiet hour to listen for migrating animals or contemplate the sky. Sign language, writing and emergency speech remain available. Players can host a meaningful pause or investigate a strange sound. Silence should have a comprehensible purpose, and accessibility must not be treated as irreverence or punished as a hidden etiquette failure.
 
 Seeds and references: [Outer Wilds](source-atlas.md#g34), [Star Trek](source-atlas.md#w04), [His Dark Materials](source-atlas.md#w20).
-
-## Relics that need caretakers
-
-**MD FA · Play · Moderate/Extend.** Gap: provenance, care commitments and competing access claims.
-
-A worn traveling cloak is revered because generations used it to shelter strangers. Its fabric now needs conservation, creating tension between public use and preservation. Players can commission a successor, document stories or design gentle display. Sacred value need not mean superior equipment stats, and theft should not automatically transfer community recognition to the thief.
-
-Seeds and references: [Black Myth: Wukong](source-atlas.md#g76), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [A Song of Ice and Fire](source-atlas.md#w10).
-
-## The doubter who keeps the choir
-
-**ALL · Play · Small/Compose.** Gap: authored belief differences and durable social participation.
-
-A choir organizer no longer shares the literal doctrine but loves the music, friendships and care network. They may speak honestly, remain private or help a newcomer find their own relationship to it. Belonging has more than one dimension. Avoid forcing every doubt into exposure, exile or conversion; a community can make room for unresolved questions.
-
-Seeds and references: [Disco Elysium](source-atlas.md#g66), [Earthsea](source-atlas.md#w11), [Austen’s social worlds](source-atlas.md#w23).
-
-## Divinity with a jurisdiction
-
-**FA · Play · Large/New.** Gap: bounded fictional agents and powers with explicit knowledge limits.
-
-A small river deity can redirect water within its basin but cannot read minds, settle distant wars or create rain. Worshippers negotiate practical requests and disagree about fairness. It might generously protect a village, exact an unjust offering, or aid one army against another; demonstrable power does not make its demands morally correct. Limited powers invite ingenuity. The deity remains an in-world participant; divine language cannot grant platform authority, access private records or justify arbitrary success outside admitted mechanics.
-
-Seeds and references: [Hades II](source-atlas.md#g01), [Pathfinder: Wrath of the Righteous](source-atlas.md#g59), [Narnia](source-atlas.md#w19).
 
 ## A calendar people can amend
 

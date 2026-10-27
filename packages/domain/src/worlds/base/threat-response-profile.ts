@@ -1,3 +1,4 @@
+import { freeze } from 'immer';
 import type { PreparedResponseProfile } from '../../prepared-responses.js';
 
 /** One authored source for the selected catalogue, wording and finite tuning.
@@ -321,3 +322,7 @@ export const BASE_THREAT_RESPONSE_PROFILE: PreparedResponseProfile = {
     stableSeconds: 12,
   },
 };
+
+// The linked trusted template is immutable; exact definition pins can be shared.
+// Authored selections and diagnostic variants use copies.
+freeze(BASE_THREAT_RESPONSE_PROFILE, true);

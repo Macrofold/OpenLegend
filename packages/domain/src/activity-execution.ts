@@ -1,3 +1,6 @@
+import { isNativeInputField } from './native-inputs.js';
+import type { NativeExecutionPermissions } from './construction-permissions.js';
+import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
 import { entityGet } from './entity-collection.js';
 import {
   activityRoleKinds,
@@ -5,10 +8,8 @@ import {
   commandEntityFields,
 } from './native-command-contracts.js';
 import { validateInstalledActivityConditions } from './action-experience.js';
-import type { ConstructionPermission } from './assembly-types.js';
 import { isEquipped } from './equipment.js';
-import { activityCommandFields, isCookingInputField } from './food-preparation.js';
-import { executeCommand, nativeOperationAvailable, prepareNativeChoice } from './kernel.js';
+import { nativeOperationAvailable, prepareNativeChoice } from './kernel.js';
 import type { Command, Position, WorldState } from './types.js';
 import { worldPosition } from './spatial-state.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
@@ -31,6 +32,7 @@ import { subjectReferenceCurrent } from './worlds/base/knowledge.js';
 import { acquiredActivities, activityRoleCompatible } from './activity-learning.js';
 import {
   validateActivityNode,
+  validateActivityQuantity,
   ACTIVITY_LIMITS,
   type ActivityNode,
   type ActivityOutput,
@@ -54,9 +56,68 @@ import {
 import { canAccessContainer } from './object-access.js';
 import { canReachEntity } from './spatial.js';
 import { capabilityBlocked } from './status-capabilities.js';
-import type { DefinitionPin } from './world-modules.js';
-import { isDefinitionPin } from './state-owners.js';
+import { definitionPin, type DefinitionPin } from './world-modules.js';
+import { recipeMechanicalPin } from './invention-families.js';
+import { itemFor } from './objects.js';
+import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { currentInventoryInspection } from './inventory-inspection.js';
+
+function activityRequirementProblem(
+  world: WorldState,
+  actorId: string,
+  bindings: Record<string, ActivityBinding>,
+  node: ActivityNode,
+): string | undefined {
+  for (const requirement of node.requirements ?? []) {
+    if (requirement.kind === 'work-policy') {
+      if (
+        !world.workBatchPolicy ||
+        !sameDefinitionPin(definitionPin(world.workBatchPolicy), requirement.definition)
+      )
+        return 'The installed finite-work selection changed.';
+    } else if (requirement.kind === 'body-policy') {
+      if (
+        !world.moduleManifest.bodyPolicy ||
+        !sameDefinitionPin(definitionPin(world.moduleManifest.bodyPolicy), requirement.definition)
+      )
+        return 'The chosen consumption policy changed.';
+    } else if (requirement.kind === 'item-definition') {
+      const definition = world.itemDefinitions[requirement.definition.id];
+      if (!definition || !sameDefinitionPin(definitionPin(definition), requirement.definition))
+        return 'The chosen material definition changed.';
+    } else if (requirement.kind === 'recipe') {
+      const recipe = world.recipes[requirement.definition.id];
+      if (
+        !world.knowledge[actorId]?.some(
+          (record) => record.recipeId === requirement.definition.id,
+        ) ||
+        !recipe ||
+        !sameDefinitionPin(recipeMechanicalPin(recipe), requirement.definition)
+      )
+        return 'The selected method is no longer known with its chosen definition.';
+    } else if (requirement.kind === 'item') {
+      const id = bindings[requirement.role];
+      if (typeof id !== 'string' || !accessiblePossession(world, actorId, id))
+        return 'The chosen tool is no longer accessible.';
+      const item = itemFor(world, id),
+        definition = item && world.itemDefinitions[item.definitionId];
+      if (!definition || !sameDefinitionPin(definitionPin(definition), requirement.definition))
+        return 'The chosen tool definition has changed.';
+    } else {
+      const id = bindings[requirement.role],
+        actor = entityGet(world.entities, actorId),
+        source = typeof id === 'string' ? entityGet(world.entities, id) : undefined;
+      // Check personal access before reading a source's changed hidden contents.
+      if (!actor || !source || !seesEntity(world, actor, source))
+        return 'The selected source is no longer personally visible.';
+      const definition = source.resource && world.itemDefinitions[source.resource.definitionId];
+      if (!definition || !sameDefinitionPin(definitionPin(definition), requirement.definition))
+        return 'The selected source no longer supplies its chosen material definition.';
+      if (source.resource!.workSeconds !== requirement.workSeconds)
+        return 'The selected source no longer has its chosen collection time.';
+    }
+  }
+}
 
 export interface CountedActivityControl {
   kind: 'counted';
@@ -82,13 +143,20 @@ export interface FiniteActivityControl {
 export type ChosenActivityControl = CountedActivityControl | FiniteActivityControl;
 
 export interface ActivityExecution {
+  cooperation?: import('./cooperation.js').CooperationPurposeBinding;
   combatHelpId?: string;
   /** Origin belongs to this invocation, never to the learned method. */
   humanInitiated?: true;
   /** A personally learned method, or absent for a requested composition. */
   methodId?: string;
   /** A requested composition carries its own validated root and chosen name. */
-  request?: { name: string; root: ActivityNode; chosenPurpose?: Command['chosenPurpose'] };
+  request?: {
+    name: string;
+    root: ActivityNode;
+    chosenPurpose?: Command['chosenPurpose'];
+    quantity?: import('./action-experience.js').ActivityQuantity;
+  };
+  completedUnits?: number;
   bindings: Record<string, ActivityBinding>;
   targetEpisodes: ActionTargetEpisodes;
   pending: { node: ActivityNode; iteration: number; startedAt?: number }[];
@@ -97,6 +165,8 @@ export interface ActivityExecution {
   processed: number;
   archivedSteps?: number;
   activeKey?: string;
+  /** Exact admitted primitive keys stopped within this invocation, including repeats. */
+  cancelledKeys?: string[];
   reason?: string;
   control?: ChosenActivityControl;
   attempts?: number;
@@ -104,6 +174,82 @@ export interface ActivityExecution {
   spent?: number;
   interrupted?: boolean;
   terminal?: boolean;
+}
+function remainingActivityWork(node: ActivityNode, cancelled: ReadonlySet<string>): boolean {
+  switch (node.kind) {
+    case 'invoke':
+      return !cancelled.has(node.key);
+    case 'wait':
+      return true;
+    case 'sequence':
+      return node.children.some((child) => remainingActivityWork(child, cancelled));
+    case 'branch':
+      return (
+        remainingActivityWork(node.yes, cancelled) ||
+        (!!node.no && remainingActivityWork(node.no, cancelled))
+      );
+    case 'repeat':
+      return remainingActivityWork(node.body, cancelled);
+  }
+}
+/** Stop selected primitives inside one existing invocation. The saved method and
+ * unrelated branches are unchanged; this frontier can never regenerate those keys. */
+export function cancelActivityCommands(
+  world: WorldState,
+  actorId: string,
+  plan: ActorPlan,
+  matches: (command: Command) => boolean,
+): void {
+  const execution = plan.activity;
+  if (!execution) return;
+  const root =
+    execution.request?.root ??
+    (execution.methodId ? world.actionExperience.methods[execution.methodId]?.root : undefined);
+  if (!root) return;
+  const cancelled = new Set(execution.cancelledKeys),
+    pending = [root];
+  while (pending.length) {
+    const node = pending.pop()!;
+    if (node.kind === 'invoke') {
+      const command = bindActivityCommand(node, execution, actorId, `${plan.id}:cancel-selection`);
+      if (command && matches(command)) cancelled.add(node.key);
+    } else if (node.kind === 'sequence') pending.push(...node.children);
+    else if (node.kind === 'branch') {
+      pending.push(node.yes);
+      if (node.no) pending.push(node.no);
+    } else if (node.kind === 'repeat') pending.push(node.body);
+  }
+  if (!cancelled.size) return;
+  execution.cancelledKeys = [...cancelled].sort();
+  execution.pending = execution.pending.filter((frame) =>
+    remainingActivityWork(frame.node, cancelled),
+  );
+  if (execution.activeKey && cancelled.has(execution.activeKey)) delete execution.activeKey;
+}
+/** Existence over this invocation's remaining frontier, with each primitive key
+ * visited once. It neither admits a future action nor looks up hidden subjects. */
+export function hasPendingActivityCommand(
+  execution: ActivityExecution,
+  actorId: string,
+  matches: (command: Command) => boolean,
+): boolean {
+  const pending = execution.pending.map((frame) => frame.node),
+    seen = new Set<string>(),
+    cancelled = new Set(execution.cancelledKeys);
+  while (pending.length) {
+    const node = pending.pop()!;
+    if (node.kind === 'invoke') {
+      if (seen.has(node.key) || cancelled.has(node.key)) continue;
+      seen.add(node.key);
+      const command = bindActivityCommand(node, execution, actorId, 'remaining-command-query');
+      if (command && matches(command)) return true;
+    } else if (node.kind === 'sequence') pending.push(...node.children);
+    else if (node.kind === 'branch') {
+      pending.push(node.yes);
+      if (node.no) pending.push(node.no);
+    } else if (node.kind === 'repeat') pending.push(node.body);
+  }
+  return false;
 }
 function finishControl(
   world: WorldState,
@@ -619,7 +765,7 @@ export function bindActivityCommand(
   node: Extract<ActivityNode, { kind: 'invoke' }>,
   execution: Pick<
     ActivityExecution,
-    'bindings' | 'outputs' | 'humanInitiated' | 'combatHelpId' | 'request'
+    'bindings' | 'outputs' | 'humanInitiated' | 'combatHelpId' | 'cooperation' | 'request'
   >,
   actorId: string,
   id: string,
@@ -634,6 +780,7 @@ export function bindActivityCommand(
       : {}),
     ...(execution.humanInitiated ? { humanInitiated: true } : {}),
     ...(execution.combatHelpId ? { combatHelpId: execution.combatHelpId } : {}),
+    ...(execution.cooperation ? { cooperation: cloneValue(execution.cooperation) } : {}),
   } as Command & Record<string, unknown>;
   for (const [field, value] of Object.entries(node.args)) {
     if (
@@ -643,6 +790,7 @@ export function bindActivityCommand(
         'type',
         'humanInitiated',
         'combatHelpId',
+        'cooperation',
         'chosenPurpose',
         '__proto__',
         'constructor',
@@ -660,9 +808,12 @@ export function bindActivityCommand(
       if (!output) return;
       bound = output.itemId;
     }
-    if (node.command === 'cook' && isCookingInputField(field)) {
+    if (node.command === 'cook' && isNativeInputField(field)) {
       const inputs = (command.inputs ??= {}) as Record<string, unknown>;
       inputs[field.slice(6)] = bound;
+    } else if (node.command === 'craft' && isManufactureToolField(field)) {
+      const tools = (command.tools ??= {}) as Record<string, unknown>;
+      tools[field.slice(5)] = bound;
     } else command[field] = bound;
   }
   return isActivityCommand(command) ? command : undefined;
@@ -698,6 +849,7 @@ export function activityFrontier(
     block('This method no longer has permitted supporting knowledge.');
     return;
   }
+  const cancelled = execution.cancelledKeys && new Set(execution.cancelledKeys);
   for (let work = 0; work < ACTIVITY_LIMITS.nodes; work++) {
     if (execution.processed >= ACTIVITY_LIMITS.expandedWork) {
       block('The admitted activity work limit has been reached.');
@@ -718,6 +870,14 @@ export function activityFrontier(
     }
     const node = frame.node;
     execution.processed++;
+    if (node.kind === 'repeat' && node.finishAtMaximum && frame.iteration >= node.maximum) continue;
+    if (cancelled && !remainingActivityWork(node, cancelled)) continue;
+    const requirementProblem = activityRequirementProblem(world, actorId, execution.bindings, node);
+    if (requirementProblem) {
+      execution.pending.push(frame);
+      block(requirementProblem);
+      return;
+    }
     switch (node.kind) {
       case 'sequence':
         execution.pending.push(
@@ -738,6 +898,7 @@ export function activityFrontier(
         break;
       }
       case 'repeat': {
+        if (cancelled && !remainingActivityWork(node.body, cancelled)) break;
         const answer = predicate(world, actorId, execution, node.until);
         if (answer === true) break;
         if (answer === undefined || frame.iteration >= node.maximum) {
@@ -777,6 +938,7 @@ export function activityFrontier(
         return;
       }
       case 'invoke': {
+        if (cancelled?.has(node.key)) break;
         if (execution.control?.kind === 'counted') {
           const budget = execution.control.budget;
           if (
@@ -840,7 +1002,7 @@ export function startLearnedActivity(
   methodId: string,
   bindings: Record<string, ActivityBinding>,
   resume = false,
-  constructionPermissions: readonly ConstructionPermission[] = [],
+  permissions: NativeExecutionPermissions = {},
   humanInitiated?: true,
   combatHelpId?: string,
 ) {
@@ -909,7 +1071,12 @@ export function startLearnedActivity(
   actor.planGeneration++;
   const first = activityFrontier(world, actorId, actor.agency.plan);
   if (first && !('itemFromStep' in first.command)) {
-    const preview = nativeOperationAvailable(world, first.command, constructionPermissions);
+    const preview = nativeOperationAvailable(
+      world,
+      first.command,
+      permissions.constructionPermissions,
+      permissions.campAssetPermissions,
+    );
     if (!preview.ok) return preview;
   }
   return outcome(true, 'queued', 'Selected the learned task.');
@@ -945,6 +1112,8 @@ export function requestedActivityProblem(
   let roles: ReturnType<typeof activityRoleKinds>;
   try {
     validateActivityNode(command.root);
+    if (command.selectionQuantity !== undefined)
+      validateActivityQuantity(command.root, command.selectionQuantity);
     roles = activityRoleKinds(command.root);
     validateInstalledActivityConditions(world, command.root, command.bindings);
     if (command.control)
@@ -1054,6 +1223,7 @@ export function firstRequestedActivityCommand(
     outputs: {},
     humanInitiated: command.humanInitiated,
     combatHelpId: command.combatHelpId,
+    cooperation: command.cooperation,
     request: { name: command.name, root: command.root, chosenPurpose: command.chosenPurpose },
   };
   return firstActivityCommand(world, command.actorId, `${command.id}:first`, execution, [
@@ -1176,11 +1346,22 @@ function firstActivityCommand(
   id: string,
   execution: Pick<
     ActivityExecution,
-    'bindings' | 'outputs' | 'humanInitiated' | 'combatHelpId' | 'request'
+    | 'bindings'
+    | 'outputs'
+    | 'humanInitiated'
+    | 'combatHelpId'
+    | 'cooperation'
+    | 'request'
+    | 'cancelledKeys'
   >,
   frames: readonly { node: ActivityNode; iteration: number }[],
 ): Command | import('./types.js').Outcome | null {
+  const cancelled = execution.cancelledKeys && new Set(execution.cancelledKeys);
   const visit = (node: ActivityNode): Command | import('./types.js').Outcome | null | undefined => {
+    if (cancelled && !remainingActivityWork(node, cancelled)) return;
+    const requirementProblem = activityRequirementProblem(world, actorId, execution.bindings, node);
+    if (requirementProblem)
+      return outcome(false, 'activity-definition-changed', requirementProblem);
     if (node.kind === 'sequence') {
       for (const child of node.children) {
         const first = visit(child);
@@ -1189,6 +1370,7 @@ function firstActivityCommand(
       return;
     }
     if (node.kind === 'invoke') {
+      if (cancelled?.has(node.key)) return;
       const bound = bindActivityCommand(node, execution, actorId, id);
       if (!bound)
         return outcome(
@@ -1198,6 +1380,7 @@ function firstActivityCommand(
         );
       return bound.type === 'equip' && isEquipped(world, actorId, bound.itemId) ? undefined : bound;
     }
+    if (node.kind === 'repeat' && cancelled && !remainingActivityWork(node.body, cancelled)) return;
     const answer = predicate(
       world,
       actorId,
@@ -1224,6 +1407,11 @@ function firstActivityCommand(
     return answer ? undefined : null;
   };
   for (const { node, iteration } of frames) {
+    if (node.kind === 'repeat' && node.finishAtMaximum && iteration >= node.maximum) continue;
+    // Stop applies inside retained repetitions too. Their cancelled children
+    // cannot become prerequisites for returning to unrelated paused work.
+    if (node.kind === 'repeat' && cancelled && !remainingActivityWork(node.body, cancelled))
+      continue;
     if (
       node.kind === 'repeat' &&
       iteration >= node.maximum &&
@@ -1247,7 +1435,7 @@ export function startRequestedActivity(
   actorId: string,
   id: string,
   command: Extract<Command, { type: 'compose' }>,
-  constructionPermissions: readonly ConstructionPermission[] = [],
+  permissions: NativeExecutionPermissions = {},
 ) {
   const problem = requestedActivityProblem(world, actorId, command);
   if (problem) return problem;
@@ -1260,17 +1448,21 @@ export function startRequestedActivity(
       actorId,
       command,
       command.mode,
-      constructionPermissions,
+      permissions.constructionPermissions,
+      undefined,
+      permissions.campAssetPermissions,
     );
     const available = 'ok' in prepared ? prepared : prepared.outcome;
     if (!available.ok) return available;
   }
   const execution: ActivityExecution = {
     ...(command.combatHelpId ? { combatHelpId: command.combatHelpId } : {}),
+    ...(command.cooperation ? { cooperation: cloneValue(command.cooperation) } : {}),
     ...(command.humanInitiated ? { humanInitiated: true } : {}),
     request: {
       name: command.name.trim(),
       root: cloneValue(command.root),
+      ...(command.selectionQuantity ? { quantity: cloneValue(command.selectionQuantity) } : {}),
       ...(command.chosenPurpose ? { chosenPurpose: cloneValue(command.chosenPurpose) } : {}),
     },
     bindings: cloneValue(command.bindings),
@@ -1279,6 +1471,7 @@ export function startRequestedActivity(
     outputs: {},
     serial: 0,
     processed: 0,
+    ...(command.selectionQuantity ? { completedUnits: 0 } : {}),
     ...(command.control
       ? {
           control: cloneValue(command.control),
@@ -1346,7 +1539,12 @@ export function startRequestedActivity(
   if (afterDirect) return outcome(true, 'queued', 'Added the task after your current work.');
   const first = activityFrontier(world, actorId, actor.agency.plan);
   if (first && !('itemFromStep' in first.command)) {
-    const preview = nativeOperationAvailable(world, first.command, constructionPermissions);
+    const preview = nativeOperationAvailable(
+      world,
+      first.command,
+      permissions.constructionPermissions,
+      permissions.campAssetPermissions,
+    );
     if (!preview.ok) return preview;
   }
   return outcome(true, 'queued', 'Started the task.');

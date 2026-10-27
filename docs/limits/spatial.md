@@ -68,11 +68,11 @@ Original recommendation: **Review**.
 
 ## LA138
 
-**Current — source rechecked 2026-10-15 · Restrictiveness: Very safe.**
+**Current — source rechecked 2026-10-19 · Restrictiveness: Very safe.**
 
-A spatial map admits 1–32 walkable surfaces and 1–16 named height levels. At most 128 physical blockers are allowed **in total across terrain cells whose authored definitions include solid geometry and explicit blocking shapes**; these are not two independent 128-entry allowances. The terrain contribution is not limited to rock. Static decorative scenery has its separate SP07 limit and does not add physical support or blocking.
+A spatial map admits 1–32 walkable surfaces and 1–16 named height levels. At most 256 physical blockers are allowed **in total across terrain cells whose authored definitions include solid geometry and explicit blocking shapes**; these are not two independent 256-entry allowances. Each box of a compound obstacle counts toward that same total; one object ID cannot hide additional physical-query work. The terrain contribution is not limited to rock. Static decorative scenery has its separate SP07 limit and does not add physical support or blocking.
 
-**Reason / tradeoff:** Increase map-detail capacity with measured pathfinding and collision costs, preserving explicit failure if a supported map exceeds processing capacity.
+**Reason / tradeoff:** The selected first-playable world and complete square camp require 137 represented physical pieces before its separate roof; the source world already uses 126. The 256-piece allowance preserves their actual terrain and camp geometry, with complete-query refusal above it. Qualification of the expanded construction, collision/navigation and native/server performance workload remains required; capacity is not a speed claim. [Current integration/evidence](../verification/first-playable-world/2026/2026-10-24-occupied-camps-and-reclamation.md#occupant-exit-comparison-integration-checkpoint).
 
 [Implementation starting point](../../packages/spatial/src/validation.ts).
 
@@ -151,6 +151,12 @@ a loop during settling. They add no route-count or waypoint-count ceiling.
 [CTR03–CTR04](../maintainers/combat-and-threat-responses.md) retain danger-driven
 aerial selection and complete qualification. Arbitrary free flight remains
 outside this finite family.
+
+Native response connections are admitted as at most **63 exact targets**, reserving
+one retained flight within the shared 64-candidate preparation envelope. Missing
+graph coverage stays distinct from a blocked or unexposed connection. Ground and
+air share the complete danger/clearance comparison; an airborne point has no
+invented floor and cannot complete settling.
 
 **Reason / tradeoff:** Review speed and wait ceilings as flight-mechanic choices, preserving valid motion calculations when they change.
 
@@ -248,7 +254,7 @@ Spatial query radius: **10,000 world units**.
 
 **Current, source-inspected during integration · Restrictiveness: Safe.**
 
-The ordinary movement coordinator owns one navigation worker with at most six body-profile meshes and one active task; its pending queue contains at most 64 admitted action requests. Overflow remains saved/pending. Each query has 4,096 nodes, at most 12 candidate interaction destinations and 2,048 output/corridor points. The worker has a 128 MiB V8 old-generation JavaScript heap limit and a 20-second watchdog; neither is a total process-memory or end-to-end latency bound. Failed/incomplete work is explicit, not proof of unreachability. Native replanning allows two attempts. One completed reply may await mutation-lane admission, retrying publication after one real second without recomputing navigation. Shutdown drains retirement/publication. Prepared world creation uses a separate bounded worker owner under [WC-L13](world-creation.md#wc-l13--prepared-empty-creation-targets), so this is not an application-wide one-worker ceiling.
+The ordinary movement coordinator owns one navigation worker with at most six body-profile meshes and one active message; its pending queue contains at most 64 admitted actor tasks. An active message combines at most 64 routes for matching body profiles without splitting an animal's complete comparison. Boundary alternatives remain separate. Overflow remains saved/pending. Each query has 4,096 nodes, at most 12 candidate interaction destinations and 2,048 output/corridor points. The worker has a 128 MiB V8 old-generation JavaScript heap limit and a 20-second watchdog; neither is a total process-memory or end-to-end latency bound. Failed/incomplete work is explicit, not proof of unreachability. Native replanning allows two attempts. One completed reply may await mutation-lane admission, retrying publication after one real second without recomputing navigation. Shutdown drains retirement/publication. Prepared world creation uses a separate bounded worker owner under [WC-L13](world-creation.md#wc-l13--prepared-empty-creation-targets), so this is not an application-wide one-worker ceiling.
 
 **Reason / tradeoff:** Bound CPU/memory and retain admitted intent. Required preparation pauses native time for the whole world while preserving prior debt; region-local blocking is unimplemented. These operating bounds are not latency/capacity certification. [Navigation owner](../../apps/server/src/navigation/coordinator.ts), [backend](../../apps/server/src/navigation/backend.ts), [contract](../../archive/07-technical-architecture/spatial-world-runtime.md#navigation-preparation).
 

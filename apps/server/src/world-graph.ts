@@ -31,6 +31,7 @@ export const DEFINITION_KINDS = [
   'sense',
   'host',
   'family',
+  'assembly-family',
   'item-handling-policy',
   'status-effect',
   'status-effect-policy',
@@ -116,6 +117,13 @@ export function readDefinition(
       label = 'Item handling policy';
       break;
     }
+    case 'assembly-family': {
+      const value = world.assemblyFamilies?.[id];
+      if (!value) return;
+      data = value;
+      label = value.name;
+      break;
+    }
     case 'family': {
       const value = recipeFamily(world, id)?.definition;
       if (!value) return;
@@ -188,6 +196,8 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
   });
   for (const { definition } of installedRecipeFamilies(world))
     add('family', definition.id, definition.name, definition);
+  for (const value of Object.values(world.assemblyFamilies ?? {}))
+    add('assembly-family', value.id, value.name, value);
   for (const value of Object.values(world.itemDefinitions))
     add('item-definition', value.id, value.name, value);
   for (const value of Object.values(world.recipes)) {
@@ -302,13 +312,15 @@ export function projectDefinitions(world: WorldState, generation: string): Defin
           'A recipe input is missing; graph coverage is unavailable.',
         );
     }
-    const output = resolve('item-definition', value.outputDefinitionId);
-    if (!output)
-      throw new GraphReadError(
-        'unavailable',
-        'A recipe output is missing; graph coverage is unavailable.',
-      );
-    link(ref, output.node.ref, 'produces');
+    for (const result of value.outputs) {
+      const output = resolve('item-definition', result.definition.id);
+      if (!output)
+        throw new GraphReadError(
+          'unavailable',
+          'A recipe output is missing; graph coverage is unavailable.',
+        );
+      link(ref, output.node.ref, 'produces', result.port, result.quantity);
+    }
     for (const dependency of value.dependencyReferences) {
       if (
         dependency.kind === 'item-definition' &&

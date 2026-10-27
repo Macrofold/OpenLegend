@@ -1,12 +1,10 @@
-import { execFile } from 'node:child_process';
+import { toolRemote as execute, toolSequence, toolDelay, remoteErrorMatches } from '../network.js';
 import { createHash } from 'node:crypto';
 import { mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { promisify } from 'node:util';
 import { assetInfrastructureOutputs, type AssetInfrastructureOptions } from './infrastructure.js';
 
-const execute = promisify(execFile);
 const account = '027677879749';
 const hostname = 'assets.openlegend.ai';
 interface Origin {
@@ -71,6 +69,10 @@ async function aws<T>(service: string, args: string[]): Promise<T> {
       '--output',
       'json',
       '--no-cli-pager',
+      '--cli-connect-timeout',
+      '10',
+      '--cli-read-timeout',
+      '60',
     ],
     {
       maxBuffer: 4 * 1024 * 1024,
@@ -159,150 +161,154 @@ function installPublicRoute(
 export async function planPublicAssetEndpoint(
   options: AssetInfrastructureOptions = {},
 ): Promise<PublicAssetEndpointPlan> {
-  const { outputs } = await assetInfrastructureOutputs(options);
-  const distributionId = outputs['ExternalDistributionId'];
-  const runtimeBucket = outputs['ExternalRuntimeBucket'];
-  const rewrite = outputs['StudyPublicPrefixRewriteArn'];
-  const studyId = outputs['StudyDistributionId'];
-  const developmentId = outputs['NonproductionDistributionId'];
-  if (!distributionId || !runtimeBucket || !rewrite || !studyId || !developmentId)
-    throw new Error(
-      'Apply the reviewed custom-hostname stack integration before planning its public CDN behavior.',
+  return toolSequence(1800000, async () => {
+    const { outputs } = await assetInfrastructureOutputs(options);
+    const distributionId = outputs['ExternalDistributionId'];
+    const runtimeBucket = outputs['ExternalRuntimeBucket'];
+    const rewrite = outputs['StudyPublicPrefixRewriteArn'];
+    const studyId = outputs['StudyDistributionId'];
+    const developmentId = outputs['NonproductionDistributionId'];
+    if (!distributionId || !runtimeBucket || !rewrite || !studyId || !developmentId)
+      throw new Error(
+        'Apply the reviewed custom-hostname stack integration before planning its public CDN behavior.',
+      );
+    const existing = await aws<{ ETag: string; DistributionConfig: DistributionConfiguration }>(
+      'cloudfront',
+      ['get-distribution-config', '--id', distributionId],
     );
-  const existing = await aws<{ ETag: string; DistributionConfig: DistributionConfiguration }>(
-    'cloudfront',
-    ['get-distribution-config', '--id', distributionId],
-  );
-  const config = structuredClone(existing.DistributionConfig);
-  if (
-    !config.Aliases?.Items?.includes(hostname) ||
-    !config.Origins?.Items?.some(
-      (origin) => origin.DomainName === runtimeBucket + '.s3.us-east-2.amazonaws.com',
-    )
-  )
-    throw new Error(
-      'The selected custom CDN no longer has the reviewed hostname and production origin.',
-    );
-  const runtimeOrigin = config.Origins.Items.find(
-    (item) => item.DomainName === runtimeBucket + '.s3.us-east-2.amazonaws.com',
-  )!;
-  for (const behavior of [config.DefaultCacheBehavior, ...(config.CacheBehaviors?.Items ?? [])]) {
-    if (behavior.TargetOriginId !== runtimeOrigin.Id) continue;
-    const functions = behavior.FunctionAssociations as
-      | { Items?: FunctionAssociation[] }
-      | undefined;
-    const lambda = behavior.LambdaFunctionAssociations as
-      | { Items?: { EventType: string }[] }
-      | undefined;
+    const config = structuredClone(existing.DistributionConfig);
     if (
-      functions?.Items?.some(
-        (item) => item.EventType === 'viewer-response' && item.FunctionARN !== rewrite,
-      ) ||
-      lambda?.Items?.some((item) => item.EventType === 'viewer-response')
+      !config.Aliases?.Items?.includes(hostname) ||
+      !config.Origins?.Items?.some(
+        (origin) => origin.DomainName === runtimeBucket + '.s3.us-east-2.amazonaws.com',
+      )
     )
-      throw new Error('Another function owns production response headers; reconcile it first.');
-    const items = [
-      ...(functions?.Items ?? []).filter((item) => item.EventType !== 'viewer-response'),
-      { EventType: 'viewer-response', FunctionARN: rewrite },
-    ];
-    behavior.FunctionAssociations = { Quantity: items.length, Items: items };
-  }
-  for (const route of [
-    {
-      id: studyId,
-      prefix: 'studies',
-      originId: 'openlegend-study-public',
-      bucket: outputs['StudiesBucket'],
-    },
-    {
-      id: developmentId,
-      prefix: 'development',
-      originId: 'openlegend-development-public',
-      bucket: outputs['NonproductionRuntimeBucket'],
-    },
-  ]) {
-    if (!route.bucket) throw new Error('Missing selected public storage boundary.');
-    const source = await aws<{ DistributionConfig: DistributionConfiguration }>('cloudfront', [
-      'get-distribution-config',
-      '--id',
-      route.id,
-    ]);
-    installPublicRoute(
-      config,
-      source.DistributionConfig,
-      { ...route, bucket: route.bucket },
-      rewrite,
+      throw new Error(
+        'The selected custom CDN no longer has the reviewed hostname and production origin.',
+      );
+    const runtimeOrigin = config.Origins.Items.find(
+      (item) => item.DomainName === runtimeBucket + '.s3.us-east-2.amazonaws.com',
+    )!;
+    for (const behavior of [config.DefaultCacheBehavior, ...(config.CacheBehaviors?.Items ?? [])]) {
+      if (behavior.TargetOriginId !== runtimeOrigin.Id) continue;
+      const functions = behavior.FunctionAssociations as
+        | { Items?: FunctionAssociation[] }
+        | undefined;
+      const lambda = behavior.LambdaFunctionAssociations as
+        | { Items?: { EventType: string }[] }
+        | undefined;
+      if (
+        functions?.Items?.some(
+          (item) => item.EventType === 'viewer-response' && item.FunctionARN !== rewrite,
+        ) ||
+        lambda?.Items?.some((item) => item.EventType === 'viewer-response')
+      )
+        throw new Error('Another function owns production response headers; reconcile it first.');
+      const items = [
+        ...(functions?.Items ?? []).filter((item) => item.EventType !== 'viewer-response'),
+        { EventType: 'viewer-response', FunctionARN: rewrite },
+      ];
+      behavior.FunctionAssociations = { Quantity: items.length, Items: items };
+    }
+    for (const route of [
+      {
+        id: studyId,
+        prefix: 'studies',
+        originId: 'openlegend-study-public',
+        bucket: outputs['StudiesBucket'],
+      },
+      {
+        id: developmentId,
+        prefix: 'development',
+        originId: 'openlegend-development-public',
+        bucket: outputs['NonproductionRuntimeBucket'],
+      },
+    ]) {
+      if (!route.bucket) throw new Error('Missing selected public storage boundary.');
+      const source = await aws<{ DistributionConfig: DistributionConfiguration }>('cloudfront', [
+        'get-distribution-config',
+        '--id',
+        route.id,
+      ]);
+      installPublicRoute(
+        config,
+        source.DistributionConfig,
+        { ...route, bucket: route.bucket },
+        rewrite,
+      );
+    }
+    // CORS must be applied at the viewer boundary. S3 headers can be cached from
+    // another Origin because the independent default cache policy does not vary it.
+    // Keep that default intact and own only the explicitly public runtime prefix.
+    const publicBehavior = config.CacheBehaviors?.Items?.find(
+      (item) => item.PathPattern === '/studies/public/*',
     );
-  }
-  // CORS must be applied at the viewer boundary. S3 headers can be cached from
-  // another Origin because the independent default cache policy does not vary it.
-  // Keep that default intact and own only the explicitly public runtime prefix.
-  const publicBehavior = config.CacheBehaviors?.Items?.find(
-    (item) => item.PathPattern === '/studies/public/*',
-  );
-  if (!publicBehavior) throw new Error('Missing managed public delivery policy.');
-  const existingPublic = config.CacheBehaviors?.Items?.find(
-    (item) => item.PathPattern === '/public/*' || item.PathPattern === 'public/*',
-  );
-  if (existingPublic && existingPublic.TargetOriginId !== runtimeOrigin.Id)
-    throw new Error('Another origin owns the public runtime prefix; reconcile it first.');
-  const runtimePublic = {
-    ...publicBehavior,
-    PathPattern: '/public/*',
-    TargetOriginId: runtimeOrigin.Id,
-    FunctionAssociations: {
-      Quantity: 1,
-      Items: [{ EventType: 'viewer-response', FunctionARN: rewrite }],
-    },
-  };
-  const publicItems = existingPublic
-    ? config.CacheBehaviors!.Items!.map((item) => (item === existingPublic ? runtimePublic : item))
-    : [...(config.CacheBehaviors?.Items ?? []), runtimePublic];
-  config.CacheBehaviors = { Quantity: publicItems.length, Items: publicItems };
-  const before = await bucketPolicy(runtimeBucket);
-  const policy = structuredClone(before);
-  const conditional = {
-    Sid: 'OpenLegendImmutablePublicAssets',
-    Effect: 'Deny',
-    Principal: '*',
-    Action: 's3:PutObject',
-    Resource: 'arn:aws:s3:::' + runtimeBucket + '/public/*',
-    Condition: {
-      Null: { 's3:if-none-match': 'true' },
-      Bool: { 's3:ObjectCreationOperation': 'true' },
-    },
-  };
-  const prior = policy.Statement.find((item) => item.Sid === conditional.Sid);
-  if (prior && digest(prior) !== digest(conditional))
-    throw new Error('An existing immutable-write rule requires explicit reconciliation.');
-  if (!prior) policy.Statement.push(conditional);
-  const configurationChanged = digest(config) !== digest(existing.DistributionConfig);
-  const bucketPolicyChanged = digest(policy) !== digest(before);
-  return {
-    hostname,
-    distributionId,
-    distributionETag: existing.ETag,
-    beforeSha256: digest(existing.DistributionConfig),
-    configuration: config,
-    runtimeBucket,
-    bucketPolicyBeforeSha256: digest(before),
-    bucketPolicy: policy,
-    configurationChanged,
-    bucketPolicyChanged,
-    changes: [
-      ...(configurationChanged
-        ? [
-            'Serve explicit public runtime/study/development prefixes with managed CORS headers; strip only matching study/development prefixes and retain the independent default behavior.',
-            'Canonical HTML/SVG/XML blobs download with a sandbox policy; reviewed named viewers retain inline rendering.',
-          ]
-        : []),
-      ...(bucketPolicyChanged
-        ? [
-            'Require absent-only writes under production public/*; preserve existing log delivery and read permissions.',
-          ]
-        : []),
-    ],
-  };
+    if (!publicBehavior) throw new Error('Missing managed public delivery policy.');
+    const existingPublic = config.CacheBehaviors?.Items?.find(
+      (item) => item.PathPattern === '/public/*' || item.PathPattern === 'public/*',
+    );
+    if (existingPublic && existingPublic.TargetOriginId !== runtimeOrigin.Id)
+      throw new Error('Another origin owns the public runtime prefix; reconcile it first.');
+    const runtimePublic = {
+      ...publicBehavior,
+      PathPattern: '/public/*',
+      TargetOriginId: runtimeOrigin.Id,
+      FunctionAssociations: {
+        Quantity: 1,
+        Items: [{ EventType: 'viewer-response', FunctionARN: rewrite }],
+      },
+    };
+    const publicItems = existingPublic
+      ? config.CacheBehaviors!.Items!.map((item) =>
+          item === existingPublic ? runtimePublic : item,
+        )
+      : [...(config.CacheBehaviors?.Items ?? []), runtimePublic];
+    config.CacheBehaviors = { Quantity: publicItems.length, Items: publicItems };
+    const before = await bucketPolicy(runtimeBucket);
+    const policy = structuredClone(before);
+    const conditional = {
+      Sid: 'OpenLegendImmutablePublicAssets',
+      Effect: 'Deny',
+      Principal: '*',
+      Action: 's3:PutObject',
+      Resource: 'arn:aws:s3:::' + runtimeBucket + '/public/*',
+      Condition: {
+        Null: { 's3:if-none-match': 'true' },
+        Bool: { 's3:ObjectCreationOperation': 'true' },
+      },
+    };
+    const prior = policy.Statement.find((item) => item.Sid === conditional.Sid);
+    if (prior && digest(prior) !== digest(conditional))
+      throw new Error('An existing immutable-write rule requires explicit reconciliation.');
+    if (!prior) policy.Statement.push(conditional);
+    const configurationChanged = digest(config) !== digest(existing.DistributionConfig);
+    const bucketPolicyChanged = digest(policy) !== digest(before);
+    return {
+      hostname,
+      distributionId,
+      distributionETag: existing.ETag,
+      beforeSha256: digest(existing.DistributionConfig),
+      configuration: config,
+      runtimeBucket,
+      bucketPolicyBeforeSha256: digest(before),
+      bucketPolicy: policy,
+      configurationChanged,
+      bucketPolicyChanged,
+      changes: [
+        ...(configurationChanged
+          ? [
+              'Serve explicit public runtime/study/development prefixes with managed CORS headers; strip only matching study/development prefixes and retain the independent default behavior.',
+              'Canonical HTML/SVG/XML blobs download with a sandbox policy; reviewed named viewers retain inline rendering.',
+            ]
+          : []),
+        ...(bucketPolicyChanged
+          ? [
+              'Require absent-only writes under production public/*; preserve existing log delivery and read permissions.',
+            ]
+          : []),
+      ],
+    };
+  });
 }
 
 /** CloudFront supplies atomic ETag admission. S3 bucket policies have no CAS API,
@@ -312,50 +318,52 @@ export async function applyPublicAssetEndpoint(
   plan: PublicAssetEndpointPlan,
   options: AssetInfrastructureOptions = {},
 ) {
-  const proposed = await planPublicAssetEndpoint(options);
-  if (digest(plan) !== digest(proposed))
-    throw new Error(
-      'The endpoint, stack resources or reviewed plan changed. Review a fresh plan before applying.',
-    );
-  const directory = await mkdtemp(join(tmpdir(), 'openlegend-public-endpoint-'));
-  try {
-    const policy = join(directory, 'bucket-policy.json');
-    const distribution = join(directory, 'distribution.json');
-    await writeFile(policy, JSON.stringify(plan.bucketPolicy), { mode: 0o600 });
-    await writeFile(distribution, JSON.stringify(plan.configuration), { mode: 0o600 });
-    if (plan.bucketPolicyChanged)
-      await aws('s3api', [
-        'put-bucket-policy',
-        '--bucket',
-        plan.runtimeBucket,
-        '--expected-bucket-owner',
-        account,
-        '--policy',
-        'file://' + policy,
-      ]);
-    const result = plan.configurationChanged
-      ? await aws<{ ETag: string }>('cloudfront', [
-          'update-distribution',
-          '--id',
-          plan.distributionId,
-          '--if-match',
-          plan.distributionETag,
-          '--distribution-config',
-          'file://' + distribution,
-        ])
-      : { ETag: plan.distributionETag };
-    return {
-      hostname,
-      distributionId: plan.distributionId,
-      eTag: result.ETag,
-      runtimeBaseUrl: 'https://' + hostname,
-      studyBaseUrl: 'https://' + hostname + '/studies',
-      developmentBaseUrl: 'https://' + hostname + '/development',
-      status: plan.configurationChanged
-        ? 'Deployment is asynchronous; qualify the deployed behavior before publishing links.'
-        : 'The reviewed endpoint configuration is already current.',
-    };
-  } finally {
-    await rm(directory, { recursive: true, force: true });
-  }
+  return toolSequence(1800000, async () => {
+    const proposed = await planPublicAssetEndpoint(options);
+    if (digest(plan) !== digest(proposed))
+      throw new Error(
+        'The endpoint, stack resources or reviewed plan changed. Review a fresh plan before applying.',
+      );
+    const directory = await mkdtemp(join(tmpdir(), 'openlegend-public-endpoint-'));
+    try {
+      const policy = join(directory, 'bucket-policy.json');
+      const distribution = join(directory, 'distribution.json');
+      await writeFile(policy, JSON.stringify(plan.bucketPolicy), { mode: 0o600 });
+      await writeFile(distribution, JSON.stringify(plan.configuration), { mode: 0o600 });
+      if (plan.bucketPolicyChanged)
+        await aws('s3api', [
+          'put-bucket-policy',
+          '--bucket',
+          plan.runtimeBucket,
+          '--expected-bucket-owner',
+          account,
+          '--policy',
+          'file://' + policy,
+        ]);
+      const result = plan.configurationChanged
+        ? await aws<{ ETag: string }>('cloudfront', [
+            'update-distribution',
+            '--id',
+            plan.distributionId,
+            '--if-match',
+            plan.distributionETag,
+            '--distribution-config',
+            'file://' + distribution,
+          ])
+        : { ETag: plan.distributionETag };
+      return {
+        hostname,
+        distributionId: plan.distributionId,
+        eTag: result.ETag,
+        runtimeBaseUrl: 'https://' + hostname,
+        studyBaseUrl: 'https://' + hostname + '/studies',
+        developmentBaseUrl: 'https://' + hostname + '/development',
+        status: plan.configurationChanged
+          ? 'Deployment is asynchronous; qualify the deployed behavior before publishing links.'
+          : 'The reviewed endpoint configuration is already current.',
+      };
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
+  });
 }

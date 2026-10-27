@@ -1,6 +1,6 @@
 import { createDraft, finishDraft } from 'immer';
 import { describe, expect, it } from 'vitest';
-import { cloneValue } from './draft.js';
+import { cloneValue, readOnlyDraftView } from './draft.js';
 
 // Protect the shared copy contract without depending on world content or event wording.
 describe('independent domain data copies', () => {
@@ -44,6 +44,17 @@ describe('independent domain data copies', () => {
     expect(source[3]!.amount).toBe(2);
   });
 
+  it('reuses unchanged data after child inspection and sees later draft writes', () => {
+    const source = { records: [{ amount: 2 }] },
+      draft = createDraft(source);
+    void draft.records[0];
+    expect(readOnlyDraftView(draft)).toBe(source);
+    draft.records[0]!.amount = 3;
+    expect(readOnlyDraftView(draft).records[0]!.amount).toBe(3);
+    expect(source.records[0]!.amount).toBe(2);
+    finishDraft(draft);
+  });
+
   it('copies nested draft values that remain usable after the draft is finished', () => {
     const source = { records: [{ amount: 2 }] };
     const draft = createDraft(source);
@@ -62,7 +73,7 @@ describe('independent domain data copies', () => {
 
 import { createWorld, PLAYER_ID, NPC_ID } from './data.js';
 import { entityGet } from './entity-collection.js';
-import { freezeWorld, updateWorld, draftWorld, finishWorld, readOnlyDraftView } from './draft.js';
+import { freezeWorld, updateWorld, draftWorld, finishWorld } from './draft.js';
 import { initializePerception } from './kernel.js';
 import { setSpatialPosition, worldSupport } from './spatial-state.js';
 it('seals recent observations before nested native preparation and isolates both continuations', () => {
@@ -73,7 +84,9 @@ it('seals recent observations before nested native preparation and isolates both
   const outer = draftWorld(initial);
   outer.simTime = 1;
   const npc = entityGet(outer.entities, NPC_ID)!;
-  setSpatialPosition(outer, npc, { x: 14, y: 0, z: 15 }, worldSupport(npc), 'physical');
+  setSpatialPosition(outer, npc, { x: 14, y: 0, z: 15 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
   initializePerception(outer, []);
   const nested = draftWorld(outer);
   const sealed = readOnlyDraftView(outer.experience!.temporal!);
@@ -85,7 +98,7 @@ it('seals recent observations before nested native preparation and isolates both
     entityGet(nested.entities, NPC_ID)!,
     { x: 15, y: 0, z: 15 },
     worldSupport(npc),
-    'physical',
+    { continuity: 'physical' },
   );
   initializePerception(nested, []);
   finishWorld(nested);

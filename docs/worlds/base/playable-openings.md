@@ -111,15 +111,26 @@ Use [FPV's owner map](../../maintainers/first-playable-validation.md#required-ca
 
 ## Main world
 
-The main opening and ordinary `wilderness` startup use the same authored `createWorld` initializer. It combines Mike, Ada, the Peacock Mercenary, Mara Reed, Tavin Vale, Kest and Orin; hunting/harvesting/cooking, making and containers, shelter materials and permission, fishing, sling practice, exploration rewards, the territorial stag, the missing-belonging investigation and Broken Watchpost. Existing world laws, finite supplies, character identities and independent decisions remain unchanged. Camp people know the shared authored woven-container method; knowledge creates no physical pouch or invention credit.
+Main and ordinary `wilderness` startup share the complete authored initializer.
+Mike arrives at day 1 08:00 with full Food/Energy/Health and no usable carried
+stock or player-owned camp. The 128 × 112 metre world preserves Ada, the Peacock
+Mercenary, Mara Reed, Tavin Vale, fishing, sling practice, the lookout/workshop,
+the territorial stag and the missing-belonging investigation. Natural food,
+materials, elementary methods, public cold hearths, camp construction and finite
+cooperation use their ordinary native owners. See the [exact selected layout](first-playable-layout.md).
 
-Kest and Orin start at the Watchpost, roughly 37–40 metres from Mike's camp arrival, beyond his ordinary 28-metre sight radius and the normal opening camera. Workshop directions lead to that optional destination. Camera preferences can change framing; administrative opening review deliberately shows the proposed full scene without granting the eventual player knowledge of distant people.
+Kest and Orin begin at the relocated Broken Watchpost near `(104,28)`, beyond
+ordinary initial sight. Its walls, openings, cache and written directions move
+together. The former player kit exists once as exposed repair stock declared as
+Kest's possessions; his title supplies neither permission nor a forced reaction.
+The original wolves/bears are relocated once and use the same native controller
+for routine, feeding and danger. Camp contacts require real travel and perception.
 
 The compact main candidate retains exact prospective world/player/resident identities, seed and authored title/premise. Its scenario contents come from the shared initializer rather than a second world snapshot or editable list of copied fixtures. Main-template editing changes its title/premise; **Describe a world** still begins with the supported editable small-opening model. Real native approach/material/action checks qualify initial activities, not every future encounter, autonomous decision or population cost.
 
 ## Solo testing ground
 
-The supplied solo opening creates one controlled person with tools, a fire, finite nearby fiber/wood/stone/berries and a known pouch method. It creates no resident, hunting animal, rival, investigation or expedition. Gather and prepare fibers, then make the pouch; the limited starting prepared fiber keeps this useful testing sequence available.
+The supplied solo opening creates one controlled person with tools, a fire, finite nearby fiber/wood/stone/berries and known fiber-cleaning, cord-twisting and pouch methods. It creates no resident, hunting animal, rival, investigation or expedition. Gather and prepare fibers, then make the pouch; the limited starting prepared fiber keeps this useful testing sequence available.
 
 The authored riverside work area is reserved before random rock/tree/shrub placement, so a selected landscape seed cannot put a rock under the starting person. Other generated terrain and ordinary support/body-clearance checks remain active. New bundled worlds share this small clearing; compatible saved terrain is not regenerated.
 
@@ -135,7 +146,7 @@ The native prepared openings have no model cost. In custom/solo candidates, name
 
 ## Fresh construction
 
-[`createFreshBaseWorld`](../../../packages/domain/src/worlds/base/world.ts) installs existing bundled definitions, policies and the supported landscape in otherwise empty current-format state. Ordinary `createWorld` remains a caller and retains its existing cast, supplies, wilderness, threats and expeditions. The custom/solo builder adds only its selected people, scene elements and stock through the existing actor, placement, item and recipe owners. It supplies no canopy construction grant. The main builder reuses the ordinary initializer and returns its explicit permission for the actual starting player and their exact materials; destination authority publishes that permission with the fresh world. Construction controls use an exact selected family and a suggested place on the current opening's actual supported terrain. The optional finite shower covers that opening's configured building place rather than the original camp's coordinates.
+[`createFreshBaseWorld`](../../../packages/domain/src/worlds/base/world.ts) installs existing bundled definitions, policies and the supported landscape in otherwise empty current-format state. Ordinary `createWorld` remains a caller and retains its existing cast, supplies, wilderness, threats and expeditions. The custom/solo builder adds only its selected people, scene elements and stock through the existing actor, placement, item and recipe owners. It supplies no canopy construction grant. The main builder reuses the ordinary initializer and returns its exact natural-source/site permission for the actual starting player; destination authority publishes that permission with the fresh world. Construction controls use an exact selected family and a suggested place on the current opening's actual supported terrain. The optional finite shower covers that opening's configured building place rather than the original camp's coordinates.
 
 Custom/solo openings and the ordinary camp read fixed gathering durations from the same [world-owned resource setup](../../../packages/domain/src/worlds/base/resources.ts). Spawned patches and outer-wilderness resources use that setup too. Each selected resource patch retains its own quantity, placement and installed duration; this shared starter setup does not make its timings universal engine law. [Everyday work pacing](time.md#everyday-work-durations) owns the current values and the fresh-world requirement caused by changing the shared cordage family. Installed patch costs are never silently rewritten.
 
@@ -145,7 +156,7 @@ An authored identity may already match a later native entity number. Initial per
 
 Account ownership is a trusted input supplied separately by the destination policy. The builder returns the prepared world, creator/player role bindings and explicit setup-grant seeds. It publishes nothing, contacts no database and supplies no control lease. Authenticated ordinary entry remains necessary.
 
-Recipe installation, initial learning and physical endowment are separate operations. The supported initial learned methods are the woven gathering container, river line and wooden shield, installed through the same trusted native compilers as ordinary authored methods. The source of initial learning is authored setup, with no actor invention credit. Backstory remains authored personal history; current location and possessions remain actual world state, and an explicitly seeded intention retains the ordinary creator attribution.
+Recipe installation, initial learning and physical endowment are separate operations. The supported custom initial methods are fiber cleaning, cord twisting, the woven gathering container, river line and wooden shield, installed through their ordinary trusted compilers. Default solo and inhabited openings explicitly grant cleaning, twisting and the container method to their selected people. Custom rows remain exact, including an empty selection, within the existing six-entry knowledge bound. The source of initial learning is authored setup, with no actor invention credit. Backstory remains authored personal history; current location and possessions remain actual world state, and an explicitly seeded intention retains the ordinary creator attribution.
 
 ## Validation and readiness
 

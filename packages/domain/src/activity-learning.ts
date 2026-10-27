@@ -1,10 +1,8 @@
+import { isNativeInputField } from './native-inputs.js';
+import { activityCommandFields, isManufactureToolField } from './native-command-contracts.js';
 import { entityGet } from './entity-collection.js';
 import { commandEntityFields, nativeOutputBinding } from './native-command-contracts.js';
-import {
-  activityCommandFields,
-  isCookingInputField,
-  preparationDefinition,
-} from './food-preparation.js';
+import { preparationDefinition } from './food-preparation.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { cloneValue } from './draft.js';
 import { isActivityCommand } from './agency.js';
@@ -156,6 +154,44 @@ function supportedStockOccurrence(entry: ActivityOccurrence): boolean {
     entry.outputs.reduce((sum, output) => sum + output.quantity, 0) === command.quantity
   );
 }
+/** A completed neutral attack can demonstrate the ordinary subject action. Keep
+ * the exact human occurrence unchanged; never turn a scored phase, point-only shot
+ * or controlled parent span into autonomous work or a promised contact/quality.
+ * docs/projects/action-execution-and-skill-expression-tech-design.md#53-exact-continuation-and-privacy */
+function resolvedLearningOccurrence(entry: ActivityOccurrence): ActivityOccurrence {
+  const command = entry.command;
+  if (!('manualExecution' in command) || command.manualExecution !== true) return entry;
+  if (
+    entry.status !== 'completed' ||
+    entry.parentId !== undefined ||
+    entry.outputs.length !== 0 ||
+    entry.attackExecution?.input.kind !== 'ordinary' ||
+    !(command.type === 'aim' ? entry.release?.aimTarget : command.targetId)
+  )
+    return entry.noLearningControl ? entry : { ...entry, noLearningControl: true };
+  if (command.type === 'strike') {
+    const { manualExecution: _manual, ...ordinary } = command;
+    return { ...entry, command: ordinary, noLearningControl: undefined };
+  }
+  if (command.type === 'aim') {
+    const {
+      manualExecution: _manual,
+      aimPoint: _point,
+      aimPointSubject: _pointBody,
+      ...ordinary
+    } = command;
+    return {
+      ...entry,
+      command: {
+        ...ordinary,
+        type: 'shoot-once',
+        targetId: entry.release!.aimTarget!.id,
+      },
+      noLearningControl: undefined,
+    };
+  }
+  return entry;
+}
 /** Generalize only actual native object bindings. Definitions and demonstrated
  * quantities remain fixed; prose and adjacency never prove equivalence. */
 export function normalizeActivity(
@@ -164,9 +200,9 @@ export function normalizeActivity(
   entries: ActivityOccurrence[],
   incomplete = false,
 ): ActivityCandidate | undefined {
+  if (entries.length < 2 || entries.length > ACTIVITY_LIMITS.nodes) return;
+  entries = entries.map(resolvedLearningOccurrence);
   if (
-    entries.length < 2 ||
-    entries.length > ACTIVITY_LIMITS.nodes ||
     entries.some(
       (entry) =>
         entry.actorId !== actorId ||
@@ -202,11 +238,15 @@ export function normalizeActivity(
         const produced = outputs.get(value);
         if (produced && nativeOutputBinding(field)) {
           const required =
-            entry.command.type === 'cook' && isCookingInputField(field)
+            entry.command.type === 'cook' && isNativeInputField(field)
               ? (world.foodPreparations[entry.command.preparationId]?.inputs.find(
                   (input) => `input:${input.role}` === field,
                 )?.quantity ?? 1)
-              : 1;
+              : entry.command.type === 'craft' && isManufactureToolField(field)
+                ? (world.recipes[entry.command.recipeId]?.retainedTools.find(
+                    (tool) => `tool:${tool.role}` === field,
+                  )?.quantity ?? 1)
+                : 1;
           args[field] = { output: produced.step, port: produced.port, quantity: required };
           continue;
         }

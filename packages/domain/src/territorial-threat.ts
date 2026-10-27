@@ -16,6 +16,8 @@ import { countDomainWork } from './diagnostic-counters.js';
 import { beginNativeEscape } from './native-response-controller.js';
 
 export interface TerritorialPolicy {
+  activation?: 'feeding-or-resting';
+  pursuitMetres?: number;
   id: string;
   version: number;
   home: SurfacePoint;
@@ -29,7 +31,7 @@ export interface TerritorialPolicy {
   refreshSeconds: number;
   refreshDisplacement: number;
   detours: number;
-  relinquishHealthFraction: number;
+  relinquishHealthFraction?: number;
   strikeDefinitionId: string;
   attackRange: number;
   movementFactor: number;
@@ -40,6 +42,7 @@ export interface TerritorialPolicy {
   stopText: string;
 }
 export interface TerritorialThreat {
+  travelledMetres?: number;
   policy: TerritorialPolicy;
   mode: 'idle' | 'pursuit' | 'search' | 'return';
   relinquished: boolean;
@@ -123,7 +126,10 @@ export function noteTerritorialInjury(
   const threat = entity.threat;
   if (!threat || damage <= 0 || !entity.actor?.alive || entity.actor.controller !== 'native')
     return;
-  if (entity.actor.health <= entity.actor.body!.maxHealth * threat.policy.relinquishHealthFraction)
+  if (
+    threat.policy.relinquishHealthFraction !== undefined &&
+    entity.actor.health <= entity.actor.body!.maxHealth * threat.policy.relinquishHealthFraction
+  )
     threat.relinquished = true;
   if (
     threat.relinquished ||
@@ -152,6 +158,9 @@ export function territorialReviewDue(world: WorldState, entity: Entity): boolean
     !!threat &&
     entity.actor?.controller === 'native' &&
     (world.simTime >= threat.reviewAt ||
+      (['pursuit', 'search'].includes(threat.mode) &&
+        threat.policy.pursuitMetres !== undefined &&
+        (threat.travelledMetres ?? 0) >= threat.policy.pursuitMetres) ||
       (['pursuit', 'search'].includes(threat.mode) &&
         threat.episodeUntil !== undefined &&
         world.simTime >= threat.episodeUntil) ||
@@ -183,7 +192,8 @@ export function renewQuietTerritorialReview(world: WorldState, entity: Entity): 
     threat.searchUntil !== undefined ||
     threat.lastSeen ||
     !actor.body ||
-    actor.health <= actor.body.maxHealth * threat.policy.relinquishHealthFraction ||
+    (threat.policy.relinquishHealthFraction !== undefined &&
+      actor.health <= actor.body.maxHealth * threat.policy.relinquishHealthFraction) ||
     distance3D(worldPosition(entity), threat.policy.home) > threat.policy.territoryRadius
   )
     return false;
@@ -236,6 +246,15 @@ export function territorialIntention(
   )
     return null;
   const policy = threat.policy;
+  if (
+    policy.activation &&
+    threat.mode === 'idle' &&
+    !(entity.actor?.action?.type === 'feed' && entity.actor.action.stage === 'working') &&
+    !(entity.animal?.foraging?.mode === 'resting' && !entity.actor?.action)
+  ) {
+    threat.reviewAt = world.simTime + policy.reviewSeconds;
+    return null;
+  }
   threat.reviewAt = world.simTime + policy.reviewSeconds;
   recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'behavior' });
   if (threat.exhaustedTarget) {
@@ -257,7 +276,9 @@ export function territorialIntention(
   )
     threat.exhaustedTarget = { id: threat.targetId, life: threat.targetLife! };
   const newlyRelinquished =
-    !threat.relinquished && actor.health <= actor.body!.maxHealth * policy.relinquishHealthFraction;
+    !threat.relinquished &&
+    policy.relinquishHealthFraction !== undefined &&
+    actor.health <= actor.body!.maxHealth * policy.relinquishHealthFraction;
   if (newlyRelinquished) threat.relinquished = true;
   // The response owner now owns all escape movement and settling. Territorial
   // pursuit cannot overwrite that action or restart the alarm after it ends.
@@ -277,6 +298,9 @@ export function territorialIntention(
   }
   if (
     threat.relinquished ||
+    (policy.pursuitMetres !== undefined &&
+      (threat.travelledMetres ?? 0) >= policy.pursuitMetres &&
+      ['pursuit', 'search'].includes(threat.mode)) ||
     distance3D(worldPosition(entity), policy.home) > policy.territoryRadius ||
     (threat.episodeUntil !== undefined &&
       world.simTime >= threat.episodeUntil &&
@@ -310,6 +334,7 @@ export function territorialIntention(
       threat.targetLife = target.actor!.physicalLife ?? 0;
       threat.mode = 'pursuit';
       threat.episodeUntil = world.simTime + policy.pursuitSeconds;
+      if (policy.pursuitMetres !== undefined) threat.travelledMetres = 0;
       threat.detoursSpent = 0;
     }
   }
@@ -388,7 +413,9 @@ export function territorialIntention(
  * attempt; failure leaves the animal at its actual supported stop, never a teleport. */
 export function admitTerritorialDetour(entity: Entity): boolean {
   const threat = entity.threat;
-  if (!threat) return true;
+  // Ordinary travel outside an episode must not spend (or be blocked by) the
+  // finite pursuit allowance retained from earlier territorial work.
+  if (!threat || threat.mode === 'idle') return true;
   const limit = threat.policy.detours + (threat.mode === 'return' ? 1 : 0);
   if (threat.detoursSpent >= limit) return false;
   threat.detoursSpent++;
@@ -414,6 +441,12 @@ export function validateTerritorialThreats(world: WorldState): void {
       !entity.actor?.body ||
       !isSafeRecordId(p.id) ||
       p.version !== 1 ||
+      (p.activation !== undefined && p.activation !== 'feeding-or-resting') ||
+      (p.pursuitMetres !== undefined &&
+        (!Number.isFinite(p.pursuitMetres) ||
+          p.pursuitMetres <= 0 ||
+          !Number.isFinite(threat.travelledMetres) ||
+          threat.travelledMetres! < 0)) ||
       typeof p.reentryAfterTimeout !== 'boolean' ||
       !strike ||
       strike.requiredBodyPlan !== entity.actor.body.plan ||
@@ -436,9 +469,10 @@ export function validateTerritorialThreats(world: WorldState): void {
       !Number.isSafeInteger(p.detours) ||
       p.detours < 0 ||
       p.detours > 16 ||
-      !Number.isFinite(p.relinquishHealthFraction) ||
-      p.relinquishHealthFraction <= 0 ||
-      p.relinquishHealthFraction >= 1 ||
+      (p.relinquishHealthFraction !== undefined &&
+        (!Number.isFinite(p.relinquishHealthFraction) ||
+          p.relinquishHealthFraction <= 0 ||
+          p.relinquishHealthFraction >= 1)) ||
       !Array.isArray(p.targetControllers) ||
       !p.targetControllers.length ||
       new Set(p.targetControllers).size !== p.targetControllers.length ||
@@ -471,5 +505,36 @@ export function validateTerritorialThreats(world: WorldState): void {
       )
     )
       throw new Error('Invalid saved territorial controller.');
+  }
+}
+
+export function interruptTerritorialPursuit(world: WorldState, entity: Entity): void {
+  const threat = entity.threat;
+  if (!threat || threat.mode === 'idle') return;
+  stopAction(world, entity);
+  threat.mode = 'idle';
+  delete threat.targetId;
+  delete threat.targetLife;
+  delete threat.lastSeen;
+  delete threat.searchUntil;
+  delete threat.episodeUntil;
+  threat.detoursSpent = 0;
+  recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'behavior' });
+}
+/** The selected territorial family may bind its region to a real feeding or
+ * resting place. Moving foragers acquire no remote territory or player location. */
+export function updateTerritorialPlace(world: WorldState, entity: Entity): void {
+  const threat = entity.threat,
+    point = supportedPosition(entity);
+  if (!point || threat?.policy.activation !== 'feeding-or-resting' || threat.mode !== 'idle')
+    return;
+  if (
+    entity.actor?.action?.type !== 'feed' &&
+    !(entity.animal?.foraging?.mode === 'resting' && !entity.actor?.action)
+  )
+    return;
+  if (distance3D(threat.policy.home, point) > 0) {
+    threat.policy.home = { ...point };
+    threat.policy.refuge = { ...point };
   }
 }

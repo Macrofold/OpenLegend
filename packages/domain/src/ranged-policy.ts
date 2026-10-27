@@ -11,6 +11,17 @@ export interface RangedPolicy {
   version: number;
   implementation: 'finite-shot';
   targetRule: 'living-animal' | 'living-actor';
+  pointFire: boolean;
+  localAvoidance?: {
+    bodyProfiles: string[];
+    heightFactor: number;
+    holdSeconds: number;
+    cooldownSeconds: number;
+    contextFactor: number;
+    contractedText: string;
+    restoredText: string;
+    clearedText: string;
+  };
   conditionAdjustment: 'danger-or-return' | 'none';
   conditionAccuracyFactor: number;
   windupSeconds: number;
@@ -28,29 +39,65 @@ export interface RangedPolicy {
 export function validateRangedPolicy(policy: RangedPolicy | null): void {
   if (policy === null) return;
   if (
-    !hasRecordFields(policy, [
-      'id',
-      'version',
-      'implementation',
-      'targetRule',
-      'conditionAdjustment',
-      'conditionAccuracyFactor',
-      'windupSeconds',
-      'approachBuffer',
-      'minimumApproachRange',
-      'invalidTargetText',
-      'unavailableText',
-      'targetLabel',
-      'actionLabel',
-      'activityLabel',
-      'description',
-      'scope',
-      'accuracyExplanation',
-    ]) ||
+    !hasRecordFields(
+      policy,
+      [
+        'id',
+        'version',
+        'implementation',
+        'targetRule',
+        'pointFire',
+        'conditionAdjustment',
+        'conditionAccuracyFactor',
+        'windupSeconds',
+        'approachBuffer',
+        'minimumApproachRange',
+        'invalidTargetText',
+        'unavailableText',
+        'targetLabel',
+        'actionLabel',
+        'activityLabel',
+        'description',
+        'scope',
+        'accuracyExplanation',
+      ],
+      ['localAvoidance'],
+    ) ||
     !isSafeRecordId(policy.id) ||
     !Number.isSafeInteger(policy.version) ||
     policy.version < 1 ||
     policy.implementation !== 'finite-shot' ||
+    typeof policy.pointFire !== 'boolean' ||
+    (policy.localAvoidance !== undefined &&
+      (!hasRecordFields(policy.localAvoidance, [
+        'bodyProfiles',
+        'heightFactor',
+        'holdSeconds',
+        'cooldownSeconds',
+        'contextFactor',
+        'contractedText',
+        'restoredText',
+        'clearedText',
+      ]) ||
+        !Number.isFinite(policy.localAvoidance.contextFactor) ||
+        policy.localAvoidance.contextFactor < 0 ||
+        policy.localAvoidance.contextFactor > 1 ||
+        ![
+          policy.localAvoidance.contractedText,
+          policy.localAvoidance.restoredText,
+          policy.localAvoidance.clearedText,
+        ].every((text) => typeof text === 'string' && text.length > 0 && text.length <= 400) ||
+        !Array.isArray(policy.localAvoidance.bodyProfiles) ||
+        !policy.localAvoidance.bodyProfiles.length ||
+        !policy.localAvoidance.bodyProfiles.every(
+          (id) => typeof id === 'string' && id.length > 0,
+        ) ||
+        !Number.isFinite(policy.localAvoidance.heightFactor) ||
+        policy.localAvoidance.heightFactor <= 0 ||
+        policy.localAvoidance.heightFactor >= 1 ||
+        ![policy.localAvoidance.holdSeconds, policy.localAvoidance.cooldownSeconds].every(
+          (n) => Number.isFinite(n) && n > 0,
+        ))) ||
     !['living-animal', 'living-actor'].includes(policy.targetRule) ||
     !['danger-or-return', 'none'].includes(policy.conditionAdjustment) ||
     !Number.isFinite(policy.conditionAccuracyFactor) ||

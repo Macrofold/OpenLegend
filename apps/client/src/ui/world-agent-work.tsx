@@ -276,7 +276,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
   }, [selected?.id, selected?.revision, exact?.revision]);
 
   async function read<T>(
-    suffix: string,
+    suffix: 'draft-read' | 'draft-history' | 'draft-compare' | 'draft-check',
     body: Record<string, unknown>,
     signal?: AbortSignal,
   ): Promise<T> {

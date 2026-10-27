@@ -5,6 +5,7 @@ import type { CognitionLevel, LedgerCategory, LevelLimits } from './cognition-bu
 
 /** Operating policy, not fictional laws. docs/limits/ai-execution.md#decision-escalation-limits */
 export const DECISION_LIMITS = {
+  backgroundExecutions: 100,
   immediateMs: 1000,
   lifetimeMs: 30_000,
   queueMs: 2000,

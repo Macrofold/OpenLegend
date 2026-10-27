@@ -88,19 +88,7 @@ function conditionTransition(
   }
   const matches = matchesStatusCondition(world, bindings, condition);
   if ('dailyWindow' in condition) {
-    const hour = localHour(world);
-    return {
-      matches,
-      afterSeconds: Math.min(
-        ...[condition.dailyWindow.start, condition.dailyWindow.end].map((h) => {
-          // h - hour is exact near an edge; adding 24 first would round a residue short of the
-          // edge to zero. Exactly on an edge has passed it; a residue short of it has not (PF13.16).
-          const gap = h - hour;
-          const seconds = (gap < 0 ? gap + 24 : gap) * 3600;
-          return seconds <= 0 ? 86400 : Math.max(TIME_EPSILON, seconds);
-        }),
-      ),
-    };
+    return { matches, afterSeconds: dailyWindowBoundary(world, condition.dailyWindow) };
   }
   if (!('compare' in condition)) return { matches, afterSeconds: Infinity };
   const c = condition.compare;
@@ -148,6 +136,21 @@ function conditionTransition(
   if (!matches)
     retainNegativeStatusCondition(world, bindings, condition, value, threshold, rate, afterSeconds);
   return { matches, afterSeconds };
+}
+/** Shared strict-future daily edges, with the matcher’s exact local-hour arithmetic. */
+export function dailyWindowBoundary(
+  world: WorldState,
+  window: { start: number; end: number },
+): number {
+  const hour = localHour(world);
+  return Math.min(
+    ...[window.start, window.end].map((h) => {
+      // Subtract before wrapping: adding 24 first can round a residue onto an edge.
+      const gap = h - hour;
+      const seconds = (gap < 0 ? gap + 24 : gap) * 3600;
+      return seconds <= 0 ? 86400 : Math.max(TIME_EPSILON, seconds);
+    }),
+  );
 }
 export function statusBoundary(
   world: WorldState,

@@ -46,6 +46,7 @@ export class PixelCharacter {
   private readonly target: pc.RenderTarget;
   private sampling?: ArtTreatment['sampling'];
   private preserveShape = false;
+  private physicalExtent = false;
   private readonly edgeSettings = new Float32Array(4);
   private readonly screenCoverage = new Float64Array(2);
   private targetResizes = 0;
@@ -229,6 +230,12 @@ export class PixelCharacter {
     this.app.systems.light?.on('beforeremove', this.removeLight, this);
     this.setVisible(false);
   }
+  /** Live world bodies retain their projected extent through pixel compositing. */
+  usePhysicalExtent(): void {
+    if (this.physicalExtent) return;
+    this.physicalExtent = true;
+    this.mappingReady = false;
+  }
   setTreatment(
     sampling: ArtTreatment['sampling'],
     edges: ArtTreatment['edges'],
@@ -383,10 +390,14 @@ export class PixelCharacter {
     this.viewProjection.mul2(projection, this.view);
     this.inverseViewProjection.copy(this.viewProjection).invert();
     let minY = Infinity,
-      maxY = -Infinity;
+      maxY = -Infinity,
+      minX = Infinity,
+      maxX = -Infinity;
     for (const point of this.neutralPoints) {
       transform.transformPoint(point, this.point);
       this.project(this.point, this.screenTop);
+      minX = Math.min(minX, this.screenTop.x);
+      maxX = Math.max(maxX, this.screenTop.x);
       minY = Math.min(minY, this.screenTop.y);
       maxY = Math.max(maxY, this.screenTop.y);
     }
@@ -403,12 +414,19 @@ export class PixelCharacter {
     const sourceHeight = ((maxY - minY) * imageHeight) / visibleRows;
     // Source-based people are upright models. The old sprite-height correction
     // would stretch this mercenary above them despite the correct 10% scale.
-    const height = this.preserveShape ? sourceHeight : (visibleHeight * imageHeight) / visibleRows;
+    const height =
+      this.preserveShape || this.physicalExtent
+        ? sourceHeight
+        : (visibleHeight * imageHeight) / visibleRows;
     // Screen capture rounding must not widen/narrow the body as allocation
     // changes. Historical fixed-row modes retain their existing aspect ratios.
     const aspect =
       this.sampling === 'screen' ? imageWidth / imageHeight : this.color.width / this.color.height;
-    const width = height * aspect;
+    // A contracted body is wider relative to its height. Keep the whole visible
+    // body in the capture instead of clipping its sides to the standing aspect.
+    const width = this.physicalExtent
+      ? Math.max(height * aspect, 2 * Math.max(this.screen.x - minX, maxX - this.screen.x))
+      : height * aspect;
     const sourceCenterY = (minY + maxY) / 2;
     const centerY = this.screen.y + ((sourceCenterY - this.screen.y) * height) / sourceHeight;
     // Separate Y ranges compensate for upright-body foreshortening. X stays

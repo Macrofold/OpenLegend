@@ -8,7 +8,7 @@ A player who has invented or obtained a usable sling can already hunt with it. P
 
 The base-world clock advances one game minute per real second at ordinary speed. When this competence was selected, cord preparation took 60 game seconds and cooking took 90; a small duration improvement saved only a fraction of a real second, which was a weak reason to add progression. The October 15 [everyday-work pacing](time.md#everyday-work-durations) changes cord preparation to 600 game seconds (ten real seconds at normal speed). That changes the timing example, without selecting a new crafting skill or changing the sling practice rules. [Current clock](time.md#clock-and-fallback-horizon), [cord method](items.md#cordage-manufacture-and-reuse), [action defaults](../../../packages/domain/src/worlds/base/actions.ts).
 
-Current hunting, explicit aiming and inert practice share [straight projectile flight](ranged-counterplay.md). Preparation holds ammunition without spending it; a valid release spends once. Competence changes the steadiness of the released ray, while actual movement, physical cover and a chosen shield determine later contact. This replaces immediate hit/injury and the old extra fleeing multiplier. It does not add a general ballistic simulation.
+Current hunting, explicit aiming and inert practice share [straight projectile flight](ranged-counterplay.md). Preparation holds ammunition without spending it; a valid release spends once. Competence improves the captured handling used only when an aware, capable body can physically evade a crossing. The released ray has no random heading error; movement, cover, actual body shape and a chosen shield determine contact. This replaces immediate hit/injury and the old extra fleeing multiplier. It does not add a general ballistic simulation.
 
 The character must approach within the tool's actual firing range; the selected world owns approach and preparation tuning. Omitted ranged support supplies no offer or equipped shortcut.
 
@@ -18,20 +18,20 @@ The exact installed competence definition owns the two rank labels, current prog
 
 The implemented **Sling handling** value has two authored states:
 
-| Value | Player-facing meaning                | Mechanical effect                                      |
-| ----- | ------------------------------------ | ------------------------------------------------------ |
-| 0     | Still becoming practiced with slings | Ordinary base sling aim steadiness                     |
-| 1     | Practiced with slings                | Reduce the chance of a deviated release by one quarter |
+| Value | Player-facing meaning                | Mechanical effect                                  |
+| ----- | ------------------------------------ | -------------------------------------------------- |
+| 0     | Still becoming practiced with slings | Ordinary base sling handling                       |
+| 1     | Practiced with slings                | Add one quarter of the gap from base handling to 1 |
 
 This applies to the supported sling-like mechanism across eligible admitted definitions, including an invented sling. A cosmetic rename or equivalent recipe does not create another skill track. It does not apply to bows, throwing by hand, melee weapons or arbitrary items named sling.
 
-For authored accuracy **a**, practiced steadiness is **a + 0.25 × (1 − a)**, separate from the unchanged weapon-authoring range of 0.6–0.9. One saved draw selects steady versus deviated aim; only a deviated release needs another draw to choose its error direction. Competence does not reroll a miss or a later collision.
+For authored accuracy **a**, practiced handling is **a + 0.25 × (1 − a)**, separate from the unchanged weapon-authoring range of 0.6–0.9. Capture this value once at release. It reduces the chance of a successful [qualified bodily evasion](skilled-action-execution.md#physical-arrow-and-local-evasion); it does not rotate the shot or promise a hit. Release draws no randomness. Only an uncertain, physically feasible local response consumes the saved contest draw, once at its actual crossing. Inert or unable bodies receive geometric contact without an invented dodge roll.
 
-| Authored base steadiness | Unpracticed | Practiced |
-| ------------------------ | ----------- | --------- |
-| 0.60                     | 60%         | 70%       |
-| 0.75                     | 75%         | 81.25%    |
-| 0.90                     | 90%         | 92.5%     |
+| Authored base handling | Unpracticed | Practiced |
+| ---------------------- | ----------- | --------- |
+| 0.60                   | 60%         | 70%       |
+| 0.75                   | 75%         | 81.25%    |
+| 0.90                   | 90%         | 92.5%     |
 
 These are arithmetic illustrations, not measured hit rates or human appreciation. A higher-quality sling remains steadier at each competence state. Practice cannot prevent misses caused by movement or cover; percentages appear only when the character may know the inputs.
 
@@ -72,7 +72,7 @@ This is a deliberately short authored learning approximation, not a scientific m
 
 The prepared first scene provides **one visible inert practice target**, with a clear supported place from which to use it. This is authored scene content, independent of shelter construction and general target manufacturing. The first target is reusable and yields no health damage, corpse, loot, harvest, repair reward or currency.
 
-**Practice one sling shot** is the separate supported action. Hunting still accepts living animals; the inert target has neither animal state nor health. The practice action uses the actual eligible sling and one compatible projectile, ordinary approach, the current 18-game-second windup and release-time reach/clearance/material checks. Against the inert target, use the same handling accuracy and one hit result, without an animal danger factor.
+**Practice one sling shot** is the separate supported action. Hunting still accepts living animals; the inert target has neither animal state nor health. The practice action uses the actual eligible sling and one compatible projectile, ordinary approach, the current 18-game-second windup and release-time reach/clearance/material checks. The release records handling normally, but an inert target cannot evade: its hit or miss follows actual projectile/body geometry, with no release-heading or dodge random draw.
 
 Practice now uses the same coarse straight-flight and body/solid contact calculation as other supported shots, with no injury on practice contact. This supersedes its original abstract hit/miss resolution. It supplies no arcing ballistics, recoverable landing item, wind correction or fine motor diagnosis. A bystander can intercept the flight without being injured; no collateral attack permission is granted. The admitted firing position and target must satisfy the family's real safe-clearance rule before release; if the space becomes blocked, stop before the shot and explain only facts the player may know. Clearance checks current geometry and the whole living body along the firing segment, including a body crossing an endpoint, using the authored 0.25-unit horizontal margin and actual body widths/heights. Conservative candidate selection includes a body whose feet are below an elevated shot. Coaching feedback requires the existing person capabilities and the authored 1.6-unit communication reach.
 

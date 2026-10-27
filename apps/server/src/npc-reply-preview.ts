@@ -69,17 +69,6 @@ export class NpcReplyPreviews {
       capabilityBlocked(world, npc, 'speech')
     )
       return false;
-    if (snapshot.conversationId) {
-      const conversations = world.conversations;
-      const conversation = conversations?.records[snapshot.conversationId];
-      if (
-        !conversation ||
-        conversation.endedAt !== undefined ||
-        conversations?.active[scope.actorId] !== conversation.id ||
-        conversations.active[snapshot.npcId] !== conversation.id
-      )
-        return false;
-    }
     if (!attempt.volume) return true;
     if (attempt.checkedWorld !== world) {
       let exposure;
@@ -131,7 +120,6 @@ export class NpcReplyPreviews {
     requestId: string;
     npcId: string;
     playerSpeechEventId: string;
-    conversationId?: string;
     attempt: number;
     maxBytes: number;
     rootKeys: string[];
@@ -145,7 +133,6 @@ export class NpcReplyPreviews {
         requestId: options.requestId,
         npcId: options.npcId,
         playerSpeechEventId: options.playerSpeechEventId,
-        conversationId: options.conversationId,
         attempt: options.attempt,
         generation: randomUUID(),
         worldId: options.scope.worldId,

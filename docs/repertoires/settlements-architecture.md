@@ -12,7 +12,7 @@
 
 ## Navigation
 
-Patterns: [A courtyard with several lives](#a-courtyard-with-several-lives) · [The expandable first shelter](#the-expandable-first-shelter) · [The public kitchen](#the-public-kitchen) · [The bridge as a neighborhood](#the-bridge-as-a-neighborhood) · [A movable workshop](#a-movable-workshop) · [The neighborhood notice wall](#the-neighborhood-notice-wall) · [A dignified threshold](#a-dignified-threshold) · [The city of shortcuts](#the-city-of-shortcuts) · [A neighborhood worth leaving alone](#a-neighborhood-worth-leaving-alone) · [Ruins with present tenants](#ruins-with-present-tenants).
+Patterns: [The bridge as a neighborhood](#the-bridge-as-a-neighborhood) · [Ruins with present tenants](#ruins-with-present-tenants) · [The expandable first shelter](#the-expandable-first-shelter) · [The city of shortcuts](#the-city-of-shortcuts) · [A movable workshop](#a-movable-workshop) · [A courtyard with several lives](#a-courtyard-with-several-lives) · [A neighborhood worth leaving alone](#a-neighborhood-worth-leaving-alone) · [The public kitchen](#the-public-kitchen) · [A dignified threshold](#a-dignified-threshold) · [The neighborhood notice wall](#the-neighborhood-notice-wall).
 
 Inventories: [Homes and private rooms](#homes-and-private-rooms) · [Settlement forms and neighborhoods](#settlement-forms-and-neighborhoods) · [Public sacred and learning places](#public-sacred-and-learning-places) · [Workshops markets and stores](#workshops-markets-and-stores) · [Water food waste and service spaces](#water-food-waste-and-service-spaces) · [Streets crossings and accessible routes](#streets-crossings-and-accessible-routes) · [Pleasure performance and intimate places](#pleasure-performance-and-intimate-places) · [Fortifications authority and confinement](#fortifications-authority-and-confinement) · [Ruins and changing occupancy](#ruins-and-changing-occupancy) · [Alien habitats and inhabited ships](#alien-habitats-and-inhabited-ships) · [Moving living and impossible architecture](#moving-living-and-impossible-architecture) · [Working expedition homes](#working-expedition-homes) · [Contested access and shared services](#contested-access-and-shared-services) · [Memory performance and revisitable places](#memory-performance-and-revisitable-places) · [Architecture that changes the question](#architecture-that-changes-the-question) · [Research coverage](#research-coverage).
 
@@ -24,13 +24,23 @@ Distinguish a drawn plan from a built structure, a door from permission to enter
 
 The following original pattern cards and source pointers are retained as provenance. The completed reading stage and its architectural incorporation are recorded under [Research coverage](#research-coverage); a retained citation alone is not a completed read.
 
-## A courtyard with several lives
+## The bridge as a neighborhood
 
-**ALL · Play · Moderate/Extend.** Gap: shared spaces, schedules and activity-compatible layouts.
+**MD MO FA · Play · Large/New.** Gap: support-aware construction and bounded shared access policy.
 
-The same courtyard hosts repairs in the morning, children after school and music at dusk. Benches, shade, storage and sightlines make these uses compatible or contentious. Builders shape encounters through layout. Avoid a room-score formula that rewards clutter; a simple well-placed chair may matter more than twelve decorative objects with numerical bonuses.
+A crossing controls access to a valuable upland route. Its tower, gate, narrow public lane and lower landing give a defender, trader, pilgrim and excluded household different approaches and interests. A player can investigate an alternative route, negotiate passage, help defend the crossing or contest its holder through the [toll-tower encounter](combinations.md#the-toll-tower-at-dawn). Winning useful access can make a future expedition possible; taking the tower does not automatically confer every resident's allegiance.
 
-Seeds and references: [The Sims](source-atlas.md#g24), [Grand Theft Auto V](source-atlas.md#g67), [Ultima VII: The Black Gate](source-atlas.md#g128), [Austen’s social worlds](source-atlas.md#w23).
+Once repaired, the crossing grows stalls, a shrine and a sheltered noticeboard. Its practical success creates congestion, identity and questions about tolls. Builders can preserve a public lane or create separate paths. Load and access changes must be legible; do not let decorative expansion secretly block emergency routes or require simulating every plank at all distances.
+
+Seeds and references: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Discworld](source-atlas.md#w12).
+
+## Ruins with present tenants
+
+**ALL · Play · Moderate/Extend.** Gap: layered place records and current occupancy claims.
+
+An old fortress now contains mushroom farms, workshops and apartments. Archaeological discovery may conflict with someone's kitchen, creating choices about preservation and access. An opened passage might reach a usable hall and a safer outward route, while its present tenants want their homes and harvests protected. A tenant can seek a thriving workshop; a wealthy claimant may want exclusive access and knowingly displace them. Inspect the space, hear distinct claims, bargain, take a side or use another supported approach. Success can provide a remarkable home or expedition base whose usefulness persists. Explorers meet current lives inside history. A ruin is not automatically ownerless loot, and every inhabited layer should have a practical purpose rather than existing only to deliver ancient exposition.
+
+Seeds and references: [Fallout 4](source-atlas.md#g74), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Ultima VII: The Black Gate](source-atlas.md#g128), [Middle-earth](source-atlas.md#w01).
 
 ## The expandable first shelter
 
@@ -40,21 +50,13 @@ A lean-to can become a workshop wall, then one side of a communal hall. Early wo
 
 Seeds and references: [Minecraft](source-atlas.md#g20), [Valheim](source-atlas.md#g31), [Core Keeper](source-atlas.md#g46).
 
-## The public kitchen
+## The city of shortcuts
 
-**ALL · Play · Moderate/Extend.** Gap: shared facilities, contribution rules and dependable work routines.
+**MO SC FA · Play · Large/New.** Gap: discoverable local route permissions and changing connectors.
 
-A kitchen connects growers, cooks, travelers and people who need help. Its menu can reflect what residents actually produce and remember. Players choose between free meals, member contributions or paid service, each with different pressures. Once stable, it should run with occasional meaningful decisions rather than demanding that the player personally stir every pot forever.
+A service stair, friendly shop and rooftop garden create an alternate route through a district. Helping a caretaker may earn access without granting ownership. Explorers become knowledgeable locals. Shortcuts should remain understandable and spatially credible, with an ordinary public route available; moving barriers must not silently invalidate every standing plan in the city.
 
-Seeds and references: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Assassin's Creed III](source-atlas.md#g99).
-
-## The bridge as a neighborhood
-
-**MD MO FA · Play · Large/New.** Gap: support-aware construction and bounded shared access policy.
-
-A repaired crossing grows stalls, a shrine and a sheltered noticeboard. Its practical success creates congestion, identity and questions about tolls. Builders can preserve a public lane or create separate paths. Load and access changes must be legible; do not let decorative expansion secretly block emergency routes or require simulating every plank at all distances.
-
-Seeds and references: [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111), [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Discworld](source-atlas.md#w12).
+Seeds and references: [Grand Theft Auto V](source-atlas.md#g67), [Elden Ring](source-atlas.md#g75), [Deus Ex (2000)](source-atlas.md#g117).
 
 ## A movable workshop
 
@@ -64,29 +66,13 @@ A wagon or landed service pod brings tools to distant communities. Customers bec
 
 Seeds and references: [Garry's Mod](source-atlas.md#g35), [Assassin's Creed IV: Black Flag](source-atlas.md#g98), [Starsector](source-atlas.md#g120).
 
-## The neighborhood notice wall
+## A courtyard with several lives
 
-**ALL · Play · Small/Compose.** Gap: authored notices; live scoped updates need publication support.
+**ALL · Play · Moderate/Extend.** Gap: shared spaces, schedules and activity-compatible layouts.
 
-Residents post requests, performances, missing objects and offers to teach. Notices reveal several optional directions, with authors who may change their minds. A player can contribute or ignore them. Keep expired notices removable and distinguish rumor from confirmed work; the wall should not become an omniscient quest database or a compulsory checklist.
+The same courtyard hosts repairs in the morning, children after school and music at dusk. Benches, shade, storage and sightlines make these uses compatible or contentious. Builders shape encounters through layout. Avoid a room-score formula that rewards clutter; a simple well-placed chair may matter more than twelve decorative objects with numerical bonuses.
 
-Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Ultima VII: The Black Gate](source-atlas.md#g128), [Discworld](source-atlas.md#w12).
-
-## A dignified threshold
-
-**ALL · Blend · Moderate/Extend.** Gap: body-aware entrances and access alternatives.
-
-A public building adds ramps, resting ledges, translation surfaces and a quiet waiting room. Different visitors can arrive independently while guards retain legitimate inspection procedures. Accessibility changes who participates in civic life. Avoid reducing accommodations to a single checkbox, or making special entrances humiliating back routes; ordinary routes should be interesting and usable too.
-
-Seeds and references: [Caves of Qud](source-atlas.md#g33), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
-
-## The city of shortcuts
-
-**MO SC FA · Play · Large/New.** Gap: discoverable local route permissions and changing connectors.
-
-A service stair, friendly shop and rooftop garden create an alternate route through a district. Helping a caretaker may earn access without granting ownership. Explorers become knowledgeable locals. Shortcuts should remain understandable and spatially credible, with an ordinary public route available; moving barriers must not silently invalidate every standing plan in the city.
-
-Seeds and references: [Grand Theft Auto V](source-atlas.md#g67), [Elden Ring](source-atlas.md#g75), [Deus Ex (2000)](source-atlas.md#g117).
+Seeds and references: [The Sims](source-atlas.md#g24), [Grand Theft Auto V](source-atlas.md#g67), [Ultima VII: The Black Gate](source-atlas.md#g128), [Austen’s social worlds](source-atlas.md#w23).
 
 ## A neighborhood worth leaving alone
 
@@ -96,13 +82,29 @@ After solving water, food and housing, residents simply live well for a while. P
 
 Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [The Sims](source-atlas.md#g24), [Final Fantasy XIV](source-atlas.md#g91).
 
-## Ruins with present tenants
+## The public kitchen
 
-**ALL · Play · Moderate/Extend.** Gap: layered place records and current occupancy claims.
+**ALL · Play · Moderate/Extend.** Gap: shared facilities, contribution rules and dependable work routines.
 
-An old fortress now contains mushroom farms, workshops and apartments. Archaeological discovery may conflict with someone's kitchen, creating choices about preservation and access. Explorers meet current lives inside history. A ruin is not automatically ownerless loot, and every inhabited layer should have a practical purpose rather than existing only to deliver ancient exposition.
+A kitchen connects growers, cooks, travelers and people who need help. Its menu can reflect what residents actually produce and remember. Players choose between free meals, member contributions or paid service, each with different pressures. Once stable, it should run with occasional meaningful decisions rather than demanding that the player personally stir every pot forever.
 
-Seeds and references: [Fallout 4](source-atlas.md#g74), [The Elder Scrolls III: Morrowind](source-atlas.md#g113), [Ultima VII: The Black Gate](source-atlas.md#g128), [Middle-earth](source-atlas.md#w01).
+Seeds and references: [The Sims](source-atlas.md#g24), [Stardew Valley](source-atlas.md#g30), [Assassin's Creed III](source-atlas.md#g99).
+
+## A dignified threshold
+
+**ALL · Blend · Moderate/Extend.** Gap: body-aware entrances and access alternatives.
+
+A public building adds ramps, resting ledges, translation surfaces and a quiet waiting room. Different visitors can arrive independently while guards retain legitimate inspection procedures. Accessibility changes who participates in civic life. Avoid reducing accommodations to a single checkbox, or making special entrances humiliating back routes; ordinary routes should be interesting and usable too.
+
+Seeds and references: [Caves of Qud](source-atlas.md#g33), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
+
+## The neighborhood notice wall
+
+**ALL · Play · Small/Compose.** Gap: authored notices; live scoped updates need publication support.
+
+Residents post requests, performances, missing objects and offers to teach. Notices reveal several optional directions, with authors who may change their minds. A player can contribute or ignore them. Keep expired notices removable and distinguish rumor from confirmed work; the wall should not become an omniscient quest database or a compulsory checklist.
+
+Seeds and references: [Old School RuneScape](source-atlas.md#g49), [Ultima VII: The Black Gate](source-atlas.md#g128), [Discworld](source-atlas.md#w12).
 
 ## Homes and private rooms
 

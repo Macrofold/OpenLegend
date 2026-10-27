@@ -11,11 +11,11 @@ import type { WorldState } from '@open-legend/domain';
  */
 export function attentionRequest(
   state: Record<string, unknown>,
-  entries: [string, string][],
+  entries: [string, unknown][],
   purpose: 'context' | 'actions' | 'choose-action' = 'context',
   guidance?: WorldState['cognitionPolicy']['actionGuidance'],
 ) {
-  const candidates: Record<string, string> = {};
+  const candidates: Record<string, unknown> = {};
   const questions: TypedQuestionMap = {};
   let stateCharacters = JSON.stringify({ ...state, candidates }).length;
   let requestCharacters = JSON.stringify({ state: { ...state, candidates }, questions }).length;

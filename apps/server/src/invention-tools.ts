@@ -64,7 +64,9 @@ export function knownInvention(service: WorldService, actorId: string, id: strin
   return service.world.recipes[id];
 }
 export function recipeDraft(recipe: RecipeDefinition): DeclarationDraft {
-  return structuredClone(recipe.sourceCandidate);
+  if (recipe.source.kind !== 'family')
+    throw new Error('This authored transformation has no invention-family editor.');
+  return structuredClone(recipe.source.candidate);
 }
 /** Human editors receive only inventor-permitted material choices and descriptor-owned labels.
  * Editing these fields produces a new candidate; admission remains the trusted family's owner. */
@@ -141,7 +143,7 @@ export function projectRecipeEditor(service: WorldService, actorId: string, raw:
             choices: materials.map((material) => ({ value: material.id, label: material.name })),
           },
         ];
-      if (constraint && constraint.type !== 'string')
+      if (constraint && (constraint.type === 'number' || constraint.type === 'integer'))
         return [
           {
             ...field,
@@ -175,15 +177,20 @@ export function inspectInvention(service: WorldService, actorId: string, id: str
   const recipe = knownInvention(service, actorId, id);
   if (!recipe)
     return { ok: false as const, message: 'That recipe is not available to this inventor.' };
+  if (recipe.source.kind !== 'family')
+    return {
+      ok: false as const,
+      message: 'This authored transformation has no invention-family editor.',
+    };
   const family = inventionFamily(recipe)!;
   return {
     ok: true as const,
     pin: { recipeId: recipe.id, version: recipe.version, digest: recipe.digest },
     candidate: recipeDraft(recipe),
-    recipeEditor: projectRecipeEditor(service, actorId, recipe.sourceCandidate),
+    recipeEditor: projectRecipeEditor(service, actorId, recipe.source.candidate),
     summary: describeInvention(recipe),
     interface: recipeFamily(service.world, family)!.definition,
-    familyPin: recipe.familyPin,
+    familyPin: recipe.source.familyPin,
     dependencyReferences: recipeVisibleDependencies(service.world, recipe),
     dependencies: recipe.inputs.map((input) => ({
       id: input.definitionId,
@@ -272,7 +279,10 @@ export function executeInventionTool(
         ok: true,
         profile: service.world.profile,
         ...(selected
-          ? { family: selected.definition, schema: selectedRecipeCandidateSchema(selected) }
+          ? {
+              family: selected.definition,
+              schema: selectedRecipeCandidateSchema(selected, service.world),
+            }
           : {
               families: installedRecipeFamilies(service.world).map(({ definition }) => ({
                 id: definition.id,

@@ -76,7 +76,7 @@ try {
       objects: [{ count: 300, name: 'Observation object', properties: ['rigid'] }],
     });
     const setup = await service.transition((input) => {
-      const world = populateScenario(structuredClone(input), scenario);
+      const world = populateScenario(structuredClone(input), scenario).world;
       return {
         world,
         events: world.events.slice(input.events.length),

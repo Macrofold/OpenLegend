@@ -10,6 +10,42 @@ import { validateStatusCondition } from './status-effect-validation.js';
 import { isWalkable } from './spatial.js';
 import { bodyProfile } from './spatial-state.js';
 import { validateReincarnationPolicy } from './reincarnation.js';
+import { ACTIVITY_LIMITS } from './action-experience.js';
+import { hasRecordFields, isSafeRecordId } from './records.js';
+
+export interface MealPolicy {
+  conditionId: string;
+  maximumUnits: number;
+  oneLabel: string;
+  mealLabel: string;
+  countLabel: string;
+  startLabel: string;
+  help: string;
+}
+export function validateMealPolicy(value: unknown): asserts value is MealPolicy {
+  if (
+    !hasRecordFields(value, [
+      'conditionId',
+      'maximumUnits',
+      'oneLabel',
+      'mealLabel',
+      'countLabel',
+      'startLabel',
+      'help',
+    ]) ||
+    !isSafeRecordId(value.conditionId) ||
+    !Number.isSafeInteger(value.maximumUnits) ||
+    Number(value.maximumUnits) < 1 ||
+    Number(value.maximumUnits) > ACTIVITY_LIMITS.iterations ||
+    ['oneLabel', 'mealLabel', 'countLabel', 'startLabel', 'help'].some(
+      (key) =>
+        typeof value[key] !== 'string' ||
+        !String(value[key]).trim() ||
+        String(value[key]).length > ACTIVITY_LIMITS.text,
+    )
+  )
+    throw new Error('Invalid installed meal selection policy.');
+}
 
 /** Finite installed body services. Policy chooses existing outcomes, never authority.
  * docs/projects/parallel-batch-01-playable-week/survival.md#installed-body-policy */
@@ -38,6 +74,7 @@ export interface BodyPolicy {
       ended: string;
       closing: string;
       withdrawing: string;
+      controls: Record<'speak' | 'stop', { label: string; description: string; success: string }>;
     };
     impactAttention: { importance: number; urgency: number };
     unavailableText: string;
@@ -69,6 +106,7 @@ export interface BodyPolicy {
     removalNarration: string;
   };
   consumption: null | {
+    meal?: MealPolicy;
     attributeId: string;
     quantityProperty: 'nutrition';
     refusals: Array<{ itemType: string; reason: string }>;
@@ -171,6 +209,7 @@ export function validateBodyPolicy(
         'ended',
         'closing',
         'withdrawing',
+        'controls',
       ]);
       if (
         ![encounter.recentSeconds].every((n) => Number.isFinite(n) && n > 0) ||
@@ -185,6 +224,13 @@ export function validateBodyPolicy(
         encounter.withdrawing,
       ])
         text(value);
+      fields(encounter.controls, ['speak', 'stop']);
+      for (const control of Object.values(encounter.controls)) {
+        fields(control, ['label', 'description', 'success']);
+        text(control.label);
+        text(control.description);
+        text(control.success);
+      }
     }
     fields(policy.combat.impactAttention, ['importance', 'urgency']);
     if (
@@ -212,6 +258,7 @@ export function validateBodyPolicy(
       'description',
       'rangedDescription',
       'confirmLabel',
+      'prepareLabel',
       'cancelLabel',
     ]);
     for (const value of Object.values(policy.lethalAttackReview)) text(value);
@@ -336,7 +383,9 @@ export function validateBodyPolicy(
       'successText',
       'unavailableText',
       'suggestWhen',
+      ...(consumption.meal !== undefined ? ['meal'] : []),
     ]);
+    if (consumption.meal !== undefined) validateMealPolicy(consumption.meal);
     numeric(consumption.attributeId);
     if (consumption.quantityProperty !== 'nutrition' || !Array.isArray(consumption.refusals))
       throw new Error('Unsupported consumption service.');

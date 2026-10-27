@@ -1,6 +1,7 @@
 import {
   BoundsIndex,
   clearConvexView,
+  horizontalCone,
   distance3D,
   movingBodiesMinimumSeparation,
   querySurfacesInBounds,
@@ -13,9 +14,9 @@ import {
   type WalkableSurface,
 } from '@open-legend/spatial';
 import { entityGet } from './entity-collection.js';
-import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
+import { effectiveBodyProfile, spatialMap, worldPosition } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
-import { visionRadius, sensesFor } from './perception.js';
+import { visionRadius, visionFieldOfView, sensesFor } from './perception.js';
 import {
   acquireObservation,
   observationFactKey,
@@ -122,10 +123,11 @@ function receptor(world: WorldState, observerId: string) {
   const detector = sensesFor(world, observer).find(
     (sense) => sense.implementation === 'vision-geometry-v1',
   );
-  const radius = visionRadius(world, observer);
+  const radius = visionRadius(world, observer),
+    angle = visionFieldOfView(world, observer);
   if (!detector || radius <= 0) return;
   const p = worldPosition(observer),
-    eye = { x: p.x, y: p.y + bodyProfile(observer).eyeHeight, z: p.z };
+    eye = { x: p.x, y: p.y + effectiveBodyProfile(world, observer).eyeHeight, z: p.z };
   const map = spatialMap(world),
     policy = selectedAttentionPolicy(world);
   const basis = JSON.stringify([
@@ -135,6 +137,8 @@ function receptor(world: WorldState, observerId: string) {
     eye.y,
     eye.z,
     radius,
+    angle,
+    angle < 2 * Math.PI ? observer.spatial.heading : null,
     detector.id,
     detector.version,
     policy.id,
@@ -144,6 +148,7 @@ function receptor(world: WorldState, observerId: string) {
     observer,
     detector,
     radius,
+    inCone: horizontalCone(p, observer.spatial.heading, angle),
     eye,
     map,
     basis,
@@ -436,8 +441,10 @@ export function refreshReceivedGeometry(
       continue;
     }
     const inRange = points.every((point) => distance3D(input.eye, point) <= input.radius);
+    const inView = points.every(input.inCone);
     const visible =
       inRange &&
+      inView &&
       surfaceSupportsRectangle(input.map, surface, rectangle!) &&
       clearConvexView(input.map, input.eye, points);
     if (!visible) {

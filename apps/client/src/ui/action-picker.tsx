@@ -17,6 +17,7 @@ import type {
 import {
   actionSections,
   actionSubjectKey,
+  playerActionStatusKey,
   filterActions,
   retainActionOrder,
 } from '../action-browser';
@@ -26,6 +27,7 @@ import { Button, Icon, IconButton, symbol } from '../design-system/components';
 import { ActionChoice } from './action-choice';
 import { Pullout, PulloutPicker } from './pullout';
 import { ActivityEntries, type ActivityEntry } from './camp-activity';
+import { movePickerFocus } from './keyboard';
 export type PickerContext = {
   context: ActionContext;
   point: { x: number; y: number };
@@ -126,8 +128,18 @@ export function ActionPicker({
   const key = JSON.stringify([
     scopeKey,
     view.player.inventoryRevision,
+    playerActionStatusKey(view.player),
+    // A proposal or reply changes social choices without moving either body or stock.
+    view.player.outings.map(({ id, revision, status }) => [id, revision, status]),
     view.clock.paused,
     actionSubjectKey(subject),
+    // The all-actions menu has no selected subject. Keep its structure choices
+    // current after a gate operation or scoped permission change too.
+    full
+      ? view.entities.flatMap((entity) =>
+          entity.assembly ? [[entity.id, entity.assembly.revision, entity.actionRevision]] : [],
+        )
+      : undefined,
   ]);
   const lostTarget = !full && !!picker.context.targetId && !subject;
   const lostRecipe = !!context.recipeId && !recipe;
@@ -469,12 +481,8 @@ export function ActionPicker({
           (e.target === input.current ||
             (e.target instanceof HTMLElement && e.target.hasAttribute('data-picker-row')))
         ) {
-          const rows = Array.from(
-            menu.current!.querySelectorAll<HTMLButtonElement>('[data-picker-row]'),
-          );
-          const index = rows.indexOf(document.activeElement as HTMLButtonElement);
           e.preventDefault();
-          rows[(index + (e.key === 'ArrowDown' ? 1 : rows.length - 1)) % rows.length]?.focus();
+          movePickerFocus(menu.current!, e.key);
         }
         if (e.key === 'Enter' && e.target === input.current) {
           e.preventDefault();

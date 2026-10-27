@@ -11,11 +11,13 @@ import type { ViteDevServer } from 'vite';
  */
 export interface ClientAssets {
   serve(request: IncomingMessage, response: ServerResponse, url: URL): Promise<void> | void;
-  close(): Promise<void>;
+  close(budget?: { timeoutMs: number; signal?: AbortSignal }): Promise<void>;
 }
 export interface ClientAssetOptions {
   authorizeAsset?: AuthorizeAsset;
   assetResolver?: AssetResolver;
+  /** Use the host's configured finite HTTP request allowance for asset output. */
+  networkCapacity?: number;
   /** Authenticated local authoring uses its selected lock and the same cookie-protected route. */
   assetWork?: { indexPath?: string };
 }
@@ -23,7 +25,11 @@ export async function createClientAssets(
   production = false,
   options: ClientAssetOptions = {},
 ): Promise<ClientAssets> {
-  const delivery = await createAssetDelivery(options.authorizeAsset, options.assetResolver);
+  const delivery = await createAssetDelivery(
+    options.authorizeAsset,
+    options.assetResolver,
+    options.networkCapacity,
+  );
   let vite: ViteDevServer | undefined;
   try {
     const workConfiguration =
@@ -65,12 +71,24 @@ export async function createClientAssets(
   const assets = resolve(assetRepositoryRoot, 'dist/client');
   let closing: Promise<void> | undefined;
   return {
-    close() {
+    close(budget) {
       closing ??= (async () => {
+        const wallEnd = budget ? Date.now() + budget.timeoutMs : undefined;
+        const monoEnd = budget ? performance.now() + budget.timeoutMs : undefined;
         try {
           await vite?.close();
         } finally {
-          await delivery.close();
+          await delivery.close(
+            budget && wallEnd !== undefined && monoEnd !== undefined
+              ? {
+                  timeoutMs: Math.max(
+                    1,
+                    Math.floor(Math.min(wallEnd - Date.now(), monoEnd - performance.now())),
+                  ),
+                  signal: budget.signal,
+                }
+              : undefined,
+          );
         }
       })();
       return closing;

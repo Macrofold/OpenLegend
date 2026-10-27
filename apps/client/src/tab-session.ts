@@ -10,16 +10,19 @@ function savedIdentity(): string {
     return crypto.randomUUID();
   }
 }
-let identity = savedIdentity();
+// A copied sessionStorage value is only a candidate until this document owns
+// its exclusive browser lock. A timed BroadcastChannel reply cannot prove that
+// a busy or suspended original tab does not still own the same identity.
+let identity: string = pageId;
 let selectedScope = '';
 const channel = new BroadcastChannel('open-legend:game-tabs');
 type Notice = { type: 'selected'; scope: string } | { type: 'logout' };
 type Message =
   | Notice
   | { type: 'probe'; query: string; page: string }
-  | { type: 'reply'; query: string; page: string; identity: string; scope: string };
+  | { type: 'reply'; query: string; page: string; scope: string };
 const listeners = new Set<(notice: Notice) => void>();
-const probes = new Map<string, { identities: Set<string>; scopes: Set<string> }>();
+const probes = new Map<string, Set<string>>();
 channel.onmessage = ({ data }: MessageEvent<Message>) => {
   if (!data || typeof data !== 'object') return;
   if (data.type === 'probe' && typeof data.query === 'string') {
@@ -27,17 +30,10 @@ channel.onmessage = ({ data }: MessageEvent<Message>) => {
       type: 'reply',
       query: data.query,
       page: pageId,
-      identity,
       scope: selectedScope,
     });
-  } else if (
-    data.type === 'reply' &&
-    data.page !== pageId &&
-    typeof data.identity === 'string' &&
-    typeof data.scope === 'string'
-  ) {
-    probes.get(data.query)?.identities.add(data.identity);
-    if (data.scope) probes.get(data.query)?.scopes.add(data.scope);
+  } else if (data.type === 'reply' && data.page !== pageId && typeof data.scope === 'string') {
+    if (data.scope) probes.get(data.query)?.add(data.scope);
   } else if (
     (data.type === 'selected' && typeof data.scope === 'string') ||
     data.type === 'logout'
@@ -48,7 +44,7 @@ channel.onmessage = ({ data }: MessageEvent<Message>) => {
 };
 async function discover() {
   const query = crypto.randomUUID();
-  const result = { identities: new Set<string>(), scopes: new Set<string>() };
+  const result = new Set<string>();
   probes.set(query, result);
   channel.postMessage({ type: 'probe', query, page: pageId });
   // One bounded foreground check, never a background polling loop.
@@ -56,20 +52,42 @@ async function discover() {
   probes.delete(query);
   return result;
 }
-export const tabIdentityReady = discover().then((peers) => {
-  // Duplicated tabs copy sessionStorage. Detect the original live page before
-  // sending any server request, while an ordinary reload keeps its tab ID.
-  if (peers.identities.has(identity)) identity = crypto.randomUUID();
+function claim(candidate: string): Promise<boolean> {
+  return new Promise((resolve, reject) => {
+    void navigator.locks
+      .request(`open-legend:tab:${candidate}`, { ifAvailable: true }, (lock) => {
+        if (!lock) {
+          resolve(false);
+          return;
+        }
+        resolve(true);
+        // The browser releases this lock during document unloading, including
+        // reload. Keep it through page hiding/BFCache so another tab cannot
+        // claim an identity that this document may later resume using.
+        return new Promise<void>(() => {});
+      })
+      .catch(reject);
+  });
+}
+export const tabIdentityReady = (async () => {
+  if (typeof navigator === 'undefined' || !navigator.locks) {
+    // Without cross-document exclusion, fresh document identity is the safe
+    // fallback. Do not persist it: reload cannot promise controller recovery.
+    return;
+  }
+  const candidate = savedIdentity();
+  if (await claim(candidate)) identity = candidate;
+  else if (!(await claim(identity))) throw new Error('Could not establish this tab’s identity.');
   try {
     sessionStorage.setItem(identityKey, identity);
   } catch {
     // Optional persistence: current-page identity remains unique.
   }
-});
+})();
 export const tabClientId = () => identity;
 export async function selectedTabElsewhere(scope: string): Promise<boolean> {
   await tabIdentityReady;
-  return (await discover()).scopes.has(scope);
+  return (await discover()).has(scope);
 }
 export function selectThisTab(scope: string): void {
   selectedScope = scope;

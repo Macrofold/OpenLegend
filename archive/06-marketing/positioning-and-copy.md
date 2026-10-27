@@ -74,6 +74,8 @@ Use the integrated game and a qualified small scenario. Preserve normal waits or
 
 The creator sequence below is a separate demonstration for an authoring audience. It can explain inspectability and editability without replacing the adventure's player-facing introduction.
 
+[Showcasing the game](showcasing-the-game.md) develops the narration, choice-and-consequence structure and format-specific explanation around these demonstrations.
+
 ## The magic-tree creator journey
 
 1. **Enter an owned world in creator mode.** Walk up to a tree and select it. This authoring authority is distinct from the ordinary character's abilities.

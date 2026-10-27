@@ -133,7 +133,9 @@ describe('bounded received situation', () => {
     expect(JSON.stringify(providerSchema)).toContain('"received"');
     expect(JSON.stringify(providerSchema)).not.toContain('"oneOf"');
     // A later pose cannot reinterpret the point seen in this prepared decision.
-    setSpatialPosition(world, actor, { x: 8, y: 0, z: 8 }, worldSupport(actor), 'physical');
+    setSpatialPosition(world, actor, { x: 8, y: 0, z: 8 }, worldSupport(actor), {
+      continuity: 'physical',
+    });
     actor.spatial.heading = 0;
     const selected = shape.parse(envelope(choice)).operations[0]!.act!.invocation!;
     expect(selected.frame).toBe('world');
@@ -349,7 +351,7 @@ describe('bounded received situation', () => {
         entityGet(draft.entities, 'edge-person-0')!,
         { x: 16, y: 2, z: 2 },
         null,
-        'physical',
+        { continuity: 'physical' },
       );
       initializePerception(draft, []);
     });
@@ -505,10 +507,14 @@ describe('bounded received situation', () => {
     expect(original).toBeDefined();
     const person = entityGet(world.entities, id)!;
     world.simTime = 1;
-    setSpatialPosition(world, person, { x: 60, y: 0, z: 2 }, worldSupport(person), 'physical');
+    setSpatialPosition(world, person, { x: 60, y: 0, z: 2 }, worldSupport(person), {
+      continuity: 'physical',
+    });
     initializePerception(world, []);
     world.simTime = 40;
-    setSpatialPosition(world, person, { x: 4, y: 0, z: 2 }, worldSupport(person), 'physical');
+    setSpatialPosition(world, person, { x: 4, y: 0, z: 2 }, worldSupport(person), {
+      continuity: 'physical',
+    });
     initializePerception(world, []);
     const after = entityHandle(world, PLAYER_ID, id);
     expect(after).not.toBe(before);

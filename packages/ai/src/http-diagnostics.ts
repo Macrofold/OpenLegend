@@ -47,38 +47,10 @@ export function captureResponseRateLimits(
 /** Retain bounded error identifiers, never raw provider messages.
  * This only observes a failed body; its caller retains outcome and retry policy.
  */
-export async function captureHttpErrorDiagnostics(
-  response: Response,
-  receipt: AiReceipt,
-  signal: AbortSignal,
-  maxBytes = 8192,
-): Promise<void> {
-  const bound = Math.min(maxBytes, 8192);
-  if (Number(response.headers.get('content-length')) > bound) {
-    void response.body?.cancel().catch(() => undefined);
-    return;
-  }
-  const reader = response.body?.getReader();
-  if (!reader) return;
-  const cancel = () => {
-    void reader.cancel().catch(() => undefined);
-  };
-  signal.addEventListener('abort', cancel, { once: true });
+export function captureHttpErrorDiagnostics(raw: string, receipt: AiReceipt): void {
   try {
-    let bytes = 0;
-    const chunks: Uint8Array[] = [];
-    for (;;) {
-      if (signal.aborted) return;
-      const chunk = await reader.read();
-      if (chunk.done) break;
-      bytes += chunk.value.byteLength;
-      if (bytes > bound) return;
-      chunks.push(chunk.value);
-    }
-    if (signal.aborted) return;
-    const data: unknown = JSON.parse(
-      new TextDecoder('utf-8', { fatal: true }).decode(Buffer.concat(chunks, bytes)),
-    );
+    if (Buffer.byteLength(raw) > 8192) return;
+    const data: unknown = JSON.parse(raw);
     if (!record(data) || !record(data.error)) return;
     const identifier = (value: unknown) =>
       typeof value === 'string' && /^[a-z][a-z0-9_]{0,127}$/.test(value) ? value : undefined;
@@ -86,9 +58,5 @@ export async function captureHttpErrorDiagnostics(
     receipt.providerErrorType = identifier(data.error.type);
   } catch {
     // Diagnostic parsing cannot replace the already known HTTP refusal.
-  } finally {
-    signal.removeEventListener('abort', cancel);
-    cancel();
-    reader.releaseLock();
   }
 }

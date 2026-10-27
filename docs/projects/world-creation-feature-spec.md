@@ -409,7 +409,7 @@ This proves a useful result beyond downloading a file: the person finds their wo
 
 The first portability profile uses two operator-prepared local worlds under the same known account/authority context and current development format. It does not need public registration, cross-operator account federation, a marketplace or a general world-package loader. Eligible first-party dependencies or explicit recorded grants must support the transfer. Being both inventor and owner simplifies attribution; it does not manufacture rights to a third party’s asset.
 
-A second useful proof can reuse the delivered manufactured-cordage-to-woven-container chain once its complete dependencies travel. The current [composition contract](../invention-composition.md#3-composition-contract) qualifies that one producer/consumer edge; it does not establish arbitrary recursive crafting. Current recipe families include cordage and woven containers as well as the earlier launchers, ammunition and gathering tools. [RF01](../limits/inventions.md#rf01--world-owned-recipe-families) remains the current family inventory. Account libraries and cross-world installation are proposed work, not delivered by these existing families.
+A second useful proof can reuse the delivered manufactured-cordage-to-woven-container chain once its complete dependencies travel. The current [composition contract](../invention-composition.md#3-composition-contract) qualifies that one producer/consumer edge; it does not establish arbitrary recursive crafting. Current recipe families include cordage and woven containers as well as the earlier ranged weapons, ammunition and gathering tools. [RF01](../limits/inventions.md#rf01--world-owned-recipe-families) remains the current family inventory. Account libraries and cross-world installation are proposed work, not delivered by these existing families.
 
 ### 15.2 Give the opening a purpose and a useful continuation
 
@@ -471,7 +471,7 @@ The first review answers six questions in one compact surface, with deeper detai
 5. What still prevents the intended character from using the result?
 6. What new creation cost, continuing work or other-world change would approval authorize?
 
-A launcher may require its exact ammunition and material family. A recipe labeled “rope” does not accept a different world’s decorative rope merely because the names match. A memory-consuming light effect is not a faithful import into a world that has no admitted memory cost. A charge-based tool does not quietly acquire hunger as an operating cost.
+A ranged weapon may require its exact ammunition and material family. A recipe labeled “rope” does not accept a different world’s decorative rope merely because the names match. A memory-consuming light effect is not a faithful import into a world that has no admitted memory cost. A charge-based tool does not quietly acquire hunger as an operating cost.
 
 Each blocker identifies the relevant experience and a real remedy: supply an eligible exact dependency, select an actually supported binding, prepare a separately reviewed adaptation, choose another world or retain the draft. Do not imply that paying for another generation can bypass an unavailable host capability or a private-content restriction.
 

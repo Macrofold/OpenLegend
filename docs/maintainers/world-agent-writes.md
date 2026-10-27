@@ -1,6 +1,10 @@
 # World Agent write foundation: focused delivery detail
 
+The [efficiency follow-through](../projects/completed/macrofold-efficiency-followup-plan.md) shares exact prior-revision admission across every turn writer and uses one exact latest-turn projection for status. Disposable PostgreSQL checks cover repeated updates, stale writes, cancellation/question ordering and permission revocation; [evidence](../verification/macrofold-efficiency-followup.md). Broader live and sustained qualification remains in its existing items.
+
 This subtracker expands [INV-21.6–21.7](inventions-and-world-evolution.md#inv-21--reviewed-mcp-authoring-and-unified-native-execution); it does not replace INV-21 or reset its broader qualification gates. The [runtime](../world-agent-runtime.md), [MCP contract](../world-agent-mcp.md), and [reviewed custom binding contract](../invention-composition.md#reviewed-custom-attribute-binding) own behavior. Actual evidence is in [write continuation verification](../verification/workshop-continuation.md) and [transport/funding verification](../verification/workshop-transport-funding.md). New conversations start with [the handoff and decision map](../invention-handoff.md).
+
+The completed [shared network design](../projects/completed/bounded-network-requests-tech-design.md) records provider/file, browser, server and progress-stream delivery under [NET04–NET08](bounded-network-requests.md). The shared mechanism independently bounds waiting and retains unsettled-work capacity even when transport cancellation fails. Existing turn/Run identities, current permission checks after awaits, required acceptance persistence, exact-operation recovery and uncertain financial holds remain authoritative. NET11 supplies focused integration evidence; WW07/WW11 and the deferred WAC/UWA/WAF cases retain their broader qualification.
 
 ## Incremental delivery and workspace
 

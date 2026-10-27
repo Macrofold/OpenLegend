@@ -2,9 +2,24 @@ import * as pc from 'playcanvas';
 import type { ShadowQuality } from './world-renderer';
 
 export const shadowSettings = {
-  detailed: { sun: pc.SHADOW_PCSS_32F, local: pc.SHADOW_PCF5_32F, resolution: 2048 },
-  economy: { sun: pc.SHADOW_PCF3_32F, local: pc.SHADOW_PCF3_32F, resolution: 1024 },
-} satisfies Record<ShadowQuality, { sun: number; local: number; resolution: number }>;
+  detailed: {
+    sun: pc.SHADOW_PCSS_32F,
+    local: pc.SHADOW_PCF5_32F,
+    sunResolution: 2048,
+    localResolution: 2048,
+  },
+  // The sun spans the camera frustum: 1024 undersamples thin foliage even at
+  // ordinary framing. Keep the cheaper local atlas independent of that footprint.
+  economy: {
+    sun: pc.SHADOW_PCF5_32F,
+    local: pc.SHADOW_PCF3_32F,
+    sunResolution: 2048,
+    localResolution: 1024,
+  },
+} satisfies Record<
+  ShadowQuality,
+  { sun: number; local: number; sunResolution: number; localResolution: number }
+>;
 
 // The engine's program cache owns shaders. Weak membership shares preparation
 // across materials using the same program without retaining obsolete devices.
@@ -26,6 +41,7 @@ declare global {
  */
 export class ShadowMaterial extends pc.StandardMaterial {
   prepareRelated?: (params: ShaderVariantParameters, shader: pc.Shader) => void;
+  private shadowFilteringPrepared = false;
 
   constructor(private sun?: pc.Light) {
     super();
@@ -36,7 +52,59 @@ export class ShadowMaterial extends pc.StandardMaterial {
     // StandardMaterial.clone constructs without arguments before copying; retain
     // the disabled sun too, so clones first drawn at night can prepare sunrise.
     this.sun = source instanceof ShadowMaterial ? source.sun : this.sun;
+    this.shadowFilteringPrepared = false;
     return this;
+  }
+
+  private prepareShadowFiltering(device: pc.GraphicsDevice): void {
+    if (this.shadowFilteringPrepared || !this.useLighting) return;
+    this.shadowFilteringPrepared = true;
+    // PCSS stores raw nearest-sampled depths. Comparing a filtered depth would
+    // invent surfaces between blockers; blend their visibility comparisons
+    // instead, so fine shadows move across texels without binary sample jumps.
+    // Preserve the artwork owner's existing fixed/screen sample-pattern chunk.
+    // docs/world-presentation.md#shadow-quality
+    const source =
+      this.shaderChunks.glsl.get('shadowSoftPS') ??
+      pc.ShaderChunks.get(device).get('shadowSoftPS')!;
+    if (source.includes('float ol_pcssVisibility(')) return;
+    this.shaderChunks.version = '2.22';
+    this.shaderChunks.glsl.set(
+      'shadowSoftPS',
+      source
+        .replace(
+          'float PCSSFilter(',
+          `float ol_pcssVisibility(TEXTURE_ACCEPT(shadowMap), vec2 uv, float receiverDepth) {
+  vec2 size = vec2(textureSize(shadowMap, 0));
+  vec2 pixel = uv * size - 0.5;
+  vec2 weight = fract(pixel);
+  vec2 corner = (floor(pixel) + 0.5) / size;
+  vec2 texel = 1.0 / size;
+  float a = step(receiverDepth, texture2DLod(shadowMap, corner, 0.0).r);
+  float b = step(receiverDepth, texture2DLod(shadowMap, corner + vec2(texel.x, 0.0), 0.0).r);
+  float c = step(receiverDepth, texture2DLod(shadowMap, corner + vec2(0.0, texel.y), 0.0).r);
+  float d = step(receiverDepth, texture2DLod(shadowMap, corner + texel, 0.0).r);
+  return mix(mix(a, b, weight.x), mix(c, d, weight.x), weight.y);
+}
+float PCSSFilter(`,
+        )
+        .replace(
+          'float sum = 0.0;',
+          `vec2 texel = 1.0 / vec2(textureSize(shadowMap, 0));
+  filterRadius = max(filterRadius, 1.5 * max(texel.x, texel.y));
+  float sum = 0.0;`,
+        )
+        .replace(
+          /float depth = texture2DLod\(shadowMap, uv \+ offsetUV, 0\.0\)\.r;\s+sum \+= step\(receiverDepth, depth\);/,
+          'sum += ol_pcssVisibility(TEXTURE_PASS(shadowMap), uv + offsetUV, receiverDepth);',
+        )
+        .replace(
+          /if \(numBlockers < 1\)\s+return 1\.0f;/,
+          // A sparse search can miss a thin blocker even at contact. Preserve
+          // the filtered central footprint rather than popping fully lit.
+          'if (numBlockers < 1) return ol_pcssVisibility(TEXTURE_PASS(shadowMap), shadowCoords.xy, receiverDepthClamped);',
+        ),
+    );
   }
 
   private variant(params: ShaderVariantParameters): pc.Shader {
@@ -46,6 +114,7 @@ export class ShadowMaterial extends pc.StandardMaterial {
   }
 
   override getShaderVariant(params: ShaderVariantParameters): pc.Shader {
+    this.prepareShadowFiltering(params.device);
     const shader = this.variant(params);
     if (params.device.contextLost) return shader;
     if (params.pass === pc.SHADER_FORWARD) this.prepareRelated?.(params, shader);

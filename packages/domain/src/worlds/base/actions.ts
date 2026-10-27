@@ -1,17 +1,16 @@
-import { nativeResponseProfile } from '../../native-response.js';
+import { nativeResponseProfile, nativeResponseMovementFactor } from '../../native-response.js';
 import { WILDERNESS_NEEDS } from './needs.js';
 import { PERCEPTION_RULES } from './senses.js';
 import { scarFactor } from '../../scar-effects.js';
+import { readOnlyDraftView } from '../../draft.js';
 
 // Bundled balance values consumed by the existing finite native adapters.
 // docs/worlds/base/survival.md
-export const BASE_GATHER_QUANTITY = 2;
 export const BASE_ACTION_DEFAULTS = {
   movementTilesPerSecond: 0.11,
   sightRadius: PERCEPTION_RULES.sightRadius,
   interactionRadius: 1.6,
   ...WILDERNESS_NEEDS,
-  gatherQuantity: BASE_GATHER_QUANTITY,
   harvestSeconds: 84,
   shotSeconds: 18,
 } as const;
@@ -36,10 +35,11 @@ export function gatheringDescription(
  * food preparation definitions. docs/worlds/base/actions.md */
 export const BASE_FAMILY_FACTS = {
   /** Completed steps whose item a later step may use (harvest only through a named port). */
-  itemOutputs: ['gather', 'prepare', 'craft', 'cook', 'fish', 'harvest'],
+  itemOutputs: ['gather', 'craft', 'cook', 'fish', 'harvest'],
   /** Of those, the ones that record a single item receipt a plain later step can use. */
-  singleItemReceipt: ['gather', 'prepare', 'craft', 'cook', 'fish'],
+  singleItemReceipt: ['gather', 'cook', 'fish'],
   toolFields: {
+    'impact-boundary': ['toolId'],
     strike: ['weaponItemId'],
     hunt: ['weaponItemId', 'ammoItemId'],
     aim: ['weaponItemId', 'ammoItemId'],
@@ -59,8 +59,10 @@ export function nativeMovementSpeed(
   world: import('../../types.js').WorldState,
   entity: import('../../types.js').Entity,
 ): number {
+  entity = readOnlyDraftView(entity);
   if (entity.actor?.action?.evasion) return entity.actor.action.evasion.speed;
-  const binding = entity.actor?.action?.nativeLocomotion;
+  const binding =
+    entity.actor?.action?.strikeMotion?.locomotion ?? entity.actor?.action?.nativeLocomotion;
   const profile = binding && nativeResponseProfile(world, binding.profile);
   const nativeSpeed = binding && profile?.locomotion[binding.locomotion]?.[binding.mode];
   if (binding && nativeSpeed === undefined)
@@ -68,8 +70,9 @@ export function nativeMovementSpeed(
   return (
     (nativeSpeed ??
       BASE_ACTION_DEFAULTS.movementTilesPerSecond * (entity.threat?.policy.movementFactor ?? 1)) *
-    (1 - (entity.actor?.body?.conditions.injury ?? 0) / 200) *
-    scarFactor(world, entity, 'movementFactor')
+    (profile
+      ? nativeResponseMovementFactor(world, entity, profile)
+      : scarFactor(world, entity, 'movementFactor'))
   );
 }
 

@@ -1,12 +1,18 @@
 import { entityGet, entityValues } from '@open-legend/domain';
 import { isEquipped } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
+import { recordBackgroundFailure } from './performance.js';
 import type { CognitionExecution, ExecutionLease } from './cognition-execution.js';
 import { personalPronoun } from '@open-legend/language';
 import { memoryMeaningForModel } from './experience-context.js';
 export { experienceManifestForModel } from './experience-context.js';
-import { MemoryPreparationError, RETRIEVAL_ROWS, RETRIEVAL_BYTES } from './memory-repository.js';
-import { STIMULUS_POLICY } from '@open-legend/domain';
+import {
+  MemoryPreparationError,
+  RETRIEVAL_ROWS,
+  RETRIEVAL_BYTES,
+  memorySourceProof,
+} from './memory-repository.js';
+import { stimulusSalience, STIMULUS_POLICY } from '@open-legend/domain';
 import { worldPosition } from '@open-legend/domain';
 import type {
   RetrievedMemory,
@@ -33,6 +39,9 @@ import {
   perceivedEntityText,
   possessionText,
   relativeLocation,
+  experienceForModel,
+  experienceModelBindings,
+  experienceEmbeddingText,
 } from './perceived-context.js';
 import { currentGoal } from '@open-legend/domain';
 import { attentionIncludes, JEV_QUESTIONS_VERSION } from './jev-questions.js';
@@ -45,6 +54,9 @@ import {
   type WorldState,
   type Awareness,
   type ObserverSubject,
+  type ExperienceEntry,
+  experienceEntries,
+  experienceEntryKey,
 } from '@open-legend/domain';
 import { embeddingBatches } from './embedding-batches.js';
 import {
@@ -68,6 +80,7 @@ export interface AttentionCandidate {
   id: string;
   kind: 'memory' | 'conversation' | 'entity' | 'possession' | 'knowledge' | 'action';
   text: string;
+  experience?: ReturnType<typeof experienceForModel>[];
   /** Stable semantic content; current spatial details still reach attention and reasoning. */
   embeddingText?: string;
   revision: string;
@@ -78,7 +91,10 @@ export interface AttentionCandidate {
   entityIds: string[];
   at: number;
   salience: number;
+  /** Native evidence IDs used by outcome/utterance owners; not complete record keys. */
   sourceIds?: string[];
+  /** Complete kind/ID keys for exact selected-source bindings and grouped freshness. */
+  sourceKeys?: string[];
   score?: number;
   selected?: boolean;
   attention?: JudgmentAnswer;
@@ -148,8 +164,18 @@ export function memoryCandidate(
   conversationIds: Set<string>,
   corrections: Record<string, string>,
   correctedIds: Set<string>,
-  awareness?: Awareness,
+  entry: ExperienceEntry,
 ): AttentionCandidate {
+  const awareness = entry.source === 'awareness' ? entry.value : undefined;
+  const experience = experienceForModel(
+    entry,
+    experienceModelBindings(
+      world,
+      actorId,
+      entry,
+      `source:${entry.source}:${digest([entry.source, memory.id]).slice(0, 12)}`,
+    ),
+  );
   const matches = (ids: Set<string>) =>
     ids.has(memory.id) || (memory.eventId ? ids.has(memory.eventId) : false);
   const permittedEntities = retainedMemoryEntities(world, actorId, memory, awareness);
@@ -187,9 +213,10 @@ export function memoryCandidate(
   const meaning = memoryMeaningForModel(world, actorId, memory);
   const hasStructuredExperience = Object.keys(meaning).length > 0;
   return {
-    id: memory.id,
+    id: experienceEntryKey(entry),
+    experience: [experience],
     kind: matches(conversationIds) ? 'conversation' : 'memory',
-    text: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${summary}${hasStructuredExperience ? `\nPermitted experience: ${JSON.stringify(meaning)}` : ''}`,
+    text: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${summary}`,
     hasStructuredExperience,
     subjects: [
       ...(memory.evidence?.sourceSubject ? [memory.evidence.sourceSubject] : []),
@@ -205,11 +232,7 @@ export function memoryCandidate(
         ),
       ),
     ],
-    ...(awareness
-      ? {
-          embeddingText: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${memory.summary}`,
-        }
-      : {}),
+    embeddingText: experienceEmbeddingText(entry, actorId),
     revision: awareness ? digest(memory) : digest({ ...memory, summary }),
     required,
     requiredSource: required,
@@ -220,6 +243,7 @@ export function memoryCandidate(
     at: memory.at,
     salience: memory.importance,
     sourceIds: [memory.id],
+    sourceKeys: [experienceEntryKey(entry)],
   };
 }
 
@@ -252,6 +276,25 @@ export function candidateSet(
   const automaticIdSet = new Set(automaticIds);
   const conversationIdSet = new Set(conversationIds);
   const corrections = world.experience?.corrections?.[actorId] ?? {};
+  const complete = retained
+    ? new Map(retained.map((source) => [source.memory, source.entry]))
+    : undefined;
+  const nativeEntries = retained ? undefined : experienceEntries(world, actorId);
+  const nativeEntry = (memory: MemoryRecord): ExperienceEntry => {
+    const entry =
+      complete?.get(memory) ??
+      nativeEntries?.get(
+        memory.kind === 'reflection'
+          ? `summary:${memory.id}`
+          : memory.kind === 'episode' &&
+              memory.eventId &&
+              nativeEntries.has(`awareness:${memory.eventId}`)
+            ? `awareness:${memory.eventId}`
+            : `memory:${memory.id}`,
+      );
+    if (!entry) throw new Error('A selected memory has no complete experience source.');
+    return entry;
+  };
   const correctedIdSet = new Set(Object.values(corrections));
   const awareness = new Map(
     (retained
@@ -285,8 +328,18 @@ export function candidateSet(
       conversationIdSet,
       corrections,
       correctedIdSet,
-      awareness.get(memory.eventId ?? memory.id),
+      nativeEntry(memory),
     ),
+  );
+  // The recent baseline counts complete individual experiences, before optional
+  // repetition grouping. Eight groups can contain an unbounded personal history.
+  // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
+  const recentMemories = new Set(
+    memories
+      .filter((memory) => memory.kind === 'memory')
+      .sort((a, b) => b.at - a.at || a.id.localeCompare(b.id))
+      .slice(0, HARD_CONTEXT_LIMITS.memories)
+      .map((memory) => memory.id),
   );
   const candidates: AttentionCandidate[] = [];
   const duplicateMemories = new Map<string, AttentionCandidate>();
@@ -301,6 +354,7 @@ export function candidateSet(
       .map((memory) => memory.id),
   );
   for (const memory of memories) {
+    if (recentMemories.has(memory.id)) memory.required = true;
     // Named others remain individual episodes; generic species recall has no actor handles.
     // The observer's own identity does not prevent grouping encounters with unnamed animals.
     // docs/memory-architecture.md#named-and-generic-memory-subjects
@@ -321,7 +375,9 @@ export function candidateSet(
       candidates.push(memory);
       continue;
     }
-    existing.sourceIds!.push(memory.id);
+    existing.sourceIds!.push(...(memory.sourceIds ?? []));
+    existing.sourceKeys!.push(...(memory.sourceKeys ?? []));
+    existing.experience!.push(...(memory.experience ?? []));
     existing.entityIds = [...new Set([...existing.entityIds, ...memory.entityIds])];
     existing.salience = Math.max(existing.salience, memory.salience);
     existing.revision = digest([existing.revision, memory.revision].sort());
@@ -442,11 +498,6 @@ export function candidateSet(
       .sort((a, b) => b.learnedAt - a.learnedAt || a.recipeId.localeCompare(b.recipeId))
       .slice(0, HARD_CONTEXT_LIMITS.knowledge)
       .map((k) => `recipe:${k.recipeId}`),
-    ...candidates
-      .filter((c) => c.kind === 'memory')
-      .sort((a, b) => b.at - a.at || a.id.localeCompare(b.id))
-      .slice(0, HARD_CONTEXT_LIMITS.memories)
-      .map((c) => c.id),
   ]);
   for (const candidate of candidates) if (hardIds.has(candidate.id)) candidate.required = true;
   const involved = new Set(observed.visibleEntities.map((entity) => entity.id));
@@ -473,6 +524,7 @@ export class RecallService {
   private indexSlotId?: string;
   private indexActors: string[] = [];
   private indexGeneration?: string;
+  private indexRoundMadeProgress = false;
   private readonly executionOwner = new AsyncLocalStorage<{
     rootId: string;
     lease: ExecutionLease;
@@ -491,7 +543,7 @@ export class RecallService {
         model: c.embeddingModel,
         modelPrices: c.embeddingModelPrices,
         dimensions: c.embeddingDimensions,
-        fetch: log.fetch,
+        network: log.network,
         timeoutMs: c.aiTimeoutMs,
       });
     this.unsubscribe = service.subscribe(() => {
@@ -552,7 +604,8 @@ export class RecallService {
             let more = false;
             try {
               more = await this.withExecution(id, lease, () => this.indexMemories());
-            } catch {
+            } catch (error) {
+              recordBackgroundFailure('memory-index', error);
               this.indexFailure =
                 'Memory indexing interrupted; the original spending remains recorded.';
             } finally {
@@ -579,10 +632,12 @@ export class RecallService {
       .then(async () => {
         while (this.indexQueued && !this.closed) {
           this.indexQueued = false;
-          await this.indexMemories();
+          const more = await this.indexMemories();
+          this.indexQueued ||= more;
         }
       })
-      .catch(() => {
+      .catch((error) => {
+        recordBackgroundFailure('memory-index', error);
         this.indexFailure =
           'Memory indexing interrupted; dispatched sources require explicit reconciliation.';
       });
@@ -610,7 +665,7 @@ export class RecallService {
               throw new Error('Embedding dispatch was already claimed.');
           } catch (error) {
             // The write may have committed despite a lost acknowledgement.
-            owner.lease.uncertain();
+            owner.lease.uncertain(request.requestId);
             throw error;
           }
         }
@@ -638,10 +693,11 @@ export class RecallService {
     });
     try {
       const result = await admitted.result;
-      if (result.receipt.completionUncertain) this.executionOwner.getStore()?.lease.uncertain();
+      if (result.receipt.completionUncertain)
+        this.executionOwner.getStore()?.lease.uncertain(request.requestId);
       return result;
     } catch (error) {
-      this.executionOwner.getStore()?.lease.uncertain();
+      this.executionOwner.getStore()?.lease.uncertain(request.requestId);
       throw error;
     }
   }
@@ -660,6 +716,7 @@ export class RecallService {
         .map((entity) => entity.id)
         .sort();
       this.indexGeneration = generation;
+      this.indexRoundMadeProgress = false;
     }
     const actors = this.indexActors;
     // One batch per actor per round prevents a long-lived actor monopolizing the index budget.
@@ -670,7 +727,10 @@ export class RecallService {
       const pending = await repository.pending(scope, model);
       const batch =
         embeddingBatches(
-          pending.map((source) => ({ ...source, text: source.memory.summary })),
+          pending.map((source) => ({
+            ...source,
+            text: experienceEmbeddingText(source.entry, actorId),
+          })),
         ).next().value ?? [];
       if (!batch.length) continue;
       const current = async () =>
@@ -712,7 +772,7 @@ export class RecallService {
           this.embedCurrent(
             {
               requestId,
-              texts: batch.map((source) => source.memory.summary),
+              texts: batch.map((source) => source.text),
               signal: controller.signal,
             },
             current,
@@ -732,12 +792,13 @@ export class RecallService {
           })),
         );
       });
-      // Finish this finite actor round before rebuilding membership. Re-adding a
-      // successful actor forever would hide newly created NPCs during a backlog.
-      if (this.execution) return true;
-      actors.push(actorId);
+      // Keep one batch per actor in a finite round, including without a shared
+      // executor. A successful earlier batch still requires a new round when its
+      // remaining participants have no work; otherwise they hide later actors.
+      this.indexRoundMadeProgress = true;
+      return true;
     }
-    return false;
+    return this.indexRoundMadeProgress;
   }
 
   private recallCurrent(
@@ -774,7 +835,7 @@ export class RecallService {
     const binding = this.sourceBindings.get(candidates);
     if (!binding) return [];
     // Every member contributes to a grouped candidate's text and freshness binding.
-    const ids = new Set(selected.flatMap((candidate) => candidate.sourceIds ?? [candidate.id]));
+    const ids = new Set(selected.flatMap((candidate) => candidate.sourceKeys ?? [candidate.id]));
     return [...ids].flatMap((id) => {
       const source = binding.sources.get(id);
       return source ? [{ ...source }] : [];
@@ -891,7 +952,9 @@ export class RecallService {
     if ((await this.service.store.records?.head())?.generation !== scope.generation)
       throw new Error('World restored during memory retrieval.');
     const sources = [
-      ...new Map([...optional, ...required].map((source) => [source.memory.id, source])).values(),
+      ...new Map(
+        [...optional, ...required].map((source) => [experienceEntryKey(source.entry), source]),
+      ).values(),
     ];
     const candidates = candidateSet(
       world,
@@ -902,22 +965,16 @@ export class RecallService {
       conversationIds,
       sources,
     );
-    const scores = new Map(sources.map((source) => [source.memory.id, source.score]));
+    const scores = new Map(
+      sources.map((source) => [experienceEntryKey(source.entry), source.score]),
+    );
     for (const candidate of candidates)
       if (scores.get(candidate.id) !== undefined) candidate.score = scores.get(candidate.id);
     this.retrieval.set(candidates, { ...coverage, status, generation: scope.generation });
     this.sourceBindings.set(candidates, {
       scope,
       sources: new Map(
-        sources.map((source) => [
-          source.memory.id,
-          {
-            id: source.memory.id,
-            sourceKind: source.sourceKind,
-            revision: source.revision,
-            ...(source.receipt ? { receipt: source.receipt } : {}),
-          },
-        ]),
+        sources.map((source) => [experienceEntryKey(source.entry), memorySourceProof(source)]),
       ),
     });
     return candidates;
@@ -971,6 +1028,7 @@ export class RecallService {
     const searchable = candidates.filter((candidate) => !candidate.automatic);
     const candidateBytes = (candidate: AttentionCandidate) =>
       Buffer.byteLength(candidate.text.replace(/\n/g, '\n  ')) +
+      (candidate.experience ? Buffer.byteLength(JSON.stringify(candidate.experience)) : 0) +
       Buffer.byteLength(candidate.id) +
       8;
     const contextBytes = candidateBytes;
@@ -1174,7 +1232,9 @@ export class RecallService {
     const candidateTexts = Object.fromEntries(
       boundedFinalists.map((candidate, index) => [
         `c${index}`,
-        `[${candidate.kind}] ${candidate.text}`,
+        candidate.experience
+          ? { kind: candidate.kind, text: candidate.text, experience: candidate.experience }
+          : `[${candidate.kind}] ${candidate.text}`,
       ]),
     );
     let attentionStatus = 'no candidates';

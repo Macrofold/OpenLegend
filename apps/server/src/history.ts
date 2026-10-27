@@ -6,6 +6,7 @@ import {
   readPerceivedEventSources,
   perspectiveField,
   historicalEntityReference,
+  projectPerceivedSpeech,
   type PerceivedEventOptions,
 } from './perceived-events.js';
 import {
@@ -26,13 +27,7 @@ import {
   itemFor,
 } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
-import type {
-  WorldState,
-  WorldEvent,
-  ConversationTransition,
-  Awareness,
-  TemporalReceipt,
-} from '@open-legend/domain';
+import type { WorldState, WorldEvent, Awareness, TemporalReceipt } from '@open-legend/domain';
 import { beginTiming, endTiming } from './performance.js';
 import { prepareHistory } from './history-preparation.js';
 import { HistoryAppendWriter, perspectiveColumns } from './history-append.js';
@@ -68,7 +63,6 @@ export const HISTORY_TABLES = [
   'history_events',
   'story_narrations',
   'story_event_sources',
-  'story_transition_sources',
   'history_totals',
 ] as const;
 /** Restore admission already has complete history rows; validate without another SQL scan. */
@@ -166,7 +160,7 @@ const revisionOf = (text: string) => createHash('sha256').update(text).digest('h
 const narrationFailed = 'Narration failed.';
 /** Older failures retain their source evidence in storage, never substitute prose in the UI. */
 function projectNarration(item: TranscriptItem): TranscriptItem {
-  // Native merge notices have no event sources and did not attempt generation.
+  // Authored source-free narration has not failed a source-based generation.
   // docs/narration-and-conversations.md#9-triggers-ordering-and-transcript-reconstruction
   return item.status === 'failed' ||
     (item.status === 'fallback' && item.sourceIds.length > 0 && !item.authoredFallback)
@@ -243,6 +237,13 @@ export class HistoryRepository {
       : this.principals;
     const policy = world.storyPolicy ?? defaultStoryPolicy();
     for (const event of inputs.changed) {
+      for (const actorId of event.audience)
+        if (
+          !inputs.forgotten(actorId).has(event.id) &&
+          (!inputs.perspective(actorId, event.id) ||
+            inputs.perspective(actorId, event.id)?.evidence.retentionClass === 'sensory')
+        )
+          return false;
       for (const principal of principals) {
         if (
           inputs.forgotten(principal.actorId).has(event.id) ||
@@ -276,17 +277,23 @@ export class HistoryRepository {
     const perceived = projectEventEvidence(event, source.evidence);
     return {
       event: perceived,
-      selection: selectStory(
-        {
-          viewerId: actorId,
-          exposure: source.evidence.exposure,
-          event: perceived,
-          sourceText: source.text,
-          source: entityGet(world.entities, perceived.actorId ?? ''),
-          target: entityGet(world.entities, perceived.targetId ?? ''),
-        },
-        policy,
-      ),
+      selection:
+        source.evidence.retentionClass === 'sensory'
+          ? {
+              kind: 'silent' as const,
+              reason: 'Sensory evidence is not autobiographical narration.',
+            }
+          : selectStory(
+              {
+                viewerId: actorId,
+                exposure: source.evidence.exposure,
+                event: perceived,
+                sourceText: source.text,
+                source: entityGet(world.entities, perceived.actorId ?? ''),
+                target: entityGet(world.entities, perceived.targetId ?? ''),
+              },
+              policy,
+            ),
     };
   }
   async nextDue(worldId: string): Promise<number | null> {
@@ -325,7 +332,7 @@ export class HistoryRepository {
         `SELECT e.id FROM history_events e JOIN history_perspectives p
          ON p.world_id=e.world_id AND p.event_id=e.id
          WHERE e.world_id=? AND e.response_id=? AND p.actor_id=?
-         AND p.event_type='speech' AND p.speech_peer_id=?
+         AND p.event_type='speech' AND p.source_id=? AND p.target_id=p.actor_id
          AND e.payload::jsonb #>> '{data,utteranceId}'=? ORDER BY e.position,e.id LIMIT 16`,
       )
       .all(worldId, responseId, actorId, npcId, `${responseId}:${localId}`);
@@ -391,15 +398,14 @@ export class HistoryRepository {
         world_id TEXT NOT NULL,owner_id TEXT NOT NULL,milestone TEXT NOT NULL,event_id TEXT NOT NULL,
         PRIMARY KEY(world_id,owner_id,milestone));
       CREATE TABLE IF NOT EXISTS history_events (
-        world_id TEXT NOT NULL, id TEXT NOT NULL, conversation_id TEXT, position BIGINT NOT NULL,
+        world_id TEXT NOT NULL, id TEXT NOT NULL, position BIGINT NOT NULL,
         payload TEXT NOT NULL,response_id TEXT,data_references TEXT[] NOT NULL,
         PRIMARY KEY(world_id,id));
       CREATE INDEX IF NOT EXISTS history_events_response ON history_events(world_id,response_id) WHERE response_id IS NOT NULL;
       CREATE INDEX IF NOT EXISTS history_events_references ON history_events USING GIN(data_references);
       CREATE INDEX IF NOT EXISTS history_events_order ON history_events(world_id,position,id);
-      CREATE INDEX IF NOT EXISTS history_events_conversation ON history_events(world_id,conversation_id,position,id);
       CREATE TABLE IF NOT EXISTS story_narrations (
-        world_id TEXT NOT NULL, id TEXT NOT NULL, owner_id TEXT NOT NULL, conversation_id TEXT,
+        world_id TEXT NOT NULL, id TEXT NOT NULL, owner_id TEXT NOT NULL,
         position BIGINT NOT NULL, revision BIGINT NOT NULL, payload TEXT NOT NULL,
         PRIMARY KEY(world_id,id,owner_id));
       CREATE INDEX IF NOT EXISTS story_owner_order ON story_narrations(world_id,owner_id,position,id);
@@ -407,9 +413,6 @@ export class HistoryRepository {
         world_id TEXT NOT NULL, narration_id TEXT NOT NULL, owner_id TEXT NOT NULL, event_id TEXT NOT NULL,
         PRIMARY KEY(world_id,narration_id,owner_id,event_id));
       CREATE INDEX IF NOT EXISTS story_event_reverse ON story_event_sources(world_id,event_id);
-      CREATE TABLE IF NOT EXISTS story_transition_sources (
-        world_id TEXT NOT NULL, narration_id TEXT NOT NULL, owner_id TEXT NOT NULL, transition_id TEXT NOT NULL,
-        PRIMARY KEY(world_id,narration_id,owner_id,transition_id));
     `);
     await initializePerceivedEventIndexes(this.db);
   }
@@ -737,13 +740,7 @@ export class HistoryRepository {
             .prepare(
               'UPDATE history_perspectives SET payload=?,position=?,event_type=?,source_id=?,target_id=?,speech_peer_id=?,temporal_chunk_id=NULL WHERE world_id=? AND event_id=? AND actor_id=?',
             )
-            .run(
-              account.payload,
-              ...perspectiveColumns(source, actorId),
-              world.id,
-              entry.eventId,
-              actorId,
-            );
+            .run(account.payload, ...perspectiveColumns(source), world.id, entry.eventId, actorId);
           for (const principal of this.principals.filter((p) => p.actorId === actorId))
             await this.revokeStories(world.id, entry.eventId, principal.ownerId);
         }
@@ -759,31 +756,6 @@ export class HistoryRepository {
         }
       }
     }
-    const transitions = world.conversations?.transitions ?? {};
-    if (transitions !== previous?.conversations?.transitions)
-      for (const record of Object.values(transitions))
-        if (
-          !previous?.conversations?.transitions[record.id] &&
-          record.kind === 'merge' &&
-          this.principals.some((p) => record.actorIds.includes(p.actorId))
-        )
-          for (const principal of this.principals.filter((p) =>
-            record.actorIds.includes(p.actorId),
-          )) {
-            await sharedWrites?.flush();
-            await this.mergeNotice(world.id, record, principal.ownerId);
-          }
-    if (transitions !== previous?.conversations?.transitions)
-      for (const record of Object.values(previous?.conversations?.transitions ?? {}))
-        if (!transitions[record.id]) {
-          await sharedWrites?.flush();
-          await this.db
-            .prepare('DELETE FROM story_narrations WHERE world_id=? AND id=?')
-            .run(world.id, `story:${record.id}`);
-          await this.db
-            .prepare('DELETE FROM story_transition_sources WHERE world_id=? AND transition_id=?')
-            .run(world.id, record.id);
-        }
   }
   private async schedule(
     world: WorldState,
@@ -793,9 +765,8 @@ export class HistoryRepository {
     source: StorySource,
   ) {
     const policy = world.storyPolicy ?? defaultStoryPolicy();
-    // Bind environmental events to the player's group at event time, never at dispatch.
-    const conversationId = event.conversationId ?? world.conversations?.active[actorId];
-    const base = `story:${ownerId}:${conversationId ?? 'world'}:${selection.groupKey}`;
+    // Narration keeps its own principal/source grouping, independent of speaking.
+    const base = `story:${ownerId}:${selection.groupKey}`;
     const priorRow = await this.db
       .prepare('SELECT payload FROM story_jobs WHERE world_id=? AND id=? AND owner_id=?')
       .get(world.id, base, ownerId);
@@ -833,7 +804,7 @@ export class HistoryRepository {
     ) as NarratorVoice;
     const impacts: TranscriptItem['impacts'] = combine ? [...prior.item.impacts] : [];
     if (event.type === 'body-effect')
-      for (const field of ['healthDelta', 'injuryDelta', 'wetnessDelta', 'burningDelta']) {
+      for (const field of ['healthDelta', 'wetnessDelta', 'burningDelta']) {
         const delta = event.data?.[field];
         if (typeof delta === 'number' && delta !== 0)
           impacts.push({
@@ -850,7 +821,6 @@ export class HistoryRepository {
       text: sources.map((s) => s.text).join(' '),
       time: anchor.time,
       order: anchor.order,
-      conversationId,
       sourceIds: sources.map((s) => s.id),
       impacts,
       status: 'pending',
@@ -888,11 +858,7 @@ export class HistoryRepository {
   }
   private async saveStory(worldId: string, job: StoryJob) {
     let changedBanner: Record<string, unknown> | undefined;
-    if (
-      job.selection &&
-      !job.item.conversationId &&
-      ['completed', 'failed', 'fallback', 'uncertain'].includes(job.state)
-    )
+    if (job.selection && ['completed', 'failed', 'fallback', 'uncertain'].includes(job.state))
       changedBanner = await this.db
         .prepare(
           `INSERT INTO story_banners VALUES (?,?,?,?,?) ON CONFLICT(world_id,owner_id,id)
@@ -921,17 +887,9 @@ export class HistoryRepository {
     const item = job.state === 'cancelled' ? job.previousItem! : job.item;
     await this.db
       .prepare(
-        'INSERT INTO story_narrations VALUES (?,?,?,?,?,?,?) ON CONFLICT(world_id,id,owner_id) DO UPDATE SET position=excluded.position,revision=excluded.revision,payload=excluded.payload',
+        'INSERT INTO story_narrations VALUES (?,?,?,?,?,?) ON CONFLICT(world_id,id,owner_id) DO UPDATE SET position=excluded.position,revision=excluded.revision,payload=excluded.payload',
       )
-      .run(
-        worldId,
-        job.id,
-        job.ownerId,
-        item.conversationId ?? null,
-        item.order,
-        item.revision ?? 1,
-        JSON.stringify(item),
-      );
+      .run(worldId, job.id, job.ownerId, item.order, item.revision ?? 1, JSON.stringify(item));
   }
   /** Claim is persisted before any paid reservation; restarted claims never redispatch. */
   async claim(
@@ -1191,27 +1149,6 @@ export class HistoryRepository {
     return result;
   }
 
-  private async mergeNotice(worldId: string, record: ConversationTransition, ownerId: string) {
-    const id = `story:${record.id}`;
-    const item: TranscriptItem = {
-      id,
-      kind: 'narration',
-      text: `Joined conversation ${record.conversationId}.`,
-      time: record.at,
-      order: record.order,
-      conversationId: record.sourceId,
-      sourceIds: [],
-      impacts: [],
-      status: 'completed',
-      revision: 1,
-    };
-    await this.db
-      .prepare('INSERT INTO story_narrations VALUES (?,?,?,?,?,?,?) ON CONFLICT DO NOTHING')
-      .run(worldId, id, ownerId, record.sourceId ?? null, record.order, 1, JSON.stringify(item));
-    await this.db
-      .prepare('INSERT INTO story_transition_sources VALUES (?,?,?,?) ON CONFLICT DO NOTHING')
-      .run(worldId, id, ownerId, record.id);
-  }
   async eventPage(worldId: string, before = Number.MAX_SAFE_INTEGER, actorId?: string) {
     const rows = actorId
       ? await this.db
@@ -1259,6 +1196,7 @@ export class HistoryRepository {
     sourceEpoch = epoch,
     corrections?: Record<string, string>,
     presentation?: EventPresentationPolicy,
+    currentRoles?: import('./perceived-events.js').PublicEventRoleProjection,
   ) {
     if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
       throw new Error('Unsupported history principal.');
@@ -1271,6 +1209,7 @@ export class HistoryRepository {
       JSON.stringify([worldId, ownerId, actorId, sourceEpoch]),
       corrections,
       presentation,
+      currentRoles,
     );
   }
   async perceivedEventSources(
@@ -1297,7 +1236,6 @@ export class HistoryRepository {
     ownerId: string,
     actorId: string,
     options: {
-      conversationId?: string;
       participantId?: string;
       speechOnly?: boolean;
       responseActions?: boolean;
@@ -1323,36 +1261,29 @@ export class HistoryRepository {
       Number(maximum?.['position'] ?? 0),
     );
     const boundary = Math.min(options.before ?? watermark + 1, watermark + 1);
-    const storyFilter = options.conversationId ? ' AND conversation_id=?' : '';
-    const args = options.conversationId ? [options.conversationId] : [];
     const select = (
       filter: string,
     ) => `SELECT p.position,p.event_id,e.payload,p.payload AS perspective,${storyAccountSql()} AS account_payload
       FROM history_perspectives p JOIN history_events e ON e.world_id=p.world_id AND e.id=p.event_id
-      WHERE p.world_id=? AND p.actor_id=? AND p.position<?${options.conversationId ? ' AND e.conversation_id=?' : ''}${filter}
+      WHERE p.world_id=? AND p.actor_id=? AND p.position<?${filter}
       ORDER BY p.position DESC,p.event_id DESC LIMIT ?`;
-    const params = [worldId, actorId, boundary, ...args];
+    const params = [worldId, actorId, boundary];
     let events: Record<string, unknown>[];
     if (options.participantId) {
-      // Seek two indexed streams before merging: permitted dialogue with this person,
-      // and that person's conversation-related actions. UNION removes their overlap.
-      // docs/performance.md#compact-transactional-persistence
-      const speech = select(' AND p.speech_peer_id=?');
-      events = options.responseActions
-        ? await this.db
-            .prepare(
-              `(${speech}) UNION (${select(' AND p.source_id=? AND p.response_action')}) ORDER BY position DESC,event_id DESC LIMIT ?`,
-            )
-            .all(
-              ...params,
-              options.participantId,
-              limit + 1,
-              ...params,
-              options.participantId,
-              limit + 1,
-              limit + 1,
-            )
-        : await this.db.prepare(speech).all(...params, options.participantId, limit + 1);
+      // Seek each observer-owned role index before merging. An explicitly
+      // requested outward response can be an action or sound, not only language.
+      // Names in quotations and undisclosed raw targets never supply a participant.
+      const filters = [
+        " AND p.event_type='speech' AND p.source_id=?",
+        " AND p.event_type='speech' AND p.target_id=?",
+        ...(options.responseActions ? [' AND p.source_id=? AND p.response_action'] : []),
+      ];
+      events = await this.db
+        .prepare(
+          `${filters.map((filter) => `(${select(filter)})`).join(' UNION ')}
+         ORDER BY position DESC,event_id DESC LIMIT ?`,
+        )
+        .all(...filters.flatMap(() => [...params, options.participantId, limit + 1]), limit + 1);
     } else if (options.speechOnly && options.responseActions) {
       events = await this.db
         .prepare(
@@ -1375,9 +1306,9 @@ export class HistoryRepository {
         ? []
         : await this.db
             .prepare(
-              `SELECT payload FROM story_narrations WHERE world_id=? AND owner_id=? AND position<?${storyFilter} ORDER BY position DESC,id DESC LIMIT ?`,
+              `SELECT payload FROM story_narrations WHERE world_id=? AND owner_id=? AND position<? ORDER BY position DESC,id DESC LIMIT ?`,
             )
-            .all(worldId, ownerId, boundary, ...args, limit + 1);
+            .all(worldId, ownerId, boundary, limit + 1);
     const items: TranscriptItem[] = events.map((row) => {
       const perspective = storySourceRow(row, 'perspective');
       const event = projectEventEvidence(
@@ -1393,17 +1324,15 @@ export class HistoryRepository {
           typeof event.data?.['text'] === 'string'
             ? event.data['text']
             : event.text,
-        speech: event.speech,
+        ...(event.speech ? { speech: projectPerceivedSpeech(event.speech) } : {}),
         time: event.at,
         order: Number(row['position']),
-        conversationId: event.conversationId,
         speakerId: event.actorId,
         speaker:
           event.speech?.speaker?.nameAtTime ??
           event.references?.find((reference) => reference.role === 'actor')?.label,
         sourceIds: [event.id],
         impacts: [],
-        legacy: !event.conversationId && event.type === 'speech',
       };
     });
     items.push(

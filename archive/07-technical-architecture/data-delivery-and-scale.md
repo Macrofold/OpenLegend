@@ -115,7 +115,7 @@ Implemented local checkpoint policy (2026-09-26; operator-configurable since 202
 
 When a later semantic policy is implemented, record its affected source class, rule/version, rationale, retained representation, dependency guards and lost query/replay capability here. The foundation supports storing policy identity, reason, optional confidence, classification state and source/group relationships without choosing their values. Missing classification is valid and must not automatically mean unimportant. Batch manifests/counters may audit later omission without a new row per discarded sample. Storage limits report pressure rather than inventing semantic deletion rules.
 
-The immediate gameplay implementation changes awareness residency only: [the hot-tail policy](../../docs/performance.md#inactive-history-residency) keeps a bounded presentation/continuity tail after commit, while SQL preserves every canonical source and its existing eligibility. No new semantic loss or detail-expiry policy is selected.
+The immediate gameplay implementation changes awareness residency only: [the hot-tail policy](../../docs/performance/preparation.md#inactive-history-residency) keeps a bounded presentation/continuity tail after commit, while SQL preserves every canonical source and its existing eligibility. No new semantic loss or detail-expiry policy is selected.
 
 Operational storage compaction may remove redundant physical representations only when canonical information, recovery guarantees and existing behavior remain intact. New content-sensitive classification, grouping and expiry behavior stays separate CR work. The [memory storage contract](production-data-model.md#semantic-history-and-grouping-support) owns the backing records and interfaces.
 

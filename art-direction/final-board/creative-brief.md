@@ -18,10 +18,57 @@ Beautiful dimensional pixel art with believable real-world proportions, expressi
 - Give trees layered, open boughs, varied greens and diffuse leaf shading; opaque paper-like tiers, crushed undersides and unexplained bright patches are rejected.
 - Let campfires, water and shadows connect people to their surroundings. Compose light around an identifiable source and preserve readable values.
 - Add meaningful lived-in objects, not uniform visual noise. Use fine detail where it describes identity, material or use.
+- Compose each place around recognizable large forms, a clear activity or route, and a few distinctive environmental features. Let geology, water, growth, weather and human use explain those features; novelty should make a place understandable and memorable.
+- Build color variety through material, species, moisture, exposure and light. Reserve the strongest accents for selected focal features and preserve quieter ground, water and shadow. A rich palette does not require every surface to compete.
+- Preserve physical identity through changes of pose and view: scars, handed tools, clothing asymmetry and carried equipment remain attached to the same person and side. Expressiveness comes from gesture, posture, deliberate pixels and lighting within believable anatomy.
 - Keep human scale, environment scale and close-up scale explicit when evaluating artwork. A large portrait or promotional illustration is not a runtime feasibility result.
 - Keep detail grouped and restrained: the October 17 feedback rejects the preceding uniformly fine treatment. Give small tools and animals only enough extra fixed pixel density to preserve identity. Check their actual screen footprint before adding detail, and keep all dated comparisons in the [study archive](../studies/README.md). Poly Haven is an endorsed source starting point; anatomy and construction still need visual review.
 
+## A living place with visible causes
+
+> A stream has risen after rain. Mud darkens near its banks. Moss and exposed roots differ from the dry slope. Someone has placed stepping stones because they cross here every day. One stone has shifted. A person's wet boots darken differently near the fire. Their backpack is sitting under an overhang rather than in the rain. A freshly cut branch has a different interior value from old bark. Someone recognizes that a plant has appeared because the wetter season began. A wounded deer chooses the open bank differently because two people are nearby.
+
+This illustrates the desired relationship between **visual beauty and a world that actually lives**. A few interconnected causes—rain, water level, ground condition, growth, habitual travel, work, shelter and perceived danger—produce many distinctive details. Their relationships make the place recognizable, understandable and worth observing. The ambition is not maximum texture or maximum simulation: it is for the player to see meaningful evidence of a place's materials, use, circumstances and history.
+
+**The creative target is a beautiful, tactile, systemic world—not a collection of handcrafted JRPG setpieces.** Apply the same deliberate care admired in Sea of Stars to what makes Open Legend distinctive: ordinary work, practical invention, people with independent motives and recognizable identities, changing weather and terrain, useful objects with histories, and encounters whose consequences survive the moment. Expressive art, sound and motion should make these interconnected realities rewarding to inhabit and observe. A quiet place can be worthwhile without a quest, fight, item reward or completion counter; a familiar place can become interesting again because something meaningful actually changed. Judge that appeal during ordinary movement and repeat visits, not just in the first impressive still.
+
+An authored starting place can establish coherent existing objects and conditions. As the world changes, the environment should depict its **actual** weather, physical objects and conditions, people's admitted actions and animals' behavior—not create those facts from visual decoration. A person noticing a new plant depends on what that person can perceive and know; a deer avoiding people depends on its available perception and chosen movement. Renderer light, color and animation communicate permitted world facts without becoming their authority. Do not imply a stone was physically displaced, an object is wet, a route is usable or someone knows something solely because an attractive effect suggests it.
+
+This is a **design vignette, not a claim of implemented behavior or a mandate that every scene simulate every example**. A useful scene can realize a subset coherently, from its terrain and light to one grounded interaction and later consequence. Use the [scene production workflow](../../docs/production-workflows/scenes-and-interfaces.md) for translating this goal into practical scene design; use the existing world, action, perception and art owners for real capabilities.
+
 ## Favorites and their contributions
+
+### Emberville — A varied world with room for action and ordinary life
+
+**Mike's preference:** Beautiful pixel art and a wide variety of two-dimensional places, with real-time combat worth studying. The character proportions are too cartoony for OpenLegend; the Stardew Valley resemblance is a reference association, not a selected style.
+
+**Visual reading:** Misty streets, warm timber interiors, luminous laboratory equipment, webbed caves, open desert and cultivated land create distinct places through layout, material, light and apparent use. The trailers also contrast damaged and furnished interiors, construction and fighting.
+
+**Creative translation:** Develop meaningful differences among regions and everyday places while keeping believable anatomy, practical construction and the current dimensional pixel-art direction. Let changing conditions or actual repairs make familiar places feel different. Preserve quiet space and readable threats where combat occurs, alongside attractive places for peaceful activity.
+
+**Context:** The [illustrated study](../research/emberville/README.md) includes four official screenshot references and timestamped visual observations. The [Emberville and Diablo combat note](../../docs/game-ideas/real-time-combat-feel.md) owns the separate gameplay lessons. Promotional imagery does not establish input responsiveness, a chosen camera or a renderer technique.
+
+### ROCKBEASTS — Character acting and a world expressed through its menus
+
+**Mike's preference:** Beautiful art, color, lighting and animation, plus menus creatively styled to fit the game's theme. He explicitly recognizes it as a nonpixel reference.
+
+**Visual reading:** Violet night scenes organize warm windows and neon into clear focal areas. Amber performance light shapes faces and instruments. Notebooks, calendars, clippings, photographs and contracts carry the same music-world identity into everyday decisions. Selected trailer sequences use posture, hands, eye direction and held reactions to communicate personality.
+
+**Creative translation:** Carry purposeful palette and light through places, people and interfaces. Make gestures and reactions readable within believable anatomy. Choose interface materials that fit the current world and task, such as a field journal or workshop notebook, while keeping text, navigation and action results clear.
+
+**Context:** These are observations of official promotional footage and images, not a playthrough or renderer analysis. Their craft informs OpenLegend's dimensional pixel art; the cartoon proportions and music-industry setting are outside the selected scope. See the [illustrated study and frame references](../research/rockbeasts/README.md) and [narrative case study](../../docs/narrative/case-studies/rockbeasts.md).
+
+### Sea of Stars — Expressive environments in a grounded world
+
+**Mike's preference:** The beauty of its expressive pixel art, environmental detail and novelty, varied colors and lighting. OpenLegend should retain a more real, believable world and people; the cartoon JRPG character treatment is outside the target.
+
+**Creative interpretation:** Organize richness around large landforms and purposeful pixel groups. Distinctive roots, rock, water, vegetation and structures should explain a place's character and use. Let local light affect nearby bodies and materials, give colorful accents quieter surroundings, and support warmth, curiosity, danger and loss within the same visual language. Natural proportions and practical construction remain the foundation.
+
+![Official Sea of Stars screenshot: a large curved tree forms a route over dark teal water](https://shared.akamai.steamstatic.com/store_item_assets/steam/apps/1244090/ss_e7ac3a6e5ebe5f4561fc46d116c33678cf4ba811.1920x1080.jpg?t=1780931183)
+
+The broad curve establishes the route; bark marks follow its form; leaf and moss clusters sit beside larger quiet areas of water. This is a useful example of organized detail rather than a demand for uniformly finer texture. Source: [official Steam gallery](https://store.steampowered.com/app/1244090/Sea_of_Stars_Sunset_Edition/), inspected October 18, 2026. Publicity imagery; exact captured build is unspecified. Copyright remains with its owners; reference use does not grant production reuse.
+
+**Use in art review:** Read the [illustrated study and scene criteria](../research/sea-of-stars/README.md) with the [current visual requirements](../decisions.md#current-visual-requirements--october-16-2026). Review actual gameplay scale, movement, overlap, natural foliage gaps and light response. This reference does not establish a 2D camera, a renderer technique, a performance result or approval of an unseen OpenLegend scene. The [full dossier](../../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) keeps mechanics and production findings separate from accepted art preferences.
 
 ### Dimensional pixel art — October 14 direction
 

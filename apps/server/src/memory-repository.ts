@@ -10,6 +10,7 @@ import {
   applySourceVersions,
   type SourceVersionPlan,
 } from './source-version-retention.js';
+import { hasLinguisticSpeech } from './speech-recall.js';
 import { tableRows } from './record-pages.js';
 import {
   readTemporalHistory,
@@ -78,6 +79,8 @@ import {
   type TemporalSupportCapsule,
   temporalKnownPlaceCapsules,
   selectedAttentionPolicy,
+  validExperienceSummary,
+  experienceReading,
 } from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase, SavedWorld } from './store.js';
@@ -211,12 +214,10 @@ export interface ConversationSource {
   revision: string;
   sequence: number;
   correction: string;
+  bodyBytes: number;
 }
-export const conversationCompactionKey = (
-  worldId: string,
-  actorId: string,
-  conversationId: string,
-) => `conversation-compaction:${JSON.stringify([worldId, actorId, conversationId])}`;
+export const conversationCompactionKey = (worldId: string, actorId: string) =>
+  `conversation-compaction:${JSON.stringify([worldId, actorId])}`;
 export interface RetrievedMemory {
   /** Read proof for an event retained in recent chronology, not a recall_sources row. */
   receipt?: TemporalReceiptLocator;
@@ -227,12 +228,56 @@ export interface RetrievedMemory {
   awareness?: Awareness;
   revision: string;
   score?: number;
+  bodyBytes: number;
+  /** A current eligible summary that admitted this exact retained original. */
+  through?: SummarySourceBinding;
+}
+export interface SummarySourceBinding {
+  id: string;
+  revision: string;
+}
+export function memorySourceProof(source: RetrievedMemory): CurrentMemorySource {
+  return {
+    id: source.memory.id,
+    sourceKind: source.sourceKind,
+    revision: source.revision,
+    ...(source.through ? { through: source.through } : {}),
+    ...(source.receipt ? { receipt: source.receipt } : {}),
+  };
+}
+
+/** All selected source readers share current-format decoding. A missing manifest
+ * never becomes a text-only summary on an editor/page or cold retrieval path. */
+function decodeMemorySource(kind: SourceKind, payload: string, actorId: string): ExperienceEntry {
+  const value: unknown = JSON.parse(payload);
+  if (kind === 'awareness') {
+    validateEventEvidence(value);
+    if (
+      (value as Awareness).exposure !== undefined &&
+      !validEncounterExposure((value as Awareness).exposure)
+    )
+      throw new Error('Invalid stored encounter evidence. Existing data was not replaced.');
+    if (value.actorId !== actorId)
+      throw new Error('Stored experience owner disagrees with its partition.');
+    return { source: kind, value: value as Awareness };
+  }
+  if (kind === 'summary') {
+    if (!validExperienceSummary(value, actorId))
+      throw new Error('Invalid stored summary attribution. Existing data was not replaced.');
+    return { source: kind, value };
+  }
+  const memory = value as MemoryRecord;
+  if (!memory || memory.actorId !== actorId)
+    throw new Error('Stored memory owner disagrees with its partition.');
+  if (memory.manifest) validateExperienceManifest(memory.manifest);
+  return { source: kind, value: memory };
 }
 export interface CurrentMemorySource {
   receipt?: TemporalReceiptLocator;
   id: string;
   sourceKind: SourceKind;
   revision: string;
+  through?: SummarySourceBinding;
 }
 export interface KnownPlaceSource {
   memory: MemoryRecord;
@@ -477,21 +522,27 @@ export class MemoryRepository {
             pg_get_expr(d.adbin,d.adrelid) AS default_value
           FROM pg_attribute a LEFT JOIN pg_attrdef d ON d.adrelid=a.attrelid AND d.adnum=a.attnum
           WHERE a.attrelid=to_regclass('open_legend.recall_sources') AND NOT a.attisdropped
-            AND a.attname IN ('search_text','search_vector')`,
+            AND a.attname IN ('search_text','search_vector','linguistic','payload_bytes','retention_class')`,
         )
         .all();
       // A shared storage marker can predate this derived-column contract. Reject
       // that layout before CREATE IF NOT EXISTS hides it; never convert development
       // databases or replace their indexes/rows (AGENTS.md#development-save-policy).
       if (
-        columns.length !== 1 ||
+        columns.length !== 4 ||
         !columns.every(
           (column) =>
             column['generated'] === '' &&
             column['required'] === true &&
-            column['name'] === 'search_text' &&
-            column['type'] === 'text' &&
-            column['default_value'] === "''::text",
+            ((column['name'] === 'search_text' &&
+              column['type'] === 'text' &&
+              column['default_value'] === "''::text") ||
+              (column['name'] === 'retention_class' &&
+                column['type'] === 'text' &&
+                column['default_value'] == null) ||
+              (['linguistic', 'payload_bytes'].includes(String(column['name'])) &&
+                column['type'] === 'bigint' &&
+                column['default_value'] == null)),
         )
       )
         throw new Error(
@@ -504,8 +555,10 @@ export class MemoryRepository {
         id TEXT NOT NULL, source_kind TEXT NOT NULL, record_id TEXT NOT NULL, revision TEXT NOT NULL,
         event_id TEXT, memory_kind TEXT, acquisition TEXT, event_type TEXT,
         at DOUBLE PRECISION NOT NULL, importance DOUBLE PRECISION NOT NULL, required BIGINT NOT NULL,eligible BIGINT NOT NULL DEFAULT 0, sequence BIGINT NOT NULL DEFAULT 0,
-        search_text TEXT NOT NULL DEFAULT '',
+        search_text TEXT NOT NULL DEFAULT '', linguistic BIGINT NOT NULL,payload_bytes BIGINT NOT NULL,retention_class TEXT NOT NULL,
         PRIMARY KEY(world_id,actor_id,id,source_kind));
+      CREATE INDEX IF NOT EXISTS recall_dialogue_order ON recall_sources(world_id,actor_id,sequence DESC,id DESC)
+        WHERE source_kind='awareness' AND eligible=1 AND linguistic=1;
       CREATE INDEX IF NOT EXISTS recall_actor_rank ON recall_sources(world_id,actor_id,eligible,importance DESC,at DESC,id);
       CREATE INDEX IF NOT EXISTS recall_source_validation ON recall_sources(world_id,actor_id,eligible,id);
       CREATE INDEX IF NOT EXISTS recall_context_rank ON recall_sources(world_id,actor_id,eligible,required DESC,importance DESC,at DESC,id);
@@ -564,6 +617,8 @@ export class MemoryRepository {
     `);
     await this.db.exec(`
       CREATE INDEX IF NOT EXISTS recall_maintenance ON recall_sources(world_id,actor_id,eligible,at,sequence,id);
+      CREATE INDEX IF NOT EXISTS recall_maintenance_routine ON recall_sources(world_id,actor_id,at,sequence,id)
+        WHERE eligible=1 AND importance<${EXPERIENCE_LIMITS.protectedImportance} AND (source_kind='awareness' OR memory_kind='episode');
       CREATE INDEX IF NOT EXISTS recall_maintenance_speech ON recall_sources(world_id,actor_id,eligible,event_type,at DESC,sequence DESC,id DESC);
     `);
     await this.db.exec(`
@@ -787,6 +842,7 @@ export class MemoryRepository {
     };
     for (const [kind, table] of Object.entries(sourceTables)) {
       const writes = changes.writes.get(table) ?? [];
+      const next = new Map(writes.map((row) => [row.id, row.payload]));
       const direct = changes.deletes.get(table) ?? [];
       const parents = new Set([
         'data_world',
@@ -826,6 +882,24 @@ export class MemoryRepository {
         for (const row of old)
           if (erasedKeys.has(JSON.stringify([row['actor_id'], row['source_id']])))
             expired.add(String(row['id']));
+        const expiredSensory =
+          kind === 'awareness'
+            ? old
+                .filter(
+                  (row) =>
+                    JSON.parse(String(row['payload']))['retentionClass'] === 'sensory' &&
+                    !next.has(String(row['id'])),
+                )
+                .map((row) => row['id'])
+            : [];
+        if (expiredSensory.length)
+          await this.db
+            .prepare(
+              `DELETE FROM history_perspectives p USING mind_awareness a
+            WHERE a.world_id=? AND a.id IN (${expiredSensory.map(() => '?').join(',')})
+              AND p.world_id=a.world_id AND p.actor_id=a.actor_id AND p.event_id=a.source_id`,
+            )
+            .run(worldId, ...expiredSensory);
         for (const row of old) {
           touch(String(row['actor_id']), String(row['source_id']));
           if (kind === 'awareness') invalidateConversations.add(String(row['actor_id']));
@@ -971,7 +1045,7 @@ export class MemoryRepository {
         id !== path.at(-1) ||
         !Array.isArray(sources) ||
         sources.some((source) => !validPersonalSourceRef(source)) ||
-        (kind === 'summary' && !manifest) ||
+        (kind === 'summary' && !validExperienceSummary(value, actorId)) ||
         (exposure !== undefined && !validEncounterExposure(exposure))
       )
         throw new Error('Invalid memory source projection.');
@@ -1025,12 +1099,15 @@ export class MemoryRepository {
         0,
         value['sequence'] ?? 0,
         value[kind === 'memory' ? 'summary' : 'text'] ?? '',
+        kind === 'awareness' && hasLinguisticSpeech(value as unknown as Awareness) ? 1 : 0,
+        Buffer.byteLength(row.payload),
+        kind === 'awareness' ? value['retentionClass'] : 'memory',
       ];
       // These are the actual SQL fields: required times/ranks cannot become NULL,
       // sequence must fit BIGINT exactly, and supplied text must remain text.
       for (let index = 0; index < values.length; index++) {
         const part = values[index];
-        if (index >= 10 && index <= 14) {
+        if ((index >= 10 && index <= 14) || (index >= 16 && index <= 17)) {
           if (
             typeof part !== 'number' ||
             !Number.isFinite(part) ||
@@ -1071,7 +1148,13 @@ export class MemoryRepository {
   ) {
     if (prepared && (prepared.worldId !== worldId || prepared.changes !== changes))
       throw new Error('Prepared memory sources do not match these exact world changes.');
-    const columns = [...sourceColumnNames, 'search_text'];
+    const columns = [
+      ...sourceColumnNames,
+      'search_text',
+      'linguistic',
+      'payload_bytes',
+      'retention_class',
+    ];
     const repository = this;
     for (const kind of Object.keys(sourceTables) as SourceKind[]) {
       // Complete restores stream rows rather than allocating a second complete source set.
@@ -1858,7 +1941,17 @@ export class MemoryRepository {
       : this.db.transaction(operation);
   }
   private eligible = `r.world_id=? AND r.actor_id=? AND (SELECT generation FROM world_head WHERE id=1)=? AND r.eligible=1`;
-  private sourceEligibility = `NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=r.world_id AND f.actor_id=r.actor_id AND (f.source_id=r.id OR f.source_id=r.event_id))
+  // Explicit causes may be finite sensory observations rather than retained
+  // memories. Their current-format row and game-time expiry, never optional
+  // retrieval/index admission, fence a pending decision's exact evidence.
+  private pendingEvidence = `r.world_id=? AND r.actor_id=? AND (SELECT generation FROM world_head WHERE id=1)=?
+    AND (r.eligible=1 OR (r.source_kind='awareness' AND r.retention_class='sensory'
+      AND EXISTS (SELECT 1 FROM mind_awareness a WHERE a.world_id=r.world_id AND a.id=r.record_id
+        AND (a.payload::jsonb->>'expiresAt')::double precision >
+          (SELECT (w.payload::jsonb->>'simTime')::double precision FROM world_settings w WHERE w.world_id=r.world_id))
+      AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=r.world_id AND f.actor_id=r.actor_id
+        AND (f.source_id=r.id OR f.source_id=r.event_id))))`;
+  private sourceEligibility = `r.retention_class='memory' AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=r.world_id AND f.actor_id=r.actor_id AND (f.source_id=r.id OR f.source_id=r.event_id))
     AND (r.source_kind<>'memory' OR ((r.memory_kind='impression' OR r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
       AND NOT (r.memory_kind='episode' AND r.event_id IS NOT NULL AND EXISTS (SELECT 1 FROM recall_sources a WHERE a.world_id=r.world_id AND a.actor_id=r.actor_id AND a.source_kind='awareness' AND a.id=r.event_id))))
     AND (r.source_kind<>'summary' OR NOT EXISTS (
@@ -1877,105 +1970,111 @@ export class MemoryRepository {
     scope: MemoryScope,
     requiredIds: string[],
     includeConversation: boolean,
-    activeConversation?: string,
+    maxBytes = RETRIEVAL_BYTES,
   ) {
     return this.snapshot(async () => {
+      // Reconsideration uses all perceived events, including physical danger. The
+      // optional linguistic suffix is not the actor's complete observation frontier.
       const watermark = await this.db
         .prepare(
           'SELECT MAX(sequence) AS sequence FROM mind_awareness WHERE world_id=? AND actor_id=? AND (SELECT generation FROM world_head WHERE id=1)=?',
         )
         .get(...this.params(scope));
-      let conversation = activeConversation;
-      if (includeConversation && !conversation) {
-        let order = -1;
-        for (let offset = 0; offset < requiredIds.length; offset += 500) {
-          const ids = requiredIds.slice(offset, offset + 500);
-          const row = await this.db
-            .prepare(
-              `SELECT e.conversation_id,a.sequence FROM mind_awareness a JOIN history_events e ON e.world_id=a.world_id AND e.id=a.source_id
-            WHERE a.world_id=? AND a.actor_id=? AND a.source_id IN (${ids.map(() => '?').join(',')}) AND a.event_id IS NOT NULL AND e.conversation_id IS NOT NULL
-            AND (SELECT generation FROM world_head WHERE id=1)=? ORDER BY a.sequence DESC LIMIT 1`,
-            )
-            .get(scope.worldId, scope.actorId, ...ids, scope.generation);
-          if (row && Number(row['sequence']) > order) {
-            order = Number(row['sequence']);
-            conversation = String(row['conversation_id']);
-          }
-        }
-      }
-      const sources =
-        includeConversation && conversation
-          ? await this.conversationSources(scope, conversation)
-          : [];
+      const selected = includeConversation
+        ? await this.conversationSources(scope, maxBytes)
+        : { sources: [], more: false };
       const required = new Set(requiredIds);
       return {
         sequence: Number(watermark?.['sequence'] ?? 0),
-        conversationId: includeConversation ? conversation : undefined,
-        sources,
-        conversationIds: sources.map((source) => source.id).filter((id) => !required.has(id)),
+        ...selected,
+        conversationIds: selected.sources
+          .map((source) => source.id)
+          .filter((id) => !required.has(id)),
       };
     });
   }
-  /** One SQL snapshot of eligible metadata; validation needs no transcript bodies
-   * or fresh awareness watermark. Callers separately fence the world generation. */
+  /** Actor/order metadata only. Stop at the first excluded complete source, keeping
+   * a contiguous suffix and one continuation witness without a lifetime count/body scan. */
   async conversationSources(
     scope: MemoryScope,
-    conversationId: string,
-  ): Promise<ConversationSource[]> {
-    // Restrict history by conversation, then check actor-scoped sources by key.
-    // A multiway join multiplied scans with cold PostgreSQL statistics; starting
-    // at recall instead scanned unrelated personal history. The scalar awareness
-    // probe keeps cold-statistics plans from rescanning/parsing the actor's entire
-    // speech history once per turn (rather than using the exact source key).
-    // docs/verification/postgresql-cognition-preparation.md#postgresql-only-storage-and-shared-preparation
-    const permittedSource =
-      "r.world_id=e.world_id AND r.actor_id=? AND r.id=e.id AND r.eligible=1 AND r.source_kind='awareness'";
-    const rows = await this.db
-      .prepare(
-        `SELECT e.id AS source_id,
-        (SELECT r.revision FROM recall_sources r WHERE ${permittedSource}) AS revision,
-        (SELECT r.sequence FROM recall_sources r WHERE ${permittedSource}) AS sequence,
-        (SELECT c.payload FROM mind_corrections c WHERE c.world_id=e.world_id AND c.actor_id=? AND c.source_id=e.id) AS correction
-        FROM history_events e WHERE e.world_id=? AND e.conversation_id=?
-        AND (SELECT generation FROM world_head WHERE id=1)=?
-        AND (e.payload::jsonb->>'type')='speech'
-        AND (SELECT 1 FROM mind_awareness a WHERE a.world_id=e.world_id AND a.actor_id=? AND a.source_id=e.id AND ${this.linguisticSpeech} LIMIT 1)=1
-        AND (SELECT 1 FROM recall_sources r WHERE ${permittedSource})=1
-        ORDER BY sequence LIMIT ${RETRIEVAL_ROWS + 1}`,
-      )
-      .all(
-        scope.actorId,
-        scope.actorId,
-        scope.actorId,
-        scope.worldId,
-        conversationId,
-        scope.generation,
-        scope.actorId,
-        scope.actorId,
-      );
-    if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
-    return rows.map(
-      (row): ConversationSource => ({
-        id: String(row['source_id']),
-        revision: String(row['revision']),
-        sequence: Number(row['sequence']),
-        correction: String(row['correction'] ?? ''),
-      }),
-    );
+    maxBytes = RETRIEVAL_BYTES,
+  ): Promise<{ sources: ConversationSource[]; more: boolean }> {
+    const sources: ConversationSource[] = [];
+    let bytes = 0,
+      before: { sequence: number; id: string } | undefined;
+    for (;;) {
+      const limit = Math.min(128, RETRIEVAL_ROWS + 1 - sources.length);
+      const rows = await this.db
+        .prepare(
+          `SELECT r.id,r.revision,r.sequence,r.payload_bytes,
+          (SELECT c.payload FROM mind_corrections c WHERE c.world_id=r.world_id AND c.actor_id=r.actor_id AND c.source_id=r.id) AS correction
+        FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='awareness' AND r.linguistic=1
+          ${before ? 'AND (r.sequence,r.id)<(?,?)' : ''}
+        ORDER BY r.sequence DESC,r.id DESC LIMIT ?`,
+        )
+        .all(...this.params(scope), ...(before ? [before.sequence, before.id] : []), limit);
+      for (const row of rows) {
+        const size = Number(row['payload_bytes']);
+        if (sources.length === RETRIEVAL_ROWS || bytes + size > Math.min(maxBytes, RETRIEVAL_BYTES))
+          return { sources: sources.reverse(), more: true };
+        bytes += size;
+        sources.push({
+          id: String(row['id']),
+          revision: String(row['revision']),
+          sequence: Number(row['sequence']),
+          correction: String(row['correction'] ?? ''),
+          bodyBytes: size,
+        });
+      }
+      if (rows.length < limit) return { sources: sources.reverse(), more: false };
+      const last = sources.at(-1)!;
+      before = { sequence: last.sequence, id: last.id };
+    }
   }
-  /** Compare the entire permitted snapshot, including removals, before replacing
-   * derived context. Ordinary later speech may append without invalidating it.
-   */
+  /** Derived speech may keep exact retired observer originals. A changed current
+   * record, correction, forgetting or generation never validates an older cache. */
+  async currentCompactionSources(scope: MemoryScope, sources: PersonalSourceRef[]) {
+    if (sources.length > RETRIEVAL_ROWS) return false;
+    let matched = 0;
+    for (let offset = 0; offset < sources.length; offset += 300) {
+      const rows = await this.db
+        .prepare(
+          `SELECT q.id FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT)
+        LEFT JOIN recall_sources r ON r.world_id=? AND r.actor_id=? AND r.source_kind=q.kind AND r.id=q.id
+        WHERE (SELECT generation FROM world_head WHERE id=1)=?
+          AND (r.revision=q.revision OR (r.id IS NULL AND EXISTS (
+            SELECT 1 FROM mind_source_versions v WHERE v.world_id=? AND v.actor_id=?
+              AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision)))
+          AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=? AND f.actor_id=? AND f.source_id=q.id)
+          AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=? AND c.actor_id=? AND c.source_id=q.id)`,
+        )
+        .all(
+          JSON.stringify(sources.slice(offset, offset + 300)),
+          scope.worldId,
+          scope.actorId,
+          scope.generation,
+          scope.worldId,
+          scope.actorId,
+          scope.worldId,
+          scope.actorId,
+          scope.worldId,
+          scope.actorId,
+        );
+      matched += rows.length;
+    }
+    return matched === sources.length;
+  }
+  /** Publish against exact selected sources and coverage. Later unrelated speech
+   * may append without invalidating this actor-owned derived artifact. */
   async publishConversationCompaction(
     scope: MemoryScope,
-    conversationId: string,
-    sequence: number,
     sources: ConversationSource[],
+    coverage: PersonalSourceRef[],
     expected: unknown,
     value: unknown,
     assertCurrent: () => void,
   ): Promise<void> {
-    const key = conversationCompactionKey(scope.worldId, scope.actorId, conversationId);
+    const key = conversationCompactionKey(scope.worldId, scope.actorId);
     await this.db.transaction(async () => {
       // Serialize with gameplay commits, including restore, with the PostgreSQL writer.
       const head = await this.db
@@ -1985,12 +2084,19 @@ export class MemoryRepository {
         .get(scope.worldId, scope.generation);
       if (!head) throw new Error('Conversation compaction generation changed.');
       assertCurrent();
-      const current = await this.conversationSources(scope, conversationId);
       if (
-        JSON.stringify(current.filter((source) => source.sequence <= sequence)) !==
-        JSON.stringify(sources)
+        !(await this.current(
+          scope,
+          sources.map((source) => ({
+            id: source.id,
+            sourceKind: 'awareness' as const,
+            revision: source.revision,
+          })),
+        ))
       )
         throw new Error('Conversation compaction sources changed.');
+      if (!(await this.currentCompactionSources(scope, coverage)))
+        throw new Error('Compacted speech coverage changed.');
       const stored = await this.db
         .prepare('SELECT value FROM meta WHERE key=?')
         .get(`integration:${key}`);
@@ -2006,7 +2112,7 @@ export class MemoryRepository {
     });
   }
   async invalidateConversationCompactions(worldId: string, actorId?: string): Promise<void> {
-    const prefix = `integration:conversation-compaction:${JSON.stringify(actorId ? [worldId, actorId] : [worldId]).slice(0, -1)},`;
+    const prefix = `integration:conversation-compaction:${JSON.stringify(actorId ? [worldId, actorId] : [worldId]).slice(0, -1)}${actorId ? ']' : ','}`;
     await this.db
       .prepare('DELETE FROM meta WHERE substr(key,1,?)=?')
       .run([...prefix].length, prefix);
@@ -2023,7 +2129,7 @@ export class MemoryRepository {
       )
       .get(scope.worldId, scope.actorId, key.slice(separator + 1), scope.generation);
     return row
-      ? ({ source: kind, value: JSON.parse(String(row['payload'])) } as ExperienceEntry)
+      ? decodeMemorySource(kind as SourceKind, String(row['payload']), scope.actorId)
       : undefined;
   }
   async page(
@@ -2064,13 +2170,11 @@ export class MemoryRepository {
       )
       .all(...params, scope.generation);
     return {
-      entries: rows.slice(0, limit).map(
-        (row) =>
-          ({
-            source: row['source'],
-            value: JSON.parse(String(row['payload'])),
-          }) as ExperienceEntry,
-      ),
+      entries: rows
+        .slice(0, limit)
+        .map((row) =>
+          decodeMemorySource(row['source'] as SourceKind, String(row['payload']), scope.actorId),
+        ),
       more: rows.length > limit,
     };
   }
@@ -2256,10 +2360,10 @@ export class MemoryRepository {
       .prepare(
         `SELECT
       CASE WHEN EXISTS (SELECT 1 FROM recall_sources r WHERE r.world_id=? AND r.actor_id=? AND r.eligible=1) THEN 1 ELSE 0 END AS memories,
-      CASE WHEN EXISTS (SELECT 1 FROM mind_awareness WHERE world_id=? AND actor_id=? AND at<=?)
-        OR EXISTS (SELECT 1 FROM mind_memories WHERE world_id=? AND actor_id=? AND at<=? AND kind='episode') THEN 1 ELSE 0 END AS due,
-      CASE WHEN EXISTS (SELECT 1 FROM mind_awareness WHERE world_id=? AND actor_id=? LIMIT 1 OFFSET ?)
-        OR EXISTS (SELECT 1 FROM mind_memories WHERE world_id=? AND actor_id=? LIMIT 1 OFFSET ?) THEN 1 ELSE 0 END AS pressure`,
+      CASE WHEN EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='awareness' AND importance<${EXPERIENCE_LIMITS.protectedImportance} AND at<=?)
+        OR EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='memory' AND memory_kind='episode' AND importance<${EXPERIENCE_LIMITS.protectedImportance} AND at<=?) THEN 1 ELSE 0 END AS due,
+      CASE WHEN EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='awareness' AND importance<${EXPERIENCE_LIMITS.protectedImportance} LIMIT 1 OFFSET ?)
+        OR EXISTS (SELECT 1 FROM recall_sources WHERE world_id=? AND actor_id=? AND eligible=1 AND source_kind='memory' AND memory_kind='episode' AND importance<${EXPERIENCE_LIMITS.protectedImportance} LIMIT 1 OFFSET ?) THEN 1 ELSE 0 END AS pressure`,
       )
       .get(
         scope.worldId,
@@ -2305,7 +2409,28 @@ export class MemoryRepository {
       const throughRevision = review?.throughRevision ?? Number(head['revision']);
       const from = mode === 'daily' ? (review?.day ?? -1) * 86400 : -Number.MAX_VALUE;
       const to = mode === 'daily' ? from + 86400 : simTime - EXPERIENCE_LIMITS.rawHours * 3600;
-      const after = review?.after ?? { at: -Number.MAX_VALUE, sequence: 0, id: '' };
+      let after = review?.after ?? { at: -Number.MAX_VALUE, sequence: 0, id: '' };
+      if (mode === 'hourly') {
+        // Start at actual routine work, then retain protected incidents inside that
+        // prefix as grouping barriers. Old protected originals cannot starve later work.
+        const anchor = await this.db
+          .prepare(
+            `SELECT r.at,r.sequence,r.id FROM recall_sources r
+          WHERE ${this.eligible} AND r.at<=? AND r.importance<${EXPERIENCE_LIMITS.protectedImportance}
+          AND (r.source_kind='awareness' OR r.memory_kind='episode')
+          AND r.id NOT IN (SELECT s.id FROM recall_sources s JOIN mind_awareness a ON a.world_id=s.world_id AND a.id=s.record_id
+            WHERE s.world_id=? AND s.actor_id=? AND s.eligible=1 AND s.source_kind='awareness' AND s.event_type='speech'
+            AND ${this.linguisticSpeech} ORDER BY s.at DESC,s.sequence DESC,s.id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech})
+          ORDER BY r.at,r.sequence,r.id LIMIT 1`,
+          )
+          .get(...this.params(scope), to, scope.worldId, scope.actorId);
+        if (!anchor) return null;
+        after = {
+          at: Number(anchor['at']),
+          sequence: Number(anchor['sequence']),
+          id: String(anchor['id']),
+        };
+      }
       const payloadBytes = 'octet_length(payload)';
       const rows = await this.db
         .prepare(
@@ -2316,7 +2441,7 @@ export class MemoryRepository {
             )
             .join(' ')} END AS payload_bytes FROM recall_sources r
         WHERE ${this.eligible} AND NOT (r.source_kind='awareness' AND r.importance>=${EXPERIENCE_LIMITS.protectedImportance} AND EXISTS (SELECT 1 FROM recall_place_capsules p WHERE p.world_id=r.world_id AND p.actor_id=r.actor_id AND p.owner_id=r.id AND p.owner_kind=r.source_kind AND p.owner_revision=r.revision)) AND r.at>=? AND r.at${mode === 'daily' ? '<' : '<='}?
-        AND (r.at,r.sequence,r.id) > (?,?,?)
+        AND (r.at,r.sequence,r.id) ${mode === 'hourly' ? '>=' : '>'} (?,?,?)
         AND (r.source_kind='awareness' OR r.memory_kind='episode'${mode === 'daily' ? " OR r.source_kind='summary'" : ''})
         AND r.id NOT IN (SELECT s.id FROM recall_sources s JOIN mind_awareness a ON a.world_id=s.world_id AND a.id=s.record_id WHERE s.world_id=? AND s.actor_id=? AND s.eligible=1 AND s.source_kind='awareness' AND s.event_type='speech' AND ${this.linguisticSpeech} ORDER BY s.at DESC,s.sequence DESC,s.id DESC LIMIT ${EXPERIENCE_LIMITS.conversationSpeech})
         ${
@@ -2360,9 +2485,11 @@ export class MemoryRepository {
         sourceBytes += size;
       }
       const hydrated = await this.hydrate(bounded);
-      const byId = new Map(hydrated.map((entry) => [entry.memory.id, entry]));
+      const byId = new Map(
+        hydrated.map((entry) => [sourceKey(entry.sourceKind, entry.memory.id), entry]),
+      );
       const ordered = bounded
-        .map((row) => byId.get(String(row['id'])))
+        .map((row) => byId.get(sourceKey(String(row['source_kind']), String(row['id']))))
         .filter((entry): entry is RetrievedMemory => !!entry);
       const selected: RetrievedMemory[] = [];
       let bytes = 0;
@@ -2376,7 +2503,7 @@ export class MemoryRepository {
             Math.floor(entry.memory.at / 86400) !== Math.floor(first.at / 86400))
         )
           break;
-        const size = Buffer.byteLength(JSON.stringify(entry.memory));
+        const size = Buffer.byteLength(JSON.stringify(entry.entry));
         if (size > MAINTENANCE_BYTES)
           throw new Error(
             'One maintenance source exceeds the preparation allowance; evidence retained.',
@@ -2385,8 +2512,8 @@ export class MemoryRepository {
         bytes += size;
         selected.push(entry);
       }
-      const sources = selected.map((entry) => entry.memory);
-      const last = sources.at(-1)!;
+      const sources = selected.map((entry) => entry.entry);
+      const last = selected.at(-1)!.memory;
       return {
         mode,
         sources,
@@ -2394,8 +2521,10 @@ export class MemoryRepository {
           entry: source.entry,
           ref: { kind: source.sourceKind, id: source.memory.id, revision: source.revision },
         })),
-        protected: sources.filter((s) => s.importance >= EXPERIENCE_LIMITS.protectedImportance),
-        routine: sources.filter((s) => s.importance < EXPERIENCE_LIMITS.protectedImportance),
+        protected: sources.filter(
+          (s) => s.value.importance >= EXPERIENCE_LIMITS.protectedImportance,
+        ),
+        routine: sources.filter((s) => s.value.importance < EXPERIENCE_LIMITS.protectedImportance),
         selection: {
           scope,
           throughRevision,
@@ -2549,20 +2678,13 @@ export class MemoryRepository {
           const payload = byId.get(row['record_id']);
           if (!payload || personalAccountRevision(payload) !== row['revision']) continue;
           const actorId = String(row['actor_id']);
-          let memory: MemoryRecord;
-          let awareness: Awareness | undefined;
-          if (kind === 'awareness') {
-            awareness = JSON.parse(payload) as Awareness;
-            if (awareness.exposure !== undefined && !validEncounterExposure(awareness.exposure))
-              throw new Error('Invalid stored encounter evidence. Existing data was not replaced.');
-            memory = awarenessMemory(awareness);
-          } else if (kind === 'summary') {
-            const summary = JSON.parse(payload) as ExperienceSummary;
-            memory = summaryMemory(summary, actorId);
-          } else memory = JSON.parse(payload) as MemoryRecord;
+          const entry = decodeMemorySource(kind, payload, actorId);
+          const memory = experienceReading(entry, actorId);
+          const awareness = entry.source === 'awareness' ? entry.value : undefined;
           const value: RetrievedMemory = {
+            bodyBytes: Buffer.byteLength(payload),
+            entry,
             sourceKind: kind,
-            entry: { source: kind, value: JSON.parse(payload) } as ExperienceEntry,
             memory,
             awareness,
             revision: String(row['revision']),
@@ -2597,7 +2719,207 @@ export class MemoryRepository {
       .get(...this.params(scope));
     return Number(row?.['count'] ?? 0);
   }
+  /** Exact retained observer originals, admitted by one current summary's native
+   * coverage. Selection/bytes precede body reads; raw global events are never a substitute. */
+  async originals(
+    scope: MemoryScope,
+    parent: SummarySourceBinding,
+    references: PersonalSourceRef[],
+    maxBytes = RETRIEVAL_BYTES,
+  ): Promise<RetrievedMemory[]> {
+    return this.snapshot(async () => {
+      if (!(await this.current(scope, [{ ...parent, sourceKind: 'summary' }])))
+        throw new Error('The remembered summary changed or is unavailable.');
+      const key = (source: PersonalSourceRef) =>
+        JSON.stringify([source.kind, source.id, source.revision]);
+      const unique = [...new Map(references.map((source) => [key(source), source])).values()];
+      if (unique.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+      // This index is derived atomically with the exact current summary. Reuse its
+      // point references instead of loading the parent's lifetime coverage body again.
+      let admitted = 0;
+      for (let offset = 0; offset < unique.length; offset += 300)
+        admitted += (
+          await this.db
+            .prepare(
+              `SELECT DISTINCT q.kind,q.id,q.revision FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT)
+          JOIN mind_source_dependencies s ON s.world_id=? AND s.actor_id=? AND s.derived_id=? AND s.derived_kind='summary'
+            AND s.source_kind=q.kind AND s.source_id=q.id AND s.source_revision=q.revision`,
+            )
+            .all(
+              JSON.stringify(unique.slice(offset, offset + 300)),
+              scope.worldId,
+              scope.actorId,
+              parent.id,
+            )
+        ).length;
+      if (admitted !== unique.length)
+        throw new Error('The requested original is outside the selected personal summary.');
+      const headers = await this.originalRows(scope, unique, false);
+      if (headers.length !== unique.length)
+        throw new Error('An exact original observer source is unavailable.');
+      const bytes = headers.reduce((sum, row) => sum + Number(row['bytes']), 0);
+      if (!Number.isSafeInteger(bytes) || bytes > Math.min(maxBytes, RETRIEVAL_BYTES))
+        throw new MemoryPreparationError();
+      const rows = await this.originalRows(scope, unique, true);
+      if (rows.length !== unique.length)
+        throw new Error('An exact original changed during preparation.');
+      const byKey = new Map(
+        rows.map((row) => [
+          key({
+            kind: row['kind'] as SourceKind,
+            id: String(row['id']),
+            revision: String(row['revision']),
+          }),
+          row,
+        ]),
+      );
+      return unique.map((reference) => {
+        const row = byKey.get(key(reference));
+        if (!row || personalAccountRevision(String(row['payload'])) !== reference.revision)
+          throw new Error('Stored original source bytes disagree with their exact revision.');
+        const entry = decodeMemorySource(reference.kind, String(row['payload']), scope.actorId);
+        if ((entry.source === 'awareness' ? entry.value.eventId : entry.value.id) !== reference.id)
+          throw new Error('Stored original identity disagrees with its exact source reference.');
+        return {
+          bodyBytes: Buffer.byteLength(String(row['payload'])),
+          entry,
+          sourceKind: reference.kind,
+          revision: reference.revision,
+          memory: experienceReading(entry, scope.actorId),
+          ...(entry.source === 'awareness' ? { awareness: entry.value } : {}),
+          through: { ...parent },
+        };
+      });
+    });
+  }
+  /** Called only with source capabilities admitted above, or their retained private
+   * freshness bindings. Parent changes are checked separately without rehydrating it. */
+  /** Resolve only explicitly needed native IDs. Each missing kind gets a bounded
+   * indexed window of current summary witnesses; exhaustion is not evidence of absence. */
+  private async requiredOriginals(
+    scope: MemoryScope,
+    ids: string[],
+    existing: RetrievedMemory[],
+    kinds: readonly SourceKind[] = ['awareness', 'memory'],
+  ): Promise<RetrievedMemory[]> {
+    const present = new Set(
+      existing.map((source) => sourceKey(source.sourceKind, source.memory.id)),
+    );
+    const wanted = [...new Set(ids)].flatMap((id) =>
+      kinds.filter((kind) => !present.has(sourceKey(kind, id))).map((kind) => ({ kind, id })),
+    );
+    if (!wanted.length) return existing;
+    if (wanted.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    const window = Math.floor(RETRIEVAL_ROWS / wanted.length);
+    const rows = await this.db
+      .prepare(
+        `SELECT q.kind,q.id,s.source_revision,r.id AS parent_id,r.revision AS parent_revision,r.eligible
+      FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT)
+      JOIN LATERAL (SELECT DISTINCT derived_id,source_revision FROM mind_source_dependencies s
+        WHERE s.world_id=? AND s.actor_id=? AND s.source_kind=q.kind AND s.source_id=q.id AND s.derived_kind='summary'
+        ORDER BY derived_id,source_revision LIMIT ${window}) s ON true
+      LEFT JOIN recall_sources r ON r.world_id=? AND r.actor_id=? AND r.source_kind='summary' AND r.id=s.derived_id
+      WHERE (SELECT generation FROM world_head WHERE id=1)=?
+        AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=? AND f.actor_id=? AND f.source_id=q.id)
+        AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=? AND c.actor_id=? AND c.source_id=q.id)`,
+      )
+      .all(
+        JSON.stringify(wanted),
+        scope.worldId,
+        scope.actorId,
+        scope.worldId,
+        scope.actorId,
+        scope.generation,
+        scope.worldId,
+        scope.actorId,
+        scope.worldId,
+        scope.actorId,
+      );
+    const witnesses = new Map<string, Record<string, unknown>[]>();
+    for (const row of rows) {
+      const key = sourceKey(String(row['kind']), String(row['id']));
+      const group = witnesses.get(key) ?? [];
+      group.push(row);
+      witnesses.set(key, group);
+    }
+    const parents = new Map<
+      string,
+      { parent: SummarySourceBinding; references: PersonalSourceRef[] }
+    >();
+    for (const request of wanted) {
+      const candidates = witnesses.get(sourceKey(request.kind, request.id)) ?? [];
+      const chosen = candidates.find((row) => Number(row['eligible']) === 1);
+      if (!chosen) {
+        if (candidates.length === window) throw new MemoryPreparationError();
+        continue;
+      }
+      const parent = {
+        id: String(chosen['parent_id']),
+        revision: String(chosen['parent_revision']),
+      };
+      const key = JSON.stringify(parent),
+        group = parents.get(key) ?? { parent, references: [] };
+      group.references.push({ ...request, revision: String(chosen['source_revision']) });
+      parents.set(key, group);
+    }
+    const count = [...parents.values()].reduce((sum, group) => sum + group.references.length, 0);
+    if (existing.length + count > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    let remainingBytes =
+      RETRIEVAL_BYTES - existing.reduce((sum, source) => sum + source.bodyBytes, 0);
+    const retained = [...existing];
+    for (const group of parents.values()) {
+      const originals = await this.originals(scope, group.parent, group.references, remainingBytes);
+      remainingBytes -= originals.reduce((sum, source) => sum + source.bodyBytes, 0);
+      retained.push(...originals);
+    }
+    return retained;
+  }
+  private async originalRows(scope: MemoryScope, references: PersonalSourceRef[], bodies: boolean) {
+    const rows: Record<string, unknown>[] = [];
+    for (let offset = 0; offset < references.length; offset += 300) {
+      const batch = references.slice(offset, offset + 300);
+      rows.push(
+        ...(await this.db
+          .prepare(
+            `SELECT q.kind,q.id,q.revision,${bodies ? 'body.payload' : 'octet_length(body.payload) AS bytes'}
+        FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT)
+        JOIN LATERAL (
+          SELECT source.payload FROM recall_sources r JOIN LATERAL (
+            ${Object.entries(sourceTables)
+              .map(
+                ([kind, table]) =>
+                  `SELECT payload FROM ${table} t WHERE q.kind='${kind}' AND t.world_id=r.world_id AND t.id=r.record_id`,
+              )
+              .join(' UNION ALL ')}
+          ) source ON true WHERE r.world_id=? AND r.actor_id=? AND r.source_kind=q.kind AND r.id=q.id AND r.revision=q.revision
+          UNION ALL SELECT v.payload FROM mind_source_versions v WHERE v.world_id=? AND v.actor_id=? AND v.source_kind=q.kind AND v.source_id=q.id AND v.revision=q.revision
+          LIMIT 1
+        ) body ON true WHERE (SELECT generation FROM world_head WHERE id=1)=?
+          AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=? AND f.actor_id=? AND f.source_id=q.id)
+          AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=? AND c.actor_id=? AND c.source_id=q.id)`,
+          )
+          .all(
+            JSON.stringify(batch),
+            scope.worldId,
+            scope.actorId,
+            scope.worldId,
+            scope.actorId,
+            scope.generation,
+            scope.worldId,
+            scope.actorId,
+            scope.worldId,
+            scope.actorId,
+          )),
+      );
+    }
+    return rows;
+  }
   async current(scope: MemoryScope, sources: CurrentMemorySource[]): Promise<boolean> {
+    const inherited = sources.filter((source) => source.through);
+    const current: CurrentMemorySource[] = [
+      ...sources.filter((source) => !source.through),
+      ...inherited.map((source) => ({ ...source.through!, sourceKind: 'summary' as const })),
+    ];
     const read = async () => {
       const receipts = sources.filter((source) => source.receipt);
       if (receipts.length) {
@@ -2625,12 +2947,12 @@ export class MemoryRepository {
         )
           return false;
       }
-      const canonical = sources.filter((source) => !source.receipt);
+      const canonical = current.filter((source) => !source.receipt);
       for (let offset = 0; offset < canonical.length; offset += 500) {
         const batch = canonical.slice(offset, offset + 500);
         const rows = await this.db
           .prepare(
-            `SELECT r.id,r.source_kind,r.revision FROM recall_sources r WHERE ${this.eligible} AND (r.id,r.source_kind) IN (${batch.map(() => '(?,?)').join(',')})`,
+            `SELECT r.id,r.source_kind,r.revision FROM recall_sources r WHERE ${this.pendingEvidence} AND (r.id,r.source_kind) IN (${batch.map(() => '(?,?)').join(',')})`,
           )
           .all(...this.params(scope), ...batch.flatMap((source) => [source.id, source.sourceKind]));
         const versions = new Map(
@@ -2646,43 +2968,46 @@ export class MemoryRepository {
         )
           return false;
       }
+      // These are server-retained capabilities from originals(), not client-selected
+      // parent claims. Exact unchanged parents preserve the admitted coverage relation.
+      if (inherited.length) {
+        const references = [
+          ...new Map(
+            inherited.map((source) => [
+              JSON.stringify([source.sourceKind, source.id, source.revision]),
+              { kind: source.sourceKind, id: source.id, revision: source.revision },
+            ]),
+          ).values(),
+        ];
+        if ((await this.originalRows(scope, references, false)).length !== references.length)
+          return false;
+      }
       return true;
     };
-    return sources.length > 500 || sources.some((source) => source.receipt)
+    return inherited.length || current.length > 500 || sources.some((source) => source.receipt)
       ? this.snapshot(read)
       : read();
   }
-  /** One fresh SQL snapshot validates conversation membership/corrections and all
-   * other selected evidence. Covered sources need no duplicate revision query. */
+  /** Selected source revisions, not social occupancy, own delayed preparation. */
   async validatePreparation(
     scope: MemoryScope,
-    conversation: { id: string; sequence: number; sources: ConversationSource[] } | undefined,
+    conversation: { sequence: number; sources: ConversationSource[] } | undefined,
     sources: CurrentMemorySource[],
   ): Promise<boolean> {
-    // Conversation turns are awareness sources. A personal note or summary with
-    // the same ID is independent and still needs its own current revision check.
-    const covered = new Map(
-      conversation?.sources.map((source) => [sourceKey('awareness', source.id), source.revision]),
-    );
-    const remaining = new Map<string, CurrentMemorySource>();
-    for (const source of sources) {
+    const selected = new Map<string, CurrentMemorySource>();
+    for (const source of [
+      ...(conversation?.sources ?? []).map((source) => ({
+        id: source.id,
+        sourceKind: 'awareness' as const,
+        revision: source.revision,
+      })),
+      ...sources,
+    ]) {
       const key = sourceKey(source.sourceKind, source.id);
-      const previous = covered.get(key) ?? remaining.get(key)?.revision;
-      if (previous && previous !== source.revision) return false;
-      if (!previous) remaining.set(key, source);
+      if (selected.has(key) && selected.get(key)!.revision !== source.revision) return false;
+      selected.set(key, source);
     }
-    const read = async () => {
-      if (conversation) {
-        const current = (await this.conversationSources(scope, conversation.id)).filter(
-          (source) => source.sequence <= conversation.sequence,
-        );
-        if (JSON.stringify(current) !== JSON.stringify(conversation.sources)) return false;
-      }
-      return this.current(scope, [...remaining.values()]);
-    };
-    // A lone SELECT already has a coherent snapshot; only combined reads need
-    // explicit BEGIN/COMMIT. Never skip fresh membership/revision checks after awaits.
-    return conversation && remaining.size ? this.snapshot(read) : read();
+    return this.current(scope, [...selected.values()]);
   }
 
   async coverage(scope: MemoryScope, model: MemoryModel) {
@@ -2759,7 +3084,7 @@ export class MemoryRepository {
         rows.push(
           ...(await this.db
             .prepare(
-              `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND r.source_kind='awareness' AND r.id IN (${batch.map(() => '?').join(',')})`,
+              `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.pendingEvidence} AND r.source_kind='awareness' AND r.id IN (${batch.map(() => '?').join(',')})`,
             )
             .all(...this.params(scope), ...batch)),
         );
@@ -2804,6 +3129,7 @@ export class MemoryRepository {
             receipt = storyTemporalReceipt(payload);
           if (awareness && receipt)
             result.push({
+              bodyBytes: Buffer.byteLength(JSON.stringify(awareness)),
               entry: { source: 'awareness', value: awareness },
               sourceKind: 'awareness',
               awareness,
@@ -2813,7 +3139,7 @@ export class MemoryRepository {
             });
         }
       }
-      return result;
+      return this.requiredOriginals(scope, unique, result, ['awareness']);
     });
   }
   /** Exact, bounded sources already selected into one appraisal/reflection context.
@@ -2822,15 +3148,16 @@ export class MemoryRepository {
     const unique = [...new Set(ids)];
     if (unique.length > 48) throw new Error('Too many appraisal source bindings.');
     if (!unique.length) return [];
-    return this.snapshot(async () =>
-      this.hydrate(
+    return this.snapshot(async () => {
+      const selected = await this.hydrate(
         await this.db
           .prepare(
-            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND (r.id IN (${unique.map(() => '?').join(',')}) OR r.event_id IN (${unique.map(() => '?').join(',')})) ORDER BY r.id`,
+            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.pendingEvidence} AND (r.id IN (${unique.map(() => '?').join(',')}) OR r.event_id IN (${unique.map(() => '?').join(',')})) ORDER BY r.id`,
           )
           .all(...this.params(scope), ...unique, ...unique),
-      ),
-    );
+      );
+      return this.requiredOriginals(scope, unique, selected);
+    });
   }
   async required(
     scope: MemoryScope,
@@ -2867,13 +3194,13 @@ export class MemoryRepository {
         params = batch.map(() => '?').join(',');
       const matches = await this.db
         .prepare(
-          `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND (r.id IN (${params}) OR r.event_id IN (${params})) LIMIT ${RETRIEVAL_ROWS + 1}`,
+          `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.pendingEvidence} AND (r.id IN (${params}) OR r.event_id IN (${params})) LIMIT ${RETRIEVAL_ROWS + 1}`,
         )
         .all(...this.params(scope), ...batch, ...batch);
       for (const row of matches) selected.set(`${row['source_kind']}:${row['id']}`, row);
       if (selected.size > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     }
-    return this.hydrate([...selected.values()], cache);
+    return this.requiredOriginals(scope, unique, await this.hydrate([...selected.values()], cache));
   }
 
   async select(

@@ -1,4 +1,5 @@
 import { formatDisplayNumber } from '@open-legend/language';
+import type { CommandDispatcher } from '../command-request';
 import { inventoryCommandStorageKey } from '../inventory-command-record';
 import { ItemTrade } from './item-trade';
 import { OutingStatus } from './outing-status';
@@ -81,16 +82,32 @@ export function Crafting({
 }) {
   const [query, setQuery] = useState('');
   const [creatorFilter, setCreatorFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
   const [selectedId, setSelectedId] = useState('');
   const search = query.trim().toLocaleLowerCase();
   const recipes = view.recipes.filter(
     (recipe) =>
-      `${recipe.output.name} ${recipe.name}`.toLocaleLowerCase().includes(search) &&
-      (creatorFilter === 'all' || recipe.origin === creatorFilter),
+      `${recipe.outputs.map((output) => output.name).join(' ')} ${recipe.name}`
+        .toLocaleLowerCase()
+        .includes(search) &&
+      (creatorFilter === 'all' || recipe.origin === creatorFilter) &&
+      (categoryFilter === 'all' || recipe.category?.id === categoryFilter),
   );
   const selected = selectedId
     ? view.recipes.find((recipe) => recipe.id === selectedId)
     : recipes[0];
+  const catalogue = view.presentation.crafting,
+    categories = catalogue?.categories.filter((category) =>
+      view.recipes.some((recipe) => recipe.category?.id === category.id),
+    ),
+    groups = categories
+      ? categories
+          .map((category) => ({
+            category,
+            recipes: recipes.filter((recipe) => recipe.category?.id === category.id),
+          }))
+          .filter((group) => group.recipes.length)
+      : [{ category: undefined, recipes }];
   return (
     <>
       <Section title="Known recipes" count={recipes.length}>
@@ -107,23 +124,53 @@ export function Crafting({
             <option value="npc">NPCs</option>
           </select>
         </label>
+        {catalogue && categories && (
+          <label>
+            {catalogue.categoryLabel}{' '}
+            <select
+              aria-label={catalogue.categoryLabel}
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+            >
+              <option value="all">{catalogue.allLabel}</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         <label className="ol-task-search">
           Find an output
           <input type="search" value={query} onChange={(event) => setQuery(event.target.value)} />
         </label>
         <div className="ol-recipe-choices" aria-label="Known recipe outputs">
-          {recipes.map((recipe) => (
-            <Button
-              key={recipe.id}
-              variant={selected?.id === recipe.id ? 'secondary' : 'quiet'}
-              aria-pressed={selected?.id === recipe.id}
-              onPress={() => setSelectedId(recipe.id)}
+          {groups.map((group) => (
+            <section
+              className="ol-recipe-group"
+              key={group.category?.id ?? 'all'}
+              aria-label={group.category?.label}
             >
-              <span>
-                <strong>{recipe.output.name}</strong>
-                <span className="ol-caption">{recipe.name}</span>
-              </span>
-            </Button>
+              {group.category && <h3>{group.category.label}</h3>}
+              {group.recipes.map((recipe) => (
+                <Button
+                  key={recipe.id}
+                  variant={selected?.id === recipe.id ? 'secondary' : 'quiet'}
+                  aria-pressed={selected?.id === recipe.id}
+                  onPress={() => setSelectedId(recipe.id)}
+                >
+                  <span>
+                    <strong>
+                      {recipe.outputs
+                        .map((output) => `${output.quantity} ${output.name}`)
+                        .join(', ')}
+                    </strong>
+                    <span className="ol-caption">{recipe.name}</span>
+                  </span>
+                </Button>
+              ))}
+            </section>
           ))}
         </div>
         {!recipes.length && (
@@ -133,20 +180,30 @@ export function Crafting({
             }
           >
             {view.recipes.length
-              ? 'Change the method source or clear the output search.'
+              ? 'Change the filters or clear the output search.'
               : 'Learn from an accessible recipe record, or describe a useful tool to invent a method with live AI.'}
           </EmptyState>
         )}
         {selected ? (
-          <section className="ol-selected-recipe" aria-label={`Make ${selected.output.name}`}>
-            {(!!search || creatorFilter !== 'all') &&
+          <section
+            className="ol-selected-recipe"
+            aria-label={`Make ${selected.outputs.map((output) => output.name).join(', ')}`}
+          >
+            {(!!search || creatorFilter !== 'all' || categoryFilter !== 'all') &&
               !recipes.some((recipe) => recipe.id === selected.id) && (
                 <p className="ol-caption">
-                  Your selected output is outside this filter. Clear the search to see it in the
-                  list.
+                  Your selected method is outside the current filters. Clear the filters to see it
+                  in the list.
                 </p>
               )}
-            <h3>{selected.output.name}</h3>
+            <h3>{selected.outputs.map((output) => output.name).join(', ')}</h3>
+            <p className="ol-caption">
+              {selected.origin === 'authored'
+                ? 'World method'
+                : selected.origin === 'npc'
+                  ? 'Known method created by another character'
+                  : 'Known method created by a player'}
+            </p>
             <RecipeDetails recipe={selected} />
             <Button
               disabled={!connected}
@@ -261,7 +318,7 @@ export function Character({
   visible = true,
 }: {
   view: GameView;
-  command(a: ActionOption): void;
+  command: CommandDispatcher;
   connected: boolean;
   godControls?: GodCharacterControls;
   openMind?: () => void;

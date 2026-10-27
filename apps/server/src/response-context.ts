@@ -23,7 +23,7 @@ import {
 } from './entity-references.js';
 import { speechDescription, type Awareness, type WorldState } from '@open-legend/domain';
 import { gameTime } from './recall.js';
-import type { JsonValue } from '@open-legend/ai';
+import { experienceForModel, experienceModelBindings } from './perceived-context.js';
 import type { WorldService } from './world-service.js';
 import { captureModelSpatialFrame, modelSpatialPoint } from './perceived-context.js';
 
@@ -55,7 +55,7 @@ export function responseTriggerContext(
   actorId: string,
   eventId?: string,
   evidence?: Awareness[],
-): Record<string, JsonValue> | undefined {
+): Record<string, unknown> | undefined {
   if (!eventId) return undefined;
   const world = service.world;
   const aware = (evidence ?? world.experience?.awareness[actorId])?.find(
@@ -81,7 +81,10 @@ export function responseTriggerContext(
   const occurrenceLabel = (role: 'actor' | 'target') =>
     aware.references?.find((reference) => reference.role === role)?.label;
   return {
-    eventId: aware.eventId,
+    experience: experienceForModel(
+      { source: 'awareness', value: aware },
+      experienceModelBindings(world, actorId, { source: 'awareness', value: aware }, 'trigger'),
+    ),
     eventTime: gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours),
     ageGameSeconds: Math.max(0, world.simTime - aware.at),
     observerRelationship: aware.triggerKind ?? 'observed_event',
@@ -146,8 +149,9 @@ export function readableDecisionContext(
     `## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`,
     `## Trigger\n${context['stimulus']}`,
     `## Trigger facts\n${JSON.stringify(context['triggerFacts'] ?? {})}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
+    `## Complete personal evidence\n${JSON.stringify(context['experience'] ?? [])}\nThese structured records preserve who experienced each event, acquisition, exact heard fragments and participant roles. Quoted words remain the speaker's words. Self, addressed, overheard, ambient and seen-only are distinct; none grants consent or forces a reply.`,
     `## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat.${(context['triggerFacts'] as { observerRelationship?: string } | undefined)?.observerRelationship === 'addressed_speech' ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.`,
-    `## Conversation so far\nSpeech I personally experienced in this exchange:\n${list(context['conversation'])}\nA turn marked "I said" is my own speech, not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
+    `## Conversation so far\nSelected speech I personally experienced, in chronological order; older unselected history may remain:\n${list(context['conversation'])}\nA turn marked "I said" is my own speech, not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
     ...(Array.isArray(context['planOffers']) && context['planOffers'].length
       ? [
           `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\nPrerequisites must be obtained first. These handles can be queued without a current action shortlist.`,
@@ -159,6 +163,9 @@ export function readableDecisionContext(
         ]
       : []),
     `## Private intentions and native work\n${formatIntentions(context['agency'])}\nThese are intentions and actual step dispositions, never proof that an objective was achieved. Reconsider an existing purpose when its reason has ended, an opportunity was declined, or an unchanged obstacle prevents progress. Continuing for a remaining reason is legitimate; a trait alone does not require restarting completed work.`,
+    ...(Array.isArray(context['supplyOpportunities']) && context['supplyOpportunities'].length
+      ? [`## Optional personal supply considerations\n${list(context['supplyOpportunities'])}`]
+      : []),
     `## Native navigation\n${context['navigation'] ?? ''}\nSpatial offsets are metres right, above and forward from my position and facing at this decision cut; this is an internal measurement frame, not learned global coordinate vocabulary. Support: ${context['currentSupport']}\nPublic supports: ${JSON.stringify(context['publicSurfaces'] ?? [])}`,
     `## Current time\n${context['now']} (simulation seconds: ${context['simTime'] ?? 'unavailable'})`,
     ...(context['activityRequests']
@@ -245,7 +252,7 @@ export function responseReferences(
             (id): id is string => !!id && awarenessBindsSubject(world, actorId, entry, id),
           ),
         )
-        .filter((id): id is string => !!id && entityHas(world.entities, id)),
+        .filter((id): id is string => !!id),
     ]),
   ];
   const visible = new Set(visibleIds);
@@ -261,6 +268,7 @@ export function responseReferences(
     id === actorId || visible.has(id) ? entityHandle(world, actorId, id) : rememberedHandle(id);
   const identityReferences: Record<string, ObserverSubject> = {};
   const roles = new Map<string, { evidenceId: string; role: string }[]>();
+  const rememberedLabels = new Map<string, string>();
   for (const entry of awareness) {
     for (const [id, role] of [
       [entry.sourceId, 'source'],

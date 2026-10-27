@@ -203,9 +203,12 @@ function mount(): void {
       target(entity) {
         status.textContent = entity.name;
       },
-      primaryAction(entity) {
+      beginPrimaryAction(entity) {
         status.textContent = entity.name + ' · Open the game to act.';
+        return null;
       },
+      commitPrimaryAction() {},
+      cancelPrimaryAction() {},
       hover() {},
       selectionDenied(message) {
         status.textContent = message;

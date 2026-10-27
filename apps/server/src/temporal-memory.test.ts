@@ -279,7 +279,7 @@ describe('bounded personal temporal storage', () => {
             entityGet(world.entities, NPC_ID)!,
             { x, y: 0, z: 2 },
             'terrain',
-            'physical',
+            { continuity: 'physical' },
           );
           initializePerception(world, []);
         });
@@ -631,8 +631,8 @@ describe('bounded personal temporal storage', () => {
             world,
             PLAYER_ID,
             'fixture-exact-summary',
-            sources,
-            [{ sourceIds: ids, text: 'Two personal outcomes.' }],
+            prepared.map((source) => source.entry),
+            [{ sourceKeys: ids.map((id) => `memory:${id}`), text: 'Two personal outcomes.' }],
             prepared,
           ),
         )

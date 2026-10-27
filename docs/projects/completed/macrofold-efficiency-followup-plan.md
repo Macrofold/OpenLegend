@@ -1,0 +1,47 @@
+# Macrofold efficiency follow-through
+
+| Status    | Current progress                                                                                                                                                 | Last updated |
+| --------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Completed | All four improvements and guidance are integrated; requested review fixes, focused verification, shared accounting checks and final reconciliation are complete. | 2026-10-18   |
+
+## Scope and completion
+
+Implement the four improvements approved in chat: consume complete immediate-inference receipts throughout gameplay and standalone callers; bound and share optional diagnostic preparation; give diagnostic and authoring callers exact narrow reads; retain immutable schema and request preparation within one operation. Apply the accompanying guidance changes and reconcile affected current contracts. Preserve native harness accounting, durable admission and receipts, permission checks, cancellation ordering, same-Run recovery and exact provider bytes. No live provider call, deployment or concurrency-policy change is required.
+
+The development base is the explicitly selected local `codex/macrofold-receipt-review` commit `cf72470e8b4780d18804dd873413dc8a2dfb4068` in `https://github.com/Macrofold/OpenLegend.git` (`origin`). Work is on `codex/macrofold-efficiency-followup` in `/Users/mzw/.codex/worktrees/8fc5/OpenLegend`. The original implementation began at `331e721f43862cdddebd049d3a15cdebbd14e59c`; the requested review refreshed to the current parent before further fixes.
+
+The initial estimate is 700–1,100 affected runtime logic lines, excluding tests, across AI receipt/transport owners, server diagnostics and repository/authoring owners. Shared accounting and asynchronous lifetime changes make this a material cross-layer change despite unchanged game rules. The review also updates current operational receipt/session records to retain original admission facts; world-save formats are unchanged. Reassess scope if integration requires broader behavior changes.
+
+## Owners and steps
+
+1. **AI receipts and preparation:** share current terminal-envelope, accounting and timing interpretation between standalone and gameplay. Keep native harness accounting separate. Retain one owned immutable schema/validator and validated JSON representation through each operation; reuse exact encoding for hashing/transport without confusing operation identity with provider-body identity.
+2. **Optional diagnostics:** use one bounded sanitization/encoding owner before retaining content. Reuse owned immutable prepared fragments; never cache caller-mutable objects. Bound input and complete records at their current 500,000/1,000,000-byte envelopes and stop excessive traversal before full construction. Account together for recent snapshots, queued snapshots, active drains and active capture reservations; omit optional content under pressure with explicit counters while executing the original operation normally. Reuse prepared encoded snapshots in repository writes. Redaction and independent authoritative accounting remain mandatory.
+3. **Narrow reads:** share permission/filter/order selection for latest diagnostic ID and compact root summaries. Preserve full details on demand. Give authoring one revision-update owner for every turn write, reusing the exact prior revision in the serialized transaction; retain current refusal/ordering and return the updated revision. Use an exact latest-turn query rather than paged history when no continuation answer is needed.
+4. **Guidance and integration:** route network changes to the existing shared network contract; require diagnostic admission before preparation and combined retention accounting; distinguish SQL statements, sequential waits, commits, transferred bytes and lock duration. Reconcile obsolete response-clone wording and affected AI/runtime/limit/tracker documents.
+
+## Performance and correctness design
+
+Cost grows with inference count and request size, diagnostic content and simultaneously retained snapshots, diagnostic page size, and streamed authoring updates. Preparation is shared only inside its owning operation or for an owned immutable diagnostic fragment. A changed caller input, schema, record revision, access scope, cancellation or replacement invalidates the corresponding meaning; no new cross-request authorization cache is introduced.
+
+Measure actual injected HTTP request counts and exact bytes for normal completion versus same-Run recovery. For diagnostics, exercise large/nested content, redaction, caller mutation, simultaneous captures and held storage; inspect bounded counters and continued operation, rather than infer memory from pending queue length. For database reads, compare result bodies and statement counts, inspect actual PostgreSQL plans on representative large bodies, and verify permission filtering and summary equality. Authoring checks cover repeated writes in one transaction, stale revisions, questions, cancellation and terminal progress.
+
+## Verification and handoff
+
+Use focused existing AI/network/receipt and server/authoring checks with injected external transport and disposable loopback PostgreSQL. Add only small ad-hoc scenarios where existing checks lack the required caller evidence. Keep provider spending disabled. Run changed-file formatting, TypeScript, production build, network enforcement, configuration and guidance checks as applicable. Review the complete task diff from the selected base and fix in-scope findings; existing unrelated project qualification stays with its owner.
+
+Completion requires all four changes integrated, affected contracts and trackers reconciled, focused runtime/SQL evidence recorded, required static/build checks passing, independent review complete, and all task changes committed with a clean checkout. Do not infer live-model quality, deployed Macrofold compatibility, smooth simulation or hosted capacity from fixture evidence.
+
+## Maintained records
+
+- Current contracts: [AI providers](../../ai-providers.md), [runtime performance](../../performance.md), [World Agent runtime](../../world-agent-runtime.md).
+- Existing work owners: [performance PF06](../../maintainers/performance.md#pf06--optional-diagnostics-and-bounded-buffers), [World Agent writes](../../maintainers/world-agent-writes.md), [Macrofold integration](../../maintainers/macrofold-worker-api.md), [agent guidance](../../maintainers/agent-guidance.md).
+- Limits: [observability](../../limits/observability.md), [AI execution](../../limits/ai-execution.md).
+- Evidence: [follow-through verification](../../verification/macrofold-efficiency-followup.md).
+
+## Requested full implementation review
+
+Review the full feature against the refreshed explicit local parent `codex/macrofold-receipt-review` at `cf72470e8b4780d18804dd873413dc8a2dfb4068` in the same repository. The original implementation commits were replayed unchanged at runtime; two additive documentation conflicts retain both the current network evidence/paths and efficiency records. The parent corrects private-inspection preparation ordering; qualify that actual reader and reconcile its formerly open finding.
+
+Expected review fixes affect approximately 150–350 runtime logic lines, excluding fixtures, in the existing diagnostic and Macrofold receipt owners. Diagnostic cost grows with aggregate raw text examined, retained snapshots and asynchronous work that outlives its original call; charge source traversal before parsing/redaction and retire capture interest/references at the original operation boundary. Recovery cost/correctness grows with inspection and native Run reconciliation: share terminal/cost interpretation, skip unusable billing rereads, retain known independent charges and use the originally admitted billing mode across configuration changes. Unknown or conflicting evidence cannot establish free execution. A continued native session must retain its own originally admitted model and billing mode with its session identity; a new host configuration cannot reinterpret it. Shared durable and decision spending accounting must keep an uncertain operation’s hold at least as large as its reserve and usable prior/incoming same-attempt charges, without marking it complete or granting replacement execution. No new provider calls, retries, concurrency policy, gameplay rule or cross-request authority cache is authorized by these fixes.
+
+Reuse current prepared fragments within their owner, and bound any examined source text separately from encoded output. Ending a capture invalidates optional content interest even when inherited asynchronous work continues; a current configuration change cannot rewrite an old Run's funding meaning. Verification uses focused existing receipt/network/cognition checks, one bounded extension of the diagnostic scenario for aggregate raw text and late/closed contexts, actual disposable PostgreSQL where needed, type/build/guidance/network/format checks, complete resulting-diff review and a local commit. Reuse valid SQL/UI evidence for unchanged paths. Reconcile all confirmed unimplemented findings with their existing owners; do not add speculative infrastructure or duplicate broader qualification gates.

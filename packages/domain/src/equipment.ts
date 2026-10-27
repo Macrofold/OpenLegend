@@ -142,7 +142,7 @@ export function validateEquipment(world: WorldState): void {
           use === 'melee'
             ? !definition.melee
             : use === 'ranged'
-              ? !definition.launcher
+              ? !definition.rangedWeapon
               : use === 'gather'
                 ? !definition.gatheringTool
                 : !definition.contactDefense,
@@ -151,7 +151,7 @@ export function validateEquipment(world: WorldState): void {
       throw new Error('Invalid equipment capability profile.');
     if (
       (definition.melee ||
-        definition.launcher ||
+        definition.rangedWeapon ||
         definition.gatheringTool ||
         definition.contactDefense) &&
       !profile

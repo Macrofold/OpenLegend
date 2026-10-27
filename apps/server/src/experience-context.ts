@@ -13,6 +13,8 @@ import {
   type SensoryFacet,
   type CapturedCurrentFacet,
   type PerceivedSpeech,
+  type PerceivedSound,
+  soundExperience,
 } from '@open-legend/domain';
 import {
   entityHandle,
@@ -30,6 +32,27 @@ import {
   modelObservationFrame,
   type ModelSpatialFrame,
 } from './perceived-context.js';
+
+function soundForModel(
+  frame: ModelSpatialFrame,
+  sound: PerceivedSound,
+  reference: (id: string) => string,
+) {
+  return {
+    ...soundExperience(sound, reference),
+    listenerPosition: modelSpatialPoint(frame, sound.listenerPosition),
+    direction: sound.direction
+      ? {
+          ...modelSpatialVector(frame, {
+            x: Math.cos((sound.direction.sector * Math.PI) / 4),
+            y: 0,
+            z: Math.sin((sound.direction.sector * Math.PI) / 4),
+          }),
+          elevation: sound.direction.elevation,
+        }
+      : null,
+  };
+}
 
 function speechForModel(frame: ModelSpatialFrame, speech: PerceivedSpeech | undefined) {
   if (!speech) return undefined;
@@ -262,20 +285,9 @@ export function facetValueForModel(
     case 'sound':
       return {
         kind: value.kind,
-        sound: {
-          kind: value.sound.kind,
-          direction: value.sound.direction
-            ? {
-                ...modelSpatialVector(frame, {
-                  x: Math.cos((value.sound.direction.sector * Math.PI) / 4),
-                  y: 0,
-                  z: Math.sin((value.sound.direction.sector * Math.PI) / 4),
-                }),
-                elevation: value.sound.direction.elevation,
-              }
-            : null,
-          listenerPosition: modelSpatialPoint(frame, value.sound.listenerPosition),
-        },
+        sound: soundForModel(frame, value.sound, (id) =>
+          permittedSourceHandle(world, actorId, ['historical-participant', sourceScope, id]),
+        ),
       };
     case 'speech':
       return eventFieldsForModel(
@@ -584,6 +596,9 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
             eventType: evidence.eventType,
             ...(!evidence.speech ? { text: evidence.text, content: evidence.content } : {}),
             modality: evidence.modality,
+            ...(evidence.sound
+              ? { sound: soundForModel(frame, evidence.sound, historyHandle) }
+              : {}),
             ...(nativeSpeech
               ? { speechFacet: nativeSpeech.ordinal }
               : { speech: speechForModel(frame, evidence.speech) }),

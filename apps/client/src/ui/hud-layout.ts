@@ -11,7 +11,7 @@ export function observeHudLayout(
 ): () => void {
   const obstacles = [
     ...root.querySelectorAll<HTMLElement>(
-      '.ol-survival, .ol-current-work, .ol-clock-position, .ol-timebar, .ol-time-settings, .ol-world-controls, .ol-quick-position, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking, .ol-world-composer',
+      '.ol-survival, .ol-current-work, .ol-attack-controls, .ol-clock-position, .ol-timebar, .ol-time-settings, .ol-world-controls, .ol-quick-position, .ol-camera, .ol-panel, .ol-caption-gap, .ol-subject-picking, .ol-world-composer',
     ),
   ];
   const controls = root.querySelector<HTMLElement>('.ol-world-controls');
@@ -51,8 +51,8 @@ export function observeHudLayout(
     previous = next;
     publish(next);
   };
-  // Only the compact status/clock positions use these measurements. Reading
-  // panels and centered launcher rails never depend on current work height.
+  // Compact clocks and narrow reading tools use the measured condition height.
+  // Centered desktop rails never depend on the current task's height.
   const observer = new ResizeObserver((entries) => {
     const rail = entries.find((change) => change.target === leftRail);
     if (rail)

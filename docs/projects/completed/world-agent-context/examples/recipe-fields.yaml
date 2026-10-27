@@ -33,7 +33,7 @@ fields:
     fields:
       name: The produced item's display name, 1 to 80 characters.
       description: The produced item's description, 1 to 700 characters; no executable effects.
-    derived_not_submitted: Properties, launcher/ammunition/container behavior and other native output fields.
+    derived_not_submitted: Properties, ranged weapon/ammunition/container behavior and other native output fields.
   parameters:
     meaning: Exactly the selected family's parameter schema; no unrelated nullable output branches.
     required: true

@@ -55,7 +55,7 @@ export async function retrieveActions(
     apiKey: config.embeddingKey,
     model: scope.model,
     dimensions: scope.dimensions,
-    fetch: log.fetch,
+    network: log.network,
     modelPrices: config.embeddingModelPrices,
     timeoutMs: config.aiTimeoutMs,
   });

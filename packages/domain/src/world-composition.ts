@@ -1,6 +1,11 @@
+import { BASE_WORK_ACTIVITY_HOST } from './worlds/base/work-activity.js';
+import { BASE_MEAL_ACTIVITY_HOST } from './worlds/base/meal-activity.js';
 import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
 import { BASE_EVENT_DISCLOSURE } from './worlds/base/event-disclosure.js';
 import { BASE_EVENT_PRESENTATION } from './worlds/base/event-presentation.js';
+import { baseAnimalActivity } from './worlds/base/animal-response-profile.js';
+import { baseAssemblyPresentation } from './worlds/base/presentation.js';
+import type { AssemblyFamily } from './assembly-types.js';
 import { baseContextActions } from './worlds/base/context-actions.js';
 import {
   nativeActivityView as baseActivityView,
@@ -21,7 +26,7 @@ import { BASE_COMMAND_DESCRIPTIONS } from './worlds/base/action-descriptions.js'
 import { baseTypedRequestVocabulary } from './worlds/base/typed-requests.js';
 import { STOCK_ACTIVITY_HOST } from './stock-activity.js';
 import type { WorldCreationCandidate, WorldCreationProfile } from './world-creation.js';
-import type { WorldState } from './types.js';
+import type { Entity, WorldState } from './types.js';
 import { isSafeRecordId } from './records.js';
 import { definitionPin, type DefinitionPin } from './world-modules.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
@@ -300,6 +305,8 @@ export function trustedActivityHosts(): readonly ActivityHostDescriptor[] {
     RESERVOIR_ACTIVITY_HOST,
     ...BASE_NATIVE_ACTIVITY_HOSTS,
     BASE_FIRE_ACTIVITY_HOST,
+    BASE_MEAL_ACTIVITY_HOST,
+    BASE_WORK_ACTIVITY_HOST,
     BASE_CAMP_ACTIVITY_HOST,
     BASE_OUTING_HOST,
     BASE_CANOPY_ACTIVITY_HOST,
@@ -365,6 +372,16 @@ export function selectedEventDisclosure(world: WorldState) {
 export function selectedEventPresentation(world: WorldState) {
   selectedCreationProfileForWorld(world);
   return BASE_EVENT_PRESENTATION;
+}
+
+export function selectedAnimalActivity(world: WorldState, entity: Entity) {
+  selectedCreationProfileForWorld(world);
+  return baseAnimalActivity(entity);
+}
+
+export function selectedAssemblyPresentation(world: WorldState, family: AssemblyFamily) {
+  selectedCreationProfileForWorld(world);
+  return baseAssemblyPresentation(family);
 }
 
 /** A requested object's menu and direct shortcut use the same selected world preference. */

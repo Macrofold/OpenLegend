@@ -1,5 +1,6 @@
 import { entityValues } from '@open-legend/domain';
 import { z } from 'zod';
+import { NetworkError, type ConsumptionContext } from '@open-legend/network';
 import type { Entity, WorldState } from '@open-legend/domain';
 import type { OperationsView, WorldOverview } from '@open-legend/protocol';
 import {
@@ -55,6 +56,7 @@ export const characterlessRoute = (method: string | undefined, path: string) =>
 /** Ordinary gameplay mutations stop while maintenance holds the world. Creators keep the
  * existing paused-world editing; any job they start waits and is fenced at Ready. */
 const MAINTENANCE_GAMEPLAY = new Set([
+  '/api/input',
   '/api/command',
   '/api/action-attempt',
   '/api/commitment',
@@ -305,11 +307,23 @@ export class OperationsRoutes {
     return { usable, location: usable ? '/auth/login' : '/?entry=invite-unavailable' };
   }
   /** Completes a remembered invite after verified sign-in; returns the landing location. */
-  async completeInvite(token: string, accountId: string): Promise<string> {
+  async completeInvite(
+    token: string,
+    accountId: string,
+    context: ConsumptionContext,
+  ): Promise<string> {
     try {
-      const outcome = await redeemInvite(this.service, this.store, token, accountId, this.now);
+      const outcome = await redeemInvite(
+        this.service,
+        this.store,
+        token,
+        accountId,
+        this.now,
+        context,
+      );
       return `/?entry=${outcome.ok ? 'invite-accepted' : outcome.code}${outcome.ok && outcome.role !== 'player' ? '&view=operations' : ''}`;
     } catch (error) {
+      if (error instanceof NetworkError) throw error;
       console.error(
         'Invite redemption failed:',
         error instanceof Error ? error.message : 'unknown error',

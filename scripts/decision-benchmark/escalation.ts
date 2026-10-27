@@ -135,7 +135,17 @@ await json('manifest.json', {
 });
 await writeFile(
   join(out, 'source.patch'),
-  execFileSync('git', ['diff', '--binary', 'HEAD', '--', 'apps', 'packages', 'scripts']),
+  execFileSync('git', [
+    'diff',
+    '--no-ext-diff',
+    '--no-textconv',
+    '--binary',
+    'HEAD',
+    '--',
+    'apps',
+    'packages',
+    'scripts',
+  ]),
   { mode: 0o600 },
 );
 const database = await createDisposableDatabase(
@@ -410,9 +420,9 @@ try {
         signal: AbortSignal.timeout(31_000),
       });
       await store.settle(attemptId, result.receipt);
-      if (result.receipt.completionUncertain) lease.uncertain();
+      if (result.receipt.completionUncertain) lease.uncertain(attemptId);
     } catch (error) {
-      lease.uncertain();
+      lease.uncertain(attemptId);
       throw error;
     } finally {
       lease.release();

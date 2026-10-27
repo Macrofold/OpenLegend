@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { decisionFixtureResult } from '../../../tests/fixtures/actor-response.js';
 import {
   currentAttentionCues,
@@ -157,7 +158,7 @@ async function harness(
     }),
     ...options.config,
   };
-  const store = await testRepository();
+  const store = await testRepository(undefined, stockedCamp());
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setPresence('fixture-browser', true);
@@ -275,10 +276,16 @@ async function prepareQuietScene(h: Awaited<ReturnType<typeof harness>>) {
       // from other NPC turns and unrelated animal navigation preparation.
       if (entity.id !== NPC_ID && entity.actor) entity.actor.controller = 'player';
       if (entity.id !== NPC_ID && entity.id !== PLAYER_ID && entity.placement?.mode === 'world')
-        setSpatialPosition(world, entity, { x: 110, y: 0, z: 10 }, ground.id, 'physical');
+        setSpatialPosition(world, entity, { x: 110, y: 0, z: 10 }, ground.id, {
+          continuity: 'physical',
+        });
     }
-    setSpatialPosition(world, observer, { x: 10, y: 0, z: 10 }, ground.id, 'physical');
-    setSpatialPosition(world, player, { x: 20, y: 0, z: 10 }, ground.id, 'physical');
+    setSpatialPosition(world, observer, { x: 10, y: 0, z: 10 }, ground.id, {
+      continuity: 'physical',
+    });
+    setSpatialPosition(world, player, { x: 20, y: 0, z: 10 }, ground.id, {
+      continuity: 'physical',
+    });
     observer.actor!.action = null;
     observer.actor!.agency = seedAgency([]);
     entitySet(world.entities, 'quiet-portrait', {
@@ -315,7 +322,9 @@ async function receivePlayerAt(h: Awaited<ReturnType<typeof harness>>, at: numbe
   await h.change((world) => {
     world.simTime = at;
     const player = entityGet(world.entities, PLAYER_ID)!;
-    setSpatialPosition(world, player, { x, y: 0, z: 10 }, worldSupport(player), 'physical');
+    setSpatialPosition(world, player, { x, y: 0, z: 10 }, worldSupport(player), {
+      continuity: 'physical',
+    });
     initializePerception(world, []);
   });
 }
@@ -546,7 +555,9 @@ describe('AI director with explicit fixtures, no live calls', () => {
       h.service.world.knowledge[NPC_ID]!.filter((record) => record.source === 'invented'),
     ).toHaveLength(0);
     expect(
-      allItems(h.service.world).some((item) => item.definitionId === recipe?.outputDefinitionId),
+      allItems(h.service.world).some(
+        (item) => item.definitionId === recipe?.outputs[0]!.definition.id,
+      ),
     ).toBe(false);
     expect(h.calls.generations).toHaveLength(1);
   });

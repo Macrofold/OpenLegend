@@ -1,4 +1,5 @@
-import { testRepository } from '../../../tests/fixtures/database.js';
+import { stockedCamp } from '../../../tests/fixtures/world.js';
+import { readConfig, testRepository } from '../../../tests/fixtures/database.js';
 import { PLAYER_ID } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
@@ -25,6 +26,8 @@ import { WorldJournal } from './world-journal.js';
 import type { SqlDatabase } from './store.js';
 import type { AiReceipt } from '@open-legend/ai';
 import { SqlGameRepository, type JobRecord, type SavedWorld } from './store.js';
+import { DecisionLedger, levelLimits } from './cognition-budget.js';
+import { validateCurrentWorldState } from './upgrade-world.js';
 
 const opened = new Set<SqlGameRepository>();
 const directories: string[] = [];
@@ -43,7 +46,7 @@ function diskPath(): string {
   return directory;
 }
 function save(): SavedWorld {
-  return { world: createWorld(73), speed: 1, manuallyPaused: false };
+  return { world: stockedCamp(73), speed: 1, manuallyPaused: false };
 }
 function receipt(requestId: string, overrides: Partial<AiReceipt> = {}): AiReceipt {
   return {
@@ -278,6 +281,10 @@ describe('PostgreSQL committed world boundary', () => {
     const path = diskPath();
     let store = await open(path);
     const initial = save();
+    entityGet(initial.world.entities, PLAYER_ID)!.actor!.body!.conditions = {
+      wetness: 12.5,
+      burning: 3,
+    };
     // Persistence coverage must not depend on the bundled world's starting inventory.
     const foodId = createItemLot(initial.world, PLAYER_ID, 'berries', 3, 'fixture-food');
     expect(await store.load()).toBeNull();
@@ -292,6 +299,22 @@ describe('PostgreSQL committed world boundary', () => {
       state: { ...initial, world: changed, speed: 3 },
     });
     const restored = (await store.load())!.state.world;
+    expect(entityGet(restored.entities, PLAYER_ID)!.actor!.body!.conditions).toEqual({
+      wetness: 12.5,
+      burning: 3,
+    });
+    for (const conditions of [
+      { wetness: 0 },
+      { burning: 0 },
+      { wetness: 0, burning: 0, unsupported: 1 },
+      { wetness: -1, burning: 0 },
+      { wetness: 0, burning: 101 },
+      { wetness: NaN, burning: 0 },
+    ]) {
+      const malformed = structuredClone(restored);
+      Reflect.set(entityGet(malformed.entities, PLAYER_ID)!.actor!.body!, 'conditions', conditions);
+      expect(() => validateCurrentWorldState(malformed)).toThrow('Invalid body conditions.');
+    }
     expect(executeCommand(restored, command).world).toBe(restored);
     expect(inventoryFor(restored, PLAYER_ID).find((item) => item.id === foodId)!.quantity).toBe(2);
   });
@@ -408,6 +431,108 @@ describe('durable AI allowances outside simulated time', () => {
     expect((await store.usage(0.1)).usage.inputTokens).toBe(1200);
     expect(await store.reserve('overspend', 'openai', 0.02, 0.1)).toBe(false);
   });
+  it('retains larger uncertain charges across restart and both spending caps', async () => {
+    const path = diskPath();
+    let store = await open(path);
+    const episode = { id: 'authoring-episode', limitUsd: 0.04 };
+    expect(
+      await store.reserve('known-charge', 'openai', 0.02, 0.04, 'actor', undefined, episode),
+    ).toBe(true);
+    const observed = receipt('known-charge', {
+      providerRequestId: 'same-run',
+      macrofoldBillingMode: 'managed',
+      completionUncertain: true,
+      estimatedCostUsd: 0.0300001,
+    });
+    await store.settle('known-charge', {
+      ...observed,
+      estimatedCostUsd: undefined,
+      providerRequestId: undefined,
+      macrofoldBillingMode: undefined,
+    });
+    await store.settle('known-charge', { ...observed, estimatedCostUsd: undefined });
+    expect((await store.attemptReceipt('known-charge'))?.providerRequestId).toBe('same-run');
+    for (const estimatedCostUsd of [0.01, 0.015]) {
+      await store.settle('known-charge', { ...observed, estimatedCostUsd });
+      expect((await store.attemptReceipt('known-charge'))?.estimatedCostUsd).toBe(estimatedCostUsd);
+    }
+    await store.settle('known-charge', observed);
+    await close(store);
+    store = await open(path);
+    await store.recoverInterruptedWork();
+    for (const estimatedCostUsd of [undefined, 0.01, NaN]) {
+      await store.settle('known-charge', { ...observed, estimatedCostUsd });
+      expect((await store.usage(0.04)).budget.spentUsd).toBe(0.030001);
+      expect(await store.attemptBudget(episode.id)).toMatchObject({
+        spentUsd: 0.030001,
+        uncertainUsd: 0.030001,
+      });
+    }
+    expect(await store.attemptReceipt('known-charge')).toMatchObject({
+      completionUncertain: true,
+      estimatedCostUsd: 0.0300001,
+    });
+    // Isolate the monthly actor cap from the episode cap: each uses this same hold.
+    expect(await store.reserve('monthly-over', 'openai', 0.01, 0.04, 'actor')).toBe(false);
+    expect(
+      await store.reserve('episode-over', 'openai', 0.01, 1, 'actor', undefined, episode),
+    ).toBe(false);
+    expect(await store.reserve('fits', 'openai', 0.009999, 0.04, 'actor', undefined, episode)).toBe(
+      true,
+    );
+    await expect(
+      store.settle('known-charge', { ...observed, providerRequestId: 'other-run' }),
+    ).rejects.toThrow(/external request identity/);
+    await expect(store.settle('known-charge', { ...observed, dispatched: false })).rejects.toThrow(
+      /retract dispatch/,
+    );
+    for (const macrofoldBillingMode of [undefined, 'byok'] as const)
+      await expect(
+        store.settle('known-charge', { ...observed, macrofoldBillingMode }),
+      ).rejects.toThrow(/original billing mode/);
+    // Definitive billing still replaces the conservative hold and is immutable.
+    await store.settle('known-charge', {
+      ...observed,
+      completionUncertain: false,
+      estimatedCostUsd: 0.025,
+    });
+    await store.settle('known-charge', { ...observed, estimatedCostUsd: 0.09 });
+    expect(await store.attemptBudget(episode.id)).toMatchObject({
+      spentUsd: 0.025,
+      reservedUsd: 0.009999,
+      uncertainUsd: 0,
+    });
+
+    const confirmed = { id: 'confirmed-episode', limitUsd: 0.04 };
+    expect(
+      await store.reserve('known-completion', 'openai', 0.04, 1, 'other', undefined, confirmed),
+    ).toBe(true);
+    await store.settle(
+      'known-completion',
+      receipt('known-completion', {
+        providerRequestId: 'other-run',
+        completionUncertain: true,
+        estimatedCostUsd: 0.03,
+      }),
+    );
+    // Later completion proof combines with the known price, not with its larger reserve.
+    await store.settle(
+      'known-completion',
+      receipt('known-completion', {
+        providerRequestId: 'other-run',
+        estimatedCostUsd: undefined,
+      }),
+    );
+    expect(await store.attemptReceipt('known-completion')).toMatchObject({
+      completionUncertain: false,
+      estimatedCostUsd: 0.03,
+    });
+    expect(await store.attemptBudget(confirmed.id)).toMatchObject({
+      spentUsd: 0.03,
+      reservedUsd: 0,
+      uncertainUsd: 0,
+    });
+  });
   it('retains immutable job request identity across status updates', async () => {
     const store = await open();
     const original = job('same-id', 'queued');
@@ -418,5 +543,79 @@ describe('durable AI allowances outside simulated time', () => {
       async () => await store.putJob({ ...original, fingerprint: 'different-body' }),
     ).rejects.toThrow(/different input/);
     expect((await store.getJob(original.id))!.fingerprint).toBe(original.fingerprint);
+  });
+});
+
+describe('decision spending summary', () => {
+  it('retains a larger uncertain charge without changing per-level request admission', () => {
+    const limits = levelLimits(readConfig());
+    limits[1] = { ...limits[1], requestsPerDecision: 2, decisionUsd: 0.04 };
+    const ledger = new DecisionLedger(limits);
+    ledger.record({
+      requestId: 'decision-charge',
+      stage: 'selection',
+      category: 'level',
+      level: 1,
+      provider: 'jev',
+      size: { instructions: 0, context: 0, schema: 0 },
+      reservedUsd: 0.02,
+    });
+    const observed = receipt('decision-charge', {
+      providerRequestId: 'same-run',
+      macrofoldBillingMode: 'managed',
+      completionUncertain: true,
+      estimatedCostUsd: 0.0300001,
+    });
+    ledger.settle('decision-charge', { ...observed, estimatedCostUsd: undefined });
+    ledger.settle('decision-charge', observed);
+    for (const estimatedCostUsd of [undefined, 0.01, NaN]) {
+      ledger.settle('decision-charge', { ...observed, estimatedCostUsd });
+      expect(ledger.summary().total).toMatchObject({ settledUsd: 0.030001, uncertain: true });
+    }
+    expect(ledger.admit('level', 1, 0.02)).toEqual({ ok: true });
+    expect(() =>
+      ledger.settle('decision-charge', { ...observed, requestId: 'other-attempt' }),
+    ).toThrow(/identity mismatch/);
+    expect(() =>
+      ledger.settle('decision-charge', { ...observed, providerRequestId: 'other-run' }),
+    ).toThrow(/external request identity/);
+    expect(() => ledger.settle('decision-charge', { ...observed, dispatched: false })).toThrow(
+      /retract dispatch/,
+    );
+    for (const macrofoldBillingMode of [undefined, 'byok'] as const)
+      expect(() => ledger.settle('decision-charge', { ...observed, macrofoldBillingMode })).toThrow(
+        /original billing mode/,
+      );
+    ledger.settle('decision-charge', {
+      ...observed,
+      completionUncertain: false,
+      estimatedCostUsd: 0.025,
+    });
+    ledger.settle('decision-charge', { ...observed, estimatedCostUsd: 0.09 });
+    expect(ledger.summary().total).toMatchObject({ settledUsd: 0.025, uncertain: false });
+    ledger.record({
+      requestId: 'known-completion',
+      stage: 'selection',
+      category: 'preparation',
+      provider: 'jev',
+      size: { instructions: 0, context: 0, schema: 0 },
+      reservedUsd: 0.02,
+    });
+    ledger.settle(
+      'known-completion',
+      receipt('known-completion', {
+        providerRequestId: 'other-run',
+        completionUncertain: true,
+        estimatedCostUsd: 0.01,
+      }),
+    );
+    ledger.settle(
+      'known-completion',
+      receipt('known-completion', {
+        providerRequestId: 'other-run',
+        estimatedCostUsd: undefined,
+      }),
+    );
+    expect(ledger.summary().total).toMatchObject({ settledUsd: 0.035, uncertain: false });
   });
 });

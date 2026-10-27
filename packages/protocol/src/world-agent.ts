@@ -236,6 +236,7 @@ export interface WorldStatusRemovalPage {
   nextCursor: string | null;
 }
 export interface WorldAgentSessionView {
+  recoveryOpening?: { choiceId: string; seed: number };
   sessionId: string;
   purpose?: 'conversation' | 'invention' | 'creation';
   workRevision?: string;
@@ -442,6 +443,7 @@ export interface WorldCreationOperationView {
 }
 
 export interface WorldCreationOpeningChoice {
+  recovery: boolean;
   id: string;
   label: string;
   description: string;

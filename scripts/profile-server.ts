@@ -1,3 +1,6 @@
+import { toolHttp, toolStream } from './network.js';
+import { SSEFramer } from '@open-legend/network';
+import { learnRecipe } from '../packages/domain/src/knowledge.js';
 import { profilingOptions } from './performance/profiling-options.js';
 import { workspaceBindings } from './performance/workspace-bindings.js';
 import {
@@ -778,7 +781,7 @@ try {
         },
       ],
     }),
-  );
+  ).world;
   const seedIds = new Set(seedRoots.map((entity) => entity.id));
   const routineActorIds = routineFixture
     ? worldRootEntities(seeded)
@@ -788,6 +791,15 @@ try {
         )
         .map((entity) => entity.id)
     : [];
+  // The diagnostic supplies method knowledge explicitly; it does not infer it
+  // from body shape or manufacture an autonomous goal.
+  for (const actorId of routineActorIds)
+    for (const recipe of Object.values(seeded.recipes))
+      if (
+        recipe.source.kind === 'fixed-transform' &&
+        ['base:clean-fibers', 'base:twist-cord'].includes(recipe.source.definition.id)
+      )
+        learnRecipe(seeded, actorId, recipe.id, 'authored', 'diagnostic:routine-material-methods');
   const routineResources: Array<{
     actorId: string;
     id: string;
@@ -1309,12 +1321,12 @@ try {
   try {
     profilingStage = 'controller setup';
     const client = 'scene-profile';
-    const response = await fetch(base + '/api/state', { headers: { 'X-OL-Client': client } });
+    const response = await toolHttp(base + '/api/state', { headers: { 'X-OL-Client': client } });
     const cookie = response.headers.get('set-cookie')?.split(';')[0];
     if (!cookie) throw new Error('Missing local session.');
     let view = (await response.json()) as GameView;
     const post = async (path: string, body: unknown) => {
-      const r = await fetch(base + path, {
+      const r = await toolHttp(base + path, {
         method: 'POST',
         headers: {
           cookie,
@@ -1336,7 +1348,7 @@ try {
       operation: 'replace',
     });
     if (!entered.ok) throw new Error(entered.message ?? 'Could not take fixture control.');
-    const refreshed = await fetch(base + '/api/state', {
+    const refreshed = await toolHttp(base + '/api/state', {
       headers: { cookie, 'X-OL-Client': client },
     });
     if (!refreshed.ok) throw new Error('Controlled scene inspection failed.');
@@ -1346,54 +1358,49 @@ try {
     let lastUpdate = performance.now();
     let commandSkipped = 0;
     if (!browserFixture && (!layer || layer === 'viewer')) {
-      const stream = await fetch(
+      const framer = new SSEFramer({ kind: 'complete-projection', owner: 'game-events' });
+      const stream = toolStream(
         `${base}/api/events?client=${client}&scope=${view.access!.scope}&revision=${view.revision}`,
-        {
-          headers: { cookie },
-          signal: streamAbort.signal,
-        },
-      );
-      if (!stream.ok || !stream.body) throw new Error('SSE connection failed.');
-      streamTask = (async () => {
-        const reader = stream.body!.getReader();
-        const decoder = new TextDecoder();
-        let pending = '';
-        try {
-          for (;;) {
-            const read = await reader.read();
-            if (read.done) break;
-            if (measuring) bytes += read.value.length;
-            pending += decoder.decode(read.value, { stream: true });
-            const messages = pending.split('\n\n');
-            pending = messages.pop()!;
-            for (const message of messages)
-              if (measuring && /event: (patch|snapshot)/.test(message)) {
-                const at = performance.now();
-                gaps.push(at - lastUpdate);
-                if (at - lastUpdate > 150) {
-                  longGaps.push({
-                    atMs: at - measureStart,
-                    ms: at - lastUpdate,
-                    spans: spans
-                      .filter((span) => span.endedAt >= lastUpdate)
-                      .map((span) => ({
-                        ...span,
-                        endedAt: span.endedAt - measureStart,
-                      })),
-                  });
-                  longGaps.sort((a, b) => b.ms - a.ms);
-                  longGaps.length = Math.min(20, longGaps.length);
-                }
-                if (lastUpdate - measureStart >= 5000) warmGaps.push(at - lastUpdate);
-                lastUpdate = at;
-                updates++;
+        { headers: { cookie }, signal: streamAbort.signal },
+        (read) => {
+          if (measuring) bytes += read.byteLength;
+          for (const message of framer.push(read))
+            if (
+              measuring &&
+              message.kind === 'event' &&
+              ['patch', 'snapshot'].includes(message.event)
+            ) {
+              const at = performance.now();
+              gaps.push(at - lastUpdate);
+              if (at - lastUpdate > 150) {
+                longGaps.push({
+                  atMs: at - measureStart,
+                  ms: at - lastUpdate,
+                  spans: spans
+                    .filter((span) => span.endedAt >= lastUpdate)
+                    .map((span) => ({
+                      ...span,
+                      endedAt: span.endedAt - measureStart,
+                    })),
+                });
+                longGaps.sort((a, b) => b.ms - a.ms);
+                longGaps.length = Math.min(20, longGaps.length);
               }
-          }
+              if (lastUpdate - measureStart >= 5000) warmGaps.push(at - lastUpdate);
+              lastUpdate = at;
+              updates++;
+            }
+        },
+        Math.ceil((seconds + 180) * 1000),
+      );
+      await stream.ready;
+      streamTask = stream.done
+        .then(() => {
           if (!streamAbort.signal.aborted) failed('stream', 'The update stream ended early.');
-        } catch (error) {
+        })
+        .catch((error) => {
           if (!streamAbort.signal.aborted) failed('stream', error);
-        }
-      })();
+        });
     }
     let startPlayerDrivers: (() => void) | undefined;
     if (!browserFixture) {
@@ -1526,11 +1533,12 @@ try {
         for (const definitionId of ['raw_fiber', 'berries'])
           if (
             gatheringYield(
+              game.service.world,
               observed.inventory.map(
                 (item) => game.service.world.itemDefinitions[item.definitionId],
               ),
               definitionId,
-            ) !== gatheringYield([], definitionId)
+            ) !== gatheringYield(game.service.world, [], definitionId)
           )
             throw new Error(
               `Long-soak resident ${actorId} has a tool outside the finite no-tool stock bound.`,
@@ -1691,8 +1699,15 @@ try {
     const routineCommand = (actorId: string, phase: number): CommandInput | undefined => {
       const observed = game.service.observe(actorId, { includeMemories: false });
       if (!observed) return;
-      if (phase === 1 || phase === 2)
-        return { type: 'prepare', preparation: phase === 1 ? 'fiber' : 'cord' };
+      if (phase === 1 || phase === 2) {
+        const method = observed.knownRecipes.find(
+          (recipe) =>
+            recipe.source.kind === 'fixed-transform' &&
+            recipe.source.definition.id === (phase === 1 ? 'base:clean-fibers' : 'base:twist-cord'),
+        );
+        if (!method) throw new Error('Routine actor lacks the required material method.');
+        return { type: 'craft', recipeId: method.id };
+      }
       if (phase === 4) {
         const food = observed.inventory.find((item) =>
           observed.itemDefinitions.some((d) => d.id === item.definitionId && d.nutrition),
@@ -2301,7 +2316,7 @@ try {
       return sorted[Math.max(0, Math.ceil(sorted.length * p) - 1)] ?? 0;
     };
     const roots = worldRootEntities(game.service.world);
-    const finalResponse = await fetch(base + '/api/state', {
+    const finalResponse = await toolHttp(base + '/api/state', {
       headers: { cookie, 'X-OL-Client': client },
     });
     if (!finalResponse.ok) throw new Error('Final scene inspection failed.');

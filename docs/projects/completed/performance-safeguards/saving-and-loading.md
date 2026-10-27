@@ -147,7 +147,7 @@ Use focused existing `store.test.ts` and `world-service.test.ts` cases, selected
 
 - Status and exit criteria: [PSF05/PSF06](../../../maintainers/performance-safeguards.md).
 - Shared plan and evidence procedure: [technical design](../performance-safeguards-tech-design.md); behavior: [feature specification](../performance-safeguards-feature-spec.md).
-- Existing constraints: [PF17-J01](../../../limits/persistence.md#pf17-j01--experimental-deferred-saving), [native arithmetic](../../../limits/native-work.md#nw17--experimental-deferred-arithmetic-window). No bound changes.
+- Existing constraints: [PF17-J01](../../../limits/persistence.md#pf17-j01--experimental-deferred-saving), [native arithmetic](../../../limits/native-work.md#nw17--anchored-continuous-native-values). No bound changes.
 - Contracts to preserve/reconcile after implementation: [journal admission](../../performance-overhaul/journal-contract.md#pre-acknowledgement-constraint-proof), [current-format validation](../../../save-and-load.md#current-format-validation), [continuation](../../../save-and-load.md#continuation-and-identity). The root development policy continues to prohibit legacy compatibility work.
 
 ## Implementation reconciliation — October 17, 2026, 19:44 EDT

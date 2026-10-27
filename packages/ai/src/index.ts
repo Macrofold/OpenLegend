@@ -9,6 +9,9 @@ export {
   createMacrofoldGenerationClient,
   macrofoldInferenceEvidence,
   captureMacrofoldRunUsage,
+  macrofoldTerminalStatus,
+  captureMacrofoldRunTiming,
+  captureMacrofoldInferenceReceipt,
 } from './macrofold-decision.js';
 export type {
   MacrofoldDecisionConfig,
@@ -19,7 +22,17 @@ export type {
   MacrofoldBillingMode,
 } from './macrofold-decision.js';
 export { JsonObjectStream } from './json-stream.js';
-export { consumeEventStream } from './event-stream.js';
+export {
+  captureMacrofoldDeploymentTarget,
+  macrofoldDeploymentRequestFields,
+  prepareMacrofoldGenerationInput,
+  decodeMacrofoldGeneration,
+  captureMacrofoldDeploymentReceipt,
+} from './macrofold-inference-target.js';
+export type {
+  MacrofoldDeploymentTarget,
+  MacrofoldOutputMode,
+} from './macrofold-inference-target.js';
 export { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
 export {
   usdToMicroUsd,
@@ -41,6 +54,9 @@ export * from './embedding.js';
 
 export {
   compileSchema,
+  prepareSchema,
+  prepareQuestions,
+  PreparedJson,
   serialize,
   InvalidData,
   validateQuestions,
@@ -50,5 +66,6 @@ export {
   decodeJudge,
   decodeUsage,
 } from './validation.js';
+export type { PreparedSchema } from './validation.js';
 
 export { OpenAiRateGate } from './rate-gate.js';

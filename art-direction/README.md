@@ -4,6 +4,8 @@ This folder is the shared home for visual direction, feedback, decisions and ref
 
 ## Start here
 
+**Reusable art requests:** use the [Standard or Higgsfield flow](../docs/production-workflows/art-flows/README.md) for style, asset, character, scene, material, motion or UI-system work. The agent handles the steps and file handoffs. The [UI surface-language brief](studies/ui-surface-language/brief.md) records the supplied border/panel/connector study request; it is not a completed visual study.
+
 **Asset storage and authoring:** follow [Asset workflows](../docs/asset-workflow.md) before fetching, creating, editing, capturing or publishing assets. Substantial models, editable sources, reference media and study captures belong in the separate library/study/runtime collections; Git retains direction, recipes, small pins and verified hosted links. [AS01–AS08](../docs/maintainers/game-asset-storage.md) tracks the remaining migration and recovery gates. Original license, attribution and reference-only limits still apply to publicly hosted sources.
 
 **Published studies:** [Current interactive tools and preserved boards](https://assets.openlegend.ai/studies/public/viewers/navigation-81bd67a16da37540aa1b9688cc22b05b5ed495c727692cab64ab5ffd5b877d36/index.html). Historical comparisons keep their recorded captures and verification limits; today's interactive tools use the current renderer.
@@ -11,6 +13,12 @@ This folder is the shared home for visual direction, feedback, decisions and ref
 **Preserved iterations:** [Study archive](studies/README.md) contains the recovered earlier screenshots/videos and the current small-detail/grounded-lighting comparisons. Current direction includes survival, weathering and emotional range alongside sunlight and warmth; preserve readable darkness and avoid uniformly cheerful presentation.
 
 **Required direction:** [Current visual requirements](decisions.md#current-visual-requirements--october-16-2026) — beautiful dimensional pixel art with believable real-world proportions; explicitly reject visibly low-poly 3D, blocky/Lego-like, cutesy and small-body/big-head art. Read this before sourcing assets, writing concepts or interpreting older reference ratings. [Grounded creator shortlist](research/3d-pixel-worlds/grounded-asset-creators.md) records promising sources and their untested limits.
+
+**Sea of Stars:** [Illustrated environmental art study](research/sea-of-stars/README.md) — expressive pixel groups, distinctive landforms, material and color variety, purposeful lighting and quiet space, translated into OpenLegend's grounded proportions and living wilderness. Includes official screenshots, a lighting comparison and concrete scene-review criteria. The [full game dossier](../archive/02-research/game-inspiration/dossiers/sea-of-stars.md) covers timed combat, lore, production, reception and community. The earlier G13 board card retains its historical context.
+
+**ROCKBEASTS:** [Color, lighting, character acting and themed menus](research/rockbeasts/README.md) — a nonpixel reference endorsed for these specific qualities, with official imagery, selected trailer-frame timecodes and concrete applications to OpenLegend's dimensional pixel art. The [narrative case study](../docs/narrative/case-studies/rockbeasts.md) covers humor, characterization and demo-player reactions.
+
+**Emberville:** [Environment variety, atmosphere and readable action](research/emberville/README.md) — misty streets, warm interiors, distinctive workspaces and open landscapes, with four official screenshot references and trailer observations. Mike likes its pixel art and world variety while finding the proportions too cartoony for OpenLegend. The [combat note](../docs/game-ideas/real-time-combat-feel.md) connects Emberville and Diablo to satisfying real-time combat within a wider life.
 
 **Current study:** [Small-subject detail and grounded atmosphere](../docs/verification/small-subject-art-and-atmosphere.md) — 46 families with three alternatives, the original mercenary, actual scene/light/motion comparisons and preserved archives. The earlier [source-based review](../docs/verification/source-based-starting-study.md) remains the baseline. Bear replacement and creator acceptance remain open.
 

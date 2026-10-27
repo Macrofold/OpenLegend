@@ -88,16 +88,23 @@ function validateTerrain(definitions: Record<string, TerrainDefinition>): void {
   }
 }
 /** Validate once at construction/load/mutation, never silently reinterpret invalid geometry as air. */
+export function validateSpatialExtent(width: number, height: number): void {
+  if (
+    !Number.isInteger(width) ||
+    !Number.isInteger(height) ||
+    width < 2 ||
+    height < 2 ||
+    width > 128 ||
+    height > 128
+  )
+    throw new Error('Invalid spatial terrain extent.');
+}
+
 export function validateSpatialMap(map: SpatialMap): void {
   validateTerrain(map?.terrain);
+  validateSpatialExtent(map?.width, map?.height);
   if (
     !map ||
-    !Number.isInteger(map.width) ||
-    !Number.isInteger(map.height) ||
-    map.width < 2 ||
-    map.height < 2 ||
-    map.width > 128 ||
-    map.height > 128 ||
     !Array.isArray(map.tiles) ||
     map.tiles.length !== map.height ||
     map.tiles.some(
@@ -110,7 +117,8 @@ export function validateSpatialMap(map: SpatialMap): void {
     throw new Error('Invalid spatial terrain.');
   if (
     map.tiles.reduce((n, row) => n + row.filter((tile) => map.terrain[tile]?.solid).length, 0) +
-      (map.spatial?.blockers?.length ?? 0) >
+      (map.spatial?.blockers?.reduce((count, blocker) => count + (blocker.boxes?.length ?? 1), 0) ??
+        0) >
     SPATIAL_LIMITS.maxBlockers
   )
     throw new Error('Too many physical terrain blockers.');
@@ -125,7 +133,8 @@ export function validateSpatialMap(map: SpatialMap): void {
     layout.surfaces.length < 1 ||
     layout.surfaces.length > SPATIAL_LIMITS.maxSurfaces ||
     !Array.isArray(layout.blockers) ||
-    layout.blockers.length > SPATIAL_LIMITS.maxBlockers ||
+    layout.blockers.reduce((count, blocker) => count + (blocker.boxes?.length ?? 1), 0) >
+      SPATIAL_LIMITS.maxBlockers ||
     !Array.isArray(layout.levels) ||
     layout.levels.length < 1 ||
     layout.levels.length > 16
@@ -244,6 +253,41 @@ export function validateSpatialMap(map: SpatialMap): void {
       b.acousticTransmission > 1
     )
       throw new Error('Invalid spatial blocker.');
+    if (b.boxes !== undefined) {
+      if (
+        !Array.isArray(b.boxes) ||
+        !b.boxes.length ||
+        b.boxes.length > SPATIAL_LIMITS.maxBlockers ||
+        b.panel
+      )
+        throw new Error('Invalid finite box union.');
+      for (const box of b.boxes)
+        if (
+          !box ||
+          !finitePoint(box.min) ||
+          !finitePoint(box.max) ||
+          (['x', 'y', 'z'] as const).some((axis) => box.min[axis] >= box.max[axis])
+        )
+          throw new Error('Invalid solid box.');
+      for (const axis of ['x', 'y', 'z'] as const)
+        if (
+          b.bounds.min[axis] !== Math.min(...b.boxes.map((box) => box.min[axis])) ||
+          b.bounds.max[axis] !== Math.max(...b.boxes.map((box) => box.max[axis]))
+        )
+          throw new Error('Finite box bounds disagree with their exact union.');
+      for (let i = 0; i < b.boxes.length; i++)
+        for (let j = i + 1; j < b.boxes.length; j++) {
+          const a = b.boxes[i]!,
+            other = b.boxes[j]!;
+          if (
+            (['x', 'y', 'z'] as const).every(
+              (axis) =>
+                Math.min(a.max[axis], other.max[axis]) > Math.max(a.min[axis], other.min[axis]),
+            )
+          )
+            throw new Error('Solid box interiors must be disjoint.');
+        }
+    }
     if (b.panel) {
       const panel = b.panel;
       if (

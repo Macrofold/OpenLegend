@@ -58,6 +58,19 @@
 .ol-entry-message details p {
   margin-block-start: var(--space-2);
 }
+.ol-entry-progress {
+  display: grid;
+  gap: var(--space-3);
+}
+.ol-entry-progress progress {
+  inline-size: 100%;
+  block-size: 10px;
+  accent-color: var(--highlight);
+}
+#world[data-entry-loading='true'],
+#world[data-entry-loading='true'] ~ :is(.ol-status-layer, .ol-speech-layer, .vision-blur) {
+  visibility: hidden;
+}
 .ol-entry-actions {
   display: grid;
   gap: var(--space-3);

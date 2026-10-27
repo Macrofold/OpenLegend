@@ -51,6 +51,7 @@ export function WorldCreationSelector({
   sessionId,
   connected,
   visible,
+  freshRecovery = false,
   mutationReason,
   ensureSession,
   onSelected,
@@ -59,6 +60,7 @@ export function WorldCreationSelector({
   sessionId: string;
   connected: boolean;
   visible: boolean;
+  freshRecovery?: boolean;
   mutationReason?: string | null;
   ensureSession(): Promise<void>;
   onSelected(draft: WorldAgentExactDraftView): void;
@@ -95,7 +97,7 @@ export function WorldCreationSelector({
         if (controller.signal.aborted) return;
         if (!result.ok || !result.data)
           throw new Error(result.message ?? 'Prepared openings are unavailable.');
-        setChoices(result.data);
+        setChoices(freshRecovery ? result.data.filter((choice) => choice.recovery) : result.data);
       })
       .catch((failure) => {
         if (!controller.signal.aborted) {
@@ -112,7 +114,7 @@ export function WorldCreationSelector({
         }
       });
     return () => controller.abort();
-  }, [visible, connected, reload]);
+  }, [visible, connected, reload, freshRecovery]);
   async function select(openingId: string, retry = false) {
     if (working.current || !connected || mutationReason || (!retry && retained)) return;
     working.current = true;
@@ -177,6 +179,14 @@ export function WorldCreationSelector({
         These supplied openings need no generation. Inspect and edit the retained proposal before
         choosing where to start it.
       </p>
+      {freshRecovery && (
+        <p>
+          A separate run keeps the original creation seed and starts with new world and player
+          identities. Belongings, relationships and personal memories do not transfer. Your original
+          world and lost life remain saved. Choose a prepared destination and review its
+          availability before confirming Start.
+        </p>
+      )}
       {reason && <p role="status">{reason}</p>}
       <LoadingIndicator active={loading} label="Reading supported openings" />
       {choices?.length === 0 && <p>No supported prepared opening is currently available.</p>}

@@ -1,4 +1,4 @@
-import { enterGame } from '../fixtures/browser.js';
+import { enterGame, blockExternalBrowserRequests } from '../fixtures/browser.js';
 import { testRepository, closeTestDatabases } from '../fixtures/database.js';
 import { expect, test } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
@@ -8,6 +8,7 @@ import type { WorldAgentSessionStatus, WorldAgentTurnView } from '@open-legend/p
 test('owner conversation grows from one line and shows message-local pending and failure details', async ({
   page,
 }) => {
+  await blockExternalBrowserRequests(page);
   const game = await createGameServer({
     config: readConfig({ OPEN_LEGEND_GOD_MODE: 'true', AI_BUDGET_USD: '0' }),
     store: await testRepository(),

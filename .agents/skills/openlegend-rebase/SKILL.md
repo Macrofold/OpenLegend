@@ -7,6 +7,8 @@ description: >-
 
 # Reconcile before continuing
 
+Initial implementation startup and requested reconciliation use this workflow. Compaction, resuming the same task, review of the same branch or a status question does not itself require another refresh/rebase. Revisit when the base, task or working history actually changes.
+
 Apply [root task authorization](../../../AGENTS.md#task-scope-and-authorization) and perform development synchronization after initial planning, before implementation. Explicit read-only tasks permit inspection only.
 
 A standalone rebase is a narrow reconciliation task, not fresh feature qualification. Plan from the expected overlap and risk; a routine rebase needs no new durable plan under [Documentation](../../rules/documentation.md#keep-maintainer-work-synchronized). Before rewriting, record the old base and branch tip so the resulting patch series can be compared and prior review/verification evidence assessed.
@@ -22,7 +24,7 @@ Apply these principles to rebases and merges, including synchronization within a
 5. **Reconcile documents without creating ceremony.** Resolve documentation conflicts and update newly inaccurate contracts or status. Accurate plans, reports and remaining-work entries stand. Do not create a merge diary, new evidence report or repeat unchanged deferrals merely to record the operation; material planning requirements still apply.
 6. **Finish at the agreed boundary.** After the requested history operation, affected-diff review and selected checks pass, report the refs, consequential resolutions and verification limits, then stop. Establish whether a failure is introduced or pre-existing; fix introduced failures, and report unrelated baseline failures without repairing them as part of reconciliation. Unchanged broader qualification remains tracked, not reopened as merge work.
 
-These limits govern reconciliation, not separately authorized feature implementation or required CI. Agent reading, analysis and harness setup are part of elapsed time; short test execution does not justify prolonged preparation.
+These limits govern reconciliation, not separately authorized feature implementation or required local verification. Agent reading, analysis and harness setup are part of elapsed time; short test execution does not justify prolonged preparation.
 
 ## Select the target
 

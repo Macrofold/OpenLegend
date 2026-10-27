@@ -9,6 +9,10 @@ Usage: `merge-branch <source>` or `merge-branch <source> into <destination>`. De
 
 Operate on the working repository, even when the global entrypoint loads this file from another checkout. Apply the target repository's instructions and verification rules. In OpenLegend, follow [Rebase](../openlegend-rebase/SKILL.md) for preservation and conflict stops, and [rebase verification](../../rules/verification.md#rebase-verification) for proportional checks. Those project-specific links apply only to OpenLegend.
 
+## Default path
+
+Keep routine integration to source/destination selection, one incoming/overlap review, certain conflict resolution, impact-selected local checks, one squash commit and push. Reuse source review and verification. Routine merges need no new feature qualification, reports, plans or diagnostic harnesses; material reconciliation risk still follows the root planning rule. Documentation-only changes do not start the game. Database changes follow the linked development reset policy, not an operational-record preservation exercise. Explain a concrete conflict, introduced failure or unavailable prerequisite before expanding this path; a large source diff alone does not require repeating its complete review or tests.
+
 ## Select the source
 
 Inspect the current branch/worktrees, pending operations, staged/unstaged/untracked edits and origin URL. Validate branch names; use exact refs and safe argument quoting. Normalize a supplied `origin/` prefix, unless the developer explicitly pins a source ref/commit.
@@ -45,7 +49,9 @@ Resolve certain conflicts from both sides' intent and current authoritative cont
 
 Report affected files, both intentions, the chosen resolution and rationale. If any resolution is uncertain or requires developer input, stop all work, preserve conflicts, explain alternatives and recommendation, and await the answer. Follow any stricter repository conflict rule. No unresolved conflict may be committed or pushed.
 
-Review the complete staged diff against the recorded destination and run checks selected by reconciliation effects. Fix introduced issues; distinguish baseline failures, reused evidence and unrun checks. Do not convert a merge into broader qualification or net-new work.
+Review the complete staged diff against the recorded destination and run local checks selected by reconciliation effects under the [verification policy](../../rules/verification.md#local-verification-only). Fix introduced issues; distinguish baseline failures, reused evidence and unrun checks. Do not convert a merge into broader qualification or net-new work.
+
+For relevant database/save/starting-world changes, complete the [configured development-database readiness check](../../rules/verification.md#rebase-verification) before calling the destination ready. Fresh disposable fixtures alone do not establish local startup readiness.
 
 With no net changes, create no empty commit. Report already-integrated content. A previously created matching squash commit may be pushed after its provenance and publication scope are verified; otherwise do not publish unrelated commits for a no-op merge.
 
@@ -59,7 +65,7 @@ Read the installed `commit` skill and reuse its summarization, formatting and sc
 - After another blank line, add `Squashed-from: <source-branch-name> at <full-frozen-tip-commit-hash>`. Use the chosen source tip, never the base/destination/result hash. Preserve the branch name losslessly if ASCII escaping is required.
 - Printable ASCII plus actual LF newlines. Write/validate a temporary UTF-8 message file and commit with `git commit --file <message-file>`; verify the final message and provenance.
 
-Determine completion from the actual net integration, the owning trackers/designs and applicable verification evidence. Preserve exact identifiers, including completed subitems within an unfinished parent. Do not claim a parent task, batch or project completed merely because its implementation merged, or recount work already present on the destination. Identify partial work as partial in the summary; unresolved acceptance stays open. Resolve any disagreement between source completion claims and current evidence before writing the completion footer. These fields follow the existing ASCII/LF rules and are separate from the summary bullets.
+Reuse source completion summaries and inspect only affected tracker changes; do not turn commit metadata into a full backlog audit. Determine completion from the actual net integration, the owning trackers/designs and applicable verification evidence. Preserve exact identifiers, including completed subitems within an unfinished parent. Do not claim a parent task, batch or project completed merely because its implementation merged, or recount work already present on the destination. Identify partial work as partial in the summary; unresolved acceptance stays open. Resolve any disagreement between source completion claims and current evidence before writing the completion footer. These fields follow the existing ASCII/LF rules and are separate from the summary bullets.
 
 Verify exactly one new commit above the recorded destination, with that tip as its only parent, the reviewed tree unchanged, and no task edits left uncommitted. Required unresolved checks prevent completion.
 

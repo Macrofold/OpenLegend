@@ -1,5 +1,7 @@
 # Abilities, learning and expressive progression
 
+**Skill expression versus learned capability (ND38):** [The selected design](../projects/action-execution-and-skill-expression-feature-spec.md) lets bounded optional human timing improve supported combat actions while native character competence, equipment, bodily condition and training remain important for people and NPCs. Dexterity/focus-like effects only exist if authored and installed for that world; proficiency is applied once, not stacked twice. Normal unassisted actions remain viable. [ASE](../maintainers/action-execution-and-skill-expression.md) owns implementation.
+
 **Canonical catalogue.** Descriptions and current priorities live together here. Each domain table is ordered by priority, then stable ID; implementation Level and build effort are not priority tie-breakers. Entry rows own individual priorities; worked examples provide context without a second ranking. These are proposals, not delivered features.
 
 [Library](README.md) · [Reading the labels](README.md#reading-the-labels) · [Selection and scale](selection-and-scale.md) · [Design foundation](design-foundation.md)
@@ -483,6 +485,10 @@ Seeds and references: [Path of Exile](source-atlas.md#g10), [Noita](source-atlas
 
 A former city guard becomes a gardener but retains spear technique, first aid and crowd-calming experience; they can take up arms again when danger returns. Their old badge no longer grants restricted access. Players can change lives without discarding history or retaining inappropriate authority. Meaningful training should transfer where applicable; avoid resetting all competence on a role change or allowing remembered procedure to stand in for current authorization.
 
+For a separate contrast, a skilled paid killer uses the same ordinary fieldcraft and weapon practice to pursue a valuable contract. Accurate memory of past killings and pride in reliable work can coexist with no remorse. Competence does not certify goodness, and defeat, friendship or a change of occupation does not automatically reform this person. Keep this separate from the former guard's established life; biography supplies history and tendencies, not a hidden instruction fixing the next decision.
+
+For a selected scene, make the actually retained relevant method available when the perceived problem gives it a use. A job title alone supplies neither technique nor current equipment. In a quiet garden scene, unrelated martial instructions can be absent while the accepted personal history remains. Compare a familiar application with a useful application outside its original profession: the surprise should come from the person's transferable knowledge and choice, not an injected instruction to resume their former role.
+
 Seeds and references: [Final Fantasy V](source-atlas.md#g82), [Final Fantasy IX](source-atlas.md#g86), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110).
 
 ## The signature move with two lives
@@ -538,6 +544,14 @@ Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](sourc
 **ALL · Play · C.** Gap: event-grounded recognition and optional learning invitations.
 
 After a player calmly organizes a rescue, a teacher offers a course in expedition planning. The offer names the observed act and can be declined. Recognition makes past choices matter without secretly assigning a permanent class. Avoid profiling real players or inferring hidden personality; the invitation concerns witnessed fictional behavior and opens an option rather than defining who they are.
+
+### The open championship
+
+A separate original recognition scene uses ARL097/117 and AP-062, AP-197, AP-201 and AP-208: an open, fair championship offers a substantial prize and access to an advanced teacher or a coveted expedition. Select a contest the world can actually resolve, with announced rules, credible judges and visible participation conditions. Its competitors want to win; spectators want an excellent contest. Boasting, nerves, attraction, envy and a sore loser supply ordinary friction without making the host dishonest.
+
+Players can study witnessed bouts, prepare, practice, compete and learn from a willing rival. Preparation and actual performance determine what the rules award; a stirring description does not decide a judge's result. A clean victory can deliver the prize, a useful new opportunity and a good celebration. Losing can cost this opportunity while leaving learning, renewed rivalry or a freely chosen ending. A competitor may decline the teacher or prefer a different ambition. The coercive patron in the separate champion-and-oath combination is not a required twist in this fair contest.
+
+The reward should enable a real next choice: advanced practice for a desired technique or a place on the [observatory expedition](adventure-discovery.md#the-observatory-above-the-cloud), for example. Invitation, instruction and demonstrated mastery remain distinct; AP-210 credits actual individual contributions. These are proposals with the parent pattern's recognition and learning gaps, informed by [progress changing possibilities](../../archive/02-research/game-inspiration/essays/fun-and-sustainable-engagement.md#p05--make-progress-change-possibilities-and-keep-its-parts-in-proportion). Mastery and personal ambition need no compulsory community-service or moral-conversion test.
 
 Seeds and references: [Wildermyth](source-atlas.md#g25), [Fire Emblem: Three Houses](source-atlas.md#g64), [Assassin's Creed III](source-atlas.md#g99).
 

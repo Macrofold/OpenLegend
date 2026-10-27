@@ -1,3 +1,4 @@
+import { supplyOpportunityContext } from './supply-opportunities.js';
 import { equippedItems } from '@open-legend/domain';
 import {
   inspectPossessions,
@@ -25,6 +26,7 @@ export function decisionObservation(
   ]);
   const observed = observeActor(world, actorId, { includeMemories: false, visibleEntityIds });
   if (!observed) return null;
+  const supplyOpportunities = supplyOpportunityContext(world, actorId, observed.inventory);
   const available = observed.inventory.length;
   const otherRows =
     observed.visibleEntities.length +
@@ -55,6 +57,7 @@ export function decisionObservation(
   }
   return {
     ...observed,
+    supplyOpportunities,
     inspectedContainer: inspectedContainer(world, actorId),
     inventoryCoverage: { available, considered: observed.inventory.length, paged },
   };

@@ -2,7 +2,7 @@
 
 [Topic map](README.md) · [Game coverage](coverage.csv) · [World coverage](world-coverage.csv) · [Record requirements](progress.md) · [Structural source/goal review](source-and-goal-map.md).
 
-The October 14, 2026 intelligence/simulation pass contributes 30 scoped NPC assessments below. The October 17 combat-response pass adds four scoped COMBAT assessments. Other source/topic cells remain unassessed, awaiting sources or historical coverage as recorded in their matrices. Earlier essays are not discarded or automatically credited. Reading sources for the framework's structural review remains distinct from substantive incorporation.
+The October 14, 2026 intelligence/simulation pass contributes 30 scoped NPC assessments below. The October 17 combat-response pass adds four scoped COMBAT assessments. The October 18 Sea of Stars records contribute to COMBAT, PRESENT and EXPLORE; the October 25 Elden Ring records contribute to COMBAT and EXPLORE. Other source/topic cells remain unassessed, awaiting sources or historical coverage as recorded in their matrices. Earlier essays are not discarded or automatically credited. Reading sources for the framework's structural review remains distinct from substantive incorporation.
 
 ## Record structure for authorized work
 
@@ -190,3 +190,54 @@ This is a scoped four-source comparison of creature escape, tactical pursuit, ta
 **Evidence and contribution:** Deliberately different default interaction access supports [COMBAT-L004](combat-and-encounters.md#combat-l004). The source is a counterexample to copying the entire category rule: OpenLegend's independently acting resident is also a normal conversation partner, so being an NPC is not sufficient grounds for a default attack.
 
 **Evidence limits:** The dated announcement does not prove a present account's settings, universal auto-retaliation behavior or a particular grace period. Broader OSRS combat details were context and were not independently rechecked as new current facts. The inference is limited to input design.
+
+
+## Sea of Stars focused incorporation — October 18, 2026
+
+**Evidence basis:** G178 [game dossier](../dossiers/sea-of-stars.md) and [illustrated art study](../../../../art-direction/research/sea-of-stars/README.md), source revision `ce0d4cd324c64d3d6c5c2bff5d36f6c7b59b93f3`. Assessment dated October 18, 2026 (ChatGPT). The dossier distinguishes launch and later rules, critic/player testimony and creator accounts. No firsthand gameplay, motion verification or player study is claimed.
+
+### PRESENT--sea-of-stars
+
+**Identity and scope:** G178 Sea of Stars, PRESENT. Evidence from the dossier's art/audio, production and reception sections and the ten-image visual study.
+
+**Evidence and contribution:** Official stills support [PRESENT-L001](art-audio-and-game-feel.md#present-l001) and [PRESENT-L002](art-audio-and-game-feel.md#present-l002): recognizable large forms, selective detail, quiet regions and coherent local light can make pixel environments rich without uniform noise. Combat mechanics and reviews support [PRESENT-L003](art-audio-and-game-feel.md#present-l003): action-specific timing can make execution expressive, while repeated inputs can become tiring when tactical variety narrows. Creator testimony about deliberately mirrored scar art supports [PRESENT-L004](art-audio-and-game-feel.md#present-l004) as a useful counterexample for OpenLegend's persistent physical identity. The GamesRadar+ review's report of an inn musician's instrument dropping from the music during conversation supports [PRESENT-L005](art-audio-and-game-feel.md#present-l005) as an attributed example of sound responding to an activity, not a verified audio-engine mechanism.
+
+**Evidence limits:** Still images do not establish shader implementation, moving stability or production performance. Review disagreement does not estimate prevalence. The source game's stylized anatomy and fixed-camera presentation are not adopted.
+
+### EXPLORE--sea-of-stars
+
+**Identity and scope:** G178 Sea of Stars, EXPLORE. Evidence from traversal, puzzles, fishing, Mirth, collectibles, world-access and visual-place sections.
+
+**Evidence and contribution:** Distinctive environmental forms that also indicate routes support [EXPLORE-L001](exploration-and-world-design.md#explore-l001). Region differentiation through landform, material, traversal and activity supports [EXPLORE-L002](exploration-and-world-design.md#explore-l002). Cross-activity rewards and the disputed completion burden support [EXPLORE-L003](exploration-and-world-design.md#explore-l003): discovery can change another worthwhile activity, while broad checklist gating can turn optional exploration into obligation.
+
+**Evidence limits:** The game is heavily authored and uses compressed map presentation. It does not demonstrate procedural-region quality, persistent autonomous settlement change or OpenLegend-scale navigation.
+
+### COMBAT--sea-of-stars
+
+**Identity and scope:** G178 Sea of Stars, COMBAT. Evidence from the version table, combat/resources/timing and Dawn redesign, six critic reviews and sampled Steam reactions.
+
+**Evidence and contribution:** Turn selection followed by distinct timing gestures supplies a clean separation between tactical intent and physical execution. Dawn's persistent combo points and revised information loop show a developer response to intended move variety being inaccessible. Praise for tactile execution alongside criticism of repetitive choices supports [COMBAT-L005](combat-and-encounters.md#combat-l005): execution skill can amplify an encounter, but cannot substitute for changing tactics.
+
+**Evidence limits:** Sea of Stars is turn-based and locally controlled. It does not establish real-time targeting, moving-crowd fairness, network latency, client trust or OpenLegend's world-rule mapping. No timing window was measured.
+
+## Elden Ring focused incorporation — October 25, 2026
+
+**Evidence basis:** G75 [Elden Ring dossier](../dossiers/elden-ring.md), with the October 24, 2026 source cutoff retained. Assessment and destination review: October 25, 2026, ChatGPT. The chapter revisions below were inspected at `Macrofold/OpenLegend` commit `63a2dcf824f0431d5fe28cf7f4d34ef32de86b22`. Documented rules, official patch changes, developer intentions, individual player accounts and constructed interpretations remain distinct. The dossiers and their underlying reports form one evidence chain, not independent corroboration. No new firsthand gameplay, frame measurements or player study was performed for this incorporation.
+
+### COMBAT--elden-ring
+
+**Identity and scope:** G75 Elden Ring, COMBAT. [Combat, builds and equipment](../dossiers/elden-ring/01-combat-builds-and-equipment.md), blob `7d6361fc574bb38ec4c07594f4d63f14ecfc0ba0`, §§1–5 and §§8–12; [design synthesis](../dossiers/elden-ring/05-design-synthesis-and-openlegend.md), blob `a638d316c5b4a521d023898567c882e968506c60`, §§3–4. The scope is equipment, preparation, assistance, commitment and versioned difficulty, not every combat mechanism or boss.
+
+**Evidence and contribution:** Weapon actions, investment and compatibility affect which options become useful; Spirit Ashes can change openings through enemy attention; guard counters retain commitment risks. These support and qualify [COMBAT-L005](combat-and-encounters.md#combat-l005): skilled execution can amplify a changing tactical choice while preparation and assistance supply other forms of competence. The final-boss changes in patch 1.14 distinguish moves, damage, stamina pressure, range and visibility. The guide preserves those separate demands and the limits of an individual favorable reaction. Its [ordinary-hunt example](combat-and-encounters.md#complete-situations-and-cross-topic-consequences) routes the preparation question into an existing OpenLegend qualification.
+
+**Evidence limits:** Attributed enjoyment and official changes do not establish prevalence, isolated causality or sales effects. A solo duel and an assisted attempt are different tasks. Spirit Ash behavior does not establish how an independent OpenLegend character should choose to help. The guide links ND38's completed design and open delivery/qualification at pinned current main `63263abd72e85f4c180cf7d7c5b7bb1bfbefe086`; CTR and ASE retain their existing finite scopes.
+
+### EXPLORE--elden-ring
+
+**Identity and scope:** G75 Elden Ring, EXPLORE. [World, exploration, narrative and presentation](../dossiers/elden-ring/02-world-exploration-and-narrative.md), blob `33982b0ce93ff7c5b645295c0a522172ee3e1464`, §§1–3, especially §§2.1, 2.3 and 2.6, and §5.2's Alexander/Jar-Bairn case. The transfer chapter remains a route to broader proposals, not a blanket assessment of every topic it discusses.
+
+**Evidence and contribution:** Landmarks, partial maps, Stormveil's different approaches and the expansion's visible but indirectly accessible plateaus support [EXPLORE-L001](exploration-and-world-design.md#explore-l001): a destination can invite intention while leaving a useful route question to solve. The frustration of an uninferable or forgotten connection qualifies that benefit. Different local rules in Sainted Hero's Grave and Leyndell Catacombs support [EXPLORE-L002](exploration-and-world-design.md#explore-l002): reused architecture can change decisions, but novelty still has an attention cost and does not invalidate repetition complaints. Exploring elsewhere to change a blocked plan, and carrying Alexander's remains onward to Jar-Bairn, support [EXPLORE-L003](exploration-and-world-design.md#explore-l003): practical use, attachment and history can give a discovery value beyond collection or repeatable loot. OpenLegend applications route to existing AV01, CF05 and discoverable-history owners, preserving what is delivered and what remains unqualified.
+
+**Evidence limits:** Authored route and quest examples do not establish procedural exploration quality, very large persistent-map behavior, multiplayer discovery races or autonomous settlement change. Named reactions identify experiences rather than their prevalence. The comparison does not prove OpenLegend's uncoached enjoyment or balance, or complete CF05's ordinary encounter with independent opposition and willing assistance. No new design identity or implementation project follows from this scoped incorporation.
+
+**Review:** Both guide diffs were inspected against these source scopes; source-to-lesson links and added assessment anchors were checked. Existing lesson IDs and unrelated source/topic cells are preserved. Design ownership, delivered behavior and player-experience evidence remain separate.

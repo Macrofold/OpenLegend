@@ -1,59 +1,55 @@
-import {
-  awarenessMemory,
-  experienceManifest,
-  validateExperienceManifest,
-  type ExperienceManifest,
-} from '@open-legend/domain';
-import { experienceManifestForModel, gameTime } from './recall.js';
-import { memoryMeaningForModel } from './experience-context.js';
-import { entityGet } from '@open-legend/domain';
-import type { CognitionPreparation } from './memory-repository.js';
 import { z } from 'zod';
-import { observerDescription, recognizesSubject, type WorldState } from '@open-legend/domain';
+import {
+  entityGet,
+  observerDescription,
+  recognizesSubject,
+  experienceReading,
+  experienceSourceReference,
+  experienceSourceKey,
+  experienceManifest,
+  validExperienceSummary,
+  type WorldState,
+  type ExperienceEntry,
+  type ExperienceSummary,
+} from '@open-legend/domain';
 import type { GenerateRequest } from '@open-legend/ai';
-import { entityHandle, projectEntityMarkers } from './entity-references.js';
+import { entityHandle } from './entity-references.js';
 import { memoryCandidate } from './recall.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { digest } from './store.js';
 import type { WorldService } from './world-service.js';
 import {
-  MemoryPreparationError,
   conversationCompactionKey,
   RETRIEVAL_BYTES,
   RETRIEVAL_ROWS,
+  type CognitionPreparation,
   type ConversationSource,
   type CurrentMemorySource,
   type MemoryScope,
 } from './memory-repository.js';
 
-// Request policy, not fictional forgetting. Replace only behind this boundary.
-// docs/projects/completed/conversation-compaction-tech-design.md#14-extension-seam
-// Byte/cold-work rationale: docs/limits/narration.md#la236
-const CONVERSATION_COMPACTOR_VERSION = 'conversation-prose-v9';
+// Request bounds, never fictional forgetting or a social membership.
+// docs/projects/speech-and-social-perception-tech-design.md#compaction-remains-a-derived-read
+const CONVERSATION_COMPACTOR_VERSION = 'actor-structured-speech';
 const CONVERSATION_BYTES = 24000;
 const SUMMARY_BYTES = 6000;
 const INPUT_BYTES = 24000;
 const MAX_COMPACTION_CALLS = 8;
+// At most the existing compaction inputs plus the exact suffix can be useful here.
+export const CONVERSATION_PREPARATION_BYTES = Math.min(
+  RETRIEVAL_BYTES,
+  INPUT_BYTES * MAX_COMPACTION_CALLS + CONVERSATION_BYTES,
+);
 const summarySchema = z.object({ summary: z.string().min(1) }).strict();
 const cacheSchema = z
   .object({
     version: z.string(),
     generation: z.string(),
+    fromSequence: z.number().int().nonnegative(),
     through: z.number().int().nonnegative(),
     sourceDigest: z.string(),
     perspective: z.string(),
-    entityIds: z.array(z.string()),
-    references: z.array(z.string()),
-    summary: z.string(),
-    manifest: z.custom<ExperienceManifest>((value) => {
-      try {
-        validateExperienceManifest(value);
-        return true;
-      } catch {
-        return false;
-      }
-    }),
-    coveredBytes: z.number().int().nonnegative(),
+    value: z.custom<ExperienceSummary>(),
   })
   .strict();
 type Compaction = z.infer<typeof cacheSchema>;
@@ -75,65 +71,10 @@ Favor recall and continuity before brevity or elegant prose, within the byte all
 function conversationText(lines: string[]): string {
   return lines.map((line) => `- ${line.replace(/\n/g, '\n  ')}`).join('\n');
 }
-const bytes = (lines: string[]) => Buffer.byteLength(conversationText(lines));
-const joinedBytes = (prefix: number, suffix: number) =>
-  prefix + suffix + (prefix && suffix ? 1 : 0);
-const summaryLine = (summary: string, structure: unknown) =>
-  `Summary of older personally experienced speech (derived, not authoritative). “The memory owner” means you, the responding actor; other speakers are distinct people:\n${summary}\nStructured original attribution: ${JSON.stringify(structure)}`;
-/** Equal roles, locations and field names are stated once within this selected view.
- * Exact variable values remain per turn; original native bodies stay unchanged. Arrays
- * are explicitly tagged so authored words cannot collide with formatting references. */
-function conversationLines(
-  turns: readonly { text: string; label: string; meaning: unknown }[],
-): string[] {
-  if (!turns.length) return [];
-  const shapes = new Map<string, { keys: string[]; count: number; common: Map<string, string> }>();
-  // JSON is the model boundary: omitted optional fields have no tuple positions.
-  const values: unknown[] = turns.map((turn) => JSON.parse(JSON.stringify(turn.meaning)));
-  const count = (value: unknown) => {
-    if (!value || typeof value !== 'object') return;
-    if (!Array.isArray(value)) {
-      const keys = Object.keys(value),
-        key = JSON.stringify(keys),
-        prior = shapes.get(key);
-      const common = new Map(
-        keys.map((field) => [field, JSON.stringify((value as Record<string, unknown>)[field])]),
-      );
-      if (prior)
-        for (const [field, body] of prior.common)
-          if (common.get(field) !== body) prior.common.delete(field);
-      shapes.set(key, prior ? { ...prior, count: prior.count + 1 } : { keys, count: 1, common });
-    }
-    for (const child of Object.values(value)) count(child);
-  };
-  for (const value of values) count(value);
-  const fields = [...shapes.values()].map((shape) => ({
-    fields: shape.keys.filter((key) => shape.count === 1 || !shape.common.has(key)),
-    constants:
-      shape.count === 1
-        ? {}
-        : Object.fromEntries([...shape.common].map(([key, value]) => [key, JSON.parse(value)])),
-  }));
-  const fieldIds = new Map([...shapes.keys()].map((key, index) => [key, index]));
-  const encode = (value: unknown): unknown => {
-    if (!value || typeof value !== 'object') return value;
-    if (Array.isArray(value)) return ['array', ...value.map(encode)];
-    const id = fieldIds.get(JSON.stringify(Object.keys(value)))!;
-    return [
-      'object',
-      id,
-      ...fields[id]!.fields.map((field) => encode((value as Record<string, unknown>)[field])),
-    ];
-  };
-  const lines = turns.map(
-    (turn, index) => `${turn.label} ${JSON.stringify(encode(values[index]))}`,
-  );
-  lines[0] = `Exact conversation formatting: ${JSON.stringify({ encoding: 'Objects are [object, field-set index, values in field order]; merge the field set constants. Arrays are [array, items].', fields })}\n${lines[0]}`;
-  const expanded = turns.map((turn) => turn.text);
-  return bytes(lines) < bytes(expanded) ? lines : expanded;
+function projectionBytes(lines: string[], experience: unknown[]): number {
+  return Buffer.byteLength(conversationText(lines)) + Buffer.byteLength(JSON.stringify(experience));
 }
 function perspective(world: WorldState, actorId: string, entityIds: string[]): string {
-  if (!entityIds.length) return digest([]);
   return digest(
     entityIds.map((id) => {
       const known = recognizesSubject(world, actorId, id);
@@ -149,13 +90,9 @@ function perspective(world: WorldState, actorId: string, entityIds: string[]): s
     }),
   );
 }
-function sourceDigest(sources: ConversationSource[], through: number) {
-  return digest(sources.filter((source) => source.sequence <= through));
-}
 
-/** The only model-facing conversation owner. Resolve scope before summarization;
- * callers never get unrestricted transcripts or choose their own truncation policy.
- */
+/** One actor/source owner for optional dialogue. Complete required causes travel
+ * independently; unrelated retained speech cannot make their decision unavailable. */
 export async function buildConversationContext(input: {
   service: WorldService;
   actorId: string;
@@ -167,158 +104,134 @@ export async function buildConversationContext(input: {
   generate?: ConversationGenerate;
   preparation?: CognitionPreparation;
 }) {
-  const { service, actorId, requiredIds, signal } = input;
-  const world = service.world;
-  const generation = service.generation;
+  const { service, actorId, signal } = input;
+  const world = service.world,
+    generation = service.generation;
   const repository = service.store.memories;
   const head = input.preparation?.scope ?? (await service.store.records?.head());
   const scope: MemoryScope | undefined =
     input.preparation?.scope ??
     (head ? { worldId: world.id, actorId, generation: head.generation } : undefined);
-  const required = new Set(requiredIds);
-  const resident = world.experience?.awareness[actorId] ?? [];
-  const residentSources = (state: WorldState, conversationId: string | undefined) => {
+  const required = new Set(input.requiredIds);
+  const residentSources = (state: WorldState) => {
     const forgotten = new Set(state.experience?.forgotten[actorId] ?? []);
-    return (state.experience?.awareness[actorId] ?? [])
-      .filter(
-        (entry) =>
-          conversationId &&
-          hasLinguisticSpeech(entry) &&
-          !forgotten.has(entry.eventId) &&
-          service.worldEvent(entry.eventId)?.type === 'speech' &&
-          service.worldEvent(entry.eventId)?.conversationId === conversationId,
-      )
-      .sort((a, b) => a.sequence - b.sequence)
-      .map(
-        (entry): ConversationSource => ({
-          id: entry.eventId,
-          revision: digest(entry),
-          sequence: entry.sequence,
-          correction: state.experience?.corrections?.[actorId]?.[entry.eventId] ?? '',
-        }),
-      );
+    const all = (state.experience?.awareness[actorId] ?? [])
+      .filter((entry) => hasLinguisticSpeech(entry) && !forgotten.has(entry.eventId))
+      .sort((a, b) => b.sequence - a.sequence || b.eventId.localeCompare(a.eventId));
+    const sources: ConversationSource[] = [];
+    let bytes = 0;
+    for (const entry of all) {
+      const bodyBytes = Buffer.byteLength(JSON.stringify(entry));
+      if (sources.length === RETRIEVAL_ROWS || bytes + bodyBytes > CONVERSATION_PREPARATION_BYTES)
+        return { sources: sources.reverse(), more: true };
+      bytes += bodyBytes;
+      sources.push({
+        id: entry.eventId,
+        revision: digest(entry),
+        sequence: entry.sequence,
+        correction: state.experience?.corrections?.[actorId]?.[entry.eventId] ?? '',
+        bodyBytes,
+      });
+    }
+    return { sources: sources.reverse(), more: false };
   };
-  const trigger = [...resident]
-    .reverse()
-    .find(
-      (entry) =>
-        required.has(entry.eventId) && service.worldEvent(entry.eventId)?.type === 'speech',
-    );
-  const active = world.conversations?.active[actorId];
-  const fallbackConversation =
-    active ?? (trigger && service.worldEvent(trigger.eventId)?.conversationId);
   const snapshot =
     input.preparation?.conversation ??
     (repository && scope
-      ? await repository.context(scope, requiredIds, input.includeConversation, active)
+      ? await repository.context(
+          scope,
+          input.requiredIds,
+          input.includeConversation,
+          CONVERSATION_PREPARATION_BYTES,
+        )
       : {
-          sequence: resident.reduce((maximum, entry) => Math.max(maximum, entry.sequence), 0),
-          conversationId: input.includeConversation ? fallbackConversation : undefined,
-          sources: input.includeConversation ? residentSources(world, fallbackConversation) : [],
+          sequence: (world.experience?.awareness[actorId] ?? []).reduce(
+            (latest, entry) => Math.max(latest, entry.sequence),
+            0,
+          ),
+          ...(input.includeConversation ? residentSources(world) : { sources: [], more: false }),
         });
-  if (snapshot.sources.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
-  const { conversationId, sources, sequence } = snapshot;
+  const sources = snapshot.sources;
   const maxBytes = Math.max(0, Math.min(CONVERSATION_BYTES, Math.floor(input.maxBytes)));
-  const summaryBytes = Math.min(SUMMARY_BYTES, Math.floor(maxBytes / 4));
-  const key = conversationCompactionKey(world.id, actorId, conversationId ?? '');
-  const saved = conversationId ? await service.store.getIntegration(key) : undefined;
+  const key = conversationCompactionKey(world.id, actorId);
+  const saved = input.includeConversation ? await service.store.getIntegration(key) : undefined;
   const parsed = cacheSchema.safeParse(saved);
   let cached: Compaction | undefined = parsed.success ? parsed.data : undefined;
   if (
     cached &&
     (cached.version !== CONVERSATION_COMPACTOR_VERSION ||
       cached.generation !== scope?.generation ||
-      cached.through > sequence ||
-      !sources.some((source) => source.sequence === cached!.through) ||
-      sourceDigest(sources, cached.through) !== cached.sourceDigest ||
-      perspective(world, actorId, cached.entityIds) !== cached.perspective ||
-      Buffer.byteLength(cached.summary) > summaryBytes)
+      !validExperienceSummary(cached.value, actorId) ||
+      cached.sourceDigest !== digest(cached.value.sources) ||
+      perspective(world, actorId, cached.value.entityIds) !== cached.perspective ||
+      Buffer.byteLength(cached.value.text) > SUMMARY_BYTES ||
+      !repository ||
+      !scope ||
+      !(await repository.currentCompactionSources(scope, cached.value.sources)))
   )
     cached = undefined;
 
-  const load = async (selected: ConversationSource[]) => {
-    const residentById =
-      repository && scope ? undefined : new Map(resident.map((entry) => [entry.eventId, entry]));
-    const entries =
-      repository && scope
-        ? await repository.evidence(
-            scope,
-            selected.map((source) => source.id),
-            input.preparation?.bodies,
-          )
-        : selected.flatMap((source) => {
-            const aware = residentById?.get(source.id);
-            return aware
-              ? [
-                  {
-                    awareness: aware,
-                    revision: source.revision,
-                    entry: { source: 'awareness' as const, value: aware },
-                    memory: awarenessMemory(aware),
-                  },
-                ]
-              : [];
-          });
-    const byId = new Map(entries.map((entry) => [entry.memory.id, entry]));
-    let preparedBytes = 0;
-    const noIds = new Set<string>();
-    return selected.map((source) => {
-      const entry = byId.get(source.id);
-      if (!entry?.awareness || entry.revision !== source.revision)
-        throw new Error('Conversation sources changed during preparation.');
-      // SQL already admitted source bytes before hydration; only custom stores
-      // need a resident-source check here.
-      if (!repository || !scope) {
-        preparedBytes += Buffer.byteLength(JSON.stringify(entry.awareness));
-        if (preparedBytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
-      }
-      const candidate = memoryCandidate(
-        entry.memory,
-        world,
-        actorId,
-        noIds,
-        noIds,
-        noIds,
-        {},
-        noIds,
-        entry.awareness,
-      );
-      const text = projectEntityMarkers(candidate.text, world, actorId);
-      return {
-        ...source,
-        prepared: {
-          entry: { source: 'awareness' as const, value: entry.awareness },
-          ref: { kind: 'awareness' as const, id: source.id, revision: source.revision },
-        },
-        at: entry.memory.at,
-        text,
-        label: `${gameTime(entry.memory.at, world.statusEffectPolicy.clockOffsetHours)} [${entry.memory.source}]:`,
-        meaning: memoryMeaningForModel(world, actorId, entry.memory),
-        references: candidate.entityIds,
-        entityIds: [
-          ...new Set([
-            ...entry.awareness.entityIds,
-            ...(entry.awareness.sourceId ? [entry.awareness.sourceId] : []),
-            ...(entry.awareness.targetId ? [entry.awareness.targetId] : []),
-          ]),
-        ],
-      };
-    });
+  const noIds = new Set<string>();
+  const project = (entry: ExperienceEntry) =>
+    memoryCandidate(
+      experienceReading(entry, actorId),
+      world,
+      actorId,
+      noIds,
+      noIds,
+      noIds,
+      {},
+      noIds,
+      entry,
+    );
+  const selected = sources.filter((source) => source.sequence > (cached?.through ?? -1));
+  const entries =
+    repository && scope
+      ? await repository.evidence(
+          scope,
+          selected.map((source) => source.id),
+          input.preparation?.bodies,
+        )
+      : (world.experience?.awareness[actorId] ?? [])
+          .filter((entry) => selected.some((source) => source.id === entry.eventId))
+          .map((entry) => ({
+            entry: { source: 'awareness' as const, value: entry },
+            revision: digest(entry),
+          }));
+  const byId = new Map(
+    entries.map((entry) => [
+      entry.entry.source === 'awareness' ? entry.entry.value.eventId : '',
+      entry,
+    ]),
+  );
+  const turns = selected.map((source) => {
+    const sourceEntry = byId.get(source.id);
+    if (
+      !sourceEntry ||
+      sourceEntry.entry.source !== 'awareness' ||
+      sourceEntry.revision !== source.revision
+    )
+      throw new Error('Selected personal speech changed during preparation.');
+    const candidate = project(sourceEntry.entry);
+    return {
+      ...source,
+      entry: sourceEntry.entry,
+      text: candidate.text,
+      experience: candidate.experience ?? [],
+      references: candidate.entityIds,
+    };
+  });
+  type Turn = (typeof turns)[number];
+  const optional = turns.filter((turn) => !required.has(turn.id));
+  const summaryProjection = (value: Compaction | undefined) => {
+    if (!value) return undefined;
+    const candidate = project({ source: 'summary', value: value.value });
+    return {
+      text: `Older personally experienced speech (derived, with exact source coverage): ${candidate.text}`,
+      experience: candidate.experience ?? [],
+      references: candidate.entityIds,
+    };
   };
-  let turns = await load(sources.filter((source) => source.sequence > (cached?.through ?? -1)));
-  // A smaller retained source set or larger allowance can make raw speech fit again.
-  if (
-    cached &&
-    joinedBytes(cached.coveredBytes, bytes(turns.map((turn) => turn.text))) <= maxBytes
-  ) {
-    cached = undefined;
-    turns = await load(sources);
-  }
-  const perspectiveIds = [
-    ...new Set([...(cached?.entityIds ?? []), ...turns.flatMap((turn) => turn.entityIds)]),
-  ];
-  const expectedPerspective = perspective(world, actorId, perspectiveIds);
-  const expectedSources = digest(sources);
   const privacy = (state: WorldState) =>
     digest({
       forgotten: state.experience?.forgotten[actorId] ?? [],
@@ -326,234 +239,286 @@ export async function buildConversationContext(input: {
     });
   const privacyRevision = privacy(world);
   let checkedWorld = new WeakRef(world);
+  let boundSources: ConversationSource[] = [];
+  let usedCache: Compaction | undefined;
+  let boundEntities: string[] = [];
+  let expectedPerspective = '';
   const assertCurrent = () => {
     signal.throwIfAborted();
     if (service.generation !== generation)
-      throw new Error('World restored during conversation compaction.');
-    // WorldService publishes immutable snapshots. Repeated SQL awaits need fresh
-    // cancellation checks, but an unchanged world needs no repeated rendering/hash.
+      throw new Error('World restored during speech preparation.');
     if (service.world !== checkedWorld.deref()) {
       if (privacy(service.world) !== privacyRevision)
-        throw new Error('Conversation disclosure changed during compaction.');
-      if (expectedPerspective !== perspective(service.world, actorId, perspectiveIds))
-        throw new Error('Conversation perspective changed during compaction.');
+        throw new Error('Personal speech disclosure changed.');
       if (
-        (!repository || !scope) &&
-        sourceDigest(residentSources(service.world, conversationId), sequence) !== expectedSources
+        expectedPerspective &&
+        perspective(service.world, actorId, boundEntities) !== expectedPerspective
       )
-        throw new Error('Conversation sources changed during compaction.');
+        throw new Error('Selected speech perspective changed.');
+      if (!repository || !scope) {
+        const current = new Map(
+          residentSources(service.world).sources.map((source) => [source.id, source]),
+        );
+        if (boundSources.some((source) => current.get(source.id)?.revision !== source.revision))
+          throw new Error('Selected personal speech changed.');
+      }
       checkedWorld = new WeakRef(service.world);
     }
   };
   const check = async (flush = true, additionalSources: CurrentMemorySource[] = []) => {
-    signal.throwIfAborted();
     if (flush) await service.flushMemorySources(actorId, false);
     assertCurrent();
-    if (repository && scope && (conversationId || additionalSources.length)) {
-      // Every await gets a fresh snapshot. Actor publication detects a read/write
-      // race, while SQL membership and assertCurrent cover history and perspective.
+    if (repository && scope) {
       for (let read = 0; read < 2; read++) {
-        const revision = repository.actorRevision(actorId);
-        const historyEpoch = service.historyEpoch;
+        const revision = repository.actorRevision(actorId),
+          historyEpoch = service.historyEpoch;
         const valid = await repository.validatePreparation(
           scope,
-          conversationId ? { id: conversationId, sequence, sources } : undefined,
+          { sequence: 0, sources: boundSources },
           additionalSources,
         );
+        const coverage =
+          !usedCache || (await repository.currentCompactionSources(scope, usedCache.value.sources));
         assertCurrent();
-        if (!valid) throw new Error('Conversation or recall sources changed during preparation.');
+        if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
         if (repository.actorRevision(actorId) === revision && service.historyEpoch === historyEpoch)
           return;
       }
-      throw new Error('Conversation sources changed during validation.');
+      throw new Error('Personal speech changed during validation.');
     }
   };
-  let calls = 0;
-  const fullLines = conversationLines(turns.filter((turn) => !required.has(turn.id)));
-  let lines = cached
-    ? [
-        summaryLine(cached.summary, experienceManifestForModel(world, actorId, cached.manifest)),
-        ...fullLines,
-      ]
-    : fullLines;
-  if (bytes(lines) > maxBytes) {
-    if (!input.generate || !repository || !scope || !conversationId)
-      throw new Error(
-        `Conversation compaction required but unavailable (${bytes(lines)} of ${maxBytes} bytes); no speech was omitted.`,
-      );
-    if (summaryBytes < 256)
-      throw new Error('Insufficient conversation allowance for a faithful summary.');
-    // Reserve summary formatting overhead, then keep a contiguous exact suffix.
-    const tailAllowance = maxBytes - summaryBytes - 512;
-    let split = turns.length;
-    let tailBytes = 0;
-    while (split > 0) {
-      const turn = turns[split - 1]!;
-      const size = required.has(turn.id) ? 0 : bytes([turn.text]) + 1;
-      if (tailBytes + size > tailAllowance) break;
-      tailBytes += size;
-      split--;
-    }
-    const older = turns.slice(0, split);
-    const manifest = experienceManifest(
-      older.map((turn) => turn.prepared),
-      cached ? [cached.manifest] : [],
-    );
-    const structure = experienceManifestForModel(world, actorId, manifest);
-    if (
-      Buffer.byteLength(JSON.stringify(manifest)) > RETRIEVAL_BYTES ||
-      bytes([summaryLine('', structure)]) > maxBytes - 256
-    )
-      throw new MemoryPreparationError();
-    if (!older.length) throw new Error('Conversation summary does not fit its allowance.');
-    const recent = conversationLines(turns.slice(split).filter((turn) => !required.has(turn.id)));
-    const chunks: (typeof older)[] = [];
-    let chunk: typeof older = [];
-    let chunkBytes = 2; // JSON array delimiters; the per-turn comma count is conservative.
-    for (const turn of older) {
-      const size =
-        Buffer.byteLength(
-          JSON.stringify({
-            text: turn.text,
-            attribution: experienceManifestForModel(
-              world,
-              actorId,
-              experienceManifest([turn.prepared]),
-            ),
-          }),
-        ) + 1;
-      if (size + 2 > INPUT_BYTES)
-        throw new Error('One speech turn exceeds compaction input capacity.');
-      if (chunkBytes + size > INPUT_BYTES) {
-        chunks.push(chunk);
-        chunk = [];
-        chunkBytes = 2;
-      }
-      chunk.push(turn);
-      chunkBytes += size;
-    }
-    if (chunk.length) chunks.push(chunk);
-    if (chunks.length > MAX_COMPACTION_CALLS)
-      throw new Error(
-        'Conversation compaction exceeds per-decision preparation capacity; no speech was omitted.',
-      );
-    let summary = cached?.summary ?? '';
-    await check();
-    for (const [index, part] of chunks.entries()) {
-      signal.throwIfAborted();
-      // Shape, byte and identity-marker checks cannot certify faithful meaning.
-      // Attribution and recall still depend on the prompt and model qualification:
-      // docs/projects/completed/conversation-compaction-tech-design.md#5-enforcement-model-hard-invariants-versus-compaction-quality-requirements
-      const output = summarySchema.parse(
-        await input.generate(
-          {
-            actorScope: actorId,
-            execution: 'fast',
-            task: 'conversation_compaction',
-            // Smaller routes invented disagreements in overheard dialogue. Reuse the
-            // configured reasoning route after live qualification: docs/verification/conversation-compaction.md#conversation-compaction.
-            model: service.config.macrofoldKey
-              ? service.config.macrofoldComplexModel
-              : service.config.complexModel,
-            reasoningEffort: 'low',
-            maxOutputTokens: 4096,
-            instructions: `${instructions}\nThe summary must fit ${summaryBytes} UTF-8 bytes.`,
-            context: {
-              previousSummary: summary,
-              olderDialogue: part.map((turn) => ({
-                text: turn.text,
-                attribution: experienceManifestForModel(
-                  world,
-                  actorId,
-                  experienceManifest([turn.prepared]),
-                ),
-              })),
-            },
-            schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
-          },
-          `attempt:${input.attempt}:conversation-compaction:${index}`,
-        ),
-      );
-      calls++;
-      if (!output.summary.trim() || Buffer.byteLength(output.summary) > summaryBytes)
-        throw new Error('Conversation compactor returned an empty or oversized summary.');
-      const markers = (text: string) =>
-        [...text.matchAll(/\(ID:([^()\s]+)\)/g)].map((match) => match[1]);
-      const permittedMarkers = new Set(
-        markers([summary, ...part.map((turn) => turn.text)].join('\n')),
-      );
-      if (markers(output.summary).some((marker) => !permittedMarkers.has(marker)))
-        throw new Error('Conversation compactor invented an identity reference.');
-      summary = output.summary;
-      await check();
-    }
-    const through = older.at(-1)!.sequence;
-    const entityIds = [
-      ...new Set([...(cached?.entityIds ?? []), ...older.flatMap((turn) => turn.entityIds)]),
+  const deriveSummary = (
+    part: Turn[],
+    previous: Compaction | undefined,
+    text: string,
+  ): ExperienceSummary => {
+    const sourceEntries = part.map((turn) => turn.entry);
+    const references = [
+      ...(previous?.value.sources ?? []),
+      ...sourceEntries.map(experienceSourceReference),
     ];
-    const next: Compaction = {
-      version: CONVERSATION_COMPACTOR_VERSION,
-      generation: scope.generation,
-      through,
-      sourceDigest: sourceDigest(sources, through),
-      perspective: perspective(world, actorId, entityIds),
-      entityIds,
-      references: [
-        ...new Set([...(cached?.references ?? []), ...older.flatMap((turn) => turn.references)]),
+    const value: ExperienceSummary = {
+      id: `dialogue-${digest([world.id, actorId]).slice(0, 24)}`,
+      text,
+      from: Math.min(
+        previous?.value.from ?? Infinity,
+        ...sourceEntries.map((entry) => entry.value.at),
+      ),
+      to: Math.max(previous?.value.to ?? 0, ...sourceEntries.map((entry) => entry.value.at)),
+      sources: references,
+      manifest: experienceManifest(
+        sourceEntries.map((entry) => ({ entry, ref: experienceSourceReference(entry) })),
+        previous ? [previous.value.manifest] : [],
+      ),
+      entityIds: [
+        ...new Set([
+          ...(previous?.value.entityIds ?? []),
+          ...sourceEntries.flatMap((entry) => entry.value.entityIds),
+        ]),
       ],
-      summary,
-      manifest,
-      coveredBytes: joinedBytes(cached?.coveredBytes ?? 0, bytes(older.map((turn) => turn.text))),
+      importance: Math.max(
+        previous?.value.importance ?? 0,
+        ...sourceEntries.map((entry) => entry.value.importance),
+      ),
     };
-    lines = [summaryLine(summary, structure), ...recent];
-    if (bytes(lines) > maxBytes) throw new Error('Compacted conversation exceeds its allowance.');
-    await repository.publishConversationCompaction(
-      scope,
-      conversationId,
-      sequence,
-      sources,
-      saved,
-      next,
-      assertCurrent,
-    );
-    cached = next;
+    if (!validExperienceSummary(value, actorId))
+      throw new Error('Optional speech coverage exceeds its bounded format.');
+    return value;
+  };
+  const summaryAllowance = Math.min(SUMMARY_BYTES, Math.floor(maxBytes / 4));
+  const fit = (summary: Compaction | undefined) => {
+    let older = summaryProjection(summary);
+    // A native attribution manifest also consumes input: prose size alone is insufficient.
+    if (older && projectionBytes([older.text], older.experience) > summaryAllowance)
+      older = undefined;
+    const recent: Turn[] = [];
+    for (let i = optional.length - 1; i >= 0; i--) {
+      const proposed = [optional[i]!, ...recent];
+      if (
+        projectionBytes(
+          [...(older ? [older.text] : []), ...proposed.map((turn) => turn.text)],
+          [...(older?.experience ?? []), ...proposed.flatMap((turn) => turn.experience)],
+        ) > maxBytes
+      )
+        break;
+      recent.unshift(optional[i]!);
+    }
+    return { recent, older };
+  };
+  let fitted = fit(cached),
+    calls = 0,
+    compactionFailure: string | null = null;
+  const older = optional.slice(0, optional.length - fitted.recent.length);
+  if (older.length && input.generate && repository && scope && maxBytes >= 1024) {
+    // Optional work uses the same existing source/input/call bounds. Failure keeps
+    // the previous valid artifact and exact recent suffix, never a prose-only source.
+    try {
+      let previous = cached;
+      let pending = [...older];
+      while (pending.length && calls < MAX_COMPACTION_CALLS) {
+        const part: Turn[] = [];
+        const prefix = summaryProjection(previous);
+        while (pending.length) {
+          const next = pending[0]!;
+          const context = {
+            previousSummary: prefix ? { text: prefix.text, experience: prefix.experience } : null,
+            olderDialogue: [...part, next].map((turn) => ({
+              text: turn.text,
+              experience: turn.experience,
+            })),
+          };
+          if (Buffer.byteLength(JSON.stringify(context)) > INPUT_BYTES) break;
+          const proposed = deriveSummary([...part, next], previous, 'Summary pending.');
+          const proposedProjection = summaryProjection({ ...previous!, value: proposed })!;
+          if (
+            projectionBytes([proposedProjection.text], proposedProjection.experience) + 512 >
+            summaryAllowance
+          )
+            break;
+          part.push(pending.shift()!);
+        }
+        if (!part.length) break;
+        const native = deriveSummary(part, previous, 'Summary pending.');
+        const nativeProjection = summaryProjection({ ...previous!, value: native })!;
+        const textBytes = Math.min(
+          SUMMARY_BYTES,
+          Math.floor(
+            (summaryAllowance -
+              projectionBytes([nativeProjection.text], nativeProjection.experience)) /
+              2,
+          ),
+        );
+        boundSources = [...boundSources, ...part];
+        usedCache = previous;
+        boundEntities = [
+          ...new Set([
+            ...(previous?.value.entityIds ?? []),
+            ...boundSources.flatMap((source) => byId.get(source.id)!.entry.value.entityIds),
+          ]),
+        ];
+        expectedPerspective = perspective(world, actorId, boundEntities);
+        checkedWorld = new WeakRef(world);
+        await check();
+        const output = summarySchema.parse(
+          await input.generate(
+            {
+              actorScope: actorId,
+              execution: 'fast',
+              task: 'conversation_compaction',
+              model: service.config.macrofoldKey
+                ? service.config.macrofoldComplexModel
+                : service.config.complexModel,
+              reasoningEffort: 'low',
+              maxOutputTokens: 4096,
+              instructions: `${instructions}\nThe summary must fit ${textBytes} UTF-8 bytes.`,
+              context: {
+                previousSummary: prefix
+                  ? { text: prefix.text, experience: prefix.experience }
+                  : null,
+                olderDialogue: part.map((turn) => ({
+                  text: turn.text,
+                  experience: turn.experience,
+                })),
+              },
+              schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
+            },
+            `attempt:${input.attempt}:conversation-compaction:${calls++}`,
+          ),
+        );
+        if (!output.summary.trim() || Buffer.byteLength(output.summary) > textBytes)
+          throw new Error('Optional speech summary is empty or oversized.');
+        const value = { ...native, text: output.summary };
+        if (!validExperienceSummary(value, actorId))
+          throw new Error('Optional speech coverage exceeds its bounded format.');
+        const next: Compaction = {
+          version: CONVERSATION_COMPACTOR_VERSION,
+          generation: scope.generation,
+          fromSequence: previous?.fromSequence ?? part[0]!.sequence,
+          through: part.at(-1)!.sequence,
+          sourceDigest: digest(value.sources),
+          perspective: perspective(world, actorId, value.entityIds),
+          value,
+        };
+        // If structural attribution cannot fit, do not pay to expand it further.
+        const projected = summaryProjection(next)!;
+        if (projectionBytes([projected.text], projected.experience) > summaryAllowance) break;
+        previous = next;
+      }
+      if (previous && previous !== cached) {
+        usedCache = previous;
+        await check();
+        await repository.publishConversationCompaction(
+          scope,
+          boundSources,
+          previous.value.sources,
+          saved,
+          previous,
+          assertCurrent,
+        );
+        cached = previous;
+        // Newly summarized entries are no longer duplicated in the exact suffix.
+        for (let i = optional.length - 1; i >= 0; i--)
+          if (optional[i]!.sequence <= previous.through) optional.splice(i, 1);
+      }
+    } catch (error) {
+      signal.throwIfAborted();
+      compactionFailure =
+        error instanceof Error ? error.message : 'Optional speech compaction unavailable.';
+    }
+    fitted = fit(cached);
   }
+  const recent = fitted.recent,
+    summary = fitted.older;
+  usedCache = summary ? cached : undefined;
+  boundSources = recent;
+  boundEntities = [
+    ...new Set([
+      ...(usedCache?.value.entityIds ?? []),
+      ...recent.flatMap((turn) => turn.entry.value.entityIds),
+    ]),
+  ];
+  expectedPerspective = perspective(world, actorId, boundEntities);
+  checkedWorld = new WeakRef(world);
   await check();
-  const recentSources = turns.filter(
-    (turn) => turn.sequence > (cached?.through ?? -1) && !required.has(turn.id),
-  );
+  const lines = [...(summary ? [summary.text] : []), ...recent.map((turn) => turn.text)];
+  const experience = [...(summary?.experience ?? []), ...recent.flatMap((turn) => turn.experience)];
   return {
     lines,
-    // Exact turns keep their existing evidence bindings. Derived prose cannot
-    // grant a source capability for an individual claim compressed out of view.
-    evidenceIds: recentSources.map((turn) => turn.id),
-    watermark: recentSources.reduce((latest, turn) => Math.max(latest, turn.at), 0),
-    sourceIds: sources.map((source) => source.id),
-    entityIds: [
-      ...new Set([...(cached?.references ?? []), ...turns.flatMap((turn) => turn.references)]),
+    experience,
+    evidenceIds: recent.map((turn) => turn.id),
+    watermark: Math.max(usedCache?.value.to ?? 0, ...recent.map((turn) => turn.entry.value.at), 0),
+    sourceKeys: [
+      ...(usedCache?.value.sources.map(experienceSourceKey) ?? []),
+      ...recent.map((turn) => experienceSourceKey({ kind: 'awareness', id: turn.id })),
     ],
-    awarenessSequence: sequence,
+    entityIds: [
+      ...new Set([...(summary?.references ?? []), ...recent.flatMap((turn) => turn.references)]),
+    ],
+    awarenessSequence: snapshot.sequence,
     validate: check,
     diagnostics: {
-      conversationId: conversationId ?? null,
-      mode: cached ? 'compacted' : 'full',
-      permittedTurns: sources.length,
-      permittedBytes: joinedBytes(
-        cached?.coveredBytes ?? 0,
-        bytes(
-          turns.filter((turn) => turn.sequence > (cached?.through ?? -1)).map((turn) => turn.text),
+      mode: summary ? 'compacted' : 'exact-suffix',
+      selectedTurns: recent.length,
+      more:
+        snapshot.more ||
+        sources.some(
+          (source) =>
+            !required.has(source.id) &&
+            !recent.some((turn) => turn.id === source.id) &&
+            !usedCache?.value.sources.some((covered) => covered.id === source.id),
         ),
-      ),
-      throughAwarenessSequence: cached?.through ?? null,
-      summaryBytes: cached ? Buffer.byteLength(cached.summary) : 0,
-      recentBytes: bytes(lines.slice(cached ? 1 : 0)),
-      recentTurns: lines.length - (cached ? 1 : 0),
-      projectionBytes: bytes(lines),
+      summaryFromSequence: usedCache?.fromSequence ?? null,
+      summaryThroughSequence: usedCache?.through ?? null,
+      firstSequence: recent[0]?.sequence ?? null,
+      lastSequence: recent.at(-1)?.sequence ?? null,
+      summaryBytes: usedCache ? Buffer.byteLength(usedCache.value.text) : 0,
+      projectionBytes: projectionBytes(lines, experience),
       maxBytes,
       compactorVersion: CONVERSATION_COMPACTOR_VERSION,
       compactionCalls: calls,
-      summary: cached?.summary ?? null,
-      recent: lines.slice(cached ? 1 : 0),
+      compactionFailure,
+      summary: usedCache?.value.text ?? null,
+      recent: recent.map((turn) => turn.text),
       projection: conversationText(lines),
     },
   };

@@ -16,19 +16,60 @@ Borrow the reason a pattern works, not its theme, economic model, exact limits o
 
 ## Principle-to-evidence map
 
-| Decision to get right           | Current guidance                                                                                                                                | Supporting evidence and caution                                                   |
-| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
-| Searchable selection            | Choose an editable combobox or an intentionally opened searchable picker; prohibit invalid nested interactive elements, not the latter workflow | [Controls](controls.md#a-combobox-is-one-composite-control), F07/F08/S01          |
-| Disabled explanations           | Keep important reasons reachable; native disabled controls cannot rely on a keyboard-focus tooltip                                              | [Controls](controls.md#disabled-controls-and-reachable-explanations), S02/S11     |
-| Utility colors                  | Quiet clear/close styling preserves deliberate focus and forced colors                                                                          | [Controls](controls.md#clear-x-explicit-quiet-and-singular), S12                  |
-| Modal and child dismissal       | Modality bounds interaction; the active child handles its gesture before the parent                                                             | [World](world-interaction.md#one-owner-for-each-gesture), S04                     |
-| Adaptive layout                 | Preserve selected object, draft, filters and reading anchor when panes change                                                                   | [Foundations](foundations.md#adapt-the-task-not-just-the-boxes), S03/S08          |
-| Component composition           | Check prop/ref/ID forwarding, handler ordering, cancellation and installed-version behavior                                                     | [React](react.md#component-composition-must-preserve-behavior), S01/S05/S06       |
-| Persistence and performance     | Separate sharable navigation, private drafts and server truth; distinguish local feedback from completion and field INP                         | [System feedback](system-feedback.md), [UXL05](../limits/ui-ux.md#uxl05), S07/S15 |
-| Agent correction and reliance   | Communicate supported tasks, enable targeted edits and expose evidence without invented confidence                                              | [Chat](chat-and-invention.md), S16–S18                                            |
-| Inventory inspection and action | Distinguish focus, inspection, selection and execution; make comparison and bulk scope deliberate                                               | [Inventory](inventory.md), S09/S20                                                |
+| Decision to get right           | Current guidance                                                                                                                                | Supporting evidence and caution                                                        |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Player-facing meaning and voice | Speak naturally to the player; preserve facts, perspective and useful context across visible, spoken and generated text                         | [Language](player-facing-language.md), [W01–W06](#player-facing-language), [F06](#f06) |
+| Searchable selection            | Choose an editable combobox or an intentionally opened searchable picker; prohibit invalid nested interactive elements, not the latter workflow | [Controls](controls.md#a-combobox-is-one-composite-control), F07/F08/S01               |
+| Disabled explanations           | Keep important reasons reachable; native disabled controls cannot rely on a keyboard-focus tooltip                                              | [Controls](controls.md#disabled-controls-and-reachable-explanations), S02/S11          |
+| Utility colors                  | Quiet clear/close styling preserves deliberate focus and forced colors                                                                          | [Controls](controls.md#clear-x-explicit-quiet-and-singular), S12                       |
+| Modal and child dismissal       | Modality bounds interaction; the active child handles its gesture before the parent                                                             | [World](world-interaction.md#one-owner-for-each-gesture), S04                          |
+| Adaptive layout                 | Preserve selected object, draft, filters and reading anchor when panes change                                                                   | [Foundations](foundations.md#adapt-the-task-not-just-the-boxes), S03/S08               |
+| Component composition           | Check prop/ref/ID forwarding, handler ordering, cancellation and installed-version behavior                                                     | [React](react.md#component-composition-must-preserve-behavior), S01/S05/S06            |
+| Persistence and performance     | Separate sharable navigation, private drafts and server truth; distinguish local feedback from completion and field INP                         | [System feedback](system-feedback.md), [UXL05](../limits/ui-ux.md#uxl05), S07/S15      |
+| Agent correction and reliance   | Communicate supported tasks, enable targeted edits and expose evidence without invented confidence                                              | [Chat](chat-and-invention.md), S16–S18                                                 |
+| Inventory inspection and action | Distinguish focus, inspection, selection and execution; make comparison and bulk scope deliberate                                               | [Inventory](inventory.md), S09/S20                                                     |
 
 The topic chapters own these principles. This map locates their evidence rather than creating a competing specification. Existing aesthetics, save policy, authority and approved dimensions are not superseded by vendor examples.
+
+## Player-facing language
+
+The sources below were opened on **October 18, 2026 (UTC)**. These published UX, style and game-accessibility guidelines support the [language standard](player-facing-language.md); they are not an Open Legend usability study, a conformance certification or measured evidence of player preference. The specific perspective rules and examples are the project's application of the guidance. The accessible-name requirement is supported by WCAG's Label in Name criterion in [F06](#f06).
+
+### W01
+
+**Jakob Nielsen — 10 Usability Heuristics for User Interface Design.** [Original article](https://www.nngroup.com/articles/ten-usability-heuristics/), published April 24, 1994; page last reviewed January 30, 2024.
+
+The principle of matching the system to the real world calls for familiar user concepts instead of internal jargon. Consistent terminology, relevant feedback and useful plain-language errors support comprehension. Application: explain the player's experience and choices without requiring them to interpret simulation objects. This supports the reason for replacing “can kill this body”; it does not prescribe that exact replacement or require real-world physics in an authored world.
+
+### W02
+
+**Microsoft Writing Style Guide — Person.** [Living guidance](https://learn.microsoft.com/en-us/style-guide/grammar/person).
+
+Second person frames writing as communication to the reader and can be implicit. First person has narrower product uses; choices should not sound like coercive instructions. Application: use “you” naturally for the appropriate player while retaining clear labels, third-person event accounts and actual character speech. The transfer is audience awareness, not a requirement to insert a pronoun into every string or adopt Microsoft's product-specific AI wording.
+
+### W03
+
+**Microsoft Writing Style Guide — Top 10 tips for Microsoft style and voice.** [Living guidance](https://learn.microsoft.com/en-us/style-guide/top-10-tips-style-voice).
+
+The guide recommends natural spoken language, reading aloud, leading with essential information, removing unnecessary jargon and giving readers enough information for confident choices. Application: compact explanations retain the subject, consequence and next step when relevant. Open Legend does not adopt brevity as an absolute or erase useful distinctions to shorten a sentence.
+
+### W04
+
+**Xbox Accessibility Guideline 114 — UI context.** [Official guidance](https://learn.microsoft.com/en-us/xbox/accessibility/xbox-accessibility-guidelines/114).
+
+Game controls need meaningful context and consistent identification; descriptions, tooltips and screen narration help players understand their use and consequences. Application: include accessible names and announcements in wording review, and make unfamiliar essential game terms understandable. The recommendation does not establish a project-wide reading-grade limit or require story dialogue and interface instructions to share one voice.
+
+### W05
+
+**Xbox Accessibility Guideline 115 — Error messages and destructive actions.** [Official guidance](https://learn.microsoft.com/en-us/xbox/accessibility/xbox-accessibility-guidelines/115).
+
+Players need to identify input errors, understand correction and recognize consequential actions without disclosing protected information. Application: state the known problem, affected action and available recovery; explain real loss plainly. The writing standard does not independently adopt the guideline's broader confirmation/undo interaction patterns for every gameplay action. Existing action, permission and recovery contracts still apply.
+
+### W06
+
+**Game Accessibility Guidelines — Use simple clear language.** [Guideline](https://gameaccessibilityguidelines.com/use-simple-clear-language/).
+
+Remove length and complexity that do not serve meaning or tone. Clear text should remain appropriate to its audience and creative context. Application: keep essential instructions understandable while preserving atmosphere, personality and world vocabulary. No demographic statistic, fixed text-length limit or comparative enjoyment claim is inferred from this source.
 
 ## Information hierarchy, layout and system feedback
 
@@ -102,9 +143,11 @@ Read the substantive indexed guidance: reserve interruption for important action
 
 ### F06
 
-**W3C — Web Content Accessibility Guidelines 2.2.** [Normative recommendation](https://www.w3.org/TR/WCAG22/).
+**W3C — Web Content Accessibility Guidelines 2.2.** [Normative recommendation](https://www.w3.org/TR/WCAG22/). [Understanding 2.5.3: Label in Name](https://www.w3.org/WAI/WCAG22/Understanding/label-in-name.html).
 
 Use the relevant text/non-text contrast, keyboard, focus, resizing and interaction criteria as web-interface baselines. These include qualifications and exceptions; this handbook does not certify the game or substitute for an accessibility audit. Destination: [React accessibility](react.md#accessibility-is-a-behavior-contract).
+
+For controls with visible text labels, the accessible name includes the visible label's text. This lets a player recognize the same wording when listening and use the visible words for speech input. Additional subject context can follow the label. Destination: [Player-facing language](player-facing-language.md#10-write-for-the-actual-reading-and-listening-context).
 
 ### F07
 

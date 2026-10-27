@@ -1,5 +1,7 @@
 # Maintainer work index
 
+[Documentation map](../README.md) · [Unfinished projects](../projects/README.md) · [Decision owners](decisions/README.md) · [Research](../research/README.md) · [Completed tracker records](completed/2026/)
+
 Use this page to find the owner of work. Focused trackers own task status; specifications own behavior, limits inventories own restrictions, and topic verification reports own actual evidence. A linked proposal or completed design does not establish implemented or qualified behavior.
 
 ## First playable: survival, a defensible home and independent encounters
@@ -10,7 +12,7 @@ Start with [first-playable delivery and validation (FPV01–FPV09)](first-playab
 
 The complete selected design is now in the [integrated pair](../projects/first-playable-world-feature-spec.md). Implementation owners are [FPW shared integration](first-playable-world.md), [SV survival/making](first-playable-survival.md), [SH natural camp](editable-shelters.md), [CP people/cooperation](first-playable-cooperation.md) and [RW wildlife/roaming](first-playable-roaming.md). Required CTR/SPK and existing foundation tasks retain their owners. All runtime and player acceptance remains explicit in those trackers and FPV.
 
-[Stealth, awareness and surprise](stealth-awareness.md) owns the completed integrated A–G design and its implementation dependencies. The [feature](../projects/stealth-awareness-feature-spec.md), [architecture](../projects/stealth-awareness-tech-design.md) and [repertoire review](../projects/stealth-awareness-repertoire-review.md) preserve perceived evidence, native startle, preparation and ordinary-player disclosure without marking runtime delivery complete. Shared and specialist design boundaries are reconciled; runtime delivery and qualification remain open. [Playable stealth controls and honest perspective (SPX01–SPX07)](stealth-player-experience.md) owns the selected player-interface delivery and qualification. Controlled-player psychological fear retains one [open policy choice](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters), including retained-appraisal applicability during direct control. Detailed F delivery: [Preparedness and surprise (SUR01–SUR09)](preparedness-and-surprise.md).
+[Stealth, awareness and surprise](stealth-awareness.md) owns the completed integrated A–G design and its implementation dependencies. The [feature](../projects/stealth-awareness-feature-spec.md), [architecture](../projects/stealth-awareness-tech-design.md) and [repertoire review](../projects/stealth-awareness-repertoire-review.md) preserve perceived evidence, native startle, preparation and ordinary-player disclosure without marking runtime delivery complete. Shared and specialist design boundaries are reconciled; runtime delivery and qualification remain open. [Playable stealth controls and honest perspective (SPX01–SPX07)](stealth-player-experience.md) owns the selected player-interface delivery and qualification. Controlled-player psychological fear retains one [open policy choice](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters), including retained-appraisal applicability during direct control. Detailed F delivery: [Preparedness and surprise (SUR01–SUR09)](preparedness-and-surprise.md).
 
 [Vision and gaze (VG00–VG08)](vision-and-gaze.md) owns specialist B's [feature specification](../projects/vision-and-gaze-feature-spec.md), [technical design](../projects/vision-and-gaze-tech-design.md), [world policy](../worlds/base/vision-and-gaze.md) and [limits](../limits/vision-and-gaze.md): physical looking while moving, exposed visual detail, world light, canonical sampled values and their declared temporal limits. Implementation and qualification of the integrated A/E/F/G interfaces remain explicit in that tracker.
 
@@ -22,13 +24,27 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 [Production workflows](../production-workflows/README.md) connect ideas to editable art, working assets, animation, scenes, interfaces, character situations and coordinated feedback. The [research collection](../../archive/02-research/ai-game-development/README.md) explains the evidence and OpenLegend-specific creative opportunities; [remaining preparation](needs-design.md#ai-assisted-game-production-research-and-design-integration) maps choices into existing owners. Art studies, V3D/INV, CE, UIUX and playability work retain their task and acceptance records.
 
+The [focused game-reference map](../../archive/02-research/game-inspiration/README.md#player-stories-authored-worlds-and-personal-meaning) routes narrative, collectible, art and marketing learnings to their existing design and production owners. Its concrete follow-up lives in ND01, ND04, ND30, ND38 and DG29/DG33/DG34 in [Future work needing design](needs-design.md); it is not another implementation queue.
+
+## Current engine research
+
+[Using engine research to improve OpenLegend](../engine-research-guide.md) connects the current Unreal/Unity study to player value, existing feature/technical owners and [scoped design questions](needs-design.md#current-engine-research-design-questions-and-existing-owners). It is the reading map; the linked maintainers retain delivery and qualification.
+
 ## General emotions, bodily reactions and adaptive review
 
-[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) are complete; implementation/qualification remain open. [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) retains the controlled-player production, retained-appraisal applicability, disclosure, revocation and transfer choice.
+[Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) specify the general foundation and four-family authored player profile; implementation/qualification remain open. [SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects authored native interpretation during direct control; EP retains exact profile rules, retained-appraisal integration and qualification.
+
+## Character and map additions
+
+[Character and map additions (CMA01–CMA06)](character-and-map-additions.md) owns delivery of Spirit, stats, more equipment slots, map markers and nicknames from the accepted Gildmoss design. Its [feature](../projects/character-and-map-additions-feature-spec.md) and [technical design](../projects/character-and-map-additions-tech-design.md) are complete; implementation has not started.
 
 ## Combat and immediate threat responses
 
-[Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). Selected ND11/ND13 design is complete; runtime and independent acceptance remain open in CTR.
+[Combat and threat responses (CTR01–CTR10)](combat-and-threat-responses.md) owns delivery of the [feature specification](../projects/combat-and-threat-responses-feature-spec.md), [technical design](../projects/combat-and-threat-responses-tech-design.md), [repertoire scope](../projects/combat-and-threat-responses-repertoire-review.md) and [limits](../limits/combat-and-threat-responses.md). CTR owns current delivery and unsatisfied independent acceptance; this index does not repeat its status.
+
+## Skilled player action execution and real item quality
+
+[Action execution and skilled input (ASE01–ASE12)](action-execution-and-skill-expression.md) owns delivery of [ND38's feature specification](../projects/action-execution-and-skill-expression-feature-spec.md), [technical design](../projects/action-execution-and-skill-expression-tech-design.md), [selected world rules](../worlds/base/skilled-action-execution.md) and [limits](../limits/action-execution-and-skill-expression.md). Movement during preparation, animated timed release, exact pointer-directed attacks and bounded local bodily evasion share the native combat owners. ASE tracks the combat-only correction, focused qualification and independent player acceptance. CTR and ordinary action/craft owners retain authoritative contact, permission and material effects.
 
 ## Acoustic stealth and physical sound
 
@@ -38,9 +54,23 @@ The complete selected design is now in the [integrated pair](../projects/first-p
 
 [Speech and social perception (SPK00–SPK11)](speech-and-social-perception.md) owns the [feature specification](../projects/speech-and-social-perception-feature-spec.md) and [technical design](../projects/speech-and-social-perception-tech-design.md). The selected ordinary-speech portion of ND16 is designed; implementation, qualification and broader hearing/media acceptance retain their owners.
 
+[Shared NPC speech streaming (NST00–NST10)](npc-speech-streaming.md) owns the additional designed public-text slice of NC19/ND16: all public NPC producers, one growing durable occurrence, fixed initial hearing and one terminal semantic boundary. The [paired design](../projects/npc-speech-streaming-feature-spec.md) is complete; runtime/provider/UI qualification remains unchecked. It consumes the relevant SPK core without waiting for animal controllers, timed speech or optional media.
+
 ## Intelligent individuals and efficient simulation
 
 [The research-to-design map](intelligent-simulation.md) links all nine selected refinements to four feature/technical pairs and existing delivery owners. Design is complete; implementation and behavioral/capacity evidence remain open.
+
+## Situation-aware cognition context
+
+[Context implementation and qualification (SC01–SC12)](cognition-context.md) coordinates the [feature specification](../projects/situation-aware-cognition-context-feature-spec.md), [technical design](../projects/situation-aware-cognition-context-tech-design.md), [supplied-request evidence and conversation decisions](../projects/situation-aware-cognition-context-evidence-and-decisions.md), [complete repertoire review](../projects/situation-aware-cognition-context-repertoire-review.md) and [SCX constraints](../limits/cognition.md#situation-aware-context-selection). The selected design is complete; runtime and gameplay qualification remain open. CR/CE/IS/PF retain their existing semantic and acceptance owners, including full accepted identity, required evidence, exact References, compatible speech/action and distinct SPK/CTR scope.
+
+## Standalone character cognition laboratory
+
+[Cognition Lab (CL00–CL11)](cognition-lab.md) owns the compact desktop workspace at `/cognition`: isolated scenarios through the ordinary game runtime, current character editing, real speech/action experiments, exact historical inspection, stage-specific one-shot input editing and retained comparisons. The [feature specification](../projects/cognition-lab-feature-spec.md), [technical design](../projects/cognition-lab-tech-design.md), [all-repertoire map](../projects/cognition-lab-repertoire-review.md) and [CLL constraints](../limits/cognition-lab.md) complete the selected design; runtime and usability/character-quality qualification remain open. CR/SC/CE/IS and native action, speech, emotion and persistence owners retain their mechanics.
+
+## Custom model deployments
+
+[Custom models (MX01–MX08)](custom-models.md) owns the [feature specification](../projects/custom-models-feature-spec.md), [technical design](../projects/custom-models-tech-design.md) and [limits](../limits/custom-models.md). The production targets are native SystemOne judgments and ordinary NPC chat generation through Macrofold-managed or trusted imported endpoints, with stable deployment references, automatic serving recovery and existing game authority. Optional benchmark work is independent of production delivery. Native judgment/chat integration and thin benchmark/report support are implemented; MX06 retains current-service access and live operating acceptance, while [research items 8–10](npc-cognition-research-needs-design.md#8-low-refusal-characterization-without-loss-of-agency) retain unrun comparisons.
 
 ## October 14 foundation review
 
@@ -68,7 +98,7 @@ Free sharing, paid distribution, visits and a funded program are separately scop
 
 ## Product design groups 21–25
 
-[Group assignment](../projects/completed/product-design-groups-21-25.md). Delivery owners: DG21 [recovery and care](recovery-and-care.md); DG22 [INV-20 commissions/associations](inventions-and-world-evolution.md); DG23 [EC character outlook and recollection](cognition-redesign.md); DG24 [NC22 text messages](narration-and-conversations.md); DG25 [HE06 correction](hearing-and-speech.md) and [SL10 shared restore](save-and-load.md).
+[Group assignment](../projects/completed/product-design-groups-21-25.md). Delivery owners: DG21 [individual injuries, recovery and care](recovery-and-care.md), with its [feature/technical pair](../projects/recovery-and-care-feature-spec.md); DG22 [INV-20 commissions/associations](inventions-and-world-evolution.md); DG23 [EC character outlook and recollection](cognition-redesign.md); DG24 [NC22 text messages](narration-and-conversations.md); DG25 [HE06 correction](hearing-and-speech.md) and [SL10 shared restore](save-and-load.md).
 
 ## Product design groups 16–20
 
@@ -83,6 +113,8 @@ Reuse the [shelter technical design](../projects/editable-shelters-tech-design.m
 ## Future work needing design
 
 [The design register](needs-design.md) distinguishes remaining decisions/design from implementation and verification. Start with [dispositions](needs-design.md#current-design-dispositions), [design groups](needs-design.md#ordered-design-groups) and [dependencies](needs-design.md#order-and-parallel-opportunities). Actual work selection follows gameplay priorities and the available build, not group numbering.
+
+[NPC cognition research follow-up map](npc-cognition-research-needs-design.md) tracks model comparisons, low-refusal characterization, architecture questions and player-value tests through existing owners.
 
 ## Five researched product specifications
 
@@ -129,7 +161,7 @@ Reuse the [shelter technical design](../projects/editable-shelters-tech-design.m
 
 [Game asset storage and study delivery (AS01–AS08)](game-asset-storage.md) owns external assets, exact publication, selective local caching and recovery. AS01–AS06 are complete; AS07 retains installation qualification and AS08 retains separately authorized history reclamation. [Specifications and design](../projects/game-asset-storage-feature-spec.md), [limits](../limits/game-asset-storage.md) and [verification](../verification/game-asset-storage.md) distinguish delivered behavior from remaining acceptance.
 
-Useful entry points: [gameplay availability](../../archive/05-project/implementation-status.md#gameplay-availability), [remaining foundations](remaining-foundational-work.md), [foundations 1–5](../projects/completed/foundations-1-5.md), [multiplayer](multiplayer.md) and [production deployment](production-deployment.md).
+Useful entry points: [gameplay availability](../features/README.md), [remaining foundations](remaining-foundational-work.md), [foundations 1–5](../projects/completed/foundations-1-5.md), [multiplayer](multiplayer.md) and [production deployment](production-deployment.md).
 
 ## Elapsed simulation
 
@@ -140,6 +172,8 @@ Useful entry points: [gameplay availability](../../archive/05-project/implementa
 ## Focused work
 
 [Action experience (AE01–AE10)](action-experience.md) follows [action records and learned activities](../action-experience.md). [Macrofold Worker API (MW01–MW04)](macrofold-worker-api.md) owns caller migration and coordinated delivery. For invention and World Agent work, [the handoff](../invention-handoff.md) maps settled decisions, source files and existing owners.
+
+[Network requests with bounded waiting (NET01–NET11)](bounded-network-requests.md) owns the shared deadline, cancellation, resource ownership and network-boundary migration. The [feature specification](../projects/completed/bounded-network-requests-feature-spec.md) and [technical design](../projects/completed/bounded-network-requests-tech-design.md) define the delivered contract; the tracker records its implementation and focused qualification. Existing AI accounting, authentication, assets, multiplayer and hosted-release owners retain their distinct acceptance gates.
 
 ## Invention foundation packet
 
@@ -179,16 +213,16 @@ Actual evidence: [continuation](../verification/workshop-continuation.md), [tran
 
 ## Supporting references
 
-| Subject                     | References                                                                                                                                                                                                                                                                    |
-| --------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Selection and boundaries    | [Policies to revisit](revisitable-policies.md), [extensibility roadmap](../extensibility-roadmap.md), [worked examples](../extensible-world-examples.md)                                                                                                                      |
-| Playable ideas              | [Repertoire library](../repertoires/README.md), [actions](../repertoires/actions.md), [mechanics](../repertoires/mechanics.md), [social slices](base-world.md#social-playable-slices), [internal-feeling processes](actor-model.md#act09--internal-feeling-process-authoring) |
-| Repertoire integration      | [Foundation](../repertoire-foundation.md), with detailed delivery in INV-20                                                                                                                                                                                                   |
-| World Agent                 | [Runtime](../world-agent-runtime.md), [MCP](../world-agent-mcp.md), [workshop tools](../invention-workshop-tools.md)                                                                                                                                                          |
-| Invention composition       | [Graph](../invention-graph.md), [composition](../invention-composition.md), [target scenarios](../invention-scenarios.md)                                                                                                                                                     |
-| Encounters/tooling          | [Encounter scaling](../encounter-scaling.md), [MCP research](../../archive/02-research/mcp-tooling-and-integration.md)                                                                                                                                                        |
-| Product decisions           | [Baseline](../../archive/01-requirements/product-baseline.md), [roadmap](../../archive/05-project/roadmap.md), [open decisions](../../archive/05-project/open-decisions.md), [research backlog](../../archive/05-project/research-backlog.md)                                 |
-| Evidence and implementation | [Verification and shared playtest protocol](../verification.md), [implementation status](../../archive/05-project/implementation-status.md)                                                                                                                                   |
-| Integration and art         | [Macrofold handoff](../macrofold-world-agent-handoff.md), [hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)                                                                                                                             |
+| Subject                     | References                                                                                                                                                                                                                                                                                                                      |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Selection and boundaries    | [Policies to revisit](revisitable-policies.md), [extensibility roadmap](../extensibility-roadmap.md), [worked examples](../extensible-world-examples.md)                                                                                                                                                                        |
+| Playable ideas              | [Game ideas to explore](../game-ideas/README.md), [Repertoire library](../repertoires/README.md), [actions](../repertoires/actions.md), [mechanics](../repertoires/mechanics.md), [social slices](base-world.md#social-playable-slices), [internal-feeling processes](actor-model.md#act09--internal-feeling-process-authoring) |
+| Repertoire integration      | [Foundation](../repertoire-foundation.md), with detailed delivery in INV-20                                                                                                                                                                                                                                                     |
+| World Agent                 | [Runtime](../world-agent-runtime.md), [MCP](../world-agent-mcp.md), [workshop tools](../invention-workshop-tools.md)                                                                                                                                                                                                            |
+| Invention composition       | [Graph](../invention-graph.md), [composition](../invention-composition.md), [target scenarios](../invention-scenarios.md)                                                                                                                                                                                                       |
+| Encounters/tooling          | [Encounter scaling](../encounter-scaling.md), [MCP research](../../archive/02-research/mcp-tooling-and-integration.md)                                                                                                                                                                                                          |
+| Product decisions           | [Baseline](../../archive/01-requirements/product-baseline.md), [roadmap](../../archive/05-project/roadmap.md), [open decisions](decisions/README.md), [research backlog](../research/gameplay-and-systems/README.md)                                                                                                            |
+| Evidence and implementation | [Verification and shared playtest protocol](../verification.md), [implementation status](../architecture.md)                                                                                                                                                                                                                    |
+| Integration and art         | [Macrofold handoff](../macrofold-world-agent-handoff.md), [hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)                                                                                                                                                                               |
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).

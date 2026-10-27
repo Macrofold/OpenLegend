@@ -1,21 +1,30 @@
-import { isImmutableData } from './records.js';
+import { observedActionAnimation } from './observed-animation.js';
+import { isImmutableData, jsonText } from './records.js';
 import { entityGet, entityKeys } from './entity-collection.js';
 import { current, isDraft, original } from 'immer';
 import { cloneValue, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
 import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
+import { nativeSensoryObserver } from './native-response.js';
 import { activelyParticipates } from './participation-state.js';
 import { visibleFeature } from './perception-frame.js';
-import { bodyProfile, spatialMap, worldPosition, worldSupport } from './spatial-state.js';
+import {
+  bodyProfile,
+  effectiveBodyProfile,
+  spatialMap,
+  worldPosition,
+  worldSupport,
+} from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
 import { projectAttributes, type AttributeView } from './world-modules.js';
-import { SpatialCandidateIndex } from './spatial.js';
+import { SpatialCandidateIndex, nearbySolidAssemblies } from './spatial.js';
 import { nextSensoryPhase, recordSensoryChange, MAX_CHANGE_SCOPES } from './dependencies.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import { sensesFor, visionRadius } from './perception.js';
-import { capabilityBlocked } from './status-capabilities.js';
+import { sensesFor, visionRadius, visionFieldOfView } from './perception.js';
+import { capabilityBlocked, projectStatusEffects } from './status-capabilities.js';
 import { SPATIAL_LIMITS } from '@open-legend/spatial';
 export interface ExposureInput {
+  assemblyId?: string;
   id: string;
   position: { x: number; y: number; z: number };
   height: number;
@@ -32,6 +41,15 @@ export interface ExposureInput {
 /** A new continuous-exposure episode identity. Its format is owned here with its parser. */
 export function perceptionEpisodeId(world: WorldState, sourceId: string): string {
   return `${world.sequence}:${world.simTime}:${sourceId}`;
+}
+/** The caller has just established sight; this grants no remembered name. */
+export function ensurePerceptionEpisode(
+  world: WorldState,
+  observerId: string,
+  sourceId: string,
+): string {
+  const episodes = ((world.perceptionEpisodes ??= {})[observerId] ??= {});
+  return (episodes[sourceId] ??= perceptionEpisodeId(world, sourceId));
 }
 /** Simulation time an episode began, or undefined for a foreign/unknown identity. */
 export function episodeStartedAt(episode: string | undefined): number | undefined {
@@ -88,7 +106,7 @@ const captures = new WeakMap<Entity, ExposureCapture | null>();
  * PF03/09: static roots otherwise rebuilt identical inputs on every slice. */
 export function captureExposure(world: WorldState, entity: Entity): ExposureCapture | null {
   countDomainWork('sensoryCaptures');
-  const frozen = Object.isFrozen(entity);
+  const frozen = Object.isFrozen(entity) && !entity.spatial.localPose;
   if (frozen) {
     const cached = captures.get(entity);
     if (cached !== undefined) return withPublicAttributes(world, cached);
@@ -96,16 +114,19 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
   let capture: ExposureCapture | null = null;
   if (activelyParticipates(entity)) {
     const position = worldPosition(entity),
-      profile = bodyProfile(entity);
+      profile = effectiveBodyProfile(world, entity);
     capture = {
       entity,
       id: entity.id,
+      ...(entity.assembly?.implementation === 'grounded-panel-boundary'
+        ? { assemblyId: entity.id }
+        : {}),
       position: isDraft(position) ? current(position) : position,
       height: profile.height,
       radius: profile.radius,
       alive: !!entity.actor?.alive,
       memory: hasMemory(entity),
-      nativeResponse: entity.actor?.controller === 'native' && !!entity.animal?.episode,
+      nativeResponse: nativeSensoryObserver(entity),
       object: (!entity.actor && !entity.animal) || !!entity.remains,
       detailSignature: JSON.stringify([
         !entity.actor ? entity.description : null,
@@ -118,6 +139,9 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
         entity.spatial.heading,
         entity.actor?.physicalLife ?? null,
         entity.actor?.species,
+        entity.actor?.description,
+        entity.actor?.body?.plan,
+        entity.icon,
         entity.container || entity.kind === 'item-pile' || entity.remains
           ? entity.placement?.revision
           : null,
@@ -154,18 +178,50 @@ function itemPresentationKey(world: WorldState): string {
         id,
         definition.name,
         definition.portable,
+        definition.assemblyMaterial,
       ]),
     );
     if (immutable) itemPresentationKeys.set(definitions, key);
   }
-  return key;
+  const families = world.assemblyFamilies && readOnlyDraftView(world.assemblyFamilies);
+  return JSON.stringify([key, families ? jsonText(families) : null]);
 }
 const publicAttributeFamilies = new WeakMap<object, boolean>();
 function withPublicAttributes(
   world: WorldState,
   capture: ExposureCapture | null,
 ): ExposureCapture | null {
-  if (!capture?.entity.actor) return capture;
+  if (!capture) return capture;
+  const entity = capture.entity;
+  if (entity.assembly) {
+    const component = readOnlyDraftView(entity.assembly),
+      family = world.assemblyFamilies?.[component.family.id];
+    capture = {
+      ...capture,
+      detailSignature: JSON.stringify([
+        capture.detailSignature,
+        jsonText(component),
+        family ? jsonText(readOnlyDraftView(family)) : null,
+        Object.values(component.parts).map((part) => {
+          const material = entityGet(readOnlyDraftView(world.entities), part.itemId),
+            definition = material?.item && world.itemDefinitions[material.item.definitionPin.id];
+          return [part.itemId, material?.name, material?.placement, definition?.assemblyMaterial];
+        }),
+      ]),
+    };
+  }
+  if (!entity.actor) return capture;
+  // Visible pose is measured detail, never narrative salience or private target
+  // identity. Recompute its actual tracking direction once per changed source.
+  const animation = observedActionAnimation(world, entity);
+  capture = {
+    ...capture,
+    detailSignature: JSON.stringify([
+      capture.detailSignature,
+      animation,
+      projectStatusEffects(world, entity),
+    ]),
+  };
   const definitions = readOnlyDraftView(world.moduleManifest.definitions);
   let installed = isImmutableData(definitions)
     ? publicAttributeFamilies.get(definitions)
@@ -222,6 +278,8 @@ interface ExposureCache {
   policyKey: string;
   itemPresentationKey: string;
   inputs: Map<string, Source>;
+  /** Only active outward tracking poses; derived from authoritative actions. */
+  trackedAnimations: Map<string, string>;
   order: Map<string, number>;
   nextOrder: number;
   near: SpatialCandidateIndex<Source>;
@@ -262,6 +320,7 @@ const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a.memory === b.memory &&
   a.nativeResponse === b.nativeResponse &&
   a.object === b.object &&
+  a.assemblyId === b.assemblyId &&
   a.feature === b.feature &&
   a.detailSignature === b.detailSignature;
 const snapshot = <T extends object>(value: T): T => (isDraft(value) ? current(value) : value);
@@ -274,6 +333,7 @@ const within = (a: Position, b: Position, radius: number) =>
 export function* prepareExposure(
   world: WorldState,
   base: EncounterBaseline,
+  motionSpeed?: (entity: Entity) => number,
 ): Generator<
   void,
   {
@@ -286,9 +346,12 @@ export function* prepareExposure(
       kind: 'people' | 'objects' | 'contact',
     ) => Source[];
     objectsChanged: (id: string) => boolean;
+    nearbySight: (observerId: string, position: Position, radius: number) => Source[];
     /** Undefined requires a full rescan; otherwise only these sources can change sight. */
     changedPeople: (id: string) => ReadonlySet<string> | undefined;
     selectedPeople: (position: Position, radius: number, ids: ReadonlySet<string>) => Source[];
+    sourceIds: Iterable<string>;
+    selectedContacts: (position: Position, radius: number, ids: ReadonlySet<string>) => Source[];
     orderPeople: (ids: readonly string[]) => string[];
     maximumBodyHeight: number;
     maximumBodyRadius: number;
@@ -363,6 +426,7 @@ export function* prepareExposure(
       policyKey,
       itemPresentationKey: itemKey,
       inputs: new Map(),
+      trackedAnimations: new Map(),
       order: new Map(),
       nextOrder: 0,
       near: new SpatialCandidateIndex(),
@@ -395,6 +459,15 @@ export function* prepareExposure(
   const peopleChanges = new Map<string, Set<string>>();
   let orderChanged = audit.orderChanged;
   const update = (id: string, entity: Entity | undefined) => {
+    const action = entity?.actor?.action;
+    if (
+      action?.type === 'strike' &&
+      action.stage === 'working' &&
+      action.strikePhase !== 'recovery' &&
+      action.targetId
+    )
+      prepared.trackedAnimations.set(id, action.targetId);
+    else prepared.trackedAnimations.delete(id);
     const old = prepared.inputs.get(id);
     const capture = entity ? captureExposure(world, entity) : null;
     countDomainWork('sensoryComparisons');
@@ -458,7 +531,12 @@ export function* prepareExposure(
   } else {
     const entities = readOnlyDraftView(world.entities);
     let index = 0;
-    for (const id of new Set([...changes.sources, ...changes.observers])) {
+    const changedIds = new Set([...changes.sources, ...changes.observers]);
+    // A held strike can keep its own action unchanged while its visible target
+    // moves. Visit the small active dependency set once, not all actors per target.
+    for (const [sourceId, targetId] of prepared.trackedAnimations)
+      if (changedIds.has(targetId)) changedIds.add(sourceId);
+    for (const id of changedIds) {
       if (index++ % 64 === 0) yield;
       update(id, entityGet(entities, id));
     }
@@ -523,7 +601,17 @@ export function* prepareExposure(
       Math.max(source.radius + prepared.radii.maximum, source.height, prepared.heights.maximum) +
       SPATIAL_LIMITS.epsilon;
     const range = Math.max(radius + 2, touch ? contactRadius : 0);
-    const signature = `${radius}:${bodyProfile(entity).eyeHeight}:${touch?.id ?? ''}:${contactRadius}:${capabilityBlocked(world, entity, 'perception')}:${world.moduleManifest.revision}`;
+    const angle = visionFieldOfView(world, entity);
+    const signature = JSON.stringify([
+      radius,
+      effectiveBodyProfile(world, entity).eyeHeight,
+      touch?.id,
+      contactRadius,
+      capabilityBlocked(world, entity, 'perception'),
+      world.moduleManifest.revision,
+      angle,
+      angle < 2 * Math.PI ? entity.spatial.heading : undefined,
+    ]);
     const moved = !within(input.position, source.position, 0);
     if (
       rebuild ||
@@ -569,8 +657,9 @@ export function* prepareExposure(
     for (const observer of prepared.observerNear.query(source.position, prepared.ranges.maximum))
       if (within(source.position, observer.position, observer.radius)) {
         affected.add(observer.id);
-        if (source.object) fullPeople.add(observer.id);
-        else {
+        // Non-occluding object changes affect object exposure, not every person
+        // this observer sees. Real occluder edits already replace the map above.
+        if (!source.object) {
           let ids = peopleChanges.get(observer.id);
           if (!ids) peopleChanges.set(observer.id, (ids = new Set()));
           ids.add(source.id);
@@ -615,26 +704,46 @@ export function* prepareExposure(
     maximumBodyHeight: prepared.heights.maximum,
     maximumBodyRadius: prepared.radii.maximum,
     objectsChanged: (id) => prepared.observers.get(id)?.objectsDirty ?? true,
+    nearbySight: (id, position, radius) => {
+      const entity = entityGet(readOnlyDraftView(world.entities), id)!;
+      return prepared.near
+        .querySphere(position, radius, { id, at: world.simTime, speed: motionSpeed?.(entity) ?? 0 })
+        .filter((source) => source.alive);
+    },
     changedPeople: (id) =>
       rebuild || orderChanged || fullPeople.has(id)
         ? undefined
         : (peopleChanges.get(id) ?? new Set<string>()),
     selectedPeople: (position, radius, ids) => prepared.near.querySelected(position, radius, ids),
+    sourceIds: prepared.inputs.keys(),
+    selectedContacts: (position, radius, ids) =>
+      prepared.contacts.querySelected(position, radius, ids),
     orderPeople: (ids) =>
       [...ids].sort((a, b) => prepared.inputs.get(a)!.order - prepared.inputs.get(b)!.order),
     sourceToken: (id) => prepared.inputs.get(id)?.measurementKey,
     publicAttributes: (id) => prepared.inputs.get(id)?.publicAttributes ?? [],
-    nearby: (position, radius, kind) =>
-      (kind === 'contact'
-        ? prepared.contacts
-        : kind === 'objects'
-          ? prepared.objects
-          : prepared.near
+    nearby: (position, radius, kind) => {
+      const ordinary = (
+        kind === 'contact'
+          ? prepared.contacts
+          : kind === 'objects'
+            ? prepared.objects
+            : prepared.near
       )
         .query(position, radius)
         .filter(
           (source) => kind === 'contact' || (kind === 'people' ? source.alive : source.object),
-        ),
+        );
+      if (kind !== 'objects') return ordinary;
+      const structures = nearbySolidAssemblies(world, position, radius);
+      if (!structures.length) return ordinary;
+      const found = new Map(ordinary.map((source) => [source.id, source]));
+      for (const root of structures) {
+        const source = prepared.inputs.get(root.id);
+        if (source?.object) found.set(root.id, source);
+      }
+      return [...found.values()].sort((a, b) => a.order - b.order);
+    },
   };
 }
 export function captureExposureCache(world: WorldState): (result: WorldState) => void {

@@ -24,11 +24,13 @@ const reference = (place: KnownPlaceView) => ({
 export function KnownPlaces({
   revision,
   visible,
+  paused,
   focus,
   command,
 }: {
   revision: string;
   visible: boolean;
+  paused: boolean;
   focus(point: WorldPoint): void;
   command(action: ActionOption): Promise<ApiResult>;
 }) {
@@ -118,16 +120,18 @@ export function KnownPlaces({
     };
   }, [query, visible]);
 
-  async function inspect(place: KnownPlaceView) {
+  async function inspect(place: KnownPlaceView, refresh = false) {
     if (!active.current) return;
     detailAbort.current?.abort();
     const abort = new AbortController();
     detailAbort.current = abort;
     const id = ++detailRequest.current;
-    inspectionFocus.current?.focus({ preventScroll: true });
-    setInspection(undefined);
+    if (!refresh) {
+      inspectionFocus.current?.focus({ preventScroll: true });
+      setInspection(undefined);
+      setMessage('');
+    }
     setError('');
-    setMessage('');
     setInspecting(true);
     try {
       const result = await post<Result<KnownPlaceInspection>>(
@@ -136,18 +140,34 @@ export function KnownPlaces({
         abort.signal,
       );
       if (id !== detailRequest.current || !active.current) return;
-      if (!result.ok) throw new Error(result.message ?? 'This observation is unavailable.');
+      if (!result.ok) {
+        setInspection(undefined);
+        throw new Error(result.message ?? 'This observation is unavailable.');
+      }
       setInspection(result);
       setMessage('');
     } catch (failure) {
       if (id === detailRequest.current) {
         setMessage('');
         setError(failure instanceof Error ? failure.message : String(failure));
+        setInspection(
+          (old) =>
+            old && {
+              ...old,
+              move: { ...old.move, enabled: false, reason: 'Recheck movement before acting.' },
+            },
+        );
       }
     } finally {
       if (id === detailRequest.current) setInspecting(false);
     }
   }
+  useEffect(() => {
+    // Pause changes movement admission, not the remembered place or reading task.
+    // Refresh only this meaningful boundary, rather than every world publication.
+    if (visible && inspection) void inspect(inspection.place, true);
+  }, [paused, visible]);
+
   async function move(selected: KnownPlaceInspection) {
     if (!active.current) return;
     const id = ++detailRequest.current;
@@ -305,7 +325,7 @@ export function KnownPlaces({
           <p>{inspection.moveDescription}</p>
           <Button
             size="sm"
-            isDisabled={busy || !inspection.move.enabled}
+            isDisabled={busy || inspecting || paused || !inspection.move.enabled}
             onPress={() => void move(inspection)}
           >
             {inspection.move.label}

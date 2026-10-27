@@ -15,12 +15,18 @@ importers:
       '@open-legend/assets':
         specifier: workspace:*
         version: link:packages/assets
+      '@open-legend/network':
+        specifier: workspace:*
+        version: link:packages/network
       '@playwright/test':
         specifier: 1.58.2
         version: 1.58.2
       '@types/node':
         specifier: 22.20.4
         version: 22.20.4
+      esbuild:
+        specifier: 0.28.2
+        version: 0.28.2
       prettier:
         specifier: 3.6.2
         version: 3.6.2
@@ -42,9 +48,15 @@ importers:
       '@open-legend/assets':
         specifier: workspace:*
         version: link:../../packages/assets
+      '@open-legend/domain':
+        specifier: workspace:*
+        version: link:../../packages/domain
       '@open-legend/language':
         specifier: workspace:*
         version: link:../../packages/language
+      '@open-legend/network':
+        specifier: workspace:*
+        version: link:../../packages/network
       '@open-legend/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -100,12 +112,18 @@ importers:
       '@open-legend/language':
         specifier: workspace:*
         version: link:../../packages/language
+      '@open-legend/network':
+        specifier: workspace:*
+        version: link:../../packages/network
       '@open-legend/protocol':
         specifier: workspace:*
         version: link:../../packages/protocol
       '@open-legend/spatial':
         specifier: workspace:*
         version: link:../../packages/spatial
+      '@smithy/node-http-handler':
+        specifier: 4.12.1
+        version: 4.12.1
       openid-client:
         specifier: 6.8.8
         version: 6.8.8
@@ -125,6 +143,9 @@ importers:
 
   packages/ai:
     dependencies:
+      '@open-legend/network':
+        specifier: workspace:*
+        version: link:../network
       '@streamparser/json':
         specifier: 0.0.26
         version: 0.0.26
@@ -136,6 +157,9 @@ importers:
 
   packages/domain:
     dependencies:
+      '@noble/hashes':
+        specifier: 2.0.1
+        version: 2.0.1
       '@open-legend/language':
         specifier: workspace:*
         version: link:../language
@@ -148,11 +172,16 @@ importers:
 
   packages/language: {}
 
+  packages/network: {}
+
   packages/protocol:
     dependencies:
       '@open-legend/assets':
         specifier: workspace:*
         version: link:../assets
+      '@open-legend/domain':
+        specifier: workspace:*
+        version: link:../domain
       '@open-legend/language':
         specifier: workspace:*
         version: link:../language
@@ -453,6 +482,10 @@ packages:
   '@modelcontextprotocol/server@2.0.0':
     resolution: {integrity: sha512-YhHWdHfpFMQfd0prsEnxKeS3Qz3ytIGmsS0sth4KDjnacIT7hxk6hXHkJ9KysxlkvTM+WZAtQbbcUhdoP4Hvtw==}
     engines: {node: '>=20'}
+
+  '@noble/hashes@2.0.1':
+    resolution: {integrity: sha512-XlOlEbQcE9fmuXxrVTXCTlG2nlRXa9Rj3rr5Ue/+tX+nmkgbX720YHh0VR3hBF9xDvwnb8D2shVGOwNx+ulArw==}
+    engines: {node: '>= 20.19.0'}
 
   '@oxc-project/types@0.150.0':
     resolution: {integrity: sha512-rDS5/31E9HfPl/CIzGrn0DOlvBbXFseQ5URJ9sYMfstbKLD/c6Gm9vmRzRGDdAXyOIL4zmO37lc9RIwYqVruZw==}
@@ -1543,6 +1576,8 @@ snapshots:
     dependencies:
       '@modelcontextprotocol/core': 2.0.0
       zod: 4.6.5
+
+  '@noble/hashes@2.0.1': {}
 
   '@oxc-project/types@0.150.0': {}
 

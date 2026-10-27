@@ -71,6 +71,9 @@ export function baseContextActions(world: WorldState, actorId: string, targetId?
     itemId?: string;
     ammoItemId?: string;
     speech?: boolean;
+    label?: string;
+    facts?: Array<[string, string]>;
+    approach?: boolean;
   }) => {
     const attack = !!choice.command && attacks.has(choice.command);
     const method = pair?.own?.method;
@@ -84,6 +87,17 @@ export function baseContextActions(world: WorldState, actorId: string, targetId?
     const equipped = !!choice.itemId && isEquipped(world, actorId, choice.itemId);
     const contact = choice.command === 'strike';
     return {
+      // Current distance/bearing describe the observed scene, not a different
+      // selected action. Ordinary movement must not invalidate an unchanged
+      // command; its actual reach and line of effect are still admitted natively.
+      bindingFacts: choice.facts?.filter(([name]) => name !== 'Distance' && name !== 'Direction'),
+      ...(choice.label
+        ? {
+            label: choice.approach
+              ? `Approach and ${choice.label[0]!.toLowerCase()}${choice.label.slice(1)}`
+              : choice.label,
+          }
+        : {}),
       priority:
         combat && attack
           ? 1000 +
@@ -100,9 +114,11 @@ export function baseContextActions(world: WorldState, actorId: string, targetId?
           : choice.speech
             ? 100
             : ((choice.command && priorities[choice.command]) ?? 0),
-      primary: combat
-        ? attack
-        : choice.speech || (!!choice.command && !standard.has(choice.command)),
+      primary: speaking
+        ? !!choice.speech
+        : combat
+          ? attack
+          : choice.speech || (!!choice.command && !standard.has(choice.command)),
     };
   };
 }

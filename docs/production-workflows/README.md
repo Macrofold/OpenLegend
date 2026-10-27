@@ -8,6 +8,10 @@ Use this handbook to turn an idea into something a player can recognize, use, re
 
 The route is chosen for the wanted experience. Improving the weight of a carried tool, making a person recognizable, revealing a mysterious path, or making an inventory satisfying to use can call for different combinations of art, geometry, animation, sound and native behavior. Begin with the smallest complete production path that can answer the actual question, while preserving the game's distinctive invention and independent-character ambitions in the early playable experience. [Gameplay priorities](../repertoires/gameplay-priorities.md) owns project selection; this handbook does not place inventory, graphics or any new pipeline ahead of already selected work.
 
+## Run an art request
+
+For a repeatable agent-operated request, use the [Standard and Higgsfield art flows](art-flows/README.md). Say which flow and what you want; the agent handles the brief, tool prompts, visual review, revisions and saving. The shared procedure separates a style/asset study, usable production files and explicit game integration. It loads only the relevant [deliverable profile](art-flows/profiles.md), and preserves outputs through the project's S3 workflow. A study can finish before any playable build.
+
 ## The common route
 
 **Idea → brief → concept or playable blockout → editable source → usable export → working game integration → play and presentation review → reusable result.**
@@ -80,6 +84,12 @@ This process applies the evidence from [procedural production](../../archive/02-
 
 ## Make each handoff inspectable
 
+When the requested result includes production-ready art, execute the common
+[production-package procedure](art-flows/production.md) and only its relevant asset recipes.
+It defines source finishing, final exports, technical inspection and the reusable package;
+the chapters here retain creative development and game integration. Reuse already completed
+steps when their source/export evidence remains valid.
+
 Each stage delivers enough for the next contributor to act without guessing. The output may be a concept sheet, editable scene, material graph, rig, animation clip, component, world-content change or reviewed runtime asset. It should identify:
 
 - The input revision and intended meaning it preserves.
@@ -91,7 +101,7 @@ Each stage delivers enough for the next contributor to act without guessing. The
 
 For example, “model complete” is insufficient when the consumer needs a movable lid. A useful handoff says whether the lid is separated, where it pivots, which opening is present, what the export contains and which gameplay behavior remains to be integrated. Name illustrative or fixture behavior explicitly; do not present it as current world content.
 
-Keep the editable sources in the established art workspace or repository location appropriate to the asset. The [art-direction tracker](../maintainers/art-direction.md) owns source locations and study milestones. Keep approved runtime artifacts in the actual game-delivery path. Provider URLs, temporary execution directories and a remembered prompt are not durable substitutes for accepted source and output files.
+Keep editable source payloads in the established external art workspace and preserve exact revisions through the [art-flow storage procedure](art-flows/README.md#preserve-and-resume). The [art-direction tracker](../maintainers/art-direction.md) owns ongoing art work and study milestones; Git holds notes, recipes and exact references. Approved runtime artifacts enter the selected game-delivery collection through the asset workflow. Provider URLs, temporary execution directories and a remembered prompt are not durable substitutes for preserved source and output files.
 
 ## Revise the responsible source
 
@@ -123,6 +133,8 @@ The language agent, image generator, mesh generator, rigging tool, authoring app
 Prefer a saved graph, editable material, export preset or narrow script when a repeated transformation is understood. A hosted service or local tool may execute that transformation; neither needs to become a universal workflow platform. Inspect unfamiliar skills and use the exact selected application/model version. A skill's example world laws or editor defaults do not become OpenLegend policy.
 
 When comparing candidate routes, retain equivalent briefs, reference quality and delivery requirements. Measure useful output, manual correction, elapsed time, actual charges and the cost of a meaningful revision. Stop broadening a comparison when it has resolved the decision. [Evaluation and adoption](../../archive/02-research/ai-game-development/11-evaluation-and-adoption.md) owns the proposed comparison method; its trials remain unrun unless actual evidence says otherwise.
+
+The [engine-research application guide](../engine-research-guide.md) connects current animation, audio, rendering, content-lifetime and execution research to these production choices. Use the relevant mechanism to resolve a concrete iteration or presentation question, with actual platform and feature maturity retained.
 
 ## Judge the complete result
 

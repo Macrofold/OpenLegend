@@ -2,7 +2,6 @@ import { entityGet, entityHas } from '@open-legend/domain';
 import { resolveContactTarget, ContactReferenceError } from './public-contact-references.js';
 import {
   activityCommandFields,
-  isCookingInputField,
   cookingChoices,
   commandBindingFields,
   commandEntityFields,
@@ -826,6 +825,8 @@ function drop(
 }
 
 function gather(scope: Scope, name: string): Outcome | undefined {
+  if (!scope.world.gatheringPolicy)
+    return refuse('blocked', 'Gathering is not available in this world.');
   const source = (e: Entity) => !!e.resource;
   const matches = visibleMatches(scope, name, source);
   if (!matches.length)
@@ -943,6 +944,7 @@ function gatherUntil(
   const label = scope.world.itemDefinitions[definitionId]?.name ?? definitionId;
   // The same carried-tool rule the native gather uses at completion.
   const perAttempt = gatheringYield(
+    scope.world,
     inventoryFor(scope.world, scope.actorId).map(
       (item) => scope.world.itemDefinitions[item.definitionId],
     ),
@@ -1611,6 +1613,14 @@ export async function commitTypedAction(
               },
             ]
           : [],
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        service.nativeExecutionPermissions,
       );
     },
     undefined,

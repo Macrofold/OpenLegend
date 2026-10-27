@@ -3,6 +3,7 @@ import { mkdir, mkdtemp, open, readFile, readdir, link, unlink, rm } from 'node:
 import { createHash, randomUUID } from 'node:crypto';
 import { dirname, join, relative } from 'node:path';
 import { tmpdir } from 'node:os';
+import type { NetworkOperation } from '@open-legend/network';
 import {
   artifactKey,
   artifactReferenceKey,
@@ -307,9 +308,17 @@ export async function withRecoveryAuthority<T>(
     operationId: string;
     fingerprint: string;
     principal: AssetPrincipal;
+    operation?: NetworkOperation;
   },
   mutation: () => Promise<T>,
 ): Promise<T> {
+  // Expiry can leave recovery coverage pending. It must never admit another
+  // SQL operation; a transaction already admitted by this guard may finish.
+  const admit = <R>(work: () => Promise<R>): Promise<R> => {
+    options.operation?.throwIfStopped();
+    return work();
+  };
+  options.operation?.throwIfStopped();
   if (repo.db.transactionActive)
     throw new Error('Recovery authority coordination must run outside a database transaction.');
   if (
@@ -318,9 +327,9 @@ export async function withRecoveryAuthority<T>(
     !/^[a-f0-9]{64}$/.test(options.fingerprint)
   )
     throw new Error('Invalid recovery authority operation.');
-  if ((await storage.principal()) !== options.principal.accountId)
+  if ((await admit(() => storage.principal())) !== options.principal.accountId)
     throw new Error('Recovery storage identity differs from the admitted operator.');
-  const observed = await storage.readRecoveryMarker(options.domain);
+  const observed = await admit(() => storage.readRecoveryMarker(options.domain));
   if (!observed)
     throw new Error(
       'Initialize verified recovery authority before changing current asset permissions.',
@@ -332,10 +341,8 @@ export async function withRecoveryAuthority<T>(
     fingerprint: options.fingerprint,
   };
   const matches = head.operation && JSON.stringify(head.operation) === JSON.stringify(operation);
-  const replay = await repo.authorityOperationOutcome<T>(
-    options.principal,
-    options.operationId,
-    options.fingerprint,
+  const replay = await admit(() =>
+    repo.authorityOperationOutcome<T>(options.principal, options.operationId, options.fingerprint),
   );
   if (head.status === 'pending' && !matches) {
     // A multistage owner can read its already committed earlier outcome to reach
@@ -346,7 +353,7 @@ export async function withRecoveryAuthority<T>(
       'Another asset authority operation has incomplete recovery coverage; reconcile it first.',
     );
   }
-  const before = await repo.restrictionSnapshot();
+  const before = await admit(() => repo.restrictionSnapshot());
   if (!matches && head.generation !== before.generation)
     throw new Error(
       'Current SQL authority is not covered by the independently retained recovery marker.',
@@ -357,41 +364,47 @@ export async function withRecoveryAuthority<T>(
   // An already admitted operation can finish its coverage after the mutation
   // removed the caller's own grant; the retained pending marker fixes its exact
   // identity. A new operation must still hold every current manage grant.
-  if (!matches) await repo.assertRecoveryOperator(options.principal);
+  if (!matches) await admit(() => repo.assertRecoveryOperator(options.principal));
   let pending = observed;
   if (head.status !== 'pending') {
     const next: AuthorityMarker = { ...head, status: 'pending', operation };
-    pending = await storage.compareRecoveryMarker(
-      options.domain,
-      Buffer.from(JSON.stringify(next)),
-      observed.etag,
+    pending = await admit(() =>
+      storage.compareRecoveryMarker(
+        options.domain,
+        Buffer.from(JSON.stringify(next)),
+        observed.etag,
+      ),
     );
   }
   // The independently pending marker is committed before SQL changes, so a crash
   // cannot silently authorize a restore using yesterday's grants.
   let result: { generation: number; outcome: T };
   try {
-    result = await repo.authorityOperation(
-      options.principal,
-      options.operationId,
-      options.fingerprint,
-      mutation,
+    result = await admit(() =>
+      repo.authorityOperation(options.principal, options.operationId, options.fingerprint, () => {
+        options.operation?.throwIfStopped();
+        return mutation();
+      }),
     );
   } catch (error) {
     // If a transaction was conclusively rolled back, restore complete coverage
     // of the unchanged authority instead of stranding every later operation.
     // An unavailable database or uncertain commit deliberately leaves pending.
-    const committed = await repo.authorityOperationOutcome<T>(
-      options.principal,
-      options.operationId,
-      options.fingerprint,
+    const committed = await admit(() =>
+      repo.authorityOperationOutcome<T>(
+        options.principal,
+        options.operationId,
+        options.fingerprint,
+      ),
     );
     if (committed) result = committed;
     else {
-      const unchanged = await repo.restrictionSnapshot();
+      const unchanged = await admit(() => repo.restrictionSnapshot());
       if (unchanged.generation !== before.generation) throw error;
       await mkdir(options.directory, { recursive: true, mode: 0o700 });
-      const exported = await exportAuthority(repo, storage, options.domain, options.directory);
+      const exported = await admit(() =>
+        exportAuthority(repo, storage, options.domain, options.directory),
+      );
       if (exported.snapshot.generation !== before.generation) throw error;
       const restored: AuthorityMarker = {
         format: 'openlegend-asset-authority',
@@ -400,16 +413,21 @@ export async function withRecoveryAuthority<T>(
         status: 'complete',
         authority: exported.object,
       };
-      await storage.compareRecoveryMarker(
-        options.domain,
-        Buffer.from(JSON.stringify(restored)),
-        pending.etag,
+      await admit(() =>
+        storage.compareRecoveryMarker(
+          options.domain,
+          Buffer.from(JSON.stringify(restored)),
+          pending.etag,
+        ),
       );
       throw error;
     }
   }
+  options.operation?.throwIfStopped();
   await mkdir(options.directory, { recursive: true, mode: 0o700 });
-  const exported = await exportAuthority(repo, storage, options.domain, options.directory);
+  const exported = await admit(() =>
+    exportAuthority(repo, storage, options.domain, options.directory),
+  );
   if (result.generation !== exported.snapshot.generation)
     throw new Error(
       'Another authority mutation raced recovery coverage; the marker remains pending.',
@@ -422,11 +440,14 @@ export async function withRecoveryAuthority<T>(
     operation,
     authority: exported.object,
   };
-  await storage.compareRecoveryMarker(
-    options.domain,
-    Buffer.from(JSON.stringify(complete)),
-    pending.etag,
+  await admit(() =>
+    storage.compareRecoveryMarker(
+      options.domain,
+      Buffer.from(JSON.stringify(complete)),
+      pending.etag,
+    ),
   );
+  options.operation?.throwIfStopped();
   return result.outcome;
 }
 async function* diskFiles(root: string, directory = root): AsyncGenerator<string> {

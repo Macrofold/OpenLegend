@@ -94,7 +94,7 @@ it("ends a memoryless listener's transient sound at the next later native percep
     innerWorld: true,
     speech: true,
     memory: false,
-    comprehendsSpeech: true,
+    language: true,
   };
   setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, worldSupport(player));
   setSpatialPosition(world, npc, { x: 2, y: 0, z: 2 }, worldSupport(npc));

@@ -152,18 +152,26 @@ export function gaugeMetric(name: string, value: number): void {
   if (owned.gauges.has(name) || owned.gauges.size < 32) owned.gauges.set(name, value);
   else owned.omitted.gaugeEvents++;
 }
-type BackgroundFailureOperation = 'memory-search' | 'intelligence-write';
+type BackgroundFailureOperation =
+  | 'memory-search'
+  | 'memory-index'
+  | 'intelligence-write'
+  | 'navigation-preview'
+  | 'simulation-tick'
+  | 'decision-admission'
+  | 'world-commit';
 interface BackgroundFailure {
   operation: BackgroundFailureOperation;
   atUnixMs: number;
   errorClass: string;
+  frames?: string[];
   code?: string;
   transactionEntered?: boolean;
   attemptedCalls?: number;
 }
 const backgroundFailures: BackgroundFailure[] = [];
 let backgroundFailuresObserved = 0;
-/** Optional work must retain its failure cause without retaining private error text. */
+/** Retain safe failure causes without retaining private error text. */
 export function recordBackgroundFailure(
   operation: BackgroundFailureOperation,
   error: unknown,
@@ -179,6 +187,20 @@ export function recordBackgroundFailure(
       operation,
       atUnixMs: performance.timeOrigin + performance.now(),
       errorClass: /^[A-Za-z][A-Za-z0-9_]{0,63}$/.test(name) ? name : 'unknown',
+      // Locations only: error messages can contain private game/provider data.
+      ...(error instanceof Error && error.stack
+        ? {
+            frames: error.stack
+              .split('\n')
+              .slice(1, 9)
+              .flatMap((line) => {
+                const frame = line.match(
+                  /^\s+at .*\/([A-Za-z0-9_.-]+\.[cm]?[jt]s:\d+:\d+)\)?$/,
+                )?.[1];
+                return frame ? [frame] : [];
+              }),
+          }
+        : {}),
       ...(code && /^(?:busy|[0-9A-Z]{5}|E[A-Z_]{1,63})$/.test(code) ? { code } : {}),
       ...details,
     };

@@ -1,3 +1,5 @@
+import { readOnlyDraftView } from './draft.js';
+import { isImmutableData } from './records.js';
 import { isDraft, original } from 'immer';
 import {
   objectIndexEntries,
@@ -115,4 +117,21 @@ export function captureAppraisalIndex(world: WorldState): (result: WorldState) =
   return (result) => {
     if (pending && result.appraisals) snapshots.set(result.appraisals, pending);
   };
+}
+
+const processDeadlines = new WeakMap<object, number>();
+/** A process table changes only on enrolment/retirement or its own due occurrence.
+ * Reuse its numeric minimum between unrelated movement/need boundaries. */
+export function nextAppraisalProcessDeadline(world: WorldState): number {
+  const processes = readOnlyDraftView(world).appraisalProcesses;
+  if (!processes) return Infinity;
+  const values = readOnlyDraftView(processes),
+    stable = isImmutableData(values);
+  const cached = stable ? processDeadlines.get(values) : undefined;
+  if (cached !== undefined) return cached;
+  let next = Infinity;
+  for (const process of Object.values(values))
+    next = Math.min(next, readOnlyDraftView(process).nextAt);
+  if (stable) processDeadlines.set(values, next);
+  return next;
 }

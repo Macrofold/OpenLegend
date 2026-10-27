@@ -4,6 +4,8 @@
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [RuneScape](runescape.md) · [Old School RuneScape](old-school-runescape.md)
 
+**Focused reception follow-up, October 26 UTC:** the [Enshrouded comparison](enshrouded/05-comparison-with-dragonwilds.md) adds three further full-release written reviews, the supplied thirty-hour Reddit account, a positive creator's ten-hour transcript and paired Steam snapshots. It preserves this earlier full pass and does not claim a new R01–R15 certification of Dragonwilds.
+
 ## 1. Identity and release boundary
 
 Dragonwilds is a survival-crafting adventure in RuneScape's universe, not a client or rules mode for either MMO. It asks a player to establish a home, acquire capabilities and confront dragons on Ashenfall. The recurring promise is that magic eventually transforms ordinary survival work, while recognizable materials, characters and rewards connect that work to RuneScape. [S3](#s3)
@@ -148,21 +150,25 @@ The business model is paid game access, with editions and platform-subscription 
 
 Four entries are scored reviews; one is a clearly labelled firsthand release-build impressions essay. Historical reviews remain valuable but do not certify current tuning.
 
-| Assessment | Positive observations | Criticism and boundary |
-| --- | --- | --- |
-| **Joe Pring, Dexerto, April 22, 2025** | Approachable construction and spatially interesting survival magic. | Repeated attacks interrupt work; the author sometimes preferred dying and recovering. Early Access, not current raid frequency. [R1](#r1) |
-| **Angharad Redden, GAMINGbible, April 25, 2025** | Attractive world and a recognizable, playable survival loop. | Needs, stamina and hostile events disrupt exploration; magic does not erase all follow-up work. Co-op difficulty observations are version-specific. [R2](#r2) |
-| **Avichai Hermon, Vgames, May 6, 2025** | Creative building and magic applied outside combat, from a RuneScape newcomer. | Thin narrative, unclear structural rules, repetitive audio and uneven progression. Full Hebrew text read; inconsistent article metadata is not used for authoritative dates/caps. [R3](#r3) |
-| **Joe Chivers, GamesRadar+, September 21, 2026** | Recognizes functioning survival ingredients. | Finds weak identity and unclear recipe discovery; skill progress often feels inconsequential. Several-hours 1.0 impressions, not a scored endgame review. [R4](#r4) |
-| **Maisie Scott, NoobFeed, September 15, 2026** | Finds RuneScape identity, magical utility and interlocking progression convincing. | Criticizes storage friction, repetitive needs and technical roughness. Reports must be reconciled with documented storage features, not treated as their absence. [R5](#r5) |
+| Assessment                                       | Positive observations                                                              | Criticism and boundary                                                                                                                                                                      |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Joe Pring, Dexerto, April 22, 2025**           | Approachable construction and spatially interesting survival magic.                | Repeated attacks interrupt work; the author sometimes preferred dying and recovering. Early Access, not current raid frequency. [R1](#r1)                                                   |
+| **Angharad Redden, GAMINGbible, April 25, 2025** | Attractive world and a recognizable, playable survival loop.                       | Needs, stamina and hostile events disrupt exploration; magic does not erase all follow-up work. Co-op difficulty observations are version-specific. [R2](#r2)                               |
+| **Avichai Hermon, Vgames, May 6, 2025**          | Creative building and magic applied outside combat, from a RuneScape newcomer.     | Thin narrative, unclear structural rules, repetitive audio and uneven progression. Full Hebrew text read; inconsistent article metadata is not used for authoritative dates/caps. [R3](#r3) |
+| **Joe Chivers, GamesRadar+, September 21, 2026** | Recognizes functioning survival ingredients.                                       | Finds weak identity and unclear recipe discovery; skill progress often feels inconsequential. Several-hours 1.0 impressions, not a scored endgame review. [R4](#r4)                         |
+| **Maisie Scott, NoobFeed, September 15, 2026**   | Finds RuneScape identity, magical utility and interlocking progression convincing. | Criticizes storage friction, repetitive needs and technical roughness. Reports must be reconciled with documented storage features, not treated as their absence. [R5](#r5)                 |
 
 The disagreement is useful: one release-era account sees a distinctive adaptation, another sees a competent but insufficiently distinctive genre entry. Nostalgia, experience with survival games, and tolerance for repeated maintenance can change the judgment without either writer being dishonest.
+
+For later contrasting criticism and positive assessments, including the supplied Game Informer review and working-parent video, see the [focused comparison](enshrouded/05-comparison-with-dragonwilds.md#2-read-the-reviewers-goals-and-exposure-alongside-their-verdicts). Its version and exposure qualifications supplement these five earlier accounts.
 
 ## 18. Direct helpful Steam evidence
 
 The English all-time helpful surface includes **Eirra, April 18, 2025**, and **Im Jay Kay, April 17, 2025**, positive Early Access accounts that still requested better solo/storage flow or advised waiting for more content. More recent positives include **BenFosse, September 15, 2026**, valuing the Storage Ledger, and **hax_theplanet, September 20, 2026**, praising controller construction while disliking a storage input and some weapon feel. These are selected accounts, not a prevalence estimate. [P1](#p1)
 
 The separate negative page exposes a **most-helpful-this-week** surface, not an all-time negative ranking. **Fantast912, September 15, 2026**, objects to a Steam disruption interrupting an already-connected solo session, but explicitly says offline play works after restarting. This must not become a claim of permanent always-online dependence. **Lexaay, September 20**, objects to what they consider unfinished 1.0 scope; **HorstFoll, September 16**, finds progression too focused on removing friction. Their judgments are preserved without adopting unverified technical, legal or future-DLC accusations from other reviews. [P2](#p2)
+
+The [October 26 UTC aggregate comparison](enshrouded/05-comparison-with-dragonwilds.md#what-the-aggregate-evidence-actually-measures) records a later Steam snapshot and the unavailable current Metacritic aggregate. It does not replace the individual September accounts above or treat recommendation percentages as numerical critic scores.
 
 ## 19. Worked interactions
 
@@ -214,22 +220,22 @@ A player responds to the elderly Garou's request for a home. They gather, plan a
 
 ## 21. Completion, preservation and reading routes
 
-| Requirement | Coverage |
-| --- | --- |
-| R01 identity/version/promise | §§1–2 |
-| R02 actions and major mechanics | §§2–13 |
-| R03 objects, equipment and composition | §§3–8, 12 |
-| R04 progression, economy, time and failure | §§2–6, 9–13 |
-| R05 concrete interactions | §19, seven constructed situations |
-| R06 NPCs/social/AI/MP and absences | §§7, 10–13 |
-| R07 visual/audio/interface/feel | §§7–8, 14 |
-| R08 narrative and gameplay | §§9, 11, 19G |
-| R09 production and iteration | §15 |
-| R10 distribution/promotion/community | §§15–16 |
-| R11 commercial definitions | §16 |
-| R12 five written assessments and contrasting helpful Steam accounts | §§17–18 |
-| R13 transfer, dependencies and limits | §20 and worked-example limits |
-| R14 evidence, preservation and navigation | this section and sources |
+| Requirement                                                         | Coverage                          |
+| ------------------------------------------------------------------- | --------------------------------- |
+| R01 identity/version/promise                                        | §§1–2                             |
+| R02 actions and major mechanics                                     | §§2–13                            |
+| R03 objects, equipment and composition                              | §§3–8, 12                         |
+| R04 progression, economy, time and failure                          | §§2–6, 9–13                       |
+| R05 concrete interactions                                           | §19, seven constructed situations |
+| R06 NPCs/social/AI/MP and absences                                  | §§7, 10–13                        |
+| R07 visual/audio/interface/feel                                     | §§7–8, 14                         |
+| R08 narrative and gameplay                                          | §§9, 11, 19G                      |
+| R09 production and iteration                                        | §15                               |
+| R10 distribution/promotion/community                                | §§15–16                           |
+| R11 commercial definitions                                          | §16                               |
+| R12 five written assessments and contrasting helpful Steam accounts | §§17–18                           |
+| R13 transfer, dependencies and limits                               | §20 and worked-example limits     |
+| R14 evidence, preservation and navigation                           | this section and sources          |
 
 **Inventory review:** identity/classlessness, skill families, tools/items/equipment, crafting/repair, powers, survival, travel, object interactions, combat/status, loot/death, production/trade, story/NPC boundaries, construction, modes, multiplayer and endgame are covered. A generalized stealth simulator, romance system, political reputation simulation and autonomous companion society are not established. No exhaustive recipe/stat catalogue is implied.
 

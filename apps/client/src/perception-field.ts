@@ -2,6 +2,7 @@ import type { GameView } from '@open-legend/protocol';
 import {
   clearSegment,
   distance3D,
+  horizontalCone,
   soundTransmission,
   SPATIAL_LIMITS,
   surfaceContains,
@@ -143,10 +144,15 @@ export function* perceptionFieldSteps(
     return { x, y, z };
   };
   const sight = new WeakMap<WorldPoint, boolean>();
+  const inCone = horizontalCone(
+    origin,
+    view.vision.heading ?? 0,
+    view.vision.fieldOfViewRadians ?? 2 * Math.PI,
+  );
   const acousticDistance = new WeakMap<WorldPoint, number>();
   const passes = (contour: (typeof contours)[number], foot: WorldPoint): boolean => {
     if (contour.sense === 'vision') {
-      if (distance3D(origin, foot) > contour.radius) return false;
+      if (distance3D(origin, foot) > contour.radius || !inCone(foot)) return false;
       let visible = sight.get(foot);
       if (visible === undefined) {
         visible = view.vision.targetHeights.some((height) =>

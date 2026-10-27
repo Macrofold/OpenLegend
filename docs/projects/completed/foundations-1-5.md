@@ -153,7 +153,7 @@ not a claim that future mechanics are implemented.
 ### Verification plan and work status
 
 Use disposable worlds and `AI_BUDGET_USD=0`; no provider calls are needed for native
-acceptance. Select any new checks under [current Verification](../../../.agents/rules/verification.md#default-delegated-implementation),
+acceptance. Select any new checks under [current Verification](../../../.agents/rules/verification.md#select-checks-for-the-task),
 which permits focused existing checks and leaves full suites to CI or explicit requests. Run
 pinned formatting on changed files, TypeScript checks and production build; run config
 checks when authored configuration changes. Exercise representative success/failure

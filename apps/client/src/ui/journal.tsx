@@ -67,6 +67,7 @@ export function Journal({
           key={`${captionScope(view)}:${view.historyEpoch}`}
           revision={view.historyRevision ?? ''}
           visible={visible && section === 'places'}
+          paused={view.clock.paused}
           command={command}
           focus={focus}
         />

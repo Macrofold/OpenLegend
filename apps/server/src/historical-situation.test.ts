@@ -74,7 +74,9 @@ it('retrieves one shared terrain boundary from cold storage for both outgoing an
     await editWorld(service, (world) => {
       world.simTime = at;
       const person = entityGet(world.entities, entering[1].sourceId)!;
-      setSpatialPosition(world, person, { x: at - 1, y: 0, z: 12 }, 'terrain', 'physical');
+      setSpatialPosition(world, person, { x: at - 1, y: 0, z: 12 }, 'terrain', {
+        continuity: 'physical',
+      });
       initializePerception(world, []);
     });
   await service.flushMemorySources(PLAYER_ID);
@@ -153,13 +155,17 @@ it('reads historical native distances through cold actor receipts, including a l
   await editWorld(service, (world) => {
     world.simTime = 2;
     const body = entityGet(world.entities, NPC_ID)!;
-    setSpatialPosition(world, body, { x: 13, y: 0, z: 12 }, worldSupport(body), 'physical');
+    setSpatialPosition(world, body, { x: 13, y: 0, z: 12 }, worldSupport(body), {
+      continuity: 'physical',
+    });
     initializePerception(world, []);
   });
   await editWorld(service, (world) => {
     world.simTime = 3;
     const body = entityGet(world.entities, 'historical-other')!;
-    setSpatialPosition(world, body, { x: 100, y: 0, z: 12 }, worldSupport(body), 'physical');
+    setSpatialPosition(world, body, { x: 100, y: 0, z: 12 }, worldSupport(body), {
+      continuity: 'physical',
+    });
     world.map.spatial.revision++;
     initializePerception(world, []);
   });

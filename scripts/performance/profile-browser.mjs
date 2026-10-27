@@ -661,69 +661,55 @@ try {
       }
     };
     addEventListener('pointerup', pointerUp, true);
-    const originalFetch = window.fetch;
-    const profiledFetch = async (...args) => {
-      if (!active) return originalFetch.apply(window, args);
-      const path = new URL(
-        typeof args[0] === 'string' ? args[0] : args[0] instanceof URL ? args[0].href : args[0].url,
-        location.href,
-      ).pathname;
+    let stopRequestObserver;
+    let observeRequests;
+    const pendingRequests = new Map();
+    const requestRecorder = (observation) => {
+      if (!active) return;
+      const path = observation.path.split('?')[0];
       if (!['/api/command', '/api/control', '/api/presence', '/api/embodiment'].includes(path))
-        return originalFetch.apply(window, args);
-      const ownedCapture = capture;
-      const started = performance.now();
-      let input = null;
-      if (typeof args[1]?.body === 'string') {
-        try {
-          input = JSON.parse(args[1].body);
-        } catch {
-          // Diagnostic decoding must not replace the server's ordinary request refusal.
+        return;
+      if (observation.phase === 'started') {
+        const input = observation.input;
+        const command = {
+          started: observation.at,
+          type: input?.command?.type,
+          ...(typeof input?.commandId === 'string' ? { commandId: input.commandId } : {}),
+          ...(path === '/api/command'
+            ? {}
+            : {
+                path,
+                visible: input?.visible,
+                operation: input?.operation,
+                paused: input?.paused,
+                speed: input?.speed,
+              }),
+        };
+        pendingRequests.set(observation.id, command);
+        append(path === '/api/command' ? commands : control, command);
+      } else {
+        const command = pendingRequests.get(observation.id);
+        pendingRequests.delete(observation.id);
+        if (!command) return;
+        if (observation.phase === 'failed') {
+          command.error = 'Request observation failed';
+          return;
         }
-      }
-      const command = {
-        started,
-        type: input?.command?.type,
-        ...(typeof input?.commandId === 'string' ? { commandId: input.commandId } : {}),
-        ...(path === '/api/command'
-          ? {}
-          : {
-              path,
-              visible: input?.visible,
-              operation: input?.operation,
-              paused: input?.paused,
-              speed: input?.speed,
-            }),
-      };
-      append(path === '/api/command' ? commands : control, command);
-      try {
-        const response = await originalFetch.apply(window, args);
-        if (!active || ownedCapture !== capture) return response;
-        command.headersAt = performance.now();
-        command.status = response.status;
-        void response
-          .clone()
-          .json()
-          .then((body) => {
-            if (!active || ownedCapture !== capture) return;
-            command.ok = body?.ok;
-            command.code = body?.code;
-            command.message = body?.message;
-            if (typeof command.ok !== 'boolean') command.unreadable = true;
-            else command.receiptAt = performance.now();
-          })
-          .catch(() => {
-            if (!active || ownedCapture !== capture) return;
-            command.unreadable = true;
-          });
-        return response;
-      } catch (error) {
-        if (active && ownedCapture === capture) command.error = String(error);
-        throw error;
+        command.status = observation.status;
+        command.ok = observation.result?.ok;
+        command.code = observation.result?.code;
+        command.message = observation.result?.message;
+        if (typeof command.ok !== 'boolean') command.unreadable = true;
+        else command.receiptAt = observation.at;
       }
     };
-    window.fetch = profiledFetch;
+    const recorderReady = import('/assets/network-tools.js').then((module) => {
+      observeRequests = module.observeBrowserRequests;
+      if (active) stopRequestObserver = observeRequests(requestRecorder);
+    });
     let completed;
     const api = {
+      ready: recorderReady,
       start() {
         if (active || destroyed) return;
         capture++;
@@ -745,12 +731,16 @@ try {
         callbackTiming = emptyCallbackTiming();
         lastFrame = undefined;
         active = true;
+        if (observeRequests) stopRequestObserver = observeRequests(requestRecorder);
         frameRequest = requestAnimationFrame(sample);
         observer?.observe({ type: 'longtask', buffered: false });
       },
       stop() {
         if (!active) return completed;
         active = false;
+        stopRequestObserver?.();
+        stopRequestObserver = undefined;
+        pendingRequests.clear();
         cancelAnimationFrame(frameRequest);
         observer?.disconnect();
         const stoppedAt = performance.now();
@@ -786,7 +776,6 @@ try {
         api.stop();
         destroyed = true;
         removeEventListener('pointerup', pointerUp, true);
-        if (window.fetch === profiledFetch) window.fetch = originalFetch;
         for (const restore of glRestorations) restore();
         if (probeGl) delete window.__openLegendShaderProbe;
         if (window.__openLegendBrowserProfile === api) delete window.__openLegendBrowserProfile;
@@ -885,6 +874,7 @@ try {
     sceneProfiling,
   );
   const startRequestedAtUnixMs = Date.now();
+  await page.evaluate(() => window.__openLegendBrowserProfile.ready);
   const started = await page.evaluate((sceneProfiling) => {
     if (sceneProfiling) window.__openLegendSceneProfile.start();
     window.__openLegendBrowserProfile.start();
@@ -936,8 +926,9 @@ try {
   let skippedOverdueSlots = 0;
   async function survivalInput(slotStartedAt) {
     const state = await page.evaluate(async (headers) => {
-      const response = await fetch('/api/state', { headers, credentials: 'same-origin' });
-      const view = await response.json();
+      const { browserRequest } = await import('/assets/network-tools.js');
+      const response = await browserRequest('/api/state', { headers, credentials: 'same-origin' });
+      const view = response.body;
       if (!response.ok) throw new Error(`Public survival read: ${response.status}`);
       return view;
     }, intentionHeaders);
@@ -1041,15 +1032,20 @@ try {
     // routine walking never requests a catalogue or relies on continuous offers.
     const checked = await page.evaluate(
       async ({ headers, context }) => {
-        const response = await fetch('/api/actions', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify(context),
-        });
+        const { browserRequest } = await import('/assets/network-tools.js');
+        const response = await browserRequest(
+          '/api/actions',
+          {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify(context),
+          },
+          context,
+        );
         let body = null;
         try {
-          body = await response.json();
+          body = response.body;
         } catch {
           /* Retain an unreadable read. */
         }
@@ -1080,16 +1076,22 @@ try {
     sample.command = command;
     const result = await page.evaluate(
       async ({ headers, command, commandEpoch }) => {
-        const response = await fetch('/api/command', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { ...headers, 'Content-Type': 'application/json' },
-          body: JSON.stringify({ commandId: crypto.randomUUID(), commandEpoch, command }),
-        });
+        const { browserRequest } = await import('/assets/network-tools.js');
+        const input = { commandId: crypto.randomUUID(), commandEpoch, command };
+        const response = await browserRequest(
+          '/api/command',
+          {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { ...headers, 'Content-Type': 'application/json' },
+            body: JSON.stringify(input),
+          },
+          input,
+        );
         let body = null;
         let unreadable = false;
         try {
-          body = await response.json();
+          body = response.body;
         } catch {
           unreadable = true;
         }
@@ -1162,8 +1164,6 @@ try {
         const panel = page.locator('#nearbyPanel');
         if (!(await panel.isVisible()))
           await page.locator('.ol-launcher[aria-label="In view"]').click({ timeout: 2000 });
-        const back = panel.getByRole('button', { name: 'Back to In view', exact: true });
-        if (await back.isVisible()) await back.click({ timeout: 2000 });
         const rows = panel.locator('[data-entity]');
         const count = await rows.count();
         if (!count) throw new Error('No visible entity available for selection sweep.');
@@ -1172,10 +1172,18 @@ try {
         const at = await page.evaluate(() => performance.now());
         const attempt = { at, entityId, outcome: 'pending' };
         selectionInputs.push(attempt);
+        const inspector = page.locator(`[data-inspector-id=${JSON.stringify(entityId)}]`);
         try {
           await row.getByRole('button').click({ timeout: 2000 });
-          await back.waitFor({ timeout: 2000 });
-          attempt.outcome = 'selected';
+          await inspector.waitFor({ timeout: 2000 });
+          if (
+            await inspector.getByRole('heading', { name: 'Out of sight', exact: true }).isVisible()
+          ) {
+            attempt.outcome = 'skipped';
+            attempt.reason = 'Target left sight before its inspection opened';
+          } else {
+            attempt.outcome = 'selected';
+          }
         } catch (error) {
           const ids = await panel
             .locator('[data-entity]')
@@ -1189,6 +1197,13 @@ try {
           if (!refused && !(showingList && !ids.includes(entityId))) throw error;
           attempt.outcome = 'skipped';
           attempt.reason = refused ? 'Sight-focus refusal' : 'Target no longer in visible list';
+        } finally {
+          // Object details have their own panel; closing it keeps the next ground
+          // input comparable instead of accumulating overlapping inspections.
+          if (await inspector.isVisible())
+            await inspector
+              .getByRole('button', { name: /^Hide .* panel$/ })
+              .click({ timeout: 2000 });
         }
         await panel.getByRole('button', { name: /^Hide .* panel$/ }).click({ timeout: 2000 });
         continue;

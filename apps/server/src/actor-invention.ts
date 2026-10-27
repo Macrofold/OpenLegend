@@ -42,30 +42,33 @@ export async function prepareActorInvention(service: WorldService, actorId: stri
       privateInventionResults: history,
       ...(enabled
         ? {
-            inventionFamilies: installedRecipeFamilies(service.world).map(({ definition }) => ({
-              id: definition.id,
-              version: definition.version,
-              description: definition.description,
-              inputs: definition.inputs,
-              guidance: definition.guidance,
-              // A complete autonomous method has no second generation call to discover
-              // the selected schema. Supply its authored scalar constraints alongside
-              // field meanings without repeating every family envelope.
-              parameters: definition.editor.fields.flatMap((field) => {
-                const key = field.path.startsWith('parameters.') ? field.path.slice(11) : '';
-                const constraint = definition.parameterSchema.properties[key];
-                return constraint
-                  ? [
-                      {
-                        ...field,
-                        required: definition.parameterSchema.required.includes(key),
-                        constraint,
-                      },
-                    ]
-                  : [];
+            inventionFamilies: installedRecipeFamilies(service.world).map(
+              ({ definition, parameterOptions }) => ({
+                id: definition.id,
+                version: definition.version,
+                description: definition.description,
+                inputs: definition.inputs,
+                guidance: definition.guidance,
+                parameterOptions: parameterOptions?.(service.world),
+                // A complete autonomous method has no second generation call to discover
+                // the selected schema. Supply its authored scalar constraints alongside
+                // field meanings without repeating every family envelope.
+                parameters: definition.editor.fields.flatMap((field) => {
+                  const key = field.path.startsWith('parameters.') ? field.path.slice(11) : '';
+                  const constraint = definition.parameterSchema.properties[key];
+                  return constraint
+                    ? [
+                        {
+                          ...field,
+                          required: definition.parameterSchema.required.includes(key),
+                          constraint,
+                        },
+                      ]
+                    : [];
+                }),
+                limitation: definition.limitation,
               }),
-              limitation: definition.limitation,
-            })),
+            ),
             candidateSchema: declarationSchema,
             inventionMaterials: inventionMaterials(service.world, service.observe(actorId)!),
             continuation: 'Set parentId to an uncontinued result ID when revising; otherwise null.',

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                 | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The selected physical-sound design is complete; implementation, integration and player qualification remain open in ACS01–ACS08. | 2026-10-24   |
+| In progress | The selected physical-sound design is complete; implementation, integration and player qualification remain open in ACS01–ACS08. | 2026-10-25   |
 
 ## Purpose and scope
 
@@ -119,7 +119,7 @@ Deliver one full physical-source → hearing → A evidence → native/player co
 
 No executable tests, game sessions, runtime performance measurements or balance trials were run for this design. Source inspection, paper traces and document/link review establish contracts, not enjoyment or capacity. Uncoached play must show that the quiet route is worthwhile beside ordinary travel and a ranged shot, and that clues are useful without tedious waiting or excessive noise messages.
 
-**Acoustic design decisions are integrated.** SC02/A preserve exact source revisions; B/C share one admitted posture/optical fixture and minimum movement-cap law. E’s finite ground-bird curiosity contrast shares the alarm/presence owner, and F receives actual timely warning evidence through A/SPK. Implementation and qualification remain open. SA-D01’s controlled-player psychological policy remains separate.
+**Acoustic design decisions are integrated.** SC02/A preserve exact source revisions; B/C share one admitted posture/optical fixture and minimum movement-cap law. E’s finite ground-bird curiosity contrast shares the alarm/presence owner, and F receives actual timely warning evidence through A/SPK. Implementation and qualification remain open. The selected [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) authored native controlled-player policy remains separate; its exact profile rules and qualification belong to emotional physiology.
 
 Initial levels, gait speeds, feature precision and animal response thresholds are reversible authored tuning. Their explicit qualification/expansion triggers are in the limits inventory. Indirect sound paths, full frequency acoustics, waveforms, long sound-travel delays, hearing damage, sound waking, scent, new destruction mechanics, generalized fatigue and animal curiosity beyond E’s finite installed contrast are outside the selected delivery; none is silently approximated as a hidden guaranteed behavior.
 

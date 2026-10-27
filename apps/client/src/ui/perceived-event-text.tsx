@@ -2,11 +2,36 @@ import type { ReactNode } from 'react';
 import type { PublicEvent } from '@open-legend/protocol';
 import { MechanicTerm } from '../design-system/components';
 
-/** Occurrence text retains its admitted wording; source inspection is owned by Events. */
-export function PerceivedEventText({ event }: { event: PublicEvent }) {
-  // Speech participants and literal quotations were already composed from the
-  // acquired typed roles. A quoted name never creates a current-person link.
-  if (event.speech) return <>{event.text}</>;
+/** Links are based on occurrence-time admitted names, never current world identities. */
+export function PerceivedEventText({
+  event,
+  inspectEntity,
+}: {
+  event: PublicEvent;
+  inspectEntity?: (id: string) => void;
+}) {
+  if (event.speech) {
+    const presentation = event.speechPresentation;
+    if (!presentation) return <>Speech presentation is unavailable.</>;
+    return (
+      <>
+        {presentation.parts.map((part, index) =>
+          part.kind === 'participant' && part.contactReference && inspectEntity ? (
+            <button
+              key={index}
+              type="button"
+              className="ol-inline-reference"
+              onClick={() => inspectEntity(part.contactReference!)}
+            >
+              {part.text}
+            </button>
+          ) : (
+            <span key={index}>{part.text}</span>
+          ),
+        )}
+      </>
+    );
+  }
   const tokens: Array<{ label: string; render(text: string, key: number): ReactNode }> = [];
   const change = event.attributeChange;
   if (change?.name && change.meaning)

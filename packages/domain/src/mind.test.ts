@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from './entity-collection.js';
 import { bindNativeChoice } from './action-capabilities.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
@@ -5,7 +6,6 @@ import { setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
 import { describe, it, expect } from 'vitest';
 import {
-  createWorld,
   executeCommand,
   advanceWorld,
   updateWorld,
@@ -23,7 +23,7 @@ import { currentBodySubject } from './worlds/base/knowledge.js';
 import { initializePerception } from './kernel.js';
 
 function encounter() {
-  let world = createWorld(42);
+  let world = stockedCamp(42);
   world.paused = false;
   setSpatialPosition(
     world,
@@ -234,7 +234,7 @@ describe('fixture: bounded authored minds', () => {
     expect(mindFor(result.world, NPC_ID).lastDreamEpisode).toBe(binding.restEpisode);
   });
   it('records person encounters natively without repeated per-step records', () => {
-    let world = createWorld(4);
+    let world = stockedCamp(4);
     world.paused = false;
     setSpatialPosition(
       world,

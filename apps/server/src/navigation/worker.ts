@@ -21,34 +21,70 @@ parentPort.on('message', (message: NavigationMessage) => {
     startupMs = undefined;
   }
   try {
-    if (
-      message.requests &&
-      (message.request || !message.requests.length || message.requests.length > 64)
-    )
-      throw new Error('Invalid complete navigation batch.');
-    if (key !== message.key || message.map) {
+    if (message.variants) {
+      if (
+        message.request ||
+        message.requests ||
+        message.warmBody ||
+        !message.variants.length ||
+        message.variants.length > 64 ||
+        message.variants.some((group) => !group.requests.length) ||
+        message.variants.reduce((count, group) => count + group.requests.length, 0) > 64
+      )
+        throw new Error('Invalid complete navigation alternatives.');
+      reply.results = [];
+      // One planner at a time, under the coordinator's one batch deadline and
+      // memory limit. A private opened-gate cut never replaces gameplay geometry.
+      for (const group of message.variants) {
+        planner?.destroy();
+        planner = undefined;
+        key = '';
+        planner = new RecastPlanner(group.map, { profiling });
+        if (timing) timing.prepareMapMs = (timing.prepareMapMs ?? 0) + (planner.prepareMapMs ?? 0);
+        planner.prepare(group.requests[0]!.body, 'map');
+        const start = profiling ? performance.now() : undefined;
+        reply.results.push(...group.requests.map((request) => planner!.route(request)));
+        if (timing && start !== undefined) {
+          timing.queryMs += performance.now() - start;
+          timing.builds.push(...(planner.takeBuilds() ?? []));
+        }
+      }
       planner?.destroy();
       planner = undefined;
-      key = message.key;
-      if (!message.map) throw new Error('Navigation geometry is not prepared.');
-      planner = new RecastPlanner(message.map, { profiling });
-      if (timing) timing.prepareMapMs = planner.prepareMapMs;
-      if (message.request ?? message.requests?.[0])
-        planner.prepare((message.request ?? message.requests![0]!).body, 'map');
-      else if (message.warmBody) {
+    } else {
+      if (
+        message.requests &&
+        (message.request || !message.requests.length || message.requests.length > 64)
+      )
+        throw new Error('Invalid complete navigation batch.');
+      if (key !== message.key || message.map) {
+        planner?.destroy();
+        planner = undefined;
+        key = message.key;
+        if (!message.map) throw new Error('Navigation geometry is not prepared.');
+        planner = new RecastPlanner(message.map, { profiling });
+        if (timing) timing.prepareMapMs = planner.prepareMapMs;
+        if (message.request ?? message.requests?.[0])
+          planner.prepare((message.request ?? message.requests![0]!).body, 'map');
+      }
+      if (!planner) throw new Error('Navigation is unavailable.');
+      if (message.warmBody) {
         try {
           planner.prepare(message.warmBody, 'map');
         } catch {
-          // This speculative build cannot deny a later real request or hide its own failure.
           if (timing) timing.warmupFailed = true;
         }
       }
-    }
-    if (!planner) throw new Error('Navigation is unavailable.');
-    if (message.request) {
-      const start = profiling ? performance.now() : undefined;
-      reply.result = planner.route(message.request);
-      if (timing && start !== undefined) timing.queryMs = performance.now() - start;
+      if (message.request) {
+        const start = profiling ? performance.now() : undefined;
+        reply.result = planner.route(message.request);
+        if (timing && start !== undefined) timing.queryMs = performance.now() - start;
+      }
+      if (message.requests) {
+        const start = profiling ? performance.now() : undefined;
+        reply.results = message.requests.map((request) => planner!.route(request));
+        if (timing && start !== undefined) timing.queryMs = performance.now() - start;
+      }
     }
     if (message.requests) {
       const start = profiling ? performance.now() : undefined;
@@ -58,11 +94,11 @@ parentPort.on('message', (message: NavigationMessage) => {
   } catch {
     reply.error = 'Navigation preparation failed.';
     reply.result = { status: 'unavailable', path: [] };
-    if (message.requests)
-      reply.results = message.requests.map(() => ({ status: 'unavailable', path: [] }));
+    const requests = message.variants?.flatMap((group) => group.requests) ?? message.requests;
+    if (requests) reply.results = requests.map(() => ({ status: 'unavailable', path: [] }));
   }
   if (timing) {
-    timing.builds = planner?.takeBuilds() ?? [];
+    timing.builds.push(...(planner?.takeBuilds() ?? []));
     // First-use profile builds happen inside route(); attribute them to construction.
     timing.buildMs = timing.builds.reduce((total, build) => total + build.ms, 0);
     timing.queryMs = Math.max(

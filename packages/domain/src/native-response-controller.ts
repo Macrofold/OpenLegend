@@ -1,5 +1,9 @@
+import { receivedEventObservation } from './perception-evidence.js';
+import { navigationMembershipChanged } from './entity-index.js';
+import { stopOwnedOffense, finishPlanAction } from './agency.js';
+import { outcome } from './events.js';
 import { isDraft } from 'immer';
-import { readOnlyDraftView } from './draft.js';
+import { readOnlyDraftView, cloneValue } from './draft.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { TIME_EPSILON } from './simulation-time.js';
@@ -7,23 +11,38 @@ import type { AnimalComponent, Entity, WorldState, WorldEvent } from './types.js
 import { entityGet } from './entity-collection.js';
 import { bodyProfile, spatialMap, supportedPosition, worldPosition } from './spatial-state.js';
 import { distance3D, walkSurfaceLine, SPATIAL_LIMITS } from '@open-legend/spatial';
-import { nativeResponseProfile } from './native-response.js';
+import {
+  nativeResponseProfile,
+  nativeAcousticPatternKey,
+  nativeAcousticPreference,
+  type NativeAcousticCue,
+  type NativeRefugeProposal,
+} from './native-response.js';
+import type { Awareness } from './experience.js';
+import { chargeWork } from './work-budget.js';
+import { byteCount } from './mind.js';
 import {
   nativeRegionDangerKey,
   nativeDangerExpiresAt,
   nativeDangerSeparation,
   nativeRouteDangerSeparation,
   reconcileNativeDangers,
+  type NativeDangerFrame,
 } from './native-response-danger.js';
 import {
-  nativeRefugeCandidates,
+  nativeRefugeCandidate,
+  nativeRefugePrefixRoute,
+  nativeEscapeBearing,
   nativeRefugeChoices,
+  scoreNativeRefugeRoute,
   type NativeRefugeRoute,
 } from './native-response-refuge.js';
 import {
   nativeRefugeBatch,
+  nativeRefugePreparationReady,
   preparedNativeRefugeRoutes,
   type NativeRefugePreparations,
+  type NativeRefugeBatch,
 } from './native-response-navigation.js';
 import { attackPreparation } from './combat-encounters.js';
 import { seesEntity } from './perception.js';
@@ -36,8 +55,20 @@ import { nextRandom } from './data.js';
 import { activelyParticipates } from './participation-state.js';
 import { releaseInvocationResources } from './resource-claims.js';
 import type { SurfacePoint } from '@open-legend/spatial';
-import { retireTerritorialControl } from './territorial-threat.js';
-import { receivedEventObservation } from './perception-evidence.js';
+import { retireTerritorialControl, interruptTerritorialPursuit } from './territorial-threat.js';
+import {
+  prepareNativeFlightChoices,
+  nativeFlightBasis,
+  type NativeFlightPreparation,
+} from './native-response-flight.js';
+import {
+  retireNativeFlight,
+  finishNativeFlightResponse,
+  holdNativeFlightPerch,
+  recoverUnavailableNativeFlight,
+  startNativeFlight,
+  advanceFlight,
+} from './flight.js';
 
 function changed(world: WorldState, animal: Entity): void {
   recordAnimalClockWrite(world, animal.id);
@@ -59,9 +90,29 @@ export function reconcileNativeControl(world: WorldState, entity: Entity): void 
       state.physicalLife === (actor.physicalLife ?? 0))
   )
     return;
-  const owned = actor.action?.nativeLocomotion;
-  if (!state.episode && !owned && state.physicalLife === (actor.physicalLife ?? 0)) return;
+  const owned =
+    actor.action?.nativeLocomotion ||
+    (actor.action && state.foraging?.work?.actionId === actor.action.id);
+  if (
+    !state.episode &&
+    !state.foraging?.proposal &&
+    !state.foraging?.work &&
+    !owned &&
+    !entity.spatial.flight?.nativeLocomotion &&
+    !Object.keys(state.acousticPatterns).length &&
+    state.physicalLife === (actor.physicalLife ?? 0)
+  )
+    return;
+  retireNativeFlight(world, entity);
   delete state.episode;
+  if (state.foraging) {
+    delete state.foraging.proposal;
+    delete state.foraging.work;
+    state.foraging.mode = 'resting';
+    state.foraging.reviewAt = world.simTime;
+  }
+  state.acousticPatterns = {};
+  if (world.perceptionEpisodes?.[entity.id]) delete world.perceptionEpisodes[entity.id];
   state.physicalLife = actor.physicalLife ?? 0;
   if (owned && actor.action) {
     releaseInvocationResources(world, actor.action.id);
@@ -96,7 +147,7 @@ export function acquireNativeResponseEvent(
     !animal.actor?.alive ||
     animal.actor.controller !== 'native' ||
     !activelyParticipates(animal) ||
-    (animal.threat && !animal.threat.relinquished)
+    (animal.threat && !animal.threat.relinquished && !animal.animal.foraging)
   )
     return;
   if (event.scope === 'private' && !event.audience.includes(animal.id)) return;
@@ -117,7 +168,7 @@ export function acquireNativeResponseEvent(
     (!source || !attackPreparation(world, source) || source.actor?.action?.targetId !== animal.id)
   )
     return;
-  if (!felt && (!source || source.id === animal.id)) return;
+  if (!felt && (!source || source.id === animal.id || !seesEntity(world, animal, source))) return;
   if (preparation && source) {
     observeNativeAttackPreparation(world, source, events);
     return;
@@ -129,6 +180,19 @@ export function acquireNativeResponseEvent(
     events,
   );
   if (!episode) return;
+  if (source && source.id !== animal.id && seesEntity(world, animal, source)) {
+    const extent = bodyProfile(source),
+      life = source.actor?.physicalLife ?? 0;
+    episode.dangers[JSON.stringify(['body', source.id, life])] = {
+      kind: 'body',
+      sourceId: source.id,
+      physicalLife: life,
+      point: { ...worldPosition(source) },
+      extent: { radius: extent.radius, height: extent.height },
+      observedAt: world.simTime,
+      visible: true,
+    };
+  }
   if (felt) {
     const projectileId = event.data?.['projectileId'];
     const receivedLocation = observation.facets.find(
@@ -163,16 +227,46 @@ function beginNativeAlarm(
   animal: Entity,
   cause: NonNullable<AnimalComponent['episode']>['latestCause'],
   events: WorldEvent[],
+  wakeBody = true,
 ) {
   const state = animal.animal!;
   const profile = nativeResponseProfile(world, state.episode?.profilePin ?? state.profile);
   if (!profile) return undefined;
+  if (state.foraging) interruptTerritorialPursuit(world, animal);
+  const forage = state.foraging,
+    current = animal.actor?.action;
+  if (forage?.work && current?.id === forage.work.actionId) {
+    if (current.type === 'strike')
+      stopOwnedOffense(world, animal.id, current.targetId!, current.targetLife!, {
+        invocationId: current.id,
+      });
+    else {
+      finishPlanAction(
+        world,
+        animal.id,
+        current.id,
+        outcome(false, 'cancelled', 'Interrupted by personally perceived danger.'),
+      );
+      releaseInvocationResources(world, current.id);
+      animal.actor!.action = null;
+      animal.actor!.planGeneration++;
+    }
+  }
+  if (forage) {
+    delete forage.proposal;
+    delete forage.work;
+    forage.mode = 'resting';
+    forage.reviewAt = world.simTime;
+  }
   const fresh = !state.episode;
   const episode = (state.episode ??= {
     id: cause.id,
     startedAt: cause.at,
     latestCause: cause,
     profilePin: { ...state.profile },
+    ...((state.aerialRouteId ?? animal.spatial.flight?.routeId)
+      ? { aerialRouteId: state.aerialRouteId ?? animal.spatial.flight!.routeId }
+      : {}),
     locomotion: state.locomotion,
     mode: 'escaping',
     dangers: {},
@@ -182,14 +276,20 @@ function beginNativeAlarm(
   if (!fresh && episode.latestCause.kind === cause.kind && episode.latestCause.id === cause.id)
     return episode;
   episode.latestCause = { ...cause };
-  episode.mode = 'escaping';
+  episode.mode = episode.movement ? 'blocked' : 'escaping';
   episode.reviewAt = world.simTime;
   delete episode.clearSince;
   delete episode.proposal;
   delete episode.blocked;
   const wake = profile.wake,
     energy = wake && readEntityAttribute(world, animal, wake.attributeId);
-  if (wake && !animal.actor!.incapacitated && typeof energy === 'number' && energy > wake.above)
+  if (
+    wakeBody &&
+    wake &&
+    !animal.actor!.incapacitated &&
+    typeof energy === 'number' &&
+    energy > wake.above
+  )
     interruptStatusEffects(world, animal, events, wake.reason);
   if (fresh)
     emit(
@@ -201,6 +301,87 @@ function beginNativeAlarm(
     );
   changed(world, animal);
   return episode;
+}
+
+/** Optional pattern housekeeping cannot start another response or renew an alarm. */
+export function expireNativeAcousticPatterns(world: WorldState, animal: Entity): void {
+  const state = animal.animal;
+  if (!state) return;
+  let expired = false;
+  for (const [key, pattern] of Object.entries(state.acousticPatterns))
+    if (pattern.idleExpiresAt <= world.simTime) {
+      delete state.acousticPatterns[key];
+      expired = true;
+    }
+  if (expired) recordAnimalClockWrite(world, animal.id);
+}
+
+/** Consumes a newly admitted observer record once; no raw emitter or utterance lookup. */
+export function acquireNativeSound(
+  world: WorldState,
+  awareness: Awareness,
+  events: WorldEvent[],
+): void {
+  const sound = awareness.sound;
+  const animal = entityGet(world.entities, awareness.actorId),
+    state = animal?.animal;
+  if (
+    !sound ||
+    !animal?.actor?.alive ||
+    animal.actor.controller !== 'native' ||
+    !state ||
+    !activelyParticipates(animal) ||
+    capabilityBlocked(world, animal, 'perception') ||
+    state.physicalLife !== sound.physicalLife ||
+    sound.physicalLife !== (animal.actor.physicalLife ?? 0) ||
+    sound.acquisition === 'self'
+  )
+    return;
+  const profile = nativeResponseProfile(world, state.episode?.profilePin ?? state.profile);
+  if (!profile || profile.soundAlarmMinimumBand === null) return;
+  const band = Math.floor(
+    (sound.clarityMarginDb - sound.detectThresholdDb) / profile.acousticChangeBandDb,
+  );
+  if (band < profile.soundAlarmMinimumBand) return;
+  expireNativeAcousticPatterns(world, animal);
+  const cue: NativeAcousticCue = {
+    eventId: awareness.eventId,
+    sequence: awareness.sequence,
+    at: awareness.at,
+    physicalLife: sound.physicalLife,
+    sound: cloneValue(sound),
+  };
+  const key = nativeAcousticPatternKey(cue, profile),
+    prior = state.acousticPatterns[key];
+  chargeWork({ effects: 1, outputBytes: byteCount(cue) });
+  state.acousticPatterns[key] = { idleExpiresAt: cue.at + profile.acousticPatternIdleSeconds, cue };
+  recordAnimalClockWrite(world, animal.id);
+  if (prior) return;
+  const priorEpisode = state.episode;
+  const blocked =
+    priorEpisode?.mode === 'blocked' && priorEpisode.blocked
+      ? cloneValue(priorEpisode.blocked)
+      : undefined;
+  const moving =
+    priorEpisode?.movement &&
+    (animal.actor.action?.id === priorEpisode.movement.id ||
+      animal.spatial.flight?.nativeLocomotion?.id === priorEpisode.movement.id);
+  const episode = beginNativeAlarm(
+    world,
+    animal,
+    { kind: 'event', id: cue.eventId, at: cue.at },
+    events,
+    false,
+  );
+  if (!episode) return;
+  if (blocked) {
+    episode.mode = 'blocked';
+    episode.blocked = blocked;
+  }
+  episode.acousticCue = cue;
+  episode.acousticLegRequired = true;
+  if (!moving) delete episode.refuge;
+  changed(world, animal);
 }
 
 /** An existing native policy may hand over a chosen withdrawal, with its exact
@@ -240,11 +421,16 @@ export function observeNativeAttackPreparation(
     !animal.actor?.alive ||
     animal.actor.controller !== 'native' ||
     !activelyParticipates(animal) ||
-    (animal.threat && !animal.threat.relinquished) ||
+    (animal.threat && !animal.threat.relinquished && !animal.animal.foraging) ||
     action?.targetLife !== (animal.actor.physicalLife ?? 0) ||
     !seesEntity(world, animal, source)
   )
     return;
+  const profile = nativeResponseProfile(
+    world,
+    animal.animal.episode?.profilePin ?? animal.animal.profile,
+  );
+  if (!profile?.dangers.attackPreparation) return;
   const key = JSON.stringify([source.id, source.actor?.physicalLife ?? 0]);
   if (animal.animal.episode?.preparations?.[key] === action.id) return;
   const episode = beginNativeAlarm(
@@ -262,7 +448,41 @@ export function observeNativeAttackPreparation(
 export type NativeResponseDecision =
   | { status: 'none' | 'pending' }
   | { status: 'choices'; routes: NativeRefugeRoute[] }
+  | { status: 'flight-choices'; preparation: NativeFlightPreparation }
   | { status: 'stop' };
+
+/** One proposal producer for ordinary admission and optional route preparation.
+ * Generation is committed only by the ordinary native turn. */
+function groundRefugeProposal(
+  world: WorldState,
+  animal: Entity,
+  frame: Extract<NativeDangerFrame, { status: 'complete' }>,
+): NativeRefugeProposal {
+  const episode = animal.animal!.episode!,
+    body = bodyProfile(animal),
+    rule = frame.profile.candidates;
+  const bearing = nativeEscapeBearing(animal, frame, nextRandom(world));
+  const proposal: NativeRefugeProposal = {
+    generation: episode.proposalGeneration + 1,
+    geometryRevision: spatialMap(world).spatial.revision,
+    at: world.simTime,
+    origin: supportedPosition(animal)!,
+    movementId: animal.actor?.action?.id ?? null,
+    wait: rule.navigationWait,
+    body: { radius: body.radius, height: body.height, maxSlope: body.maxSlope },
+    search: {
+      bearing,
+      distance:
+        rule.distance.minimum + nextRandom(world) * (rule.distance.maximum - rule.distance.minimum),
+      side: nextRandom(world) < 0.5 ? -1 : 1,
+      attempted: 0,
+    },
+    candidates: [],
+  };
+  const candidate = nativeRefugeCandidate(world, animal, proposal);
+  if (candidate) proposal.candidates = [candidate];
+  return proposal;
+}
 
 /** The existing sensory phase selects changed observers and supplies its complete
  * local candidates. Native animals retain physical evidence without the person's
@@ -272,6 +492,14 @@ export function reconcileNativeExposure(
   animal: Entity,
   candidates?: Iterable<Entity>,
 ): void {
+  // Only previously seen acoustic sources need continuity checks during routine
+  // behavior; no human recognition, sighting memory or whole-neighborhood scan.
+  const episodes = world.perceptionEpisodes?.[animal.id];
+  if (episodes)
+    for (const id of Object.keys(episodes)) {
+      const source = entityGet(world.entities, id);
+      if (!source || !seesEntity(world, animal, source)) delete episodes[id];
+    }
   const episode = animal.animal?.episode;
   if (!episode || !animal.actor?.alive || animal.actor.controller !== 'native') return;
   const frame = reconcileNativeDangers(world, animal, episode, candidates);
@@ -283,7 +511,8 @@ export function reconcileNativeExposure(
     reconsider = episode.mode !== 'blocked';
   } else {
     const profile = frame.profile,
-      clear = profile.avoidanceDistance + profile.clearanceMargin;
+      clear = profile.avoidanceDistance + profile.clearanceMargin,
+      from = supportedPosition(animal);
     for (const { key, danger } of frame.records) {
       const inside =
         nativeDangerSeparation(animal, worldPosition(animal), danger, profile, world.simTime) <
@@ -314,9 +543,10 @@ export function reconcileNativeExposure(
           (nativeDangerSeparation(animal, worldPosition(animal), danger, profile, world.simTime) <
             clear ||
             (action?.path.length &&
+              from &&
               nativeRouteDangerSeparation(
                 animal,
-                supportedPosition(animal)!,
+                from,
                 action.path,
                 danger,
                 profile,
@@ -337,6 +567,8 @@ export function reconcileNativeExposure(
   }
   if (reconsider && episode.reviewAt > world.simTime) {
     episode.reviewAt = world.simTime;
+    episode.mode = 'blocked';
+    delete episode.proposal;
     meaningful = true;
   }
   if (meaningful) changed(world, animal);
@@ -344,6 +576,30 @@ export function reconcileNativeExposure(
 
 /** Native decisions prepare intentions only. The kernel admits a chosen ordinary
  * movement and its saved random draw in one atomic transition. */
+export function nativeResponseDue(
+  world: WorldState,
+  animal: Entity,
+  prepared?: NativeRefugePreparations,
+): boolean {
+  const state = animal.animal,
+    actor = animal.actor,
+    episode = state?.episode;
+  return !!(
+    episode &&
+    actor &&
+    (actor.controller !== 'native' ||
+      !actor.alive ||
+      state.physicalLife !== (actor.physicalLife ?? 0) ||
+      episode.reviewAt <= world.simTime ||
+      (episode.proposal &&
+        (episode.proposal.wait !== 'entity' ||
+          prepared?.has(animal.id) ||
+          !nativeRefugeBatch(world, animal))) ||
+      Object.values(state.acousticPatterns).some(
+        (pattern) => pattern.idleExpiresAt <= world.simTime,
+      ))
+  );
+}
 export function nativeResponseDecision(
   world: WorldState,
   animal: Entity,
@@ -353,12 +609,14 @@ export function nativeResponseDecision(
   const state = animal.animal,
     actor = animal.actor;
   if (!state || !actor) return { status: 'none' };
+  expireNativeAcousticPatterns(world, animal);
   if (actor.controller !== 'native') {
     reconcileNativeControl(world, animal);
     return { status: 'none' };
   }
   if (!actor.alive || state.physicalLife !== (actor.physicalLife ?? 0)) {
     delete state.episode;
+    state.acousticPatterns = {};
     state.physicalLife = actor.physicalLife ?? 0;
     changed(world, animal);
     return { status: 'none' };
@@ -369,13 +627,23 @@ export function nativeResponseDecision(
   const profile = nativeResponseProfile(world, episode.profilePin);
   if (!profile) return { status: 'none' };
   if (
+    episode.proposal?.wait === 'entity' &&
+    nativeRefugeBatch(world, animal) &&
+    !nativeRefugePreparationReady(world, animal, prepared)
+  ) {
+    if (episode.reviewAt <= world.simTime) {
+      episode.reviewAt = world.simTime + profile.reviewSeconds;
+      changed(world, animal);
+    }
+    return { status: 'pending' };
+  }
+  if (
     actor.incapacitated ||
     !activelyParticipates(animal) ||
     capabilityBlocked(world, animal, 'locomotion') ||
     capabilityBlocked(world, animal, 'actions') ||
     animal.spatial.fallVelocity !== undefined ||
-    animal.spatial.flight ||
-    !supportedPosition(animal)
+    (!animal.spatial.flight && !supportedPosition(animal))
   ) {
     episode.mode = 'blocked';
     episode.reviewAt = world.simTime + profile.blockedReviewSeconds;
@@ -400,12 +668,20 @@ export function nativeResponseDecision(
     !!action &&
     action.id === episode.movement?.id &&
     action.nativeLocomotion?.episodeId === episode.id;
-  if (episode.movement && !owned) delete episode.movement;
+  const flight = animal.spatial.flight;
+  const ownedFlight = flight?.nativeLocomotion?.episodeId === episode.id;
+  if (episode.movement && !owned && !ownedFlight) delete episode.movement;
   const clear = frame.records.every(
     ({ danger }) =>
       nativeDangerSeparation(animal, worldPosition(animal), danger, profile, world.simTime) >=
       profile.avoidanceDistance + profile.clearanceMargin,
   );
+  if (
+    episode.acousticLegRequired &&
+    episode.refuge &&
+    distance3D(worldPosition(animal), episode.refuge.point) <= SPATIAL_LIMITS.epsilon
+  )
+    delete episode.acousticLegRequired;
   const nextReview = () =>
     Math.min(
       world.simTime +
@@ -413,7 +689,15 @@ export function nativeResponseDecision(
       episode.clearSince === undefined ? Infinity : episode.clearSince + profile.settlingSeconds,
       ...frame.records.map(({ danger }) => nativeDangerExpiresAt(profile, danger)),
     );
-  if (!owned && !action && clear) {
+  if (
+    !owned &&
+    !action &&
+    clear &&
+    !episode.acousticLegRequired &&
+    supportedPosition(animal) &&
+    (!flight || flight.atRest || flight.waitSeconds > 0)
+  ) {
+    holdNativeFlightPerch(world, animal);
     if (episode.clearSince === undefined) {
       episode.clearSince = world.simTime;
       episode.mode = 'settling';
@@ -428,6 +712,7 @@ export function nativeResponseDecision(
     delete episode.proposal;
     delete episode.blocked;
     if (world.simTime >= episode.clearSince + profile.settlingSeconds) {
+      finishNativeFlightResponse(animal);
       delete state.episode;
       emit(
         world,
@@ -436,6 +721,7 @@ export function nativeResponseDecision(
         subjectNarration(animal, profile.presentation.routine),
         animal,
       );
+      advanceFlight(world, animal, 0, events);
       changed(world, animal);
       return { status: 'none' };
     }
@@ -444,88 +730,235 @@ export function nativeResponseDecision(
     return { status: 'none' };
   }
   if (!clear) delete episode.clearSince;
-  if (action && !owned) {
+  if (action && !owned && action.nativeLocomotion?.mode !== 'travel') {
     episode.reviewAt = nextReview();
     changed(world, animal);
     return { status: 'none' };
   }
-  if (episode.proposal && !nativeRefugeBatch(world, animal)) delete episode.proposal;
-  if (!episode.proposal) {
+  if (
+    profile.locomotion[episode.locomotion]?.flightEscape !== undefined &&
+    (flight || episode.aerialRouteId)
+  ) {
     const retained =
-      owned &&
-      episode.refuge &&
-      action?.destination &&
-      distance3D(worldPosition(animal), episode.refuge.point) > 1e-6
-        ? { id: 'retained', point: { ...episode.refuge.point }, retained: true as const }
+      flight && !flight.atRest && !flight.awaitingChoice
+        ? {
+            kind:
+              flight.nativeLocomotion?.stopAt === undefined &&
+              world.flightRoutes[flight.routeId]?.continuation.kind === 'land'
+                ? ('landing' as const)
+                : ('transit' as const),
+            routeId: flight.routeId,
+            next: flight.next,
+          }
         : undefined;
-    const candidates = nativeRefugeCandidates(world, animal, frame, retained);
-    const from = supportedPosition(animal)!;
-    const body = bodyProfile(animal);
-    episode.proposal = {
-      generation: ++episode.proposalGeneration,
-      geometryRevision: spatialMap(world).spatial.revision,
-      at: world.simTime,
-      origin: { ...from },
-      movementId: action?.id ?? null,
-      body: { radius: body.radius, height: body.height, maxSlope: body.maxSlope },
-      candidates: candidates.candidates,
-    };
+    const preparation = prepareNativeFlightChoices(world, animal, frame, retained);
+    if (preparation.choices.length) {
+      delete episode.proposal;
+      if (
+        ownedFlight &&
+        preparation.choices.length === 1 &&
+        preparation.choices[0]!.candidate.retained
+      ) {
+        episode.reviewAt = nextReview();
+        changed(world, animal);
+        return { status: 'none' };
+      }
+      return { status: 'flight-choices', preparation };
+    }
+    if (!supportedPosition(animal)) {
+      delete episode.proposal;
+      recoverUnavailableNativeFlight(animal);
+      episode.mode = 'blocked';
+      episode.blocked = { reason: 'no-usable-flight', basis: preparation.basis };
+      episode.reviewAt = world.simTime + profile.blockedReviewSeconds;
+      changed(world, animal);
+      return { status: 'none' };
+    }
   }
-  const basis = contentLabel(
-    canonicalJson([
-      spatialMap(world).spatial.revision,
-      episode.proposal.origin,
-      episode.proposal.body,
-      episode.proposal.candidates,
-      frame.records.map(({ key, danger }) => {
-        const { insideAvoidance: _band, ...geometry } = danger;
-        return { key, danger: geometry };
-      }),
-    ]),
-  );
-  if (episode.blocked?.basis === basis) {
+  if (owned && !episode.proposal) {
+    if (
+      episode.mode === 'escaping' &&
+      episode.reviewAt <= world.simTime &&
+      episode.refuge &&
+      distance3D(worldPosition(animal), episode.refuge.point) > SPATIAL_LIMITS.epsilon
+    ) {
+      episode.reviewAt = nextReview();
+      changed(world, animal);
+      return { status: 'none' };
+    }
+  }
+  if (episode.proposal && !nativeRefugeBatch(world, animal)) {
+    countDomainWork('nativeResponseStaleProposals');
     delete episode.proposal;
-    episode.reviewAt = world.simTime + profile.blockedReviewSeconds;
-    changed(world, animal);
-    return { status: 'none' };
   }
-  const routes = preparedNativeRefugeRoutes(world, animal, frame, prepared);
-  if (routes === undefined) {
-    changed(world, animal);
-    return { status: 'pending' };
+  if (!episode.proposal) {
+    // Stop only this controller's uncommitted locomotion before entity-local waiting.
+    if (owned && actor.action) {
+      releaseInvocationResources(world, actor.action.id);
+      actor.action = null;
+      delete episode.movement;
+    }
+    episode.proposal = groundRefugeProposal(world, animal, frame);
+    navigationMembershipChanged(world, animal.id, episode.proposal.wait ?? 'world');
+    episode.proposalGeneration = episode.proposal.generation;
   }
-  if (routes === 'unavailable') {
-    episode.mode = 'blocked';
-    episode.blocked = { reason: 'navigation-unavailable', basis };
-    delete episode.proposal;
-    episode.reviewAt = world.simTime + profile.blockedReviewSeconds;
-    changed(world, animal);
-    return { status: 'none' };
-  }
-  const choices = nativeRefugeChoices(routes, profile);
-  if (!choices.length) {
-    if (episode.blocked?.basis !== basis)
-      emit(
-        world,
-        events,
-        'animal-response',
-        subjectNarration(animal, profile.presentation.blocked),
-        animal,
+  const proposal = episode.proposal,
+    search = proposal.search!,
+    rule = profile.candidates;
+  while (search.attempted < rule.angles.length) {
+    const routes = preparedNativeRefugeRoutes(world, animal, frame, prepared);
+    if (routes === undefined) {
+      episode.reviewAt = world.simTime + profile.reviewSeconds;
+      changed(world, animal);
+      return { status: 'pending' };
+    }
+    let route = routes === 'unavailable' ? undefined : routes[0];
+    if (
+      (!route || route.length > search.distance * rule.maximumDetourFactor) &&
+      proposal.candidates[0]
+    )
+      route = nativeRefugePrefixRoute(world, animal, frame, proposal.candidates[0]);
+    if (
+      route &&
+      route.length <= search.distance * rule.maximumDetourFactor + SPATIAL_LIMITS.epsilon
+    ) {
+      const progress = Math.hypot(
+        route.candidate.point.x - proposal.origin.x,
+        route.candidate.point.z - proposal.origin.z,
       );
-    episode.mode = 'blocked';
-    episode.blocked = { reason: 'no-usable-route', basis };
-    delete episode.proposal;
-    episode.reviewAt = world.simTime + profile.blockedReviewSeconds;
-    changed(world, animal);
-    return { status: owned ? 'stop' : 'none' };
+      if (progress > (search.best?.progress ?? 0))
+        search.best = {
+          point: { ...route.candidate.point },
+          path: route.path.map((point) => ({ ...point })),
+          length: route.length,
+          progress,
+        };
+      if (progress >= search.distance * rule.preferredProgress - SPATIAL_LIMITS.epsilon)
+        return { status: 'choices', routes: [route] };
+    }
+    search.attempted++;
+    if (
+      search.best &&
+      (search.attempted >= rule.angles.length ||
+        (search.attempted >= rule.minimumAttempts &&
+          search.best.progress >= search.distance * rule.minimumProgress - SPATIAL_LIMITS.epsilon))
+    ) {
+      const best = search.best;
+      // Other bodies can move while the worker runs. Recheck the chosen stored path now.
+      const scored = scoreNativeRefugeRoute(
+        world,
+        animal,
+        frame,
+        { id: 'best', point: best.point },
+        proposal.origin,
+        best.path,
+        best.length,
+      );
+      if (scored.status === 'complete') return { status: 'choices', routes: [scored.route] };
+      delete search.best;
+    }
+    if (search.attempted >= rule.angles.length) break;
+    const candidate = nativeRefugeCandidate(world, animal, proposal);
+    proposal.candidates = candidate ? [candidate] : [];
   }
-  if (choices.length === 1 && choices[0]!.candidate.retained) {
-    delete episode.proposal;
-    episode.reviewAt = nextReview();
-    changed(world, animal);
-    return { status: 'none' };
+  episode.mode = 'blocked';
+  episode.blocked = { reason: 'no-usable-route', basis: String(proposal.generation) };
+  delete episode.proposal;
+  episode.reviewAt = world.simTime + profile.blockedReviewSeconds;
+  changed(world, animal);
+  return { status: owned ? 'stop' : 'none' };
+}
+
+/** Complete current preparation and the single saved draw are committed together.
+ * An asynchronous yield cannot admit a choice made for a different body or danger. */
+export function admitNativeFlightChoices(
+  world: WorldState,
+  animal: Entity,
+  prepared: NativeFlightPreparation,
+  events: WorldEvent[],
+): boolean {
+  const episode = animal.animal?.episode;
+  if (!episode || animal.actor?.controller !== 'native' || !animal.actor.alive) return false;
+  const frame = reconcileNativeDangers(world, animal, episode);
+  if (
+    frame.status !== 'complete' ||
+    nativeFlightBasis(world, animal, frame) !== prepared.basis ||
+    !prepared.choices.length
+  )
+    return false;
+  const action = animal.actor.action;
+  if (
+    action &&
+    action.nativeLocomotion?.mode !== 'travel' &&
+    action.nativeLocomotion?.episodeId !== episode.id
+  )
+    return false;
+  let selected = prepared.choices[0]!,
+    draw: number | undefined;
+  if (prepared.choices.length > 1) {
+    draw = nextRandom(world);
+    const weights = prepared.choices.map(
+      (choice) => 1 / (1 + choice.length / frame.profile.candidates.distanceWeightScale),
+    );
+    let remainder = draw * weights.reduce((sum, weight) => sum + weight, 0);
+    for (let i = 0; i < prepared.choices.length; i++) {
+      selected = prepared.choices[i]!;
+      remainder -= weights[i]!;
+      if (remainder < 0) break;
+    }
   }
-  return { status: 'choices', routes: choices };
+  if (action) {
+    releaseInvocationResources(world, action.id);
+    animal.actor.action = null;
+    animal.actor.planGeneration++;
+  }
+  const generation = ++episode.proposalGeneration;
+  const id = `native-flight-${world.nextId++}`;
+  startNativeFlight(animal, selected.connection, {
+    id,
+    physicalLife: animal.actor.physicalLife ?? 0,
+    profile: { ...episode.profilePin },
+    locomotion: episode.locomotion,
+    mode: 'escape',
+    episodeId: episode.id,
+    generation,
+    routeDigest: selected.routeDigest,
+    selectedAt: world.simTime,
+    geometryRevision: spatialMap(world).spatial.revision,
+    ...(draw === undefined ? {} : { draw }),
+    ...(selected.connection.kind === 'transit' ? { stopAt: selected.connection.next } : {}),
+  });
+  if (selected.connection.kind === 'landing') {
+    const route = world.flightRoutes[selected.connection.routeId]!,
+      terminal = route.points.at(-1)!;
+    episode.refuge = {
+      ...(episode.acousticCue
+        ? { acousticDirection: cloneValue(episode.acousticCue.sound.direction) }
+        : {}),
+      point: { ...terminal.position, surfaceId: terminal.landingSurfaceId! },
+      selectedAt: world.simTime,
+      generation,
+      flightRouteId: route.id,
+      ...(draw === undefined ? {} : { draw }),
+    };
+  } else delete episode.refuge;
+  episode.movement = { kind: 'flight', id };
+  episode.mode = 'escaping';
+  episode.reviewAt = world.simTime + frame.profile.reviewSeconds;
+  delete episode.proposal;
+  delete episode.blocked;
+  delete episode.clearSince;
+  emit(
+    world,
+    events,
+    'animal-response',
+    subjectNarration(animal, frame.profile.presentation.escaping),
+    animal,
+  );
+  reconcileAnimalWander(world, animal);
+  changed(world, animal);
+  advanceFlight(world, animal, 0, events);
+  return true;
 }
 
 export function nativeWanderRoute(
@@ -642,6 +1075,7 @@ export function reconcileAnimalWander(world: WorldState, entity: Entity): void {
     !spatial.flight &&
     spatial.fallVelocity === undefined &&
     !animal.episode &&
+    !animal.foraging &&
     !capabilityBlocked(world, entity, 'locomotion');
   const clock = readOnlyDraftView(animal.wander);
   let next: AnimalComponent['wander'] | undefined;

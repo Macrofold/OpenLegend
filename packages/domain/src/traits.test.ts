@@ -10,14 +10,13 @@ describe('saved character traits (native fixtures)', () => {
     expect(world).toEqual(same);
     for (const id of [PLAYER_ID, NPC_ID]) {
       const traits = entityGet(world.entities, id)!.actor!.traits!;
-      expect(new Set(traits.map((t) => t.id)).size).toBe(
-        id === NPC_ID ? ADA_IDENTITY.traits.length : 3,
-      );
+      expect(new Set(traits.map((t) => t.id)).size).toBe(traits.length);
       if (id === NPC_ID) expect(traits).toEqual(ADA_IDENTITY.traits);
+      else expect(traits).toHaveLength(3);
       expect(traits.every((t) => !!t.name && !!t.description)).toBe(true);
     }
-    // This authored character deliberately supplies an empty list instead of sampling.
-    expect(entityGet(world.entities, 'peacock-mercenary')!.actor!.traits).toEqual([]);
+    // Kest's authored empty list suppresses random sampling.
+    expect(entityGet(world.entities, 'kest')!.actor!.traits).toEqual([]);
     const before = world.rngState;
     const actor = createActor(world, 'npc', 70);
     expect(actor.traits).toHaveLength(3);

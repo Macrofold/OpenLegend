@@ -25,7 +25,7 @@ export interface StoryPolicy {
     role: 'source' | 'target';
     field?: string;
     minimum?: number;
-    fact?: 'healthDelta' | 'injuryDelta';
+    fact?: 'healthDelta';
     maximum?: number;
     significance: number;
   }[];
@@ -128,7 +128,7 @@ export function validateStoryPolicy(p: StoryPolicy): void {
       number(r.minimum!, -1000, 1000);
     } else if (r.minimum !== undefined) throw new Error('A field comparison needs a field.');
     if (r.fact !== undefined) {
-      if (r.type !== 'body-effect' || !['healthDelta', 'injuryDelta'].includes(r.fact))
+      if (r.type !== 'body-effect' || r.fact !== 'healthDelta')
         throw new Error('Unsupported structured fact.');
       number(r.maximum!, -1000, 1000);
     } else if (r.maximum !== undefined) throw new Error('A fact comparison needs a fact.');

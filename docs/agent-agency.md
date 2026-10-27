@@ -176,7 +176,7 @@ This is a behavioral scenario, not a canned recipe or a required route for every
 
 **Idea.** The actor thinks a flexible branch and a tensioned binding might propel a projectile. It can submit that proposed mechanism immediately, or first request invention and supply its method after neutral clarification. A bow alone is not assumed to solve ammunition, hunting, harvesting, cooking or eating.
 
-**Validation.** The invention service checks the proposal against the supported launcher family, known/permitted material references and world policy. “Fiber” is not silently replaced with finished cord if that changes an essential construction step. Any necessary preparation must be known or proposed. Unsupported assumptions return honestly. The engine does not spawn a bow when it accepts the design.
+**Validation.** The invention service checks the proposal against the supported ranged weapon family, known/permitted material references and world policy. “Fiber” is not silently replaced with finished cord if that changes an essential construction step. Any necessary preparation must be known or proposed. Unsupported assumptions return honestly. The engine does not spawn a bow when it accepts the design.
 
 **Optional commitment.** On receiving the accepted technique, the actor can adopt “Make a hunting bow” as a goal, keep only a short next plan portion, or decide its hunger makes immediate foraging more useful. It may also maintain “Improve our food supply” as a broader aim. No forced goal-setting call is inserted.
 
@@ -204,7 +204,7 @@ The [attention and investigation design](projects/attention-and-investigation-fe
 
 The [emotional-review contract](projects/emotional-physiology-tech-design.md#ep-c08--independently-selectable-emotional-review) uses existing appraisal deadlines and one coalesced `ActorWork` ticket. It acknowledges only its own captured opportunities, preserving pending replies, threats and ordinary evidence watermarks. Harmless progress does not cancel review or ongoing work. Finite attempts, material support, dormant no-change outcomes and shared admission bound optional reasoning; native effects and appraisal lifetimes continue when it is unavailable. Emotional intensity alone grants no threat-reserved execution slot.
 
-[Time and lifecycle](projects/stealth-awareness-tech-design.md#time-and-lifecycle) govern saved simulation progress. [SA-D01](../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) remains open for interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior during direct control; bodily effects do not confer autonomous authority over the human player's subjective choices.
+[Time and lifecycle](projects/stealth-awareness-tech-design.md#time-and-lifecycle) govern saved simulation progress. [SA-D01](maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects explicit world-authored native interpretation from the controlled character's own admitted evidence. Compatible retained appraisals remain applicable without lifetime renewal; native or interpreted feelings confer no authority to choose the human player's actions. Exact profile rules and qualification remain with the emotion owner.
 
 ## 9. The intended 80/20
 

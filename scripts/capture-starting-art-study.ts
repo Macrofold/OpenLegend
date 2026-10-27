@@ -1,3 +1,4 @@
+import { toolHttp } from './network.js';
 /** Refresh permitted visual replay views through ordinary native travel.
  * Uses the disposable test database helper; never resets a user's world. */
 import { access, mkdir, writeFile } from 'node:fs/promises';
@@ -54,7 +55,7 @@ try {
     const client = await localHttpClient(base);
     const read = async () =>
       (await (
-        await fetch(`${base}/api/state`, { headers: { Cookie: client.cookie } })
+        await toolHttp(`${base}/api/state`, { headers: { Cookie: client.cookie } })
       ).json()) as GameView;
     const stops: { id: string; label: string; view: Omit<GameView, 'map'> }[] = [];
     const digest = (value: unknown) =>

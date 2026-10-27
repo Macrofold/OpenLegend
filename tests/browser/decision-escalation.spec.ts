@@ -1,7 +1,8 @@
+import { NPC_ID } from '@open-legend/domain';
 import { expect, test } from '@playwright/test';
 import { createGameServer } from '../../apps/server/src/http.js';
 import { readConfig, testRepository, closeTestDatabases } from '../fixtures/database.js';
-import { enterGame } from '../fixtures/browser.js';
+import { enterGame, blockExternalBrowserRequests } from '../fixtures/browser.js';
 import type { AiClient, GenerateRequest } from '../../packages/ai/src/index.js';
 import { undispatchedReceipt } from '../../apps/server/src/decision-state.js';
 import { DECISION_MODEL, DECISION_REASONS } from '../../apps/server/src/decision-state.js';
@@ -22,12 +23,11 @@ test('E36 explains one reconsideration and total cost in the authorized inspecto
   if (!address || typeof address === 'string') throw new Error('Missing listener.');
   try {
     await seedDecisionInspection(game.service);
+    await blockExternalBrowserRequests(page);
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
     await page.getByRole('button', { name: 'Game', exact: true }).click();
-    await page
-      .getByRole('button', { name: 'God mode · Intelligence diagnostics', exact: true })
-      .click();
+    await page.getByRole('button', { name: 'Intelligence diagnostics', exact: true }).click();
     await page
       .locator('.ol-trace-row')
       .filter({ hasText: 'A difficult reply needed reconsideration.' })
@@ -38,13 +38,46 @@ test('E36 explains one reconsideration and total cost in the authorized inspecto
     await expect(page.getByText('Resolved by the fallback model', { exact: false })).toBeVisible();
     await expect(page.getByText('Cost of the whole decision', { exact: true })).toBeVisible();
     await expect(page.getByText('<$0.01 estimated charges;', { exact: false })).toBeVisible();
+    const timingStage = page
+      .locator('.ol-diagnostic-stage')
+      .filter({ hasText: 'Stage ID: fixture-decision-inspection:provider-timing' });
+    const heading = timingStage.locator(':scope > details > summary');
+    // Enter the ordinary tab order, then return to the actual native summary.
+    // The preview must follow that focus owner without an extra nested tab stop.
+    await page.bringToFront();
+    await expect.poll(() => page.evaluate(() => document.hasFocus())).toBe(true);
+    await heading.focus();
+    await page.keyboard.press('Tab');
+    await page.keyboard.press('Shift+Tab');
+    await expect(heading).toBeFocused();
+    await expect(page.getByRole('tooltip')).toContainText('Input');
+    await expect(heading).toHaveAttribute('aria-describedby', /.+/);
+    await page.keyboard.press('Escape');
+    await expect(page.getByRole('tooltip')).toBeHidden();
+    await heading.press('Enter');
+    await expect(timingStage.locator(':scope > details')).toHaveAttribute('open', '');
+    await heading.press('Space');
+    await expect(timingStage.locator(':scope > details')).not.toHaveAttribute('open', '');
+    await page.mouse.move(0, 0);
+    await heading.hover();
+    await expect(page.getByRole('tooltip')).toContainText('Input');
+    await heading.click();
+    await timingStage.locator('.ol-stage-technical > summary').click();
+    for (const [label, value] of [
+      ['Provider request', '40 ms'],
+      ['Macrofold wait', '10 ms'],
+      ['Macrofold execution', '90 ms'],
+    ]) {
+      await expect(timingStage.locator('dt').filter({ hasText: label }).first()).toBeVisible();
+      await expect(timingStage.locator('dd').filter({ hasText: value }).first()).toBeVisible();
+    }
     await page.screenshot({ path: info.outputPath('decision-inspector.png') });
   } finally {
     await page.close();
     await game.close();
   }
 });
-test('E36 keeps NPC waiting dots, failure details and a newer draft during reconsideration', async ({
+test('E36 keeps the pending reply, failure details and a newer speech draft during reconsideration', async ({
   page,
 }, info) => {
   test.setTimeout(120_000);
@@ -98,29 +131,36 @@ test('E36 keeps NPC waiting dots, failure details and a newer draft during recon
   if (!address || typeof address === 'string') throw new Error('Missing listener.');
   try {
     await useNearCampSight(game.service);
+    await blockExternalBrowserRequests(page);
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
-    await page.getByRole('button', { name: 'Conversation', exact: true }).click();
-    await page
-      .getByRole('button', { name: /^Talk to / })
-      .first()
-      .click();
-    const input = page.getByRole('textbox', { name: 'Your message', exact: true });
+    await page.getByRole('button', { name: 'In view', exact: true }).click();
+    await page.locator(`[data-entity="${NPC_ID}"]`).click({ button: 'right' });
+    await page.getByRole('searchbox', { name: 'Find an action' }).fill('speak');
+    await page.locator(`[data-catalogue-action="talk-${NPC_ID}"]`).click();
+    const input = page.getByRole('textbox', { name: 'Words to say out loud', exact: true });
+    const waiting = page.getByRole('status').filter({ hasText: /is considering a reply/ });
     await input.fill('Could we talk about the plan?');
+    // The native recipient/allowance check is asynchronous. Enter before that
+    // public check completes correctly preserves the draft without sending it.
+    await expect(
+      page
+        .getByRole('region', { name: 'Speak out loud', exact: true })
+        .getByRole('button', { name: 'Speak', exact: true }),
+    ).toBeEnabled();
     await input.press('Enter');
     await expect.poll(() => requests.length).toBe(1);
     expect(requests[0]!.task).toBe('decision-escalation');
-    await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeVisible();
+    await expect(waiting).toBeVisible();
     await input.fill('Keep this newer unsent message.');
     release!();
-    await expect(page.getByRole('status', { name: 'Waiting for a reply' })).toBeHidden();
-    const failed = page.getByRole('button', {
-      name: 'Failed: The AI answer could not be used.',
-      exact: true,
-    });
-    await expect(failed).toBeVisible();
-    await failed.hover();
-    await expect(page.getByRole('tooltip')).toContainText('The AI answer could not be used.');
+    await expect(waiting).toBeHidden();
+    await expect(
+      page.getByRole('status').filter({ hasText: 'The AI answer could not be used.' }),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'Retry their reply', exact: true }),
+    ).toBeVisible();
     await expect(input).toHaveValue('Keep this newer unsent message.');
     expect(requests).toHaveLength(1);
     await page.screenshot({ path: info.outputPath('npc-fallback-failure.png') });

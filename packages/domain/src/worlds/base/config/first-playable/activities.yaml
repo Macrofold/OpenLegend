@@ -1,0 +1,63 @@
+workBatches:
+  id: base:finite-survival-work
+  version: 1
+  maximumBatches: 16
+  commands: [gather, craft]
+  onceLabel: Once
+  repeatLabel: Repeat
+  countLabel: Batches
+  startLabel: Start
+  gatherLabel: 'Gather from {source}'
+  toolLabel: Collect with
+  handsLabel: Bare hands
+  automaticToolLabel: Choose best available once
+  help: >-
+    Run only the chosen batches. Each checks its own materials and tool. Stop
+    keeps completed goods and spent materials. No other source or tool is
+    substituted; finishing never restarts.
+meal:
+  conditionId: base:chosen-meal
+  maximumUnits: 16
+  oneLabel: Eat one
+  mealLabel: Eat meal
+  countLabel: Units
+  startLabel: Start
+  help: >-
+    Eat only this food and chosen quantity. Stop at full or a blocker.
+    Food already eaten stays consumed; finishing never restarts.
+workRequests:
+  modeLabel: Current work
+  foodLabel: Food
+  gather:
+    id: base:repeat-gather
+    label: Gather a chosen number of batches
+    description: Gather from one personally visible source for a chosen finite count. Keep the selected tool or bare hands; stop if the source, tool or native step becomes unavailable.
+    selectionLabel: Gathering source
+  craft:
+    id: base:repeat-craft
+    label: Craft a chosen number of batches
+    description: Repeat one known method for a chosen finite count. Each batch spends its own inputs and uses the chosen kept tools. Stop on a blocker; never choose another method or tool.
+    selectionLabel: Known method
+  meal:
+    id: base:eat-meal
+    label: Eat a chosen meal
+    description: Eat a chosen number of units of one edible definition from one own-stock location. Each unit uses ordinary Eat. Stop at full or a blocker; never substitute food or restart later.
+    selectionLabel: Own-stock location
+catalogue:
+  categoryLabel: Purpose
+  allLabel: All purposes
+  defaultCategoryId: tools
+  categories:
+    - { id: food-fire, label: Food and fire }
+    - { id: tools, label: Tools and carrying }
+    - { id: camp, label: Camp components }
+  rules:
+    - { categoryId: camp, kind: transform, id: 'base:trim-canopy-post' }
+    - { categoryId: camp, kind: transform, id: 'base:dress-tall-canopy-post' }
+    - { categoryId: camp, kind: transform, id: 'base:weave-roof-mat' }
+    - { categoryId: camp, kind: transform, id: 'base:clean-fibers' }
+    - { categoryId: camp, kind: transform, id: 'base:twist-cord' }
+    - { categoryId: tools, kind: transform, id: 'base:knap-cutting-stone' }
+    - { categoryId: tools, kind: transform, id: 'base:trim-club' }
+    - { categoryId: food-fire, kind: family, id: 'base:fishing-line' }
+    - { categoryId: camp, kind: family, id: 'base:cordage' }

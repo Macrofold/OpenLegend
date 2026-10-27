@@ -483,29 +483,15 @@ These are proposed fictional operating laws, not descriptions of demonstrated re
 | TE-299 | Reassemblable service swarm        | SC          | Blend | 5 Specialist | D     | Define a finite swarm of supplied units that can form a few admitted tools or structures; forming a bridge removes those units from a workbench until they return.                                                           | Large; material-preserving assembly, supported shapes and local control.     | [Spore][spore]; original extrapolation                       |
 | TE-300 | Repairable miniature habitat       | —           | Lab   | 5 Specialist | D     | Define an engineered small-scale inhabited environment with its own explicit air, access and scale interfaces; outside maintenance can become a meaningful event inside without automatically creating or copying residents. | Large; unusual scale law, Ecology and independently defined people.          | [World technology][worldtech]; original extrapolation        |
 
-## The district heat loom
+## Phase kiln
 
-**MO SC · Blend · D.** Gap: coarse heat-routing network with capacity, loss and isolation.
+**SC FA · Play · D.** Gap: one authored transformation process with conserved inputs and batch limits.
 
-A network moves surplus workshop heat to baths and greenhouses through visible exchange stations. Operators negotiate priorities during cold weather. Builders get a machine that connects domestic comfort and industry. Start with a handful of nodes, bypasses and clear flow displays; detailed thermodynamics is optional, and one fault should not recursively simulate every household appliance.
+A machine changes the internal structure of a common mineral to make gate components, consuming power and a reusable catalyst that slowly degrades. The interesting scarcity is maintenance expertise and reliable energy. Creators can build industrial towns, lucrative monopolies or contested arsenals around it; an invented process may let a newcomer challenge the current owner. State the fictional law clearly and keep waste or loss explicit; “phase” is not permission for arbitrary matter creation.
 
-Seeds and references: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [Oxygen Not Included](source-atlas.md#g129).
+In a selected breakthrough, maker Rell wants a durable gate hinge that makes an abandoned ground passage to an isolated basin usable. A rival investor offers power in exchange for exclusive supply; an excluded apprentice has useful operating knowledge and wants a credited place on the team. Players can test the admitted process, choose an agreement, seek another energy source or abandon an unworkable design. A working gate can make the journey possible and earn a real commission; ownership and access disputes may continue without making the invention secretly useless. Once operation is dependable, repeated calibration need not replace the expedition it enabled. This remains a local SC/FA technical premise with the stated prerequisites, not playable spaceflight or a new universal manufacturing law.
 
-## Hushmesh
-
-**MO SC · Play · D.** Gap: bounded acoustic attenuation and per-sense observations.
-
-A woven panel dampens selected sound ranges, allowing a musician and night worker to share a building. The same panel can help conceal a raider’s approach or mask a machine’s warning noise, creating a useful tradeoff. Players configure particular acoustic effects, not universal stealth bubbles. Define what is attenuated, which warnings remain visible and how people inspect the effect; silence must not erase unrelated evidence.
-
-Seeds and references: [Deus Ex (2000)](source-atlas.md#g117), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
-
-## The relay orchard
-
-**SC · Play · D.** Gap: bounded communication nodes, delays and maintenance.
-
-A settlement grows or assembles branching relays that carry messages through difficult terrain. A damaged node isolates one valley, prompting repair, courier work or a temporary bridge. An armed faction may seize it to charge for access, and rivals can contest that control. Players build, defend or disrupt consequential infrastructure. Messages retain senders and uncertainty; relay coverage cannot grant omniscient remote perception or access to information nobody chose to transmit.
-
-Seeds and references: [Lethal Company](source-atlas.md#g38), [Warcraft II: Tides of Darkness](source-atlas.md#g95), [The Expanse](source-atlas.md#w15).
+Seeds and references: [Noita](source-atlas.md#g32), [Mass Effect: Andromeda](source-atlas.md#g104), [Dune](source-atlas.md#w09).
 
 ## A tool with swappable manners
 
@@ -514,14 +500,6 @@ Seeds and references: [Lethal Company](source-atlas.md#g38), [Warcraft II: Tides
 A service drone can survey, carry or illuminate, but its heavy cargo mount blocks a sensor. Players configure it for a particular job and can explain the tradeoff; a weapon or decoy mount can support an expedition while consuming capacity needed for salvage. Avoid dozens of interchangeable stat modules; each attachment should enable a different method. Behavior modes remain bounded standing plans, not unrestricted agents generating fresh instructions on every tick.
 
 Seeds and references: [Final Fantasy VII](source-atlas.md#g84), [Final Fantasy XII](source-atlas.md#g89), [Mass Effect: Andromeda](source-atlas.md#g104).
-
-## Phase kiln
-
-**SC FA · Play · D.** Gap: one authored transformation process with conserved inputs and batch limits.
-
-A machine changes the internal structure of a common mineral to make gate components, consuming power and a reusable catalyst that slowly degrades. The interesting scarcity is maintenance expertise and reliable energy. Creators can build industrial towns, lucrative monopolies or contested arsenals around it; an invented process may let a newcomer challenge the current owner. State the fictional law clearly and keep waste or loss explicit; “phase” is not permission for arbitrary matter creation.
-
-Seeds and references: [Noita](source-atlas.md#g32), [Mass Effect: Andromeda](source-atlas.md#g104), [Dune](source-atlas.md#w09).
 
 ## The route room
 
@@ -539,6 +517,14 @@ During a discrete external encounter, crew operate shielding, communications, ev
 
 Seeds and references: [Lethal Company](source-atlas.md#g38), [Mass Effect 2](source-atlas.md#g102), [Mass Effect 3](source-atlas.md#g103).
 
+## The relay orchard
+
+**SC · Play · D.** Gap: bounded communication nodes, delays and maintenance.
+
+A settlement grows or assembles branching relays that carry messages through difficult terrain. A damaged node isolates one valley, prompting repair, courier work or a temporary bridge. An armed faction may seize it to charge for access, and rivals can contest that control. Players build, defend or disrupt consequential infrastructure. Messages retain senders and uncertainty; relay coverage cannot grant omniscient remote perception or access to information nobody chose to transmit.
+
+Seeds and references: [Lethal Company](source-atlas.md#g38), [Warcraft II: Tides of Darkness](source-atlas.md#g95), [The Expanse](source-atlas.md#w15).
+
 ## Pocket fabrication with a bill of matter
 
 **SC · Play · D.** Gap: supported recipes, material accounting and honest output constraints.
@@ -546,6 +532,22 @@ Seeds and references: [Lethal Company](source-atlas.md#g38), [Mass Effect 2](sou
 A field fabricator makes repair brackets from local feedstock, but cannot print knowledge, living citizens or every complex component. Players scan a supported shape, choose material and inspect strength limits. It rewards preparation and adaptation. Output consumes conserved inputs and time; a convincing prompt cannot fabricate an absent execution capability or clone unique resources.
 
 Seeds and references: [Minecraft](source-atlas.md#g20), [Mass Effect: Andromeda](source-atlas.md#g104), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
+
+## The district heat loom
+
+**MO SC · Blend · D.** Gap: coarse heat-routing network with capacity, loss and isolation.
+
+A network moves surplus workshop heat to baths and greenhouses through visible exchange stations. Operators negotiate priorities during cold weather. Builders get a machine that connects domestic comfort and industry. Start with a handful of nodes, bypasses and clear flow displays; detailed thermodynamics is optional, and one fault should not recursively simulate every household appliance.
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [Oxygen Not Included](source-atlas.md#g129).
+
+## Hushmesh
+
+**MO SC · Play · D.** Gap: bounded acoustic attenuation and per-sense observations.
+
+A woven panel dampens selected sound ranges, allowing a musician and night worker to share a building. The same panel can help conceal a raider’s approach or mask a machine’s warning noise, creating a useful tradeoff. Players configure particular acoustic effects, not universal stealth bubbles. Define what is attenuated, which warnings remain visible and how people inspect the effect; silence must not erase unrelated evidence.
+
+Seeds and references: [Deus Ex (2000)](source-atlas.md#g117), [Prey (2017)](source-atlas.md#g118), [Star Trek](source-atlas.md#w04).
 
 ## Memory as a commissioned recording
 

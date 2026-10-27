@@ -12,6 +12,11 @@ import { MIND_LIMITS, RESPONSE_LIMITS } from '@open-legend/domain';
 import { LEVEL_LIMITS } from './cognition-contracts.js';
 import type { AppConfig } from './config.js';
 import { CONTEXT_BYTE_LIMIT } from './context.js';
+import {
+  assertAttemptReceiptContinuity,
+  retainKnownAttemptCost,
+  uncertainAttemptMicroUsd,
+} from './attempt-budget.js';
 
 /** Reserve from the same model catalogue used to settle supported usage. Missing prices
  * retain the caller's conservative unknown-cost floor, never an invented zero rate. */
@@ -191,6 +196,13 @@ export interface LedgerEntry {
   /** Instructions, context/state and schema/questions sizes as submitted, in UTF-8 bytes. */
   size: { instructions: number; context: number; schema: number };
   reservedUsd: number;
+  providerRequestId?: string;
+  macrofoldBillingMode?: AiReceipt['macrofoldBillingMode'];
+  macrofoldDeployment?: AiReceipt['macrofoldDeployment'];
+  macrofoldCostAttribution?: AiReceipt['macrofoldCostAttribution'];
+  dispatched?: boolean;
+  /** Known price is separate from the possibly larger conservative spending hold. */
+  estimatedCostUsd?: number;
   settledUsd?: number;
   uncertain?: boolean;
   outcome?: string;
@@ -239,16 +251,31 @@ export class DecisionLedger {
   settle(requestId: string, receipt: AiReceipt, outcome?: string): void {
     const entry = this.entries.find((e) => e.requestId === requestId);
     if (!entry) return;
-    // Missing usage or uncertain completion is not free: the reservation stays charged.
+    if (receipt.requestId !== requestId) throw new Error('Spending receipt identity mismatch.');
+    assertAttemptReceiptContinuity(entry, receipt);
+    if (entry.settledUsd !== undefined && entry.uncertain === false) return;
+    receipt = retainKnownAttemptCost(receipt, entry.estimatedCostUsd);
     const charge = usdToMicroUsd(receipt.estimatedCostUsd);
     const uncertain = receipt.dispatched && (receipt.completionUncertain || charge === undefined);
-    entry.settledUsd = !receipt.dispatched
+    const spent = !receipt.dispatched
       ? 0
       : uncertain
-        ? entry.reservedUsd
-        : charge === undefined
-          ? entry.reservedUsd
-          : charge / 1_000_000;
+        ? uncertainAttemptMicroUsd(
+            usdToMicroUsd(entry.reservedUsd) ?? NaN,
+            usdToMicroUsd(entry.settledUsd ?? 0) ?? NaN,
+            receipt.estimatedCostUsd,
+          )
+        : charge!;
+    const settledUsd = microUsdToUsd(String(spent));
+    if (settledUsd === undefined) throw new Error('Decision spending exceeds safe arithmetic.');
+    entry.settledUsd = settledUsd;
+    entry.providerRequestId = receipt.providerRequestId;
+    entry.macrofoldBillingMode = receipt.macrofoldBillingMode;
+    entry.macrofoldDeployment = receipt.macrofoldDeployment ?? entry.macrofoldDeployment;
+    entry.macrofoldCostAttribution =
+      receipt.macrofoldCostAttribution ?? entry.macrofoldCostAttribution;
+    entry.dispatched = receipt.dispatched;
+    entry.estimatedCostUsd = charge === undefined ? undefined : receipt.estimatedCostUsd;
     entry.uncertain = uncertain;
     entry.outcome = outcome;
     if (receipt.usage) entry.usage = receipt.usage;
@@ -285,7 +312,7 @@ export class DecisionLedger {
       inputTokens: entries.reduce((s, e) => s + (e.usage?.inputTokens ?? 0), 0),
       outputTokens: entries.reduce((s, e) => s + (e.usage?.outputTokens ?? 0), 0),
       reasoningTokens: entries.reduce((s, e) => s + (e.usage?.reasoningOutputTokens ?? 0), 0),
-      usageMissing: entries.some((e) => e.usage === undefined && e.settledUsd !== 0),
+      usageMissing: entries.some((e) => e.usage === undefined && e.dispatched),
       reservedUsd: amountUsd(entries, false),
       settledUsd: amountUsd(entries, true),
       uncertain: entries.some((e) => e.uncertain || e.settledUsd === undefined),

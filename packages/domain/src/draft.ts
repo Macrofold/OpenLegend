@@ -6,6 +6,7 @@ import {
   entityKeys,
 } from './entity-collection.js';
 import { captureOutingIndex } from './outing-index.js';
+import { captureCompactIndex } from './social-compact-index.js';
 import { captureExposureCache } from './encounter-cache.js';
 import { captureAppraisalIndex } from './appraisal-index.js';
 import { captureWorkAllocations } from './work-budget.js';
@@ -17,12 +18,13 @@ import {
   inheritSensoryChanges,
   MAX_CHANGE_SCOPES,
 } from './dependencies.js';
-import { captureRootIndex } from './entity-index.js';
+import { captureRootIndex, inheritRootIndex } from './entity-index.js';
 import { captureReservationIndex } from './resource-claims.js';
 import { captureContributionSources } from './status-capabilities.js';
 import { captureContributionResidency } from './contribution-residency.js';
 import { Immer, current, isDraft, original, enablePatches, freeze, type Patch } from 'immer';
 import { reconcileSemanticInterval } from './semantic-opportunities.js';
+import { isImmutableData } from './records.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { materializeNativeValuesInPlace } from './native-values.js';
@@ -93,6 +95,26 @@ export function entityChangesBetween(
     cursor = next;
   }
   return cursor === after ? changed : undefined;
+}
+/** Current writes since a caller's known immutable baseline. Shared-rule identities
+ * are explicit dependencies; unavailable lineage requires the consumer's full check. */
+export function entityChangesSince(
+  world: WorldState,
+  baseline: WorldState | undefined,
+  unchanged: readonly (keyof WorldState)[],
+): ReadonlySet<string> | undefined {
+  if (!isDraft(world) || !baseline || !Object.isFrozen(baseline)) return;
+  const latest = readOnlyDraftView(world),
+    source = original(world)!;
+  for (const key of unchanged) {
+    const value = latest[key];
+    const actual = value && typeof value === 'object' ? readOnlyDraftView(value) : value;
+    if (actual !== baseline[key] || !isImmutableData(baseline[key])) return;
+  }
+  if (!isImmutableData(baseline.entities) || !isImmutableData(source.entities)) return;
+  const inherited = entityChangesBetween(baseline.entities, source.entities);
+  const local = changedDraftEntityIds(world);
+  return inherited && local ? new Set([...inherited, ...local]) : undefined;
 }
 /** Exact write set from the most recent transition; no retained base-world reference. */
 export function changedEntityIds(world: WorldState): ReadonlySet<string> | undefined {
@@ -223,27 +245,37 @@ export function appendedEventCount(previous: WorldEvent[], next: WorldEvent[]): 
     : undefined;
 }
 const IMMER_STATE = Symbol.for('immer-state');
-/** Latest value of a draft container without creating a child draft for every property
- * later read from it. Unread children are their immutable base records; children already
- * drafted in this transition are returned as those live drafts. Callers must only read.
+/** Latest value without creating writable children for a pure read. An unchanged
+ * draft resolves to its base even if reading a child already prepared a copy;
+ * a modified container returns its current children. Callers must only read.
  * Immer 10 exposes its latest copy through this registered state symbol; any other shape
  * falls back to the ordinary proxied container, which is correct but creates child drafts.
  * PF03/09: one proxy per unread root was later finalized again at every publication.
  */
 export function readOnlyDraftView<T extends object>(value: T): T {
-  if (!isDraft(value)) return value;
-  const state = (value as Record<symbol, { copy_?: T | null; base_?: T } | undefined>)[IMMER_STATE];
-  const latest = state?.copy_ ?? state?.base_;
+  if (value == null) return value;
+  // Reading the registered state already detects a draft; isDraft would repeat this proxy read.
+  const state = (
+    value as Record<symbol, { copy_?: T | null; base_?: T; modified_?: boolean } | undefined>
+  )[IMMER_STATE];
+  const latest = state?.modified_ === false ? state.base_ : (state?.copy_ ?? state?.base_);
   return latest && typeof latest === 'object' ? latest : value;
 }
 /** Server ownership boundary; builders remain mutable until explicitly handed off.
  * Frozen unchanged branches skip Immer traversal (docs/architecture.md#state-and-transitions).
  */
-export function freezeWorld(world: WorldState): WorldState {
-  // Entity storage now has persistent tree branches. Ordinary freezing visits the
-  // changed logarithmic paths and stops at unchanged frozen nodes, without a flat
-  // directory walk or a second published-copy special case.
+const pendingPublications = new WeakMap<WorldState, () => void>();
+export function freezeWorld(
+  world: WorldState,
+  options: { completedTransition?: boolean } = {},
+): WorldState {
+  const publish = pendingPublications.get(world);
+  pendingPublications.delete(world);
+  // Only the completion owner can certify no writes occurred after finishing its
+  // draft. A builder may have made further edits; freezing it must rebuild cold.
+  // docs/save-and-load.md#continuation-and-identity
   freezeData(world);
+  if (options.completedTransition) publish?.();
   return world;
 }
 type ImmerState = {
@@ -480,6 +512,7 @@ export function draftWorld(
   if (!completeObjectHistory(world.entities)) markPartialObjectHistory(base.entities);
   const result = drafts.createDraft(base);
   captureKnownPlaceEvidence(world)(result);
+  inheritRootIndex(result, world);
   inheritSensoryChanges(result, world);
   if (!options.retainNativeValues) materializeNativeValuesInPlace(result);
   return result;
@@ -506,7 +539,11 @@ export function finishWorld(
   reconcileDraftSemantics(world);
   sealAppends(world);
   sealNativeEvidence(world);
-  if (!isDraft(world)) return world;
+  if (!isDraft(world)) {
+    // Re-completing an editable result cannot certify its earlier write set.
+    pendingPublications.delete(world);
+    return world;
+  }
   for (const value of admittedRecords.get(world) ?? []) freezeData(value);
   admittedRecords.delete(world);
   const sealedAppends: Array<{ before: unknown[]; after: unknown[] }> = [];
@@ -532,6 +569,7 @@ export function finishWorld(
   const publishObjects = captureObjectIndex(world);
   const publishAppraisals = captureAppraisalIndex(world);
   const publishOutings = captureOutingIndex(world);
+  const publishCompacts = captureCompactIndex(world);
   const publishAllocations = captureWorkAllocations(world);
   const publishAppraisalResidency = captureAppraisalResidency(world);
   const publishChanges = captureSemanticChanges(world);
@@ -610,57 +648,67 @@ export function finishWorld(
   if (result !== base) invalidateInheritedNativeInterval(result, base.nativeInterval);
   if (!knownEntityIds) for (const id of entityKeys(result.entities)) entityIds.add(id);
   changedEntities.set(result, entityIds);
-  if (base.entities !== result.entities && Object.isFrozen(base.entities))
-    entitySuccessors.set(base.entities, { next: new WeakRef(result.entities), changed: entityIds });
-  // Only these key-addressed relationships opt in. Ordered maps cannot use a
-  // changed-key proof: deleting and reinserting a key can change order without
-  // changing its final value. docs/performance.md#storage-execution
-  const publishMap = (
-    before: object | undefined,
-    after: object | undefined,
-    changed: ReadonlySet<string>,
-  ) => {
-    if (before && after && before !== after && Object.isFrozen(before))
-      recordMapSuccessors.set(before, { next: new WeakRef(after), changed });
-  };
-  if (!perceptionRootReplaced) {
-    if (perceptionIds.size)
-      publishMap(base.perceptionEpisodes, result.perceptionEpisodes, new Set(perceptionIds.keys()));
-    for (const [observer, changed] of perceptionIds)
-      if (changed)
+  pendingPublications.set(result, () => {
+    if (base.entities !== result.entities && isImmutableData(base.entities))
+      entitySuccessors.set(base.entities, {
+        next: new WeakRef(result.entities),
+        changed: entityIds,
+      });
+    // Only these key-addressed relationships opt in. Ordered maps cannot use a
+    // changed-key proof: deleting and reinserting a key can change order without
+    // changing its final value. docs/performance.md#storage-execution
+    const publishMap = (
+      before: object | undefined,
+      after: object | undefined,
+      changed: ReadonlySet<string>,
+    ) => {
+      if (before && after && before !== after && Object.isFrozen(before))
+        recordMapSuccessors.set(before, { next: new WeakRef(after), changed });
+    };
+    if (!perceptionRootReplaced) {
+      if (perceptionIds.size)
         publishMap(
-          base.perceptionEpisodes?.[observer],
-          result.perceptionEpisodes?.[observer],
-          changed,
+          base.perceptionEpisodes,
+          result.perceptionEpisodes,
+          new Set(perceptionIds.keys()),
         );
-  }
-  if (!correctionRootReplaced) {
-    if (correctionIds.size)
-      publishMap(
-        base.experience?.corrections,
-        result.experience?.corrections,
-        new Set(correctionIds.keys()),
-      );
-    for (const [actorId, changed] of correctionIds)
-      if (changed)
+      for (const [observer, changed] of perceptionIds)
+        if (changed)
+          publishMap(
+            base.perceptionEpisodes?.[observer],
+            result.perceptionEpisodes?.[observer],
+            changed,
+          );
+    }
+    if (!correctionRootReplaced) {
+      if (correctionIds.size)
         publishMap(
-          base.experience?.corrections?.[actorId],
-          result.experience?.corrections?.[actorId],
-          changed,
+          base.experience?.corrections,
+          result.experience?.corrections,
+          new Set(correctionIds.keys()),
         );
-  }
-  publishChanges(result, result !== base);
-  publishSensory(result);
-  publishRoots(result, entityIds);
-  publishReservations(result);
-  publishContributionSources(result, entityIds);
-  publishContributionResidency(result, entityIds);
-  publishObjects(result, entityIds);
-  publishExposure(result);
-  publishAppraisals(result);
-  publishOutings(result);
-  publishAllocations(result);
-  publishAppraisalResidency(result);
+      for (const [actorId, changed] of correctionIds)
+        if (changed)
+          publishMap(
+            base.experience?.corrections?.[actorId],
+            result.experience?.corrections?.[actorId],
+            changed,
+          );
+    }
+    publishChanges(result, result !== base);
+    publishSensory(result);
+    publishRoots(result, entityIds);
+    publishReservations(result);
+    publishContributionSources(result, entityIds);
+    publishContributionResidency(result, entityIds);
+    publishObjects(result, entityIds);
+    publishExposure(result);
+    publishAppraisals(result);
+    publishOutings(result);
+    publishCompacts(result);
+    publishAllocations(result);
+    publishAppraisalResidency(result);
+  });
   for (const [previous, change] of arrays) {
     if (!change.appendOnly) continue;
     let next: unknown = result;
@@ -706,6 +754,15 @@ export function updateWorld(world: WorldState, change: (draft: WorldState) => vo
   const draft = draftWorld(world);
   change(draft);
   return finishWorld(draft);
+}
+/** Complete an owned transition before any caller can edit its result. Immutable
+ * inputs publish their derived indexes immediately; editable builders retain their
+ * existing cold-finalization contract. Use finishWorld for intermediate installation.
+ * docs/save-and-load.md#continuation-and-identity */
+export function finishTransitionWorld(world: WorldState): WorldState {
+  const immutableSource = isDraft(world) && Object.isFrozen(original(world)!);
+  const result = finishWorld(world);
+  return immutableSource ? freezeWorld(result, { completedTransition: true }) : result;
 }
 export function cloneValue<T>(value: T): T {
   if (!value || typeof value !== 'object') return value;

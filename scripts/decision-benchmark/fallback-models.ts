@@ -1,3 +1,4 @@
+import { toolHttp } from '../network.js';
 /** Explicit paid experiment; importing this entry point never changes gameplay policy. */
 import { mkdir, readFile, realpath, writeFile } from 'node:fs/promises';
 import { isAbsolute, join, relative } from 'node:path';
@@ -217,14 +218,13 @@ if (args.get('report') !== 'true' && args.get('live') !== 'true') {
 if (args.get('live') === 'true' && args.get('report') !== 'true' && args.get('max-new') !== '0') {
   // An offline local control plane cannot serve either native comparison arm.
   // Refuse before paid admission rather than accumulating avoidable uncertain calls.
-  const health = await fetch(
+  const health = await toolHttp(
     new URL('/health', process.env['MACROFOLD_BASE_URL'] ?? 'http://localhost:3210'),
     {
-      signal: AbortSignal.timeout(5000),
       redirect: 'error',
     },
+    { timeoutMs: 5000, bodyPolicy: { kind: 'bounded', maxBytes: 1_048_576 } },
   ).catch(() => undefined);
-  void health?.body?.cancel();
   if (!health?.ok)
     throw new Error(
       'Start Macrofold and its database before live comparison; no paid requests were admitted.',

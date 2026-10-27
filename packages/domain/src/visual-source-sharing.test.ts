@@ -52,7 +52,9 @@ it('shares only complete outward source values while preserving independent rece
   const cut = captureEvidenceCut(world, first.id),
     previous = a.value;
   world.simTime = 1;
-  setSpatialPosition(world, source, { x: 4, y: 0, z: 3 }, worldSupport(source), 'physical');
+  setSpatialPosition(world, source, { x: 4, y: 0, z: 3 }, worldSupport(source), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   const movedA = world.perceptionEvidence![first.id]!.current[`${source.id}:body`]!,
     movedB = world.perceptionEvidence![second.id]!.current[`${source.id}:body`]!;
@@ -109,7 +111,9 @@ it('shares only complete outward source values while preserving independent rece
   }
   expect(restored.experience?.temporal).toEqual(world.experience?.temporal);
   world.simTime = 3;
-  setSpatialPosition(world, first, { x: 1.5, y: 0, z: 2 }, worldSupport(first), 'physical');
+  setSpatialPosition(world, first, { x: 1.5, y: 0, z: 2 }, worldSupport(first), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   expect(
     point(first.id).value.kind === 'location' &&

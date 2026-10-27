@@ -1,11 +1,24 @@
 import { entityGet } from './entity-collection.js';
-import { speechPresentation, validName, type Named } from '@open-legend/language';
+import {
+  speechPresentation as renderSpeechText,
+  validName,
+  personPhrase,
+  personalPronoun,
+  type Named,
+} from '@open-legend/language';
+import {
+  perceiveSound,
+  soundDescription,
+  validatePerceivedSound,
+  type PerceivedSound,
+} from './sound.js';
 import { worldPosition } from './spatial-state.js';
 import {
   observerName,
   intendedAddresseeName,
   recognizesSubject,
   observerIndividual,
+  canAddressRememberedSubject,
 } from './worlds/base/knowledge.js';
 import {
   validRecognitionFeatures,
@@ -19,6 +32,7 @@ import { isSafeRecordId } from './records.js';
 import { speechPerception } from './perception.js';
 import { contentLabel } from './events.js';
 import type { SpeechVolume } from './acoustics.js';
+import type { NarrationPerspective } from './narration.js';
 import type { Awareness } from './experience.js';
 import type { Entity, Position, WorldEvent, WorldState } from './types.js';
 
@@ -27,16 +41,7 @@ export type SpeechTargetRole = 'body' | 'remembered';
 export const isSpeechTargetRole = (value: unknown): value is SpeechTargetRole =>
   value === 'body' || value === 'remembered';
 
-export interface PerceivedSound {
-  kind: 'voice-like';
-  receivedLevelDbSpl: number;
-  clarityMarginDb: number;
-  direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
-  listenerPosition: Position;
-}
-export const soundDescription = (_sound: PerceivedSound): string =>
-  'You hear a voice-like sound nearby.';
-
+export type SpeechParticipant = Omit<Named, 'name'> & { nameAtTime: string };
 export type SpeechSegment = { kind: 'heard'; text: string } | { kind: 'unintelligible' };
 /** This entire shape is observer-permitted, including only the observer's own acquisition pose. */
 export interface PerceivedSpeech {
@@ -105,7 +110,7 @@ export function perceivedSpeechPresentation(
   speech: PerceivedSpeech,
   roles: { observerId?: string; targetId?: string } = {},
 ) {
-  return speechPresentation({
+  return renderSpeechText({
     speaker: speech.speaker ? { ...speech.speaker, name: speech.speaker.nameAtTime } : null,
     addressee: speech.addressee ? { ...speech.addressee, name: speech.addressee.nameAtTime } : null,
     self: speech.perception === 'self',
@@ -134,7 +139,7 @@ export function perceiveSpeech(
   words?: ReturnType<typeof prepareSpeechWords>,
 ): Awareness | null {
   const self = observer.id === source.id;
-  if (!self && (!observer.actor?.alive || observer.actor.incapacitated)) return null;
+  if (!self && !observer.actor?.alive) return null;
   const contact = self ? null : speechPerception(world, observer, source, volume);
   if (!self && !contact) return null;
   const detail = self ? 'clear' : contact!.detail;
@@ -191,21 +196,23 @@ export function perceiveSpeech(
             }
           : undefined;
   const sourceId = visible ? source.id : voice?.recognized ? individual?.canonicalId : undefined;
-  if (!hasMemory(observer) || observer.actor?.capabilities?.comprehendsSpeech === false) {
-    if (
-      perception !== 'heard' ||
-      contact?.receivedLevelDbSpl == null ||
-      contact.clarityMarginDb == null
-    )
-      return null;
-    const sound: PerceivedSound = {
-      kind: 'voice-like',
-      receivedLevelDbSpl: contact.receivedLevelDbSpl,
-      clarityMarginDb: contact.clarityMarginDb,
-      direction,
-      listenerPosition: { ...listener },
-    };
+  if (!hasMemory(observer) || observer.actor?.capabilities?.language === false) {
+    if (perception === 'seen') return null;
+    const received = perceiveSound(
+      world,
+      observer,
+      event,
+      {
+        emitterId: source.id,
+        origin: worldPosition(source),
+        sourceLevelDbSplAt1m: world.moduleManifest.acoustics.sourceLevelDbSplAt1m[volume],
+      },
+      contact ?? undefined,
+    );
+    if (!received?.sound) return null;
+    const sound: PerceivedSound = { ...received.sound, kind: 'voice-like' };
     return {
+      ...received,
       eventId: event.id,
       actorId: observer.id,
       at: event.at,
@@ -313,6 +320,7 @@ export function perceiveSpeech(
     ]),
   ];
   return {
+    retentionClass: 'memory',
     eventId: event.id,
     actorId: observer.id,
     at: event.at,
@@ -396,6 +404,8 @@ export function receivedEventAwareness(
 export type EventEvidence = Pick<
   Awareness,
   | 'actorId'
+  | 'retentionClass'
+  | 'expiresAt'
   | 'eventData'
   | 'references'
   | 'eventType'
@@ -429,6 +439,7 @@ export function receivedEventEvidence(
   const targetId = fact.references.find((reference) => reference.role === 'target')?.id;
   const sound = values.find((value) => value.kind === 'sound');
   return {
+    retentionClass: 'memory',
     actorId,
     eventType: fact.eventType,
     text: fact.text,
@@ -449,6 +460,20 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('Invalid committed observer facts.');
   const evidence = value as Partial<EventEvidence>;
+  if (
+    !['memory', 'sensory'].includes(evidence.retentionClass ?? '') ||
+    (evidence.retentionClass === 'sensory'
+      ? !Number.isFinite(evidence.expiresAt) || !evidence.sound || !!evidence.speech
+      : evidence.expiresAt !== undefined)
+  )
+    throw new Error('Invalid observer retention.');
+  if (
+    evidence.sound &&
+    evidence.retentionClass === 'sensory' &&
+    evidence.expiresAt! <= evidence.sound.acquiredAt
+  )
+    throw new Error('Invalid sensory expiry.');
+
   if (
     !isSafeRecordId(evidence.actorId) ||
     (evidence.sourceId !== undefined && !isSafeRecordId(evidence.sourceId)) ||
@@ -527,6 +552,12 @@ export type ActorEvent = WorldEvent & {
   modality: Awareness['modality'];
   references?: Awareness['references'];
 };
+/** A received sound does not disclose its source's private linguistic occurrence. */
+export function perceivedEventType(
+  evidence: Pick<Awareness, 'eventType' | 'sound' | 'speech'>,
+): string | undefined {
+  return evidence.sound && !evidence.speech ? 'sound' : evidence.eventType;
+}
 export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence): ActorEvent {
   if (event.type === 'speech' && !evidence.speech && !evidence.sound)
     throw new Error('Speech is missing its committed listener perspective.');
@@ -537,9 +568,8 @@ export function projectEventEvidence(event: WorldEvent, evidence: EventEvidence)
     sequence: event.sequence,
     at: event.at,
     order: event.order,
-    type: evidence.eventType!,
+    type: perceivedEventType(evidence)!,
     scope: event.scope,
-    conversationId: event.conversationId,
     text: evidence.text,
     audience: [evidence.actorId],
     modality: evidence.modality,
@@ -588,32 +618,7 @@ function validDirection(value: unknown): boolean {
     ['above', 'level', 'below'].includes(direction.elevation)
   );
 }
-export function validatePerceivedSound(value: unknown): asserts value is PerceivedSound {
-  if (!value || typeof value !== 'object' || Array.isArray(value))
-    throw new Error('Invalid received sound.');
-  const sound = value as PerceivedSound;
-  if (
-    Object.keys(value).some(
-      (key) =>
-        ![
-          'kind',
-          'receivedLevelDbSpl',
-          'clarityMarginDb',
-          'direction',
-          'listenerPosition',
-        ].includes(key),
-    )
-  )
-    throw new Error('Unsupported received sound field.');
-  if (
-    sound.kind !== 'voice-like' ||
-    !Number.isFinite(sound.receivedLevelDbSpl) ||
-    !Number.isFinite(sound.clarityMarginDb) ||
-    !validDirection(sound.direction) ||
-    !validListenerPosition(sound.listenerPosition)
-  )
-    throw new Error('Invalid received sound.');
-}
+
 export function validSpeechLabel(value: unknown): value is PerceivedSpeech['speaker'] {
   if (value === null) return true;
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
@@ -697,4 +702,181 @@ export function validateReceivedFeatures(
     sample.quality > 1
   )
     throw new Error('Invalid received individual features.');
+}
+
+export interface SpeechRoles {
+  sourceId?: string;
+  targetId?: string;
+  addressing: PerceivedSpeech['addressing'];
+  acquisition: PerceivedSpeech['perception'];
+  relationship: 'self' | 'addressed' | 'overheard' | 'ambient' | 'seen';
+  speaker: SpeechParticipant | null;
+  addressee: SpeechParticipant | null;
+}
+export function speechRelationship(
+  ownerId: string,
+  targetId: string | null | undefined,
+  speech: Pick<PerceivedSpeech, 'perception' | 'addressing'>,
+): SpeechRoles['relationship'] {
+  return speech.perception === 'self'
+    ? 'self'
+    : speech.perception === 'seen'
+      ? 'seen'
+      : speech.addressing === 'ambient'
+        ? 'ambient'
+        : targetId === ownerId
+          ? 'addressed'
+          : 'overheard';
+}
+/** Select only the acquired roles; this never looks up people or parses words. */
+export function speechRoles(
+  evidence: Pick<EventEvidence, 'actorId' | 'sourceId' | 'targetId' | 'speech'>,
+): SpeechRoles | undefined {
+  const speech = evidence.speech;
+  if (!speech) return undefined;
+  return {
+    ...(evidence.sourceId ? { sourceId: evidence.sourceId } : {}),
+    ...(evidence.targetId ? { targetId: evidence.targetId } : {}),
+    addressing: speech.addressing,
+    acquisition: speech.perception,
+    relationship: speechRelationship(evidence.actorId, evidence.targetId, speech),
+    speaker: speech.speaker,
+    addressee: speech.addressee,
+  };
+}
+/** Addressing selects an acquired individual, not an arbitrary hidden world ID.
+ * Recognition never grants the person's current location or physical targeting. */
+export function canAddressSpeech(world: WorldState, source: Entity, target: Entity): boolean {
+  return (
+    canAddressRememberedSubject(world, source.id, target.id) ||
+    !!currentBodyLocalSubject(world, source.id, target.id)
+  );
+}
+/** Detected directed language is a social opportunity even when no words resolve.
+ * Seen-only cues and ambient/overheard speech cannot stand in for that evidence. */
+export function heardAddressedSpeech(
+  evidence: Pick<EventEvidence, 'actorId' | 'sourceId' | 'targetId' | 'speech'>,
+): boolean {
+  const roles = speechRoles(evidence);
+  return roles?.acquisition === 'heard' && roles.relationship === 'addressed';
+}
+export type SpeechDisplayPart =
+  | { kind: 'literal'; text: string }
+  | { kind: 'participant'; id: string; role: 'speaker' | 'addressee'; text: string }
+  | { kind: 'quotation'; segments: readonly SpeechSegment[]; text: string };
+export interface SpeechPresentation {
+  acquisition: PerceivedSpeech['perception'];
+  speakerLabel: string;
+  directionLabel: string | null;
+  segments: readonly SpeechSegment[];
+  personalText: string;
+  accessibilityText: string;
+  parts: readonly SpeechDisplayPart[];
+}
+/** Occurrence labels are selected once, independently of current person displays. */
+export function speechPerspective(
+  evidence: Pick<EventEvidence, 'actorId' | 'sourceId' | 'targetId' | 'speech'>,
+  selfId: string | undefined = evidence.actorId,
+): NarrationPerspective {
+  const names = new Map<string, Named>();
+  for (const [id, label] of [
+    [evidence.sourceId, evidence.speech?.speaker],
+    [evidence.targetId, evidence.speech?.addressee],
+  ] as const)
+    if (id && label) names.set(id, { ...label, name: label.nameAtTime });
+  return { selfId, names };
+}
+/** Typed spans and flattened prose are derived together; words are never parsed as identities. */
+export function speechPresentation(
+  evidence: Pick<EventEvidence, 'actorId' | 'sourceId' | 'targetId' | 'speech'>,
+  perspective: Readonly<NarrationPerspective>,
+  purpose: 'personal' | 'caption' | 'neutral',
+): SpeechPresentation | undefined {
+  const speech = evidence.speech,
+    roles = speechRoles(evidence);
+  if (!speech || !roles) return undefined;
+  const grammaticalPerson =
+    purpose === 'personal' ? 'first' : purpose === 'caption' ? 'second' : 'third';
+  const participant = (
+    id: string | undefined,
+    role: 'speaker' | 'addressee',
+    grammar: 'subject' | 'object' | 'reflexive',
+    unknown: string,
+    capitalize = false,
+  ): SpeechDisplayPart => {
+    const named = id ? perspective.names.get(id) : undefined;
+    if (!id || !named) {
+      // A learned local voice may have a legitimate occurrence label without a
+      // canonical person association. Preserve the label without inventing a link.
+      const occurrence = role === 'speaker' ? speech.speaker : speech.addressee;
+      let text = occurrence
+        ? personPhrase({ ...occurrence, name: occurrence.nameAtTime }, grammar, false, 'indefinite')
+        : unknown;
+      if (capitalize && occurrence?.nameForm !== 'proper')
+        text = text[0]!.toUpperCase() + text.slice(1);
+      return { kind: 'literal', text };
+    }
+    const self =
+      grammaticalPerson !== 'third' &&
+      id === (purpose === 'personal' ? evidence.actorId : perspective.selfId);
+    let text = personPhrase(
+      named,
+      grammar,
+      self,
+      'indefinite',
+      grammaticalPerson === 'second' ? 'second' : 'first',
+    );
+    if (capitalize && (self || named.nameForm !== 'proper'))
+      text = text[0]!.toUpperCase() + text.slice(1);
+    return { kind: 'participant', id, role, text };
+  };
+  const source = participant(roles.sourceId, 'speaker', 'subject', 'someone', true);
+  const target = participant(
+    roles.targetId,
+    'addressee',
+    roles.targetId === roles.sourceId ? 'reflexive' : 'object',
+    'someone else',
+  );
+  const directionLabel = roles.addressing === 'directed' ? `to ${target.text}` : null;
+  const literal = (text: string): SpeechDisplayPart => ({ kind: 'literal', text });
+  const parts: SpeechDisplayPart[] = [source];
+  const observer = personalPronoun('subject', purpose === 'caption' ? 'second' : 'first');
+  if (roles.relationship === 'seen') parts.push(literal(' appears to be speaking.'));
+  else {
+    parts.push(literal(speech.intelligibility === 'none' ? ' spoke' : ' said'));
+    if (directionLabel) parts.push(literal(' to '), target);
+    if (speech.intelligibility === 'none')
+      parts.push(
+        literal(
+          purpose === 'neutral'
+            ? '; the words were unintelligible.'
+            : `; ${observer} could not understand the words.`,
+        ),
+      );
+    else {
+      parts.push(literal(': '), {
+        kind: 'quotation',
+        segments: speech.segments,
+        text: `“${speechWords(speech)}”`,
+      });
+      if (speech.intelligibility === 'partial')
+        parts.push(
+          literal(
+            purpose === 'neutral'
+              ? ' Some words were unintelligible.'
+              : ` ${observer[0]!.toUpperCase() + observer.slice(1)} heard only part of the words.`,
+          ),
+        );
+    }
+  }
+  const personalText = parts.map((part) => part.text).join('');
+  return {
+    acquisition: speech.perception,
+    speakerLabel: source.text,
+    directionLabel,
+    segments: speech.segments,
+    personalText,
+    accessibilityText: personalText,
+    parts,
+  };
 }

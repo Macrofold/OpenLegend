@@ -2,16 +2,14 @@ import { namePhrase } from '@open-legend/language';
 import {
   describeBodyRemains,
   fireFuelDescription,
+  selectedAnimalActivity,
   type Entity,
-  type ItemDefinition,
-  type CastDefinition,
+  type WorldState,
 } from '@open-legend/domain';
 /** Called only for entities in the player's permitted observation. No private mind. */
-export function describeEntity(
-  entity: Entity,
-  definitions: Record<string, ItemDefinition>,
-  castDefinitions: Record<string, CastDefinition>,
-): string {
+export function describeEntity(world: WorldState, entity: Entity): string {
+  const definitions = world.itemDefinitions,
+    castDefinitions = world.castDefinitions;
   const remains = describeBodyRemains(entity, definitions);
   if (remains) return remains;
   if (entity.threat)
@@ -31,8 +29,7 @@ export function describeEntity(
     return `${namePhrase(entity, 'indefinite', { capitalize: true })}. ${definitions[entity.resource.definitionId]?.description ?? 'A source of gathering materials.'} ${entity.resource.quantity} units remain.`;
   if (entity.actor && !entity.animal)
     return `${entity.actor.description?.trim() || `${namePhrase(entity, 'definite', { capitalize: true })} is here.`}${entity.actor.alive ? '' : ' Their life has ended.'}`;
-  if (entity.animal)
-    return `${namePhrase(entity, 'indefinite', { capitalize: true })} of the clearing. ${entity.actor!.alive ? (entity.animal.episode?.mode === 'escaping' ? 'It is fleeing.' : 'It is foraging nearby.') : 'It is no longer alive.'}`;
+  if (entity.animal) return selectedAnimalActivity(world, entity).description;
   if (entity.heat)
     return entity.heat.lit
       ? `A burning fire that provides heat for food preparation, with ${fireFuelDescription(entity.heat)}.`

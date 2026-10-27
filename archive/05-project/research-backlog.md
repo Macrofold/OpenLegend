@@ -1,5 +1,7 @@
 # Research backlog
 
+> Historical snapshot retained October 24, 2026 from `ecf49b1237e0aa83e408572a486aadb7f29cb910`. Research backlog descriptions below include earlier states and are not current authority. Use [the maintained owner](../../docs/research/gameplay-and-systems/README.md) for current contracts and unfinished work. Original observations, rationale and dates are preserved.
+
 ## Spatial empirical work
 
 Use [the research archive](../02-research/three-dimensional-worlds-and-navigation.md) and [SW qualification](../../docs/maintainers/spatial-world.md) for measured questions: layered-grid versus navmesh clearance/scale, sprite readability during orbit/pitch, coarse transmission versus audible unidentified contacts, air-corridor coverage and cold/warm native cost. The current native stack is a reversible small-world choice, not a benchmark verdict against researched libraries. Full actor crowd/geometry performance and viewport policy qualification remain open; implementation acceptance stays only in SW.

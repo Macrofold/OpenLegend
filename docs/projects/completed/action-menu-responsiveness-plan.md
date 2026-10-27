@@ -6,7 +6,7 @@
 
 Mike authorized faster ordinary action menus and meaningful sections on October 14. The first opening must benefit; retaining a previous menu is not the performance strategy. Existing permitted choices, exact commands, explanations, refusal order, inspection/privacy, current control and final command admission remain controlling. This work does not depend on the separate unanswered survival-tuning questions.
 
-The owner’s later October 14 correction replaces the accordion presentation delivered here with right-opening category submenus. [Current ordinary discovery](../../action-experience.md#ordinary-player-action-discovery) and [the superseding decision](../../documentation-changelog.md#october-14-2026--right-click-categories-open-as-submenus) own that later change; the scope, measurements and completion below remain historical evidence of this first-opening repair.
+The owner’s later October 14 correction replaces the accordion presentation delivered here with right-opening category submenus. [Current ordinary discovery](../../action-experience.md#ordinary-player-action-discovery) and [the superseding decision](../../changelog/2026/2026-10-24-earlier-collection.md#october-14-2026--right-click-categories-open-as-submenus) own that later change; the scope, measurements and completion below remain historical evidence of this first-opening repair.
 
 ## Scope and owners
 

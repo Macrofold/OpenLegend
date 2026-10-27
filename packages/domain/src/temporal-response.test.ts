@@ -134,7 +134,9 @@ it('retains a supplied current measurement even when recent history omits it and
   const { world, binding, commit } = setup();
   const player = entityGet(world.entities, PLAYER_ID)!;
   world.simTime = 5;
-  setSpatialPosition(world, player, { x: 4, y: 0, z: 2 }, worldSupport(player), 'physical');
+  setSpatialPosition(world, player, { x: 4, y: 0, z: 2 }, worldSupport(player), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   const snapshot = currentObservedFacets(world, NPC_ID, PLAYER_ID).find(
     (facet) => facet.value.kind === 'location',
@@ -148,7 +150,9 @@ it('retains a supplied current measurement even when recent history omits it and
   binding.currentReferences = { 'supplied-current-point': snapshot };
   // No new sensory sample follows this movement during the character's pending interpretation.
   world.simTime = 10;
-  setSpatialPosition(world, player, { x: 7, y: 0, z: 2 }, worldSupport(player), 'physical');
+  setSpatialPosition(world, player, { x: 7, y: 0, z: 2 }, worldSupport(player), {
+    continuity: 'physical',
+  });
   const result = commit(
     [
       {

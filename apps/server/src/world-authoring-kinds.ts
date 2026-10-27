@@ -33,7 +33,7 @@ import { AuthoringRequestError, type AuthoringKind } from './world-authoring-con
 import { normalizeInventionProposal } from './invention-service.js';
 import { scopedInventionErrors } from './invention-context.js';
 import { fingerprint } from './relationship-index.js';
-import { commandInputSchema } from './world-service.js';
+import { commandInputSchema } from './command-input-schema.js';
 import { OPENING_CHECKER_VERSION, openingValidation } from './world-opening-authoring.js';
 import type { WorldService } from './world-service.js';
 import type { WorldAgentPreparation } from '@open-legend/protocol';

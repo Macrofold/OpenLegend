@@ -26,6 +26,10 @@ export type NarrationPart =
 export interface Narration {
   parts: NarrationPart[];
 }
+export interface NarrationPerspective {
+  selfId?: string;
+  names: ReadonlyMap<string, Named>;
+}
 export const person = (
   entity: Entity | string,
   role: PersonRole = 'subject',
@@ -50,10 +54,30 @@ export function renderNarration(
   narration: Narration,
   viewerId?: string,
 ): string {
+  const names = new Map<string, Named>();
+  for (const part of narration.parts) {
+    if (typeof part === 'string') continue;
+    const id = 'verb' in part ? part.subjectId : part.entityId;
+    if (!names.has(id))
+      names.set(
+        id,
+        viewerId
+          ? observerName(world, viewerId, id)
+          : (entityGet(world.entities, id) ?? { name: 'unidentified individual' }),
+      );
+  }
+  return renderNarrationParts(narration, { selfId: viewerId, names }, viewerId ? 'first' : 'third');
+}
+
+/** Pure participant grammar; quotations and all other literal strings are appended unchanged. */
+export function renderNarrationParts(
+  narration: Readonly<Narration>,
+  perspective: Readonly<NarrationPerspective>,
+  grammaticalPerson: 'first' | 'second' | 'third',
+): string {
   const named = (id: string): Named =>
-    viewerId
-      ? observerName(world, viewerId, id)
-      : (entityGet(world.entities, id) ?? { name: 'unidentified individual' });
+    perspective.names.get(id) ?? { name: 'unidentified individual' };
+  const personal = grammaticalPerson !== 'third';
   let text = '';
   for (const part of narration.parts) {
     if (typeof part === 'string') {
@@ -63,18 +87,25 @@ export function renderNarration(
     if ('verb' in part) {
       text += presentTense(
         part.verb,
-        viewerId === part.subjectId,
+        personal && perspective.selfId === part.subjectId,
         named(part.subjectId).nameForm === 'plural',
+        grammaticalPerson === 'second' ? 'second' : 'first',
       );
       continue;
     }
-    const self = viewerId === part.entityId;
+    const self = personal && perspective.selfId === part.entityId;
     const subject = named(part.entityId);
-    const article = part.article ?? (viewerId ? 'indefinite' : 'definite');
+    const article = part.article ?? (personal ? 'indefinite' : 'definite');
     const value =
       part.role === 'name'
         ? namePhrase(subject, article)
-        : personPhrase(subject, part.role, self, article);
+        : personPhrase(
+            subject,
+            part.role,
+            self,
+            article,
+            grammaticalPerson === 'second' ? 'second' : 'first',
+          );
     text +=
       (!text || /[.!?]\s*$/.test(text)) &&
       ((self && part.role !== 'name') || subject.nameForm !== 'proper')

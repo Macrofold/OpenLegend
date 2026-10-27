@@ -470,13 +470,37 @@ These deliberately unusual proposals define subjective rules rather than assert 
 
 **ALL · Blend · Moderate/Extend.** Gap: context-specific appraisals based on permitted evidence and prior commitments.
 
-An unexpected visitor delights a lonely host and worries a cook with scarce supplies; the cook can be pleased to see the visitor at the same time. Players can learn what matters to each person and offer a practical response, such as bringing food or sharing preparation. A quiet review may change the cook's worry after supplies actually arrive, while joy and other concerns keep their own meaning. Revisit supported concerns at bounded opportunities without computing every possible interpretation for every resident or exposing private reasons. The [emotional-state design](../projects/emotional-physiology-feature-spec.md) owns the selected simultaneous-feeling and review contract.
+An unexpected visitor brings a desirable expedition invitation. The lonely host is delighted; the cook worries about scarce provisions and about losing a companion for the journey, yet is pleased to see the visitor too. Another capable resident feels envy at being overlooked and wants a place on the expedition. These are selected concerns for different people, not feelings every arrival must cause. Players can ask about the route, offer food, compete for the place or decline. A practical contribution may make the departure feasible without settling jealousy or a divided loyalty. A quiet review may change the cook's worry after supplies actually arrive, while joy and other concerns keep their own meaning. Revisit supported concerns at bounded opportunities without computing every possible interpretation for every resident or exposing private reasons. The [emotional-state design](../projects/emotional-physiology-feature-spec.md) owns the selected simultaneous-feeling and review contract.
 
 Each interpretation must use only evidence that person could possess.
 
 Related entries: [PB-024](#appraisal-and-emotional-meaning).
 
 Seeds and references: [RimWorld](source-atlas.md#g21), [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126).
+
+## Trust in ability versus intent
+
+**ALL · Blend · Moderate/Extend.** Gap: separate evidence-backed appraisals of competence and goodwill.
+
+A neighbor believes a friend means well but will not entrust them with a delicate repair. They may offer practice, supervision or a different task. Keep that well-meaning, unreliable friend intact. A separate rival in a selected expedition is highly competent, wants the same paid berth and has previously taken credit for another person's work. Trusting the rival's inspection does not require trusting their promises or liking them.
+
+Players can seek a demonstration, compare evidence, allocate a task with clear terms or choose another route. Genuine competence can make the expedition succeed even while self-interest complicates cooperation. A successful demonstration can revise competence without buying affection, and one technical mistake need not imply malice or permanently destroy the friendship. Record what the person actually did; a suspicion is not proof of betrayal.
+
+Related entries: [PB-122](#trust-understanding-and-social-feedback).
+
+Seeds and references: [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](source-atlas.md#g102), [Austen’s social worlds](source-atlas.md#w23).
+
+## Emotion changes the available method
+
+**ALL · Blend · Moderate/Extend.** Gap: bounded state effects on planning with alternatives and recovery.
+
+An angry craftsperson wants an expensive commission after a public slight. A walk or a trusted colleague may help them negotiate; direct confrontation, a rash remark or rejecting an inadequate offer are other possible responses. The client can also refuse. The feeling changes which approach seems worthwhile without making productive coping the only permitted conduct.
+
+Players can support a pause, contest the insult, improve the proposal or leave the commission to a rival. Winning it can bring useful pay and pride; losing it can leave shame, resentment or a new ambition. Show the actual choice, timing or expression without requiring a diagnosis or explanatory monologue. Do not equate emotion with irrationality or let a hidden mood state override every explicit intention without explanation.
+
+Related entries: [PB-183](#danger-courage-and-aggression).
+
+Seeds and references: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126).
 
 ## Anticipation can be pleasant
 
@@ -490,45 +514,15 @@ Related entries: [PB-082](#motivation-anticipation-and-enough).
 
 Seeds and references: [Animal Crossing: New Horizons](source-atlas.md#g03), [Stardew Valley](source-atlas.md#g30), [Persona 5 Royal](source-atlas.md#g124).
 
-## Trust in ability versus intent
+## Grief with ordinary afternoons
 
-**ALL · Blend · Moderate/Extend.** Gap: separate evidence-backed appraisals of competence and goodwill.
+**ALL · Play · Small/Compose.** Gap: authored variation and selected memory triggers; autonomous modeling needs Moderate/Extend.
 
-A neighbor believes a friend means well but will not entrust them with a delicate repair. They may offer practice, supervision or a different task. This creates more nuanced cooperation than one trust number. A successful demonstration can revise competence without buying affection, and one technical mistake need not imply malice or permanently destroy the relationship.
+A person mourning a friend can laugh at a game, forget an errand, enjoy a meal and later want quiet. They may choose a memorial project or none. Companionship can matter without curing grief. Avoid a linear sadness bar or fixed sequence of stages; this is a particular fictional life, not a universal psychological account or a task the player must complete.
 
-Related entries: [PB-122](#trust-understanding-and-social-feedback).
+Related entries: [PB-202](#loss-accountability-and-continuing-life).
 
-Seeds and references: [Dragon Age II](source-atlas.md#g52), [Mass Effect 2](source-atlas.md#g102), [Austen’s social worlds](source-atlas.md#w23).
-
-## A crowded mind has priorities
-
-**ALL · Blend · Moderate/Extend.** Gap: bounded attention, interruption policy and resumable activities.
-
-A resident balancing a deadline and a promised meal misses a minor greeting but notices smoke. Others may misread the omission until they talk. Attention creates plausible limits without making people incompetent. Persist interrupted work and provide clear critical signals; simulated distraction should not become an excuse for silently dropping commitments or ignoring obvious danger indefinitely.
-
-Related entries: [PB-005](#attention-and-what-gets-noticed).
-
-Seeds and references: [RimWorld](source-atlas.md#g21), [The Sims](source-atlas.md#g24), [Final Fantasy XII](source-atlas.md#g89).
-
-## Emotion changes the available method
-
-**ALL · Blend · Moderate/Extend.** Gap: bounded state effects on planning with alternatives and recovery.
-
-An angry craftsperson chooses a walk before negotiating an expensive commission, or asks a trusted colleague to attend. The feeling changes which approach seems worthwhile. Players can support regulation through space, time or company. Do not equate emotion with irrationality or let a hidden mood state override every explicit intention without explanation.
-
-Related entries: [PB-183](#danger-courage-and-aggression).
-
-Seeds and references: [The Sims](source-atlas.md#g24), [Disco Elysium](source-atlas.md#g66), [Crusader Kings III](source-atlas.md#g126).
-
-## Habits that can be renegotiated
-
-**ALL · Play · Moderate/Extend.** Gap: learned routine preferences and deliberate replacement plans.
-
-A night worker keeps waking early to help a household even after their schedule changes. A new breakfast arrangement can preserve care while allowing sleep. Habits make people recognizable but not fixed. Show the practical conflict and allow gradual adjustment; behavior should not revert every morning solely because an old personality summary still mentions the habit.
-
-Related entries: [PB-064](#habits-interruptions-and-follow-through).
-
-Seeds and references: [Red Dead Redemption 2](source-atlas.md#g70), [Final Fantasy XII](source-atlas.md#g89), [Persona 5 Royal](source-atlas.md#g124).
+Seeds and references: [Wildermyth](source-atlas.md#g25), [Red Dead Redemption 2](source-atlas.md#g70), [The Sopranos](source-atlas.md#w22).
 
 ## A belief with a receipt
 
@@ -542,15 +536,27 @@ Related entries: [PB-043](#belief-evidence-and-mistakes).
 
 Seeds and references: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [The Elder Scrolls III: Morrowind](source-atlas.md#g113).
 
-## Grief with ordinary afternoons
+## A crowded mind has priorities
 
-**ALL · Play · Small/Compose.** Gap: authored variation and selected memory triggers; autonomous modeling needs Moderate/Extend.
+**ALL · Blend · Moderate/Extend.** Gap: bounded attention, interruption policy and resumable activities.
 
-A person mourning a friend can laugh at a game, forget an errand, enjoy a meal and later want quiet. They may choose a memorial project or none. Companionship can matter without curing grief. Avoid a linear sadness bar or fixed sequence of stages; this is a particular fictional life, not a universal psychological account or a task the player must complete.
+A resident balancing a deadline and a promised meal misses a minor greeting but notices smoke. Others may misread the omission until they talk. Attention creates plausible limits without making people incompetent. Persist interrupted work and provide clear critical signals; simulated distraction should not become an excuse for silently dropping commitments or ignoring obvious danger indefinitely.
 
-Related entries: [PB-202](#loss-accountability-and-continuing-life).
+Keep fictional inattention distinct from incomplete preparation of an AI decision. Select the actual concerns, unfinished work, current outcomes and permitted event evidence before considering optional associations; do not manufacture this scene by discarding required speech or promises. Positive associations deserve consideration too: a familiar tune, a friend's arrival or an odd shell can matter without an emergency. Compare an urgent interruption, a resolved interruption and an unchanged quiet opportunity. The evidence should change with the situation, while continuing work, curiosity, silence and mixed feelings remain available choices rather than prescribed reactions.
 
-Seeds and references: [Wildermyth](source-atlas.md#g25), [Red Dead Redemption 2](source-atlas.md#g70), [The Sopranos](source-atlas.md#w22).
+Related entries: [PB-005](#attention-and-what-gets-noticed).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [The Sims](source-atlas.md#g24), [Final Fantasy XII](source-atlas.md#g89).
+
+## A self-story open to revision
+
+**ALL · Blend · Moderate/Extend.** Gap: event-grounded identity narratives separate from actual history and authority.
+
+A resident thinks of themselves as someone who always leaves, yet notices years of caring for the same garden and neighbors. They may reconsider, joke about the contradiction or decide to travel again. Change emerges from lived events. Do not let a rewritten self-description erase past actions, create skills or dictate a therapeutic breakthrough the character never chose.
+
+Related entries: [PB-104](#memory-and-self-understanding).
+
+Seeds and references: [Disco Elysium](source-atlas.md#g66), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110), [The Sopranos](source-atlas.md#w22), [Macondo](source-atlas.md#w24).
 
 ## Social feedback that compounds
 
@@ -564,15 +570,15 @@ Related entries: [PB-138](#trust-understanding-and-social-feedback).
 
 Seeds and references: [RimWorld](source-atlas.md#g21), [Crusader Kings III](source-atlas.md#g126), [The Wire](source-atlas.md#w21).
 
-## A self-story open to revision
+## Habits that can be renegotiated
 
-**ALL · Blend · Moderate/Extend.** Gap: event-grounded identity narratives separate from actual history and authority.
+**ALL · Play · Moderate/Extend.** Gap: learned routine preferences and deliberate replacement plans.
 
-A resident thinks of themselves as someone who always leaves, yet notices years of caring for the same garden and neighbors. They may reconsider, joke about the contradiction or decide to travel again. Change emerges from lived events. Do not let a rewritten self-description erase past actions, create skills or dictate a therapeutic breakthrough the character never chose.
+A night worker keeps waking early to help a household even after their schedule changes. A new breakfast arrangement can preserve care while allowing sleep. Habits make people recognizable but not fixed. Show the practical conflict and allow gradual adjustment; behavior should not revert every morning solely because an old personality summary still mentions the habit.
 
-Related entries: [PB-104](#memory-and-self-understanding).
+Related entries: [PB-064](#habits-interruptions-and-follow-through).
 
-Seeds and references: [Disco Elysium](source-atlas.md#g66), [Star Wars: Knights of the Old Republic II — The Sith Lords](source-atlas.md#g110), [The Sopranos](source-atlas.md#w22), [Macondo](source-atlas.md#w24).
+Seeds and references: [Red Dead Redemption 2](source-atlas.md#g70), [Final Fantasy XII](source-atlas.md#g89), [Persona 5 Royal](source-atlas.md#g124).
 
 ## Research coverage
 

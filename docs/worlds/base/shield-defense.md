@@ -4,7 +4,7 @@
 
 ## Compatible equipment
 
-Applicable people have a main-hand and an off-hand equipment port. A knife or existing one-handed gathering tool uses the main hand. A shield uses the off hand. Current sling/bow launcher profiles and AV01’s lookout spear require both hands; equipping one removes conflicting held equipment into carried custody atomically, without moving it to the ground or changing ownership. These are explicit definition capabilities, not deductions from names. A nonperson body without these authored ports does not acquire human equipment by default.
+Applicable people have a main-hand and an off-hand equipment port. A knife or existing one-handed gathering tool uses the main hand. A shield uses the off hand. Current sling/bow ranged weapon profiles and AV01’s lookout spear require both hands; equipping one removes conflicting held equipment into carried custody atomically, without moving it to the ground or changing ownership. These are explicit definition capabilities, not deductions from names. A nonperson body without these authored ports does not acquire human equipment by default.
 
 The engine represents one physical attachment per item and derives occupied ports from its admitted profile. The base-world definitions provide the port labels, compatible tool uses and occupied-port requirements. Future clothing consumes that same attachment mechanism with its own port and permissions; it does not mean shields introduce every future armor slot.
 

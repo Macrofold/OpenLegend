@@ -1,5 +1,11 @@
 # Maintainer TODO — cross-cutting work
 
+Use a [focused tracker](README.md) for work with an existing owner. [Decision owners](decisions/README.md) and [research questions](../research/README.md) are separate from this miscellaneous backlog; completed task bodies are filed in coherent year/topic batches. This page does not duplicate their task inventories.
+
+## Shared NPC speech streaming
+
+The selected immediate-text design is complete. [NST01–NST10](npc-speech-streaming.md) owns its implementation and qualification tasks, with the [paired specification/design](../projects/npc-speech-streaming-feature-spec.md) and [limits](../limits/npc-speech-streaming.md). NC19/ND16's public NPC streaming slice leaves the needs-design queue; remaining private callers, broader acoustics/media and runtime acceptance retain their focused owners. Do not create a second streaming checklist here.
+
 ## Foundation review follow-through
 
 - [x] Complete the prioritized [foundation review tasks](foundation-review-todos.md), starting with private reads, stale private comparison text and observer-specific action facts. That document owns FR01–FR13, implementation instructions and acceptance; do not duplicate task bodies here. The [review](../verification/foundation-review.md) distinguishes reproduced behavior, static traces and existing unfinished work.
@@ -8,6 +14,10 @@
 ## Existing documentation anchors needing reconciliation
 
 - [x] Reconcile the five missing-heading references recorded by the October 3 batch-numbering audit. The IW03 creator-editor layout record is restored in its [interface inventory](../limits/interface.md#iw03--creator-editor-layout), and BW22 retains its explicit [observer-safe event-name anchor](base-world.md#bw22--observer-safe-names-in-event-text). The current incoming references and their source documents resolve; the October 15 audit separately checked all 29,821 relative file/heading references across 639 non-archived Markdown files. This closes the link repair, not broader layout, privacy or gameplay acceptance.
+
+## Shared network waiting and recovery
+
+[NET01–NET11](bounded-network-requests.md) records delivery of common finite request lifetimes, stream ownership, adapter migration and enforcement. Its adversarial checks extend the existing WAC01, UWA01/UWA04/UWA10, MW06 and WAF03 caller cases below; do not duplicate those broader recovery, permission, accounting and real-harness obligations or mark them complete from transport-only checks. The existing stale-result and coalesced-refresh evidence remains valid within its recorded scope.
 
 ## Validation with a concrete purpose
 
@@ -102,7 +112,7 @@ The Worktree-bound Sandbox caller is superseded by [MW01–MW04](macrofold-worke
 
 This file contains miscellaneous and cross-cutting deferred validation, integration blockers, documentation gaps and small follow-ups that do not belong to a focused feature tracker. Feature task state belongs in the focused trackers listed in the [maintainer work index](README.md).
 
-[Stealth and awareness](stealth-awareness.md) owns the integrated A–G design and remaining implementation/qualification through PP, VG, ACS, EP, ATI, SUR and SPX. The selected design overlaps in ND03/ND11/ND13/ND16/ND19 are complete; the full controlled-player emotion choice remains open in SA-D01. Focused trackers retain the runtime work rather than duplicating it here.
+[Stealth and awareness](stealth-awareness.md) owns the integrated A–G design and remaining implementation/qualification through PP, VG, ACS, EP, ATI, SUR and SPX. The selected design overlaps in ND03/ND11/ND13/ND16/ND19 are complete; SA-D01 selects authored native controlled-player interpretation, with exact profile rules and qualification retained in EP. Focused trackers retain the runtime work rather than duplicating it here.
 
 Runtime latency, database scheduling, native CPU, buffering and long-session optimization are tracked in [PF00–PF11](performance.md). Existing feature correctness checks below remain open; performance work does not complete them.
 

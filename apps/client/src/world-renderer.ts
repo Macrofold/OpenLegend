@@ -9,12 +9,33 @@ export interface ScreenRect extends ScreenPoint {
   width: number;
   height: number;
 }
+export interface PhysicalAimPoint {
+  position: { x: number; y: number; z: number };
+  targetId?: string;
+  bodyReference?: string;
+  /** Current displayed living body; the installed source still selects eligible targets. */
+  livingBody?: 'actor' | 'animal';
+  surfaceId?: string;
+  shapeId?: string;
+}
+export interface AttackPointerControls {
+  begin(aim: PhysicalAimPoint | null, screen: ScreenPoint): boolean;
+  move(aim: PhysicalAimPoint | null, screen: ScreenPoint, deliberateSelf: boolean): void;
+  release(aim: PhysicalAimPoint | null, screen: ScreenPoint): void;
+  cancel(): void;
+}
+export type SceneLoadProgress =
+  | { phase: 'loading' | 'preparing' | 'ready'; completed: number; total: number }
+  | { phase: 'failed'; completed: number; total: number; message: string };
 export interface SceneCallbacks {
+  loadingChanged?(progress: SceneLoadProgress): void;
   select(entity: EntityView | null, at?: ScreenPoint, ground?: SurfacePoint): void;
   move(position: SurfacePoint): void;
   target(entity: EntityView): void;
-  primaryAction(entity: EntityView): void;
-  hover(entity: EntityView | null, at: ScreenPoint): void;
+  beginPrimaryAction(entity: EntityView): string | null;
+  commitPrimaryAction(gestureId: string, entity: EntityView): void;
+  cancelPrimaryAction(): void;
+  hover(entity: EntityView | null, at: ScreenPoint, primary: boolean): void;
   selectionDenied(message: string): void;
   cameraChanged?(state: CameraState): void;
 }
@@ -50,6 +71,9 @@ export interface ConstructionPreviewTransform {
   rotation: number;
 }
 export interface WorldRenderer {
+  setAttackInput(controls: AttackPointerControls | null): void;
+  aimAt(screen: ScreenPoint): PhysicalAimPoint | null;
+  aimScreenPosition(id: string): ScreenPoint | null;
   setConstructionPreview(
     shapes: readonly ConstructionShape[] | null,
     valid?: boolean,
@@ -64,6 +88,8 @@ export interface WorldRenderer {
   setCaptionOptions(options: SpeechCaptionOptions): void;
   resetTransientCaptions(): void;
   setView(view: GameView): void;
+  /** Select an already server-observed subject, including a named HUD entry.
+   * Camera picking and highlight visibility retain their own presentation limits. */
   select(id: string | null): boolean;
   center(): void;
   setZoom(delta: number): void;

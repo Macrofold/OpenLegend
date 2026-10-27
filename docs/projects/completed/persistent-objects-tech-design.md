@@ -2,7 +2,7 @@
 
 | Status    | Current progress                                                                                                         | Last updated |
 | --------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-16   |
+| Completed | The agreed persistent-object and custody slices were delivered; broader object and hosted qualification remain separate. | 2026-10-19   |
 
 **Status:** approved and implemented for this project’s scope; [verification](../../verification/foundations-1-5.md#foundation-priorities-15--implementation-evidence) records evidence and limits. [Feature specification](persistent-objects-feature-spec.md) owns behavior. [PO01–PO09](../../maintainers/persistent-objects.md) refines DF01/BW07; P1 owns claims, P2 current authority, P4 dependency invalidation, and SL00 consistent capture.
 
@@ -149,7 +149,7 @@ Complexity targets: direct child query proportional to returned page; cycle/ance
 
 [PO01–PO09](../../maintainers/persistent-objects.md) supplies ordered work. Planning envelope: approximately 2,500–5,000 production logic lines across domain item/spatial adapters, canonical records/migrations, action/context and client views; PO01 must refine this with the actual direct-position and inventory caller audit.
 
-The original native/manual acceptance required all feature scenarios, both then-supported SQL adapters, failed multi-item transfer, opposing nested moves, ancestor capacity changes, reservation interference, dropped acknowledgements, current-format restore with active equipment, nonempty retirement, delayed old references and restore. Compare total quantities and pins before/after each committed operation. Record network privacy and real browser list behavior separately from native invariants. Current checks use PostgreSQL only. Select future checks under [current Verification](../../../.agents/rules/verification.md#default-delegated-implementation); focused existing checks are permitted, with no new tests authored by default. No paid execution is required, and CI/deferred regression coverage remains open.
+The original native/manual acceptance required all feature scenarios, both then-supported SQL adapters, failed multi-item transfer, opposing nested moves, ancestor capacity changes, reservation interference, dropped acknowledgements, current-format restore with active equipment, nonempty retirement, delayed old references and restore. Compare total quantities and pins before/after each committed operation. Record network privacy and real browser list behavior separately from native invariants. Current checks use PostgreSQL only. Select future checks under [current Verification](../../../.agents/rules/verification.md#select-checks-for-the-task); focused existing checks are permitted, with no new tests authored by default. No paid execution is required, and CI/deferred regression coverage remains open.
 
 ## 11. Alternatives and primary mechanism references
 

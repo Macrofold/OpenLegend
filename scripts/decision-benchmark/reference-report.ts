@@ -1,6 +1,6 @@
 import { episodes } from './complex-scenes.js';
 import { sha256 } from './corpus.js';
-import { summarize, type RunRecord } from './evaluate.js';
+import { groupByModel, summarize, type RunRecord } from './evaluate.js';
 import {
   gradeGeneratedReviewed,
   reviewedGenerationReferences,
@@ -8,6 +8,7 @@ import {
 } from './reference-review.js';
 import type { BenchmarkScene } from './types.js';
 import { compileQualityPolicy, summarizeQuality } from './quality.js';
+import { armById, type BenchmarkArm } from './arms.js';
 
 /** Prepare before paid admission, then retain through reporting. A new offered
  * choice without a reviewed points policy must fail before any model is called.
@@ -26,6 +27,7 @@ export function reviewedReferenceReport(
   records: RunRecord[],
   models: string[],
   prepared = prepareReferenceReport(scenes),
+  availableArms: ReadonlyMap<string, BenchmarkArm> = armById,
 ) {
   const { review, qualityPolicy } = prepared;
   const generationRecords = records.filter((record) => record.sceneId.startsWith('generate-'));
@@ -48,11 +50,13 @@ export function reviewedReferenceReport(
       : {}),
   }));
   const generationAmendments = generationReview.amendments;
+  const generationRowsByModel = groupByModel(generationRows);
   const comparison = summarize(
     [...review.scenes],
     records.filter((record) => !record.sceneId.startsWith('generate-')),
     models,
     new Set(review.excludedIds),
+    availableArms,
   );
   return {
     postRunReview: true,
@@ -66,7 +70,7 @@ export function reviewedReferenceReport(
       referenceAmendments: generationAmendments,
       rows: generationRows,
       models: models.map((model) => {
-        const rows = generationRows.filter((row) => row.model === model);
+        const rows = generationRowsByModel.get(model) ?? [];
         return {
           model,
           submitted: rows.length,

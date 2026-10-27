@@ -1,8 +1,20 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type HTMLAttributes,
+  type RefObject,
+} from 'react';
 import { Tooltip, TooltipTrigger } from 'react-aria-components';
 
 const EDGE = 8;
 const GAP = 6;
+
+export type PointerTooltipTriggerProps = HTMLAttributes<HTMLElement> & {
+  ref: RefObject<HTMLElement | null>;
+};
 
 /** One positioning rule for panel help, including portaled and keyboard-only controls. */
 export function PointerTooltip({
@@ -12,14 +24,17 @@ export function PointerTooltip({
   delay = 300,
   disabled = false,
 }: {
-  children: ReactNode;
+  children: ReactNode | ((props: PointerTooltipTriggerProps) => ReactNode);
   content: ReactNode;
   className?: string;
   delay?: number;
   disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
-  const trigger = useRef<HTMLSpanElement>(null);
+  // A render child attaches to a native control whose DOM parent must stay exact
+  // (for example, summary must be a direct child of details).
+  const direct = typeof children === 'function';
+  const trigger = useRef<HTMLElement>(null);
   const tooltip = useRef<HTMLDivElement | null>(null);
   const pointer = useRef<{ x: number; y: number } | null>(null);
   const frame = useRef<number | null>(null);
@@ -39,7 +54,11 @@ export function PointerTooltip({
     const bottom = top + (viewport?.height ?? innerHeight) - EDGE * 2;
     const focus = document.activeElement;
     const anchor =
-      focus instanceof HTMLElement && source.contains(focus) ? focus : source.firstElementChild;
+      focus instanceof HTMLElement && source.contains(focus)
+        ? focus
+        : direct
+          ? source
+          : source.firstElementChild;
     // A retained, hidden panel does not unmount its portaled help or reliably
     // dispatch pointer-leave/blur. Its actual trigger must still own visible UI.
     if (
@@ -65,7 +84,7 @@ export function PointerTooltip({
     element.style.left = `${Math.max(left, Math.min(right - box.width, preferredX))}px`;
     element.style.top = `${Math.max(top, Math.min(bottom - box.height, preferredY))}px`;
     element.style.visibility = 'visible';
-  }, [close]);
+  }, [close, direct]);
   const schedule = useCallback(() => {
     if (!tooltip.current || frame.current !== null) return;
     frame.current = requestAnimationFrame(() => {
@@ -82,7 +101,7 @@ export function PointerTooltip({
       place();
       const observer = new ResizeObserver(schedule);
       observer.observe(element);
-      const anchor = trigger.current?.firstElementChild;
+      const anchor = direct ? trigger.current : trigger.current?.firstElementChild;
       if (anchor) observer.observe(anchor);
       // Visibility/inert changes can retain the trigger's dimensions. Observe
       // only its ancestors while open, never the document subtree or every row.
@@ -105,47 +124,47 @@ export function PointerTooltip({
         frame.current = null;
       };
     },
-    [place, schedule, close],
+    [place, schedule, close, direct],
   );
   useEffect(() => () => cleanup.current?.(), []);
-  return (
-    <span
-      ref={trigger}
-      className="ol-tooltip-trigger"
-      onPointerMoveCapture={(event) => {
-        if (tooltip.current?.contains(event.target as Node)) return;
-        pointer.current = { x: event.clientX, y: event.clientY };
+  const triggerProps: PointerTooltipTriggerProps = {
+    ref: trigger,
+    className: direct ? undefined : 'ol-tooltip-trigger',
+    onPointerMoveCapture: (event) => {
+      if (tooltip.current?.contains(event.target as Node)) return;
+      pointer.current = { x: event.clientX, y: event.clientY };
+      schedule();
+    },
+    onPointerEnter: (event) => {
+      if (tooltip.current?.contains(event.target as Node)) return;
+      pointer.current = { x: event.clientX, y: event.clientY };
+      schedule();
+    },
+    onFocusCapture: (event) => {
+      if (event.target.matches(':focus-visible')) {
+        pointer.current = null;
         schedule();
-      }}
-      onPointerEnter={(event) => {
-        if (tooltip.current?.contains(event.target as Node)) return;
-        pointer.current = { x: event.clientX, y: event.clientY };
-        schedule();
-      }}
-      onFocusCapture={(event) => {
-        if (event.target.matches(':focus-visible')) {
-          pointer.current = null;
-          schedule();
-        }
-      }}
+      }
+    },
+  };
+  const overlay = (
+    <TooltipTrigger
+      delay={delay}
+      closeDelay={150}
+      isDisabled={disabled}
+      isOpen={open}
+      onOpenChange={(value) => setOpen(value && document.hasFocus())}
     >
-      <TooltipTrigger
-        delay={delay}
-        closeDelay={150}
-        isDisabled={disabled}
-        isOpen={open}
-        onOpenChange={(value) => setOpen(value && document.hasFocus())}
+      {typeof children === 'function' ? children(triggerProps) : children}
+      <Tooltip
+        ref={attach}
+        className={`ol-root ol-pointer-tooltip ${className}`}
+        placement="top"
+        style={{ position: 'fixed', left: 0, top: 0, visibility: 'hidden' }}
       >
-        {children}
-        <Tooltip
-          ref={attach}
-          className={`ol-root ol-pointer-tooltip ${className}`}
-          placement="top"
-          style={{ position: 'fixed', left: 0, top: 0, visibility: 'hidden' }}
-        >
-          <div className="ol-portal-content">{content}</div>
-        </Tooltip>
-      </TooltipTrigger>
-    </span>
+        <div className="ol-portal-content">{content}</div>
+      </Tooltip>
+    </TooltipTrigger>
   );
+  return direct ? overlay : <span {...triggerProps}>{overlay}</span>;
 }

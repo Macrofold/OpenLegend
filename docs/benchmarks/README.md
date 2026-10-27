@@ -1,6 +1,14 @@
 # OpenLegend benchmarks
 
-Start with the full comparison for general model quality, and the fallback comparison for difficult decisions that the primary model missed. Each report owns its measurements.
+Choose a runtime or model comparison below. Each report owns its measurements; the newest date or fastest sample is not automatically applicable evidence. New growing topics group related runs by question/campaign in year folders under the [documentation system](../documentation-system.md).
+
+- [First-playable runtime](first-playable/README.md): earned camps, cooperation, preparation and complete server cost.
+- [Combat runtime](combat-and-threat-responses/README.md): navigation, alarm density and required/exploratory populations.
+- [Existing performance collection](../verification/performance/README.md): current applicable summaries and earlier mixed investigations retained in place.
+
+## Model comparisons
+
+Use the full comparison for general model quality, and the fallback comparison for difficult primary-model misses.
 
 | Report                                                                                     | What it answers                                                                                                                                       |
 | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |

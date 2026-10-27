@@ -196,7 +196,6 @@ function ScopedHistory({ visible = true, revision, refreshRequest = 0 }: Props) 
               {item.sourceStatus === 'unavailable' && (
                 <small>The original source is no longer available.</small>
               )}
-              {item.legacy && <small>Earlier conversation membership was not recorded.</small>}
             </article>
           ),
         }))}

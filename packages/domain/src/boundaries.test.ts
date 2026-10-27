@@ -33,7 +33,7 @@ const draft = (): DeclarationDraft => ({
   ],
   output: {
     name: 'Fixture bow',
-    description: 'Test-only flex launcher.',
+    description: 'Test-only flex ranged weapon.',
   },
   parameters: { workSeconds: 90, damage: 18, range: 7, accuracy: 0.8 },
 });
@@ -88,7 +88,6 @@ describe('untrusted dictionary identifiers', () => {
       { type: 'hunt', targetId: id },
       { type: 'hunt', targetId: 'hare-1', weaponItemId: id },
       { ...cookingChoices(world, inventoryFor(world, PLAYER_ID), id, 'fixture-raw')[0]! },
-      { type: 'prepare', preparation: id },
       { type: 'teach', targetId: NPC_ID, recipeId: id },
       { type: 'say', targetId: id, text: 'This should not be spoken.' },
     ];

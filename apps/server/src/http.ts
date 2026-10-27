@@ -25,11 +25,15 @@ import {
   projectCommandContactReferences,
   projectActionCatalogue,
   ContactReferenceError,
+  perceivedParticipantReferences,
+  projectConstructionView,
+  projectConstructionPreview,
 } from './public-contact-references.js';
 import { recoverPlayerAction } from './action-request-recovery.js';
 import { recoverHumanRequest } from './human-request-recovery.js';
 import { CognitionExecution } from './cognition-execution.js';
-import { constructionPlanSchema } from './construction.js';
+import { constructionPlanSchema, hearthPlanSchema } from './construction.js';
+import { workBatchRequestSchema } from './work-batches.js';
 import { WorkLane, OverloadError } from './work-lane.js';
 import { foundationCapabilities } from './foundation-capabilities.js';
 import { continuitySubjects, continuityView } from './continuity-view.js';
@@ -91,6 +95,7 @@ import {
   recordDuration,
   countMetric,
   profilingEnabled,
+  recordBackgroundFailure,
 } from './performance.js';
 import {
   ACTIVITY_LIMITS,
@@ -116,7 +121,9 @@ import { AiDirector } from './ai-director.js';
 import { readConfig, type AppConfig } from './config.js';
 import { PostgresDatabase } from './postgres.js';
 import { SqlGameRepository, digest } from './store.js';
-import { WorldService, commandInputSchema, requestIdSchema } from './world-service.js';
+import { WorldService } from './world-service.js';
+import { commandInputSchema, requestIdSchema } from './command-input-schema.js';
+import { worldInputSchema } from './world-input-schema.js';
 import { projectPatch, projectView, ViewChangedError } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
 import { actionCatalogue, ActionCatalogueUnavailable } from './action-catalogue.js';
@@ -352,6 +359,7 @@ const godAwareness = z
         }
       })
       .optional(),
+    retentionClass: z.literal('memory'),
     sound: z
       .custom<PerceivedSound>((value) => {
         try {
@@ -588,7 +596,11 @@ async function initializeGameServer(
   };
   if (config.creation.startup === 'awaiting-creation' && !options.createdActivation) {
     const assets =
-      options.clientAssets ?? (await createClientAssets(options.production, { authorizeAsset }));
+      options.clientAssets ??
+      (await createClientAssets(options.production, {
+        authorizeAsset,
+        networkCapacity: config.capacity.requests,
+      }));
     if (!options.clientAssets) onFailure(() => assets.close());
     return createAwaitingCreationHost({
       assets,
@@ -618,7 +630,8 @@ async function initializeGameServer(
   onFailure(() => autosaves.close());
   await service.ready;
   await autosaves.initialize();
-  const navigation = new NavigationCoordinator(service);
+  let wakeAfterNavigation: (() => void) | undefined;
+  const navigation = new NavigationCoordinator(service, () => wakeAfterNavigation?.());
   onFailure(() => navigation.close());
   const cognitionExecution = new CognitionExecution(store, options.now);
   onFailure(() => cognitionExecution.close());
@@ -717,6 +730,14 @@ async function initializeGameServer(
   };
   const channels = new Map<string, Channel>();
   const streams = new Map<ServerResponse, StreamState>();
+  const writeStream = (stream: ServerResponse, state: StreamState, message: string): boolean => {
+    if (state.blocked || stream.destroyed) return false;
+    if (!stream.write(message)) {
+      state.blocked = true;
+      state.timeout = setTimeout(() => stream.destroy(), 30_000);
+    }
+    return !state.blocked;
+  };
   const privateStreams = new Set<{ check(): boolean; close(): void }>();
   let pendingStreams = 0;
   const projectionLane = new WorkLane('projection', config.capacity.requests);
@@ -807,11 +828,7 @@ async function initializeGameServer(
       const patch = channel.patches.get(state.revision);
       const message = patch?.message ?? `event: reset\ndata: ${JSON.stringify(channel.view)}\n\n`;
       state.revision = patch?.revision ?? channel.view.revision;
-      if (!stream.write(message)) {
-        state.blocked = true;
-        state.timeout = setTimeout(() => stream.destroy(), 30_000);
-        break;
-      }
+      if (!writeStream(stream, state, message)) break;
     }
   };
   let publishTimer: ReturnType<typeof setTimeout> | undefined;
@@ -820,6 +837,17 @@ async function initializeGameServer(
   let publishQueued = false;
   let nextPublicationAt = 0;
   let disposed = false;
+  // Quiet and paused worlds still prove transport liveness. One cadence visits
+  // existing streams without projecting the world or accumulating blocked writes.
+  const streamHeartbeat = setInterval(() => {
+    if (disposed) return;
+    for (const [stream, state] of streams) {
+      if (!service.currentScope(state.scope)) invalidateStream(stream);
+      else writeStream(stream, state, ': heartbeat\n\n');
+    }
+  }, 15_000);
+  streamHeartbeat.unref();
+  onFailure(() => clearInterval(streamHeartbeat));
   let shuttingDown: Promise<ShutdownReport> | undefined;
   const publish = () => {
     if (disposed) return;
@@ -893,7 +921,11 @@ async function initializeGameServer(
   const unsubscribe = service.subscribe(publish);
   onFailure(unsubscribe);
   const clientAssets =
-    options.clientAssets ?? (await createClientAssets(options.production, { authorizeAsset }));
+    options.clientAssets ??
+    (await createClientAssets(options.production, {
+      authorizeAsset,
+      networkCapacity: config.capacity.requests,
+    }));
   if (!options.clientAssets) onFailure(() => clientAssets.close());
   const server = createServer(async (request, response) => {
     const arrivedAt = options.profileCommand ? performance.now() : 0;
@@ -915,28 +947,54 @@ async function initializeGameServer(
       return mcp.handle(request, response);
     const address = (options.publicServer ?? server).address();
     const port = address && typeof address !== 'string' ? address.port : config.port;
-    const allowedHosts = new Set(
-      config.authentication.mode === 'local'
-        ? [`127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`]
-        : [new URL(config.authentication.origin).host],
-    );
-    if (!allowedHosts.has(request.headers.host ?? ''))
-      return send(response, 403, {
-        ok: false,
-        code: 'host',
-        message: 'Use the configured game host.',
-      });
+    const loopbackHosts = new Set([`127.0.0.1:${port}`, `localhost:${port}`, `[::1]:${port}`]);
+    const publicOrigin =
+      config.authentication.mode === 'oidc' ? new URL(config.authentication.origin) : undefined;
+    const allowedHosts = publicOrigin ? new Set([publicOrigin.host]) : loopbackHosts;
     let url: URL;
     try {
       url = new URL(request.url ?? '/', `http://${request.headers.host}`);
     } catch {
       return send(response, 400, { ok: false, code: 'url', message: 'Invalid URL.' });
     }
+    if (!allowedHosts.has(request.headers.host ?? '')) {
+      // Local browser entry must reach the registered sign-in origin before cookies
+      // are issued. Redirect navigation only; API access keeps its exact Host checks.
+      if (
+        config.authentication.insecureLoopback &&
+        publicOrigin?.protocol === 'http:' &&
+        loopbackHosts.has(publicOrigin.host) &&
+        loopbackHosts.has(request.headers.host ?? '') &&
+        (request.method === 'GET' || request.method === 'HEAD') &&
+        request.url?.startsWith('/') &&
+        !['/api', '/auth', '/mcp'].some(
+          (path) => url.pathname === path || url.pathname.startsWith(`${path}/`),
+        )
+      ) {
+        response.writeHead(307, {
+          Location: `${publicOrigin.origin}${url.pathname}${url.search}`,
+          'Cache-Control': 'no-store',
+        });
+        response.end();
+        return;
+      }
+      return send(response, 403, {
+        ok: false,
+        code: 'host',
+        message: 'Use the configured game host.',
+      });
+    }
     const ownOrigin =
       config.authentication.mode === 'oidc'
         ? config.authentication.origin
         : `http://${request.headers.host}`;
     if (request.method === 'GET' && url.pathname.startsWith('/auth/')) {
+      const cancellation = new AbortController();
+      const disconnect = () => {
+        if (!response.writableFinished) cancellation.abort();
+      };
+      request.once('aborted', disconnect);
+      response.once('close', disconnect);
       try {
         if (url.pathname === '/auth/invite') {
           // The bearer token survives only the OIDC round trip; redemption needs verified identity.
@@ -963,7 +1021,9 @@ async function initializeGameServer(
           const destination = await authentication.begin(
             browserToken,
             url.searchParams.get('change-account') === 'true',
+            cancellation.signal,
           );
+          cancellation.signal.throwIfAborted();
           response.setHeader('Set-Cookie', cookie('ol_login', browserToken, 300));
           response.writeHead(303, { Location: destination.href, 'Cache-Control': 'no-store' });
           response.end();
@@ -971,46 +1031,63 @@ async function initializeGameServer(
         }
         if (url.pathname === '/auth/callback') {
           const callback = new URL(request.url!, ownOrigin);
-          const identity = await authentication.complete(callback, readCookie(request, 'ol_login'));
           const previous = readCookie(request, 'ol_session');
-          const login = await service.authenticationMutation(() =>
-            store.db.transaction(async () => {
-              const replacement = await store.authority.login(
-                identity,
-                now(),
-                config.authentication.sessionMs,
-                config.capacity.sessions,
-              );
-              if (previous) {
-                try {
-                  const oldSession = await store.authority.authenticate(previous, now());
-                  await store.authority.revokeSession(oldSession.id, now());
-                } catch (error) {
-                  if (!(error instanceof AuthorityError)) throw error;
-                }
-              }
-              return replacement;
-            }),
+          await authentication.complete(
+            callback,
+            readCookie(request, 'ol_login'),
+            async (identity, context) => {
+              const login = await service.authenticationMutation(() => {
+                context.throwIfStopped();
+                return store.db.transaction(async () => {
+                  const replacement = await store.authority.login(
+                    identity,
+                    now(),
+                    config.authentication.sessionMs,
+                    config.capacity.sessions,
+                  );
+                  if (previous) {
+                    try {
+                      const oldSession = await store.authority.authenticate(previous, now());
+                      await store.authority.revokeSession(oldSession.id, now());
+                    } catch (error) {
+                      if (!(error instanceof AuthorityError)) throw error;
+                    }
+                  }
+                  return replacement;
+                });
+              });
+              context.throwIfStopped();
+              const invite = readCookie(request, 'ol_invite');
+              const location = invite
+                ? await operations.completeInvite(invite, login.session.accountId, context)
+                : '/';
+              context.throwIfStopped();
+              response.setHeader('Set-Cookie', [
+                cookie(
+                  'ol_session',
+                  login.token,
+                  Math.floor(config.authentication.sessionMs / 1000),
+                ),
+                cookie('ol_login', '', 0),
+                cookie('ol_invite', '', 0),
+              ]);
+              response.writeHead(303, { Location: location, 'Cache-Control': 'no-store' });
+              response.end();
+            },
+            cancellation.signal,
           );
-          const invite = readCookie(request, 'ol_invite');
-          const location = invite
-            ? await operations.completeInvite(invite, login.session.accountId)
-            : '/';
-          response.setHeader('Set-Cookie', [
-            cookie('ol_session', login.token, Math.floor(config.authentication.sessionMs / 1000)),
-            cookie('ol_login', '', 0),
-            cookie('ol_invite', '', 0),
-          ]);
-          response.writeHead(303, { Location: location, 'Cache-Control': 'no-store' });
-          response.end();
           return;
         }
       } catch {
+        if (cancellation.signal.aborted || response.destroyed) return;
         return send(response, 401, {
           ok: false,
           code: 'session',
           message: 'Sign-in could not be verified. Start sign-in again.',
         });
+      } finally {
+        request.off('aborted', disconnect);
+        response.off('close', disconnect);
       }
       return send(response, 404, { ok: false, code: 'route' });
     }
@@ -1138,8 +1215,14 @@ async function initializeGameServer(
           responseCapability = 'create';
           return send(response, 200, await authoring.creationTargets(value.sessionId, scope));
         }
+        if (request.method === 'GET' && url.pathname === '/api/construction/hearths')
+          return send(response, 200, service.hearthConstructionView(scope));
         if (request.method === 'GET' && url.pathname === '/api/construction')
-          return send(response, 200, service.constructionView(scope));
+          return send(
+            response,
+            200,
+            projectConstructionView(service.world, scope, service.constructionView(scope)),
+          );
         if (request.method === 'GET' && url.pathname === '/api/state')
           return send(response, 200, await currentView(scope));
         if (request.method === 'GET' && url.pathname === '/api/operations') {
@@ -1150,7 +1233,10 @@ async function initializeGameServer(
         if (request.method === 'GET' && url.pathname === '/api/performance') {
           responseCapability = 'inspect';
           service.assertScope(scope, 'inspect');
-          return send(response, 200, performanceSnapshot());
+          return send(response, 200, {
+            ...performanceSnapshot(),
+            diagnosticCapture: director.diagnosticCaptureSnapshot(),
+          });
         }
         if (request.method === 'GET' && url.pathname === '/api/world-events') {
           const options = z
@@ -1193,6 +1279,7 @@ async function initializeGameServer(
             sourceEpoch,
             corrections,
             selectedEventPresentation(service.world),
+            (event) => perceivedParticipantReferences(service.world, scope, event),
           );
           await assertHistoryRead(scope, epoch);
           if (options.showAll) service.assertScope(scope, 'inspect');
@@ -1201,8 +1288,6 @@ async function initializeGameServer(
         if (request.method === 'GET' && url.pathname === '/api/history') {
           const options = z
             .object({
-              conversationId: requestIdSchema.optional(),
-              active: z.literal('true').optional(),
               speechOnly: z.literal('true').optional(),
               responseActions: z.literal('true').optional(),
               participantId: requestIdSchema.optional(),
@@ -1215,11 +1300,6 @@ async function initializeGameServer(
           if (!store.history)
             return send(response, 503, { message: 'History repository unavailable.' });
           const epoch = `${service.timelineId}:${service.historyEpoch}:${scopeKey(scope)}`;
-          const scopedId = options.active
-            ? service.world.conversations?.active[scope.actorId]
-            : options.conversationId;
-          if (options.active && options.conversationId && options.conversationId !== scopedId)
-            throw new HistoryCursorError('The active conversation changed. Refresh it.');
           const page = await store.history.transcript(
             service.world.id,
             scope.accountId,
@@ -1238,10 +1318,8 @@ async function initializeGameServer(
                 : {}),
               speechOnly: options.speechOnly === 'true',
               responseActions: options.responseActions === 'true',
-              conversationId: scopedId,
             },
           );
-          if (options.active && !scopedId) page.items = [];
           const speechJobs = options.speechOnly
             ? await store.getSpeechJobs(
                 page.items
@@ -1278,22 +1356,26 @@ async function initializeGameServer(
 
           const profile = await service.profileFor(scope);
           await assertHistoryRead(scope, epoch);
-          if (options.active && scopedId !== service.world.conversations?.active[scope.actorId])
-            throw new HistoryCursorError('The active conversation changed. Refresh it.');
-          const activeId = service.world.conversations?.active[scope.actorId];
-          const active = activeId ? service.world.conversations?.records[activeId] : undefined;
           return send(response, 200, {
             ...page,
             ...(messages ? { messages } : {}),
             voice: profile.preferences.narratorVoice,
-            scope: scopedId,
-            active: active
-              ? {
-                  id: active.id,
-                  generation: active.generation,
-                }
-              : null,
           });
+        }
+        if (request.method === 'GET' && url.pathname === '/api/player-interaction/availability') {
+          const value = z
+            .object({ mode: z.enum(['speak', 'act']), targetId: requestIdSchema.optional() })
+            .strict()
+            .parse(Object.fromEntries(url.searchParams));
+          const available = await service.playerInteractionAvailability(
+            value.mode,
+            value.targetId
+              ? resolveContactTarget(service.world, scope, value.targetId, { communication: true })
+              : undefined,
+            scope,
+          );
+          service.assertScope(scope);
+          return send(response, 200, available);
         }
         if (request.method === 'GET' && url.pathname === '/api/events') {
           if (streams.size + privateStreams.size + pendingStreams >= config.capacity.connections)
@@ -1304,7 +1386,9 @@ async function initializeGameServer(
             });
           const transportId = randomBytes(16).toString('hex');
           let connected = false;
-          let closed = false;
+          // Authentication may have awaited after this socket already closed.
+          // Such a request must never install a connection that cannot release.
+          let closed = response.destroyed;
           let released = false;
           const release = async () => {
             if (!connected || released || disposed) return;
@@ -1335,6 +1419,7 @@ async function initializeGameServer(
           // Keep admission reserved across the initial asynchronous private projection.
           pendingStreams++;
           try {
+            if (closed) return;
             await service.setConnection(transportId, true, scope);
             connected = true;
             if (closed) {
@@ -1343,7 +1428,10 @@ async function initializeGameServer(
             }
             await currentView(scope);
             service.assertScope(scope);
-            if (response.destroyed) return;
+            if (response.destroyed) {
+              await release();
+              return;
+            }
             response.writeHead(200, {
               'Content-Type': 'text/event-stream',
               'Cache-Control': 'no-store',
@@ -1370,7 +1458,7 @@ async function initializeGameServer(
             });
             response.flushHeaders();
             // An up-to-date paused world still needs a live, established stream.
-            response.write(': connected\n\n');
+            writeStream(response, streams.get(response)!, ': connected\n\n');
             pump(response);
             publish();
           } catch (error) {
@@ -1644,8 +1732,11 @@ async function initializeGameServer(
         const controlling = [
           '/api/god/construction-shower',
           '/api/construction/preview',
+          '/api/construction/hearth-preview',
+          '/api/work-batches/preview',
           '/api/command',
           '/api/attention',
+          '/api/input',
           '/api/knowledge',
           '/api/control',
           '/api/conversation',
@@ -2020,8 +2111,14 @@ async function initializeGameServer(
               return send(response, 200, activityStatus(service, scope));
             case '/api/activity-preview': {
               const input = commandInputSchema.parse(body);
-              if (input.type !== 'activity-request')
-                return send(response, 400, { ok: false, message: 'Review a requested activity.' });
+              if (
+                input.type !== 'activity-request' &&
+                (input.type !== 'outing' || input.outingOperation !== 'propose')
+              )
+                return send(response, 400, {
+                  ok: false,
+                  message: 'Review an activity or cooperation proposal.',
+                });
               service.assertScope(scope, 'play', true);
               return send(
                 response,
@@ -2029,6 +2126,8 @@ async function initializeGameServer(
                 service.previewCommand(
                   resolveCommandContactReferences(service.world, scope, input),
                   scope.actorId,
+                  true,
+                  scope,
                 ),
               );
             }
@@ -2169,11 +2268,40 @@ async function initializeGameServer(
                   scope,
                 ),
               );
+            case '/api/work-batches/preview':
+              return send(
+                response,
+                200,
+                service.previewWorkBatch(
+                  resolveCommandContactReferences(
+                    service.world,
+                    scope,
+                    workBatchRequestSchema.parse(body),
+                  ),
+                  scope,
+                ),
+              );
+            case '/api/construction/hearth-preview':
+              return send(
+                response,
+                200,
+                await service.previewHearth(hearthPlanSchema.parse(body), scope),
+              );
             case '/api/construction/preview':
               return send(
                 response,
                 200,
-                service.previewConstruction(constructionPlanSchema.parse(body), scope),
+                projectConstructionPreview(
+                  scope,
+                  service.previewConstruction(
+                    resolveCommandContactReferences(
+                      service.world,
+                      scope,
+                      constructionPlanSchema.parse(body),
+                    ),
+                    scope,
+                  ),
+                ),
               );
             case '/api/command': {
               const value = command.parse(body);
@@ -2192,6 +2320,12 @@ async function initializeGameServer(
                 ),
               );
             }
+            case '/api/input':
+              return send(
+                response,
+                200,
+                await service.updateWorldInput(worldInputSchema.parse(body), scope),
+              );
             case '/api/command/receipt': {
               const value = command.required({ commandEpoch: true }).parse(body);
               return send(
@@ -2249,28 +2383,6 @@ async function initializeGameServer(
                 200,
                 await service.transition((world) =>
                   amendCommitment(world, scope.actorId, value.id, value.revision, value),
-                ),
-              );
-            }
-            case '/api/conversation': {
-              const value = z
-                .object({
-                  requestId: requestIdSchema,
-                  operation: z.enum(['join', 'leave']),
-                  conversationId: requestIdSchema,
-                  generation: z.number().int().nonnegative(),
-                })
-                .strict()
-                .parse(body);
-              return send(
-                response,
-                200,
-                await service.conversation(
-                  value.requestId,
-                  value.operation,
-                  value.conversationId,
-                  value.generation,
-                  scope,
                 ),
               );
             }
@@ -2856,9 +2968,9 @@ async function initializeGameServer(
                 worldId: service.world.id,
                 ...(peek
                   ? {
-                      roots: (await store.diagnosticRoots(0, {}, service.diagnosticAccess(scope)))
-                        .slice(0, 1)
-                        .map(({ id }) => ({ id })),
+                      roots: await store
+                        .latestDiagnosticRootId(service.diagnosticAccess(scope))
+                        .then((id) => (id === undefined ? [] : [{ id }])),
                     }
                   : await traceHistory(
                       store,
@@ -3246,6 +3358,7 @@ async function initializeGameServer(
                 value.budgetUsd,
                 scope,
                 value.purpose,
+                value.freshRecovery,
               );
               return send(response, 200, {
                 ok: true,
@@ -3826,8 +3939,9 @@ async function initializeGameServer(
           .considerThought()
           .catch((error: unknown) => {
             if (error instanceof OverloadError) return;
+            recordBackgroundFailure('decision-admission', error);
             service.storageError =
-              'Background admission failed; simulation paused. Restart and reconcile storage.';
+              'Character decision admission failed; simulation paused. Restart after resolving the recorded failure.';
             service.notify();
           })
           .finally(() => {
@@ -3836,21 +3950,23 @@ async function initializeGameServer(
     })()
       .catch((error: unknown) => {
         if (error instanceof OverloadError) return;
+        recordBackgroundFailure('simulation-tick', error);
         service.storageError =
-          'Background persistence failed; simulation paused. Restart and reconcile storage.';
+          'Automatic simulation failed; simulation paused. Restart after resolving the recorded failure.';
         service.notify();
       })
       .finally(() => {
         ticking = false;
         // One owned continuation preserves catch-up throughput without keeping an
         // old elapsed-time offer open. The interval remains the idle wake owner.
-        if (more && !disposed && !loadingSave)
+        if (more && !disposed && !loadingSave && !clockContinuation)
           clockContinuation = setImmediate(() => {
             clockContinuation = undefined;
             wakeClock();
           });
       });
   };
+  if (options.tick !== false) service.useMonotonicClock();
   const interval =
     options.tick === false
       ? undefined
@@ -3869,6 +3985,16 @@ async function initializeGameServer(
           }
           wakeClock();
         }, 50);
+  if (interval)
+    wakeAfterNavigation = () => {
+      // A completed route removes the physical wait now. Reuse the one owned
+      // clock continuation; admission still charges only actual elapsed time.
+      if (disposed || loadingSave || clockContinuation) return;
+      clockContinuation = setImmediate(() => {
+        clockContinuation = undefined;
+        wakeClock();
+      });
+    };
 
   return {
     server,
@@ -3892,6 +4018,7 @@ async function initializeGameServer(
    * report states whether the final save completed and the last revision confirmed durable. */
   async function shutdownOnce(deadlineMs: number): Promise<ShutdownReport> {
     disposed = true;
+    clearInterval(streamHeartbeat);
     creationRecoveryStop.abort();
     maintenance.close();
     const until = performance.now() + deadlineMs;
@@ -3921,6 +4048,7 @@ async function initializeGameServer(
       }
     };
     if (interval) clearInterval(interval);
+    wakeAfterNavigation = undefined;
     if (clockContinuation) clearImmediate(clockContinuation);
     clockContinuation = undefined;
     if (publishTimer) clearTimeout(publishTimer);
@@ -3982,7 +4110,15 @@ async function initializeGameServer(
         }),
       0.5,
     );
-    if (!options.clientAssets) await stage('Client assets', () => clientAssets.close(), 0.5);
+    if (!options.clientAssets)
+      await stage(
+        'Client assets',
+        () =>
+          clientAssets.close({
+            timeoutMs: Math.max(1, Math.floor((until - performance.now()) * 0.5)),
+          }),
+        0.5,
+      );
     service.releaseHostWork();
     await stage('Storage', () => store.close(), 1);
     // A final save that finished after its stage deadline still counts as saved.

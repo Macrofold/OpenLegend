@@ -2,9 +2,15 @@ import {
   usdToMicroUsd,
   sumSafeIntegers,
   type MacrofoldBillingMode,
+  type AiReceipt,
 } from '../../packages/ai/src/index.js';
 import type { RunRecord } from './evaluate.js';
-import { armById, type BenchmarkArmId } from './arms.js';
+import { armById, type BenchmarkArm, type BenchmarkArmId } from './arms.js';
+import {
+  experimentArms,
+  validateResolvedModelExperiment,
+  type ResolvedModelExperiment,
+} from './model-experiment.js';
 
 export interface BenchmarkManifest {
   version: string;
@@ -12,6 +18,7 @@ export interface BenchmarkManifest {
   gitCommit: string;
   runId: string;
   models: BenchmarkArmId[];
+  modelExperiment?: ResolvedModelExperiment;
   executionDigest: string;
   priorCommitmentUsd: number;
   maxCostUsd: number;
@@ -34,12 +41,34 @@ export interface BenchmarkJournalEvent {
   record?: RunRecord;
   at: string;
 }
+/** A separately known deployment request fee is independent of token telemetry. */
+function deploymentRequestPrice(receipt: AiReceipt): boolean {
+  const deployment = receipt.macrofoldDeployment,
+    attribution = receipt.macrofoldCostAttribution;
+  return (
+    receipt.provider === 'macrofold' &&
+    receipt.macrofoldBillingMode === 'byok' &&
+    deployment !== undefined &&
+    attribution?.basis === 'deployment' &&
+    attribution.deploymentId === deployment.deploymentId &&
+    attribution.infrastructureCostIncluded === false &&
+    receipt.requestedModel === `deployment:${deployment.deploymentId}`
+  );
+}
 
 const micro = (value: number) => {
   const amount = usdToMicroUsd(value);
   if (amount === undefined) throw new Error('Invalid benchmark accounting amount.');
   return amount;
 };
+
+/** Known request evidence also constrains live admission while its journal write waits. */
+export function knownReceiptMicroUsd(receipt: AiReceipt): number {
+  return Math.max(
+    micro(receipt.estimatedCostUsd ?? 0),
+    micro(receipt.providerReportedCostUsd ?? 0),
+  );
+}
 
 /** Derived from validated events, or updated after a live event is durably synced.
  * Completed history never needs rescanning to admit the next call. Only unfinished
@@ -71,12 +100,19 @@ export class BenchmarkAccounting {
       requireValue(admission, 'result without a pending reservation');
       const reserved = micro(admission.reservedUsd!);
       const receipt = event.record!.result.receipt;
-      const known = Math.max(
-        micro(receipt.estimatedCostUsd ?? 0),
-        micro(receipt.providerReportedCostUsd ?? 0),
-      );
-      const settled =
-        receipt.usage && receipt.estimatedCostUsd !== undefined && !receipt.completionUncertain
+      const known = knownReceiptMicroUsd(receipt);
+      // Macrofold rejection with no Run proves no admission. Direct provider trace IDs
+      // retain their existing conservative accounting when usage is unavailable.
+      const notAdmitted =
+        receipt.provider === 'macrofold' &&
+        receipt.dispatched === false &&
+        receipt.completionUncertain === false &&
+        receipt.providerRequestId === undefined;
+      const settled = notAdmitted
+        ? known
+        : (receipt.usage || deploymentRequestPrice(receipt)) &&
+            receipt.estimatedCostUsd !== undefined &&
+            !receipt.completionUncertain
           ? known
           : Math.max(reserved, known);
       total = sumSafeIntegers([this.committedMicroUsd - reserved, settled]);
@@ -108,6 +144,11 @@ const count = (value: unknown): value is number =>
 /** Current manifests only: corrupt funding or limits cannot authorize resumed spending. */
 export function assertValidManifest(value: unknown): asserts value is BenchmarkManifest {
   object(value);
+  if (value.modelExperiment !== undefined) validateResolvedModelExperiment(value.modelExperiment);
+  const availableArms =
+    value.modelExperiment === undefined
+      ? armById
+      : experimentArms({ modelExperiment: value.modelExperiment });
   requireValue(
     text(value.version) &&
       hash(value.corpusDigest) &&
@@ -123,9 +164,9 @@ export function assertValidManifest(value: unknown): asserts value is BenchmarkM
   requireValue(
     Array.isArray(value.models) &&
       value.models.length > 0 &&
-      value.models.length <= armById.size &&
+      value.models.length <= availableArms.size &&
       new Set(value.models).size === value.models.length &&
-      value.models.every((model) => typeof model === 'string' && armById.has(model)),
+      value.models.every((model) => typeof model === 'string' && availableArms.has(model)),
     'model binding',
   );
   const cap = usdToMicroUsd(value.capUsd),
@@ -154,6 +195,18 @@ export function assertValidManifest(value: unknown): asserts value is BenchmarkM
       value.timeoutMs <= 300000,
     'execution limits',
   );
+  if (value.modelExperiment) {
+    const plan = value.modelExperiment.plan;
+    requireValue(
+      value.models.length === availableArms.size &&
+        cap === usdToMicroUsd(plan.limits.cap_usd) &&
+        price === usdToMicroUsd(plan.limits.per_call_usd) &&
+        usdToMicroUsd(value.priorCommitmentUsd) === usdToMicroUsd(plan.prior_commitment_usd) &&
+        value.timeoutMs === plan.limits.timeout_ms &&
+        value.concurrency === plan.limits.concurrency,
+      'experiment limits or arm selection',
+    );
+  }
   requireValue(
     (value.streamGeneration === undefined || value.streamGeneration === true) &&
       date(value.startedAt),
@@ -186,6 +239,7 @@ export function assertBenchmarkRecord(
   requestId: string,
   expectedDigest: string,
   acceptedRun?: string,
+  availableArms: ReadonlyMap<string, BenchmarkArm> = armById,
 ): asserts value is RunRecord {
   object(value);
   requireValue(
@@ -214,7 +268,7 @@ export function assertBenchmarkRecord(
   );
   object(result.receipt);
   const receipt = result.receipt;
-  const arm = armById.get(String(value.model));
+  const arm = availableArms.get(String(value.model));
   requireValue(arm, 'unknown arm');
   requireValue(
     value.stream === undefined ||
@@ -222,6 +276,47 @@ export function assertBenchmarkRecord(
     'generation delivery mode',
   );
   const macrofold = arm.transport.startsWith('macrofold');
+  if (arm.macrofoldDeployment && result.outcome === 'value') object(receipt.macrofoldDeployment);
+  requireValue(
+    value.outputMode === undefined ||
+      (arm.macrofoldDeployment !== undefined &&
+        ['json_schema', 'json_object', 'prompted_json'].includes(String(value.outputMode))),
+    'output mode',
+  );
+  requireValue(
+    value.attemptLatencyMs === undefined ||
+      (finite(value.attemptLatencyMs) && value.attemptLatencyMs >= 0),
+    'attempt timing',
+  );
+  if (receipt.macrofoldDeployment !== undefined) {
+    object(receipt.macrofoldDeployment);
+    const uuid = /^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/;
+    requireValue(
+      arm.macrofoldDeployment !== undefined &&
+        typeof receipt.macrofoldDeployment.deploymentRevisionId === 'string' &&
+        uuid.test(receipt.macrofoldDeployment.deploymentRevisionId) &&
+        receipt.macrofoldDeployment.deploymentId ===
+          arm.macrofoldDeployment.modelBinding.deployment_id &&
+        (arm.macrofoldDeployment.modelBinding.deployment_revision_id === undefined ||
+          receipt.macrofoldDeployment.deploymentRevisionId ===
+            arm.macrofoldDeployment.modelBinding.deployment_revision_id),
+      'deployment receipt binding',
+    );
+  }
+  if (receipt.macrofoldCostAttribution !== undefined) {
+    object(receipt.macrofoldCostAttribution);
+    object(receipt.macrofoldDeployment);
+    const attribution = receipt.macrofoldCostAttribution;
+    requireValue(
+      arm.macrofoldDeployment !== undefined &&
+        receipt.macrofoldBillingMode === 'byok' &&
+        attribution.basis === 'deployment' &&
+        attribution.infrastructureCostIncluded === false &&
+        attribution.deploymentId === arm.macrofoldDeployment.modelBinding.deployment_id &&
+        receipt.macrofoldDeployment?.deploymentId === attribution.deploymentId,
+      'deployment cost attribution',
+    );
+  }
   requireValue(
     receipt.requestId === requestId &&
       receipt.provider === (macrofold ? 'macrofold' : 'openai') &&
@@ -311,7 +406,12 @@ export function assertBenchmarkRecord(
         ),
       'individual question refusals',
     );
-  for (const field of ['providerLatencyMs', 'providerQueueLatencyMs'])
+  for (const field of [
+    'providerLatencyMs',
+    'providerQueueLatencyMs',
+    'intermediaryRunLatencyMs',
+    'intermediaryQueueLatencyMs',
+  ])
     requireValue(
       receipt[field] === undefined || (finite(receipt[field]) && receipt[field] >= 0),
       'provider timing',
@@ -391,6 +491,7 @@ export function validateJournal(
   expectedInputs: Map<string, string>,
 ): BenchmarkJournalEvent[] {
   assertValidManifest(manifest);
+  const availableArms = experimentArms(manifest);
   const admitted = new Map<string, string>(),
     requestIds = new Set<string>(),
     accepted = new Map<string, string>(),
@@ -404,11 +505,15 @@ export function validateJournal(
     const key = event.key;
     const expectedDigest = expectedInputs.get(key);
     requireValue(expectedDigest !== undefined && hash(expectedDigest), 'unknown model or scene');
-    const model = manifest.models.find((model) => key.startsWith(`${model}:`));
-    requireValue(model !== undefined, 'unselected model');
+    const modelIndex = Number(event.requestId.slice(event.requestId.lastIndexOf(':') + 1));
+    const model = manifest.models[modelIndex];
+    requireValue(
+      Number.isSafeInteger(modelIndex) && model !== undefined && key.startsWith(`${model}:`),
+      'unselected model',
+    );
     const scene = event.key.slice(model.length + 1);
     requireValue(
-      event.requestId === `olbench:${manifest.runId}:${scene}:${manifest.models.indexOf(model)}`,
+      event.requestId === `olbench:${manifest.runId}:${scene}:${modelIndex}`,
       'request binding',
     );
     if (event.event === 'admitted') {
@@ -461,10 +566,12 @@ export function validateJournal(
           event.requestId,
           expectedDigest,
           accepted.get(event.key),
+          availableArms,
         );
         requireValue(
           event.record.stream ===
-            (manifest.streamGeneration && armById.get(model)!.transport === 'macrofold-generation'
+            (manifest.streamGeneration &&
+            availableArms.get(model)!.transport === 'macrofold-generation'
               ? true
               : undefined),
           'request delivery differs from manifest',

@@ -1,0 +1,13 @@
+# Player-facing language
+
+Before creating, changing or reviewing text that a player may see or hear, read the [core standard and principles](../../docs/ui-ux/player-facing-language.md#core-standard), then the matching surface guidance and [review checklist](../../docs/ui-ux/player-facing-language.md#review-the-complete-player-experience). Reuse current loaded guidance. This applies in every package and to new files, not only frontend work.
+
+Scope includes menus, controls, tooltips, settings, status and mechanic explanations, warnings, errors, notifications, world events, captions, narration, dialogue, help, accessibility names and announcements, and creator/operations interfaces. Include authored definitions, templates, generated-text instructions, examples and fallbacks that shape those outputs. Internal logs, protocol identifiers and developer documentation are separate audiences unless their text is also presented to players; merely mentioning UI in internal prose does not trigger this read.
+
+The handbook owns wording principles and examples. Apply them to the actual recipient, speaker, selected subject and permitted information. Treat a player-facing sentence as communication to a person playing the game. The reported “can kill this body” wording is the [canonical perspective example](../../docs/ui-ux/player-facing-language.md#why-this-body-misses-the-audience), not a global word-replacement rule.
+
+For implementation, trace the visible or spoken wording to its semantic owner and every affected consumer; follow existing engine/world, privacy, event and AI routes whenever their stated conditions apply. World-specific names, laws and wording retain their world-owned source. Do not solve the same language defect independently in several renderers, or expose raw diagnostic/model instructions as player explanations.
+
+For generated output, apply the [generated-text contract](../../docs/ui-ux/player-facing-language.md#authored-generated-and-composed-text) to instructions, examples, fallback wording and review. Do not erase character voice or rewrite quoted player speech to satisfy system-copy style.
+
+Before completion, review the complete rendered meaning with relevant subjects, counts, states and accessible context. Preserve actual consequences and uncertainty. Follow [verification policy](verification.md) for the changed scope: documentation checks do not establish runtime or generated-language quality. Track concrete uncovered copy work in [UIUX20](../../docs/maintainers/ui-ux.md#uiux20); do not claim this standard retroactively fixes every existing surface.

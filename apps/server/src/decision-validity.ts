@@ -100,17 +100,6 @@ export function decisionValidity(world: WorldState, actorId: string): string {
     }
     return feeling;
   });
-  const conversationId = world.conversations?.active[actorId];
-  const conversation = conversationId ? world.conversations?.records[conversationId] : undefined;
-  const awareness = world.experience?.awareness[actorId] ?? [];
-  let latestSpeech: string | undefined;
-  for (let index = awareness.length - 1; index >= 0; index--) {
-    const evidence = awareness[index]!;
-    if (evidence.triggerKind === 'addressed_speech' && evidence.intelligible) {
-      latestSpeech = evidence.eventId;
-      break;
-    }
-  }
   return digest({
     // Installed rules and authored identity shape the meaning of the prepared question.
     // Their revisions change independently of the plan or selected memory sources.
@@ -143,14 +132,6 @@ export function decisionValidity(world: WorldState, actorId: string): string {
     forgotten: world.experience?.forgotten[actorId],
     corrections: world.experience?.corrections?.[actorId],
     outcomes: requiredOutcomeMemoryIds(world, actorId),
-    conversation: conversation
-      ? {
-          id: conversation.id,
-          generation: conversation.generation,
-          endedAt: conversation.endedAt,
-          latestSpeech,
-        }
-      : null,
   });
 }
 

@@ -38,7 +38,7 @@ export function externalAudience(world: WorldState, source: Entity): string[] {
   if (!index) {
     // Only copy receiver scalars below. Snapshotting full actors also copies their
     // plans/body/action state even though none of it survives in this index.
-    const roots = worldRootEntities(world);
+    const roots = worldRootEntities(world, true);
     countDomainWork('audienceScans');
     const inputs: Receiver[] = [];
     for (const [order, entity] of roots.entries()) {

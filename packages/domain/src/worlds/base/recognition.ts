@@ -50,6 +50,8 @@ export interface RecognitionSample {
 export interface AuthoredRecognition {
   source: string;
   installedAt: number;
+  /** Settled ability at installation; future changes cannot re-admit this seed. */
+  perception: number;
   order: number;
   baseline: 'learned' | 'familiar';
   exemplars: { features: RecognitionFeatures; quality: number; ordinal: number }[];
@@ -87,6 +89,11 @@ export const BASE_PERCEPTION_POLICY = {
   familiarityRoots: 120,
   familiarityMatureSeconds: 1800,
 } as const;
+
+const learningQuality = (perception: number, familiarity: number): number =>
+  Math.max(0.55, 0.7 - (0.2 * perception) / 100 - 0.15 * familiarity);
+const initialLearningQuality = (perception: number, modality: RecognitionModality): number =>
+  learningQuality(perception, (modality === 'sight' ? 1 : 2) / 6);
 
 const rootOrder = (a: FamiliarityRoot, b: FamiliarityRoot) =>
   b.at - a.at || b.order - a.order || a.key.localeCompare(b.key);
@@ -681,18 +688,9 @@ function perceiveIndividual(
       sample.support.push(...result.learningSupport);
     }
   }
-  // Only real, qualifying original samples can change familiarity. Prior evidence
-  // remains available through the existing personal-history source owner.
-  if (quality < 0.55 || usable(features).length < 3) return result;
-  if (
-    Object.values(records).some((identity) =>
-      identity[modality]?.samples.some((prior) => prior.key === sample.key),
-    )
-  )
-    return result;
   let associated =
     result.subject?.kind === 'individual' ? records[result.subject.individualId] : undefined;
-  if (!associated && visibleSourceId) {
+  if (!associated && visibleSourceId)
     associated = Object.values(records).find(
       (identity) =>
         !identity.seedOnly &&
@@ -700,6 +698,23 @@ function perceiveIndividual(
         !!identity.encounterId &&
         identity.encounterId === world.perceptionEpisodes?.[observerId]?.[visibleSourceId],
     );
+  const established = associated?.[modality];
+  const learned =
+    !!established?.authored || (established?.samples.length ?? 0) >= (modality === 'sight' ? 1 : 2);
+  // New profiles must already support recognition at their starting familiarity.
+  // Later learning keeps the ordinary quality floor; weak samples remain observations.
+  if (
+    quality < (learned ? 0.55 : initialLearningQuality(perception, modality)) ||
+    usable(features).length < 3
+  )
+    return result;
+  if (
+    Object.values(records).some((identity) =>
+      identity[modality]?.samples.some((prior) => prior.key === sample.key),
+    )
+  )
+    return result;
+  if (!associated && visibleSourceId) {
     if (!associated) {
       const individualId = allocateObserverIndividual(world, observerId);
       associated = records[individualId] = {
@@ -744,7 +759,12 @@ function perceiveIndividual(
           prior,
           ...compare(sample, { ...prior, authored: false }),
         }))
-        .filter((match) => match.dimensions >= 3 && match.quality >= 0.55 && match.distance <= 0.3)
+        .filter(
+          (match) =>
+            match.dimensions >= 3 &&
+            match.quality >= initialLearningQuality(perception, 'voice') &&
+            match.distance <= 0.3,
+        )
         .sort((a, b) => a.distance - b.distance || a.prior.at - b.prior.at);
       return matches[0] ? [{ identity, ...matches[0] }] : [];
     })
@@ -986,7 +1006,8 @@ export function installAuthoredVoice(
   sourceId: string,
 ): void {
   const profile = entityGet(world.entities, sourceId)?.actor?.voiceProfile;
-  if (!profile) return;
+  const perception = effectivePerception(world, observerId);
+  if (!profile || perception === undefined) return;
   identity.voice = {
     samples: [],
     authored: {
@@ -997,6 +1018,7 @@ export function installAuthoredVoice(
         BASE_PERCEPTION_POLICY.version,
       ]),
       installedAt: world.simTime,
+      perception,
       order: Object.keys(world.observerIdentities?.[observerId] ?? {}).length,
       baseline: 'familiar',
       exemplars: [{ features: receivedVoiceFeatures(profile), quality: 1, ordinal: 0 }],
@@ -1167,8 +1189,8 @@ export function validateRecognition(world: WorldState): void {
   for (const entity of entityValues(world.entities)) {
     if (!entity?.actor) continue;
     if (
-      entity.actor.capabilities?.comprehendsSpeech !== undefined &&
-      typeof entity.actor.capabilities.comprehendsSpeech !== 'boolean'
+      entity.actor.capabilities?.language !== undefined &&
+      typeof entity.actor.capabilities.language !== 'boolean'
     )
       throw new Error('Invalid installed linguistic comprehension capability.');
     if (entity.actor.voiceProfile && !validVoiceFeatures(entity.actor.voiceProfile))
@@ -1233,6 +1255,9 @@ export function validateRecognition(world: WorldState): void {
           voice.authored &&
           (!['learned', 'familiar'].includes(voice.authored.baseline) ||
             !Number.isFinite(voice.authored.installedAt) ||
+            !Number.isFinite(voice.authored.perception) ||
+            voice.authored.perception < 0 ||
+            voice.authored.perception > 100 ||
             !Number.isSafeInteger(voice.authored.order) ||
             typeof voice.authored.source !== 'string' ||
             !voice.authored.source ||
@@ -1246,7 +1271,14 @@ export function validateRecognition(world: WorldState): void {
                 sample.quality > resolution(sample.features),
             ) ||
             !voice.authored.exemplars.some(
-              (sample) => usable(sample.features).length >= 3 && sample.quality >= 0.55,
+              (sample) =>
+                usable(sample.features).length >= 3 &&
+                sample.quality >=
+                  learningQuality(
+                    voice.authored!.perception,
+                    (voice.authored!.baseline === 'familiar' ? 6 : modality === 'sight' ? 1 : 2) /
+                      6,
+                  ),
             ))
         )
           throw new Error('Invalid authored recognition knowledge.');

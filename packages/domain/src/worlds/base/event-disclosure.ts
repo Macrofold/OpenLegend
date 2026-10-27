@@ -29,6 +29,26 @@ const fields: Record<string, readonly string[]> = {
   struck: ['definitionId', 'contactInjury', 'hit', 'reason'],
   'state-changed': ['definitionId', 'active'],
   // These outcomes narrate visible work; internal material ID lists are not public facts.
+  'gate-operated': [
+    'actionId',
+    'itemId',
+    'operation',
+    'beforePosition',
+    'position',
+    'beforeBarred',
+    'barred',
+    'changed',
+  ],
+  'gate-checked': [
+    'actionId',
+    'itemId',
+    'operation',
+    'beforePosition',
+    'position',
+    'beforeBarred',
+    'barred',
+    'changed',
+  ],
   'construction-phase': [],
   'cover-lowered': [],
   'weather-cue': ['endsAt'],
@@ -97,12 +117,24 @@ export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
       );
     }
     const owned = event.scope === 'private' || event.actorId === observerId;
-    const keys = owned ? Object.keys(event.data ?? {}) : [...shared, ...(fields[event.type] ?? [])];
+    // Gate grant revisions and visibility controls serve native publication,
+    // not perception. Finding a leaf already closed also proves no unseen bar state.
+    const keys =
+      event.type === 'gate-operated' || event.type === 'gate-checked'
+        ? fields[event.type]!.filter(
+            (key) =>
+              event.type !== 'gate-checked' ||
+              event.data?.['operation'] !== 'close' ||
+              (key !== 'beforeBarred' && key !== 'barred'),
+          )
+        : owned
+          ? Object.keys(event.data ?? {})
+          : [...shared, ...(fields[event.type] ?? [])];
     // Feeling a contact does not reveal another person's exact bodily meters, even to
     // the attacker. Preserve this policy at acquisition instead of filtering on every read.
     const privateMetrics =
       event.type === 'body-effect'
-        ? ['healthDelta', 'injuryDelta', 'wetnessDelta', 'burningDelta']
+        ? ['healthDelta', 'wetnessDelta', 'burningDelta']
         : event.data?.['contactInjury'] === true
           ? contactMetrics
           : [];

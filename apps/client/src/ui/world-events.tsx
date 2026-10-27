@@ -1,4 +1,4 @@
-import { memo, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type {
   GameView,
   PerceivedEventsPage,
@@ -11,8 +11,7 @@ import { Button, FilterButton, Icon, IconButton } from '../design-system/compone
 import { EventTime, clockParts } from './event-time';
 import { PerceivedEventText } from './perceived-event-text';
 import './world-events.css';
-import { formatDisplayNumber } from '@open-legend/language';
-import { eventSpeechPresentation } from '../speech-presentation';
+import { formatDisplayNumber, namePhrase } from '@open-legend/language';
 import { LoadingIndicator } from '../design-system/loading';
 import { ConversationThread } from './conversation';
 import { getScoped, post } from '../api';
@@ -40,11 +39,15 @@ type Props = {
   revision: string | undefined;
   visible?: boolean;
   view: GameView;
+  inspectEntity?: (id: string) => void;
+  addressPerson?: (id: string, label: string) => void;
 };
 /** Keyed ownership clears old rows during the same render, not a later effect. The owner may
  * control the filter, for example to open Speech from the missed-caption notice. */
 export const WorldEvents = memo(function WorldEvents({
   view,
+  inspectEntity,
+  addressPerson,
   type: controlledType,
   onTypeChange,
   ...props
@@ -57,6 +60,15 @@ export const WorldEvents = memo(function WorldEvents({
     view.access?.privateDraftScope,
     view.saveTimeline,
   ]);
+  const inspection = useRef(inspectEntity);
+  inspection.current = inspectEntity;
+  const inspectCurrent = useCallback((id: string) => inspection.current?.(id), []);
+  const address = useRef(addressPerson);
+  address.current = addressPerson;
+  const addressCurrent = useCallback(
+    (id: string, label: string) => address.current?.(id, label),
+    [],
+  );
   const [localType, setLocalType] = useState('all');
   const type = controlledType ?? localType;
   const setType = onTypeChange ?? setLocalType;
@@ -65,12 +77,14 @@ export const WorldEvents = memo(function WorldEvents({
     <ScopedComparisonOwner
       key={ownerScope}
       {...props}
-      observerId={view.player.id}
       canShowAll={!!view.godMode}
       controlScope={view.access?.scope ?? ''}
       historyEpoch={view.historyEpoch ?? ''}
       day={view.clock.day}
+      viewerId={view.player.id}
       offsetHours={view.clock.offsetHours}
+      inspectEntity={inspectEntity ? inspectCurrent : undefined}
+      addressPerson={addressPerson ? addressCurrent : undefined}
       type={type}
       setType={setType}
       query={query}
@@ -80,7 +94,7 @@ export const WorldEvents = memo(function WorldEvents({
 });
 
 type HistoryProps = Omit<Props, 'view'> & {
-  observerId: string;
+  viewerId: string;
   day: number;
   offsetHours: number;
   controlScope: string;
@@ -91,7 +105,9 @@ type HistoryProps = Omit<Props, 'view'> & {
 // Only clock formatting/date bounds reach the historical reader; live positions and
 // meters must not rebuild all loaded event rows on every world update.
 const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
-  observerId,
+  viewerId,
+  inspectEntity,
+  addressPerson,
   controlScope,
   historyEpoch,
   canShowAll,
@@ -208,9 +224,11 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
 
   return (
     <ScopedWorldEvents
+      viewerId={viewerId}
+      addressPerson={addressPerson}
+      inspectEntity={inspectEntity}
       key={`${historyEpoch}:${canShowAll}`}
       scope={scope}
-      observerId={observerId}
       controlScope={controlScope}
       historyEpoch={historyEpoch}
       canShowAll={canShowAll}
@@ -244,7 +262,9 @@ const ScopedComparisonOwner = memo(function ScopedComparisonOwner({
 });
 
 function ScopedWorldEvents({
-  observerId,
+  viewerId,
+  inspectEntity,
+  addressPerson,
   canShowAll,
   day,
   offsetHours,
@@ -580,14 +600,55 @@ function ScopedWorldEvents({
                     {event.attributeChange.unit}
                   </p>
                 )}
-                {event.speech && (
-                  <p>
-                    {
-                      eventSpeechPresentation({ ...event, speech: event.speech }, observerId)
-                        .attribution
-                    }
-                  </p>
+                {event.speech?.addressee && <p>To {event.speech.addressee.nameAtTime}</p>}
+                {event.speech && addressPerson && (
+                  <div className="ol-world-event-actions">
+                    {(event.references ?? [])
+                      .filter(
+                        (ref, index, refs) =>
+                          !!ref.communicationReference &&
+                          (ref.role === 'actor' || ref.role === 'target') &&
+                          refs.findIndex((candidate) => candidate.id === ref.id) === index,
+                      )
+                      .map((ref) => {
+                        const person =
+                          ref.role === 'actor' ? event.speech!.speaker : event.speech!.addressee;
+                        if (!person) return null;
+                        const label = namePhrase(
+                          {
+                            name: person.nameAtTime,
+                            nameForm: person.nameForm,
+                            indefiniteArticle: person.indefiniteArticle,
+                          },
+                          'indefinite',
+                        );
+                        return (
+                          <Button
+                            key={ref.id}
+                            size="sm"
+                            variant="secondary"
+                            isDisabled={!currentPage}
+                            onPress={() => addressPerson(ref.communicationReference!, label)}
+                          >
+                            Speak to {label}
+                          </Button>
+                        );
+                      })}
+                  </div>
                 )}
+                {inspectEntity &&
+                  (event.references ?? [])
+                    .filter((ref) => !!ref.contactReference)
+                    .map((ref) => (
+                      <button
+                        type="button"
+                        key={`${ref.role}:${ref.id}`}
+                        className="ol-inline-reference"
+                        onClick={() => inspectEntity(ref.contactReference!)}
+                      >
+                        {ref.label}
+                      </button>
+                    ))}
                 {source && (
                   <div className="ol-world-event-actions">
                     <Button
@@ -615,7 +676,18 @@ function ScopedWorldEvents({
         ),
       };
     });
-  }, [events, slots, choosingSlot, type, query, offsetHours, currentPage, observerId]);
+  }, [
+    events,
+    slots,
+    choosingSlot,
+    type,
+    query,
+    inspectEntity,
+    addressPerson,
+    viewerId,
+    offsetHours,
+    currentPage,
+  ]);
 
   const visibleSlotIndices = [0, 1] as const;
 

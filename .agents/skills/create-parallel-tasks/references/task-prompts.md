@@ -87,7 +87,7 @@ If the requested deliverable is findings or design rather than implementation, c
 
 ## Final quality check
 
-Verify the requested number and focus, readable descriptions, real references, complete task definitions and coherent combined outcome. A task can span categories, and multiple tasks can share a category. Any capacity figures must match the user's request and disclose assumptions.
+Verify the requested number and focus, explaining any justified shortfall under the selection rules; check readable descriptions, real references, complete task definitions and coherent combined outcome. A task can span categories, and multiple tasks can share a category. Any capacity figures must match the user's request and disclose assumptions.
 
 Read every prompt as an agent with only the target repository. Can it identify the desired behavior, scope, confirmed and open prerequisites, exact new branch name, design decisions, completion criteria and documentation obligations? Apply the independent-completion check: could this agent finish every requirement if no sibling agent ever starts? Check that Open prerequisites contains only earlier external work needed before launch, and that available work, this task's own deliverables and nonblocking qualifications appear elsewhere. Regroup any same-batch dependency; remove unsupported assumptions and instructions requiring communication or intermediate handoffs. Check specifically for stale grants to spend, write tests, merge branches or orchestrate other agents from copied prompts.
 

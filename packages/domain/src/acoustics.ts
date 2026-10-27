@@ -10,6 +10,7 @@ export interface AcousticPolicy {
   sourceLevelDbSplAt1m: Record<SpeechVolume, number>;
   backgroundLevelDbSpl: number;
   thresholdsDb: { detect: number; partial: number; clear: number };
+  sensoryLifetimeSeconds: number;
 }
 export { DEFAULT_ACOUSTICS } from './worlds/base/acoustics.js';
 export interface AcousticExposure {
@@ -37,10 +38,13 @@ export function validateAcoustics(policy: AcousticPolicy): void {
       'sourceLevelDbSplAt1m',
       'backgroundLevelDbSpl',
       'thresholdsDb',
+      'sensoryLifetimeSeconds',
     ]) ||
     !/^[a-z][a-z0-9-]*:[a-z][a-z0-9-]*$/.test(policy.id) ||
     policy.version !== 1 ||
     policy.reference !== 'air-spl-20uPa' ||
+    !Number.isFinite(policy.sensoryLifetimeSeconds) ||
+    policy.sensoryLifetimeSeconds <= 0 ||
     !level(policy.backgroundLevelDbSpl) ||
     !exact(policy.sourceLevelDbSplAt1m, [...SPEECH_VOLUMES]) ||
     !SPEECH_VOLUMES.every((v) => level(policy.sourceLevelDbSplAt1m[v])) ||
@@ -60,11 +64,22 @@ export function acousticReach(
   volume: SpeechVolume,
   threshold = policy.thresholdsDb.detect,
 ): number {
+  return acousticReachAtLevel(
+    policy,
+    hearingFloorDbSpl,
+    policy.sourceLevelDbSplAt1m[volume],
+    threshold,
+  );
+}
+export function acousticReachAtLevel(
+  policy: AcousticPolicy,
+  hearingFloorDbSpl: number,
+  sourceLevelDbSplAt1m: number,
+  threshold = policy.thresholdsDb.detect,
+): number {
   return Math.pow(
     10,
-    (policy.sourceLevelDbSplAt1m[volume] -
-      Math.max(policy.backgroundLevelDbSpl, hearingFloorDbSpl) -
-      threshold) /
+    (sourceLevelDbSplAt1m - Math.max(policy.backgroundLevelDbSpl, hearingFloorDbSpl) - threshold) /
       20,
   );
 }
@@ -75,20 +90,36 @@ export function acousticExposure(
   separation: number,
   transmission: number,
 ): AcousticExposure {
+  return acousticExposureAtLevel(
+    policy,
+    hearingFloorDbSpl,
+    policy.sourceLevelDbSplAt1m[volume],
+    separation,
+    transmission,
+  );
+}
+export function acousticExposureAtLevel(
+  policy: AcousticPolicy,
+  hearingFloorDbSpl: number,
+  sourceLevelDbSplAt1m: number,
+  separation: number,
+  transmission: number,
+): AcousticExposure {
   if (
     !Number.isFinite(separation) ||
     separation < 0 ||
     !Number.isFinite(transmission) ||
     transmission < 0 ||
     transmission > 1 ||
-    !Number.isFinite(hearingFloorDbSpl)
+    !Number.isFinite(hearingFloorDbSpl) ||
+    !Number.isFinite(sourceLevelDbSplAt1m)
   )
     throw new Error('Invalid acoustic geometry or listener floor.');
   if (transmission === 0)
     return { detail: 'undetected', receivedLevelDbSpl: null, clarityMarginDb: null };
   // Transmission is energy, not pressure amplitude; zero is handled before log10.
   const receivedLevelDbSpl =
-    policy.sourceLevelDbSplAt1m[volume] -
+    sourceLevelDbSplAt1m -
     20 * Math.log10(Math.max(separation, 0.25)) +
     10 * Math.log10(transmission);
   const clarityMarginDb =

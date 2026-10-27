@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                 | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Asset storage and delivery are deployed; game hosting, rollout and broader production qualification remain open. | 2026-10-17   |
+| In progress | Asset storage and delivery are deployed; game hosting, rollout and broader production qualification remain open. | 2026-10-24   |
 
 **Status: hosting recommendation, researched 1–2 October 2026; broader hosting is not implemented or capacity-qualified.** Auth0 is selected by Mike; the asset-storage implementation and measured limits are recorded under [AS](../maintainers/game-asset-storage.md). Hosting research baseline: [`b9a08a05`](https://github.com/Macrofold/OpenLegend/commit/b9a08a05b45edbda31154ad40bccd03c69c21cdd); the production branch at `ca804cc8` was reviewed for this update. Read the [feature specification](production-deployment-feature-spec.md) for promises, the [checklist](../maintainers/production-deployment.md) for delivery order, and the [implementation playbook](production-deployment-playbook.md) for packaging, commands, CI/CD and release procedures.
 
@@ -30,7 +30,7 @@ This is not a claim that one Fargate task serves 100,000 players. Either cloud c
 
 **[Runtime art](../invention-art-pipeline.md) and [3D asset pipeline](3d-pixel-art-asset-pipeline.md):** Reuse the implemented AS publication/storage/delivery owners while preserving their version, rights and fallback contracts. The curated prototype has real external delivery; production licensing, arbitrary generated appearances and broader device/hosted acceptance retain their separate gates.
 
-**[Package scripts](../../package.json), [server entry](../../apps/server/src/main.ts) and [CI](../../.github/workflows/check.yml):** The server runs TypeScript through tsx; build produces client output, not a compiled server. Existing shutdown handling needs container qualification, not replacement by assumption. CI uses PostgreSQL 16 while this design targets qualified PostgreSQL 18. The playbook makes these concrete PD02/PD04/PD09 prerequisites.
+**[Package scripts](../../package.json), [server entry](../../apps/server/src/main.ts) and [local verification](../../.agents/rules/verification.md#local-verification-only):** The server runs TypeScript through tsx; build produces client output, not a compiled server. Existing shutdown handling needs container qualification, not replacement by assumption. Historical GitHub checks used PostgreSQL 16; this design still targets qualified PostgreSQL 18. Current checks run against the selected local PostgreSQL instance. The playbook makes these concrete PD02/PD04/PD09 prerequisites.
 
 The research branch is linked by immutable commit rather than copied or merged over newer code. The deployment-specific PD tasks are now integrated under D5/D6; retain the separate historical scaling proposal and current subsystem task ownership. A named side-branch plan is not delivered runtime or a second active owner by implication.
 

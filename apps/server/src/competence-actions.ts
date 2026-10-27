@@ -44,8 +44,9 @@ export function competenceOptions(
       );
       for (const tool of tools.length ? tools : [undefined]) {
         const item = tool && world.itemDefinitions[tool.definitionId],
-          accuracy = item?.launcher && handlingAccuracy(world, actor, item);
-        const ammunition = item?.launcher && ammoFor(world, actorId, item.launcher.ammunitionKind);
+          accuracy = item?.rangedWeapon && handlingAccuracy(world, actor, item);
+        const ammunition =
+          item?.rangedWeapon && ammoFor(world, actorId, item.rangedWeapon.ammunitionKind);
         options.push({
           id: `practice:${target.id}:${tool?.id ?? 'missing'}`,
           label: definition.practice.practiceLabel,

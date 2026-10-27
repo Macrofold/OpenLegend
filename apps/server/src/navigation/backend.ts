@@ -2,6 +2,8 @@ import * as R from 'recast-navigation';
 import { generateTiledNavMesh } from 'recast-navigation/generators';
 import {
   MOVEMENT,
+  outsideNavigationBounds,
+  validOutsideNavigationBounds,
   SPATIAL_LIMITS,
   canStand,
   canWalkSegment,
@@ -13,6 +15,7 @@ import {
   surfacesInBounds,
   validateSpatialMap,
   type BodyProfile,
+  type Bounds3,
   type NavigationRequest,
   type NavigationResult,
   type SpatialMap,
@@ -115,15 +118,22 @@ export class RecastPlanner {
   route(request: NavigationRequest): NavigationResult {
     if (
       request.geometryRevision !== this.map.spatial.revision ||
-      !request.destinations.length ||
-      request.destinations.length > 12
+      (request.outsideBounds
+        ? request.destinations.length !== 0 || !validOutsideNavigationBounds(request.outsideBounds)
+        : !request.destinations.length || request.destinations.length > 12)
     )
       return { status: 'invalid-endpoint', path: [] };
     const { from, body } = request;
     if (!canStand(this.map, from, body)) return { status: 'invalid-endpoint', path: [] };
-    const { query: q } = this.prepare(body, 'first-use');
+    if (request.outsideBounds && outsideNavigationBounds(from, request.outsideBounds))
+      return { status: 'reached', path: [], length: 0 };
+    const prepared = this.prepare(body, 'first-use'),
+      q = prepared.query;
+    const outside =
+      request.outsideBounds && this.outsideDestinations(prepared, request, request.outsideBounds);
+    if (outside && 'status' in outside) return outside;
     let last: NavigationResult = { status: 'no-route', path: [] };
-    for (const to of request.destinations) {
+    for (const to of outside ? outside.destinations : request.destinations) {
       if (!canStand(this.map, to, body)) continue;
       // Small XYZ extents prevent "nearest" from silently finding another storey.
       const halfExtents = { x: 0.3, y: MOVEMENT.projectionTolerance, z: 0.3 };
@@ -181,8 +191,140 @@ export class RecastPlanner {
         straight.straightPathRefs.destroy();
       }
     }
-    return last;
+    if (outside?.overflow) return { status: 'budget-exceeded', path: [] };
+    // A reachable exterior polygon without a physically validated corridor is an
+    // incomplete geometric proof, not evidence that the person has no exit.
+    return outside?.hasExterior && last.status === 'no-route'
+      ? { status: 'unsafe-route', path: [] }
+      : last;
   }
+
+  /** Existential exit query over the same body-specific Detour graph. The circle
+   * encloses the whole forbidden region: a route leaving it has already exited.
+   * No partial node/buffer result can certify absence of an exit.
+   * docs/projects/first-playable-world-tech-design.md#occupied-exits-through-shared-navigation
+   */
+  private outsideDestinations(
+    prepared: Prepared,
+    request: NavigationRequest,
+    bounds: Bounds3,
+  ): { destinations: SurfacePoint[]; overflow: boolean; hasExterior: boolean } | NavigationResult {
+    const { query, mesh } = prepared,
+      { from, body } = request;
+    const start = query.findNearestPoly(from, {
+      halfExtents: { x: 0.3, y: MOVEMENT.projectionTolerance, z: 0.3 },
+    });
+    if (!start.success || !start.nearestRef) return { status: 'unsafe-route', path: [] };
+    const radius =
+      Math.hypot(
+        Math.max(
+          Math.abs(bounds.min.x - start.nearestPoint.x),
+          Math.abs(bounds.max.x - start.nearestPoint.x),
+        ),
+        Math.max(
+          Math.abs(bounds.min.z - start.nearestPoint.z),
+          Math.abs(bounds.max.z - start.nearestPoint.z),
+        ),
+      ) +
+      MOVEMENT.cellSize * 2;
+    const reachable = query.findPolysAroundCircle(start.nearestRef, start.nearestPoint, radius, {
+      maxPolys: 4096,
+    });
+    if ((reachable.status & (R.Detour.DT_OUT_OF_NODES | R.Detour.DT_BUFFER_TOO_SMALL)) !== 0)
+      return { status: 'budget-exceeded', path: [] };
+    if (!reachable.success) return { status: 'unavailable', path: [] };
+    const destinations: SurfacePoint[] = [],
+      seen = new Set<string>();
+    let hasExterior = false;
+    // The SDK returns capacity-sized arrays; only resultCount entries are real.
+    for (let index = 0; index < reachable.resultCount; index++) {
+      const ref = reachable.resultRefs[index]!;
+      const result = mesh.getTileAndPolyByRef(ref);
+      if (!result.success) return { status: 'unavailable', path: [] };
+      const vertices = Array.from({ length: result.poly.vertCount() }, (_, index) => {
+        const offset = result.poly.verts(index) * 3;
+        return {
+          x: result.tile.verts(offset),
+          y: result.tile.verts(offset + 1),
+          z: result.tile.verts(offset + 2),
+        };
+      });
+      for (const axis of ['x', 'y', 'z'] as const)
+        for (const greater of [false, true]) {
+          const edge = greater
+            ? bounds.max[axis] + SPATIAL_LIMITS.epsilon
+            : bounds.min[axis] - SPATIAL_LIMITS.epsilon;
+          const region = clipOutsidePolygon(vertices, axis, edge, greater);
+          if (!region.length) continue;
+          hasExterior = true;
+          const centre = region.reduce(
+            (sum, p) => ({
+              x: sum.x + p.x / region.length,
+              y: sum.y + p.y / region.length,
+              z: sum.z + p.z / region.length,
+            }),
+            { x: 0, y: 0, z: 0 },
+          );
+          for (const point of [centre, ...region]) {
+            const tolerance = MOVEMENT.projectionTolerance;
+            for (const surface of surfacesInBounds(this.map, {
+              min: { x: point.x, y: point.y - tolerance, z: point.z },
+              max: { x: point.x, y: point.y + tolerance, z: point.z },
+            })) {
+              if (!surfaceContains(surface, point)) continue;
+              const supported = {
+                x: point.x,
+                y: surfaceHeight(surface, point.x, point.z),
+                z: point.z,
+                surfaceId: surface.id,
+              };
+              if (
+                Math.abs(supported.y - point.y) > tolerance ||
+                !outsideNavigationBounds(supported, bounds) ||
+                !canStand(this.map, supported, body)
+              )
+                continue;
+              const key = JSON.stringify([
+                supported.surfaceId,
+                supported.x,
+                supported.y,
+                supported.z,
+              ]);
+              if (seen.has(key)) continue;
+              seen.add(key);
+              // As with ordinary chosen destinations, attempt at most twelve complete
+              // corridors. A positive proof suffices; untried goals remain explicit
+              // budget exhaustion if every tried corridor fails.
+              if (destinations.length === 12) return { destinations, overflow: true, hasExterior };
+              destinations.push(supported);
+            }
+          }
+        }
+    }
+    return { destinations, overflow: false, hasExterior };
+  }
+}
+
+/** Clip one convex navigation polygon to one exterior half-space. This selects
+ * a goal region; all returned routes still pass ordinary physical projection.
+ */
+function clipOutsidePolygon(
+  vertices: WorldPoint[],
+  axis: 'x' | 'y' | 'z',
+  edge: number,
+  greater: boolean,
+): WorldPoint[] {
+  const output: WorldPoint[] = [];
+  for (let i = 0; i < vertices.length; i++) {
+    const from = vertices[i]!,
+      to = vertices[(i + 1) % vertices.length]!;
+    const insideFrom = greater ? from[axis] >= edge : from[axis] <= edge;
+    const insideTo = greater ? to[axis] >= edge : to[axis] <= edge;
+    if (insideFrom) output.push(from);
+    if (insideFrom !== insideTo)
+      output.push(interpolate(from, to, (edge - from[axis]) / (to[axis] - from[axis])));
+  }
+  return output;
 }
 
 /** Recast's raster heights are guidance, not the physical foot location. Split at exact patch

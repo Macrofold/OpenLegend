@@ -1,3 +1,5 @@
+import { advanceWithNavigation } from '../../../tests/fixtures/navigation.js';
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
@@ -48,7 +50,7 @@ import { domainCommand } from './cognition.js';
 
 const stores: SqlGameRepository[] = [];
 async function setup(): Promise<WorldService> {
-  const store = await testRepository();
+  const store = await testRepository(undefined, stockedCamp());
   stores.push(store);
   const service = new WorldService(
     store,
@@ -339,7 +341,7 @@ describe('actor-scoped native decision candidates', () => {
     );
     await service.transition((world) => advanceWorld(world, 60));
     const tool = inventoryFor(service.world, NPC_ID).find(
-      (item) => item.definitionId === recipe.outputDefinitionId,
+      (item) => item.definitionId === recipe.outputs[0]!.definition.id,
     );
     expect(tool).toBeDefined();
     await perform(
@@ -417,10 +419,10 @@ describe('actor-scoped native decision candidates', () => {
       service,
       select(service, 'harvest', (action) => action.command?.targetId === 'hare-1'),
     );
-    await service.transition((world) => advanceWorld(world, 120));
+    await service.transition((world) => advanceWithNavigation(world, 120));
     expect(quantityOf(service.world, NPC_ID, 'raw_meat')).toBe(2);
     await perform(service, select(service, 'cook'));
-    await service.transition((world) => advanceWorld(world, 200));
+    await service.transition((world) => advanceWithNavigation(world, 200));
     const cooked = inventoryFor(service.world, NPC_ID).find(
       (item) => item.definitionId === 'cooked_meat',
     )!;

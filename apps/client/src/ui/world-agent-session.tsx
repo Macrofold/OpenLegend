@@ -1,3 +1,5 @@
+import { browserSubscription } from '../browser-network';
+import type { Subscription } from '@open-legend/network';
 import type {
   WorldAgentReply,
   WorldAgentSessionStatus,
@@ -55,6 +57,7 @@ export function WorldAgentSession({
   seed,
   purpose,
   nativeCreation,
+  freshRecovery,
   onCreated,
   controls,
   onStatusPolicyChanged,
@@ -67,6 +70,7 @@ export function WorldAgentSession({
   seed?: { id: string; text: string } | null;
   purpose?: 'invention' | 'creation';
   nativeCreation?: boolean;
+  freshRecovery?: boolean;
   onCreated(): void;
   controls?: ReactNode;
   onStatusPolicyChanged(): void;
@@ -88,10 +92,16 @@ export function WorldAgentSession({
       nativeCreation ??
       readLocal(recordKey('native-creation'), false, (v): v is boolean => typeof v === 'boolean'),
   );
+  const [initialFreshRecovery] = useState(
+    () =>
+      freshRecovery ??
+      readLocal(recordKey('fresh-recovery'), false, (v): v is boolean => typeof v === 'boolean'),
+  );
   useEffect(() => {
+    writeLocal(recordKey('fresh-recovery'), initialFreshRecovery);
     writeLocal(recordKey('purpose'), initialPurpose);
     writeLocal(recordKey('native-creation'), initialNativeCreation);
-  }, [key, initialPurpose, initialNativeCreation]);
+  }, [key, initialPurpose, initialNativeCreation, initialFreshRecovery]);
   const [text, setText] = useState(() =>
     readLocal(recordKey('draft'), '', (v): v is string => typeof v === 'string'),
   );
@@ -117,6 +127,9 @@ export function WorldAgentSession({
   const [busy, setBusy] = useState(false),
     [error, setError] = useState('');
   const [subscriptionRevision, setSubscriptionRevision] = useState(0);
+  const subscriptionAccess = useRef({ scope: accessScope, stopped: false });
+  if (subscriptionAccess.current.scope !== accessScope)
+    subscriptionAccess.current = { scope: accessScope, stopped: false };
   const alive = useRef(true),
     working = useRef(false),
     refreshing = useRef(false);
@@ -203,7 +216,7 @@ export function WorldAgentSession({
         .slice(-256);
     });
   }
-  async function read<T>(suffix: string, body: unknown): Promise<T> {
+  async function read<T>(suffix: 'turns' | 'turn', body: unknown): Promise<T> {
     const result = await post<Page<T>>(
       `/api/world-agent/session/${suffix}`,
       body,
@@ -278,79 +291,127 @@ export function WorldAgentSession({
     }
   }
   async function reconnect() {
+    subscriptionAccess.current.stopped = false;
     await refresh();
     if (alive.current) setSubscriptionRevision((revision) => revision + 1);
   }
   // One visible owner stream. Status/history reads serve initial/reconnect or explicit
   // mutation recovery; they never run a simultaneous fast polling loop.
   useEffect(() => {
-    if (!visible || !connected) return;
+    if (!visible || !connected || subscriptionAccess.current.stopped) return;
     let disposed = false;
-    let stream: EventSource | undefined;
+    let stream: Subscription | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let stopped = false;
     let lastState = '';
-    const wake = () => {
-      stream?.close();
+    const close = () => {
+      const previous = stream;
       stream = undefined;
-      if (disposed || document.visibilityState !== 'visible') return;
+      previous?.close();
+      clearTimeout(timer);
+    };
+    const reconnectLater = () => {
+      close();
+      if (disposed || stopped || document.visibilityState !== 'visible') return;
+      setError('Reconnecting to saved reply progress…');
+      timer = setTimeout(() => {
+        void refresh().then(() => {
+          if (!disposed && !stopped) wake();
+        });
+      }, 6000);
+    };
+    const wake = () => {
+      close();
+      if (disposed || stopped || document.visibilityState !== 'visible') return;
       if (!statusRef.current?.data) {
         void refresh();
         return;
       }
-      stream = new EventSource(worldAgentProgressUrl(worldId, sessionId));
-      stream.onopen = () => {
-        if (!disposed) {
-          setError('');
-          void refresh();
-        }
-      };
-      stream.addEventListener('snapshot', (event) => {
-        if (disposed || !alive.current) return;
-        try {
-          const snapshot = JSON.parse(
-            (event as MessageEvent<string>).data,
-          ) as WorldAgentProgressSnapshot;
-          if (snapshot.sessionId !== sessionId) throw new Error('Conversation changed.');
-          if (snapshot.turn) mergeTurns([snapshot.turn]);
-          const state = JSON.stringify([
-            snapshot.statusRevision,
-            snapshot.activeTurn,
-            snapshot.questionTurn,
-            snapshot.recovering,
-            snapshot.available,
-            snapshot.turn?.response,
-            snapshot.turn?.question,
-          ]);
-          if (state !== lastState) {
-            lastState = state;
+      let opened = false;
+      const connection = browserSubscription(
+        worldAgentProgressUrl(worldId, sessionId),
+        new AbortController().signal,
+        'private-progress',
+        (frame, context) => {
+          context.throwIfStopped();
+          if (disposed || !alive.current || stream !== connection) return;
+          if (!opened) {
+            opened = true;
+            setError('');
             void refresh();
           }
-        } catch {
-          setError('The reply update could not be read. Refresh saved progress.');
-          stream?.close();
-        }
-      });
-      stream.addEventListener('access-changed', () => {
-        stream?.close();
-        if (!disposed) {
-          setTurns([]);
-          setStatus(undefined);
-          setError('Access changed. Reopen the conversation with current access.');
-        }
-      });
-      stream.addEventListener('unavailable', () => {
-        stream?.close();
-        if (!disposed)
-          setError('Live delivery stopped. Saved text remains available; refresh to reconnect.');
-      });
-      stream.onerror = () => {
-        if (!disposed) setError('Reconnecting to saved reply progress…');
-      };
+          if (frame.kind === 'comment') return;
+          if (frame.event === 'snapshot') {
+            try {
+              const snapshot = JSON.parse(frame.data) as WorldAgentProgressSnapshot;
+              if (snapshot.sessionId !== sessionId) throw new Error('Conversation changed.');
+              if (snapshot.turn) mergeTurns([snapshot.turn]);
+              const state = JSON.stringify([
+                snapshot.statusRevision,
+                snapshot.activeTurn,
+                snapshot.questionTurn,
+                snapshot.recovering,
+                snapshot.available,
+                snapshot.turn?.response,
+                snapshot.turn?.question,
+              ]);
+              if (state !== lastState) {
+                lastState = state;
+                void refresh();
+              }
+            } catch {
+              reconnectLater();
+            }
+          } else if (frame.event === 'access-changed') {
+            stopped = true;
+            subscriptionAccess.current.stopped = true;
+            close();
+            setTurns([]);
+            statusRef.current = undefined;
+            setStatus(undefined);
+            setError('Access changed. Reopen the conversation with current access.');
+          } else if (frame.event === 'unavailable') {
+            stopped = true;
+            subscriptionAccess.current.stopped = true;
+            close();
+            setError('Live delivery stopped. Saved text remains available; refresh to reconnect.');
+          }
+        },
+      );
+      stream = connection;
+      void connection.done
+        .then((result) => {
+          if (disposed || stream !== connection) return;
+          stream = undefined;
+          if (result.reason === 'closed') return;
+          if (result.reason === 'connection_failed' && result.failure.kind === 'http_status') {
+            if (result.failure.status === 204) {
+              stopped = true;
+              subscriptionAccess.current.stopped = true;
+              setError('Live delivery stopped. Refresh saved progress to reconnect.');
+              return;
+            }
+            if (result.failure.status === 401 || result.failure.status === 403) {
+              stopped = true;
+              subscriptionAccess.current.stopped = true;
+              setTurns([]);
+              statusRef.current = undefined;
+              setStatus(undefined);
+              setError('Access changed. Reopen the conversation with current access.');
+              return;
+            }
+          }
+          reconnectLater();
+        })
+        .catch(() => {
+          if (!disposed && stream === connection) reconnectLater();
+        });
     };
     document.addEventListener('visibilitychange', wake);
     wake();
     return () => {
       disposed = true;
-      stream?.close();
+      close();
       document.removeEventListener('visibilitychange', wake);
     };
   }, [visible, connected, worldId, sessionId, accessScope, !!status?.data, subscriptionRevision]);
@@ -387,6 +448,7 @@ export function WorldAgentSession({
         ...prefix,
         budgetUsd: initialNativeCreation ? 0 : (status?.availability.sessionAllowanceUsd ?? 0),
         ...(initialPurpose ? { purpose: initialPurpose } : {}),
+        ...(initialFreshRecovery ? { freshRecovery: true } : {}),
       });
       if (!reply.ok) throw new Error(reply.message ?? 'Session could not be created.');
       onCreated();
@@ -658,6 +720,7 @@ export function WorldAgentSession({
               worldId={worldId}
               sessionId={sessionId}
               connected={connected}
+              freshRecovery={initialFreshRecovery || !!session?.recoveryOpening}
               visible={readingVisible && view === 'conversation'}
               mutationReason={
                 session && !session.available
@@ -672,7 +735,12 @@ export function WorldAgentSession({
                 }
                 const reply = await post<{ ok: boolean; message?: string }>(
                   '/api/world-agent/session/open',
-                  { ...prefix, purpose: 'creation', budgetUsd: 0 },
+                  {
+                    ...prefix,
+                    purpose: 'creation',
+                    budgetUsd: 0,
+                    ...(initialFreshRecovery ? { freshRecovery: true } : {}),
+                  },
                 );
                 if (!reply.ok)
                   throw new Error(reply.message ?? 'The creation workspace could not be opened.');
@@ -795,6 +863,11 @@ export function WorldAgentSession({
         )}
         <div id={detailsId} className="ol-world-agent-context" hidden={!detailsOpen}>
           {controls}
+          <div className="ol-agent-tools">
+            <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
+              Refresh this session
+            </Button>
+          </div>
           {session && (
             <>
               <Tag tone="highlight">God mode</Tag>
@@ -814,9 +887,6 @@ export function WorldAgentSession({
                 <p>${session.budget.uncertainUsd.toFixed(3)} is unconfirmed and remains counted.</p>
               )}
               <div className="ol-agent-tools">
-                <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
-                  Refresh this session
-                </Button>
                 {!session.closed && (
                   <Button
                     size="sm"
@@ -906,19 +976,21 @@ export function WorldAgentSession({
                   </p>
                 )}
               </div>
-              <p className="ol-caption" role="status">
-                {!connected
-                  ? 'Reconnect to send a request. Your draft is kept.'
-                  : !session.available
-                    ? 'This history is read only. Start a new conversation to make another request.'
-                    : session.question
-                      ? 'Answer the current question before sending a different request.'
-                      : !status.availability.configured
-                        ? status.availability.reason
-                        : session.budget.availableUsd <= 0
-                          ? 'This conversation has no remaining allowance for a new request.'
-                          : ''}
-              </p>
+              {view === 'conversation' && !nativeOpeningSession && (
+                <p className="ol-caption" role="status">
+                  {!connected
+                    ? 'Reconnect to send a request. Your draft is kept.'
+                    : !session.available
+                      ? 'This history is read only. Start a new conversation to make another request.'
+                      : session.question
+                        ? 'Answer the current question before sending a different request.'
+                        : !status.availability.configured
+                          ? status.availability.reason
+                          : session.budget.availableUsd <= 0
+                            ? 'This conversation has no remaining allowance for a new request.'
+                            : ''}
+                </p>
+              )}
             </>
           )}
           {error && <p role="alert">{error}</p>}

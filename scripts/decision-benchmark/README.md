@@ -154,13 +154,72 @@ Neither zero answer points nor a detected clear error proves that the real engin
 
 ## Spending, records and interruption
 
+### Custom generation experiments
+
+`--model-experiment=/absolute/private/plan.json` selects a finite generation comparison through the same deployment configuration, capability preparation, inference executor and receipt decoder used by production. It supports an existing generation arm, either configured NPC purpose, or an explicit Macrofold deployment. Native decision-only arms are rejected. These tools never create, start or stop hosting, and production does not import experiment metadata.
+
+An example plan is below. Replace the workspace/deployment UUIDs with an existing authorized deployment; the example does not identify a running service. The baseline uses the ordinary configured fast NPC target, including its prices and output allowance. A study output limit can reduce that allowance. Explicit provider model aliases retain their configured pricing.
+
+```json
+{
+  "schema_version": 1,
+  "id": "first_screen",
+  "question": "Does this deployment preserve the selected response contract?",
+  "cases": ["generate-practical-hare-hunter"],
+  "replicates": 1,
+  "arms": [
+    {
+      "id": "baseline",
+      "source": { "kind": "purpose", "purpose": "npc_response_fast" }
+    },
+    {
+      "id": "candidate",
+      "source": {
+        "kind": "deployment",
+        "workspace_id": "44444444-4444-4444-8444-444444444444",
+        "model_binding": {
+          "deployment_id": "11111111-1111-4111-8111-111111111111"
+        },
+        "structured_output": "auto"
+      }
+    }
+  ],
+  "limits": {
+    "cap_usd": 1,
+    "per_call_usd": 0.25,
+    "timeout_ms": 35000,
+    "concurrency": 1,
+    "max_output_tokens": 1024
+  },
+  "prior_commitment_usd": 0,
+  "hosting_cost": { "basis": "already-funded-shared" }
+}
+```
+
+An existing arm uses `source: {"kind":"existing","arm":"spark-contributor"}`; a pinned deployment adds `deployment_revision_id` inside `model_binding`. Output policies are `auto`, `json_schema`, `json_object` and explicitly chosen `prompted_json`. The complete local JSON schema remains mandatory in every mode. `auto` is resolved from actual capabilities only during explicit passive preflight or live execution.
+
+```sh
+node --env-file-if-exists=.env --import tsx scripts/decision-benchmark/main.ts prepare --model-experiment=/absolute/private/plan.json --out=/absolute/private/comparison
+node --env-file-if-exists=.env --import tsx scripts/decision-benchmark/main.ts prepare --model-experiment=/absolute/private/plan.json --out=/absolute/private/comparison --online-preflight=true
+node --env-file-if-exists=.env --import tsx scripts/decision-benchmark/main.ts run --model-experiment=/absolute/private/plan.json --out=/absolute/private/comparison --live=true
+node --env-file-if-exists=.env --import tsx scripts/decision-benchmark/main.ts report --model-experiment=/absolute/private/plan.json --out=/absolute/private/comparison
+```
+
+Ordinary `prepare` and `report` are offline. Passive preflight reads deployment capabilities through the shared production owner; it submits no inference. Live execution prepares only selected new requests within their original deadline and uses admitted revisions or unsupported-capability receipts to update later preparation. `run` still requires `--live=true` and existing spending authorization. `--models` conflicts with an experiment plan; duplicate budget, deadline, concurrency and output flags must agree with the plan after checked conversion. Unknown fields, unknown tasks and native decision sources fail locally. Plan files and combined resolved study/request metadata use the existing 20 MB private evidence envelope, with an exact final metadata check. Provably oversized repetitions and required pairwise reports fail before expansion or funding, without a fixed case/model-count limit or a claimed JavaScript heap bound. Complete reports still construct their selected results in memory.
+
+The manifest freezes the resolved baseline, plan/reference fingerprints and explicit replicate identities. Resuming requires the same plan, input contract and baseline settings. Each replicate preserves its original corpus/task IDs and has a distinct arm ID, so grading cannot overwrite a preceding answer. Existing writer locks, admissions, accepted Run identities and uncertain holds prevent redispatch after interruption; authentication/funding stops apply to subsequent repetitions of the same target and funding configuration. These synthetic tasks propose values for evaluation and never publish game actions.
+
+Reports retain selected/admitted/accepted/answered coverage, each replicate's actual revisions/output modes, existing adapter completion latency and explicit failures. Separate complete-attempt timing includes capability preparation and admission persistence before inference; generation summaries report its p50/p95 independently. First useful permitted speech latency remains unavailable in this harness. Assistant refusal, quiet sanitization and independent character choice require human review; native rejection and committed effects require gameplay evidence. A missing shared hosting bill is `null`, and a supplied `hosting_cost.cost_usd` is an operator-reported study-window amount shown once, separate from request fees. It is not a provider invoice or a per-request hosting charge. Missing token usage retains request reservations unless the exact deployment receipt independently establishes its request fee. A proved Macrofold rejection with no admitted Run releases its request hold; direct provider rejection traces retain existing conservative accounting. A known zero request fee does not mean free hosting. Directory changes grant no new spending allowance.
+
 Only explicitly live execution makes model calls; export, audit, analysis and ordinary report commands are offline. Mike explicitly increased this experiment's aggregate ceiling to **$100 on October 16**, superseding $50. The current manifest validator allows at most $100; an existing $50 manifest keeps its original cap, and a new directory does not grant a new allowance. Revised-run preparation carries every prior charge and uncertain reservation into the next ledger; the ordinary fresh-run default prior amount is not sufficient for continuing this task.
 
 Before POST, each call syncs its admission and credible reservation to an append-only journal. Macrofold receives that exact provider cap. Direct OpenAI reservations use a conservative UTF-8-byte token upper bound, schema/instruction/framing overhead, verified rates including cache writes and applicable long-context premiums, and the hard output-token allowance. `--per-call-usd` defaults to a $0.10 safety ceiling; oversized reservations are rejected. Reservations are not predicted charges.
 
 **Completed calls with complete measured usage and a known conservative usage-based estimate release unused reservation headroom**. Their commitment becomes the greater of that estimate and any provider-reported invoice. Missing/uncertain evidence retains at least the reservation and any larger known charge. Above-cap actual costs stop later admission and remain visible.
 
-`estimatedCostUsd` is a usage-based price estimate. `providerReportedCostUsd` is separate when an actual invoice amount is supplied. Macrofold's `reported_micro_usd` is a frozen-rate usage estimate, despite its name; OpenRouter's native `usage.cost` is the provider-reported amount. Direct OpenAI costs remain usage-based estimates pending billing settlement. Reports preserve precision, missing usage, uncertainty and the prior commitment.
+`estimatedCostUsd` is a usage-based price estimate. `providerReportedCostUsd` is separate when an actual invoice amount is supplied. Macrofold's `reported_micro_usd` is a frozen-rate retail usage estimate, despite its name; its terminal receipt separately preserves a provider-reported amount when available. Direct OpenAI costs remain usage-based estimates pending billing settlement. Reports preserve precision, missing usage, uncertainty and the prior commitment.
+
+A completed Macrofold POST already supplies invocation usage and billing. The caller awaits its accepted-Run journal entry, then consumes those fields without a separate Run or organization-billing lookup. BYOK estimates require complete token usage and non-provisional billing; missing/provisional accounting retains the reservation, despite BYOK's zero Macrofold model charge. Running or interrupted receipts observe the same accepted Run without another submission.
 
 Accepted Macrofold Run IDs sync before observation. Resume never resubmits a journaled admission, including one with unknown dispatch. A single-writer lock blocks parallel processes. After acquiring it, the runner compares the exact journal bytes used during preparation; if a prior writer finished in between, it refuses execution so stale admissions cannot be repeated. Resume again from the latest journal. Investigate the original process before removing a stale lock. Malformed journals, changed input/prompt bindings, changed funding and edited prior commitments fail closed. Definitive authentication/funding/not-found failures stop subsequent calls for that configuration; already admitted calls remain recorded. No automatic paid retry occurs.
 
@@ -178,7 +237,7 @@ If a harness integration defect caused Macrofold to refuse budget admission befo
 
 This is authored synthetic evidence, not independently labeled player transcripts. Related views and shared history templates are correlated. Twenty supplied trackers are not twenty decisive constraints in every ordinary case; the compound views explicitly require all twenty. Guaranteed plan costs/outcomes are task facts, not predictions of game physics. The suite does not establish production recall quality, natural long-term character conduct, medical/psychological truth, native proposal admission, sustained population capacity or free-text quality. Byte sizes do not establish tokenizer fit. Provider capacity failures remain results and evidence is never silently truncated.
 
-Latency measures each configured integration path, including Macrofold overhead for its arms; direct OpenAI and intermediary paths are not identical infrastructure. Reported provider timings appear separately when available. Cache writes/hits, warm-up, request order, output budgets and reasoning token counts affect costs and latency. One pass cannot establish repeatability or deployment readiness.
+Latency measures each configured integration path, including Macrofold overhead and awaited acceptance journaling for its arms; direct OpenAI and intermediary paths are not identical infrastructure. Macrofold's `providerLatencyMs` measures its upstream adapter interval, including networking and response normalization, from `inference.timings_ms.provider`. Its admission wait is separately named `intermediaryQueueLatencyMs`; Run start-to-completion duration is `intermediaryRunLatencyMs` when recovery supplies those timestamps. Normal terminal POST receipts do not supply Run duration. Missing timings remain absent; none of these measurements isolates model computation. Cache writes/hits, warm-up, request order, output budgets and reasoning token counts affect costs and latency. One pass cannot establish repeatability or deployment readiness.
 
 ## Decision escalation qualification
 

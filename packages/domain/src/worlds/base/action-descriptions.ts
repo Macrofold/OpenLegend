@@ -9,6 +9,12 @@ import { BASE_FOOD_ACTION_WORDING } from './action-views.js';
 
 /** Bundled command explanations, selected through the installed action owner. */
 export const BASE_COMMAND_DESCRIPTIONS: Record<string, string> = {
+  'impact-boundary':
+    'Prepare one tool impact against a perceived solid structural part. Reach, exact tool, material condition and current property exposure are rechecked at contact; preparation alone causes no damage.',
+  'operate-gate':
+    'Use an actual gate handle or its inside bar. Movement keeps the original endpoint during preparation and rechecks the leaf and hanging cords before committing.',
+  'place-hearth':
+    'Place a supported fire using its installed definition, actual material and current site permission.',
   ...BASE_DEATH_COMMAND_DESCRIPTIONS,
   outing: BASE_OUTING.description,
   ...BASE_PRACTICE_COMMAND_DESCRIPTIONS,
@@ -19,9 +25,7 @@ export const BASE_COMMAND_DESCRIPTIONS: Record<string, string> = {
     'Read a bounded page of my own past actions and results, without repeating them.',
   activity:
     'Attempt a personally learned sequence; each step rechecks its requirements and keeps actual completed results.',
-  say: 'Speak to nearby listeners. Only people who hear the words receive the speech.',
-  conversation:
-    'Join or leave a nearby conversation. Membership never grants earlier unheard speech.',
+  say: 'Speak aloud or to one known person; listeners notice only what their senses detect.',
   pickup:
     'Approach a visible pile and pick up its portable items. Quantities are checked again on arrival.',
   drop: 'Place the selected quantity of a portable possession on the current support. Stop active work first.',
@@ -42,9 +46,9 @@ export const BASE_COMMAND_DESCRIPTIONS: Record<string, string> = {
   'shoot-once': BASE_RANGED_TEXT.shotDescription,
   'release-shot': BASE_RANGED_TEXT.releaseDescription,
   move: 'Walk to the chosen location along a traversable route. This replaces your current work.',
+  feed: 'Eat one reachable exposed unit permitted by this body’s installed diet. The food remains finite and is checked again at completion.',
   gather:
     'Approach a resource and collect a small batch into your inventory. Supplies at each source are finite.',
-  prepare: 'Turn gathered plant material into usable fibers or cord for crafting.',
   craft:
     'Make an item using a technique you know. Materials are consumed when work begins and are not refunded if you stop.',
   guard: BASE_GUARD_TEXT.description,
@@ -74,5 +78,5 @@ export const BASE_COMMAND_DESCRIPTIONS: Record<string, string> = {
     'Learn the exact production method from a currently inspected accessible record. This grants knowledge only, without making an item or consuming the record.',
   teach:
     'Share a learned crafting technique with a nearby person so they can use it themselves. Teaching shares knowledge, not an item.',
-  talk: 'Open a conversation with a nearby person. You can review and edit your message before sending it.',
+  talk: 'Speak to a known person. You can review and edit your message before sending it.',
 };

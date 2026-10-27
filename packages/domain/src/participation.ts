@@ -1,3 +1,4 @@
+import { reconcileCompacts } from './social-compacts.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { subjectNarration } from './narration.js';
 import { namePhrase } from '@open-legend/language';
@@ -9,9 +10,9 @@ import { finish, emit, outcome } from './events.js';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
 import { releaseInvocationResources } from './resource-claims.js';
 import { cancelPlan, discardSuspended } from './agency.js';
-import { leaveConversation } from './conversations.js';
 import { isSafeRecordId } from './records.js';
 import { TIME_EPSILON } from './simulation-time.js';
+import { forgetProjectileBodyEncounters } from './ranged.js';
 import type { Transition, WorldEvent, WorldState } from './types.js';
 import type { Entity } from './types.js';
 import { reconcileOutings } from './outings.js';
@@ -36,14 +37,19 @@ function interruptDepartureWork(world: WorldState, entity: Entity): void {
     }
 }
 function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): void {
-  leaveConversation(world, entity.id, 'disconnect');
   interruptDepartureWork(world, entity);
   const state = entity.actor!.participation!;
   const support = supportedPosition(entity);
   if (support && canStand(spatialMap(world), support, bodyProfile(entity)))
     state.returnAnchor = support;
+  // Direct administrative departure need not run another native interval before
+  // saving. Retire the visible pose/crossing now; this same living body's response
+  // cooldown survives returning so departure cannot reset an evasion opportunity.
+  delete entity.spatial.localPose;
+  forgetProjectileBodyEncounters(world, entity.id, entity.actor!.physicalLife ?? 0);
   state.phase = 'inactive';
   reconcileOutings(world, events, { changedOnly: true });
+  reconcileCompacts(world, events);
   if (world.exitExposures) delete world.exitExposures[entity.id];
   emit(
     world,
@@ -140,7 +146,6 @@ export function changeParticipation(
       'The saved location and configured return location are unavailable. A safe return location must be restored.',
     );
   const world = draftWorld(input);
-  if (operation.type === 'depart') leaveConversation(world, actorId, 'disconnect');
   const entity = entityGet(world.entities, actorId)!,
     actor = entity.actor!,
     events: WorldEvent[] = [];
@@ -178,6 +183,7 @@ export function changeParticipation(
       );
   }
   reconcileOutings(world, events, { changedOnly: true });
+  reconcileCompacts(world, events);
   return finish(
     world,
     events,

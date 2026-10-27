@@ -424,6 +424,42 @@ The first eight entries are unusual tastes under stated premises. The final two 
 | TR-299 | Tomorrow's manners belong to the last willing host | —           | Play  | 5 Specialist | D     | An authored disposition model adopts the publicly demonstrated social manner of the last host who agreed to lend it, changing at dawn while retaining memories and values. Choosing where to stay also chooses tomorrow's conversational style, not tomorrow's obedience. | Large · New: bounded temporary disposition borrowing; Magic owns transfer and expiry.           | Original synthesis                                               |
 | TR-300 | Inherits boredom without inheriting mastery        | —           | Blend | 5 Specialist | D     | A selected lineage passes on weariness with its predecessor's practiced routines but not the skills that made those routines easy. A successor may seek a novel route into the same craft, negotiate necessary repetition or reject the inherited aversion.               | Large · New: selective disposition inheritance; Bodies or Technology owns lineage and identity. | Creative leap from separated learning and personhood · [F5] [CU] |
 
+## Contradiction under pressure
+
+**ALL · Blend · Moderate/Extend.** Gap: competing goals with inspectable decisions and remembered exceptions.
+
+A scrupulously fair organizer controls a coveted funded apprenticeship. Their sibling wants it, while another candidate has a stronger demonstration of the relevant skill. In one selected version, the organizer has made an exception and must answer the excluded candidate, whose chance to leave precarious work was real. The contradiction emerges from loyalties and circumstances, not a random hypocrisy event. Players can defend, expose or contest the appointment, seek another place or help change the decision. A corrected award can be a genuine victory without making the lost time imaginary. Keep the person capable of change and ordinary goodness; a trait combination must not predetermine betrayal or a villain arc.
+
+When preparing the situation, preserve the accepted person, the actual family association and the competing concern rather than selecting whichever single trait predicts the desired act. When the scene begins before the appointment, the organizer can uphold the rule, bend it, ask someone else to judge or propose another arrangement. Compare those possibilities for a stranger, a sibling and an openly changed circumstance without changing the biography to force a result. In the already-appointed version, later choices address the actual appointment and its consequences; they do not rewrite what happened. Particular tastes and humor deserve the same treatment: an elegant lover of trashy art (TR-177) remains more than whichever preference matched the latest scene.
+
+Related entries: [TR-203](#values-contradictions-and-unpleasant-choices).
+
+Seeds and references: [Dragon Age II](source-atlas.md#g52), [Crusader Kings III](source-atlas.md#g126), [The Sopranos](source-atlas.md#w22).
+
+## Risk has a shape
+
+**ALL · Blend · Moderate/Extend.** Gap: domain-specific risk appraisals linked to experience.
+
+A courier calmly crosses exposed ridges but avoids borrowing money after a family business failure. A selected ridge commission promises enough pay to equip a workshop, but its supply advance puts the courier's home at risk under the stated terms. They may welcome the climb yet refuse the debt, seek different terms or choose a smaller, already-funded job. Success can bring a useful gain; refusal can protect the home while losing a wanted opportunity.
+
+Players can examine the offer, contribute supplies or compare jobs through the selected world's supported agreement and consequence rules; this example adds no lending system. Evidence may revise a fear, but an enticing reward need not overcome it. One “bravery” value would erase the difference between physical confidence and financial caution. Limit modeled domains to those that affect play; do not infer real psychological diagnoses from fictional habits.
+
+Related entries: [TR-143](#risk-courage-and-aggression).
+
+Seeds and references: [Kenshi](source-atlas.md#g36), [Battle Brothers](source-atlas.md#g121), [Crusader Kings III](source-atlas.md#g126).
+
+## Loves the unfinished
+
+**ALL · Play · Small/Compose.** Gap: authored novelty preference and clear handoff behavior.
+
+A builder starts exciting experiments, then loses interest once the solution is routine. A working portable lift could win an expedition commission; a patient collaborator has the experience to finish it. Pairing them can create a thriving workshop, but applause for the inventor alone may leave the finisher resentful, and abandoned follow-through can lose the commission. Neither result is inevitable.
+
+Players can help demonstrate a supported prototype, negotiate credit and responsibilities or select another maker. A completed invention can stay useful and free both people for a new ambition or a rest. Keep unfinished projects visible and bounded so the personality creates stories rather than an unmanageable mess of background jobs. Enjoying invention is not itself a fault; knowingly leaving another person to bear an accepted obligation is a distinct choice.
+
+Related entries: [TR-045](#craft-standards-and-completion).
+
+Seeds and references: [Dreams](source-atlas.md#g13), [Spore](source-atlas.md#g16), [The Sims](source-atlas.md#g24).
+
 ## Practical generosity
 
 **ALL · Play · Small/Compose.** Gap: authored preferences; reliable resource-aware behavior needs plan integration.
@@ -433,76 +469,6 @@ Someone offers tools and labor readily but dislikes ceremonial gifts. During a s
 Related entries: [TR-021](#giving-keeping-and-hospitality).
 
 Seeds and references: [The Sims](source-atlas.md#g24), [Palworld](source-atlas.md#g41), [Discworld](source-atlas.md#w12).
-
-## Proud of the repair
-
-**ALL · Play · Small/Compose.** Gap: authored pride tied to remembered work and visible objects.
-
-A craftsperson keeps old patchwork visible because repairs record competence. They may argue with a customer who wants everything disguised as new, yet admire an ingenious novice. Let pride generate teaching, humor and occasional friction. Do not make every criticism a feud or every compliment a persuasion key; a good demonstration can matter more than flattery.
-
-Related entries: [TR-042](#craft-standards-and-completion).
-
-Seeds and references: [Dwarf Fortress](source-atlas.md#g23), [Assassin's Creed III](source-atlas.md#g99), [Spirited Away](source-atlas.md#w25).
-
-## Risk has a shape
-
-**ALL · Blend · Moderate/Extend.** Gap: domain-specific risk appraisals linked to experience.
-
-A courier calmly crosses exposed ridges but avoids borrowing money after a family business failure. One “bravery” value would erase the distinction. Players learn whom to trust with which task and can help revise a fear through evidence. Limit modeled domains to those that affect play; do not infer real psychological diagnoses from fictional habits.
-
-Related entries: [TR-143](#risk-courage-and-aggression).
-
-Seeds and references: [Kenshi](source-atlas.md#g36), [Battle Brothers](source-atlas.md#g121), [Crusader Kings III](source-atlas.md#g126).
-
-## Keeps a little in reserve
-
-**ALL · Play · Moderate/Extend.** Gap: preference-based reserves and negotiation over surplus.
-
-A cook saves ingredients against unexpected guests, sometimes frustrating a workshop that needs the storage space. A reserve can become the thing that saves a festival. Show the person's reason and allow compromise, rather than making thrift a hidden efficiency modifier. A secure period may gradually relax the habit without erasing the character's history.
-
-Related entries: [TR-022](#giving-keeping-and-hospitality).
-
-Seeds and references: [RimWorld](source-atlas.md#g21), [Slay the Spire](source-atlas.md#g43), [Oxygen Not Included](source-atlas.md#g129).
-
-## Fluent in one room
-
-**ALL · Play · Moderate/Extend.** Gap: context-specific confidence and recognized expertise.
-
-A mechanic who jokes easily with apprentices becomes formal at council meetings. Invite them to demonstrate a machine rather than force a speech; another character can translate institutional language. This opens multiple social methods. Confidence changes participation, not truth or worth, and fluency in public speaking must not become a universal measure of competence.
-
-Related entries: [TR-081](#speech-humor-and-company).
-
-Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Disco Elysium](source-atlas.md#g66), [Austen’s social worlds](source-atlas.md#w23).
-
-## Loves the unfinished
-
-**ALL · Play · Small/Compose.** Gap: authored novelty preference and clear handoff behavior.
-
-A builder starts exciting experiments, then loses interest once the solution is routine. Pairing with a patient maintainer can create a thriving workshop, or an unfair division of credit. Players can negotiate responsibilities instead of curing a flaw. Keep unfinished projects visible and bounded so the personality creates stories rather than an unmanageable mess of background jobs.
-
-Related entries: [TR-045](#craft-standards-and-completion).
-
-Seeds and references: [Dreams](source-atlas.md#g13), [Spore](source-atlas.md#g16), [The Sims](source-atlas.md#g24).
-
-## Ritual makes room
-
-**ALL · Play · Small/Compose.** Gap: authored coping routines with interruption choices.
-
-A traveler cleans their boots before a difficult conversation; the routine offers time to think and an opening for company. It need not grant a statistical bonus or indicate pathology. A friend can join, wait or gently interrupt when urgency matters. Repeated scenes should compress naturally while retaining exceptional moments, avoiding compulsory animation tax.
-
-Related entries: [TR-183](#routines-comfort-and-personal-order).
-
-Seeds and references: [Red Dead Redemption 2](source-atlas.md#g70), [Final Fantasy XV](source-atlas.md#g92), [The Sopranos](source-atlas.md#w22).
-
-## Changes their mind carefully
-
-**ALL · Blend · Moderate/Extend.** Gap: evidence provenance and explicit belief revision.
-
-An archivist resists rumors but revises a cherished story after two independent witnesses and a material clue. Players can persuade by investigating, not merely raising charisma. A cautious standard may also delay urgent help. The character can explain uncertainty; avoid absolute immunity to persuasion or instant updates from facts they never perceived.
-
-Related entries: [TR-062](#curiosity-certainty-and-attention).
-
-Seeds and references: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [The Elder Scrolls III: Morrowind](source-atlas.md#g113).
 
 ## A taste that connects strangers
 
@@ -514,15 +480,55 @@ Related entries: [TR-164](#pleasure-taste-and-adult-intimacy).
 
 Seeds and references: [Stardew Valley](source-atlas.md#g30), [Persona 5 Royal](source-atlas.md#g124), [Star Wars](source-atlas.md#w03).
 
-## Contradiction under pressure
+## Fluent in one room
 
-**ALL · Blend · Moderate/Extend.** Gap: competing goals with inspectable decisions and remembered exceptions.
+**ALL · Play · Moderate/Extend.** Gap: context-specific confidence and recognized expertise.
 
-A scrupulously fair organizer makes an exception for a sibling, then must answer the people affected. The contradiction emerges from loyalties and circumstances, not a random hypocrisy event. Players can defend, expose or help repair the decision. Keep the person capable of change and ordinary goodness; a trait combination must not predetermine betrayal or a villain arc.
+A mechanic who jokes easily with apprentices becomes formal at council meetings. Invite them to demonstrate a machine rather than force a speech; another character can translate institutional language. This opens multiple social methods. Confidence changes participation, not truth or worth, and fluency in public speaking must not become a universal measure of competence.
 
-Related entries: [TR-203](#values-contradictions-and-unpleasant-choices).
+Related entries: [TR-081](#speech-humor-and-company).
 
-Seeds and references: [Dragon Age II](source-atlas.md#g52), [Crusader Kings III](source-atlas.md#g126), [The Sopranos](source-atlas.md#w22).
+Seeds and references: [Fire Emblem: Three Houses](source-atlas.md#g64), [Disco Elysium](source-atlas.md#g66), [Austen’s social worlds](source-atlas.md#w23).
+
+## Changes their mind carefully
+
+**ALL · Blend · Moderate/Extend.** Gap: evidence provenance and explicit belief revision.
+
+An archivist resists rumors but revises a cherished story after two independent witnesses and a material clue. Players can persuade by investigating, not merely raising charisma. A cautious standard may also delay urgent help. The character can explain uncertainty; avoid absolute immunity to persuasion or instant updates from facts they never perceived.
+
+Related entries: [TR-062](#curiosity-certainty-and-attention).
+
+Seeds and references: [Among Us](source-atlas.md#g02), [Disco Elysium](source-atlas.md#g66), [The Elder Scrolls III: Morrowind](source-atlas.md#g113).
+
+## Proud of the repair
+
+**ALL · Play · Small/Compose.** Gap: authored pride tied to remembered work and visible objects.
+
+A craftsperson keeps old patchwork visible because repairs record competence. They may argue with a customer who wants everything disguised as new, yet admire an ingenious novice. Let pride generate teaching, humor and occasional friction. Do not make every criticism a feud or every compliment a persuasion key; a good demonstration can matter more than flattery.
+
+Related entries: [TR-042](#craft-standards-and-completion).
+
+Seeds and references: [Dwarf Fortress](source-atlas.md#g23), [Assassin's Creed III](source-atlas.md#g99), [Spirited Away](source-atlas.md#w25).
+
+## Keeps a little in reserve
+
+**ALL · Play · Moderate/Extend.** Gap: preference-based reserves and negotiation over surplus.
+
+A cook saves ingredients against unexpected guests, sometimes frustrating a workshop that needs the storage space. A reserve can become the thing that saves a festival. Show the person's reason and allow compromise, rather than making thrift a hidden efficiency modifier. A secure period may gradually relax the habit without erasing the character's history.
+
+Related entries: [TR-022](#giving-keeping-and-hospitality).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Slay the Spire](source-atlas.md#g43), [Oxygen Not Included](source-atlas.md#g129).
+
+## Ritual makes room
+
+**ALL · Play · Small/Compose.** Gap: authored coping routines with interruption choices.
+
+A traveler cleans their boots before a difficult conversation; the routine offers time to think and an opening for company. It need not grant a statistical bonus or indicate pathology. A friend can join, wait or gently interrupt when urgency matters. Repeated scenes should compress naturally while retaining exceptional moments, avoiding compulsory animation tax.
+
+Related entries: [TR-183](#routines-comfort-and-personal-order).
+
+Seeds and references: [Red Dead Redemption 2](source-atlas.md#g70), [Final Fantasy XV](source-atlas.md#g92), [The Sopranos](source-atlas.md#w22).
 
 ## Research coverage
 
@@ -560,6 +566,8 @@ Challenge-seeking rivals, competent companions, practical teachers, interesting 
 
 Music, comedy, art, food, conversation, playful courtship and peaceful enterprise retain legitimate early value. Traits that make those activities enjoyable can be Complete without granting a combat bonus. Mixed motives, nuanced loyalties, different tastes and most personal contradictions are Depth, to enrich a cast already doing things worth participating in.
 
+Distribute ordinary faults among otherwise recognizable people: a proud but capable rival wants a fair victory; an envious mentor admires a student's skill while resenting their invitation; a frightened official protects a career by withholding a warning; a generous host is irritable about being taken for granted; a loyal companion resents an old obligation. Use particular stakes and current choices, not an obligatory dark secret. A steward knowingly spending entrusted winter stores on private feasts differs from someone simply enjoying food; a watchkeeper deliberately abandoning a feasible duty differs from someone exhausted, disabled or taking an agreed rest. These are optional applications of existing tendencies, not new vice meters or automatic reactions.
+
 Reserve keeping (TR-022), exact loan returns (TR-024), pride in patches (TR-042), fixing every wobble (TR-048), repairing rather than replacing (TR-054), cleaning boots (TR-183), rearranging chairs (TR-192), household checklists (TR-193) and handoff rehearsals (TR-241) are Detail. Their authored expression may be Small. Do not build upkeep or administrative machinery to give these tendencies something to react to before the first adventure works.
 
-Most unfamiliar tastes are still ordinary Depth, even in a magical creature. Specialist is reserved here for separate synthetic/copying or reality-law premises and focused adult experiences outside the current game's foundation. Scores are not moral judgments, diagnoses or real-world political rankings. No disposition grants another person's participation, reveals private thoughts or bypasses a clear refusal; these remain constraints on every selected feature, not optional personality bonuses.
+Most unfamiliar tastes are still ordinary Depth, even in a magical creature. Specialist is reserved here for separate synthetic/copying or reality-law premises and focused adult experiences outside the current game's foundation. Scores are not moral judgments, diagnoses or real-world political rankings. A disposition does not manufacture consent, obedience, knowledge or authority. A person may nevertheless choose a supported hostile action against an unwilling target; resolve the action, resistance and consequences through the owning world rules. A disposition grants no private knowledge or real-account permission; supported fictional information-gathering retains its owning rules.

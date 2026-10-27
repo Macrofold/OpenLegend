@@ -43,7 +43,9 @@ it('lets the owner read exact acquired recent positions without revealing an unk
   await editWorld(service, (world) => {
     world.simTime += 1;
     const other = entityGet(world.entities, NPC_ID)!;
-    setSpatialPosition(world, other, { x: 4, y: 0, z: 2 }, worldSupport(other), 'physical');
+    setSpatialPosition(world, other, { x: 4, y: 0, z: 2 }, worldSupport(other), {
+      continuity: 'physical',
+    });
     initializePerception(world, []);
   });
   const page = await memoryHistory(service, PLAYER_ID, service.localScope, { recent: true });

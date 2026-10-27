@@ -1,4 +1,11 @@
 import {
+  constructionPermissionBatch,
+  absorbConstructionPermissionBatch,
+  finishConstructionPermissionBatch,
+  type NativeExecutionPermissions,
+} from './construction-permissions.js';
+import { reconcileCompacts } from './social-compacts.js';
+import {
   currentBodyObservation,
   evidenceCutEligible,
   type ObservationContribution,
@@ -449,6 +456,7 @@ export function commitActorResponse(
   identityReferences: Record<string, ObserverSubject> = {},
   entityLeases: Record<string, string> = {},
   situationBinding?: SituationProposalBinding,
+  permissions: NativeExecutionPermissions = {},
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -547,10 +555,39 @@ export function commitActorResponse(
       entityIds.map((targetId) => [targetId, expectedEncounters[targetId] ?? null]),
     );
   let world = draftWorld(input);
+  const construction = constructionPermissionBatch(
+    input.id,
+    permissions.constructionPermissions ?? [],
+    permissions.campAssetPermissions ?? [],
+  );
+
   const events: Transition['events'] = [];
   const components: ResponseReceipt['components'] = {};
   let localId = '';
   let appendOnlyCommands = true;
+  /** Only the next selected action must be possible now. Later steps may depend on
+   * earlier equipment or typed outputs; their native owner rechecks when they start.
+   * docs/projects/parallel-batch-01-playable-week-tech-design.md#admission-before-execution
+   */
+  const admitPlan = (...args: Parameters<typeof arrangePlan>): Outcome => {
+    const [world, , , commands, mode] = args;
+    const first = commands[0];
+    if (first && !('itemFromStep' in first)) {
+      const prepared = prepareNativeChoice(
+        world,
+        first.actorId,
+        first,
+        mode,
+        construction.permissions,
+        undefined,
+        construction.campAssets,
+      );
+      const available = 'ok' in prepared ? prepared : prepared.outcome;
+      if (!available.ok) return available;
+    }
+    return arrangePlan(...args);
+  };
+
   const command = (part: 'talk' | 'act', value: Command) => {
     const beforeEvents = isDraft(world.events) ? current(world.events) : world.events;
     let transition = executeCommand(world, value);
@@ -907,7 +944,7 @@ export function commitActorResponse(
           false,
           'invalid-speech',
           !validTarget
-            ? 'talk.addresseeEntityId must reference a permitted existing entity ID.'
+            ? 'talk.addresseeEntityId must be null for ambient speech or a permitted existing entity ID.'
             : 'Speech must contain 1–1200 characters.',
         );
       else
@@ -959,9 +996,15 @@ export function commitActorResponse(
         entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (bound.type === 'outing' && bound.operation === 'help') command('act', bound);
+      else if (
+        bound.type === 'outing' &&
+        bound.operation !== 'invite' &&
+        bound.operation !== 'accept' &&
+        bound.operation !== 'work'
+      )
+        command('act', bound);
       else if (bound.type === 'compose' || bound.type === 'outing') {
-        if (bound.mode !== act.mode)
+        if (('mode' in bound ? bound.mode : undefined) !== act.mode)
           components[localId] = outcome(
             false,
             'activity-choices',
@@ -1005,7 +1048,6 @@ export function commitActorResponse(
           'activity',
           'compose',
           'inspect-activities',
-          'conversation',
           'teach',
           'handover',
           'outing',
@@ -1013,6 +1055,7 @@ export function commitActorResponse(
           'cancel',
           'resume-work',
           'recover',
+          'release-shot',
           'withdraw-attempt',
           'confirm-attempt',
         ].includes(selected.type)
@@ -1260,7 +1303,6 @@ export function commitActorResponse(
         else if (
           selected.length === 1 &&
           [
-            'conversation',
             'teach',
             'handover',
             'outing',
@@ -1359,7 +1401,9 @@ export function commitActorResponse(
       const goalId = goalRef(op.plan.goalId);
       if (
         goalId === undefined ||
-        op.plan.steps.some((step) => step.actionId !== null && !getOwn(actions, step.actionId))
+        op.plan.steps.some(
+          (step) => step.actionId !== null && !getOwn(actions, step.actionId)?.invocation,
+        )
       )
         components[localId] = outcome(
           false,
@@ -1387,7 +1431,27 @@ export function commitActorResponse(
             'Future dispatch cancelled; goals and spent resources retained.',
           );
         }
-      } else
+      } else if (
+        op.plan.steps.some(
+          (step) =>
+            step.actionId !== null && !choiceWorkCurrent(world, actorId, actions[step.actionId]!),
+        )
+      )
+        components[localId] = outcome(
+          false,
+          'stale-plan',
+          'The work affected by this choice changed.',
+        );
+      else if (
+        op.plan.steps[0]?.actionId &&
+        actions[op.plan.steps[0].actionId]!.transition !== op.plan.mode
+      )
+        components[localId] = outcome(
+          false,
+          'work-transition',
+          'The plan must preserve the selected first action’s handling of current work.',
+        );
+      else
         components[localId] = admitPlan(
           world,
           component,
@@ -1416,6 +1480,7 @@ export function commitActorResponse(
   // A selected replacement plan is saved before its first physical step. Retire any
   // superseded trip here so its consent never points at work the actor no longer owns.
   reconcileOutings(world, events, { changedOnly: true });
+  reconcileCompacts(world, events);
   if (appendOnlyCommands && world.events !== input.events) {
     // All command prefixes were proved; expressions only append. Seal the composed suffix
     // once so intermediate metadata forks do not force durable history to diff the old prefix.
@@ -1464,7 +1529,7 @@ export function commitActorResponse(
   // world events, durable jobs and conversation history keep their own retention.
   for (const oldId of Object.keys(receipts).slice(0, -RESPONSE_RECEIPT_LIMIT))
     delete receipts[oldId];
-  return finish(world, events, overall);
+  return finishConstructionPermissionBatch(finish(world, events, overall), construction);
 }
 
 /** Player-authored fiction has one event, never an executable command. Participants stay

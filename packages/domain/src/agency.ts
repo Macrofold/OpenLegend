@@ -1,12 +1,18 @@
 import { openingSemanticInterval, finishSemanticWork } from './semantic-opportunities.js';
+import { attackSubject, validAimPointSubject } from './combat-execution.js';
+import { isMaterialInputRole } from './native-inputs.js';
+import { recordSemanticChange } from './dependencies.js';
+import type { NativeExecutionPermissions } from './construction-permissions.js';
+import { validGateUseIntent } from './gate-operations.js';
+import { validBoundaryImpactIntent } from './boundary-impacts.js';
 import { entityGet, entityHas, entityValues } from './entity-collection.js';
 import { validResponsePurpose } from './action-capabilities.js';
 import {
   activityEntityReferences,
+  nativeOperationFields,
   validExactInventorySources,
 } from './native-command-contracts.js';
 import {
-  isCookingInputRole,
   preparationDefinition,
   validCookCommand,
   validCookReference,
@@ -24,6 +30,8 @@ import {
   activityFrontier,
   reconcileActivityControl,
   startRequestedActivity,
+  cancelActivityCommands,
+  hasPendingActivityCommand,
   type ActivityExecution,
 } from './activity-execution.js';
 import {
@@ -52,16 +60,18 @@ import {
 } from './action-capabilities.js';
 import { FOLLOW_RULES } from './follow.js';
 import { finitePoint, type SurfacePoint } from '@open-legend/spatial';
+import { validHearthCommand } from './hearths.js';
 import { seesEntity } from './perception.js';
 import { observerDescription } from './worlds/base/knowledge.js';
 import { supportedPosition } from './spatial-state.js';
 import { isFireCareCommand } from './worlds/base/fire.js';
 import { validAssemblyPhase } from './assemblies.js';
+import { validManufactureTools } from './manufacture.js';
 import { cloneValue } from './draft.js';
 import { appendMemory, outcome } from './events.js';
-import { isSafeRecordId } from './records.js';
+import { isSafeRecordId, hasRecordFields } from './records.js';
 import type { ActorComponent, Command, Outcome, WorldState } from './types.js';
-import { validateCombatHelpReference } from './outings.js';
+import { validateCombatHelpReference, validateCooperationReference } from './outings.js';
 
 /** The item kind a producing step yields when that is known before it runs, from the step's
  * own target or the world's installed preparation definition. */
@@ -540,6 +550,105 @@ export function stopCurrentWork(world: WorldState, actorId: string): void {
     actor.planGeneration++;
   }
 }
+/** End only the captured opponent's unfinished work within its exact admitted
+ * plan. Other current work and other participants' actions retain their owners. */
+export function stopOwnedOffense(
+  world: WorldState,
+  actorId: string,
+  targetId: string,
+  targetLife: number,
+  owned: { invocationId: string; planId?: string },
+): void {
+  const actor = entityGet(world.entities, actorId)!.actor!,
+    agency = actor.agency;
+  const matches = (command: PlannedCommand | Command) =>
+    ['strike', 'hunt', 'aim', 'shoot-once'].includes(command.type) &&
+    'targetId' in command &&
+    command.targetId === targetId;
+  const stopped = outcome(
+    false,
+    'cancelled',
+    'Stopped this unfinished attack; committed costs and released effects remain.',
+  );
+  const stopAction = () => {
+    if (!actor.action || actor.action.strikePhase === 'recovery') return;
+    const memoryId = endActivity(world, actorId, actor.action.id, stopped);
+    releaseInvocationResources(world, actor.action.id);
+    actor.action = null;
+    actor.planGeneration++;
+    return memoryId;
+  };
+  for (const plan of [agency.plan, agency.suspended]) {
+    if (!plan || plan.id !== owned.planId || !['active', 'blocked'].includes(plan.status)) continue;
+    cancelActivityCommands(world, actorId, plan, matches);
+    for (const step of plan.steps) {
+      if (!['queued', 'running', 'blocked'].includes(step.status) || !matches(step.command))
+        continue;
+      if (
+        actor.action &&
+        actor.action.id === step.actionId &&
+        actor.action.strikePhase === 'recovery'
+      )
+        continue;
+      if (
+        actor.action &&
+        actor.action.id === step.actionId &&
+        attackSubject(actor.action)?.life === targetLife
+      )
+        step.resultMemoryId = stopAction();
+      else if (step.actionId)
+        step.resultMemoryId = endActivity(world, actorId, step.actionId, stopped);
+      step.status = 'cancelled';
+      step.outcome = { ...stopped };
+    }
+    if (
+      !plan.steps.some((step) => ['queued', 'running', 'blocked'].includes(step.status)) &&
+      !plan.activity?.pending.length
+    ) {
+      plan.status = 'cancelled';
+      if (plan === agency.suspended) discardSuspended(world, actor, actorId);
+    }
+    plan.revision++;
+    agency.revision++;
+  }
+  if (
+    actor.action?.id === owned.invocationId &&
+    attackSubject(actor.action)?.id === targetId &&
+    attackSubject(actor.action)?.life === targetLife
+  )
+    stopAction();
+}
+export function ownedOffenseContinues(
+  world: WorldState,
+  actorId: string,
+  targetId: string,
+  targetLife: number,
+  owned: { invocationId: string; planId?: string },
+): boolean {
+  const actor = entityGet(world.entities, actorId)?.actor;
+  if (!actor) return false;
+  if (
+    actor.action?.id === owned.invocationId &&
+    attackSubject(actor.action)?.id === targetId &&
+    attackSubject(actor.action)?.life === targetLife
+  )
+    return true;
+  const matches = (command: PlannedCommand | Command) =>
+    ['strike', 'hunt', 'aim', 'shoot-once'].includes(command.type) &&
+    'targetId' in command &&
+    command.targetId === targetId;
+  for (const plan of [actor.agency.plan, actor.agency.suspended]) {
+    if (!plan || plan.id !== owned.planId || !['active', 'blocked'].includes(plan.status)) continue;
+    if (
+      plan.steps.some(
+        (step) => ['queued', 'running', 'blocked'].includes(step.status) && matches(step.command),
+      ) ||
+      (plan.activity && hasPendingActivityCommand(plan.activity, actorId, matches))
+    )
+      return true;
+  }
+  return false;
+}
 /** Why the current native work cannot stop at a safe boundary, if it cannot. Families that
  * already spent inputs or committed a strike finish or are replaced instead; nothing is
  * refunded and no progress is invented. docs/action-capabilities.md#15-resource-claims-interruption-and-timing
@@ -889,6 +998,10 @@ export function finishPlanAction(
   result: Outcome,
 ): void {
   finishSemanticWork(world, actorId, actionId);
+  // Native movement can finish silently, including just inside its arrival
+  // tolerance before a forecast deadline. Refresh its action/rate inputs even
+  // without a plan or outward event; unrelated participants keep their forecasts.
+  recordSemanticChange(world, { kind: 'state', entityId: actorId, field: 'behavior' });
   const resultMemoryId = endActivity(world, actorId, actionId, result);
   releaseInvocationResources(world, actionId);
   const actor = entityGet(world.entities, actorId)!.actor!;
@@ -927,6 +1040,15 @@ export function finishPlanAction(
     });
   actor.agency.lastResultMemoryId = step.resultMemoryId;
   step.outcome = result;
+  const quantity = plan!.activity?.request?.quantity;
+  if (
+    quantity &&
+    step.activityKey &&
+    result.ok &&
+    step.command.type === quantity.command &&
+    (quantity.command !== 'eat' || result.code === 'ate')
+  )
+    plan!.activity!.completedUnits = (plan!.activity!.completedUnits ?? 0) + 1;
   // Key outputs by the producing node, never by whichever node ran last: a step queued
   // outside the activity must not overwrite an activity output binding.
   if (plan!.activity && step.activityKey)
@@ -944,7 +1066,9 @@ export function finishPlanAction(
   plan!.status = !result.ok
     ? 'blocked'
     : (!plan!.activity || !plan!.activity.pending.length) &&
-        plan!.steps.every((entry) => entry.status === 'completed')
+        // Ending exact consent may cancel only part of a mixed frontier. Those
+        // steps remain unsuccessful history, but cannot keep finished work active.
+        plan!.steps.every((entry) => entry.status === 'completed' || entry.status === 'cancelled')
       ? 'completed'
       : 'active';
   plan!.revision++;
@@ -1174,8 +1298,10 @@ export function validateAgency(world: WorldState): void {
         throw new Error('Invalid saved plan output references.');
       if (plan?.status === 'active' || plan?.status === 'blocked')
         for (const step of plan.steps)
-          if (step.status === 'queued' || step.status === 'running' || step.status === 'blocked')
+          if (step.status === 'queued' || step.status === 'running' || step.status === 'blocked') {
             validateCombatHelpReference(world, entity.id, step.command);
+            validateCooperationReference(world, entity.id, step.command);
+          }
     }
     for (const step of [
       ...(agency.plan?.steps ?? []),
@@ -1329,7 +1455,12 @@ export function isPhysicalCommand(command: Command): boolean {
     !isSafeRecordId(command.id) ||
     !isSafeRecordId(command.actorId) ||
     (command.humanInitiated !== undefined && command.humanInitiated !== true) ||
-    (command.combatHelpId !== undefined && !isSafeRecordId(command.combatHelpId))
+    (command.combatHelpId !== undefined && !isSafeRecordId(command.combatHelpId)) ||
+    (command.cooperation !== undefined &&
+      (!hasRecordFields(command.cooperation, ['id', 'revision']) ||
+        !isSafeRecordId(command.cooperation.id) ||
+        !Number.isSafeInteger(command.cooperation.revision) ||
+        command.cooperation.revision < 1))
   )
     return false;
   if (
@@ -1339,8 +1470,18 @@ export function isPhysicalCommand(command: Command): boolean {
   )
     return false;
   switch (command.type) {
-    case 'assemble':
-      return validAssemblyPhase(command);
+    case 'impact-boundary':
+      return validBoundaryImpactIntent(nativeOperationFields(command));
+    case 'operate-gate': {
+      const intent = nativeOperationFields(command);
+      return validGateUseIntent(intent);
+    }
+    case 'place-hearth':
+      return validHearthCommand(command);
+    case 'assemble': {
+      const phase = nativeOperationFields(command);
+      return validAssemblyPhase(phase);
+    }
     case 'pickup':
       return (
         isSafeRecordId(command.targetId) &&
@@ -1395,19 +1536,49 @@ export function isPhysicalCommand(command: Command): boolean {
             command.onLost === undefined))
       );
     case 'gather':
+      return (
+        isSafeRecordId(command.targetId) &&
+        (command.itemId === undefined || isSafeRecordId(command.itemId)) &&
+        (command.gatheringMode === undefined ||
+          (command.gatheringMode === 'bare-hands' && command.itemId === undefined) ||
+          (command.gatheringMode === 'carried-tool' && isSafeRecordId(command.itemId)))
+      );
     case 'harvest':
       return isSafeRecordId(command.targetId);
-    case 'prepare':
-      return command.preparation === 'fiber' || command.preparation === 'cord';
     case 'craft':
-      return isSafeRecordId(command.recipeId);
+      return (
+        isSafeRecordId(command.recipeId) &&
+        (command.tools === undefined || validManufactureTools(command.tools))
+      );
     case 'treat-scar':
       return isSafeRecordId(command.targetId) && isSafeRecordId(command.scarId);
     case 'replenish':
       return isSafeRecordId(command.targetId) && isSafeRecordId(command.attributeId);
     case 'equip':
-    case 'eat':
       return isSafeRecordId(command.itemId);
+    case 'eat':
+      return command.sourceId === undefined
+        ? isSafeRecordId(command.itemId) &&
+            command.definitionId === undefined &&
+            command.definitionVersion === undefined &&
+            command.definitionDigest === undefined &&
+            command.bodyPolicyId === undefined &&
+            command.bodyPolicyVersion === undefined &&
+            command.bodyPolicyDigest === undefined
+        : command.itemId === undefined &&
+            isSafeRecordId(command.sourceId) &&
+            isSafeRecordId(command.definitionId) &&
+            Number.isSafeInteger(command.definitionVersion) &&
+            command.definitionVersion > 0 &&
+            typeof command.definitionDigest === 'string' &&
+            command.definitionDigest.length > 0 &&
+            command.definitionDigest.length <= 180 &&
+            isSafeRecordId(command.bodyPolicyId) &&
+            Number.isSafeInteger(command.bodyPolicyVersion) &&
+            command.bodyPolicyVersion > 0 &&
+            typeof command.bodyPolicyDigest === 'string' &&
+            command.bodyPolicyDigest.length > 0 &&
+            command.bodyPolicyDigest.length <= 180;
     case 'guard':
       return (
         isSafeRecordId(command.itemId) &&
@@ -1424,15 +1595,31 @@ export function isPhysicalCommand(command: Command): boolean {
         (command.expectedRevision === undefined ||
           (Number.isSafeInteger(command.expectedRevision) && command.expectedRevision >= 0))
       );
+    case 'feed':
+      return (
+        isSafeRecordId(command.targetId) &&
+        (command.itemId === undefined || isSafeRecordId(command.itemId))
+      );
     case 'strike':
       return (
         isSafeRecordId(command.targetId) &&
         isSafeRecordId(command.definitionId) &&
         (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId))
       );
-    case 'practice-shot':
     case 'aim':
     case 'shoot-once':
+      return (
+        (command.targetId === undefined ? !!command.aimPoint : isSafeRecordId(command.targetId)) &&
+        (command.aimPoint === undefined || finitePoint(command.aimPoint)) &&
+        (command.aimPointSubject === undefined ||
+          (!!command.aimPoint && validAimPointSubject(command.aimPointSubject))) &&
+        (command.type !== 'aim' ||
+          command.manualExecution === undefined ||
+          command.manualExecution === true) &&
+        (command.weaponItemId === undefined || isSafeRecordId(command.weaponItemId)) &&
+        (command.ammoItemId === undefined || isSafeRecordId(command.ammoItemId))
+      );
+    case 'practice-shot':
     case 'hunt':
       return (
         isSafeRecordId(command.targetId) &&
@@ -1491,7 +1678,7 @@ function isPlannedCommand(command: PlannedCommand): boolean {
     (command.type === 'cook'
       ? isSafeRecordId(command.heatId) &&
         validCookReference(command) &&
-        isCookingInputRole(command.inputRole) &&
+        isMaterialInputRole(command.inputRole) &&
         (command.inputs === undefined || validCookingInputs(command.inputs))
       : command.heatId === undefined)
   );
@@ -1662,6 +1849,7 @@ export function confirmActionRevision(
   actorId: string,
   attemptId: string,
   id: string,
+  permissions: NativeExecutionPermissions = {},
 ): Outcome {
   const actor = entityHas(world.entities, actorId)
     ? entityGet(world.entities, actorId)?.actor
@@ -1699,12 +1887,18 @@ export function confirmActionRevision(
   const composed = alternative.commands[0]!;
   const result =
     composed.type === 'compose'
-      ? startRequestedActivity(world, actorId, id, {
-          ...composed,
+      ? startRequestedActivity(
+          world,
           actorId,
-          id: `${id}:0`,
-          mode: alternative.mode,
-        })
+          id,
+          {
+            ...composed,
+            actorId,
+            id: `${id}:0`,
+            mode: alternative.mode,
+          },
+          permissions,
+        )
       : arrangePlan(
           world,
           actor,
@@ -1716,4 +1910,74 @@ export function confirmActionRevision(
         );
   if (result.ok) withdrawAttempt(actor, attemptId);
   return result;
+}
+
+/** Cancel only commands explicitly chosen for these terms. A committed phase detaches
+ * from live consent and finishes under its physical owner; no queued continuation survives.
+ * docs/projects/first-playable-cooperation-tech-design.md#exact-consent-and-cancellation */
+export function stopCooperativeWork(
+  world: WorldState,
+  actorId: string,
+  binding: import('./cooperation.js').CooperationPurposeBinding,
+): void {
+  const actor = entityGet(world.entities, actorId)?.actor;
+  if (!actor) return;
+  const matches = (command: {
+    type?: string;
+    cooperation?: import('./cooperation.js').CooperationPurposeBinding;
+  }) => command.cooperation?.id === binding.id && command.cooperation.revision === binding.revision;
+  const reason = outcome(
+    false,
+    'cooperation-ended',
+    'This agreed purpose ended. Committed physical effects continue; no further cooperative step is promised.',
+  );
+  const current = actor.action;
+  let resultMemoryId: string | undefined;
+  if (current && matches(current)) {
+    const aimed = attackSubject(current);
+    // Refusing to pause an attack does not commit its future blow. Cancel only
+    // this invocation; passing its plan would also stop unrelated attacks.
+    if (
+      ['strike', 'hunt', 'aim', 'shoot-once'].includes(current.type) &&
+      current.strikePhase !== 'recovery' &&
+      aimed !== undefined
+    ) {
+      stopOwnedOffense(world, actorId, aimed.id, aimed.life, {
+        invocationId: current.id,
+      });
+      resultMemoryId = endActivity(world, actorId, current.id, reason);
+    } else if (pauseRefusal(current)) delete current.cooperation;
+    else {
+      resultMemoryId = endActivity(world, actorId, current.id, reason);
+      releaseInvocationResources(world, current.id);
+      actor.action = null;
+      actor.planGeneration++;
+    }
+  }
+  for (const plan of [actor.agency.plan, actor.agency.suspended]) {
+    if (!plan || !['active', 'blocked'].includes(plan.status)) continue;
+    const steps = plan.steps.filter(
+      (step) => ['queued', 'running', 'blocked'].includes(step.status) && matches(step.command),
+    );
+    const ownsExecution = !!plan.activity && matches(plan.activity);
+    if (!steps.length && !ownsExecution) continue;
+    cancelActivityCommands(world, actorId, plan, matches);
+    if (ownsExecution) delete plan.activity!.cooperation;
+    for (const step of steps) {
+      step.status = 'cancelled';
+      step.outcome = { ...reason };
+      if (step.actionId === current?.id && resultMemoryId) step.resultMemoryId = resultMemoryId;
+      else if (step.actionId && step.actionId !== actor.action?.id)
+        step.resultMemoryId = endActivity(world, actorId, step.actionId, reason);
+    }
+    if (
+      !plan.steps.some((step) => ['queued', 'running', 'blocked'].includes(step.status)) &&
+      !plan.activity?.pending.length
+    ) {
+      plan.status = 'cancelled';
+      if (plan === actor.agency.suspended) discardSuspended(world, actor, actorId);
+    }
+    plan.revision++;
+    actor.agency.revision++;
+  }
 }

@@ -1,16 +1,21 @@
 import {
   bodySurfaceDistance,
   movingBodiesMinimumSeparation,
-  type SurfacePoint,
+  SPATIAL_LIMITS,
+  type WorldPoint,
 } from '@open-legend/spatial';
 import { entityGet } from './entity-collection.js';
+import { readOnlyDraftView } from './draft.js';
 import { entityVisionQuery, visionRadius } from './perception.js';
-import { nearbyEntities } from './spatial.js';
+import { nearbyEntities, nearbySelectedEntities } from './spatial.js';
+import { nativeSourceActor, nativeDangerSourceIds } from './native-danger-sources.js';
 import { bodyProfile, worldPosition } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
 import { capabilityBlocked } from './status-capabilities.js';
 import { chargeWork } from './work-budget.js';
 import { countDomainWork } from './diagnostic-counters.js';
+import { sensoryInputRevision, stateChangeRevision } from './dependencies.js';
+import { isDraft } from 'immer';
 import {
   nativeResponseProfile,
   type NativeDanger,
@@ -47,22 +52,135 @@ export function nativeDangerExpiresAt(
         profile.retentionSeconds;
 }
 
-function dangerous(profile: NativeResponseProfile, source: Entity): boolean {
-  const actor = source.actor;
-  if (!actor?.alive || actor.incapacitated || !activelyParticipates(source)) return false;
-  if (
+/** A phase may interrupt an attack, so select its potential bodily sources before
+ * checking current action/life/sight. Static species/body/capability facts remain
+ * stable during exposure; an actual danger still needs the complete predicate. */
+function nativePotentialDangerSource(profile: NativeResponseProfile, source: Entity): boolean {
+  const actor = nativeSourceActor(source);
+  return !!(
+    actor &&
+    (nativeDangerBody(profile, actor) ||
+      (profile.dangers.currentNaturalAttack && actor.naturalStrikeIds?.length))
+  );
+}
+function nativeDangerBody(profile: NativeResponseProfile, actor: NonNullable<Entity['actor']>) {
+  const body = actor.body && readOnlyDraftView(actor.body);
+  return (
     profile.dangers.species.includes(actor.species ?? '') ||
-    (actor.body && profile.dangers.bodyPlans.includes(actor.body.plan))
-  )
-    return true;
-  const action = actor.action;
+    !!(body && profile.dangers.bodyPlans.includes(body.plan))
+  );
+}
+
+/** One existing exposure phase owns these derived sets. Common physical eligibility
+ * is shared; retained evidence and old-body aliases stay observer-specific. The
+ * caller's selected contact query preserves ordinary cell bounds and source order.
+ * docs/projects/first-playable-world-tech-design.md#select-physical-danger-candidates-before-native-exposure */
+export function prepareNativeDangerSources(world: WorldState, sourceIds: Iterable<string>) {
+  let sources: Entity[] | undefined, remains: Map<string, string[]> | undefined;
+  const profiles = new Map<NativeResponseProfile, ReadonlySet<string>>();
+  return (observer: Entity): ReadonlySet<string> | undefined => {
+    const selection = nativeResponseSightSelection(world, observer);
+    if (selection.kind !== 'danger') return;
+    sources ??= [...sourceIds].flatMap((id) => {
+      const entity = entityGet(readOnlyDraftView(world.entities), id);
+      return entity?.actor ? [entity] : [];
+    });
+    let common = profiles.get(selection.profile);
+    if (!common) {
+      const selected = new Set<string>();
+      for (const source of sources) {
+        chargeWork({ tests: 1 });
+        countDomainWork('nativeResponseExposureSourceChecks');
+        if (nativePotentialDangerSource(selection.profile, source)) selected.add(source.id);
+      }
+      profiles.set(selection.profile, (common = selected));
+    }
+    if (!selection.sourceIds.size) return common;
+    if (!remains) {
+      remains = new Map();
+      for (const source of sources) {
+        if (!source.remains) continue;
+        const id = source.remains.sourceId;
+        let aliases = remains.get(id);
+        if (!aliases) remains.set(id, (aliases = []));
+        aliases.push(source.id);
+      }
+    }
+    let selected: Set<string> | undefined;
+    const include = (id: string) => {
+      if (!common.has(id)) (selected ??= new Set(common)).add(id);
+    };
+    for (const id of selection.sourceIds) {
+      include(id);
+      for (const alias of remains.get(id) ?? []) include(alias);
+    }
+    return selected ?? common;
+  };
+}
+
+/** Current physical eligibility only; no observer's knowledge or danger record. */
+export function nativeDangerSource(profile: NativeResponseProfile, source: Entity): boolean {
+  const actor = nativeSourceActor(source);
+  if (!actor?.alive || actor.incapacitated || !activelyParticipates(source)) return false;
+  if (nativeDangerBody(profile, actor)) return true;
+  const action = actor.action && readOnlyDraftView(actor.action);
   return !!(
     profile.dangers.currentNaturalAttack &&
     action?.type === 'strike' &&
     action.stage === 'working' &&
     action.strikePhase !== 'recovery' &&
-    actor.naturalStrikeIds?.includes(action.definitionId ?? '')
+    actor.naturalStrikeIds &&
+    readOnlyDraftView(actor.naturalStrikeIds).includes(action.definitionId ?? '')
   );
+}
+
+export type NativeSightSelection = { accepts: (source: Entity) => boolean } & (
+  | { kind: 'all' }
+  | { kind: 'known'; sourceIds: ReadonlySet<string> }
+  | { kind: 'danger'; profile: NativeResponseProfile; sourceIds: ReadonlySet<string> }
+);
+
+/** Only this memoryless controller's consumed sight sources can require a crossing.
+ * Old exact bodies remain relevant until actual sight resolves them, including remains.
+ * The predicate belongs to one unchanged query, never to saved state or a later turn.
+ * docs/projects/combat-and-threat-responses-tech-design.md#dense-alarm-sight-preparation-follow-through */
+export function nativeResponseSightSelection(
+  world: WorldState,
+  observer: Entity,
+): NativeSightSelection {
+  const animal = readOnlyDraftView(observer).animal,
+    current = animal && readOnlyDraftView(animal).episode,
+    episode = current && readOnlyDraftView(current),
+    profile = episode && nativeResponseProfile(world, episode.profilePin);
+  // Missing preparation cannot prove that any candidate is irrelevant.
+  if (!episode) {
+    const exposed = world.perceptionEpisodes?.[observer.id];
+    return {
+      kind: 'known',
+      sourceIds: new Set(Object.keys(exposed ?? {})),
+      accepts: (source) => !!exposed && Object.hasOwn(exposed, source.id),
+    };
+  }
+  if (!profile) return { kind: 'all', accepts: (_source) => true };
+  const dangers = readOnlyDraftView(episode.dangers);
+  const retainedSources = new Set<string>();
+  for (const danger of Object.values(dangers)) {
+    chargeWork({ tests: 1 });
+    if (danger.kind === 'body') retainedSources.add(danger.sourceId);
+  }
+  const accepts = (source: Entity): boolean => {
+    chargeWork({ tests: 1 });
+    countDomainWork('nativeResponseSightSourceChecks');
+    if (nativeDangerSource(profile, source)) return true;
+    const id = source.remains?.sourceId ?? source.id;
+    const retained =
+      !!source.actor &&
+      retainedSources.has(id) &&
+      dangers[nativeBodyDangerKey(id, source.actor.physicalLife ?? 0)]?.kind === 'body';
+    if (!retained) countDomainWork('nativeResponseSightSourceExclusions');
+    return retained;
+  };
+  return { kind: 'danger', profile, sourceIds: retainedSources, accepts };
 }
 function samePoint(a: Position, b: Position): boolean {
   return a.x === b.x && a.y === b.y && a.z === b.z;
@@ -83,7 +201,70 @@ export type NativeDangerFrame =
  * candidates only; actual sight admits each estimate. No local-density cutoff or
  * retained-history scan can substitute for completeness.
  * docs/worlds/base/animal-responses.md#potential-dangers-during-an-alarm */
+const dangerAssessments = new WeakMap<
+  WorldState,
+  Map<
+    string,
+    {
+      episode: string;
+      at: number;
+      sensory: number;
+      state: number;
+      manifest: number;
+      geometry: number;
+      mapRevision: number;
+      frame: NativeDangerFrame;
+    }
+  >
+>();
 export function reconcileNativeDangers(
+  world: WorldState,
+  observer: Entity,
+  episode: NativeResponseEpisode,
+  candidates?: Iterable<Entity>,
+): NativeDangerFrame {
+  const owned = isDraft(world) && observer.animal?.episode === episode,
+    sensory = sensoryInputRevision(world),
+    state =
+      stateChangeRevision(world, 'body') +
+      stateChangeRevision(world, 'contribution') +
+      stateChangeRevision(world, 'participation') +
+      stateChangeRevision(world, 'behavior'),
+    manifest = world.moduleManifest.revision,
+    geometry = world.assemblyGeometryRevision ?? 0,
+    mapRevision = world.map.spatial.revision,
+    retained = owned ? dangerAssessments.get(world)?.get(observer.id) : undefined;
+  if (
+    retained &&
+    retained.episode === episode.id &&
+    retained.at === world.simTime &&
+    retained.sensory === sensory &&
+    retained.state === state &&
+    retained.manifest === manifest &&
+    retained.geometry === geometry &&
+    retained.mapRevision === mapRevision
+  ) {
+    countDomainWork('nativeResponseDangerReuses');
+    return retained.frame;
+  }
+  const frame = reconcileCurrentNativeDangers(world, observer, episode, candidates);
+  if (owned && frame.status === 'complete') {
+    let entries = dangerAssessments.get(world);
+    if (!entries) dangerAssessments.set(world, (entries = new Map()));
+    entries.set(observer.id, {
+      episode: episode.id,
+      at: world.simTime,
+      sensory,
+      state,
+      manifest,
+      geometry,
+      mapRevision,
+      frame,
+    });
+  }
+  return frame;
+}
+function reconcileCurrentNativeDangers(
   world: WorldState,
   observer: Entity,
   episode: NativeResponseEpisode,
@@ -103,9 +284,23 @@ export function reconcileNativeDangers(
   const newlyVisible: string[] = [];
   let changed = false;
   countDomainWork('nativeResponseDangerQueries');
-  for (const source of complete
-    ? (candidates ?? nearbyEntities(world, worldPosition(observer), radius))
-    : []) {
+  const selected =
+    complete && !candidates
+      ? nativeDangerSourceIds(
+          world,
+          profile,
+          new Set(
+            previous.flatMap(([, danger]) => (danger.kind === 'body' ? [danger.sourceId] : [])),
+          ),
+        )
+      : undefined;
+  const sources = complete
+    ? (candidates ??
+      (selected
+        ? nearbySelectedEntities(world, worldPosition(observer), radius, selected)
+        : nearbyEntities(world, worldPosition(observer), radius)))
+    : [];
+  for (const source of sources) {
     countDomainWork('nativeResponseDangerCandidates');
     chargeWork({ tests: 1 });
     if (source.id === observer.id || !source.actor) continue;
@@ -119,7 +314,8 @@ export function reconcileNativeDangers(
       if (episode.dangers[key]?.kind === 'body' && sees(source)) visiblyEnded.add(key);
       continue;
     }
-    if (!dangerous(profile, source) || !sees(source)) continue;
+    const known = episode.dangers[nativeBodyDangerKey(source.id, source.actor.physicalLife ?? 0)];
+    if ((!known && !nativeDangerSource(profile, source)) || !sees(source)) continue;
     const physicalLife = source.actor!.physicalLife ?? 0;
     const key = nativeBodyDangerKey(source.id, physicalLife);
     visible.add(key);
@@ -160,7 +356,7 @@ export function reconcileNativeDangers(
           current &&
           (current.actor?.physicalLife ?? 0) === old.physicalLife &&
           sees(current) &&
-          !dangerous(profile, current))
+          !current.actor?.alive)
       ) {
         delete episode.dangers[key];
         changed = true;
@@ -190,6 +386,34 @@ export function reconcileNativeDangers(
   };
 }
 
+/** A physical preview may test landing permission without publishing exposure.
+ * Only danger records' scalar visibility fields are mutated by reconciliation. */
+export function readNativeDangers(
+  world: WorldState,
+  observer: Entity,
+  episode: NativeResponseEpisode,
+): NativeDangerFrame {
+  return reconcileNativeDangers(world, observer, {
+    ...episode,
+    dangers: Object.fromEntries(
+      Object.entries(episode.dangers).map(([key, danger]) => [key, { ...danger }]),
+    ),
+  });
+}
+
+export function nativeDangersClearAt(
+  observer: Entity,
+  point: WorldPoint,
+  frame: Extract<NativeDangerFrame, { status: 'complete' }>,
+  at: number,
+): boolean {
+  return frame.records.every(
+    ({ danger }) =>
+      nativeDangerSeparation(observer, point, danger, frame.profile, at) >=
+      frame.profile.avoidanceDistance + frame.profile.clearanceMargin - SPATIAL_LIMITS.epsilon,
+  );
+}
+
 const pointExtent = { radius: 0, height: 0 };
 /** Current observed/remembered geometry only, with no hidden-source dereference. */
 export function nativeDangerSeparation(
@@ -213,8 +437,8 @@ export function nativeDangerSeparation(
  * route passing another personally perceived danger. This selects no movement. */
 export function nativeRouteDangerSeparation(
   observer: Entity,
-  from: SurfacePoint,
-  path: readonly SurfacePoint[],
+  from: WorldPoint,
+  path: readonly WorldPoint[],
   danger: NativeDanger,
   profile: NativeResponseProfile,
   at: number,

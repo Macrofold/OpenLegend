@@ -41,7 +41,7 @@ export function inventionMaterials(world: WorldState, observed: ActorObservation
         native: !definition.recipeId,
         ...(definition.nutrition !== undefined ? { nutrition: definition.nutrition } : {}),
         ...(definition.cooked !== undefined ? { cooked: definition.cooked } : {}),
-        ...(definition.launcher ? { launcher: definition.launcher } : {}),
+        ...(definition.rangedWeapon ? { rangedWeapon: definition.rangedWeapon } : {}),
         ...(definition.melee ? { melee: definition.melee } : {}),
         ...(definition.ammunition ? { ammunition: definition.ammunition } : {}),
         ...(definition.gatheringTool ? { gatheringTool: definition.gatheringTool } : {}),

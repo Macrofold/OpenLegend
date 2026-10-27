@@ -19,6 +19,8 @@ type CameraTargetImplementation = {
   destroy(device: pc.GraphicsDevice): void;
 };
 
+const SUNLIGHT_INTERPOLATION_SECONDS = 0.05;
+
 /** Renderer-only approximations. Mechanical bodies, hearing and sight never use these shaders.
  * docs/world-presentation.md#sprite-lighting
  */
@@ -130,6 +132,27 @@ export class WorldPresentation {
   private readonly selectedLights = new Set<string>();
   private readonly sunDirection = new pc.Vec3();
   private readonly sunRotation = new pc.Quat();
+  private sunlightSample?: {
+    worldId: string;
+    saveTimeline?: string;
+    scope?: string;
+    clock: GameView['clock'];
+  };
+  private sunlightSeconds = 0;
+  private sunlightFromSeconds = 0;
+  private sunlightElapsed = 0;
+  private readonly updateSunlight = (dt: number): void => {
+    const clock = this.sunlightSample?.clock;
+    if (!clock || this.sunlightSeconds === clock.seconds) return;
+    this.sunlightElapsed = Math.min(SUNLIGHT_INTERPOLATION_SECONDS, this.sunlightElapsed + dt);
+    this.sunlightSeconds =
+      this.sunlightElapsed === SUNLIGHT_INTERPOLATION_SECONDS
+        ? clock.seconds
+        : this.sunlightFromSeconds +
+          (clock.seconds - this.sunlightFromSeconds) *
+            (this.sunlightElapsed / SUNLIGHT_INTERPOLATION_SECONDS);
+    this.applySunlight();
+  };
   private shadowQuality?: ShadowQuality;
   private readonly frame: pc.CameraFrame;
   private readonly preparedTargets = new WeakSet<pc.RenderTarget>();
@@ -164,7 +187,9 @@ export class WorldPresentation {
     // Angular spread, not a world-space blur radius: large values make the
     // blocker search miss small bodies. Keep the sun close to a small disk.
     sun.light!.penumbraSize = 0.015;
-    sun.light!.shadowSamples = 16;
+    // Each filter sample blends four depth comparisons. Eight samples retain
+    // soft penumbras without quadrupling the previous 16-point filter's reads.
+    sun.light!.shadowSamples = 8;
     sun.light!.shadowBlockerSamples = 16;
     this.frame = new pc.CameraFrame(app, camera.camera!);
     const updateFrame = this.frame.update.bind(this.frame);
@@ -181,6 +206,7 @@ export class WorldPresentation {
     this.frame.update();
     this.pixels = new ScenePixels(app.graphicsDevice, camera.camera!);
     app.on('prerender', this.updatePixels);
+    app.on('update', this.updateSunlight);
   }
   private prepareCameraTarget(): void {
     const device = this.app.graphicsDevice;
@@ -284,9 +310,9 @@ export class WorldPresentation {
     // Clustered lights use the shared atlas, not individual light resolutions.
     // docs/world-presentation.md#shadow-quality
     this.app.scene.lighting.shadowType = settings.local;
-    this.app.scene.lighting.shadowAtlasResolution = settings.resolution;
+    this.app.scene.lighting.shadowAtlasResolution = settings.localResolution;
     this.sun.light!.shadowType = settings.sun;
-    this.sun.light!.shadowResolution = settings.resolution;
+    this.sun.light!.shadowResolution = settings.sunResolution;
     return true;
   }
   private revealMaterial(source: pc.StandardMaterial): pc.StandardMaterial {
@@ -657,11 +683,55 @@ export class WorldPresentation {
     this.protectionMaterials.get(source)?.destroy();
     this.protectionMaterials.delete(source);
   }
-  lighting(view: GameView): void {
-    const { daylight, toSun } = sunlightAtHour(view.clock.hour);
+  private receiveSunlight(view: GameView): void {
+    const { clock } = view;
+    const previous = this.sunlightSample;
+    const before = previous?.clock;
+    const delta = before ? clock.seconds - before.seconds : 0;
+    const immediate =
+      !previous ||
+      previous.worldId !== view.worldId ||
+      previous.saveTimeline !== view.saveTimeline ||
+      previous.scope !== view.access?.scope ||
+      clock.paused ||
+      clock.preparingNavigation ||
+      before?.paused ||
+      before?.preparingNavigation ||
+      delta < 0 ||
+      delta > Math.max(1, 0.25 * clock.baseRatio * clock.speed) ||
+      before?.speed !== clock.speed ||
+      before?.baseRatio !== clock.baseRatio ||
+      before?.offsetHours !== clock.offsetHours ||
+      before?.daylight?.startHour !== clock.daylight?.startHour ||
+      before?.daylight?.endHour !== clock.daylight?.endHour ||
+      before?.daylight?.noonElevationDegrees !== clock.daylight?.noonElevationDegrees;
+    this.sunlightSample = {
+      worldId: view.worldId,
+      saveTimeline: view.saveTimeline,
+      scope: view.access?.scope,
+      clock,
+    };
+    if (immediate) {
+      this.sunlightSeconds = clock.seconds;
+    } else if (delta !== 0) {
+      this.sunlightFromSeconds = this.sunlightSeconds;
+      this.sunlightElapsed = 0;
+    }
+    // Clock receipt bounds this short transition: after 50 ms it settles at
+    // that exact sample, including if the connection stops sending. Repeated
+    // quality/art updates reapply lighting without restarting the transition.
+    // docs/world-presentation.md#sun-path
+    this.applySunlight();
+  }
+  private applySunlight(): void {
+    const clock = this.sunlightSample!.clock;
+    // Use the received hour's offset and a seconds delta, so midnight does not
+    // interpolate backwards through an entire day.
+    const hour = clock.hour + (this.sunlightSeconds - clock.seconds) / 3600;
+    const { daylight, toSun } = sunlightAtHour(hour, clock.daylight);
     this.sunDirection.set(toSun.x, toSun.y, toSun.z);
     // PlayCanvas directional rays follow local −Y. Use world orientation so camera
-    // motion cannot move the sun; received clock updates also handle pause/load/rewind.
+    // motion cannot move the sun; clock discontinuities snap before this call.
     this.sun.setRotation(this.sunRotation.setFromDirections(pc.Vec3.UP, this.sunDirection));
     if (this.survivalAtmosphere)
       this.app.scene.ambientLight.set(
@@ -677,6 +747,9 @@ export class WorldPresentation {
       );
     this.sun.light!.intensity = (this.survivalAtmosphere ? 1.08 : 1.2) * daylight;
     this.sun.enabled = daylight > 0.001;
+  }
+  lighting(view: GameView): void {
+    this.receiveSunlight(view);
     const p = view.player.position;
     // Only currently authorized sources illuminate the scene. Retained history
     // never becomes a live light emitter. See the shared publication contract.
@@ -724,6 +797,7 @@ export class WorldPresentation {
     this.interactionMeshes.clear();
     this.hover = undefined;
     this.app.off('prerender', this.updatePixels);
+    this.app.off('update', this.updateSunlight);
     this.pixels.destroy();
     this.effects?.destroy();
     this.effectSources.clear();

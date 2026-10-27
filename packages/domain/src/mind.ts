@@ -1,3 +1,9 @@
+import {
+  constructionPermissionBatch,
+  absorbConstructionPermissionBatch,
+  finishConstructionPermissionBatch,
+  type NativeExecutionPermissions,
+} from './construction-permissions.js';
 import { entityGet } from './entity-collection.js';
 import { dreamStatus, dreamPolicy } from './cognition-policy.js';
 import { bodyThinkingBlocked, bodyEligibilityRevision } from './body-policy.js';
@@ -187,6 +193,7 @@ export function commitCognition(
   input: WorldState,
   binding: CognitionBinding,
   proposal: MindProposal,
+  permissions: NativeExecutionPermissions = {},
 ): Transition {
   const reject = (message: string) => ({
     world: input,
@@ -384,6 +391,11 @@ export function commitCognition(
     return reject('Mind capacity or document reference invalid.');
   let world = draftWorld(input);
   let events: Transition['events'] = [];
+  const construction = constructionPermissionBatch(
+    input.id,
+    permissions.constructionPermissions ?? [],
+    permissions.campAssetPermissions ?? [],
+  );
   if (proposal.actionId !== null) {
     if (
       !Object.hasOwn(binding.actions, proposal.actionId) ||
@@ -428,6 +440,13 @@ export function commitCognition(
         binding.expectedPlan,
         [],
         binding.entityEpisodes,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        permissions,
       );
       const result =
         transition.world.responseReceipts?.[`${binding.decisionId}:action`]?.components['choice'];
@@ -435,6 +454,7 @@ export function commitCognition(
         return reject(result?.message ?? transition.outcome.message);
       world = draftWorld(transition.world);
       events = transition.events;
+      absorbConstructionPermissionBatch(construction, transition);
     }
   }
   mind.revision++;
@@ -457,7 +477,10 @@ export function commitCognition(
   // older decisions after they fall out of this recent idempotency window.
   for (const key of Object.keys(mind.receipts).slice(0, -300)) delete mind.receipts[key];
   (world.minds ??= {})[binding.actorId] = mind;
-  return finish(world, events, outcome(true, 'cognition-committed', 'Cognition accepted.'));
+  return finishConstructionPermissionBatch(
+    finish(world, events, outcome(true, 'cognition-committed', 'Cognition accepted.')),
+    construction,
+  );
 }
 
 /** Fallible impressions are eligible optional recollections, never exact grant support. */

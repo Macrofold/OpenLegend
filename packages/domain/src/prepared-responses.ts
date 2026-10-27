@@ -83,6 +83,8 @@ export interface PreparedResponseOption extends PreparedResponseMethod {
 export interface PreparedResponsePurpose {
   id: string;
   purpose: ResponsePurposeBinding;
-  description: string;
+  label: string;
+  meaning: string;
+  roleDescriptions: Record<string, string>;
   options: PreparedResponseOption[];
 }

@@ -1,8 +1,10 @@
 # Combat and threat responses: feature specification
 
-| Status      | Current progress                                                                                                                            | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-22   |
+| Status      | Current progress                                                                                                                               | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Physical combat, animal responses and busy-character choices are installed; Ada’s counterattacks and final combined qualification remain open. | 2026-10-25   |
+
+**Behavior alignment updated:** 2026-10-23T06:11:21Z.
 
 ## Purpose and authority
 
@@ -14,11 +16,25 @@ Native code may implement an authored world's animal policy. The engine supplies
 
 The reusable decision architecture belongs to [agency](../agent-agency.md#shared-deliberation-different-ways-to-choose) and [action capabilities](../action-capabilities.md#prepared-choices-and-prospective-work-transitions). Ordinary task changes, optional speech and defense share exact choices, work consequences, admission and actual results. Combat selects its particular purposes, appraisal and two-call strategy. Human shortcuts stay direct, ordinary animals stay native, and a character can still choose an ordinary action without generating a thought or goal. The first delivery must demonstrate this reuse through the [shared-contract qualification cases](../maintainers/combat-and-threat-responses.md#shared-contract-qualification).
 
+Attack preparation does not
+alarm animals; personally observed actual attacks do. Ground escape uses the
+[sequential 10–15 m leg, 75%/50% thresholds and ten-angle maximum](../worlds/base/animal-responses.md#sequential-ground-escape).
+Animal navigation waits hold only that animal; other callers retain their existing
+world hold unless their request selects otherwise. Population cases at 100/500
+animals are measurements, not population throughput acceptance targets.
+
+The selected world
+checks ordinary sight at bounded current-world samples instead of forecasting
+future visibility or danger-clearance crossings. Brief visual opportunities can
+be missed. Actual attack/sound evidence, contact and action admission retain
+their current checks; [time fidelity](../worlds/base/time.md#spatial-fidelity) owns
+the cadence. This does not change animal speed, avoidance, preparation or harm.
+
 ## Accepted outcomes
 
 1. Released projectiles apply the selected world's contact-damage law to the body or material they actually contact. An unintended living interceptor is not immune merely because it was not the selected target.
 2. Human players may deliberately attack other physically present, vulnerable players in this world. Account/control authority, exact physical-life binding and departure protection remain separate from fictional hostility.
-3. Alarmed animals consider all locally perceived potential dangers, choose reachable safer destinations, and remain wary until both distance and continuous safety conditions are met. Ordinary animals make no Decision API calls.
+3. Alarmed animals consider all locally perceived potential dangers, try reachable escape directions sequentially, and remain wary until both distance and continuous safety conditions are met. Ordinary animals make no Decision API calls.
 4. Species movement is authored in the world's units, with plausibly faster escape than the current uniformly slow animal motion.
 5. In the ordinary, feasible, unprovoked attack scenario, Ada must independently choose and attempt a physical counterattack. Authored personality, present evidence, feelings and the available choices must produce that response. A name-specific retaliation branch or a scripted biography instruction cannot satisfy acceptance.
 6. Busy characters receive relevant threats, context and feasible response choices. Existing work is not a reason to hide attacks or defense; the chosen response explicitly retains, replaces or interrupts work through its existing owner.
@@ -37,13 +53,20 @@ The [shared combat contract](stealth-awareness-tech-design.md#threat-preparednes
 
 The intended first loop is approach, provocation or attack, understandable response, an opportunity to retreat or change tactics, and a readable end to the immediate encounter. A harmless berry bush still offers gathering and an ordinary person still offers speaking. Physical defense has value because bodies, terrain, distance and time affect the result.
 
+Ordinary bows reach beyond prey's avoidance distance: the selected world admits
+4–30-metre bow designs and supplies a 24-metre Field bow. This October 22 tuning
+also applies to the watchpost archer. It changes the former 10-metre family ceiling
+and 8-metre Field bow, while retaining shot preparation, flight speed, damage,
+steadiness, finite ammunition and physical contact. [The world profile](../worlds/base/ranged-counterplay.md)
+owns these values; longer range does not guarantee a hit.
+
 The project favors distinct authored lives over a universal enemy state. Ada may be practical, protective of her own future and unwilling to submit to casual violence while another character responds differently. Animals have efficient authored options rather than model-generated thoughts. Neither system needs an invisible global hostility score that overrides all other decisions.
 
 ### Deliberately deferred
 
 Long-term relationship change, reconciliation, reputation, law and communal punishment remain separate work. This project retains causal evidence for their eventual consumers but does not invent new relationship scores.
 
-Richer animal ecology—offspring, den protection, packs and herds, predation, hunger-driven hunting, taming and learning—and optional animal cognition are recorded as later possibilities. They are not prerequisites for useful fleeing now. General ranged penetration, ricochet, automatic repeated attacks, universal tactical command systems and new combat pausing are also outside this first implementation.
+Richer animal ecology—offspring, den protection, packs and herds, predation, hunger-driven hunting, taming and learning—and optional animal cognition are recorded as later possibilities. They are not prerequisites for useful fleeing now. General ranged penetration, ricochet, automatic repeated attacks, universal tactical command systems and new combat pausing are also outside this first implementation. Player-execution interactions remain outside CTR's selected scope. The selected [ND38 feature](action-execution-and-skill-expression-feature-spec.md) and [technical design](action-execution-and-skill-expression-tech-design.md) now define how optional hold/release timing, exact point aiming and compatible movement compose with admitted native attacks. Their implementation and qualification remain open under ASE; CTR retains its permission, actual-contact, personal-evidence and threat-response responsibilities.
 
 ## Journeys and acceptance structure
 
@@ -58,6 +81,8 @@ Prove the central playable paths early: an independently chosen response to an a
 ### A shot has physical consequences
 
 The player chooses and reviews the exact shot while it can still be withheld. A released projectile then follows its captured trajectory and the selected world's contact law. If Ada, another player, an animal or a vulnerable former shooter physically crosses it first, that actual body receives the ordinary contact-defense and injury result. A shield can prevent harm through its real coverage; scenery can stop a projectile through its supported material response. Selecting a different target, calling the shot practice, losing the shooter or discovering that the new impact would be lethal cannot retrospectively make the projectile harmless.
+
+Aiming may lead a moving target only from motion the shooter has actually seen. The selected world uses the observed straight movement to estimate an intercept within the existing flight range; unseen, ambiguous or unsupported motion supplies no lead. Release still requires the current visible target, then fixes the trajectory. Preparation, projectile speed, range and accuracy remain unchanged. This owner-approved aiming change replaces aiming exclusively at the currently observed body point; it does not grant knowledge of a future route.
 
 This initial family still stops at its first physical contact. It does not pierce multiple bodies or introduce general structural destruction. Intended target, actual contact, observed outcome and private knowledge remain distinct. A shooter who cannot see the impact does not acquire a damage report or an unseen person's identity. The [ranged world profile](../worlds/base/ranged-counterplay.md#selected-contact-consequences) owns complete contact cases and review wording.
 
@@ -152,7 +177,7 @@ Broader relationship change, reputation, witness reporting, offspring protection
 
 ## Native animals that reach safety
 
-**Selected behavior; implementation pending (CTR03–CTR04).** Ordinary animals use native deterministic or saved weighted-random decisions, with no model cognition. Their small repertoire is escape to a reachable refuge, remain alert there, continue escaping when danger follows, resume ordinary behavior after continuous safety, and remain physically blocked when no admitted route exists. Existing territorial animal strikes remain a separately selected part of the same native controller lifecycle. The [authored animal contract](../worlds/base/animal-responses.md) owns all profile values and detailed behavior.
+**Implemented; complete acceptance remains open (CTR03–CTR04).** Ordinary animals use native deterministic or saved weighted-random decisions, with no model cognition. Their small repertoire is escape to a reachable refuge, remain alert there, continue escaping when danger follows, resume ordinary behavior after continuous safety, and remain physically blocked when no admitted route exists. Existing territorial animal strikes remain a separately selected part of the same native controller lifecycle. The [authored animal contract](../worlds/base/animal-responses.md) owns all profile values and detailed behavior.
 
 ### Required journeys
 

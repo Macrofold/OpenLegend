@@ -1,8 +1,8 @@
 # First-playable roaming danger: feature specification
 
-| Status      | Current progress                                                                                                                                    | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The selected wildlife and independent human-trip design is complete; RW implementation, real choices and integrated encounter evidence remain open. | 2026-10-18   |
+| Status      | Current progress                                                                                                                                     | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Animals feed, hunt and regroup in Main; support-loss/save checks pass, with independent human travel, combined performance and player evidence open. | 2026-10-22   |
 
 ## Player experience and scope
 

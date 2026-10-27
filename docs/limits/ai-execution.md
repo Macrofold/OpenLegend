@@ -206,9 +206,11 @@ Original recommendation: **Review**.
 
 ## LA097
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-18 · Restrictiveness: Safe.**
 
-The embedding adapter defaults to a 15-second abort timeout and combines it with the caller's abort signal. Game callers such as action retrieval supply the configured AI timeout instead. This adapter does not independently consume the request's absolute `deadlineMs` field; a caller needing that earlier deadline must include it in its signal. Missing/uncertain completion retains the original accounting exposure and does not trigger a retry.
+The embedding adapter defaults to a 15-second operation budget and combines it with caller cancellation and the earlier absolute `deadlineMs`. Game callers such as action retrieval supply the configured AI timeout instead. The budget includes headers, body consumption and required callbacks, and ends local waiting even when cancellation is ignored. Missing/uncertain completion retains the original accounting exposure and does not trigger a retry.
+
+The [NET04 migration](../maintainers/bounded-network-requests.md#net04--migrate-all-aimacrofold-and-diagnostic-consumers) enforces the earlier absolute deadline and complete response/cleanup lifetime without changing this configured default or accounting policy.
 
 **Reason / tradeoff:** Keep a finite wait for optional search preparation and preserve directly retrieved required facts when the service is unavailable.
 
@@ -220,7 +222,7 @@ Original recommendation: **Review**.
 
 **Removed by NP01 on October 2, 2026 · Restrictiveness: — (removed).** Configuration already accepted $0–$100 per agent per UTC month with a $50 default, but the reservation owner still clamped admission to $50 on `c2e670b0`. The earlier audit's removal claim was inaccurate; the planning audit identified that mismatch. NP01 now removes the actual remaining clamp, with [synthetic $75 admission after $50, exact exhaustion, lowered/episode/background ceilings and concurrent reservation evidence](../verification/level1-decisions.md#np01-reliable-ai-outcomes-and-spending--october-2-2026).
 
-**Reason / tradeoff:** Honor the already accepted operator setting without changing the $50 default or $100 configuration maximum. Atomic admission, conservative uncertain exposure, separate episode/decision bounds and real account-owner spending authorization remain. This software allowance grants no engineering spending permission. [Reservation owner](../../apps/server/src/store.ts), [configuration](../../apps/server/src/config.ts), [NP01](../maintainers/parallel-batch-02-foundations-and-usability.md#np01--reliable-ai-outcomes-and-spending).
+**Reason / tradeoff:** Honor the already accepted operator setting without changing the $50 default or $100 configuration maximum. Atomic admission, uncertain exposure covering at least the reservation and any larger known same-attempt charge, separate episode/decision bounds and real account-owner spending authorization remain. This software allowance grants no engineering spending permission. [Reservation owner](../../apps/server/src/store.ts), [configuration](../../apps/server/src/config.ts), [NP01](../maintainers/parallel-batch-02-foundations-and-usability.md#np01--reliable-ai-outcomes-and-spending).
 
 ## LA183
 
@@ -344,7 +346,7 @@ Macrofold JSON requests use a 500,000-byte canonical body bound. Ordinary respon
 
 **Reason / tradeoff:** Keep network-size and wait protections while aligning them with the remote operations the game officially supports.
 
-[Macrofold transport](../../packages/ai/src/macrofold.ts) · [Stream framing](../../packages/ai/src/event-stream.ts).
+[Macrofold transport](../../packages/ai/src/macrofold.ts) · [Stream framing](../../packages/network/src/events.ts).
 
 Original recommendation: **Review**.
 
@@ -432,15 +434,15 @@ Active-release delivery target: **at least 95.00%** of opportunities declared im
 
 ### DE-L02 — Bounded scheduling and context retention
 
-**Implemented; default apply · Restrictiveness: Very safe.** Initially share **one active optional background-generation slot per server process** with existing background generation; do not add a separate unbounded fallback pool. Allow **16 queued escalation descriptors per process**, at most **one queued or running child per actor**, and at most **8 KiB of scalar/reference metadata per queued descriptor**. Required current execution/accounting records are not discarded on overflow. An execution with unknown completion retains its occupied slot, including across restart through durable attempt links; ending local waiting is not proof that remote work stopped. A definitively completed call with missing price frees execution capacity but retains its financial obligation.
+**Implemented; default apply · Restrictiveness: Medium.** Share **100 simultaneous background-generation operations per server process** across reconsideration, existing maintenance/indexing and urgent decisions. This replaces the initial single-operation allowance at Mike's explicit October 22 request; it is not measured provider capacity or additional funding. Allow **16 queued escalation descriptors per process**, at most **one queued or running child per actor**, and at most **8 KiB of scalar/reference metadata per queued descriptor**. Required current execution/accounting records are not discarded on overflow. Each execution with unknown completion retains one occupied position, including across restart through its exact durable attempt identity; ending local waiting is not proof that remote work stopped. Settling one attempt releases only its position. A definitively completed call with missing price frees execution capacity but retains its financial obligation.
 
 Retain a separate **one-primary-inference execution allowance per process**, including an original request that is still running after its immediate coordination slot is released. Saturation causes native/explicit deferral, never a paid fallback solely to bypass that limit. This preserves the prior effective primary concurrency and prevents the new handoff from creating unbounded remote waiters. Both execution classes reconstruct uncertain leases after restart. No new primary paid stage starts after its immediate deadline.
 
 Queue full, too-old work or oversized metadata ends optional admission with an inspectable reason; it never stalls native simulation or silently erases evidence. Hydrate request bodies only for admitted active preparation, under DE-L04. Distinct player messages and events remain in their normal stores. No payload copies containing hundreds of memories accumulate in the waiting queue.
 
-Eligible decision and maintenance classes alternate when both have work; decisions order by trusted urgency, original eligibility time and stable ID. No preemption of another actor's paid fallback. No queued coalescing across distinct events. Only one existing urgent-evidence refresh is shared across primary and higher preparation before higher reservation, within unchanged deadlines; further change ends stale. These choices favor bounded, understandable behavior over maximizing throughput, and uncertain execution can suspend optional generation until reconciled.
+Eligible decision and maintenance classes alternate when both have work; decisions order by trusted urgency, original eligibility time and stable ID. No preemption of another actor's paid fallback. No queued coalescing across distinct events. Only one existing urgent-evidence refresh is shared across primary and higher preparation before higher reservation, within unchanged deadlines; further change ends stale. Optional generation defers when all 100 positions are occupied; a single uncertain execution no longer prevents unrelated background work.
 
-Reason: conservative initial qualification and bounded retained bytes; this is not a large-population capacity claim. Increase the shared allowance only after complete-path tests show foreground/native headroom and provider/account capacity. No new stand-alone performance project is created; DE04 owns this delivery's measurement. Owner: [scheduling](../projects/decision-escalation-tech-design.md#scheduling-without-blocking-other-characters).
+Reason: the owner expanded the initial conservative allowance so one unconfirmed cancellation cannot monopolize background execution. Existing per-call/account spending, prepared-input limits, deadlines and per-world immediate admission still apply. Up to 100 prepared requests can now be retained concurrently; provider throughput, memory and complete gameplay performance at that concurrency remain unqualified under DE04. Owner: [scheduling](../projects/decision-escalation-tech-design.md#scheduling-without-blocking-other-characters).
 
 ### DE-L03 — Attempts, permissions and spending
 

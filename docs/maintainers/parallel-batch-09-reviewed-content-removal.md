@@ -64,7 +64,7 @@ RD01–RD05 belong to one independently complete assignment. There are no interm
 
 All requested review corrections and their evidence are complete in the [existing report](../verification/reviewed-content-removal.md#requested-complete-change-review--october-14-2026). The broader CE01-B qualification/indexed-proof item remains with [creator edits](creator-edits.md); no selected Batch 09 acceptance is deferred there.
 
-[Guidance reconciliation](agent-guidance.md#batch-09-lessons-and-reading-routes--october-14-2026) carries the requested review lessons forward. The completed feature specification records the saved-review opening decision and current recovery/inspection behavior with a reconciliation datetime; the design records its consultation datetime. This documentation-only follow-up changes no runtime acceptance or broader parent status.
+[Guidance reconciliation](../verification/agent-guidance/2026/2026-10-24-engineering-dispatch.md#batch-09-lessons-and-reading-routes--october-14-2026) carries the requested review lessons forward. The completed feature specification records the saved-review opening decision and current recovery/inspection behavior with a reconciliation datetime; the design records its consultation datetime. This documentation-only follow-up changes no runtime acceptance or broader parent status.
 
 ## World/engine boundary follow-up
 

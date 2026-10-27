@@ -45,6 +45,35 @@ export const WATCHPOST = {
   description:
     'A roofless ruined store. The open front between the two broken wall ends exposes the interior. A longer approach follows the outside of the long western wall, rounds the rear and reaches the eastern side opening. The taller stone segments provide full-body physical cover. Every opening and the ground outside remain routes for retreat. Inspect the actual occupants and cache; no stock is promised.',
 } as const;
+/** Translate the whole authored encounter together, before creating any body or record. */
+export function watchpostLayout(offset: { x: number; z: number } = { x: 0, z: 0 }) {
+  return {
+    ...WATCHPOST,
+    cache: { x: WATCHPOST.cache.x + offset.x, z: WATCHPOST.cache.z + offset.z },
+    occupants: WATCHPOST.occupants.map((person) => ({
+      ...person,
+      position: { x: person.position.x + offset.x, z: person.position.z + offset.z },
+    })),
+    walls: WATCHPOST.walls.map((wall) => ({
+      ...wall,
+      minX: wall.minX + offset.x,
+      maxX: wall.maxX + offset.x,
+      minZ: wall.minZ + offset.z,
+      maxZ: wall.maxZ + offset.z,
+    })),
+  };
+}
+export function watchpostReservations(offset: { x: number; z: number }) {
+  const layout = watchpostLayout(offset);
+  return [
+    {
+      minX: Math.min(...layout.walls.map((w) => w.minX)) - 2,
+      maxX: Math.max(...layout.walls.map((w) => w.maxX)) + 2,
+      minZ: Math.min(...layout.walls.map((w) => w.minZ)) - 2,
+      maxZ: Math.max(...layout.walls.map((w) => w.maxZ)) + 2,
+    },
+  ];
+}
 export const FIELD_BOW_METHOD: RecipeCandidate = {
   family: { id: 'base:flex', version: 1 },
   name: 'Field bow',
@@ -58,7 +87,7 @@ export const FIELD_BOW_METHOD: RecipeCandidate = {
     description:
       'A bow held in both hands. It launches compatible finite arrows; a carried knife or shield requires changing equipment.',
   },
-  parameters: { workSeconds: 180, damage: 18, range: 8, accuracy: 0.75 },
+  parameters: { workSeconds: 180, damage: 18, range: 24, accuracy: 0.75 },
 };
 export const FIELD_ARROW_METHOD: RecipeCandidate = {
   family: { id: 'base:arrow', version: 1 },
@@ -75,7 +104,13 @@ export const FIELD_ARROW_METHOD: RecipeCandidate = {
   },
   parameters: { workSeconds: 72, damageBonus: 0 },
 };
-export function installWatchpost(world: WorldState, makeActor: typeof createActor): void {
+export function installWatchpost(
+  world: WorldState,
+  makeActor: typeof createActor,
+  offset?: { x: number; z: number },
+  conditions?: Record<'kest' | 'orin', { fullness: number; energy: number }>,
+): void {
+  const layout = watchpostLayout(offset);
   const ground = (p: { x: number; z: number }) => starterGroundAt(world.map.spatial, p.x, p.z);
   const bow = installRecipe(world, FIELD_BOW_METHOD, {
     source: 'authored-world',
@@ -85,8 +120,10 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
     source: 'authored-world',
     profile: { ...world.profile },
   }).recipe;
-  const shield = Object.values(world.recipes).find((r) => r.familyPin.id === 'base:shield')!;
-  for (const wall of WATCHPOST.walls) {
+  const shield = Object.values(world.recipes).find(
+    (r) => r.source.kind === 'family' && r.source.familyPin.id === 'base:shield',
+  )!;
+  for (const wall of layout.walls) {
     const floor = Math.min(
       ground({ x: wall.minX, z: wall.minZ }).y,
       ground({ x: wall.maxX, z: wall.maxZ }).y,
@@ -104,28 +141,28 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
     });
   }
   world.map.spatial.revision++;
-  const point = ground(WATCHPOST.cache);
+  const point = ground(layout.cache);
   const cache: Entity = {
-    id: WATCHPOST.cacheId,
+    id: layout.cacheId,
     name: 'Broken Watchpost cache',
     kind: 'item-pile',
-    description: WATCHPOST.description,
+    description: layout.description,
     placement: worldPlacement(point, point.surfaceId),
     spatial: baseSpatial('object'),
     appearance: 'study:chest-plank-cache',
   };
   entitySet(world.entities, cache.id, cache);
   const place: PlaceDefinition = {
-    id: WATCHPOST.id,
+    id: layout.id,
     revision: 1,
     label: 'Broken Watchpost',
-    description: WATCHPOST.description,
+    description: layout.description,
     point,
     landmarkId: cache.id,
     exposure: { kind: 'arrive-and-see', radius: 9, importance: 8 },
   };
   world.places![place.id] = place;
-  for (const resident of WATCHPOST.occupants) {
+  for (const resident of layout.occupants) {
     const p = ground(resident.position);
     entitySet(world.entities, resident.id, {
       id: resident.id,
@@ -135,7 +172,13 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
       kind: 'npc',
       spatial: { ...baseSpatial('person'), heading: Math.PI },
       placement: worldPlacement(p, p.surfaceId),
-      actor: makeActor(world, 'npc', 76, resident.identity),
+      actor: makeActor(
+        world,
+        'npc',
+        conditions?.[resident.id].fullness ?? 76,
+        resident.identity,
+        conditions?.[resident.id].energy,
+      ),
     });
     world.memories[resident.id] = [];
     world.knowledge[resident.id] = [];
@@ -149,8 +192,8 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
       e.placement.parentEntityId === 'kest',
   )!;
   // Their authored shared history binds names to these people, not to visitors.
-  for (const observer of WATCHPOST.occupants)
-    for (const subject of WATCHPOST.occupants)
+  for (const observer of layout.occupants)
+    for (const subject of layout.occupants)
       if (observer.id !== subject.id)
         assignGivenName(
           world,
@@ -163,11 +206,16 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
   equipLot(
     world,
     'kest',
-    addItem(world, 'kest', shield.outputDefinitionId, 1),
+    addItem(world, 'kest', shield.outputs[0]!.definition.id, 1),
     'authored-watchpost',
   );
-  equipLot(world, 'orin', addItem(world, 'orin', bow.outputDefinitionId, 1), 'authored-watchpost');
-  addItem(world, 'orin', arrow.outputDefinitionId, 6);
+  equipLot(
+    world,
+    'orin',
+    addItem(world, 'orin', bow.outputs[0]!.definition.id, 1),
+    'authored-watchpost',
+  );
+  addItem(world, 'orin', arrow.outputs[0]!.definition.id, 6);
   learnRecipe(world, 'kest', shield.id, 'authored', 'base:watchpost-loadout');
   learnRecipe(world, 'orin', bow.id, 'authored', 'base:watchpost-loadout');
   learnRecipe(world, 'orin', arrow.id, 'authored', 'base:watchpost-loadout');
@@ -176,7 +224,7 @@ export function installWatchpost(world: WorldState, makeActor: typeof createActo
     ['cord', 2],
     ['prepared_fiber', 1],
     ['stone', 4],
-    [arrow.outputDefinitionId, 4],
+    [arrow.outputs[0]!.definition.id, 4],
   ] as const)
     addItem(world, cache.id, definitionId, quantity);
   world.itemDefinitions['watchpost-directions'] = {

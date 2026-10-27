@@ -1,3 +1,5 @@
+import { contentsExposureProfile } from '../../contents-exposure.js';
+import { definitionPin } from '../../world-modules.js';
 import type { RecipeFamilyDescriptor } from '../../invention-families.js';
 import type { RecipeCandidate } from '../../types.js';
 import { BASE_BINDING_MATERIAL, CONSTRUCTED_ITEM_STORY_FIELDS } from './items.js';
@@ -61,7 +63,18 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
       type: 'object',
       additionalProperties: false,
       required: [],
-      properties: {},
+      properties: {
+        contentsExposureProfile: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['id', 'version', 'digest'],
+          properties: {
+            id: { type: 'string', minLength: 1, maxLength: 180 },
+            version: { type: 'integer', minimum: 1, maximum: Number.MAX_SAFE_INTEGER },
+            digest: { type: 'string', minLength: 1, maxLength: 180 },
+          },
+        },
+      },
     },
     editor: {
       fields: [
@@ -105,14 +118,27 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
       `Choose ${rules.minimumPouchQuantity}–${rules.maximumPouchQuantity} actual native pouch units with fiber, flexible and pouch properties. Use one native or verified manufactured binding item for each ${rules.bindingDivisor} pouch units, rounding up to a whole item. Each cord item supplies one binding item.`,
       `Each pouch unit adds ${rules.capacityPerPouchUnit} packing units of capacity. The empty container takes one packing unit per ${rules.emptyPackingLoadDivisor} pouch units, rounded up. Work takes ${rules.workSecondsPerMaterial} game seconds per total input item. Describe the chosen quantities and physical method in ordinary language; these derived facts are not editable effects.`,
       'Choose your own fitting names and descriptions. Installation teaches the technique; ordinary crafting consumes inputs when work starts and makes one individual container on completion. Interruption does not refund materials.',
+      'An optional contentsExposureProfile must be an exact installed profile pin from the offered choices. Omit it for a pouch. An admitted open form transmits rain to eligible direct contents; it grants no waterproofing or deeper material nesting.',
       'Raw unprepared fiber alone does not qualify. Nested contents count toward capacity, and ground access is not an ownership lock.',
     ],
     rules,
   },
-  validate(_world, candidate) {
+  parameterOptions(world) {
+    return {
+      contentsExposureProfile: Object.values(world.contentsExposureProfiles ?? {}).map(
+        definitionPin,
+      ),
+    };
+  },
+  validate(world, candidate) {
     const quantity = pouchQuantity(candidate);
     const binding = Math.ceil(quantity / rules.bindingDivisor);
     const errors: string[] = [];
+    if (
+      candidate.parameters.contentsExposureProfile !== undefined &&
+      !contentsExposureProfile(world, candidate.parameters.contentsExposureProfile)
+    )
+      errors.push('Choose an exact installed open contents-exposure profile.');
     if (quantity < rules.minimumPouchQuantity || quantity > rules.maximumPouchQuantity)
       errors.push(
         `Choose ${rules.minimumPouchQuantity}–${rules.maximumPouchQuantity} pouch units.`,
@@ -123,7 +149,13 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
       );
     return errors;
   },
-  compile(_world, candidate) {
+  compile(world, candidate) {
+    const profile =
+      candidate.parameters.contentsExposureProfile === undefined
+        ? undefined
+        : contentsExposureProfile(world, candidate.parameters.contentsExposureProfile);
+    if (candidate.parameters.contentsExposureProfile !== undefined && !profile)
+      throw new Error('The selected contents-exposure profile is unavailable.');
     const quantity = pouchQuantity(candidate);
     const capacity = rules.capacityPerPouchUnit * quantity;
     const packingLoad = Math.ceil(quantity / rules.emptyPackingLoadDivisor);
@@ -134,12 +166,16 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
       outputDefinition: {
         mechanismFields: structuredClone(CONSTRUCTED_ITEM_STORY_FIELDS),
         portable: true,
+        ...(profile ? { contentsExposure: { profile: definitionPin(profile) } } : {}),
         packingLoad,
         properties: ['fiber', 'pouch'],
-        container: { capacity, maximumDepth: rules.maximumDepth },
+        container: {
+          capacity,
+          maximumDepth: rules.maximumDepth,
+        },
         characteristics: [
           {
-            key: 'capacity',
+            key: 'container-capacity',
             label: 'Capacity',
             path: 'container.capacity',
             unit: 'packing-load units',
@@ -153,6 +189,15 @@ export const BASE_CAMP_CONTAINER_FAMILY: RecipeFamilyDescriptor = {
         ],
       },
       facts: [
+        ...(profile
+          ? [
+              {
+                id: 'contents-exposure',
+                label: profile.labels.name,
+                value: profile.labels.description,
+              },
+            ]
+          : []),
         { id: 'craft-work', label: 'Crafting time', value: workSeconds, unit: 'game seconds' },
         {
           id: 'container-capacity',

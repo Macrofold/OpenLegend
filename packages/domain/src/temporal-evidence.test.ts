@@ -63,7 +63,9 @@ it('binds history to the captured receipt prefix even when later measurements sh
     bytes: 1024 * 1024,
   });
   const npc = entityGet(world.entities, NPC_ID)!;
-  setSpatialPosition(world, npc, { x: 4, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  setSpatialPosition(world, npc, { x: 4, y: 0, z: 2 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   const later = selectTemporalHistory(world.experience!.temporal, actorId, {
     limit: 1000,
@@ -80,7 +82,9 @@ it('binds history to the captured receipt prefix even when later measurements sh
     }),
   ).toEqual(prior);
   beginTemporalReceiptEpoch(world, 'different-namespace');
-  setSpatialPosition(world, npc, { x: 5, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  setSpatialPosition(world, npc, { x: 5, y: 0, z: 2 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   const newCut = captureTemporalReceiptPrefix(world, actorId);
   const restoredStream = selectTemporalHistory(world.experience!.temporal, actorId, {
@@ -122,11 +126,15 @@ it('retains intermediate actually received movement and its exact last sample on
     [2, 5],
   ] as const) {
     world.simTime = at;
-    setSpatialPosition(world, npc, { x, y: 0, z: 2 }, worldSupport(npc), 'physical');
+    setSpatialPosition(world, npc, { x, y: 0, z: 2 }, worldSupport(npc), {
+      continuity: 'physical',
+    });
     initializePerception(world, []);
   }
   world.simTime = 3;
-  setSpatialPosition(world, npc, { x: 100, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  setSpatialPosition(world, npc, { x: 100, y: 0, z: 2 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
   const selected = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
@@ -169,11 +177,11 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
     firstSubject = currentBodyLocalSubject(world, PLAYER_ID, first.id)!;
   expect(firstSubject.kind).toBe('individual');
   world.simTime = 1;
-  setSpatialPosition(world, first, { x: 100, y: 0, z: 100 }, 'terrain', 'physical');
+  setSpatialPosition(world, first, { x: 100, y: 0, z: 100 }, 'terrain', { continuity: 'physical' });
   initializePerception(world, []);
   expect(currentBodyObservation(world, PLAYER_ID, first.id)).toBeUndefined();
   world.simTime = 2;
-  setSpatialPosition(world, second, { x: 3, y: 0, z: 2 }, 'terrain', 'physical');
+  setSpatialPosition(world, second, { x: 3, y: 0, z: 2 }, 'terrain', { continuity: 'physical' });
   initializePerception(world, []);
   const secondBody = currentBodyObservation(world, PLAYER_ID, second.id)!,
     secondSubject = currentBodyLocalSubject(world, PLAYER_ID, second.id)!;
@@ -230,7 +238,7 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   ]);
   acknowledgeAttention(world, PLAYER_ID, captureAttentionPresentation(world, PLAYER_ID));
   world.simTime = 1;
-  setSpatialPosition(world, branches, { x: 1, y: 0, z: 4 }, 'terrain', 'physical');
+  setSpatialPosition(world, branches, { x: 1, y: 0, z: 4 }, 'terrain', { continuity: 'physical' });
   initializePerception(world, []);
   expect(currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId)).toEqual([
     branches.id,
@@ -247,7 +255,7 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
     NPC_ID,
   );
   world.simTime = 3;
-  setSpatialPosition(world, npc, { x: 100, y: 0, z: 100 }, 'terrain', 'physical');
+  setSpatialPosition(world, npc, { x: 100, y: 0, z: 100 }, 'terrain', { continuity: 'physical' });
   initializePerception(world, []);
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
   const lost = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
@@ -281,7 +289,9 @@ it('keeps the original exact received sequence through current-format JSON resto
   const world = scene(42);
   world.simTime = 1;
   const npc = entityGet(world.entities, NPC_ID)!;
-  setSpatialPosition(world, npc, { x: 4, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  setSpatialPosition(world, npc, { x: 4, y: 0, z: 2 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   const before = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
     bytes: 1024 * 1024,
@@ -722,7 +732,9 @@ it('shares equal received values without granting another observer the earlier h
   focus(NPC_ID, PLAYER_ID);
   const branches = entityGet(world.entities, 'branches')!;
   world.simTime = 1;
-  setSpatialPosition(world, branches, { x: 2, y: 0, z: 2 }, worldSupport(branches), 'physical');
+  setSpatialPosition(world, branches, { x: 2, y: 0, z: 2 }, worldSupport(branches), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   const exposure = currentBodyObservation(world, NPC_ID, 'branches')!.exposure.episodeId;
   expect(
@@ -761,7 +773,9 @@ it('shares equal received values without granting another observer the earlier h
   // Two actual recipients of the same changed value share this append's payload.
   // A later attention entry still has its own recording time and no earlier route.
   world.simTime = 3;
-  setSpatialPosition(world, branches, { x: 2.5, y: 0, z: 2 }, worldSupport(branches), 'physical');
+  setSpatialPosition(world, branches, { x: 2.5, y: 0, z: 2 }, worldSupport(branches), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   const currentBodyReference = (actorId: string, subject: string) =>
     bodyReference(
@@ -845,7 +859,9 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   expect(location.valueMeasuredFrom).toBe(3);
   const npc = entityGet(world.entities, NPC_ID)!;
   world.simTime = 4;
-  setSpatialPosition(world, npc, { x: 4, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  setSpatialPosition(world, npc, { x: 4, y: 0, z: 2 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   const motion = currentObservedFacets(world, PLAYER_ID, NPC_ID).find(
     (f) => f.value.kind === 'observed-motion',
@@ -859,7 +875,9 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
     )!.valueMeasuredThrough,
   ).toBe(3);
   world.simTime = 5;
-  setSpatialPosition(world, npc, { x: 100, y: 0, z: 2 }, worldSupport(npc), 'physical');
+  setSpatialPosition(world, npc, { x: 100, y: 0, z: 2 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
   initializePerception(world, []);
   const losses = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
     bytes: 1024 * 1024,

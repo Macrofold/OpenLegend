@@ -10,6 +10,7 @@ export function nativeCommandKind(kind: CommandInput['type'] | Command['type']):
     case 'construction-rest':
       return 'status-effect';
     case 'activity-request':
+    case 'repeat-work':
       return 'compose';
     default:
       return kind;

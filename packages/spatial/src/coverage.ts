@@ -20,6 +20,14 @@ export interface ExposureFootprint {
   /** Only constant-height ordering uses this interval midpoint at zero-duration crossings. */
   orderingY?: number;
 }
+/** A finite constant incident field. Overlaps use the maximum, never addition. */
+export interface IncidentRain {
+  minX: number;
+  maxX: number;
+  minZ: number;
+  maxZ: number;
+  intensity: number;
+}
 type Plane2 = readonly [number, number, number];
 const EPS = 1e-10;
 const models = new WeakMap<
@@ -161,7 +169,7 @@ function shadowRectangle(p: CoverPanel, f: ExposureFootprint) {
 export function incidentExposure(
   footprint: ExposureFootprint,
   panels: readonly CoverPanel[],
-  region?: { minX: number; maxX: number; minZ: number; maxZ: number },
+  sources?: readonly IncidentRain[],
 ): { fraction: number; coveredArea: number; clips: number } {
   const area = (footprint.maxX - footprint.minX) * (footprint.maxZ - footprint.minZ);
   if (!(area > 0)) throw new Error('An exposure footprint needs finite positive area.');
@@ -185,7 +193,7 @@ export function incidentExposure(
       minZ: p.minZ,
       maxZ: p.maxZ,
     })),
-    ...(region ? [region] : []),
+    ...(sources ?? []),
   ];
   for (const b of boundaries) {
     for (const x of [b.minX, b.maxX]) if (x > footprint.minX && x < footprint.maxX) xs.add(x);
@@ -207,11 +215,18 @@ export function incidentExposure(
       clips += relevant.length;
       const transmission = above.reduce((amount, p) => amount * p.transmission, 1);
       if (above.length) covered += cell;
-      if (
-        !region ||
-        (cx >= region.minX && cx <= region.maxX && cz >= region.minZ && cz <= region.maxZ)
-      )
-        incident += cell * transmission;
+      const intensity =
+        sources === undefined
+          ? 1
+          : sources.reduce(
+              (maximum, source) =>
+                cx >= source.minX && cx <= source.maxX && cz >= source.minZ && cz <= source.maxZ
+                  ? Math.max(maximum, source.intensity)
+                  : maximum,
+              0,
+            );
+      clips += sources?.length ?? 0;
+      incident += cell * transmission * intensity;
     }
   const fraction = incident / area;
   // Parallel-plane arithmetic must preserve exact dry/full exposure at machine
@@ -229,7 +244,7 @@ export function exposureCrossings(
   from: ExposureFootprint,
   to: ExposureFootprint,
   panels: readonly CoverPanel[],
-  region?: { minX: number; maxX: number; minZ: number; maxZ: number },
+  sources?: readonly IncidentRain[],
 ): number[] {
   if (
     ['minX', 'maxX', 'minZ', 'maxZ', 'y'].every(
@@ -259,9 +274,9 @@ export function exposureCrossings(
     [from.minZ, to.minZ],
     [from.maxZ, to.maxZ],
   ];
-  if (region) {
-    x.push([region.minX, region.minX], [region.maxX, region.maxX]);
-    z.push([region.minZ, region.minZ], [region.maxZ, region.maxZ]);
+  for (const source of sources ?? []) {
+    x.push([source.minX, source.minX], [source.maxX, source.maxX]);
+    z.push([source.minZ, source.minZ], [source.maxZ, source.maxZ]);
   }
   for (const p of panels) {
     if (p.id === from.ownPanelId) continue;

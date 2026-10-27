@@ -1,3 +1,4 @@
+import { navigationMembershipChanged } from './entity-index.js';
 import { entityGet, entityHas } from './entity-collection.js';
 import { seesEntity } from './perception.js';
 import { canReachEntity, distance, findApproachPath, findPath, isWalkable } from './spatial.js';
@@ -165,7 +166,7 @@ function pendingRouteCurrent(world: WorldState, actor: Entity, action: Action): 
   const profile = bodyProfile(actor);
   return (
     !!request &&
-    request.geometryRevision === world.map.spatial.revision &&
+    request.geometryRevision === spatialMap(world).spatial.revision &&
     request.body.radius === profile.radius &&
     request.body.height === profile.height &&
     request.body.maxSlope === profile.maxSlope &&
@@ -190,6 +191,7 @@ function pursue(world: WorldState, actor: Entity, action: Action): string | null
     if (!path || (path.status !== 'reached' && path.status !== 'pending'))
       return 'no supported route reaches where the target was last seen.';
     action.path = path.path;
+    navigationMembershipChanged(world, actor.id);
     action.navigation = path.status === 'pending' ? { request: path.request } : undefined;
   }
   return null;
@@ -253,6 +255,7 @@ export function updateFollowPath(
         ? 'the follow route exceeds the current navigation budget.'
         : 'no supported route to the perceived target remains.';
     action.path = path.path;
+    navigationMembershipChanged(world, actor.id);
     action.navigation = path.status === 'pending' ? { request: path.request } : undefined;
     follow.lastObservedPosition = { ...worldPosition(target) };
     follow.nextRepathAt = world.simTime + FOLLOW_RULES.repathSeconds;

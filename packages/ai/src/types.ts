@@ -1,3 +1,8 @@
+import type { NetworkOwner } from '@open-legend/network';
+import type {
+  MacrofoldDeploymentTarget,
+  MacrofoldOutputMode,
+} from './macrofold-inference-target.js';
 export type JsonValue =
   | null
   | boolean
@@ -36,7 +41,7 @@ export type JudgmentAnswer =
       probabilities: Record<string, number>;
       confidence?: number;
     }
-  | { type: 'noul'; noul: number };
+  | { type: 'noul'; noul: number; confidence?: number };
 
 export interface JudgeValue {
   answers: Record<string, JudgmentAnswer>;
@@ -58,6 +63,10 @@ export interface GenerateRequest extends RequestControl {
   /** Private execution progress, never serialized into a model request. */
   onProgress?: (progress: GenerationProgress) => void;
   model?: string;
+  /** Trusted deployment selected by the producer before reservation; never hosting credentials. */
+  macrofoldDeployment?: MacrofoldDeploymentTarget;
+  /** Resolved once from configured policy and deployment capabilities before reservation. */
+  macrofoldOutputMode?: MacrofoldOutputMode;
   reasoningEffort?: 'none' | 'low' | 'medium' | 'high';
   actorScope?: string;
   execution?: 'fast' | 'complex' | 'full';
@@ -116,14 +125,33 @@ export interface AiReceipt {
   model: string;
   modelVersionStatus: 'reported' | 'unavailable';
   providerRequestId?: string;
+  /** Macrofold billing admitted for this exact request, retained across configuration changes. */
+  macrofoldBillingMode?: 'managed' | 'byok';
+  /** Original local target and deliberate pin, retained for recovery outside gameplay rewind. */
+  macrofoldRequestedDeployment?: MacrofoldDeploymentTarget;
+  /** Actual immutable revision admitted for this Run, independent of current hosting status. */
+  macrofoldDeployment?: { deploymentId: string; deploymentRevisionId: string };
+  macrofoldCostAttribution?: {
+    basis: 'deployment';
+    deploymentId: string;
+    infrastructureCostIncluded: false;
+  };
   contextDigest: string;
   providerRequestDigest?: string;
   startedAt: string;
   completedAt: string;
   /** Open Legend wall time around the adapter call. */
   latencyMs: number;
-  /** Provider execution time when the intermediary reports authoritative timestamps. */
+  /** Reported execution duration; Macrofold measures provider transport and normalization, not isolated model compute. */
   providerLatencyMs?: number;
+  /** Native decision engine's reported scoring duration, excluding Macrofold transport. */
+  nativeLatencyMs?: number;
+  /** Whether the native decision engine reports truncating its input. */
+  nativeTruncated?: boolean;
+  /** Intermediary Run start to completion, including its finalization. */
+  intermediaryRunLatencyMs?: number;
+  /** Intermediary Run admission wait; not the upstream model queue. */
+  intermediaryQueueLatencyMs?: number;
   /** Provider queue time before execution, when reported separately. */
   providerQueueLatencyMs?: number;
   dispatched: boolean;
@@ -169,6 +197,8 @@ export interface OpenAiProviderConfig extends ProviderConfig {
 }
 
 export interface AiClientConfig {
+  /** Shared service-lifetime network admission; never construct per request. */
+  network?: NetworkOwner;
   jev?: ProviderConfig;
   openai?: OpenAiProviderConfig;
   fetch?: FetchTransport;

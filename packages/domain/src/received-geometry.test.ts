@@ -356,7 +356,7 @@ describe('native received relation producers', () => {
         entityGet(candidate.entities, people[1]!.id)!,
         { x: 7, y: 0, z: 2 },
         null,
-        'physical',
+        { continuity: 'physical' },
       );
       initializePerception(candidate, []);
       expect(candidate.perceptionEvidence![PLAYER_ID]!.attention!.nextRelationAt).toBeGreaterThan(
@@ -386,12 +386,16 @@ describe('native received relation producers', () => {
     const initialRemaining = attention.relationScans[key]!.remaining;
     expect(initialRemaining).toBeGreaterThan(0);
     world.simTime = 15;
-    setSpatialPosition(world, people.at(-1)!, { x: 23, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, people.at(-1)!, { x: 23, y: 0, z: 2 }, null, {
+      continuity: 'physical',
+    });
     initializePerception(world, []);
     expect(attention.relationScans[key]!.remaining).toBe(initialRemaining);
     const afterMovement = attention.relationScans[key]!.revision;
     world.simTime = 16;
-    setSpatialPosition(world, people.at(-1)!, { x: 24.5, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, people.at(-1)!, { x: 24.5, y: 0, z: 2 }, null, {
+      continuity: 'physical',
+    });
     initializePerception(world, []);
     world.simTime = 30;
     initializePerception(world, []);
@@ -458,10 +462,10 @@ describe('native received relation producers', () => {
     value.tiles = Array.from({ length: 5 }, () => Array(42).fill('grass'));
     const { world, people } = nativeScene(1, value, { x: 25, y: 2, z: 2 });
     const person = people[0]!;
-    setSpatialPosition(world, person, { x: 15, y: 2, z: 2 }, null, 'physical');
+    setSpatialPosition(world, person, { x: 15, y: 2, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     world.simTime = 15;
-    setSpatialPosition(world, person, { x: 16, y: 2, z: 2 }, null, 'physical');
+    setSpatialPosition(world, person, { x: 16, y: 2, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const cue = currentAttentionCues(world, PLAYER_ID).find(
       (value) => value.family === 'closing-drop',
@@ -485,7 +489,7 @@ describe('native received relation producers', () => {
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.episodeId;
     world.simTime = 2;
-    setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const before = world.experience!.temporal!.actors[PLAYER_ID]!.count;
     captureCurrentGeometrySupport(world, PLAYER_ID);
@@ -514,13 +518,13 @@ describe('native received relation producers', () => {
     const { world, player, people } = nativeScene(1, map());
     people[0]!.actor!.capabilities!.memory = false;
     world.simTime = 15;
-    setSpatialPosition(world, player, { x: 1.25, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, player, { x: 1.25, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.episodeId;
     const oldBlock = world.experience!.temporal!.actors[PLAYER_ID]!.captures[original.id]!.blockId;
     world.simTime = 21610;
-    setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     world.simTime = 21616;
     const temporal = world.experience!.temporal!;
@@ -594,8 +598,8 @@ describe('native received relation producers', () => {
     initializePerception(world, []);
     expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(unchangedCount);
     world.simTime = 15;
-    setSpatialPosition(world, player, { x: 2, y: 0, z: 2 }, null, 'physical');
-    setSpatialPosition(world, person, { x: 7, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, player, { x: 2, y: 0, z: 2 }, null, { continuity: 'physical' });
+    setSpatialPosition(world, person, { x: 7, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     world.simTime = 30;
     world.map.spatial.surfaces[0]!.y = -2;
@@ -749,7 +753,7 @@ describe('native received relation producers', () => {
     expect(original).toBeDefined();
     const before = world.experience!.temporal!.actors[PLAYER_ID]!.count;
     world.simTime = 2;
-    setSpatialPosition(world, person, { x: 6, y: 2, z: 2 }, null, 'physical');
+    setSpatialPosition(world, person, { x: 6, y: 2, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     expect(currentReceivedGeometry(world, PLAYER_ID).supportedThrough).toBe(2);
     const atMovement = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
@@ -798,7 +802,7 @@ describe('native received relation producers', () => {
     // no authored cliff label or private destination is supplied to the observer.
     const { world, people } = nativeScene(16, value, { x: 25, y: 2, z: 2 });
     const daughter = people[0]!;
-    setSpatialPosition(world, daughter, { x: 15, y: 2, z: 2 }, null, 'physical');
+    setSpatialPosition(world, daughter, { x: 15, y: 2, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const owner = world.perceptionEvidence![PLAYER_ID]!;
     const anchor = Object.entries(owner.attention!.candidates).find(
@@ -815,7 +819,7 @@ describe('native received relation producers', () => {
       ),
     ).toBe(true);
     world.simTime = 15;
-    setSpatialPosition(world, daughter, { x: 16, y: 2, z: 2 }, null, 'physical');
+    setSpatialPosition(world, daughter, { x: 16, y: 2, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const cue = currentAttentionCues(world, PLAYER_ID).find(
       (entry) => entry.sourceId === daughter.id && entry.family === 'closing-drop',
@@ -839,22 +843,22 @@ describe('native received relation producers', () => {
     const { world, people } = nativeScene(2, map([surface('ground', -5, 25, 0)]));
     const anchor = people[0]!,
       neighbor = people[1]!;
-    setSpatialPosition(world, anchor, { x: 5, y: 0, z: 2 }, null, 'physical');
-    setSpatialPosition(world, neighbor, { x: 11, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, anchor, { x: 5, y: 0, z: 2 }, null, { continuity: 'physical' });
+    setSpatialPosition(world, neighbor, { x: 11, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const key = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.candidates).find(
       ([, candidate]) => candidate.sourceId === anchor.id,
     )![0];
     setAttentionFocus(world, PLAYER_ID, [key]);
     world.simTime = 15;
-    setSpatialPosition(world, neighbor, { x: 7, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, neighbor, { x: 7, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const cue = currentAttentionCues(world, PLAYER_ID).find(
       (entry) => entry.sourceId === anchor.id && entry.family === 'closing-body',
     );
     expect(cue).toBeDefined();
     world.simTime = 30;
-    setSpatialPosition(world, neighbor, { x: 100, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, neighbor, { x: 100, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     world.simTime = 180;
     initializePerception(world, []);
@@ -866,10 +870,10 @@ describe('native received relation producers', () => {
     const { world, people } = nativeScene(2, map([surface('ground', -5, 25, 0)]));
     const anchor = people[0]!,
       neighbor = people[1]!;
-    setSpatialPosition(world, neighbor, { x: 11, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, neighbor, { x: 11, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     world.simTime = 15;
-    setSpatialPosition(world, neighbor, { x: 7, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, neighbor, { x: 7, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const cue = currentAttentionCues(world, PLAYER_ID).find(
       (entry) => entry.sourceId === anchor.id && entry.family === 'closing-body',
@@ -909,13 +913,9 @@ describe('native received relation producers', () => {
     const { world, people } = nativeScene(40, value);
     const person = people[0]!;
     for (const [index, neighbor] of people.slice(1).entries())
-      setSpatialPosition(
-        world,
-        neighbor,
-        { x: 11, y: 0, z: 0.5 + (index % 8) * 0.4 },
-        null,
-        'physical',
-      );
+      setSpatialPosition(world, neighbor, { x: 11, y: 0, z: 0.5 + (index % 8) * 0.4 }, null, {
+        continuity: 'physical',
+      });
     initializePerception(world, []);
     const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
     const anchorKey = Object.entries(attention.candidates).find(
@@ -923,7 +923,7 @@ describe('native received relation producers', () => {
     )![0];
     setAttentionFocus(world, PLAYER_ID, [anchorKey]);
     world.simTime = 15;
-    setSpatialPosition(world, person, { x: 7, y: 0, z: 2 }, null, 'physical');
+    setSpatialPosition(world, person, { x: 7, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const cue = currentAttentionCues(world, PLAYER_ID).find(
       (value) => value.anchorKey === anchorKey && value.family === 'closing-body',
@@ -958,7 +958,7 @@ describe('native received relation producers', () => {
       entityGet(interrupted.entities, witness.subjectId)!,
       { x: 100, y: 0, z: 2 },
       null,
-      'physical',
+      { continuity: 'physical' },
     );
     initializePerception(interrupted, []);
     expect(

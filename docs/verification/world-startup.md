@@ -4,7 +4,7 @@ These are recorded observations from the original verification log, not a new ru
 
 ## Development startup recovery
 
-The normal `.env` PostgreSQL startup failed because its saved world contained the previous `sleepPolicy` but no `statusEffectPolicy`. Read-only reconstruction of the saved checkpoint/journal reproduced the validation error. Earlier status-effect verification used a fresh temporary database and did not cover this path. The initial reset-based recovery is superseded; see [documentation history](../documentation-changelog.md#in-place-development-updates).
+The normal `.env` PostgreSQL startup failed because its saved world contained the previous `sleepPolicy` but no `statusEffectPolicy`. Read-only reconstruction of the saved checkpoint/journal reproduced the validation error. Earlier status-effect verification used a fresh temporary database and did not cover this path. The initial reset-based recovery is superseded; see [documentation history](../changelog/2026/2026-10-24-earlier-collection.md#in-place-development-updates).
 
 Manual isolated SQLite execution of the in-place replacement retained the world and actor IDs, name, energy 37, simulation time 12,345, inventory and original rest action ID. The action became a current effect instance with 456 elapsed dream seconds. Raw checkpoint/journal reconstruction confirmed the new registry was durably stored and obsolete policy/rest fields removed. Accounting was byte-for-byte unchanged and a separate integration record survived. A second startup retained identity and dream progress. Manual-save reading converted the same earlier shape without changing identity or action ownership. Malformed current registry values still rejected startup without replacing the world.
 

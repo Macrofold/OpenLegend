@@ -49,13 +49,17 @@ export async function searchInventions(
   };
   const sources = recipes.map((recipe) => ({
     id: recipe.id,
-    revision: digest({ version: recipe.version, digest: recipe.digest, descriptionVersion: 1 }),
+    revision: digest({ version: recipe.version, digest: recipe.digest, descriptionVersion: 2 }),
     text: JSON.stringify({
       name: recipe.name,
       purpose: recipe.description,
       family: inventionFamily(recipe),
       inputs: recipe.inputs,
-      output: recipe.output,
+      outputs: recipe.outputs.map((output) => ({
+        port: output.port,
+        quantity: output.quantity,
+        name: world.itemDefinitions[output.definition.id]!.name,
+      })),
       workSeconds: recipe.workSeconds,
     }),
   }));
@@ -63,7 +67,7 @@ export async function searchInventions(
     apiKey: config.embeddingKey,
     model: config.embeddingModel,
     dimensions: config.embeddingDimensions,
-    fetch: log.fetch,
+    network: log.network,
     modelPrices: config.embeddingModelPrices,
     timeoutMs: config.aiTimeoutMs,
   });

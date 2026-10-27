@@ -59,7 +59,7 @@ Each SAI row consumes its focused owner's specified work/state bounds and overfl
 
 ## SA-L08 — Controlled-player psychological acquisition
 
-**Status: Proposed — decision open. Restrictiveness: Not yet rated.** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) owns authored native interpretation, opt-in AI interpretation and native-startle-only initial scope. No option is assumed. The choice bounds the controlled-player interpreted-emotion producer/application policy, retained-appraisal treatment during direct control and its specific acceptance; native startle, NPC emotion, effective mechanics and other shared contracts have integrated contracts and remain independently implementable.
+**Status: Selected target — authored native rules. Restrictiveness: Medium.** [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects B: authored native interpretation from admitted character evidence, with compatible retained appraisals mechanically applicable during direct control. This yields predictable persistent consequences without paid interpretation, while reducing interpretive flexibility. Exact world rules, source/replay authority, owner disclosure and control-transfer/restore acceptance remain EP06–EP09 implementation gates; native startle, NPC emotion, effective mechanics and other shared contracts have integrated contracts and remain independently implementable.
 
 ## Shared inventories
 

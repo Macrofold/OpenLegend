@@ -486,7 +486,7 @@ export function rememberedCommunicationSubjects(
       : [],
   );
 }
-/** Existing creator-authored acquaintances persist across encounters; other identities do not.
+/** Recognition associates a person, while current physical exposure remains separate.
  * docs/worlds/base/knowledge.md#identity-and-recognition
  */
 export function subjectReferenceCurrent(

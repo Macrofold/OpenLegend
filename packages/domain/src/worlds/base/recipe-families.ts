@@ -1,3 +1,4 @@
+import { BASE_ATTACK_EXECUTION } from './skilled-execution.js';
 import { entityValues } from '../../entity-collection.js';
 import type {
   RecipeFamilyDescriptor,
@@ -11,10 +12,10 @@ import { CONSTRUCTED_ITEM_STORY_FIELDS } from './items.js';
 
 import { BASE_CAMP_CONTAINER_FAMILY } from './camp-container-family.js';
 import { BASE_CORDAGE_FAMILY } from './cordage-family.js';
-import { BASE_GATHER_EQUIPMENT, BASE_LAUNCHER_EQUIPMENT } from './equipment.js';
+import { BASE_GATHER_EQUIPMENT, BASE_RANGED_WEAPON_EQUIPMENT } from './equipment.js';
 import { BASE_SHIELD_FAMILY } from './shield-family.js';
 import { RIVER_LINE_FAMILY } from './river-fishing.js';
-import { BASE_PROJECTILE_SPEED } from './ranged-counterplay.js';
+import { BASE_PROJECTILE_SPEED, BASE_PROJECTILE_CONTACT_WARNING } from './ranged-counterplay.js';
 
 const number = (minimum: number, maximum: number): RecipeParameterSchema => ({
   type: 'number',
@@ -158,20 +159,20 @@ const weaponConsumer = {
   effects: ['finite-ammunition-consumption', 'body-injury'],
   reads: ['known-recipe', 'inventory', 'target-body', 'spatial-reach'],
 };
-function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
+function rangedWeaponFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
   const swing = mechanism === 'swing';
   const ammunitionKind = swing ? 'stone' : 'arrow';
   const data = definition(
     `base:${mechanism}`,
-    swing ? 'Sling-like launcher' : 'Bow-like launcher',
+    swing ? 'Sling-like ranged weapon' : 'Bow-like ranged weapon',
     swing
-      ? 'A physical sling-like stone launcher using binding and a flexible pouch.'
-      : 'A physical bow-like launcher with a flexible rigid body and binding, using arrows.',
+      ? 'A physical sling-like stone ranged weapon using binding and a flexible pouch.'
+      : 'A physical bow-like ranged weapon with a flexible rigid body and binding, using arrows.',
     swing ? [roles.binding, roles.pouch] : [roles.body, roles.binding],
     {
       workSeconds: work,
       damage: swing ? number(10, 20) : number(16, 28),
-      range: swing ? number(3, 7) : number(4, 10),
+      range: swing ? number(3, 7) : number(4, 30),
       accuracy: number(0.6, 0.9),
     },
     [
@@ -182,9 +183,11 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
     ],
     {
       ...weaponConsumer,
-      limitation: swing
-        ? 'Straight point-projectile shots at permitted living targets and inert practice targets; no arcs, piercing or collateral injury.'
-        : 'Uses compatible arrows with straight point-projectile flight; no arcs, piercing or collateral injury.',
+      limitation: `${
+        swing
+          ? 'Straight point-projectile shots at permitted living targets and inert practice targets; no arcs or piercing.'
+          : 'Uses compatible arrows with straight point-projectile flight; no arcs or piercing.'
+      } ${BASE_PROJECTILE_CONTACT_WARNING}`,
     },
     {
       mechanism,
@@ -213,15 +216,19 @@ function launcherFamily(mechanism: 'swing' | 'flex'): RecipeFamilyDescriptor {
         workSeconds: numeric(candidate, 'workSeconds'),
         outputDefinition: {
           ...baseOutput(world, candidate),
-          launcher: {
+          rangedWeapon: {
             mechanism,
             ammunitionKind,
             damage: numeric(candidate, 'damage'),
             range: numeric(candidate, 'range'),
             accuracy: numeric(candidate, 'accuracy'),
             flightSpeed: BASE_PROJECTILE_SPEED[ammunitionKind],
+            recoverySeconds: mechanism === 'swing' ? 18 : 24,
           },
-          equipment: structuredClone(BASE_LAUNCHER_EQUIPMENT),
+          execution: structuredClone(
+            swing ? BASE_ATTACK_EXECUTION.sling : BASE_ATTACK_EXECUTION.bow,
+          ),
+          equipment: structuredClone(BASE_RANGED_WEAPON_EQUIPMENT),
         },
         facts: [
           workFact(candidate),
@@ -259,7 +266,7 @@ const arrowDefinition = definition(
     uses: ['craft', 'hunt'],
     effects: ['finite-crafted-item'],
     reads: ['known-recipe', 'inventory'],
-    limitation: 'Consumed by a compatible launcher; cannot define new damage operators.',
+    limitation: 'Consumed by a compatible ranged weapon; cannot define new damage operators.',
   },
   {
     ammunitionKind: 'arrow',
@@ -378,8 +385,8 @@ const gathering: RecipeFamilyDescriptor = {
 };
 /** The host catalog contains trusted capabilities; a world's manifest selects which are installed. */
 export const BASE_RECIPE_FAMILIES: readonly RecipeFamilyDescriptor[] = [
-  launcherFamily('swing'),
-  launcherFamily('flex'),
+  rangedWeaponFamily('swing'),
+  rangedWeaponFamily('flex'),
   arrow,
   gathering,
   BASE_CAMP_CONTAINER_FAMILY,

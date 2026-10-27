@@ -43,7 +43,7 @@ export function livingBody(species: (typeof BASE_SPECIES)[number]): LivingBody {
             ? 36
             : 18,
     revision: 0,
-    conditions: { injury: 0, wetness: 0, burning: 0 },
+    conditions: { wetness: 0, burning: 0 },
     susceptibility: { injury: 1, wetness: 1, burning: 1, healing: 1 },
     harvestYield:
       species === 'human' || species === 'construct'
@@ -75,7 +75,7 @@ export function nativeActor(
       memory: false,
       innerWorld: false,
       speech: false,
-      comprehendsSpeech: false,
+      language: false,
     },
     health: body.maxHealth,
     alive: true,

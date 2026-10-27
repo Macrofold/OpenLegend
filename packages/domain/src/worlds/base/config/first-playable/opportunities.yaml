@@ -1,0 +1,109 @@
+{
+  'actors':
+    [
+      {
+        'actorId': 'kest',
+        'methodRefs': ['base:clean-fibers', 'base:twist-cord'],
+        'profile':
+          {
+            'id': 'base:kest-supply-considerations',
+            'version': 1,
+            'foodBelow': 36,
+            'ammunitionBelow': 4,
+            'maximumCandidates': 8,
+            'descriptions':
+              {
+                'food': 'My known available food restores only {available} nourishment; I may consider obtaining provisions.',
+                'ammunition': 'My equipped bow has only {available} known available compatible shots; I may consider ammunition supplies.',
+                'material': 'My currently chosen crafting work needs supplies I do not have available.',
+                'alternatives': 'I may use my own stock, gather something actually seen, hunt seen prey, offer exchange, choose real travel, rest, abandon this consideration or continue another purpose. A place report promises no supply or route.',
+                'motive': 'I value a secure provisioned stopping place and practical exchange, and dislike taking risks for strangers.',
+              },
+            'places':
+              [
+                { 'id': 'broken-watchpost', 'purposes': ['food'], 'materialIds': [] },
+                { 'id': 'base:eastern-berries', 'purposes': ['food'], 'materialIds': [] },
+                {
+                  'id': 'base:eastern-materials',
+                  'purposes': ['ammunition', 'material'],
+                  'materialIds': ['wood', 'stone', 'cord', 'prepared_fiber'],
+                },
+                {
+                  'id': 'base:central-fiber',
+                  'purposes': ['material'],
+                  'materialIds': ['raw_fiber', 'cord', 'prepared_fiber'],
+                },
+                {
+                  'id': 'riverside-workshop',
+                  'purposes': ['ammunition', 'material'],
+                  'materialIds': ['wood', 'stone', 'cord', 'prepared_fiber'],
+                },
+              ],
+          },
+      },
+      {
+        'actorId': 'orin',
+        'methodRefs': ['base:clean-fibers', 'base:twist-cord'],
+        'profile':
+          {
+            'id': 'base:orin-supply-considerations',
+            'version': 1,
+            'foodBelow': 36,
+            'ammunitionBelow': 4,
+            'maximumCandidates': 8,
+            'descriptions':
+              {
+                'food': 'My known available food restores only {available} nourishment; I may consider obtaining provisions.',
+                'ammunition': 'My equipped bow has only {available} known available compatible shots; I may consider ammunition supplies.',
+                'material': 'My currently chosen crafting work needs supplies I do not have available.',
+                'alternatives': 'I may use my own stock, gather something actually seen, hunt seen prey, offer exchange, choose real travel, rest, abandon this consideration or continue another purpose. A place report promises no supply or route.',
+                'motive': 'I value ammunition, a clear retreat and a chance to prove competence, and dislike avoidable injury.',
+              },
+            'places':
+              [
+                { 'id': 'broken-watchpost', 'purposes': ['food'], 'materialIds': [] },
+                { 'id': 'base:eastern-berries', 'purposes': ['food'], 'materialIds': [] },
+                {
+                  'id': 'base:eastern-materials',
+                  'purposes': ['ammunition', 'material'],
+                  'materialIds': ['wood', 'stone', 'cord', 'prepared_fiber'],
+                },
+                {
+                  'id': 'base:central-fiber',
+                  'purposes': ['material'],
+                  'materialIds': ['raw_fiber', 'cord', 'prepared_fiber'],
+                },
+                {
+                  'id': 'riverside-workshop',
+                  'purposes': ['ammunition', 'material'],
+                  'materialIds': ['wood', 'stone', 'cord', 'prepared_fiber'],
+                },
+              ],
+          },
+      },
+    ],
+  'places':
+    [
+      {
+        'id': 'base:eastern-berries',
+        'landmarkId': 'forage-east',
+        'label': 'Eastern berry habitat',
+        'description': 'Old familiarity with a berry thicket. No current stock or occupants are known.',
+        'reportedBy': 'Personal familiarity from earlier supply walks',
+      },
+      {
+        'id': 'base:eastern-materials',
+        'landmarkId': 'outer-branches',
+        'label': 'Eastern material bank',
+        'description': 'An old report of woodland materials. Actual stock, paths and people must be observed.',
+        'reportedBy': 'An old supply report',
+      },
+      {
+        'id': 'base:central-fiber',
+        'landmarkId': 'woodland-patch-9',
+        'label': 'Central fiber patch',
+        'description': 'An old report of useful fibers near the central woodland. No camp or person is known there.',
+        'reportedBy': 'An old material-gathering report',
+      },
+    ],
+}

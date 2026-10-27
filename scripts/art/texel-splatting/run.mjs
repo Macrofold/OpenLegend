@@ -1,15 +1,14 @@
-import { execFile as execFileCallback } from 'node:child_process';
-import { promisify } from 'node:util';
 import { mkdtemp, readFile, writeFile, cp, mkdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { createServer } from 'vite';
+import { createServer, build } from 'vite';
+import { tsImport } from 'tsx/esm/api';
 import { chromium } from '@playwright/test';
 import { fixedCaptureSource } from './stable-variants.mjs';
 
-const execFile = promisify(execFileCallback);
+const { toolRemote } = await tsImport('../../network.ts', import.meta.url);
 const source = dirname(fileURLToPath(import.meta.url));
 const geometryPath = process.argv[2],
   outputPath = process.argv[3];
@@ -24,13 +23,12 @@ if (!geometryPath || !outputPath || ![96, 192, 384].includes(probe))
 const upstreamCommit = '394d350f91842779ed4c45760bd4ea9a07ce5c4c';
 const work = await mkdtemp(join(tmpdir(), 'openlegend-texel-e07-'));
 const upstream = join(work, 'upstream');
-await execFile('git', [
-  'clone',
-  '--quiet',
-  'https://github.com/dylanebert/texel-splatting.git',
-  upstream,
-]);
-await execFile('git', ['-C', upstream, 'checkout', '--quiet', upstreamCommit]);
+await toolRemote(
+  'git',
+  ['clone', '--quiet', 'https://github.com/dylanebert/texel-splatting.git', upstream],
+  { timeoutMs: 300_000 },
+);
+await toolRemote('git', ['-C', upstream, 'checkout', '--quiet', upstreamCommit]);
 for (const path of ['experiment.mjs', 'stable-variants.mjs', 'surface-grid.mjs'])
   await cp(join(source, path), join(work, path));
 const geometryText = await readFile(resolve(geometryPath), 'utf8');
@@ -52,6 +50,25 @@ for (const mesh of geometry.meshes) {
     throw new Error(`Invalid static triangle geometry: ${mesh.name}`);
 }
 await writeFile(join(work, 'geometry.json'), geometryText);
+await writeFile(
+  join(work, 'geometry-policy.mjs'),
+  'export const geometryBytes = ' + Buffer.byteLength(geometryText) + ';\n',
+);
+// Build the shared browser-safe owner into the independent study workspace.
+await build({
+  configFile: false,
+  publicDir: false,
+  build: {
+    outDir: work,
+    emptyOutDir: false,
+    target: 'es2022',
+    lib: {
+      entry: resolve(source, '../../../packages/network/src/index.ts'),
+      formats: ['es'],
+      fileName: () => 'network.mjs',
+    },
+  },
+});
 // Change only sample density in a temporary source copy; preserve the MIT notice.
 const upstreamHashes = {};
 for (const path of ['src/splat.ts', 'src/lighting.ts', 'demo/direct.ts', 'LICENSE']) {

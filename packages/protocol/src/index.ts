@@ -3,8 +3,24 @@ export type {
   CheckpointRequest,
   CheckpointContext,
 } from './request-recovery.js';
-import type { ConstructionPlan, AssemblyView } from './construction.js';
+import type {
+  ConstructionPlan,
+  AssemblyView,
+  HearthPlan,
+  GateUsePlan,
+  BoundaryImpactPlan,
+} from './construction.js';
 export * from './construction.js';
+import type { WorkBatchRequest, WorkBatchSelection } from './work-batches.js';
+export * from './work-batches.js';
+import type {
+  AttackExecutionControl,
+  AttackExecutionView,
+  AttackModeNotice,
+  WorldInputScope,
+  TimedReleaseProfile,
+} from './execution-input.js';
+export * from './execution-input.js';
 import type { Named } from '@open-legend/language';
 import type { AssetRevisionReference } from '@open-legend/assets';
 /** Public wire contract. Never expose the authoritative world or another actor's memory. */
@@ -20,18 +36,44 @@ export type {
 } from './inventory.js';
 export type Position = Readonly<WorldPoint>;
 export type { SurfacePoint, SpatialLayout };
+export interface PrimaryActionSelection {
+  targetId: string;
+  actionId: string;
+  /** Opaque scope/body/preference/meaning binding, never permission by itself. */
+  reference: string;
+}
+
+/** Current application admission; it does not promise a listener will respond. */
+export interface PlayerInteractionAvailability {
+  /** The observer's current chosen name; no hidden body description or position. */
+  recipientName?: string;
+  available: boolean;
+  code: string;
+  reason: string | null;
+  /** Operational reply routing only; it grants no hearing or promised response. */
+  reply: boolean;
+}
 
 /** Deliberately smaller than the domain command: the server supplies actor/authority. */
 export interface CommandInput {
+  execution?: AttackExecutionControl;
+  aimPoint?: Position;
+  aimBasis?: { bodyReference?: string; surfaceId?: string; shapeId?: string };
+  bodyReference?: string;
   /** A contextual shortcut must still select this exact offer at command admission.
    * Omitted for an explicitly chosen menu action. Not native command authority. */
-  primaryAction?: { targetId: string; actionId: string };
+  primaryAction?: PrimaryActionSelection;
+  encounterPreference?: { operation: 'speak' | 'stop'; reference: string };
   type:
+    | 'encounter-preference'
     | 'construction'
+    | 'operate-gate'
+    | 'impact-boundary'
+    | 'place-hearth'
+    | 'repeat-work'
     | 'construction-rest'
     | 'activity'
     | 'activity-request'
-    | 'conversation'
     | 'say'
     | 'pickup'
     | 'drop'
@@ -45,7 +87,6 @@ export interface CommandInput {
     | 'confirm-attempt'
     | 'withdraw-attempt'
     | 'gather'
-    | 'prepare'
     | 'craft'
     | 'equip'
     | 'guard'
@@ -54,6 +95,7 @@ export interface CommandInput {
     | 'aim'
     | 'shoot-once'
     | 'release-shot'
+    | 'release-strike'
     | 'practice-shot'
     | 'coaching'
     | 'harvest'
@@ -75,6 +117,11 @@ export interface CommandInput {
     | 'learn-record'
     | 'teach';
   constructionPlan?: ConstructionPlan;
+  gateUse?: GateUsePlan;
+  boundaryImpact?: BoundaryImpactPlan;
+  hearthPlan?: HearthPlan;
+  workBatch?: WorkBatchRequest;
+  workBatchDigest?: string;
   bay?: number;
   purpose?: string;
   activityFamilyId?: string;
@@ -87,20 +134,49 @@ export interface CommandInput {
   after?: string;
   containerId?: string;
   expectedScope?: string;
-  conversationId?: string;
   text?: string;
   volume?: SpeechVolume;
   facing?: number;
   aimId?: string;
   autoEquip?: boolean;
-  generation?: number;
-  operation?: 'join' | 'leave';
   effectOperation?: 'activate' | 'deactivate';
   fireOperation?: 'light' | 'fuel' | 'extinguish';
   coachingOperation?: 'request' | 'accept' | 'decline' | 'withdraw' | 'feedback';
   episodeId?: string;
-  handoverOperation?: 'offer' | 'counter' | 'accept' | 'decline' | 'withdraw';
-  outingOperation?: 'help' | 'invite' | 'accept' | 'decline' | 'leave';
+  handoverOperation?: 'offer' | 'counter' | 'accept' | 'decline' | 'withdraw' | 'withdraw-use';
+  contributionPermissionId?: string;
+  constructionUse?: {
+    site: { surfaceId: string; minX: number; maxX: number; minZ: number; maxZ: number };
+    operation: string;
+    expiresAt: number;
+  };
+  outingOperation?:
+    | 'compact-propose'
+    | 'compact-revise'
+    | 'compact-accept'
+    | 'compact-decline'
+    | 'compact-withdraw'
+    | 'compact-leave'
+    | 'help'
+    | 'invite'
+    | 'propose'
+    | 'work'
+    | 'revise'
+    | 'withdraw'
+    | 'conclude'
+    | 'accept'
+    | 'decline'
+    | 'leave';
+  cooperationKind?: 'guide' | 'help' | 'hunt';
+  compactKind?: 'alliance' | 'ceasefire';
+  compactId?: string;
+  quarryId?: string;
+  cooperationTask?:
+    | { kind: 'prepare'; recipeId: string; outputPort: string; quantity: number }
+    | { kind: 'carry'; offerId: string; offerRevision: number; destinationId: string }
+    | { kind: 'construction'; plan: ConstructionPlan };
+  cooperation?: { id: string; revision: number };
+  amendmentRevision?: number;
   opponentId?: string;
   /** Offered server-derived purpose; public dispatch rebinds current consent. */
   combatHelpId?: string;
@@ -120,6 +196,7 @@ export interface CommandInput {
   definitionId?: string;
   itemId?: string;
   recipeId?: string;
+  tools?: Record<string, string>;
   recordPin?: { id: string; version: number; digest: string };
   attributeId?: string;
   ammunitionId?: string;
@@ -144,7 +221,6 @@ export interface CommandInput {
   /** The reviewed contents of a container item, independent of its placement. */
   expectedContentsRevision?: number;
   targetRevision?: number;
-  preparation?: 'fiber' | 'cord';
   preparationId?: string;
   preparationVersion?: number;
   preparationDigest?: string;
@@ -187,14 +263,28 @@ export interface OutingView {
   destination: string;
   companion: string;
   distance: number | null;
-  kind: 'travel' | 'combat-help';
+  kind: 'travel' | 'combat-help' | 'cooperate' | 'alliance' | 'ceasefire' | 'item-offer';
   purpose?: string;
-  status: 'pending' | 'traveling' | 'arrived' | 'helping';
+  status: 'pending' | 'traveling' | 'arrived' | 'helping' | 'accepted' | 'ended';
+  deadline?: number;
   company: string;
   description: string;
   choices: Array<{ id: string; label: string; description: string; command: CommandInput }>;
 }
 
+export type ActivityRequestField = {
+  modeLabels?: Record<'enqueue' | 'replace' | 'interrupt', string>;
+  label: string;
+  minimum?: number;
+  maximum?: number;
+  minimumDuration?: number;
+  maximumDuration?: number;
+  required: true;
+  discovery?: { source: 'spatial' | 'storage' | 'materials'; sourceField?: string };
+} & (
+  | { type: 'definition'; definitionKind: 'item' | 'recipe' }
+  | { type: 'entity' | 'integer' | 'time' | 'mode'; definitionKind?: never }
+);
 export interface ActivityRequestsView {
   ok: boolean;
   scope: string;
@@ -208,20 +298,7 @@ export interface ActivityRequestsView {
     label: string;
     description: string;
     presentation?: ActivityRequestPresentation;
-    fields: Record<
-      string,
-      {
-        type: 'entity' | 'definition' | 'integer' | 'time' | 'mode';
-        modeLabels?: Record<'enqueue' | 'replace' | 'interrupt', string>;
-        label: string;
-        minimum?: number;
-        maximum?: number;
-        minimumDuration?: number;
-        maximumDuration?: number;
-        required: true;
-        discovery?: { source: 'spatial' | 'storage' | 'materials'; sourceField?: string };
-      }
-    >;
+    fields: Record<string, ActivityRequestField>;
   }[];
   timeOptions?: {
     minimumDuration: number;
@@ -233,6 +310,7 @@ export interface ActivityRequestsView {
     status: string;
     reason?: string;
     spent?: number;
+    quantity?: { requested: number; completed: number; unitLabel: string };
     maximumSpent?: number;
     spendingUnit?: string;
     attempts?: number;
@@ -306,8 +384,9 @@ export interface CatalogueAction {
   reason?: string;
   intent:
     | { kind: 'command'; command: CommandInput }
+    | { kind: 'work-batch'; selection: WorkBatchSelection }
     | { kind: 'activity'; family: string; arguments: Record<string, string> }
-    | { kind: 'compose'; mode: 'chat' | 'invention'; npcId?: string }
+    | { kind: 'compose'; mode: 'chat' | 'invention'; npcId?: string; preference?: CommandInput }
     | { kind: 'unavailable' };
 }
 
@@ -331,6 +410,7 @@ export interface ActionCatalogue {
   actions: CatalogueAction[];
   /** Exact preferred offer, including its refusal when temporarily unavailable. */
   defaultActionId?: string;
+  primaryAction?: PrimaryActionSelection;
   /** Permitted category labels, including categories with no concrete choices. */
   categories: string[];
 }
@@ -391,6 +471,8 @@ export interface EntityView extends Named {
   trade?: ItemTradeView;
   bodySize?: { width: number; height: number };
   assembly?: AssemblyView;
+  /** Opaque scoped refresh signal, never permission or an operational grant. */
+  actionRevision?: string;
   /** Current consent replies/endings, separate from requested action discovery. */
   controls?: ActionOption[];
   contents?: Array<{
@@ -419,9 +501,15 @@ export interface EntityView extends Named {
   description?: string;
   traits?: Array<{ id: string; name: string; description: string }>;
   canTalk?: boolean;
+  talkRequiresAi?: boolean;
+  talkUnavailableReason?: string;
   speechCapable?: boolean;
   health?: number;
   bodyRevision?: number;
+  /** Opaque current-body identity for delayed presentation choices; not action authority. */
+  bodyReference?: string;
+  /** Cheap opaque contextual-preference freshness, never a complete action list. */
+  contextActionRevision?: string;
   bodyState?: 'dead' | 'rotting';
   bodyPlan?: 'biped' | 'quadruped' | 'avian';
   /** Observed fraction of the installed simulated departure exposure. */
@@ -463,10 +551,12 @@ export interface InventoryItemSummary extends Named {
   tags: string[];
 }
 export interface InventoryItemView extends InventoryItemSummary {
+  workBatch?: { label: string; selection: WorkBatchSelection };
   actions: ActionOption[];
 }
 
 export interface TradeLotView {
+  capacity?: number;
   id: string;
   name: string;
   label: string;
@@ -510,12 +600,20 @@ export interface ItemTradeView {
     changed: string;
     unknown: string;
   };
+  contributionChoices?: {
+    id: string;
+    label: string;
+    terms: NonNullable<CommandInput['constructionUse']>;
+    durationSeconds: number;
+    detail: string;
+  }[];
   ownLots: TradeLotView[];
   knownLots: TradeLotView[];
   offers: {
     id: string;
     revision: number;
     incoming: boolean;
+    constructionUse?: { terms: NonNullable<CommandInput['constructionUse']>; detail: string };
     give?: TradeLotView;
     receive?: TradeLotView;
     expiresAt: number;
@@ -524,13 +622,19 @@ export interface ItemTradeView {
 }
 
 export interface RecipeDetailsView {
+  category?: { id: string; label: string };
   name: string;
   description: string;
   family: string;
-  output: { name: string; description: string };
+  outputs: Array<{ port: string; name: string; description: string; quantity: number }>;
   facts: Array<{ id: string; label: string; value: number | string; unit?: string }>;
   limitations: string[];
-  ingredients: Array<{ name: string; quantity: number; available: number; role: string }>;
+  ingredients: Array<{ name: string; quantity: number; available: number }>;
+  retainedTools: Array<{
+    role: string;
+    quantity: number;
+    choices: Array<{ name: string; available: number }>;
+  }>;
   workSeconds: number;
 }
 export interface RecipeView extends RecipeDetailsView {
@@ -540,22 +644,58 @@ export interface RecipeView extends RecipeDetailsView {
 }
 
 export type SpeechVolume = 'whisper' | 'normal' | 'shout';
-export interface PerceivedSpeech {
-  perception: 'heard' | 'seen' | 'self';
-  intelligibility: 'none' | 'partial' | 'clear';
-  segments: Array<{ kind: 'heard'; text: string } | { kind: 'unintelligible' }>;
-  speaker: (Omit<Named, 'name'> & { nameAtTime: string }) | null;
-  addressing: 'ambient' | 'directed' | null;
-  addressee: (Omit<Named, 'name'> & { nameAtTime: string }) | null;
+export type SpeechParticipant = Omit<Named, 'name'> & { nameAtTime: string };
+interface SpeechAcquisition {
+  speaker: SpeechParticipant | null;
   /** Actually understood introduction claim, not canonical identity proof. */
   nameClaim?: string;
-  /** Opaque acquired participant for caption grouping; grants no body/communication role. */
+  /** Acquired participant continuity, never a physical or communication grant. */
   speakerReference?: string;
-  /** A separately admitted current physical contact; voice recognition supplies none. */
+  /** Independently admitted live body contact. */
   speakerContact?: string;
   delivery: SpeechVolume | null;
   direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
   listenerPosition: Position;
+}
+export type PerceivedSpeech = SpeechAcquisition &
+  (
+    | {
+        perception: 'seen';
+        addressing: null;
+        intelligibility: 'none';
+        segments: [];
+        addressee: null;
+      }
+    | {
+        perception: 'heard' | 'self';
+        addressing: 'ambient' | 'directed';
+        intelligibility: 'none' | 'partial' | 'clear';
+        segments: Array<{ kind: 'heard'; text: string } | { kind: 'unintelligible' }>;
+        addressee: SpeechParticipant | null;
+      }
+  );
+export type SpeechDisplayPart =
+  | { kind: 'literal'; text: string }
+  | {
+      kind: 'participant';
+      id: string;
+      role: 'speaker' | 'addressee';
+      text: string;
+      contactReference?: string;
+    }
+  | {
+      kind: 'quotation';
+      segments: readonly ({ kind: 'heard'; text: string } | { kind: 'unintelligible' })[];
+      text: string;
+    };
+export interface SpeechPresentation {
+  acquisition: PerceivedSpeech['perception'];
+  speakerLabel: string;
+  directionLabel: string | null;
+  segments: readonly ({ kind: 'heard'; text: string } | { kind: 'unintelligible' })[];
+  personalText: string;
+  accessibilityText: string;
+  parts: readonly SpeechDisplayPart[];
 }
 export interface PerceivedEventsPage {
   events: PublicEvent[];
@@ -698,6 +838,21 @@ export interface WorldEventSourcesView {
 }
 
 export interface PublicEvent {
+  sound?: {
+    kind?: 'voice-like';
+    acquisition: 'self' | 'external';
+    acquiredAt: number;
+    listenerPosition: { x: number; y: number; z: number };
+    receivedLevelDbSpl: number;
+    clarityMarginDb: number;
+    detectThresholdDb: number;
+    direction: { sector: number; elevation: 'above' | 'level' | 'below' } | null;
+    visibleSource: {
+      /** Dated acquired role, never a current physical target. */
+      reference: string;
+      description: Named;
+    } | null;
+  };
   presentation?: {
     category: 'speech' | 'actions' | 'conflict' | 'body' | 'observations';
     icon: string;
@@ -709,6 +864,9 @@ export interface PublicEvent {
     label: string;
     role: 'actor' | 'target' | 'participant';
     kind: 'historical';
+    /** Independent current permission, never inferred from historical identity. */
+    contactReference?: string;
+    communicationReference?: string;
   }>;
   /** Perceived descriptive expression, with no mechanical effects. */
   descriptive?: true;
@@ -726,11 +884,7 @@ export interface PublicEvent {
     kind?: 'health';
   };
   speech?: PerceivedSpeech;
-  sound?: {
-    kind: 'voice-like';
-    direction: PerceivedSpeech['direction'];
-    listenerPosition: { x: number; y: number; z: number };
-  };
+  speechPresentation?: SpeechPresentation;
   modality?: 'heard' | 'observed' | 'felt' | 'internal';
   source?: WorldEventSourceReference;
   id: string;
@@ -757,14 +911,13 @@ export interface ChatMessage {
   time: number;
 }
 
-/** Volatile, authenticated direct-conversation presentation; never heard history. */
+/** Volatile, authenticated source-bound reply presentation; never heard history. */
 export interface NpcReplyPreview {
   requestId: string;
   attempt: number;
   generation: string;
   worldId: string;
   timelineId: string;
-  conversationId?: string;
   playerSpeechEventId: string;
   npcId: string;
   providerRequestId?: string;
@@ -837,9 +990,26 @@ export interface GameView {
   worldId: string;
   profile: PlayerProfile;
   /** Public authored location/clock wording; application control names stay in the client. */
-  presentation: { worldName: string; locationName: string; timeLabel: string };
+  presentation: {
+    worldName: string;
+    locationName: string;
+    timeLabel: string;
+    introduction?: string;
+    crafting?: {
+      categoryLabel: string;
+      allLabel: string;
+      categories: Array<{ id: string; label: string }>;
+    };
+  };
   /** Native sight range/body anchors; presentation bands add no gameplay tier or range. */
-  vision: { radius: number; enabled: boolean; eyeHeight: number; targetHeights: number[] };
+  vision: {
+    radius: number;
+    enabled: boolean;
+    eyeHeight: number;
+    targetHeights: number[];
+    fieldOfViewRadians?: number;
+    heading?: number;
+  };
   hearing: {
     referenceRadius: number;
     partialRadius: number;
@@ -856,6 +1026,8 @@ export interface GameView {
     terrain: import('@open-legend/spatial').SpatialMap['terrain'];
   };
   clock: {
+    weather?: { label: string; intensity: number };
+    daylight?: { startHour: number; endHour: number; noonElevationDegrees: number };
     seconds: number;
     day: number;
     hour: number;
@@ -871,10 +1043,24 @@ export interface GameView {
     offsetHours: number;
   };
   player: Named & {
+    inputScope?: WorldInputScope;
+    attackModeNotice?: AttackModeNotice;
+    attackSource?: {
+      label: string;
+      enabled: boolean;
+      reason?: string;
+      command: CommandInput;
+      profile?: TimedReleaseProfile;
+    } & (
+      | { kind: 'ranged'; pointFire: boolean; targetRule?: 'living-actor' | 'living-animal' }
+      | { kind: 'melee' }
+    );
+    knowledgeRevision: number;
     evasion?: { label: string; readyIn: number };
     life?: number;
     death?: {
       message: string;
+      freshWorldReview: boolean;
       at: number;
       corpseId: string;
       retainedLabel: string;
@@ -892,6 +1078,8 @@ export interface GameView {
     position: Position;
     supportSurfaceId: string | null;
     heading: number;
+    /** Current visible body extent, without private pose state or definition pins. */
+    bodySize: { width: number; height: number };
     /** Permitted applicable values, never a raw module state dump. */
     attributes: AttributeView[];
     practice: PracticeProgressView[];
@@ -909,6 +1097,7 @@ export interface GameView {
       durationSeconds: number;
       elapsedSeconds: number;
       advancing: boolean;
+      execution?: AttackExecutionView;
       controls?: ActionOption[];
       detail?: string;
     } | null;
@@ -918,6 +1107,9 @@ export interface GameView {
     history?: string;
     inventory: InventoryItemSummary[];
     inventoryRevision: number;
+    /** Opaque own construction-choice invalidation; contains no material/grant identity. */
+    constructionRevision?: string;
+    workBatchRevision?: string;
     canUseInventory: boolean;
     actionAttempts: PlayerActionAttempt[];
     /** The controlled actor's plain activity result; detailed steps remain God-only. */
@@ -1006,6 +1198,8 @@ export interface GamePatch {
 }
 
 export interface ApiResult {
+  inputScope?: WorldInputScope;
+  execution?: AttackExecutionView;
   ok: boolean;
   code: string;
   message: string;
@@ -1287,7 +1481,6 @@ export interface TranscriptItem {
   text: string;
   time: number;
   order: number;
-  conversationId?: string;
   speakerId?: string;
   /** Name captured in this observer's original event evidence. */
   speaker?: string;
@@ -1303,7 +1496,6 @@ export interface TranscriptItem {
   voice?: 'restrained' | 'lyrical' | 'wry';
   sourceStatus?: 'available' | 'unavailable';
   revision?: number;
-  legacy?: boolean;
 }
 export interface TranscriptPage {
   items: TranscriptItem[];

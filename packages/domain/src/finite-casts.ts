@@ -76,7 +76,7 @@ export function castGeometryProblem(
     endpoint.z < water.minZ ||
     endpoint.z > water.maxZ ||
     distance3D(stance, endpoint) > definition.maximumLineMetres ||
-    !hasLineOfSight(world, interactionAnchor(actor, stance), endpoint)
+    !hasLineOfSight(world, interactionAnchor(world, actor, stance), endpoint)
   )
     return 'The selected stance or line to the declared endpoint is blocked.';
   if (

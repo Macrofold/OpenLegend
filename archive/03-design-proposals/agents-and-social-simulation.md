@@ -20,6 +20,8 @@ The most useful initial observable behaviors are gathering accessible resources,
 
 ## Physical state
 
+> Historical anatomy proposal: the selected [individual injury/care design](../../docs/projects/recovery-and-care-feature-spec.md) uses independent conditions and optional causal location; the body-part graph below is not a prerequisite. Detailed posed anatomy, organ intersections and prosthetics remain future capabilities in that design.
+
 Health may be a derived summary or a chosen body model. World/species definitions select applicable needs; categories and dispositions need not be numeric. Native body consequences still require supported mechanics.
 
 | System           | First useful version                                                 | Expansion seam                                        |

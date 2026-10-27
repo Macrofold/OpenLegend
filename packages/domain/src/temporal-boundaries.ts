@@ -1,7 +1,9 @@
 import { nativeDangerExpiresAt } from './native-response-danger.js';
+import { nextSensoryExpiry } from './experience.js';
 import { nativeResponseProfile } from './native-response.js';
 import { entityGet } from './entity-collection.js';
 import { nextOutingDeadline } from './outings.js';
+import { nextCompactDeadline } from './social-compact-index.js';
 import { nextItemOfferDeadline } from './handover.js';
 import { nextRemainsDeadline } from './remains.js';
 import { activeActivityControl, nextActivityBoundary } from './activity-execution.js';
@@ -14,7 +16,7 @@ import { nextPerceptionWorkAt } from './perception-evidence.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { nextCommitmentDeadline } from './commitments.js';
-import { nextAppraisalDeadline } from './appraisal-index.js';
+import { nextAppraisalDeadline, nextAppraisalProcessDeadline } from './appraisal-index.js';
 import { nextConditionReview } from './conditions.js';
 import { nextResourceReservationDeadline } from './resource-claims.js';
 import {
@@ -25,6 +27,7 @@ import {
   TIME_EPSILON,
   untilThreshold,
   elapsedDeadline,
+  type AttributeRates,
 } from './simulation-time.js';
 import {
   crossStatusReferences,
@@ -33,7 +36,6 @@ import {
   type NativeDrain,
 } from './status-effects.js';
 import type { WorldState } from './types.js';
-import { selectedSocialPolicy } from './social-policy.js';
 
 /** Finite-family composition, not an omniscient scheduler for arbitrary future rules.
  * docs/simulation-time.md and docs/maintainers/simulation-boundaries.md */
@@ -45,6 +47,8 @@ export function nativeInterval(
   statusIds: readonly string[],
   status: readonly StatusRateInterval[],
   travelFor: (id: string) => number,
+  statusDeadline?: (id: string, rates: AttributeRates) => number,
+  remainsIds: readonly string[] = ambientIds,
 ): {
   seconds: number;
   requiresImmediateIntegration: boolean;
@@ -52,21 +56,44 @@ export function nativeInterval(
   drains: NativeDrain[];
   privateWalkers: ReadonlySet<string>;
   endsAt?: number;
+  endingCauses: Array<{ at: number; entityId?: string; kind: 'participant' | 'shared' }>;
 } {
+  let ownerId: string | undefined;
+  let causes: Array<{ at: number; entityId?: string; kind: 'participant' | 'shared' }> = [];
+  const recordCause = (time: number, id = ownerId) => {
+    if (!Number.isFinite(time)) return;
+    const first = causes[0]?.at ?? Infinity;
+    if (time < first - TIME_EPSILON) causes = [];
+    if (time <= first + TIME_EPSILON)
+      causes.push({
+        at: time,
+        ...(id ? { entityId: id } : {}),
+        kind: id ? 'participant' : 'shared',
+      });
+  };
+  const limit = (seconds: number) => {
+    recordCause(world.simTime + seconds);
+    bound = Math.min(bound, seconds);
+  };
   let bound = Math.min(requested, BASE_TIME_POLICY.idleHorizonSeconds);
   // Owners compare the clock with stored absolute deadlines. Landing on that exact value,
   // not on a sum of slices, lets them fire at the boundary instead of 1e-6 s or more later.
   let deadline = Infinity;
   const at = (time: number) => {
     if (!(time > world.simTime)) return;
+    recordCause(time);
     deadline = Math.min(deadline, time);
     bound = Math.min(bound, time - world.simTime);
   };
-  at(nextRemainsDeadline(world, ambientIds));
+  at(nextRemainsDeadline(world, remainsIds));
+  at(nextSensoryExpiry(world));
   for (const deadline of Object.values(world.exitExposures ?? {})) at(deadline);
   for (const id of ambientIds) {
+    ownerId = id;
     const entity = entityGet(world.entities, id),
       animal = entity?.animal;
+    if (animal)
+      for (const pattern of Object.values(animal.acousticPatterns)) at(pattern.idleExpiresAt);
     const threat = entity?.threat;
     if (threat && !(threat.relinquished && threat.mode === 'idle')) {
       // Ordinary reviews are private wake-ups. The owner certifies deadline-only
@@ -74,6 +101,10 @@ export function nativeInterval(
       if (['pursuit', 'search'].includes(threat.mode) && threat.episodeUntil !== undefined)
         at(threat.episodeUntil);
       if (threat.mode === 'search' && threat.searchUntil !== undefined) at(threat.searchUntil);
+    }
+    if (animal?.foraging && !animal.episode) {
+      at(animal.foraging.reviewAt);
+      if (animal.foraging.work) at(animal.foraging.work.endsAt);
     }
     if (animal?.episode) {
       at(animal.episode.reviewAt);
@@ -94,12 +125,13 @@ export function nativeInterval(
     }
     if (animal?.wander && 'dueAt' in animal.wander) at(animal.wander.dueAt);
   }
+  ownerId = undefined;
   // Serial clamps depend on how an interval is divided; such values integrate every slice.
   // Conserved replenishment against a reservoir drain retains this one-second fallback.
   // Health rates below require immediate integration, but do not select this fallback.
   let serialClamps = false;
   const serialClampFallback = () => {
-    bound = Math.min(bound, 1);
+    limit(1);
     serialClamps = true;
   };
   const rates = statusAttributeRates(status),
@@ -114,6 +146,7 @@ export function nativeInterval(
   const references = crossStatusReferences(world, statusIds, status);
   const privateWalkers = new Set<string>();
   for (const id of actorIds) {
+    ownerId = id;
     const entity = entityGet(world.entities, id),
       actor = entity?.actor;
     const perception = nextPerceptionWorkAt(world, id);
@@ -184,7 +217,7 @@ export function nativeInterval(
             ((value === d.schema.min && rate < 0) || (value === d.schema.max && rate > 0))
           )
         )
-          bound = Math.min(bound, untilThreshold(value, rate, t));
+          limit(untilThreshold(value, rate, t));
     }
     if (coupledReservoir) drains.push(...reservoirs);
     if (!action || action.type === 'status-effect') continue;
@@ -197,7 +230,7 @@ export function nativeInterval(
       action.remainingSeconds > 0 &&
       (action.type === 'pickup' || !capabilityBlocked(world, entity, 'locomotion'))
     )
-      bound = Math.min(bound, action.remainingSeconds);
+      limit(action.remainingSeconds);
     if (
       action.stage === 'approaching' &&
       action.path.length &&
@@ -225,24 +258,25 @@ export function nativeInterval(
           if (point.surfaceId !== support) break;
           support = point.surfaceId;
         }
-        bound = Math.min(bound, Math.max(TIME_EPSILON, length / speed));
+        limit(Math.max(TIME_EPSILON, length / speed));
       } else
-        bound = Math.min(
-          bound,
-          travelFor(id) / speed,
-          Math.max(TIME_EPSILON, distance3D(worldPosition(entity), action.path[0]!) / speed),
+        limit(
+          Math.min(
+            travelFor(id) / speed,
+            Math.max(TIME_EPSILON, distance3D(worldPosition(entity), action.path[0]!) / speed),
+          ),
         );
     }
   }
+  ownerId = undefined;
   for (const [id, demand] of supplies) {
     const remaining = entityGet(world.entities, id)?.replenisher?.remaining;
-    if (remaining !== undefined && remaining > 0) bound = Math.min(bound, remaining / demand);
+    if (remaining !== undefined && remaining > 0) limit(remaining / demand);
   }
   for (const id of ambientIds) {
     const entity = entityGet(world.entities, id);
     if (!entity) continue;
-    if (entity.heat?.lit && entity.heat.fuelSeconds > 0)
-      bound = Math.min(bound, entity.heat.fuelSeconds);
+    if (entity.heat?.lit && entity.heat.fuelSeconds > 0) limit(entity.heat.fuelSeconds);
   }
   // Main's independently owned lifetimes participate in elapsed integration. Skipping an
   // internal-source deadline would lose an occurrence; an expired claim cannot block stock.
@@ -252,20 +286,16 @@ export function nativeInterval(
   at(nextAppraisalDeadline(world));
   at(nextItemOfferDeadline(world));
   at(nextOutingDeadline(world));
-  for (const process of Object.values(world.appraisalProcesses ?? {})) at(process.nextAt);
-  if (world.conversations) {
-    const timeout = selectedSocialPolicy(world).conversationInactivitySeconds;
-    // The owner's own sum, so the clock lands exactly where it compares.
-    for (const id of new Set(Object.values(world.conversations.active))) {
-      const c = world.conversations.records[id];
-      if (c) at((c.lastActivityAt ?? c.startedAt) + timeout);
+  at(nextCompactDeadline(world));
+  at(nextAppraisalProcessDeadline(world));
+  limit(attributeBoundary(world, rates, attributes.numeric));
+  if (statusDeadline) {
+    for (const id of statusIds) {
+      ownerId = id;
+      at(statusDeadline(id, rates));
     }
-  }
-  bound = Math.min(
-    bound,
-    attributeBoundary(world, rates, attributes.numeric),
-    statusBoundary(world, statusIds, rates, attributes.byId, at),
-  );
+    ownerId = undefined;
+  } else limit(statusBoundary(world, statusIds, rates, attributes.byId, at));
   const seconds = Math.min(requested, Math.max(TIME_EPSILON, bound));
   return {
     seconds,
@@ -273,6 +303,9 @@ export function nativeInterval(
     serialClamps,
     drains,
     privateWalkers,
+    endingCauses: causes.filter(
+      (cause) => Math.abs(cause.at - world.simTime - seconds) <= TIME_EPSILON,
+    ),
     ...(deadline - world.simTime <= seconds ? { endsAt: deadline } : {}),
   };
 }

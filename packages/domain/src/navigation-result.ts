@@ -1,7 +1,10 @@
 import {
   canWalkSegment,
+  canStand,
   distance3D,
   finitePoint,
+  outsideNavigationBounds,
+  validOutsideNavigationBounds,
   SPATIAL_LIMITS,
   type BodyProfile,
   type NavigationRequest,
@@ -28,6 +31,8 @@ export function navigationResultProblem(
           : 'the proposed route does not fit this body or its supporting surfaces.';
   if (!Array.isArray(result.path) || result.path.length > SPATIAL_LIMITS.maxPathPoints)
     return 'navigation returned an invalid route.';
+  if (!canStand(map, request.from, profile))
+    return 'the prepared route has no supported starting place.';
   let previous = request.from;
   for (const point of result.path) {
     if (!finitePoint(point) || !canWalkSegment(map, previous, point, profile))
@@ -35,9 +40,13 @@ export function navigationResultProblem(
     previous = point;
   }
   if (
-    !request.destinations.some(
-      (point) => point.surfaceId === previous.surfaceId && distance3D(point, previous) < 1e-6,
-    )
+    request.outsideBounds
+      ? request.destinations.length !== 0 ||
+        !validOutsideNavigationBounds(request.outsideBounds) ||
+        !outsideNavigationBounds(previous, request.outsideBounds)
+      : !request.destinations.some(
+          (point) => point.surfaceId === previous.surfaceId && distance3D(point, previous) < 1e-6,
+        )
   )
     return 'navigation returned only a partial route.';
   return undefined;

@@ -1,3 +1,4 @@
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { decisionFixtureResult } from '../../../tests/fixtures/actor-response.js';
 import { entityGet, entityValues, setAttentionFocus } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
@@ -12,6 +13,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   compileSchema,
   createAiClient,
+  usdToMicroUsd,
   type AiClient,
   type AiReceipt,
   type AiResult,
@@ -30,7 +32,7 @@ import type { IntelligenceLog } from './intelligence-log.js';
 import { traceDetails } from './cognition-inspection.js';
 import { LEVEL_LIMITS, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
 import { prepareActorInvention } from './actor-invention.js';
-import { decisionAllowance } from './cognition-budget.js';
+import { decisionAllowance, sumRequestCosts } from './cognition-budget.js';
 import type { JobRecord } from './store.js';
 import type { Level1Rating } from './level1-selection.js';
 
@@ -306,7 +308,11 @@ afterEach(async () => {
 }, 120_000);
 
 async function harness(
-  options: { env?: Record<string, string>; client?: (config: AppConfig) => AiClient } = {},
+  options: {
+    env?: Record<string, string>;
+    client?: (config: AppConfig) => AiClient;
+    ordinaryMain?: boolean;
+  } = {},
 ) {
   let now = 10_000;
   const config = readConfig({
@@ -320,7 +326,9 @@ async function harness(
     NARRATION_BATCH_MS: '10000',
     ...options.env,
   });
-  const store = await testRepository();
+  // Adapter specimens choose their small supplied scene explicitly. The greeting
+  // keeps actual Main input-budget coverage. Neither changes production defaults.
+  const store = await testRepository(undefined, options.ordinaryMain ? undefined : stockedCamp());
   const service = new WorldService(store, config, () => now);
   await enterLocalWorld(service);
   await service.setPresence('fixture-browser', true);
@@ -516,7 +524,7 @@ describe(
       expect(ordinary.service.world.responseReceipts?.[job.id]).toBeDefined();
     });
     it('answers a greeting with one low-effort level-2 mini request, a minimal schema, no reflection and no harness', async () => {
-      const h = await harness();
+      const h = await harness({ ordinaryMain: true });
       h.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
       h.state.generate = (request) =>
         value(request.requestId, 'openai', talk(String(request.context), 'Hello. I am Ada.'));
@@ -763,6 +771,7 @@ describe(
       ];
       // The first reply reaches the second request only as world-derived conversation evidence:
       // no provider response ID, raw model output or earlier instructions are carried over.
+      // Complete personally heard segments legitimately retain the exact speech text.
       expect(firstInput).not.toContain('Welcome to the river camp.');
       const section = secondInput.indexOf('## Conversation so far');
       expect(section).toBeGreaterThanOrEqual(0);
@@ -899,24 +908,17 @@ describe(
       expect(offeredRoutes.some((key) => /^request_\d+$/.test(key))).toBe(true);
       expect(jevOnlyTransport.requests.filter((request) => request.url !== JEV_URL)).toEqual([]);
       expect(jevOnly.npcResponses()).toEqual([]);
-      // Speech uses the dependent path: routing first, then one separate level-1 rating request.
-      expect(decisionJudges(jevOnly, job.id)).toEqual([
-        `${job.id}:attempt:0:route`,
-        `${job.id}:attempt:0:action-attention`,
-      ]);
-      expect(Object.keys(routeRequest(jevOnly, job.id)!.questions)).toEqual([
-        'route',
-        'reflection',
-        'possibleAction',
-      ]);
-      const rating = jevOnly.calls.judges.find(
-        (request) => request.requestId === `${job.id}:attempt:0:action-attention`,
-      )!;
-      const handles = Object.keys(rating.questions);
+      // An autonomous decision combines routing and action ratings. Speech
+      // interpretation itself requires generation and is not the Jev-only specimen.
+      expect(decisionJudges(jevOnly, job.id)).toEqual([`${job.id}:attempt:0:route`]);
+      const rating = routeRequest(jevOnly, job.id)!;
+      expect(Object.keys(rating.questions)).toEqual(
+        expect.arrayContaining(['route', 'reflection']),
+      );
+      const handles = ratingHandles(rating.questions);
       expect(handles.length).toBeGreaterThan(0);
-      expect(ratingHandles(rating.questions)).toEqual(handles);
-      for (const question of Object.values(rating.questions))
-        expect(question).toMatchObject({
+      for (const handle of handles)
+        expect(rating.questions[handle]).toMatchObject({
           type: 'noul',
           instructions: expect.stringContaining('serve a current need, intention or interest'),
         });
@@ -936,7 +938,7 @@ describe(
       const selection = trace.children.find((child) => child.id === `${job.id}:attempt:0:level1`)!;
       expect(selection).toMatchObject({
         kind: 'Level-1 selection',
-        input: { selectionRequest: 'dependent', ignoredAnswers: [] },
+        input: { selectionRequest: 'combined', ignoredAnswers: [] },
         output: {
           outcome: {
             kind: 'defer',
@@ -960,21 +962,39 @@ describe(
       h.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
       // A known adapter failure is the control for `uncertain`: only unknown completion maps there.
       const generationOutcomes = [...FAILURES, 'failed'] as const;
+      const knownUncertainCost = sumRequestCosts([decisionAllowance(h.config, 'openai'), 0.01]);
       for (const kind of generationOutcomes) {
-        h.state.generate = (request) => failure(request.requestId, 'openai', kind);
-        const spent = await h.spent();
+        h.state.generate = (request) => {
+          const result = failure(request.requestId, 'openai', kind);
+          if (kind === 'uncertain') result.receipt.estimatedCostUsd = knownUncertainCost;
+          return result;
+        };
+        const spent = usdToMicroUsd(await h.spent())!;
         const job = await h.chat(`outcome-${kind}`, `Fixture ${kind} request.`);
         expect(job.status).toBe('failed');
         expect(job.result).toEqual({ disposition: kind });
         expect(h.service.world.responseReceipts?.[job.id]).toBeUndefined();
         const trace = await h.trace(job.id);
         expect(trace).toMatchObject({ route: 'level2', status: 'failed', disposition: kind });
-        const charged = (await h.spent()) - spent;
-        // Unknown completion keeps the generation reservation charged; the others settle their receipts.
+        const charged = usdToMicroUsd(await h.spent())! - spent;
+        // Unknown completion preserves a larger known charge and keeps execution occupied.
         if (kind === 'uncertain') {
-          expect(charged).toBeGreaterThanOrEqual(decisionAllowance(h.config, 'openai'));
+          expect(charged).toBeGreaterThanOrEqual(usdToMicroUsd(knownUncertainCost)!);
+          expect(
+            trace.children.find((child) => child.kind === 'Decision accounting'),
+          ).toMatchObject({
+            output: {
+              entries: expect.arrayContaining([
+                expect.objectContaining({
+                  requestId: h.npcResponses().at(-1)!.requestId,
+                  settledUsd: knownUncertainCost,
+                  uncertain: true,
+                }),
+              ]),
+            },
+          });
           await h.confirmCompletion(h.npcResponses().at(-1)!.requestId, 'openai');
-        } else expect(charged).toBeLessThan(0.01);
+        } else expect(charged).toBeLessThan(10_000);
       }
       expect(h.npcResponses()).toHaveLength(generationOutcomes.length);
 
@@ -984,16 +1004,18 @@ describe(
           request.requestId.endsWith(':attempt:0:route')
             ? failure(request.requestId, 'jev', kind)
             : value(request.requestId, 'jev', { answers: answers(request, h.state.policy) });
-        const spent = await h.spent();
+        const spent = usdToMicroUsd(await h.spent())!;
         const job = await h.chat(`outcome-jev-${kind}`, `Fixture Jev ${kind}.`);
         expect(job.status).toBe('failed');
         expect(job.result).toEqual({ disposition: kind });
         expect(await h.trace(job.id)).toMatchObject({ status: 'failed', disposition: kind });
-        const charged = (await h.spent()) - spent;
+        const charged = usdToMicroUsd(await h.spent())! - spent;
         if (kind === 'uncertain') {
-          expect(charged).toBeGreaterThanOrEqual(decisionAllowance(h.config, 'jev'));
+          expect(charged).toBeGreaterThanOrEqual(
+            usdToMicroUsd(decisionAllowance(h.config, 'jev'))!,
+          );
           await h.confirmCompletion(routeRequest(h, job.id)!.requestId, 'jev');
-        } else expect(charged).toBeLessThan(0.01);
+        } else expect(charged).toBeLessThan(10_000);
       }
       expect(h.npcResponses()).toHaveLength(generationOutcomes.length);
       delete h.state.judge;
@@ -1074,10 +1096,17 @@ describe(
       h.state.policy = {
         route: 'level1',
         reflection: 'no',
-        rate: (description) => (description.startsWith('Prepare 1 Fiber cord') ? 0.9 : 0.1),
+        rate: (description) => (/^Craft .*cord/i.test(description) ? 0.9 : 0.1),
       };
       const cordStep = expect.objectContaining({
-        command: expect.objectContaining({ type: 'prepare', preparation: 'cord' }),
+        command: expect.objectContaining({
+          type: 'craft',
+          recipeId: Object.values(h.service.world.recipes).find(
+            (recipe) =>
+              recipe.source.kind === 'fixed-transform' &&
+              recipe.source.definition.id === 'base:twist-cord',
+          )!.id,
+        }),
       });
       const steps = () =>
         entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.plan?.steps ?? [];
@@ -1095,7 +1124,7 @@ describe(
             ratings: Level1Rating[];
           }
         ).ratings.find((rating) => rating.handle === selectedHandle(act)),
-      ).toMatchObject({ rating: 0.9, description: expect.stringMatching(/^Prepare 1 Fiber cord/) });
+      ).toMatchObject({ rating: 0.9, description: expect.stringMatching(/^Craft .*cord/i) });
       // The selected binding was admitted natively and now drives Ada's plan.
       const actReceipt = h.service.world.responseReceipts?.[act.id];
       expect(Object.values(actReceipt?.components ?? {}).length).toBeGreaterThan(0);

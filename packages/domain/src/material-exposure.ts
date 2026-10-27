@@ -1,3 +1,4 @@
+import { openContentsProfile, openContentsRoot } from './contents-exposure.js';
 import { entityGet } from './entity-collection.js';
 import {
   exposureCrossings,
@@ -8,17 +9,19 @@ import {
   coverFootprint,
   type ExposureFootprint,
   type SpatialMap,
+  type IncidentRain,
 } from '@open-legend/spatial';
 import { readOnlyDraftView } from './draft.js';
 import { assemblyShapes } from './assembly-geometry.js';
-import { bodyProfile, spatialMap, worldPosition } from './spatial-state.js';
+import { bodyProfile, effectiveBodyProfile, spatialMap, worldPosition } from './spatial-state.js';
 import { worldRootEntities } from './entity-index.js';
 import { exposedMaterialIds } from './objects.js';
+import { incidentRain, dailyRainBoundary } from './rain.js';
 import { chargeWork } from './work-budget.js';
 import { readState, stateAddress, writeState } from './state-owners.js';
 import { attributeDefinition } from './world-modules.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import type { AssemblyFamily, FiniteRain } from './assembly-types.js';
+import type { FlexibleBayFamily } from './assembly-types.js';
 import type { WorldState, WorldEvent } from './types.js';
 
 const panelViews = new WeakMap<
@@ -116,7 +119,7 @@ function materialFootprintFromRead(
   const descriptor = readMaterialRecord(definition?.assemblyMaterial),
     family = descriptor && world.assemblyFamilies?.[descriptor.familyId];
   if (
-    !family ||
+    family?.implementation !== 'four-corner-flexible-bays' ||
     !descriptor ||
     !['cover', 'fiber'].includes(descriptor.role) ||
     !item?.placement ||
@@ -132,6 +135,31 @@ function materialFootprintFromRead(
   }
   if (placement.mode === 'world') return;
   const parent = readMaterialRecord(entityGet(read.entities, placement.parentEntityId));
+  if (parent?.container && openContentsProfile(world, parent)) {
+    const root = openContentsRoot(world, parent);
+    if (!root) return;
+    const body = bodyProfile(parent),
+      point = worldPosition(root);
+    const y =
+      point.y +
+      (root.actor?.alive ? effectiveBodyProfile(world, root).interactionHeight : body.height);
+    const key = JSON.stringify(['open-contents', parent.id, point.x, point.z, y, body.radius]);
+    const previous = read.footprints.get(key);
+    if (previous) {
+      countDomainWork('materialFootprintsReused');
+      return previous;
+    }
+    const footprint = {
+      minX: point.x - body.radius,
+      maxX: point.x + body.radius,
+      minZ: point.z - body.radius,
+      maxZ: point.z + body.radius,
+      y,
+    };
+    read.footprints.set(key, footprint);
+    countDomainWork('materialFootprintsBuilt');
+    return footprint;
+  }
   if (
     !parent ||
     readMaterialRecord(parent.placement)?.mode !== 'world' ||
@@ -139,7 +167,7 @@ function materialFootprintFromRead(
   )
     return;
   const point = worldPosition(parent),
-    profile = bodyProfile(parent);
+    profile = effectiveBodyProfile(world, parent);
   const worn = descriptor.role === 'cover' && placement.mode === 'attached';
   const form = worn
     ? family.exposure.worn
@@ -176,24 +204,20 @@ function materialFootprintFromRead(
 }
 interface MaterialSample {
   id: string;
-  family: AssemblyFamily;
+  family: FlexibleBayFamily;
   footprint: ExposureFootprint;
 }
 export interface MaterialExposureInterval {
   at: number;
   panels: CoverPanel[];
-  rain?: FiniteRain;
+  rain: readonly IncidentRain[];
   materials: MaterialSample[];
 }
 /** Captured once per native motion slice; changes at its endpoint affect only future time. */
 export function captureMaterialExposure(world: WorldState): MaterialExposureInterval {
   const materials: MaterialSample[] = [];
-  const rain = world.finiteRain;
-  const raining =
-    !!rain &&
-    world.simTime >= rain.startsAt - 1e-8 &&
-    world.simTime < rain.endsAt - 1e-8 &&
-    rain.intensity > 0;
+  const rain = incidentRain(world);
+  const raining = rain.length > 0;
   const read = materialRead(world);
   for (const id of exposedMaterialIds(world, !raining)) {
     const item = readMaterialRecord(entityGet(read.entities, id))!,
@@ -203,7 +227,8 @@ export function captureMaterialExposure(world: WorldState): MaterialExposureInte
     const definition = readMaterialRecord(read.itemDefinitions[lot.definitionPin.id]),
       descriptor = readMaterialRecord(definition?.assemblyMaterial);
     const family = descriptor && world.assemblyFamilies?.[descriptor.familyId];
-    const moisture = family && readMaterialRecord(item.attributes)?.[family.moistureAttribute];
+    if (family?.implementation !== 'four-corner-flexible-bays') continue;
+    const moisture = readMaterialRecord(item.attributes)?.[family.moistureAttribute];
     // The native weather boundary ends this interval before any future rain starts.
     // A dry material has no drying work; movement cannot make it wetter without rain.
     if (!family || !moisture || (!raining && moisture.value === 0)) continue;
@@ -219,9 +244,10 @@ export function captureMaterialExposure(world: WorldState): MaterialExposureInte
 }
 export function weatherBoundary(world: WorldState, maximum: number): number {
   const rain = world.finiteRain;
+  maximum = Math.min(maximum, dailyRainBoundary(world));
   if (!rain) return maximum;
   for (const at of [rain.startsAt, rain.endsAt])
-    if (at > world.simTime + 1e-8) maximum = Math.min(maximum, at - world.simTime);
+    if (at > world.simTime) maximum = Math.min(maximum, at - world.simTime);
   return maximum;
 }
 const between = (a: ExposureFootprint, b: ExposureFootprint, t: number): ExposureFootprint => ({
@@ -241,12 +267,12 @@ export function* integrateMaterialExposure(
 ): Generator<void> {
   if (!(seconds > 0)) return;
   const rain = interval.rain;
-  const raining =
-    !!rain &&
-    interval.at >= rain.startsAt - 1e-8 &&
-    interval.at < rain.endsAt - 1e-8 &&
-    rain.intensity > 0;
+  const raining = rain.length > 0;
   const footprints = new Map<string, ExposureFootprint>();
+  const exposureSegments = new Map<
+    ExposureFootprint,
+    Map<ExposureFootprint, Array<{ seconds: number; incident: number }>>
+  >();
   for (const sample of interval.materials) {
     yield;
     const to = materialFootprintFromRead(world, sample.id, materialRead(world, footprints)),
@@ -255,37 +281,47 @@ export function* integrateMaterialExposure(
     const state = readState(world, stateAddress(sample.id, definition), 'owner');
     if (state.status !== 'known' || typeof state.value !== 'number') continue;
     let value = state.value;
-    const panels = raining ? nearbyPanels(interval.panels, sample.footprint, to) : [];
-    const exposure = (t: number, layerHeight: number) => {
-      const result = incidentExposure(
-        { ...between(sample.footprint, to, t), orderingY: layerHeight },
-        panels,
-        rain,
-      );
-      chargeWork({ candidates: panels.length + result.clips });
-      return result.fraction;
-    };
-    const crossings = raining ? exposureCrossings(sample.footprint, to, panels, rain) : [0, 1];
-    chargeWork({ candidates: crossings.length });
-    for (let n = 1; n < crossings.length; n++) {
-      const a = crossings[n - 1]!,
-        b = crossings[n]!,
-        duration = seconds * (b - a);
-      // Height crossings change which layers are above the material discontinuously.
-      // Use this segment's ordering at both endpoints; a boundary line has zero duration.
-      // docs/projects/editable-shelters-tech-design.md#42-rain-coverage-calculation
-      const layerHeight = sample.footprint.y + ((to.y - sample.footprint.y) * (a + b)) / 2;
-      const mid = raining ? exposure((a + b) / 2, layerHeight) : 0;
-      if (mid > 0)
-        value = Math.min(
-          1,
-          value +
-            (((duration * (exposure(a, layerHeight) + 4 * mid + exposure(b, layerHeight))) / 6) *
-              rain!.intensity) /
-              sample.family.wettingSeconds,
+    let byDestination = exposureSegments.get(sample.footprint);
+    if (!byDestination) exposureSegments.set(sample.footprint, (byDestination = new Map()));
+    let segments = byDestination.get(to);
+    if (!segments) {
+      segments = [];
+      const panels = raining ? nearbyPanels(interval.panels, sample.footprint, to) : [];
+      const exposure = (t: number, layerHeight: number) => {
+        const result = incidentExposure(
+          { ...between(sample.footprint, to, t), orderingY: layerHeight },
+          panels,
+          rain,
         );
-      else value = Math.max(0, value - duration / sample.family.dryingSeconds);
+        chargeWork({ candidates: panels.length + result.clips });
+        return result.fraction;
+      };
+      const crossings = raining ? exposureCrossings(sample.footprint, to, panels, rain) : [0, 1];
+      chargeWork({ candidates: crossings.length });
+      for (let n = 1; n < crossings.length; n++) {
+        const a = crossings[n - 1]!,
+          b = crossings[n]!,
+          duration = seconds * (b - a);
+        // Height crossings change ordering discontinuously; both endpoints use
+        // this segment's midpoint ordering, since the boundary has zero duration.
+        const layerHeight = sample.footprint.y + ((to.y - sample.footprint.y) * (a + b)) / 2;
+        const mid = raining ? exposure((a + b) / 2, layerHeight) : 0;
+        // Keep the original three-point numerator and material arithmetic order.
+        const incident =
+          mid > 0 ? exposure(a, layerHeight) + 4 * mid + exposure(b, layerHeight) : 0;
+        segments.push({ seconds: duration, incident });
+      }
+      byDestination.set(to, segments);
     }
+    // Equal actual rim footprints share geometry work, never child state or material law.
+    for (const segment of segments)
+      value =
+        segment.incident > 0
+          ? Math.min(
+              1,
+              value + (segment.seconds * segment.incident) / 6 / sample.family.wettingSeconds,
+            )
+          : Math.max(0, value - segment.seconds / sample.family.dryingSeconds);
     if (value !== state.value)
       writeState(
         world,
@@ -309,14 +345,12 @@ export function materialExposureView(
     definition = lot && readMaterialRecord(read.itemDefinitions[lot.definitionPin.id]),
     descriptor = readMaterialRecord(definition?.assemblyMaterial),
     family = descriptor && world.assemblyFamilies?.[descriptor.familyId];
+  if (family?.implementation !== 'four-corner-flexible-bays') return;
   const footprint = materialFootprintFromRead(world, id, read),
     value = family && readMaterialRecord(item?.attributes)?.[family.moistureAttribute]?.value;
   if (!family || !footprint || typeof value !== 'number') return;
   const panels = nearbyPanels(materialPanels(world), footprint);
-  const incident = incidentExposure(footprint, panels, world.finiteRain);
-  const rain = world.finiteRain,
-    raining =
-      !!rain && rain.startsAt <= world.simTime && rain.endsAt > world.simTime && rain.intensity > 0;
+  const incident = incidentExposure(footprint, panels, incidentRain(world));
   const labels = family.moistureLabels;
   return {
     label:
@@ -327,7 +361,7 @@ export function materialExposureView(
           : value > labels.dryMaximum
             ? labels.damp
             : labels.dry,
-    process: raining && incident.fraction > 0 ? 'wetting' : 'drying',
+    process: incident.fraction > 0 ? 'wetting' : 'drying',
     coveredFraction:
       incident.coveredArea /
       ((footprint.maxX - footprint.minX) * (footprint.maxZ - footprint.minZ)),

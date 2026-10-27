@@ -877,6 +877,16 @@ export function releaseResource(world: WorldState, id: string, invocationId: str
   }
   return true;
 }
+/** Exact active holds for one admitted invocation; retained claim history is not scanned. */
+export function* heldInvocationResources(
+  world: WorldState,
+  invocationId: string,
+): Generator<ResourceReservation> {
+  for (const id of reservationIndex(world).invocations.get(invocationId) ?? []) {
+    const hold = world.resourceReservations?.[id];
+    if (hold?.state === 'held') yield hold;
+  }
+}
 export function releaseInvocationResources(world: WorldState, invocationId: string): void {
   if (!world.resourceReservations) return;
   for (const id of reservationIndex(world).invocations.get(invocationId) ?? [])

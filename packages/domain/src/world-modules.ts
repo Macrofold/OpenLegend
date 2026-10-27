@@ -1,3 +1,17 @@
+import { validateAttackExecutions } from './combat-execution.js';
+import { validLethalPermission } from './combat-consent.js';
+import { validateSensoryProgress } from './perception-timing.js';
+import { validatePersonalSocialEvidence } from './personal-social.js';
+import { validateSupplyOpportunities } from './supply-opportunities.js';
+import { validateNativeFeeding } from './native-feeding.js';
+import { validateStrikeMotion } from './strikes.js';
+import { validateNativeForagingProfiles } from './native-foraging.js';
+import { validateCooperationExperience, validateCooperationMethods } from './cooperation.js';
+import { validateSocialCompacts } from './social-compacts.js';
+import { validateSocialOfferPolicy } from './social-offer-policy.js';
+import { validateSocialOffers } from './social-offers.js';
+import { validateCraftCatalogue } from './craft-catalogue.js';
+import { validExperienceSummary } from './experience-sources.js';
 import {
   validateObservationContribution,
   validatePerceptionEvidenceState,
@@ -25,6 +39,11 @@ import {
 } from './practical-competence.js';
 import { validateCoaching } from './coaching.js';
 import { validateAssemblies } from './assembly-validation.js';
+import {
+  validateHearthDefinitions,
+  validatePlacedHearth,
+  validateHearthAction,
+} from './hearths.js';
 import { validNarrationTemplate, formatDisplayNumber } from '@open-legend/language';
 import {
   narrationTemplate,
@@ -64,13 +83,22 @@ import { DEFAULT_ACOUSTICS, validateAcoustics, type AcousticPolicy } from './aco
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
 import { validateItemHandling } from './item-handling.js';
-import { validateGatheringTools } from './gathering.js';
+import {
+  validateGatheringTools,
+  validateGatheringPolicy,
+  validateGatheringBinding,
+} from './gathering.js';
 import { validateInventionPolicy } from './invention-policy.js';
+import { validateWorkBatchPolicy } from './work-batches.js';
 import { validateFoodPreparations } from './food-preparation.js';
 import { validateFiniteCasts } from './finite-casts.js';
 import { validateActionExperience } from './action-experience.js';
-import { validateActivityHostPins } from './activity-hosts.js';
-import { nativeCommandSupported, activityHostForCommand } from './activity-hosts.js';
+import { validateActivityHostPins, validateInstalledActivityRequests } from './activity-hosts.js';
+import {
+  nativeCommandSupported,
+  activityHostForCommand,
+  trustedActivityHost,
+} from './activity-hosts.js';
 import { isDefinitionPin, sameDefinitionPin } from './state-owners.js';
 import { isFuel } from './worlds/base/fire.js';
 import { validateAgency } from './agency.js';
@@ -102,7 +130,11 @@ import { validateEvasion } from './evasion.js';
 import { validateRanged } from './ranged.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
-import { validateOutings, validateCombatHelpReference } from './outings.js';
+import {
+  validateOutings,
+  validateCooperationReference,
+  validateCombatHelpReference,
+} from './outings.js';
 import { validateSocialPolicy } from './social-policy.js';
 import { readOnlyDraftView } from './draft.js';
 
@@ -275,7 +307,10 @@ export function definitionPin<T extends { id: string; version: number }>(
  * data too: a mutable authoring draft cannot hide edits behind unchanged saved pins.
  */
 export function activityManifest(world: WorldState): string {
-  const manifest = world.moduleManifest;
+  // Publication revision does not change a method's meaning. Actual definitions
+  // and executable host pins remain exact.
+  // docs/action-experience.md#learning-and-shared-definitions
+  const { revision: _revision, ...manifest } = world.moduleManifest;
   return canonicalJson({
     ...manifest,
     definitions: manifest.definitions.map(definitionPin),
@@ -438,13 +473,40 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       sense,
       sense.implementation === 'hearing-db-v1'
         ? ['id', 'version', 'implementation', 'hearingFloorDbSpl']
-        : ['id', 'version', 'implementation', 'radius'],
+        : sense.implementation === 'vision-geometry-v1'
+          ? [
+              'id',
+              'version',
+              'implementation',
+              'radius',
+              'sampleSeconds',
+              'fieldOfViewRadians',
+              'routineTiming',
+            ]
+          : ['id', 'version', 'implementation', 'radius', 'awarenessTiming', 'sampleSeconds'],
     );
     if (
       !namespace.test(sense.id) ||
       senseIds.has(sense.id) ||
       sense.version !== 1 ||
       !SENSE_IMPLEMENTATIONS.includes(sense.implementation) ||
+      (sense.implementation === 'vision-geometry-v1' &&
+        (!['boundary', 'cadence'].includes(sense.routineTiming) ||
+          (sense.routineTiming === 'cadence' && sense.sampleSeconds === undefined))) ||
+      (sense.implementation === 'body-contact-v1' &&
+        (!['crossing', 'sampled'].includes(sense.awarenessTiming) ||
+          (sense.awarenessTiming === 'sampled' &&
+            (sense.sampleSeconds === undefined ||
+              !finite(sense.sampleSeconds) ||
+              sense.sampleSeconds <= 0)))) ||
+      (sense.implementation === 'vision-geometry-v1' &&
+        sense.sampleSeconds !== undefined &&
+        (!finite(sense.sampleSeconds) || sense.sampleSeconds <= 0)) ||
+      (sense.implementation === 'vision-geometry-v1' &&
+        sense.fieldOfViewRadians !== undefined &&
+        (!finite(sense.fieldOfViewRadians) ||
+          sense.fieldOfViewRadians <= 0 ||
+          sense.fieldOfViewRadians > 2 * Math.PI)) ||
       (sense.implementation === 'hearing-db-v1'
         ? !finite(sense.hearingFloorDbSpl) ||
           sense.hearingFloorDbSpl < -120 ||
@@ -649,11 +711,21 @@ export function attributeDefinitions(world: {
   const manifest = readOnlyDraftView(world).moduleManifest;
   return (isDraft(manifest) ? current(manifest) : manifest).definitions;
 }
+const attributeIndexes = new WeakMap<object, ReadonlyMap<string, AttributeDefinition>>();
 export function attributeDefinition(
   world: { moduleManifest: Pick<WorldModuleManifest, 'definitions'> },
   id: string,
 ): AttributeDefinition | undefined {
-  return attributeDefinitions(world).find((d) => d.id === id);
+  const definitions = attributeDefinitions(world);
+  if (!isImmutableData(definitions)) return definitions.find((d) => d.id === id);
+  let index = attributeIndexes.get(definitions);
+  if (!index) {
+    const entries = new Map<string, AttributeDefinition>();
+    for (const definition of definitions)
+      if (!entries.has(definition.id)) entries.set(definition.id, definition);
+    attributeIndexes.set(definitions, (index = entries));
+  }
+  return index.get(id);
 }
 /** One synchronous forecast's installed-rule facts. Never retain dynamic actor values. */
 export interface AttributeForecastPreparation {
@@ -662,12 +734,16 @@ export interface AttributeForecastPreparation {
   byId: ReadonlyMap<string, AttributeDefinition>;
   healthIds: ReadonlySet<string>;
 }
+const attributeForecasts = new WeakMap<object, AttributeForecastPreparation>();
 export function prepareAttributeForecast(world: WorldState): AttributeForecastPreparation {
   const latest = attributeDefinitions(world);
   const manifest = readOnlyDraftView(world).moduleManifest;
   // Preserve the existing authoring distinction: clock bounds inspect original installed
   // rules, while predicate metadata and health classification inspect the latest rules.
   const installed = isDraft(manifest) ? original(manifest)!.definitions : manifest.definitions;
+  const reusable = latest === installed && isImmutableData(latest),
+    previous = reusable ? attributeForecasts.get(latest) : undefined;
+  if (previous) return previous;
   const numeric: AttributeDefinition[] = [];
   const native: Array<{ definition: AttributeDefinition; thresholds: number[] }> = [];
   const byId = new Map<string, AttributeDefinition>();
@@ -688,7 +764,9 @@ export function prepareAttributeForecast(world: WorldState): AttributeForecastPr
       ]) ?? [];
     native.push({ definition, thresholds });
   }
-  return { numeric, native, byId, healthIds };
+  const prepared = { numeric, native, byId, healthIds };
+  if (reusable) attributeForecasts.set(latest, prepared);
+  return prepared;
 }
 export function readAttribute(
   world: WorldState,
@@ -1047,6 +1125,11 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  if (world.socialOfferPolicy !== undefined) validateSocialOfferPolicy(world.socialOfferPolicy);
+  if (Object.hasOwn(world, 'conversations'))
+    throw new Error(
+      'Current worlds contain personal speech evidence, not ordinary social membership records.',
+    );
   if (world.pendingNativeIntegration !== undefined) {
     // Validate the existing anchors before any pending operation is read, then the
     // exact continuation and its current view. Neither validation installs a twin
@@ -1075,10 +1158,41 @@ export function validateWorldModules(world: WorldState): void {
   );
   if (
     world.presentation !== undefined &&
-    (!hasRecordFields(world.presentation, ['worldName', 'locationName', 'timeLabel']) ||
-      Object.values(world.presentation).some((value) => typeof value !== 'string' || !value.trim()))
+    (!hasRecordFields(
+      world.presentation,
+      ['worldName', 'locationName', 'timeLabel'],
+      ['crafting', 'introduction', 'daylight'],
+    ) ||
+      [
+        world.presentation.worldName,
+        world.presentation.locationName,
+        world.presentation.timeLabel,
+      ].some((value) => typeof value !== 'string' || !value.trim()))
   )
     throw new Error('Invalid world presentation.');
+  if (
+    world.presentation?.introduction !== undefined &&
+    (typeof world.presentation.introduction !== 'string' ||
+      !world.presentation.introduction.trim() ||
+      world.presentation.introduction.length > 4000)
+  )
+    throw new Error('Invalid world introduction.');
+  const daylight = world.presentation?.daylight;
+  if (
+    daylight !== undefined &&
+    (!hasRecordFields(daylight, ['startTime', 'endTime', 'noonElevationDegrees']) ||
+      !Object.hasOwn(world.statusEffectPolicy.namedTimes, daylight.startTime) ||
+      !Object.hasOwn(world.statusEffectPolicy.namedTimes, daylight.endTime) ||
+      world.statusEffectPolicy.namedTimes[daylight.startTime] ===
+        world.statusEffectPolicy.namedTimes[daylight.endTime] ||
+      typeof daylight.noonElevationDegrees !== 'number' ||
+      !Number.isFinite(daylight.noonElevationDegrees) ||
+      daylight.noonElevationDegrees <= 0 ||
+      daylight.noonElevationDegrees > 90)
+  )
+    throw new Error('Invalid authored daylight presentation.');
+  if (world.presentation?.crafting !== undefined)
+    validateCraftCatalogue(world.presentation.crafting);
   const originalObservations = new Map<string, string>();
   const validatePersonalOriginals = (
     evidence: {
@@ -1241,6 +1355,7 @@ export function validateWorldModules(world: WorldState): void {
   validateStatusEffects(world);
   validateNativeWork(world);
   validateAssemblies(world);
+  validateHearthDefinitions(world);
   validateSpatialWorld(world);
   validatePerceptionState(world);
   validatePlaces(world);
@@ -1248,13 +1363,27 @@ export function validateWorldModules(world: WorldState): void {
   validateInventionAttribution(world);
   validateInstalledRecipes(world);
   validateGatheringTools(world);
+  validateGatheringPolicy(world.gatheringPolicy);
+  if (world.workBatchPolicy !== undefined) validateWorkBatchPolicy(world.workBatchPolicy);
+  validateInstalledActivityRequests(world);
   validateEquipment(world);
   validateContactDefense(world);
   validateRanged(world);
+  validateAttackExecutions(world);
   validateEvasion(world);
   validateFoodPreparations(world);
   validateFiniteCasts(world);
   for (const definition of Object.values(world.itemDefinitions)) {
+    if (definition.tracksMaterialOrigins !== undefined && definition.tracksMaterialOrigins !== true)
+      throw new Error('Invalid material-origin capability.');
+    if (
+      definition.stockShape !== undefined &&
+      (!hasRecordFields(definition.stockShape, ['usableLengthMeters']) ||
+        typeof definition.stockShape.usableLengthMeters !== 'number' ||
+        !Number.isFinite(definition.stockShape.usableLengthMeters) ||
+        definition.stockShape.usableLengthMeters <= 0)
+    )
+      throw new Error('Invalid finite material stock dimensions.');
     if (
       (definition.icon !== undefined && typeof definition.icon !== 'string') ||
       (definition.gatherLabel !== undefined && typeof definition.gatherLabel !== 'string')
@@ -1295,6 +1424,10 @@ export function validateWorldModules(world: WorldState): void {
     if (entity.actor?.agency.semantic !== undefined)
       validateSemanticContinuation(entity.actor.agency.semantic);
   validateOutings(world);
+  validateSocialCompacts(world);
+  validateCooperationExperience(world);
+  validateCooperationMethods(world);
+  validateSocialOffers(world);
   validateActionExperience(world);
   validatePractice(world);
   validateCoaching(world);
@@ -1307,6 +1440,9 @@ export function validateWorldModules(world: WorldState): void {
   );
   validateCognitionPolicy(world, world.cognitionPolicy);
   validateNativeResponseProfiles(world);
+  validateNativeForagingProfiles(world);
+  validateSupplyOpportunities(world);
+  validatePersonalSocialEvidence(world);
   validateReincarnation(world);
   validateRangedActions(world);
   validateNativeStrikes(world);
@@ -1315,17 +1451,33 @@ export function validateWorldModules(world: WorldState): void {
     (definition) => definition.implementation === 'native-health-v1',
   );
   for (const e of entityValues(world.entities)) {
+    validateSensoryProgress(e);
+    validateGatheringBinding(world, e);
+    if (
+      e.actor?.capabilities &&
+      (!hasRecordFields(e.actor.capabilities, [
+        'cognition',
+        'memory',
+        'innerWorld',
+        'speech',
+        'language',
+      ]) ||
+        Object.values(e.actor.capabilities).some((value) => typeof value !== 'boolean'))
+    )
+      throw new Error('Invalid actor capabilities.');
     if (e.icon !== undefined && typeof e.icon !== 'string')
       throw new Error('Invalid entity presentation.');
     if (!validName(e)) throw new Error('Invalid canonical entity name or name grammar.');
     if (
       e.actor &&
-      (['fullness', 'energy', 'fullnessRevision', 'energyRevision'].some((key) =>
+      (['fullness', 'energy', 'fullnessRevision', 'energyRevision', 'knownTradeLots'].some((key) =>
         Object.hasOwn(e.actor!, key),
       ) ||
         (e.actor.capabilities && Object.hasOwn(e.actor.capabilities, 'needs')))
     )
-      throw new Error('Incompatible native meter aliases.');
+      throw new Error('Unsupported actor storage fields.');
+    validatePlacedHearth(world, e);
+    validateHearthAction(world, e);
     if (
       e.resource &&
       (!Number.isSafeInteger(e.resource.quantity) ||
@@ -1341,6 +1493,14 @@ export function validateWorldModules(world: WorldState): void {
       }
     if (e.actor?.body && (!Number.isFinite(e.actor.body.maxHealth) || e.actor.body.maxHealth <= 0))
       throw new Error('Invalid body maximum.');
+    if (
+      e.actor?.body &&
+      (!hasRecordFields(e.actor.body.conditions, ['wetness', 'burning']) ||
+        Object.values(e.actor.body.conditions).some(
+          (value) => !Number.isFinite(value) || value < 0 || value > 100,
+        ))
+    )
+      throw new Error('Invalid body conditions.');
     if (
       e.actor?.body &&
       healthDefinition?.nativeHealth?.precision === 'whole-points' &&
@@ -1518,16 +1678,21 @@ export function validateWorldModules(world: WorldState): void {
       const permission = activeAction.lethalPermission;
       if (
         !['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
+        !validLethalPermission(permission) ||
         permission.actorId !== e.id ||
         permission.sourceLife !== (e.actor!.physicalLife ?? 0) ||
-        permission.targetId !== activeAction.targetId ||
-        permission.targetLife !== activeAction.targetLife ||
+        (activeAction.targetId !== undefined && permission.targetId !== activeAction.targetId) ||
+        (activeAction.targetLife !== undefined &&
+          permission.targetLife !== activeAction.targetLife) ||
         typeof permission.attackDigest !== 'string' ||
         !permission.attackDigest
       )
         throw new Error('Invalid saved lethal permission.');
     }
-    if (activeAction) validateCombatHelpReference(world, e.id, activeAction);
+    if (activeAction) {
+      validateCombatHelpReference(world, e.id, activeAction);
+      validateCooperationReference(world, e.id, activeAction);
+    }
     if (
       activeAction?.requiresLethalReview !== undefined &&
       (!['strike', 'hunt', 'aim', 'shoot-once'].includes(activeAction.type) ||
@@ -1557,6 +1722,8 @@ export function validateWorldModules(world: WorldState): void {
             e.actor.combatReadyAt === undefined)))
     )
       throw new Error('Invalid saved melee phase.');
+    validateStrikeMotion(world, e);
+    validateNativeFeeding(world, e);
     if (
       e.actor?.action?.type === 'replenish' &&
       (!attributeDefinition(world, e.actor.action.attributeId ?? '')?.reservoir ||

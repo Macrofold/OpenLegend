@@ -53,6 +53,44 @@ Reports identify boundary-limited-prefix integration, setup/initial-freeze cost,
 
 This first version excludes real-time clock debt, database commits, browser frames, cognition admission/context preparation and paid model calls. Use the running server's `/api/performance` for tick/debt and cognition spans. Long history, constrained cognition capacity and dense encounter fan-out remain distinct workloads; do not treat a successful gem scenario as 100-agent qualification.
 
+The classic running-server report also records its effective world preset, world
+seed and base ratio. Its scenario seed controls placement shuffle; it does not
+replace the server configuration’s world seed. Compare both seeds.
+
+`nativeAlarmPercent` selects 0–100 percent of the **added deer cohort**, rounded
+up (default 0). The generated fixture uses each actual spawn result's entity ID,
+places its idle performer at a supported clear nearby stance, admits a real
+unarmed preparation, records the animal's own exposure and cancels before time
+advances. It restores the performer afterward. These explicit setup placements
+are diagnostic construction, not ordinary travel, participant behavior or synthetic
+danger records. A failed stance/preparation fails the workload; it never reduces
+the cohort silently. Main content remains background, with its actual native
+population reported separately. The setup retains real action/event history, so
+different alarm percentages are complete workloads, not isolated CPU comparisons.
+
+`populateScenario` returns the world and its exact added animal IDs. All current
+tool callers consume that single result. The full-server report's `nativeStart`
+and `nativeEnd` distinguish total living native animals/alarms from the declared
+cohort; finite alarms may legitimately end during the run. Do not call a transient
+or ended workload continuously alarmed. Optional domain counters include actual
+random evaluations (including tentative values in later refused transactions),
+ground-route preparations, retained-route checks and stale proposals. Server
+counts separately retire derived worker answers. These are work tallies, not
+additional world state, committed random draws or distinct-route counts; disabled
+profiling collects none of them.
+
+`nativePressure` is a full-server-only workload selection: `none` (default),
+`converging-people`, or `geometry-edits`. It retains the declared animal cohort.
+Two pairs of actually spawned people walk toward a cohort animal through native
+commands; per-phase positions and current actions distinguish admission from
+completed travel. A small movement-blocking screen instead moves by 0.2 metres
+in alternating directions every 500 real milliseconds, with one serialized edit
+outstanding and occupied edits skipped. Reports retain actual attempted/admitted
+edits, skipped occupied placements and failures. These are explicit diagnostic
+interventions, not gameplay behavior. Cold reopening retains the fixture, and
+cleanup aborts and drains owned work before closing its disposable database.
+The native-only profiler refuses this selection rather than silently omitting it.
+
 ## Actual progress and pending navigation
 
 The profiler initializes the shared collision adapter before constructing/loading a world. Reports distinguish requested steps, attempted steps, completed steps and actual `simulatedSeconds`. A no-progress native call stops the measured loop with `status: blocked`; throughput/headroom use actual world-time progress, never requested iterations. This script does not run the navigation coordinator: a pending derived route requires the running-server diagnostic. Re-run on the same snapshot/seed for comparisons. CPU profiling adds instrumentation overhead, so the capacity gate remains an unprofiled full-server measurement.
@@ -65,9 +103,17 @@ Browser recording limits, overflow behavior and acknowledged trace clocks live i
 
 Run a generated disposable scene through the real server timer, durable commands, SSE and a separate-process client. Set `OPEN_LEGEND_PROFILE_POSTGRES_URL` to a loopback administrative database.
 
+With application profiling on, `OPENLEGEND_CPU_PROFILE=1` also writes
+`REPORT.json.cpuprofile`. It captures the main JavaScript isolate after world
+bootstrap, spanning load-client startup, warm-up and all requested phases, and
+stops before retained-heap collection and cleanup. The report brackets inspector
+start/stop with monotonic clock reads. Worker CPU is separate; use its existing
+timings. Prefer one fresh speed per capture for attribution. Application profiling
+off rejects CPU capture, and failure cleanup disconnects the inspector.
+
 `OPENLEGEND_PROFILE_SERVER_WARMUP_SECONDS` selects 0–60 real seconds per speed (default 0). Warm-up and measurement use one continuously running timer and load child, without a pause between them. The cutoff occurs at the next server event-loop opportunity; report actual elapsed/progress and debt rather than assuming the requested duration was admitted. Client samples belong to the phase where their request started; measurement includes outstanding-request drain and counts requests crossing the cutoff. Duration stages belong to the phase where they completed, with all-sample counts/totals/maxima and a bounded last-256 sample distribution. Report cold/warm failures and load/heap/RSS alongside measured results.
 
-The restarted fixture explicitly takes character control through the ordinary player endpoint before play. Between speeds, normal pause admission still applies; final shutdown stops and drains the profiler's own timer. `native.iteratorCall` records each synchronous native generator call, `native.finalization` records immutable publication work, and `native.noYield` records the complete synchronous native segment between actual cooperative yields, including finalization. Queue, PostgreSQL and cooperative waiting are separate spans; host descheduling still contributes to these wall-time measurements. None changes native scheduling or its work budget. [NW12](../limits/native-work.md#nw12) distinguishes the current I/O-yield target from the coherent-world publication target; a private comparison must pin both separately.
+The restarted fixture explicitly takes character control through the ordinary player endpoint before play. Between speeds, normal pause admission still applies; final shutdown stops and drains the profiler's own timer. `native.iteratorCall` records each synchronous native generator call, including snapshot construction/finalization inside it. `native.finalization` records only the host’s final freeze after that generator returns. `native.noYield` records the complete synchronous native segment between actual cooperative yields, including finalization. Queue, PostgreSQL and cooperative waiting are separate spans; host descheduling still contributes to these wall-time measurements. None changes native scheduling or its work budget. [NW12](../limits/native-work.md#nw12) distinguishes the current I/O-yield target from the coherent-world publication target; a private comparison must pin both separately.
 
 ```sh
 pnpm run build
@@ -93,7 +139,7 @@ With zero warm-up, the first measured phase includes acquisition after ordinary 
 
 Report nominal elapsed-time achieved speed together with admitted/requested clock counters, pending debt and excluded gaps. Pending debt excludes elapsed wall time that an in-progress timer operation has not yet admitted. Existing >2-second callback-gap detection can misclassify long synchronous persistence as absence; the dense case does not qualify that boundary. Metric totals/counts are phase deltas, while `cumulativeMaxMs` is explicitly since startup. Keep initial presence-expiry runs separate from continuous-presence capacity evidence.
 
-The short high-command-count SQLite cases and PostgreSQL history-only exercise have [recorded evidence](../verification/integration-summaries.md#dense-persistence-implementation). The [action reconciliation observations](../verification/action-reconciliation.md) separately record current-source full-server PostgreSQL diagnostics and their failed throughput/dense-tail targets. Long soaks, repeated independent percentile cases, genuine multiple players, slow consumers, remote database topology, browser rendering and no-network cognition/maintenance fixtures remain PF00/PF11 acceptance work. Phase heap usage is the main JavaScript isolate, not total process memory; `rssBytes` includes resident memory across threads. None of these phase-end values is a measured peak.
+The short high-command-count SQLite cases and PostgreSQL history-only exercise have [recorded evidence](../verification/integration-summaries.md#dense-persistence-implementation). The [action reconciliation observations](../verification/action-reconciliation.md) separately record current-source full-server PostgreSQL diagnostics and their failed throughput/dense-tail targets. Long soaks, repeated independent percentile cases, genuine multiple players, slow consumers, remote database topology, browser rendering and no-network cognition/maintenance fixtures remain PF00/PF11 acceptance work. Phase heap usage is the main JavaScript isolate, not total process memory; `rssBytes` includes resident memory across threads. None of these phase-end values is a measured peak. Launch the server tool with Node `--expose-gc` to record a separate retained main-isolate heap sample after two requested full collections outside all measured windows, while the server/world remain alive. It includes in-flight work and profiler records; RSS remains a process sample, and worker/WASM retention and peaks are not established. Without that flag, retained memory is explicitly unavailable.
 
 ## Contact candidate isolation
 

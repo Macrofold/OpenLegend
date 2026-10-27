@@ -304,14 +304,21 @@ export function boundResponseSchema(
         targetEntityId: physicalEntityId,
         actionId,
         invocation: decisionInvocation.nullable(),
-        slots: intentSlotsSchema
-          .extend({
-            itemId: physicalEntityId,
-            instrumentId: physicalEntityId,
-            recipientId: physicalEntityId,
-            until,
-          })
-          .nullable(),
+        description:
+          capabilities.proposals === false
+            ? z.null()
+            : operationSchema.shape.act.unwrap().shape.description,
+        slots:
+          capabilities.proposals === false
+            ? z.null()
+            : intentSlotsSchema
+                .extend({
+                  itemId: physicalEntityId,
+                  instrumentId: physicalEntityId,
+                  recipientId: physicalEntityId,
+                  until,
+                })
+                .nullable(),
         kind:
           capabilities.proposals === false
             ? capabilities.expressions

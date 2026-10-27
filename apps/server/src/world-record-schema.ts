@@ -1,6 +1,7 @@
 import { accountClass, experienceIndividualIds, type ExperienceEntry } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
+import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
  * a world/actor history container. New growing collections belong here explicitly.
  * docs/architecture.md#current-consuming-data-contracts
@@ -60,12 +61,24 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       // Keep even small authored records out of the frequently written world header.
       knowledgePolicy: one('config_knowledge'),
       itemHandling: one('config_item_handling'),
+      gatheringPolicy: one('config_gathering'),
+      workBatchPolicy: one('config_work_batches'),
+      socialOfferPolicy: one('config_social_offers'),
+      hearthDefinitions: map('config_hearth_definitions'),
       assemblyFamilies: map('config_assembly_families'),
       constructionProfile: one('config_construction_profile'),
+      contentsExposureProfiles: map('config_contents_exposure_profiles'),
+      dailyRainDefinitions: map('config_daily_rain_definitions'),
       finiteRain: one('sim_finite_rain'),
+      pendingNativeIntegration: one('sim_native_values', {
+        bindings: map('sim_native_value_bindings'),
+        byEntity: map('sim_native_value_subjects'),
+      }),
       participationPolicy: one('config_participation'),
       nativeStrikes: map('config_native_strikes'),
       nativeResponseProfiles: map('config_native_response_profiles'),
+      nativeForagingProfiles: map('config_native_foraging_profiles'),
+      supplyOpportunities: map('config_supply_opportunities'),
       foodPreparations: map('config_food_preparations'),
       castDefinitions: map('config_cast_definitions'),
       exitExposures: map('sim_exit_exposures'),
@@ -117,6 +130,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
             traits: list('sim_actor_traits', 'id'),
           }),
           animal: one('sim_animal_behavior', {
+            acousticPatterns: map('sim_native_acoustic_patterns'),
             episode: one('sim_native_response_episodes', {
               dangers: map('sim_native_response_dangers'),
               preparations: map('sim_native_attack_preparations'),
@@ -151,6 +165,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       }),
       workState: one('sim_work_state', { invocations: map('sim_work_invocations') }),
       outings: map('activity_outings'),
+      socialCompacts: map('social_compacts'),
       itemDefinitions: map('definition_items'),
       recipes: map('definition_recipes'),
       flightRoutes: map('sim_flight_routes'),
@@ -196,11 +211,6 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       appraisals: actorMaps('mind_appraisals'),
       appraisalProcesses: map('mind_appraisal_processes'),
       familyTree: one('sim_family_tree', { links: map('sim_parent_links') }),
-      conversations: one('conversation_state', {
-        records: map('conversations', { intervals: list('conversation_membership', 'id') }),
-        active: map('conversation_active'),
-        transitions: map('conversation_transitions'),
-      }),
       responseReceipts: { ...map('response_receipts'), stablePositions: true },
       experience: one('experience_state', {
         // Correction chronology belongs to its evidence, not map insertion order.
@@ -368,15 +378,17 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
       retention_class: {
         sql: 'TEXT NOT NULL',
         value: (value) =>
-          accountClass({
-            source:
-              table === 'mind_awareness'
-                ? 'awareness'
-                : table === 'mind_summaries'
-                  ? 'summary'
-                  : 'memory',
-            value,
-          } as unknown as ExperienceEntry),
+          table === 'mind_awareness' && value['retentionClass'] === 'sensory'
+            ? 'sensory'
+            : accountClass({
+                source:
+                  table === 'mind_awareness'
+                    ? 'awareness'
+                    : table === 'mind_summaries'
+                      ? 'summary'
+                      : 'memory',
+                value,
+              } as unknown as ExperienceEntry),
       },
       retention_reason: {
         sql: 'TEXT',
@@ -396,6 +408,22 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
               sql: 'TEXT NOT NULL',
               value: (value: JsonRecord) => personalAccountRevision(JSON.stringify(value)),
             },
+            agreement_key: {
+              sql: 'TEXT',
+              value: (value) =>
+                personalAgreementMetadata(value as unknown as Awareness)?.key ?? null,
+            },
+            agreement_open: {
+              sql: 'BIGINT NOT NULL',
+              value: (value) =>
+                Number(personalAgreementMetadata(value as unknown as Awareness)?.open ?? false),
+            },
+            agreement_until: {
+              sql: 'DOUBLE PRECISION',
+              value: (value) =>
+                personalAgreementMetadata(value as unknown as Awareness)?.until ?? null,
+            },
+            agreement_head: { sql: 'BIGINT NOT NULL', value: () => 0 },
           }
         : {}),
       ...(table === 'mind_memories'
@@ -425,7 +453,13 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
       ['actor_id', 'retention_class', 'at', 'source_id'],
       ['actor_id', 'source_id'],
       ...(table === 'mind_memories' ? [['actor_id', 'event_id']] : []),
-      ...(table === 'mind_awareness' ? [['actor_id', 'sequence']] : []),
+      ...(table === 'mind_awareness'
+        ? [
+            ['actor_id', 'sequence'],
+            ['actor_id', 'agreement_key', 'position'],
+            ['agreement_head', 'agreement_open', 'agreement_until'],
+          ]
+        : []),
       ...(table === 'mind_memories'
         ? [
             ['expires_at', 'actor_id'],

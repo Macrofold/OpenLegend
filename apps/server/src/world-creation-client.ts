@@ -9,6 +9,9 @@ import {
 import { digest } from './content-digest.js';
 import type { AppConfig } from './config.js';
 import type { WorldCreationTargetView } from '@open-legend/protocol';
+import { createNetworkOwner, NetworkError, requestText } from '@open-legend/network';
+
+const creationNetwork = createNetworkOwner({ role: 'server-creation-target', capacity: 16 });
 
 export class CreationTransportError extends Error {
   constructor(
@@ -64,73 +67,46 @@ export class WorldCreationClient {
     payload: unknown,
     signal?: AbortSignal,
   ): Promise<unknown> {
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 10_000);
     try {
-      const response = await fetch(
-        new URL(`/internal/world-creation/${operation}`, target.intakeUrl),
-        {
-          method: 'POST',
-          redirect: 'error',
-          signal: signal ? AbortSignal.any([signal, controller.signal]) : controller.signal,
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${target.intakeKey}`,
+      return await creationNetwork.run({ timeoutMs: 10_000, signal }, async (network) => {
+        const response = await requestText(network, {
+          url: new URL(`/internal/world-creation/${operation}`, target.intakeUrl),
+          init: {
+            method: 'POST',
+            redirect: 'error',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${target.intakeKey}`,
+            },
+            body: JSON.stringify(payload),
           },
-          body: JSON.stringify(payload),
-        },
-      );
-      const chunks: Uint8Array[] = [];
-      let length = 0;
-      const reader = response.body?.getReader();
-      if (!reader)
-        throw new CreationTransportError(
-          'invalid',
-          'The creation target returned no native reply.',
-        );
-      try {
-        for (;;) {
-          const part = await reader.read();
-          if (part.done) break;
-          length += part.value.byteLength;
-          if (length > 64000) {
-            await reader.cancel();
-            throw new CreationTransportError(
-              'invalid',
-              'The creation target returned an excessive native reply.',
-            );
-          }
-          chunks.push(part.value);
+          bodyPolicy: { kind: 'bounded', maxBytes: 64_000 },
+        });
+        const value: unknown = JSON.parse(response.text);
+        network.throwIfStopped();
+        if (response.status < 200 || response.status >= 300) {
+          const failure =
+            value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
+          throw new CreationTransportError(
+            typeof failure.code === 'string' ? failure.code : 'unavailable',
+            typeof failure.message === 'string'
+              ? failure.message
+              : 'The prepared host refused this operation.',
+          );
         }
-      } finally {
-        reader.releaseLock();
-      }
-      const bytes = new Uint8Array(length);
-      let offset = 0;
-      for (const chunk of chunks) {
-        bytes.set(chunk, offset);
-        offset += chunk.length;
-      }
-      const value: unknown = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
-      if (!response.ok) {
-        const failure =
-          value && typeof value === 'object' ? (value as Record<string, unknown>) : {};
-        throw new CreationTransportError(
-          typeof failure.code === 'string' ? failure.code : 'unavailable',
-          typeof failure.message === 'string'
-            ? failure.message
-            : 'The prepared host refused this operation.',
-        );
-      }
-      return value;
+        return value;
+      });
     } catch (error) {
       if (error instanceof CreationTransportError) throw error;
+      if (error instanceof NetworkError && error.kind === 'body_too_large')
+        throw new CreationTransportError(
+          'invalid',
+          'The creation target returned an excessive native reply.',
+        );
       throw new CreationTransportError(
         'unavailable',
         'The target did not confirm this request. Resolve the original Start receipt before attempting a new operation.',
       );
-    } finally {
-      clearTimeout(timer);
     }
   }
 

@@ -1,6 +1,12 @@
 import { createHash } from 'node:crypto';
 import Ajv, { type ValidateFunction } from 'ajv';
-import type { JudgmentAnswer, JudgeValue, TypedQuestionMap, TokenUsage } from './types.js';
+import type {
+  JudgmentAnswer,
+  JudgeValue,
+  TypedQuestionMap,
+  TokenUsage,
+  JsonSchema,
+} from './types.js';
 
 export class InvalidData extends Error {
   constructor(readonly code: string) {
@@ -63,6 +69,23 @@ export function serialize(
   return result;
 }
 
+/** One operation owns these validated bytes through hashing, journaling and HTTP.
+ * This is not a reusable authority check or a cache of a mutable caller object. */
+export class PreparedJson {
+  readonly #text: string;
+  readonly #bytes: number;
+  constructor(value: unknown, maxBytes: number) {
+    // Schema fields and offered choices have intentional order. Capture that
+    // order through the envelope; canonical comparisons use serialize directly.
+    this.#text = serialize(value, maxBytes, { preserveKeyOrder: true });
+    this.#bytes = Buffer.byteLength(this.#text);
+  }
+  text(maxBytes: number): string {
+    if (this.#bytes > maxBytes) throw new InvalidData('request_too_large');
+    return this.#text;
+  }
+}
+
 const finite = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 const nonempty = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
 
@@ -102,6 +125,22 @@ export function validateQuestions(value: unknown): asserts value is TypedQuestio
   }
 }
 
+/** Keep offered choice order as well as values through asynchronous execution.
+ * Canonical JSON sorts object keys, so its parsed copy cannot own tie-breaking. */
+export function prepareQuestions(value: unknown, maxBytes: number): TypedQuestionMap {
+  serialize(value, maxBytes);
+  const captured: unknown = structuredClone(value);
+  validateQuestions(captured);
+  freezeJson(captured);
+  return captured;
+}
+
+function freezeJson(value: unknown): void {
+  if (!value || typeof value !== 'object' || Object.isFrozen(value)) return;
+  for (const child of Object.values(value)) freezeJson(child);
+  Object.freeze(value);
+}
+
 // Conservative application estimates (4 characters/token), not a provider question-count limit.
 // docs/ai-providers.md#provider-behavior-and-limits
 export const JUDGMENT_MAX_CHARACTERS = 55_000 * 4;
@@ -131,6 +170,9 @@ function probabilities(value: unknown, keys: string[]): Record<string, number> {
 
 export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeValue {
   if (!record(data) || !record(data.answers)) throw new InvalidData('invalid_answers');
+  // A decision about only part of the required evidence cannot answer the
+  // original supplied question. Missing optional diagnostics remain allowed.
+  if (data.truncated === true) throw new InvalidData('judgment_input_truncated');
   const answers: Record<string, JudgmentAnswer> = Object.create(null) as Record<
     string,
     JudgmentAnswer
@@ -144,7 +186,7 @@ export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeVa
       Object.hasOwn(answer, 'confidence') && finite(answer.confidence)
         ? answer.confidence
         : undefined;
-    if (q.type !== 'noul' && Object.hasOwn(answer, 'confidence') && confidence === undefined)
+    if (Object.hasOwn(answer, 'confidence') && confidence === undefined)
       throw new InvalidData(`invalid_${q.type}_answer`);
     if (q.type === 'choice') {
       const distribution = probabilities(answer.probabilities, Object.keys(q.criteria));
@@ -171,7 +213,11 @@ export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeVa
       };
     } else {
       if (!finite(answer.noul)) throw new InvalidData('invalid_noul_answer');
-      answers[id] = { type: 'noul', noul: answer.noul };
+      answers[id] = {
+        type: 'noul',
+        noul: answer.noul,
+        ...(confidence === undefined ? {} : { confidence }),
+      };
     }
   }
   return { answers };
@@ -233,6 +279,17 @@ export function compileSchema(schema: unknown): ValidateFunction {
     throw new InvalidData('invalid_schema');
   }
 }
+
+/** Capture the exact schema once; later caller mutation cannot change its request
+ * or the validator retained across the provider wait. No cross-request cache. */
+export function prepareSchema(schema: unknown, maxBytes: number) {
+  const captured: unknown = JSON.parse(serialize(schema, maxBytes, { preserveKeyOrder: true }));
+  const validate = compileSchema(captured);
+  freezeJson(captured);
+  return Object.freeze({ schema: captured as JsonSchema, validate });
+}
+
+export type PreparedSchema = ReturnType<typeof prepareSchema>;
 
 export function decodeUsage(data: unknown): TokenUsage | undefined {
   if (!record(data) || !record(data.usage)) return undefined;

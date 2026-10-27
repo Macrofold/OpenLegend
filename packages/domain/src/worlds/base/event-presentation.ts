@@ -16,6 +16,8 @@ register(
   [
     'crafted',
     'construction-phase',
+    'gate-operated',
+    'structure-lowered',
     'cover-lowered',
     'method-learned',
     'taught',
@@ -50,11 +52,11 @@ register(
   ],
   true,
 );
-register('actions', 'action.eat', ['ate', 'cooked', 'cast-completed'], true);
+register('actions', 'action.eat', ['ate', 'fed', 'cooked', 'cast-completed'], true);
 register(
   'actions',
   'action.fire',
-  ['fire-lit', 'fire-out', 'fire-extinguished', 'fire-fueled'],
+  ['hearth-placed', 'fire-lit', 'fire-out', 'fire-extinguished', 'fire-fueled'],
   true,
 );
 register('actions', 'action.rest', ['rested', 'recovered'], true);
@@ -64,6 +66,7 @@ register(
   'action.hunt',
   [
     'struck',
+    'structure-struck',
     'shot',
     'shot-released',
     'projectile-contact',
@@ -89,6 +92,8 @@ register(
     'attribute-changed',
     'attribute-concern',
     'body-condition',
+    'body-rotting',
+    'body-removed',
     'body-effect',
     'state-changed',
     'contact',
@@ -96,6 +101,8 @@ register(
   ],
   true,
 );
+// Finite alarm changes are meaningful outcomes; routine travel remains below.
+register('observations', 'ui.inview', ['animal-response'], true);
 register('observations', 'ui.inview', ['encounter', 'weather-cue', 'activity-observed']);
 // Retain routine evidence, but never turn a new event family into player-facing noise by default.
 register('observations', 'ui.inview', ['takeoff', 'landed', 'departed', 'returned', 'respawn']);

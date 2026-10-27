@@ -1,0 +1,63 @@
+{
+  "baseline": {
+    "id": "base:social-offers",
+    "version": 1,
+    "implementation": "bounded-local-offers",
+    "outgoing": 3,
+    "incoming": 6,
+    "messages": {
+      "outgoing": "Withdraw an earlier offer before making another.",
+      "incoming": "That person cannot receive another offer now.",
+      "pair": "Review or withdraw the existing offer between you first."
+    },
+    "pendingSeconds": 1800,
+    "onePendingPerPair": false
+  },
+  "firstPlayable": {
+    "id": "base:first-playable-social-offers",
+    "version": 1,
+    "implementation": "bounded-local-offers",
+    "outgoing": 3,
+    "incoming": 6,
+    "messages": {
+      "outgoing": "Withdraw an earlier offer before making another.",
+      "incoming": "That person cannot receive another offer now.",
+      "pair": "Review or withdraw the existing offer between you first."
+    },
+    "pendingSeconds": 7200,
+    "onePendingPerPair": true,
+    "cooperation": {
+      "episodeSeconds": 14400,
+      "arrivalMetres": 1,
+      "families": ["guide", "help", "hunt", "alliance", "ceasefire"],
+      "ceasefireSeconds": 7200,
+      "helpMethods": [],
+      "description": "Agree to one finite practical activity. Each person chooses their own work and route. Acceptance starts no movement and grants no materials or control. Either may leave; completed effects remain.",
+      "labels": {
+        "alliance": "Mutual alliance, without an expiry. Each person keeps independent choices and permissions; either may leave.",
+        "ceasefire": "Ceasefire for {seconds} game seconds. Acceptance stops our unreleased attacks on each other. Either may leave; a new chosen attack ends assent. Released effects remain.",
+        "releasedRisk": "An earlier released attack may still arrive.",
+        "propose": "Ask for guidance",
+        "accept": "Accept these terms; keep choosing my own work",
+        "decline": "Decline these terms",
+        "withdraw": "Withdraw my proposal",
+        "leave": "Leave this activity",
+        "conclude": "Conclude this activity without claiming success",
+        "help": "Ask for practical help",
+        "carry": "Ask to carry this offered object",
+        "takeCarry": "Accept the separate gift and take actual custody",
+        "hunt": "Invite to hunt",
+        "lastSeen": "Walk to where I last saw the quarry",
+        "huntTerms": "Hunt {quarry} together, meeting at {place}. You may be injured or killed. We choose our own actions and may stop. Division is decided from actual yield afterward.",
+        "carryTerms": "Carry {item} to {place}. This is a separate custody transfer and voluntary transport, without a loan or retrieval right.",
+        "huntAction": "Act for the agreed hunt",
+        "construct": "Start the agreed camp operation",
+        "placeCarry": "Put the agreed object down here",
+        "prepare": "Make one batch for this activity",
+        "walk": "Walk to the agreed place",
+        "acceptAmendment": "Accept revised terms and end unfinished work for the old terms",
+        "declineAmendment": "Decline amendment; keep the accepted activity"
+      }
+    }
+  }
+}

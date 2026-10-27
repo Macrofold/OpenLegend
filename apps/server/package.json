@@ -6,6 +6,8 @@
   "license": "AGPL-3.0-only",
   "dependencies": {
     "@open-legend/assets": "workspace:*",
+    "@open-legend/network": "workspace:*",
+    "@smithy/node-http-handler": "4.12.1",
     "@aws-sdk/client-s3": "3.1152.0",
     "@aws-sdk/client-sts": "3.1152.0",
     "@aws-sdk/credential-providers": "3.1152.0",

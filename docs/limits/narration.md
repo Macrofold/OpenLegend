@@ -6,19 +6,21 @@ Values below were source-checked on October 3, 2026 against `b50ec6c`; this does
 
 Implementation starting points: [story-selection.ts](../../packages/domain/src/story-selection.ts).
 
-Private NPC preview constraints are owned by [NPV01](interface.md#npv01--private-npc-reply-preview). Provisional Talk text does not enter speech, memory, caption or conversation records; these still require final native admission and actual listener projection. [NP05 evidence](../verification/npc-reply-preview.md) distinguishes private early reading from committed speech. No narration retention or audience policy changed.
+Retained private NPC preview constraints are owned by [NPV01](interface.md#npv01--private-npc-reply-preview). That historical provisional Talk text creates no speech, memory, caption or conversation record; the current player interface displays native admitted speech. [NP05 evidence](../verification/npc-reply-preview.md) qualifies the restricted private-preview slice, not public streaming.
+
+**Accepted progressive public-speech target; implementation pending:** [NPC speech streaming](../projects/npc-speech-streaming-feature-spec.md) admits each approved text batch durably into one appendable occurrence, with hearing and permitted attribution fixed at its first acceptance. Captions and Events may show accepted open text; recall, compaction, word-derived NPC reactions and Narrator selection wait for terminal eligible evidence. The selected scope adds no speech clock, per-part hearing or automatic per-part narration/embedding call. New constraints and rationale live once in [NST-L01–NST-L09](npc-speech-streaming.md); [NST01–NST10](../maintainers/npc-speech-streaming.md) own implementation. Existing narration retention, context budgets, disclosure and release gates remain with their owners.
 
 ## SSP-N01 — One optional addressee
 
-**Proposed — accepted SPK target; runtime not delivered. Restrictiveness: Medium — deliberate first scope.** Ordinary speech has one speaker and either one intended addressee or none. Multiple explicit addressees are deferred; ambient speech can still be heard and answered by many actors. Refuse an unsupported multi-target submission rather than inventing group membership, selecting one silently or duplicating the utterance. The restriction keeps a clear first interaction without capping the acoustic audience. Expand only through a selected multiple-addressee use. [Speech contract](../narration-and-conversations.md#player-speak-and-descriptive-act), [SPK feature specification](../projects/speech-and-social-perception-feature-spec.md) and [implementation tracker](../maintainers/speech-and-social-perception.md).
+**Source-checked under SPK01/SPK06. Restrictiveness: Medium — deliberate first scope.** Ordinary speech has one speaker and either one intended addressee or none. Multiple explicit addressees are deferred; ambient speech can still be heard and answered by many actors. Refuse an unsupported multi-target submission rather than inventing group membership, selecting one silently or duplicating the utterance. The restriction keeps a clear first interaction without capping the acoustic audience. Expand only through a selected multiple-addressee use. [Speech contract](../narration-and-conversations.md#player-speak-and-descriptive-act), [SPK feature specification](../projects/speech-and-social-perception-feature-spec.md) and [implementation tracker](../maintainers/speech-and-social-perception.md).
 
 ## SSP-N02 — Ordinary exchanges without membership
 
-**Proposed removal — accepted SPK target; current lifecycle remains implemented. Restrictiveness: — (proposed removal) — removes an unnecessary social restriction.** Ordinary Speak, Speak-to and NPC speech no longer require Conversation joining, merging, a single active group or timed group departure. Opening/closing a reading view is presentation, not social consent. Genuine private-channel, travel, activity and agreement consent remain with those mechanics. Preserve actor-permitted context, chronological paging, exact recent speech and faithful older summaries through source-linked selection; group removal cannot silently erase history or grant earlier unheard words. LA180/LA181 retain current lifecycle evidence until cutover. No replacement authoritative semantic grouping engine or lifetime-history scan is selected. [Lifecycle target](../narration-and-conversations.md#6-durable-conversation-lifecycle) and [SPK](../maintainers/speech-and-social-perception.md).
+**Removed under SPK05. Restrictiveness: — removes an unnecessary social restriction.** Ordinary Speak, Speak-to and NPC speech no longer require Conversation joining, merging, a single active group or timed group departure. Opening/closing a reading view is presentation, not social consent. Genuine private-channel, travel, activity and agreement consent remain with those mechanics. Preserve actor-permitted context, chronological paging, exact recent speech and faithful older summaries through source-linked selection; group removal cannot silently erase history or grant earlier unheard words. LA180/LA181 retain removal history and the independent presence limit. No replacement authoritative semantic grouping engine or lifetime-history scan is selected. [Lifecycle target](../narration-and-conversations.md#6-durable-conversation-lifecycle) and [SPK](../maintainers/speech-and-social-perception.md).
 
 ## SSP-N03 — No semantic reply linkage
 
-**Proposed — accepted SPK target. Restrictiveness: Medium — deliberate simpler meaning.** Do not add semantic `replyTo` or require a conversation ID on every speech occurrence. A response can relate to several remarks, a physical event or a broader context. Retain exact operational source-event/request identity for dispatch ownership, stale-result validation, provenance, preview and duplicate-response prevention; those bindings do not assert a fictional single-parent reply relationship. Optional derived history grouping is rebuildable and never grants awareness or controls ordinary action lifetime. The separately proposed attributed-correction relationship retains its own product authority. [Technical design](../projects/speech-and-social-perception-tech-design.md) and [SPK](../maintainers/speech-and-social-perception.md).
+**Proposed — accepted SPK target. Restrictiveness: Medium — deliberate simpler meaning.** Do not add semantic `replyTo` or require a conversation ID on every speech occurrence. A response can relate to several remarks, a physical event or a broader context. Retain exact operational source-event/request identity for dispatch ownership, stale-result validation, provenance, speech publication and duplicate-response prevention; those bindings do not assert a fictional single-parent reply relationship. Optional derived history grouping is rebuildable and never grants awareness or controls ordinary action lifetime. The separately proposed attributed-correction relationship retains its own product authority. [Technical design](../projects/speech-and-social-perception-tech-design.md) and [SPK](../maintainers/speech-and-social-perception.md).
 
 ## SSP-N04 — Shared player composition availability
 
@@ -206,33 +208,20 @@ Original recommendation: **Keep**.
 
 ## LA180
 
-**Source-checked · Restrictiveness: Safe.**
-
-The playing browser reports presence every 5 wall-clock seconds. Conversation inactivity defaults to 1,800 game seconds, configurable from 60 to 86,400; paused worlds do not accrue simulated inactivity. These are separate clocks and consumers.
-
-**Accepted target disposition:** SSP-N02 removes ordinary conversation inactivity/departure semantics; browser presence keeps its independent connection owner. This row remains current-source/historical evidence until the SPK cutover, not a target lifetime for the new exchange context.
-
-**Reason / tradeoff:** Review connection traffic and conversation lifetime separately so a useful conversation does not end merely because a timing default is too short.
-
-[Implementation source](../../apps/server/src/config.ts).
-
-[Browser presence](../../apps/client/src/api.ts) and native [conversation processing](../../packages/domain/src/conversations.ts) use the distinct timings.
-
-Original recommendation: **Review**.
+**Source-checked · Restrictiveness: Safe.** The playing browser reports presence
+every 5 wall-clock seconds through its independent [connection owner](../../apps/client/src/api.ts).
+Ordinary conversation inactivity is removed under SSP-N02/SPK05. The earlier
+1,800-game-second default and 60–86,400 override range are historical, with no
+replacement speech lifetime. Actual control, participation and source validity
+remain independent. This removes a social restriction without granting consent.
 
 ## LA181
 
-**Source-checked · Restrictiveness: Safe.**
-
-A disconnected participant retains membership for 60 wall-clock seconds by default, configurable from 5 to 600 seconds, before native departure.
-
-**Accepted target disposition:** SSP-N02 removes ordinary membership and this conversation-specific disconnect grace. Actual access, body, timeline and connection policies remain independently authoritative. Runtime removal is still SPK implementation work.
-
-**Reason / tradeoff:** Keep time for brief reconnects while ensuring abandoned conversations eventually close.
-
-[Implementation source](../../apps/server/src/config.ts).
-
-Original recommendation: **Review**.
+**Removed under SSP-N02/SPK05.** Ordinary speech has no conversation-specific
+disconnect grace or native departure. The earlier default of 60 wall-clock seconds
+and 5–600-second override range are historical. Browser presence, access, body and
+participation policies retain their own owners. [SPK05](../maintainers/speech-and-social-perception.md#spk05--ordinary-dialogue-without-membership)
+tracks qualification; brief reconnects preserve retained personal evidence.
 
 ## LA234
 
@@ -290,6 +279,8 @@ Conversation metadata admission retains the existing 8,192-row boundary, and unc
 **Assessment:** Keep the bounded projection; tune the split/model from continuity traces. Expand cold rebuild only with a bounded continuation strategy and spending evidence. There was no prior runtime compaction allocation to remove; the earlier full-transcript admission failure is replaced by on-demand compaction, with explicit capacity failures retained.
 
 **Accepted SPK integration:** Retain these model/output and complete mandatory-evidence bounds while replacing mandatory social-group selection/cache identity. Automatic context uses bounded pre-hydration selection of exact causes, an existing valid actor summary and recent exact suffix; older relevant sources remain available through scoped recall. The target does not require all retained speech or an all-history summary rebuild per turn. Optional compaction/recall unavailability cannot block an otherwise valid response; missing or oversized mandatory evidence still fails explicitly. No larger model allowance, new lifetime cap or per-utterance paid summary is selected. Structured permitted evidence, including speaker/addressee roles, must survive compaction and remain resolvable under [SSP-M02](memory.md#ssp-m02--structured-experience-is-the-semantic-source); earlier grammatical qualification alone does not establish that stronger end-to-end contract. [SPK](../maintainers/speech-and-social-perception.md) owns this coordinated consumer change. The compulsory full-group failure behavior above remains current-runtime evidence until cutover.
+
+**Accepted NST integration:** open speech is excluded from both automatic context and opportunistic recall/compaction reads. Closure makes the actor's final permitted evidence eligible once, independently of its original occurrence position. Updating an owned open text body must not invalidate an unrelated captured semantic prefix; actual correction, forgetting, authority loss and changed mandatory evidence retain their existing fences. The [technical design](../projects/npc-speech-streaming-tech-design.md) defines this readiness integration without changing LA236's model or preparation allowance. Implementation remains in [NST](../maintainers/npc-speech-streaming.md).
 
 [Canonical behavior](../narration-and-conversations.md#model-facing-conversation-compaction) · [Design](../projects/completed/conversation-compaction-tech-design.md) · [Evidence](../verification/conversation-compaction.md#conversation-compaction) · [NC14–NC17](../maintainers/narration-and-conversations.md).
 

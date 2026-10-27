@@ -6,6 +6,8 @@
 
 **Proposal catalogue · September 28, 2026.** Two hundred and seventy-two concrete ways to delegate known work, build a satisfying contraption, author a world worth visiting, sustain independent lives and hand a creation to someone else. Automation can support a bakery, a heist, a tyrant's pageant, a ridiculous parade or a quiet household. Its purpose is not always maximum output: reliability, beauty, secrecy, play, freedom and domination are different possible intentions.
 
+**Selected consumer design:** The [Cognition Lab](../projects/cognition-lab-feature-spec.md) selects isolated character rehearsal, causal inspection and matched comparisons from ACR-131, ACR-133, ACR-134 and ACR-143; its [repertoire map](../projects/cognition-lab-repertoire-review.md) keeps wider creator/world tooling outside that implementation scope.
+
 **Scope:** Own standing workflows, creator-facing composition, scenario packaging, attention management, reuse and world-scale coordination here. [Work] owns the underlying trades and production steps; [Technology] owns machines and infrastructure; [Magic] owns supernatural effects; [Politics] owns institutions; [Combat] owns fighting and rescue behavior. A kitchen routine here schedules and reserves work; it does not duplicate the recipe inventory. Refer to [category ownership](README.md#category-ownership-and-cross-references).
 
 Use the README's [shared labels](README.md#reading-the-labels) and [table format](README.md#catalogue-tables). C rows compose assumed existing scheduling, filtering, observation and action capabilities; their gaps name missing constituents. D rows define new reusable policies, authoring facilities or world-rule integrations. None claims current engine support. `—` preserves wider-library proposals outside the four seed boundaries. Fictional authorities, scripts and omniscient creator views never gain real account permissions or private information.
@@ -20,23 +22,13 @@ The inventory contains **272 rows, ACR-001–ACR-272**. The ten retained introdu
 
 [Households](#households-and-dependable-mornings) · [Food and hospitality](#food-hospitality-and-pleasant-evenings) · [Gardens and gathering](#gardens-gathering-and-land-stewardship) · [Workshops](#workshops-making-and-repair) · [Logistics](#stores-deliveries-and-shared-supplies) · [Field command](#watch-rescue-and-field-command) · [Performance](#performances-games-and-public-pleasure) · [Delegation](#delegates-with-limits-and-preferences) · [Blueprints](#blueprints-layouts-and-construction) · [Interaction authoring](#objects-contraptions-and-interaction-authoring) · [First sessions](#scenarios-with-a-first-evening) · [Cast and history](#inhabited-casts-and-usable-histories) · [World contracts](#world-contracts-and-selected-modes) · [Rehearsal](#rehearsal-inspection-and-debugging) · [Attention](#attention-views-and-meaningful-interruptions) · [Scale](#offscreen-life-and-bounded-scale) · [Sharing](#sharing-remixing-and-compatible-reuse) · [Succession](#long-projects-handover-and-retirement) · [Strange creators](#strange-automation-and-experimental-creation) · [Complete experiences](#creator-challenges-and-complete-experiences) · [Playable authoring](#playful-authoring-with-observable-results) · [Scene direction](#cast-aware-scenes-and-returning-lives) · [Operational institutions](#material-roles-and-institutions-that-actually-work) · [Visiting and publishing](#visiting-publishing-and-preserving-a-creation) · [Practice and loadouts](#practice-loadouts-and-configurable-help) · [Cases and handoffs](#case-direction-and-continuing-cast-handoffs) · [Earned returns](#earned-recovery-and-different-kinds-of-return) · [Legible policies](#legible-policies-and-bounded-production) · [Readiness and continuity](#readiness-evidence-and-personal-continuity).
 
-## The explainable household routine
-
-**ALL · Play · Moderate/Extend.** Gap: bounded standing plans with priorities, reserves and stop reasons.
-
-“Prepare supper if ingredients remain after tomorrow's lunches” is an inspectable routine. A resident can pause it, propose a substitute or refuse an excessive workload. Casual players gain dependable help; experts tune priorities. Show the decisive condition and current owner. Never use a fresh model call per tick or let routine execution silently change its purpose.
-
-Show which ingredients were counted and why the routine stops.
-
-Related entries: [ACR-001](#households-and-dependable-mornings), [ACR-011](#food-hospitality-and-pleasant-evenings).
-
-Seeds and references: [RimWorld](source-atlas.md#g21), [Palworld](source-atlas.md#g41), [Final Fantasy XII](source-atlas.md#g89).
-
 ## A creation with a first evening
 
 **ALL · Play · Small/Compose.** Gap: authored onboarding scenario; packaging capability reviewed separately.
 
 A shared harbor pack includes three people, one damaged landing, a valuable salvage claim and a rival crew. Visitors can repair access, bargain for cooperation or race the rival to the prize, then return with a reward or a changed relationship. Builders can expand a playable experience from that first evening. Evaluate whether another person enjoys the first evening, not how many generated entities exist. Avoid shipping only a vocabulary of parts and expecting every recipient to invent the missing experience.
+
+Give those three people current aims: a boatwright wants to prove a portable landing, a diver wants a profitable salvage share, and a rival captain wants the same cargo for her own promised voyage. She may bargain, deceive or attempt supported sabotage; the boatwright may resent unfair credit, and the diver may prefer a paid rival offer. Author their histories, resources and opportunities rather than instructions forcing betrayal, cooperation or remorse. Visitors can win something useful, lose the race or settle a genuine joint claim. An actual success can end this contest and leave room to enjoy the harbor. ACR-115 preserves a villain who wants the harmful result; ACR-120 preserves independence from the creator's preferred arc. Helpful household routines elsewhere in this catalogue are not the default personality of every inhabitant.
 
 Related entries: [ACR-101–110](#scenarios-with-a-first-evening).
 
@@ -52,6 +44,26 @@ Related entries: [ACR-081–090](#blueprints-layouts-and-construction).
 
 Seeds and references: [Factorio](source-atlas.md#g27), [Satisfactory](source-atlas.md#g28), [The Legend of Zelda: Tears of the Kingdom](source-atlas.md#g111).
 
+## A quiet world still runs
+
+**ALL · Blend · Moderate/Extend.** Gap: due work, native routines and graceful model unavailability.
+
+Known routines continue when no one needs a conversation: ovens finish, agreed deliveries progress, patrols follow their orders and characters rest. A hostile routine remains limited to its admitted purposes, observations and actions. A model is used for a meaningful novel decision, not each motion. Hosts can budget interaction without freezing basic life. If inference is unavailable, pause or use an admitted fallback honestly; never narrate completion for a task that did not execute.
+
+Related entries: [ACR-151](#offscreen-life-and-bounded-scale), [ACR-160](#offscreen-life-and-bounded-scale).
+
+Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Final Fantasy XIV](source-atlas.md#g91).
+
+## The rehearsal room
+
+**ALL · Blend · Large/New.** Gap: isolated scenario copies with explicit external-effect fencing.
+
+Creators rehearse a flood, spell combination, assault, betrayal or council dispute using disposable fictional state. They inspect causal traces and try a different parameter without harming the main world. Rehearsal should show its seed, rules and limits. It cannot undo real charges or messages, and a successful small rehearsal is evidence only for the tested conditions.
+
+Related entries: [ACR-131–140](#rehearsal-inspection-and-debugging).
+
+Seeds and references: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [Garry's Mod](source-atlas.md#g35), [Simulation](simulation-experiments.md).
+
 ## The scenario dial with a promise
 
 **ALL · Play · Moderate/Extend.** Gap: world policies with understandable effects and save-safe transitions.
@@ -63,46 +75,6 @@ This includes offscreen changes: adjusting the dial is an explicit transition, n
 Related entries: [ACR-121–130](#world-contracts-and-selected-modes).
 
 Seeds and references: [Fortnite](source-atlas.md#g07), [Valheim](source-atlas.md#g31), [Project Zomboid](source-atlas.md#g37).
-
-## The bounded civic planner
-
-**ALL · Blend · Large/New.** Gap: group-level scheduling with limited materialized participants.
-
-A creator describes a town's services and a few named residents, then models distant districts as aggregate supply and demand until interaction matters. This supports scale without pretending every citizen has continuous private cognition. Preserve identity for encountered people and reconcile stock flows. Explicitly show approximation boundaries; aggregate transitions cannot invent witnesses or personal memories retroactively.
-
-Related entries: [ACR-151–160](#offscreen-life-and-bounded-scale).
-
-Seeds and references: [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Crusader Kings III](source-atlas.md#g126), [Oxygen Not Included](source-atlas.md#g129).
-
-## A quiet world still runs
-
-**ALL · Blend · Moderate/Extend.** Gap: due work, native routines and graceful model unavailability.
-
-Known routines continue when no one needs a conversation: ovens finish, agreed deliveries progress, patrols follow their orders and characters rest. A hostile routine remains limited to its admitted purposes, observations and actions. A model is used for a meaningful novel decision, not each motion. Hosts can budget interaction without freezing basic life. If inference is unavailable, pause or use an admitted fallback honestly; never narrate completion for a task that did not execute.
-
-Related entries: [ACR-151](#offscreen-life-and-bounded-scale), [ACR-160](#offscreen-life-and-bounded-scale).
-
-Seeds and references: [Factorio](source-atlas.md#g27), [Final Fantasy XII](source-atlas.md#g89), [Final Fantasy XIV](source-atlas.md#g91).
-
-## A remix with a family tree
-
-**ALL · Play · Large/New.** Gap: definition versions, dependency disclosure and authorized adoption.
-
-A creator adapts a festival game into a rescue drill, retaining attribution and a readable account of changed rules. Other hosts can choose which version to adopt. Reuse becomes social craft. A new version should not silently rewrite active worlds, and copied presentation does not prove compatibility, licensing or permission to activate its mechanics.
-
-Related entries: [ACR-161–170](#sharing-remixing-and-compatible-reuse).
-
-Seeds and references: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Fire Emblem Heroes](source-atlas.md#g65).
-
-## The rehearsal room
-
-**ALL · Blend · Large/New.** Gap: isolated scenario copies with explicit external-effect fencing.
-
-Creators rehearse a flood, spell combination, assault, betrayal or council dispute using disposable fictional state. They inspect causal traces and try a different parameter without harming the main world. Rehearsal should show its seed, rules and limits. It cannot undo real charges or messages, and a successful small rehearsal is evidence only for the tested conditions.
-
-Related entries: [ACR-131–140](#rehearsal-inspection-and-debugging).
-
-Seeds and references: [Dreams](source-atlas.md#g13), [Noita](source-atlas.md#g32), [Garry's Mod](source-atlas.md#g35), [Simulation](simulation-experiments.md).
 
 ## A creator's attention budget
 
@@ -123,6 +95,38 @@ A host documents the town's active rules, unresolved projects and necessary serv
 Related entries: [ACR-171–180](#long-projects-handover-and-retirement).
 
 Seeds and references: [Dreams](source-atlas.md#g13), [Project Spark](source-atlas.md#g14), [Worlds Adrift](source-atlas.md#g15).
+
+## A remix with a family tree
+
+**ALL · Play · Large/New.** Gap: definition versions, dependency disclosure and authorized adoption.
+
+A creator adapts a festival game into a rescue drill, retaining attribution and a readable account of changed rules. Other hosts can choose which version to adopt. Reuse becomes social craft. A new version should not silently rewrite active worlds, and copied presentation does not prove compatibility, licensing or permission to activate its mechanics.
+
+Related entries: [ACR-161–170](#sharing-remixing-and-compatible-reuse).
+
+Seeds and references: [Roblox](source-atlas.md#g04), [Dreams](source-atlas.md#g13), [Fire Emblem Heroes](source-atlas.md#g65).
+
+## The bounded civic planner
+
+**ALL · Blend · Large/New.** Gap: group-level scheduling with limited materialized participants.
+
+A creator describes a town's services and a few named residents, then models distant districts as aggregate supply and demand until interaction matters. This supports scale without pretending every citizen has continuous private cognition. Preserve identity for encountered people and reconcile stock flows. Explicitly show approximation boundaries; aggregate transitions cannot invent witnesses or personal memories retroactively.
+
+Related entries: [ACR-151–160](#offscreen-life-and-bounded-scale).
+
+Seeds and references: [Mount & Blade II: Bannerlord](source-atlas.md#g115), [Crusader Kings III](source-atlas.md#g126), [Oxygen Not Included](source-atlas.md#g129).
+
+## The explainable household routine
+
+**ALL · Play · Moderate/Extend.** Gap: bounded standing plans with priorities, reserves and stop reasons.
+
+“Prepare supper if ingredients remain after tomorrow's lunches” is an inspectable routine. A resident can pause it, propose a substitute or refuse an excessive workload. Casual players gain dependable help; experts tune priorities. Show the decisive condition and current owner. Never use a fresh model call per tick or let routine execution silently change its purpose.
+
+Show which ingredients were counted and why the routine stops.
+
+Related entries: [ACR-001](#households-and-dependable-mornings), [ACR-011](#food-hospitality-and-pleasant-evenings).
+
+Seeds and references: [RimWorld](source-atlas.md#g21), [Palworld](source-atlas.md#g41), [Final Fantasy XII](source-atlas.md#g89).
 
 ## Households and dependable mornings
 
@@ -443,16 +447,16 @@ These tools make a particular creative choice inspectable and immediately playab
 
 The creator selects opportunities, not a compulsory emotional interpretation. These entries link scene eligibility, current bodies and actual history to the existing character and relationship owners.
 
-| ID      | Idea                                                       | Seed worlds | Use   | Priority     | Level | Specific behavior and payoff                                                                                                                                                                                                                                                                                                                     | Build scope / gap                                                                                                | Inspiration                                                                          |
-| ------- | ---------------------------------------------------------- | ----------- | ----- | ------------ | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| ACR-210 | Give each returning character a different reason to notice | ALL         | Play  | 2 Complete   | D     | Author interests and priorities for short callbacks: the cook notices a new ingredient, the vain rival a prize, the lover a missed appointment. The director selects among eligible moments and remembers acknowledgments. A greeting does not repeat forever merely because the original event remains in memory.                               | Moderate; [Knowledge] evidence and acknowledgment; [Psychology] interests; [Relationships] encounter timing.     | [Hades I][r-hades], [Hades study][r-hades-study].                                    |
-| ACR-211 | Reblock the scene for the body that returned               | ALL         | Play  | 2 Complete   | C     | After a supported injury or transformation, revise entrances, prop handling and positions around actual capability. The one-handed performer receives a workable part rather than a narration claiming two-handed action. Keep the scene's purpose where possible; a changed body need not erase the character's place in it.                    | Moderate; [Bodies] capabilities; [Arts] blocking; [Objects] handling; [Places] access.                           | [Wildermyth][r-wilder].                                                              |
-| ACR-216 | Keep a deferred scene's question, not its stale answer     | ALL         | Play  | 2 Complete   | D     | A queued reunion or confrontation rechecks its participants and relevant facts when an opening arrives. A debt already paid no longer produces an unpaid-debt accusation as authoritative truth; a suspicious character may still make that mistake from their own evidence. Delay preserves the opportunity without freezing the world.         | Moderate; [Adventure] deferred eligibility; [Knowledge] speaker evidence; [Relationships] changed circumstances. | [Hades study][r-hades-study], [Wildermyth][r-wilder].                                |
-| ACR-209 | The scene that refuses an unsuitable cast                  | ALL         | Play  | 3 Depth      | D     | Define the roles and prior facts a reusable encounter needs, then preview eligible people. A rivalry scene waits when there are no rivals; a reconciliation does not invent an earlier betrayal. Creators can loosen a condition deliberately or let another activity fill the evening.                                                          | Moderate; [Characters] role selection; [Relationships] facts; [Adventure] encounter eligibility.                 | [Wildermyth][r-wilder].                                                              |
-| ACR-212 | Rotate the household spotlight at a chosen milestone       | ALL         | Play  | 3 Depth      | C     | Follow a different household after a birth, completed project, seasonal gathering or selected date. Carry the world's existing continuity and offscreen policies into the change of viewpoint. The new protagonist reveals another use of familiar places instead of generating a replacement neighborhood.                                      | Moderate; [Characters] focus; [History] milestones; [Relationships] offscreen policy.                            | [The Sims][r-sims-dossier], [The Sims study][r-sims].                                |
-| ACR-213 | Make the beloved animal part of the expedition brief       | ALL         | Play  | 3 Depth      | C     | Let a player designate one actual animal as a protected project and organize supplies, shelter, transport and recovery around it. The crew can decline impossible conditions or propose a different journey. Attachment changes the plan without inventing the animal's gratitude or making every creature a mandatory escort quest.             | Moderate; [Adventure] personal objectives; [Bodies] care; [Economy] supplies; [Relationships] commitments.       | [RimWorld][r-rim-dossier], [RimWorld study][r-rim], [Red Dead Redemption 2][r-rdr2]. |
-| ACR-214 | Tell the chapter through objects that actually survived it | ALL         | Play  | 3 Depth      | D     | Build an optional recap around a repaired instrument, captured banner, unfinished gift or memorial object. Each points to its real maker and recorded encounters; disputed motives remain attributed. A quiet shelf can preserve a chapter more effectively than another mandatory speech about everything that happened.                        | Moderate; [History] provenance; [Objects] continuity; [Arts] arrangement; [Knowledge] attributed interpretation. | [Dwarf Fortress][r-df], [Dwarf Fortress study][r-df-study].                          |
-| ACR-215 | Choose a chronological sequel or a deliberate retelling    | —           | Blend | 5 Specialist | D     | A creator imports a remembered hero into a clearly separate retelling, selecting which appearance, abilities and relationships recur. A chronological continuation instead preserves the actual age and commitments. The editor exposes the difference before a familiar face acquires an incompatible second childhood or contradictory family. | Large; [History] continuity modes; [Characters] versions; [Abilities] receiving-context progression.             | [Wildermyth][r-wilder], [Spore][r-spore].                                            |
+| ID      | Idea                                                       | Seed worlds | Use   | Priority     | Level | Specific behavior and payoff                                                                                                                                                                                                                                                                                                                                                                 | Build scope / gap                                                                                                | Inspiration                                                                          |
+| ------- | ---------------------------------------------------------- | ----------- | ----- | ------------ | ----- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| ACR-210 | Give each returning character a different reason to notice | ALL         | Play  | 2 Complete   | D     | Give returning people evidence that can matter in their own lives: a cook may recognize an ingredient, a rival a prize, or a lover a missed appointment. Include the relevant remembered connection without making an interest compel one response. Eligible moments and prior acknowledgments support new choices; a greeting does not repeat forever because its source remains in memory. | Moderate; [Knowledge] evidence and acknowledgment; [Psychology] interests; [Relationships] encounter timing.     | [Hades I][r-hades], [Hades study][r-hades-study].                                    |
+| ACR-211 | Reblock the scene for the body that returned               | ALL         | Play  | 2 Complete   | C     | After a supported injury or transformation, revise entrances, prop handling and positions around actual capability. The one-handed performer receives a workable part rather than a narration claiming two-handed action. Keep the scene's purpose where possible; a changed body need not erase the character's place in it.                                                                | Moderate; [Bodies] capabilities; [Arts] blocking; [Objects] handling; [Places] access.                           | [Wildermyth][r-wilder].                                                              |
+| ACR-216 | Keep a deferred scene's question, not its stale answer     | ALL         | Play  | 2 Complete   | D     | A queued reunion or confrontation rechecks its participants and relevant facts when an opening arrives. A debt already paid no longer produces an unpaid-debt accusation as authoritative truth; a suspicious character may still make that mistake from their own evidence. Delay preserves the opportunity without freezing the world.                                                     | Moderate; [Adventure] deferred eligibility; [Knowledge] speaker evidence; [Relationships] changed circumstances. | [Hades study][r-hades-study], [Wildermyth][r-wilder].                                |
+| ACR-209 | The scene that refuses an unsuitable cast                  | ALL         | Play  | 3 Depth      | D     | Define the roles and prior facts a reusable encounter needs, then preview eligible people. A rivalry scene waits when there are no rivals; a reconciliation does not invent an earlier betrayal. Creators can loosen a condition deliberately or let another activity fill the evening.                                                                                                      | Moderate; [Characters] role selection; [Relationships] facts; [Adventure] encounter eligibility.                 | [Wildermyth][r-wilder].                                                              |
+| ACR-212 | Rotate the household spotlight at a chosen milestone       | ALL         | Play  | 3 Depth      | C     | Follow a different household after a birth, completed project, seasonal gathering or selected date. Carry the world's existing continuity and offscreen policies into the change of viewpoint. The new protagonist reveals another use of familiar places instead of generating a replacement neighborhood.                                                                                  | Moderate; [Characters] focus; [History] milestones; [Relationships] offscreen policy.                            | [The Sims][r-sims-dossier], [The Sims study][r-sims].                                |
+| ACR-213 | Make the beloved animal part of the expedition brief       | ALL         | Play  | 3 Depth      | C     | Let a player designate one actual animal as a protected project and organize supplies, shelter, transport and recovery around it. The crew can decline impossible conditions or propose a different journey. Attachment changes the plan without inventing the animal's gratitude or making every creature a mandatory escort quest.                                                         | Moderate; [Adventure] personal objectives; [Bodies] care; [Economy] supplies; [Relationships] commitments.       | [RimWorld][r-rim-dossier], [RimWorld study][r-rim], [Red Dead Redemption 2][r-rdr2]. |
+| ACR-214 | Tell the chapter through objects that actually survived it | ALL         | Play  | 3 Depth      | D     | Build an optional recap around a repaired instrument, captured banner, unfinished gift or memorial object. Each points to its real maker and recorded encounters; disputed motives remain attributed. A quiet shelf can preserve a chapter more effectively than another mandatory speech about everything that happened.                                                                    | Moderate; [History] provenance; [Objects] continuity; [Arts] arrangement; [Knowledge] attributed interpretation. | [Dwarf Fortress][r-df], [Dwarf Fortress study][r-df-study].                          |
+| ACR-215 | Choose a chronological sequel or a deliberate retelling    | —           | Blend | 5 Specialist | D     | A creator imports a remembered hero into a clearly separate retelling, selecting which appearance, abilities and relationships recur. A chronological continuation instead preserves the actual age and commitments. The editor exposes the difference before a familiar face acquires an incompatible second childhood or contradictory family.                                             | Large; [History] continuity modes; [Characters] versions; [Abilities] receiving-context progression.             | [Wildermyth][r-wilder], [Spore][r-spore].                                            |
 
 ## Material roles and institutions that actually work
 
@@ -556,7 +560,7 @@ These interfaces keep different kinds of continuity visible instead of treating 
 | ACR-271 | Substitute a sensory cue without changing the underlying hazard          | ALL         | Blend | 2 Complete   | D     | Offer an alternate silhouette, sound or readable indicator from that audience's permitted evidence for a chosen presentation boundary while preserving the admitted interaction, timing, precision, uncertainty and age. Less distressing depiction need not erase an encounter; equivalent inputs need not reward only theatrical performance. Accessibility grants no new fictional sense. A creator can choose a separate rules change. | Moderate; [Arts] per-view presentation; [Knowledge] equivalent cues; [Bodies] accessibility; [Mechanics] unchanged resolution.            | [Grounded][g142], [Final Fantasy XVI][g093], [Mass Effect Galaxy][g105].      |
 | ACR-272 | Explain which matching recipe actually wins                              | ALL         | Play  | 2 Complete   | D     | Show eligible ingredient categories, exclusions and priority when several recipes match a pot or workshop batch. A player can preserve an unfamiliar discovery rather than receive a hidden automatic substitution. A cook's notebook may record tested results without revealing every undiscovered recipe or treating a plausible name as a supported transformation.                                                                    | Moderate; [Work] recipe predicates and priority; [Knowledge] discovered records; [Materials] ingredient roles.                            | [Don't Starve Together][g140], [Green Hell][g144], [Final Fantasy XII][g089]. |
 | ACR-268 | Hand over the active world seat without forking its history accidentally | ALL         | Blend | 3 Depth      | D     | An authorized participant can resume hosting from the latest committed world state after the current host ends their session. Display who holds the active seat and preserve a separate copy only when deliberately chosen. Shared access is not a promise that the world continuously simulates while nobody hosts it.                                                                                                                    | Large; host authority and state handoff; [History] commit boundary; [Relationships] participation.                                        | [Grounded][g142], [Worlds Adrift][r-adrift].                                  |
-| ACR-270 | The companion's selective journey album                                  | ALL         | Play  | 3 Depth      | D     | Let a companion propose a few actual photographs, sketches or souvenirs from shared travel, then let participants curate them. A ridiculous meal or beautiful roadside pause may matter more than a boss victory. Unrecorded events remain unrecorded; an album is a chosen perspective, not an exhaustive surveillance log.                                                                                                               | Moderate; [Arts] capture and curation; [History] events; [Knowledge] viewpoint; [Relationships] sharing.                                  | [Final Fantasy XV][g092], [Red Dead Redemption 2][r-rdr2].                    |
+| ACR-270 | The companion's selective journey album                                  | ALL         | Play  | 3 Depth      | D     | Let a companion propose actual photographs, sketches or souvenirs from shared travel, then let participants curate them. A ridiculous meal or beautiful roadside pause may matter more than a boss victory and become a reason to revisit. Selection preserves what made the chosen moment particular; unrecorded events remain unrecorded, and participants can decline sharing.                                                          | Moderate; [Arts] capture and curation; [History] events; [Knowledge] viewpoint; [Relationships] sharing.                                  | [Final Fantasy XV][g092], [Red Dead Redemption 2][r-rdr2].                    |
 | ACR-269 | A carryover matrix for knowledge, designs, objects and lives             | —           | Blend | 5 Specialist | D     | Before a chosen scenario transition, inspect separately what happens to recipe knowledge, reusable designs, item instances, local services and relationships. Keeping a blueprint need not keep its building; keeping a person need not preserve a former office. A deliberate new scenario is not an automatic remedy for an incompatible ordinary save.                                                                                  | Large; [History] continuity; [Objects] instances; [Knowledge] learned material; [Politics] local services; explicit transition admission. | [Once Human][g147], [Enshrouded][g145], [Spore][r-spore].                     |
 
 ## Research coverage and remaining gaps

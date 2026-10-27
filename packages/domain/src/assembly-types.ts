@@ -1,9 +1,28 @@
+import type {
+  GroundedPanelFamily,
+  BoundaryComponent,
+  BoundaryOperation,
+  BoundaryPhase,
+  BoundaryPlan,
+  GateOperation,
+} from './boundary-types.js';
 import type { SpatialBlocker, SurfacePoint, WorldPoint } from '@open-legend/spatial';
 import type { DefinitionPin } from './world-modules.js';
 
 /** Authored selection for the current opening, distinct from construction grants. */
 export interface ConstructionProfile {
+  suggestionPlaceIds?: string[];
   family: DefinitionPin;
+  boundary?: DefinitionPin;
+  dailyRain?: DefinitionPin;
+  materialContributions?: {
+    maximumSeconds: number;
+    siteRadiusMetres: number;
+    operations: ConstructionOperation[];
+    label: string;
+    termsText: string;
+    siteLabels: Record<string, string>;
+  };
   suggested: SurfacePoint;
   shower?: {
     site: { minX: number; maxX: number; minZ: number; maxZ: number };
@@ -18,7 +37,8 @@ export interface ConstructionProfile {
 }
 
 /** Trusted finite computation family; the installed world supplies materials and policy. */
-export interface AssemblyFamily {
+export type AssemblyFamily = FlexibleBayFamily | GroundedPanelFamily;
+export interface FlexibleBayFamily {
   id: string;
   version: number;
   implementation: 'four-corner-flexible-bays';
@@ -35,13 +55,14 @@ export interface AssemblyFamily {
     help: string;
     useHelp: string;
     replacementHelp: string;
-    planLabels: Record<AssemblyPlan['operation'], string>;
+    planLabels: Record<FlexibleAssemblyPlan['operation'], string>;
   };
   bay: { width: number; length: number; postSection: number };
   defaultArrangementId: string;
   arrangements: AssemblyArrangement[];
   binding: { contactBand: number; workDrop: number; stanceOffset: number };
-  cover: { width: number; length: number; thickness: number; edge: number; transmission: number };
+  defaultCover: DefinitionPin;
+  coverProfiles: AssemblyCoverProfile[];
   limits: { bays: number; parts: number; layers: number; sockets: number };
   restMargin: number;
   minimumClearance: number;
@@ -52,7 +73,7 @@ export interface AssemblyFamily {
   moistureAttribute: string;
   /** The selected material law admits initialization, homogeneous copying and custody.
    * Inventory never derives these rules from a material's construction role. */
-  inventory: Record<AssemblyMaterial['role'], MaterialInventoryRule>;
+  inventory: Record<'post' | 'cover' | 'binding' | 'fiber', MaterialInventoryRule>;
   wettingSeconds: number;
   dryingSeconds: number;
   moistureLabels: {
@@ -69,6 +90,55 @@ export interface AssemblyFamily {
     worn: { width: number; length: number };
   };
 }
+/** Finite orthogonal panel/slider computation. Selected material and tuning remain world data. */
+export interface GroundedPanelGeometry {
+  section: {
+    spacing: number;
+    postSection: number;
+    postHeight: number;
+    gatePostHeight: number;
+    panelWidth: number;
+    panelHeight: number;
+    panelThickness: number;
+    accessOpening: { width: number; bottom: number; top: number };
+  };
+  gate: {
+    travel: number;
+    width: number;
+    height: number;
+    thickness: number;
+    insideOffset: number;
+    railHeight: number;
+    railSection: number;
+    railLength: number;
+    hangerSection: number;
+    hangerHalfSpacing: number;
+    handleHeight: number;
+    insideHandleOffset: number;
+    outsideHandleOffset: number;
+  };
+}
+export type BoundaryShapeRole =
+  | 'post'
+  | 'gate-post'
+  | 'panel'
+  | 'access-panel'
+  | 'gate'
+  | 'first-rail'
+  | 'second-rail'
+  | 'first-hanger'
+  | 'second-hanger';
+export interface AssemblyCoverProfile {
+  id: string;
+  version: number;
+  implementation: 'flexible-sheet';
+  name: string;
+  width: number;
+  length: number;
+  thickness: number;
+  edge: number;
+  transmission: number;
+}
 export interface MaterialInventoryRule {
   initialAttributes: string[];
   stateAttributes: string[];
@@ -83,11 +153,16 @@ export interface AssemblyArrangement {
   maximumBays: number;
 }
 export type AssemblyOperation = 'post' | 'cover' | 'lower' | 'reclaim-post' | 'reclaim-lowered';
-export interface AssemblyMaterial {
-  familyId: string;
-  role: 'post' | 'cover' | 'binding' | 'fiber';
-  postHeight?: number;
-}
+export type ConstructionOperation = AssemblyOperation | BoundaryOperation | 'place-hearth';
+export type AssemblyMaterial = { familyId: string } & (
+  | { role: 'post'; postHeight: number; coverProfile?: never }
+  | { role: 'cover'; coverProfile: DefinitionPin; postHeight?: never }
+  | {
+      role: 'binding' | 'fiber' | 'panel' | 'gate' | 'rail';
+      postHeight?: never;
+      coverProfile?: never;
+    }
+);
 export interface AssemblyPart {
   itemId: string;
   role: 'post' | 'cover' | 'binding';
@@ -101,7 +176,9 @@ export interface AssemblyJoint {
   bindingId: string;
   corner: number;
 }
-export interface AssemblyComponent {
+export type AssemblyComponent = FlexibleBayComponent | BoundaryComponent;
+export interface FlexibleBayComponent {
+  implementation: 'four-corner-flexible-bays';
   arrangementId: string;
   family: DefinitionPin;
   requestId: string;
@@ -123,10 +200,23 @@ export interface ConstructionPermission {
   revision: number;
   revoked: boolean;
   site: { surfaceId: string; minX: number; maxX: number; minZ: number; maxZ: number };
-  operations: AssemblyOperation[];
+  operations: ConstructionOperation[];
   materialIds: string[];
+  materialContributions?: true;
+  contribution?: import('./construction-contributions.js').ConstructionContributionScope;
+  /** Explicit operator delegation to register completed gates. Building alone
+   * grants no public use; issued asset permissions remain outside gameplay saves. */
+  publicGateUse?: { family: DefinitionPin; operations: GateOperation[] };
+  structuralExposure?: { family: DefinitionPin; operations: ['held-tool-impact'] };
+  /** Trusted operational policy, never inferred from custody or social choices. */
+  acquisition?: {
+    sources: Array<{ entityId: string; definition: DefinitionPin }>;
+    assemblyIds: string[];
+  };
 }
-export interface AssemblyPlan {
+export type AssemblyPlan = FlexibleAssemblyPlan | BoundaryPlan;
+export interface FlexibleAssemblyPlan {
+  implementation?: never;
   arrangementId: string;
   familyId: string;
   rootId?: string;
@@ -142,7 +232,9 @@ export interface AssemblyPlan {
   keepCovered?: boolean;
 }
 /** Each invocation is ordinary saved native work; no assembly timer exists. */
-export interface AssemblyPhase {
+export type AssemblyPhase = FlexibleBayPhase | BoundaryPhase;
+export interface FlexibleBayPhase {
+  implementation?: never;
   arrangementId: string;
   operation: AssemblyOperation;
   familyId: string;
@@ -175,4 +267,20 @@ export interface AssemblyAttachment {
   portId: 'assembly';
   slot: string;
   local: WorldPoint;
+}
+
+/** One installed immutable daily source; current activity derives only from game time. */
+export interface DailyRainDefinition {
+  id: string;
+  version: number;
+  implementation: 'daily-vertical-rain';
+  clock: { clock: 'localTime'; offsetHours: number };
+  windowLocalHours: { start: number; end: number };
+  region: {
+    opening: DefinitionPin;
+    bounds: { id: string; version: number; minX: number; maxX: number; minZ: number; maxZ: number };
+  };
+  intensity: number;
+  overlap: 'maximum';
+  labels: { raining: string; dry: string };
 }

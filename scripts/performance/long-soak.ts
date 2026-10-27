@@ -7,7 +7,7 @@ import {
   PLAYER_ID,
   type WorldState,
 } from '@open-legend/domain';
-import { NATIVE_PREPARATIONS } from '../../packages/domain/src/worlds/base/items.js';
+import { baseMaterialMethod } from '../../packages/domain/src/worlds/base/material-methods.js';
 
 export interface RoutineResource {
   actorId: string;
@@ -68,8 +68,8 @@ export function prepareLongSoak(
   for (const target of Object.values(targets)) {
     const cycle =
       entityGet(world.entities, target.fiber)!.resource!.workSeconds +
-      NATIVE_PREPARATIONS.fiber.workSeconds +
-      NATIVE_PREPARATIONS.cord.workSeconds +
+      baseMaterialMethod('base:clean-fibers').workSeconds +
+      baseMaterialMethod('base:twist-cord').workSeconds +
       entityGet(world.entities, target.berries)!.resource!.workSeconds;
     minimumCycleSeconds = Math.min(minimumCycleSeconds, cycle);
     maximumCycleSeconds = Math.max(maximumCycleSeconds, cycle);
@@ -77,7 +77,7 @@ export function prepareLongSoak(
   const maximumCyclesPerActor = Math.ceil(gameSeconds / minimumCycleSeconds) + 1;
   for (const resource of resources) {
     const patch = entityGet(world.entities, resource.id)!.resource!;
-    patch.quantity = maximumCyclesPerActor * gatheringYield([], patch.definitionId);
+    patch.quantity = maximumCyclesPerActor * gatheringYield(world, [], patch.definitionId);
     resource.quantity = patch.quantity;
   }
   const initialFoodQuantity =
@@ -92,7 +92,7 @@ export function prepareLongSoak(
     resourceSchedule:
       'Each resident chooses its declared initially reachable patch only while visible and offered; standing work with no NPC approach travel, retargeting or replenishment.',
     assumptions:
-      'Current no-tool gathering yields and fixed native preparation durations; walking/rest can only lengthen the cycle. No tool or learned activity is granted.',
+      'Current no-tool gathering yields and installed manufacture durations; walking/rest can only lengthen the cycle. Elementary material recipe knowledge is supplied explicitly; no tool or learned activity is granted.',
     targets,
     energyConcernBelow: energy.concern.below,
     playerSurvival: {

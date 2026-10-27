@@ -1,3 +1,5 @@
+import { expectCurrentWorldEquivalent } from '../../../tests/assert-current-world.js';
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet, entityKeys, entityValues } from './entity-collection.js';
 import { occupiedBodySweepClear } from './spatial.js';
 import { bodyProfile, worldPosition, worldSupport } from './spatial-state.js';
@@ -10,7 +12,6 @@ import {
   PLAYER_ID,
   NPC_ID,
   canReachEntity,
-  createWorld,
   executeCommand,
   hearsEntity,
   quantityOf,
@@ -29,7 +30,7 @@ import { projectEventEvidence } from './speech.js';
 import { materializeNativeValues } from './native-values.js';
 
 function active() {
-  const world = createWorld();
+  const world = stockedCamp();
   world.paused = false;
   return world;
 }
@@ -42,7 +43,8 @@ describe('native spatial-world integration without providers', () => {
     const world = active();
     const bird = entityGet(world.entities, 'bird-1')!;
     bird.spatial.body = { ...bird.spatial.body, id: 'glider', radius: 0.1, height: 0.35 };
-    world.flightRoutes[bird.spatial.flight!.routeId]!.body = { ...bird.spatial.body };
+    // Connected flight definitions must agree on this deliberately supplied body.
+    for (const route of Object.values(world.flightRoutes)) route.body = { ...bird.spatial.body };
     const restored = JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState;
     validateSpatialWorld(restored);
     const direct = advance(world, 200),
@@ -57,7 +59,7 @@ describe('native spatial-world integration without providers', () => {
     Reflect.deleteProperty(entityGet(malformed.entities, 'bird-1')!.spatial.body, 'height');
     expect(() => validateSpatialWorld(malformed)).toThrow('Invalid physical body profile');
     const wrongRoute = structuredClone(restored);
-    wrongRoute.flightRoutes[bird.spatial.flight!.routeId]!.body.radius = 0.2;
+    for (const route of Object.values(wrongRoute.flightRoutes)) route.body.radius = 0.2;
     expect(() => validateSpatialWorld(wrongRoute)).toThrow('Invalid flight progress');
   });
   it('keeps a tall body in conservative candidates when its feet are far below', () => {
@@ -153,9 +155,22 @@ describe('native spatial-world integration without providers', () => {
       (entry) => entry.eventId === event.id,
     )!;
     const perceived = projectEventEvidence(event, evidence);
-    expect(perceived.speech).toMatchObject({ intelligibility: 'clear', speaker: null });
+    expect(perceived.speech).toMatchObject({
+      intelligibility: 'clear',
+      speaker: { nameAtTime: 'person', nameForm: 'count' },
+    });
     expect(perceived.data?.['text']).toBe('Audible words above the floor');
-    expect(perceived.actorId).toBeUndefined();
+    // Hearing creates a stable personal voice reference, without live location.
+    expect(perceived.actorId).toBe(b.id);
+    expect(
+      executeCommand(world, {
+        id: 'unseen-voice-strike',
+        actorId: a.id,
+        type: 'strike',
+        targetId: b.id,
+        definitionId: 'punch',
+      }).outcome.ok,
+    ).toBe(false);
     expect(perceived.origin).toBeUndefined();
     expect(perceived.text).not.toContain(b.name);
     const speech = executeCommand(world, {
@@ -166,7 +181,9 @@ describe('native spatial-world integration without providers', () => {
       volume: 'whisper',
     });
     expect(speech.events.find((event) => event.type === 'speech')?.audience).not.toContain(a.id);
-    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(soundOrigin(b));
+    expect(speech.events.find((event) => event.type === 'speech')?.origin).toEqual(
+      soundOrigin(world, b),
+    );
     expect(
       speech.world.experience?.awareness[a.id]?.some((entry) =>
         speech.events.some((event) => event.type === 'speech' && event.id === entry.eventId),
@@ -218,9 +235,7 @@ describe('native spatial-world integration without providers', () => {
     expect(worldSupport(entityGet(world.entities, PLAYER_ID)!)).toBe('lookout-ramp');
     const restored = JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState;
     validateWorldModules(restored);
-    expect(materializeNativeValues(advance(restored, 120))).toEqual(
-      materializeNativeValues(advance(world, 120)),
-    );
+    expectCurrentWorldEquivalent(advance(restored, 120), advance(world, 120));
   });
   it('executes native flight and grounded landing without an AI job', () => {
     let world = active();
@@ -229,9 +244,7 @@ describe('native spatial-world integration without providers', () => {
     expect(worldPosition(entityGet(world.entities, 'bird-1')!).y).toBeGreaterThan(3);
     expect(worldSupport(entityGet(world.entities, 'bird-1')!)).toBeNull();
     const restored = JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState;
-    expect(materializeNativeValues(advance(world, 20))).toEqual(
-      materializeNativeValues(advance(restored, 20)),
-    );
+    expectCurrentWorldEquivalent(advance(world, 20), advance(restored, 20));
     const trip = advanceWorld(world, 650);
     world = trip.world;
     expect(trip.events.some((event) => event.type === 'landed' && event.actorId === 'bird-1')).toBe(

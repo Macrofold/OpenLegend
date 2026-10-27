@@ -34,7 +34,6 @@ import {
   fireFuelDescription,
   gatheringYield,
   NATIVE_ITEMS,
-  NATIVE_PREPARATIONS,
   type ActorObservation,
 } from '@open-legend/domain';
 import type { CommandInput } from '@open-legend/protocol';
@@ -94,17 +93,12 @@ function describeCommand(
     case 'gather':
       if (!target?.resource || target.resource.cast) return common;
       return `${common} ${namePhrase(target, 'definite', { capitalize: true })} has ${target.resource.quantity} units of ${name(target.resource.definitionId).toLowerCase()} remaining.`;
-    case 'prepare': {
-      if (!command.preparation) return common;
-      const preparation = NATIVE_PREPARATIONS[command.preparation];
-      return `Use ${preparation.inputQuantity} ${name(preparation.input).toLowerCase()} to make ${preparation.outputQuantity} ${name(preparation.output).toLowerCase()}. Materials are consumed when work begins; stopping does not return them.`;
-    }
     case 'craft':
       if (!recipe) return common;
-      return `${recipe.description}\n\nMakes ${namePhrase(definition(recipe.outputDefinitionId) ?? recipe.output, 'indefinite')}. Requires: ${recipe.inputs.map((input) => `${input.quantity} ${name(input.definitionId).toLowerCase()}`).join(', ')}. Materials are consumed when work begins and are not refunded if you stop.`;
+      return `${recipe.description}\n\nMakes ${recipe.outputs.map((output) => `${output.quantity} ${name(output.definition.id)}`).join(', ')}. Requires: ${recipe.inputs.map((input) => `${input.quantity} ${name(input.definitionId).toLowerCase()}`).join(', ')}. Materials are consumed when work begins and are not refunded if you stop.`;
     case 'equip':
-      return itemDefinition?.launcher
-        ? `${itemDefinition.description}\n\nReady ${namePhrase(itemDefinition, 'definite')} for hunting. It uses ${itemDefinition.launcher!.ammunitionKind} ammunition.`
+      return itemDefinition?.rangedWeapon
+        ? `${itemDefinition.description}\n\nReady ${namePhrase(itemDefinition, 'definite')} for hunting. It uses ${itemDefinition.rangedWeapon!.ammunitionKind} ammunition.`
         : itemDefinition
           ? `${itemDefinition.description}\n\n${common}`
           : common;
@@ -117,7 +111,7 @@ function describeCommand(
       if (command.type === 'practice-shot') {
         const practice = weapon && toolPracticeDefinition(world, weapon);
         const known =
-          weapon?.launcher && practice?.id === target?.practiceTarget?.attributeId
+          weapon?.rangedWeapon && practice?.id === target?.practiceTarget?.attributeId
             ? handlingAccuracy(world, observation.actor, weapon)
             : undefined;
         return practice?.practice
@@ -129,7 +123,7 @@ function describeCommand(
             )
           : common;
       }
-      const handling = weapon?.launcher && handlingAccuracy(world, observation.actor, weapon);
+      const handling = weapon?.rangedWeapon && handlingAccuracy(world, observation.actor, weapon);
       const note = handling?.definition
         ? ` ${handling.definition.name}: ${practiceRank(handling.definition.practice!, handling.competence)}. ${handling.definition.practice!.scope}`
         : '';
@@ -139,7 +133,7 @@ function describeCommand(
         target && rangedTargetAllowed(world, target)
           ? namePhrase(target, 'definite')
           : policy.targetLabel;
-      return `${equipped ? equipmentChangeDescription(world, observation.actor.id, equipped.id) : ''}${policy.actionLabel}: attempt one shot at ${subject}. ${weapon?.launcher ? `${namePhrase(weapon, 'definite', { capitalize: true })} is the selected tool and uses ${weapon.launcher.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} ${policy.scope}${note} ${policy.accuracyExplanation}`;
+      return `${equipped ? equipmentChangeDescription(world, observation.actor.id, equipped.id) : ''}${policy.actionLabel}: attempt one shot at ${subject}. ${weapon?.rangedWeapon ? `${namePhrase(weapon, 'definite', { capitalize: true })} is the selected tool and uses ${weapon.rangedWeapon.ammunitionKind} ammunition.` : 'Equip a ranged tool and carry compatible ammunition first.'} ${policy.scope}${note} ${policy.accuracyExplanation}`;
     }
     case 'harvest':
       if (!target?.remains) return common;
@@ -215,6 +209,7 @@ export function commandFacts(
         'Yields',
         `${Math.min(
           gatheringYield(
+            observation,
             command.itemId
               ? [read.definitions.get(read.items.get(command.itemId)?.definitionId ?? '')]
               : read.gatheringTools,
@@ -225,14 +220,6 @@ export function commandFacts(
       ],
       ['Time', `${duration(target.resource.workSeconds)}, plus travel`],
     ];
-  if (command.type === 'prepare' && command.preparation) {
-    const p = NATIVE_PREPARATIONS[command.preparation];
-    return [
-      ['Costs', `${p.inputQuantity} ${name(p.input)}`],
-      ['Yields', `${p.outputQuantity} ${name(p.output)}`],
-      ['Time', duration(p.workSeconds)],
-    ];
-  }
   if (command.type === 'tend-fire' && command.fireOperation) {
     const operation = command.fireOperation;
     return [
@@ -252,7 +239,10 @@ export function commandFacts(
     if (r)
       return [
         ['Costs', r.inputs.map((i) => `${i.quantity} ${name(i.definitionId)}`).join(', ')],
-        ['Yields', r.output.name],
+        [
+          'Yields',
+          r.outputs.map((output) => `${output.quantity} ${name(output.definition.id)}`).join(', '),
+        ],
         ['Time', duration(r.workSeconds)],
       ];
   }
@@ -267,6 +257,7 @@ export function actionDescriptions(observation: ActorObservation, world: WorldSt
   return {
     describe: (command: CommandInput) => describeCommand(command, observation, world, read),
     facts: (command: CommandInput): Array<[string, string]> => {
+      if (command.type === 'encounter-preference') return [];
       const native = domainCommand(command, observation.actor.id, 'preview');
       if (native.type === 'hunt' && command.ammunitionId) native.ammoItemId = command.ammunitionId;
       const view = nativeView(native);

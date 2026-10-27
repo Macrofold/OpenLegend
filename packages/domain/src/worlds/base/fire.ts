@@ -64,7 +64,7 @@ function plainMaterial(definition: ItemDefinition): boolean {
   return (
     definition.portable === true &&
     !definition.container &&
-    !definition.launcher &&
+    !definition.rangedWeapon &&
     !definition.ammunition &&
     !definition.melee &&
     !definition.gatheringTool &&
