@@ -2,252 +2,251 @@
 
 | Status | Current progress | Last updated |
 | --- | --- | --- |
-| Not started | Contracts and delivery breakdown are specified; executable integration and qualification remain open. | 2026-10-26 |
+| Not started | The design and delivery breakdown are complete; implementation and gameplay qualification remain open. | 2026-10-27 |
 
 ## 1. Scope, base and owners
 
-Implements the selected [feature](emergency-combat-and-loadouts-feature-spec.md), including the scoped ND11/ND13 and related ND38 overlap. Design inspection used connected `Macrofold/OpenLegend` main at `beeb25179c6d772c4d3044c43e694265dd78c414`; later implementation must reconcile its actual base, not assume these source files are unchanged. Names marked **proposed** below identify new contracts, not existing runtime support.
+Implements the selected [feature](emergency-combat-and-loadouts-feature-spec.md), including the scoped ND11/ND13 and related ND38 overlap. Inspection used connected `Macrofold/OpenLegend` main at `beeb25179c6d772c4d3044c43e694265dd78c414`. Implementation must check its actual base. Names marked **proposed** identify new contracts, not existing runtime support.
 
 | Meaning | Existing owner to extend | Required integration |
 | --- | --- | --- |
-| Actual attacks, personal encounter facts and recovery | `packages/domain/src/combat-encounters.ts`, existing combat execution and attack-family adapters | Add the mechanical opening state and lifecycle notifications here; keep it separate from perceived pair records and existing recovery. |
-| Exact equipment and attachment validation | `packages/domain/src/equipment.ts`, `objects.ts`, `object-access.ts`, `resource-claims.ts` | One grouped preflight/commit path; retain placement as the only equipment authority. |
-| Active defense and resulting injury | `packages/domain/src/contact-defense.ts`, `living.ts`, installed shield/body profiles | Extend the supported defense source to body or item; reuse one guard and impact owner. |
-| Fictional configuration | Installed base-world composition, `packages/domain/src/worlds/base/body-policy.ts` and its definition/configuration consumers | Install the [world profile](../worlds/base/combat-readiness.md) once; generic code reads it. |
-| Action command admission and current work | Existing command binder, native dispatcher, prospective work-transition and receipt owners | Guard/attack use their existing execution; add only the finite equipment-set action. No Stop-then-attack HTTP sequence. |
-| Live client input and mode | Existing ASE scene/input/settings owner | Preserve Shift+T, WASD, exact gesture invalidation, mode-notice baseline and body-bound targeting. |
-| Requests and public view | Existing `apps/server` WorldService/projection and `packages/protocol` contracts | Authenticated scoped commands, private emergency projection, current-format save/validation, actual receipts. |
-| Panels, inventory and barter drafts | Existing App overlay/workspace and inventory/person-panel owners | Hide rather than reconstruct task state; no trade-state copy in the emergency component. |
-| Saved user choices | Existing account/character-scoped preference repository and client settings | Named equipment sets and automatic-set selection; no effect authority in preferences. |
+| Attacks, personal encounters and recovery | `packages/domain/src/combat-encounters.ts`, combat execution and attack-family adapters | Mechanical opening state stays separate from perceived pairs and recovery. |
+| Equipment and attachments | `equipment.ts`, `objects.ts`, `object-access.ts`, `resource-claims.ts` | One grouped preflight/commit; placement remains the sole equipment authority. |
+| Defense and injury | `contact-defense.ts`, `living.ts`, installed shield/body profiles | Body/item defense sources share guard phases and impact resolution. |
+| Fictional configuration | Base-world composition, `worlds/base/body-policy.ts`, definition/configuration owners | Install [world policy](../worlds/base/combat-readiness.md) once; generic consumers read it. |
+| Commands and current work | Existing binder, dispatcher, prospective work-transition and receipt owners | Checked replacement plus ordinary guard/attack; one new equipment-set action, not an emergency executor. |
+| Input and mode | Existing ASE scene/input/settings owner | Preserve current bindings, gesture cancellation, notice baselines and exact targeting. |
+| Requests and public view | Existing server WorldService/projection and protocol | Authenticated commands, scoped emergency view and ordinary result recovery. |
+| Panels and drafts | Existing App overlay/workspace and inventory/person panels | Hide mounted task owners; never copy their private drafts into the alert. |
+| Saved choices | Existing account/character-scoped preference storage | Named sets and automatic-set selection, without equipment or execution authority. |
 
-`AttackModeNotice` currently records a sequence, occurrence, time and one of own admitted offense/personally experienced assault. Do not convert it into a hidden-enemy list. `PersonalEncounter` currently owns perceived pairs and active observed action/projectile references. Mechanical opening eligibility must not be inferred from those possibly incomplete observations.
+`AttackModeNotice` currently records sequence, occurrence, time and own offense/personally experienced assault. It is not a hidden-enemy list. `PersonalEncounter` owns perceived pairs and observed action/projectile references; incomplete observations cannot determine mechanical opening eligibility.
 
-At implementation startup locate the actual current callers through these owners, including natural strikes, Punch, equipped melee, ordinary/held ranged, native NPC choice, menu actions, point fire and restoration. Record the caller map in ECL01. This is a concrete integration check, not permission to build a new architecture catalogue or rerun unrelated research.
+At implementation startup map actual natural-strike, Punch, equipped-melee, ordinary/held-ranged, NPC, menu, point-fire and restoration callers through these owners in ECL01. This is an affected-caller check, not a new architecture catalogue. Native admission, current-format continuation and privacy retain the linked existing contracts unless this design expressly extends them.
 
 ## 2. State and configuration
 
 ### 2.1 Mechanical opening state
 
-Add one **proposed `combatOpening`** value to the existing body/actor combat-state record. It contains current physical life, first actual occurrence/episode identity, installed policy pin, opening time, immutable sampled allowance, opening deadline, latest relevant hostile occurrence time and any pending quiet-rearm deadline. Absence means this life is eligible for an opening if the installed policy supports it. A spent episode remains spent until the defined quiet transition.
+Add one **proposed `combatOpening`** to the existing body/actor combat record: current physical life, episode/first occurrence, policy pin, opening time, immutable sampled allowance/deadline, latest relevant occurrence time and pending quiet-rearm deadline. Absence means this life is eligible when its installed policy supports the rule; a spent episode remains spent until genuine quiet.
 
-Actual active directed attacks/target-bound flights and own offensive work already own their source, target and lifetime. Maintain/reuse an exact target-life lookup from their start/end/release/contact changes; do not copy all active attacks into each player or poll every world entity per frame. Rebuild this derived lookup from current active work on load. A retained historical first occurrence need not remain an active action forever.
+Reuse or maintain an exact target-life lookup from actual directed attack/target-bound-flight start/end/release/contact changes. Do not copy all attacks into each player or poll world entities. Rebuild the derived lookup from active work on load. Historical first occurrences need not remain active actions.
 
-A qualifying attack stores its sampled opening contribution/deadline with its existing preparation continuation. It does not read the defender's changing bonus on every tick. Keep ordinary readiness and this minimum not-before contribution distinguishable so an early release cannot bypass either. A changed target at release is rechecked under §3, never treated as a new physical attack merely because the view refreshed.
+Each affected attack retains ordinary readiness separately from its admitted opening boundary. Re-publication, release, phase changes and restoration never add the same interval again. Changing a target cannot erase an already admitted preparation delay. The opening is mechanical state; neither it nor the derived lookup supplies character knowledge.
 
 ### 2.2 Emergency projection
 
-Add a **proposed `EmergencyThreatView`** to the controlled player's permitted view. It carries an opaque occurrence binding, current scope/life, whether the opening/current attack is active, authorized timing for the assistance indicator, safe description, an optional currently targetable attacker reference, and exact native Defend/Retaliate availability summaries. Hidden canonical IDs, coordinates, source equipment, private plans and all-world hostility records are absent.
+Add a **proposed `EmergencyThreatView`** to the controlled player's permitted view: opaque occurrence binding, control/life scope, current/opening status, authorized assistance timing, safe description, optional currently targetable attacker, and native reaction availability. Omit hidden canonical IDs, coordinates, equipment, plans and all-world hostility.
 
-Construct this from real physical attack lifecycle plus independently permitted current perception. A generic opening cue is explicitly authorized by the installed player-assistance rule; it does not call `emitPrivateObservation` as though the character saw an attacker. Ordinary observed assault still uses the existing experience and attack-mode notice path. Anonymous cue alone does not automatically enter attack mode; choosing an emergency action or the normal mode toggle can. A visible/recognized person is not an identified attacker without the independent permitted attack association; the [world disclosure rule](../worlds/base/combat-readiness.md#opening-attack-policy) also applies to the accepted received-pose extension.
+Real physical attack lifecycle supplies anonymous assistance only when the world enables it. Independently permitted perception supplies any named attacker and direction. Do not call `emitPrivateObservation` merely because assistance appeared. Ordinary experienced assault retains its existing notice path; anonymous assistance alone does not auto-enter combat mode. A visible/recognized person is not an identified attacker without the permitted attack association, including under the selected received-pose extension.
 
-The initial/reconnected snapshot can display ongoing danger without manufacturing a fresh occurrence, mode-entry event or opening. Subsequent actual occurrences update the same region. Distinguish native elapsed time from received/displayed time; no browser acknowledgement controls physical completion.
+Initial/reconnected views may show ongoing danger without creating a new occurrence, mode entry or allowance. Display time is distinct from native time; no browser acknowledgement gates contact. The indicator reports the extra opening allowance, not an exact time-to-hit or safety guarantee.
+
+Prepare Defend and Retaliate from one shared read-only post-replacement context where their dependencies agree; reuse the existing equipped-source and action evaluators. Refresh on relevant equipment, work/recovery, control, threat or perception changes, not camera frames or unrelated inventory/world changes. Do not simulate an attack merely to populate the banner.
+
+**Information tradeoff:** the physical delay is observable. In particular, point-fire gating can let a shooter infer that the ray threatened a player even though no identity or position is returned. This design does not claim timing-side-channel secrecy. Read-only aiming, inspection and previews must not allocate an opening, emit assistance, or expose its hidden-recipient-dependent delay. Only an otherwise admitted actual attempt reaches that gate. No new concealment, fake timing or universal projectile system is selected to disguise the tradeoff.
 
 ### 2.3 Loadout preference
 
-A **proposed `EquipmentLoadout`** preference contains application-assigned ID, revision, name, exact individualized item IDs with definition pins, and optional saved permitted display labels. Occupied ports, protection and current availability are derived from current permitted definitions/possessions; do not persist a second writable equipment map. The existing installed equipped-action chooser selects an attack source from actual equipment. No per-loadout primary weapon, active-weapon authority or parallel source-priority setting is introduced.
+A **proposed `EquipmentLoadout`** contains application-assigned ID, revision, name, exact individualized item IDs/definition pins and optional saved permitted labels. Derive ports, protection and availability from actual equipment/definitions. The installed equipped-action chooser remains the attack-source owner; no per-loadout primary-weapon or writable equipment mirror is introduced.
 
-Scope these preferences by account, world and character. Store the selected automatic-loadout ID beside them. Use the existing preference storage boundary, not a new service or inventory database. The initial interface permits **12 sets per scoped character**; each set has at most as many distinct items as the installed body's equipment ports because every equipped item occupies at least one nonoverlapping port. Names use the existing user-label validation. The finite preference payload is bounded by those counts and existing request-size checks. [ECL limits](../limits/emergency-combat-and-loadouts.md) owns this deliberate initial restriction.
+Scope presets and the optional automatic-set ID by account, world and character, using existing preference storage. There is **no feature-specific loadout-count cap**. Each saved set has no more distinct items than its compatible body's equipment ports because every item occupies at least one nonoverlapping port. Reuse existing label/request/storage admission; a storage rejection preserves the previous saved document and explains the failure. Do not claim unlimited storage, silently truncate sets, or add a preset service merely to paginate an ordinary personal list. [ECL-L04](../limits/emergency-combat-and-loadouts.md#ecl-l04--equipment-transition-and-preset-storage) records the growth boundary.
 
-Save current equipment captures only actual individualized equipment through the placement index. This avoids introducing a speculative choose-one-unit-from-an-unindividualized-stack editor. Editing contents means explicitly replacing the preset from current equipment; rename/duplicate/delete do not change physical gear. An empty set is valid. Definition changes require reviewing/resaving the affected set; ordinary item condition changes do not permanently stale a preset's identity.
-
-Missing items do not delete the preset or resolve to same-name replacements. Saved own labels are descriptive memory, not permission to locate a now-hidden item. Another account taking control of the character receives its own preferences, not the prior person's private presets.
+Save current equipment captures actual individualized attachments. Edit contents by explicitly replacing the preset from current equipment; rename/duplicate/delete changes no gear. Empty is valid. Changed definition meaning requires review/resave; ordinary item condition is read at execution and does not permanently invalidate the preset. Missing items remain unavailable, never replaced by name or recalled from elsewhere. Saved own labels do not disclose current hidden whereabouts. A different controlling account receives its own presets.
 
 ### 2.4 Client-only continuity
 
-Keep one previous-workspace reference and at most one pending automatic-loadout intention in the existing client scope. Neither is durable world state. Preserve the mounted inventory/trade owners and their existing drafts/receipt state; save only which panels were exposed and their focus route. A changed account/character/world/timeline or revoked private scope clears the affected UI work under the existing contract.
+Retain one previous-workspace reference and at most one pending automatic-set intention within the existing client scope. Preserve mounted task owners and their existing drafts/receipts; retain panel arrangement and focus route, not another copy of inventory/trade state. Account/character/world/timeline/privacy changes clear affected private work normally.
 
-Combat mode remains the ASE input state, not a new server combat flag. Automatic loadout entry uses one local transition token under current control and retains its actual cause: explicit mode selection, emergency reaction, or existing automatic notice. Re-publication and manual On while already On do not create another token. Reconnect starts from the existing mode baseline; it never resumes the convenience or held input.
+Combat mode remains ASE input state, not a server hostility flag. One local off-to-on token records explicit selection, emergency reaction or automatic-notice entry under current control. Re-publication and On-while-On create no new entry. Reconnect consumes the normal baseline and never restores pending convenience or held input.
 
 ## 3. Opening-attack algorithm
 
 ### 3.1 Admission and timing
 
-All calculations below use native simulation time and the installed normal-play conversion. Let `t` be actual preparation/recipient-binding time, `W` the sampled opening duration, and `R` the attack's ordinary readiness under its real inputs.
+Use native simulation time and the installed normal-play conversion. At actual preparation/recipient-binding time `t`, let `R` be readiness from ordinary preparation **without any opening addition**, and `W` the recipient's sampled allowance.
 
-1. Perform normal attack permission, source, target/life and prerequisite checks. A preview, refused attack, approach before preparation or private intention allocates nothing and warns nobody.
-2. Settle due native state at `t`. If the recipient's last episode has genuinely satisfied quiet rearming, retire it before deciding eligibility.
-3. For a newly eligible recipient, create the opening episode with `openedAt=t` and `openingUntil=t+W`. The first qualifying preparation receives extra `W`.
-4. For an attack newly beginning/binding to that recipient while their opening remains active, its extra duration is `max(0, openingUntil-t)`. For an already spent opening, extra is zero.
-5. Store the admitted readiness as `max(R,t) + extra`. Apply the extra once to that exact execution/recipient binding, not again at rendering, release, save/load or every preparation phase. Ordinary preparation and the shared remaining opportunity are both respected.
-6. Publish the authorized cue after this native transition commits. The client interpolates the authoritative indicator; animation tracks actual preparation progress. No damage is pre-applied or stored for a later artificial flush.
+1. Check ordinary permission, source, exact recipient life and prerequisites. Refused attacks, previews, approach alone and private intentions allocate nothing.
+2. Settle due native state at `t`, including any genuinely completed quiet rearm.
+3. For an eligible recipient, create `openedAt=t`, `openingUntil=t+W`. An existing active opening supplies `extra=max(0, openingUntil-t)`; a spent opening supplies zero.
+4. For a previously unbound execution/recipient, compute `candidateReadyAt=max(R,t)+extra`. Retain the later of that boundary and any opening boundary already admitted for this execution. Never add `extra` to an already extended readiness or repeatedly apply it to the same binding.
+5. Store the physical preparation boundary and publish assistance only after this transition commits. Native execution and animation use that actual preparation; no pre-applied damage or delayed health queue exists.
 
-**Example at normal speed:** attack A begins at 0 with 0.5 seconds of ordinary preparation and a two-second opening: ready at 2.5. Attack B begins at 1 with 0.5 seconds of preparation: it adds the remaining one second, also ready at 2.5. A faster B can finish earlier than A after the shared opening expires. B does not create another two seconds starting at 1. An attack beginning after the opening deadline receives ordinary timing.
+**Normal-speed example:** A begins at 0, has 0.5 seconds ordinary preparation and a two-second opening, and is ready at 2.5. B begins at 1 with the same ordinary preparation; the remaining allowance is one second, so B is also ready at 2.5. A faster B can complete earlier after the opening expires. Starting after the deadline receives ordinary timing, not a new two seconds.
 
-The first attacker may cancel; the opening remains spent. If there are no continuing relevant attacks, quiet rearming starts from the latest real hostile occurrence/end, not from a menu event. A long-held current attack or current target-bound flight prevents quiet rearming even when it temporarily leaves view. This mechanical fact does not disclose the hidden source to the player.
+Canceling A spends rather than refunds the opening. Long-held directed preparation and target-bound flight prevent quiet rearming even when unseen; that mechanical lookup grants no source disclosure. The current binding, readiness and recipient episode are sufficient: do not build a permanent history of every aim target solely to remember already elapsed waits.
 
 ### 3.2 Ranged and late-bound recipients
 
-For a target-bound ranged preparation, apply the recipient's gate when real preparation begins. Holding longer than required does not add another opening at release against that same life. At final subject/point selection, the ordinary exact review and native ray preparation identify whether the shot now threatens a different eligible player. A newly bound recipient gets its applicable gate before launch. Freeze the requested release choice through the existing pending-release owner; do not silently retarget it while waiting.
+Target-bound ranged preparation applies its gate when physical preparation begins. Holding past readiness never charges the same recipient again. At the accepted final subject/point selection, ordinary exact review and the first-body/solid ray query determine a newly threatened player before launch. Empty-point preparation cannot prepay another player's opening; a solid stopping the ray before a player does not create a threat behind it.
 
-For point fire, reuse the existing first-body/solid ray query at the would-be release. A player already on that ray is eligible even without a named subject selection; private physics can determine delay without disclosing hidden identity to the shooter. Do not return hidden candidate details in the review/UI. Retain the existing collider ordering and cover behavior. A solid that would stop the shot first does not establish a player threat behind it.
+Freeze that release choice through the existing pending-release owner. A new explicit release choice uses the ordinary new-binding/review rules; a stale pending request cannot silently retarget. At eventual launch, revalidate ordinary source/permission/subject-or-point prerequisites. Actual later movement and interception remain physical collateral; do not turn a held release into a recurring search for new recipients or repeatedly postpone it as bodies cross the ray. This is the declared preparation/selection boundary, not a guarantee for every person who may later enter the path.
 
-After the gate, ordinary current-source/permission/target-or-point validation and collision apply. Do not repeatedly extend a consumed gate because another publication or query encounters the same recipient. A new explicit release choice is a new semantic binding under the existing input/review rules, not permission for a stale pending request to change target. Unforeseen later interception remains physical collateral, as specified in the feature.
+Do not alter a released flight's speed, ray, ammunition, collision or source lifetime. No gating at health subtraction. A private ray query can affect physical delay, with the observable tradeoff in §2.2, but cannot return hidden candidate facts to review or UI.
 
-Do not alter a released flight's speed, ray, ammunition accounting, collision or source lifetime. No delay at hit-point subtraction. Existing live-input expiry still applies to a human pending release: qualify the longest selected opening under the actual lease/renewal contract, and report expiration rather than firing after control loss. A held preparation that survives can expose its ordinary explicit Release/Cancel recovery; it does not replay the old button-up.
+Human pending release remains subject to existing input authority/expiry. Qualify the longest installed opening against that real lease/renewal path. Expiry disarms release rather than firing after control loss; surviving preparation uses ordinary explicit Release/Cancel recovery, never the old mouse-up.
 
 ### 3.3 Rearming and composition
 
-Advance the quiet deadline only from relevant admitted offense, incoming preparation/release/attempt/contact and actual end of continuing relevant work. At a quiet deadline, check the exact current-life incoming/outgoing work lookup. If anything relevant still continues, wait for that owner's next terminal/change notification; do not reschedule whole-world polling. Once empty and quiet for the world-owned duration, remove the spent opening. A new physical life initializes independently; reconnect or mode changes do not.
+Relevant incoming preparation/release/attempt/contact, own admitted offense and actual endings establish the quiet boundary. At its deadline check the current-life incoming/outgoing lookup. Continuing work waits for its owner's terminal/change notification, not a polling loop. Once empty and quiet for the installed duration, retire the spent opening. New life initializes separately; reconnect, menu, equipment and mode changes do not.
 
-The SUR preparedness evaluator still samples its own actual evidence at its own specified cut. An assistance banner is not evidence. Guard becoming physically ready can contribute under the existing selected preparedness rules. Opening bonus, surprise damage, startle and native recovery remain distinct values/owners; none is multiplied into another merely because they concern danger. ECL does not depend on delivering the entire SUR/stealth project first; preserve its declared inputs and ordering when that optional installed consumer is present.
-
-Support omission and different installed timing through this same mechanism. Generic protocol/client code must not hardcode human eligibility, two seconds, the quiet interval, Focus or a bundled action name.
+SUR evaluates actual preparedness at its own evidence cut. Assistance is not evidence; a physically ready chosen guard may qualify through SUR's existing rules. Opening allowance, surprise damage, startle and recovery remain separate. ECL can ship without the complete stealth/SUR project, but must compose correctly when it is installed. Generic consumers hardcode neither human eligibility, Focus, durations nor bundled action names.
 
 ## 4. Defense, protective outfit and ordinary attack composition
 
 ### 4.1 Shared guard
 
-Extend the current contact-defense source representation to an explicit item-backed or body-backed source with its exact installed definition pin. Item-backed shielding continues to bind the actual equipped shield; body-backed brace binds the installed capability on this physical life. Do not represent brace as a fabricated shield entity or a parallel status effect.
+Extend contact defense to an explicit item-backed or body-backed source with its installed pin. A shield binds the actual equipped item; Brace binds a capability on the current life. No fake shield entity or parallel defense buff.
 
-The same guard action owns preparing/ready/recovering phases, facing, readiness/expiry deadlines, eligible incoming families and one-interception consumption. Extend pure availability, ordinary action discovery, emergency offering, input, status descriptions, current validation and impact callers together. A profile can cover direct melee without covering projectiles. Resolve compatibility from the installed family, not English labels.
+Both use one guard action for preparation/readiness/recovery, facing, deadlines, eligible contact families and one-interception consumption. Extend pure availability, ordinary discovery, emergency offering, status/protocol/current validation and impact callers together. Installed compatibility, not labels, distinguishes melee-only Brace from projectile-capable shielding.
 
-Current recovery cannot be canceled by mode/equipment changes or emergency submission. Starting defense uses prospective cancellation of the exact incompatible work; released effects and spent ingredients are retained. Direction must be supplied from currently permitted evidence or the character's existing facing. No hidden target lookup is allowed for choosing facing.
+Prospective replacement may end exact incompatible work, never committed recovery, spent inputs or released effects. Facing uses independently permitted direction or current body facing; it cannot track an unidentified source. Show meaningful limits, including that Brace does not stop arrows, rather than imply every enabled Defend protects against the current threat.
 
 ### 4.2 Protective equipment
 
-Install the outfit port, one ordinary recipe and the supported passive physical-protection definition through the existing base-world definition/recipe sources. Equipment attachment is already generic; extend the injury contribution owner, not body collision geometry or every attack implementation separately. Source protection from the actual exact attached item at impact, not the pending set or the loadout preference.
+Install the outfit port, ordinary recipe and passive physical-protection definition through current world composition. Attachments already have an owner; extend the shared injury contribution path, not collision geometry or each attack independently. Sample the actual exact attached garment at impact, never the pending preset.
 
-Apply the selected order in the world profile through the shared contact/body effect path, including natural/melee/projectile callers. Prevent duplicate application per occupied port and round only through the existing final-health rule. Keep effect attribution private/perceived according to the normal outcome owner. Wetness, heat, starvation and unrelated conditions receive no invented armor benefit. The outfit does not repair or multiply its stored material.
+Apply the world-owned order through shared natural/melee/projectile contact, once per item rather than occupied port, with existing final-health rounding and permitted attribution. Unrelated heat/wetness/starvation/status injury receives no invented protection. No durability, material repair, anatomy or full armor catalogue is required.
 
 ### 4.3 Reaction submission
 
-A UI reaction first captures the exact currently displayed source, target life/reference, offered operation and required prospective work transition. Suspend any not-yet-submitted equipment selection from this mode entry while the reaction is reviewed/admitted; clear transient input synchronously. Hide ordinary panels and enter mode without using the old event as world input. An already admitted equipment action can only be canceled through the checked native replacement below, not undone by clearing client state.
+Capture the displayed exact source, target reference/life, operation and prospective work replacement. Suspend the entry's unsubmitted equipment convenience while reaction/review is pending. Clear transient input, hide ordinary panels, enter mode and consume the activation so its release cannot become world input.
 
-Submit **one ordinary native intention with an explicit replacement transition** through the current action owner. Extend that existing contract only where necessary; do not send Stop and then an independent attack, add an emergency executor or bypass the ordinary evaluator. The pure preflight checks the state after the proposed exact cancellation, including resources it releases. A refused new action must not first destroy the current task. Required lethal review remains read-only until confirmation; only then commit the admitted transition/action together. Decline/refusal clears the suspended gear convenience; an unknown reaction result keeps it nonexecutable until the original result is resolved.
+Submit **one existing native intention with checked replacement**, not Stop then Attack. Read-only preflight evaluates post-cancellation availability/resources. On refusal leave physical work/equipment intact. When required, lethal review remains read-only; confirmation admits replacement and action together. Decline/refusal clears pending convenience, while an unknown result keeps it nonexecutable until the original receipt resolves.
 
-The replacement ends the exact owning current work and its continuing plan as the existing transition requires; it does not leave an automatically resumable fishing/crafting step behind the defense. Do not blanket-cancel independent outing/help consent or other social agreements. Any actual agreement consequences follow their existing owner and appear in the shared prospective explanation.
+Replacement ends the exact work and continuing plan as required; it does not leave fishing queued to restart after defense. Independent outing/help consent is not blanket-canceled. Show actual agreement consequences through the owning prospective explanation.
 
-Defend delegates to the same guard operation used in ordinary combat. Retaliate delegates to one ordinary neutral attack with the captured equipped source and exact currently targetable attacker. Disallow automatic approach on this emergency route. No new timed execution score, weapon choice, model call or repeat loop is selected. Ranged retaliation uses native subject aim, not the alert button's cursor position.
+Defend delegates to ordinary guard. Retaliate delegates to one neutral ordinary attack against its captured permitted attacker, without approach, repeats, synthetic timing input or model calls. **Require the captured source still to be the equipped source at admission.** Ordinary attack auto-equipping must not silently restore an old weapon after a concurrent loadout change. Reject and refresh instead. Ranged retaliation uses native subject aim, not the button's screen coordinates.
 
-If a submitted result is unknown, retain the exact request and existing Check result semantics. UI closure, reconnect or another warning is not permission to retry with a new ID. A committed result wins over a later cancellation; expose what really occurred.
+Resolve uncertain delivery through the original request/result owner; no new ID to repeat the action. A committed result stands despite a later cancellation. A required lethal review means Retaliate is not an unconditional instant attack: its blocker/consequence must be visible, and Defend/Return to world remain independent available choices. This design does not waive or duplicate that review policy.
 
 ## 5. Equipment-set transition
 
 ### 5.1 Preflight
 
-Create one shared read-only **proposed `prepareEquipmentSet`** operation returning the exact desired attachments, current attachments to stow, current item/definition pins, affected ports/custody ancestors, required claims and resulting capacity checks. Its inputs are exact item IDs; the preset is resolved by the server preference owner, or an equivalent explicitly supplied native set is validated for an NPC. Names never resolve objects. The existing equipped-action chooser, not the preset, continues to select the ordinary attack source.
+One **proposed `prepareEquipmentSet`** read returns desired attachments, current items to stow, exact item/definition dependencies, affected ports/ancestors, claims and final net-capacity checks. The server preference owner resolves the preset; an NPC's equivalent explicit native set passes the same checks. Names never bind objects.
 
-Check current control/physical life, available installed operation, compatible body, unique items, one admitted port allocation per object, no overlapping occupied ports, current accessible personal custody and all required resource/active-work constraints. An individual item may occupy several ports but appears once. All items absent from the target equipment set are stowed; unchanged exact attachments need not be rewritten. Stow into the carried root, not guessed former bags. Preflight final net capacities through the existing object owner.
+Check current authority/life, installed operation, compatible body, unique exact items, nonoverlapping ports, accessible personal custody and meaningful claims/work constraints. Multi-port items appear once. Stow omitted gear into the carried root; unchanged attachments need no rewrite. Use existing net-load/ancestor rules, not scans of unrelated bags or remembered former destinations.
 
-For a manual Equip button, named loadout shortcut, or deliberate mode-entry command with an enabled combat set, prepare the explicit replacement of incompatible current work through the same prospective-transition owner used in §4.3. Check availability against the post-cancellation resources without mutating them. The visible control/setting explains the actual work being stopped. Admit replacement and equipment preparation together in one native request; no extra generic confirmation or Stop-then-Equip sequence. A mode notice generated by incoming assault/own offense supplies no such replacement authority; its deferred convenience can start only at a captured eligible idle boundary. A matching-set no-op does not cancel current work.
+Manual Equip, its shortcut and explicit combat entry with an enabled set permit prospective replacement. Display the stopped work; preflight released resources without mutating them, then admit replacement plus preparation together. No generic confirmation or Stop-then-Equip request. Automatic notice entry has no replacement authority. A matching-set no-op leaves current work alone.
 
-Ordinary offers and the Apply control consume this same prepared meaning. At admission capture the exact current dependency revisions and definition meaning, not a global world revision that changes on unrelated movement. A set with changed definition pins requires review/resave before an automatic request. The empty set is a valid explicit stow-all operation; an already matching set returns a no-op result without allocating timed work.
+Ordinary offers and Equip use the same prepared meaning. Bind relevant item/definition/work dependencies, not a global revision changed by unrelated movement. Changed meaning requires review/resave; empty explicitly means stow all. Saving or browsing a preset neither reserves gear nor grants execution.
 
 ### 5.2 Start and completion
 
-Add the finite **proposed `equip-set`** native action using the existing physical-action slot. It records actor life, installed operation pin, exact desired items, start/completion times and needed claims. Reuse the existing resource-claim envelope for selected and displaced equipment. No items move and no new equipment is active at Start.
+One **proposed `equip-set`** uses the existing physical-action slot. Save actor life, installed operation, desired items, start/completion times and existing claim-envelope bindings for selected/displaced gear. Start moves nothing; old equipment remains effective.
 
-At the native completion boundary, revalidate current mutable access, claims, compatibility and the exact selected objects. In one existing domain/storage transaction, detach changed attachments, stow displaced items, attach desired objects, release claims and record the actual outcome. Write only changed items/ancestors plus normal action/result records. On failure discard the equipment mutation as a whole, release this action's claims and retain old attachments. Ordinary source-choice caches are invalidated by the same actual equipment changes; no new primary-weapon state is written.
+At completion revalidate mutable access, claims, compatibility and exact items. In one existing domain/storage transaction, detach changes, stow omissions, attach desired items, release claims and record the actual result. Write changed items/ancestors plus ordinary action/outcome records. Failure leaves old attachments intact and releases this action's claims; no partial set or second writable equipment state. Actual attachment changes invalidate existing source-choice caches.
 
-A defensive/offensive/movement replacement may cancel this exact unfinished action. Cancellation releases only its claims and changes no attachments. An already completed switch is never rolled back. Attacks resolve against the equipment effective at their actual native ordering point. A contact and equipment completion with equal timestamps use the existing scheduler/transition order; do not add a client timestamp tie-breaker or rewrite earlier damage. Qualify that order explicitly with an equal-boundary case.
-
-Manual switching is permitted during a fight when native prerequisites permit it, not prohibited by a global combat flag. It still cannot erase recovery. Physical movement is incompatible for this first slice. NPCs can use the same explicit equipment operation through ordinary action discovery where selected; there is no automatic NPC combat loadout or compulsory AI choice.
+Deliberate defense/offense/walking can replace unfinished equipment work; cancellation changes no attachments. Completed changes are not rolled back. Equal-time contact/completion uses the existing native phase/order, which qualification must exercise explicitly, not a client timestamp rule. Switching during combat follows native availability, not a global combat lock, and never erases recovery. Movement remains incompatible in this first slice. NPCs may receive the same explicit operation without automatic NPC loadouts or compulsory choice.
 
 ### 5.3 Automatic entry coordination
 
-One client coordinator consumes existing mode transitions and current physical-work state. On off→on, resolve the opt-in set once. Retain the actual entry cause and at most one pending selection containing preset ID/revision, mode-entry token, current account/world/character/control/life and the exact work/reaction identity it is waiting behind. Distinguish unsubmitted, submitted/unknown and terminal outcomes through the existing request/result states; no durable convenience queue is needed.
+One client coordinator resolves the opt-in set on a true off→on transition. Retain at most one pending selection with preset revision, entry token/cause, current scope/life and exact work/reaction it follows. Existing request states distinguish unsubmitted, submitted/unknown and terminal. No durable queue or periodic retry.
 
-- **Explicit mode entry:** submit the deliberate replacement-and-equip operation under §5.1. Failure leaves physical work/equipment intact while the input mode may remain on. The setting must disclose that this deliberate entry can stop current work.
-- **Automatic notice entry:** idle entry may submit immediately. Busy ordinary work is not stopped. Wait for its unchanged legitimate completion or an explicitly admitted emergency replacement.
-- **Emergency entry or reaction while an unsubmitted selection exists:** react with current gear first. After confirmed admission, bind that same pending selection to the actual reaction and its recovery. A subsequent emergency button can update that waiting binding but cannot allocate another entry, dispatch a duplicate set or revive a spent attempt.
-- **Reaction after equipment admission:** the ordinary native replacement can cancel the exact unfinished equipment action. Its entry attempt is then spent; do not restore a pending automatic request. A manual Equip route remains available.
-- **Other deliberate work:** ordinary movement/attack commands, manual equipment choices, mode exit or scope/input-authority loss clear the unsubmitted convenience before dispatch. A refused/declined reaction also clears it; unresolved result/review blocks dispatch.
-- **Eligible idle boundary:** submit the pending set once, without work-replacement authority and with its captured equipment dependencies and exact expected idle/work binding. Reuse or minimally extend the existing work-transition owner's actor-scoped revision check so a stale convenience cannot override a newer intention. Do not add a general command queue or a second global epoch.
-- **Result:** admission refusal, cancellation or completion is terminal for that mode entry. Unknown delivery uses the original receipt; never automatically reissue it. Repeated hits, view refresh and reconnect create no new entry attempt.
+| Entry/event | Required behavior |
+| --- | --- |
+| Explicit mode selection | Submit deliberate replacement-and-equip. Failure preserves work/gear; mode may remain on. |
+| Automatic assault/own-offense notice | Submit if idle; otherwise wait behind unchanged current work. Never cancel fishing or the player's newly chosen attack just because its notice arrived. |
+| Emergency reaction with an unsubmitted set | React first with current gear. After confirmed admission, bind the same selection behind that action and recovery; another emergency may update the binding, not allocate another attempt. |
+| Reaction after equipment admission | Checked replacement may cancel that unfinished equipment action; its entry attempt is spent, with no automatic retry. |
+| New ordinary movement/attack, manual gear, mode exit or input/scope loss | Clear unsubmitted convenience before dispatch. Declined/refused reaction also clears it; review/unknown results block it. |
+| Eligible idle boundary | Submit once without replacement authority, using captured equipment dependencies and the owner's exact expected idle/work revision. A stale convenience cannot displace newer work. |
+| Refusal/cancellation/completion | Terminal for this entry; uncertainty uses the original receipt. Hits, refresh and reconnect create no replacement entry. |
 
-After a mode-entry equipment action has started, mode exit requests cancellation of that exact unfinished entry action only. It never restores prior gear or cancels an unrelated manually selected loadout. Lost control/departure uses native continuation rules rather than a client promise that a late Cancel certainly arrived.
+The setting and waiting display explain this ordering and expose manual Equip. One short pending selection is the entire convenience, not a general activity queue. Mode exit cancels only its exact unfinished automatic equipment action, never a manual set or completed change. Native departure/control rules decide already admitted work; a local cancellation is not proof the server received it.
 
 ## 6. UI implementation
 
-Compose a small emergency region from the existing design-system controls, action-availability explanations and shared native progress display. Give it one owner across normal HUD, sheet and modal layouts. Within a modal, register its emergency slot with the active overlay scope so both pointer and keyboard activation are legal; do not remove `aria-modal` or allow the rest of the world behind it to receive input.
+Compose one top-center region with shared buttons, availability explanations and native progress. It belongs to the permitted scope of the active gameplay overlay, including sheets/modals; do not disable modal isolation or allow background world input. Authentication, maintenance, disconnection and competing-tab blockers cannot be bypassed.
 
-Keep target/source binding stable from pointer-down or focused activation through command admission. If it becomes invalid, refuse/refresh that button rather than substituting a different target. New threats may update a non-interactive summary while the bound action remains stable. Essential blocker text stays reachable without a disabled-button tooltip.
+Use a single danger announcement per meaningful occurrence, optionally one existing UI-alert sound respecting volume/mute. This is interface feedback, not a fictional sound heard by residents. Use steady color-independent emphasis rather than strobing; reduced motion does not change native deadlines. Announce phase changes, not countdown frames.
 
-Use the existing App/workspace close-or-hide mechanism to hide all ordinary task panels deliberately, preserving their mounted state. Capture the last nonempty task workspace; repeated reactions against an already exposed world do not overwrite that return point. A newly deliberately opened task workspace replaces it. Separately cancel transient drag/picker/held-attack input through its own owner. One Escape still closes one relevant layer during ordinary use; the explicit emergency button is the dedicated all-panels transition. An old trade-confirmation click must never become an attack or acceptance after the transition.
+The warning and retaliation target are distinct when several threats overlap. Explicitly name the permitted target on the button/detail; an unknown leading warning cannot silently make Retaliate attack some unrelated visible person. Keep source/target stable through held/focused activation. Invalid bindings disable/refresh rather than substitute; new threats can update the summary separately. Essential blockers remain reachable without relying on disabled-button hover.
 
-The focused view adds no second renderer/camera or copied inventory. Use existing condition, weapon, guard/recovery and quick-action components, with compact automatic-loadout progress. Expose a clear ordinary way to close menus even when both reaction actions are unavailable. Return to workspace restores only UI; ordinary panel refresh/access and exact receipt owners decide what remains actionable.
+Hide task panels through their existing owners and retain the last nonempty workspace. Repeated reactions with the scene already exposed do not erase it; a deliberately opened new workspace replaces it. Cancel transient drag/picker/held input separately and consume the triggering click/key. Ordinary Escape still closes one layer; explicit emergency action deliberately hides the stack.
 
-Shortcuts are named remappable actions in the existing input/settings owner, initially unassigned for these new actions. Bind a specific loadout ID, not its current row number. Key repeats cannot create repeated reactions or equipment changes. Existing browser shortcuts, typing, IME, popups, camera controls and modality win according to their existing scopes. Touch activation uses the same buttons; no controller-parity claim is made without actual qualification.
+The focused view reuses camera, condition, weapon, guard/recovery and quick actions. **Return to world** must remain reachable even when neither reaction is available; it hides panels without starting a native action. **Return to workspace** restores UI, not work, trade, gear or combat-mode state. Keep the mode indicator visible so the next world click remains predictable. Current access and receipt owners determine what is actionable after return. Do not auto-reopen panels when a timer ends.
+
+New reaction/loadout shortcuts are named and remappable, initially unassigned. Bind preset IDs rather than row positions; suppress key repeat and honor text/IME, child overlays, camera and browser ownership. Visible keyboard-operable buttons remain the default route; touch uses the same buttons without an unverified controller-parity claim.
 
 ## 7. Persistence, privacy and lifecycle
 
-| State | Save/restore and loss behavior |
+| State | Treatment |
 | --- | --- |
-| Opening episode and admitted extra preparation | Save in existing body/action records with exact life, policy pin, original times and spent state. Rebuild active-work lookups. No new allowance on resume. |
-| Active guard/brace and recovery | Existing guard/action/body continuation, with explicit source kind and profile. No parallel buff timer or recovery reset. |
-| Actual attachments and active equipment transition | Existing object records plus one finite native action/claims. Current-format validation checks both ownership directions and exact desired items. Native pause preserves partial progress; actual departure/control/life rules may cancel. |
-| Saved named sets and automatic selection | Existing account-scoped preference storage, outside gameplay rewind. Restore cannot recreate missing items or permissions. A rewind can leave a preset unavailable; it never manufactures a replacement. |
-| Pending automatic convenience, held input and old click | Transient and discarded on blur, reconnect, pause/control transfer, life or timeline changes. No replay after return. |
-| Inventory/trade draft and original submitted receipt | Existing same-owner UI continuity and native receipt lifetime. Hide/reopen is not another command. Revoke private content under its existing owner. |
+| Opening and admitted preparation | Existing body/action records retain life, policy, original deadlines and spent state; rebuild derived active-work lookup without renewed time. |
+| Guard/Brace/recovery | Existing continuation plus explicit source/profile; no parallel buff or reset. |
+| Attachments/equipment action | Existing object records and action/claims, bidirectionally validated. Pause preserves progress; actual departure/control/life rules decide cancellation. |
+| Named sets/automatic selection | Account-scoped preference storage outside gameplay rewind. Missing items after restore remain unavailable; no replacement or permission is manufactured. |
+| Pending convenience/held input/old click | Transient; discard on blur, pause, reconnect or scope/life/timeline change. |
+| Drafts/submitted transactions | Existing same-owner UI continuity and original receipts; revoke private facts normally, never resubmit on reopen. |
 
-Extend current initialization, validation, codecs, command/protocol consumers and current-format restoration together. There are no real users: do not build migrations, old-shape fallback readers, compatibility aliases or a second feature version. Do preserve current-format integrity, exact outcomes, financial/permission boundaries and unrelated authored starting content.
-
-Validate source/target/actor life, exact IDs and meaningful dependencies at owning boundaries. Do not tie loadout identity to names or delimiter concatenation. An anonymous alert token cannot be used to query a hidden attacker. A client-supplied timer, equipped list or “in combat” flag grants no permission and supplies no actual protection.
+Change current initialization, schemas, codecs, protocol and validation together. Development saves are disposable under root policy: no migrations, old-shape readers, compatibility aliases or feature-version system. Preserve same-format continuation, actual effects and current permissions. Exact identity and meaningful dependency checks belong at their owning boundaries, not repeatedly in every component. Anonymous assistance tokens cannot resolve hidden attackers; client timers, mode flags and equipped lists grant no effects.
 
 ## 8. Performance and failure scope
 
-No new paid calls, polling agents, all-world inventory scans, per-frame action preparation or independent scheduler. Opening work is driven by actual attack/recipient/lifecycle changes and native deadlines. Exact-loadout work is proportional to selected/displaced items, occupied ports and existing affected containment ancestors; inspect via existing indexes. At most one pending auto intention and one previous workspace are retained per current client scope.
+Use actual attack/recipient/lifecycle changes and native deadlines; no paid calls, polling agents, all-world inventory scans or independent scheduler. Work for a selected set is proportional to selected/displaced items, occupied ports and affected ancestors. Build shared reaction prerequisites once per compatible read and invalidate by their actual dependencies.
 
-The selected 12-set preference allowance makes initial list preparation finite. Validate current availability only for the selected/visible task when relevant body/equipment/claim/access facts change, not every world frame. Public emergency projection uses the recipient's actual relevant active work and existing permitted references. Count actual work examined as well as output size during qualification; a one-banner output alone is not a bound on preparation.
+Preset storage/listing grows with the number of saved sets, with no feature-specific count cap. Read the personal list when its task opens/changes; prepare current availability only for the selected or visible task, never all presets every frame. Existing transport/storage bounds remain; record actual scanned work and bytes, not only the size of the displayed result. Add indexing or paging only for demonstrated growth in this owner, not a speculative service.
 
-A failed request never claims success; an unreadable receipt never claims failure. Native refusal leaves prior physical work/equipment unchanged unless a separately committed operation already changed it. Report actual scope and reason. Do not build speculative rollback logs, a transaction orchestration framework, generalized concurrent dressing or an omniscient threat service for this feature.
+There is one pending convenience and one return-workspace reference per client scope. Emergency projection follows current relevant work and permitted evidence. A failed request does not claim success, an unreadable receipt does not claim failure, and rejection cannot destroy prior work before preflight. No rollback journal, generalized dressing concurrency or second threat/transaction service is needed.
 
 ## 9. Delivery and acceptance
 
-[ECL](../maintainers/emergency-combat-and-loadouts.md) owns task progress. The dependency order is ECL01 → ECL02/ECL03 in parallel where owners permit → ECL04 → ECL05/ECL06 → ECL07 → ECL08. A usable initial guard journey can integrate before all equipment UI is finished, but that is not completion of the whole feature.
+[ECL](../maintainers/emergency-combat-and-loadouts.md) owns progress. Order: ECL01 → ECL02/ECL03 where shared writes permit → ECL04 → ECL05/ECL06 → ECL07 → ECL08. Integrate one useful guard journey early without treating that slice as whole-feature completion.
 
 ### Required functional cases
 
 | Case | Required observable result |
 | --- | --- |
-| Inventory open, known melee opening | Top-center warning; ordinary world runs; actual extra preparation; Defend exposes world, preserves draft and starts one real defense. |
-| Barter draft and pending settlement | Draft survives hiding; settled exchange stands; unknown result remains checkable; failed settlement moves neither side. |
-| Busy fishing/crafting | Explicit reaction, manual Equip or deliberate mode entry with its enabled set performs one valid prospective replacement; invalid requests do not first destroy work; spent inputs are not refunded and chores do not resume automatically. |
-| Automatic assault/own-offense entry | Busy work is not canceled by the notice. A subsequent emergency reaction can carry the same unsubmitted set behind itself; an ordinary new movement/attack command clears it. |
-| Shield and body brace | Correct source/profile, facing, preparation, one interception and recovery; brace does not intercept a projectile. |
-| Equipped weapon retaliation | Exactly one neutral attack against the bound attacker, no mouse-location shot, no hidden approach, no free ammo or substitute source. |
-| Lethal review | Review precedes effects; decline cancels the matching attempt and pending gear; emergency defense does not later fire the reviewed attack. |
-| Unknown source | Anonymous assistance, no name/position leak, no enabled hidden-target retaliation; merely seeing a person does not bind the private source to them. Current-facing defense and ordinary escape remain possible. |
-| Multiple attackers | One shared opening deadline; later attackers get remaining allowance only; held button cannot retarget. |
-| Mode/menu/equipment toggles | No opening reset, duplicate automatic set, cooldown reset or repeated attack. |
-| Cancel, miss, block, zero injury | Opening remains spent until genuine quiet; defense consumes only its supported connecting contact. |
-| Long held aim and late subject | Already-served same-recipient gate is not repeated; newly selected player receives their own applicable pre-release gate. |
-| Point fire at an existing player | Pre-release first-body query applies the same opening rule without revealing hidden identity; ordinary cover remains. |
-| Released flight and unexpected collateral | Flight is not frozen or recalled; no retroactive invulnerability or post-contact damage queue. |
-| Positive/negative reaction contribution | Actual installed modifier changes native delay and truthful explanation once; changes during an opening do not resize it. |
-| Quiet, reconnect and new life | Genuine quiet rearms; same-life reconnect does not; new life follows its own ordinary initialization. |
-| Save/load during opening or equipment action | Same remaining native work and effects under identical next input; no duplicated transfer or granted time. |
-| Complete loadout and empty loadout | All desired attachments commit together; omitted equipment stows; empty set stows all; already matching set is a no-op that leaves current work alone. |
-| Missing item, blocked claim, incompatible ports | Whole switch refuses with actual reason; old equipment remains; no name-based substitution or partial application. |
-| Reaction during admitted equipment preparation | Unfinished switch cancels; reaction uses old actual gear; that entry's equipment attempt is spent and is not automatically retried. |
-| Auto entry, manual Off and reconnect | One opt-in attempt per true entry; Off cancels only its unfinished entry work; no auto-return set or reconnect replay. |
-| Injury at equipment completion boundary | Existing native ordering chooses one actual equipment state; no double protection, partial outfit or retroactive recalculation. |
-| Padded outfit via ordinary play | Method, actual materials, crafting, carrying, exact equip and contact protection work; no free stock, armor-class or healing side effect. |
-| Alternate installed world and omission | Different duration/body ports/defense profile works through same owners; missing capabilities remain absent without bundled fallback. |
-| Keyboard, text, IME, modal and drag | No focus theft, background shortcut, click-through, accidental trade confirmation or stale release. Buttons remain accessible in the actual overlay. |
-| Return to ordinary life after repeated reactions | Last nonempty permitted inventory/trade task is restored; no automatic work restart, new transaction or gear reversal. |
+| Inventory open, known melee opening | Warning precedes real extended preparation; Defend exposes the world, retains the draft and starts one defense while others continue. |
+| Barter draft/pending settlement | Draft survives; committed trade stands; uncertainty is checkable; failed settlement moves neither side. |
+| Busy fishing/crafting | Manual reaction/Equip/explicit mode entry uses one prospective replacement; refusal preserves work, inputs are not refunded, chores never auto-resume. |
+| Automatic assault/own-offense entry | Notice leaves busy work intact; emergency can carry the same pending set; new ordinary movement/attack clears it. |
+| Shield and Brace | Actual source, facing, phases, one interception and recovery; Brace does not stop projectiles and feedback says so. |
+| Equipped-source retaliation | One neutral exact-target attack, no approach/free ammo/substitution; concurrent gear change refuses rather than auto-equipping the old weapon. |
+| Lethal review | Required review precedes effects; decline cancels matching attempt/pending gear; Defend cannot later fire the old attack. |
+| Unknown source | Anonymous assistance, no explicit source facts or targeting grant; unrelated visible people are not accused; actual timing inference is acknowledged. |
+| Multiple attackers | Shared opening deadline; held button stays bound to its displayed attacker, even if another threat becomes earlier. |
+| Mode/menu/gear toggles | No renewed opening, duplicate automatic set, recovery reset or repeat attack. |
+| Cancel/miss/block/zero injury | Opening stays spent; defense consumes only an eligible connecting contact. |
+| Long held aim/late subject | Same-recipient gate is not charged twice; a new explicit recipient uses its gate without summing already extended readiness. |
+| Point fire at an existing player | Actual admitted pre-release threat gates; preview does not. Cover blocks normally; later crossing does not start a recurring recipient-search loop. |
+| Released flight/collateral | No stopped/recalled flight, damage queue or retroactive immunity. |
+| Positive/negative contribution | Real installed modifiers affect mechanics/explanation once; mid-opening changes do not resize it. |
+| Quiet/reconnect/new life | Genuine quiet rearms; same-life reconnect does not; new life initializes normally. |
+| Save/load mid-opening or switching | Same remaining work/results under the same next input; no duplicated objects or allowance. |
+| Complete/empty/matching set | Atomic desired set, omissions stowed, empty stows all; matching is a no-op that does not stop work. |
+| Missing/claimed/incompatible item | Entire switch refuses; old gear remains; no by-name substitution or partial result. |
+| Reaction during equipment work | Cancel unfinished switch, react using old actual gear, do not automatically retry that spent attempt. |
+| Entry/manual Off/reconnect | One opt-in attempt per entry; Off affects only its unfinished automatic work; no exit-set or reconnect replay. |
+| Contact at equipment completion | Native phase/order determines one actual equipment state; no double protection or retroactive calculation. |
+| Ordinary crafted outfit | Real recipe/materials/manufacture/custody/equip/protection; no free stock, healing or armor-class subsystem. |
+| Alternate world/omission | Different timing/body/ports/defense and absent support work through the same owners without bundled fallback. |
+| Keyboard/text/IME/modal/drag | Legal accessible emergency controls, no focus theft/click-through/old release; Return to world works when reactions are blocked. |
+| Return after repeated reactions | Restore the last nonempty permitted task; no transaction/work/gear replay, mode remains visibly understandable. |
 
 ### Evidence requirements
 
-Run focused existing static/native checks and small ad-hoc downstream scenarios under repository verification policy; no new automated test suite is authorized by this design task. Implementation must exercise actual authenticated server/projection and current PostgreSQL continuation, not just isolated helpers. Browser qualification covers a normal desktop, a narrow/short viewport and enlarged text with real open inventory/trade overlays, plus keyboard-only operation. Report actual assistive-device and touch limits rather than inferring compliance from component use.
+Use focused existing checks and connected ad-hoc scenarios under repository verification policy; this design does not authorize a new automated test suite. Implementation must exercise real authenticated server/projection and current PostgreSQL continuation. Browser qualification covers normal desktop, narrow/short viewports, enlarged text and keyboard-only operation with actual inventory/trade overlays. Report untested assistive hardware/touch rather than infer acceptance from component use.
 
-**Required measurement, not a preset capacity pass:** compare baseline versus feature-enabled command-to-native-start, publication-to-visible warning, and the affected attack/equipment preparation work in a representative existing scene; include multi-attacker overlap and large-but-supported carried inventories. Report native time actually advanced, host/renderer cost, work examined, and ordinary versus worst selected paths. No new millisecond or population promise is selected before measurement.
+**Required measurement, not a preset capacity pass:** compare baseline/feature command-to-native-start, publication-to-warning and affected attack/equipment work in a representative scene. Include multiple attackers and large supported possessions/preset lists; report actual simulation progress, host/renderer cost, examined work and bytes. No population or millisecond promise is invented.
 
-**Human acceptance remains distinct:** observe an uncoached player fishing/trading, receiving an attack, choosing a reaction, understanding actual equipment, escaping or fighting, and returning to their task. Record whether they understood what happened, whether they felt cheated or repeatedly interrupted, and whether the encounter added excitement without making everyday activity unpleasant. Tuning changes must preserve the selected causal rules and reconcile the world/limits owners.
+**Independent human acceptance:** observe an uncoached fishing/trading → danger → defend/fight/escape → return episode. Evaluate usable reaction time after delivery delay, clarity of actual equipment, whether ordinary life remains enjoyable, and whether the interruption adds excitement rather than frustration. A scripted mechanical pass is not enjoyment evidence. Reconcile tuning through its world/limits owners.
 
 ## 10. Decisions and non-goals
 
-Selected: physical preparation rather than global slowdown; one encounter opportunity rather than per-enemy grace; anonymous player assistance rather than hidden targeting; ordinary actions rather than an emergency executor; current-equipment reaction before automatic loadout; one atomic set change rather than per-slot dressing; small real armor consumer rather than an empty UI promise; explicit return rather than reopening menus mid-fight.
+Selected: physical preparation, one encounter opportunity, anonymous assistance without targeting knowledge, ordinary reaction actions, current gear before automatic switching, atomic complete equipment sets, one useful outfit, and deliberate return to ordinary life.
 
-Not selected: first-damage immunity, late-hit rollback, projectile freezing, automatic retaliation, a second hostility state, universal Focus/stamina/armor-class systems, compulsory NPC defense, generalized concurrent actions, market/vendor implementation, offline combat automation, compatibility support or a new data/queue service.
+Not selected: universal first-damage immunity, projectile freezing, automatic retaliation, hidden-target secrecy despite observable timing, a second hostility/controller system, compulsory Focus/stamina/armor-class systems, forced NPC defense, generalized action queues, shop/market implementation or compatibility support.
 
-**Open product decisions: None for the specified slice.** Balance and uncoached enjoyment remain empirical acceptance, and the physical collateral limitation is explicit rather than an unresolved algorithm. An implementing agent must not reinterpret those limits silently.
+**Open implementation-blocking product decisions: None.** Agent-selected tuning and conveniences remain revisable. Particularly consequential choices are anonymous warning of unseen targeted attacks, one shared opening rather than per-attacker delay, reaction-first equipment ordering, unchanged lethal review, and the small Brace/outfit extensions. Their tradeoffs are explicit; balance and player preference require ECL08 evidence, not claims of flawless future implementation.
 
 ## Maintained records
 
 - Feature: [Player experience](emergency-combat-and-loadouts-feature-spec.md).
 - Implementation: [ECL00–ECL08](../maintainers/emergency-combat-and-loadouts.md).
-- Policy and tuning: [Bundled combat readiness](../worlds/base/combat-readiness.md).
+- World policy: [Combat readiness](../worlds/base/combat-readiness.md).
 - Limits: [ECL inventory](../limits/emergency-combat-and-loadouts.md).
 - Selection: [Repertoire review](emergency-combat-and-loadouts-repertoire-review.md).
 - Existing contracts: [Action availability](../action-capabilities.md#action-availability-and-temporary-execution), [identity](../identity-and-references.md#contract), [continuation](../save-and-load.md#continuation-and-identity), [native time](../simulation-time.md#native-interval-contract), [world boundaries](../engine-and-world-boundaries.md#design-principles-for-every-feature).
