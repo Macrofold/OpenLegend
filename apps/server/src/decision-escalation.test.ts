@@ -14,6 +14,8 @@ import {
   definitionPin,
   markPartialAppraisals,
   setItemQuantity,
+  reserveDiscovery,
+  discoveryInterval,
 } from '@open-legend/domain';
 import {
   compileSchema,
@@ -1444,7 +1446,16 @@ describe('durable reader publication and bounded scheduling', () => {
           },
         };
       });
+      await editWorld(h.service, (world) => {
+        const interval = discoveryInterval(world, NPC_ID);
+        expect(interval).toBeTypeOf('number');
+        expect(reserveDiscovery(world, NPC_ID, interval!, job.id)).toBe(true);
+      });
       await h.store.recoverInterruptedWork();
+      await h.director['reconcileDiscoveryReservations']();
+      expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
+        dispatched ? 'spent' : 'available',
+      );
       blocker.resolve();
       await h.execution.idle();
       expect(calls).toHaveLength(0);
@@ -2073,11 +2084,19 @@ describe('durable reader publication and bounded scheduling', () => {
     h.config.macrofoldKey = 'fixture-macrofold';
     h.config.decisionEscalation.origins = [decisionOrigin(h.config)];
     const job = await admitted(h);
+    await editWorld(h.service, (world) => {
+      const interval = discoveryInterval(world, NPC_ID);
+      expect(interval).toBeTypeOf('number');
+      expect(reserveDiscovery(world, NPC_ID, interval!, job.id)).toBe(true);
+    });
     const requests: { url: string; body: Record<string, unknown> }[] = [];
     vi.stubGlobal(
       'fetch',
       vi.fn(async (url: string, init: RequestInit) => {
         requests.push({ url, body: JSON.parse(init.body as string) });
+        expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
+          'spent',
+        );
         return new Response(
           JSON.stringify({
             id: 'resp_fixture_fallback',

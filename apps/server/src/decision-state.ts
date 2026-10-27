@@ -85,6 +85,7 @@ export interface DecisionAttemptLink {
 }
 export interface LinkedDecisionAttempt extends DecisionAttemptLink {
   attemptId: string;
+  dispatchIntent: boolean;
   provider: 'jev' | 'openai' | 'macrofold';
   reservedUsd: number;
   receipt?: import('@open-legend/ai').AiReceipt;

@@ -1654,6 +1654,7 @@ export class SqlGameRepository implements GameRepository {
       .all(rootJobId);
     return rows.map((row) => ({
       attemptId: String(row['attempt_id']),
+      dispatchIntent: row['dispatch_intent'] === true,
       rootJobId: String(row['root_job_id']),
       category: row['category'] as DecisionAttemptLink['category'],
       ...(row['level'] === null

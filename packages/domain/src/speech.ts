@@ -26,7 +26,7 @@ import {
 } from './worlds/base/recognition.js';
 import { hasMemory, understandsSpeech } from './living.js';
 import { selectedVoiceReception } from './world-composition.js';
-import { currentBodyLocalSubject } from './perception-evidence.js';
+import { currentBodyGrant, currentBodyLocalSubject } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
 import { isSafeRecordId } from './records.js';
 import { speechPerception } from './perception.js';
@@ -242,15 +242,7 @@ export function perceiveSpeech(
       triggerKind: 'observed_event',
     };
   }
-  const bodyLease =
-    visible && !self
-      ? Object.values(world.perceptionEvidence?.[observer.id]?.current ?? {}).find(
-          (facet) =>
-            facet.subjectId === source.id &&
-            facet.subjectPhysicalLife === (source.actor?.physicalLife ?? 0) &&
-            facet.value.kind === 'body',
-        )
-      : undefined;
+  const bodyLease = visible && !self ? currentBodyGrant(world, observer.id, source.id) : undefined;
   const speech: PerceivedSpeech = {
     perception,
     intelligibility: detail === 'clear' || detail === 'partial' ? detail : 'none',
@@ -339,7 +331,7 @@ export function perceiveSpeech(
           sourceBody: {
             entityId: source.id,
             physicalLife: source.actor?.physicalLife ?? 0,
-            leaseId: self ? null : bodyLease!.id,
+            leaseId: self ? null : bodyLease!.leaseId,
           },
         }
       : {}),

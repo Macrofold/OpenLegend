@@ -1052,7 +1052,9 @@ export function currentBodyAssociation(
   observerId: string,
   subjectId: string,
 ): ObserverSubject | undefined {
-  const association = world.perceptionEvidence?.[observerId]?.current[`${subjectId}:association`];
+  const stored = world.perceptionEvidence?.[observerId]?.current;
+  const held = stored && readOnlyDraftView(stored)[`${subjectId}:association`];
+  const association = held && readOnlyDraftView(held);
   if (association?.value.kind !== 'association' || association.value.strength !== 'supported')
     return;
   const body = eligibleBodyLease(world, observerId, subjectId);

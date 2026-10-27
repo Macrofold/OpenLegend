@@ -1800,12 +1800,19 @@ export class AiDirector {
         if (run.expiryTimer) clearTimeout(run.expiryTimer);
         this.replyPreviews.end(run.job.id);
         try {
-          if (run.discovery && !run.discovery.spent)
-            await this.releaseUndispatchedDiscovery(
-              run.discovery.actorId,
-              run.discovery.reservation,
-              run.generation,
-            );
+          if (run.discovery && !run.discovery.spent) {
+            // Handoff keeps the same bounded opportunity until its actual
+            // dispatch or a definitive end; it never grants another free turn.
+            if (run.handedOff) {
+              this.discoveryRecovery = undefined;
+              await this.reconcileDiscoveryReservations();
+            } else
+              await this.releaseUndispatchedDiscovery(
+                run.discovery.actorId,
+                run.discovery.reservation,
+                run.generation,
+              );
+          }
           this.releaseImmediate(run);
 
           this.service.notify();
@@ -4540,9 +4547,21 @@ export class AiDirector {
         continue;
       const reservation = state.reservation;
       const attempts = await this.service.store.decisionAttempts(reservation);
-      const dispatched = attempts.some(
-        (attempt) => attempt.receipt?.dispatched !== false || attempt.receipt.completionUncertain,
+      const dispatched = attempts.some((attempt) =>
+        attempt.receipt
+          ? attempt.receipt.dispatched || attempt.receipt.completionUncertain
+          : attempt.dispatchIntent,
       );
+      const job = dispatched ? undefined : await this.service.store.getJob(reservation);
+      if (
+        job?.decision &&
+        ['higher', 'waiting-primary'].includes(job.decision.phase) &&
+        job.decision.generation === generation &&
+        job.decision.timelineId === this.service.timelineId
+      ) {
+        this.discoveryRecovery = undefined;
+        continue;
+      }
       if (dispatched)
         await this.service.publishAttention(actorId, generation, (current) =>
           settleDiscovery(current, actorId, reservation, true),

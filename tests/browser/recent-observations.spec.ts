@@ -6,8 +6,12 @@ import {
   NPC_ID,
   PLAYER_ID,
   setSpatialPosition,
-  worldSupport,
+  supportedPosition,
+  worldPosition,
+  effectiveBodyProfile,
+  assemblySpatialMap,
 } from '@open-legend/domain';
+import { canStand } from '@open-legend/spatial';
 import { closeTestDatabases, readConfig, testRepository } from '../fixtures/database.js';
 import { editWorld } from '../fixtures/service.js';
 import { enterGame } from '../fixtures/browser.js';
@@ -29,19 +33,26 @@ test('the player can read and search actual recent observations on desktop and a
   try {
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
-    await editWorld(game.service, (world) => {
+    const point = await editWorld(game.service, (world) => {
       const player = entityGet(world.entities, PLAYER_ID)!,
         other = entityGet(world.entities, NPC_ID)!;
-      setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, worldSupport(player));
-      setSpatialPosition(world, other, { x: 3, y: 0, z: 2 }, worldSupport(other));
+      const here = worldPosition(player),
+        origin = supportedPosition(other)!;
+      player.spatial.heading = Math.atan2(origin.x - here.x, origin.z - here.z);
+      const point = { ...origin, x: origin.x + 1 };
+      expect(
+        canStand(assemblySpatialMap(world, world.map), point, effectiveBodyProfile(world, other)),
+      ).toBe(true);
       other.name = 'Unseen private name';
       initializePerception(world, []);
       world.simTime += 1;
-      setSpatialPosition(world, other, { x: 4, y: 0, z: 2 }, worldSupport(other), {
+      setSpatialPosition(world, other, point, point.surfaceId, {
         continuity: 'physical',
       });
       initializePerception(world, []);
+      return point;
     });
+    const positionLabel = `(${point.x}, ${point.y}, ${point.z})`;
     await page.getByRole('button', { name: 'In view', exact: true }).click();
     await page.locator('[data-entity]').first().getByRole('button').click();
     await page.getByRole('button', { name: 'Focus here', exact: true }).focus();
@@ -55,12 +66,12 @@ test('the player can read and search actual recent observations on desktop and a
     await page.getByRole('tab', { name: 'Record', exact: true }).click();
     const reader = page.locator('.ol-memory-history:visible');
     await reader.getByRole('checkbox', { name: 'Recent observations', exact: true }).check();
-    await expect(reader).toContainText('(4, 0, 2)');
+    await expect(reader).toContainText(positionLabel);
     await expect(reader).not.toContainText('Unseen private name');
     const search = reader.getByRole('searchbox', { name: 'Search recent observations' });
-    await search.fill('(4, 0, 2)');
+    await search.fill(positionLabel);
     await search.press('Enter');
-    await expect(reader).toContainText('(4, 0, 2)');
+    await expect(reader).toContainText(positionLabel);
     await page.setViewportSize({ width: 390, height: 844 });
     await expect(search).toBeVisible();
     const size = await reader.evaluate((element) => ({

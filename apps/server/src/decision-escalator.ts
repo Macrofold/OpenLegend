@@ -1,4 +1,4 @@
-import { entityGet } from '@open-legend/domain';
+import { entityGet, settleDiscovery } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
 import {
   createAiClient,
@@ -639,6 +639,18 @@ export class DecisionEscalator {
         });
       let receipt: AiReceipt | undefined;
       try {
+        const semantic = entityGet(this.service.world.entities, state.actorId)?.actor?.agency
+          .semantic;
+        if (semantic?.discovery === 'reserved' && semantic.reservation === rootId) {
+          if (
+            !(await this.service.publishAttention(state.actorId, state.generation, (world) =>
+              settleDiscovery(world, state.actorId, rootId, true),
+            ))
+          ) {
+            await this.end(rootId, 'stale');
+            return;
+          }
+        }
         const result = await this.log.run(
           'Higher-model decision',
           {
