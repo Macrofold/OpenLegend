@@ -528,6 +528,7 @@ export async function projectView(
       ...(body.icon ? { icon: body.icon } : {}),
       ...(body.bodyPlan ? { bodyPlan: body.bodyPlan } : {}),
       statusEffects: body.effects ?? [],
+      observedMoving: facets.some((facet) => facet.value.kind === 'observed-motion'),
       position: body.position,
       supportSurfaceId: body.supportSurfaceId,
       heading: body.heading,

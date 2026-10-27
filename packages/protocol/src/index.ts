@@ -458,6 +458,8 @@ export interface EntityView extends Named {
         confirmedThrough: number;
         sourceReference: string;
       };
+  /** Current received continuous movement; no route or predicted destination. */
+  observedMoving?: boolean;
   observedCarried?: {
     items: Array<{ itemKindAsObserved: string }>;
     measurementAt: number;

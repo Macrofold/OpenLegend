@@ -1517,10 +1517,7 @@ export class WorldService {
       this.eventViewRevisions.set(actorId, (this.eventViewRevisions.get(actorId) ?? 0) + 1);
     if (count === undefined && before !== after) this.transcriptEpoch++;
     const relevant = (event: WorldEvent) =>
-      !(
-        event.type === 'action-started' &&
-        (event.data?.['actionType'] === 'move' || event.text.endsWith(' started move.'))
-      );
+      !(event.type === 'action-started' && event.data?.['actionType'] === 'move');
     const changed =
       count === undefined
         ? JSON.stringify(before.filter(relevant)) !== JSON.stringify(after.filter(relevant))

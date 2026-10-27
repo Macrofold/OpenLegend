@@ -2480,8 +2480,17 @@ export class WildernessScene implements WorldRenderer {
       const dx = interpolating ? entry.view.position.x - position.x : 0;
       const dy = interpolating ? entry.view.position.y - position.y : 0;
       const dz = interpolating ? entry.view.position.z - position.z : 0;
-      const moving = Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 0.025;
-      const screenMotion = dx * this.camera.right.x + dz * this.camera.right.z;
+      // A received displacement can animate walking without extrapolating the
+      // person's location or reading a private route between samples.
+      const moving = interpolating
+        ? Math.abs(dx) + Math.abs(dy) + Math.abs(dz) > 0.025
+        : entry.view.observedMoving === true;
+      const screenMotion = interpolating
+        ? dx * this.camera.right.x + dz * this.camera.right.z
+        : moving
+          ? Math.sin(entry.view.heading) * this.camera.right.x +
+            Math.cos(entry.view.heading) * this.camera.right.z
+          : 0;
       if (Math.abs(screenMotion) > 0.012) entry.facing = screenMotion < 0 ? -1 : 1;
       if (
         this.view &&
