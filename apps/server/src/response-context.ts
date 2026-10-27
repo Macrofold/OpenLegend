@@ -23,9 +23,14 @@ import {
 } from './entity-references.js';
 import { speechDescription, type Awareness, type WorldState } from '@open-legend/domain';
 import { gameTime } from './recall.js';
-import { experienceForModel, experienceModelBindings } from './perceived-context.js';
+import {
+  experienceForModel,
+  experienceModelBindings,
+  captureModelSpatialFrame,
+  modelSpatialPoint,
+  type ModelSpatialFrame,
+} from './perceived-context.js';
 import type { WorldService } from './world-service.js';
-import { captureModelSpatialFrame, modelSpatialPoint } from './perceived-context.js';
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */
 export function responseTrigger(
@@ -55,6 +60,7 @@ export function responseTriggerContext(
   actorId: string,
   eventId?: string,
   evidence?: Awareness[],
+  frame?: ModelSpatialFrame,
 ): Record<string, unknown> | undefined {
   if (!eventId) return undefined;
   const world = service.world;
@@ -83,7 +89,13 @@ export function responseTriggerContext(
   return {
     experience: experienceForModel(
       { source: 'awareness', value: aware },
-      experienceModelBindings(world, actorId, { source: 'awareness', value: aware }, 'trigger'),
+      experienceModelBindings(
+        world,
+        actorId,
+        { source: 'awareness', value: aware },
+        'trigger',
+        frame,
+      ),
     ),
     eventTime: gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours),
     ageGameSeconds: Math.max(0, world.simTime - aware.at),

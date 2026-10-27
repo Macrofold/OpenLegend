@@ -299,6 +299,7 @@ export function facetValueForModel(
     case 'sound':
       return {
         kind: value.kind,
+        ...(value.source ? { source: participantForModel(world, actorId, value.source) } : {}),
         sound: soundForModel(frame, value.sound, (id) =>
           permittedSourceHandle(world, actorId, ['historical-participant', sourceScope, id]),
         ),

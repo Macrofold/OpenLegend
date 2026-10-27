@@ -68,7 +68,7 @@ export function experienceEmbeddingText(entry: ExperienceEntry, ownerId: string)
 /** One owned frame per decision, shared by presentation and fixed-point movement.
  * Native evidence keeps its original world coordinates and acquisition frame. */
 export const RECEIVED_HISTORY_INSTRUCTIONS =
-  'Recent input contains selected historical receipts. A participant’s receivedSubject joins that occurrence to the same received subject, without revealing identity or intent. Partial coverage can omit retained intermediate events; request history when earlier detail is needed. Omission does not mean an event was never perceived or did not happen.';
+  'Recent input contains selected historical receipts. A participant’s receivedSubject joins that occurrence to the same received subject, without revealing identity or intent. Partial coverage can omit retained intermediate events; request history when earlier detail is needed. Omission does not mean an event was never perceived or did not happen. History facts inherit facetDefaults; their own fields override them. A history frame number indexes frames in that same history result. A supplied-fact value reuses the exact already supplied source/ordinal value; its receipt timing, role and confirmations remain independent.';
 
 export interface ModelSpatialFrame {
   position: Position;

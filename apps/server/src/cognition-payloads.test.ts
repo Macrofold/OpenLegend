@@ -1484,8 +1484,8 @@ describe(
       probes.push(await probe(fresh, 'fresh', 9.5, [...files.slice(0, 9), half]));
       // The large snapshots must refuse before dispatch. A small accepted snapshot supplies
       // a positive control independently of growing authored starting context.
-      const sixFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
-      const positiveSix = await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6));
+      const threeFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
+      const positiveThree = await probe(threeFiles, 'fresh-three-files', 3, files.slice(0, 3));
       const control = await harness({ script: { route: { level2: 0.9 } }, reply });
       const positive = await probe(control, 'fresh-control', 1, files.slice(0, 1));
       report('inner-world-quota', {
@@ -1493,7 +1493,7 @@ describe(
         fileBytes: fileBytes[0],
         level2InputLimit: levelLimits(h.config)[2].inputSize,
         level1InputLimit: levelLimits(h.config)[1].inputSize,
-        probes: [...probes, positiveSix, positive],
+        probes: [...probes, positiveThree, positive],
       });
       const exceeded =
         'Complete accepted inner world and required context exceed the input budget.';
@@ -1515,8 +1515,8 @@ describe(
           generationInputBytes: null,
           accounting: null,
         });
-      expect(positiveSix).toMatchObject({
-        files: 6,
+      expect(positiveThree).toMatchObject({
+        files: 3,
         status: 'completed',
         disposition: 'responded',
         routeHasCompleteSnapshot: true,

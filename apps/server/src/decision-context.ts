@@ -581,7 +581,14 @@ export async function prepareDecision(
     knowledgeInstructions: world.knowledgePolicy
       ? knowledgePolicyInstructions(world.knowledgePolicy)
       : 'Knowledge is unavailable.',
-    triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
+    triggerFacts:
+      responseTriggerContext(
+        service,
+        actorId,
+        triggerEvidenceId,
+        evidence,
+        capturedSituation.frame,
+      ) ?? null,
     navigation: navigationInstructions(world, true),
     namedTimes: namedClockTimes(world),
     outputFamilies: itemOutputFamilies(world),
@@ -906,7 +913,14 @@ export async function prepareDecision(
     knowledgeInstructions: currentWorld.knowledgePolicy
       ? knowledgePolicyInstructions(currentWorld.knowledgePolicy)
       : 'Knowledge is unavailable.',
-    triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
+    triggerFacts:
+      responseTriggerContext(
+        service,
+        actorId,
+        triggerEvidenceId,
+        evidence,
+        capturedSituation.frame,
+      ) ?? null,
     navigation: navigationInstructions(currentWorld, true),
     namedTimes: namedClockTimes(currentWorld),
     outputFamilies: itemOutputFamilies(currentWorld),
