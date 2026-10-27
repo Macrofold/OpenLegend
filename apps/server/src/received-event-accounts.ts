@@ -1,6 +1,7 @@
 import {
   receivedEventEvidence,
   receivedEventAwareness,
+  currentReceivedObservations,
   temporalFacetEligible,
   appendedRecordCount,
   type Awareness,
@@ -87,7 +88,7 @@ export function receivedEventAccounts(
     }
   }
   if (options.current)
-    for (const observation of world.perceptionEvidence?.[actorId]?.received ?? []) {
+    for (const observation of currentReceivedObservations(world, actorId).observations) {
       const eventId =
         observation.origin.kind === 'occurrence' ? observation.origin.eventId : undefined;
       if (!eventId || !wanted.has(eventId) || result.has(eventId) || forgotten.has(eventId))

@@ -6,11 +6,13 @@ import {
 } from '@open-legend/spatial';
 import {
   currentBodyGeometryInputs,
+  currentReceivedObservations,
   type BodyGeometrySample,
   type CurrentBodyGeometryInput,
   type LocationGeometrySample,
   type ObservedBody,
 } from './perception-evidence.js';
+import { entityGet } from './entity-collection.js';
 import { readOnlyDraftView } from './draft.js';
 import type { Position, WorldState } from './types.js';
 
@@ -39,13 +41,16 @@ const cached = new WeakMap<WorldState, Map<string, ReceivedScene>>();
 /** Derived only when a reader actually needs scene context. This never polls a
  * target transform or keeps a second writable position. */
 export function receivedScene(world: WorldState, observerId: string): ReceivedScene {
-  const owners = readOnlyDraftView(world).perceptionEvidence;
-  const stored = owners && readOnlyDraftView(owners)[observerId];
-  const owner = stored && readOnlyDraftView(stored);
-  const physicalLife = owner?.life ?? 0;
   const previous = Object.isFrozen(world) ? cached.get(world)?.get(observerId) : undefined;
-  if (previous && previous.observerId === observerId && previous.physicalLife === physicalLife)
+  if (
+    previous &&
+    previous.observerId === observerId &&
+    previous.physicalLife ===
+      (entityGet(readOnlyDraftView(world.entities), observerId)?.actor?.physicalLife ?? 0)
+  )
     return previous;
+  const reception = currentReceivedObservations(world, observerId);
+  const physicalLife = reception.physicalLife;
   const bodies = new Map<string, ReceivedSceneBody>();
   let nonlocalized = 0;
   for (const input of currentBodyGeometryInputs(world, observerId)) {
@@ -56,7 +61,7 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
       bounds: receivedBodyBounds(input.body, error),
     });
   }
-  for (const contribution of readOnlyDraftView(owner?.received ?? []))
+  for (const contribution of reception.observations)
     if (
       contribution.facets.some((facet) => facet.value.kind === 'sound') &&
       !contribution.facets.some((facet) => facet.value.kind === 'location')

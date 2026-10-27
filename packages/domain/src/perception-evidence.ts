@@ -593,6 +593,27 @@ export function acquireObservation(
   return contribution;
 }
 
+/** Old originals may remain after body replacement until the next native phase.
+ * Current reception belongs only to the actual observer life; hearing needs no
+ * visual sense or lasting-memory capability. Historical accounts stay separate. */
+export function currentReceivedObservations(
+  world: WorldState,
+  observerId: string,
+): { physicalLife: number; observations: readonly ObservationContribution[] } {
+  const observer = entityGet(readOnlyDraftView(world.entities), observerId);
+  const physicalLife = observer?.actor?.physicalLife ?? 0;
+  const owners = readOnlyDraftView(world).perceptionEvidence;
+  const stored = owners && readOnlyDraftView(owners)[observerId];
+  const state = stored && readOnlyDraftView(stored);
+  return {
+    physicalLife,
+    observations:
+      observer?.actor && state?.life === physicalLife
+        ? readOnlyDraftView(state.received).map(immutableObservation)
+        : [],
+  };
+}
+
 /** Capture-only: callers may supply retained source-owned support prepared before this cut.
  * No sight query, source hydration, ID allocation or timestamp-based history reconstruction. */
 export function captureEvidenceCut(
@@ -618,7 +639,7 @@ export function captureEvidenceCut(
   const acquired = new Map<string, ObservationContribution>();
   for (const contribution of [
     ...retained,
-    ...(state?.life === life.physicalLife ? state.received : []),
+    ...currentReceivedObservations(world, observerId).observations,
     ...currentReceivedGeometry(world, observerId).observations,
     ...current.map((facet) => facet.original),
   ]) {

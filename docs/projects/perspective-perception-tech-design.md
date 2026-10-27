@@ -4,7 +4,7 @@
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | In progress | Existing-channel evidence and shared temporal retention implemented; future producers and full PP07/SAI-A qualification remain open. | 2026-10-27   |
 
-Architecture consulted for the supported-channel temporal/familiarity implementation **2026-10-27 06:51 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
+Architecture consulted for the supported-channel temporal/familiarity implementation **2026-10-27 10:15 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
 
 ## Authority, scope and implementation boundary
 

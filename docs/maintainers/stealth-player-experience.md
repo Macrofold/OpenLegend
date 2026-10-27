@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design: integrated for SAD-G's selected scope. Implementation: SPX01 existing-channel conversion is implemented with scoped native/browser verification. Broader UX, accessibility, performance and security qualification remains open.** Updated 2026-10-26.
+**Design: integrated for SAD-G's selected scope. Implementation: SPX01 existing-channel conversion is implemented with scoped native/browser verification. Broader UX, accessibility, performance and security qualification remains open.** Updated 2026-10-27.
 
 [Feature behavior](../projects/stealth-player-experience-feature-spec.md) owns controls, feedback and all ten player journeys. [Technical design](../projects/stealth-player-experience-tech-design.md) owns projection, input, component boundaries, invalid states and G-AC acceptance. [Limits](../limits/stealth-player-experience.md) owns discretionary defaults and remaining capacity questions. [SA coordination](stealth-awareness.md) owns A–G/I integration; this tracker is the focused SAI-G implementation owner.
 

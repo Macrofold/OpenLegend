@@ -14,7 +14,12 @@ import {
   initializePerception,
   setAttentionFocus,
   selectedTemporalPolicy,
+  reviveActor,
+  receivedScene,
+  captureEvidenceCut,
 } from '@open-legend/domain';
+import { applyBodyEffects } from '../../../packages/domain/src/living.js';
+import { validateWorldModules } from '../../../packages/domain/src/world-modules.js';
 import { canStand, supportBelow } from '@open-legend/spatial';
 import { bodyProfile, setSpatialPosition } from '../../../packages/domain/src/spatial-state.js';
 import { seesEntity } from '../../../packages/domain/src/perception.js';
@@ -103,8 +108,20 @@ afterEach(async () => {
 describe('event-time observer facts', () => {
   it('can display an actually heard voice-like sound without creating words or a memory', () => {
     const world = createWorld(73);
-    place(world, NPC_ID, 11);
-    place(world, PLAYER_ID, 12);
+    // The real receiver hears a shout directly above it through the deck, without
+    // an azimuth or visual sense; current sound must not depend on visual eligibility.
+    setSpatialPosition(
+      world,
+      entityGet(world.entities, NPC_ID)!,
+      { x: 20, y: 0, z: 5.5 },
+      'terrain',
+    );
+    setSpatialPosition(
+      world,
+      entityGet(world.entities, PLAYER_ID)!,
+      { x: 20, y: 3, z: 5.5 },
+      'lookout-deck',
+    );
     const actor = entityGet(world.entities, NPC_ID)!.actor!;
     actor.capabilities = {
       cognition: false,
@@ -113,12 +130,16 @@ describe('event-time observer facts', () => {
       memory: false,
       comprehendsSpeech: false,
     };
+    actor.senses = world.moduleManifest.senses
+      .filter((sense) => sense.implementation === 'hearing-db-v1')
+      .map((sense) => sense.id);
     initializePerception(world, []);
     const result = executeCommand(world, {
       id: 'voice-only-current',
       actorId: PLAYER_ID,
       type: 'say',
       text: 'Unreceived private fixture words.',
+      volume: 'shout',
     });
     expect(result.outcome.ok).toBe(true);
     const event = result.events.find((entry) => entry.type === 'speech')!;
@@ -135,6 +156,39 @@ describe('event-time observer facts', () => {
       result.world.experience?.awareness[NPC_ID]?.some((entry) => entry.eventId === event.id) ??
         false,
     ).toBe(false);
+    expect(receivedScene(result.world, NPC_ID).nonlocalized).toBe(1);
+    const listener = entityGet(result.world.entities, NPC_ID)!;
+    const died = applyBodyEffects(
+      result.world,
+      'memoryless-sound-life-ended',
+      [{ targetId: NPC_ID, kind: 'health', amount: -100 }],
+      { [NPC_ID]: listener.actor!.body!.revision },
+    );
+    expect(died.outcome.ok).toBe(true);
+    expect(entityGet(died.world.entities, NPC_ID)!.actor!.alive).toBe(false);
+    const revived = reviveActor(died.world, NPC_ID);
+    expect(revived.outcome.ok).toBe(true);
+    const restored = JSON.parse(JSON.stringify(revived.world)) as WorldState;
+    validateWorldModules(restored);
+    const life = entityGet(restored.entities, NPC_ID)!.actor!.physicalLife ?? 0;
+    expect(restored.perceptionEvidence![NPC_ID]!.life).not.toBe(life);
+    expect(receivedScene(restored, NPC_ID)).toMatchObject({ physicalLife: life, nonlocalized: 0 });
+    expect(captureEvidenceCut(restored, NPC_ID).acquired).toHaveLength(0);
+    expect(
+      receivedEventAccounts(restored, NPC_ID, new Set([event.id]), { current: true }).size,
+    ).toBe(0);
+    const fresh = executeCommand(restored, {
+      id: 'voice-only-new-life',
+      actorId: PLAYER_ID,
+      type: 'say',
+      text: 'New actual sound.',
+      volume: 'shout',
+    });
+    expect(fresh.outcome.ok).toBe(true);
+    expect(receivedScene(fresh.world, NPC_ID)).toMatchObject({
+      physicalLife: life,
+      nonlocalized: 1,
+    });
   });
   it.each(['gather', 'strike'] as const)(
     'keeps only visible activity after an actual %s on a hidden target',

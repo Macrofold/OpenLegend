@@ -4,7 +4,7 @@
 | ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Required SPK01–SPK04 existing-channel integration implemented; wider speech/social delivery and qualification remain open. | 2026-10-27   |
 
-Design used for scoped implementation and review: **2026-10-27 06:51 UTC**.
+Design used for scoped implementation and review: **2026-10-27 10:15 UTC**.
 
 This is the implementation design for the [feature specification](speech-and-social-perception-feature-spec.md). The accepted target changes ordinary speech, recognition, experience preparation and conversation coordination together. It does not describe delivered runtime behavior. Implementation, dependencies and unsatisfied acceptance belong to [SPK00–SPK11](../maintainers/speech-and-social-perception.md), not this document.
 
