@@ -1,6 +1,7 @@
 import { entityGet } from './entity-collection.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
-import { validObserverSubject, type ObserverSubject } from './knowledge.js';
+import { sameSubject, validObserverSubject, type ObserverSubject } from './knowledge.js';
+import { countDomainWork } from './diagnostic-counters.js';
 import {
   prepareCurrentBodySubjects,
   effectiveCurrentFacetSupport,
@@ -424,7 +425,8 @@ export function updateAttention(
           geometryRevision: '',
         };
     candidate.leaseId = body.id;
-    candidate.subject = subject;
+    candidate.subject =
+      old?.subject && subject && sameSubject(old.subject, subject) ? old.subject : subject;
     candidate.descriptionRevision = descriptions(owner, sourceId);
     candidate.changeRevision = JSON.stringify([
       readOnlyDraftView(body.original).id,
@@ -506,7 +508,19 @@ export function updateAttention(
       physical +
         (policy.familiarityBonus * selectedAttentionFamiliarity(world, observerId, subject)) / 100,
     );
-    state.candidates[key] = candidate;
+    // A newly measured meter can leave every attention input unchanged. Keep
+    // that complete candidate rather than dirtying its map and retained snapshot.
+    const fields = Object.keys(candidate) as Array<keyof AttentionCandidate>;
+    if (
+      old &&
+      fields.length === Object.keys(old).length &&
+      fields.every((field) => Object.hasOwn(old, field) && candidate[field] === old[field])
+    )
+      countDomainWork('attentionCandidatesUnchanged');
+    else {
+      state.candidates[key] = candidate;
+      countDomainWork('attentionCandidatesChanged');
+    }
   }
   const live = new Set(Object.keys(state.candidates));
   const explicit = readOnlyDraftView(state.explicit).filter((key) => live.has(key));

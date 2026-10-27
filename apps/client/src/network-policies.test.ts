@@ -10,6 +10,11 @@ it('classifies POST reads, shared-path operations, and retained recovery without
     semantic: 'mutation',
     recovery: 'current-state',
   });
+  expect(browserRequestPolicy('POST', '/api/attention', { targetId: null })).toMatchObject({
+    semantic: 'mutation',
+    timeoutMs: 30_000,
+    recovery: 'current-state',
+  });
   expect(browserRequestPolicy('POST', '/api/god/status-effects', {})).toMatchObject({
     semantic: 'read',
   });

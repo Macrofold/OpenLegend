@@ -176,6 +176,13 @@ export const calendarFields = (world: WorldState) => ({
   hour: (world.statusEffectPolicy.clockOffsetHours + world.simTime / 3600) % 24,
 });
 
+const publicDetailKinds = [
+  'pile-contents',
+  'carried',
+  'public-attributes',
+  'observed-motion',
+] as const;
+
 /** This explicit projection is a security boundary: never serialize WorldState to the browser. */
 export async function projectView(
   service: WorldService,
@@ -437,7 +444,7 @@ export async function projectView(
     const received = currentBodyObservation(world, player.id, entity.id);
     if (!received) throw new ViewChangedError();
     const body = received.value.body;
-    const facets = currentObservedFacets(world, player.id, entity.id);
+    const facets = currentObservedFacets(world, player.id, entity.id, publicDetailKinds);
     const pile = facets.find((facet) => facet.value.kind === 'pile-contents');
     const carried = facets.find((facet) => facet.value.kind === 'carried');
     const publicAttributes = facets.find((facet) => facet.value.kind === 'public-attributes');

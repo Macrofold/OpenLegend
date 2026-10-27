@@ -833,6 +833,30 @@ export function captureCurrentFacet(lease: LiveFacetSupport): CapturedCurrentFac
   );
 }
 
+const currentLocationValues = new WeakMap<
+  Extract<SensoryFacet, { kind: 'location' }>,
+  WeakMap<ObservationFrame, Extract<SensoryFacet, { kind: 'location' }>>
+>();
+function locationInFrame(
+  facet: Extract<SensoryFacet, { kind: 'location' }>,
+  frame: ObservationFrame,
+): Extract<SensoryFacet, { kind: 'location' }> {
+  if (sameObservationFrame(facet.frame, frame)) return facet;
+  // Native recording and publication consume this same received point/frame.
+  // Share only complete immutable inputs; mutable construction remains isolated.
+  const reusable = isImmutableData(facet) && isImmutableData(frame);
+  const frames = reusable ? currentLocationValues.get(facet) : undefined;
+  const held = frames?.get(frame);
+  if (held) return held;
+  const value = copyFacetValue({ ...facet, frame }) as typeof facet;
+  if (reusable) {
+    const entries = frames ?? new WeakMap<ObservationFrame, typeof facet>();
+    if (!frames) currentLocationValues.set(facet, entries);
+    entries.set(frame, value);
+  }
+  return value;
+}
+
 /** Read the last actually completed sight phase without mutating every held value.
  * A missing facet cannot be revived, and inferred identity never gets a new value time. */
 export function effectiveCurrentFacetSupport(
@@ -874,9 +898,7 @@ export function effectiveCurrentFacetSupport(
             valueMeasuredFrom: through,
             valueMeasuredThrough: through,
             valueAcquiredAt: through,
-            value: sameObservationFrame(facet.frame, confirmation.frame)
-              ? facet
-              : copyFacetValue({ ...facet, frame: confirmation.frame }),
+            value: locationInFrame(facet, confirmation.frame),
           }
         : { valueMeasuredThrough: through, valueAcquiredAt: through }),
   };
@@ -1174,6 +1196,7 @@ export function currentObservedFacets(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  kinds: readonly (typeof CURRENT_BODY_FACET_KINDS)[number][] = CURRENT_BODY_FACET_KINDS,
 ): CapturedCurrentFacet[] {
   const state = world.perceptionEvidence?.[observerId];
   const observer = entityGet(world.entities, observerId);
@@ -1186,7 +1209,7 @@ export function currentObservedFacets(
     return [];
   const subject = entityGet(world.entities, subjectId);
   if (!subject) return [];
-  return CURRENT_BODY_FACET_KINDS.flatMap((kind) => state.current[`${subjectId}:${kind}`] ?? [])
+  return kinds.flatMap((kind) => state.current[`${subjectId}:${kind}`] ?? [])
     .filter(
       (lease) =>
         currentLeaseEligible(world, observerId, lease) &&
@@ -1983,7 +2006,8 @@ export function reconcileAttendedTemporalEvidence(
   const result = updateAttention(world, observerId, { directSubjects, changedSourceIds, ...cues });
   const after = new Set(result.after);
   const selected = new Set([...before, ...after]);
-  const current = world.perceptionEvidence?.[observerId]?.current;
+  const storedCurrent = world.perceptionEvidence?.[observerId]?.current;
+  const current = storedCurrent && readOnlyDraftView(storedCurrent);
   const selectedExposures = new Map(
     [...selected].flatMap((id) => {
       const body = current?.[`${id}:body`];

@@ -177,6 +177,7 @@ routes(
     '/api/god/ownership',
     '/api/god/family/edit',
     '/api/god/appraisal',
+    '/api/attention',
     '/api/knowledge',
     '/api/god/knowledge',
     '/api/god/act',

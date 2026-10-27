@@ -179,6 +179,7 @@ export function identitiesForEntity(
       matches.push(record);
       indexed.set(record.canonicalId, matches);
     }
+    for (const matches of indexed.values()) Object.freeze(matches);
     canonicalIndividuals.set(records, indexed);
   }
   return (

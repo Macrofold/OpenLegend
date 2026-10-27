@@ -410,6 +410,21 @@ async function harness(
       await execution.reconcile(store);
       expect(Object.values(execution.snapshot())).not.toContain('unknown');
     },
+    async awaitGeneration(
+      started: Promise<GenerateRequest>,
+      jobId: string,
+    ): Promise<GenerateRequest> {
+      // A refused preparation never calls the provider. Fail with its actual job
+      // outcome instead of leaving cancellation specimens waiting indefinitely.
+      return Promise.race([
+        started,
+        director.idle().then(async () => {
+          throw new Error(
+            `Decision ended before generation: ${JSON.stringify(await store.getJob(jobId))}`,
+          );
+        }),
+      ]);
+    },
     async chat(id: string, text: string): Promise<JobRecord> {
       const result = await director.submit('chat', id, text, NPC_ID);
       expect(result.ok, result.message).toBe(true);
@@ -1042,7 +1057,7 @@ describe(
         NPC_ID,
       );
       expect(submitted.ok, submitted.message).toBe(true);
-      const pending = await started.promise;
+      const pending = await h.awaitGeneration(started.promise, submitted.jobId!);
       expect((await h.director.cancel(submitted.jobId!)).code).toBe('cancelling');
       wait.resolve(value(pending.requestId, 'openai', talk(String(pending.context), 'Too late.')));
       await h.director.idle();
@@ -1219,7 +1234,7 @@ describe(
       };
       const submitted = await h.director.submit('chat', 'coverage-cancel', 'Cancel me.', NPC_ID);
       expect(submitted.ok, submitted.message).toBe(true);
-      const pending = await started.promise;
+      const pending = await h.awaitGeneration(started.promise, submitted.jobId!);
       await h.director.cancel(submitted.jobId!);
       wait.resolve(value(pending.requestId, 'openai', { operations: [] }));
       await h.director.idle();

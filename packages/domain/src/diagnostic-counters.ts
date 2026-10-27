@@ -148,6 +148,8 @@ export const DOMAIN_COUNTERS = [
   /** Common outward values prepared once or reused across receivers in one actual sight phase. */
   'visualSourcePreparations',
   'visualSourcePreparationReuses',
+  'attentionCandidatesChanged',
+  'attentionCandidatesUnchanged',
   /** Sighting-identity assignments (including redundant baseline writes), additions/removals. */
   'episodeBindingsAssigned',
   'episodeBindingsInserted',
