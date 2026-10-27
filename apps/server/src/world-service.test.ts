@@ -4,7 +4,7 @@ import { testRepository } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from '@open-legend/domain';
-import { worldPosition, initializePerception } from '@open-legend/domain';
+import { worldPosition, initializePerception, receivedScene } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -153,6 +153,8 @@ describe('world presence, time and durable commands', () => {
     'settles disconnected exposure and advances the requested game time at speed %s',
     async (speed) => {
       const { service, clock } = await setup();
+      await activate(service);
+      await service.setPresence('test-client', false);
       expect(service.paused).toBe(true);
       expect(service.pauseReason).toBe('away');
       await service.tick(1);
@@ -512,7 +514,7 @@ describe('public projection', () => {
 });
 
 it.each(['disappearance', 'revival'] as const)(
-  'withdraws a pending player view after current-only heard sound %s',
+  'withdraws a pending player view after current heard sound %s while retaining its finite historical account',
   async (change) => {
     const { service } = await setup();
     await activate(service);
@@ -528,7 +530,7 @@ it.each(['disappearance', 'revival'] as const)(
         innerWorld: true,
         speech: true,
         memory: false,
-        language: true,
+        language: false,
       };
       setSpatialPosition(world, player, { x: 20, y: 0, z: 5.5 }, 'terrain');
       setSpatialPosition(world, other, { x: 20, y: 3, z: 5.5 }, 'lookout-deck');
@@ -585,6 +587,7 @@ it.each(['disappearance', 'revival'] as const)(
     release();
     await rejected;
     delayed.mockRestore();
-    expect(JSON.stringify((await projectView(service)).events)).not.toContain('voice-like sound');
+    expect(receivedScene(service.world, PLAYER_ID).nonlocalized).toBe(0);
+    expect(JSON.stringify((await projectView(service)).events)).toContain('voice-like sound');
   },
 );

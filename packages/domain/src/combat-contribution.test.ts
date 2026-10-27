@@ -157,8 +157,7 @@ describe('native optional contribution independent of target controller', () => 
       world = command(world, {
         type: 'aim',
         manualExecution: true,
-        ...(intended ? { targetId: NPC_ID } : {}),
-        aimPoint: { x: p.x, y: p.y + 1.2, z: p.z },
+        ...(intended ? { targetId: NPC_ID } : { aimPoint: { x: p.x, y: p.y + 1.2, z: p.z } }),
       });
       world = advanceWorld(world, 18).world;
       const base = world;

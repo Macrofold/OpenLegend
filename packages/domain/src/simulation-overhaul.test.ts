@@ -512,7 +512,9 @@ describe('simulation overhaul ownership and continuation', () => {
         expect(calls(setting)).toBe(3);
       finishWorld(fork);
 
-      const restored = JSON.parse(JSON.stringify(published)) as WorldState,
+      // Runtime recovery publishes the validated loaded world before creating an
+      // owned turn; the following specimen separately covers mutable raw builders.
+      const restored = freezeWorld(JSON.parse(JSON.stringify(published)) as WorldState),
         working = draftWorld(restored);
       phase(working);
       phase(working);

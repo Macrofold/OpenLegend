@@ -157,11 +157,12 @@ describe('native spatial-world integration without providers', () => {
     const perceived = projectEventEvidence(event, evidence);
     expect(perceived.speech).toMatchObject({
       intelligibility: 'clear',
-      speaker: { nameAtTime: 'person', nameForm: 'count' },
+      speaker: null,
     });
     expect(perceived.data?.['text']).toBe('Audible words above the floor');
-    // Hearing creates a stable personal voice reference, without live location.
-    expect(perceived.actorId).toBe(b.id);
+    // Clear words through an opaque floor do not identify this unfamiliar speaker.
+    expect(perceived.actorId).toBeUndefined();
+    expect(evidence.sourceBody).toBeUndefined();
     expect(
       executeCommand(world, {
         id: 'unseen-voice-strike',

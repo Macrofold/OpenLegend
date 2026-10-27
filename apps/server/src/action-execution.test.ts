@@ -20,8 +20,9 @@ import {
   executeCommand,
   navigationBlocked,
   spatialMap,
+  initializePerception,
 } from '@open-legend/domain';
-import type { CommandInput, WorldInputScope } from '@open-legend/protocol';
+import type { CommandInput, GameView, WorldInputScope } from '@open-legend/protocol';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld, editWorld } from '../../../tests/fixtures/service.js';
@@ -31,6 +32,7 @@ import { commandInputSchema } from './command-input-schema.js';
 import { worldInputSchema } from './world-input-schema.js';
 import { fixture as rangedFixture } from '../../../tests/fixtures/combat-execution.js';
 import { initializeNavigationRuntime, RecastPlanner } from './navigation/backend.js';
+import { currentContactReference } from './public-contact-references.js';
 
 const services: WorldService[] = [];
 afterEach(async () => {
@@ -58,14 +60,16 @@ async function setup(opening: WorldState = stockedCamp(), wallClock?: () => numb
       { x: point.x + 1.5, y: point.y, z: point.z },
       worldSupport(player)!,
     );
+    initializePerception(world, [], [PLAYER_ID]);
   });
-  const send = (id: string, input: CommandInput) =>
+  const send = (id: string, input: CommandInput, publicReferences = false) =>
     service.command(
       id,
       commandInputSchema.parse(input),
       undefined,
       service.commandEpoch,
       service.localScope,
+      publicReferences,
     );
   const equipped = await send('equip-fixture', { type: 'equip', itemId });
   expect(equipped.ok, equipped.message).toBe(true);
@@ -86,6 +90,14 @@ async function setup(opening: WorldState = stockedCamp(), wallClock?: () => numb
       await service.tick(ms / 1000, 0, { offeredUntil: now });
     },
   };
+}
+function observedTarget(service: WorldService, view: GameView, id = NPC_ID) {
+  const reference = currentContactReference(
+    service.world,
+    service.localScope,
+    entityGet(service.world.entities, id)!,
+  );
+  return view.entities.find((entity) => entity.id === reference)!;
 }
 const identity = (scope: WorldInputScope, sequence = 1) => ({
   inputEpoch: scope.inputEpoch,
@@ -481,12 +493,17 @@ describe('native held attack service and control authority', () => {
     expect(duplicate).toEqual(begun);
     expect(itemFor(f.service.world, held.ammoItemId!)!.quantity).toBe(before - 1);
     await f.advance(300);
-    const targetView = await projectView(f.service);
-    const aimed = await f.send('ordinary-target', {
-      ...targetView.player.attackSource!.command,
-      targetId: NPC_ID,
-      bodyReference: targetView.entities.find((entity) => entity.id === NPC_ID)!.bodyReference,
-    });
+    const targetView = await projectView(f.service),
+      target = observedTarget(f.service, targetView);
+    const aimed = await f.send(
+      'ordinary-target',
+      {
+        ...targetView.player.attackSource!.command,
+        targetId: target.id,
+        bodyReference: target.bodyReference,
+      },
+      true,
+    );
     expect(aimed.ok, aimed.message).toBe(true);
     const targetAction = entityGet(f.service.world.entities, PLAYER_ID)!.actor!.action!;
     expect(targetAction.ranged?.aimTarget).toEqual({ id: NPC_ID, life: 0 });
@@ -514,14 +531,14 @@ describe('native held attack service and control authority', () => {
       source = view.player.attackSource!,
       scope = f.service.inputScope(f.service.localScope);
     expect(source).toMatchObject({ kind: 'ranged', pointFire: false });
-    const target = view.entities.find((entity) => entity.id === NPC_ID)!;
+    const target = observedTarget(f.service, view);
     const input: CommandInput = {
       ...source.command,
-      targetId: NPC_ID,
+      targetId: target.id,
       bodyReference: target.bodyReference,
       execution: { operation: 'begin', ...identity(scope) },
     };
-    const begun = await f.send('subject-only', input);
+    const begun = await f.send('subject-only', input, true);
     expect(begun.ok, begun.message).toBe(true);
     expect(
       entityGet(f.service.world.entities, PLAYER_ID)!.actor!.action?.ranged?.aimPoint,
@@ -530,15 +547,19 @@ describe('native held attack service and control authority', () => {
       (await f.send('cancel-subject', { type: 'cancel', expectedActionId: begun.actionId })).ok,
     ).toBe(true);
     const p = worldPosition(entityGet(f.service.world.entities, NPC_ID)!);
-    const refused = await f.send('no-point-law', {
-      ...input,
-      aimPoint: { ...p, y: p.y + 0.85 },
-      aimBasis: { bodyReference: target.bodyReference },
-      execution: {
-        operation: 'begin',
-        ...identity(f.service.inputScope(f.service.localScope)),
+    const refused = await f.send(
+      'no-point-law',
+      {
+        ...input,
+        aimPoint: { ...p, y: p.y + 0.85 },
+        aimBasis: { bodyReference: target.bodyReference },
+        execution: {
+          operation: 'begin',
+          ...identity(f.service.inputScope(f.service.localScope)),
+        },
       },
-    });
+      true,
+    );
     expect(refused.ok).toBe(false);
     expect(refused.code).toBe('point-fire-unavailable');
   }, 30000);
@@ -563,32 +584,41 @@ describe('native held attack service and control authority', () => {
         material: 'wood',
       });
       world.map.spatial.revision++;
+      initializePerception(world, [], [PLAYER_ID]);
     });
     expect((await f.send('cover-equip', { type: 'equip', itemId: ranged.toolId })).ok).toBe(true);
     const view = await projectView(f.service),
       scope = f.service.inputScope(f.service.localScope),
-      target = view.entities.find((entity) => entity.id === NPC_ID)!;
+      target = observedTarget(f.service, view);
     expect(target.bodyReference).toBeTruthy();
     const p = worldPosition(entityGet(f.service.world.entities, NPC_ID)!),
       aimPoint = { ...p, y: p.y + 0.85 };
     const input: CommandInput = {
       ...view.player.attackSource!.command,
-      targetId: NPC_ID,
+      targetId: target.id,
       bodyReference: target.bodyReference,
       aimPoint,
       aimBasis: { bodyReference: target.bodyReference },
       execution: { operation: 'begin', ...identity(scope) },
     };
-    const denied = await f.send('hidden-outside-body', {
-      ...input,
-      aimPoint: { ...aimPoint, x: aimPoint.x + 0.7 },
-    });
+    const denied = await f.send(
+      'hidden-outside-body',
+      {
+        ...input,
+        aimPoint: { ...aimPoint, x: aimPoint.x + 0.7 },
+      },
+      true,
+    );
     expect(denied.ok).toBe(false);
     expect(denied.code).toBe('not-visible');
-    const begun = await f.send('covered-body', {
-      ...input,
-      execution: { operation: 'begin', ...identity(scope, 2) },
-    });
+    const begun = await f.send(
+      'covered-body',
+      {
+        ...input,
+        execution: { operation: 'begin', ...identity(scope, 2) },
+      },
+      true,
+    );
     expect(begun.ok, begun.message).toBe(true);
     const action = entityGet(f.service.world.entities, PLAYER_ID)!.actor!.action!;
     expect(action.ranged?.aimPointSubject).toEqual({ id: NPC_ID, life: 0 });
@@ -600,9 +630,13 @@ describe('native held attack service and control authority', () => {
     const f = await setup(),
       scope = f.service.inputScope(f.service.localScope);
     const visible = await projectView(f.service),
-      target = visible.entities.find((entity) => entity.id === NPC_ID)!;
-    const input = { ...begin(scope, f.itemId), bodyReference: target.bodyReference },
-      started = await f.send('begin', input);
+      target = observedTarget(f.service, visible);
+    const input = {
+        ...begin(scope, f.itemId),
+        targetId: target.id,
+        bodyReference: target.bodyReference,
+      },
+      started = await f.send('begin', input, true);
     expect(started.ok, started.message).toBe(true);
     expect(started.actionId).toBeTruthy();
     expect(started.execution?.profile.kind).toBe('timed-release');
@@ -662,7 +696,7 @@ describe('native held attack service and control authority', () => {
     expect(tooLate.code, tooLate.message).toBe('released');
     await f.service.control({ paused: true });
     expect(await f.send('release', release)).toEqual(requested);
-    expect(await f.send('begin', input)).toEqual(started);
+    expect(await f.send('begin', input, true)).toEqual(started);
   }, 30000);
   it('cancellation before acknowledgement is terminal and cannot stop unrelated later work', async () => {
     const f = await setup(),
@@ -1377,32 +1411,40 @@ describe('native held attack service and control authority', () => {
       f = await setup(ranged.world);
     expect((await f.send('equip-ranged', { type: 'equip', itemId: ranged.toolId })).ok).toBe(true);
     const view = await projectView(f.service),
-      target = view.entities.find((entity) => entity.id === NPC_ID)!;
+      target = observedTarget(f.service, view);
     const point = worldPosition(entityGet(f.service.world.entities, NPC_ID)!);
     const aimPoint = { x: point.x, y: point.y + 0.85, z: point.z },
       scope = f.service.inputScope(f.service.localScope);
-    const started = await f.send('ranged-begin', {
-      ...view.player.attackSource!.command,
-      targetId: NPC_ID,
-      bodyReference: target.bodyReference,
-      aimPoint,
-      aimBasis: { bodyReference: target.bodyReference },
-      execution: { operation: 'begin', ...identity(scope) },
-    });
-    expect(started.ok, started.message).toBe(true);
-    const requested = await f.send('ranged-release', {
-      type: 'release-shot',
-      aimId: started.actionId,
-      targetId: NPC_ID,
-      aimPoint,
-      aimBasis: { bodyReference: target.bodyReference },
-      execution: {
-        operation: 'release',
-        ...identity(scope),
-        beginCommandId: 'ranged-begin',
-        input: { kind: 'ordinary' },
+    const started = await f.send(
+      'ranged-begin',
+      {
+        ...view.player.attackSource!.command,
+        targetId: target.id,
+        bodyReference: target.bodyReference,
+        aimPoint,
+        aimBasis: { bodyReference: target.bodyReference },
+        execution: { operation: 'begin', ...identity(scope) },
       },
-    });
+      true,
+    );
+    expect(started.ok, started.message).toBe(true);
+    const requested = await f.send(
+      'ranged-release',
+      {
+        type: 'release-shot',
+        aimId: started.actionId,
+        targetId: target.id,
+        aimPoint,
+        aimBasis: { bodyReference: target.bodyReference },
+        execution: {
+          operation: 'release',
+          ...identity(scope),
+          beginCommandId: 'ranged-begin',
+          input: { kind: 'ordinary' },
+        },
+      },
+      true,
+    );
     expect(requested.ok, requested.message).toBe(true);
     for (let step = 1; step <= 4; step++) {
       await f.advance(100);
@@ -1475,14 +1517,15 @@ describe('native held attack service and control authority', () => {
         { x: point.x, y: point.y, z: point.z + 2 },
         worldSupport(player)!,
       );
+      initializePerception(world, [], [PLAYER_ID]);
     });
     expect((await f.send('redirect-equip', { type: 'equip', itemId: ranged.toolId })).ok).toBe(
       true,
     );
     const view = await projectView(f.service),
       scope = f.service.inputScope(f.service.localScope);
-    const original = view.entities.find((entity) => entity.id === NPC_ID)!,
-      redirected = view.entities.find((entity) => entity.id === redirectedId)!;
+    const original = observedTarget(f.service, view),
+      redirected = observedTarget(f.service, view, redirectedId);
     expect(redirected?.bodyReference).toBeTruthy();
     const point = (id: string) => {
       const position = worldPosition(entityGet(f.service.world.entities, id)!);
@@ -1490,23 +1533,27 @@ describe('native held attack service and control authority', () => {
     };
     const input: CommandInput = {
       ...view.player.attackSource!.command,
-      targetId: NPC_ID,
+      targetId: original.id,
       bodyReference: original.bodyReference,
       execution: { operation: 'begin', ...identity(scope) },
     };
-    const proposed = await f.send('redirect-begin', input);
+    const proposed = await f.send('redirect-begin', input, true);
     expect(proposed.lethalReview, proposed.message).toBeDefined();
-    const started = await f.send('redirect-prepare', {
-      ...input,
-      lethalReviewId: proposed.lethalReview!.id,
-      execution: { operation: 'confirm-review', ...identity(scope, 2) },
-    });
+    const started = await f.send(
+      'redirect-prepare',
+      {
+        ...input,
+        lethalReviewId: proposed.lethalReview!.id,
+        execution: { operation: 'confirm-review', ...identity(scope, 2) },
+      },
+      true,
+    );
     expect(started.ok, started.message).toBe(true);
     const aimPoint = point(redirectedId),
       release: CommandInput = {
         type: 'release-shot',
         aimId: started.actionId,
-        targetId: redirectedId,
+        targetId: redirected.id,
         bodyReference: redirected.bodyReference,
         execution: {
           operation: 'release',
@@ -1515,20 +1562,28 @@ describe('native held attack service and control authority', () => {
           input: { kind: 'timed-release', phase: 0.25 },
         },
       };
-    const reviewed = await f.send('redirect-release', release);
+    const reviewed = await f.send('redirect-release', release, true);
     expect(reviewed.lethalReview, reviewed.message).toBeDefined();
-    const changed = await f.send('redirect-changed', {
-      ...release,
-      aimPoint: { ...aimPoint, z: aimPoint.z + 1 },
-      lethalReviewId: reviewed.lethalReview!.id,
-      execution: { operation: 'confirm-review', ...identity(scope, 3) },
-    });
+    const changed = await f.send(
+      'redirect-changed',
+      {
+        ...release,
+        aimPoint: { ...aimPoint, z: aimPoint.z + 1 },
+        lethalReviewId: reviewed.lethalReview!.id,
+        execution: { operation: 'confirm-review', ...identity(scope, 3) },
+      },
+      true,
+    );
     expect(changed.ok).toBe(false);
-    const confirmed = await f.send('redirect-confirm', {
-      ...release,
-      lethalReviewId: reviewed.lethalReview!.id,
-      execution: { operation: 'confirm-review', ...identity(scope, 3) },
-    });
+    const confirmed = await f.send(
+      'redirect-confirm',
+      {
+        ...release,
+        lethalReviewId: reviewed.lethalReview!.id,
+        execution: { operation: 'confirm-review', ...identity(scope, 3) },
+      },
+      true,
+    );
     expect(confirmed.ok, confirmed.message).toBe(true);
     expect(confirmed.execution?.assessment?.score).toBe(1);
     const action = entityGet(f.service.world.entities, PLAYER_ID)!.actor!.action!;

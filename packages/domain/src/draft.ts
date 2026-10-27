@@ -531,6 +531,10 @@ export function finishWorld(
 ): WorldState {
   reconcileDraftSemantics(world);
   sealAppends(world);
+  // Seal immutable publications before Immer traverses the same shared facts
+  // through many working paths. Editable builders must retain writable owners
+  // for direct native effects after this turn.
+  if (isDraft(world) && Object.isFrozen(original(world)!)) sealNativeEvidence(world);
   if (!isDraft(world)) {
     // Re-completing an editable result cannot certify its earlier write set.
     pendingPublications.delete(world);
@@ -633,10 +637,6 @@ export function finishWorld(
           path[1] >= before.length),
     );
   });
-  // The finalizer has resolved the owned draft graph. Seal it in place rather
-  // than constructing a second complete graph just before finalization.
-  freezeData(result.perceptionEvidence);
-  freezeData(result.experience?.temporal);
   publishKnownPlaces(result);
   // A semantic mutation cannot inherit a native prediction's sampling progress. A no-op
   // (including load validation) preserves it; native advance publishes a new owned value.
