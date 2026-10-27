@@ -2864,6 +2864,7 @@ export function validatePerceptionEvidenceState(
         // Unchanged continuously measured values may predate their latest support.
         // Completed measurement still cannot claim time after this native boundary.
         lease.valueMeasuredThrough > world.simTime ||
+        lease.valueMeasuredThrough > lease.valueAcquiredAt ||
         lease.valueMeasuredThrough > lease.confirmedThrough ||
         lease.valueAcquiredAt < lease.original.acquiredAt ||
         lease.valueAcquiredAt > world.simTime ||
@@ -2907,6 +2908,7 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
           ...existing,
           confirmedThrough: world.simTime,
           valueMeasuredThrough: world.simTime,
+          valueAcquiredAt: world.simTime,
           revision: existing.revision + 1,
         });
       }
@@ -3455,6 +3457,7 @@ export function validateSensoryFacet(
           snapshot.confirmedThrough,
         ].every(Number.isFinite) ||
         snapshot.valueMeasuredThrough < snapshot.valueMeasuredFrom ||
+        snapshot.valueMeasuredThrough > snapshot.valueAcquiredAt ||
         snapshot.confirmedThrough < snapshot.confirmedFrom ||
         snapshot.value.kind === 'confirmation'
       )
