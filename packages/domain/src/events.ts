@@ -594,7 +594,9 @@ export function reconcileTransition(world: WorldState, events: WorldEvent[]): vo
   advanceCommitments(world, events);
   reconcileConversations(world);
 }
-export function finish(
+/** Complete one admitted command's semantic/event boundary. Publication is separate
+ * so a private native command can remain in its owning advance's working draft. */
+export function completeTransition(
   world: WorldState,
   events: WorldEvent[],
   result: Outcome,
@@ -606,7 +608,16 @@ export function finish(
   beforePublication?.();
   world.sequence++;
   const committedEvents = cloneValue(events);
-  return { world: finishWorld(world), events: committedEvents, outcome: result };
+  return { world, events: committedEvents, outcome: result };
+}
+export function finish(
+  world: WorldState,
+  events: WorldEvent[],
+  result: Outcome,
+  beforePublication?: () => void,
+): Transition {
+  const completed = completeTransition(world, events, result, beforePublication);
+  return { ...completed, world: finishWorld(world) };
 }
 
 /** Observed conversation events may be native state narration, not an actor reply. */

@@ -32,6 +32,30 @@ import {
 } from './entity-references.js';
 import { facetValueForModel, observationForModel } from './experience-context.js';
 import type { TemporalHistoryPage } from './temporal-storage.js';
+import { presentedSpatialSubject, receivedMeasurementDescription } from './perceived-context.js';
+
+function readableMeasurement(
+  anchorFacts: Parameters<typeof presentedSpatialSubject>[0],
+  measurement: Parameters<typeof receivedMeasurementDescription>[1],
+  otherFacts?: Parameters<typeof presentedSpatialSubject>[0],
+  boundaryReference?: string,
+): { description?: string; support?: string[] } {
+  const anchor = presentedSpatialSubject(anchorFacts);
+  const other = otherFacts && presentedSpatialSubject(otherFacts);
+  const description = receivedMeasurementDescription(anchor.label, measurement, other?.label);
+  return description
+    ? {
+        description,
+        support: [
+          ...new Set([
+            ...anchor.support,
+            ...(other?.support ?? []),
+            ...(boundaryReference ? [boundaryReference] : []),
+          ]),
+        ],
+      }
+    : {};
+}
 
 const reference = z.string().min(1).max(120);
 // Each branch already has an exclusive literal kind. The ordinary union emits
@@ -427,28 +451,39 @@ export function captureSituation(
     );
     initialVisits += nearby.visited;
     const bodies = nearby.values
-      .map((body) => ({
-        reference: entityHandle(world, actorId, body.sourceId),
-        ...receivedSeparation(anchor, body),
-      }))
+      .map(
+        (
+          body,
+        ): { reference: string } & ReturnType<typeof receivedSeparation> &
+          ReturnType<typeof readableMeasurement> => ({
+          reference: entityHandle(world, actorId, body.sourceId),
+          ...receivedSeparation(anchor, body),
+        }),
+      )
       .sort((a, b) => (a.lower ?? Infinity) - (b.lower ?? Infinity))
       .slice(0, 2);
     const remaining = Math.max(0, allowance - nearby.visited),
       candidates = boundaries.slice(0, remaining);
     initialVisits += candidates.length;
     const edges = candidates
-      .map(({ observation, boundary }) => ({
-        reference: evidenceSourceHandle(world, actorId, {
-          family: 'native-exposure',
-          observer: observation.observer,
-          id: observation.id,
-          revision: observation.revision,
+      .map(
+        ({
+          observation,
+          boundary,
+        }): { reference: string } & ReturnType<typeof receivedBoundarySeparation> &
+          ReturnType<typeof readableMeasurement> => ({
+          reference: evidenceSourceHandle(world, actorId, {
+            family: 'native-exposure',
+            observer: observation.observer,
+            id: observation.id,
+            revision: observation.revision,
+          }),
+          ...receivedBoundarySeparation(anchor, boundary, {
+            from: observation.acquiredAt,
+            through: geometry.supportedThrough,
+          }),
         }),
-        ...receivedBoundarySeparation(anchor, boundary, {
-          from: observation.acquiredAt,
-          through: geometry.supportedThrough,
-        }),
-      }))
+      )
       .sort((a, b) => (a.lower ?? Infinity) - (b.lower ?? Infinity))
       .slice(0, 2);
     return [
@@ -503,7 +538,21 @@ export function captureSituation(
       discoveryRows: discovery.length,
     },
   };
+  let emittedRows = new Map<string, ReturnType<typeof bodyFacts>['facts']>();
+  const emittedFacts = (reference: string) => emittedRows.get(reference) ?? [];
   const currentBytes = () => {
+    // Narrowing can remove an association or entire row. Re-render from only
+    // the kept facts so a name/description cannot outlive its disclosed proof.
+    emittedRows = new Map(
+      [...packet.detailed, ...packet.discovery].map((row) => [row.reference, row.facts.facts]),
+    );
+    for (const relation of packet.relations) {
+      const anchor = emittedFacts(relation.anchor);
+      for (const body of relation.bodies)
+        Object.assign(body, readableMeasurement(anchor, body, emittedFacts(body.reference)));
+      for (const edge of relation.boundaries)
+        Object.assign(edge, readableMeasurement(anchor, edge, undefined, edge.reference));
+    }
     compactFrames(packet, 0);
     return Buffer.byteLength(JSON.stringify({ ...packet, recent: undefined }));
   };
@@ -632,9 +681,19 @@ export function captureSituation(
     if (input.kind === 'separation') {
       const a = references.get(input.first),
         b = references.get(input.second);
-      return a && b
-        ? { result: receivedSeparation(scene.bodies.get(a)!, scene.bodies.get(b)!), visited: 0 }
-        : { result: { status: 'unavailable' }, visited: 0 };
+      if (!a || !b) return { result: { status: 'unavailable' }, visited: 0 };
+      const measurement = receivedSeparation(scene.bodies.get(a)!, scene.bodies.get(b)!);
+      return {
+        result: {
+          ...measurement,
+          ...readableMeasurement(
+            emittedFacts(input.first),
+            measurement,
+            emittedFacts(input.second),
+          ),
+        },
+        visited: 0,
+      };
     }
     const id = input.kind === 'near' ? references.get(input.anchor) : undefined;
     const anchor = id ? scene.bodies.get(id) : undefined;
@@ -647,11 +706,26 @@ export function captureSituation(
         : scene.index.region(region!, visits);
     const result = {
       status: found.status,
-      bodies: found.values.map((body) => ({
-        reference: entityHandle(world, actorId, body.sourceId),
-        ...(anchor ? { separation: receivedSeparation(anchor, body) } : {}),
-        facts: bodyFacts(body.sourceId),
-      })),
+      bodies: found.values.map((body) => {
+        const facts = bodyFacts(body.sourceId);
+        const measurement = anchor && receivedSeparation(anchor, body);
+        return {
+          reference: entityHandle(world, actorId, body.sourceId),
+          ...(measurement
+            ? {
+                separation: {
+                  ...measurement,
+                  ...readableMeasurement(
+                    emittedFacts(input.kind === 'near' ? input.anchor : ''),
+                    measurement,
+                    facts.facts,
+                  ),
+                },
+              }
+            : {}),
+          facts,
+        };
+      }),
     } as {
       status: 'complete' | 'partial';
       bodies: Array<{ reference: string; facts: ReturnType<typeof bodyFacts> }>;
@@ -681,6 +755,7 @@ export function captureSituation(
     observationReferences,
     bindHistory,
     bodyFacts,
+    emittedFacts,
     queryBodies,
     allAttentionReferences,
     allCurrentReferences,
@@ -828,7 +903,33 @@ export async function expandSituation(
           distanceUnit: 'metres',
           scope: 'selected-retained-evidence',
           preparedFacts: native.preparedFacts,
-          samples: render(native.samples),
+          samples: render(
+            native.samples.map((sample) => ({
+              ...sample,
+              ...(sample.other
+                ? {
+                    other: {
+                      ...sample.other,
+                      description: receivedMeasurementDescription(
+                        'the retained observed body',
+                        sample.other,
+                        'the other retained observed body',
+                      ),
+                    },
+                  }
+                : {}),
+              boundaries: sample.boundaries.map((edge) => ({
+                ...edge,
+                measurement: {
+                  ...edge.measurement,
+                  description: receivedMeasurementDescription(
+                    'the retained observed body',
+                    edge.measurement,
+                  ),
+                },
+              })),
+            })),
+          ),
         };
         keepNewest = true;
       }
@@ -876,12 +977,20 @@ export async function expandSituation(
               revision: observation.revision,
             })
           ] = observation;
+          const presented = observationForModel(world, actorId, observation);
+          const measurement = receivedBoundarySeparation(body, boundary, {
+            from: observation.acquiredAt,
+            through: captured.geometry.supportedThrough,
+          });
           facts.push({
-            observation: observationForModel(world, actorId, observation),
-            ...receivedBoundarySeparation(body, boundary, {
-              from: observation.acquiredAt,
-              through: captured.geometry.supportedThrough,
-            }),
+            observation: presented,
+            ...measurement,
+            ...readableMeasurement(
+              captured.emittedFacts(query.anchor),
+              measurement,
+              undefined,
+              presented.source,
+            ),
           });
         }
         visits -= seen;

@@ -10,6 +10,77 @@ import {
 import { entityHandle } from './entity-references.js';
 import type { AttentionCandidate } from './recall.js';
 
+type PresentedSpatialFact = { reference?: unknown; value?: unknown };
+type ReceivedMeasurement = {
+  status: string;
+  at?: number;
+  asOf?: number;
+  lower?: number;
+  upper?: number;
+  decreaseLower?: number;
+  dropLower?: number;
+  endpointChange?: { from: number; through: number; decreaseLower: number };
+};
+
+/** Labels come only from facts included in this read, never a live identity lookup. */
+export function presentedSpatialSubject(facts: readonly PresentedSpatialFact[]) {
+  let label = 'this observed body';
+  const support: string[] = [];
+  for (const fact of facts) {
+    const value = fact.value as
+      | { kind: 'body'; body: { label?: Parameters<typeof namePhrase>[0] } }
+      | { kind: 'association'; strength: string; subject: { label: string } }
+      | { kind: string };
+    if (!value) continue;
+    if (['body', 'location', 'observed-motion'].includes(value.kind)) {
+      if (typeof fact.reference === 'string') support.push(fact.reference);
+      if (value.kind === 'body' && 'body' in value && value.body.label)
+        label = namePhrase(value.body.label, 'indefinite') || label;
+    }
+  }
+  const association = facts.find((fact) => {
+    const value = fact.value as { kind?: string; strength?: string } | undefined;
+    return value?.kind === 'association' && value.strength === 'supported';
+  });
+  if (association) {
+    const value = association.value as { subject: { label: string } };
+    label = value.subject.label;
+    if (typeof association.reference === 'string') support.push(association.reference);
+  }
+  return { label, support };
+}
+
+/** Human-readable rendering of native measurements, not another spatial/meaning rule.
+ * Round intervals outwards and guaranteed minima down; exact numbers remain alongside it. */
+export function receivedMeasurementDescription(
+  anchor: string,
+  measurement: ReceivedMeasurement,
+  other?: string,
+): string | undefined {
+  if (
+    measurement.status !== 'complete' ||
+    measurement.lower === undefined ||
+    measurement.upper === undefined
+  )
+    return;
+  const lower = (value: number) => Math.floor(value * 100) / 100;
+  const upper = (value: number) => Math.ceil(value * 100) / 100;
+  const time = measurement.asOf ?? measurement.at;
+  if (time === undefined) return;
+  const text = [
+    `At simulation second ${time}, measured ${other ? `body separation between ${anchor} and ${other}` : `clearance from ${anchor} to an observed physical edge`} is ${lower(measurement.lower)}–${upper(measurement.upper)} metres.`,
+  ];
+  const change = measurement.endpointChange;
+  const decrease = change?.decreaseLower ?? measurement.decreaseLower;
+  if (decrease !== undefined && decrease > 0)
+    text.push(
+      `${other ? 'Separation' : 'Clearance'} decreased ${lower(decrease) > 0 ? `by at least ${lower(decrease)} metres ` : ''}between received endpoints${change ? ` at simulation seconds ${change.from} and ${change.through}` : ''}.`,
+    );
+  if (measurement.dropLower !== undefined && measurement.dropLower > 0)
+    text.push(`The received far surface is at least ${lower(measurement.dropLower)} metres lower.`);
+  return text.join(' ');
+}
+
 /** Describe exact currently permitted values. Native menu preparation can retain
  * private admission records, but none of those records are character evidence. */
 export function perceivedEntityText(

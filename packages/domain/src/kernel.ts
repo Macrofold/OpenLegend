@@ -363,7 +363,16 @@ import {
   recordHealthChange,
   commitBodyEffects,
 } from './living.js';
-import { draftWorld, finishWorld, freezeWorld, cloneValue, readOnlyDraftView } from './draft.js';
+import {
+  draftWorld,
+  finishWorld,
+  freezeWorld,
+  cloneValue,
+  readOnlyDraftView,
+  reconcileDraftSemantics,
+  invalidateInheritedNativeInterval,
+} from './draft.js';
+import { materializeNativeValuesInPlace } from './native-values.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { experiences } from './experience.js';
 import {
@@ -392,6 +401,7 @@ import {
   encounterEmitter,
   acquireExposure,
   reconcileTransition,
+  completeTransition,
   finish,
   outcome,
 } from './events.js';
@@ -2110,10 +2120,15 @@ function nativeMovementTransition(
       if (remainder < 0) break;
     }
   }
-  const transition = executeCommand(selecting, command(selected), {
-    nativeController: true,
-    nativeMovement: { binding, path: selected.path, draw },
-  });
+  const transition = runCommand(
+    selecting,
+    command(selected),
+    {
+      nativeController: true,
+      nativeMovement: { binding, path: selected.path, draw },
+    },
+    mode === 'travel' && routes.length === 1,
+  );
   if (!transition.outcome.ok) return { ...transition, world: original, events: [] };
   return transition;
 }
@@ -2162,6 +2177,15 @@ type CommandOptions = {
   nativeMovement?: { binding: NativeLocomotion; path: SurfacePoint[]; draw?: number };
   constructionPermissions?: readonly ConstructionPermission[];
 };
+/** A late refusal cannot return a mutated parent as though nothing happened. */
+class NativeCommandAbort extends Error {
+  constructor(readonly outcome: Outcome) {
+    super(`An admitted private native command failed: ${outcome.code}.`);
+  }
+}
+interface NativeCommandScope {
+  used: boolean;
+}
 
 /** Accepted commands are idempotent by id+body. Rejections cause no physical effects. */
 export function executeCommand(
@@ -2169,16 +2193,44 @@ export function executeCommand(
   command: Command,
   options: CommandOptions = {},
 ): Transition {
+  return runCommand(original, command, options);
+}
+
+/** Only the native advance's private caller can request its working draft. Public
+ * command options cannot select this path, and the ordinary owner proves it below. */
+function runCommand(
+  original: WorldState,
+  command: Command,
+  options: CommandOptions,
+  reuseNativeParent = false,
+): Transition {
   const nested = inWorkGroup();
+  const parent: NativeCommandScope | undefined = reuseNativeParent ? { used: false } : undefined;
   try {
     return withWorkMeter(WORK_LIMITS.group, () => {
       chargeWork({ inputBytes: (JSON.stringify(command)?.length ?? 0) * 3 });
-      return executeCommandNative(original, command, options, !nested);
+      const transition = executeCommandNative(original, command, options, !nested, parent);
+      if (parent?.used && !transition.outcome.ok) throw new NativeCommandAbort(transition.outcome);
+      return transition;
     });
   } catch (error) {
-    if (!(error instanceof WorkBudgetError || error instanceof ResourceReservationError) || nested)
+    if (
+      !(
+        error instanceof WorkBudgetError ||
+        error instanceof ResourceReservationError ||
+        error instanceof NativeCommandAbort
+      ) ||
+      nested
+    )
       throw error;
-    return { world: original, events: [], outcome: outcome(false, error.code, error.message) };
+    return {
+      world: original,
+      events: [],
+      outcome:
+        error instanceof NativeCommandAbort
+          ? error.outcome
+          : outcome(false, error.code, error.message),
+    };
   }
 }
 
@@ -2187,6 +2239,7 @@ function executeCommandNative(
   command: Command,
   options: CommandOptions,
   standalone: boolean,
+  parent?: NativeCommandScope,
 ): Transition {
   const reject = (code: string, message: string): Transition => ({
     world: original,
@@ -2401,7 +2454,28 @@ function executeCommandNative(
         outcome: outcome(true, 'available', 'The selected invitation choice is available.'),
       };
   }
-  const world = draftWorld(original);
+  // No ordinary refusal remains after admission for this exact approaching move:
+  // no work starts, no prior action/status interrupts, and no tool/aim is acquired.
+  // New fallible setup here must retain isolation until its preflight covers it.
+  const inNativeDraft =
+    !!parent &&
+    !standalone &&
+    !options.preview &&
+    isDraft(original) &&
+    options.nativeController &&
+    options.nativeMovement?.binding.mode === 'travel' &&
+    action?.type === 'move' &&
+    action.stage === 'approaching' &&
+    !source.actor?.action &&
+    !statusInterruptionRequired(original, source, 'new-action');
+  const inheritedNativeInterval = inNativeDraft ? original.nativeInterval : undefined;
+  const world = inNativeDraft ? original : draftWorld(original);
+  if (inNativeDraft) {
+    parent!.used = true;
+    // draftWorld ordinarily settles these exact retained operations before command
+    // writes. Parent reuse removes copying, never this numeric boundary.
+    materializeNativeValuesInPlace(world);
+  }
   const actor = entityGet(world.entities, command.actorId)!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];
@@ -3420,7 +3494,16 @@ function executeCommandNative(
     reconcileTransition(world, events);
     bindNativeMovement(world, actor, action, options.nativeMovement, events);
   }
-  return finish(world, events, result);
+  if (inNativeDraft) {
+    const completed = completeTransition(world, events, result);
+    reconcileDraftSemantics(world);
+    invalidateInheritedNativeInterval(world, inheritedNativeInterval);
+    countDomainWork('nativeMovementDraftReuses');
+    return completed;
+  }
+  const completed = finish(world, events, result);
+  if (options.nativeMovement) countDomainWork('nativeMovementIsolated');
+  return completed;
 }
 
 function startingActivityView(world: WorldState, command: Command, action?: Action) {
@@ -4994,9 +5077,23 @@ export function* advanceWorldSlices(
       advanceWorldNative(original, elapsedSimSeconds, options),
     );
   } catch (error) {
-    if (!(error instanceof WorkBudgetError || error instanceof ResourceReservationError) || nested)
+    if (
+      !(
+        error instanceof WorkBudgetError ||
+        error instanceof ResourceReservationError ||
+        error instanceof NativeCommandAbort
+      ) ||
+      nested
+    )
       throw error;
-    return { world: original, events: [], outcome: outcome(false, error.code, error.message) };
+    return {
+      world: original,
+      events: [],
+      outcome:
+        error instanceof NativeCommandAbort
+          ? error.outcome
+          : outcome(false, error.code, error.message),
+    };
   }
 }
 
@@ -5800,7 +5897,8 @@ function* advanceWorldNative(
       if (!route) continue;
       yield* materialize();
       const transition = nativeMovementTransition(world, id, [route], 'travel');
-      world = draftWorld(transition.world);
+      if (!transition.outcome.ok || transition.world !== world)
+        world = draftWorld(transition.world);
       events.push(...transition.events);
       participants = nativeParticipants(world);
       movementEffects = true;

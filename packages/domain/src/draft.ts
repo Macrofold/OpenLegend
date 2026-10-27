@@ -484,14 +484,26 @@ export function draftWorld(
   if (!options.retainNativeValues) materializeNativeValuesInPlace(result);
   return result;
 }
-export function finishWorld(
-  world: WorldState,
-  capturePatches?: (patches: readonly Patch[]) => void,
-): WorldState {
+/** Both publication and an admitted private command reconcile the same changed
+ * characters; keeping a native working draft does not skip semantic boundaries. */
+export function reconcileDraftSemantics(world: WorldState): void {
   if (isDraft(world)) {
     const changed = changedDraftEntityIds(world);
     for (const id of changed ?? entityKeys(world.entities)) reconcileSemanticInterval(world, id);
   }
+}
+/** A command cannot inherit an unchanged prediction's sampling progress. */
+export function invalidateInheritedNativeInterval(
+  world: WorldState,
+  inherited: WorldState['nativeInterval'],
+): void {
+  if (world.nativeInterval === inherited) delete world.nativeInterval;
+}
+export function finishWorld(
+  world: WorldState,
+  capturePatches?: (patches: readonly Patch[]) => void,
+): WorldState {
+  reconcileDraftSemantics(world);
   sealAppends(world);
   sealNativeEvidence(world);
   if (!isDraft(world)) return world;
@@ -595,8 +607,7 @@ export function finishWorld(
   // A semantic mutation cannot inherit a native prediction's sampling progress. A no-op
   // (including load validation) preserves it; native advance publishes a new owned value.
   // docs/simulation-time.md#native-interval-contract
-  if (result !== base && result.nativeInterval === base.nativeInterval)
-    delete result.nativeInterval;
+  if (result !== base) invalidateInheritedNativeInterval(result, base.nativeInterval);
   if (!knownEntityIds) for (const id of entityKeys(result.entities)) entityIds.add(id);
   changedEntities.set(result, entityIds);
   if (base.entities !== result.entities && Object.isFrozen(base.entities))

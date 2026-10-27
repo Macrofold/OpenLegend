@@ -30,6 +30,7 @@ import {
 import { boundResponseSchema } from './cognition-contracts.js';
 import { entityHandle } from './entity-references.js';
 import { readableDecisionContext } from './response-context.js';
+import { presentedSpatialSubject, receivedMeasurementDescription } from './perceived-context.js';
 import { appendMemory } from '../../../packages/domain/src/events.js';
 import { cloneValue } from '../../../packages/domain/src/draft.js';
 import { assignGivenName } from '../../../packages/domain/src/worlds/base/knowledge.js';
@@ -57,6 +58,61 @@ function crowded(count = 16) {
 }
 
 describe('bounded received situation', () => {
+  it('words only emitted supported names and rounds measurement guarantees conservatively', () => {
+    expect(
+      presentedSpatialSubject([
+        { reference: 'unlabelled-proof', value: { kind: 'body', body: {} } },
+      ]),
+    ).toEqual({ label: 'this observed body', support: ['unlabelled-proof'] });
+    const body = {
+      reference: 'body-proof',
+      value: { kind: 'body', body: { label: { name: 'person', nameForm: 'count' } } },
+    };
+    const possible = {
+      reference: 'possible-proof',
+      value: { kind: 'association', strength: 'possible', subject: { label: 'Unproven name' } },
+    };
+    const supported = {
+      reference: 'name-proof',
+      value: { kind: 'association', strength: 'supported', subject: { label: 'Received name' } },
+    };
+    expect(presentedSpatialSubject([body, possible])).toEqual({
+      label: 'a person',
+      support: ['body-proof'],
+    });
+    expect(presentedSpatialSubject([body, supported])).toEqual({
+      label: 'Received name',
+      support: ['body-proof', 'name-proof'],
+    });
+    // The same kept-row rendering is repeated after byte narrowing: an omitted
+    // association contributes neither its name nor an undisclosed proof handle.
+    const narrowed = presentedSpatialSubject([body]);
+    const measurement = {
+      status: 'complete',
+      asOf: 30,
+      lower: 3.604,
+      upper: 3.854,
+      decreaseLower: 0.748,
+      dropLower: 5.755,
+    };
+    const description = receivedMeasurementDescription(narrowed.label, measurement)!;
+    expect(description).toContain('a person');
+    expect(description).not.toContain('Received name');
+    expect(description).toContain('3.6–3.86 metres');
+    expect(description).toContain('at least 0.74 metres');
+    expect(description).toContain('at least 5.75 metres lower');
+    expect(description).toContain('between received endpoints');
+    expect(receivedMeasurementDescription('a person', { status: 'unavailable' })).toBeUndefined();
+    expect(measurement).toEqual({
+      status: 'complete',
+      asOf: 30,
+      lower: 3.604,
+      upper: 3.854,
+      decreaseLower: 0.748,
+      dropLower: 5.755,
+    });
+  });
+
   it('separates earlier memories from received surroundings without hiding actual contact evidence', () => {
     const world = crowded(1);
     const captured = captureSituation(world, PLAYER_ID, 'grounded-render', {
@@ -85,7 +141,7 @@ describe('bounded received situation', () => {
     ).not.toContain('None supplied.');
   });
 
-  it('keeps actually received changes and native relation proof before optional crowd detail', () => {
+  it('keeps actually received changes and native relation proof before optional crowd detail', async () => {
     let world = updateWorld(createWorld(117), (draft) => {
       const observer = entityGet(draft.entities, NPC_ID)!,
         player = entityGet(draft.entities, PLAYER_ID)!,
@@ -214,6 +270,30 @@ describe('bounded received situation', () => {
             (edge.decreaseLower ?? 0) > 0,
         ),
     ).toBe(true);
+    const relation = captured.packet.relations.find((relation) => relation.anchor === reference)!;
+    const boundary = relation.boundaries.find((edge) => (edge.decreaseLower ?? 0) > 0)!;
+    expect(boundary.description).toContain('An acquaintance');
+    expect(boundary.description).toContain('observed physical edge');
+    expect(boundary.description).toContain('Clearance decreased');
+    for (const support of boundary.support ?? [])
+      expect(
+        captured.currentReferences[support] ?? captured.observationReferences[support],
+      ).toBeDefined();
+    expect(boundary.support).toContain(boundary.reference);
+    const expanded = await expandSituation(
+      captured,
+      [{ kind: 'boundaries', anchor: reference }],
+      async () => ({ entries: [], incomplete: true, hasMore: false }),
+    );
+    const queried = (
+      expanded.results[0] as { result: { facts: { description?: string; support?: string[] }[] } }
+    ).result.facts[0]!;
+    expect(queried.description).toContain('An acquaintance');
+    expect(queried.description).toContain('received endpoints');
+    for (const support of queried.support ?? [])
+      expect(
+        captured.currentReferences[support] ?? captured.observationReferences[support],
+      ).toBeDefined();
     expect(captured.packet.coverage.omittedOptionalFacets).toBeGreaterThan(0);
     const suppliedDescriptions = new Set(captured.presented.map((entry) => entry.key));
     expect(captured.packet.coverage.unconsideredDescriptions).toBe(

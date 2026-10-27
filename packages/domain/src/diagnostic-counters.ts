@@ -57,6 +57,8 @@ export const DOMAIN_COUNTERS = [
   'nativeSharedBoundaries',
   'nativePublications',
   'nativeContinuationsReused',
+  'nativeMovementDraftReuses',
+  'nativeMovementIsolated',
   'outingIndexed',
   'outingChecked',
   /** Sensory input preparation, certified draft coverage, affected observers and recovery. */

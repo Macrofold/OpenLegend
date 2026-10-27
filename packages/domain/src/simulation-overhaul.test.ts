@@ -7,7 +7,7 @@ import {
   validateEntityCollection,
   cloneEntities,
 } from './entity-collection.js';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { createWorld, PLAYER_ID, NPC_ID, nextRandom } from './data.js';
 import {
   draftWorld,
@@ -17,7 +17,13 @@ import {
   changedDraftEntityIds,
   sensoryDraftWrites,
 } from './draft.js';
-import { executeCommand } from './kernel.js';
+import { advanceWorld, executeCommand } from './kernel.js';
+import { materializeNativeValues } from './native-values.js';
+import { WorkBudgetError } from './work-budget.js';
+import { ResourceReservationError } from './resource-claims.js';
+import * as nativeController from './native-response-controller.js';
+import * as statusEffects from './status-effects.js';
+import { nativeResponseProfileKey } from './native-response.js';
 import { observeDomainCounters, type DomainCounters } from './diagnostic-counters.js';
 import {
   renewQuietTerritorialReview,
@@ -50,7 +56,136 @@ function result<T>(iterator: Generator<void, T>): T {
   }
 }
 
+function ordinaryWander(distance?: number) {
+  const world = createWorld(163),
+    animal = entityGet(world.entities, 'hare-1')!;
+  world.entities = emptyEntities();
+  entitySet(world.entities, animal.id, animal);
+  world.paused = false;
+  animal.animal!.wander = { remainingSeconds: 1 };
+  if (distance !== undefined) {
+    const pin = animal.animal!.profile,
+      key = nativeResponseProfileKey(pin),
+      profile = structuredClone(world.nativeResponseProfiles![key]!);
+    profile.wander.distance = distance;
+    world.nativeResponseProfiles = { ...world.nativeResponseProfiles, [key]: profile };
+  }
+  reconcileAnimalWander(world, animal);
+  return freezeWorld(world);
+}
+
 describe('simulation overhaul ownership and continuation', () => {
+  it('keeps ordinary native travel in its owning advance with exact restored arithmetic, RNG and semantic boundaries', () => {
+    const initial = ordinaryWander(),
+      before = JSON.stringify(initial),
+      midway = advanceWorld(initial, 0.5).world,
+      snapshot = JSON.stringify(midway),
+      restored = JSON.parse(JSON.stringify(materializeNativeValues(midway))),
+      reference = structuredClone(midway),
+      counters: DomainCounters = {};
+    nextRandom(reference);
+    nextRandom(reference);
+    let warm: typeof initial;
+    observeDomainCounters(counters);
+    try {
+      warm = advanceWorld(midway, 2).world;
+    } finally {
+      observeDomainCounters();
+    }
+    const cold = advanceWorld(restored, 2).world;
+    expect(counters.nativeMovementDraftReuses).toBe(1);
+    expect(counters.nativeMovementIsolated ?? 0).toBe(0);
+    expect(warm.rngState).toBe(reference.rngState);
+    expect(warm.sequence).toBe(midway.sequence + 2);
+    expect(entityGet(warm.entities, 'hare-1')!.actor!.agency.semantic).toEqual(
+      entityGet(midway.entities, 'hare-1')!.actor!.agency.semantic,
+    );
+    expect(materializeNativeValues(warm)).toEqual(materializeNativeValues(cold));
+    expect(JSON.stringify(midway)).toBe(snapshot);
+    expect(JSON.stringify(initial)).toBe(before);
+  });
+
+  it('keeps an in-reach native move in an isolated command transaction', () => {
+    const counters: DomainCounters = {};
+    observeDomainCounters(counters);
+    try {
+      const transition = advanceWorld(ordinaryWander(0.001), 2);
+      expect(transition.outcome.ok).toBe(true);
+    } finally {
+      observeDomainCounters();
+    }
+    expect(counters.nativeMovementDraftReuses ?? 0).toBe(0);
+    expect(counters.nativeMovementIsolated).toBe(1);
+  });
+
+  for (const error of [
+    new WorkBudgetError('work-unavailable', 'tests'),
+    new ResourceReservationError(),
+  ])
+    it(`rolls back the entire native advance after a late ${error.code} in admitted travel`, () => {
+      const initial = ordinaryWander(),
+        before = JSON.stringify(initial),
+        record = nativeController.recordAnimalClockWrite;
+      let failedAfterMutation = false;
+      const failure = vi
+        .spyOn(nativeController, 'recordAnimalClockWrite')
+        .mockImplementation((world, id) => {
+          if (entityGet(world.entities, id)?.actor?.action?.nativeLocomotion?.mode === 'travel') {
+            failedAfterMutation = true;
+            throw error;
+          }
+          return record(world, id);
+        });
+      try {
+        const transition = advanceWorld(initial, 2);
+        expect(failedAfterMutation).toBe(true);
+        expect(transition.outcome.ok).toBe(false);
+        expect(transition.outcome.code).toBe(error.code);
+        expect(transition.world).toBe(initial);
+        expect(transition.events).toEqual([]);
+        expect(JSON.stringify(initial)).toBe(before);
+      } finally {
+        failure.mockRestore();
+      }
+    });
+
+  it('aborts the owning advance rather than falling back after an unexpected post-admission refusal', () => {
+    const initial = ordinaryWander(),
+      before = JSON.stringify(initial),
+      interrupt = statusEffects.interruptStatusEffects;
+    let insertedAfterAdmission = false;
+    const failure = vi
+      .spyOn(statusEffects, 'interruptStatusEffects')
+      .mockImplementation((world, actor, events, reason) => {
+        interrupt(world, actor, events, reason);
+        if (reason === 'new-action' && actor.animal && !actor.actor!.action) {
+          // Deliberate fault injection: a future setup callback could make the
+          // ordinary late refusal reachable after the private parent was written.
+          actor.actor!.action = {
+            id: 'injected-late-status',
+            type: 'status-effect',
+            stage: 'working',
+            path: [],
+            remainingSeconds: 1,
+            totalSeconds: 1,
+            consumed: [],
+            definitionId: 'wilderness:restorative-rest',
+          };
+          insertedAfterAdmission = true;
+        }
+      });
+    try {
+      const transition = advanceWorld(initial, 2);
+      expect(insertedAfterAdmission).toBe(true);
+      expect(transition.outcome).toMatchObject({ ok: false, code: 'cannot-interrupt' });
+      expect(transition.world).toBe(initial);
+      expect(transition.events).toEqual([]);
+      expect(JSON.stringify(initial)).toBe(before);
+    } finally {
+      failure.mockRestore();
+    }
+  });
+
   it('reuses owned entity lookup paths and invalidates only replaced or removed keys', () => {
     const base = freezeWorld(createWorld()),
       world = draftWorld(base),
