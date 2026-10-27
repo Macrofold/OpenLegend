@@ -490,6 +490,8 @@ Navigation activity
 
 Behind/beside need an observed reference frame or heading, not a raw hidden transform. “Follow the exact trail” needs observed trajectory evidence; following the current target does not supply that automatically. Interception needs an admitted estimator or actor hypothesis, not future state access. Some relations are impossible for a particular body/topology; the descriptor must say so.
 
+Full character cognition can select a fixed point in its supplied received decision frame. The server decodes that choice through its owned captured pose into an ordinary world-point invocation before native admission. Actor-frame movement instead uses the actor's pose at admission. A delayed decision cannot silently exchange those meanings, and an untrusted direct command cannot provide a captured pose. [The personal spatial contract](projects/attention-and-scenes-tech-design.md#54-geometric-context-without-an-all-pairs-graph) owns presentation and evidence boundaries.
+
 ### 10.3 Follow state machine
 
 Use family-local state within the AG activity:

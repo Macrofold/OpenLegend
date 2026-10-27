@@ -12,6 +12,7 @@ import {
   type MemoryRecord,
   type SensoryFacet,
   type CapturedCurrentFacet,
+  type PerceivedSpeech,
 } from '@open-legend/domain';
 import {
   entityHandle,
@@ -21,6 +22,32 @@ import {
   personalSourceHandle,
   historicalAccountText,
 } from './entity-references.js';
+import {
+  captureModelSpatialFrame,
+  modelSpatialPoint,
+  modelSpatialVector,
+  modelObservedLocation,
+  modelObservationFrame,
+  type ModelSpatialFrame,
+} from './perceived-context.js';
+
+function speechForModel(frame: ModelSpatialFrame, speech: PerceivedSpeech | undefined) {
+  if (!speech) return undefined;
+  return {
+    ...speech,
+    listenerPosition: modelSpatialPoint(frame, speech.listenerPosition),
+    direction: speech.direction
+      ? {
+          ...modelSpatialVector(frame, {
+            x: Math.cos((speech.direction.sector * Math.PI) / 4),
+            y: 0,
+            z: Math.sin((speech.direction.sector * Math.PI) / 4),
+          }),
+          elevation: speech.direction.elevation,
+        }
+      : null,
+  };
+}
 
 /** The native source tuple stays in the binding. Models receive the same permitted
  * meaning with opaque roles, never the private producer/exposure routing key.
@@ -83,6 +110,7 @@ export function facetValueForModel(
   actorId: string,
   value: SensoryFacet,
   sourceScope: unknown,
+  frame = captureModelSpatialFrame(world, actorId),
 ): unknown {
   switch (value.kind) {
     case 'body':
@@ -90,8 +118,12 @@ export function facetValueForModel(
         kind: value.kind,
         body: {
           label: value.body.label,
-          position: value.body.position,
-          heading: value.body.heading,
+          position: modelSpatialPoint(frame, value.body.position),
+          facing: modelSpatialVector(frame, {
+            x: Math.sin(value.body.heading),
+            y: 0,
+            z: Math.cos(value.body.heading),
+          }),
           radius: value.body.radius,
           height: value.body.height,
           outward: value.body.outward,
@@ -119,18 +151,38 @@ export function facetValueForModel(
         ),
       };
     case 'surface-patch':
-      return { kind: value.kind, patch: value.patch };
+      return {
+        kind: value.kind,
+        patch: {
+          ...value.patch,
+          vertices: value.patch.vertices.map((point) => modelSpatialPoint(frame, point)),
+          normal: modelSpatialVector(frame, value.patch.normal),
+          frame: modelObservationFrame(frame, value.patch.frame),
+        },
+      };
+    case 'location':
+      return {
+        kind: value.kind,
+        location: modelObservedLocation(frame, value.location),
+        frame: modelObservationFrame(frame, value.frame),
+      };
     case 'physical-boundary':
       return {
         kind: value.kind,
         boundary: {
           ...value.boundary,
+          a: modelSpatialPoint(frame, value.boundary.a),
+          b: modelSpatialPoint(frame, value.boundary.b),
           nearSurface: {
             ...value.boundary.nearSurface,
+            point: modelSpatialPoint(frame, value.boundary.nearSurface.point),
+            normal: modelSpatialVector(frame, value.boundary.nearSurface.normal),
             support: supportForModel(world, actorId, value.boundary.nearSurface.support),
           },
           farSurface: {
             ...value.boundary.farSurface,
+            point: modelSpatialPoint(frame, value.boundary.farSurface.point),
+            normal: modelSpatialVector(frame, value.boundary.farSurface.normal),
             support: supportForModel(world, actorId, value.boundary.farSurface.support),
           },
         },
@@ -150,7 +202,7 @@ export function facetValueForModel(
     case 'claim':
       return {
         kind: value.kind,
-        claim: value.claim,
+        claim: { ...value.claim, where: modelObservedLocation(frame, value.claim.where) },
         supportStatus: value.supportAliases?.some((alias) =>
           sourceForgotten(world, actorId, alias.id),
         )
@@ -183,18 +235,24 @@ export function facetValueForModel(
     case 'encounter-exposure':
       return {
         kind: value.kind,
-        exposure: exposureForModel(value.exposure, (id) =>
-          permittedSourceHandle(world, actorId, ['historical-participant', sourceScope, id]),
+        exposure: exposureForModel(
+          value.exposure,
+          (id) =>
+            permittedSourceHandle(world, actorId, ['historical-participant', sourceScope, id]),
+          frame,
         ),
       };
     case 'confirmation':
-      return { kind: value.kind, snapshot: currentFacetForModel(world, actorId, value.snapshot) };
+      return {
+        kind: value.kind,
+        snapshot: currentFacetForModel(world, actorId, value.snapshot, frame),
+      };
     case 'observed-motion':
       return {
         kind: value.kind,
         exposure: permittedSourceHandle(world, actorId, ['exposure', value.exposure]),
-        earlier: currentFacetForModel(world, actorId, value.earlier),
-        later: currentFacetForModel(world, actorId, value.later),
+        earlier: currentFacetForModel(world, actorId, value.earlier, frame),
+        later: currentFacetForModel(world, actorId, value.later, frame),
         correspondence: value.correspondence,
       };
     // Physical feature vectors and intensity margins are native matching inputs.
@@ -206,10 +264,26 @@ export function facetValueForModel(
         kind: value.kind,
         sound: {
           kind: value.sound.kind,
-          direction: value.sound.direction,
-          listenerPosition: value.sound.listenerPosition,
+          direction: value.sound.direction
+            ? {
+                ...modelSpatialVector(frame, {
+                  x: Math.cos((value.sound.direction.sector * Math.PI) / 4),
+                  y: 0,
+                  z: Math.sin((value.sound.direction.sector * Math.PI) / 4),
+                }),
+                elevation: value.sound.direction.elevation,
+              }
+            : null,
+          listenerPosition: modelSpatialPoint(frame, value.sound.listenerPosition),
         },
       };
+    case 'speech':
+      return eventFieldsForModel(
+        world,
+        actorId,
+        { kind: value.kind, speech: speechForModel(frame, value.speech) },
+        sourceScope,
+      );
     case 'pile-contents':
       return {
         kind: value.kind,
@@ -249,6 +323,7 @@ export function currentFacetForModel(
   world: WorldState,
   actorId: string,
   snapshot: CapturedCurrentFacet,
+  frame = captureModelSpatialFrame(world, actorId),
 ) {
   return {
     source: evidenceSourceHandle(world, actorId, {
@@ -275,7 +350,7 @@ export function currentFacetForModel(
           },
         }
       : {}),
-    value: facetValueForModel(world, actorId, snapshot.value, snapshot.original.id),
+    value: facetValueForModel(world, actorId, snapshot.value, snapshot.original.id, frame),
     measuredFrom: snapshot.valueMeasuredFrom,
     measuredThrough: snapshot.valueMeasuredThrough,
     acquiredAt: snapshot.valueAcquiredAt,
@@ -287,6 +362,7 @@ export function observationForModel(
   world: WorldState,
   actorId: string,
   observation: ObservationContribution,
+  frame = captureModelSpatialFrame(world, actorId),
 ) {
   if (observation.observer.actorId !== actorId) throw new Error('Foreign personal observation.');
   const first = observation.facets[0];
@@ -327,7 +403,7 @@ export function observationForModel(
           acquiredAt: facet.acquiredAt,
         }).filter(([key, value]) => !defaults || value !== defaults[key as keyof typeof defaults]),
       ),
-      value: facetValueForModel(world, actorId, facet.value, observation.id),
+      value: facetValueForModel(world, actorId, facet.value, observation.id, frame),
     })),
   };
 }
@@ -377,6 +453,7 @@ export function experienceManifestForModel(
   world: WorldState,
   actorId: string,
   manifest: ExperienceManifest,
+  frame = captureModelSpatialFrame(world, actorId),
 ) {
   return {
     coverage: manifest.coverage.map((source) => ({
@@ -384,14 +461,14 @@ export function experienceManifestForModel(
       reference: personalSourceHandle(world, actorId, source),
     })),
     observations: manifest.observations.map((observation) =>
-      observationForModel(world, actorId, observation),
+      observationForModel(world, actorId, observation, frame),
     ),
     speech: manifest.speech.map((group) => ({
       sources: group.sources.map((source) => personalSourceHandle(world, actorId, source)),
       utterances: group.utterances.map((utterance) => ({
         source: personalSourceHandle(world, actorId, utterance.source),
         at: utterance.at,
-        speech: utterance.speech,
+        speech: speechForModel(frame, utterance.speech),
       })),
       speaker: group.speaker,
       addressee: group.addressee,
@@ -418,6 +495,7 @@ export function experienceManifestForModel(
 function exposureForModel(
   exposure: NonNullable<MemoryRecord['evidence']>['exposure'],
   reference: (id: string) => string,
+  frame: ModelSpatialFrame,
 ) {
   if (!exposure) return undefined;
   if (exposure.kind === 'place')
@@ -427,7 +505,7 @@ function exposureForModel(
       revision: exposure.revision,
       label: exposure.label,
       description: exposure.description,
-      point: exposure.point,
+      point: modelSpatialPoint(frame, exposure.point),
       locationLabel: exposure.locationLabel,
       landmarkReference: reference(exposure.landmarkId),
       mechanismFields: exposure.mechanismFields,
@@ -445,11 +523,16 @@ function exposureForModel(
     mechanismFields: exposure.mechanismFields,
     observedLocation:
       location?.kind === 'world'
-        ? { ...location, containerId: reference(location.containerId) }
+        ? {
+            ...location,
+            point: modelSpatialPoint(frame, location.point),
+            containerId: reference(location.containerId),
+          }
         : location,
   };
 }
 export function memoryMeaningForModel(world: WorldState, actorId: string, memory: MemoryRecord) {
+  const frame = captureModelSpatialFrame(world, actorId);
   const evidence = memory.evidence;
   const historyHandle = (id: string) =>
     id === actorId
@@ -501,7 +584,9 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
             eventType: evidence.eventType,
             ...(!evidence.speech ? { text: evidence.text, content: evidence.content } : {}),
             modality: evidence.modality,
-            ...(nativeSpeech ? { speechFacet: nativeSpeech.ordinal } : { speech: evidence.speech }),
+            ...(nativeSpeech
+              ? { speechFacet: nativeSpeech.ordinal }
+              : { speech: speechForModel(frame, evidence.speech) }),
             ...(evidence.sourceId ? { source: historyHandle(evidence.sourceId) } : {}),
             ...(evidence.targetId ? { target: historyHandle(evidence.targetId) } : {}),
             ...(evidence.sourceSubject
@@ -521,7 +606,7 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
             ...(evidence.exposure
               ? nativeExposure
                 ? { exposureFacet: nativeExposure.ordinal }
-                : { exposure: exposureForModel(evidence.exposure, historyHandle) }
+                : { exposure: exposureForModel(evidence.exposure, historyHandle, frame) }
               : {}),
             references: evidence.references?.map((ref) => ({
               reference: historyHandle(ref.id),
@@ -532,17 +617,17 @@ export function memoryMeaningForModel(world: WorldState, actorId: string, memory
         }
       : {}),
     ...(memory.observation
-      ? { observation: observationForModel(world, actorId, memory.observation) }
+      ? { observation: observationForModel(world, actorId, memory.observation, frame) }
       : {}),
     ...(memory.observations
       ? {
           observations: memory.observations.map((observation) =>
-            observationForModel(world, actorId, observation),
+            observationForModel(world, actorId, observation, frame),
           ),
         }
       : {}),
     ...(memory.manifest
-      ? { retained: experienceManifestForModel(world, actorId, memory.manifest) }
+      ? { retained: experienceManifestForModel(world, actorId, memory.manifest, frame) }
       : {}),
   };
 }

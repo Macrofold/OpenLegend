@@ -547,10 +547,9 @@ export async function prepareDecision(
       ? knowledgePolicyInstructions(world.knowledgePolicy)
       : 'Knowledge is unavailable.',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
-    navigation: navigationInstructions(world),
+    navigation: navigationInstructions(world, true),
     namedTimes: namedClockTimes(world),
     outputFamilies: itemOutputFamilies(world),
-    currentPosition: worldPosition(observed.actor),
     currentSupport: worldSupport(observed.actor),
     publicSurfaces:
       world.map.spatial.disclosure === 'public'
@@ -570,6 +569,8 @@ export async function prepareDecision(
       [],
       [],
       activityDecisionReferences(requiredActivity),
+      [],
+      capturedSituation.frame,
     ).references,
     identity: `I am ${entityLabel(world, observed.actor, actorId)}. Species: ${snapshotActor.species ?? 'unknown'}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
     feelings: decisionFeelings(world, actorId, requiredChoices?.feelings),
@@ -853,10 +854,9 @@ export async function prepareDecision(
       ? knowledgePolicyInstructions(currentWorld.knowledgePolicy)
       : 'Knowledge is unavailable.',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
-    navigation: navigationInstructions(currentWorld),
+    navigation: navigationInstructions(currentWorld, true),
     namedTimes: namedClockTimes(currentWorld),
     outputFamilies: itemOutputFamilies(currentWorld),
-    currentPosition: worldPosition(currentObserved.actor),
     currentSupport: worldSupport(currentObserved.actor),
     publicSurfaces:
       currentWorld.map.spatial.disclosure === 'public'
@@ -953,6 +953,7 @@ export async function prepareDecision(
       .slice(0, 16),
     activityDecisionReferences(currentActivity),
     currentSelection.flatMap((candidate) => candidate.subjects ?? []),
+    capturedSituation.frame,
   );
   context['references'] = references.references;
   const planningTargetIds = planOffers.flatMap(({ command }) =>

@@ -11,6 +11,7 @@ export * from './social-policy.js';
 export * from './ranged-policy.js';
 export * from './native-command-contracts.js';
 export * from './types.js';
+export { headingFrame } from './follow.js';
 export * from './perception-evidence.js';
 export * from './perception-support.js';
 export * from './worlds/base/initial-opening.js';

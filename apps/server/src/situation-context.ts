@@ -32,7 +32,15 @@ import {
 } from './entity-references.js';
 import { facetValueForModel, observationForModel } from './experience-context.js';
 import type { TemporalHistoryPage } from './temporal-storage.js';
-import { presentedSpatialSubject, receivedMeasurementDescription } from './perceived-context.js';
+import {
+  presentedSpatialSubject,
+  receivedMeasurementDescription,
+  captureModelSpatialFrame,
+  modelObservationFrame,
+  modelObservedLocation,
+  modelSpatialBounds,
+  type ModelSpatialFrame,
+} from './perceived-context.js';
 
 function readableMeasurement(
   anchorFacts: Parameters<typeof presentedSpatialSubject>[0],
@@ -100,6 +108,7 @@ export function temporalHistoryForModel(
   world: WorldState,
   actorId: string,
   selection: TemporalHistorySelection,
+  frame = captureModelSpatialFrame(world, actorId),
 ) {
   return {
     coverage: selection.incomplete ? 'partial' : 'selected-retained',
@@ -131,7 +140,13 @@ export function temporalHistoryForModel(
           ...(fact.confirmedThrough !== undefined
             ? { confirmedThrough: fact.confirmedThrough }
             : {}),
-          value: temporalValueForModel(world, actorId, value, [receipt.epoch, receipt.ordinal]),
+          value: temporalValueForModel(
+            world,
+            actorId,
+            value,
+            [receipt.epoch, receipt.ordinal],
+            frame,
+          ),
         };
       }),
     })),
@@ -142,6 +157,7 @@ function temporalValueForModel(
   actorId: string,
   value: TemporalValue,
   scope: unknown,
+  frame: ModelSpatialFrame,
 ): unknown {
   if (value.kind === 'personal-account')
     return {
@@ -153,22 +169,22 @@ function temporalValueForModel(
     return {
       kind: value.kind,
       earlier: {
-        location: value.earlier.location,
-        frame: value.earlier.frame,
+        location: modelObservedLocation(frame, value.earlier.location),
+        frame: modelObservationFrame(frame, value.earlier.frame),
         measuredFrom: value.earlier.measuredFrom,
         measuredThrough: value.earlier.measuredThrough,
         acquiredAt: value.earlier.acquiredAt,
       },
       later: {
-        location: value.later.location,
-        frame: value.later.frame,
+        location: modelObservedLocation(frame, value.later.location),
+        frame: modelObservationFrame(frame, value.later.frame),
         measuredFrom: value.later.measuredFrom,
         measuredThrough: value.later.measuredThrough,
         acquiredAt: value.later.acquiredAt,
       },
       correspondence: value.correspondence,
     };
-  return facetValueForModel(world, actorId, value, scope);
+  return facetValueForModel(world, actorId, value, scope, frame);
 }
 
 /** Captured permitted inputs, with private routing maps kept outside model/player text. */
@@ -179,7 +195,8 @@ export function captureSituation(
   retainedHistory: TemporalHistorySelection,
 ) {
   const policy = selectedAttentionPolicy(world).scene,
-    scene = receivedScene(world, actorId);
+    scene = receivedScene(world, actorId),
+    frame = captureModelSpatialFrame(world, actorId);
   const geometry = currentReceivedGeometry(world, actorId);
   const cut = captureEvidenceCut(world, actorId, geometry.observations),
     entries = currentDetailedAttention(world, actorId);
@@ -301,27 +318,30 @@ export function captureSituation(
                 correspondence: facet.value.correspondence,
                 earlier: indexedFrame(
                   {
-                    location: facet.value.earlier.value.location,
+                    location: modelObservedLocation(frame, facet.value.earlier.value.location),
                     measuredFrom: facet.value.earlier.valueMeasuredFrom,
                     measuredThrough: facet.value.earlier.valueMeasuredThrough,
                   },
-                  facet.value.earlier.value.frame,
+                  modelObservationFrame(frame, facet.value.earlier.value.frame),
                 ),
                 later: indexedFrame(
                   {
-                    location: facet.value.later.value.location,
+                    location: modelObservedLocation(frame, facet.value.later.value.location),
                     measuredFrom: facet.value.later.valueMeasuredFrom,
                     measuredThrough: facet.value.later.valueMeasuredThrough,
                   },
-                  facet.value.later.value.frame,
+                  modelObservationFrame(frame, facet.value.later.value.frame),
                 ),
               }
             : facet.value.kind === 'location'
               ? indexedFrame(
-                  { kind: facet.value.kind, location: facet.value.location },
-                  facet.value.frame,
+                  {
+                    kind: facet.value.kind,
+                    location: modelObservedLocation(frame, facet.value.location),
+                  },
+                  modelObservationFrame(frame, facet.value.frame),
                 )
-              : facetValueForModel(world, actorId, facet.value, facet.original.id);
+              : facetValueForModel(world, actorId, facet.value, facet.original.id, frame);
         return {
           reference,
           value,
@@ -394,7 +414,7 @@ export function captureSituation(
   );
   for (const observation of staticObservations) {
     if (staticRows.length >= policy.staticRows) break;
-    const row = observationForModel(world, actorId, observation),
+    const row = observationForModel(world, actorId, observation, frame),
       size = Buffer.byteLength(JSON.stringify(row));
     if (staticBytes + size > policy.staticBytes) continue;
     staticRows.push(row);
@@ -508,14 +528,14 @@ export function captureSituation(
     measuredAt: world.simTime,
     frames,
     frameEncoding:
-      'Detailed body location/motion frames are indices into frames; other observations retain their captured frame objects. Coordinates remain received world positions.',
+      'Spatial components are metres right, above and forward from my position and facing at this decision cut, not learned global coordinates. Detailed location/motion acquisition frames are indices into frames; all original measurement times remain independent. Bounds conservatively enclose distinct received membership groups and can overlap after rotation.',
     measurementEncoding:
       'Relation lower/upper conservatively bound body separation or boundary clearance in metres. Positive decreaseLower is the minimum supported decrease between measured endpoints, not a continuous path, speed or intent. dropLower is the minimum received vertical drop beyond the observed boundary; it proves neither crossing nor danger. Partial coverage is not absence.',
-    units: { space: 'metres', time: 'simulation-seconds', frame: 'received-world-Y-up' },
+    units: { space: 'metres', time: 'simulation-seconds', frame: 'decision-relative' },
     broad: cover.rows.map((row) => ({
       reference: permittedSourceHandle(world, actorId, ['region', jobId, row.key]),
       count: row.count,
-      bounds: row.bounds,
+      bounds: modelSpatialBounds(frame, row.bounds),
       detail: 'unexpanded',
     })),
     nonlocalized: { count: scene.nonlocalized, detail: 'not-spatially-localized' },
@@ -529,7 +549,7 @@ export function captureSituation(
     detailed,
     relations,
     discovery,
-    recent: temporalHistoryForModel(world, actorId, history),
+    recent: temporalHistoryForModel(world, actorId, history, frame),
     coverage: {
       bodies: scene.bodies.size,
       broadRows: cover.rows.length,
@@ -571,7 +591,7 @@ export function captureSituation(
     packet.broad = cover.rows.map((row) => ({
       reference: permittedSourceHandle(world, actorId, ['region', jobId, row.key]),
       count: row.count,
-      bounds: row.bounds,
+      bounds: modelSpatialBounds(frame, row.bounds),
       detail: 'unexpanded',
     }));
   }
@@ -738,6 +758,7 @@ export function captureSituation(
   };
   return {
     world,
+    frame,
     actorId,
     jobId,
     packet,
@@ -952,7 +973,7 @@ export async function expandSituation(
         });
         captured.bindHistory(history);
         // Historical receipts stay historical; expansion never invents a current entity lease.
-        result = temporalHistoryForModel(world, actorId, history);
+        result = temporalHistoryForModel(world, actorId, history, captured.frame);
         keepNewest = true;
       }
     } else if (query.kind === 'boundaries') {
@@ -981,7 +1002,7 @@ export async function expandSituation(
               revision: observation.revision,
             })
           ] = observation;
-          const presented = observationForModel(world, actorId, observation);
+          const presented = observationForModel(world, actorId, observation, captured.frame);
           const measurement = receivedBoundarySeparation(body, boundary, {
             from: observation.acquiredAt,
             through: captured.geometry.supportedThrough,

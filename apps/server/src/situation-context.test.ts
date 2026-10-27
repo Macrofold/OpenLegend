@@ -19,6 +19,7 @@ import {
   selectedAttentionPolicy,
   updateWorld,
   executeCommand,
+  bindActionInvocation,
 } from '@open-legend/domain';
 import {
   captureSituation,
@@ -33,6 +34,7 @@ import { readableDecisionContext } from './response-context.js';
 import { presentedSpatialSubject, receivedMeasurementDescription } from './perceived-context.js';
 import { appendMemory } from '../../../packages/domain/src/events.js';
 import { cloneValue } from '../../../packages/domain/src/draft.js';
+import { facetValueForModel } from './experience-context.js';
 import { assignGivenName } from '../../../packages/domain/src/worlds/base/knowledge.js';
 
 function crowded(count = 16) {
@@ -58,6 +60,115 @@ function crowded(count = 16) {
 }
 
 describe('bounded received situation', () => {
+  it('presents received space relative to one captured pose and keeps its selected destination fixed', () => {
+    const world = crowded(1),
+      actor = entityGet(world.entities, PLAYER_ID)!;
+    actor.spatial.heading = Math.PI / 2;
+    initializePerception(world, []);
+    const captured = captureSituation(world, PLAYER_ID, 'relative-space', {
+      entries: [],
+      incomplete: false,
+    });
+    const text = JSON.stringify(captured.packet);
+    expect(text).toContain('decision-relative');
+    expect(text).toContain('"right"');
+    expect(text).not.toMatch(/"(?:x|y|z)":/);
+    const shape = boundResponseSchema(
+      ['self'],
+      [],
+      { speech: false, expressions: false },
+      [],
+      [],
+      [],
+      undefined,
+      [],
+      [],
+      { attention: [], retention: [], frame: captured.frame },
+    );
+    const invocation = {
+      family: 'move',
+      parameters: null,
+      x: 1,
+      z: 3,
+      surfaceId: null,
+      frame: 'received',
+      place: null,
+      targetEntityId: null,
+      distance: null,
+      relation: null,
+      onLost: null,
+      until: null,
+      itemId: null,
+      quantity: null,
+    };
+    const choice = {
+      kind: 'invoke',
+      mode: 'enqueue',
+      actionId: null,
+      verb: null,
+      targetEntityId: null,
+      description: null,
+      slots: null,
+      invocation,
+    };
+    const envelope = (act: unknown) => ({
+      operations: [
+        {
+          localId: 'move',
+          requiresAccepted: [],
+          act,
+          talk: null,
+          think: null,
+          goal: null,
+          plan: null,
+          note: null,
+          name: null,
+          appraise: null,
+          observe: null,
+          remember: null,
+        },
+      ],
+    });
+    const providerSchema = z.toJSONSchema(shape, { target: 'draft-7', io: 'input' });
+    expect(JSON.stringify(providerSchema)).toContain('"received"');
+    expect(JSON.stringify(providerSchema)).not.toContain('"oneOf"');
+    // A later pose cannot reinterpret the point seen in this prepared decision.
+    setSpatialPosition(world, actor, { x: 8, y: 0, z: 8 }, worldSupport(actor), 'physical');
+    actor.spatial.heading = 0;
+    const selected = shape.parse(envelope(choice)).operations[0]!.act!.invocation!;
+    expect(selected.frame).toBe('world');
+    expect(selected.x).toBeCloseTo(4);
+    expect(selected.z).toBeCloseTo(3);
+    const native = bindActionInvocation(world, PLAYER_ID, 'captured-destination', selected, []);
+    expect('type' in native && native.type).toBe('move');
+    if (!('type' in native) || native.type !== 'move') throw new Error('Expected native move.');
+    expect(native.destination.x).toBeCloseTo(4);
+    expect(native.destination.z).toBeCloseTo(3);
+    const current = shape.parse(
+      envelope({ ...choice, invocation: { ...invocation, frame: 'actor' } }),
+    );
+    expect(current.operations[0]!.act!.invocation!.frame).toBe('actor');
+    const unsupported = boundResponseSchema(['self'], [], { speech: false, expressions: false });
+    expect(unsupported.safeParse(envelope(choice)).success).toBe(false);
+    const speech = {
+      kind: 'speech' as const,
+      speech: {
+        perception: 'heard' as const,
+        intelligibility: 'clear' as const,
+        segments: [{ kind: 'heard' as const, text: 'The sign says x=100, z=50.' }],
+        speaker: null,
+        addressee: null,
+        addressing: 'ambient' as const,
+        delivery: 'normal' as const,
+        direction: null,
+        listenerPosition: { x: 1, y: 0, z: 2 },
+      },
+    };
+    expect(
+      JSON.stringify(facetValueForModel(world, PLAYER_ID, speech, 'literal', captured.frame)),
+    ).toContain('The sign says x=100, z=50.');
+    expect(speech.speech.listenerPosition).toEqual({ x: 1, y: 0, z: 2 });
+  });
   it('words only emitted supported names and rounds measurement guarantees conservatively', () => {
     expect(
       presentedSpatialSubject([

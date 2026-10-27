@@ -3239,6 +3239,7 @@ export class AiDirector {
         Object.keys(prepared.binding.identityReferences ?? {}),
         Object.keys(prepared.binding.physicalEntityReferences ?? {}),
         {
+          frame: prepared.situation.frame,
           attention: Object.keys(prepared.situation.attentionReferences),
           retention: [
             ...Object.keys(prepared.situation.retentionReferences),
@@ -3318,7 +3319,7 @@ export class AiDirector {
         ...schema.shape,
       })
       .strict();
-    const responseSchema = z.toJSONSchema(querySchema, { target: 'draft-7' });
+    const responseSchema = z.toJSONSchema(querySchema, { target: 'draft-7', io: 'input' });
     let value: unknown;
     if (requestedActivity) value = requestedActivity;
     else if (executedRoute === 'level1') {
@@ -3431,7 +3432,7 @@ export class AiDirector {
             throw new ContextBudgetError(
               'The bounded situation expansion exceeds the decision input allowance.',
             );
-          const finalSchema = z.toJSONSchema(schema, { target: 'draft-7' });
+          const finalSchema = z.toJSONSchema(schema, { target: 'draft-7', io: 'input' });
           if (textBytes(finalSchema) > levelLimit.schemaBytes)
             throw new ContextBudgetError('The expanded response schema exceeds its allowance.');
           value = await this.generate<unknown>(

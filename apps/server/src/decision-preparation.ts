@@ -117,6 +117,7 @@ export async function prepareReconsideration(
     appraisal?.schema,
     Object.keys(prepared.binding.identityReferences ?? {}),
     Object.keys(prepared.binding.physicalEntityReferences ?? {}),
+    { attention: [], retention: [], frame: prepared.situation.frame },
   );
   const current = async () => {
     if (

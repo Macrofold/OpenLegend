@@ -25,6 +25,7 @@ import { speechDescription, type Awareness, type WorldState } from '@open-legend
 import { gameTime } from './recall.js';
 import type { JsonValue } from '@open-legend/ai';
 import type { WorldService } from './world-service.js';
+import { captureModelSpatialFrame, modelSpatialPoint } from './perceived-context.js';
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */
 export function responseTrigger(
@@ -158,7 +159,7 @@ export function readableDecisionContext(
         ]
       : []),
     `## Private intentions and native work\n${formatIntentions(context['agency'])}\nThese are intentions and actual step dispositions, never proof that an objective was achieved. Reconsider an existing purpose when its reason has ended, an opportunity was declined, or an unchanged obstacle prevents progress. Continuing for a remaining reason is legitimate; a trait alone does not require restarting completed work.`,
-    `## Native navigation\n${context['navigation'] ?? ''}\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport']}\nPublic supports: ${JSON.stringify(context['publicSurfaces'] ?? [])}`,
+    `## Native navigation\n${context['navigation'] ?? ''}\nSpatial offsets are metres right, above and forward from my position and facing at this decision cut; this is an internal measurement frame, not learned global coordinate vocabulary. Support: ${context['currentSupport']}\nPublic supports: ${JSON.stringify(context['publicSurfaces'] ?? [])}`,
     `## Current time\n${context['now']} (simulation seconds: ${context['simTime'] ?? 'unavailable'})`,
     ...(context['activityRequests']
       ? [
@@ -227,6 +228,7 @@ export function responseReferences(
   /** Current prepared request choices and an explicitly inspected container page. */
   inspectedIds: string[] = [],
   learnedSubjects: ObserverSubject[] = [],
+  frame = captureModelSpatialFrame(world, actorId),
 ) {
   visibleIds = visibleIds.filter((id) => !!currentBodyObservation(world, actorId, id));
   const evidence = new Set(evidenceIds);
@@ -295,7 +297,7 @@ export function responseReferences(
       currentBody: !!received,
       ...(received
         ? {
-            position: received.value.body.position,
+            position: modelSpatialPoint(frame, received.value.body.position),
             positionMeasuredFrom: received.valueMeasuredFrom,
             positionMeasuredThrough: received.valueMeasuredThrough,
             positionAcquiredAt: received.valueAcquiredAt,

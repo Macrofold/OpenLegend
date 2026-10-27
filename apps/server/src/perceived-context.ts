@@ -4,11 +4,103 @@ import {
   currentObservedFacets,
   observerName,
   worldPosition,
+  worldSupport,
+  entityGet,
+  headingFrame,
   type Entity,
+  type Position,
+  type ObservationFrame,
+  type ObservedLocation,
   type WorldState,
 } from '@open-legend/domain';
 import { entityHandle } from './entity-references.js';
 import type { AttentionCandidate } from './recall.js';
+
+/** One owned frame per decision, shared by presentation and fixed-point movement.
+ * Native evidence keeps its original world coordinates and acquisition frame. */
+export interface ModelSpatialFrame {
+  position: Position;
+  axes: ReturnType<typeof headingFrame>;
+  support: string | null;
+}
+export function captureModelSpatialFrame(world: WorldState, actorId: string): ModelSpatialFrame {
+  const actor = entityGet(world.entities, actorId);
+  if (!actor) throw new Error('A spatial presentation requires its observer.');
+  return {
+    position: { ...worldPosition(actor) },
+    axes: headingFrame(actor.spatial.heading),
+    support: worldSupport(actor),
+  };
+}
+export function modelSpatialVector(frame: ModelSpatialFrame, vector: Position) {
+  return {
+    right: vector.x * frame.axes.right.x + vector.z * frame.axes.right.z,
+    above: vector.y,
+    forward: vector.x * frame.axes.forward.x + vector.z * frame.axes.forward.z,
+  };
+}
+export function modelSpatialPoint(frame: ModelSpatialFrame, point: Position) {
+  return modelSpatialVector(frame, {
+    x: point.x - frame.position.x,
+    y: point.y - frame.position.y,
+    z: point.z - frame.position.z,
+  });
+}
+export function worldPointFromModel(frame: ModelSpatialFrame, right: number, forward: number) {
+  return {
+    x: frame.position.x + right * frame.axes.right.x + forward * frame.axes.forward.x,
+    z: frame.position.z + right * frame.axes.right.z + forward * frame.axes.forward.z,
+  };
+}
+export function modelObservationFrame(frame: ModelSpatialFrame, observed: ObservationFrame) {
+  return {
+    observerAtAcquisition: modelSpatialPoint(frame, observed.positionAtObservation),
+    ...(observed.forwardAtObservation !== undefined
+      ? {
+          facingAtAcquisition: modelSpatialVector(frame, {
+            x: Math.sin(observed.forwardAtObservation),
+            y: 0,
+            z: Math.cos(observed.forwardAtObservation),
+          }),
+        }
+      : {}),
+  };
+}
+export function modelObservedLocation(frame: ModelSpatialFrame, location: ObservedLocation) {
+  if (location.kind === 'point')
+    return { ...location, point: modelSpatialPoint(frame, location.point) };
+  if (location.kind === 'region')
+    return { ...location, center: modelSpatialPoint(frame, location.center) };
+  // The received bearing's sector is measured in the source's global X/Z plane.
+  const direction = modelSpatialVector(frame, {
+    x: Math.cos((location.sector * Math.PI) / 4),
+    y: 0,
+    z: Math.sin((location.sector * Math.PI) / 4),
+  });
+  return {
+    kind: location.kind,
+    from: modelSpatialPoint(frame, location.from),
+    direction,
+    elevation: location.elevation,
+    spread: location.spread,
+  };
+}
+export function modelSpatialBounds(
+  frame: ModelSpatialFrame,
+  bounds: { min: Position; max: Position },
+) {
+  const corners = [bounds.min.x, bounds.max.x].flatMap((x) =>
+    [bounds.min.z, bounds.max.z].map((z) => modelSpatialPoint(frame, { x, y: bounds.min.y, z })),
+  );
+  return {
+    right: [Math.min(...corners.map((p) => p.right)), Math.max(...corners.map((p) => p.right))],
+    above: [bounds.min.y - frame.position.y, bounds.max.y - frame.position.y],
+    forward: [
+      Math.min(...corners.map((p) => p.forward)),
+      Math.max(...corners.map((p) => p.forward)),
+    ],
+  };
+}
 
 type PresentedSpatialFact = { reference?: unknown; value?: unknown };
 type ReceivedMeasurement = {

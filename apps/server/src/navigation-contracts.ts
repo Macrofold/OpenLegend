@@ -98,11 +98,16 @@ export function namedTimeSchema(world: WorldState) {
   return names.length ? z.enum(names as [string, ...string[]]).nullable() : z.null();
 }
 /** Built per world: the stopping-time names come from the world's own clock policy. */
-export function navigationInstructions(world: WorldState): string {
+export function navigationInstructions(world: WorldState, receivedFrame = false): string {
   const times = namedClockTimes(world);
   const navigation = NAVIGATION_TEXT.replace(
     '{until}',
     times.length ? `, until ${times.join('/')} to end it` : '',
+  ).replace(
+    '{received}',
+    receivedFrame
+      ? '; or frame received with x metres right and z metres forward in the supplied decision-relative frame, selecting a fixed point from when this decision was prepared even if I move or turn before admission'
+      : '',
   );
   const requests = activityRequestDescriptors(world);
   // Both decision and action-grounding contexts supply the complete descriptors.
@@ -112,4 +117,4 @@ export function navigationInstructions(world: WorldState): string {
     : navigation;
 }
 const NAVIGATION_TEXT =
-  'For movement or item handling not listed in suggestions use act.kind=invoke with invocation fields family, parameters, x, z, surfaceId, frame, place, targetEntityId, distance, relation, onLost, until, itemId, quantity (unused fields null). Navigation uses parameters null. Pickup: targetEntityId is a visible pile, itemId one stack in it or null for everything, quantity an exact count or null. Drop: itemId a possession, quantity exact or null for the whole stack as it is now. Move: world X/Z (not height) with frame world; or frame actor with x metres right and z metres forward of your own facing; or place target (near a visible target now) or place last-seen (where you last saw that target) with targetEntityId. Follow: targetEntityId, optional distance, relation near/behind/beside/left/right (behind/beside use the direction you saw them travel), onLost stop or last-seen{until}. Follow stops on lost sight unless onLost last-seen, on cancellation or native interruption; it has no stealth. Put a request with unsupported qualifiers in kind=proposal instead, preserving its text and optional targetEntityId, so fulfillment can be reviewed. Never silently drop a requirement by choosing a direct invocation. For any non-invoke act, invocation is null.';
+  'For movement or item handling not listed in suggestions use act.kind=invoke with invocation fields family, parameters, x, z, surfaceId, frame, place, targetEntityId, distance, relation, onLost, until, itemId, quantity (unused fields null). Navigation uses parameters null. Pickup: targetEntityId is a visible pile, itemId one stack in it or null for everything, quantity an exact count or null. Drop: itemId a possession, quantity exact or null for the whole stack as it is now. Move: world X/Z (not height) with frame world when those coordinates are actually known; or frame actor with x metres right and z metres forward of your own facing at admission{received}; or place target (near a visible target now) or place last-seen (where you last saw that target) with targetEntityId. Follow: targetEntityId, optional distance, relation near/behind/beside/left/right (behind/beside use the direction you saw them travel), onLost stop or last-seen{until}. Follow stops on lost sight unless onLost last-seen, on cancellation or native interruption; it has no stealth. Put a request with unsupported qualifiers in kind=proposal instead, preserving its text and optional targetEntityId, so fulfillment can be reviewed. Never silently drop a requirement by choosing a direct invocation. For any non-invoke act, invocation is null.';

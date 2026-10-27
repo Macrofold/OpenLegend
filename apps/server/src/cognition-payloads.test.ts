@@ -209,7 +209,7 @@ function references(context: string) {
           label: string;
           relation?: string;
           currentBody?: boolean;
-          position?: { x: number; y: number; z: number };
+          position?: { right: number; above: number; forward: number };
           triggerRoles: { role: string }[];
         },
     );
@@ -1549,7 +1549,11 @@ describe('actual director situation query continuation', () => {
           // reaches the unlisted crowd without replaying all nearer details.
           const anchor = offered
             .filter((entry) => entry.currentBody && entry.position && entry.relation !== 'myself')
-            .sort((a, b) => b.position!.z - a.position!.z || b.position!.x - a.position!.x)[0];
+            .sort(
+              (a, b) =>
+                Math.hypot(b.position!.right, b.position!.above, b.position!.forward) -
+                Math.hypot(a.position!.right, a.position!.above, a.position!.forward),
+            )[0];
           expect(anchor, 'An actually offered current body is required.').toBeDefined();
           return {
             operations: [],

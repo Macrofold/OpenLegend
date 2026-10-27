@@ -195,7 +195,12 @@ export function compileDecisionTask(
     ]),
   );
   const schema = z.object({ answers: z.object(answerSchemas).strict() }).strict();
-  const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7', unrepresentable: 'throw' });
+  // Providers emit schema inputs; decoding can then bind captured native values.
+  const jsonSchema = z.toJSONSchema(schema, {
+    target: 'draft-7',
+    unrepresentable: 'throw',
+    io: 'input',
+  });
   const questions = Object.fromEntries(
     Object.entries(tasks).map(([id, task]) => {
       const { valueSchema: _schema, ...description } = task;
