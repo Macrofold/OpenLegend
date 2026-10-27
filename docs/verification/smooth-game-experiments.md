@@ -1,7 +1,7 @@
 # Making OpenLegend run smoothly at 3×
 
-| Status      | Current progress                                                                                                               | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Status      | Current progress                                                                                                                              | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Historical experiments are preserved; smooth 3× remains unresolved, runtime work is stopped, and a new proposal batch links from this report. | 2026-10-16   |
 
 ## Read this first: what we know now

@@ -30,17 +30,16 @@ The complete per-run reviewer is prepared before the first run. It rechecks full
 
 Private launch plan: `ol-pf180-fixed-launch-plan-20261016-a.json`, SHA-256 `e3725ab2fb4bd0e8856a32547692d9995ce8c9f86c1bb4f5494893cbe1e54466`. Static/helper audit SHA-256: `154a4136f79e2605aa6fc78fafb8b088f557dfff4e71e1a2add6a462c17469ce`. Original source/type/worker/native/SQL proofs are unchanged and pinned. The first control is running; no write-cost gain or game acceptance exists yet.
 
-
 ## Four complete fixed bursts
 
-Every phase closes normally and passes the original source/catalog/volume/data/privacy/rollback/load/reopen/owned-cleanup gates. Every burst publishes the same 64 synthetic signals to fifteen witnesses, adding exactly 960 awareness/searchable rows. Complete logical worlds, all 131 canonical tables  / 5,061 rows and all three derived tables  / 1,759 rows match without masking. Ordinary sixteen-plan admissions still take sixteen saves  / 128 requests. No parameter/value/row/order difference explains the following physical write reduction.
+Every phase closes normally and passes the original source/catalog/volume/data/privacy/rollback/load/reopen/owned-cleanup gates. Every burst publishes the same 64 synthetic signals to fifteen witnesses, adding exactly 960 awareness/searchable rows. Complete logical worlds, all 131 canonical tables / 5,061 rows and all three derived tables / 1,759 rows match without masking. Ordinary sixteen-plan admissions still take sixteen saves / 128 requests. No parameter/value/row/order difference explains the following physical write reduction.
 
-| Fixed phase | Complete event-and-save elapsed | Game-process CPU | Searchable inserts inside PostgreSQL | Recovery-log bytes |
-| --- | ---: | ---: | ---: | ---: |
-| Control first |370.5ms|174.9ms|51.3ms|2,442,512|
-| Candidate first |365.9ms|210.9ms|22.9ms|525,266|
-| Candidate second |534.3ms|278.4ms|28.2ms|525,266|
-| Control last |660.6ms|186.9ms|187.4ms|2,442,512|
+| Fixed phase      | Complete event-and-save elapsed | Game-process CPU | Searchable inserts inside PostgreSQL | Recovery-log bytes |
+| ---------------- | ------------------------------: | ---------------: | -----------------------------------: | -----------------: |
+| Control first    |                         370.5ms |          174.9ms |                               51.3ms |          2,442,512 |
+| Candidate first  |                         365.9ms |          210.9ms |                               22.9ms |            525,266 |
+| Candidate second |                         534.3ms |          278.4ms |                               28.2ms |            525,266 |
+| Control last     |                         660.6ms |          186.9ms |                              187.4ms |          2,442,512 |
 
 Both inserts are the same 526-row and 434-row actual SQL statements in every phase. Removing fourteen secondary indexes makes mean insert execution **119.35→25.55ms**, about79% lower, and both candidates beat both controls for that operation. The final control's slower second insert affects the mean; all individual values remain visible. Planning is **6.72→8.88ms**, rather than an improvement.
 

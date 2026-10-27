@@ -30,13 +30,13 @@ The process closes normally with exact owned cleanup and unchanged source / work
 
 The longest save is **6.908 seconds** and the longest SQL callback is **1.764 seconds**. The prior seven-second timer pause does not recur: timer lateness peaks at **380 ms**, and recorded garbage collection at **103 ms**. This does not repair or explain the earlier severe control failure.
 
-| Actual recorded writer cost in this game | Elapsed time |
-| --- | ---: |
+| Actual recorded writer cost in this game                     | Elapsed time |
+| ------------------------------------------------------------ | -----------: |
 | PostgreSQL processing / waiting inside the writer connection | **45.486 s** |
-| The same writer requests through application callbacks | **63.217 s** |
-| Writer parsing | **5.355 s** |
-| Writer preparing bound values | **7.085 s** |
-| Writer executing extended requests | **31.327 s** |
+| The same writer requests through application callbacks       | **63.217 s** |
+| Writer parsing                                               |  **5.355 s** |
+| Writer preparing bound values                                |  **7.085 s** |
+| Writer executing extended requests                           | **31.327 s** |
 
 The separate parse/bind/execute/simple categories sum to the database total; application waits overlap save and other stages. Neither total is pure CPU. Reader requests add 1.707 seconds inside PostgreSQL / 8.022 seconds through callbacks; trivial reference queries add 0.776 / 11.816 seconds. Their connections run in parallel, so do not add those totals as an exclusive timeline.
 

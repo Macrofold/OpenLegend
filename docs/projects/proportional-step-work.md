@@ -1,7 +1,7 @@
 # Work proportional to what a moment affects
 
-| Status      | Current progress                                                                                                                     | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| Status      | Current progress                                                                                                                                          | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | NP02 sensory preparation and measured current-read improvements are retained; proportional continuous state, status/work and publication remain proposed. | 2026-10-16   |
 
 **Scope:** NP02 delivers the source-preparation portion of stage 2, and PW08 supplies the earlier bounded improvements identified below; the remaining stages are proposed work, not approved for implementation. Further implementation starts only with Mike's go-ahead. The choices at the end are proposals with their reasons, not independent implementation approval. Requested by Mike in chat on 2026-09-29 as the general follow-up to the [regional time and navigation work](regional-time-and-navigation.md). The documents that define current behavior stay authoritative: [simulation time](../simulation-time.md), [base-world time](../worlds/base/time.md), and the [boundary catalogue](../maintainers/simulation-boundaries.md), which is the maintainers' table of every kind of moment that can end a step. The trackers are linked from each stage.

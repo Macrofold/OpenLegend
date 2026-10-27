@@ -26,11 +26,11 @@ One sixty-second measurement is released under the preregistered bounds. Private
 
 The complete sixty-second minimal measurement passes its result, recording, bounds and exact owned-cleanup checks. All **298 constant queries** return the expected number. There are no query/connection errors or in-flight skips; three nominal opportunities are unissued because timers do not maintain a perfect ideal schedule. The helper uses **319 ms of CPU** across the minute.
 
-| No-game measurement | 95th percentile | Maximum |
-| --- | ---: | ---: |
-| Constant query through the application callback | **19.20 ms** | **51.62 ms** |
-| The same query inside PostgreSQL | **2.39 ms** | **18.53 ms** |
-| How late the fifty-millisecond timer runs | **5.21 ms** | **33.79 ms** |
+| No-game measurement                             | 95th percentile |      Maximum |
+| ----------------------------------------------- | --------------: | -----------: |
+| Constant query through the application callback |    **19.20 ms** | **51.62 ms** |
+| The same query inside PostgreSQL                |     **2.39 ms** | **18.53 ms** |
+| How late the fifty-millisecond timer runs       |     **5.21 ms** | **33.79 ms** |
 
 System load is still very high, 183.50→120.65 on ten logical CPUs, but neither the 7.3-second timer delay nor a multi-second query occurs. This means the system-load number alone cannot explain the failed game. It does not rule out intermittent interference, paging of the much larger game process, or write-specific waits: this minimal case performs **reads**, not ordinary game saves / WAL flushes. Its timing window is later than the failed game and is not a matched causal comparison.
 
