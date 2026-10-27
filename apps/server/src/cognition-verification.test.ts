@@ -405,10 +405,10 @@ async function harness(
     async confirmCompletion(requestId: string, provider: 'jev' | 'openai') {
       // Independent outcome specimens can proceed only after the simulated provider
       // confirms the preceding unknown execution ended. Unpriced cost remains accounted for.
-      expect(await execution.primaryAvailable()).toBe(false);
+      expect(Object.values(execution.snapshot())).toContain('unknown');
       await store.settle(requestId, receipt(requestId, provider, { estimatedCostUsd: undefined }));
       await execution.reconcile(store);
-      expect(await execution.primaryAvailable()).toBe(true);
+      expect(Object.values(execution.snapshot())).not.toContain('unknown');
     },
     async chat(id: string, text: string): Promise<JobRecord> {
       const result = await director.submit('chat', id, text, NPC_ID);
@@ -723,6 +723,13 @@ describe(
       });
       expect(h.director.executionSource).toBe('test-fixture');
       const first = await h.chat('fresh-1', 'Hello');
+      expect(
+        h.service.world.experience?.awareness[NPC_ID]?.some(
+          (entry) =>
+            entry.speech?.perception === 'self' && entry.content === 'Welcome to the river camp.',
+        ),
+        JSON.stringify(first),
+      ).toBe(true);
       const second = await h.chat('fresh-2', 'What are you making?');
       expect(first, JSON.stringify(first)).toMatchObject({
         status: 'completed',
@@ -889,7 +896,8 @@ describe(
         expect(keys.length).toBeGreaterThan(0);
         expect(setAttentionFocus(world, NPC_ID, keys)).toBe(true);
       });
-      const job = await jevOnly.chat('jev-only', 'Hello');
+      await jevOnly.kill('deer-1');
+      const job = await jevOnly.think();
       const routing = jevOnlyTransport.requests.find(
         (request) =>
           request.url === JEV_URL && 'route' in (request.body['questions'] as TypedQuestionMap),
@@ -958,7 +966,7 @@ describe(
     });
 
     it('keeps refused, unavailable, invalid and uncertain outcomes distinct, and cancellation cancelled', async () => {
-      const h = await harness();
+      const h = await harness({ env: { AI_BUDGET_USD: '5' } });
       h.state.policy = { route: 'level2', reflection: 'no', possibleAction: 'no' };
       // A known adapter failure is the control for `uncertain`: only unknown completion maps there.
       const generationOutcomes = [...FAILURES, 'failed'] as const;
@@ -1033,6 +1041,7 @@ describe(
         'Fixture cancel.',
         NPC_ID,
       );
+      expect(submitted.ok, submitted.message).toBe(true);
       const pending = await started.promise;
       expect((await h.director.cancel(submitted.jobId!)).code).toBe('cancelling');
       wait.resolve(value(pending.requestId, 'openai', talk(String(pending.context), 'Too late.')));
@@ -1209,6 +1218,7 @@ describe(
         return wait.promise;
       };
       const submitted = await h.director.submit('chat', 'coverage-cancel', 'Cancel me.', NPC_ID);
+      expect(submitted.ok, submitted.message).toBe(true);
       const pending = await started.promise;
       await h.director.cancel(submitted.jobId!);
       wait.resolve(value(pending.requestId, 'openai', { operations: [] }));
