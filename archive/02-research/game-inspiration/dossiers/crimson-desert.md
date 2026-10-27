@@ -46,7 +46,7 @@ The [creator study](crimson-desert/04-creation-and-modding.md#3-representative-c
 
 ## The revenue question
 
-**The claim of US$500 million already earned since March was not substantiated as a reported title-revenue figure.** The [commercial evidence ledger](crimson-desert/03-production-business.md#21-a-dated-ledger) preserves the actual publisher disclosures, revised forecasts, dated unit milestones and a separately attributed consumer-spending estimate. It explains the differences among sales, recognized revenue, spending and profit. The evidence supports a substantial commercial success; private project profit and exact marketing attribution remain unknown.
+**The claim of US$500 million already earned since March was not substantiated as a reported title-revenue figure.** The [commercial evidence ledger](crimson-desert/03-production-business.md#21-a-dated-ledger) preserves the actual publisher disclosures, revised forecasts, dated unit milestones and a revenue estimate attributed to Alinea by a secondary source. It explains the differences among sales, recognized revenue, spending and profit. The evidence supports a substantial commercial success; private project profit and exact marketing attribution remain unknown.
 
 ## How to interpret the reception
 

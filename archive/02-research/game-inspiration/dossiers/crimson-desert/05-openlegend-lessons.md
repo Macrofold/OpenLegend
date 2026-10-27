@@ -1,6 +1,6 @@
 # Crimson Desert: applications through Open Legend's existing owners
 
-**Research synthesis, 26 October 2026.** These are proposals for interpreting and observing the experience already selected for Open Legend. They do not revise accepted designs, claim runtime delivery, allocate implementation, or add maintainer tasks. The owner documents below were read on current `main`; their distinctions between delivered behavior, accepted designs and future proposals remain authoritative. Crimson Desert evidence stays in the [mechanics and world chapter](01-mechanics-world.md), [reception chapter](02-reception.md) and [production chapter](03-production-business.md).
+**Research synthesis, 26 October 2026.** These are proposals for interpreting and observing the experience already selected for Open Legend. They do not revise accepted designs, claim runtime delivery, allocate implementation, or add maintainer tasks. The owner documents below retain authority over delivered behavior, accepted designs and future proposals. Crimson Desert evidence stays in the [mechanics and world chapter](01-mechanics-world.md), [reception chapter](02-reception.md), [production chapter](03-production-business.md) and [creation study](04-creation-and-modding.md).
 
 The most useful lesson is to connect capabilities, places and people into experiences the player wants to continue. A large feature inventory does not establish that connection. Open Legend already selects a complete survival-adventure with useful invention, independent people and remembered consequences inside its first playable loop. This dossier can sharpen how that existing ambition is judged. It provides neither a requirement for Crimson Desert's scale nor evidence that a particular implementation will be enjoyable.
 
@@ -16,7 +16,7 @@ The [mechanics chapter's shared-action examples](01-mechanics-world.md#6-a-small
 
 ## 2. Make a small area repay attention at several scales
 
-The [reception analysis](02-reception.md#61-discovery-works-when-the-destination-changes-what-the-player-can-do) motivates a chain from noticing something to approaching it, discovering a possibility and carrying something meaningful away. Open Legend can investigate that chain within the existing opening: a route, resource site, home and a few people can create overlapping purposes without adding a continent.
+The [reception analysis](02-reception.md#61-discovery-can-turn-curiosity-into-new-possibilities) motivates a chain from noticing something to approaching it, discovering a possibility and carrying something meaningful away. Open Legend can investigate that chain within the existing opening: a route, resource site, home and a few people can create overlapping purposes without adding a continent.
 
 **Existing owners:** the [first-playable target][opening] selects resources, camp-site tradeoffs, exploration and independent danger; [gameplay priorities][priorities] owns feature selection. The [design foundation][foundation] keeps quiet pleasure and ordinary life within scope.
 
@@ -62,7 +62,7 @@ The [progression analysis](01-mechanics-world.md#4-progression-distinguish-learn
 
 **Failure mode and alternative:** repeated acquisition can consume the benefit of every efficiency gain, while effortless access can erase a satisfying learning process. Examine the complete activity: finding inputs, carrying, processing, making, using and recovering. Earlier possessions may retain situational or personal value without being required to remain optimal forever.
 
-**Small observation:** track a wanted improvement through its first consequential use. Ask what became possible or easier and whether the player would choose the acquisition again. If the benefit arrives after its relevant activity has ended, investigate timing before adding another reward tier.
+**Small observation:** track a wanted improvement through its first consequential use. Ask what became possible or easier and whether the player would choose the acquisition again. If the benefit arrives after its relevant activity has ended, investigate timing before adding another reward tier. When an attractive second approach is already supported, observe whether the player tries it; distinguish a preferred style from material, equipment-handling or learning costs that make the alternative impractical. Use the selected world's actual recovery and commitment rules.
 
 ## 7. Preserve meaningful constraints; remove accidental uncertainty
 
@@ -108,15 +108,26 @@ The [marketing analysis](03-production-business.md#7-marketing-a-sequence-of-pro
 
 The [production chapter](03-production-business.md#4-the-production-system-behind-a-dense-world) supports studying editable representations, reusable components and short feedback loops. For Open Legend, the useful objective is making it easier to revise a meaningful situation while preserving actual capabilities, character identity and consequences. A specific file format, engine or automation tool is not the lesson.
 
-**Existing owners:** [Characters, situations and playable consequences][production] already routes content through world, invention, presentation and feedback owners, then directs observed problems to the right place. [ND01][nd01] retains world-creation scope. No new authoring platform or asset-sourcing decision is selected here.
+**Existing owners:** [Characters, situations and playable consequences][production] already routes content through world, invention, presentation and feedback owners, then directs observed problems to the right place. [ND01][nd01] retains world-creation scope. The [creation study](04-creation-and-modding.md#3-representative-creations-and-the-desires-behind-them) also treats authoring as expression: a supported variation can offer a different desired experience, beyond making existing content cheaper. [ND12][nd12] retains broader library and publishing decisions.
 
 **Failure mode and alternative:** reuse can produce interchangeable encounters, and automation can make unwanted content faster. Bespoke work can instead make small narrative changes expensive. Preserve a clear authored purpose and use reuse where it reduces repeated work without deciding every outcome in advance.
 
-**Small observation:** review one already supported situation and identify a modest change to a person's goal or a location's condition. Walk through which definitions and dependencies would need revision, then inspect an existing revision where available. Distinguish shorter editing effort from a better player experience; neither follows automatically from tool sophistication.
+**Small observation:** inspect an already supported revision, from the intended change through definitions touched, dependent fixes and confirmation in ordinary play. If only a proposed change is available, record a dependency estimate rather than a demonstrated productivity gain. Include maintenance and handoffs when judging authoring cost; a faster edit alone does not establish a better player experience. For a supported creator variation, can the creator produce the intended experience and explain it well enough for another player to choose it?
 
 ## How to use these observations
 
-Keep these questions within the [existing player journeys][playtest], selected capabilities and evidence owners. They are hypotheses for interpretation, not a checklist every participant must complete or a new testing program. Record absent opportunities, ordinary choices, refusals, failed attempts, preparation costs and satisfied endings honestly. Technical correctness, independent conduct, player enjoyment and operating cost require different evidence. This dossier's contribution is to make those existing judgments more precise while leaving Open Legend's accepted designs and delivery decisions with their established owners.
+Choose the relevant route when refining selected work or interpreting an actual finding. Existing specifications own behavior; focused trackers own delivery and acceptance. The source examples do not reopen completed designs or require every participant to complete a checklist.
+
+| Lessons                                                                 | Existing design owner                                                                                     | Route into actual work                                                                                                                                      |
+| ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1–3, 5–7: capabilities, places, opening, home, progression and controls | [Complete first-playable design][world-spec]; selected [ND07][nd07], [ND13][nd13] and [ND38][nd38] owners | [FPV06][fpv06] observes the offered journey; [FPV08][fpv08] routes a concrete finding to the existing survival, shelter, control or execution owner.        |
+| 4: independent people                                                   | [People and voluntary cooperation][cooperation-spec]                                                      | [FPV06][fpv06] distinguishes preference, contribution and independent choice; [CP][cooperation-work] retains behavior delivery.                             |
+| 8: discoverable history and present meaning                             | [ND01's existing history-design item][nd01] and its linked authoring guides                               | Finish that selected design and delivery breakdown before implementation; no new campaign task is created by this example.                                  |
+| 9: return value and lasting outcomes                                    | [World target][opening] and [consequence production][aftermath]                                           | [FPV07][fpv07] observes continuing play; [FPV08][fpv08] routes supported corrections.                                                                       |
+| 10: representative player stories                                       | [Showcasing the game][showcase] and [ND26][nd26]                                                          | [FPV05][fpv05] owns audience material; compare expectations with ordinary [FPV06][fpv06] play.                                                              |
+| 11: revision and creator expression                                     | [ND01][nd01] and [ND12][nd12]                                                                             | Existing [OC03][oc03] preview and [OC05][oc05] first-play qualification cover supported openings. Broader reuse/publication retains ND12's design boundary. |
+
+Use the [existing player journeys][playtest] and their evidence records. Preserve absent opportunities, ordinary choices, refusals, failed attempts, preparation costs and satisfied endings. Technical correctness, independent conduct, player enjoyment and operating cost need different evidence. Record consequential gaps once in the matching owner; a research principle alone is not a new task or priority change.
 
 [priorities]: ../../../../../docs/repertoires/gameplay-priorities.md
 [opening]: ../../../../../docs/worlds/base/playable-openings.md#first-playable-game-target
@@ -135,3 +146,13 @@ Keep these questions within the [existing player journeys][playtest], selected c
 [nd38]: ../../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution
 [playtest]: ../../../../../docs/projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys
 [showcase]: ../../../../../archive/06-marketing/showcasing-the-game.md
+[nd12]: ../../../../../docs/maintainers/needs-design.md#nd12--cross-world-invention-libraries-and-usable-pack-publishing
+[world-spec]: ../../../../../docs/projects/first-playable-world-feature-spec.md
+[cooperation-spec]: ../../../../../docs/projects/first-playable-cooperation-feature-spec.md
+[cooperation-work]: ../../../../../docs/maintainers/first-playable-cooperation.md
+[fpv05]: ../../../../../docs/maintainers/first-playable-validation.md#fpv05--audience-materials-and-recruitment
+[fpv06]: ../../../../../docs/maintainers/first-playable-validation.md#fpv06--observe-survival-building-and-character-choice
+[fpv07]: ../../../../../docs/maintainers/first-playable-validation.md#fpv07--danger-unscripted-contact-and-returning-play
+[fpv08]: ../../../../../docs/maintainers/first-playable-validation.md#fpv08--diagnose-fix-and-retest
+[oc03]: ../../../../../docs/maintainers/parallel-batch-07-playable-world-creation.md#oc03--inspect-a-genuinely-usable-beginning
+[oc05]: ../../../../../docs/maintainers/parallel-batch-07-playable-world-creation.md#oc05--complete-first-play-and-the-whole-assignment

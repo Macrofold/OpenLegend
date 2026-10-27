@@ -175,7 +175,7 @@ Death is chiefly an interruption and retry problem in the evidence reviewed here
 
 The strongest official statement about endgame is the reason given for **Rematch** and **Reblockade**: after liberation and defeating bosses, there were fewer opportunities to fight. Boss memories can now initiate rematches. Reminisce preserves original difficulty, while Resonate raises difficulty to match a stronger character. At introduction, consumables were restored afterward and the rematch itself did not grant separate loot. Reblockade settings let the player disable or vary hostile returns to eligible locations. [M09]
 
-Later changes gave reblockades battle and reconstruction phases and allowed protection purchases to suppress recurrence. [M10] **Interpretation:** these systems reveal a fundamental tension in authored open worlds. Liberation should feel permanent, yet eliminating every enemy removes the arena in which the player's hard-earned abilities matter. Configurable recurrence lets different players choose preservation or renewed conflict. It is not the same as factions independently planning a strategic campaign.
+Later changes gave reblockades battle and reconstruction phases and allowed protection purchases to suppress recurrence. [M10] **Interpretation:** these systems reveal a fundamental tension in authored open worlds. Preserving a liberation can make victory meaningful, while resolved encounters can remove opportunities to use developed abilities. Configurable recurrence lets different players choose preservation or renewed conflict. It is not the same as factions independently planning a strategic campaign.
 
 The supported long tail includes remaining exploration, collection, gear experimentation, home improvement, mounts and pets, optional encounters, rematches and a new campaign with the specifically documented carryover. The evidence does not justify promising endlessly generated stories. For Open Legend, this is a useful separation between **replayable activity**, **persistent consequence** and **new narrative generation**; one does not automatically supply the others.
 
@@ -233,7 +233,7 @@ The update that permits teleporting while mounted, climbing, swimming or falling
 
 The lessons here are proposals for evaluation, not permission to change the Open Legend design or implementation.
 
-1. **A useful ability should survive a change of context.** The force, light and perception examples show how a small vocabulary can connect fighting, traversal and puzzles. Test compatibility and feedback before multiplying powers.
+1. **Some capabilities gain value when a reliable rule works across several contexts.** The force, light and perception examples show how a small vocabulary can connect fighting, traversal and puzzles. Test compatibility and feedback before multiplying powers.
 2. **A spectacular reward should change the use of existing geography.** Dragon riding and other movement modes matter beyond the acquisition cutscene. Also test whether their gates and limits match the promise that brought the player in.
 3. **Let growth leave visible traces.** Camp work, services and known inhabitants give progression a place. Visible activity can produce attachment without requiring a simulation of every background life.
 4. **Connect quiet systems to desired capabilities.** Ingredients, research, relationships and dispatch become meaningful when their outputs alter a trip, a fight or a homecoming. A large activity count alone does not establish that connection.

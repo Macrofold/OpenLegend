@@ -31,11 +31,21 @@ Documentation verification used pinned Prettier 3.6.2 on the seven new documents
 
 Substantive content and navigation were preserved at commit `275a5fa60ebe2d5d53e7d9fd15c21fa72047c4f7`; final formatting and this completion record are retained in the subsequent completion commit on the same branch. This record does not claim a merge into main.
 
+## October 26 critique and integration
+
+The requested follow-up reviewed all five chapters, the hub, the conversation's substantive conclusions and their existing design/delivery routes, starting at `b8383fbbea4b4e7c92545d3b47dd3087eadeea90`. Repeated application lists were consolidated in chapter 05. Discovery, specialist abilities and repeatable conflict retain different legitimate purposes; the October revenue estimate's accounting basis remains unverified.
+
+The application map connects selected work to FPV05–FPV08, CP and OC03/OC05, with ND01/ND12 retaining broader history/creation design. ND26, the existing playtest procedure and showcase guidance provide incoming routes. The additions examine the opening's actual promise, the cost of trying another supported approach and creator expression. They preserve existing scope, priorities, task status and acceptance; no new design document, design need or implementation queue was justified.
+
+Conversation capture retained connected capabilities, actionable scenery and intrinsic pleasures, independent people, meaningful home/progression, present-day relevance of history, lasting outcomes, representative marketing, affordable revision and varied creator preferences in their existing chapters. Duplicate prescriptions were removed only after checking that their useful meaning and evidence survived.
+
+Independent incremental review found no remaining issues. Pinned formatting and scoped Markdown path, heading and source-reference checks cover the final changes. This is documentation verification; it adds no gameplay or participant evidence.
+
 ## Evidence limits
 
 This is current-source desk research, not firsthand gameplay, engine-source inspection, video viewing or an independent rendering benchmark. Developer and vendor capability claims are attributed. The helpful-sorted Steam convenience sample is not random or representative; visible review text and playtime can change after original publication. Some contemporary review details and historical mechanics differ from later patched behavior.
 
-The exact current dragon cooldown was not settled by the conflicting available guides. Private project profit, complete development/marketing costs, and causal campaign returns remain unverified. The H1 title-revenue figures come from a publisher earnings letter accessed through a mirror after the official PDF endpoint failed. The October Alinea-derived dollar estimate remains a secondary attribution because its original graphic was not readable. No unsupported $500 million achieved-revenue claim is promoted to fact.
+The exact current dragon cooldown was not settled by the conflicting available guides. Private project profit, complete development/marketing costs, and causal campaign returns remain unverified. The H1 title-revenue figures come from a publisher earnings letter accessed through a mirror after the official PDF endpoint failed. The October dollar estimate remains attributed to Alinea by a secondary source; the Crimson-specific figure and accounting treatment could not be independently verified in the retrieved original. No unsupported $500 million achieved-revenue claim is promoted to fact.
 
 Enhanced was released before this cutoff. The October 29 expansion and its announced features were still forthcoming on October 26 and are not credited as shipped mechanics or explanations for earlier success. Community mods demonstrate creator activity and demand, not official SDK support or guaranteed cross-version compatibility. The eight worked interactions explain supported systems but are constructed scenarios, not observed play sessions.
 

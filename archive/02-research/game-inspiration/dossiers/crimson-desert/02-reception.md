@@ -178,11 +178,11 @@ This exposes two different update costs. A usability fix can make the existing j
 
 ## 6. What makes the game great—and where that mechanism breaks
 
-### 6.1 Discovery works when the destination changes what the player can do
+### 6.1 Discovery can turn curiosity into new possibilities
 
 GameSpot's account of following unusual terrain into an unexpected mechanical encounter and another distinctive settlement illustrates the attraction: an initially visual curiosity becomes an event. Game Informer's memorable discoveries likewise include an ability, not only another view. The experience offers an expanding set of possibilities. [P04] [P07]
 
-**Design interpretation:** a distant landmark can begin a chain of anticipation, movement, discovery, capability, and renewed curiosity. Open Legend should evaluate the complete chain. A beautiful destination that repeatedly produces the same reward or a closed gate can weaken trust in the next landmark. This is not an argument that every sight must contain loot; a discovery can instead change knowledge, relationships, routes, or future choices.
+**Design interpretation:** a distant landmark can begin a chain of anticipation, movement, discovery, capability, and renewed curiosity. Open Legend can evaluate how curiosity leads to a wanted experience. Capabilities, knowledge and relationships are some rewards; beauty, humor, fluent movement and company can also be sufficient reasons to explore without a persistent gain.
 
 ### 6.2 An “alive” world has both sensory detail and social continuity
 
@@ -243,23 +243,7 @@ This model deliberately separates session quality from total hours. A player can
 
 ## 8. Concrete lessons to carry into Open Legend research
 
-1. **Study connections between systems, not the feature count.** Record an episode in which exploration changes movement, movement changes combat choices, or a relationship changes access. The useful unit is a memorable chain of consequences. A long inventory of unrelated activities does not demonstrate a strong integrated world.
-
-2. **Make the opening a representative sample of the intended experience.** It need not grant every late ability. It should deliver an early instance of agency, discovery, physical satisfaction, and consequence that stands on its own. Test a short session as well as uninterrupted long play; do not assume everyone can finance a long learning period with future enthusiasm.
-
-3. **Keep execution understandable while leaving solutions discoverable.** During observation, distinguish “I do not know what the problem is,” “I know the rule but cannot perform the action,” and “I performed it but cannot read the result.” These require different remedies. Count external-guide dependence only after understanding its cause.
-
-4. **Give ordinary people and small interactions continuing significance.** Large landscapes attract attention, but companion details and a developing home can provide reasons to return. Ask whether the player can recall a person, what that person wanted, and how their situation changed. This is a sharper test of social life than counting ambient animations.
-
-5. **Treat travel, gathering, and recovery as experiences with costs and rewards.** These activities are not automatically filler. Their value depends on novelty, choice, feedback, and connection to an objective the player cares about. Repetition should earn its duration. A boss retry should not casually inherit unrelated preparation labor unless that preparation is a meaningful part of the design.
-
-6. **Test the full ability vocabulary against real encounters.** A move that exists but is hard to remember, difficult to aim, or rarely useful is largely absent from the experienced game. Investigate dominant strategies, camera behavior, input conflicts, and opportunities to recover from mistakes. Do not use difficulty as a substitute for expressive depth.
-
-7. **For a future supported player release, plan updates around the continuity of a player's journey.** Publish intelligible changes and offer an understandable return path. When revising narrative foundations, consider how an existing save communicates new context without demanding an unwanted restart. Listen to both those requesting fixes and those attached to the previous experience.
-
-8. **Preserve disagreement in future research.** Recruit people who enjoy wandering and people who need a strong narrative purpose; people who play in short sessions and people who settle in for hours. Record difficulty, hardware, input device, patch, and progression. The goal is to identify which design choices serve which desired experience, not force a universal verdict.
-
-None of these lessons requires Open Legend to reproduce Crimson Desert's content volume, production scale, or specific fictional material. The transferable opportunity is to connect impressive possibilities to understandable actions, meaningful consequences, and a world the player has reasons to care about.
+The [Open Legend applications](05-openlegend-lessons.md) consolidate these interpretations into existing design owners, concrete observations and delivery routes. Use this chapter's version distinctions, disagreements and journey model to judge which desired experience a proposal serves; preserve both positive appeal and the effort required to reach it.
 
 ## 9. Confidence, unresolved questions, and follow-up boundaries
 
