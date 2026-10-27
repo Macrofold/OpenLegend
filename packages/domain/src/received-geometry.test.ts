@@ -810,4 +810,78 @@ describe('native received relation producers', () => {
     expect(currentAttentionCues(world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(false);
     expect(attention.relationDirty[key]).toBeUndefined();
   });
+  it('keeps a supported clear interval across bounded deadline pages but never across a received witness loss', () => {
+    const value = map([surface('ground', -5, 25, 0)]);
+    value.width = 32;
+    value.tiles = Array.from({ length: 5 }, () => Array(32).fill('grass'));
+    const { world, people } = nativeScene(40, value);
+    const person = people[0]!;
+    for (const [index, neighbor] of people.slice(1).entries())
+      setSpatialPosition(
+        world,
+        neighbor,
+        { x: 11, y: 0, z: 0.5 + (index % 8) * 0.4 },
+        null,
+        'physical',
+      );
+    initializePerception(world, []);
+    const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
+    const anchorKey = Object.entries(attention.candidates).find(
+      ([, value]) => value.sourceId === person.id,
+    )![0];
+    setAttentionFocus(world, PLAYER_ID, [anchorKey]);
+    world.simTime = 15;
+    setSpatialPosition(world, person, { x: 7, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    const cue = currentAttentionCues(world, PLAYER_ID).find(
+      (value) => value.anchorKey === anchorKey && value.family === 'closing-body',
+    )!;
+    expect(cue).toBeDefined();
+    const key = JSON.stringify([anchorKey, 'closing-body']);
+    for (let at = 30; at <= 300 && attention.latches[key]!.clearSince === undefined; at += 15) {
+      world.simTime = at;
+      initializePerception(world, []);
+    }
+    const clearSince = attention.latches[key]!.clearSince;
+    expect(clearSince).toBeDefined();
+    expect(attention.relationDirty[key]).toBeUndefined();
+    const deadline =
+      clearSince! + worldComposition.selectedAttentionPolicy(world).relation.clearSeconds;
+    world.simTime = deadline;
+    initializePerception(world, []);
+    expect(attention.relationScans[key]!.remaining).toBeGreaterThan(0);
+    expect(attention.latches[key]!.clearSince).toBe(clearSince);
+    expect(currentAttentionCues(world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(true);
+
+    const interrupted = JSON.parse(JSON.stringify(world)) as WorldState;
+    const witness = Object.values(interrupted.perceptionEvidence![PLAYER_ID]!.current).find(
+      (lease) =>
+        lease.value.kind === 'body' &&
+        lease.exposure.episodeId === attention.latches[key]!.witnessId,
+    )!;
+    expect(witness).toBeDefined();
+    interrupted.simTime = deadline + 15;
+    setSpatialPosition(
+      interrupted,
+      entityGet(interrupted.entities, witness.subjectId)!,
+      { x: 100, y: 0, z: 2 },
+      null,
+      'physical',
+    );
+    initializePerception(interrupted, []);
+    expect(
+      interrupted.perceptionEvidence![PLAYER_ID]!.attention!.latches[key]!.clearSince,
+    ).toBeUndefined();
+    interrupted.simTime = deadline + 300;
+    initializePerception(interrupted, []);
+    expect(currentAttentionCues(interrupted, PLAYER_ID).some((value) => value.id === cue.id)).toBe(
+      true,
+    );
+
+    for (let at = deadline + 15; at <= deadline + 300 && attention.latches[key]!.active; at += 15) {
+      world.simTime = at;
+      initializePerception(world, []);
+    }
+    expect(attention.latches[key]!.active).toBe(false);
+  });
 });
