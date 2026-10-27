@@ -4,6 +4,7 @@ import {
   expandSituation,
   situationQuerySchema,
   situationProposalBinding,
+  situationResponseCapabilities,
 } from './situation-context.js';
 import { entityGet, currentBodyObservation, currentBodySubject } from '@open-legend/domain';
 import {
@@ -3347,15 +3348,7 @@ export class AiDirector {
         appraisals?.schema,
         Object.keys(prepared.binding.identityReferences ?? {}),
         Object.keys(prepared.binding.physicalEntityReferences ?? {}),
-        {
-          frame: prepared.situation.frame,
-          attention: Object.keys(prepared.situation.attentionReferences),
-          retention: [
-            ...Object.keys(prepared.situation.retentionReferences),
-            ...Object.keys(prepared.situation.observationReferences),
-            ...Object.keys(prepared.situation.currentReferences),
-          ],
-        },
+        situationResponseCapabilities(prepared.situation),
       );
     const instructions = `${RESPONSE_INSTRUCTIONS} ${actorInvention.instructions}`;
     const additionalInstructionBytes =

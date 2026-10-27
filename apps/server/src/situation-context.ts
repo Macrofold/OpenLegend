@@ -917,6 +917,19 @@ export function captureSituation(
 }
 export type CapturedSituation = ReturnType<typeof captureSituation>;
 
+/** Both ordinary and reconsidered responses consume the same captured grants. */
+export function situationResponseCapabilities(captured: CapturedSituation) {
+  return {
+    frame: captured.frame,
+    attention: Object.keys(captured.attentionReferences),
+    retention: [
+      ...Object.keys(captured.retentionReferences),
+      ...Object.keys(captured.observationReferences),
+      ...Object.keys(captured.currentReferences),
+    ],
+  };
+}
+
 /** Domain admission receives only finite granted references, never the server's
  * captured world, spatial query objects or read closures. */
 export function situationProposalBinding(

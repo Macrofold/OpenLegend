@@ -11,6 +11,7 @@ import {
   currentBodyObservation,
   observerIndividual,
   currentCommunicationSubject,
+  knownGuideDestinations,
   canAddressRememberedSubject,
   type ActorEvent,
   type ObservedAssembly,
@@ -346,6 +347,25 @@ export function resolveContactTarget(
   return contactTargetResolver(world, scope, options.communication)(reference);
 }
 
+/** A retained destination is a personal place role, not a current body grant.
+ * Resolve only the existing owner's offered places; never consult hidden positions. */
+function knownDestinationReferences(world: WorldState, scope: RequestScope, project: boolean) {
+  let destinations: Map<string, string> | undefined;
+  return (value: string): string => {
+    destinations ??= new Map(
+      knownGuideDestinations(world, scope.actorId).map(({ id }): [string, string] => {
+        const reference = `place-${createHmac('sha256', communicationKey)
+          .update(JSON.stringify([scopeKey(scope), 'known-destination', id]))
+          .digest('hex')}`;
+        return project ? [id, reference] : [reference, id];
+      }),
+    );
+    const result = destinations.get(value);
+    if (result === undefined) throw new ContactReferenceError();
+    return result;
+  };
+}
+
 const admittedSpeechRole = (reference: string): SpeechTargetRole =>
   reference.startsWith('person-') ? 'remembered' : 'body';
 
@@ -367,6 +387,7 @@ function mapContactReferences<T>(
   world: WorldState,
   input: T,
   entityReference: (id: string) => string,
+  destinationReference: (id: string) => string,
   inspectionScope: (value: string) => string,
 ): T {
   const visit = (value: unknown): unknown => {
@@ -392,6 +413,16 @@ function mapContactReferences<T>(
           typeof part === 'string'
         )
           return [key, inspectionScope(part)];
+        // Guide/hunt terms and carrying-help tasks select personal places, which
+        // may outlive physical contact. Other destinations remain physical roles.
+        if (
+          key === 'destinationId' &&
+          typeof part === 'string' &&
+          ((command.type === 'outing' &&
+            (command.cooperationKind === 'guide' || command.cooperationKind === 'hunt')) ||
+            command.kind === 'carry')
+        )
+          return [key, destinationReference(part)];
         if (
           ([
             'targetId',
@@ -481,6 +512,7 @@ export function resolveCommandContactReferences<T extends object>(
     world,
     input,
     contactTargetResolver(world, scope, communication),
+    knownDestinationReferences(world, scope, false),
     (value) => resolveInspectionScope(scope, value),
   ) as T & { targetRole?: SpeechTargetRole };
   // This is admission metadata, not a client-granted name or identity claim.
@@ -507,6 +539,7 @@ export function projectCommandContactReferences<T>(
       }
       return reference;
     },
+    knownDestinationReferences(world, scope, true),
     (value) => projectInspectionScope(scope, value),
   );
 }

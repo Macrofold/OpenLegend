@@ -24,6 +24,7 @@ import { digest, type JobRecord } from './store.js';
 import { compileDecisionTask, prepareDecisionTask, type DecisionTask } from './decision-task.js';
 import { DECISION_LIMITS } from './decision-state.js';
 import type { WorldService } from './world-service.js';
+import { situationProposalBinding, situationResponseCapabilities } from './situation-context.js';
 
 /** The same response owner handles a supplied action on either model route. */
 export function knownDecisionResponse(
@@ -146,7 +147,7 @@ export async function prepareReconsideration(
       appraisal?.schema,
       Object.keys(prepared.binding.identityReferences ?? {}),
       Object.keys(prepared.binding.physicalEntityReferences ?? {}),
-      { attention: [], retention: [], frame: prepared.situation.frame },
+      situationResponseCapabilities(prepared.situation),
     );
   const current = async () => {
     if (
@@ -317,7 +318,7 @@ export async function prepareReconsideration(
               appraisal?.bindings,
               prepared.binding.identityReferences,
               prepared.binding.entityLeases,
-              undefined,
+              situationProposalBinding(prepared.situation, job.semanticCauses),
               service.nativeExecutionPermissions,
             );
           },

@@ -510,11 +510,14 @@ export function updateAttention(
     );
     // A newly measured meter can leave every attention input unchanged. Keep
     // that complete candidate rather than dirtying its map and retained snapshot.
-    const fields = Object.keys(candidate) as Array<keyof AttentionCandidate>;
     if (
       old &&
-      fields.length === Object.keys(old).length &&
-      fields.every((field) => Object.hasOwn(old, field) && candidate[field] === old[field])
+      old.changeRevision === candidate.changeRevision &&
+      old.geometryRevision === candidate.geometryRevision &&
+      Object.keys(candidate).length === Object.keys(old).length &&
+      (Object.keys(candidate) as Array<keyof AttentionCandidate>).every(
+        (field) => Object.hasOwn(old, field) && candidate[field] === old[field],
+      )
     )
       countDomainWork('attentionCandidatesUnchanged');
     else {

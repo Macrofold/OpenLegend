@@ -817,19 +817,19 @@ export function captureCurrentFacet(lease: LiveFacetSupport): CapturedCurrentFac
     value: latest,
     ...fields
   } = readOnlyDraftView(lease);
-  return freeze(
+  return immutableDataSnapshot<CapturedCurrentFacet>(
     {
-      ...cloneValue(fields),
+      ...fields,
       original: immutableObservation(original),
-      value: copyFacetValue(latest),
+      value: latest,
       confirmation: {
         family: 'native-exposure' as const,
-        observer: { ...lease.observer },
+        observer: lease.observer,
         id: lease.id,
         revision,
       },
     },
-    true,
+    readOnlyDraftView,
   );
 }
 
@@ -1209,7 +1209,8 @@ export function currentObservedFacets(
     return [];
   const subject = entityGet(world.entities, subjectId);
   if (!subject) return [];
-  return kinds.flatMap((kind) => state.current[`${subjectId}:${kind}`] ?? [])
+  return kinds
+    .flatMap((kind) => state.current[`${subjectId}:${kind}`] ?? [])
     .filter(
       (lease) =>
         currentLeaseEligible(world, observerId, lease) &&
@@ -2157,8 +2158,11 @@ function awarenessBodyContext(
       soundSource?: Extract<EvidenceParticipant, { kind: 'exposure' }>;
     }
   | undefined {
-  const state = world.perceptionEvidence?.[awareness.actorId];
-  if (!state) return;
+  const scope = bodyReadScope(world, awareness.actorId);
+  if (!scope) return;
+  const state = readOnlyDraftView(world.perceptionEvidence![awareness.actorId]!);
+  const attention = state.attention && readOnlyDraftView(state.attention);
+  const entries = attention && readOnlyDraftView(attention.entries);
   const result: ObservationExposure[] = [];
   const receivedParticipants: ReceivedEventParticipant[] = [];
   const speechParticipants: ReceivedSpeechParticipants = {};
@@ -2174,8 +2178,9 @@ function awarenessBodyContext(
     const episode =
       awareness.entityEpisodes?.[id] ??
       (visibleSound?.entityId === id ? visibleSound.episodeId : undefined);
-    const lease = eligibleBodyLease(world, awareness.actorId, id),
-      detected = state.current[`${id}:detected`];
+    const lease = scope.body(id),
+      storedDetected = scope.current[`${id}:detected`],
+      detected = storedDetected && readOnlyDraftView(storedDetected);
     if (
       !lease ||
       !detected ||
@@ -2237,9 +2242,10 @@ function awarenessBodyContext(
     }
     if (receivedSoundSource) soundSource = participant;
     attended ||=
-      state.attention?.entries.some(
-        (entry) => entry.sourceId === id && entry.exposure.episodeId === lease.exposure.episodeId,
-      ) === true;
+      entries?.some((stored) => {
+        const entry = readOnlyDraftView(stored);
+        return entry.sourceId === id && entry.exposure.episodeId === lease.exposure.episodeId;
+      }) === true;
   }
   return result.length
     ? {
