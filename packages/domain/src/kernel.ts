@@ -7924,13 +7924,15 @@ function* updateEncounters(
       observer?.actor?.alive &&
       activelyParticipates(observer) &&
       visionRadius(world, observer) <= 0
-    )
+    ) {
       endCurrentEvidence(
         world,
         id,
         'sight',
         normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
       );
+      retirePerceptionEpisodes(world, id);
+    }
     if (
       observer?.actor?.encounters &&
       (observer.actor.encounters.life !== (observer.actor.physicalLife ?? 0) ||

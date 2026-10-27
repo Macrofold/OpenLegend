@@ -1,8 +1,13 @@
 import type { Position } from './types.js';
 import type { EvidenceSource, ObservedLocation } from './perception-evidence.js';
 
-export const validPerceivedPoint = (value: Position | undefined) =>
-  !!value && [value.x, value.y, value.z].every(Number.isFinite);
+export const validPerceivedPoint = (value: unknown): value is Position =>
+  !!value &&
+  typeof value === 'object' &&
+  'x' in value &&
+  'y' in value &&
+  'z' in value &&
+  [value.x, value.y, value.z].every(Number.isFinite);
 export function validateEvidenceSource(source: EvidenceSource): void {
   if (
     !source ||

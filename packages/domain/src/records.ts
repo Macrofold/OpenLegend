@@ -86,6 +86,9 @@ export function immutableDataSnapshot<T>(
   value: T,
   view: <V extends object>(value: V) => V = (value) => value,
 ): T {
+  if (!value || typeof value !== 'object') return value;
+  const latest = view(value);
+  if (isImmutableData(latest)) return latest;
   const memo = new WeakMap<object, object>();
   const copy = (value: unknown): unknown => {
     if (!value || typeof value !== 'object') return value;

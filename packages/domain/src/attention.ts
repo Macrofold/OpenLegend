@@ -435,6 +435,7 @@ export function updateAttention(
       location ? readOnlyDraftView(location.original).id : null,
       location?.originalOrdinal ?? null,
       location?.valueAcquiredAt ?? null,
+      location?.modality === 'sight' ? (owner.visualConfirmation?.frameRevision ?? null) : null,
     ]);
     const geometryRevision = JSON.stringify([
       measured?.point,

@@ -136,6 +136,22 @@ export interface ObservationFrame {
   positionAtObservation: Position;
   forwardAtObservation?: number;
 }
+function sameObservationFrame(first: ObservationFrame | undefined, second: ObservationFrame) {
+  return (
+    !!first &&
+    first.positionAtObservation.x === second.positionAtObservation.x &&
+    first.positionAtObservation.y === second.positionAtObservation.y &&
+    first.positionAtObservation.z === second.positionAtObservation.z &&
+    first.forwardAtObservation === second.forwardAtObservation
+  );
+}
+function validObservationFrame(value: unknown): value is ObservationFrame {
+  return (
+    hasRecordFields(value, ['positionAtObservation'], ['forwardAtObservation']) &&
+    validPoint(value.positionAtObservation) &&
+    (value.forwardAtObservation === undefined || Number.isFinite(value.forwardAtObservation))
+  );
+}
 /** The finite current-channel body fields. This contains no inventory, intent or private meters. */
 export interface ObservedBody {
   kind: Entity['kind'];
@@ -325,8 +341,14 @@ export interface CurrentBodyGeometryInput {
 }
 export interface PerceptionEvidenceOwner {
   /** One completed full sight phase renews only its extant supported sight facets.
-   * Values/independent losses remain in current; no stationary detail is rewritten. */
-  visualConfirmation?: { through: number; revision: number };
+   * Independent values/losses remain in current. Effective readers apply this
+   * actual receiver frame and timing without rewriting stationary detail. */
+  visualConfirmation?: {
+    through: number;
+    revision: number;
+    frame: ObservationFrame;
+    frameRevision: number;
+  };
   geometry?: import('./received-geometry.js').ReceivedGeometryState;
   attention?: import('./attention.js').AttentionState;
   life: number;
@@ -797,8 +819,10 @@ export function effectiveCurrentFacetSupport(
   lease: LiveFacetSupport,
 ): LiveFacetSupport {
   const value = readOnlyDraftView(lease),
-    state = world.perceptionEvidence?.[observerId];
-  const confirmation = state?.visualConfirmation;
+    stored = world.perceptionEvidence?.[observerId],
+    state = stored && readOnlyDraftView(stored),
+    completed = state?.visualConfirmation;
+  const confirmation = completed && readOnlyDraftView(completed);
   if (
     value.modality !== 'sight' ||
     !confirmation ||
@@ -816,14 +840,22 @@ export function effectiveCurrentFacetSupport(
   )
     return value;
   const through = confirmation.through;
+  const facet = readOnlyDraftView(value.value);
   return {
     ...value,
     revision: Math.max(value.revision, confirmation.revision),
     confirmedThrough: through,
     ...(value.value.kind === 'association'
       ? {}
-      : value.value.kind === 'location'
-        ? { valueMeasuredFrom: through, valueMeasuredThrough: through, valueAcquiredAt: through }
+      : facet.kind === 'location'
+        ? {
+            valueMeasuredFrom: through,
+            valueMeasuredThrough: through,
+            valueAcquiredAt: through,
+            value: sameObservationFrame(facet.frame, confirmation.frame)
+              ? facet
+              : copyFacetValue({ ...facet, frame: confirmation.frame }),
+          }
         : { valueMeasuredThrough: through, valueAcquiredAt: through }),
   };
 }
@@ -1282,6 +1314,9 @@ export function reconcileVisualEvidence(
     },
     true,
   );
+  const completed = readOnlyDraftView(state).visualConfirmation;
+  const priorConfirmation = completed && readOnlyDraftView(completed);
+  const frameChanged = !sameObservationFrame(priorConfirmation?.frame, observerFrame);
   const beforeAttention = new Set(
     currentDetailedAttention(world, observer.id).map((entry) => entry.sourceId),
   );
@@ -1307,6 +1342,7 @@ export function reconcileVisualEvidence(
   }
   for (const subject of subjects) {
     chargeWork({ tests: 1 });
+    if (frameChanged) attentionChanges.add(subject.id);
     delete state.gaps[subject.id];
     const exposed = world.perceptionEpisodes?.[observer.id]?.[subject.id];
     if (subject.placement?.mode !== 'world') continue;
@@ -1322,31 +1358,7 @@ export function reconcileVisualEvidence(
       measuredSource?.leaseId === heldBody.id &&
       measuredSource.token === token
     ) {
-      const position = observerFrame.positionAtObservation,
-        heading = observerFrame.forwardAtObservation;
       const location = readOnlyDraftView(state.current)[`${subject.id}:location`];
-      const locationValue = location && readOnlyDraftView(location.value);
-      if (locationValue?.kind === 'location') {
-        const frame = locationValue.frame;
-        const moved =
-          frame.positionAtObservation.x !== position.x ||
-          frame.positionAtObservation.y !== position.y ||
-          frame.positionAtObservation.z !== position.z ||
-          frame.forwardAtObservation !== heading;
-        if (moved) {
-          attentionChanges.add(subject.id);
-          const writable = state.current[`${subject.id}:location`]!;
-          writable.revision++;
-          writable.confirmedThrough = world.simTime;
-          writable.valueMeasuredFrom = world.simTime;
-          writable.valueMeasuredThrough = world.simTime;
-          writable.valueAcquiredAt = world.simTime;
-          const value = { ...locationValue, frame: observerFrame };
-          writable.value = isImmutableData(locationValue)
-            ? freeze(value, true)
-            : copyFacetValue(value);
-        }
-      }
       const motionKey = `${subject.id}:observed-motion`,
         storedMotion = readOnlyDraftView(state.current)[motionKey],
         motion = storedMotion && readOnlyDraftView(storedMotion);
@@ -1426,7 +1438,13 @@ export function reconcileVisualEvidence(
       // Drafting every unchanged nested body here makes later native previews copy it.
       const priorLease = prior && readOnlyDraftView(prior),
         previousValue = priorLease && readOnlyDraftView(priorLease.value);
-      const changed = !previousValue || jsonText(previousValue) !== jsonText(facet);
+      // A complete sight phase owns one shared receiver frame. Moving the
+      // observer does not require replacing every stationary source location.
+      const changed =
+        !previousValue ||
+        (previousValue.kind === 'location' && facet.kind === 'location'
+          ? jsonText(previousValue.location) !== jsonText(facet.location)
+          : jsonText(previousValue) !== jsonText(facet));
       if (changed) attentionChanges.add(subject.id);
       if (
         prior &&
@@ -1662,9 +1680,12 @@ export function reconcileVisualEvidence(
       });
   }
   pruneLostBodyIndividuals(world, observer.id, lostIndividuals);
+  const revision = (priorConfirmation?.revision ?? 0) + 1;
   state.visualConfirmation = {
     through: world.simTime,
-    revision: (state.visualConfirmation?.revision ?? 0) + 1,
+    revision,
+    frame: observerFrame,
+    frameRevision: frameChanged ? revision : priorConfirmation!.frameRevision,
   };
   // Memoryless native reactions consume received bodies; no current consumer asks
   // them for autobiographical scene geometry or detailed attention.
@@ -2558,7 +2579,11 @@ export function validatePerceptionEvidenceState(
         state.visualConfirmation.through < 0 ||
         state.visualConfirmation.through > world.simTime ||
         !Number.isSafeInteger(state.visualConfirmation.revision) ||
-        state.visualConfirmation.revision < 1)
+        state.visualConfirmation.revision < 1 ||
+        !Number.isSafeInteger(state.visualConfirmation.frameRevision) ||
+        state.visualConfirmation.frameRevision < 1 ||
+        state.visualConfirmation.frameRevision > state.visualConfirmation.revision ||
+        !validObservationFrame(state.visualConfirmation.frame))
     )
       throw new Error('Invalid completed visual confirmation.');
     if (state.support) validateDetectionSupportState(world, observerId, state.support, originals);
@@ -2886,11 +2911,7 @@ export function validateSensoryFacet(
       break;
     case 'location':
       validateObservedLocation(value.location);
-      if (
-        !validPoint(value.frame?.positionAtObservation) ||
-        (value.frame.forwardAtObservation !== undefined &&
-          !Number.isFinite(value.frame.forwardAtObservation))
-      )
+      if (!validObservationFrame(value.frame))
         throw new Error('Invalid original observation frame.');
       break;
     case 'body': {
