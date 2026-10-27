@@ -727,15 +727,20 @@ function copyFacetValue(value: SensoryFacet): SensoryFacet {
   const source = readOnlyDraftView(value);
   if (isImmutableData(source)) return source;
   if (source.kind === 'confirmation')
-    return { kind: 'confirmation', snapshot: immutableSnapshot(source.snapshot) };
+    return freeze({ kind: 'confirmation', snapshot: immutableSnapshot(source.snapshot) }, true);
   if (source.kind === 'observed-motion')
-    return {
-      ...source,
-      exposure: cloneValue(source.exposure),
-      earlier: immutableSnapshot(source.earlier) as CapturedLocationSample,
-      later: immutableSnapshot(source.later) as CapturedLocationSample,
-    };
-  return cloneValue(source);
+    return freeze(
+      {
+        ...source,
+        exposure: cloneValue(source.exposure),
+        earlier: immutableSnapshot(source.earlier) as CapturedLocationSample,
+        later: immutableSnapshot(source.later) as CapturedLocationSample,
+      },
+      true,
+    );
+  // Received values are replaced as a whole. Seal the detached value once so
+  // later capture/publication can retain it instead of copying the same sample.
+  return freeze(cloneValue(source), true);
 }
 export function captureCurrentFacet(lease: LiveFacetSupport): CapturedCurrentFacet {
   const {
@@ -1220,6 +1225,14 @@ export function reconcileVisualEvidence(
   sourcePublicAttributes?: (id: string) => readonly AttributeView[],
 ): void {
   const state = owner(world, observer);
+  const observerPosition = readOnlyDraftView(worldPosition(observer));
+  const observerFrame: ObservationFrame = freeze(
+    {
+      positionAtObservation: { ...observerPosition },
+      forwardAtObservation: observer.spatial.heading,
+    },
+    true,
+  );
   const beforeAttention = new Set(
     currentDetailedAttention(world, observer.id).map((entry) => entry.sourceId),
   );
@@ -1257,8 +1270,8 @@ export function reconcileVisualEvidence(
       measuredSource?.leaseId === heldBody.id &&
       measuredSource.token === token
     ) {
-      const position = readOnlyDraftView(worldPosition(observer)),
-        heading = observer.spatial.heading;
+      const position = observerFrame.positionAtObservation,
+        heading = observerFrame.forwardAtObservation;
       const location = readOnlyDraftView(state.current)[`${subject.id}:location`];
       const locationValue = location && readOnlyDraftView(location.value);
       if (locationValue?.kind === 'location') {
@@ -1276,11 +1289,10 @@ export function reconcileVisualEvidence(
           writable.valueMeasuredFrom = world.simTime;
           writable.valueMeasuredThrough = world.simTime;
           writable.valueAcquiredAt = world.simTime;
-          if (writable.value.kind === 'location')
-            writable.value.frame = {
-              positionAtObservation: { ...position },
-              forwardAtObservation: heading,
-            };
+          const value = { ...locationValue, frame: observerFrame };
+          writable.value = isImmutableData(locationValue)
+            ? freeze(value, true)
+            : copyFacetValue(value);
         }
       }
       const motionKey = `${subject.id}:observed-motion`,
@@ -1303,13 +1315,9 @@ export function reconcileVisualEvidence(
       token,
       sourcePublicAttributes?.(subject.id) ?? projectAttributes(world, subject, 'public'),
     );
-    const frame: ObservationFrame = {
-      positionAtObservation: { ...readOnlyDraftView(worldPosition(observer)) },
-      forwardAtObservation: observer.spatial.heading,
-    };
     const values: SensoryFacet[] = [
       prepared.facets[0]!,
-      { kind: 'location', location: prepared.location, frame },
+      freeze({ kind: 'location', location: prepared.location, frame: observerFrame }, true),
       ...prepared.facets.slice(1),
     ];
     const detected = state.current[`${subject.id}:detected`];
@@ -1485,13 +1493,16 @@ export function reconcileVisualEvidence(
         earlierLocation.value.location.point.z - laterLocation.value.location.point.z,
       ) >
         earlierLocation.value.location.errorRadius + laterLocation.value.location.errorRadius
-        ? {
-            kind: 'observed-motion' as const,
-            exposure: cloneValue(locationLease!.exposure),
-            earlier: earlierLocation,
-            later: laterLocation,
-            correspondence: 'unambiguous-received-continuity' as const,
-          }
+        ? freeze(
+            {
+              kind: 'observed-motion' as const,
+              exposure: cloneValue(locationLease!.exposure),
+              earlier: earlierLocation,
+              later: laterLocation,
+              correspondence: 'unambiguous-received-continuity' as const,
+            },
+            true,
+          )
         : undefined;
     const priorMotion = state.current[motionKey];
     if (!motion) {
