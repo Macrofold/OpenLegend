@@ -74,7 +74,10 @@ The 2024 Gold Road campaign used a Global Reveal, connected dungeon/Chapter stor
 
 ## Commercial scale and payment pressure
 
-At GDC in March 2024, Firor reported **nearly US$2 billion in lifetime ESO customer spending**. This title-scoped milestone establishes substantial commercial reach; it is neither net receipts nor profit, and no shop/subscription/package split was disclosed. **Complete lifetime production/operation cost and profit are not estimable from accessed evidence.** [E03]
+| Product and period                      | Reported evidence                                                                        | Interpretation and limit                                                                                        |
+| --------------------------------------- | ---------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| ESO lifetime; GDC March 2024 report     | Firor reported **nearly US$2 billion in customer spending**.                             | Title-scoped spending, neither net receipts nor profit; no shop/subscription/package split was disclosed. [E03] |
+| ESO lifetime through this research date | **Complete production/operation cost and profit: not estimable from accessed evidence.** | The spending milestone alone does not establish these totals.                                                   |
 
 **Outcome assessment:** disclosed spending demonstrates strong commercial reach; lifetime profitability and current sustainability remain indeterminate. A plausible explanation combines franchise attraction, easier entry and multiple enduring activities with recurring offers. That is inference, not measured retention attribution: each system adds maintenance, and paid relief can alienate some players. [P01, P02, E04, R08]
 
