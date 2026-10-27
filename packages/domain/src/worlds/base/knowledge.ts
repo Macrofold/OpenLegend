@@ -18,8 +18,8 @@ import {
   knowledgeDocument,
   type KnowledgePolicy,
 } from '../../knowledge.js';
-import { isSafeRecordId } from '../../records.js';
-import { cloneValue } from '../../draft.js';
+import { isImmutableData, isSafeRecordId } from '../../records.js';
+import { cloneValue, readOnlyDraftView } from '../../draft.js';
 import { adjustRetainedKnowledgeAccounting } from '../../remembered-impressions.js';
 import {
   captureTemporalObservation,
@@ -154,6 +154,43 @@ export interface GivenNameEdit {
   givenName: string;
 }
 
+const canonicalIndividuals = new WeakMap<
+  Record<string, ObserverIdentity>,
+  Map<string, ObserverIdentity[]>
+>();
+/** A pure scoped read. Preserve matching-record order and distinct local accounts;
+ * mutable authoring/working maps always inspect their actual current values. */
+export function identitiesForEntity(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): readonly ObserverIdentity[] {
+  const owners = readOnlyDraftView(world).observerIdentities;
+  const owned = owners && readOnlyDraftView(owners)[observerId];
+  const records = owned && readOnlyDraftView(owned);
+  if (!records) return [];
+  const immutable = isImmutableData(records);
+  let indexed = immutable ? canonicalIndividuals.get(records) : undefined;
+  if (!indexed && immutable) {
+    indexed = new Map();
+    for (const record of Object.values(records)) {
+      if (record.seedOnly || !record.canonicalId) continue;
+      const matches = indexed.get(record.canonicalId) ?? [];
+      matches.push(record);
+      indexed.set(record.canonicalId, matches);
+    }
+    canonicalIndividuals.set(records, indexed);
+  }
+  return (
+    indexed?.get(subjectId) ??
+    (indexed
+      ? []
+      : Object.values(records)
+          .map(readOnlyDraftView)
+          .filter((identity) => !identity.seedOnly && identity.canonicalId === subjectId))
+  );
+}
+
 /** Identity assignment is world policy, not a universal property of engine documents.
  * docs/worlds/base/knowledge.md#identity-and-recognition
  */
@@ -162,9 +199,7 @@ export function identityForEntity(
   observerId: string,
   subjectId: string,
 ): ObserverIdentity | undefined {
-  const records = Object.values(world.observerIdentities?.[observerId] ?? {}).filter(
-    (identity) => !identity.seedOnly && identity.canonicalId === subjectId,
-  );
+  const records = identitiesForEntity(world, observerId, subjectId);
   return (
     records.find(
       (identity) =>
@@ -451,9 +486,8 @@ export function canAddressRememberedSubject(
 ): boolean {
   if (!entityGet(world.entities, subjectId)?.actor) return false;
   if (observerId === subjectId) return true;
-  return Object.values(world.observerIdentities?.[observerId] ?? {}).some(
-    (identity) =>
-      !!identity.individualId && !identity.seedOnly && identity.canonicalId === subjectId,
+  return identitiesForEntity(world, observerId, subjectId).some(
+    (identity) => !!identity.individualId,
   );
 }
 /** Prepare the remembered addressees once per caller. Resolving each person by

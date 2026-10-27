@@ -8,7 +8,7 @@ import {
 } from '../../knowledge.js';
 import { readAttribute, definitionPin } from '../../world-modules.js';
 import type { WorldEvent, WorldState } from '../../types.js';
-import { commitObserverIdentity, type ObserverIdentity } from './knowledge.js';
+import { commitObserverIdentity, identitiesForEntity, type ObserverIdentity } from './knowledge.js';
 import {
   isTemporalReceiptSource,
   setTemporalSupportRequired,
@@ -98,26 +98,26 @@ const initialLearningQuality = (perception: number, modality: RecognitionModalit
 const rootOrder = (a: FamiliarityRoot, b: FamiliarityRoot) =>
   b.at - a.at || b.order - a.order || a.key.localeCompare(b.key);
 export function individualFamiliarity(identity: ObserverIdentity): number {
-  return Math.min(
-    100,
-    Math.max(
-      identity.familiarity?.authored?.value ?? 0,
-      identity.familiarity?.roots.filter((root) => root.credited).length ?? 0,
-    ),
-  );
+  const source = readOnlyDraftView(identity);
+  const familiarity = source.familiarity && readOnlyDraftView(source.familiarity);
+  let credited = 0;
+  if (familiarity)
+    for (const root of readOnlyDraftView(familiarity.roots)) if (root.credited) credited++;
+  return Math.min(100, Math.max(familiarity?.authored?.value ?? 0, credited));
+}
+function familiarityIdentity(world: WorldState, observerId: string, subject: ObserverSubject) {
+  if (subject.kind === 'entity') return identitiesForEntity(world, observerId, subject.entityId)[0];
+  const owners = readOnlyDraftView(world).observerIdentities;
+  const owned = owners && readOnlyDraftView(owners)[observerId];
+  const identity = owned && readOnlyDraftView(owned)[subject.individualId];
+  return identity && readOnlyDraftView(identity);
 }
 export function subjectFamiliarity(
   world: WorldState,
   observerId: string,
   subject: ObserverSubject,
 ): number {
-  const records = world.observerIdentities?.[observerId] ?? {};
-  const identity =
-    subject.kind === 'individual'
-      ? records[subject.individualId]
-      : Object.values(records).find(
-          (record) => !record.seedOnly && record.canonicalId === subject.entityId,
-        );
+  const identity = familiarityIdentity(world, observerId, subject);
   return identity && !identity.seedOnly ? individualFamiliarity(identity) : 0;
 }
 export function subjectFamiliarityContactDue(
@@ -126,13 +126,7 @@ export function subjectFamiliarityContactDue(
   subject: ObserverSubject,
   at: number,
 ): boolean {
-  const records = world.observerIdentities?.[observerId] ?? {};
-  const identity =
-    subject.kind === 'individual'
-      ? records[subject.individualId]
-      : Object.values(records).find(
-          (record) => !record.seedOnly && record.canonicalId === subject.entityId,
-        );
+  const identity = familiarityIdentity(world, observerId, subject);
   return (
     !!identity &&
     !identity.seedOnly &&
@@ -169,13 +163,7 @@ export function creditSubjectFamiliarity(
   subject: ObserverSubject,
   input: { key: string; sourceKey: string; at: number; order: number; support: readonly string[] },
 ): boolean {
-  const records = world.observerIdentities?.[observerId] ?? {};
-  const previous =
-    subject.kind === 'individual'
-      ? records[subject.individualId]
-      : Object.values(records).find(
-          (record) => !record.seedOnly && record.canonicalId === subject.entityId,
-        );
+  const previous = familiarityIdentity(world, observerId, subject);
   if (!previous?.individualId || previous.seedOnly) return false;
   if (
     !validRecognitionSupportKey(input.sourceKey) ||

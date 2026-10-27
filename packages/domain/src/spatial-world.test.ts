@@ -13,6 +13,7 @@ import {
   NPC_ID,
   canReachEntity,
   executeCommand,
+  freezeWorld,
   hearsEntity,
   quantityOf,
   replaceSpatialLayout,
@@ -97,7 +98,8 @@ describe('native spatial-world integration without providers', () => {
     expect(bodyProfile(actor).height).toBe(actor.spatial.body.height);
   });
   it('moves onto the lookout, gathers its actual resource, and returns below', () => {
-    let world = active();
+    // Match the server's published world through real navigation continuations.
+    let world = freezeWorld(active());
     let t = executeCommand(world, {
       id: 'up',
       actorId: PLAYER_ID,

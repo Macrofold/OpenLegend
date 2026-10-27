@@ -7,6 +7,7 @@ import { setSpatialPosition, worldPosition, worldSupport } from './spatial-state
 import { setBodyHealth } from './body-state.js';
 import { settleProjectiles } from './ranged.js';
 import { validateWorldModules } from './world-modules.js';
+import { freezeWorld } from './draft.js';
 import type { WorldEvent, WorldState } from './types.js';
 import type { AdmittedWorldInput } from './execution-input.js';
 
@@ -206,8 +207,10 @@ describe('native projectile chronology', () => {
       actorId,
       steering: { direction: { x: 1, z: 0 }, startsAt: world.simTime, endsAt: world.simTime + 4 },
     }));
-    const large = cut(structuredClone(world), 4, 4, inputs),
-      small = cut(structuredClone(world), 4, 0.1, inputs);
+    // Live native progression starts from the same published ownership boundary
+    // as the server, including a restored setup's first bounded advance.
+    const large = cut(freezeWorld(structuredClone(world)), 4, 4, inputs),
+      small = cut(freezeWorld(structuredClone(world)), 4, 0.1, inputs);
     expect(large.events.some((e) => e.type === 'projectile-contact')).toBe(true);
     expect(combatFacts(large.events)).toEqual(combatFacts(small.events));
     for (const id of [PLAYER_ID, NPC_ID])

@@ -163,7 +163,7 @@ export function appendEvents(world: WorldState, owned: WorldEvent[]): void {
     sealEvents(world);
     buffer = undefined;
   }
-  if (!buffer && isDraft(world)) {
+  if (!buffer && (isDraft(world) || Object.isFrozen(entries))) {
     // An unfrozen development builder has no certified immutable prefix. Own a
     // copied snapshot once; never freeze its caller-owned records in place.
     buffer = {

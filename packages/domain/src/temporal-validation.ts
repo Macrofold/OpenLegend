@@ -296,7 +296,7 @@ export function validateTemporalEvidenceState(
         const value = values
           ? values[index]
           : temporal.sources[facet.blockId]?.values[facet.valueOrdinal];
-        if (value?.kind === 'event' || value?.kind === 'speech')
+        if (value?.kind === 'event' || value?.kind === 'speech' || value?.kind === 'sound')
           validateReceivedParticipantObservers(value, {
             actorId,
             physicalLife: receipt.physicalLife,

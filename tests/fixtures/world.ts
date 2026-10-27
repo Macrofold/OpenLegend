@@ -7,7 +7,7 @@ import { prepareBaseInitialWorldState } from '../../packages/domain/src/worlds/b
 await initializeCollisionRuntime();
 
 /** Explicit supplied camp for isolated native-action examples. The real ordinary
- * Main is empty handed; these specimens need chosen stock and no roaming ecology. */
+ * Main is empty handed; these specimens need chosen stock and the small diagnostic opening. */
 export function stockedCamp(seed = 73, accounts?: WorldCreationAccounts) {
   const world = createBaseDiagnosticWorld(seed, accounts);
   // This is fresh authored state, not a restored world. Stored fixtures need the

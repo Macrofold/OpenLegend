@@ -63,6 +63,7 @@ import {
   isSafeRecordId,
   isImmutableData,
   immutableDataSnapshot,
+  jsonEncoding,
   jsonText,
 } from './records.js';
 import {
@@ -222,7 +223,11 @@ export type SensoryFacet =
       participants?: ReceivedSpeechParticipants;
     }
   | { kind: 'perceived-feature'; sample: NonNullable<Awareness['receivedFeatures']> }
-  | { kind: 'sound'; sound: NonNullable<Awareness['sound']> }
+  | {
+      kind: 'sound';
+      sound: NonNullable<Awareness['sound']>;
+      source?: Extract<EvidenceParticipant, { kind: 'exposure' }>;
+    }
   /** Complete already-admitted inspection/place meaning, independent of its prose. */
   | { kind: 'encounter-exposure'; exposure: EncounterExposure }
   | {
@@ -291,7 +296,8 @@ export interface ObservationContribution {
   acquiredAt: number;
   modality: 'sight' | 'hearing' | 'touch';
   detector: { id: string; version: number };
-  /** Event-time body roles; routing context grants no later body access. */
+  /** Received bodies sharing this occurrence's recording scope. Participant roles
+   * belong to its typed facets; this scope grants no later body access. */
   context?: { subjects: ObservationExposure[]; attended: boolean };
   facets: ObservationFacet[];
 }
@@ -446,7 +452,6 @@ const observerLife = (entity: Entity): ObserverLife => ({
   actorId: entity.id,
   physicalLife: entity.actor?.physicalLife ?? 0,
 });
-const evidenceEncoder = new TextEncoder();
 /** Prepared native source identity is a dependency token, never saved authority. */
 const measuredSources = new WeakMap<ObservationContribution, { leaseId: string; token: string }>();
 interface VisualSourceValues {
@@ -641,28 +646,31 @@ export function acquireObservation(
   const index = state.receipts[key];
   const prior = index === undefined ? undefined : state.received[index];
   if (prior) return immutableObservation(prior);
-  const contribution: ObservationContribution = {
-    id: nextId(world, 'perception-observation'),
-    revision: 1,
-    observer: observerLife(observer),
-    origin: cloneValue(input.origin),
-    acquiredAt: world.simTime,
-    modality: input.modality,
-    detector: { ...input.detector },
-    ...(input.context ? { context: cloneValue(input.context) } : {}),
-    facets: input.facets.map((facet, ordinal) => ({
-      ...cloneValue({ ...facet, value: undefined }),
-      value: copyFacetValue(facet.value),
-      ordinal,
+  // One owner detaches all mutable inputs and proves the completed immutable
+  // graph. Separate per-field copies, freezing and later proof repeat that walk.
+  const contribution = immutableDataSnapshot<ObservationContribution>(
+    {
+      id: nextId(world, 'perception-observation'),
+      revision: 1,
+      observer: observerLife(observer),
+      origin: input.origin,
       acquiredAt: world.simTime,
-    })),
-  };
+      modality: input.modality,
+      detector: input.detector,
+      ...(input.context ? { context: input.context } : {}),
+      facets: input.facets.map((facet, ordinal) => ({
+        ...facet,
+        ordinal,
+        acquiredAt: world.simTime,
+      })),
+    },
+    readOnlyDraftView,
+  );
   chargeWork({
     effects: 1,
-    outputBytes: evidenceEncoder.encode(JSON.stringify(contribution)).byteLength,
+    outputBytes: jsonEncoding(contribution).bytes,
   });
   state.receipts[key] = state.received.length;
-  freeze(contribution, true);
   state.received.push(contribution);
   return contribution;
 }
@@ -2122,6 +2130,7 @@ function awarenessBodyContext(
       context: NonNullable<ObservationContribution['context']>;
       participants: ReceivedEventParticipant[];
       speechParticipants: ReceivedSpeechParticipants;
+      soundSource?: Extract<EvidenceParticipant, { kind: 'exposure' }>;
     }
   | undefined {
   const state = world.perceptionEvidence?.[awareness.actorId];
@@ -2129,13 +2138,18 @@ function awarenessBodyContext(
   const result: ObservationExposure[] = [];
   const receivedParticipants: ReceivedEventParticipant[] = [];
   const speechParticipants: ReceivedSpeechParticipants = {};
+  const visibleSound = awareness.sound?.visibleSource;
+  let soundSource: Extract<EvidenceParticipant, { kind: 'exposure' }> | undefined;
   let attended = false;
   const participants = new Set([
     ...Object.keys(awareness.entityEpisodes ?? {}),
     ...(awareness.references?.map((reference) => reference.id) ?? []),
+    ...(visibleSound ? [visibleSound.entityId] : []),
   ]);
   for (const id of participants) {
-    const episode = awareness.entityEpisodes?.[id];
+    const episode =
+      awareness.entityEpisodes?.[id] ??
+      (visibleSound?.entityId === id ? visibleSound.episodeId : undefined);
     const lease = eligibleBodyLease(world, awareness.actorId, id),
       detected = state.current[`${id}:detected`];
     if (
@@ -2151,7 +2165,17 @@ function awarenessBodyContext(
       lease.original.acquiredAt > awareness.at
     )
       continue;
-    if (lease.subjectPhysicalLife === null && awareness.modality !== 'observed') continue;
+    const receivedSoundSource =
+      visibleSound?.entityId === id &&
+      visibleSound.physicalLife === (lease.subjectPhysicalLife ?? 0) &&
+      visibleSound.episodeId === detected.original.origin.episodeId;
+    if (awareness.sound && !receivedSoundSource) continue;
+    if (
+      lease.subjectPhysicalLife === null &&
+      awareness.modality !== 'observed' &&
+      !receivedSoundSource
+    )
+      continue;
     if (awareness.speech) {
       // A known unseen voice names no visible body. Only the actual received
       // speaker/body grant or independently perceived addressee can join this view.
@@ -2163,26 +2187,31 @@ function awarenessBodyContext(
         )
           continue;
       } else if (id !== awareness.targetId || !awareness.speech.addressee) continue;
-    } else if (!awareness.references?.some((reference) => reference.id === id)) continue;
+    } else if (
+      !receivedSoundSource &&
+      !awareness.references?.some((reference) => reference.id === id)
+    )
+      continue;
+    const participant: Extract<EvidenceParticipant, { kind: 'exposure' }> = {
+      kind: 'exposure',
+      exposure: cloneValue(lease.exposure),
+    };
     if (!result.some((context) => context.episodeId === lease.exposure.episodeId))
-      result.push(cloneValue(lease.exposure));
+      result.push(participant.exposure);
     // Preserve the correspondence proved now. The recording scope alone cannot
     // tell a later reader which unknown person performed each event role.
     awareness.references?.forEach((reference, referenceOrdinal) => {
       if (reference.id === id)
         receivedParticipants.push({
           referenceOrdinal,
-          participant: { kind: 'exposure', exposure: cloneValue(lease.exposure) },
+          participant,
         });
     });
     if (awareness.speech) {
-      const participant = {
-        kind: 'exposure' as const,
-        exposure: cloneValue(lease.exposure),
-      };
       if (id === awareness.sourceId) speechParticipants.speaker = participant;
       if (id === awareness.targetId) speechParticipants.addressee = participant;
     }
+    if (receivedSoundSource) soundSource = participant;
     attended ||=
       state.attention?.entries.some(
         (entry) => entry.sourceId === id && entry.exposure.episodeId === lease.exposure.episodeId,
@@ -2193,6 +2222,7 @@ function awarenessBodyContext(
         context: { subjects: result, attended },
         participants: receivedParticipants,
         speechParticipants,
+        ...(soundSource ? { soundSource } : {}),
       }
     : undefined;
 }
@@ -2330,7 +2360,11 @@ export function acquireAwarenessObservation(
         },
         frame: { positionAtObservation: { ...awareness.sound.listenerPosition } },
       });
-    values.push({ kind: 'sound', sound: cloneValue(awareness.sound) });
+    values.push({
+      kind: 'sound',
+      sound: cloneValue(awareness.sound),
+      ...(receivedContext?.soundSource ? { source: receivedContext.soundSource } : {}),
+    });
   } else if (awareness.speech) {
     const speech = awareness.speech;
     if (speech.direction)
@@ -2972,7 +3006,11 @@ export function validateObservationContribution(
   originals.set(key, body);
   for (const facet of observation.facets) {
     validateSensoryFacet(facet.value, originals);
-    if (facet.value.kind === 'event' || facet.value.kind === 'speech')
+    if (
+      facet.value.kind === 'event' ||
+      facet.value.kind === 'speech' ||
+      facet.value.kind === 'sound'
+    )
       validateReceivedParticipantObservers(facet.value, observation.observer);
     if (
       (facet.value.kind === 'confirmation' &&
@@ -3002,13 +3040,17 @@ function validReceivedExposureParticipant(
 
 /** A retained role may never borrow another observer's body correspondence. */
 export function validateReceivedParticipantObservers(
-  value: Extract<SensoryFacet, { kind: 'event' | 'speech' }>,
+  value: Extract<SensoryFacet, { kind: 'event' | 'speech' | 'sound' }>,
   observer: ObserverLife,
 ): void {
   const participants =
     value.kind === 'event'
       ? (value.participants?.map((entry) => entry.participant) ?? [])
-      : Object.values(value.participants ?? {});
+      : value.kind === 'speech'
+        ? Object.values(value.participants ?? {})
+        : value.source
+          ? [value.source]
+          : [];
   if (
     participants.some(
       (participant) =>
@@ -3222,7 +3264,6 @@ export function validateSensoryFacet(
       if (
         value.participants !== undefined &&
         (!hasRecordFields(value.participants, [], ['speaker', 'addressee']) ||
-          !Object.keys(value.participants).length ||
           Object.values(value.participants).some(
             (participant) => !validReceivedExposureParticipant(participant),
           ))
@@ -3234,6 +3275,8 @@ export function validateSensoryFacet(
       break;
     case 'sound':
       validatePerceivedSound(value.sound);
+      if (value.source !== undefined && !validReceivedExposureParticipant(value.source))
+        throw new Error('Invalid received sound source.');
       break;
     case 'association':
       if (

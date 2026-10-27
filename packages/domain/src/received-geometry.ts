@@ -178,9 +178,19 @@ function normal(surface: WalkableSurface): Position {
     z: surface.slopeZ === 0 ? 0 : -surface.slopeZ / length,
   };
 }
-function priority(patch: Rectangle, eye: Position): number {
+function priority(patch: PendingPatch, map: SpatialMap, eye: Position): number {
+  const surface = surfaceById(map, patch.surfaceId);
+  if (!surface) return Infinity;
+  const base = surfaceHeight(surface, patch.minX, patch.minZ),
+    riseX = (patch.maxX - patch.minX) * surface.slopeX,
+    riseZ = (patch.maxZ - patch.minZ) * surface.slopeZ;
+  // Affine surface extrema occur at its rectangle's corners. Include height so
+  // an occluded floor below cannot monopolize work ahead of nearby raised ground.
+  const minY = base + Math.min(0, riseX) + Math.min(0, riseZ),
+    maxY = base + Math.max(0, riseX) + Math.max(0, riseZ);
   return (
     Math.max(patch.minX - eye.x, eye.x - patch.maxX, 0) ** 2 +
+    Math.max(minY - eye.y, eye.y - maxY, 0) ** 2 +
     Math.max(patch.minZ - eye.z, eye.z - patch.maxZ, 0) ** 2
   );
 }
@@ -394,10 +404,16 @@ export function refreshReceivedGeometry(
   // The preparation list is bounded, and its rectangles are immutable values.
   // Work on an owned array rather than making every nearest-first comparison
   // create/read Immer proxies for the same hundreds of rectangles.
-  const pending = readOnlyDraftView(state.pending).map(readOnlyDraftView);
+  const prepare = (patch: PendingPatch) => ({
+    patch,
+    priority: priority(patch, input.map, input.eye),
+  });
+  const pending = readOnlyDraftView(state.pending).map((patch) =>
+    prepare(readOnlyDraftView(patch)),
+  );
   const enqueue = (patches: PendingPatch[]) => {
     for (const patch of patches) {
-      if (pending.length < policy.preparationPatches) pending.push(patch);
+      if (pending.length < policy.preparationPatches) pending.push(prepare(patch));
       else state.unrepresented = true;
     }
   };
@@ -423,18 +439,17 @@ export function refreshReceivedGeometry(
   ) {
     let nearest = 0;
     for (let index = 1; index < pending.length; index++)
-      if (priority(pending[index]!, input.eye) < priority(pending[nearest]!, input.eye))
-        nearest = index;
-    const [rectangle] = pending.splice(nearest, 1);
-    const surface = surfaceById(input.map, rectangle!.surfaceId);
+      if (pending[index]!.priority < pending[nearest]!.priority) nearest = index;
+    const rectangle = pending.splice(nearest, 1)[0]!.patch;
+    const surface = surfaceById(input.map, rectangle.surfaceId);
     patchVisits++;
     if (!surface) {
       state.unrepresented = true;
       continue;
     }
-    const width = rectangle!.maxX - rectangle!.minX,
-      depth = rectangle!.maxZ - rectangle!.minZ;
-    const points = vertices(surface, rectangle!);
+    const width = rectangle.maxX - rectangle.minX,
+      depth = rectangle.maxZ - rectangle.minZ;
+    const points = vertices(surface, rectangle);
     const facing = input.eye.y - surfaceHeight(surface, input.eye.x, input.eye.z) > epsilon;
     if (!facing) {
       state.unrepresented = true;
@@ -445,15 +460,15 @@ export function refreshReceivedGeometry(
     const visible =
       inRange &&
       inView &&
-      surfaceSupportsRectangle(input.map, surface, rectangle!) &&
+      surfaceSupportsRectangle(input.map, surface, rectangle) &&
       clearConvexView(input.map, input.eye, points);
     if (!visible) {
       if (Math.max(width, depth) > (inRange ? policy.errorMetres * 2 : policy.patchMetres))
-        enqueue(split(rectangle!));
+        enqueue(split(rectangle));
       else state.unrepresented = true;
       continue;
     }
-    const key = rectangleKey(rectangle!);
+    const key = rectangleKey(rectangle);
     const observation = emit(
       world,
       input,
@@ -467,13 +482,13 @@ export function refreshReceivedGeometry(
       },
       JSON.stringify([state.generation, key]),
     );
-    state.fragments.push({ ...rectangle!, key, observation });
+    state.fragments.push({ ...rectangle, key, observation });
     state.boundaryChecked = 0;
     acquired.push(observation);
   }
   // Pair only received adjacent patches. A clipped/occluded edge never invents a
   // drop; an unseen far side remains unknown even if the physical map knows it.
-  state.pending = pending;
+  state.pending = pending.map((entry) => entry.patch);
   const ordered = readOnlyDraftView(state.fragments)
     .map(readOnlyDraftView)
     .sort((a, b) => a.key.localeCompare(b.key));
