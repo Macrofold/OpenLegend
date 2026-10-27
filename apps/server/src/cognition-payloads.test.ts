@@ -877,7 +877,10 @@ describe(
 
       expect(generation!.instructions).toContain('Speak in natural observed-relative terms');
       expect(generation!.instructions).toContain(
-        'actually received labels establish that convention',
+        'numeric JSON axes and reference tokens are internal representation',
+      );
+      expect(generation!.instructions).toContain(
+        'actually perceived signs or speech establish that convention',
       );
       const context = String(generation!.context);
       const parts = sections(context);
@@ -885,6 +888,12 @@ describe(
       expect(section(parts, 'Recent memories').body).toContain('not a current scene');
       expect(section(parts, 'Received situation').body).toContain(
         'Use this packet for current received surroundings',
+      );
+      expect(section(parts, 'Received situation').body).toContain(
+        "not access to other people's intentions, knowledge or attention",
+      );
+      expect(section(parts, 'Received situation').body).toContain(
+        'an empty list applies only to its supplied subject and received scope',
       );
       for (const request of activityRequestDescriptors(h.service.world))
         expect(context.split(JSON.stringify(request))).toHaveLength(2);

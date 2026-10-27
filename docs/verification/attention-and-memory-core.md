@@ -55,8 +55,8 @@ The clean sequential moving comparison used the untouched task-start source at `
 
 | Measured native result        | Pinned task-start source | Current implementation |
 | ----------------------------- | -----------------------: | ---------------------: |
-| Wall time for 30 game seconds |         20,054.456084 ms |         6,528.435667 ms |
-| Process CPU                   |            21,169.627 ms |           8,755.32 ms |
+| Wall time for 30 game seconds |         20,054.456084 ms |        6,528.435667 ms |
+| Process CPU                   |            21,169.627 ms |            8,755.32 ms |
 | Per-call p95                  |            834.041167 ms |          563.833208 ms |
 | End heap, not peak            |        271,082,232 bytes |      192,646,744 bytes |
 | Headroom at normal 60:1 clock |                 0.024932 |               0.076588 |

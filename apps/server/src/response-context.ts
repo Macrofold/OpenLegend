@@ -179,7 +179,7 @@ export function readableDecisionContext(
     `## Recent memories\nThese are earlier personal experiences, not a current scene. A remembered location, activity or object state does not establish present conditions; describe it as remembered unless current received evidence supports the present claim. A remembered conditional rule does not establish its condition now.\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
     ...(context['receivedSituation']
       ? [
-          `## Received situation\n${JSON.stringify(context['receivedSituation'])}\nUse this packet for current received surroundings and its explicitly timed retained changes. These are personally received measurements, not other people's intentions. Original times and gaps matter. Unexpanded or missing detail does not prove absence. Use only the supplied references for optional situation queries, further attention or a fallible remembered interpretation.`,
+          `## Received situation\n${JSON.stringify(context['receivedSituation'])}\nUse this packet for current received surroundings and its explicitly timed retained changes. These are personally received measurements, not access to other people's intentions, knowledge or attention. Original times and gaps matter. Unexpanded or missing detail does not prove absence; an empty list applies only to its supplied subject and received scope, not other people or omitted facts. Use only the supplied references for optional situation queries, further attention or a fallible remembered interpretation.`,
         ]
       : []),
     // Current scene capture supersedes the old separate entity shortlist. An empty

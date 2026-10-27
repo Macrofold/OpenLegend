@@ -48,6 +48,7 @@ import {
   reconcileAnimalWander,
 } from './native-response-controller.js';
 import { AnimalWanderQueue } from './worlds/base/animal-wander-queue.js';
+import type { WorldState } from './types.js';
 
 function result<T>(iterator: Generator<void, T>): T {
   for (;;) {
