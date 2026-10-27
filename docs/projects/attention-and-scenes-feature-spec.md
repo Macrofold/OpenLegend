@@ -4,7 +4,7 @@
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Native attention and memory paths pass final integration; semantic reliability, operating scale and broader scene delivery remain open. | 2026-10-27   |
 
-**Architecture consulted and implementation reconciled 2026-10-27 12:42 UTC.**
+**Architecture consulted and implementation reconciled 2026-10-27 13:38 UTC.**
 
 **Supported attention/memory core implemented; broader scene proposals remain separate.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds, timed speech and voice-media delivery remain separate proposals outside the implemented core.
 

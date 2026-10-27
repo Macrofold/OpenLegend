@@ -144,18 +144,39 @@ export async function prepareSourceVersions(
 ): Promise<{ state: SavedWorld; plan: SourceVersionPlan }> {
   const actors = new Set<string>(),
     future = new Map<string, Category>(),
-    changedRecords: string[] = [];
+    versionGroups = new Map<string, Array<{ sourceId: string; revision: string }>>(),
+    changedRecords = new Map<string, { all: string[]; previous: Map<string, string[]> }>();
+  const changed = (actorId: string, kind: string, recordId: string, previous: boolean) => {
+    let records = changedRecords.get(actorId);
+    if (!records) {
+      records = { all: [], previous: new Map() };
+      changedRecords.set(actorId, records);
+    }
+    records.all.push(recordId);
+    if (previous) {
+      const ids = records.previous.get(kind) ?? [];
+      ids.push(recordId);
+      records.previous.set(kind, ids);
+    }
+  };
   const needed = (actorId: string, source: PersonalSourceRef, category: Category) => {
     if (state.world.experience?.forgotten[actorId]?.includes(source.id)) return;
     const id = key({ actorId, kind: source.kind, id: source.id, revision: source.revision });
     const old = future.get(id);
+    if (old === undefined) {
+      const scope = JSON.stringify([actorId, source.kind]),
+        versions = versionGroups.get(scope) ?? [];
+      versions.push({ sourceId: source.id, revision: source.revision });
+      versionGroups.set(scope, versions);
+    }
     if (old === undefined || priority(category) > priority(old)) future.set(id, category);
   };
   for (const [kind, table] of Object.entries(tables)) {
     for (const id of changes.deletes.get(table) ?? []) {
       const path = JSON.parse(id) as string[];
-      actors.add(path[kind === 'memory' ? 2 : 3]!);
-      changedRecords.push(id);
+      const actorId = path[kind === 'memory' ? 2 : 3]!;
+      actors.add(actorId);
+      changed(actorId, kind, id, true);
     }
     for (const row of changes.writes.get(table) ?? []) {
       const path = JSON.parse(row.id) as string[],
@@ -164,7 +185,7 @@ export async function prepareSourceVersions(
       const manifest = 'manifest' in value ? value.manifest : undefined;
       const sources = 'sources' in value ? value.sources : [];
       if (!row.create || manifest || sources?.length) actors.add(actorId);
-      changedRecords.push(row.id);
+      changed(actorId, kind, row.id, !row.create);
       if ('kind' in value && value.kind === 'impression') continue;
       const category = accountClass({ source: kind, value } as ExperienceEntry);
       for (const source of [...(sources ?? []), ...(manifest?.coverage ?? [])])
@@ -179,12 +200,17 @@ export async function prepareSourceVersions(
         "SELECT source_kind,source_id,revision,retention_class,logical_bytes FROM mind_source_versions WHERE world_id=? AND actor_id=? AND source_kind IN ('awareness','memory','summary')",
       )
       .all(world.id, actorId);
+    // The SELECT envelope keeps this CTE on the existing bounded reader connection.
     for (const row of await db
       .prepare(
-        `SELECT d.source_kind,d.source_id,d.source_revision,COALESCE(a.retention_class,m.retention_class,s.retention_class) AS retention_class FROM mind_source_dependencies d JOIN recall_sources r ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id LEFT JOIN mind_awareness a ON r.source_kind='awareness' AND a.world_id=r.world_id AND a.id=r.record_id LEFT JOIN mind_memories m ON r.source_kind='memory' AND m.world_id=r.world_id AND m.id=r.record_id LEFT JOIN mind_summaries s ON r.source_kind='summary' AND s.world_id=r.world_id AND s.id=r.record_id
-      WHERE d.world_id=? AND d.actor_id=? AND d.source_kind IN ('awareness','memory','summary') AND r.memory_kind IS DISTINCT FROM 'impression' AND r.record_id<>ALL(?::text[])`,
+        `SELECT * FROM (WITH retained_accounts AS MATERIALIZED (
+        SELECT r.world_id,r.actor_id,r.source_kind,r.id,r.record_id FROM recall_sources r
+        WHERE r.world_id=? AND r.actor_id=? AND r.memory_kind IS DISTINCT FROM 'impression'
+          AND NOT EXISTS (SELECT 1 FROM unnest(?::text[]) changed(id) WHERE changed.id=r.record_id))
+        SELECT d.source_kind,d.source_id,d.source_revision,COALESCE(a.retention_class,m.retention_class,s.retention_class) AS retention_class FROM retained_accounts r JOIN mind_source_dependencies d ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id LEFT JOIN mind_awareness a ON r.source_kind='awareness' AND a.world_id=r.world_id AND a.id=r.record_id LEFT JOIN mind_memories m ON r.source_kind='memory' AND m.world_id=r.world_id AND m.id=r.record_id LEFT JOIN mind_summaries s ON r.source_kind='summary' AND s.world_id=r.world_id AND s.id=r.record_id
+        WHERE d.source_kind IN ('awareness','memory','summary')) retained_versions`,
       )
-      .all(world.id, actorId, changedRecords))
+      .all(world.id, actorId, changedRecords.get(actorId)?.all ?? []))
       needed(
         actorId,
         {
@@ -207,34 +233,50 @@ export async function prepareSourceVersions(
       candidates.set(key(value), value);
     }
     for (const [kind, table] of Object.entries(tables)) {
-      const ids = [
-        ...(changes.deletes.get(table) ?? []),
-        ...(changes.writes.get(table) ?? []).filter((row) => !row.create).map((row) => row.id),
-      ];
+      const ids = changedRecords.get(actorId)?.previous.get(kind) ?? [];
       if (!ids.length) continue;
-      const size = await db
+      const versions = versionGroups.get(JSON.stringify([actorId, kind])) ?? [];
+      if (!versions.length) continue;
+      // Select exact retained versions before reading their bodies. Expiring unrelated
+      // accounts from independent pools can exceed one read without retaining a byte.
+      const selected = await db
         .prepare(
-          `SELECT COALESCE(SUM(octet_length(payload)),0) AS bytes FROM ${table} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
+          `SELECT a.id,octet_length(a.payload) AS bytes FROM ${table} a
+          JOIN recall_sources r ON r.world_id=a.world_id AND r.actor_id=a.actor_id AND r.record_id=a.id AND r.source_kind=?
+          JOIN jsonb_to_recordset(?::jsonb) q("sourceId" text,revision text) ON q."sourceId"=r.id AND q.revision=r.revision
+          WHERE a.world_id=? AND a.actor_id=? AND a.id=ANY(?::text[])`,
         )
-        .get(world.id, actorId, ids);
-      if (Number(size?.['bytes'] ?? 0) > 4 * 1024 * 1024)
-        throw new Error('Exact source closure exceeds bounded preparation.');
-      for (const row of await db
-        .prepare(
-          `SELECT source_id,payload FROM ${table} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
-        )
-        .all(world.id, actorId, ids)) {
-        const payload = String(row['payload']);
-        const value = {
-          actorId,
-          kind,
-          id: String(row['source_id']),
-          revision: personalAccountRevision(payload),
-          payload,
-          category: 'optional' as Category,
-          bytes: Buffer.byteLength(payload),
-        };
-        candidates.set(key(value), value);
+        .all(kind, JSON.stringify(versions), world.id, actorId, ids);
+      for (let offset = 0; offset < selected.length; ) {
+        const batch: string[] = [];
+        let bytes = 0;
+        while (offset < selected.length) {
+          const row = selected[offset]!,
+            size = Number(row['bytes']);
+          if (batch.length && bytes + size > 4 * 1024 * 1024) break;
+          if (size > 4 * 1024 * 1024)
+            throw new Error('Exact source closure exceeds bounded preparation.');
+          batch.push(String(row['id']));
+          bytes += size;
+          offset++;
+        }
+        for (const row of await db
+          .prepare(
+            `SELECT source_id,payload FROM ${table} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
+          )
+          .all(world.id, actorId, batch)) {
+          const payload = String(row['payload']);
+          const value = {
+            actorId,
+            kind,
+            id: String(row['source_id']),
+            revision: personalAccountRevision(payload),
+            payload,
+            category: 'optional' as Category,
+            bytes: Buffer.byteLength(payload),
+          };
+          candidates.set(key(value), value);
+        }
       }
     }
     const totals = zero();

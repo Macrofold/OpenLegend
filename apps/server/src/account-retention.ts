@@ -30,6 +30,7 @@ const tables = {
   summary: 'mind_summaries',
 } as const;
 type Kind = keyof typeof tables;
+const maximumPreparationBytes = 4 * 1024 * 1024;
 interface Candidate {
   kind: Kind;
   id: string;
@@ -230,7 +231,7 @@ export async function prepareAccountRetention(
       });
     }
     const projected = structuredClone(accounts),
-      selected = new Set<string>();
+      selectedCandidates: Candidate[] = [];
     const ordered = [...candidates.values()].sort(
       (a, b) =>
         a.rank - b.rank || a.at - b.at || a.kind.localeCompare(b.kind) || a.id.localeCompare(b.id),
@@ -243,7 +244,7 @@ export async function prepareAccountRetention(
           projected[candidate.category].count > budget.maxRecords;
       if (candidate.active) continue;
       if (pressure || (candidate.due !== null && candidate.due <= now)) {
-        selected.add(JSON.stringify([candidate.kind, candidate.id]));
+        selectedCandidates.push(candidate);
         projected[candidate.category].bytes -= candidate.bytes;
         projected[candidate.category].count--;
       } else if (candidate.due !== null) nextDue = Math.min(nextDue ?? Infinity, candidate.due);
@@ -256,198 +257,214 @@ export async function prepareAccountRetention(
       )
     )
       throw new MemoryRetentionError('Active personal support exceeds reserved durable capacity.');
-    let preparationBytes = 0;
-    const needed = ordered.filter(
-      (candidate) =>
-        selected.has(JSON.stringify([candidate.kind, candidate.id])) && !candidate.value,
-    );
-    for (const kind of Object.keys(tables) as Kind[]) {
-      const ids = needed
-        .filter((candidate) => candidate.kind === kind)
-        .map((candidate) => candidate.recordId);
-      if (!ids.length) continue;
-      const size = await db
-        .prepare(
-          `SELECT SUM(octet_length(payload)) AS bytes FROM ${tables[kind]} WHERE world_id=? AND id=ANY(?::text[])`,
-        )
-        .get(world.id, ids);
-      preparationBytes += Number(size?.['bytes'] ?? 0);
-      if (preparationBytes > 4 * 1024 * 1024)
-        throw new MemoryRetentionError('Personal memory retention exceeds bounded preparation.');
-      for (const row of await db
-        .prepare(
-          `SELECT source_id,payload FROM ${tables[kind]} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
-        )
-        .all(world.id, actorId, ids)) {
-        const candidate = candidates.get(JSON.stringify([kind, String(row['source_id'])]));
-        if (candidate)
-          candidate.value = {
-            source: kind,
-            value: JSON.parse(String(row['payload'])),
-          } as ExperienceEntry;
+    const totals = structuredClone(accounts);
+    for (let offset = 0; offset < selectedCandidates.length; ) {
+      const batch: Candidate[] = [];
+      let coldBytes = 0;
+      while (offset < selectedCandidates.length) {
+        const candidate = selectedCandidates[offset]!;
+        const bytes = candidate.value ? 0 : candidate.bytes;
+        if (batch.length && coldBytes + bytes > maximumPreparationBytes) break;
+        if (bytes > maximumPreparationBytes)
+          throw new MemoryRetentionError('One personal memory exceeds bounded preparation.');
+        batch.push(candidate);
+        coldBytes += bytes;
+        offset++;
       }
-    }
-    const totals = structuredClone(accounts),
-      expired: ExperienceEntry[] = [],
-      replacements: MemoryRecord[] = [];
-    for (const candidate of ordered) {
-      if (!selected.has(JSON.stringify([candidate.kind, candidate.id]))) continue;
-      const entry = candidate.value;
-      if (!entry)
-        throw new MemoryRetentionError('Selected personal memory disappeared before retention.');
-      const category = accountClass(entry);
-      let replacement: MemoryRecord | undefined;
-      if (entry.source === 'memory' && entry.value.impression)
-        replacement = weakenImpression(entry.value, now);
-      else if (entry.value.retention?.receipt) {
-        const locator = entry.value.retention.receipt;
-        const record =
-          entry.source === 'awareness'
-            ? awarenessMemory(entry.value)
-            : entry.source === 'summary'
-              ? summaryMemory(entry.value, actorId)
-              : entry.value;
-        const locators =
-          entry.source === 'summary'
-            ? (entry.value.manifest.receipts ?? [])
-            : entry.source === 'memory' && entry.value.manifest
-              ? (entry.value.manifest.receipts ?? [])
-              : [locator];
-        const spans = new Map<
-          string,
-          {
-            actorId: string;
-            physicalLife: number;
-            epoch: string;
-            family: 'temporal-receipt';
-            from: number;
-            through: number;
+      // Independent retained pools can together exceed one bounded read. Retire
+      // their selected bodies a batch at a time in this same prepared world; only
+      // the encompassing world transaction publishes their combined effects.
+      let preparationBytes = 0;
+      const hydrated: Candidate[] = [];
+      for (const kind of Object.keys(tables) as Kind[]) {
+        const needed = batch.filter((candidate) => candidate.kind === kind && !candidate.value);
+        const ids = needed.map((candidate) => candidate.recordId);
+        if (!ids.length) continue;
+        const size = await db
+          .prepare(
+            `SELECT SUM(octet_length(payload)) AS bytes FROM ${tables[kind]} WHERE world_id=? AND id=ANY(?::text[])`,
+          )
+          .get(world.id, ids);
+        preparationBytes += Number(size?.['bytes'] ?? 0);
+        if (preparationBytes > maximumPreparationBytes)
+          throw new MemoryRetentionError('Personal memory retention exceeds bounded preparation.');
+        for (const row of await db
+          .prepare(
+            `SELECT source_id,payload FROM ${tables[kind]} WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])`,
+          )
+          .all(world.id, actorId, ids)) {
+          const candidate = candidates.get(JSON.stringify([kind, String(row['source_id'])]));
+          if (candidate) {
+            candidate.value = {
+              source: kind,
+              value: JSON.parse(String(row['payload'])),
+            } as ExperienceEntry;
+            hydrated.push(candidate);
           }
-        >();
-        for (const receipt of locators) {
-          const key = JSON.stringify([receipt.actorId, receipt.physicalLife, receipt.epoch]),
-            prior = spans.get(key);
-          if (prior) {
-            prior.from = Math.min(prior.from, receipt.ordinal);
-            prior.through = Math.max(prior.through, receipt.ordinal);
-          } else
-            spans.set(key, {
-              actorId,
-              physicalLife: receipt.physicalLife,
-              epoch: receipt.epoch,
-              family: 'temporal-receipt',
-              from: receipt.ordinal,
-              through: receipt.ordinal,
-            });
-        }
-        const personal = {
-          kind: entry.source,
-          id: entryId(entry),
-          revision: personalAccountRevision(JSON.stringify(entry.value)),
-        };
-        const observations =
-          entry.source === 'awareness'
-            ? [
-                ...(entry.value.observation ? [entry.value.observation] : []),
-                ...(entry.value.observations ?? []),
-              ]
-            : (record.manifest?.observations ?? [
-                ...(record.observation ? [record.observation] : []),
-                ...(record.observations ?? []),
-                ...(record.evidence?.observation ? [record.evidence.observation] : []),
-                ...(record.evidence?.observations ?? []),
-              ]);
-        const dependencies: ImpressionDependency[] = [
-          personal,
-          ...(record.manifest?.coverage ?? []),
-          ...(entry.source === 'summary' ? entry.value.sources : []),
-          ...observationDependencies(observations),
-        ];
-        replacement = createRememberedImpression(
-          record,
-          [...spans.values()],
-          now,
-          policy.impression,
-          [...new Map(dependencies.map((source) => [JSON.stringify(source), source])).values()],
-        );
-      }
-      // Pressure may discard a preferred recollection. It never creates a second
-      // quota or keeps a larger exact record behind a short rendered account.
-      totals[category].bytes -= candidate.bytes;
-      totals[category].count--;
-      if (replacement) {
-        const bytes = encodedExperienceBytes({ source: 'memory', value: replacement });
-        if (
-          totals.optional.bytes + bytes <= policy.optional.maxBytes &&
-          totals.optional.count + 1 <= policy.optional.maxRecords
-        ) {
-          replacements.push(replacement);
-          totals.optional.bytes += bytes;
-          totals.optional.count++;
-          const next = experienceRetentionDue(world, { source: 'memory', value: replacement });
-          if (next !== null) nextDue = Math.min(nextDue ?? Infinity, next);
         }
       }
-      expired.push(entry);
-      const table = tables[entry.source];
-      rows.set(table, [...(rows.get(table) ?? []), candidate.recordId]);
-      if (candidate.position !== Number.MAX_SAFE_INTEGER) {
-        const selected = positions.get(table) ?? new Map<string, number>();
-        selected.set(candidate.recordId, candidate.position);
-        positions.set(table, selected);
+      const expired: ExperienceEntry[] = [],
+        replacements: MemoryRecord[] = [];
+      for (const candidate of batch) {
+        const entry = candidate.value;
+        if (!entry)
+          throw new MemoryRetentionError('Selected personal memory disappeared before retention.');
+        const category = accountClass(entry);
+        let replacement: MemoryRecord | undefined;
+        if (entry.source === 'memory' && entry.value.impression)
+          replacement = weakenImpression(entry.value, now);
+        else if (entry.value.retention?.receipt) {
+          const locator = entry.value.retention.receipt;
+          const record =
+            entry.source === 'awareness'
+              ? awarenessMemory(entry.value)
+              : entry.source === 'summary'
+                ? summaryMemory(entry.value, actorId)
+                : entry.value;
+          const locators =
+            entry.source === 'summary'
+              ? (entry.value.manifest.receipts ?? [])
+              : entry.source === 'memory' && entry.value.manifest
+                ? (entry.value.manifest.receipts ?? [])
+                : [locator];
+          const spans = new Map<
+            string,
+            {
+              actorId: string;
+              physicalLife: number;
+              epoch: string;
+              family: 'temporal-receipt';
+              from: number;
+              through: number;
+            }
+          >();
+          for (const receipt of locators) {
+            const key = JSON.stringify([receipt.actorId, receipt.physicalLife, receipt.epoch]),
+              prior = spans.get(key);
+            if (prior) {
+              prior.from = Math.min(prior.from, receipt.ordinal);
+              prior.through = Math.max(prior.through, receipt.ordinal);
+            } else
+              spans.set(key, {
+                actorId,
+                physicalLife: receipt.physicalLife,
+                epoch: receipt.epoch,
+                family: 'temporal-receipt',
+                from: receipt.ordinal,
+                through: receipt.ordinal,
+              });
+          }
+          const personal = {
+            kind: entry.source,
+            id: entryId(entry),
+            revision: personalAccountRevision(JSON.stringify(entry.value)),
+          };
+          const observations =
+            entry.source === 'awareness'
+              ? [
+                  ...(entry.value.observation ? [entry.value.observation] : []),
+                  ...(entry.value.observations ?? []),
+                ]
+              : (record.manifest?.observations ?? [
+                  ...(record.observation ? [record.observation] : []),
+                  ...(record.observations ?? []),
+                  ...(record.evidence?.observation ? [record.evidence.observation] : []),
+                  ...(record.evidence?.observations ?? []),
+                ]);
+          const dependencies: ImpressionDependency[] = [
+            personal,
+            ...(record.manifest?.coverage ?? []),
+            ...(entry.source === 'summary' ? entry.value.sources : []),
+            ...observationDependencies(observations),
+          ];
+          replacement = createRememberedImpression(
+            record,
+            [...spans.values()],
+            now,
+            policy.impression,
+            [...new Map(dependencies.map((source) => [JSON.stringify(source), source])).values()],
+          );
+        }
+        // Pressure may discard a preferred recollection. It never creates a second
+        // quota or keeps a larger exact record behind a short rendered account.
+        totals[category].bytes -= candidate.bytes;
+        totals[category].count--;
+        if (replacement) {
+          const bytes = encodedExperienceBytes({ source: 'memory', value: replacement });
+          if (
+            totals.optional.bytes + bytes <= policy.optional.maxBytes &&
+            totals.optional.count + 1 <= policy.optional.maxRecords
+          ) {
+            replacements.push(replacement);
+            totals.optional.bytes += bytes;
+            totals.optional.count++;
+            const next = experienceRetentionDue(world, { source: 'memory', value: replacement });
+            if (next !== null) nextDue = Math.min(nextDue ?? Infinity, next);
+          }
+        }
+        expired.push(entry);
+        const table = tables[entry.source];
+        let retired = rows.get(table);
+        if (!retired) rows.set(table, (retired = []));
+        retired.push(candidate.recordId);
+        if (candidate.position !== Number.MAX_SAFE_INTEGER) {
+          const selected = positions.get(table) ?? new Map<string, number>();
+          selected.set(candidate.recordId, candidate.position);
+          positions.set(table, selected);
+        }
       }
+      world = updateWorld(world, (draft) => {
+        // Residency is preparation only: preserve exact SQL positions on the selected
+        // old bodies so removing them cannot renumber untouched cold history.
+        for (const kind of Object.keys(tables) as Kind[]) {
+          const old =
+            kind === 'memory'
+              ? (draft.memories[actorId] ?? [])
+              : kind === 'awareness'
+                ? (draft.experience!.awareness[actorId] ?? [])
+                : (draft.experience!.summaries[actorId] ?? []);
+          const placement = historyPositions.get(old),
+            positions = new Map(
+              placement?.positions ?? old.map((value, index) => [historyKey(value), index]),
+            );
+          const merged = new Map(old.map((value) => [historyKey(value), value]));
+          for (const candidate of batch)
+            if (candidate.kind === kind && candidate.value) {
+              merged.set(candidate.id, candidate.value.value);
+              positions.set(candidate.id, candidate.position);
+            }
+          const values = [...merged.values()].sort(
+            (a, b) => (positions.get(historyKey(a)) ?? 0) - (positions.get(historyKey(b)) ?? 0),
+          );
+          historyPositions.set(values, {
+            positions,
+            next:
+              placement?.next ??
+              Math.max(
+                0,
+                ...metadata
+                  .filter((row) => row['source_kind'] === kind)
+                  .map((row) => Number(row['position']) + 1),
+              ),
+            complete: placement?.complete,
+          });
+          if (kind === 'memory')
+            draft.memories[actorId] = values as (typeof draft.memories)[string];
+          else if (kind === 'awareness')
+            draft.experience!.awareness[actorId] = values as NonNullable<
+              typeof draft.experience
+            >['awareness'][string];
+          else
+            draft.experience!.summaries[actorId] = values as NonNullable<
+              typeof draft.experience
+            >['summaries'][string];
+        }
+        if (!expireExperience(draft, actorId, expired, replacements))
+          throw new MemoryRetentionError('Personal memory changed before retention installation.');
+      });
+      for (const candidate of hydrated) delete candidate.value;
     }
     world = updateWorld(world, (draft) => {
-      // Residency is preparation only: preserve exact SQL positions on the selected
-      // old bodies so removing them cannot renumber untouched cold history.
-      for (const kind of Object.keys(tables) as Kind[]) {
-        const old =
-          kind === 'memory'
-            ? (draft.memories[actorId] ?? [])
-            : kind === 'awareness'
-              ? (draft.experience!.awareness[actorId] ?? [])
-              : (draft.experience!.summaries[actorId] ?? []);
-        const placement = historyPositions.get(old),
-          positions = new Map(
-            placement?.positions ?? old.map((value, index) => [historyKey(value), index]),
-          );
-        const merged = new Map(old.map((value) => [historyKey(value), value]));
-        for (const candidate of candidates.values())
-          if (
-            candidate.kind === kind &&
-            candidate.value &&
-            selected.has(JSON.stringify([kind, candidate.id]))
-          ) {
-            merged.set(candidate.id, candidate.value.value);
-            positions.set(candidate.id, candidate.position);
-          }
-        const values = [...merged.values()].sort(
-          (a, b) => (positions.get(historyKey(a)) ?? 0) - (positions.get(historyKey(b)) ?? 0),
-        );
-        historyPositions.set(values, {
-          positions,
-          next:
-            placement?.next ??
-            Math.max(
-              0,
-              ...metadata
-                .filter((row) => row['source_kind'] === kind)
-                .map((row) => Number(row['position']) + 1),
-            ),
-          complete: placement?.complete,
-        });
-        if (kind === 'memory') draft.memories[actorId] = values as (typeof draft.memories)[string];
-        else if (kind === 'awareness')
-          draft.experience!.awareness[actorId] = values as NonNullable<
-            typeof draft.experience
-          >['awareness'][string];
-        else
-          draft.experience!.summaries[actorId] = values as NonNullable<
-            typeof draft.experience
-          >['summaries'][string];
-      }
-      if (!expireExperience(draft, actorId, expired, replacements))
-        throw new MemoryRetentionError('Personal memory changed before retention installation.');
       draft.experience!.temporal!.actors[actorId]!.accounts!.nextDue = nextDue;
     });
     const finalSupports = await releaseUnusedTemporalSupports(
