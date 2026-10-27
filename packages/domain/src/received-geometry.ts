@@ -345,6 +345,7 @@ export function refreshReceivedGeometry(
     acquired: ObservationContribution[] = [];
   let state = owner.geometry,
     changed = false;
+  const wasComplete = state?.complete ?? false;
   if (!state || state.basis !== input.basis) {
     if (state) finalizeGeometry(world, observerId, state);
     const nextAt = state?.nextAt ?? 0;
@@ -563,7 +564,7 @@ export function refreshReceivedGeometry(
     state.fragments.length + state.boundaries.length >= policy.maxFragments;
   state.complete =
     state.finished && !state.pending.length && state.surfacesComplete && !state.unrepresented;
-  if (acquired.length || changed) {
+  if (acquired.length || changed || state.complete !== wasComplete) {
     changed = true;
     markAttentionRelationsDirty(world, observerId);
   }
@@ -773,18 +774,21 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
     ),
   );
   const bodies = [...scene.bodies.values()];
-  const bodyRevision = JSON.stringify(
-    bodies.map((body) => [
-      body.exposure,
-      body.sample.original.id,
-      body.sample.valueAcquiredAt,
-      body.motion?.earlier.valueAcquiredAt,
-    ]),
-  );
-  const geometryRevision = JSON.stringify(boundaries.map((value) => value.observation.id));
+  const owner = readOnlyDraftView(world.perceptionEvidence![observerId]!);
+  const geometryBasis = owner.geometry && readOnlyDraftView(owner.geometry).basis;
+  const state = world.perceptionEvidence![observerId]!.attention!;
+  // The receiver's dirty owner already advances on actual member/value/frame/
+  // correspondence or geometry changes. Reuse that proof instead of repeating
+  // every crowd member in each anchor's saved scan key. Confirmation time alone
+  // changes neither the cut nor the latest support checks performed below.
+  const revision = JSON.stringify([
+    state.relationRevision,
+    scene.physicalLife,
+    geometryBasis,
+    geometry.complete,
+  ]);
   const bodiesByExposure = new Map(bodies.map((body) => [body.exposure, body]));
   const boundariesById = new Map(boundaries.map((value) => [value.observation.id, value]));
-  const state = world.perceptionEvidence![observerId]!.attention!;
   const evaluations: AttentionRelationEvaluation[] = [];
   // A tree continuation cannot survive moving members. Rotating received rows
   // instead gives every member finite visits without pretending partial absence
@@ -837,7 +841,8 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
     scan.cursor = values.length ? (scan.cursor + count) % values.length : 0;
     scan.remaining -= count;
     if (prior && !witnesses.some((value) => value.id === prior.id)) witnesses.push(prior);
-    const complete = scan.remaining === 0 && knownComplete;
+    const exhausted = scan.remaining === 0;
+    const complete = exhausted && knownComplete;
     const clearSupported = scan.clearSupported && (!priorRequired || !!prior);
     if (scan.remaining === 0) {
       scan.remaining = values.length;
@@ -848,6 +853,7 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
         anchorKey: entry.key,
         family,
         revision: cut,
+        exhausted,
         complete,
         clearSupported,
         witnesses,
@@ -891,7 +897,7 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
       entry,
       'closing-body',
       bodies,
-      bodyRevision,
+      revision,
       Math.ceil(share / 2),
       bodyMeasure,
       share > 0 && priorBody ? bodyMeasure(priorBody) : undefined,
@@ -932,7 +938,7 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
       entry,
       'closing-drop',
       boundaries,
-      geometryRevision,
+      revision,
       Math.max(0, share - body.visited),
       dropMeasure,
       share - body.visited > 0 && priorBoundary ? dropMeasure(priorBoundary) : undefined,

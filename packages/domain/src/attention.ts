@@ -180,6 +180,9 @@ export interface AttentionRelationEvaluation {
   anchorKey: string;
   family: AttentionRelationFamily;
   revision: string;
+  /** Every candidate in this received cut was visited, even if coverage is partial. */
+  exhausted: boolean;
+  /** The received coverage also supports a complete negative answer. */
   complete: boolean;
   clearSupported: boolean;
   witnesses: AttentionRelationWitness[];
@@ -394,6 +397,8 @@ export function updateAttention(
     const old = originalCandidate && readOnlyDraftView(originalCandidate);
     const locationSource = readOnlyDraftView(owner.current)[`${sourceId}:location`];
     const location = locationSource && readOnlyDraftView(locationSource);
+    const motionSource = readOnlyDraftView(owner.current)[`${sourceId}:observed-motion`];
+    const motion = motionSource && readOnlyDraftView(motionSource);
     const measured = currentPoint(owner, sourceId, world, observerId);
     const subject =
       currentBodyAssociation(world, observerId, sourceId) ??
@@ -429,6 +434,14 @@ export function updateAttention(
       measured?.errorRadius,
       readOnlyDraftView(bodyValue.body).radius,
       readOnlyDraftView(bodyValue.body).height,
+      body.id,
+      body.revision,
+      location?.id,
+      location?.revision,
+      // Ending an actually received motion interval can establish stationary
+      // support without moving the point. Recheck once, not on every clock tick.
+      motion?.id,
+      motion?.revision,
     ]);
     if (candidate.geometryRevision !== geometryRevision) geometryChanged = true;
     candidate.geometryRevision = geometryRevision;
@@ -780,7 +793,8 @@ export function applyAttentionRelationEvaluations(
   for (const evaluation of evaluations) {
     const anchor = state.entries.find((entry) => entry.key === evaluation.anchorKey);
     if (!anchor) continue;
-    if (evaluation.complete) delete state.relationDirty[relationKey(anchor.key, evaluation.family)];
+    if (evaluation.exhausted)
+      delete state.relationDirty[relationKey(anchor.key, evaluation.family)];
     const bounds = evaluation.family === 'closing-body' ? policy.body : policy.drop;
     const matches = (witness: AttentionRelationWitness) =>
       witness.distanceUpper <= bounds.enter &&

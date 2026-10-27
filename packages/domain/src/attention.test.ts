@@ -223,6 +223,7 @@ describe('received detailed attention', () => {
         anchorKey: anchor.key,
         family: 'closing-body',
         revision: 'received',
+        exhausted: true,
         complete: true,
         clearSupported: false,
         witnesses: [
@@ -483,6 +484,7 @@ describe('received detailed attention', () => {
       anchorKey: anchor.key,
       family: 'closing-drop' as const,
       revision: 'first',
+      exhausted: true,
       complete: true,
       clearSupported: true,
       witnesses: [
@@ -551,6 +553,7 @@ describe('received detailed attention', () => {
       anchorKey: anchor!.key,
       family: 'closing-body' as const,
       revision: 'alarm',
+      exhausted: true,
       complete: true,
       clearSupported: true,
       witnesses: [witness],
@@ -591,6 +594,7 @@ describe('received detailed attention', () => {
           anchorKey: anchor.key,
           family,
           revision: 'complete',
+          exhausted: true,
           complete: true,
           clearSupported: true,
           witnesses: [],

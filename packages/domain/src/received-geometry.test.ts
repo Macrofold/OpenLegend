@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
+import * as worldComposition from './world-composition.js';
 import {
   clearConvexView,
   clearSegment,
@@ -26,6 +27,7 @@ import { validateTemporalEvidenceState } from './temporal-validation.js';
 import type { WorldState } from './types.js';
 import {
   currentReceivedGeometry,
+  evaluateAttentionRelations,
   refreshReceivedGeometry,
   revokeReceivedGeometryEvidence,
   validateReceivedGeometryState,
@@ -251,6 +253,152 @@ function nativeScene(
 }
 
 describe('native received relation producers', () => {
+  it('exhausts unchanged partial terrain once and rechecks actual received changes identically after restore', () => {
+    const { world, people } = nativeScene(
+      2,
+      map([surface('ground', 0, 4, 0), surface('unseen-upper-face', 0, 4, 10)]),
+    );
+    const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
+    expect(currentReceivedGeometry(world, PLAYER_ID).complete).toBe(false);
+    expect(world.perceptionEvidence![PLAYER_ID]!.geometry!.finished).toBe(true);
+    expect(attention.relationDirty).toEqual({});
+    const checkedThrough = attention.nextRelationAt;
+    world.simTime = 15;
+    initializePerception(world, []);
+    expect(attention.nextRelationAt).toBe(checkedThrough);
+    expect(attention.relationDirty).toEqual({});
+    const restored = JSON.parse(JSON.stringify(world)) as WorldState;
+    for (const candidate of [world, restored]) {
+      candidate.simTime = 16;
+      setSpatialPosition(
+        candidate,
+        entityGet(candidate.entities, people[1]!.id)!,
+        { x: 7, y: 0, z: 2 },
+        null,
+        'physical',
+      );
+      initializePerception(candidate, []);
+      expect(candidate.perceptionEvidence![PLAYER_ID]!.attention!.nextRelationAt).toBeGreaterThan(
+        checkedThrough,
+      );
+      expect(candidate.perceptionEvidence![PLAYER_ID]!.attention!.relationDirty).toEqual({});
+    }
+    expect(JSON.parse(JSON.stringify(world.perceptionEvidence![PLAYER_ID]!.attention))).toEqual(
+      restored.perceptionEvidence![PLAYER_ID]!.attention,
+    );
+    expect(JSON.parse(JSON.stringify(world.experience!.temporal))).toEqual(
+      restored.experience!.temporal,
+    );
+  });
+
+  it('finishes a multi-page stationary crowd and restarts after a real between-page movement', () => {
+    const { world, people } = nativeScene(
+      40,
+      map([surface('ground', 0, 4, 0), surface('unseen-upper-face', 0, 4, 10)]),
+    );
+    const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
+    const anchor = Object.entries(attention.candidates).find(
+      ([, candidate]) => candidate.sourceId === people[0]!.id,
+    )![0];
+    expect(setAttentionFocus(world, PLAYER_ID, [anchor])).toBe(true);
+    const key = JSON.stringify([anchor, 'closing-body']);
+    const initialRemaining = attention.relationScans[key]!.remaining;
+    expect(initialRemaining).toBeGreaterThan(0);
+    world.simTime = 15;
+    setSpatialPosition(world, people.at(-1)!, { x: 23, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    expect(attention.relationScans[key]!.remaining).toBe(initialRemaining);
+    const afterMovement = attention.relationScans[key]!.revision;
+    world.simTime = 16;
+    setSpatialPosition(world, people.at(-1)!, { x: 24.5, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    world.simTime = 30;
+    initializePerception(world, []);
+    expect(attention.relationScans[key]!.revision).not.toBe(afterMovement);
+    // Fair shares vary as other anchors finish. A changed cut starts a new
+    // nonempty pass rather than treating the earlier visited prefix as current.
+    expect(attention.relationScans[key]!.remaining).toBeGreaterThan(0);
+    for (let at = 45; at <= 300 && attention.relationDirty[key] !== undefined; at += 15) {
+      world.simTime = at;
+      initializePerception(world, []);
+    }
+    expect(attention.relationDirty[key]).toBeUndefined();
+    expect(currentDetailedAttention(world, PLAYER_ID).some((entry) => entry.key === anchor)).toBe(
+      true,
+    );
+    expect(
+      Object.values(world.perceptionEvidence![PLAYER_ID]!.current).filter(
+        (lease) => lease.value.kind === 'body',
+      ),
+    ).toHaveLength(40);
+  });
+
+  it('rechecks newly completed physical coverage even when its last bounded pass emits no new fact', () => {
+    const installed = worldComposition.selectedAttentionPolicy;
+    // A two-visit disposable source policy certifies one real patch first and
+    // its four edges on later opportunities. Production allowances stay intact.
+    const bounded = vi
+      .spyOn(worldComposition, 'selectedAttentionPolicy')
+      .mockImplementation((world) => {
+        const policy = installed(world);
+        return { ...policy, geometry: { ...policy.geometry, indexVisits: 2 } };
+      });
+    try {
+      const { world } = nativeScene(1, map());
+      const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
+      expect(currentReceivedGeometry(world, PLAYER_ID).complete).toBe(false);
+      let finishedWithoutNewFact = false;
+      for (let at = 15; at <= 120; at += 15) {
+        world.simTime = at;
+        const previous = currentReceivedGeometry(world, PLAYER_ID).complete;
+        const received = refreshReceivedGeometry(world, PLAYER_ID);
+        if (!previous && currentReceivedGeometry(world, PLAYER_ID).complete) {
+          expect(received.acquired).toEqual([]);
+          expect(received.changed).toBe(true);
+          expect(Object.keys(attention.relationDirty).length).toBeGreaterThan(0);
+          finishedWithoutNewFact = true;
+          break;
+        }
+        evaluateAttentionRelations(world, PLAYER_ID);
+      }
+      expect(finishedWithoutNewFact).toBe(true);
+    } finally {
+      bounded.mockRestore();
+    }
+  });
+
+  it('does not rearm a received drop condition after exhausting incomplete physical coverage', () => {
+    const value = map([
+      surface('high', -5, 20, 2),
+      surface('low', 20, 40, 0),
+      surface('unseen-upper-face', -5, 40, 20),
+    ]);
+    value.width = 42;
+    value.tiles = Array.from({ length: 5 }, () => Array(42).fill('grass'));
+    const { world, people } = nativeScene(1, value, { x: 25, y: 2, z: 2 });
+    const person = people[0]!;
+    setSpatialPosition(world, person, { x: 15, y: 2, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    world.simTime = 15;
+    setSpatialPosition(world, person, { x: 16, y: 2, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    const cue = currentAttentionCues(world, PLAYER_ID).find(
+      (value) => value.family === 'closing-drop',
+    )!;
+    expect(cue).toBeDefined();
+    expect(currentReceivedGeometry(world, PLAYER_ID).complete).toBe(false);
+    const key = JSON.stringify([cue.anchorKey, cue.family]);
+    world.simTime = 30;
+    initializePerception(world, []);
+    const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
+    expect(attention.relationDirty[key]).toBeUndefined();
+    expect(attention.latches[key]!.clearSince).toBeUndefined();
+    world.simTime = 180;
+    initializePerception(world, []);
+    expect(currentAttentionCues(world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(true);
+    expect(attention.latches[key]!.clearSince).toBeUndefined();
+  });
+
   it('seals an actually held geometry interval at a cognition cut without sensing or duplicate confirmation', () => {
     const { world, people } = nativeScene(1, map());
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
@@ -632,5 +780,34 @@ describe('native received relation producers', () => {
     expect(
       currentAttentionCues(world, PLAYER_ID).find((entry) => entry.id === cue!.id),
     ).toBeDefined();
+  });
+  it('rearms a closing-body condition at its existing clear deadline using continuously confirmed stationary support', () => {
+    const { world, people } = nativeScene(2, map([surface('ground', -5, 25, 0)]));
+    const anchor = people[0]!,
+      neighbor = people[1]!;
+    setSpatialPosition(world, neighbor, { x: 11, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    world.simTime = 15;
+    setSpatialPosition(world, neighbor, { x: 7, y: 0, z: 2 }, null, 'physical');
+    initializePerception(world, []);
+    const cue = currentAttentionCues(world, PLAYER_ID).find(
+      (entry) => entry.sourceId === anchor.id && entry.family === 'closing-body',
+    )!;
+    expect(cue).toBeDefined();
+    world.simTime = 30;
+    initializePerception(world, []);
+    const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
+    const key = JSON.stringify([cue.anchorKey, cue.family]);
+    expect(attention.latches[key]!.clearSince).toBe(30);
+    expect(attention.relationDirty[key]).toBeUndefined();
+    const checkedThrough = attention.nextRelationAt;
+    world.simTime = 149;
+    initializePerception(world, []);
+    expect(attention.nextRelationAt).toBe(checkedThrough);
+    expect(currentAttentionCues(world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(true);
+    world.simTime = 150;
+    initializePerception(world, []);
+    expect(currentAttentionCues(world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(false);
+    expect(attention.relationDirty[key]).toBeUndefined();
   });
 });
