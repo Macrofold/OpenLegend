@@ -80,7 +80,9 @@ Canceling A spends rather than refunds the opening. Long-held directed preparati
 
 Target-bound ranged preparation applies its gate when physical preparation begins. Holding past readiness never charges the same recipient again. At the accepted final subject/point selection, ordinary exact review and the first-body/solid ray query determine a newly threatened player before launch. Empty-point preparation cannot prepay another player's opening; a solid stopping the ray before a player does not create a threat behind it.
 
-Freeze that release choice through the existing pending-release owner. A new explicit release choice uses the ordinary new-binding/review rules; a stale pending request cannot silently retarget. At eventual launch, revalidate ordinary source/permission/subject-or-point prerequisites. Actual later movement and interception remain physical collateral; do not turn a held release into a recurring search for new recipients or repeatedly postpone it as bodies cross the ray. This is the declared preparation/selection boundary, not a guarantee for every person who may later enter the path.
+Freeze the release choice through the existing pending-release owner. A new explicit release choice uses ordinary binding/review rules; a stale request cannot silently retarget. At each actual native launch attempt, revalidate source/permission/subject-or-point prerequisites and perform the same first-body/solid check against the ray that would launch now. If a newly threatened player's current encounter still grants an opening, admit only that applicable delay and return to the existing readiness deadline; do not recursively launch or poll the ray every frame. At the next due launch boundary, repeat that ordinary current-geometry check. A served/spent recipient adds no new time. This prevents a player crossing during preparation from bypassing the first-attack rule while retaining one pending release and one current gate, not a target-history queue.
+
+The frozen choice remains a subject or point under the ordinary aim contract: a point stays fixed, while a subject uses only currently permitted targeting facts. Collision candidates do not become new selected targets, private names or tracking coordinates. A changed obstruction may stop the eventual shot; no hit is guaranteed. Unforeseen interception **after actual launch** remains physical collateral.
 
 Do not alter a released flight's speed, ray, ammunition, collision or source lifetime. No gating at health subtraction. A private ray query can affect physical delay, with the observable tradeoff in §2.2, but cannot return hidden candidate facts to review or UI.
 
@@ -124,7 +126,7 @@ Resolve uncertain delivery through the original request/result owner; no new ID 
 
 ### 5.1 Preflight
 
-One **proposed `prepareEquipmentSet`** read returns desired attachments, current items to stow, exact item/definition dependencies, affected ports/ancestors, claims and final net-capacity checks. The server preference owner resolves the preset; an NPC's equivalent explicit native set passes the same checks. Names never bind objects.
+One **proposed `prepareEquipmentSet`** read returns desired attachments, current items to stow, exact item/definition dependencies, affected ports/ancestors, claims and final net-capacity checks. The server preference owner resolves the preset; an NPC's equivalent explicit native set passes the same checks. Names never bind objects. Share the final-placement builder and attachment mutation with ordinary Equip and [IWB02's compound equip/stow](../maintainers/item-and-building-workflows.md#iwb02--equip-and-stow-without-accidental-loss). ECL adds a complete desired set and duration; it does not require IWB's deferred chosen-container destination editor.
 
 Check current authority/life, installed operation, compatible body, unique exact items, nonoverlapping ports, accessible personal custody and meaningful claims/work constraints. Multi-port items appear once. Stow omitted gear into the carried root; unchanged attachments need no rewrite. Use existing net-load/ancestor rules, not scans of unrelated bags or remembered former destinations.
 
@@ -158,7 +160,7 @@ The setting and waiting display explain this ordering and expose manual Equip. O
 
 ## 6. UI implementation
 
-Compose one top-center region with shared buttons, availability explanations and native progress. It belongs to the permitted scope of the active gameplay overlay, including sheets/modals; do not disable modal isolation or allow background world input. Authentication, maintenance, disconnection and competing-tab blockers cannot be bypassed.
+Compose one top-center region with shared buttons, availability explanations and native progress. It belongs to the permitted scope of the active gameplay overlay, including sheets/modals; do not disable modal isolation or allow background world input. Authentication, maintenance, disconnection and competing-tab blockers cannot be bypassed. Render received committed danger immediately; the shared 500 ms loading-spinner delay is not a notification delay.
 
 Use a single danger announcement per meaningful occurrence, optionally one existing UI-alert sound respecting volume/mute. This is interface feedback, not a fictional sound heard by residents. Use steady color-independent emphasis rather than strobing; reduced motion does not change native deadlines. Announce phase changes, not countdown frames.
 
@@ -185,7 +187,7 @@ Change current initialization, schemas, codecs, protocol and validation together
 
 ## 8. Performance and failure scope
 
-Use actual attack/recipient/lifecycle changes and native deadlines; no paid calls, polling agents, all-world inventory scans or independent scheduler. Work for a selected set is proportional to selected/displaced items, occupied ports and affected ancestors. Build shared reaction prerequisites once per compatible read and invalidate by their actual dependencies.
+Use actual attack/recipient/lifecycle changes and native deadlines; no paid calls, polling agents, all-world inventory scans or independent scheduler. A delayed shot checks the first relevant collider only at a genuine native launch attempt, not on every frame or sensory publication. Work for a selected set is proportional to selected/displaced items, occupied ports and affected ancestors. Build shared reaction prerequisites once per compatible read and invalidate by their actual dependencies.
 
 Preset storage/listing grows with the number of saved sets, with no feature-specific count cap. Read the personal list when its task opens/changes; prepare current availability only for the selected or visible task, never all presets every frame. Existing transport/storage bounds remain; record actual scanned work and bytes, not only the size of the displayed result. Add indexing or paging only for demonstrated growth in this owner, not a speculative service.
 
@@ -211,7 +213,7 @@ There is one pending convenience and one return-workspace reference per client s
 | Mode/menu/gear toggles | No renewed opening, duplicate automatic set, recovery reset or repeat attack. |
 | Cancel/miss/block/zero injury | Opening stays spent; defense consumes only an eligible connecting contact. |
 | Long held aim/late subject | Same-recipient gate is not charged twice; a new explicit recipient uses its gate without summing already extended readiness. |
-| Point fire at an existing player | Actual admitted pre-release threat gates; preview does not. Cover blocks normally; later crossing does not start a recurring recipient-search loop. |
+| Point fire and a player crossing before launch | Each real launch attempt checks current first collider: a newly threatened eligible player gets their gate, a served recipient adds none. Preview does not activate it; no per-frame polling, target substitution or hidden facts. |
 | Released flight/collateral | No stopped/recalled flight, damage queue or retroactive immunity. |
 | Positive/negative contribution | Real installed modifiers affect mechanics/explanation once; mid-opening changes do not resize it. |
 | Quiet/reconnect/new life | Genuine quiet rearms; same-life reconnect does not; new life initializes normally. |

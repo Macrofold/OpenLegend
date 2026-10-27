@@ -6,7 +6,7 @@
 
 Use the world profile's base allowance, modifier clamp and quiet-rearm interval, converted once to simulation time. One opportunity belongs to the recipient's life/encounter, shared across attackers. Cancellation/miss/block/zero injury spends an admitted opening; menu/mode/equipment changes and reconnect cannot renew it. Rebinding a held attack never adds an allowance to readiness already extended by that allowance.
 
-Supported directed and accepted pre-release ray threats qualify. Later crossing/interception, released projectiles and environmental harm do not receive retroactive protection. The result is extra physical preparation, not guaranteed visible reaction time, survival or first-damage immunity; no shared slowdown or client-acknowledgement extension.
+Supported directed and pre-release ray threats qualify, with current geometry rechecked at each actual native launch attempt. A newly threatened eligible player can delay that launch; a served recipient cannot repeatedly renew it. This uses native readiness boundaries, not per-frame polling or a target-history queue. Crossing/interception after release and environmental harm receive no retroactive protection. The result is extra physical preparation, not guaranteed visible reaction time, survival or first-damage immunity; no shared slowdown or client-acknowledgement extension.
 
 **Rationale/reconsideration:** first counterplay without perpetual fight stalling or another projectile system. Qualify ordinary/ranged/late-bound/multiple attacks and actual delivery delay; assess feints, separated encounters and the value of the selected quiet interval through ECL08.
 
