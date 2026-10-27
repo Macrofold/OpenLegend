@@ -35,8 +35,12 @@ import {
   captureTemporalReceiptPrefix,
   temporalReceiptWithinPrefix,
   retireTemporalChunks,
+  materializeTemporalValue,
+  temporalReceiptForRead,
   type TemporalValue,
   type TemporalValueReference,
+  type TemporalFacetReference,
+  type TemporalFragment,
 } from './temporal-evidence.js';
 
 function scene(seed = 41) {
@@ -790,6 +794,11 @@ it('shares equal received values without granting another observer the earlier h
     valueOrdinal: currentBodyReference(PLAYER_ID, playerExposure).valueOrdinal,
   });
   const encoded = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
+  const completeValue = (reference: TemporalFacetReference, fragment: TemporalFragment) => {
+    const value = materializeTemporalValue(reference, fragment);
+    expect(value).toBeDefined();
+    return value;
+  };
   for (const block of Object.values(world.experience!.temporal!.sources))
     expect(block.bytes).toBe(encoded(block));
   for (const actor of Object.values(world.experience!.temporal!.actors)) {
@@ -801,18 +810,31 @@ it('shares equal received values without granting another observer the earlier h
             (n, reference) =>
               n +
               encoded(
-                world.experience!.temporal!.sources[reference.blockId]!.values[
-                  reference.valueOrdinal
-                ],
+                completeValue(
+                  reference,
+                  world.experience!.temporal!.sources[reference.blockId]!.values[
+                    reference.valueOrdinal
+                  ]!,
+                ),
               ),
             0,
           ),
         0,
       );
-      expect(chunk.bytes).toBe(encoded(chunk) + supportBytes);
+      expect(chunk.bytes).toBe(
+        encoded({ ...chunk, receipts: chunk.receipts.map(temporalReceiptForRead) }) + supportBytes,
+      );
     }
     for (const capsule of Object.values(actor.supports ?? {}))
-      expect(capsule.bytes).toBe(encoded(capsule));
+      expect(capsule.bytes).toBe(
+        encoded({
+          ...capsule,
+          receipt: temporalReceiptForRead(capsule.receipt),
+          values: capsule.values.map((value, index) =>
+            completeValue(capsule.receipt.facets[index]!, value),
+          ),
+        }),
+      );
   }
 });
 

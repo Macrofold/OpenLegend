@@ -77,6 +77,7 @@ import {
   type TemporalHistorySelection,
   type TemporalReceiptLocator,
   type TemporalSupportCapsule,
+  splitTemporalValue,
   temporalKnownPlaceCapsules,
   selectedAttentionPolicy,
   validExperienceSummary,
@@ -709,14 +710,20 @@ export class MemoryRepository {
       return false;
     const selected = selections.map(({ receipt, values }) => {
       const { facets, sourceIds: _aliases, ...header } = receipt;
+      // The public read contains full personal values. Reconstruct the exact
+      // stored pairing before comparing it within the scoped SQL snapshot.
+      const fragments = values.map(splitTemporalValue);
       return {
         actorId: receipt.actorId,
         physicalLife: receipt.physicalLife,
         epoch: receipt.epoch,
         ordinal: receipt.ordinal,
         header,
-        facets,
-        values,
+        facets: facets.map((facet, index) => ({
+          ...facet,
+          ...(fragments[index]!.reception ? { reception: fragments[index]!.reception } : {}),
+        })),
+        values: fragments.map(({ value }) => value),
       };
     });
     const payload = JSON.stringify(selected);

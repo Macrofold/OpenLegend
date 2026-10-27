@@ -5,6 +5,8 @@ import {
   retireTemporalChunks,
   clearTemporalCaptureReferences,
   temporalReceiptWithinPrefix,
+  materializeTemporalValue,
+  temporalReceiptForRead,
   updateWorld,
   type WorldState,
   type TemporalChunk,
@@ -307,9 +309,10 @@ export async function readTemporalHistory(
         (facet.measuredFrom <= query.measurements.through &&
           (facet.confirmedThrough ?? facet.measuredThrough) >= query.measurements.from),
     );
-    const values = references.map(
-      (reference) => sources[reference.blockId]?.values[reference.valueOrdinal],
-    );
+    const values = references.map((reference) => {
+      const fragment = sources[reference.blockId]?.values[reference.valueOrdinal];
+      return fragment && materializeTemporalValue(reference, fragment);
+    });
     if (values.some((value) => !value)) {
       incomplete = true;
       examined = before;
@@ -338,7 +341,7 @@ export async function readTemporalHistory(
     )
       incomplete = true;
     const entry = {
-      receipt: { ...receipt, facets: kept.map(({ facet }) => facet) },
+      receipt: temporalReceiptForRead({ ...receipt, facets: kept.map(({ facet }) => facet) }),
       values: kept.map(({ value }) => value!),
     };
     const size = Buffer.byteLength(JSON.stringify(entry));

@@ -6,6 +6,7 @@ import {
   selectedRecognitionSupportSourceIds,
   releaseTemporalSupport,
   temporalReceiptAliases,
+  temporalSupportAliases,
   temporalReceiptIndividualIds,
   updateWorld,
   type ExperienceEntry,
@@ -71,18 +72,18 @@ export async function releaseUnusedTemporalSupports(
     if (record.sourceReceipt) keys.push(temporalReceiptId(record.sourceReceipt));
   }
   const held = new Set([...keys, ...selectedRecognitionSupportSourceIds(state.world, keys)]);
-  const candidates = Object.values(supports).filter(
-    (capsule) =>
-      !capsule.required &&
-      !capsule.values.some(
-        (value) => value.kind === 'encounter-exposure' && value.exposure.kind === 'place',
-      ) &&
-      ![capsule.receipt.id, ...capsule.receipt.sourceIds].some((id) => held.has(id)),
-  );
+  const candidates = Object.values(supports)
+    .map((capsule) => ({ capsule, aliases: temporalSupportAliases(capsule, state.world) }))
+    .filter(
+      ({ capsule, aliases }) =>
+        !capsule.required &&
+        !capsule.values.some(
+          (value) => value.kind === 'encounter-exposure' && value.exposure.kind === 'place',
+        ) &&
+        !aliases.some((id) => held.has(id)),
+    );
   if (!candidates.length) return { state, ids: [] };
-  const aliases = [
-    ...new Set(candidates.flatMap((capsule) => [capsule.receipt.id, ...capsule.receipt.sourceIds])),
-  ];
+  const aliases = [...new Set(candidates.flatMap(({ aliases }) => aliases))];
   const retained = new Set<string>();
   if (!complete)
     for (let offset = 0; offset < aliases.length; offset += 800) {
@@ -97,11 +98,8 @@ export async function releaseUnusedTemporalSupports(
         retained.add(id);
     }
   const ids = candidates
-    .filter(
-      (capsule) =>
-        ![capsule.receipt.id, ...capsule.receipt.sourceIds].some((id) => retained.has(id)),
-    )
-    .map((capsule) => capsule.receipt.id);
+    .filter(({ aliases }) => !aliases.some((id) => retained.has(id)))
+    .map(({ capsule }) => capsule.receipt.id);
   if (!ids.length) return { state, ids };
   return {
     state: {
@@ -203,7 +201,7 @@ export async function cleanupRetiredIndividuals(
         )
       ) {
         const value = actor(actorId);
-        for (const id of [capsule.receipt.id, ...capsule.receipt.sourceIds]) value.sources.add(id);
+        for (const id of temporalSupportAliases(capsule, before.world)) value.sources.add(id);
         if (capsule.receipt.subjectIdentity?.kind === 'individual')
           value.individuals.add(capsule.receipt.subjectIdentity.individualId);
         for (const facet of capsule.values)
@@ -258,8 +256,7 @@ export async function cleanupRetiredIndividuals(
     const history = world.experience?.temporal?.actors[actorId],
       sources = world.experience?.temporal?.sources ?? {};
     for (const capsule of Object.values(history?.supports ?? {})) {
-      for (const id of capsule.receipt.sourceIds) retained.add(id);
-      retained.add(capsule.receipt.id);
+      for (const id of temporalSupportAliases(capsule, world)) retained.add(id);
       if (capsule.receipt.subjectIdentity?.kind === 'individual')
         individuals.add(capsule.receipt.subjectIdentity.individualId);
       for (const value of capsule.values)

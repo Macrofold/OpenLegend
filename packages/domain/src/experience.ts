@@ -87,6 +87,8 @@ import {
   temporalReceiptSource,
   temporalReceiptId,
   temporalReceiptAliases,
+  temporalSupportAliases,
+  splitTemporalValue,
   type TemporalReceipt,
   type TemporalValue,
 } from './temporal-evidence.js';
@@ -1173,14 +1175,20 @@ export function retainedExperienceSource(
   const affected = new Set([sourceId]);
   if (
     Object.values(world.experience?.temporal?.actors[actorId]?.supports ?? {}).some(
-      (support) => support.receipt.id === sourceId || support.receipt.sourceIds.includes(sourceId),
+      (support) =>
+        support.receipt.id === sourceId ||
+        temporalSupportAliases(support, world).includes(sourceId),
     )
   )
     return true;
   if (
     world.experience?.temporal?.actors[actorId]?.chunks.some((chunk) =>
       chunk.receipts.some(
-        (receipt) => receipt.id === sourceId || receipt.sourceIds.includes(sourceId),
+        (receipt) =>
+          receipt.id === sourceId ||
+          temporalReceiptAliases(receipt, world.experience!.temporal!.sources, world).includes(
+            sourceId,
+          ),
       ),
     )
   )
@@ -1519,7 +1527,8 @@ export function rememberInterpretation(
     if (receipts.has(receipt.id)) continue;
     receipts.add(receipt.id);
     const sources: import('./temporal-evidence.js').TemporalEvidenceState['sources'] = {};
-    receipt.facets.forEach((reference, index) => {
+    const storedFacets = receipt.facets.map((reference, index) => {
+      const { value, reception } = splitTemporalValue(values[index]!);
       const block = (sources[reference.blockId] ??= {
         id: reference.blockId,
         at: receipt.at,
@@ -1527,13 +1536,14 @@ export function rememberInterpretation(
         bytes: 0,
         values: [],
       });
-      block.values[reference.valueOrdinal] = values[index]!;
+      block.values[reference.valueOrdinal] = value;
+      return { ...reference, ...(reception ? { reception } : {}) };
     });
     const source = temporalReceiptSource(receipt);
     dependencies.set(canonicalJson(source), {
       source,
       ordinal: null,
-      aliases: temporalReceiptAliases(receipt, sources, world),
+      aliases: temporalReceiptAliases({ ...receipt, facets: storedFacets }, sources, world),
     });
     provenance.push({
       actorId,
@@ -1700,6 +1710,9 @@ export function invalidateExperience(
   };
   while (expanded) {
     expanded = false;
+    // A direct account alias revokes the account. Embedded fact dependencies
+    // instead revoke their selected facets; promoting those to the receipt ID
+    // would erase independently received siblings in the resident account.
     for (const support of Object.values(state.temporal?.actors[actorId]?.supports ?? {}))
       if (support.receipt.sourceIds.some((source) => affected.has(source)))
         include(support.receipt.id);
