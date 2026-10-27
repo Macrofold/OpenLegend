@@ -156,7 +156,7 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
   second.id = 'different-unknown-deer';
   entitySet(world.entities, second.id, second);
   for (const entity of entityValues(world.entities))
-    if (entity.id !== PLAYER_ID && entity.placement.mode === 'world')
+    if (entity.id !== PLAYER_ID && entity.placement?.mode === 'world')
       setSpatialPosition(world, entity, { x: 100, y: 0, z: 100 }, 'terrain');
   setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, 'terrain');
   setSpatialPosition(world, first, { x: 3, y: 0, z: 2 }, 'terrain');
@@ -218,7 +218,7 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
     npc = entityGet(world.entities, NPC_ID)!,
     branches = entityGet(world.entities, 'branches')!;
   for (const entity of entityValues(world.entities))
-    if (entity.id !== PLAYER_ID && entity.placement.mode === 'world')
+    if (entity.id !== PLAYER_ID && entity.placement?.mode === 'world')
       setSpatialPosition(world, entity, { x: 100, y: 0, z: 100 }, 'terrain');
   setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, 'terrain');
   setSpatialPosition(world, npc, { x: 3, y: 0, z: 2 }, 'terrain');

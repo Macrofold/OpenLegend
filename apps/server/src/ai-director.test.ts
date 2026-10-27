@@ -311,20 +311,6 @@ async function considerQuietScene(h: Awaited<ReturnType<typeof harness>>) {
   await h.director.idle();
 }
 
-async function quietJobs(h: Awaited<ReturnType<typeof harness>>) {
-  return (await h.store.recentJobs(30))
-    .filter((job) => job.kind === 'thought')
-    .map((job) => ({
-      id: job.id,
-      actor: job.request.npcId,
-      status: job.status,
-      trigger: job.diagnosticTriggerType,
-      message: job.message,
-      result: job.result,
-      causes: job.semanticCauses,
-    }));
-}
-
 async function receivePlayerAt(h: Awaited<ReturnType<typeof harness>>, at: number, x: number) {
   await h.change((world) => {
     world.simTime = at;
@@ -371,10 +357,9 @@ describe('AI director with explicit fixtures, no live calls', () => {
     await considerQuietScene(h);
     await h.change((world) => initializePerception(world, []));
     await considerQuietScene(h);
-    expect(
-      { judges: h.calls.judges.length, generations: h.calls.generations.length },
-      JSON.stringify(await quietJobs(h)),
-    ).toEqual(dispatched);
+    expect({ judges: h.calls.judges.length, generations: h.calls.generations.length }).toEqual(
+      dispatched,
+    );
   });
 
   it('spends a failed discovery only once and renews it only after actual chosen work completes', async () => {
@@ -392,13 +377,13 @@ describe('AI director with explicit fixtures, no live calls', () => {
     });
     await prepareQuietScene(h);
     await considerQuietScene(h);
-    expect(attempts, JSON.stringify(await quietJobs(h))).toBe(1);
+    expect(attempts).toBe(1);
     expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
       'spent',
     );
     await h.change((world) => initializePerception(world, []));
     await considerQuietScene(h);
-    expect(attempts, JSON.stringify(await quietJobs(h))).toBe(1);
+    expect(attempts).toBe(1);
     const moved = await h.service.transition((world) =>
       executeCommand(world, {
         id: 'quiet-interval-chosen-move',
@@ -408,11 +393,20 @@ describe('AI director with explicit fixtures, no live calls', () => {
       }),
     );
     expect(moved.ok, moved.message).toBe(true);
-    expect(h.service.paused, h.service.storageError).toBe(false);
-    for (let step = 0; step < 6 && entityGet(h.service.world.entities, NPC_ID)!.actor!.action; step++)
+    expect(h.service.paused, h.service.storageError ?? undefined).toBe(false);
+    for (
+      let step = 0;
+      step < 6 && entityGet(h.service.world.entities, NPC_ID)!.actor!.action;
+      step++
+    )
       await h.service.tick(0.1, 0, { drain: true });
-    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.action,
-      JSON.stringify({ simTime: h.service.world.simTime, paused: h.service.paused, error: h.service.storageError }),
+    expect(
+      entityGet(h.service.world.entities, NPC_ID)!.actor!.action,
+      JSON.stringify({
+        simTime: h.service.world.simTime,
+        paused: h.service.paused,
+        error: h.service.storageError,
+      }),
     ).toBeNull();
     expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic).toMatchObject({
       interval: 1,
@@ -431,7 +425,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
       initializePerception(world, []);
     });
     await considerQuietScene(h);
-    expect(attempts, JSON.stringify(await quietJobs(h))).toBe(3);
+    expect(attempts).toBe(3);
     expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
       'spent',
     );
@@ -459,7 +453,6 @@ describe('AI director with explicit fixtures, no live calls', () => {
       entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.resolved[
         JSON.stringify([first.anchorKey, first.family])
       ],
-      JSON.stringify(await quietJobs(h)),
     ).toBeDefined();
     await receivePlayerAt(h, 30, 20);
     await receivePlayerAt(h, 150, 20);
