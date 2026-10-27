@@ -109,6 +109,7 @@ const reusableTables = new Set([
   'sim_status_effects',
   'sim_work_invocations',
   'sim_native_response_episodes',
+  'mind_perception_owners',
 ]);
 function encodedBody(node: RecordNode, value: Value): string {
   // Immutable leaf values have no excluded children; reuse the same encoding
@@ -346,6 +347,10 @@ export class WorldRecords {
         ids.push(id);
         changes.deletes.set(node.table, ids);
         return;
+      }
+      if (node.encode) {
+        old = old === undefined ? undefined : node.encode(old);
+        next = node.encode(next);
       }
       const payload = encodedBody(node, next);
       if (
@@ -1647,7 +1652,7 @@ export function assembleWorldRecords(
         if (field !== '$') put(value, field, target);
       }
     }
-    return value;
+    return node.decode ? node.decode(value) : value;
   };
   const roots = groups.get(schema.table)?.get('') ?? [];
   if (roots.length !== 1) throw new Error('Missing world control record; recovery refused.');

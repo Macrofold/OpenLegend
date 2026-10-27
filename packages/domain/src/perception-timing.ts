@@ -8,6 +8,7 @@ import type { Entity, WorldState } from './types.js';
 
 interface SampleProgress {
   definitions: string;
+  epochAt: number;
   nextAt: number;
   life: number;
   suspended: boolean;
@@ -29,6 +30,15 @@ const noRoutineObservation = Object.freeze({
   sampledSight: false,
   sampledContact: false,
 });
+/** Keep a recurring clock on its original grid. Repeated addition drifts away
+ * from mathematically coincident native deadlines and buys extra whole phases.
+ * docs/simulation-time.md#native-interval-contract */
+function nextSampleAt(epochAt: number, seconds: number, now: number): number {
+  const ordinal = Math.floor((now - epochAt) / seconds) + 1;
+  const nextAt = epochAt + ordinal * seconds;
+  // Division can round the quotient just below an exact reached occurrence.
+  return nextAt > now ? nextAt : epochAt + (ordinal + 1) * seconds;
+}
 /** Scheduling and recording must select the same observers. A quiet native body
  * has no routine evidence consumer; its retired clock cannot keep time advancing
  * in tiny steps while the recording phase correctly skips it. */
@@ -81,10 +91,9 @@ export function takeRoutineObservation(world: WorldState, observer: Entity): Rou
     const fresh =
       !prior || prior.definitions !== definitions || prior.life !== life || prior.suspended;
     if (!fresh && prior.nextAt > world.simTime) return false;
-    const nextAt = fresh
-      ? world.simTime + seconds
-      : prior.nextAt + (Math.floor((world.simTime - prior.nextAt) / seconds) + 1) * seconds;
-    next[channel] = { definitions, life, suspended: false, nextAt };
+    const epochAt = fresh ? world.simTime : prior.epochAt;
+    const nextAt = nextSampleAt(epochAt, seconds, world.simTime);
+    next[channel] = { definitions, life, suspended: false, epochAt, nextAt };
     changed = true;
     return true;
   };
@@ -122,7 +131,7 @@ export function takeRoutineObservation(world: WorldState, observer: Entity): Rou
   return { sight, contact, sampledSight, sampledContact };
 }
 
-export function validateSensoryProgress(entity: Entity): void {
+export function validateSensoryProgress(world: WorldState, entity: Entity): void {
   const progress = entity.sensoryProgress;
   if (progress === undefined) return;
   if (
@@ -140,21 +149,41 @@ export function validateSensoryProgress(entity: Entity): void {
       ))
   )
     throw new Error('Invalid personally observed feature baseline.');
-  for (const sample of [progress.routineSight, progress.incidentalContact]) {
+  const policy = routineSensePolicy(world, entity);
+  for (const [sample, channel] of [
+    [progress.routineSight, policy.sight],
+    [progress.incidentalContact, policy.contact],
+  ] as const) {
     if (!sample) continue;
     if (
-      !hasRecordFields(sample, ['definitions', 'nextAt', 'life', 'suspended']) ||
+      !hasRecordFields(sample, ['definitions', 'epochAt', 'nextAt', 'life', 'suspended']) ||
       typeof sample.definitions !== 'string' ||
       !sample.definitions ||
       sample.definitions.length > 128 ||
+      typeof sample.epochAt !== 'number' ||
+      !Number.isFinite(sample.epochAt) ||
+      sample.epochAt < 0 ||
+      sample.epochAt > world.simTime ||
       typeof sample.nextAt !== 'number' ||
       !Number.isFinite(sample.nextAt) ||
-      sample.nextAt < 0 ||
+      sample.nextAt <= sample.epochAt ||
       typeof sample.life !== 'number' ||
       !Number.isSafeInteger(sample.life) ||
       sample.life < 0 ||
       typeof sample.suspended !== 'boolean'
     )
       throw new Error('Invalid routine observation clock.');
+    // A stale definition is allowed until the next observation resets its grid.
+    // Under the same installed period, the cached deadline must belong to it.
+    if (channel?.key === sample.definitions && channel.seconds) {
+      const ordinal = Math.round((sample.nextAt - sample.epochAt) / channel.seconds);
+      if (
+        !Number.isSafeInteger(ordinal) ||
+        ordinal < 1 ||
+        sample.nextAt !== sample.epochAt + ordinal * channel.seconds ||
+        sample.nextAt > nextSampleAt(sample.epochAt, channel.seconds, world.simTime)
+      )
+        throw new Error('Invalid routine observation sampling grid.');
+    }
   }
 }

@@ -2,6 +2,7 @@ import { accountClass, experienceIndividualIds, type ExperienceEntry } from '@op
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
 import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
+import { encodePerceptionOwner, decodePerceptionOwner } from './perception-records.js';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
  * a world/actor history container. New growing collections belong here explicitly.
  * docs/architecture.md#current-consuming-data-contracts
@@ -13,6 +14,9 @@ export interface RecordNode {
   indexes?: string[][];
   uniqueIndexes?: string[][];
   constraints?: string[];
+  /** Normalize a shared native value within this same owned record subtree. */
+  encode?: (value: unknown) => unknown;
+  decode?: (value: unknown) => unknown;
 }
 export type JsonRecord = Record<string, unknown>;
 export interface RecordCollection {
@@ -25,9 +29,13 @@ export interface RecordCollection {
   stablePositions?: boolean;
 }
 const leaf = (table: string): RecordNode => ({ table });
-const map = (table: string, children?: RecordNode['children']): RecordCollection => ({
+const map = (
+  table: string,
+  children?: RecordNode['children'],
+  codec?: Pick<RecordNode, 'encode' | 'decode'>,
+): RecordCollection => ({
   mode: 'map',
-  node: { table, children },
+  node: { table, children, ...codec },
 });
 const list = (table: string, key?: string): RecordCollection => ({
   mode: 'list',
@@ -182,21 +190,26 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       actorKnowledge: actorMaps('mind_knowledge_documents'),
       knowledgeRevisions: map('mind_knowledge_revisions'),
       observerIdentities: actorMaps('mind_recognition'),
-      perceptionEvidence: map('mind_perception_owners', {
-        current: map('mind_perception_current'),
-        // Confirmation clocks must not rewrite the unchanged scene and attention
-        // candidates. These retain their existing ordered, observer-owned values.
-        geometry: one('mind_perception_geometry', {
-          fragments: list('mind_perception_geometry_fragments', 'key'),
-          boundaries: list('mind_perception_geometry_boundaries', 'id'),
-        }),
-        attention: one('mind_perception_attention', {
-          candidates: map('mind_perception_attention_candidates'),
-          latches: map('mind_perception_attention_latches'),
-          relationDirty: map('mind_perception_attention_dirty'),
-          relationScans: map('mind_perception_attention_scans'),
-        }),
-      }),
+      perceptionEvidence: map(
+        'mind_perception_owners',
+        {
+          originals: { ...map('mind_perception_originals'), unordered: true },
+          current: map('mind_perception_current'),
+          // Confirmation clocks must not rewrite the unchanged scene and attention
+          // candidates. These retain their existing ordered, observer-owned values.
+          geometry: one('mind_perception_geometry', {
+            fragments: list('mind_perception_geometry_fragments', 'key'),
+            boundaries: list('mind_perception_geometry_boundaries', 'id'),
+          }),
+          attention: one('mind_perception_attention', {
+            candidates: map('mind_perception_attention_candidates'),
+            latches: map('mind_perception_attention_latches'),
+            relationDirty: map('mind_perception_attention_dirty'),
+            relationScans: map('mind_perception_attention_scans'),
+          }),
+        },
+        { encode: encodePerceptionOwner, decode: decodePerceptionOwner },
+      ),
       // A subject leaving view must not renumber every remaining sight binding.
       // Episode identities fence recognition by key, never by iteration order.
       // docs/performance.md#preserve-order-without-one-global-database-bottleneck

@@ -8295,7 +8295,10 @@ function* updateEncounters(
       reconcileVisualEvidence(
         world,
         entityGet(world.entities, actor.id)!,
-        [...seen, ...objectIds].flatMap((id) => entityGet(world.entities, id) ?? []),
+        [...seen, ...objectIds].flatMap((id) => {
+          const source = entityGet(readOnlyDraftView(world.entities), id);
+          return source ? [readOnlyDraftView(source)] : [];
+        }),
         vision,
         normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
         frame.sourceToken,

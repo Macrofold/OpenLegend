@@ -97,7 +97,7 @@ For a human, offer permitted history and a simple way to resume listening. For a
 
 Reserve some detailed attention and context expansion for the oldest still-present received descriptions that have not actually reached cognition. Loud arrivals cannot permanently consume every discovery place. A quiet portrait may therefore be offered beside a maker's existing interests without a blacksmithing-to-weapons lookup table. Understanding it still requires sufficient observed content and a real interpretive turn; discovery can miss or misunderstand meaning.
 
-Fair exposure runs across justified ordinary thinking and at most one optional discovery attempt per genuine free interval. No call is owed for every object, and a timer or new arrival cannot replenish that allowance. Existing thought can consider several waiting descriptions at once. Repeated coordinates create no new descriptive novelty, departure clears unretained waiting entries, and failed delivery is not false consideration. Absent service means slower discovery, not a growing lifetime backlog.
+Fair exposure runs across justified ordinary thinking and at most one optional discovery attempt per genuine free interval. No call is owed for every object, and a timer or new arrival cannot replenish that allowance. Existing thought can consider several waiting descriptions at once. Repeated coordinates and ordinary numeric meter drift create no new descriptive novelty, departure clears unretained waiting entries, and failed delivery is not false consideration. Absent service means slower discovery, not a growing lifetime backlog.
 
 ### 4.6 Familiarity and reasons to think
 

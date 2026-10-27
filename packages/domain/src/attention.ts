@@ -5,6 +5,7 @@ import {
   currentBodyAssociation,
   currentBodyLocalSubject,
   effectiveCurrentFacetSupport,
+  publicAttributeMeanings,
   reconcileAttendedTemporalEvidence,
 } from './perception-evidence.js';
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
@@ -293,7 +294,8 @@ function descriptions(owner: PerceptionEvidenceOwner, id: string): string {
   };
   const body = facet('body'),
     appearance = body?.kind === 'body' ? readOnlyDraftView(body.body) : undefined;
-  const association = facet('association');
+  const association = facet('association'),
+    attributes = facet('public-attributes');
   return JSON.stringify(
     [
       body?.kind === 'body'
@@ -311,7 +313,9 @@ function descriptions(owner: PerceptionEvidenceOwner, id: string): string {
           }
         : null,
       facet('carried') ?? null,
-      facet('public-attributes') ?? null,
+      attributes?.kind === 'public-attributes'
+        ? { kind: attributes.kind, attributes: publicAttributeMeanings(attributes) }
+        : null,
       association?.kind === 'association'
         ? { subject: association.subject, strength: association.strength }
         : null,

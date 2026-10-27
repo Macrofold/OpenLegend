@@ -636,9 +636,12 @@ export function captureTemporalCurrent(
       !(lease.value.kind === 'body' && contactSubjects.has(lease.subjectId))
     )
       continue;
-    const reference = owned.actor.captures[lease.id];
+    // Comparing an existing capture does not modify its source block. Avoid
+    // drafting every retained value merely to discover it is unchanged.
+    const reference = readOnlyDraftView(owned.actor.captures)[lease.id];
     const previous =
-      reference && owned.state.sources[reference.blockId]?.values[reference.valueOrdinal];
+      reference &&
+      retainedValueAt(readOnlyDraftView(owned.state.sources), readOnlyDraftView(reference));
     if (
       !newlySelected.has(lease.subjectId) &&
       !endingSelection.has(lease.subjectId) &&
@@ -678,7 +681,7 @@ export function captureTemporalCurrent(
         sourceIds: [...new Set(group.map((lease) => lease.original.id))],
         facets: group.map((lease) => ({
           ...temporalFacetInput(lease),
-          retainedValue: owned.actor.captures[lease.id],
+          retainedValue: readOnlyDraftView(owned.actor.captures)[lease.id],
         })),
       },
       policy,

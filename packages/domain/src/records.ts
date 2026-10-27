@@ -99,7 +99,12 @@ export function immutableDataSnapshot<T>(
       return freeze(structuredClone(isDraft(value) ? current(value) : latest), true);
     const result = array ? new Array(latest.length) : Object.create(prototype);
     memo.set(latest, result);
-    const keys = Object.keys(latest);
+    // Array elements are part of their serialized value even when an index is
+    // non-enumerable. Object.keys would silently erase such received content.
+    const keys: string[] = array ? [] : Object.keys(latest);
+    if (array)
+      for (let index = 0; index < latest.length; index++)
+        if (index in latest) keys.push(String(index));
     let immutable =
       !array ||
       (keys.length === latest.length && keys.every((key, index) => key === String(index)));

@@ -1214,10 +1214,12 @@ function finalizeLease(world: WorldState, observer: Entity, lease: LiveFacetSupp
   );
 }
 
-/** Pose and continuously changing quantities keep only their latest received sample.
- * Semantic detail changes retain the ended meaning; numeric effects already have
- * their exact before/after accounts at the attribute mutation owner. */
-function attributeMeanings(value: Extract<SensoryFacet, { kind: 'public-attributes' }>) {
+/** Changing a meter sample is received detail, not a new outward description.
+ * Its name, status, range and critical meaning remain descriptively significant;
+ * exact numeric effects retain their accounts at the attribute mutation owner. */
+export function publicAttributeMeanings(
+  value: Extract<SensoryFacet, { kind: 'public-attributes' }>,
+) {
   return value.attributes.map(({ value: sample, revision: _revision, ...detail }) => ({
     ...detail,
     ...(detail.display === 'category' ? { value: sample } : {}),
@@ -1253,7 +1255,10 @@ function semanticFacetChanged(before: SensoryFacet, after: SensoryFacet): boolea
     );
   }
   if (before.kind === 'public-attributes' && after.kind === 'public-attributes')
-    return JSON.stringify(attributeMeanings(before)) !== JSON.stringify(attributeMeanings(after));
+    return (
+      JSON.stringify(publicAttributeMeanings(before)) !==
+      JSON.stringify(publicAttributeMeanings(after))
+    );
   return after.kind === 'carried' || after.kind === 'pile-contents';
 }
 
@@ -1289,7 +1294,8 @@ export function reconcileVisualEvidence(
       (entity) => [entity.id, entity.actor ? (entity.actor.physicalLife ?? 0) : null] as const,
     ),
   );
-  for (const [key, lease] of Object.entries(readOnlyDraftView(state.current)))
+  for (const [key, stored] of Object.entries(readOnlyDraftView(state.current))) {
+    const lease = readOnlyDraftView(stored);
     if (lease.modality === 'sight' && lease.subjectPhysicalLife !== eligible.get(lease.subjectId)) {
       attentionChanges.add(lease.subjectId);
       if (lease.value.kind === 'body' && lease.localSubject?.kind === 'individual')
@@ -1298,6 +1304,7 @@ export function reconcileVisualEvidence(
       finalizeLease(world, observer, lease);
       delete state.current[key];
     }
+  }
   for (const subject of subjects) {
     chargeWork({ tests: 1 });
     delete state.gaps[subject.id];
@@ -1341,7 +1348,8 @@ export function reconcileVisualEvidence(
         }
       }
       const motionKey = `${subject.id}:observed-motion`,
-        motion = state.current[motionKey];
+        storedMotion = readOnlyDraftView(state.current)[motionKey],
+        motion = storedMotion && readOnlyDraftView(storedMotion);
       if (motion && location && world.simTime > motion.valueMeasuredThrough) {
         attentionChanges.add(subject.id);
         finalizeLease(world, observer, motion);
@@ -1387,7 +1395,7 @@ export function reconcileVisualEvidence(
           : facet,
       ),
     ];
-    const detected = state.current[`${subject.id}:detected`];
+    const detected = readOnlyDraftView(state.current)[`${subject.id}:detected`];
     let original = detected && readOnlyDraftView(detected).original;
     if (!original)
       original = acquireObservation(world, observer, {
@@ -1538,12 +1546,14 @@ export function reconcileVisualEvidence(
         }
       }
     });
-    const currentBody = state.current[`${subject.id}:body`];
+    const storedBody = readOnlyDraftView(state.current)[`${subject.id}:body`],
+      currentBody = storedBody && readOnlyDraftView(storedBody);
     if (subject.actor && currentBody && !currentBody.localSubject) {
       const localSubject = selectedBodyIndividual(world, observer.id, subject.id);
-      if (localSubject) currentBody.localSubject = localSubject;
+      if (localSubject) state.current[`${subject.id}:body`]!.localSubject = localSubject;
     }
-    const locationLease = state.current[`${subject.id}:location`];
+    const storedLocation = readOnlyDraftView(state.current)[`${subject.id}:location`],
+      locationLease = storedLocation && readOnlyDraftView(storedLocation);
     const motionKey = `${subject.id}:observed-motion`;
     const laterLocation =
       earlierLocation &&
@@ -1571,7 +1581,8 @@ export function reconcileVisualEvidence(
             true,
           )
         : undefined;
-    const priorMotion = state.current[motionKey];
+    const storedMotion = readOnlyDraftView(state.current)[motionKey],
+      priorMotion = storedMotion && readOnlyDraftView(storedMotion);
     if (!motion) {
       if (
         priorMotion &&
@@ -1586,12 +1597,13 @@ export function reconcileVisualEvidence(
         delete state.current[motionKey];
       }
     } else if (priorMotion) {
-      priorMotion.revision++;
-      priorMotion.value = motion;
-      priorMotion.valueMeasuredFrom = earlierLocation!.valueMeasuredFrom;
-      priorMotion.valueMeasuredThrough = world.simTime;
-      priorMotion.valueAcquiredAt = world.simTime;
-      priorMotion.confirmedThrough = world.simTime;
+      const writable = state.current[motionKey]!;
+      writable.revision++;
+      writable.value = motion;
+      writable.valueMeasuredFrom = earlierLocation!.valueMeasuredFrom;
+      writable.valueMeasuredThrough = world.simTime;
+      writable.valueAcquiredAt = world.simTime;
+      writable.confirmedThrough = world.simTime;
     } else {
       const received = acquireObservation(world, observer, {
         origin: {
@@ -1635,13 +1647,14 @@ export function reconcileVisualEvidence(
     const kinds = new Set(values.map((facet) => facet.kind));
     for (const kind of ['pile-contents', 'public-attributes'] as const) {
       const key = `${subject.id}:${kind}`;
-      if (state.current[key] && !kinds.has(kind)) {
+      const removed = readOnlyDraftView(state.current)[key];
+      if (removed && !kinds.has(kind)) {
         attentionChanges.add(subject.id);
-        finalizeLease(world, observer, state.current[key]!);
+        finalizeLease(world, observer, readOnlyDraftView(removed));
         delete state.current[key];
       }
     }
-    const measured = state.current[`${subject.id}:body`];
+    const measured = readOnlyDraftView(state.current)[`${subject.id}:body`];
     if (token && measured)
       measuredSources.set(readOnlyDraftView(readOnlyDraftView(measured).original), {
         leaseId: measured.id,

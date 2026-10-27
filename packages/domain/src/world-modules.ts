@@ -1451,7 +1451,7 @@ export function validateWorldModules(world: WorldState): void {
     (definition) => definition.implementation === 'native-health-v1',
   );
   for (const e of entityValues(world.entities)) {
-    validateSensoryProgress(e);
+    validateSensoryProgress(world, e);
     validateGatheringBinding(world, e);
     if (
       e.actor?.capabilities &&
