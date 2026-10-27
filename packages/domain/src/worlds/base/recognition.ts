@@ -132,6 +132,20 @@ export function subjectFamiliarityContactDue(
     (identity.familiarity?.nextCreditAt === undefined || at >= identity.familiarity.nextCreditAt)
   );
 }
+/** A scheduled contact is an existing individual-owned deadline, not a new
+ * sampling clock. A declined credit cannot keep an overdue receiver spinning. */
+export function individualFamiliarityContactAt(
+  world: WorldState,
+  observerId: string,
+  individualId: string,
+  confirmedThrough: number,
+): number | undefined {
+  const identity = world.observerIdentities?.[observerId]?.[individualId];
+  const at = identity?.familiarity?.nextCreditAt;
+  return identity && !identity.seedOnly && at !== undefined && at > confirmedThrough
+    ? at
+    : undefined;
+}
 function retainFamiliarity(roots: FamiliarityRoot[]): FamiliarityRoot[] {
   const required = roots.filter((root) => root.required).sort(rootOrder);
   const optional = roots.filter((root) => !root.required).sort(rootOrder);

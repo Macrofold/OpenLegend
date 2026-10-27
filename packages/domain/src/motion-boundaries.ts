@@ -33,6 +33,7 @@ import {
 } from './flight.js';
 import { worldRootEntities } from './entity-index.js';
 import { hasMemory } from './living.js';
+import { nextPerceptionWorkAt } from './perception-evidence.js';
 import { activelyParticipates } from './participation-state.js';
 import { sensesFor, SIGHT_BODY_FRACTIONS } from './perception.js';
 import { spatialCandidates } from './spatial.js';
@@ -1039,7 +1040,13 @@ export function sensoryCrossingBound(
     maximumDomainWork('crossingTrackPeak', cache.tracks.size);
     certain.set(id, entry);
   }
-  if (!certain.size && !outcomes.size && !growingNativeRegion) return seconds;
+  if (!certain.size && !outcomes.size && !growingNativeRegion) {
+    for (const id of actorIds) {
+      const at = nextPerceptionWorkAt(world, id);
+      if (at !== undefined && at > now) seconds = Math.min(seconds, at - now);
+    }
+    return seconds;
+  }
   const still = (entity: Entity): CertainTrack => {
     const cached = cache.tracks.get(entity.id);
     // A body that is not moving now (e.g. a flyer that just reached its hover) may still hold
@@ -1067,6 +1074,9 @@ export function sensoryCrossingBound(
     const entity = entityGet(entities, id);
     if (!entity) return [];
     observationDue = Math.min(observationDue, entity.actor?.encounters?.nextAt ?? Infinity);
+    const perceptionAt = nextPerceptionWorkAt(world, id);
+    if (perceptionAt !== undefined && perceptionAt > now)
+      observationDue = Math.min(observationDue, perceptionAt);
     if (Object.values(entity.actor?.encounters?.pairs ?? {}).some((pair) => pair.watch))
       watchedObservers.push(entity);
     const plan = entity.actor?.agency.plan;

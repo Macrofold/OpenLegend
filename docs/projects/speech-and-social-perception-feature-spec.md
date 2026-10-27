@@ -1,8 +1,8 @@
 # Speech and social perception — feature specification
 
-| Status      | Current progress                                                                                                           | Last updated         |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Required SPK01–SPK04 existing-channel integration implemented; wider speech/social delivery and qualification remain open. | 2026-10-25 15:35 UTC |
+| Status      | Current progress                                                                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Required SPK01–SPK04 existing-channel integration implemented; wider speech/social delivery and qualification remain open. | 2026-10-27   |
 
 ## Purpose and design status
 

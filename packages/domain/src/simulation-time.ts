@@ -24,6 +24,13 @@ import { readOnlyDraftView } from './draft.js';
 
 /** Numeric progress guard, not a biological tick. docs/simulation-time.md#native-interval-contract */
 export const TIME_EPSILON = 1e-6;
+/** First clock value satisfying an owner's elapsed comparison, including rounding. */
+export function elapsedDeadline(start: number, seconds: number): number {
+  let time = start + seconds;
+  while (time - start < seconds)
+    time += Math.max(Number.MIN_VALUE, Math.abs(time) * Number.EPSILON);
+  return time;
+}
 export type AttributeRates = Map<string, Map<string, number>>;
 export function addRate(
   rates: AttributeRates,

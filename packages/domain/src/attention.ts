@@ -9,6 +9,7 @@ import {
 } from './perception-evidence.js';
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
 import { personalFactAlias } from './experience-source.js';
+import { elapsedDeadline } from './simulation-time.js';
 import type {
   ObservationExposure,
   ObservationFactKey,
@@ -748,6 +749,36 @@ export function markAttentionRelationsDirty(world: WorldState, observerId: strin
     for (const family of ['closing-body', 'closing-drop'] as const)
       state.relationDirty[relationKey(entry.key, family)] = state.relationRevision;
 }
+/** Only live selected continuations need clock work. Unselected expired cues are
+ * cleared by the existing update owner before they can be ranked again. */
+export function nextAttentionWorkAt(world: WorldState, observerId: string): number | undefined {
+  const source = owned(world, observerId)?.attention;
+  if (!source) return;
+  const state = readOnlyDraftView(source);
+  const candidates = readOnlyDraftView(state.candidates);
+  const dirty = readOnlyDraftView(state.relationDirty);
+  const latches = readOnlyDraftView(state.latches);
+  const policy = selectedAttentionPolicy(world).relation;
+  let next = Infinity;
+  for (const entry of readOnlyDraftView(state.entries)) {
+    const candidate = candidates[entry.key];
+    if (candidate?.urgency && candidate.urgencyThrough !== undefined)
+      next = Math.min(next, candidate.urgencyThrough);
+    if (candidate?.direct && candidate.directThrough !== undefined)
+      next = Math.min(next, candidate.directThrough);
+    for (const family of ['closing-body', 'closing-drop'] as const) {
+      const key = relationKey(entry.key, family);
+      if (dirty[key] !== undefined) next = Math.min(next, state.nextRelationAt);
+      const latch = latches[key];
+      if (latch?.active && latch.clearSince !== undefined)
+        next = Math.min(
+          next,
+          Math.max(state.nextRelationAt, elapsedDeadline(latch.clearSince, policy.clearSeconds)),
+        );
+    }
+  }
+  return Number.isFinite(next) ? next : undefined;
+}
 export function attentionRelationOpportunity(
   world: WorldState,
   observerId: string,
@@ -762,7 +793,7 @@ export function attentionRelationOpportunity(
         (latch) =>
           latch.active &&
           latch.clearSince !== undefined &&
-          world.simTime >= latch.clearSince + policy.relation.clearSeconds,
+          world.simTime >= elapsedDeadline(latch.clearSince, policy.relation.clearSeconds),
       )
       .map((latch) => latch.anchorKey),
   );

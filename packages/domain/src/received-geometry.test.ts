@@ -10,13 +10,15 @@ import { createWorld, PLAYER_ID, NPC_ID } from './worlds/base/world.js';
 import { BASE_TERRAIN } from './worlds/base/spatial-definitions.js';
 import { entityGet, entitySet, emptyEntities } from './entity-collection.js';
 import { worldPlacement, setSpatialPosition } from './spatial-state.js';
-import { initializePerception } from './kernel.js';
+import { initializePerception, advanceWorld } from './kernel.js';
+import { freezeWorld } from './draft.js';
 import { currentAttentionCues, currentDetailedAttention, setAttentionFocus } from './attention.js';
 import { observationDependencies, observationLearningSources } from './experience-manifest.js';
 import {
   perceptionEvidenceOwner,
   currentBodyObservation,
   captureCurrentGeometrySupport,
+  nextPerceptionWorkAt,
 } from './perception-evidence.js';
 import {
   selectTemporalHistory,
@@ -253,6 +255,31 @@ function nativeScene(
 }
 
 describe('native received relation producers', () => {
+  it('finishes stationary pending perception on the ordinary clock with JSON continuation and no exhausted-source spin', () => {
+    const { world } = nativeScene(18,
+      map([surface('ground', 0, 4, 0), surface('unseen-upper-face', 0, 4, 10)]));
+    world.paused = false;
+    const key = currentDetailedAttention(world, PLAYER_ID)[0]!.key;
+    expect(world.perceptionEvidence![PLAYER_ID]!.attention!.relationDirty[
+      JSON.stringify([key, 'closing-body'])]).toBeDefined();
+    expect(nextPerceptionWorkAt(world, PLAYER_ID)).toBe(15);
+    const input = freezeWorld(world);
+    const saved = JSON.parse(JSON.stringify(input)) as WorldState;
+    const warm = advanceWorld(input, 90, { maxIntervals: 64 });
+    const cold = advanceWorld(saved, 90, { maxIntervals: 64 });
+    for (const result of [warm, cold]) {
+      expect(result.outcome.code, result.outcome.message).toBe('advanced');
+      expect(result.world.simTime).toBe(90);
+      expect(result.world.perceptionEvidence![PLAYER_ID]!.attention!.relationDirty[
+        JSON.stringify([key, 'closing-body'])]).toBeUndefined();
+      expect(currentReceivedGeometry(result.world, PLAYER_ID).complete).toBe(false);
+      expect(nextPerceptionWorkAt(result.world, PLAYER_ID)).toBe(120);
+    }
+    expect(JSON.parse(JSON.stringify(warm.world.perceptionEvidence)))
+      .toEqual(JSON.parse(JSON.stringify(cold.world.perceptionEvidence)));
+    expect(JSON.parse(JSON.stringify(warm.world.experience!.temporal)))
+      .toEqual(JSON.parse(JSON.stringify(cold.world.experience!.temporal)));
+  });
   it('exhausts unchanged partial terrain once and rechecks actual received changes identically after restore', () => {
     const { world, people } = nativeScene(
       2,

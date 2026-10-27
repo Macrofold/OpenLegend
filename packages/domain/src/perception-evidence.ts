@@ -20,6 +20,7 @@ import { retainObservationConfirmation } from './experience.js';
 import {
   currentDetailedAttention,
   currentAttentionCues,
+  nextAttentionWorkAt,
   updateAttention,
   type AttentionEntry,
   type AttentionUpdate,
@@ -60,6 +61,8 @@ import {
   selectedRecordingReason,
   selectedTemporalPolicy,
   selectedAttentionContactDue,
+  selectedAttentionContactAt,
+  selectedAttentionPolicy,
   selectedCreditAttentionContact,
   selectedAssociateBodyFamiliarity,
 } from './world-composition.js';
@@ -72,7 +75,7 @@ import {
 import { validObserverSubject } from './knowledge.js';
 import { activelyParticipates } from './participation-state.js';
 import { capabilityBlocked } from './status-capabilities.js';
-import { sensesFor } from './perception.js';
+import { sensesFor, visionRadius } from './perception.js';
 import { projectAttributes, type AttributeView } from './world-modules.js';
 import type { Awareness } from './experience.js';
 import type { ObserverSubject } from './knowledge.js';
@@ -305,6 +308,51 @@ export interface PerceptionEvidenceOwner {
   support?: DetectionSupportState;
 }
 export type PerceptionEvidenceState = Record<string, PerceptionEvidenceOwner>;
+/** Existing finite receiver work joins the native clock.
+ * docs/simulation-time.md#extensible-boundary-ownership
+ * Read at most the selected
+ * entries, never all bodies/history. Exhausted unknown geometry and an already
+ * attempted declined contact provide no recurring wake-up. Motion retains its
+ * explicit received interval until another genuine sight phase ends it. */
+export function nextPerceptionWorkAt(world: WorldState, observerId: string): number | undefined {
+  const observer = entityGet(world.entities, observerId);
+  const source = world.perceptionEvidence?.[observerId];
+  if (
+    !source ||
+    !observer?.actor?.alive ||
+    !activelyParticipates(observer) ||
+    (!hasMemory(observer) &&
+      !(observer.actor.controller === 'native' && observer.animal?.episode)) ||
+    source.life !== (observer.actor.physicalLife ?? 0) ||
+    visionRadius(world, observer) <= 0
+  )
+    return;
+  const state = readOnlyDraftView(source);
+  const geometry = state.geometry && readOnlyDraftView(state.geometry);
+  let next = nextAttentionWorkAt(world, observerId) ?? Infinity;
+  if (
+    geometry &&
+    !geometry.finished &&
+    geometry.fragments.length + geometry.boundaries.length <
+      selectedAttentionPolicy(world).geometry.maxFragments
+  )
+    next = Math.min(next, geometry.nextAt);
+  const current = readOnlyDraftView(state.current);
+  for (const entry of currentDetailedAttention(world, observerId)) {
+    const body = current[`${entry.sourceId}:body`];
+    if (!body || body.id !== entry.leaseId) continue;
+    const subject = body.localSubject?.kind === 'individual' ? body.localSubject : entry.subject;
+    if (subject?.kind !== 'individual') continue;
+    const at = selectedAttentionContactAt(
+      world,
+      observerId,
+      subject.individualId,
+      state.visualConfirmation?.through ?? -Infinity,
+    );
+    if (at !== undefined) next = Math.min(next, at);
+  }
+  return Number.isFinite(next) ? next : undefined;
+}
 export interface EvidenceCut {
   privacyRevision: number;
   observer: ObserverLife;

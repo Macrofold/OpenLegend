@@ -48,6 +48,7 @@ import {
   retainRecognitionEvidence,
   recognitionMaintenanceDue,
   expireRecognitionSeeds,
+  individualFamiliarityContactAt,
 } from './worlds/base/recognition.js';
 import { hasMemory } from './living.js';
 import { currentBodyObservation, observationFactKey } from './perception-evidence.js';
@@ -120,6 +121,15 @@ export function selectedAttentionContactDue(
 ): boolean {
   selectedCreationProfileForWorld(world);
   return subjectFamiliarityContactDue(world, observerId, subject, at);
+}
+export function selectedAttentionContactAt(
+  world: WorldState,
+  observerId: string,
+  individualId: string,
+  confirmedThrough: number,
+): number | undefined {
+  selectedCreationProfileForWorld(world);
+  return individualFamiliarityContactAt(world, observerId, individualId, confirmedThrough);
 }
 export function selectedAssociateBodyFamiliarity(
   world: WorldState,

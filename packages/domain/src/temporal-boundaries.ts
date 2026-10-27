@@ -10,6 +10,7 @@ import { capabilityBlocked } from './status-capabilities.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { prepareAttributeForecast, readAttribute } from './world-modules.js';
 import { hasMemory } from './living.js';
+import { nextPerceptionWorkAt } from './perception-evidence.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import { nativeMovementSpeed } from './worlds/base/actions.js';
 import { nextCommitmentDeadline } from './commitments.js';
@@ -23,6 +24,7 @@ import {
   statusBoundary,
   TIME_EPSILON,
   untilThreshold,
+  elapsedDeadline,
 } from './simulation-time.js';
 import {
   crossStatusReferences,
@@ -35,14 +37,6 @@ import { selectedSocialPolicy } from './social-policy.js';
 
 /** Finite-family composition, not an omniscient scheduler for arbitrary future rules.
  * docs/simulation-time.md and docs/maintainers/simulation-boundaries.md */
-/** First clock value at which `time - start >= seconds`, the form an owner that compares
- * elapsed time uses. `start + seconds` can round an ulp short of it (PF13.16). */
-function elapsedDeadline(start: number, seconds: number): number {
-  let time = start + seconds;
-  while (time - start < seconds)
-    time += Math.max(Number.MIN_VALUE, Math.abs(time) * Number.EPSILON);
-  return time;
-}
 export function nativeInterval(
   world: WorldState,
   requested: number,
@@ -122,6 +116,8 @@ export function nativeInterval(
   for (const id of actorIds) {
     const entity = entityGet(world.entities, id),
       actor = entity?.actor;
+    const perception = nextPerceptionWorkAt(world, id);
+    if (perception !== undefined) at(perception);
     if (!entity || !actor?.alive || actor.incapacitated) continue;
     const action = actor.action;
     if (action?.guard) {

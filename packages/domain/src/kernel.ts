@@ -13,6 +13,7 @@ import { entityGet, entityOwn } from './entity-collection.js';
 import { beginSemanticWork } from './semantic-opportunities.js';
 import {
   reconcileVisualEvidence,
+  nextPerceptionWorkAt,
   endCurrentEvidence,
   currentBodyObservation,
   recentExposureEpisode,
@@ -5594,7 +5595,13 @@ function* advanceWorldNative(
         discardMechanics();
       }
     }
-    if (perceiving !== undefined && perceivers() !== perceiving) {
+    if (
+      (perceiving !== undefined && perceivers() !== perceiving) ||
+      participants.actors.some((id) => {
+        const at = nextPerceptionWorkAt(world, id);
+        return at !== undefined && at <= world.simTime;
+      })
+    ) {
       yield* updateEncounters(world, before, events, participants.actors);
       reconcileOutings(world, events, { companyObserved: true });
       before = snapshotEncounters(world);
@@ -6205,10 +6212,12 @@ function* updateEncounters(
   for (const actor of frame.observers) {
     yield;
     const radius = visionRadius(world, actor.entity);
+    const perceptionAt = nextPerceptionWorkAt(world, actor.id);
+    const perceptionDue = perceptionAt !== undefined && perceptionAt <= world.simTime;
     if (actor.nativeResponse) {
       const episode = actor.entity.animal?.episode;
       const due = episode && episode.reviewAt <= world.simTime;
-      if (frame.affected.has(actor.id) || due) {
+      if (frame.affected.has(actor.id) || due || perceptionDue) {
         const candidates = frame
           .nearby(actor.position, radius, 'contact')
           .flatMap((source) => entityGet(world.entities, source.id) ?? []);
@@ -6261,6 +6270,7 @@ function* updateEncounters(
       !movingContacts &&
       !placesChanged &&
       !world.experience?.temporal?.actors[actor.id]?.capturesInvalidated &&
+      !perceptionDue &&
       !(encounterDue !== undefined && encounterDue <= world.simTime)
     ) {
       countDomainWork('observersSkipped');
