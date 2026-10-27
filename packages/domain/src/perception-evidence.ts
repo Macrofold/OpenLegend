@@ -81,7 +81,7 @@ import {
   selectedCreditAttentionContact,
   selectedAssociateBodyFamiliarity,
 } from './world-composition.js';
-import { freeze } from 'immer';
+import { freeze, isDraft, original as draftOriginal } from 'immer';
 import { validatePerceivedSpeech, validateReceivedFeatures } from './speech.js';
 import { validObserverSubject } from './knowledge.js';
 import { activelyParticipates } from './participation-state.js';
@@ -617,6 +617,19 @@ export function beginPerceptionPhase(world: WorldState, observerId: string): voi
   state.receivedAtSequence = world.sequence;
 }
 const owner = perceptionEvidenceOwner;
+/** Completed live envelopes use the same immutable ownership as their originals.
+ * Later native changes replace the envelope; raw world builders stay editable. */
+function replaceCurrentFacet(
+  world: WorldState,
+  state: PerceptionEvidenceOwner,
+  key: string,
+  value: LiveFacetSupport,
+): void {
+  state.current[key] =
+    isDraft(world) && Object.isFrozen(draftOriginal(world)!)
+      ? immutableDataSnapshot(value, readOnlyDraftView)
+      : value;
+}
 export const observationFactKey = (
   observation: ObservationContribution,
   ordinal: number,
@@ -1446,7 +1459,11 @@ export function reconcileVisualEvidence(
       }
       if (subject.actor && !heldBody.localSubject) {
         const local = selectedBodyIndividual(world, observer.id, subject.id);
-        if (local) state.current[`${subject.id}:body`]!.localSubject = local;
+        if (local)
+          replaceCurrentFacet(world, state, `${subject.id}:body`, {
+            ...readOnlyDraftView(heldBody),
+            localSubject: local,
+          });
       }
       continue;
     }
@@ -1570,10 +1587,12 @@ export function reconcileVisualEvidence(
         });
         if (facet.kind === 'body' || facet.kind === 'public-attributes') {
           // The same observed body/contact continues while its semantic fact changes.
-          prior = state.current[key]!;
-          prior.original = facetOriginal;
-          prior.originalOrdinal = 0;
-          prior.confirmedFrom = world.simTime;
+          prior = {
+            ...readOnlyDraftView(prior),
+            original: facetOriginal,
+            originalOrdinal: 0,
+            confirmedFrom: world.simTime,
+          };
         } else {
           delete state.current[key];
           prior = undefined;
@@ -1604,7 +1623,7 @@ export function reconcileVisualEvidence(
               },
             ],
           });
-        state.current[key] = {
+        replaceCurrentFacet(world, state, key, {
           id: nextId(world, 'perception-lease'),
           revision: 1,
           observer: observerLife(observer),
@@ -1626,26 +1645,34 @@ export function reconcileVisualEvidence(
           valueAcquiredAt: world.simTime,
           confirmedFrom: world.simTime,
           confirmedThrough: world.simTime,
-        };
+        });
       } else if (changed) {
-        prior = state.current[key]!;
-        prior.revision++;
-        prior.confirmedThrough = world.simTime;
-        prior.value = copyFacetValue(facet);
-        prior.valueMeasuredFrom = world.simTime;
-        prior.valueMeasuredThrough = world.simTime;
-        prior.valueAcquiredAt = world.simTime;
-        if (facet.kind === 'location') {
-          prior.motionContinuityRevision = placement.motionContinuityRevision ?? 0;
-          prior.sourcePlacementRevision = placement.revision;
-        }
+        replaceCurrentFacet(world, state, key, {
+          ...readOnlyDraftView(prior),
+          revision: prior.revision + 1,
+          confirmedThrough: world.simTime,
+          value: copyFacetValue(facet),
+          valueMeasuredFrom: world.simTime,
+          valueMeasuredThrough: world.simTime,
+          valueAcquiredAt: world.simTime,
+          ...(facet.kind === 'location'
+            ? {
+                motionContinuityRevision: placement.motionContinuityRevision ?? 0,
+                sourcePlacementRevision: placement.revision,
+              }
+            : {}),
+        });
       }
     });
     const storedBody = readOnlyDraftView(state.current)[`${subject.id}:body`],
       currentBody = storedBody && readOnlyDraftView(storedBody);
     if (subject.actor && currentBody && !currentBody.localSubject) {
       const localSubject = selectedBodyIndividual(world, observer.id, subject.id);
-      if (localSubject) state.current[`${subject.id}:body`]!.localSubject = localSubject;
+      if (localSubject)
+        replaceCurrentFacet(world, state, `${subject.id}:body`, {
+          ...currentBody,
+          localSubject,
+        });
     }
     const storedLocation = readOnlyDraftView(state.current)[`${subject.id}:location`],
       locationLease = storedLocation && readOnlyDraftView(storedLocation);
@@ -1692,13 +1719,15 @@ export function reconcileVisualEvidence(
         delete state.current[motionKey];
       }
     } else if (priorMotion) {
-      const writable = state.current[motionKey]!;
-      writable.revision++;
-      writable.value = motion;
-      writable.valueMeasuredFrom = earlierLocation!.valueMeasuredFrom;
-      writable.valueMeasuredThrough = world.simTime;
-      writable.valueAcquiredAt = world.simTime;
-      writable.confirmedThrough = world.simTime;
+      replaceCurrentFacet(world, state, motionKey, {
+        ...priorMotion,
+        revision: priorMotion.revision + 1,
+        value: motion,
+        valueMeasuredFrom: earlierLocation!.valueMeasuredFrom,
+        valueMeasuredThrough: world.simTime,
+        valueAcquiredAt: world.simTime,
+        confirmedThrough: world.simTime,
+      });
     } else {
       const received = acquireObservation(world, observer, {
         origin: {
@@ -1720,7 +1749,7 @@ export function reconcileVisualEvidence(
           },
         ],
       });
-      state.current[motionKey] = {
+      replaceCurrentFacet(world, state, motionKey, {
         id: nextId(world, 'perception-lease'),
         revision: 1,
         observer: observerLife(observer),
@@ -1737,7 +1766,7 @@ export function reconcileVisualEvidence(
         valueAcquiredAt: world.simTime,
         confirmedFrom: world.simTime,
         confirmedThrough: world.simTime,
-      };
+      });
     }
     const kinds = new Set(values.map((facet) => facet.kind));
     for (const kind of ['pile-contents', 'public-attributes'] as const) {
@@ -2537,7 +2566,7 @@ export function acquireAwarenessObservation(
         JSON.stringify(facet.value.subject) === JSON.stringify(recognition.subject),
     );
     if (ordinal >= 0) {
-      owner(world, observer).current[`${binding!.entityId}:association`] = {
+      replaceCurrentFacet(world, owner(world, observer), `${binding!.entityId}:association`, {
         id: nextId(world, 'perception-lease'),
         revision: 1,
         observer: observerLife(observer),
@@ -2554,7 +2583,7 @@ export function acquireAwarenessObservation(
         valueAcquiredAt: contribution.acquiredAt,
         confirmedFrom: event.at,
         confirmedThrough: event.at,
-      };
+      });
       selectedAssociateBodyFamiliarity(world, observer.id, binding!.entityId);
     }
   }
@@ -2596,7 +2625,10 @@ export function acquireAwarenessObservation(
     state.received[state.receipts[acquisitionKey(contribution)]!] = selected;
     const association = binding && state.current[`${binding.entityId}:association`];
     if (association && readOnlyDraftView(association.original) === contribution)
-      association.original = selected;
+      replaceCurrentFacet(world, state, `${binding!.entityId}:association`, {
+        ...readOnlyDraftView(association),
+        original: selected,
+      });
     contribution = selected;
   }
   return contribution;
@@ -2867,12 +2899,16 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
   }
   for (const [sourceId, contact] of Object.entries(contacts)) {
     const key = `${sourceId}:contact`;
-    const existing = state.current[key];
+    const held = readOnlyDraftView(state.current)[key];
+    const existing = held && readOnlyDraftView(held);
     if (existing) {
       if (existing.confirmedThrough < world.simTime) {
-        existing.confirmedThrough = world.simTime;
-        existing.valueMeasuredThrough = world.simTime;
-        existing.revision++;
+        replaceCurrentFacet(world, state, key, {
+          ...existing,
+          confirmedThrough: world.simTime,
+          valueMeasuredThrough: world.simTime,
+          revision: existing.revision + 1,
+        });
       }
       continue;
     }
@@ -2910,7 +2946,7 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
         },
       ],
     });
-    state.current[key] = {
+    replaceCurrentFacet(world, state, key, {
       id: nextId(world, 'perception-lease'),
       revision: 1,
       observer: observerLife(observer),
@@ -2926,7 +2962,7 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
       valueAcquiredAt: world.simTime,
       confirmedFrom: measuredFrom,
       confirmedThrough: world.simTime,
-    };
+    });
   }
 }
 
