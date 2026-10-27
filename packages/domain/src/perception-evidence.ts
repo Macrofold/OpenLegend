@@ -288,6 +288,25 @@ export interface CapturedCurrentFacet
 export type CapturedLocationSample = CapturedCurrentFacet & {
   value: Extract<SensoryFacet, { kind: 'location' }>;
 };
+/** Current spatial readers need measured values and their exact provenance, not
+ * a second historical account/confirmation wrapper for every body and location. */
+export interface BodyGeometrySample {
+  valueMeasuredFrom: number;
+  valueMeasuredThrough: number;
+  fact: ObservationFactKey;
+}
+export interface LocationGeometrySample extends BodyGeometrySample {
+  location: ObservedLocation;
+}
+export interface CurrentBodyGeometryInput {
+  /** Private routing; player/model projection supplies its scoped reference. */
+  sourceId: string;
+  exposure: string;
+  body: ObservedBody;
+  sample: BodyGeometrySample;
+  location?: LocationGeometrySample;
+  motion?: { earlier: LocationGeometrySample; later: LocationGeometrySample };
+}
 export interface PerceptionEvidenceOwner {
   /** One completed full sight phase renews only its extant supported sight facets.
    * Values/independent losses remain in current; no stationary detail is rewritten. */
@@ -777,29 +796,106 @@ export function currentBodyObservation(
       })
     : undefined;
 }
-function eligibleBodyLease(
-  world: WorldState,
-  observerId: string,
-  subjectId: string,
-): LiveFacetSupport | undefined {
+function bodyReadScope(world: WorldState, observerId: string) {
   const state = world.perceptionEvidence?.[observerId],
-    observer = entityGet(world.entities, observerId),
-    subject = entityGet(world.entities, subjectId);
+    entities = readOnlyDraftView(world.entities),
+    observer = entityGet(entities, observerId);
   if (
     !observer?.actor?.alive ||
     !activelyParticipates(observer) ||
     capabilityBlocked(world, observer, 'perception') ||
     !sensesFor(world, observer).some((sense) => sense.implementation === 'vision-geometry-v1') ||
-    state?.life !== (observer.actor.physicalLife ?? 0) ||
-    !activelyParticipates(subject)
+    state?.life !== (observer.actor.physicalLife ?? 0)
   )
     return;
-  const lease = state.current[`${subjectId}:body`];
-  return lease &&
-    lease.value.kind === 'body' &&
-    lease.subjectPhysicalLife === (subject?.actor ? (subject.actor.physicalLife ?? 0) : null)
-    ? lease
-    : undefined;
+  const current = readOnlyDraftView(state.current);
+  // This reader exists only for one synchronous batch. It never grants later
+  // execution and no draft/current record leaves the owned projection below.
+  // docs/memory-architecture.md#private-retrieval-fencing
+  return {
+    current,
+    body(subjectId: string): LiveFacetSupport | undefined {
+      const stored = current[`${subjectId}:body`],
+        lease = stored && readOnlyDraftView(stored),
+        subject = entityGet(entities, subjectId);
+      return lease &&
+        lease.value.kind === 'body' &&
+        activelyParticipates(subject) &&
+        lease.subjectPhysicalLife === (subject?.actor ? (subject.actor.physicalLife ?? 0) : null)
+        ? lease
+        : undefined;
+    },
+  };
+}
+function eligibleBodyLease(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): LiveFacetSupport | undefined {
+  return bodyReadScope(world, observerId)?.body(subjectId);
+}
+/** Owned values for the current scene, sharing observer checks within this
+ * synchronous read only. Full event/cognition cuts retain their existing owner. */
+export function currentBodyGeometryInputs(
+  world: WorldState,
+  observerId: string,
+): CurrentBodyGeometryInput[] {
+  const scope = bodyReadScope(world, observerId);
+  if (!scope) return [];
+  const result: CurrentBodyGeometryInput[] = [];
+  const interval = (
+    lease: Pick<
+      LiveFacetSupport,
+      'valueMeasuredFrom' | 'valueMeasuredThrough' | 'original' | 'originalOrdinal'
+    >,
+  ): BodyGeometrySample => ({
+    valueMeasuredFrom: lease.valueMeasuredFrom,
+    valueMeasuredThrough: lease.valueMeasuredThrough,
+    fact: observationFactKey(lease.original, lease.originalOrdinal),
+  });
+  const locationSample = (
+    lease: Pick<
+      CapturedLocationSample,
+      'value' | 'valueMeasuredFrom' | 'valueMeasuredThrough' | 'original' | 'originalOrdinal'
+    >,
+  ): LocationGeometrySample => ({
+    ...interval(lease),
+    location: cloneValue(lease.value.location),
+  });
+  for (const stored of Object.values(scope.current)) {
+    const lease = readOnlyDraftView(stored);
+    if (lease.value.kind !== 'body' || lease.subjectId === observerId) continue;
+    const admitted = scope.body(lease.subjectId);
+    if (!admitted || admitted.value.kind !== 'body') continue;
+    const body = effectiveCurrentFacetSupport(world, observerId, admitted);
+    const location = scope.current[`${lease.subjectId}:location`];
+    const point = location && effectiveCurrentFacetSupport(world, observerId, location);
+    const motionSource = scope.current[`${lease.subjectId}:observed-motion`];
+    const motion = motionSource && readOnlyDraftView(readOnlyDraftView(motionSource).value);
+    result.push({
+      sourceId: lease.subjectId,
+      exposure: lease.exposure.episodeId,
+      body: cloneValue(admitted.value.body),
+      sample: interval(body),
+      ...(point?.value.kind === 'location'
+        ? {
+            location: {
+              ...interval(point),
+              location: cloneValue(point.value.location),
+            },
+          }
+        : {}),
+      ...(motion?.kind === 'observed-motion'
+        ? {
+            motion: {
+              earlier: locationSample(motion.earlier),
+              later: locationSample(motion.later),
+            },
+          }
+        : {}),
+    });
+  }
+  return result;
 }
 /** Small exact role proof for server reference binding, without copying historical bodies. */
 export function currentBodyGrant(

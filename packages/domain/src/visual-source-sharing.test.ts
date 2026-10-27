@@ -7,7 +7,9 @@ import {
   captureEvidenceCut,
   currentBodyObservation,
   currentObservedFacets,
+  observationFactKey,
 } from './perception-evidence.js';
+import { receivedScene } from './received-scene.js';
 
 it('shares only complete outward source values while preserving independent receiver frames, evidence and historical samples', () => {
   const world = createWorld(218),
@@ -31,6 +33,15 @@ it('shares only complete outward source values while preserving independent rece
     currentObservedFacets(world, id, source.id).find((value) => value.value.kind === 'location')!;
   const firstLocation = point(first.id),
     secondLocation = point(second.id);
+  const received = receivedScene(world, first.id).bodies.get(source.id)!;
+  expect(received.sample).toEqual({
+    valueMeasuredFrom: a.valueMeasuredFrom,
+    valueMeasuredThrough: a.valueMeasuredThrough,
+    fact: observationFactKey(a.original, a.originalOrdinal),
+  });
+  expect(received.location!.fact).toEqual(
+    observationFactKey(firstLocation.original, firstLocation.originalOrdinal),
+  );
   expect(
     firstLocation.value.kind === 'location' && firstLocation.value.frame.positionAtObservation,
   ).toEqual({ x: 1, y: 0, z: 2 });
@@ -48,9 +59,38 @@ it('shares only complete outward source values while preserving independent rece
   expect(movedA.value).toBe(movedB.value);
   expect(movedA.value).not.toBe(previous);
   expect(currentBodyObservation(world, first.id, source.id)!.value.body.position.x).toBe(4);
+  expect(received.body.position.x).toBe(3);
   expect(cut.current.find((value) => value.id === a.id)!.value).toBe(previous);
   expect(previous.kind === 'body' && previous.body.position.x).toBe(3);
   const restored = JSON.parse(JSON.stringify(world)) as typeof world;
+  const restoredScene = receivedScene(restored, first.id).bodies.get(source.id)!;
+  expect(restoredScene.motion).toBeDefined();
+  const motion = world.perceptionEvidence![first.id]!.current[`${source.id}:observed-motion`]!;
+  if (motion.value.kind !== 'observed-motion') throw new Error('Actual motion is required.');
+  expect(restoredScene.motion!.earlier.fact).toEqual(
+    observationFactKey(motion.value.earlier.original, motion.value.earlier.originalOrdinal),
+  );
+  expect(restoredScene.motion!.later.fact).toEqual(
+    observationFactKey(motion.value.later.original, motion.value.later.originalOrdinal),
+  );
+  // A mutable restored world still supplies owned scene values, not live aliases.
+  restoredScene.body.position.x = 999;
+  if (restoredScene.location!.location.kind !== 'point')
+    throw new Error('The actual received point is required.');
+  restoredScene.location!.location.point.x = 999;
+  expect(currentBodyObservation(restored, first.id, source.id)!.value.body.position.x).toBe(4);
+  const restoredLocation =
+    restored.perceptionEvidence![first.id]!.current[`${source.id}:location`]!.value;
+  if (restoredLocation.kind !== 'location' || restoredLocation.location.kind !== 'point')
+    throw new Error('The original received point is required.');
+  expect(restoredLocation.location.point.x).toBe(4);
+  const replaced = structuredClone(restored);
+  entityGet(replaced.entities, source.id)!.actor!.physicalLife = 1;
+  expect(receivedScene(replaced, first.id).bodies.has(source.id)).toBe(false);
+  const changedObserver = structuredClone(restored);
+  expect(receivedScene(changedObserver, first.id).bodies.has(source.id)).toBe(true);
+  entityGet(changedObserver.entities, first.id)!.actor!.physicalLife = 1;
+  expect(receivedScene(changedObserver, first.id).bodies.size).toBe(0);
   world.simTime = 2;
   restored.simTime = 2;
   initializePerception(world, []);

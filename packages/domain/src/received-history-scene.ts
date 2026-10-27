@@ -61,7 +61,7 @@ function geometry(fact: BodyFact, at: number, facts: Fact[]): ReceivedBodyGeomet
     ...(location?.value.kind === 'location'
       ? {
           location: {
-            value: location.value,
+            location: location.value.location,
             valueMeasuredFrom: location.reference.measuredFrom,
             valueMeasuredThrough: through(location),
           },
@@ -211,8 +211,8 @@ export function historicalSpatialMeasurements(
 
     const bounds = receivedBodyBounds(
       anchor.value.body,
-      anchorGeometry.location?.value.location.kind === 'point'
-        ? anchorGeometry.location.value.location.errorRadius
+      anchorGeometry.location?.location.kind === 'point'
+        ? anchorGeometry.location.location.errorRadius
         : 0,
     );
     for (const point of [bounds.min, bounds.max])

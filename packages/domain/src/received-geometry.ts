@@ -474,9 +474,10 @@ export function refreshReceivedGeometry(
     const surface = surfaceById(input.map, fragment.surfaceId);
     return surface ? actualEdges(fragment, surface).map((edge) => ({ fragment, edge })) : [];
   });
-  const index = new BoundsIndex(
-    ordered.map((fragment) => ({ value: fragment, bounds: patchBounds(fragment) })),
-  );
+  // A preparation opportunity can refine unknown patches without leaving any
+  // unvisited boundary work. Build the same local tree only if a query uses it.
+  // docs/performance.md#design-recurring-work-before-implementation
+  let index: BoundsIndex<(typeof ordered)[number]> | undefined;
   let checked = 0;
   while (
     edges.length &&
@@ -502,6 +503,9 @@ export function refreshReceivedGeometry(
         z: Math.max(edge.a.z, edge.b.z) + epsilon,
       },
     };
+    index ??= new BoundsIndex(
+      ordered.map((fragment) => ({ value: fragment, bounds: patchBounds(fragment) })),
+    );
     const result = index.query((bounds) => intersects(b, bounds), policy.indexVisits - indexVisits);
     indexVisits += result.visited;
     if (result.status === 'partial') state.unrepresented = true;
@@ -689,16 +693,9 @@ export function revokeReceivedGeometryEvidence(
 
 function bodyProof(body: ReceivedSceneBody): ObservationFactKey[] {
   return [
-    observationFactKey(body.sample.original, body.sample.originalOrdinal),
-    ...(body.location
-      ? [observationFactKey(body.location.original, body.location.originalOrdinal)]
-      : []),
-    ...(body.motion
-      ? [
-          observationFactKey(body.motion.earlier.original, body.motion.earlier.originalOrdinal),
-          observationFactKey(body.motion.later.original, body.motion.later.originalOrdinal),
-        ]
-      : []),
+    body.sample.fact,
+    ...(body.location ? [body.location.fact] : []),
+    ...(body.motion ? [body.motion.earlier.fact, body.motion.later.fact] : []),
   ];
 }
 export function receivedBoundarySeparation(
@@ -718,11 +715,11 @@ export function receivedBoundarySeparation(
   const sampleAt = (time: number) => {
     for (const sample of [anchor.location, anchor.motion?.earlier, anchor.motion?.later])
       if (
-        sample?.value.location.kind === 'point' &&
+        sample?.location.kind === 'point' &&
         time >= sample.valueMeasuredFrom &&
         time <= sample.valueMeasuredThrough
       )
-        return { point: sample.value.location.point, error: sample.value.location.errorRadius };
+        return { point: sample.location.point, error: sample.location.errorRadius };
     return time >= anchor.sample.valueMeasuredFrom && time <= anchor.sample.valueMeasuredThrough
       ? { point: anchor.body.position, error: 0 }
       : undefined;

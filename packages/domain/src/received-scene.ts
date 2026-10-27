@@ -5,33 +5,25 @@ import {
   type BoundsQueryCursor,
 } from '@open-legend/spatial';
 import {
-  captureCurrentFacet,
-  currentBodyObservation,
-  effectiveCurrentFacetSupport,
-  type CapturedCurrentFacet,
-  type CapturedLocationSample,
+  currentBodyGeometryInputs,
+  type BodyGeometrySample,
+  type CurrentBodyGeometryInput,
+  type LocationGeometrySample,
   type ObservedBody,
 } from './perception-evidence.js';
-import { cloneValue } from './draft.js';
+import { readOnlyDraftView } from './draft.js';
 import type { Position, WorldState } from './types.js';
 
 export interface ReceivedBodyGeometry {
   body: ObservedBody;
-  sample: Pick<CapturedCurrentFacet, 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
-  location?: Pick<CapturedLocationSample, 'value' | 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
+  sample: Pick<BodyGeometrySample, 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
+  location?: Omit<LocationGeometrySample, 'fact'>;
   motion?: {
-    earlier: Pick<CapturedLocationSample, 'value' | 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
-    later: Pick<CapturedLocationSample, 'value' | 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
+    earlier: Omit<LocationGeometrySample, 'fact'>;
+    later: Omit<LocationGeometrySample, 'fact'>;
   };
 }
-export interface ReceivedSceneBody extends ReceivedBodyGeometry {
-  /** Private routing; ordinary context replaces this with a decision-scoped reference. */
-  sourceId: string;
-  exposure: string;
-  body: ObservedBody;
-  sample: CapturedCurrentFacet;
-  location?: CapturedLocationSample;
-  motion?: Extract<CapturedCurrentFacet['value'], { kind: 'observed-motion' }>;
+export interface ReceivedSceneBody extends CurrentBodyGeometryInput {
   bounds: Bounds3;
 }
 
@@ -47,41 +39,24 @@ const cached = new WeakMap<WorldState, Map<string, ReceivedScene>>();
 /** Derived only when a reader actually needs scene context. This never polls a
  * target transform or keeps a second writable position. */
 export function receivedScene(world: WorldState, observerId: string): ReceivedScene {
-  const owner = world.perceptionEvidence?.[observerId];
-  const key = owner?.current;
+  const owners = readOnlyDraftView(world).perceptionEvidence;
+  const stored = owners && readOnlyDraftView(owners)[observerId];
+  const owner = stored && readOnlyDraftView(stored);
+  const physicalLife = owner?.life ?? 0;
   const previous = Object.isFrozen(world) ? cached.get(world)?.get(observerId) : undefined;
-  if (previous && previous.observerId === observerId && previous.physicalLife === owner!.life)
+  if (previous && previous.observerId === observerId && previous.physicalLife === physicalLife)
     return previous;
   const bodies = new Map<string, ReceivedSceneBody>();
   let nonlocalized = 0;
-  for (const lease of Object.values(key ?? {})) {
-    if (lease.value.kind !== 'body' || lease.subjectId === observerId) continue;
-    const admitted = currentBodyObservation(world, observerId, lease.subjectId);
-    if (!admitted) continue;
-    const body = cloneValue(admitted.value.body);
-    const location = key?.[`${lease.subjectId}:location`];
+  for (const input of currentBodyGeometryInputs(world, observerId)) {
     const error =
-      location?.value.kind === 'location' && location.value.location.kind === 'point'
-        ? location.value.location.errorRadius
-        : 0;
-    const motion = key?.[`${lease.subjectId}:observed-motion`]?.value;
-    bodies.set(lease.subjectId, {
-      sourceId: lease.subjectId,
-      exposure: lease.exposure.episodeId,
-      body,
-      sample: admitted,
-      ...(location?.value.kind === 'location'
-        ? {
-            location: captureCurrentFacet(
-              effectiveCurrentFacetSupport(world, observerId, location),
-            ) as CapturedLocationSample,
-          }
-        : {}),
-      ...(motion?.kind === 'observed-motion' ? { motion: cloneValue(motion) } : {}),
-      bounds: receivedBodyBounds(body, error),
+      input.location?.location.kind === 'point' ? input.location.location.errorRadius : 0;
+    bodies.set(input.sourceId, {
+      ...input,
+      bounds: receivedBodyBounds(input.body, error),
     });
   }
-  for (const contribution of owner?.received ?? [])
+  for (const contribution of readOnlyDraftView(owner?.received ?? []))
     if (
       contribution.facets.some((facet) => facet.value.kind === 'sound') &&
       !contribution.facets.some((facet) => facet.value.kind === 'location')
@@ -89,7 +64,7 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
       nonlocalized++;
   const scene: ReceivedScene = {
     observerId,
-    physicalLife: owner?.life ?? 0,
+    physicalLife,
     bodies,
     index: new BoundsIndex([...bodies.values()].map((value) => ({ value, bounds: value.bounds }))),
     nonlocalized,
@@ -155,24 +130,24 @@ function measuredPoint(
 ): { point: Position; error: number } | undefined {
   const location = body.location;
   if (
-    location?.value.location.kind === 'point' &&
+    location?.location.kind === 'point' &&
     at >= location.valueMeasuredFrom &&
     at <= location.valueMeasuredThrough
   )
-    return { point: location.value.location.point, error: location.value.location.errorRadius };
+    return { point: location.location.point, error: location.location.errorRadius };
   for (const sample of body.motion ? [body.motion.earlier, body.motion.later] : [])
     if (
-      sample.value.location.kind === 'point' &&
+      sample.location.kind === 'point' &&
       at >= sample.valueMeasuredFrom &&
       at <= sample.valueMeasuredThrough
     )
-      return { point: sample.value.location.point, error: sample.value.location.errorRadius };
+      return { point: sample.location.point, error: sample.location.errorRadius };
   // The body producer's actually measured unchanged interval can support a stationary
   // participant while a neighbor moves; contact continuity alone cannot do so.
   if (at >= body.sample.valueMeasuredFrom && at <= body.sample.valueMeasuredThrough)
     return {
       point: body.body.position,
-      error: location?.value.location.kind === 'point' ? location.value.location.errorRadius : 0,
+      error: location?.location.kind === 'point' ? location.location.errorRadius : 0,
     };
   return undefined;
 }
