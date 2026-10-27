@@ -387,7 +387,21 @@ export class WorldRecords {
         if (child.mode === 'list') {
           const a = Array.isArray(previous) ? previous : [];
           const b = Array.isArray(current) ? current : [];
-          const placement = historyPositions.get(a);
+          const key = (entry: Value, index: number) =>
+            child.key ? String(own(entry, child.key) ?? index) : String(index);
+          // History keeps canonical ordinals from its first encoding, before any
+          // cold eviction. Replacing an expired source must not renumber its
+          // retained sibling into the position the replacement still owns.
+          // docs/performance.md#inactive-history-residency
+          const placement =
+            historyPositions.get(a) ??
+            (HISTORY_TABLES.has(child.node.table)
+              ? {
+                  positions: new Map(a.map((entry, index) => [key(entry, index), index])),
+                  next: a.length,
+                  complete: true,
+                }
+              : undefined);
           const appended = appendedRecordCount(a, b);
           const nextPlacement = placement
             ? {
@@ -398,8 +412,6 @@ export class WorldRecords {
               }
             : undefined;
           const start = appended === undefined ? 0 : a.length;
-          const key = (entry: Value, index: number) =>
-            child.key ? String(own(entry, child.key) ?? index) : String(index);
           const prior = new Map(
             a.slice(start).map((entry, i) => [key(entry, start + i), { entry, index: start + i }]),
           );
