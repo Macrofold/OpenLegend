@@ -89,8 +89,9 @@ it('seals recent observations before nested native preparation and isolates both
   });
   initializePerception(outer, []);
   const nested = draftWorld(outer);
-  const sealed = readOnlyDraftView(outer.experience!.temporal!);
+  const sealed = readOnlyDraftView(nested.experience!.temporal!);
   expect(Object.isFrozen(sealed)).toBe(true);
+  expect(Object.isFrozen(readOnlyDraftView(outer.experience!.temporal!))).toBe(false);
   const captured = JSON.stringify(sealed);
   nested.simTime = 2;
   setSpatialPosition(
@@ -102,9 +103,16 @@ it('seals recent observations before nested native preparation and isolates both
   );
   initializePerception(nested, []);
   finishWorld(nested);
+  // The parent continues the same real native turn after preparing its preview.
+  // Its original observation owners must remain writable and isolated.
+  outer.simTime = 3;
+  setSpatialPosition(outer, npc, { x: 13, y: 0, z: 15 }, worldSupport(npc), {
+    continuity: 'physical',
+  });
+  initializePerception(outer, []);
   expect(JSON.stringify(sealed)).toBe(captured);
   expect(JSON.stringify(initial.experience!.temporal)).toBe(before);
-  expect(JSON.stringify(finishWorld(outer).experience!.temporal)).toBe(captured);
+  expect(JSON.stringify(finishWorld(outer).experience!.temporal)).not.toBe(captured);
 });
 it('seals shared received evidence once while preserving earlier immutable snapshots', () => {
   const initial = createWorld(73);

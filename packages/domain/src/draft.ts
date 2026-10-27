@@ -483,8 +483,22 @@ export function draftWorld(
   options: { retainNativeValues?: boolean } = {},
 ): WorldState {
   sealAppends(world);
-  sealNativeEvidence(world);
-  const base = isDraft(world) ? current(world) : world;
+  const draft = isDraft(world),
+    perception = world.perceptionEvidence,
+    temporal = world.experience?.temporal;
+  let base: WorldState;
+  try {
+    sealNativeEvidence(world);
+    base = draft ? current(world) : world;
+  } finally {
+    // A private preview needs a sealed independent snapshot, while its parent
+    // transition may still emit observations. Immer does not draft a freshly
+    // assigned frozen replacement; preserve the parent's original writable owners.
+    if (draft) {
+      if (world.perceptionEvidence !== perception) world.perceptionEvidence = perception;
+      if (world.experience?.temporal !== temporal) world.experience!.temporal = temporal;
+    }
+  }
   // A compound command may copy an already modified entity dictionary. Carry its
   // trusted residency metadata through that snapshot, never through serialized JSON.
   // docs/save-and-load.md#continuation-and-identity
@@ -517,7 +531,6 @@ export function finishWorld(
 ): WorldState {
   reconcileDraftSemantics(world);
   sealAppends(world);
-  sealNativeEvidence(world);
   if (!isDraft(world)) {
     // Re-completing an editable result cannot certify its earlier write set.
     pendingPublications.delete(world);
@@ -620,6 +633,10 @@ export function finishWorld(
           path[1] >= before.length),
     );
   });
+  // The finalizer has resolved the owned draft graph. Seal it in place rather
+  // than constructing a second complete graph just before finalization.
+  freezeData(result.perceptionEvidence);
+  freezeData(result.experience?.temporal);
   publishKnownPlaces(result);
   // A semantic mutation cannot inherit a native prediction's sampling progress. A no-op
   // (including load validation) preserves it; native advance publishes a new owned value.

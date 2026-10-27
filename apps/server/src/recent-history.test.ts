@@ -128,7 +128,9 @@ it('persists receipt-only native movement before immediate recent browsing and d
     ).ok,
   ).toBe(true);
   const before = service.world;
-  await service.tick(0.005);
+  // Reach the installed three-game-second sight sample; a held interval must
+  // not invent an observation merely because the actor physically moved.
+  await service.tick(0.05);
   expect(worldPosition(entityGet(service.world.entities, NPC_ID)!).x).toBeGreaterThan(3);
   expect(service.world.memories[PLAYER_ID]).toBe(before.memories[PLAYER_ID]);
   expect(service.world.experience!.awareness[PLAYER_ID]).toBe(

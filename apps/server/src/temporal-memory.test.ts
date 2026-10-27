@@ -8,6 +8,8 @@ import {
   NPC_ID,
   entityGet,
   experiences,
+  experienceEntryKey,
+  experienceSourceReference,
   acceptConsolidation,
   learnRecipe,
   executeCommand,
@@ -37,7 +39,6 @@ import { testRepository, readConfig } from '../../../tests/fixtures/database.js'
 import { editWorld, enterLocalWorld, useNearCampSight } from '../../../tests/fixtures/service.js';
 import { WorldService } from './world-service.js';
 import { randomUUID } from 'node:crypto';
-import { personalAccountRevision } from './personal-accounts.js';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -489,7 +490,7 @@ describe('bounded personal temporal storage', () => {
       service.world.events.find(
         (event) => event.type === 'gathered' && event.actorId === strangerId,
       )?.data,
-    ).toMatchObject({ definitionId: 'wood', quantity: 2 });
+    ).toMatchObject({ definitionId: 'wood', quantity: 1 });
     const page = await memoryHistory(service, PLAYER_ID, service.localScope, { recent: true });
     expect(JSON.stringify(page)).toContain(words);
     expect(JSON.stringify(page)).not.toContain(hiddenName);
@@ -615,14 +616,8 @@ describe('bounded personal temporal storage', () => {
     );
     const prepared = ids.map((id) => {
       const value = service.world.memories[PLAYER_ID]!.find((value) => value.id === id)!;
-      return {
-        entry: { source: 'memory' as const, value },
-        ref: {
-          kind: 'memory' as const,
-          id,
-          revision: personalAccountRevision(JSON.stringify(value)),
-        },
-      };
+      const entry = { source: 'memory' as const, value };
+      return { entry, ref: experienceSourceReference(entry) };
     });
     expect(
       (
@@ -632,7 +627,12 @@ describe('bounded personal temporal storage', () => {
             PLAYER_ID,
             'fixture-exact-summary',
             prepared.map((source) => source.entry),
-            [{ sourceKeys: ids.map((id) => `memory:${id}`), text: 'Two personal outcomes.' }],
+            [
+              {
+                sourceKeys: prepared.map(({ entry }) => experienceEntryKey(entry)),
+                text: 'Two personal outcomes.',
+              },
+            ],
             prepared,
           ),
         )

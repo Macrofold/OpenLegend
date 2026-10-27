@@ -16,6 +16,7 @@ import {
   sumSafeIntegers,
 } from '@open-legend/ai';
 import {
+  AUTHORITY_TABLES,
   AuthorityRepository,
   type AuthorityFence,
   type AccountBinding,
@@ -26,7 +27,7 @@ import {
 } from './authority.js';
 import { InviteRepository } from './invites.js';
 import { MaintenanceRepository } from './maintenance.js';
-import { AssetRepository } from './asset-repository.js';
+import { ASSET_TABLES, AssetRepository } from './asset-repository.js';
 import { assertAssetBinding, type AssetRevisionReference } from '@open-legend/assets';
 import {
   compactHistory,
@@ -705,9 +706,12 @@ export class SqlGameRepository implements GameRepository {
         !existing?.['relation'] &&
         (await this.db
           .prepare(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema='open_legend' LIMIT 1",
+            "SELECT table_name FROM information_schema.tables WHERE table_schema='open_legend' AND NOT (table_name = ANY(?::text[])) LIMIT 1",
           )
-          .get())
+          // Artwork and access have independent owners and can be installed
+          // before a game's first initialization. Any unmarked game/storage
+          // table still refuses startup; this never admits an older world.
+          .get([...ASSET_TABLES, ...AUTHORITY_TABLES]))
       )
         throw new Error('Database schema marker is missing. Existing data was not changed.');
       const schema = `
