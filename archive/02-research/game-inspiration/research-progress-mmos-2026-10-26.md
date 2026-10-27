@@ -4,7 +4,7 @@
 
 ## Current progress
 
-Eleven scoped subjects are researched and reviewed against the applicable R01–R15 requirements: Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2, Guild Wars 3, The Elder Scrolls Online, The Lord of the Rings Online, Final Fantasy XIV, Black Desert Online, MapleStory and Star Wars: The Old Republic. GW3 uses five independent observer previews because it is unreleased; the other ten retain five substantive firsthand written assessments. Completed dossiers are committed with their ledger updates. Earlier dossier evidence and worked cases are preserved. Albion Online is in progress; its incomplete checkpoint preserves production/creation evidence and initial mechanics/lore, with remaining core systems, commercial/reception integration and final review explicitly open. The comparative essay's full game-by-game conclusions and final integration gates remain open. The run began October 26 and resumed October 27; each source retains its actual access date.
+Twelve scoped subjects are researched and reviewed against the applicable R01–R15 requirements: Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2, Guild Wars 3, The Elder Scrolls Online, The Lord of the Rings Online, Final Fantasy XIV, Black Desert Online, MapleStory, Star Wars: The Old Republic and Albion Online. GW3 uses five independent observer previews because it is unreleased; the other eleven retain five substantive firsthand written assessments. Completed dossiers are committed with their ledger updates. Earlier dossier evidence and worked cases are preserved. The comparative essay's full game-by-game conclusions and final integration gates remain open. The run began October 26 and resumed October 27; each source retains its actual access date.
 
 ## Scope and evidence rules
 
@@ -31,7 +31,7 @@ Eleven scoped subjects are researched and reviewed against the applicable R01–
 | [Black Desert Online](dossiers/black-desert-online.md)                | PC service; console/mobile boundaries                                    | Researched and reviewed; committed with this ledger |
 | [MapleStory](dossiers/maplestory.md)                                  | Original PC game; regional and server-model differences                  | Researched and reviewed; committed with this ledger |
 | [Star Wars: The Old Republic](dossiers/star-wars-the-old-republic.md) | Class stories, service changes and current operations                    | Researched and reviewed; committed with this ledger |
-| [Albion Online](dossiers/albion-online.md)                            | Regional worlds, economy, risk and social structures                     | In progress; incomplete research checkpoint         |
+| [Albion Online](dossiers/albion-online.md)                            | Regional worlds, economy, risk and social structures                     | Researched and reviewed; committed with this ledger |
 | World of Warcraft                                                     | Refresh existing dossier; Retail and Classic separated                   | Pending                                             |
 | Old School RuneScape                                                  | Refresh existing dossier; distinct from modern RuneScape                 | Pending                                             |
 | RuneScape                                                             | Refresh existing dossier; PC/mobile shared game, separate spin-offs      | Pending                                             |
