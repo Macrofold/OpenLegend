@@ -1,7 +1,7 @@
 import { expect, it } from 'vitest';
 import { freeze } from 'immer';
 import { createWorld, NPC_ID, PLAYER_ID } from './data.js';
-import { entityGet } from './entity-collection.js';
+import { entityGet, entitySet, entityValues } from './entity-collection.js';
 import { initializePerception, executeCommand, advanceWorld } from './kernel.js';
 import { setSpatialPosition, worldSupport } from './spatial-state.js';
 import {
@@ -12,6 +12,7 @@ import {
 } from './attention.js';
 import {
   currentBodyObservation,
+  currentBodyLocalSubject,
   currentObservedFacets,
   captureEvidenceCut,
   validatePerceptionEvidenceState,
@@ -33,6 +34,7 @@ import {
   clearTemporalCaptureReferences,
   captureTemporalReceiptPrefix,
   temporalReceiptWithinPrefix,
+  retireTemporalChunks,
   type TemporalValue,
   type TemporalValueReference,
 } from './temporal-evidence.js';
@@ -144,6 +146,135 @@ it('retains intermediate actually received movement and its exact last sample on
   expect(lostBody.receipt.at).toBe(3);
   expect(lostBody.receipt.facets[0]!.measuredThrough).toBe(2);
   expect(selected.incomplete).toBe(true);
+});
+
+it('keeps a lost unfamiliar deer separate from a different deer entering the same place', () => {
+  const world = createWorld(84),
+    player = entityGet(world.entities, PLAYER_ID)!,
+    first = entityGet(world.entities, 'deer-1')!,
+    second = structuredClone(first);
+  second.id = 'different-unknown-deer';
+  entitySet(world.entities, second.id, second);
+  for (const entity of entityValues(world.entities))
+    if (entity.id !== PLAYER_ID && entity.placement.mode === 'world')
+      setSpatialPosition(world, entity, { x: 100, y: 0, z: 100 }, 'terrain');
+  setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, 'terrain');
+  setSpatialPosition(world, first, { x: 3, y: 0, z: 2 }, 'terrain');
+  player.actor!.attentionCapacity = 1;
+  initializePerception(world, []);
+  expect(currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId)).toContain(
+    first.id,
+  );
+  const firstBody = currentBodyObservation(world, PLAYER_ID, first.id)!,
+    firstSubject = currentBodyLocalSubject(world, PLAYER_ID, first.id)!;
+  expect(firstSubject.kind).toBe('individual');
+  world.simTime = 1;
+  setSpatialPosition(world, first, { x: 100, y: 0, z: 100 }, 'terrain', 'physical');
+  initializePerception(world, []);
+  expect(currentBodyObservation(world, PLAYER_ID, first.id)).toBeUndefined();
+  world.simTime = 2;
+  setSpatialPosition(world, second, { x: 3, y: 0, z: 2 }, 'terrain', 'physical');
+  initializePerception(world, []);
+  const secondBody = currentBodyObservation(world, PLAYER_ID, second.id)!,
+    secondSubject = currentBodyLocalSubject(world, PLAYER_ID, second.id)!;
+  expect(secondBody.exposure.episodeId).not.toBe(firstBody.exposure.episodeId);
+  expect(secondSubject.kind).toBe('individual');
+  expect(secondSubject).not.toEqual(firstSubject);
+  for (const subject of [firstSubject, secondSubject]) {
+    if (subject.kind !== 'individual') throw new Error('Expected an unfamiliar animal.');
+    const identity = world.observerIdentities![PLAYER_ID]![subject.individualId]!;
+    expect(identity.givenName).toBe('');
+    expect(identity.canonicalId).toBeUndefined();
+  }
+  const read = (subject: string) =>
+    selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+      subject,
+      limit: 1000,
+      bytes: 1024 * 1024,
+    });
+  const oldHistory = read(firstBody.exposure.episodeId),
+    newHistory = read(secondBody.exposure.episodeId);
+  expect(oldHistory.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(true);
+  expect(oldHistory.entries.every(({ receipt }) => receipt.at <= 1)).toBe(true);
+  expect(newHistory.entries.length).toBeGreaterThan(0);
+  expect(newHistory.entries.every(({ receipt }) => receipt.at === 2)).toBe(true);
+  expect(newHistory.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(false);
+  expect(oldHistory.incomplete).toBe(true);
+  expect(newHistory.incomplete).toBe(false);
+  validateTemporalEvidenceState(world);
+  const restored = JSON.parse(JSON.stringify(world));
+  expect(
+    selectTemporalHistory(restored.experience.temporal, PLAYER_ID, {
+      subject: firstBody.exposure.episodeId,
+      limit: 1000,
+      bytes: 1024 * 1024,
+    }),
+  ).toEqual(oldHistory);
+});
+
+it('distinguishes leaving attention, losing actual sight and no longer retaining the old sequence', () => {
+  const world = createWorld(85),
+    player = entityGet(world.entities, PLAYER_ID)!,
+    npc = entityGet(world.entities, NPC_ID)!,
+    branches = entityGet(world.entities, 'branches')!;
+  for (const entity of entityValues(world.entities))
+    if (entity.id !== PLAYER_ID && entity.placement.mode === 'world')
+      setSpatialPosition(world, entity, { x: 100, y: 0, z: 100 }, 'terrain');
+  setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, 'terrain');
+  setSpatialPosition(world, npc, { x: 3, y: 0, z: 2 }, 'terrain');
+  player.actor!.attentionCapacity = 1;
+  initializePerception(world, []);
+  const subject = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  expect(currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId)).toEqual([
+    NPC_ID,
+  ]);
+  acknowledgeAttention(world, PLAYER_ID, captureAttentionPresentation(world, PLAYER_ID));
+  world.simTime = 1;
+  setSpatialPosition(world, branches, { x: 1, y: 0, z: 4 }, 'terrain', 'physical');
+  initializePerception(world, []);
+  expect(currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId)).toEqual([
+    branches.id,
+  ]);
+  const query = { subject, limit: 1000, bytes: 1024 * 1024 };
+  const interrupted = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+  expect(interrupted.entries.some(({ receipt }) => receipt.change === 'attention-exit')).toBe(true);
+  expect(interrupted.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(false);
+  expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeDefined();
+  world.simTime = 2;
+  player.actor!.attentionCapacity = 2;
+  initializePerception(world, []);
+  expect(currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId)).toContain(
+    NPC_ID,
+  );
+  world.simTime = 3;
+  setSpatialPosition(world, npc, { x: 100, y: 0, z: 100 }, 'terrain', 'physical');
+  initializePerception(world, []);
+  expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
+  const lost = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+  const loss = lost.entries.find(({ receipt }) => receipt.change === 'loss');
+  expect(loss).toBeDefined();
+  expect(loss!.receipt.at).toBe(3);
+  expect(loss!.receipt.facets.some((facet) => facet.measuredThrough < 3)).toBe(true);
+  expect(lost.entries.some(({ receipt }) => receipt.change === 'attention-exit')).toBe(true);
+  world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 1;
+  const actor = world.experience!.temporal!.actors[PLAYER_ID]!,
+    retired = [...actor.chunks];
+  retireTemporalChunks(
+    world,
+    PLAYER_ID,
+    retired.map((chunk) => chunk.id),
+    {
+      bytes: retired.reduce((sum, chunk) => sum + chunk.bytes, 0),
+      count: retired.reduce((sum, chunk) => sum + chunk.count, 0),
+    },
+    null,
+    Math.max(...retired.map((chunk) => chunk.throughAt)),
+  );
+  const expired = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+  expect(expired.entries).toEqual([]);
+  expect(expired.incomplete).toBe(true);
+  expect(expired.hasMore).toBe(false);
+  expect(currentBodyObservation(world, PLAYER_ID, branches.id)).toBeDefined();
 });
 
 it('keeps the original exact received sequence through current-format JSON restoration', () => {

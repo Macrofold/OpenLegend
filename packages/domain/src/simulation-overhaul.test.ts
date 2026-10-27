@@ -23,7 +23,7 @@ import { WorkBudgetError } from './work-budget.js';
 import { ResourceReservationError } from './resource-claims.js';
 import * as nativeController from './native-response-controller.js';
 import * as statusEffects from './status-effects.js';
-import { nativeResponseProfileKey } from './native-response.js';
+import { installNativeResponseProfile, nativeResponseProfile } from './native-response.js';
 import { observeDomainCounters, type DomainCounters } from './diagnostic-counters.js';
 import {
   renewQuietTerritorialReview,
@@ -64,11 +64,10 @@ function ordinaryWander(distance?: number) {
   world.paused = false;
   animal.animal!.wander = { remainingSeconds: 1 };
   if (distance !== undefined) {
-    const pin = animal.animal!.profile,
-      key = nativeResponseProfileKey(pin),
-      profile = structuredClone(world.nativeResponseProfiles![key]!);
+    const profile = structuredClone(nativeResponseProfile(world, animal.animal!.profile)!);
+    profile.version++;
     profile.wander.distance = distance;
-    world.nativeResponseProfiles = { ...world.nativeResponseProfiles, [key]: profile };
+    animal.animal!.profile = installNativeResponseProfile(world, profile);
   }
   reconcileAnimalWander(world, animal);
   return freezeWorld(world);
@@ -83,6 +82,7 @@ describe('simulation overhaul ownership and continuation', () => {
       restored = JSON.parse(JSON.stringify(materializeNativeValues(midway))),
       reference = structuredClone(midway),
       counters: DomainCounters = {};
+    expect(midway.pendingNativeIntegration?.segments.length).toBeGreaterThan(0);
     nextRandom(reference);
     nextRandom(reference);
     let warm: typeof initial;
@@ -147,6 +147,7 @@ describe('simulation overhaul ownership and continuation', () => {
       } finally {
         failure.mockRestore();
       }
+      expect(advanceWorld(initial, 2).outcome.ok).toBe(true);
     });
 
   it('aborts the owning advance rather than falling back after an unexpected post-admission refusal', () => {
@@ -184,6 +185,7 @@ describe('simulation overhaul ownership and continuation', () => {
     } finally {
       failure.mockRestore();
     }
+    expect(advanceWorld(initial, 2).outcome.ok).toBe(true);
   });
 
   it('reuses owned entity lookup paths and invalidates only replaced or removed keys', () => {

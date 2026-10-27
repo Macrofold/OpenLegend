@@ -1,5 +1,18 @@
 import { decisionFixtureResult } from '../../../tests/fixtures/actor-response.js';
-import { entityGet } from '@open-legend/domain';
+import {
+  currentAttentionCues,
+  entityGet,
+  entitySet,
+  entityValues,
+  executeCommand,
+  initializePerception,
+  seedAgency,
+  setSpatialPosition,
+  worldPlacement,
+  worldSupport,
+} from '@open-legend/domain';
+import { individualFamiliarity } from '../../../packages/domain/src/worlds/base/recognition.js';
+import { currentBodySubject } from '../../../packages/domain/src/worlds/base/knowledge.js';
 import { testRepository } from '../../../tests/fixtures/database.js';
 import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
@@ -132,7 +145,7 @@ async function harness(
     config?: Partial<AppConfig>;
   } = {},
 ) {
-  const now = 10_000;
+  let now = 10_000;
   const config = {
     ...readConfig({
       TYPESAFE_API_KEY: 'test-fixture-key',
@@ -218,10 +231,215 @@ async function harness(
     job: (id: string) => store.getJob(jobIds.get(id) ?? id),
     calls,
     change,
+    advanceClock: () => {
+      now += 1000;
+    },
   };
 }
 
+/** Healthy simulated decisions deliberately choose no action. The fixture tests
+ * admission, not whether a real model understands the supplied surroundings. */
+function quietJudgment(request: JudgeRequest): AiResult<JudgeValue> {
+  const answers: JudgeValue['answers'] = {};
+  for (const [key, question] of Object.entries(request.questions)) {
+    if (question.type === 'noul') answers[key] = { type: 'noul', noul: 0.1 };
+    else {
+      const choices = Object.keys(question.criteria);
+      const choice = key === 'route' ? 'level2' : choices.includes('no') ? 'no' : choices[0]!;
+      answers[key] = {
+        type: 'choice',
+        choice,
+        confidence: 0.99,
+        probabilities: Object.fromEntries(
+          choices.map((value) => [value, value === choice ? 1 : 0]),
+        ),
+      };
+    }
+  }
+  return value(request.requestId, 'jev', { answers });
+}
+
+const quietPortrait = 'A framed painting depicts a blue bird above a woven basket.';
+async function prepareQuietScene(h: Awaited<ReturnType<typeof harness>>) {
+  await h.change((world) => {
+    const observer = entityGet(world.entities, NPC_ID)!,
+      player = entityGet(world.entities, PLAYER_ID)!;
+    world.map.width = 128;
+    world.map.tiles = Array.from({ length: world.map.height }, () => Array(128).fill('grass'));
+    const ground = world.map.spatial.surfaces.find((surface) => surface.id === 'terrain')!;
+    ground.maxX = 128;
+    world.map.spatial.blockers = [];
+    world.map.spatial.revision++;
+    for (const entity of entityValues(world.entities))
+      if (entity.id !== NPC_ID && entity.id !== PLAYER_ID && entity.placement?.mode === 'world')
+        setSpatialPosition(world, entity, { x: 110, y: 0, z: 10 }, ground.id, 'physical');
+    setSpatialPosition(world, observer, { x: 10, y: 0, z: 10 }, ground.id, 'physical');
+    setSpatialPosition(world, player, { x: 20, y: 0, z: 10 }, ground.id, 'physical');
+    observer.actor!.action = null;
+    observer.actor!.agency = seedAgency([]);
+    entitySet(world.entities, 'quiet-portrait', {
+      id: 'quiet-portrait',
+      kind: 'assembly',
+      name: 'Framed painting',
+      nameForm: 'count',
+      description: quietPortrait,
+      appearance: 'sprite',
+      spatial: structuredClone(entityGet(world.entities, 'campfire')!.spatial),
+      placement: worldPlacement({ x: 12, y: 0, z: 10 }, ground.id),
+    });
+    initializePerception(world, []);
+  });
+  await h.service.control({ paused: false });
+  await h.service.whenDurable();
+  // Starting-world memories predate this controlled scene. They were already
+  // considered; the new outward painting stays genuinely unconsidered.
+  await h.store.putIntegration(`semantic-schedule:${h.service.world.id}:${NPC_ID}`, {
+    fingerprint: 'fixture-considered-opening', at: 10000, watermark: h.service.world.nextId,
+  });
+}
+
+async function considerQuietScene(h: Awaited<ReturnType<typeof harness>>) {
+  h.advanceClock();
+  await h.service.whenDurable();
+  await h.director.considerThought();
+  await h.director.idle();
+}
+
+async function receivePlayerAt(h: Awaited<ReturnType<typeof harness>>, at: number, x: number) {
+  await h.change((world) => {
+    world.simTime = at;
+    const player = entityGet(world.entities, PLAYER_ID)!;
+    setSpatialPosition(world, player, { x, y: 0, z: 10 }, worldSupport(player), 'physical');
+    initializePerception(world, []);
+  });
+}
+
 describe('AI director with explicit fixtures, no live calls', () => {
+  it('considers a quiet novel portrait autonomously once, without buying thought for movement, familiarity or refresh', async () => {
+    const h = await harness({
+      judge: quietJudgment,
+      generate: (request) => value(request.requestId, 'openai', { operations: [] }),
+    });
+    await prepareQuietScene(h);
+    await considerQuietScene(h);
+    expect(h.calls.generations.filter((request) => request.task === 'npc_response')).toHaveLength(
+      1,
+    );
+    const generation = h.calls.generations.find((request) => request.task === 'npc_response')!;
+    expect(generation.context).toContain(quietPortrait);
+    expect((await h.store.recentJobs(20)).find((job) => job.kind === 'thought')).toMatchObject({
+      status: 'completed',
+      diagnosticTriggerType: 'Autonomous cognition · Discovery',
+    });
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
+      'spent',
+    );
+    const subject = currentBodySubject(h.service.world, NPC_ID, PLAYER_ID)!;
+    expect(subject.kind).toBe('individual');
+    if (subject.kind !== 'individual') throw new Error('Expected an actual local body subject');
+    const before = individualFamiliarity(
+      h.service.world.observerIdentities![NPC_ID]![subject.individualId]!,
+    );
+    const dispatched = { judges: h.calls.judges.length, generations: h.calls.generations.length };
+    await receivePlayerAt(h, 15, 19);
+    expect(currentAttentionCues(h.service.world, NPC_ID)).toHaveLength(0);
+    await considerQuietScene(h);
+    await receivePlayerAt(h, 120, 18);
+    expect(
+      individualFamiliarity(h.service.world.observerIdentities![NPC_ID]![subject.individualId]!),
+    ).toBeGreaterThan(before);
+    await considerQuietScene(h);
+    await h.change((world) => initializePerception(world, []));
+    await considerQuietScene(h);
+    expect({ judges: h.calls.judges.length, generations: h.calls.generations.length }).toEqual(
+      dispatched,
+    );
+  });
+
+  it('spends a failed discovery only once and renews it only after actual chosen work completes', async () => {
+    let attempts = 0;
+    const h = await harness({
+      judge: quietJudgment,
+      generate: (request) =>
+        ++attempts === 1
+          ? {
+              outcome: 'unavailable',
+              reason: 'fixture failure after dispatch',
+              receipt: receipt(request.requestId, 'openai'),
+            }
+          : value(request.requestId, 'openai', { operations: [] }),
+    });
+    await prepareQuietScene(h);
+    await considerQuietScene(h);
+    expect(attempts).toBe(1);
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
+      'spent',
+    );
+    await receivePlayerAt(h, 15, 19);
+    await considerQuietScene(h);
+    expect(attempts).toBe(1);
+    const moved = await h.service.transition((world) =>
+      executeCommand(world, {
+        id: 'quiet-interval-chosen-move',
+        actorId: NPC_ID,
+        type: 'move',
+        destination: { x: 11, y: 0, z: 10, surfaceId: 'terrain' },
+      }),
+    );
+    expect(moved.ok, moved.message).toBe(true);
+    await h.service.tick(0.1, 0);
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.action).toBeNull();
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic).toMatchObject({
+      interval: 1,
+      discovery: 'available',
+    });
+    await considerQuietScene(h);
+    expect(attempts).toBe(2);
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
+      'spent',
+    );
+    await considerQuietScene(h);
+    expect(attempts).toBe(2);
+  });
+
+  it('reuses an accepted quiet choice when actual closing-body evidence clears and returns with a new generation', async () => {
+    const h = await harness({
+      judge: quietJudgment,
+      generate: (request) => value(request.requestId, 'openai', { operations: [] }),
+    });
+    await prepareQuietScene(h);
+    await considerQuietScene(h);
+    await receivePlayerAt(h, 15, 13);
+    const first = currentAttentionCues(h.service.world, NPC_ID).find(
+      (cue) => cue.family === 'closing-body',
+    )!;
+    expect(first).toBeDefined();
+    await considerQuietScene(h);
+    expect(h.calls.generations.filter((request) => request.task === 'npc_response')).toHaveLength(
+      2,
+    );
+    expect(
+      entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.resolved[
+        JSON.stringify([first.anchorKey, first.family])
+      ],
+    ).toBeDefined();
+    await receivePlayerAt(h, 30, 20);
+    await receivePlayerAt(h, 150, 20);
+    expect(currentAttentionCues(h.service.world, NPC_ID)).toHaveLength(0);
+    await receivePlayerAt(h, 165, 13);
+    const returned = currentAttentionCues(h.service.world, NPC_ID).find(
+      (cue) => cue.family === 'closing-body',
+    )!;
+    expect(returned).toMatchObject({
+      anchorKey: first.anchorKey,
+      generation: first.generation + 1,
+    });
+    const calls = { judges: h.calls.judges.length, generations: h.calls.generations.length };
+    await considerQuietScene(h);
+    expect({ judges: h.calls.judges.length, generations: h.calls.generations.length }).toEqual(
+      calls,
+    );
+  });
   it('releases a restored discovery reservation proven not dispatched without losing its free-interval opportunity', async () => {
     const h = await harness();
     const reservation = 'fixture-unsent-discovery',

@@ -35,7 +35,7 @@ C must supply a defensible identity-fidelity value from its supported physical f
 
 ## Learning and familiarity
 
-The delivered direct-path voice implementation uses the bounded modality credits below. The [shared subject-familiarity target](#shared-subject-familiarity-target) replaces their familiarity calculation when implemented; it does not remove modality learning, received-feature matching or their current qualification gates.
+The direct-path voice implementation uses the bounded modality samples below for learned-feature eligibility and exemplar selection. The [shared subject score](#shared-subject-familiarity-target) independently supplies recognition benefit and attention preference; it does not remove modality learning, received-feature matching or their qualification gates.
 
 A first unfamiliar voice creates an anonymous auditory exposure. It does not select a hidden person's existing identity record. A stable learned-individual record can subsequently describe **this distinguishable voice**, even without a visible body or known name. It remains an observer-local subject through the existing recognition and knowledge owners, not an entity spawned into the world.
 

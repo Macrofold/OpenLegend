@@ -2,7 +2,7 @@ import type { AttentionPolicy, RecordingInput, RecordingReason } from '../../att
 import type { Entity, WorldState } from '../../types.js';
 import { readAttribute } from '../../world-modules.js';
 
-/** The selected world's initial qualified envelope, not a universal mind capacity.
+/** The selected world's initial allowances, not measured population capacity.
  * docs/worlds/base/attention.md */
 export const BASE_ATTENTION_POLICY: AttentionPolicy = {
   geometry: {

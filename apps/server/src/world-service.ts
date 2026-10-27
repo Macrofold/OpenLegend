@@ -3548,7 +3548,8 @@ export class WorldService {
       // Optional memory maintenance must never stop native time or walking.
       // This warning measures resident pressure only; maintenanceStatus separately checks
       // canonical SQL backlog, including awareness evicted from the working set.
-      // Retain every source; docs/memory-architecture.md#6-hourly-consolidation-and-six-hour-raw-recall.
+      // The selected retention policy still applies while consolidation is behind.
+      // docs/memory-architecture.md#retention-corrections-and-protected-commitments
       const memoryBacklog =
         Object.values(this.world.experience?.awareness ?? {}).some(
           (entries) => entries.length >= EXPERIENCE_LIMITS.consolidationPressure,
@@ -3556,7 +3557,7 @@ export class WorldService {
         Object.values(this.world.memories).some(
           (entries) => entries.length >= EXPERIENCE_LIMITS.consolidationPressure + 16,
         )
-          ? 'Memory consolidation is behind; simulation continues and all source memories are retained.'
+          ? "Memory consolidation is behind; simulation continues with the world's memory limits."
           : null;
       if (this.memoryBacklog !== memoryBacklog) {
         this.memoryBacklog = memoryBacklog;

@@ -1,5 +1,6 @@
 import { validateTemporalEvidenceState } from '../../../packages/domain/src/temporal-validation.js';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import * as worldComposition from '../../../packages/domain/src/world-composition.js';
 import {
   appendTemporalReceipt,
   selectedTemporalPolicy,
@@ -59,6 +60,126 @@ async function setup() {
 }
 
 describe('bounded personal temporal storage', () => {
+  it('retires an explicit old prefix under recent-recording pressure without replacing retained movement with endpoints', async () => {
+    const { store, service } = await setup();
+    await useNearCampSight(service);
+    await editWorld(service, (world) => {
+      for (const entity of entityValues(world.entities))
+        if (entity.actor && entity.id !== PLAYER_ID) {
+          entity.actor.controller = 'player';
+          entity.actor.senses = [];
+          setSpatialPosition(world, entity, { x: 100, y: 0, z: 100 }, 'terrain');
+        }
+      const observer = entityGet(world.entities, PLAYER_ID)!,
+        person = entityGet(world.entities, NPC_ID)!;
+      setSpatialPosition(world, observer, { x: 1, y: 0, z: 2 }, 'terrain');
+      setSpatialPosition(world, person, { x: 3, y: 0, z: 2 }, 'terrain');
+      initializePerception(world, []);
+      const [key] = Object.entries(
+        world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
+      ).find(([, candidate]) => candidate.sourceId === NPC_ID)!;
+      expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
+    });
+    const subject = currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.exposure.episodeId,
+      installed = selectedTemporalPolicy(service.world);
+    // A disposable authored allowance exercises the same pressure branch without
+    // manufacturing 131,073 changes or changing the bundled world's production policy.
+    const policy = vi.spyOn(worldComposition, 'selectedTemporalPolicy').mockReturnValue({
+      ...installed,
+      recent: { ...installed.recent, maxChanges: 12 },
+    });
+    try {
+      for (const x of [4, 5, 6, 7, 8])
+        await editWorld(service, (world) => {
+          world.simTime += 1;
+          setSpatialPosition(
+            world,
+            entityGet(world.entities, NPC_ID)!,
+            { x, y: 0, z: 2 },
+            'terrain',
+            'physical',
+          );
+          initializePerception(world, []);
+        });
+      const scope = {
+        worldId: service.world.id,
+        actorId: PLAYER_ID,
+        generation: (await store.records.head())!.generation,
+      };
+      const recent = await store.memories.temporalHistory(
+        scope,
+        { subjects: [subject], limit: 128, bytes: 32768 },
+        service.world,
+      );
+      const positions = recent.entries.flatMap(({ values }) =>
+        values.flatMap((value) => (value.kind === 'body' ? [value.body.position.x] : [])),
+      );
+      expect(recent.incomplete).toBe(true);
+      expect(positions.at(-1)).toBe(8);
+      expect(positions).toContain(7);
+      expect(positions).not.toContain(3);
+      expect(
+        service.world.experience!.temporal!.actors[PLAYER_ID]!.releasedThrough,
+      ).toBeGreaterThanOrEqual(1);
+      expect(
+        Number(
+          (await store.db
+            .prepare(
+              'SELECT COALESCE(SUM(receipt_count),0) AS count FROM mind_temporal_chunks WHERE world_id=? AND actor_id=?',
+            )
+            .get(service.world.id, PLAYER_ID))!['count'],
+        ),
+      ).toBeLessThanOrEqual(12);
+      expect(currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.value.kind).toBe('body');
+      validateTemporalEvidenceState((await store.records.load(true))!.state.world);
+    } finally {
+      policy.mockRestore();
+    }
+  });
+
+  it('holds a whole native speech-and-obligation batch before installation when required support cannot fit', async () => {
+    const { store, service } = await setup();
+    const installed = selectedTemporalPolicy(service.world);
+    const policy = vi.spyOn(worldComposition, 'selectedTemporalPolicy').mockReturnValue({
+      ...installed,
+      required: { ...installed.required, maxRecords: 1 },
+    });
+    try {
+      expect(
+        (await service.say('first-required-promise', PLAYER_ID, 'I promise to gather wood.')).ok,
+      ).toBe(true);
+      const before = service.world,
+        encoded = JSON.stringify(before),
+        head = await store.records.head();
+      expect(
+        before.memories[PLAYER_ID]!.filter(
+          (record) => record.kind === 'commitment' && !record.resolved,
+        ),
+      ).toHaveLength(1);
+      const refused = await service.say(
+        'overflow-required-promise',
+        PLAYER_ID,
+        'I promise to gather berries.',
+      );
+      expect(refused.ok).toBe(false);
+      expect(service.storageError).not.toBeNull();
+      expect(service.world).toBe(before);
+      expect(JSON.stringify(service.world)).toBe(encoded);
+      expect(await store.records.head()).toEqual(head);
+      const stored = (await store.records.load(true))!.state.world;
+      expect(
+        stored.memories[PLAYER_ID]!.filter(
+          (record) => record.kind === 'commitment' && !record.resolved,
+        ),
+      ).toHaveLength(1);
+      expect(JSON.stringify(stored.experience!.awareness[PLAYER_ID])).not.toContain(
+        'I promise to gather berries.',
+      );
+    } finally {
+      policy.mockRestore();
+    }
+  });
+
   it('keeps an unknown person’s actual move, work, meal and words in order without inventing a destination', async () => {
     const { store, service } = await setup();
     await useNearCampSight(service);
