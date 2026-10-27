@@ -5992,7 +5992,8 @@ export class WorldService {
           code: 'invalid-command',
           message: 'Command IDs cannot use the reserved gameplay namespace.',
         };
-      // Legacy callers retain their old identity rules; new clients bind retries to their issued epoch.
+      // Trusted native callers use their admitted command identity; public clients
+      // additionally bind retries to their issued command epoch.
       if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
       if (epoch === undefined && input.type === 'say') {
         const bound = this.bindCommand(commandId, input, actor, true, scope ?? this.localScope);

@@ -127,6 +127,10 @@ export interface ReceivedEventParticipant {
   referenceOrdinal: number;
   participant: Extract<EvidenceParticipant, { kind: 'exposure' }>;
 }
+export interface ReceivedSpeechParticipants {
+  speaker?: Extract<EvidenceParticipant, { kind: 'exposure' }>;
+  addressee?: Extract<EvidenceParticipant, { kind: 'exposure' }>;
+}
 export type ObservedLocation =
   | { kind: 'point'; point: Position; errorRadius: number }
   | {
@@ -212,7 +216,11 @@ export type SensoryFacet =
     }
   | { kind: 'confirmation'; snapshot: CapturedCurrentFacet }
   | { kind: 'contact'; exposure: ObservationExposure; detail: 'present' | 'moving' }
-  | { kind: 'speech'; speech: NonNullable<Awareness['speech']> }
+  | {
+      kind: 'speech';
+      speech: NonNullable<Awareness['speech']>;
+      participants?: ReceivedSpeechParticipants;
+    }
   | { kind: 'perceived-feature'; sample: NonNullable<Awareness['receivedFeatures']> }
   | { kind: 'sound'; sound: NonNullable<Awareness['sound']> }
   /** Complete already-admitted inspection/place meaning, independent of its prose. */
@@ -2113,12 +2121,14 @@ function awarenessBodyContext(
   | {
       context: NonNullable<ObservationContribution['context']>;
       participants: ReceivedEventParticipant[];
+      speechParticipants: ReceivedSpeechParticipants;
     }
   | undefined {
   const state = world.perceptionEvidence?.[awareness.actorId];
   if (!state) return;
   const result: ObservationExposure[] = [];
   const receivedParticipants: ReceivedEventParticipant[] = [];
+  const speechParticipants: ReceivedSpeechParticipants = {};
   let attended = false;
   const participants = new Set([
     ...Object.keys(awareness.entityEpisodes ?? {}),
@@ -2165,13 +2175,25 @@ function awarenessBodyContext(
           participant: { kind: 'exposure', exposure: cloneValue(lease.exposure) },
         });
     });
+    if (awareness.speech) {
+      const participant = {
+        kind: 'exposure' as const,
+        exposure: cloneValue(lease.exposure),
+      };
+      if (id === awareness.sourceId) speechParticipants.speaker = participant;
+      if (id === awareness.targetId) speechParticipants.addressee = participant;
+    }
     attended ||=
       state.attention?.entries.some(
         (entry) => entry.sourceId === id && entry.exposure.episodeId === lease.exposure.episodeId,
       ) === true;
   }
   return result.length
-    ? { context: { subjects: result, attended }, participants: receivedParticipants }
+    ? {
+        context: { subjects: result, attended },
+        participants: receivedParticipants,
+        speechParticipants,
+      }
     : undefined;
 }
 
@@ -2322,7 +2344,12 @@ export function acquireAwarenessObservation(
         },
         frame: { positionAtObservation: { ...speech.listenerPosition } },
       });
-    values.push({ kind: 'speech', speech: cloneValue(speech) });
+    const participants = receivedContext?.speechParticipants;
+    values.push({
+      kind: 'speech',
+      speech: cloneValue(speech),
+      ...(participants?.speaker || participants?.addressee ? { participants } : {}),
+    });
   }
   if (!awareness.speech)
     values.push({
@@ -2945,8 +2972,8 @@ export function validateObservationContribution(
   originals.set(key, body);
   for (const facet of observation.facets) {
     validateSensoryFacet(facet.value, originals);
-    if (facet.value.kind === 'event')
-      validateReceivedEventObserver(facet.value, observation.observer);
+    if (facet.value.kind === 'event' || facet.value.kind === 'speech')
+      validateReceivedParticipantObservers(facet.value, observation.observer);
     if (
       (facet.value.kind === 'confirmation' &&
         facet.value.snapshot.valueAcquiredAt > observation.acquiredAt) ||
@@ -2957,19 +2984,39 @@ export function validateObservationContribution(
   }
 }
 
-/** The same retained event may never borrow another observer's body correspondence. */
-export function validateReceivedEventObserver(
-  value: Extract<SensoryFacet, { kind: 'event' }>,
+function validReceivedExposureParticipant(
+  value: unknown,
+): value is Extract<EvidenceParticipant, { kind: 'exposure' }> {
+  return (
+    hasRecordFields(value, ['kind', 'exposure']) &&
+    value.kind === 'exposure' &&
+    hasRecordFields(value.exposure, ['observer', 'episodeId']) &&
+    isSafeRecordId(value.exposure.episodeId) &&
+    hasRecordFields(value.exposure.observer, ['actorId', 'physicalLife']) &&
+    isSafeRecordId(value.exposure.observer.actorId) &&
+    typeof value.exposure.observer.physicalLife === 'number' &&
+    Number.isSafeInteger(value.exposure.observer.physicalLife) &&
+    value.exposure.observer.physicalLife >= 0
+  );
+}
+
+/** A retained role may never borrow another observer's body correspondence. */
+export function validateReceivedParticipantObservers(
+  value: Extract<SensoryFacet, { kind: 'event' | 'speech' }>,
   observer: ObserverLife,
 ): void {
+  const participants =
+    value.kind === 'event'
+      ? (value.participants?.map((entry) => entry.participant) ?? [])
+      : Object.values(value.participants ?? {});
   if (
-    value.participants?.some(
-      ({ participant }) =>
+    participants.some(
+      (participant) =>
         participant.exposure.observer.actorId !== observer.actorId ||
         participant.exposure.observer.physicalLife !== observer.physicalLife,
     )
   )
-    throw new Error('Foreign received event participant.');
+    throw new Error('Foreign received participant.');
 }
 
 export function validateSensoryFacet(
@@ -3172,6 +3219,15 @@ export function validateSensoryFacet(
     }
     case 'speech':
       validatePerceivedSpeech(value.speech);
+      if (
+        value.participants !== undefined &&
+        (!hasRecordFields(value.participants, [], ['speaker', 'addressee']) ||
+          !Object.keys(value.participants).length ||
+          Object.values(value.participants).some(
+            (participant) => !validReceivedExposureParticipant(participant),
+          ))
+      )
+        throw new Error('Invalid received speech participants.');
       break;
     case 'perceived-feature':
       validateReceivedFeatures(value.sample);
@@ -3260,17 +3316,7 @@ export function validateSensoryFacet(
                 !Number.isSafeInteger(entry.referenceOrdinal) ||
                 entry.referenceOrdinal < 0 ||
                 entry.referenceOrdinal >= value.references.length ||
-                !hasRecordFields(entry.participant, ['kind', 'exposure']) ||
-                entry.participant.kind !== 'exposure' ||
-                !hasRecordFields(entry.participant.exposure, ['observer', 'episodeId']) ||
-                !isSafeRecordId(entry.participant.exposure.episodeId) ||
-                !hasRecordFields(entry.participant.exposure.observer, [
-                  'actorId',
-                  'physicalLife',
-                ]) ||
-                !isSafeRecordId(entry.participant.exposure.observer.actorId) ||
-                !Number.isSafeInteger(entry.participant.exposure.observer.physicalLife) ||
-                entry.participant.exposure.observer.physicalLife < 0,
+                !validReceivedExposureParticipant(entry.participant),
             )))
       )
         throw new Error('Invalid permitted event detail.');

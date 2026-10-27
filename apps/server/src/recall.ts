@@ -4,7 +4,6 @@ import { AsyncLocalStorage } from 'node:async_hooks';
 import { recordBackgroundFailure } from './performance.js';
 import type { CognitionExecution, ExecutionLease } from './cognition-execution.js';
 import { personalPronoun } from '@open-legend/language';
-import { memoryMeaningForModel } from './experience-context.js';
 export { experienceManifestForModel } from './experience-context.js';
 import {
   MemoryPreparationError,
@@ -210,8 +209,15 @@ export function memoryCandidate(
     (memory.kind === 'commitment' && !memory.resolved) ||
     !!corrections[memory.id] ||
     correctedIds.has(memory.id);
-  const meaning = memoryMeaningForModel(world, actorId, memory);
-  const hasStructuredExperience = Object.keys(meaning).length > 0;
+  // Presentation metadata alone is not structured evidence. Avoid rendering the
+  // complete source again just to decide whether equivalent prose may be grouped.
+  const hasStructuredExperience = !!(
+    memory.evidence ||
+    memory.observation ||
+    memory.observations?.length ||
+    memory.manifest ||
+    memory.impression
+  );
   return {
     id: experienceEntryKey(entry),
     experience: [experience],

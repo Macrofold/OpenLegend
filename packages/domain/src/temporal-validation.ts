@@ -7,7 +7,7 @@ import type {
 } from './temporal-evidence.js';
 import {
   validateEvidenceSource,
-  validateReceivedEventObserver,
+  validateReceivedParticipantObservers,
   validateSensoryFacet,
 } from './perception-evidence.js';
 import { validObserverSubject } from './knowledge.js';
@@ -296,8 +296,8 @@ export function validateTemporalEvidenceState(
         const value = values
           ? values[index]
           : temporal.sources[facet.blockId]?.values[facet.valueOrdinal];
-        if (value?.kind === 'event')
-          validateReceivedEventObserver(value, {
+        if (value?.kind === 'event' || value?.kind === 'speech')
+          validateReceivedParticipantObservers(value, {
             actorId,
             physicalLife: receipt.physicalLife,
           });

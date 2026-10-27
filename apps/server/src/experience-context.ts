@@ -104,7 +104,7 @@ function participantForModel(world: WorldState, actorId: string, participant: Ev
     case 'exposure':
       return {
         kind: participant.kind,
-        reference: permittedSourceHandle(world, actorId, ['exposure', participant.exposure]),
+        receivedSubject: receivedSubjectHandle(world, actorId, participant.exposure.episodeId),
       };
     case 'described':
       return { ...participant };
@@ -226,7 +226,7 @@ export function facetValueForModel(
       return {
         kind: value.kind,
         detail: value.detail,
-        reference: permittedSourceHandle(world, actorId, ['exposure', value.exposure]),
+        receivedSubject: receivedSubjectHandle(world, actorId, value.exposure.episodeId),
       };
     case 'claim':
       return {
@@ -287,7 +287,7 @@ export function facetValueForModel(
     case 'observed-motion':
       return {
         kind: value.kind,
-        exposure: permittedSourceHandle(world, actorId, ['exposure', value.exposure]),
+        receivedSubject: receivedSubjectHandle(world, actorId, value.exposure.episodeId),
         earlier: currentFacetForModel(world, actorId, value.earlier, frame),
         later: currentFacetForModel(world, actorId, value.later, frame),
         correspondence: value.correspondence,
@@ -307,7 +307,19 @@ export function facetValueForModel(
       return eventFieldsForModel(
         world,
         actorId,
-        { kind: value.kind, speech: speechForModel(frame, value.speech) },
+        {
+          kind: value.kind,
+          speech: speechForModel(frame, value.speech),
+          ...(value.participants
+            ? {
+                participants: Object.fromEntries(
+                  Object.entries(value.participants).flatMap(([role, participant]) =>
+                    participant ? [[role, participantForModel(world, actorId, participant)]] : [],
+                  ),
+                ),
+              }
+            : {}),
+        },
         sourceScope,
       );
     case 'pile-contents':
