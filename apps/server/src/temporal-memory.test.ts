@@ -62,6 +62,69 @@ async function setup() {
 }
 
 describe('bounded personal temporal storage', () => {
+  it('can forget a corrected impression of an actual inspection while keeping actor ownership', async () => {
+    const { store, service } = await setup();
+    const itemId = await editWorld(service, (world) =>
+      createItemLot(world, PLAYER_ID, 'wood', 1, 'corrected-inspection-wood'),
+    );
+    expect(
+      (
+        await service.transition((world) =>
+          executeCommand(world, {
+            id: 'corrected-inspection',
+            actorId: PLAYER_ID,
+            type: 'inspect-inventory',
+            itemId,
+          }),
+        )
+      ).ok,
+    ).toBe(true);
+    const sourceId = service.world.experience!.awareness[PLAYER_ID]!.find(
+      (entry) => entry.eventType === 'inventory-inspected',
+    )!.eventId;
+    await editWorld(service, (world) => {
+      world.simTime += selectedTemporalPolicy(world).aftermathSeconds + 1;
+    });
+    const stored = () =>
+      store.db
+        .prepare(
+          'SELECT payload FROM mind_memories WHERE world_id=? AND actor_id=? AND source_id=?',
+        )
+        .get(service.world.id, PLAYER_ID, sourceId);
+    expect(JSON.parse(String((await stored())!['payload'])).kind).toBe('impression');
+    expect((await service.forgetMemory(NPC_ID, sourceId)).ok).toBe(false);
+    expect(
+      (
+        await service.say(
+          'correct-inspection-impression',
+          PLAYER_ID,
+          'I correct my earlier recollection of inspecting the wood.',
+        )
+      ).ok,
+    ).toBe(true);
+    const correctionId = service.world.events.filter((event) => event.type === 'speech').at(-1)!.id;
+    expect((await service.correctMemory(PLAYER_ID, sourceId, correctionId)).ok).toBe(true);
+    expect(await stored()).toBeDefined();
+    expect((await service.forgetMemory(PLAYER_ID, sourceId)).ok).toBe(true);
+    expect(await stored()).toBeUndefined();
+    for (const [table, field] of [
+      ['recall_sources', 'id'],
+      ['mind_source_versions', 'source_id'],
+      ['mind_source_dependencies', 'derived_id'],
+      ['mind_impression_spans', 'owner_id'],
+    ] as const)
+      expect(
+        Number(
+          (await store.db
+            .prepare(
+              `SELECT COUNT(*)AS count FROM ${table} WHERE world_id=? AND actor_id=? AND ${field}=?`,
+            )
+            .get(service.world.id, PLAYER_ID, sourceId))!['count'],
+        ),
+      ).toBe(0);
+    validateTemporalEvidenceState((await store.records.load(true))!.state.world);
+  });
+
   it('reclaims a revoked shared source after its last receipt while preserving another witness and a later append', async () => {
     const { store, service } = await setup();
     await useNearCampSight(service);

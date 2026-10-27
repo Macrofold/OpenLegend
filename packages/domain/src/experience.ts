@@ -1067,13 +1067,20 @@ function experienceDependsOn(
   );
 }
 
-/** A retired account remains editable while an eligible retained account depends on it.
- * Cold callers prepare that account through the existing history-edit dependency closure. */
+/** Canonical accounts remain editable even when a correction excludes them from recall.
+ * A retired original stays editable while an eligible account depends on it. Cold
+ * callers prepare these bodies through the existing history-edit dependency closure. */
 export function retainedExperienceSource(
   world: WorldState,
   actorId: string,
   sourceId: string,
 ): boolean {
+  if (
+    ['awareness', 'memory', 'summary'].some((kind) =>
+      experienceEntry(world, actorId, `${kind}:${sourceId}`),
+    )
+  )
+    return true;
   const affected = new Set([sourceId]);
   if (
     Object.values(world.experience?.temporal?.actors[actorId]?.supports ?? {}).some(
