@@ -89,7 +89,9 @@ export const situationQuerySchema = z.union([
     })
     .strict(),
   z.object({ kind: z.literal('expand'), region: reference }).strict(),
-]);
+]).describe(
+  'near, separation and boundaries use supplied current-body references: Received situation bodies, returned query bodies, or References rows marked currentBody:true. expand uses a supplied broad-region reference. history and historical-spatial use supplied received-subject or current-body references. A communication-only person reference grants no current spatial position.',
+);
 export type SituationQuery = z.infer<typeof situationQuerySchema>;
 
 export function temporalHistoryForModel(
