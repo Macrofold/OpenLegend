@@ -1,4 +1,10 @@
-import { assemblyPresentation } from '@open-legend/domain';
+import {
+  assemblyPresentation,
+  currentBodyObservation,
+  canonicalJson,
+  observerName,
+  type ObservedAssembly,
+} from '@open-legend/domain';
 import { BOUNDARY_REPAIR_INPUT_LIMIT } from '@open-legend/domain';
 import {
   boundaryConstructionProfile,
@@ -44,7 +50,6 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import type {
-  AssemblyView,
   BoundaryConstructionChoices,
   BoundaryConstructionPlan,
   CanopyConstructionPlan,
@@ -370,7 +375,8 @@ export function boundaryConstructionChoices(
       !root ||
       component?.implementation !== 'grounded-panel-boundary' ||
       component.family.id !== family.id ||
-      component.retired
+      component.retired ||
+      !constructionPreviewBasis(world, actorId, id)
     )
       continue;
     const candidates = boundaryEditCandidates(world, id),
@@ -461,7 +467,7 @@ export function boundaryConstructionChoices(
       }
     roots.push({
       id,
-      name: root.name,
+      name: observerName(world, actorId, root.id).name,
       revision: component.revision,
       site: assemblySite(root)!,
       orientation: assemblyHeadings.indexOf(root.spatial.heading) as 0 | 1 | 2 | 3,
@@ -522,13 +528,34 @@ export function boundaryConstructionChoices(
     roots,
   };
 }
-export function assemblyView(
+/** Proposed edits may reuse live mechanical helpers only while their complete
+ * outward structure still matches the actual received sample. This check grants
+ * no new observation; a mismatch waits for the native sensory owner. */
+export function constructionPreviewBasis(
   world: WorldState,
+  actorId: string,
   id: string,
-  editor = false,
-  observerId?: string,
-): AssemblyView | undefined {
-  return assemblyPresentation(world, id, editor, observerId);
+): ObservedAssembly | undefined {
+  const observed = currentBodyObservation(world, actorId, id)?.value.body.assembly;
+  const root = entityGet(world.entities, id);
+  if (!observed || !root?.assembly || observed.revision !== root.assembly.revision) return;
+  const actual = assemblyPresentation(world, id);
+  if (!actual) return;
+  const geometry = (value: ObservedAssembly) => ({
+    implementation: value.implementation,
+    familyId: value.familyId,
+    revision: value.revision,
+    heading: value.heading,
+    site: value.site,
+    presentation: value.presentation,
+    shapes: value.shapes,
+    arrangementId:
+      value.implementation === 'four-corner-flexible-bays' ? value.arrangementId : undefined,
+    parts: value.parts.map(({ condition: _condition, ...part }) => part),
+  });
+  return canonicalJson(geometry(actual)) === canonicalJson(geometry(observed))
+    ? observed
+    : undefined;
 }
 
 /** Reuse the same visible roots, material roles and full-plan compiler as Build.
@@ -767,7 +794,8 @@ function canopyHelpPlans(
       !site ||
       component?.implementation !== family.implementation ||
       component.retired ||
-      component.family.id !== family.id
+      component.family.id !== family.id ||
+      !constructionPreviewBasis(world, actorId, root.id)
     )
       continue;
     const base: CanopyConstructionPlan = {

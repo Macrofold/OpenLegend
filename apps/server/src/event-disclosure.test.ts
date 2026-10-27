@@ -19,6 +19,8 @@ import {
   reviveActor,
   receivedScene,
   captureEvidenceCut,
+  experienceEntry,
+  queryMemories,
 } from '@open-legend/domain';
 import { applyBodyEffects } from '../../../packages/domain/src/living.js';
 import { validateWorldModules } from '../../../packages/domain/src/world-modules.js';
@@ -108,7 +110,7 @@ afterEach(async () => {
 });
 
 describe('event-time observer facts', () => {
-  it('can display an actually heard voice-like sound without creating words or a memory', () => {
+  it('keeps actually heard voice-like sound as finite sensory evidence without words or autobiographical memory', () => {
     const world = createWorld(73);
     // The real receiver hears a shout directly above it through the deck, without
     // an azimuth or visual sense; current sound must not depend on visual eligibility.
@@ -154,10 +156,18 @@ describe('event-time observer facts', () => {
     expect(JSON.stringify(projected)).not.toContain('Unreceived private fixture words');
     expect(projected.actorId).toBeUndefined();
     expect(projected.targetId).toBeUndefined();
-    expect(
-      result.world.experience?.awareness[NPC_ID]?.some((entry) => entry.eventId === event.id) ??
-        false,
-    ).toBe(false);
+    const sensory = result.world.experience?.awareness[NPC_ID]?.find(
+      (entry) => entry.eventId === event.id,
+    );
+    expect(sensory).toMatchObject({
+      retentionClass: 'sensory',
+      sound: acquired.sound,
+      expiresAt: event.at + result.world.moduleManifest.acoustics.sensoryLifetimeSeconds,
+    });
+    expect(experienceEntry(result.world, NPC_ID, `awareness:${event.id}`)).toBeUndefined();
+    expect(queryMemories(result.world, NPC_ID).some((memory) => memory.eventId === event.id)).toBe(
+      false,
+    );
     expect(receivedScene(result.world, NPC_ID).nonlocalized).toBe(1);
     const listener = entityGet(result.world.entities, NPC_ID)!;
     const died = applyBodyEffects(
@@ -176,9 +186,19 @@ describe('event-time observer facts', () => {
     expect(restored.perceptionEvidence![NPC_ID]!.life).not.toBe(life);
     expect(receivedScene(restored, NPC_ID)).toMatchObject({ physicalLife: life, nonlocalized: 0 });
     expect(captureEvidenceCut(restored, NPC_ID).acquired).toHaveLength(0);
-    expect(
-      receivedEventAccounts(restored, NPC_ID, new Set([event.id]), { current: true }).size,
-    ).toBe(0);
+    // The combined account reader includes the independently retained finite
+    // buffer. It is dated evidence from the old life, never the fresh body's
+    // current received scene or autobiographical recall.
+    const priorSound = receivedEventAccounts(restored, NPC_ID, new Set([event.id]), {
+      current: true,
+    }).get(event.id)?.evidence;
+    expect(priorSound).toMatchObject({
+      retentionClass: 'sensory',
+      expiresAt: sensory!.expiresAt,
+      sound: { physicalLife: sensory!.sound!.physicalLife },
+    });
+    expect(priorSound!.sound!.physicalLife).not.toBe(life);
+    expect(experienceEntry(restored, NPC_ID, `awareness:${event.id}`)).toBeUndefined();
     const fresh = executeCommand(restored, {
       id: 'voice-only-new-life',
       actorId: PLAYER_ID,

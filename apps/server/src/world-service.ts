@@ -87,7 +87,7 @@ import {
 } from './decision-publication.js';
 import { DecisionClaimLost } from './decision-state.js';
 import { decisionPolicyDigest } from './decision-task.js';
-import { assemblyView } from './construction.js';
+import { constructionPreviewBasis } from './construction.js';
 import {
   orderedRecordSet,
   reconcileConstructionAuthority,
@@ -4445,6 +4445,17 @@ export class WorldService {
     scope = this.localScope,
   ): ApiResult & { shapes: ConstructionShape[] } {
     this.assertScope(scope);
+    const observed = plan.rootId
+      ? constructionPreviewBasis(this.world, scope.actorId, plan.rootId)
+      : undefined;
+    if (plan.rootId && !observed)
+      return {
+        ok: false,
+        code: 'stale-observation',
+        message:
+          'The structure changed or is no longer in view. Refresh its building choices before previewing this edit.',
+        shapes: [],
+      };
     const boundaryReview =
       plan.implementation === 'grounded-panel-boundary'
         ? prepareBoundaryPlan(
@@ -4467,18 +4478,6 @@ export class WorldService {
           this.store.authority!.constructionPermissions(this.world.id),
         );
     const root = plan.rootId ? entityGet(this.world.entities, plan.rootId) : undefined;
-    // A refused guessed root must not disclose its position or installed geometry.
-    if (plan.rootId && (!root?.assembly || !currentBodyGrant(this.world, scope.actorId, root.id)))
-      return {
-        ...('ok' in checked
-          ? checked
-          : {
-              ok: false,
-              code: 'not-visible',
-              message: 'Move close enough to perceive the actual structure.',
-            }),
-        shapes: [],
-      };
     if (plan.implementation === 'grounded-panel-boundary') {
       const family = this.world.assemblyFamilies?.[plan.familyId],
         exposure =
@@ -4506,7 +4505,7 @@ export class WorldService {
           !plan.steps.every((step) =>
             boundaryRemovalOperations.some((operation) => operation === step.operation),
           )
-            ? (assemblyView(this.world, root.id)?.shapes ?? [])
+            ? (observed?.shapes ?? [])
             : []),
           ...boundaryPlanShapes(this.world, scope.actorId, plan).map(({ bounds, ...shape }) => ({
             ...shape,
@@ -4515,8 +4514,8 @@ export class WorldService {
         ],
       };
     }
-    const site = root ? assemblySite(root)! : plan.site,
-      heading = root ? root.spatial.heading : (plan.orientation * Math.PI) / 2,
+    const site = observed?.site ?? plan.site,
+      heading = observed?.heading ?? (plan.orientation * Math.PI) / 2,
       family = this.world.assemblyFamilies?.[plan.familyId];
     const shapes: ConstructionShape[] = [];
     if (
@@ -4580,7 +4579,7 @@ export class WorldService {
             });
           }
       } else if (root?.assembly) {
-        const actual = assemblyView(this.world, root.id)?.shapes ?? [];
+        const actual = observed?.shapes ?? [];
         if (plan.operation === 'replace') {
           const bay = root.assembly.parts[plan.outgoingId ?? '']?.bay;
           if (bay !== undefined) previewCover('preview-incoming-cover', bay);
