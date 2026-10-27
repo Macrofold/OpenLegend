@@ -501,7 +501,7 @@ describe('bounded received situation', () => {
       importance: 5,
     })!;
     expect(source).toBeTruthy();
-    const original = selectTemporalHistory(world.experience?.temporal, PLAYER_ID, {
+    const original = selectTemporalHistory(world, PLAYER_ID, {
       bytes: 262144,
       limit: 1000,
     }).entries.find((entry) =>
@@ -565,7 +565,7 @@ describe('bounded received situation', () => {
         world,
         PLAYER_ID,
         'binding-test',
-        selectTemporalHistory(world.experience?.temporal, PLAYER_ID),
+        selectTemporalHistory(world, PLAYER_ID),
       );
     const binding = situationProposalBinding(captured);
     expect(structuredClone(binding)).toEqual(binding);
@@ -586,7 +586,7 @@ describe('bounded received situation', () => {
   });
   it('keeps broad crowd presence when only ten subjects receive detail', () => {
     const world = crowded(),
-      history = selectTemporalHistory(world.experience?.temporal, PLAYER_ID);
+      history = selectTemporalHistory(world, PLAYER_ID);
     const captured = captureSituation(world, PLAYER_ID, 'scene-test', history);
     expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(10);
     expect(captured.packet.broad.reduce((sum, row) => sum + row.count, 0)).toBe(
@@ -604,7 +604,7 @@ describe('bounded received situation', () => {
         world,
         PLAYER_ID,
         'query-test',
-        selectTemporalHistory(world.experience?.temporal, PLAYER_ID),
+        selectTemporalHistory(world, PLAYER_ID),
       );
     const id = [...captured.scene.bodies.keys()][0]!;
     const result = await expandSituation(
@@ -635,7 +635,7 @@ describe('bounded received situation', () => {
         world,
         PLAYER_ID,
         'cut-test',
-        selectTemporalHistory(world.experience?.temporal, PLAYER_ID),
+        selectTemporalHistory(world, PLAYER_ID),
       );
     const at = captured.packet.measuredAt;
     world.simTime += 120;
@@ -651,7 +651,7 @@ describe('bounded received situation', () => {
         world,
         PLAYER_ID,
         'frame-test',
-        selectTemporalHistory(world.experience?.temporal, PLAYER_ID),
+        selectTemporalHistory(world, PLAYER_ID),
       );
     const id = [...captured.scene.bodies.keys()][0]!;
     const facts = captured.bodyFacts(id);
@@ -670,7 +670,7 @@ describe('bounded received situation', () => {
         world,
         PLAYER_ID,
         'body-query',
-        selectTemporalHistory(world.experience?.temporal, PLAYER_ID),
+        selectTemporalHistory(world, PLAYER_ID),
       );
     const anchor = entityHandle(world, PLAYER_ID, [...captured.scene.bodies.keys()][0]!);
     const result = await expandSituation(
@@ -756,7 +756,7 @@ describe('bounded received situation', () => {
         entityIds: [],
         importance: 5,
       });
-    const hydrated = selectTemporalHistory(initialWorld.experience?.temporal, PLAYER_ID, {
+    const hydrated = selectTemporalHistory(initialWorld, PLAYER_ID, {
       bytes: 4 * 1024 * 1024,
       limit: 128,
     });
@@ -787,7 +787,7 @@ describe('bounded received situation', () => {
     const represented = [...spoken.world.experience!.awareness[PLAYER_ID]!]
       .reverse()
       .find((entry) => entry.eventType === 'speech' && entry.observation)!.observation!;
-    const duplicate = selectTemporalHistory(spoken.world.experience?.temporal, PLAYER_ID, {
+    const duplicate = selectTemporalHistory(spoken.world, PLAYER_ID, {
       bytes: 4 * 1024 * 1024,
       limit: 128,
     }).entries.find(({ receipt }) =>
@@ -814,7 +814,7 @@ describe('bounded received situation', () => {
       ],
     ).toBe(represented);
     const world = crowded(1),
-      history = selectTemporalHistory(world.experience?.temporal, PLAYER_ID);
+      history = selectTemporalHistory(world, PLAYER_ID);
     const captured = captureSituation(world, PLAYER_ID, 'history-pages', history);
     const source = history.entries[0]!;
     const entries = Array.from({ length: 12 }, (_, ordinal) => ({

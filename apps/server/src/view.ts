@@ -7,11 +7,11 @@ import { gateUseLabel } from '@open-legend/domain';
 import { assemblyPhaseLabel } from '@open-legend/domain';
 import { selectedCreationProfileForWorld, definitionPin } from '@open-legend/domain';
 import {
-  currentBodyObservation,
   currentBodyGrant,
   currentObservedBodyIds,
   activelyParticipates,
-  currentObservedFacets,
+  currentObservedFacetValues,
+  hasCurrentObservedFacet,
   rememberedCommunicationSubjects,
   currentCommunicationSubject,
 } from '@open-legend/domain';
@@ -179,12 +179,7 @@ export const calendarFields = (world: WorldState) => ({
   hour: (world.statusEffectPolicy.clockOffsetHours + world.simTime / 3600) % 24,
 });
 
-const publicDetailKinds = [
-  'pile-contents',
-  'carried',
-  'public-attributes',
-  'observed-motion',
-] as const;
+const publicDetailKinds = ['body', 'pile-contents', 'carried', 'public-attributes'] as const;
 
 /** This explicit projection is a security boundary: never serialize WorldState to the browser. */
 export async function projectView(
@@ -449,10 +444,10 @@ export async function projectView(
     }),
   );
   const entities: EntityView[] = observation.visibleEntities.map((entity) => {
-    const received = currentBodyObservation(world, player.id, entity.id);
-    if (!received) throw new ViewChangedError();
+    const facets = currentObservedFacetValues(world, player.id, entity.id, publicDetailKinds);
+    const received = facets.find((facet) => facet.value.kind === 'body');
+    if (received?.value.kind !== 'body') throw new ViewChangedError();
     const body = received.value.body;
-    const facets = currentObservedFacets(world, player.id, entity.id, publicDetailKinds);
     const pile = facets.find((facet) => facet.value.kind === 'pile-contents');
     const carried = facets.find((facet) => facet.value.kind === 'carried');
     const publicAttributes = facets.find((facet) => facet.value.kind === 'public-attributes');
@@ -531,19 +526,14 @@ export async function projectView(
         measurementAt: received.valueMeasuredThrough,
         acquiredAt: received.valueAcquiredAt,
         confirmedThrough: received.confirmedThrough,
-        sourceReference: evidenceSourceHandle(world, player.id, {
-          family: 'native-exposure',
-          observer: received.original.observer,
-          id: received.original.id,
-          revision: received.original.revision,
-        }),
+        sourceReference: evidenceSourceHandle(world, player.id, received.source),
       },
       kind,
       subtype: body.subtype ?? body.kind,
       ...(body.icon ? { icon: body.icon } : {}),
       ...(body.bodyPlan ? { bodyPlan: body.bodyPlan } : {}),
       statusEffects: body.effects ?? [],
-      observedMoving: facets.some((facet) => facet.value.kind === 'observed-motion'),
+      observedMoving: hasCurrentObservedFacet(world, player.id, entity.id, 'observed-motion'),
       position: body.position,
       supportSurfaceId: body.supportSurfaceId,
       heading: body.heading,

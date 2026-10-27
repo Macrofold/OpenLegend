@@ -7,6 +7,9 @@ import {
   temporalReceiptWithinPrefix,
   materializeTemporalValue,
   temporalReceiptForRead,
+  temporalReceiptAliases,
+  temporalReceiptAccountAliases,
+  selectTemporalReceiptFacets,
   updateWorld,
   type WorldState,
   type TemporalChunk,
@@ -278,6 +281,10 @@ export async function readTemporalHistory(
   }
   for (const id of sourceIds) if (resident?.sources[id]) sources[id] = resident.sources[id]!;
   const entries: TemporalHistorySelection['entries'] = [];
+  const forgotten = new Set(world.experience?.forgotten[scope.actorId] ?? []);
+  const corrections = world.experience?.corrections?.[scope.actorId] ?? {};
+  const hasRevocations = forgotten.size > 0 || Object.keys(corrections).length > 0;
+  const revoked = (id: string) => forgotten.has(id) || Object.hasOwn(corrections, id);
   let bytes = 0;
   let examined: TemporalHistoryPage['nextBefore'];
   for (const receipt of receipts) {
@@ -293,11 +300,10 @@ export async function readTemporalHistory(
       ordinal: receipt.ordinal,
     };
     if (
-      receipt.sourceIds.some(
-        (id) =>
-          world.experience?.forgotten[scope.actorId]?.includes(id) ||
-          world.experience?.corrections?.[scope.actorId]?.[id],
-      )
+      hasRevocations &&
+      (revoked(receipt.id) ||
+        (receipt.sourceIds.some(revoked) &&
+          temporalReceiptAccountAliases(receipt, sources, world).some(revoked)))
     ) {
       incomplete = true;
       examined = before;
@@ -327,6 +333,12 @@ export async function readTemporalHistory(
           (!query.measurements ||
             (facet.measuredFrom <= query.measurements.through &&
               (facet.confirmedThrough ?? facet.measuredThrough) >= query.measurements.from)) &&
+          (!hasRevocations ||
+            !temporalReceiptAliases(
+              { ...receipt, sourceIds: [], facets: [facet] },
+              sources,
+              world,
+            ).some(revoked)) &&
           temporalFacetEligible(world, scope.actorId, facet, value),
       );
     if (!kept.length) {
@@ -341,7 +353,14 @@ export async function readTemporalHistory(
     )
       incomplete = true;
     const entry = {
-      receipt: temporalReceiptForRead({ ...receipt, facets: kept.map(({ facet }) => facet) }),
+      receipt: temporalReceiptForRead(
+        selectTemporalReceiptFacets(
+          receipt,
+          kept.map(({ facet }) => facet),
+          sources,
+          world,
+        ),
+      ),
       values: kept.map(({ value }) => value!),
     };
     const size = Buffer.byteLength(JSON.stringify(entry));

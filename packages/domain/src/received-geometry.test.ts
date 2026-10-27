@@ -494,7 +494,7 @@ describe('native received relation producers', () => {
     const before = world.experience!.temporal!.actors[PLAYER_ID]!.count;
     captureCurrentGeometrySupport(world, PLAYER_ID);
     expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBeGreaterThan(before);
-    const sealed = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    const sealed = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       from: 2,
       through: 2,
@@ -551,7 +551,7 @@ describe('native received relation producers', () => {
     delete temporal.sources[oldBlock];
     expect(temporal.actors[PLAYER_ID]!.capturesInvalidated).toBe(true);
     initializePerception(world, []);
-    const recent = selectTemporalHistory(temporal, PLAYER_ID, {
+    const recent = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       from: 21600,
       bytes: 1024 * 1024,
@@ -582,7 +582,7 @@ describe('native received relation producers', () => {
       subject = currentBodyObservation(world, PLAYER_ID, person.id)!.exposure.episodeId;
     expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(0);
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
-    const first = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    const first = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       bytes: 1024 * 1024,
       limit: 1000,
@@ -606,7 +606,7 @@ describe('native received relation producers', () => {
     world.map.spatial.revision++;
     initializePerception(world, []);
     expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(0);
-    const old = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    const old = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       through: 15,
       bytes: 1024 * 1024,
@@ -641,7 +641,7 @@ describe('native received relation producers', () => {
       null,
       15,
     );
-    const expired = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    const expired = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       through: 15,
       bytes: 1024 * 1024,
@@ -659,7 +659,7 @@ describe('native received relation producers', () => {
     const exposure = currentBodyObservation(world, PLAYER_ID, other.id)!.exposure.episodeId;
     const observation = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     expect(
-      selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+      selectTemporalHistory(world, PLAYER_ID, {
         subject: exposure,
         bytes: 1024 * 1024,
       }).entries.some((entry) => entry.values.some((value) => value.kind === 'surface-patch')),
@@ -679,7 +679,7 @@ describe('native received relation producers', () => {
     expect(JSON.parse(JSON.stringify(world.experience!.temporal))).toEqual(
       restored.experience!.temporal,
     );
-    const baseline = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    const baseline = selectTemporalHistory(world, PLAYER_ID, {
       subject: exposure,
       bytes: 1024 * 1024,
     });
@@ -704,14 +704,14 @@ describe('native received relation producers', () => {
     ).toHaveLength(1);
     for (const subject of outgoing)
       expect(
-        selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+        selectTemporalHistory(world, PLAYER_ID, {
           subject,
           from: 1,
           through: 1,
           bytes: 1024 * 1024,
         }).entries.some((entry) => entry.receipt.id === terrain.receipt.id),
       ).toBe(true);
-    const earlier = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    const earlier = selectTemporalHistory(world, PLAYER_ID, {
       through: 0,
       bytes: 1024 * 1024,
       limit: 1000,
@@ -734,8 +734,8 @@ describe('native received relation producers', () => {
     const cold = JSON.parse(JSON.stringify(world)) as WorldState;
     for (const subject of [...outgoing, exposure]) {
       const query = { subject, from: 1, through: 1, bytes: 1024 * 1024 };
-      const retained = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
-      expect(retained).toEqual(selectTemporalHistory(cold.experience!.temporal, PLAYER_ID, query));
+      const retained = selectTemporalHistory(world, PLAYER_ID, query);
+      expect(retained).toEqual(selectTemporalHistory(cold, PLAYER_ID, query));
       expect(retained.entries.some((entry) => entry.receipt.id === terrain.receipt.id)).toBe(true);
     }
     validateTemporalEvidenceState(world);
@@ -756,7 +756,7 @@ describe('native received relation producers', () => {
     setSpatialPosition(world, person, { x: 6, y: 2, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     expect(currentReceivedGeometry(world, PLAYER_ID).supportedThrough).toBe(2);
-    const atMovement = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    const atMovement = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       bytes: 1024 * 1024,
       limit: 1000,
@@ -770,7 +770,7 @@ describe('native received relation producers', () => {
     world.simTime = 3;
     world.map.spatial.revision++;
     initializePerception(world, []);
-    const historical = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    const historical = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       bytes: 1024 * 1024,
       limit: 1000,

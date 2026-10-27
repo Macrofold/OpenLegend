@@ -115,7 +115,8 @@ export interface TemporalReceipt extends TemporalReceiptLocator {
   subjectIdentity?: ObserverSubject;
   change: 'baseline' | 'change' | 'loss' | 'occurrence' | 'attention-exit';
   required: boolean;
-  /** Original account aliases are needed for scoped correction, never for hidden hydration. */
+  /** Source lookup aliases include facet provenance; only independent account
+   * aliases revoke the whole receipt. Neither grants hidden hydration. */
   sourceIds: string[];
   facets: TemporalFacetReference[];
 }
@@ -1109,12 +1110,14 @@ export function temporalReceiptWithinPrefix(
       receipt.ordinal <= cut.throughOrdinal)
   );
 }
-/** Cold callers supply only already actor-scoped selected chunks and their exact blocks. */
+/** Select this actor's retained chunks and exact blocks. The supplied world's
+ * installed evidence owner also classifies aliases when detail is narrowed. */
 export function selectTemporalHistory(
-  temporal: TemporalEvidenceState | undefined,
+  world: WorldState,
   actorId: string,
   query: TemporalHistoryQuery = {},
 ): TemporalHistorySelection {
+  const temporal = world.experience?.temporal;
   const actor = temporal?.actors[actorId];
   if (!temporal || !actor) return { entries: [], incomplete: true };
   const limit = query.limit ?? 128,
@@ -1190,7 +1193,7 @@ export function selectTemporalHistory(
     }
     if (missing || !values.length) continue;
     const selectedReceipt = temporalReceiptForRead(
-      references.length === receipt.facets.length ? receipt : { ...receipt, facets: references },
+      selectTemporalReceiptFacets(receipt, references, temporal.sources, world),
     );
     const size = byteLength({ receipt: selectedReceipt, values });
     if (entries.length >= limit || bytes + size > maxBytes) {
@@ -1223,8 +1226,10 @@ export function invalidateTemporalEvidence(
     const removed = chunk.receipts.filter(
       (receipt) =>
         sourceIds.has(receipt.id) ||
-        receipt.sourceIds.some((id) => sourceIds.has(id)) ||
-        receipt.facets.some((facet) => facet.original && sourceIds.has(facet.original.source.id)),
+        (receipt.sourceIds.some((id) => sourceIds.has(id)) &&
+          temporalReceiptAccountAliases(receipt, world.experience!.temporal!.sources, world).some(
+            (id) => sourceIds.has(id),
+          )),
     );
     if (!removed.length) continue;
     actor.releasedThrough = Math.max(
@@ -1245,8 +1250,8 @@ export function invalidateTemporalEvidence(
   // A surviving receipt can contain an independently received fact beside a
   // route whose earlier proof was revoked. Remove that facet, not its siblings.
   invalidateTemporalFacets(world, actorId, (_value, reference, receipt) =>
-    temporalReceiptAliases({ ...receipt, facets: [reference] }, sources, world).some((id) =>
-      sourceIds.has(id),
+    temporalReceiptAliases({ ...receipt, sourceIds: [], facets: [reference] }, sources, world).some(
+      (id) => sourceIds.has(id),
     ),
   );
 }
@@ -1318,7 +1323,12 @@ export function invalidateTemporalFacets(
       if (facets.length !== receipt.facets.length) {
         actor.releasedThrough = Math.max(actor.releasedThrough ?? 0, receipt.at);
         if (facets.length)
-          retained.push(immutableDataSnapshot({ ...receipt, facets }, readOnlyDraftView));
+          retained.push(
+            immutableDataSnapshot(
+              selectTemporalReceiptFacets(receipt, facets, temporal.sources, world),
+              readOnlyDraftView,
+            ),
+          );
       } else {
         retained.push(receipt);
       }
@@ -1349,6 +1359,38 @@ export function temporalReceiptAliases(
     aliases.add(key.source.id);
     aliases.add(personalFactAlias(key.source.id, key.ordinal));
   };
+  const dependencies = (value: TemporalValue) => {
+    if (value.kind === 'association')
+      for (const id of selectedRecognitionSupportSourceIds(world, value.learningSupport ?? []))
+        aliases.add(id);
+    if (value.kind === 'claim') {
+      for (const key of value.support) fact(key);
+      for (const alias of value.supportAliases ?? []) aliases.add(alias.id);
+    }
+    if (value.kind === 'received-motion')
+      for (const sample of [value.earlier, value.later]) {
+        fact(sample.original);
+        aliases.add(sample.confirmation.id);
+      }
+    if (value.kind === 'physical-boundary') {
+      for (const key of [value.boundary.nearSurface?.support, value.boundary.farSurface?.support])
+        if (key) fact(key);
+    }
+    if (value.kind === 'confirmation') {
+      const snapshot = value.snapshot;
+      fact({
+        source: {
+          family: 'native-exposure',
+          observer: snapshot.observer,
+          id: snapshot.original.id,
+          revision: snapshot.original.revision,
+        },
+        ordinal: snapshot.originalOrdinal,
+      });
+      aliases.add(snapshot.confirmation.id);
+      dependencies(temporalValue(snapshot.value));
+    }
+  };
   for (let index = 0; index < receipt.facets.length; index++) {
     const reference = receipt.facets[index]!;
     aliases.add(personalFactAlias(receipt.id, reference.ordinal));
@@ -1362,28 +1404,49 @@ export function temporalReceiptAliases(
       (fragment.kind !== 'association' &&
         fragment.kind !== 'claim' &&
         fragment.kind !== 'received-motion' &&
-        fragment.kind !== 'physical-boundary')
+        fragment.kind !== 'physical-boundary' &&
+        fragment.kind !== 'confirmation')
     )
       continue;
     const value = materializeTemporalValue(reference, fragment);
-    if (value?.kind === 'association')
-      for (const id of selectedRecognitionSupportSourceIds(world, value.learningSupport ?? []))
-        aliases.add(id);
-    if (value?.kind === 'claim') {
-      for (const key of value.support) fact(key);
-      for (const alias of value.supportAliases ?? []) aliases.add(alias.id);
-    }
-    if (value?.kind === 'received-motion')
-      for (const sample of [value.earlier, value.later]) {
-        fact(sample.original);
-        aliases.add(sample.confirmation.id);
-      }
-    if (value?.kind === 'physical-boundary') {
-      for (const key of [value.boundary.nearSurface?.support, value.boundary.farSurface?.support])
-        if (key) fact(key);
-    }
+    if (value) dependencies(value);
   }
   return [...aliases];
+}
+
+/** Facet provenance can share the source-lookup list with a real account alias.
+ * Correcting that provenance must not turn independent sibling facts into the
+ * same account, including when a sparse capsule retains only selected facets. */
+export function temporalReceiptAccountAliases(
+  receipt: TemporalReceipt,
+  sources: TemporalEvidenceState['sources'],
+  world: WorldState,
+  selectedFragments?: readonly TemporalFragment[],
+): string[] {
+  const dependencies = new Set(
+    temporalReceiptAliases({ ...receipt, sourceIds: [] }, sources, world, selectedFragments),
+  );
+  return receipt.sourceIds.filter(
+    (id) =>
+      (receipt.origin?.kind === 'occurrence' && id === receipt.origin.eventId) ||
+      !dependencies.has(id),
+  );
+}
+
+/** Dropped facet aliases must leave too: otherwise their now-unmatched source
+ * IDs would be misclassified as whole-account aliases on the next read/edit. */
+export function selectTemporalReceiptFacets(
+  receipt: TemporalReceipt,
+  facets: TemporalFacetReference[],
+  sources: TemporalEvidenceState['sources'],
+  world: WorldState,
+): TemporalReceipt {
+  if (facets.length === receipt.facets.length) return { ...receipt, facets };
+  const retained = new Set([
+    ...temporalReceiptAccountAliases(receipt, sources, world),
+    ...temporalReceiptAliases({ ...receipt, facets, sourceIds: [] }, sources, world),
+  ]);
+  return { ...receipt, facets, sourceIds: receipt.sourceIds.filter((id) => retained.has(id)) };
 }
 
 /** Sparse support outlives its source block, but keeps the same exact dependency
@@ -1464,6 +1527,10 @@ export function temporalFacetEligible(
         factAllowed(sample.original) &&
         sample.confirmation.observer.actorId === actorId &&
         allowed(sample.confirmation.id),
+    );
+  if (value.kind === 'physical-boundary')
+    return [value.boundary.nearSurface?.support, value.boundary.farSurface?.support].every(
+      (fact) => !fact || factAllowed(fact),
     );
   if (value.kind === 'confirmation') {
     const snapshot = value.snapshot;
@@ -1621,16 +1688,14 @@ export function retainTemporalSupport(
     if (!value) return;
     values.push(immutableDataSnapshot(value, readOnlyDraftView));
   }
+  const selectedReceipt = selectTemporalReceiptFacets(receipt, facets, temporal.sources, world);
   const capsule: TemporalSupportCapsule = {
     receipt: immutableDataSnapshot(
       {
-        ...readOnlyDraftView(receipt),
-        facets,
+        ...selectedReceipt,
         sourceIds: [
           ...new Set([
-            ...receipt.sourceIds.filter(
-              (id) => !receipt.facets.some((facet) => facet.original?.source.id === id),
-            ),
+            ...selectedReceipt.sourceIds,
             ...facets.flatMap((facet) => [
               personalFactAlias(receipt.id, facet.ordinal),
               ...(facet.original

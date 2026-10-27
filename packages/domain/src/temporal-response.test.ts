@@ -34,7 +34,7 @@ function setup() {
   const candidate = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates).find(
     ([, value]) => value.sourceId === PLAYER_ID,
   )!;
-  const selected = selectTemporalHistory(world.experience!.temporal, NPC_ID, {
+  const selected = selectTemporalHistory(world, NPC_ID, {
     bytes: 1024 * 1024,
     limit: 1000,
   }).entries.find(({ values }) =>
@@ -168,7 +168,7 @@ it('retains a supplied current measurement even when recent history omits it and
     'response-current-point',
   );
   expect(result.outcome.ok, result.outcome.message).toBe(true);
-  const retained = selectTemporalHistory(result.world.experience!.temporal, NPC_ID, {
+  const retained = selectTemporalHistory(result.world, NPC_ID, {
     bytes: 1024 * 1024,
     limit: 1000,
   }).entries.at(-1)!;

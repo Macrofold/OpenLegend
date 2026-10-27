@@ -337,6 +337,17 @@ export interface CapturedCurrentFacet
   > {
   confirmation: Extract<EvidenceSource, { family: 'native-exposure' | 'native-response' }>;
 }
+/** Public presentation needs the permitted value and its times, without the
+ * complete original/confirmation envelope needed by evidence consumers. */
+export type CurrentFacetValue = Pick<
+  LiveFacetSupport,
+  | 'id'
+  | 'value'
+  | 'valueMeasuredFrom'
+  | 'valueMeasuredThrough'
+  | 'valueAcquiredAt'
+  | 'confirmedThrough'
+> & { source: EvidenceSource };
 export type CapturedLocationSample = CapturedCurrentFacet & {
   value: Extract<SensoryFacet, { kind: 'location' }>;
 };
@@ -1207,12 +1218,12 @@ function selectedCurrentSupports(
   );
 }
 
-export function currentObservedFacets(
+function currentObservedSupports(
   world: WorldState,
   observerId: string,
   subjectId: string,
-  kinds: readonly (typeof CURRENT_BODY_FACET_KINDS)[number][] = CURRENT_BODY_FACET_KINDS,
-): CapturedCurrentFacet[] {
+  kinds: readonly (typeof CURRENT_BODY_FACET_KINDS)[number][],
+): LiveFacetSupport[] {
   const state = world.perceptionEvidence?.[observerId];
   const observer = entityGet(world.entities, observerId);
   if (
@@ -1231,8 +1242,53 @@ export function currentObservedFacets(
         currentLeaseEligible(world, observerId, lease) &&
         (!lease.bodyLeaseId ||
           lease.bodyLeaseId === eligibleBodyLease(world, observerId, subjectId)?.id),
-    )
-    .map((lease) => captureCurrentFacet(effectiveCurrentFacetSupport(world, observerId, lease)));
+    );
+}
+
+export function currentObservedFacets(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+  kinds: readonly (typeof CURRENT_BODY_FACET_KINDS)[number][] = CURRENT_BODY_FACET_KINDS,
+): CapturedCurrentFacet[] {
+  return currentObservedSupports(world, observerId, subjectId, kinds).map((lease) =>
+    captureCurrentFacet(effectiveCurrentFacetSupport(world, observerId, lease)),
+  );
+}
+
+/** The same live eligibility as captured evidence, projected before detaching.
+ * Mutable builders remain editable; only requested values are detached. */
+export function currentObservedFacetValues(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+  kinds: readonly (typeof CURRENT_BODY_FACET_KINDS)[number][] = CURRENT_BODY_FACET_KINDS,
+): CurrentFacetValue[] {
+  return currentObservedSupports(world, observerId, subjectId, kinds).map((lease) => {
+    const value = effectiveCurrentFacetSupport(world, observerId, lease);
+    return immutableDataSnapshot<CurrentFacetValue>(
+      {
+        id: value.id,
+        value: value.value,
+        valueMeasuredFrom: value.valueMeasuredFrom,
+        valueMeasuredThrough: value.valueMeasuredThrough,
+        valueAcquiredAt: value.valueAcquiredAt,
+        confirmedThrough: value.confirmedThrough,
+        source: observationFactKey(value.original, value.originalOrdinal).source,
+      },
+      readOnlyDraftView,
+    );
+  });
+}
+
+/** Presence-only presentation must not capture a motion's endpoint proof graph. */
+export function hasCurrentObservedFacet(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+  kind: (typeof CURRENT_BODY_FACET_KINDS)[number],
+): boolean {
+  return currentObservedSupports(world, observerId, subjectId, [kind]).length > 0;
 }
 function currentLeaseEligible(
   world: WorldState,

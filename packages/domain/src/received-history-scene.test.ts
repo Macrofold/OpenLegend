@@ -99,7 +99,7 @@ it('measures retained body/edge history only through actually captured support i
     bytes: 1024 * 1024,
     limit: 1000,
   };
-  const history = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+  const history = selectTemporalHistory(world, PLAYER_ID, query);
   const result = historicalSpatialMeasurements(
     history,
     { anchor: subject, other: second, from: 0, through: 2, radius: 30 },
@@ -121,7 +121,7 @@ it('measures retained body/edge history only through actually captured support i
     acquiredAt: 0,
     confirmedThrough: 2,
   });
-  const earlierCut = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const earlierCut = selectTemporalHistory(world, PLAYER_ID, {
     ...query,
     cut: before,
   });
@@ -134,7 +134,7 @@ it('measures retained body/edge history only through actually captured support i
   const restored = JSON.parse(JSON.stringify(world));
   expect(
     historicalSpatialMeasurements(
-      selectTemporalHistory(restored.experience.temporal, PLAYER_ID, query),
+      selectTemporalHistory(restored, PLAYER_ID, query),
       { anchor: subject, other: second, from: 0, through: 2, radius: 30 },
       128,
     ),
@@ -161,7 +161,7 @@ it('uses an ongoing received geometry interval sealed at the decision cut withou
   const count = world.experience!.temporal!.actors[PLAYER_ID]!.count;
   captureCurrentGeometrySupport(world, PLAYER_ID);
   expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(count);
-  const history = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const history = selectTemporalHistory(world, PLAYER_ID, {
     subjects: [subject],
     cut: prefix,
     measurements: { from: 1, through: 2 },
@@ -197,7 +197,7 @@ it('refuses a counterpart position when actual changes share one timestamp witho
   initializePerception(world, []);
   setSpatialPosition(world, other, { x: 19, y: 2, z: 2 }, null, { continuity: 'physical' });
   initializePerception(world, []);
-  const history = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const history = selectTemporalHistory(world, PLAYER_ID, {
     subjects: [first, second],
     measurements: { from: 2, through: 2 },
     bytes: 1024 * 1024,

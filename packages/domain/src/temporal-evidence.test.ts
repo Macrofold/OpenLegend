@@ -61,7 +61,7 @@ it('binds history to the captured receipt prefix even when later measurements sh
   const world = scene(49),
     actorId = PLAYER_ID;
   const cut = captureTemporalReceiptPrefix(world, actorId);
-  const prior = selectTemporalHistory(world.experience!.temporal, actorId, {
+  const prior = selectTemporalHistory(world, actorId, {
     cut,
     limit: 1000,
     bytes: 1024 * 1024,
@@ -71,7 +71,7 @@ it('binds history to the captured receipt prefix even when later measurements sh
     continuity: 'physical',
   });
   initializePerception(world, []);
-  const later = selectTemporalHistory(world.experience!.temporal, actorId, {
+  const later = selectTemporalHistory(world, actorId, {
     limit: 1000,
     bytes: 1024 * 1024,
   });
@@ -79,7 +79,7 @@ it('binds history to the captured receipt prefix even when later measurements sh
     true,
   );
   expect(
-    selectTemporalHistory(world.experience!.temporal, actorId, {
+    selectTemporalHistory(world, actorId, {
       cut,
       limit: 1000,
       bytes: 1024 * 1024,
@@ -91,7 +91,7 @@ it('binds history to the captured receipt prefix even when later measurements sh
   });
   initializePerception(world, []);
   const newCut = captureTemporalReceiptPrefix(world, actorId);
-  const restoredStream = selectTemporalHistory(world.experience!.temporal, actorId, {
+  const restoredStream = selectTemporalHistory(world, actorId, {
     cut: newCut,
     limit: 1000,
     bytes: 1024 * 1024,
@@ -99,7 +99,7 @@ it('binds history to the captured receipt prefix even when later measurements sh
   expect(restoredStream.entries.some(({ receipt }) => receipt.epoch !== newCut.epoch)).toBe(true);
   expect(restoredStream.entries.some(({ receipt }) => receipt.epoch === newCut.epoch)).toBe(true);
   expect(
-    selectTemporalHistory(world.experience!.temporal, actorId, {
+    selectTemporalHistory(world, actorId, {
       cut,
       limit: 1000,
       bytes: 1024 * 1024,
@@ -141,7 +141,7 @@ it('retains intermediate actually received movement and its exact last sample on
   });
   initializePerception(world, []);
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
-  const selected = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const selected = selectTemporalHistory(world, PLAYER_ID, {
     subject: exposure,
     from: 0,
     bytes: 1024 * 1024,
@@ -199,7 +199,7 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
     expect(identity.canonicalId).toBeUndefined();
   }
   const read = (subject: string) =>
-    selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    selectTemporalHistory(world, PLAYER_ID, {
       subject,
       limit: 1000,
       bytes: 1024 * 1024,
@@ -216,7 +216,7 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
   validateTemporalEvidenceState(world);
   const restored = JSON.parse(JSON.stringify(world));
   expect(
-    selectTemporalHistory(restored.experience.temporal, PLAYER_ID, {
+    selectTemporalHistory(restored, PLAYER_ID, {
       subject: firstBody.exposure.episodeId,
       limit: 1000,
       bytes: 1024 * 1024,
@@ -248,7 +248,7 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
     branches.id,
   ]);
   const query = { subject, limit: 1000, bytes: 1024 * 1024 };
-  const interrupted = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+  const interrupted = selectTemporalHistory(world, PLAYER_ID, query);
   expect(interrupted.entries.some(({ receipt }) => receipt.change === 'attention-exit')).toBe(true);
   expect(interrupted.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(false);
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeDefined();
@@ -262,7 +262,7 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   setSpatialPosition(world, npc, { x: 100, y: 0, z: 100 }, 'terrain', { continuity: 'physical' });
   initializePerception(world, []);
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
-  const lost = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+  const lost = selectTemporalHistory(world, PLAYER_ID, query);
   const loss = lost.entries.find(({ receipt }) => receipt.change === 'loss');
   expect(loss).toBeDefined();
   expect(loss!.receipt.at).toBe(3);
@@ -282,7 +282,7 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
     null,
     Math.max(...retired.map((chunk) => chunk.throughAt)),
   );
-  const expired = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+  const expired = selectTemporalHistory(world, PLAYER_ID, query);
   expect(expired.entries).toEqual([]);
   expect(expired.incomplete).toBe(true);
   expect(expired.hasMore).toBe(false);
@@ -297,13 +297,13 @@ it('keeps the original exact received sequence through current-format JSON resto
     continuity: 'physical',
   });
   initializePerception(world, []);
-  const before = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const before = selectTemporalHistory(world, PLAYER_ID, {
     bytes: 1024 * 1024,
     limit: 1000,
   });
   const restored = JSON.parse(JSON.stringify(world));
   expect(
-    selectTemporalHistory(restored.experience.temporal, PLAYER_ID, {
+    selectTemporalHistory(restored, PLAYER_ID, {
       bytes: 1024 * 1024,
       limit: 1000,
     }),
@@ -357,7 +357,7 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
     valueOrdinal: after.valueOrdinal,
   });
   const query = { subject: 'received-note', bytes: 1024 * 1024, limit: 1000 };
-  const selected = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+  const selected = selectTemporalHistory(world, PLAYER_ID, query);
   expect(
     selected.entries.flatMap(({ values }) =>
       values.map((value) => value.kind === 'personal-account' && value.data?.['nested']),
@@ -376,7 +376,7 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
   child.note = 'After an array edit.';
   expect(append(arrayValue, arrayBefore).valueOrdinal).not.toBe(arrayBefore.valueOrdinal);
   expect(
-    selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    selectTemporalHistory(world, PLAYER_ID, {
       ...query,
       subject: 'received-array',
     }).entries.flatMap(({ values }) =>
@@ -386,7 +386,7 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
   validateTemporalEvidenceState(world);
   const restored = JSON.parse(JSON.stringify(world));
   validateTemporalEvidenceState(restored);
-  expect(selectTemporalHistory(restored.experience.temporal, PLAYER_ID, query)).toEqual(selected);
+  expect(selectTemporalHistory(restored, PLAYER_ID, query)).toEqual(selected);
 });
 
 it('does not turn ordinary lost object facets into autobiographical confirmations', () => {
@@ -417,7 +417,7 @@ it('retains received speech independently of optional detailed attention and rev
   expect(spoken.outcome.ok).toBe(true);
   world = JSON.parse(JSON.stringify(spoken.world));
   const event = spoken.events.find((entry) => entry.type === 'speech')!;
-  const before = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const before = selectTemporalHistory(world, PLAYER_ID, {
     bytes: 1024 * 1024,
     limit: 1000,
   });
@@ -436,7 +436,7 @@ it('retains received speech independently of optional detailed attention and rev
     ),
   ).toBe(true);
   invalidateExperience(world, PLAYER_ID, [event.id], true);
-  const after = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const after = selectTemporalHistory(world, PLAYER_ID, {
     bytes: 1024 * 1024,
     limit: 1000,
   });
@@ -493,7 +493,7 @@ it('records an actually attended resource target and a routine occurrence that d
   )!;
   expect(event.targetId).toBe(branches.id);
   expect(event.data).toMatchObject({ definitionId: 'wood', quantity: 1 });
-  const selected = selectTemporalHistory(result.world.experience!.temporal, PLAYER_ID, {
+  const selected = selectTemporalHistory(result.world, PLAYER_ID, {
     subjects: [exposure],
     bytes: 1024 * 1024,
     limit: 1000,
@@ -539,7 +539,7 @@ it('records an actually attended resource target and a routine occurrence that d
     later.experience!.awareness[PLAYER_ID]!.some((value) => value.eventId === routine.id),
   ).toBe(false);
   expect(
-    selectTemporalHistory(later.experience!.temporal, PLAYER_ID, {
+    selectTemporalHistory(later, PLAYER_ID, {
       subjects: [personExposure],
       bytes: 1024 * 1024,
       limit: 1000,
@@ -549,7 +549,7 @@ it('records an actually attended resource target and a routine occurrence that d
   const forgotten = structuredClone(result.world);
   invalidateExperience(forgotten, PLAYER_ID, [event.id], true);
   expect(
-    selectTemporalHistory(forgotten.experience!.temporal, PLAYER_ID, {
+    selectTemporalHistory(forgotten, PLAYER_ID, {
       subjects: [exposure],
       bytes: 1024 * 1024,
       limit: 1000,
@@ -601,7 +601,7 @@ it('captures an attended person recipient while the actually visible speaker is 
     true,
   );
   expect(
-    selectTemporalHistory(result.world.experience!.temporal, PLAYER_ID, {
+    selectTemporalHistory(result.world, PLAYER_ID, {
       subjects: [exposure],
       bytes: 1024 * 1024,
       limit: 1000,
@@ -657,13 +657,13 @@ it('keeps an actually heard unseen voice separate from a previously seen body', 
   expect(heard.sourceBody).toBeUndefined();
   expect(heard.observation!.context).toBeUndefined();
   expect(
-    selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    selectTemporalHistory(world, PLAYER_ID, {
       bytes: 1024 * 1024,
       limit: 1000,
     }).entries.some(({ receipt }) => receipt.sourceIds.includes(event.id)),
   ).toBe(true);
   expect(
-    selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+    selectTemporalHistory(world, PLAYER_ID, {
       subjects: [exposure],
       bytes: 1024 * 1024,
       limit: 1000,
@@ -742,7 +742,7 @@ it('shares equal received values without granting another observer the earlier h
   initializePerception(world, []);
   const exposure = currentBodyObservation(world, NPC_ID, 'branches')!.exposure.episodeId;
   expect(
-    selectTemporalHistory(world.experience!.temporal, NPC_ID, {
+    selectTemporalHistory(world, NPC_ID, {
       subject: exposure,
       from: 1,
       bytes: 1024 * 1024,
@@ -750,7 +750,7 @@ it('shares equal received values without granting another observer the earlier h
   ).toEqual([]);
   world.simTime = 2;
   focus(NPC_ID, 'branches');
-  const promoted = selectTemporalHistory(world.experience!.temporal, NPC_ID, {
+  const promoted = selectTemporalHistory(world, NPC_ID, {
     subject: exposure,
     from: 1,
     bytes: 1024 * 1024,
@@ -758,7 +758,7 @@ it('shares equal received values without granting another observer the earlier h
   expect(promoted.entries.length).toBeGreaterThan(0);
   expect(promoted.entries.every(({ receipt }) => receipt.at === 2)).toBe(true);
   const playerExposure = currentBodyObservation(world, PLAYER_ID, 'branches')!.exposure.episodeId;
-  const playerHistory = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const playerHistory = selectTemporalHistory(world, PLAYER_ID, {
     subject: playerExposure,
     from: 1,
     bytes: 1024 * 1024,
@@ -783,7 +783,7 @@ it('shares equal received values without granting another observer the earlier h
   initializePerception(world, []);
   const currentBodyReference = (actorId: string, subject: string) =>
     bodyReference(
-      selectTemporalHistory(world.experience!.temporal, actorId, {
+      selectTemporalHistory(world, actorId, {
         subject,
         from: 3,
         bytes: 1024 * 1024,
@@ -840,18 +840,18 @@ it('shares equal received values without granting another observer the earlier h
 
 it('reports an empty change window as unavailable without renewing an older acquisition', () => {
   const world = scene(47);
-  const before = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const before = selectTemporalHistory(world, PLAYER_ID, {
     bytes: 1024 * 1024,
     limit: 1000,
   });
   world.simTime = 60;
-  const empty = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const empty = selectTemporalHistory(world, PLAYER_ID, {
     from: 1,
     through: 60,
   });
   expect(empty.entries).toEqual([]);
   expect(empty.incomplete).toBe(true);
-  const held = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const held = selectTemporalHistory(world, PLAYER_ID, {
     bytes: 1024 * 1024,
     limit: 1000,
   });
@@ -901,7 +901,7 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
     continuity: 'physical',
   });
   initializePerception(world, []);
-  const losses = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+  const losses = selectTemporalHistory(world, PLAYER_ID, {
     bytes: 1024 * 1024,
     limit: 1000,
   }).entries.filter(
@@ -931,7 +931,7 @@ it('keeps same-time receipt chronology ordered across independently named restor
     text: 'Second actual words.',
   });
   const event = second.events.find((value) => value.type === 'speech')!;
-  const latest = selectTemporalHistory(second.world.experience!.temporal, PLAYER_ID, {
+  const latest = selectTemporalHistory(second.world, PLAYER_ID, {
     limit: 1,
     bytes: 1024 * 1024,
   });
@@ -939,7 +939,7 @@ it('keeps same-time receipt chronology ordered across independently named restor
   const receipt = latest.entries[0]!.receipt;
   expect(receipt.sourceIds).toContain(event.id);
   expect(receipt.epoch.startsWith('aaa-newer-timeline')).toBe(true);
-  const preceding = selectTemporalHistory(second.world.experience!.temporal, PLAYER_ID, {
+  const preceding = selectTemporalHistory(second.world, PLAYER_ID, {
     before: {
       at: receipt.at,
       order: receipt.order,

@@ -87,6 +87,7 @@ import {
   temporalReceiptSource,
   temporalReceiptId,
   temporalReceiptAliases,
+  temporalReceiptAccountAliases,
   temporalSupportAliases,
   splitTemporalValue,
   type TemporalReceipt,
@@ -1714,7 +1715,11 @@ export function invalidateExperience(
     // instead revoke their selected facets; promoting those to the receipt ID
     // would erase independently received siblings in the resident account.
     for (const support of Object.values(state.temporal?.actors[actorId]?.supports ?? {}))
-      if (support.receipt.sourceIds.some((source) => affected.has(source)))
+      if (
+        temporalReceiptAccountAliases(support.receipt, {}, world, support.values).some((source) =>
+          affected.has(source),
+        )
+      )
         include(support.receipt.id);
     // Personal source IDs and native contributions are aliases of one received account.
     // Revoke descendants before pruning any body, including required native support that

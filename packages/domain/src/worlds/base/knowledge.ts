@@ -7,7 +7,7 @@ import {
   currentBodyAssociation,
   currentBodyLocalSubject,
   currentBodyGrant,
-  currentBodyObservation,
+  currentObservedFacetValues,
 } from '../../perception-evidence.js';
 import { namePhrase, type Named, type NameArticle } from '@open-legend/language';
 import { outcome } from '../../events.js';
@@ -696,8 +696,9 @@ export function outwardBodyName(_world: WorldState, entity: Entity): Named {
 export function observerName(world: WorldState, observerId: string, subjectId: string): Named {
   const known = observerGivenName(world, observerId, subjectId);
   if (known) return { name: known, nameForm: 'proper', indefiniteArticle: undefined };
-  const received = currentBodyObservation(world, observerId, subjectId);
-  if (received?.value.body.label) return received.value.body.label;
+  const received = currentObservedFacetValues(world, observerId, subjectId, ['body'])[0];
+  if (received?.value.kind === 'body' && received.value.body.label)
+    return received.value.body.label;
   const inspected = inspectedItemName(world, observerId, subjectId);
   if (inspected) return inspected;
   const entity = entityGet(world.entities, subjectId);

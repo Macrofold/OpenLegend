@@ -402,7 +402,7 @@ export async function prepareDecision(
           },
           world,
         )
-      : selectTemporalHistory(world.experience?.temporal, actorId, {
+      : selectTemporalHistory(world, actorId, {
           cut: receiptPrefix,
           bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
           limit: historyPolicy.historyReceipts,
@@ -1174,7 +1174,7 @@ export async function prepareDecision(
       const result =
         service.store.memories && evidenceScope
           ? await service.store.memories.temporalHistory(evidenceScope, query, currentWorld)
-          : selectTemporalHistory(currentWorld.experience?.temporal, actorId, query);
+          : selectTemporalHistory(currentWorld, actorId, query);
       await validatePrepared(false);
       return { ...result, hasMore: result.hasMore ?? false };
     },

@@ -263,7 +263,7 @@ export function buildContext(
     service.world,
     actorId,
     `context:${service.world.sequence}`,
-    selectTemporalHistory(service.world.experience?.temporal, actorId),
+    selectTemporalHistory(service.world, actorId),
   );
   const context = {
     receivedSituation: situation.packet,
