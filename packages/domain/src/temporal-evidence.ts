@@ -441,38 +441,43 @@ export function appendTemporalReceipt(
   let addedSourceBytes = 0;
   let sourceBytes = 0;
   const ordinal = actor.nextOrdinal++;
-  const receipt: TemporalReceipt = {
-    id: temporalReceiptId({ epoch: actor.epoch, ordinal }),
-    actorId,
-    physicalLife: actor.physicalLife,
-    epoch: actor.epoch,
-    ordinal,
-    at: world.simTime,
-    order: world.nextId,
-    ...(input.origin ? { origin: cloneValue(input.origin) } : {}),
-    subject: input.subject,
-    ...(input.contextSubjects?.length
-      ? { contextSubjects: [...new Set(input.contextSubjects)] }
-      : {}),
-    ...(input.subjectIdentity ? { subjectIdentity: cloneValue(input.subjectIdentity) } : {}),
-    change: input.change,
-    required: input.required === true,
-    sourceIds: [...new Set(input.sourceIds ?? [])],
-    facets: input.facets.map(({ value, retainedValue, ...metadata }, ordinal) => {
-      const retained = retainValue(
-        world,
-        temporal,
-        temporalValue(value),
-        policy.chunkBytes,
-        retainedValue,
-      );
-      addedSourceBytes += retained.addedBytes;
-      sourceBytes += retained.valueBytes;
-      return { ...cloneValue(metadata), ...retained.reference, ordinal };
-    }),
-  };
+  // A received sequence is complete here. Corrections replace its retained
+  // projection; publication can share this immutable record without copying it.
+  const receipt = immutableDataSnapshot<TemporalReceipt>(
+    {
+      id: temporalReceiptId({ epoch: actor.epoch, ordinal }),
+      actorId,
+      physicalLife: actor.physicalLife,
+      epoch: actor.epoch,
+      ordinal,
+      at: world.simTime,
+      order: world.nextId,
+      ...(input.origin ? { origin: input.origin } : {}),
+      subject: input.subject,
+      ...(input.contextSubjects?.length
+        ? { contextSubjects: [...new Set(input.contextSubjects)] }
+        : {}),
+      ...(input.subjectIdentity ? { subjectIdentity: input.subjectIdentity } : {}),
+      change: input.change,
+      required: input.required === true,
+      sourceIds: [...new Set(input.sourceIds ?? [])],
+      facets: input.facets.map(({ value, retainedValue, ...metadata }, ordinal) => {
+        const retained = retainValue(
+          world,
+          temporal,
+          temporalValue(value),
+          policy.chunkBytes,
+          retainedValue,
+        );
+        addedSourceBytes += retained.addedBytes;
+        sourceBytes += retained.valueBytes;
+        return { ...metadata, ...retained.reference, ordinal };
+      }),
+    },
+    readOnlyDraftView,
+  );
   // Logical accounting charges each observer's full support even when storage shares it.
-  const receiptBytes = byteLength(receipt);
+  const receiptBytes = jsonEncoding(receipt).bytes;
   const bytes = receiptBytes + sourceBytes;
   const atBoundary = boundary(world);
   let chunk = actor.chunks.at(-1);
@@ -1104,7 +1109,9 @@ export function invalidateTemporalFacets(
     const previousBytes = chunk.bytes,
       previousCount = chunk.count;
     let changed = false;
-    for (const receipt of chunk.receipts) {
+    const retained: TemporalReceipt[] = [];
+    for (const stored of readOnlyDraftView(chunk.receipts)) {
+      const receipt = readOnlyDraftView(stored);
       const facets = receipt.facets.filter((reference) => {
         const value = temporal.sources[reference.blockId]?.values[reference.valueOrdinal];
         if (!value || !revoked(value, reference)) return true;
@@ -1113,11 +1120,14 @@ export function invalidateTemporalFacets(
       });
       if (facets.length !== receipt.facets.length) {
         actor.releasedThrough = Math.max(actor.releasedThrough ?? 0, receipt.at);
-        receipt.facets = facets;
+        if (facets.length)
+          retained.push(immutableDataSnapshot({ ...receipt, facets }, readOnlyDraftView));
+      } else {
+        retained.push(receipt);
       }
     }
     if (!changed) continue;
-    chunk.receipts = chunk.receipts.filter((receipt) => receipt.facets.length > 0);
+    chunk.receipts = retained;
     refreshChunk(chunk, temporal, world);
     actor.bytes -= previousBytes - chunk.bytes;
     actor.count -= previousCount - chunk.count;
@@ -1257,6 +1267,44 @@ export function temporalFacetEligible(
   return true;
 }
 
+function sameReceiptAddress(receipt: TemporalReceipt, locator: TemporalReceiptLocator): boolean {
+  return (
+    receipt.actorId === locator.actorId &&
+    receipt.physicalLife === locator.physicalLife &&
+    receipt.epoch === locator.epoch &&
+    receipt.ordinal === locator.ordinal
+  );
+}
+function findTemporalReceipt(
+  actor: TemporalActorHistory,
+  locator: TemporalReceiptLocator,
+): TemporalReceipt | undefined {
+  const chunks = readOnlyDraftView(actor.chunks);
+  // Contact retention normally asks for the just-appended receipt. Chunk bounds
+  // also prune older epochs/lives without flattening every retained receipt.
+  for (let index = chunks.length - 1; index >= 0; index--) {
+    const chunk = readOnlyDraftView(chunks[index]!);
+    if (
+      chunk.actorId !== locator.actorId ||
+      chunk.physicalLife !== locator.physicalLife ||
+      chunk.epoch !== locator.epoch ||
+      locator.ordinal < chunk.fromOrdinal ||
+      locator.ordinal > chunk.throughOrdinal
+    )
+      continue;
+    const receipts = readOnlyDraftView(chunk.receipts);
+    let lower = 0,
+      upper = receipts.length - 1;
+    while (lower <= upper) {
+      const middle = (lower + upper) >>> 1,
+        receipt = readOnlyDraftView(receipts[middle]!);
+      if (receipt.ordinal < locator.ordinal) lower = middle + 1;
+      else if (receipt.ordinal > locator.ordinal) upper = middle - 1;
+      else return sameReceiptAddress(receipt, locator) ? receipt : undefined;
+    }
+  }
+  return undefined;
+}
 /** Resolve an already owned receipt. Cold callers supply their separately scoped
  * captured body at the server admission boundary instead of expanding all history. */
 export function retainedTemporalReceipt(
@@ -1266,15 +1314,10 @@ export function retainedTemporalReceipt(
   const temporal = world.experience?.temporal;
   const actor = temporal?.actors[locator.actorId];
   if (!temporal || !actor) return;
-  const matches = (receipt: TemporalReceipt) =>
-    receipt.actorId === locator.actorId &&
-    receipt.physicalLife === locator.physicalLife &&
-    receipt.epoch === locator.epoch &&
-    receipt.ordinal === locator.ordinal;
   const support = actor.supports?.[temporalReceiptId(locator)];
-  const receipt = actor.chunks.flatMap((chunk) => chunk.receipts).find(matches);
+  const receipt = findTemporalReceipt(actor, locator);
   if (!receipt)
-    return support && matches(support.receipt)
+    return support && sameReceiptAddress(support.receipt, locator)
       ? { receipt: cloneValue(support.receipt), values: cloneValue(support.values) }
       : undefined;
   const values = receipt.facets.map(
@@ -1329,15 +1372,7 @@ export function retainTemporalSupport(
       return;
     return actor.supports![id];
   }
-  const receipt = actor.chunks
-    .flatMap((chunk) => chunk.receipts)
-    .find(
-      (candidate) =>
-        candidate.actorId === locator.actorId &&
-        candidate.physicalLife === locator.physicalLife &&
-        candidate.epoch === locator.epoch &&
-        candidate.ordinal === locator.ordinal,
-    );
+  const receipt = findTemporalReceipt(actor, locator);
   if (!receipt) return;
   const selected =
     options.facetOrdinals &&
@@ -1357,29 +1392,32 @@ export function retainTemporalSupport(
   for (const reference of facets) {
     const value = temporal.sources[reference.blockId]?.values[reference.valueOrdinal];
     if (!value) return;
-    values.push(cloneValue(readOnlyDraftView(value)));
+    values.push(immutableDataSnapshot(value, readOnlyDraftView));
   }
   const capsule: TemporalSupportCapsule = {
-    receipt: {
-      ...cloneValue(receipt),
-      facets: cloneValue(facets),
-      sourceIds: [
-        ...new Set([
-          ...receipt.sourceIds.filter(
-            (id) => !receipt.facets.some((facet) => facet.original?.source.id === id),
-          ),
-          ...facets.flatMap((facet) => [
-            personalFactAlias(receipt.id, facet.ordinal),
-            ...(facet.original
-              ? [
-                  facet.original.source.id,
-                  personalFactAlias(facet.original.source.id, facet.original.ordinal),
-                ]
-              : []),
+    receipt: immutableDataSnapshot(
+      {
+        ...readOnlyDraftView(receipt),
+        facets,
+        sourceIds: [
+          ...new Set([
+            ...receipt.sourceIds.filter(
+              (id) => !receipt.facets.some((facet) => facet.original?.source.id === id),
+            ),
+            ...facets.flatMap((facet) => [
+              personalFactAlias(receipt.id, facet.ordinal),
+              ...(facet.original
+                ? [
+                    facet.original.source.id,
+                    personalFactAlias(facet.original.source.id, facet.original.ordinal),
+                  ]
+                : []),
+            ]),
           ]),
-        ]),
-      ],
-    },
+        ],
+      },
+      readOnlyDraftView,
+    ),
     values,
     bytes: 0,
     required: prior?.required === true || options.required === true,

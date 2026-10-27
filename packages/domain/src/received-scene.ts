@@ -67,11 +67,18 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
       !contribution.facets.some((facet) => facet.value.kind === 'location')
     )
       nonlocalized++;
+  let index: ReceivedScene['index'] | undefined;
   const scene: ReceivedScene = {
     observerId,
     physicalLife,
     bodies,
-    index: new BoundsIndex([...bodies.values()].map((value) => ({ value, bounds: value.bounds }))),
+    // Native relation checks visit a bounded array. Prepare the spatial tree
+    // only for readers that actually ask this same received scene for a query.
+    get index() {
+      return (index ??= new BoundsIndex(
+        [...bodies.values()].map((value) => ({ value, bounds: value.bounds })),
+      ));
+    },
     nonlocalized,
   };
   if (Object.isFrozen(world)) {
