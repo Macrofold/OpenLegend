@@ -183,7 +183,18 @@ export function journalTableFamily(
           if (/NOT NULL/.test(column.sql)) return false;
           continue;
         }
-        if (/^(?:BIGINT|DOUBLE PRECISION)/.test(column.sql)) {
+        // Current temporal/search indexes include typed arrays. Check their
+        // elements before scalar prefixes; for-of also rejects sparse holes.
+        if (/^(?:TEXT|BIGINT)\[\]/.test(column.sql)) {
+          if (!Array.isArray(value)) return false;
+          for (const part of value)
+            if (
+              /^TEXT/.test(column.sql)
+                ? typeof part !== 'string' || !postgresText(part)
+                : typeof part !== 'number' || !Number.isSafeInteger(part)
+            )
+              return false;
+        } else if (/^(?:BIGINT|DOUBLE PRECISION)/.test(column.sql)) {
           if (
             typeof value !== 'number' ||
             !Number.isFinite(value) ||

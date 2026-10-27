@@ -417,11 +417,11 @@ describe('native received relation producers', () => {
     expect(expired.entries).toEqual([]);
     expect(expired.incomplete).toBe(true);
   });
-  it('adds an original-time context pointer when a new subject enters attention without new geometry', () => {
+  it('shares one original-time terrain receipt across outgoing and entering attention through cold retrieval and retirement', () => {
     const { world, people } = nativeScene(3, map(), { x: 1, y: 0, z: 2 }, 2);
-    const selected = new Set(
-      currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId),
-    );
+    const previous = currentDetailedAttention(world, PLAYER_ID);
+    const outgoing = previous.map((entry) => entry.exposure.episodeId);
+    const selected = new Set(previous.map((entry) => entry.sourceId));
     const other = people.find((person) => !selected.has(person.id))!;
     const exposure = currentBodyObservation(world, PLAYER_ID, other.id)!.exposure.episodeId;
     const observation = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
@@ -435,6 +435,11 @@ describe('native received relation producers', () => {
       ([, candidate]) => candidate.sourceId === other.id,
     )![0];
     world.simTime = 1;
+    initializePerception(world, []);
+    expect(currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId)).toEqual(
+      previous.map((entry) => entry.sourceId),
+    );
+    expect(currentReceivedGeometry(world, PLAYER_ID).supportedThrough).toBe(1);
     const restored = JSON.parse(JSON.stringify(world)) as WorldState;
     expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
     expect(setAttentionFocus(restored, PLAYER_ID, [key])).toBe(true);
@@ -452,6 +457,27 @@ describe('native received relation producers', () => {
     expect(terrain.receipt.change).toBe('baseline');
     expect(terrain.receipt.facets[0]!.acquiredAt).toBe(observation.acquiredAt);
     expect(terrain.receipt.at).toBe(1);
+    expect(new Set(terrain.receipt.contextSubjects)).toEqual(new Set([...outgoing, exposure]));
+    expect(terrain.receipt.facets[0]!.confirmedThrough).toBe(1);
+    const history = world.experience!.temporal!.actors[PLAYER_ID]!;
+    expect(
+      history.chunks
+        .flatMap((chunk) => chunk.receipts)
+        .filter(
+          (receipt) =>
+            receipt.at === 1 &&
+            receipt.facets.some((facet) => facet.original?.source.id === observation.id),
+        ),
+    ).toHaveLength(1);
+    for (const subject of outgoing)
+      expect(
+        selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
+          subject,
+          from: 1,
+          through: 1,
+          bytes: 1024 * 1024,
+        }).entries.some((entry) => entry.receipt.id === terrain.receipt.id),
+      ).toBe(true);
     const earlier = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, {
       through: 0,
       bytes: 1024 * 1024,
@@ -459,6 +485,26 @@ describe('native received relation producers', () => {
     }).entries.find((entry) => entry.values.some((value) => value.kind === 'surface-patch'))!;
     expect(terrain.receipt.facets[0]!.blockId).toBe(earlier.receipt.facets[0]!.blockId);
     expect(terrain.receipt.facets[0]!.valueOrdinal).toBe(earlier.receipt.facets[0]!.valueOrdinal);
+    validateTemporalEvidenceState(world);
+    const retired = history.chunks.filter((chunk) => chunk.throughAt === 0);
+    retireTemporalChunks(
+      world,
+      PLAYER_ID,
+      retired.map((chunk) => chunk.id),
+      {
+        bytes: retired.reduce((sum, chunk) => sum + chunk.bytes, 0),
+        count: retired.reduce((sum, chunk) => sum + chunk.count, 0),
+      },
+      null,
+      0,
+    );
+    const cold = JSON.parse(JSON.stringify(world)) as WorldState;
+    for (const subject of [...outgoing, exposure]) {
+      const query = { subject, from: 1, through: 1, bytes: 1024 * 1024 };
+      const retained = selectTemporalHistory(world.experience!.temporal, PLAYER_ID, query);
+      expect(retained).toEqual(selectTemporalHistory(cold.experience!.temporal, PLAYER_ID, query));
+      expect(retained.entries.some((entry) => entry.receipt.id === terrain.receipt.id)).toBe(true);
+    }
     validateTemporalEvidenceState(world);
   });
   it('closes an actual held terrain interval when a later view replaces it, without resampling each body movement', () => {

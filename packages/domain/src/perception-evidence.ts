@@ -1416,9 +1416,10 @@ export function reconcileVisualEvidence(
     newGeometry,
   );
   evaluateAttentionRelations(world, observer.id);
+  const newCues = currentAttentionCues(world, observer.id).filter((cue) => !priorCues.has(cue.id));
+  if (!newCues.length) return;
   const geometry = currentReceivedGeometry(world, observer.id).observations;
-  for (const cue of currentAttentionCues(world, observer.id)) {
-    if (priorCues.has(cue.id)) continue;
+  for (const cue of newCues) {
     const anchor = currentDetailedAttention(world, observer.id).find(
       (entry) => entry.key === cue.anchorKey,
     );
@@ -1485,14 +1486,6 @@ function captureAttendedGeometryContext(
   if (!active.size || (!acquired.length && !changedScope && !confirmHeld)) return;
   const geometry = currentReceivedGeometry(world, observerId);
   const available = geometry.observations;
-  if (changedScope || confirmHeld)
-    finalizeTemporalGeometrySupport(
-      world,
-      observerId,
-      available,
-      geometry.supportedThrough,
-      selectedTemporalPolicy(world).recent,
-    );
   const byId = new Map(available.map((observation) => [observation.id, observation]));
   const fresh = new Set(acquired.map((observation) => observation.id));
   const scopes = new Map<string, { observation: ObservationContribution; subjects: Set<string> }>();
@@ -1520,6 +1513,24 @@ function captureAttendedGeometryContext(
           const original = byId.get(support.source.id);
           if (original) include(original, subjects);
         }
+  if (changedScope || confirmHeld) {
+    const captures = world.experience?.temporal?.actors[observerId]?.captures;
+    for (const { observation, subjects } of scopes.values()) {
+      const held = captures?.[observation.id];
+      // One actual boundary can both close held support and introduce the same
+      // original to a new recording scope. Preserve the outgoing scope only when
+      // its interval really extends; no second copy of the fact/time is needed.
+      if (held && geometry.supportedThrough > (held.confirmedThrough ?? observation.acquiredAt))
+        for (const subject of held.contextSubjects ?? []) subjects.add(subject);
+    }
+    finalizeTemporalGeometrySupport(
+      world,
+      observerId,
+      available.filter((observation) => !scopes.has(observation.id)),
+      geometry.supportedThrough,
+      selectedTemporalPolicy(world).recent,
+    );
+  }
   const captured = new Set<string>();
   // Source patches precede their dependent boundaries in this owned collection.
   for (const observation of available) {
@@ -1618,7 +1629,7 @@ export function reconcileAttendedTemporalEvidence(
     exiting = new Set([...before].filter((id) => !after.has(id)));
   const measured =
     changedSourceIds && !rebaseline
-      ? new Set([...changedSourceIds, ...entering, ...exiting])
+      ? new Set([...changedSourceIds.filter((id) => selected.has(id)), ...entering, ...exiting])
       : undefined;
   const contacts = new Map<string, ObserverSubject>();
   if (creditContacts)
@@ -1636,17 +1647,21 @@ export function reconcileAttendedTemporalEvidence(
     }
   // Unchanged leases still keep their deduplication ownership. They need no
   // newly allocated confirmation view when this capture will skip them.
-  const leases = selectedCurrentSupports(world, observerId, current, selectedExposures, measured);
-  const captured = captureTemporalCurrent(
-    world,
-    observerId,
-    leases,
-    entering,
-    selectedTemporalPolicy(world).recent,
-    exiting,
-    new Set(contacts.keys()),
-    changedSourceIds && !rebaseline ? new Set(changedSourceIds) : undefined,
-  );
+  // The completed phase proves that neither the selected values nor recording
+  // scope changed. Keep watermarks intact without scanning them to rediscover it.
+  const captureNeeded = !measured || measured.size > 0;
+  const captured = captureNeeded
+    ? captureTemporalCurrent(
+        world,
+        observerId,
+        selectedCurrentSupports(world, observerId, current, selectedExposures, measured),
+        entering,
+        selectedTemporalPolicy(world).recent,
+        exiting,
+        new Set(contacts.keys()),
+        changedSourceIds && !rebaseline ? new Set(changedSourceIds) : undefined,
+      )
+    : [];
   const creditedSources: string[] = [];
   for (const entry of captured) {
     const subject = contacts.get(entry.subjectId);
