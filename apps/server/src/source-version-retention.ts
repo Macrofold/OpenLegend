@@ -114,6 +114,7 @@ export function sourceVersionPreparationNeeded(
   after: WorldState,
 ): boolean {
   if (!before) return false;
+  if (before.experience?.privacyRevisions !== after.experience?.privacyRevisions) return true;
   if (before.experience?.summaries !== after.experience?.summaries) return true;
   for (const [old, next] of [
     [before.memories, after.memories],

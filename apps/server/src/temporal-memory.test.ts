@@ -29,6 +29,8 @@ import {
   advanceWorld,
   currentBodyObservation,
   type Command,
+  type TemporalChunk,
+  type TemporalReceiptLocator,
 } from '@open-legend/domain';
 import { appendMemory, acquireExposure } from '../../../packages/domain/src/events.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
@@ -60,6 +62,123 @@ async function setup() {
 }
 
 describe('bounded personal temporal storage', () => {
+  it('reclaims a revoked shared source after its last receipt while preserving another witness and a later append', async () => {
+    const { store, service } = await setup();
+    await useNearCampSight(service);
+    await editWorld(service, (world) => {
+      for (const entity of entityValues(world.entities))
+        if (entity.actor && entity.id !== PLAYER_ID && entity.id !== NPC_ID) {
+          entity.actor.senses = [];
+          setSpatialPosition(world, entity, { x: 100, y: 0, z: 100 }, 'terrain');
+        }
+      setSpatialPosition(
+        world,
+        entityGet(world.entities, PLAYER_ID)!,
+        { x: 20, y: 0, z: 5.5 },
+        'terrain',
+      );
+      setSpatialPosition(
+        world,
+        entityGet(world.entities, NPC_ID)!,
+        { x: 22, y: 0, z: 5.5 },
+        'terrain',
+      );
+      initializePerception(world, []);
+      world.simTime += 1;
+    });
+    expect(
+      (
+        await service.say(
+          'shared-block-words',
+          PLAYER_ID,
+          'We both heard these exact words.',
+          NPC_ID,
+        )
+      ).ok,
+    ).toBe(true);
+    const eventId = service.world.events.filter((event) => event.type === 'speech').at(-1)!.id;
+    const scope = {
+      worldId: service.world.id,
+      actorId: PLAYER_ID,
+      generation: (await store.records.head())!.generation,
+    };
+    const received = (actorId: string) => {
+      const locator = service.world.experience!.awareness[actorId]!.find(
+        (entry) => entry.eventId === eventId,
+      )!.sourceReceipt!;
+      expect(locator).toBeDefined();
+      return service.world
+        .experience!.temporal!.actors[actorId]!.chunks.flatMap((chunk) => chunk.receipts)
+        .find((receipt) => receipt.epoch === locator.epoch && receipt.ordinal === locator.ordinal)!;
+    };
+    const own = received(PLAYER_ID),
+      witness = received(NPC_ID);
+    expect(own).toBeDefined();
+    expect(witness).toBeDefined();
+    const block = own.facets.find((reference) =>
+      witness.facets.some((other) => other.blockId === reference.blockId),
+    )!.blockId;
+    const owners = async () =>
+      (
+        await store.db
+          .prepare(
+            'SELECT payload FROM mind_temporal_chunks WHERE world_id=? AND source_refs @> ARRAY[?]::text[]',
+          )
+          .all(service.world.id, block)
+      ).flatMap((row) => {
+        const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
+        return chunk.receipts.filter((receipt) =>
+          receipt.facets.some((reference) => reference.blockId === block),
+        );
+      });
+    const address = (receipt: TemporalReceiptLocator): TemporalReceiptLocator => ({
+      actorId: receipt.actorId,
+      physicalLife: receipt.physicalLife,
+      epoch: receipt.epoch,
+      ordinal: receipt.ordinal,
+    });
+    expect((await service.forgetRecentObservation(address(own))).ok).toBe(true);
+    expect((await owners()).some((receipt) => receipt.actorId === NPC_ID)).toBe(true);
+    expect(
+      await store.db
+        .prepare('SELECT source_id FROM mind_temporal_sources WHERE world_id=? AND source_id=?')
+        .get(service.world.id, block),
+    ).toBeDefined();
+    await editWorld(service, (world) => {
+      world.simTime += 1;
+    });
+    expect(
+      (
+        await service.say(
+          'later-independent-words',
+          PLAYER_ID,
+          'A later independent statement.',
+          NPC_ID,
+        )
+      ).ok,
+    ).toBe(true);
+    for (let limit = 0; limit < 32; limit++) {
+      const [receipt] = await owners();
+      if (!receipt) break;
+      expect((await service.forgetRecentObservation(address(receipt))).ok).toBe(true);
+    }
+    expect(await owners()).toEqual([]);
+    expect(
+      await store.db
+        .prepare('SELECT source_id FROM mind_temporal_sources WHERE world_id=? AND source_id=?')
+        .get(service.world.id, block),
+    ).toBeUndefined();
+    expect(service.world.experience!.temporal!.sources[block]).toBeUndefined();
+    const cold = (await store.records.load(true))!.state.world;
+    validateTemporalEvidenceState(cold);
+    const remaining = await store.memories.temporalHistory(
+      scope,
+      { limit: 128, bytes: 262144 },
+      cold,
+    );
+    expect(JSON.stringify(remaining)).toContain('A later independent statement.');
+  });
+
   it('retires an explicit old prefix under recent-recording pressure without replacing retained movement with endpoints', async () => {
     const { store, service } = await setup();
     await useNearCampSight(service);

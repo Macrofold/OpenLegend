@@ -593,10 +593,17 @@ export class MemoryRepository {
     state: SavedWorld,
     complete = false,
     pending?: RecordChanges,
+    previous?: WorldState,
   ): Promise<PreparedMemoryRetention> {
     return this.snapshot(async () => {
       const accounts = await prepareAccountRetention(this.db, state, complete, pending?.deletes);
-      const recent = await prepareTemporalRetention(this.db, accounts.state, complete);
+      const recent = await prepareTemporalRetention(
+        this.db,
+        accounts.state,
+        complete,
+        pending,
+        previous,
+      );
       const rows = new Map(accounts.rows);
       for (const [table, ids] of recent.rows) rows.set(table, [...(rows.get(table) ?? []), ...ids]);
       let retained = recent.state;

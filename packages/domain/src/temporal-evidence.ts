@@ -1059,12 +1059,15 @@ function refreshChunk(
     ...new Set(chunk.receipts.flatMap((receipt) => receipt.facets.map((facet) => facet.blockId))),
   ];
   chunk.count = chunk.receipts.length;
-  if (chunk.receipts.length) {
-    chunk.fromOrdinal = chunk.receipts[0]!.ordinal;
-    chunk.throughOrdinal = chunk.receipts.at(-1)!.ordinal;
-    chunk.fromAt = chunk.receipts[0]!.at;
-    chunk.throughAt = chunk.receipts.at(-1)!.at;
+  if (!chunk.count) {
+    // The caller removes this chunk; no stored header remains to charge.
+    chunk.bytes = 0;
+    return;
   }
+  chunk.fromOrdinal = chunk.receipts[0]!.ordinal;
+  chunk.throughOrdinal = chunk.receipts.at(-1)!.ordinal;
+  chunk.fromAt = chunk.receipts[0]!.at;
+  chunk.throughAt = chunk.receipts.at(-1)!.at;
   const supportBytes = chunk.receipts.reduce(
     (sum, receipt) =>
       sum +

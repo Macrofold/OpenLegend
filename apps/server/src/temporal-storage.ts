@@ -17,6 +17,7 @@ import {
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { MemoryScope } from './memory-repository.js';
 import type { SourceVersionPlan } from './source-version-retention.js';
+import type { RecordChanges } from './world-records.js';
 
 const maximumPreparation = 4 * 1024 * 1024;
 const maximumRows = 8192;
@@ -375,6 +376,8 @@ export async function prepareTemporalRetention(
   db: SqlDatabase,
   state: SavedWorld,
   complete = false,
+  pending?: RecordChanges,
+  previous?: WorldState,
 ): Promise<PreparedMemoryRetention> {
   const temporal = state.world.experience?.temporal;
   const rows = new Map<string, string[]>();
@@ -390,6 +393,20 @@ export async function prepareTemporalRetention(
     through: number;
   }> = [];
   const possibleSources = new Set<string>();
+  // An edited receipt can release its last reference before its chunk expires.
+  // Inspect only changed chunk relations, then ask the shared owner below whether
+  // another witness or a pending append still retains the exact block.
+  for (const [actorId, before] of Object.entries(previous?.experience?.temporal?.actors ?? {})) {
+    const after = temporal.actors[actorId];
+    if (before.chunks === after?.chunks) continue;
+    const current = new Map((after?.chunks ?? []).map((chunk) => [chunk.id, chunk]));
+    for (const chunk of before.chunks) {
+      const next = current.get(chunk.id);
+      if (chunk === next) continue;
+      const retained = new Set(next?.sourceRefs ?? []);
+      for (const id of chunk.sourceRefs) if (!retained.has(id)) possibleSources.add(id);
+    }
+  }
   for (const [actorId, actor] of Object.entries(temporal.actors)) {
     if (
       !actor.maintenanceDue &&
@@ -470,7 +487,7 @@ export async function prepareTemporalRetention(
       rows.set('mind_temporal_chunks', [...(rows.get('mind_temporal_chunks') ?? []), ...recordIds]);
     }
   }
-  if (!retired.length) return { state, rows };
+  if (!retired.length && !possibleSources.size) return { state, rows };
   const world = updateWorld(state.world, (draft) => {
     for (const release of retired)
       retireTemporalChunks(
@@ -488,7 +505,11 @@ export async function prepareTemporalRetention(
   }
   const candidates = [...possibleSources].filter((id) => !keep.has(id));
   if (candidates.length) {
-    const expired = rows.get('mind_temporal_chunks') ?? [];
+    const replaced = [
+      ...(rows.get('mind_temporal_chunks') ?? []),
+      ...(pending?.deletes.get('mind_temporal_chunks') ?? []),
+      ...(pending?.writes.get('mind_temporal_chunks') ?? []).map((row) => row.id),
+    ];
     const unused = complete
       ? candidates.map((source_id) => ({
           id: JSON.stringify(['world', 'experience', 'temporal', 'sources', source_id]),
@@ -497,11 +518,16 @@ export async function prepareTemporalRetention(
       : await db
           .prepare(
             `SELECT s.id,s.source_id FROM mind_temporal_sources s
-      WHERE s.world_id=? AND s.source_id=ANY(?::text[]) AND NOT EXISTS (
+      WHERE s.world_id=? AND s.source_id=ANY(?::text[]) AND s.id<>ALL(?::text[]) AND NOT EXISTS (
         SELECT 1 FROM mind_temporal_chunks c WHERE c.world_id=s.world_id
           AND c.source_refs @> ARRAY[s.source_id]::text[] AND c.id<>ALL(?::text[]))`,
           )
-          .all(state.world.id, candidates, expired);
+          .all(
+            state.world.id,
+            candidates,
+            pending?.deletes.get('mind_temporal_sources') ?? [],
+            replaced,
+          );
     if (unused.length) {
       rows.set(
         'mind_temporal_sources',
@@ -527,5 +553,5 @@ export async function prepareTemporalRetention(
       };
     }
   }
-  return { state: { ...state, world }, rows };
+  return { state: world === state.world ? state : { ...state, world }, rows };
 }

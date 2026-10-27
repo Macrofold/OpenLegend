@@ -389,7 +389,12 @@ export class SqlGameRepository implements GameRepository {
       this.records.stageRetirements(state, rows, positions);
       const changes = this.records.prepare(this.acceptedState ?? undefined, state);
       const planned = await this.memories.prepareSourceVersionRetention(state, changes);
-      const retained = await this.memories.prepareRetention(planned.state, complete, changes);
+      const retained = await this.memories.prepareRetention(
+        planned.state,
+        complete,
+        changes,
+        this.acceptedState?.world,
+      );
       for (const [table, ids] of retained.rows)
         rows.set(table, [...new Set([...(rows.get(table) ?? []), ...ids])]);
       for (const [table, values] of retained.positions ?? []) {
