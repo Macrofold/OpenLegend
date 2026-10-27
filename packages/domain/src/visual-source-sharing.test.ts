@@ -50,7 +50,25 @@ it('shares only complete outward source values while preserving independent rece
   expect(currentBodyObservation(world, first.id, source.id)!.value.body.position.x).toBe(4);
   expect(cut.current.find((value) => value.id === a.id)!.value).toBe(previous);
   expect(previous.kind === 'body' && previous.body.position.x).toBe(3);
+  const restored = JSON.parse(JSON.stringify(world)) as typeof world;
   world.simTime = 2;
+  restored.simTime = 2;
+  initializePerception(world, []);
+  initializePerception(restored, []);
+  for (const observerId of [first.id, second.id]) {
+    expect(
+      currentObservedFacets(world, observerId, source.id).some(
+        (facet) => facet.value.kind === 'observed-motion',
+      ),
+    ).toBe(false);
+    expect(
+      currentObservedFacets(restored, observerId, source.id).some(
+        (facet) => facet.value.kind === 'observed-motion',
+      ),
+    ).toBe(false);
+  }
+  expect(restored.experience?.temporal).toEqual(world.experience?.temporal);
+  world.simTime = 3;
   setSpatialPosition(world, first, { x: 1.5, y: 0, z: 2 }, worldSupport(first), 'physical');
   initializePerception(world, []);
   expect(

@@ -1327,7 +1327,9 @@ export function reconcileVisualEvidence(
       if (
         priorMotion &&
         (!locationLease ||
-          locationLease.valueMeasuredThrough > priorMotion.valueMeasuredThrough ||
+          // This actual sight phase confirms the point even when its stored value
+          // is unchanged. Cold/full and held-token refreshes end old motion alike.
+          world.simTime > priorMotion.valueMeasuredThrough ||
           priorMotion.motionContinuityRevision !== locationLease?.motionContinuityRevision)
       ) {
         attentionChanges.add(subject.id);

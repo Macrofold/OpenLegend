@@ -270,9 +270,13 @@ async function prepareQuietScene(h: Awaited<ReturnType<typeof harness>>) {
     ground.maxX = 128;
     world.map.spatial.blockers = [];
     world.map.spatial.revision++;
-    for (const entity of entityValues(world.entities))
+    for (const entity of entityValues(world.entities)) {
+      // Keep the authored bodies, while isolating this one character's choices
+      // from other NPC turns and unrelated animal navigation preparation.
+      if (entity.id !== NPC_ID && entity.actor) entity.actor.controller = 'player';
       if (entity.id !== NPC_ID && entity.id !== PLAYER_ID && entity.placement?.mode === 'world')
         setSpatialPosition(world, entity, { x: 110, y: 0, z: 10 }, ground.id, 'physical');
+    }
     setSpatialPosition(world, observer, { x: 10, y: 0, z: 10 }, ground.id, 'physical');
     setSpatialPosition(world, player, { x: 20, y: 0, z: 10 }, ground.id, 'physical');
     observer.actor!.action = null;
@@ -294,7 +298,9 @@ async function prepareQuietScene(h: Awaited<ReturnType<typeof harness>>) {
   // Starting-world memories predate this controlled scene. They were already
   // considered; the new outward painting stays genuinely unconsidered.
   await h.store.putIntegration(`semantic-schedule:${h.service.world.id}:${NPC_ID}`, {
-    fingerprint: 'fixture-considered-opening', at: 10000, watermark: h.service.world.nextId,
+    fingerprint: 'fixture-considered-opening',
+    at: 10000,
+    watermark: h.service.world.nextId,
   });
 }
 
@@ -303,6 +309,20 @@ async function considerQuietScene(h: Awaited<ReturnType<typeof harness>>) {
   await h.service.whenDurable();
   await h.director.considerThought();
   await h.director.idle();
+}
+
+async function quietJobs(h: Awaited<ReturnType<typeof harness>>) {
+  return (await h.store.recentJobs(30))
+    .filter((job) => job.kind === 'thought')
+    .map((job) => ({
+      id: job.id,
+      actor: job.request.npcId,
+      status: job.status,
+      trigger: job.diagnosticTriggerType,
+      message: job.message,
+      result: job.result,
+      causes: job.semanticCauses,
+    }));
 }
 
 async function receivePlayerAt(h: Awaited<ReturnType<typeof harness>>, at: number, x: number) {
@@ -351,9 +371,10 @@ describe('AI director with explicit fixtures, no live calls', () => {
     await considerQuietScene(h);
     await h.change((world) => initializePerception(world, []));
     await considerQuietScene(h);
-    expect({ judges: h.calls.judges.length, generations: h.calls.generations.length }).toEqual(
-      dispatched,
-    );
+    expect(
+      { judges: h.calls.judges.length, generations: h.calls.generations.length },
+      JSON.stringify(await quietJobs(h)),
+    ).toEqual(dispatched);
   });
 
   it('spends a failed discovery only once and renews it only after actual chosen work completes', async () => {
@@ -371,35 +392,51 @@ describe('AI director with explicit fixtures, no live calls', () => {
     });
     await prepareQuietScene(h);
     await considerQuietScene(h);
-    expect(attempts).toBe(1);
+    expect(attempts, JSON.stringify(await quietJobs(h))).toBe(1);
     expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
       'spent',
     );
-    await receivePlayerAt(h, 15, 19);
+    await h.change((world) => initializePerception(world, []));
     await considerQuietScene(h);
-    expect(attempts).toBe(1);
+    expect(attempts, JSON.stringify(await quietJobs(h))).toBe(1);
     const moved = await h.service.transition((world) =>
       executeCommand(world, {
         id: 'quiet-interval-chosen-move',
         actorId: NPC_ID,
         type: 'move',
-        destination: { x: 11, y: 0, z: 10, surfaceId: 'terrain' },
+        destination: { x: 9, y: 0, z: 10, surfaceId: 'terrain' },
       }),
     );
     expect(moved.ok, moved.message).toBe(true);
-    await h.service.tick(0.1, 0);
-    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.action).toBeNull();
+    expect(h.service.paused, h.service.storageError).toBe(false);
+    for (let step = 0; step < 6 && entityGet(h.service.world.entities, NPC_ID)!.actor!.action; step++)
+      await h.service.tick(0.1, 0, { drain: true });
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.action,
+      JSON.stringify({ simTime: h.service.world.simTime, paused: h.service.paused, error: h.service.storageError }),
+    ).toBeNull();
     expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic).toMatchObject({
       interval: 1,
       discovery: 'available',
     });
     await considerQuietScene(h);
     expect(attempts).toBe(2);
+    // The actual completion has its own justified personal result. That turn
+    // does not spend the separate discovery permission for this free interval.
+    expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
+      'available',
+    );
+    await h.change((world) => {
+      entityGet(world.entities, 'quiet-portrait')!.description =
+        'A framed painting depicts a red bird above a woven basket.';
+      initializePerception(world, []);
+    });
+    await considerQuietScene(h);
+    expect(attempts, JSON.stringify(await quietJobs(h))).toBe(3);
     expect(entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.discovery).toBe(
       'spent',
     );
     await considerQuietScene(h);
-    expect(attempts).toBe(2);
+    expect(attempts).toBe(3);
   });
 
   it('reuses an accepted quiet choice when actual closing-body evidence clears and returns with a new generation', async () => {
@@ -422,6 +459,7 @@ describe('AI director with explicit fixtures, no live calls', () => {
       entityGet(h.service.world.entities, NPC_ID)!.actor!.agency.semantic!.resolved[
         JSON.stringify([first.anchorKey, first.family])
       ],
+      JSON.stringify(await quietJobs(h)),
     ).toBeDefined();
     await receivePlayerAt(h, 30, 20);
     await receivePlayerAt(h, 150, 20);

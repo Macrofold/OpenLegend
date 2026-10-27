@@ -89,9 +89,9 @@ describe('bounded personal temporal storage', () => {
       recent: { ...installed.recent, maxChanges: 12 },
     });
     try {
-      for (const x of [4, 5, 6, 7, 8])
+      for (const x of [4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4, 5, 6, 7, 8])
         await editWorld(service, (world) => {
-          world.simTime += 1;
+          world.simTime += 0.25;
           setSpatialPosition(
             world,
             entityGet(world.entities, NPC_ID)!,
@@ -120,7 +120,7 @@ describe('bounded personal temporal storage', () => {
       expect(positions).not.toContain(3);
       expect(
         service.world.experience!.temporal!.actors[PLAYER_ID]!.releasedThrough,
-      ).toBeGreaterThanOrEqual(1);
+      ).toBeGreaterThanOrEqual(0.25);
       expect(
         Number(
           (await store.db
