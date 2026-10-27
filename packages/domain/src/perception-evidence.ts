@@ -2044,21 +2044,29 @@ export function endCurrentEvidence(
   observerId: string,
   modality?: ObservationContribution['modality'],
   episodeGraceSeconds = 0,
+  subjectId?: string,
 ): void {
   const state = world.perceptionEvidence?.[observerId];
   if (!state) return;
   const observer = entityGet(world.entities, observerId);
-  if (!modality || modality === 'sight') endReceivedGeometry(world, observerId);
+  if (subjectId === undefined && (!modality || modality === 'sight'))
+    endReceivedGeometry(world, observerId);
   const lostIndividuals = new Set<string>();
+  let changed = false;
   for (const [key, lease] of Object.entries(readOnlyDraftView(state.current)))
-    if (!modality || lease.modality === modality) {
+    if (
+      (subjectId === undefined || lease.subjectId === subjectId) &&
+      (!modality || lease.modality === modality)
+    ) {
       if (lease.value.kind === 'body' && lease.localSubject?.kind === 'individual')
         lostIndividuals.add(lease.localSubject.individualId);
       retainVisualGap(world, state, lease, episodeGraceSeconds);
       if (observer?.actor && state.life === (observer.actor.physicalLife ?? 0))
         finalizeLease(world, observer, lease);
       delete state.current[key];
+      changed = true;
     }
+  if (subjectId !== undefined && !changed) return;
   pruneLostBodyIndividuals(world, observerId, lostIndividuals);
   reconcileAttendedTemporalEvidence(world, observerId);
 }
@@ -2617,6 +2625,12 @@ export function validatePerceptionEvidenceState(
         !lease.id.startsWith('perception-lease-') ||
         !Number.isSafeInteger(lease.revision) ||
         lease.revision < 1 ||
+        // This location changes at most once per full sight phase. The phase
+        // revision must distinguish each newly captured receiver frame.
+        (lease.modality === 'sight' &&
+          lease.value.kind === 'location' &&
+          state.visualConfirmation &&
+          lease.revision > state.visualConfirmation.revision) ||
         lease.observer.actorId !== observerId ||
         lease.observer.physicalLife !== state.life ||
         !isSafeRecordId(lease.subjectId) ||

@@ -263,6 +263,9 @@ function temporalValue(value: TemporalCaptureInput['facets'][number]['value']): 
     later: sample(value.later),
     correspondence: value.correspondence,
   };
+  // Every nested field above is newly owned. Cache the completed value so
+  // comparison, byte accounting and retention can reuse its immutable proof.
+  freeze(result, true);
   motionValues.set(original, result);
   return result;
 }

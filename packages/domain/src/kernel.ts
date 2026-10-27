@@ -8390,17 +8390,15 @@ function* updateEncounters(
   return frame.affected;
 }
 
-/** Establish real encounter episodes before a fresh world's first decision. Otherwise
+/** Establish actual sight/contact for fresh worlds or an actually returned observer. Otherwise
  * an equip-then-target plan binds a null episode and becomes stale on the first tick.
- * Startup already owns this mutation; no clock advance or recognition is fabricated. */
-export function initializePerception(world: WorldState, events: WorldEvent[]): void {
-  for (const _ of updateEncounters(
-    world,
-    snapshotEncounters(world),
-    events,
-    nativeParticipants(world).actors,
-    true,
-  )) {
+ * The world/lifecycle mutation owns this phase; no clock advance or recognition is fabricated. */
+export function initializePerception(
+  world: WorldState,
+  events: WorldEvent[],
+  observerIds: readonly string[] = nativeParticipants(world).actors,
+): void {
+  for (const _ of updateEncounters(world, snapshotEncounters(world), events, observerIds, true)) {
     // Startup consumes the finite initial roster; ordinary ticks use bounded slices.
   }
 }

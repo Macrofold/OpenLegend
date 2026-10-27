@@ -5,7 +5,7 @@ import { namePhrase } from '@open-legend/language';
 import { releaseWork } from './work-budget.js';
 import { recordSemanticChange } from './dependencies.js';
 import { canStand, finitePoint } from '@open-legend/spatial';
-import { draftWorld } from './draft.js';
+import { draftWorld, readOnlyDraftView } from './draft.js';
 import { finish, emit, outcome } from './events.js';
 import { bodyProfile, setSpatialPosition, spatialMap, supportedPosition } from './spatial-state.js';
 import { releaseInvocationResources } from './resource-claims.js';
@@ -16,6 +16,8 @@ import { forgetProjectileBodyEncounters } from './ranged.js';
 import type { Transition, WorldEvent, WorldState } from './types.js';
 import type { Entity } from './types.js';
 import { reconcileOutings } from './outings.js';
+import { endCurrentEvidence } from './perception-evidence.js';
+import { initializePerception } from './kernel.js';
 export { activelyParticipates, type ParticipationState } from './participation-state.js';
 
 function interruptDepartureWork(world: WorldState, entity: Entity): void {
@@ -48,6 +50,44 @@ function departActor(world: WorldState, entity: Entity, events: WorldEvent[]): v
   delete entity.spatial.localPose;
   forgetProjectileBodyEncounters(world, entity.id, entity.actor!.physicalLife ?? 0);
   state.phase = 'inactive';
+  // Physical absence ends current access now, including when departure and
+  // return occur while paused. Old observations remain historical evidence.
+  delete entity.sensoryProgress;
+  const observers = new Set([
+    entity.id,
+    ...Object.keys(world.perceptionEvidence ?? {}),
+    ...Object.keys(world.perceptionEpisodes ?? {}),
+  ]);
+  for (const observerId of observers) {
+    endCurrentEvidence(
+      world,
+      observerId,
+      undefined,
+      0,
+      observerId === entity.id ? undefined : entity.id,
+    );
+    const episodes = world.perceptionEpisodes?.[observerId];
+    if (episodes) {
+      if (observerId === entity.id) {
+        for (const id of Object.keys(episodes)) delete episodes[id];
+      } else delete episodes[entity.id];
+    }
+    const observer = entityGet(readOnlyDraftView(world.entities), observerId);
+    if (observerId === entity.id) {
+      if (Object.keys(entity.actor!.contacts ?? {}).length) entity.actor!.contacts = {};
+    } else if (observer?.actor?.contacts?.[entity.id])
+      delete entityGet(world.entities, observerId)!.actor!.contacts![entity.id];
+  }
+  for (const table of [world.visiblePeople, world.visibleObjects])
+    if (table)
+      for (const [observerId, ids] of Object.entries(readOnlyDraftView(table))) {
+        if (observerId === entity.id) {
+          if (ids.length) table[observerId] = [];
+        } else if (ids.includes(entity.id))
+          table[observerId] = ids.filter((id) => id !== entity.id);
+      }
+  if (Object.keys(world.visiblePlaces?.[entity.id] ?? {}).length)
+    world.visiblePlaces![entity.id] = {};
   reconcileOutings(world, events, { changedOnly: true });
   reconcileCompacts(world, events);
   if (world.exitExposures) delete world.exitExposures[entity.id];
@@ -171,7 +211,8 @@ export function changeParticipation(
     state.phase = 'active';
     delete state.exitAttemptId;
     if (world.exitExposures) delete world.exitExposures[actorId];
-    if (previous?.phase === 'inactive')
+    if (previous?.phase === 'inactive') {
+      delete entity.sensoryProgress;
       emit(
         world,
         events,
@@ -181,6 +222,10 @@ export function changeParticipation(
         undefined,
         { significant: true },
       );
+      // Re-entry is an actual bodily transition, not a view request or restore
+      // replay. Only this actor receives a fresh phase and restarts its clocks.
+      initializePerception(world, events, [actorId]);
+    }
   }
   reconcileOutings(world, events, { changedOnly: true });
   reconcileCompacts(world, events);
