@@ -1114,6 +1114,12 @@ export async function prepareDecision(
         sharedSlots.set(key, { index: slot, revision });
     });
   }
+  // Conversation owns independently prepared exact sources. They already appear
+  // in this same array; appraisal causes must not serialize those records again.
+  for (const [key, shared] of conversation.sharedExperiences) {
+    const index = experienceSlots.get(shared.experience);
+    if (index !== undefined) sharedSlots.set(key, { index, revision: shared.revision });
+  }
   const offered: { id: string; description: string }[] = [];
   for (const key of Object.keys(context)) {
     const value = context[key];
@@ -1174,6 +1180,7 @@ export async function prepareDecision(
     },
     context,
     prompt,
+    includeActions: false,
     sharedExperiences,
     actionGuidance: structuredClone(currentWorld.cognitionPolicy.actionGuidance),
     // Entity handles were projected with the rest of the permitted context above;
@@ -1250,6 +1257,85 @@ function actionEntityReferences(
     ...Object.fromEntries(
       Object.entries(prepared.visibleEntityReferences).filter(([, id]) => targets.has(id)),
     ),
+  };
+}
+
+/** Generation adds private capabilities after recall/action selection. Fit their
+ * actual envelope before sacrificing any personal evidence or raising its limit.
+ * docs/memory-architecture.md#3-one-compact-model-facing-context */
+export function fitDecisionEnvelope(
+  prepared: Awaited<ReturnType<typeof prepareDecision>>,
+  additionalBytes: number,
+) {
+  const includeActions = prepared.includeActions;
+  const bytes = (prompt: string) =>
+    Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS) + additionalBytes;
+  if (bytes(prepared.prompt) <= CONTEXT_BYTE_LIMIT) return prepared;
+
+  const context = { ...prepared.context };
+  const plans = (context['planOffers'] as Array<{ id: string; description: string }>).slice();
+  let offered = prepared.offered;
+  const removed = new Set<string>();
+  const render = () => readableDecisionContext(context, offered, includeActions);
+  // Optional offers keep their existing order. Whole-prefix sizing accounts for
+  // headings/JSON punctuation without repeatedly serializing once per offer.
+  const fitPrefix = <T>(rows: T[], install: (rows: T[]) => void): T[] => {
+    let low = 0,
+      high = rows.length;
+    while (low < high) {
+      const mid = Math.ceil((low + high) / 2);
+      install(rows.slice(0, mid));
+      if (bytes(render()) <= CONTEXT_BYTE_LIMIT) low = mid;
+      else high = mid - 1;
+    }
+    const kept = rows.slice(0, low);
+    install(kept);
+    return kept;
+  };
+  const keptPlans = fitPrefix(plans, (rows) => {
+    context['planOffers'] = rows;
+  });
+  for (const row of plans.slice(keptPlans.length)) removed.add(row.id);
+  if (bytes(render()) > CONTEXT_BYTE_LIMIT && prepared.choiceCoverage === 'optional') {
+    const previous = offered;
+    offered = fitPrefix(previous, (rows) => {
+      offered = rows;
+    });
+    for (const row of previous.slice(offered.length)) removed.add(row.id);
+  }
+  const prompt = render(),
+    inputBytes = bytes(prompt);
+  if (inputBytes > CONTEXT_BYTE_LIMIT)
+    throw new ContextBudgetError(
+      'Complete accepted inner world and required context exceed the input budget.',
+    );
+  return {
+    ...prepared,
+    context,
+    prompt,
+    offered,
+    binding: {
+      ...prepared.binding,
+      actions: Object.fromEntries(
+        Object.entries(prepared.binding.actions).filter(([id]) => !removed.has(id)),
+      ),
+    },
+    diagnostics: {
+      ...prepared.diagnostics,
+      inputBytes: inputBytes - additionalBytes,
+      estimatedInputTokens: Math.ceil((inputBytes - additionalBytes) / 3),
+      planningOptions: {
+        ...prepared.diagnostics.planningOptions,
+        included: keptPlans.length,
+        omittedForInputSize: prepared.diagnostics.planningOptions.available - keptPlans.length,
+      },
+      finalEnvelope: {
+        inputBytes,
+        additionalBytes,
+        omittedPlanningOffers: plans.length - keptPlans.length,
+        omittedActionOffers: prepared.offered.length - offered.length,
+      },
+    },
   };
 }
 
@@ -1337,6 +1423,7 @@ export async function selectDecisionActions(
     entityReferences,
     offered,
     prompt,
+    includeActions: true,
     diagnostics: {
       ...prepared.diagnostics,
       inputBytes,
@@ -1444,6 +1531,7 @@ export function offerPreparedActions(
     entityReferences: actionEntityReferences(prepared, candidates),
     offered,
     prompt,
+    includeActions: true,
     diagnostics: {
       ...prepared.diagnostics,
       inputBytes,

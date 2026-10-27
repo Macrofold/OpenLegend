@@ -247,7 +247,7 @@ it('reinforces only actually selected impressions at accepted semantic use', () 
   ).toBe(prior);
 });
 
-it('rejects mixed, duplicated and unbounded new proposal payloads at the shared envelope', () => {
+it('rejects mixed proposals and bounds repeated source references at the shared envelope', () => {
   expect(
     validResponseEnvelope({
       operations: [
@@ -269,6 +269,18 @@ it('rejects mixed, duplicated and unbounded new proposal payloads at the shared 
           localId: 'x',
           requiresAccepted: [],
           remember: { sources: ['b', 'b'], text: 'Maybe.' },
+        },
+      ],
+    }),
+  ).toBe(true);
+  expect(
+    validResponseEnvelope({
+      operations: [
+        {
+          ...empty,
+          localId: 'x',
+          requiresAccepted: [],
+          remember: { sources: Array.from({ length: 9 }, () => 'b'), text: 'Maybe.' },
         },
       ],
     }),

@@ -17,6 +17,8 @@ import { entityHandle } from './entity-references.js';
 import { memoryCandidate } from './recall.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { digest } from './store.js';
+import { ContextBudgetError } from './context.js';
+import type { SharedModelExperience } from './perceived-context.js';
 import type { WorldService } from './world-service.js';
 import {
   conversationCompactionKey,
@@ -222,6 +224,12 @@ export async function buildConversationContext(input: {
     };
   });
   type Turn = (typeof turns)[number];
+  // Required causes keep their complete typed source in the decision's evidence
+  // section, but still belong in the chronological dialogue the actor is using.
+  const requiredTurns = turns.filter((turn) => required.has(turn.id));
+  const requiredLines = requiredTurns.map((turn) => turn.text);
+  if (requiredTurns.length && projectionBytes(requiredLines, []) > maxBytes)
+    throw new ContextBudgetError('Complete required conversation exceeds the input budget.');
   const optional = turns.filter((turn) => !required.has(turn.id));
   const summaryProjection = (value: Compaction | undefined) => {
     if (!value) return undefined;
@@ -336,7 +344,7 @@ export async function buildConversationContext(input: {
       const proposed = [optional[i]!, ...recent];
       if (
         projectionBytes(
-          [...(older ? [older.text] : []), ...proposed.map((turn) => turn.text)],
+          [...(older ? [older.text] : []), ...requiredLines, ...proposed.map((turn) => turn.text)],
           [...(older?.experience ?? []), ...proposed.flatMap((turn) => turn.experience)],
         ) > maxBytes
       )
@@ -469,36 +477,57 @@ export async function buildConversationContext(input: {
   }
   const recent = fitted.recent,
     summary = fitted.older;
+  const exactTurns = [...requiredTurns, ...recent].sort((a, b) => a.sequence - b.sequence);
   usedCache = summary ? cached : undefined;
-  boundSources = recent;
+  boundSources = exactTurns;
   boundEntities = [
     ...new Set([
       ...(usedCache?.value.entityIds ?? []),
-      ...recent.flatMap((turn) => turn.entry.value.entityIds),
+      ...exactTurns.flatMap((turn) => turn.entry.value.entityIds),
     ]),
   ];
   expectedPerspective = perspective(world, actorId, boundEntities);
   checkedWorld = new WeakRef(world);
   await check();
-  const lines = [...(summary ? [summary.text] : []), ...recent.map((turn) => turn.text)];
+  const lines = [...(summary ? [summary.text] : []), ...exactTurns.map((turn) => turn.text)];
   const experience = [...(summary?.experience ?? []), ...recent.flatMap((turn) => turn.experience)];
+  const sharedExperiences = new Map<string, SharedModelExperience>();
+  let experienceIndex = summary?.experience.length ?? 0;
+  for (const turn of recent) {
+    const value = turn.experience[0];
+    if (value)
+      sharedExperiences.set(experienceSourceKey({ kind: 'awareness', id: turn.id }), {
+        index: experienceIndex,
+        revision: turn.revision,
+        experience: value,
+      });
+    experienceIndex += turn.experience.length;
+  }
   return {
     lines,
     experience,
-    evidenceIds: recent.map((turn) => turn.id),
-    watermark: Math.max(usedCache?.value.to ?? 0, ...recent.map((turn) => turn.entry.value.at), 0),
+    sharedExperiences,
+    evidenceIds: exactTurns.map((turn) => turn.id),
+    watermark: Math.max(
+      usedCache?.value.to ?? 0,
+      ...exactTurns.map((turn) => turn.entry.value.at),
+      0,
+    ),
     sourceKeys: [
       ...(usedCache?.value.sources.map(experienceSourceKey) ?? []),
-      ...recent.map((turn) => experienceSourceKey({ kind: 'awareness', id: turn.id })),
+      ...exactTurns.map((turn) => experienceSourceKey({ kind: 'awareness', id: turn.id })),
     ],
     entityIds: [
-      ...new Set([...(summary?.references ?? []), ...recent.flatMap((turn) => turn.references)]),
+      ...new Set([
+        ...(summary?.references ?? []),
+        ...exactTurns.flatMap((turn) => turn.references),
+      ]),
     ],
     awarenessSequence: snapshot.sequence,
     validate: check,
     diagnostics: {
       mode: summary ? 'compacted' : 'exact-suffix',
-      selectedTurns: recent.length,
+      selectedTurns: exactTurns.length,
       more:
         snapshot.more ||
         sources.some(
@@ -509,8 +538,8 @@ export async function buildConversationContext(input: {
         ),
       summaryFromSequence: usedCache?.fromSequence ?? null,
       summaryThroughSequence: usedCache?.through ?? null,
-      firstSequence: recent[0]?.sequence ?? null,
-      lastSequence: recent.at(-1)?.sequence ?? null,
+      firstSequence: exactTurns[0]?.sequence ?? null,
+      lastSequence: exactTurns.at(-1)?.sequence ?? null,
       summaryBytes: usedCache ? Buffer.byteLength(usedCache.value.text) : 0,
       projectionBytes: projectionBytes(lines, experience),
       maxBytes,
@@ -518,7 +547,7 @@ export async function buildConversationContext(input: {
       compactionCalls: calls,
       compactionFailure,
       summary: usedCache?.value.text ?? null,
-      recent: recent.map((turn) => turn.text),
+      recent: exactTurns.map((turn) => turn.text),
       projection: conversationText(lines),
     },
   };

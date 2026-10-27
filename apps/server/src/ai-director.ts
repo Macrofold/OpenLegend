@@ -134,6 +134,7 @@ import { CognitionMaintenance } from './cognition-maintenance.js';
 import { RecallService } from './recall.js';
 import {
   fallbackDecisionActions,
+  fitDecisionEnvelope,
   prepareDecision,
   refreshDecisionActions,
   selectDecisionActions,
@@ -3356,12 +3357,19 @@ export class AiDirector {
           ],
         },
       );
+    const instructions = `${RESPONSE_INSTRUCTIONS} ${actorInvention.instructions}`;
+    const additionalInstructionBytes =
+      Buffer.byteLength(instructions) - Buffer.byteLength(RESPONSE_INSTRUCTIONS);
+    const additionalContext = `\n${actorInvention.context}${appraisals ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisals.context) : ''}`;
+    prepared = fitDecisionEnvelope(
+      prepared,
+      additionalInstructionBytes + Buffer.byteLength(additionalContext),
+    );
     let baseSchema = buildResponseSchema();
     let schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })
       : baseSchema;
-    const instructions = `${RESPONSE_INSTRUCTIONS} ${actorInvention.instructions}`;
-    let context = `${prepared.prompt}\n${actorInvention.context}${appraisals ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisals.context) : ''}`;
+    let context = `${prepared.prompt}${additionalContext}`;
     // Private proposal context shares the existing total bound; it does not buy a larger prompt.
     if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
       throw new ContextBudgetError();
@@ -3568,14 +3576,28 @@ export class AiDirector {
             const episode = prepared.situation.world.perceptionEpisodes?.[actorId]?.[id];
             if (episode) (prepared.binding.entityEpisodes ??= {})[id] = episode;
           }
+          preview?.finish();
+          const { expandedIds: _expandedIds, ...disclosedExpansion } = expansion;
+          const finalContext = { ...prepared.context, situationQueries: false };
+          const expandedContext = `${additionalContext}\nRequested received evidence: ${JSON.stringify(disclosedExpansion)}`;
+          prepared = fitDecisionEnvelope(
+            {
+              ...prepared,
+              context: finalContext,
+              prompt: readableDecisionContext(
+                finalContext,
+                prepared.offered,
+                prepared.includeActions,
+              ),
+            },
+            additionalInstructionBytes + Buffer.byteLength(expandedContext),
+          );
           baseSchema = buildResponseSchema();
           schema = actorInvention.enabled
             ? baseSchema.extend({ invention: actorInvention.schema })
             : baseSchema;
-          preview?.finish();
           preview = startPreview();
-          const { expandedIds: _expandedIds, ...disclosedExpansion } = expansion;
-          context = `${readableDecisionContext({ ...prepared.context, situationQueries: false }, prepared.offered, prepared.prompt.includes('## Actions'))}\n${actorInvention.context}${appraisals ? '\nPermitted feeling proposals: ' + JSON.stringify(appraisals.context) : ''}\nRequested received evidence: ${JSON.stringify(disclosedExpansion)}`;
+          context = `${prepared.prompt}${expandedContext}`;
           if (Buffer.byteLength(instructions) + Buffer.byteLength(context) > CONTEXT_BYTE_LIMIT)
             throw new ContextBudgetError(
               'The bounded situation expansion exceeds the decision input allowance.',
