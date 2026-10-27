@@ -12,6 +12,45 @@ import {
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
 
+/** Resolve a batch as relations, rather than rescanning the same actor rows for
+ * every alias. Sparse-proof release deliberately omits recent-history ownership.
+ * docs/performance.md#storage-execution */
+async function retainedSourceAliases(
+  db: SqlDatabase,
+  worldId: string,
+  actorId: string,
+  aliases: readonly string[],
+  removedAccounts: readonly string[],
+  removedChunks?: readonly string[],
+): Promise<string[]> {
+  const rows = await db
+    .prepare(
+      `WITH requested AS MATERIALIZED (SELECT unnest(?::text[]) AS id),
+      retained_accounts AS MATERIALIZED (
+        SELECT world_id,actor_id,id,source_kind,event_id FROM recall_sources
+        WHERE world_id=? AND actor_id=? AND memory_kind IS DISTINCT FROM 'impression' AND record_id<>ALL(?::text[]))
+      ${removedChunks === undefined ? '' : `SELECT q.id FROM requested q JOIN mind_temporal_chunks c ON c.world_id=? AND c.actor_id=? AND c.source_ids @> ARRAY[q.id]::text[] WHERE c.id<>ALL(?::text[]) UNION`}
+      SELECT q.id FROM requested q JOIN retained_accounts r ON r.id=q.id
+      UNION SELECT q.id FROM requested q JOIN retained_accounts r ON r.event_id=q.id
+      UNION SELECT q.id FROM requested q JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=? AND d.source_id=q.id
+        JOIN retained_accounts r ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id
+      UNION SELECT q.id FROM requested q JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=? AND d.alias_id=q.id
+        JOIN retained_accounts r ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id`,
+    )
+    .all(
+      aliases,
+      worldId,
+      actorId,
+      removedAccounts,
+      ...(removedChunks === undefined ? [] : [worldId, actorId, removedChunks]),
+      worldId,
+      actorId,
+      worldId,
+      actorId,
+    );
+  return rows.map((row) => String(row['id']));
+}
+
 /** Proof is owned by an actual retained name/profile/note/place or mechanical
  * grant. Dropping a profile cannot leave its old sparse proof charged forever. */
 export async function releaseUnusedTemporalSupports(
@@ -48,22 +87,14 @@ export async function releaseUnusedTemporalSupports(
   if (!complete)
     for (let offset = 0; offset < aliases.length; offset += 800) {
       const batch = aliases.slice(offset, offset + 800);
-      for (const row of await db
-        .prepare(
-          `SELECT q.id FROM unnest(?::text[])q(id) WHERE
-      EXISTS(SELECT 1 FROM recall_sources r WHERE r.world_id=? AND r.actor_id=? AND (r.id=q.id OR r.event_id=q.id) AND r.memory_kind IS DISTINCT FROM 'impression' AND r.record_id<>ALL(?::text[]))
-      OR EXISTS(SELECT 1 FROM mind_source_dependencies d JOIN recall_sources r ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id WHERE d.world_id=? AND d.actor_id=? AND (d.source_id=q.id OR d.alias_id=q.id) AND r.memory_kind IS DISTINCT FROM 'impression' AND r.record_id<>ALL(?::text[]))`,
-        )
-        .all(
-          batch,
-          state.world.id,
-          actorId,
-          removedAccounts,
-          state.world.id,
-          actorId,
-          removedAccounts,
-        ))
-        retained.add(String(row['id']));
+      for (const id of await retainedSourceAliases(
+        db,
+        state.world.id,
+        actorId,
+        batch,
+        removedAccounts,
+      ))
+        retained.add(id);
     }
   const ids = candidates
     .filter(
@@ -243,26 +274,15 @@ export async function cleanupRetiredIndividuals(
     const aliases = [...candidate.sources],
       ids = [...candidate.individuals];
     if (!complete && aliases.length) {
-      const remaining = await db
-        .prepare(
-          `SELECT q.id FROM unnest(?::text[]) q(id) WHERE
-        EXISTS(SELECT 1 FROM mind_temporal_chunks c WHERE c.world_id=? AND c.actor_id=? AND c.source_ids @> ARRAY[q.id]::text[] AND c.id<>ALL(?::text[]))
-        OR EXISTS(SELECT 1 FROM recall_sources r WHERE r.world_id=? AND r.actor_id=? AND (r.id=q.id OR r.event_id=q.id) AND r.memory_kind IS DISTINCT FROM 'impression' AND r.record_id<>ALL(?::text[]))
-        OR EXISTS(SELECT 1 FROM mind_source_dependencies d JOIN recall_sources r ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id WHERE d.world_id=? AND d.actor_id=? AND (d.source_id=q.id OR d.alias_id=q.id) AND r.memory_kind IS DISTINCT FROM 'impression' AND r.record_id<>ALL(?::text[]))`,
-        )
-        .all(
-          aliases,
-          world.id,
-          actorId,
-          retiredChunks,
-          world.id,
-          actorId,
-          removedAccounts,
-          world.id,
-          actorId,
-          removedAccounts,
-        );
-      for (const row of remaining) retained.add(String(row['id']));
+      for (const id of await retainedSourceAliases(
+        db,
+        world.id,
+        actorId,
+        aliases,
+        removedAccounts,
+        retiredChunks,
+      ))
+        retained.add(id);
     }
     if (!complete && ids.length)
       for (const row of await db
