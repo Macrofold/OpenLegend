@@ -3,8 +3,7 @@ import {
   characterCount,
   knowledgeDocument,
   currentCommunicationSubject,
-  currentBodySubject,
-  sameSubject,
+  currentBodySubjects,
   subjectKey,
   subjectLabel,
   observerIndividual,
@@ -62,6 +61,11 @@ export function subjectKnowledgeCandidates(
   actorId: string,
   involved: Set<string>,
 ): AttentionCandidate[] {
+  const involvedSubjects = new Set(
+    [...involved].flatMap((entityId) =>
+      currentBodySubjects(world, actorId, entityId).map(subjectKey),
+    ),
+  );
   return Object.entries(world.actorKnowledge?.[actorId] ?? {}).flatMap(([id, doc]) => {
     if (doc.subjectId === null || !doc.text) return [];
     const entity =
@@ -90,10 +94,7 @@ export function subjectKnowledgeCandidates(
         required:
           doc.subjectId.kind === 'entity'
             ? bound && involved.has(doc.subjectId.entityId)
-            : [...involved].some((entityId) => {
-                const subject = currentBodySubject(world, actorId, entityId);
-                return !!subject && sameSubject(subject, doc.subjectId!);
-              }),
+            : involvedSubjects.has(subjectKey(doc.subjectId)),
         automatic: false,
         entityIds: bound && doc.subjectId.kind === 'entity' ? [doc.subjectId.entityId] : [],
         at: world.simTime,

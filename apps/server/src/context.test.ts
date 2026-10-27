@@ -15,8 +15,25 @@ import {
   setAttentionFocus,
   initializePerception,
   currentBodyObservation,
+  currentBodyAssociation,
+  currentBodyLocalSubject,
+  currentBodySubject,
+  currentBodySubjects,
+  createWorld,
+  PLAYER_ID,
+  setSpatialPosition,
+  worldSupport,
+  editKnowledge,
+  assignSubjectName,
+  observerIndividual,
+  observerGivenName,
+  sameSubject,
   type DeclarationDraft,
 } from '@open-legend/domain';
+import { subjectKnowledgeCandidates } from './knowledge-context.js';
+import { responseReferences } from './response-context.js';
+import { entityHandle } from './entity-references.js';
+import { continuitySubjects } from './continuity-view.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
 import {
   buildContext,
@@ -69,6 +86,155 @@ afterEach(async () => {
 });
 
 describe('bounded actor context', () => {
+  it('reconnects recognized returning people to their notes while preserving local labels and conflicting notes', async () => {
+    const service = await setup();
+    let world = createWorld(167, undefined, {
+      worldId: service.world.id,
+      playerId: PLAYER_ID,
+      residentId: NPC_ID,
+    });
+    world.observerIdentities![PLAYER_ID] = {};
+    for (const [id, x] of [
+      [PLAYER_ID, 1],
+      [NPC_ID, 3],
+    ] as const) {
+      const entity = entityGet(world.entities, id)!;
+      setSpatialPosition(world, entity, { x, y: 0, z: 2 }, worldSupport(entity));
+    }
+    initializePerception(world, []);
+    const say = (id: string, at: number, introduction?: string) => {
+      world = structuredClone(world);
+      world.simTime = at;
+      const result = executeCommand(world, {
+        id,
+        actorId: NPC_ID,
+        type: 'say',
+        targetId: PLAYER_ID,
+        text: introduction ? `My name is ${introduction}.` : 'I am still nearby.',
+        ...(introduction ? { selfIntroduction: introduction } : {}),
+      });
+      expect(result.outcome.ok).toBe(true);
+      world = result.world;
+    };
+    say('returning-introduction', 0, 'Tavin');
+    const introduced = currentBodySubject(world, PLAYER_ID, NPC_ID)!;
+    const beforeRepeatedName = structuredClone(observerIndividual(world, PLAYER_ID, introduced)!);
+    say('repeated-returning-introduction', 1, 'Tavin');
+    expect(observerIndividual(world, PLAYER_ID, introduced)!.revision).toBe(
+      beforeRepeatedName.revision,
+    );
+    expect(observerIndividual(world, PLAYER_ID, introduced)!.nameEvidenceIds).toEqual(
+      beforeRepeatedName.nameEvidenceIds,
+    );
+    say('returning-contact', 120);
+    const learned = currentBodySubject(world, PLAYER_ID, NPC_ID)!;
+    world = structuredClone(world);
+    expect(
+      editKnowledge(
+        world,
+        PLAYER_ID,
+        {
+          subjectId: learned,
+          expectedRevision: 0,
+          text: 'Tavin offered to share his food.',
+        },
+        [learned],
+      ).ok,
+    ).toBe(true);
+    const blocker = {
+      id: 'returning-person-occluder',
+      bounds: { min: { x: 1.9, y: 0, z: 1 }, max: { x: 2.1, y: 3, z: 3 } },
+      movement: false,
+      sight: true,
+      acousticTransmission: 1,
+      material: 'cloth',
+    };
+    world.map.spatial.blockers.push(blocker);
+    world.map.spatial.revision++;
+    world.simTime = 240;
+    initializePerception(world, []);
+    expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
+    world.map.spatial.blockers = world.map.spatial.blockers.filter(
+      (entry) => entry.id !== blocker.id,
+    );
+    world.map.spatial.revision++;
+    world.simTime = 360;
+    initializePerception(world, []);
+    const local = currentBodyLocalSubject(world, PLAYER_ID, NPC_ID)!;
+    expect(sameSubject(local, learned)).toBe(false);
+    expect(currentBodyAssociation(world, PLAYER_ID, NPC_ID)).toBeUndefined();
+    const requiredNotes = () =>
+      subjectKnowledgeCandidates(world, PLAYER_ID, new Set([NPC_ID])).filter(
+        (entry) => entry.required,
+      );
+    expect(requiredNotes()).toHaveLength(0);
+    say('returning-recognition', 480);
+    expect(currentBodyAssociation(world, PLAYER_ID, NPC_ID)).toEqual(learned);
+    expect(observerGivenName(world, PLAYER_ID, NPC_ID)).toBe('Tavin');
+    expect(currentBodySubject(world, PLAYER_ID, NPC_ID)).toEqual(learned);
+    expect(requiredNotes()).toHaveLength(1);
+    expect(
+      responseReferences(world, PLAYER_ID, [NPC_ID], []).identityReferences[
+        entityHandle(world, PLAYER_ID, NPC_ID)
+      ],
+    ).toEqual(learned);
+    world = structuredClone(world);
+    expect(
+      assignSubjectName(
+        world,
+        PLAYER_ID,
+        {
+          subjectId: currentBodySubject(world, PLAYER_ID, NPC_ID)!,
+          expectedRevision: observerIndividual(world, PLAYER_ID, learned)!.revision,
+          givenName: 'Tav',
+        },
+        [learned],
+      ).ok,
+    ).toBe(true);
+    expect(observerIndividual(world, PLAYER_ID, learned)!.givenName).toBe('Tav');
+    expect(
+      editKnowledge(
+        world,
+        PLAYER_ID,
+        {
+          subjectId: local,
+          expectedRevision: 0,
+          text: 'This person seemed wary before speaking.',
+        },
+        [local],
+      ).ok,
+    ).toBe(true);
+    expect(currentBodySubject(world, PLAYER_ID, NPC_ID)).toEqual(local);
+    expect(requiredNotes()).toHaveLength(2);
+    expect(
+      assignSubjectName(
+        world,
+        PLAYER_ID,
+        {
+          subjectId: local,
+          expectedRevision: observerIndividual(world, PLAYER_ID, local)!.revision,
+          givenName: 'Blue coat',
+        },
+        [local],
+      ).ok,
+    ).toBe(true);
+    expect(observerGivenName(world, PLAYER_ID, NPC_ID)).toBe('Blue coat');
+    expect(observerIndividual(world, PLAYER_ID, learned)!.givenName).toBe('Tav');
+    expect(currentBodySubjects(world, PLAYER_ID, NPC_ID)).toEqual([local, learned]);
+    expect(requiredNotes()).toHaveLength(2);
+    await editWorld(service, (draft) => Object.assign(draft, structuredClone(world)));
+    for (const [subject, label, text] of [
+      [local, 'Blue coat', 'This person seemed wary before speaking.'],
+      [learned, 'Tav', 'Tavin offered to share his food.'],
+    ] as const) {
+      const selected = continuitySubjects(service, PLAYER_ID, service.localScope, {
+        subjectId: subject,
+      }).selected;
+      expect(selected?.subject.label).toBe(label);
+      expect(selected?.subject.status).toBe('in-view');
+      expect(selected?.notepad?.text).toBe(text);
+    }
+  });
   it('preserves complete context and trimming order with exact UTF-8 accounting', async () => {
     const service = await setup();
     const base = buildContext(service, NPC_ID, '');

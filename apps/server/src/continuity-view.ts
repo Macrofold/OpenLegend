@@ -8,7 +8,7 @@ import {
   snapshotRevision,
   canRememberSubject,
   currentBodyObservation,
-  currentBodySubject,
+  currentBodySubjects,
   currentCommunicationSubject,
   distance3D,
   observerDescription,
@@ -223,12 +223,10 @@ export function continuitySubjects(
     if (lease.value.kind !== 'body') continue;
     const body = currentBodyObservation(world, actorId, lease.subjectId);
     if (!body) continue;
-    const subject =
-      currentBodySubject(world, actorId, lease.subjectId) ??
-      (!entityGet(world.entities, lease.subjectId)?.actor
-        ? { kind: 'entity' as const, entityId: lease.subjectId }
-        : undefined);
-    if (subject) {
+    const supported = currentBodySubjects(world, actorId, lease.subjectId);
+    if (!supported.length && !entityGet(world.entities, lease.subjectId)?.actor)
+      supported.push({ kind: 'entity', entityId: lease.subjectId });
+    for (const subject of supported) {
       currentSubjects.push(subject);
       currentBodies.set(subjectKey(subject), body.value.body.position);
     }

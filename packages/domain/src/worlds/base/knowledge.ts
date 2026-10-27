@@ -15,6 +15,7 @@ import {
   characterCount,
   advanceKnowledgeRevision,
   allocateObserverIndividual,
+  knowledgeDocument,
   type KnowledgePolicy,
 } from '../../knowledge.js';
 import { isSafeRecordId } from '../../records.js';
@@ -355,20 +356,42 @@ function currentBodyIdentity(
     (identity) => !identity.seedOnly && !identity.authored && identity.encounterId === encounterId,
   );
 }
-/** Local subject for this exact current body, separate from remembered people. */
+/** Both an uninterrupted local account and a received recognition can describe
+ * this body. Keep conflicting notes separate instead of silently merging them. */
+export function currentBodySubjects(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): ObserverSubject[] {
+  const local = currentBodyLocalSubject(world, observerId, subjectId);
+  const association = currentBodyAssociation(world, observerId, subjectId);
+  if (local || association)
+    return [
+      ...(local ? [local] : []),
+      ...(association && (!local || !sameSubject(local, association)) ? [association] : []),
+    ];
+  const identity = currentBodyIdentity(world, observerId, subjectId);
+  return identity?.individualId
+    ? [{ kind: 'individual', individualId: identity.individualId }]
+    : [];
+}
+/** An unannotated returning body edits the person actually recognized. A chosen
+ * local name or note keeps its existing subject; recognition never overwrites it.
+ * docs/worlds/base/knowledge.md#current-delivered-binding */
 export function currentBodySubject(
   world: WorldState,
   observerId: string,
   subjectId: string,
 ): ObserverSubject | undefined {
-  const local = currentBodyLocalSubject(world, observerId, subjectId);
-  if (local) return local;
-  const association = currentBodyAssociation(world, observerId, subjectId);
-  if (association) return association;
-  const identity = currentBodyIdentity(world, observerId, subjectId);
-  return identity?.individualId
-    ? { kind: 'individual', individualId: identity.individualId }
-    : undefined;
+  const subjects = currentBodySubjects(world, observerId, subjectId),
+    local = subjects[0];
+  if (
+    local &&
+    (observerIndividual(world, observerId, local)?.givenName ||
+      knowledgeDocument(world, observerId, local)?.text.trim())
+  )
+    return local;
+  return subjects.at(-1);
 }
 /** Called only by actual body observation after its lease has been installed.
  * Seeing an unfamiliar body permits a continuous local subject, never a face profile
@@ -729,6 +752,8 @@ export function assignSubjectName(
     return outcome(false, 'stale-identity', 'The preferred name changed.');
   if (!edit.givenName.trim() || characterCount(edit.givenName) > 120)
     return outcome(false, 'invalid-given-name', 'A preferred name must contain 1–120 characters.');
+  if (identity.givenName === edit.givenName.trim())
+    return outcome(true, 'given-name-unchanged', 'Preferred name is already current.');
   const held = retainNameEvidence(world, observerId, evidenceIds);
   if (!held)
     return outcome(
