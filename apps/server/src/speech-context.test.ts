@@ -6,6 +6,7 @@ import { WorldService } from './world-service.js';
 import { IntelligenceLog } from './intelligence-log.js';
 import { RecallService } from './recall.js';
 import { prepareDecision } from './decision-context.js';
+import { canonicalJson, experienceSourceKey } from '@open-legend/domain';
 
 async function fixture() {
   const config = readConfig({ AI_BUDGET_USD: '0' });
@@ -56,13 +57,18 @@ it('keeps required causes and a complete bounded recent suffix after the trigger
     const history = decision.context['conversation'] as string[];
     expect(history.length).toBeGreaterThan(0);
     expect(history.length).toBeLessThan(34);
-    const numbers = history.map((line) => Number(/My reply number (\d+)/.exec(line)?.[1]));
+    const numbers = history.flatMap((line) => {
+      const match = /My reply number (\d+)/.exec(line);
+      return match ? [Number(match[1])] : [];
+    });
+    expect(history[0]).toContain('First question');
+    expect(numbers.length).toBeGreaterThan(0);
     expect(
       numbers.every((number, index) => index === 0 || number === numbers[index - 1]! + 1),
     ).toBe(true);
-    // The latest own utterance is also a required committed work result, kept
-    // separately rather than duplicated in the optional suffix.
-    expect(numbers.at(-1)).toBe(32);
+    // Required speech remains chronological dialogue. Its complete typed source
+    // is supplied once in the shared experience pool, alongside the exact suffix.
+    expect(numbers.at(-1)).toBe(33);
     expect(decision.prompt).toContain('My reply number 33');
     expect(decision.prompt).toContain('First question');
     expect(decision.awarenessSequence).toBe(
@@ -73,6 +79,18 @@ it('keeps required causes and a complete bounded recent suffix after the trigger
     expect((decision.context['experience'] as unknown[]).length).toBeGreaterThanOrEqual(
       history.length,
     );
+    const latest = service.world.events.find(
+      (event) => event.data?.['text'] === 'My reply number 33',
+    )!;
+    for (const id of [first.id, latest.id]) {
+      const source = decision.sharedExperiences.get(experienceSourceKey({ kind: 'awareness', id }));
+      expect(source).toBeDefined();
+      expect(
+        (decision.context['experience'] as unknown[]).filter(
+          (value) => canonicalJson(value) === canonicalJson(source!.experience),
+        ),
+      ).toHaveLength(1);
+    }
     await expect(decision.validateConversation()).resolves.toBeUndefined();
   } finally {
     await recall.close();
