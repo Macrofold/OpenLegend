@@ -8,6 +8,9 @@ import { assemblyPhaseLabel } from '@open-legend/domain';
 import { selectedCreationProfileForWorld, definitionPin } from '@open-legend/domain';
 import {
   currentBodyObservation,
+  currentBodyGrant,
+  currentObservedBodyIds,
+  activelyParticipates,
   currentObservedFacets,
   rememberedCommunicationSubjects,
   currentCommunicationSubject,
@@ -213,19 +216,16 @@ export async function projectView(
     ),
     visibleEntities: memo(
       'visibleEntities',
-      [world.entities, world.perceptionEvidence?.[scope.actorId]],
+      [
+        world.entities,
+        world.moduleManifest,
+        world.statusEffectPolicy,
+        world.perceptionEvidence?.[scope.actorId],
+      ],
       () =>
-        [
-          ...new Set(
-            Object.values(world.perceptionEvidence?.[scope.actorId]?.current ?? {})
-              .filter((lease) => lease.value.kind === 'body')
-              .map((lease) => lease.subjectId),
-          ),
-        ].flatMap((id) => {
+        currentObservedBodyIds(world, scope.actorId).flatMap((id) => {
           const entity = entityGet(world.entities, id);
-          return entity && id !== scope.actorId && currentBodyObservation(world, scope.actorId, id)
-            ? [entity]
-            : [];
+          return entity ? [entity] : [];
         }),
     ),
     knownRecipes: memo('knownRecipes', [world.knowledge[scope.actorId], world.recipes], () =>
@@ -283,6 +283,14 @@ export async function projectView(
     },
   );
   const actor = player.actor!;
+  const observerLife = actor.physicalLife ?? 0;
+  const observerParticipating = activelyParticipates(player);
+  // Capture only body roles this view exposes. Exact grant continuity permits
+  // ordinary movement while an async reader waits, but never a lost/replaced body.
+  const bodyGrants = observation.visibleEntities.map((entity) => ({
+    id: entity.id,
+    grant: currentBodyGrant(world, scope.actorId, entity.id)!,
+  }));
   const generation = service.generation;
   const historyEpoch = service.historyEpoch;
   const practice = await memo<Promise<PracticeView[]>>(
@@ -1324,6 +1332,24 @@ export async function projectView(
   )
     throw new ViewChangedError();
   service.assertScope(scope);
+  if (service.world !== world) {
+    const currentPlayer = entityGet(service.world.entities, player.id);
+    if (
+      !currentPlayer?.actor ||
+      (currentPlayer.actor.physicalLife ?? 0) !== observerLife ||
+      currentPlayer.actor.alive !== actor.alive ||
+      activelyParticipates(currentPlayer) !== observerParticipating ||
+      bodyGrants.some(({ id, grant }) => {
+        const current = currentBodyGrant(service.world, scope.actorId, id);
+        return (
+          !current ||
+          current.leaseId !== grant.leaseId ||
+          current.physicalLife !== grant.physicalLife
+        );
+      })
+    )
+      throw new ViewChangedError();
+  }
   // Natural expiry can remove a recent account without a creator edit. Recheck
   // selected event facts after asynchronous preparation, only when this person's
   // evidence owners changed; unrelated motion must not invalidate their view.

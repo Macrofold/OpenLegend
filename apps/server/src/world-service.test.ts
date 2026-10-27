@@ -155,8 +155,9 @@ describe('world presence, time and durable commands', () => {
       const { service, clock } = await setup();
       await activate(service);
       await service.setPresence('test-client', false);
-      expect(service.paused).toBe(true);
-      expect(service.pauseReason).toBe('away');
+      // Explicit departure first runs the world's vulnerable absence interval.
+      expect(service.paused).toBe(false);
+      expect(service.pauseReason).toBeNull();
       await service.tick(1);
       expect(service.world.simTime).toBe(60);
       for (let i = 0; i < 16; i++) {
@@ -164,6 +165,8 @@ describe('world presence, time and durable commands', () => {
         await service.tick(0.25);
       }
       expect(service.world.simTime).toBe(300);
+      expect(service.paused).toBe(true);
+      expect(service.pauseReason).toBe('away');
       await activate(service);
       expect((await service.control({ speed })).ok).toBe(true);
       const restResult = await service.command('rest', {
@@ -514,7 +517,7 @@ describe('public projection', () => {
 });
 
 it.each(['disappearance', 'revival'] as const)(
-  'withdraws a pending player view after current heard sound %s while retaining its finite historical account',
+  'keeps finite heard history after %s while fencing observer replacement',
   async (change) => {
     const { service } = await setup();
     await activate(service);
@@ -547,7 +550,18 @@ it.each(['disappearance', 'revival'] as const)(
         )
       ).ok,
     ).toBe(true);
-    expect(JSON.stringify((await projectView(service)).events)).toContain('voice-like sound');
+    const assertHeardAccount = (view: Awaited<ReturnType<typeof projectView>>) => {
+      const sound = view.events.find((event) => event.sound?.kind === 'voice-like');
+      expect(sound).toMatchObject({
+        type: 'sound',
+        modality: 'heard',
+        sound: { kind: 'voice-like', acquisition: 'external', visibleSource: null },
+      });
+      expect(sound?.speech).toBeUndefined();
+      expect(sound?.actorId).toBeUndefined();
+      expect(JSON.stringify(sound)).not.toContain('An actually heard temporary sentence.');
+    };
+    assertHeardAccount(await projectView(service));
     let started!: () => void, release!: () => void;
     const waiting = new Promise<void>((resolve) => {
       started = resolve;
@@ -561,7 +575,8 @@ it.each(['disappearance', 'revival'] as const)(
       return undefined;
     });
     const pending = projectView(service);
-    const rejected = expect(pending).rejects.toThrow('The world changed');
+    const rejected =
+      change === 'revival' ? expect(pending).rejects.toThrow('The world changed') : undefined;
     await waiting;
     const historyEpoch = service.historyEpoch;
     if (change === 'revival') {
@@ -585,9 +600,10 @@ it.each(['disappearance', 'revival'] as const)(
     } else await service.tick(0.005);
     expect(service.historyEpoch).toBe(historyEpoch);
     release();
-    await rejected;
+    if (rejected) await rejected;
+    else assertHeardAccount(await pending);
     delayed.mockRestore();
     expect(receivedScene(service.world, PLAYER_ID).nonlocalized).toBe(0);
-    expect(JSON.stringify((await projectView(service)).events)).toContain('voice-like sound');
+    assertHeardAccount(await projectView(service));
   },
 );
