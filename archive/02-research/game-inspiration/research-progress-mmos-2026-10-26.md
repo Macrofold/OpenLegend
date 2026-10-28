@@ -4,7 +4,7 @@
 
 ## Current progress
 
-Twenty scoped subjects are researched and reviewed against the applicable R01–R15 requirements: Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2, Guild Wars 3, The Elder Scrolls Online, The Lord of the Rings Online, Final Fantasy XIV, Black Desert Online, MapleStory, Star Wars: The Old Republic, Albion Online, World of Warcraft, Old School RuneScape, modern RuneScape, EVE Online, Ultima Online, EverQuest, Final Fantasy XI and Dungeon Fighter Online. GW3 uses five independent observer previews because it is unreleased; the other nineteen retain five substantive firsthand written assessments. Completed dossiers are committed with their ledger updates. Earlier dossier evidence and worked cases are preserved. Fantasy Westward Journey has a substantive incomplete core checkpoint. Lineage, the comparative essay's final two game-by-game conclusions and final integration gates remain open. The run began October 26 and continued October 27–28; each source retains its actual access date.
+Twenty-one scoped subjects are researched and reviewed against the applicable R01–R15 requirements: Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2, Guild Wars 3, The Elder Scrolls Online, The Lord of the Rings Online, Final Fantasy XIV, Black Desert Online, MapleStory, Star Wars: The Old Republic, Albion Online, World of Warcraft, Old School RuneScape, modern RuneScape, EVE Online, Ultima Online, EverQuest, Final Fantasy XI, Dungeon Fighter Online and Fantasy Westward Journey. GW3 uses five independent observer previews because it is unreleased; the other twenty retain five substantive firsthand written assessments. Completed dossiers are committed with their ledger updates. Earlier dossier evidence and worked cases are preserved. Lineage, the comparative essay's final two game-by-game conclusions and final integration gates remain open. The run began October 26 and continued October 27–28; each source retains its actual access date.
 
 ## Scope and evidence rules
 
@@ -40,7 +40,7 @@ Twenty scoped subjects are researched and reviewed against the applicable R01–
 | [EverQuest](dossiers/everquest.md)                                    | Original game; not EverQuest II or cancelled Next                        | Researched and reviewed; committed with this ledger |
 | [Final Fantasy XI](dossiers/final-fantasy-xi.md)                      | Refresh existing dossier; distinct current service                       | Researched and reviewed; committed with this ledger |
 | [Dungeon Fighter Online](dossiers/dungeon-fighter-online.md)          | PC original; Chinese/Korean/global and mobile separated                  | Researched and reviewed; committed with this ledger |
-| [Fantasy Westward Journey](dossiers/fantasy-westward-journey.md)      | Original PC game; mobile and franchise totals separated                  | Core checkpoint; incomplete                         |
+| [Fantasy Westward Journey](dossiers/fantasy-westward-journey.md)      | Original PC game; mobile and franchise totals separated                  | Researched and reviewed; committed with this ledger |
 | Lineage                                                               | Original PC game; sequel, mobile and Classic boundaries                  | Pending                                             |
 
 ## Final integration gates
