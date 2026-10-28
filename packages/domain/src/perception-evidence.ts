@@ -2193,18 +2193,18 @@ export function reconcileAttendedTemporalEvidence(
     if (entering.size || exiting.size) {
       const affected = new Set([...entering, ...exiting]);
       const exposures = new Map(
-        [...affected].flatMap((id) => {
+        [...new Set([...after, ...final])].flatMap((id) => {
           const body = current?.[`${id}:body`];
           return body ? [[id, body.exposure.episodeId] as const] : [];
         }),
       );
-      const changed = selectedCurrentSupports(world, observerId, current, exposures);
+      const leases = selectedCurrentSupports(world, observerId, current, exposures, affected);
       // Credit may change prominence. Retain the newly selected current baseline before
       // publication, without recursively awarding contacts for an attention-only change.
       captureTemporalCurrent(
         world,
         observerId,
-        changed,
+        leases,
         entering,
         selectedTemporalPolicy(world).recent,
         exiting,

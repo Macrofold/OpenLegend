@@ -814,7 +814,9 @@ export function captureTemporalSnapshot(
   );
 }
 
-/** Watermarks hold references only; they do not become another writable current-fact graph. */
+/** Leases cover the complete retained selection at this boundary, including exits.
+ * changedSubjects limits processing, never the watermark ownership kept alive.
+ * Watermarks reference their source owner, not another writable current-fact graph. */
 export function captureTemporalCurrent(
   world: WorldState,
   actorId: string,
