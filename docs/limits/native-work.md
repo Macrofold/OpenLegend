@@ -130,7 +130,7 @@ Change tracking retains **4,096 distinct scopes** before falling back to broader
 
 **Reported · Restrictiveness: Medium.**
 
-Per-call/group native work. Output admission changed from 16,000,000 to 64,000,000 actual UTF-8 bytes: the valid dense first exposure otherwise refused complete witness output. Other counters are unchanged.
+Per-call/group native work accumulates across all private yields. Output admission changed from 16,000,000 to 64,000,000 actual UTF-8 bytes to retain complete witness output. The current dense first-exposure workload still exceeds it; this is a [measured capacity failure](../verification/attention-and-memory-core.md#continued-normal-clock-qualification--october-28-2026), not a supported population. Other counters are unchanged.
 
 **Reason / tradeoff:** Versioned conservative admission bounds; no claim that these values establish supported population. Overruns refuse admission or pause required work.
 

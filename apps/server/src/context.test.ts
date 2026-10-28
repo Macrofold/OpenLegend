@@ -44,19 +44,21 @@ import {
   npcCandidates,
   type CandidateAction,
 } from './context.js';
-import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 import { domainCommand } from './cognition.js';
 
-const stores: SqlGameRepository[] = [];
+const cleanup: Array<() => Promise<void>> = [];
 async function setup(): Promise<WorldService> {
   const store = await testRepository(undefined, stockedCamp());
-  stores.push(store);
   const service = new WorldService(
     store,
     readConfig({ WORLD_SEED: '73' }),
     () => 1_800_000_000_000,
   );
+  cleanup.push(async () => {
+    service.releaseHostWork();
+    await store.close();
+  });
   await enterLocalWorld(service);
   await service.setPresence('test', true);
   return service;
@@ -84,7 +86,7 @@ async function perform(service: WorldService, candidate: CandidateAction): Promi
   expect(result.ok, result.message).toBe(true);
 }
 afterEach(async () => {
-  for (const store of stores.splice(0)) await store.close();
+  for (const close of cleanup.splice(0)) await close();
 });
 
 describe('bounded actor context', () => {

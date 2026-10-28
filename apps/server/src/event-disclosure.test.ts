@@ -7,6 +7,7 @@ import {
   createWorld,
   sensesFor,
   executeCommand,
+  freezeWorld,
   inventoryFor,
   NPC_ID,
   PLAYER_ID,
@@ -73,8 +74,9 @@ function perform(world: WorldState, family: 'gather' | 'strike', visible: boolea
   const targetId = family === 'gather' ? 'branches' : 'mara';
   arrange(world, targetId, visible);
   const before = entityGet(world.entities, targetId)!.actor?.health;
+  // The completed arrangement enters the same published boundary as a service command.
   const admitted = executeCommand(
-    world,
+    freezeWorld(world),
     family === 'gather'
       ? { id: 'disclosure-gather', actorId: PLAYER_ID, type: 'gather', targetId }
       : {

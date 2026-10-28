@@ -33,8 +33,8 @@ export const WORK_LIMITS = Object.freeze({
     candidates: 2_000_000,
     tests: 4_000_000,
     inputBytes: 64_000_000,
-    // First exposure at the release crowd size legitimately emits tens of thousands
-    // of private acquisitions. Sliced execution preserves them within one publication.
+    // The whole metered advance includes every private yield and receiver's output.
+    // Slicing does not reset this ceiling; population capacity needs separate evidence.
     outputBytes: 64_000_000,
     effects: 100_000,
     claims: 100_000,
