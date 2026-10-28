@@ -24,6 +24,7 @@ import {
   materializeTemporalValue,
   temporalChunkLogicalBytes,
   temporalSupportLogicalBytes,
+  receivedTemporalFragment,
 } from './temporal-evidence.js';
 
 const encoder = new TextEncoder();
@@ -48,6 +49,8 @@ export function validateTemporalValue(
     throw new Error('Invalid temporal value.');
   if (value['kind'] === 'observed-motion')
     throw new Error('Current motion needs its typed temporal conversion.');
+  if (value['kind'] === 'observation-header' || value['kind'] === 'observation-frame')
+    throw new Error('Personal metadata is not a temporal fact.');
   if (value['kind'] === 'personal-account') {
     if (
       !['awareness', 'memory'].includes(String(value['source'])) ||
@@ -219,13 +222,12 @@ export function validateTemporalEvidenceState(
       receiptKeys = new Set<string>();
     const validateReference = (reference: { blockId: string; valueOrdinal: number }) => {
       const block = sources[reference.blockId];
-      const fragment = block?.values[reference.valueOrdinal];
+      const fragment = receivedTemporalFragment(block?.values[reference.valueOrdinal] ?? undefined);
       if (
         !block ||
         !ordinal(reference.valueOrdinal) ||
         reference.valueOrdinal >= block.values.length ||
-        !fragment ||
-        fragment.kind === 'observed-motion'
+        !fragment
       )
         throw new Error('Unavailable retained temporal fragment.');
       return fragment;

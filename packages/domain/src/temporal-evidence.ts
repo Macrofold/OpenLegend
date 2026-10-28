@@ -3,6 +3,7 @@ import {
   retainReceivedValue,
   receivedValueAt,
   type ReceivedValueState,
+  type ReceivedValueFragment,
 } from './received-values.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
 import { entityGet } from './entity-collection.js';
@@ -270,9 +271,10 @@ export function splitTemporalValue(value: TemporalValue): {
  * fragment alone grants neither a frame, an identity nor a received route. */
 export function materializeTemporalValue(
   reference: Pick<TemporalFacetReference, 'reception'>,
-  fragment: TemporalFragment,
+  fragment: ReceivedValueFragment,
 ): TemporalValue | undefined {
-  const value = readOnlyDraftView(fragment);
+  const value = receivedTemporalFragment(readOnlyDraftView(fragment));
+  if (!value) return;
   const reception = reference.reception && readOnlyDraftView(reference.reception);
   if (value.kind === 'location')
     return reception?.kind === 'location'
@@ -387,12 +389,21 @@ function appendHeaderValue(values: string[], value: string): number {
   values.push(value);
   return bytes;
 }
+export function receivedTemporalFragment(
+  value: ReceivedValueFragment | undefined,
+): TemporalFragment | undefined {
+  return value?.kind === 'observed-motion' ||
+    value?.kind === 'observation-header' ||
+    value?.kind === 'observation-frame'
+    ? undefined
+    : value;
+}
 function retainedValueAt(
   sources: ReceivedValueState['sources'],
   reference: TemporalValueReference,
 ): TemporalFragment | undefined {
   const value = receivedValueAt(sources, reference);
-  return value?.kind === 'observed-motion' ? undefined : value;
+  return receivedTemporalFragment(value);
 }
 function temporalValue(value: TemporalCaptureInput['facets'][number]['value']): TemporalValue {
   if (value.kind !== 'observed-motion') return value;

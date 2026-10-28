@@ -236,7 +236,7 @@ describe('received detailed attention', () => {
             distanceLower: 1,
             distanceUpper: 1.1,
             decreaseLower: 1,
-            proof: [observationFactKey(lease.original, lease.originalOrdinal)],
+            proof: [observationFactKey(world, lease.original, lease.originalOrdinal)],
           },
         ],
       },
@@ -510,7 +510,7 @@ describe('received detailed attention', () => {
     const { world, owner } = scene(2, 2);
     const anchor = currentDetailedAttention(world, PLAYER_ID)[0]!;
     const lease = owner.current[`${anchor.sourceId}:body`]!;
-    const proof = [observationFactKey(lease.original, lease.originalOrdinal)];
+    const proof = [observationFactKey(world, lease.original, lease.originalOrdinal)];
     const evaluation = {
       anchorKey: anchor.key,
       family: 'closing-drop' as const,
@@ -578,7 +578,7 @@ describe('received detailed attention', () => {
       distanceLower: 2,
       distanceUpper: 2.25,
       decreaseLower: 0.5,
-      proof: [observationFactKey(body.original, body.originalOrdinal)],
+      proof: [observationFactKey(world, body.original, body.originalOrdinal)],
     };
     const evaluation = {
       anchorKey: anchor!.key,

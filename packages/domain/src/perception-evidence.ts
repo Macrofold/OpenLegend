@@ -159,6 +159,19 @@ export function validObservationFrame(value: unknown): value is ObservationFrame
     (value.forwardAtObservation === undefined || Number.isFinite(value.forwardAtObservation))
   );
 }
+/** Native producers may retain a complete installed sense definition here. Readers
+ * require its exact identity/version; its additional received metadata is preserved. */
+export function validObservationDetector(
+  value: unknown,
+): value is ObservationContribution['detector'] {
+  const detector = value as ObservationContribution['detector'] | undefined;
+  return (
+    !!detector &&
+    typeof detector.id === 'string' &&
+    Number.isSafeInteger(detector.version) &&
+    detector.version >= 1
+  );
+}
 /** The finite current-channel body fields. This contains no inventory, intent or private meters. */
 export interface ObservedBody {
   kind: Entity['kind'];
@@ -303,7 +316,7 @@ export interface ObservationContribution {
 export interface ReceivedFacetValue {
   kind: SensoryFacet['kind'];
   reference: readonly [blockId: string, valueOrdinal: number];
-  reception?: { kind: 'location'; frame: ObservationFrame };
+  reception?: { kind: 'location'; frameRef: readonly [blockId: string, valueOrdinal: number] };
 }
 export interface ReceivedObservationFacet {
   ordinal?: number;
@@ -314,14 +327,50 @@ export interface ReceivedObservationFacet {
   acquiredAt?: number;
   value: ReceivedFacetValue;
 }
-export interface ReceivedObservation extends Omit<ObservationContribution, 'facets'> {
+export type ReceivedObservationHeader = Pick<
+  ObservationContribution,
+  'observer' | 'acquiredAt' | 'modality' | 'detector'
+>;
+export interface ReceivedObservation
+  extends Omit<
+    ObservationContribution,
+    'facets' | 'observer' | 'acquiredAt' | 'modality' | 'detector'
+  > {
+  headerRef: readonly [blockId: string, valueOrdinal: number];
   facets: ReceivedObservationFacet[];
+}
+
+/** Resolve only already received metadata, without expanding a single facet. */
+export function receivedObservationHeader(
+  world: WorldState,
+  source: Pick<ReceivedObservation, 'headerRef'>,
+): ReceivedObservationHeader {
+  const value = receivedValueAt(world.receivedValues?.sources ?? {}, {
+    blockId: source.headerRef[0],
+    valueOrdinal: source.headerRef[1],
+  });
+  if (value?.kind !== 'observation-header')
+    throw new Error('The received observation header is unavailable.');
+  return value.header;
+}
+/** A frame reference is comparison data, never permission to sense or move. */
+export function receivedObservationFrame(
+  world: WorldState,
+  reference: readonly [string, number],
+): ObservationFrame {
+  const value = receivedValueAt(world.receivedValues?.sources ?? {}, {
+    blockId: reference[0],
+    valueOrdinal: reference[1],
+  });
+  if (value?.kind !== 'observation-frame')
+    throw new Error('The received observation frame is unavailable.');
+  return value.frame;
 }
 
 export function receivedObservationFacetMetadata(
   original: ReceivedObservation,
   ordinal: number,
-): Omit<ObservationFacet, 'value'> {
+): Omit<ObservationFacet, 'value' | 'acquiredAt'> & { acquiredAt?: number } {
   const facet = original.facets[ordinal];
   if (!facet) throw new Error('The received observation has no selected facet.');
   const from =
@@ -335,7 +384,7 @@ export function receivedObservationFacetMetadata(
     asOf: facet.asOf ?? measuredThrough,
     measuredFrom: facet.measuredFrom ?? from,
     measuredThrough,
-    acquiredAt: facet.acquiredAt ?? original.acquiredAt,
+    ...(facet.acquiredAt !== undefined ? { acquiredAt: facet.acquiredAt } : {}),
   };
 }
 
@@ -358,7 +407,7 @@ export function receivedFacetValue(
   if (value.kind === 'location') {
     if (descriptor.reception?.kind !== 'location') return;
     const location = readOnlyDraftView(value.location),
-      frame = readOnlyDraftView(descriptor.reception.frame);
+      frame = readOnlyDraftView(receivedObservationFrame(world, descriptor.reception.frameRef));
     // Resolve the live address before reuse. Only exact immutable geometry and
     // the receiver's immutable frame can share this complete read wrapper.
     if (!isImmutableData(location) || !isImmutableData(frame))
@@ -390,10 +439,16 @@ export function materializeObservation(
   source: ReceivedObservation,
 ): ObservationContribution {
   source = readOnlyDraftView(source);
-  const fragments = source.facets.map((facet) =>
+  const fragments = [
+    { reference: source.headerRef },
+    ...source.facets.map((facet) => facet.value),
+    ...source.facets.flatMap((facet) =>
+      facet.value.reception ? [{ reference: facet.value.reception.frameRef }] : [],
+    ),
+  ].map((value) =>
     receivedValueAt(world.receivedValues?.sources ?? {}, {
-      blockId: facet.value.reference[0],
-      valueOrdinal: facet.value.reference[1],
+      blockId: value.reference[0],
+      valueOrdinal: value.reference[1],
     }),
   );
   if (fragments.some((value) => !value))
@@ -406,13 +461,20 @@ export function materializeObservation(
     cached.fragments.every((fragment, index) => fragment === fragments[index])
   )
     return cached.value;
+  const header = receivedObservationHeader(world, source);
+  const { headerRef: _header, ...fields } = source;
   const value = immutableDataSnapshot<ObservationContribution>(
     {
-      ...source,
+      ...fields,
+      ...header,
       facets: source.facets.map((facet, ordinal) => {
         const value = receivedFacetValue(world, facet.value);
         if (!value) throw new Error('The received facet reference has incompatible meaning.');
-        return { ...receivedObservationFacetMetadata(source, ordinal), value };
+        return {
+          ...receivedObservationFacetMetadata(source, ordinal),
+          acquiredAt: facet.acquiredAt ?? header.acquiredAt,
+          value,
+        };
       }),
     },
     readOnlyDraftView,
@@ -421,6 +483,28 @@ export function materializeObservation(
   return value;
 }
 
+const frameFragments = new WeakMap<
+  ObservationFrame,
+  { kind: 'observation-frame'; frame: ObservationFrame }
+>();
+function retainObservationFrame(world: WorldState, frame: ObservationFrame) {
+  frame = readOnlyDraftView(frame);
+  const reusable = isImmutableData(frame);
+  let value = reusable ? frameFragments.get(frame) : undefined;
+  if (!value) {
+    value = immutableDataSnapshot({ kind: 'observation-frame' as const, frame }, readOnlyDraftView);
+    if (reusable) frameFragments.set(frame, value);
+  }
+  const retained = retainReceivedValue(
+    world,
+    value,
+    selectedTemporalPolicy(world).recent.chunkBytes,
+  );
+  return {
+    reference: [retained.reference.blockId, retained.reference.valueOrdinal] as const,
+    addedBytes: retained.addedBytes,
+  };
+}
 const locationFragments = new WeakMap<
   ObservedLocation,
   { kind: 'location'; location: ObservedLocation }
@@ -430,6 +514,7 @@ function retainFacetValue(world: WorldState, value: SensoryFacet) {
   value = readOnlyDraftView(value);
   let fragment: import('./received-values.js').ReceivedValueFragment = value;
   let reception: ReceivedFacetValue['reception'];
+  let frameBytes = 0;
   if (value.kind === 'location') {
     const location = readOnlyDraftView(value.location);
     const reusable = isImmutableData(location);
@@ -439,7 +524,9 @@ function retainFacetValue(world: WorldState, value: SensoryFacet) {
       if (reusable) locationFragments.set(location, neutral);
     }
     fragment = neutral;
-    reception = { kind: 'location', frame: value.frame };
+    const received = retainObservationFrame(world, value.frame);
+    reception = { kind: 'location', frameRef: received.reference };
+    frameBytes = received.addedBytes;
   }
   const retained = retainReceivedValue(
     world,
@@ -452,7 +539,7 @@ function retainFacetValue(world: WorldState, value: SensoryFacet) {
       reference: [retained.reference.blockId, retained.reference.valueOrdinal],
       ...(reception ? { reception } : {}),
     } as ReceivedFacetValue,
-    addedBytes: retained.addedBytes,
+    addedBytes: retained.addedBytes + frameBytes,
   };
 }
 export interface LiveFacetSupport {
@@ -530,7 +617,7 @@ export interface PerceptionEvidenceOwner {
   visualConfirmation?: {
     through: number;
     revision: number;
-    frame: ObservationFrame;
+    frameRef: readonly [blockId: string, valueOrdinal: number];
     frameRevision: number;
   };
   geometry?: import('./received-geometry.js').ReceivedGeometryState;
@@ -771,12 +858,22 @@ export function beginPerceptionPhase(world: WorldState, observerId: string): voi
   const state = world.perceptionEvidence?.[observerId];
   if (
     !state?.received.length ||
-    state.received.every((observation) => observation.acquiredAt >= world.simTime)
+    state.received.every(
+      (observation) => receivedObservationHeader(world, observation).acquiredAt >= world.simTime,
+    )
   )
     return;
-  state.received = state.received.filter((observation) => observation.acquiredAt >= world.simTime);
+  state.received = state.received.filter(
+    (observation) => receivedObservationHeader(world, observation).acquiredAt >= world.simTime,
+  );
   state.receipts = Object.fromEntries(
-    state.received.map((observation, index) => [observationAcquisitionKey(observation), index]),
+    state.received.map((observation, index) => [
+      observationAcquisitionKey({
+        ...receivedObservationHeader(world, observation),
+        origin: observation.origin,
+      }),
+      index,
+    ]),
   );
   state.receivedAtSequence = world.sequence;
 }
@@ -815,12 +912,20 @@ function replaceCurrentFacet(
       : stored;
 }
 export const observationFactKey = (
-  observation: Pick<ObservationContribution, 'id' | 'revision' | 'observer'>,
+  world: WorldState,
+  observation:
+    | Pick<ObservationContribution, 'id' | 'revision' | 'observer'>
+    | Pick<ReceivedObservation, 'id' | 'revision' | 'headerRef'>,
   ordinal: number,
 ): ObservationFactKey => ({
   source: {
     family: 'native-exposure',
-    observer: immutableDataSnapshot(observation.observer, readOnlyDraftView),
+    observer: immutableDataSnapshot(
+      'headerRef' in observation
+        ? receivedObservationHeader(world, observation).observer
+        : observation.observer,
+      readOnlyDraftView,
+    ),
     id: observation.id,
     revision: observation.revision,
   },
@@ -850,16 +955,29 @@ function acquireReceivedObservation(
   if (prior) return readOnlyDraftView(prior);
   const from = input.origin.kind === 'exposure' ? input.origin.measuredFrom : input.origin.at,
     through = input.origin.kind === 'exposure' ? input.origin.measuredThrough : input.origin.at;
-  let addedBytes = 0;
+  const header = retainReceivedValue(
+    world,
+    immutableDataSnapshot(
+      {
+        kind: 'observation-header' as const,
+        header: {
+          observer: observerLife(observer),
+          acquiredAt: world.simTime,
+          modality: input.modality,
+          detector: input.detector,
+        },
+      },
+      readOnlyDraftView,
+    ),
+    selectedTemporalPolicy(world).recent.chunkBytes,
+  );
+  let addedBytes = header.addedBytes;
   const contribution = immutableDataSnapshot<ReceivedObservation>(
     {
       id: nextId(world, 'perception-observation'),
       revision: 1,
-      observer: observerLife(observer),
+      headerRef: [header.reference.blockId, header.reference.valueOrdinal],
       origin: input.origin,
-      acquiredAt: world.simTime,
-      modality: input.modality,
-      detector: input.detector,
       ...(input.context ? { context: input.context } : {}),
       facets: input.facets.map((facet) => {
         const retained = retainFacetValue(world, facet.value);
@@ -1107,7 +1225,7 @@ export function effectiveCurrentFacetSupport(
             valueAcquiredAt: through,
             value: {
               ...facet,
-              reception: { kind: 'location' as const, frame: confirmation.frame },
+              reception: { kind: 'location' as const, frameRef: confirmation.frameRef },
             },
           }
         : { valueMeasuredThrough: through, valueAcquiredAt: through }),
@@ -1196,11 +1314,11 @@ export function currentBodyGeometryInputs(
     lease: Pick<
       LiveFacetSupport,
       'valueMeasuredFrom' | 'valueMeasuredThrough' | 'originalOrdinal'
-    > & { original: Pick<ObservationContribution, 'id' | 'revision' | 'observer'> },
+    > & { original: Parameters<typeof observationFactKey>[1] },
   ): BodyGeometrySample => ({
     valueMeasuredFrom: lease.valueMeasuredFrom,
     valueMeasuredThrough: lease.valueMeasuredThrough,
-    fact: observationFactKey(lease.original, lease.originalOrdinal),
+    fact: observationFactKey(world, lease.original, lease.originalOrdinal),
   });
   const locationSample = (
     lease: Pick<
@@ -1467,7 +1585,7 @@ export function currentObservedFacetValues(
         valueMeasuredThrough: value.valueMeasuredThrough,
         valueAcquiredAt: value.valueAcquiredAt,
         confirmedThrough: value.confirmedThrough,
-        source: observationFactKey(value.original, value.originalOrdinal).source,
+        source: observationFactKey(world, value.original, value.originalOrdinal).source,
       },
       readOnlyDraftView,
     );
@@ -1511,7 +1629,9 @@ function currentLeaseEligible(
   const observer = entityGet(world.entities, observerId);
   return (
     !!observer &&
-    sensesFor(world, observer).some((sense) => sense.id === lease.original.detector.id)
+    sensesFor(world, observer).some(
+      (sense) => sense.id === receivedObservationHeader(world, lease.original).detector.id,
+    )
   );
 }
 
@@ -1656,9 +1776,14 @@ export function reconcileVisualEvidence(
     },
     readOnlyDraftView,
   );
+  const receivedFrame = retainObservationFrame(world, observerFrame);
+  if (receivedFrame.addedBytes) chargeWork({ outputBytes: receivedFrame.addedBytes });
   const completed = readOnlyDraftView(state).visualConfirmation;
   const priorConfirmation = completed && readOnlyDraftView(completed);
-  const frameChanged = !sameObservationFrame(priorConfirmation?.frame, observerFrame);
+  const frameChanged = !sameObservationFrame(
+    priorConfirmation ? receivedObservationFrame(world, priorConfirmation.frameRef) : undefined,
+    observerFrame,
+  );
   const beforeAttention = new Set(
     currentDetailedAttention(world, observer.id).map((entry) => entry.sourceId),
   );
@@ -1776,7 +1901,7 @@ export function reconcileVisualEvidence(
         })),
       });
     const priorExposure = detectedLease && readOnlyDraftView(detectedLease.exposure),
-      receivedObserver = readOnlyDraftView(original.observer);
+      receivedObserver = readOnlyDraftView(receivedObservationHeader(world, original).observer);
     const exposure = immutableDataSnapshot<ObservationExposure>(
       priorExposure?.episodeId === original.id &&
         priorExposure.observer.actorId === receivedObserver.actorId &&
@@ -2052,7 +2177,7 @@ export function reconcileVisualEvidence(
   state.visualConfirmation = {
     through: world.simTime,
     revision,
-    frame: observerFrame,
+    frameRef: receivedFrame.reference,
     frameRevision: frameChanged ? revision : priorConfirmation!.frameRevision,
   };
   // Memoryless native reactions consume received bodies; no current consumer asks
@@ -2485,7 +2610,7 @@ function awarenessBodyContext(
       detected.exposure.episodeId !== lease.exposure.episodeId ||
       detected.observer.actorId !== lease.observer.actorId ||
       detected.observer.physicalLife !== lease.observer.physicalLife ||
-      lease.original.acquiredAt > awareness.at
+      receivedObservationHeader(world, lease.original).acquiredAt > awareness.at
     )
       continue;
     const receivedSoundSource =
@@ -2857,7 +2982,7 @@ export function acquireAwarenessObservation(
     const ordinal = contribution.facets.findIndex(
       (facet) => facet.value.kind === 'event' || facet.value.kind === 'speech',
     );
-    const proof = observationFactKey(contribution, Math.max(0, ordinal));
+    const proof = observationFactKey(world, contribution, Math.max(0, ordinal));
     reconcileAttendedTemporalEvidence(
       world,
       observer.id,
@@ -2965,7 +3090,7 @@ export function acquireOrdinaryWarning(
       .flatMap((segment) => (segment.kind === 'heard' ? [segment.text] : []))
       .join(' '),
     support: [
-      observationFactKey(source, speechOrdinal),
+      observationFactKey(world, source, speechOrdinal),
       { source: cloneValue(place.source), ordinal: place.facetOrdinal },
     ],
     supportAliases: [
@@ -3110,10 +3235,7 @@ export function validateObservationContribution(
     observation.observer.physicalLife < 0 ||
     !Number.isFinite(observation.acquiredAt) ||
     !['sight', 'hearing', 'touch'].includes(observation.modality) ||
-    !observation.detector ||
-    typeof observation.detector.id !== 'string' ||
-    !Number.isSafeInteger(observation.detector.version) ||
-    observation.detector.version < 1 ||
+    !validObservationDetector(observation.detector) ||
     !observation.origin ||
     !Array.isArray(observation.facets) ||
     observation.facets.some(

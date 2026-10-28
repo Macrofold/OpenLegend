@@ -63,7 +63,7 @@ export function recoveryFile(payload: unknown, checksum: unknown): string {
     throw new GameSaveError('Recovery pointer integrity check failed.');
   return pointer.data.file;
 }
-export const SAVE_FORMAT = 'development-2026-10-28-received-values';
+export const SAVE_FORMAT = 'development-2026-10-28-received-personal-headers';
 type Rows = Record<string, unknown>[];
 export interface SavePayload {
   format: string;

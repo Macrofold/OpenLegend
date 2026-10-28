@@ -12,6 +12,7 @@ import {
   temporalReceiptAccountAliases,
   selectTemporalReceiptFacets,
   receivedObservationValueReferences,
+  receivedFacetValueReferences,
   referencedReceivedValues,
   pruneReceivedValueBlock,
   updateWorld,
@@ -93,13 +94,20 @@ export function receivedValueReleaseCandidates(
   after: WorldState,
 ): Set<string> {
   const candidates = new Set<string>();
+  const observations = new WeakSet<ReceivedObservation>();
   const addObservation = (source: ReceivedObservation) => {
+    if (observations.has(source)) return;
+    observations.add(source);
     for (const reference of receivedObservationValueReferences(source))
       candidates.add(reference.blockId);
   };
   if (before?.perceptionEvidence !== after.perceptionEvidence)
     for (const [actorId, owner] of Object.entries(before?.perceptionEvidence ?? {})) {
       const current = after.perceptionEvidence?.[actorId];
+      const frame = owner.visualConfirmation?.frameRef;
+      const nextFrame = current?.visualConfirmation?.frameRef;
+      if (frame && (!nextFrame || frame[0] !== nextFrame[0] || frame[1] !== nextFrame[1]))
+        candidates.add(frame[0]);
       if (owner.received !== current?.received) {
         const retained = new Set(current?.received);
         for (const source of owner.received) if (!retained.has(source)) addObservation(source);
@@ -107,12 +115,19 @@ export function receivedValueReleaseCandidates(
       if (owner.current !== current?.current)
         for (const [key, lease] of Object.entries(owner.current)) {
           const next = current?.current[key];
+          if (lease.original === next?.original && lease.value === next?.value) continue;
+          const beforeRefs = receivedFacetValueReferences(lease.value),
+            afterRefs = next ? receivedFacetValueReferences(next.value) : [];
           if (
             lease.original !== next?.original ||
-            lease.value.reference[0] !== next?.value.reference[0] ||
-            lease.value.reference[1] !== next?.value.reference[1]
+            beforeRefs.length !== afterRefs.length ||
+            beforeRefs.some(
+              (reference, index) =>
+                reference.blockId !== afterRefs[index]?.blockId ||
+                reference.valueOrdinal !== afterRefs[index]?.valueOrdinal,
+            )
           ) {
-            candidates.add(lease.value.reference[0]);
+            for (const reference of beforeRefs) candidates.add(reference.blockId);
             addObservation(lease.original);
           }
         }
@@ -405,9 +420,7 @@ export async function readTemporalHistory(
     );
     const values = references.map((reference) => {
       const fragment = sources[reference.blockId]?.values[reference.valueOrdinal];
-      return fragment && fragment.kind !== 'observed-motion'
-        ? materializeTemporalValue(reference, fragment)
-        : undefined;
+      return fragment ? materializeTemporalValue(reference, fragment) : undefined;
     });
     if (values.some((value) => !value)) {
       incomplete = true;

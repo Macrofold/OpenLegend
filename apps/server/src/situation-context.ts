@@ -327,7 +327,7 @@ export function captureSituation(
   // they need no duplicate history row, but retain their supplied source grant.
   const observationReferences: Record<string, ObservationContribution> = Object.fromEntries(
     representedObservations.map((observation) => [
-      evidenceSourceHandle(world, actorId, observationFactKey(observation, 0).source),
+      evidenceSourceHandle(world, actorId, observationFactKey(world, observation, 0).source),
       observation,
     ]),
   );
@@ -347,7 +347,7 @@ export function captureSituation(
     staticBytes += size;
     observationReferences[row.source] = observation;
     for (const facet of row.facets)
-      suppliedFacts.set(canonicalJson(observationFactKey(observation, facet.ordinal)), {
+      suppliedFacts.set(canonicalJson(observationFactKey(world, observation, facet.ordinal)), {
         source: row.source,
         ordinal: facet.ordinal,
         encodedValue: canonicalJson(facet.value),
@@ -357,7 +357,8 @@ export function captureSituation(
   const representedFacts = new Map(
     representedObservations.flatMap((observation) =>
       observation.facets.map(
-        (facet) => [canonicalJson(observationFactKey(observation, facet.ordinal)), facet] as const,
+        (facet) =>
+          [canonicalJson(observationFactKey(world, observation, facet.ordinal)), facet] as const,
       ),
     ),
   );
@@ -424,7 +425,7 @@ export function captureSituation(
     activeCues.flatMap((cue) => cue.proof.map((fact) => canonicalJson(fact))),
   );
   const supportsCue = (sample: Pick<CapturedCurrentFacet, 'original' | 'originalOrdinal'>) =>
-    cueFacts.has(canonicalJson(observationFactKey(sample.original, sample.originalOrdinal)));
+    cueFacts.has(canonicalJson(observationFactKey(world, sample.original, sample.originalOrdinal)));
   const entryBySource = new Map(entries.map((entry) => [entry.sourceId, entry]));
   const salientFacts = new Set<string>();
   const detailIds = new Set(entries.map((entry) => entry.sourceId));

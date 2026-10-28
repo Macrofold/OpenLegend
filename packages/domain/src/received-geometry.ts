@@ -568,12 +568,12 @@ export function refreshReceivedGeometry(
           nearSurface: {
             point: middle,
             normal: nearValue.patch.normal,
-            support: observationFactKey(fragment.observation, 0),
+            support: observationFactKey(world, fragment.observation, 0),
           },
           farSurface: {
             point: farPoint,
             normal: farValue.patch.normal,
-            support: observationFactKey(far.observation, 0),
+            support: observationFactKey(world, far.observation, 0),
           },
           dropLower: lower,
         },
@@ -944,10 +944,10 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
         distanceUpper: measured.upper!,
         decreaseLower: measured.decreaseLower ?? 0,
         dropLower: measured.dropLower,
-        proof: [...bodyProof(anchor), observationFactKey(value.observation, value.ordinal)].slice(
-          0,
-          8,
-        ),
+        proof: [
+          ...bodyProof(anchor),
+          observationFactKey(world, value.observation, value.ordinal),
+        ].slice(0, 8),
       };
     };
     const priorBoundary = dropLatch?.witnessId

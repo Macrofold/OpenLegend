@@ -9,6 +9,7 @@ import {
   currentBodyGrant,
   currentObservedFacetValues,
   receivedFacetValue,
+  observationFactKey,
 } from '../../perception-evidence.js';
 import { namePhrase, type Named, type NameArticle } from '@open-legend/language';
 import { outcome } from '../../events.js';
@@ -281,15 +282,7 @@ export function associateBodyFamiliarity(
     world,
     from,
     candidate,
-    JSON.stringify({
-      source: {
-        family: 'native-exposure',
-        observer: association.original.observer,
-        id: association.original.id,
-        revision: association.original.revision,
-      },
-      ordinal: association.originalOrdinal,
-    }),
+    JSON.stringify(observationFactKey(world, association.original, association.originalOrdinal)),
   );
   if (candidate.individualId)
     commitObserverIdentity(world, observerId, candidate.individualId, candidate);

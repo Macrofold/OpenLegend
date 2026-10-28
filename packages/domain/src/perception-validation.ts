@@ -8,7 +8,10 @@ import {
   materializeObservation,
   observationAcquisitionKey,
   receivedFacetValue,
+  receivedObservationHeader,
+  receivedObservationFrame,
   validObservationFrame,
+  validObservationDetector,
   validateObservationContribution,
   validateReceivedParticipantObservers,
   validateSensoryFacet,
@@ -20,8 +23,19 @@ import { hasRecordFields, isSafeRecordId, jsonEncoding } from './records.js';
 import { validObserverSubject } from './knowledge.js';
 import { readOnlyDraftView } from './draft.js';
 
-/** Physical payload storage is independent of any actor's receipt. Its dates never
- * establish when a receiver saw it, and released ordinals never become new values. */
+function validReceivedReference(value: unknown): value is readonly [string, number] {
+  return (
+    Array.isArray(value) &&
+    value.length === 2 &&
+    isSafeRecordId(value[0]) &&
+    typeof value[1] === 'number' &&
+    Number.isSafeInteger(value[1]) &&
+    value[1] >= 0
+  );
+}
+
+/** A block's storage dates do not establish when a receiver saw anything; explicit
+ * headers retain that personal timing. Released ordinals never become new values. */
 export function validateReceivedValueState(
   world: WorldState,
   originals = new Map<string, string>(),
@@ -70,7 +84,28 @@ export function validateReceivedValueState(
       throw new Error('Invalid received value block.');
     for (const fragment of block.values) {
       if (fragment === null) continue;
-      if (fragment?.kind === 'observed-motion') validateSensoryFacet(fragment, originals);
+      if (fragment?.kind === 'observation-header') {
+        const header = fragment.header;
+        if (
+          !hasRecordFields(fragment, ['kind', 'header']) ||
+          !hasRecordFields(header, ['observer', 'acquiredAt', 'modality', 'detector']) ||
+          !hasRecordFields(header.observer, ['actorId', 'physicalLife']) ||
+          !isSafeRecordId(header.observer.actorId) ||
+          typeof header.observer.physicalLife !== 'number' ||
+          !Number.isSafeInteger(header.observer.physicalLife) ||
+          header.observer.physicalLife < 0 ||
+          typeof header.acquiredAt !== 'number' ||
+          !Number.isFinite(header.acquiredAt) ||
+          header.acquiredAt < 0 ||
+          header.acquiredAt > world.simTime ||
+          !['sight', 'hearing', 'touch'].includes(header.modality) ||
+          !validObservationDetector(header.detector)
+        )
+          throw new Error('Invalid received observation header.');
+      } else if (fragment?.kind === 'observation-frame') {
+        if (!hasRecordFields(fragment, ['kind', 'frame']) || !validObservationFrame(fragment.frame))
+          throw new Error('Invalid shared observation frame.');
+      } else if (fragment?.kind === 'observed-motion') validateSensoryFacet(fragment, originals);
       else validateTemporalFragment(fragment, originals);
     }
   }
@@ -86,15 +121,11 @@ export function validateReceivedFacetValue(
   if (
     !hasRecordFields(input, ['kind', 'reference'], ['reception']) ||
     typeof input.kind !== 'string' ||
-    !Array.isArray(input.reference) ||
-    input.reference.length !== 2 ||
-    !isSafeRecordId(input.reference[0]) ||
-    !Number.isSafeInteger(input.reference[1]) ||
-    Number(input.reference[1]) < 0 ||
+    !validReceivedReference(input.reference) ||
     (input.kind === 'location'
-      ? !hasRecordFields(input.reception, ['kind', 'frame']) ||
+      ? !hasRecordFields(input.reception, ['kind', 'frameRef']) ||
         input.reception.kind !== 'location' ||
-        !validObservationFrame(input.reception.frame)
+        !validReceivedReference(input.reception.frameRef)
       : input.reception !== undefined)
   )
     throw new Error('Invalid received facet reference.');
@@ -112,17 +143,15 @@ export function validateReceivedObservation(
   originals = new Map<string, string>(),
 ): asserts input is ReceivedObservation {
   if (
-    !hasRecordFields(
-      input,
-      ['id', 'revision', 'observer', 'origin', 'acquiredAt', 'modality', 'detector', 'facets'],
-      ['context'],
-    ) ||
+    !hasRecordFields(input, ['id', 'revision', 'headerRef', 'origin', 'facets'], ['context']) ||
+    !validReceivedReference(input.headerRef) ||
     !input.origin ||
     typeof input.origin !== 'object' ||
     !Array.isArray(input.facets)
   )
     throw new Error('Invalid received observation.');
   const source = input as unknown as ReceivedObservation;
+  receivedObservationHeader(world, source);
   for (const [ordinal, facet] of source.facets.entries()) {
     if (
       !hasRecordFields(
@@ -199,7 +228,8 @@ export function validatePerceptionEvidenceState(
         !Number.isSafeInteger(state.visualConfirmation.frameRevision) ||
         state.visualConfirmation.frameRevision < 1 ||
         state.visualConfirmation.frameRevision > state.visualConfirmation.revision ||
-        !validObservationFrame(state.visualConfirmation.frame))
+        !validReceivedReference(state.visualConfirmation.frameRef) ||
+        !validObservationFrame(receivedObservationFrame(world, state.visualConfirmation.frameRef)))
     )
       throw new Error('Invalid completed visual confirmation.');
     if (state.support) validateDetectionSupportState(world, observerId, state.support, originals);
@@ -210,16 +240,21 @@ export function validatePerceptionEvidenceState(
           !Number.isSafeInteger(index) ||
           index < 0 ||
           index >= state.received.length ||
-          key !== observationAcquisitionKey(state.received[index]!),
+          key !==
+            observationAcquisitionKey({
+              ...receivedObservationHeader(world, state.received[index]!),
+              origin: state.received[index]!.origin,
+            }),
       )
     )
       throw new Error('Invalid perception acquisition receipt.');
     for (const observation of state.received) {
       validateOriginal(observation);
+      const header = receivedObservationHeader(world, observation);
       if (
-        observation.observer.actorId !== observerId ||
-        observation.observer.physicalLife !== state.life ||
-        observation.acquiredAt > world.simTime
+        header.observer.actorId !== observerId ||
+        header.observer.physicalLife !== state.life ||
+        header.acquiredAt > world.simTime
       )
         throw new Error('Invalid perception observer life.');
     }
@@ -227,6 +262,7 @@ export function validatePerceptionEvidenceState(
       if (!lease || typeof lease !== 'object' || !lease.observer || !lease.value)
         throw new Error('Invalid current perception facet.');
       validateOriginal(lease.original);
+      const header = receivedObservationHeader(world, lease.original);
       const value = validateReceivedFacetValue(world, lease.value, originals);
       validateReceivedParticipantObservers(value, lease.observer);
       if (
@@ -252,7 +288,7 @@ export function validatePerceptionEvidenceState(
         lease.exposure.observer?.actorId !== observerId ||
         lease.exposure.observer.physicalLife !== state.life ||
         !['sight', 'hearing', 'touch'].includes(lease.modality) ||
-        (value.kind !== 'association' && lease.modality !== lease.original.modality) ||
+        (value.kind !== 'association' && lease.modality !== header.modality) ||
         [lease.motionContinuityRevision, lease.sourcePlacementRevision].some(
           (revision) => revision !== undefined && (!Number.isSafeInteger(revision) || revision < 0),
         ) ||
@@ -276,12 +312,12 @@ export function validatePerceptionEvidenceState(
         (value.kind === 'association' &&
           (typeof lease.bodyLeaseId !== 'string' ||
             state.current[`${lease.subjectId}:body`]?.id !== lease.bodyLeaseId)) ||
-        lease.original.observer.actorId !== observerId ||
-        lease.original.observer.physicalLife !== state.life ||
+        header.observer.actorId !== observerId ||
+        header.observer.physicalLife !== state.life ||
         !Number.isSafeInteger(lease.originalOrdinal) ||
         !lease.original.facets[lease.originalOrdinal] ||
         lease.original.facets[lease.originalOrdinal]!.value.kind !== value.kind ||
-        lease.original.acquiredAt > world.simTime ||
+        header.acquiredAt > world.simTime ||
         ![
           lease.valueMeasuredFrom,
           lease.valueMeasuredThrough,
@@ -295,7 +331,7 @@ export function validatePerceptionEvidenceState(
         lease.valueMeasuredThrough > world.simTime ||
         lease.valueMeasuredThrough > lease.valueAcquiredAt ||
         lease.valueMeasuredThrough > lease.confirmedThrough ||
-        lease.valueAcquiredAt < lease.original.acquiredAt ||
+        lease.valueAcquiredAt < header.acquiredAt ||
         lease.valueAcquiredAt > world.simTime ||
         lease.confirmedThrough > world.simTime ||
         lease.confirmedThrough < lease.confirmedFrom

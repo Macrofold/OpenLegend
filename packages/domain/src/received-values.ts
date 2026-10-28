@@ -3,13 +3,19 @@ import { countDomainWork } from './diagnostic-counters.js';
 import { readOnlyDraftView } from './draft.js';
 import { immutableDataSnapshot, isImmutableData, jsonEncoding } from './records.js';
 import type { WorldState } from './types.js';
-import type { SensoryFacet } from './perception-evidence.js';
+import type {
+  SensoryFacet,
+  ObservationFrame,
+  ReceivedObservationHeader,
+} from './perception-evidence.js';
 import type { TemporalFragment } from './temporal-evidence.js';
 
 /** Shared exact payloads are data, never evidence that an actor received them. */
 export type ReceivedValueFragment =
   | TemporalFragment
-  | Extract<SensoryFacet, { kind: 'observed-motion' }>;
+  | Extract<SensoryFacet, { kind: 'observed-motion' }>
+  | { kind: 'observation-header'; header: ReceivedObservationHeader }
+  | { kind: 'observation-frame'; frame: ObservationFrame };
 export interface ReceivedValueReference {
   blockId: string;
   valueOrdinal: number;
@@ -194,13 +200,24 @@ export function pruneReceivedValueBlock(
   return result;
 }
 
+export function receivedFacetValueReferences(
+  value: import('./perception-evidence.js').ReceivedFacetValue,
+): ReceivedValueReference[] {
+  return [
+    { blockId: value.reference[0], valueOrdinal: value.reference[1] },
+    ...(value.reception
+      ? [{ blockId: value.reception.frameRef[0], valueOrdinal: value.reception.frameRef[1] }]
+      : []),
+  ];
+}
+
 export function receivedObservationValueReferences(
   source: import('./perception-evidence.js').ReceivedObservation,
 ): ReceivedValueReference[] {
-  return source.facets.map(({ value }) => ({
-    blockId: value.reference[0],
-    valueOrdinal: value.reference[1],
-  }));
+  return [
+    { blockId: source.headerRef[0], valueOrdinal: source.headerRef[1] },
+    ...source.facets.flatMap(({ value }) => receivedFacetValueReferences(value)),
+  ];
 }
 
 /** Native rows are resident; the persistence owner adds exact cold receipt
@@ -224,9 +241,15 @@ export function referencedReceivedValues(
     for (const reference of receivedObservationValueReferences(source)) add(reference);
   };
   for (const owner of Object.values(world.perceptionEvidence ?? {})) {
+    if (owner.visualConfirmation)
+      add({
+        blockId: owner.visualConfirmation.frameRef[0],
+        valueOrdinal: owner.visualConfirmation.frameRef[1],
+      });
     for (const source of owner.received) observation(readOnlyDraftView(source));
     for (const lease of Object.values(readOnlyDraftView(owner.current))) {
-      add({ blockId: lease.value.reference[0], valueOrdinal: lease.value.reference[1] });
+      for (const reference of receivedFacetValueReferences(readOnlyDraftView(lease.value)))
+        add(reference);
       observation(readOnlyDraftView(lease.original));
     }
   }

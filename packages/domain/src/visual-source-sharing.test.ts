@@ -9,6 +9,7 @@ import {
   currentObservedFacets,
   observationFactKey,
   receivedFacetValue,
+  receivedObservationHeader,
 } from './perception-evidence.js';
 import { receivedScene } from './received-scene.js';
 
@@ -30,8 +31,8 @@ it('shares only complete outward source values while preserving independent rece
   expect(aValue).toBe(receivedFacetValue(world, b.value));
   expect(Object.isFrozen(aValue)).toBe(true);
   expect(a.original).not.toBe(b.original);
-  expect(a.original.observer.actorId).toBe(first.id);
-  expect(b.original.observer.actorId).toBe(second.id);
+  expect(receivedObservationHeader(world, a.original).observer.actorId).toBe(first.id);
+  expect(receivedObservationHeader(world, b.original).observer.actorId).toBe(second.id);
   const point = (id: string) =>
     currentObservedFacets(world, id, source.id).find((value) => value.value.kind === 'location')!;
   const firstLocation = point(first.id),
@@ -40,10 +41,10 @@ it('shares only complete outward source values while preserving independent rece
   expect(received.sample).toEqual({
     valueMeasuredFrom: a.valueMeasuredFrom,
     valueMeasuredThrough: a.valueMeasuredThrough,
-    fact: observationFactKey(a.original, a.originalOrdinal),
+    fact: observationFactKey(world, a.original, a.originalOrdinal),
   });
   expect(received.location!.fact).toEqual(
-    observationFactKey(firstLocation.original, firstLocation.originalOrdinal),
+    observationFactKey(world, firstLocation.original, firstLocation.originalOrdinal),
   );
   expect(
     firstLocation.value.kind === 'location' && firstLocation.value.frame.positionAtObservation,
@@ -76,10 +77,10 @@ it('shares only complete outward source values while preserving independent rece
   const motionValue = receivedFacetValue(world, motion.value);
   if (motionValue?.kind !== 'observed-motion') throw new Error('Actual motion is required.');
   expect(restoredScene.motion!.earlier.fact).toEqual(
-    observationFactKey(motionValue.earlier.original, motionValue.earlier.originalOrdinal),
+    observationFactKey(world, motionValue.earlier.original, motionValue.earlier.originalOrdinal),
   );
   expect(restoredScene.motion!.later.fact).toEqual(
-    observationFactKey(motionValue.later.original, motionValue.later.originalOrdinal),
+    observationFactKey(world, motionValue.later.original, motionValue.later.originalOrdinal),
   );
   // A mutable restored world still supplies owned scene values, not live aliases.
   restoredScene.body.position.x = 999;
