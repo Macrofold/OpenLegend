@@ -74,6 +74,14 @@ export interface RecordChanges {
   /** Actor-permitted semantic expiry, never re-archived as an old source version. */
   expired?: Map<string, string[]>;
 }
+export const retainedSourceTables: ReadonlySet<string> = new Set([
+  'mind_awareness',
+  'mind_memories',
+  'mind_summaries',
+  'mind_temporal_chunks',
+  'mind_temporal_sources',
+  'mind_temporal_supports',
+]);
 const own = (value: Value, key: string): Value =>
   value && typeof value === 'object' && Object.hasOwn(value, key)
     ? (value as JsonRecord)[key]
@@ -177,16 +185,7 @@ export class WorldRecords {
     positions = new Map<string, Map<string, number>>(),
   ): void {
     for (const table of rows.keys())
-      if (
-        ![
-          'mind_awareness',
-          'mind_memories',
-          'mind_summaries',
-          'mind_temporal_chunks',
-          'mind_temporal_sources',
-          'mind_temporal_supports',
-        ].includes(table)
-      )
+      if (!retainedSourceTables.has(table))
         throw new Error('Unsupported personal-history retirement.');
     this.retirements.set(state, { rows, positions });
   }

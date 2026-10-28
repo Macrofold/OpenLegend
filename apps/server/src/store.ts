@@ -36,7 +36,7 @@ import {
   compactContributionHistory,
 } from './history-residency.js';
 import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
-import { WorldRecords } from './world-records.js';
+import { WorldRecords, retainedSourceTables } from './world-records.js';
 import {
   assertAttemptReceiptContinuity,
   readAttemptBudget,
@@ -431,15 +431,6 @@ export interface GameRepository extends WorldStore {
   recoverInterruptedWork(): Promise<void>;
   usage(ceilingUsd: number, actorId?: string): Promise<Pick<GameView['ai'], 'budget' | 'usage'>>;
 }
-
-const retainedSourceTables = new Set([
-  'mind_awareness',
-  'mind_memories',
-  'mind_summaries',
-  'mind_temporal_chunks',
-  'mind_temporal_sources',
-  'mind_temporal_supports',
-]);
 
 /**
  * PostgreSQL game repository.

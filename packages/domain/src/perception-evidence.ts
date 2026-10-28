@@ -1964,8 +1964,9 @@ function captureAttendedGeometryContext(
   observerId: string,
   previous: readonly AttentionEntry[],
   acquired: readonly ObservationContribution[],
-  confirmHeld = false,
+  options: { confirmHeld?: boolean; rebaselineMissing?: boolean } = {},
 ): ReadonlySet<string> | undefined {
+  const { confirmHeld = false, rebaselineMissing = false } = options;
   const entries = currentDetailedAttention(world, observerId);
   const oldContexts = new Set(previous.map((entry) => entry.exposure.episodeId));
   const newContexts = entries
@@ -1973,7 +1974,8 @@ function captureAttendedGeometryContext(
     .filter((id) => !oldContexts.has(id));
   const active = new Set([...oldContexts, ...entries.map((entry) => entry.exposure.episodeId)]);
   const changedScope = oldContexts.size !== entries.length || newContexts.length > 0;
-  if (!active.size || (!acquired.length && !changedScope && !confirmHeld)) return;
+  if (!active.size || (!acquired.length && !changedScope && !confirmHeld && !rebaselineMissing))
+    return;
   const geometry = currentReceivedGeometry(world, observerId);
   const available = geometry.observations;
   const byId = new Map(available.map((observation) => [observation.id, observation]));
@@ -1986,7 +1988,7 @@ function captureAttendedGeometryContext(
   };
   for (const observation of acquired) include(observation, active);
   if (newContexts.length) for (const observation of available) include(observation, newContexts);
-  if (confirmHeld) {
+  if (confirmHeld || rebaselineMissing) {
     const captures = world.experience?.temporal?.actors[observerId]?.captures;
     for (const observation of available)
       if (!captures?.[observation.id]) include(observation, active);
@@ -2003,6 +2005,9 @@ function captureAttendedGeometryContext(
           const original = byId.get(support.source.id);
           if (original) include(original, subjects);
         }
+  // Replacing expired payload restores only missing baselines. Unaffected held
+  // intervals close at a real scope/view boundary or cognition cut, not eviction.
+  // docs/projects/attention-and-scenes-tech-design.md#53-recent-chronology-without-narrative-boundaries
   if (changedScope || confirmHeld) {
     const captures = world.experience?.temporal?.actors[observerId]?.captures;
     for (const { observation, subjects } of scopes.values()) {
@@ -2060,7 +2065,7 @@ export function captureCurrentGeometrySupport(world: WorldState, observerId: str
     observerId,
     currentDetailedAttention(world, observerId),
     [],
-    true,
+    { confirmHeld: true },
   );
 }
 
@@ -2204,13 +2209,9 @@ export function reconcileAttendedTemporalEvidence(
       );
     }
   }
-  const geometry = captureAttendedGeometryContext(
-    world,
-    observerId,
-    priorEntries,
-    newGeometry,
-    rebaseline,
-  );
+  const geometry = captureAttendedGeometryContext(world, observerId, priorEntries, newGeometry, {
+    rebaselineMissing: rebaseline,
+  });
   if (history) delete history.capturesInvalidated;
   return geometry;
 }
