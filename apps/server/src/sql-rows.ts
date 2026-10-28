@@ -118,16 +118,16 @@ export function* sqlRecordBatches(
 ): Generator<string> {
   let batch: string[] = [],
     bytes = 2;
+  // Only encoded text escapes; trusted fixed-column rows reuse one transport object.
+  let record: Record<string, unknown> | undefined;
   for (const row of rows) {
-    const encoded = JSON.stringify(
-      Object.fromEntries(
-        columns.map((column, index) => {
-          const value = row[index];
-          // Match pg's text encoding before JSON would escape an isolated surrogate.
-          return [column, typeof value === 'string' ? toUSVString(value) : (value ?? null)];
-        }),
-      ),
-    );
+    record ??= Object.fromEntries(columns.map((column) => [column, null]));
+    for (let index = 0; index < columns.length; index++) {
+      const value = row[index];
+      // Match pg's text encoding before JSON would escape an isolated surrogate.
+      record[columns[index]!] = typeof value === 'string' ? toUSVString(value) : (value ?? null);
+    }
+    const encoded = JSON.stringify(record);
     const size = Buffer.byteLength(encoded);
     if (
       batch.length &&

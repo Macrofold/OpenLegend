@@ -471,11 +471,11 @@ export class MemoryRepository {
   committed(changes: RecordChanges, restored = false) {
     const actors = new Set<string>();
     let unknownScope = changes.deletes.has('data_world') || changes.deletes.has('world_settings');
-    // Current visibility/encounter bookkeeping is not retained evidence. A bird
-    // crossing the view must not invalidate memory counts or wake the indexer.
-    // Actual observations still arrive through mind_awareness in this same commit.
+    // Current reception and attention are not retained memory. Their own grants
+    // fence live reads; retained awareness/temporal sources still invalidate here.
     const affectsMemory = (table: string) =>
       table.startsWith('mind_') &&
+      !table.startsWith('mind_perception_') &&
       !/^mind_(exposure|visible_objects|visible_people|visible_places)(?:_owners)?$/.test(table);
     const mark = (id: string) => {
       const path = JSON.parse(id) as string[];
