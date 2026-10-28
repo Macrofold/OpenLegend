@@ -239,24 +239,28 @@ export function compactHistory(
         options,
       )
     : world;
-  return compactTemporalHistory(projected);
+  return compactTemporalHistory(projected, options);
 }
 
 /** Placement only. Canonical chunks survive in SQL until the retention owner
  * explicitly releases them, while native capture keeps only its bounded tail. */
-export function compactTemporalHistory(world: WorldState): WorldState {
+export function compactTemporalHistory(
+  world: WorldState,
+  options: { preview?: boolean } = {},
+): WorldState {
   const temporal = world.experience?.temporal;
   if (!temporal) return world;
   const maximum = selectedTemporalPolicy(world).recent.residentChunks;
   let changed = false;
   const actors = { ...temporal.actors };
   const retainedSources = new Set<string>();
+  const placements = new Map<string, Positions>();
   for (const [actorId, actor] of Object.entries(actors)) {
     let chunks = actor.chunks;
     if (chunks.length > maximum) {
       const old = historyPositions.get(chunks);
       const tail = chunks.slice(-maximum);
-      historyPositions.set(tail, {
+      placements.set(actorId, {
         positions: new Map(
           tail.map((chunk, index) => [
             chunk.id,
@@ -281,5 +285,10 @@ export function compactTemporalHistory(world: WorldState): WorldState {
     delete next.activeSource;
     delete next.activeBoundary;
   }
-  return { ...world, experience: { ...world.experience!, temporal: next } };
+  const projected = projectWorldHistory(world, { temporal: next }, options);
+  // The immutable temporal constructor may replace the newly built tail array.
+  // Storage ordinals belong to that actual returned collection, never its input.
+  for (const [actorId, placement] of placements)
+    historyPositions.set(projected.experience!.temporal!.actors[actorId]!.chunks, placement);
+  return projected;
 }

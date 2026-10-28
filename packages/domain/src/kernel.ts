@@ -38,6 +38,7 @@ import { visibleFeature } from './perception-frame.js';
 import { beginNativeChangeFeed, takeNativeChanges } from './native-change-feed.js';
 import { pendingNavigationEntityIds, navigationMembershipChanged } from './entity-index.js';
 import { NativeStatusPreparation } from './native-status-preparation.js';
+import type { TemporalEvidenceState } from './temporal-evidence.js';
 import { foragingProfile } from './native-foraging.js';
 import {
   nativeForagingDue,
@@ -6277,7 +6278,7 @@ const nativeContinuations = new WeakMap<
 >();
 
 type HistoryProjection = Partial<Pick<WorldState, 'events' | 'archivedEventCount' | 'memories'>> &
-  Partial<Pick<NonNullable<WorldState['experience']>, 'awareness' | 'summaries'>> &
+  Partial<Pick<NonNullable<WorldState['experience']>, 'awareness' | 'summaries' | 'temporal'>> &
   Partial<Pick<WorldState['actionExperience'], 'occurrences'>>;
 const historyProjectionRoots = new Set([
   'events',
@@ -6292,6 +6293,7 @@ const historyProjectionFields = new Set([
   'memories',
   'awareness',
   'summaries',
+  'temporal',
   'occurrences',
 ]);
 /** Removal preserves both record identity and order; protected active records cannot
@@ -6319,6 +6321,50 @@ function retainsHistoryMap<T>(
     retainsHistory(before[id] ?? [], after[id] ?? [], required),
   );
 }
+/** Residency can remove exact retained records, never edit their meaning or the
+ * live capture/append owner. Unknown fields conservatively invalidate reuse. */
+function sameResidencyFields(before: object, after: object, except: readonly string[]): boolean {
+  if (before === after) return true;
+  const keys = Object.keys(before),
+    next = Object.keys(after);
+  return (
+    keys.length === next.length &&
+    keys.every(
+      (key, index) =>
+        key === next[index] &&
+        (except.includes(key) || Reflect.get(before, key) === Reflect.get(after, key)),
+    )
+  );
+}
+function retainsTemporalHistory(
+  before: TemporalEvidenceState | undefined,
+  after: TemporalEvidenceState,
+): boolean {
+  if (before === after) return true;
+  if (!before || !sameResidencyFields(before, after, ['actors', 'sources'])) return false;
+  const actors = Object.keys(before.actors),
+    nextActors = Object.keys(after.actors);
+  if (
+    actors.length !== nextActors.length ||
+    actors.some((id, index) => id !== nextActors[index]) ||
+    !retainsHistory(Object.keys(before.sources), Object.keys(after.sources)) ||
+    Object.entries(after.sources).some(([id, block]) => before.sources[id] !== block) ||
+    (after.activeSource !== undefined && !after.sources[after.activeSource])
+  )
+    return false;
+  for (const id of actors) {
+    const prior = before.actors[id]!,
+      retained = after.actors[id]!;
+    if (
+      !sameResidencyFields(prior, retained, ['chunks']) ||
+      !retainsHistory(prior.chunks, retained.chunks) ||
+      retained.chunks.some((chunk) => chunk.sourceRefs.some((id) => !after.sources[id])) ||
+      Object.values(retained.captures).some((reference) => !after.sources[reference.blockId])
+    )
+      return false;
+  }
+  return true;
+}
 /** Relocate already committed history without settling unrelated physical calculations.
  * Record edits use ordinary mutation/materialization; only proven ordered removal
  * preserves prediction. Other experience/action fields never pass through this API.
@@ -6332,12 +6378,12 @@ export function projectWorldHistory(
   const keys = Object.keys(projection);
   if (keys.some((key) => !historyProjectionFields.has(key)))
     throw new Error('History residency cannot change mechanical world fields.');
-  if ((projection.awareness || projection.summaries) && !world.experience)
+  if ((projection.awareness || projection.summaries || projection.temporal) && !world.experience)
     throw new Error('History residency requires existing character experience.');
   if (
     keys.every((key) => {
       const owner =
-        key === 'awareness' || key === 'summaries'
+        key === 'awareness' || key === 'summaries' || key === 'temporal'
           ? world.experience
           : key === 'occurrences'
             ? world.actionExperience
@@ -6359,6 +6405,8 @@ export function projectWorldHistory(
       retainsHistoryMap(world.experience!.awareness, projection.awareness)) &&
     (!projection.summaries ||
       retainsHistoryMap(world.experience!.summaries, projection.summaries)) &&
+    (!projection.temporal ||
+      retainsTemporalHistory(world.experience?.temporal, projection.temporal)) &&
     (!projection.occurrences ||
       retainsHistoryMap(
         world.actionExperience.occurrences,
@@ -6366,14 +6414,15 @@ export function projectWorldHistory(
         (entry) => entry.status === 'running',
       ));
   const draft = draftWorld(world, { retainNativeValues: pure });
-  const { awareness, summaries, occurrences, ...roots } = projection;
+  const { awareness, summaries, temporal, occurrences, ...roots } = projection;
   Object.assign(draft, roots);
   if (occurrences) draft.actionExperience = { ...draft.actionExperience, occurrences };
-  if (awareness || summaries)
+  if (awareness || summaries || temporal)
     draft.experience = {
       ...draft.experience!,
       ...(awareness ? { awareness } : {}),
       ...(summaries ? { summaries } : {}),
+      ...(temporal ? { temporal } : {}),
     };
   // finishWorld clears interval progress after ordinary semantic edits. Residency is
   // explicitly pure, so publish a separately owned, identical remainder instead.
