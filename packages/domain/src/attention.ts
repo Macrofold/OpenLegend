@@ -253,6 +253,7 @@ const policyKey = (policy: AttentionPolicy, capacity?: number) =>
     policy.maximumMotionCue,
     policy.newDescriptionCue,
     policy.urgentCue,
+    policy.relation,
   ]);
 export const attentionSubjectKey = (sourceId: string, exposure: ObservationExposure) =>
   JSON.stringify([
@@ -457,6 +458,7 @@ export function updateAttention(
   );
   let geometryChanged = false,
     selectionInputsChanged = policyChanged;
+  const changedGeometryKeys = new Set<string>();
   const lostWitness = (key: string) => {
     const previous = readOnlyDraftView(state.candidates)[key];
     if (!previous) return;
@@ -532,7 +534,10 @@ export function updateAttention(
       motion?.id,
       motion?.revision,
     ]);
-    if (candidate.geometryRevision !== geometryRevision) geometryChanged = true;
+    if (candidate.geometryRevision !== geometryRevision) {
+      geometryChanged = true;
+      changedGeometryKeys.add(key);
+    }
     candidate.geometryRevision = geometryRevision;
     candidate.anchor ??= measured;
     if ((candidate.urgencyThrough ?? Infinity) <= world.simTime) {
@@ -788,7 +793,22 @@ export function updateAttention(
     const [anchorKey] = JSON.parse(key) as [string, AttentionRelationFamily];
     if (!live.has(anchorKey)) delete state.relationScans[key];
   }
-  if (geometryChanged) markAttentionRelationsDirty(world, observerId);
+  if (policyChanged) {
+    // An interval under the old criterion/capacity cannot certify the new one.
+    // Preserve the alarm generation while a fresh full pass restarts clearance.
+    for (const latch of Object.values(state.latches)) if (latch.active) delete latch.clearSince;
+    markAttentionRelationsDirty(world, observerId);
+  } else if (geometryChanged) {
+    // Any received body can approach a selected anchor. A static drop instead
+    // depends on that anchor's own geometry, not an unrelated moving neighbor.
+    markAttentionRelationsDirty(world, observerId, ['closing-body']);
+    const anchors = new Set(
+      readOnlyDraftView(state.entries)
+        .filter((entry) => changedGeometryKeys.has(entry.key))
+        .map((entry) => entry.key),
+    );
+    if (anchors.size) markAttentionRelationsDirty(world, observerId, ['closing-drop'], anchors);
+  }
   for (const entry of readOnlyDraftView(state.entries))
     if (!current.has(entry.key))
       for (const family of ['closing-body', 'closing-drop'] as const)
@@ -882,13 +902,19 @@ export function acknowledgeAttention(
   );
 }
 
-export function markAttentionRelationsDirty(world: WorldState, observerId: string): void {
+export function markAttentionRelationsDirty(
+  world: WorldState,
+  observerId: string,
+  families: readonly AttentionRelationFamily[] = ['closing-body', 'closing-drop'],
+  anchors?: ReadonlySet<string>,
+): void {
   const state = owned(world, observerId)?.attention;
   if (!state) return;
   state.relationRevision++;
   for (const entry of state.entries)
-    for (const family of ['closing-body', 'closing-drop'] as const)
-      state.relationDirty[relationKey(entry.key, family)] = state.relationRevision;
+    if (!anchors || anchors.has(entry.key))
+      for (const family of families)
+        state.relationDirty[relationKey(entry.key, family)] = state.relationRevision;
 }
 /** Only live selected continuations need clock work. Unselected expired cues are
  * cleared by the existing update owner before they can be ranked again. */
@@ -923,33 +949,52 @@ export function nextAttentionWorkAt(world: WorldState, observerId: string): numb
 export function attentionRelationOpportunity(
   world: WorldState,
   observerId: string,
-): { anchors: readonly AttentionEntry[]; candidates: number } | undefined {
+):
+  | {
+      anchors: readonly AttentionEntry[];
+      families: ReadonlyMap<string, ReadonlySet<AttentionRelationFamily>>;
+      candidates: number;
+    }
+  | undefined {
   const state = owned(world, observerId)?.attention;
   if (!state || !state.entries.length || world.simTime < state.nextRelationAt) return undefined;
   const policy = selectedAttentionPolicy(world);
-  const clearDue = new Set(
-    Object.values(readOnlyDraftView(state.latches))
-      .map((value) => readOnlyDraftView(value))
-      .filter(
-        (latch) =>
-          latch.active &&
-          latch.clearSince !== undefined &&
-          world.simTime >= elapsedDeadline(latch.clearSince, policy.relation.clearSeconds),
-      )
-      .map((latch) => latch.anchorKey),
-  );
-  const due = state.entries.filter(
-    (entry) =>
-      (['closing-body', 'closing-drop'] as const).some(
-        (family) => state.relationDirty[relationKey(entry.key, family)] !== undefined,
-      ) || clearDue.has(entry.key),
-  );
+  const families = new Map<string, Set<AttentionRelationFamily>>();
+  const due = state.entries.filter((entry) => {
+    const pending = new Set<AttentionRelationFamily>();
+    for (const family of ['closing-body', 'closing-drop'] as const) {
+      const key = relationKey(entry.key, family),
+        latch = state.latches[key];
+      if (
+        state.relationDirty[key] === undefined &&
+        latch?.active &&
+        latch.clearSince !== undefined &&
+        world.simTime >= elapsedDeadline(latch.clearSince, policy.relation.clearSeconds)
+      ) {
+        // No dirty input and the completed scan/latch agree on this cut. Rebase
+        // only their comparison key; no proof, cursor or clear interval advances.
+        // Keep deadline work pending across partial pages without a sibling job.
+        const scan = state.relationScans[key];
+        const sameCut = scan && scan.revision !== '' && scan.revision === latch.revision;
+        state.relationDirty[key] = ++state.relationRevision;
+        if (sameCut) {
+          const revision = String(state.relationRevision);
+          scan.revision = revision;
+          latch.revision = revision;
+        } else delete latch.clearSince;
+      }
+      if (state.relationDirty[key] !== undefined) pending.add(family);
+    }
+    if (pending.size) families.set(entry.key, pending);
+    return pending.size > 0;
+  });
   if (!due.length) return undefined;
   state.nextRelationAt = world.simTime + policy.relation.intervalSeconds;
   const start = state.relationCursor % due.length;
   state.relationCursor = (start + 1) % due.length;
   return {
     anchors: [...due.slice(start), ...due.slice(0, start)],
+    families,
     candidates: policy.relation.candidates,
   };
 }
@@ -975,6 +1020,9 @@ export function applyAttentionRelationEvaluations(
         (witness.dropLower ?? -Infinity) >= policy.drop.minimumDrop);
     const witness = evaluation.witnesses.find(matches);
     const key = relationKey(anchor.key, evaluation.family);
+    // Negative scan progress belongs to its scan, not an alarm that never
+    // existed. A cleared positive generation stays available for its next cue.
+    if (!witness && !state.latches[key]?.active) continue;
     const latch = (state.latches[key] ??= {
       anchorKey: anchor.key,
       family: evaluation.family,
@@ -1101,7 +1149,10 @@ export function revokeAttentionEvidence(
   for (const [key, latch] of Object.entries(state.latches)) {
     // A pending all-clear interval is optional derived evidence. A correction
     // cannot preserve it by omission merely because its original alarm survived.
-    if (affected.size) delete latch.clearSince;
+    if (affected.size && latch.clearSince !== undefined) {
+      delete latch.clearSince;
+      if (latch.active) state.relationDirty[key] = ++state.relationRevision;
+    }
     if (![...(latch.entryProof ?? []), ...(latch.newestProof ?? [])].some((fact) => revoked(fact)))
       continue;
     latch.active = false;

@@ -395,7 +395,7 @@ export function refreshReceivedGeometry(
     state.finished ||
     state.fragments.length + state.boundaries.length >= policy.maxFragments
   ) {
-    if (changed) markAttentionRelationsDirty(world, observerId);
+    if (changed) markAttentionRelationsDirty(world, observerId, ['closing-drop']);
     return { acquired, changed };
   }
   state.nextAt = world.simTime + policy.intervalSeconds;
@@ -592,7 +592,7 @@ export function refreshReceivedGeometry(
     state.finished && !state.pending.length && state.surfacesComplete && !state.unrepresented;
   if (acquired.length || changed || state.complete !== wasComplete) {
     changed = true;
-    markAttentionRelationsDirty(world, observerId);
+    markAttentionRelationsDirty(world, observerId, ['closing-drop']);
   }
   return { acquired, changed };
 }
@@ -630,7 +630,7 @@ export function endReceivedGeometry(world: WorldState, observerId: string): void
   finalizeGeometry(world, observerId, owner.geometry);
   delete owner.geometry;
   reconcileTemporalGeometryCaptures(world, observerId, new Set(), []);
-  markAttentionRelationsDirty(world, observerId);
+  markAttentionRelationsDirty(world, observerId, ['closing-drop']);
 }
 
 /** Pure current read: changed eye/range/geometry immediately removes stale grants
@@ -710,7 +710,7 @@ export function revokeReceivedGeometryEvidence(
   state.boundaryChecked = 0;
   state.finished = false;
   state.complete = false;
-  markAttentionRelationsDirty(world, observerId);
+  markAttentionRelationsDirty(world, observerId, ['closing-drop']);
 }
 
 function bodyProof(body: ReceivedSceneBody): ObservationFactKey[] {
@@ -793,19 +793,7 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
     ),
   );
   const bodies = [...scene.bodies.values()];
-  const owner = readOnlyDraftView(world.perceptionEvidence![observerId]!);
-  const geometryBasis = owner.geometry && readOnlyDraftView(owner.geometry).basis;
   const state = world.perceptionEvidence![observerId]!.attention!;
-  // The receiver's dirty owner already advances on actual member/value/frame/
-  // correspondence or geometry changes. Reuse that proof instead of repeating
-  // every crowd member in each anchor's saved scan key. Confirmation time alone
-  // changes neither the cut nor the latest support checks performed below.
-  const revision = JSON.stringify([
-    state.relationRevision,
-    scene.physicalLife,
-    geometryBasis,
-    geometry.complete,
-  ]);
   const bodiesByExposure = new Map(bodies.map((body) => [body.exposure, body]));
   const boundariesById = new Map(boundaries.map((value) => [value.observation.id, value]));
   const evaluations: AttentionRelationEvaluation[] = [];
@@ -813,10 +801,10 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
   // instead gives every member finite visits without pretending partial absence
   // is a negative answer. Only a complete unchanged-cut pass can clear a latch.
   const page = <T>(
-    entry: { key: string; changeRevision: string },
+    entry: { key: string },
     family: 'closing-body' | 'closing-drop',
     values: readonly T[],
-    revision: string,
+    due: boolean,
     allowance: number,
     measure: (value: T) => AttentionRelationWitness | undefined,
     prior: AttentionRelationWitness | undefined,
@@ -824,19 +812,33 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
     knownComplete: boolean,
   ) => {
     const key = JSON.stringify([entry.key, family]);
+    const previous = state.relationScans[key];
+    const reserved = priorRequired && allowance > 0 ? 1 : 0;
+    if (!due) {
+      // Reserve exactly the old page allowance, including its prior witness.
+      // Skipping clean work must not lend extra visits to this or later anchors.
+      return {
+        visited:
+          Math.min(
+            Math.max(0, allowance - reserved),
+            values.length,
+            previous?.remaining ?? values.length,
+          ) + reserved,
+      };
+    }
     const scan = (state.relationScans[key] ??= {
       cursor: 0,
       remaining: values.length,
       revision: '',
       clearSupported: true,
     });
-    const cut = JSON.stringify([entry.changeRevision, revision]);
+    // Only this predicate's received dependencies advance its generation.
+    const cut = String(state.relationDirty[key]);
     if (scan.revision !== cut) {
       scan.revision = cut;
       scan.remaining = values.length;
       scan.clearSupported = true;
     }
-    const reserved = priorRequired && allowance > 0 ? 1 : 0;
     const count = Math.min(Math.max(0, allowance - reserved), values.length, scan.remaining);
     const witnesses: AttentionRelationWitness[] = [];
     const bounds = family === 'closing-body' ? policy.body : policy.drop;
@@ -883,7 +885,8 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
   let remaining = opportunity.candidates;
   for (let ordinal = 0; ordinal < opportunity.anchors.length; ordinal++) {
     const entry = opportunity.anchors[ordinal]!,
-      anchor = scene.bodies.get(entry.sourceId);
+      anchor = scene.bodies.get(entry.sourceId),
+      families = opportunity.families.get(entry.key)!;
     if (!anchor) continue;
     const share = Math.floor(remaining / (opportunity.anchors.length - ordinal));
     const bodyKey = JSON.stringify([entry.key, 'closing-body']),
@@ -916,15 +919,15 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
       entry,
       'closing-body',
       bodies,
-      revision,
+      families.has('closing-body'),
       Math.ceil(share / 2),
       bodyMeasure,
-      share > 0 && priorBody ? bodyMeasure(priorBody) : undefined,
+      families.has('closing-body') && share > 0 && priorBody ? bodyMeasure(priorBody) : undefined,
       !!bodyLatch?.active,
       true,
     );
     remaining -= body.visited;
-    evaluations.push(body.evaluation);
+    if (body.evaluation) evaluations.push(body.evaluation);
     const dropLatch = state.latches[JSON.stringify([entry.key, 'closing-drop'])];
     const dropMeasure = (
       value: (typeof boundaries)[number],
@@ -957,15 +960,17 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
       entry,
       'closing-drop',
       boundaries,
-      revision,
+      families.has('closing-drop'),
       Math.max(0, share - body.visited),
       dropMeasure,
-      share - body.visited > 0 && priorBoundary ? dropMeasure(priorBoundary) : undefined,
+      families.has('closing-drop') && share - body.visited > 0 && priorBoundary
+        ? dropMeasure(priorBoundary)
+        : undefined,
       !!dropLatch?.active,
       geometry.complete,
     );
     remaining -= drop.visited;
-    evaluations.push(drop.evaluation);
+    if (drop.evaluation) evaluations.push(drop.evaluation);
   }
   applyAttentionRelationEvaluations(world, observerId, evaluations);
 }

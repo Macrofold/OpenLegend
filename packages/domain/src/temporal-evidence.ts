@@ -780,17 +780,30 @@ export function captureTemporalCurrent(
     // Comparing an existing capture does not modify its source block. Avoid
     // drafting every retained value merely to discover it is unchanged.
     const reference = readOnlyDraftView(owned.actor.captures)[lease.id];
+    const current = receivedFacetValue(world, lease.value)!;
     const previous =
       reference &&
       retainedValueAt(
         readOnlyDraftView(world.receivedValues?.sources ?? {}),
         readOnlyDraftView(reference),
       );
-    const projected = splitTemporalValue(temporalValue(receivedFacetValue(world, lease.value)!));
-    if (
+    const maySkip =
       !newlySelected.has(lease.subjectId) &&
       !endingSelection.has(lease.subjectId) &&
-      !(lease.value.kind === 'body' && contactSubjects.has(lease.subjectId)) &&
+      !(lease.value.kind === 'body' && contactSubjects.has(lease.subjectId));
+    // One synchronous read resolved the same retained payload. Geometry with a
+    // personal reception still needs its independent frame/proof comparison.
+    if (
+      maySkip &&
+      previous &&
+      current === previous &&
+      reference?.reception === undefined &&
+      lease.value.reception === undefined
+    )
+      continue;
+    const projected = splitTemporalValue(temporalValue(current));
+    if (
+      maySkip &&
       previous &&
       valueEncoding(previous).json === valueEncoding(projected.value).json &&
       (reference?.reception === projected.reception ||
