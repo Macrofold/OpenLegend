@@ -1,6 +1,6 @@
 # EverQuest — full research dossier
 
-**G197 · October 28, 2026 — assembled draft, final review pending.** Original PC _EverQuest_: Live and official progression servers, with historical eras identified. _EverQuest II_, _Next_, _Legends_ and independent emulator services have different contracts. No client, editor, server, account or payment was used; audiovisual observations below are attributed written evidence.
+**G197 · October 28, 2026 — researched and independently reviewed.** Original PC _EverQuest_: Live and official progression servers, with historical eras identified. _EverQuest II_, _Next_, _Legends_ and independent emulator services have different contracts. No client, editor, server, account or payment was used; audiovisual observations below are attributed written evidence.
 
 [Requirements](../research-requirements.md) · [Packet provenance](../references/packet-provenance.md)
 
@@ -10,15 +10,13 @@ EverQuest's useful proposition is that a particular capability can make someone 
 
 ## 1. Identity and version boundaries
 
-Launched in **1999**, EverQuest is a persistent, zoned fantasy MMORPG: a character continues between sessions, while encounters, spawned creatures and temporary instances can reset. Its setting, **Norrath**, includes cities, wilderness, dungeons and other planes. It is chiefly a PvE progression game; an official progression server is a changed ruleset within the continuing service, not an exact restored launch client. [E01](#e01) [R02](#r02)
+Launched in **1999**, EverQuest is a persistent, zoned fantasy MMORPG. Its setting, **Norrath**, includes cities, wilderness, dungeons and other planes. Character continuity coexists with resettable encounters and instances; the service contracts below determine which world a person actually enters. [E01](#e01) [R02](#r02)
 
 **Shattering of Ro** went live December 2, 2025, raising the cap to **130** and adding planar quests, group missions, raids, collections and new abilities. The October 6, 2026 **Favors of Fortune** announcement concerns preorder/beta access, not a delivered replacement at this cutoff. The distinction matters when judging new promises against proven play. [S12](#s12) [P03](#p03)
 
-Characters retain progress across sessions. Fresh progression servers begin alongside existing servers; they do not periodically erase the established population. [E01](#e01)
-
 | Boundary                  | What persists and what varies                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Live and progression      | Live supports the continuing expansion game. Progression servers unlock content under different schedules and trade/boxing rules; Lethar launched August 26, 2026. Agnarr stops in the Planes of Power era. These are revised rulesets, not exact 1999 restorations. [E01](#e01)                                                                                                                                                                  |
+| Live and progression      | Live supports the continuing expansion game. Progression servers unlock content under different schedules and trade/boxing rules; Lethar launched August 26, 2026. Agnarr stops in the Planes of Power era. These are revised rulesets, not exact 1999 restorations. New progression starts leave established servers intact. [E01](#e01)                                                                                                         |
 | Population and encounters | `/pickzone` selects load-balanced copies within a server. Raids/missions use bounded instances; their closure does not erase the character. [E01](#e01) [E10](#e10)                                                                                                                                                                                                                                                                               |
 | Transfers                 | A paid token relocates a character only to eligible destinations; expansion progress and ruleset restrictions apply. Shared-bank possessions stay behind. Real-estate ownership ends, while house/plot contents move in a crate requiring a destination plot; guild and fellowship membership end. Account-to-account transfers are currently unavailable. The April 2026 destination roster is dated, not a guaranteed October list. [E04](#e04) |
 | Housing and absence       | Housing uses instanced neighborhoods and interiors. Escrow pays upkeep; exhausted funds restrict access/use. The 2010 guide's exact inactivity-eviction timer was not verified as current and should not become an October 2026 guarantee. [S02](#s02)                                                                                                                                                                                            |
@@ -40,19 +38,19 @@ A class selects a substantial capability vocabulary. This compact map uses a pub
 
 A character's role can therefore include stopping an extra enemy from acting or preserving others' resources. Large damage numbers are only one expression of competence. [S01](#s01)
 
-Race and deity also locate a person socially. The original **Trilogy manual**, available here through indexed extracts, explains faction as other groups' disposition, affected by identity and actions. An Innoruuk worshipper's treatment at a Qeynos paladin temple illustrates why the same city is not equally welcoming to everyone. This is historical faction design, not a claim that every current starting option remains unchanged. [S14](#s14)
+Race and deity also locate a person socially. Indexed extracts of the historical **Trilogy manual** explain faction as other groups' disposition, affected by identity and actions: an Innoruuk worshipper is unwelcome at a Qeynos paladin temple. Current starting choices should not be inferred from that example. [S14](#s14)
 
 Levels unlock eligibility and capacity; practice improves relevant skills, while trainers supply another route. **Alternate Advancement** adds earned points spent on ranked general, archetype and class abilities. The publisher's 2008 redesign consolidated repeated lines and exposed prerequisites through purchase filters: specialization creates decisions, but navigating an expanding list is itself work. Exact old catch-up thresholds are not imported. [S09](#s09) [S13](#s13)
 
 Current acquisition differs from old “buy every spell” guides. The **February 2026 update** added optional subscriber spell/combat-ability auto-grants at level-up, with a four-expansion lag and exclusions; eligibility depends on owned content on Live and unlocked era on progression servers. Knowledge of which tool to use remains separate from receiving it. [S05](#s05)
 
-**Alternate Personas** let one named character develop different class/race/deity combinations. The documented system shares inventory, bank, crafting and keys, while levels, spellbooks and several character settings remain separate. Swapping is restricted to suitable safe locations outside combat; it is not simultaneous access to all classes. Shared achievements and lockouts also prevent treating each persona as an entirely fresh quest identity. [S06](#s06)
+**Alternate Personas** let one named character develop different class/race/deity combinations. Inventory, bank, crafting and keys are shared; levels and spellbooks remain separate. Swapping requires suitable safe locations outside combat. Shared achievements and lockouts also prevent treating each persona as a fresh quest identity. [S06](#s06)
 
 ## 3. Actions, combat and cooperation
 
-The basic interaction is to move through a zone, select a target, judge its threat, begin weapon attacks or activate a prepared ability, and respond to health, mana/endurance, position and other participants. Spellcasting selects a target and prepared spell; casting time, interruption, resistance and resource depletion can defeat the intended effect. The historical manual distinguishes acquiring a spellbook entry from memorizing a usable spell gem; its old slot limit is not a current specification. [S14](#s14)
+Move, select a target, start weapon attacks or activate a prepared ability, then respond to resources, position and other participants. Spellcasting requires a target/prepared spell; casting time, interruption, resistance and depleted mana can defeat the intended effect. The historical manual separates acquiring a spellbook entry from memorizing a usable gem; its old slot limit is not a current specification. [S14](#s14)
 
-A **Berserker example**, documented in 2008, makes the resource and social layer concrete. Two-handed attacks and thrown axes coexist with endurance-costing stun, snare and threat-reduction abilities; some consume particular summoned axes. Damage and aid generate enemy attention. Acting too aggressively can pull that attention away from the intended tank. Preparation is therefore relevant before the next target is engaged. [S08](#s08)
+The **2008 Berserker guide** connects two-handed attacks and thrown axes to endurance-costing stun, snare and threat reduction; some abilities consume particular summoned axes. Damage and aid generate enemy attention, so an aggressive player can draw attacks away from the tank. [S08](#s08)
 
 Pulling separates a manageable fight from nearby enemies; control and timing determine whether the group can sustain it. Group play joins complementary capabilities, while raids coordinate several groups around an encounter and an agreed reward policy. A publisher-hosted **2007 raid guide** assigns scouting, pulling, tanking, loot distribution and backup leadership, and explicitly treats an unexpectedly extended event as a cost imposed on everyone. That is valuable historical coordination advice; its authoritarian rhetoric is not an OpenLegend social model. [S18](#s18)
 
@@ -62,7 +60,7 @@ The positive opportunity is continuity when a human partner is absent. The limit
 
 ## 4. Items, crafting, markets, time and loss
 
-Loot, quest rewards, purchased supplies and crafted objects feed different uses: equipped weapons/armor, spell or ability acquisition, consumables, ingredients, collections, storage and display. The Persona FAQ makes custody concrete: possessions are shared across personas but equipment remains subject to applicability; changing class can return unusable gear to bags, and sharing a Lore item does not grant a second copy. [S06](#s06)
+Possessions serve as equipment, consumables, ingredients, collectibles or display. The Persona FAQ makes custody concrete: changing class can return inapplicable equipment to bags, while a shared Lore item does not grant another copy. [S06](#s06)
 
 **Crafting** combines ingredients in an appropriate container/workstation. Recipes can be learned or discovered; missing components, skill and failure affect the attempt. Smithing, tailoring, pottery, baking, brewing, fletching and jewelcraft serve different outputs; research produces spells, while alchemy, poison-making and tinkering have class/race constraints. The 2007 primary guide distinguishes a recipe becoming trivial for skill gain from guaranteed success, and warns that vendor resale may not recover inputs. Fishing/gathered or looted resources, intermediates and player demand make the chain broader than a combine button. Its old skill caps are not current limits. [S04](#s04)
 
@@ -82,7 +80,7 @@ Time is consumed by preparation, movement, recovery, finding companions and repe
 
 **Free play** includes expansion content through _Laurion's Song_ following the June 17, 2026 unlock. That does not grant every original edition's promotional item or all later expansions. [E05](#e05) **All Access** unlocks broader AA progression, full spell ranks and mercenary tiers, additional character slots, fuller market/guild facilities and progression-server access. The membership page lists optional Perks as an additional charge, not included benefits. Payment therefore changes usable character and organizational capability. [E03](#e03)
 
-**Krono** converts purchased membership time into a tradeable asset: a cash purchaser can sell it for existing player currency/items; an earner can buy it and redeem membership time. The sale transfers existing wealth rather than creating platinum. Players cannot lawfully cash out Krono to each other under the published rules. The March 30, 2026 FAQ says redemption grants All Access time only when All Access is already active; otherwise it grants time in the consuming game. It also says a traded/listed Krono becomes tied to that game and warns of special-server restrictions. Do not repeat the older support article's unrestricted cross-game/All Access wording. [E02](#e02)
+**Krono** converts purchased membership time into a tradeable asset: a cash purchaser can sell it for existing player currency/items; an earner can buy it and redeem membership time. The sale transfers existing wealth rather than creating platinum. Published rules prohibit player cashout. The March 30, 2026 FAQ says redemption grants All Access time only when All Access is already active; otherwise it grants time in the consuming game. It also says a traded/listed Krono becomes tied to that game and warns of special-server restrictions. This dossier follows that dated FAQ where older support wording is broader. [E02](#e02)
 
 Purchasable **level 115 Heroic Characters** include gear, spells and AAs, subject to the _Shattering of Ro_ unlock. The anniversary's free subscriber claim ended in April. Separate **Heroic Experience Draughts**, released May 2026, grant a specified level without that equipment/spell/AA package, with availability tied to server progression. These remove preparation time; they do not teach coordination or class judgment. [E09](#e09) Optional Perks alter play too: the Fangbreaker FAQ explicitly permits Challenger's protection against losing a level. It is not blanket immunity from death's consequences. [E06](#e06)
 
@@ -106,7 +104,7 @@ These are **constructed situations** derived from the cited rules, not claimed p
 
 The publisher's **2007 creation account** begins with the Nameless and elemental gods shaping existence. **Veeshan** claims Norrath and places dragons in Velious; **Brell Serilis** secretly seeds the depths, then brokers a pact to restrain dragon dominance. Dwarves, Tunare's elves and Prexus's aquatic Kedge embody competing divine claims. Excluded **Innoruuk** turns kidnapped elven rulers into ancestors of the dark elves as revenge. **Rallos Zek's** creations build an empire and invade the Plane of Earth; divine retaliation destroys that power and scatters its peoples. Solusek Ro's heat later displaces elves, while human settlement produces Qeynos and Freeport. These conflicts make displacement, divine allegiance and unfamiliar cities intelligible. They are authored history, not a continuously simulated creation myth. [S03](#s03)
 
-That history reaches the player through unequal faction reception (§2), culturally situated routes (§4) and particular aspirations. Berserker **Keras**, exiled after killing a sparring partner in rage, seeks control; his epic quest casts disciplined use of fury as achievement. Crescent Reach's Drakkin heritage leads to a breath-weapon quest rather than remaining only a character-selection label. [S08](#s08) [S09](#s09)
+That history reaches the player through faction reception (§2), routes (§4) and individual aspirations. Berserker **Keras**, exiled after killing a sparring partner, seeks control; his epic quest makes disciplined fury an achievement. [S08](#s08) Crescent Reach's Drakkin heritage leads to a breath-weapon quest rather than remaining only a selection label. [S09](#s09)
 
 The delivered **Shattering of Ro** premise reconnects divine motives: an explosion kills **Druzzil Ro**; unconscious **Firiona Vie** is the survivor, and **Solusek Ro** blames mortals. **Innoruuk** and **Rallos Zek** join his assault on Tunare's Plane of Growth for their own advantage. **Mithaniel Marr** defends Tunare, while **Quellious** treats both sides and seeks an alternative to war. Damaged magic becomes hazardous storms as well as a story problem. This creates a question—what happened, whom to aid, and whether escalation is warranted—around the expansion's activities. The promotional premise does not prove every alignment produces a branching, lasting world outcome. [S11](#s11)
 
@@ -114,7 +112,7 @@ OpenLegend's transferable ambition is a world whose inhabitants' reasons connect
 
 ## 7. Presentation and interface
 
-EverQuest's spatial places and layered interface carry different kinds of information: the scene establishes location and movement; targets, resource displays, spell gems, inventories and text communicate actionable state. The older interface's preparation model is documented in the manual (§3); its original layout is not treated as today's screenshot. [S14](#s14)
+The historical manual documents first-person, overhead and rear camera views, including fixed/rotating options and pan/zoom. Changing viewpoint changes spatial awareness; this is a documented original interface, not a current screenshot or observed camera test. [S14](#s14)
 
 Koh's 2007 review contrasts smooth, natural Drakkin movement with choppier older zones. Rivervale's buoyant music stood out, but sound quality varied between zones and footsteps did not change with terrain. These are attributed written observations, not footage inspected for this research. [R04](#r04)
 
@@ -152,6 +150,8 @@ The following is a documented path through **EQEmu/PEQ**, not a reproduced tutor
 **Permission and evidence limits.** EQEmu's repository carries GPLv3 code licensing; that does not grant rights to Daybreak assets or make every server's content interchangeable. [M11](#m11) Official support for UI customization is not blanket approval of gameplay automation or third-party servers. The practical lesson for OpenLegend is to make a creator's supported recipient path, dependencies and revision consequences understandable; it is not a decision to adopt EQEmu, its technical stack or a donation business model.
 
 ## 9. Production, marketing and commercial evidence
+
+Darkpaw Games develops the current game; Daybreak publishes it within the EG7 group. [P04](#p04)
 
 Brad McQuaid's 2012 interview traces the design to John Smedley's graphical online-world proposal and McQuaid/Steve Clover's experience with MUDs. UO strengthened their preference for PvE and prompted adding crafting. Development moved from software to hardware rendering when crowds threatened performance; model optimization and a reliable UDP framework addressed different technical constraints. McQuaid describes a relatively inexperienced team working through trial and error. These participant recollections explain choices and production problems, not the current engine's implementation or a controlled proof that difficulty caused retention. [P01](#p01)
 
@@ -205,7 +205,7 @@ The research supports **recognizable usefulness, chosen commitments and earned b
 
 ## 12. Coverage, preservation and source limits
 
-This assembled pass awaits independent final review. It uses historical primary guides for durable mechanisms and labels subsequent changes; dated player experiences are not current rules audits. The historical manual could not be fully fetched and is used only for the clearly identified indexed extracts. No footage was inspected or software run.
+Independent final review is complete. It uses historical primary guides for durable mechanisms and labels subsequent changes; dated player experiences are not current rules audits. The historical manual could not be fully fetched and is used only for the clearly identified indexed extracts. No footage was inspected or software run.
 
 The separate canceled **G18 EverQuest Next** owners remain [the original game note](../games/everquest-next.md) and [its dossier](everquest-next.md); announced Storybricks/Rallying Calls and Landmark features do not become shipped original-EQ systems. The [WoW dossier](world-of-warcraft.md) retains its separately attributed production account of removing EverQuest pain points. Nothing is moved or replaced here.
 
@@ -253,7 +253,7 @@ Accessed October 28, 2026. Publication dates qualify historical rules. Primary p
 
 <a id="s13"></a> **S13 — [Alternate Advancement Enhancements](https://www.everquest.com/news/imported-eq-enus-50943)**. May 27, 2008. Full primary body read; ranked purchases, prerequisites and consolidation, not old catch-up numbers.
 
-<a id="s14"></a> **S14 — [EverQuest Trilogy manual](https://www.mocagh.org/miscgame/everquesttrilogy-manual.pdf)**. Historical publisher manual, museum mirror. Indexed faction/spell excerpts read; full PDF exceeded retrieval limit. Old slots/death rules excluded.
+<a id="s14"></a> **S14 — [EverQuest Trilogy manual](https://www.mocagh.org/miscgame/everquesttrilogy-manual.pdf)**. Historical publisher manual, museum mirror. Indexed faction/spell/camera excerpts read; full PDF exceeded retrieval limit. Old slots/death rules excluded.
 
 <a id="s15"></a> **S15 — [All About Mercenaries](https://www.everquest.com/news/imported-eq-enus-51873)**. April 20, 2010. Relevant primary body read; hire/assist/upkeep/raid boundaries. Its type/tier list is superseded by S16.
 
@@ -272,6 +272,8 @@ Accessed October 28, 2026. Publication dates qualify historical rules. Primary p
 <a id="p02"></a>**P02 — [22nd Expansion interview with Brad McQuaid](https://www.mmorpg.com/interviews/22nd-expansion-interview-with-brad-mcquaid-2000105080).** Robert Lashley, December 8, 2015. Relevant first-page interview body read; historical GDC demonstration and launch recollections.
 
 <a id="p03"></a>**P03 — [Favors of Fortune preorder and beta](https://www-cdn.everquest.com/news/eq-fof-beta-and-preorder).** October 6, 2026. Full primary announcement read; actual promotion and beta scope, not released expansion outcomes.
+
+<a id="p04"></a>**P04 — [Daybreak company profile](https://www.daybreakgames.com/about-eqn).** Relevant current studio/publisher body read October 28, 2026; current ownership, not original-development chronology.
 
 <a id="m01"></a>**M01 — [Drakah's downloads catalogue](https://shakahr.com/downloads/).** Full original-EQ catalogue, version labels, donation and personal-edit terms read October 28, 2026. Creator statements, not audience or earnings statistics.
 
