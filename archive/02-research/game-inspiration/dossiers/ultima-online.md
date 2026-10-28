@@ -1,6 +1,8 @@
 # Ultima Online — full research dossier
 
-**G19 · October 28, 2026 refresh — incomplete checkpoint.** The complete September 26–27 dossier is preserved below while current rules, native creation, connected lore, commercial evidence and independent reception are being refreshed. Production shards and **New Legacy** are distinct contracts; Season 2 launched October 15, 2026 (see §24). Historical source captures remain dated and are not presented as newly reread. [Preserved ecology case](../games/ultima-online-s-ecology.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G19 · Complete refresh, October 28, 2026.** Ordinary production shards and **New Legacy** have distinct progression, property and continuity contracts; Season 2 launched October 15 (see §24). Historical September captures are preserved with their access dates, alongside the current primary evidence and independent reviews. [Preserved ecology case](../games/ultima-online-s-ecology.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+
+**Reading route:** §§1/9 cover persistence and payment; §§2–22 explain play, housing and six worked situations; §§23–26 cover presentation, seasonal scope and reception; §§27–28 cover production, commercial evidence and the ecology correction; the external-creation section documents R15; §29 routes the findings into existing design and qualification.
 
 Ultima Online is one of OpenLegend's most important precedents because it treats a game world less as a sequence of combat encounters and more as a place where players can become **blacksmiths, thieves, animal tamers, shopkeepers, homeowners, murderers, guildmates, treasure hunters, mages, fishermen and politicians of informal player society**. Its strongest systems interlock because ordinary actions change ownership, reputation, scarcity and relationships. Its original ecology's computational and resource-circulation problems are equally valuable, with distinct participant explanations preserved in §§16/28.
 
@@ -595,7 +597,9 @@ The underlying attachment loop already existed without an LLM.
 
 ## 16. The failed ecology experiment
 
-UO's ecology is a useful failure study, but two failures should not be collapsed into one. In his 2024 retrospective, lead designer Raph Koster distinguishes expensive radial searches and pathfinding, which contributed to removing ecology AI during beta, from a finite resource loop exhausted by players turning sheep into wool, crafting shirts for advancement, and retaining or slowly selling the output. Removing AI did not remove every resource mechanic. This participant account qualifies Garriott's better-known harvesting explanation; neither is a complete contemporaneous performance or economic record. The transferable question is whether a simulation remains affordable and productive under the actual incentives and circulation of its resources. [P26-01](#p26-01)
+<a id="what-actually-failed"></a>
+
+Lead designer Raph Koster's 2024 retrospective separates costly radial searches/pathfinding, which helped remove ecology AI during beta, from a finite resource loop clogged by players turning sheep into wool, making shirts for advancement and retaining the output. Disabling ecology AI did not eliminate all resource mechanics. This qualifies Garriott's harvesting account; neither retrospective supplies complete contemporaneous measurements. Test computational cost and resource circulation under actual incentives. [P26-01](#p26-01)
 
 ### OpenLegend application
 
@@ -1027,8 +1031,8 @@ The official-service boundary is narrower: UO sanctions its integrated **Classic
 
 ### Representative author-to-player lifecycle
 
-1. **Author the behavior.** In ModernUO, a creator writes a C# item or creature under the content project. Its example magic lantern connects graphic identity, charges, light, ownership checks, interaction and timers. Configuration JSON selects settings and expansion/maps; region/map files supply data. These are different authoring layers, not one all-purpose visual editor. [M26-07](#m26-07) [M26-08](#m26-08)
-2. **Build and preview.** The documented Windows/macOS/Linux build path checks prerequisites and publishes a server distribution. Its current requirements include .NET 10 and platform libraries. First launch asks for locally supplied UO data, a listener, expansion/maps and an owner account. A client pointed to the local address provides a playable test environment. These steps were documented, not reproduced in this research. [M26-09](#m26-09) [M26-10](#m26-10) [M26-11](#m26-11)
+1. **Author the behavior.** In ModernUO, a creator writes a C# item or creature under the content project. Its example magic lantern connects graphic identity, charges, light, backpack-use checks, interaction and timers. Configuration JSON selects settings and expansion/maps; region/map files supply data. These are different authoring layers, not one all-purpose visual editor. [M26-07](#m26-07) [M26-08](#m26-08)
+2. **Build and preview.** The documented Windows/macOS/Linux build path checks prerequisites and publishes a server distribution. Its current requirements include .NET 10 and platform libraries. First launch asks for locally supplied UO data, a listener, expansion/maps and an owner account. A client pointed to the local address provides a playable test environment. GM commands `[add` and `[Props` create an instance and inspect its properties. [M26-12](#m26-12) These steps were documented, not reproduced in this research. [M26-09](#m26-09) [M26-10](#m26-10) [M26-11](#m26-11)
 3. **Test behavior and saved state.** For the lantern, test permission, charge consumption and timer cleanup, then save/reload to check restoration. ModernUO's serialization documentation connects persisted fields, version changes and explicit migration methods. That makes saved custom instances part of an update's compatibility problem; a successful compile alone is insufficient. This is a proposed test derived from the documented example. [M26-07](#m26-07) [M26-12](#m26-12)
 4. **Package and share the supported combination.** ModernUO's portable distribution can be deployed to a host; recipients need compatible client data and the correct address. IPL illustrates a separate delivery tool: build its patch/server/client parts, configure the shard, generate a versioned manifest, and distribute the launcher. Its manifest is regenerated when packaged files change; special handling preserves local settings or deletes selected files. [M26-06](#m26-06) [M26-13](#m26-13)
 5. **Play, update and remove deliberately.** A recipient launches the matching client and connects to that particular shard. A world package's maps, code and saved instances can conflict with another version; this is not a standardized drag-and-drop load order. The reviewed material establishes neither a universal safe uninstaller nor automatic preservation when a custom type is removed. The operator must decide how affected instances and files are handled before withdrawing the component. ModernUO's GPLv3 code license does not itself license Ultima's art or maps. [M26-04](#m26-04) [M26-11](#m26-11) [M26-12](#m26-12) [M26-14](#m26-14)
@@ -1102,26 +1106,27 @@ These are qualification questions for existing owners. The research does not clo
 
 The September 27 audit covered classless attributes and editable skill budgets; acquisition, containers, equipment, crafting and upgrading; magic and virtues; travel, stealth, crime and object interaction; death and recovery; player trade, housing and pet training; guilds, NPC services, quests and long-term activities. Its key scope limits remain: native pets are not deep cognitive companions, authored events are not universal player-driven history, housing is not population simulation, and ordinary production rules differ from the 1997 launch and seasonal New Legacy.
 
-The October refresh strengthens the actual activity chains, six causal situations, native housing lifecycle, connected lore, current service/payment boundaries and firsthand reception. The production/ecology correction and external-creation lifecycle are integrated; final independent review remains open at this checkpoint. Original examples and dated contrary accounts are retained rather than replaced by the newest update.
+The October refresh strengthens the actual activity chains, six causal situations, native housing lifecycle, connected lore, current service/payment boundaries and firsthand reception. Production, ecology and external creation are integrated; independent core/reception and commercial reviews passed, with their concrete corrections applied. Original examples and dated contrary accounts are retained rather than replaced by the newest update.
 
 **September 27 boundary check (historical):** the prior audit recorded Publish 124, the 29th anniversary and future client/publish work. [UO01](#uo01) [UO02](#uo02) Its New Legacy forecast is retained in §24 alongside the subsequently verified launch.
 
-| Requirement                             | Coverage                                                                        |
-| --------------------------------------- | ------------------------------------------------------------------------------- |
-| R01 identity / scope / promise          | §§1–3, 24, 27                                                                   |
-| R02 player actions / mechanics          | §§3–23                                                                          |
-| R03 items / entities / composition      | §§7–10, 15, 22                                                                  |
-| R04 progression / economy / time        | §§2–3, 8–10, 24                                                                 |
-| R05 interactions / concrete situations  | §§8–18                                                                          |
-| R06 people / AI / social / multiplayer  | §§9–19                                                                          |
-| R07 art / audio / interface / feel      | §23                                                                             |
-| R08 story / narrative                   | §§18, 21, 24                                                                    |
-| R09 production / development            | §§27–28                                                                         |
-| R10 marketing / distribution / virality | §§1, 24, 27                                                                     |
-| R11 commercial / participation          | active 29-year service; §1 and reviews; no unsupported current subscriber count |
-| R12 reviews / player feedback           | §§25–26                                                                         |
-| R13 transferable inspiration / limits   | §§28–29                                                                         |
-| R14 sources / preservation / navigation | this section + sources                                                          |
+| Requirement                                     | Coverage                                                                                                         |
+| ----------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| R01 identity / scope / promise                  | §§1–3, 24, 27                                                                                                    |
+| R02 player actions / mechanics                  | §§3–23                                                                                                           |
+| R03 items / entities / composition              | §§7–10, 15, 22                                                                                                   |
+| R04 progression / economy / time                | §§2–3, 8–10, 24                                                                                                  |
+| R05 interactions / concrete situations          | §§8–18 and §21 six worked situations                                                                             |
+| R06 people / AI / social / multiplayer          | §§9–19                                                                                                           |
+| R07 art / audio / interface / feel              | §23                                                                                                              |
+| R08 story / narrative                           | §§18, 21, 24                                                                                                     |
+| R09 production / development                    | §§27–28                                                                                                          |
+| R10 marketing / distribution / virality         | §§1, 24, 27                                                                                                      |
+| R11 commercial / participation                  | §§1/9 service and payment; §27 compact commercial table with dated evidence, scoped unknown revenue/profit/ROI   |
+| R12 reviews / player feedback                   | §§25–26                                                                                                          |
+| R13 transferable inspiration / limits           | §§28–29                                                                                                          |
+| R14 sources / preservation / navigation         | this section + sources                                                                                           |
+| R15 popular modifications / practical authoring | Yes: external creation section; named examples and documented author-to-player lifecycle. Native housing in §10. |
 
 **Preservation check:** the [focused ecology case](../games/ultima-online-s-ecology.md) and [G19 fun/engagement evidence](../references/fun-and-engagement-dossier-evidence.md) remain distinct owners. [Packet provenance](../references/packet-provenance.md) retains the broader reading route. Original numbered headings, source anchors, skill atrophy, the wool-to-vendor chain, ghost recovery, region-specific travel and differing Trammel judgments remain available. Garriott's attributed harvesting account remains; Koster's computational/resource-circulation distinction qualifies the diagnosis without turning either retrospective into telemetry or a verdict that simulation cannot work. Historical Trammel/Felucca opinions are attributed rather than resolved as one objective community verdict.
 
