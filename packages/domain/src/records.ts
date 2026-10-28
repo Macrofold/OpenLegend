@@ -87,11 +87,13 @@ export function immutableDataSnapshot<T>(
   view: <V extends object>(value: V) => V = (value) => value,
 ): T {
   if (!value || typeof value !== 'object') return value;
-  const latest = view(value);
-  if (isImmutableData(latest)) return latest;
+  if (immutableData.has(value)) return value;
   const memo = new WeakMap<object, object>();
   const copy = (value: unknown): unknown => {
     if (!value || typeof value !== 'object') return value;
+    // A proved immutable object cannot be a writable draft. Resolve views only
+    // for unknown inputs; foreign frozen graphs still need the complete check.
+    if (immutableData.has(value)) return value;
     const latest = view(value);
     if (isImmutableData(latest)) return latest;
     const held = memo.get(latest);

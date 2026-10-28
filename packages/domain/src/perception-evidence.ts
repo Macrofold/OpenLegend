@@ -1880,8 +1880,10 @@ export function reconcileVisualEvidence(
     ];
     const detected = readOnlyDraftView(state.current)[`${subject.id}:detected`],
       detectedLease = detected && readOnlyDraftView(detected);
-    let original = detectedLease?.original;
-    if (!original)
+    let original = detectedLease?.original,
+      admittedOriginal: ReceivedObservation | undefined;
+    if (!original) {
+      const before = state.received.length;
       original = acquireReceivedObservation(world, observer, {
         origin: {
           kind: 'exposure',
@@ -1900,6 +1902,8 @@ export function reconcileVisualEvidence(
           value: facet,
         })),
       });
+      if (state.received.length > before) admittedOriginal = original;
+    }
     const priorExposure = detectedLease && readOnlyDraftView(detectedLease.exposure),
       receivedObserver = readOnlyDraftView(receivedObservationHeader(world, original).observer);
     const exposure = immutableDataSnapshot<ObservationExposure>(
@@ -2026,7 +2030,12 @@ export function reconcileVisualEvidence(
           original: facetOriginal!,
           originalOrdinal: facetOriginal!.facets.length === 1 ? 0 : ordinal,
           modality: 'sight',
-          value: copyFacetValue(facet),
+          // Only this newly admitted original proves the same current value.
+          // A reused onset may predate a returning or changed detail.
+          value:
+            facetOriginal === admittedOriginal
+              ? facetOriginal!.facets[ordinal]!.value
+              : copyFacetValue(facet),
           valueMeasuredFrom: world.simTime,
           valueMeasuredThrough: world.simTime,
           valueAcquiredAt: world.simTime,
