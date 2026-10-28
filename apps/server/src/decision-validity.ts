@@ -1,6 +1,6 @@
 import {
   entityGet,
-  currentBodyObservation,
+  currentBodyGrant,
   activeAppraisals,
   appraisalDefinition,
   attributeDefinition,
@@ -40,7 +40,7 @@ export function preparedResponseValidity(
     currentBodyLeases: Object.entries(entityLeases).map(([id, expected]) => [
       id,
       expected,
-      currentBodyObservation(world, actorId, id)?.id ?? null,
+      currentBodyGrant(world, actorId, id)?.leaseId ?? null,
     ]),
     life: actor?.physicalLife,
     controller: actor?.controller,
@@ -148,6 +148,6 @@ export function physicalEntityReferencesCurrent(
   return targetIds.every(
     (id) =>
       entityLeases[id] === undefined ||
-      currentBodyObservation(world, actorId, id)?.id === entityLeases[id],
+      currentBodyGrant(world, actorId, id)?.leaseId === entityLeases[id],
   );
 }

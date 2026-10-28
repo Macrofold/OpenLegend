@@ -6,7 +6,7 @@ import {
   situationProposalBinding,
   situationResponseCapabilities,
 } from './situation-context.js';
-import { entityGet, currentBodyObservation, currentBodySubject } from '@open-legend/domain';
+import { entityGet, currentBodyGrant, currentBodySubject } from '@open-legend/domain';
 import {
   discoveryInterval,
   reserveDiscovery,
@@ -3578,11 +3578,11 @@ export class AiDirector {
           await prepared.validateConversation(false);
           for (const id of expansion.expandedIds) {
             const handle = entityHandle(prepared.situation.world, actorId, id);
-            const body = currentBodyObservation(prepared.situation.world, actorId, id);
+            const body = currentBodyGrant(prepared.situation.world, actorId, id);
             if (!body) continue;
             prepared.entityReferences[handle] = id;
             prepared.binding.physicalEntityReferences![handle] = id;
-            prepared.binding.entityLeases![id] = body.id;
+            prepared.binding.entityLeases![id] = body.leaseId;
             const subject =
               currentBodySubject(prepared.situation.world, actorId, id) ??
               (!entityGet(prepared.situation.world.entities, id)?.actor

@@ -1257,6 +1257,21 @@ export function currentBodyObservation(
       })
     : undefined;
 }
+
+/** Present body values do not require copying their complete historical proof.
+ * Keep the same live-body eligibility as captured evidence and reference grants. */
+export function currentBodyValue(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+): (CurrentFacetValue & { value: Extract<SensoryFacet, { kind: 'body' }> }) | undefined {
+  const lease = eligibleBodyLease(world, observerId, subjectId);
+  return lease
+    ? (projectCurrentFacetValue(world, observerId, lease) as CurrentFacetValue & {
+        value: Extract<SensoryFacet, { kind: 'body' }>;
+      })
+    : undefined;
+}
 function bodyReadScope(world: WorldState, observerId: string) {
   const state = world.perceptionEvidence?.[observerId],
     entities = readOnlyDraftView(world.entities),
@@ -1583,23 +1598,31 @@ export function currentObservedFacetValues(
   subjectId: string,
   kinds: readonly (typeof CURRENT_BODY_FACET_KINDS)[number][] = CURRENT_BODY_FACET_KINDS,
 ): CurrentFacetValue[] {
-  return currentObservedSupports(world, observerId, subjectId, kinds).map((lease) => {
-    const value = effectiveCurrentFacetSupport(world, observerId, lease);
-    const received = receivedFacetValue(world, value.value);
-    if (!received) throw new Error('Selected current value is unavailable.');
-    return immutableDataSnapshot<CurrentFacetValue>(
-      {
-        id: value.id,
-        value: received,
-        valueMeasuredFrom: value.valueMeasuredFrom,
-        valueMeasuredThrough: value.valueMeasuredThrough,
-        valueAcquiredAt: value.valueAcquiredAt,
-        confirmedThrough: value.confirmedThrough,
-        source: observationFactKey(world, value.original, value.originalOrdinal).source,
-      },
-      readOnlyDraftView,
-    );
-  });
+  return currentObservedSupports(world, observerId, subjectId, kinds).map((lease) =>
+    projectCurrentFacetValue(world, observerId, lease),
+  );
+}
+
+function projectCurrentFacetValue(
+  world: WorldState,
+  observerId: string,
+  lease: LiveFacetSupport,
+): CurrentFacetValue {
+  const value = effectiveCurrentFacetSupport(world, observerId, lease);
+  const received = receivedFacetValue(world, value.value);
+  if (!received) throw new Error('Selected current value is unavailable.');
+  return immutableDataSnapshot<CurrentFacetValue>(
+    {
+      id: value.id,
+      value: received,
+      valueMeasuredFrom: value.valueMeasuredFrom,
+      valueMeasuredThrough: value.valueMeasuredThrough,
+      valueAcquiredAt: value.valueAcquiredAt,
+      confirmedThrough: value.confirmedThrough,
+      source: observationFactKey(world, value.original, value.originalOrdinal).source,
+    },
+    readOnlyDraftView,
+  );
 }
 
 /** Presence-only presentation must not capture a motion's endpoint proof graph. */

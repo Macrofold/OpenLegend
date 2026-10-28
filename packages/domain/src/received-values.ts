@@ -87,7 +87,7 @@ export function receivedValueAt(
   sources: ReceivedValueState['sources'],
   reference: ReceivedValueReference,
 ): ReceivedValueFragment | undefined {
-  const block = sources[reference.blockId];
+  const block = readOnlyDraftView(sources)[reference.blockId];
   const value = block && readOnlyDraftView(readOnlyDraftView(block).values)[reference.valueOrdinal];
   return value ? readOnlyDraftView(value) : undefined;
 }

@@ -3,12 +3,12 @@ import {
   accessiblePossession,
   activityRequestDescriptors,
   currentInventoryInspection,
-  currentObservedFacets,
+  currentObservedFacetValues,
   rememberedCommunicationSubjects,
   canAccessContainer,
   objectAncestors,
   currentBodyGrant,
-  currentBodyObservation,
+  currentBodyValue,
   currentBodySubject,
   receivedFacetValue,
   type ObserverSubject,
@@ -138,13 +138,13 @@ export function perceivedParticipantReferences(
   const body = event.sourceBody;
   if (body) {
     const entity = entityGet(world.entities, body.entityId);
-    const received = currentBodyObservation(world, scope.actorId, body.entityId);
+    const received = currentBodyGrant(world, scope.actorId, body.entityId);
     if (body.entityId === scope.actorId && body.physicalLife === (entity?.actor?.physicalLife ?? 0))
       result.actor = { contactReference: scope.actorId };
     else if (
       entity &&
       received &&
-      received.id === body.leaseId &&
+      received.leaseId === body.leaseId &&
       body.physicalLife === (entity.actor?.physicalLife ?? 0)
     )
       result.actor = { contactReference: currentContactReference(world, scope, entity) };
@@ -249,7 +249,7 @@ function permittedContent(world: WorldState, actorId: string, id: string): boole
   const root = objectAncestors(world, id).at(-1);
   return (
     !!root &&
-    currentObservedFacets(world, actorId, root.id).some(
+    currentObservedFacetValues(world, actorId, root.id, ['pile-contents']).some(
       (facet) =>
         facet.value.kind === 'pile-contents' && facet.value.items.some((item) => item.id === id),
     )
@@ -266,7 +266,7 @@ export const hasPhysicalContactReference = (
   const root = objectAncestors(world, id).at(-1);
   return (
     !!root &&
-    !!currentBodyObservation(world, actorId, root.id)?.value.body.assembly?.parts.some(
+    !!currentBodyValue(world, actorId, root.id)?.value.body.assembly?.parts.some(
       (part) => part.id === id,
     )
   );
@@ -283,7 +283,7 @@ export function physicalContactReference(
     return currentContactReference(world, scope, entity);
   if (permittedContent(world, scope.actorId, id)) return id;
   const root = entity && objectAncestors(world, id).at(-1);
-  const body = root && currentBodyObservation(world, scope.actorId, root.id)?.value.body;
+  const body = root && currentBodyValue(world, scope.actorId, root.id)?.value.body;
   if (root && body?.assembly?.parts.some((part) => part.id === id))
     return assemblyPartReference(world, scope, root.id, id);
   throw new ContactReferenceError();

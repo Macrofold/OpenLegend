@@ -21,9 +21,9 @@ import {
   activityRequestHost,
   activityHostRequests,
   currentInventoryInspection,
-  currentBodyObservation,
+  currentBodyValue,
   currentBodyGrant,
-  currentObservedFacets,
+  currentObservedFacetValues,
   worldPosition,
   readRecipeRecord,
   definitionPin,
@@ -173,7 +173,7 @@ export function observedStorageApproach(service: WorldService, scope: RequestSco
   const actor = entityGet(world.entities, scope.actorId);
   const root = objectAncestors(world, id).at(-1);
   if (!actor || !root || root.placement?.mode !== 'world') return null;
-  const observed = currentBodyObservation(world, scope.actorId, root.id);
+  const observed = currentBodyValue(world, scope.actorId, root.id);
   if (!observed) return null;
   const position = worldPosition(root),
     captured = observed.value.body;
@@ -232,10 +232,10 @@ export function inventoryAccess(
   const root = objectAncestors(world, target.id).at(-1);
   if (!root || root.placement?.mode !== 'world') return unavailable;
   const accessible = canAccessContainer(world, actor.id, target.id);
-  const observed = currentBodyObservation(world, scope.actorId, root.id);
+  const observed = currentBodyValue(world, scope.actorId, root.id);
   const visibleExterior =
     (target.id === root.id && !!observed) ||
-    currentObservedFacets(world, scope.actorId, root.id).some(
+    currentObservedFacetValues(world, scope.actorId, root.id, ['pile-contents']).some(
       (facet) =>
         facet.value.kind === 'pile-contents' &&
         facet.value.items.some((item) => item.id === target.id),
@@ -560,17 +560,17 @@ function containerLocation(service: WorldService, scope: RequestScope, id: strin
       .map((entry) => observerDescription(world, scope.actorId, entry.id));
     return `${enclosing.length ? `In ${enclosing.join(' › ')}, ` : ''}Carried by you`;
   }
-  let observed = currentBodyObservation(world, scope.actorId, id);
+  let observed = currentBodyValue(world, scope.actorId, id);
   if (!observed) {
     const root = objectAncestors(world, id).at(-1);
     if (
       root &&
-      currentObservedFacets(world, scope.actorId, root.id).some(
+      currentObservedFacetValues(world, scope.actorId, root.id, ['pile-contents']).some(
         (facet) =>
           facet.value.kind === 'pile-contents' && facet.value.items.some((item) => item.id === id),
       )
     )
-      observed = currentBodyObservation(world, scope.actorId, root.id);
+      observed = currentBodyValue(world, scope.actorId, root.id);
   }
   if (!observed) return 'Location not currently observed';
   const separation = distance(
@@ -634,12 +634,12 @@ export function activityStorageReader(
     const groundAppearance =
       target.placement?.mode === 'contained' &&
       target.placement.parentEntityId === root.id &&
-      currentObservedFacets(world, scope.actorId, root.id).some(
+      currentObservedFacetValues(world, scope.actorId, root.id, ['pile-contents']).some(
         (facet) =>
           facet.value.kind === 'pile-contents' && facet.value.items.some((item) => item.id === id),
       );
     const visible =
-      (target.placement?.mode === 'world' && !!currentBodyObservation(world, scope.actorId, id)) ||
+      (target.placement?.mode === 'world' && !!currentBodyGrant(world, scope.actorId, id)) ||
       groundAppearance;
     const granted =
       target.placement?.mode === 'contained' &&
@@ -786,7 +786,7 @@ export function inventoryDestinationPage(
       .update(JSON.stringify(observedBodies()))
       .digest('hex'));
   const observedPile = (id: string) =>
-    currentObservedFacets(world, scope.actorId, id).find(
+    currentObservedFacetValues(world, scope.actorId, id, ['pile-contents']).find(
       (facet) => facet.value.kind === 'pile-contents',
     );
   if (
@@ -967,7 +967,7 @@ export function inventoryDestinationPage(
       if (target.id === scope.actorId) continue;
       // A corpse retains its actor component; its storage follows native remains access.
       if (request.activity && (!target.actor || target.remains)) {
-        if (!currentBodyObservation(world, scope.actorId, target.id)) continue;
+        if (!currentBodyGrant(world, scope.actorId, target.id)) continue;
         if (target.container) add(target.id);
         if (target.kind === 'item-pile' || target.remains) {
           cursor.phase = 'ground';

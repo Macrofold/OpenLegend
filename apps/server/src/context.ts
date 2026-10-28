@@ -1,6 +1,6 @@
 import { entityHandle, permittedSourceHandle } from './entity-references.js';
 import { memoryForModel, acceptedMindForModel, eventFieldsForModel } from './experience-context.js';
-import { currentBodyObservation, currentObservedFacets, bodyContext } from '@open-legend/domain';
+import { currentBodyValue, currentObservedFacets, bodyContext } from '@open-legend/domain';
 import { captureSituation } from './situation-context.js';
 import { selectTemporalHistory } from '@open-legend/domain';
 import { itemContainerCapacity } from '@open-legend/domain';
@@ -190,7 +190,7 @@ function describeTargets(
       const point =
         target.id === actorId
           ? effectivePosition(service.world, target.id)
-          : currentBodyObservation(service.world, actorId, target.id)?.value.body.position;
+          : currentBodyValue(service.world, actorId, target.id)?.value.body.position;
       if (point) positions.set(target.id, point);
     }
     const position = target && positions.get(target.id);
@@ -292,7 +292,7 @@ export function buildContext(
         })) ?? [],
     },
     nearby: observed.visibleEntities.flatMap((entity) => {
-      const received = currentBodyObservation(service.world, actorId, entity.id);
+      const received = currentBodyValue(service.world, actorId, entity.id);
       if (!received) return [];
       const body = received.value.body;
       return [

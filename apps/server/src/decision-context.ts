@@ -1,4 +1,4 @@
-import { currentBodyObservation } from '@open-legend/domain';
+import { currentBodyGrant } from '@open-legend/domain';
 import {
   captureTemporalReceiptPrefix,
   PERSONAL_EVIDENCE_PREPARATION,
@@ -1063,8 +1063,8 @@ export async function prepareDecision(
       ...references.entityLeases,
       ...Object.fromEntries(
         planningTargetIds.flatMap((id) => {
-          const received = currentBodyObservation(currentWorld, actorId, id);
-          return received ? [[id, received.id]] : [];
+          const received = currentBodyGrant(currentWorld, actorId, id);
+          return received ? [[id, received.leaseId]] : [];
         }),
       ),
     },

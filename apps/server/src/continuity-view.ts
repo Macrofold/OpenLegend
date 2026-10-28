@@ -7,7 +7,7 @@ import {
   knowledgePage,
   snapshotRevision,
   canRememberSubject,
-  currentBodyObservation,
+  currentBodyValue,
   currentBodySubjects,
   currentCommunicationSubject,
   distance3D,
@@ -229,7 +229,7 @@ export function continuitySubjects(
   const currentSubjects: ObserverSubject[] = [];
   for (const lease of Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})) {
     if (lease.value.kind !== 'body') continue;
-    const body = currentBodyObservation(world, actorId, lease.subjectId);
+    const body = currentBodyValue(world, actorId, lease.subjectId);
     if (!body) continue;
     const supported = currentBodySubjects(world, actorId, lease.subjectId);
     if (!supported.length && !entityGet(world.entities, lease.subjectId)?.actor)

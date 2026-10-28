@@ -9,7 +9,7 @@ import {
   inspectedContainer,
   custodian,
   objectAncestors,
-  currentBodyObservation,
+  currentBodyValue,
   currentBodyGrant,
   worldPosition,
   distance,
@@ -361,7 +361,7 @@ export function activityChoicePage(
     }
     const choice = host.requestChoice!(world, actor.id, request.family, request.field, id);
     if (!choice) return;
-    const body = currentBodyObservation(world, scope.actorId, id);
+    const body = currentBodyValue(world, scope.actorId, id);
     const separation = body ? distance(worldPosition(actor), body.value.body.position) : undefined;
     return {
       ...choice,

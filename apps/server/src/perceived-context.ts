@@ -2,8 +2,8 @@ import { namePhrase } from '@open-legend/language';
 import { memoryForModel } from './experience-context.js';
 import { experienceReading, type ExperienceEntry } from '@open-legend/domain';
 import {
-  currentBodyObservation,
-  currentObservedFacets,
+  currentObservedFacetValues,
+  currentBodyValue,
   observerName,
   worldPosition,
   worldSupport,
@@ -278,11 +278,19 @@ export function perceivedEntityText(
   observerId: string,
   entityId: string,
 ): string | undefined {
-  const body = currentBodyObservation(world, observerId, entityId);
+  const body = currentBodyValue(world, observerId, entityId);
   if (!body) return undefined;
-  const facts = currentObservedFacets(world, observerId, entityId);
+  const facts = currentObservedFacetValues(world, observerId, entityId, [
+    'carried',
+    'pile-contents',
+  ]);
   const label = namePhrase(observerName(world, observerId, entityId), 'indefinite');
-  const received = (facet: (typeof facts)[number]) =>
+  const received = (
+    facet: Pick<
+      (typeof facts)[number],
+      'valueMeasuredFrom' | 'valueMeasuredThrough' | 'valueAcquiredAt'
+    >,
+  ) =>
     `Measured at simulation second ${facet.valueMeasuredFrom}${facet.valueMeasuredThrough !== facet.valueMeasuredFrom ? `–${facet.valueMeasuredThrough}` : ''}; received at ${facet.valueAcquiredAt}.`;
   const text = [
     `I can see ${label} (ID:${entityHandle(world, observerId, entityId)}). ${received(body)}`,
@@ -311,7 +319,7 @@ export function relativeLocation(
   observer: Entity,
   target: Entity,
 ): string | undefined {
-  const received = currentBodyObservation(world, observer.id, target.id);
+  const received = currentBodyValue(world, observer.id, target.id);
   if (!received) return undefined;
   const position = received.value.body.position;
   const here = worldPosition(observer);

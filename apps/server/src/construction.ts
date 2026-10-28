@@ -1,6 +1,6 @@
 import {
   assemblyPresentation,
-  currentBodyObservation,
+  currentBodyValue,
   canonicalJson,
   observerName,
   type ObservedAssembly,
@@ -538,7 +538,7 @@ export function constructionPreviewBasis(
   actorId: string,
   id: string,
 ): ObservedAssembly | undefined {
-  const observed = currentBodyObservation(world, actorId, id)?.value.body.assembly;
+  const observed = currentBodyValue(world, actorId, id)?.value.body.assembly;
   const root = entityGet(world.entities, id);
   if (!observed || !root?.assembly || observed.revision !== root.assembly.revision) return;
   const actual = assemblyPresentation(world, id);

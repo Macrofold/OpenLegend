@@ -22,7 +22,7 @@ import type {
 } from './memory-repository.js';
 import { subjectKnowledgeCandidates } from './knowledge-context.js';
 import {
-  currentBodyObservation,
+  currentBodyValue,
   identityForEntity,
   observerIndividual,
   speechDescription,
@@ -412,7 +412,7 @@ export function candidateSet(
     groundItems.set(item.ownerId, contents);
   }
   for (const e of observed.visibleEntities) {
-    const received = currentBodyObservation(world, actorId, e.id);
+    const received = currentBodyValue(world, actorId, e.id);
     const description = perceivedEntityText(world, actorId, e.id);
     if (!received || !description) continue;
     const embeddingText = description.replace(/ \(ID:[a-f0-9]+\)/g, '');

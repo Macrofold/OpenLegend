@@ -3,7 +3,8 @@ import { accessiblePossession, worldPosition } from '@open-legend/domain';
 import {
   knowledgeDocument,
   characterCount,
-  currentBodyObservation,
+  currentBodyValue,
+  currentBodyGrant,
   currentBodySubject,
   canAddressRememberedSubject,
   recognizesSubject,
@@ -78,10 +79,10 @@ export function responseTriggerContext(
       ? entityGet(world.entities, recipientId)
       : undefined;
   const sourceBody =
-    aware.sourceBody && currentBodyObservation(world, actorId, aware.sourceBody.entityId);
+    aware.sourceBody && currentBodyGrant(world, actorId, aware.sourceBody.entityId);
   const sourceVisible =
     !!sourceBody &&
-    sourceBody.id === aware.sourceBody!.leaseId &&
+    sourceBody.leaseId === aware.sourceBody!.leaseId &&
     aware.sourceBody!.physicalLife ===
       (entityGet(world.entities, aware.sourceBody!.entityId)?.actor?.physicalLife ?? 0);
   const occurrenceLabel = (role: 'actor' | 'target') =>
@@ -124,12 +125,12 @@ export function responseTriggerContext(
     ...(!aware.speech && recipient
       ? {
           subject: occurrenceLabel('target') ?? 'Unidentified subject',
-          subjectCurrentlyVisible: !!currentBodyObservation(world, actorId, recipient.id),
+          subjectCurrentlyVisible: !!currentBodyGrant(world, actorId, recipient.id),
         }
       : {}),
     sourceCurrentlyVisible: aware.speech
       ? sourceVisible
-      : !!(source && currentBodyObservation(world, actorId, source.id)),
+      : !!(source && currentBodyGrant(world, actorId, source.id)),
   };
 }
 
@@ -252,7 +253,7 @@ export function responseReferences(
   learnedSubjects: ObserverSubject[] = [],
   frame = captureModelSpatialFrame(world, actorId),
 ) {
-  visibleIds = visibleIds.filter((id) => !!currentBodyObservation(world, actorId, id));
+  visibleIds = visibleIds.filter((id) => !!currentBodyGrant(world, actorId, id));
   const evidence = new Set(evidenceIds);
   const awareness = (retainedEvidence ?? world.experience?.awareness[actorId] ?? []).filter(
     (entry) => evidence.has(entry.eventId),
@@ -301,7 +302,7 @@ export function responseReferences(
   const piled = pileItemIds.filter((id) => !ids.includes(id) && !possessions.includes(id));
   const references = ids.map((id) => {
     const entity = entityGet(world.entities, id)!;
-    const received = visible.has(id) ? currentBodyObservation(world, actorId, id) : undefined;
+    const received = visible.has(id) ? currentBodyValue(world, actorId, id) : undefined;
     const currentSubject = received
       ? (currentBodySubject(world, actorId, id) ??
         (!entity.actor ? { kind: 'entity' as const, entityId: id } : undefined))
@@ -414,8 +415,7 @@ export function responseReferences(
       ...possessions,
       ...piled,
       ...inspected.filter(
-        (id) =>
-          accessiblePossession(world, actorId, id) || !!currentBodyObservation(world, actorId, id),
+        (id) => accessiblePossession(world, actorId, id) || !!currentBodyGrant(world, actorId, id),
       ),
     ]),
   ];
@@ -430,8 +430,8 @@ export function responseReferences(
     physicalEntityReferences: entityReferenceMap(world, physicalIds, actorId),
     entityLeases: Object.fromEntries(
       visibleIds.flatMap((id) => {
-        const received = currentBodyObservation(world, actorId, id);
-        return received ? [[id, received.id]] : [];
+        const received = currentBodyGrant(world, actorId, id);
+        return received ? [[id, received.leaseId]] : [];
       }),
     ),
     identityReferences,
