@@ -1449,6 +1449,45 @@ export function temporalReceiptAccountAliases(
   );
 }
 
+/** Receipt IDs and true account aliases are interchangeable edit roots. Facet
+ * provenance stays directional and must never pull independent sibling facts in. */
+export function temporalAccountAliasClosure(
+  world: WorldState,
+  actorId: string,
+  sourceIds: Iterable<string>,
+): string[] {
+  const temporal = world.experience?.temporal,
+    actor = temporal?.actors[actorId];
+  const groups = new Map<string, string[][]>();
+  const add = (receipt: TemporalReceipt, values?: readonly TemporalFragment[]) => {
+    const aliases = [
+      receipt.id,
+      ...temporalReceiptAccountAliases(receipt, temporal?.sources ?? {}, world, values),
+    ];
+    for (const alias of aliases) {
+      const linked = groups.get(alias) ?? [];
+      linked.push(aliases);
+      groups.set(alias, linked);
+    }
+  };
+  for (const chunk of actor?.chunks ?? []) for (const receipt of chunk.receipts) add(receipt);
+  for (const support of Object.values(actor?.supports ?? {})) add(support.receipt, support.values);
+  const selected = new Set(sourceIds),
+    queue = [...selected],
+    visited = new Set<string[]>();
+  for (let index = 0; index < queue.length; index++)
+    for (const aliases of groups.get(queue[index]!) ?? []) {
+      if (visited.has(aliases)) continue;
+      visited.add(aliases);
+      for (const alias of aliases)
+        if (!selected.has(alias)) {
+          selected.add(alias);
+          queue.push(alias);
+        }
+    }
+  return [...selected];
+}
+
 /** Dropped facet aliases must leave too: otherwise their now-unmatched source
  * IDs would be misclassified as whole-account aliases on the next read/edit. */
 export function selectTemporalReceiptFacets(

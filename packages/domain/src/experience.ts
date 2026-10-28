@@ -88,7 +88,7 @@ import {
   temporalReceiptSource,
   temporalReceiptId,
   temporalReceiptAliases,
-  temporalReceiptAccountAliases,
+  temporalAccountAliasClosure,
   temporalSupportAliases,
   splitTemporalValue,
   type TemporalReceipt,
@@ -795,6 +795,7 @@ function applyExperienceMutation(
       mutation.sourceId === mutation.correctionEventId
     )
       return null;
+    const aliases = temporalAccountAliasClosure(world, actorId, [mutation.sourceId]);
     const invalidated = invalidateExperience(
       world,
       actorId,
@@ -802,8 +803,8 @@ function applyExperienceMutation(
       false,
       mutation.correctionEventId,
     );
-    ((world.experience!.corrections ??= {})[actorId] ??= {})[mutation.sourceId] =
-      mutation.correctionEventId;
+    const corrections = ((world.experience!.corrections ??= {})[actorId] ??= {});
+    for (const alias of aliases) corrections[alias] = mutation.correctionEventId;
     return invalidated;
   }
   if (!Array.isArray(mutation) && mutation.operation === 'obligation') {
@@ -1442,12 +1443,15 @@ export function acceptConsolidation(
 }
 /** Forget derivatives conservatively; original evidence of other observers is untouched. */
 export function forgetExperience(input: WorldState, actorId: string, sourceId: string): Transition {
+  const aliases = new Set(temporalAccountAliasClosure(input, actorId, [sourceId]));
   if (
     (input.memories[actorId] ?? []).some(
       (memory) =>
         memory.kind === 'commitment' &&
         !memory.resolved &&
-        [memory.id, memory.eventId, memory.obligation?.evidenceId].includes(sourceId),
+        [memory.id, memory.eventId, memory.obligation?.evidenceId].some(
+          (id) => !!id && aliases.has(id),
+        ),
     )
   )
     return {
@@ -1702,7 +1706,8 @@ export function invalidateExperience(
   ensureExperienceAccounting(world, actorId);
   const accounting = experienceEntries(world, actorId);
   invalidateKnownPlaceEvidence(world, actorId);
-  const affected = new Set(sourceIds);
+  const roots = new Set(temporalAccountAliasClosure(world, actorId, sourceIds));
+  const affected = new Set(roots);
   let expanded = true;
   const include = (id: string | undefined) => {
     if (id && !affected.has(id)) {
@@ -1715,13 +1720,7 @@ export function invalidateExperience(
     // A direct account alias revokes the account. Embedded fact dependencies
     // instead revoke their selected facets; promoting those to the receipt ID
     // would erase independently received siblings in the resident account.
-    for (const support of Object.values(state.temporal?.actors[actorId]?.supports ?? {}))
-      if (
-        temporalReceiptAccountAliases(support.receipt, {}, world, support.values).some((source) =>
-          affected.has(source),
-        )
-      )
-        include(support.receipt.id);
+    for (const alias of temporalAccountAliasClosure(world, actorId, affected)) include(alias);
     // Personal source IDs and native contributions are aliases of one received account.
     // Revoke descendants before pruning any body, including required native support that
     // is independent of the small resident autobiographical tail.
@@ -1896,7 +1895,7 @@ export function invalidateExperience(
     // Losing the correction does not turn its earlier direct observation back into
     // established information. Keep that occurrence and its explicit disputed marker.
     for (const [source, correction] of Object.entries(state.corrections?.[actorId] ?? {}))
-      if (affected.has(correction) && !sourceIds.includes(source)) retainedDirect.add(source);
+      if (affected.has(correction) && !roots.has(source)) retainedDirect.add(source);
     for (const entry of state.awareness[actorId] ?? [])
       if (retainedDirect.has(entry.eventId))
         for (const observation of [
@@ -1991,7 +1990,6 @@ export function invalidateExperience(
       world.actorKnowledge[actorId]![key] = next;
     }
   }
-  const roots = new Set(sourceIds);
   const summaries = state.summaries[actorId] ?? [];
   const retained = summaries.filter((s) => !affected.has(s.id) || (!forget && roots.has(s.id)));
   if (retained.length !== summaries.length) state.summaries[actorId] = retained;
@@ -2234,7 +2232,7 @@ export function correctExperience(
   // not independent correcting evidence merely because their IDs differ.
   const sameAccount =
     aware &&
-    (aware.eventId === sourceId ||
+    (temporalAccountAliasClosure(input, actorId, [sourceId]).includes(aware.eventId) ||
       ownedObservationSources([
         ...(aware.observation ? [aware.observation] : []),
         ...(aware.observations ?? []),

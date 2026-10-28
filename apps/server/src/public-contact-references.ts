@@ -9,8 +9,7 @@ import {
   objectAncestors,
   currentBodyGrant,
   currentBodyObservation,
-  currentBodyAssociation,
-  currentBodyLocalSubject,
+  currentBodySubject,
   type ObserverSubject,
   observerIndividual,
   currentCommunicationSubject,
@@ -362,9 +361,7 @@ export function resolveCurrentPersonSubject(
   const target = entityGet(world.entities, id);
   if (!target?.actor || entityBodyReference(scopeKey(scope), target) !== bodyReference)
     throw new ContactReferenceError();
-  const subject =
-    currentBodyAssociation(world, scope.actorId, id) ??
-    currentBodyLocalSubject(world, scope.actorId, id);
+  const subject = currentBodySubject(world, scope.actorId, id);
   if (!subject) throw new ContactReferenceError();
   return subject;
 }

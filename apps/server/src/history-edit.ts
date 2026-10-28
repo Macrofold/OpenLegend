@@ -5,6 +5,7 @@ import type {
   TemporalSourceBlock,
   TemporalReceiptLocator,
 } from '@open-legend/domain';
+import { temporalAccountAliasClosure } from '@open-legend/domain';
 import { digest } from './content-digest.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions, historyMapPositions } from './history-residency.js';
@@ -106,36 +107,6 @@ export async function prepareHistoryEdit(
     if (!roots.length) return { state, events, referencedEventIds };
     // UNION (not UNION ALL) terminates source/alias cycles. Traverse canonical links,
     // including ineligible retained sources, rather than only currently recallable rows.
-    const affected = await db
-      .prepare(
-        `WITH RECURSIVE affected(actor_id,source_id) AS (
-      SELECT actor_id,source_id FROM jsonb_to_recordset(?::jsonb) AS roots(actor_id text,source_id text)
-      UNION
-      SELECT a.actor_id,d.id FROM affected a CROSS JOIN LATERAL (
-        SELECT id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND event_id=a.source_id
-        UNION SELECT event_id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND id=a.source_id AND source_kind='memory' AND event_id IS NOT NULL
-        UNION SELECT result_memory_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND result_memory_id IS NOT NULL
-        UNION SELECT source_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND result_memory_id=a.source_id
-        UNION SELECT payload::jsonb->>'activityId' FROM mind_memories WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND payload::jsonb->>'activityId' IS NOT NULL
-        UNION SELECT derived_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND (source_id=a.source_id OR alias_id=a.source_id)
-        UNION SELECT source_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND derived_id=a.source_id AND support_key=?
-        UNION SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=a.actor_id AND correction_id=a.source_id
-      ) d
-    ) SELECT actor_id,source_id FROM affected`,
-      )
-      .all(
-        JSON.stringify(roots),
-        worldId,
-        worldId,
-        worldId,
-        worldId,
-        worldId,
-        worldId,
-        worldId,
-        digest('native-origin'),
-        worldId,
-      );
-    const scope = JSON.stringify(affected);
     const world = {
       ...state.world,
       memories: { ...state.world.memories },
@@ -149,6 +120,146 @@ export async function prepareHistoryEdit(
         summaries: { ...state.world.experience!.summaries },
       },
     };
+    // Alternate indexed dependency closure and exact personal account aliases. A
+    // receipt address can name a cold canonical event; facet support cannot do so.
+    let affected: Record<string, unknown>[] = [];
+    const loadedChunks = new Set(
+      Object.values(world.experience.temporal?.actors ?? {}).flatMap((actor) =>
+        actor.chunks.map((chunk) => chunk.id),
+      ),
+    );
+    let chunkCount = 0,
+      chunkBytes = 0,
+      sourceBytes = 0;
+    for (;;) {
+      affected = await db
+        .prepare(
+          `WITH RECURSIVE affected(actor_id,source_id) AS (
+      SELECT actor_id,source_id FROM jsonb_to_recordset(?::jsonb) AS roots(actor_id text,source_id text)
+      UNION
+      SELECT a.actor_id,d.id FROM affected a CROSS JOIN LATERAL (
+        SELECT id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND event_id=a.source_id
+        UNION SELECT event_id FROM recall_sources WHERE world_id=? AND actor_id=a.actor_id AND id=a.source_id AND source_kind='memory' AND event_id IS NOT NULL
+        UNION SELECT result_memory_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND result_memory_id IS NOT NULL
+        UNION SELECT source_id FROM activity_occurrences WHERE world_id=? AND actor_id=a.actor_id AND result_memory_id=a.source_id
+        UNION SELECT payload::jsonb->>'activityId' FROM mind_memories WHERE world_id=? AND actor_id=a.actor_id AND source_id=a.source_id AND payload::jsonb->>'activityId' IS NOT NULL
+        UNION SELECT derived_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND (source_id=a.source_id OR alias_id=a.source_id)
+        UNION SELECT source_id FROM mind_source_dependencies WHERE world_id=? AND actor_id=a.actor_id AND derived_id=a.source_id AND support_key=?
+        UNION SELECT source_id FROM mind_corrections WHERE world_id=? AND actor_id=a.actor_id AND correction_id=a.source_id
+      ) d
+    ) SELECT actor_id,source_id FROM affected`,
+        )
+        .all(
+          JSON.stringify(roots),
+          worldId,
+          worldId,
+          worldId,
+          worldId,
+          worldId,
+          worldId,
+          worldId,
+          digest('native-origin'),
+          worldId,
+        );
+      const scope = JSON.stringify(affected);
+      // A creator correction must reach cold personal receipts too. Select the actor's
+      // indexed source aliases before loading packed chunks; shared blocks grant no access.
+      if (world.experience.temporal) {
+        const selected = await db
+          .prepare(
+            `SELECT t.actor_id,t.payload,t.position,octet_length(t.payload) AS bytes
+        FROM mind_temporal_chunks t WHERE t.world_id=? AND NOT (t.source_id=ANY(?::text[])) AND EXISTS (
+          SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text)
+          WHERE a.actor_id=t.actor_id AND t.source_ids @> ARRAY[a.source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
+          )
+          .all(worldId, [...loadedChunks], scope);
+        chunkCount += selected.length;
+        chunkBytes += selected.reduce((sum, row) => sum + Number(row['bytes']), 0);
+        if (chunkCount > 8192 || chunkBytes > 4 * 1024 * 1024)
+          throw new Error('Complete personal receipt correction exceeds bounded preparation.');
+        const temporal = {
+          ...world.experience.temporal,
+          actors: { ...world.experience.temporal.actors },
+          sources: { ...world.experience.temporal.sources },
+        };
+        const sources = new Set<string>(),
+          owners = new Map<string, typeof selected>();
+        for (const row of selected) {
+          const actorId = String(row['actor_id']),
+            rows = owners.get(actorId) ?? [];
+          loadedChunks.add((JSON.parse(String(row['payload'])) as TemporalChunk).id);
+          rows.push(row);
+          owners.set(actorId, rows);
+        }
+        for (const [actorId, rows] of owners) {
+          const actor = temporal.actors[actorId];
+          if (!actor) throw new Error('Cold personal receipt owner is unavailable.');
+          const placement = historyPositions.get(actor.chunks),
+            positions = new Map(
+              placement?.positions ?? actor.chunks.map((chunk, index) => [chunk.id, index]),
+            );
+          const chunks = new Map(actor.chunks.map((chunk) => [chunk.id, chunk]));
+          for (const row of rows) {
+            const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
+            chunks.set(chunk.id, chunk);
+            positions.set(chunk.id, Number(row['position']));
+            for (const id of chunk.sourceRefs) sources.add(id);
+          }
+          const merged = [...chunks.values()].sort(
+            (a, b) => positions.get(a.id)! - positions.get(b.id)!,
+          );
+          historyPositions.set(merged, {
+            positions,
+            next: placement?.next ?? Math.max(...rows.map((row) => Number(row['position']) + 1)),
+            complete: placement?.complete,
+          });
+          temporal.actors[actorId] = { ...actor, chunks: merged };
+        }
+        const missing = [...sources].filter((id) => !temporal.sources[id]);
+        if (missing.length) {
+          const size = await db
+            .prepare(
+              'SELECT SUM(octet_length(payload)) AS bytes FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+            )
+            .get(worldId, missing);
+          sourceBytes += Number(size?.['bytes'] ?? 0);
+          if (sourceBytes > 4 * 1024 * 1024)
+            throw new Error('Complete personal source correction exceeds bounded preparation.');
+          for (const row of await db
+            .prepare(
+              'SELECT payload FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+            )
+            .all(worldId, missing)) {
+            const source = JSON.parse(String(row['payload'])) as TemporalSourceBlock;
+            temporal.sources[source.id] = source;
+          }
+        }
+        if ([...sources].some((id) => !temporal.sources[id]))
+          throw new Error('Personal receipt correction has missing source fragments.');
+        world.experience.temporal = temporal;
+      }
+      const known = new Set(
+        affected.map((row) => JSON.stringify([row['actor_id'], row['source_id']])),
+      );
+      const additions: typeof roots = [];
+      for (const actorId of new Set(affected.map((row) => String(row['actor_id']))))
+        for (const alias of temporalAccountAliasClosure(
+          world,
+          actorId,
+          affected
+            .filter((row) => row['actor_id'] === actorId)
+            .map((row) => String(row['source_id'])),
+        )) {
+          const key = JSON.stringify([actorId, alias]);
+          if (!known.has(key)) {
+            known.add(key);
+            additions.push({ actor_id: actorId, source_id: alias });
+          }
+        }
+      if (!additions.length) break;
+      roots.push(...additions);
+    }
+    const scope = JSON.stringify(affected);
     for (const [kind, table] of Object.entries({
       ...MEMORY_SOURCE_TABLES,
       activity: 'activity_occurrences',
@@ -217,79 +328,6 @@ export async function prepareHistoryEdit(
         else
           world.experience.summaries[actorId] = next as (typeof world.experience.summaries)[string];
       }
-    }
-    // A creator correction must reach cold personal receipts too. Select the actor's
-    // indexed source aliases before loading packed chunks; shared blocks grant no access.
-    if (world.experience.temporal) {
-      const selected = await db
-        .prepare(
-          `SELECT t.actor_id,t.payload,t.position,octet_length(t.payload) AS bytes
-        FROM mind_temporal_chunks t WHERE t.world_id=? AND EXISTS (
-          SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text)
-          WHERE a.actor_id=t.actor_id AND t.source_ids @> ARRAY[a.source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
-        )
-        .all(worldId, scope);
-      if (
-        selected.length > 8192 ||
-        selected.reduce((sum, row) => sum + Number(row['bytes']), 0) > 4 * 1024 * 1024
-      )
-        throw new Error('Complete personal receipt correction exceeds bounded preparation.');
-      const temporal = {
-        ...world.experience.temporal,
-        actors: { ...world.experience.temporal.actors },
-        sources: { ...world.experience.temporal.sources },
-      };
-      const sources = new Set<string>(),
-        owners = new Map<string, typeof selected>();
-      for (const row of selected) {
-        const actorId = String(row['actor_id']),
-          rows = owners.get(actorId) ?? [];
-        rows.push(row);
-        owners.set(actorId, rows);
-      }
-      for (const [actorId, rows] of owners) {
-        const actor = temporal.actors[actorId];
-        if (!actor) throw new Error('Cold personal receipt owner is unavailable.');
-        const placement = historyPositions.get(actor.chunks),
-          positions = new Map(
-            placement?.positions ?? actor.chunks.map((chunk, index) => [chunk.id, index]),
-          );
-        const chunks = new Map(actor.chunks.map((chunk) => [chunk.id, chunk]));
-        for (const row of rows) {
-          const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
-          chunks.set(chunk.id, chunk);
-          positions.set(chunk.id, Number(row['position']));
-          for (const id of chunk.sourceRefs) sources.add(id);
-        }
-        const merged = [...chunks.values()].sort(
-          (a, b) => positions.get(a.id)! - positions.get(b.id)!,
-        );
-        historyPositions.set(merged, {
-          positions,
-          next: placement?.next ?? Math.max(...rows.map((row) => Number(row['position']) + 1)),
-          complete: placement?.complete,
-        });
-        temporal.actors[actorId] = { ...actor, chunks: merged };
-      }
-      const missing = [...sources].filter((id) => !temporal.sources[id]);
-      if (missing.length) {
-        const size = await db
-          .prepare(
-            'SELECT SUM(octet_length(payload)) AS bytes FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
-          )
-          .get(worldId, missing);
-        if (Number(size?.['bytes'] ?? 0) > 4 * 1024 * 1024)
-          throw new Error('Complete personal source correction exceeds bounded preparation.');
-        for (const row of await db
-          .prepare(
-            'SELECT payload FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
-          )
-          .all(worldId, missing)) {
-          const source = JSON.parse(String(row['payload'])) as TemporalSourceBlock;
-          temporal.sources[source.id] = source;
-        }
-      }
-      world.experience.temporal = temporal;
     }
     // Experience correction intentionally clears all appraisals for affected actors,
     // including terminal records. Their old private attribution must not survive in SQL.

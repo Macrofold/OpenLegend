@@ -2,8 +2,7 @@ import {
   canSpeak,
   equippedItems,
   knowledgeDocument,
-  currentBodyAssociation,
-  currentBodyLocalSubject,
+  currentBodySubject,
   observerIndividual,
 } from '@open-legend/domain';
 import { worldClockParts, worldDayText } from '@open-legend/protocol';
@@ -481,9 +480,7 @@ export async function projectView(
           ? publicAttributes.value.attributes.find((attribute) => attribute.bodyHealth)?.value
           : undefined;
       const display = observerName(world, player.id, entity.id);
-      const individualSubject =
-        currentBodyAssociation(world, player.id, entity.id) ??
-        currentBodyLocalSubject(world, player.id, entity.id);
+      const individualSubject = currentBodySubject(world, player.id, entity.id);
       const identity = individualSubject
         ? observerIndividual(world, player.id, individualSubject)
         : undefined;
