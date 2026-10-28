@@ -4,6 +4,7 @@ import { entityGet, entityKeys } from './entity-collection.js';
 import { current, isDraft, original } from 'immer';
 import { cloneValue, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
 import { worldRootEntities } from './entity-index.js';
+import { objectAncestors } from './objects.js';
 import { hasMemory } from './living.js';
 import { nativeSensoryObserver } from './native-response.js';
 import { activelyParticipates } from './participation-state.js';
@@ -21,7 +22,11 @@ import { SpatialCandidateIndex, nearbySolidAssemblies } from './spatial.js';
 import { nextSensoryPhase, recordSensoryChange, MAX_CHANGE_SCOPES } from './dependencies.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { sensesFor, visionRadius, visionFieldOfView } from './perception.js';
-import { capabilityBlocked, projectStatusEffects } from './status-capabilities.js';
+import {
+  capabilityBlocked,
+  projectStatusEffects,
+  statusDefinitions,
+} from './status-capabilities.js';
 import { SPATIAL_LIMITS } from '@open-legend/spatial';
 export interface ExposureInput {
   assemblyId?: string;
@@ -133,6 +138,7 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
         !entity.actor ? entity.nameForm : null,
         !entity.actor ? entity.indefiniteArticle : null,
         entity.resource?.quantity,
+        entity.resource?.definitionId,
         entity.remains?.phase,
         worldSupport(entity),
         entity.inventoryRevision ?? 0,
@@ -178,6 +184,7 @@ function itemPresentationKey(world: WorldState): string {
         id,
         definition.name,
         definition.portable,
+        definition.icon,
         definition.assemblyMaterial,
       ]),
     );
@@ -278,8 +285,8 @@ interface ExposureCache {
   policyKey: string;
   itemPresentationKey: string;
   inputs: Map<string, Source>;
-  /** Only active outward tracking poses; derived from authoritative actions. */
-  trackedAnimations: Map<string, string>;
+  /** Actual external inputs to outward poses and public source-sustained effects. */
+  outwardDependencies: Map<string, ReadonlySet<string>>;
   order: Map<string, number>;
   nextOrder: number;
   near: SpatialCandidateIndex<Source>;
@@ -426,7 +433,7 @@ export function* prepareExposure(
       policyKey,
       itemPresentationKey: itemKey,
       inputs: new Map(),
-      trackedAnimations: new Map(),
+      outwardDependencies: new Map(),
       order: new Map(),
       nextOrder: 0,
       near: new SpatialCandidateIndex(),
@@ -457,19 +464,47 @@ export function* prepareExposure(
   const changed: Source[] = [];
   const fullPeople = new Set<string>();
   const peopleChanges = new Map<string, Set<string>>();
+  const publicContributions = new Set(
+    statusDefinitions(world).flatMap((definition) =>
+      definition.contribution?.disclosure === 'public' &&
+      (definition.presentation || definition.actions)
+        ? [definition.id]
+        : [],
+    ),
+  );
   let orderChanged = audit.orderChanged;
   const update = (id: string, entity: Entity | undefined) => {
+    const old = prepared.inputs.get(id);
+    const capture = entity ? captureExposure(world, entity) : null;
+    let outwardInputs: Set<string> | undefined;
     const action = entity?.actor?.action;
     if (
+      capture &&
       action?.type === 'strike' &&
       action.stage === 'working' &&
       action.strikePhase !== 'recovery' &&
       action.targetId
     )
-      prepared.trackedAnimations.set(id, action.targetId);
-    else prepared.trackedAnimations.delete(id);
-    const old = prepared.inputs.get(id);
-    const capture = entity ? captureExposure(world, entity) : null;
+      (outwardInputs ??= new Set()).add(action.targetId);
+    const states = publicContributions.size && capture && entity?.actor && entity.statusEffects;
+    if (states)
+      for (const stored of Object.values(readOnlyDraftView(states))) {
+        const state = readOnlyDraftView(stored),
+          contribution = state.contribution && readOnlyDraftView(state.contribution);
+        if (!state.active || !contribution || contribution.lifetime.kind !== 'source-sustained')
+          continue;
+        // Match the public presentation reader, including a presently unavailable
+        // source that can return before its contribution is settled.
+        if (publicContributions.has(contribution.definitionId)) {
+          (outwardInputs ??= new Set()).add(state.sourceId);
+          const source = entityGet(readOnlyDraftView(world.entities), state.sourceId);
+          if (source && !source.retirement && source.actor?.alive !== false)
+            for (const ancestor of objectAncestors(world, state.sourceId))
+              outwardInputs.add(ancestor.id);
+        }
+      }
+    if (outwardInputs) prepared.outwardDependencies.set(id, outwardInputs);
+    else prepared.outwardDependencies.delete(id);
     countDomainWork('sensoryComparisons');
     if (capture && equal(old, capture)) return;
     orderChanged ||= !!old !== !!capture;
@@ -532,10 +567,14 @@ export function* prepareExposure(
     const entities = readOnlyDraftView(world.entities);
     let index = 0;
     const changedIds = new Set([...changes.sources, ...changes.observers]);
-    // A held strike can keep its own action unchanged while its visible target
-    // moves. Visit the small active dependency set once, not all actors per target.
-    for (const [sourceId, targetId] of prepared.trackedAnimations)
-      if (changedIds.has(targetId)) changedIds.add(sourceId);
+    // A held pose or public contribution can change when another body moves or
+    // leaves. Finish this dependency pass before update() changes its membership.
+    for (const [sourceId, inputs] of prepared.outwardDependencies)
+      for (const inputId of inputs)
+        if (changedIds.has(inputId)) {
+          changedIds.add(sourceId);
+          break;
+        }
     for (const id of changedIds) {
       if (index++ % 64 === 0) yield;
       update(id, entityGet(entities, id));

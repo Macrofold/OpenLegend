@@ -829,6 +829,18 @@ export function evidenceCutEligible(world: WorldState, cut: EvidenceCut): boolea
 function immutableObservation(value: ObservationContribution): ObservationContribution {
   return immutableDataSnapshot(value, readOnlyDraftView);
 }
+/** The last completed sight sample for this actual observer life. Reading a view
+ * cannot advance that measurement or inherit one from a replacement body. */
+export function currentSightConfirmedThrough(world: WorldState, observerId: string): number | null {
+  const observer = entityGet(readOnlyDraftView(world.entities), observerId),
+    actor = observer?.actor && readOnlyDraftView(observer.actor),
+    owners = readOnlyDraftView(world).perceptionEvidence,
+    stored = owners && readOnlyDraftView(owners)[observerId],
+    state = stored && readOnlyDraftView(stored);
+  return actor && state?.life === (actor.physicalLife ?? 0)
+    ? (state.visualConfirmation?.through ?? null)
+    : null;
+}
 function copyFacetValue(value: SensoryFacet): SensoryFacet {
   // One constructor detaches mutable inputs and shares only proved immutable
   // children, including nested original observations and prior motion samples.

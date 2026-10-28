@@ -387,18 +387,25 @@ export function sensoryDraftWrites(
         'indefiniteArticle',
         'kind',
         'appearance',
+        'icon',
         'placement',
         'retirement',
         'inventoryRevision',
         'container',
+        'statusEffects',
       ]) ||
       changed(entity.spatial, ['body', 'inactiveBody', 'softFootprint', 'heading']) ||
       changed(entity.heat, ['lit']) ||
-      changed(entity.resource, ['quantity']) ||
+      changed(entity.resource, ['quantity', 'definitionId']) ||
       changed(entity.remains, ['harvested', 'phase']) ||
       changed(entity.actor?.attributes, publicAttributes) ||
       (publicHealth && changed(entity.actor, ['health'])) ||
+      (entity.actor &&
+        isDraft(entity.actor) &&
+        changed(entity.actor, ['body']) &&
+        entity.actor.body?.plan !== original(entity.actor)?.body?.plan) ||
       changed(entity.actor, [
+        'description',
         'alive',
         'incapacitated',
         'capabilities',
