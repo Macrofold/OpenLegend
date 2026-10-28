@@ -7,9 +7,17 @@ import type {
   WorldAgentTurnCursor,
   WorldAgentProgressSnapshot,
 } from '@open-legend/protocol';
-import { useEffect, useId, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useId, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Button, EmptyState, IconButton, Tag, TextTooltip } from '../design-system/components';
+import {
+  Button,
+  EmptyState,
+  Icon,
+  IconButton,
+  Tag,
+  TextTooltip,
+} from '../design-system/components';
+import { revealHorizontalChild } from '../design-system/horizontal-reveal';
 import { post, worldAgentProgressUrl } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { ConversationComposer, ConversationMessage, ConversationThread } from './conversation';
@@ -59,7 +67,6 @@ export function WorldAgentSession({
   nativeCreation,
   freshRecovery,
   onCreated,
-  controls,
   onStatusPolicyChanged,
 }: {
   worldId: string;
@@ -72,7 +79,6 @@ export function WorldAgentSession({
   nativeCreation?: boolean;
   freshRecovery?: boolean;
   onCreated(): void;
-  controls?: ReactNode;
   onStatusPolicyChanged(): void;
 }) {
   const key = authoringKey('session', worldId, accessScope, sessionId);
@@ -586,26 +592,33 @@ export function WorldAgentSession({
           {
             id: `${turn.id}:reply`,
             content: (
-              <ConversationMessage
-                role={turn.progress?.text || turn.response?.ok ? 'agent' : 'status'}
-                label="World agent"
-                text={
-                  turn.response?.code === 'completed'
-                    ? turn.response.message
-                    : turn.progress?.text || turn.response?.message || ''
-                }
-                failureReason={turn.response && !turn.response.ok ? turn.response.code : undefined}
-              >
-                {turn.response && turn.response.code !== 'completed' && turn.progress?.text && (
-                  <p className="ol-caption">{turn.response.message}</p>
-                )}
-                {turn.progress?.completeness === 'incomplete' && (
-                  <p className="ol-caption">
-                    Some reply text is omitted from this preview. The final result is checked
-                    separately.
-                  </p>
-                )}
-              </ConversationMessage>
+              <div className="ol-agent-reply-row">
+                <span className="ol-agent-avatar" aria-hidden="true">
+                  <Icon name="ui.world" />
+                </span>
+                <ConversationMessage
+                  role={turn.progress?.text || turn.response?.ok ? 'agent' : 'status'}
+                  label="World agent"
+                  text={
+                    turn.response?.code === 'completed'
+                      ? turn.response.message
+                      : turn.progress?.text || turn.response?.message || ''
+                  }
+                  failureReason={
+                    turn.response && !turn.response.ok ? turn.response.code : undefined
+                  }
+                >
+                  {turn.response && turn.response.code !== 'completed' && turn.progress?.text && (
+                    <p className="ol-caption">{turn.response.message}</p>
+                  )}
+                  {turn.progress?.completeness === 'incomplete' && (
+                    <p className="ol-caption">
+                      Some reply text is omitted from this preview. The final result is checked
+                      separately.
+                    </p>
+                  )}
+                </ConversationMessage>
+              </div>
             ),
           },
         ]
@@ -664,12 +677,7 @@ export function WorldAgentSession({
           onFocusCapture={(event) => {
             const button = event.target;
             if (!(button instanceof HTMLButtonElement)) return;
-            const strip = event.currentTarget;
-            if (
-              button.offsetLeft < strip.scrollLeft ||
-              button.offsetLeft + button.offsetWidth > strip.scrollLeft + strip.clientWidth
-            )
-              strip.scrollLeft = button.offsetLeft;
+            revealHorizontalChild(event.currentTarget, button);
           }}
         >
           <Button
@@ -862,7 +870,6 @@ export function WorldAgentSession({
           </>
         )}
         <div id={detailsId} className="ol-world-agent-context" hidden={!detailsOpen}>
-          {controls}
           <div className="ol-agent-tools">
             <Button size="sm" variant="quiet" onPress={() => void reconnect()}>
               Refresh this session

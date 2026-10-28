@@ -149,3 +149,22 @@ Additional second-review Jev/provider cost is **$0**. Cumulative task exposure r
 ## Remaining acceptance
 
 [PC06](../maintainers/practical-competence.md#pc06--game-first-acceptance) still requires human evidence that players notice and appreciate the improvement during a valued activity and do not feel compelled to grind the target first. Finite counters, exact probabilities and this one resident's choices do not prove it. No human play study ran. Retuning, omission or expansion should follow that evidence; beginner hunting remains capable meanwhile. Broader authored stats, roof/dice behavior, personality growth, general teaching and population capacity remain outside this delivery.
+
+## Intelligence-weighted progress — October 27, 2026
+
+**Separate prototype evidence:** the following campaign ran on the mechanics implementation preserved at `codex/character-mechanics-prototype`, commit `1ad0bbf6cdcbb0d079e4407bd0938d8a4e2ba05b`. Intelligence-weighted progress is not installed by the current UI-only Gildmoss delivery. The earlier practical-competence evidence retains its original implementation scope.
+
+A disposable native scenario used the existing equipped-sling fixture and ordinary `aim` → `release-shot` command owners, including preparation and actual combat recovery. Each shot spent exactly one compatible projectile. The release owner captured the effective Intelligence factor once; only its admitted actor gained support. No provider, browser, server or database was started for these checks; `AI_BUDGET_USD=0`.
+
+| Effective Intelligence                | Progress per actual release | Independent releases to rank 1 | Total earned progress |
+| ------------------------------------- | --------------------------- | ------------------------------ | --------------------- |
+| 1                                     | 0.55                        | 11                             | 6.05 displayed        |
+| 10                                    | 1                           | 6                              | 6                     |
+| 20                                    | 1.5                         | 4                              | 6                     |
+| 14 from a worn +4 modifier at base 10 | 1.2                         | 5                              | 6                     |
+
+The stored sum for the eleven low-Intelligence releases was `6.049999999999999`; the shared display formatter shows `6.05` without changing those facts. Replaying the same native release credit added nothing. Changing Intelligence after two 1.5-progress releases retained their exact amounts; the next release at Intelligence 1 earned 0.55. Explicit correction removed only the selected release's amount. Serializing and parsing the current native world retained its earned amounts/rank and passed practice validation; a zero-credit copy was rejected. This is current-format JSON evidence, not PostgreSQL durability qualification.
+
+A clearly supplied completed-coaching support exercised the native award reader: 3 earned progress plus that support granted the practiced rank, later releases continued filling independent support, removing the coaching support retained rank once 6 progress was independently supported, and correcting one of those releases lowered it again. The supplied support proves arithmetic/correction only; it does not establish voluntary agreement or repair the separately tracked delayed-shot observation gap.
+
+The profile names `independentProgress`/`coachedProgress` own thresholds; release count remains the actual number of evidence records. Exact earned progress appears in both the canonical release record and its compact support. No effective stat/progress total or inverse unequip delta is saved. Retention uses the installed positive minimum factor, including an ordinary factor of one for bodies without an applicable stat. Existing authority, disclosure, feedback choice and memory-reader fences were unchanged in that prototype. Its combined CMA browser/server/database acceptance remained incomplete; it is not remaining work for the current UI-only assignment.

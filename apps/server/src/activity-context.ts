@@ -198,7 +198,7 @@ export function activityChoiceView(
           : '',
       time:
         condition.test === 'time'
-          ? `it is ${gameTime(condition.at, world.statusEffectPolicy.clockOffsetHours)}`
+          ? `it is ${gameTime(condition.at, world.statusEffectPolicy.clockOffsetHours, world.presentation?.calendar?.dayLabel)}`
           : '',
     };
     const subject = !('role' in condition)

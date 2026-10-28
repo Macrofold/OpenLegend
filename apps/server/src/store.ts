@@ -26,7 +26,7 @@ import {
 } from './authority.js';
 import { InviteRepository } from './invites.js';
 import { MaintenanceRepository } from './maintenance.js';
-import { AssetRepository } from './asset-repository.js';
+import { ASSET_TABLES, AssetRepository } from './asset-repository.js';
 import { assertAssetBinding, type AssetRevisionReference } from '@open-legend/assets';
 import {
   compactHistory,
@@ -157,7 +157,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '21';
+export const DATABASE_SCHEMA = '22';
 
 export interface AttemptBudget {
   id: string;
@@ -303,6 +303,8 @@ interface TableWrite {
 
 /** Replaceable persistence boundary for committed world state. */
 export interface WorldStore {
+  /** Deferred query tables have caught up after durable acknowledgement. */
+  onProjection(listener: () => void): () => void;
   /** A successful nonnull load is current-format validated and has passed its
    * required history audit. Invalid storage throws before installation. */
   load(active?: boolean): Promise<{ revision: number; state: SavedWorld } | null>;
@@ -429,6 +431,11 @@ export interface GameRepository extends WorldStore {
  * simulated timeline, so reopening a save cannot repeat or erase provider usage.
  */
 export class SqlGameRepository implements GameRepository {
+  private readonly projectionListeners = new Set<() => void>();
+  onProjection(listener: () => void): () => void {
+    this.projectionListeners.add(listener);
+    return () => this.projectionListeners.delete(listener);
+  }
   private readonly settlementListeners = new Set<() => void>();
   onSettlement(listener: () => void): () => void {
     this.settlementListeners.add(listener);
@@ -664,13 +671,16 @@ export class SqlGameRepository implements GameRepository {
             `Unsupported database schema: stored ${String(version?.['value'] ?? 'missing')}, required ${DATABASE_SCHEMA}. Existing data was not changed. Follow README.md's development database recovery guidance; do not edit the stored schema marker.`,
           );
       }
+      // The asset CLI owns its catalog independently of a gameplay database marker.
+      // Fresh gameplay may share that current catalog; every other unversioned table
+      // still refuses before initialization. docs/asset-workflow.md#publish-an-exact-revision
       if (
         !existing?.['relation'] &&
         (await this.db
           .prepare(
-            "SELECT table_name FROM information_schema.tables WHERE table_schema='open_legend' LIMIT 1",
+            `SELECT table_name FROM information_schema.tables WHERE table_schema='open_legend' AND table_name NOT IN (${ASSET_TABLES.map(() => '?').join(',')}) LIMIT 1`,
           )
-          .get())
+          .get(...ASSET_TABLES))
       )
         throw new Error('Database schema marker is missing. Existing data was not changed.');
       const schema = `
@@ -1182,9 +1192,20 @@ export class SqlGameRepository implements GameRepository {
   private publishWorldTables(write: TableWrite, remoteSources?: PreparedMemorySources): void {
     this.readyHistoryWorlds.add(write.state.world.id);
     this.records.needsHotPrune = false;
+    const memoryRevision = this.memories.publicationRevision;
     this.history.committed();
-    this.memories.committed(write.changes, write.restore);
+    this.memories.committed(write.changes, write.restore, remoteSources ?? write.preparedSources);
     this.memories.lexicalCommitted(remoteSources);
+    // The live world was already published at durable journal acknowledgement.
+    // Its SQL-derived read tokens advance only here; quiet/paused clients need
+    // this second notification rather than waiting for an unrelated world tick.
+    if (
+      write.deferred &&
+      (memoryRevision !== this.memories.publicationRevision ||
+        !!write.preparedHistory?.changed.length ||
+        !!write.preparedHistory?.removed.length)
+    )
+      for (const listener of this.projectionListeners) listener();
   }
   private async applyOnlineJournal(
     range: JournalRange,

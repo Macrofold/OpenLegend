@@ -154,11 +154,13 @@ Inventory page: **40 displayed groups**, scanning at most **200 groups** before 
 
 **Reason / tradeoff:** Bound projected page and scan work while exposing continuation.
 
+Collection sorting prepares the selected order across all display groups: native order (the default), definition name ascending/descending, or aggregate quantity descending, retaining native order for ties. Initial grouping is O(N) direct children; a first nondefault order is O(G log G) for G display groups, with O(G) ordering/continuation metadata. A weak cache retains only the finite selected orders for each valid prepared group array; definition, membership and member-state invalidation remain owned by the existing grouping preparation. A warm page seeks its anchor directly and examines at most 200 groups, returning at most 40. Existing representative/action preparation and aggregate availability reads may still inspect physical members of selected groups; the page bound is not a total latency guarantee.
+
 ## QU04
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-27 · Restrictiveness: Safe.**
 
-Inventory search case-folds and matches the **definition name within the current container only**, not arbitrary item-instance names or recursively unopened contents. It continues through the QU03 scan windows, including empty windows with more children. Merge-target mode uses exact native merge eligibility instead of this text filter. [Page owner](../../apps/server/src/inventory-view.ts).
+Inventory search case-folds and matches the **definition name within the current container only**, not arbitrary item-instance names or recursively unopened contents. **All items**, **Equipped** and **Containers** filter that full permitted collection within the QU03 scan windows, including empty windows with more children. Equipped and container objects already have individual display groups, so these predicates do not scan grouped physical members. Search, sort and filter are bound to the page cursor alongside scope, container, custody revisions and the prepared names/order fingerprint. That fingerprint is computed once per prepared order; a changed definition name invalidates continuation even when custody is unchanged. Merge-target mode uses exact native merge eligibility instead of this text filter and admits only its existing default/all ordering, without silently ignoring requested controls. [Page owner](../../apps/server/src/inventory-view.ts).
 
 **Reason / tradeoff:** Avoid recursive inventory search cost/semantics in the first UI.
 

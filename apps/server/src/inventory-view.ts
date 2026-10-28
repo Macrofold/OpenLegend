@@ -1,7 +1,7 @@
-import { itemContainerCapacity } from '@open-legend/domain';
+import { itemContainerCapacity, itemIllustration } from '@open-legend/domain';
 import { mealChoiceForItem } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
-import { inventoryDisplayGroups, inventoryGroupToken } from './inventory-groups.js';
+import { inventoryDisplayOrder, inventoryGroupToken } from './inventory-groups.js';
 import { isEquipped, equipmentConflicts } from '@open-legend/domain';
 import { nativeCommandKind } from './native-command-kind.js';
 import {
@@ -50,13 +50,21 @@ import type {
   ActionOption,
   InventoryItemView,
   InventoryItemSummary,
+  InventoryBindingsView,
   ContainerPage,
+  ContainerPageRequest,
   ObjectHistoryPage,
   InventoryDestination,
   InventoryDestinationPage,
   InventoryDestinationRequest,
   InventoryAccessView,
   EntityView,
+} from '@open-legend/protocol';
+import {
+  DEFAULT_INVENTORY_FILTER,
+  DEFAULT_INVENTORY_SORT,
+  INVENTORY_FILTERS,
+  INVENTORY_SORTS,
 } from '@open-legend/protocol';
 import { scopeKey, type RequestScope } from './authority.js';
 import type { WorldService } from './world-service.js';
@@ -117,6 +125,9 @@ const cursorSchema = z
     revision: z.number().int().nonnegative(),
     rootRevision: z.number().int().nonnegative(),
     query: z.string(),
+    sort: z.enum(INVENTORY_SORTS),
+    filter: z.enum(INVENTORY_FILTERS),
+    order: z.string(),
     source: z.string(),
     after: z.string(),
   })
@@ -223,7 +234,7 @@ export function inventoryAccess(
 export function containerPage(
   service: WorldService,
   scope: RequestScope,
-  request: { containerId?: string; query?: string; cursor?: string; mergeSourceId?: string },
+  request: ContainerPageRequest,
 ): ContainerPage {
   service.assertScope(scope);
   const world = service.world,
@@ -234,7 +245,13 @@ export function containerPage(
   const revision = entity.inventoryRevision ?? 0,
     rootRevision = entityGet(world.entities, scope.actorId)!.inventoryRevision ?? 0;
   const query = (request.query ?? '').trim().toLocaleLowerCase(),
-    source = request.mergeSourceId ?? '';
+    source = request.mergeSourceId ?? '',
+    sort = request.sort ?? DEFAULT_INVENTORY_SORT,
+    filter = request.filter ?? DEFAULT_INVENTORY_FILTER;
+  if (source && (sort !== DEFAULT_INVENTORY_SORT || filter !== DEFAULT_INVENTORY_FILTER))
+    throw new HistoryCursorError(
+      'Choose default order and all items when choosing a merge target.',
+    );
   if (source && itemFor(world, source)?.ownerId !== containerId)
     throw new HistoryCursorError('This lot changed. Refresh this container.');
   // A lot that ongoing work needs cannot be merged anywhere; list no targets.
@@ -242,6 +259,7 @@ export function containerPage(
     !!source &&
     (!!inventoryWorkReason(world, scope.actorId, source) ||
       world.itemDefinitions[itemFor(world, source)!.definitionId]?.portable !== true);
+  const order = source ? undefined : inventoryDisplayOrder(world, containerId, sort);
   let after = '';
   if (request.cursor) {
     let cursor: z.infer<typeof cursorSchema>;
@@ -258,6 +276,9 @@ export function containerPage(
       cursor.revision !== revision ||
       cursor.rootRevision !== rootRevision ||
       cursor.query !== query ||
+      cursor.sort !== sort ||
+      cursor.filter !== filter ||
+      cursor.order !== (order?.revision ?? '') ||
       cursor.source !== source
     )
       throw new HistoryCursorError('Contents or access changed. Refresh this container.');
@@ -297,13 +318,16 @@ export function containerPage(
         revision,
         rootRevision,
         query,
+        sort,
+        filter,
+        order: order?.revision ?? '',
         source,
         after: last,
       }),
     ).toString('base64url');
   if (!source) {
-    const groups = inventoryDisplayGroups(world, containerId);
-    const previous = after ? groups.findIndex((entry) => entry.ids[0] === after) : -1;
+    const groups = order!.groups;
+    const previous = after ? (order!.positions.get(after) ?? -1) : -1;
     // Material state can regroup a member without changing its custody revision.
     // A vanished page anchor is stale, never permission to silently repeat page one.
     if (after && previous < 0)
@@ -321,6 +345,13 @@ export function containerPage(
       after = group.ids[0]!;
       examined++;
       const item = itemFor(world, after)!;
+      // Attached objects and containers are individual groups under the grouping owner,
+      // so these predicates never need to inspect every member of an aggregated stack.
+      if (
+        (filter === 'equipped' && !isEquipped(world, scope.actorId, item.id)) ||
+        (filter === 'containers' && !item.container)
+      )
+        continue;
       if (
         !query ||
         world.itemDefinitions[item.definitionId]!.name.toLocaleLowerCase().includes(query)
@@ -362,7 +393,7 @@ export function containerPage(
       // chosen total, including the existing native 16-object operation allowance.
       const drop = service.previewCommand(
         { type: 'drop', itemId: item.id, inventoryGroup: token, quantity: 1 },
-        scope.actorId,
+        scope,
       );
       const active = canUseInventory(service, scope);
       return {
@@ -659,10 +690,18 @@ export function inventoryDestinationPage(
               type: 'handover',
               handoverOperation: 'offer',
               targetId: id,
-              itemId: item.id,
-              quantity: source.quantity,
+              offeredItems: [
+                {
+                  itemId: item.id,
+                  quantity: source.quantity,
+                  expectedRevision: source.revision,
+                  placementRevision: source.placementRevision,
+                  expectedContentsRevision: source.contentsRevision,
+                },
+              ],
+              requestedItems: [],
             },
-            scope.actorId,
+            scope,
           )
         : undefined;
     const reason =
@@ -885,7 +924,7 @@ export function inventoryItemsView(
     const key = JSON.stringify(command);
     let result = previews.get(key);
     if (!result) {
-      result = service.previewCommand(command, scope.actorId);
+      result = service.previewCommand(command, scope);
       previews.set(key, result);
     }
     return result;
@@ -909,7 +948,7 @@ export function inventoryItemChoices(
   scope: RequestScope,
   item: ItemInstance,
   preview: (command: CommandInput) => ReturnType<WorldService['previewCommand']> = (command) =>
-    service.previewCommand(command, scope.actorId),
+    service.previewCommand(command, scope),
   itemActions = prepareNativeInventoryActions(service.world, scope.actorId),
 ) {
   const world = service.world,
@@ -1050,7 +1089,7 @@ export function inventoryItemView(
   scope: RequestScope,
   item: ItemInstance,
   preview: (command: CommandInput) => ReturnType<WorldService['previewCommand']> = (command) =>
-    service.previewCommand(command, scope.actorId),
+    service.previewCommand(command, scope),
   itemActions = prepareNativeInventoryActions(service.world, scope.actorId),
 ): InventoryItemView {
   const { actions, recordRead } = inventoryItemChoices(service, scope, item, preview, itemActions);
@@ -1058,6 +1097,25 @@ export function inventoryItemView(
     ...inventoryItemSummary(service, scope, item, recordRead),
     actions,
     workBatch: mealChoiceForItem(service.world, scope.actorId, item.id),
+  };
+}
+
+/** Exact shortcut IDs never widen into an inventory/world scan. Normal custody and
+ * parent-container admission apply even when an ID came from browser storage. */
+export function inventoryBindings(
+  service: WorldService,
+  scope: RequestScope,
+  itemIds: string[],
+): InventoryBindingsView {
+  service.assertScope(scope);
+  return {
+    ok: true,
+    items: [...new Set(itemIds)].flatMap((id) => {
+      const item = itemFor(service.world, id);
+      return item && accessiblePossession(service.world, scope.actorId, id)
+        ? [inventoryItemSummary(service, scope, item)]
+        : [];
+    }),
   };
 }
 
@@ -1146,6 +1204,7 @@ export function inventoryItemSummary(
         }
       : {}),
     definitionId: item.definitionId,
+    art: itemIllustration(world, item.definitionId),
     ...(definition.icon ? { icon: definition.icon } : {}),
     name: definition.name,
     nameForm: definition.nameForm,

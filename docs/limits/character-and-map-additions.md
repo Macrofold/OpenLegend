@@ -2,15 +2,15 @@
 
 [Feature contract](../projects/character-and-map-additions-feature-spec.md) · [Implementation work](../maintainers/character-and-map-additions.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
-Every entry is a **proposed target (2026-10-27)**; none is implemented. Ratings describe restrictiveness, not correctness or measured capacity.
+CMA-L01/L02 are current enforced limits; their running-interface qualification remains with [CMA01/CMA02](../maintainers/character-and-map-additions.md). CMA-L03–L06 remain proposed targets (2026-10-27). Ratings describe restrictiveness, not correctness or measured capacity.
 
 ## CMA-L01 — Map markers per character
 
-**Proposed · 500 · Restrictiveness: Low.** Mike asked to drop "as many as you like". 500 keeps a character's saved knowledge and owner view bounded while staying far above ordinary play. At the cap a new marker is refused with a reason; deleting one frees space.
+**Current · 500 · Restrictiveness: Low.** Mike asked to drop "as many as you like". The bundled world's authored map definition limits markers per character to 500. Native admission refuses another marker at capacity; deleting one frees space. This bounds saved annotations and their owner projection, not measured long-running map/history performance. Full map and minimap share one owner-scoped prepared Known places read. Committed changes to that actor's place evidence or place notes refresh both views; unrelated memories, general notes and nicknames do not. An active page chain finishes before one trailing refresh adopts the latest committed token, avoiding repeated cancellation and duplicate reads. An unchanged failed read waits for the explicit Refresh action. World, actor, access, timeline and history epoch fence this private cache, which is released with its last reader; a new server process has a new token identity.
 
 ## CMA-L02 — Label lengths
 
-**Proposed · marker label 40 characters, nickname 40 characters · Restrictiveness: Low.** Short labels fit map chips, pickers and names over the world. Place notes keep the existing knowledge-document limits; the known name keeps its 120-character limit.
+**Current · marker label 40 Unicode code points, nickname 40 Unicode code points · Restrictiveness: Low.** Native admission and current-format validation enforce these bounds. Place notes keep the existing world-installed knowledge-document limits; the known name keeps its 120-character limit. Map labels, entity notes and place notes have separate identity namespaces. Retained-place notes require the exact permitted observation, without requiring that the live place still exists. Array-shaped marker collections are rejected before saving.
 
 ## CMA-L03 — Stat range and step
 

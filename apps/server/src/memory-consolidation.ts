@@ -139,7 +139,11 @@ export function consolidationRequests(
         source,
         experienceModelBindings(world, actorId, source, handle),
       ),
-      at: gameTime(reading.at, world.statusEffectPolicy.clockOffsetHours),
+      at: gameTime(
+        reading.at,
+        world.statusEffectPolicy.clockOffsetHours,
+        world.presentation?.calendar?.dayLabel,
+      ),
       chronologicalPosition: positions.get(experienceEntryKey(source)),
       existingSummary: source.source === 'summary',
     };

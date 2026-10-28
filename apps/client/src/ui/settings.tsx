@@ -1,11 +1,12 @@
 import type { GameView } from '@open-legend/protocol';
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { Button, Section, SegmentedControl } from '../design-system/components';
 import type { ShadowQuality } from '../world-renderer';
 import { InventionSettings } from './invention-settings';
 import { WorldVisualSettings } from './world-visual-settings';
 import icons from '../design-system/icons/catalog';
+import { THEMES } from '../design-system/themes';
 import {
   DEFAULT_ACTION_INPUT,
   inputPreferenceProblem,
@@ -39,6 +40,7 @@ export const Settings = memo(function Settings({
   browseActions,
   actionInput,
   setActionInput,
+  cameraControls,
 }: {
   view: SettingsView;
   section: string;
@@ -60,6 +62,7 @@ export const Settings = memo(function Settings({
   browseActions(opener: HTMLElement): void;
   actionInput: ActionInputPreferences;
   setActionInput(value: ActionInputPreferences): void;
+  cameraControls?: ReactNode;
 }) {
   const [inputProblem, setInputProblem] = useState('');
   function inputChange(key: keyof ActionInputPreferences, value: string) {
@@ -97,9 +100,11 @@ export const Settings = memo(function Settings({
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
             >
-              <option value="wilderness">Wilderness</option>
-              <option value="fantasy">Fantasy</option>
-              <option value="scifi">Sci-fi</option>
+              {THEMES.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
             </select>
           </label>
           <p className="ol-caption">
@@ -150,6 +155,7 @@ export const Settings = memo(function Settings({
         </Section>
       </TabPanel>
       <TabPanel id="graphics" shouldForceMount className="ol-settings-page">
+        {cameraControls && <Section title="Camera controls">{cameraControls}</Section>}
         <WorldVisualSettings
           view={view}
           shadowQuality={shadowQuality}

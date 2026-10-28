@@ -707,6 +707,20 @@ export class WorldRecords {
     // Move physical children before deleting their old parent. Semantic containment
     // is restrictive; structural cascade ownership must never destroy those objects.
     await writes.flush();
+    // Deleted objects may contain one another across separate delete batches.
+    // Clear only their own placement records first, using the structural owner
+    // index. A surviving child's placement remains restrictive unless its admitted
+    // reparenting write above moved it; never cascade through physical_parent_id.
+    // docs/save-and-load.md#current-subsystem-integration
+    const deletedEntities = changes.deletes.get('sim_entities') ?? [];
+    for (let offset = 0; offset < deletedEntities.length; offset += 800) {
+      const batch = deletedEntities.slice(offset, offset + 800);
+      await this.db
+        .prepare(
+          `DELETE FROM sim_placements WHERE world_id=? AND parent_id IN (${batch.map(() => '?').join(',')})`,
+        )
+        .run(worldId, ...batch);
+    }
     for (const [table, ids] of changes.deletes)
       for (let offset = 0; offset < ids.length; offset += 800) {
         const batch = ids.slice(offset, offset + 800);

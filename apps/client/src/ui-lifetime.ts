@@ -44,3 +44,9 @@ export function sampleLifetime(lifetime: PresentationLifetime, nowMs: number, pa
     remainingFraction: lifetime.durationMs ? remainingMs / lifetime.durationMs : 0,
   };
 }
+
+/** Shared reading allowance for permitted speech and narrator captions. */
+export function captionReadingMs(text: string, readingScale = 1): number {
+  const readingMs = Math.max(text.trim().split(/\s+/).length * 300, [...text].length * 45);
+  return Math.max(4000, Math.min(12000, 2000 + readingMs)) * readingScale;
+}

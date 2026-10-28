@@ -6,7 +6,7 @@ export interface CraftCataloguePolicy {
   categoryLabel: string;
   allLabel: string;
   defaultCategoryId: string;
-  categories: Array<{ id: string; label: string }>;
+  categories: Array<{ id: string; label: string; icon?: string }>;
   rules: Array<{
     categoryId: string;
     kind: 'transform' | 'family' | 'authored-profile';
@@ -36,7 +36,8 @@ export function validateCraftCatalogue(value: unknown): asserts value is CraftCa
     selectors = new Set<string>();
   for (const category of value.categories) {
     if (
-      !hasRecordFields(category, ['id', 'label']) ||
+      !hasRecordFields(category, ['id', 'label'], ['icon']) ||
+      (category.icon !== undefined && !text(category.icon)) ||
       !isSafeRecordId(category.id) ||
       !text(category.label) ||
       categories.has(category.id)

@@ -1,10 +1,10 @@
 # Character and map additions — technical design
 
-| Status      | Current progress                                                                                             | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Mechanisms are specified; Spirit composition and critical-hit interaction remain open before implementation. | 2026-10-27   |
+| Status      | Current progress                                                                                                                  | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Nicknames and maps are implemented with Gildmoss; the remaining mechanics retain their separate design and delivery requirements. | 2026-10-27   |
 
-The [feature specification](character-and-map-additions-feature-spec.md) owns behavior and proposed tuning. This design composes existing owners and adds only missing mechanisms. Bundled-world choices (which stats, their effects, the Spirit rule, body places, wearables, item masses and map art) live in `packages/domain/src/worlds/base/` and `docs/worlds/base/`; engine code never names them.
+The [feature specification](character-and-map-additions-feature-spec.md) owns behavior and proposed tuning. Only CMA01/CMA02 are part of the current Gildmoss UI assignment; the other mechanisms below are accepted future targets, not current runtime contracts. This design composes existing owners and adds only missing mechanisms. Bundled-world choices (which stats, their effects, the Spirit rule, body places, wearables, item masses and map art) live in `packages/domain/src/worlds/base/` and `docs/worlds/base/`; engine code never names them.
 
 ## Boundary decisions
 
@@ -64,7 +64,7 @@ Different-world checks (P12): the clockwork world could derive a "Composure" sum
 - **Map art:** a world presentation definition `mapArt` names a runtime art reference, the world bounds it covers (min/max x and z) and north. The bundled world uses the parchment map with the bounds of the top-down plan it was drawn over. The client draws the Map tab and the minimap from that one picture; the minimap is a crop around the player, not a second render of the 3D world.
 - **Owner projection:** position and facing, known places from the existing [known-places](../../apps/server/src/known-places.ts) owner, markers and place notes.
 - **Markers:** actor-owned records in the [editable knowledge](../knowledge.md) owner — id, x, z, label (40 characters), a world marker-icon key and an optional note document. Owner-only create, move, rename and delete through its mutation route; at most 500 per actor; saved with the actor's knowledge.
-- **Place notes:** subject documents keyed by place identity, extending supported subject kinds to places, with the existing document limits.
+- **Place notes:** subject documents keyed by place identity and `place` subject kind, with the existing document limits. Marker notes use `map-marker`; entity notes keep their distinct subject namespace, so equal IDs never alias one another. Place edits bind the exact retained observation; marker edits bind the current actor's marker.
 - **Search** runs in the client over the owner projection; no server search is added.
 
 ## Nicknames
@@ -86,9 +86,7 @@ No new automated tests unless Mike asks. Each stage runs disposable scenarios th
 
 ## Open decisions
 
-- **Determined:** a trigger the game can recognize, and its effect (Mike's example: +1 Strength).
-- **Stat growth and creation choices** stay out of this version; revisit after play.
-- **Critical hits and surprise:** how a critical hit combines with the existing amplified harm of surprise attacks, settled with the combat owner.
+The [paused future-mechanics owner](../maintainers/character-and-map-additions.md#future-mechanics--paused-design-decisions-and-prerequisites) tracks Willpower, ranged accuracy, Perception integration, expressed cues, ordinary healing, Spirit/Determined and critical/surprise composition. None blocks the current UI assignment. Stat growth and creation choices stay out of this version; revisit after play.
 
 ## Maintained records
 

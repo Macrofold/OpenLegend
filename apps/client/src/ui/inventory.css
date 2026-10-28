@@ -38,6 +38,15 @@
   flex-wrap: wrap;
   gap: 8px;
 }
+.ol-inventory-open-bags {
+  display: flex;
+  flex-wrap: wrap;
+  flex: none;
+  gap: var(--space-2);
+}
+.ol-bag-window-slot .ol-inventory-feedback {
+  flex: none;
+}
 .ol-inventory-controls {
   grid-column: 2;
   grid-row: 1;
@@ -88,6 +97,17 @@
   display: grid;
   gap: 4px;
 }
+.ol-inventory-view-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ol-inventory-view-controls > label {
+  display: grid;
+  gap: 4px;
+  flex: 1 1 136px;
+  min-width: 0;
+}
 .ol-inventory-search > div,
 .ol-inventory-quantity-controls {
   display: flex;
@@ -101,7 +121,7 @@
   inline-size: 100%;
 }
 .ol-inventory-search input,
-.ol-inventory-quantity input {
+.ol-inventory-quantity input[type='text'] {
   box-sizing: border-box;
   min-block-size: 32px;
   padding: 6px 8px;
@@ -112,7 +132,7 @@
   font: inherit;
 }
 .ol-inventory-search input:focus-visible,
-.ol-inventory-quantity input:focus-visible {
+.ol-inventory-quantity input[type='text']:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
@@ -120,13 +140,59 @@
   display: grid;
   gap: 4px;
 }
-.ol-inventory-quantity input {
+.ol-inventory-quantity input[type='text'] {
   inline-size: 5em;
   min-inline-size: 3em;
   max-inline-size: 100%;
 }
 .ol-inventory-quantity-controls {
   flex-wrap: wrap;
+}
+.ol-quantity-slider {
+  padding-inline: 14px;
+}
+.ol-quantity-slider[data-disabled] {
+  opacity: 0.5;
+}
+.ol-quantity-slider-track {
+  position: relative;
+  height: 32px;
+}
+.ol-quantity-slider-track::before,
+.ol-quantity-slider-fill {
+  position: absolute;
+  top: calc(50% - 2px);
+  height: 4px;
+  border-radius: 2px;
+}
+.ol-quantity-slider-track::before {
+  content: '';
+  width: 100%;
+  background: var(--field-fill);
+  box-shadow: inset 0 0 0 1px var(--line-control);
+}
+.ol-quantity-slider-fill {
+  background: var(--primary);
+  pointer-events: none;
+}
+.ol-quantity-slider-thumb {
+  top: 50%;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+}
+.ol-quantity-slider-thumb::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border: 2px solid var(--canvas);
+  border-radius: 50%;
+  background: var(--primary);
+  box-shadow: 0 0 0 3px var(--line-strong);
+}
+.ol-quantity-slider-thumb[data-focus-visible] {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 .ol-inventory-panes {
   display: grid;
@@ -316,20 +382,19 @@
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 6.5rem), 1fr));
-  gap: 6px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, var(--slot-size)), var(--slot-size)));
+  gap: var(--space-1);
 }
 .ol-inventory-grid > li {
   min-inline-size: 0;
 }
 .ol-inventory-cell {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 4px;
+  position: relative;
+  display: grid;
+  place-items: center;
   inline-size: 100%;
-  padding: 8px 4px;
+  aspect-ratio: 1;
+  padding: var(--space-1);
   border: 1px solid var(--line-strong);
   border-radius: var(--control-radius);
   background: var(--surface);
@@ -337,23 +402,38 @@
   font: inherit;
   cursor: pointer;
 }
-.ol-inventory-cell:hover,
-.ol-inventory-cell[data-selected] {
+.ol-inventory-cell:hover {
   border-color: var(--focus);
+}
+.ol-inventory-cell[data-selected] {
+  border-color: var(--highlight);
+  background: var(--surface-selected);
+  box-shadow: var(--selected-glow);
 }
 .ol-inventory-cell:focus-visible,
 .ol-inventory-collection:focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
-.ol-inventory-cell-name {
-  overflow-wrap: anywhere;
-  font-weight: 600;
-  text-align: center;
-}
-.ol-inventory-cell-quantity,
-.ol-inventory-cell-state {
+.ol-inventory-cell-quantity {
+  position: absolute;
+  inset-inline-end: 3px;
+  inset-block-end: 2px;
+  max-inline-size: calc(100% - 6px);
   font-size: var(--text-detail-size);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  overflow-wrap: anywhere;
+  text-shadow: 0 1px 2px var(--canvas);
+}
+.ol-inventory-cell-marks {
+  position: absolute;
+  inset-inline-start: 2px;
+  inset-block-start: 2px;
+  display: flex;
+  gap: 1px;
+  color: var(--highlight);
+  pointer-events: none;
 }
 .ol-inventory-cell[draggable='true'] {
   cursor: grab;
@@ -389,6 +469,43 @@
 }
 .ol-inventory-detail {
   outline: none;
+}
+/* Recipient selection promotes the same nonmodal overlay into the board's wide
+ * workspace. React Aria retains dismissal/focus ownership; the item anchor no
+ * longer owns geometry for a task that compares inventory with both offers. */
+.ol-inventory-popover[data-trade] {
+  position: fixed !important;
+  inset: 50% auto auto 50% !important;
+  transform: translate(-50%, -50%);
+  inline-size: min(calc(1024px * var(--ui-scale, 1)), calc(100dvw - 32px));
+  max-block-size: calc(100dvh - 32px) !important;
+  padding: 0;
+  overflow: hidden;
+}
+.ol-inventory-popover[data-trade] > .ol-portal-content,
+.ol-inventory-detail--trade {
+  max-block-size: calc((100dvh - 32px) / var(--ui-scale, 1));
+  min-block-size: 0;
+  overflow: hidden;
+}
+.ol-inventory-detail--trade {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 24px;
+}
+.ol-inventory-detail--trade .ol-trade-workspace {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 0;
+}
+.ol-inventory-detail--trade .ol-trade-heading {
+  flex-shrink: 0;
+}
+.ol-inventory-detail--trade .ol-trade-layout,
+.ol-inventory-trade-unavailable {
+  min-block-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
 }
 .ol-inventory-detail > *,
 .ol-inventory-detail p {

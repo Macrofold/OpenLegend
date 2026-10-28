@@ -78,7 +78,12 @@ import { BASE_FIRE_ACTIVITY_HOST } from './fire-activity.js';
 import { BASE_CAMP_ACTIVITY_HOST } from './camp-activity.js';
 import { BASE_OUTING_HOST } from './outing.js';
 import { BASE_CANOPY_ACTIVITY_HOST } from './canopies.js';
-import { BASE_WORLD_PRESENTATION } from './presentation.js';
+import {
+  BASE_WORLD_PRESENTATION,
+  BASE_SHIELD_ART,
+  BASE_POUCH_ART,
+  bindBaseItemArt,
+} from './presentation.js';
 import { initializeIdentity } from '../../identity.js';
 import { defaultStoryPolicy } from '../../story-selection.js';
 import { BASE_PLACES } from './places.js';
@@ -782,6 +787,7 @@ function buildBaseWorld(
       if (material.quantity > 1) entityGet(world.entities, id)!.name += ` ${n + 1}`;
     }
   const shieldRecipe = installKnownShieldMethod(world);
+  bindBaseItemArt(world, shieldRecipe.outputs[0]!.definition.id, BASE_SHIELD_ART);
   const installMaterialMethods = () => {
     const installedMethods = new Map<string, string>();
     const methods = prepared
@@ -881,6 +887,7 @@ function buildBaseWorld(
     source: 'authored-world',
     profile: { ...world.profile },
   }).recipe;
+  bindBaseItemArt(world, containerRecipe.outputs[0]!.definition.id, BASE_POUCH_ART);
   // Explicit authored starting support; Ada's biography does not grant mechanics.
   setStartingPractice(world, entityGet(world.entities, residentId)!, SLING_HANDLING, 1);
   for (const id of [playerId, residentId, MERCENARY_ID]) {

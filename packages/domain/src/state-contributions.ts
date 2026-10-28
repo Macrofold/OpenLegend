@@ -161,6 +161,7 @@ export function attachCapabilityContribution(
       definitionId: definition.id,
       definitionDigest: contentLabel(canonicalJson(definition)),
       revision: 1,
+      lifetimeStartedAt: world.simTime,
       lifetime: structuredClone(request.lifetime),
     },
   };
@@ -306,6 +307,7 @@ export function refreshCapabilityContribution(
   ]!.contribution!;
   if (canonicalJson(contribution.lifetime) !== canonicalJson(request.lifetime)) {
     contribution.lifetime = structuredClone(request.lifetime);
+    contribution.lifetimeStartedAt = world.simTime;
     contribution.revision++;
   }
   const result = outcome(true, 'contribution-refreshed', 'Capability contribution refreshed.');

@@ -1,5 +1,6 @@
 import {
   craftCatalogueCategory,
+  itemIllustration,
   manufactureInputQuantities,
   recipeFamily,
   type RecipeDefinition,
@@ -25,6 +26,11 @@ export function recipeDetailsView(
       port,
       quantity,
       name: world.itemDefinitions[definition.id]!.name,
+      icon: world.itemDefinitions[definition.id]!.icon,
+      art: itemIllustration(world, definition.id),
+      ...(world.itemDefinitions[definition.id]!.equipment
+        ? { equipmentPorts: [...world.itemDefinitions[definition.id]!.equipment!.ports] }
+        : {}),
       description: world.itemDefinitions[definition.id]!.description,
     })),
     facts: recipe.facts,
@@ -32,6 +38,8 @@ export function recipeDetailsView(
     family: family?.definition.name ?? 'Material transformation',
     ingredients: [...manufactureInputQuantities(recipe)].map(([definitionId, required]) => ({
       name: world.itemDefinitions[definitionId]!.name,
+      icon: world.itemDefinitions[definitionId]!.icon,
+      art: itemIllustration(world, definitionId),
       quantity: required,
       available: quantity(definitionId),
     })),

@@ -488,9 +488,16 @@ export interface WorldState {
     worldName: string;
     locationName: string;
     timeLabel: string;
+    /** Names and the finite self-history text for the supported 24-hour clock. */
+    calendar?: { dayLabel: string; historyTemplate?: string };
     introduction?: string;
     daylight?: { startTime: string; endTime: string; noonElevationDegrees: number };
     crafting?: import('./craft-catalogue.js').CraftCataloguePolicy;
+    mapArt?: import('./cartography.js').MapArtDefinition;
+    /** Appearance identities are authored by the installed world, never inferred from names. */
+    portraits?: Record<string, import('./presentation-art.js').PortraitArt>;
+    /** Exact item-definition identities; only permitted individual rows are projected. */
+    itemArt?: Record<string, import('./presentation-art.js').ItemArt>;
   };
   projectiles?: Record<string, import('./ranged.js').ProjectileFlight>;
   places: Record<string, import('./places.js').PlaceDefinition>;
@@ -523,6 +530,8 @@ export interface WorldState {
   /** Pending offers only, bounded per offerer; saved with the world settings record. */
   itemOffers?: Record<string, import('./handover.js').ItemOffer>;
   knowledgeRevisions?: Record<string, number>;
+  /** Private annotations owned by each actor's editable knowledge. */
+  mapMarkers?: Record<string, Record<string, import('./cartography.js').MapMarker>>;
   knowledgePolicy?: import('./knowledge.js').KnowledgePolicy;
   actorKnowledge?: Record<string, import('./knowledge.js').ActorKnowledge>;
   observerIdentities?: Record<
@@ -809,14 +818,9 @@ export type Command = Envelope &
         type: 'handover';
         operation: 'offer' | 'counter';
         targetId: string;
-        itemId: string;
-        quantity: number;
-        /** Human-held selections may pin current items and recipient possessions. */
-        expectedRevision?: number;
-        placementRevision?: number;
-        expectedContentsRevision?: number;
-        targetRevision?: number;
-        requested?: import('./handover.js').RequestedLot;
+        /** Every offered and requested lot belongs to the same atomic proposal. */
+        offered: import('./handover.js').RequestedLot[];
+        requested: import('./handover.js').RequestedLot[];
         constructionUse?: import('./construction-contributions.js').ConstructionContributionTerms;
         offerId?: string;
         expectedOfferRevision?: number;

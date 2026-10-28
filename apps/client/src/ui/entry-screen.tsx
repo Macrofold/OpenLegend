@@ -9,6 +9,7 @@ export type EntryStatus =
   | { kind: 'loading'; retryLabel?: 'Check access again' | 'Retry connection' }
   | { kind: 'scene-loading'; progress: SceneLoadProgress }
   | { kind: 'scene-failed'; message: string }
+  | { kind: 'paused' }
   | { kind: 'signed-out' }
   | { kind: 'forbidden' }
   | { kind: 'creation-host'; host: WorldCreationHostStatus }
@@ -26,9 +27,11 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
         ? undefined
         : status.kind === 'scene-failed'
           ? 'Retry scene'
-          : forbidden
-            ? 'Check access again'
-            : 'Retry connection';
+          : status.kind === 'paused'
+            ? 'Enter world'
+            : forbidden
+              ? 'Check access again'
+              : 'Retry connection';
   return (
     <main className="ol-entry" aria-labelledby="entry-title">
       <section className="ol-card ol-entry-card">
@@ -56,6 +59,8 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
                 check your access or send an invitation.
               </p>
             </>
+          ) : status.kind === 'paused' ? (
+            <h2>Continue to your world</h2>
           ) : status.kind === 'scene-loading' ? (
             <div className="ol-entry-progress">
               <h2>

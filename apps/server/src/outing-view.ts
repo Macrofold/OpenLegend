@@ -525,12 +525,15 @@ export function cooperationProposals(
       });
   }
   for (const offer of helping ? perceivedOffersBetween(world, actorId, recipientId).outgoing : []) {
-    const item = entityGet(world.entities, offer.offered.itemId)?.item;
+    const item =
+      offer.offered.length === 1
+        ? entityGet(world.entities, offer.offered[0]!.itemId)?.item
+        : undefined;
     if (
-      offer.requested ||
+      offer.requested.length ||
       !item ||
-      item.revision !== offer.offered.revision ||
-      item.quantity !== offer.offered.quantity
+      item.revision !== offer.offered[0]!.revision ||
+      item.quantity !== offer.offered[0]!.quantity
     )
       continue;
     for (const place of knownDestinations())

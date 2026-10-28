@@ -1,7 +1,14 @@
+import {
+  PresentationClock,
+  createLifetime,
+  activateLifetime,
+  sampleLifetime,
+  captionReadingMs,
+} from '../ui-lifetime';
 import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import type { TranscriptPage, TranscriptItem } from '@open-legend/protocol';
-import { Button } from '../design-system/components';
+import { Button, IconButton } from '../design-system/components';
 import { getScoped, post } from '../api';
 import { ConversationThread } from './conversation';
 import { EventTime } from './event-time';
@@ -207,19 +214,85 @@ function ScopedHistory({ visible = true, revision, refreshRequest = 0 }: Props) 
 export function Narrator({
   item,
   onReadStory,
+  paused = false,
+  readingScale = 1,
+  reducedMotion = false,
 }: {
+  readingScale?: number;
+  reducedMotion?: boolean;
   item: TranscriptItem | null | undefined;
   onReadStory?: () => void;
+  paused?: boolean;
 }) {
   const [dismissed, setDismissed] = useState<string | null>(null);
   const initial = useRef<string | null | undefined>(undefined);
+  const timerLine = useRef<HTMLDivElement>(null);
+  const caption = useRef<HTMLElement>(null);
+  const pausedNow = useRef(paused);
+  pausedNow.current = paused;
   // The initial snapshot is history, not a new announcement after reload.
   if (initial.current === undefined && item !== undefined) initial.current = item?.id ?? null;
+  useEffect(() => {
+    if (!item || item.status === 'pending' || initial.current === item.id || dismissed === item.id)
+      return;
+    const clock = new PresentationClock();
+    const lifetime = createLifetime(captionReadingMs(item.text, readingScale));
+    let frame = 0;
+    let lastFraction = -1;
+    const visibility = () => clock.sample(performance.now(), document.hidden || pausedNow.current);
+    const update = (time: number) => {
+      const now = clock.sample(time, document.hidden || pausedNow.current);
+      activateLifetime(lifetime, now);
+      const sample = sampleLifetime(lifetime, now);
+      const fraction = reducedMotion
+        ? Math.ceil(sample.remainingFraction * 4) / 4
+        : sample.remainingFraction;
+      if (timerLine.current && fraction !== lastFraction) {
+        timerLine.current.style.transform = `scaleX(${fraction})`;
+        lastFraction = fraction;
+      }
+      if (sample.state === 'expired') {
+        const fadeMs =
+          reducedMotion ||
+          matchMedia('(prefers-reduced-motion: reduce)').matches ||
+          document.documentElement.dataset.reduceMotion === 'true'
+            ? 0
+            : 500;
+        const elapsed = now - (lifetime.startedAt ?? now) - lifetime.durationMs;
+        if (caption.current)
+          caption.current.style.opacity = String(Math.max(0, 1 - elapsed / Math.max(1, fadeMs)));
+        if (elapsed >= fadeMs) {
+          setDismissed(item.id);
+          return;
+        }
+      }
+      frame = requestAnimationFrame(update);
+    };
+    document.addEventListener('visibilitychange', visibility);
+    frame = requestAnimationFrame(update);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener('visibilitychange', visibility);
+    };
+  }, [item?.id, item?.text, item?.status, dismissed, readingScale, reducedMotion]);
   if (!item || item.status === 'pending' || dismissed === item.id || initial.current === item.id)
     return null;
   return (
-    <aside className="ol-narrator ol-card" aria-label="Narrator">
-      <p role="status">{item.text}</p>
+    <aside key={item.id} ref={caption} className="ol-narrator ol-card" aria-label="Narrator">
+      <p role="status" aria-label={item.text}>
+        <span aria-hidden="true">
+          {item.text.split(/(\s+)/).map((word, index, words) => (
+            <span
+              className="ol-narrator-word"
+              key={index}
+              style={{ animationDelay: `${(index / words.length) * 1000}ms` }}
+            >
+              {word}
+            </span>
+          ))}
+        </span>
+      </p>
+      <div className="ol-narrator-timer" ref={timerLine} aria-hidden="true" />
       <div className="ol-reading-controls">
         {onReadStory && (
           <Button
@@ -232,9 +305,11 @@ export function Narrator({
             Read your story
           </Button>
         )}
-        <Button size="sm" variant="quiet" onPress={() => setDismissed(item.id)}>
-          Dismiss
-        </Button>
+        <IconButton
+          icon="ui.close"
+          label="Dismiss narrator"
+          onPress={() => setDismissed(item.id)}
+        />
       </div>
     </aside>
   );

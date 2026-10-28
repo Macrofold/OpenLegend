@@ -14,6 +14,9 @@ export interface WorldOpeningIdentities {
 }
 export interface InitialWorldPreparation {
   world: WorldState;
+  /** The trusted opening uses this deployment's installed artwork; the server
+   * resolves its exact release and current permission before publication. */
+  useInstalledArtwork?: true;
   accountRoles: Array<{ accountId: string; actorId: string | null; role: 'creator' | 'player' }>;
   constructionSeeds: ConstructionPermission[];
 }

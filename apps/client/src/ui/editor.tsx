@@ -15,6 +15,7 @@ export type EditorTab = {
 
 export function EditorPanel({
   title,
+  opener,
   tabs,
   dirty,
   saving,
@@ -28,6 +29,8 @@ export function EditorPanel({
   onClose,
 }: {
   title: string;
+  /** Exact trigger from the press event; pointer activation need not focus it. */
+  opener: HTMLElement;
   tabs: EditorTab[];
   dirty: boolean;
   saving: boolean;
@@ -50,9 +53,14 @@ export function EditorPanel({
   const [layer, setLayer] = useState(() => ++topLayer);
   const [confirmClose, setConfirmClose] = useState(false);
   const editor = useRef<HTMLElement>(null);
+  // The owned confirmation is portaled outside the editor's DOM subtree.
+  const confirmation = useRef<HTMLElement>(null);
   useLayoutEffect(() => {
     const element = editor.current;
     if (!element) return;
+    // This workspace is non-modal, but its opened task owns initial keyboard
+    // focus. Leave deliberate focus elsewhere alone when the task later closes.
+    element.focus({ preventScroll: true });
     const clamp = () => {
       const bounds = element.getBoundingClientRect();
       const scale = bounds.width / element.offsetWidth || 1;
@@ -74,8 +82,24 @@ export function EditorPanel({
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', clamp);
+      const ownedFocus =
+        document.activeElement === document.body ||
+        element.contains(document.activeElement) ||
+        confirmation.current?.contains(document.activeElement);
+      if (ownedFocus)
+        // An owned modal may still contain focus and hide the opener during layout
+        // cleanup. Restore once after its teardown, unless focus deliberately moved.
+        requestAnimationFrame(() => {
+          if (
+            document.activeElement === document.body &&
+            opener.isConnected &&
+            opener.getClientRects().length &&
+            !opener.closest('[inert], [hidden], [aria-hidden="true"]')
+          )
+            opener.focus({ preventScroll: true });
+        });
     };
-  }, []);
+  }, [opener]);
   const drag = useRef<
     | { x: number; y: number; left: number; top: number; boundsLeft: number; boundsTop: number }
     | undefined
@@ -147,6 +171,7 @@ export function EditorPanel({
       ref={editor}
       className="ol-root ol-editor"
       role="dialog"
+      tabIndex={-1}
       aria-label={title}
       aria-describedby={scope ? scopeId : undefined}
       style={{
@@ -157,6 +182,20 @@ export function EditorPanel({
         zIndex: layer,
       }}
       onPointerDown={bringForward}
+      onKeyDown={(event) => {
+        if (event.key !== 'Escape' || event.defaultPrevented || event.nativeEvent.isComposing)
+          return;
+        const dialog =
+          event.target instanceof Element &&
+          event.target.closest('[role="dialog"], [role="alertdialog"]');
+        // Child controls/dialogs handle their first Escape before this bubble
+        // handler. Consume the editor's dismissal before global world shortcuts.
+        // docs/ui-ux/controls.md#overlay-ownership-prevents-overlap-bugs
+        if (dialog && dialog !== event.currentTarget) return;
+        event.preventDefault();
+        event.stopPropagation();
+        if (!event.repeat) requestClose();
+      }}
     >
       <header
         className="ol-editor-head"
@@ -249,6 +288,7 @@ export function EditorPanel({
         >
           <Modal className="ol-modal">
             <LoadingDialog
+              ref={confirmation}
               className="ol-person-dialog ol-creator-confirm"
               role="alertdialog"
               aria-label={`Unsaved changes in ${title}`}

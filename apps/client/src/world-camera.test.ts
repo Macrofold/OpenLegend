@@ -9,7 +9,7 @@ import {
 
 describe('plain tactical camera controller', () => {
   it('supports orbit, pitch, pan, projection and XYZ focus without changing the input', () => {
-    const initial = initialCamera(),
+    const initial = updateCamera(initialCamera(), { type: 'perspective-lock' }),
       copy = structuredClone(initial);
     let state = updateCamera(initial, { type: 'orbit', yaw: Math.PI / 2, pitch: 0.1 });
     state = updateCamera(state, { type: 'pan', dx: 50, dy: 0, viewportHeight: 500 });

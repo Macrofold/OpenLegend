@@ -336,7 +336,13 @@ export function validateStatusEffects(world: WorldState): void {
       );
       if (state.contribution) {
         const contribution = state.contribution;
-        object(contribution, ['definitionId', 'definitionDigest', 'revision', 'lifetime']);
+        object(contribution, [
+          'definitionId',
+          'definitionDigest',
+          'revision',
+          'lifetimeStartedAt',
+          'lifetime',
+        ]);
         if (
           !entity.actor ||
           !capabilityContributionDefinition(d) ||
@@ -345,6 +351,11 @@ export function validateStatusEffects(world: WorldState): void {
           id !== state.episode ||
           !Number.isSafeInteger(contribution.revision) ||
           contribution.revision < 1 ||
+          !Number.isFinite(contribution.lifetimeStartedAt) ||
+          contribution.lifetimeStartedAt < 0 ||
+          contribution.lifetimeStartedAt > world.simTime ||
+          (contribution.lifetime.kind === 'fixed' &&
+            contribution.lifetime.expiresAt < contribution.lifetimeStartedAt) ||
           contribution.definitionDigest !== contentLabel(canonicalJson(d)) ||
           !validContributionLifetime(contribution.lifetime, 0)
         )

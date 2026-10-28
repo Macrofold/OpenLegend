@@ -4,6 +4,7 @@ import {
   itemOfferSnapshot,
   perceivedItemOffers,
   rememberedTradeLots,
+  rememberedTradeLotReferences,
   mutualSocialReception,
   type PerceivedItemOffer,
 } from './personal-social.js';
@@ -53,6 +54,7 @@ import { readOnlyDraftView } from './draft.js';
 import { definitionPin, type DefinitionPin } from './world-modules.js';
 import { sameDefinitionPin } from './state-owners.js';
 import { BASE_HANDOVER } from './worlds/base/handover.js';
+import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import type { Command, Entity, ItemInstance, Outcome, WorldEvent, WorldState } from './types.js';
 
 export interface RequestedLot {
@@ -80,6 +82,13 @@ export interface KnownTradeLot {
   description: string;
   disclosedAt: number;
 }
+/** Trusted preparation of retained personal evidence. This is operation context,
+ * never client command authority or another saved copy of a person's knowledge. */
+export interface TradeDisclosureContext {
+  actorId: string;
+  personId: string;
+  lots: ReadonlyMap<string, KnownTradeLot>;
+}
 /** Pending consent only. Events and ordinary command receipts retain outcomes.
  * docs/worlds/base/social.md#offering-and-accepting-possessions */
 export interface ItemOffer {
@@ -87,8 +96,8 @@ export interface ItemOffer {
   revision: number;
   offererId: string;
   recipientId: string;
-  offered: OfferLot;
-  requested?: OfferLot;
+  offered: OfferLot[];
+  requested: OfferLot[];
   constructionUse?: ConstructionContributionConsent;
   createdAt: number;
   expiresAt: number;
@@ -121,10 +130,16 @@ export function isHandoverCommand(command: Command): boolean {
     return isSafeRecordId(command.permissionId) && revision(command.expectedRevision);
   if (command.operation === 'offer' || command.operation === 'counter')
     return (
-      validRequest(command) &&
-      (command.constructionUse === undefined || validContributionTerms(command.constructionUse)) &&
-      (command.requested === undefined || validRequest(command.requested)) &&
-      (command.targetRevision === undefined || revision(command.targetRevision)) &&
+      Array.isArray(command.offered) &&
+      command.offered.length > 0 &&
+      command.offered.length <= STOCK_TRANSFER_LIMITS.movedLots &&
+      command.offered.every(validRequest) &&
+      Array.isArray(command.requested) &&
+      command.requested.length <= STOCK_TRANSFER_LIMITS.movedLots &&
+      command.requested.every(validRequest) &&
+      command.offered.length + command.requested.length <= STOCK_TRANSFER_LIMITS.movedLots &&
+      (command.constructionUse === undefined ||
+        (command.offered.length === 1 && validContributionTerms(command.constructionUse))) &&
       (command.operation !== 'counter' ||
         (isSafeRecordId(command.offerId) && revision(command.expectedOfferRevision)))
     );
@@ -178,8 +193,7 @@ function offerIndex(world: WorldState): OfferIndex {
     index.deadlines.push(offer);
     pair(offer.offererId, offer.recipientId).outgoing.push(offer);
     pair(offer.recipientId, offer.offererId).incoming.push(offer);
-    index.byItem.set(offer.offered.itemId, offer);
-    if (offer.requested) index.byItem.set(offer.requested.itemId, offer);
+    for (const lot of [...offer.offered, ...offer.requested]) index.byItem.set(lot.itemId, offer);
   }
   index.deadlines.sort((a, b) => a.expiresAt - b.expiresAt);
   for (const people of index.between.values())
@@ -275,14 +289,20 @@ export function describeItemOffer(
     descriptions?: PerceivedItemOffer['descriptions'];
   },
 ): string {
+  const describe = (
+    lots: readonly OfferLot[],
+    descriptions?: { name: string; description: string }[],
+  ) =>
+    lots
+      .map((lot, index) =>
+        descriptions?.[index]
+          ? `${lot.quantity} ${descriptions[index]!.name}`
+          : describeOfferLot(world, lot),
+      )
+      .join(', ');
   const ordinary = BASE_HANDOVER.text.terms(
-    offer.descriptions
-      ? `${offer.offered.quantity} ${offer.descriptions.offered.name}`
-      : describeOfferLot(world, offer.offered),
-    offer.requested &&
-      (offer.descriptions?.requested
-        ? `${offer.requested.quantity} ${offer.descriptions.requested.name}`
-        : describeOfferLot(world, offer.requested)),
+    describe(offer.offered, offer.descriptions?.offered),
+    offer.requested.length ? describe(offer.requested, offer.descriptions?.requested) : undefined,
   );
   if (!offer.constructionUse) return ordinary;
   return ordinary + ' — ' + describeConstructionUse(world, offer.constructionUse.terms);
@@ -353,8 +373,9 @@ function lotStillHeld(world: WorldState, holderId: string, lot: OfferLot, exact 
 }
 function offerStillHeld(world: WorldState, offer: ItemOffer): boolean {
   return (
-    lotStillHeld(world, offer.offererId, offer.offered, !!offer.requested) &&
-    (!offer.requested || lotStillHeld(world, offer.recipientId, offer.requested))
+    offer.offered.every((lot) =>
+      lotStillHeld(world, offer.offererId, lot, offer.requested.length > 0),
+    ) && offer.requested.every((lot) => lotStillHeld(world, offer.recipientId, lot))
   );
 }
 /** Witnesses perceive the ordinary act; only parties receive exact reciprocal terms.
@@ -458,17 +479,18 @@ export function prepareItemOffer(
   actor: Entity,
   command: TermsCommand,
   permissions: readonly ConstructionPermission[] = [],
+  disclosures?: TradeDisclosureContext,
 ):
   | Outcome
   | {
-      item: ItemInstance;
+      items: ItemInstance[];
       recipient: Entity;
-      requested?: OfferLot;
+      requested: OfferLot[];
       prior?: ItemOffer;
       constructionUse?: ConstructionContributionConsent;
     } {
   if (!isHandoverCommand(command))
-    return outcome(false, 'invalid-command', 'Choose an offer and a person.');
+    return outcome(false, 'invalid-command', 'Choose the items and a person for this offer.');
   const other = entityOwn(world.entities, command.targetId);
   const refused = offerRecipientProblem(world, actor, other);
   if (refused || !other)
@@ -483,67 +505,73 @@ export function prepareItemOffer(
     if (world.simTime >= prior.expiresAt)
       return outcome(false, 'expired', 'That offer has expired.');
   }
-  const item = itemFor(world, command.itemId),
-    definition = item && world.itemDefinitions[item.definitionId];
-  if (!item || !definition || !accessiblePossession(world, actor.id, item.id))
-    return outcome(false, 'item-unavailable', 'Choose one of your accessible possessions.');
-  // Barter never pins/probes the recipient's private inventory revision.
-  if (
-    !matchingSelection(world, item, command) ||
-    (!command.requested &&
-      command.targetRevision !== undefined &&
-      (other.inventoryRevision ?? 0) !== command.targetRevision)
-  )
-    return outcome(false, 'stale', 'The item or recipient changed. Refresh before offering it.');
-  if (definition.portable !== true)
-    return outcome(false, 'not-portable', 'This object cannot be handed over.');
-  if (command.quantity > availableItemQuantity(world, item.id))
-    return outcome(false, 'quantity', 'You do not have that many free to offer.');
-  if (
-    command.quantity !== item.quantity &&
-    (item.individuality === 'individual' || entityGet(world.entities, item.id)?.container)
-  )
-    return outcome(false, 'whole-object', 'Offer the whole object.');
-  const busy = inventoryWorkReason(world, actor.id, item.id);
-  if (busy) return outcome(false, 'in-use', busy);
-  if (grantedContainer(world, item.id))
-    return outcome(false, 'access-granted', "Clear this bag's access list before offering it.");
-  let requested: OfferLot | undefined;
-  if (command.requested) {
-    // Check knowledge before touching other stock. Guessed IDs and unavailable remembered
-    // objects produce the same refusal, never where/why the other person's item changed.
-    const known = knownTradeLots(world, actor.id, other.id).find(
-      (entry) => entry.lot.itemId === command.requested!.itemId,
+  const items: ItemInstance[] = [];
+  for (const selection of command.offered) {
+    const item = itemFor(world, selection.itemId),
+      definition = item && world.itemDefinitions[item.definitionId];
+    if (!item || !definition || !accessiblePossession(world, actor.id, item.id))
+      return outcome(false, 'item-unavailable', 'Choose your accessible possessions.');
+    if (!matchingSelection(world, item, selection))
+      return outcome(false, 'stale', 'An item changed. Review the current offer.');
+    if (definition.portable !== true)
+      return outcome(false, 'not-portable', 'This object cannot be handed over.');
+    if (selection.quantity > availableItemQuantity(world, item.id))
+      return outcome(false, 'quantity', 'You do not have that many free to offer.');
+    if (
+      selection.quantity !== item.quantity &&
+      (item.individuality === 'individual' || entityGet(world.entities, item.id)?.container)
+    )
+      return outcome(false, 'whole-object', 'Offer the whole object.');
+    const busy = inventoryWorkReason(world, actor.id, item.id);
+    if (busy) return outcome(false, 'in-use', busy);
+    if (grantedContainer(world, item.id))
+      return outcome(false, 'access-granted', "Clear this bag's access list before offering it.");
+    items.push(item);
+  }
+  const receivedPrior =
+    prior &&
+    perceivedItemOffers(world, actor.id).find(
+      (known) =>
+        known.id === prior.id && known.revision === prior.revision && known.status === 'pending',
     );
-    const receivedPrior =
-      prior &&
-      perceivedItemOffers(world, actor.id).find(
-        (known) =>
-          known.id === prior.id && known.revision === prior.revision && known.status === 'pending',
-      );
-    const previous =
-      receivedPrior &&
-      (receivedPrior.offererId === other.id ? receivedPrior.offered : receivedPrior.requested);
-    // An open proposal is itself a permitted disclosure even after the compact memory
-    // list ages it out. It grants only its exact lot/pins/quantity, never other stock.
+  const previous = receivedPrior
+    ? receivedPrior.offererId === other.id
+      ? receivedPrior.offered
+      : receivedPrior.requested
+    : [];
+  // A complete retained read overrides the resident tail, including an empty
+  // result after forgetting. Current custody and exact pins are still checked below.
+  const known =
+    disclosures?.actorId === actor.id && disclosures.personId === other.id
+      ? disclosures.lots
+      : rememberedTradeLotReferences(
+          world,
+          actor.id,
+          other.id,
+          command.requested.map((selection) => selection.itemId),
+        );
+  const requested: OfferLot[] = [];
+  for (const selection of command.requested) {
+    // Check personal disclosure before inspecting another person's current stock.
     const disclosed =
-      known?.lot ?? (previous?.itemId === command.requested.itemId ? previous : undefined);
+      known.get(selection.itemId)?.lot ?? previous.find((lot) => lot.itemId === selection.itemId);
     if (
       !disclosed ||
-      command.requested.quantity > disclosed.quantity ||
-      (disclosed.whole && command.requested.quantity !== disclosed.quantity)
+      selection.quantity > disclosed.quantity ||
+      (disclosed.whole && selection.quantity !== disclosed.quantity)
     )
       return outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable);
-    requested = {
+    const lot = {
       ...disclosed,
       definitionPin: { ...disclosed.definitionPin },
-      quantity: command.requested.quantity,
+      quantity: selection.quantity,
     };
     if (
-      !lotStillHeld(world, other.id, requested) ||
-      !matchingSelection(world, itemFor(world, requested.itemId)!, command.requested)
+      !lotStillHeld(world, other.id, lot) ||
+      !matchingSelection(world, itemFor(world, lot.itemId)!, selection)
     )
       return outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable);
+    requested.push(lot);
   }
   const pending = offerIndex(world);
   const promised = (id: string) => {
@@ -555,14 +583,19 @@ export function prepareItemOffer(
       if (promised(child) || promisedDescendant(child)) return true;
     return false;
   };
-  const overlaps = (id: string) =>
-    promised(id) ||
-    objectAncestors(world, id).some((entity) => promised(entity.id)) ||
-    promisedDescendant(id);
-  if (overlaps(item.id))
-    return outcome(false, 'already-offered', 'These items are already being offered.');
-  if (requested && overlaps(requested.itemId))
-    return outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable);
+  const all = [...items.map((item) => item.id), ...requested.map((lot) => lot.itemId)],
+    selected = new Set(all);
+  if (selected.size !== all.length)
+    return outcome(false, 'duplicate-item', 'Choose each item or containing object only once.');
+  for (const id of all) {
+    const ancestors = objectAncestors(world, id);
+    if (ancestors.some((ancestor) => ancestor.id !== id && selected.has(ancestor.id)))
+      return outcome(false, 'duplicate-item', 'Choose each item or containing object only once.');
+    if (promised(id) || ancestors.some((entity) => promised(entity.id)) || promisedDescendant(id))
+      return requested.some((lot) => lot.itemId === id)
+        ? outcome(false, 'offer-lapsed', BASE_HANDOVER.text.unavailable)
+        : outcome(false, 'already-offered', 'These items are already being offered.');
+  }
   const admission = socialOfferAdmissionProblem(
     world,
     actor.id,
@@ -586,34 +619,30 @@ export function prepareItemOffer(
       permissions,
       actor.id,
       other.id,
-      item.id,
+      items[0]!.id,
       command.constructionUse,
     );
   if (constructionUse && 'ok' in constructionUse) return constructionUse;
   return {
-    item,
+    items,
     recipient: other,
+    requested,
     ...(constructionUse ? { constructionUse } : {}),
-    ...(requested ? { requested } : {}),
     ...(prior ? { prior } : {}),
   };
 }
 function offerMoves(offer: ItemOffer) {
   return [
-    {
-      itemId: offer.offered.itemId,
-      quantity: offer.offered.quantity,
+    ...offer.offered.map((lot) => ({
+      itemId: lot.itemId,
+      quantity: lot.quantity,
       destinationId: offer.recipientId,
-    },
-    ...(offer.requested
-      ? [
-          {
-            itemId: offer.requested.itemId,
-            quantity: offer.requested.quantity,
-            destinationId: offer.offererId,
-          },
-        ]
-      : []),
+    })),
+    ...offer.requested.map((lot) => ({
+      itemId: lot.itemId,
+      quantity: lot.quantity,
+      destinationId: offer.offererId,
+    })),
   ];
 }
 /** Read-only admission shared by replies and previews, including final joint placement. */
@@ -650,7 +679,7 @@ export function itemOfferReplyProblem(
     return outcome(
       false,
       'offer-lapsed',
-      offer.requested ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
+      offer.requested.length ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
     );
   if (offer.constructionUse) {
     const current = prepareConstructionContribution(
@@ -658,7 +687,7 @@ export function itemOfferReplyProblem(
       permissions,
       offer.offererId,
       offer.recipientId,
-      offer.offered.itemId,
+      offer.offered[0]!.itemId,
       offer.constructionUse.terms,
     );
     if ('ok' in current) return current;
@@ -669,7 +698,7 @@ export function itemOfferReplyProblem(
     return outcome(
       false,
       'offer-lapsed',
-      offer.requested ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
+      offer.requested.length ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
     );
 }
 export function contributionWithdrawalProblem(
@@ -707,6 +736,7 @@ export function executeHandover(
   command: HandoverCommand,
   events: WorldEvent[],
   batch: ConstructionPermissionBatch,
+  disclosures?: TradeDisclosureContext,
 ): Outcome {
   if (command.operation === 'withdraw-use') {
     const problem = contributionWithdrawalProblem(world, actor, command, batch.permissions);
@@ -736,16 +766,18 @@ export function executeHandover(
     // discovers any interrupted work through its ordinary admitted outcome.
     return outcome(true, 'contribution-withdrawn', message);
   }
-  if ('itemId' in command) {
-    const prepared = prepareItemOffer(world, actor, command, batch.permissions);
+  if ('offered' in command) {
+    const prepared = prepareItemOffer(world, actor, command, batch.permissions, disclosures);
     if ('ok' in prepared) return prepared;
     const offer: ItemOffer = {
       id: prepared.prior?.id ?? nextId(world, 'offer'),
       revision: (prepared.prior?.revision ?? 0) + 1,
       offererId: actor.id,
       recipientId: prepared.recipient.id,
-      offered: pinLot(world, prepared.item, command.quantity),
-      ...(prepared.requested ? { requested: prepared.requested } : {}),
+      offered: prepared.items.map((item, index) =>
+        pinLot(world, item, command.offered[index]!.quantity),
+      ),
+      requested: prepared.requested,
       ...(prepared.constructionUse
         ? { constructionUse: cloneValue(prepared.constructionUse) }
         : {}),
@@ -821,22 +853,25 @@ export function executeHandover(
   const carrying = carryingOffer(world, offer);
   let itemId: string;
   try {
-    itemId = offer.requested
-      ? moveLotsTogether(world, offerMoves(offer), command.id)[0]!
-      : moveLot(
-          world,
-          offer.offered.itemId,
-          actor.id,
-          offer.offered.quantity,
-          command.id,
-          !offer.constructionUse && !carrying,
-        );
+    // Plan every promised source together; merging one of several sources before
+    // its move would invalidate the agreement. A single gift keeps normal merging.
+    itemId =
+      offer.requested.length || offer.offered.length > 1
+        ? moveLotsTogether(world, offerMoves(offer), command.id)[0]!
+        : moveLot(
+            world,
+            offer.offered[0]!.itemId,
+            actor.id,
+            offer.offered[0]!.quantity,
+            command.id,
+            !offer.constructionUse && !carrying,
+          );
   } catch (error) {
     if (error instanceof WorkBudgetError) throw error;
     return outcome(
       false,
       'offer-lapsed',
-      offer.requested ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
+      offer.requested.length ? BASE_HANDOVER.text.unavailable : BASE_HANDOVER.text.giftUnavailable,
     );
   }
   if (offer.constructionUse) {
@@ -860,7 +895,7 @@ export function executeHandover(
         transferred: {
           itemId,
           definition: { ...lot.definitionPin },
-          quantity: offer.offered.quantity,
+          quantity: offer.offered[0]!.quantity,
           originIds: [...lot.materialOriginIds!],
         },
       },
@@ -881,7 +916,7 @@ export function executeHandover(
     ...outcome(
       true,
       'accepted-offer',
-      offer.requested
+      offer.requested.length
         ? BASE_HANDOVER.text.exchanged(describeItemOffer(world, offer))
         : 'Took ' + describeItemOffer(world, offer) + '.',
     ),
@@ -1007,18 +1042,34 @@ export function validateItemOffers(world: WorldState): void {
     if (
       !hasRecordFields(
         offer,
-        ['id', 'revision', 'offererId', 'recipientId', 'offered', 'createdAt', 'expiresAt'],
-        ['requested', 'constructionUse'],
+        [
+          'id',
+          'revision',
+          'offererId',
+          'recipientId',
+          'offered',
+          'requested',
+          'createdAt',
+          'expiresAt',
+        ],
+        ['constructionUse'],
       ) ||
       id !== offer.id ||
       ![id, offer.offererId, offer.recipientId].every(isSafeRecordId) ||
       offer.offererId === offer.recipientId ||
       !revision(offer.revision) ||
       offer.revision < 1 ||
-      !isOfferLot(offer.offered) ||
-      (offer.requested !== undefined && !isOfferLot(offer.requested)) ||
+      !Array.isArray(offer.offered) ||
+      !offer.offered.length ||
+      offer.offered.length > STOCK_TRANSFER_LIMITS.movedLots ||
+      !offer.offered.every(isOfferLot) ||
+      !Array.isArray(offer.requested) ||
+      offer.requested.length > STOCK_TRANSFER_LIMITS.movedLots ||
+      !offer.requested.every(isOfferLot) ||
+      offer.offered.length + offer.requested.length > STOCK_TRANSFER_LIMITS.movedLots ||
       (offer.constructionUse !== undefined &&
-        (!validContributionConsent(offer.constructionUse) ||
+        (offer.offered.length !== 1 ||
+          !validContributionConsent(offer.constructionUse) ||
           !world.constructionProfile?.materialContributions ||
           !world.constructionProfile.materialContributions.operations.includes(
             offer.constructionUse.terms.operation,
@@ -1036,7 +1087,7 @@ export function validateItemOffers(world: WorldState): void {
       offer.expiresAt > offer.createdAt + world.socialOfferPolicy.pendingSeconds
     )
       throw new Error('Invalid item offer.');
-    for (const lot of [offer.offered, ...(offer.requested ? [offer.requested] : [])]) {
+    for (const lot of [...offer.offered, ...offer.requested]) {
       if (items.has(lot.itemId)) throw new Error('An item is promised twice.');
       items.add(lot.itemId);
     }

@@ -2,9 +2,9 @@ import type { EquipmentProfile, EquipmentPort } from '../../equipment.js';
 
 // Body plans alone never grant these authored hand and cloak attachments.
 export const BASE_EQUIPMENT_PORTS: readonly EquipmentPort[] = [
-  { id: 'main-hand', label: 'Main hand' },
-  { id: 'off-hand', label: 'Off hand' },
-  { id: 'back', label: 'Back' },
+  { id: 'main-hand', label: 'Main hand', icon: 'body.main-hand' },
+  { id: 'off-hand', label: 'Off hand', icon: 'body.off-hand' },
+  { id: 'back', label: 'Back', icon: 'body.back' },
 ];
 export const BASE_KNIFE_EQUIPMENT: EquipmentProfile = { ports: ['main-hand'], uses: ['melee'] };
 export const BASE_SPEAR_EQUIPMENT: EquipmentProfile = {

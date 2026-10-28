@@ -1,14 +1,14 @@
 # Character and map additions — feature specification
 
-| Status      | Current progress                                                                                             | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Scope is specified; Spirit composition and critical-hit interaction still need design before implementation. | 2026-10-27   |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Nicknames and maps are implemented with Gildmoss; equipment, stats, Spirit and critical hits remain separate future work. | 2026-10-27   |
 
-The accepted [Gildmoss interface](../../apps/client/src/design-system/gildmoss/README.md) draws five things the game does not have: **Spirit**, **stats with calculated values**, **more equipment slots**, **a map with your own markers and place notes**, and **nicknames**. Mike decided on 2026-10-27 that all five should be built ([plan decision 20](interface-art-direction-overhaul-plan.md#decisions)), specified now and not yet implemented. The [technical design](character-and-map-additions-tech-design.md) owns mechanisms, data and stages.
+The accepted [Gildmoss interface](../../apps/client/src/design-system/gildmoss/README.md) includes designs for **Spirit**, **stats with calculated values**, **more equipment slots**, **a map with your own markers and place notes**, and **nicknames** ([plan decision 20](interface-art-direction-overhaul-plan.md#decisions)). CMA01/CMA02, nicknames and maps, are implemented within the current UI-only assignment. CMA03–CMA06 remain separate future work; their accepted designs below are not claims of current delivery or authorization to implement them in this assignment. The [technical design](character-and-map-additions-tech-design.md) owns mechanisms, data and stages, and the [tracker](../maintainers/character-and-map-additions.md) distinguishes implementation from qualification.
 
 Each addition must change something the player does or understands; a number on a panel alone is not the feature ([authored stats](authored-stats-feature-spec.md#11-the-player-payoff-must-earn-the-rule)). Values marked **proposed** are the bundled world's reversible starting tuning. Another world can choose different stats, slots or map art, or no Spirit at all.
 
-**Today:** there is no Spirit, no stat except Sling handling practice, and no character weight or carrying limit; scars directly multiply movement and injury. Human bodies have three equipment places (main hand, off hand, back). There is no player map or minimap; characters know places they have reached or read about (Journal · Places). Each observer keeps one preferred name per person, and accepting an introduction overwrites it.
+**Today:** there is no Spirit, no stat except Sling handling practice, and no character weight or carrying limit; scars directly multiply movement and injury. Human bodies have three equipment places (main hand, off hand, back). The player map/minimap, private markers/place notes and separate observer nicknames are implemented; an introduction changes the known name without overwriting the nickname. Remaining mechanics decisions and prerequisites are parked in the [paused future-work owner](../maintainers/character-and-map-additions.md#future-mechanics--paused-design-decisions-and-prerequisites), not the UI acceptance path.
 
 ## 1. Spirit
 

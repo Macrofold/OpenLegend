@@ -21,18 +21,24 @@ export function CameraControls({
   center,
   overlays,
   toggleOverlay,
+  embedded = false,
 }: {
-  state: Pick<CameraState, 'projection' | 'rotationLocked' | 'following'>;
+  state: Pick<CameraState, 'projection' | 'rotationLocked' | 'following' | 'perspectiveLocked'>;
   send(command: CameraCommand): void;
   center(): void;
   overlays: PerceptionOptions;
   toggleOverlay(sense: keyof PerceptionOptions): void;
+  embedded?: boolean;
 }) {
   const [expanded, setExpanded] = useState(false);
   const advancedId = useId();
   const optionsButton = useRef<HTMLButtonElement>(null);
   return (
-    <Toolbar className="ol-camera ol-card" aria-label="Camera and range guides">
+    <Toolbar
+      className="ol-camera ol-card"
+      data-embedded={embedded || undefined}
+      aria-label="Camera and range guides"
+    >
       <CameraButton
         icon="ui.plus"
         label="Zoom in"
@@ -108,16 +114,19 @@ export function CameraControls({
           optionsButton.current?.focus();
         }}
       >
+        {state.perspectiveLocked && (
+          <p className="ol-caption">Unlock perspective beside your portrait to rotate freely.</p>
+        )}
         <CameraButton
           icon="ui.rotate-left"
           label="Rotate left"
-          disabled={state.rotationLocked}
+          disabled={state.rotationLocked || state.perspectiveLocked}
           onPress={() => send({ type: 'orbit', yaw: -Math.PI / 4, pitch: 0 })}
         />
         <CameraButton
           icon="ui.rotate-right"
           label="Rotate right"
-          disabled={state.rotationLocked}
+          disabled={state.rotationLocked || state.perspectiveLocked}
           onPress={() => send({ type: 'orbit', yaw: Math.PI / 4, pitch: 0 })}
         />
         <CameraButton

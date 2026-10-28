@@ -1,3 +1,16 @@
+import { MapWorkspace } from './ui/map-workspace';
+import {
+  DaylightDial,
+  ConditionStatuses,
+  GildmossHotbar,
+  GameSeal,
+  MainPanelTabs,
+  type MainDestination,
+} from './ui/gildmoss-hud';
+import { isTheme } from './design-system/themes';
+import { ItemTrade, TradeCommandStatus, type TradeNegotiationTarget } from './ui/item-trade';
+import { useInventoryCommand } from './ui/use-inventory-command';
+import { inventoryCommandStorageKey } from './inventory-command-record';
 import { browserSubscription } from './browser-network';
 import type { Subscription } from '@open-legend/network';
 import { sunlightAtHour } from './sunlight';
@@ -18,6 +31,8 @@ import { FamilyEditor } from './ui/family-editor';
 import { WorldEvents } from './ui/world-events';
 import { GameSavesPanel } from './ui/game-saves';
 import { AssetReleaseControl } from './ui/asset-release-control';
+import { Portrait } from './design-system/portrait';
+import { NicknameEditor } from './ui/nickname-editor';
 import { iconCatalogReady } from './design-system/icons/catalog';
 import { OperationsConsole } from './ui/operations-console';
 import { EntryScreen, type EntryStatus } from './ui/entry-screen';
@@ -32,7 +47,7 @@ import { Journal } from './ui/journal';
 import { Settings } from './ui/settings';
 import { createRoot } from 'react-dom/client';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
-import { WorldClockProvider, clockParts } from './ui/event-time';
+import { WorldClockProvider } from './ui/event-time';
 import {
   useCallback,
   useEffect,
@@ -90,6 +105,7 @@ import { AiConnectionNotice, EvasionCooldown } from './ui/hud-status';
 import type { CameraState } from './world-camera';
 import {
   Button,
+  IconDefinitions,
   Condition,
   EmptyState,
   Icon,
@@ -123,6 +139,10 @@ import './design-system/components.css';
 import './design-system/layout.css';
 
 type PanelId =
+  | 'trade'
+  | 'map'
+  | 'skills'
+  | 'time'
   | 'inventory'
   | 'crafting'
   | 'activity'
@@ -142,18 +162,22 @@ type PanelId =
   | 'mind';
 const timeSpeeds = [0.5, 1, 3, 8];
 const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?: boolean }> = {
+  trade: { title: 'Trade', side: 'right', wide: true },
+  map: { title: 'Map', side: 'left', wide: true },
+  skills: { title: 'Skills', side: 'left', wide: true },
+  time: { title: 'Time', side: 'right' },
   inventory: { title: 'Inventory', side: 'left' },
-  crafting: { title: 'Craft', side: 'left' },
+  crafting: { title: 'Crafting', side: 'left' },
   building: { title: 'Build', side: 'left' },
-  'world-editor': { title: 'World editor', side: 'right', wide: true },
+  'world-editor': { title: 'World Agent', side: 'right', wide: true },
   'world-inspection': { title: 'Inspect world', side: 'right', wide: true },
   activity: { title: 'Current task', side: 'left', wide: true },
   character: { title: 'Character', side: 'left' },
-  agent: { title: 'Create', side: 'right', wide: true },
+  agent: { title: 'Invention', side: 'right', wide: true },
   game: { title: 'Game', side: 'right' },
   checkpoints: { title: 'Checkpoints', side: 'right', wide: true },
   nearby: { title: 'In view', side: 'right' },
-  journal: { title: 'Character records', side: 'left', wide: true },
+  journal: { title: 'Journal', side: 'left', wide: true },
   events: { title: 'Events', side: 'left', wide: true },
   ai: { title: 'Intelligence & allowance', side: 'right' },
   intelligence: { title: 'Intelligence', side: 'right', wide: true },
@@ -161,9 +185,31 @@ const panelInfo: Record<PanelId, { title: string; side: 'left' | 'right'; wide?:
   mind: { title: 'Private mind', side: 'right', wide: true },
 };
 type GodEditorWindow =
-  | { id: string; type: 'person'; actorId: string }
-  | { id: string; type: 'world-events' }
+  | { id: string; type: 'person'; actorId: string; opener: HTMLElement }
+  | { id: string; type: 'world-events'; opener: HTMLElement }
   | { id: string; type: 'family'; actorId: string };
+const mainWorkspaces: PanelId[] = [
+  'character',
+  'inventory',
+  'skills',
+  'journal',
+  'events',
+  'map',
+  'crafting',
+  'agent',
+];
+const centeredWorkspaces: PanelId[] = [...mainWorkspaces, 'trade', 'world-editor'];
+function mainDestination(id: PanelId): MainDestination {
+  return id === 'inventory'
+    ? 'character'
+    : id === 'events'
+      ? 'journal'
+      : id === 'agent'
+        ? 'crafting'
+        : mainWorkspaces.includes(id)
+          ? (id as MainDestination)
+          : 'character';
+}
 function taskScope(view: GameView) {
   return JSON.stringify([
     view.access?.privateDraftScope,
@@ -238,6 +284,8 @@ function App({
   const [conditionPolicyRevision, setConditionPolicyRevision] = useState(0);
   const [inspectors, setInspectors] = useState<{ id: string; slot: number }[]>([]);
   const [activeInspector, setActiveInspector] = useState<string | null>(null);
+  const [bagWindowHost, setBagWindowHost] = useState<HTMLDivElement | null>(null);
+  const [bagSheetVisible, setBagSheetVisible] = useState(false);
   const [worldIntent, setWorldIntent] = useState<(WorldIntent & { owner: string }) | null>(null);
   const [speechPreferenceNotice, setSpeechPreferenceNotice] = useState<{
     scope: string;
@@ -251,10 +299,11 @@ function App({
   } | null>(null);
   const [creationEntryScope, setCreationEntryScope] = useState<string | null>(null);
   const [cameraView, setCameraView] = useState<
-    Pick<CameraState, 'projection' | 'rotationLocked' | 'following'>
+    Pick<CameraState, 'projection' | 'rotationLocked' | 'following' | 'perspectiveLocked'>
   >({
     projection: 'orthographic',
     rotationLocked: false,
+    perspectiveLocked: true,
     following: true,
   });
   const [open, setOpen] = useState<PanelId[]>([]),
@@ -285,7 +334,6 @@ function App({
     ],
   );
   const [expandedWorkspaces, setExpandedWorkspaces] = useState<PanelId[]>(['inventory']);
-  const [inventoryOpened, setInventoryOpened] = useState(false);
   const [activityOpened, setActivityOpened] = useState(false);
   const [activityEntry, setActivityEntry] = useState<ActivityEntry>();
   const [workBatchEntry, setWorkBatchEntry] = useState<WorkBatchEntry>();
@@ -300,6 +348,7 @@ function App({
   const [storyRequest, setStoryRequest] = useState(0);
   const [settingsSection, setSettingsSection] = useState('reading');
   const gameReturnFocus = useRef<Element | null>(null);
+  const panelOpeners = useRef(new Map<PanelId, Element>());
   const [loggingOut, setLoggingOut] = useState(false);
   const [gameError, setGameError] = useState('');
   const [mindDirty, setMindDirty] = useState(false);
@@ -318,7 +367,6 @@ function App({
       surfaceId: string;
     } | null>(null),
     [godEditors, setGodEditors] = useState<GodEditorWindow[]>([]),
-    [timeSettings, setTimeSettings] = useState(false),
     [openingDisclosure, setOpeningDisclosure] = useState<{ owner: string; expanded: boolean }>(),
     [pausePending, setPausePending] = useState(false),
     [speedPending, setSpeedPending] = useState(false),
@@ -329,9 +377,23 @@ function App({
     DEFAULT_ACTION_INPUT,
     isActionInputPreferences,
   );
-  const [theme, setTheme] = useLocal('open-legend:theme', 'wilderness', (v): v is string =>
-    ['wilderness', 'fantasy', 'scifi'].includes(String(v)),
+  const [theme, setTheme] = useLocal('open-legend:theme', 'gildmoss', isTheme);
+  const [eventsQuick, setEventsQuick] = useState(false);
+  const [craftingSection, setCraftingSection] = useState('recipes');
+  const [tradeNegotiation, setTradeNegotiation] = useState<TradeNegotiationTarget | null>(null);
+  const registerTradeNegotiation = useCallback(
+    (target: TradeNegotiationTarget, clear = false) =>
+      setTradeNegotiation((current) =>
+        clear ? (current?.element === target.element ? null : current) : target,
+      ),
+    [],
   );
+  const [tradeTarget, setTradeTarget] = useState<string | null>(null);
+  useEffect(() => {
+    setTradeTarget(null);
+    setTradeNegotiation(null);
+    setBagSheetVisible(false);
+  }, [view?.worldId, view?.saveTimeline, view?.player.id, view?.access?.privateDraftScope]);
   const [scale, setScale] = useLocal('open-legend:ui-scale', 1, (v): v is number =>
     [0.9, 1, 1.15, 1.3].includes(Number(v)),
   );
@@ -403,7 +465,7 @@ function App({
       commitPrimaryAction: (_id: string, _entity: EntityView) => {},
       cancelPrimaryAction: () => {},
     }),
-    retry = useRef(() => {});
+    retryEntry = useRef(() => {});
   latest.current = view;
   const settingsView = useMemo(
     () =>
@@ -452,6 +514,10 @@ function App({
     document.documentElement.style.setProperty('--ui-scale', String(scale));
   }, [theme, reduce, scale]);
   useEffect(() => {
+    document.documentElement.dataset.lighting =
+      view && !sunlightAtHour(view.clock.hour, view.clock.daylight).isDay ? 'night' : 'day';
+  }, [view?.clock.hour, view?.clock.daylight]);
+  useEffect(() => {
     document.title = view ? `Open Legend — ${view.presentation.worldName}` : 'Open Legend';
   }, [view?.presentation.worldName]);
   const { paused: tabPaused, acceptView, pause: pauseTab, isPaused, enter } = tab;
@@ -473,9 +539,11 @@ function App({
   const visibleEntryStatus: EntryStatus =
     view && sceneError
       ? { kind: 'scene-failed', message: sceneError }
-      : view && !sceneReady && entryStatus.kind === 'loading'
-        ? { kind: 'scene-loading', progress: sceneProgress }
-        : entryStatus;
+      : view && tabPaused && !tab.blocked && !tab.resuming && entryStatus.kind === 'loading'
+        ? { kind: 'paused' }
+        : view && !sceneReady && !tabPaused && entryStatus.kind === 'loading'
+          ? { kind: 'scene-loading', progress: sceneProgress }
+          : entryStatus;
   const showFocusPause = !!view && tabPaused && !tab.blocked && !showEntry;
   const accept = useCallback(
     (next: GameView, reset = false) => {
@@ -710,9 +778,11 @@ function App({
         }
       }
     }
-    retry.current = () => {
+    // Entry recovery replaces the presence stream. Ordinary successful writes
+    // must use its committed publications instead of restarting the connection.
+    retryEntry.current = () => {
       blockedEntry.current = undefined;
-      void bootstrap();
+      void bootstrap(true);
     };
     void bootstrap();
     const hide = () => {
@@ -727,7 +797,13 @@ function App({
     const focus = () => {
       if (isPaused()) void bootstrap(true);
     };
+    const visibility = () => {
+      // A visible tab need not receive a separate window-focus event. Reuse
+      // entry admission; it still requires actual focus and current control.
+      if (document.visibilityState === 'visible') focus();
+    };
     window.addEventListener('focus', focus);
+    document.addEventListener('visibilitychange', visibility);
     window.addEventListener('pagehide', hide);
     window.addEventListener('pageshow', show);
     return () => {
@@ -735,6 +811,7 @@ function App({
       source?.close();
       clearTimeout(timer);
       window.removeEventListener('focus', focus);
+      document.removeEventListener('visibilitychange', visibility);
       window.removeEventListener('pagehide', hide);
       window.removeEventListener('pageshow', show);
     };
@@ -764,19 +841,25 @@ function App({
   const raisedInspector = inspectors.some((entry) => entry.id === activeInspector)
     ? activeInspector
     : (inspectors.at(-1)?.id ?? null);
+  const bagSheetShowing = narrow && bagSheetVisible && open.at(-1) !== 'game';
   const inspectorSheetVisible =
-    narrow && activeInspector !== null && inspectors.length > 0 && open.at(-1) !== 'game';
+    narrow &&
+    !bagSheetShowing &&
+    activeInspector !== null &&
+    inspectors.length > 0 &&
+    open.at(-1) !== 'game';
   const inspectorOptions = inspectors.map(({ id }) => ({
     id,
     label: inspectedEntities.get(id)?.name ?? 'Out of sight',
   }));
   const panelVisible = (id: PanelId) =>
-    open.includes(id) && (!narrow || (open.at(-1) === id && !inspectorSheetVisible));
+    open.includes(id) &&
+    (!narrow || (open.at(-1) === id && !inspectorSheetVisible && !bagSheetShowing));
   const inventoryFeedbackVisible = useRef(false);
   const activityFeedbackVisible = useRef(false);
   useLayoutEffect(() => {
     // A delayed acknowledgement belongs to the panel currently shown, not its dispatch closure.
-    inventoryFeedbackVisible.current = panelVisible('inventory');
+    inventoryFeedbackVisible.current = panelVisible('character');
     activityFeedbackVisible.current = connected && panelVisible('activity');
     return () => {
       inventoryFeedbackVisible.current = false;
@@ -831,7 +914,6 @@ function App({
     open,
     inspectors,
     activeInspector,
-    timeSettings,
     expandedWorkspaces,
     choosingActionSubject,
     tabPaused,
@@ -847,10 +929,39 @@ function App({
     const hasGame = panels.includes('game');
     let result = panels.filter((id) => id !== 'game');
     const size = (id: PanelId) =>
-      expandedWorkspaces.includes(id) ? workspaceWidth : panelInfo[id].wide ? 504 : 336;
+      centeredWorkspaces.includes(id)
+        ? id === 'world-editor' && expandedWorkspaces.includes(id)
+          ? available - 48
+          : mainWorkspaces.includes(id)
+            ? Math.min(1152, available - 48, width < 1280 ? width * 0.78 : Infinity)
+            : Math.min(1060, available - 48)
+        : expandedWorkspaces.includes(id)
+          ? workspaceWidth
+          : panelInfo[id].wide
+            ? 504
+            : 336;
+    // The Game dock retains the shared edge inset even while another dock is centered.
+    const edgeDock = hud.current?.querySelector('.ol-dock-game');
+    const sideInset = edgeDock ? parseFloat(getComputedStyle(edgeDock).right) : 92;
+    const overlapsMain = () => {
+      const main = result.find((id) => centeredWorkspaces.includes(id));
+      // A centered workspace leaves only half the spare width on either side.
+      // Summed panel widths alone incorrectly admit overlapping side docks.
+      return (
+        main !== undefined &&
+        (['left', 'right'] as const).some((side) => {
+          const panels = result.filter((id) => id !== main && panelInfo[id].side === side);
+          return (
+            panels.length > 0 &&
+            panels.reduce((n, id) => n + size(id) + 16, sideInset) > (available - size(main)) / 2
+          );
+        })
+      );
+    };
     while (
       result.length > 1 &&
-      (result.reduce((n, id) => n + size(id) + 16, 0) > available - 220 ||
+      (overlapsMain() ||
+        result.reduce((n, id) => n + size(id) + 16, 0) > available - 220 ||
         (available < 1100 &&
           result.filter((id) => panelInfo[id].side === panelInfo[result.at(-1)!].side).length > 1))
     )
@@ -858,6 +969,9 @@ function App({
     return hasGame ? [...result, 'game' as const] : result;
   }
   function show(id: PanelId) {
+    if (id === 'inventory') id = 'character';
+    if (!panelVisible(id) && document.activeElement)
+      panelOpeners.current.set(id, document.activeElement);
     setTargetMode(false);
     if (id === 'game') {
       if (!panelVisible('game')) gameReturnFocus.current = document.activeElement;
@@ -875,16 +989,30 @@ function App({
       return;
     }
     gameReturnFocus.current = null;
+    setBagSheetVisible(false);
     setActiveInspector(null);
-    if (
-      ['character', 'journal', 'events', 'help', 'checkpoints', 'mind', 'intelligence'].includes(id)
-    )
+    if ([...mainWorkspaces, 'help', 'checkpoints', 'mind', 'intelligence'].includes(id))
       setRetainedPanels((current) => (current.includes(id) ? current : [...current, id]));
-    if (id === 'inventory') setInventoryOpened(true);
     if (id === 'activity') setActivityOpened(true);
     // Opening speech history is the recovery path, so it settles the missed-caption notice.
     if (id === 'events') missedCaptions.clear();
-    setOpen((v) => fit([...v.filter((p) => p !== id && p !== 'game'), id]));
+    setOpen((v) =>
+      fit([
+        ...v.filter(
+          (p) =>
+            p !== id &&
+            p !== 'game' &&
+            // Centered workspaces fill their dock. Keep task drafts mounted,
+            // without squeezing another task into the same full-width surface.
+            !(
+              (centeredWorkspaces.includes(id) && centeredWorkspaces.includes(p)) ||
+              (panelInfo[id].side === panelInfo[p].side &&
+                (centeredWorkspaces.includes(id) || centeredWorkspaces.includes(p)))
+            ),
+        ),
+        id,
+      ]),
+    );
   }
   function openGameTask(id: PanelId) {
     const opener = document.activeElement;
@@ -904,7 +1032,7 @@ function App({
   function hide(id: PanelId) {
     if (id === 'inventory') containerOpening.cancel();
     const focused = document.activeElement;
-    const returnTo = id === 'game' ? gameReturnFocus.current : null;
+    const returnTo = id === 'game' ? gameReturnFocus.current : panelOpeners.current.get(id);
     if (id === 'game') gameReturnFocus.current = null;
     const ownsFocus =
       focused === document.body ||
@@ -922,9 +1050,7 @@ function App({
           returnTo.focus({ preventScroll: true });
           return;
         }
-        const launcher = document.querySelector<HTMLButtonElement>(
-          `.ol-launcher[aria-label="${panelInfo[id].title}"]`,
-        );
+        const launcher = document.getElementById(`launcher-${id}`);
         (launcher ?? document.getElementById('gameMenuButton') ?? canvas.current)?.focus({
           preventScroll: true,
         });
@@ -941,12 +1067,14 @@ function App({
       });
   }
   function toggle(id: PanelId) {
+    if (id === 'inventory') id = 'character';
     if (panelVisible(id) && !inspectorSheetVisible && (id === 'game' || !open.includes('game')))
       hide(id);
     else show(id);
   }
   function showInspector(id: string) {
     gameReturnFocus.current = null;
+    setBagSheetVisible(false);
     setOpen((panels) => panels.filter((panel) => panel !== 'game'));
     const focused = document.activeElement;
     setActiveInspector(id);
@@ -1083,13 +1211,84 @@ function App({
     if (connected && action.enabled) containerOpening.stopFollowing();
     return sendCommand(action, request, acknowledgement);
   }
-  function openContainer(entity: EntityView) {
+  // Inventory and the separate Trade window share one retained request owner.
+  // Its receipt remains reachable after either entrance or the person disappears.
+  const tradeOperations = useInventoryCommand({
+    worldId: view?.worldId ?? '',
+    actorId: view?.player.id ?? '',
+    timeline: view?.saveTimeline,
+    scope: view?.access?.scope ?? '',
+    recoveryScope: view?.access?.commandRecoveryScope,
+    epoch: view?.commandEpoch,
+    connected,
+    task: 'trade',
+    command,
+    // Native commits publish through the existing live stream. Bootstrapping
+    // here would close that presence and interrupt the player's ongoing work.
+  });
+  const tradeRequestKey = view
+    ? inventoryCommandStorageKey(
+        view.access?.commandRecoveryScope,
+        view.worldId,
+        view.player.id,
+        view.saveTimeline,
+        'trade',
+      )
+    : undefined;
+  const [workBatchResolution, setWorkBatchResolution] = useState(0);
+  // Crafting and Current task are two presentations of the same finite-work request.
+  const workBatchOperations = useInventoryCommand({
+    worldId: view?.worldId ?? '',
+    actorId: view?.player.id ?? '',
+    timeline: view?.saveTimeline,
+    scope: view?.access?.scope ?? '',
+    recoveryScope: view?.access?.commandRecoveryScope,
+    epoch: view?.commandEpoch,
+    connected,
+    task: 'work-batch',
+    command: (action, request) =>
+      command(action, request, panelVisible('activity') ? 'activity' : 'notice'),
+    onResolved() {
+      setWorkBatchResolution((revision) => revision + 1);
+    },
+  });
+  function activateBagWindow() {
+    gameReturnFocus.current = null;
+    setOpen((panels) => panels.filter((panel) => panel !== 'game'));
+    setActiveInspector(null);
+    setBagSheetVisible(true);
+  }
+  function showBelongings(opener?: HTMLElement) {
+    const owner = view?.access?.scope;
+    const focused = document.activeElement;
+    show('character');
+    // Only explicit bag navigation moves focus. Automatic responsive changes keep
+    // the current quantity/detail focus and its exact collection endpoints.
+    if (!opener || !owner) return;
+    requestAnimationFrame(() => {
+      if (
+        latest.current?.access?.scope !== owner ||
+        (document.activeElement !== document.body && document.activeElement !== focused)
+      )
+        return;
+      const target = hud.current?.querySelector<HTMLInputElement>(
+        '#inventoryPanel .ol-inventory-search input',
+      );
+      if (
+        target?.isConnected &&
+        target.getClientRects().length &&
+        !target.closest('[hidden], [inert], [aria-hidden="true"]')
+      )
+        target.focus({ preventScroll: true });
+    });
+  }
+  function openContainer(entity: EntityView, opener?: Element | null) {
     setExpandedWorkspaces((current) =>
       current.includes('inventory') ? current : [...current, 'inventory'],
     );
     show('inventory');
     setPicker(null);
-    containerOpening.open(entity);
+    containerOpening.open(entity, opener instanceof HTMLElement ? opener : canvas.current);
   }
   function openActivity(entry?: ActivityEntry) {
     setWorkBatchEntry(undefined);
@@ -1141,23 +1340,10 @@ function App({
     setPicker(null);
     hide('events');
   }
-  function talkAbout(item: { itemId: string; name: string; recipientId?: string }) {
-    const current = latest.current;
-    if (!current) return;
-    const recipient = current.entities.find(
-      (entity) => entity.canTalk && entity.id === item.recipientId,
-    );
-    setWorldIntent({
-      mode: 'speak',
-      ...(recipient ? { targetId: recipient.id, label: namePhrase(recipient, 'indefinite') } : {}),
-      item: { id: item.itemId, name: item.name },
-      owner: JSON.stringify([current.worldId, current.saveTimeline, current.player.id]),
-    });
-    setPicker(null);
-  }
   function invent(text = '') {
     setInventionSeed({ id: crypto.randomUUID(), text });
-    show('agent');
+    setCraftingSection('invention');
+    show('crafting');
     setPicker(null);
   }
   function describeAction(subject: EntityView | null) {
@@ -1463,13 +1649,14 @@ function App({
                   : null,
             ),
           selectionDenied: notify,
-          cameraChanged: ({ projection, rotationLocked, following }) =>
+          cameraChanged: ({ projection, rotationLocked, following, perspectiveLocked }) =>
             setCameraView((previous) =>
               previous.projection === projection &&
               previous.rotationLocked === rotationLocked &&
-              previous.following === following
+              previous.following === following &&
+              previous.perspectiveLocked === perspectiveLocked
                 ? previous
-                : { projection, rotationLocked, following },
+                : { projection, rotationLocked, following, perspectiveLocked },
             ),
         });
         renderer = allocated;
@@ -1610,14 +1797,6 @@ function App({
     return () => window.removeEventListener('pointerdown', dismiss, true);
   }, []);
   useEffect(() => {
-    if (!timeSettings) return;
-    const outside = (event: PointerEvent) => {
-      if (!(event.target as HTMLElement).closest('.ol-clock-position')) setTimeSettings(false);
-    };
-    window.addEventListener('pointerdown', outside, true);
-    return () => window.removeEventListener('pointerdown', outside, true);
-  }, [timeSettings]);
-  useEffect(() => {
     const key = (e: KeyboardEvent) => {
       if (e.defaultPrevented || e.isComposing || isPaused() || modalOwnsInput()) return;
       if (e.key === 'Escape') {
@@ -1633,8 +1812,7 @@ function App({
         } else if (targeting) {
           setTargetMode(false);
           e.preventDefault();
-        } else if (timeSettings) setTimeSettings(false);
-        else if (panelVisible('game')) hide('game');
+        } else if (panelVisible('game')) hide('game');
         else if (view) show('game');
         return;
       }
@@ -1644,12 +1822,6 @@ function App({
         if (!view || !connected || e.repeat) return;
         e.preventDefault();
         attack.toggle();
-        return;
-      }
-      if (e.shiftKey && e.code === actionInput.create) {
-        if (!view || !connected || e.repeat) return;
-        e.preventDefault();
-        toggle('agent');
         return;
       }
       if (e.shiftKey && (e.code === 'KeyS' || e.code === 'KeyA')) {
@@ -1680,7 +1852,7 @@ function App({
         e.preventDefault();
         if (e.repeat) return;
         if (e.key.toLowerCase() === 'p') void pause();
-        else {
+        else if (view.godMode) {
           const speed =
             e.code === 'BracketRight'
               ? timeSpeeds.find((value) => value > view.clock.speed)
@@ -1692,10 +1864,12 @@ function App({
       if (choosingActionSubject || e.repeat) return;
       const ids: Record<string, PanelId> = {
         i: 'inventory',
-        c: 'crafting',
-        k: 'character',
+        c: 'character',
+        k: 'crafting',
+        m: 'map',
+        b: 'building',
         v: 'nearby',
-        j: 'events',
+        j: 'journal',
       };
       const id = ids[e.key.toLowerCase()];
       if (id) {
@@ -1807,7 +1981,11 @@ function App({
       }
     }
   }
-  function browseActions(context: ActionContext, opener: Element) {
+  function browseActions(
+    context: ActionContext,
+    opener: Element,
+    item?: { id: string; name: string },
+  ) {
     const bounds = opener.getBoundingClientRect();
     const subject =
       context.targetId === latest.current?.player.id
@@ -1817,7 +1995,8 @@ function App({
       context,
       point: { x: bounds.right, y: bounds.top },
       entity: subject ?? null,
-      browse: context.catalogue === true,
+      browse: true,
+      item,
       opener,
     });
   }
@@ -1856,13 +2035,14 @@ function App({
       enableCognition,
       ...(target.kind === 'actor'
         ? {
-            editPerson: () =>
+            editPerson: (opener: HTMLElement) =>
               setGodEditors((current) => [
                 ...current,
                 {
                   id: crypto.randomUUID(),
                   type: 'person' as const,
                   actorId: target.id,
+                  opener,
                 },
               ]),
             ...(view.godTools?.familyLabel
@@ -1951,7 +2131,12 @@ function App({
         run={(action) => run(action, picker.dispatchCommand)}
         invent={invent}
         inspect={inspect}
-        openContainer={openContainer}
+        onTrade={(entity) => {
+          setTradeTarget(entity.id);
+          setPicker(null);
+          show('trade');
+        }}
+        openContainer={(entity) => openContainer(entity, picker.opener)}
         openActivity={openActivity}
         compose={(mode) => {
           const targetId = picker.context.itemId ?? picker.context.targetId;
@@ -1987,21 +2172,112 @@ function App({
     if (!view) return null;
     // Quiet pause leaves the player's reading place mounted. Each reader owns
     // request cancellation and privacy loss; inactive control never permits writes.
-    const visible = connected && panelVisible(id);
+    const visible =
+      connected &&
+      ((id === 'events' && eventsQuick) ||
+        panelVisible(id) ||
+        (id === 'agent' && panelVisible('crafting') && craftingSection === 'invention') ||
+        (id === 'inventory' && panelVisible('character')));
     const props = {
       view,
       connected,
       command,
     };
     switch (id) {
+      case 'trade': {
+        const person = view.entities.find((entity) => entity.id === tradeTarget);
+        return person?.trade ? (
+          <ItemTrade
+            key={person.trade.scope}
+            trade={person.trade}
+            view={view}
+            connected={connected}
+            visible={visible}
+            command={(action) => tradeOperations.dispatch(action, person.trade!.scope)}
+            recovery={tradeOperations}
+            onNegotiationTarget={registerTradeNegotiation}
+            inventoryRequestKeys={[
+              inventoryCommandStorageKey(
+                view.access?.commandRecoveryScope,
+                view.worldId,
+                view.player.id,
+                view.saveTimeline,
+              ),
+              tradeRequestKey,
+            ].filter((key): key is string => !!key)}
+          />
+        ) : (
+          <>
+            <EmptyState title="This person is no longer available for trade">
+              Look at them again to review current offers.
+            </EmptyState>
+            <TradeCommandStatus recovery={tradeOperations} connected={connected} />
+          </>
+        );
+      }
+      case 'map':
+        return <MapWorkspace view={view} visible={visible} />;
+      case 'skills':
+        return (
+          <Section title="Skills">
+            {view.player.practice.length ? (
+              view.player.practice.map((progress) => (
+                <article key={progress.id}>
+                  <h3>{progress.name}</h3>
+                  <strong>{progress.rankLabel}</strong>
+                  <p>{progress.progressText}</p>
+                  <p>
+                    {progress.scope} {progress.effect}
+                  </p>
+                  <details>
+                    <summary>
+                      {progress.evidenceHeading} ({progress.evidence.length})
+                    </summary>
+                    <ul>
+                      {progress.evidence.map((evidence, index) => (
+                        <li key={evidence.occurrenceId}>
+                          {progress.evidenceItemTemplate
+                            .replaceAll('{number}', String(index + 1))
+                            .replaceAll('{description}', evidence.description)}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                </article>
+              ))
+            ) : (
+              <EmptyState title="No practiced skills yet" />
+            )}
+          </Section>
+        );
+      case 'time':
+        return view.godMode ? (
+          <>
+            <DaylightDial clock={view.clock} />
+            {pauseButton}
+            <SegmentedControl
+              label="Time speed"
+              options={timeSpeeds.map((n) => ({ value: String(n), label: `${n}×` }))}
+              value={String(view.clock.speed)}
+              disabled={!connected || speedPending}
+              onChange={(value) => void changeSpeed(Number(value))}
+            />
+          </>
+        ) : (
+          <EmptyState title="Time debugging requires God mode" />
+        );
       case 'inventory':
         return (
           <>
             <ContainerOpening state={containerOpening} paused={view.clock.paused} />
             <Inventory
               {...props}
+              tradeCommand={(action, scope) => tradeOperations.dispatch(action, scope)}
+              tradeRecovery={tradeOperations}
+              tradeRequestKey={tradeRequestKey}
               narrow={narrow}
               showHeading={false}
+              onNegotiationTarget={registerTradeNegotiation}
               chooseWork={(item) => {
                 if (!item.workBatch) return;
                 setWorkBatchEntry({
@@ -2031,8 +2307,13 @@ function App({
               }}
               command={(action, request) => command(action, request, 'inventory')}
               openContainer={containerOpening.openContainer}
-              onTalkAbout={talkAbout}
-              visible={panelVisible('inventory')}
+              bagWindowHost={bagWindowHost}
+              bagWindowsVisible={!tabPaused && !showEntry && !choosingActionSubject && !targeting}
+              bagSheetVisible={bagSheetShowing}
+              onActivateBagWindow={activateBagWindow}
+              onBagWindowsEmpty={() => setBagSheetVisible(false)}
+              onShowBelongings={showBelongings}
+              visible={panelVisible('character')}
               addItem={() => openItemCreation({ target: { actorId: view.player.id } })}
               contextMenu={(item, point, opener, dispatchCommand) =>
                 openPicker({
@@ -2060,7 +2341,8 @@ function App({
               connected={connected}
               visible={panelVisible('activity')}
               entry={workBatchEntry?.owner === taskScope(view) ? workBatchEntry : undefined}
-              command={(action, request) => command(action, request, 'activity')}
+              operations={workBatchOperations}
+              resolutionRevision={workBatchResolution}
               close={() => setWorkBatchEntry(undefined)}
             />
             {workBatchEntry?.owner !== taskScope(view) && (
@@ -2076,11 +2358,30 @@ function App({
         );
       case 'crafting':
         return (
-          <Crafting
-            {...props}
-            invent={() => invent()}
-            browseRecipe={(recipeId, opener) => browseActions({ recipeId }, opener)}
-          />
+          <>
+            <SegmentedControl
+              label="Crafting section"
+              options={[
+                { value: 'recipes', label: 'Crafting' },
+                { value: 'invention', label: 'Invention' },
+              ]}
+              value={craftingSection}
+              onChange={setCraftingSection}
+            />
+            <div hidden={craftingSection !== 'recipes'}>
+              <Crafting
+                {...props}
+                operations={workBatchOperations}
+                resolutionRevision={workBatchResolution}
+                visible={visible && craftingSection === 'recipes'}
+                invent={() => {
+                  setCraftingSection('invention');
+                }}
+                browseRecipe={(recipeId, opener) => browseActions({ recipeId }, opener)}
+              />
+            </div>
+            <div hidden={craftingSection !== 'invention'}>{content('agent')}</div>
+          </>
         );
       case 'building':
         return (
@@ -2101,22 +2402,27 @@ function App({
         );
       case 'character':
         return (
-          <>
-            <Character
-              {...props}
-              key={taskScope(view)}
-              visible={visible}
-              actionSubject={actionSubject}
-              actionEntry={actionEntry}
-              conditionEntry={conditionEntry}
-              workEntry={workEntry}
-              chooseActionSubject={chooseActionSubject}
-              clearActionSubject={() => setActionSubject(null)}
-              godControls={characterGodControls(playerEntity(view))}
-              openActivity={() => openActivity()}
-              openMind={() => openMind(view.player.id)}
-            />
-          </>
+          <div className="ol-main-character-grid">
+            <section>
+              <Character
+                {...props}
+                key={taskScope(view)}
+                visible={visible}
+                actionSubject={actionSubject}
+                actionEntry={actionEntry}
+                conditionEntry={conditionEntry}
+                workEntry={workEntry}
+                chooseActionSubject={chooseActionSubject}
+                clearActionSubject={() => setActionSubject(null)}
+                godControls={characterGodControls(playerEntity(view))}
+                openActivity={() => openActivity()}
+                openMind={() => openMind(view.player.id)}
+              />
+            </section>
+            <section id="inventoryPanel" aria-label="Your belongings">
+              {content('inventory')}
+            </section>
+          </div>
         );
       case 'nearby':
         return (
@@ -2198,6 +2504,16 @@ function App({
             <Journal
               key={taskScope(view)}
               view={view}
+              connected={connected}
+              addressPerson={addressPerson}
+              inspectEntity={(id) => {
+                const entity =
+                  id === view.player.id
+                    ? playerEntity(view)
+                    : view.entities.find((entity) => entity.id === id);
+                if (entity) inspect(entity);
+                else notify('This person or object is not currently in view.');
+              }}
               visible={visible}
               storyRequest={storyRequest}
               command={command}
@@ -2247,6 +2563,7 @@ function App({
         return (
           <div className="ol-game-menu">
             <header className="ol-game-brand">
+              <GameSeal />
               <h1 className="t-wordmark">OPEN LEGEND</h1>
               <strong>{view.presentation.worldName}</strong>
               <p className="ol-caption">Playing as {view.player.name}</p>
@@ -2255,6 +2572,11 @@ function App({
               Back to the world
             </Button>
             <Section title="Your game">
+              {pauseButton}
+              <Button onPress={() => openGameTask('nearby')}>In view</Button>
+              <Button onPress={(event) => browseActions({ catalogue: true }, event.target)}>
+                All actions
+              </Button>
               <p role={view.persistence.status === 'error' ? 'alert' : undefined}>
                 {view.persistence.message}
               </p>
@@ -2267,7 +2589,6 @@ function App({
                   context={view.checkpoint}
                   selected={view.presentationRelease}
                   revision={view.presentationReleaseRevision ?? 0}
-                  onChanged={() => retry.current()}
                 />
               )}
               <Button onPress={() => openGameTask('help')}>Settings & help</Button>
@@ -2287,8 +2608,23 @@ function App({
               </p>
               <Button onPress={() => openGameTask('ai')}>Intelligence & allowance</Button>
             </Section>
+            <Section title="World opportunities">
+              {view.milestones.map((milestone) => (
+                <div key={milestone.id} className="ol-game-opportunity">
+                  <strong>{milestone.label}</strong>
+                  <span>{milestone.done ? 'Reached' : 'Possible beginning'}</span>
+                </div>
+              ))}
+            </Section>
             <Section title="Create">
-              <Button onPress={() => openGameTask('agent')}>Invent something</Button>
+              <Button
+                onPress={() => {
+                  setCraftingSection('invention');
+                  openGameTask('crafting');
+                }}
+              >
+                Invent something
+              </Button>
               <p className="ol-caption">
                 Describe an idea, find learned recipes, or revisit a request.
               </p>
@@ -2297,7 +2633,8 @@ function App({
               <Section title="World tools">
                 {view.godMode && (
                   <>
-                    <Button onPress={() => openGameTask('world-editor')}>World editor</Button>
+                    <Button onPress={() => openGameTask('world-editor')}>World Agent</Button>
+                    <Button onPress={() => openGameTask('time')}>Time</Button>
                     <p className="ol-caption">
                       Chat about changes to the world, then review and apply them.
                     </p>
@@ -2336,6 +2673,18 @@ function App({
             section={settingsSection}
             setSection={setSettingsSection}
             theme={theme}
+            cameraControls={
+              <CameraControls
+                embedded
+                overlays={{ vision: visionGuide, hearing: hearingGuide }}
+                toggleOverlay={(sense) =>
+                  sense === 'vision' ? setVisionGuide(!visionGuide) : setHearingGuide(!hearingGuide)
+                }
+                state={cameraView}
+                send={(command) => scene.current?.cameraCommand(command)}
+                center={() => scene.current?.center()}
+              />
+            }
             setTheme={setTheme}
             scale={scale}
             setScale={setScale}
@@ -2360,10 +2709,6 @@ function App({
     view && worldIntent?.owner === JSON.stringify([view.worldId, view.saveTimeline, view.player.id])
       ? worldIntent
       : null;
-  // Narrow reading panels and the speech bar cover the full clock. Keep its
-  // existing pause control in the utility row without closing the current task.
-  const clockInTopTools =
-    narrow && (open.length > 0 || inspectors.length > 0 || !!currentWorldIntent);
   const pauseButton = view && (
     <IconButton
       id="pause"
@@ -2415,6 +2760,10 @@ function App({
         ref={hud}
         className="ol-root ol-hud"
         data-theme={theme}
+        data-lighting={
+          view && !sunlightAtHour(view.clock.hour, view.clock.daylight).isDay ? 'night' : 'day'
+        }
+        data-gildmoss-layout="true"
         data-reduce-motion={reduce}
         data-narrow={narrow}
         data-compact={width / scale < 1200}
@@ -2438,7 +2787,7 @@ function App({
                 retryLabel:
                   entryStatus.kind === 'forbidden' ? 'Check access again' : 'Retry connection',
               });
-              retry.current();
+              retryEntry.current();
             }}
           />
         )}
@@ -2446,220 +2795,137 @@ function App({
           // Keep the last game view and drafts visible through ordinary focus loss.
           // Actual entry/return failures retain their separate retry screen.
           <div className="ol-play-workspace" hidden={showEntry} inert={tabPaused}>
-            <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
-              <div className="ol-survival-name">
-                <Button
-                  variant="quiet"
-                  className="ol-character-link"
-                  onPress={() => {
+            <div className="ol-gildmoss-overview">
+              <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
+                <span className="ol-gildmoss-frame" aria-hidden="true" />
+                <div className="ol-survival-name">
+                  <Button
+                    variant="quiet"
+                    className="ol-character-link"
+                    aria-label={view.player.name}
+                    onPress={() => {
+                      setConditionEntry((value) => value + 1);
+                      show('character');
+                    }}
+                  >
+                    <Portrait art={view.player.portrait} size={64} />
+                  </Button>
+                </div>
+                <Condition {...view.player} />
+                <EvasionCooldown evasion={view.player.evasion} />
+                <ConditionStatuses
+                  view={view}
+                  openCondition={() => {
                     setConditionEntry((value) => value + 1);
                     show('character');
                   }}
-                >
-                  {view.player.name}
-                  <Icon name="ui.character" size={16} />
-                </Button>
-              </div>
-              <Condition {...view.player} />
-              <EvasionCooldown evasion={view.player.evasion} />
+                />
 
-              {(view.player.participation !== 'active' || !view.player.alive) && (
-                <p className="ol-caption ol-player-state">
-                  {view.player.participation === 'inactive'
-                    ? 'Away from the world'
-                    : view.player.participation === 'exiting'
-                      ? 'Preparing to leave'
-                      : !view.player.alive
-                        ? 'Life has ended'
-                        : null}
-                </p>
-              )}
-              {view.persistence.status === 'error' && (
-                <p className="ol-save-failure" role="alert">
-                  {view.persistence.message}
-                  {view.access?.canManageSaves && (
-                    <Button size="sm" onPress={() => show('checkpoints')}>
-                      Open recovery
-                    </Button>
-                  )}
-                </p>
-              )}
-            </section>
-            <CurrentWork
-              key={taskScope(view)}
-              player={view.player}
-              review={() => {
-                setWorkEntry((value) => value + 1);
-                show('character');
-              }}
-            />
-            {choosingActionSubject && (
-              <section className="ol-card ol-subject-picking" aria-label="Choose action subject">
-                <strong>Choose a subject</strong>
-                <p>
-                  Click an object in the world, or choose from In view. Your action will be prepared
-                  for that exact subject.
-                </p>
-                <div>
-                  <Button onPress={() => show('nearby')}>In view</Button>
-                  <Button onPress={() => finishActionSubject()}>Cancel</Button>
-                </div>
+                {(view.player.participation !== 'active' || !view.player.alive) && (
+                  <p className="ol-caption ol-player-state">
+                    {view.player.participation === 'inactive'
+                      ? 'Away from the world'
+                      : view.player.participation === 'exiting'
+                        ? 'Preparing to leave'
+                        : !view.player.alive
+                          ? 'Life has ended'
+                          : null}
+                  </p>
+                )}
+                {view.persistence.status === 'error' && (
+                  <p className="ol-save-failure" role="alert">
+                    {view.persistence.message}
+                    {view.access?.canManageSaves && (
+                      <Button size="sm" onPress={() => show('checkpoints')}>
+                        Open recovery
+                      </Button>
+                    )}
+                  </p>
+                )}
               </section>
-            )}
-            <div className="ol-clock-position" hidden={clockInTopTools}>
-              <div className="ol-card ol-timebar" aria-label="Time">
-                <div className="ol-timebar-when">
-                  <Icon
-                    name={
-                      sunlightAtHour(view.clock.hour, view.clock.daylight).isDay
-                        ? 'ui.day'
-                        : 'ui.night'
-                    }
-                  />
+              {choosingActionSubject && (
+                <section className="ol-card ol-subject-picking" aria-label="Choose action subject">
+                  <strong>Choose a subject</strong>
+                  <p>
+                    Click an object in the world, or choose from In view. Your action will be
+                    prepared for that exact subject.
+                  </p>
                   <div>
-                    <span className="ol-timebar-day">Day {view.clock.day}</span>
-                    <span className="ol-timebar-clock">
-                      {clockParts(view.clock.seconds, view.clock.offsetHours).hour}:
-                      {clockParts(view.clock.seconds, view.clock.offsetHours).minute}
-                    </span>
-                    <div className="ol-timebar-location">{view.presentation.locationName}</div>
-                    {view.clock.weather && (
-                      <div className="ol-timebar-status">{view.clock.weather.label}</div>
-                    )}
-                    {(view.clock.paused || view.clock.preparingNavigation) && (
-                      <div className="ol-timebar-status">
-                        {view.clock.paused
-                          ? view.clock.pauseReason === 'maintenance'
-                            ? 'Paused for maintenance'
-                            : 'Paused'
-                          : 'Preparing navigation…'}
-                      </div>
-                    )}
+                    <Button onPress={() => show('nearby')}>In view</Button>
+                    <Button onPress={() => finishActionSubject()}>Cancel</Button>
                   </div>
-                </div>
-                <span className="ol-timebar-sep" />
-                {!clockInTopTools && pauseButton}
-                <SegmentedControl
-                  label="Time speed"
-                  options={timeSpeeds.map((n) => ({
-                    value: String(n),
-                    label: `${n}×`,
-                  }))}
-                  value={String(view.clock.speed)}
-                  disabled={!connected || speedPending}
-                  onChange={(v) => void changeSpeed(Number(v))}
-                />
+                </section>
+              )}
+              <div className="ol-gildmoss-lock">
                 <IconButton
-                  icon="ui.settings"
-                  label="Time settings"
-                  pressed={timeSettings}
-                  onPress={() => setTimeSettings(!timeSettings)}
+                  icon="ui.lock-perspective"
+                  label="Lock perspective"
+                  pressed={!!cameraView.perspectiveLocked}
+                  onPress={() => scene.current?.cameraCommand({ type: 'perspective-lock' })}
                 />
               </div>
-              {view.player.action?.controls && !view.player.action.execution && !aimPanel && (
-                <div className="ol-card ol-aim-status">
-                  <AimControls
-                    action={view.player.action}
-                    connected={connected}
-                    controlling={!!view.access?.controlling}
-                    command={(choice) => void command(choice)}
-                  />
-                </div>
-              )}
-              {timeSettings && (
-                <div className="ol-card ol-time-settings" role="region" aria-label="Time settings">
-                  <p>
-                    Leaving this tab pauses your play. Returning resumes automatically unless you
-                    started playing in another tab.
-                  </p>
-                  <p className="ol-caption">
-                    1×: one real second is {view.clock.baseRatio} game seconds. Manual pause always
-                    wins. P pauses or resumes; Shift + ] speeds up; Shift + [ slows down.
-                  </p>
-                </div>
-              )}
-              {!narrow && openingInformation}
-              <div className="ol-hud-notices">
+              <div className="ol-gildmoss-corner">
+                {' '}
+                <DaylightDial clock={view.clock} />
+                {view.cartography && (
+                  <div>
+                    <MapWorkspace
+                      view={view}
+                      mode="minimap"
+                      visible
+                      onOpenMap={() => show('map')}
+                    />
+                    <div className="ol-minimap-place">{view.presentation.locationName}</div>
+                  </div>
+                )}
+              </div>
+              <div className="ol-gildmoss-notices">
                 <EntryNotice />
                 <MaintenanceNotice maintenance={view.maintenance} />
+                {openingInformation}
               </div>
             </div>
-            <div className="ol-top-tools">
-              {clockInTopTools && pauseButton}
-              <Button id="gameMenuButton" size="sm" variant="quiet" onPress={() => toggle('game')}>
-                Game
-              </Button>
-              <IconButton icon="ui.help" label="Settings and help" onPress={() => toggle('help')} />
-            </div>
-            <div className="ol-launcher-rails">
-              {(['left', 'right'] as const).map((side) => (
-                <Toolbar
-                  key={side}
-                  className={`ol-rail ol-rail-${side}`}
-                  orientation={
-                    width / scale < 360 ||
-                    shortHud ||
-                    (narrow && (open.length > 0 || inspectors.length > 0))
-                      ? 'horizontal'
-                      : 'vertical'
-                  }
-                  aria-label={
-                    side === 'left' ? 'Your character and records' : 'World actions and creation'
-                  }
-                >
-                  {(side === 'left'
-                    ? (['inventory', 'character', 'events', 'journal'] as PanelId[])
-                    : (['nearby', 'crafting', 'building', 'agent'] as PanelId[])
-                  ).map((id) => (
-                    <Launcher
-                      key={id}
-                      id={`launcher-${id}`}
-                      icon={
-                        {
-                          inventory: 'ui.inventory',
-                          crafting: 'ui.crafting',
-                          character: 'ui.character',
-                          journal: 'ui.journal',
-                          events: 'ui.journal',
-                          building: 'ui.build',
-                          agent: 'ui.agent',
-                          game: 'ui.settings',
-                          nearby: 'ui.inview',
-                          intelligence: 'ui.star',
-                        }[id as 'inventory']
-                      }
-                      label={panelInfo[id].title}
-                      open={open.includes(id)}
-                      side={side}
-                      shortcut={
-                        {
-                          inventory: 'I',
-                          crafting: 'C',
-                          character: 'K',
-                          agent: `Shift+${actionInput.create.replace('Key', '')}`,
-                          nearby: 'V',
-                          events: 'J',
-                        }[id as 'inventory']
-                      }
-                      onPress={() => toggle(id)}
+            <GildmossHotbar
+              visible={!tabPaused && !showEntry}
+              view={view}
+              connected={connected}
+              mode={currentWorldIntent?.mode}
+              attackMode={attack.mode}
+              toggleAttack={attack.toggle}
+              intent={(mode) => {
+                setWorldIntent({
+                  mode,
+                  owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
+                });
+                setPicker(null);
+              }}
+              show={show}
+              game={() => toggle('game')}
+              browse={(item, opener) => browseActions({ itemId: item.id }, opener, item)}
+            />
+            <div className="ol-events-quick">
+              {eventsQuick ? (
+                <section className="ol-card ol-events-quick-panel" aria-label="Events quick view">
+                  <header>
+                    <strong>Events</strong>
+                    <IconButton
+                      icon="ui.minus"
+                      label="Minimize events"
+                      onPress={() => setEventsQuick(false)}
                     />
-                  ))}
-                  {side === 'right' && (
-                    <Launcher
-                      icon="ui.speech"
-                      label="Speak"
-                      open={worldIntent?.mode === 'speak'}
-                      side="right"
-                      onPress={() =>
-                        setWorldIntent({
-                          mode: 'speak',
-                          owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
-                        })
-                      }
-                    />
-                  )}
-                </Toolbar>
-              ))}
+                  </header>
+                  <div>{content('events')}</div>
+                  <Button variant="quiet" onPress={() => show('journal')}>
+                    Open Journal
+                  </Button>
+                </section>
+              ) : (
+                <IconButton
+                  icon="ui.journal"
+                  label="Events quick view"
+                  onPress={() => setEventsQuick(true)}
+                />
+              )}
             </div>
             {narrow && (open.length > 0 || inspectors.length > 0) && (
               <div
@@ -2696,29 +2962,55 @@ function App({
                 data-side={side === 'game' ? 'right' : side}
               >
                 {(Object.keys(panelInfo) as PanelId[])
-                  .filter((id) =>
-                    side === 'game' ? id === 'game' : id !== 'game' && panelInfo[id].side === side,
+                  .filter(
+                    (id) =>
+                      id !== 'inventory' &&
+                      id !== 'agent' &&
+                      (side === 'game'
+                        ? id === 'game'
+                        : id !== 'game' && panelInfo[id].side === side),
                   )
                   .map((id) => (
                     <div
                       key={id}
                       className="ol-panel-slot"
+                      data-main-workspace={mainWorkspaces.includes(id) ? '' : undefined}
                       hidden={!panelVisible(id)}
                       style={{ order: open.indexOf(id) }}
-                      onPointerDownCapture={() => {
-                        if (id !== 'game') setActiveInspector(null);
+                      onPointerDownCapture={(event) => {
+                        // A portaled bag keeps Inventory as its React parent, not
+                        // as its visual window. Do not lower it through that ancestor.
+                        if ((event.target as Element).closest('[data-bag-window]')) return;
+                        if (id !== 'game') {
+                          setActiveInspector(null);
+                          setBagSheetVisible(false);
+                        }
                       }}
-                      onFocusCapture={() => {
-                        if (id !== 'game') setActiveInspector(null);
+                      onFocusCapture={(event) => {
+                        if ((event.target as Element).closest('[data-bag-window]')) return;
+                        if (id !== 'game') {
+                          setActiveInspector(null);
+                          setBagSheetVisible(false);
+                        }
                       }}
                     >
                       <Panel
                         title={title(id)}
+                        tabs={
+                          mainWorkspaces.includes(id) ? (
+                            <MainPanelTabs
+                              selected={mainDestination(id)}
+                              show={show}
+                              mapAvailable={!!view.cartography}
+                            />
+                          ) : undefined
+                        }
                         id={id === 'nearby' ? 'nearbyPanel' : `${id}Panel`}
                         wide={panelInfo[id].wide}
-                        draggable={!narrow}
+                        draggable={!narrow && !mainWorkspaces.includes(id)}
                         resizable={!narrow && id === 'intelligence'}
                         workspace={
+                          !mainWorkspaces.includes(id) &&
                           [
                             'inventory',
                             'agent',
@@ -2731,7 +3023,7 @@ function App({
                           ].includes(id)
                             ? {
                                 expanded: expandedWorkspaces.includes(id),
-                                width: workspaceWidth,
+                                width: id === 'world-editor' ? width / scale - 48 : workspaceWidth,
                                 onToggle: () => {
                                   setExpandedWorkspaces((current) =>
                                     current.includes(id)
@@ -2770,7 +3062,6 @@ function App({
                         id === 'world-editor' ||
                         id === 'world-inspection' ||
                         id === 'building' ||
-                        (id === 'inventory' && inventoryOpened) ||
                         (id === 'activity' && activityOpened) ||
                         retainedPanels.includes(id) ||
                         open.includes(id)
@@ -2781,6 +3072,14 @@ function App({
                   ))}
               </div>
             ))}
+            <div
+              ref={setBagWindowHost}
+              className="ol-bag-window-host"
+              style={{
+                zIndex:
+                  bagSheetVisible && !panelVisible('game') ? 'calc(var(--z-sheet) + 2)' : undefined,
+              }}
+            />
             <div
               className="ol-inspectors"
               style={{
@@ -2796,6 +3095,7 @@ function App({
                     key={`${taskScope(view)}:${id}`}
                     className="ol-inspector-slot"
                     data-inspector-id={id}
+                    data-person={inspected?.kind === 'actor' || undefined}
                     hidden={narrow && (!raised || !inspectorSheetVisible)}
                     style={
                       {
@@ -2803,12 +3103,39 @@ function App({
                         zIndex: raised ? inspectors.length : index,
                       } as CSSProperties
                     }
-                    onPointerDownCapture={() => setActiveInspector(id)}
-                    onFocusCapture={() => setActiveInspector(id)}
+                    onPointerDownCapture={() => {
+                      setBagSheetVisible(false);
+                      setActiveInspector(id);
+                    }}
+                    onFocusCapture={() => {
+                      setBagSheetVisible(false);
+                      setActiveInspector(id);
+                    }}
                   >
                     <Panel
-                      title={inspected?.name ?? 'Out of sight'}
+                      title={inspected?.identity?.knownName ?? inspected?.name ?? 'Out of sight'}
+                      titleArtwork={
+                        inspected?.kind === 'actor' ? (
+                          <Portrait art={inspected.portrait} size={narrow ? 48 : 64} />
+                        ) : undefined
+                      }
+                      titleDetails={
+                        inspected?.kind === 'actor' ? (
+                          <>
+                            <NicknameEditor
+                              entity={inspected}
+                              view={view}
+                              connected={connected}
+                              compact
+                            />
+                            {inspected.description && (
+                              <p className="ol-caption">{inspected.description}</p>
+                            )}
+                          </>
+                        ) : undefined
+                      }
                       draggable={!narrow}
+                      avoidOverlap
                       tabs={
                         narrow && inspectors.length > 1 ? (
                           <div className="ol-inspector-switch">
@@ -2826,19 +3153,11 @@ function App({
                       {inspected ? (
                         <EntityDetail
                           entity={inspected}
+                          visible={!narrow || (raised && inspectorSheetVisible)}
                           view={view}
                           connected={connected}
-                          command={command}
                           godControls={characterGodControls(inspected)}
-                          actionBrowser={actionBrowser(
-                            {
-                              entity: inspected,
-                              context: { targetId: id },
-                              point: { x: 0, y: 0 },
-                            },
-                            'inspection',
-                            !narrow || (raised && inspectorSheetVisible),
-                          )}
+                          actionBrowser={null}
                         />
                       ) : (
                         <EmptyState title="No longer in sight">
@@ -2854,6 +3173,16 @@ function App({
               className="ol-world-controls"
               data-bounded={narrow && open.length === 0 ? '' : undefined}
             >
+              {view.player.action?.controls && !view.player.action.execution && !aimPanel && (
+                <div className="ol-card ol-aim-status">
+                  <AimControls
+                    action={view.player.action}
+                    connected={connected}
+                    controlling={!!view.access?.controlling}
+                    command={(choice) => void command(choice)}
+                  />
+                </div>
+              )}
               <div className="ol-execution-controls">
                 <AttackControls
                   controller={attack}
@@ -2862,35 +3191,6 @@ function App({
                   inView={() => show('nearby')}
                 />
               </div>
-              <div className="ol-quick-position">
-                <Button
-                  size="sm"
-                  variant={attack.mode ? 'primary' : 'secondary'}
-                  aria-pressed={attack.mode}
-                  data-attack-mode-toggle=""
-                  disabled={!connected || !view.access?.controlling}
-                  onPress={attack.toggle}
-                >
-                  Attack mode {attack.mode ? 'on' : 'off'}
-                </Button>
-                <Button
-                  icon="ui.search"
-                  disabled={!connected || choosingActionSubject}
-                  onPress={(event) => browseActions({ catalogue: true }, event.target)}
-                >
-                  Actions
-                </Button>
-              </div>
-              {narrow && openingInformation}
-              <CameraControls
-                overlays={{ vision: visionGuide, hearing: hearingGuide }}
-                toggleOverlay={(sense) =>
-                  sense === 'vision' ? setVisionGuide(!visionGuide) : setHearingGuide(!hearingGuide)
-                }
-                state={cameraView}
-                send={(command) => scene.current?.cameraCommand(command)}
-                center={() => scene.current?.center()}
-              />
             </div>
             <div hidden={tabPaused}>
               <Narrator
@@ -2903,6 +3203,12 @@ function App({
                   view.historyEpoch,
                 ])}
                 item={view.narrator}
+                readingScale={captionReadingScale}
+                reducedMotion={
+                  reduce === true ||
+                  (reduce !== false && matchMedia('(prefers-reduced-motion: reduce)').matches)
+                }
+                paused={view.clock.paused || tabPaused}
                 onReadStory={readStory}
               />
             </div>
@@ -2910,6 +3216,18 @@ function App({
             {!tabPaused && picker && !creation.visible && actionBrowser(picker)}
             <WorldComposer
               notice={notice}
+              chooseTarget={(id) =>
+                setWorldIntent({
+                  mode: currentWorldIntent?.mode ?? 'act',
+                  owner: JSON.stringify([view.worldId, view.saveTimeline, view.player.id]),
+                  ...(id
+                    ? {
+                        targetId: id,
+                        label: view.entities.find((entity) => entity.id === id)?.name,
+                      }
+                    : {}),
+                })
+              }
               clearRecipient={() => {
                 setWorldIntent({
                   mode: 'speak',
@@ -2931,6 +3249,8 @@ function App({
               view={view}
               connected={connected}
               intent={currentWorldIntent}
+              portalTarget={tradeNegotiation?.element}
+              negotiationPerson={tradeNegotiation?.person}
               visible={!tabPaused && !picker}
               close={() => {
                 setWorldIntent(null);
@@ -3020,20 +3340,22 @@ function App({
                   <PersonEditor
                     key={editor.id}
                     actorId={editor.actorId}
+                    opener={editor.opener}
                     traits={view.godTools?.traits ?? []}
                     close={() =>
                       setGodEditors((current) => current.filter((item) => item.id !== editor.id))
                     }
-                    openWorldEvents={() =>
+                    openWorldEvents={(opener) =>
                       setGodEditors((current) => [
                         ...current,
-                        { id: crypto.randomUUID(), type: 'world-events' },
+                        { id: crypto.randomUUID(), type: 'world-events', opener },
                       ])
                     }
                   />
                 ) : (
                   <WorldEventsEditor
                     key={editor.id}
+                    opener={editor.opener}
                     close={() =>
                       setGodEditors((current) => current.filter((item) => item.id !== editor.id))
                     }
@@ -3182,18 +3504,49 @@ function ApplicationScope() {
   }, []);
   const openOperations = useCallback(() => setOperations(true), []);
   const tab = useTabControl();
-  // Characterless operator/spectator accounts, or an explicit ?view=operations tab.
-  if (operations) return <OperationsConsole />;
+  // One gradient-definition owner also serves the characterless operations workspace.
   return (
-    <App
-      key={generation}
-      resetApplication={resetApplication}
-      entryFailure={entryFailure}
-      authenticationRejected={authenticationRejected}
-      onCharacterless={openOperations}
-      tab={tab}
-    />
+    <>
+      <IconDefinitions />
+      {operations ? (
+        <OperationsConsole />
+      ) : (
+        <App
+          key={generation}
+          resetApplication={resetApplication}
+          entryFailure={entryFailure}
+          authenticationRejected={authenticationRejected}
+          onCharacterless={openOperations}
+          tab={tab}
+        />
+      )}
+    </>
   );
 }
-await iconCatalogReady;
+// Font downloads cannot be cancelled through FontFaceSet. Choose one stable
+// per-entry family set after the finite wait, so late success cannot swap text.
+const interfaceFontsReady = new Promise<boolean>((resolve) => {
+  const timeout = setTimeout(() => resolve(false), 5000);
+  void Promise.all([
+    document.fonts.load('600 20px Gelasio'),
+    document.fonts.load('italic 400 20px Gelasio'),
+    document.fonts.load('500 14px Figtree'),
+    document.fonts.load('italic 500 14px Figtree'),
+  ]).then(
+    (faces) => {
+      clearTimeout(timeout);
+      resolve(faces.every((loaded) => loaded.length > 0));
+    },
+    () => {
+      clearTimeout(timeout);
+      resolve(false);
+    },
+  );
+});
+await Promise.all([
+  iconCatalogReady,
+  interfaceFontsReady.then((ready) => {
+    document.documentElement.dataset.interfaceFonts = ready ? 'ready' : 'fallback';
+  }),
+]);
 createRoot(document.getElementById('app')!).render(<ApplicationScope />);

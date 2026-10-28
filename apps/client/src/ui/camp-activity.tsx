@@ -18,7 +18,8 @@ import type { CommandDispatcher, CommandRequestIdentity } from '../command-reque
 import { Button, Icon, Section, SelectField, Tag } from '../design-system/components';
 import { ActivityObjectField } from './activity-object-field';
 import { OutingStatus } from './outing-status';
-import { clockParts, EventTime } from './event-time';
+import { EventTime } from './event-time';
+import { worldClockText } from '@open-legend/protocol';
 import './camp-activity.css';
 
 export type { ActivityEntry } from '@open-legend/protocol';
@@ -1203,7 +1204,11 @@ function ActivityTask({ view, connected, visible = true, entry, command }: Props
                         .map((time) => ({
                           id: time.name,
                           label: `Next ${time.name}`,
-                          description: `Day ${clockParts(time.at, view.clock.offsetHours).day}, ${clockParts(time.at, view.clock.offsetHours).hour}:${clockParts(time.at, view.clock.offsetHours).minute}`,
+                          description: worldClockText(
+                            time.at,
+                            view.clock.offsetHours,
+                            view.clock.dayLabel,
+                          ),
                         })),
                     ]}
                     onChange={(when) => {

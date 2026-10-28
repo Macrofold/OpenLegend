@@ -85,6 +85,9 @@ export function createBaseMainWorldCandidate(
   return candidate;
 }
 
+/** Both ordinary and interactive Main request this deployment's approved artwork. */
+export const BASE_MAIN_ARTWORK = { useInstalledArtwork: true } as const;
+
 export function buildBaseMainWorld(
   candidate: BaseMainWorldCandidate,
   accounts: WorldCreationAccounts,
@@ -101,6 +104,7 @@ export function buildBaseMainWorld(
   prepareBaseInitialWorldState(world);
   return {
     world,
+    ...BASE_MAIN_ARTWORK,
     ...(prepared
       ? {
           contentManifest: baseOpeningContentManifest(

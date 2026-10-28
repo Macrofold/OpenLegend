@@ -1,9 +1,11 @@
 import { person, subjectNarration } from '../../narration.js';
 
 // Authored sharing policy for the bundled world, not a universal consent law.
+// SocialOfferPolicy installs deadlines/inbox limits; this presentation/suggestion
+// owner is still compiled directly. Selected-world replacement is tracked at BW20.
 // docs/worlds/base/social.md#offering-and-accepting-possessions
 export const BASE_HANDOVER = {
-  /** Recent exact references per person; older experiences remain in ordinary memory. */
+  /** Compact generated suggestions; retained exact disclosures remain addressable. */
   candidateLots: 6,
   text: {
     title: 'Trade',
@@ -15,7 +17,7 @@ export const BASE_HANDOVER = {
     giveQuantity: 'Quantity you give',
     receiveQuantity: 'Quantity you receive',
     selectionHint:
-      'This panel shows six carried lots and the six most recent item disclosures. Choose other possessions in Inventory. Older items can still be countered in an open offer; otherwise ask for a fresh disclosure.',
+      'Search or page through your belongings and the items this person has offered you. Their items and amounts may have changed.',
     exchanged: (terms: string) => `Exchanged ${terms}.`,
     into: 'Into your possessions',
     to: 'To',

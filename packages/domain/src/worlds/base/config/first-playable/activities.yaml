@@ -48,9 +48,9 @@ catalogue:
   allLabel: All purposes
   defaultCategoryId: tools
   categories:
-    - { id: food-fire, label: Food and fire }
-    - { id: tools, label: Tools and carrying }
-    - { id: camp, label: Camp components }
+    - { id: food-fire, label: Food and fire, icon: category.survival }
+    - { id: tools, label: Tools and carrying, icon: category.tools }
+    - { id: camp, label: Camp components, icon: category.materials }
   rules:
     - { categoryId: camp, kind: transform, id: 'base:trim-canopy-post' }
     - { categoryId: camp, kind: transform, id: 'base:dress-tall-canopy-post' }

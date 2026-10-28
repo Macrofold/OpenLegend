@@ -43,7 +43,9 @@ Automatic activation is unsupported for this branch. Existing native statuses re
 their singleton and ordered-rate behavior.
 
 Each contribution uses its episode as its saved instance key and retains its source,
-target, exact definition digest, revision and lifetime. Ordinary status commands bind
+target, exact definition digest, revision, lifetime and its actual simulation start.
+A changed lifetime refresh records its new start; replay or an unchanged refresh does not
+restart it. Ordinary status commands bind
 the source to their admitted actor. Their deactivate action removes that source's
 contribution, leaving other sources active. Explicit domain attach/refresh/end ports
 retain request receipts; refresh cannot resurrect an ended episode or change its
@@ -52,6 +54,10 @@ lifetime family. Ending a contribution never restores an old body snapshot.
 Capability queries read all active contributions plus the native status. Owner
 projections show repeated sources as a count; public projections omit owner-only
 definitions and never include source bindings. Fixed deadlines use simulation time.
+Owner presentation includes the real deadline and admitted duration for the final active
+fixed cause, plus the installed meaning and authored action icon when present. The HUD
+counts down against that same world clock; it invents no deadline for qualitative,
+source-sustained or untimed states.
 Source-sustained instances stop applying immediately when their source disappears, dies,
 retires or belongs to an inactive containment root; the native phase finalizes the state.
 Whole-object movement preserves source identity; live incoming source references prevent

@@ -6,8 +6,10 @@ import {
   type ReactNode,
   type HTMLAttributes,
   type RefObject,
+  type ReactElement,
+  isValidElement,
 } from 'react';
-import { Tooltip, TooltipTrigger } from 'react-aria-components';
+import { Focusable, Tooltip, TooltipTrigger } from 'react-aria-components';
 
 const EDGE = 8;
 const GAP = 6;
@@ -147,6 +149,22 @@ export function PointerTooltip({
       }
     },
   };
+  const child = typeof children === 'function' ? children(triggerProps) : children;
+  // TooltipTrigger supplies handlers/ref through React Aria's focusable context.
+  // Native labels do not consume it themselves; Focusable bridges without adding
+  // a DOM wrapper (especially important for a summary directly inside details).
+  // React Aria controls and existing Focusable children already own that bridge.
+  const native =
+    isValidElement<
+      HTMLAttributes<HTMLElement> & { disabled?: boolean; href?: string; type?: string }
+    >(child) && typeof child.type === 'string'
+      ? child
+      : undefined;
+  const naturallyFocusable =
+    native &&
+    (['button', 'select', 'textarea', 'summary'].includes(native.type as string) ||
+      (native.type === 'input' && native.props.type !== 'hidden') ||
+      (['a', 'area'].includes(native.type as string) && !!native.props.href));
   const overlay = (
     <TooltipTrigger
       delay={delay}
@@ -155,7 +173,16 @@ export function PointerTooltip({
       isOpen={open}
       onOpenChange={(value) => setOpen(value && document.hasFocus())}
     >
-      {typeof children === 'function' ? children(triggerProps) : children}
+      {native ? (
+        <Focusable
+          isDisabled={disabled || native.props.disabled}
+          excludeFromTabOrder={!naturallyFocusable && native.props.tabIndex === undefined}
+        >
+          {native as ReactElement<HTMLAttributes<HTMLElement>, string>}
+        </Focusable>
+      ) : (
+        child
+      )}
       <Tooltip
         ref={attach}
         className={`ol-root ol-pointer-tooltip ${className}`}

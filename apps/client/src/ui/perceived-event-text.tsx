@@ -2,6 +2,15 @@ import type { ReactNode } from 'react';
 import type { PublicEvent } from '@open-legend/protocol';
 import { MechanicTerm } from '../design-system/components';
 
+const unavailableSpeech = 'Speech presentation is unavailable.';
+
+/** The same permitted words without interactive references, for selecting a row. */
+export function perceivedEventLabel(event: PublicEvent): string {
+  return event.speech
+    ? (event.speechPresentation?.parts.map((part) => part.text).join('') ?? unavailableSpeech)
+    : event.text;
+}
+
 /** Links are based on occurrence-time admitted names, never current world identities. */
 export function PerceivedEventText({
   event,
@@ -12,7 +21,7 @@ export function PerceivedEventText({
 }) {
   if (event.speech) {
     const presentation = event.speechPresentation;
-    if (!presentation) return <>Speech presentation is unavailable.</>;
+    if (!presentation) return <>{unavailableSpeech}</>;
     return (
       <>
         {presentation.parts.map((part, index) =>

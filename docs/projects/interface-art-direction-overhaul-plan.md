@@ -1,8 +1,8 @@
 # Interface art direction overhaul — direct method plan
 
-| Status      | Current progress                                                                                                                                                                 | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Gildmoss is final and its production package is archived with verified retrieval; Mike's integration decisions are recorded, and implementation in the game awaits his go-ahead. | 2026-10-27   |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Stage 6 is authorized and in progress: shared theme/art delivery, complete surface integration, CMA01/CMA02 and BW27. | 2026-10-27   |
 
 ## Purpose and authorization
 
@@ -29,7 +29,7 @@ Out of scope: new gameplay, progression, slots or currencies; changes to camera 
 3. **Artwork for contenders (done).** One reference-guided item sheet per direction, then the finalists' full composition set (22 belongings, two portraits, two structures and the campfire per finalist), cleaned for interface use, placed into the editable compositions and judged at display size over the world.
 4. **Owner choice (done).** One A/B board with the two finalists, B and C, was published. Mike chose to continue from C with changes (decision 6). The painted revision D (Hearthlight), with a generated painted kit in place, was rejected (decision 8). Of three modern versions, Mike chose E Lashing (decision 9); Claude Design then drew it as row H, "Lashing, cozy": ten screens over the real world capture and a component sheet, following the UX redesign specification. Each screen was rendered locally with the real pixel art and measured against the specification's spacing rules; one correction pass fixed the defects found (a submenu 8 px off its row, invented menu rows, an ambiguous task sentence, a missing new-events button, a duplicated placement message and an unreal pause reason). Mike kept it (decision 10) and asked for three variations to choose from. Claude Design drew Emberwood, Moonford and Dawnstitch on a new canvas, each as a component sheet and seven screens; after measurement one correction pass fixed the campfire-menu spacing in Moonford and Dawnstitch. Mike reviewed those (decision 11), and round 7 drew four new variations of the new layout, Wealdcrest, Mistfen, Inkfern and Lanternmoss, with a small generated art kit (brush strokes, organic edges, a woven texture, mist, ornaments, cord and ember progress bars, a minimap and a full-body figure of Mike); one correction pass followed measurement. Round 8 drew three variations of the converged layout (Brassbrook, Gildmoss, Bronzereach); Mike chose Gildmoss (decision 14), refined it over rounds 8b–8n (decisions 15–18) and made it the final design on 2026-10-26 (decision 19).
 5. **Design system and specification (done for Gildmoss).** Tokens, type, materials, frames, emblems, item-art rules and every surface/state, validated with representative exemplars and specialist critique before the art family expands. The [production package](#production-package-2026-10-26) delivers them for Gildmoss; the [Gildmoss design system](../../apps/client/src/design-system/gildmoss/README.md) is the accepted specification.
-6. **Production and implementation.** Complete asset family (the production package, done); implementation, not started, awaiting Mike's go-ahead, through the existing design-system, theme and component owners; live play and repair loop; viewport, scale, keyboard, reduced-motion and theme checks.
+6. **Production and implementation.** Complete asset family (the production package, done); implementation authorized October 27, 2026 and in progress, through the existing design-system, theme and component owners; live play and repair loop; viewport, scale, keyboard, reduced-motion and theme checks.
 7. **Independent review, documentation and delivery.** Findings-only review by a different capable model with live access; fixes; canonical documentation; assets published; handoff with evidence and actual spend.
 
 ## Production package (2026-10-26)
@@ -44,10 +44,21 @@ Mike asked to make the entire Gildmoss interface asset set production-ready thro
 - **Done when:** every member is exported and checked, the package and study material are archived with verified retrieval, and the design system, study record and preference records are committed. Integration remains the next stage.
 - **Result (2026-10-26):** package revision `2026-10-26.1` — 654 files, all checked as above, including the specimen at 1× and 2× and an independent critique whose findings were fixed. It is archived privately on S3 with the study material and the shared comparison inputs; each archive was downloaded back and matched. The [study record](../../art-direction/studies/2026-10-18-interface-direct-method/README.md) holds the exact indexes and checks, and the design system's `assets.json` fetches the 555 files integration uses. Nothing is selected for the runtime release.
 
+## Current implementation
+
+Stage 6 starts from local `main` at `0d875902bfa31e11fdf0ceeb03817212bed3819c` in `Macrofold/OpenLegend`, on `codex/implement-gildmoss-interface` in `/Users/mzw/.codex/worktrees/99ce/OpenLegend`. Mike's October 27 go-ahead includes the complete Gildmoss interface, CMA01 nicknames, CMA02 map/minimap/markers/place notes, and BW27 midnight day numbering. CMA03–CMA06 and MP19 remain separate work. The swappable plain HUD plate remains until Mike reconciles the Higgsfield corner piece.
+
+Implementation proceeds through shared semantic theme and verified runtime art, private world/knowledge contracts, screen composition and existing behavior, then combined qualification. Theme/assets, private map/nickname/clock contracts, and trade/World Agent have separate writers; the application shell coordinates their integration. Multi-kind trade extends the existing atomic offer/transfer owner. Native work remains paid-AI disabled. Assets stay external; publication and any current-format development-state replacement are coordinated with the active writer.
+
+The shared theme/assets, screen composition and native CMA01/CMA02/BW27 paths are implemented. The [implementation and review evidence](../verification/gildmoss-interface.md) records passing native/storage/static checks, actual game interactions and remaining qualification. Named functional checks, normal startup/reopen and the populated original/current measurement are delivered. Confirmed visual differences from the accepted boards still require correction; the [fidelity work](../verification/gildmoss-interface.md#confirmed-design-fidelity-work) remains open under UIUX21. The live World Agent reply/proposal check remains blocked by the absent unexpired writable MCP connector; [UIUX21](../maintainers/ui-ux.md#uiux21--gildmoss-interface-integration) retains that precise gate. CMA03–CMA06 mechanics are paused and excluded from this UI delivery; their unresolved design points remain in the [focused future-work owner](../maintainers/character-and-map-additions.md#future-mechanics--paused-design-decisions-and-prerequisites).
+
+Completion requires every current coverage-map surface, the archived 1920×1080 boards, 1440×900, 1280×720, the narrow boundary, 90–130% interface scale, keyboard/Escape, reduced motion, day/night, and all four themes. Existing checks, type checking, build, asset/guidance guards, independent review and actual running-game interaction remain required; implementation or static checks alone do not close visual or behavior acceptance.
+
 ## Engineering approach
 
 - Text, numbers, controls, focus and accessibility stay native DOM through the existing React Aria components. Artwork supplies illustration and material only; frames use scalable CSS/SVG or border-image slices, never a painted screenshot behind live controls.
 - Item, resource, creature and action art binds to world-authored semantic symbol keys through the trusted catalogue, never by guessing from names. Content without authored art keeps an immediate, readable fallback. Saved worlds carry their own item definitions, so newly authored keys reach new worlds; any change for existing worlds needs an explicit owner decision.
+- Item illustrations use the world's exact definition-to-art mapping and one shared renderer across admitted inventory, recipe, trade, equipment and quick-slot rows. The optional mapping is presentation data; it grants neither a capability nor permission to read an item. Existing semantic icons and readable sigils remain the fallback.
 - Theme-specific materials and fonts live in the existing theme layer (`apps/client/src/design-system/tokens/`, `components.css`, `layout.css`); one component owner per pattern.
 - Artwork files follow the repository's [external-storage contract](../asset-workflow.md#where-files-belong): payloads are published to the OpenLegend asset store and Git holds catalogues, exact locks, prompts and provenance (decided by Mike, 2026-10-19).
 
@@ -118,7 +129,7 @@ Mike approved an **$80 hard cap for OpenAI image generation** on 2026-10-19, rep
     - Only the world owner and the admins they authorize can pause a world; that permission is designed later.
     - No "Try": the composer offers Say and Act only.
     - The observations in a person's window are written by the game, like the lines in Events.
-    - Spirit, stats, extra equipment slots, map markers and nicknames are all wanted. They are specified in [Character and map additions](character-and-map-additions-feature-spec.md) and not implemented yet.
+    - Spirit, stats, extra equipment slots, map markers and nicknames are all wanted. They are specified in [Character and map additions](character-and-map-additions-feature-spec.md) and were unimplemented when this decision was recorded.
     - The day number changes at midnight, not at the world's starting hour.
     - The top-left frame is the elaborate corner piece from the Higgsfield material study; Mike reconciles it with Gildmoss himself.
     - Gildmoss becomes a theme of its own beside the existing ones, and players can switch themes.
@@ -126,10 +137,10 @@ Mike approved an **$80 hard cap for OpenAI image generation** on 2026-10-19, rep
 
 ## Completion criteria
 
-The chosen direction is implemented across every surface and state in scope, with complete production artwork and fallbacks; the evaluation tasks pass in the running game at the stated viewports and settings; independent review findings are fixed and re-verified; canonical UI, design-system and component documentation describes the finished interface; artwork is published with provenance and the delivered files match the pushed branch.
+The chosen direction is implemented across every surface and state in scope, with complete production artwork and fallbacks; the evaluation tasks pass in the running game at the stated viewports and settings; independent review findings are fixed and re-verified; canonical UI, design-system and component documentation describes the finished interface; artwork is published with provenance and all delivered source changes are committed. Pushing or merging remains a separate authorized history operation.
 
 ## Maintained records
 
-- Implementation: [UI/UX tracker](../maintainers/ui-ux.md) (new entry to be added when implementation begins).
+- Implementation: [UI/UX tracker](../maintainers/ui-ux.md) ([UIUX21](../maintainers/ui-ux.md#uiux21--gildmoss-interface-integration)).
 - Limits and constraints: [Interface limits](../limits/interface.md) and [UI tuning](../limits/ui-ux.md).
 - Related contracts: [UI design brief](../ui-design-brief.md), [design-system guide](../../apps/client/src/design-system/README.md), [asset workflow](../asset-workflow.md), [interface production route](../production-workflows/scenes-and-interfaces.md#art-directed-working-interfaces).

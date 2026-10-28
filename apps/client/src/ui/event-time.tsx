@@ -1,9 +1,29 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import type { GameView } from '@open-legend/protocol';
+import { createContext, useContext, useMemo, type ReactNode } from 'react';
+import { worldClockParts, worldClockText, type GameView } from '@open-legend/protocol';
 
-/** The current world's clock offset in hours (day 1 starts at this hour), from the view.
+/** The current world's local-clock offset in hours, from the view.
  * Displays read it rather than assuming a start hour. */
-export const ClockOffsetContext = createContext(0);
+type ClockPresentation = Pick<GameView['clock'], 'offsetHours' | 'dayLabel'>;
+const ClockPresentationContext = createContext<ClockPresentation>({ offsetHours: 0 });
+export function ClockPresentationProvider({
+  clock,
+  children,
+}: {
+  clock?: ClockPresentation;
+  children: ReactNode;
+}) {
+  // Historical timestamps do not change on ordinary simulation clock ticks.
+  const value = useMemo(
+    () => ({
+      offsetHours: clock?.offsetHours ?? 0,
+      ...(clock?.dayLabel ? { dayLabel: clock.dayLabel } : {}),
+    }),
+    [clock?.offsetHours, clock?.dayLabel],
+  );
+  return (
+    <ClockPresentationContext.Provider value={value}>{children}</ClockPresentationContext.Provider>
+  );
+}
 /** Timed readers subscribe directly, so an open deadline need not rebuild the
  * inventory's otherwise unchanged presentation on each clock publication. */
 const SimulationClockContext = createContext<GameView['clock'] | null>(null);
@@ -21,29 +41,30 @@ export function WorldClockProvider({
   children: ReactNode;
 }) {
   return (
-    <ClockOffsetContext.Provider value={clock?.offsetHours ?? 0}>
+    <ClockPresentationProvider clock={clock}>
       <SimulationClockContext.Provider value={clock ?? null}>
         {children}
       </SimulationClockContext.Provider>
-    </ClockOffsetContext.Provider>
+    </ClockPresentationProvider>
   );
 }
 
-/** "Day N, HH:MM": the day counts from the world's start; the hour reads its clock. */
+/** The day changes at the installed world's midnight. */
 export function clockParts(time: number, offsetHours: number) {
-  const minutes = Math.floor(time / 60 + offsetHours * 60);
+  const clock = worldClockParts(time, offsetHours);
   return {
-    day: Math.floor(time / 86400) + 1,
-    hour: String(Math.floor(minutes / 60) % 24).padStart(2, '0'),
-    minute: String(minutes % 60).padStart(2, '0'),
+    day: clock.day,
+    hour: String(Math.floor(clock.hour)).padStart(2, '0'),
+    minute: String(clock.minute).padStart(2, '0'),
   };
 }
 
 export function EventTime({ time }: { time: number }) {
-  const { day, hour, minute } = clockParts(time, useContext(ClockOffsetContext));
+  const clock = useContext(ClockPresentationContext);
+  const text = worldClockText(time, clock.offsetHours, clock.dayLabel);
   return (
-    <time className="ol-event-time" aria-label={`Game day ${day}, ${hour}:${minute}`}>
-      Day {day}, {hour}:{minute}
+    <time className="ol-event-time" aria-label={text}>
+      {text}
     </time>
   );
 }

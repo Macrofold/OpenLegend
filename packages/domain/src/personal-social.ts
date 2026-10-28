@@ -4,6 +4,7 @@ import { hasRecordFields, isSafeRecordId } from './records.js';
 import { finitePoint, type SurfacePoint } from '@open-legend/spatial';
 import { cloneValue } from './draft.js';
 import { isOfferLot } from './handover.js';
+import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import { validContributionTerms } from './construction-contributions.js';
 import type { ItemOffer, OfferLot, KnownTradeLot } from './handover.js';
 import type { MovementOuting, OutingEndCause } from './outings.js';
@@ -85,14 +86,14 @@ export interface PerceivedItemOffer extends PersonalTerms {
   family: 'item-offer';
   offererId: string;
   recipientId: string;
-  offered: OfferLot;
-  requested?: OfferLot;
+  offered: OfferLot[];
+  requested: OfferLot[];
   constructionUse?: {
     terms: import('./construction-contributions.js').ConstructionContributionTerms;
   };
   descriptions: {
-    offered: { name: string; description: string };
-    requested?: { name: string; description: string };
+    offered: { name: string; description: string }[];
+    requested: { name: string; description: string }[];
   };
   status: 'pending' | 'ended';
   cause?: string;
@@ -160,13 +161,13 @@ export function itemOfferSnapshot(
     offererId: offer.offererId,
     recipientId: offer.recipientId,
     offered: cloneValue(offer.offered),
-    ...(offer.requested ? { requested: cloneValue(offer.requested) } : {}),
+    requested: cloneValue(offer.requested),
     ...(offer.constructionUse
       ? { constructionUse: { terms: cloneValue(offer.constructionUse.terms) } }
       : {}),
     descriptions: previous?.descriptions ?? {
-      offered: description(offer.offered),
-      ...(offer.requested ? { requested: description(offer.requested) } : {}),
+      offered: offer.offered.map(description),
+      requested: offer.requested.map(description),
     },
     status: cause ? 'ended' : 'pending',
     ...(cause ? { cause } : {}),
@@ -246,28 +247,41 @@ export function validatePersonalSocial(
           'offererId',
           'recipientId',
           'offered',
+          'requested',
           'descriptions',
           'status',
         ],
-        ['requested', 'constructionUse', 'cause'],
+        ['constructionUse', 'cause'],
       ) ||
       !isSafeRecordId(record.offererId) ||
       !isSafeRecordId(record.recipientId) ||
       ![record.offererId, record.recipientId].includes(actorId) ||
       record.offererId === record.recipientId ||
-      !isOfferLot(record.offered) ||
-      (record.requested !== undefined && !isOfferLot(record.requested)) ||
-      !hasRecordFields(record.descriptions, ['offered'], ['requested']) ||
-      (record.requested !== undefined) !== Object.hasOwn(record.descriptions, 'requested') ||
+      !Array.isArray(record.offered) ||
+      !record.offered.length ||
+      !record.offered.every(isOfferLot) ||
+      !Array.isArray(record.requested) ||
+      !record.requested.every(isOfferLot) ||
+      record.offered.length + record.requested.length > STOCK_TRANSFER_LIMITS.movedLots ||
+      new Set([...record.offered, ...record.requested].map((lot) => lot.itemId)).size !==
+        record.offered.length + record.requested.length ||
+      !hasRecordFields(record.descriptions, ['offered', 'requested']) ||
+      !Array.isArray(record.descriptions.offered) ||
+      record.descriptions.offered.length !== record.offered.length ||
+      !Array.isArray(record.descriptions.requested) ||
+      record.descriptions.requested.length !== record.requested.length ||
       (record.cause !== undefined && typeof record.cause !== 'string') ||
       !['pending', 'ended'].includes(String(record.status)) ||
       (record.status === 'ended') !== (typeof record.cause === 'string') ||
       (record.constructionUse !== undefined &&
-        (!hasRecordFields(record.constructionUse, ['terms']) ||
+        (record.offered.length !== 1 ||
+          !hasRecordFields(record.constructionUse, ['terms']) ||
           !validContributionTerms(record.constructionUse.terms)))
     )
       fail();
-    for (const description of Object.values(record.descriptions as Record<string, unknown>))
+    for (const description of Object.values(
+      record.descriptions as Record<string, unknown[]>,
+    ).flat())
       if (
         !hasRecordFields(description, ['name', 'description']) ||
         typeof description.name !== 'string' ||
@@ -314,11 +328,17 @@ function personallyReceived(world: WorldState, actorId: string): Received {
         holder = own ? value.recipientId : value.offererId,
         lot = own ? value.requested : value.offered,
         description = own ? value.descriptions.requested : value.descriptions.offered;
-      if (lot && description) {
+      if (lot.length) {
         let rows = disclosures.get(holder);
         if (!rows) disclosures.set(holder, (rows = new Map()));
-        rows.delete(lot.itemId);
-        rows.set(lot.itemId, { lot, ...description, disclosedAt: value.createdAt });
+        lot.forEach((item, index) => {
+          rows.delete(item.itemId);
+          rows.set(item.itemId, {
+            lot: item,
+            ...description[index]!,
+            disclosedAt: value.createdAt,
+          });
+        });
       }
     }
   }
@@ -353,6 +373,33 @@ export function rememberedTradeLots(
   return [...(personallyReceived(world, actorId).disclosures.get(otherId)?.values() ?? [])]
     .reverse()
     .slice(0, limit);
+}
+
+const emptyTradeDisclosures: ReadonlyMap<string, KnownTradeLot> = new Map();
+/** Prepared personal evidence only; consumers must retain their actor's read scope. */
+export function rememberedTradeDisclosureIndex(
+  world: WorldState,
+  actorId: string,
+  otherId: string,
+): ReadonlyMap<string, KnownTradeLot> {
+  return personallyReceived(world, actorId).disclosures.get(otherId) ?? emptyTradeDisclosures;
+}
+
+/** Exact submitted references use the same personally received evidence index.
+ * Candidate display windows cannot decide whether a disclosed lot is known. */
+export function rememberedTradeLotReferences(
+  world: WorldState,
+  actorId: string,
+  otherId: string,
+  itemIds: readonly string[],
+): ReadonlyMap<string, KnownTradeLot> {
+  const disclosed = rememberedTradeDisclosureIndex(world, actorId, otherId);
+  const selected = new Map<string, KnownTradeLot>();
+  for (const id of itemIds) {
+    const entry = disclosed.get(id);
+    if (entry) selected.set(id, entry);
+  }
+  return selected;
 }
 export function validatePersonalSocialEvidence(world: WorldState): void {
   for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {}))

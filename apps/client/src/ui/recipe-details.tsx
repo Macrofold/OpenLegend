@@ -1,6 +1,7 @@
 import type { RecipeDetailsView } from '@open-legend/protocol';
 import { formatDisplayNumber } from '@open-legend/language';
 import { Fragment } from 'react';
+import { ItemIllustration } from '../design-system/item-illustration';
 import './recipe-details.css';
 
 /** Shared permitted recipe knowledge. Parents own native actions and creator provenance. */
@@ -13,6 +14,12 @@ export function RecipeDetails({ recipe }: { recipe: RecipeDetailsView }) {
         <dd>
           {recipe.ingredients.map((ingredient, index) => (
             <div key={`${ingredient.name}:${index}`}>
+              <ItemIllustration
+                art={ingredient.art}
+                icon={ingredient.icon}
+                label={ingredient.name}
+                size={24}
+              />{' '}
               {ingredient.quantity} {ingredient.name} —{' '}
               {typeof ingredient.available === 'number' && Number.isFinite(ingredient.available)
                 ? `${ingredient.available} currently held`
@@ -42,6 +49,13 @@ export function RecipeDetails({ recipe }: { recipe: RecipeDetailsView }) {
         <dd>
           {recipe.outputs.map((output) => (
             <div key={output.port}>
+              <ItemIllustration
+                art={output.art}
+                icon={output.icon}
+                label={output.name}
+                size={64}
+                detail
+              />{' '}
               <strong>
                 {output.quantity} {output.name}
               </strong>

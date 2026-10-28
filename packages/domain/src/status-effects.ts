@@ -160,6 +160,8 @@ export interface StatusEffectInstance {
     definitionId: string;
     definitionDigest: string;
     revision: number;
+    /** Start of the currently admitted lifetime, for truthful timed presentation. */
+    lifetimeStartedAt: number;
     lifetime: import('./state-contributions.js').ContributionLifetime;
   };
   active: boolean;
@@ -621,6 +623,7 @@ export function activateStatusEffect(
             definitionId: definition.id,
             definitionDigest: contentLabel(canonicalJson(definition)),
             revision: 1,
+            lifetimeStartedAt: world.simTime,
             lifetime:
               definition.contribution.lifetime === 'fixed'
                 ? {
