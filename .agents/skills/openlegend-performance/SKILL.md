@@ -10,7 +10,7 @@ description: >-
 
 Before choosing an algorithm, identify who calls it, how often, what grows, and whether work is repeated across objects, requests, observers, or frames. Separate setup from recurring cost. Use existing semantic owners and query helpers; avoid accidental full scans, repeated copies, and nested preparation. A bounded result does not prove bounded work.
 
-Prefer selecting eligible candidates before expensive preparation, exact lookups for exact identities, and shared target-independent work within a compatible read. Use existing indexes first. Add caches, indexes, workers, hierarchy, or batching for a demonstrated cost or clear task requirement, not speculative scale. Reuse must preserve permissions, actual dependencies, current-format restoration, ordering, and bounded retention; derived preparation is never another authority.
+Select eligible candidates and only the fields or proof the caller consumes before expensive preparation. Use exact lookups for known identities and share target-independent work within a compatible read. Use existing indexes first. Add caches, indexes, workers, hierarchy, or batching for a demonstrated cost or clear task requirement, not speculative scale. Reuse must preserve permissions, actual dependencies, current-format restoration, ordering, and bounded retention; derived preparation is never another authority.
 
 Match the evidence to the change. A clear, low-risk removal of repeated pure work can use source reasoning and focused correctness checks. An uncertain or invasive optimization needs measured attribution before editing. Claims of faster complete behavior need representative complete-path measurements; fewer helper calls alone are not sufficient.
 
