@@ -2,7 +2,7 @@
 
 **G19 · October 28, 2026 refresh — incomplete checkpoint.** The complete September 26–27 dossier is preserved below while current rules, native creation, connected lore, commercial evidence and independent reception are being refreshed. Production shards and **New Legacy** are distinct contracts; Season 2 launched October 15, 2026 (see §24). Historical source captures remain dated and are not presented as newly reread. [Preserved ecology case](../games/ultima-online-s-ecology.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
-Ultima Online is one of OpenLegend's most important precedents because it treats a game world less as a sequence of combat encounters and more as a place where players can become **blacksmiths, thieves, animal tamers, shopkeepers, homeowners, murderers, guildmates, treasure hunters, mages, fishermen and politicians of informal player society**. Its strongest systems interlock because ordinary actions change ownership, reputation, scarcity and relationships. Its most famous failed subsystem—the original simulated ecology—is equally valuable: elegant simulation collapsed when actual players harvested creatures far more aggressively than the designers' assumptions.
+Ultima Online is one of OpenLegend's most important precedents because it treats a game world less as a sequence of combat encounters and more as a place where players can become **blacksmiths, thieves, animal tamers, shopkeepers, homeowners, murderers, guildmates, treasure hunters, mages, fishermen and politicians of informal player society**. Its strongest systems interlock because ordinary actions change ownership, reputation, scarcity and relationships. Its original ecology's computational and resource-circulation problems are equally valuable, with distinct participant explanations preserved in §§16/28.
 
 ## 1. Identity, release and current status
 
@@ -24,9 +24,23 @@ The modern service can be accessed through:
 
 This matters because “Ultima Online mechanics” are not one frozen 1997 ruleset.
 
+### Persistent places, bounded custody and seasonal renewal
+
+Ultima Online's ordinary production shards support durable public settlements and possessions. This does not mean one global character economy, universal safety, or the absence of encounter instances. The Trammel/Felucca distinction (§17) separates consent rules by facet; Siege/Mugen have separate rules. The historical analysis of that split remains relevant independently of New Legacy.
+
+| Boundary                  | What continues, changes or ends                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
+| ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Shard movement            | Paid character transfer moves permitted character state, carried/banked items and pets. Houses, vendors and guild affiliation do not move; the house stays with its account. Shard-bound items cannot transfer, and Siege/Mugen are excluded destinations. This is a relocation service, not unrestricted world hopping. [E26-06](#e26-06)                                                                                                                                                                                     |
+| Encounters                | UO introduced queued, party-specific Medusa/Stygian Dragon arenas in 2009. Their bounded lifetime was separate from the persistent shard; the original detailed timer schedule is historical, not a newly verified 2026 rule. [S26-09](#s26-09)                                                                                                                                                                                                                                                                                |
+| Ordinary house absence    | An unpaid account receives a **90-day grace period**, then its house begins decay. Reactivation before the final decay stages refreshes it at the next server startup. Remaining subscribed and merely not visiting are different conditions. [UO18](#uo18)                                                                                                                                                                                                                                                                    |
+| Collapse                  | Condemnation removes house access and friend/co-owner lists. Collapse makes surviving contents contestable loot; listed categories, including account-bound items and veteran rewards, are deleted. There is no general private asset-recovery guarantee. The existing 2026 post-collapse placement raffle is a separate land-allocation step. [E26-03](#e26-03) [UO21](#uo21)                                                                                                                                                 |
+| Returning account         | Endless Journey becomes available after **120 days inactive** and retains access to pre-existing characters. Its bank restrictions and lack of house ownership mean returning for free is not preservation of the former property's custody contract. [UO03](#uo03)                                                                                                                                                                                                                                                            |
+| New Legacy lifecycle      | Season 2 **launched October 15, 2026** and is planned to run through **June 2027**. Seasonal closure/renewal must not be presented as an ordinary production-shard wipe. [S26-01](#s26-01) [E26-01](#e26-01)                                                                                                                                                                                                                                                                                                                   |
+| Seasonal exit and housing | Transfers into New Legacy are prohibited; exit opens during the Shattering. Subscribers receive a complimentary transfer, subject to destination slots and excluding Siege/Mugen; Endless Journey accounts must subscribe or buy a token. Skills/stats and eligible item categories can leave, not the whole seasonal world. Paid accounts can own seasonal houses, maintained by quest objectives under a **28-day decay cycle**. Exact final transferable items remain subject to the season's published list. [UO35](#uo35) |
+
 ## 2. Character creation: no class lock, just a starting configuration
 
-The main game is fundamentally **classless**.
+The main game is fundamentally **classless**. Production character creation also selects a race: humans favor carrying, recovery and baseline versatility; Heartwood elves favor mana, perception and unusual resources; Ter Mur gargoyles use wings instead of mounts and have affinities for Throwing, Mysticism and Imbuing. These are capability differences alongside appearance, not separate mandatory classes. [S26-06](#s26-06)
 
 A character has:
 
@@ -168,6 +182,10 @@ That makes capability feel **world-valid**, not mode-specific.
 
 The cost is balance complexity: an ability useful in PvE can become oppressive in PvP, and a virtual-world ruleset must manage consent/criminality as well as combat numbers.
 
+### Bards change the encounter
+
+Musicianship and an actual, wearing instrument support **Peacemaking** (interrupt or pacify), **Discordance** (weaken creatures), and **Provocation** (make creatures fight). These require range and successful checks; failed provocation can turn both targets against the musician. PvP Discordance has different effects from the creature debuff. [S26-03](#s26-03)
+
 ## 6. Magery and the broader spell ecosystem
 
 Classic **Magery** remains one of UO's most expressive systems.
@@ -267,6 +285,8 @@ Modern item insurance changes death risk:
 
 That creates configurable loss without making the object system purely account-bound.
 
+**Upgrading is also a resource transformation.** At a soulforge an artificer unravels unwanted magical equipment, destroying it for ingredients, then combines these with gems and sometimes rarer materials to add or overwrite allowed properties. The menu exposes cost, intensity and success chance; failure consumes some ingredients. Controlled Imbuing and more random Runic Reforging offer different tradeoffs, rather than a single universal upgrade level. [S26-04](#s26-04)
+
 ## 8. Crafting is an actual profession
 
 Crafting is one of UO's foundational strengths because crafted goods enter the same world used by adventurers.
@@ -361,33 +381,23 @@ while still offering search tools.
 
 An abstract global market is convenient but erases many social/economic hooks.
 
+### What payment changes
+
+**Endless Journey** is a substantial free mode, with the same ordinary 720 skill cap and access through Stygian Abyss. Its bank holds 20 items, expandable to 28; an over-cap legacy bank is viewable but withdrawals require resolving account restrictions. It cannot own/co-own houses, operate vendors, launch boats, harvest advanced ores/woods or create guilds. Thus subscription changes production, storage and social roles, not just appearance. High Seas and Time of Legends require separate purchases under either account mode. [UO03](#uo03)
+
+**Sovereigns** buy in-game store items; expansions, boosters and game-time entitlements use account-applied purchases. Most store items are not account-bound, with item-specific exceptions. Currency itself cannot move between master wallets. [E26-04](#e26-04) Current inventory includes a token granting five chosen skills at 90, extra stable capacity, merchant-fee reductions and event-point boosters: money can buy progression shortcuts, throughput and convenience as well as decoration. This is not evidence that payment guarantees competitive victory. [E26-05](#e26-05)
+
+New Legacy also restricts advanced builds/major hybridization to subscribers. [UO35](#uo35) Its store opened October 20, superseding the launch article's later planned opening. Season 2's paid fortune potion doubles specified boss/event rewards within stated caps and doubles house-refresh objective credit; ordinary-store effects should not be copied wholesale onto the seasonal shard. [E26-01](#e26-01) [E26-02](#e26-02)
+
 ## 10. Housing: property creates durable place
 
-Housing is one of UO's defining systems.
+Housing places a player-authored building in eligible shared world space; it can become a shop, workshop, guild hall, museum or home. [UO18](#uo18)
 
-A house owner can:
+**Author and revise.** After acquiring a customizable plot, use its sign to enter Customize. Choose and place floors, walls, doors, stairs or teleporters; illegal supports turn orange. The draft persists between sessions while visitors see the last committed building. Backup/Restore preserve a draft; Revert returns to the committed version. Commit charges or refunds the value difference and makes the revision visible and usable. Affected possessions move into an owner-accessible moving crate, whose contents must be recovered; it is not a portable house-export container. A nonempty crate blocks demolition. [UO19, building](#uo19)
 
-- place a house in eligible world space;
-- choose classic or customizable structures;
-- build custom walls/floors/doors/stairs;
-- lock down objects;
-- secure containers;
-- set access/friend/co-owner rules;
-- ban people;
-- make the building public/private;
-- run vendors/barkeeps;
-- transfer/sell the house;
-- decorate it with crafted and collectible objects. [UO18](#uo18) [UO19](#uo19)
+**Use and share.** Public admission does not grant every interior permission. Doors, teleporters and containers have separate access levels; co-ownership is account-wide, friendship character-specific. Secure containers allow permitted withdrawals; locked-down displays can be viewable without surrendering their contents. Owners can admit or ban visitors, place vendors/barkeeps, lease vendor space, trade the house or demolish it. Moving a container can remove its secure state, requiring it to be secured again. [UO19, managing](#uo19)
 
-The home can therefore be:
-
-- storage;
-- shop;
-- guild/social venue;
-- museum;
-- workshop;
-- trophy room;
-- personal identity.
+This is a documented in-world creation lifecycle, not an executed editor test or proof of a portable invention-package format. The important opportunity is useful shared space; update, access and custody costs belong in the same workflow as attractive construction.
 
 ### Scarcity is physical
 
@@ -585,32 +595,7 @@ The underlying attachment loop already existed without an LLM.
 
 ## 16. The failed ecology experiment
 
-Richard Garriott's retrospective describes an ambitious launch-era ecological simulation:
-
-- grass/resources;
-- herbivores;
-- predators;
-- population/replenishment assumptions.
-
-The designers expected a self-balancing food chain.
-
-Players instead:
-
-- killed animals;
-- harvested resources;
-- overwhelmed replenishment.
-
-The simulated ecosystem collapsed so rapidly that the team eventually replaced much of it with more conventional spawning/content behavior. [UO30](#uo30)
-
-### What actually failed
-
-Not “ecology simulation.”
-
-The failure was a **model of player behavior**:
-
-- the designers expected ecosystem participants;
-- the game rewarded harvesting;
-- thousands of players optimized extraction.
+UO's ecology is a useful failure study, but two failures should not be collapsed into one. In his 2024 retrospective, lead designer Raph Koster distinguishes expensive radial searches and pathfinding, which contributed to removing ecology AI during beta, from a finite resource loop exhausted by players turning sheep into wool, crafting shirts for advancement, and retaining or slowly selling the output. Removing AI did not remove every resource mechanic. This participant account qualifies Garriott's better-known harvesting explanation; neither is a complete contemporaneous performance or economic record. The transferable question is whether a simulation remains affordable and productive under the actual incentives and circulation of its resources. [P26-01](#p26-01)
 
 ### OpenLegend application
 
@@ -692,16 +677,19 @@ Housing + trade + guild identity + PvP + speech + persistent names already allow
 
 ### OpenLegend opportunity
 
-AI inhabitants can make those institutions persist even with one human player:
+A hypothesis for OpenLegend is that inhabitants could sustain meaningful councils, guild roles, shops, laws, family obligations or religious organizations with one human participant. UO establishes the human social precedent; independently chosen, useful conduct by OpenLegend's inhabitants still needs qualification.
 
-- town councils;
-- guild roles;
-- shops;
-- laws;
-- family obligations;
-- religious organizations.
+**Vice versus Virtue** replaced the older faction system. Guild-based participants contest cities through occupation, kills, stolen sigils and altars, earning silver for rewards. Its rules also warn approaching nonparticipants: remaining in an active battle or assisting combatants can expose them to attack. This is a specific regional consent contract, not blanket safety from declining enrollment. [S26-10](#s26-10)
 
-UO shows the power of the substrate; OpenLegend can supply persistent non-player society inside it.
+### Connected history, cultures and motives — spoilers
+
+The shattered **Gem of Immortality** supplies a cosmological explanation for servers: shards share an origin, then develop different inhabitants and histories. This makes local player institutions compatible with a common world premise rather than requiring every shard to be the same canonical present. [S26-06](#s26-06)
+
+The official _Voices_ fiction connects Mondain's defeat to rebuilding Britannia and displaced peoples: survivors of Rondorin gather at Zento in Tokuno, while other lands fall into war. Later, **Minax** wants Shadowguard to move through time so she can deploy armies against any era. Her servant **Anon** uses sacrifice and demonic magic; **Hawkwind**, the Time Lord, attempts to protect the continuity of time. Their conflicting spells, reinforced by voices across the shards, entangle Shadowguard with **Eodon**. Blackthorn warns that Minax remains dangerous: she has lost her protected retreat, leaving the people of Sosaria to confront her. This is the story bridge into _Time of Legends_, not a claim that every player's quest permanently ends the shared threat. [S26-07](#s26-07)
+
+Britannia's moral geography connects **Truth, Love and Courage** to Moonglow's Lycaeum, Yew's Empath Abbey and Serpent's Hold, then to eight virtues and their shrines. Compassion has a practical expression: escorting or rescuing NPCs builds the ability to restore more health when resurrecting another player. Geography, ethical identity and a useful social capability reinforce one another. [UO27](#uo27)
+
+Ter Mur is also a society rather than merely a race-selection screen. In _The Oracle and the Bard_, mage **Mariah** visits seer **Naxatilor** to share pastries, local food and scholarship. When a vision injures him, **Queen Zhah** protects the elder and sends a warning to Britannia's king. These authored relationships make mutual care and diplomacy legible; they do not establish autonomous NPC memory. [S26-08](#s26-08) The 2009 _Stygian Abyss_ rules gave service to the Queen material consequences: loyalty earned through quests and fighting opened privileged housing and soulforge access. Its tombs and passages join ancestral history, puzzles, monsters and settlement privileges. [S26-09](#s26-09)
 
 ## 19. NPCs and AI
 
@@ -723,11 +711,6 @@ Players historically interact through:
 Current player-owned vendor NPCs have highly bounded functions; they are not autonomous merchants. [UO17](#uo17)
 
 The world feels social primarily because of **other human players**, not because NPCs possess deep cognition.
-
-This is the key OpenLegend contrast:
-
-- UO gives strong **economic/legal/object/world affordances**;
-- OpenLegend aims to give inhabitants much stronger **memory/planning/conversation** inside similar affordances.
 
 ## 20. World map, travel and dungeons
 
@@ -766,27 +749,13 @@ OpenLegend world packages can similarly define:
 
 as world law rather than hardcoded universal game rules.
 
+**Ships are working property.** Launch a deed at unobstructed water, board by plank or rope, then steer with tillerman commands, plotted map pins or the wheel. Ships support fishing, cargo, mining and piracy; galleon permissions distinguish passenger, crew and officer responsibilities. Cannons, damage and wood/cloth repairs connect fighting to production. Severe damage changes boarding access according to the facet's rules; emergency repair and returning ashore are different decisions. Unrefreshed vessels can decay with cargo. [S26-05](#s26-05)
+
 ## 21. Quests, events and activities
 
 UO was never defined by a single main quest.
 
-Activities include:
-
-- monster hunting;
-- treasure hunting;
-- dungeon/champion encounters;
-- crafting;
-- bulk orders;
-- fishing;
-- taming;
-- stealing;
-- house design;
-- shopping/trade;
-- PvP;
-- guild wars;
-- resource gathering;
-- seasonal/live events;
-- quests introduced/expanded over time.
+Combat, dungeons/champion encounters and treasure hunting coexist with crafting/bulk orders, fishing, taming, stealing, gathering, decorating, shopping, guild life, PvP and authored quests/events.
 
 This variety makes the game closer to a **world activity platform** than a campaign RPG.
 
@@ -797,6 +766,25 @@ Current 2026 publishes continue that model with:
 - weekend events;
 - anniversary rewards;
 - continuing housing/combat/system changes. [UO02](#uo02)
+
+**Treasure hunting combines professions.** Obtain a map from loot or quests, decode it with Cartography, compare landmarks, dig, defeat the guardians, unlock and disarm the chest. Cartography affects the search; Lockpicking or eligible magic and Remove Trap solve different barriers. Since the 2019 redesign, triggering the old trap with Telekinesis is not a substitute for disarming it. [S26-02](#s26-02)
+
+**Mature combat has progression stakes.** Champion areas advance through monster stages to a boss; Valor can start or advance that encounter. [UO27](#uo27) Felucca champion rewards include tradable skill-cap scrolls, while some professions obtain their scrolls through jobs or quests. Consuming a scroll raises a ceiling rather than granting the missing expertise. The distinction preserves reasons both to pursue dangerous rewards and to continue practicing. [S26-11](#s26-11)
+
+### Six worked situations
+
+These are constructed examples of documented rules, not claimed play sessions or guaranteed economic outcomes.
+
+| Goal and starting conditions                                   | Actions, interaction and next decision                                                                                                                                                                                                                                                                                                      |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A crafter wants a public workshop with private stock.          | Build an accessible working floor and restricted upstairs storage; commit, then check the separate door/container permissions with a visitor. If a renovation displaces the vendor, recover it before expecting customers to shop. The next choice is who needs co-ownership rather than simple admission. [UO19](#uo19)                    |
+| A bard cannot safely defeat two creatures directly.            | Select an instrument, attempt Provocation on the pair and remain within range. Success redirects their attacks and grants the bard appropriate credit; failure makes the musician the target. The player must decide whether to maintain position, recover control or retreat. [S26-03](#s26-03)                                            |
+| A hunter finds a difficult treasure map.                       | Decode and locate it, recruit combat help, then dig. Guardians prevent opening; disarming can bring further threats. The chest's roughly hour-long lifetime makes preparation valuable. After success, divide profession-themed supplies and decide whether the group can handle a harder map. [S26-02](#s26-02)                            |
+| An artificer has unwanted magical loot and an incomplete suit. | Unravel the surplus, choose an eligible item/property and inspect cost and success chance. Attempting the improvement trades ingredients for a controlled benefit; failure leaves fewer inputs. The next choice is another attempt, gathering missing materials or buying a suitable finished piece. [S26-04](#s26-04)                      |
+| An adventurer dies near dangerous creatures.                   | The ghost seeks a capable friend; that friend's prior Compassion work can improve resurrection health. Recovery still requires confronting the corpse's location and item rules. The pair can retrieve possessions together or postpone a risky return, making rescue capability useful beyond damage output. [UO22](#uo22) [UO27](#uo27)   |
+| A cargo captain must cross obstructed water.                   | Plot a route, let the tillerman follow it, then take manual control when an obstacle blocks progress. Crew permissions support shared operation without automatically sharing the hold. If fighting disables the vessel, repair and boarding rules change the risk; decide whether to finish delivery or return to shore. [S26-05](#s26-05) |
+
+The common mechanism is a capability meeting another system's need. Requiring several capabilities can create a useful relationship; it can also become an opaque prerequisite chain. OpenLegend should validate whether participants understand the need and can find a satisfying role before adding more interdependence.
 
 ## 22. Loot and reward loops
 
@@ -841,11 +829,7 @@ Classic UO uses:
 - targeting cursors;
 - text speech above characters.
 
-Later clients added:
-
-- enhanced 3D-ish rendering;
-- hotbars;
-- modernized maps and UI affordances.
+The official getting-started guide distinguishes the original client from the Enhanced Client's revised graphics, radar, visible macro bar and configurable interface. Client choice changes interaction presentation without making it a different world. [S26-06](#s26-06)
 
 The original interface can feel opaque and archaic to modern players, but it reinforces object identity:
 
@@ -860,35 +844,15 @@ GameSpot's historical reviews repeatedly praised the unusual virtual-world depth
 - newcomer hostility;
 - technical/UI friction. [UO34](#uo34) [UO20](#uo20)
 
+A concrete information cue is treasure digging: the official guide describes audible digging followed by a growing dirt patch and an emerging chest, allowing a prepared hunter to anticipate its guardians. [S26-02](#s26-02) In his **2005 Samurai Empire-era** review, Hubbard heard Far Eastern musical themes reinforcing Tokuno's setting, while criticizing uneven effects and tiny inventory targets that caused accidental bag dragging. These are source observations, not a fresh audiovisual playtest. [UO39](#uo39)
+
 ## 24. New Legacy: current seasonal reinterpretation, not the main ruleset
 
-**New Legacy** launched its first season in 2024 as a separate shard designed to make UO feel more explicitly like an RPG again.
-
-Its systems intentionally differ from the main shards:
-
-- narrative-led progression;
-- faster skill gain;
-- job-board tasks;
-- player/guild housing prerequisites and upkeep;
-- guild levels;
-- guild resource banks;
-- seasonal lifecycle;
-- eventual “Shattering” and shard closure;
-- character/selected-item transfer into production shards. [UO35](#uo35) [UO36](#uo36)
-
-For example, New Legacy skill gain can be awarded through narrative/job-board progress and then distributed at trainers rather than relying only on the production shard's classic use-based progression. [UO37](#uo37)
-
-That is a deliberate different design.
+**New Legacy** began in 2024 as a seasonal reinterpretation of UO. Narrative and job-board progress can award skill advancement distributed at trainers, rather than only the production game's use-based training. Guild levels/resource banks and housing prerequisites connect that progression to settlement. Its exit and property contracts are in §1. [UO36](#uo36) [UO37](#uo37)
 
 ### September 26, 2026 status
 
-At the original September 26 research date:
-
-- Season 1 is at the end of its lifecycle;
-- final transfer date is **September 28, 2026**;
-- soft-launch/pre-season activity for Season 2 is planned for October 1;
-- final wipe is October 13;
-- **Season 2 launches October 15, 2026**. [UO35](#uo35)
+The earlier research recorded Season 1's September 28 transfer deadline and planned October 1 soft launch, October 13 wipe and October 15 Season 2 opening. These are preserved historical plans. [UO35](#uo35)
 
 ### October 28, 2026 update
 
@@ -911,6 +875,8 @@ without forcing one ruleset onto every authored reality.
 
 ## 25. Five written reviews / retrospectives
 
+The September capture's five historical reviews remain below. On October 28, the full GameRevolution, Renaissance and two-page Hubbard reviews were reread; the 1997 GameSpot and Third Dawn bodies were inaccessible, so their earlier attributed findings are preserved rather than presented as new verification. Two further substantial firsthand accounts add the 2018 free-player opening and a 2026 return to Great Lakes. Together these supply five freshly read independent assessments, with different purposes and eras rather than five interchangeable scores.
+
 ### 1. GameSpot — Desslock, December 1997
 
 **Liked / recognized:** extraordinary ambition, unprecedented complexity, thousands of players in a persistent dynamic fantasy world.
@@ -925,7 +891,7 @@ This is a useful reminder that historical influence does not make a bad launch a
 
 **Disliked:** unpolished, buggy, confusing and frustrating.
 
-This source is a valuable counterpoint to GameSpot: two critics experienced many of the same defects but weighted the unprecedented social world differently. [UO38](#uo38)
+The reviewer also regularly adventured with school friends living abroad whom they otherwise rarely saw. This is observed continued play and renewed relationships, not a retention estimate. The account weights the unprecedented social world differently from GameSpot's launch criticism. [UO38](#uo38)
 
 ### 3. GameSpot — Renaissance, 2000
 
@@ -943,13 +909,19 @@ The review ultimately described Renaissance as rewarding across player types des
 
 ### 5. MMORPG.com — Reed Hubbard, 2005
 
-**Liked:** enormous established world, many noncombat roles, depth accumulated across expansions and the unusual ability to live as something other than a monster killer.
+**Liked:** Samurai Empire offered complementary samurai/ninja approaches, creatures to tame, and Japanese house tiles for gardens and dojos. Hubbard judged these satisfying additions for veterans.
 
 **Disliked / qualification:** by the Samurai Empire era the aged engine/interface and complexity created a substantial barrier; the Japanese-theme expansion added professions/content but remained built on an old system. [UO39](#uo39)
 
 ### Additional long-view criticism — Lord Blackthorn's Revenge
 
 GameSpot's later review framed UO's biggest enduring strength as something competitors still did poorly: characters could become adept at meaningful occupations other than killing fauna. Its critique was that this unique world was increasingly buried under dated presentation and complexity. [UO40](#uo40)
+
+### Further independent firsthand assessments
+
+**Eliot Lefebvre, MassivelyOP, April–May 2018 — Endless Journey newcomer, Enhanced Client.** His attempt to play a paladin stalled on finding abilities, closing windows, paying a tithe and understanding spell feedback. He eventually killed a small creature but died again without a clear grasp of recovery. These are his experienced failures of explanation, not a current mechanics guide. [R26-01](#r26-01) He then ended the UO column early, citing onboarding, interface and technical friction. His statement that he would have left earlier outside paid work is counterfactual; the shortened series is the documented stopping behavior. He explicitly declined to treat that experience as an evaluation of everything veteran UO players enjoyed. [R26-02](#r26-02)
+
+**Arturo V Bauermeister, May 22, 2026 — personal return essay, Great Lakes.** After about 25 years away, he actually returned at a childhood friend's invitation. He found maintained houses, stocked vendors, bank gatherings and practical generosity, including receiving a high-level skill scroll. He describes a community remembering a deceased player through stories and a planned memorial. The appeal was continuity with people and places, extending beyond replaying childhood adventures. This is a substantial firsthand account of return and social meaning, not a systematic game review, measured retention result or population survey; it does not establish how long he subsequently stayed. [R26-03](#r26-03)
 
 ## 26. Player testimony and community preferences
 
@@ -979,16 +951,11 @@ Long-running community attachment to:
 
 is visible even in current 2026 development, where the team continues updating house-placement rules and explicitly cites player homes/shops/gathering places as core to the world's life. [UO21](#uo21) [UO41](#uo41)
 
-### Steam boundary
+### Synthesis and sampling boundary
 
-**Steam review sampling is not applicable.** The current official UO service is not a Steam-distributed title. Historical player testimony comes from:
+The accounts describe different access to the same promise: established friends and useful places supported continued participation, while an unassisted newcomer struggled to reach meaningful activity. For OpenLegend, let an early practical interaction reveal why a place or person matters, then observe whether players voluntarily return to it. Persistent storage and named inhabitants supply possibilities; believable usefulness, relationships and player choice must supply the motivation. The Great Lakes story also concerns real human relationships, so it cannot establish that AI inhabitants will produce the same attachment.
 
-- GameFAQs;
-- official/community forums;
-- retrospective articles;
-- the game's own long-running community.
-
-This dossier does not fabricate a Steam review section.
+Steam sampling remains inapplicable: official access was checked through UO's account/client route, and no official Steam store listing was found in this check. There are consequently no Steam hours, votes or sentiment proportions to report. [R26-04](#r26-04)
 
 ## 27. Production history and major evolution
 
@@ -1020,203 +987,124 @@ The game repeatedly changed foundational assumptions:
 - onboarding;
 - account model.
 
-That means its longevity comes partly from **being willing to alter world rules**, not from never changing anything.
+This chronology demonstrates continued adaptation. That adaptation contributed to longevity is a plausible inference, not something the chronology alone proves.
+
+### Production practice and actual promotion
+
+Participant interviews in Wes Locher's _Braving Britannia_ excerpt describe a prototype using the Ultima VI engine while the new engine was unfinished; scripts written before their language existed then required rewriting. Designers also supplied art when specialist capacity was scarce. Chris Mayer recalls joining the live team in 1998 after original programmers had been reassigned, inheriting fragile dependencies and frequent outages. Separate development, QA and live branches helped stabilize delivery. These are recollections of particular production conditions, not an audited universal explanation for every launch problem. The positive surprise was equally concrete: players turned clothing and shared places into guild identity, weddings and social performances. [P26-02](#p26-02)
+
+Actual promotion included an October 2024 veteran preview weekend for the ClassicUO web client around New Legacy's launch, with a feedback channel and a subsequent free-access rollout announced. This demonstrates an access-and-return campaign; no attributable conversion or retention result was found. [P26-03](#p26-03)
+
+### Commercial evidence and limits
+
+| Date and scope                                        | Evidence                                                                                                                              | Limit                                                                                                                                                                                                                                  |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1997 original development; June 2026 recollection     | Raph Koster put UO's development cost at **US$2 million** in a participant interview. [E26-07](#e26-07)                               | Retrospective estimate; accounting inclusions unspecified, not lifetime development/operations spending.                                                                                                                               |
+| FY2001 and March 31, 2002; title subscribers          | EA reported about **200,000 average paying customers in FY2001**, and **207,000 at March 31, 2002**. [E26-08](#e26-08)                | Historical paying-customer measures; neither a verified lifetime peak nor current activity.                                                                                                                                            |
+| FY2005; publisher assessment                          | EA explicitly described UO as successful while discussing mixed results from its persistent-world products. [E26-09](#e26-09)         | Attributed qualitative outcome; no standalone margin.                                                                                                                                                                                  |
+| Historical/current title revenue and continuing costs | No reliably isolated annual/current or lifetime UO receipts and complete operating/marketing totals established in this bounded pass. | EA.com combines several services; parent/company figures cannot be assigned to UO.                                                                                                                                                     |
+| Title profit and ROI                                  | **Not estimable** from the inspected evidence.                                                                                        | Need realized subscription/store/expansion receipts, regional pricing/mix, operating costs, development amortization and publishing allocations. A subscriber snapshot multiplied by today's price cannot reconstruct lifetime profit. |
+
+**Outcome inference:** the historical paid audience, publisher assessment and continuing service support treating UO as a durable commercial precedent. They do not establish present growth or prove that its loss rules caused that durability. Its positive opportunity for OpenLegend is legible, useful participation—making goods, hosting places and helping others recover—whose history remains meaningful. The transfer question is which authored worlds benefit from shared scarcity and upkeep, with clear consent and absence rules, not whether every OpenLegend world should inherit land competition or subscription-linked decay.
 
 ## 28. The virtual ecology failure, preserved
 
-The existing focused case remains canonical for this subsystem.
+The [focused ecology case](../games/ultima-online-s-ecology.md) remains the detailed historical owner. Garriott's account describes the planned grass/prey/predator chain, unexpectedly intense player harvesting, collapse and replacement of the original design. [UO30](#uo30) Section 16 distinguishes Koster's account of computational cost from resource circulation. Continued success after an abandoned subsystem does not establish that any one replacement mechanism caused the game's longevity.
 
-Richard Garriott's account:
+## External creation — R15: yes, distinct from official housing
 
-1. designers modeled grass/prey/predator relationships;
-2. expected an internally sustainable ecology;
-3. players killed/harvested creatures at industrial scale;
-4. ecological balance collapsed;
-5. the system was tuned and eventually replaced/removed as originally envisioned. [UO30](#uo30)
+**An established external ecosystem exists.** ServUO's maintained C# server-emulator repository and its public resource catalogue document custom worlds, server scripts, maps and distribution tools. This is stronger evidence of sustained creation than a few visual presets; repository activity and downloads still do not measure active players. ModernUO provides a separate documented framework. Their components cannot be assumed interchangeable. [M26-01](#m26-01) [M26-02](#m26-02)
 
-This dossier adds the broader context:
+The official-service boundary is narrower: UO sanctions its integrated **ClassicUO web client**, while its policy explicitly withholds sanction from the modifiable desktop client on official servers. An emulator or independent-shard tutorial does not establish publisher approval or permission to redistribute Ultima assets. [M26-03](#m26-03)
 
-- UO succeeded as a virtual world despite this subsystem failing;
-- player economies and social systems worked partly because they _embraced_ optimization and human incentives rather than assuming ecologically gentle behavior.
+### Named creations, motives and earning evidence
 
-OpenLegend should stress-test every simulated commons against adversarial use.
+| Creation                                            | What its author makes and why                                                                                                                            | Distribution and practical limits                                                                                                                                                                                                                                                                      |
+| --------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Finaltwist and collaborators' Ultima Adventures** | A fork of Ultima Odyssey, motivated by additional roleplaying, multiplayer and high-level content without taking over the original project.              | September 2026 catalogue revision offers an offline/online world package. Its instructions require a separate installation and matching custom maps/client files; overwriting Odyssey can produce conflicts. Creator earnings were not established. [M26-04](#m26-04)                                  |
+| **MrRiots' UO Region Editor**                       | An offline HTML tool the author built for personal use and shared: load local map data or a demo, draw named rectangles, then export server-region data. | TXT/XML, configuration, CSV and JSON outputs are data, not a replacement server engine. Browser sessions do not retain work automatically; export matters. The author promises no ongoing updates. Polygon mode serves personal needs and is not supported by the servers described. [M26-05](#m26-05) |
+| **Voxpire's Installer, Patcher, Launcher (IPL)**    | A packaged recipient path that configures a shard's client files and connection settings.                                                                | A site account upgrade gates the download; that establishes an access charge, not the author's income or a universal paid-mod market. Windows/.NET requirements differ from the server's platform support. [M26-06](#m26-06)                                                                           |
+
+### Representative author-to-player lifecycle
+
+1. **Author the behavior.** In ModernUO, a creator writes a C# item or creature under the content project. Its example magic lantern connects graphic identity, charges, light, ownership checks, interaction and timers. Configuration JSON selects settings and expansion/maps; region/map files supply data. These are different authoring layers, not one all-purpose visual editor. [M26-07](#m26-07) [M26-08](#m26-08)
+2. **Build and preview.** The documented Windows/macOS/Linux build path checks prerequisites and publishes a server distribution. Its current requirements include .NET 10 and platform libraries. First launch asks for locally supplied UO data, a listener, expansion/maps and an owner account. A client pointed to the local address provides a playable test environment. These steps were documented, not reproduced in this research. [M26-09](#m26-09) [M26-10](#m26-10) [M26-11](#m26-11)
+3. **Test behavior and saved state.** For the lantern, test permission, charge consumption and timer cleanup, then save/reload to check restoration. ModernUO's serialization documentation connects persisted fields, version changes and explicit migration methods. That makes saved custom instances part of an update's compatibility problem; a successful compile alone is insufficient. This is a proposed test derived from the documented example. [M26-07](#m26-07) [M26-12](#m26-12)
+4. **Package and share the supported combination.** ModernUO's portable distribution can be deployed to a host; recipients need compatible client data and the correct address. IPL illustrates a separate delivery tool: build its patch/server/client parts, configure the shard, generate a versioned manifest, and distribute the launcher. Its manifest is regenerated when packaged files change; special handling preserves local settings or deletes selected files. [M26-06](#m26-06) [M26-13](#m26-13)
+5. **Play, update and remove deliberately.** A recipient launches the matching client and connects to that particular shard. A world package's maps, code and saved instances can conflict with another version; this is not a standardized drag-and-drop load order. The reviewed material establishes neither a universal safe uninstaller nor automatic preservation when a custom type is removed. The operator must decide how affected instances and files are handled before withdrawing the component. ModernUO's GPLv3 code license does not itself license Ultima's art or maps. [M26-04](#m26-04) [M26-11](#m26-11) [M26-12](#m26-12) [M26-14](#m26-14)
+
+**OpenLegend implication:** useful creation includes the recipient's ability to obtain, understand, try and revise a coherent package. Route that observation to existing pack provenance/dependency and creator workflow owners. ModernUO's migration burden does not impose legacy-development-save compatibility on OpenLegend. No emulator, client policy or distribution business model is adopted by this comparison.
 
 ## 29. Transferable inspiration for OpenLegend
 
 ### A. Make professions own real world capability
 
-A tailor should not be “combat character who presses Tailoring in a menu.”
-
-The UO chain:
-
-> sheep → wool → spin → loom → cloth → crafted/marked item → vendor → another player
-
-is powerful because each step is a world fact.
-
-OpenLegend can do this for:
-
-- medicine;
-- construction;
-- farming;
-- research;
-- law;
-- teaching;
-- religion;
-- logistics.
+The chain **sheep → wool → spin → loom → cloth → marked item → vendor → another player** links practice to someone else's need. The same question applies to medicine, construction, farming, research, law, teaching, religion and logistics: what useful world capability does this profession provide?
 
 ### B. Use a bounded skill budget instead of mandatory classes
 
-A **world may choose** a bounded skill budget to make practiced capabilities distinctive. Neither a cap nor classlessness should become an engine-wide character rule; other authored worlds may use classes, uncapped expertise, or different costs for changing profession.
-
-This works especially well for AI actors because their competence can reflect:
-
-- life history;
-- job;
-- hobbies;
-- injury;
-- teaching.
+A world may choose a skill budget, classes, uncapped expertise or another cost of changing profession. None is an engine-wide mandate. Distinct competence can reflect a person's practiced work, history, hobbies, injuries and teaching.
 
 ### C. Ownership/access should be mechanics, not lore
 
-UO houses distinguish:
-
-- owner;
-- co-owner;
-- friend;
-- banned;
-- secure container access;
-- vendor tenancy.
-
-OpenLegend's object/place permission model can support:
-
-- homes;
-- guild halls;
-- labs;
-- prisons;
-- shops;
-- private rooms.
+House owners, co-owners, friends, tenants and visitors have different rights. OpenLegend's custody and place permissions should make such distinctions usable in homes, shops, laboratories, guild halls and other authored institutions, without treating admission as shared ownership.
 
 ### D. Markets are more alive when the seller/place still exists
 
-Vendor Search improves convenience while preserving that the item belongs to a vendor at a house.
-
-OpenLegend can expose search without collapsing all commerce into an omnipresent store UI.
+Retain situated sellers, reputation and logistics when they make the authored world's market more useful or interesting.
 
 ### E. Death can create a social recovery state
 
-Ghost → healer/player resurrection → corpse recovery creates:
-
-- travel;
-- vulnerability;
-- rescue;
-- memory.
-
-OpenLegend can make death consequences world-specific rather than defaulting to save reload.
+Ghost → resurrection → corpse recovery illustrates one world-specific way to create vulnerability, rescue and memory.
 
 ### F. Crime requires ownership + witnesses/knowledge + institutions
 
-UO's murder reporting is simple but directionally correct.
-
-The engine should represent:
-
-- victim;
-- actor;
-- observer;
-- jurisdiction;
-- property;
-- evidence;
-- legal consequence.
+Represent the actor, victim, property, observer, evidence and jurisdiction before assigning a legal consequence. A global morality score cannot substitute for who knows what or why institutions disagree.
 
 ### G. Pets become meaningful through useful persistence
 
-Tamed animals prove that:
-
-- usefulness;
-- persistence;
-- customization;
-- risk
-
-can create attachment even without sophisticated dialogue.
-
-Adding cognition should deepen that, not replace the material relationship.
+Memory, personality, needs, trust and independent goals should deepen a companion's useful persistent relationship rather than substitute for it.
 
 ### H. Public housing creates society and scarcity at once
 
-Persistent player construction produces:
-
-- neighborhoods;
-- shops;
-- landmarks;
-- identity.
-
-It also produces:
-
-- sprawl;
-- scarce land;
-- inactive-owner problems.
-
-OpenLegend needs explicit land/property lifecycle policies.
+Choose how homes become neighborhoods, shops, landmarks and identities without automatically inheriting scarce plots, sprawl or inactive-owner problems.
 
 ### I. Let worlds choose their risk contract
 
-Felucca and Trammel show how one flag changes:
-
-- markets;
-- travel;
-- strangers;
-- policing;
-- fear;
-- cooperation.
-
-Authored realities can choose:
-
-- full consequence;
-- protected social spaces;
-- consensual PvP;
-- single-player;
-- recoverable losses.
+Choose protected spaces, consensual conflict, full consequences, recoverable losses or solitary play according to the authored world's experience.
 
 ### J. Simulations must survive optimizing humans
 
-The ecology failure is a permanent warning:
-**simulate the incentives, not the designer's preferred behavior.**
+Examine the incentives and runtime cost of a simulated commons, including harvesting, hoarding and automation. Its appealing fictional explanation does not qualify the implementation.
 
 ### K. Long-lived worlds accumulate rules debt
 
-Twenty-nine years of:
+Make invention provenance, versions and dependencies visible. Any continuity/replacement promise for a published pack must be explicit and scoped to supported use. This does **not** impose legacy-development-save compatibility, automatic migration or deprecation infrastructure on experimental worlds.
 
-- expansions;
-- items;
-- currencies;
-- housing;
-- clients;
-- events
+### Application through existing design and qualification
 
-creates enormous complexity.
+The opportunity is a world where making, caring for, discovering or hosting something changes what another person can do. Preserve that ambition without copying UO's full skill catalogue, land scarcity, mandatory upkeep or PvP rules. Human social continuity is evidence to investigate, not proof that OpenLegend's inhabitants will produce equivalent attachment.
 
-OpenLegend's invention packs need visible provenance, versions and dependencies so creators can understand the capabilities they adopt. Any continuity or replacement promise for a published pack should be explicit and scoped to its supported use. This does **not** impose legacy-development-save compatibility, automatic migration or deprecation infrastructure on the engine; experimental worlds may be rebuilt as their design changes.
+| Research implication                                            | Existing route and concrete question                                                                                                                                                                                                                                                                                                                                                                               |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| Useful practice should become a recognizable role.              | [DG14](../../../../docs/maintainers/needs-design.md#dg14--useful-competence-and-practice) and [FPV06–08](../../../../docs/maintainers/first-playable-validation.md): can a new player complete a useful material/action chain, explain its payoff and choose a next activity without repetitive coaching?                                                                                                          |
+| Complementary capabilities should create voluntary cooperation. | [CP10](../../../../docs/maintainers/first-playable-cooperation.md) and [CE05](../../../../docs/maintainers/character-experience.md): observe useful independent aid, refusal, stopping and a later choice shaped by the shared occurrence. A scripted rescue or an agreement alone does not qualify this.                                                                                                          |
+| Building should yield a useful, revisable place.                | [SH12 / DG13](../../../../docs/maintainers/needs-design.md#dg13--editable-shelter-and-useful-places): assess the complete construction, access, alteration and recovery effort against the benefit of inhabiting it; do not adopt public land competition by analogy.                                                                                                                                              |
+| Persistent worlds need an understandable consequence contract.  | [DG29](../../../../docs/maintainers/needs-design.md#dg29--more-participants-and-travel-between-worlds) and FPV07: distinguish saved identity, property custody, absence, local danger and scenario reset under the selected world's rules.                                                                                                                                                                         |
+| Creator success includes later use and maintenance.             | [ND12](../../../../docs/maintainers/needs-design.md#nd12--cross-world-invention-libraries-and-usable-pack-publishing) and [ND23 / PACK](../../../../docs/maintainers/needs-design.md#nd23--creator-revenue-allocation-and-marketplace-operation): expose authorship, permissions, dependencies, revision/removal consequences and any published-use promise, without adding development-save compatibility duties. |
+| Payment can alter practical participation.                      | [CO01–03](../../../../docs/maintainers/commercial-offers.md): compare the actual paid/free roles, capacity, time and custody effects of an offer. UO's terms do not replace accepted finite free and paid authoring or establish OpenLegend demand.                                                                                                                                                                |
+
+These are qualification questions for existing owners. The research does not close their implementation/player-evidence checks or require a new feature specification or needs-design item.
 
 ## 30. Requirement and preservation check
 
 ### September 27 requirements-and-corrections audit
 
-The September 27 audit against the then-current mechanics inventory found the production-shard dossier complete and confirms these version-sensitive boundaries:
+The September 27 audit covered classless attributes and editable skill budgets; acquisition, containers, equipment, crafting and upgrading; magic and virtues; travel, stealth, crime and object interaction; death and recovery; player trade, housing and pet training; guilds, NPC services, quests and long-term activities. Its key scope limits remain: native pets are not deep cognitive companions, authored events are not universal player-driven history, housing is not population simulation, and ordinary production rules differ from the 1997 launch and seasonal New Legacy.
 
-- **Identity / classes / attributes / skills / leveling / trees:** classless Strength/Dexterity/Intelligence plus use-based, capped skills and Raise/Lock/Lower atrophy define character development (§§2–4). Templates are emergent combinations rather than engine classes.
-- **Items / inventory / weapons / armor / equipment / crafting / upgrading:** world containers/corpses, equipment, crafted goods, repair, resources, vendors, housing storage and later item-property systems are covered across §§5–15.
-- **Magic / spells / powers:** Magery's 64-spell/eight-circle vocabulary plus later spell schools and Virtue/mastery-like systems provide bounded capability families (§6 and later system sections).
-- **Traversal / environmental and object interaction:** walking/riding/boats/travel magic, containers/doors/locks, stealing/snooping, housing, world items and spatial crime/property rules are covered throughout.
-- **Activities / minigames:** combat, taming, crafting, fishing, treasure hunting, trade/shopkeeping, housing, guild/social activity and live events coexist rather than one mandatory combat loop.
-- **Combat / stealth / loot / rewards:** PvE/PvP, Hiding/Stealth, stealing, corpse loot, crafted/equipped rewards and ruleset-specific consent/risk are explicitly separated.
-- **Death / failure / recovery:** ghosts, corpses, resurrection, item insurance and harsher shard rules are covered; modern production loss is not identical to 1997 full-loot expectations.
-- **Economy / trading:** player vendors, direct exchange, crafted production, resource scarcity and housing/property create a player-mediated economy rather than one central auction-house model.
-- **Story / relationships / romance / reputation / party / companions:** authored lore/events coexist with guilds, reputation/karma/virtues and player society; animal followers exist, while romance/affinity is not a central native progression system.
-- **NPC/AI behavior and schedules / factions:** vendors/guards/creatures/factional actors have authored behaviors, but the dossier does not inflate them into a modern deep individual-memory simulator. The failed launch ecology is preserved as a specific simulation case.
-- **World map / environment / quests / events:** facets/shards, towns/dungeons/housing plots, live publishes/events and New Legacy's narrative/job structures are covered.
-- **Building / settlements / management:** player housing, customization, storage, vendors and community spaces are major persistent-world systems; these are property/community systems rather than worker-population colony simulation.
-- **Multiplayer / social / endgame / return loops:** the shared persistent shard, guild/player economy, housing, skills, collections, events and expansion/live-publish content supply the long-term loop rather than a finite campaign ending.
+The October refresh strengthens the actual activity chains, six causal situations, native housing lifecycle, connected lore, current service/payment boundaries and firsthand reception. The production/ecology correction and external-creation lifecycle are integrated; final independent review remains open at this checkpoint. Original examples and dated contrary accounts are retained rather than replaced by the newest update.
 
-**September 27 boundary check (historical):** production shards remain on **Publish 124** after the August worldwide rollout and September hotfixes; the game marked its **29th anniversary on September 24, 2026**, with current weekend/live-event activity continuing. **New Legacy Season 2 is still future** on September 27: final Season 1 transfer deadline September 28, pre-season/soft launch October 1, final wipe October 13, and Season 2 launch October 15. Publish 125/client work is likewise announced future scope, not current production behavior. [UO01](#uo01) [UO02](#uo02) [UO35](#uo35)
+**September 27 boundary check (historical):** the prior audit recorded Publish 124, the 29th anniversary and future client/publish work. [UO01](#uo01) [UO02](#uo02) Its New Legacy forecast is retained in §24 alongside the subsequently verified launch.
 
 | Requirement                             | Coverage                                                                        |
 | --------------------------------------- | ------------------------------------------------------------------------------- |
@@ -1235,19 +1123,99 @@ The September 27 audit against the then-current mechanics inventory found the pr
 | R13 transferable inspiration / limits   | §§28–29                                                                         |
 | R14 sources / preservation / navigation | this section + sources                                                          |
 
-**Preservation check:** the focused ecology case remains intact and linked. This dossier does not convert Garriott's anecdote into “simulation doesn't work”; it identifies the narrower failure of ecological assumptions under real harvesting incentives. Historical Trammel/Felucca opinions are attributed rather than resolved as one objective community verdict.
+**Preservation check:** the [focused ecology case](../games/ultima-online-s-ecology.md) and [G19 fun/engagement evidence](../references/fun-and-engagement-dossier-evidence.md) remain distinct owners. [Packet provenance](../references/packet-provenance.md) retains the broader reading route. Original numbered headings, source anchors, skill atrophy, the wool-to-vendor chain, ghost recovery, region-specific travel and differing Trammel judgments remain available. Garriott's attributed harvesting account remains; Koster's computational/resource-circulation distinction qualifies the diagnosis without turning either retrospective into telemetry or a verdict that simulation cannot work. Historical Trammel/Felucca opinions are attributed rather than resolved as one objective community verdict.
 
 ## Sources
 
-Original UO01–UO42 annotations record September 26–27, 2026 captures unless a specific October reread is stated. New S26 entries record this refresh; additional production, economics and reception evidence is pending at this checkpoint.
+Original UO01–UO42 annotations record September 26–27, 2026 captures unless a specific October reread is stated. S26, E26, R26, P26 and M26 entries record this refresh. New primary bodies and firsthand accounts were read as annotated; no client or editor was executed.
 
 <a id="s26-01"></a> **S26-01 — [New Legacy Season 2 — Now Available!](https://uo.com/2026/10/15/new-legacy-season-2-now-available/)**, UO Dev Team, October 15, 2026. Full primary announcement read October 28; establishes delivered launch and selected seasonal changes.
+
+<a id="s26-02"></a> **S26-02 — [Treasure Maps](https://uo.com/wiki/ultima-online-wiki/gameplay/treasure-maps/)**, official guide. Relevant primary body read October 28, 2026; post-2019 map, digging, guardians, trap and reward sequence.
+
+<a id="s26-03"></a> **S26-03 — [Bardic Skills](https://uo.com/wiki/ultima-online-wiki/skills/bardic-skills/)**, official guide. Full relevant body read October 28; instrument wear, control checks and creature/PvP differences.
+
+<a id="s26-04"></a> **S26-04 — [Imbuing](https://uo.com/wiki/ultima-online-wiki/skills/imbuing/)**, official guide. Relevant body read October 28; destructive unravelling, ingredients, controlled properties and failure.
+
+<a id="s26-05"></a> **S26-05 — [Ships Guide](https://uo.com/wiki/ultima-online-wiki/gameplay/ships-guide/)**, official guide. Full body read October 28; navigation, cargo/access, combat, repairs and decay.
+
+<a id="s26-06"></a> **S26-06 — [Getting Started](https://uo.com/getting-started/)**, official guide. Full body read October 28; race capabilities, client distinctions and shards' fictional common origin.
+
+<a id="s26-07"></a> **S26-07 — [Voices](https://uo.com/wiki/ultima-online-wiki/fiction/the-silver-gate/voices/)**, EM Malachi. Full primary fiction read October 28; motives and the _Time of Legends_ bridge, not live simulation evidence.
+
+<a id="s26-08"></a> **S26-08 — [The Oracle and the Bard](https://uo.com/wiki/ultima-online-wiki/fiction/the-shattered-obelisk/the-oracle-and-the-bard/)**, EM Malachi. Full primary fiction read October 28; Mariah, Naxatilor and Zhah's relationships.
+
+<a id="s26-09"></a> **S26-09 — [Publish 60: Stygian Abyss](https://uo.com/wiki/ultima-online-wiki/technical/previous-publishes/2009-2/publish-60-8th-september-stygian-abyss/)**, September 8, 2009. Relevant primary lands, loyalty and instancing sections read October 28; historical expansion design, not current timer verification.
+
+<a id="e26-01"></a> **E26-01 — [New Legacy Season 2 notes](https://uo.com/wiki/new-legacy-publish-notes/new-legacy-season-2/)**. Official primary body read October 28, 2026; planned June 2027 end and scoped potion effects.
+
+<a id="e26-02"></a> **E26-02 — [New Legacy Ultima Store Now Open](https://uo.com/2026/10/20/new-legacy-ultima-store-now-open/)**. October 20, 2026. Full primary announcement read; delivered opening supersedes the earlier forecast.
+
+<a id="e26-03"></a> **E26-03 — [Condemned Houses](https://uo.com/wiki/ultima-online-wiki/gameplay/houses-placing-a-house/condemned-houses-idoc/)**. Primary body read October 28; access loss, collapse loot and deleted-item exceptions.
+
+<a id="e26-04"></a> **E26-04 — [Ultima Store guide](https://uo.com/ultima-store/)**. Primary body read October 28; Sovereigns, entitlement purchases, wallets and binding exceptions.
+
+<a id="e26-05"></a> **E26-05 — [Ultima Store inventory](https://uo.com/wiki/ultima-online-wiki/items/ultima-store-inventory/)**. Relevant primary inventory read October 28; concrete progression, capacity and convenience effects.
+
+<a id="e26-06"></a> **E26-06 — [Character Transfer Token](https://uo.com/wiki/ultima-online-wiki/player/character-transfer-token/)**. Primary body read October 28; moved character possessions versus immobile property and restricted destinations.
+
+<a id="e26-07"></a> **E26-07 — [Koster interview](https://www.pcgamer.com/games/mmo/ultima-online-and-star-wars-galaxies-vet-tells-me-the-theme-park-assembly-line-mmo-just-isnt-viable-anymore-especially-as-dev-costs-spike-we-hit-the-wall/)**. PC Gamer, June 14, 2026. Relevant participant account read; retrospective cost estimate with unspecified accounting scope.
+
+<a id="e26-08"></a> **E26-08 — [EA FY2002 annual report](https://www.annualreports.com/HostedData/AnnualReportArchive/e/NASDAQ_ERTS_2002.pdf)**. Relevant primary pages 23/33 read; title customers separated from aggregate EA.com finances.
+
+<a id="e26-09"></a> **E26-09 — [EA FY2005 annual report](https://www.annualreports.com/HostedData/AnnualReportArchive/e/NASDAQ_ERTS_2005.pdf)**. Primary Online Games section read, page 62; qualitative title success, not standalone profit.
+
+<a id="r26-01"></a> **R26-01 — [And now, Ultima Online, sooner or later](https://massivelyop.com/2018/04/20/choose-my-adventure-and-now-ultima-online-sooner-or-later/)**. Eliot Lefebvre, April 20, 2018. Full firsthand opening account read October 28; experienced confusion, not current mechanics.
+
+<a id="r26-02"></a> **R26-02 — [Ultima Online, we didn’t need to do this](https://massivelyop.com/2018/05/11/choose-my-adventure-ultima-online-we-didnt-need-to-do-this/)**. Eliot Lefebvre, May 11, 2018. Full closing column read; actual early series ending versus hypothetical earlier abandonment.
+
+<a id="r26-03"></a> **R26-03 — [The Shard Remembers](https://arturovbauermeister.substack.com/p/the-shard-remembers)**. Arturo V Bauermeister, May 22, 2026. Full Great Lakes return essay read; firsthand social meaning, not population measurement.
+
+<a id="r26-04"></a> **R26-04 — [Client Download](https://uo.com/client-download/)**. Official access body checked October 28; bounded Steam search found no official store listing.
+
+<a id="s26-10"></a> **S26-10 — [Vice versus Virtue](https://uo.com/wiki/ultima-online-wiki/combat/virtue-versus-vice/)**. Official guide, relevant body read October 28; city objectives, rewards and exposure of nonparticipants.
+
+<a id="s26-11"></a> **S26-11 — [Scrolls of Power](https://uo.com/wiki/ultima-online-wiki/items/scrolls-of-power/)**. Official guide, full relevant body read October 28; mastery ceilings, reward routes, trading and consumption.
+
+<a id="p26-01"></a>**P26-01 — [Did players destroy the UO ecology?](https://www.raphkoster.com/games/snippets/did-players-destroy-the-uo-ecology/).** Raph Koster, updated August 28, 2024. Full participant account read; distinguishes AI cost and resource circulation.
+
+<a id="p26-02"></a>**P26-02 — [A behind-the-scenes look at building Ultima Online](https://www.gamedeveloper.com/design/book-excerpt-a-behind-the-scenes-look-at-building-i-ultima-online-i-).** Wes Locher, July 13, 2018. Full relevant interview excerpt read; prototype, staffing, stabilization and player appropriation recollections, not audited production accounts.
+
+<a id="p26-03"></a>**P26-03 — [ClassicUO Web Client Veteran Preview Weekend](https://uo.com/2024/10/11/classicuo-web-client-veteran-preview-weekend/).** UO, October 11, 2024. Full announcement read; historical campaign, not current entitlement rules.
+
+<a id="m26-01"></a>**M26-01 — [ServUO repository](https://github.com/ServUO/ServUO).** Maintainer README and repository metadata read October 28, 2026; C# emulator and public development evidence.
+
+<a id="m26-02"></a>**M26-02 — [ServUO resource catalogue](https://www.servuo.dev/archive/).** Current catalogue and relevant resource bodies read; ecosystem evidence without inferring players from downloads.
+
+<a id="m26-03"></a>**M26-03 — [ClassicUO Web Client policy](https://uo.com/wiki/classicuo-web-client/).** UO, October 2024 revision. Full policy read; official web/desktop sanction distinction.
+
+<a id="m26-04"></a>**M26-04 — [Ultima Adventures](https://www.servuo.dev/archive/ultima-adventures-a-full-featured-content-packed-offline-online-server.1374/).** Finaltwist, September 15, 2026 revision. Full public author description read; motives and package requirements, not reproduced features or verified earnings.
+
+<a id="m26-05"></a>**M26-05 — [UO Region Editor](https://www.servuo.dev/archive/uo-region-editor.2631/).** MrRiots, May 25, 2026. Full public description read; data authoring, export and support limits.
+
+<a id="m26-06"></a>**M26-06 — [Installer, Patcher, Launcher](https://www.servuo.dev/archive/all-in-one-installer-patcher-launcher-ipl.1724/).** Voxpire, version 3.1 revision March 2026. Public build/configuration/deployment instructions read. Download was gated and not obtained; no income estimate.
+
+<a id="m26-07"></a>**M26-07 — [Items and Mobiles](https://modernuo.com/docs/development/items-and-mobiles/).** ModernUO. Full author tutorial read; behavior and persistence example. No execution.
+
+<a id="m26-08"></a>**M26-08 — [Configuration](https://modernuo.com/docs/getting-started/configuration/).** ModernUO. Foundation sections read; JSON settings and expansion selection.
+
+<a id="m26-09"></a>**M26-09 — [Creating a Build](https://modernuo.com/docs/getting-started/building/).** ModernUO. Full guide read; build/publish and target platforms.
+
+<a id="m26-10"></a>**M26-10 — [Installation](https://modernuo.com/docs/getting-started/installation/).** ModernUO. Full guide read; current prerequisites.
+
+<a id="m26-11"></a>**M26-11 — [Starting the Server](https://modernuo.com/docs/getting-started/starting/).** ModernUO. Full setup/connection and relevant troubleshooting read; separately supplied game files and local preview route.
+
+<a id="m26-12"></a>**M26-12 — [Serialization](https://modernuo.com/docs/development/serialization/).** ModernUO. Field, version, restoration and cleanup sections read; documents this framework's save coupling.
+
+<a id="m26-13"></a>**M26-13 — [ModernUO README](https://github.com/modernuo/ModernUO/blob/main/README.md).** Full body fetched through GitHub October 28, 2026; portable deployment and requirements.
+
+<a id="m26-14"></a>**M26-14 — [ModernUO license](https://github.com/modernuo/ModernUO/blob/main/LICENSE).** GPLv3 text fetched; code licensing only, not an asset-rights grant.
 
 <a id="uo01"></a>**UO01 — [Celebrating 29 years / Ultima Online home](https://uo.com/).** UO Team, 2026-09-24 snapshot. Primary current-service/anniversary evidence.
 
 <a id="uo02"></a>**UO02 — [Publish 124 World Wide](https://uo.com/2026/08/24/publish-124-world-wide/) and [September 2026 archive](https://uo.com/2026/09/).** UO Team. Current publish/events state.
 
-<a id="uo03"></a>**UO03 — [Endless Journey](https://uo.com/wiki/ultima-online-wiki/beginning-the-adventure/endless-journey/).** Official/current account-mode feature/restriction reference.
+<a id="uo03"></a>**UO03 — [Endless Journey](https://uo.com/wiki/ultima-online-wiki/beginning-the-adventure/endless-journey/).** Primary restrictions body reread October 28, 2026; explicit bank table used where older narrative wording conflicts.
 
 <a id="uo04"></a>**UO04 — [Skills, Stats and Attributes](https://uo.com/wiki/ultima-online-wiki/player/stats/skills-stats-and-attributes/).** Official/current mechanics reference for stat/skill caps and Raise/Lower/Lock behavior.
 
@@ -1277,11 +1245,11 @@ Original UO01–UO42 annotations record September 26–27, 2026 captures unless 
 
 <a id="uo17"></a>**UO17 — [Player-owned NPCs](https://uo.com/wiki/ultima-online-wiki/gameplay/npc-commercial-transactions/npcs-player-owned/) and [Vendor Search](https://uo.com/wiki/ultima-online-wiki/gameplay/npc-commercial-transactions/vendor-search/).** Official/current player-shop, rental, wages and search logistics.
 
-<a id="uo18"></a>**UO18 — [Placing a House](https://uo.com/wiki/ultima-online-wiki/gameplay/houses-placing-a-house/).** Official/current housing placement, ownership and scarcity rules.
+<a id="uo18"></a>**UO18 — [Placing a House](https://uo.com/wiki/ultima-online-wiki/gameplay/houses-placing-a-house/).** Primary body reread October 28, 2026; placement, ownership and unpaid-account grace/decay.
 
-<a id="uo19"></a>**UO19 — [Building a Custom House](https://uo.com/wiki/ultima-online-wiki/gameplay/houses-placing-a-house/house-owning-2-building-a-custom-house/) and [Managing Your Home](https://uo.com/wiki/ultima-online-wiki/gameplay/houses-placing-a-house/house-ownership-4-managing-your-home/).** Official/current construction, storage and permission roles.
+<a id="uo19"></a>**UO19 — [Building a Custom House](https://uo.com/wiki/ultima-online-wiki/gameplay/houses-placing-a-house/house-owning-2-building-a-custom-house/) and [Managing Your Home](https://uo.com/wiki/ultima-online-wiki/gameplay/houses-placing-a-house/house-ownership-4-managing-your-home/).** Full primary building and management bodies reread October 28, 2026; draft/commit, moving-crate, access and removal workflow.
 
-<a id="uo20"></a>**UO20 — [Ultima Online: Third Dawn Review](https://www.gamespot.com/reviews/ultima-online-third-dawn-review/1900-2703752/).** GameSpot, 2001-04-02. Full review; Ilshenar, housing-sprawl, client and newcomer friction.
+<a id="uo20"></a>**UO20 — [Ultima Online: Third Dawn Review](https://www.gamespot.com/reviews/ultima-online-third-dawn-review/1900-2703752/).** GameSpot, 2001-04-02. September capture retained; October body blocked. Ilshenar, housing-sprawl, client and newcomer friction.
 
 <a id="uo21"></a>**UO21 — [Post-IDOC House Placement](https://uo.com/wiki/ultima-online-wiki/gameplay/houses-placing-a-house/post-idoc-house-placement/).** Official/current 2026 collapsed-plot raffle system.
 
@@ -1295,7 +1263,7 @@ Original UO01–UO42 annotations record September 26–27, 2026 captures unless 
 
 <a id="uo26"></a>**UO26 — [Fame and Karma](https://uo.com/wiki/ultima-online-wiki/player/fame-and-karma/).** Official/current broad reputation system.
 
-<a id="uo27"></a>**UO27 — [The Virtues](https://uo.com/wiki/ultima-online-wiki/gameplay/the-virtues/).** Official/current virtue gameplay reference.
+<a id="uo27"></a>**UO27 — [The Virtues](https://uo.com/wiki/ultima-online-wiki/gameplay/the-virtues/).** Primary principles and Compassion sections reread October 28, 2026; moral geography and resurrection consequences.
 
 <a id="uo28"></a>**UO28 — [Animal Taming](https://uo.com/wiki/ultima-online-wiki/skills/animal-taming/).** Official/current tame/control/attachment description.
 
@@ -1303,23 +1271,23 @@ Original UO01–UO42 annotations record September 26–27, 2026 captures unless 
 
 <a id="uo30"></a>**UO30 — [War Stories: Ultima Online — the virtual ecology](https://arstechnica.com/video/watch/war-stories-ultima-online-the-virtual-ecology/).** Ars Technica / Richard Garriott. Original developer-interview transcript used by the preserved ecology case; attributed retrospective, not telemetry.
 
-<a id="uo31"></a>**UO31 — [Ultima Online: Renaissance Review](https://www.gamespot.com/reviews/ultima-online-renaissance-review/1900-2593371/).** GameSpot, 2000. Full review and historical Trammel/Felucca split evidence.
+<a id="uo31"></a>**UO31 — [Ultima Online: Renaissance Review](https://www.gamespot.com/reviews/ultima-online-renaissance-review/1900-2593371/).** Michael E., Renaissance-era body; page renders May 17, 2006. Full reread October 28; historical split, not a 2006 state audit.
 
-<a id="uo32"></a>**UO32 — [Ultima Online: Renaissance — GameFAQs player review](https://gamefaqs.gamespot.com/pc/258374-ultima-online-renaissance/reviews/58541).** Historical self-selected player critique of the Trammel/Felucca social split; one person's interpretation.
+<a id="uo32"></a>**UO32 — [Ultima Online: Renaissance — GameFAQs player review](https://gamefaqs.gamespot.com/pc/258374-ultima-online-renaissance/reviews/58541).** Historical self-selected player critique of the Trammel/Felucca social split; one person's interpretation. September capture retained; October body blocked.
 
-<a id="uo33"></a>**UO33 — [The most important PC games — Ultima Online](https://www.pcgamer.com/most-important-pc-games/6/).** PC Gamer retrospective / Chris Thursten. Direct personal memory plus historical significance argument.
+<a id="uo33"></a>**UO33 — [The most important PC games — Ultima Online](https://www.pcgamer.com/most-important-pc-games/6/).** PC Gamer retrospective / Chris Thursten. September capture; UO-specific entry reread through indexed text in October, while direct rendering omitted it. Not a fresh full-feature read.
 
-<a id="uo34"></a>**UO34 — [Ultima Online Review](https://www.gamespot.com/reviews/ultima-online-review/1900-2531690/).** Desslock, GameSpot, 1997-12-17. Full launch-era review.
+<a id="uo34"></a>**UO34 — [Ultima Online Review](https://www.gamespot.com/reviews/ultima-online-review/1900-2531690/).** Desslock, GameSpot, 1997-12-17. Full launch-era September capture retained; October body blocked.
 
-<a id="uo35"></a>**UO35 — [Ultima Online: New Legacy](https://uo.com/ultima-online-new-legacy/).** UO Team, FAQ updated 2026-09-09. Current seasonal rules and future Season 2 date.
+<a id="uo35"></a>**UO35 — [Ultima Online: New Legacy](https://uo.com/ultima-online-new-legacy/).** UO Team, FAQ updated 2026-09-09. Full FAQ reread October 28; seasonal rights and exit categories. Final transferable-item list remains prospective.
 
 <a id="uo36"></a>**UO36 — [New Legacy — Houses](https://uo.com/wiki/ultima-online-wiki/new-legacy-an-overview/new-legacy-houses/).** Official/current seasonal housing, guild and upkeep mechanics.
 
 <a id="uo37"></a>**UO37 — [New Legacy, An Overview](https://uo.com/wiki/ultima-online-wiki/new-legacy-an-overview/).** Official seasonal narrative/job-board skill progression.
 
-<a id="uo38"></a>**UO38 — [Ultima Ongoing Review](https://www.gamerevolution.com/review/33084-ultima-online-review).** GameRevolution, 1998-02-05. Full historical review; revolutionary/addictive versus buggy/frustrating.
+<a id="uo38"></a>**UO38 — [Ultima Ongoing Review](https://www.gamerevolution.com/review/33084-ultima-online-review).** GR Staff (current byline), February 5, 1998. Full reread October 28; actual continued social play despite friction.
 
-<a id="uo39"></a>**UO39 — [Ultima Online Review](https://www.mmorpg.com/reviews/ultima-online-review-2000055015).** Reed Hubbard, MMORPG.com, 2005-01-18. Full long-running-game/Samurai Empire-era review.
+<a id="uo39"></a>**UO39 — [Ultima Online Review](https://www.mmorpg.com/reviews/ultima-online-review-2000055015).** Reed Hubbard, January 18, 2005. Both pages reread October 28; Samurai Empire, presentation and veteran/newcomer differences.
 
 <a id="uo40"></a>**UO40 — [Ultima Online: Lord Blackthorn's Revenge Review](https://www.gamespot.com/reviews/ultima-online-lord-blackthorns-revenge-review/1900-2858324/).** GameSpot / Desslock. Historical review emphasizing UO's unusual noncombat lives and dated presentation.
 

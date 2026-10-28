@@ -2,6 +2,8 @@
 
 **Evidence.** In an original interview, Richard Garriott describes an ecological system whose assumptions were overwhelmed by players killing and collecting creatures. After attempts to rebalance it, the system was removed. This was a failed subsystem inside a game with a much larger history. [UO1](../references/sources-01.md#source-uo1)
 
+**October 28, 2026 qualification.** Koster distinguishes the cost of the ecology AI from hoarding in its resource loop. The [refreshed dossier](../dossiers/ultima-online.md#16-the-failed-ecology-experiment) retains both participant accounts and their limits.
+
 **Interpretation.** A model can be internally elegant while irrelevant or unstable under real player incentives. If harvesting everything is rewarded, players need not behave like cautious ecological participants. The system must survive the behavior the game encourages, not merely the behavior its designers find plausible.
 
 **OpenLegend implication.** Test adversarial and optimizing play early. Can a reusable construct duplicate rewards, exhaust a shared resource, monopolize NPC attention, or make one interaction dominate all others? Do not rely on a world agent to verbally discourage behavior that the mechanics reward.
