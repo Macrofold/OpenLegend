@@ -3,6 +3,7 @@ import {
   equippedItems,
   knowledgeDocument,
   currentBodySubject,
+  currentSightConfirmedThrough,
   observerIndividual,
 } from '@open-legend/domain';
 import { worldClockParts, worldDayText } from '@open-legend/protocol';
@@ -255,6 +256,10 @@ export async function projectView(
   for (const key of cache.values.keys())
     if (key.startsWith('entity:') && !visibleIds.has(key.slice(7))) cache.values.delete(key);
   const player = entityGet(world.entities, scope.actorId)!;
+  const sightConfirmedThrough = currentSightConfirmedThrough(world, player.id);
+  // The receiver's actual completed sample is shared transport metadata. Unequal
+  // detail times stay explicit; the world clock can never fill a missing sample.
+  const detailTime = (at: number) => (at === sightConfirmedThrough ? undefined : at);
   const presentation = memo(
     'presentation',
     [world.presentation, world.places, player, observation.visibleEntities],
@@ -560,9 +565,9 @@ export async function projectView(
         observation: {
           kind: 'current',
           modality: 'sight',
-          measurementAt: received.valueMeasuredThrough,
-          acquiredAt: received.valueAcquiredAt,
-          confirmedThrough: received.confirmedThrough,
+          measurementAt: detailTime(received.valueMeasuredThrough),
+          acquiredAt: detailTime(received.valueAcquiredAt),
+          confirmedThrough: detailTime(received.confirmedThrough),
           sourceReference: evidenceSourceHandle(world, player.id, received.source),
         },
         kind,
@@ -613,8 +618,8 @@ export async function projectView(
           ? {
               observedCarried: {
                 items: carried.value.items,
-                measurementAt: carried.valueMeasuredThrough,
-                confirmedThrough: carried.confirmedThrough,
+                measurementAt: detailTime(carried.valueMeasuredThrough),
+                confirmedThrough: detailTime(carried.confirmedThrough),
               },
             }
           : {}),
@@ -897,6 +902,7 @@ export async function projectView(
   const projected: GameView = {
     schemaVersion: 3,
     evaluationCut: world.simTime,
+    sightConfirmedThrough,
     checkpoint: service.mayManageSaves(scope)
       ? {
           scope: scopeKey(scope),
@@ -1582,6 +1588,9 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   return {
     schemaVersion: 3,
     evaluationCut: next.evaluationCut,
+    ...(previous.sightConfirmedThrough !== next.sightConfirmedThrough
+      ? { sightConfirmedThrough: next.sightConfirmedThrough }
+      : {}),
     scope: next.access?.scope,
     ...(!same(previous.cartography, next.cartography) ? { cartography: next.cartography } : {}),
     ...(removedView.length || removedClock || removedPlayer || removedAi

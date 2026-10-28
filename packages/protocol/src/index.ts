@@ -479,17 +479,19 @@ export interface EntityView extends Named {
     | {
         kind: 'current';
         modality: 'sight';
-        measurementAt: number;
-        acquiredAt: number;
-        confirmedThrough: number;
+        /** An omitted time equals this view's sightConfirmedThrough, never its clock. */
+        measurementAt?: number;
+        acquiredAt?: number;
+        confirmedThrough?: number;
         sourceReference: string;
       };
   /** Current received continuous movement; no route or predicted destination. */
   observedMoving?: boolean;
   observedCarried?: {
     items: Array<{ itemKindAsObserved: string }>;
-    measurementAt: number;
-    confirmedThrough: number;
+    /** An omitted time equals this view's sightConfirmedThrough. */
+    measurementAt?: number;
+    confirmedThrough?: number;
   };
   /** Remembered communication is distinct from the current physical contact. */
   communicationReference?: string;
@@ -1010,6 +1012,9 @@ export interface AiJobView {
 export interface GameView {
   /** Native simulation time through which this acquired projection is complete. */
   evaluationCut: number;
+  /** Last completed sight phase for the controlled person's current life; null if absent.
+   * Only exactly equal per-detail times may be omitted in favor of this value. */
+  sightConfirmedThrough: number | null;
   /** Remembered communication roles; no current body, location or state is implied. */
   communicationReferences: Array<{ id: string; label: string }>;
   cartography?: CartographyView;
@@ -1241,6 +1246,7 @@ export interface EntityFieldPatch {
 }
 export interface GamePatch {
   evaluationCut: number;
+  sightConfirmedThrough?: GameView['sightConfirmedThrough'];
   communicationReferences?: GameView['communicationReferences'];
   /** JSON omits undefined. Removed fields are explicit; null remains a meaningful value. */
   remove?: {
@@ -1281,6 +1287,14 @@ export interface GamePatch {
   ai?: Partial<GameView['ai']>;
   milestones?: GameView['milestones'];
   persistence?: GameView['persistence'];
+}
+
+/** Use the detail's own captured view: a newer header cannot refresh a retained old detail. */
+export function sightDetailTime(
+  view: Pick<GameView, 'sightConfirmedThrough'>,
+  time: number | undefined,
+): number | null {
+  return time ?? view.sightConfirmedThrough;
 }
 
 export interface ApiResult {

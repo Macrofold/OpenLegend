@@ -232,6 +232,7 @@ function publicView(): import('@open-legend/protocol').GameView {
   return {
     schemaVersion: 3,
     evaluationCut: 0,
+    sightConfirmedThrough: null,
     communicationReferences: [],
     revision: 1,
     worldId: 'world:a',
@@ -333,6 +334,7 @@ it('roundtrips optional-field removal through the actual JSON patch producer and
   const { projectPatch } = await import('../../server/src/view.js');
   const { applyGamePatch } = await import('./api.js');
   const previous = publicView();
+  previous.sightConfirmedThrough = 10;
   previous.player.activity = { name: 'A selected activity', status: 'active' };
   previous.player.bodyState = 'dead';
   previous.player.actionAnimation = {
@@ -350,6 +352,7 @@ it('roundtrips optional-field removal through the actual JSON patch producer and
   const before = structuredClone(previous);
   const next = structuredClone(previous);
   next.revision++;
+  next.sightConfirmedThrough = null;
   next.player.activity = undefined;
   delete next.player.bodyState;
   next.player.actionAnimation = null;
@@ -368,6 +371,9 @@ it('roundtrips optional-field removal through the actual JSON patch producer and
   expect(received.player.actionAnimation).toBeNull();
   expect(previous).toEqual(before);
   expect(received.map).toBe(previous.map);
+  expect(received.entities).toBe(previous.entities);
+  expect(wire.sightConfirmedThrough).toBeNull();
+  expect(received.sightConfirmedThrough).toBeNull();
 });
 
 it('retains entity removal/order and refuses an update for a different audience or base revision', async () => {

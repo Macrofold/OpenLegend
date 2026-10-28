@@ -17,6 +17,7 @@ import type { CommandDispatcher } from '../command-request';
 import { OutingStatus } from './outing-status';
 import { GodCharacterActions, type GodCharacterControls } from './god-character-actions';
 import { playerEntity } from '../entity-view';
+import { sightDetailTime } from '@open-legend/protocol';
 import { UsageRemaining } from './usage-remaining';
 import { ActionAttempts } from './action-attempts';
 import { RecipeDetails } from './recipe-details';
@@ -614,13 +615,26 @@ export function EntityDetail({
   const observations = events
     .filter((event) => !event.speech && event.presentation?.displayToPlayer !== false)
     .slice(-4);
-  const details = (
-    <div className="ol-person-overview" data-person={entity.kind === 'actor' || undefined}>
+  const bodyMeasuredAt =
+    entity.observation.kind === 'current'
+      ? sightDetailTime(view, entity.observation.measurementAt)
+      : null;
+  const carriedMeasuredAt = entity.observedCarried
+    ? sightDetailTime(view, entity.observedCarried.measurementAt)
+    : null;
+  const observedDetails = (
+    <>
       {entity.observation.kind === 'current' && (
         <p className="ol-caption">
-          In sight. Details observed{' '}
-          {formatDisplayNumber(Math.max(0, view.evaluationCut - entity.observation.measurementAt))}{' '}
-          game seconds ago.
+          In sight.
+          {bodyMeasuredAt !== null && (
+            <>
+              {' '}
+              Details observed{' '}
+              {formatDisplayNumber(Math.max(0, view.evaluationCut - bodyMeasuredAt))} game seconds
+              ago.
+            </>
+          )}
         </p>
       )}
       {entity.observedCarried && (
@@ -629,13 +643,23 @@ export function EntityDetail({
           {entity.observedCarried.items.length
             ? entity.observedCarried.items.map((item) => item.itemKindAsObserved).join(', ')
             : 'nothing discernible'}
-          . Observed{' '}
-          {formatDisplayNumber(
-            Math.max(0, view.evaluationCut - entity.observedCarried.measurementAt),
-          )}{' '}
-          game seconds ago.
+          .
+          {carriedMeasuredAt !== null && (
+            <>
+              {' '}
+              Observed {formatDisplayNumber(
+                Math.max(0, view.evaluationCut - carriedMeasuredAt),
+              )}{' '}
+              game seconds ago.
+            </>
+          )}
         </p>
       )}
+    </>
+  );
+  const details = (
+    <div className="ol-person-overview">
+      {observedDetails}
       <p className="ol-narrative">{entity.description ?? entity.status}</p>
       {entity.kind !== 'actor' && entity.contents && !entity.storage && (
         <ul>
@@ -684,6 +708,7 @@ export function EntityDetail({
           <div className="ol-person-column">
             <Section title="Doing now">
               <p>{entity.status}</p>
+              {observedDetails}
             </Section>
             {!!entity.attributes?.length && <Condition attributes={entity.attributes} />}
             {!!entity.statusEffects?.length && (

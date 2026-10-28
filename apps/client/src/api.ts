@@ -423,6 +423,9 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
     ...current,
     revision: patch.revision,
     evaluationCut: patch.evaluationCut,
+    ...(patch.sightConfirmedThrough !== undefined
+      ? { sightConfirmedThrough: patch.sightConfirmedThrough }
+      : {}),
     ...(patch.communicationReferences
       ? { communicationReferences: patch.communicationReferences }
       : {}),
