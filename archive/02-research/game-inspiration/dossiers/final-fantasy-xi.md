@@ -1,6 +1,6 @@
 # Final Fantasy XI — full research dossier
 
-**G88 · Research pass and corrective coverage review, September 26, 2026.** This dossier treats *Final Fantasy XI* as a **24-year evolving MMORPG**, not a frozen 2002/2003 launch artifact. Launch-era reviews are preserved because they explain the game's original social contract; current-system claims are grounded in Square Enix's official 2023–2026 returning-player guides and September 2026 service state. PlayStation 2/Xbox 360 support, original level-cap assumptions, pre-Trust party requirements, and later PC-only operation are kept distinct. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
+**G88 · October 28, 2026 refresh in progress; economics, reception, production/creation and final review remain open.** The September 26 research and corrective pass are preserved below. This dossier treats *Final Fantasy XI* as a **24-year evolving MMORPG**, not a frozen 2002/2003 launch artifact. Launch-era reviews are preserved because they explain the game's original social contract; current-system claims are grounded in Square Enix's official 2023–2026 returning-player guides and September 2026 service state. PlayStation 2/Xbox 360 support, original level-cap assumptions, pre-Trust party requirements, and later PC-only operation are kept distinct. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
 The central OpenLegend relevance is unusually strong: FFXI models a persistent world in which **one character can inhabit many professions, social groups and long-term equipment identities**, while combat's most distinctive power comes from timed cooperation between separately controlled people. Its 2013→2026 Trust evolution is also a rare live experiment in what happens when a socially interdependent MMORPG gradually makes its story and progression solo-accessible.
 
@@ -41,7 +41,11 @@ The **2026 promise is different**:
 
 This is not merely “the same MMO with easier leveling.” The **social dependency graph of the game has changed**.
 
-## 2. Current September 2026 service boundary
+<a id="2-current-september-2026-service-boundary"></a>
+
+## 2. Current service boundary
+
+The October 13, 2026 GMT update is confirmed delivered by Square Enix; the following September changes remain dated evidence, not a claim that September was the last update. [S26-01](#s26-01)
 
 FFXI remains an actively operated Windows-only MMORPG.
 
@@ -565,6 +569,10 @@ This is not full freeform housing architecture, but it gives the player:
 
 OpenLegend should go much further: housing can be a physical object in the shared simulation with ownership, guests, storage, workspaces, safety and social meaning.
 
+### Native authoring: arrange a useful room
+
+The official support workflow starts with a furnishing in the **Mog Safe**. Open **Layout**, select the item in the room’s blueprint view, move it to an allowed grid location and confirm placement. This makes owned furniture into a visible arrangement; buying the object and placing it are different actions. The guide documents placement, not reusable world scripts or a published room package. Visitor, revision and removal details are being checked separately in this refresh. [S26-02](#s26-02)
+
 ### Mog Garden and other noncombat loops
 
 **Mog Garden** is a separate personal production space. After the relevant nation-rank or pioneer access, a dinghy or Adoulin service provides entry. Limited daily harvests at its gathering sites build usage toward purchased rank upgrades; a combat level alone does not mature the garden. Gathering, spending for infrastructure and collecting later output are different steps. [FFXI47](#ffxi47)
@@ -688,6 +696,12 @@ The current Ultimate Collection includes the five boxed expansions plus add-ons.
 - ties story progression into Prime Weapon forging/upgrading and Sortie currency. [FFXI32](#ffxi32) [FFXI33](#ffxi33)
 
 This is one of FFXI's best achievements: a persistent MMO character can still participate in **authored story arcs with endings**, rather than the world requiring one endless plot.
+
+### Creation belief and national history
+
+The official introductory history tells of a divine-descended civilization destroyed after trying to reach paradise. **Altana’s five tears** become the five peoples; **Promathia** curses them with conflict. This is the introductory creation account, not an exhaustive resolution of the expansion mysteries. Tarutaru magic strengthens Windurst; its spread ends their monopoly. San d’Oria’s knightly expansion then meets Bastok’s firearms and industrial economy. **Cid’s** engineering and Jeuno’s bridges make technology and geography sources of influence. The **Shadow Lord’s** Crystal War forces the nations into an alliance brokered by **Kam’lanaut**; victory leaves devastation and mistrust. Twenty years later, the nations employ independent adventurers instead of committing their own armies. [S26-03](#s26-03)
+
+That framing connects the player’s ordinary employment to national history: a mission, travel permission or Conquest contribution belongs to institutions with reasons to recruit outsiders. The introductory account is deliberately kept distinct from the later Prishe/Promathia resolution below.
 
 ### Prishe and Ulmia: a specific life inside the expansion — spoilers
 
@@ -1316,3 +1330,11 @@ Accessed September 26, 2026. Primary guides and historical update text are disti
 <a id="ffxi56"></a>**FFXI56 — [March 10, 2020 version update](https://forum.square-enix.com/ffxi/threads/56575).** Square Enix, official forum. Odyssey entry, timed expedition and shared temporary izzat passages inspected; later Moogle Segments/Gaol come from FFXI10 rather than being backdated to launch.
 
 <a id="ffxi57"></a>**FFXI57 — [Monster Rearing](https://ffxiclopedia.fandom.com/wiki/Monster_Rearing).** Community activity reference. Substantive indexed care, growth, memento and cheer passages read, alongside the official access introduction in FFXI47. Not a general autonomous-creature simulation or a personally raised animal.
+
+### October 28, 2026 refresh sources
+
+<a id="s26-01"></a>**S26-01 — [October 13, 2026 update confirmation](https://www.playonline.com/ff11eu/polnews/news27784.shtml).** Square Enix. Full primary notice read October 28; delivered service update, without inferred patch contents.
+
+<a id="s26-02"></a>**S26-02 — [Mog House Layouts](https://support.na.square-enix.com/faqarticle.php?id=20&kid=11422).** Square Enix Support. Full primary placement instructions read October 28, 2026; documented, not executed.
+
+<a id="s26-03"></a>**S26-03 — [The History of Vana’diel](https://www.playonline.com/ff11us/intro/about/history.html).** Square Enix. Full primary introductory chronology read October 28, 2026; creation belief, national change and adventurer premise, not the whole later storyline.
