@@ -10,14 +10,13 @@ import {
   type BodyGeometrySample,
   type CurrentBodyGeometryInput,
   type LocationGeometrySample,
-  type ObservedBody,
 } from './perception-evidence.js';
 import { entityGet } from './entity-collection.js';
 import { readOnlyDraftView } from './draft.js';
 import type { Position, WorldState } from './types.js';
 
 export interface ReceivedBodyGeometry {
-  body: ObservedBody;
+  body: CurrentBodyGeometryInput['body'];
   sample: Pick<BodyGeometrySample, 'valueMeasuredFrom' | 'valueMeasuredThrough'>;
   location?: Omit<LocationGeometrySample, 'fact'>;
   motion?: {
@@ -94,7 +93,7 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
 }
 
 /** Full received body extent, expanded only by the supplied measurement error. */
-export function receivedBodyBounds(body: ObservedBody, error = 0): Bounds3 {
+export function receivedBodyBounds(body: CurrentBodyGeometryInput['body'], error = 0): Bounds3 {
   const point = body.position;
   return {
     min: { x: point.x - body.radius - error, y: point.y - error, z: point.z - body.radius - error },

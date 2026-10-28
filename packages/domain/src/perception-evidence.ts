@@ -605,7 +605,8 @@ export interface CurrentBodyGeometryInput {
   /** Private routing; player/model projection supplies its scoped reference. */
   sourceId: string;
   exposure: string;
-  body: ObservedBody;
+  /** Distance queries do not copy appearance; current facts still own those details. */
+  body: Pick<ObservedBody, 'position' | 'radius' | 'height'>;
   sample: BodyGeometrySample;
   location?: LocationGeometrySample;
   motion?: { earlier: LocationGeometrySample; later: LocationGeometrySample };
@@ -1370,7 +1371,11 @@ export function currentBodyGeometryInputs(
     result.push({
       sourceId: lease.subjectId,
       exposure: lease.exposure.episodeId,
-      body: cloneValue(bodyValue.body),
+      body: {
+        position: cloneValue(bodyValue.body.position),
+        radius: bodyValue.body.radius,
+        height: bodyValue.body.height,
+      },
       sample: interval(body),
       ...(pointValue?.kind === 'location'
         ? {
