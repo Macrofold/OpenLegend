@@ -432,6 +432,15 @@ export interface GameRepository extends WorldStore {
   usage(ceilingUsd: number, actorId?: string): Promise<Pick<GameView['ai'], 'budget' | 'usage'>>;
 }
 
+const retainedSourceTables = new Set([
+  'mind_awareness',
+  'mind_memories',
+  'mind_summaries',
+  'mind_temporal_chunks',
+  'mind_temporal_sources',
+  'mind_temporal_supports',
+]);
+
 /**
  * PostgreSQL game repository.
  * World snapshots and command receipts commit together. Paid attempts live outside the
@@ -447,7 +456,13 @@ export class SqlGameRepository implements GameRepository {
       positions = new Map<string, Map<string, number>>();
     for (let round = 0; round < 4; round++) {
       this.records.stageRetirements(state, rows, positions);
-      const changes = this.records.prepare(this.acceptedState ?? undefined, state);
+      // Retention joins only personal source changes. Preparing unrelated physical
+      // and current-perception records again in each closure round repeats the save.
+      const changes = this.records.prepare(
+        this.acceptedState ?? undefined,
+        state,
+        retainedSourceTables,
+      );
       const planned = await this.memories.prepareSourceVersionRetention(state, changes);
       const retained = await this.memories.prepareRetention(
         planned.state,

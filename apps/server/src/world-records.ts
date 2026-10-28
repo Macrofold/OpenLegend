@@ -326,9 +326,24 @@ export class WorldRecords {
   }
   /** Establishes derived storage-position metadata on the supplied collections.
    * A complete reference encoding for diagnostics must use an independent copy:
-   * recapturing an accepted collection can overwrite its live storage ordinals. */
-  prepare(before: SavedWorld | undefined, after: SavedWorld): RecordChanges {
+   * recapturing an accepted collection can overwrite its live storage ordinals.
+   * A selection prepares only those tables, plus ancestor deletions whose foreign
+   * keys remove selected records. Unrelated collections are never enumerated. */
+  prepare(
+    before: SavedWorld | undefined,
+    after: SavedWorld,
+    selectedTables?: ReadonlySet<string>,
+  ): RecordChanges {
     const changes: RecordChanges = { writes: new Map(), deletes: new Map(), rows: 0 };
+    const required = selectedTables ? new Set(selectedTables) : undefined;
+    if (required)
+      for (const table of selectedTables!) {
+        let parent = RECORD_PARENTS.get(table);
+        while (parent) {
+          required.add(parent);
+          parent = RECORD_PARENTS.get(parent);
+        }
+      }
     const visit = (
       node: RecordNode,
       old: Value,
@@ -339,6 +354,7 @@ export class WorldRecords {
       position: number,
       oldPosition = position,
     ) => {
+      if (required && !required.has(node.table)) return;
       if (old === next && oldPosition === position && !this.needsHotPrune) return;
       const id = recordId(path);
       if (next === undefined) {
@@ -352,29 +368,32 @@ export class WorldRecords {
         old = old === undefined ? undefined : node.encode(old);
         next = node.encode(next);
       }
-      const payload = encodedBody(node, next);
-      if (
-        old === undefined ||
-        (this.needsHotPrune && node.table === 'world_settings') ||
-        oldPosition !== position ||
-        payload !== encodedBody(node, old)
-      ) {
-        const rows = changes.writes.get(node.table) ?? [];
-        rows.push({
-          id,
-          parent,
-          slot,
-          position,
-          payload,
-          create: old === undefined,
-          extra: Object.values(node.columns ?? {}).map((column) =>
-            column.value(next as JsonRecord, path),
-          ),
-        });
-        changes.writes.set(node.table, rows);
-        changes.rows++;
+      if (!selectedTables || selectedTables.has(node.table)) {
+        const payload = encodedBody(node, next);
+        if (
+          old === undefined ||
+          (this.needsHotPrune && node.table === 'world_settings') ||
+          oldPosition !== position ||
+          payload !== encodedBody(node, old)
+        ) {
+          const rows = changes.writes.get(node.table) ?? [];
+          rows.push({
+            id,
+            parent,
+            slot,
+            position,
+            payload,
+            create: old === undefined,
+            extra: Object.values(node.columns ?? {}).map((column) =>
+              column.value(next as JsonRecord, path),
+            ),
+          });
+          changes.writes.set(node.table, rows);
+          changes.rows++;
+        }
       }
       for (const [field, child] of Object.entries(node.children ?? {})) {
+        if (required && !required.has(child.node.table)) continue;
         const previous = field === '$' ? old : own(old, field);
         const current = field === '$' ? next : own(next, field);
         if (previous === current && !(this.needsHotPrune && child.node.table === 'world_settings'))
@@ -640,8 +659,11 @@ export class WorldRecords {
     const retirement = this.retirements.get(after),
       retired = retirement?.rows;
     if (retired?.size) {
-      changes.expired = retired;
+      changes.expired = selectedTables
+        ? new Map([...retired].filter(([table]) => selectedTables.has(table)))
+        : retired;
       for (const [table, ids] of retired) {
+        if (selectedTables && !selectedTables.has(table)) continue;
         // A bounded cold-retention read already proved these exact rows exist.
         // Their replacement cannot be treated as a newly allocated identity.
         for (const row of changes.writes.get(table) ?? []) {
