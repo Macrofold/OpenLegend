@@ -1,6 +1,6 @@
 # Dungeon Fighter Online — full research dossier
 
-**G198 · October 28, 2026 — researched and independently reviewed.** This pass studies the PC Dungeon & Fighter / Dungeon Fighter Online regional services, using **DFO Global** for the operational mechanics below. Korean DNF, Chinese DNF, Global and mobile/franchise results remain separate. R01–R14 and applicable R15 are covered below, with regional scope, dated mechanics and evidence limits retained. No client, account, editor or payment was used.
+**G199 · October 28, 2026 — researched and independently reviewed.** This pass studies the PC Dungeon & Fighter / Dungeon Fighter Online regional services, using **DFO Global** for the operational mechanics below. Korean DNF, Chinese DNF, Global and mobile/franchise results remain separate. R01–R14 and applicable R15 are covered below, with regional scope, dated mechanics and evidence limits retained. No client, account, editor or payment was used.
 
 [Requirements](../research-requirements.md) · [MMO research progress](../research-progress-mmos-2026-10-26.md)
 

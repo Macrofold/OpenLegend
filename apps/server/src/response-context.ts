@@ -32,7 +32,7 @@ export function responseTrigger(
     : undefined;
   if (!aware) return `Situation change: ${fallback}`;
   const triggerKind = aware.triggerKind;
-  const time = `(${gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours)})`;
+  const time = `(${gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours, world.presentation?.calendar?.dayLabel)})`;
   if (aware.speech) {
     return `${triggerKind === 'addressed_speech' ? 'Addressed speech (to me)' : triggerKind === 'self_event' ? 'My own speech' : 'Nearby speech'}: ${speechDescription(aware)} ${time}`;
   }
@@ -67,7 +67,11 @@ export function responseTriggerContext(
       { source: 'awareness', value: aware },
       experienceModelBindings(world, actorId, { source: 'awareness', value: aware }, 'trigger'),
     ),
-    eventTime: gameTime(aware.at, world.statusEffectPolicy.clockOffsetHours),
+    eventTime: gameTime(
+      aware.at,
+      world.statusEffectPolicy.clockOffsetHours,
+      world.presentation?.calendar?.dayLabel,
+    ),
     ageGameSeconds: Math.max(0, world.simTime - aware.at),
     observerRelationship: aware.triggerKind ?? 'observed_event',
     // Omit inapplicable roles: strict AI serialization rejects undefined before dispatch.

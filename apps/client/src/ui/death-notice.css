@@ -4,7 +4,9 @@
   bottom: calc(var(--space-6) + 3rem);
   transform: translateX(-50%);
   width: min(32rem, calc(100vw - var(--space-6)));
-  z-index: 40;
+  /* This is a persistent notice, not a modal. Keep the HUD's task windows and
+   * checkpoint recovery above it so death cannot block their pointer controls. */
+  z-index: calc(var(--z-hud) - 1);
   display: grid;
   gap: var(--space-3);
   padding: var(--space-4);

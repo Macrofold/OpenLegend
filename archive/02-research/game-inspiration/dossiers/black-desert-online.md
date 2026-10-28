@@ -1,4 +1,4 @@
-# G192 — Black Desert Online
+# G193 — Black Desert Online
 
 **Checked October 26, 2026.** Scope is original PC Black Desert, primarily NA/EU, with regional guides and historical releases identified. Console and mobile are separate products/services. This is documentary research, not firsthand gameplay, a client benchmark or accepted OpenLegend scope.
 

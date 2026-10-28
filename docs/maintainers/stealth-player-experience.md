@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design: integrated for SAD-G's selected scope. Implementation: not started by this work. UX, accessibility, performance and security qualification: not performed.** Updated 2026-10-24.
+**Design: integrated for SAD-G's selected scope. Implementation: not started by this work. UX, accessibility, performance and security qualification: not performed.** Updated 2026-10-25.
 
 [Feature behavior](../projects/stealth-player-experience-feature-spec.md) owns controls, feedback and all ten player journeys. [Technical design](../projects/stealth-player-experience-tech-design.md) owns projection, input, component boundaries, invalid states and G-AC acceptance. [Limits](../limits/stealth-player-experience.md) owns discretionary defaults and remaining capacity questions. [SA coordination](stealth-awareness.md) owns A–G/I integration; this tracker is the focused SAI-G implementation owner.
 
@@ -20,9 +20,9 @@ The [source audit](../projects/stealth-player-experience-tech-design.md#contract
 - [x] Specify all ten journeys, useful nonlethal outcomes, failed ambush/recovery and distinct human/animal behavior.
 - [x] Specify complete minimum interface, progressive polish, component ownership and developer acceptance.
 - [x] Review all repertoire scopes and directly relevant entries; reconcile the selected presentation/control slice with the broader gameplay priorities.
-- [x] Record numerical defaults, the open player-emotion policy, implementation tasks and evidence limits.
+- [x] Record numerical defaults, the selected player-emotion policy and its remaining implementation/runtime qualification, implementation tasks and evidence limits.
 
-**Exit:** the selected product/interface design and shared boundaries are explicit for implementation planning. SA-D01 remains the deliberately open controlled-player emotion policy; dependent implementation must not choose it implicitly.
+**Exit:** the selected product/interface design and shared boundaries are explicit for implementation planning. SA-D01 selects authored controlled-player psychology; dependent implementation must qualify the selected policy.
 
 ## SPX01 — Integrate contracts and protect publication
 
@@ -77,7 +77,7 @@ The [source audit](../projects/stealth-player-experience-tech-design.md#contract
 - [ ] Preserve admitted evasion geometry and enforce current range before new cost. Separate finite startle end from persistent applicable effects.
 - [ ] Keep surprise eligibility private, injury composition native and lethal confirmation invariant to hidden target readiness. No new confirmation after ranged release.
 - [ ] Present only permitted actual contact/defense/injury/aftermath and useful recovery options. Qualify a registered warning with failed defense, retained expectation after guard ends, zero-injury shield contact and an unperceived miss without inventing cues or injury.
-- [ ] Resolve any claimed controlled-player persistent emotion behavior through the full SA-D01 decision before implementing or presenting it.
+- [ ] Implement and qualify selected SA-D01 authored player emotions, retained-appraisal applicability and truthful transfer/restore feedback before presenting the complete path.
 - [ ] Qualify G-J06–08 and relevant G-AC combat/time cases at 1×, permitted pause and debug speeds.
 
 **Exit:** betrayal/failed ambush/recovery continue playable ordinary action without a detection oracle or categorical startle lock.
@@ -112,8 +112,8 @@ The [source audit](../projects/stealth-player-experience-tech-design.md#contract
 
 - [ ] Execute every G-AC acceptance case through its actual native/server/client caller; include malicious/stale requests as well as UI behavior.
 - [ ] Run all ten G-J journeys, record actual screen/input sequence, invalid outcomes and accessible alternatives; do not substitute native-only tests.
-- [ ] Measure complete cue acquisition → publication → readable display → human input → native admission/action, separately from simulation's acquired/unacquired decision.
-- [ ] Measure cold/warm/dense cue/publication/restore/creator downgrade costs and bound retention/input queues under the limits inventory; record remaining scaling risks.
+- [ ] Measure complete cue acquisition → publication → readable display → human input → native admission/action, separately from simulation's acquired/unacquired decision. Include routine/danger cue overflow while steering, then keyboard/history access after the transient cue or last-seen marker leaves; reading must not depend on a quick pointer response.
+- [ ] Measure cold/warm/dense cue/publication/restore/creator downgrade costs and bound retention/input queues under the limits inventory; record remaining scaling risks. Qualify missed renewals, false stops and actual stopping distance together at ordinary pace and permitted debug speeds; do not shorten the watchdog merely to reduce calculated travel.
 - [ ] Conduct uncoached normal-speed play: can people distinguish current/history, move/look/crouch/stand, choose a watch, investigate a wrong sound and recover without explanation?
 - [ ] Assess whether quiet approach offers a useful choice versus ordinary movement; whether a nonlethal hare observation, voice encounter and empty search can feel worthwhile; record dead time and confusing costs.
 - [ ] Check sound-off, color/contrast/reduced-motion and promised input alternatives separately. Identify invisible acquired cues versus correctly unacquired world cues.
@@ -123,6 +123,6 @@ The [source audit](../projects/stealth-player-experience-tech-design.md#contract
 
 ## Dependencies and remaining decision
 
-The [integrated dependency contract](../projects/stealth-player-experience-tech-design.md#integrated-dependencies-and-remaining-decision) points to the canonical A–F owners. Implement and qualify their admitted values through the existing native, server and client paths. SA-D01 remains open for controlled-player appraisal production, retained-appraisal applicability, disclosure, revocation and transfer; the native-body-only initial recommendation is not an adopted policy.
+The [integrated dependency contract](../projects/stealth-player-experience-tech-design.md#integrated-dependencies-and-selected-player-policy) points to the canonical A–F owners. Implement and qualify their admitted values through the existing native, server and client paths. SA-D01 selects authored native player interpretation with applicable retained appraisals, permitted own feedback and fenced control transfer. EP06–EP09 retain exact profiles and lifecycle acceptance; SPX qualifies their client disclosure and controls.
 
 This design narrows the **needs-design** work for controls, perspective and basic remapping; it does not close all ND13 recommendations/devices, SA implementation, FPV play qualification or unrelated repertoire ideas. Source inspection and documentation review are the only verification conducted here.

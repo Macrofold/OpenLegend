@@ -53,6 +53,7 @@ body,
   --left-rail-height: 280px;
   --summary-bottom: calc(50% - var(--left-rail-height) / 2 - var(--space-3));
   --status-bottom: calc(var(--hud-inset) + var(--status-height) * var(--status-scale));
+  --sheet-bottom: calc(var(--control-md) + 2 * var(--space-3));
   position: absolute;
   inset: 0;
   pointer-events: none;
@@ -94,16 +95,15 @@ body,
 .ol-root h3 {
   margin: 0;
 }
-.ol-root
-  input:not([type='checkbox']):not([type='radio']):not(.ol-select-input):not(.ol-search input),
-.ol-root select,
-.ol-root textarea {
+/* Defaults yield to the input's semantic owner, including inputs inside a field.
+   Specificity here must not grow with the number of excluded native types. */
+:where(.ol-root) :where(input:not([type='checkbox']):not([type='radio']), select, textarea) {
   box-sizing: border-box;
   width: 100%;
   font: inherit;
   color: var(--ink);
-  background: var(--surface-raised);
-  border: 1px solid var(--line-strong);
+  background: var(--field-fill);
+  border: 1px solid var(--field-border);
   border-radius: var(--control-radius);
   padding: var(--space-2) var(--space-3);
   transition:
@@ -114,12 +114,12 @@ body,
 .ol-root label {
   color: var(--ink-muted);
 }
-.ol-root
-  input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.ol-select-input):not(
-    .ol-search input
-  ),
-.ol-root select,
-.ol-root .ol-field-control {
+:where(.ol-root)
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='range']),
+    select,
+    .ol-field-control
+  ) {
   min-block-size: var(--control-height);
   line-height: 20px;
 }
@@ -426,6 +426,18 @@ body,
   align-items: center;
   gap: var(--space-2);
 }
+.ol-panel-heading {
+  display: flex;
+  align-items: start;
+  gap: var(--space-4);
+  min-width: 0;
+}
+.ol-panel-heading-copy {
+  min-width: 0;
+}
+.ol-panel-heading-copy > p {
+  margin: var(--space-1) 0 0;
+}
 .ol-panel[data-draggable] {
   z-index: calc(var(--z-panel) + 1);
 }
@@ -693,8 +705,8 @@ body,
 .ol-picker {
   position: fixed;
   width: var(--panel-width);
-  max-width: calc(100vw - var(--space-6));
-  max-height: calc(100vh - var(--space-6));
+  max-width: calc((100vw - var(--space-6)) / var(--ui-scale, 1));
+  max-height: calc((100vh - var(--space-6)) / var(--ui-scale, 1));
   padding: var(--space-2);
   background: var(--surface);
   border: 1px solid var(--line-strong);
@@ -708,15 +720,48 @@ body,
 }
 .ol-picker-head {
   display: flex;
-  gap: var(--space-2);
+  gap: var(--space-3);
   align-items: center;
-  padding: var(--space-1) var(--space-2);
+  padding: var(--space-1) var(--space-3) var(--space-2);
+}
+.ol-picker-subject-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  inline-size: 64px;
+  block-size: 52px;
+  overflow: hidden;
+  border-radius: var(--control-radius);
+  background: var(--surface-well);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.ol-picker-subject-art > :is(.ol-item-illustration, .ol-portrait) {
+  max-block-size: 100%;
+}
+.ol-picker-subject-art img {
+  inline-size: auto;
+  block-size: auto;
+  max-inline-size: 64px;
+  max-block-size: 52px;
+}
+.ol-picker-subject {
+  flex: 1;
+  min-inline-size: 0;
 }
 .ol-picker-head strong {
-  flex: 1;
-  font-family: var(--font-heading);
-  font-size: 20px;
-  font-weight: 600;
+  display: block;
+  font: 600 var(--title-sm-size) / var(--title-sm-leading) var(--font-heading);
+}
+.ol-picker-subject-state {
+  display: block;
+  color: var(--ink-muted);
+  font: var(--text-detail-size) / var(--text-detail-leading) var(--font-ui);
+  overflow-wrap: anywhere;
+}
+.ol-picker-head > .ol-ibtn {
+  flex: none;
+  align-self: start;
 }
 :is(.ol-picker, .ol-action-browser) .ol-search {
   flex: none;
@@ -813,6 +858,112 @@ body,
 }
 .ol-item-hint {
   white-space: nowrap;
+}
+[data-theme='gildmoss'] .ol-picker {
+  padding: var(--space-2) 0;
+}
+[data-theme='gildmoss'] .ol-picker-subject-art {
+  background: var(--surface-art-well);
+}
+[data-theme='gildmoss'] .ol-picker .ol-search {
+  margin-inline: var(--space-3);
+}
+[data-theme='gildmoss'] .ol-menu-scroll {
+  padding: 0 var(--space-1);
+}
+[data-theme='gildmoss'] :is(.ol-item, .ol-pullout-option) {
+  position: relative;
+  min-height: var(--control-height);
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  padding-inline: var(--space-2);
+}
+[data-theme='gildmoss'] .ol-pullout-option {
+  grid-template-columns: 24px minmax(0, 1fr);
+}
+[data-theme='gildmoss'] .ol-action-choice .ol-item {
+  grid-template-columns: 24px minmax(0, 1fr);
+  padding-block: var(--space-1);
+}
+[data-theme='gildmoss'] .ol-item > .ol-icon-wrap {
+  justify-self: center;
+  width: 18px;
+  height: 18px;
+}
+[data-theme='gildmoss']
+  :is(.ol-item, .ol-pullout-option):is(
+    :hover,
+    [data-focused],
+    [data-hovered],
+    [data-active='true'],
+    [aria-expanded='true']
+  ) {
+  background: var(--surface-selected);
+  box-shadow: var(--selected-glow);
+}
+[data-theme='gildmoss']
+  :is(.ol-item, .ol-pullout-option):is(
+    :hover,
+    [data-focused],
+    [data-hovered],
+    [data-active='true'],
+    [aria-expanded='true']
+  )::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--metal-gold-edge);
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(black 0 0) content-box,
+    linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(black 0 0) content-box exclude,
+    linear-gradient(black 0 0);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-item[aria-disabled='true'],
+    .ol-item[data-unavailable='true'],
+    .ol-pullout-option[data-disabled]
+  ) {
+  color: var(--ink-faint);
+  padding-block: var(--space-2);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-item[aria-disabled='true'],
+    .ol-item[data-unavailable='true'],
+    .ol-pullout-option[data-disabled]
+  )
+  > .ol-icon-wrap {
+  opacity: 0.45;
+  filter: none;
+}
+[data-theme='gildmoss'] .ol-item[aria-disabled='true'] .ol-item-reason {
+  color: var(--danger);
+}
+[data-theme='gildmoss'] .ol-menu-sep {
+  margin: var(--space-1) var(--space-2);
+}
+@media (forced-colors: active) {
+  [data-theme='gildmoss']
+    :is(.ol-item, .ol-pullout-option):is(
+      :hover,
+      [data-focused],
+      [data-hovered],
+      [data-active='true'],
+      [aria-expanded='true']
+    ) {
+    outline: 1px solid Highlight;
+    outline-offset: -1px;
+  }
+  [data-theme='gildmoss'] :is(.ol-item, .ol-pullout-option)::before {
+    display: none;
+  }
 }
 .ol-fact {
   display: contents;
@@ -1393,6 +1544,13 @@ body,
   transform-origin: left;
   background: var(--world-text);
 }
+[data-theme='gildmoss'] .ol-status-progress {
+  width: 112px;
+  height: var(--progress-height);
+  border-radius: 2px;
+  background: var(--progress-track);
+  box-shadow: inset 0 0 0 1px var(--progress-edge);
+}
 
 .ol-hud[data-compact='true'] .ol-clock-position {
   left: auto;
@@ -1406,14 +1564,21 @@ body,
 .ol-hud[data-narrow='true'] {
   --hud-inset: var(--space-3);
   --status-scale: 0.72;
-  /* Reading tools start below the actual condition card, including enlarged text. */
+  /* Keep the natural HUD-below position when it leaves a useful reading area.
+   * Short screens may overlay that HUD rather than collapse an active task. */
   --sheet-tabs-space: 0px;
   --sheet-rail-top: max(
     calc(var(--status-bottom) + var(--space-2)),
     calc(var(--space-3) + var(--control-sm) + var(--space-2))
   );
-  --sheet-top: calc(
-    var(--sheet-rail-top) + var(--control-md) + 2 * var(--space-1) + var(--sheet-tabs-space)
+  --sheet-top: max(
+    calc(var(--space-2) + var(--sheet-tabs-space)),
+    min(
+      calc(
+        var(--sheet-rail-top) + var(--control-md) + 2 * var(--space-1) + var(--sheet-tabs-space)
+      ),
+      calc(100vh / var(--ui-scale, 1) - var(--sheet-bottom) - 320px)
+    )
   );
   --dock-top: max(
     230px,
@@ -1480,11 +1645,11 @@ body,
   height: var(--control-md);
 }
 .ol-hud[data-narrow='true'] .ol-dock {
-  top: auto;
+  top: var(--sheet-top);
   left: 0;
   right: 0;
-  bottom: 0;
-  height: 55%;
+  bottom: var(--sheet-bottom);
+  height: auto;
   z-index: var(--z-sheet);
 }
 .ol-hud[data-narrow='true'] .ol-panel-slot {
@@ -1504,7 +1669,7 @@ body,
 }
 .ol-hud[data-narrow='true'] .ol-mobile-tabs {
   position: absolute;
-  bottom: 55%;
+  bottom: calc(100% - var(--sheet-top));
   width: 100%;
   display: flex;
   overflow: auto;
@@ -1520,19 +1685,16 @@ body,
   bottom: calc(55% + 70px);
 }
 
-.ol-hud[data-narrow='true'] .ol-camera {
+.ol-hud[data-narrow='true'] .ol-camera:not([data-embedded]) {
   bottom: var(--space-3);
   right: var(--space-3);
   flex-direction: column;
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-camera {
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-camera:not([data-embedded]) {
   display: none;
 }
 .ol-hud[data-narrow='true'] .ol-thread {
   max-height: 25vh;
-}
-.ol-hud[data-narrow='true'] .ol-picker {
-  zoom: calc(1 / var(--ui-scale));
 }
 .ol-hud[data-narrow='true'] .ol-toast {
   bottom: var(--space-6);
@@ -1556,9 +1718,6 @@ body,
   transition: none !important;
 }
 
-.ol-picker {
-  zoom: calc(1 / var(--ui-scale));
-}
 .ol-root a {
   color: var(--accent);
 }
@@ -1638,15 +1797,11 @@ body,
   flex-direction: row;
   gap: var(--space-1);
 }
-.ol-hud:is([data-tight='true'], [data-short='true']) .ol-dock {
+.ol-hud:is([data-tight='true'], [data-short='true']):not([data-narrow='true']) .ol-dock {
   /* Reserve the launcher row and open-panel tabs at enlarged UI scales. A fixed
      half-screen sheet otherwise covers the controls needed to switch panels. */
   top: calc(var(--mobile-tabs-top) + var(--space-8) + 2 * var(--space-1));
   height: auto;
-}
-.ol-hud:is([data-tight='true'], [data-short='true']) .ol-mobile-tabs {
-  top: var(--mobile-tabs-top);
-  bottom: auto;
 }
 .ol-hud:is([data-tight='true'], [data-short='true']):has(.ol-mobile-tabs) .ol-quick-position {
   display: none;
@@ -2803,7 +2958,7 @@ body,
 }
 /* Keep the compact creator's ordinary message field and Send visible. Reuse the
  * camera's actual clearance, moving upward only when the default dock is too short. */
-.ol-hud:not([data-narrow='true'])
+.ol-hud:not([data-narrow='true']):not([data-gildmoss-layout])
   .ol-dock-right:has(
     .ol-panel-slot:not([hidden]) > :is(#agentPanel, #world-editorPanel):not([data-workspace])
   ) {
@@ -2812,11 +2967,13 @@ body,
     max(var(--hud-inset), calc(100% - var(--dock-right-clearance) - 480px))
   );
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-camera {
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-camera:not([data-embedded]) {
   display: grid;
   grid-template-columns: repeat(2, var(--control-md));
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-camera > :not(.ol-range-toggle) {
+.ol-hud[data-narrow='true']:has(.ol-mobile-tabs)
+  .ol-camera:not([data-embedded])
+  > :not(.ol-range-toggle) {
   display: none;
 }
 .ol-perception-hint {
@@ -2909,16 +3066,6 @@ body,
   .ol-launcher:focus-visible {
   outline-offset: -2px;
 }
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-dock {
-  top: var(--sheet-top);
-  bottom: calc(var(--control-md) + 2 * var(--space-3));
-  height: calc(100% - var(--sheet-top) - var(--control-md) - 2 * var(--space-3));
-}
-.ol-hud[data-narrow='true']:has(.ol-mobile-tabs) .ol-mobile-tabs {
-  top: auto;
-  bottom: calc(100% - var(--sheet-top));
-}
-
 @media (max-height: 600px) {
   /* Reuse the compact condition card so time controls leave the range strip clear. */
   .ol-hud[data-narrow='true'] {
@@ -3198,15 +3345,15 @@ body,
 }
 .ol-inspector-slot {
   position: absolute;
-  inset-inline-start: calc(28% + var(--inspector-offset));
+  inset-inline-start: var(--hud-inset);
   top: calc(var(--dock-top) + var(--inspector-offset));
   pointer-events: auto;
-  height: min(700px, calc(100% - var(--dock-top) - var(--inspector-offset) - var(--space-4)));
+  max-height: calc(100vh / var(--ui-scale, 1) - var(--dock-top) - var(--space-4));
 }
 .ol-inspector-slot > .ol-panel {
-  width: min(420px, calc(100vw - 32px));
-  height: 100%;
-  max-height: 100%;
+  width: min(420px, calc(100vw / var(--ui-scale, 1) - 32px));
+  height: auto;
+  max-height: inherit;
 }
 .ol-action-browser-embedded {
   display: flex;
@@ -3224,11 +3371,13 @@ body,
 .ol-hud[data-narrow='true'] .ol-inspector-slot {
   inset-inline: var(--space-2);
   top: var(--sheet-top);
-  bottom: calc(var(--control-md) + 2 * var(--space-3));
+  bottom: var(--sheet-bottom);
   height: auto;
+  max-height: none;
 }
 .ol-hud[data-narrow='true'] .ol-inspector-slot > .ol-panel {
   width: 100%;
+  height: 100%;
   max-height: 100%;
 }
 
@@ -3286,4 +3435,21 @@ body,
 }
 .ol-hud[data-picking='true'] .ol-opening-information {
   visibility: hidden;
+}
+
+/* Settings hosts the existing camera command owner without HUD positioning. */
+.ol-camera[data-embedded] {
+  position: static;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: 100%;
+  gap: var(--space-1);
+  background: transparent;
+  box-shadow: none;
+}
+.ol-camera[data-embedded] .ol-camera-advanced {
+  width: 100%;
+  grid-template-columns: repeat(auto-fit, minmax(var(--control-md), 1fr));
 }

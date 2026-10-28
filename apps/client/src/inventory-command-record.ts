@@ -11,7 +11,7 @@ export function inventoryCommandStorageKey(
   worldId: string,
   actorId: string,
   timeline?: string,
-  task?: 'construction' | 'hearth' | 'work-batch' | 'attack',
+  task?: 'construction' | 'hearth' | 'work-batch' | 'attack' | 'trade',
 ) {
   return recoveryScope
     ? `open-legend:inventory-command:${JSON.stringify([recoveryScope, worldId, actorId, timeline, ...(task ? [task] : [])])}`

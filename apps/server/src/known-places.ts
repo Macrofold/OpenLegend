@@ -1,3 +1,4 @@
+import { knowledgeDocument } from '@open-legend/domain';
 import { currentPlaceObservation } from '@open-legend/domain';
 import type {
   KnownPlaceView,
@@ -117,7 +118,12 @@ export async function knownPlaces(
     generation: prepared.generation,
     entries: result.entries.flatMap((entry) => {
       const place = placeView(entry);
-      return place ? [place] : [];
+      const note = place
+        ? knowledgeDocument(prepared.world, scope.actorId, place.id, 'place')
+        : undefined;
+      return place
+        ? [{ ...place, note: { text: note?.text ?? '', revision: note?.revision ?? 0 } }]
+        : [];
     }),
     next: result.after
       ? Buffer.from(JSON.stringify({ fence, after: result.after })).toString('base64url')
@@ -126,7 +132,7 @@ export async function knownPlaces(
   };
 }
 
-async function selectedPlace(service: WorldService, actorId: string, reference: Reference) {
+export async function selectedPlace(service: WorldService, actorId: string, reference: Reference) {
   const prepared = await prepare(service, actorId);
   const result = await prepared.repository.knownPlaces(prepared.scope, {
     placeId: reference.id,
@@ -179,7 +185,7 @@ export async function inspectKnownPlace(
     !place.corrected &&
     currentPlaceObservation(service.world, exposure);
   const preview = valid
-    ? service.previewCommand({ type: 'move', position: place.position }, scope.actorId)
+    ? service.previewCommand({ type: 'move', position: place.position }, scope)
     : { ok: false, message: unavailable };
   return {
     ok: true,

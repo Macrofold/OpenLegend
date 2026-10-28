@@ -1,0 +1,39 @@
+.ol-speech-caption-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.ol-speech-caption-body {
+  min-width: 0;
+  flex: 1;
+}
+.ol-speech-caption-head {
+  display: flex;
+  flex: none;
+  zoom: var(--caption-scale, 1);
+}
+[data-theme='gildmoss'] .ol-speech-caption {
+  max-width: min(calc(420px * var(--caption-scale, 1)), calc(100vw - 32px));
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-world);
+  text-shadow: var(--world-text-shadow);
+  font-family: var(--font-ui);
+  font-weight: 500;
+}
+[data-theme='gildmoss'] .ol-speech-caption-meta {
+  color: var(--ink-world-name);
+  font-family: var(--font-heading);
+  font-size: calc(var(--world-name-size) * var(--caption-scale, 1));
+  line-height: calc(var(--world-name-leading) * var(--caption-scale, 1));
+  font-weight: 600;
+}
+[data-theme='gildmoss'] .ol-speech-caption-recipient,
+[data-theme='gildmoss'] .ol-speech-direction-label {
+  color: var(--ink-world);
+  font-size: calc(var(--text-detail-size) * var(--caption-scale, 1));
+  line-height: 1.4;
+}

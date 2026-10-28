@@ -140,7 +140,7 @@ function frontier(world: WorldState, actorId: string, plan: ActorPlan, direct: b
     plan.status === 'blocked'
       ? (plan.activity?.reason ?? blockedStep?.outcome?.message)
       : waiting && next!.node.kind === 'wait' && next!.node.until.test === 'time'
-        ? `Ends at ${gameTime(next!.node.until.at, world.statusEffectPolicy.clockOffsetHours)}; anything chosen meanwhile can interrupt it.`
+        ? `Ends at ${gameTime(next!.node.until.at, world.statusEffectPolicy.clockOffsetHours, world.presentation?.calendar?.dayLabel)}; anything chosen meanwhile can interrupt it.`
         : direct && state === 'queued'
           ? 'Starts after the action already under way ends.'
           : undefined;

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-24   |
+| In progress | Design complete and reviewed; VG01–VG08 implementation, runtime qualification and playtesting have not started. | 2026-10-25   |
 
 ## 1. Authority, dependencies and completion boundary
 
@@ -517,7 +517,7 @@ E’s finite observation/watch work and G’s authorized frozen-value presentati
 
 Selected: physical pose separate from camera/motion; one action owner; finite physical rigs/patches; actual range/fields and materials/lights; separate detection/detail and face geometry; finite precision bands; canonical active-scope sampled support with exact real occurrence cuts; complete indexed candidates and resumable work; and source-free permitted appearance. The numerical fidelity is declared and the producer/consumer shapes are settled.
 
-Implementation and mechanical/performance/play qualification remain open. The source revision, Perception, posture/movement, received-motion and sampling contracts above are integrated; their owners must implement producers and consumers together. SA-D01 remains the separate controlled-player psychological policy decision. Changing selected B behavior requires updating this pair, policy, limits and tracker together.
+Implementation and mechanical/performance/play qualification remain open. The source revision, Perception, posture/movement, received-motion and sampling contracts above are integrated; their owners must implement producers and consumers together. The selected [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) authored native controlled-player policy remains separate; its exact profile rules and qualification belong to emotional physiology. Changing selected B behavior requires updating this pair, policy, limits and tracker together.
 
 Unqualified tuning/capacity remains explicit: field widths, turn/control rates, locomotion factors, brightness/contrast/size thresholds, quality bands, patch density, eye/head allocation reach, appearance distributions, finite solver work and dense-scene throughput. Initial values are selected for readable ordinary play, not validated human physiology or measured performance. VG08 must separately test whether people enjoy useful looking/light/cover and can understand failures without constant vigilance chores. Future optics, more anatomical parts, broad senses or richer rendering need their own measured supported extensions; no open-ended solver promise is implied.
 

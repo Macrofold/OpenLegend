@@ -6,6 +6,7 @@ import { recipeMechanicalPin } from '../../invention-families.js';
 import { worldPlacement } from '../../spatial-state.js';
 import { starterGroundAt } from './landscape.js';
 import type { Entity, RecipeCandidate, WorldState } from '../../types.js';
+import { BASE_SLING_ART, bindBaseItemArt } from './presentation.js';
 
 /** One authored source for positions, stock and readable clues. New starts only.
  * docs/worlds/base/rewarding-expeditions.md */
@@ -35,6 +36,7 @@ export function installExpeditions(world: WorldState): void {
     source: 'authored-world',
     profile: { ...world.profile },
   });
+  bindBaseItemArt(world, recipe.outputs[0]!.definition.id, BASE_SLING_ART);
   world.itemDefinitions['workshop-directions'] = {
     id: 'workshop-directions',
     version: 1,

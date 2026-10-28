@@ -2,6 +2,7 @@ import { entityGet } from '@open-legend/domain';
 import {
   COMMITMENT_ADMISSION_LIMIT,
   observerDescription,
+  recognizesSubject,
   openObligations,
   unresolvedCommitmentCount,
   type MemoryRecord,
@@ -43,6 +44,9 @@ function promiseView(world: WorldState, actorId: string, memory: MemoryRecord): 
     id: memory.id,
     revision: obligation.revision,
     words: start >= 0 ? memory.summary.slice(start) : memory.summary,
+    // An internal historical identity does not identify a currently unrecognized
+    // body. Keep the promise readable without granting that person-window join.
+    recipientId: recipientId && recognizesSubject(world, actorId, recipientId) ? recipientId : null,
     recipient: recipientId ? observerDescription(world, actorId, recipientId, 'definite') : null,
     madeAt: memory.at,
     status,

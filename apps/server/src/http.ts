@@ -97,14 +97,17 @@ import { commandInputSchema, requestIdSchema } from './command-input-schema.js';
 import { worldInputSchema } from './world-input-schema.js';
 import { projectPatch, projectView, ViewChangedError } from './view.js';
 import type { GameSaveCatalog, GameView } from '@open-legend/protocol';
+import { INVENTORY_FILTERS, INVENTORY_SORTS } from '@open-legend/protocol';
 import { actionCatalogue, ActionCatalogueUnavailable } from './action-catalogue.js';
 import {
   containerPage,
   inventoryAccess,
+  inventoryBindings,
   inventoryDestinationPage,
   objectHistoryPage,
 } from './inventory-view.js';
 import { activityRequests, activityStatus, activityChoicePage } from './activity-requests.js';
+import { tradeDisclosures } from './trade-disclosures.js';
 
 const clientId = z
   .string()
@@ -512,7 +515,7 @@ async function initializeGameServer(
       now: options.now,
       closeStore: !options.store,
       prepare: (initial, binding, candidate) =>
-        prepareCreatedWorld(initial, binding, config, candidate),
+        prepareCreatedWorld(initial, binding, config, candidate, assetIndex.release),
       adopt: (receipt, publicServer) =>
         createGameServer({
           ...options,
@@ -1625,6 +1628,8 @@ async function initializeGameServer(
           '/api/command',
           '/api/input',
           '/api/knowledge',
+          '/api/nickname',
+          '/api/map/marker',
           '/api/control',
           '/api/conversation',
           '/api/commitment',
@@ -1969,7 +1974,7 @@ async function initializeGameServer(
                   message: 'Review an activity or cooperation proposal.',
                 });
               service.assertScope(scope, 'play', true);
-              return send(response, 200, service.previewCommand(input, scope.actorId, true, scope));
+              return send(response, 200, service.previewCommand(input, scope));
             }
             case '/api/inventory/history': {
               const value = z
@@ -2005,10 +2010,31 @@ async function initializeGameServer(
                   query: z.string().max(160).optional(),
                   cursor: z.string().max(3000).optional(),
                   mergeSourceId: requestIdSchema.optional(),
+                  sort: z.enum(INVENTORY_SORTS).optional(),
+                  filter: z.enum(INVENTORY_FILTERS).optional(),
                 })
                 .strict()
                 .parse(body);
               return send(response, 200, containerPage(service, scope, value));
+            }
+            case '/api/inventory/bindings': {
+              const value = z
+                // This read has one exact ID per displayed hotbar slot, never a full inventory.
+                .object({ itemIds: z.array(requestIdSchema).max(10) })
+                .strict()
+                .parse(body);
+              return send(response, 200, inventoryBindings(service, scope, value.itemIds));
+            }
+            case '/api/trade/disclosures': {
+              const value = z
+                .object({
+                  personId: requestIdSchema,
+                  query: z.string().max(160).optional(),
+                  cursor: z.string().max(3000).optional(),
+                })
+                .strict()
+                .parse(body);
+              return send(response, 200, await tradeDisclosures(service, scope, value));
             }
             case '/api/inventory/access': {
               const value = z
@@ -2840,6 +2866,42 @@ async function initializeGameServer(
                 ...(result.ok ? { mind: await inspectGodMind(service, value.actorId, scope) } : {}),
               });
             }
+            case '/api/nickname': {
+              const value = z
+                .object({
+                  worldId: requestIdSchema,
+                  generation: requestIdSchema,
+                  subjectId: requestIdSchema,
+                  expectedRevision: z.number().int().nonnegative(),
+                  nickname: z.string().max(160),
+                })
+                .strict()
+                .parse(body);
+              return send(response, 200, await service.editObserverNickname(value, scope));
+            }
+            case '/api/map/marker': {
+              const common = {
+                worldId: requestIdSchema,
+                generation: requestIdSchema,
+                id: requestIdSchema,
+                expectedRevision: z.number().int().nonnegative(),
+              };
+              const value = z
+                .union([
+                  z.object({ ...common, remove: z.literal(true) }).strict(),
+                  z
+                    .object({
+                      ...common,
+                      x: z.number().finite(),
+                      z: z.number().finite(),
+                      label: z.string().max(400),
+                      icon: z.string().min(1).max(120),
+                    })
+                    .strict(),
+                ])
+                .parse(body);
+              return send(response, 200, await service.editMapAnnotation(value, scope));
+            }
             case '/api/knowledge':
             case '/api/god/knowledge': {
               const owned = url.pathname === '/api/knowledge';
@@ -2851,9 +2913,12 @@ async function initializeGameServer(
                   generation: requestIdSchema,
                   actorId: requestIdSchema,
                   subjectId: requestIdSchema.nullable(),
+                  subjectKind: z.enum(['place', 'map-marker']).optional(),
                   expectedRevision: z.number().int().nonnegative(),
                   text: z.string(),
                   givenName: z.string().optional(),
+                  nickname: z.string().optional(),
+                  place: knownPlaceReference.optional(),
                   nameRevision: z.number().int().nonnegative().optional(),
                 })
                 .strict()

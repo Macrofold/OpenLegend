@@ -23,6 +23,7 @@ import type { WorldCreationAccounts } from '../../invention-attribution.js';
 import type { CharacterTrait, Entity, RecipeCandidate, WorldState } from '../../types.js';
 import { createActor, createFreshBaseWorld } from './world.js';
 import { NATIVE_ITEMS } from './items.js';
+import { BASE_SHIELD_ART, BASE_POUCH_ART, bindBaseItemArt } from './presentation.js';
 import { ADA_IDENTITY } from './characters.js';
 import { KNOWN_SHIELD_METHOD } from './shield-family.js';
 import { BASE_WOVEN_CONTAINER_METHOD } from './container-method.js';
@@ -764,6 +765,12 @@ export function buildBaseInitialWorld(
             ).recipe.id
           : installRecipe(world, openingMethod(knowledge.method), provenance).recipe.id;
       installed.set(knowledge.method, recipeId);
+      if (knowledge.method === 'wooden-shield' || knowledge.method === 'woven-container')
+        bindBaseItemArt(
+          world,
+          world.recipes[recipeId]!.outputs[0]!.definition.id,
+          knowledge.method === 'wooden-shield' ? BASE_SHIELD_ART : BASE_POUCH_ART,
+        );
     }
     learnRecipe(world, knowledge.actorId, recipeId, 'authored', `opening:${knowledge.method}`);
   }

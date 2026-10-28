@@ -1,3 +1,5 @@
+import { equippedItems, recognizesSubject, knowledgeDocument } from '@open-legend/domain';
+import { worldClockParts, worldDayText } from '@open-legend/protocol';
 import { attackSourceView } from './attack-execution-view.js';
 import { perceivedOffersBetween, knownTradeLots } from '@open-legend/domain';
 import { contributionWithdrawals } from './handover-actions.js';
@@ -112,9 +114,18 @@ import {
 } from '@open-legend/domain';
 import { describeEntity } from './entity-description.js';
 import { entityBodyReference, contextActionRevision } from './entity-references.js';
-import { perceivedEncounterPreferenceBinding } from '@open-legend/domain';
+import { itemIllustration, perceivedEncounterPreferenceBinding } from '@open-legend/domain';
 import { reincarnationPolicy, scarTreatmentProblem } from '@open-legend/domain';
 import type { WorldService } from './world-service.js';
+
+/** Called only for the controlled player or an already permitted entity. Do not
+ * project the world's lookup table: it can name people the observer has not met. */
+function portraitArt(world: WorldState, appearance: string | undefined) {
+  const portraits = world.presentation?.portraits;
+  return portraits && appearance && Object.hasOwn(portraits, appearance)
+    ? portraits[appearance]
+    : undefined;
+}
 
 /** Private evidence changed during a read; discard and prepare a current view. */
 export class ViewChangedError extends Error {
@@ -191,11 +202,16 @@ function isJournalEvent(event: { type: string; text: string; data?: Record<strin
 }
 
 /** Calendar projection shared by embodied views and the characterless operations view. */
-export const calendarFields = (world: WorldState) => ({
-  seconds: world.simTime,
-  day: Math.floor(world.simTime / 86400) + 1,
-  hour: (world.statusEffectPolicy.clockOffsetHours + world.simTime / 3600) % 24,
-});
+export const calendarFields = (world: WorldState) => {
+  const { day, hour } = worldClockParts(world.simTime, world.statusEffectPolicy.clockOffsetHours);
+  return {
+    seconds: world.simTime,
+    day,
+    hour,
+    offsetHours: world.statusEffectPolicy.clockOffsetHours,
+    ...(world.presentation?.calendar ? { dayLabel: world.presentation.calendar.dayLabel } : {}),
+  };
+};
 
 /** This explicit projection is a security boundary: never serialize WorldState to the browser. */
 export async function projectView(
@@ -481,6 +497,7 @@ export async function projectView(
       world.resourceReservations,
       world.itemDefinitions,
       world.recipes,
+      world.presentation?.itemArt,
       actor.inventoryInspection,
       world.knowledge[player.id],
       player.inventoryRevision,
@@ -524,6 +541,10 @@ export async function projectView(
             ? service.gateUseReadRevision(entity.id)
             : undefined,
           world.observerIdentities?.[scope.actorId]?.[entity.id],
+          entity.actor ? world.presentation?.portraits : undefined,
+          entity.actor || entity.resource || entity.kind === 'item-pile' || entity.remains
+            ? world.presentation?.itemArt
+            : undefined,
           world.perceptionEpisodes?.[scope.actorId]?.[entity.id],
           entity.kind === 'item-pile' || entity.remains ? pileContents.get(entity.id) : undefined,
           // Fire care availability depends on the player's carried tinder, drill and fuel.
@@ -648,7 +669,7 @@ export async function projectView(
             [coaching.learnerId, coaching.coachId].includes(entity.id)
           )
             for (const option of competenceOptions(world, scope.actorId, entity, [])) {
-              const preview = service.previewCommand(option.command, scope.actorId);
+              const preview = service.previewCommand(option.command, scope);
               controls.push(
                 action(option.id, option.label, option.command, preview.ok, preview.message),
               );
@@ -661,7 +682,7 @@ export async function projectView(
               entity,
               { offers: false },
             )) {
-              const preview = service.previewCommand(option.command, scope.actorId);
+              const preview = service.previewCommand(option.command, scope);
               controls.push(
                 action(option.id, option.shortLabel, option.command, preview.ok, preview.message),
               );
@@ -708,9 +729,29 @@ export async function projectView(
                 }
               : {}),
             ...display,
+            ...(entity.actor &&
+            recognizesSubject(world, scope.actorId, entity.id) &&
+            world.observerIdentities?.[scope.actorId]?.[entity.id]
+              ? {
+                  identity: {
+                    ...(world.observerIdentities[scope.actorId]![entity.id]!.givenName
+                      ? {
+                          knownName: world.observerIdentities[scope.actorId]![entity.id]!.givenName,
+                        }
+                      : {}),
+                    ...(world.observerIdentities[scope.actorId]![entity.id]!.nickname
+                      ? { nickname: world.observerIdentities[scope.actorId]![entity.id]!.nickname }
+                      : {}),
+                    revision: world.observerIdentities[scope.actorId]![entity.id]!.revision,
+                  },
+                }
+              : {}),
             icon: entity.resource
               ? world.itemDefinitions[entity.resource.definitionId]?.icon
               : entity.icon,
+            ...(entity.resource
+              ? { art: itemIllustration(world, entity.resource.definitionId) }
+              : {}),
             storage: inventoryStorageHint(service, scope, entity.id),
             ...(entity.kind === 'item-pile' || entity.remains
               ? { contents: pileContents.get(entity.id) ?? [] }
@@ -723,6 +764,7 @@ export async function projectView(
             supportSurfaceId: worldSupport(entity),
             heading: entity.spatial.heading,
             appearance: entity.appearance ?? 'sprite',
+            ...(entity.actor ? { portrait: portraitArt(world, entity.appearance) } : {}),
             ...(entity.heat ? { heat: { lit: entity.heat.lit } } : {}),
             radius: bodySize ? bodySize.width / 2 : entity.kind === 'campfire' ? 0.5 : 0.35,
             contextActionRevision: contextActionRevision(
@@ -874,8 +916,14 @@ export async function projectView(
                         trade: itemTradeView(
                           world,
                           scope.actorId,
-                          memo('tradeOwnLots', [observation.inventory, world.itemDefinitions], () =>
-                            tradeOwnLots(world, observation.inventory),
+                          memo(
+                            'tradeOwnLots',
+                            [
+                              observation.inventory,
+                              world.itemDefinitions,
+                              world.presentation?.itemArt,
+                            ],
+                            () => tradeOwnLots(world, observation.inventory),
                           ),
                           entity,
                           JSON.stringify([privateDraftScopeKey(scope), service.timelineId]),
@@ -990,7 +1038,7 @@ export async function projectView(
   // Only paused existing work needs the service's exceptional-command check;
   // ordinary Stop remains a cheap direct control, not a fresh full action menu.
   const pausedStop =
-    hasWork && paused ? service.previewCommand({ type: 'cancel' }, player.id) : undefined;
+    hasWork && paused ? service.previewCommand({ type: 'cancel' }, scope) : undefined;
   const playerControls = [
     action(
       'cancel',
@@ -1005,7 +1053,7 @@ export async function projectView(
     scope.actorId,
     service.store.authority!.constructionPermissions(world.id),
   )) {
-    const checked = service.previewCommand(option.command, scope.actorId);
+    const checked = service.previewCommand(option.command, scope);
     playerControls.push(
       action(option.id, option.label, option.command, checked.ok, checked.message),
     );
@@ -1093,6 +1141,8 @@ export async function projectView(
       service.store.history?.latestNarration(world.id, scope.accountId) ?? Promise.resolve(null),
   );
   const assetAuthorityGeneration = service.assetAuthorityGeneration;
+  const placesRevision =
+    service.store.memories?.knownPlacesRevision(player.id) ?? service.generation;
   const presentationRelease = await service.presentationReleaseFor(scope);
   const projected: GameView = {
     schemaVersion: 3,
@@ -1129,6 +1179,42 @@ export async function projectView(
       ? { presentationReleaseRevision: service.presentationReleaseRevision }
       : {}),
     presentation,
+    ...(world.presentation?.mapArt
+      ? {
+          cartography: memo<NonNullable<GameView['cartography']>>(
+            'cartography',
+            [
+              world.presentation.mapArt,
+              world.knowledgePolicy,
+              world.mapMarkers?.[player.id],
+              world.actorKnowledge?.[player.id],
+              world.knowledgeRevisions?.[player.id],
+              placesRevision,
+            ],
+            () => {
+              const art = world.presentation!.mapArt!;
+              return {
+                art: { path: art.path, bounds: { ...art.bounds }, northDegrees: art.northDegrees },
+                revision: world.knowledgeRevisions?.[player.id] ?? 0,
+                placesRevision,
+                maxMarkers: art.maxMarkers,
+                labelCharacters: art.labelCharacters,
+                ...(world.knowledgePolicy
+                  ? { noteCharacters: world.knowledgePolicy.maxCharacters.subject }
+                  : {}),
+                markerIcons: art.markerIcons.map((icon) => ({ ...icon })),
+                markers: Object.values(world.mapMarkers?.[player.id] ?? {}).map((marker) => {
+                  const note = knowledgeDocument(world, player.id, marker.id, 'map-marker');
+                  return {
+                    ...marker,
+                    note: { text: note?.text ?? '', revision: note?.revision ?? 0 },
+                  };
+                }),
+              };
+            },
+          ),
+        }
+      : {}),
     saveTimeline: service.timelineId,
     commandEpoch: service.commandEpoch,
     godMode: service.config.godMode && service.currentScope(scope, 'create'),
@@ -1182,11 +1268,11 @@ export async function projectView(
       pauseReason: pauseReason,
       preparingNavigation: navigationBlocked(world),
       namedTimes: namedClockTimes(world),
-      offsetHours: world.statusEffectPolicy.clockOffsetHours,
     },
     player: {
       knowledgeRevision: world.knowledgeRevisions?.[player.id] ?? 0,
       appearance: player.appearance ?? 'sprite',
+      portrait: portraitArt(world, player.appearance),
       participation: actor.participation?.phase ?? 'active',
       departureNotice: world.participationPolicy?.exitDescription,
       id: player.id,
@@ -1372,8 +1458,53 @@ export async function projectView(
         service.historyEpoch,
         service.store.memories?.actorRevision(player.id) ?? 0,
       ]),
-      history: `Your time in this world began on Day 1. You have been here for ${Math.floor(world.simTime / 86400)} full days.`,
+      // Two finite presentation substitutions preserve the world's authored self
+      // description. Elapsed whole intervals use zero offset, unlike date labels.
+      ...(world.presentation?.calendar?.historyTemplate
+        ? {
+            history: world.presentation.calendar.historyTemplate
+              .replaceAll(
+                '{startDay}',
+                worldDayText(
+                  worldClockParts(0, world.statusEffectPolicy.clockOffsetHours).day,
+                  world.presentation.calendar.dayLabel,
+                ),
+              )
+              .replaceAll('{elapsedDays}', String(worldClockParts(world.simTime, 0).day - 1)),
+          }
+        : {}),
       inventory,
+      equipmentPorts: memo(
+        'equipment-ports',
+        [
+          actor.body?.equipmentPorts,
+          player.inventoryRevision,
+          world.itemDefinitions,
+          world.presentation?.itemArt,
+        ],
+        () => {
+          const attached = equippedItems(world, player.id);
+          return (actor.body?.equipmentPorts ?? []).map((port) => {
+            const item = attached.find((item) =>
+              world.itemDefinitions[item.definitionId]!.equipment!.ports.includes(port.id),
+            );
+            const definition = item && world.itemDefinitions[item.definitionId]!;
+            return {
+              ...port,
+              ...(item && definition
+                ? {
+                    item: {
+                      id: item.id,
+                      name: definition.name,
+                      art: itemIllustration(world, item.definitionId),
+                      ...(definition.icon ? { icon: definition.icon } : {}),
+                    },
+                  }
+                : {}),
+            };
+          });
+        },
+      ),
       inventoryRevision: player.inventoryRevision ?? 0,
       constructionRevision: service.constructionReadRevision(player.id),
       workBatchRevision: world.workBatchPolicy
@@ -1618,7 +1749,14 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   const player = changedFields(previous.player, next.player);
   const ai = changedFields(previous.ai, next.ai);
   const removedView = (
-    ['commandEpoch', 'worldEventsRevision', 'historyRevision', 'historyEpoch', 'narrator'] as const
+    [
+      'commandEpoch',
+      'worldEventsRevision',
+      'historyRevision',
+      'historyEpoch',
+      'narrator',
+      'cartography',
+    ] as const
   ).filter((key) => previous[key] !== undefined && next[key] === undefined);
   const removedClock = removedFields(previous.clock, next.clock);
   const removedPlayer = removedFields(previous.player, next.player);
@@ -1626,6 +1764,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   return {
     schemaVersion: 3,
     scope: next.access?.scope,
+    ...(!same(previous.cartography, next.cartography) ? { cartography: next.cartography } : {}),
     ...(removedView.length || removedClock || removedPlayer || removedAi
       ? {
           remove: {

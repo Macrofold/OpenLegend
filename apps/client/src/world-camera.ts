@@ -6,6 +6,8 @@ export interface CameraState {
   zoom: number;
   projection: 'orthographic' | 'perspective';
   rotationLocked: boolean;
+  /** Keep the view aligned with the controlled character's admitted gaze. */
+  perspectiveLocked?: boolean;
   following: boolean;
 }
 export type CameraCommand =
@@ -15,6 +17,7 @@ export type CameraCommand =
   | { type: 'focus'; point: WorldPoint }
   | { type: 'projection' }
   | { type: 'rotation-lock' }
+  | { type: 'perspective-lock' }
   | { type: 'follow' };
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 export const CAMERA_FOV_DEGREES = 45;
@@ -26,6 +29,7 @@ export function initialCamera(): CameraState {
     zoom: 5.5,
     projection: 'orthographic',
     rotationLocked: false,
+    perspectiveLocked: true,
     following: true,
   };
 }
@@ -36,9 +40,10 @@ export function updateCamera(state: CameraState, command: CameraCommand): Camera
       if (![command.yaw, command.pitch].every(Number.isFinite)) return state;
       return {
         ...state,
-        yaw: state.rotationLocked
-          ? state.yaw
-          : Math.atan2(Math.sin(state.yaw + command.yaw), Math.cos(state.yaw + command.yaw)),
+        yaw:
+          state.rotationLocked || state.perspectiveLocked
+            ? state.yaw
+            : Math.atan2(Math.sin(state.yaw + command.yaw), Math.cos(state.yaw + command.yaw)),
         pitch: clamp(state.pitch + command.pitch, Math.PI / 7.2, Math.PI / 2.4),
       };
     case 'pan': {
@@ -53,6 +58,7 @@ export function updateCamera(state: CameraState, command: CameraCommand): Camera
       return {
         ...state,
         following: false,
+        perspectiveLocked: false,
         focus: {
           x: clamp(state.focus.x - dx * Math.cos(state.yaw) - dy * Math.sin(state.yaw), -64, 192),
           y: state.focus.y,
@@ -72,9 +78,20 @@ export function updateCamera(state: CameraState, command: CameraCommand): Camera
         projection: state.projection === 'orthographic' ? 'perspective' : 'orthographic',
       };
     case 'follow':
-      return { ...state, following: !state.following };
+      return {
+        ...state,
+        following: !state.following,
+        perspectiveLocked: state.following ? false : state.perspectiveLocked,
+      };
+    case 'perspective-lock':
+      return {
+        ...state,
+        perspectiveLocked: !state.perspectiveLocked,
+        rotationLocked: false,
+        following: true,
+      };
     case 'rotation-lock':
-      return { ...state, rotationLocked: !state.rotationLocked };
+      return { ...state, rotationLocked: !state.rotationLocked, perspectiveLocked: false };
   }
 }
 export function cameraPose(state: CameraState): { position: WorldPoint; target: WorldPoint } {
@@ -100,6 +117,7 @@ export function cameraPreferences(state: CameraState) {
     zoom: state.zoom,
     projection: state.projection,
     rotationLocked: state.rotationLocked,
+    perspectiveLocked: state.perspectiveLocked,
     following: state.following,
   };
 }
@@ -115,5 +133,6 @@ export function restoreCameraPreferences(value: unknown): CameraState {
   if (v.projection === 'perspective') state.projection = v.projection;
   if (typeof v.rotationLocked === 'boolean') state.rotationLocked = v.rotationLocked;
   if (typeof v.following === 'boolean') state.following = v.following;
+  if (typeof v.perspectiveLocked === 'boolean') state.perspectiveLocked = v.perspectiveLocked;
   return state;
 }

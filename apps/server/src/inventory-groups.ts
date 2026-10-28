@@ -15,6 +15,7 @@ import {
 } from '@open-legend/domain';
 import { openCursor, sealCursor } from './scoped-cursor.js';
 import { z } from 'zod';
+import type { InventorySort } from '@open-legend/protocol';
 
 /** Display grouping never merges objects: construction rights and history retain origins.
  * Preparing the container is full-set work; paging and actions reuse its compact ID groups.
@@ -105,6 +106,70 @@ export function inventoryDisplayGroups(
     groups: result,
   });
   return result;
+}
+
+type InventoryDisplayOrder = {
+  groups: InventoryDisplayGroup[];
+  positions: ReadonlyMap<string, number>;
+  revision: string;
+};
+const displayOrders = new WeakMap<
+  InventoryDisplayGroup[],
+  Map<InventorySort, InventoryDisplayOrder>
+>();
+
+/** Sorting is collection-wide preparation, not a sort of the visible page. The existing
+ * group owner invalidates names, quantities and membership; weak keys retain at most
+ * the four finite orders per live prepared container, never arbitrary search queries.
+ * docs/limits/objects.md#qu03 */
+export function inventoryDisplayOrder(
+  world: WorldState,
+  containerId: string,
+  sort: InventorySort,
+): InventoryDisplayOrder {
+  const native = inventoryDisplayGroups(world, containerId);
+  let orders = displayOrders.get(native);
+  if (!orders) displayOrders.set(native, (orders = new Map()));
+  const retained = orders.get(sort);
+  if (retained) return retained;
+  const groups =
+    sort === 'native'
+      ? native
+      : native
+          .map((group, index) => ({
+            group,
+            index,
+            name:
+              sort === 'quantity-desc'
+                ? ''
+                : world.itemDefinitions[itemFor(world, group.ids[0]!)!.definitionId]!.name,
+          }))
+          .sort((a, b) => {
+            const compared =
+              sort === 'quantity-desc'
+                ? b.group.quantity - a.group.quantity
+                : sort === 'name-desc'
+                  ? b.name.localeCompare(a.name)
+                  : a.name.localeCompare(b.name);
+            return compared || a.index - b.index;
+          })
+          .map(({ group }) => group);
+  const prepared = {
+    groups,
+    positions: new Map(groups.map((group, index) => [group.ids[0]!, index])),
+    // Definition names can change search/order without changing custody revisions.
+    // Bind a continuation to the prepared collection once, never hash it per page.
+    revision: digest(
+      groups.map((group) => [
+        group.key,
+        group.ids[0],
+        group.quantity,
+        world.itemDefinitions[itemFor(world, group.ids[0]!)!.definitionId]!.name,
+      ]),
+    ),
+  };
+  orders.set(sort, prepared);
+  return prepared;
 }
 export function inventoryGroupToken(
   world: WorldState,

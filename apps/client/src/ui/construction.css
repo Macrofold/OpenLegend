@@ -52,6 +52,25 @@
   outline: 2px solid Highlight;
   outline-offset: 2px;
 }
+[data-theme='gildmoss'] .ol-building-tile {
+  position: relative;
+  border: 0;
+  border-radius: var(--control-radius);
+  background: var(--surface-well, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--line-control, var(--line));
+}
+[data-theme='gildmoss'] .ol-building-tile:hover {
+  background: var(--surface-hover);
+}
+[data-theme='gildmoss'] .ol-building-tile[aria-pressed='true'] {
+  background: var(--surface-selected);
+  box-shadow: var(--selected-glow);
+}
+[data-theme='gildmoss'] .ol-construction input:focus-visible,
+[data-theme='gildmoss'] .ol-building-tile:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
 .ol-building-tile strong {
   font-size: var(--text-item-title-size);
 }
@@ -106,4 +125,10 @@
 .ol-building-details[open] {
   display: grid;
   gap: var(--space-2);
+}
+@media (forced-colors: active) {
+  [data-theme='gildmoss'] .ol-construction input:focus-visible,
+  [data-theme='gildmoss'] .ol-building-tile:focus-visible {
+    outline-color: Highlight;
+  }
 }

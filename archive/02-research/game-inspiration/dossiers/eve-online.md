@@ -1,6 +1,6 @@
 # EVE Online
 
-> **G196 · research inspected October 27, 2026 · researched and reviewed.** Original PC/Mac service, with explicit regional and encounter boundaries. No client, editor, executable, transaction or linked video was run. Lore spoilers in §6. Source IDs refer to the annotated register in §12.
+> **G197 · research inspected October 27, 2026 · researched and reviewed.** Original PC/Mac service, with explicit regional and encounter boundaries. No client, editor, executable, transaction or linked video was run. Lore spoilers in §6. Source IDs refer to the annotated register in §12.
 
 ## 1. Identity and the useful question
 
@@ -186,7 +186,7 @@ These hours are current Steam displays, not posting-time or whole-career totals.
 
 **Review decision:** retain the prior creator essay as the specialized evidence owner and add this complete game account plus its comparison/index route. No separate EVE feature plan or new needs-design item is warranted. The existing tasks already contain the decisions this evidence can sharpen. The notable user choice, if a future authored world proposes it, is the intended relationship among involuntary loss, absence obligations and useful cooperation; that is not settled by EVE's longevity.
 
-**Preservation and coverage:** G196 extends the [October 14 scoped comparison](../essays/player-created-content-modding-and-marketplaces.md#4-eve-online-creators-can-design-appearances-markets-and-collective-work) and [its completion ledger](../research-progress-modding-2026-10-14.md), which did not claim a full-game dossier. Keep [packet provenance](../references/packet-provenance.md) and reconcile the previous unnumbered EVE comparison key to G196. R01–06 are covered in §§1–5; R07 in §7; R08 in §6; R09–10 in §9; R11–12 in §10; R13–14 in this section/register; R15 and native creation in §8. Economics, persistence and behavioral chronology supplement rather than replace those requirements.
+**Preservation and coverage:** G197 extends the [October 14 scoped comparison](../essays/player-created-content-modding-and-marketplaces.md#4-eve-online-creators-can-design-appearances-markets-and-collective-work) and [its completion ledger](../research-progress-modding-2026-10-14.md), which did not claim a full-game dossier. Keep [packet provenance](../references/packet-provenance.md) and reconcile the previous unnumbered EVE comparison key to G197. R01–06 are covered in §§1–5; R07 in §7; R08 in §6; R09–10 in §9; R11–12 in §10; R13–14 in this section/register; R15 and native creation in §8. Economics, persistence and behavioral chronology supplement rather than replace those requirements.
 
 ## 12. Annotated source register
 

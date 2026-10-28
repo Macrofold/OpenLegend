@@ -1,3 +1,4 @@
+import { selectedPlace } from './known-places.js';
 import type { PreparedNavigationPublication } from './navigation/messages.js';
 import { WorldInputOwner, type WorldInputState } from './world-input.js';
 import { aimPointProblem } from './aim-point-binding.js';
@@ -57,6 +58,11 @@ import {
 } from './decision-publication.js';
 import { DecisionClaimLost } from './decision-state.js';
 import { decisionPolicyDigest } from './decision-task.js';
+import { STOCK_TRANSFER_LIMITS, type TradeDisclosureContext } from '@open-legend/domain';
+import {
+  retainedTradeDisclosureReferences,
+  retainedNativeTradeDisclosureReferences,
+} from './trade-disclosures.js';
 import { assemblyView } from './construction.js';
 import {
   orderedRecordSet,
@@ -175,7 +181,13 @@ import {
 } from './authority.js';
 import { compactHistory, discardedHistoryRelease } from './history-residency.js';
 import { consolidationBatch, type ConsolidationBatch } from './memory-consolidation.js';
-import { editKnowledge, assignGivenName, rememberSubject } from '@open-legend/domain';
+import {
+  editMapMarker,
+  assignNickname,
+  editKnowledge,
+  assignGivenName,
+  rememberSubject,
+} from '@open-legend/domain';
 import { createGodItem, type GodItemRequest } from '@open-legend/domain';
 import { declareOwnership, custodian, type OwnershipRequest } from '@open-legend/domain';
 import { inventoryTotals, projectStatusEffects } from '@open-legend/domain';
@@ -291,7 +303,7 @@ import {
   type AssetRevisionReference,
 } from '@open-legend/assets';
 import type { CreationActivationReceipt } from './creation-target-contracts.js';
-import { prepareWorldForStartup } from './initial-world-preparation.js';
+import { initialWorldArtwork, prepareWorldForStartup } from './initial-world-preparation.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { primaryActionRefusal } from './action-catalogue.js';
 
@@ -477,6 +489,7 @@ export class WorldService {
 
   private saved!: SavedWorld;
   private assetAuthorityUnsubscribe?: () => void;
+  private projectionUnsubscribe?: () => void;
   private readonly personMemoryPage = createPersonMemoryPager();
   private worldEventsById = new Map<string, WorldEvent>();
   private persistedRevision = 0;
@@ -801,6 +814,8 @@ export class WorldService {
   releaseHostWork(): void {
     this.assetAuthorityUnsubscribe?.();
     this.assetAuthorityUnsubscribe = undefined;
+    this.projectionUnsubscribe?.();
+    this.projectionUnsubscribe = undefined;
     this.hostWork.close();
     this.geometryBatches.close();
   }
@@ -926,17 +941,28 @@ export class WorldService {
       creatorAccountIds: [this.currentProfile.id],
       playerAccountId: this.currentProfile.id,
     };
+    const initial = existing
+      ? undefined
+      : createBaseStartingWorld(config.worldPreset, config.seed, creationAccounts);
+    // Native opening preparation requests installed artwork; the application
+    // resolves its exact release. Reopening a saved world never makes this choice.
+    const initialArtwork =
+      initial?.useInstalledArtwork && this.startup.presentationRelease
+        ? initialWorldArtwork(this.startup.presentationRelease)
+        : undefined;
     this.saved = existing?.state ?? {
-      world: createBaseStartingWorld(config.worldPreset, config.seed, creationAccounts),
+      world: initial!.world,
       speed: 1,
       manuallyPaused: false,
+      ...initialArtwork,
     };
     if (this.saved.presentationRelease) {
       if (!store.assets)
         throw new GameSaveError('The asset publication repository is unavailable.');
       // A new build can open a known older release using native depiction, so the
       // owner can explicitly select this build's exact release without a deadlock.
-      await store.assets.worldReleaseStatus(this.saved.world.id, this.saved.presentationRelease);
+      if (existing)
+        await store.assets.worldReleaseStatus(this.saved.world.id, this.saved.presentationRelease);
     }
     if (!store.authority) throw new Error('Current authority repository is required.');
     const bindings = createdActivation
@@ -1027,6 +1053,16 @@ export class WorldService {
           undefined,
           {
             after: startupHistory,
+            ...(initialArtwork
+              ? {
+                  operationalChange: () =>
+                    store.assets!.bindWorld(
+                      { accountId: this.currentProfile.id },
+                      this.saved.world.id,
+                      initialArtwork.presentationRelease,
+                    ),
+                }
+              : {}),
             ...(startupContributions.effects.length
               ? {
                   constructionChanges: {
@@ -1076,6 +1112,7 @@ export class WorldService {
       .map((entity) => entity.id);
     store.authority.subscribe(() => this.notify(false));
     this.assetAuthorityUnsubscribe = store.assets?.subscribeAuthority(() => this.notify(false));
+    this.projectionUnsubscribe = store.onProjection(() => this.notify(false));
     this.viewRevision = this.persistedRevision;
     this.lastProgressSaveAt = this.now();
     this.publishDurable(this.persistedRevision, this.snapshotSequence, this.saved.world);
@@ -3269,6 +3306,15 @@ export class WorldService {
     return this.mutate(async () => {
       await this.ready;
 
+      if (
+        input.speed !== undefined &&
+        (!this.config.godMode || !this.currentScope(scope, 'create'))
+      )
+        return {
+          ok: false,
+          code: 'forbidden',
+          message: 'Game speed is available in God mode only.',
+        };
       if (input.speed !== undefined && ![0.5, 1, 3, 8].includes(input.speed))
         return { ok: false, code: 'speed', message: 'Choose 0.5×, 1×, 3× or 8×.' };
       if (this.maintenanceHeld && input.paused === false)
@@ -4771,11 +4817,13 @@ export class WorldService {
     });
   }
 
-  private async godTransition(operation: (world: WorldState) => Transition): Promise<ApiResult> {
+  private async godTransition(
+    operation: (world: WorldState) => Transition | Promise<Transition>,
+  ): Promise<ApiResult> {
     return this.mutate(async () => {
       await this.ready;
 
-      const result = operation(this.world);
+      const result = await operation(this.world);
       if (!result.outcome.ok) return result.outcome;
       if (
         !(await this.commit(
@@ -4926,12 +4974,85 @@ export class WorldService {
     });
   }
 
+  async editMapAnnotation(
+    value: import('@open-legend/domain').MapMarkerEdit & { worldId: string; generation: string },
+    scope = this.localScope,
+  ): Promise<ApiResult> {
+    return this.godTransition((world) => {
+      if (!this.currentScope(scope, 'play', true))
+        return {
+          world,
+          events: [],
+          outcome: {
+            ok: false,
+            code: 'forbidden',
+            message: 'Your map is unavailable in this tab.',
+          },
+        };
+      if (world.id !== value.worldId || this.generation !== value.generation)
+        return {
+          world,
+          events: [],
+          outcome: {
+            ok: false,
+            code: 'stale-world',
+            message: 'The world changed. Reopen your map.',
+          },
+        };
+      let result: import('@open-legend/domain').Outcome;
+      const candidate = updateWorld(world, (draft) => {
+        result = editMapMarker(draft, scope.actorId, value);
+      });
+      return { world: result!.ok ? candidate : world, events: [], outcome: result! };
+    });
+  }
+
+  async editObserverNickname(
+    value: {
+      worldId: string;
+      generation: string;
+      subjectId: string;
+      expectedRevision: number;
+      nickname: string;
+    },
+    scope = this.localScope,
+  ): Promise<ApiResult> {
+    return this.godTransition((world) => {
+      if (
+        !this.currentScope(scope, 'play', true) ||
+        world.id !== value.worldId ||
+        this.generation !== value.generation
+      )
+        return {
+          world,
+          events: [],
+          outcome: {
+            ok: false,
+            code: 'stale-world',
+            message: 'Your character or world changed. Reopen the person window.',
+          },
+        };
+      let result: import('@open-legend/domain').Outcome;
+      const candidate = updateWorld(world, (draft) => {
+        result = assignNickname(
+          draft,
+          scope.actorId,
+          value,
+          canRememberSubject(draft, scope.actorId, value.subjectId) ? [value.subjectId] : [],
+        );
+      });
+      return { world: result!.ok ? candidate : world, events: [], outcome: result! };
+    });
+  }
+
   async editCharacterKnowledge(
     value: import('@open-legend/domain').KnowledgeEdit & {
       worldId: string;
       generation: string;
       actorId: string;
       givenName?: string;
+      nickname?: string;
+      place?: { id: string; sourceId: string; revision: string };
       nameRevision?: number;
     },
     scope = this.localScope,
@@ -4940,7 +5061,7 @@ export class WorldService {
     if (mode === 'creator' && !this.config.godMode)
       return { ok: false, code: 'forbidden', message: 'God access required.' };
 
-    return this.godTransition((world) => {
+    return this.godTransition(async (world) => {
       if (
         !this.mayInspectPrivate(value.actorId, scope) ||
         (mode === 'owner' &&
@@ -4965,6 +5086,30 @@ export class WorldService {
             message: 'The world changed. Reload the editor.',
           },
         };
+      let rememberedPlace: string | undefined;
+      if (
+        value.subjectKind === 'place' &&
+        value.place &&
+        mode === 'owner' &&
+        value.subjectId === value.place.id
+      ) {
+        const selected = await selectedPlace(this, value.actorId, value.place);
+        rememberedPlace = selected.place.id;
+        if (
+          !this.currentScope(scope, 'play', true) ||
+          world.id !== value.worldId ||
+          this.generation !== value.generation
+        )
+          return {
+            world,
+            events: [],
+            outcome: {
+              ok: false,
+              code: 'stale-world',
+              message: 'Your character or world changed. Reopen the map.',
+            },
+          };
+      }
       let edited: import('@open-legend/domain').Outcome = {
         ok: false,
         code: 'knowledge-rejected',
@@ -4973,12 +5118,40 @@ export class WorldService {
       const candidate = updateWorld(world, (draft) => {
         const permitted =
           value.subjectId &&
-          (mode === 'creator' ||
-            canRememberSubject(draft, value.actorId, value.subjectId) ||
-            knowledgeDocument(draft, value.actorId, value.subjectId))
+          (value.subjectKind === 'place'
+            ? rememberedPlace === value.subjectId
+            : value.subjectKind === 'map-marker'
+              ? !!draft.mapMarkers?.[value.actorId]?.[value.subjectId]
+              : mode === 'creator' ||
+                canRememberSubject(draft, value.actorId, value.subjectId) ||
+                knowledgeDocument(draft, value.actorId, value.subjectId))
             ? [value.subjectId]
             : [];
-        if (value.givenName !== undefined && value.subjectId) {
+        if (value.nickname !== undefined && value.subjectId && !value.subjectKind) {
+          if (mode !== 'owner') {
+            edited = {
+              ok: false,
+              code: 'forbidden',
+              message: 'Only the current character can choose a nickname.',
+            };
+            return;
+          }
+          const named = assignNickname(
+            draft,
+            value.actorId,
+            {
+              subjectId: value.subjectId,
+              expectedRevision: value.nameRevision ?? 0,
+              nickname: value.nickname,
+            },
+            permitted,
+          );
+          if (!named.ok) {
+            edited = named;
+            return;
+          }
+        }
+        if (value.givenName !== undefined && value.subjectId && !value.subjectKind) {
           const named = assignGivenName(
             draft,
             value.actorId,
@@ -4996,7 +5169,12 @@ export class WorldService {
           }
         }
         edited = editKnowledge(draft, value.actorId, value, permitted);
-        if (edited.ok && value.subjectId)
+        if (
+          edited.ok &&
+          value.subjectId &&
+          !value.subjectKind &&
+          entityGet(draft.entities, value.subjectId)
+        )
           rememberSubject(draft, value.actorId, value.subjectId, mode === 'creator');
       });
       return { world: edited.ok ? candidate : world, events: [], outcome: edited };
@@ -5727,6 +5905,7 @@ export class WorldService {
                 message: 'That command ID was used for different input.',
               };
       }
+      let tradeDisclosures: TradeDisclosureContext | undefined;
       const prepare = async () => {
         if (
           input.type === 'say' &&
@@ -5744,6 +5923,26 @@ export class WorldService {
           ? primaryActionRefusal(this, input, scope ?? this.localScope)
           : undefined;
         if (refusal) return refusal;
+        if (
+          input.type === 'handover' &&
+          (input.handoverOperation === 'offer' || input.handoverOperation === 'counter') &&
+          input.targetId &&
+          input.requestedItems?.length
+        ) {
+          // Bound exact historical preparation by the existing native operation
+          // envelope. SQL evidence never becomes client-supplied authority.
+          if (input.requestedItems.length > STOCK_TRANSFER_LIMITS.movedLots)
+            return {
+              ok: false,
+              code: 'invalid-command',
+              message: 'Choose fewer items for one trade.',
+            };
+          const itemIds = input.requestedItems.map((lot) => lot.itemId);
+          const lots = scope
+            ? await retainedTradeDisclosureReferences(this, scope, input.targetId, itemIds)
+            : await retainedNativeTradeDisclosureReferences(this, actor, input.targetId, itemIds);
+          tradeDisclosures = { actorId: actor, personId: input.targetId, lots };
+        }
         if (!input.knownPlace) return input;
         if (input.type !== 'move')
           return {
@@ -5766,6 +5965,9 @@ export class WorldService {
               false,
               undefined,
               scope ?? this.localScope,
+              true,
+              commandId,
+              tradeDisclosures,
             )
           : resolved;
       }
@@ -5807,6 +6009,7 @@ export class WorldService {
         scope ?? this.localScope,
         true,
         commandId,
+        tradeDisclosures,
       );
     });
   }
@@ -5852,10 +6055,21 @@ export class WorldService {
   }
 
   /** Run current admission; native pure prerequisites or disposable effects never commit. */
-  previewCommand(
+  previewCommand(input: CommandInput, scope: RequestScope): ApiResult {
+    this.assertScope(scope);
+    return this.previewForActor(input, scope.actorId, true, scope);
+  }
+
+  /** Trusted native preparation names its actor without impersonating a browser
+   * account. Browser-only physical proofs still require an embodied scope. */
+  previewNativeCommand(input: CommandInput, actorId: string): ApiResult {
+    return this.previewForActor(input, actorId, false);
+  }
+
+  private previewForActor(
     input: CommandInput,
-    actorId = this.controlledEntityId,
-    humanInitiated = true,
+    actorId: string,
+    humanInitiated: boolean,
     scope?: RequestScope,
   ): ApiResult {
     const result = this.evaluateCommand(
@@ -5883,12 +6097,11 @@ export class WorldService {
     input: CommandInput,
     actorId: string,
     transition: WorkTransitionMode,
-    humanInitiated = false,
   ): PreparedNativeChoice | Outcome | ApiResult {
-    const bound = this.bindCommand('prepared-choice', input, actorId, humanInitiated);
+    const bound = this.bindCommand('prepared-choice', input, actorId, false);
     if ('ok' in bound) return bound;
     if (!isActivityCommand(bound) && bound.type !== 'learn-record' && bound.type !== 'compose')
-      return this.previewCommand(input, actorId, humanInitiated);
+      return this.previewNativeCommand(input, actorId);
     return this.prepareNativeCommandChoice(bound, transition);
   }
 
@@ -5939,7 +6152,7 @@ export class WorldService {
     input: CommandInput,
     actorId: string,
     humanInitiated = true,
-    scope: RequestScope = this.localScope,
+    scope?: RequestScope,
     liveInputRoute = false,
   ): Command | ApiResult {
     if (input.execution && !liveInputRoute)
@@ -5948,7 +6161,20 @@ export class WorldService {
         code: 'input-route',
         message: 'Use the current direct attack controls for this input.',
       };
-    const pointProblem = aimPointProblem(this.world, input, scope);
+    if (
+      !scope &&
+      (humanInitiated ||
+        input.bodyReference ||
+        input.aimPoint ||
+        input.aimBasis ||
+        input.encounterPreference)
+    )
+      return {
+        ok: false,
+        code: 'input-route',
+        message: 'Use the current controls for this character.',
+      };
+    const pointProblem = scope ? aimPointProblem(this.world, input, scope) : undefined;
     if (pointProblem) return { ok: false, code: 'aim-point', message: pointProblem };
     const selectedAimBody = input.targetId
       ? entityGet(this.world.entities, input.targetId)
@@ -6210,6 +6436,7 @@ export class WorldService {
         if (
           !binding ||
           !input.encounterPreference ||
+          !scope ||
           scope.actorId !== actorId ||
           input.encounterPreference.reference !==
             encounterControlReference(scopeKey(scope), input.encounterPreference.operation, binding)
@@ -6472,31 +6699,20 @@ export class WorldService {
               code: 'construction-contribution',
               message: 'Review the exact construction-use terms.',
             };
-          if (!input.itemId || input.quantity === undefined)
+          if (!input.offeredItems?.length)
             return { ok: false, code: 'item', message: 'Choose what to offer and how many.' };
           command = {
             ...envelope,
             type: 'handover',
             operation: input.handoverOperation,
             targetId: input.targetId,
-            itemId: input.itemId,
-            quantity: input.quantity,
-            ...(input.requestedItem ? { requested: input.requestedItem } : {}),
+            offered: input.offeredItems ?? [],
+            requested: input.requestedItems ?? [],
             ...(input.constructionUse ? { constructionUse: input.constructionUse } : {}),
             ...(input.offerId ? { offerId: input.offerId } : {}),
             ...(input.expectedOfferRevision !== undefined
               ? { expectedOfferRevision: input.expectedOfferRevision }
               : {}),
-            ...(input.expectedRevision !== undefined
-              ? { expectedRevision: input.expectedRevision }
-              : {}),
-            ...(input.placementRevision !== undefined
-              ? { placementRevision: input.placementRevision }
-              : {}),
-            ...(input.expectedContentsRevision !== undefined
-              ? { expectedContentsRevision: input.expectedContentsRevision }
-              : {}),
-            ...(input.targetRevision !== undefined ? { targetRevision: input.targetRevision } : {}),
           };
         } else {
           if (!input.offerId || input.expectedOfferRevision === undefined)
@@ -6729,9 +6945,10 @@ export class WorldService {
     scope?: RequestScope,
     humanInitiated = true,
     originalRequestId = commandId,
+    tradeDisclosures?: TradeDisclosureContext,
   ): ApiResult | Promise<ApiResult> {
     const operation = input.execution;
-    if (operation && (!humanInitiated || actorId !== (scope ?? this.localScope).actorId))
+    if (operation && (!humanInitiated || !scope || actorId !== scope.actorId))
       return {
         ok: false,
         code: 'input-route',
@@ -6793,7 +7010,7 @@ export class WorldService {
       bindingInput,
       actorId,
       humanInitiated,
-      scope ?? this.localScope,
+      scope,
       humanInitiated,
     );
     if (!('actorId' in bound)) return bound;
@@ -6809,6 +7026,7 @@ export class WorldService {
         preview: true,
         constructionPermissions: this.store.authority!.constructionPermissions(this.world.id),
         campAssetPermissions: this.store.authority!.campAssetPermissions(this.world.id),
+        tradeDisclosures,
       });
       return { ok: outcome.ok, code: outcome.code, message: outcome.message };
     }
@@ -6833,7 +7051,13 @@ export class WorldService {
     // Closing this exact review is an explicit native cancellation, including
     // after Confirm won the race. It grants no renewed input authority.
     if (cancelsReview && !operation) {
-      const state = this.inputState(scope ?? this.localScope);
+      if (!scope)
+        return {
+          ok: false,
+          code: 'input-route',
+          message: 'Use the current controls for this character.',
+        };
+      const state = this.inputState(scope);
       if (
         review!.beginCommandId &&
         state.attack &&
@@ -6905,10 +7129,16 @@ export class WorldService {
     }
     let inputState: WorldInputState | undefined;
     if (operation) {
+      if (!scope)
+        return {
+          ok: false,
+          code: 'input-route',
+          message: 'Use the current controls for this character.',
+        };
       const now = performance.now();
       this.accountInputTime(now);
       this.worldInputs.expire(now, actorId);
-      inputState = this.inputState(scope ?? this.localScope);
+      inputState = this.inputState(scope);
       const fail = (message: string): ApiResult => ({
         ok: false,
         code: 'input-stale',
@@ -7118,6 +7348,7 @@ export class WorldService {
         executeCommand(world, command, {
           constructionPermissions: this.store.authority!.constructionPermissions(world.id),
           campAssetPermissions: this.store.authority!.campAssetPermissions(world.id),
+          tradeDisclosures,
         }),
       gameplay,
       undefined,

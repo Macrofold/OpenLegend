@@ -1,0 +1,497 @@
+.ol-map-workspace {
+  position: relative;
+  container-type: size;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.ol-map-search {
+  position: absolute;
+  inset-block-start: var(--space-4);
+  inset-inline-end: var(--space-4);
+  z-index: 5;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  inline-size: min(232px, calc(100% - 2 * var(--space-4)));
+  max-block-size: calc(100% - 2 * var(--space-4));
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-float);
+}
+.ol-map-search label {
+  min-inline-size: 0;
+}
+.ol-map-search > .ol-search {
+  min-inline-size: 0;
+  height: 32px;
+  margin: 0;
+  /* The 28px browse target centres its 16px glyph at the reference field's
+   * 12px inset; the input still starts 8px after that visible glyph. */
+  padding: 0 12px 0 6px;
+  gap: 2px;
+}
+.ol-map-search > .ol-search > .ol-ibtn {
+  width: 28px;
+  height: 28px;
+}
+.ol-map-search > .ol-search > .ol-ibtn > .ol-icon-wrap {
+  width: 16px;
+  height: 16px;
+}
+.ol-map-search input {
+  display: block;
+  width: 100%;
+  min-height: 0;
+  height: 20px;
+  padding: 0;
+  border: 0;
+}
+.ol-map-body {
+  position: relative;
+  min-height: 0;
+  height: 100%;
+}
+.ol-map-stage {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  height: 100%;
+}
+.ol-map-viewport {
+  container-type: size;
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+  min-height: 0;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  touch-action: none;
+}
+.ol-map-plane {
+  position: absolute;
+  /* Cover either viewport before zooming; minimaps remain filled even when the
+   * authored map is much wider or taller than their circular crop. */
+  width: max(100cqw, calc(100cqh * var(--ol-map-aspect)));
+  left: 50%;
+  top: 50%;
+  user-select: none;
+}
+.ol-map-plane > img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+.ol-map-place,
+.ol-map-marker,
+.ol-map-player,
+.ol-map-draft {
+  position: absolute;
+  transform: translate(-50%, -50%) scale(var(--ol-map-symbol-scale, 1));
+  display: grid;
+  place-items: center;
+  min-width: 28px;
+  min-height: 28px;
+  color: var(--highlight);
+  background: var(--surface);
+  border: 1px solid var(--highlight);
+  border-radius: 50%;
+  padding: 4px;
+  z-index: 1;
+}
+.ol-map-label {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-size: var(--text-detail-size);
+  line-height: var(--text-detail-leading);
+  font-weight: 600;
+  color: var(--map-label-ink);
+  text-shadow: var(--map-label-shadow);
+}
+.ol-map-place.is-selected,
+.ol-map-marker.is-selected {
+  outline: 2px solid var(--highlight);
+  outline-offset: 2px;
+}
+.ol-map-workspace:not(.ol-map-workspace--minimap) :is(.ol-map-place, .ol-map-marker) {
+  /* Keep a 28px hit target around the board's 24px marker chip. */
+  width: 28px;
+  height: 28px;
+  border: 0;
+  padding: 2px;
+  background: transparent;
+  isolation: isolate;
+}
+.ol-map-workspace:not(.ol-map-workspace--minimap) :is(.ol-map-place, .ol-map-marker)::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  z-index: -1;
+  border-radius: 50%;
+  background: var(--map-marker-bg, var(--surface));
+  box-shadow:
+    inset 0 0 0 1px var(--map-marker-edge, var(--highlight)),
+    var(--map-marker-shadow, var(--shadow-tile));
+  pointer-events: none;
+}
+.ol-map-workspace:not(.ol-map-workspace--minimap) .ol-map-place.is-selected {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  outline: 0;
+  transform: translate(-50%, -100%) scale(var(--ol-map-symbol-scale, 1));
+  filter: var(--map-pin-filter, none);
+  --icon-finish: url(#ol-metal-gold);
+}
+.ol-map-workspace:not(.ol-map-workspace--minimap) .ol-map-place.is-selected::before,
+.ol-map-workspace:not(.ol-map-workspace--minimap) .ol-map-place.is-selected .ol-map-label {
+  display: none;
+}
+.ol-map-workspace:not(.ol-map-workspace--minimap) .ol-map-place.is-selected > .ol-icon-wrap {
+  width: 32px;
+  height: 32px;
+}
+.ol-map-workspace:not(.ol-map-workspace--minimap) .ol-map-place.is-selected:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.ol-map-player {
+  width: 48px;
+  height: 48px;
+  min-width: 0;
+  min-height: 0;
+  padding: 4px;
+  border: 0;
+  background: var(--metal-gold-rim, var(--highlight));
+  z-index: 2;
+  /* Position is an annotation; a known place at the same point keeps its action. */
+  pointer-events: none;
+}
+.ol-map-player > .ol-portrait {
+  border-radius: 50%;
+  background: var(--portrait-ground, var(--surface));
+}
+.ol-map-facing {
+  display: block;
+  transform-origin: center;
+  pointer-events: none;
+}
+.ol-map-north {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  pointer-events: none;
+  color: var(--highlight);
+  font-weight: 700;
+  text-shadow: 0 1px 3px var(--canvas);
+}
+.ol-map-art-state {
+  position: absolute;
+  top: var(--space-4);
+  left: var(--space-4);
+  padding: var(--space-2);
+  background: var(--surface);
+  color: var(--ink);
+  pointer-events: none;
+}
+.ol-map-zoom {
+  position: absolute;
+  left: 8px;
+  bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ol-map-workspace:not(.ol-map-workspace--minimap) .ol-map-zoom {
+  inset-inline-start: auto;
+  inset-inline-end: var(--space-4);
+  flex-direction: column;
+}
+.ol-map-tools {
+  position: absolute;
+  inset-inline-start: var(--space-4);
+  inset-block-end: var(--space-4);
+  z-index: 3;
+  max-inline-size: min(300px, calc(100% - 88px));
+  max-block-size: calc(100% - 2 * var(--space-4));
+  overflow: auto;
+  padding: var(--space-2) var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+}
+.ol-map-tools summary,
+.ol-map-marker-actions summary {
+  cursor: pointer;
+}
+.ol-map-marker-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-block: var(--space-2);
+}
+.ol-map-sidebar {
+  position: absolute;
+  inset-block-start: 117px;
+  inset-inline-start: var(--space-4);
+  z-index: 4;
+  inline-size: min(216px, calc(100% - 2 * var(--space-4)));
+  max-block-size: calc(100% - 132px);
+  min-width: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: var(--space-3);
+  scroll-padding-block-start: calc(var(--control-md) + 2 * var(--space-3));
+  padding: var(--space-3);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-float);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-2);
+}
+.ol-map-results {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-block-size: 0;
+  max-block-size: max(0px, calc(100cqh - 112px));
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: var(--space-2);
+}
+.ol-map-results[hidden] {
+  display: none;
+}
+.ol-map-results > h3 {
+  margin: var(--space-2) 0 var(--space-1);
+  font-size: var(--text-label-size);
+}
+.ol-map-results > .ol-btn {
+  justify-content: start;
+  text-align: start;
+  min-block-size: var(--control-md);
+  block-size: auto;
+  white-space: normal;
+}
+.ol-map-results > .ol-btn > span {
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.ol-map-card-head {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  background: var(--surface);
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: var(--space-2);
+}
+.ol-map-card-head h3 {
+  flex: 1;
+  min-inline-size: 0;
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: var(--title-md-size);
+  line-height: var(--title-md-leading);
+  overflow-wrap: anywhere;
+}
+.ol-map-card-head > .ol-btn {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+}
+.ol-map-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+.ol-map-sidebar p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.ol-map-note-preview,
+.ol-map-marker-actions .ol-button-row {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-map-note-preview > .ol-btn {
+  justify-self: start;
+}
+.ol-map-note-editor[hidden] {
+  display: none;
+}
+.ol-map-message {
+  position: absolute;
+  inset-inline: var(--space-4) 72px;
+  inset-block-end: 64px;
+  z-index: 6;
+  max-block-size: calc(100% - 80px);
+  overflow: auto;
+  margin: 0;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--ink);
+}
+.ol-map-sidebar form,
+.ol-map-sidebar > div,
+.ol-map-note-editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.ol-map-sidebar label input,
+.ol-map-sidebar label select,
+.ol-map-sidebar textarea {
+  display: block;
+  width: 100%;
+}
+.ol-map-open {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: none;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+.ol-map-workspace--minimap {
+  display: block;
+  width: 206px;
+  height: 206px;
+  margin-top: 7px;
+  overflow: visible;
+}
+.ol-map-workspace--minimap .ol-map-body {
+  display: block;
+  height: 100%;
+}
+.ol-map-workspace--minimap .ol-map-stage {
+  min-height: 0;
+  height: 100%;
+  padding: 3px;
+  border-radius: 50%;
+  background: var(--metal-gold-rim, var(--highlight));
+  box-shadow: var(--shadow-rim);
+}
+.ol-map-workspace--minimap .ol-map-viewport {
+  min-height: 0;
+  height: 100%;
+  border: 0;
+  border-radius: 50%;
+}
+.ol-map-workspace--minimap .ol-map-viewport::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: inherit;
+  background: var(--minimap-vignette, none);
+  pointer-events: none;
+}
+.ol-map-workspace--minimap .ol-map-plane > img {
+  filter: var(--minimap-picture-filter);
+}
+.ol-map-workspace--minimap .ol-map-north {
+  top: -7px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--north-mark, var(--surface-raised));
+  color: var(--north-mark-ink, var(--ink));
+  box-shadow: 0 0 0 2px var(--canvas);
+  font: 600 12px/12px var(--font-heading);
+  text-shadow: none;
+  z-index: 3;
+}
+.ol-map-workspace--minimap .ol-map-zoom {
+  left: -28px;
+  bottom: 17px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0;
+  z-index: 3;
+}
+.ol-root .ol-map-workspace--minimap .ol-map-zoom > .ol-ibtn {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--map-marker-bg, var(--surface-glass-hud));
+}
+.ol-map-workspace--minimap .ol-map-zoom > .ol-ibtn:last-child {
+  margin-left: 15px;
+}
+.ol-map-zoom > .ol-ibtn > .ol-icon-wrap {
+  width: 16px;
+  height: 16px;
+}
+.ol-map-workspace--minimap .ol-map-place,
+.ol-map-workspace--minimap .ol-map-marker {
+  min-width: 16px;
+  min-height: 16px;
+  padding: 1px;
+  pointer-events: none;
+}
+.ol-map-workspace--minimap .ol-map-label {
+  display: none;
+}
+.ol-map-workspace--minimap .ol-map-player {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  background: transparent;
+}
+@container (max-width: 680px) or (max-height: 420px) {
+  .ol-map-sidebar {
+    inset: 72px var(--space-2) var(--space-2);
+    inline-size: auto;
+    max-block-size: none;
+  }
+  .ol-map-sidebar[data-editing] {
+    inset-block-start: var(--space-2);
+  }
+  .ol-map-workspace:has(.ol-map-sidebar[data-editing]) .ol-map-search {
+    visibility: hidden;
+  }
+  .ol-map-search {
+    inset-block-start: var(--space-2);
+    inset-inline-end: var(--space-2);
+    inline-size: min(260px, calc(100% - 2 * var(--space-2)));
+    max-block-size: calc(100% - 2 * var(--space-2));
+  }
+  .ol-map-results {
+    max-block-size: max(0px, calc(100cqh - 88px));
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ol-map-workspace * {
+    scroll-behavior: auto;
+  }
+}
+@media (forced-colors: active) {
+  .ol-map-workspace:not(.ol-map-workspace--minimap) .ol-map-place.is-selected:focus-visible {
+    outline-color: Highlight;
+  }
+}

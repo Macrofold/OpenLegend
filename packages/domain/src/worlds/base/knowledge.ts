@@ -25,6 +25,8 @@ export const BASE_SOCIAL_PERCEPTION: SocialPerceptionPolicy | null = socialPerce
 
 export interface ObserverIdentity {
   givenName: string;
+  /** Private observer-chosen label; introductions never replace it. */
+  nickname?: string;
   revision: number;
   encounterId: string | null;
   authored: boolean;
@@ -75,7 +77,9 @@ export function observerGivenName(
 ): string | undefined {
   if (observerId === subjectId) return entityGet(world.entities, subjectId)?.name;
   return recognizesSubject(world, observerId, subjectId)
-    ? world.observerIdentities?.[observerId]?.[subjectId]?.givenName || undefined
+    ? world.observerIdentities?.[observerId]?.[subjectId]?.nickname ||
+        world.observerIdentities?.[observerId]?.[subjectId]?.givenName ||
+        undefined
     : undefined;
 }
 export function assignGivenName(
@@ -122,12 +126,58 @@ export function assignGivenName(
     return outcome(true, 'given-name-unchanged', 'Preferred name is already current.');
   ((world.observerIdentities ??= {})[observerId] ??= {})[edit.subjectId] = {
     givenName: edit.givenName.trim(),
+    ...(current?.nickname ? { nickname: current.nickname } : {}),
     revision: (current?.revision ?? 0) + 1,
     encounterId,
     authored: authored || current?.authored === true,
   };
   advanceKnowledgeRevision(world, observerId);
   return outcome(true, 'given-name-edited', 'Observer-specific given name updated.');
+}
+
+/** A private label changes only this observer's presentation, never the person's claim. */
+export function assignNickname(
+  world: WorldState,
+  observerId: string,
+  edit: { subjectId: string; expectedRevision: number; nickname: string },
+  permittedSubjects: readonly string[],
+): Outcome {
+  if (
+    !permittedSubjects.includes(edit.subjectId) ||
+    observerId === edit.subjectId ||
+    !entityGet(world.entities, observerId)?.actor ||
+    !entityGet(world.entities, edit.subjectId)
+  )
+    return outcome(false, 'unpermitted-subject', 'This person is unavailable.');
+  const current = world.observerIdentities?.[observerId]?.[edit.subjectId];
+  if (
+    !Number.isSafeInteger(edit.expectedRevision) ||
+    edit.expectedRevision !== (current?.revision ?? 0)
+  )
+    return outcome(false, 'stale-identity', 'The name changed. Read it again before editing.');
+  if (typeof edit.nickname !== 'string' || characterCount(edit.nickname.trim()) > 40)
+    return outcome(false, 'invalid-nickname', 'Keep the nickname within 40 characters.');
+  if (!current && !canRememberSubject(world, observerId, edit.subjectId))
+    return outcome(false, 'recognition-unavailable', 'This person is no longer recognized.');
+  if (!Number.isSafeInteger((current?.revision ?? 0) + 1))
+    return outcome(false, 'identity-exhausted', 'This name cannot be edited further.');
+  const nickname = edit.nickname.trim();
+  if ((current?.nickname ?? '') === nickname)
+    return outcome(true, 'nickname-unchanged', 'Your nickname is already current.');
+  ((world.observerIdentities ??= {})[observerId] ??= {})[edit.subjectId] = {
+    givenName: current?.givenName ?? '',
+    ...(nickname ? { nickname } : {}),
+    revision: (current?.revision ?? 0) + 1,
+    encounterId:
+      current?.encounterId ?? world.perceptionEpisodes?.[observerId]?.[edit.subjectId] ?? null,
+    authored: current?.authored ?? false,
+  };
+  advanceKnowledgeRevision(world, observerId);
+  return outcome(
+    true,
+    'nickname-edited',
+    nickname ? 'Your nickname was saved.' : 'Your nickname was cleared.',
+  );
 }
 
 export function canRememberSubject(
@@ -303,6 +353,10 @@ export function validateObserverIdentities(world: WorldState): void {
         !isSafeRecordId(subjectId) ||
         !identity ||
         typeof identity.givenName !== 'string' ||
+        (identity.nickname !== undefined &&
+          (typeof identity.nickname !== 'string' ||
+            !identity.nickname.trim() ||
+            characterCount(identity.nickname) > 40)) ||
         characterCount(identity.givenName) > 120 ||
         !Number.isSafeInteger(identity.revision) ||
         identity.revision < 0 ||

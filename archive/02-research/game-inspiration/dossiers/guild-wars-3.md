@@ -1,6 +1,6 @@
 # Guild Wars 3 — momentum, smaller encounters and a grounded frontier
 
-**G189 · Unreleased case · Research date: October 26, 2026.** [Scoped ledger](../research-progress-mmos-2026-10-26.md). ArenaNet has announced an action-adventure MMORPG for PC and PlayStation 5, with beta opportunities planned for fall 2027. That is a testing target, not a launch date. This study separates official intentions and press-observed alpha demonstrations from delivered player experience. Guild Wars 2 remains a separate, operating game. [P01, P02]
+**G190 · Unreleased case · Research date: October 26, 2026.** [Scoped ledger](../research-progress-mmos-2026-10-26.md). ArenaNet has announced an action-adventure MMORPG for PC and PlayStation 5, with beta opportunities planned for fall 2027. That is a testing target, not a launch date. This study separates official intentions and press-observed alpha demonstrations from delivered player experience. Guild Wars 2 remains a separate, operating game. [P01, P02]
 
 ## What the evidence establishes
 

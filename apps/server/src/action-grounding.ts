@@ -559,7 +559,11 @@ export async function groundActionAttempts(
                         ? (world.recipes[String(value)]?.name ?? 'Unavailable known method')
                         : (world.itemDefinitions[String(value)]?.name ?? 'Unavailable material')
                       : field.type === 'time' && typeof value === 'number'
-                        ? gameTime(value, world.statusEffectPolicy.clockOffsetHours)
+                        ? gameTime(
+                            value,
+                            world.statusEffectPolicy.clockOffsetHours,
+                            world.presentation?.calendar?.dayLabel,
+                          )
                         : String(value);
                 return `${field.label}: ${description}`;
               }),

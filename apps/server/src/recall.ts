@@ -1,3 +1,4 @@
+import { worldClockText } from '@open-legend/protocol';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { isEquipped } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
@@ -97,13 +98,9 @@ export const HARD_CONTEXT_LIMITS = {
   knowledge: 16,
   memories: 8,
 };
-/** Day counts from the world's start; the hour reads the world's own clock offset
- * (`statusEffectPolicy.clockOffsetHours`), never an engine constant. */
-export function gameTime(at: number, offsetHours: number): string {
-  const clock = at + offsetHours * 3600;
-  const hour = Math.floor(clock / 3600) % 24;
-  const minute = Math.floor(clock / 60) % 60;
-  return `Day ${Math.floor(at / 86400) + 1}, ${hour.toString().padStart(2, '0')}:${minute.toString().padStart(2, '0')}`;
+/** Calendar labels read the installed world's clock offset and optional unit name. */
+export function gameTime(at: number, offsetHours: number, dayLabel?: string): string {
+  return worldClockText(at, offsetHours, dayLabel);
 }
 export function memoryCandidate(
   memory: MemoryRecord,
@@ -158,7 +155,7 @@ export function memoryCandidate(
     id: experienceEntryKey(entry),
     experience: [experience],
     kind: matches(conversationIds) ? 'conversation' : 'memory',
-    text: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours)} [${memory.source}]: ${summary}`,
+    text: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours, world.presentation?.calendar?.dayLabel)} [${memory.source}]: ${summary}`,
     embeddingText: experienceEmbeddingText(entry, actorId),
     revision: awareness ? digest(memory) : digest({ ...memory, summary }),
     required,
@@ -277,7 +274,12 @@ export function candidateSet(
     recallable
       .filter((memory) =>
         memory.entityIds.some(
-          (id) => id !== actorId && !!world.observerIdentities?.[actorId]?.[id]?.givenName,
+          (id) =>
+            id !== actorId &&
+            !!(
+              world.observerIdentities?.[actorId]?.[id]?.nickname ||
+              world.observerIdentities?.[actorId]?.[id]?.givenName
+            ),
         ),
       )
       .map((memory) => memory.id),
@@ -295,11 +297,11 @@ export function candidateSet(
       continue;
     }
     // Repeated speech is still a distinct turn in a conversation.
-    const key = `${memory.kind}:${memory.text
-      .replace(/^Day \d+, \d\d:\d\d /, '')
-      .trim()
-      .replace(/\s+/g, ' ')
-      .toLocaleLowerCase()}`;
+    const timePrefix = `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours, world.presentation?.calendar?.dayLabel)} `;
+    const content = memory.text.startsWith(timePrefix)
+      ? memory.text.slice(timePrefix.length)
+      : memory.text;
+    const key = `${memory.kind}:${content.trim().replace(/\s+/g, ' ').toLocaleLowerCase()}`;
     const existing = memory.kind === 'conversation' ? undefined : duplicateMemories.get(key);
     if (!existing) {
       duplicateMemories.set(key, memory);

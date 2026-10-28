@@ -249,7 +249,12 @@ export class S3AssetStorage {
       : masterCredentials;
     this.client = new S3Client({
       ...options,
-      credentials: () => this.sdk(() => roleCredentials(), 'credentials'),
+      // The SDK resolves credentials lazily inside the first object command. Their
+      // STS/SSO replies are metadata, not that object: keep them out of its exact
+      // byte allowance, or a file smaller than the credential reply stalls until
+      // the transfer deadline. They keep the handler's small-reply limit.
+      credentials: () =>
+        responseByteLimit.exit(() => this.sdk(() => roleCredentials(), 'credentials')),
     });
     // Logical approval belongs to the authenticated human/operator; assuming a
     // narrower storage role never changes that PostgreSQL authority identity.

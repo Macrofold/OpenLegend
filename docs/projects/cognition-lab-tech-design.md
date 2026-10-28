@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                           | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Design complete; shared-runtime contracts and delivery stages are specified; implementation and qualification remain open. | 2026-10-24   |
+| In progress | Design complete; shared-runtime contracts and delivery stages are specified; implementation and qualification remain open. | 2026-10-26   |
 
 ## 1. Scope, authority and baseline
 
@@ -172,7 +172,7 @@ Continuous Run repeatedly offers elapsed time and ordinary admission until an op
 
 Advance-time and run-until use the same clock driver/native boundaries as normal play. A step crosses one defined semantic boundary (selected event, stage or decision), not an assumed number of 50 ms host wakes. The recorded step specifies which boundary was crossed. Provider waiting time, simulation time and operator breakpoint time remain separate measurements.
 
-The selected autonomous participant set is a lab admission policy, not a transfer of human control and not a changed personality. A scripted event authored for a character remains labeled operator-authored. Actual directly controlled-character psychology follows its owning policy; the lab does not resolve the emotion branch's separate SA-D01 decision by selecting a person in a dropdown.
+The selected autonomous participant set is a lab admission policy, not a transfer of human control and not a changed personality. A scripted event authored for a character remains labeled operator-authored. Actual directly controlled-character psychology follows the selected [SA-D01 authored policy](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters); selecting an inspector or focal actor grants no interpretation authority.
 
 ### 5.5 Bounded stopping
 
@@ -544,7 +544,7 @@ Do not optimistically pretend an edit committed or an action executed. Retain th
 
 The lab exposes installed capabilities in their actual categories: bodily condition/reaction, private interpretation/appraisal, externally observable expression, derived consequences and behavior. Similar labels do not establish identical variables. Qualitative grief can retain cause, target, source and lifetime without inventing a global numeric grief axis. Several current reactions can coexist; use the installed aggregation/selection owner instead of summing a dashboard's sliders.
 
-The separate [emotional-physiology feature proposal](https://github.com/Macrofold/OpenLegend/blob/codex/design-stealth-02-emotions/docs/projects/emotional-physiology-feature-spec.md) and [technical proposal](https://github.com/Macrofold/OpenLegend/blob/codex/design-stealth-02-emotions/docs/projects/emotional-physiology-tech-design.md) are external implementation dependencies. Their existence does not make all emotional mechanics installed on this baseline. The lab descriptor reports available, read-only, model-only or unavailable precisely. The directly controlled human-character interpretation decision SA-D01 remains that design's open decision; choosing an inspector/focal actor does not settle it.
+The integrated [emotional-physiology feature specification](emotional-physiology-feature-spec.md) and [technical design](emotional-physiology-tech-design.md) retain implementation dependencies. Their existence does not make all emotional mechanics installed on this baseline. The lab descriptor reports available, read-only, model-only or unavailable precisely. SA-D01 selects authored native interpretation for directly controlled characters; [EP06–EP09](../maintainers/emotional-physiology.md#controlled-character-dependency) retain rule installation, retained-appraisal integration and lifecycle/player qualification. Choosing an inspector or focal actor grants no interpretation authority.
 
 Reflection, recall maintenance, consolidation, higher cognition and existing harness work keep their native scheduling, context, time/cost and source validation. Provide explicit inspect/advance-to-boundary/run-maintenance controls only for supported owner operations. An existing native owner may already have a developer trigger; use it. Where none exists, add a bounded explicit request to that owner instead of calling its model directly from a lab route.
 
@@ -660,7 +660,7 @@ A useful episode is more than a pleasing isolated line: the participants remembe
 
 The selected architecture, screen/current-history boundary, single-active-scenario storage, one-response semantics, exact stage editing, request-only historical rerun and current-format policy are decided. Their numerical defaults and usability/performance outcomes are proposed constraints to qualify, not unresolved choices that require a setup conversation before implementation.
 
-Open external dependencies are explicit: delivered context manifests/omission evidence; native editors or history insertion that the existing owner does not yet support; actual unusual action/perception/world rules; installed emotional physiology/maintenance capabilities; and emotional design decision SA-D01 for directly controlled human characters. Their owning projects make those decisions and implementations. None requires delaying the isolated ordinary-speech slice or inventing substitute mechanics.
+Open external dependencies are explicit: delivered context manifests/omission evidence; native editors or history insertion that the existing owner does not yet support; actual unusual action/perception/world rules; installed emotional physiology/maintenance capabilities; and implementation and qualification of SA-D01's selected authored policy for directly controlled characters under EP06–EP09. Their owning projects retain those implementations and qualification. None requires delaying the isolated ordinary-speech slice or inventing substitute mechanics.
 
 The lab does not include a second simulation, provider client in the browser, parallel scheduler, repository-wide multitenancy, simultaneous live comparison worlds, full world checkpoint for every call, old-code execution, schema migration/version compatibility service, generalized search/queue platform, immutable archive infrastructure or automatic extra evaluation calls. It provides the smallest shared seams needed to make the complete selected experiment workflow real and understandable.
 

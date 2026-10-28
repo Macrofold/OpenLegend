@@ -57,7 +57,7 @@ Historical inspection states its channel and time beside the subject: for exampl
 
 Facets retain separate times. Hearing Ada now can establish **Ada's voice · just heard**, while the equipment section still says **Spear · last seen earlier**. An unknown voice is not retroactively named because a later person appears nearby. A reported claim remains attributed testimony; an inferred identity remains a suspicion.
 
-The default marker does not fade toward an assertion of absence. It leaves the active scene after the bounded presentation interval in the [limits inventory](../limits/stealth-player-experience.md), while its eligible record remains accessible through historical inspection and its permitted source reader. Pinned historical inspection can remain open with the label. A silhouette option uses frozen, already permitted art and no animation, light, sound, shadow, reflection, collision or live hit testing.
+The default marker does not fade toward an assertion of absence. It leaves the active scene after the bounded presentation interval in the [limits inventory](../limits/stealth-player-experience.md), while its eligible record remains accessible through historical inspection and its permitted source reader. Pinned historical inspection can remain open with the label. Keyboard/history access remains available after the scene marker leaves, giving people time to read and choose deliberately. A silhouette option uses frozen, already permitted art and no animation, light, sound, shadow, reflection, collision or live hit testing.
 
 ## Controls
 
@@ -226,7 +226,7 @@ The target blocks, evades or is hit according to native resolution. Present only
 
 After an eligible sudden attack, own status shows **Startled** and the actual consequences, such as less steady aim and a shorter available evade, with remaining normal-play time. It does not disable WASD, Stop, speech or ordinary flight merely for drama.
 
-An already admitted evade keeps its frozen path and duration; a newly chosen endpoint must satisfy the current allowed range. A too-distant request refuses before cost and refreshes the offered choice. At pause, mechanical recovery stops. At debug 3×/8× all simulation work and recovery accelerate together; reading aids may remain readable without extending the effect. When finite startle ends, remove only that effect's claim: another authorized contribution can still affect aim or evasion. Do not announce calm, safety or full mechanical recovery, or invent a timer for a persistent effect. Longer-term appraisal applicability and disclosure remain conditional on SA-D01.
+An already admitted evade keeps its frozen path and duration; a newly chosen endpoint must satisfy the current allowed range. A too-distant request refuses before cost and refreshes the offered choice. At pause, mechanical recovery stops. At debug 3×/8× all simulation work and recovery accelerate together; reading aids may remain readable without extending the effect. When finite startle ends, remove only that effect's claim: another authorized contribution can still affect aim or evasion. Do not announce calm, safety or full mechanical recovery, or invent a timer for a persistent effect. Selected SA-D01 keeps compatible longer-term appraisals applicable during control, with permitted own feedback.
 
 ### G-J09 — Lose visual contact
 
@@ -266,8 +266,8 @@ The worthwhile additions are small and reusable: a clear historical inspection r
 
 ## Open decisions and evidence limits
 
-- **SA-D01 remains open:** the controlled-character fear producer, whether retained appraisals mechanically apply during direct control, disclosure, revocation and control-transfer behavior. D recommends native-body-only initial control (mask interpreted appraisal mechanics while preserving records/lifetimes), with deterministic interpretation if persistent player fear is desired; neither is adopted. This design specifies native startle and already authorized own feedback. It does not choose active versus masked prior fear, schedule AI for a human-controlled character or disclose a former controller's private thoughts.
-- **Implementation and qualification remain open:** use the [integrated owner contracts](stealth-player-experience-tech-design.md#integrated-dependencies-and-remaining-decision) for exact evidence references, sampled visual values, preparation timing and control admission. Runtime help must continue describing shipped controls until the new controls are implemented.
+- **SA-D01 selects B:** authored native event rules assign fictional player emotions; compatible retained appraisals remain active with truthful owner feedback. D owns exact world profiles and transfer/restore authority. Direct control enables no AI interpretation, forced expression or disclosure of a former controller's ungranted private thoughts. EP06–EP09 and SPX retain implementation/qualification.
+- **Implementation and qualification remain open:** use the [integrated owner contracts](stealth-player-experience-tech-design.md#integrated-dependencies-and-selected-player-policy) for exact evidence references, sampled visual values, preparation timing and control admission. Runtime help must continue describing shipped controls until the new controls are implemented.
 - Numerical presentation/input defaults are selected starting proposals in the limits inventory, not measured optimums. Human understanding, enjoyment, accessibility, latency, graphics and load acceptance remain unchecked in the tracker.
 
 ## Maintained records

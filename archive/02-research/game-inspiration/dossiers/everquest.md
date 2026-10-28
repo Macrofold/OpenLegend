@@ -1,6 +1,6 @@
 # EverQuest — full research dossier
 
-**G197 · October 28, 2026 — researched and independently reviewed.** Original PC _EverQuest_: Live and official progression servers, with historical eras identified. _EverQuest II_, _Next_, _Legends_ and independent emulator services have different contracts. No client, editor, server, account or payment was used; audiovisual observations below are attributed written evidence.
+**G198 · October 28, 2026 — researched and independently reviewed.** Original PC _EverQuest_: Live and official progression servers, with historical eras identified. _EverQuest II_, _Next_, _Legends_ and independent emulator services have different contracts. No client, editor, server, account or payment was used; audiovisual observations below are attributed written evidence.
 
 [Requirements](../research-requirements.md) · [Packet provenance](../references/packet-provenance.md)
 

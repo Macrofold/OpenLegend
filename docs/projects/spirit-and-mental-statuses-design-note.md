@@ -1,8 +1,8 @@
 # Spirit and mental statuses — design note
 
-| Status      | Current progress                                                                                | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Spirit and separate mental statuses are selected; detailed gameplay mechanics remain undecided. | 2026-10-25   |
+| Status      | Current progress                                                                                                                          | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Spirit and separate mental statuses are selected; Spirit's rule and its first status are now specified, and Determined remains undecided. | 2026-10-27   |
 
 This records the naming decision and design direction for OpenLegend's bundled world, not a complete implementation specification or a universal engine rule. No gameplay changes are authorized by this note.
 
@@ -34,7 +34,7 @@ These are optional considerations, not Mike-approved constraints. More psycholog
 
 ## Still undecided
 
-Spirit's precise behavioral effects, causes and recovery; statuses' effects, duration and interaction; and whether Determined adds Strength. No meter range, formula, stacking rule, additional visible meters, or detailed psychological simulation is selected here.
+[Character and map additions](character-and-map-additions-feature-spec.md#1-spirit) specifies Spirit as a 0–100 summary derived from the character's feelings, with status words, no direct effect and a first status, Inspired. Determined's trigger and effect, including whether it adds Strength, remain undecided.
 
 ## Maintained records
 

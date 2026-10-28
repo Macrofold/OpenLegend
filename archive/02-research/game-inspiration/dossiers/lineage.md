@@ -1,6 +1,6 @@
 # Lineage — original and Remastered PC dossier
 
-**Game:** G200, Lineage's original 1998 PC lineage and its Remastered continuation.  
+**Game:** G201, Lineage's original 1998 PC lineage and its Remastered continuation.  
 **Status:** Research in progress; expanded core checkpoint, not completed or independently reviewed.  
 **Research date:** October 28, 2026.
 

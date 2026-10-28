@@ -53,7 +53,7 @@ export function AssetReleaseControl({
   context: CheckpointContext;
   selected?: AssetRevisionReference;
   revision: number;
-  onChanged(): void;
+  onChanged?(): void;
 }) {
   const key = assetSelectionRequestKey(context.recoveryScope);
   const [retained, setRetained] = useState<RetainedRequest<AssetReleaseSelectionRequest>>(() =>
@@ -102,7 +102,7 @@ export function AssetReleaseControl({
               ? 'Artwork selection was saved. Refreshing the world.'
               : 'The earlier artwork choice is no longer current. Review the refreshed world before selecting again.',
         );
-        onChanged();
+        onChanged?.();
       } else setMessage('No completed selection is recorded. You can retry the original choice.');
     } catch (error) {
       if (alive.current) {

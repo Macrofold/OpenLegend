@@ -1,6 +1,6 @@
 # Guild Wars 2 — enduring capability, cooperative discovery and chosen goals
 
-**G188 · Research date: October 26, 2026.** [Scoped ledger](../research-progress-mmos-2026-10-26.md). ArenaNet's MMO offers a persistent account, distinctive movement and spontaneous cooperation across an expanding authored world. It is a strong positive case for preserving useful accomplishments while giving players new reasons to explore. Stable equipment does not eliminate preparation, exclusion or tedious work.
+**G189 · Research date: October 26, 2026.** [Scoped ledger](../research-progress-mmos-2026-10-26.md). ArenaNet's MMO offers a persistent account, distinctive movement and spontaneous cooperation across an expanding authored world. It is a strong positive case for preserving useful accomplishments while giving players new reasons to explore. Stable equipment does not eliminate preparation, exclusion or tedious work.
 
 ## Current service and persistence boundary
 

@@ -1,6 +1,6 @@
 # Lost Ark — combat mastery, progression pressure and access to the party
 
-**G187 · Research date: October 26, 2026.** [Scoped ledger](../research-progress-mmos-2026-10-26.md). This dossier distinguishes the Amazon-published Western PC service from Smilegate's Korean game and other regional services. Lost Ark combines an isometric action RPG's spectacular abilities with persistent character/roster growth, shared towns and exploration, and instanced group encounters. Its promise includes discovering Arkesia, trying contrasting classes and mastering demanding fights; it should not be evaluated solely as a monetization case. [L01]
+**G188 · Research date: October 26, 2026.** [Scoped ledger](../research-progress-mmos-2026-10-26.md). This dossier distinguishes the Amazon-published Western PC service from Smilegate's Korean game and other regional services. Lost Ark combines an isometric action RPG's spectacular abilities with persistent character/roster growth, shared towns and exploration, and instanced group encounters. Its promise includes discovering Arkesia, trying contrasting classes and mastering demanding fights; it should not be evaluated solely as a monetization case. [L01]
 
 ## Current boundary
 

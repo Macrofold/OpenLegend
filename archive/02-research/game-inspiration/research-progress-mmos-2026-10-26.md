@@ -6,6 +6,8 @@
 
 Twenty-one scoped subjects are researched and reviewed against the applicable R01–R15 requirements: Ashes of Creation, New World / Aeternum, Lost Ark, Guild Wars 2, Guild Wars 3, The Elder Scrolls Online, The Lord of the Rings Online, Final Fantasy XIV, Black Desert Online, MapleStory, Star Wars: The Old Republic, Albion Online, World of Warcraft, Old School RuneScape, modern RuneScape, EVE Online, Ultima Online, EverQuest, Final Fantasy XI, Dungeon Fighter Online and Fantasy Westward Journey. GW3 uses five independent observer previews because it is unreleased; the other twenty retain five substantive firsthand written assessments. Completed dossiers are committed with their ledger updates. Earlier dossier evidence and worked cases are preserved. Lineage, the comparative essay's final game-by-game conclusion and final integration gates remain open. The run began October 26 and continued October 27–28; each source retains its actual access date.
 
+**Integration reconciliation (October 28):** preserve published `main` at `5e490f9a4b766785b50a6eeaa2f255f133a9f025`, including Crimson Desert as G185 and its existing design routes. This branch’s sixteen additions now use G186–G201; the earlier checkpoint labels G185–G200 were provisional and are superseded. Dossier filenames and the six refreshed subjects remain unchanged.
+
 ## Scope and evidence rules
 
 - Treat the requested “Ashes of Cremation” as Ashes of Creation; preserve the assumption explicitly.

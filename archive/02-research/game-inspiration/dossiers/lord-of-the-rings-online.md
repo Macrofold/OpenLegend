@@ -2,7 +2,7 @@
 
 ## Scope, current service and persistence
 
-**G191 — checked October 26, 2026.** LOTRO is a third-person, target-and-hotbar MMORPG. [S12] Its promise is an inhabitable Tolkien landscape where errands, fellowship and craftsmanship coexist with the great war. [S14] This case separates the 2007 launch, 2010 free-to-play conversion, replaced progression systems and current service. [P02, P04] Its strongest OpenLegend reference is how ordinary activities acquire meaning through place and shared history; its caution is the accumulated work of reaching, understanding and maintaining that experience.
+**G192 — checked October 26, 2026.** LOTRO is a third-person, target-and-hotbar MMORPG. [S12] Its promise is an inhabitable Tolkien landscape where errands, fellowship and craftsmanship coexist with the great war. [S14] This case separates the 2007 launch, 2010 free-to-play conversion, replaced progression systems and current service. [P02, P04] Its strongest OpenLegend reference is how ordinary activities acquire meaning through place and shared history; its caution is the accumulated work of reaching, understanding and maintaining that experience.
 
 The supported client is Windows PC; official macOS support ended in August 2022. Update 49.8 shipped October 14, 2026. _The Wolves of Mordor_ remains scheduled for October 28, with its instances/raid later. However, its purchased Neighbours feature already arrived September 30 and level-up packages October 7. A forthcoming expansion and delivered preorder benefits must not be conflated. [E01, E02, E08, E10, E19, E20, M04]
 

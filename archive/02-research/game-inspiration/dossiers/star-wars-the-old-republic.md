@@ -1,6 +1,6 @@
 # Star Wars: The Old Republic
 
-**G194 · desktop game · researched 2026-10-27.** SWTOR launched in December 2011 from BioWare Austin. [P01] Current EA help documents PC/Mac access. [E05] This is a desk-research dossier, not a client test; dated rules, attributed intentions and player experiences retain their scope.
+**G195 · desktop game · researched 2026-10-27.** SWTOR launched in December 2011 from BioWare Austin. [P01] Current EA help documents PC/Mac access. [E05] This is a desk-research dossier, not a client test; dated rules, attributed intentions and player experiences retain their scope.
 
 ## 1. Identity, playable promise and persistence
 

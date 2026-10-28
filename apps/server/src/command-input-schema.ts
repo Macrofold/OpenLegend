@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import {
   ACTIVITY_LIMITS,
+  STOCK_TRANSFER_LIMITS,
   SPEECH_VOLUMES,
   validContributionTerms,
   validManufactureTools,
@@ -23,6 +24,15 @@ const id = z
   .min(1)
   .max(120)
   .regex(/^[a-zA-Z0-9_.:-]+$/);
+const tradeLotInput = z
+  .object({
+    itemId: id,
+    quantity: z.number().int().positive().safe(),
+    expectedRevision: z.number().int().nonnegative().safe().optional(),
+    placementRevision: z.number().int().nonnegative().safe().optional(),
+    expectedContentsRevision: z.number().int().nonnegative().safe().optional(),
+  })
+  .strict();
 export const commandInputSchema = z
   .object({
     execution: executionControlSchema.optional(),
@@ -221,16 +231,8 @@ export const commandInputSchema = z
     destinationId: id.optional(),
     offerId: id.optional(),
     expectedOfferRevision: z.number().int().nonnegative().safe().optional(),
-    requestedItem: z
-      .object({
-        itemId: id,
-        quantity: z.number().int().positive().safe(),
-        expectedRevision: z.number().int().nonnegative().safe().optional(),
-        placementRevision: z.number().int().nonnegative().safe().optional(),
-        expectedContentsRevision: z.number().int().nonnegative().safe().optional(),
-      })
-      .strict()
-      .optional(),
+    offeredItems: z.array(tradeLotInput).max(STOCK_TRANSFER_LIMITS.movedLots).optional(),
+    requestedItems: z.array(tradeLotInput).max(STOCK_TRANSFER_LIMITS.movedLots).optional(),
     inventoryGroup: z.string().min(1).max(4096).optional(),
     targetId: id.optional(),
     bodyReference: z

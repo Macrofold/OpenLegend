@@ -119,8 +119,16 @@ export function continuityView(
 function notepadView(world: WorldState, actorId: string, doc: KnowledgeDocument) {
   return {
     subjectId: doc.subjectId,
+    ...(doc.subjectKind ? { subjectKind: doc.subjectKind } : {}),
     origin: doc.origin,
-    label: doc.subjectId ? observerDescription(world, actorId, doc.subjectId) : 'General knowledge',
+    label:
+      doc.subjectKind === 'place'
+        ? 'Place note'
+        : doc.subjectKind === 'map-marker'
+          ? (world.mapMarkers?.[actorId]?.[doc.subjectId!]?.label ?? 'Map marker note')
+          : doc.subjectId
+            ? observerDescription(world, actorId, doc.subjectId)
+            : 'General knowledge',
     text: doc.text,
     revision: doc.revision,
     characters: characterCount(doc.text),

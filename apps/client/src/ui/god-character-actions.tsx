@@ -12,7 +12,7 @@ export function godCharacterAvailability(entity: EntityView) {
 export interface GodCharacterControls {
   revive(entity: EntityView): Promise<void>;
   enableCognition(entity: EntityView): Promise<void>;
-  editPerson?(): void;
+  editPerson?(opener: HTMLElement): void;
   inspectMind?(): void;
   editFamily?(): void;
   familyLabel?: string;
@@ -79,7 +79,7 @@ export function GodCharacterActions({
             variant="quiet"
             size="sm"
             disabled={!connected || busy}
-            onPress={controls.editPerson}
+            onPress={(event) => controls.editPerson?.(event.target as HTMLElement)}
           >
             Edit Person
           </Button>

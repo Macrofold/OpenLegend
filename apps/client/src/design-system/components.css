@@ -503,6 +503,10 @@
 .ol-ibtn[data-variant='outline'] {
   border-color: var(--line-strong);
 }
+.ol-ibtn[data-variant='secondary'] {
+  background: var(--surface-raised);
+  border-color: var(--line-strong);
+}
 .ol-ibtn:disabled {
   color: var(--ink-faint);
   background: transparent;
@@ -1489,6 +1493,16 @@
 .ol-search input::placeholder {
   color: var(--ink-faint);
 }
+/* The surrounding field owns its well, inset edge and spacing in every theme. */
+.ol-select-input,
+.ol-search input,
+.ol-composer-input textarea {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
 .ol-menu {
   list-style: none;
   margin: 0;
@@ -1792,4 +1806,618 @@
 }
 .ol-mechanic-term:hover {
   text-decoration-color: currentColor;
+}
+
+/* Product reading surfaces, separate from generated token definitions. */
+
+.ol-narrator {
+  position: absolute;
+  top: 5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(34rem, 75vw);
+  padding: 0.75rem 1rem;
+  text-align: center;
+  pointer-events: auto;
+  font-family: Georgia, serif;
+}
+
+.ol-history > label {
+  display: block;
+  margin-block: 0.75rem;
+}
+.ol-history > article {
+  padding-block: 0.75rem;
+}
+
+/* Gildmoss uses the same interaction owners. Only authored semantic roles and
+   material construction change; the archived boards remain visual references. */
+[data-theme='gildmoss'] {
+  font-weight: 500;
+}
+/* One finite entry decision prevents late font downloads from changing text
+   geometry during play. Nested HUD and portaled surfaces share the same choice. */
+[data-interface-fonts='fallback'][data-theme='gildmoss'],
+[data-interface-fonts='fallback'] [data-theme='gildmoss'] {
+  --font-display: var(--font-display-fallback);
+  --font-heading: var(--font-display-fallback);
+  --font-ui: var(--font-ui-fallback);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-panel,
+    .ol-card,
+    .ol-picker,
+    .ol-modal,
+    .ol-select-popover,
+    .ol-inventory-popover,
+    .ol-disclosure-popover,
+    .ol-hover-label,
+    .ol-pointer-tooltip,
+    .ol-dialog,
+    .ol-tooltip,
+    .ol-map-search,
+    .ol-map-sidebar,
+    .ol-map-tools,
+    .ol-pullout,
+    .ol-pullout-popover,
+    .ol-context-menu
+  ) {
+  background-color: transparent;
+  background-image: var(--lantern-light), var(--glass-fill);
+  border: var(--panel-border);
+  border-radius: var(--panel-radius);
+  box-shadow: var(--shadow-window);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+[data-theme='gildmoss'] .ol-panel {
+  box-shadow: var(--shadow-panel);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-picker,
+    .ol-modal,
+    .ol-select-popover,
+    .ol-inventory-popover,
+    .ol-disclosure-popover,
+    .ol-hover-label,
+    .ol-pointer-tooltip,
+    .ol-dialog,
+    .ol-map-search,
+    .ol-map-sidebar,
+    .ol-map-tools,
+    .ol-pullout-popover,
+    .ol-context-menu
+  ) {
+  border-radius: var(--radius-md);
+}
+[data-theme='gildmoss'] .ol-pointer-tooltip {
+  padding: var(--space-3);
+  box-shadow: var(--shadow-tooltip);
+  line-height: var(--text-detail-leading);
+}
+[data-theme='gildmoss'] .ol-tip b {
+  font: 600 var(--world-name-size) / var(--world-name-leading) var(--font-heading);
+}
+[data-theme='gildmoss'] :is(.ol-panel-head, .ol-panel-foot) {
+  background: transparent;
+  border-color: var(--line);
+}
+[data-theme='gildmoss'] :is(.ol-panel-title, .ol-dialog-title, .t-panel-title) {
+  font: 600 var(--title-xl-size) / var(--title-xl-leading) var(--font-heading);
+  letter-spacing: normal;
+}
+[data-theme='gildmoss'] :is(.t-entity-title, .ol-row-count) {
+  font-family: var(--font-heading);
+}
+[data-theme='gildmoss'] :is(.ol-eyebrow, .t-eyebrow) {
+  font-size: var(--text-label-size);
+  line-height: var(--text-detail-leading);
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+[data-theme='gildmoss'] :is(.t-body, .ol-narrative, .t-meta, .ol-meta, .t-caption, .ol-caption) {
+  font-family: var(--font-ui);
+  font-weight: 500;
+}
+[data-theme='gildmoss'] :is(.t-meta, .ol-meta, .t-caption, .ol-caption) {
+  font-size: var(--text-detail-size);
+  line-height: var(--text-detail-leading);
+}
+[data-theme='gildmoss'] .ol-kbd {
+  background: var(--keycap-fill);
+  border: none;
+  border-radius: var(--radius-xs);
+  box-shadow: inset 0 0 0 1px var(--line-control);
+  min-width: 20px;
+  height: 20px;
+  color: var(--ink-muted);
+  font: 700 var(--text-label-size) / 16px var(--font-ui);
+}
+[data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-filter-button) {
+  border: none;
+  border-radius: var(--control-radius);
+  background: var(--surface-raised);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px var(--line-control);
+  font-family: var(--font-ui);
+}
+[data-theme='gildmoss'] .ol-btn {
+  padding-inline: var(--space-3);
+}
+[data-theme='gildmoss'] .ol-btn[data-size='sm'] {
+  padding-inline: var(--space-2);
+  gap: var(--space-2);
+}
+[data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-filter-button):hover {
+  background: var(--surface-hover);
+  box-shadow: inset 0 0 0 1px var(--line-hover);
+}
+[data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-filter-button):active {
+  background: var(--surface-slot-empty);
+}
+[data-theme='gildmoss'] .ol-btn:where([data-variant='primary'], [data-variant='solid']) {
+  background: var(--primary);
+  color: var(--on-highlight);
+  box-shadow:
+    inset 0 0 0 1px var(--primary-edge),
+    var(--primary-glow);
+  --icon-mark: var(--icon-mark-on-primary);
+  --icon-finish: url(#ol-metal-ink);
+}
+[data-theme='gildmoss'] .ol-btn:where([data-variant='primary'], [data-variant='solid']):hover {
+  background: var(--primary-hover);
+}
+[data-theme='gildmoss'] .ol-btn:where([data-variant='primary'], [data-variant='solid']):active {
+  background: var(--primary-pressed);
+}
+[data-theme='gildmoss']
+  :is(.ol-btn:where([data-variant='quiet']), .ol-ibtn:where(:not([data-variant='secondary']))) {
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-muted);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-btn:where([data-variant='quiet']),
+    .ol-ibtn:where(:not([data-variant='secondary']))
+  ):hover {
+  background: var(--surface-quiet-hover);
+  box-shadow: none;
+  color: var(--ink-muted);
+}
+[data-theme='gildmoss'] .ol-ibtn[data-size='xs'] {
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+}
+[data-theme='gildmoss'] .ol-btn:where([data-variant='danger']) {
+  color: var(--danger);
+  background: var(--danger-quiet);
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+[data-theme='gildmoss']
+  :where(input:not([type='range']):not([type='checkbox']):not([type='radio']), textarea, select),
+[data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input) {
+  background: var(--surface-well);
+  color: var(--ink);
+  border-color: transparent;
+  border-radius: var(--control-radius);
+  box-shadow:
+    inset 0 0 0 1px var(--line-control),
+    var(--field-inset-shadow);
+  font-family: var(--font-ui);
+}
+[data-theme='gildmoss'] :is(input, textarea, select)::placeholder {
+  color: var(--ink-faint);
+}
+[data-theme='gildmoss']
+  :where(
+    input:not([type='range']):not([type='checkbox']):not([type='radio']),
+    textarea,
+    select
+  ):focus,
+[data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input):focus-within {
+  box-shadow:
+    inset 0 0 0 1px var(--focus),
+    var(--field-glow);
+}
+[data-theme='gildmoss'] :is(.ol-select-input, .ol-search input, .ol-composer-input textarea) {
+  min-height: 0;
+  background: transparent;
+  box-shadow: none;
+}
+[data-theme='gildmoss']
+  :where(
+    input:not([type='range']):not([type='checkbox']):not([type='radio']),
+    textarea,
+    select
+  ):focus-visible {
+  /* The inset ivory edge and halo are the field's focus indicator. */
+  outline: none;
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-row,
+    .ol-select-option,
+    .ol-tab,
+    .ol-tab-btn,
+    .ol-seg :where(button, .ol-radio),
+    .ol-filter-button
+  ) {
+  position: relative;
+  border-radius: var(--control-radius);
+}
+[data-theme='gildmoss'] :is(.ol-row, .ol-select-option):is(:hover, [data-focused]) {
+  background: var(--surface-selected);
+  box-shadow:
+    inset 0 0 0 1px var(--line-hover),
+    var(--selected-glow);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-row,
+    .ol-select-option,
+    .ol-tab-btn,
+    .ol-seg :where(button, .ol-radio),
+    .ol-filter-button,
+    .ol-building-tile,
+    .ol-event-select,
+    .ol-btn:where(:not(.ol-navigation-tab)),
+    .ol-ibtn
+  ):is(
+    [aria-selected='true'],
+    [aria-current='true'],
+    [aria-current='page'],
+    [aria-checked='true'],
+    [aria-pressed='true'],
+    [data-selected]
+  ) {
+  color: var(--highlight);
+  background: var(--surface-selected);
+  box-shadow: var(--selected-glow);
+  --icon-finish: url(#ol-metal-gold);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-row,
+    .ol-select-option,
+    .ol-tab-btn,
+    .ol-seg :where(button, .ol-radio),
+    .ol-filter-button,
+    .ol-building-tile,
+    .ol-event-select,
+    .ol-btn:where(:not(.ol-navigation-tab)),
+    .ol-ibtn
+  ):is(
+    [aria-selected='true'],
+    [aria-current='true'],
+    [aria-current='page'],
+    [aria-checked='true'],
+    [aria-pressed='true'],
+    [data-selected]
+  )::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  padding: 1px;
+  border-radius: inherit;
+  background: var(--metal-gold-edge);
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(black 0 0) content-box,
+    linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(black 0 0) content-box exclude,
+    linear-gradient(black 0 0);
+}
+[data-theme='gildmoss'] :is(.ol-tab, .ol-navigation-tab, .ol-btn.ol-navigation-tab) {
+  position: relative;
+  height: 40px;
+  min-height: 40px;
+  padding-inline: var(--space-4);
+  gap: var(--space-2);
+  color: var(--ink-silver);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 600 var(--text-tab-size) / 20px var(--font-ui);
+}
+[data-theme='gildmoss'] :is(.ol-tab, .ol-navigation-tab, .ol-btn.ol-navigation-tab):hover {
+  background: transparent;
+  box-shadow: none;
+}
+[data-theme='gildmoss']
+  :is(.ol-tab, .ol-navigation-tab):is(
+    [aria-selected='true'],
+    [aria-current='page'],
+    [aria-pressed='true'],
+    [aria-expanded='true']
+  ) {
+  color: var(--highlight);
+  background: transparent;
+  --icon-finish: url(#ol-metal-gold);
+}
+[data-theme='gildmoss']
+  :is(.ol-tab, .ol-navigation-tab):is(
+    [aria-selected='true'],
+    [aria-current='page'],
+    [aria-pressed='true'],
+    [aria-expanded='true']
+  )
+  > span:not(.ol-icon-wrap) {
+  background: var(--metal-gold-label);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+[data-theme='gildmoss'] .ol-navigation-tab .ol-kbd {
+  -webkit-text-fill-color: var(--ink-muted);
+  color: var(--ink-muted);
+}
+[data-theme='gildmoss']
+  :is(.ol-tab, .ol-navigation-tab):is(
+    [aria-selected='true'],
+    [aria-current='page'],
+    [aria-pressed='true'],
+    [aria-expanded='true']
+  )::after {
+  content: '';
+  position: absolute;
+  inset: auto var(--space-3) 0;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--metal-gold-line);
+  box-shadow: var(--underline-glow);
+  pointer-events: none;
+}
+[data-theme='gildmoss'] .ol-seg {
+  background: var(--surface-well);
+  border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+  gap: var(--space-1);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+[data-theme='gildmoss'] .ol-seg :where(button, .ol-radio) {
+  padding-inline: var(--space-3);
+  border-radius: var(--control-radius);
+  color: var(--ink-silver);
+  font: 600 13px / 16px var(--font-ui);
+}
+[data-theme='gildmoss']
+  :is(.ol-btn, .ol-ibtn, .ol-filter-button, .ol-radio):is(
+    :disabled,
+    [aria-disabled='true'],
+    [data-disabled]
+  ) {
+  color: var(--control-disabled-ink);
+  background: var(--control-disabled-fill);
+  box-shadow: inset 0 0 0 1px var(--control-disabled-edge);
+  --icon-finish: url(#ol-metal-silver);
+  --icon-mark: inherit;
+}
+[data-theme='gildmoss']
+  :is(.ol-btn, .ol-ibtn, .ol-filter-button, .ol-radio):is(
+    :disabled,
+    [aria-disabled='true'],
+    [data-disabled]
+  )::before {
+  display: none;
+}
+[data-theme='gildmoss']
+  :is(.ol-navigation-tab, .ol-btn.ol-navigation-tab):is(
+    :disabled,
+    [aria-disabled='true'],
+    [data-disabled]
+  ) {
+  background: transparent;
+  box-shadow: none;
+}
+[data-theme='gildmoss'] .ol-meter-track {
+  height: var(--meter-height);
+  border-radius: var(--radius-xs);
+  background: var(--meter-track);
+  box-shadow: inset 0 0 0 1px var(--meter-edge);
+}
+[data-theme='gildmoss'] .ol-meter-fill {
+  border-radius: inherit;
+}
+[data-theme='gildmoss'] .ol-meter-value {
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-weight: 600;
+}
+[data-theme='gildmoss'] .ol-meter-label {
+  color: var(--ink-muted);
+}
+.ol-meter-state {
+  min-inline-size: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-detail-size);
+  line-height: var(--text-detail-leading);
+}
+[data-theme='gildmoss'] .ol-condition-plate {
+  background-image: var(--hud-frame-image, none), var(--lantern-light), var(--glass-fill);
+  background-size: 100% 100%;
+  border: none;
+  border-radius: var(--panel-radius);
+  box-shadow: var(--shadow-plate);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+[data-theme='gildmoss'] :is(.ol-progress-fill, .ol-status-progress span, .ol-work-progress span) {
+  background: var(--progress-fill);
+}
+[data-theme='gildmoss'] .ol-picker {
+  padding: var(--space-2) var(--space-1);
+  border-radius: var(--radius-md);
+}
+[data-theme='gildmoss'] .ol-picker-target {
+  padding: var(--space-2) var(--space-3);
+}
+[data-theme='gildmoss'] .ol-picker-target b {
+  font: 600 var(--title-sm-size) / var(--title-sm-leading) var(--font-heading);
+}
+[data-theme='gildmoss'] :is(.ol-hover-label, .ol-tip) {
+  font-family: var(--font-ui);
+  color: var(--ink);
+}
+/* A name alone is world text. Rich pointer previews retain their separate card
+   so carried quantities and Command-click consequences remain readable. */
+[data-theme='gildmoss'] .ol-world-hover:not(:has(> div:nth-child(2))) {
+  padding: 0;
+  border: none;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-world-name);
+  font: 600 var(--world-name-size) / var(--world-name-leading) var(--font-heading);
+  text-shadow: var(--world-text-shadow);
+}
+[data-theme='gildmoss'] .ol-icon .ol-icon-fill {
+  fill: var(--icon-finish);
+  stroke: var(--icon-finish);
+}
+[data-theme='gildmoss'] .ol-icon .ol-icon-line {
+  stroke: var(--icon-finish);
+}
+[data-theme='gildmoss'] :is(.ol-status, .ol-condition-effect) {
+  --icon-finish: url(#ol-metal-ivory);
+}
+[data-theme='gildmoss'] .ol-special-shine {
+  position: relative;
+  border: 2px solid var(--highlight);
+  box-shadow: var(--selected-glow);
+}
+[data-theme='gildmoss'] .ol-special-shine::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: var(--metal-gold-rim);
+  padding: 2px;
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(black 0 0) content-box,
+    linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(black 0 0) content-box exclude,
+    linear-gradient(black 0 0);
+}
+@media (forced-colors: active) {
+  [data-theme='gildmoss']
+    :is(
+      .ol-btn,
+      .ol-ibtn,
+      .ol-filter-button,
+      .ol-row,
+      .ol-tab,
+      .ol-radio,
+      input,
+      textarea,
+      select
+    ) {
+    forced-color-adjust: auto;
+    border: 1px solid ButtonText;
+    box-shadow: none;
+  }
+  [data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-row, .ol-tab, .ol-radio)::before,
+  [data-theme='gildmoss'] :is(.ol-tab, .ol-navigation-tab)::after {
+    display: none;
+  }
+  [data-theme='gildmoss']
+    :is(.ol-tab, .ol-navigation-tab):is(
+      [aria-selected='true'],
+      [aria-current='page'],
+      [aria-pressed='true'],
+      [aria-expanded='true']
+    )
+    > span:not(.ol-icon-wrap) {
+    background: none;
+    color: Highlight;
+    -webkit-text-fill-color: Highlight;
+  }
+  [data-theme='gildmoss']
+    :where(
+      input:not([type='range']):not([type='checkbox']):not([type='radio']),
+      textarea,
+      select
+    ):focus-visible,
+  [data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input):focus-within {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+}
+.ol-icon-definitions {
+  position: absolute;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+.ol-icon[data-artwork='gildmoss'] {
+  display: none;
+}
+[data-theme='gildmoss'] .ol-icon[data-artwork='shared'] {
+  display: none;
+}
+[data-theme='gildmoss'] .ol-icon[data-artwork='gildmoss'] {
+  display: inline-block;
+}
+/* Tabs keep their existing collection/focus behaviour across feature owners. */
+[data-theme='gildmoss'] [role='tab'] {
+  position: relative;
+  color: var(--ink-silver);
+  border-color: transparent;
+  font-family: var(--font-ui);
+}
+[data-theme='gildmoss'] [role='tab'][aria-selected='true'] {
+  color: var(--highlight);
+}
+[data-theme='gildmoss']
+  :where(input:not([type='range']):not([type='checkbox']):not([type='radio']), select) {
+  min-height: var(--control-height);
+  padding-inline: var(--space-3);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-leading);
+}
+[data-theme='gildmoss'] textarea {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-body-size);
+  line-height: var(--text-body-leading);
+}
+[data-theme='gildmoss'] :is(.ol-select-input, .ol-search input, .ol-composer-input textarea) {
+  padding: 0;
+}
+/* A composer is a field plus a separate commitment. Its form is not another
+   field well; the same owner serves speech, negotiation and world editing. */
+[data-theme='gildmoss'] .ol-composer {
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+[data-theme='gildmoss'] .ol-composer .ol-composer-input {
+  min-height: 64px;
+  padding: var(--space-3);
+  border: 0;
+}
+[data-theme='gildmoss'] .ol-composer .ol-composer-input textarea {
+  min-height: 40px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow-y: auto;
+}
+[data-theme='gildmoss'] .ol-composer > .ol-btn {
+  min-height: 40px;
 }

@@ -11,7 +11,7 @@ const runnerSourceSha256 = createHash('sha256')
   .digest('hex');
 if (!readyPath || !outputPath || !Number.isInteger(seconds) || seconds < 5 || seconds > 1800)
   throw new Error(
-    'Usage: node scripts/performance/profile-browser.mjs READY.json NEW_REPORT.json [5–1800 SECONDS] [--app-profiling=on|off] [--cpu-profile] [--trace] [--blur-off] [--selection-sweep] [--survival] [--near-start] [--wait-for-resume]',
+    'Usage: node scripts/performance/profile-browser.mjs READY.json NEW_REPORT.json [5–1800 SECONDS] [--app-profiling=on|off] [--cpu-profile] [--trace] [--blur-off] [--selection-sweep] [--interface-metrics] [--interface-only] [--survival] [--near-start] [--wait-for-resume]',
   );
 if (
   flags.some(
@@ -22,6 +22,8 @@ if (
         '--trace',
         '--blur-off',
         '--selection-sweep',
+        '--interface-metrics',
+        '--interface-only',
         '--survival',
         '--near-start',
         '--wait-for-resume',
@@ -40,7 +42,7 @@ if (
   )
 )
   throw new Error(
-    'Profiling off supports the fixed-input workload without CPU sampling or traces.',
+    'Profiling off excludes CPU sampling, traces and scene-dependent survival diagnostics.',
   );
 try {
   await stat(outputPath);
@@ -56,7 +58,9 @@ if (
   ready.databaseAdapter !== 'postgres' ||
   !ready.startMarkerPath
 )
-  throw new Error('Use the owned disposable PostgreSQL fixture manifest from profile-server.ts.');
+  throw new Error(
+    'Use explicit loopback PostgreSQL ready metadata from the owned fixture or task server.',
+  );
 if (sceneProfiling) target.searchParams.set('profile', '1');
 else target.searchParams.delete('profile');
 const cpuProfile = flags.includes('--cpu-profile');
@@ -65,6 +69,17 @@ const trace = flags.includes('--trace');
 if (trace && seconds > 60) throw new Error('Detailed browser traces are limited to 60 seconds.');
 const blurOff = flags.includes('--blur-off');
 const selectionSweep = flags.includes('--selection-sweep');
+const interfaceMetrics = flags.includes('--interface-metrics');
+const interfaceOnly = flags.includes('--interface-only');
+if (interfaceOnly && !interfaceMetrics)
+  throw new Error('Interface-only capture requires --interface-metrics.');
+if (
+  interfaceOnly &&
+  flags.some((flag) =>
+    ['--survival', '--selection-sweep', '--cpu-profile', '--trace'].includes(flag),
+  )
+)
+  throw new Error('Interface-only capture excludes survival, selection, CPU sampling and traces.');
 const survival = flags.includes('--survival');
 const nearStart = flags.includes('--near-start');
 const waitForResume = flags.includes('--wait-for-resume');
@@ -137,6 +152,55 @@ const traceCollection = {
 };
 let report;
 let intentionHeaders = {};
+let interfaceMeasurement;
+let loadPhase;
+const loadRequests = new Map();
+function beginLoad(name) {
+  loadPhase = {
+    name,
+    startedAtUnixMs: Date.now(),
+    requestsStarted: 0,
+    redirects: 0,
+    completedResponses: 0,
+    failedRequests: 0,
+    omittedRequests: 0,
+    encodedResponseBytes: 0,
+    requestsByType: {},
+    completedByType: {},
+    responses: [],
+    responseRowsOmitted: 0,
+  };
+}
+function finishLoad(boundary = 'The current page rendered its permitted first world view.') {
+  const phase = loadPhase;
+  loadPhase = undefined;
+  phase.closed = true;
+  const { closed: _closed, ...values } = phase;
+  return {
+    ...values,
+    endedAtUnixMs: Date.now(),
+    inFlightAtBoundary: [...loadRequests.values()].filter((value) => value.phase === phase).length,
+    boundary,
+    byteMeaning:
+      'CDP Network.loadingFinished encoded response bytes for observed page-target requests, excluding request uploads, TLS and unobserved worker targets. Cached replies may transfer zero bytes. In-flight, failed and omitted requests are not a measured zero.',
+    responseMeaning:
+      'Completed response rows retain HTTP(S) pathname only, never query, fragment, headers or body. Null cache flags mean CDP supplied no evidence; servedFromCache is not a distinction between memory and disk. Rows have the same finite capture limit as pending requests; omitted rows remain in completed totals.',
+  };
+}
+async function openGameTask(name) {
+  await page.locator('#gameMenuButton').click();
+  await page.getByRole('button', { name, exact: true }).click();
+}
+function loadedScripts() {
+  return page.evaluate(() => {
+    const paths = [...document.scripts]
+      .filter((script) => script.src)
+      .map((script) => new URL(script.src))
+      .filter((url) => url.origin === location.origin)
+      .map((url) => url.pathname);
+    return { paths: paths.slice(0, 32), truncated: Math.max(0, paths.length - 32) };
+  });
+}
 function saveTrace() {
   if (traceStopPromise) return traceStopPromise;
   if (!traceRunning) return Promise.resolve();
@@ -359,7 +423,7 @@ function analyzeCpuProfile(profile, navigationStart, measuredStart, measuredEnd)
   return result;
 }
 
-try {
+async function run() {
   browser = await chromium.launch({
     headless: true,
     args: ['--use-gl=angle', '--use-angle=metal'],
@@ -796,6 +860,75 @@ try {
     traceTimer = setTimeout(() => void saveTrace().catch(recordError), 60_000);
   }
   await cdp.send('Network.enable');
+  if (interfaceMetrics) {
+    cdp.on('Network.requestWillBeSent', (event) => {
+      if (!loadPhase) return;
+      loadPhase.requestsStarted++;
+      if (event.redirectResponse) loadPhase.redirects++;
+      loadPhase.requestsByType[event.type] = (loadPhase.requestsByType[event.type] ?? 0) + 1;
+      if (loadRequests.size >= captureLimits.messages && !loadRequests.has(event.requestId)) {
+        loadPhase.omittedRequests++;
+        return;
+      }
+      let pathname = null;
+      let pathnameTruncated = false;
+      try {
+        const url = new URL(event.request.url);
+        // Opaque data/blob paths can contain payloads rather than resource names.
+        if (url.protocol === 'http:' || url.protocol === 'https:') {
+          pathname = url.pathname.slice(0, captureLimits.text);
+          pathnameTruncated = pathname.length !== url.pathname.length;
+        }
+      } catch {
+        // An unparseable diagnostic URL must not stop the measured game task.
+      }
+      loadRequests.set(event.requestId, {
+        phase: loadPhase,
+        pathname,
+        pathnameTruncated,
+        type: event.type ?? 'Unknown',
+        status: null,
+        servedFromCache: null,
+        fromDiskCache: null,
+        fromServiceWorker: null,
+        fromPrefetchCache: null,
+      });
+    });
+    cdp.on('Network.requestServedFromCache', (event) => {
+      const request = loadRequests.get(event.requestId);
+      if (request && !request.phase.closed) request.servedFromCache = true;
+    });
+    cdp.on('Network.responseReceived', (event) => {
+      const request = loadRequests.get(event.requestId);
+      if (!request || request.phase.closed) return;
+      request.type = event.type ?? request.type;
+      request.status = event.response.status;
+      for (const flag of ['fromDiskCache', 'fromServiceWorker', 'fromPrefetchCache'])
+        request[flag] = event.response[flag] ?? null;
+    });
+    cdp.on('Network.loadingFinished', (event) => {
+      const request = loadRequests.get(event.requestId);
+      loadRequests.delete(event.requestId);
+      if (!request || request.phase.closed) return;
+      const { phase, ...response } = request;
+      phase.completedResponses++;
+      phase.encodedResponseBytes += event.encodedDataLength;
+      const category = (phase.completedByType[request.type] ??= {
+        responses: 0,
+        encodedResponseBytes: 0,
+      });
+      category.responses++;
+      category.encodedResponseBytes += event.encodedDataLength;
+      if (phase.responses.length < captureLimits.messages)
+        phase.responses.push({ ...response, encodedResponseBytes: event.encodedDataLength });
+      else phase.responseRowsOmitted++;
+    });
+    cdp.on('Network.loadingFailed', (event) => {
+      const phase = loadRequests.get(event.requestId)?.phase;
+      loadRequests.delete(event.requestId);
+      if (phase && !phase.closed) phase.failedRequests++;
+    });
+  }
   await cdp.send('Performance.enable');
   if (cpuProfile) {
     await cdp.send('Profiler.enable');
@@ -831,6 +964,7 @@ try {
   const login = await context.request.get(new URL('/auth/login', target).href);
   if (!login.ok()) throw new Error(`Local fixture sign-in failed (${login.status()}).`);
   console.error('browser profile stage: signed in');
+  if (interfaceMetrics) beginLoad('first load in a fresh browser context');
   await page.goto(target.href, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await page.bringToFront();
   console.error('browser profile stage: page loaded, waiting for entry or rendered scene');
@@ -846,19 +980,33 @@ try {
     await page.waitForFunction(() => !!window.__openLegendSceneProfile, undefined, {
       timeout: 10_000,
     });
+  if (interfaceMetrics) {
+    interfaceMeasurement = { loads: [finishLoad()] };
+    beginLoad('warm reload in the same browser context');
+    await page.reload({ waitUntil: 'domcontentloaded', timeout: 60_000 });
+    await page.locator('#world[data-ready="true"]').waitFor({ timeout: 60_000 });
+    if (sceneProfiling)
+      await page.waitForFunction(() => !!window.__openLegendSceneProfile, undefined, {
+        timeout: 10_000,
+      });
+    interfaceMeasurement.loads.push(finishLoad());
+  }
   const resume = page.getByRole('button', { name: 'Resume world', exact: true });
-  // Fixture time must stay paused while cold reads and collector preparation run.
-  await resume.waitFor();
-  const threeTimes = page.getByRole('radio', { name: '3×', exact: true });
-  // The visible React Aria label owns pointer input; use the radio's ordinary keyboard action.
-  if (!(await threeTimes.isChecked())) await threeTimes.press('Space');
-  await expect(threeTimes).toBeChecked({ timeout: 10_000 });
+  if (!interfaceOnly) {
+    await openGameTask('Time');
+    // Fixture time must stay paused while cold reads and collector preparation run.
+    await resume.waitFor();
+    const threeTimes = page.getByRole('radio', { name: '3×', exact: true });
+    // The visible React Aria label owns pointer input; use the radio's ordinary keyboard action.
+    if (!(await threeTimes.isChecked())) await threeTimes.press('Space');
+    await expect(threeTimes).toBeChecked({ timeout: 10_000 });
+  }
   if (blurOff)
     await page.addStyleTag({
       content:
         '.vision-blur { backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }',
     });
-  await resume.waitFor();
+  if (!interfaceOnly) await resume.waitFor();
   const metrics = await cdp.send('Performance.getMetrics');
   navigationStart =
     metrics.metrics.find((metric) => metric.name === 'NavigationStart')?.value * 1000;
@@ -873,6 +1021,162 @@ try {
     }),
     sceneProfiling,
   );
+  if (interfaceMetrics) {
+    if (!interfaceOnly)
+      await page
+        .locator('#timePanel')
+        .getByRole('button', { name: 'Hide Time panel', exact: true })
+        .click();
+    const stateResponse = await context.request.get(new URL('/api/state', target).href);
+    if (!stateResponse.ok()) throw new Error('Could not read the permitted inventory context.');
+    const state = await stateResponse.json();
+    if (interfaceOnly && !state.clock.paused)
+      throw new Error(
+        'Pause the owned task world before interface-only capture. No control was sent.',
+      );
+    await page.locator('#launcher-character').evaluate((button) => {
+      button.addEventListener('pointerdown', () => performance.mark('profile-inventory-open'), {
+        once: true,
+      });
+    });
+    const [inventoryRead] = await Promise.all([
+      page.waitForResponse((response) => {
+        const url = new URL(response.url());
+        return (
+          url.origin === target.origin &&
+          url.pathname === '/api/inventory' &&
+          response.request().method() === 'POST' &&
+          response.request().postDataJSON()?.containerId === ready.playerId
+        );
+      }),
+      page.locator('#launcher-character').click(),
+    ]);
+    const inventoryPage = await inventoryRead.json();
+    if (!inventoryRead.ok() || !inventoryPage.ok)
+      throw new Error('The native inventory read was refused; opening latency is unqualified.');
+    await page
+      .locator(
+        '#inventoryPanel .ol-inventory-collection[data-side="belongings"][aria-busy="false"]',
+      )
+      .waitFor();
+    const opened = await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              const start = performance.getEntriesByName('profile-inventory-open').at(-1);
+              resolve({
+                pointerToRowsAndTwoFramesMs: start ? performance.now() - start.startTime : null,
+                visibleFirstPageItems: document.querySelectorAll('#inventoryPanel [data-item-id]')
+                  .length,
+              });
+            }),
+          ),
+        ),
+    );
+    if (opened.visibleFirstPageItems !== inventoryPage.items.length)
+      throw new Error('Rendered inventory rows do not match the successful native page.');
+    const panelStartedAt = await page.evaluate((sceneProfiling) => {
+      window.__openLegendBrowserProfile.start();
+      if (sceneProfiling) window.__openLegendSceneProfile.start();
+      return performance.now();
+    }, sceneProfiling);
+    await delay(5000);
+    const panel = await page.evaluate(
+      (sceneProfiling) => ({
+        browser: window.__openLegendBrowserProfile.stop(),
+        scene: sceneProfiling ? window.__openLegendSceneProfile.stop() : null,
+      }),
+      sceneProfiling,
+    );
+    const intervals = panel.browser.histograms.browserFrame;
+    interfaceMeasurement.inventory = {
+      ...opened,
+      projectedInventoryEntries: state.player.inventory.length,
+      population: state.player.inventory.length
+        ? 'populated'
+        : 'empty; populated check unqualified',
+      paused: state.clock.paused,
+      presentationRelease: state.presentationRelease ?? null,
+      effectivePresentation: await page.evaluate(() => {
+        const hud = document.querySelector('.ol-hud');
+        const style = getComputedStyle(hud);
+        return {
+          theme: document.documentElement.dataset.theme ?? document.body.dataset.theme ?? null,
+          lighting:
+            document.documentElement.dataset.lighting ?? document.body.dataset.lighting ?? null,
+          interfaceScale: style.getPropertyValue('--ui-scale').trim(),
+          fontMode: document.documentElement.dataset.interfaceFonts ?? null,
+          fontFamily: style.fontFamily,
+          devicePixelRatio,
+        };
+      }),
+      panels: ['Character with Your belongings'],
+      observedSeconds: (panel.browser.stoppedAt - panelStartedAt) / 1000,
+      frameIntervals: histogramDistribution(intervals),
+      callbackFramesPerSecond: intervals.count
+        ? (intervals.count * 1000) / intervals.totalMs
+        : null,
+      callbackCount: panel.browser.callbackTiming.count,
+      framesAbove50Ms: intervals.above50Ms,
+      longTasks: panel.browser.longTasks,
+      renderedFrames: panel.scene?.renderedFrames ?? null,
+      renderSubmissionsPerSecond: panel.scene
+        ? (panel.scene.renderedFrames.count * 1000) /
+          (panel.scene.stoppedAt - panel.scene.startedAt)
+        : null,
+      renderedFrameIntervals: panel.scene
+        ? histogramDistribution(panel.scene.histograms.renderedFrame)
+        : null,
+      renderer: panel.scene?.renderer ?? null,
+      interpretation:
+        'One current-world inventory opening, followed by five seconds with its Character panel open and the world paused. Opening ends after native current rows and two animation frames. This is not an original-interface comparison or a larger-inventory capacity result.',
+    };
+    await page
+      .locator('#characterPanel')
+      .getByRole('button', { name: 'Hide Character panel', exact: true })
+      .click();
+    if (!interfaceOnly) await openGameTask('Time');
+  }
+  if (interfaceOnly) {
+    report = {
+      mode: 'interface-only',
+      runnerSourceSha256,
+      fixture: {
+        readyPath: resolve(readyPath),
+        origin: target.origin,
+        databaseAdapter: ready.databaseAdapter,
+        sourceProvenance: ready.sourceProvenance ?? null,
+        serverCapture: 'Not collected; the task owns this paused server.',
+        serverOutputPath: null,
+      },
+      environment: {
+        browser: browser.version(),
+        headless: true,
+        viewport: { width: 1920, height: 1080 },
+        loadedScripts: await loadedScripts(),
+      },
+      instrumentation: {
+        appProfiling,
+        cpuSampling: cpuProfile,
+        detailedTrace: trace,
+        blurDisabledDiagnostic: blurOff,
+        nativeCommandsSent: 0,
+        startMarkerWritten: false,
+      },
+      interfaceMeasurement,
+      startup,
+      errors,
+      failedRequests,
+      consoleMessages,
+      diagnosticOmitted: diagnosticOmissions(),
+    };
+    await writeFile(outputPath, JSON.stringify(report, null, 2), { flag: 'wx', mode: 0o600 });
+    console.log(JSON.stringify({ outputPath: resolve(outputPath), mode: report.mode, errors }));
+    if (errors.length || Object.values(diagnosticOmissions()).some((count) => count > 0))
+      process.exitCode = 1;
+    return;
+  }
   const startRequestedAtUnixMs = Date.now();
   await page.evaluate(() => window.__openLegendBrowserProfile.ready);
   const started = await page.evaluate((sceneProfiling) => {
@@ -903,6 +1207,10 @@ try {
   const resumeRequestedAtUnixMs = Date.now();
   await resume.click();
   await page.getByRole('button', { name: 'Pause world', exact: true }).waitFor();
+  await page
+    .locator('#timePanel')
+    .getByRole('button', { name: 'Hide Time panel', exact: true })
+    .click();
   const resumeAcknowledgedAtUnixMs = Date.now();
   await writeFile(ready.startMarkerPath, JSON.stringify({ startedAtUnixMs: started.unixMs }), {
     flag: 'wx',
@@ -1162,8 +1470,7 @@ try {
       if (survival && (await survivalInput(slotStartedAt))) continue;
       if (selectionSweep && offered % 3 === 0) {
         const panel = page.locator('#nearbyPanel');
-        if (!(await panel.isVisible()))
-          await page.locator('.ol-launcher[aria-label="In view"]').click({ timeout: 2000 });
+        if (!(await panel.isVisible())) await openGameTask('In view');
         const rows = panel.locator('[data-entity]');
         const count = await rows.count();
         if (!count) throw new Error('No visible entity available for selection sweep.');
@@ -1356,18 +1663,12 @@ try {
       nativeSpeed: ready.nativeSpeed,
       instrumentation: ready.instrumentation ?? null,
     },
+    interfaceMeasurement,
     runnerSourceSha256,
     environment: {
       browser: browser.version(),
       headless: true,
-      loadedScripts: await page.evaluate(() => {
-        const paths = [...document.scripts]
-          .filter((script) => script.src)
-          .map((script) => new URL(script.src))
-          .filter((url) => url.origin === location.origin)
-          .map((url) => url.pathname);
-        return { paths: paths.slice(0, 32), truncated: Math.max(0, paths.length - 32) };
-      }),
+      loadedScripts: await loadedScripts(),
       viewport: { width: 1920, height: 1080 },
       framebuffer: started.framebuffer,
       renderer: stopped.scene?.renderer ?? null,
@@ -1414,6 +1715,8 @@ try {
       blurDisabledDiagnostic: blurOff,
       peripheralBlur: started.peripheralBlur,
       selectionSweep,
+      interfaceMetrics,
+      startupLoad: interfaceMetrics ? 'warm reload' : 'first load',
       survivalDriver: survival,
       nearStartDiagnostic: nearStart,
       waitForActualResumptionDiagnostic: waitForResume,
@@ -1612,7 +1915,14 @@ try {
     report.survival?.failedActivityGate
   )
     process.exitCode = 1;
+}
+try {
+  await run();
 } catch (error) {
+  if (loadPhase) {
+    interfaceMeasurement ??= { loads: [] };
+    interfaceMeasurement.loads.push(finishLoad('Failed before the first world view rendered.'));
+  }
   const failurePage = page
     ? await page
         .locator('body')
@@ -1628,6 +1938,8 @@ try {
       JSON.stringify({
         status: 'failed',
         error: String(error),
+        runnerSourceSha256,
+        interfaceMeasurement,
         errors,
         consoleMessages,
         failedRequests,

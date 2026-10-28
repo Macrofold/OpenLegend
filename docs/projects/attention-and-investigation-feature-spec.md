@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-24   |
+| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-25   |
 
 ## Purpose and scope
 
@@ -59,6 +59,8 @@ These are ordinary capabilities offered through the same action discovery, exact
 Investigation is a purpose expressed by existing finite activities, not a new planner. An already admitted conditional method may react natively to a supported condition; a novel destination, a new accusation or an attack still requires the appropriate new choice. Freeform “find out everything” must be narrowed to an executable scope, with the unresolved question retained honestly.
 
 The [world profile](../worlds/base/attention-and-investigation.md) owns initial durations, observation methods and native curiosity policy. The [limits inventory](../limits/attention-and-investigation.md) distinguishes play choices from work quanta and retention. Another world can choose different bodies, senses, methods and deadlines through the same trusted families.
+
+The default watch should support an ordinary stretch of compatible work or travel without repeated short renewals. A scan's overall deadline leaves room for its real turns and dwell, but finishes early when the chosen sequence is done; arbitrary alternating foci can still end partial. Neither default grants broader physical coverage or a compulsory wait after useful work has finished.
 
 ## What is being watched
 
@@ -139,7 +141,7 @@ Audio, non-audio cues, history and action descriptions must agree on uncertainty
 
 [ATI01–ATI08](../maintainers/attention-and-investigation.md) owns staged delivery and unperformed runtime/player qualification. Each slice includes ordinary discovery, admission, interruption, persistence and truthful results.
 
-**The attention design has no unresolved product choice.** The [implementation dependencies](attention-and-investigation-tech-design.md#11-implementation-dependencies-and-open-player-choice) identify the required sensing, physical, animal, preparation and player-surface adapters. SA-D02/SA-D03 are resolved; SA-D01 remains open for controlled-player interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior. Initial tuning and useful, enjoyable play remain empirical qualification.
+**The attention design has no unresolved product choice.** The [implementation dependencies](attention-and-investigation-tech-design.md#11-implementation-dependencies-and-selected-player-policy) identify the required sensing, physical, animal, preparation and player-surface adapters. SA-D02/SA-D03 are resolved; [SA-D01](../maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects authored native interpretation during direct control, with exact profile rules and qualification owned by emotional physiology. Initial tuning and useful, enjoyable play remain empirical qualification.
 
 ## Repertoire coverage
 

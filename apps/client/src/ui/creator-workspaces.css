@@ -8,6 +8,9 @@
   gap: var(--space-3);
   align-content: start;
 }
+.ol-creator-records {
+  grid-auto-rows: max-content;
+}
 .ol-creator-page[hidden] {
   display: none;
 }
@@ -45,6 +48,18 @@
   color: var(--ink);
   background: var(--surface-selected);
   box-shadow: inset 0 -2px var(--accent);
+}
+[data-theme='gildmoss'] .ol-creator-views .ol-navigation-tab {
+  flex: none;
+  white-space: nowrap;
+  background: transparent;
+  box-shadow: none;
+}
+[data-theme='gildmoss']
+  .ol-creator-views
+  .ol-navigation-tab:is([aria-pressed='true'], [aria-expanded='true']) {
+  background: transparent;
+  box-shadow: none;
 }
 .ol-creator-history > summary {
   cursor: pointer;
@@ -92,11 +107,58 @@
 .ol-knowledge-editor textarea {
   resize: vertical;
 }
+.ol-knowledge-footer {
+  display: contents;
+}
+.ol-knowledge-footer[data-compact] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ol-knowledge-footer[data-compact] > p {
+  flex: 1 1 10rem;
+  margin: 0;
+}
 .ol-player-workshop textarea:focus-visible,
 .ol-knowledge-editor :is(input, textarea):focus-visible,
 .ol-inspection-search :is(input, select):focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+[data-theme='gildmoss']
+  :is(.ol-player-workshop, .ol-knowledge-editor, .ol-inspection-search)
+  :is(
+    textarea,
+    input:where(:not([type='checkbox']):not([type='radio']):not([type='range'])),
+    select
+  ) {
+  background: var(--field-fill);
+  border: 0;
+  color: var(--ink);
+  box-shadow:
+    inset 0 0 0 1px var(--line-control),
+    var(--field-inset-shadow);
+}
+[data-theme='gildmoss']
+  :is(.ol-player-workshop, .ol-knowledge-editor, .ol-inspection-search)
+  :is(
+    textarea,
+    input:where(:not([type='checkbox']):not([type='radio']):not([type='range'])),
+    select
+  ):focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 0 0 1px var(--focus),
+    var(--field-glow);
+}
+@media (forced-colors: active) {
+  [data-theme='gildmoss']
+    :is(.ol-player-workshop, .ol-knowledge-editor, .ol-inspection-search)
+    :is(textarea, input, select):focus-visible {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }
 .ol-creator-facts {
   display: grid;

@@ -1,0 +1,381 @@
+.ol-crafting-workspace {
+  display: grid;
+  grid-template-columns: minmax(0, 240fr) minmax(0, 416fr) minmax(0, 400fr);
+  gap: var(--space-6);
+  min-block-size: 0;
+  min-inline-size: 0;
+  align-items: start;
+}
+.ol-crafting-categories,
+.ol-crafting-list,
+.ol-crafting-detail {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--space-3);
+  align-content: start;
+}
+.ol-crafting-categories,
+.ol-crafting-list {
+  position: relative;
+}
+.ol-crafting-categories::after,
+.ol-crafting-list::after {
+  content: '';
+  position: absolute;
+  inset-inline-end: -13px;
+  inset-block-start: 0;
+  block-size: 720px;
+  inline-size: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+.ol-crafting-categories {
+  gap: var(--space-1);
+}
+.ol-crafting-list {
+  gap: var(--space-2);
+}
+.ol-crafting-detail {
+  gap: var(--space-4);
+}
+.ol-crafting-section {
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+.ol-crafting-section[hidden] {
+  display: none;
+}
+.ol-crafting-categories > .ol-btn {
+  justify-content: start;
+  text-align: start;
+  white-space: normal;
+  min-block-size: 32px;
+  padding: 0 var(--space-2);
+  font-weight: 500;
+}
+.ol-crafting-categories > .ol-btn > span:not(.ol-icon-wrap) {
+  display: flex;
+  gap: var(--space-2);
+  justify-content: space-between;
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.ol-crafting-categories > .ol-btn[aria-pressed='true'],
+.ol-crafting-recipes .ol-btn[aria-pressed='true'] {
+  background: var(--surface-selected);
+  color: var(--highlight);
+  box-shadow: inset 0 0 0 1px var(--highlight);
+}
+.ol-crafting-count {
+  flex: none;
+  color: var(--ink-muted);
+  font-variant-numeric: tabular-nums;
+  font: 600 var(--text-label-size) / 16px var(--font-ui);
+}
+.ol-crafting-owned-toggle {
+  position: relative;
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  min-block-size: 32px;
+  padding-inline: var(--space-2);
+  margin-block-end: var(--space-3);
+  font: 500 var(--text-detail-size) / 16px var(--font-ui);
+  color: var(--ink-silver, var(--ink-muted));
+  cursor: pointer;
+}
+.ol-crafting-owned-toggle::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  inset-block-end: -9px;
+  block-size: 1px;
+  background: var(--line);
+}
+.ol-crafting-owned-toggle input {
+  appearance: none;
+  position: relative;
+  inline-size: 28px;
+  block-size: 16px;
+  min-block-size: 0;
+  flex: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: var(--surface-well, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--line-control, var(--line));
+  cursor: pointer;
+}
+.ol-crafting-owned-toggle input::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 2px;
+  inset-inline-start: 2px;
+  inline-size: 12px;
+  block-size: 12px;
+  border-radius: 50%;
+  background: var(--ink-silver, var(--ink-muted));
+}
+.ol-crafting-owned-toggle input:checked::before {
+  inset-inline-start: 14px;
+  background: var(--primary, var(--highlight));
+}
+.ol-crafting-owned-toggle input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+.ol-crafting-categories details summary,
+.ol-crafting-more summary {
+  cursor: pointer;
+  color: var(--ink-muted);
+}
+.ol-crafting-categories select {
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+.ol-crafting-search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: var(--control-md);
+  padding-inline: var(--space-3);
+  border-radius: var(--control-radius);
+  background: var(--surface-well, var(--surface));
+  box-shadow: inset 0 0 0 1px var(--line-control, var(--line));
+}
+.ol-crafting-search:focus-within {
+  box-shadow:
+    inset 0 0 0 1px var(--focus),
+    var(--field-glow, 0 0 transparent);
+}
+.ol-crafting-search input {
+  inline-size: 100%;
+  min-inline-size: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.ol-crafting-search input:focus-visible {
+  outline: none;
+}
+[data-theme='gildmoss'] .ol-crafting-search input {
+  box-shadow: none;
+}
+.ol-crafting-recipes {
+  display: grid;
+  /* Capped lists scroll their natural rows; auto tracks can otherwise shrink
+   * multiline buttons to the shared control minimum and overlap their text. */
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: var(--space-1);
+  max-block-size: min(64dvh, 680px);
+  overflow: auto;
+  padding: 0;
+}
+.ol-crafting-recipe.ol-btn {
+  min-block-size: 56px;
+  block-size: 56px;
+  justify-content: start;
+  padding: var(--space-2);
+  text-align: start;
+  white-space: normal;
+}
+.ol-crafting-recipe.ol-btn[data-focus-visible] {
+  outline-offset: -2px;
+}
+.ol-crafting-recipe.ol-btn > span {
+  display: grid;
+  grid-template-columns: 40px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: center;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+.ol-crafting-recipe.ol-btn > span > span:not(.ol-icon-wrap) {
+  display: grid;
+  gap: 0;
+  min-inline-size: 0;
+}
+.ol-crafting-recipe :is(strong, .ol-caption) {
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.ol-crafting-recipe strong {
+  font: 600 var(--text-body-size) / var(--text-body-leading) var(--font-ui);
+}
+.ol-crafting-recipe .ol-item-illustration {
+  border-radius: var(--control-radius);
+  background: var(--surface-art-well, var(--surface-well, var(--surface)));
+  box-shadow: inset 0 0 0 1px var(--slot-edge, var(--line));
+}
+.ol-crafting-identity {
+  display: grid;
+  gap: var(--space-2);
+}
+.ol-crafting-identity > h3 {
+  margin: 0;
+  font: 600 var(--title-lg-size) / var(--title-lg-leading) var(--font-heading);
+}
+.ol-crafting-detail .ol-crafting-identity > p {
+  margin: 0;
+  color: var(--ink-muted);
+}
+.ol-crafting-detail > p {
+  margin: 0;
+}
+.ol-crafting-art {
+  display: grid;
+  place-items: center;
+  min-block-size: 152px;
+  border: 1px solid var(--line-control, var(--line));
+  border-radius: var(--radius-sm);
+  background: var(--surface-item-art, var(--surface-well, var(--surface)));
+}
+.ol-crafting-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+.ol-crafting-ingredients {
+  display: grid;
+  gap: var(--space-1);
+}
+.ol-crafting-ingredients > header,
+.ol-crafting-ingredients > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ol-crafting-ingredients > header {
+  justify-content: space-between;
+}
+.ol-crafting-ingredients h4,
+.ol-crafting-tools h4,
+.ol-crafting-tools p {
+  margin: 0;
+}
+.ol-crafting-ingredients h4.ol-eyebrow {
+  font: 700 var(--text-label-size) / var(--text-label-leading) var(--font-ui);
+}
+[data-theme='gildmoss'] .ol-crafting-ingredients h4.ol-eyebrow {
+  background: var(--metal-gold-label);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+.ol-crafting-ingredients > div {
+  min-block-size: 44px;
+  padding: 0 var(--space-3) 0 var(--space-1);
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
+  box-shadow: inset 0 0 0 1px var(--slot-edge, var(--line));
+}
+.ol-crafting-ingredient-name {
+  flex: 1;
+  min-inline-size: 0;
+  overflow-wrap: anywhere;
+}
+.ol-crafting-ingredient-quantity {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+}
+.ol-crafting-ingredient-quantity strong {
+  font-weight: 600;
+}
+.ol-crafting-ingredient-quantity > span {
+  font-weight: 500;
+  color: var(--ink-faint);
+}
+.ol-crafting-ingredients [data-missing='true'] {
+  color: var(--danger);
+}
+.ol-crafting-ingredient-quantity[data-missing='true'] > span {
+  color: inherit;
+}
+.ol-crafting-tools {
+  display: grid;
+  gap: var(--space-1);
+}
+.ol-crafting-quantity {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--control-md) 48px var(--control-md);
+  align-items: center;
+  gap: var(--space-2);
+}
+.ol-crafting-quantity input {
+  min-inline-size: 0;
+  text-align: center;
+}
+.ol-crafting-quantity > .ol-caption {
+  grid-column: 1/-1;
+}
+.ol-crafting-submit,
+.ol-crafting-submit > .ol-btn {
+  display: block;
+  inline-size: 100%;
+}
+.ol-crafting-submit > .ol-btn {
+  min-block-size: 40px;
+}
+.ol-crafting-reason {
+  color: var(--ink-muted);
+}
+.ol-crafting-more > *:not(summary) {
+  margin-block-start: var(--space-3);
+}
+@media (max-width: 1100px) {
+  .ol-crafting-workspace {
+    grid-template-columns: minmax(130px, 0.6fr) minmax(0, 1fr);
+  }
+  .ol-crafting-detail {
+    grid-column: 1 / -1;
+    border-block-start: 1px solid var(--line);
+    padding-block-start: var(--space-3);
+  }
+  .ol-crafting-list {
+    border-inline-end: 0;
+    padding-inline-end: 0;
+  }
+  .ol-crafting-list::after {
+    display: none;
+  }
+}
+@media (max-width: 640px) {
+  .ol-crafting-workspace {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ol-crafting-categories {
+    border-inline-end: 0;
+    padding-inline-end: 0;
+  }
+  .ol-crafting-categories::after {
+    display: none;
+  }
+  .ol-crafting-recipes {
+    max-block-size: 240px;
+  }
+}
+
+.ol-crafting-operation-feedback {
+  grid-column: 1 / -1;
+  border-block-start: 1px solid var(--line);
+  padding-block-start: var(--space-3);
+}
+@media (forced-colors: active) {
+  [data-theme='gildmoss'] .ol-crafting-search:focus-within {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
+  [data-theme='gildmoss'] .ol-crafting-ingredients h4.ol-eyebrow {
+    background: none;
+    color: Highlight;
+    -webkit-text-fill-color: Highlight;
+  }
+}

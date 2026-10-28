@@ -42,9 +42,9 @@ export function useInventoryCommand({
   recoveryScope?: string;
   epoch?: string;
   connected: boolean;
-  task?: 'construction' | 'hearth' | 'work-batch' | 'attack';
+  task?: 'construction' | 'hearth' | 'work-batch' | 'attack' | 'trade';
   command: CommandDispatcher;
-  onResolved(result: ApiResult, request: PendingCommand): void;
+  onResolved?(result: ApiResult, request: PendingCommand): void;
 }) {
   const storageKey = inventoryCommandStorageKey(recoveryScope, worldId, actorId, timeline, task);
   const taskName = task === 'work-batch' ? 'selected work' : (task ?? 'inventory');
@@ -123,7 +123,7 @@ export function useInventoryCommand({
     // A response from a former component can arrive after reconnect recovered that
     // command and the current component started another one. It cannot erase the latter.
     const releaseTrade = tradeScope
-      ? prepareTradeInventoryReceiptResolution(tradeScope, commandId, recovered)
+      ? prepareTradeInventoryReceiptResolution(request, result, recovered)
       : undefined;
     if (saved?.request?.commandId === commandId) {
       sessionStorage.removeItem(storageKey);
@@ -140,7 +140,7 @@ export function useInventoryCommand({
     if (alive.current) {
       setPending(undefined);
       setMessage(result.message);
-      onResolved(result, request);
+      onResolved?.(result, request);
     }
   }
 
@@ -313,3 +313,10 @@ export function useInventoryCommand({
 
   return { pending, message, dispatch, check, setMessage };
 }
+
+/** Several trade entrances observe one command owner; none owns a second sender. */
+export type InventoryCommandOperations = ReturnType<typeof useInventoryCommand>;
+export type InventoryCommandRecovery = Pick<
+  InventoryCommandOperations,
+  'pending' | 'message' | 'check'
+>;

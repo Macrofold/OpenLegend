@@ -1613,8 +1613,6 @@ describe('native held attack service and control authority', () => {
     );
     expect(result.outcome.code).toBe('input-route');
     expect(result.world).toBe(f.service.world);
-    expect(f.service.previewCommand(begin(scope, f.itemId), NPC_ID, false).code).toBe(
-      'input-route',
-    );
+    expect(f.service.previewNativeCommand(begin(scope, f.itemId), NPC_ID).code).toBe('input-route');
   }, 30000);
 });

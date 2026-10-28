@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                  | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The integrated repertoire selection is reconciled; implementation and player qualification remain with the shared delivery owner. | 2026-10-24   |
+| In progress | The integrated repertoire selection is reconciled; implementation and player qualification remain with the shared delivery owner. | 2026-10-25   |
 
 ## Authority and source basis
 
@@ -14,7 +14,7 @@ The repository inventory contains **42 repertoire documents**: 28 canonical cata
 
 Review covers all 42 files' purpose, ownership and structure, with detailed reading of relevant sensory, physical, cognitive, tactical, social and control material and its surrounding context. The world profiles and research ledgers establish selection and provenance boundaries. This is not a word-for-word reread of every unrelated catalogue entry, a new external-source study, or a new reading-completion attestation for the research corpus. Catalogue build estimates and original study conclusions do not establish current implementation or measured enjoyment.
 
-The selected minimum makes approach, observation, inquiry, deliberate preparation and recovery usable within the whole game. Broader psychology, surveillance, disguise, ecology, institutional behavior and optional worlds retain their existing scope and priority. Native startle and bounded NPC interpretation are specified; **SA-D01 remains open** for controlled-player appraisal production, retained-appraisal mechanical applicability, disclosure, revocation and control transfer. Native-body-only initial control is a recommendation, not an adopted policy.
+The selected minimum makes approach, observation, inquiry, deliberate preparation and recovery usable within the whole game. Broader psychology, surveillance, disguise, ecology, institutional behavior and optional worlds retain their existing scope and priority. Native startle and bounded NPC interpretation are specified; **SA-D01 selects B**, authored native player interpretation with applicable retained appraisals. Exact profiles, disclosure and transfer/restore qualification remain with EP06–EP09; autonomous AI interpretation is not enabled by direct control.
 
 ## Complete repertoire inventory
 
@@ -56,7 +56,7 @@ Looking while walking uses the accepted body/head owner; crouching uses actual a
 
 [D](emotional-physiology-tech-design.md) separates immediate native bodily startle, private interpretation and effective mechanics. Native startle preserves ordinary movement and eligible actions while imposing its actual accuracy/evasion consequences; it creates neither a categorical action lock nor automatic running slowdown. Courage and practical calm are not immunity, and prose traits do not install modifiers. Reasoning inhabitants may fear, fight, flee, investigate, help or continue according to their actual circumstances and choices.
 
-Bounded reconsideration can use a retained concern without inventing a new external incident. Reusing an unchanged account cannot renew the cause indefinitely. The open [player-fear decision](stealth-awareness-feature-spec.md#player-fear-decision) covers retained-appraisal applicability as well as new production, disclosure, revocation and transfer. Catalogue scenes cannot silently choose whether interpreted NPC fear remains mechanically active under direct control.
+Bounded reconsideration can use a retained concern without inventing a new external incident. Reusing an unchanged account cannot renew the cause indefinitely. The selected [authored player-psychology policy](stealth-awareness-feature-spec.md#player-fear-decision) covers new production, disclosure and transfer: compatible retained appraisals remain mechanically applicable during direct control. Catalogue scenes follow that policy and cannot reset a feeling's cause, lifetime or review allowance on transfer.
 
 ### Preparedness, surprise and disclosure
 
@@ -92,4 +92,4 @@ These are design interpretations from existing repository studies, not fresh ext
 
 The integrated owner specifications determine formulas, durations, evidence revisions and lawful composition; this review adds none. [SA](../maintainers/stealth-awareness.md) coordinates the shared scenarios and [SPX](../maintainers/stealth-player-experience.md) owns the complete player journeys. Qualification must distinguish correct native sensing, timely publication, understandable feedback, successful control and actual player enjoyment. An acquired cue missed by the interface differs from a cue the body never acquired.
 
-No priority or catalogue expansion is justified merely because a subsystem can support it. Choose a connected activity, observe whether the information changes a useful decision, include approach/preparation/recovery time, and retain ordinary alternatives and independent refusal. Implementation, accessibility, performance, player learning and the open player-emotion policy keep their actual evidence and decision status in the delivery owners.
+No priority or catalogue expansion is justified merely because a subsystem can support it. Choose a connected activity, observe whether the information changes a useful decision, include approach/preparation/recovery time, and retain ordinary alternatives and independent refusal. Implementation, accessibility, performance, player learning and the selected player policy’s remaining implementation and runtime qualification keep their actual evidence and decision status in the delivery owners.

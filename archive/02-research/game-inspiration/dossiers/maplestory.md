@@ -1,6 +1,6 @@
 # MapleStory
 
-**G193 · original PC game · researched 2026-10-27.** Scope: the Korean service (KMS), Global MapleStory (GMS), and explicitly identified regional examples. MapleStory M, MapleStory 2 and MapleStory Worlds are separate products. This is a desk-research dossier, not a client test; dated mechanics and experiences are not silently promoted into current universal rules.
+**G194 · original PC game · researched 2026-10-27.** Scope: the Korean service (KMS), Global MapleStory (GMS), and explicitly identified regional examples. MapleStory M, MapleStory 2 and MapleStory Worlds are separate products. This is a desk-research dossier, not a client test; dated mechanics and experiences are not silently promoted into current universal rules.
 
 Global MapleStory Classic World launched on October 21, 2026 with distinct rules. Its shared Steam app/news surface does not make Classic reactions evidence about modern retail play. [E10]
 

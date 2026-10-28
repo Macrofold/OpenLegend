@@ -352,7 +352,7 @@ export function validateAuthoring(
                       message: 'The controlled actor changed.',
                     }
                   : action?.success
-                    ? service.previewCommand(action.data, d.actorId)
+                    ? service.previewCommand(action.data, scope)
                     : {
                         ok: false,
                         code: 'invalid-action',

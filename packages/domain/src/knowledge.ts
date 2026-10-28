@@ -11,12 +11,14 @@ export interface KnowledgeDocument {
    * docs/knowledge.md#documents-and-authority */
   origin: 'authored-starting' | 'actor-edit';
   subjectId: string | null;
+  subjectKind?: 'place' | 'map-marker';
   text: string;
   revision: number;
   evidenceIds: string[];
 }
 export interface KnowledgeEdit {
   subjectId: string | null;
+  subjectKind?: 'place' | 'map-marker';
   expectedRevision: number;
   text: string;
 }
@@ -45,10 +47,22 @@ export function advanceKnowledgeRevision(world: WorldState, actorId: string): vo
   recordSemanticChange(world, { kind: 'knowledge', actorId });
 }
 export const characterCount = (text: string): number => Array.from(text).length;
-export const knowledgeKey = (subjectId: string | null): string =>
-  subjectId === null ? 'general' : `subject:${subjectId}`;
-export function knowledgeDocument(world: WorldState, actorId: string, subjectId: string | null) {
-  return getOwn(world.actorKnowledge?.[actorId] ?? {}, knowledgeKey(subjectId));
+export const knowledgeKey = (
+  subjectId: string | null,
+  subjectKind?: KnowledgeEdit['subjectKind'],
+): string =>
+  subjectId === null
+    ? 'general'
+    : subjectKind
+      ? `${subjectKind}:${subjectId}`
+      : `subject:${subjectId}`;
+export function knowledgeDocument(
+  world: WorldState,
+  actorId: string,
+  subjectId: string | null,
+  subjectKind?: KnowledgeEdit['subjectKind'],
+) {
+  return getOwn(world.actorKnowledge?.[actorId] ?? {}, knowledgeKey(subjectId, subjectKind));
 }
 const orderedDocuments = new WeakMap<ActorKnowledge, readonly string[]>();
 /** Directional social text is this exact document revision, never a second writable
@@ -89,12 +103,20 @@ export function editKnowledge(
   const policy = world.knowledgePolicy;
   if (!policy || !entityGet(world.entities, actorId)?.actor || !isSafeRecordId(actorId))
     return outcome(false, 'knowledge-unavailable', 'Knowledge is unavailable for this actor.');
-  const current = knowledgeDocument(world, actorId, edit.subjectId);
+  const current = knowledgeDocument(world, actorId, edit.subjectId, edit.subjectKind);
   if (
     edit.subjectId !== null &&
     (!permittedSubjects.includes(edit.subjectId) ||
       !isSafeRecordId(edit.subjectId) ||
-      (!entityGet(world.entities, edit.subjectId) && !current))
+      // A retained place binding is admitted from the actor's exact observation,
+      // and remains useful after the live authored place has changed or disappeared.
+      (!(
+        edit.subjectKind === 'place' ||
+        (edit.subjectKind === 'map-marker'
+          ? world.mapMarkers?.[actorId]?.[edit.subjectId]
+          : entityGet(world.entities, edit.subjectId))
+      ) &&
+        !current))
   )
     return outcome(false, 'unpermitted-subject', 'The knowledge subject was not supplied.');
   if (
@@ -107,6 +129,11 @@ export function editKnowledge(
       'stale-knowledge',
       'The knowledge document changed; read its current revision.',
     );
+  if (
+    (edit.subjectKind !== undefined && !['place', 'map-marker'].includes(edit.subjectKind)) ||
+    (edit.subjectId === null && edit.subjectKind !== undefined)
+  )
+    return outcome(false, 'invalid-subject-kind', 'This note subject is unavailable.');
   const limit = policy.maxCharacters[edit.subjectId === null ? 'general' : 'subject'];
   if (typeof edit.text !== 'string' || characterCount(edit.text) > limit)
     return outcome(
@@ -119,11 +146,17 @@ export function editKnowledge(
     return outcome(false, 'forgotten-evidence', 'Knowledge cannot retain forgotten evidence.');
   if (current?.text === edit.text)
     return outcome(true, 'knowledge-unchanged', 'Knowledge is already current.');
+  if (
+    !Number.isSafeInteger((current?.revision ?? 0) + 1) ||
+    !Number.isSafeInteger((world.knowledgeRevisions?.[actorId] ?? 0) + 1)
+  )
+    return outcome(false, 'knowledge-exhausted', 'This note cannot be edited further.');
   const documents = ((world.actorKnowledge ??= {})[actorId] ??= {});
   // Keep empty documents as revisioned tombstones: an old create cannot undo a later deletion.
-  documents[knowledgeKey(edit.subjectId)] = {
+  documents[knowledgeKey(edit.subjectId, edit.subjectKind)] = {
     origin: 'actor-edit',
     subjectId: edit.subjectId,
+    ...(edit.subjectKind ? { subjectKind: edit.subjectKind } : {}),
     text: edit.text,
     revision: (current?.revision ?? 0) + 1,
     // Current publication evidence stays bounded by admitted context; prior provenance remains in committed history.
@@ -150,7 +183,10 @@ export function validateKnowledge(world: WorldState): void {
     for (const [id, document] of Object.entries(documents)) {
       if (
         !['authored-starting', 'actor-edit'].includes(document.origin) ||
-        id !== knowledgeKey(document.subjectId) ||
+        id !== knowledgeKey(document.subjectId, document.subjectKind) ||
+        (document.subjectKind !== undefined &&
+          !['place', 'map-marker'].includes(document.subjectKind)) ||
+        (document.subjectId === null && document.subjectKind !== undefined) ||
         (document.subjectId !== null && !isSafeRecordId(document.subjectId)) ||
         !Number.isSafeInteger(document.revision) ||
         document.revision < 1 ||

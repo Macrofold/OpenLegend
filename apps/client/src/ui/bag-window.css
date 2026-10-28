@@ -1,0 +1,65 @@
+.ol-bag-window-host {
+  position: absolute;
+  inset: 0;
+  inset-block-end: var(--sheet-bottom);
+  pointer-events: none;
+  z-index: var(--z-sheet);
+}
+.ol-bag-window-slot {
+  position: absolute;
+  inset-inline-start: calc(50% + 160px + var(--bag-window-offset));
+  inset-block-start: calc(var(--dock-top) + var(--bag-window-offset));
+  /* The Panel can be translated away from this anchor by shared window placement. */
+  pointer-events: none;
+  min-inline-size: 0;
+  max-block-size: calc(100vh / var(--ui-scale, 1) - var(--sheet-bottom) - 16px);
+}
+.ol-bag-window-slot[hidden] {
+  display: none;
+}
+.ol-bag-window-slot > .ol-panel {
+  pointer-events: auto;
+  inline-size: min(420px, calc(100vw / var(--ui-scale, 1) - 32px));
+  block-size: min(520px, calc(100vh / var(--ui-scale, 1) - var(--sheet-bottom) - 16px));
+  max-block-size: inherit;
+}
+.ol-bag-window-tools {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline: var(--content-padding);
+  padding-block-end: var(--space-2);
+}
+.ol-bag-window-slot .ol-panel-body {
+  /* One bounded scroll owner keeps rows and operation controls reachable when
+   * the collection header or retained-result/God controls need more room. */
+  display: block;
+  min-block-size: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding-block: var(--space-2);
+}
+.ol-bag-window-slot .ol-inventory-collection {
+  overflow: visible;
+}
+.ol-bag-window-slot .ol-inventory-grid-scroll {
+  flex: none;
+  max-block-size: none;
+  overflow: visible;
+}
+.ol-bag-window-slot .ol-inventory-feedback > details {
+  max-block-size: none;
+  overflow: visible;
+}
+.ol-root[data-narrow='true'] .ol-bag-window-slot {
+  inset-inline: var(--space-2);
+  inset-block-start: var(--sheet-top);
+  inset-block-end: 0;
+  max-block-size: none;
+}
+.ol-root[data-narrow='true'] .ol-bag-window-slot > .ol-panel {
+  inline-size: 100%;
+  block-size: 100%;
+  max-block-size: 100%;
+}

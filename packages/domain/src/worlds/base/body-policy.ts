@@ -45,7 +45,7 @@ const lethalAttackDescription =
   'This attack could kill the target. Death leaves a body; ordinary animal and NPC revival is unavailable. Confirm one attack; a hit is not guaranteed. Choosing does not pause the world.';
 export const BASE_BODY_POLICY: BodyPolicy = {
   id: 'wilderness:body-policy',
-  version: 12,
+  version: 15,
   evasion: {
     bodyPlans: ['biped'],
     maximumDistance: 2,

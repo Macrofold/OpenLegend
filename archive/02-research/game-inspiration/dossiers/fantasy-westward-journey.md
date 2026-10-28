@@ -1,6 +1,6 @@
 # Fantasy Westward Journey — original PC dossier
 
-**Game:** G199, 梦幻西游电脑版 (Fantasy Westward Journey, original PC).  
+**Game:** G200, 梦幻西游电脑版 (Fantasy Westward Journey, original PC).  
 **Status:** Researched and independently reviewed. R01–R14 complete; R15 applicability screened as uncertain.  
 **Research date:** October 28, 2026.
 
@@ -235,7 +235,7 @@ The strongest opportunity is **several useful ways to belong in the same world**
 
 ## 16. Coverage, preservation and evidence limits
 
-Full-dossier and commercial/persistence independent reviews completed October 28, 2026; both passed without remaining corrections. This is a new G199 dossier, so no older title dossier or worked case was replaced. Seven distinct situations remain, with native composition separated from external modification.
+Full-dossier and commercial/persistence independent reviews completed October 28, 2026; both passed without remaining corrections. This is a new G200 dossier, so no older title dossier or worked case was replaced. Seven distinct situations remain, with native composition separated from external modification.
 
 | Requirement                             | Reading route                            |
 | --------------------------------------- | ---------------------------------------- |

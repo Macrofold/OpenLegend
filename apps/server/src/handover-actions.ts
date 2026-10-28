@@ -1,4 +1,4 @@
-import { itemContainerCapacity } from '@open-legend/domain';
+import { itemContainerCapacity, itemIllustration } from '@open-legend/domain';
 import {
   worldPosition,
   worldSupport,
@@ -13,6 +13,7 @@ import { entityGet } from '@open-legend/domain';
 import { namePhrase } from '@open-legend/language';
 import {
   BASE_HANDOVER,
+  STOCK_TRANSFER_LIMITS,
   perceivedOffersBetween,
   knownTradeLots,
   describeItemOffer,
@@ -143,8 +144,10 @@ export function handoverOptions(
   const options: HandoverOption[] = [];
   for (const offer of incoming) {
     const what = describeItemOffer(world, offer);
-    const receive = describeOfferLot(world, offer.offered);
-    const give = offer.requested && describeOfferLot(world, offer.requested);
+    const receive = offer.offered.map((lot) => describeOfferLot(world, lot)).join(', ');
+    const give = offer.requested.length
+      ? offer.requested.map((lot) => describeOfferLot(world, lot)).join(', ')
+      : undefined;
     for (const operation of ['accept', 'decline'] as const) {
       const label = operation === 'accept' ? BASE_HANDOVER.text.accept : BASE_HANDOVER.text.decline;
       options.push({
@@ -156,10 +159,14 @@ export function handoverOptions(
           operation === 'accept'
             ? BASE_HANDOVER.text.acceptDescription(receive, give) +
               ' ' +
-              (world.itemDefinitions[offer.offered.definitionPin.id]?.description ?? '') +
+              offer.offered
+                .map((lot) => world.itemDefinitions[lot.definitionPin.id]?.description ?? '')
+                .join(' ') +
               (give
                 ? ' ' +
-                  (world.itemDefinitions[offer.requested!.definitionPin.id]?.description ?? '')
+                  offer.requested
+                    .map((lot) => world.itemDefinitions[lot.definitionPin.id]?.description ?? '')
+                    .join(' ')
                 : '') +
               ' ' +
               BASE_HANDOVER.text.replyDuringWork +
@@ -261,7 +268,8 @@ export function handoverOptions(
               type: 'handover',
               handoverOperation: 'offer',
               targetId: person.id,
-              ...own,
+              offeredItems: [own],
+              requestedItems: [],
               constructionUse: choice.terms,
             },
           });
@@ -269,7 +277,10 @@ export function handoverOptions(
       }
       // A reply replaces the existing proposal rather than promising its item twice.
       for (const prior of incoming) {
-        const terms = BASE_HANDOVER.text.terms(what, describeOfferLot(world, prior.offered));
+        const terms = BASE_HANDOVER.text.terms(
+          what,
+          prior.offered.map((lot) => describeOfferLot(world, lot)).join(', '),
+        );
         options.push({
           id: 'counter:' + prior.id + ':' + prior.revision + ':' + item.id + ':' + quantity,
           label: BASE_HANDOVER.text.actionLabel(
@@ -280,15 +291,59 @@ export function handoverOptions(
           ),
           shortLabel: BASE_HANDOVER.text.counter + ' ' + terms,
           description:
-            BASE_HANDOVER.text.counterDescription(what, describeOfferLot(world, prior.offered)) +
+            BASE_HANDOVER.text.counterDescription(
+              what,
+              prior.offered.map((lot) => describeOfferLot(world, lot)).join(', '),
+            ) +
             ' ' +
             BASE_HANDOVER.text.decision,
           command: {
             type: 'handover',
             handoverOperation: 'counter',
             targetId: person.id,
-            ...own,
-            requestedItem: pins(prior.offered),
+            offeredItems: [own],
+            requestedItems: prior.offered.map(pins),
+            offerId: prior.id,
+            expectedOfferRevision: prior.revision,
+          },
+        });
+      }
+      // Extend a received or already-sent basket by one concrete own lot. This
+      // gives negotiation a bounded way to add something without enumerating
+      // every subset of a person's possessions or dropping earlier terms.
+      for (const prior of [...incoming, ...outgoing]) {
+        const ownTerms = prior.offererId === actorId ? prior.offered : prior.requested;
+        const theirTerms = prior.offererId === actorId ? prior.requested : prior.offered;
+        if (
+          !!prior.constructionUse ||
+          !ownTerms.length ||
+          ownTerms.some((lot) => lot.itemId === item.id) ||
+          ownTerms.length + theirTerms.length + 1 > STOCK_TRANSFER_LIMITS.movedLots
+        )
+          continue;
+        const offeredItems = [...ownTerms.map(pins), own];
+        const give = [...ownTerms.map((lot) => describeOfferLot(world, lot)), what].join(', ');
+        const receive = theirTerms.map((lot) => describeOfferLot(world, lot)).join(', ');
+        const terms = BASE_HANDOVER.text.terms(give, receive || undefined);
+        options.push({
+          id: 'extend-offer:' + JSON.stringify([prior.id, prior.revision, item.id, quantity]),
+          label: BASE_HANDOVER.text.actionLabel(
+            BASE_HANDOVER.text.counter,
+            terms,
+            personLabel,
+            false,
+          ),
+          shortLabel: BASE_HANDOVER.text.counter + ' ' + terms,
+          description:
+            BASE_HANDOVER.text.counterDescription(give, receive) +
+            ' ' +
+            BASE_HANDOVER.text.decision,
+          command: {
+            type: 'handover',
+            handoverOperation: 'counter',
+            targetId: person.id,
+            offeredItems,
+            requestedItems: theirTerms.map(pins),
             offerId: prior.id,
             expectedOfferRevision: prior.revision,
           },
@@ -315,14 +370,14 @@ export function handoverOptions(
             type: 'handover',
             handoverOperation: 'offer',
             targetId: person.id,
-            ...own,
-            requestedItem: pins(requested.lot),
+            offeredItems: [own],
+            requestedItems: [pins(requested.lot)],
           },
         });
       }
       if (
-        !outgoing.some(
-          (offer) => offer.offered.itemId === item.id || offer.requested?.itemId === item.id,
+        !outgoing.some((offer) =>
+          [...offer.offered, ...offer.requested].some((lot) => lot.itemId === item.id),
         )
       )
         options.push({
@@ -334,15 +389,27 @@ export function handoverOptions(
             personLabel,
             world.socialOfferPolicy.pendingSeconds / 60,
           ),
-          command: { type: 'handover', handoverOperation: 'offer', targetId: person.id, ...own },
+          command: {
+            type: 'handover',
+            handoverOperation: 'offer',
+            targetId: person.id,
+            offeredItems: [own],
+            requestedItems: [],
+          },
         });
     }
   }
   return options;
 }
 
-function disclosedView(known: KnownTradeLot, index: number): TradeLotView {
+export function disclosedView(
+  world: WorldState,
+  known: KnownTradeLot,
+  index: number,
+): TradeLotView {
   return {
+    icon: world.itemDefinitions[known.lot.definitionPin.id]?.icon,
+    art: itemIllustration(world, known.lot.definitionPin.id),
     id: known.lot.itemId,
     name: known.name,
     label: BASE_HANDOVER.text.disclosedLot(known.name, index),
@@ -366,6 +433,8 @@ export function tradeOwnLots(
     .map(
       (item, index): TradeLotView => ({
         id: item.id,
+        icon: world.itemDefinitions[item.definitionId]!.icon,
+        art: itemIllustration(world, item.definitionId),
         name: world.itemDefinitions[item.definitionId]!.name,
         label: BASE_HANDOVER.text.carriedLot(world.itemDefinitions[item.definitionId]!.name, index),
         description: world.itemDefinitions[item.definitionId]!.description,
@@ -395,10 +464,12 @@ export function itemTradeView(
     const saved = remembered.find((entry) => entry.lot.itemId === lot.itemId);
     const named = own
       ? ownLots.find((item) => item.id === lot.itemId)
-      : saved && disclosedView(saved, remembered.indexOf(saved));
+      : saved && disclosedView(world, saved, remembered.indexOf(saved));
     const definition = world.itemDefinitions[lot.definitionPin.id];
     return {
       id: lot.itemId,
+      icon: named?.icon ?? definition?.icon,
+      art: itemIllustration(world, lot.definitionPin.id),
       name: named?.name ?? definition?.name ?? 'item',
       label: named?.label ?? definition?.name ?? 'item',
       description: named?.description ?? definition?.description ?? '',
@@ -411,6 +482,7 @@ export function itemTradeView(
     };
   };
   return {
+    maximumLots: STOCK_TRANSFER_LIMITS.movedLots,
     scope: JSON.stringify([scope, person.id]),
     personId: person.id,
     personName: observerName(world, actorId, person.id).name,
@@ -446,7 +518,7 @@ export function itemTradeView(
       ? { contributionChoices: contributionChoices(world, actorId) }
       : {}),
     ownLots: [...ownLots],
-    knownLots: remembered.map(disclosedView),
+    knownLots: remembered.map((known, index) => disclosedView(world, known, index)),
     offers: [...incoming, ...outgoing].map((offer) => {
       const isIncoming = offer.recipientId === actorId;
       const give = isIncoming ? offer.requested : offer.offered;
@@ -463,8 +535,8 @@ export function itemTradeView(
               },
             }
           : {}),
-        ...(give ? { give: termView(give, true) } : {}),
-        ...(receive ? { receive: termView(receive, false) } : {}),
+        give: give.map((lot) => termView(lot, true)),
+        receive: receive.map((lot) => termView(lot, false)),
         expiresAt: offer.expiresAt,
         actions: replies
           .filter((option) => option.command.offerId === offer.id)

@@ -11,6 +11,7 @@ import { assignGivenName } from './knowledge.js';
 import type { PlaceDefinition } from '../../places.js';
 import type { Entity, RecipeCandidate, WorldState } from '../../types.js';
 import type { createActor } from './world.js';
+import { BASE_ARROW_ART, bindBaseItemArt } from './presentation.js';
 
 /** One authored placement/loadout source; installation is only part of createWorld. */
 export const WATCHPOST = {
@@ -120,6 +121,7 @@ export function installWatchpost(
     source: 'authored-world',
     profile: { ...world.profile },
   }).recipe;
+  bindBaseItemArt(world, arrow.outputs[0]!.definition.id, BASE_ARROW_ART);
   const shield = Object.values(world.recipes).find(
     (r) => r.source.kind === 'family' && r.source.familyPin.id === 'base:shield',
   )!;

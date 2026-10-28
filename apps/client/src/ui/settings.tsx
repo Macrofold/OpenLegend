@@ -1,11 +1,12 @@
 import type { GameView } from '@open-legend/protocol';
-import { memo } from 'react';
+import { memo, type ReactNode } from 'react';
 import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { Button, Section, SegmentedControl } from '../design-system/components';
 import type { ShadowQuality } from '../world-renderer';
 import { InventionSettings } from './invention-settings';
 import { WorldVisualSettings } from './world-visual-settings';
 import icons from '../design-system/icons/catalog';
+import { THEMES } from '../design-system/themes';
 import {
   DEFAULT_ACTION_INPUT,
   inputPreferenceProblem,
@@ -39,6 +40,7 @@ export const Settings = memo(function Settings({
   browseActions,
   actionInput,
   setActionInput,
+  cameraControls,
 }: {
   view: SettingsView;
   section: string;
@@ -60,6 +62,7 @@ export const Settings = memo(function Settings({
   browseActions(opener: HTMLElement): void;
   actionInput: ActionInputPreferences;
   setActionInput(value: ActionInputPreferences): void;
+  cameraControls?: ReactNode;
 }) {
   const [inputProblem, setInputProblem] = useState('');
   function inputChange(key: keyof ActionInputPreferences, value: string) {
@@ -82,10 +85,20 @@ export const Settings = memo(function Settings({
         Browse known actions
       </Button>
       <TabList aria-label="Settings sections" className="ol-settings-tabs">
-        <Tab id="reading">Appearance & reading</Tab>
-        <Tab id="graphics">Camera & graphics</Tab>
-        <Tab id="controls">Controls & help</Tab>
-        {view.godMode && <Tab id="policy">World permissions</Tab>}
+        <Tab id="reading" className="ol-navigation-tab">
+          <span>Appearance & reading</span>
+        </Tab>
+        <Tab id="graphics" className="ol-navigation-tab">
+          <span>Camera & graphics</span>
+        </Tab>
+        <Tab id="controls" className="ol-navigation-tab">
+          <span>Controls & help</span>
+        </Tab>
+        {view.godMode && (
+          <Tab id="policy" className="ol-navigation-tab">
+            <span>World permissions</span>
+          </Tab>
+        )}
       </TabList>
       <TabPanel id="reading" shouldForceMount className="ol-settings-page">
         <p className="ol-setting-scope">This device, changes apply immediately</p>
@@ -97,9 +110,11 @@ export const Settings = memo(function Settings({
               value={theme}
               onChange={(e) => setTheme(e.target.value)}
             >
-              <option value="wilderness">Wilderness</option>
-              <option value="fantasy">Fantasy</option>
-              <option value="scifi">Sci-fi</option>
+              {THEMES.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
             </select>
           </label>
           <p className="ol-caption">
@@ -150,6 +165,7 @@ export const Settings = memo(function Settings({
         </Section>
       </TabPanel>
       <TabPanel id="graphics" shouldForceMount className="ol-settings-page">
+        {cameraControls && <Section title="Camera controls">{cameraControls}</Section>}
         <WorldVisualSettings
           view={view}
           shadowQuality={shadowQuality}

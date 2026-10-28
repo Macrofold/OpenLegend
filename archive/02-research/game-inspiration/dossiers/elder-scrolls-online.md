@@ -1,6 +1,6 @@
 # The Elder Scrolls Online — many ways to inhabit a familiar world
 
-**G190 · Research date: October 26, 2026.** ESO combines authored Elder Scrolls adventures with shared exploration, action combat, equipment building and social projects. Its useful question for OpenLegend is how distinct activities sustain a recognizable character and place—and when accumulated options become preparation, clutter or obligation.
+**G191 · Research date: October 26, 2026.** ESO combines authored Elder Scrolls adventures with shared exploration, action combat, equipment building and social projects. Its useful question for OpenLegend is how distinct activities sustain a recognizable character and place—and when accumulated options become preparation, clutter or obligation.
 
 ## Current position and persistent-world boundary
 

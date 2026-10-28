@@ -25,7 +25,9 @@
     "guidance:check": "node scripts/check-agent-guidance.mjs",
     "assets:check": "tsx scripts/check-assets.ts",
     "network:check": "tsx scripts/generate-study-access.ts --check && tsx scripts/check-network-boundaries.ts",
-    "network:generate": "tsx scripts/generate-study-access.ts"
+    "network:generate": "tsx scripts/generate-study-access.ts",
+    "tokens:generate": "tsx scripts/generate-interface-tokens.ts",
+    "tokens:check": "tsx scripts/generate-interface-tokens.ts --check"
   },
   "dependencies": {
     "tsx": "4.23.13"

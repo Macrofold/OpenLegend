@@ -2,6 +2,7 @@ export * from './entity-collection.js';
 export * from './ordered-record.js';
 export * from './world-creation.js';
 export * from './world-composition.js';
+export { itemIllustration, type ItemArt } from './presentation-art.js';
 export type {
   EventCategory,
   EventPresentation,
@@ -420,3 +421,5 @@ export * from './execution-input.js';
 export { canSteer } from './player-steering.js';
 
 export { itemContainerCapacity } from './objects.js';
+
+export * from './cartography.js';

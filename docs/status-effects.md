@@ -43,7 +43,9 @@ Automatic activation is unsupported for this branch. Existing native statuses re
 their singleton and ordered-rate behavior.
 
 Each contribution uses its episode as its saved instance key and retains its source,
-target, exact definition digest, revision and lifetime. Ordinary status commands bind
+target, exact definition digest, revision, lifetime and its actual simulation start.
+A changed lifetime refresh records its new start; replay or an unchanged refresh does not
+restart it. Ordinary status commands bind
 the source to their admitted actor. Their deactivate action removes that source's
 contribution, leaving other sources active. Explicit domain attach/refresh/end ports
 retain request receipts; refresh cannot resurrect an ended episode or change its
@@ -52,6 +54,10 @@ lifetime family. Ending a contribution never restores an old body snapshot.
 Capability queries read all active contributions plus the native status. Owner
 projections show repeated sources as a count; public projections omit owner-only
 definitions and never include source bindings. Fixed deadlines use simulation time.
+Owner presentation includes the real deadline and admitted duration for the final active
+fixed cause, plus the installed meaning and authored action icon when present. The HUD
+counts down against that same world clock; it invents no deadline for qualitative,
+source-sustained or untimed states.
 Source-sustained instances stop applying immediately when their source disappears, dies,
 retires or belongs to an inactive containment root; the native phase finalizes the state.
 Whole-object movement preserves source identity; live incoming source references prevent
@@ -74,7 +80,7 @@ before validating exact pins, including ended contributions.
 
 Trusted physical or personally acquired causes admit onset without memory or AI. Wrappers of the same original cause cannot repeat it. Active and terminal receipts stay in the existing status/contribution records, with bounded prepared replay lookup before physical mutation; missing required preparation is incomplete rather than no effect. Fixed reactions can outlive their source, end with the affected physical life and never transfer to a new body. [Simulation time](simulation-time.md#selected-stealth-and-emotion-timing) preserves admitted normal-play duration and paused/restored progress.
 
-[EP-C06–EP-C07](projects/emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution) define the complete read-only emotional query, narrow numeric parameter family and ordered combat consumers. They add no writable fear total or inverse-delta cleanup; newly caused shock cannot affect its own impact. [Base psychological reactions](worlds/base/psychological-reactions.md) owns mappings and tuning. Private interpretation/reassessment remains with appraisals and cognition, including the unresolved [SA-D01](maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) control policy.
+[EP-C06–EP-C07](projects/emotional-physiology-tech-design.md#ep-c06--complete-effective-fear-and-parameter-resolution) define the complete read-only emotional query, narrow numeric parameter family and ordered combat consumers. They add no writable fear total or inverse-delta cleanup; newly caused shock cannot affect its own impact. [Base psychological reactions](worlds/base/psychological-reactions.md) owns mappings and tuning. Private interpretation/reassessment retains its appraisal authority. The selected [SA-D01](maintainers/decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) target uses explicit world-authored native rules during direct control and preserves compatible retained-appraisal mechanics and lifetimes; it grants no AI interpretation authority.
 
 ## Transitions
 

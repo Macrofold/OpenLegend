@@ -1,0 +1,386 @@
+.ol-trade-workspace {
+  min-inline-size: 0;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
+  container-type: inline-size;
+}
+
+.ol-trade-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--line);
+}
+.ol-trade-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  font: 600 var(--title-lg-size) / var(--title-lg-leading) var(--font-heading);
+  overflow-wrap: anywhere;
+}
+.ol-trade-heading h3 > span:last-child {
+  min-inline-size: 0;
+}
+.ol-trade-basket-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-block-size: 24px;
+}
+[data-theme='gildmoss'] .ol-trade-basket-heading,
+[data-theme='gildmoss'] .ol-trade-conversation > .ol-eyebrow {
+  font: 700 var(--text-label-size) / var(--text-label-leading) var(--font-ui);
+}
+.ol-trade-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+.ol-trade-heading-actions .ol-ibtn {
+  inline-size: 32px;
+  block-size: 32px;
+  min-block-size: 32px;
+}
+
+.ol-trade-heading h3,
+.ol-trade-conversation h4,
+.ol-trade-basket h4 {
+  margin: 0;
+}
+
+.ol-trade-layout {
+  display: grid;
+  flex: 1;
+  min-block-size: 0;
+  grid-template-columns: minmax(0, 308fr) minmax(0, 644fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--space-6);
+  padding-block-start: var(--space-4);
+  align-items: stretch;
+}
+.ol-trade-layout::before {
+  content: '';
+  grid-area: 1 / 1;
+  justify-self: end;
+  inline-size: 1px;
+  transform: translateX(13px);
+  background: var(--line);
+  pointer-events: none;
+}
+.ol-trade-workspace:not([data-heading]) .ol-trade-layout {
+  padding-block-start: 0;
+}
+
+.ol-trade-inventory {
+  grid-area: 1 / 1;
+  min-inline-size: 0;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+.ol-trade-inventory .ol-inventory-collection {
+  flex: 1;
+  min-block-size: 0;
+}
+.ol-trade-inventory .ol-inventory-collection-header,
+.ol-trade-inventory .ol-inventory-collection-footer {
+  flex: none;
+}
+
+.ol-trade-inventory .ol-inventory-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.ol-trade-inventory [data-compact] .ol-inventory-cell {
+  position: relative;
+  min-block-size: 0;
+  aspect-ratio: 1;
+  justify-content: center;
+  padding: var(--space-1);
+}
+
+.ol-trade-inventory .ol-inventory-grid-scroll {
+  flex: 1;
+  min-block-size: 0;
+  max-block-size: none;
+}
+
+.ol-trade-deal {
+  grid-area: 1 / 2;
+  min-inline-size: 0;
+  min-block-size: 0;
+  display: grid;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: var(--space-6);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding: var(--space-1);
+}
+.ol-trade-workspace .ol-trade-deal > p {
+  margin: 0;
+}
+
+.ol-trade-workspace .ol-trade-terms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-6);
+}
+
+.ol-trade-basket {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ol-trade-basket ul {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 48px));
+  gap: var(--space-1);
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-window, 8px);
+  background: var(--surface-offer, var(--surface-well, var(--surface)));
+  box-shadow: inset 0 0 0 1px var(--slot-edge, var(--line));
+  list-style: none;
+  align-content: start;
+}
+
+.ol-trade-basket li > span,
+.ol-trade-inventory .ol-inventory-grid > li > span {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.ol-trade-basket li {
+  min-inline-size: 0;
+  aspect-ratio: 1;
+}
+
+.ol-trade-slot.ol-btn,
+.ol-trade-slot-empty {
+  min-block-size: 0;
+  border: 0;
+  border-radius: var(--radius-slot, var(--radius-sm));
+  background: var(--surface-slot, var(--surface-well, var(--surface)));
+  box-shadow:
+    inset 0 0 0 1px var(--slot-edge, var(--line-control, var(--line))),
+    var(--slot-inner-shadow, 0 0 transparent);
+}
+.ol-trade-slot-empty {
+  background: var(--surface-slot-empty, var(--surface-well, var(--surface)));
+  box-shadow: inset 0 0 0 1px var(--slot-empty-edge, var(--line));
+}
+
+.ol-trade-slot.ol-btn {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  padding: var(--space-1);
+  color: var(--ink);
+}
+
+.ol-trade-slot.ol-btn > span:first-child {
+  display: grid;
+  place-items: center;
+}
+
+.ol-trade-slot.ol-btn[aria-pressed='true'] {
+  background: var(--surface-slot-selected, var(--surface-selected));
+  box-shadow: var(--selected-glow);
+}
+.ol-trade-slot.ol-btn[aria-pressed='true']::before {
+  padding: 2px;
+}
+
+.ol-trade-slot-quantity {
+  position: absolute;
+  inset-inline-end: 4px;
+  inset-block-end: 4px;
+  font: 700 var(--text-label-size) / 12px var(--font-ui);
+  font-variant-numeric: tabular-nums;
+}
+
+.ol-trade-lot-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: start;
+  padding: var(--space-3);
+  background: var(--surface-well, var(--surface));
+  border: 1px solid var(--line-control, var(--line));
+  border-radius: var(--radius-sm);
+}
+
+.ol-trade-lot-editor > strong,
+.ol-trade-lot-editor > p,
+.ol-trade-lot-editor > .ol-inventory-quantity {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.ol-trade-request {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+.ol-trade-request-details > summary {
+  cursor: pointer;
+  color: var(--ink-silver, var(--ink-muted));
+  font-size: var(--text-detail-size);
+}
+.ol-trade-request-details > .ol-trade-request {
+  margin-block-start: var(--space-3);
+}
+
+.ol-trade-request .ol-caption {
+  flex-basis: 100%;
+}
+
+.ol-trade-decision.ol-actions {
+  justify-content: end;
+  margin: 0;
+}
+
+.ol-trade-conversation {
+  min-inline-size: 0;
+  padding-block-start: var(--space-6);
+  border-block-start: 1px solid var(--line);
+  display: grid;
+  grid-template-rows: auto auto auto;
+  gap: var(--space-3);
+}
+
+.ol-trade-conversation > .ol-thread-shell {
+  min-block-size: 0;
+  max-block-size: 76px;
+  overflow: hidden;
+}
+
+.ol-trade-conversation .ol-thread {
+  min-block-size: 0;
+  max-block-size: 76px;
+  gap: var(--space-2);
+  padding: 0;
+}
+
+.ol-trade-workspace .ol-trade-speech {
+  display: grid;
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: var(--space-3);
+  align-items: baseline;
+  margin: 0;
+}
+.ol-trade-speech > strong {
+  font: 600 var(--text-tab-size) / var(--text-body-leading) var(--font-heading);
+  color: var(--ink-world-name, var(--ink));
+}
+.ol-trade-speech[data-own] > strong {
+  font: 600 var(--text-body-size) / var(--text-body-leading) var(--font-ui);
+  color: var(--ink-muted);
+}
+
+.ol-trade-speech .ol-event-time {
+  display: inline;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-faint);
+  font: 500 var(--text-label-size) / var(--text-label-leading) var(--font-ui);
+}
+[data-theme='gildmoss'] .ol-trade-basket-heading > span:last-child,
+[data-theme='gildmoss'] .ol-trade-conversation > .ol-eyebrow {
+  background: var(--metal-gold-label);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+
+.ol-trade-negotiation-input .ol-world-composer {
+  position: static;
+  inset: auto;
+  inline-size: auto;
+  max-inline-size: none;
+  transform: none;
+  margin: 0;
+}
+.ol-trade-negotiation-input {
+  position: relative;
+}
+
+@container (max-width: 640px) {
+  .ol-trade-layout {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .ol-trade-deal {
+    flex: none;
+    overflow: visible;
+  }
+
+  .ol-trade-inventory {
+    flex: none;
+    padding-inline-end: 0;
+    padding-block-end: var(--space-3);
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--line);
+  }
+  .ol-trade-layout::before {
+    display: none;
+  }
+
+  .ol-trade-inventory .ol-inventory-grid-scroll {
+    max-block-size: 200px;
+  }
+}
+
+@container (max-width: 520px) {
+  .ol-trade-workspace .ol-trade-terms {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ol-trade-workspace .ol-trade-speech {
+    grid-template-columns: minmax(0, 88px) minmax(0, 1fr);
+  }
+  .ol-trade-speech .ol-event-time {
+    grid-column: 2;
+  }
+  .ol-trade-inventory .ol-inventory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 44px), 1fr));
+  }
+  .ol-trade-basket ul {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 44px), 1fr));
+  }
+  .ol-trade-negotiation-input .ol-world-composer-input .ol-composer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ol-trade-negotiation-input .ol-composer > .ol-btn {
+    justify-self: end;
+  }
+}
+@media (forced-colors: active) {
+  [data-theme='gildmoss'] .ol-trade-basket-heading > span:last-child,
+  [data-theme='gildmoss'] .ol-trade-conversation > .ol-eyebrow {
+    background: none;
+    color: Highlight;
+    -webkit-text-fill-color: Highlight;
+  }
+}

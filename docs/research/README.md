@@ -5,6 +5,7 @@ Research informs decisions; it grants no implementation or spending authority. C
 - [Development-agent workflows](agent-workflows/README.md): sources, adoption rationale and unverified efficiency claims.
 - [Gameplay and systems questions](gameplay-and-systems/README.md): scoped research questions retained from the former archive backlog, with current delivery owners.
 - [Cross-game learning](../../archive/02-research/game-inspiration/synthesis/README.md): maintained synthesis at its established path; design proposals retain their own authority.
+- [Engine and runtime applications](../engine-research-guide.md): connects the [engine studies](../../research/README.md) to existing design questions, subsystem owners and evaluation work.
 - [Existing source research](../../archive/02-research/): historical sources indexed in place, read only for a relevant question.
 
 [Open decision owners](../maintainers/decisions/README.md) · [Verification](../verification.md) · [Benchmarks](../benchmarks/README.md)

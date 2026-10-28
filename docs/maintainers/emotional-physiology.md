@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design complete; implementation not started.** This tracker owns the new emotional-physiology slices of SAD-D/SAI-D. It extends delivered ACT07/ACT08 and coordinates CE02/CE03/CE05, continuing-lives, CTR06–CTR10 and existing cognition work without reopening their completed foundations or duplicating their remaining acceptance.
+**Design complete, including authored player fear/anger/joy/grief; implementation not started.** This tracker owns the new emotional-physiology slices of SAD-D/SAI-D. It extends delivered ACT07/ACT08 and coordinates CE02/CE03/CE05, continuing-lives, CTR06–CTR10 and existing cognition work without reopening their completed foundations or duplicating their remaining acceptance.
 
 The [feature specification](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) describe target behavior. [Feelings limits](../limits/feelings.md) and [world policy](../worlds/base/psychological-reactions.md) own tuning and bounds. No implementation or executable tests are authorized by this assignment.
 
@@ -11,10 +11,10 @@ The [feature specification](../projects/emotional-physiology-feature-spec.md) an
 - [x] Read the exact requested base, binding shared contracts and existing appraisal/cognition owners.
 - [x] Separate native bodily reactions, private interpretation and derived mechanical state.
 - [x] Complete policy schemas, reassessment algebra, operation scheduling, source/receipt integrity, lifecycle, acceptance scenarios and implementation responsibilities.
-- [x] Reconcile affected specifications, repertoires, limits and design TODOs; preserve the unresolved controlled-character interpretation decision.
+- [x] Reconcile affected specifications, repertoires, limits and design TODOs; record selected SA-D01 authored controlled-character interpretation.
 - [x] Review and push the complete documentation-only change.
 
-**Exit:** SAD-D is fully specified for independent implementation except the explicitly gated SA-D01 controlled-character producer/application choice. A checked design item never means runtime delivery or player qualification.
+**Exit:** The general SAD-D foundation and SA-D01 four-family authored player profile are specified for implementation; all native, privacy, lifecycle and player qualification remains open. A checked design item never means runtime delivery or player qualification.
 
 ## Implementation order and existing ownership
 
@@ -35,7 +35,7 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 
 **Status: Not started.** Dependencies: EP00; exact installed module/clock contracts. Owner: domain appraisal/body/status definitions and server world-record schema. Contract: EP-C01–EP-C03 and EP-C09.
 
-- [ ] Add the finite bodily reaction, mechanical-channel mapping and review-policy schemas, exact definition pins, closed reason/outcome fields and validation. Separate world tuning from engine families.
+- [ ] Add the finite bodily reaction, mechanical-channel mapping, review-policy and explicit native-rule permission schemas, exact definition pins, closed reason/outcome fields and validation. Extend the existing appraisal collection to the current genuine-appraisal/native-outcome record union; update codecs, exact residency reads and active indexes together. Outcome-only records hold no emotion value/lifetime and participate in no mechanical or display membership. Separate world tuning from engine families.
 - [ ] Replace ambiguous appraisal lifetime authoring with explicit normal-play duration/rate units; update current definitions, compilers, writers, readers and validators together. Preserve the installed base fear/anger/discomfort curves and calm's 30-simulation-second expiry as 0.5 normal seconds by explicit conversion, without a second editable rate or older-format reader.
 - [ ] Extend the existing appraisal record with immutable original-cause horizon and bounded operational review state, separate from its semantic revision. Extend ActorMind's current persisted state with the standalone-review dispatch spacing scalar.
 - [ ] Extend independent contribution origin/parameter representation for source-free fixed bodily causes and exact target life; preserve current live-source contribution behavior.
@@ -105,10 +105,10 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 - [ ] Keep courage, sensitivity, temperament, persistence, expression and coping as distinct contextual influences; no personality-word parsing or automatic action script.
 - [ ] Supply personally relevant current feelings, uncertainty, current body/work and exact changed evidence without hidden safety knowledge or a whole action catalog.
 - [ ] Integrate permitted compact owner feedback and useful action consequences through existing presentation. Do not add a universal emotion/needs HUD or infer private feeling from expression.
-- [ ] Implement an explicit disabled-or-selected authority gate for directly controlled interpreted emotions. Adopt and qualify an SA-D01 option only after its real selection; native bodily effects apply independently.
+- [ ] Implement selected SA-D01 authored player rules through the existing appraisal owner: explicit event/state predicates, selected families/values, exact sources, deterministic once-only outcomes and no AI fallback. Keep enablement gated on complete mechanics, disclosure and transfer acceptance; native bodily effects apply independently.
 - [ ] Keep wider needs, dream transformation and permanent outlook/trait development under their existing open owners rather than enrolling another periodic process.
 
-**Exit:** fear, joy and grief behave differently through the complete source/context paths, with anger preserving threat autonomy. The controlled-player interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior slice remains blocked until SA-D01 is chosen.
+**Exit:** fear, joy and grief behave differently through the complete source/context paths, with anger preserving threat autonomy. Selected authored player emotions and compatible retained appraisals apply without model interpretation, with complete disclosure and control-transfer qualification.
 
 ## EP07 — Lifecycle, privacy, persistence and accounting recovery
 
@@ -126,10 +126,10 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 
 **Status: Not started.** Dependencies: applicable EP02–EP07 and A/C/E/F/G implementations. Owner: SAI-D with SAI-I and existing CTR/EPR/SPK/agency/player-view owners. Contract: EP-C12 and SC01–SC14.
 
-- [ ] Implement the settled A/C acquired occurrence/exposure-transition adapters and F's unexpected-contact result through their owning interfaces. Preserve exact original support without private source metadata or a fully formed enclosing memory event.
+- [ ] Implement the settled A/C acquired occurrence/exposure-transition and outward-life-condition adapters, own completed productive-result binding, and F's unexpected-contact result through their owning interfaces. Preserve exact original support without private source metadata or a fully formed enclosing memory event.
 - [ ] Exercise exact attacker/actual-victim cuts, acquired-warning order, continuous contact, collateral impact and no same-impact shock feedback through actual melee/ranged defense.
 - [ ] Preserve E's native animal/ordinary attention routes, operation-specific cognition consumption and urgent threat capacity without an emotion-owned action pipeline.
-- [ ] Qualify G's owner feedback, full/patch/current/historical privacy, accessible presentation, action preview and control-transfer behavior under the chosen-or-blocked player gate.
+- [ ] Qualify G's owner feedback, full/patch/current/historical privacy, accessible presentation, action preview and control-transfer behavior under the selected authored-player policy, including inherited effects and no former-controller private-thought disclosure.
 - [ ] Qualify the feature's selected repertoire scenarios through the integrated owners; retain optional broader possibilities and the central playable-scope boundary.
 
 **Exit:** shared journeys remain coherent across physical evidence, personal interpretation, effective mechanics, ordinary action and player information; no duplicate owner or missing specialist seam remains.
@@ -138,18 +138,20 @@ EP01 supplies compatible definitions and records. EP02–EP04 can then advance a
 
 **Status: Not started.** Dependencies: applicable EP01–EP08. Owner: existing domain/server/storage/provider acceptance plus CE/CTR/SAI-I whole-episode and player qualification.
 
-- [ ] Implement meaningful checks for EP-C11 A01–A41 through actual affected callers. Preserve relevant delivered appraisal/social-continuity and action/cognition gates.
+- [ ] Implement meaningful checks for EP-C11 A01–A47 through actual affected callers. Preserve relevant delivered appraisal/social-continuity and action/cognition gates.
 - [ ] Separately record deterministic correctness, independently selected character behavior and uncoached player usefulness/enjoyment. Fixtures and arithmetic checks cannot establish believable independent character choice.
 - [ ] Qualify rescue while afraid, joy alongside grief, useful recovery during ongoing work, differing individuals, native animals and real successful escape. Label unsupported content scenarios as future opportunities rather than passed scenes.
 - [ ] Measure actual preparation/native work, source completeness, coalesced tickets, threshold churn, requests/cost, latency/staleness and save/recovery under concentrated combat and many quiet actors. No zero-cost or population-scale claim without evidence.
-- [ ] Tune authored startle/precision/review values only against recorded legibility, viable escape/cooperation, character independence and cost; keep one policy owner and update the feelings inventory.
-- [ ] Update delivery statuses and evidence only after the corresponding complete route works. Do not close ACT09, broader ND11/ND19, D69/DG23 or SA-D01 by association.
+- [ ] Tune authored startle/precision/review values only against recorded legibility, viable escape/cooperation, character independence and cost; keep one policy owner and update the feelings inventory. Compare the initial shock, a minute of escape/useful work and eventual native recovery, including stronger retained feelings, unchanged-review dormancy and joy alongside persistent grief; initial percentages alone do not qualify the episode.
+- [ ] Update delivery statuses and evidence only after the corresponding complete route works. Do not close ACT09, broader ND11/ND19 or D69/DG23 by association; SA-D01 design selection is separate from player runtime acceptance.
 
-**Exit:** the selected module is useful, bounded and correctly integrated, with explicit limits and honest remaining scope. Full controlled-player psychological acceptance additionally requires an adopted SA-D01 option.
+**Exit:** the selected module is useful, bounded and correctly integrated, with explicit limits and honest remaining scope. Full controlled-player psychological acceptance requires the selected B policy to pass its native, lifecycle, privacy and player checks.
 
 ## Controlled-character dependency
 
-[SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) remains open for longer-term interpreted emotion in directly controlled characters. Its scope includes creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior. Native bodily startle, NPC interpretation, native animal response and complete mechanical queries proceed independently.
+**Current continuation:** B and all four families are selected. The [world event table](../worlds/base/psychological-reactions.md#initial-player-event-rules) and [native writer contract](../projects/emotional-physiology-tech-design.md#native-authored-player-interpretation) specify danger/harm, productive completion, explicit personal loss and supported reunion. No product question remains for this profile. EP06–EP09 retain installation, source/result/life-state adapters, non-mutating receipts, complete mechanics, private bindings, control transfer, restore and A42–A47 acceptance; runtime is unstarted.
+
+[SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects authored native event rules for longer-term interpreted emotion in directly controlled characters. EP06–EP09 retain rule installation, applicable retained state, disclosure, authority fencing and control-transfer/restore qualification. Native bodily startle, NPC interpretation, native animal response and complete mechanical queries proceed independently.
 
 ## Maintained records
 

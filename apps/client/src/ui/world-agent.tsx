@@ -5,7 +5,7 @@ import type {
   WorldAgentSessionSummary,
   WorldAgentSessionCursor,
 } from '@open-legend/protocol';
-import { Button, Tag } from '../design-system/components';
+import { Button, DisclosurePopover, Tag } from '../design-system/components';
 import { post } from '../api';
 import { readLocal, writeLocal } from './storage';
 import { Inventions } from './inventions';
@@ -13,6 +13,7 @@ import { WorldInspection } from './world-inspection';
 import { WorldAgentSession } from './world-agent-session';
 import { UsageRemaining } from './usage-remaining';
 import './creator-workspaces.css';
+import './world-agent-layout.css';
 import { authoringKey } from './world-agent-identity';
 import { WorldAgentReview } from './world-agent-review';
 
@@ -35,7 +36,23 @@ type Props = {
   connected: boolean;
   conditionPolicyRevision: number;
   onStatusPolicyChanged(): void;
+  workspaceControl?: { expanded: boolean; toggle(): void };
 };
+
+const conversationDateFormat = new Intl.DateTimeFormat(undefined, {
+  year: 'numeric',
+  month: 'short',
+  day: 'numeric',
+});
+
+function conversationDate(timestamp: number): string {
+  const date = new Date(timestamp);
+  const today = new Date();
+  if (date.toDateString() === today.toDateString()) return 'Today';
+  today.setDate(today.getDate() - 1);
+  if (date.toDateString() === today.toDateString()) return 'Yesterday';
+  return conversationDateFormat.format(date);
+}
 
 /** Ordinary invention and owner editing have separate entrances and retained state.
  * A presentation mode never grants the authority checked by the native handlers. */
@@ -170,22 +187,14 @@ function WorldAgentPanel(props: Props) {
         ? 'New world'
         : 'New conversation');
   const controls = (
-    <div className="ol-creator-options">
-      <h3>Conversations</h3>
-      <div className="ol-agent-tools">
-        <Button size="sm" variant="quiet" onPress={() => create()}>
-          New conversation
-        </Button>
-        <Button size="sm" variant="quiet" onPress={() => create('invention')}>
-          Design an invention
-        </Button>
-        <Button size="sm" variant="quiet" onPress={() => create('creation')}>
-          Describe a new world
-        </Button>
-        <Button size="sm" variant="quiet" onPress={() => create('creation', true)}>
-          Choose a starting world
-        </Button>
-      </div>
+    <aside
+      className="ol-creator-options ol-agent-conversations"
+      aria-label="World Agent conversations"
+    >
+      <h3 className="ol-agent-conversations-title ol-sr">Conversations</h3>
+      <Button icon="ui.plus" variant="secondary" onPress={() => create()}>
+        New chat
+      </Button>
       <div className="ol-creator-records">
         {sessions.map((session) => (
           <Button
@@ -195,23 +204,49 @@ function WorldAgentPanel(props: Props) {
             onPress={() => setActive(session.sessionId)}
           >
             <strong>{session.title}</strong>
+            <small className="ol-agent-conversation-date">
+              {conversationDate(session.createdAt)}
+            </small>
             {!session.available && <span className="ol-caption">Read-only history</span>}
           </Button>
         ))}
       </div>
       {!sessions.length && !busy && <p className="ol-caption">No saved conversations yet.</p>}
+      {before && (
+        <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list(before)}>
+          Earlier conversations
+        </Button>
+      )}
+      {error && <p role="alert">{error}</p>}
+    </aside>
+  );
+  const conversationTools = (
+    <DisclosurePopover
+      label="More conversation tools"
+      icon="ui.more"
+      className="ol-agent-conversation-tools"
+      contentClassName="ol-agent-conversation-options"
+    >
       <div className="ol-agent-tools">
+        <Button size="sm" variant="quiet" onPress={() => create('invention')}>
+          Design an invention
+        </Button>
+        <Button size="sm" variant="quiet" onPress={() => create('creation')}>
+          Describe a new world
+        </Button>
+        <Button size="sm" variant="quiet" onPress={() => create('creation', true)}>
+          Choose a starting world
+        </Button>
         <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list()}>
           Refresh conversations
         </Button>
-        {before && (
-          <Button size="sm" variant="quiet" disabled={busy} onPress={() => void list(before)}>
-            Earlier conversations
+        {props.workspaceControl && (
+          <Button size="sm" variant="quiet" onPress={props.workspaceControl.toggle}>
+            {props.workspaceControl.expanded ? 'Compact workspace' : 'Expand workspace'}
           </Button>
         )}
       </div>
-      {error && <p role="alert">{error}</p>}
-    </div>
+    </DisclosurePopover>
   );
   if (mode === 'invent')
     return (
@@ -295,50 +330,47 @@ function WorldAgentPanel(props: Props) {
     );
   return (
     <div
-      className="ol-agent ol-creator-workspace ol-creator-author"
+      className="ol-agent ol-creator-workspace ol-creator-author ol-agent-with-conversations"
       data-session={active ? '' : undefined}
     >
-      <header className="ol-creator-heading">
-        <div>
-          <Tag tone="highlight">God mode</Tag>
-          <h3 title={active ? activeTitle : undefined}>
-            {active ? activeTitle : 'Shape this world'}
-          </h3>
-        </div>
-        {sessions.some((session) => session.sessionId === active) && (
-          <Button size="sm" variant="quiet" onPress={() => create()}>
-            New chat
-          </Button>
-        )}
-      </header>
-      {active ? (
-        <WorldAgentSession
-          key={authoringKey(
-            'session-component',
-            worldId,
-            accessScope,
-            saveTimeline ?? null,
-            active,
-          )}
-          worldId={worldId}
-          accessScope={accessScope}
-          sessionId={active}
-          connected={connected}
-          visible={visible}
-          purpose={
-            creationTarget?.id === active
-              ? 'creation'
-              : inventionTarget === active
-                ? 'invention'
-                : undefined
-          }
-          nativeCreation={creationTarget?.id === active ? creationTarget.native : undefined}
-          freshRecovery={creationTarget?.id === active ? creationTarget.recovery : undefined}
-          onCreated={() => void list()}
-          controls={controls}
-          onStatusPolicyChanged={onStatusPolicyChanged}
-        />
-      ) : null}
+      <div className="ol-agent-conversation-layout">
+        {controls}
+        <section className="ol-agent-active" aria-label={active ? activeTitle : 'Shape this world'}>
+          <header className="ol-creator-heading">
+            <h3 title={active ? activeTitle : undefined}>
+              {active ? activeTitle : 'Shape this world'}
+            </h3>
+            {conversationTools}
+          </header>
+          {active ? (
+            <WorldAgentSession
+              key={authoringKey(
+                'session-component',
+                worldId,
+                accessScope,
+                saveTimeline ?? null,
+                active,
+              )}
+              worldId={worldId}
+              accessScope={accessScope}
+              sessionId={active}
+              connected={connected}
+              visible={visible}
+              purpose={
+                creationTarget?.id === active
+                  ? 'creation'
+                  : inventionTarget === active
+                    ? 'invention'
+                    : undefined
+              }
+              nativeCreation={creationTarget?.id === active ? creationTarget.native : undefined}
+              freshRecovery={creationTarget?.id === active ? creationTarget.recovery : undefined}
+              onCreated={() => void list()}
+              onStatusPolicyChanged={onStatusPolicyChanged}
+            />
+          ) : null}
+        </section>
+      </div>
     </div>
   );
 }
