@@ -55,6 +55,7 @@ import { canStand } from '@open-legend/spatial';
 import { spatialMap, validateSpatialWorld } from '../packages/domain/src/spatial-state.js';
 import { starterGroundAt } from '../packages/domain/src/worlds/base/landscape.js';
 import { BASE_BODY_PROFILES } from '../packages/domain/src/worlds/base/spatial-definitions.js';
+import { prepareBaseInitialWorldState } from '../packages/domain/src/worlds/base/initial-opening.js';
 import { parseScenario, populateScenario } from './performance/scenario.js';
 import { prepareRoutinePlan, selectRoutinePlan } from './performance/routine-plan.js';
 import { prepareLongSoak, soakInventory } from './performance/long-soak.js';
@@ -933,7 +934,12 @@ try {
     longSoak.resourceSchedule =
       'Finite assigned separated patches, with actual supported approach travel and ordinary return between cycles. No retargeting or replenishment.';
   if (longSoak) validateCurrentWorldState(seeded);
-  seeded.paused = true;
+  // A saved fixture restores without first-creation effects, just like real saves.
+  // Include the world's actual initial sensing/conditions in setup, before timing play.
+  profilingStage = 'initial fixture preparation';
+  const startupAt = performance.now();
+  prepareBaseInitialWorldState(seeded);
+  const startupPreparationMs = performance.now() - startupAt;
   profilingStage = 'initial fixture save';
   await store.commit(0, { world: seeded, speed: 3, manuallyPaused: true });
   const setupMs = performance.now() - setupAt;
@@ -2344,6 +2350,7 @@ try {
           ? 'memory-ui-correctness'
           : 'three-times-capacity',
       fixture: {
+        startupPreparationMs,
         ...(travelFixture ? { travel: { routes: travelRoutes, rehearsal: travelRehearsal } } : {}),
         expanded: expandedFixture,
         addedPopulation,
