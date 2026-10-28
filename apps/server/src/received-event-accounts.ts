@@ -1,7 +1,8 @@
 import {
   receivedEventEvidence,
   receivedEventAwareness,
-  currentReceivedObservations,
+  currentReceivedObservationSources,
+  materializeObservation,
   temporalFacetEligible,
   materializeTemporalValue,
   appendedRecordCount,
@@ -92,11 +93,11 @@ export function receivedEventAccounts(
     }
   }
   if (options.current)
-    for (const observation of currentReceivedObservations(world, actorId).observations) {
-      const eventId =
-        observation.origin.kind === 'occurrence' ? observation.origin.eventId : undefined;
+    for (const source of currentReceivedObservationSources(world, actorId).observations) {
+      const eventId = source.origin.kind === 'occurrence' ? source.origin.eventId : undefined;
       if (!eventId || !wanted.has(eventId) || result.has(eventId) || forgotten.has(eventId))
         continue;
+      const observation = materializeObservation(world, source);
       const values = observation.facets
         .filter((facet) => facet.value.kind === 'event' || facet.value.kind === 'sound')
         .flatMap((facet) =>

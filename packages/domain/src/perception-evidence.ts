@@ -1019,10 +1019,10 @@ export function acquireObservation(
 /** Old originals may remain after body replacement until the next native phase.
  * Current reception belongs only to the actual observer life; hearing needs no
  * visual sense or lasting-memory capability. Historical accounts stay separate. */
-export function currentReceivedObservations(
+export function currentReceivedObservationSources(
   world: WorldState,
   observerId: string,
-): { physicalLife: number; observations: readonly ObservationContribution[] } {
+): { physicalLife: number; observations: readonly ReceivedObservation[] } {
   const observer = entityGet(readOnlyDraftView(world.entities), observerId);
   const physicalLife = observer?.actor?.physicalLife ?? 0;
   const owners = readOnlyDraftView(world).perceptionEvidence;
@@ -1031,9 +1031,19 @@ export function currentReceivedObservations(
   return {
     physicalLife,
     observations:
-      observer?.actor && state?.life === physicalLife
-        ? readOnlyDraftView(state.received).map((source) => materializeObservation(world, source))
-        : [],
+      observer?.actor && state?.life === physicalLife ? readOnlyDraftView(state.received) : [],
+  };
+}
+/** Complete cuts expand only after selecting the receiver's current sources.
+ * The borrowed source reader above is synchronous metadata, never a disclosure. */
+export function currentReceivedObservations(
+  world: WorldState,
+  observerId: string,
+): { physicalLife: number; observations: readonly ObservationContribution[] } {
+  const current = currentReceivedObservationSources(world, observerId);
+  return {
+    physicalLife: current.physicalLife,
+    observations: current.observations.map((source) => materializeObservation(world, source)),
   };
 }
 

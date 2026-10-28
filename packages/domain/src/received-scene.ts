@@ -6,7 +6,7 @@ import {
 } from '@open-legend/spatial';
 import {
   currentBodyGeometryInputs,
-  currentReceivedObservations,
+  currentReceivedObservationSources,
   type BodyGeometrySample,
   type CurrentBodyGeometryInput,
   type LocationGeometrySample,
@@ -49,7 +49,7 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
       (entityGet(readOnlyDraftView(world.entities), observerId)?.actor?.physicalLife ?? 0)
   )
     return previous;
-  const reception = currentReceivedObservations(world, observerId);
+  const reception = currentReceivedObservationSources(world, observerId);
   const physicalLife = reception.physicalLife;
   const bodies = new Map<string, ReceivedSceneBody>();
   let nonlocalized = 0;
@@ -61,12 +61,16 @@ export function receivedScene(world: WorldState, observerId: string): ReceivedSc
       bounds: receivedBodyBounds(input.body, error),
     });
   }
-  for (const contribution of reception.observations)
+  // This coverage count needs only the admitted facet kinds. Expanding complete
+  // originals would copy body/history proof that no scene measurement consumes.
+  for (const contribution of reception.observations) {
+    const facets = readOnlyDraftView(readOnlyDraftView(contribution).facets);
     if (
-      contribution.facets.some((facet) => facet.value.kind === 'sound') &&
-      !contribution.facets.some((facet) => facet.value.kind === 'location')
+      facets.some((facet) => readOnlyDraftView(facet).value.kind === 'sound') &&
+      !facets.some((facet) => readOnlyDraftView(facet).value.kind === 'location')
     )
       nonlocalized++;
+  }
   let index: ReceivedScene['index'] | undefined;
   const scene: ReceivedScene = {
     observerId,
