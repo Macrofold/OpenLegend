@@ -144,7 +144,7 @@ The support job does not erase the main job. It modifies:
 - stats;
 - equipment-independent utility.
 
-At level 99, the traditional support-job cap is level 49. Modern **Master Levels** extend the support-job cap: every five Master Levels adds one support level, up to support level 59 at Master Level 50. [FFXI10](#ffxi10)
+At level 99, the traditional support-job cap is level 49. **Master Levels** add one support level per five Master Levels. [S26-07](#s26-07) The official history records the cap reaching Master Level 50 in November 2022, permitting support level 59. [S26-08](#s26-08)
 
 This is a particularly good “primary identity + secondary expertise” model:
 - main profession establishes role/authority;
@@ -358,13 +358,7 @@ They use authored behavior rules:
 
 A 2026 returning player described learning which Trusts open/follow particular Skillchains, while also noting a frustrating edge case where Trusts would not independently attack because the player had not entered the required engaged state. [FFXI19](#ffxi19)
 
-That is a powerful OpenLegend lesson:
-- **bounded agents are predictable and cheap**;
-- **general agents are flexible but harder to control**.
-
-World NPCs probably need both:
-- deterministic safety/authority constraints;
-- broader cognition within those constraints.
+For OpenLegend, authored role behavior offers inspectable expectations; it does not establish a measured cost advantage over broader cognition. Independent inhabitants may have reasons to help or refuse that Trust companions do not model. Deterministic authority constraints remain necessary, while capability, reliability and cost need separate evaluation in the actual system.
 
 ## 15. Level 99 is now the beginning of endgame progression
 
@@ -377,13 +371,9 @@ Current path:
 4. reach **Job Master**;
 5. unlock Master Levels;
 6. earn Exemplar Points to increase Master Level;
-7. improve job-specific and endgame equipment through content currencies/materials. [FFXI21](#ffxi21) [FFXI10](#ffxi10)
+7. improve job-specific and endgame equipment through content currencies/materials. [FFXI21](#ffxi21) [S26-07](#s26-07)
 
-At Master Level:
-- core parameters rise;
-- battle/magic skill caps rise;
-- support-job cap rises every five levels;
-- current cap is Master Level 50 / support level 59. [FFXI10](#ffxi10)
+Master Levels increase basic parameters and combat/magic skill caps; §5 explains the additional support-job possibilities. The character must first obtain the **Master Breaker** key item from Ru’Lude Gardens’ Nomad Moogle while meeting level-99 and Job Master prerequisites. [S26-07](#s26-07)
 
 This is a live-service progression stack rather than one monolithic level curve.
 
@@ -438,7 +428,7 @@ OpenLegend should borrow situational equipment value, not the inventory-manageme
 
 FFXI historically made K.O. costly through experience loss and possible level loss.
 
-Modern rules have softened many historical mission penalties, but current official guidance still states that K.O. can reduce experience and **Exemplar Points**, with Raise restoring part of the latter loss. [FFXI10](#ffxi10)
+Current guidance retains experience loss on K.O. [FFXI10](#ffxi10) The Master Level release rules also specify **Exemplar Point** loss, possible Master Level reduction and partial recovery through Raise/Reraise. A trained role can therefore lose some recent advancement without erasing the character’s other careers. [S26-07](#s26-07)
 
 The design intent/effect is different from modern checkpoint RPGs:
 - dying costs group time;
@@ -571,7 +561,9 @@ OpenLegend should go much further: housing can be a physical object in the share
 
 ### Native authoring: arrange a useful room
 
-The official support workflow starts with a furnishing in the **Mog Safe**. Open **Layout**, select the item in the room’s blueprint view, move it to an allowed grid location and confirm placement. This makes owned furniture into a visible arrangement; buying the object and placing it are different actions. The guide documents placement, not reusable world scripts or a published room package. Visitor, revision and removal details are being checked separately in this refresh. [S26-02](#s26-02)
+The official workflow starts with a furnishing in the **Mog Safe**. Open **Layout**, select it in the blueprint view, move it to an allowed grid location and confirm. Buying an object and placing it are different actions. [S26-02](#s26-02) To share the result, open the room through the moogle; a member of the same party selects the house through the outside NPC. [S26-05](#s26-05)
+
+The May 2015 release added a quest-unlocked second floor, national interior styles and Mog Safe 2. Floor choice affects function: second-floor furnishing does not contribute Moghancement, and a guest must leave and be reinvited to visit that floor. An Orchestrion or specified statue can supply music there. [S26-04](#s26-04) The retail community’s Layout guide documents rotation, rearrangement and removal through the same editor; its old console controls and exact grid size are not current platform guarantees. This placement→visit→revision/removal path is documented, not executed. It does not publish reusable scripts or turn the room into a new shared-world ruleset. [S26-06](#s26-06)
 
 ### Mog Garden and other noncombat loops
 
@@ -761,15 +753,15 @@ This supports different long-horizon goals:
 
 **Ambuscade:** Gorpa-Masorpa in Mhaura and Records of Eminence lead to the primer key item required by each participant. Select Normal or Intense and a difficulty at the Tome, then solve that month's encounter. A successful clear consumes the primer; defeat does not. Hallmarks buy rewards and also count toward cumulative milestones, while Gallantry rewards actual player grouping rather than a party filled only with Trusts. Monthly currency resets make spending before the update a separate concern from winning a fight. Augmentable job capes are one concrete continuing equipment goal. [FFXI46](#ffxi46)
 
-**Omen:** complete the required Rhapsodies progression, obtain each participant's mystical canteen from Incantrix and enter through Reisenjima's concrescence. Floor objectives and branching routes let the group emphasize job cards or bosses. Rewards develop Artifact armor and provide equipment; choosing a route is therefore also choosing a development goal. A higher item level does not itself replace the entry key or fulfilled story condition. [FFXI10](#ffxi10)
+**Omen:** finish Rhapsodies, obtain each participant’s canteen from Incantrix and enter through Reisenjima’s concrescence. Objectives yield job cards for Artifact armor; bosses provide separate spoils. Gear strength does not replace a missing entry key or story prerequisite. [S26-09](#s26-09) The later guide names the key **mystical canteen** and describes branching routes: choose more card objectives or a particular boss to fit the intended development goal. [FFXI10](#ffxi10)
 
-**Odyssey exploration:** a moglophone opens a timed Sheol expedition from Rabao. Fighting creates party-shared **izzat**, which can open chests and is lost when the expedition ends; it is not a bankable currency. Loot supplies equipment augmentation. The later system also awards persistent **Moogle Segments**, which can fund a different entry item. [FFXI56](#ffxi56) [FFXI10](#ffxi10)
+**Odyssey exploration:** a moglophone opens a timed Sheol expedition from Rabao. Fighting creates party-shared **izzat**, which can open chests and is lost when the expedition ends; it is not a bankable currency. Loot supplies equipment augmentation. [FFXI56](#ffxi56) Later **Moogle Segments** fund a different entry item, moglophone II. [S26-10](#s26-10)
 
-**Sheol: Gaol:** the separate moglophone II route leads to selected bosses under stricter party/job rules. Wins unlock associated merchant gear; higher-difficulty fights supply augmentation progress. It is not merely another floor of the same chest expedition. [FFXI10](#ffxi10)
+**Sheol: Gaol:** the moglophone II route leads to selected bosses with nonduplicate jobs and preparation between attempts. Previously used jobs become unavailable for the remaining stay. Wins unlock merchant gear, while boss damage/defeat yields augmentation progress under difficulty conditions. The 2021 launch rules establish this different commitment; they are not today’s complete numerical balance table. [S26-10](#s26-10)
 
 **Sortie:** the documented entry conditions include the relevant Adoulin and Rhapsodies milestones and a shiny Ra'Kaznarian plate from Ruspix. The plate becomes dull on entry and recharges; participants cannot bypass its state because someone else can enter. Monsters and fulfilled conditions supply chests, gallimaufry, gear-upgrade materials and appraisal opportunities. The original note specifies Adoulin through **The Light Within**, so a broader guide's “complete Seekers” shorthand is not substituted for that precise requirement. [FFXI55](#ffxi55)
 
-Some Sortie objectives involve examining a target without equipment or discarding a temporary item rather than maximizing kills. Gallimaufry supports Empyrean and Prime development. This makes knowing the objective an independent form of progress. [FFXI10](#ffxi10)
+Some Sortie rewards require examining a target unequipped or discarding a temporary item. Gallimaufry supports Empyrean and Prime development; knowledge of the objective matters separately from damage. [FFXI10](#ffxi10)
 
 **Interpretation:** each activity asks what should persist: an item's development, a score toward this month's exchange, an expedition resource, access to a boss or knowledge of a hidden condition. Calling all of these a grind conceals the decisions; promising that every currency is permanent would conceal real loss boundaries.
 
@@ -1040,7 +1032,7 @@ World mastery becomes infrastructure. **Next decision:** choose a useful newly a
 
 ### H. Recognizing the objective can beat killing another enemy
 
-**Intention:** obtain a Sortie conditional reward. **Conditions:** the party knows a particular chest condition requires an interaction or temporary-item action. **Actions:** satisfy that condition while maintaining safety instead of assuming another kill is the only way forward. **Interaction:** inventory state and observation become encounter actions. **Result:** the expedition can yield development resources through knowledge as well as damage. **Next choice:** pursue another condition or a boss appropriate to the remaining time. **Limit:** the trigger must be the actual documented condition; arbitrary ritual actions do not generate new rewards. [FFXI10](#ffxi10)
+**Intention:** obtain a Sortie conditional reward. **Conditions/actions:** identify and safely perform the required interaction or temporary-item action. **Interaction/result:** observing and changing inventory state can produce a chest instead of another kill. **Next choice:** pursue another condition or a boss within the remaining time. **Limit:** the actual documented trigger is required; arbitrary rituals do not create rewards. [FFXI10](#ffxi10)
 
 ## 38. Comprehensive mechanics inventory
 
@@ -1142,11 +1134,13 @@ Modern teleportation fixed one of classic FFXI's greatest time taxes.
 
 **Borrow:** let infrastructure and knowledge compress logistics after the world has been meaningfully traversed.
 
-### J. Persistent worlds need migration paths, not frozen rules
+<a id="j-persistent-worlds-need-migration-paths-not-frozen-rules"></a>
+
+### J. Published continuity promises need explicit boundaries
 
 Trusts, level cap, item level, platform retirement and expansion systems radically changed FFXI.
 
-**Borrow:** long-lived OpenLegend worlds need version/migration policy that preserves identity/history while allowing systems to improve.
+**Borrow:** for a supported published world, state what identity, possessions and history survive a change, and which rules may change. This is a product-continuity question, not a requirement to preserve incompatible OpenLegend development saves or implement migrations; the [development-save policy](../../../../AGENTS.md#development-save-policy) remains controlling.
 
 ### K. Do not preserve friction merely because it created nostalgia
 
@@ -1231,7 +1225,7 @@ For OpenLegend:
 
 <a id="ffxi09"></a>**FFXI09 — [Final Fantasy XI Review](https://www.gamespot.com/reviews/final-fantasy-xi-review/1900-6083638/).** Greg Kasavin, GameSpot, 2003-11-14. Full PC launch review; job switching, six-player groups, support jobs, Skillchains, crafting/trade/housing, PlayOnline/install and forced-grouping evidence.
 
-<a id="ffxi10"></a>**FFXI10 — [Returning Adventurer Guide Vol. 6](https://we-are-vanadiel.finalfantasyxi.com/post/?id=721&lang=en).** Square Enix, 2023. Primary current Master Level/Exemplar Point/support-job cap and current battle-content progression reference. Corrective pass reread Omen, Sortie and Odyssey sections; the narrower Sortie release-note prerequisite is separately preserved in FFXI55.
+<a id="ffxi10"></a>**FFXI10 — [Returning Adventurer Guide Vol. 6](https://we-are-vanadiel.finalfantasyxi.com/post/?id=721&lang=en).** Square Enix, 2023. Relevant progression/battle body reread October 28, 2026; FFXI55 preserves the narrower Sortie prerequisite.
 
 <a id="ffxi11"></a>**FFXI11 — [WE DISCUSS VANA'DIEL: Seekers job design](https://we-are-vanadiel.finalfantasyxi.com/post/?id=764&lang=en).** Square Enix. Developer interview with Yasuhiro Taniguchi; Rune Fencer was partly inspired by player-created Red Mage tanking.
 
@@ -1338,3 +1332,17 @@ Accessed September 26, 2026. Primary guides and historical update text are disti
 <a id="s26-02"></a>**S26-02 — [Mog House Layouts](https://support.na.square-enix.com/faqarticle.php?id=20&kid=11422).** Square Enix Support. Full primary placement instructions read October 28, 2026; documented, not executed.
 
 <a id="s26-03"></a>**S26-03 — [The History of Vana’diel](https://www.playonline.com/ff11us/intro/about/history.html).** Square Enix. Full primary introductory chronology read October 28, 2026; creation belief, national change and adventurer premise, not the whole later storyline.
+
+<a id="s26-04"></a>**S26-04 — [May 14, 2015 update](https://forum.square-enix.com/ffxi/threads/46976).** Square Enix. Full relevant housing release section read; floor function, guest boundary and music, not every old limit.
+
+<a id="s26-05"></a>**S26-05 — [Inviting Guests to Your Mog House](https://support.na.square-enix.com/faqarticle.php?id=20&kid=11290).** Square Enix Support. Full primary party/entry instructions read.
+
+<a id="s26-06"></a>**S26-06 — [Layout](https://ffxiclopedia.fandom.com/wiki/Layout).** Retail community reference. Substantive indexed placement/rearrange/removal text read; direct retrieval returned an error. Console controls remain historical.
+
+<a id="s26-07"></a>**S26-07 — [November 10, 2021 update](https://forum.square-enix.com/ffxi/threads/58770).** Square Enix. Full relevant Master Levels release section read; prerequisites, earned progression, support-job effects and death recovery.
+
+<a id="s26-08"></a>**S26-08 — [Official 2021 history: Master Levels](https://we-are-vanadiel.finalfantasyxi.com/history/?lang=en&year=2021).** Square Enix. Master Level history and developer comments read; records subsequent November 2022 cap.
+
+<a id="s26-09"></a>**S26-09 — [December 13, 2016 update](https://forum.square-enix.com/ffxi/threads/51767).** Square Enix. Full Omen release section read; progression, entry and distinct rewards, without importing original participant/canteen limits.
+
+<a id="s26-10"></a>**S26-10 — [January 12, 2021 update](https://forum.square-enix.com/ffxi/threads/57650).** Square Enix. Full Sheol: Gaol release section read; preparation, job restriction, entry currency and equipment development.
