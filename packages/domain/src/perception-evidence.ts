@@ -824,19 +824,10 @@ export function evidenceCutEligible(world: WorldState, cut: EvidenceCut): boolea
   };
   return cut.acquired.every(supported) && cut.current.every((facet) => supported(facet.original));
 }
-/** Native originals never change. Sharing the frozen source body avoids copying it once
- * per current facet and again through every nested native transition. Restored plain
- * sources become immutable on their first captured read; this cache grants no evidence. */
-const immutableObservations = new WeakMap<ObservationContribution, ObservationContribution>();
+/** Fully immutable originals share directly; mutable builder/restored sources must
+ * detach their current facts on every read without changing an earlier captured cut. */
 function immutableObservation(value: ObservationContribution): ObservationContribution {
-  const source = readOnlyDraftView(value);
-  if (isImmutableData(source)) return source;
-  let result = immutableObservations.get(source);
-  if (!result) {
-    result = immutableDataSnapshot(source, readOnlyDraftView);
-    immutableObservations.set(source, result);
-  }
-  return result;
+  return immutableDataSnapshot(value, readOnlyDraftView);
 }
 function copyFacetValue(value: SensoryFacet): SensoryFacet {
   // One constructor detaches mutable inputs and shares only proved immutable
