@@ -150,6 +150,8 @@ export const DOMAIN_COUNTERS = [
   'visualSourcePreparationReuses',
   'attentionCandidatesChanged',
   'attentionCandidatesUnchanged',
+  'attentionSelectionsRanked',
+  'attentionSelectionsReused',
   /** Sighting-identity assignments (including redundant baseline writes), additions/removals. */
   'episodeBindingsAssigned',
   'episodeBindingsInserted',

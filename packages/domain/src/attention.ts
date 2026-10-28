@@ -344,27 +344,30 @@ function rank(a: AttentionCandidate, b: AttentionCandidate) {
 /** Quiet received revisions still refresh selected detail and relation work below.
  * Only skip competition when the same choices remain valid even after optional
  * incumbent stability expires; discovery keeps its independent rotation deadline. */
-function canRetainSelection(
+function retainedSelection(
   state: AttentionState,
   entries: readonly AttentionEntry[],
   candidates: readonly (readonly [string, AttentionCandidate])[],
   capacity: number,
   policy: AttentionPolicy,
   now: number,
-): boolean {
+): Array<{ key: string; basis: AttentionBasis }> | undefined {
+  const current = readOnlyDraftView(state.candidates);
   if (
     state.explicit.length ||
     entries.length !== Math.min(capacity, candidates.length) ||
-    entries.some((entry) => entry.basis !== 'cue' && entry.basis !== 'discovery') ||
-    candidates.some(([, candidate]) => candidate.direct || candidate.urgency > 0)
+    entries.some(
+      (entry) => !current[entry.key] || (entry.basis !== 'cue' && entry.basis !== 'discovery'),
+    ) ||
+    candidates.some(([, candidate]) => candidate.direct || candidate.urgency >= policy.urgentCue)
   )
-    return false;
+    return;
   const selected = new Set(entries.map((entry) => entry.key));
   const waiting = candidates.some(
     ([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision,
   );
   const discovery = entries.find((entry) => entry.basis === 'discovery');
-  const held = discovery && readOnlyDraftView(state.candidates)[discovery.key];
+  const held = discovery && current[discovery.key];
   if (
     waiting
       ? !discovery ||
@@ -373,26 +376,28 @@ function canRetainSelection(
         held.presentedDescription === held.descriptionRevision
       : !!discovery
   )
-    return false;
-  const optional = entries.filter((entry) => entry.basis === 'cue');
+    return;
+  // Below-threshold cues cannot displace a stable incumbent. Current score
+  // changes can still reorder incumbents, exactly as the full owner does.
+  const optional = entries
+    .filter((entry) => entry.basis === 'cue')
+    .sort((a, b) => rank(current[a.key]!, current[b.key]!));
   let weakestExpired = Infinity;
-  for (let index = 0; index < optional.length; index++) {
-    const entry = optional[index]!,
-      candidate = readOnlyDraftView(state.candidates)[entry.key];
-    if (!candidate) return false;
-    // A prior challenger replacement can leave the old order unsorted. The full
-    // owner sorts incumbents on its next pass, so retain that exact behavior.
-    if (
-      index &&
-      rank(readOnlyDraftView(state.candidates)[optional[index - 1]!.key]!, candidate) > 0
-    )
-      return false;
+  for (const entry of optional) {
+    const candidate = current[entry.key];
+    if (!candidate) return;
     if (entry.stableUntil <= now) weakestExpired = Math.min(weakestExpired, candidate.score);
   }
-  return !candidates.some(
-    ([key, candidate]) =>
-      !selected.has(key) && candidate.score >= weakestExpired + policy.switchMargin,
-  );
+  if (
+    candidates.some(
+      ([key, candidate]) =>
+        !selected.has(key) && candidate.score >= weakestExpired + policy.switchMargin,
+    )
+  )
+    return;
+  const result = optional.map(({ key, basis }) => ({ key, basis }));
+  if (discovery) result.push({ key: discovery.key, basis: 'discovery' });
+  return result;
 }
 /** Change-fed native selection. A cold call alone enumerates the current body keys.
  * It never reads a source's live entity properties to score received evidence. */
@@ -585,8 +590,6 @@ export function updateAttention(
       !old ||
       old.leaseId !== candidate.leaseId ||
       old.subject !== candidate.subject ||
-      old.score !== candidate.score ||
-      old.urgency !== candidate.urgency ||
       old.direct !== candidate.direct ||
       (old.presentedDescription !== old.descriptionRevision) !==
         (candidate.presentedDescription !== candidate.descriptionRevision)
@@ -619,25 +622,32 @@ export function updateAttention(
   const current = new Map(
     entriesBefore.filter((entry) => live.has(entry.key)).map((entry) => [entry.key, entry]),
   );
-  let selected: Array<{ key: string; basis: AttentionBasis }>;
+  let retained: Array<{ key: string; basis: AttentionBasis }> | undefined;
   if (
     update.changedSourceIds &&
     !selectionInputsChanged &&
     !expired.length &&
     !Object.keys(update.urgency ?? {}).length &&
     !update.directSubjects?.length &&
-    !observer.actor.action?.targetId &&
-    canRetainSelection(
+    !observer.actor.action?.targetId
+  ) {
+    const candidates = readOnlyDraftView(state.candidates);
+    for (const entry of candidateEntriesBefore) entry[1] = readOnlyDraftView(candidates[entry[0]]!);
+    retained = retainedSelection(
       state,
       entriesBefore,
       candidateEntriesBefore,
       capacity,
       policy,
       world.simTime,
-    )
-  )
-    selected = entriesBefore.map(({ key, basis }) => ({ key, basis }));
-  else {
+    );
+  }
+  let selected: Array<{ key: string; basis: AttentionBasis }>;
+  if (retained) {
+    selected = retained;
+    countDomainWork('attentionSelectionsReused');
+  } else {
+    countDomainWork('attentionSelectionsRanked');
     const candidates = Object.entries(readOnlyDraftView(state.candidates)).map(
       ([key, value]) => [key, readOnlyDraftView(value)] as const,
     );
