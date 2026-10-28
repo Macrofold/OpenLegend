@@ -1,6 +1,8 @@
 import { accountClass, experienceIndividualIds, type ExperienceEntry } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
+import { temporalChunkValueReferences } from './temporal-storage.js';
+import type { TemporalChunk } from '@open-legend/domain';
 import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
 import { encodePerceptionOwner, decodePerceptionOwner } from './perception-records.js';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
@@ -190,6 +192,9 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       actorKnowledge: actorMaps('mind_knowledge_documents'),
       knowledgeRevisions: map('mind_knowledge_revisions'),
       observerIdentities: actorMaps('mind_recognition'),
+      receivedValues: one('mind_perception_value_state', {
+        sources: { ...map('mind_perception_values'), unordered: true },
+      }),
       perceptionEvidence: map(
         'mind_perception_owners',
         {
@@ -239,7 +244,6 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         forgotten: actorLists('mind_forgotten'),
         privacyRevisions: map('mind_privacy_revisions'),
         temporal: one('mind_temporal_state', {
-          sources: { ...map('mind_temporal_sources'), unordered: true },
           actors: map('mind_temporal_actors', {
             chunks: list('mind_temporal_chunks', 'id'),
             supports: map('mind_temporal_supports'),
@@ -534,6 +538,10 @@ columns(
     receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
     subjects: { sql: 'TEXT[] NOT NULL', value: (value) => value['subjects'] },
     source_refs: { sql: 'TEXT[] NOT NULL', value: (value) => value['sourceRefs'] },
+    value_refs: {
+      sql: 'JSONB NOT NULL',
+      value: (value) => temporalChunkValueReferences(value as unknown as TemporalChunk),
+    },
     source_ids: { sql: 'TEXT[] NOT NULL', value: (value) => value['sourceIds'] },
     individual_ids: { sql: 'TEXT[] NOT NULL', value: (value) => value['individualIds'] },
     receipt_ordinals: {
@@ -561,7 +569,7 @@ columns(
   [['next_due', 'actor_id']],
 );
 columns(
-  'mind_temporal_sources',
+  'mind_perception_values',
   { source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' }, at: numberColumn('at') },
   [['source_id']],
 );

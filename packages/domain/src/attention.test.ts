@@ -13,9 +13,11 @@ import {
   observationFactKey,
   perceptionEvidenceOwner,
   currentBodyObservation,
+  receivedFacetValue,
   type LiveFacetSupport,
   type SensoryFacet,
 } from './perception-evidence.js';
+import { retainReceivedValue } from './received-values.js';
 import {
   acknowledgeAttention,
   applyAttentionRelationEvaluations,
@@ -111,6 +113,7 @@ function scene(count: number, capacity = 10) {
         measuredThrough: 0,
       })),
     });
+    const received = owner.received.find((value) => value.id === original.id)!;
     const individualId = `fixture-local-${index}`;
     ((world.observerIdentities ??= {})[PLAYER_ID] ??= {})[individualId] = {
       individualId,
@@ -127,10 +130,10 @@ function scene(count: number, capacity = 10) {
         subjectId: id,
         subjectPhysicalLife: source.actor!.physicalLife ?? 0,
         exposure: { observer: original.observer, episodeId: original.id },
-        original,
+        original: received,
         originalOrdinal: ordinal,
         modality: 'sight',
-        value,
+        value: received.facets[ordinal]!.value,
         valueMeasuredFrom: 0,
         valueMeasuredThrough: 0,
         valueAcquiredAt: 0,
@@ -479,11 +482,17 @@ describe('received detailed attention', () => {
     const id = ids[0]!,
       location = owner.current[`${id}:location`]!;
     world.simTime = 120;
-    if (location.value.kind !== 'location' || location.value.location.kind !== 'point')
+    const value = receivedFacetValue(world, location.value);
+    if (value?.kind !== 'location' || value.location.kind !== 'point')
       throw new Error('fixture location');
+    const retained = retainReceivedValue(
+      world,
+      { kind: 'location', location: { ...value.location, point: { x: 10, y: 0, z: 2 } } },
+      selectedAttentionPolicy(world).retention.recent.chunkBytes,
+    );
     location.value = {
       ...location.value,
-      location: { ...location.value.location, point: { x: 10, y: 0, z: 2 } },
+      reference: [retained.reference.blockId, retained.reference.valueOrdinal],
     };
     location.valueMeasuredThrough = 120;
     location.valueAcquiredAt = 120;

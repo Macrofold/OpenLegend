@@ -40,8 +40,8 @@ import {
   type TemporalValue,
   type TemporalValueReference,
   type TemporalFacetReference,
-  type TemporalFragment,
 } from './temporal-evidence.js';
+import type { ReceivedValueFragment } from './received-values.js';
 
 function scene(seed = 41) {
   const world = createWorld(seed);
@@ -698,7 +698,8 @@ it('retains only the exact qualifying contact capsule when familiarity uses a te
     .flatMap((chunk) => chunk.receipts)
     .find((receipt) => receipt.id === support.receipt.id)!;
   const location = original.facets.find(
-    (facet) => temporal.sources[facet.blockId]!.values[facet.valueOrdinal]!.kind === 'location',
+    (facet) =>
+      world.receivedValues!.sources[facet.blockId]!.values[facet.valueOrdinal]!.kind === 'location',
   )!;
   const before = { ...actor.accounts!.optional };
   const extended = retainTemporalSupport(world, support.receipt, {
@@ -770,7 +771,7 @@ it('shares equal received values without granting another observer the earlier h
       )
       .at(-1)!;
   const bodyValue = (reference: ReturnType<typeof bodyReference>) =>
-    world.experience!.temporal!.sources[reference.blockId]!.values[reference.valueOrdinal];
+    world.receivedValues!.sources[reference.blockId]!.values[reference.valueOrdinal];
   expect(bodyValue(bodyReference(promoted.entries))).toEqual(
     bodyValue(bodyReference(playerHistory.entries)),
   );
@@ -794,12 +795,14 @@ it('shares equal received values without granting another observer the earlier h
     valueOrdinal: currentBodyReference(PLAYER_ID, playerExposure).valueOrdinal,
   });
   const encoded = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
-  const completeValue = (reference: TemporalFacetReference, fragment: TemporalFragment) => {
+  const completeValue = (reference: TemporalFacetReference, fragment: ReceivedValueFragment) => {
+    if (fragment.kind === 'observed-motion')
+      throw new Error('Temporal receipts need their received-motion value.');
     const value = materializeTemporalValue(reference, fragment);
     expect(value).toBeDefined();
     return value;
   };
-  for (const block of Object.values(world.experience!.temporal!.sources))
+  for (const block of Object.values(world.receivedValues!.sources))
     expect(block.bytes).toBe(encoded(block));
   for (const actor of Object.values(world.experience!.temporal!.actors)) {
     for (const chunk of actor.chunks) {
@@ -812,9 +815,7 @@ it('shares equal received values without granting another observer the earlier h
               encoded(
                 completeValue(
                   reference,
-                  world.experience!.temporal!.sources[reference.blockId]!.values[
-                    reference.valueOrdinal
-                  ]!,
+                  world.receivedValues!.sources[reference.blockId]!.values[reference.valueOrdinal]!,
                 ),
               ),
             0,

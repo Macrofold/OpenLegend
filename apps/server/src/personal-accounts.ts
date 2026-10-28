@@ -147,7 +147,7 @@ export function storyAccountSql(alias = 'p'): string {
     SELECT '{"receipt":'||r.receipt::text||',"values":['||(
       SELECT string_agg((s.payload::json->'values'->(f.value->>'valueOrdinal')::int)::text,',' ORDER BY f.ordinal)
       FROM json_array_elements(r.receipt->'facets') WITH ORDINALITY f(value,ordinal)
-      JOIN mind_temporal_sources s ON s.world_id=${alias}.world_id AND s.source_id=f.value->>'blockId'
+      JOIN mind_perception_values s ON s.world_id=${alias}.world_id AND s.source_id=f.value->>'blockId'
       WHERE s.payload::json->'values'->(f.value->>'valueOrdinal')::int->>'kind' IN ('event','sound')
     )||']}' FROM mind_temporal_chunks c
       CROSS JOIN LATERAL json_array_elements(c.payload::json->'receipts') r(receipt)
@@ -267,7 +267,7 @@ export function storedStoryAccount(
   accounts: ReadonlyMap<string, string>,
   temporal?: {
     receipts: ReadonlyMap<string, TemporalReceipt>;
-    sources: Readonly<Record<string, import('@open-legend/domain').TemporalSourceBlock>>;
+    sources: Readonly<Record<string, import('@open-legend/domain').ReceivedValueBlock>>;
   },
 ) {
   const source = JSON.parse(payload) as StoredStorySource;

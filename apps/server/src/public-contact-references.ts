@@ -10,6 +10,7 @@ import {
   currentBodyGrant,
   currentBodyObservation,
   currentBodySubject,
+  receivedFacetValue,
   type ObserverSubject,
   observerIndividual,
   currentCommunicationSubject,
@@ -321,7 +322,9 @@ function contactTargetResolver(world: WorldState, scope: RequestScope, communica
             !currentBodyGrant(world, scope.actorId, lease.subjectId)
           )
             continue;
-          for (const part of lease.value.body.assembly?.parts ?? [])
+          const value = receivedFacetValue(world, lease.value);
+          if (value?.kind !== 'body') continue;
+          for (const part of value.body.assembly?.parts ?? [])
             parts.set(assemblyPartReference(world, scope, lease.subjectId, part.id), part.id);
         }
       }

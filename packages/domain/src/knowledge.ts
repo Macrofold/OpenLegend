@@ -168,15 +168,27 @@ export function learnRecipe(
     if (!temporal) world.experience!.temporal = cloneValue(received);
     else {
       // Re-enter the caller's mutable owner; a finalized nested draft is frozen.
-      // Only this actor and the one new value fragment belong to this admission.
+      // Only this actor belongs to this admission.
       temporal.actors[actorId] = cloneValue(received.actors[actorId]!);
-      const capsule =
-        received.actors[actorId]!.supports![temporalReceiptId(record.sourceReceipt!)]!;
-      for (const facet of capsule.receipt.facets)
-        temporal.sources[facet.blockId] = cloneValue(received.sources[facet.blockId]!);
-      temporal.activeSource = received.activeSource;
-      temporal.activeBoundary = received.activeBoundary;
     }
+    const capsule = received.actors[actorId]!.supports![temporalReceiptId(record.sourceReceipt!)]!;
+    const incoming = prepared.receivedValues;
+    if (!incoming) throw new Error('The admitted knowledge has no received value source.');
+    const pool = (world.receivedValues ??= { sources: {} });
+    const blocks = new Set(capsule.receipt.facets.map((facet) => facet.blockId));
+    if (incoming.activeSource) blocks.add(incoming.activeSource);
+    for (const id of incoming.activeSources ?? []) if (!pool.sources[id]) blocks.add(id);
+    for (const id of blocks) {
+      const block = incoming.sources[id];
+      if (!block) throw new Error('The admitted knowledge value is unavailable.');
+      if (pool.sources[id] !== block) pool.sources[id] = cloneValue(block);
+    }
+    if (incoming.activeAt === undefined) delete pool.activeAt;
+    else pool.activeAt = incoming.activeAt;
+    if (incoming.activeSources === undefined) delete pool.activeSources;
+    else pool.activeSources = [...incoming.activeSources];
+    if (incoming.activeSource === undefined) delete pool.activeSource;
+    else pool.activeSource = incoming.activeSource;
     world.nextId = prepared.nextId;
   }
   (world.knowledge[actorId] ??= []).push(record);

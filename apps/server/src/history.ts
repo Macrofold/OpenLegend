@@ -112,7 +112,7 @@ export function validateHistoryEvidence(
       world.id,
       String(row['actor_id']),
       accounts,
-      { receipts, sources: temporal?.sources ?? {} },
+      { receipts, sources: world.receivedValues?.sources ?? {} },
     );
     if (
       row['world_id'] !== world.id ||

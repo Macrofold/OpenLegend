@@ -281,6 +281,14 @@ export function reconstructJournalWorld(
         slot: row.slot,
         position: row.position,
         payload,
+        // Canonical reconstruction retains the same validated derived columns
+        // as SQL recovery; ownership indexes must not disappear in memory.
+        ...Object.fromEntries(
+          Object.keys(RECORD_NODES.get(table)!.columns ?? {}).map((column, index) => [
+            column,
+            row.extra[index],
+          ]),
+        ),
       });
       parents.set(row.parent, siblings);
     }

@@ -22,7 +22,16 @@ import { captureRootIndex, inheritRootIndex } from './entity-index.js';
 import { captureReservationIndex } from './resource-claims.js';
 import { captureContributionSources } from './status-capabilities.js';
 import { captureContributionResidency } from './contribution-residency.js';
-import { Immer, current, isDraft, original, enablePatches, freeze, type Patch } from 'immer';
+import {
+  Immer,
+  current,
+  isDraft,
+  original,
+  castDraft,
+  enablePatches,
+  freeze,
+  type Patch,
+} from 'immer';
 import { reconcileSemanticInterval } from './semantic-opportunities.js';
 import { isImmutableData, immutableDataSnapshot } from './records.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
@@ -467,14 +476,17 @@ function freezeData(value: unknown): void {
 function sealNativeEvidence(world: WorldState): void {
   if (!isDraft(world)) return;
   const value = world.perceptionEvidence;
-  if (value && !Object.isFrozen(readOnlyDraftView(value)))
+  if (value && !isImmutableData(readOnlyDraftView(value)))
     world.perceptionEvidence = immutableDraftSnapshot(value);
   // Automatic movement can prepare a nested command after recent observations
   // were appended. Seal that same owned history once: otherwise current(world)
   // recursively copies every earlier receipt for each moving animal.
   const temporal = world.experience?.temporal;
-  if (temporal && !Object.isFrozen(readOnlyDraftView(temporal)))
+  if (temporal && !isImmutableData(readOnlyDraftView(temporal)))
     world.experience!.temporal = immutableDraftSnapshot(temporal);
+  const received = world.receivedValues;
+  if (received && !isImmutableData(readOnlyDraftView(received)))
+    world.receivedValues = immutableDraftSnapshot(received);
 }
 
 /** Resolve a JSON DAG once, rather than Immer.current's repeated copying of a shared
@@ -492,7 +504,8 @@ export function draftWorld(
   sealAppends(world);
   const draft = isDraft(world),
     perception = world.perceptionEvidence,
-    temporal = world.experience?.temporal;
+    temporal = world.experience?.temporal,
+    received = world.receivedValues;
   let base: WorldState;
   try {
     sealNativeEvidence(world);
@@ -504,6 +517,7 @@ export function draftWorld(
     if (draft) {
       if (world.perceptionEvidence !== perception) world.perceptionEvidence = perception;
       if (world.experience?.temporal !== temporal) world.experience!.temporal = temporal;
+      if (world.receivedValues !== received) world.receivedValues = received;
     }
   }
   // A compound command may copy an already modified entity dictionary. Carry its
@@ -591,7 +605,9 @@ export function finishWorld(
   let perceptionRootReplaced = false;
   const correctionIds = new Map<string, Set<string> | null>();
   let correctionRootReplaced = false;
-  const result = drafts.finishDraft(world, (patches) => {
+  // Immutable payload addresses stay readonly in WorldState. Immer's draft view
+  // widens them only for this already-owned finalization boundary.
+  const result = drafts.finishDraft(castDraft(world), (patches) => {
     capturePatches?.(patches);
     for (const { op, path, value: patchValue } of patches) {
       if (path[0] === 'perceptionEpisodes') {

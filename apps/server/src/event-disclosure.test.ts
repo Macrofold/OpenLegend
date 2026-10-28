@@ -589,10 +589,17 @@ describe('event-time observer facts', () => {
       (entry) => entry.origin?.kind === 'occurrence' && entry.origin.eventId === event.id,
     )!;
     const eventValue = receipt.facets
-      .map((reference) => temporal.sources[reference.blockId]!.values[reference.valueOrdinal]!)
+      .map(
+        (reference) =>
+          missingReceivedFacts.state.world.receivedValues!.sources[reference.blockId]!.values[
+            reference.valueOrdinal
+          ]!,
+      )
       .find((value) => value.kind === 'event')!;
     delete (eventValue as unknown as Record<string, unknown>)['data'];
-    expect(() => store.saves.validatePayload(missingReceivedFacts)).toThrow('temporal source');
+    expect(() => store.saves.validatePayload(missingReceivedFacts)).toThrow(
+      'Invalid received value block.',
+    );
     const missingHistoryFacts = structuredClone(payload);
     const savedRow = missingHistoryFacts.history.history_perspectives.find(
       (entry) => entry['event_id'] === event.id && entry['actor_id'] === NPC_ID,

@@ -10,6 +10,7 @@ import {
   updateWorld,
   projectWorldHistory,
   selectedTemporalPolicy,
+  referencedReceivedValues,
   retainedAgreementEvidence,
   type WorldState,
 } from '@open-legend/domain';
@@ -249,14 +250,13 @@ export function compactTemporalHistory(
   options: { preview?: boolean } = {},
 ): WorldState {
   const temporal = world.experience?.temporal;
-  if (!temporal) return world;
+  if (!temporal && !world.receivedValues) return world;
   const maximum = selectedTemporalPolicy(world).recent.residentChunks;
   let changed = false;
-  const actors = { ...temporal.actors };
-  const retainedSources = new Set<string>();
+  const actors = { ...temporal?.actors };
   const placements = new Map<string, Positions>();
   for (const [actorId, actor] of Object.entries(actors)) {
-    let chunks = actor.chunks;
+    const chunks = actor.chunks;
     if (chunks.length > maximum) {
       const old = historyPositions.get(chunks);
       const tail = chunks.slice(-maximum);
@@ -270,22 +270,34 @@ export function compactTemporalHistory(
         next: old?.next ?? chunks.length,
       });
       actors[actorId] = { ...actor, chunks: tail };
-      chunks = tail;
       changed = true;
     }
-    for (const chunk of chunks) for (const id of chunk.sourceRefs) retainedSources.add(id);
-    for (const reference of Object.values(actor.captures)) retainedSources.add(reference.blockId);
   }
-  const entries = Object.entries(temporal.sources);
+  const next = temporal && changed ? { ...temporal, actors } : temporal;
+  const scope =
+    next && next !== temporal
+      ? { ...world, experience: { ...world.experience!, temporal: next } }
+      : world;
+  const received = world.receivedValues;
+  const retainedSources = new Set(referencedReceivedValues(scope).keys());
+  // The saved append group preserves deterministic comparisons outside actor
+  // tails. It does not grant retention ownership or a semantic account.
+  for (const id of received?.activeSources ?? []) retainedSources.add(id);
+  if (received?.activeSource) retainedSources.add(received.activeSource);
+  const entries = Object.entries(received?.sources ?? {});
   const sources = entries.filter(([id]) => retainedSources.has(id));
-  changed ||= sources.length !== entries.length;
-  if (!changed) return world;
-  const next = { ...temporal, actors, sources: Object.fromEntries(sources) };
-  if (next.activeSource && !retainedSources.has(next.activeSource)) {
-    delete next.activeSource;
-    delete next.activeBoundary;
-  }
-  const projected = projectWorldHistory(world, { temporal: next }, options);
+  const receivedChanged = sources.length !== entries.length;
+  if (!changed && !receivedChanged) return world;
+  const projected = projectWorldHistory(
+    world,
+    {
+      ...(next && next !== temporal ? { temporal: next } : {}),
+      ...(received && receivedChanged
+        ? { receivedValues: { ...received, sources: Object.fromEntries(sources) } }
+        : {}),
+    },
+    options,
+  );
   // The immutable temporal constructor may replace the newly built tail array.
   // Storage ordinals belong to that actual returned collection, never its input.
   for (const [actorId, placement] of placements)

@@ -52,7 +52,8 @@ export function receivedEventAccounts(
       if (!eventId || !wanted.has(eventId) || result.has(eventId) || forgotten.has(eventId))
         continue;
       const values = receipt.facets.flatMap((reference) => {
-        const fragment = temporal!.sources[reference.blockId]?.values[reference.valueOrdinal];
+        const fragment =
+          world.receivedValues?.sources[reference.blockId]?.values[reference.valueOrdinal];
         if (!fragment || (fragment.kind !== 'event' && fragment.kind !== 'sound')) return [];
         const value = materializeTemporalValue(reference, fragment);
         return value && temporalFacetEligible(world, actorId, reference, value) ? [value] : [];

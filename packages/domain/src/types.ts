@@ -606,6 +606,7 @@ export interface WorldState {
   visiblePeople?: Record<string, string[]>;
   /** Active acquired sensory working set and current leases, owned by exposure. */
   perceptionEvidence?: import('./perception-evidence.js').PerceptionEvidenceState;
+  receivedValues?: import('./received-values.js').ReceivedValueState;
   knowledge: Record<string, KnowledgeRecord[]>;
   events: WorldEvent[];
   /** Durable history rows outside the active event working set; not deleted evidence. */

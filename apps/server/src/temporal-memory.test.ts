@@ -205,7 +205,7 @@ describe('bounded personal temporal storage', () => {
     expect((await owners()).some((receipt) => receipt.actorId === NPC_ID)).toBe(true);
     expect(
       await store.db
-        .prepare('SELECT source_id FROM mind_temporal_sources WHERE world_id=? AND source_id=?')
+        .prepare('SELECT source_id FROM mind_perception_values WHERE world_id=? AND source_id=?')
         .get(service.world.id, block),
     ).toBeDefined();
     await editWorld(service, (world) => {
@@ -229,10 +229,10 @@ describe('bounded personal temporal storage', () => {
     expect(await owners()).toEqual([]);
     expect(
       await store.db
-        .prepare('SELECT source_id FROM mind_temporal_sources WHERE world_id=? AND source_id=?')
+        .prepare('SELECT source_id FROM mind_perception_values WHERE world_id=? AND source_id=?')
         .get(service.world.id, block),
     ).toBeUndefined();
-    expect(service.world.experience!.temporal!.sources[block]).toBeUndefined();
+    expect(service.world.receivedValues!.sources[block]).toBeUndefined();
     const cold = (await store.records.load(true))!.state.world;
     validateTemporalEvidenceState(cold);
     const remaining = await store.memories.temporalHistory(

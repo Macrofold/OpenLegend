@@ -254,7 +254,7 @@ export async function cleanupRetiredIndividuals(
     const retained = new Set<string>(),
       individuals = new Set<string>();
     const history = world.experience?.temporal?.actors[actorId],
-      sources = world.experience?.temporal?.sources ?? {};
+      sources = world.receivedValues?.sources ?? {};
     for (const capsule of Object.values(history?.supports ?? {})) {
       for (const id of temporalSupportAliases(capsule, world)) retained.add(id);
       if (capsule.receipt.subjectIdentity?.kind === 'individual')

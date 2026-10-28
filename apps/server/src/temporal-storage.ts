@@ -1,23 +1,28 @@
 import {
   selectedTemporalPolicy,
+  canonicalJson,
+  appendedRecordCount,
   selectedAttentionPolicy,
   temporalFacetEligible,
   retireTemporalChunks,
-  clearTemporalCaptureReferences,
   temporalReceiptWithinPrefix,
   materializeTemporalValue,
   temporalReceiptForRead,
   temporalReceiptAliases,
   temporalReceiptAccountAliases,
   selectTemporalReceiptFacets,
+  receivedObservationValueReferences,
+  referencedReceivedValues,
+  pruneReceivedValueBlock,
   updateWorld,
   type WorldState,
   type TemporalChunk,
   type TemporalEvidenceState,
   type TemporalHistorySelection,
-  type TemporalSourceBlock,
+  type ReceivedValueBlock,
   type TemporalReceiptPrefix,
   type TemporalValue,
+  type ReceivedObservation,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { MemoryScope } from './memory-repository.js';
@@ -28,6 +33,28 @@ const maximumPreparation = 4 * 1024 * 1024;
 const maximumRows = 8192;
 export const temporalChunkRecordId = (actorId: string, id: string) =>
   JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'chunks', id]);
+/** Exact value membership is a derived column on the existing chunk, not a
+ * second owner or one SQL row per received coordinate. */
+export function temporalChunkValueReferences(chunk: TemporalChunk): Record<string, number[]> {
+  const references = new Map<string, Set<number>>();
+  for (const receipt of chunk.receipts)
+    for (const reference of receipt.facets) {
+      let ordinals = references.get(reference.blockId);
+      if (!ordinals) references.set(reference.blockId, (ordinals = new Set()));
+      ordinals.add(reference.valueOrdinal);
+    }
+  return Object.fromEntries(
+    [...references].map(([id, ordinals]) => [id, [...ordinals].sort((a, b) => a - b)]),
+  );
+}
+/** This projection controls payload reclamation, so a malformed saved index
+ * must refuse before it can erase a still-owned value. */
+export function readTemporalChunkRecord(row: Record<string, unknown>): TemporalChunk {
+  const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
+  if (canonicalJson(row['value_refs']) !== canonicalJson(temporalChunkValueReferences(chunk)))
+    throw new MemoryRetentionError('Temporal value ownership metadata disagrees with its receipt.');
+  return chunk;
+}
 export function temporalChunkSourceId(actorId: string, recordId: string): string | undefined {
   const path = JSON.parse(recordId) as unknown;
   if (!Array.isArray(path) || typeof path.at(-1) !== 'string') return;
@@ -57,6 +84,66 @@ export interface TemporalHistoryQuery {
   cut?: TemporalReceiptPrefix;
   measurements?: { from: number; through: number };
   kinds?: readonly TemporalValue['kind'][];
+}
+
+/** Changed personal ownership selects candidate blocks before any global
+ * reference union or SQL. Confirmation/header-only changes release nothing. */
+export function receivedValueReleaseCandidates(
+  before: Pick<WorldState, 'receivedValues' | 'perceptionEvidence' | 'experience'> | undefined,
+  after: WorldState,
+): Set<string> {
+  const candidates = new Set<string>();
+  const addObservation = (source: ReceivedObservation) => {
+    for (const reference of receivedObservationValueReferences(source))
+      candidates.add(reference.blockId);
+  };
+  if (before?.perceptionEvidence !== after.perceptionEvidence)
+    for (const [actorId, owner] of Object.entries(before?.perceptionEvidence ?? {})) {
+      const current = after.perceptionEvidence?.[actorId];
+      if (owner.received !== current?.received) {
+        const retained = new Set(current?.received);
+        for (const source of owner.received) if (!retained.has(source)) addObservation(source);
+      }
+      if (owner.current !== current?.current)
+        for (const [key, lease] of Object.entries(owner.current)) {
+          const next = current?.current[key];
+          if (
+            lease.original !== next?.original ||
+            lease.value.reference[0] !== next?.value.reference[0] ||
+            lease.value.reference[1] !== next?.value.reference[1]
+          ) {
+            candidates.add(lease.value.reference[0]);
+            addObservation(lease.original);
+          }
+        }
+    }
+  if (before?.experience?.temporal !== after.experience?.temporal)
+    for (const [actorId, actor] of Object.entries(before?.experience?.temporal?.actors ?? {})) {
+      const next = after.experience?.temporal?.actors[actorId];
+      if (actor.chunks === next?.chunks) continue;
+      const chunks = new Map((next?.chunks ?? []).map((chunk) => [chunk.id, chunk]));
+      for (const chunk of actor.chunks) {
+        const retained = chunks.get(chunk.id);
+        if (
+          chunk === retained ||
+          (retained && appendedRecordCount(chunk.receipts, retained.receipts) !== undefined)
+        )
+          continue;
+        // A surviving block ID can still lose an individual payload ordinal.
+        for (const id of chunk.sourceRefs) candidates.add(id);
+      }
+    }
+  if (before?.receivedValues !== after.receivedValues) {
+    const old = before?.receivedValues?.sources ?? {},
+      current = after.receivedValues?.sources ?? {};
+    for (const [id, source] of Object.entries(current))
+      if (source !== old[id] && (old[id] || id !== after.receivedValues?.activeSource || !before))
+        candidates.add(id);
+    const append = before?.receivedValues?.activeSource;
+    if (append && append !== after.receivedValues?.activeSource) candidates.add(append);
+    for (const id of Object.keys(old)) if (!current[id]) candidates.add(id);
+  }
+  return candidates;
 }
 
 export function retentionNeedsPreparation(world: WorldState): boolean {
@@ -195,10 +282,10 @@ export async function readTemporalHistory(
   if (selected.length)
     for (const row of await db
       .prepare(
-        'SELECT payload FROM mind_temporal_chunks WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
+        'SELECT payload,value_refs FROM mind_temporal_chunks WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
       )
       .all(scope.worldId, scope.actorId, selected)) {
-      const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
+      const chunk = readTemporalChunkRecord(row);
       if (chunk.actorId !== scope.actorId)
         throw new MemoryRetentionError('Foreign temporal chunk.');
       chunks.set(chunk.id, chunk);
@@ -254,12 +341,12 @@ export async function readTemporalHistory(
           (reference.confirmedThrough ?? reference.measuredThrough) >= query.measurements.from)
       )
         sourceIds.add(reference.blockId);
-  const sources: Record<string, TemporalSourceBlock> = {};
-  const missing = [...sourceIds].filter((id) => !resident?.sources[id]);
+  const sources: Record<string, ReceivedValueBlock> = {};
+  const missing = [...sourceIds].filter((id) => !world.receivedValues?.sources[id]);
   if (missing.length) {
     const sizes = await db
       .prepare(
-        'SELECT SUM(octet_length(payload)) AS bytes FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+        'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
       )
       .get(scope.worldId, missing);
     preparationBytes += Number(sizes?.['bytes'] ?? 0);
@@ -272,14 +359,15 @@ export async function readTemporalHistory(
       };
     for (const row of await db
       .prepare(
-        'SELECT payload FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+        'SELECT payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
       )
       .all(scope.worldId, missing)) {
-      const source = JSON.parse(String(row['payload'])) as TemporalSourceBlock;
+      const source = JSON.parse(String(row['payload'])) as ReceivedValueBlock;
       sources[source.id] = source;
     }
   }
-  for (const id of sourceIds) if (resident?.sources[id]) sources[id] = resident.sources[id]!;
+  for (const id of sourceIds)
+    if (world.receivedValues?.sources[id]) sources[id] = world.receivedValues.sources[id]!;
   const entries: TemporalHistorySelection['entries'] = [];
   const forgotten = new Set(world.experience?.forgotten[scope.actorId] ?? []);
   const corrections = world.experience?.corrections?.[scope.actorId] ?? {};
@@ -317,7 +405,9 @@ export async function readTemporalHistory(
     );
     const values = references.map((reference) => {
       const fragment = sources[reference.blockId]?.values[reference.valueOrdinal];
-      return fragment && materializeTemporalValue(reference, fragment);
+      return fragment && fragment.kind !== 'observed-motion'
+        ? materializeTemporalValue(reference, fragment)
+        : undefined;
     });
     if (values.some((value) => !value)) {
       incomplete = true;
@@ -403,7 +493,6 @@ export async function prepareTemporalRetention(
 ): Promise<PreparedMemoryRetention> {
   const temporal = state.world.experience?.temporal;
   const rows = new Map<string, string[]>();
-  if (!temporal) return { state, rows };
   const policy = selectedTemporalPolicy(state.world).recent;
   const cutoff = state.world.simTime - policy.maxAgeSeconds;
   const retired: Array<{
@@ -415,21 +504,7 @@ export async function prepareTemporalRetention(
     through: number;
   }> = [];
   const possibleSources = new Set<string>();
-  // An edited receipt can release its last reference before its chunk expires.
-  // Inspect only changed chunk relations, then ask the shared owner below whether
-  // another witness or a pending append still retains the exact block.
-  for (const [actorId, before] of Object.entries(previous?.experience?.temporal?.actors ?? {})) {
-    const after = temporal.actors[actorId];
-    if (before.chunks === after?.chunks) continue;
-    const current = new Map((after?.chunks ?? []).map((chunk) => [chunk.id, chunk]));
-    for (const chunk of before.chunks) {
-      const next = current.get(chunk.id);
-      if (chunk === next) continue;
-      const retained = new Set(next?.sourceRefs ?? []);
-      for (const id of chunk.sourceRefs) if (!retained.has(id)) possibleSources.add(id);
-    }
-  }
-  for (const [actorId, actor] of Object.entries(temporal.actors)) {
+  for (const [actorId, actor] of Object.entries(temporal?.actors ?? {})) {
     if (
       !actor.maintenanceDue &&
       actor.bytes <= policy.maxBytes &&
@@ -509,71 +584,141 @@ export async function prepareTemporalRetention(
       rows.set('mind_temporal_chunks', [...(rows.get('mind_temporal_chunks') ?? []), ...recordIds]);
     }
   }
+  for (const id of receivedValueReleaseCandidates(previous, state.world)) possibleSources.add(id);
+  const beforeSources = previous?.receivedValues?.sources ?? {};
   if (!retired.length && !possibleSources.size) return { state, rows };
-  const world = updateWorld(state.world, (draft) => {
-    for (const release of retired)
-      retireTemporalChunks(
-        draft,
-        release.actorId,
-        release.ids,
-        release,
-        release.nextDue,
-        release.through,
-      );
-  });
-  const keep = new Set<string>();
-  for (const actor of Object.values(world.experience?.temporal?.actors ?? {})) {
-    for (const chunk of actor.chunks) for (const source of chunk.sourceRefs) keep.add(source);
-  }
-  const candidates = [...possibleSources].filter((id) => !keep.has(id));
-  if (candidates.length) {
-    const replaced = [
-      ...(rows.get('mind_temporal_chunks') ?? []),
-      ...(pending?.deletes.get('mind_temporal_chunks') ?? []),
-      ...(pending?.writes.get('mind_temporal_chunks') ?? []).map((row) => row.id),
-    ];
-    const unused = complete
-      ? candidates.map((source_id) => ({
-          id: JSON.stringify(['world', 'experience', 'temporal', 'sources', source_id]),
-          source_id,
-        }))
-      : await db
-          .prepare(
-            `SELECT s.id,s.source_id FROM mind_temporal_sources s
-      WHERE s.world_id=? AND s.source_id=ANY(?::text[]) AND s.id<>ALL(?::text[]) AND NOT EXISTS (
-        SELECT 1 FROM mind_temporal_chunks c WHERE c.world_id=s.world_id
-          AND c.source_refs @> ARRAY[s.source_id]::text[] AND c.id<>ALL(?::text[]))`,
-          )
-          .all(
-            state.world.id,
-            candidates,
-            pending?.deletes.get('mind_temporal_sources') ?? [],
-            replaced,
+  let world = retired.length
+    ? updateWorld(state.world, (draft) => {
+        for (const release of retired)
+          retireTemporalChunks(
+            draft,
+            release.actorId,
+            release.ids,
+            release,
+            release.nextDue,
+            release.through,
           );
-    if (unused.length) {
-      rows.set(
-        'mind_temporal_sources',
-        unused.map((row) => String(row['id'])),
+      })
+    : state.world;
+  // Capture marks locate prior recording; they cannot keep an expired value
+  // alive by themselves. Current receipt/original and real chunk owners can.
+  const keep = referencedReceivedValues(world, { captures: false });
+  const sources = world.receivedValues?.sources ?? {};
+  const needsPruning = (id: string) => {
+    const block = sources[id] ?? beforeSources[id];
+    const ordinals = keep.get(id);
+    return !block || block.values.some((value, ordinal) => value && !ordinals?.has(ordinal));
+  };
+  const candidates = [...possibleSources].filter(needsPruning);
+  if (!candidates.length)
+    return { state: world === state.world ? state : { ...state, world }, rows };
+  const replaced = [
+    ...(rows.get('mind_temporal_chunks') ?? []),
+    ...(pending?.deletes.get('mind_temporal_chunks') ?? []),
+    ...(pending?.writes.get('mind_temporal_chunks') ?? []).map((row) => row.id),
+  ];
+  let preparationBytes = 0;
+  if (!complete) {
+    const cold = await db
+      .prepare(
+        `SELECT value_refs,octet_length(value_refs::text) AS bytes FROM mind_temporal_chunks
+         WHERE world_id=? AND source_refs && ?::text[] AND id<>ALL(?::text[]) LIMIT ?`,
+      )
+      .all(world.id, candidates, replaced, maximumRows + 1);
+    preparationBytes = cold.reduce((sum, row) => sum + Number(row['bytes']), 0);
+    if (cold.length > maximumRows || preparationBytes > maximumPreparation)
+      throw new MemoryRetentionError(
+        'Complete received-value ownership exceeds bounded preparation.',
       );
-      return {
-        state: {
-          ...state,
-          world: updateWorld(world, (draft) => {
-            const temporal = draft.experience!.temporal!;
-            clearTemporalCaptureReferences(
-              draft,
-              new Set(unused.map((row) => String(row['source_id']))),
-            );
-            for (const row of unused) delete temporal.sources[String(row['source_id'])];
-            if (temporal.activeSource && !temporal.sources[temporal.activeSource]) {
-              delete temporal.activeSource;
-              delete temporal.activeBoundary;
-            }
-          }),
-        },
-        rows,
-      };
+    for (const row of cold)
+      for (const [id, ordinals] of Object.entries(row['value_refs'] as Record<string, number[]>)) {
+        if (!possibleSources.has(id)) continue;
+        const owned = keep.get(id) ?? new Set<number>();
+        for (const ordinal of ordinals) owned.add(ordinal);
+        keep.set(id, owned);
+      }
+  }
+  const available = new Map(
+    candidates.flatMap((id) => {
+      const block = sources[id] ?? beforeSources[id];
+      return block ? [[id, block] as const] : [];
+    }),
+  );
+  const missing = candidates.filter((id) => !available.has(id));
+  const positions = new Map<string, Map<string, number>>();
+  if (missing.length && !complete) {
+    const sizes = await db
+      .prepare(
+        'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+      )
+      .get(world.id, missing);
+    preparationBytes += Number(sizes?.['bytes'] ?? 0);
+    if (preparationBytes > maximumPreparation)
+      throw new MemoryRetentionError(
+        'Complete received-value ownership exceeds bounded preparation.',
+      );
+    for (const row of await db
+      .prepare(
+        'SELECT id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+      )
+      .all(world.id, missing)) {
+      const block = JSON.parse(String(row['payload'])) as ReceivedValueBlock;
+      available.set(block.id, block);
+      let placement = positions.get('mind_perception_values');
+      if (!placement) positions.set('mind_perception_values', (placement = new Map()));
+      placement.set(String(row['id']), 0);
     }
   }
-  return { state: world === state.world ? state : { ...state, world }, rows };
+  if (missing.some((id) => !available.has(id) && keep.get(id)?.size))
+    throw new MemoryRetentionError('A retained received-value source is unavailable.');
+  const changes = new Map<string, ReceivedValueBlock | undefined>();
+  for (const [id, block] of available) {
+    const next = pruneReceivedValueBlock(block, keep.get(id) ?? new Set());
+    if (next !== block) changes.set(id, next);
+  }
+  if (!changes.size) return { state: world === state.world ? state : { ...state, world }, rows };
+  const deleted = [...changes]
+    .filter(([, value]) => !value)
+    .map(([id]) => JSON.stringify(['world', 'receivedValues', 'sources', id]));
+  // Empty retirements still carry existing-row placement for a cold block update.
+  rows.set('mind_perception_values', deleted);
+  world = updateWorld(world, (draft) => {
+    const received = draft.receivedValues;
+    if (!received) throw new MemoryRetentionError('Received-value owner is unavailable.');
+    for (const [id, value] of changes) {
+      if (value) received.sources[id] = value;
+      else delete received.sources[id];
+    }
+    if (
+      received.activeSource &&
+      changes.has(received.activeSource) &&
+      !changes.get(received.activeSource)
+    ) {
+      delete received.activeSource;
+    }
+    if (received.activeSources) {
+      const group = received.activeSources.filter((id) => !!received.sources[id]);
+      if (group.length !== received.activeSources.length) {
+        if (group.length) received.activeSources = group;
+        else {
+          delete received.activeSources;
+          delete received.activeAt;
+        }
+      }
+    }
+    for (const actor of Object.values(draft.experience?.temporal?.actors ?? {}))
+      for (const [key, reference] of Object.entries(actor.captures)) {
+        if (!changes.has(reference.blockId)) continue;
+        const block = changes.get(reference.blockId);
+        if (!block?.values[reference.valueOrdinal]) {
+          delete actor.captures[key];
+          actor.capturesInvalidated = true;
+        }
+      }
+  });
+  return {
+    state: world === state.world ? state : { ...state, world },
+    rows,
+    ...(positions.size ? { positions } : {}),
+  };
 }

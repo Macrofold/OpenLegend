@@ -46,6 +46,8 @@ export function validateTemporalValue(
 ): asserts value is TemporalValue {
   if (!record(value) || typeof value['kind'] !== 'string')
     throw new Error('Invalid temporal value.');
+  if (value['kind'] === 'observed-motion')
+    throw new Error('Current motion needs its typed temporal conversion.');
   if (value['kind'] === 'personal-account') {
     if (
       !['awareness', 'memory'].includes(String(value['source'])) ||
@@ -188,29 +190,12 @@ export function validateTemporalEvidenceState(
     value.version !== 1 ||
     typeof value.namespace !== 'string' ||
     !isSafeRecordId(value.namespace) ||
-    !record(value.sources) ||
+    !hasRecordFields(value, ['version', 'namespace', 'actors']) ||
     !record(value.actors)
   )
     throw new Error('Invalid temporal evidence owner.');
   const temporal: TemporalEvidenceState = value;
-  for (const [id, block] of Object.entries(temporal.sources)) {
-    if (
-      !record(block) ||
-      !isSafeRecordId(id) ||
-      block.id !== id ||
-      !finite(block.at) ||
-      block.at < 0 ||
-      block.at > world.simTime ||
-      !ordinal(block.sequence) ||
-      block.sequence > world.sequence ||
-      !ordinal(block.bytes) ||
-      block.bytes !== encodedBytes(block) ||
-      !Array.isArray(block.values) ||
-      !block.values.length
-    )
-      throw new Error('Invalid shared temporal source.');
-    for (const fragment of block.values) validateTemporalFragment(fragment, originals);
-  }
+  const sources = world.receivedValues?.sources ?? {};
   for (const [actorId, actor] of Object.entries(temporal.actors)) {
     if (
       !isSafeRecordId(actorId) ||
@@ -233,14 +218,17 @@ export function validateTemporalEvidenceState(
     const chunks = new Set<string>(),
       receiptKeys = new Set<string>();
     const validateReference = (reference: { blockId: string; valueOrdinal: number }) => {
-      const block = temporal.sources[reference.blockId];
+      const block = sources[reference.blockId];
+      const fragment = block?.values[reference.valueOrdinal];
       if (
         !block ||
         !ordinal(reference.valueOrdinal) ||
-        reference.valueOrdinal >= block.values.length
+        reference.valueOrdinal >= block.values.length ||
+        !fragment ||
+        fragment.kind === 'observed-motion'
       )
         throw new Error('Unavailable retained temporal fragment.');
-      return block.values[reference.valueOrdinal]!;
+      return fragment;
     };
     for (const reference of Object.values(actor.captures)) {
       const fragment = validateReference(reference);
@@ -497,10 +485,8 @@ export function validateTemporalEvidenceState(
         lastAt = receipt.at;
         subjects.add(receipt.subject);
         for (const subject of receipt.contextSubjects ?? []) subjects.add(subject);
-        for (const alias of temporalReceiptAliases(receipt, temporal.sources, world))
-          aliases.add(alias);
-        for (const id of temporalReceiptIndividualIds(receipt, temporal.sources))
-          individuals.add(id);
+        for (const alias of temporalReceiptAliases(receipt, sources, world)) aliases.add(alias);
+        for (const id of temporalReceiptIndividualIds(receipt, sources)) individuals.add(id);
         for (const facet of receipt.facets) {
           references.add(facet.blockId);
         }
@@ -518,7 +504,7 @@ export function validateTemporalEvidenceState(
         chunk.sourceIds.some((id) => !aliases.has(id)) ||
         individuals.size !== chunk.individualIds.length ||
         chunk.individualIds.some((id) => !individuals.has(id)) ||
-        chunk.bytes !== temporalChunkLogicalBytes(chunk, temporal.sources)
+        chunk.bytes !== temporalChunkLogicalBytes(chunk, sources)
       )
         throw new Error('Inconsistent temporal chunk metadata.');
       if (
@@ -531,9 +517,4 @@ export function validateTemporalEvidenceState(
     if (bytes > actor.bytes || count > actor.count)
       throw new Error('Understated temporal retention counters.');
   }
-  if (
-    (temporal.activeSource !== undefined && !temporal.sources[temporal.activeSource]) ||
-    (temporal.activeBoundary !== undefined && typeof temporal.activeBoundary !== 'string')
-  )
-    throw new Error('Invalid active temporal source.');
 }

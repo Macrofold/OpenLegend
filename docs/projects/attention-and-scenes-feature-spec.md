@@ -4,7 +4,7 @@
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Supported native and controlled semantic behavior is verified; final regression, operating scale and broader scene delivery remain open. | 2026-10-28   |
 
-**Architecture consulted and implementation reconciled 2026-10-28 14:15 UTC.**
+**Architecture consulted and implementation reconciled 2026-10-28 19:50 UTC.**
 
 **Supported attention/memory core implemented; broader scene proposals remain separate.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds, timed speech and voice-media delivery remain separate proposals outside the implemented core.
 
@@ -252,7 +252,7 @@ Physical reception establishes what actually arrived. Broad current surroundings
 
 An attended person passing the anvil, entering a visible room and returning still has a recent path even without other actions. Preserve intermediate received measurements and actual discrete events, with their original times, uncertainty and gaps. Nearby objects are context, not inferred destinations. Received tool contact can support a work interpretation; a hidden crafting command cannot. A character can infer that a room is a kitchen from observed furnishings and activity without first reading its name. An inferred room category, known proper name and observed room extent remain different information.
 
-When an attended deer leaves sight, current permission ends immediately. Its retained recent path, last received position and loss of contact remain available until their actual retention boundary. This does not reveal unseen travel or identify a later deer. Attention switching ends further detailed capture without deleting earlier history. A technical gap cannot be described as looking away or replaced with a supposedly complete start/end path.
+When an attended deer leaves sight, current permission ends immediately. Its retained recent path, last received position and loss of contact remain available until their actual retention boundary. This does not reveal unseen travel or identify a later deer. Attention switching ends further detailed capture without deleting earlier history. Person and object inspection show how old their actually measured details are; clock advancement ages that information, a new sight sample refreshes it, and sight loss removes current inspection. A technical gap cannot be described as looking away or replaced with a supposedly complete start/end path.
 
 The [world profile](../worlds/base/attention.md#recent-history-and-lasting-memory) sets provisional age, byte and record allowances. A six-game-hour target is six normal-play minutes, not a universal guarantee at any source rate. Required outcomes and active obligations have their own finite admission/protection. Historical pool occupancy never prevents choosing a new subject. Exceeding the qualified recent envelope shortens explicitly available optional coverage rather than creating an unlimited archive.
 

@@ -8,6 +8,7 @@ import {
   currentBodyLocalSubject,
   currentBodyGrant,
   currentObservedFacetValues,
+  receivedFacetValue,
 } from '../../perception-evidence.js';
 import { namePhrase, type Named, type NameArticle } from '@open-legend/language';
 import { outcome } from '../../events.js';
@@ -318,8 +319,14 @@ export function pruneObserverIndividuals(
   const pinned = new Set(retainedPins);
   for (const lease of Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})) {
     if (lease.localSubject?.kind === 'individual') pinned.add(lease.localSubject.individualId);
-    if (lease.value.kind === 'association' && lease.value.subject.kind === 'individual')
-      pinned.add(lease.value.subject.individualId);
+    const association =
+      lease.value.kind === 'association' && receivedFacetValue(world, lease.value);
+    if (
+      association &&
+      association.kind === 'association' &&
+      association.subject.kind === 'individual'
+    )
+      pinned.add(association.subject.individualId);
   }
   let removed = 0;
   for (const key of input.candidates ?? Object.keys(identities)) {

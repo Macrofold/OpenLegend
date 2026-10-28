@@ -1,4 +1,5 @@
 import { effectiveBodyProfile } from './spatial-state.js';
+import { referencedReceivedValues, type ReceivedValueState } from './received-values.js';
 import { settleDetectionSupport } from './perception-support.js';
 import {
   beginPerceptionPhase,
@@ -6292,7 +6293,9 @@ const nativeContinuations = new WeakMap<
   }
 >();
 
-type HistoryProjection = Partial<Pick<WorldState, 'events' | 'archivedEventCount' | 'memories'>> &
+type HistoryProjection = Partial<
+  Pick<WorldState, 'events' | 'archivedEventCount' | 'memories' | 'receivedValues'>
+> &
   Partial<Pick<NonNullable<WorldState['experience']>, 'awareness' | 'summaries' | 'temporal'>> &
   Partial<Pick<WorldState['actionExperience'], 'occurrences'>>;
 const historyProjectionRoots = new Set([
@@ -6301,6 +6304,7 @@ const historyProjectionRoots = new Set([
   'memories',
   'experience',
   'actionExperience',
+  'receivedValues',
 ]);
 const historyProjectionFields = new Set([
   'events',
@@ -6310,6 +6314,7 @@ const historyProjectionFields = new Set([
   'summaries',
   'temporal',
   'occurrences',
+  'receivedValues',
 ]);
 /** Removal preserves both record identity and order; protected active records cannot
  * move to cold storage. Only changed arrays are visited. */
@@ -6356,27 +6361,48 @@ function retainsTemporalHistory(
   after: TemporalEvidenceState,
 ): boolean {
   if (before === after) return true;
-  if (!before || !sameResidencyFields(before, after, ['actors', 'sources'])) return false;
+  if (!before || !sameResidencyFields(before, after, ['actors'])) return false;
   const actors = Object.keys(before.actors),
     nextActors = Object.keys(after.actors);
-  if (
-    actors.length !== nextActors.length ||
-    actors.some((id, index) => id !== nextActors[index]) ||
-    !retainsHistory(Object.keys(before.sources), Object.keys(after.sources)) ||
-    Object.entries(after.sources).some(([id, block]) => before.sources[id] !== block) ||
-    (after.activeSource !== undefined && !after.sources[after.activeSource])
-  )
+  if (actors.length !== nextActors.length || actors.some((id, index) => id !== nextActors[index]))
     return false;
   for (const id of actors) {
     const prior = before.actors[id]!,
       retained = after.actors[id]!;
     if (
       !sameResidencyFields(prior, retained, ['chunks']) ||
-      !retainsHistory(prior.chunks, retained.chunks) ||
-      retained.chunks.some((chunk) => chunk.sourceRefs.some((id) => !after.sources[id])) ||
-      Object.values(retained.captures).some((reference) => !after.sources[reference.blockId])
+      !retainsHistory(prior.chunks, retained.chunks)
     )
       return false;
+  }
+  return true;
+}
+/** Only already committed whole blocks can leave residency. A live append block,
+ * surviving payload or native/capture reference cannot change under this proof. */
+function retainsReceivedValueHistory(
+  world: WorldState,
+  after: ReceivedValueState,
+  temporal: TemporalEvidenceState | undefined,
+): boolean {
+  const before = world.receivedValues;
+  if (before === after) return true;
+  if (
+    !before ||
+    !sameResidencyFields(before, after, ['sources']) ||
+    !retainsHistory(Object.keys(before.sources), Object.keys(after.sources)) ||
+    Object.entries(after.sources).some(([id, block]) => before.sources[id] !== block) ||
+    after.activeSources?.some((id) => !after.sources[id]) ||
+    (after.activeSource !== undefined && !after.sources[after.activeSource])
+  )
+    return false;
+  const scope =
+    temporal === world.experience?.temporal
+      ? world
+      : { ...world, experience: { ...world.experience!, temporal } };
+  for (const [id, ordinals] of referencedReceivedValues(scope)) {
+    const block = after.sources[id];
+    if (!block) return false;
+    for (const ordinal of ordinals) if (!block.values[ordinal]) return false;
   }
   return true;
 }
@@ -6422,6 +6448,12 @@ export function projectWorldHistory(
       retainsHistoryMap(world.experience!.summaries, projection.summaries)) &&
     (!projection.temporal ||
       retainsTemporalHistory(world.experience?.temporal, projection.temporal)) &&
+    (!projection.receivedValues ||
+      retainsReceivedValueHistory(
+        world,
+        projection.receivedValues,
+        projection.temporal ?? world.experience?.temporal,
+      )) &&
     (!projection.occurrences ||
       retainsHistoryMap(
         world.actionExperience.occurrences,

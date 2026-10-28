@@ -1,5 +1,6 @@
 import { sqlRecordBatches, SqlWriteBatch } from './sql-rows.js';
 import { tableRows } from './record-pages.js';
+import { readTemporalChunkRecord } from './temporal-storage.js';
 import { hotEventDependencies } from './hot-events.js';
 import {
   HISTORY_TABLES,
@@ -45,8 +46,8 @@ import {
   type Entity,
   type ItemInstance,
   selectedTemporalPolicy,
-  type TemporalChunk,
-  type TemporalSourceBlock,
+  type ReceivedValueBlock,
+  referencedReceivedValues,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import {
@@ -79,7 +80,7 @@ export const retainedSourceTables: ReadonlySet<string> = new Set([
   'mind_memories',
   'mind_summaries',
   'mind_temporal_chunks',
-  'mind_temporal_sources',
+  'mind_perception_values',
   'mind_temporal_supports',
 ]);
 const own = (value: Value, key: string): Value =>
@@ -658,9 +659,14 @@ export class WorldRecords {
     const retirement = this.retirements.get(after),
       retired = retirement?.rows;
     if (retired?.size) {
-      changes.expired = selectedTables
-        ? new Map([...retired].filter(([table]) => selectedTables.has(table)))
-        : retired;
+      // Placement-only metadata can mark a cold update as an existing row. It
+      // does not delete a record or require the synchronous expiry save path.
+      const expired = new Map(
+        [...retired].filter(
+          ([table, ids]) => ids.length && (!selectedTables || selectedTables.has(table)),
+        ),
+      );
+      if (expired.size) changes.expired = expired;
       for (const [table, ids] of retired) {
         if (selectedTables && !selectedTables.has(table)) continue;
         // A bounded cold-retention read already proved these exact rows exist.
@@ -908,7 +914,7 @@ export class WorldRecords {
     // Startup recovery loads the simulation working set. Ordinary feature reads use
     // scoped repositories below, not this complete reconstruction path.
     for (const table of RECORD_NODES.keys()) {
-      if (active && ['mind_temporal_chunks', 'mind_temporal_sources'].includes(table)) {
+      if (active && ['mind_temporal_chunks', 'mind_perception_values'].includes(table)) {
         groups.set(table, new Map());
         continue;
       }
@@ -1014,22 +1020,27 @@ export class WorldRecords {
       nextPositions,
       WORLD_RECORD_SCHEMA,
     );
-    if (active && state.world.experience?.temporal) {
-      const temporal = state.world.experience.temporal;
+    if (active && state.world.receivedValues) {
+      const received = state.world.receivedValues;
+      const temporal = state.world.experience?.temporal;
       const maximum = selectedTemporalPolicy(state.world).recent.residentChunks;
       // The append owner can point outside every actor's resident tail. Load its
       // one exact block with the existing batch; a cold pointer is not missing data.
       // docs/save-and-load.md#shared-temporal-evidence-continuation
-      const references = new Set<string>(temporal.activeSource ? [temporal.activeSource] : []);
-      const chunks = await this.db
-        .prepare(
-          `SELECT c.id,c.actor_id,c.position,c.payload
+      const references = new Set(referencedReceivedValues(state.world).keys());
+      for (const id of received.activeSources ?? []) references.add(id);
+      if (received.activeSource) references.add(received.activeSource);
+      const chunks = temporal
+        ? await this.db
+            .prepare(
+              `SELECT c.id,c.actor_id,c.position,c.payload,c.value_refs
         FROM mind_temporal_actors a CROSS JOIN LATERAL (
-          SELECT id,actor_id,position,payload FROM mind_temporal_chunks
+          SELECT id,actor_id,position,payload,value_refs FROM mind_temporal_chunks
           WHERE world_id=a.world_id AND actor_id=a.actor_id ORDER BY position DESC LIMIT ?
         ) c WHERE a.world_id=? ORDER BY c.actor_id,c.position`,
-        )
-        .all(maximum, head.worldId);
+            )
+            .all(maximum, head.worldId)
+        : [];
       const byActor = new Map<string, typeof chunks>();
       for (const row of chunks) {
         const actorId = String(row['actor_id']);
@@ -1037,9 +1048,9 @@ export class WorldRecords {
         selected.push(row);
         byActor.set(actorId, selected);
       }
-      for (const [actorId, actor] of Object.entries(temporal.actors)) {
+      for (const [actorId, actor] of Object.entries(temporal?.actors ?? {})) {
         const selected = byActor.get(actorId) ?? [];
-        actor.chunks = selected.map((row) => JSON.parse(String(row['payload'])) as TemporalChunk);
+        actor.chunks = selected.map(readTemporalChunkRecord);
         const parent = JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId]);
         historyPositions.set(actor.chunks, {
           positions: new Map(
@@ -1053,11 +1064,11 @@ export class WorldRecords {
       for (let offset = 0, ids = [...references]; offset < ids.length; offset += 800)
         for (const row of await this.db
           .prepare(
-            'SELECT payload FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+            'SELECT payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
           )
           .all(head.worldId, ids.slice(offset, offset + 800))) {
-          const source = JSON.parse(String(row['payload'])) as TemporalSourceBlock;
-          temporal.sources[source.id] = source;
+          const source = JSON.parse(String(row['payload'])) as ReceivedValueBlock;
+          received.sources[source.id] = source;
         }
     }
     if (active) {
@@ -1620,7 +1631,10 @@ export function assembleWorldRecords(
   let consumed = 0;
   const assemble = (node: RecordNode, row: JsonRecord): Value => {
     consumed++;
-    const value: Value = JSON.parse(String(row['payload']));
+    const value: Value =
+      node.table === 'mind_temporal_chunks'
+        ? readTemporalChunkRecord(row)
+        : JSON.parse(String(row['payload']));
     for (const [field, child] of Object.entries(node.children ?? {})) {
       const placeholder = field === '$' ? value : own(value, field);
       const children = groups.get(child.node.table)?.get(String(row['id'])) ?? [];

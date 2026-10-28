@@ -1,12 +1,12 @@
 import type {
   WorldEvent,
   Appraisal,
-  TemporalChunk,
-  TemporalSourceBlock,
+  ReceivedValueBlock,
   TemporalReceiptLocator,
 } from '@open-legend/domain';
 import { temporalAccountAliasClosure } from '@open-legend/domain';
 import { digest } from './content-digest.js';
+import { readTemporalChunkRecord } from './temporal-storage.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions, historyMapPositions } from './history-residency.js';
 import { MEMORY_SOURCE_TABLES } from './memory-repository.js';
@@ -167,7 +167,7 @@ export async function prepareHistoryEdit(
       if (world.experience.temporal) {
         const selected = await db
           .prepare(
-            `SELECT t.actor_id,t.payload,t.position,octet_length(t.payload) AS bytes
+            `SELECT t.actor_id,t.source_id,t.payload,t.position,t.value_refs,octet_length(t.payload) AS bytes
         FROM mind_temporal_chunks t WHERE t.world_id=? AND NOT (t.source_id=ANY(?::text[])) AND EXISTS (
           SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text)
           WHERE a.actor_id=t.actor_id AND t.source_ids @> ARRAY[a.source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
@@ -180,14 +180,13 @@ export async function prepareHistoryEdit(
         const temporal = {
           ...world.experience.temporal,
           actors: { ...world.experience.temporal.actors },
-          sources: { ...world.experience.temporal.sources },
         };
         const sources = new Set<string>(),
           owners = new Map<string, typeof selected>();
         for (const row of selected) {
           const actorId = String(row['actor_id']),
             rows = owners.get(actorId) ?? [];
-          loadedChunks.add((JSON.parse(String(row['payload'])) as TemporalChunk).id);
+          loadedChunks.add(String(row['source_id']));
           rows.push(row);
           owners.set(actorId, rows);
         }
@@ -200,7 +199,7 @@ export async function prepareHistoryEdit(
             );
           const chunks = new Map(actor.chunks.map((chunk) => [chunk.id, chunk]));
           for (const row of rows) {
-            const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
+            const chunk = readTemporalChunkRecord(row);
             chunks.set(chunk.id, chunk);
             positions.set(chunk.id, Number(row['position']));
             for (const id of chunk.sourceRefs) sources.add(id);
@@ -215,11 +214,12 @@ export async function prepareHistoryEdit(
           });
           temporal.actors[actorId] = { ...actor, chunks: merged };
         }
-        const missing = [...sources].filter((id) => !temporal.sources[id]);
+        const received = { ...world.receivedValues, sources: { ...world.receivedValues?.sources } };
+        const missing = [...sources].filter((id) => !received.sources[id]);
         if (missing.length) {
           const size = await db
             .prepare(
-              'SELECT SUM(octet_length(payload)) AS bytes FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+              'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
             )
             .get(worldId, missing);
           sourceBytes += Number(size?.['bytes'] ?? 0);
@@ -227,16 +227,17 @@ export async function prepareHistoryEdit(
             throw new Error('Complete personal source correction exceeds bounded preparation.');
           for (const row of await db
             .prepare(
-              'SELECT payload FROM mind_temporal_sources WHERE world_id=? AND source_id=ANY(?::text[])',
+              'SELECT payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
             )
             .all(worldId, missing)) {
-            const source = JSON.parse(String(row['payload'])) as TemporalSourceBlock;
-            temporal.sources[source.id] = source;
+            const source = JSON.parse(String(row['payload'])) as ReceivedValueBlock;
+            received.sources[source.id] = source;
           }
         }
-        if ([...sources].some((id) => !temporal.sources[id]))
+        if ([...sources].some((id) => !received.sources[id]))
           throw new Error('Personal receipt correction has missing source fragments.');
         world.experience.temporal = temporal;
+        if (sources.size) world.receivedValues = received;
       }
       const known = new Set(
         affected.map((row) => JSON.stringify([row['actor_id'], row['source_id']])),

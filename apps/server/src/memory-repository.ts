@@ -520,14 +520,13 @@ export class MemoryRepository {
     const actors = new Set<string>();
     let unknownScope = changes.deletes.has('data_world') || changes.deletes.has('world_settings');
     // Current reception and attention are not retained memory. Their own grants
-    // fence live reads; retained awareness/temporal sources still invalidate here.
+    // fence live reads; retained accounts, receipts and corrections invalidate here.
     const affectsMemory = (table: string) =>
       table.startsWith('mind_') &&
       !table.startsWith('mind_perception_') &&
       !/^mind_(exposure|visible_objects|visible_people|visible_places)(?:_owners)?$/.test(table);
     const mark = (id: string) => {
       const path = JSON.parse(id) as string[];
-      if (path[1] === 'experience' && path[2] === 'temporal' && path[3] === 'sources') return;
       const actor = path[path[1] === 'experience' ? (path[2] === 'temporal' ? 4 : 3) : 2];
       if (actor) actors.add(actor);
       else unknownScope = true;
@@ -745,7 +744,13 @@ export class MemoryRepository {
           ]);
       }
       const cleaned = await cleanupRetiredIndividuals(this.db, state, retained, rows, complete);
-      return { state: cleaned, rows, positions: accounts.positions };
+      const positions = new Map(accounts.positions);
+      for (const [table, ordinals] of recent.positions ?? []) {
+        const combined = positions.get(table) ?? new Map<string, number>();
+        for (const [id, position] of ordinals) combined.set(id, position);
+        positions.set(table, combined);
+      }
+      return { state: cleaned, rows, ...(positions.size ? { positions } : {}) };
     });
   }
   /** Revalidate the actual selected facts, not merely a surviving receipt address.
@@ -800,7 +805,7 @@ export class MemoryRepository {
           AND (r.receipt-'facets'-'sourceIds')=q.header
           AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(q.facets) WITH ORDINALITY f(value,position)
             WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r.receipt->'facets') owned(facet)
-              JOIN mind_temporal_sources source ON source.world_id=? AND source.source_id=f.value->>'blockId'
+              JOIN mind_perception_values source ON source.world_id=? AND source.source_id=f.value->>'blockId'
               WHERE owned.facet=f.value AND source.payload::jsonb->'values'->(f.value->>'valueOrdinal')::int=q.values->(f.position::int-1))))
         OR EXISTS(SELECT 1 FROM mind_temporal_supports s
           WHERE s.world_id=? AND s.actor_id=q."actorId" AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal

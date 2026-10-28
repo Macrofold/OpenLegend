@@ -28,6 +28,7 @@ import {
   clearTemporalCaptureReferences,
 } from './temporal-evidence.js';
 import { validateTemporalEvidenceState } from './temporal-validation.js';
+import { pruneReceivedValueBlock, referencedReceivedValues } from './received-values.js';
 import type { WorldState } from './types.js';
 import {
   currentReceivedGeometry,
@@ -562,7 +563,12 @@ describe('native received relation producers', () => {
         .some((receipt) => receipt.facets.some((facet) => facet.blockId === oldBlock)),
     ).toBe(false);
     clearTemporalCaptureReferences(world, new Set([oldBlock]));
-    delete temporal.sources[oldBlock];
+    const remaining = pruneReceivedValueBlock(
+      world.receivedValues!.sources[oldBlock]!,
+      referencedReceivedValues(world, { captures: false }).get(oldBlock) ?? new Set(),
+    );
+    if (remaining) world.receivedValues!.sources[oldBlock] = remaining;
+    else delete world.receivedValues!.sources[oldBlock];
     expect(temporal.actors[PLAYER_ID]!.capturesInvalidated).toBe(true);
     initializePerception(world, []);
     const recent = selectTemporalHistory(world, PLAYER_ID, {

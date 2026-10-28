@@ -1,4 +1,4 @@
-import { retentionNeedsPreparation } from './temporal-storage.js';
+import { retentionNeedsPreparation, receivedValueReleaseCandidates } from './temporal-storage.js';
 import {
   sourceVersionPreparationNeeded,
   restoredSourceVersions,
@@ -531,7 +531,10 @@ export class WorldService {
   private worldEventsById = new Map<string, WorldEvent>();
   private persistedRevision = 0;
   private persistedEvents: WorldEvent[] = [];
-  private persistedMemorySources?: Pick<WorldState, 'memories' | 'experience'>;
+  private persistedMemorySources?: Pick<
+    WorldState,
+    'memories' | 'experience' | 'receivedValues' | 'perceptionEvidence'
+  >;
   private epoch: CommandEpoch = { generation: 0, openedAt: 0, token: '' };
   get commandEpoch(): string {
     return this.epoch.token;
@@ -2064,6 +2067,8 @@ export class WorldService {
     this.persistedMemorySources = {
       memories: write.released.world.memories,
       experience: write.released.world.experience,
+      receivedValues: write.released.world.receivedValues,
+      perceptionEvidence: write.released.world.perceptionEvidence,
     };
     this.lastProgressSaveAt = this.now();
     return revision;
@@ -2084,7 +2089,14 @@ export class WorldService {
 
   private async prepareRetention(saved: SavedWorld, complete = false) {
     const versions = sourceVersionPreparationNeeded(this.persistedMemorySources, saved.world);
-    if (!this.store.memories || (!retentionNeedsPreparation(saved.world) && !versions))
+    // Current payload release shares the ordinary commit boundary. A header-only
+    // change enters only the cheap candidate check; it creates no new save cadence.
+    const currentChanged =
+      receivedValueReleaseCandidates(this.persistedMemorySources, saved.world).size > 0;
+    if (
+      !this.store.memories ||
+      (!retentionNeedsPreparation(saved.world) && !versions && !currentChanged)
+    )
       return {
         state: saved,
         rows: new Map<string, string[]>(),
@@ -2148,8 +2160,8 @@ export class WorldService {
   }
 
   private rememberPersistedMemorySources(): void {
-    const { memories, experience } = this.world;
-    this.persistedMemorySources = { memories, experience };
+    const { memories, experience, receivedValues, perceptionEvidence } = this.world;
+    this.persistedMemorySources = { memories, experience, receivedValues, perceptionEvidence };
   }
 
   /** Persist sources needed by SQL, not unrelated pose/need progression. Appends

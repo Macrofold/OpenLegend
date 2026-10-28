@@ -6,6 +6,7 @@ import {
   prepareCurrentBodySubjects,
   effectiveCurrentFacetSupport,
   publicAttributeMeanings,
+  receivedFacetValue,
   reconcileAttendedTemporalEvidence,
 } from './perception-evidence.js';
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
@@ -294,18 +295,20 @@ function currentPoint(
 ): AttentionPoint | undefined {
   const source = readOnlyDraftView(owner.current)[`${sourceId}:location`];
   const lease = source && effectiveCurrentFacetSupport(world, observerId, source),
-    value = lease && readOnlyDraftView(lease.value);
+    value = lease && receivedFacetValue(world, readOnlyDraftView(lease.value));
   return value?.kind === 'location'
     ? point(readOnlyDraftView(value.location), lease!.valueMeasuredThrough)
     : undefined;
 }
-function descriptions(owner: PerceptionEvidenceOwner, id: string): string {
+function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: string): string {
   // A new receipt can measure the same appearance at another position. Receipt
   // identity is provenance; it must not invent new descriptive novelty.
   const current = readOnlyDraftView(owner.current);
   const facet = (kind: string) => {
     const lease = current[`${id}:${kind}`];
-    return lease ? readOnlyDraftView(readOnlyDraftView(lease).value) : undefined;
+    return lease
+      ? receivedFacetValue(world, readOnlyDraftView(readOnlyDraftView(lease).value))
+      : undefined;
   };
   const body = facet('body'),
     appearance = body?.kind === 'body' ? readOnlyDraftView(body.body) : undefined;
@@ -464,7 +467,7 @@ export function updateAttention(
   for (const sourceId of changed) {
     const bodySource = readOnlyDraftView(owner.current)[`${sourceId}:body`];
     const body = bodySource && readOnlyDraftView(bodySource),
-      bodyValue = body && readOnlyDraftView(body.value);
+      bodyValue = body && receivedFacetValue(world, readOnlyDraftView(body.value));
     const previousKey = existingBySource.get(sourceId);
     if (!body || bodyValue?.kind !== 'body') {
       if (previousKey) {
@@ -505,7 +508,7 @@ export function updateAttention(
     candidate.leaseId = body.id;
     candidate.subject =
       old?.subject && subject && sameSubject(old.subject, subject) ? old.subject : subject;
-    candidate.descriptionRevision = descriptions(owner, sourceId);
+    candidate.descriptionRevision = descriptions(world, owner, sourceId);
     candidate.changeRevision = JSON.stringify([
       readOnlyDraftView(body.original).id,
       body.originalOrdinal,
