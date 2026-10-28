@@ -1,6 +1,7 @@
 import {
   isImmutableData,
   jsonText,
+  canonicalJson,
   type CapturedCurrentFacet,
   type CapturedLocationSample,
   type LiveFacetSupport,
@@ -9,9 +10,33 @@ import {
   type SensoryFacet,
 } from '@open-legend/domain';
 
-type StoredSample = Omit<CapturedLocationSample, 'original'> & { original: string };
-type StoredCapture = Omit<CapturedCurrentFacet, 'original' | 'value'> & {
+type EnvelopeMetadata = Pick<
+  LiveFacetSupport,
+  | 'observer'
+  | 'exposure'
+  | 'original'
+  | 'originalOrdinal'
+  | 'modality'
+  | 'valueMeasuredFrom'
+  | 'valueMeasuredThrough'
+  | 'valueAcquiredAt'
+  | 'confirmedFrom'
+  | 'confirmedThrough'
+>;
+interface StoredMetadata {
   original: string;
+  originalOrdinal: number;
+  exposure: string;
+  modality?: LiveFacetSupport['modality'];
+  at?: number;
+  from?: number;
+  acquiredAt?: number;
+  confirmedFrom?: number;
+  confirmedThrough?: number;
+}
+type StoredEnvelope<T extends EnvelopeMetadata> = Omit<T, keyof EnvelopeMetadata> & StoredMetadata;
+type StoredSample = StoredEnvelope<CapturedLocationSample>;
+type StoredCapture = Omit<StoredEnvelope<CapturedCurrentFacet>, 'value'> & {
   value: StoredFacet;
 };
 type StoredFacet =
@@ -24,8 +49,7 @@ type StoredFacet =
 type StoredObservation = Omit<ObservationContribution, 'facets'> & {
   facets: Array<Omit<ObservationContribution['facets'][number], 'value'> & { value: StoredFacet }>;
 };
-type StoredLease = Omit<LiveFacetSupport, 'original' | 'value'> & {
-  original: string;
+type StoredLease = Omit<StoredEnvelope<LiveFacetSupport>, 'value'> & {
   value: StoredFacet;
 };
 type StoredOwner = Omit<PerceptionEvidenceOwner, 'current' | 'received'> & {
@@ -51,26 +75,72 @@ const originalKey = (original: Pick<ObservationContribution, 'observer' | 'id' |
     original.id,
     original.revision,
   ]);
+const sameObserver = (
+  left: ObservationContribution['observer'],
+  right: ObservationContribution['observer'],
+) => left.actorId === right.actorId && left.physicalLife === right.physicalLife;
+
+/** Defaults belong to this exact immutable original, never the current clock or
+ * another envelope. Every unequal scalar remains explicit and lossless. */
+function encodeMetadata<T extends EnvelopeMetadata>(
+  held: T,
+  originals: ObservationContribution[],
+): StoredEnvelope<T> {
+  const {
+    observer,
+    exposure,
+    original,
+    originalOrdinal,
+    modality,
+    valueMeasuredFrom: from,
+    valueMeasuredThrough: at,
+    valueAcquiredAt: acquiredAt,
+    confirmedFrom,
+    confirmedThrough,
+    ...fields
+  } = held;
+  const facet = original.facets[originalOrdinal];
+  if (
+    !facet ||
+    !sameObserver(observer, original.observer) ||
+    !sameObserver(exposure.observer, original.observer) ||
+    modality === undefined ||
+    from === undefined ||
+    at === undefined ||
+    acquiredAt === undefined ||
+    confirmedFrom === undefined ||
+    confirmedThrough === undefined
+  )
+    throw new Error('A current observation has no exact owned original.');
+  originals.push(original);
+  return {
+    ...fields,
+    original: originalKey(original),
+    originalOrdinal,
+    exposure: exposure.episodeId,
+    ...(modality === original.modality ? {} : { modality }),
+    ...(at === facet.measuredThrough ? {} : { at }),
+    ...(from === at ? {} : { from }),
+    ...(acquiredAt === at ? {} : { acquiredAt }),
+    ...(confirmedFrom === facet.measuredFrom ? {} : { confirmedFrom }),
+    ...(confirmedThrough === at ? {} : { confirmedThrough }),
+  };
+}
 
 /** Only these native facet shapes embed full received originals. Other fields,
  * including similarly named authored data, keep their exact existing meaning. */
 function encodeFacet(value: SensoryFacet, originals: ObservationContribution[]): StoredFacet {
-  const reference = (original: ObservationContribution) => {
-    originals.push(original);
-    return originalKey(original);
-  };
   if (value.kind === 'observed-motion')
     return Object.freeze({
       ...value,
-      earlier: Object.freeze({ ...value.earlier, original: reference(value.earlier.original) }),
-      later: Object.freeze({ ...value.later, original: reference(value.later.original) }),
+      earlier: Object.freeze(encodeMetadata(value.earlier, originals)),
+      later: Object.freeze(encodeMetadata(value.later, originals)),
     });
   if (value.kind === 'confirmation')
     return Object.freeze({
       ...value,
       snapshot: Object.freeze({
-        ...value.snapshot,
-        original: reference(value.snapshot.original),
+        ...encodeMetadata(value.snapshot, originals),
         value: encodeFacet(value.snapshot.value, originals),
       }),
     });
@@ -96,7 +166,11 @@ function addOriginal(catalogue: Catalogue, original: ObservationContribution): v
   const reference = originalKey(original),
     prior = catalogue.sources.get(reference);
   if (prior) {
-    if (prior !== original && jsonText(prior) !== jsonText(original))
+    if (
+      prior !== original &&
+      jsonText(prior) !== jsonText(original) &&
+      canonicalJson(prior) !== canonicalJson(original)
+    )
       throw new Error('A current observation identity has conflicting original facts.');
     return;
   }
@@ -120,11 +194,10 @@ export function encodePerceptionOwner(value: unknown): StoredOwner {
       Object.entries(owner.current).map(([key, lease]) => {
         let projected = leaseProjections.get(lease);
         if (!projected) {
-          const originals = [lease.original];
+          const originals: ObservationContribution[] = [];
           projected = {
             value: Object.freeze({
-              ...lease,
-              original: originalKey(lease.original),
+              ...encodeMetadata(lease, originals),
               value: encodeFacet(lease.value, originals),
             }),
             originals,
@@ -177,11 +250,11 @@ export function decodePerceptionOwner(value: unknown): PerceptionEvidenceOwner {
   const used = new Set<string>(),
     resolving = new Set<string>(),
     restoredOriginals = new Map<string, ObservationContribution>();
-  const sameObserver = (
-    left: ObservationContribution['observer'],
-    right: ObservationContribution['observer'],
-  ) => left.actorId === right.actorId && left.physicalLife === right.physicalLife;
-  const observer = Object.values(current)[0]?.observer ?? originals[received[0] ?? '']?.observer;
+  const first = Object.values(current)[0]?.original ?? received[0];
+  const observer =
+    typeof first === 'string' && Object.hasOwn(originals, first)
+      ? originals[first]!.observer
+      : undefined;
   if (observer && observer.physicalLife !== owner.life)
     throw new Error('A current observation has no exact owned original.');
   const resolve = (
@@ -214,9 +287,7 @@ export function decodePerceptionOwner(value: unknown): PerceptionEvidenceOwner {
     observer: ObservationContribution['observer'],
   ): SensoryFacet => {
     const sample = <T extends StoredCapture | StoredSample>(held: T) => {
-      if (!sameObserver(held.observer, observer))
-        throw new Error('A current observation has no exact owned original.');
-      return { ...held, original: resolve(held.original, observer) };
+      return metadata(held, observer);
     };
     if (value.kind === 'observed-motion')
       return { ...value, earlier: sample(value.earlier), later: sample(value.later) };
@@ -234,16 +305,55 @@ export function decodePerceptionOwner(value: unknown): PerceptionEvidenceOwner {
     ...stored,
     facets: stored.facets.map((held) => ({ ...held, value: facet(held.value, stored.observer) })),
   });
+  const metadata = <T extends StoredMetadata>(
+    held: T,
+    observer: ObservationContribution['observer'],
+  ): Omit<T, keyof StoredMetadata> & EnvelopeMetadata => {
+    const {
+      original: reference,
+      originalOrdinal,
+      exposure,
+      modality,
+      at: storedAt,
+      from,
+      acquiredAt,
+      confirmedFrom,
+      confirmedThrough,
+      ...fields
+    } = held;
+    const original = resolve(reference, observer),
+      facet = original.facets[originalOrdinal];
+    if (
+      !facet ||
+      typeof exposure !== 'string' ||
+      ['observer', 'valueMeasuredFrom', 'valueMeasuredThrough', 'valueAcquiredAt'].some((key) =>
+        Object.hasOwn(held, key),
+      )
+    )
+      throw new Error('A current observation has no exact owned original.');
+    const at = storedAt === undefined ? facet.measuredThrough : storedAt;
+    return {
+      ...fields,
+      observer: original.observer,
+      exposure: { observer: original.observer, episodeId: exposure },
+      original,
+      originalOrdinal,
+      modality: modality === undefined ? original.modality : modality,
+      valueMeasuredFrom: from === undefined ? at : from,
+      valueMeasuredThrough: at,
+      valueAcquiredAt: acquiredAt === undefined ? at : acquiredAt,
+      confirmedFrom: confirmedFrom === undefined ? facet.measuredFrom : confirmedFrom,
+      confirmedThrough: confirmedThrough === undefined ? at : confirmedThrough,
+    };
+  };
   const restored = Object.fromEntries(
     Object.entries(current).map(([key, lease]) => {
-      if (!observer || !sameObserver(lease.observer, observer))
-        throw new Error('A current observation has no exact owned original.');
+      if (!observer) throw new Error('A current observation has no exact owned original.');
       return [
         key,
         {
-          ...lease,
-          original: resolve(lease.original, lease.observer),
-          value: facet(lease.value, lease.observer),
+          ...metadata(lease, observer),
+          value: facet(lease.value, observer),
         },
       ];
     }),
