@@ -660,7 +660,7 @@ export const observationFactKey = (
 ): ObservationFactKey => ({
   source: {
     family: 'native-exposure',
-    observer: { ...observation.observer },
+    observer: immutableDataSnapshot(observation.observer, readOnlyDraftView),
     id: observation.id,
     revision: observation.revision,
   },
@@ -1570,8 +1570,9 @@ export function reconcileVisualEvidence(
           : facet,
       ),
     ];
-    const detected = readOnlyDraftView(state.current)[`${subject.id}:detected`];
-    let original = detected && readOnlyDraftView(detected).original;
+    const detected = readOnlyDraftView(state.current)[`${subject.id}:detected`],
+      detectedLease = detected && readOnlyDraftView(detected);
+    let original = detectedLease?.original;
     if (!original)
       original = acquireObservation(world, observer, {
         origin: {
@@ -1591,7 +1592,16 @@ export function reconcileVisualEvidence(
           value: facet,
         })),
       });
-    const exposure = { observer: observerLife(observer), episodeId: original.id };
+    const priorExposure = detectedLease && readOnlyDraftView(detectedLease.exposure),
+      receivedObserver = readOnlyDraftView(original.observer);
+    const exposure = immutableDataSnapshot<ObservationExposure>(
+      priorExposure?.episodeId === original.id &&
+        priorExposure.observer.actorId === receivedObserver.actorId &&
+        priorExposure.observer.physicalLife === receivedObserver.physicalLife
+        ? priorExposure
+        : { observer: receivedObserver, episodeId: original.id },
+      readOnlyDraftView,
+    );
     let earlierLocation: CapturedLocationSample | undefined;
     values.forEach((facet, ordinal) => {
       chargeWork({ tests: 1 });
@@ -1695,7 +1705,7 @@ export function reconcileVisualEvidence(
         replaceCurrentFacet(world, state, key, {
           id: nextId(world, 'perception-lease'),
           revision: 1,
-          observer: observerLife(observer),
+          observer: exposure.observer,
           subjectId: subject.id,
           subjectPhysicalLife: subject.actor ? (subject.actor.physicalLife ?? 0) : null,
           ...(facet.kind === 'location'
@@ -1821,11 +1831,11 @@ export function reconcileVisualEvidence(
       replaceCurrentFacet(world, state, motionKey, {
         id: nextId(world, 'perception-lease'),
         revision: 1,
-        observer: observerLife(observer),
+        observer: motion.exposure.observer,
         subjectId: subject.id,
         subjectPhysicalLife: locationLease!.subjectPhysicalLife,
         motionContinuityRevision: locationLease!.motionContinuityRevision,
-        exposure: cloneValue(locationLease!.exposure),
+        exposure: motion.exposure,
         original: received,
         originalOrdinal: 0,
         modality: 'sight',

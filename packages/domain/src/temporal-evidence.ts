@@ -1,12 +1,11 @@
 import { nextId } from './data.js';
-import { freeze } from 'immer';
 import { cloneValue, readOnlyDraftView } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { ensureExperienceAccounting } from './remembered-impressions.js';
 import { personalFactAlias } from './experience-source.js';
-import { immutableDataSnapshot, jsonEncoding, jsonText } from './records.js';
+import { isImmutableData, immutableDataSnapshot, jsonEncoding, jsonText } from './records.js';
 import { selectedRecognitionSupportSourceIds } from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
@@ -414,36 +413,44 @@ function retainedValueAt(
 function temporalValue(value: TemporalCaptureInput['facets'][number]['value']): TemporalValue {
   if (value.kind !== 'observed-motion') return value;
   const original = readOnlyDraftView(value);
-  const held = motionValues.get(original);
+  const reusable = isImmutableData(original);
+  const held = reusable ? motionValues.get(original) : undefined;
   if (held) return held;
-  const sample = (input: typeof value.earlier): TemporalMotionSample => ({
-    location: cloneValue(input.value.location),
-    frame: cloneValue(input.value.frame),
-    measuredFrom: input.valueMeasuredFrom,
-    measuredThrough: input.valueMeasuredThrough,
-    acquiredAt: input.valueAcquiredAt,
-    original: {
-      source: {
-        family: 'native-exposure',
-        id: input.original.id,
-        revision: input.original.revision,
-        observer: { ...input.observer },
+  const sample = (input: typeof value.earlier): TemporalMotionSample => {
+    const received = readOnlyDraftView(input),
+      location = readOnlyDraftView(received.value),
+      observation = readOnlyDraftView(received.original);
+    return {
+      location: location.location,
+      frame: location.frame,
+      measuredFrom: received.valueMeasuredFrom,
+      measuredThrough: received.valueMeasuredThrough,
+      acquiredAt: received.valueAcquiredAt,
+      original: {
+        source: {
+          family: 'native-exposure',
+          id: observation.id,
+          revision: observation.revision,
+          observer: received.observer,
+        },
+        ordinal: received.originalOrdinal,
       },
-      ordinal: input.originalOrdinal,
-    },
-    confirmation: cloneValue(input.confirmation),
-  });
-  const result: TemporalMotionValue = {
-    kind: 'received-motion',
-    exposure: cloneValue(value.exposure),
-    earlier: sample(value.earlier),
-    later: sample(value.later),
-    correspondence: value.correspondence,
+      confirmation: received.confirmation,
+    };
   };
-  // Every nested field above is newly owned. Cache the completed value so
-  // comparison, byte accounting and retention can reuse its immutable proof.
-  freeze(result, true);
-  motionValues.set(original, result);
+  const result = immutableDataSnapshot<TemporalMotionValue>(
+    {
+      kind: 'received-motion',
+      exposure: original.exposure,
+      earlier: sample(original.earlier),
+      later: sample(original.later),
+      correspondence: original.correspondence,
+    },
+    readOnlyDraftView,
+  );
+  // Only a complete immutable received value can retain this conversion. Raw
+  // builders must observe later endpoint edits without returning an older route.
+  if (reusable) motionValues.set(original, result);
   return result;
 }
 function initialBytes(value: { bytes: number }, measure = () => byteLength(value)): number {
@@ -732,6 +739,7 @@ export function appendTemporalReceipt(
 export function temporalFacetInput(
   lease: LiveFacetSupport,
 ): TemporalCaptureInput['facets'][number] {
+  const observer = immutableDataSnapshot(lease.observer, readOnlyDraftView);
   return {
     value: readOnlyDraftView(lease.value),
     role: lease.original.facets[lease.originalOrdinal]?.role ?? 'direct',
@@ -744,7 +752,7 @@ export function temporalFacetInput(
         family: 'native-exposure',
         id: lease.original.id,
         revision: lease.original.revision,
-        observer: { ...lease.observer },
+        observer,
       },
       ordinal: lease.originalOrdinal,
     },
@@ -752,7 +760,7 @@ export function temporalFacetInput(
       family: 'native-exposure',
       id: lease.id,
       revision: lease.revision,
-      observer: { ...lease.observer },
+      observer,
     },
   };
 }
