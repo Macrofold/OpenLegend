@@ -241,12 +241,14 @@ describe('native spatial-world integration without providers', () => {
     expectCurrentWorldEquivalent(advance(restored, 120), advance(world, 120));
   });
   it('executes native flight and grounded landing without an AI job', () => {
-    let world = active();
+    let world = freezeWorld(active());
     const ids = entityKeys(world.entities);
     world = advance(world, 240);
     expect(worldPosition(entityGet(world.entities, 'bird-1')!).y).toBeGreaterThan(3);
     expect(worldSupport(entityGet(world.entities, 'bird-1')!)).toBeNull();
-    const restored = JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState;
+    const restored = freezeWorld(
+      JSON.parse(JSON.stringify(materializeNativeValues(world))) as WorldState,
+    );
     expectCurrentWorldEquivalent(advance(world, 20), advance(restored, 20));
     const trip = advanceWorld(world, 650);
     world = trip.world;
