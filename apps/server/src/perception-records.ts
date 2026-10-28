@@ -9,6 +9,7 @@ import {
   type PerceptionEvidenceOwner,
   type SensoryFacet,
 } from '@open-legend/domain';
+import { retainMapPositions } from './history-residency.js';
 
 type EnvelopeMetadata = Pick<
   LiveFacetSupport,
@@ -208,6 +209,8 @@ export function encodePerceptionOwner(value: unknown): StoredOwner {
         return [key, projected.value];
       }),
     );
+    // Envelope encoding preserves this map's key order and canonical placement.
+    retainMapPositions(owner.current, current);
     collection = { current, ...catalogue };
     if (isImmutableData(owner.current)) {
       Object.freeze(current);
@@ -364,5 +367,6 @@ export function decodePerceptionOwner(value: unknown): PerceptionEvidenceOwner {
   });
   if (used.size !== Object.keys(originals).length)
     throw new Error('An unreferenced current observation original was stored.');
+  retainMapPositions(current, restored);
   return { ...owner, current: restored, received: receivedValues };
 }

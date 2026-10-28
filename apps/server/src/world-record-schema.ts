@@ -194,7 +194,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         'mind_perception_owners',
         {
           originals: { ...map('mind_perception_originals'), unordered: true },
-          current: map('mind_perception_current'),
+          // Rolling maps preserve iteration order without renumbering surviving rows.
+          current: { ...map('mind_perception_current'), stablePositions: true },
           // Confirmation clocks must not rewrite the unchanged scene and attention
           // candidates. These retain their existing ordered, observer-owned values.
           geometry: one('mind_perception_geometry', {
@@ -202,10 +203,10 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
             boundaries: list('mind_perception_geometry_boundaries', 'id'),
           }),
           attention: one('mind_perception_attention', {
-            candidates: map('mind_perception_attention_candidates'),
-            latches: map('mind_perception_attention_latches'),
-            relationDirty: map('mind_perception_attention_dirty'),
-            relationScans: map('mind_perception_attention_scans'),
+            candidates: { ...map('mind_perception_attention_candidates'), stablePositions: true },
+            latches: { ...map('mind_perception_attention_latches'), stablePositions: true },
+            relationDirty: { ...map('mind_perception_attention_dirty'), stablePositions: true },
+            relationScans: { ...map('mind_perception_attention_scans'), stablePositions: true },
           }),
         },
         { encode: encodePerceptionOwner, decode: decodePerceptionOwner },

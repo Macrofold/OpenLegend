@@ -169,10 +169,24 @@ describe('certified received planar geometry', () => {
           boundary.nearSurface.support.source.id !== boundary.farSurface.support.source.id,
       ),
     ).toBe(true);
+    validateReceivedGeometryState(
+      world,
+      PLAYER_ID,
+      world.perceptionEvidence![PLAYER_ID]!.geometry!,
+    );
     const corrupt = structuredClone(world);
     const edge = corrupt.perceptionEvidence![PLAYER_ID]!.geometry!.boundaries[0]!.facets[0]!.value;
-    if (edge.kind === 'physical-boundary')
-      edge.boundary.farSurface.support.source.observer.actorId = 'someone-else';
+    if (edge.kind === 'physical-boundary') {
+      // Observer identity is shared with received originals; corrupt only this support.
+      const support = edge.boundary.farSurface.support;
+      edge.boundary.farSurface.support = {
+        ...support,
+        source: {
+          ...support.source,
+          observer: { ...support.source.observer, actorId: 'someone-else' },
+        },
+      };
+    }
     expect(() =>
       validateReceivedGeometryState(
         corrupt,

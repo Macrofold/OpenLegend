@@ -33,14 +33,14 @@ type Positions = { complete?: boolean; positions: Map<string, number>; next: num
 export const historyPositions = new WeakMap<unknown[], Positions>();
 export const HISTORY_MAP_TABLES = new Set(['mind_appraisals', 'sim_status_effects']);
 export const historyMapPositions = new WeakMap<object, Positions>();
-/** Keep canonical order when a hot map omits earlier terminal records. New records
- * append after the canonical tail, not after the much shorter resident subset. */
-function retainMapPositions(before: object, after: object): void {
+/** Keep canonical order through order-preserving filtering or representation changes.
+ * New records append after the canonical tail, not the shorter resident subset. */
+export function retainMapPositions(before: object, after: object): void {
   const prior = historyMapPositions.get(before);
   if (prior)
     historyMapPositions.set(after, {
+      ...prior,
       positions: new Map(Object.keys(after).map((key) => [key, prior.positions.get(key)!])),
-      next: prior.next,
     });
 }
 export const historyKey = (entry: unknown): string => {
