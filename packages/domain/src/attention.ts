@@ -237,7 +237,22 @@ export interface AttentionUpdate {
   proofs?: Readonly<Record<string, ObservationFactKey>>;
   directSubjects?: readonly string[];
 }
-const policyKey = (policy: AttentionPolicy) => JSON.stringify([policy.id, policy.version]);
+const policyKey = (policy: AttentionPolicy, capacity?: number) =>
+  JSON.stringify([
+    policy.id,
+    policy.version,
+    capacity,
+    policy.maximumCapacity,
+    policy.maximumScore,
+    policy.ongoingShare,
+    policy.stabilitySeconds,
+    policy.switchMargin,
+    policy.familiarityBonus,
+    policy.displacementMetresPerPoint,
+    policy.maximumMotionCue,
+    policy.newDescriptionCue,
+    policy.urgentCue,
+  ]);
 export const attentionSubjectKey = (sourceId: string, exposure: ObservationExposure) =>
   JSON.stringify([
     exposure.observer.actorId,
@@ -326,6 +341,59 @@ function descriptions(owner: PerceptionEvidenceOwner, id: string): string {
 function rank(a: AttentionCandidate, b: AttentionCandidate) {
   return b.score - a.score || a.order - b.order;
 }
+/** Quiet received revisions still refresh selected detail and relation work below.
+ * Only skip competition when the same choices remain valid even after optional
+ * incumbent stability expires; discovery keeps its independent rotation deadline. */
+function canRetainSelection(
+  state: AttentionState,
+  entries: readonly AttentionEntry[],
+  candidates: readonly (readonly [string, AttentionCandidate])[],
+  capacity: number,
+  policy: AttentionPolicy,
+  now: number,
+): boolean {
+  if (
+    state.explicit.length ||
+    entries.length !== Math.min(capacity, candidates.length) ||
+    entries.some((entry) => entry.basis !== 'cue' && entry.basis !== 'discovery') ||
+    candidates.some(([, candidate]) => candidate.direct || candidate.urgency > 0)
+  )
+    return false;
+  const selected = new Set(entries.map((entry) => entry.key));
+  const waiting = candidates.some(
+    ([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision,
+  );
+  const discovery = entries.find((entry) => entry.basis === 'discovery');
+  const held = discovery && readOnlyDraftView(state.candidates)[discovery.key];
+  if (
+    waiting
+      ? !discovery ||
+        discovery.stableUntil <= now ||
+        !held ||
+        held.presentedDescription === held.descriptionRevision
+      : !!discovery
+  )
+    return false;
+  const optional = entries.filter((entry) => entry.basis === 'cue');
+  let weakestExpired = Infinity;
+  for (let index = 0; index < optional.length; index++) {
+    const entry = optional[index]!,
+      candidate = readOnlyDraftView(state.candidates)[entry.key];
+    if (!candidate) return false;
+    // A prior challenger replacement can leave the old order unsorted. The full
+    // owner sorts incumbents on its next pass, so retain that exact behavior.
+    if (
+      index &&
+      rank(readOnlyDraftView(state.candidates)[optional[index - 1]!.key]!, candidate) > 0
+    )
+      return false;
+    if (entry.stableUntil <= now) weakestExpired = Math.min(weakestExpired, candidate.score);
+  }
+  return !candidates.some(
+    ([key, candidate]) =>
+      !selected.has(key) && candidate.score >= weakestExpired + policy.switchMargin,
+  );
+}
 /** Change-fed native selection. A cold call alone enumerates the current body keys.
  * It never reads a source's live entity properties to score received evidence. */
 export function updateAttention(
@@ -341,42 +409,46 @@ export function updateAttention(
   const entriesBefore = readOnlyDraftView(state.entries).map((entry) => readOnlyDraftView(entry));
   const before = entriesBefore.map((entry) => entry.sourceId);
   const policy = selectedAttentionPolicy(world);
-  state.policy = policyKey(policy);
-  const candidatesBefore = Object.values(readOnlyDraftView(state.candidates)).map(
-    readOnlyDraftView,
-  );
+  const capacity = selectedAttentionCapacity(world, observer);
+  const nextPolicy = policyKey(policy, capacity);
+  const policyChanged = state.policy !== nextPolicy;
+  state.policy = nextPolicy;
+  const candidateEntriesBefore = Object.entries(readOnlyDraftView(state.candidates));
+  for (const entry of candidateEntriesBefore) entry[1] = readOnlyDraftView(entry[1]);
+  const candidatesBefore = candidateEntriesBefore.map(([, candidate]) => candidate);
   const expired = candidatesBefore.filter(
     (candidate) =>
       (candidate.urgencyThrough !== undefined && candidate.urgencyThrough <= world.simTime) ||
       (candidate.directThrough !== undefined && candidate.directThrough <= world.simTime),
   );
-  const changed = update.changedSourceIds
-    ? [
-        ...new Set([
-          ...update.changedSourceIds,
-          ...Object.keys(update.urgency ?? {}),
-          ...(update.directSubjects ?? []),
-          ...expired.map((candidate) => candidate.sourceId),
-        ]),
-      ]
-    : [
-        ...new Set([
-          ...Object.values(readOnlyDraftView(owner.current))
-            .map((lease) => readOnlyDraftView(lease))
-            .filter((lease) => lease.value.kind === 'body')
-            .map((lease) => lease.subjectId),
-          ...Object.values(readOnlyDraftView(state.candidates)).map(
-            (candidate) => candidate.sourceId,
-          ),
-        ]),
-      ];
+  // Coefficients and actor capacity may change without changing an authored pin.
+  // Rescore all received candidates before considering the new selection policy.
+  const changed =
+    update.changedSourceIds && !policyChanged
+      ? [
+          ...new Set([
+            ...update.changedSourceIds,
+            ...Object.keys(update.urgency ?? {}),
+            ...(update.directSubjects ?? []),
+            ...expired.map((candidate) => candidate.sourceId),
+          ]),
+        ]
+      : [
+          ...new Set([
+            ...Object.values(readOnlyDraftView(owner.current))
+              .map((lease) => readOnlyDraftView(lease))
+              .filter((lease) => lease.value.kind === 'body')
+              .map((lease) => lease.subjectId),
+            ...Object.values(readOnlyDraftView(state.candidates)).map(
+              (candidate) => candidate.sourceId,
+            ),
+          ]),
+        ];
   const existingBySource = new Map(
-    Object.entries(readOnlyDraftView(state.candidates)).map(([key, candidate]) => [
-      candidate.sourceId,
-      key,
-    ]),
+    candidateEntriesBefore.map(([key, candidate]) => [candidate.sourceId, key]),
   );
-  let geometryChanged = false;
+  let geometryChanged = false,
+    selectionInputsChanged = policyChanged;
   const lostWitness = (key: string) => {
     const previous = readOnlyDraftView(state.candidates)[key];
     if (!previous) return;
@@ -394,6 +466,7 @@ export function updateAttention(
         lostWitness(previousKey);
         delete state.candidates[previousKey];
         geometryChanged = true;
+        selectionInputsChanged = true;
       }
       continue;
     }
@@ -508,6 +581,17 @@ export function updateAttention(
       physical +
         (policy.familiarityBonus * selectedAttentionFamiliarity(world, observerId, subject)) / 100,
     );
+    if (
+      !old ||
+      old.leaseId !== candidate.leaseId ||
+      old.subject !== candidate.subject ||
+      old.score !== candidate.score ||
+      old.urgency !== candidate.urgency ||
+      old.direct !== candidate.direct ||
+      (old.presentedDescription !== old.descriptionRevision) !==
+        (candidate.presentedDescription !== candidate.descriptionRevision)
+    )
+      selectionInputsChanged = true;
     // A newly measured meter can leave every attention input unchanged. Keep
     // that complete candidate rather than dirtying its map and retained snapshot.
     if (
@@ -530,110 +614,131 @@ export function updateAttention(
   if (explicit.length !== state.explicit.length) state.explicit = explicit;
   for (const [key, latch] of Object.entries(readOnlyDraftView(state.latches)))
     if (!live.has(latch.anchorKey)) delete state.latches[key];
-  const capacity = selectedAttentionCapacity(world, observer);
   if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > policy.maximumCapacity)
     throw new Error('Attention capacity exceeds the installed profile.');
-  const candidates = Object.entries(readOnlyDraftView(state.candidates)).map(
-    ([key, value]) => [key, readOnlyDraftView(value)] as const,
-  );
-  const candidateMap = new Map(candidates);
   const current = new Map(
     entriesBefore.filter((entry) => live.has(entry.key)).map((entry) => [entry.key, entry]),
   );
-  const waiting = candidates.filter(
-    ([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision,
-  );
-  const previousDiscovery = entriesBefore.find(
-    (entry) =>
-      entry.basis === 'discovery' &&
-      entry.stableUntil > world.simTime &&
-      waiting.some(([key]) => key === entry.key),
-  );
-  const nextWaiting = waiting.filter(([, candidate]) => candidate.order > state.discoveryCursor);
-  const oldest = (nextWaiting.length ? nextWaiting : waiting).reduce<
-    readonly [string, AttentionCandidate] | undefined
-  >((value, entry) => (!value || entry[1].order < value[1].order ? entry : value), undefined);
-  const discoveryKey = previousDiscovery?.key ?? oldest?.[0];
-  if (discoveryKey && !previousDiscovery)
-    state.discoveryCursor = candidateMap.get(discoveryKey)!.order;
-  const selected: Array<{ key: string; basis: AttentionBasis }> = [];
-  const take = (key: string, basis: AttentionBasis) => {
-    const reservation =
-      discoveryKey && key !== discoveryKey && !selected.some((entry) => entry.key === discoveryKey)
-        ? 1
-        : 0;
-    if (selected.length < capacity - reservation && !selected.some((entry) => entry.key === key))
-      selected.push({ key, basis: key === discoveryKey ? 'discovery' : basis });
-  };
-  // A strong received cue can displace optional ongoing detail. Native
-  // physical effects remain independent of whether this detail fits attention.
-  const urgent: Array<readonly [string, AttentionCandidate]> = [];
-  for (const item of candidates)
-    if (item[1].urgency >= policy.urgentCue) {
-      const at = urgent.findIndex((entry) => rank(item[1], entry[1]) < 0);
-      urgent.splice(at < 0 ? urgent.length : at, 0, item);
-      if (urgent.length > capacity) urgent.pop();
-    }
-  for (const [key] of urgent) take(key, 'cue');
-  const ongoing = Math.ceil((capacity - 1) * policy.ongoingShare);
-  for (const [key, candidate] of candidates)
-    if (
-      candidate.direct &&
-      (candidate.directThrough ?? 0) >= world.simTime &&
-      selected.length < ongoing
+  let selected: Array<{ key: string; basis: AttentionBasis }>;
+  if (
+    update.changedSourceIds &&
+    !selectionInputsChanged &&
+    !expired.length &&
+    !Object.keys(update.urgency ?? {}).length &&
+    !update.directSubjects?.length &&
+    !observer.actor.action?.targetId &&
+    canRetainSelection(
+      state,
+      entriesBefore,
+      candidateEntriesBefore,
+      capacity,
+      policy,
+      world.simTime,
     )
-      take(key, 'direct');
-  for (const key of readOnlyDraftView(state.explicit))
-    if (selected.length < ongoing) take(key, 'explicit');
-  const workTarget = observer.actor.action?.targetId;
-  for (const [key, candidate] of candidates)
-    if (candidate.sourceId === workTarget && selected.length < ongoing) take(key, 'work');
-  const optionalCapacity =
-    capacity -
-    selected.length -
-    (discoveryKey && !selected.some((entry) => entry.key === discoveryKey) ? 1 : 0);
-  const incumbents = [...current.values()].filter(
-    (entry) => !selected.some((value) => value.key === entry.key) && entry.key !== discoveryKey,
-  );
-  incumbents.sort((a, b) => rank(candidateMap.get(a.key)!, candidateMap.get(b.key)!));
-  const optional = incumbents.slice(0, Math.max(0, optionalCapacity)).map((entry) => entry.key);
-  for (const [key, challenger] of candidates) {
-    if (
-      key === discoveryKey ||
-      selected.some((entry) => entry.key === key) ||
-      optional.includes(key)
-    )
-      continue;
-    if (optional.length < optionalCapacity) {
-      optional.push(key);
-      continue;
-    }
-    let weakest = -1;
-    for (let index = 0; index < optional.length; index++) {
-      const entry = current.get(optional[index]!);
-      if (
-        entry &&
+  )
+    selected = entriesBefore.map(({ key, basis }) => ({ key, basis }));
+  else {
+    const candidates = Object.entries(readOnlyDraftView(state.candidates)).map(
+      ([key, value]) => [key, readOnlyDraftView(value)] as const,
+    );
+    const candidateMap = new Map(candidates);
+    const waiting = candidates.filter(
+      ([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision,
+    );
+    const previousDiscovery = entriesBefore.find(
+      (entry) =>
+        entry.basis === 'discovery' &&
         entry.stableUntil > world.simTime &&
-        (challenger.urgency < policy.urgentCue ||
-          challenger.urgency <= candidateMap.get(entry.key)!.urgency)
+        waiting.some(([key]) => key === entry.key),
+    );
+    const nextWaiting = waiting.filter(([, candidate]) => candidate.order > state.discoveryCursor);
+    const oldest = (nextWaiting.length ? nextWaiting : waiting).reduce<
+      readonly [string, AttentionCandidate] | undefined
+    >((value, entry) => (!value || entry[1].order < value[1].order ? entry : value), undefined);
+    const discoveryKey = previousDiscovery?.key ?? oldest?.[0];
+    if (discoveryKey && !previousDiscovery)
+      state.discoveryCursor = candidateMap.get(discoveryKey)!.order;
+    selected = [];
+    const take = (key: string, basis: AttentionBasis) => {
+      const reservation =
+        discoveryKey &&
+        key !== discoveryKey &&
+        !selected.some((entry) => entry.key === discoveryKey)
+          ? 1
+          : 0;
+      if (selected.length < capacity - reservation && !selected.some((entry) => entry.key === key))
+        selected.push({ key, basis: key === discoveryKey ? 'discovery' : basis });
+    };
+    // A strong received cue can displace optional ongoing detail. Native
+    // physical effects remain independent of whether this detail fits attention.
+    const urgent: Array<readonly [string, AttentionCandidate]> = [];
+    for (const item of candidates)
+      if (item[1].urgency >= policy.urgentCue) {
+        const at = urgent.findIndex((entry) => rank(item[1], entry[1]) < 0);
+        urgent.splice(at < 0 ? urgent.length : at, 0, item);
+        if (urgent.length > capacity) urgent.pop();
+      }
+    for (const [key] of urgent) take(key, 'cue');
+    const ongoing = Math.ceil((capacity - 1) * policy.ongoingShare);
+    for (const [key, candidate] of candidates)
+      if (
+        candidate.direct &&
+        (candidate.directThrough ?? 0) >= world.simTime &&
+        selected.length < ongoing
+      )
+        take(key, 'direct');
+    for (const key of readOnlyDraftView(state.explicit))
+      if (selected.length < ongoing) take(key, 'explicit');
+    const workTarget = observer.actor.action?.targetId;
+    for (const [key, candidate] of candidates)
+      if (candidate.sourceId === workTarget && selected.length < ongoing) take(key, 'work');
+    const optionalCapacity =
+      capacity -
+      selected.length -
+      (discoveryKey && !selected.some((entry) => entry.key === discoveryKey) ? 1 : 0);
+    const incumbents = [...current.values()].filter(
+      (entry) => !selected.some((value) => value.key === entry.key) && entry.key !== discoveryKey,
+    );
+    incumbents.sort((a, b) => rank(candidateMap.get(a.key)!, candidateMap.get(b.key)!));
+    const optional = incumbents.slice(0, Math.max(0, optionalCapacity)).map((entry) => entry.key);
+    for (const [key, challenger] of candidates) {
+      if (
+        key === discoveryKey ||
+        selected.some((entry) => entry.key === key) ||
+        optional.includes(key)
       )
         continue;
+      if (optional.length < optionalCapacity) {
+        optional.push(key);
+        continue;
+      }
+      let weakest = -1;
+      for (let index = 0; index < optional.length; index++) {
+        const entry = current.get(optional[index]!);
+        if (
+          entry &&
+          entry.stableUntil > world.simTime &&
+          (challenger.urgency < policy.urgentCue ||
+            challenger.urgency <= candidateMap.get(entry.key)!.urgency)
+        )
+          continue;
+        if (
+          weakest < 0 ||
+          rank(candidateMap.get(optional[index]!)!, candidateMap.get(optional[weakest]!)!) > 0
+        )
+          weakest = index;
+      }
       if (
-        weakest < 0 ||
-        rank(candidateMap.get(optional[index]!)!, candidateMap.get(optional[weakest]!)!) > 0
+        weakest >= 0 &&
+        challenger.score >= candidateMap.get(optional[weakest]!)!.score + policy.switchMargin
       )
-        weakest = index;
+        optional[weakest] = key;
     }
-    if (
-      weakest >= 0 &&
-      challenger.score >= candidateMap.get(optional[weakest]!)!.score + policy.switchMargin
-    )
-      optional[weakest] = key;
+    for (const key of optional) take(key, 'cue');
+    if (discoveryKey) take(discoveryKey, 'discovery');
   }
-  for (const key of optional) take(key, 'cue');
-  if (discoveryKey) take(discoveryKey, 'discovery');
   const nextEntries = selected.map(({ key, basis }) => {
-    const candidate = candidateMap.get(key)!,
+    const candidate = readOnlyDraftView(state.candidates)[key]!,
       old = current.get(key);
     if (
       old &&

@@ -504,7 +504,7 @@ function prepareVisualSourceValues(
     ...(subject.actor
       ? {
           animation: observedActionAnimation(world, subject),
-          effects: cloneValue(projectStatusEffects(world, subject)),
+          effects: projectStatusEffects(world, subject),
           ...(subject.actor.body?.plan ? { bodyPlan: subject.actor.body.plan } : {}),
           subtype: subject.actor.species,
         }
@@ -523,7 +523,7 @@ function prepareVisualSourceValues(
     ...((subject.actor?.description ?? subject.description)
       ? { description: subject.actor?.description ?? subject.description }
       : {}),
-    ...(subject.assembly ? { assembly: cloneValue(assemblyPresentation(world, subject.id)) } : {}),
+    ...(subject.assembly ? { assembly: assemblyPresentation(world, subject.id) } : {}),
     ...(subject.resource ? { quantity: subject.resource.quantity } : {}),
     ...(subject.heat ? { heatLit: subject.heat.lit } : {}),
     ...(subject.remains ? { remainsPhase: subject.remains.phase } : {}),
@@ -561,10 +561,10 @@ function prepareVisualSourceValues(
       }),
     });
   if (publicAttributes.length)
-    facets.push({ kind: 'public-attributes', attributes: [...cloneValue(publicAttributes)] });
-  const values = freeze(
+    facets.push({ kind: 'public-attributes', attributes: [...publicAttributes] });
+  const values = immutableDataSnapshot(
     { location: { kind: 'point' as const, point: body.position, errorRadius: 0 }, facets },
-    true,
+    readOnlyDraftView,
   );
   if (sourceToken && token) {
     if (!prepared) visualSourceValues.set(sourceToken, (prepared = new Map()));
@@ -628,6 +628,19 @@ export function beginPerceptionPhase(world: WorldState, observerId: string): voi
   state.receivedAtSequence = world.sequence;
 }
 const owner = perceptionEvidenceOwner;
+/** A working phase owns this map after its first write. Replacing its container
+ * once avoids drafting every changed key; publication and private forks still
+ * seal independent snapshots through the existing world owner. */
+function writableCurrent(state: PerceptionEvidenceOwner): PerceptionEvidenceOwner['current'] {
+  const current = state.current;
+  if (isDraft(current)) {
+    const view = readOnlyDraftView(current);
+    // Editable input worlds still need Immer's child isolation. Published
+    // immutable leases can bypass those proxies without exposing prior writes.
+    state.current = { ...(isImmutableData(view) ? view : current) };
+  } else if (Object.isFrozen(current)) state.current = { ...current };
+  return state.current;
+}
 /** Completed live envelopes use the same immutable ownership as their originals.
  * Later native changes replace the envelope; raw world builders stay editable. */
 function replaceCurrentFacet(
@@ -636,7 +649,7 @@ function replaceCurrentFacet(
   key: string,
   value: LiveFacetSupport,
 ): void {
-  state.current[key] =
+  writableCurrent(state)[key] =
     isDraft(world) && Object.isFrozen(draftOriginal(world)!)
       ? immutableDataSnapshot(value, readOnlyDraftView)
       : value;
@@ -1453,12 +1466,12 @@ export function reconcileVisualEvidence(
 ): void {
   const state = owner(world, observer);
   const observerPosition = readOnlyDraftView(worldPosition(observer));
-  const observerFrame: ObservationFrame = freeze(
+  const observerFrame: ObservationFrame = immutableDataSnapshot(
     {
-      positionAtObservation: { ...observerPosition },
+      positionAtObservation: observerPosition,
       forwardAtObservation: observer.spatial.heading,
     },
-    true,
+    readOnlyDraftView,
   );
   const completed = readOnlyDraftView(state).visualConfirmation;
   const priorConfirmation = completed && readOnlyDraftView(completed);
@@ -1483,7 +1496,7 @@ export function reconcileVisualEvidence(
         lostIndividuals.add(lease.localSubject.individualId);
       retainVisualGap(world, state, lease, episodeGraceSeconds);
       finalizeLease(world, observer, lease);
-      delete state.current[key];
+      delete writableCurrent(state)[key];
     }
   }
   for (const subject of subjects) {
@@ -1511,7 +1524,7 @@ export function reconcileVisualEvidence(
       if (motion && location && world.simTime > motion.valueMeasuredThrough) {
         attentionChanges.add(subject.id);
         finalizeLease(world, observer, motion);
-        delete state.current[motionKey];
+        delete writableCurrent(state)[motionKey];
       }
       if (subject.actor && !heldBody.localSubject) {
         const local = selectedBodyIndividual(world, observer.id, subject.id);
@@ -1650,7 +1663,7 @@ export function reconcileVisualEvidence(
             confirmedFrom: world.simTime,
           };
         } else {
-          delete state.current[key];
+          delete writableCurrent(state)[key];
           prior = undefined;
         }
       }
@@ -1748,15 +1761,15 @@ export function reconcileVisualEvidence(
         earlierLocation.value.location.point.z - laterLocation.value.location.point.z,
       ) >
         earlierLocation.value.location.errorRadius + laterLocation.value.location.errorRadius
-        ? freeze(
+        ? immutableDataSnapshot(
             {
               kind: 'observed-motion' as const,
-              exposure: cloneValue(locationLease!.exposure),
+              exposure: locationLease!.exposure,
               earlier: earlierLocation,
               later: laterLocation,
               correspondence: 'unambiguous-received-continuity' as const,
             },
-            true,
+            readOnlyDraftView,
           )
         : undefined;
     const storedMotion = readOnlyDraftView(state.current)[motionKey],
@@ -1772,7 +1785,7 @@ export function reconcileVisualEvidence(
       ) {
         attentionChanges.add(subject.id);
         finalizeLease(world, observer, priorMotion);
-        delete state.current[motionKey];
+        delete writableCurrent(state)[motionKey];
       }
     } else if (priorMotion) {
       replaceCurrentFacet(world, state, motionKey, {
@@ -1831,7 +1844,7 @@ export function reconcileVisualEvidence(
       if (removed && !kinds.has(kind)) {
         attentionChanges.add(subject.id);
         finalizeLease(world, observer, readOnlyDraftView(removed));
-        delete state.current[key];
+        delete writableCurrent(state)[key];
       }
     }
     const measured = readOnlyDraftView(state.current)[`${subject.id}:body`];
@@ -2226,7 +2239,7 @@ export function endCurrentEvidence(
       retainVisualGap(world, state, lease, episodeGraceSeconds);
       if (observer?.actor && state.life === (observer.actor.physicalLife ?? 0))
         finalizeLease(world, observer, lease);
-      delete state.current[key];
+      delete writableCurrent(state)[key];
       changed = true;
     }
   if (subjectId !== undefined && !changed) return;
@@ -2951,7 +2964,7 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
     ) {
       if (contact) renewed.set(lease.subjectId, { previous: lease.id, newLife });
       finalizeLease(world, observer, lease);
-      delete state.current[key];
+      delete writableCurrent(state)[key];
     }
   }
   for (const [sourceId, contact] of Object.entries(contacts)) {

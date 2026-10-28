@@ -104,15 +104,13 @@ export function immutableDataSnapshot<T>(
     memo.set(latest, result);
     // Array elements are part of their serialized value even when an index is
     // non-enumerable. Object.keys would silently erase such received content.
-    const keys: string[] = array ? [] : Object.keys(latest);
+    const keys: Array<string | number> = array ? [] : Object.keys(latest);
     if (array)
-      for (let index = 0; index < latest.length; index++)
-        if (index in latest) keys.push(String(index));
-    let immutable =
-      !array ||
-      (keys.length === latest.length && keys.every((key, index) => key === String(index)));
+      for (let index = 0; index < latest.length; index++) if (index in latest) keys.push(index);
+    let immutable = !array || keys.length === latest.length;
     for (const key of keys) {
-      const child = copy((latest as Record<string, unknown>)[key]);
+      const input = (latest as Record<string | number, unknown>)[key];
+      const child = input !== null && typeof input === 'object' ? copy(input) : input;
       if (key === '__proto__')
         Object.defineProperty(result, key, {
           value: child,
