@@ -4,9 +4,11 @@
 
 Gildmoss is row Q of the overhaul's Claude Design canvas at version 41 (`1792999021-8ee1`): eleven screens and a component sheet, chosen and refined by Mike over rounds 8–8n, with the icon family completed in round 8o. The [study record](../../../../../art-direction/studies/2026-10-18-interface-direct-method/README.md) holds the history, alternatives and decisions; the production package holds the artwork, fonts and sources.
 
+The material study's Bare/Crest/Filigree kit and 14 selectable character-panel styles below are accepted targets awaiting runtime publication and integration under [UIUX22](../../../../../docs/maintainers/ui-ux.md#uiux22). They are separate from the integrated base theme and its remaining [UIUX21](../../../../../docs/maintainers/ui-ux.md#uiux21--gildmoss-interface-integration) qualification.
+
 ## The look
 
-The world stays the main view. Panels are deep olive glass with no border: a soft 12 px blur of the world behind them, the strongest lantern light at their top edge and a shadow beneath. Pale champagne gold is metal that reflects rather than glows. It appears only on what is chosen — the selected tab, row, slot and toggle — and on rims and gold labels. Everything unselected is silver. The single primary action in a panel, and the quantity slider, are a solid, slightly warmer gold so they stand out. Gelasio sets names and titles, and in italic the narrator's voice; Figtree sets everything you read and act on. By day nothing glows; at dusk the lantern light turns amber and chosen elements gain a soft, wide firelight glow. Nothing is cartoony, neon or extreme.
+The world stays the main view. Panels are deep olive textured glass in the material study's Bare frame — a polished glass bevel with small gold corner caps — over a soft 12 px blur of the world behind them, with the strongest lantern light at their top edge and a shadow beneath. Pale champagne gold is metal that reflects rather than glows. It appears only on what is chosen — the selected tab, row, slot and toggle — and on rims, gold labels and the frames' small ornaments. Everything unselected is silver. The single primary action in a panel, and the quantity slider, are a solid, slightly warmer gold so they stand out. Gelasio sets names and titles, and in italic the narrator's voice; Figtree sets everything you read and act on. By day nothing glows; at dusk the lantern light turns amber and chosen elements gain a soft, wide firelight glow. Nothing is cartoony, neon or extreme.
 
 ## Files
 
@@ -30,7 +32,7 @@ The canonical values and their uses are in `tokens.json`. The ones that define t
 - **Status tones:** good `#50915E`, bad `#B0564C`, neutral `#4E74B5`, special `#A68E5B`.
 - **Coral and leaf:** `#F08A76` marks something missing, an unavailable reason or damage over the world; `#A9CB8B` marks a net gain or having everything.
 
-Metal is never a panel border or a button fill. Gradients are copied exactly from the boards: the chosen edge (135°), the tab underline and hotbar dividers, the round rims (conic, from 210°), gold label text, and the icon metals.
+Metal is never a button fill, and ordinary panels have no metal border: their Bare frame is glass with small gold corner caps. Only the narrator's caption and special notifications take Filigree's gold frame, and the secondary button Crest's hairline rim ([plan decision 21](../../../../../docs/projects/interface-art-direction-overhaul-plan.md#decisions)). Gradients are copied exactly from the boards: the chosen edge (135°), the tab underline and hotbar dividers, the round rims (conic, from 210°), gold label text, and the icon metals.
 
 ## Type
 
@@ -63,10 +65,10 @@ Item illustrations are separate from semantic glyphs. A world may author `presen
 
 ## Components
 
-`components.reference.css` is the exact construction. In words:
+`components.reference.css` records the board construction. The material-study frames, textured glass and Crest buttons below are the accepted additions tracked by UIUX22; the reference stylesheet does not yet implement them. In words:
 
-- **Panels, windows, menus and tooltips:** glass with lantern light and shadow, no border. Panel dividers are silver at 22 %. Names and status lines over the world never show through a panel.
-- **Buttons:** primary solid gold; secondary raised olive with a faint gold inset edge; quiet buttons have no fill. Hover lightens and pressed darkens; focus is a 2 px ivory outline 2 px outside. Unavailable controls keep a reachable explanation.
+- **Panels, windows, menus and tooltips:** the material study's Bare frame and textured glass, with lantern light and shadow; the narrator's caption and special notifications use its Filigree frame. Panel dividers are silver at 22 %. Names and status lines over the world never show through a panel.
+- **Buttons:** primary solid gold; secondary the material study's Crest button, dark glass with a champagne hairline rim; quiet buttons have no fill. Hover lightens and pressed darkens; focus is a 2 px ivory outline 2 px outside. Unavailable controls keep a reachable explanation.
 - **Fields:** a dark well with a faint gold inset edge; focus adds an ivory edge and a soft halo.
 - **Tabs:** the chosen tab's label is gold with a 2 px metal underline; the rest are silver. Segmented groups use the chosen fill.
 - **Right-click menu:** 8 px top and bottom; rows 32 high, 4 from the panel's side, content 12 from its edge; an 18 icon in a 24 column or the item's sprite at 1× in a 40 column; the header shows the object's art in a 64 × 52 well, its name in Gelasio 17 and its state in Figtree 13. The hovered row looks like the open row: the chosen fill with a gold edge. Unavailable rows are muted, art at 45 %, with the reason in coral on one line beneath. Submenus open 4 px to the right, their first row level with the parent (left only at the screen edge).
@@ -80,12 +82,12 @@ Item illustrations are separate from semantic glyphs. A world may author `presen
 
 ## The HUD
 
-- **Top left:** a 284-wide HUD plate, 24 from the top and left edges: your 64 portrait (it opens Character), then each need's icon, bar and number, and your timed statuses and lasting effects beneath. Its frame will be the elaborate corner piece from the Higgsfield material study, which Mike reconciles with Gildmoss; the boards show the plain plate.
+- **Top left:** the character panel: your portrait (it opens Character), then each need's icon, bar and number, and your timed statuses and lasting effects beneath. It is one of the material study's 14 corner-panel styles, which players switch between; each style's layout places these pieces. The boards show a plain 284-wide plate, 24 from the top and left edges, with a 64 portrait.
 - **Top right:** the minimap fully in the corner — a 200 map in a 206 champagne rim, 24 from the right and top edges, with a North mark and zoom in/out buttons (round, 28, 4 apart) at its lower left. The place name sits under it in Gelasio.
 - **Day-and-night dial:** a 72 round dial in the gap at the minimap's upper left — not a clock. Sunrise is on the left and sunset on the right; by day a small sun crosses the top half and by night a crescent moon crosses the bottom half, both clockwise. The face is shaded by daylight with soft fades. The left point is the world's dawn and the right its dusk, each half spread evenly over its own length, so the dial fits any world's hours. "Day 1 · Year 1" and the time sit centred beneath it; the day number changes at midnight. Year is an example value until a world defines years.
 - **Hotbar:** no panel behind it — ten slots, then Speak, Act and Combat mode (main's attack mode), then Character, Journal, Crafting, Build and the game menu, with thin gold metal dividers between the groups. The game-menu button is the Open Legend campfire seal in a champagne rim and opens the game menu, as Esc does. 986 wide, centred, 24 above the bottom edge; the Say and Act bars share its edges.
 - **Events quick view:** a button at the bottom left, level with the hotbar, opens a quick view of what you perceived — speech, actions and notable observations, newest at the bottom. While open it replaces the button and has its own minimize button.
-- **Narrator:** a caption at the top centre, like a film subtitle: the line in Gelasio italic on dark glass, up to three lines, with a thin gold timer line beneath that shortens toward the centre. The X appears only on hover. The line appears word by word, holds, then fades; with reduced motion it simply appears and disappears.
+- **Narrator:** a caption at the top centre, like a film subtitle: the line in Gelasio italic on dark glass in the Filigree frame, up to three lines, with a thin gold timer line beneath that shortens toward the centre. The X appears only on hover. The line appears word by word, holds, then fades; with reduced motion it simply appears and disappears.
 
 ## Screens
 

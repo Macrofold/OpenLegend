@@ -1,0 +1,671 @@
+{
+ "release": {
+  "owner": {
+   "kind": "collection",
+   "id": "openlegend-curated"
+  },
+  "assetId": "ui-gildmoss-character-panels-production-sources",
+  "revisionId": "sha256-cbfaa7e00ed6f7229b7cb3604862897bfa04c9108265d0e3f775a07ba884babd",
+  "manifestSha256": "976192c30c0696ee5314f16d7a4b333e6d75b80d6f266d0d28eb67d837e26d8f"
+ },
+ "files": {
+  "README.md": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "54fad6f54357b2f99afff4ed3d8dd471a578d5d45bf60b1e88e7233c3dccc692",
+   "bytes": 10696,
+   "mediaType": "text/markdown; charset=utf-8"
+  },
+  "inspection/character-panels/gold-quartz-slate-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b8340e0ed8245b122b21d0f6a9a6eee90795b18cda8a272a967ae7b9002ae487",
+   "bytes": 245072,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/gold-quartz-slate-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b9ebcbf032f705ba38f413e0070cba1ea92c7a83dfe0d3bf2ab57cef1772ad92",
+   "bytes": 875184,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/gold-quartz-slate-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2b4d2cf13f267ebccae173612dd6bd438a0f764f383e0d608e4f0211cf064c17",
+   "bytes": 239241,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/gold-quartz-slate-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "05147a4b2875cba82f729aaf02c77a29984864a70c1d722bef13737ac1a28a9c",
+   "bytes": 857140,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-lode-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "277289a4d307982cc8fa396fb0c1e97fa52f60e1013a90f6d1df2bd5a6995d06",
+   "bytes": 222680,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-lode-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "dac95e0bf47272e65c741509116f3f1fb7576b6f0ea74d0f7ea996fe48d1c6f2",
+   "bytes": 799225,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-lode-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0b340643ced4889c787fb7211894d2fcce1c5c5048329b8d9ace7fc72f16bc38",
+   "bytes": 216804,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-lode-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "24e09c960d51f451f01944e4d1de2217f3a430d88026d3e1b457e7c3a4a45cb5",
+   "bytes": 779745,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-medallion-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ad1414ce3f0f1feefa8f897c88c7c7e730d4ec4180e0ce7d6548c8b630ef1647",
+   "bytes": 180744,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-medallion-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8d65d517295ee62c1d62c70b427bc0efba4bbaf9559124b8822506d09b625adf",
+   "bytes": 630032,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-medallion-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1760a36268c0aeeda641dedfdb90f5ab4b632bbcaf5ead15b4a699e483acc6f1",
+   "bytes": 175961,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-medallion-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "10a1e199b66b22c4d4630b58680c5dc62366e9a2a1f9a6f28096b1b3a3ee5d29",
+   "bytes": 612174,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-set-band-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6dae98f26c1be629b9e9f079ca47b1dd062ecad2fddd1d7ba475bbee9931c37d",
+   "bytes": 224099,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-set-band-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d5ccd9b7e49a8a433944ec990eca0d26b1f1b83c28ea8cd8cec4d61282e4654f",
+   "bytes": 801744,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-set-band-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "973c3460cfe64cfb312fa08433a579f96aeb99088af31a0b9b3216be8aed9eb9",
+   "bytes": 218398,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-set-band-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5b2a15c97b771a620a8efdd5e10b3597e8cd25a9b34ecb6d7e83d1d17718d825",
+   "bytes": 782620,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/laurel-ring-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3f65caea97e46564ccc4a0af2d784b16fbee2cf63935941a7a71f9394c9019f6",
+   "bytes": 227946,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/laurel-ring-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "22f531d2ba8a1791f4c624b93ed89917231f0fc758d35df539664fff7566dcbe",
+   "bytes": 825075,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/laurel-ring-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f2c339fae6ce5c176a38ccf1eb1daa334af27563ddb52496241c6fd54b49b4ba",
+   "bytes": 222468,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/laurel-ring-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5109d759e579e7db9d2b88c84aacb6075aa4bf8450b4874bd99dc29024773e72",
+   "bytes": 807316,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/malachite-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5c051860e6da16f16f32873909184bec968e9690afb7f36d38ec22f9fd1a145f",
+   "bytes": 215727,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/malachite-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1ec9afa317b7fc313dc0fc97e2eaf77c44e5ca45dce45c0d04e6ee404061d589",
+   "bytes": 773873,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/malachite-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c36bd70d44d1c95f2f9c7c9c71ad291d4c532b7692edbe11a52c98774f36f988",
+   "bytes": 209810,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/malachite-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "379d322181e6939727395afe2a274fe3c5ec2b3bd61dfd577f2aafdd1f2a81e1",
+   "bytes": 752740,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/mossbound-ruin-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0f35a81cbfe37976101985ad4f72e1e90979a1bba15be1bd830984e331eae29a",
+   "bytes": 151620,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/mossbound-ruin-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c2e8d30f2b7d289a5ca83f4fdc9b97e8a3a86fe33df7b0e9d6918e4f86329e39",
+   "bytes": 538806,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/mossbound-ruin-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "09983c99114af5bf12c8a00f54d54f92bd843c86cc1a5ca49bbcf7fb565842c3",
+   "bytes": 146711,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/mossbound-ruin-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ce05c311e4f243337e3fd1995a4a7905495ff69bba1efcd072176f80319d0192",
+   "bytes": 522259,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/nacre-shore-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "13b152fd2865e8ce4013ec5794815059991178b4baa0d925581debec997d6175",
+   "bytes": 171333,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/nacre-shore-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "421e6fa0d645bb79934b3957dbeb7fa6a3f40ba3c72ae48edb9123be4d060a00",
+   "bytes": 613625,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/nacre-shore-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1a46db86622c4366595a08636b4fedfd1386068e917feafb3754d3b0fdea932f",
+   "bytes": 167394,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/nacre-shore-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4649a36adf3ee612fb316fafa806d228e0a704c2ef365c9178a6d34865fa7dc1",
+   "bytes": 598844,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/overgrown-relic-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "65362e9ecad433062737b1d99e87ccd93cb8250ddf66035a58f244424263342f",
+   "bytes": 186741,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/overgrown-relic-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "46743883637b46e9ec9b62da4f287c4d3c5070d8ef038728127f29c528441ebb",
+   "bytes": 676394,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/overgrown-relic-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "968729bfa65df4fb88305ff09253378ef8cc091529cf24b95e78a633648bab47",
+   "bytes": 181837,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/overgrown-relic-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0999d5944627ebd4d5b44074b4fa7ce29519be3c4539c56ad258bed5c1bdcf1c",
+   "bytes": 660492,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-granite-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c5815867e79ee84fcae1c9cdde04e5f92f12d6b6e5c09764ea9b898c1f009ec1",
+   "bytes": 211730,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-granite-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ad1299993abfa1663a87533449c37f13d58cfc9c71912d24b294443bbf2cc0da",
+   "bytes": 775266,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-granite-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5b692167ec9d41b19a95dbc84447f9bf6ebafe8c6d091c9ce50326417f43836b",
+   "bytes": 206438,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-granite-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3c5384ee52f6e77e4ae96ddfd04d0fb597114f3b529cbfb5a9e73ffff892a938",
+   "bytes": 757343,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-nacre-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "742b77b40989e3b642a18afee1d6126284afe74487c8268f8f37bd5382848ef8",
+   "bytes": 134203,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-nacre-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "eadbc8feb02757c59b476f38f02335c16edd80abc5fc19c10527b58ab8e8d384",
+   "bytes": 469347,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-nacre-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ac0b7f7a129df7313886e9cf01fd48c11b68d366261171dbaeebc7ef95bc6dad",
+   "bytes": 130128,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-nacre-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f1024395beac5319bbc103e39d0abdea10c040a4e808fa0473c5e161946aedf4",
+   "bytes": 453164,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/rootbound-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d1d2d84b13be5d3e03fd14be7cc5c98fb1804016d0ec8c492de330d0c0c58e90",
+   "bytes": 124890,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/rootbound-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bc763b344c225ee5b3be20961e196f0ed428b21bf78141b44ad75797848d58ac",
+   "bytes": 447486,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/rootbound-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "01d8a9c95a61727b1d118e01b5c183bacd711168de4055642349040eaae2dd4b",
+   "bytes": 121410,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/rootbound-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "fa7858de104a8bca4196a3331deb985d30f48f4fe4c832574df617825d27e902",
+   "bytes": 435533,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/star-iron-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e377e47ae351a4f3f9c341847efc7ce0a15b93da428442ad74ed3298b191d5a6",
+   "bytes": 231130,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/star-iron-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6485c5efee78ddf0268223a4da6550b35c32bd3d7b76c3e38b869bc22c4c4eb3",
+   "bytes": 842696,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/star-iron-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "82e334f098d47fef79cb2459c4f50fce1abbc3554fa62c0fd541aff413f9234f",
+   "bytes": 224809,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/star-iron-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6c52ff8319253281483b8a59353a07a1f00f0f9a149d74d04d3f7899fe0dd08c",
+   "bytes": 820368,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/verde-antico-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3d3b67a11c547a312bd8e330d7901987b9279fef06e28e77dade48b3fa475cce",
+   "bytes": 175508,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/verde-antico-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3d44d76fd711c209dbb1c94e73d2376cde0636da00579704173a23436fdf07ad",
+   "bytes": 619027,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/verde-antico-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "017008a0e370977287253a2ae9e172b18e9908f8b611e8897460712542afa2cd",
+   "bytes": 171942,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/verde-antico-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c3c0ede75890858d209383e3ce74402f5eaf27e2122d5f7d32adda13fd48e9e8",
+   "bytes": 603803,
+   "mediaType": "image/png"
+  },
+  "inspection/fidelity/fidelity-1.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f61f4c7d5c541e3305f3131be25dbca74a3e7779b0c06caaa638694a300fbf26",
+   "bytes": 2193960,
+   "mediaType": "image/png"
+  },
+  "inspection/fidelity/fidelity-2.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0253b8ab6e6aa8089f870d77b0c43f9d55a998720ffadc13ed70b9784dc748ba",
+   "bytes": 2842591,
+   "mediaType": "image/png"
+  },
+  "inspection/fidelity/glass-luma.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9db596fd3621f2aaf87a84086322abf168717d9f035bf910d717fc589f3587c8",
+   "bytes": 896,
+   "mediaType": "application/json"
+  },
+  "inspection/fidelity/kit-bare.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9be1049615e520c9a387edfd7171f37b6045ef2f1dd31a1a5415e19d1eee3748",
+   "bytes": 1865696,
+   "mediaType": "image/png"
+  },
+  "inspection/fidelity/kit-crest.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5d5d64708cf6aad97c14cf4aec9da2b58033046ac060468b0591cb38682dc775",
+   "bytes": 467733,
+   "mediaType": "image/png"
+  },
+  "inspection/fidelity/kit-filigree.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0204d78ac30938eb943d3377b899d206fba74db8f939b0931a60a109ff8ad8b2",
+   "bytes": 2115728,
+   "mediaType": "image/png"
+  },
+  "inspection/fidelity/kit-journal.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6b9ce12ea2f2335c45112464d7cbd8bd13670479f9d9024135efdc21d3c06375",
+   "bytes": 515466,
+   "mediaType": "image/png"
+  },
+  "inspection/gildmoss/kit-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f84011de464dbec4569c2c1cb85f491af78fb196a03432ce1145c62fcf2c8dde",
+   "bytes": 969016,
+   "mediaType": "image/png"
+  },
+  "inspection/gildmoss/kit-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "08349a3e8d20b9c91f91b1edb8636dd01ffc8b98606b8c5dabcd78b52e0466d5",
+   "bytes": 3010960,
+   "mediaType": "image/png"
+  },
+  "inspection/gildmoss/kit-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "474103a5fdbe856f5d9a6b9f7bd59b8804a427116d49cd387d00e2d26d156b67",
+   "bytes": 910748,
+   "mediaType": "image/png"
+  },
+  "inspection/gildmoss/kit-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "38215d9df0e956e93fcad4dc4e38837a039a55c17a0c72927a4f0b52901235d3",
+   "bytes": 2802239,
+   "mediaType": "image/png"
+  },
+  "inspection/validation.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "52ae27aac9fa97efffc41d9637c8b6edef6f60cc96aad2ca4d564980ac400fd5",
+   "bytes": 1652,
+   "mediaType": "application/json"
+  },
+  "recipe/character_panels.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "87138f3b43ef185f5176bef0232d7778f711d01aa60bb1185801636d6bfb6453",
+   "bytes": 34986,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "recipe/common.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3da0075645583a7aa2fa6bcde969d5ef11bf1a1116a8d7026b75e8de19f2b1f5",
+   "bytes": 9358,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "recipe/debug_panels.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a5f34dc42dc85fec1e48d89af7a7e7e81db28d2d8dab0edb1c182e3f1a2c1bee",
+   "bytes": 2354,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "recipe/gildmoss.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e01ac78d71c1680054a5997a65c0e9ce4fee9ce5a80dbb46ebdef3d11e78951b",
+   "bytes": 43579,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "recipe/inspect_fidelity.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "87eb200b564c249dd97799a286007c7eb144a8ad03af4f5a7035d1b39045ba60",
+   "bytes": 3211,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "recipe/inspect_kit.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e7d4dfcccbbe70cdc6f67fb061c4d579c618d73c02e0bd2d459186dbd024c212",
+   "bytes": 10660,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "recipe/inspect_kit_fidelity.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ad1b05edabf45a58b19b3e00fd962306bdecc44fed42c7366cc748d597f49699",
+   "bytes": 6315,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "recipe/inspect_panels.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3c599f02f70fa8dc16eb14c5916917e4ab56d730a5b9b3bb6c90cfd5aba6fa1c",
+   "bytes": 9391,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "recipe/kit_parts.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "74bbf77eec6087eb8f67fa1144a07430a1ab2a388c7a74fd807be2ddfc6ab630",
+   "bytes": 2970,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "recipe/validate.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e167d7e6e408a732b1e09df3862a315e64060324ad1b2be6dddfd6be2ce0fca7",
+   "bytes": 11215,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "sources/character-panels/gold-quartz-slate-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4fdbbac5fbc9b480d28bc28c0443b444e9a700cd4ff2b14dc8069c717ebfc959",
+   "bytes": 1134163,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/jade-lode-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "17f768cda67b72fd6fd54109fd0b02c92ccb331e56756adeb10cf5d62fd37d44",
+   "bytes": 1322095,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/jade-medallion-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c2bd961b7defb901d527c627e6531e71d41bbad145a2844be05a09a8f6751fa7",
+   "bytes": 394613,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/jade-set-band-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "cba922245b30e40ff6d97812562ec3e1e02ddc7481289f762bed36593f10e6a9",
+   "bytes": 1248990,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/laurel-ring-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "338b1589ab01f237c771f2514222b9c3c639fea6c0ce70032fb5ab130b459747",
+   "bytes": 1609449,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/malachite-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1f345719c437c2e425e7f987deffd04a4b43cb921382da3a5acfdd2152ebf541",
+   "bytes": 1303424,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/mossbound-ruin-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "fdf269b7c6edf3f5198749da83be370738fc25e9d81086a8d66025bdc91c689f",
+   "bytes": 568629,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/nacre-shore-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3f94fafa0c420bd6abe5f6bbc733060f767fdecd8102979526c0dc200bafb866",
+   "bytes": 1046660,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/overgrown-relic-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4b1c78a103b5584478de00fd0351b843d4fb4676a02da9dabd324740c4ca691e",
+   "bytes": 1277269,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/river-granite-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ca8fb40ee467d46eccc56d67dc4bf1bedc74ff8ac475eb2fdfc81a4f215ab9bd",
+   "bytes": 1170621,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/river-nacre-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3d3a37f32a45adedcf47684ff19186082142f0049edc49d45da41fba4f98d3b1",
+   "bytes": 352205,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/rootbound-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "24a3de06bee902cacd9c5935102058821c16364adfb0818beb98bdf6f462a48c",
+   "bytes": 466107,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/star-iron-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0c8f0123f168c498a9fb5ffa2abc3a8499d178e349d17a990501da0cc1425181",
+   "bytes": 1531489,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/verde-antico-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "21064d32d0f830eadfb789a3aed06eeaeebea49688607fb3de7a31aec97b0687",
+   "bytes": 424435,
+   "mediaType": "image/png"
+  },
+  "sources/game-capture-1920x1080.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "28c2b2e975867183d36839b98ca3e875a271b0e9196e8d458d77489d34408d7b",
+   "bytes": 1258836,
+   "mediaType": "image/png"
+  }
+ }
+}

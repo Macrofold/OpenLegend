@@ -19,6 +19,7 @@ This is a navigation index, not a second task list. The linked UIUX sections own
 | Remaining work                                                                                          | Kind                                  | Canonical task owner                                              |
 | ------------------------------------------------------------------------------------------------------- | ------------------------------------- | ----------------------------------------------------------------- |
 | Existing player-facing wording, including the reported death warning and shared generated/fallback text | Copy implementation and qualification | [UIUX20](#uiux20)                                                 |
+| Gildmoss panel kit and player-selectable character-panel styles                                         | Art integration                       | [UIUX22](#uiux22)                                                 |
 | Saved choice to keep an ordinary connected game running when its tab is hidden                          | Interface control                     | [UIUX14](#uiux14)                                                 |
 | Current ordinary-browser failures and required CI for the additional local UI repairs                   | Implementation verification           | [UIUX18](#uiux18)                                                 |
 | Broader text/viewport and non-drag combinations, real OS IME, assistive devices and uncoached play      | Input/player qualification            | [UIUX18](#uiux18), J47–J48; [UIUX11](#uiux11) for integrated play |
@@ -376,3 +377,14 @@ The reported warning's source and rendered context remain unverified. The two un
 - [ ] Qualify live World Agent reply/proposal presentation through an approved unexpired writable MCP connector. The normal game has no such connection; Mike chose to retain this [documented verification blocker](../verification/gildmoss-interface.md#connector-dependent-qualification). It does not authorize inventing a reply, weakening access or adding a new connector grant.
 
 No runtime or visual acceptance is established merely by merging the archived package.
+
+## UIUX22
+
+**Gildmoss panel kit and selectable character-panel styles — production art ready; integration open.** The [material study](../../art-direction/studies/2026-10-25-ui-material-language-higgsfield/README.md) records Mike's selections and the production package: the Gildmoss kit (Bare panels and textured glass, Crest buttons, Filigree special panels, rails and connectors) and 14 character-panel styles with layout metadata and their own glass, exported at @1x/@2x, technically checked and privately archived. Mike chose the kit for every panel ([plan decision 21](../projects/interface-art-direction-overhaul-plan.md#decisions)). Nothing is installed or selected for the game.
+
+- [x] Produce and archive the production package: exports, sources, export recipe and inspection.
+- [ ] Publish the selected exports through the runtime asset process.
+- [ ] Apply the kit in the Gildmoss theme through the existing token and component owners: Bare frames and textured glass on panels, windows, menus and tooltips, with lantern light and its night treatment; Crest secondary buttons; Filigree for the narrator's caption and special notifications.
+- [ ] Build the top-left character panel from a style's plate and layout, with the live portrait, the installed world's condition rows, 10–15 statuses and the perspective lock, and add the player setting that switches styles. The plates are designed for four condition rows; other counts need a layout decision.
+
+Exit: the running game shows the kit and a switchable character panel with real data, checked against the [UI verification matrix](../ui-ux/verification.md).

@@ -135,6 +135,8 @@ Mike approved an **$80 hard cap for OpenAI image generation** on 2026-10-19, rep
     - Gildmoss becomes a theme of its own beside the existing ones, and players can switch themes.
     - The parchment map stays as it is; Mike will make a better one later.
 
+21. **Panels use the material study's kit (2026-10-27):** Mike chose the [UI material study](../../art-direction/studies/2026-10-25-ui-material-language-higgsfield/README.md)'s production kit for every Gildmoss panel. Bare frames and their textured glass replace the borderless glass on panels, windows, menus and tooltips. Crest is the secondary button while the primary stays solid gold, and Filigree frames the narrator's caption and special notifications. The top-left frame is one of the study's 14 corner-panel styles, which players switch between. Colours, type, icons and layout stay as designed; [UIUX22](../maintainers/ui-ux.md#uiux22) tracks this integration.
+
 ## Completion criteria
 
 The chosen direction is implemented across every surface and state in scope, with complete production artwork and fallbacks; the evaluation tasks pass in the running game at the stated viewports and settings; independent review findings are fixed and re-verified; canonical UI, design-system and component documentation describes the finished interface; artwork is published with provenance and all delivered source changes are committed. Pushing or merging remains a separate authorized history operation.

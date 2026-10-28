@@ -1,0 +1,92 @@
+[
+ {
+  "id": "r3-01",
+  "cid": "HIG-R3-01",
+  "name": "Jade Medallion",
+  "stem": "r3-v01-jade-ref-clean",
+  "change": "Portrait in a carved, translucent dark green nephrite jade boulder with low-relief reeds and a hairline gold bezel.",
+  "good": "Your jade idea: reads as real polished stone, not cartoon; the reed carving ties it to the river; the boulder shape sits naturally in the corner.",
+  "watch": "The boulder is fairly large next to the bars; the jade texture is busy at small size."
+ },
+ {
+  "id": "r3-02",
+  "cid": "HIG-R3-02",
+  "name": "Verde Antico",
+  "stem": "r3-v02-verde-ref-clean",
+  "change": "Portrait in an oval cameo carved into dark green marble with white veining, ringed by a gilded stone laurel wreath.",
+  "good": "The most classical and legendary; the laurel wreath carries over the portrait ring you liked in Ringed Dial; marble keeps the green palette.",
+  "watch": "The eye toggle came out as a tab sticking out of the status tray's right edge."
+ },
+ {
+  "id": "r3-03",
+  "cid": "HIG-R3-03",
+  "name": "Kintsugi Stone",
+  "stem": "r3-v03-kintsugi-ref-clean",
+  "change": "Portrait in a dark river stone cracked and mended with pale gold seams.",
+  "good": "Organic stone with gold that has a story (broken and mended), very fitting for survival; the simplest silhouette of the ten.",
+  "watch": "The seam was supposed to run on into the panel's edge and did not; one timed status (the tent) was dropped, so it shows 12 of 13."
+ },
+ {
+  "id": "r3-04",
+  "cid": "HIG-R3-04",
+  "name": "Geode Hollow",
+  "stem": "r3-v04-geode-ref-clean",
+  "change": "Portrait inside a split geode: rough grey rock, banded agate and a ring of dark green crystals.",
+  "good": "The most striking natural object; the crystal ring frames the face like a halo without any glow; clearly legendary-treasure in mood.",
+  "watch": "The grey rock and agate bands are the busiest texture of the set; the water droplet status came out red."
+ },
+ {
+  "id": "r3-05",
+  "cid": "HIG-R3-05",
+  "name": "Gold in Quartz",
+  "stem": "r3-v05-goldquartz-ref-clean",
+  "change": "Portrait in a block of dark smoky quartz threaded with natural gold veins that continue into the panel edges.",
+  "good": "Gold appears the way it does in nature, threaded through dark crystal, so it feels found rather than applied; the dark smoky quartz keeps it moody; compact.",
+  "watch": "The eye toggle floats outside the tray on the right; the sharp crystal edges are busy at small size."
+ },
+ {
+  "id": "r3-06",
+  "cid": "HIG-R3-06",
+  "name": "Mossbound Ruin",
+  "stem": "r3-v06-ruin-ref-clean",
+  "change": "Portrait framed by a weathered fragment of an ancient carved granite ring with moss, a small fern and lichen.",
+  "good": "The strongest 'legendary ruin' mood: a fragment of an ancient monument reclaimed by moss; the moss stays small and crisp as asked.",
+  "watch": "The ring has carved letter-like marks that could read as writing; green moss on a green world adds texture; the art starts a little away from the screen corner."
+ },
+ {
+  "id": "r3-07",
+  "cid": "HIG-R3-07",
+  "name": "Rootbound",
+  "stem": "r3-v07-roots-ref-clean",
+  "change": "A dark stone medallion gripped by ancient grey tree roots that run a short way along the screen edges.",
+  "good": "Feels ancient and alive, as if the HUD grew into the corner; grey roots avoid the rejected brown-wood look; roots along both screen edges anchor it.",
+  "watch": "The roots spread across the corner and down the left edge, adding weight where other UI may sit; the root texture is busy."
+ },
+ {
+  "id": "r3-08",
+  "cid": "HIG-R3-08",
+  "name": "Stag Crown",
+  "stem": "r3-v08-stag-ref-clean",
+  "change": "Portrait in a dark stone ring with a pair of real weathered stag antlers rising behind it like a crown.",
+  "good": "A strong, noble silhouette that says hunter and lord of the wild; the antlers are realistic, not stylised.",
+  "watch": "The tallest of the ten, and it could read as a hunting trophy; the antlers add height without holding any information."
+ },
+ {
+  "id": "r3-09",
+  "cid": "HIG-R3-09",
+  "name": "Obsidian Edge",
+  "stem": "r3-v09-obsidian-ref-clean",
+  "change": "Portrait in volcanic obsidian with knapped, blade-like flaked edges and a polished face.",
+  "good": "Dark, primal and dramatic; the polished face around the portrait reads well.",
+  "watch": "The flaking came out as flat polished facets, close to the faceted low-poly look rejected for the world's art; it reads more like a cut gem than knapped stone."
+ },
+ {
+  "id": "r3-10",
+  "cid": "HIG-R3-10",
+  "name": "River Nacre",
+  "stem": "r3-v10-nacre-ref-clean",
+  "change": "Portrait ringed with iridescent river mother-of-pearl and small freshwater pearls, set in dark river stone.",
+  "good": "The most precious and the most specific to the river (mussel shell and freshwater pearls); the sheen catches light without glowing; a clean round silhouette.",
+  "watch": "The eye toggle sticks out from the tray's right edge; the iridescence may read as jewellery more than survival."
+ }
+]

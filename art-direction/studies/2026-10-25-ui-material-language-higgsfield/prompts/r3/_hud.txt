@@ -1,0 +1,15 @@
+Game interface artwork for "Open Legend", a grounded, realistic medieval survival role-playing game with an epic, legendary feel. Create ONE single, one-of-a-kind character HUD for the top-left corner of the screen, on a fully transparent background: no scene, no backdrop, no labels or captions. The top-left corner of the image is the top-left corner of the player's screen, and the HUD is anchored into that corner.
+
+Contents, all clearly readable:
+1. Portrait: a detailed, realistically proportioned pixel-art bust of a man with tousled brown hair, a short brown beard and a dark tunic, drawn as true pixel art with clearly visible square pixels like a game sprite, not a painting. Only the portrait picture is pixel art; everything else is crisp and high-resolution.
+2. Four need bars, straight and horizontal, stacked and parallel, never curved, each with a small icon and a number: a heart and 100 (deep muted red), an apple and 72 (muted ochre), a lightning bolt and 84 (muted moss green), a four-pointed sparkle and 80 (deep muted blue). Dark tracks behind the bars.
+3. A status tray below the bars, built to hold up to fifteen status icons in neat, evenly spaced, left-aligned rows that wrap. Show all thirteen of these small icons, in two rows: first four square lasting effects with thin, subtle coloured borders (a bandaged leg - red, a strapped wrist - red, an old scar - blue, a snowflake for cold-hardened - green), then nine round timed statuses whose thin ring is a timer at different amounts left (a steaming bowl - green, a gust of wind - red, a campfire - green, a water droplet - red, a crescent moon - green, a blood drop - red, a lute - gold, a small tent - blue, a herb leaf - green).
+4. A small round toggle for locking the camera perspective: an eye inside four corner brackets.
+
+Panels: the bars and the status tray sit on the game's "Gildmoss Bare" panels: slightly translucent very dark green glass (#10140D to #1B2318) with a crisp, polished glass bevel edge and NO gold rim, tiny engraved pale champagne corner caps, and a gentle warm light falling from the top edge. Numbers in a clean ivory sans-serif. {REFERENCE}
+
+The unique portrait setting (this is what makes this design special): {DESIGN}
+
+Style: realistic, physically based materials as in a modern AAA fantasy game's interface art: real stone, mineral and natural textures with natural imperfections, subtle wear, and soft, believable light from above. Restrained, slightly desaturated colour; fine, precise detail. Epic and legendary in mood, like an ancient relic or heirloom. Gold is used sparingly: thin, worn, pale champagne gilding only.
+AVOID: cartoon or cel shading, thick outlines, chunky bevels, glossy plastic, bright yellow gold, mobile-game styling; signs, signboards, flags, banners, pennants, ribbons, scrolls or anything hanging; curved, arched or circular need bars; glowing text or icons; rope, cord or knots; brush strokes; torn paper; feathered, smudged or faded edges; neon colours; sci-fi.
+Compact: on a 1920x1080 screen the whole HUD covers roughly a quarter of the screen width.
