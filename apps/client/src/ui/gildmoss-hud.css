@@ -7,28 +7,40 @@
   --gildmoss-hotbar-inset: 24px;
   /* Conservative until the shared HUD observer reports the wrapped logical sizes. */
   --gildmoss-hotbar-height: 160px;
-  --gildmoss-events-control-height: 48px;
+  --gildmoss-events-control-height: 52px;
   --gildmoss-narrator-height: 0px;
   --sheet-bottom: calc(var(--gildmoss-hotbar-inset) + var(--gildmoss-hotbar-height) + 12px);
 }
 .ol-gildmoss-overview {
   display: contents;
 }
+.ol-main-destination-strip {
+  position: relative;
+  flex: none;
+  height: 52px;
+}
+.ol-main-destination-strip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
 .ol-main-destinations {
   display: flex;
   align-items: center;
-  gap: var(--space-2, 8px);
+  gap: 4px;
   overflow-x: auto;
-  padding: 8px 16px;
-  /* The fixed Close control owns this strip outside the scrolling tabs. */
-  margin-right: 48px;
+  height: 52px;
+  padding: 12px 16px 0;
+  /* Reserve Close outside the scroller, with an equal inset on the left so
+   * the board's destination strip stays centred in the whole workspace. */
+  margin-inline: 48px;
   flex-shrink: 0;
   justify-content: safe center;
-  border-bottom: 1px solid var(--line);
-}
-.ol-main-destinations [aria-current='page'] {
-  color: var(--highlight);
-  border-bottom: 2px solid var(--highlight);
 }
 .ol-main-destination-label {
   display: inline-flex;
@@ -42,22 +54,50 @@
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 12px;
   pointer-events: auto;
   max-width: calc(100vw / var(--ui-scale, 1) - 32px);
 }
-.ol-gildmoss-hotbar > .ol-ibtn {
-  flex: 0 0 40px;
+.ol-hotbar-intents,
+.ol-hotbar-panels {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.ol-gildmoss-hotbar :is(.ol-hotbar-intents, .ol-hotbar-panels) > .ol-ibtn {
+  flex: none;
   width: 40px;
   height: 40px;
-  background: var(--surface-glass-hud);
-  border-radius: 4px;
+  background: var(--hotbar-bg, var(--surface-glass-hud));
+  border-radius: 6px;
+  box-shadow:
+    inset 0 0 0 1px var(--line-control),
+    var(--shadow-tile);
+}
+.ol-gildmoss-hotbar .ol-hotbar-intents > .ol-ibtn {
+  width: 52px;
+  height: 52px;
+}
+.ol-hotbar-intents > .ol-ibtn > .ol-icon-wrap {
+  width: 24px;
+  height: 24px;
+}
+.ol-hotbar-panels > .ol-ibtn > .ol-icon-wrap {
+  width: 20px;
+  height: 20px;
+}
+.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar .ol-ibtn[aria-pressed='true'] {
+  background: var(--surface-selected);
+  box-shadow: var(--shadow-tile), var(--hotbar-glow);
+}
+.ol-gildmoss-hotbar .ol-ibtn:hover {
+  background: var(--surface-hover);
 }
 .ol-gildmoss-slots {
   display: flex;
   gap: 4px;
 }
-.ol-hotbar-slot {
+.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar .ol-hotbar-slot {
   width: 52px;
   height: 52px;
   position: relative;
@@ -65,27 +105,44 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: var(--radius-slot, 4px);
-  background: var(--slot-bg, var(--surface));
-  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--hotbar-bg, var(--surface-glass-hud));
+  border: 0;
+  box-shadow:
+    inset 0 0 0 1px var(--line-control),
+    var(--shadow-tile);
 }
-.ol-hotbar-slot > small {
+.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar .ol-hotbar-slot[data-empty] {
+  background: var(--hotbar-empty-bg, var(--surface-glass-hud));
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+.ol-hotbar-slot > span {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: 100%;
+}
+.ol-hotbar-slot small {
   position: absolute;
   left: 4px;
-  top: 2px;
-  font-size: 12px;
-  color: var(--ink-muted);
+  top: 4px;
+  font: 700 12px/12px var(--font-ui);
+  color: var(--ink-silver);
+  text-shadow: var(--world-text-shadow);
+}
+.ol-hotbar-slot .ol-item-illustration {
+  max-height: 100%;
 }
 .ol-slot-count {
   position: absolute;
-  right: 3px;
-  top: 2px;
+  right: 4px;
+  bottom: 4px;
   font-size: 12px;
 }
 .ol-hotbar-divider {
   height: 40px;
   width: 1px;
-  margin: 0 8px;
+  margin: 0;
   flex-shrink: 0;
   background: var(--highlight);
 }
@@ -93,31 +150,49 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
-  font-size: 12px;
+  flex: none;
+  width: 80px;
+  gap: 0;
+  font: 600 13px/18px var(--font-ui);
   color: var(--ink);
-  text-shadow: 0 1px 3px var(--canvas);
+  text-shadow: var(--fixed-hud-text-shadow);
+}
+.ol-daylight-face + span {
+  margin-top: 8px;
+}
+.ol-daylight strong {
+  font: 600 15px/20px var(--font-ui);
 }
 .ol-daylight-face {
   position: relative;
   width: 72px;
   height: 72px;
   border-radius: 50%;
-  border: 2px solid var(--highlight);
   overflow: hidden;
+  background: var(--metal-gold-rim, var(--highlight));
+  box-shadow: var(--shadow-dial, var(--shadow-rim));
+}
+.ol-daylight-face::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 50%;
   background: var(--daylight-dial-face, var(--surface));
 }
-.ol-daylight-horizon {
+.ol-daylight-sky {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  border-top: 1px solid var(--line);
+  inset: 19%;
+  border-radius: 50%;
+  background: var(--daylight-dial-sky, var(--surface));
+  mask-image: radial-gradient(closest-side, black 30%, transparent 100%);
 }
 .ol-daylight-orb {
   position: absolute;
   transform: translate(-50%, -50%);
   color: var(--highlight);
+}
+.ol-daylight-orb > img {
+  display: block;
 }
 .ol-daylight small {
   color: var(--ink-muted);
@@ -128,8 +203,10 @@
   right: 24px;
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 6px;
   pointer-events: auto;
+  /* Minimap utilities stay inside the HUD layer below open reading panels. */
+  isolation: isolate;
 }
 .ol-gildmoss-corner .ol-daylight {
   margin-top: 0;
@@ -156,7 +233,7 @@
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr);
   gap: 8px 12px;
-  padding: 16px 12px;
+  padding: 12px;
   background: var(--lantern-light), var(--surface-glass-hud);
   box-shadow: var(--shadow-plate);
 }
@@ -168,12 +245,14 @@
 .ol-root[data-gildmoss-layout]:not([data-narrow='true'])
   .ol-dock-left:has(.ol-panel-slot[data-main-workspace]:not([hidden])) {
   left: 50%;
-  top: calc(50vh / var(--ui-scale, 1));
+  top: calc(
+    (100vh / var(--ui-scale, 1) - min(848px, 100vh / var(--ui-scale, 1) - 160px)) / 2 - 12px
+  );
   bottom: auto;
   right: auto;
-  transform: translate(-50%, -50%);
+  transform: translateX(-50%);
   width: min(1152px, calc(100vw / var(--ui-scale, 1) - 48px));
-  height: min(842px, calc(100vh / var(--ui-scale, 1) - 120px));
+  height: min(848px, calc(100vh / var(--ui-scale, 1) - 160px));
 }
 .ol-root[data-gildmoss-layout] .ol-panel-slot[data-main-workspace] {
   width: 100%;
@@ -184,6 +263,12 @@
   max-width: none;
   height: 100%;
   max-height: none;
+}
+.ol-root[data-gildmoss-layout] .ol-panel-slot[data-main-workspace] > .ol-panel > .ol-panel-body {
+  padding: 24px;
+}
+.ol-root[data-gildmoss-layout] #mapPanel > .ol-panel-body {
+  padding-bottom: 36px;
 }
 .ol-root[data-gildmoss-layout] .ol-world-controls {
   bottom: 88px;
@@ -201,11 +286,22 @@
 }
 .ol-main-character-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 668fr) minmax(0, 412fr);
   gap: 24px;
 }
 .ol-main-character-grid > section {
+  position: relative;
   min-width: 0;
+}
+.ol-root:not([data-narrow='true']) .ol-main-character-grid > section + section::before {
+  content: '';
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: -12px;
+  inline-size: 1px;
+  block-size: 720px;
+  background: var(--line);
+  pointer-events: none;
 }
 .ol-events-quick {
   position: fixed;
@@ -214,32 +310,46 @@
   pointer-events: auto;
 }
 .ol-root[data-gildmoss-layout] .ol-events-quick > .ol-ibtn {
-  inline-size: 48px;
-  block-size: 48px;
-  background: var(--surface-raised);
-  box-shadow: inset 0 0 0 1px var(--line-control);
+  inline-size: 52px;
+  block-size: 52px;
+  background: var(--hotbar-bg, var(--surface-glass-hud));
+  box-shadow:
+    inset 0 0 0 1px var(--line-control),
+    var(--shadow-tile);
+}
+.ol-events-quick > .ol-ibtn > .ol-icon-wrap {
+  width: 26px;
+  height: 26px;
 }
 .ol-root[data-gildmoss-layout] .ol-events-quick > .ol-ibtn:hover {
   background: var(--surface-hover);
 }
 .ol-events-quick-panel {
-  width: 360px;
+  width: 427px;
   max-width: calc(100vw - 32px);
-  height: min(360px, 45vh);
+  height: min(414px, 45vh);
   display: flex;
   flex-direction: column;
+  padding: 12px;
+  gap: 8px;
 }
 .ol-events-quick-panel > header {
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+.ol-events-quick-panel > header > strong {
+  font: 600 var(--title-md-size) / var(--title-md-leading) var(--font-heading);
+}
+.ol-events-quick-panel > header > .ol-ibtn {
+  width: 28px;
+  height: 28px;
+}
 .ol-events-quick-panel > div {
   overflow: auto;
   flex: 1;
   min-height: 0;
 }
-.ol-root[data-gildmoss-layout] .ol-events-quick:has(.ol-events-quick-panel),
 .ol-root[data-gildmoss-layout][data-events-above-hotbar] .ol-events-quick {
   bottom: calc(var(--gildmoss-hotbar-inset) + var(--gildmoss-hotbar-height) + 8px);
 }
@@ -266,7 +376,7 @@
   width: 100%;
   justify-content: center;
 }
-.ol-root[data-narrow='true'] .ol-hotbar-slot {
+.ol-root[data-narrow='true'] .ol-gildmoss-hotbar .ol-hotbar-slot {
   width: calc((100vw / var(--ui-scale, 1) - 60px) / 10);
   max-width: 48px;
   min-width: 28px;
@@ -292,6 +402,9 @@
 .ol-root[data-narrow='true'] .ol-daylight-face {
   width: 44px;
   height: 44px;
+}
+.ol-root[data-narrow='true'] .ol-daylight {
+  width: 64px;
 }
 .ol-root[data-narrow='true'] .ol-events-quick {
   left: 8px;
@@ -372,14 +485,14 @@
   max-width: 380px;
 }
 .ol-gildmoss-hotbar .ol-hotbar-divider {
-  background: var(--metal-gold-line, var(--highlight));
+  background: var(--metal-gold-divider, var(--highlight));
 }
 .ol-minimap-place {
   text-align: center;
-  font-family: var(--font-heading);
+  font: 600 var(--world-name-size) / var(--world-name-leading) var(--font-heading);
   color: var(--ink);
   text-shadow: var(--fixed-hud-text-shadow);
-  margin-top: 8px;
+  margin-top: 5px;
 }
 
 .ol-narrator p {
@@ -429,23 +542,30 @@
   }
 }
 
+.ol-condition-status-groups {
+  display: grid;
+  gap: 8px;
+  grid-column: 1/-1;
+}
 .ol-condition-status-icons {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  grid-column: 1/-1;
+  gap: 4px;
   border-top: 1px solid var(--line);
-  padding-top: 12px;
+  padding-top: 8px;
 }
 .ol-condition-status-icon {
   --status-tone: var(--status-neutral);
   position: relative;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 32px;
   height: 32px;
   color: var(--status-tone);
   border: 2px solid var(--status-tone);
-  border-radius: 4px;
+  border-radius: 6px;
+  background: var(--status-ground, var(--surface));
 }
 .ol-condition-status-icon[data-tone='good'] {
   --status-tone: var(--status-good);
@@ -466,35 +586,57 @@
   min-width: 28px;
   padding: 4px;
   border-radius: inherit;
+  color: var(--ink);
+  --icon-finish: url(#ol-metal-ivory);
 }
 .ol-condition-status-icon .ol-progress-ring {
   position: absolute;
-  inset: -1px;
+  inset: 0;
   pointer-events: none;
   color: var(--status-tone);
 }
+.ol-condition-status-icon .ol-progress-ring circle {
+  /* The shared ring uses a 20-unit viewBox; these values draw the board's
+   * radius-15, 2px remaining arc at this 32px status size. */
+  r: 9.375px;
+  stroke-width: 1.25px;
+}
+.ol-condition-status-icon .ol-progress-ring .ol-progress-ring-track {
+  stroke-width: 0.625px;
+  opacity: 0.3;
+}
 .ol-root[data-gildmoss-layout] .ol-survival-name {
   grid-column: 1;
-  grid-row: 1/3;
+  grid-row: 1;
   display: flex;
   align-items: center;
 }
 .ol-root[data-gildmoss-layout] .ol-survival-name .ol-character-link {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  justify-content: center;
   width: 64px;
+  height: 64px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--portrait-ground, var(--surface));
   white-space: normal;
 }
 .ol-root[data-gildmoss-layout] .ol-survival > .ol-condition {
   grid-column: 2;
+  grid-row: 1;
+  align-self: center;
   font-size: 12px;
 }
 .ol-root[data-gildmoss-layout] .ol-survival .ol-meter {
-  grid-template-columns: 16px minmax(0, 1fr) 28px;
-  gap: 6px;
+  grid-template-columns: 16px minmax(0, 1fr) 24px;
+  gap: 8px;
+  height: 16px;
+}
+.ol-root[data-gildmoss-layout] .ol-survival .ol-meter-value {
+  font: 600 13px/16px var(--font-ui);
 }
 .ol-root[data-gildmoss-layout] .ol-survival .ol-meter-label {
   position: absolute;
@@ -507,7 +649,8 @@
   height: 6px;
 }
 .ol-root[data-gildmoss-layout] .ol-survival .ol-save-failure,
-.ol-root[data-gildmoss-layout] .ol-survival .ol-player-state {
+.ol-root[data-gildmoss-layout] .ol-survival .ol-player-state,
+.ol-root[data-gildmoss-layout] .ol-survival > .ol-caption {
   grid-column: 1/-1;
 }
 .ol-root[data-gildmoss-layout]:not([data-narrow='true'])
@@ -517,11 +660,22 @@
   top: calc(50vh / var(--ui-scale, 1));
   bottom: auto;
   transform: translate(-50%, -50%);
-  width: min(1060px, calc(100vw / var(--ui-scale, 1) - 48px));
-  height: min(780px, calc(100vh / var(--ui-scale, 1) - 120px));
+  width: min(1088px, calc(100vw / var(--ui-scale, 1) - 48px));
+  height: min(760px, calc(100vh / var(--ui-scale, 1) - 120px));
 }
 .ol-root[data-gildmoss-layout]:not([data-narrow='true'])
-  .ol-dock-right:has(.ol-panel-slot:not([hidden]) > #world-editorPanel[data-workspace]) {
+  .ol-dock-right:has(.ol-panel-slot:not([hidden]) > #world-editorPanel) {
+  top: calc(50vh / var(--ui-scale, 1) - 48px);
+}
+.ol-root[data-gildmoss-layout]:not([data-narrow='true'])
+  .ol-dock-right:has(.ol-panel-slot:not([hidden]) > #tradePanel) {
+  top: calc(50vh / var(--ui-scale, 1) - 58px);
+  width: min(1024px, calc(100vw / var(--ui-scale, 1) - 48px));
+  height: min(532px, calc(100vh / var(--ui-scale, 1) - 160px));
+}
+.ol-root[data-gildmoss-layout]:not([data-narrow='true'])
+  .ol-dock-right:has(.ol-panel-slot[data-expanded-workspace]:not([hidden]) > #world-editorPanel) {
+  top: calc(50vh / var(--ui-scale, 1));
   width: calc(100vw / var(--ui-scale, 1) - 48px);
   height: calc(100vh / var(--ui-scale, 1) - 48px);
 }
@@ -536,8 +690,54 @@
   max-width: none;
 }
 #tradePanel {
-  width: min(1060px, calc(100vw / var(--ui-scale, 1) - 48px));
+  width: min(1024px, calc(100vw / var(--ui-scale, 1) - 48px));
   max-width: none;
+}
+.ol-root[data-gildmoss-layout] #tradePanel > .ol-panel-body {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  padding: 16px 24px 24px;
+}
+.ol-root[data-gildmoss-layout] #tradePanel > .ol-panel-body > .ol-item-trade {
+  flex: 1;
+  min-height: 0;
+}
+.ol-root[data-gildmoss-layout] :is(#tradePanel, #world-editorPanel) > .ol-panel-head {
+  position: relative;
+  height: 72px;
+  min-height: 72px;
+  padding: 16px 16px 8px 24px;
+  align-items: center;
+  border: 0;
+}
+.ol-root[data-gildmoss-layout] :is(#tradePanel, #world-editorPanel) > .ol-panel-head::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+.ol-root[data-gildmoss-layout] :is(#tradePanel, #world-editorPanel) .ol-panel-heading {
+  align-items: center;
+  gap: 12px;
+  min-height: 48px;
+}
+.ol-root[data-gildmoss-layout] :is(#tradePanel, #world-editorPanel) .ol-panel-title {
+  font-size: 24px;
+  line-height: 28px;
+}
+.ol-root[data-gildmoss-layout] #world-editorPanel .ol-panel-heading-copy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+.ol-root[data-gildmoss-layout] #world-editorPanel .ol-panel-heading > .ol-icon-wrap {
+  --icon-finish: url(#ol-metal-gold);
 }
 /* Keep the seal above the shared theme's quiet-button material rules. */
 .ol-root[data-gildmoss-layout] .ol-game-seal {
@@ -546,20 +746,31 @@
   flex-shrink: 0;
   padding: 0;
   border: 0;
-  background: transparent;
+  border-radius: 6px;
+  background: var(--hotbar-bg, var(--surface-glass-hud));
+  box-shadow:
+    inset 0 0 0 1px var(--line-control),
+    var(--shadow-tile);
+}
+.ol-game-seal .ol-logo-seal {
+  width: 32px;
+  height: 32px;
+  border-width: 2px;
 }
 .ol-logo-seal {
   box-sizing: border-box;
-  padding: 3px;
-  border: 1px solid var(--highlight);
+  padding: 0;
+  border: 4px solid transparent;
   border-radius: 50%;
-  background: var(--surface-glass-hud);
+  background:
+    linear-gradient(var(--surface), var(--surface)) padding-box,
+    var(--metal-gold-rim, var(--highlight)) border-box;
 }
 
 /* The meter keeps its full accessible name while the compact plate uses its symbol. */
 .ol-root[data-gildmoss-layout] .ol-survival .ol-condition {
   display: grid;
-  gap: 8px;
+  gap: 0;
 }
 .ol-gildmoss-notices {
   position: absolute;
@@ -588,22 +799,6 @@
   width: 100%;
 }
 
-.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar .ol-hotbar-slot {
-  background: var(--surface-slot-empty, var(--surface));
-  border: 0;
-  box-shadow: inset 0 0 0 1px var(--line);
-  color: var(--ink-muted);
-}
-.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar > .ol-ibtn {
-  background: var(--surface-glass-hud);
-}
-.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar > .ol-ibtn[aria-pressed='true'] {
-  background: var(--surface-selected);
-  color: var(--highlight);
-  box-shadow:
-    inset 0 0 0 1px var(--highlight),
-    var(--hotbar-glow);
-}
 .ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar .ol-hotbar-slot:hover {
   background: var(--surface-hover);
   box-shadow: inset 0 0 0 1px var(--line-hover);
@@ -624,8 +819,8 @@
 }
 .ol-panel-slot[data-main-workspace] > .ol-panel > .ol-panel-head {
   position: absolute;
-  right: 8px;
-  top: 6px;
+  right: 16px;
+  top: 16px;
   z-index: 2;
   padding: 0;
   background: transparent;
@@ -642,18 +837,23 @@
   position: fixed;
   left: 50%;
   /* Reuse measured logical footer size, including wrapping and interface scale. */
-  bottom: calc(var(--gildmoss-hotbar-inset) + var(--gildmoss-hotbar-height) + 12px);
+  bottom: calc(var(--gildmoss-hotbar-inset) + var(--gildmoss-hotbar-height) + 16px);
   transform: translateX(-50%);
   display: block;
   padding: 12px;
-  width: min(984px, calc(100vw / var(--ui-scale, 1) - 48px));
+  width: min(986px, calc(100vw / var(--ui-scale, 1) - 48px));
   /* Close stays above the bar; only its contents scroll on short screens. */
   overflow: visible;
   max-height: none;
 }
+[data-theme='gildmoss'] .ol-world-composer.ol-card {
+  border: 0;
+  background: var(--lantern-light), var(--surface-glass-hud);
+  box-shadow: var(--shadow-plate);
+}
 .ol-world-composer-body {
   display: grid;
-  grid-template-columns: 200px minmax(0, 1fr) 100px;
+  grid-template-columns: 200px minmax(0, 1fr) 92px;
   gap: 8px 12px;
   max-height: max(
     0px,
@@ -692,19 +892,46 @@
   min-width: 0;
   width: 100%;
 }
+.ol-composer-target .ol-select-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.ol-composer-target .ol-select-trigger {
+  /* This picker carries a portrait rather than the shared field's 16px glyph. */
+  grid-template-columns: 48px minmax(0, 1fr) 32px;
+  min-height: 64px;
+  background: transparent;
+  gap: 8px;
+}
+.ol-composer-target .ol-select-trigger .ol-select-input {
+  font-family: var(--font-heading);
+  font-size: var(--title-sm-size);
+  line-height: var(--title-sm-leading);
+  font-weight: 600;
+}
+.ol-composer-target .ol-portrait {
+  flex: none;
+}
 .ol-root .ol-world-volume {
   grid-column: 3;
   grid-row: 1;
   display: flex;
-  gap: 2px;
+  gap: 4px;
   margin: 0;
-  width: auto;
+  width: 92px;
   padding: 0;
 }
 .ol-world-volume .ol-ibtn {
-  width: 30px;
+  width: 28px;
   height: 28px;
   min-width: 28px;
+}
+.ol-world-volume .ol-ibtn > .ol-icon-wrap {
+  width: 18px;
+  height: 18px;
 }
 .ol-root .ol-world-composer-input {
   grid-column: 2/4;
@@ -718,14 +945,23 @@
   display: flex;
   align-items: end;
   gap: 12px;
+  min-width: 0;
+  width: 100%;
 }
 .ol-world-composer-input .ol-composer > .ol-btn {
-  width: 100px;
+  width: 92px;
+  height: 28px;
+  min-height: 28px;
   flex-shrink: 0;
+  font-size: var(--text-detail-size);
+  line-height: var(--text-detail-leading);
 }
 .ol-world-composer-input .ol-composer textarea {
-  min-height: 64px;
+  min-height: 40px;
   max-height: 140px;
+}
+[data-theme='gildmoss'] .ol-world-composer-input .ol-composer > .ol-btn {
+  min-height: 28px;
 }
 .ol-world-composer-body > p,
 .ol-world-composer-body > .ol-world-item-mention {
@@ -757,31 +993,33 @@
 .ol-dial-sunrise,
 .ol-dial-sunset {
   position: absolute;
-  top: calc(50% - 4px);
-  width: 8px;
-  height: 8px;
+  top: 42.361111%;
+  width: 13.888889%;
+  height: 9.722222%;
 }
 .ol-dial-sunrise {
-  left: 3px;
+  left: 18.75%;
 }
 .ol-dial-sunset {
-  right: 3px;
+  left: 67.361111%;
 }
 .ol-root:not([data-narrow='true']) .ol-inspector-slot[data-person] {
-  inset-inline-start: calc(50% - min(480px, 42vw) + var(--inspector-offset));
-  top: calc(50vh / var(--ui-scale, 1) - 300px + var(--inspector-offset));
-  height: min(600px, calc(100vh / var(--ui-scale, 1) - 160px));
-  max-height: min(600px, calc(100vh / var(--ui-scale, 1) - 160px));
+  inset-inline-start: calc(
+    50% - min(448px, (100vw / var(--ui-scale, 1) - 48px) / 2) + var(--inspector-offset)
+  );
+  top: max(24px, calc(50vh / var(--ui-scale, 1) - 356px + var(--inspector-offset)));
+  height: min(552px, calc(100vh / var(--ui-scale, 1) - 160px));
+  max-height: min(552px, calc(100vh / var(--ui-scale, 1) - 160px));
 }
 .ol-root:not([data-narrow='true']) .ol-inspector-slot[data-person] > .ol-panel {
-  width: var(--inspection-person-width, min(960px, calc(100vw / var(--ui-scale, 1) - 48px)));
+  width: var(--inspection-person-width, min(896px, calc(100vw / var(--ui-scale, 1) - 48px)));
   height: 100%;
 }
 /* A person and an object are a comparison, not a cascade through the person's
  * heading. Keep the lone board composition; share desktop width when both open. */
 .ol-root:not([data-narrow='true'])
   .ol-inspectors:has(.ol-inspector-slot[data-person]):has(.ol-inspector-slot:not([data-person])) {
-  --inspection-person-width: min(960px, calc((100vw / var(--ui-scale, 1) - 64px) * 0.65));
+  --inspection-person-width: min(896px, calc((100vw / var(--ui-scale, 1) - 64px) * 0.65));
   --inspection-object-width: min(420px, calc((100vw / var(--ui-scale, 1) - 64px) * 0.35));
 }
 .ol-root:not([data-narrow='true'])
@@ -793,17 +1031,95 @@
   width: var(--inspection-object-width, min(420px, calc(100vw / var(--ui-scale, 1) - 32px)));
 }
 .ol-inspector-slot[data-person] .ol-panel-head {
+  position: relative;
+  min-height: 104px;
   padding: 24px 24px 16px;
-  border-bottom: 1px solid var(--line);
+  border: 0;
+}
+.ol-inspector-slot[data-person] .ol-panel-heading {
+  align-items: center;
+  gap: 16px;
+}
+.ol-inspector-slot[data-person] .ol-panel-heading-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ol-inspector-slot[data-person] .ol-panel-tools {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+}
+.ol-inspector-slot[data-person] .ol-panel-head .ol-portrait {
+  border-radius: 8px;
+  background: var(--portrait-ground, var(--surface));
+}
+.ol-person-identity-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 28px;
+}
+.ol-inspector-slot[data-person] .ol-person-identity-line > .ol-nickname-compact {
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+.ol-person-identity-line > .ol-nickname-compact > summary {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.ol-inspector-slot[data-person] .ol-person-identity-line > p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-detail-size);
+  line-height: var(--text-detail-leading);
+}
+.ol-person-identity-line > p::before {
+  content: '·';
+  margin-right: 8px;
+}
+.ol-person-identity-line:has(.ol-nickname-compact[open]) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+.ol-person-identity-line:has(.ol-nickname-compact[open]) > p::before {
+  content: none;
+}
+.ol-inspector-slot[data-person] > .ol-panel > .ol-panel-body {
+  padding: 8px 0 24px;
 }
 .ol-person-details > [role='tablist'] {
+  position: relative;
   display: flex;
-  gap: 24px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--line);
+  gap: 4px;
+  height: 40px;
+  margin: 0;
+  padding: 0 24px;
+  border: 0;
+}
+.ol-person-details > [role='tablist']::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+.ol-person-details > [role='tabpanel'] {
+  margin: 0;
+  padding: 24px 24px 0;
 }
 .ol-person-details {
   container-type: inline-size;
+}
+.ol-panel-body > .ol-person-details {
+  margin: 0;
 }
 .ol-person-details [role='tab'] {
   display: inline-flex;
@@ -814,11 +1130,11 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: start;
-  gap: 16px 24px;
+  gap: 24px;
 }
 .ol-person-column {
   display: grid;
-  gap: 16px;
+  gap: 24px;
   align-content: start;
   min-width: 0;
 }
@@ -857,15 +1173,34 @@
   grid-template-columns: 16px 54px minmax(0, 1fr) 36px;
 }
 .ol-person-observation {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
   margin-top: 8px;
 }
+.ol-person-observation > :first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
 .ol-person-observation > .ol-caption {
-  flex-shrink: 0;
-  order: 1;
+  margin: 0;
+  white-space: nowrap;
+  font-size: var(--text-label-size);
+  line-height: var(--text-detail-leading);
+  color: var(--ink-faint);
+}
+.ol-person-observation .ol-event-time {
+  display: inline;
+  min-height: 0;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  font: 500 var(--text-label-size) / var(--text-detail-leading) var(--font-ui);
+  color: var(--ink-faint);
 }
 .ol-person-condition-list {
   display: flex;
@@ -914,35 +1249,42 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+@container (max-width: 360px) {
+  .ol-person-observation {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 4px;
+  }
+  .ol-person-observation > .ol-caption {
+    justify-self: end;
+  }
+}
 
 .ol-main-destinations .ol-btn {
   font-size: var(--text-tab-size, 15px);
   line-height: var(--text-tab-leading, 20px);
 }
 
-@media (max-width: 1279px) {
-  .ol-root[data-gildmoss-layout] {
-    --gildmoss-hotbar-inset: 16px;
-  }
-  .ol-gildmoss-hotbar {
-    gap: 2px;
-  }
-  .ol-hotbar-slot {
-    width: 40px;
-    height: 44px;
-  }
-  .ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar > .ol-ibtn {
-    width: 32px;
-    height: 36px;
-    flex-basis: 32px;
-  }
-  .ol-hotbar-divider {
-    margin: 0 4px;
-  }
-  .ol-root[data-gildmoss-layout]:not([data-narrow='true'])
-    .ol-dock-left:has(.ol-panel-slot[data-main-workspace]:not([hidden])) {
-    width: min(78vw, calc(100vw / var(--ui-scale, 1) - 48px));
-  }
+.ol-root[data-gildmoss-layout][data-compact='true']:not([data-narrow='true']) {
+  --gildmoss-hotbar-inset: 16px;
+}
+.ol-root[data-compact='true'] .ol-gildmoss-hotbar {
+  gap: 8px;
+}
+.ol-root[data-compact='true']:not([data-narrow='true']) .ol-hotbar-slot {
+  width: 40px;
+  height: 44px;
+}
+.ol-root[data-compact='true'] .ol-hotbar-panels > .ol-ibtn {
+  width: 32px;
+  height: 36px;
+}
+.ol-root[data-compact='true'] .ol-hotbar-intents > .ol-ibtn {
+  width: 40px;
+  height: 44px;
+}
+.ol-root[data-compact='true'] .ol-game-seal {
+  width: 32px;
+  height: 36px;
 }
 
 @media (max-width: 719px) {

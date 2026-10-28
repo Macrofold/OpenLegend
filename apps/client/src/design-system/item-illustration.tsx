@@ -13,6 +13,7 @@ export function ItemIllustration({
   size = 32,
   fallbackSize = size,
   detail = false,
+  nativeSize = false,
   className = '',
 }: {
   art?: ItemArt;
@@ -21,6 +22,8 @@ export function ItemIllustration({
   size?: number;
   fallbackSize?: number;
   detail?: boolean;
+  /** Slot artwork keeps its authored pixels; the surrounding well still bounds it. */
+  nativeSize?: boolean;
   className?: string;
 }) {
   const path = detail ? (art?.detailPath ?? art?.path) : art?.path;
@@ -35,8 +38,8 @@ export function ItemIllustration({
         <img
           src={assetUrl(path)}
           alt=""
-          width={size}
-          height={size}
+          width={nativeSize ? undefined : size}
+          height={nativeSize ? undefined : size}
           draggable={false}
           onError={() => setFailedPath(path)}
         />

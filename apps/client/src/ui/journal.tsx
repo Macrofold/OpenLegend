@@ -73,8 +73,8 @@ export function Journal({
       <TabList className="ol-journal-nav" aria-label="Journal section">
         {sections.map(({ value, label, icon }) => (
           <Tab key={value} id={value} className="ol-btn" data-variant="quiet">
-            <Icon name={icon} size={16} />
-            {label}
+            <Icon name={icon} size={18} />
+            <span>{label}</span>
           </Tab>
         ))}
       </TabList>

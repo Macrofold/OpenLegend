@@ -8,7 +8,12 @@ import {
   type MainDestination,
 } from './ui/gildmoss-hud';
 import { isTheme } from './design-system/themes';
-import { ItemTrade, TradeCommandStatus, type TradeNegotiationTarget } from './ui/item-trade';
+import {
+  ItemTrade,
+  itemTradeTitle,
+  TradeCommandStatus,
+  type TradeNegotiationTarget,
+} from './ui/item-trade';
 import { useInventoryCommand } from './ui/use-inventory-command';
 import { inventoryCommandStorageKey } from './inventory-command-record';
 import { browserSubscription } from './browser-network';
@@ -109,6 +114,8 @@ import {
   Condition,
   EmptyState,
   Icon,
+  Tag,
+  TextTooltip,
   IconButton,
   Launcher,
   Panel,
@@ -922,6 +929,12 @@ function App({
     aimPanel,
   ]);
   const workspaceWidth = Math.min(792, Math.max(336, width / scale - 184));
+  function toggleWorkspace(id: PanelId) {
+    setExpandedWorkspaces((current) =>
+      current.includes(id) ? current.filter((value) => value !== id) : [...current, id],
+    );
+    setOpen((current) => [...current.filter((value) => value !== id), id]);
+  }
   function fit(panels: PanelId[]) {
     const available = width / scale;
     if (narrow) return panels;
@@ -934,7 +947,7 @@ function App({
           ? available - 48
           : mainWorkspaces.includes(id)
             ? Math.min(1152, available - 48, width < 1280 ? width * 0.78 : Infinity)
-            : Math.min(1060, available - 48)
+            : Math.min(id === 'world-editor' ? 1088 : 1024, available - 48)
         : expandedWorkspaces.includes(id)
           ? workspaceWidth
           : panelInfo[id].wide
@@ -2101,14 +2114,20 @@ function App({
     setPersonPosition(null);
     setPicker(null);
   }
-  const title = (id: PanelId) =>
-    id === 'activity' && activityEntry
+  const title = (id: PanelId) => {
+    const trade =
+      id === 'trade'
+        ? view?.entities.find((person) => person.id === tradeTarget)?.trade
+        : undefined;
+    if (trade) return itemTradeTitle(trade);
+    return id === 'activity' && activityEntry
       ? activityEntry.label
       : id === 'nearby' && choosingActionSubject
         ? 'Choose a subject'
         : id === 'intelligence' && intelligenceSelection
           ? `${intelligenceSelection.actorName ?? 'World agent'} request`
           : panelInfo[id].title;
+  };
   function actionBrowser(
     picker: PickerContext,
     presentation: 'context' | 'inspection' = 'context',
@@ -2189,6 +2208,7 @@ function App({
         return person?.trade ? (
           <ItemTrade
             key={person.trade.scope}
+            showHeading={false}
             trade={person.trade}
             view={view}
             connected={connected}
@@ -2359,16 +2379,7 @@ function App({
       case 'crafting':
         return (
           <>
-            <SegmentedControl
-              label="Crafting section"
-              options={[
-                { value: 'recipes', label: 'Crafting' },
-                { value: 'invention', label: 'Invention' },
-              ]}
-              value={craftingSection}
-              onChange={setCraftingSection}
-            />
-            <div hidden={craftingSection !== 'recipes'}>
+            <div className="ol-crafting-section" hidden={craftingSection !== 'recipes'}>
               <Crafting
                 {...props}
                 operations={workBatchOperations}
@@ -2380,7 +2391,12 @@ function App({
                 browseRecipe={(recipeId, opener) => browseActions({ recipeId }, opener)}
               />
             </div>
-            <div hidden={craftingSection !== 'invention'}>{content('agent')}</div>
+            <div className="ol-crafting-section" hidden={craftingSection !== 'invention'}>
+              <Button variant="quiet" icon="ui.back" onPress={() => setCraftingSection('recipes')}>
+                Back to recipes
+              </Button>
+              {content('agent')}
+            </div>
           </>
         );
       case 'building':
@@ -2455,6 +2471,11 @@ function App({
         return (
           <WorldAgent
             mode={id === 'agent' ? 'invent' : id === 'world-editor' ? 'author' : 'inspect'}
+            workspaceControl={
+              id === 'world-editor'
+                ? { expanded: expandedWorkspaces.includes(id), toggle: () => toggleWorkspace(id) }
+                : undefined
+            }
             conditionPolicyRevision={conditionPolicyRevision}
             onStatusPolicyChanged={() => setConditionPolicyRevision((value) => value + 1)}
             actorId={view.player.id}
@@ -2767,7 +2788,7 @@ function App({
         data-reduce-motion={reduce}
         data-narrow={narrow}
         data-compact={width / scale < 1200}
-        data-tight={width / scale < 360}
+        data-tight={width / scale < 560}
         data-short={shortHud}
         data-picking={choosingActionSubject}
         style={{ '--ui-scale': scale } as CSSProperties}
@@ -2799,17 +2820,19 @@ function App({
               <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
                 <span className="ol-gildmoss-frame" aria-hidden="true" />
                 <div className="ol-survival-name">
-                  <Button
-                    variant="quiet"
-                    className="ol-character-link"
-                    aria-label={view.player.name}
-                    onPress={() => {
-                      setConditionEntry((value) => value + 1);
-                      show('character');
-                    }}
-                  >
-                    <Portrait art={view.player.portrait} size={64} />
-                  </Button>
+                  <TextTooltip text={`Character (C) · ${view.player.name}`}>
+                    <Button
+                      variant="quiet"
+                      className="ol-character-link"
+                      aria-label={`Character: ${view.player.name} (C)`}
+                      onPress={() => {
+                        setConditionEntry((value) => value + 1);
+                        show('character');
+                      }}
+                    >
+                      <Portrait art={view.player.portrait} size={64} />
+                    </Button>
+                  </TextTooltip>
                 </div>
                 <Condition {...view.player} />
                 <EvasionCooldown evasion={view.player.evasion} />
@@ -2921,7 +2944,7 @@ function App({
                 </section>
               ) : (
                 <IconButton
-                  icon="ui.journal"
+                  icon="ui.events"
                   label="Events quick view"
                   onPress={() => setEventsQuick(true)}
                 />
@@ -2975,6 +2998,7 @@ function App({
                       key={id}
                       className="ol-panel-slot"
                       data-main-workspace={mainWorkspaces.includes(id) ? '' : undefined}
+                      data-expanded-workspace={expandedWorkspaces.includes(id) ? '' : undefined}
                       hidden={!panelVisible(id)}
                       style={{ order: open.indexOf(id) }}
                       onPointerDownCapture={(event) => {
@@ -2996,6 +3020,22 @@ function App({
                     >
                       <Panel
                         title={title(id)}
+                        titleArtwork={
+                          id === 'world-editor' ? (
+                            <Icon name="ui.agent" size={24} />
+                          ) : id === 'trade' ? (
+                            <Portrait
+                              art={
+                                view.entities.find((person) => person.id === tradeTarget)?.portrait
+                              }
+                              head
+                              size={40}
+                            />
+                          ) : undefined
+                        }
+                        titleDetails={
+                          id === 'world-editor' ? <Tag tone="highlight">God mode</Tag> : undefined
+                        }
                         tabs={
                           mainWorkspaces.includes(id) ? (
                             <MainPanelTabs
@@ -3014,7 +3054,6 @@ function App({
                           [
                             'inventory',
                             'agent',
-                            'world-editor',
                             'world-inspection',
                             'journal',
                             'events',
@@ -3023,18 +3062,8 @@ function App({
                           ].includes(id)
                             ? {
                                 expanded: expandedWorkspaces.includes(id),
-                                width: id === 'world-editor' ? width / scale - 48 : workspaceWidth,
-                                onToggle: () => {
-                                  setExpandedWorkspaces((current) =>
-                                    current.includes(id)
-                                      ? current.filter((value) => value !== id)
-                                      : [...current, id],
-                                  );
-                                  setOpen((current) => [
-                                    ...current.filter((value) => value !== id),
-                                    id,
-                                  ]);
-                                },
+                                width: workspaceWidth,
+                                onToggle: () => toggleWorkspace(id),
                               }
                             : undefined
                         }
@@ -3121,7 +3150,7 @@ function App({
                       }
                       titleDetails={
                         inspected?.kind === 'actor' ? (
-                          <>
+                          <div className="ol-person-identity-line">
                             <NicknameEditor
                               entity={inspected}
                               view={view}
@@ -3131,7 +3160,7 @@ function App({
                             {inspected.description && (
                               <p className="ol-caption">{inspected.description}</p>
                             )}
-                          </>
+                          </div>
                         ) : undefined
                       }
                       draggable={!narrow}

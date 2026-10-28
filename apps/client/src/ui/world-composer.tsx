@@ -33,24 +33,7 @@ export type WorldIntent = {
   item?: { id: string; name: string };
 };
 export function WorldIntentIcon({ mode }: { mode: WorldIntent['mode'] }) {
-  return mode === 'speak' ? (
-    <Icon name="ui.speech" />
-  ) : (
-    <svg
-      className="ol-icon"
-      viewBox="0 0 24 24"
-      width="20"
-      height="20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M8 13V6a1.5 1.5 0 0 1 3 0v6-8a1.5 1.5 0 0 1 3 0v8-6a1.5 1.5 0 0 1 3 0v6-3a1.5 1.5 0 0 1 3 0v6c0 4-2.5 7-6 7h-1c-2 0-3.5-1-4.5-2.5L4 13a1.7 1.7 0 0 1 2.7-2L8 13Z" />
-    </svg>
-  );
+  return <Icon name={mode === 'speak' ? 'ui.speech' : 'ui.act'} />;
 }
 const volumes: SpeechVolume[] = ['whisper', 'normal', 'shout'];
 type Attempt = {
@@ -528,10 +511,12 @@ function ScopedWorldComposer({
         </div>
         <div className="ol-world-composer-body">
           <div className="ol-composer-target">
-            <Portrait art={recipient?.portrait} head size={48} />
             {chooseTarget && !portalTarget ? (
               <SelectField
                 label={intent?.mode === 'speak' ? 'To' : 'Target'}
+                triggerArtwork={<Portrait art={recipient?.portrait} head size={48} />}
+                toggleLabel={intent?.mode === 'speak' ? 'Choose addressee' : 'Choose target'}
+                placeholder={intent?.mode === 'speak' ? 'Choose a listener…' : 'Choose a target…'}
                 value={intent?.targetId ?? ''}
                 onChange={chooseTarget}
                 options={[
@@ -542,7 +527,10 @@ function ScopedWorldComposer({
                 ]}
               />
             ) : (
-              <span>{recipientLabel}</span>
+              <>
+                <Portrait art={recipient?.portrait} head size={48} />
+                <span>{recipientLabel}</span>
+              </>
             )}
           </div>
           {notice && !(intent?.mode === 'speak' && notice === preferenceNotice) && (

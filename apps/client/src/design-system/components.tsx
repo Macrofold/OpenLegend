@@ -169,19 +169,32 @@ export function DisclosurePopover({
   label,
   children,
   className = '',
+  icon,
+  contentClassName = '',
 }: {
   label: string;
   children: ReactNode;
   className?: string;
+  icon?: string;
+  contentClassName?: string;
 }) {
   return (
     <DialogTrigger>
-      <Button size="sm" variant="quiet" className={`ol-disclosure-trigger ${className}`}>
-        {label}
-        <span className="ol-disclosure-chevron" aria-hidden="true" />
-      </Button>
+      {icon ? (
+        <AriaButton className={`ol-ibtn ol-disclosure-trigger ${className}`} aria-label={label}>
+          <Icon name={icon} size={16} />
+        </AriaButton>
+      ) : (
+        <Button size="sm" variant="quiet" className={`ol-disclosure-trigger ${className}`}>
+          {label}
+          <span className="ol-disclosure-chevron" aria-hidden="true" />
+        </Button>
+      )}
       <Popover className="ol-root ol-disclosure-popover" placement="bottom end" offset={8}>
-        <LoadingDialog aria-label={label} className="ol-portal-content ol-disclosure-content">
+        <LoadingDialog
+          aria-label={label}
+          className={`ol-portal-content ol-disclosure-content ${contentClassName}`}
+        >
           {children}
         </LoadingDialog>
       </Popover>
@@ -194,6 +207,7 @@ export function IconButton({
   onPress,
   pressed,
   disabled,
+  variant = 'quiet',
   ...props
 }: {
   icon: string;
@@ -202,11 +216,13 @@ export function IconButton({
   pressed?: boolean;
   disabled?: boolean;
   id?: string;
+  variant?: 'quiet' | 'secondary';
 }) {
   return (
     <AriaButton
       {...props}
       className="ol-ibtn"
+      data-variant={variant}
       aria-label={label}
       aria-pressed={pressed}
       isDisabled={disabled}
@@ -268,6 +284,7 @@ export function SelectField({
   toggleLabel,
   disabledKeys,
   onOpenChange,
+  triggerArtwork,
 }: {
   label: string;
   value?: string | null;
@@ -285,6 +302,8 @@ export function SelectField({
   toggleLabel?: string;
   disabledKeys?: string[];
   onOpenChange?(open: boolean): void;
+  /** A permitted portrait or illustration can identify the current choice. */
+  triggerArtwork?: ReactNode;
 }) {
   const trigger = useRef<HTMLDivElement>(null);
   const [popupWidth, setPopupWidth] = useState<number>();
@@ -335,7 +354,7 @@ export function SelectField({
     >
       <Label className="ol-select-label">{label}</Label>
       <SelectInputGroup trigger={trigger}>
-        <Icon name="ui.search" size={16} />
+        {triggerArtwork ?? <Icon name="ui.search" size={16} />}
         <Input className="ol-select-input" autoFocus={autoFocus} placeholder={placeholder} />
         <AriaButton
           className="ol-select-toggle"
@@ -421,11 +440,14 @@ export function Condition({
   valueText,
   fieldErrors,
   onTextChange,
+  showCondition = false,
 }: {
   attributes: Omit<import('@open-legend/protocol').AttributeView, 'version' | 'revision'>[];
   valueText?: Record<string, string>;
   fieldErrors?: Record<string, string>;
   onTextChange?(id: string, value: string): void;
+  /** The character sheet has room for the same permitted state beside the need. */
+  showCondition?: boolean;
 }) {
   const errorId = useId();
   return (
@@ -522,6 +544,7 @@ export function Condition({
                 name
               )}
             </span>
+            {showCondition && <span className="ol-meter-state">{attribute.condition}</span>}
             <span className="ol-meter-track" aria-hidden="true">
               <span className="ol-meter-fill" />
             </span>

@@ -50,37 +50,40 @@ export function MainPanelTabs({
   mapAvailable: boolean;
 }) {
   return (
-    <nav
-      className="ol-main-destinations"
-      aria-label="Character and world records"
-      onFocusCapture={(event) => {
-        if (event.target instanceof HTMLButtonElement)
-          revealHorizontalChild(event.currentTarget, event.target);
-      }}
-    >
-      {destinations
-        .filter(({ id }) => id !== 'map' || mapAvailable)
-        .map(({ id, label, icon, key }) => (
-          <Button
-            key={id}
-            icon={icon}
-            variant="quiet"
-            aria-current={selected === id ? 'page' : undefined}
-            onPress={() => show(id)}
-            aria-description={key ? `${label} (${key})` : label}
-            aria-keyshortcuts={key}
-          >
-            <span className="ol-main-destination-label">
-              {label}
-              {key && (
-                <kbd className="ol-kbd" aria-hidden="true">
-                  {key}
-                </kbd>
-              )}
-            </span>
-          </Button>
-        ))}
-    </nav>
+    <div className="ol-main-destination-strip">
+      <nav
+        className="ol-main-destinations"
+        aria-label="Character and world records"
+        onFocusCapture={(event) => {
+          if (event.target instanceof HTMLButtonElement)
+            revealHorizontalChild(event.currentTarget, event.target);
+        }}
+      >
+        {destinations
+          .filter(({ id }) => id !== 'map' || mapAvailable)
+          .map(({ id, label, icon, key }) => (
+            <Button
+              key={id}
+              className="ol-navigation-tab"
+              icon={icon}
+              variant="quiet"
+              aria-current={selected === id ? 'page' : undefined}
+              onPress={() => show(id)}
+              aria-description={key ? `${label} (${key})` : label}
+              aria-keyshortcuts={key}
+            >
+              <span className="ol-main-destination-label">
+                {label}
+                {key && (
+                  <kbd className="ol-kbd" aria-hidden="true">
+                    {key}
+                  </kbd>
+                )}
+              </span>
+            </Button>
+          ))}
+      </nav>
+    </div>
   );
 }
 
@@ -104,7 +107,7 @@ export function DaylightDial({ clock }: { clock: GameView['clock'] }) {
     >
       {policy && (
         <div className="ol-daylight-face" data-day={lighting.isDay} aria-hidden="true">
-          <span className="ol-daylight-horizon" />
+          <span className="ol-daylight-sky" />
           <img
             className="ol-dial-sunrise"
             src={assetUrl(
@@ -121,14 +124,17 @@ export function DaylightDial({ clock }: { clock: GameView['clock'] }) {
           />
           <span
             className="ol-daylight-orb"
-            style={{ left: `${50 + 33 * Math.cos(angle)}%`, top: `${50 + 33 * Math.sin(angle)}%` }}
+            style={{
+              left: `${50 + (28 / 72) * 100 * Math.cos(angle)}%`,
+              top: `${50 + (28 / 72) * 100 * Math.sin(angle)}%`,
+            }}
           >
             <img
               src={assetUrl(
                 `apps/client/src/design-system/gildmoss/icons/hud/hud-${lighting.isDay ? 'sun' : 'moon'}.svg`,
               )}
-              width={14}
-              height={14}
+              width={10}
+              height={10}
               alt=""
             />
           </span>
@@ -270,6 +276,7 @@ export function QuickSlots({
               key={index}
               className="ol-hotbar-slot"
               variant="quiet"
+              data-empty={!id || undefined}
               aria-label={`Quick slot ${index === 9 ? 0 : index + 1}: ${label}`}
               aria-description={`${label}. Right-click or press Shift+F10 to change this shortcut.`}
               onContextMenu={(event) => {
@@ -297,7 +304,9 @@ export function QuickSlots({
                     art={item.art}
                     icon={item.icon ?? 'ui.inventory'}
                     label={item.name}
-                    size={20}
+                    size={44}
+                    fallbackSize={24}
+                    nativeSize
                   />
                   {item.quantity > 1 && <span className="ol-slot-count">{item.quantity}</span>}
                 </>
@@ -454,7 +463,7 @@ export function GildmossHotbar({
   browse(item: InventoryItemSummary, opener: Element): void;
 }) {
   return (
-    <div className="ol-gildmoss-hotbar" aria-label="Play controls">
+    <nav className="ol-gildmoss-hotbar" aria-label="Play controls">
       <QuickSlots
         key={JSON.stringify([
           view.worldId,
@@ -468,53 +477,57 @@ export function GildmossHotbar({
         visible={visible}
       />
       <span className="ol-hotbar-divider" />
-      <IconButton
-        icon="ui.speech"
-        label="Speak (Shift+S)"
-        pressed={mode === 'speak'}
-        onPress={() => intent('speak')}
-      />
-      <IconButton
-        icon="ui.act"
-        label="Act (Shift+A)"
-        pressed={mode === 'act'}
-        onPress={() => intent('act')}
-      />
-      <IconButton
-        icon="ui.attack-mode"
-        label="Combat mode"
-        pressed={attackMode}
-        disabled={!connected || !view.access?.controlling}
-        onPress={toggleAttack}
-      />
+      <div className="ol-hotbar-intents" role="group" aria-label="Speech and action modes">
+        <IconButton
+          icon="ui.speech"
+          label="Speak (Shift+S)"
+          pressed={mode === 'speak'}
+          onPress={() => intent('speak')}
+        />
+        <IconButton
+          icon="ui.act"
+          label="Act (Shift+A)"
+          pressed={mode === 'act'}
+          onPress={() => intent('act')}
+        />
+        <IconButton
+          icon="ui.attack-mode"
+          label="Combat mode"
+          pressed={attackMode}
+          disabled={!connected || !view.access?.controlling}
+          onPress={toggleAttack}
+        />
+      </div>
       <span className="ol-hotbar-divider" />
-      {destinations
-        .filter(({ id }) => ['character', 'journal', 'crafting'].includes(id))
-        .map(({ id, label, icon, key }) => (
-          <IconButton
-            id={`launcher-${id}`}
-            key={id}
-            icon={icon}
-            label={`${label} (${key})`}
-            onPress={() => show(id)}
-          />
-        ))}
-      <IconButton
-        id="launcher-building"
-        icon="ui.build"
-        label="Build (B)"
-        onPress={() => show('building')}
-      />
-      <Button
-        variant="quiet"
-        id="gameMenuButton"
-        className="ol-game-seal"
-        aria-label="Game menu (Escape)"
-        onPress={game}
-      >
-        <GameSeal />
-      </Button>
-    </div>
+      <div className="ol-hotbar-panels" role="group" aria-label="Game panels">
+        {destinations
+          .filter(({ id }) => ['character', 'journal', 'crafting'].includes(id))
+          .map(({ id, label, icon, key }) => (
+            <IconButton
+              id={`launcher-${id}`}
+              key={id}
+              icon={icon}
+              label={`${label} (${key})`}
+              onPress={() => show(id)}
+            />
+          ))}
+        <IconButton
+          id="launcher-building"
+          icon="ui.build"
+          label="Build (B)"
+          onPress={() => show('building')}
+        />
+        <Button
+          variant="quiet"
+          id="gameMenuButton"
+          className="ol-game-seal"
+          aria-label="Game menu (Escape)"
+          onPress={game}
+        >
+          <GameSeal />
+        </Button>
+      </div>
+    </nav>
   );
 }
 
@@ -537,42 +550,61 @@ export function ConditionStatuses({
     })),
   ];
   if (!statuses.length) return null;
+  const groups = [
+    { label: 'Lasting effects', effects: statuses.filter((effect) => !effect.timing) },
+    { label: 'Timed statuses', effects: statuses.filter((effect) => effect.timing) },
+  ];
   return (
-    <div className="ol-condition-status-icons" aria-label="Current conditions">
-      {statuses.map((effect) => {
-        const timing = effect.timing;
-        const remaining = timing ? Math.max(0, timing.expiresAt - view.clock.seconds) : undefined;
-        const realSeconds =
-          remaining === undefined
-            ? undefined
-            : Math.ceil(remaining / (view.clock.baseRatio * view.clock.speed));
-        const label = [
-          effect.label,
-          effect.explanation,
-          realSeconds === undefined
-            ? undefined
-            : `${view.clock.paused ? 'Paused; ' : ''}${realSeconds} seconds at the current speed`,
-        ]
-          .filter(Boolean)
-          .join('. ');
-        return (
-          <span
-            key={effect.id}
-            className="ol-condition-status-icon"
-            data-timed={!!timing}
-            data-tone={effect.tone ?? 'neutral'}
-          >
-            <IconButton
-              icon={effect.icon ?? 'ui.condition'}
-              label={label}
-              onPress={openCondition}
-            />
-            {timing && remaining !== undefined && (
-              <ProgressRing size={34} fraction={remaining / timing.durationSeconds} />
-            )}
-          </span>
-        );
-      })}
+    <div className="ol-condition-status-groups" aria-label="Current conditions">
+      {groups.map(
+        (group) =>
+          group.effects.length > 0 && (
+            <div className="ol-condition-status-icons" key={group.label} aria-label={group.label}>
+              {group.effects.map((effect) => {
+                const timing = effect.timing;
+                const remaining = timing
+                  ? Math.max(0, timing.expiresAt - view.clock.seconds)
+                  : undefined;
+                const realSeconds =
+                  remaining === undefined
+                    ? undefined
+                    : Math.ceil(remaining / (view.clock.baseRatio * view.clock.speed));
+                const label = [
+                  effect.label,
+                  effect.explanation,
+                  realSeconds === undefined
+                    ? undefined
+                    : `${view.clock.paused ? 'Paused; ' : ''}${realSeconds} seconds at the current speed`,
+                ]
+                  .filter(Boolean)
+                  .join('. ');
+                return (
+                  <span
+                    key={effect.id}
+                    className="ol-condition-status-icon"
+                    data-timed={!!timing}
+                    data-tone={effect.tone ?? 'neutral'}
+                  >
+                    <IconButton
+                      icon={effect.icon ?? 'ui.condition'}
+                      label={label}
+                      onPress={openCondition}
+                    />
+                    {timing && remaining !== undefined && (
+                      // The board's elapsed gap grows clockwise from 12 o'clock, so the
+                      // remaining arc occupies the counterclockwise side of that origin.
+                      <ProgressRing
+                        size={32}
+                        direction="counterclockwise"
+                        fraction={remaining / timing.durationSeconds}
+                      />
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+          ),
+      )}
     </div>
   );
 }

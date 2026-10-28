@@ -24,7 +24,7 @@ import type {
 } from '@open-legend/protocol';
 import { post } from '../api';
 import type { CommandDispatcher, CommandRequestIdentity } from '../command-request';
-import { Button, DisclosurePopover, Tag } from '../design-system/components';
+import { Button, Tag } from '../design-system/components';
 import { ItemIllustration } from '../design-system/item-illustration';
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { InventoryCollection, type InventorySide } from './inventory-collection';
@@ -1166,6 +1166,8 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
       <InventoryCollection
         side={side}
         title={title}
+        heading={side === 'belongings' ? 'Inventory' : undefined}
+        tools={side === 'belongings' ? inventoryTools : undefined}
         state={state}
         selectedId={selection?.side === side ? selection.itemId : undefined}
         onSelectedAnchor={(button) => {
@@ -1249,6 +1251,56 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         })}
     </footer>
   );
+  const inventoryTools = (
+    <>
+      {view.godMode && (
+        <Button size="sm" variant="quiet" disabled={busy || !connected} onPress={addItem}>
+          Add item (God mode)
+        </Button>
+      )}
+      <details>
+        <summary>Controls</summary>
+        <p className="ol-caption">
+          Select an item to inspect it. With two containers open, drag between them or Shift-click
+          to move its available units. Keyboard: Tab to an item, Enter to inspect, Shift+Enter to
+          move.
+        </p>
+        {!right.location.id && (
+          <p>
+            Open a container in the world to see it beside your belongings. You can also open one of
+            your bags beside them.
+          </p>
+        )}
+      </details>
+      {view.player.inventory.some((entry) => entry.equipped) && (
+        <section className="ol-inventory-equipment" aria-label="Equipped items">
+          <strong>Equipped</strong>
+          {view.player.inventory
+            .filter((entry) => entry.equipped)
+            .map((entry) => (
+              <div key={entry.id}>
+                <ItemIllustration art={entry.art} icon={entry.icon} label={entry.name} />
+                <span>{entry.name}</span>
+                {browseActions && (
+                  <Button
+                    size="sm"
+                    variant="quiet"
+                    disabled={!canAct}
+                    onPress={(event) =>
+                      browseActions(entry, event.target, (action) =>
+                        contextDispatch.current(action, 'belongings'),
+                      )
+                    }
+                  >
+                    Item actions
+                  </Button>
+                )}
+              </div>
+            ))}
+        </section>
+      )}
+    </>
+  );
   return (
     <div
       ref={workspace}
@@ -1260,58 +1312,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         stopDrag();
       }}
     >
-      <header className="ol-inventory-header">
-        {(showHeading || view.godMode) && (
-          <div className="ol-inventory-toolbar">
-            {showHeading && <h2 className="ol-heading">Belongings</h2>}
-            {view.godMode && (
-              <Button size="sm" variant="quiet" disabled={busy || !connected} onPress={addItem}>
-                Add item (God mode)
-              </Button>
-            )}
-          </div>
-        )}
-        <DisclosurePopover label="Controls" className="ol-inventory-controls">
-          <p className="ol-caption">
-            Select an item to inspect it. With two containers open, drag between them or Shift-click
-            to move its available units. Keyboard: Tab to an item, Enter to inspect, Shift+Enter to
-            move.
-          </p>
-          {!right.location.id && (
-            <p>
-              Open a container in the world to see it beside your belongings. You can also open one
-              of your bags beside them.
-            </p>
-          )}
-        </DisclosurePopover>
-        {view.player.inventory.some((entry) => entry.equipped) && (
-          <section className="ol-inventory-equipment" aria-label="Equipped items">
-            <strong>Equipped</strong>
-            {view.player.inventory
-              .filter((entry) => entry.equipped)
-              .map((entry) => (
-                <div key={entry.id}>
-                  <ItemIllustration art={entry.art} icon={entry.icon} label={entry.name} />
-                  <span>{entry.name}</span>
-                  {browseActions && (
-                    <Button
-                      size="sm"
-                      variant="quiet"
-                      disabled={!canAct}
-                      onPress={(event) =>
-                        browseActions(entry, event.target, (action) =>
-                          contextDispatch.current(action, 'belongings'),
-                        )
-                      }
-                    >
-                      Item actions
-                    </Button>
-                  )}
-                </div>
-              ))}
-          </section>
-        )}
-      </header>
+      {showHeading && <h2 className="ol-heading">Belongings</h2>}
       {bags.length > 0 && (
         <div className="ol-inventory-context" role="group" aria-label="Open inventory containers">
           <div>

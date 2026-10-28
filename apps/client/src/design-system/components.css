@@ -503,6 +503,10 @@
 .ol-ibtn[data-variant='outline'] {
   border-color: var(--line-strong);
 }
+.ol-ibtn[data-variant='secondary'] {
+  background: var(--surface-raised);
+  border-color: var(--line-strong);
+}
 .ol-ibtn:disabled {
   color: var(--ink-faint);
   background: transparent;
@@ -1489,6 +1493,16 @@
 .ol-search input::placeholder {
   color: var(--ink-faint);
 }
+/* The surrounding field owns its well, inset edge and spacing in every theme. */
+.ol-select-input,
+.ol-search input,
+.ol-composer-input textarea {
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
 .ol-menu {
   list-style: none;
   margin: 0;
@@ -1837,10 +1851,16 @@
     .ol-modal,
     .ol-select-popover,
     .ol-inventory-popover,
+    .ol-disclosure-popover,
     .ol-hover-label,
+    .ol-pointer-tooltip,
     .ol-dialog,
     .ol-tooltip,
+    .ol-map-search,
+    .ol-map-sidebar,
+    .ol-map-tools,
     .ol-pullout,
+    .ol-pullout-popover,
     .ol-context-menu
   ) {
   background-color: transparent;
@@ -1853,6 +1873,32 @@
 }
 [data-theme='gildmoss'] .ol-panel {
   box-shadow: var(--shadow-panel);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-picker,
+    .ol-modal,
+    .ol-select-popover,
+    .ol-inventory-popover,
+    .ol-disclosure-popover,
+    .ol-hover-label,
+    .ol-pointer-tooltip,
+    .ol-dialog,
+    .ol-map-search,
+    .ol-map-sidebar,
+    .ol-map-tools,
+    .ol-pullout-popover,
+    .ol-context-menu
+  ) {
+  border-radius: var(--radius-md);
+}
+[data-theme='gildmoss'] .ol-pointer-tooltip {
+  padding: var(--space-3);
+  box-shadow: var(--shadow-tooltip);
+  line-height: var(--text-detail-leading);
+}
+[data-theme='gildmoss'] .ol-tip b {
+  font: 600 var(--world-name-size) / var(--world-name-leading) var(--font-heading);
 }
 [data-theme='gildmoss'] :is(.ol-panel-head, .ol-panel-foot) {
   background: transparent;
@@ -1880,14 +1926,14 @@
   line-height: var(--text-detail-leading);
 }
 [data-theme='gildmoss'] .ol-kbd {
-  background: var(--surface-well);
+  background: var(--keycap-fill);
   border: none;
   border-radius: var(--radius-xs);
   box-shadow: inset 0 0 0 1px var(--line-control);
   min-width: 20px;
   height: 20px;
-  color: var(--ink-faint);
-  font: 600 var(--text-label-size) / 1 var(--font-ui);
+  color: var(--ink-muted);
+  font: 700 var(--text-label-size) / 16px var(--font-ui);
 }
 [data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-filter-button) {
   border: none;
@@ -1900,6 +1946,10 @@
 [data-theme='gildmoss'] .ol-btn {
   padding-inline: var(--space-3);
 }
+[data-theme='gildmoss'] .ol-btn[data-size='sm'] {
+  padding-inline: var(--space-2);
+  gap: var(--space-2);
+}
 [data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-filter-button):hover {
   background: var(--surface-hover);
   box-shadow: inset 0 0 0 1px var(--line-hover);
@@ -1907,7 +1957,7 @@
 [data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-filter-button):active {
   background: var(--surface-slot-empty);
 }
-[data-theme='gildmoss'] .ol-btn:is([data-variant='primary'], [data-variant='solid']) {
+[data-theme='gildmoss'] .ol-btn:where([data-variant='primary'], [data-variant='solid']) {
   background: var(--primary);
   color: var(--on-highlight);
   box-shadow:
@@ -1916,62 +1966,85 @@
   --icon-mark: var(--icon-mark-on-primary);
   --icon-finish: url(#ol-metal-ink);
 }
-[data-theme='gildmoss'] .ol-btn:is([data-variant='primary'], [data-variant='solid']):hover {
+[data-theme='gildmoss'] .ol-btn:where([data-variant='primary'], [data-variant='solid']):hover {
   background: var(--primary-hover);
 }
-[data-theme='gildmoss'] .ol-btn:is([data-variant='primary'], [data-variant='solid']):active {
+[data-theme='gildmoss'] .ol-btn:where([data-variant='primary'], [data-variant='solid']):active {
   background: var(--primary-pressed);
 }
-[data-theme='gildmoss'] :is(.ol-btn[data-variant='quiet'], .ol-ibtn) {
+[data-theme='gildmoss']
+  :is(.ol-btn:where([data-variant='quiet']), .ol-ibtn:where(:not([data-variant='secondary']))) {
   background: transparent;
   box-shadow: none;
   color: var(--ink-muted);
 }
-[data-theme='gildmoss'] :is(.ol-btn[data-variant='quiet'], .ol-ibtn):hover {
-  background: var(--surface-hover);
-  color: var(--ink);
+[data-theme='gildmoss']
+  :is(
+    .ol-btn:where([data-variant='quiet']),
+    .ol-ibtn:where(:not([data-variant='secondary']))
+  ):hover {
+  background: var(--surface-quiet-hover);
+  box-shadow: none;
+  color: var(--ink-muted);
 }
-[data-theme='gildmoss'] .ol-btn[data-variant='danger'] {
+[data-theme='gildmoss'] .ol-ibtn[data-size='xs'] {
+  width: var(--control-height-sm);
+  height: var(--control-height-sm);
+}
+[data-theme='gildmoss'] .ol-btn:where([data-variant='danger']) {
   color: var(--danger);
   background: var(--danger-quiet);
   box-shadow: inset 0 0 0 1px var(--danger);
 }
 [data-theme='gildmoss']
-  :is(.ol-btn, .ol-ibtn, .ol-filter-button):is(:disabled, [aria-disabled='true']) {
-  color: var(--ink-faint);
-  background: var(--surface);
-  box-shadow: inset 0 0 0 1px var(--line);
-}
-[data-theme='gildmoss']
-  :is(
-    input:not([type='range']):not([type='checkbox']):not([type='radio']),
-    textarea,
-    select,
-    .ol-select-trigger,
-    .ol-search,
-    .ol-composer-input
-  ) {
+  :where(input:not([type='range']):not([type='checkbox']):not([type='radio']), textarea, select),
+[data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input) {
   background: var(--surface-well);
   color: var(--ink);
   border-color: transparent;
   border-radius: var(--control-radius);
-  box-shadow: inset 0 0 0 1px var(--line-control);
+  box-shadow:
+    inset 0 0 0 1px var(--line-control),
+    var(--field-inset-shadow);
   font-family: var(--font-ui);
 }
 [data-theme='gildmoss'] :is(input, textarea, select)::placeholder {
   color: var(--ink-faint);
 }
+[data-theme='gildmoss']
+  :where(
+    input:not([type='range']):not([type='checkbox']):not([type='radio']),
+    textarea,
+    select
+  ):focus,
 [data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input):focus-within {
   box-shadow:
     inset 0 0 0 1px var(--focus),
     var(--field-glow);
 }
 [data-theme='gildmoss'] :is(.ol-select-input, .ol-search input, .ol-composer-input textarea) {
+  min-height: 0;
   background: transparent;
   box-shadow: none;
 }
 [data-theme='gildmoss']
-  :is(.ol-row, .ol-select-option, .ol-tab, .ol-tab-btn, .ol-seg button, .ol-filter-button) {
+  :where(
+    input:not([type='range']):not([type='checkbox']):not([type='radio']),
+    textarea,
+    select
+  ):focus-visible {
+  /* The inset ivory edge and halo are the field's focus indicator. */
+  outline: none;
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-row,
+    .ol-select-option,
+    .ol-tab,
+    .ol-tab-btn,
+    .ol-seg :where(button, .ol-radio),
+    .ol-filter-button
+  ) {
   position: relative;
   border-radius: var(--control-radius);
 }
@@ -1985,11 +2058,13 @@
   :is(
     .ol-row,
     .ol-select-option,
-    .ol-tab,
     .ol-tab-btn,
-    .ol-seg button,
+    .ol-seg :where(button, .ol-radio),
     .ol-filter-button,
-    .ol-btn
+    .ol-building-tile,
+    .ol-event-select,
+    .ol-btn:where(:not(.ol-navigation-tab)),
+    .ol-ibtn
   ):is(
     [aria-selected='true'],
     [aria-current='true'],
@@ -2004,7 +2079,17 @@
   --icon-finish: url(#ol-metal-gold);
 }
 [data-theme='gildmoss']
-  :is(.ol-row, .ol-select-option, .ol-tab-btn, .ol-seg button, .ol-filter-button, .ol-btn):is(
+  :is(
+    .ol-row,
+    .ol-select-option,
+    .ol-tab-btn,
+    .ol-seg :where(button, .ol-radio),
+    .ol-filter-button,
+    .ol-building-tile,
+    .ol-event-select,
+    .ol-btn:where(:not(.ol-navigation-tab)),
+    .ol-ibtn
+  ):is(
     [aria-selected='true'],
     [aria-current='true'],
     [aria-current='page'],
@@ -2027,17 +2112,59 @@
     linear-gradient(black 0 0) content-box exclude,
     linear-gradient(black 0 0);
 }
-[data-theme='gildmoss'] .ol-tab {
+[data-theme='gildmoss'] :is(.ol-tab, .ol-navigation-tab, .ol-btn.ol-navigation-tab) {
+  position: relative;
+  height: 40px;
+  min-height: 40px;
+  padding-inline: var(--space-4);
+  gap: var(--space-2);
   color: var(--ink-silver);
   border: none;
   border-radius: 0;
+  background: transparent;
+  box-shadow: none;
   font: 600 var(--text-tab-size) / 20px var(--font-ui);
 }
-[data-theme='gildmoss'] .ol-tab[aria-selected='true'] {
+[data-theme='gildmoss'] :is(.ol-tab, .ol-navigation-tab, .ol-btn.ol-navigation-tab):hover {
+  background: transparent;
+  box-shadow: none;
+}
+[data-theme='gildmoss']
+  :is(.ol-tab, .ol-navigation-tab):is(
+    [aria-selected='true'],
+    [aria-current='page'],
+    [aria-pressed='true'],
+    [aria-expanded='true']
+  ) {
   color: var(--highlight);
   background: transparent;
+  --icon-finish: url(#ol-metal-gold);
 }
-[data-theme='gildmoss'] .ol-tab[aria-selected='true']::after {
+[data-theme='gildmoss']
+  :is(.ol-tab, .ol-navigation-tab):is(
+    [aria-selected='true'],
+    [aria-current='page'],
+    [aria-pressed='true'],
+    [aria-expanded='true']
+  )
+  > span:not(.ol-icon-wrap) {
+  background: var(--metal-gold-label);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+[data-theme='gildmoss'] .ol-navigation-tab .ol-kbd {
+  -webkit-text-fill-color: var(--ink-muted);
+  color: var(--ink-muted);
+}
+[data-theme='gildmoss']
+  :is(.ol-tab, .ol-navigation-tab):is(
+    [aria-selected='true'],
+    [aria-current='page'],
+    [aria-pressed='true'],
+    [aria-expanded='true']
+  )::after {
   content: '';
   position: absolute;
   inset: auto var(--space-3) 0;
@@ -2045,15 +2172,56 @@
   border-radius: 1px;
   background: var(--metal-gold-line);
   box-shadow: var(--underline-glow);
+  pointer-events: none;
 }
 [data-theme='gildmoss'] .ol-seg {
   background: var(--surface-well);
   border: none;
+  border-radius: var(--radius-md);
+  padding: var(--space-1);
+  gap: var(--space-1);
+  box-shadow: inset 0 0 0 1px var(--line);
+}
+[data-theme='gildmoss'] .ol-seg :where(button, .ol-radio) {
+  padding-inline: var(--space-3);
+  border-radius: var(--control-radius);
+  color: var(--ink-silver);
+  font: 600 13px / 16px var(--font-ui);
+}
+[data-theme='gildmoss']
+  :is(.ol-btn, .ol-ibtn, .ol-filter-button, .ol-radio):is(
+    :disabled,
+    [aria-disabled='true'],
+    [data-disabled]
+  ) {
+  color: var(--control-disabled-ink);
+  background: var(--control-disabled-fill);
+  box-shadow: inset 0 0 0 1px var(--control-disabled-edge);
+  --icon-finish: url(#ol-metal-silver);
+  --icon-mark: inherit;
+}
+[data-theme='gildmoss']
+  :is(.ol-btn, .ol-ibtn, .ol-filter-button, .ol-radio):is(
+    :disabled,
+    [aria-disabled='true'],
+    [data-disabled]
+  )::before {
+  display: none;
+}
+[data-theme='gildmoss']
+  :is(.ol-navigation-tab, .ol-btn.ol-navigation-tab):is(
+    :disabled,
+    [aria-disabled='true'],
+    [data-disabled]
+  ) {
+  background: transparent;
+  box-shadow: none;
 }
 [data-theme='gildmoss'] .ol-meter-track {
   height: var(--meter-height);
   border-radius: var(--radius-xs);
   background: var(--meter-track);
+  box-shadow: inset 0 0 0 1px var(--meter-edge);
 }
 [data-theme='gildmoss'] .ol-meter-fill {
   border-radius: inherit;
@@ -2065,6 +2233,12 @@
 }
 [data-theme='gildmoss'] .ol-meter-label {
   color: var(--ink-muted);
+}
+.ol-meter-state {
+  min-inline-size: 0;
+  color: var(--ink-muted);
+  font-size: var(--text-detail-size);
+  line-height: var(--text-detail-leading);
 }
 [data-theme='gildmoss'] .ol-condition-plate {
   background-image: var(--hud-frame-image, none), var(--lantern-light), var(--glass-fill);
@@ -2136,14 +2310,46 @@
 }
 @media (forced-colors: active) {
   [data-theme='gildmoss']
-    :is(.ol-btn, .ol-ibtn, .ol-filter-button, .ol-row, .ol-tab, input, textarea, select) {
+    :is(
+      .ol-btn,
+      .ol-ibtn,
+      .ol-filter-button,
+      .ol-row,
+      .ol-tab,
+      .ol-radio,
+      input,
+      textarea,
+      select
+    ) {
     forced-color-adjust: auto;
     border: 1px solid ButtonText;
     box-shadow: none;
   }
-  [data-theme='gildmoss'] :is(.ol-btn, .ol-row, .ol-tab)::before,
-  [data-theme='gildmoss'] .ol-tab::after {
+  [data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-row, .ol-tab, .ol-radio)::before,
+  [data-theme='gildmoss'] :is(.ol-tab, .ol-navigation-tab)::after {
     display: none;
+  }
+  [data-theme='gildmoss']
+    :is(.ol-tab, .ol-navigation-tab):is(
+      [aria-selected='true'],
+      [aria-current='page'],
+      [aria-pressed='true'],
+      [aria-expanded='true']
+    )
+    > span:not(.ol-icon-wrap) {
+    background: none;
+    color: Highlight;
+    -webkit-text-fill-color: Highlight;
+  }
+  [data-theme='gildmoss']
+    :where(
+      input:not([type='range']):not([type='checkbox']):not([type='radio']),
+      textarea,
+      select
+    ):focus-visible,
+  [data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input):focus-within {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
   }
 }
 .ol-icon-definitions {
@@ -2172,18 +2378,8 @@
 [data-theme='gildmoss'] [role='tab'][aria-selected='true'] {
   color: var(--highlight);
 }
-[data-theme='gildmoss'] [role='tab'][aria-selected='true']::after {
-  content: '';
-  position: absolute;
-  inset: auto var(--space-3) 0;
-  height: 2px;
-  border-radius: 1px;
-  background: var(--metal-gold-line);
-  box-shadow: var(--underline-glow);
-  pointer-events: none;
-}
 [data-theme='gildmoss']
-  :is(input:not([type='range']):not([type='checkbox']):not([type='radio']), select) {
+  :where(input:not([type='range']):not([type='checkbox']):not([type='radio']), select) {
   min-height: var(--control-height);
   padding-inline: var(--space-3);
   font-size: var(--text-body-size);
@@ -2196,4 +2392,32 @@
 }
 [data-theme='gildmoss'] :is(.ol-select-input, .ol-search input, .ol-composer-input textarea) {
   padding: 0;
+}
+/* A composer is a field plus a separate commitment. Its form is not another
+   field well; the same owner serves speech, negotiation and world editing. */
+[data-theme='gildmoss'] .ol-composer {
+  align-items: flex-end;
+  gap: var(--space-3);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+[data-theme='gildmoss'] .ol-composer .ol-composer-input {
+  min-height: 64px;
+  padding: var(--space-3);
+  border: 0;
+}
+[data-theme='gildmoss'] .ol-composer .ol-composer-input textarea {
+  min-height: 40px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow-y: auto;
+}
+[data-theme='gildmoss'] .ol-composer > .ol-btn {
+  min-height: 40px;
 }

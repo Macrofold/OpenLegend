@@ -2,26 +2,51 @@
   container: world-agent / size;
   grid-template-rows: minmax(0, 1fr);
 }
+.ol-root[data-gildmoss-layout] .ol-panel-body:has(> .ol-agent-with-conversations) {
+  padding: 16px 24px 24px 16px;
+}
 
 .ol-agent-conversation-layout {
+  position: relative;
   display: grid;
-  grid-template-columns: minmax(160px, 0.28fr) minmax(0, 1fr);
+  grid-template-columns: 264px minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
   min-inline-size: 0;
   min-block-size: 0;
-  gap: var(--space-4);
+  gap: var(--space-6);
   align-items: stretch;
 }
 
 .ol-agent-conversations {
-  display: grid;
-  gap: var(--space-3);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
   min-inline-size: 0;
   min-block-size: 0;
-  overflow: auto;
+  overflow: hidden;
   padding-inline-end: var(--space-4);
-  border-inline-end: 1px solid var(--line);
   align-content: start;
+}
+.ol-agent-conversation-layout::before {
+  content: '';
+  position: absolute;
+  inset-inline-start: 264px;
+  inset-block: 0;
+  inline-size: 1px;
+  background: var(--line);
+  pointer-events: none;
+}
+.ol-root[data-gildmoss-layout] #world-editorPanel .ol-panel-heading-copy > .ol-tag {
+  height: 20px;
+  border: 0;
+  border-radius: 10px;
+  color: var(--ink-muted);
+  background: color-mix(in srgb, var(--ink) 7%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent);
+}
+.ol-agent-conversations > * {
+  flex: none;
 }
 
 .ol-agent-conversations h3 {
@@ -42,23 +67,80 @@
 }
 
 .ol-agent-conversations .ol-creator-records {
-  max-block-size: max(160px, calc(100dvh / var(--ui-scale, 1) - 420px));
+  flex: 1;
+  min-block-size: 0;
+  max-block-size: none;
   overflow: auto;
-  padding: var(--space-1);
+  padding: 0;
+}
+.ol-agent-conversations .ol-creator-records:empty {
+  display: none;
+  flex: none;
+}
+.ol-agent-conversations > .ol-btn {
+  inline-size: calc(100% - 16px);
+  margin-inline: var(--space-2);
+  justify-content: center;
+}
+.ol-agent-conversations .ol-creator-records .ol-btn {
+  min-block-size: 52px;
+  padding: var(--space-2);
+  align-items: center;
+  color: var(--ink);
+  font: 600 14px / 20px var(--font-ui);
+}
+.ol-agent-conversations .ol-creator-records .ol-btn strong {
+  font-weight: 600;
+}
+.ol-agent-conversations .ol-creator-records .ol-btn > span {
+  gap: 0;
+}
+.ol-agent-conversation-date {
+  color: var(--ink-faint);
+  font: 500 var(--text-label-size) / 16px var(--font-ui);
 }
 
 .ol-agent-conversations .ol-creator-records .ol-btn[aria-pressed='true'] {
   background: var(--surface-selected);
   color: var(--highlight);
-  box-shadow: inset 2px 0 var(--highlight);
+  box-shadow: var(--selected-glow);
+}
+[data-theme='gildmoss']
+  .ol-agent-conversations
+  .ol-creator-records
+  .ol-btn[aria-pressed='true']
+  strong {
+  background: var(--metal-gold-label);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+}
+@media (forced-colors: active) {
+  [data-theme='gildmoss']
+    .ol-agent-conversations
+    .ol-creator-records
+    .ol-btn[aria-pressed='true']
+    strong {
+    background: none;
+    color: Highlight;
+    -webkit-text-fill-color: Highlight;
+  }
 }
 
 .ol-agent-active {
   display: flex;
   flex-direction: column;
-  gap: var(--space-3);
+  gap: var(--space-2);
   min-inline-size: 0;
   min-block-size: 0;
+}
+.ol-agent-active > .ol-creator-heading h3 {
+  font: 600 var(--title-md-size) / var(--title-md-leading) var(--font-heading);
+}
+.ol-agent-active > .ol-creator-heading {
+  align-items: center;
+  min-block-size: 32px;
 }
 
 .ol-agent-active > .ol-world-agent-session {
@@ -67,10 +149,20 @@
   flex: 1;
 }
 
-.ol-agent-conversation-tools summary {
-  color: var(--ink-muted);
-  cursor: pointer;
-  padding: var(--space-2);
+.ol-agent-conversation-tools {
+  inline-size: 32px;
+  block-size: 32px;
+  flex: none;
+}
+.ol-agent-conversation-options > .ol-agent-tools {
+  display: grid;
+  gap: var(--space-1);
+  margin: 0;
+}
+.ol-agent-conversation-options .ol-btn {
+  inline-size: 100%;
+  justify-content: start;
+  white-space: normal;
 }
 
 .ol-agent-reply-row {
@@ -90,15 +182,59 @@
   inline-size: 32px;
   block-size: 32px;
   border-radius: 50%;
-  background: var(--surface);
+  background: transparent;
   border: 1px solid var(--line);
 }
 
 .ol-agent-with-conversations .ol-message-you {
   margin-inline-start: auto;
-  max-inline-size: min(80%, 680px);
+  inline-size: fit-content;
+  max-inline-size: min(100%, 680px);
+  padding: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.ol-agent-with-conversations .ol-message-author {
+  margin-block-end: var(--space-1);
+  color: var(--ink-faint);
+  font: 500 var(--text-label-size) / 16px var(--font-ui);
+}
+.ol-agent-with-conversations .ol-message-you > .ol-message-author {
+  text-align: end;
+}
+.ol-agent-with-conversations .ol-message-you > .ol-prose {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
   background: var(--surface-selected);
   box-shadow: inset 0 0 0 1px var(--line-gold-soft, var(--line));
+}
+.ol-agent-with-conversations .ol-message-agent {
+  padding: 0;
+  border-inline-start: 0;
+}
+.ol-agent-with-conversations .ol-world-agent-conversation .ol-thread {
+  padding: var(--space-2) 0;
+}
+.ol-agent-with-conversations .ol-world-agent-footer {
+  border-block-start: 0;
+}
+.ol-agent-with-conversations .ol-world-agent-compose .ol-composer {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  gap: var(--space-3);
+  background: transparent;
+}
+.ol-agent-with-conversations .ol-world-agent-compose .ol-composer-input {
+  min-block-size: 64px;
+  padding: var(--space-3);
+}
+.ol-agent-with-conversations .ol-world-agent-compose textarea {
+  min-block-size: 40px;
+}
+.ol-agent-with-conversations .ol-world-agent-compose .ol-composer > .ol-btn {
+  min-inline-size: 72px;
+  min-block-size: 40px;
 }
 
 .ol-agent-with-conversations .ol-creator-change-card {
@@ -129,6 +265,16 @@
     padding-block-end: var(--space-3);
     border-inline-end: 0;
     border-block-end: 1px solid var(--line);
+  }
+  .ol-agent-conversation-layout::before {
+    display: none;
+  }
+  .ol-agent-conversations .ol-creator-records {
+    flex: 0 1 auto;
+    min-block-size: 56px;
+  }
+  .ol-agent-conversations > .ol-btn {
+    margin-inline: 0;
   }
 
   .ol-agent-conversations > .ol-agent-tools,
