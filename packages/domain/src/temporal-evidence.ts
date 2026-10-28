@@ -387,19 +387,13 @@ export function temporalSupportLogicalBytes(capsule: TemporalSupportCapsule): nu
   });
   return bytes;
 }
-function sourceHeaderBytes(block: TemporalSourceBlock): number {
-  return byteLength({ ...readOnlyDraftView(block), values: [] });
-}
-function chunkHeaderBytes(chunk: TemporalChunk): number {
-  const held = readOnlyDraftView(chunk);
-  return byteLength({
-    ...held,
-    subjects: readOnlyDraftView(held.subjects),
-    sourceIds: readOnlyDraftView(held.sourceIds),
-    individualIds: readOnlyDraftView(held.individualIds),
-    sourceRefs: readOnlyDraftView(held.sourceRefs),
-    receipts: [],
-  });
+/** Append-only header arrays charge only their new encoded strings and separators.
+ * The retained prefix is unchanged; JSON escaping and UTF-8 still own every byte. */
+function appendHeaderValue(values: string[], value: string): number {
+  if (values.includes(value)) return 0;
+  const bytes = byteLength(value) + (values.length ? 1 : 0);
+  values.push(value);
+  return bytes;
 }
 function retainedValueAt(
   sources: TemporalEvidenceState['sources'],
@@ -599,10 +593,10 @@ function retainValue(
     const before = block.bytes;
     ordinal = block.values.length;
     const copy = immutableDataSnapshot(value, readOnlyDraftView);
-    const previousHeader = sourceHeaderBytes(block);
+    const previousByteDigits = byteLength(before);
     block.values.push(copy);
     block.bytes += valueBytes + (block.values.length > 1 ? 1 : 0);
-    adjustHeaderBytes(block, previousHeader, () => sourceHeaderBytes(block));
+    adjustHeaderBytes(block, previousByteDigits, () => byteLength(block.bytes));
     addedBytes += block.bytes - before;
     index.set(key, ordinal);
     prepared.length = block.values.length;
@@ -699,22 +693,34 @@ export function appendTemporalReceipt(
     actor.bytes += chunk.bytes;
     actor.chunks.push(chunk);
   }
-  const previousHeader = chunkHeaderBytes(chunk);
+  const previousByteDigits = byteLength(chunk.bytes);
+  let headerDelta =
+    byteLength(receipt.at) -
+    byteLength(chunk.throughAt) +
+    byteLength(receipt.ordinal) -
+    byteLength(chunk.throughOrdinal) +
+    byteLength(chunk.count + 1) -
+    byteLength(chunk.count);
   chunk.receipts.push(receipt);
   chunk.count++;
   chunk.bytes += bytes + (chunk.receipts.length > 1 ? 1 : 0);
   chunk.throughAt = receipt.at;
   chunk.throughOrdinal = receipt.ordinal;
   for (const subject of [receipt.subject, ...(receipt.contextSubjects ?? [])])
-    if (!chunk.subjects.includes(subject)) chunk.subjects.push(subject);
-  for (const id of receipt.sourceIds) if (!chunk.sourceIds.includes(id)) chunk.sourceIds.push(id);
+    headerDelta += appendHeaderValue(chunk.subjects, subject);
+  for (const id of receipt.sourceIds) headerDelta += appendHeaderValue(chunk.sourceIds, id);
   for (const id of temporalReceiptIndividualIds(receipt, temporal.sources))
-    if (!chunk.individualIds.includes(id)) chunk.individualIds.push(id);
+    headerDelta += appendHeaderValue(chunk.individualIds, id);
   for (const id of temporalReceiptAliases(receipt, temporal.sources, world))
-    if (!chunk.sourceIds.includes(id)) chunk.sourceIds.push(id);
+    headerDelta += appendHeaderValue(chunk.sourceIds, id);
   for (const facet of receipt.facets)
-    if (!chunk.sourceRefs.includes(facet.blockId)) chunk.sourceRefs.push(facet.blockId);
-  const headerChange = adjustHeaderBytes(chunk, previousHeader, () => chunkHeaderBytes(chunk));
+    headerDelta += appendHeaderValue(chunk.sourceRefs, facet.blockId);
+  // The existing fixed-point adjustment accounts for the byte count's own digits.
+  const headerChange = adjustHeaderBytes(
+    chunk,
+    previousByteDigits,
+    () => headerDelta + byteLength(chunk.bytes),
+  );
   actor.bytes += bytes + (chunk.receipts.length > 1 ? 1 : 0) + headerChange;
   actor.count++;
   const due = chunk.fromAt + policy.maxAgeSeconds;
