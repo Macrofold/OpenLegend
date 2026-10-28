@@ -73,8 +73,9 @@ trigger relationship. Unseen zero-word calls, visible-only cues, hidden familiar
 third-party recipients, mute listeners, invalid targets, actual later travel/name
 learning and SQL restoration have focused native evidence. The installed profile
 and language capability remain independent of hearing and speech production.
-The complete shared model, recall, summary and UI consumers are still being
-implemented; these checks do not close SPK01–SPK02 or their acceptance matrices.
+Supported model, recall, summary and UI consumers now use shared received evidence.
+Complete SPK01–SPK02 acceptance still requires their remaining channel and human
+qualification; the scoped foundation checks do not close those matrices.
 [Evidence](../verification/speech-and-social-perception.md) retains exact scope
 and failed fixtures. Complete empty-handed Main is selected; final combined and human qualification remain open.
 

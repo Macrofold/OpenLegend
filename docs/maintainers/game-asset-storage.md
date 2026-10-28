@@ -1,6 +1,6 @@
 # Game asset storage and study delivery
 
-**Curated implementation verified; history reclamation separately gated. Updated 2026-10-18.** Shared publication, access, cache, consumer and recovery tools are implemented; current and historical game assets, sources and study pages are published and verified. Independent cloud verification, full isolated object restoration, native world restoration, protected Git restoration and repository removal pass. The signed-in owner selected the installed artwork in the configured current world, and its actual browser renders current scenery, characters and interface icons. [Feature specification](../projects/game-asset-storage-feature-spec.md) · [Technical design and directory contract](../projects/game-asset-storage-tech-design.md) · [AST limits](../limits/game-asset-storage.md).
+**Curated implementation verified; history reclamation separately gated. Updated 2026-10-28.** Shared publication, access, cache, consumer and recovery tools are implemented; current and historical game assets, sources and study pages are published and verified. Independent cloud verification, full isolated object restoration, native world restoration, protected Git restoration and repository removal pass. The signed-in owner selected the installed artwork in the configured current world, and its actual browser renders current scenery, characters and interface icons. [Feature specification](../projects/game-asset-storage-feature-spec.md) · [Technical design and directory contract](../projects/game-asset-storage-tech-design.md) · [AST limits](../limits/game-asset-storage.md).
 
 This tracker owns storage organization, local tooling, study delivery and migration. [PD05](production-deployment.md) retains hosted-game acceptance; [V3D02/V3D03](3d-pixel-art.md) retain general appearance publication/client handoff; INV retains art-production authority. The AS stages implement shared portions once. Nothing here closes those broader gates, authorizes paid infrastructure or rewrites history.
 
@@ -52,6 +52,8 @@ supplements AS04: selected initial artwork and a complete rendered frame finish
 behind the loading bar, while required failures offer an explicit scene retry.
 This closes the temporary-artwork flash reported in the current Main; it does not
 change the wider delivery or hosted acceptance scopes above.
+
+- [ ] Restore/reconcile the configured development catalog for the exact release in [the current development lock](../../assets/locks/development.json), then demonstrate ordinary Main initialization, persistence and reopening. The format 29 reset preserves all 39 artwork/access tables, but its catalog lacks selected revision `sha256-b47b5a09e7cecb8f53d7be1c2036cd9efa3db1282c9842e95031c9ffa66546e1`; startup correctly refuses before creating a world. Use actual publication records and independently current authority through the existing recovery owner, without fabricating records or changing the selection. [Evidence](../verification/attention-and-memory-core.md#continued-normal-clock-qualification--october-28-2026).
 
 ## AS05 — Inventory, preservation and repository migration
 
