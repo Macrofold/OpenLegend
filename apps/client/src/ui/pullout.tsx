@@ -177,9 +177,16 @@ export function Pullout({
     // Side placement can overflow when neither side fits. Keep the choices on
     // screen by overlapping their parent, while React Aria still owns anchoring.
     const fit = () => {
-      const left = Number.parseFloat(element.style.left || '0');
+      // React Aria can anchor a flipped popup with right rather than left.
+      // Measure its physical rectangle; its CSS origin is not the visual edge.
+      const bounds = element.getBoundingClientRect();
       const viewport = element.ownerDocument.documentElement.clientWidth;
-      const shift = Math.max(12 - left, Math.min(0, viewport - 12 - left - element.offsetWidth));
+      const current = Number.parseFloat(element.style.getPropertyValue('--ol-pullout-shift')) || 0;
+      // Remove our prior offset so a wider viewport can restore the native anchor.
+      const left = bounds.left - current;
+      const right = bounds.right - current;
+      const shift = Math.max(12 - left, Math.min(0, viewport - 12 - right));
+      if (Math.abs(shift - current) < 0.5) return;
       const value = `${shift}px`;
       if (element.style.getPropertyValue('--ol-pullout-shift') !== value)
         element.style.setProperty('--ol-pullout-shift', value);
@@ -209,7 +216,7 @@ export function Pullout({
           if (!disabled && event.key === 'ArrowRight') {
             event.preventDefault();
             onOpenChange(true);
-          }
+          } else event.continuePropagation();
         }}
         onHoverStart={() => {
           if (!disabled) onOpenChange(true);

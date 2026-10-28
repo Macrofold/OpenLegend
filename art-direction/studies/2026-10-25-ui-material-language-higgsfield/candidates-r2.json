@@ -1,0 +1,112 @@
+[
+ {
+  "id": "hig10",
+  "cid": "HIG-10",
+  "name": "Gildmoss Crest (original)",
+  "group": "variation",
+  "src": "d10-gildmoss-refined",
+  "change": "The chosen round 1 direction, shown first for comparison.",
+  "good": "",
+  "watch": ""
+ },
+ {
+  "id": "hig10a",
+  "cid": "HIG-10A",
+  "name": "Gildmoss Bare",
+  "group": "variation",
+  "src": "r2-a-bare",
+  "change": "No gold rim on panels: polished glass bevel edges, small engraved corner caps and a slim clasp where panels join.",
+  "good": "Directly tests your 'panels without a gold border' idea; the lightest, most modern of the five; the glass reads as the material and the world shows through more.",
+  "watch": "Without a rim, panels lean on the corner caps for definition; over a bright, busy scene the edge is softer."
+ },
+ {
+  "id": "hig10b",
+  "cid": "HIG-10B",
+  "name": "Gildmoss Etched",
+  "group": "variation",
+  "src": "r2-b-etched",
+  "change": "Same hairline rim plus a faint frosted reed-and-leaf band etched into the glass just inside it.",
+  "good": "Adds texture and a riverside motif with no extra metal; the etching reads as part of the glass, not as a border.",
+  "watch": "The etched band sits close to text margins; it must stay this faint, and it disappears at small sizes."
+ },
+ {
+  "id": "hig10c",
+  "cid": "HIG-10C",
+  "name": "Gildmoss Notched",
+  "group": "variation",
+  "src": "r2-c-notched",
+  "change": "Corners carry small angled champagne corner plates, and connected panels are joined by a slim spine with a roundel.",
+  "good": "Gives the panels a more game-like silhouette at the corners and the clearest joint between the HUD and the Journal.",
+  "watch": "The notch came out subtle: the corners read as small corner plates rather than cut-away corners."
+ },
+ {
+  "id": "hig10d",
+  "cid": "HIG-10D",
+  "name": "Gildmoss Lantern",
+  "group": "variation",
+  "src": "r2-d-lantern",
+  "change": "A small lantern-bracket crest at the centre of each panel's top edge, with the lantern light spreading from it.",
+  "good": "Gives each panel a clear 'top' and a source for the lantern light you asked for more of; the crest is small enough to stay out of the way.",
+  "watch": "The model put the lantern crest only on the HUD, not the Journal, and added a bright glint at the joint between them that reads as a light leak."
+ },
+ {
+  "id": "hig10e",
+  "cid": "HIG-10E",
+  "name": "Gildmoss Filigree",
+  "group": "variation",
+  "src": "r2-e-filigree",
+  "change": "Fine pierced leaf-scroll filigree at the corners, a thin double hairline rim and a filigree clasp between panels.",
+  "good": "The richest of the five while staying calm behind text; the leaf scrolls feel crafted rather than stamped; the double rim and filigree clasp read well together.",
+  "watch": "Corner filigree at every panel adds up quickly; small buttons get crowded corners, as in the kit's button row."
+ },
+ {
+  "id": "h1",
+  "cid": "HIG-H1",
+  "name": "Corner Mount",
+  "group": "hud",
+  "src": "h1-corner",
+  "change": "A sculpted corner piece fills the screen corner with gilded rails along the top and left edges; the round portrait medallion sits in it, with tapered plates for the needs and statuses.",
+  "good": "Looks built into the screen frame, exactly the embedded feeling; tapered plates keep the bars long and readable; the lock toggle docks onto the portrait ring.",
+  "watch": "The left-edge rail runs about 40% of the screen height, which may be more than you want; it could stop much higher."
+ },
+ {
+  "id": "h2",
+  "cid": "HIG-H2",
+  "name": "Ringed Dial",
+  "group": "hud",
+  "src": "h2-dial",
+  "change": "The needs become concentric arcs around the portrait ring, like the rings of an astrolabe, with statuses set in sockets along the outer arc.",
+  "good": "The most distinctive silhouette: the needs sweep out of the portrait like the rings of an astrolabe; the portrait is the centrepiece and large enough to show the pixel art.",
+  "watch": "Curved arcs make it harder to compare how full each need is; the eye toggle sits at the end of the arcs where it reads as a fifth need."
+ },
+ {
+  "id": "h3",
+  "cid": "HIG-H3",
+  "name": "Escutcheon",
+  "group": "hud",
+  "src": "h3-escutcheon",
+  "change": "The portrait sits in a heraldic shield with a crest; needs and statuses ride on rigid glass pennants fixed to the shield.",
+  "good": "Heraldic and medieval at a glance; the long pennants keep the bars straight and easy to compare; the shield's crest gives the corner a strong silhouette.",
+  "watch": "Reads as noble or knightly heraldry, more than a survivor's camp; the swallowtail ends add width."
+ },
+ {
+  "id": "h4",
+  "cid": "HIG-H4",
+  "name": "Lantern Window",
+  "group": "hud",
+  "src": "h4-lantern",
+  "change": "The portrait sits in a pointed-arch lantern pane hanging from a gilded bracket on the top screen edge; needs and statuses hang beside it.",
+  "good": "Most directly 'hung in the screen corner' from a bracket; the lantern cap lights the portrait, tying into the lantern-light preference; the hanging eye toggle is charming.",
+  "watch": "The rectangular plates beside the arch are the least unique part; the gilded bracket along the top edge makes the corner feel heavy."
+ },
+ {
+  "id": "h5",
+  "cid": "HIG-H5",
+  "name": "Reedscroll",
+  "group": "hud",
+  "src": "h5-reedscroll",
+  "change": "One continuous cast housing: the portrait ring flows into a curved cradle for the needs, with reed-stem flourishes along the screen edges.",
+  "good": "One continuous cast piece, so it reads most like a single crafted object; reed and leaf flourishes tie it to the riverside setting; the most compact for its content.",
+  "watch": "Leaf flourishes spill down the left edge and could crowd other UI there; the eye toggle floats separately at the right end."
+ }
+]

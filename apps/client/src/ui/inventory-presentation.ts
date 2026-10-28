@@ -1,11 +1,12 @@
 import type { EntityView, GameView } from '@open-legend/protocol';
 
-type InventoryEntity = Pick<EntityView, 'id' | 'name' | 'kind' | 'storage' | 'trade'> &
+type InventoryEntity = Pick<EntityView, 'id' | 'name' | 'kind' | 'storage' | 'trade' | 'portrait'> &
   Partial<Pick<EntityView, 'position' | 'supportSurfaceId'>>;
 type InventoryPlayer = Pick<
   GameView['player'],
   | 'id'
   | 'name'
+  | 'portrait'
   | 'inventory'
   | 'inventoryRevision'
   | 'canUseInventory'
@@ -19,7 +20,14 @@ type InventoryPlayer = Pick<
  * requires adding it here, rather than accidentally receiving an old full view. */
 export type InventoryPresentation = Pick<
   GameView,
-  'worldId' | 'saveTimeline' | 'access' | 'commandEpoch' | 'godMode' | 'recipes'
+  | 'worldId'
+  | 'saveTimeline'
+  | 'access'
+  | 'commandEpoch'
+  | 'godMode'
+  | 'recipes'
+  | 'conversation'
+  | 'historyEpoch'
 > & {
   clock: Pick<GameView['clock'], 'paused'>;
   map: { spatial: Pick<GameView['map']['spatial'], 'revision'> };
@@ -45,6 +53,7 @@ export function inventoryPresentation(
         kind: entity.kind,
         storage: entity.storage,
         trade: entity.trade,
+        portrait: entity.portrait,
         // World-container movement invalidates an open root. Other people's poses
         // are neither displayed nor used to select recipients; those reads are scoped.
         position: entity.storage ? entity.position : undefined,
@@ -63,6 +72,7 @@ export function inventoryPresentation(
     {
       id: view.player.id,
       name: view.player.name,
+      portrait: view.player.portrait,
       inventory: view.player.inventory,
       inventoryRevision: view.player.inventoryRevision,
       canUseInventory: view.player.canUseInventory,
@@ -81,6 +91,8 @@ export function inventoryPresentation(
   return reuse(
     {
       worldId: view.worldId,
+      conversation: view.conversation,
+      historyEpoch: view.historyEpoch,
       saveTimeline: view.saveTimeline,
       access: view.access,
       commandEpoch: view.commandEpoch,

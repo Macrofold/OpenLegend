@@ -1,5 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import type { ContainerPage, CommandInput } from '@open-legend/protocol';
+import {
+  DEFAULT_INVENTORY_FILTER,
+  DEFAULT_INVENTORY_SORT,
+  type ContainerPage,
+  type CommandInput,
+  type InventoryFilter,
+  type InventorySort,
+} from '@open-legend/protocol';
 import { postContactRead } from '../api';
 
 /** One visible collection owns one bounded native page. The other side never shares its
@@ -31,19 +38,27 @@ export function useInventoryCollection({
     id: initialId,
   });
   const [query, setQueryValue] = useState('');
+  const [sort, setSort] = useState<InventorySort>(DEFAULT_INVENTORY_SORT);
+  const [filter, setFilter] = useState<InventoryFilter>(DEFAULT_INVENTORY_FILTER);
   const [refreshNumber, setRefreshNumber] = useState(0);
   const available = visible && connected && !!location.id && !blockedReason;
   const [availability, setAvailability] = useState({ available, revision: 0 });
   if (availability.available !== available)
     setAvailability({ available, revision: availability.revision + 1 });
-  const paginationContext = JSON.stringify([scope, revisionKey, availability.revision]);
+  const queryIdentity = JSON.stringify([query, sort, filter]);
+  const paginationContext = JSON.stringify([
+    scope,
+    revisionKey,
+    availability.revision,
+    queryIdentity,
+  ]);
   const cursor = location.context === paginationContext ? location.cursor : undefined;
   const key = JSON.stringify([
     displayOwner,
     scope,
     location.id,
     cursor,
-    query,
+    queryIdentity,
     revisionKey,
     refreshNumber,
     availability.revision,
@@ -52,7 +67,7 @@ export function useInventoryCollection({
   const [result, setResult] = useState<{
     key: string;
     locationId: string;
-    query: string;
+    queryIdentity: string;
     displayOwner: string;
     rootId: string;
     page?: ContainerPage;
@@ -68,7 +83,7 @@ export function useInventoryCollection({
       () => {
         void postContactRead<ContainerPage>(
           '/api/inventory',
-          { containerId: location.id, cursor, query },
+          { containerId: location.id, cursor, query, sort, filter },
           [location.id, expectedRootId],
           controller.signal,
         )
@@ -82,7 +97,7 @@ export function useInventoryCollection({
                 locationId: location.id,
                 displayOwner,
                 rootId: expectedRootId,
-                query,
+                queryIdentity,
                 error: 'This container moved. Open it again from its current location.',
               });
               return;
@@ -92,7 +107,7 @@ export function useInventoryCollection({
               locationId: location.id,
               displayOwner,
               rootId: expectedRootId,
-              query,
+              queryIdentity,
               ...(page.ok
                 ? { page }
                 : { error: page.message ?? 'These contents are unavailable.' }),
@@ -105,11 +120,11 @@ export function useInventoryCollection({
                 locationId: location.id,
                 displayOwner,
                 rootId: expectedRootId,
-                query,
+                queryIdentity,
                 ...(previous?.displayOwner === displayOwner &&
                 previous.rootId === expectedRootId &&
                 previous.locationId === location.id &&
-                previous.query === query
+                previous.queryIdentity === queryIdentity
                   ? { page: previous.page }
                   : {}),
                 error: error instanceof Error ? error.message : 'These contents are unavailable.',
@@ -133,12 +148,14 @@ export function useInventoryCollection({
     result?.displayOwner === displayOwner &&
     result.rootId === expectedRootId &&
     result.locationId === location.id &&
-    result.query === query
+    result.queryIdentity === queryIdentity
       ? result
       : undefined;
   return {
     location: { id: location.id, cursor },
     query,
+    sort,
+    filter,
     page: displayed?.page,
     current: !!current?.page && !current.error,
     error: current?.error ?? displayed?.error,
@@ -159,6 +176,14 @@ export function useInventoryCollection({
     },
     search(value: string) {
       setQueryValue(value);
+      setLocation((old) => ({ id: old.id, cursor: undefined }));
+    },
+    sortBy(value: InventorySort) {
+      setSort(value);
+      setLocation((old) => ({ id: old.id, cursor: undefined }));
+    },
+    filterBy(value: InventoryFilter) {
+      setFilter(value);
       setLocation((old) => ({ id: old.id, cursor: undefined }));
     },
     refresh() {

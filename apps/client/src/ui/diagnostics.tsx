@@ -20,8 +20,10 @@ import type {
   DecisionInspection,
   MindSubject,
   MindSubjectPage,
+  GameView,
+  EntityView,
 } from '@open-legend/protocol';
-import { AccessError, post } from '../api';
+import { AccessError, post, postContactRead } from '../api';
 import { EventTime } from './event-time';
 import { SubjectPicker, subjectPath } from './subject-picker';
 import { modalOwnsInput } from './keyboard';
@@ -89,7 +91,7 @@ function InlineJson({ title, value }: { title: string; value: unknown }) {
 
 type SubjectDetails = NonNullable<MindSubjectPage['selected']>;
 
-function KnowledgeEditor({
+export function KnowledgeEditor({
   mind,
   onSaved,
   owned = false,
@@ -97,7 +99,13 @@ function KnowledgeEditor({
   readScope,
   readCurrent,
   onDirtyChange,
+  fixedSubject,
+  editIdentity = true,
+  compact = false,
 }: {
+  fixedSubject?: MindSubject | null;
+  editIdentity?: boolean;
+  compact?: boolean;
   owned?: boolean;
   visible: boolean;
   readScope?: string;
@@ -106,7 +114,7 @@ function KnowledgeEditor({
   onSaved: (mind: GodMindView) => void;
   onDirtyChange(dirty: boolean): void;
 }) {
-  const [subject, setSubject] = useState<MindSubject | null>(null);
+  const [subject, setSubject] = useState<MindSubject | null>(fixedSubject ?? null);
   // A subject's notes may lie on another notes page; load them by exact subject instead.
   const subjectReadKey = JSON.stringify([mind.actorId, owned, subject?.id, readScope]);
   const [subjectRead, setSubjectRead] = useState<{ key: string; details: SubjectDetails | null }>();
@@ -122,10 +130,10 @@ function KnowledgeEditor({
   const document = subject ? details?.notepad : general;
   const identity = subject ? details?.identity : undefined;
   const [text, setText] = useState(document?.text ?? '');
-  const [name, setName] = useState(identity?.givenName ?? '');
+  const [name, setName] = useState((owned ? identity?.nickname : identity?.givenName) ?? '');
   const [base, setBase] = useState(() => ({
     text: document?.text ?? '',
-    name: identity?.givenName ?? '',
+    name: (owned ? identity?.nickname : identity?.givenName) ?? '',
     revision: document?.revision ?? 0,
     nameRevision: identity?.revision ?? 0,
   }));
@@ -134,7 +142,7 @@ function KnowledgeEditor({
   const [failed, setFailed] = useState(false);
   // The details refresh after a save; editing waits for the saved revisions.
   const [refreshing, setRefreshing] = useState(false);
-  const dirty = text !== base.text || name !== base.name;
+  const dirty = text !== base.text || (editIdentity && name !== base.name);
   const dirtyRef = useRef(dirty);
   dirtyRef.current = dirty;
   useEffect(() => onDirtyChange(dirty || saving), [dirty, saving, onDirtyChange]);
@@ -179,7 +187,7 @@ function KnowledgeEditor({
     if (!readCurrent || dirtyRef.current || (subject && details === undefined)) return;
     const next = {
       text: document?.text ?? '',
-      name: identity?.givenName ?? '',
+      name: (owned ? identity?.nickname : identity?.givenName) ?? '',
       revision: document?.revision ?? 0,
       nameRevision: identity?.revision ?? 0,
     };
@@ -205,29 +213,41 @@ function KnowledgeEditor({
     !loading &&
     !unavailable &&
     (base.revision !== (document?.revision ?? 0) ||
-      base.nameRevision !== (identity?.revision ?? 0));
+      (editIdentity && base.nameRevision !== (identity?.revision ?? 0)));
+  const explanation = (
+    <p className="ol-caption">
+      {readCurrent
+        ? owned
+          ? 'Your character’s understanding'
+          : `${mind.name}’s understanding`
+        : 'Your retained local note edit'}
+      . Editing these notes does not change the subject or establish an objective world fact.
+    </p>
+  );
   return (
-    <Section title="Knowledge notepads">
+    <Section title={compact ? 'Your notes' : 'Knowledge notepads'}>
       <div className="ol-knowledge-editor" hidden={!readCurrent && !dirty}>
-        <p className="ol-caption">
-          {readCurrent
-            ? owned
-              ? 'Your character’s understanding'
-              : `${mind.name}’s understanding`
-            : 'Your retained local note edit'}
-          . Editing these notes does not change the subject or establish an objective world fact.
-        </p>
-        <SubjectPicker
-          actorId={mind.actorId}
-          owned={owned}
-          label="Person or general knowledge"
-          none="General knowledge"
-          value={subject}
-          onSelect={(next) => {
-            if (!dirty && !saving) setSubject(next);
-          }}
-          disabled={saving || dirty || !readCurrent}
-        />
+        {compact ? (
+          <details>
+            <summary>About your notes</summary>
+            {explanation}
+          </details>
+        ) : (
+          explanation
+        )}
+        {fixedSubject === undefined && (
+          <SubjectPicker
+            actorId={mind.actorId}
+            owned={owned}
+            label="Person or general knowledge"
+            none="General knowledge"
+            value={subject}
+            onSelect={(next) => {
+              if (!dirty && !saving) setSubject(next);
+            }}
+            disabled={saving || dirty || !readCurrent}
+          />
+        )}
         {dirty && (
           <p role="status" className="ol-caption">
             Unsaved notes. Save or discard before choosing another subject or page.
@@ -243,14 +263,19 @@ function KnowledgeEditor({
           <details>
             <summary>Compare with saved revision {document?.revision ?? 0}</summary>
             <p className="ol-prose">{document?.text || 'No saved note text.'}</p>
-            {subject && <p>Saved known name: {identity?.givenName || 'Not named'}</p>}
+            {subject && editIdentity && (
+              <p>
+                Saved known name:{' '}
+                {(owned ? identity?.nickname : identity?.givenName) || 'Not named'}
+              </p>
+            )}
             <Button
               variant="quiet"
               disabled={saving || loading}
               onPress={() => {
                 setBase({
                   text: document?.text ?? '',
-                  name: identity?.givenName ?? '',
+                  name: (owned ? identity?.nickname : identity?.givenName) ?? '',
                   revision: document?.revision ?? 0,
                   nameRevision: identity?.revision ?? 0,
                 });
@@ -275,9 +300,9 @@ function KnowledgeEditor({
             Retry loading notes
           </Button>
         )}
-        {subject && !unavailable && (
+        {subject && editIdentity && !unavailable && (
           <label>
-            Given name known by this observer
+            {owned ? 'Your nickname' : 'Given name known by this observer'}
             <input
               disabled={saving || loading}
               value={name}
@@ -286,94 +311,101 @@ function KnowledgeEditor({
           </label>
         )}
         <label>
-          Editable knowledge
+          <span className={compact ? 'ol-sr' : undefined}>Editable knowledge</span>
           <textarea
-            rows={8}
+            rows={compact ? 4 : 8}
             disabled={saving || loading || unavailable}
             value={text}
             onChange={(event) => setText(event.target.value)}
           />
         </label>
-        <p>
-          {characters.toLocaleString()}
-          {readCurrent
-            ? ` / ${limit.toLocaleString()} characters.`
-            : ' characters in your draft.'}{' '}
-          {!readCurrent
-            ? 'Current note limits are unavailable until private information is refreshed.'
-            : characters > limit
-              ? 'Rewrite or shorten before saving.'
-              : subject
-                ? 'This is your understanding of this person; it does not change their view of you.'
-                : 'Record current understanding; rewrite when space is needed.'}
-        </p>
-        <Button
-          disabled={
-            !readCurrent ||
-            saving ||
-            loading ||
-            unavailable ||
-            !dirty ||
-            sourceChanged ||
-            characters > limit
-          }
-          onPress={() => {
-            setSaving(true);
-            setMessage('');
-            void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
-              owned ? '/api/knowledge' : '/api/god/knowledge',
-              {
-                actorId: mind.actorId,
-                worldId: mind.worldId,
-                generation: mind.generation,
-                subjectId: subject?.subject ?? null,
-                expectedRevision: base.revision,
-                text,
-                ...(subject && name !== base.name
-                  ? { givenName: name, nameRevision: base.nameRevision }
-                  : {}),
-              },
-            )
-              .then((result) => {
-                setMessage(result.message ?? '');
-                if (result.ok) {
-                  setBase((previous) => ({ ...previous, text, name }));
-                }
-                if (result.ok && result.mind) onSaved(result.mind);
-                if (result.ok && subject) {
-                  setRefreshing(true);
-                  setReload((value) => value + 1);
-                }
-              })
-              .catch((error) => setMessage(String(error)))
-              .finally(() => setSaving(false));
-          }}
-        >
-          Save knowledge
-        </Button>
-        {dirty && (
+        <div className="ol-knowledge-footer" data-compact={compact || undefined}>
+          <p className={compact ? 'ol-caption' : undefined}>
+            {characters.toLocaleString()}
+            {readCurrent
+              ? ` / ${limit.toLocaleString()} characters.`
+              : ' characters in your draft.'}{' '}
+            {!readCurrent
+              ? 'Current note limits are unavailable until private information is refreshed.'
+              : characters > limit
+                ? 'Rewrite or shorten before saving.'
+                : compact
+                  ? null
+                  : subject
+                    ? 'This is your understanding of this person; it does not change their view of you.'
+                    : 'Record current understanding; rewrite when space is needed.'}
+          </p>
           <Button
-            variant="quiet"
-            disabled={saving || (readCurrent && loading)}
+            disabled={
+              !readCurrent ||
+              saving ||
+              loading ||
+              unavailable ||
+              !dirty ||
+              sourceChanged ||
+              characters > limit
+            }
             onPress={() => {
-              const next =
-                unavailable || !readCurrent
-                  ? base
-                  : {
-                      text: document?.text ?? '',
-                      name: identity?.givenName ?? '',
-                      revision: document?.revision ?? 0,
-                      nameRevision: identity?.revision ?? 0,
-                    };
-              setBase(next);
-              setText(next.text);
-              setName(next.name);
-              setMessage('Local edits discarded.');
+              setSaving(true);
+              setMessage('');
+              void post<{ ok: boolean; message?: string; mind?: GodMindView }>(
+                owned ? '/api/knowledge' : '/api/god/knowledge',
+                {
+                  actorId: mind.actorId,
+                  worldId: mind.worldId,
+                  generation: mind.generation,
+                  subjectId: subject?.subject ?? null,
+                  expectedRevision: base.revision,
+                  text,
+                  ...(subject && editIdentity && name !== base.name
+                    ? {
+                        ...(owned ? { nickname: name } : { givenName: name }),
+                        nameRevision: base.nameRevision,
+                      }
+                    : {}),
+                },
+              )
+                .then((result) => {
+                  setMessage(result.message ?? '');
+                  if (result.ok) {
+                    setBase((previous) => ({ ...previous, text, name }));
+                  }
+                  if (result.ok && result.mind) onSaved(result.mind);
+                  if (result.ok && subject) {
+                    setRefreshing(true);
+                    setReload((value) => value + 1);
+                  }
+                })
+                .catch((error) => setMessage(String(error)))
+                .finally(() => setSaving(false));
             }}
           >
-            {sourceChanged ? 'Discard edit and load saved notes' : 'Discard note edits'}
+            Save knowledge
           </Button>
-        )}
+          {dirty && (
+            <Button
+              variant="quiet"
+              disabled={saving || (readCurrent && loading)}
+              onPress={() => {
+                const next =
+                  unavailable || !readCurrent
+                    ? base
+                    : {
+                        text: document?.text ?? '',
+                        name: (owned ? identity?.nickname : identity?.givenName) ?? '',
+                        revision: document?.revision ?? 0,
+                        nameRevision: identity?.revision ?? 0,
+                      };
+                setBase(next);
+                setText(next.text);
+                setName(next.name);
+                setMessage('Local edits discarded.');
+              }}
+            >
+              {sourceChanged ? 'Discard edit and load saved notes' : 'Discard note edits'}
+            </Button>
+          )}
+        </div>
         {message && <p role="status">{message}</p>}
       </div>
     </Section>
@@ -432,6 +464,126 @@ function AuthoredFeeling({
       >
         Author feeling
       </Button>
+    </div>
+  );
+}
+
+/** The same knowledge editor, scoped to the controlled actor rather than the person being read. */
+function OwnedKnowledgeWorkspace({
+  view,
+  connected,
+  visible = true,
+  mode = 'notes',
+  person,
+  compact = false,
+}: {
+  view: GameView;
+  connected: boolean;
+  visible?: boolean;
+  mode?: 'notes' | 'people';
+  person?: EntityView;
+  compact?: boolean;
+}) {
+  const [mind, setMind] = useState<GodMindView>();
+  const [personSubject, setPersonSubject] = useState<MindSubject>();
+  const [error, setError] = useState('');
+  const [dirty, setDirty] = useState(false);
+  const [refresh, setRefresh] = useState(0);
+  useEffect(() => {
+    if (!visible || !connected) return;
+    const controller = new AbortController();
+    setError('');
+    // A current contact is not a canonical person ID. The existing private-subject
+    // reader binds the actually received body before the note editor uses it.
+    void Promise.all([
+      post<{ ok: boolean; mind?: GodMindView; message?: string }>(
+        '/api/mind',
+        { actorId: view.player.id },
+        controller.signal,
+      ),
+      person
+        ? postContactRead<MindSubjectPage | { ok: false; message?: string }>(
+            '/api/mind/subjects',
+            {
+              actorId: view.player.id,
+              contactReference: person.id,
+              bodyReference: person.bodyReference,
+            },
+            [person.id],
+            controller.signal,
+          )
+        : Promise.resolve(undefined),
+    ])
+      .then(([result, selected]) => {
+        if (controller.signal.aborted) return;
+        if (!result.ok || !result.mind)
+          throw new Error(result.message ?? 'Your notes are unavailable.');
+        if (person && (!selected?.ok || !selected.selected))
+          throw new Error('This person is no longer available for notes.');
+        setMind(result.mind);
+        setPersonSubject(selected?.ok ? selected.selected?.subject : undefined);
+      })
+      .catch((error) => {
+        if (!controller.signal.aborted)
+          setError(error instanceof Error ? error.message : String(error));
+      });
+    return () => controller.abort();
+  }, [visible, connected, view.player.id, person?.id, person?.bodyReference, refresh]);
+  const fixedSubject = person ? personSubject : mode === 'notes' ? null : undefined;
+  return (
+    <>
+      {!mind && !error && <p role="status">Loading your notes…</p>}
+      {error && <p role="alert">{error}</p>}
+      {mind && (!person || personSubject) && (
+        <KnowledgeEditor
+          mind={mind}
+          owned
+          visible={visible}
+          readScope={view.access?.scope}
+          readCurrent={connected}
+          fixedSubject={fixedSubject}
+          editIdentity={!person}
+          compact={compact}
+          onSaved={setMind}
+          onDirtyChange={setDirty}
+        />
+      )}
+      <Button
+        variant="quiet"
+        disabled={!connected || dirty}
+        onPress={() => setRefresh((value) => value + 1)}
+      >
+        Refresh notes
+      </Button>
+    </>
+  );
+}
+export function OwnKnowledge(props: Parameters<typeof OwnedKnowledgeWorkspace>[0]) {
+  const { view, person, mode } = props;
+  return (
+    <OwnedKnowledgeWorkspace
+      key={`${view.worldId}:${view.saveTimeline}:${view.historyEpoch}:${view.access?.scope}:${view.player.id}:${person?.id ?? mode ?? 'notes'}:${person?.bodyReference ?? ''}`}
+      {...props}
+    />
+  );
+}
+export function PersonKnowledge(props: {
+  entity: EntityView;
+  view: GameView;
+  connected: boolean;
+  visible?: boolean;
+  compact?: boolean;
+}) {
+  return (
+    <div className="ol-person-knowledge">
+      <OwnKnowledge
+        view={props.view}
+        connected={props.connected}
+        visible={props.visible}
+        person={props.entity}
+        mode="people"
+        compact={props.compact}
+      />
     </div>
   );
 }
@@ -602,7 +754,12 @@ export function Mind({
             )}
             <Section title="My understanding of people">
               {mind.notepads
-                ?.filter((doc) => doc.subjectId && doc.text)
+                ?.filter(
+                  (doc) =>
+                    doc.subjectId &&
+                    (doc.subjectId.kind === 'entity' || doc.subjectId.kind === 'individual') &&
+                    doc.text,
+                )
                 .map((doc) => (
                   <details key={JSON.stringify(doc.subjectId)}>
                     <summary>{doc.label}</summary>

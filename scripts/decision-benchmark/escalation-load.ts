@@ -130,6 +130,7 @@ try {
             new PostgresDatabase(database.url),
           );
           const config = readConfig({
+            OPEN_LEGEND_GOD_MODE: 'true',
             OPEN_LEGEND_DATABASE_URL: database.url,
             OPENAI_API_KEY: 'fixture',
             TYPESAFE_API_KEY: 'fixture',

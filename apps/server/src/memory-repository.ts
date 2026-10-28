@@ -10,6 +10,7 @@ import {
   applySourceVersions,
   type SourceVersionPlan,
 } from './source-version-retention.js';
+import { randomUUID } from 'node:crypto';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { tableRows } from './record-pages.js';
 import {
@@ -82,6 +83,9 @@ import {
   selectedAttentionPolicy,
   validExperienceSummary,
   experienceReading,
+  isOfferLot,
+  STOCK_TRANSFER_LIMITS,
+  type KnownTradeLot,
 } from '@open-legend/domain';
 import { z } from 'zod';
 import type { SqlDatabase, SavedWorld } from './store.js';
@@ -209,6 +213,43 @@ export interface MemoryScope {
   worldId: string;
   actorId: string;
   generation: string;
+}
+export interface TradeDisclosurePosition {
+  position: number;
+  ordinal: number;
+}
+const tradeTerms = (alias: string) =>
+  `((${alias}.payload::jsonb #>> '{eventData,agreement}')::jsonb)`;
+const tradeKeys = (alias: string) => `(
+  jsonb_path_query_array(${tradeTerms(alias)},'$.offererId') ||
+  jsonb_path_query_array(${tradeTerms(alias)},'$.recipientId') ||
+  jsonb_path_query_array(${tradeTerms(alias)},'$.offered[*].itemId') ||
+  jsonb_path_query_array(${tradeTerms(alias)},'$.requested[*].itemId'))`;
+const retainedTradeSource = (alias: string) => `${alias}.world_id=? AND ${alias}.actor_id=?
+  AND (SELECT generation FROM world_head WHERE id=1)=? AND ${alias}.agreement_key IS NOT NULL
+  AND ${alias}.payload::jsonb #> '{eventData,personalAgreement}'='true'::jsonb
+  AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=${alias}.world_id AND f.actor_id=${alias}.actor_id AND f.source_id=${alias}.source_id)
+  AND NOT EXISTS (SELECT 1 FROM mind_corrections c WHERE c.world_id=${alias}.world_id AND c.actor_id=${alias}.actor_id AND c.source_id=${alias}.source_id)`;
+const tradeParties = (actorId: string, personId: string) => ({
+  incoming: { family: 'item-offer', offererId: personId, recipientId: actorId },
+  outgoing: { family: 'item-offer', offererId: actorId, recipientId: personId },
+});
+function retainedTradeLot(row: Record<string, unknown>): KnownTradeLot {
+  const lot: unknown = JSON.parse(String(row['lot']));
+  if (
+    !isOfferLot(lot) ||
+    typeof row['name'] !== 'string' ||
+    typeof row['description'] !== 'string' ||
+    typeof row['disclosed_at'] !== 'number' ||
+    !Number.isFinite(row['disclosed_at'])
+  )
+    throw new Error('Invalid retained trade disclosure.');
+  return {
+    lot,
+    name: row['name'],
+    description: row['description'],
+    disclosedAt: row['disclosed_at'],
+  };
 }
 export interface ConversationSource {
   id: string;
@@ -397,6 +438,13 @@ export class MemoryRepository {
     { revision: number; reset: number; rows: Record<string, unknown>[] }
   >();
   private actorRevisions = new Map<string, number>();
+  private readonly placeReadEpoch = randomUUID();
+  private placeReset = 0;
+  /** Retained place capsules share the existing personal-memory revision. Current
+   * reception is excluded by committed(); correction, support and cold-source changes are not. */
+  knownPlacesRevision(actorId: string): string {
+    return JSON.stringify([this.placeReadEpoch, this.placeReset, this.actorRevision(actorId)]);
+  }
   actorRevision(actorId: string): number {
     return this.actorRevisions.get(actorId) ?? 0;
   }
@@ -498,6 +546,9 @@ export class MemoryRepository {
     if (restored) {
       this.lexical.restored();
       this.actorRevisions.clear();
+    }
+    if (restored || unknownScope || changes.deletes.has('experience_state')) {
+      this.placeReset++;
     }
     if (
       restored ||
@@ -622,6 +673,12 @@ export class MemoryRepository {
         WHERE eligible=1 AND importance<${EXPERIENCE_LIMITS.protectedImportance} AND (source_kind='awareness' OR memory_kind='episode');
       CREATE INDEX IF NOT EXISTS recall_maintenance_speech ON recall_sources(world_id,actor_id,eligible,event_type,at DESC,sequence DESC,id DESC);
     `);
+    // Only participant/item keys are indexed, never descriptions or a second
+    // knowledge state. Direct index updates avoid a growing pending-list scan
+    // for each exact read before vacuum; ordinary observations are excluded.
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS mind_trade_disclosure_keys ON mind_awareness
+      USING GIN ((${tradeKeys('mind_awareness')}) jsonb_path_ops) WITH (fastupdate=off)
+      WHERE agreement_key IS NOT NULL`);
     await this.db.exec(`
       CREATE TABLE IF NOT EXISTS memory_vectors (
         world_id TEXT NOT NULL,actor_id TEXT NOT NULL,generation TEXT NOT NULL,source_id TEXT NOT NULL,
@@ -1682,6 +1739,113 @@ export class MemoryRepository {
       return prepareKnownPlaceEvidence(capsules);
     });
   }
+
+  /** Latest eligible disclosure per item, including sources outside the resident
+   * awareness tail. Page positions are canonical source order and lot ordinal;
+   * indexed newer-source checks prevent an older quantity replacing newer knowledge. */
+  async tradeDisclosurePage(
+    scope: MemoryScope,
+    personId: string,
+    options: { before?: TradeDisclosurePosition; limit: number },
+  ): Promise<{
+    entries: Array<{ position: TradeDisclosurePosition; lot?: KnownTradeLot }>;
+    more: boolean;
+  }> {
+    if (!Number.isSafeInteger(options.limit) || options.limit < 1 || options.limit > 200)
+      throw new Error('Invalid retained trade page size.');
+    const parties = tradeParties(scope.actorId, personId);
+    return this.snapshot(async () => {
+      const rows = await this.db
+        .prepare(
+          `WITH parties AS (SELECT ?::jsonb AS incoming,?::jsonb AS outgoing,?::jsonb AS keys),
+        candidates AS MATERIALIZED (
+          SELECT a.position,e.ordinality::int AS ordinal,e.lot->>'itemId' AS item_id,e.lot::text AS lot,
+            d.terms->'descriptions'->s.side->(e.ordinality-1)::int->>'name' AS name,
+            d.terms->'descriptions'->s.side->(e.ordinality-1)::int->>'description' AS description,
+            (d.terms->>'createdAt')::double precision AS disclosed_at
+          FROM mind_awareness a CROSS JOIN parties p
+          CROSS JOIN LATERAL (SELECT ${tradeTerms('a')} AS terms) d
+          CROSS JOIN LATERAL (SELECT CASE WHEN d.terms->>'offererId'=a.actor_id THEN 'requested' ELSE 'offered' END AS side) s
+          CROSS JOIN LATERAL jsonb_array_elements(d.terms->s.side) WITH ORDINALITY e(lot,ordinality)
+          WHERE ${retainedTradeSource('a')} AND ${tradeKeys('a')} @> p.keys
+            AND (d.terms @> p.incoming OR d.terms @> p.outgoing)
+            ${options.before ? 'AND (a.position,e.ordinality)<(?,?)' : ''}
+          ORDER BY a.position DESC,e.ordinality DESC LIMIT ?
+        ), latest_sources AS MATERIALIZED (
+          SELECT k.item_id,n.position FROM (SELECT DISTINCT item_id FROM candidates) k
+          CROSS JOIN LATERAL (
+            SELECT n.position FROM mind_awareness n CROSS JOIN parties p
+            WHERE ${retainedTradeSource('n')}
+              AND ${tradeKeys('n')} @> (p.keys || jsonb_build_array(k.item_id)) AND (
+                ${tradeTerms('n')} @> (p.incoming || jsonb_build_object('offered',jsonb_build_array(jsonb_build_object('itemId',k.item_id)))) OR
+                ${tradeTerms('n')} @> (p.outgoing || jsonb_build_object('requested',jsonb_build_array(jsonb_build_object('itemId',k.item_id))))
+              )
+            ORDER BY n.position DESC LIMIT 1
+          ) n
+        )
+        SELECT c.*,c.position=l.position AS latest FROM candidates c
+        JOIN latest_sources l ON l.item_id=c.item_id ORDER BY c.position DESC,c.ordinal DESC`,
+        )
+        .all(
+          JSON.stringify(parties.incoming),
+          JSON.stringify(parties.outgoing),
+          JSON.stringify([scope.actorId, personId]),
+          ...this.params(scope),
+          ...(options.before ? [options.before.position, options.before.ordinal] : []),
+          options.limit + 1,
+          ...this.params(scope),
+        );
+      return {
+        entries: rows.slice(0, options.limit).map((row) => ({
+          position: { position: Number(row['position']), ordinal: Number(row['ordinal']) },
+          ...(row['latest'] ? { lot: retainedTradeLot(row) } : {}),
+        })),
+        more: rows.length > options.limit,
+      };
+    });
+  }
+
+  /** At most one indexed canonical source per submitted item. No candidate window
+   * or current inventory can manufacture or erase the actor's disclosure proof. */
+  async tradeDisclosureReferences(
+    scope: MemoryScope,
+    personId: string,
+    itemIds: readonly string[],
+  ): Promise<ReadonlyMap<string, KnownTradeLot>> {
+    const ids = [...new Set(itemIds)];
+    if (ids.length > STOCK_TRANSFER_LIMITS.movedLots) throw new MemoryPreparationError();
+    if (!ids.length) return new Map();
+    const parties = tradeParties(scope.actorId, personId);
+    const requests = ids.map((id) => ({
+      item_id: id,
+      keys: [scope.actorId, personId, id],
+      incoming: { ...parties.incoming, offered: [{ itemId: id }] },
+      outgoing: { ...parties.outgoing, requested: [{ itemId: id }] },
+    }));
+    return this.snapshot(async () => {
+      const rows = await this.db
+        .prepare(
+          `SELECT q.item_id,e.lot::text AS lot,
+        d.terms->'descriptions'->s.side->(e.ordinality-1)::int->>'name' AS name,
+        d.terms->'descriptions'->s.side->(e.ordinality-1)::int->>'description' AS description,
+        (d.terms->>'createdAt')::double precision AS disclosed_at
+        FROM jsonb_to_recordset(?::jsonb) q(item_id TEXT,keys JSONB,incoming JSONB,outgoing JSONB)
+        CROSS JOIN LATERAL (
+          SELECT a.payload,a.actor_id FROM mind_awareness a
+          WHERE ${retainedTradeSource('a')} AND ${tradeKeys('a')} @> q.keys
+            AND (${tradeTerms('a')} @> q.incoming OR ${tradeTerms('a')} @> q.outgoing)
+          ORDER BY a.position DESC LIMIT 1
+        ) a
+        CROSS JOIN LATERAL (SELECT ${tradeTerms('a')} AS terms) d
+        CROSS JOIN LATERAL (SELECT CASE WHEN d.terms->>'offererId'=a.actor_id THEN 'requested' ELSE 'offered' END AS side) s
+        CROSS JOIN LATERAL jsonb_array_elements(d.terms->s.side) WITH ORDINALITY e(lot,ordinality)
+        WHERE e.lot->>'itemId'=q.item_id`,
+        )
+        .all(JSON.stringify(requests), ...this.params(scope));
+      return new Map(rows.map((row) => [String(row['item_id']), retainedTradeLot(row)]));
+    });
+  }
+
   /** One current retained observation per place. Filter a bounded metadata window before
    * hydration; continuation reaches every known place regardless of total history. */
   async knownPlaces(

@@ -294,8 +294,8 @@ describe('event-time observer facts', () => {
       type: 'handover',
       operation: 'offer',
       targetId: 'mara',
-      itemId: item.id,
-      quantity: 1,
+      offered: [{ itemId: item.id, quantity: 1 }],
+      requested: [],
     });
     expect(result.outcome.ok, result.outcome.message).toBe(true);
     const event = result.events.find((entry) => entry.type === 'item-offered')!;

@@ -1,0 +1,146 @@
+.ol-agent.ol-creator-author.ol-agent-with-conversations {
+  container: world-agent / size;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.ol-agent-conversation-layout {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.28fr) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  min-inline-size: 0;
+  min-block-size: 0;
+  gap: var(--space-4);
+  align-items: stretch;
+}
+
+.ol-agent-conversations {
+  display: grid;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  min-block-size: 0;
+  overflow: auto;
+  padding-inline-end: var(--space-4);
+  border-inline-end: 1px solid var(--line);
+  align-content: start;
+}
+
+.ol-agent-conversations h3 {
+  margin: 0;
+}
+
+.ol-agent-conversations > .ol-agent-tools,
+.ol-agent-conversations > .ol-creator-records {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.ol-agent-conversations .ol-btn {
+  inline-size: 100%;
+  justify-content: start;
+  text-align: start;
+  white-space: normal;
+}
+
+.ol-agent-conversations .ol-creator-records {
+  max-block-size: max(160px, calc(100dvh / var(--ui-scale, 1) - 420px));
+  overflow: auto;
+  padding: var(--space-1);
+}
+
+.ol-agent-conversations .ol-creator-records .ol-btn[aria-pressed='true'] {
+  background: var(--surface-selected);
+  color: var(--highlight);
+  box-shadow: inset 2px 0 var(--highlight);
+}
+
+.ol-agent-active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  min-block-size: 0;
+}
+
+.ol-agent-active > .ol-world-agent-session {
+  min-inline-size: 0;
+  min-block-size: 0;
+  flex: 1;
+}
+
+.ol-agent-conversation-tools summary {
+  color: var(--ink-muted);
+  cursor: pointer;
+  padding: var(--space-2);
+}
+
+.ol-agent-reply-row {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr);
+  gap: var(--space-3);
+  min-inline-size: 0;
+}
+
+.ol-agent-reply-row > .ol-message {
+  grid-column: 2;
+}
+
+.ol-agent-avatar {
+  display: grid;
+  place-items: center;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: 50%;
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+
+.ol-agent-with-conversations .ol-message-you {
+  margin-inline-start: auto;
+  max-inline-size: min(80%, 680px);
+  background: var(--surface-selected);
+  box-shadow: inset 0 0 0 1px var(--line-gold-soft, var(--line));
+}
+
+.ol-agent-with-conversations .ol-creator-change-card {
+  max-inline-size: 440px;
+  background: var(--surface-well, var(--surface));
+  border-color: var(--line-control, var(--line));
+}
+
+@container world-agent (max-width: 680px) or (max-height: 420px) {
+  .ol-agent-conversation-layout {
+    grid-template-columns: minmax(0, 1fr);
+    /* The panel can be shorter than its controls at enlarged interface scales.
+     * Scroll this retained stack instead of squeezing the chat/composer to zero. */
+    grid-template-rows: auto minmax(360px, 1fr);
+    overflow: auto;
+    overscroll-behavior: contain;
+    scroll-padding: var(--space-2);
+    padding: var(--space-1);
+  }
+
+  .ol-agent-active > .ol-world-agent-session {
+    grid-template-rows: auto minmax(120px, 1fr) auto;
+  }
+
+  .ol-agent-conversations {
+    max-block-size: 200px;
+    padding-inline-end: 0;
+    padding-block-end: var(--space-3);
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--line);
+  }
+
+  .ol-agent-conversations > .ol-agent-tools,
+  .ol-agent-conversations > .ol-creator-records {
+    display: flex;
+    overflow: auto;
+    flex-wrap: nowrap;
+  }
+
+  .ol-agent-conversations .ol-btn {
+    inline-size: auto;
+    flex: 0 0 auto;
+    max-inline-size: 220px;
+  }
+}

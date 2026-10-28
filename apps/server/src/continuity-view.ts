@@ -15,6 +15,7 @@ import {
   worldPosition,
   observerIndividual,
   subjectKey,
+  validObserverSubject,
   subjectLabel,
   type ObserverSubject,
   type KnowledgeDocument,
@@ -128,7 +129,14 @@ function notepadView(world: WorldState, actorId: string, doc: KnowledgeDocument)
   return {
     subjectId: doc.subjectId,
     origin: doc.origin,
-    label: doc.subjectId ? subjectLabel(world, actorId, doc.subjectId) : 'General knowledge',
+    label:
+      doc.subjectId?.kind === 'place'
+        ? 'Place note'
+        : doc.subjectId?.kind === 'map-marker'
+          ? (world.mapMarkers?.[actorId]?.[doc.subjectId.markerId]?.label ?? 'Map marker note')
+          : doc.subjectId
+            ? subjectLabel(world, actorId, doc.subjectId)
+            : 'General knowledge',
     text: doc.text,
     revision: doc.revision,
     characters: characterCount(doc.text),
@@ -238,6 +246,7 @@ export function continuitySubjects(
     // Exact lookup for the note editor: a subject's notes may lie on any notes page.
     const selected = subjectView(world, actorId, request.subjectId, currentBodies);
     const document = selected ? knowledgeDocument(world, actorId, selected.subject) : undefined;
+    const identity = selected ? observerIndividual(world, actorId, selected.subject) : undefined;
     return {
       ok: true,
       worldId: world.id,
@@ -248,7 +257,13 @@ export function continuitySubjects(
         ? {
             subject: selected,
             notepad: document ? notepadView(world, actorId, document) : null,
-            identity: observerIndividual(world, actorId, selected.subject) ?? null,
+            identity: identity
+              ? {
+                  givenName: identity.givenName,
+                  ...(identity.nickname ? { nickname: identity.nickname } : {}),
+                  revision: identity.revision,
+                }
+              : null,
           }
         : null,
     };
@@ -256,7 +271,8 @@ export function continuitySubjects(
   const subjects = new Map<string, ObserverSubject>();
   for (const subject of currentSubjects) subjects.set(subjectKey(subject), subject);
   for (const document of Object.values(world.actorKnowledge?.[actorId] ?? {}))
-    if (document.subjectId) subjects.set(subjectKey(document.subjectId), document.subjectId);
+    if (validObserverSubject(document.subjectId))
+      subjects.set(subjectKey(document.subjectId), document.subjectId);
   for (const identity of Object.values(world.observerIdentities?.[actorId] ?? {})) {
     if (!identity.individualId || identity.seedOnly) continue;
     const subject: ObserverSubject = { kind: 'individual', individualId: identity.individualId };

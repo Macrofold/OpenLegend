@@ -3,6 +3,25 @@ import { BASE_GUARD_TEXT } from './shield-defense.js';
 import type { ItemInstance, WorldState } from '../../types.js';
 import { prepareManufactureChoices } from '../../manufacture.js';
 import type { AssemblyFamily } from '../../assembly-types.js';
+import type { ItemArt } from '../../presentation-art.js';
+
+const itemArt = (file: string): ItemArt => ({
+  path: `apps/client/src/design-system/gildmoss/art/world/base/items/${file}.png`,
+});
+export const BASE_SHIELD_ART: ItemArt = {
+  ...itemArt('wooden-shield'),
+  detailPath: itemArt('wooden-shield-large').path,
+};
+export const BASE_POUCH_ART = itemArt('woven-gathering-pouch');
+export const BASE_SLING_ART = itemArt('field-sling');
+export const BASE_ARROW_ART = itemArt('field-arrow');
+
+/** The initializer binds an authored method's actual returned definition ID.
+ * Generated IDs are never guessed from output names or invention families. */
+export function bindBaseItemArt(world: WorldState, definitionId: string, art: ItemArt): void {
+  if (world.presentation)
+    world.presentation.itemArt = { ...world.presentation.itemArt, [definitionId]: art };
+}
 
 /** Bundled appearance only; the construction mechanism does not require a
  * transparent covering, and render opacity changes no physical perception. */
@@ -20,7 +39,61 @@ export const BASE_WORLD_PRESENTATION: NonNullable<WorldState['presentation']> = 
   worldName: 'The Wilderness',
   locationName: 'The first clearing',
   timeLabel: 'Time in the wilderness',
+  calendar: {
+    dayLabel: 'Day',
+    historyTemplate:
+      'Your time in this world began on {startDay}. You have been here for {elapsedDays} full days.',
+  },
   daylight: { startTime: 'dawn', endTime: 'dusk', noonElevationDegrees: 60 },
+  itemArt: {
+    bone: itemArt('bone-fragment'),
+    cooked_meat: itemArt('cooked-meat'),
+    cooked_river_fish: itemArt('cooked-river-fish'),
+    cord: itemArt('fiber-cord'),
+    stone_tool: itemArt('flaked-cutting-stone'),
+    knife: itemArt('knife'),
+    travel_cloak: itemArt('large-travel-cloak'),
+    canopy_post: itemArt('light-canopy-post'),
+    prepared_fiber: itemArt('prepared-fibers'),
+    raw_meat: itemArt('raw-meat'),
+    raw_river_fish: itemArt('raw-river-fish'),
+    raw_fiber: itemArt('reed-fibers'),
+    stone: itemArt('small-stone'),
+    weather_cloth: itemArt('spare-weather-cloth'),
+    wood: itemArt('supple-branch'),
+    canopy_tall_post: itemArt('tall-canopy-post'),
+    tavins_sorting_note: itemArt('tavins-sorting-note'),
+    torn_red_fastening: itemArt('torn-red-fastening'),
+    berries: itemArt('wild-berries'),
+    woven_bag: itemArt('woven-bag'),
+  },
+  portraits: {
+    'study:mike-field-tunic': {
+      path: 'apps/client/src/design-system/gildmoss/art/sample-characters/portrait-mike.png',
+      headPath: 'apps/client/src/design-system/gildmoss/art/sample-characters/head-mike.png',
+      figurePath:
+        'apps/client/src/design-system/gildmoss/art/sample-characters/mike-fullbody-227x560@2x.png',
+    },
+    'study:mara-travel-coat': {
+      path: 'apps/client/src/design-system/gildmoss/art/sample-characters/portrait-mara-reed.png',
+      headPath: 'apps/client/src/design-system/gildmoss/art/sample-characters/head-mara-reed.png',
+    },
+  },
+  mapArt: {
+    path: 'apps/client/src/design-system/gildmoss/art/world/base/map-starting-land-parchment.jpg',
+    // Exact full-image extent of the retained map construction, not live terrain sampling.
+    bounds: { minX: -20, minZ: 0, maxX: 148, maxZ: 112 },
+    northDegrees: 0,
+    maxMarkers: 500,
+    labelCharacters: 40,
+    markerIcons: [
+      { id: 'pin', label: 'Pin', icon: 'ui.map-marker' },
+      { id: 'place', label: 'Place', icon: 'ui.places' },
+      { id: 'camp', label: 'Camp', icon: 'structure.campfire' },
+      { id: 'star', label: 'Star', icon: 'ui.special' },
+      { id: 'warning', label: 'Warning', icon: 'ui.unavailable' },
+    ],
+  },
 };
 
 export const BASE_ACTION_DESCRIPTIONS = {

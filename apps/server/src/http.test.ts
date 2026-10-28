@@ -139,7 +139,7 @@ describe('local HTTP boundary', () => {
     ).toBe(403);
   });
   it('uses the event connection for opted-in background play and pauses after departure exposure', async () => {
-    const { game, base, cookie, post } = await start();
+    const { game, base, cookie, post } = await start(true);
     const controller = new AbortController();
     try {
       const stream = await fetch(`${base}/api/events`, {
@@ -283,7 +283,7 @@ describe('local HTTP boundary', () => {
     expect(game.service.pauseReason).toBe('away');
   }, 60_000);
   it('does not renew presence from speed changes or while manually pausing', async () => {
-    const { post, game } = await start();
+    const { post, game } = await start(true);
     await post('/api/control', { speed: 3, clientId: 'away-tab', presenceSequence: 1 });
     expect(game.service.present).toBe(false);
     await post('/api/control', { paused: true, clientId: 'away-tab', presenceSequence: 2 });
@@ -294,7 +294,7 @@ describe('local HTTP boundary', () => {
     expect(game.service.speed).toBe(3);
   }, 60_000);
   it('supports presence, controls and idempotent native actions without AI', async () => {
-    const { post, game } = await start();
+    const { post, game } = await start(true);
     await post('/api/presence', { clientId: 'test-client', visible: true });
     expect(game.service.paused).toBe(false);
     // New starts carry no food; see docs/worlds/base/survival.md.
@@ -320,7 +320,7 @@ describe('local HTTP boundary', () => {
     expect(game.service.speed).toBe(3);
   });
   it('rejects extra authority, unbounded text and unsupported controls', async () => {
-    const { post } = await start();
+    const { post, game } = await start();
     expect(
       (
         await post('/api/command', {
@@ -336,6 +336,11 @@ describe('local HTTP boundary', () => {
       ).status,
     ).toBe(400);
     expect((await post('/api/control', { speed: 10000 })).status).toBe(400);
+    expect(await (await post('/api/control', { speed: 3 })).json()).toMatchObject({
+      ok: false,
+      code: 'forbidden',
+    });
+    expect(game.service.speed).toBe(1);
     expect((await post('/api/chat', { requestId: 'x', text: 'x'.repeat(1001) })).status).toBe(400);
   });
   it('returns an explicit unavailable result rather than a pretend generated recipe', async () => {

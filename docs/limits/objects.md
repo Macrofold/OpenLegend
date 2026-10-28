@@ -156,11 +156,13 @@ World-container pages contain only the current native inspection: at most **16 l
 
 **Reason / tradeoff:** Bound projected page and scan work while exposing continuation. World contents require deliberate received evidence rather than treating physical access as inspection.
 
+Collection sorting prepares the selected order across all display groups: native order (the default), definition name ascending/descending, or aggregate quantity descending, retaining native order for ties. Initial grouping is O(N) direct children; a first nondefault order is O(G log G) for G display groups, with O(G) ordering/continuation metadata. A weak cache retains only the finite selected orders for each valid prepared group array; definition, membership and member-state invalidation remain owned by the existing grouping preparation. A warm page seeks its anchor directly and examines at most 200 groups, returning at most 40. Existing representative/action preparation and aggregate availability reads may still inspect physical members of selected groups; the page bound is not a total latency guarantee.
+
 ## QU04
 
-**Current — source inspected 2026-10-06 · Restrictiveness: Safe.**
+**Current — source inspected 2026-10-27 · Restrictiveness: Safe.**
 
-Inventory search case-folds and matches the **definition name within the current container only**, not arbitrary item-instance names or recursively unopened contents. Owned-container search continues through the QU03 scan windows, including empty windows with more children. World-container search covers only the current inspected page; a native inspection continuation is required before later names can match. Merge-target mode uses exact native merge eligibility instead of this text filter. [Page owner](../../apps/server/src/inventory-view.ts).
+Inventory search case-folds and matches the **definition name within the current container only**, not arbitrary item-instance names or recursively unopened contents. Owned-container search and the All items, Equipped and Containers filters continue through the QU03 scan windows, including empty windows with more children. Equipped and container objects already have individual display groups, so filtering does not scan grouped members. Search, sort and filter bind continuation alongside scope, container and custody revisions; a changed prepared name/order fingerprint invalidates it even when custody is unchanged. World-container search covers only the current inspected page; a native inspection continuation is required before later names can match. Merge-target mode uses exact native merge eligibility instead of this text filter and accepts only its default/all ordering rather than silently ignoring other controls. [Page owner](../../apps/server/src/inventory-view.ts).
 
 **Reason / tradeoff:** Avoid recursive inventory search cost/semantics in the first UI.
 

@@ -34,6 +34,7 @@ try {
   await mkdir(directory, { mode: 0o700 });
   disposable = await createDisposableDatabase(process.env['OPENLEGEND_STRESS_DATABASE_URL']);
   const config = readConfig({
+    OPEN_LEGEND_GOD_MODE: 'true',
     OPEN_LEGEND_DATABASE_URL: disposable.url,
     OPEN_LEGEND_SQL_WRITE_GROUPS: process.env['OPEN_LEGEND_SQL_WRITE_GROUPS'],
     AI_BUDGET_USD: '0',

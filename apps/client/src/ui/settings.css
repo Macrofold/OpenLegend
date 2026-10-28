@@ -72,6 +72,19 @@
   gap: var(--space-2);
   text-align: center;
 }
+.ol-game-brand > .ol-logo-seal {
+  justify-self: center;
+}
+.ol-game-opportunity {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-1) var(--space-3);
+}
+.ol-game-opportunity > span {
+  color: var(--ink-muted);
+}
 .ol-game-brand :is(h1, p) {
   margin: 0;
 }

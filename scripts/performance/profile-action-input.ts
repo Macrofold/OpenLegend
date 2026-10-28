@@ -54,7 +54,7 @@ let service: WorldService | undefined;
 try {
   for (const speed of [0.5, 1, 3, 8]) {
     const store = await testRepository(undefined, stockedCamp());
-    service = new WorldService(store, readConfig());
+    service = new WorldService(store, readConfig({ OPEN_LEGEND_GOD_MODE: 'true' }));
     await enterLocalWorld(service);
     await service.setPresence('profile', true);
     let itemId = '';

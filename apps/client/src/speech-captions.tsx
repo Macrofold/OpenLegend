@@ -4,17 +4,21 @@ import type {
   PublicEvent,
   PerceivedSpeech,
   SpeechPresentation,
+  PortraitArt,
 } from '@open-legend/protocol';
 import { Icon } from './design-system/components';
+import { Portrait } from './design-system/portrait';
 import { ProgressRing, progressFraction } from './design-system/progress-ring';
 import {
   PresentationClock,
+  captionReadingMs,
   createLifetime,
   activateLifetime,
   sampleLifetime,
   type PresentationLifetime,
 } from './ui-lifetime';
 import type { SpeechCaptionOptions } from './world-renderer';
+import './speech-captions.css';
 export type CaptionPoint = {
   x: number;
   y: number;
@@ -48,6 +52,8 @@ type Entry = {
   ring?: SVGCircleElement;
   arrow?: HTMLElement;
   directionLabel?: HTMLElement;
+  portrait?: PortraitArt;
+  portraitSubject: boolean;
   attach: (node: HTMLDivElement | null) => void;
 };
 // Queue residence is separate from the ring's reading budget. Old hidden speech remains in history.
@@ -193,6 +199,16 @@ export class SpeechCaptions {
       this.rebase = false;
       return;
     }
+    // An event's admitted source association stays fixed. Current visibility may
+    // remove its head illustration, but never identifies an earlier unknown voice.
+    for (const entry of this.active) {
+      const subject = this.portraitSubject(entry.event.actorId);
+      const path = (art?: PortraitArt) => art?.headPath ?? art?.path;
+      if (entry.portraitSubject !== !!subject || path(entry.portrait) !== path(subject?.portrait))
+        this.dirty = true;
+      entry.portraitSubject = !!subject;
+      entry.portrait = subject?.portrait;
+    }
     if (view.events === this.previousEvents) return;
     // The bounded live event window turned over between updates: more may have been missed.
     if (
@@ -236,6 +252,7 @@ export class SpeechCaptions {
       const parts = chunks(captionText(perceived));
       const entry: Entry = {
         event: perceived,
+        portraitSubject: false,
         visible: false,
         lastVisibleAt: this.clock.now,
         priority,
@@ -262,10 +279,13 @@ export class SpeechCaptions {
     if (this.seen.size > 1024) this.seen = new Set([...this.seen].slice(-512));
   }
   private lifetime(text: string) {
-    const readingMs = Math.max(text.trim().split(/\s+/).length * 300, [...text].length * 45);
-    return createLifetime(
-      Math.max(4000, Math.min(12000, 2000 + readingMs)) * this.options.readingScale,
-    );
+    return createLifetime(captionReadingMs(text, this.options.readingScale));
+  }
+  private portraitSubject(id: string | undefined) {
+    if (!id || !this.view) return undefined;
+    return id === this.view.player.id
+      ? this.view.player
+      : this.view.entities.find((entity) => entity.id === id);
   }
   update(projection: CaptionProjection): void {
     if (this.destroyed) return;
@@ -318,6 +338,9 @@ export class SpeechCaptions {
           continue;
         }
         this.pending.splice(i, 1);
+        const subject = this.portraitSubject(entry.event.actorId);
+        entry.portraitSubject = !!subject;
+        entry.portrait = subject?.portrait;
         this.active.push(entry);
         this.dirty = true;
       }
@@ -339,60 +362,67 @@ export class SpeechCaptions {
                 aria-hidden={entry.chunk > 0 ? true : undefined}
                 ref={entry.attach}
               >
-                <div aria-hidden="true">
-                  <div className="ol-speech-caption-meta">
-                    <span>
-                      {entry.event.speechPresentation?.speakerLabel ?? 'Someone nearby'}
-                      {speech.delivery === 'whisper'
-                        ? ' (whispering)'
-                        : speech.delivery === 'shout'
-                          ? ' (shouting)'
-                          : ''}
-                      {speech.intelligibility === 'partial' ? ' (partly heard)' : ''}
-                      {entry.chunks.length > 1
-                        ? ` (${entry.chunk + 1}/${entry.chunks.length})`
-                        : ''}
-                      {speech.perception === 'seen' ? ' (seen)' : ''}
-                      {speech.direction?.elevation !== 'level' && speech.direction
-                        ? ` (${speech.direction.elevation})`
-                        : ''}
+                <div aria-hidden="true" className="ol-speech-caption-content">
+                  {entry.portraitSubject && (
+                    <span className="ol-speech-caption-head">
+                      <Portrait art={entry.portrait} head size={52} />
                     </span>
-                    <span
-                      className="ol-speech-arrow"
-                      ref={(node) => {
-                        entry.arrow = node ?? undefined;
-                      }}
-                    >
-                      ➜
-                    </span>
-                  </div>
-                  {entry.event.speechPresentation?.directionLabel && (
-                    <div className="ol-speech-caption-recipient">
-                      {entry.event.speechPresentation.directionLabel}
-                    </div>
                   )}
-                  <span
-                    className="ol-speech-direction-label"
-                    ref={(node) => {
-                      entry.directionLabel = node ?? undefined;
-                    }}
-                    hidden
-                  >
-                    Approximate direction heard
-                  </span>
-                  <div className="ol-speech-caption-text">
-                    {speech.perception !== 'seen' && <Icon name="ui.speech" size={16} />}
-                    {speech.intelligibility === 'none'
-                      ? entry.chunks[entry.chunk]
-                      : `“${entry.chunks[entry.chunk]}”`}{' '}
-                    <ProgressRing
-                      fraction={1}
+                  <div className="ol-speech-caption-body">
+                    <div className="ol-speech-caption-meta">
+                      <span>
+                        {entry.event.speechPresentation?.speakerLabel ?? 'Someone nearby'}
+                        {speech.delivery === 'whisper'
+                          ? ' (whispering)'
+                          : speech.delivery === 'shout'
+                            ? ' (shouting)'
+                            : ''}
+                        {speech.intelligibility === 'partial' ? ' (partly heard)' : ''}
+                        {entry.chunks.length > 1
+                          ? ` (${entry.chunk + 1}/${entry.chunks.length})`
+                          : ''}
+                        {speech.perception === 'seen' ? ' (seen)' : ''}
+                        {speech.direction?.elevation !== 'level' && speech.direction
+                          ? ` (${speech.direction.elevation})`
+                          : ''}
+                      </span>
+                      <span
+                        className="ol-speech-arrow"
+                        ref={(node) => {
+                          entry.arrow = node ?? undefined;
+                        }}
+                      >
+                        ➜
+                      </span>
+                    </div>
+                    {entry.event.speechPresentation?.directionLabel && (
+                      <div className="ol-speech-caption-recipient">
+                        {entry.event.speechPresentation.directionLabel}
+                      </div>
+                    )}
+                    <span
+                      className="ol-speech-direction-label"
                       ref={(node) => {
-                        entry.ring =
-                          node?.querySelector<SVGCircleElement>('[data-progress-value]') ??
-                          undefined;
+                        entry.directionLabel = node ?? undefined;
                       }}
-                    />
+                      hidden
+                    >
+                      Approximate direction heard
+                    </span>
+                    <div className="ol-speech-caption-text">
+                      {speech.perception !== 'seen' && <Icon name="ui.speech" size={16} />}
+                      {speech.intelligibility === 'none'
+                        ? entry.chunks[entry.chunk]
+                        : `“${entry.chunks[entry.chunk]}”`}{' '}
+                      <ProgressRing
+                        fraction={1}
+                        ref={(node) => {
+                          entry.ring =
+                            node?.querySelector<SVGCircleElement>('[data-progress-value]') ??
+                            undefined;
+                        }}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

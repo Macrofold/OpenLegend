@@ -1,5 +1,5 @@
 import type { WorldCreationAccounts } from '../../invention-attribution.js';
-import type { WorldState } from '../../types.js';
+import type { InitialWorldPreparation } from '../../world-creation.js';
 import { createReservoirDemo, createTouchDemo } from '../../world-presets.js';
 import {
   BASE_OPENING_IDENTITY_KEYS,
@@ -7,6 +7,7 @@ import {
   createBaseOpeningCandidate,
 } from './initial-opening.js';
 import { createWorld, PLAYER_ID } from './world.js';
+import { BASE_MAIN_ARTWORK } from './main-opening.js';
 
 export const BASE_STARTING_WORLD_PRESETS = [
   'wilderness',
@@ -22,14 +23,14 @@ export function createBaseStartingWorld(
   preset: BaseStartingWorldPreset,
   seed: number,
   accounts: WorldCreationAccounts,
-): WorldState {
+): Pick<InitialWorldPreparation, 'world' | 'useInstalledArtwork'> {
   switch (preset) {
     case 'wilderness':
-      return createWorld(seed, accounts);
+      return { world: createWorld(seed, accounts), ...BASE_MAIN_ARTWORK };
     case 'reservoir-demo':
-      return createReservoirDemo(seed, accounts);
+      return { world: createReservoirDemo(seed, accounts) };
     case 'touch-demo':
-      return createTouchDemo(seed, accounts);
+      return { world: createTouchDemo(seed, accounts) };
     case 'solo': {
       const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
       const candidate = createBaseOpeningCandidate(
@@ -43,7 +44,7 @@ export function createBaseStartingWorld(
         'solitary',
         normalizedSeed,
       );
-      return buildBaseInitialWorld(candidate, accounts).world;
+      return buildBaseInitialWorld(candidate, accounts);
     }
   }
 }

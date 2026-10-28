@@ -2614,6 +2614,16 @@ export class WildernessScene implements WorldRenderer {
     const player = this.view && this.actors.get(this.view.player.id);
     if (player && this.view) {
       const position = player.root.getPosition();
+      if (this.cameraSettings.perspectiveLocked) {
+        // Camera presentation follows only the controlled actor's admitted gaze;
+        // holding movement still retains its captured world direction.
+        const heading = this.view.vision.heading ?? this.view.player.heading;
+        const yaw = Math.atan2(Math.sin(heading + Math.PI), Math.cos(heading + Math.PI));
+        if (this.cameraSettings.yaw !== yaw || !this.cameraSettings.following) {
+          this.cameraSettings = { ...this.cameraSettings, yaw, following: true };
+          this.placeCamera();
+        }
+      }
       this.perception.moveOrigin(position);
       // Follow the interpolated sprite, not network snapshots; docs/spatial-world.md#picking-and-controls.
       if (this.cameraSettings.following) {

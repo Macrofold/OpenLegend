@@ -1,0 +1,811 @@
+{
+ "release": {
+  "owner": {
+   "kind": "collection",
+   "id": "openlegend-curated"
+  },
+  "assetId": "ui-material-language-higgsfield-2026-10-25-round-3",
+  "revisionId": "sha256-fb48e77282b19e2d69830ae1afcbb4b033a52f715c2399c8222104258d74ac85",
+  "manifestSha256": "00ed9aae790af6a4f913e90d59638237a601a0b6984ef0027b9c83a67610fcb4"
+ },
+ "files": {
+  "boards/img/r3-01-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "131e450609291a9f1a87915f4fc8dca749f3b83bbbf7d348d2cfba61b0df9dbf",
+   "bytes": 575582,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-01-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f1bbe40c2b7a0633f08a656fdf7028f6314befbe3a17fa3bf14fa0af6a6abd19",
+   "bytes": 157657,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-01-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "572c89b828436318ba07df5405771b8f564f48e713e70e50177ff85029cb3deb",
+   "bytes": 214273,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-02-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1621b2bb784b02c3e95172f9739bab7776536804364ef2f2acfa4c43a803c5bb",
+   "bytes": 592718,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-02-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "dbb08e2bb192f34bee1d26a7bf79cc0b10d634396ae5384c28fd93e13de4bc31",
+   "bytes": 166845,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-02-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d27dcca2a7c2c22de644f13365dfa40bc5136771f6aaa05432f9b31b1e51eea7",
+   "bytes": 216450,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-03-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "56b0feac319cd0968b6cc6da5c8565312cb3b1b1f5f87a8e58962f129b87f62c",
+   "bytes": 569919,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-03-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "fb53b2d33fb2f84ff59886c2a793b6681161dfd395b55cd5478928d05a37ce0a",
+   "bytes": 166669,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-03-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2ffc1259201a11e9131fc72915f5560b767941a96f91d560c5f21bb9279c83a8",
+   "bytes": 214025,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-04-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f53becb1095cbe29edff3629f4c1154dfd139f8b077f4d4f4d980c67b965d9fd",
+   "bytes": 585342,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-04-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d131746def68a470de6646e9ada239d7d8bf83e89ba603a36a4d40f00bf6d2a8",
+   "bytes": 180983,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-04-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4a47420a9b98a788414aaa25eeb0cdc81f15c587efabf975f457aa1f3e220ba8",
+   "bytes": 215160,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-05-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "75b7037035223948f93ea13cb090f56dd965960e5f4d9535a9d9eed7669efdd1",
+   "bytes": 583483,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-05-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "14a0e17e5370ed67e55f7f8c2f3da8b04d113a59c12e5ba3382c206ef9ddcf3a",
+   "bytes": 148971,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-05-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4f3c928a895418c1d9e6602f42cb955a000ccb3e1355a2703631b6606550fa31",
+   "bytes": 215362,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-06-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4b83ea9d3a117ce006e620cb11edb5404ef9b57ee973952dec6267d61cd9206b",
+   "bytes": 587225,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-06-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "441f4f7999a05821fadf918bc9d3a7ac4bcefc432b52da7341e9cf0a93fa66d4",
+   "bytes": 241760,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-06-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "da94a3dcaacdea05e897e3da4b6a4c5b3cb1e98b5831307849bdad412375b3f1",
+   "bytes": 215664,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-07-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6047ccc06d79508b4a7740ff821df13a7514955226de5cfd86c786a5ca271d0b",
+   "bytes": 582640,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-07-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "65b3c8e0851bca4a46fa06fe6a14c455c153647b505591f14fe18d1e8654c59e",
+   "bytes": 204935,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-07-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "101d804f38b3feea376971235b9ecf0a411b6818f221d507d9b97f4ac4d144ff",
+   "bytes": 215704,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-08-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c58c55ca0ab88164421ce0a757126e19f530acb148313ce05c515d9bf746be11",
+   "bytes": 576661,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-08-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "11719ce1c7011e5ebbef6f97730f1d95f19b0a253a7f4d6615c71bf25b316520",
+   "bytes": 168479,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-08-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "09189b3eab9b4205faa41f143798dcb306d2c4b501d2a051d878a635dca5a832",
+   "bytes": 214494,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-09-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8397aa31ea38076a437bf68d1fdb3e4875cfd5a82a2a7a3ad472000cddc640b4",
+   "bytes": 567414,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-09-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6e7f0ba649198bc994b9ff2b3f46e3742c27d1cd8d2552795cff2c5f5b7c84f9",
+   "bytes": 164726,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-09-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2b46ab03ed11735bc0fe47fa1e27ae508d3e4a36b580c8c1cc4021744325fd95",
+   "bytes": 214081,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-10-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "33dc7d0da4fc48fe9e79063fcde6ee85f0c23f407afdfd9bd150297aff441d2e",
+   "bytes": 572465,
+   "mediaType": "image/png"
+  },
+  "boards/img/r3-10-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "87c31e19bbd82137162e4fa42fdb0ba143a2d0fdd783fa97ec607cb01fc9ffe3",
+   "bytes": 170886,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-10-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6615f80e68b78a3267df3d041fa62f41437aa3a9842613b6badeaab227e95457",
+   "bytes": 214038,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r3-corners-1to1.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4c3166e6b9a75ee8201da3cae3d541d0a59f61ec46fc1badc39daafc4705c35b",
+   "bytes": 2686071,
+   "mediaType": "image/png"
+  },
+  "boards/round3.html": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2cff6a1ef4c7fd908921cfcc3e831c9e5d0e90361ff802bd3c10c1113a7354f1",
+   "bytes": 15195,
+   "mediaType": "text/html; charset=utf-8"
+  },
+  "build_board3.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "20a452191d1c7d5658010b564680c34cfd1aa8ef336db0e6392666d26decb48d",
+   "bytes": 3596,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "clean_alpha.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9702de84fbf76677aa35ea8887b118b152384ab6465769d967c8b4ba8dcde77e",
+   "bytes": 964,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "directions-r3.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6936de76666a1c7381280424059743e2a5a72a2c393b344ee4d87b874a9177c3",
+   "bytes": 5027,
+   "mediaType": "application/json"
+  },
+  "gen3.sh": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a65e67c631056a9782defc86105ecbb4c4454f3c07eaa631e1bd0b627f691ad8",
+   "bytes": 1185,
+   "mediaType": "text/x-shellscript; charset=utf-8"
+  },
+  "hud_views.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1d4470cb146f3058afbc067b405e66915f1885c63018da4364cacbff2402540a",
+   "bytes": 1226,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "outputs/r3-v01-jade-noref.r0.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a09cffb4678f9e05c8b18c999d74857bba533e86d539caa5fc59ba60e5675032",
+   "bytes": 2159495,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v01-jade-noref.r0.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ed08ca0cafd4f425bffedf0803f0c1dc76a6028a92f93e165dd2616e8abfc4e6",
+   "bytes": 3468,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v01-jade-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b84da84807fc0363efbce388dcd5c79d5beb305dcb22fcd00c02401a9147810d",
+   "bytes": 184610,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v01-jade-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "131e450609291a9f1a87915f4fc8dca749f3b83bbbf7d348d2cfba61b0df9dbf",
+   "bytes": 575582,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v01-jade-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f0e7ea142eaa8980bf823c77ad4a5bfe2f0d3fd4d08bd1979e8f58b2b1e34570",
+   "bytes": 387760,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v01-jade-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d68ff7969a4522f5fbd55a1b998a93a33f1966ea0eeaf4b52d173081719a6cad",
+   "bytes": 1973392,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v01-jade-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f361b02678c1214db055c90b3bff656676979d88996cb9fc480d50d104b9f37e",
+   "bytes": 2009868,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v01-jade-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c06cbef3eca92bdb9cbef2cf2ca5ad85aef0c4c0d9c212c47134a3b4e9959417",
+   "bytes": 3756,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v01-jade-ref.r0.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6a69e341fbd5147caf061688b67e83b1171bafd475fd3cdd148e7612f2f54dd7",
+   "bytes": 2286861,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v01-jade-ref.r0.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b709071d1b23bc4bb5f9edea55e2e1cee06fcc1e8667622697e1cddcaab10a37",
+   "bytes": 3647,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v02-verde-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f4ddefec2c2cc00934554e138bcc4577a88d321cbb051347e0cc9f059a33a37e",
+   "bytes": 196031,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v02-verde-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1621b2bb784b02c3e95172f9739bab7776536804364ef2f2acfa4c43a803c5bb",
+   "bytes": 592718,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v02-verde-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "01c7ba5c52b102130e2553c1dbb5227d8a38a4067585036d5ecd15b73cef8e45",
+   "bytes": 392850,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v02-verde-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "02d36e8390b6d88adf73093ba288aa1e12ec08f6ab8a5dac1013ee02f34525e4",
+   "bytes": 2169714,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v02-verde-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e3d6e80bb53684ba657cc476dfa81acc2b1be5e9a3971d5057fed6335f9b04e2",
+   "bytes": 2207929,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v02-verde-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "83069504570aa62eedd6cd347d9e7842bfcfe87db9ed48eadaa2bb99eda59f2e",
+   "bytes": 3692,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v03-kintsugi-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "fffc443c10b5ffeadf48092f18b4123119f7956f8b66ab5849faf6c6c9e72f44",
+   "bytes": 196605,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v03-kintsugi-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "56b0feac319cd0968b6cc6da5c8565312cb3b1b1f5f87a8e58962f129b87f62c",
+   "bytes": 569919,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v03-kintsugi-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6346646bc118f7c18860c7f4fc398263130c1b2ef5bc824efbb62ec8d8808ce5",
+   "bytes": 387926,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v03-kintsugi-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b9e839033e22ba186a14fb0797ef4babe1e57e73eb5948cd03c87c5b4bf81cd0",
+   "bytes": 2053392,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v03-kintsugi-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5fa120faa6a7559536113da61127ed8f7c74721aa2a4227831b76fc5cd93c437",
+   "bytes": 2088677,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v03-kintsugi-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f0763399c3803b743677dd4b27c60e06b62f4dbd088595eaaf366b0bd6e9f473",
+   "bytes": 3652,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v04-geode-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6953281ff0ff6db98cac6cfdd471e9c21f4b9e7af0a31a7a0e5d328bb226cb94",
+   "bytes": 212730,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v04-geode-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f53becb1095cbe29edff3629f4c1154dfd139f8b077f4d4f4d980c67b965d9fd",
+   "bytes": 585342,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v04-geode-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ec538a1bdc62d47120d878e3f75e5eb46dae3efd4afdef064141b48a48c06eca",
+   "bytes": 389896,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v04-geode-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "469edf9b42e3ab2872a178181bffcad8470c57313d356e66f9c63a52edda21ee",
+   "bytes": 2522382,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v04-geode-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bf2cf451e04a01ad6292a7d3c6c2007eef1604c0b4146d60079a6fc62a880048",
+   "bytes": 2646051,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v04-geode-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "24835e332d96b1af2165f73aabe233729daa5a0f81bccf3763bbcd6d8568d484",
+   "bytes": 3594,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v05-goldquartz-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6fad843d2d2aff5b87d4b5409df09e59e3eb5bb6d294024ff2eb7d68a6587a4b",
+   "bytes": 176034,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v05-goldquartz-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "75b7037035223948f93ea13cb090f56dd965960e5f4d9535a9d9eed7669efdd1",
+   "bytes": 583483,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v05-goldquartz-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ccc8f7ed9540f5a215383b6725fdc35dbb3761d4d61d761e1f304a6733d3b003",
+   "bytes": 390065,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v05-goldquartz-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c83fb5a1d755a4d3e56d39ecba215df92f39fb8f973f50171e50ab2b4d2a6f66",
+   "bytes": 1854423,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v05-goldquartz-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1204a5530043557e694a53181678f429353e8ca670c95858e868d8ea8bd45ddc",
+   "bytes": 1886344,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v05-goldquartz-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "60c7d700c0c97cf2edbf19352dac2df42581a464b5269f85877f6168bf5354c7",
+   "bytes": 3645,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v06-ruin-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ce29248d11fd3c97feeb190fdb02c6285450d92bc04faabc8d794ee2a42c83d6",
+   "bytes": 283132,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v06-ruin-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4b83ea9d3a117ce006e620cb11edb5404ef9b57ee973952dec6267d61cd9206b",
+   "bytes": 587225,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v06-ruin-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e6e3cd900539e31cf00eeffaaea72e536e01a549c0187e94aa97a499e9ffef4d",
+   "bytes": 390623,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v06-ruin-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "71893316a861762da3b2484861e8f769de54756989942721086362ec1a7f87ed",
+   "bytes": 2689687,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v06-ruin-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "41330fa22589ec8fbc53a794f3cb5c2b36773b1b36be69344eaa37d6bf90044a",
+   "bytes": 2740320,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v06-ruin-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f24c47118ab154102ef8b9324c95f451f483323d78bbc03bf067ab81dd91b9ac",
+   "bytes": 3660,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v07-roots-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6a320f86d57bfd16d529c2c0f8354c9a457eee3ed9c020a750e667575745a22d",
+   "bytes": 240068,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v07-roots-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6047ccc06d79508b4a7740ff821df13a7514955226de5cfd86c786a5ca271d0b",
+   "bytes": 582640,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v07-roots-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d17fa856d4b41135738382f9821709cf411373fe400780b9d641800974f8073c",
+   "bytes": 390328,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v07-roots-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "7de633a64bfe15e97b18caa5800672b9a1da4d1b5f33130cf4ab93a6fef3fd94",
+   "bytes": 2475258,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v07-roots-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1cbab13d29231be41a6df6ee2f5866e5f24f423e5da1c62b4b34dd72e86507dc",
+   "bytes": 2520510,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v07-roots-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "22a1c06207d27ff74028f208da86915a8bd149694f4486bb0080973dc03f97d3",
+   "bytes": 3608,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v08-stag-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "7f3313004977fa688f709c4e935657de7a52c48846631f8fa911e7e77bb9a906",
+   "bytes": 197494,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v08-stag-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c58c55ca0ab88164421ce0a757126e19f530acb148313ce05c515d9bf746be11",
+   "bytes": 576661,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v08-stag-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0a25c15e7e1c555c91a586422d81de5bc066a8c1f1d60299430c3408bc7a4e1d",
+   "bytes": 388289,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v08-stag-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1bd0df57e0d96b79ed064d0af51f2b520b868876adbdee1b271e8a48880fb149",
+   "bytes": 2233790,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v08-stag-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "14d560083e6dab0528da8b30279fb4076413f53ddd62c979d8f6582764834f79",
+   "bytes": 2275379,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v08-stag-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3027b6c8770974d23770a1c0d674232418f13dcf0d17db85720b198132840a4f",
+   "bytes": 3639,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v09-obsidian-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1b5b72504707ff0269c20a2ba924dd7c43c9c23a0f909597138a07cb7a46776d",
+   "bytes": 193371,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v09-obsidian-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8397aa31ea38076a437bf68d1fdb3e4875cfd5a82a2a7a3ad472000cddc640b4",
+   "bytes": 567414,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v09-obsidian-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "95cbda54bb2e18f14da1f617a24ff52c954b6b16a12a2e6ad8acdcbd254f45ed",
+   "bytes": 387043,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v09-obsidian-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9d9dd79f58f4b2bb27c2692c8a3f1cb1eb3f3ff55e0d80a68bc5788541cc785e",
+   "bytes": 2167788,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v09-obsidian-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "735624b4b0740f2f2e1019b926f8ecbdc6254c7b47e8c674ad095f7949320bb0",
+   "bytes": 2215952,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v09-obsidian-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d720b9d071d8a99f8c638bfabf1ca395d8c3628d046cabe7c76800110ed8f1ec",
+   "bytes": 3599,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r3-v10-nacre-ref-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f55a39122a5acc6b4c1b5edf626dfec77b8573dcb175efecb9e497a4b44ae4fd",
+   "bytes": 200063,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v10-nacre-ref-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "33dc7d0da4fc48fe9e79063fcde6ee85f0c23f407afdfd9bd150297aff441d2e",
+   "bytes": 572465,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v10-nacre-ref-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b589d421cb925f71e0e8e83dfae7e1921aff3a4d80262e38d975ef0fbf06176c",
+   "bytes": 387725,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r3-v10-nacre-ref-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "66301f1dda75c77806dca86400eed3f4802a6d01126cc5d3da46a3e1ae9f8037",
+   "bytes": 2099395,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v10-nacre-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e81bd63ac5a32152bfbb0d995be3e8f6d3c7acfa8e19aece6a22e9841bc09d97",
+   "bytes": 2136398,
+   "mediaType": "image/png"
+  },
+  "outputs/r3-v10-nacre-ref.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c23d9ef52acb73fbbf4ff2f6ee8035dda45c0c52856345a079d811d48f9bdfcc",
+   "bytes": 3672,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/_hud.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1378bfbdd799128ad700c4a9baf23f11cf02fff33ad6ec35c81703e10ba7463c",
+   "bytes": 3095,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/_ref.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d92eccd2c2693503c90c880cf1bc4e6ddefb49f49a7358c9a9d407e030a3cc5f",
+   "bytes": 180,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v01-jade.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "19b8cc98464ec3d212aaf7f005afa9467a88902826b070d40f20b49ba6d0ce52",
+   "bytes": 523,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v02-verde.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c0780fb7cba3d154531f87907cbe2dda31f3d1dc5b224d1e418f05d4dd5fdb5d",
+   "bytes": 457,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v03-kintsugi.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "72b65f655dd90b25b4e56ca027cd68e65cd5d8df00da02a192da76e86d768298",
+   "bytes": 419,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v04-geode.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "63685d86be4a0e589d93e565d00d695a7db414d76a7b66108d635ace0526f4a2",
+   "bytes": 359,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v05-goldquartz.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6b55ea990e18b3abd812dfdbc9c355153b5beed49e7f21881ee801fe1ce29258",
+   "bytes": 412,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v06-ruin.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "15d543da971884d598ebf193a105ca613ed2bd9cc450c4fca2f66fcaf1ee3d6f",
+   "bytes": 427,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v07-roots.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2e88b883dc5baeec3559c2e8cfc6e57139f3ed0ea5b1daba3277d254ecd60ab8",
+   "bytes": 370,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v08-stag.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f9a7a8cda740ada0740aa220830d2fe3ecb1230cb0f858fdb62390c65cdd51ac",
+   "bytes": 402,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v09-obsidian.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "07e4d0ec3e0cae7cbb15d20702c64caaec745a9e1bcd97f8c2a83d777a8a5071",
+   "bytes": 365,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r3/v10-nacre.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d8f1ddc6d9d9acc99c8c49d6bc55b8d3bba680eed2f3724b4043d702e491147a",
+   "bytes": 436,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "refs/gildmoss-bare-panel-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "16b1271ebf69a0ed9ce9f32cceec44764a7d6e89e31067134673be479232df43",
+   "bytes": 528148,
+   "mediaType": "image/png"
+  }
+ }
+}

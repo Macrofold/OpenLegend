@@ -4,6 +4,10 @@
 
 - [Personal perception foundation](verification/personal-perception-foundation.md) — supported-channel evidence, local recognition, faithful retention, complete place preparation and safe player/NPC publication; future sensing and full integrated acceptance remain open.
 
+- [Gildmoss interface](verification/gildmoss-interface.md) — native/private-map/trade/storage review, actual running-game interactions and remaining screen, responsive and performance qualification.
+
+- [Character mechanics prototype](verification/character-and-map-additions.md) — separate-branch historical equipment, stat, carrying and native consumer evidence; not current Gildmoss mechanics delivery.
+
 - [Skilled action execution](verification/action-execution-and-skill-expression.md) — native effects, exact input/receipt ownership, fitted capacity, rendered controls, isolated measurements and separate player acceptance.
 
 - [First-playable entry](verification/first-playable-entry.md) — actual loading bar, held/failed required artwork, explicit Retry and current Main selection; bounded animal feeding evidence remains separate.

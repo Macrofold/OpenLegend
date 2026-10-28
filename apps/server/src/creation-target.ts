@@ -24,6 +24,7 @@ import {
   type CreationRegistration,
 } from './creation-target-contracts.js';
 import { BACKUP_TABLES } from './operational-backup.js';
+import { ASSET_TABLES } from './asset-repository.js';
 import { WORLD_RECORD_TABLES } from './world-record-schema.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import type { SavedWorld, SqlDatabase, SqlGameRepository } from './store.js';
@@ -168,6 +169,7 @@ export class CreationTargetRepository {
   }
 
   async assertEmpty(): Promise<void> {
+    const assetTables = new Set<string>(ASSET_TABLES);
     const tables = [
       ...new Set([
         ...WORLD_RECORD_TABLES,
@@ -180,7 +182,12 @@ export class CreationTargetRepository {
         'memory_index_queue',
         'memory_vectors',
       ]),
-    ].filter((table) => table !== 'meta' && table !== 'creation_target_registration');
+    ].filter(
+      (table) =>
+        table !== 'meta' && table !== 'creation_target_registration' && !assetTables.has(table),
+    );
+    // A destination's external-art catalog is independent of an empty gameplay
+    // target. Exact selected artwork is admitted/retained in the activation commit.
     // Trusted owner catalogs close the check over cold/inconsistent leftovers as well as roots.
     // EXISTS and LIMIT stop at the first occupied record rather than counting retained history.
     const occupied = await this.db
@@ -569,7 +576,15 @@ export class CreationTarget {
         authorityBindings: prepared.authorityBindings,
         authorityOwners: prepared.authorityOwners,
         constructionSeeds: prepared.constructionSeeds,
-        operationalChange: () => this.repository.publish(requestFingerprint, receipt),
+        operationalChange: async () => {
+          if (prepared.savedWorld.presentationRelease)
+            await this.store.assets.bindWorld(
+              { accountId: mapping.account.accountId },
+              prepared.savedWorld.world.id,
+              prepared.savedWorld.presentationRelease,
+            );
+          await this.repository.publish(requestFingerprint, receipt);
+        },
       });
       return receipt;
     });

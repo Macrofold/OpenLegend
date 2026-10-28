@@ -42,9 +42,17 @@ afterEach(async () => {
     await service.store.close();
   }
 });
-async function setup(opening: WorldState = stockedCamp(), wallClock?: () => number) {
+async function setup(
+  opening: WorldState = stockedCamp(),
+  wallClock?: () => number,
+  creator = false,
+) {
   const store = await testRepository(undefined, opening);
-  const service = new WorldService(store, readConfig(), wallClock);
+  const service = new WorldService(
+    store,
+    readConfig({ OPEN_LEGEND_GOD_MODE: String(creator) }),
+    wallClock,
+  );
   services.push(service);
   await enterLocalWorld(service);
   await service.setPresence('test-client', true);
@@ -1182,7 +1190,7 @@ describe('native held attack service and control authority', () => {
   }, 30000);
   it('retains real pending-navigation debt without lending it to fresh or expired input windows', async () => {
     await initializeNavigationRuntime();
-    const f = await setup();
+    const f = await setup(stockedCamp(), undefined, true);
     let walkerId = '';
     await editWorld(f.service, (world) => {
       walkerId = entityValues(world.entities).find(
@@ -1630,7 +1638,7 @@ describe('native held attack service and control authority', () => {
     validateWorldModules(f.service.world);
   }, 30000);
   it('excludes paused commit time and settles admitted input time at the old speed before changing it', async () => {
-    const f = await setup();
+    const f = await setup(stockedCamp(), undefined, true);
     await f.service.control({ paused: true });
     const original = f.service.store.commit.bind(f.service.store);
     const commit = vi.spyOn(f.service.store, 'commit').mockImplementation((...args) => {
@@ -1668,8 +1676,6 @@ describe('native held attack service and control authority', () => {
     );
     expect(result.outcome.code).toBe('input-route');
     expect(result.world).toBe(f.service.world);
-    expect(f.service.previewCommand(begin(scope, f.itemId), NPC_ID, false).code).toBe(
-      'input-route',
-    );
+    expect(f.service.previewNativeCommand(begin(scope, f.itemId), NPC_ID).code).toBe('input-route');
   }, 30000);
 });

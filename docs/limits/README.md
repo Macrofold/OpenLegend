@@ -16,7 +16,7 @@ The selected [acoustic-stealth inventory](acoustic-stealth.md) owns physical-sou
 
 The accepted [shared NPC text design](../projects/npc-speech-streaming-feature-spec.md) is inventoried in [NST-L01–NST-L09](npc-speech-streaming.md). Shared hearing, cognition, memory, response and HTTP/caption limits retain their existing owners; the new inventory distinguishes selected batching/presentation constraints from unmeasured multiplayer capacity.
 
-The designed [character and map additions](../projects/character-and-map-additions-feature-spec.md) propose [CMA-L01–CMA-L06](character-and-map-additions.md) for map markers, label lengths, the stat scale, carrying weight, Spirit and armour.
+The [character and map additions inventory](character-and-map-additions.md) records current CMA-L01/L02 map-marker and label bounds. CMA-L03–L06 for the stat scale, carrying weight, Spirit and armour remain future targets in the [accepted design](../projects/character-and-map-additions-feature-spec.md), outside the UI-only delivery.
 
 - The feature specification owns behavior and accepted requirements.
 - `docs/limits/<feature>.md` owns that feature’s limit inventory, reason and restrictiveness. A shared mechanism belongs to its owning feature once; consumers link to it. Do not create a second inventory in each project that touches it.

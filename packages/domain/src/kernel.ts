@@ -3025,6 +3025,7 @@ export function executeCommand(
     constructionPermissions?: readonly ConstructionPermission[];
     campAssetPermissions?: readonly CampAssetPermission[];
     boundaryExits?: BoundaryExitPreparations;
+    tradeDisclosures?: import('./handover.js').TradeDisclosureContext;
   } = {},
 ): Transition {
   const nested = inWorkGroup();
@@ -3050,6 +3051,7 @@ function executeCommandNative(
     constructionPermissions?: readonly ConstructionPermission[];
     campAssetPermissions?: readonly CampAssetPermission[];
     boundaryExits?: BoundaryExitPreparations;
+    tradeDisclosures?: import('./handover.js').TradeDisclosureContext;
   },
   standalone: boolean,
   ownedNativeMovement = false,
@@ -3277,8 +3279,14 @@ function executeCommandNative(
         options.constructionPermissions ?? [],
       );
       if (problem) return { world: original, events: [], outcome: problem };
-    } else if ('itemId' in command) {
-      const offer = prepareItemOffer(original, source, command, options.constructionPermissions);
+    } else if ('offered' in command) {
+      const offer = prepareItemOffer(
+        original,
+        source,
+        command,
+        options.constructionPermissions,
+        options.tradeDisclosures,
+      );
       if ('ok' in offer) return { world: original, events: [], outcome: offer };
     } else {
       const problem = itemOfferReplyProblem(
@@ -3865,7 +3873,14 @@ function executeCommandNative(
         break;
       }
       case 'handover': {
-        const done = executeHandover(world, actor, command, events, constructionBatch);
+        const done = executeHandover(
+          world,
+          actor,
+          command,
+          events,
+          constructionBatch,
+          options.tradeDisclosures,
+        );
         if (!done.ok) return reject(done.code, done.message);
         result = done;
         break;

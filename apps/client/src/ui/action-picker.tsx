@@ -1,7 +1,7 @@
 import { AttentionFocus } from './attention-focus';
 import { LoadingIndicator, LoadingScope } from '../design-system/loading';
 import { WorldIntentIcon, type WorldIntent } from './world-composer';
-import { namePhrase } from '@open-legend/language';
+import { formatDisplayNumber, namePhrase } from '@open-legend/language';
 import { godCharacterAvailability } from './god-character-actions';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
@@ -24,6 +24,8 @@ import {
 import { post } from '../api';
 import { playerEntity } from '../entity-view';
 import { Button, Icon, IconButton, symbol } from '../design-system/components';
+import { ItemIllustration } from '../design-system/item-illustration';
+import { Portrait } from '../design-system/portrait';
 import { ActionChoice } from './action-choice';
 import { Pullout, PulloutPicker } from './pullout';
 import { ActivityEntries, type ActivityEntry } from './camp-activity';
@@ -47,6 +49,7 @@ export function ActionPicker({
   run,
   invent,
   inspect,
+  onTrade,
   openContainer,
   openActivity,
   compose,
@@ -67,6 +70,7 @@ export function ActionPicker({
   run(action: CatalogueAction): void;
   invent(text: string): void;
   inspect(entity: EntityView): void;
+  onTrade?(entity: EntityView): void;
   openContainer(entity: EntityView): void;
   openActivity(entry: ActivityEntry): void;
   compose(mode: WorldIntent['mode']): void;
@@ -125,6 +129,34 @@ export function ActionPicker({
     picker.context.targetId === view.player.id
       ? playerEntity(view)
       : view.entities.find((entity) => entity.id === picker.context.targetId);
+  const ownedItemId = context.itemId ?? picker.item?.id;
+  const ownedItem = ownedItemId
+    ? view.player.inventory.find((item) => item.id === ownedItemId)
+    : undefined;
+  const subjectName =
+    recipe?.name ??
+    ownedItem?.name ??
+    picker.item?.name ??
+    subject?.name ??
+    picker.entity?.name ??
+    view.presentation.locationName;
+  // Artwork and state follow the same exact subject as the name. A retained
+  // item label is not permission to substitute another target's illustration.
+  const subjectArt = recipe
+    ? recipe.outputs[0]?.art
+    : ownedItem
+      ? ownedItem.art
+      : picker.item
+        ? undefined
+        : subject?.art;
+  const subjectPortrait = !recipe && !ownedItem && !picker.item ? subject?.portrait : undefined;
+  const subjectState = recipe
+    ? undefined
+    : ownedItem
+      ? `Quantity: ${formatDisplayNumber(ownedItem.quantity)}${ownedItem.equipped ? ' · Equipped' : ''}`
+      : picker.item
+        ? undefined
+        : subject?.status;
   const key = JSON.stringify([
     scopeKey,
     view.player.inventoryRevision,
@@ -365,6 +397,15 @@ export function ActionPicker({
     !embedded &&
     picker.entity.id !== view.player.id &&
     (!query || 'look closer description inspect'.includes(query.toLowerCase()));
+  const showTrade =
+    !full &&
+    !lostTarget &&
+    !!subject?.trade &&
+    !!onTrade &&
+    (!query ||
+      `${subject.trade.labels.title} ${subject.name}`
+        .toLocaleLowerCase()
+        .includes(query.toLocaleLowerCase()));
   const showOpen =
     !full &&
     !lostTarget &&
@@ -391,7 +432,12 @@ export function ActionPicker({
   const suggested = useMemo(() => {
     const limit = Math.max(
       0,
-      5 - Number(showSpeak) - Number(showAct) - Number(showInspect) - Number(showOpen),
+      5 -
+        Number(showSpeak) -
+        Number(showAct) -
+        Number(showInspect) -
+        Number(showOpen) -
+        Number(showTrade),
     );
     if (full || searching || !limit) return [];
     const choices: CatalogueAction[] = [];
@@ -401,7 +447,7 @@ export function ActionPicker({
       if (choices.length === limit) break;
     }
     return choices;
-  }, [matches, full, searching, showSpeak, showAct, showInspect, showOpen]);
+  }, [matches, full, searching, showSpeak, showAct, showInspect, showOpen, showTrade]);
   const menuSections = useMemo(() => {
     const promoted = new Set(suggested.map((action) => action.id));
     return sections.filter(
@@ -463,7 +509,16 @@ export function ActionPicker({
           hadFocus.current = false;
       }}
       aria-label={`Actions for ${full ? 'all known choices' : (recipe?.name ?? picker.item?.name ?? (subject ? namePhrase(subject, 'definite') : picker.entity ? namePhrase(picker.entity, 'definite') : view.presentation.locationName))}`}
-      style={embedded ? undefined : { left: position.x, top: position.y }}
+      style={
+        embedded
+          ? undefined
+          : {
+              // Cursor/clamp coordinates are physical; the HUD scales the menu's
+              // reading and controls once, so only its origin needs conversion.
+              left: `calc(${position.x}px / var(--ui-scale, 1))`,
+              top: `calc(${position.y}px / var(--ui-scale, 1))`,
+            }
+      }
       onKeyDown={(e) => {
         if (e.defaultPrevented || e.nativeEvent.isComposing || e.repeat) return;
         // Portaled pullouts own their keyboard navigation; React events still bubble here.
@@ -506,21 +561,30 @@ export function ActionPicker({
           <h3 className="ol-heading ol-inspector-actions-title">Actions</h3>
         ) : (
           <div className="ol-picker-head">
-            <Icon
-              name={subject?.icon ?? picker.entity?.icon ?? 'ui.inview'}
-              fallbackLabel={
-                recipe?.name ?? picker.item?.name ?? subject?.name ?? picker.entity?.name
-              }
-            />
-            <strong>
-              {full
-                ? 'Action browser'
-                : (recipe?.name ??
-                  picker.item?.name ??
-                  subject?.name ??
-                  picker.entity?.name ??
-                  view.presentation.locationName)}
-            </strong>
+            <span className="ol-picker-subject-art" aria-hidden="true">
+              {subjectPortrait ? (
+                <Portrait art={subjectPortrait} size={52} fallbackSize={20} />
+              ) : (
+                <ItemIllustration
+                  art={subjectArt}
+                  icon={
+                    recipe?.outputs[0]?.icon ??
+                    ownedItem?.icon ??
+                    (!picker.item ? (subject?.icon ?? picker.entity?.icon) : undefined) ??
+                    'ui.inview'
+                  }
+                  label={subjectName}
+                  size={64}
+                  fallbackSize={20}
+                />
+              )}
+            </span>
+            <div className="ol-picker-subject">
+              <strong>{full ? 'Action browser' : subjectName}</strong>
+              {!full && subjectState && (
+                <span className="ol-picker-subject-state">{subjectState}</span>
+              )}
+            </div>
             <IconButton icon="ui.close" label="Close action picker" onPress={close} />
           </div>
         )}
@@ -636,6 +700,17 @@ export function ActionPicker({
                   : [],
               )}
             />
+          )}
+          {showTrade && subject?.trade && (
+            <AriaButton
+              data-picker-row
+              className="ol-item"
+              isDisabled={!connected}
+              onPress={() => onTrade?.(subject)}
+            >
+              <Icon name="ui.inventory" />
+              <span>{subject.trade.labels.title}</span>
+            </AriaButton>
           )}
           {showInspect && (
             <AriaButton data-picker-row className="ol-item" onPress={() => inspect(subject!)}>
@@ -811,6 +886,7 @@ export function ActionPicker({
             !showOpen &&
             !showCognition &&
             !showInspect &&
+            !showTrade &&
             !showSpeak &&
             !showAct &&
             !showRevive &&

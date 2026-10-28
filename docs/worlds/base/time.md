@@ -84,7 +84,9 @@ Engine code never states these names. Deadline binding, request validation, the 
 
 A follow or wait that ends at a named time is an exact interval boundary: elapsed-time integration stops at that instant instead of running the 60-second fallback horizon past it. Named times are a small clock vocabulary, not a general time-expression parser; "wait N minutes" is the only relative form. A separate clock policy is warranted when another clock consumer (calendar, seasons) appears.
 
-Clock displays (the HUD clock, event times and God-tool time labels) read the world's `clockOffsetHours` from the view. The day number changes at local midnight ([BW27](../../maintainers/base-world.md#bw27--day-number-changes-at-midnight)); today it still changes at 08:00.
+Clock displays, event times, Operations, God-tool labels and recalled times share the supported 24-hour formatter and read the world's `clockOffsetHours`. The day number changes at local midnight ([BW27](../../maintainers/base-world.md#bw27--day-number-changes-at-midnight)).
+
+The bundled [presentation definition](../../../packages/domain/src/worlds/base/presentation.ts) names this counter **Day** through `presentation.calendar.dayLabel`. Its optional `historyTemplate` owns the controlled person's current self-description, with only `{startDay}` and `{elapsedDays}` substitutions. The starting calendar label uses the installed offset; elapsed whole days use the same arithmetic with zero offset. A world that omits calendar naming shows the numeric counter alone, and supplies no self-history sentence unless it authors that template. This seam names the existing clock; it does not add a different day length, months or years.
 
 ## Daylight presentation
 

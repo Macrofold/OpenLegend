@@ -1,0 +1,1011 @@
+/* Geometry belongs to the shared interface; every material and type role is
+ * selected by the active theme. The frame slot is independent of the plate. */
+.ol-root.ol-hud[data-gildmoss-layout] {
+  --status-scale: 1;
+}
+.ol-root[data-gildmoss-layout] {
+  --gildmoss-hotbar-inset: 24px;
+  /* Conservative until the shared HUD observer reports the wrapped logical sizes. */
+  --gildmoss-hotbar-height: 160px;
+  --gildmoss-events-control-height: 48px;
+  --gildmoss-narrator-height: 0px;
+  --sheet-bottom: calc(var(--gildmoss-hotbar-inset) + var(--gildmoss-hotbar-height) + 12px);
+}
+.ol-gildmoss-overview {
+  display: contents;
+}
+.ol-main-destinations {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2, 8px);
+  overflow-x: auto;
+  padding: 8px 16px;
+  /* The fixed Close control owns this strip outside the scrolling tabs. */
+  margin-right: 48px;
+  flex-shrink: 0;
+  justify-content: safe center;
+  border-bottom: 1px solid var(--line);
+}
+.ol-main-destinations [aria-current='page'] {
+  color: var(--highlight);
+  border-bottom: 2px solid var(--highlight);
+}
+.ol-main-destination-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ol-gildmoss-hotbar {
+  position: fixed;
+  left: 50%;
+  bottom: var(--gildmoss-hotbar-inset, 24px);
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  pointer-events: auto;
+  max-width: calc(100vw / var(--ui-scale, 1) - 32px);
+}
+.ol-gildmoss-hotbar > .ol-ibtn {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  background: var(--surface-glass-hud);
+  border-radius: 4px;
+}
+.ol-gildmoss-slots {
+  display: flex;
+  gap: 4px;
+}
+.ol-hotbar-slot {
+  width: 52px;
+  height: 52px;
+  position: relative;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-slot, 4px);
+  background: var(--slot-bg, var(--surface));
+  border: 1px solid var(--line);
+}
+.ol-hotbar-slot > small {
+  position: absolute;
+  left: 4px;
+  top: 2px;
+  font-size: 12px;
+  color: var(--ink-muted);
+}
+.ol-slot-count {
+  position: absolute;
+  right: 3px;
+  top: 2px;
+  font-size: 12px;
+}
+.ol-hotbar-divider {
+  height: 40px;
+  width: 1px;
+  margin: 0 8px;
+  flex-shrink: 0;
+  background: var(--highlight);
+}
+.ol-daylight {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  color: var(--ink);
+  text-shadow: 0 1px 3px var(--canvas);
+}
+.ol-daylight-face {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 2px solid var(--highlight);
+  overflow: hidden;
+  background: var(--daylight-dial-face, var(--surface));
+}
+.ol-daylight-horizon {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  border-top: 1px solid var(--line);
+}
+.ol-daylight-orb {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  color: var(--highlight);
+}
+.ol-daylight small {
+  color: var(--ink-muted);
+}
+.ol-gildmoss-corner {
+  position: absolute;
+  top: 24px;
+  right: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  pointer-events: auto;
+}
+.ol-gildmoss-corner .ol-daylight {
+  margin-top: 0;
+}
+.ol-gildmoss-lock {
+  position: absolute;
+  top: 24px;
+  left: calc(284px + 40px);
+  pointer-events: auto;
+}
+.ol-gildmoss-frame {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background-image: var(--hud-frame-image, none);
+  background-size: 100% 100%;
+}
+.ol-root[data-gildmoss-layout] .ol-survival {
+  position: absolute;
+  left: 24px;
+  top: 24px;
+  width: 284px;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px 12px;
+  padding: 16px 12px;
+  background: var(--lantern-light), var(--surface-glass-hud);
+  box-shadow: var(--shadow-plate);
+}
+.ol-root.ol-hud[data-gildmoss-layout] .ol-survival {
+  /* Reflow the new plate instead of inheriting the old compact HUD's shrinking
+   * transform. Text and targets retain the player's chosen interface scale. */
+  transform: none;
+}
+.ol-root[data-gildmoss-layout]:not([data-narrow='true'])
+  .ol-dock-left:has(.ol-panel-slot[data-main-workspace]:not([hidden])) {
+  left: 50%;
+  top: calc(50vh / var(--ui-scale, 1));
+  bottom: auto;
+  right: auto;
+  transform: translate(-50%, -50%);
+  width: min(1152px, calc(100vw / var(--ui-scale, 1) - 48px));
+  height: min(842px, calc(100vh / var(--ui-scale, 1) - 120px));
+}
+.ol-root[data-gildmoss-layout] .ol-panel-slot[data-main-workspace] {
+  width: 100%;
+  height: 100%;
+}
+.ol-root[data-gildmoss-layout] .ol-panel-slot[data-main-workspace] > .ol-panel {
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: none;
+}
+.ol-root[data-gildmoss-layout] .ol-world-controls {
+  bottom: 88px;
+  right: 24px;
+  left: auto;
+}
+.ol-root[data-gildmoss-layout] .ol-narrator {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(640px, calc(40vw / var(--ui-scale, 1)));
+  text-align: center;
+  padding: 16px 24px;
+}
+.ol-main-character-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr);
+  gap: 24px;
+}
+.ol-main-character-grid > section {
+  min-width: 0;
+}
+.ol-events-quick {
+  position: fixed;
+  left: 24px;
+  bottom: 24px;
+  pointer-events: auto;
+}
+.ol-root[data-gildmoss-layout] .ol-events-quick > .ol-ibtn {
+  inline-size: 48px;
+  block-size: 48px;
+  background: var(--surface-raised);
+  box-shadow: inset 0 0 0 1px var(--line-control);
+}
+.ol-root[data-gildmoss-layout] .ol-events-quick > .ol-ibtn:hover {
+  background: var(--surface-hover);
+}
+.ol-events-quick-panel {
+  width: 360px;
+  max-width: calc(100vw - 32px);
+  height: min(360px, 45vh);
+  display: flex;
+  flex-direction: column;
+}
+.ol-events-quick-panel > header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.ol-events-quick-panel > div {
+  overflow: auto;
+  flex: 1;
+  min-height: 0;
+}
+.ol-root[data-gildmoss-layout] .ol-events-quick:has(.ol-events-quick-panel),
+.ol-root[data-gildmoss-layout][data-events-above-hotbar] .ol-events-quick {
+  bottom: calc(var(--gildmoss-hotbar-inset) + var(--gildmoss-hotbar-height) + 8px);
+}
+.ol-root[data-gildmoss-layout] .ol-events-quick-panel {
+  max-width: calc(100vw / var(--ui-scale, 1) - 16px);
+  max-height: max(
+    0px,
+    calc(
+      100vh / var(--ui-scale, 1) - var(--gildmoss-hotbar-inset) - var(--gildmoss-hotbar-height) -
+        24px
+    )
+  );
+}
+.ol-root[data-gildmoss-layout][data-narrow='true'] {
+  --gildmoss-hotbar-inset: 8px;
+}
+.ol-root[data-narrow='true'] .ol-gildmoss-hotbar {
+  width: calc(100vw / var(--ui-scale, 1) - 16px);
+  max-width: none;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.ol-root[data-narrow='true'] .ol-gildmoss-slots {
+  width: 100%;
+  justify-content: center;
+}
+.ol-root[data-narrow='true'] .ol-hotbar-slot {
+  width: calc((100vw / var(--ui-scale, 1) - 60px) / 10);
+  max-width: 48px;
+  min-width: 28px;
+  height: 40px;
+}
+.ol-root[data-narrow='true'] .ol-gildmoss-corner {
+  top: 8px;
+  right: 8px;
+  gap: 4px;
+}
+.ol-root[data-gildmoss-layout][data-narrow='true'] .ol-survival {
+  top: 8px;
+  left: 8px;
+  width: 210px;
+}
+.ol-root[data-narrow='true'] .ol-gildmoss-lock {
+  top: 8px;
+  left: 226px;
+}
+.ol-root[data-narrow='true'] .ol-main-character-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ol-root[data-narrow='true'] .ol-daylight-face {
+  width: 44px;
+  height: 44px;
+}
+.ol-root[data-narrow='true'] .ol-events-quick {
+  left: 8px;
+  bottom: calc(var(--gildmoss-hotbar-inset) + var(--gildmoss-hotbar-height) + 8px);
+}
+.ol-root[data-gildmoss-layout][data-compact='true'] .ol-narrator {
+  /* Share the measured footer row with Events; 40vw is only the desktop
+   * subtitle width and otherwise covers the need plate at enlarged reading sizes. */
+  top: auto;
+  bottom: calc(var(--gildmoss-hotbar-inset) + var(--gildmoss-hotbar-height) + 8px);
+  left: max(
+    calc(16px + var(--gildmoss-events-control-height)),
+    calc((100vw / var(--ui-scale, 1) - 640px) / 2)
+  );
+  right: 8px;
+  transform: none;
+  width: auto;
+  max-width: 640px;
+  padding: 8px 12px;
+}
+.ol-root[data-gildmoss-layout][data-narrow='true'] .ol-narrator p {
+  font-size: var(--title-sm-size);
+  line-height: var(--title-sm-leading);
+}
+.ol-root[data-gildmoss-layout][data-narrow='true'] .ol-narrator-timer {
+  margin-top: 8px;
+}
+.ol-root[data-gildmoss-layout][data-compact='true'] .ol-gildmoss-overview {
+  max-height: max(
+    0px,
+    calc(
+      100vh / var(--ui-scale, 1) - var(--gildmoss-hotbar-inset) - var(--gildmoss-hotbar-height) -
+        max(var(--gildmoss-events-control-height), var(--gildmoss-narrator-height)) - 24px
+    )
+  );
+}
+.ol-root[data-gildmoss-layout][data-tight='true'] .ol-survival {
+  position: static;
+  width: 100%;
+  grid-area: 1 / 1;
+}
+.ol-root[data-gildmoss-layout][data-tight='true'] .ol-gildmoss-overview {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  width: calc(100vw / var(--ui-scale, 1) - 16px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 32px;
+  gap: 12px 8px;
+  pointer-events: auto;
+}
+.ol-root[data-gildmoss-layout][data-tight='true'] .ol-gildmoss-lock {
+  position: static;
+  grid-area: 1 / 2;
+  align-self: start;
+}
+.ol-root[data-gildmoss-layout][data-tight='true'] .ol-gildmoss-corner {
+  position: static;
+  grid-area: 2 / 1 / auto / -1;
+  justify-self: end;
+}
+.ol-root[data-gildmoss-layout][data-tight='true'] .ol-subject-picking {
+  position: static;
+  grid-column: 1 / -1;
+}
+.ol-root[data-gildmoss-layout][data-tight='true'] .ol-map-workspace--minimap {
+  width: 160px;
+  height: 160px;
+}
+.ol-root[data-gildmoss-layout][data-tight='true'] .ol-gildmoss-slots {
+  justify-content: start;
+  overflow-x: auto;
+}
+
+.ol-root[data-gildmoss-layout] .ol-execution-controls {
+  max-width: 380px;
+}
+.ol-gildmoss-hotbar .ol-hotbar-divider {
+  background: var(--metal-gold-line, var(--highlight));
+}
+.ol-minimap-place {
+  text-align: center;
+  font-family: var(--font-heading);
+  color: var(--ink);
+  text-shadow: var(--fixed-hud-text-shadow);
+  margin-top: 8px;
+}
+
+.ol-narrator p {
+  font-family: var(--font-heading);
+  font-style: italic;
+  font-size: 20px;
+  line-height: 28px;
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ol-narrator-word {
+  animation: ol-caption-word 1ms steps(1) both;
+}
+@keyframes ol-caption-word {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.ol-narrator-timer {
+  height: 2px;
+  background: var(--highlight);
+  transform-origin: center;
+  margin-top: 16px;
+}
+.ol-narrator .ol-reading-controls {
+  opacity: 0;
+  position: absolute;
+  top: 4px;
+  right: 4px;
+}
+.ol-narrator:hover .ol-reading-controls,
+.ol-narrator:focus-within .ol-reading-controls {
+  opacity: 1;
+}
+[data-reduce-motion='true'] .ol-narrator-word {
+  animation: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ol-narrator-word {
+    animation: none;
+  }
+}
+
+.ol-condition-status-icons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  grid-column: 1/-1;
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+.ol-condition-status-icon {
+  --status-tone: var(--status-neutral);
+  position: relative;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  color: var(--status-tone);
+  border: 2px solid var(--status-tone);
+  border-radius: 4px;
+}
+.ol-condition-status-icon[data-tone='good'] {
+  --status-tone: var(--status-good);
+}
+.ol-condition-status-icon[data-tone='bad'] {
+  --status-tone: var(--status-bad);
+}
+.ol-condition-status-icon[data-tone='special'] {
+  --status-tone: var(--status-special);
+}
+.ol-condition-status-icon[data-timed='true'] {
+  border: 0;
+  border-radius: 50%;
+}
+.ol-condition-status-icon .ol-ibtn {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 4px;
+  border-radius: inherit;
+}
+.ol-condition-status-icon .ol-progress-ring {
+  position: absolute;
+  inset: -1px;
+  pointer-events: none;
+  color: var(--status-tone);
+}
+.ol-root[data-gildmoss-layout] .ol-survival-name {
+  grid-column: 1;
+  grid-row: 1/3;
+  display: flex;
+  align-items: center;
+}
+.ol-root[data-gildmoss-layout] .ol-survival-name .ol-character-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  width: 64px;
+  white-space: normal;
+}
+.ol-root[data-gildmoss-layout] .ol-survival > .ol-condition {
+  grid-column: 2;
+  font-size: 12px;
+}
+.ol-root[data-gildmoss-layout] .ol-survival .ol-meter {
+  grid-template-columns: 16px minmax(0, 1fr) 28px;
+  gap: 6px;
+}
+.ol-root[data-gildmoss-layout] .ol-survival .ol-meter-label {
+  position: absolute;
+  clip-path: inset(50%);
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}
+.ol-root[data-gildmoss-layout] .ol-survival .ol-meter-track {
+  height: 6px;
+}
+.ol-root[data-gildmoss-layout] .ol-survival .ol-save-failure,
+.ol-root[data-gildmoss-layout] .ol-survival .ol-player-state {
+  grid-column: 1/-1;
+}
+.ol-root[data-gildmoss-layout]:not([data-narrow='true'])
+  .ol-dock-right:has(.ol-panel-slot:not([hidden]) > :is(#tradePanel, #world-editorPanel)) {
+  left: 50%;
+  right: auto;
+  top: calc(50vh / var(--ui-scale, 1));
+  bottom: auto;
+  transform: translate(-50%, -50%);
+  width: min(1060px, calc(100vw / var(--ui-scale, 1) - 48px));
+  height: min(780px, calc(100vh / var(--ui-scale, 1) - 120px));
+}
+.ol-root[data-gildmoss-layout]:not([data-narrow='true'])
+  .ol-dock-right:has(.ol-panel-slot:not([hidden]) > #world-editorPanel[data-workspace]) {
+  width: calc(100vw / var(--ui-scale, 1) - 48px);
+  height: calc(100vh / var(--ui-scale, 1) - 48px);
+}
+.ol-root[data-gildmoss-layout]
+  .ol-dock-right:has(.ol-panel-slot:not([hidden]) > :is(#tradePanel, #world-editorPanel))
+  > .ol-panel-slot:not([hidden]) {
+  width: 100%;
+  min-width: 0;
+}
+.ol-root[data-gildmoss-layout] :is(#tradePanel, #world-editorPanel) {
+  width: 100%;
+  max-width: none;
+}
+#tradePanel {
+  width: min(1060px, calc(100vw / var(--ui-scale, 1) - 48px));
+  max-width: none;
+}
+/* Keep the seal above the shared theme's quiet-button material rules. */
+.ol-root[data-gildmoss-layout] .ol-game-seal {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.ol-logo-seal {
+  box-sizing: border-box;
+  padding: 3px;
+  border: 1px solid var(--highlight);
+  border-radius: 50%;
+  background: var(--surface-glass-hud);
+}
+
+/* The meter keeps its full accessible name while the compact plate uses its symbol. */
+.ol-root[data-gildmoss-layout] .ol-survival .ol-condition {
+  display: grid;
+  gap: 8px;
+}
+.ol-gildmoss-notices {
+  position: absolute;
+  left: 50%;
+  top: 108px;
+  transform: translateX(-50%);
+  width: min(460px, 40vw);
+  pointer-events: auto;
+}
+.ol-gildmoss-notices:empty {
+  display: none;
+}
+.ol-gildmoss-notices .ol-opening-information {
+  position: static;
+  width: auto;
+  margin-top: 8px;
+}
+.ol-root[data-narrow='true'] .ol-gildmoss-notices {
+  top: 180px;
+  width: calc(100% - 32px);
+}
+.ol-root[data-gildmoss-layout][data-tight='true'] .ol-gildmoss-notices {
+  position: static;
+  grid-area: 3 / 1 / auto / -1;
+  transform: none;
+  width: 100%;
+}
+
+.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar .ol-hotbar-slot {
+  background: var(--surface-slot-empty, var(--surface));
+  border: 0;
+  box-shadow: inset 0 0 0 1px var(--line);
+  color: var(--ink-muted);
+}
+.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar > .ol-ibtn {
+  background: var(--surface-glass-hud);
+}
+.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar > .ol-ibtn[aria-pressed='true'] {
+  background: var(--surface-selected);
+  color: var(--highlight);
+  box-shadow:
+    inset 0 0 0 1px var(--highlight),
+    var(--hotbar-glow);
+}
+.ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar .ol-hotbar-slot:hover {
+  background: var(--surface-hover);
+  box-shadow: inset 0 0 0 1px var(--line-hover);
+}
+.ol-quick-slot-dialog {
+  padding: 24px;
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+}
+.ol-quick-slot-dialog .ol-inventory-grid-scroll {
+  max-height: min(360px, 45vh);
+  overflow: auto;
+}
+
+.ol-panel-slot[data-main-workspace] > .ol-panel {
+  position: relative;
+}
+.ol-panel-slot[data-main-workspace] > .ol-panel > .ol-panel-head {
+  position: absolute;
+  right: 8px;
+  top: 6px;
+  z-index: 2;
+  padding: 0;
+  background: transparent;
+  border: 0;
+}
+.ol-panel-slot[data-main-workspace] > .ol-panel > .ol-panel-head h2 {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.ol-root.ol-hud[data-gildmoss-layout] .ol-world-composer {
+  position: fixed;
+  left: 50%;
+  /* Reuse measured logical footer size, including wrapping and interface scale. */
+  bottom: calc(var(--gildmoss-hotbar-inset) + var(--gildmoss-hotbar-height) + 12px);
+  transform: translateX(-50%);
+  display: block;
+  padding: 12px;
+  width: min(984px, calc(100vw / var(--ui-scale, 1) - 48px));
+  /* Close stays above the bar; only its contents scroll on short screens. */
+  overflow: visible;
+  max-height: none;
+}
+.ol-world-composer-body {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 100px;
+  gap: 8px 12px;
+  max-height: max(
+    0px,
+    calc(
+      100vh / var(--ui-scale, 1) - var(--gildmoss-hotbar-inset) - var(--gildmoss-hotbar-height) -
+        76px
+    )
+  );
+  overflow: auto;
+}
+.ol-world-composer {
+  /* Respond to the usable logical width, including interface zoom and portals. */
+  container: world-composer / inline-size;
+}
+.ol-world-composer-head {
+  position: absolute;
+  top: -32px;
+  right: 0;
+}
+.ol-world-composer-head > strong {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+.ol-composer-target {
+  grid-column: 1;
+  grid-row: 1/3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+.ol-composer-target .ol-select {
+  min-width: 0;
+  width: 100%;
+}
+.ol-root .ol-world-volume {
+  grid-column: 3;
+  grid-row: 1;
+  display: flex;
+  gap: 2px;
+  margin: 0;
+  width: auto;
+  padding: 0;
+}
+.ol-world-volume .ol-ibtn {
+  width: 30px;
+  height: 28px;
+  min-width: 28px;
+}
+.ol-root .ol-world-composer-input {
+  grid-column: 2/4;
+  grid-row: 1/3;
+  margin: 0;
+}
+.ol-world-composer-input > .ol-icon-wrap {
+  display: none;
+}
+.ol-world-composer-input .ol-composer {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+.ol-world-composer-input .ol-composer > .ol-btn {
+  width: 100px;
+  flex-shrink: 0;
+}
+.ol-world-composer-input .ol-composer textarea {
+  min-height: 64px;
+  max-height: 140px;
+}
+.ol-world-composer-body > p,
+.ol-world-composer-body > .ol-world-item-mention {
+  grid-column: 1/-1;
+}
+/* Negotiation reuses the portaled composer inside its own dialog layout. */
+.ol-trade-negotiation-input .ol-world-composer {
+  position: static !important;
+  transform: none !important;
+  width: 100% !important;
+  max-height: none !important;
+  display: block;
+}
+.ol-trade-negotiation-input .ol-world-composer-body {
+  display: block;
+  max-height: none;
+  overflow: visible;
+}
+.ol-trade-negotiation-input .ol-world-composer-head,
+.ol-trade-negotiation-input .ol-composer-target {
+  display: none;
+}
+.ol-trade-negotiation-input .ol-world-volume {
+  position: absolute;
+  right: 12px;
+  top: -24px;
+}
+
+.ol-dial-sunrise,
+.ol-dial-sunset {
+  position: absolute;
+  top: calc(50% - 4px);
+  width: 8px;
+  height: 8px;
+}
+.ol-dial-sunrise {
+  left: 3px;
+}
+.ol-dial-sunset {
+  right: 3px;
+}
+.ol-root:not([data-narrow='true']) .ol-inspector-slot[data-person] {
+  inset-inline-start: calc(50% - min(480px, 42vw) + var(--inspector-offset));
+  top: calc(50vh / var(--ui-scale, 1) - 300px + var(--inspector-offset));
+  height: min(600px, calc(100vh / var(--ui-scale, 1) - 160px));
+  max-height: min(600px, calc(100vh / var(--ui-scale, 1) - 160px));
+}
+.ol-root:not([data-narrow='true']) .ol-inspector-slot[data-person] > .ol-panel {
+  width: var(--inspection-person-width, min(960px, calc(100vw / var(--ui-scale, 1) - 48px)));
+  height: 100%;
+}
+/* A person and an object are a comparison, not a cascade through the person's
+ * heading. Keep the lone board composition; share desktop width when both open. */
+.ol-root:not([data-narrow='true'])
+  .ol-inspectors:has(.ol-inspector-slot[data-person]):has(.ol-inspector-slot:not([data-person])) {
+  --inspection-person-width: min(960px, calc((100vw / var(--ui-scale, 1) - 64px) * 0.65));
+  --inspection-object-width: min(420px, calc((100vw / var(--ui-scale, 1) - 64px) * 0.35));
+}
+.ol-root:not([data-narrow='true'])
+  .ol-inspectors:has(.ol-inspector-slot:not([data-person]))
+  .ol-inspector-slot[data-person] {
+  inset-inline-start: var(--hud-inset);
+}
+.ol-root:not([data-narrow='true']) .ol-inspector-slot:not([data-person]) > .ol-panel {
+  width: var(--inspection-object-width, min(420px, calc(100vw / var(--ui-scale, 1) - 32px)));
+}
+.ol-inspector-slot[data-person] .ol-panel-head {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.ol-person-details > [role='tablist'] {
+  display: flex;
+  gap: 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--line);
+}
+.ol-person-details {
+  container-type: inline-size;
+}
+.ol-person-details [role='tab'] {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.ol-person-overview[data-person] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+  gap: 16px 24px;
+}
+.ol-person-column {
+  display: grid;
+  gap: 16px;
+  align-content: start;
+  min-width: 0;
+}
+.ol-person-overview :is(.ol-sheet-section, .ol-condition) {
+  min-width: 0;
+  margin: 0;
+}
+.ol-person-overview .ol-sheet-section {
+  align-content: start;
+  padding: 0;
+}
+.ol-person-overview .ol-section-head {
+  margin: 0;
+  padding: 0;
+}
+.ol-person-overview .ol-sheet-section > p {
+  margin: 0;
+}
+/* The board's column spacing owns these embedded readers; their standalone
+ * paragraph, section and disclosure insets must not accumulate here. */
+.ol-person-overview :is(.ol-promises, .ol-person-knowledge, .ol-knowledge-editor) {
+  display: grid;
+  gap: 8px;
+}
+.ol-person-overview :is(.ol-promises, .ol-knowledge-editor) > p {
+  margin: 0;
+}
+.ol-person-overview .ol-promises > p:empty {
+  display: none;
+}
+.ol-person-overview :is(.ol-promises, .ol-knowledge-editor) > details {
+  padding: 0;
+  border: 0;
+}
+.ol-person-overview .ol-meter {
+  grid-template-columns: 16px 54px minmax(0, 1fr) 36px;
+}
+.ol-person-observation {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 8px;
+}
+.ol-person-observation > .ol-caption {
+  flex-shrink: 0;
+  order: 1;
+}
+.ol-person-condition-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.ol-person-condition {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
+.ol-nickname-compact {
+  margin-top: 4px;
+  font-size: var(--text-detail-size);
+  color: var(--ink-muted);
+}
+.ol-nickname-compact > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  min-height: var(--control-sm);
+}
+.ol-nickname-compact[open] > .ol-nickname-editor {
+  padding: 12px;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+}
+.ol-nickname-editor :is(p, label) {
+  margin: 4px 0;
+}
+.ol-root[data-narrow='true'] .ol-person-overview[data-person] {
+  grid-template-columns: minmax(0, 1fr);
+}
+.ol-root[data-narrow='true'] .ol-inspector-slot[data-person] .ol-panel-head {
+  padding: 12px;
+}
+.ol-root[data-narrow='true'] .ol-inspector-slot[data-person] .ol-panel-heading {
+  gap: 12px;
+}
+@container (max-width: 640px) {
+  .ol-person-overview[data-person] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ol-main-destinations .ol-btn {
+  font-size: var(--text-tab-size, 15px);
+  line-height: var(--text-tab-leading, 20px);
+}
+
+@media (max-width: 1279px) {
+  .ol-root[data-gildmoss-layout] {
+    --gildmoss-hotbar-inset: 16px;
+  }
+  .ol-gildmoss-hotbar {
+    gap: 2px;
+  }
+  .ol-hotbar-slot {
+    width: 40px;
+    height: 44px;
+  }
+  .ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar > .ol-ibtn {
+    width: 32px;
+    height: 36px;
+    flex-basis: 32px;
+  }
+  .ol-hotbar-divider {
+    margin: 0 4px;
+  }
+  .ol-root[data-gildmoss-layout]:not([data-narrow='true'])
+    .ol-dock-left:has(.ol-panel-slot[data-main-workspace]:not([hidden])) {
+    width: min(78vw, calc(100vw / var(--ui-scale, 1) - 48px));
+  }
+}
+
+@media (max-width: 719px) {
+  .ol-main-destinations {
+    justify-content: start;
+  }
+  .ol-person-overview[data-person] {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@container world-composer (max-width: 680px) {
+  .ol-root .ol-world-composer-body {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .ol-composer-target {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .ol-root .ol-world-volume {
+    grid-column: 2;
+    grid-row: 1;
+  }
+  .ol-root .ol-world-composer-input {
+    grid-column: 1/-1;
+    grid-row: 2;
+  }
+}
+@container world-composer (max-width: 360px) {
+  .ol-root .ol-world-composer-body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ol-root :is(.ol-composer-target, .ol-world-volume, .ol-world-composer-input) {
+    grid-column: 1;
+    grid-row: auto;
+  }
+  .ol-world-composer-input .ol-composer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ol-world-composer-input .ol-composer > .ol-btn {
+    justify-self: end;
+  }
+}
+
+/* The quick view reuses perceived history and its continuation, while the full
+ * Journal keeps search, filtering, source comparison and time navigation. */
+.ol-events-quick-panel .ol-world-event-controls,
+.ol-events-quick-panel .ol-event-search,
+.ol-events-quick-panel .ol-event-options,
+.ol-events-quick-panel .ol-event-time-jump > label,
+.ol-events-quick-panel .ol-event-time-jump > button,
+.ol-events-quick-panel .ol-world-event-detail {
+  display: none;
+}
+.ol-events-quick-panel .ol-event-time-jump {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+.ol-events-quick-panel .ol-event-time-heading > .ol-event-time-label {
+  display: none;
+}
+.ol-events-quick-panel .ol-world-event {
+  padding-right: 0;
+}

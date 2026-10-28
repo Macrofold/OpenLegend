@@ -24,8 +24,18 @@ import type { AccountBinding } from './authority.js';
 import type { AppConfig } from './config.js';
 import type { CreationStartupPreparation } from './creation-target.js';
 import type { SavedWorld } from './store.js';
+import type { AssetRevisionReference } from '@open-legend/assets';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { prepareOpeningReadiness } from './world-opening-authoring.js';
+
+/** Initial selection only; the publication transaction still checks current
+ * permission and retains this exact release through AssetRepository.bindWorld. */
+export function initialWorldArtwork(reference: AssetRevisionReference) {
+  return {
+    presentationRelease: structuredClone(reference),
+    presentationReleaseRevision: 1,
+  };
+}
 
 /** Shared deterministic startup preparation. Fresh observations are requested only by
  * an ordinary newly assembled world; the creation builder already records its own.
@@ -76,13 +86,19 @@ export async function prepareCreatedWorld(
   binding: AccountBinding,
   config: AppConfig,
   candidate: WorldCreationCandidate,
+  installedRelease: AssetRevisionReference,
 ): Promise<CreationStartupPreparation> {
   const selected = selectedCreationProfileForCandidate(candidate);
   if (!binding.actorId || binding.actorId !== selected.profile.controlledActor(selected.candidate))
     throw new Error('The prepared account must control the selected starting person.');
   const authorityOwners = new Map([[binding.actorId, binding.accountId]]);
   const savedWorld = prepareWorldForStartup(
-    { world: initial.world, speed: 1, manuallyPaused: true },
+    {
+      world: initial.world,
+      speed: 1,
+      manuallyPaused: true,
+      ...(initial.useInstalledArtwork ? initialWorldArtwork(installedRelease) : {}),
+    },
     config,
     authorityOwners,
     initial.constructionSeeds,

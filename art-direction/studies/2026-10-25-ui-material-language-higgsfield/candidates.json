@@ -1,0 +1,98 @@
+[
+ {
+  "id": "d01-forged-strap",
+  "cid": "HIG-01",
+  "name": "Forgewright",
+  "materials": "Blackened hand-forged iron straps, square rivets and fleur finials around dark green smoked glass; a hair-thin champagne gold inlay runs inside every strap.",
+  "good": "Strongest blacksmith identity; joints read as real load-bearing hardware; text areas stay calm; very clear HUD-to-Journal bridge.",
+  "watch": "Fleur finials at every corner add up quickly; would need a lighter corner for small slots. Heaviest frame of the set."
+ },
+ {
+  "id": "d02-riverstone",
+  "cid": "HIG-02",
+  "name": "Riverstone",
+  "materials": "Honed dark slate with faint veining, bevelled stone mouldings, a bronze channel inlay and chevron keystone corners; panels sit on stone corbels.",
+  "good": "Quiet, grounded and timeless; the most legible over the bright day scene; stone corbel joints are an original scaffolding idea.",
+  "watch": "Stone can feel static and dungeon-like; slate veining must stay faint behind long text."
+ },
+ {
+  "id": "d03-bannercloth",
+  "cid": "HIG-03",
+  "name": "Bannercloth",
+  "materials": "Dense green felted wool bordered by couched gold-thread vine embroidery; panels hang from slim iron rods with ball finials; heraldic roundel corners.",
+  "good": "Most directly tied to the concept art's embroidered cloaks and banners; hanging-rod scaffolding is distinctive and literal; warm and lived-in.",
+  "watch": "Embroidered borders are busy at small size; the heraldic eagle reads as a specific house and should become an Open Legend motif."
+ },
+ {
+  "id": "d04-reliquary",
+  "cid": "HIG-04",
+  "name": "Reliquary",
+  "materials": "Deep green champlevé enamel in gilt beaded frames with garnet and agate cabochons at the corners; hinge-straps join panels.",
+  "good": "Most precious and refined; crisp at small sizes; beaded dividers and hinge joints are elegant.",
+  "watch": "Reads royal or ecclesiastical rather than survival; heavy gold contradicts the current no-gold-border panel trial. Better reserved for rewards or rare items."
+ },
+ {
+  "id": "d05-lanternhorn",
+  "cid": "HIG-05",
+  "name": "Lanternhorn",
+  "materials": "Translucent green-tinted horn panes in wrought iron lantern cames with pierced quatrefoil vents; the lantern frame continues from panel to panel.",
+  "good": "Ties directly to the lantern-light preference; pierced iron edges are beautiful; chain-hung joints feel physical.",
+  "watch": "Mottled horn panes are too busy behind text in the kit; the assembled HUD toned them down. Pane texture must be calmed before use."
+ },
+ {
+  "id": "d06-cartographer",
+  "cid": "HIG-06",
+  "name": "Cartographer",
+  "materials": "Smooth deep green surface with a faint grid, champagne double rules with scale ticks, compass-rose corner roundels and engraved cartouche title rails.",
+  "good": "Lightest and most modern; fits the hand-drawn map idea and a character who records the world; closest to the current Gildmoss restraint.",
+  "watch": "Compass roses at every corner become repetitive; least tactile and least medieval-survival of the set."
+ },
+ {
+  "id": "d07-fieldscaffold",
+  "cid": "HIG-07",
+  "name": "Fieldworks",
+  "materials": "Waxed green oilcloth stretched in dark ash-pole frames with forged iron clamps and plates; a tall pole carries the HUD and Journal like a camp signpost.",
+  "good": "The most literal scaffolding: panels physically hang off one post; strongly survival-camp; plain plates read cleanly.",
+  "watch": "Visible timber grain edges toward the rejected wood look; bent-pole connector is physically implausible; the post occupies screen edge."
+ },
+ {
+  "id": "d08-gambeson",
+  "cid": "HIG-08",
+  "name": "Gambeson",
+  "materials": "Dark green diamond-quilted linen, riveted mail bands with champagne edges, lamellar steel corner plates, leather straps and blackened buckles as joints.",
+  "good": "Armour craft maps naturally to a combat-capable survival game; buckled straps are an original connector; quilting stays low behind text.",
+  "watch": "Mail bands are visually noisy at small size; buckles must not suggest something you can click."
+ },
+ {
+  "id": "d09-antler",
+  "cid": "HIG-09",
+  "name": "Antlerwork",
+  "materials": "Ivory bone and antler strips with notch carving and iron pins around smooth dark green; antler-tine corners, bone toggles in iron rings.",
+  "good": "Very original hunter-crafter identity; ivory edges give high contrast without gold; strongly about a wilderness world.",
+  "watch": "Antler tines read slightly aggressive or tribal; ivory is bright and may compete with text on dark."
+ },
+ {
+  "id": "d10-gildmoss-refined",
+  "cid": "HIG-10",
+  "name": "Gildmoss Crest",
+  "materials": "Translucent green glass with top lantern light, a single champagne hairline rim and small engraved roundels only where panels join.",
+  "good": "Closest to the chosen Gildmoss direction and the glass/lantern preferences; least frame weight, so the most world stays visible; compact size reads cleanly.",
+  "watch": "Least 'medieval survival' character of the set; the faint star motif in roundels and buttons is generic and could take an Open Legend mark instead."
+ },
+ {
+  "id": "d11-tabletweave",
+  "cid": "HIG-11",
+  "name": "Brooch & Band",
+  "materials": "Green felted wool edged with tablet-woven geometric bands; bronze penannular brooches pin neighbouring panels together.",
+  "good": "Woven bands tie to the clothing in the concept art; the brooch pinning two panels is the most charming connector in the set; bands give pattern without metal weight.",
+  "watch": "Kit corners drift toward interlace knotwork, close to the rejected knotted styling; bands are busy at compact size. The first kit sheet (kept as r0) had a title-substitution bug from my script, regenerated."
+ },
+ {
+  "id": "d12-verdigris",
+  "cid": "HIG-12",
+  "name": "Verdigris",
+  "materials": "Burnished green-black metal faces in hammered copper repoussé reed-and-wave bands with soft verdigris in the recesses; pinned copper clasps join panels.",
+  "good": "Reed-and-river repoussé is the most specific to the riverside setting; patina gives a second green that suits the palette; joints are solid and physical.",
+  "watch": "Raw copper reads brown-orange, close to the rejected brown palettes; frames are heavy and wide at compact size."
+ }
+]

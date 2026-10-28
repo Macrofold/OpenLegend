@@ -18,6 +18,7 @@ export interface EquipmentProfile {
 export interface EquipmentPort {
   id: string;
   label: string;
+  icon?: string;
 }
 export function validEquipmentProfile(profile: EquipmentProfile): boolean {
   return (
@@ -167,11 +168,12 @@ export function validateEquipment(world: WorldState): void {
       ports.some(
         (p) =>
           !p ||
-          !hasRecordFields(p, ['id', 'label']) ||
+          !hasRecordFields(p, ['id', 'label'], ['icon']) ||
           !isSafeRecordId(p.id) ||
           typeof p.label !== 'string' ||
           !p.label.trim() ||
-          p.label.length > 160,
+          p.label.length > 160 ||
+          (p.icon !== undefined && (typeof p.icon !== 'string' || !p.icon.trim())),
       )
     )
       throw new Error('Incompatible current body equipment ports.');

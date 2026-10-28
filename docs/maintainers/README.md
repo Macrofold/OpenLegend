@@ -36,7 +36,7 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Character and map additions
 
-[Character and map additions (CMA01–CMA06)](character-and-map-additions.md) owns delivery of Spirit, stats, more equipment slots, map markers and nicknames from the accepted Gildmoss design. Its [feature](../projects/character-and-map-additions-feature-spec.md) and [technical design](../projects/character-and-map-additions-tech-design.md) are complete; implementation has not started.
+[Character and map additions (CMA01–CMA06)](character-and-map-additions.md) owns delivery of Spirit, stats, more equipment slots, map markers and nicknames from the accepted Gildmoss design. Its [feature](../projects/character-and-map-additions-feature-spec.md) and [technical design](../projects/character-and-map-additions-tech-design.md) retain the accepted targets. CMA01/CMA02 nicknames and maps are implemented within Gildmoss; CMA03–CMA06 remain separate future work, with prototype evidence preserved outside the current UI delivery.
 
 ## Combat and immediate threat responses
 

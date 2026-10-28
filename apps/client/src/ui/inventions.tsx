@@ -419,6 +419,10 @@ export function Inventions({
   );
   const requestIds = useMemo(() => new Set(requests.map((request) => request.id)), [requests]);
   const blocked = pending || retained.status !== 'empty';
+  // The retained Requests section also renders while inactive. Only its exposed,
+  // eligible first read may register feedback with the surrounding loading owner.
+  const historyLoading =
+    visible && connected && view === 'history' && !historyRead && !historyError;
   return (
     <div className="ol-inventions ol-player-workshop">
       <nav className="ol-creator-views" aria-label="Create views">
@@ -769,13 +773,15 @@ export function Inventions({
           );
         })}
         {!requests.length && (
-          <p role={!historyRead ? 'status' : undefined}>
+          <p role={historyLoading ? 'status' : undefined}>
             {historyRead ? (
               'No saved invention requests yet.'
             ) : historyError ? (
               'Saved requests could not be read.'
+            ) : !connected ? (
+              'Reconnect to read saved requests.'
             ) : (
-              <LoadingIndicator active label="Loading saved invention requests" />
+              <LoadingIndicator active={historyLoading} label="Loading saved invention requests" />
             )}
           </p>
         )}

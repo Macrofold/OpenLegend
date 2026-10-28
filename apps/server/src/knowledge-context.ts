@@ -5,6 +5,7 @@ import {
   currentCommunicationSubject,
   currentBodySubjects,
   subjectKey,
+  validObserverSubject,
   subjectLabel,
   observerIndividual,
   type ObserverSubject,
@@ -30,7 +31,7 @@ export function selectedKnowledgeReferences(
   for (const candidate of candidates) {
     if (!candidate.id.startsWith('notepad:')) continue;
     const doc = world.actorKnowledge?.[actorId]?.[candidate.id.slice('notepad:'.length)];
-    if (!doc?.subjectId) continue;
+    if (!doc || !validObserverSubject(doc.subjectId)) continue;
     const reference = noteReference(actorId, doc.subjectId);
     if (references[reference] && subjectKey(references[reference]) !== subjectKey(doc.subjectId))
       throw new Error('Knowledge reference collision.');
@@ -68,6 +69,27 @@ export function subjectKnowledgeCandidates(
   );
   return Object.entries(world.actorKnowledge?.[actorId] ?? {}).flatMap(([id, doc]) => {
     if (doc.subjectId === null || !doc.text) return [];
+    if (doc.subjectId.kind === 'place' || doc.subjectId.kind === 'map-marker') {
+      // Map annotations supply beliefs, never physical targets or model edit handles.
+      const label =
+        doc.subjectId.kind === 'map-marker'
+          ? (world.mapMarkers?.[actorId]?.[doc.subjectId.markerId]?.label ?? 'a map marker')
+          : 'a known place';
+      return [
+        {
+          id: `notepad:${id}`,
+          kind: 'knowledge' as const,
+          text: `Your map note about ${label}; read-only annotation, not an entity reference.\n${projectEntityMarkers(doc.text, world, actorId)}`,
+          embeddingText: `Map note about ${label}: ${doc.text}`,
+          revision: JSON.stringify([doc.subjectId.kind, doc.revision, label]),
+          required: false,
+          automatic: false,
+          entityIds: [],
+          at: world.simTime,
+          salience: 3,
+        },
+      ];
+    }
     const entity =
       doc.subjectId.kind === 'entity'
         ? entityGet(world.entities, doc.subjectId.entityId)
@@ -78,7 +100,8 @@ export function subjectKnowledgeCandidates(
         : doc.subjectId.entityId === actorId ||
           currentCommunicationSubject(world, actorId, doc.subjectId.entityId) ===
             doc.subjectId.entityId;
-    const name = observerIndividual(world, actorId, doc.subjectId)?.givenName;
+    const identity = observerIndividual(world, actorId, doc.subjectId);
+    const name = identity?.nickname || identity?.givenName;
     const label =
       entity && bound
         ? entityLabel(world, entity, actorId)

@@ -63,6 +63,8 @@ export interface ObserverIdentity {
   sight?: RecognitionKnowledge;
   nameEvidenceIds?: string[];
   givenName: string;
+  /** Private observer-chosen label; introductions never replace it. */
+  nickname?: string;
   revision: number;
   encounterId: string | null;
   authored: boolean;
@@ -245,6 +247,7 @@ export function retainedIndividualEvidenceKeys(world: WorldState, actorId: strin
       for (const sample of profile?.samples ?? []) keys.push(sample.sourceKey, ...sample.support);
     const meaningful =
       identity.authored ||
+      identity.nickname ||
       identity.givenName ||
       identity.voice?.authored ||
       identity.sight?.authored ||
@@ -324,6 +327,7 @@ export function pruneObserverIndividuals(
     const learned =
       identity &&
       (identity.authored ||
+        identity.nickname ||
         identity.givenName ||
         identity.voice?.authored ||
         identity.sight?.authored ||
@@ -353,6 +357,7 @@ export function pruneObserverIndividuals(
       identity.authored ||
       pinned.has(key) ||
       (input.candidates && identity.retained) ||
+      identity.nickname ||
       identity.givenName ||
       identity.voice?.authored ||
       identity.sight?.authored ||
@@ -382,7 +387,7 @@ function currentBodyIdentity(
 ): ObserverIdentity | undefined {
   const local = currentBodyLocalSubject(world, observerId, subjectId);
   const localIdentity = local && observerIndividual(world, observerId, local);
-  if (localIdentity?.givenName) return localIdentity;
+  if (localIdentity?.nickname || localIdentity?.givenName) return localIdentity;
   const association = currentBodyAssociation(world, observerId, subjectId);
   if (association) return observerIndividual(world, observerId, association);
   if (localIdentity) return localIdentity;
@@ -423,7 +428,8 @@ export function currentBodySubject(
     local = subjects[0];
   if (
     local &&
-    (observerIndividual(world, observerId, local)?.givenName ||
+    (observerIndividual(world, observerId, local)?.nickname ||
+      observerIndividual(world, observerId, local)?.givenName ||
       knowledgeDocument(world, observerId, local)?.text.trim())
   )
     return local;
@@ -517,7 +523,13 @@ export function rememberedCommunicationSubjects(
   }
   return [...selected].flatMap(([id, { identity, permitted }]) =>
     permitted && entityGet(world.entities, id)?.actor
-      ? [{ id, label: identity.givenName || observerDescription(world, observerId, id) }]
+      ? [
+          {
+            id,
+            label:
+              identity.nickname || identity.givenName || observerDescription(world, observerId, id),
+          },
+        ]
       : [],
   );
 }
@@ -544,7 +556,8 @@ export function observerGivenName(
   subjectId: string,
 ): string | undefined {
   if (observerId === subjectId) return entityGet(world.entities, subjectId)?.name;
-  return currentBodyIdentity(world, observerId, subjectId)?.givenName || undefined;
+  const identity = currentBodyIdentity(world, observerId, subjectId);
+  return identity?.nickname || identity?.givenName || undefined;
 }
 export function assignGivenName(
   world: WorldState,
@@ -620,6 +633,81 @@ export function assignGivenName(
   }
   advanceKnowledgeRevision(world, observerId);
   return outcome(true, 'given-name-edited', 'Observer-specific given name updated.');
+}
+
+const NICKNAME_CHARACTERS = 40;
+/** A private label changes only this observer's presentation, never the person's claim. */
+export function assignNickname(
+  world: WorldState,
+  observerId: string,
+  edit: { subjectId: ObserverSubject; expectedRevision: number; nickname: string },
+  permittedSubjects: readonly ObserverSubject[],
+): Outcome {
+  if (
+    !permittedSubjects.some((subject) => sameSubject(subject, edit.subjectId)) ||
+    !entityGet(world.entities, observerId)?.actor ||
+    (edit.subjectId.kind === 'entity' && observerId === edit.subjectId.entityId)
+  )
+    return outcome(false, 'unpermitted-subject', 'This person is unavailable.');
+  const current = observerIndividual(world, observerId, edit.subjectId);
+  if (
+    !current &&
+    (edit.subjectId.kind !== 'entity' ||
+      !canRememberSubject(world, observerId, edit.subjectId.entityId))
+  )
+    return outcome(false, 'recognition-unavailable', 'This person is no longer recognized.');
+  if (current?.seedOnly)
+    return outcome(false, 'recognition-unavailable', 'This person is no longer recognized.');
+  if (
+    !Number.isSafeInteger(edit.expectedRevision) ||
+    edit.expectedRevision !== (current?.revision ?? 0)
+  )
+    return outcome(false, 'stale-identity', 'The name changed. Read it again before editing.');
+  if (
+    typeof edit.nickname !== 'string' ||
+    characterCount(edit.nickname.trim()) > NICKNAME_CHARACTERS
+  )
+    return outcome(
+      false,
+      'invalid-nickname',
+      `Keep the nickname within ${NICKNAME_CHARACTERS} characters.`,
+    );
+  const nickname = edit.nickname.trim();
+  if ((current?.nickname ?? '') === nickname)
+    return outcome(true, 'nickname-unchanged', 'Your nickname is already current.');
+  if (
+    !Number.isSafeInteger((current?.revision ?? 0) + 1) ||
+    !Number.isSafeInteger((world.knowledgeRevisions?.[observerId] ?? 0) + 1)
+  )
+    return outcome(false, 'identity-exhausted', 'This name cannot be edited further.');
+  const individualId = current?.individualId ?? allocateObserverIndividual(world, observerId);
+  const candidate: ObserverIdentity = {
+    ...current,
+    individualId,
+    ...(edit.subjectId.kind === 'entity' ? { canonicalId: edit.subjectId.entityId } : {}),
+    givenName: current?.givenName ?? '',
+    revision: (current?.revision ?? 0) + 1,
+    encounterId:
+      current?.encounterId ??
+      (edit.subjectId.kind === 'entity'
+        ? (world.perceptionEpisodes?.[observerId]?.[edit.subjectId.entityId] ?? null)
+        : null),
+    authored: current?.authored ?? false,
+  };
+  if (nickname) candidate.nickname = nickname;
+  else delete candidate.nickname;
+  if (!commitObserverIdentity(world, observerId, individualId, candidate))
+    return outcome(
+      false,
+      'knowledge-capacity',
+      'Personal knowledge is full; the previous name was retained.',
+    );
+  advanceKnowledgeRevision(world, observerId);
+  return outcome(
+    true,
+    'nickname-edited',
+    nickname ? 'Your nickname was saved.' : 'Your nickname was cleared.',
+  );
 }
 
 export function canRememberSubject(
@@ -720,7 +808,8 @@ export function intendedAddresseeName(
   role: import('../../speech.js').SpeechTargetRole,
 ): Named {
   if (role === 'remembered' && canAddressRememberedSubject(world, observerId, subjectId)) {
-    const name = identityForEntity(world, observerId, subjectId)?.givenName;
+    const identity = identityForEntity(world, observerId, subjectId);
+    const name = identity?.nickname || identity?.givenName;
     if (name) return { name, nameForm: 'proper' };
   }
   return observerName(world, observerId, subjectId);
@@ -819,14 +908,18 @@ export function subjectLabel(
   observerId: string,
   subject: ObserverSubject,
 ): string {
-  return subject.kind === 'entity'
-    ? identityForEntity(world, observerId, subject.entityId)?.givenName ||
-        observerDescription(world, observerId, subject.entityId)
-    : observerIndividual(world, observerId, subject)?.givenName ||
-        (observerIndividual(world, observerId, subject)?.voice
-          ? 'unidentified voice'
-          : 'unidentified individual');
+  const identity = observerIndividual(world, observerId, subject);
+  return (
+    identity?.nickname ||
+    identity?.givenName ||
+    (subject.kind === 'entity'
+      ? observerDescription(world, observerId, subject.entityId)
+      : identity?.voice
+        ? 'unidentified voice'
+        : 'unidentified individual')
+  );
 }
+
 const introductionWords = new Intl.Segmenter('und', { granularity: 'word' });
 function containsNameWords(text: string, name: string[]): boolean {
   const words = [...introductionWords.segment(text)].filter((word) => word.isWordLike);
@@ -923,6 +1016,10 @@ export function validateObserverIdentities(world: WorldState): void {
           (!Array.isArray(identity.nameEvidenceIds) ||
             identity.nameEvidenceIds.some((source) => typeof source !== 'string' || !source))) ||
         typeof identity.givenName !== 'string' ||
+        (identity.nickname !== undefined &&
+          (typeof identity.nickname !== 'string' ||
+            !identity.nickname.trim() ||
+            characterCount(identity.nickname) > NICKNAME_CHARACTERS)) ||
         characterCount(identity.givenName) > 120 ||
         !Number.isSafeInteger(identity.revision) ||
         identity.revision < 0 ||

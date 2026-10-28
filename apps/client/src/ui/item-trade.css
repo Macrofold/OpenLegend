@@ -1,0 +1,270 @@
+.ol-trade-workspace {
+  min-inline-size: 0;
+  container-type: inline-size;
+}
+
+.ol-trade-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding-block-end: var(--space-3);
+  border-block-end: 1px solid var(--line);
+}
+.ol-trade-heading h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-inline-size: 0;
+  font: 600 var(--title-xl-size) / var(--title-xl-leading) var(--font-heading);
+  overflow-wrap: anywhere;
+}
+.ol-trade-heading h3 > span:last-child {
+  min-inline-size: 0;
+}
+.ol-trade-basket-heading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+.ol-trade-heading-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: end;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+.ol-trade-heading h3,
+.ol-trade-conversation h4,
+.ol-trade-basket h4 {
+  margin: 0;
+}
+
+.ol-trade-layout {
+  display: grid;
+  grid-template-columns: minmax(200px, 0.48fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  padding-block-start: var(--space-3);
+  align-items: start;
+}
+
+.ol-trade-inventory {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--space-2);
+  padding-inline-end: var(--space-3);
+  border-inline-end: 1px solid var(--line);
+}
+
+.ol-trade-inventory .ol-inventory-grid {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--space-1);
+}
+
+.ol-trade-inventory [data-compact] .ol-inventory-cell {
+  position: relative;
+  min-block-size: 44px;
+  aspect-ratio: 1;
+  justify-content: center;
+  padding: var(--space-1);
+}
+
+.ol-trade-inventory .ol-inventory-grid-scroll {
+  max-block-size: min(48dvh, 460px);
+}
+
+.ol-trade-deal {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--space-3);
+}
+
+.ol-trade-workspace .ol-trade-terms {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.ol-trade-basket {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--space-2);
+}
+
+.ol-trade-basket ul {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  align-content: start;
+}
+
+.ol-trade-basket li > span,
+.ol-trade-inventory .ol-inventory-grid > li > span {
+  display: block;
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.ol-trade-basket li {
+  min-inline-size: 0;
+  aspect-ratio: 1;
+}
+
+.ol-trade-slot.ol-btn,
+.ol-trade-slot-empty {
+  min-block-size: 44px;
+  border: 1px solid var(--line-control, var(--line));
+  border-radius: var(--radius-sm);
+  background: var(--surface-well, var(--surface));
+}
+
+.ol-trade-slot.ol-btn {
+  position: relative;
+  inline-size: 100%;
+  block-size: 100%;
+  padding: var(--space-1);
+  color: var(--ink);
+}
+
+.ol-trade-slot.ol-btn > span:first-child {
+  display: grid;
+  place-items: center;
+}
+
+.ol-trade-slot.ol-btn[aria-pressed='true'] {
+  border-color: var(--highlight);
+  background: var(--surface-selected);
+}
+
+.ol-trade-slot-quantity {
+  position: absolute;
+  inset-inline-end: 4px;
+  inset-block-end: 2px;
+  font-size: var(--text-detail-size);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.ol-trade-lot-editor {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: start;
+  padding: var(--space-3);
+  background: var(--surface-well, var(--surface));
+  border: 1px solid var(--line-control, var(--line));
+  border-radius: var(--radius-sm);
+}
+
+.ol-trade-lot-editor > strong,
+.ol-trade-lot-editor > p,
+.ol-trade-lot-editor > .ol-inventory-quantity {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.ol-trade-request {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.ol-trade-request .ol-caption {
+  flex-basis: 100%;
+}
+
+.ol-trade-decision {
+  justify-content: end;
+}
+
+.ol-trade-conversation {
+  min-inline-size: 0;
+  padding-block-start: var(--space-3);
+  border-block-start: 1px solid var(--line);
+  display: grid;
+  grid-template-rows: auto minmax(64px, 1fr) auto;
+  gap: var(--space-2);
+}
+
+.ol-trade-conversation > .ol-thread-shell {
+  min-block-size: 64px;
+  max-block-size: 180px;
+  overflow: hidden;
+}
+
+.ol-trade-conversation .ol-thread {
+  max-block-size: 180px;
+}
+
+.ol-trade-speech {
+  display: grid;
+  grid-template-columns: minmax(70px, auto) minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  align-items: baseline;
+  margin: 0;
+}
+
+.ol-trade-speech .ol-event-time {
+  color: var(--ink-muted);
+  font-size: var(--text-detail-size);
+}
+
+.ol-trade-negotiation-input .ol-world-composer {
+  position: static;
+  inset: auto;
+  inline-size: auto;
+  max-inline-size: none;
+  transform: none;
+  margin: 0;
+}
+.ol-trade-negotiation-input {
+  position: relative;
+}
+
+@container (max-width: 640px) {
+  .ol-trade-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .ol-trade-inventory {
+    padding-inline-end: 0;
+    padding-block-end: var(--space-3);
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--line);
+  }
+
+  .ol-trade-inventory .ol-inventory-grid-scroll {
+    max-block-size: 200px;
+  }
+}
+
+@container (max-width: 520px) {
+  .ol-trade-workspace .ol-trade-terms {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ol-trade-speech {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+  .ol-trade-speech .ol-event-time {
+    grid-column: 2;
+  }
+  .ol-trade-inventory .ol-inventory-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 44px), 1fr));
+  }
+  .ol-trade-basket ul {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 44px), 1fr));
+  }
+  .ol-trade-negotiation-input .ol-world-composer-input .ol-composer {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .ol-trade-negotiation-input .ol-composer > .ol-btn {
+    justify-self: end;
+  }
+}

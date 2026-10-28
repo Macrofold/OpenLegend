@@ -11,7 +11,7 @@ import { post, postContactRead } from '../api';
 import { actionSubjectKey, playerActionStatusKey } from '../action-browser';
 import { Button, SelectField } from '../design-system/components';
 import { LoadingIndicator } from '../design-system/loading';
-import { useInventoryCommand } from './use-inventory-command';
+import type { InventoryCommandOperations } from './use-inventory-command';
 import './recipe-details.css';
 import './work-batches.css';
 export interface WorkBatchEntry {
@@ -25,14 +25,16 @@ export function WorkBatches({
   connected,
   visible,
   entry,
-  command,
+  operations,
+  resolutionRevision,
   close,
 }: {
   view: GameView;
   connected: boolean;
   visible: boolean;
   entry?: WorkBatchEntry;
-  command: CommandDispatcher;
+  operations: InventoryCommandOperations;
+  resolutionRevision: number;
   close(): void;
 }) {
   const [draft, setDraft] = useState<{
@@ -128,6 +130,7 @@ export function WorkBatches({
     actionSubjectKey(source),
     availability.revision,
     refresh,
+    resolutionRevision,
   ]);
   const currentKey = useRef<string | undefined>(undefined);
   currentKey.current = available ? key : undefined;
@@ -137,20 +140,6 @@ export function WorkBatches({
   const validCount =
     Number.isSafeInteger(count) && count >= 1 && (!policy || count <= policy.maximumBatches);
   const submitting = useRef(false);
-  const operations = useInventoryCommand({
-    worldId: view.worldId,
-    actorId: view.player.id,
-    timeline: view.saveTimeline,
-    scope: view.access?.scope ?? '',
-    recoveryScope: view.access?.commandRecoveryScope,
-    epoch: view.commandEpoch,
-    connected,
-    task: 'work-batch',
-    command,
-    onResolved() {
-      setRefresh((value) => value + 1);
-    },
-  });
   useEffect(() => {
     if (!entryId || !available || !request || !validCount || operations.pending) return;
     const abort = new AbortController();

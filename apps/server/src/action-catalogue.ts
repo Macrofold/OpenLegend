@@ -238,7 +238,7 @@ function nativeActionCatalogue(
   const preview = (command: CommandInput) => {
     let result = previews.get(command);
     if (!result) {
-      result = service.previewCommand(command, scope.actorId, true, scope);
+      result = service.previewCommand(command, scope);
       previews.set(command, result);
     }
     return result;

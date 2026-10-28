@@ -433,6 +433,7 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
       : {}),
     ...(patch.historyRevision !== undefined ? { historyRevision: patch.historyRevision } : {}),
     ...(Object.hasOwn(patch, 'narrator') ? { narrator: patch.narrator } : {}),
+    ...(Object.hasOwn(patch, 'cartography') ? { cartography: patch.cartography } : {}),
     ...(patch.profile ? { profile: patch.profile } : {}),
     clock: applyFields(current.clock, patch.clock, patch.remove?.clock),
     player: applyFields(current.player, patch.player, patch.remove?.player),

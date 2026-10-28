@@ -1,5 +1,5 @@
+import { createPortal } from 'react-dom';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Label, Slider, SliderOutput, SliderThumb, SliderTrack } from 'react-aria-components';
 import type {
   AiJobView,
   ApiResult,
@@ -12,6 +12,7 @@ import type {
 import { post, getScoped } from '../api';
 import { playerActionStatusKey } from '../action-browser';
 import { Button, Icon, IconButton, SelectField } from '../design-system/components';
+import { Portrait } from '../design-system/portrait';
 import { ConversationComposer } from './conversation';
 import { LoadingScope, LoadingIndicator } from '../design-system/loading';
 import { namePhrase } from '@open-legend/language';
@@ -71,10 +72,13 @@ type WorldComposerProps = {
   view: GameView;
   connected: boolean;
   intent: WorldIntent | null;
+  portalTarget?: HTMLElement;
+  negotiationPerson?: { id: string; name: string; communicationReference?: string };
   visible: boolean;
   preferenceNotice?: string;
   notice?: string;
   clearRecipient(): void;
+  chooseTarget?(id: string): void;
   close(): void;
   setup(): void;
   changeAddressee(targetId: string | undefined, label: string | undefined): void;
@@ -82,7 +86,19 @@ type WorldComposerProps = {
 
 /** Remains mounted when hidden; private ownership, not transport, owns its drafts. */
 export function WorldComposer(props: WorldComposerProps) {
-  return <ScopedWorldComposer key={composerDraftScope(props.view)} {...props} />;
+  const negotiating = props.negotiationPerson;
+  const negotiationTarget = negotiating
+    ? (negotiating.communicationReference ??
+      props.view.entities.find((entity) => entity.id === negotiating.id)?.id)
+    : undefined;
+  // A retained trade is not a remembered communication grant. Keep its draft
+  // mounted, but withdraw a contact-only composer when that body leaves view.
+  const intent = negotiating
+    ? negotiationTarget
+      ? { mode: 'speak' as const, targetId: negotiationTarget, label: negotiating.name }
+      : null
+    : props.intent;
+  return <ScopedWorldComposer key={composerDraftScope(props.view)} {...props} intent={intent} />;
 }
 
 function ScopedWorldComposer({
@@ -93,9 +109,11 @@ function ScopedWorldComposer({
   preferenceNotice,
   notice,
   clearRecipient,
+  chooseTarget,
   close,
   setup,
   changeAddressee,
+  portalTarget,
 }: WorldComposerProps) {
   const [drafts, setDrafts] = useState<Record<string, ComposerDraft>>({});
   const latestDrafts = useRef(drafts);
@@ -285,7 +303,7 @@ function ScopedWorldComposer({
   );
   useEffect(() => {
     if (visible && intent && !uncertain) input.current?.focus();
-  }, [visible, key, intent]);
+  }, [visible, key, intent?.mode, intent?.targetId]);
   useLayoutEffect(() => {
     // A result check may replace its button. Return only the focus it still owns;
     // a player who moved into another task keeps that newer focus.
@@ -490,7 +508,7 @@ function ScopedWorldComposer({
       }
     }
   }
-  return (
+  const composer = (
     <section
       ref={surface}
       tabIndex={-1}
@@ -504,7 +522,7 @@ function ScopedWorldComposer({
           event.stopPropagation();
           return;
         }
-        if (event.key === 'Escape' && !event.defaultPrevented) {
+        if (event.key === 'Escape' && !event.defaultPrevented && !portalTarget) {
           event.preventDefault();
           event.stopPropagation();
           close();
@@ -516,174 +534,175 @@ function ScopedWorldComposer({
           <strong>
             {intent?.mode === 'speak' ? 'Speak' : intent?.label ? `Act on ${intent.label}` : 'Act'}
           </strong>
-          <IconButton icon="ui.close" label="Close text bar" onPress={close} />
+          {!portalTarget && <IconButton icon="ui.close" label="Close text bar" onPress={close} />}
         </div>
-        {intent?.mode === 'speak' && (
-          <SelectField
-            label="Address"
-            value={intent.targetId ?? 'ambient'}
-            disabled={sending}
-            options={[
-              { id: 'ambient', label: 'Anyone nearby' },
-              ...(intent.targetId &&
-              !view.communicationReferences.some((person) => person.id === intent.targetId)
-                ? [{ id: intent.targetId, label: recipientLabel }]
-                : []),
-              ...view.communicationReferences.map((person) => ({
-                id: person.id,
-                label: person.label,
-              })),
-            ]}
-            onChange={(reference) =>
-              changeAddressee(
-                reference === 'ambient' ? undefined : reference,
-                view.communicationReferences.find((person) => person.id === reference)?.label,
-              )
-            }
-          />
-        )}
-        {intent?.mode === 'speak' && intent.targetId && (
-          <div className="ol-world-recipient">
-            <span>To {recipientLabel}</span>
-            <IconButton icon="ui.close" label="Clear recipient" onPress={clearRecipient} />
+        <div className="ol-world-composer-body">
+          <div className="ol-composer-target">
+            <Portrait art={recipient?.portrait} head size={48} />
+            {chooseTarget && !portalTarget ? (
+              <SelectField
+                label={intent?.mode === 'speak' ? 'To' : 'Target'}
+                value={intent?.targetId ?? ''}
+                onChange={(reference) => {
+                  if (intent?.mode === 'speak')
+                    changeAddressee(
+                      reference || undefined,
+                      view.communicationReferences.find((person) => person.id === reference)?.label,
+                    );
+                  else chooseTarget(reference);
+                }}
+                options={[
+                  { id: '', label: intent?.mode === 'speak' ? 'Anyone who can hear' : 'No target' },
+                  ...(intent?.mode === 'speak'
+                    ? [
+                        ...(intent.targetId &&
+                        !view.communicationReferences.some(
+                          (person) => person.id === intent.targetId,
+                        )
+                          ? [{ id: intent.targetId, label: recipientLabel }]
+                          : []),
+                        ...view.communicationReferences,
+                      ]
+                    : view.entities.map((entity) => ({ id: entity.id, label: entity.name }))),
+                ]}
+              />
+            ) : (
+              <span>{recipientLabel}</span>
+            )}
           </div>
-        )}
-        {notice && !(intent?.mode === 'speak' && notice === preferenceNotice) && (
-          <p role="status" className="ol-meta">
-            {notice}
-          </p>
-        )}
-        {preferenceNotice && intent?.mode === 'speak' && (
-          <p role="status" className="ol-muted">
-            {preferenceNotice}
-          </p>
-        )}
-        {intent?.mode === 'speak' ? (
-          <Slider
-            className="ol-world-volume"
-            aria-label="Speech volume"
-            minValue={0}
-            maxValue={2}
-            step={1}
-            value={volumes.indexOf(volume)}
-            onChange={(value) => setVolume(volumes[Number(value)]!)}
-          >
-            <Label>Volume</Label>
-            <SliderOutput>{volume[0]!.toUpperCase() + volume.slice(1)}</SliderOutput>
-            <SliderTrack>
-              <SliderThumb aria-label={`Speech volume: ${volume}`} />
-            </SliderTrack>
-            <div className="ol-world-volume-labels" aria-hidden="true">
-              <span>Whisper</span>
-              <span>Normal</span>
-              <span>Shout</span>
+          {notice && !(intent?.mode === 'speak' && notice === preferenceNotice) && (
+            <p role="status" className="ol-meta">
+              {notice}
+            </p>
+          )}
+          {preferenceNotice && intent?.mode === 'speak' && (
+            <p role="status" className="ol-muted">
+              {preferenceNotice}
+            </p>
+          )}
+          {intent?.mode === 'speak' && (
+            <div className="ol-world-volume" role="group" aria-label="Speech volume">
+              {volumes.map((value) => (
+                <IconButton
+                  key={value}
+                  icon={`speech.${value}`}
+                  label={value[0]!.toUpperCase() + value.slice(1)}
+                  pressed={volume === value}
+                  onPress={() => setVolume(value)}
+                />
+              ))}
             </div>
-          </Slider>
-        ) : (
-          <p className="ol-caption">Descriptive only. No mechanical effects yet.</p>
-        )}
-        {mentionedItem && (
-          <div className="ol-world-item-mention">
-            <span>About {mentionedItem.name}</span>
-            <IconButton
-              icon="ui.close"
-              label={`Remove mention of ${mentionedItem.name}`}
-              onPress={() =>
-                writeDraft(key, { ...draft, item: undefined, revision: crypto.randomUUID() })
+          )}
+          {mentionedItem && (
+            <div className="ol-world-item-mention">
+              <span>About {mentionedItem.name}</span>
+              <IconButton
+                icon="ui.close"
+                label={`Remove mention of ${mentionedItem.name}`}
+                onPress={() =>
+                  writeDraft(key, { ...draft, item: undefined, revision: crypto.randomUUID() })
+                }
+              />
+            </div>
+          )}
+          <div className="ol-world-composer-input">
+            <WorldIntentIcon mode={intent?.mode ?? 'act'} />
+            <ConversationComposer
+              inputRef={input}
+              ariaLabel={
+                intent?.mode === 'speak' ? 'Words to say out loud' : 'Describe your action'
               }
+              placeholder={intent?.mode === 'speak' ? 'Say something…' : 'Do a jig…'}
+              maxLength={directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500}
+              value={text}
+              onChange={(value) =>
+                writeDraft(key, { ...draft, text: value, revision: crypto.randomUUID() })
+              }
+              onSubmit={() => send()}
+              inputDisabled={!!uncertain}
+              busy={sending}
+              disabled={
+                !available?.available ||
+                !!blocked ||
+                !text.trim() ||
+                sending ||
+                waitingForAct ||
+                !!uncertain
+              }
+              submitLabel={intent?.mode === 'speak' ? 'Say' : 'Act'}
+              submitIcon={intent?.mode === 'speak' ? 'ui.speech' : 'ui.act'}
             />
           </div>
-        )}
-        <div className="ol-world-composer-input">
-          <WorldIntentIcon mode={intent?.mode ?? 'act'} />
-          <ConversationComposer
-            inputRef={input}
-            ariaLabel={intent?.mode === 'speak' ? 'Words to say out loud' : 'Describe your action'}
-            placeholder={intent?.mode === 'speak' ? 'Say something…' : 'Do a jig…'}
-            maxLength={directReply ? 1000 : intent?.mode === 'speak' ? 1500 : 500}
-            value={text}
-            onChange={(value) =>
-              writeDraft(key, { ...draft, text: value, revision: crypto.randomUUID() })
-            }
-            onSubmit={() => send()}
-            inputDisabled={!!uncertain}
-            busy={sending}
-            disabled={
-              !available?.available ||
-              !!blocked ||
-              !text.trim() ||
-              sending ||
-              waitingForAct ||
-              !!uncertain
-            }
-            submitLabel={intent?.mode === 'speak' ? 'Speak' : 'Act'}
+          {(blocked || error || waitingForAct || uncertain) && (
+            <p role="status" className="ol-meta">
+              {uncertain
+                ? 'A previous send is unconfirmed. Check it before sending again.'
+                : error ||
+                  (waitingForAct
+                    ? currentSubmission?.attempt.directReply
+                      ? `${currentSubmission.attempt.intent.label ?? 'The listener'} is considering a reply…`
+                      : 'Describing your action…'
+                    : blocked)}
+            </p>
+          )}
+          {uncertain && (
+            <Button
+              size="sm"
+              onPress={() => void send(uncertain, true)}
+              disabled={sending || !connected}
+            >
+              Check previous send
+            </Button>
+          )}
+          {failedReply && (
+            <Button
+              size="sm"
+              variant="secondary"
+              isPending={sending}
+              isDisabled={!available?.available || !!blocked || sending || !!uncertain}
+              onPress={() =>
+                void send({
+                  ...failedReply.attempt,
+                  scope,
+                  id: failedReply.retryId,
+                  retryOf: failedReply.jobId,
+                })
+              }
+            >
+              Retry their reply
+            </Button>
+          )}
+          {currentSubmission && !view.ai.jobs.some((job) => job.id === currentSubmission.jobId) && (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={sending || !connected || !!uncertain}
+              onPress={() => void send(currentSubmission.attempt, true)}
+            >
+              Check {currentSubmission.attempt.directReply ? 'reply' : 'action'} status
+            </Button>
+          )}
+          {needsAi && (
+            <Button size="sm" onPress={setup}>
+              AI settings and allowance
+            </Button>
+          )}
+          {available && !available.available && connected && !sending && !uncertain && (
+            <Button
+              size="sm"
+              variant="secondary"
+              onPress={() => setAvailabilityRefresh((n) => n + 1)}
+            >
+              Check availability
+            </Button>
+          )}
+          <LoadingIndicator
+            active={checkingAvailability}
+            label="Checking interaction availability"
           />
         </div>
-        {(blocked || error || waitingForAct || uncertain) && (
-          <p role="status" className="ol-meta">
-            {uncertain
-              ? 'A previous send is unconfirmed. Check it before sending again.'
-              : error ||
-                (waitingForAct
-                  ? currentSubmission?.attempt.directReply
-                    ? `${currentSubmission.attempt.intent.label ?? 'The listener'} is considering a reply…`
-                    : 'Describing your action…'
-                  : blocked)}
-          </p>
-        )}
-        {uncertain && (
-          <Button
-            size="sm"
-            onPress={() => void send(uncertain, true)}
-            disabled={sending || !connected}
-          >
-            Check previous send
-          </Button>
-        )}
-        {failedReply && (
-          <Button
-            size="sm"
-            variant="secondary"
-            isPending={sending}
-            isDisabled={!available?.available || !!blocked || sending || !!uncertain}
-            onPress={() =>
-              void send({
-                ...failedReply.attempt,
-                scope,
-                id: failedReply.retryId,
-                retryOf: failedReply.jobId,
-              })
-            }
-          >
-            Retry their reply
-          </Button>
-        )}
-        {currentSubmission && !view.ai.jobs.some((job) => job.id === currentSubmission.jobId) && (
-          <Button
-            size="sm"
-            variant="secondary"
-            disabled={sending || !connected || !!uncertain}
-            onPress={() => void send(currentSubmission.attempt, true)}
-          >
-            Check {currentSubmission.attempt.directReply ? 'reply' : 'action'} status
-          </Button>
-        )}
-        {needsAi && (
-          <Button size="sm" onPress={setup}>
-            AI settings and allowance
-          </Button>
-        )}
-        {available && !available.available && connected && !sending && !uncertain && (
-          <Button
-            size="sm"
-            variant="secondary"
-            onPress={() => setAvailabilityRefresh((n) => n + 1)}
-          >
-            Check availability
-          </Button>
-        )}
-        <LoadingIndicator active={checkingAvailability} label="Checking interaction availability" />
       </LoadingScope>
     </section>
   );
+  return portalTarget ? createPortal(composer, portalTarget) : composer;
 }

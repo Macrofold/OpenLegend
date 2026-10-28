@@ -27,7 +27,7 @@ import {
   Focusable,
   type ButtonProps as AriaButtonProps,
 } from 'react-aria-components';
-import icons from './icons/catalog';
+import icons, { gildmossIcons, iconMetalDefinitions } from './icons/catalog';
 import {
   LoadingDialog,
   LoadingIndicator,
@@ -37,7 +37,20 @@ import {
 } from './loading';
 import { PointerTooltip } from './pointer-tooltip';
 import { formatDisplayNumber } from '@open-legend/language';
+import { placeReadingWindow } from './window-placement';
 export { Toolbar };
+/** The exact runtime catalog supplies these reviewed definitions once per document. */
+export function IconDefinitions() {
+  return (
+    <svg
+      className="ol-icon-definitions"
+      aria-hidden="true"
+      width="0"
+      height="0"
+      dangerouslySetInnerHTML={{ __html: iconMetalDefinitions.body }}
+    />
+  );
+}
 export function Icon({
   name,
   label,
@@ -52,16 +65,29 @@ export function Icon({
   fallbackLabel?: string;
 }) {
   const data = Object.hasOwn(icons, name) ? icons[name] : undefined;
+  const gildmoss = Object.hasOwn(gildmossIcons, name) ? gildmossIcons[name] : undefined;
   const style = { '--ol-icon': `${size}px` } as CSSProperties;
   // Only the exact checksum-verified, reviewed icon catalog enters this sink.
   // Arbitrary asset SVG and generated names never become trusted markup.
   const glyph = data ? (
-    <svg
-      className="ol-icon"
-      viewBox={data.viewBox}
-      aria-hidden="true"
-      dangerouslySetInnerHTML={{ __html: data.body }}
-    />
+    <>
+      <svg
+        className="ol-icon"
+        data-artwork={gildmoss ? 'shared' : undefined}
+        viewBox={data.viewBox}
+        aria-hidden="true"
+        dangerouslySetInnerHTML={{ __html: data.body }}
+      />
+      {gildmoss && (
+        <svg
+          className="ol-icon"
+          data-artwork="gildmoss"
+          viewBox={gildmoss.viewBox}
+          aria-hidden="true"
+          dangerouslySetInnerHTML={{ __html: gildmoss.body }}
+        />
+      )}
+    </>
   ) : (
     <span className="ol-sigil">
       <span>{(fallbackLabel ?? name.split('.').at(-1) ?? '?').charAt(0).toUpperCase()}</span>
@@ -539,6 +565,8 @@ export function Condition({
 }
 export function Panel({
   title,
+  titleArtwork,
+  titleDetails,
   onClose,
   onBack,
   backLabel,
@@ -549,10 +577,14 @@ export function Panel({
   id,
   hidden,
   draggable = false,
+  avoidOverlap = false,
+  placementBounds,
   resizable = false,
   workspace,
 }: {
   title: string;
+  titleArtwork?: ReactNode;
+  titleDetails?: ReactNode;
   onClose(): void;
   onBack?: () => void;
   backLabel?: string;
@@ -563,6 +595,9 @@ export function Panel({
   id?: string;
   hidden?: boolean;
   draggable?: boolean;
+  avoidOverlap?: boolean;
+  /** A layout-owned available region, shared by initial fit and manual drag. */
+  placementBounds?: HTMLElement | null;
   resizable?: boolean;
   workspace?: { expanded: boolean; width: number; onToggle(): void };
 }) {
@@ -571,6 +606,7 @@ export function Panel({
   const body = useRef<HTMLDivElement>(null),
     listScroll = useRef(0);
   const [offset, setOffset] = useState({ x: 0, y: 0 });
+  const placed = useRef(false);
   const drag = useRef<
     | {
         pointerX: number;
@@ -579,9 +615,24 @@ export function Panel({
         offsetY: number;
         left: number;
         top: number;
+        width: number;
+        height: number;
+        scale: number;
+        viewport: { left: number; top: number; width: number; height: number };
       }
     | undefined
   >(undefined);
+  const viewport = () => {
+    const bounds = placementBounds?.getBoundingClientRect();
+    const left = Math.max(0, bounds?.left ?? 0);
+    const top = Math.max(0, bounds?.top ?? 0);
+    return {
+      left,
+      top,
+      width: Math.min(innerWidth, bounds?.right ?? innerWidth) - left,
+      height: Math.min(innerHeight, bounds?.bottom ?? innerHeight) - top,
+    };
+  };
   const detail = !!onBack;
   useLayoutEffect(() => {
     panelElement.current?.dispatchEvent(new Event('ol-panel-moved', { bubbles: true }));
@@ -596,6 +647,7 @@ export function Panel({
   }, [detail]);
   useLayoutEffect(() => {
     if (!draggable) {
+      placed.current = false;
       // A floating panel becoming a narrow sheet must drop its desktop offset.
       setOffset((previous) => (previous.x || previous.y ? { x: 0, y: 0 } : previous));
       return;
@@ -611,8 +663,43 @@ export function Panel({
       }
       const bounds = panel.getBoundingClientRect();
       const scale = bounds.width / panel.offsetWidth || 1;
-      const left = Math.max(8, Math.min(innerWidth - bounds.width - 8, bounds.left));
-      const top = Math.max(8, Math.min(innerHeight - bounds.height - 8, bounds.top));
+      const available = viewport();
+      // The layout can reserve measured HUD utilities below a floating window.
+      // ResizeObserver already follows that region; no extra geometry loop is needed.
+      drag.current = undefined;
+      let left = Math.max(
+        available.left + 8,
+        Math.min(available.left + available.width - bounds.width - 8, bounds.left),
+      );
+      let top = Math.max(
+        available.top + 8,
+        Math.min(available.top + available.height - bounds.height - 8, bounds.top),
+      );
+      if (avoidOverlap && !placed.current && bounds.width && bounds.height) {
+        placed.current = true;
+        // Entry animation translates the surface without changing its final
+        // layout. Place the final rectangle, not an intermediate animation frame.
+        const transform = getComputedStyle(panel).transform;
+        const motion = new DOMMatrixReadOnly(transform === 'none' ? undefined : transform);
+        const preferred = {
+          left: bounds.left - motion.m41 * scale,
+          top: bounds.top - motion.m42 * scale,
+          width: bounds.width,
+          height: bounds.height,
+        };
+        const root = panel.closest('.ol-hud');
+        const occupied = [
+          ...(root?.querySelectorAll<HTMLElement>(
+            '.ol-inspector-slot > .ol-panel, .ol-bag-window-slot > .ol-panel, .ol-dock > .ol-panel-slot:not([hidden]) > .ol-panel',
+          ) ?? []),
+        ]
+          .filter((other) => other !== panel && !other.closest('[hidden]'))
+          .map((other) => other.getBoundingClientRect())
+          .filter((other) => other.width && other.height);
+        ({ left, top } = placeReadingWindow(preferred, available, occupied, 8 * scale, 16 * scale));
+        left += bounds.left - preferred.left;
+        top += bounds.top - preferred.top;
+      }
       const dx = left - bounds.left;
       const dy = top - bounds.top;
       if (Math.abs(dx) < 0.5 && Math.abs(dy) < 0.5) return;
@@ -624,20 +711,22 @@ export function Panel({
     observer.observe(panel);
     // Refitting open panels can move this panel's anchor without resizing it.
     // Recheck after its dock changes too, rather than retaining an obsolete clamp.
-    const dock = panel.closest('.ol-dock');
+    const dock = placementBounds ?? panel.closest('.ol-dock, .ol-inspectors');
     if (dock) observer.observe(dock);
     window.addEventListener('resize', keepHeaderReachable);
     return () => {
       observer.disconnect();
       window.removeEventListener('resize', keepHeaderReachable);
     };
-  }, [draggable, hidden, workspace?.expanded, workspace?.width]);
+  }, [draggable, hidden, avoidOverlap, placementBounds, workspace?.expanded, workspace?.width]);
   const startDrag = (event: PointerEvent<HTMLElement>) => {
     if (
       !draggable ||
       event.button !== 0 ||
       !event.isPrimary ||
-      (event.target as HTMLElement).closest('button, a, [role="button"]')
+      (event.target as HTMLElement).closest(
+        'button, a, input, textarea, select, summary, [role="button"]',
+      )
     )
       return;
     const panel = event.currentTarget.closest<HTMLElement>('.ol-panel');
@@ -650,29 +739,33 @@ export function Panel({
       offsetY: offset.y,
       left: bounds.left,
       top: bounds.top,
+      width: bounds.width,
+      height: bounds.height,
+      scale: bounds.width / panel.offsetWidth || 1,
+      viewport: viewport(),
     };
     event.currentTarget.setPointerCapture(event.pointerId);
   };
   const moveDrag = (event: PointerEvent<HTMLElement>) => {
     const active = drag.current;
     if (!active) return;
-    const element = panelElement.current;
-    const scale = element ? element.getBoundingClientRect().width / element.offsetWidth || 1 : 1;
+    const available = active.viewport;
     const dx = Math.max(
-      8 - active.left,
+      available.left + 8 - active.left,
       Math.min(
-        innerWidth - (panelElement.current?.getBoundingClientRect().width ?? 120) - 8 - active.left,
+        available.left + available.width - active.width - 8 - active.left,
         event.clientX - active.pointerX,
       ),
     );
     const dy = Math.max(
-      8 - active.top,
+      available.top + 8 - active.top,
       Math.min(
-        Math.max(8, innerHeight - (element?.getBoundingClientRect().height ?? 56) - 8) - active.top,
+        Math.max(available.top + 8, available.top + available.height - active.height - 8) -
+          active.top,
         event.clientY - active.pointerY,
       ),
     );
-    setOffset({ x: active.offsetX + dx / scale, y: active.offsetY + dy / scale });
+    setOffset({ x: active.offsetX + dx / active.scale, y: active.offsetY + dy / active.scale });
   };
   return (
     <section
@@ -703,21 +796,25 @@ export function Panel({
           onPointerCancel={() => (drag.current = undefined)}
           onLostPointerCapture={() => (drag.current = undefined)}
         >
-          <div>
-            {onBack && (
-              <Button
-                aria-label={`Back to ${backLabel ?? 'list'}`}
-                variant="quiet"
-                size="sm"
-                icon="ui.back"
-                onPress={onBack}
-              >
-                {backLabel ?? 'Back'}
-              </Button>
-            )}
-            <h2 id={titleId} className="ol-panel-title ol-heading">
-              {title}
-            </h2>
+          <div className="ol-panel-heading">
+            {titleArtwork}
+            <div className="ol-panel-heading-copy">
+              {onBack && (
+                <Button
+                  aria-label={`Back to ${backLabel ?? 'list'}`}
+                  variant="quiet"
+                  size="sm"
+                  icon="ui.back"
+                  onPress={onBack}
+                >
+                  {backLabel ?? 'Back'}
+                </Button>
+              )}
+              <h2 id={titleId} className="ol-panel-title ol-heading">
+                {title}
+              </h2>
+              {titleDetails}
+            </div>
           </div>
           <div className="ol-panel-tools">
             {workspace && (

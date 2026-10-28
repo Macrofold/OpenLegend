@@ -46,7 +46,15 @@ function PromiseItem({ promise }: { promise: OwnPromise }) {
 /** Read-only list of the player's own spoken promises: exact words, what the world checks
  * and what happened. Changing or cancelling promises is not offered (open decision D64).
  * docs/projects/readable-promises-feature-spec.md */
-export function Promises({ visible = true, revision }: { visible?: boolean; revision?: string }) {
+export function Promises({
+  visible = true,
+  revision,
+  personId,
+}: {
+  visible?: boolean;
+  revision?: string;
+  personId?: string;
+}) {
   const [page, setPage] = useState<OwnPromisePage | null>(null);
   const [past, setPast] = useState<OwnPromise[]>([]);
   const [busy, setBusy] = useState(false);
@@ -81,14 +89,20 @@ export function Promises({ visible = true, revision }: { visible?: boolean; revi
       request.current++;
     };
   }, [visible]);
+  const open = page?.open.filter((promise) => !personId || promise.recipientId === personId) ?? [];
+  const earlier = past.filter((promise) => !personId || promise.recipientId === personId);
   const full = !!page && page.counted >= page.openLimit;
   const unlisted = page ? page.counted - page.open.length : 0;
   return (
     <div className="ol-promises" aria-busy={busy}>
-      <p className="ol-caption">Your spoken words, their terms and the recorded outcome.</p>
+      <p className="ol-caption">
+        {personId
+          ? 'Your promises to this person.'
+          : 'Your spoken words, their terms and the recorded outcome.'}
+      </p>
       <p className="ol-meta" role="status">
         <LoadingIndicator active={busy} label="Loading promises" />
-        {page
+        {page && !personId
           ? `${
               unlisted > 0
                 ? `${page.open.length} open, plus ${unlisted} unlisted ${unlisted === 1 ? 'commitment' : 'commitments'} counted toward the limit of ${page.openLimit}.`
@@ -115,15 +129,21 @@ export function Promises({ visible = true, revision }: { visible?: boolean; revi
           </Button>
         </div>
       )}
-      {!!page?.open.length && <h4 className="ol-heading">Unresolved</h4>}
-      {page?.open.map((promise) => (
+      {!!open.length && <h4 className="ol-heading">Unresolved</h4>}
+      {open.map((promise) => (
         <PromiseItem key={promise.id} promise={promise} />
       ))}
-      {!!past.length && <h4 className="ol-heading">Earlier promises</h4>}
-      {past.map((promise) => (
+      {!!earlier.length && <h4 className="ol-heading">Earlier promises</h4>}
+      {earlier.map((promise) => (
         <PromiseItem key={promise.id} promise={promise} />
       ))}
-      {page && !page.counted && !page.open.length && !past.length && (
+      {page && personId && !open.length && !earlier.length && (
+        <p className="ol-meta">
+          No promises to this person are on the current pages
+          {page.next ? '; earlier pages remain' : ''}.
+        </p>
+      )}
+      {page && !personId && !page.counted && !page.open.length && !past.length && (
         <p className="ol-meta">You have not made a promise yet.</p>
       )}
       {page?.partial && (

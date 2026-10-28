@@ -1,0 +1,14 @@
+Game interface artwork: one single, one-of-a-kind character HUD for the top-left corner of the screen in "Open Legend", a grounded medieval survival role-playing game. Show ONLY the HUD on a fully transparent background: no scene, no backdrop panel behind it, no shadow box, no labels or captions. The top-left corner of the image is the top-left corner of the player's screen: the HUD mounts into that corner and fills most of the canvas.
+
+The HUD contains, all clearly readable:
+1. The player's portrait: a small pixel-art bust of a man with tousled brown hair, a short brown beard and a dark tunic, in detailed pixel art. Only the portrait picture is pixel art; every frame, metal part and icon is crisp and high-resolution.
+2. Four slim need gauges, each with a small icon and a number: a heart and 100 (deep muted red #8C3B32), an apple and 72 (ochre #977233), a lightning bolt and 84 (moss green #557A42), a four-pointed sparkle and 80 (deep blue #3F5B8A); the gauge tracks are dark.
+3. One lasting effect: a small square icon of a bandaged leg with a thin, subtle muted-red border.
+4. Two timed statuses: small circular icons whose ring is a timer partly run down: a steaming bowl with a muted green ring about two-thirds full, and a gust of wind with a muted red ring about one-third full.
+5. A small toggle button for locking the camera perspective: an eye inside four corner brackets.
+
+Materials, shared with the game's "Gildmoss" interface: slightly translucent very dark green glass, pale champagne gilded metal that reflects light like real polished metal but never glows, warm ivory numbers in a clean sans-serif, a gentle warm lantern light falling from above.
+
+Construction: NOT a rectangle with a border. {DESIGN}
+
+AAA fantasy role-playing-game craftsmanship: sculpted, cast and engraved metal made for this one HUD rather than a reusable frame; ornament concentrated around the portrait and where parts join; calm, smooth glass behind the numbers and icons. Compact enough to sit at the top-left of a 1920x1080 game screen at about a quarter of the screen width.

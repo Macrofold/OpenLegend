@@ -9,6 +9,9 @@ import {
   objectAncestors,
   currentBodyGrant,
   currentBodyObservation,
+  currentBodyAssociation,
+  currentBodyLocalSubject,
+  type ObserverSubject,
   observerIndividual,
   currentCommunicationSubject,
   knownGuideDestinations,
@@ -345,6 +348,25 @@ export function resolveContactTarget(
   options: { communication?: boolean } = {},
 ): string {
   return contactTargetResolver(world, scope, options.communication)(reference);
+}
+
+/** A current person window may select private knowledge only through the same
+ * received body shown to that viewer. This grants no canonical identity or name. */
+export function resolveCurrentPersonSubject(
+  world: WorldState,
+  scope: RequestScope,
+  reference: string,
+  bodyReference: string,
+): ObserverSubject {
+  const id = resolveContactTarget(world, scope, reference);
+  const target = entityGet(world.entities, id);
+  if (!target?.actor || entityBodyReference(scopeKey(scope), target) !== bodyReference)
+    throw new ContactReferenceError();
+  const subject =
+    currentBodyAssociation(world, scope.actorId, id) ??
+    currentBodyLocalSubject(world, scope.actorId, id);
+  if (!subject) throw new ContactReferenceError();
+  return subject;
 }
 
 /** A retained destination is a personal place role, not a current body grant.

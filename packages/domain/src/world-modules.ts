@@ -1,3 +1,5 @@
+import { validateCartography } from './cartography.js';
+import { validateItemArt, validatePortraitArt } from './presentation-art.js';
 import { validateAttackExecutions } from './combat-execution.js';
 import { validLethalPermission } from './combat-consent.js';
 import { validateSensoryProgress } from './perception-timing.js';
@@ -1161,7 +1163,7 @@ export function validateWorldModules(world: WorldState): void {
     (!hasRecordFields(
       world.presentation,
       ['worldName', 'locationName', 'timeLabel'],
-      ['crafting', 'introduction', 'daylight'],
+      ['crafting', 'introduction', 'daylight', 'mapArt', 'portraits', 'itemArt', 'calendar'],
     ) ||
       [
         world.presentation.worldName,
@@ -1177,6 +1179,24 @@ export function validateWorldModules(world: WorldState): void {
       world.presentation.introduction.length > 4000)
   )
     throw new Error('Invalid world introduction.');
+  const calendar = world.presentation?.calendar;
+  if (
+    calendar !== undefined &&
+    (!hasRecordFields(calendar, ['dayLabel'], ['historyTemplate']) ||
+      typeof calendar.dayLabel !== 'string' ||
+      !calendar.dayLabel.trim() ||
+      (calendar.historyTemplate !== undefined &&
+        (typeof calendar.historyTemplate !== 'string' ||
+          !calendar.historyTemplate.trim() ||
+          calendar.historyTemplate.length > 4000 ||
+          /[{}]/.test(
+            calendar.historyTemplate.replaceAll('{startDay}', '').replaceAll('{elapsedDays}', ''),
+          ))))
+  )
+    throw new Error('Invalid authored clock wording.');
+  validateCartography(world);
+  validatePortraitArt(world);
+  validateItemArt(world);
   const daylight = world.presentation?.daylight;
   if (
     daylight !== undefined &&

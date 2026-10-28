@@ -1,7 +1,6 @@
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import {
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -9,7 +8,7 @@ import {
   type ComponentProps,
   type FormEvent,
 } from 'react';
-import { ClockOffsetContext, clockParts } from './event-time';
+import { EventTime } from './event-time';
 import { Modal, ModalOverlay } from 'react-aria-components';
 import type {
   ApiResult,
@@ -451,15 +450,6 @@ export function PersonCreationModal({
   );
 }
 
-function GameDate({ time }: { time: number }) {
-  const { day, hour, minute } = clockParts(time, useContext(ClockOffsetContext));
-  return (
-    <time>
-      Day {day}, {hour}:{minute}
-    </time>
-  );
-}
-
 function RefreshHead({
   refreshedAt,
   refresh,
@@ -530,7 +520,7 @@ function MemoryEditor({
                 <Tag tone={entry.label === 'Consolidated' ? 'highlight' : undefined}>
                   {entry.label}
                 </Tag>
-                <GameDate time={entry.time} />
+                <EventTime time={entry.time} />
               </span>
               <strong>{entry.text}</strong>
               <small>{entry.tags.join(' · ')}</small>
@@ -564,14 +554,16 @@ function MemoryEditor({
 
 export function PersonEditor({
   actorId,
+  opener,
   traits,
   close,
   openWorldEvents,
 }: {
   actorId: string;
+  opener: HTMLElement;
   traits: TraitOption[];
   close(): void;
-  openWorldEvents(): void;
+  openWorldEvents(opener: HTMLElement): void;
 }) {
   const drafts = useRef(new Map<string, string>());
   const generation = useRef(0);
@@ -785,6 +777,7 @@ export function PersonEditor({
     return (
       <EditorReload
         title="Edit Person"
+        opener={opener}
         saved={needsReload}
         loading={loading}
         error={error}
@@ -797,6 +790,7 @@ export function PersonEditor({
   return (
     <EditorPanel
       title={`Edit ${loaded.person.name}`}
+      opener={opener}
       scope="Save commits changes across this person’s sections. The separate World Events editor saves world records independently."
       saveLabel="Save person changes"
       dirty={dirty}
@@ -1006,7 +1000,11 @@ export function PersonEditor({
                 not the world event.
               </p>
               <RefreshHead refreshedAt={refreshedAt} refresh={refresh} />
-              <Button variant="secondary" icon="ui.next" onPress={openWorldEvents}>
+              <Button
+                variant="secondary"
+                icon="ui.next"
+                onPress={(event) => openWorldEvents(event.target as HTMLElement)}
+              >
                 Open World Events editor · God mode
               </Button>
               <div className="ol-entry-list ol-aware-events">
@@ -1015,7 +1013,7 @@ export function PersonEditor({
                     <button type="button" disabled>
                       <span>
                         <Tag>{event.eventType ?? 'Observed event'}</Tag>
-                        <GameDate time={event.time} />
+                        <EventTime time={event.time} />
                       </span>
                       <strong>{event.text}</strong>
                     </button>
@@ -1185,7 +1183,7 @@ function useStoryMechanismEditor() {
   return { content, dirty, writing: pending === 'save', discard };
 }
 
-export function WorldEventsEditor({ close }: { close(): void }) {
+export function WorldEventsEditor({ close, opener }: { close(): void; opener: HTMLElement }) {
   const story = useStoryMechanismEditor();
   const drafts = useRef(new Map<string, string>());
   const generation = useRef(0);
@@ -1330,6 +1328,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
     return (
       <EditorReload
         title="World Events"
+        opener={opener}
         saved={needsReload}
         loading={loading}
         error={error}
@@ -1343,6 +1342,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
   return (
     <EditorPanel
       title="World Events"
+      opener={opener}
       scope="Save event changes commits the record edits and deletions below. Future narration has its own separate save."
       saveLabel="Save event changes"
       dirty={dirty}
@@ -1397,7 +1397,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
                       <button type="button" onClick={() => void openEvent(event.id)}>
                         <span>
                           <Tag>{event.type}</Tag>
-                          <GameDate time={event.time} />
+                          <EventTime time={event.time} />
                         </span>
                         <strong>{event.text}</strong>
                         <small>{event.actors.join(' · ')}</small>
@@ -1459,6 +1459,7 @@ export function WorldEventsEditor({ close }: { close(): void }) {
 
 function EditorReload({
   title,
+  opener,
   saved,
   loading,
   error,
@@ -1467,6 +1468,7 @@ function EditorReload({
   close,
 }: {
   title: string;
+  opener: HTMLElement;
   saved: boolean;
   loading: boolean;
   error: string;
@@ -1477,6 +1479,7 @@ function EditorReload({
   return (
     <EditorPanel
       title={title}
+      opener={opener}
       dirty={false}
       // Only a read runs here; any preceding write is already acknowledged.
       saving={false}

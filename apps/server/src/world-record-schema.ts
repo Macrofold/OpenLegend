@@ -211,6 +211,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         },
         { encode: encodePerceptionOwner, decode: decodePerceptionOwner },
       ),
+      mapMarkers: actorMaps('mind_map_markers'),
       // A subject leaving view must not renumber every remaining sight binding.
       // Episode identities fence recognition by key, never by iteration order.
       // docs/performance.md#preserve-order-without-one-global-database-bottleneck

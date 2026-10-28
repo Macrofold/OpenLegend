@@ -177,22 +177,22 @@ export function perceiveSpeech(
   const localBodySubject = visible
     ? currentBodyLocalSubject(world, observer.id, source.id)
     : undefined;
-  const preferredBodyName = localBodySubject
-    ? observerIndividual(world, observer.id, localBodySubject)?.givenName
-    : undefined;
+  const localBodyIdentity =
+    localBodySubject && observerIndividual(world, observer.id, localBodySubject);
+  const preferredBodyName = localBodyIdentity?.nickname || localBodyIdentity?.givenName;
+  const individualName = individual?.nickname || individual?.givenName;
   const speaker =
     voice?.recognized && individual
       ? {
-          name: preferredBodyName || individual.givenName || 'unidentified voice',
-          nameForm:
-            preferredBodyName || individual.givenName ? ('proper' as const) : ('count' as const),
+          name: preferredBodyName || individualName || 'unidentified voice',
+          nameForm: preferredBodyName || individualName ? ('proper' as const) : ('count' as const),
         }
       : visible
         ? observerName(world, observer.id, source.id)
         : individual
           ? {
-              name: individual.givenName || 'unidentified voice',
-              nameForm: individual.givenName ? ('proper' as const) : ('count' as const),
+              name: individualName || 'unidentified voice',
+              nameForm: individualName ? ('proper' as const) : ('count' as const),
             }
           : undefined;
   const sourceId = visible ? source.id : voice?.recognized ? individual?.canonicalId : undefined;

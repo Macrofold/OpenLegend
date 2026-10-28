@@ -372,6 +372,22 @@ Expanding a workspace also uses more vertical HUD space until the player chooses
 
 <a id="iw02--proposed-invention-workspace"></a>
 
+## QS01 — Quick-slot item facts
+
+The ten hotbar slots store exact item IDs in the current character's private browser session. One explicit read resolves at most **10 IDs**, matching the displayed slots, through existing owned-possession and parent-container access checks. It returns current item summaries without preparing actions; missing, moved or inaccessible objects return no body. The live view's 60-item summary window does not limit shortcut availability. Assignment reuses the inventory's bounded current-container search, paging and nested-bag navigation.
+
+The read renews on private/control scope, history epoch, inventory revision or bound-ID changes, and when the active game workspace resumes. It does not scan every possession or repeat on ordinary clock/position updates. The bound limits requested facts, not native execution or inventory size; actual activation opens the current action reader. Existing item-summary preparation and containment-access work are not a measured latency guarantee.
+
+[Shortcut read](../../apps/server/src/inventory-view.ts) · [Hotbar and assignment](../../apps/client/src/ui/gildmoss-hud.tsx) · [Inventory pages](objects.md#qu03).
+
+## TD01 — Remembered trade item pages
+
+The remembered-item chooser returns at most **6 rows** after examining at most **200 item-disclosure candidates** per response. These engine-owned read bounds keep the chooser compact and bound each search window. They are independent of the bundled world's generated suggestion policy and the native **16-lot** exchange envelope. Continuation reaches older retained disclosures; a selection survives page/search changes and remains an exact remembered reference rather than a query of the other person's live stock.
+
+The canonical SQL evidence owner supplies both pages and at most 16 exact admission references, including records outside hot memory after reopening. A compact participant/item-key index selects matching personal evidence; latest-source preparation runs once per distinct item in a page, and only selected lot fields are returned. An opaque position continuation binds current actor/access, other person, query, storage generation and private history epoch. New appends can continue older pages; correction, forgetting and restore invalidate the affected evidence scope. Database work still depends on matching retained sources; the 6/200 bounds are not a total latency or memory certificate.
+
+[Read owner](../../apps/server/src/trade-disclosures.ts) · [Bundled handover policy](../worlds/base/social.md#offering-and-accepting-possessions) · [Native trade envelope](base-world.md#bw11).
+
 ## IW02 — Invention workspace
 
 **Current — native evidence 2026-10-02; final browser/stream qualification pending · Restrictiveness: Very safe for direct editing, Safe for presentation.** [PW11](../maintainers/parallel-batch-01-playable-week.md#pw11--inspectable-and-editable-invention-workspace) supplies exact saved-work inspection for the current authoring kinds; [Batch 07](../maintainers/parallel-batch-07-playable-world-creation.md) adds the eighth, initial-world opening, with history and structural comparison. Direct structured human edits cover recipe fields supplied by installed native family metadata and supported opening fields supplied by the world-owned profile; other kinds retain conversational revision and current exact review. Changed fields without editor metadata remain accessible as scoped exact values, without a second model summary or invented mechanical claim. Revision history and reviews for one exact draft/revision return **20 entries** with **21-row lookahead** and explicit continuation; they do not scan the latest session review page to infer that an old revision has no review.

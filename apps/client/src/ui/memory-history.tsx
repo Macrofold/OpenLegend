@@ -212,7 +212,7 @@ export function MemoryHistory({
   const scanLimited = shownPage?.scanLimited;
   const message = error?.identity === identity ? error.message : '';
   const staleRecent = shownPage && shownPage.revision !== revision;
-  const loading = busy || (!shownPage && !message);
+  const loading = visible && (busy || (!shownPage && !message));
   const moreLabel = recent
     ? 'Older observations'
     : filtered

@@ -12,13 +12,15 @@ function record(value: unknown): Record<string, unknown> | undefined {
 
 // Keep diagnostic presentation separate from actor-perspective reasoning context.
 // docs/memory-architecture.md#god-mode-cognition-debugger
-export function diagnosticTriggerText(text: string): string {
+export function diagnosticTriggerText(text: string, dayLabel?: string): string {
+  const unit = dayLabel ? `${dayLabel.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')} ` : '';
+  const timestamp = new RegExp(`\\s*\\(${unit}-?\\d+, \\d{2}:\\d{2}\\)\\s*$`);
   return text
     .replace(
       /^(?:My action or change|Observed event|World change|Internal change|Action directed at me|Situation change|Addressed speech|Overheard speech|My own speech):\s*/,
       '',
     )
-    .replace(/\s*\(Day \d+, \d{2}:\d{2}\)\s*$/, '')
+    .replace(timestamp, '')
     .replace(/\s*I am being spoken to directly\.$|\s*This was not addressed to me\.$/, '')
     .trim();
 }
@@ -34,7 +36,10 @@ function presentation(call: IntelligenceCall, world?: WorldState) {
         : 'world';
   return {
     ...call,
-    trigger: diagnosticTriggerText(call.trigger ?? call.kind),
+    trigger: diagnosticTriggerText(
+      call.trigger ?? call.kind,
+      world?.presentation?.calendar?.dayLabel,
+    ),
     actorKind,
     actorIcon: entity?.icon,
   };

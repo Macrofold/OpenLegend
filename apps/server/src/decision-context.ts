@@ -622,7 +622,11 @@ export async function prepareDecision(
       mindFor(world, actorId)
         .documents.map((document) => `${document.title}\n${document.text}`)
         .join('\n'),
-    now: gameTime(world.simTime, world.statusEffectPolicy.clockOffsetHours),
+    now: gameTime(
+      world.simTime,
+      world.statusEffectPolicy.clockOffsetHours,
+      world.presentation?.calendar?.dayLabel,
+    ),
     body: bodyContext(world, observed.actor),
     contacts: observed.contacts.map((c) => c.text),
     goal: currentGoal(snapshotActor),
@@ -938,7 +942,11 @@ export async function prepareDecision(
       mindFor(currentWorld, actorId)
         .documents.map((d) => `${d.title}\n${d.text}`)
         .join('\n'),
-    now: gameTime(currentWorld.simTime, currentWorld.statusEffectPolicy.clockOffsetHours),
+    now: gameTime(
+      currentWorld.simTime,
+      currentWorld.statusEffectPolicy.clockOffsetHours,
+      currentWorld.presentation?.calendar?.dayLabel,
+    ),
     body: bodyContext(currentWorld, currentObserved.actor),
     contacts: currentObserved.contacts.map((contact) => contact.text),
     ...(currentObserved.inventoryCoverage.paged

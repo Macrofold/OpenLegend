@@ -1,10 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AccessCapability, OperationsView, WorldOverview } from '@open-legend/protocol';
-import { ACCESS_CAPABILITY_TEXT } from '@open-legend/protocol';
+import { ACCESS_CAPABILITY_TEXT, worldClockText } from '@open-legend/protocol';
+import { ClockPresentationProvider } from './event-time';
 import { AccessError, SignInRequiredError, getOperations, logOut } from '../api';
 import { Tab, TabList, TabPanel, Tabs } from 'react-aria-components';
 import { Button, Section, Tag } from '../design-system/components';
 import { LoadingIndicator } from '../design-system/loading';
+import { isTheme } from '../design-system/themes';
 import { EntryNotice } from './entry-notice';
 import { GameSavesPanel } from './game-saves';
 import { AssetReleaseControl } from './asset-release-control';
@@ -26,9 +28,7 @@ const PAUSE_TEXT = {
 /** World operations for operators, spectators and creators; see
  * docs/projects/completed/multiplayer-entry-maintenance.md. */
 export function OperationsConsole() {
-  const [theme] = useLocal('open-legend:theme', 'wilderness', (v): v is string =>
-    ['wilderness', 'fantasy', 'scifi'].includes(String(v)),
-  );
+  const [theme] = useLocal('open-legend:theme', 'gildmoss', isTheme);
   const [view, setView] = useState<OperationsView | null>(null);
   const [error, setError] = useState('');
   const [entry, setEntry] = useState<'signed-out' | 'forbidden' | 'failed'>();
@@ -86,239 +86,246 @@ export function OperationsConsole() {
       ? 'overview'
       : task;
   return (
-    <div className="ol-root ol-operations" data-theme={theme}>
-      <header className="ol-operations-head">
-        <h1 className="ol-wordmark t-wordmark">OPEN LEGEND</h1>
-        <span className="ol-heading">World operations</span>
-        <div className="ol-operations-links">
-          {view?.actorId && <a href="/">Return to your character</a>}
-          {view?.mode === 'oidc' && (
-            <Button
-              size="sm"
-              variant="quiet"
-              busy={loggingOut}
-              onPress={() => {
-                setLoggingOut(true);
-                void logOut().catch((reason: unknown) => {
-                  setLoggingOut(false);
-                  setError(reason instanceof Error ? reason.message : String(reason));
-                });
-              }}
-            >
-              Log Out
-            </Button>
-          )}
-        </div>
-      </header>
-      <EntryNotice />
-      {view && (
-        <div className="ol-operations-notices">
-          <MaintenanceNotice maintenance={view.maintenance} />
-        </div>
-      )}
-      {!view ? (
-        <main className="ol-card ol-operations-card ol-operations-entry">
-          <h2 className="ol-heading">
-            {entry === 'signed-out'
-              ? 'Sign in to World operations'
-              : entry === 'forbidden'
-                ? 'No access to World operations'
-                : entry === 'failed'
-                  ? 'World operations could not connect'
-                  : 'World operations'}
-          </h2>
-          {error ? (
-            <p role="alert">{error}</p>
-          ) : (
-            <LoadingIndicator active={refreshing} label="Checking world access" />
-          )}
-          {entry === 'forbidden' && (
-            <p>
-              Ask the world operator to check this account’s access, or sign in with another
-              account.
-            </p>
-          )}
-          <div className="ol-operations-row">
-            {entry === 'signed-out' ? (
-              <a className="ol-btn" data-variant="primary" href="/auth/login">
-                Sign in
-              </a>
-            ) : (
-              entry && (
-                <Button busy={refreshing} onPress={() => void refresh()}>
-                  {entry === 'forbidden' ? 'Check access again' : 'Retry connection'}
-                </Button>
-              )
-            )}
-            {entry === 'forbidden' && <a href="/auth/login?change-account=true">Change account</a>}
-          </div>
-        </main>
-      ) : (
-        <main className="ol-operations-workspace">
-          <section
-            className="ol-card ol-operations-card ol-operations-summary"
-            aria-label="World and account status"
-          >
-            <div>
-              <h2 className="ol-heading">World status</h2>
-              <p className="ol-operations-clock">
-                Day {view.clock.day} · {String(Math.floor(view.clock.hour)).padStart(2, '0')}:
-                {String(Math.floor(view.clock.seconds / 60) % 60).padStart(2, '0')} ·{' '}
-                {view.clock.paused
-                  ? PAUSE_TEXT[view.clock.pauseReason ?? 'manual']
-                  : `Running at ${view.clock.speed}×`}
-              </p>
-              <p className="ol-muted">
-                {view.actorId
-                  ? 'This account has a character. Return to your character to play.'
-                  : 'This account has no character here. Viewing operations does not control a character or keep the world running.'}
-              </p>
-            </div>
-            <div className="ol-operations-summary-actions">
-              <Button size="sm" variant="quiet" busy={refreshing} onPress={() => void refresh()}>
-                Refresh world status
+    <ClockPresentationProvider clock={view?.clock}>
+      <div className="ol-root ol-operations" data-theme={theme}>
+        <header className="ol-operations-head">
+          <h1 className="ol-wordmark t-wordmark">OPEN LEGEND</h1>
+          <span className="ol-heading">World operations</span>
+          <div className="ol-operations-links">
+            {view?.actorId && <a href="/">Return to your character</a>}
+            {view?.mode === 'oidc' && (
+              <Button
+                size="sm"
+                variant="quiet"
+                busy={loggingOut}
+                onPress={() => {
+                  setLoggingOut(true);
+                  void logOut().catch((reason: unknown) => {
+                    setLoggingOut(false);
+                    setError(reason instanceof Error ? reason.message : String(reason));
+                  });
+                }}
+              >
+                Log Out
               </Button>
-              {updatedAt && (
-                <span className="ol-caption">
-                  Updated {new Date(updatedAt).toLocaleTimeString()}
-                </span>
-              )}
-              <details>
-                <summary>World and account details</summary>
-                <p className="ol-caption">World: {view.worldId}</p>
-                <p className="ol-caption">Account: {view.accountId}</p>
-              </details>
-            </div>
-            {error && (
-              <p role="alert">
-                World status could not refresh. The previous view remains visible. {error}
+            )}
+          </div>
+        </header>
+        <EntryNotice />
+        {view && (
+          <div className="ol-operations-notices">
+            <MaintenanceNotice maintenance={view.maintenance} />
+          </div>
+        )}
+        {!view ? (
+          <main className="ol-card ol-operations-card ol-operations-entry">
+            <h2 className="ol-heading">
+              {entry === 'signed-out'
+                ? 'Sign in to World operations'
+                : entry === 'forbidden'
+                  ? 'No access to World operations'
+                  : entry === 'failed'
+                    ? 'World operations could not connect'
+                    : 'World operations'}
+            </h2>
+            {error ? (
+              <p role="alert">{error}</p>
+            ) : (
+              <LoadingIndicator active={refreshing} label="Checking world access" />
+            )}
+            {entry === 'forbidden' && (
+              <p>
+                Ask the world operator to check this account’s access, or sign in with another
+                account.
               </p>
             )}
-          </section>
-          <Tabs
-            key={`${view.worldId}:${view.accountId}`}
-            className="ol-operations-tabs"
-            selectedKey={selectedTask}
-            onSelectionChange={(key) => setTask(String(key))}
-          >
-            <TabList aria-label="World operations tasks" className="ol-operations-task-list">
-              <Tab id="overview" className="ol-operations-task">
-                Overview and access
-              </Tab>
-              {view.access && (
-                <Tab id="access" className="ol-operations-task">
-                  People and invitations
+            <div className="ol-operations-row">
+              {entry === 'signed-out' ? (
+                <a className="ol-btn" data-variant="primary" href="/auth/login">
+                  Sign in
+                </a>
+              ) : (
+                entry && (
+                  <Button busy={refreshing} onPress={() => void refresh()}>
+                    {entry === 'forbidden' ? 'Check access again' : 'Retry connection'}
+                  </Button>
+                )
+              )}
+              {entry === 'forbidden' && (
+                <a href="/auth/login?change-account=true">Change account</a>
+              )}
+            </div>
+          </main>
+        ) : (
+          <main className="ol-operations-workspace">
+            <section
+              className="ol-card ol-operations-card ol-operations-summary"
+              aria-label="World and account status"
+            >
+              <div>
+                <h2 className="ol-heading">World status</h2>
+                <p className="ol-operations-clock">
+                  {worldClockText(view.clock.seconds, view.clock.offsetHours, view.clock.dayLabel)}{' '}
+                  ·{' '}
+                  {view.clock.paused
+                    ? PAUSE_TEXT[view.clock.pauseReason ?? 'manual']
+                    : `Running at ${view.clock.speed}×`}
+                </p>
+                <p className="ol-muted">
+                  {view.actorId
+                    ? 'This account has a character. Return to your character to play.'
+                    : 'This account has no character here. Viewing operations does not control a character or keep the world running.'}
+                </p>
+              </div>
+              <div className="ol-operations-summary-actions">
+                <Button size="sm" variant="quiet" busy={refreshing} onPress={() => void refresh()}>
+                  Refresh world status
+                </Button>
+                {updatedAt && (
+                  <span className="ol-caption">
+                    Updated {new Date(updatedAt).toLocaleTimeString()}
+                  </span>
+                )}
+                <details>
+                  <summary>World and account details</summary>
+                  <p className="ol-caption">World: {view.worldId}</p>
+                  <p className="ol-caption">Account: {view.accountId}</p>
+                </details>
+              </div>
+              {error && (
+                <p role="alert">
+                  World status could not refresh. The previous view remains visible. {error}
+                </p>
+              )}
+            </section>
+            <Tabs
+              key={`${view.worldId}:${view.accountId}`}
+              className="ol-operations-tabs"
+              selectedKey={selectedTask}
+              onSelectionChange={(key) => setTask(String(key))}
+            >
+              <TabList aria-label="World operations tasks" className="ol-operations-task-list">
+                <Tab id="overview" className="ol-operations-task">
+                  Overview and access
                 </Tab>
+                {view.access && (
+                  <Tab id="access" className="ol-operations-task">
+                    People and invitations
+                  </Tab>
+                )}
+                {can('create') && (
+                  <Tab id="maintenance" className="ol-operations-task">
+                    Maintenance
+                  </Tab>
+                )}
+                {can('save') && (
+                  <Tab id="checkpoints" className="ol-operations-task">
+                    Checkpoints
+                  </Tab>
+                )}
+              </TabList>
+              <TabPanel id="overview" className="ol-operations-task-panel" shouldForceMount>
+                <div className="ol-operations-grid">
+                  <section className="ol-card ol-operations-card">
+                    <Section title="Your permitted tasks">
+                      <p>
+                        These permissions belong to this account in this world. Opening a tab does
+                        not perform an operation.
+                      </p>
+                      <ul className="ol-operations-tags" aria-label="Granted operations">
+                        {view.capabilities.map((capability) => (
+                          <li key={capability}>
+                            <Tag>{ACCESS_CAPABILITY_TEXT[capability]}</Tag>
+                          </li>
+                        ))}
+                      </ul>
+                    </Section>
+                    {view.checkpoint && (
+                      <Section title="World artwork">
+                        <AssetReleaseControl
+                          key={view.checkpoint.recoveryScope}
+                          context={view.checkpoint}
+                          selected={view.presentationRelease}
+                          revision={view.presentationReleaseRevision ?? 0}
+                          onChanged={() => void refresh()}
+                        />
+                      </Section>
+                    )}
+                  </section>
+                  <section
+                    className="ol-card ol-operations-card"
+                    aria-label="Public world overview"
+                  >
+                    <Section title="Public world overview">
+                      <p className="ol-caption">
+                        A read-only map of broad categories. It does not show private names,
+                        possessions, speech or character knowledge.
+                      </p>
+                      {view.overview ? (
+                        <OverviewMap overview={view.overview} />
+                      ) : (
+                        <p>
+                          This account does not have access to the public map. Its permitted world
+                          status is shown above.
+                        </p>
+                      )}
+                    </Section>
+                  </section>
+                </div>
+              </TabPanel>
+              {view.access && (
+                <TabPanel
+                  id="access"
+                  className="ol-operations-task-panel ol-card ol-operations-card"
+                  shouldForceMount
+                >
+                  <AccessSection
+                    view={view}
+                    access={view.access}
+                    describe={(capability) => ACCESS_CAPABILITY_TEXT[capability]}
+                    onChanged={() => void refresh()}
+                  />
+                </TabPanel>
               )}
               {can('create') && (
-                <Tab id="maintenance" className="ol-operations-task">
-                  Maintenance
-                </Tab>
+                <TabPanel
+                  id="maintenance"
+                  className="ol-operations-task-panel ol-card ol-operations-card"
+                  shouldForceMount
+                >
+                  <MaintenanceSection
+                    current={
+                      view.maintenance?.status === 'scheduled' ||
+                      view.maintenance?.status === 'active'
+                        ? view.maintenance
+                        : undefined
+                    }
+                    history={view.maintenanceHistory ?? []}
+                    onChanged={() => void refresh()}
+                  />
+                </TabPanel>
               )}
               {can('save') && (
-                <Tab id="checkpoints" className="ol-operations-task">
-                  Checkpoints
-                </Tab>
-              )}
-            </TabList>
-            <TabPanel id="overview" className="ol-operations-task-panel" shouldForceMount>
-              <div className="ol-operations-grid">
-                <section className="ol-card ol-operations-card">
-                  <Section title="Your permitted tasks">
-                    <p>
-                      These permissions belong to this account in this world. Opening a tab does not
-                      perform an operation.
-                    </p>
-                    <ul className="ol-operations-tags" aria-label="Granted operations">
-                      {view.capabilities.map((capability) => (
-                        <li key={capability}>
-                          <Tag>{ACCESS_CAPABILITY_TEXT[capability]}</Tag>
-                        </li>
-                      ))}
-                    </ul>
-                  </Section>
+                <TabPanel
+                  id="checkpoints"
+                  className="ol-operations-task-panel ol-card ol-operations-card"
+                  shouldForceMount
+                >
                   {view.checkpoint && (
-                    <Section title="World artwork">
-                      <AssetReleaseControl
-                        key={view.checkpoint.recoveryScope}
-                        context={view.checkpoint}
-                        selected={view.presentationRelease}
-                        revision={view.presentationReleaseRevision ?? 0}
-                        onChanged={() => void refresh()}
-                      />
-                    </Section>
+                    <GameSavesPanel
+                      key={view.checkpoint.recoveryScope}
+                      context={view.checkpoint}
+                      visible={selectedTask === 'checkpoints'}
+                      timeDisplay="elapsed"
+                    />
                   )}
-                </section>
-                <section className="ol-card ol-operations-card" aria-label="Public world overview">
-                  <Section title="Public world overview">
-                    <p className="ol-caption">
-                      A read-only map of broad categories. It does not show private names,
-                      possessions, speech or character knowledge.
-                    </p>
-                    {view.overview ? (
-                      <OverviewMap overview={view.overview} />
-                    ) : (
-                      <p>
-                        This account does not have access to the public map. Its permitted world
-                        status is shown above.
-                      </p>
-                    )}
-                  </Section>
-                </section>
-              </div>
-            </TabPanel>
-            {view.access && (
-              <TabPanel
-                id="access"
-                className="ol-operations-task-panel ol-card ol-operations-card"
-                shouldForceMount
-              >
-                <AccessSection
-                  view={view}
-                  access={view.access}
-                  describe={(capability) => ACCESS_CAPABILITY_TEXT[capability]}
-                  onChanged={() => void refresh()}
-                />
-              </TabPanel>
-            )}
-            {can('create') && (
-              <TabPanel
-                id="maintenance"
-                className="ol-operations-task-panel ol-card ol-operations-card"
-                shouldForceMount
-              >
-                <MaintenanceSection
-                  current={
-                    view.maintenance?.status === 'scheduled' ||
-                    view.maintenance?.status === 'active'
-                      ? view.maintenance
-                      : undefined
-                  }
-                  history={view.maintenanceHistory ?? []}
-                  onChanged={() => void refresh()}
-                />
-              </TabPanel>
-            )}
-            {can('save') && (
-              <TabPanel
-                id="checkpoints"
-                className="ol-operations-task-panel ol-card ol-operations-card"
-                shouldForceMount
-              >
-                {view.checkpoint && (
-                  <GameSavesPanel
-                    key={view.checkpoint.recoveryScope}
-                    context={view.checkpoint}
-                    visible={selectedTask === 'checkpoints'}
-                    timeDisplay="elapsed"
-                  />
-                )}
-              </TabPanel>
-            )}
-          </Tabs>
-        </main>
-      )}
-    </div>
+                </TabPanel>
+              )}
+            </Tabs>
+          </main>
+        )}
+      </div>
+    </ClockPresentationProvider>
   );
 }
 

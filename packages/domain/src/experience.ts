@@ -23,6 +23,7 @@ import {
   knowledgeDocument,
   advanceKnowledgeRevision,
   subjectKey,
+  validObserverSubject,
   revokeLearnedRecipeSupport,
   type ObserverSubject,
   type KnowledgeEdit,
@@ -2138,6 +2139,9 @@ export function publishInnerWorld(
     if (!result.ok) return reject(result.message);
   }
   for (const edit of knowledgeChanges) {
+    // Map annotations are read-only model context, never an offered note-edit role.
+    if (edit.subjectId !== null && !validObserverSubject(edit.subjectId))
+      return reject('Knowledge subject is not editable in this response.');
     const rememberedSubject =
       edit.subjectId && Object.hasOwn(knowledgeReferences, subjectKey(edit.subjectId))
         ? knowledgeReferences[subjectKey(edit.subjectId)]

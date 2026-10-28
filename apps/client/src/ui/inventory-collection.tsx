@@ -1,10 +1,29 @@
 import { LoadingIndicator } from '../design-system/loading';
 import { useId, useRef, type DragEvent } from 'react';
-import type { InventoryItemView } from '@open-legend/protocol';
-import { Button, Icon, symbol } from '../design-system/components';
+import {
+  DEFAULT_INVENTORY_FILTER,
+  INVENTORY_FILTERS,
+  INVENTORY_SORTS,
+  type InventoryFilter,
+  type InventoryItemView,
+  type InventorySort,
+} from '@open-legend/protocol';
+import { Button, Icon, TextTooltip } from '../design-system/components';
+import { ItemIllustration } from '../design-system/item-illustration';
 import type { InventoryCollectionState } from './use-inventory-collection';
 
-export type InventorySide = 'belongings' | 'container';
+export type InventorySide = 'belongings' | 'container' | `bag-${string}`;
+const sortLabels: Record<InventorySort, string> = {
+  native: 'Default order',
+  'name-asc': 'Name A–Z',
+  'name-desc': 'Name Z–A',
+  'quantity-desc': 'Quantity high–low',
+};
+const filterLabels: Record<InventoryFilter, string> = {
+  all: 'All items',
+  equipped: 'Equipped',
+  containers: 'Containers',
+};
 
 /** A visual grid of ordinary buttons keeps Tab/Enter inspection separate from transfer.
  * It deliberately does not claim composite ARIA-grid arrow-key semantics. */
@@ -24,7 +43,11 @@ export function InventoryCollection({
   onDragStart,
   onDragEnd,
   onDrop,
+  selectionRole = 'inspect',
+  compact = false,
 }: {
+  selectionRole?: 'inspect' | 'choose';
+  compact?: boolean;
   side: InventorySide;
   title: string;
   state: InventoryCollectionState;
@@ -33,7 +56,7 @@ export function InventoryCollection({
   busy: boolean;
   canMove: boolean;
   dropActive: boolean;
-  onNavigate(id: string): void;
+  onNavigate(id: string, opener?: HTMLElement): void;
   onSelect(item: InventoryItemView, anchor: HTMLButtonElement, actions: boolean): void;
   onContextMenu(
     item: InventoryItemView,
@@ -56,6 +79,7 @@ export function InventoryCollection({
     <section
       className="ol-inventory-collection"
       data-side={side}
+      data-compact={compact || undefined}
       data-drop-active={dropActive || undefined}
       aria-label={title}
       aria-busy={loading}
@@ -82,7 +106,12 @@ export function InventoryCollection({
                 size="sm"
                 variant="quiet"
                 disabled={busy || entry.id === state.location.id}
-                onPress={() => onNavigate(entry.id)}
+                onPress={(event) =>
+                  onNavigate(
+                    entry.id,
+                    event.target instanceof HTMLElement ? event.target : undefined,
+                  )
+                }
               >
                 {entry.name}
               </Button>
@@ -121,6 +150,40 @@ export function InventoryCollection({
             )}
           </div>
         </div>
+        <div className="ol-inventory-view-controls">
+          <label htmlFor={`${searchId}-sort`}>
+            Sort
+            <select
+              id={`${searchId}-sort`}
+              aria-label={`Sort ${collectionTitle}`}
+              value={state.sort}
+              disabled={busy}
+              onChange={(event) => state.sortBy(event.target.value as InventorySort)}
+            >
+              {INVENTORY_SORTS.map((value) => (
+                <option key={value} value={value}>
+                  {sortLabels[value]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label htmlFor={`${searchId}-filter`}>
+            Show
+            <select
+              id={`${searchId}-filter`}
+              aria-label={`Filter ${collectionTitle}`}
+              value={state.filter}
+              disabled={busy}
+              onChange={(event) => state.filterBy(event.target.value as InventoryFilter)}
+            >
+              {INVENTORY_FILTERS.map((value) => (
+                <option key={value} value={value}>
+                  {filterLabels[value]}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </header>
       <div className="ol-inventory-grid-scroll">
         {!state.available && !page && (
@@ -134,81 +197,83 @@ export function InventoryCollection({
         />
         {error && <p role="alert">{error}</p>}
         <ul className="ol-inventory-grid" aria-label={`${title} items`}>
-          {page?.items.map((item) => (
-            <li key={item.id}>
-              <button
-                type="button"
-                ref={selectedId === item.id ? onSelectedAnchor : undefined}
-                className="ol-inventory-cell"
-                data-item-id={item.id}
-                data-selected={selectedId === item.id || undefined}
-                aria-label={`${item.name}, ${item.quantity}${item.availableQuantity !== undefined && item.availableQuantity !== item.quantity ? `, ${item.availableQuantity} available; reserved remainder stays` : ''}${item.equipped ? ', equipped' : ''}${item.container ? ', container' : ''}`}
-                aria-haspopup="dialog"
-                draggable={
-                  canMove &&
-                  !busy &&
-                  item.availableQuantity !== undefined &&
-                  item.availableQuantity > 0
-                }
-                onClick={(event) => {
-                  if (busy) return;
-                  if (event.shiftKey && canMove) onQuickMove(item);
-                  else onSelect(item, event.currentTarget, false);
-                }}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                  event.stopPropagation();
-                  if (!busy)
-                    onContextMenu(item, event.currentTarget, {
-                      x: event.clientX,
-                      y: event.clientY,
-                    });
-                }}
-                onKeyDown={(event) => {
-                  if (event.defaultPrevented || event.nativeEvent.isComposing || event.repeat)
-                    return;
-                  if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                    if (!busy) {
-                      const bounds = event.currentTarget.getBoundingClientRect();
-                      onContextMenu(item, event.currentTarget, {
-                        x: bounds.left,
-                        y: bounds.bottom,
-                      });
+          {page?.items.map((item) => {
+            const reserved =
+              item.availableQuantity !== undefined && item.availableQuantity !== item.quantity;
+            const identity = `${item.name}, ${item.quantity}${item.equipped ? ', equipped' : ''}${item.container ? ', container' : ''}${item.individual && !item.equipped && !item.container ? ', individual object' : ''}${reserved ? `; ${item.availableQuantity} available, reserved remainder stays` : ''}`;
+            return (
+              <li key={item.id}>
+                <TextTooltip text={identity}>
+                  <button
+                    type="button"
+                    ref={selectedId === item.id ? onSelectedAnchor : undefined}
+                    className="ol-inventory-cell"
+                    data-item-id={item.id}
+                    data-selected={selectedId === item.id || undefined}
+                    aria-label={identity}
+                    aria-haspopup={selectionRole === 'inspect' ? 'dialog' : undefined}
+                    draggable={
+                      canMove &&
+                      !busy &&
+                      item.availableQuantity !== undefined &&
+                      item.availableQuantity > 0
                     }
-                  } else if (event.key === 'Enter' && event.shiftKey && canMove) {
-                    event.preventDefault();
-                    if (!busy) onQuickMove(item);
-                  }
-                }}
-                onDragStart={(event) => onDragStart(item, event)}
-                onDragEnd={onDragEnd}
-              >
-                <Icon name={symbol(item.icon ?? '')} fallbackLabel={item.name} size={32} />
-                <span className="ol-inventory-cell-name">{item.name}</span>
-                <span className="ol-inventory-cell-quantity">× {item.quantity}</span>
-                {item.availableQuantity !== undefined &&
-                  item.availableQuantity !== item.quantity && (
-                    <span className="ol-inventory-cell-state">
-                      {item.availableQuantity} available; reserved remainder stays
-                    </span>
-                  )}
-                {item.individual && !item.equipped && !item.container && (
-                  <span className="ol-inventory-cell-state">Individual object</span>
-                )}
-                {item.equipped && <span className="ol-inventory-cell-state">Equipped</span>}
-                {item.container && <span className="ol-inventory-cell-state">Container</span>}
-              </button>
-            </li>
-          ))}
+                    onClick={(event) => {
+                      if (busy) return;
+                      if (event.shiftKey && canMove) onQuickMove(item);
+                      else onSelect(item, event.currentTarget, false);
+                    }}
+                    onContextMenu={(event) => {
+                      event.preventDefault();
+                      event.stopPropagation();
+                      if (!busy)
+                        onContextMenu(item, event.currentTarget, {
+                          x: event.clientX,
+                          y: event.clientY,
+                        });
+                    }}
+                    onKeyDown={(event) => {
+                      if (event.defaultPrevented || event.nativeEvent.isComposing || event.repeat)
+                        return;
+                      if (event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        if (!busy) {
+                          const bounds = event.currentTarget.getBoundingClientRect();
+                          onContextMenu(item, event.currentTarget, {
+                            x: bounds.left,
+                            y: bounds.bottom,
+                          });
+                        }
+                      } else if (event.key === 'Enter' && event.shiftKey && canMove) {
+                        event.preventDefault();
+                        if (!busy) onQuickMove(item);
+                      }
+                    }}
+                    onDragStart={(event) => onDragStart(item, event)}
+                    onDragEnd={onDragEnd}
+                  >
+                    <ItemIllustration art={item.art} icon={item.icon} label={item.name} size={32} />
+                    <span className="ol-inventory-cell-quantity">{item.quantity}</span>
+                    {(item.equipped || item.container || reserved) && (
+                      <span className="ol-inventory-cell-marks" aria-hidden="true">
+                        {item.equipped && <Icon name="ui.check" size={12} />}
+                        {item.container && <Icon name="category.containers" size={12} />}
+                        {reserved && <Icon name="ui.lock" size={12} />}
+                      </span>
+                    )}
+                  </button>
+                </TextTooltip>
+              </li>
+            );
+          })}
         </ul>
         {page && !page.items.length && (
           <p role="status">
             {page.next || page.inspection?.next
               ? 'No match in this part of the search. More contents remain to search.'
-              : state.query
-                ? 'No matching items. Clear the search to see other contents.'
+              : state.query || state.filter !== DEFAULT_INVENTORY_FILTER
+                ? 'No matching items. Change the search or filter to see other contents.'
                 : page.inspection
                   ? 'No items on this inspected page.'
                   : 'This container is empty.'}

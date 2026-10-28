@@ -256,14 +256,22 @@ const capabilityBits: Record<Capability, number> = {
   speech: 4,
   perception: 8,
 };
+export type StatusEffectProjection = {
+  id: string;
+  label: string;
+  explanation?: string;
+  icon?: string;
+  /** A native simulation deadline; presentation may count down but never expires it. */
+  timing?: { expiresAt: number; durationSeconds: number; clock: 'simulation-seconds' };
+} & StatusPresentation;
 type CapabilityPreparation = {
   from: number;
   until: number;
   mask: number;
   active: StatusEffectDefinition[];
   dynamic: boolean;
-  public?: Array<{ id: string; label: string } & StatusPresentation>;
-  owner?: Array<{ id: string; label: string } & StatusPresentation>;
+  public?: StatusEffectProjection[];
+  owner?: StatusEffectProjection[];
 };
 const capabilityPreparations = new WeakMap<
   States,
@@ -348,7 +356,7 @@ export function projectStatusEffects(
   world: WorldState,
   entity: Entity | undefined,
   audience: 'owner' | 'public' = 'public',
-): Array<{ id: string; label: string } & StatusPresentation> {
+): StatusEffectProjection[] {
   entity = entity ? (entityGet(readOnlyDraftView(world.entities), entity.id) ?? entity) : undefined;
   if (!entity || !readOnlyDraftView(entity).statusEffects) return [];
   const prepared = currentStatusPreparation(world, entity);
@@ -367,10 +375,42 @@ export function projectStatusEffects(
               .get(d.id)
               ?.filter((id) => effectiveContribution(world, entity.statusEffects![id])).length ?? 0)
           : 1;
+      const deadlines =
+        audience === 'owner' && d.contribution?.lifetime === 'fixed'
+          ? (contributionIndex(entity!.statusEffects!).get(d.id) ?? []).flatMap((id) => {
+              const state = entity!.statusEffects![id]!;
+              const lifetime = state.contribution?.lifetime;
+              return effectiveContribution(world, state) && lifetime?.kind === 'fixed'
+                ? [
+                    {
+                      expiresAt: lifetime.expiresAt,
+                      durationSeconds: lifetime.expiresAt - state.contribution!.lifetimeStartedAt,
+                    },
+                  ]
+                : [];
+            })
+          : [];
+      // A grouped status stays effective until its last admitted fixed cause ends.
+      const timing = deadlines.reduce<(typeof deadlines)[number] | undefined>(
+        (latest, current) => (!latest || current.expiresAt > latest.expiresAt ? current : latest),
+        undefined,
+      );
       return {
         id: d.id,
         label: count > 1 ? `${d.label} (${count} sources)` : d.label,
         ...d.presentation,
+        ...(audience === 'owner' && d.meaning ? { explanation: d.meaning } : {}),
+        ...(audience === 'owner' && d.actions?.activateIcon
+          ? { icon: d.actions.activateIcon }
+          : {}),
+        ...(timing
+          ? {
+              timing: {
+                ...timing,
+                clock: 'simulation-seconds' as const,
+              },
+            }
+          : {}),
       };
     });
   for (const row of result) Object.freeze(row);

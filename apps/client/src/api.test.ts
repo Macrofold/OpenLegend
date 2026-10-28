@@ -303,6 +303,7 @@ function publicView(): import('@open-legend/protocol').GameView {
       action: null,
       hasWork: false,
       inventory: [],
+      equipmentPorts: [],
       inventoryRevision: 1,
       memoryRevision: 'memory:1',
       canUseInventory: true,

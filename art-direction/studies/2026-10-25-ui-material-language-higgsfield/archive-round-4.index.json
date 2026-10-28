@@ -1,0 +1,461 @@
+{
+ "release": {
+  "owner": {
+   "kind": "collection",
+   "id": "openlegend-curated"
+  },
+  "assetId": "ui-material-language-higgsfield-2026-10-25-round-4",
+  "revisionId": "sha256-c988b7604b5bd16258ac859c1f145c8fe1128ee571205bda6806c1da693e871c",
+  "manifestSha256": "11a2871ff75f5d9cc607daab15c3620e5b513e5bfcd9934ff95f7c4e5216cc0a"
+ },
+ "files": {
+  "boards/img/r4-01-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "131e450609291a9f1a87915f4fc8dca749f3b83bbbf7d348d2cfba61b0df9dbf",
+   "bytes": 575582,
+   "mediaType": "image/png"
+  },
+  "boards/img/r4-01-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r4-01-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5a5e13a850e4d2a261b7f0bd913b58b7e6a21a91983c005ce3aae4c445b8de92",
+   "bytes": 255943,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-01-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "66e34e1ccbed5a3af6d2d41964c41e9f51fd9873ce527ce8de91b756408132ad",
+   "bytes": 218408,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-02-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "550d2656e53db416a6f698c86bea81a3e5c65d4553d7f6e659c112af1c4b7759",
+   "bytes": 649724,
+   "mediaType": "image/png"
+  },
+  "boards/img/r4-02-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "742485242787205a420ded6f06ffb9373dda99c20774f614e87b66e8c8a54e89",
+   "bytes": 343961,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-02-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c6ee111eb98c5d54c918b1b861676cdc98e29a6c5678ad9a5e2d8694c44b3bcb",
+   "bytes": 220605,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-03-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1621b2bb784b02c3e95172f9739bab7776536804364ef2f2acfa4c43a803c5bb",
+   "bytes": 592718,
+   "mediaType": "image/png"
+  },
+  "boards/img/r4-03-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6f070a865c9779cb556895208d4fe4a8438712db0adb2cf641dbd384bfb56ec3",
+   "bytes": 627599,
+   "mediaType": "image/png"
+  },
+  "boards/img/r4-03-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "65e6bc4ab93538254b68cc2959ead39dab5bef1d606a0e5959bb6ba30c3ac49c",
+   "bytes": 387419,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-03-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "927727ce94818a130d9fec77d11a4c82ef3f46cf86fbc02e588a7bef72f24839",
+   "bytes": 220335,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-04-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4b83ea9d3a117ce006e620cb11edb5404ef9b57ee973952dec6267d61cd9206b",
+   "bytes": 587225,
+   "mediaType": "image/png"
+  },
+  "boards/img/r4-04-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b96f194a9856da41e3d8722f562464918ee3c554897b7625f6c1d4e4132b0aaf",
+   "bytes": 616243,
+   "mediaType": "image/png"
+  },
+  "boards/img/r4-04-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bd6d17968a266fb3539a6e1ba29d4e0f2339bb214c5d2d92017cf370eace62e8",
+   "bytes": 285740,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-04-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3b67908f23f8baf6c28397bb3f6975958676b47b8c73e1b063ae921198e7b523",
+   "bytes": 218625,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-05-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "33dc7d0da4fc48fe9e79063fcde6ee85f0c23f407afdfd9bd150297aff441d2e",
+   "bytes": 572465,
+   "mediaType": "image/png"
+  },
+  "boards/img/r4-05-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ae3513dfbdc04b055a894c4c6f3afd8a1c7d395598daf1479b287669aedc8c78",
+   "bytes": 596040,
+   "mediaType": "image/png"
+  },
+  "boards/img/r4-05-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "92d3cd32203f4bb8c611e54cb726d451075354594a91fae78c2cbf7759c91979",
+   "bytes": 235007,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-05-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e8a82d87247fa9ab5352e2e7188c50156216f0646320d23945a7c1335ff2765d",
+   "bytes": 217060,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r4-corners-1to1.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ed157bdef94ee6bb3c9bd93656644c24b265e6c55baa28423a4f1ce998e3a47b",
+   "bytes": 2196476,
+   "mediaType": "image/png"
+  },
+  "boards/round4.html": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6216e744a5fd6444ccd6aa68ec0a52dc3c7ca425bbbe1f49ae5a9f49aa5680fb",
+   "bytes": 10960,
+   "mediaType": "text/html; charset=utf-8"
+  },
+  "build_board3.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c8c45bb9eee87108bd5f5ed5a7973050384c5ba91c6fe66baf8085f2eff5a73e",
+   "bytes": 4198,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "directions-r4.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1118907bd026b4f632486dbcddf6220155ee7c67b9345b0d3b64c92fdf265dd5",
+   "bytes": 3439,
+   "mediaType": "application/json"
+  },
+  "gen4.sh": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a4e407baa35fb31a21696610b22b07b8fadab0cbac33257e4b8547d316484bd1",
+   "bytes": 1572,
+   "mediaType": "text/x-shellscript; charset=utf-8"
+  },
+  "outputs/r4-w01-jade-lode-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "363ed8ca4366caf3558006cff069caadf524b3196bc9fb2282aacca23f82694c",
+   "bytes": 460553,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w01-jade-lode-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w01-jade-lode-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f9c891cf7acaffe54812c7cbb973dbb591e7ed9d90d88407a72303931c4f05c3",
+   "bytes": 395879,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w01-jade-lode-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "63f43723b4ffeced48cdf6495a5ea7f6a4d0d40111987f2dcc4c35a3abd67265",
+   "bytes": 3525151,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w01-jade-lode.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1cd2fb20cb4cadac158db4fc9fb9adf7b73425fe529080e2ffc30bac9b650088",
+   "bytes": 3561104,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w01-jade-lode.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "94035b36cf93c08038cd726a6bc6774223e29ebba38a68b8c05729385a37e6da",
+   "bytes": 4846,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r4-w02-rampart-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "efe1e1cf2a17290a5f9a0f49c526ce17d9e9f097e98acd4f818fd343693cfcac",
+   "bytes": 401007,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w02-rampart-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "550d2656e53db416a6f698c86bea81a3e5c65d4553d7f6e659c112af1c4b7759",
+   "bytes": 649724,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w02-rampart-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "7aa2a9b492478ee5ab071d557301a32c426eb88eae2d42dbd2f88631b6c6e105",
+   "bytes": 402901,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w02-rampart-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bd7a6e4e89090dfe9fd2cdc5daf5644b6cbe1a733d34bf6b3d229b0c9de9c456",
+   "bytes": 3190959,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w02-rampart.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "08b504ce057e129685c6cfe63ec6510c55102383ba311f8037d910ef9c002a1d",
+   "bytes": 3219474,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w02-rampart.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "fccd2a8e3cd1541cd0c98c508966de82845676e5db3deacd1dc02b3c37da6cc1",
+   "bytes": 4977,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r4-w03-marble-frieze-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "515c630e7ee0db3727b3696b0c5e2cd27a105550a7e4be3443c942005a762d17",
+   "bytes": 450512,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w03-marble-frieze-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6f070a865c9779cb556895208d4fe4a8438712db0adb2cf641dbd384bfb56ec3",
+   "bytes": 627599,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w03-marble-frieze-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8c943d775f6c6c58cbbc73c3c901fc2128d4b12a7f9d29fe802dcad1afb0af07",
+   "bytes": 401430,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w03-marble-frieze-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e3670b442e9f799dfb3d7a47e3178f79820d8bac1a61fa7b325b4a8b90e834f8",
+   "bytes": 3646601,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w03-marble-frieze.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "17bbc5e7c97cd59d672024bd652572eba184d4eac22e82b8a992a5a4d2901e33",
+   "bytes": 3702927,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w03-marble-frieze.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1917006e5eb0575c32ca9e6672cf466c1d33dc3729a362257b781e2da0f75d1b",
+   "bytes": 4666,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r4-w04-overgrown-relic-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5ae06df69fbed32479c56141dffb5843a1150cde40e4483e5badf72d16379364",
+   "bytes": 504672,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w04-overgrown-relic-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b96f194a9856da41e3d8722f562464918ee3c554897b7625f6c1d4e4132b0aaf",
+   "bytes": 616243,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w04-overgrown-relic-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "987dba4eaf8d42840bf7691f4695e50fbc890e22597cdd5a5c6fe6980bad3d5b",
+   "bytes": 397472,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w04-overgrown-relic-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ec7dcaec8e24e600773953fd6f02089b304f9c2d00faeecccd62a5e4df37daff",
+   "bytes": 3719048,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w04-overgrown-relic.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d191248e188989507a543dc974c83c80d2f25c78991115a589d56f52a336fbc5",
+   "bytes": 3759963,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w04-overgrown-relic.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "01bbc11efc7b2d10a78fd265e4c0be539221eb8018408f72c1fc1356c0204e98",
+   "bytes": 5066,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r4-w05-nacre-shore-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9a05001520782898f6011577b53e04b22ee9277f1764dd60e44ab9956a063a86",
+   "bytes": 444858,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w05-nacre-shore-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ae3513dfbdc04b055a894c4c6f3afd8a1c7d395598daf1479b287669aedc8c78",
+   "bytes": 596040,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w05-nacre-shore-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4506f7d35a279fc468ce0d6043dced2d0e5f3fa3e1628f36d83f73967f406cec",
+   "bytes": 393132,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r4-w05-nacre-shore-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "542023acb95595c0ec2bd23452772cf3f3d8f46f6bd783229553a527f6e59221",
+   "bytes": 3350424,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w05-nacre-shore.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e67c879ae78483d78245b6ca761c3ae05531f924b40ae10c933a9916d0709996",
+   "bytes": 3389009,
+   "mediaType": "image/png"
+  },
+  "outputs/r4-w05-nacre-shore.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9ba62b18ba09d8c75709f24be3a6d3e0e695e3b4e64fd3d925ab2305f964c3b4",
+   "bytes": 4667,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r4/_hud.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d27f8c9ec024f702af629f1c7d1d3e26321ae2f9085151471846a3c45f5964fa",
+   "bytes": 3821,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r4/_ref-gold.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0b728d54d810adccd8bd16e7ac8ff13ec0618d78f7919de09a13081bd6177006",
+   "bytes": 168,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r4/_ref-hud.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c29bd6141ffe00e91aac82d184b04455554e4cea50944546b7e14f7cea2ba18c",
+   "bytes": 192,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r4/_ref-panel.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "10ddb2d21bfb1416d12b6602b5b84952cf9c16ae32653ca881f5f9fbd09222e7",
+   "bytes": 159,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r4/w01-jade-lode.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bcfddcf001c0fea7842cbbcc4f862fc77a660d854ade1b07f5d1cd68a844fc2c",
+   "bytes": 696,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r4/w02-rampart.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a9f5690f0c0dd17c266c4f73d11561e6889f4912ab8a17a19441c7bfd6d578b1",
+   "bytes": 825,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r4/w03-marble-frieze.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ace2c30e6d92d9414339d2cf44cfd7f33fa3f86067316234f4e068044972edca",
+   "bytes": 521,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r4/w04-overgrown-relic.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "11098728bff7857005724c11974be533f7163c4d4e524f4fab22c8e7bb81bf61",
+   "bytes": 745,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r4/w05-nacre-shore.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a7ee3fe62d21dfc001a92db1a664197c42dfbc4e222451331f2b1268cf34b3b0",
+   "bytes": 520,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "refs/gildmoss-filigree-ornament-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "25e0161dcf11b38a6c4d3e1b5608dbce30aa9fe852a1e87f4ee75806424b3a3d",
+   "bytes": 245224,
+   "mediaType": "image/png"
+  }
+ }
+}

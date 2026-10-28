@@ -8,6 +8,7 @@ import { createGameServer } from './http.js';
 import { OperationsRoutes } from './operations-routes.js';
 import { MaintenanceSchedule } from './maintenance.js';
 import { readConfig, testRepository } from '../../../tests/fixtures/database.js';
+import { stockedCamp } from '../../../tests/fixtures/world.js';
 
 const accept = async (identity: VerifiedIdentity) => identity;
 const issuer = 'https://identity.example.test';
@@ -104,7 +105,7 @@ describe('bounded OpenID SDK requests', () => {
     async () => {
       const { authentication, callback } = fixture();
       const appConfig = readConfig();
-      const store = await testRepository();
+      const store = await testRepository(undefined, stockedCamp());
       const game = await createGameServer({
         config: appConfig,
         store,
@@ -268,7 +269,7 @@ describe('bounded OpenID SDK requests', () => {
       });
       const game = await createGameServer({
         config: { ...readConfig(), authentication: config },
-        store: await testRepository(),
+        store: await testRepository(undefined, stockedCamp()),
         production: true,
         tick: false,
       });

@@ -1,0 +1,19 @@
+Game interface artwork for "Open Legend", a grounded, realistic medieval survival role-playing game with an epic, legendary feel. Create ONE single, one-of-a-kind character HUD for the top-left corner of the screen, on a fully transparent background: no scene, no backdrop, no labels or captions. The top-left corner of the image is the top-left corner of the player's screen.
+
+{REFS}
+
+Contents, all clearly readable:
+1. Portrait: a detailed, realistically proportioned pixel-art bust of a man with tousled brown hair, a short brown beard and a dark tunic, drawn as true pixel art with clearly visible square pixels like a game sprite, not a painting. Only the portrait picture is pixel art; everything else is crisp and high-resolution.
+2. Four need bars, straight and horizontal, stacked and parallel, never curved, each with a small icon and a number: a heart and 100, an apple and 72, a lightning bolt and 84, a four-pointed sparkle and 80. The bar colours are muted, matte and slightly dark, never bright: deep red #8C3B32, ochre #977233, moss green #557A42, deep blue #3F5B8A, on dark tracks.
+3. Directly to the RIGHT of the need bars, just past the bar panel's right end: a round button that locks the camera perspective, showing an eye inside four corner brackets. It sits in a small, subtle outcrop of the same material as the corner setting, which grows out from the HUD and gives the button its own space: loosely connected to the panel, natural-looking and not fancy, but clearly a button. It is NOT inside the status tray.
+4. A status tray below the bars, built to hold up to fifteen status icons in neat, evenly spaced, left-aligned rows that wrap. Show all thirteen of these small icons, in two rows: first four square lasting effects with thin, subtle coloured borders (a bandaged leg - red, a strapped wrist - red, an old scar - blue, a snowflake for cold-hardened - green), then nine round timed statuses whose thin ring is a timer at different amounts left (a steaming bowl - green, a gust of wind - red, a campfire - green, a water droplet - blue, a crescent moon - green, a blood drop - red, a lute - gold, a small tent - blue, a herb leaf - green).
+
+Panels: the bars and the status tray sit on the game's "Gildmoss Bare" panels: slightly translucent very dark green glass (#10140D to #1B2318) with a crisp, polished glass bevel edge and NO gold rim, tiny engraved pale champagne corner caps, and a gentle warm light falling from the top edge. Numbers in a clean ivory sans-serif.
+
+Gold: ornate gold is welcome around the portrait and at structural points, in the Gildmoss style: pale champagne gold that reflects light like real polished metal, with finely engraved leaf-and-reed scrollwork; crisp and refined, never bright yellow, never glowing.
+
+The unique corner setting (this is what makes this design special): {DESIGN}
+
+Style: realistic, physically based materials as in a modern AAA fantasy game's interface art: real stone and mineral textures with natural imperfections and subtle wear, and soft, believable light from above. Restrained, slightly desaturated colour in the Gildmoss palette of very dark greens with champagne gold; fine, precise detail. Epic and legendary in mood, like an ancient relic.
+AVOID: cartoon, toy-like or cel-shaded looks, thick outlines, chunky bevels, glossy plastic, mobile-game styling; signs, signboards, flags, banners, pennants, ribbons, scrolls or anything hanging; curved, arched or circular need bars; glowing text or icons; rope, cord or knots; brush strokes; torn paper; feathered, smudged or faded edges; neon colours; sci-fi.
+Size: on a 1920x1080 screen the whole HUD, corner setting included, spans roughly a quarter of the screen width. The corner setting may run off the top and left edges of the image, but no further right than the eye button.

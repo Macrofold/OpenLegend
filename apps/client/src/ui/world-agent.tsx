@@ -13,6 +13,7 @@ import { WorldInspection } from './world-inspection';
 import { WorldAgentSession } from './world-agent-session';
 import { UsageRemaining } from './usage-remaining';
 import './creator-workspaces.css';
+import './world-agent-layout.css';
 import { authoringKey } from './world-agent-identity';
 import { WorldAgentReview } from './world-agent-review';
 
@@ -170,21 +171,44 @@ function WorldAgentPanel(props: Props) {
         ? 'New world'
         : 'New conversation');
   const controls = (
-    <div className="ol-creator-options">
+    <aside
+      className="ol-creator-options ol-agent-conversations"
+      aria-label="World Agent conversations"
+    >
       <h3>Conversations</h3>
       <div className="ol-agent-tools">
         <Button size="sm" variant="quiet" onPress={() => create()}>
           New conversation
         </Button>
-        <Button size="sm" variant="quiet" onPress={() => create('invention')}>
-          Design an invention
-        </Button>
-        <Button size="sm" variant="quiet" onPress={() => create('creation')}>
-          Describe a new world
-        </Button>
-        <Button size="sm" variant="quiet" onPress={() => create('creation', true)}>
-          Choose a starting world
-        </Button>
+        <details
+          className="ol-agent-conversation-tools"
+          onKeyDown={(event) => {
+            if (
+              event.key !== 'Escape' ||
+              event.defaultPrevented ||
+              event.nativeEvent.isComposing ||
+              !event.currentTarget.open
+            )
+              return;
+            event.preventDefault();
+            event.stopPropagation();
+            event.currentTarget.open = false;
+            event.currentTarget.querySelector('summary')?.focus();
+          }}
+        >
+          <summary>More conversation tools</summary>
+          <div className="ol-agent-tools">
+            <Button size="sm" variant="quiet" onPress={() => create('invention')}>
+              Design an invention
+            </Button>
+            <Button size="sm" variant="quiet" onPress={() => create('creation')}>
+              Describe a new world
+            </Button>
+            <Button size="sm" variant="quiet" onPress={() => create('creation', true)}>
+              Choose a starting world
+            </Button>
+          </div>
+        </details>
       </div>
       <div className="ol-creator-records">
         {sessions.map((session) => (
@@ -211,7 +235,7 @@ function WorldAgentPanel(props: Props) {
         )}
       </div>
       {error && <p role="alert">{error}</p>}
-    </div>
+    </aside>
   );
   if (mode === 'invent')
     return (
@@ -295,50 +319,47 @@ function WorldAgentPanel(props: Props) {
     );
   return (
     <div
-      className="ol-agent ol-creator-workspace ol-creator-author"
+      className="ol-agent ol-creator-workspace ol-creator-author ol-agent-with-conversations"
       data-session={active ? '' : undefined}
     >
-      <header className="ol-creator-heading">
-        <div>
-          <Tag tone="highlight">God mode</Tag>
-          <h3 title={active ? activeTitle : undefined}>
-            {active ? activeTitle : 'Shape this world'}
-          </h3>
-        </div>
-        {sessions.some((session) => session.sessionId === active) && (
-          <Button size="sm" variant="quiet" onPress={() => create()}>
-            New chat
-          </Button>
-        )}
-      </header>
-      {active ? (
-        <WorldAgentSession
-          key={authoringKey(
-            'session-component',
-            worldId,
-            accessScope,
-            saveTimeline ?? null,
-            active,
-          )}
-          worldId={worldId}
-          accessScope={accessScope}
-          sessionId={active}
-          connected={connected}
-          visible={visible}
-          purpose={
-            creationTarget?.id === active
-              ? 'creation'
-              : inventionTarget === active
-                ? 'invention'
-                : undefined
-          }
-          nativeCreation={creationTarget?.id === active ? creationTarget.native : undefined}
-          freshRecovery={creationTarget?.id === active ? creationTarget.recovery : undefined}
-          onCreated={() => void list()}
-          controls={controls}
-          onStatusPolicyChanged={onStatusPolicyChanged}
-        />
-      ) : null}
+      <div className="ol-agent-conversation-layout">
+        {controls}
+        <section className="ol-agent-active" aria-label={active ? activeTitle : 'Shape this world'}>
+          <header className="ol-creator-heading">
+            <h3 title={active ? activeTitle : undefined}>
+              {active ? activeTitle : 'Shape this world'}
+            </h3>
+            <Tag tone="highlight">God mode</Tag>
+          </header>
+          {active ? (
+            <WorldAgentSession
+              key={authoringKey(
+                'session-component',
+                worldId,
+                accessScope,
+                saveTimeline ?? null,
+                active,
+              )}
+              worldId={worldId}
+              accessScope={accessScope}
+              sessionId={active}
+              connected={connected}
+              visible={visible}
+              purpose={
+                creationTarget?.id === active
+                  ? 'creation'
+                  : inventionTarget === active
+                    ? 'invention'
+                    : undefined
+              }
+              nativeCreation={creationTarget?.id === active ? creationTarget.native : undefined}
+              freshRecovery={creationTarget?.id === active ? creationTarget.recovery : undefined}
+              onCreated={() => void list()}
+              onStatusPolicyChanged={onStatusPolicyChanged}
+            />
+          ) : null}
+        </section>
+      </div>
     </div>
   );
 }

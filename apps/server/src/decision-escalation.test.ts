@@ -973,10 +973,9 @@ describe('enabled character decision reconsideration', () => {
       entityGet(h.service.world.entities, NPC_ID)!.actor!.attributes?.['wilderness:fullness'],
     ).toBeUndefined();
     expect(
-      h.service.previewCommand(
+      h.service.previewNativeCommand(
         { type: 'replenish', targetId: 'charge-bank', attributeId: 'clockwork:charge' },
         NPC_ID,
-        false,
       ).ok,
     ).toBe(true);
     await editWorld(h.service, (world) => {

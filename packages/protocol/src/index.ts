@@ -1,3 +1,6 @@
+import type { CartographyView } from './cartography.js';
+export type { CartographyView } from './cartography.js';
+export { worldClockParts, worldDayText, worldClockText } from './calendar.js';
 export type {
   RequestRecoveryResult,
   CheckpointRequest,
@@ -185,13 +188,20 @@ export interface CommandInput {
   destinationId?: string;
   offerId?: string;
   expectedOfferRevision?: number;
-  requestedItem?: {
+  offeredItems?: {
     itemId: string;
     quantity: number;
     expectedRevision?: number;
     placementRevision?: number;
     expectedContentsRevision?: number;
-  };
+  }[];
+  requestedItems?: {
+    itemId: string;
+    quantity: number;
+    expectedRevision?: number;
+    placementRevision?: number;
+    expectedContentsRevision?: number;
+  }[];
   targetId?: string;
   definitionId?: string;
   itemId?: string;
@@ -442,8 +452,24 @@ export interface ActionAnimation {
 export interface StatusEffectView {
   id: string;
   label: string;
+  explanation?: string;
+  icon?: string;
+  tone?: 'good' | 'bad' | 'neutral' | 'special';
+  /** Exact native deadline, absent for qualitative, sustained or untimed statuses. */
+  timing?: { expiresAt: number; durationSeconds: number; clock: 'simulation-seconds' };
   pose?: 'horizontal';
   particle?: { text: string; anchor: 'head'; motion: 'floatAway' };
+}
+/** A permitted subject's authored illustration; no global identity/artwork catalogue. */
+export interface PortraitArt {
+  path: string;
+  headPath?: string;
+  figurePath?: string;
+}
+/** One already-permitted item's artwork; never the installed world's lookup table. */
+export interface ItemArt {
+  path: string;
+  detailPath?: string;
 }
 export interface EntityView extends Named {
   /** Explicit preference; presence offers prospective attention to this received subject. */
@@ -467,7 +493,10 @@ export interface EntityView extends Named {
   };
   /** Remembered communication is distinct from the current physical contact. */
   communicationReference?: string;
+  /** Only this observer's recognized name and private nickname. */
+  identity?: { knownName?: string; nickname?: string; revision: number };
   icon?: string;
+  art?: ItemArt;
   /** Native root placement is public; contents revision requires current contents access. */
   storage?: { containerId: string; placementRevision: number; revision?: number };
   trade?: ItemTradeView;
@@ -496,6 +525,7 @@ export interface EntityView extends Named {
   heading: number;
   /** Presentation key resolved by trusted client artwork; it grants no physical capability. */
   appearance: string;
+  portrait?: PortraitArt;
   radius: number;
   status: string;
   /** Observed heat state. Renderers must not infer it from status wording. */
@@ -523,6 +553,7 @@ export interface EntityView extends Named {
 /** Continuous permitted possession facts; native operations are read explicitly. */
 export interface InventoryItemSummary extends Named {
   icon?: string;
+  art?: ItemArt;
   materialCondition?: { label: string; process: 'wetting' | 'drying'; coveredFraction: number };
   revision: number;
   placementRevision: number;
@@ -557,7 +588,16 @@ export interface InventoryItemView extends InventoryItemSummary {
   actions: ActionOption[];
 }
 
+/** Current owned-lot facts for the ten displayed shortcuts; no prepared actions. */
+export interface InventoryBindingsView {
+  ok: boolean;
+  message?: string;
+  items: InventoryItemSummary[];
+}
+
 export interface TradeLotView {
+  icon?: string;
+  art?: ItemArt;
   capacity?: number;
   id: string;
   name: string;
@@ -569,8 +609,18 @@ export interface TradeLotView {
   contentsRevision?: number;
   whole: boolean;
 }
+
+/** Paged personally remembered disclosures, with no lookup of another person's stock. */
+export interface TradeDisclosuresPage {
+  ok: boolean;
+  message?: string;
+  items: TradeLotView[];
+  next?: string;
+  scanLimited: boolean;
+}
 /** Participant-only pending terms and remembered disclosures, never other live stock. */
 export interface ItemTradeView {
+  maximumLots: number;
   scope: string;
   personId: string;
   personName: string;
@@ -616,8 +666,8 @@ export interface ItemTradeView {
     revision: number;
     incoming: boolean;
     constructionUse?: { terms: NonNullable<CommandInput['constructionUse']>; detail: string };
-    give?: TradeLotView;
-    receive?: TradeLotView;
+    give: TradeLotView[];
+    receive: TradeLotView[];
     expiresAt: number;
     actions: ActionOption[];
   }[];
@@ -628,10 +678,24 @@ export interface RecipeDetailsView {
   name: string;
   description: string;
   family: string;
-  outputs: Array<{ port: string; name: string; description: string; quantity: number }>;
+  outputs: Array<{
+    port: string;
+    name: string;
+    description: string;
+    quantity: number;
+    icon?: string;
+    equipmentPorts?: string[];
+    art?: ItemArt;
+  }>;
   facts: Array<{ id: string; label: string; value: number | string; unit?: string }>;
   limitations: string[];
-  ingredients: Array<{ name: string; quantity: number; available: number }>;
+  ingredients: Array<{
+    name: string;
+    quantity: number;
+    available: number;
+    icon?: string;
+    art?: ItemArt;
+  }>;
   retainedTools: Array<{
     role: string;
     quantity: number;
@@ -717,6 +781,8 @@ export interface OwnPromise {
   words: string;
   /** The addressed person as the viewer's character knows them, if any. */
   recipient: string | null;
+  /** Exact counterpart for scoped person-window filtering; never resolved from a name. */
+  recipientId: string | null;
   madeAt: number;
   status: 'open' | 'overdue' | 'kept' | 'cancelled';
   terms: string;
@@ -763,6 +829,7 @@ export interface MemoryHistoryPage {
 }
 
 export interface KnownPlaceView {
+  note?: { text: string; revision: number };
   id: string;
   sourceId: string;
   revision: string;
@@ -945,6 +1012,7 @@ export interface GameView {
   evaluationCut: number;
   /** Remembered communication roles; no current body, location or state is implied. */
   communicationReferences: Array<{ id: string; label: string }>;
+  cartography?: CartographyView;
   /** Exact installed asset release; absent authorizes only bootstrap depiction. */
   presentationRelease?: AssetRevisionReference;
   presentationReleaseRevision?: number;
@@ -1000,7 +1068,7 @@ export interface GameView {
     crafting?: {
       categoryLabel: string;
       allLabel: string;
-      categories: Array<{ id: string; label: string }>;
+      categories: Array<{ id: string; label: string; icon?: string }>;
     };
   };
   /** Native sight range/body anchors; presentation bands add no gameplay tier or range. */
@@ -1032,6 +1100,8 @@ export interface GameView {
     daylight?: { startHour: number; endHour: number; noonElevationDegrees: number };
     seconds: number;
     day: number;
+    /** Optional authored name; absence displays the calendar counter numerically. */
+    dayLabel?: string;
     hour: number;
     speed: number;
     baseRatio: number;
@@ -1041,7 +1111,7 @@ export interface GameView {
     preparingNavigation?: boolean;
     /** Stopping-time names this world defines ("dawn"); empty when it names none. */
     namedTimes: string[];
-    /** The world's clock offset in hours: day 1 starts at this hour. */
+    /** Local-clock offset in hours; calendar labels advance at local midnight. */
     offsetHours: number;
   };
   player: Named & {
@@ -1074,6 +1144,7 @@ export interface GameView {
     scars?: Array<{ id: string; name: string; description: string; treatmentsRemaining: number }>;
     bodyState?: 'dead' | 'rotting' | 'removed';
     appearance?: EntityView['appearance'];
+    portrait?: PortraitArt;
     participation?: 'active' | 'exiting' | 'inactive';
     statusEffects?: StatusEffectView[];
     id: string;
@@ -1108,6 +1179,13 @@ export interface GameView {
     memoryRevision: string;
     history?: string;
     inventory: InventoryItemSummary[];
+    /** The current body's installed places and actual attachments, including empty places. */
+    equipmentPorts: Array<{
+      id: string;
+      label: string;
+      icon?: string;
+      item?: { id: string; name: string; icon?: string; art?: ItemArt };
+    }>;
     inventoryRevision: number;
     /** Opaque own construction-choice invalidation; contains no material/grant identity. */
     constructionRevision?: string;
@@ -1167,7 +1245,12 @@ export interface GamePatch {
   /** JSON omits undefined. Removed fields are explicit; null remains a meaningful value. */
   remove?: {
     view?: Array<
-      'commandEpoch' | 'worldEventsRevision' | 'historyRevision' | 'historyEpoch' | 'narrator'
+      | 'commandEpoch'
+      | 'worldEventsRevision'
+      | 'historyRevision'
+      | 'historyEpoch'
+      | 'narrator'
+      | 'cartography'
     >;
     clock?: Array<keyof GameView['clock']>;
     player?: Array<keyof GameView['player']>;
@@ -1182,6 +1265,7 @@ export interface GamePatch {
   baseRevision: number;
   revision: number;
   narrator?: GameView['narrator'];
+  cartography?: GameView['cartography'];
   profile?: GameView['profile'];
   clock?: Partial<GameView['clock']>;
   player?: Partial<GameView['player']>;
@@ -1346,7 +1430,7 @@ export interface GodMindView {
   worldId?: string;
   generation?: string;
   notepads?: {
-    subjectId: ObserverSubject | null;
+    subjectId: KnowledgeSubject | null;
     origin: 'authored-starting' | 'actor-edit';
     label: string;
     text: string;
@@ -1398,6 +1482,11 @@ export interface GodMindView {
 export type ObserverSubject =
   | { kind: 'entity'; entityId: string }
   | { kind: 'individual'; individualId: string };
+/** Personal understanding may concern a known person, acquired place or own map marker. */
+export type KnowledgeSubject =
+  | ObserverSubject
+  | { kind: 'place'; placeId: string }
+  | { kind: 'map-marker'; markerId: string };
 export interface MindSubject {
   id: string;
   subject: ObserverSubject;
@@ -1418,9 +1507,8 @@ export interface MindSubjectPage {
     notepad: NonNullable<GodMindView['notepads']>[number] | null;
     identity: {
       givenName: string;
+      nickname?: string;
       revision: number;
-      encounterId: string | null;
-      authored: boolean;
     } | null;
   } | null;
 }
@@ -1656,6 +1744,22 @@ export interface ObjectHistoryPage {
   next?: string;
 }
 
+export const INVENTORY_SORTS = ['native', 'name-asc', 'name-desc', 'quantity-desc'] as const;
+export type InventorySort = (typeof INVENTORY_SORTS)[number];
+export const DEFAULT_INVENTORY_SORT: InventorySort = 'native';
+export const INVENTORY_FILTERS = ['all', 'equipped', 'containers'] as const;
+export type InventoryFilter = (typeof INVENTORY_FILTERS)[number];
+export const DEFAULT_INVENTORY_FILTER: InventoryFilter = 'all';
+
+export interface ContainerPageRequest {
+  containerId?: string;
+  query?: string;
+  cursor?: string;
+  mergeSourceId?: string;
+  sort?: InventorySort;
+  filter?: InventoryFilter;
+}
+
 export interface ContainerPage {
   ok: boolean;
   message?: string;
@@ -1808,7 +1912,10 @@ export interface OperationsView {
   scope: string;
   generation: string;
   mode: 'local' | 'oidc';
-  clock: Pick<GameView['clock'], 'seconds' | 'day' | 'hour' | 'speed' | 'paused' | 'pauseReason'>;
+  clock: Pick<
+    GameView['clock'],
+    'seconds' | 'day' | 'dayLabel' | 'hour' | 'offsetHours' | 'speed' | 'paused' | 'pauseReason'
+  >;
   maintenance: MaintenanceWindowView | null;
   overview?: WorldOverview;
   access?: {

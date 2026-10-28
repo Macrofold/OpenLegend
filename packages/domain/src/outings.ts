@@ -2392,17 +2392,18 @@ function chosenCooperationTerms(
       offer.revision !== task.offerRevision ||
       offer.offererId !== actorId ||
       offer.recipientId !== recipientId ||
-      offer.requested ||
+      offer.requested.length ||
+      offer.offered.length !== 1 ||
       world.simTime >= offer.expiresAt
     )
       return;
     const destination = chosenGuideTerms(world, actorId, task.destinationId);
     if (destination?.purpose !== 'guide') return;
-    const item = entityGet(world.entities, offer.offered.itemId)?.item;
+    const item = entityGet(world.entities, offer.offered[0]!.itemId)?.item;
     if (
       !item ||
-      item.revision !== offer.offered.revision ||
-      item.quantity !== offer.offered.quantity
+      item.revision !== offer.offered[0]!.revision ||
+      item.quantity !== offer.offered[0]!.quantity
     )
       return;
     return {
@@ -2412,11 +2413,11 @@ function chosenCooperationTerms(
         helperId: recipientId,
         offerId: offer.id,
         offerRevision: offer.revision,
-        itemId: offer.offered.itemId,
-        itemRevision: offer.offered.revision,
-        definition: { ...offer.offered.definitionPin },
-        quantity: offer.offered.quantity,
-        itemLabel: observerDescription(world, actorId, offer.offered.itemId, 'definite'),
+        itemId: offer.offered[0]!.itemId,
+        itemRevision: offer.offered[0]!.revision,
+        definition: { ...offer.offered[0]!.definitionPin },
+        quantity: offer.offered[0]!.quantity,
+        itemLabel: observerDescription(world, actorId, offer.offered[0]!.itemId, 'definite'),
         destination: destination.destination,
       },
     };
@@ -2510,12 +2511,13 @@ function carryOfferCurrent(
     offer.revision === task.offerRevision &&
     offer.offererId === proposerId &&
     offer.recipientId === recipientId &&
-    !offer.requested &&
+    offer.requested.length === 0 &&
+    offer.offered.length === 1 &&
     offer.expiresAt > world.simTime &&
-    offer.offered.itemId === task.itemId &&
-    offer.offered.revision === task.itemRevision &&
-    offer.offered.quantity === task.quantity &&
-    sameDefinitionPin(offer.offered.definitionPin, task.definition)
+    offer.offered[0]!.itemId === task.itemId &&
+    offer.offered[0]!.revision === task.itemRevision &&
+    offer.offered[0]!.quantity === task.quantity &&
+    sameDefinitionPin(offer.offered[0]!.definitionPin, task.definition)
   );
 }
 /** Preserve the identity explicitly named by accepted carrying terms; this grants no custody. */

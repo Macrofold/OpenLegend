@@ -1,0 +1,713 @@
+{
+ "release": {
+  "owner": {
+   "kind": "collection",
+   "id": "openlegend-curated"
+  },
+  "assetId": "ui-material-language-higgsfield-2026-10-25-round-5",
+  "revisionId": "sha256-e5b84799f386cc2d737040d9bca897356a147dc421e89cff493d201fa9592879",
+  "manifestSha256": "f23f0cd1c5d7c46628245e94669b2b828fc1a77e68b0276d2a84adc6d5ed5630"
+ },
+ "files": {
+  "boards/img/r5-corners-1to1.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "16077561fd9de64c894130fa83cdbe40515195ba718b29ce14da7d1e3a8391af",
+   "bytes": 1302843,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-rings-1to1.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "7588528fd287db902f9c9a8792e78363f4904d0e3965701715486dea0d7cc117",
+   "bytes": 1292708,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-x1-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-x1-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "298021a45be276a87353af877ad90c4d9f6ce46839ae1a8f271dcc4c335a72f9",
+   "bytes": 622763,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-x1-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "96dc30d91a4332f9ca00b55dea33b76328a34f05f46874a8a1a02e2b77eac8e3",
+   "bytes": 289073,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-x1-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c8f8db93008d0a9ca54b8c5f48fa62775a4f7c5474f186d7d7c4635c139b5d9c",
+   "bytes": 218759,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-x2-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-x2-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0778c721acb93ea5b19088a03c84cb942284210f3d188b0b96ec0170fc644bf4",
+   "bytes": 619430,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-x2-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3e07a673f5a2f654be047994be492ec1ad282628e6b296776c0b0d9f719f6da1",
+   "bytes": 273763,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-x2-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c2fce3d1c9795e8ae1909105099bf8dead3bff14f65185096766fa82e29e3d46",
+   "bytes": 219457,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-x3-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-x3-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "10ab73fa1af835a6f9d5e2c9b4924012ed4d47fd595ba03a33f30605f0487a52",
+   "bytes": 612674,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-x3-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f5e9568887aa75c70ddcc3cb0e5c5e78ca5800cb5d230ccde818948ec3dcbdcd",
+   "bytes": 256713,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-x3-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "399aceb13e6584468b3c358332469671723242d87897b1fd65a4e5ff42c84798",
+   "bytes": 218156,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-x4-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-x4-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5eeed0f26604c721dc69d12370f9f54a388a295fadae70973e30eb9860bf5ff8",
+   "bytes": 612656,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-x4-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1fb2aeeb36179187c4bf495647185ae12d4088fe1c15890557a2771a5d684482",
+   "bytes": 253413,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-x4-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a102356e3be6c19b10d806d42279213f6096799110fe1fc4ade129a617a49f98",
+   "bytes": 218316,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-y1-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-y1-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bc89a276b18f8df9ece6fccb2704c75c828f460c01415c0dfb65b263990c9581",
+   "bytes": 615717,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-y1-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5592745e1e1c3e006ba8d13a10a6219f524b9a4e99d2d5f3cc18480f4bdb732e",
+   "bytes": 276280,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-y1-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "288f8973b7f736563113daa0dfaf9cf97e0abd493c0911df7350f118fe409e1f",
+   "bytes": 218287,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-y2-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-y2-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "51608849182529f77dfc19e2a66980b48181c85791ca44b74e3c3616244cb797",
+   "bytes": 620330,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-y2-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bd34e0da14f7def858eafbb67bcd6226dd93e5a152e39fe67deb3527f1e0985c",
+   "bytes": 270542,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-y2-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8bae1e77d4e2d8abb12ad1a7ae856672e6a4eac727fd0eb214071b71b135a97a",
+   "bytes": 219002,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-y3-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-y3-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "247f9c806584a5b1eecbe03654ec277a22d6af043759bf7908821ffd39a78642",
+   "bytes": 617864,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-y3-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "09910e42e9cfc4c50ab84677225dcc5920d4c4e205cfe77eded46fe50a2acb19",
+   "bytes": 276916,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-y3-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b2c3f3014ba0e2c4ed039f78bb9f119da2900c90ee943e1f197701050cc669ac",
+   "bytes": 218503,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-y4-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-y4-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2fa5feb97ffb9603aca267732f4e6bbfe54258b70665548172f05d024d1f854a",
+   "bytes": 609919,
+   "mediaType": "image/png"
+  },
+  "boards/img/r5-y4-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "064dddab5e0313ff3c0cb718bd178885d6b5379ca1b1a07812235dc183dfb593",
+   "bytes": 253832,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r5-y4-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4b31c6264fa8db6dc79dc0d692245e27e4c25351ab8bbcca9b1c58871290e226",
+   "bytes": 217880,
+   "mediaType": "image/jpeg"
+  },
+  "boards/round5.html": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ffac753b9ed51b274b3629d286179ca1eef2b97528534bc2e94937dc3c15faf6",
+   "bytes": 15252,
+   "mediaType": "text/html; charset=utf-8"
+  },
+  "build_board3.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ea43ebbd4bf7f6654f118cdaedb680fbb3fc497d73812612c291b786ebef995c",
+   "bytes": 4431,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "directions-r5.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ddab2c27b94c4807c4e132ab31250e6e04c4d365114a908cbc3396022b955485",
+   "bytes": 4902,
+   "mediaType": "application/json"
+  },
+  "gen4.sh": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3cbd81244b7303f424aaade87eb7f983d341870a85f3e078f198561546c4e183",
+   "bytes": 1803,
+   "mediaType": "text/x-shellscript; charset=utf-8"
+  },
+  "outputs/r5-x01-laurel-ring-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "83e1554ca714a508b592969ad9538c1bc934187c6d8e6d2a16669a68ba6dd913",
+   "bytes": 572843,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-x01-laurel-ring-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "298021a45be276a87353af877ad90c4d9f6ce46839ae1a8f271dcc4c335a72f9",
+   "bytes": 622763,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x01-laurel-ring-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ba3d8cb0db9f56490f2da55244542a4ba4ee9f227d7105ce4d5ca5c3283511c3",
+   "bytes": 398022,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-x01-laurel-ring-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b7014dd8f46db901b7c508126b6cc9be9e328edab912c52170c40fa8670e5e08",
+   "bytes": 3977829,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x01-laurel-ring.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "dc87d1aa8782bb26430a8134eff691055e56389e66cdacab3b7557ad87540a72",
+   "bytes": 4014565,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x01-laurel-ring.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "556b95054f91e45d4ea8416aba4e2db3cf41d74311a7d37dd0407fd7dc15f1c5",
+   "bytes": 4878,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r5-x02-reed-ring-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "63b583333aba6194b14042eb26d067b236c0ff04801daaf018db34e6e79a394d",
+   "bytes": 524928,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-x02-reed-ring-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0778c721acb93ea5b19088a03c84cb942284210f3d188b0b96ec0170fc644bf4",
+   "bytes": 619430,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x02-reed-ring-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "abd057c6506262f274a1e84edcbb2d8e1e085c6213037baca225bebc23256df7",
+   "bytes": 398970,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-x02-reed-ring-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d7f76c9616990ce43b7d08a33026e7146f3ebf921b7c5c55a4f4e8b3b5e38070",
+   "bytes": 3645165,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x02-reed-ring.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "536d9a87200ebac2274580d378409698a32bf36063dfe3b656cb6cd92ae7d75c",
+   "bytes": 3674675,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x02-reed-ring.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5f7f470158718f837b8fb2c9a86e840145ee2d5b4c6880c626a6ad484001f910",
+   "bytes": 4633,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r5-x03-jade-set-band-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b21e4a88f645cfec9511d777868d062ab1e64e7c315b1b4825ff8d2c7f075392",
+   "bytes": 450706,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-x03-jade-set-band-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "10ab73fa1af835a6f9d5e2c9b4924012ed4d47fd595ba03a33f30605f0487a52",
+   "bytes": 612674,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x03-jade-set-band-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "948aeb095b2e95dcca9c156aeb27803d18d860bd53f5ee52c0525d1e40332eb2",
+   "bytes": 397020,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-x03-jade-set-band-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "83a6f44edc35f2109e917be3b984ff91d52b10ac0c7b6038dd2356f4598138d5",
+   "bytes": 3309587,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x03-jade-set-band.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "33573f4c5a0fdb9c9e9d42c117079655342aedf9a6b1cd00732a0460a93431f7",
+   "bytes": 3338426,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x03-jade-set-band.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9c048a3ac076bbdc069ab4812984835438855e661de857abdf03cb2d149aa021",
+   "bytes": 4645,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r5-x04-rooted-ring-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "eedaa5228dd952421deae4c004fa72f1f6326a36fcb0075e21f698cef663615c",
+   "bytes": 442846,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-x04-rooted-ring-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5eeed0f26604c721dc69d12370f9f54a388a295fadae70973e30eb9860bf5ff8",
+   "bytes": 612656,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x04-rooted-ring-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "409e9c008026f7ef8f77aef093981e75b0e63b90d0c0a4e0f3c33efac51272e0",
+   "bytes": 397327,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-x04-rooted-ring-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5323c538dbefe320a60ff7b1411b7903f2fcbb5ddc35d184726ef1899795550e",
+   "bytes": 3343824,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x04-rooted-ring.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5b1700f5101187e55df758c65c752c5fa091f5ebe4089c102d728a961fdf71b3",
+   "bytes": 3382078,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-x04-rooted-ring.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "cf32d37739c8d1c9a5473fd62c8918c5178719fa7aa6752571d01affb446634f",
+   "bytes": 4627,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r5-y01-river-granite-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6cb23b779f3866d8c658d0fe1849617f13b50e123762b0664422642baf673e4f",
+   "bytes": 427196,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-y01-river-granite-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bc89a276b18f8df9ece6fccb2704c75c828f460c01415c0dfb65b263990c9581",
+   "bytes": 615717,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y01-river-granite-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "7e958387be8c1bb11e9dd2862c7a7e87c3a78ce7c248e3366b262a6a626a92a6",
+   "bytes": 396581,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-y01-river-granite-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5e30f9a23061100cf42c340cdce32d24f75dfa58e96e2ae0d8c1666b1473d497",
+   "bytes": 3301395,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y01-river-granite.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "5a3217d3d20b0c9f110d8a989402bfd426ca4c13d8c8b12c9e5a88accbeeb181",
+   "bytes": 3333727,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y01-river-granite.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ae3bb97508249132651c6984bfa5072fae16b9093ccfac62a18525812b57a053",
+   "bytes": 5021,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r5-y02-gold-quartz-slate-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "99fdb7703fccabf2d7ed1e18bcfe2263938d6c523b13b6dcd1dfc84131d971a6",
+   "bytes": 395690,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-y02-gold-quartz-slate-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "51608849182529f77dfc19e2a66980b48181c85791ca44b74e3c3616244cb797",
+   "bytes": 620330,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y02-gold-quartz-slate-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2967f68db7531528695c09bbb1aca25573525fd9c796b9910c6729c89fe5aa68",
+   "bytes": 398006,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-y02-gold-quartz-slate-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "50ef179f52619cfabac63c520222644cf73ef7feb4d8bedefe08564417b945ed",
+   "bytes": 3005244,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y02-gold-quartz-slate.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d76b7f563aa78f8781d8e8cbf4aebdf594bc67d058e20ec962e5665d3a381b99",
+   "bytes": 3037533,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y02-gold-quartz-slate.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c969b21d8de060328036f84e7df92be7c05a435eed5e7da198ed843e6f21c483",
+   "bytes": 5007,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r5-y03-star-iron-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9baa3a387a46e1ab78d4afa1c402e097da736da7b1309320e0822d8c67165006",
+   "bytes": 539617,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-y03-star-iron-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "247f9c806584a5b1eecbe03654ec277a22d6af043759bf7908821ffd39a78642",
+   "bytes": 617864,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y03-star-iron-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c8926bf143572fea67b97b7518f8029155c3908b001de5910464e65ef287fdd7",
+   "bytes": 397167,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-y03-star-iron-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "833f1783b32d50236e5dbf4f5290407fea0103012df17c88aca98ad67b1e43d9",
+   "bytes": 3863529,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y03-star-iron.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9f0dd52b5aa02b0c321b2a863dfec15de82d599644aa74e3d00c0e4cdf5b9b24",
+   "bytes": 3906811,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y03-star-iron.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "303cf33a29da3588ba5a2d6d6587531b3f84ca2d2323a47641747dc14498ad5a",
+   "bytes": 5080,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r5-y04-malachite-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1a75fb2355726e9cf8c5c937a1c3244b468fe7c8768b518f1920c1ff39a16118",
+   "bytes": 480674,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-y04-malachite-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2fa5feb97ffb9603aca267732f4e6bbfe54258b70665548172f05d024d1f854a",
+   "bytes": 609919,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y04-malachite-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "545e7ae825319858439d6fb896ceeeb5f7b24fb494c9aece6f72a14dcf9ea90e",
+   "bytes": 395258,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r5-y04-malachite-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3a40aeb67d85b2efade5b7b8beee60589d9696eeea74c087633e7b2ff6167907",
+   "bytes": 3605563,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y04-malachite.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8d55909e771d0a1d30a33e41a3b964de6bcf3afd0e9ddc6cd44d4376bd8494c3",
+   "bytes": 3652068,
+   "mediaType": "image/png"
+  },
+  "outputs/r5-y04-malachite.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c3891d51016ed83ce540f75204e984d57b8956f05074023bfe742a8de5655385",
+   "bytes": 5039,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/_hud.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1e4ae495bcc5c6244f06b04b0b709356918ddd267f804ef2c5871c6bd0b10ab0",
+   "bytes": 4092,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/_ref-gold.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0b728d54d810adccd8bd16e7ac8ff13ec0618d78f7919de09a13081bd6177006",
+   "bytes": 168,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/_ref-hud.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c5c521ad3b352a28e2d907dbe2513f6c6f8816e9245c100f73a9316b0fa31bfe",
+   "bytes": 250,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/_ref-panel.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "10ddb2d21bfb1416d12b6602b5b84952cf9c16ae32653ca881f5f9fbd09222e7",
+   "bytes": 159,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/_ref-ring.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ce0d08c4cbbea029a659ab607d3f57f03ea700c6d6c89027c724eeba79820d9d",
+   "bytes": 167,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/x01-laurel-ring.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "00b227a3e5b099a63069f2cf10baf65e13708b144540051fc36f34a193306dbd",
+   "bytes": 403,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/x02-reed-ring.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8fa0c4444e3d3dbfa0113584b9e4632d1b40418c44fd575e42737154034d5a68",
+   "bytes": 344,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/x03-jade-set-band.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b6586223e2a73e1a77679c824df381b3513412cfca65a8908dc62a88adc4ad06",
+   "bytes": 360,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/x04-rooted-ring.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c62fa4bd6ddcb859bc5bad0dda30384a6b66992bcdba7c123ecd3602f0d50fed",
+   "bytes": 340,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/y01-river-granite.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "845d21371663686b018ae99bf5bd014ba687b85c97502b3458b5eea68e052310",
+   "bytes": 548,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/y02-gold-quartz-slate.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "459f062266e2065d9d8e316712a9dbdef8a5c01c18c2f98ffae02434015dd877",
+   "bytes": 538,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/y03-star-iron.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "557066671ede56fc0c84a194ec4f1f0a5e7795109eb01672c7177a35d871bcec",
+   "bytes": 603,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r5/y04-malachite.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0fc38e8e7c1df7555fb2d3db7e8aef010098e4c65f46c4220fbc35b4b517b2a4",
+   "bytes": 562,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "refs/ringed-dial-ring-ref.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "772a54a5f03956d6804a9807c96fb703a17982642525a1b0cb5fe72a4f1a3c52",
+   "bytes": 349367,
+   "mediaType": "image/png"
+  }
+ }
+}

@@ -13,8 +13,10 @@ import './container-opening.css';
 
 export interface OpenContainerRequest {
   requestId: string;
-  containerId: string | null;
+  containerId: string;
   name: string;
+  scope: string;
+  opener?: HTMLElement | null;
 }
 type Movement = CommandRequestIdentity & { stance: SurfacePoint; actionId?: string; seen: boolean };
 type Attempt = {
@@ -26,6 +28,7 @@ type Attempt = {
   geometry: string;
   placementRevision: number;
   geometryRevision: number;
+  opener?: HTMLElement | null;
   phase: 'checking' | 'out-of-reach' | 'walking' | 'unknown' | 'blocked';
   message: string;
   movement?: Movement;
@@ -53,7 +56,7 @@ export function useContainerOpening(
   dispatch: CommandDispatcher,
 ) {
   const [opening, setOpening] = useState<Attempt | null>(null);
-  const [openContainer, setOpenContainer] = useState<OpenContainerRequest | null>();
+  const [openContainer, setOpenContainer] = useState<OpenContainerRequest>();
   const current = useRef<Attempt | null>(null);
   const sequence = useRef(0);
   const read = useRef<AbortController | null>(null);
@@ -102,6 +105,8 @@ export function useContainerOpening(
       requestId: crypto.randomUUID(),
       containerId: value.containerId,
       name: value.name,
+      scope: value.scope,
+      opener: value.opener,
     });
     retain(null);
   }
@@ -342,11 +347,10 @@ export function useContainerOpening(
         retain({ ...current.current, phase: 'unknown', message: String(reason) });
     }
   }
-  function open(entity: EntityView) {
+  function open(entity: EntityView, opener?: HTMLElement | null) {
     // An uncertain original inspection must settle before another Open can replace it.
     if (current.current?.inspection) return;
     stopFollowing();
-    setOpenContainer({ requestId: crypto.randomUUID(), containerId: null, name: entity.name });
     const now = latest.current;
     if (!entity.storage || !now.view?.access?.scope || !now.connected) return;
     const value: Attempt = {
@@ -358,6 +362,7 @@ export function useContainerOpening(
       geometry: geometry(entity),
       placementRevision: entity.storage.placementRevision,
       geometryRevision: now.view.map.spatial.revision,
+      opener,
       phase: 'checking',
       message: 'Checking access…',
     };
@@ -368,7 +373,7 @@ export function useContainerOpening(
     const entity = latest.current.view?.entities.find(
       (entry) => entry.id === current.current?.entityId,
     );
-    if (entity) open(entity);
+    if (entity) open(entity, current.current?.opener);
   }
   async function stopMovement(value: Attempt) {
     if (!value.movement?.actionId || !sameScope(value)) return;

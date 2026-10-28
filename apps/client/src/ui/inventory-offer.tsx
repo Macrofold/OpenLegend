@@ -14,12 +14,16 @@ export function InventoryOffer({
   source,
   scope,
   active,
+  existingTrades,
+  canOpenExisting,
   onOffer,
 }: {
   source: InventoryTransferSource;
   scope: string;
   active: boolean;
-  onOffer(recipient: InventoryDestination): void;
+  existingTrades: Array<{ id: string; name: string }>;
+  canOpenExisting: boolean;
+  onOffer(recipient: Pick<InventoryDestination, 'id'>): void;
 }) {
   const [query, setQuery] = useState('');
   const [refresh, setRefresh] = useState(0);
@@ -77,11 +81,13 @@ export function InventoryOffer({
     current?.page?.destinations.filter(
       (entry) => entry.kind === 'recipient' && currentContactAvailable(entry.id),
     ) ?? [];
+  const existingIds = new Set(existingTrades.map((person) => person.id));
+  const existing = existingTrades.filter((person) =>
+    person.name.toLocaleLowerCase().includes(query.trim().toLocaleLowerCase()),
+  );
   return (
-    <section className="ol-inventory-offer" aria-label="Offer to a person">
-      <p>
-        Choose a person to review an offer or exchange. Nothing changes hands before acceptance.
-      </p>
+    <section className="ol-inventory-offer" aria-label="Choose a recipient">
+      <p>Choose a person to open Trade.</p>
       <label htmlFor={searchId}>Find a person</label>
       <input
         id={searchId}
@@ -96,21 +102,30 @@ export function InventoryOffer({
       {current?.error && <p role="alert">{current.error}</p>}
       {current?.page?.message && <p role="status">{current.page.message}</p>}
       <ul>
-        {people.map((person) => (
+        {existing.map((person) => (
           <li key={person.id}>
-            <Button
-              disabled={
-                !active || person.fit === 'blocked' || current?.page?.status === 'unavailable'
-              }
-              onPress={() => onOffer(person)}
-            >
-              Trade with {namePhrase(person, 'definite')}
+            <Button disabled={!canOpenExisting} onPress={() => onOffer(person)}>
+              Trade with {person.name}
             </Button>
-            {person.reason && <p className="ol-caption">{person.reason}</p>}
           </li>
         ))}
+        {people
+          .filter((person) => !existingIds.has(person.id))
+          .map((person) => (
+            <li key={person.id}>
+              <Button
+                disabled={
+                  !active || person.fit === 'blocked' || current?.page?.status === 'unavailable'
+                }
+                onPress={() => onOffer(person)}
+              >
+                Trade with {namePhrase(person, 'definite')}
+              </Button>
+              {person.reason && <p className="ol-caption">{person.reason}</p>}
+            </li>
+          ))}
       </ul>
-      {current?.page && !people.length && (
+      {current?.page && !people.length && !existing.length && (
         <p>
           {current.page.next
             ? 'No recipient in this part of the search. More results remain.'

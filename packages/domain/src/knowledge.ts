@@ -46,18 +46,39 @@ export function validObserverSubject(subject: unknown): subject is ObserverSubje
         typeof value.individualId === 'string' &&
         isSafeRecordId(value.individualId);
 }
+/** Document namespaces do not widen the subjects permitted by recognition or targeting. */
+export type KnowledgeSubject =
+  | ObserverSubject
+  | { kind: 'place'; placeId: string }
+  | { kind: 'map-marker'; markerId: string };
+export function validKnowledgeSubject(subject: unknown): subject is KnowledgeSubject {
+  if (validObserverSubject(subject)) return true;
+  if (
+    !subject ||
+    typeof subject !== 'object' ||
+    Array.isArray(subject) ||
+    Object.keys(subject).length !== 2
+  )
+    return false;
+  const value = subject as { kind?: unknown; placeId?: unknown; markerId?: unknown };
+  return value.kind === 'place'
+    ? typeof value.placeId === 'string' && isSafeRecordId(value.placeId)
+    : value.kind === 'map-marker' &&
+        typeof value.markerId === 'string' &&
+        isSafeRecordId(value.markerId);
+}
 export interface KnowledgeDocument {
   /** Source of the current complete text, never inferred from revision or evidence absence.
    * Observed facts and testimony keep their distinct sources on the referenced evidence.
    * docs/knowledge.md#documents-and-authority */
   origin: 'authored-starting' | 'actor-edit';
-  subjectId: ObserverSubject | null;
+  subjectId: KnowledgeSubject | null;
   text: string;
   revision: number;
   evidenceIds: string[];
 }
 export interface KnowledgeEdit {
-  subjectId: ObserverSubject | null;
+  subjectId: KnowledgeSubject | null;
   expectedRevision: number;
   text: string;
 }
@@ -198,12 +219,18 @@ export function advanceKnowledgeRevision(world: WorldState, actorId: string): vo
   recordSemanticChange(world, { kind: 'knowledge', actorId });
 }
 export const characterCount = (text: string): number => Array.from(text).length;
-export const knowledgeKey = (subjectId: ObserverSubject | null): string =>
-  subjectId === null ? 'general' : `subject:${subjectKey(subjectId)}`;
+export const knowledgeKey = (subjectId: KnowledgeSubject | null): string =>
+  subjectId === null
+    ? 'general'
+    : subjectId.kind === 'place'
+      ? `place:${subjectId.placeId}`
+      : subjectId.kind === 'map-marker'
+        ? `map-marker:${subjectId.markerId}`
+        : `subject:${subjectKey(subjectId)}`;
 export function knowledgeDocument(
   world: WorldState,
   actorId: string,
-  subjectId: ObserverSubject | null,
+  subjectId: KnowledgeSubject | null,
 ) {
   return getOwn(world.actorKnowledge?.[actorId] ?? {}, knowledgeKey(subjectId));
 }
@@ -240,7 +267,7 @@ export function editKnowledge(
   world: WorldState,
   actorId: string,
   edit: KnowledgeEdit,
-  permittedSubjects: readonly ObserverSubject[],
+  permittedSubjects: readonly KnowledgeSubject[],
   evidenceIds: readonly string[] = [],
 ): Outcome {
   const policy = world.knowledgePolicy;
@@ -249,12 +276,18 @@ export function editKnowledge(
   const current = knowledgeDocument(world, actorId, edit.subjectId);
   if (
     edit.subjectId !== null &&
-    (!validObserverSubject(edit.subjectId) ||
-      !permittedSubjects.some((subject) => sameSubject(subject, edit.subjectId!)) ||
-      (edit.subjectId.kind === 'entity'
-        ? !entityGet(world.entities, edit.subjectId.entityId) && !current
-        : world.observerIdentities?.[actorId]?.[edit.subjectId.individualId]?.individualId !==
-          edit.subjectId.individualId))
+    (!validKnowledgeSubject(edit.subjectId) ||
+      !permittedSubjects.some(
+        (subject) => knowledgeKey(subject) === knowledgeKey(edit.subjectId),
+      ) ||
+      (edit.subjectId.kind === 'place'
+        ? false // Exact retained place is admitted by the caller.
+        : edit.subjectId.kind === 'map-marker'
+          ? !world.mapMarkers?.[actorId]?.[edit.subjectId.markerId] && !current
+          : edit.subjectId.kind === 'entity'
+            ? !entityGet(world.entities, edit.subjectId.entityId) && !current
+            : world.observerIdentities?.[actorId]?.[edit.subjectId.individualId]?.individualId !==
+              edit.subjectId.individualId))
   )
     return outcome(false, 'unpermitted-subject', 'The knowledge subject was not supplied.');
   if (
@@ -279,7 +312,10 @@ export function editKnowledge(
     return outcome(false, 'forgotten-evidence', 'Knowledge cannot retain forgotten evidence.');
   if (current?.text === edit.text)
     return outcome(true, 'knowledge-unchanged', 'Knowledge is already current.');
-  if (current?.revision === Number.MAX_SAFE_INTEGER)
+  if (
+    !Number.isSafeInteger((current?.revision ?? 0) + 1) ||
+    !Number.isSafeInteger((world.knowledgeRevisions?.[actorId] ?? 0) + 1)
+  )
     return outcome(
       false,
       'knowledge-revision-exhausted',
@@ -389,7 +425,7 @@ export function validateKnowledge(world: WorldState): void {
         !['authored-starting', 'actor-edit'].includes(document.origin) ||
         id !== knowledgeKey(document.subjectId) ||
         (document.subjectId !== null &&
-          (!validObserverSubject(document.subjectId) ||
+          (!validKnowledgeSubject(document.subjectId) ||
             (document.subjectId.kind === 'individual' &&
               world.observerIdentities?.[actorId]?.[document.subjectId.individualId]
                 ?.individualId !== document.subjectId.individualId))) ||
