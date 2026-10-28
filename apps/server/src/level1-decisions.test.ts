@@ -1,6 +1,6 @@
 import { entityHandle } from './entity-references.js';
 import { decisionFixtureResult } from '../../../tests/fixtures/actor-response.js';
-import { entityGet, entityValues } from '@open-legend/domain';
+import { entityGet, entityValues, materializeNativeValues } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -1153,7 +1153,11 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
         job.id,
       );
     const receipt = structuredClone(h.service.world.responseReceipts?.[job.id]);
-    const ada = structuredClone(h.ada());
+    // Persistence may settle deferred meter anchors; compare the already-earned
+    // values through the same current-value owner on both sides of the replay.
+    const currentAda = () =>
+      entityGet(materializeNativeValues(h.service.world).entities, NPC_ID)!.actor!;
+    const ada = structuredClone(currentAda());
     const events = new Set(h.service.world.events.map((event) => event.id));
     const stored = await h.store.getJob(job.id);
 
@@ -1169,7 +1173,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     });
     await h.director.idle();
     expect(h.berries()).toBe(1);
-    expect(h.ada()).toEqual(ada);
+    expect(currentAda()).toEqual(ada);
     expect(newEvents(h, events)).toEqual([]);
     expect(h.service.world.responseReceipts?.[job.id]).toEqual(receipt);
     expect(await h.store.getJob(job.id)).toEqual(stored);
