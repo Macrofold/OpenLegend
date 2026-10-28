@@ -10,7 +10,7 @@ import type {
   TradeLotView,
   TradeDisclosuresPage,
 } from '@open-legend/protocol';
-import { Button, TextTooltip } from '../design-system/components';
+import { Button, IconButton, TextTooltip } from '../design-system/components';
 import { Portrait } from '../design-system/portrait';
 import { ItemIllustration } from '../design-system/item-illustration';
 import { InventoryQuantity, exactQuantity } from './inventory-controls';
@@ -27,6 +27,8 @@ export type TradeNegotiationTarget = {
   element: HTMLElement;
   person: { id: string; name: string; communicationReference?: string };
 };
+export const itemTradeTitle = (trade: Pick<ItemTradeView, 'labels' | 'personName'>) =>
+  `${trade.labels.title} with ${trade.personName}`;
 type TradeContext = Pick<
   GameView,
   'worldId' | 'saveTimeline' | 'access' | 'conversation' | 'historyEpoch'
@@ -72,9 +74,11 @@ export function ItemTrade({
   onClose,
   onChooseRecipient,
   visible = true,
+  showHeading = true,
 }: {
   trade: ItemTradeView;
   visible?: boolean;
+  showHeading?: boolean;
   view: TradeContext;
   connected: boolean;
   command(action: ActionOption): Promise<ApiResult>;
@@ -109,6 +113,7 @@ export function ItemTrade({
   const [chosenOffer, setChosenOffer] = useState<string>();
   const [inventoryChoice, setInventoryChoice] = useState<InventoryItemView>();
   const [editingLot, setEditingLot] = useState<{ side: 'give' | 'receive'; id: string }>();
+  const [requestsOpen, setRequestsOpen] = useState(false);
   const alive = useRef(true),
     workspace = useRef<HTMLElement>(null),
     negotiation = useRef<HTMLDivElement>(null);
@@ -339,7 +344,7 @@ export function ItemTrade({
           <Portrait
             art={side === 'give' ? view.player.portrait : counterpartPortrait}
             head
-            size={28}
+            size={24}
           />
           <span>{side === 'give' ? labels.give : labels.receive}</span>
         </h4>
@@ -359,7 +364,9 @@ export function ItemTrade({
                     art={item.lot.art}
                     icon={item.lot.icon}
                     label={item.lot.name}
-                    size={32}
+                    size={40}
+                    fallbackSize={24}
+                    nativeSize
                   />
                   <span className="ol-trade-slot-quantity">{item.quantity}</span>
                 </Button>
@@ -381,30 +388,30 @@ export function ItemTrade({
       ref={workspace}
       tabIndex={-1}
       className="ol-item-trade ol-trade-workspace"
-      aria-label={`${labels.title}: ${trade.personName}`}
+      data-heading={showHeading || undefined}
+      aria-label={itemTradeTitle(trade)}
     >
-      <header className="ol-trade-heading">
-        <h3 className="ol-heading t-panel-title">
-          <Portrait art={counterpartPortrait} head size={40} />
-          <span>
-            {labels.title}: {trade.personName}
-          </span>
-        </h3>
-        {(onChooseRecipient || onClose) && (
-          <div className="ol-trade-heading-actions">
-            {onChooseRecipient && (
-              <Button size="sm" variant="quiet" disabled={pending} onPress={onChooseRecipient}>
-                Choose another person
-              </Button>
-            )}
-            {onClose && (
-              <Button size="sm" variant="quiet" onPress={onClose} aria-label="Close trade">
-                Close
-              </Button>
-            )}
-          </div>
-        )}
-      </header>
+      {showHeading && (
+        <header className="ol-trade-heading">
+          <h3 className="ol-heading t-panel-title">
+            <Portrait art={counterpartPortrait} head size={40} />
+            <span>{itemTradeTitle(trade)}</span>
+          </h3>
+          {(onChooseRecipient || onClose) && (
+            <div className="ol-trade-heading-actions">
+              {onChooseRecipient && (
+                <IconButton
+                  icon="ui.people"
+                  label="Choose another person"
+                  disabled={pending}
+                  onPress={onChooseRecipient}
+                />
+              )}
+              {onClose && <IconButton icon="ui.close" label="Close trade" onPress={onClose} />}
+            </div>
+          )}
+        </header>
+      )}
       <div className="ol-trade-layout">
         <div className="ol-trade-inventory">
           <InventoryCollection
@@ -542,14 +549,21 @@ export function ItemTrade({
             </section>
           )}
           {draft && (
-            <TradeDisclosurePicker
-              key={JSON.stringify([trade.scope, view.access?.scope, view.historyEpoch])}
-              trade={trade}
-              connected={connected}
-              visible={visible}
-              disabled={blocked}
-              add={(lot) => add(lot, 'receive')}
-            />
+            <details
+              className="ol-trade-request-details"
+              open={requestsOpen}
+              onToggle={(event) => setRequestsOpen(event.currentTarget.open)}
+            >
+              <summary>Add a requested item</summary>
+              <TradeDisclosurePicker
+                key={JSON.stringify([trade.scope, view.access?.scope, view.historyEpoch])}
+                trade={trade}
+                connected={connected}
+                visible={visible && requestsOpen}
+                disabled={blocked}
+                add={(lot) => add(lot, 'receive')}
+              />
+            </details>
           )}
           {draft?.constructionUse && (
             <p>
@@ -706,15 +720,18 @@ export function ItemTrade({
             className="ol-trade-conversation"
             aria-label={`Conversation with ${trade.personName}`}
           >
-            <h4>Conversation</h4>
+            <h4 className="ol-eyebrow">Conversation</h4>
             <ConversationThread
               conversationKey={JSON.stringify([privateOwner, trade.personId])}
               items={speech.map((line) => ({
                 id: line.id,
                 content: (
-                  <p className="ol-trade-speech">
+                  <p
+                    className="ol-trade-speech"
+                    data-own={line.speakerId === view.player.id || undefined}
+                  >
                     <strong>{line.speaker}</strong> <span>{line.text}</span>{' '}
-                    <EventTime time={line.time} />
+                    <EventTime time={line.time} format="clock" />
                   </p>
                 ),
               }))}

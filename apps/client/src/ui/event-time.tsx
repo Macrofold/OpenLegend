@@ -59,12 +59,18 @@ export function clockParts(time: number, offsetHours: number) {
   };
 }
 
-export function EventTime({ time }: { time: number }) {
+/** Compact rows retain the full date in their accessible name and hover text. */
+export function EventTime({ time, format = 'full' }: { time: number; format?: 'full' | 'clock' }) {
   const clock = useContext(ClockPresentationContext);
   const text = worldClockText(time, clock.offsetHours, clock.dayLabel);
+  let display = text;
+  if (format === 'clock') {
+    const { hour, minute } = clockParts(time, clock.offsetHours);
+    display = `${hour}:${minute}`;
+  }
   return (
-    <time className="ol-event-time" aria-label={text}>
-      {text}
+    <time className="ol-event-time" aria-label={text} title={format === 'clock' ? text : undefined}>
+      {display}
     </time>
   );
 }

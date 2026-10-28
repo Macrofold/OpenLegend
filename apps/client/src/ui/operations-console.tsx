@@ -205,22 +205,22 @@ export function OperationsConsole() {
               onSelectionChange={(key) => setTask(String(key))}
             >
               <TabList aria-label="World operations tasks" className="ol-operations-task-list">
-                <Tab id="overview" className="ol-operations-task">
-                  Overview and access
+                <Tab id="overview" className="ol-operations-task ol-navigation-tab">
+                  <span>Overview and access</span>
                 </Tab>
                 {view.access && (
-                  <Tab id="access" className="ol-operations-task">
-                    People and invitations
+                  <Tab id="access" className="ol-operations-task ol-navigation-tab">
+                    <span>People and invitations</span>
                   </Tab>
                 )}
                 {can('create') && (
-                  <Tab id="maintenance" className="ol-operations-task">
-                    Maintenance
+                  <Tab id="maintenance" className="ol-operations-task ol-navigation-tab">
+                    <span>Maintenance</span>
                   </Tab>
                 )}
                 {can('save') && (
-                  <Tab id="checkpoints" className="ol-operations-task">
-                    Checkpoints
+                  <Tab id="checkpoints" className="ol-operations-task ol-navigation-tab">
+                    <span>Checkpoints</span>
                   </Tab>
                 )}
               </TabList>

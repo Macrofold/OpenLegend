@@ -8,7 +8,13 @@ import type {
   WorldEventSourceReference,
   WorldEventSourcesView,
 } from '@open-legend/protocol';
-import { Button, FilterButton, Icon, IconButton } from '../design-system/components';
+import {
+  Button,
+  DisclosurePopover,
+  FilterButton,
+  Icon,
+  IconButton,
+} from '../design-system/components';
 import { EventTime, clockParts } from './event-time';
 import { PerceivedEventText, perceivedEventLabel } from './perceived-event-text';
 import './world-events.css';
@@ -935,7 +941,18 @@ function ScopedWorldEvents({
         }}
       >
         <div className="ol-search">
-          <Icon name="ui.search" size={16} />
+          {layout === 'journal' ? (
+            <button
+              type="submit"
+              className="ol-event-search-submit"
+              aria-label="Search events"
+              disabled={busy}
+            >
+              <Icon name="ui.search" size={16} />
+            </button>
+          ) : (
+            <Icon name="ui.search" size={16} />
+          )}
           <input
             ref={searchInput}
             type="search"
@@ -971,9 +988,11 @@ function ScopedWorldEvents({
             />
           )}
         </div>
-        <Button type="submit" isDisabled={busy}>
-          Search
-        </Button>
+        {layout !== 'journal' && (
+          <Button type="submit" isDisabled={busy}>
+            Search
+          </Button>
+        )}
       </form>
     </>
   );
@@ -1200,6 +1219,7 @@ function ScopedWorldEvents({
           event.preventDefault();
           event.stopPropagation();
           disclosure.open = false;
+          disclosure.querySelector('summary')?.focus();
         } else if (
           choosingSlot !== null ||
           (comparisonOpen && (layout !== 'journal' || sourceToolsOpen))
@@ -1219,14 +1239,19 @@ function ScopedWorldEvents({
           <>
             <header className="ol-event-browser-heading">
               <h3>Events</h3>
+              <span className="ol-event-browser-tools">
+                <DisclosurePopover
+                  label="Filters and time"
+                  icon="ui.more"
+                  contentClassName="ol-event-browser-options"
+                >
+                  {filterControls}
+                  {timeControls}
+                  {showAllControl}
+                </DisclosurePopover>
+              </span>
               {searchForm}
             </header>
-            <details className="ol-event-browser-tools">
-              <summary>Filters and time</summary>
-              {filterControls}
-              {timeControls}
-              {showAllControl}
-            </details>
           </>
         ) : (
           <>

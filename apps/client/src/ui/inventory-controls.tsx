@@ -32,8 +32,19 @@ export function InventoryQuantity({
   const amount = exactQuantity(value, maximum);
   return (
     <div className="ol-inventory-quantity">
-      <label htmlFor={id}>{label}</label>
+      <label className="ol-sr" htmlFor={id}>
+        {label}
+      </label>
       <div className="ol-inventory-quantity-controls">
+        <Button
+          variant="quiet"
+          className="ol-quantity-step"
+          icon="ui.minus"
+          children={null}
+          aria-label={`Decrease ${label}`}
+          disabled={disabled || amount === undefined || amount <= 1}
+          onPress={() => amount !== undefined && onChange(String(amount - 1))}
+        />
         <input
           id={id}
           type="text"
@@ -45,22 +56,25 @@ export function InventoryQuantity({
           onChange={(event) => onChange(event.target.value)}
         />
         <Button
-          size="sm"
           variant="quiet"
-          disabled={disabled || maximum === undefined || maximum < 1}
-          onPress={() => onChange(String(maximum))}
-        >
-          All
-        </Button>
+          className="ol-quantity-step"
+          icon="ui.plus"
+          children={null}
+          aria-label={`Increase ${label}`}
+          disabled={disabled || amount === undefined || maximum === undefined || amount >= maximum}
+          onPress={() => amount !== undefined && onChange(String(amount + 1))}
+        />
+        <span className="ol-caption ol-quantity-available">
+          {maximum === undefined ? 'Available quantity unknown' : `of ${maximum}`}
+        </span>
         <Button
           size="sm"
           variant="quiet"
-          disabled={disabled || maximum === undefined || maximum < 2}
-          onPress={() => {
-            if (maximum !== undefined && maximum >= 2) onChange(String(Math.floor(maximum / 2)));
-          }}
+          className="ol-quantity-max"
+          disabled={disabled || maximum === undefined || maximum < 1}
+          onPress={() => onChange(String(maximum))}
         >
-          Half
+          Max
         </Button>
       </div>
       {maximum !== undefined && maximum > 1 && (
@@ -88,17 +102,30 @@ export function InventoryQuantity({
           </SliderTrack>
         </Slider>
       )}
-      <p id={`${id}-hint`} className="ol-caption">
-        {hint ??
-          (maximum === undefined
-            ? 'Available quantity is unknown.'
-            : `${maximum} available whole units.`)}{' '}
-        The slider, All and Half only edit this amount.
-        {amount === undefined &&
-          maximum !== undefined &&
-          maximum > 1 &&
-          ' Enter a valid quantity or choose a preset to use the slider.'}
-      </p>
+      <details className="ol-quantity-options">
+        <summary>More amounts</summary>
+        <Button
+          size="sm"
+          variant="quiet"
+          disabled={disabled || maximum === undefined || maximum < 2}
+          onPress={() => {
+            if (maximum !== undefined && maximum >= 2) onChange(String(Math.floor(maximum / 2)));
+          }}
+        >
+          Half
+        </Button>
+        <p id={`${id}-hint`} className="ol-caption">
+          {hint ??
+            (maximum === undefined
+              ? 'Available quantity is unknown.'
+              : `${maximum} available whole units.`)}{' '}
+          The slider, Max and Half only edit this amount.
+          {amount === undefined &&
+            maximum !== undefined &&
+            maximum > 1 &&
+            ' Enter a valid quantity or choose a preset to use the slider.'}
+        </p>
+      </details>
       {error && (
         <p id={`${id}-error`} role="alert">
           {error}

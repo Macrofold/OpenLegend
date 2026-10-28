@@ -1,5 +1,6 @@
-import { LoadingIndicator } from '../design-system/loading';
-import { useId, useRef, type DragEvent } from 'react';
+import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
+import { useId, useRef, type DragEvent, type ReactNode } from 'react';
+import { DialogTrigger, Popover } from 'react-aria-components';
 import {
   DEFAULT_INVENTORY_FILTER,
   INVENTORY_FILTERS,
@@ -24,12 +25,46 @@ const filterLabels: Record<InventoryFilter, string> = {
   equipped: 'Equipped',
   containers: 'Containers',
 };
+const filterIcons: Record<InventoryFilter, string> = {
+  all: 'ui.all',
+  equipped: 'ui.check',
+  containers: 'ui.inventory',
+};
+
+/** These are the same native collection tools in a compact, labelled opener. */
+function InventoryTool({
+  label,
+  icon,
+  children,
+  variant,
+}: {
+  label: string;
+  icon: string;
+  children: ReactNode;
+  variant: 'quiet' | 'secondary';
+}) {
+  return (
+    <DialogTrigger>
+      <TextTooltip text={label}>
+        <Button variant={variant} className="ol-inventory-tool" aria-label={label}>
+          <Icon name={icon} size={18} />
+        </Button>
+      </TextTooltip>
+      <Popover className="ol-root ol-disclosure-popover" placement="bottom end" offset={8}>
+        <LoadingDialog aria-label={label} className="ol-portal-content ol-disclosure-content">
+          {children}
+        </LoadingDialog>
+      </Popover>
+    </DialogTrigger>
+  );
+}
 
 /** A visual grid of ordinary buttons keeps Tab/Enter inspection separate from transfer.
  * It deliberately does not claim composite ARIA-grid arrow-key semantics. */
 export function InventoryCollection({
   side,
   title,
+  heading,
   state,
   selectedId,
   onSelectedAnchor,
@@ -45,11 +80,14 @@ export function InventoryCollection({
   onDrop,
   selectionRole = 'inspect',
   compact = false,
+  tools,
 }: {
   selectionRole?: 'inspect' | 'choose';
   compact?: boolean;
+  tools?: ReactNode;
   side: InventorySide;
   title: string;
+  heading?: string;
   state: InventoryCollectionState;
   selectedId?: string;
   onSelectedAnchor(button: HTMLButtonElement | null): void;
@@ -75,6 +113,37 @@ export function InventoryCollection({
     side === 'belongings' && (page?.breadcrumbs.length ?? 1) === 1
       ? title
       : (page?.container.name ?? title);
+  const sorting = (
+    <InventoryTool
+      label={`Sort ${collectionTitle}`}
+      icon="ui.sort"
+      variant={compact ? 'quiet' : 'secondary'}
+    >
+      <label htmlFor={`${searchId}-sort`}>Sort {collectionTitle}</label>
+      <select
+        id={`${searchId}-sort`}
+        value={state.sort}
+        disabled={busy}
+        onChange={(event) => state.sortBy(event.target.value as InventorySort)}
+      >
+        {INVENTORY_SORTS.map((value) => (
+          <option key={value} value={value}>
+            {sortLabels[value]}
+          </option>
+        ))}
+      </select>
+      <Button
+        size="sm"
+        variant="quiet"
+        icon="ui.refresh"
+        disabled={!state.available || loading}
+        onPress={state.refresh}
+      >
+        Refresh
+      </Button>
+      {tools}
+    </InventoryTool>
+  );
   return (
     <section
       className="ol-inventory-collection"
@@ -94,7 +163,14 @@ export function InventoryCollection({
       onDrop={onDrop}
     >
       <header className="ol-inventory-collection-header">
-        <h3 className="ol-heading">{collectionTitle}</h3>
+        <div className="ol-inventory-collection-title">
+          <h3 className="ol-heading">
+            {side === 'belongings' && (page?.breadcrumbs.length ?? 1) === 1
+              ? (heading ?? collectionTitle)
+              : collectionTitle}
+          </h3>
+          {!compact && sorting}
+        </div>
         {page?.container.location && !(side === 'belongings' && page.breadcrumbs.length === 1) && (
           <p className="ol-caption">{page.container.location}</p>
         )}
@@ -124,14 +200,16 @@ export function InventoryCollection({
           </p>
         )}
         <div className="ol-inventory-search">
-          <label htmlFor={searchId}>
+          <label className="ol-sr" htmlFor={searchId}>
             Search {page?.inspection ? 'inspected contents' : collectionTitle}
           </label>
           <div>
+            <Icon name="ui.search" size={16} />
             <input
               ref={search}
               id={searchId}
               type="text"
+              placeholder={side === 'belongings' ? 'Search inventory' : `Search ${collectionTitle}`}
               maxLength={160}
               value={state.query}
               onChange={(event) => state.search(event.target.value)}
@@ -140,49 +218,34 @@ export function InventoryCollection({
               <Button
                 size="sm"
                 variant="quiet"
+                className="ol-inventory-search-clear"
+                aria-label={`Clear search in ${collectionTitle}`}
                 onPress={() => {
                   state.search('');
                   search.current?.focus();
                 }}
               >
-                Clear
+                <Icon name="ui.close" size={16} />
               </Button>
             )}
           </div>
         </div>
         <div className="ol-inventory-view-controls">
-          <label htmlFor={`${searchId}-sort`}>
-            Sort
-            <select
-              id={`${searchId}-sort`}
-              aria-label={`Sort ${collectionTitle}`}
-              value={state.sort}
-              disabled={busy}
-              onChange={(event) => state.sortBy(event.target.value as InventorySort)}
-            >
-              {INVENTORY_SORTS.map((value) => (
-                <option key={value} value={value}>
-                  {sortLabels[value]}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label htmlFor={`${searchId}-filter`}>
-            Show
-            <select
-              id={`${searchId}-filter`}
-              aria-label={`Filter ${collectionTitle}`}
-              value={state.filter}
-              disabled={busy}
-              onChange={(event) => state.filterBy(event.target.value as InventoryFilter)}
-            >
-              {INVENTORY_FILTERS.map((value) => (
-                <option key={value} value={value}>
-                  {filterLabels[value]}
-                </option>
-              ))}
-            </select>
-          </label>
+          {INVENTORY_FILTERS.map((value) => (
+            <TextTooltip key={value} text={`${filterLabels[value]} in ${collectionTitle}`}>
+              <Button
+                variant="quiet"
+                className="ol-inventory-tool"
+                aria-label={`${filterLabels[value]} in ${collectionTitle}`}
+                aria-pressed={state.filter === value}
+                disabled={busy}
+                onPress={() => state.filterBy(value)}
+              >
+                <Icon name={filterIcons[value]} size={18} />
+              </Button>
+            </TextTooltip>
+          ))}
+          {compact && sorting}
         </div>
       </header>
       <div className="ol-inventory-grid-scroll">
@@ -253,8 +316,17 @@ export function InventoryCollection({
                     onDragStart={(event) => onDragStart(item, event)}
                     onDragEnd={onDragEnd}
                   >
-                    <ItemIllustration art={item.art} icon={item.icon} label={item.name} size={32} />
-                    <span className="ol-inventory-cell-quantity">{item.quantity}</span>
+                    <ItemIllustration
+                      art={item.art}
+                      icon={item.icon}
+                      label={item.name}
+                      size={40}
+                      fallbackSize={24}
+                      nativeSize
+                    />
+                    {item.quantity > 1 && (
+                      <span className="ol-inventory-cell-quantity">{item.quantity}</span>
+                    )}
                     {(item.equipped || item.container || reserved) && (
                       <span className="ol-inventory-cell-marks" aria-hidden="true">
                         {item.equipped && <Icon name="ui.check" size={12} />}
@@ -267,6 +339,18 @@ export function InventoryCollection({
               </li>
             );
           })}
+          {/* Empty cells are presentation, not storage capacity or item records. */}
+          {Array.from(
+            {
+              length: Math.max(
+                0,
+                (compact ? 36 : side === 'belongings' ? 56 : 18) - (page?.items.length ?? 0),
+              ),
+            },
+            (_, index) => (
+              <li key={`empty-${index}`} className="ol-inventory-cell-empty" aria-hidden="true" />
+            ),
+          )}
         </ul>
         {page && !page.items.length && (
           <p role="status">

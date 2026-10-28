@@ -95,10 +95,9 @@ body,
 .ol-root h3 {
   margin: 0;
 }
-.ol-root
-  input:not([type='checkbox']):not([type='radio']):not(.ol-select-input):not(.ol-search input),
-.ol-root select,
-.ol-root textarea {
+/* Defaults yield to the input's semantic owner, including inputs inside a field.
+   Specificity here must not grow with the number of excluded native types. */
+:where(.ol-root) :where(input:not([type='checkbox']):not([type='radio']), select, textarea) {
   box-sizing: border-box;
   width: 100%;
   font: inherit;
@@ -115,12 +114,12 @@ body,
 .ol-root label {
   color: var(--ink-muted);
 }
-.ol-root
-  input:not([type='checkbox']):not([type='radio']):not([type='range']):not(.ol-select-input):not(
-    .ol-search input
-  ),
-.ol-root select,
-.ol-root .ol-field-control {
+:where(.ol-root)
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not([type='range']),
+    select,
+    .ol-field-control
+  ) {
   min-block-size: var(--control-height);
   line-height: 20px;
 }
@@ -860,6 +859,112 @@ body,
 .ol-item-hint {
   white-space: nowrap;
 }
+[data-theme='gildmoss'] .ol-picker {
+  padding: var(--space-2) 0;
+}
+[data-theme='gildmoss'] .ol-picker-subject-art {
+  background: var(--surface-art-well);
+}
+[data-theme='gildmoss'] .ol-picker .ol-search {
+  margin-inline: var(--space-3);
+}
+[data-theme='gildmoss'] .ol-menu-scroll {
+  padding: 0 var(--space-1);
+}
+[data-theme='gildmoss'] :is(.ol-item, .ol-pullout-option) {
+  position: relative;
+  min-height: var(--control-height);
+  grid-template-columns: 24px minmax(0, 1fr) auto;
+  gap: var(--space-2);
+  padding-inline: var(--space-2);
+}
+[data-theme='gildmoss'] .ol-pullout-option {
+  grid-template-columns: 24px minmax(0, 1fr);
+}
+[data-theme='gildmoss'] .ol-action-choice .ol-item {
+  grid-template-columns: 24px minmax(0, 1fr);
+  padding-block: var(--space-1);
+}
+[data-theme='gildmoss'] .ol-item > .ol-icon-wrap {
+  justify-self: center;
+  width: 18px;
+  height: 18px;
+}
+[data-theme='gildmoss']
+  :is(.ol-item, .ol-pullout-option):is(
+    :hover,
+    [data-focused],
+    [data-hovered],
+    [data-active='true'],
+    [aria-expanded='true']
+  ) {
+  background: var(--surface-selected);
+  box-shadow: var(--selected-glow);
+}
+[data-theme='gildmoss']
+  :is(.ol-item, .ol-pullout-option):is(
+    :hover,
+    [data-focused],
+    [data-hovered],
+    [data-active='true'],
+    [aria-expanded='true']
+  )::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: var(--metal-gold-edge);
+  pointer-events: none;
+  -webkit-mask:
+    linear-gradient(black 0 0) content-box,
+    linear-gradient(black 0 0);
+  -webkit-mask-composite: xor;
+  mask:
+    linear-gradient(black 0 0) content-box exclude,
+    linear-gradient(black 0 0);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-item[aria-disabled='true'],
+    .ol-item[data-unavailable='true'],
+    .ol-pullout-option[data-disabled]
+  ) {
+  color: var(--ink-faint);
+  padding-block: var(--space-2);
+}
+[data-theme='gildmoss']
+  :is(
+    .ol-item[aria-disabled='true'],
+    .ol-item[data-unavailable='true'],
+    .ol-pullout-option[data-disabled]
+  )
+  > .ol-icon-wrap {
+  opacity: 0.45;
+  filter: none;
+}
+[data-theme='gildmoss'] .ol-item[aria-disabled='true'] .ol-item-reason {
+  color: var(--danger);
+}
+[data-theme='gildmoss'] .ol-menu-sep {
+  margin: var(--space-1) var(--space-2);
+}
+@media (forced-colors: active) {
+  [data-theme='gildmoss']
+    :is(.ol-item, .ol-pullout-option):is(
+      :hover,
+      [data-focused],
+      [data-hovered],
+      [data-active='true'],
+      [aria-expanded='true']
+    ) {
+    outline: 1px solid Highlight;
+    outline-offset: -1px;
+  }
+  [data-theme='gildmoss'] :is(.ol-item, .ol-pullout-option)::before {
+    display: none;
+  }
+}
 .ol-fact {
   display: contents;
 }
@@ -1438,6 +1543,13 @@ body,
   height: 100%;
   transform-origin: left;
   background: var(--world-text);
+}
+[data-theme='gildmoss'] .ol-status-progress {
+  width: 112px;
+  height: var(--progress-height);
+  border-radius: 2px;
+  background: var(--progress-track);
+  box-shadow: inset 0 0 0 1px var(--progress-edge);
 }
 
 .ol-hud[data-compact='true'] .ol-clock-position {
@@ -2846,7 +2958,7 @@ body,
 }
 /* Keep the compact creator's ordinary message field and Send visible. Reuse the
  * camera's actual clearance, moving upward only when the default dock is too short. */
-.ol-hud:not([data-narrow='true'])
+.ol-hud:not([data-narrow='true']):not([data-gildmoss-layout])
   .ol-dock-right:has(
     .ol-panel-slot:not([hidden]) > :is(#agentPanel, #world-editorPanel):not([data-workspace])
   ) {

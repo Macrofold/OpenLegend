@@ -313,6 +313,7 @@ export function Crafting({
         <label className="ol-crafting-owned-toggle">
           <input
             type="checkbox"
+            role="switch"
             checked={haveEverything}
             onChange={(event) => setHaveEverything(event.target.checked)}
           />
@@ -363,6 +364,7 @@ export function Crafting({
       <section className="ol-crafting-list" aria-label="Known recipes">
         <label className="ol-crafting-search">
           <span className="ol-sr">Search recipes</span>
+          <Icon name="ui.search" size={16} />
           <input
             type="search"
             placeholder="Search recipes"
@@ -384,6 +386,8 @@ export function Crafting({
                 icon={recipe.outputs[0]?.icon ?? 'ui.crafting'}
                 label={recipe.outputs[0]?.name ?? recipe.name}
                 size={40}
+                fallbackSize={24}
+                nativeSize
               />
               <span>
                 <strong>{recipe.outputs.map((item) => item.name).join(', ')}</strong>
@@ -411,12 +415,14 @@ export function Crafting({
               art={output?.art}
               icon={output?.icon ?? 'ui.crafting'}
               label={output?.name ?? selected.name}
-              size={112}
+              size={132}
               detail
             />
           </div>
-          <h3>{selected.outputs.map((item) => item.name).join(', ')}</h3>
-          <p>{selected.description}</p>
+          <div className="ol-crafting-identity">
+            <h3>{selected.outputs.map((item) => item.name).join(', ')}</h3>
+            <p>{selected.description}</p>
+          </div>
           {!recipes.some((recipe) => recipe.id === selected.id) && (
             <p className="ol-caption">Your selected method is outside the current filters.</p>
           )}
@@ -433,7 +439,7 @@ export function Crafting({
           </div>
           <section aria-label="Ingredients" className="ol-crafting-ingredients">
             <header>
-              <h4>Ingredients</h4>
+              <h4 className="ol-eyebrow">Ingredients</h4>
               <span className="ol-caption">Have / need</span>
             </header>
             {selected.ingredients.map((item, index) => {
@@ -444,13 +450,18 @@ export function Crafting({
                     art={item.art}
                     icon={item.icon ?? 'ui.inventory'}
                     label={item.name}
-                    size={32}
+                    size={44}
+                    fallbackSize={18}
+                    nativeSize
                   />
-                  <span>{item.name}</span>
-                  <strong data-missing={need !== undefined && item.available < need}>
-                    {formatDisplayNumber(item.available)} /{' '}
-                    {need === undefined ? '—' : formatDisplayNumber(need)}
-                  </strong>
+                  <span className="ol-crafting-ingredient-name">{item.name}</span>
+                  <span
+                    className="ol-crafting-ingredient-quantity"
+                    data-missing={need !== undefined && item.available < need}
+                  >
+                    <strong>{formatDisplayNumber(item.available)}</strong>
+                    <span> / {need === undefined ? '—' : formatDisplayNumber(need)}</span>
+                  </span>
                 </div>
               );
             })}
@@ -696,11 +707,13 @@ export function EntityDetail({
       className="ol-person-details"
     >
       <TabList aria-label="Person information">
-        <Tab id="overview">
-          <Icon name="ui.overview" size={16} /> Overview
+        <Tab id="overview" className="ol-navigation-tab">
+          <Icon name="ui.overview" size={16} />
+          <span>Overview</span>
         </Tab>
-        <Tab id="events">
-          <Icon name="ui.events" size={16} /> Events
+        <Tab id="events" className="ol-navigation-tab">
+          <Icon name="ui.events" size={16} />
+          <span>Events</span>
         </Tab>
       </TabList>
       <TabPanel id="overview" shouldForceMount>
@@ -729,11 +742,11 @@ export function EntityDetail({
               {observations.length ? (
                 observations.map((event) => (
                   <div className="ol-person-observation" key={event.id}>
-                    <span className="ol-caption">
-                      <EventTime time={event.time} />
-                    </span>
                     <span>
                       <PerceivedEventText event={event} />
+                    </span>
+                    <span className="ol-caption">
+                      <EventTime time={event.time} />
                     </span>
                   </div>
                 ))
@@ -749,7 +762,7 @@ export function EntityDetail({
             )}
           </div>
           <div className="ol-person-column">
-            <Section title="Your commitments">
+            <Section title="Commitments">
               <Promises
                 personId={entity.id}
                 visible={visible && personTab === 'overview'}
@@ -881,10 +894,7 @@ export function Character({
                   className="ol-character-need"
                   data-has-condition={!!attribute.condition}
                 >
-                  <Condition attributes={[attribute]} />
-                  {attribute.condition && (
-                    <span className="ol-character-need-state">{attribute.condition}</span>
-                  )}
+                  <Condition attributes={[attribute]} showCondition />
                 </div>
               ))}
             </section>
@@ -1097,7 +1107,9 @@ export function Character({
                     art={port.item?.art}
                     icon={port.item?.icon ?? port.icon ?? 'ui.inventory'}
                     label={port.item?.name ?? port.label}
-                    size={28}
+                    size={40}
+                    fallbackSize={18}
+                    nativeSize
                   />
                   <span className="ol-sr">
                     {port.label}: {port.item?.name ?? 'Empty'}

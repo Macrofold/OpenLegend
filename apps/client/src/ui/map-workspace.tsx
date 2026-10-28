@@ -86,6 +86,7 @@ function OwnedMapWorkspace({
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState('');
   const [aspect, setAspect] = useState(1.5);
+  const [viewportAspect, setViewportAspect] = useState(1.5);
   const [artState, setArtState] = useState<'loading' | 'ready' | 'error'>('loading');
   const mounted = useRef(true);
   const committing = useRef(false);
@@ -97,6 +98,18 @@ function OwnedMapWorkspace({
   }, []);
   useEffect(() => setArtState('loading'), [map?.art.path]);
   const plane = useRef<HTMLDivElement>(null);
+  const viewport = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const element = viewport.current;
+    if (!element || mini) return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (!entry || entry.contentRect.width <= 0 || entry.contentRect.height <= 0) return;
+      const next = entry.contentRect.width / entry.contentRect.height;
+      setViewportAspect((current) => (current === next ? current : next));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [mini, !!map]);
   const searchCard = useRef<HTMLDivElement>(null);
   const searchInput = useRef<HTMLInputElement>(null);
   const noteCard = useRef<HTMLElement>(null);
@@ -104,6 +117,7 @@ function OwnedMapWorkspace({
   const toolsCard = useRef<HTMLDetailsElement>(null);
   const selectionOpener = useRef<HTMLElement | null>(null);
   const resultsId = useId();
+  const searchId = useId();
   const drag = useRef<
     | {
         id: number;
@@ -147,7 +161,17 @@ function OwnedMapWorkspace({
     z: (point.z - b.minZ) / (b.maxZ - b.minZ),
   });
   const player = normalized(view.player.position);
-  const focus = mini ? player : center;
+  // CSS covers either viewport before zooming. Bound the displayed centre by
+  // its visible image fraction, so selection, search, dragging and Find me
+  // cannot expose blank ground. Below fit size, the full map may zoom out.
+  const viewAspect = mini ? 1 : viewportAspect;
+  const halfWidth = zoom >= 1 ? 0.5 / (zoom * Math.max(1, aspect / viewAspect)) : 0;
+  const halfHeight = zoom >= 1 ? 0.5 / (zoom * Math.max(1, viewAspect / aspect)) : 0;
+  const clampCenter = (point: { x: number; z: number }) => ({
+    x: Math.max(halfWidth, Math.min(1 - halfWidth, point.x)),
+    z: Math.max(halfHeight, Math.min(1 - halfHeight, point.z)),
+  });
+  const focus = clampCenter(mini ? player : center);
   const inside = (point: { x: number; z: number }) =>
     point.x >= 0 && point.x <= 1 && point.z >= 0 && point.z <= 1;
   const clearNoteRefusal = () =>
@@ -179,12 +203,17 @@ function OwnedMapWorkspace({
     if (toolsCard.current) toolsCard.current.open = false;
   };
   const mapCenter = {
-    x: b.minX + center.x * (b.maxX - b.minX),
-    z: b.minZ + center.z * (b.maxZ - b.minZ),
+    x: b.minX + focus.x * (b.maxX - b.minX),
+    z: b.minZ + focus.z * (b.maxZ - b.minZ),
   };
-  const select = (item: Selection, point: { x: number; z: number }, opener?: HTMLElement) => {
+  const select = (
+    item: Selection,
+    point: { x: number; z: number },
+    opener?: HTMLElement,
+    recenter = false,
+  ) => {
     if (item.kind === selection?.kind && item.id === selection.id) {
-      if (!mini) setCenter(normalized(point));
+      if (!mini && recenter) setCenter(clampCenter(normalized(point)));
       return true;
     }
     if ((item.kind !== selection?.kind || item.id !== selection?.id) && !canLeaveNote())
@@ -200,12 +229,12 @@ function OwnedMapWorkspace({
     setDraft(undefined);
     setAdding(false);
     setMessage('');
-    if (!mini) setCenter(normalized(point));
+    if (!mini && recenter) setCenter(clampCenter(normalized(point)));
     return true;
   };
   const chooseResult = (item: Selection, point: { x: number; z: number }, opener: HTMLElement) => {
     const focused = document.activeElement;
-    const chosen = select(item, point, opener);
+    const chosen = select(item, point, opener, true);
     if (!chosen) return;
     setBrowsing(false);
     requestAnimationFrame(() => {
@@ -347,9 +376,19 @@ function OwnedMapWorkspace({
     >
       {!mini && (
         <div ref={searchCard} className="ol-map-search">
-          <label>
-            <span className="ol-sr">Search known places, markers and notes</span>
+          <div className="ol-search">
+            <IconButton
+              icon="ui.search"
+              label="Browse places and markers"
+              aria-expanded={browsing}
+              aria-controls={resultsId}
+              onPress={() => setBrowsing((value) => !value)}
+            />
+            <label className="ol-sr" htmlFor={searchId}>
+              Search known places, markers and notes
+            </label>
             <input
+              id={searchId}
               ref={searchInput}
               type="search"
               placeholder="Search places"
@@ -359,14 +398,7 @@ function OwnedMapWorkspace({
                 setBrowsing(true);
               }}
             />
-          </label>
-          <IconButton
-            icon="ui.places"
-            label="Browse places and markers"
-            aria-expanded={browsing}
-            aria-controls={resultsId}
-            onPress={() => setBrowsing((value) => !value)}
-          />
+          </div>
           <aside
             id={resultsId}
             className="ol-map-results"
@@ -435,6 +467,7 @@ function OwnedMapWorkspace({
       <div className="ol-map-body">
         <div className="ol-map-stage">
           <div
+            ref={viewport}
             className="ol-map-viewport"
             tabIndex={mini ? -1 : 0}
             aria-label={
@@ -462,10 +495,13 @@ function OwnedMapWorkspace({
               if (step) {
                 event.preventDefault();
                 event.stopPropagation();
-                setCenter((value) => ({
-                  x: Math.max(0, Math.min(1, value.x + step.x / zoom)),
-                  z: Math.max(0, Math.min(1, value.z + step.z / zoom)),
-                }));
+                setCenter((value) => {
+                  const start = clampCenter(value);
+                  return clampCenter({
+                    x: start.x + step.x / zoom,
+                    z: start.z + step.z / zoom,
+                  });
+                });
               }
               if (event.key === '+' || event.key === '-' || event.key === '=') {
                 event.preventDefault();
@@ -485,7 +521,7 @@ function OwnedMapWorkspace({
                 y: event.clientY,
                 width: rect.width,
                 height: rect.height,
-                center,
+                center: focus,
                 moved: false,
               };
             }}
@@ -497,10 +533,12 @@ function OwnedMapWorkspace({
               if (Math.abs(dx) + Math.abs(dz) > 4) active.moved = true;
               if (adding) return;
               if (active.moved)
-                setCenter({
-                  x: Math.max(0, Math.min(1, active.center.x - dx / active.width)),
-                  z: Math.max(0, Math.min(1, active.center.z - dz / active.height)),
-                });
+                setCenter(
+                  clampCenter({
+                    x: active.center.x - dx / active.width,
+                    z: active.center.z - dz / active.height,
+                  }),
+                );
             }}
             onPointerUp={(event) => {
               const active = drag.current;
@@ -624,7 +662,7 @@ function OwnedMapWorkspace({
                       }}
                     />
                   ) : (
-                    <Portrait art={view.player.portrait} size={42} />
+                    <Portrait art={view.player.portrait} size={40} />
                   )}
                   <span className="ol-sr">{view.player.name}</span>
                 </span>
@@ -650,7 +688,7 @@ function OwnedMapWorkspace({
           <div
             className="ol-map-north"
             aria-label="North"
-            style={{ transform: `rotate(${map.art.northDegrees}deg)` }}
+            style={{ transform: `translateX(-50%) rotate(${map.art.northDegrees}deg)` }}
           >
             N
           </div>
@@ -659,18 +697,29 @@ function OwnedMapWorkspace({
               <IconButton
                 icon="ui.map-marker"
                 label="Add marker"
+                variant="secondary"
                 disabled={busy || !!draft || map.markers.length >= map.maxMarkers}
                 onPress={beginMarker}
               />
             )}
-            <IconButton icon="ui.plus" label="Zoom map in" onPress={() => changeZoom(1)} />
-            <IconButton icon="ui.minus" label="Zoom map out" onPress={() => changeZoom(-1)} />
+            <IconButton
+              icon="ui.zoom-in"
+              label="Zoom map in"
+              variant={mini ? 'quiet' : 'secondary'}
+              onPress={() => changeZoom(1)}
+            />
+            <IconButton
+              icon="ui.zoom-out"
+              label="Zoom map out"
+              variant={mini ? 'quiet' : 'secondary'}
+              onPress={() => changeZoom(-1)}
+            />
           </div>
           {!mini && (
             <details ref={toolsCard} className="ol-map-tools">
               <summary>Map tools</summary>
               <div className="ol-map-marker-controls">
-                <Button variant="quiet" onPress={() => setCenter(player)}>
+                <Button variant="quiet" onPress={() => setCenter(clampCenter(player))}>
                   Find me
                 </Button>
                 <Button
@@ -815,15 +864,9 @@ function OwnedMapWorkspace({
                         }
                       }}
                     >
-                      <Icon name="ui.edit" />
+                      <Icon name="ui.edit" size={16} />
                     </Button>
                   )}
-                  <IconButton
-                    icon="ui.close"
-                    label="Close place note"
-                    disabled={busy}
-                    onPress={closeSelection}
-                  />
                 </div>
                 {map.noteCharacters !== undefined && !editingNote && (
                   <div className="ol-map-note-preview">
@@ -966,14 +1009,22 @@ function OwnedMapWorkspace({
                     </div>
                   </details>
                 )}
-                <Button
-                  variant="quiet"
-                  onPress={() => {
-                    if (closeSelection()) setBrowsing(true);
-                  }}
-                >
-                  Back to places
-                </Button>
+                <div className="ol-map-card-actions">
+                  <Button
+                    variant="quiet"
+                    onPress={() => {
+                      if (closeSelection()) setBrowsing(true);
+                    }}
+                  >
+                    Back to places
+                  </Button>
+                  <IconButton
+                    icon="ui.close"
+                    label="Close place note"
+                    disabled={busy}
+                    onPress={closeSelection}
+                  />
+                </div>
               </div>
             ) : null}
             {message && <p role="status">{message}</p>}

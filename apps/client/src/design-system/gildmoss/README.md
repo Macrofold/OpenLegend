@@ -1,6 +1,6 @@
 # Gildmoss design system
 
-**Status:** accepted on 2026-10-26 as the final design of the [interface overhaul](../../../../../docs/projects/interface-art-direction-overhaul-plan.md). Stage 6 integration is implemented: Gildmoss is an available runtime theme with published artwork and shared components across the application surfaces. Running-game checks qualify named functional states; exact visual fidelity remains unfinished, with confirmed differences and the live World Agent connection blocker tracked in the [verification report](../../../../../docs/verification/gildmoss-interface.md#remaining-acceptance-and-limits).
+**Status:** accepted on 2026-10-26 as the final design of the [interface overhaul](../../../../../docs/projects/interface-art-direction-overhaul-plan.md). Gildmoss is an available runtime theme with published artwork and shared components across the application surfaces. The confirmed row-Q construction and composition differences have source corrections, and the named corrected-build visual/input checks pass. The [verification report](../../../../../docs/verification/gildmoss-interface.md#confirmed-design-fidelity-work) separates those corrections, measured desktop geometry and remaining checks. Live World Agent reply/proposal presentation retains its accepted connection blocker.
 
 Gildmoss is row Q of the overhaul's Claude Design canvas at version 41 (`1792999021-8ee1`): eleven screens and a component sheet, chosen and refined by Mike over rounds 8–8n, with the icon family completed in round 8o. The [study record](../../../../../art-direction/studies/2026-10-18-interface-direct-method/README.md) holds the history, alternatives and decisions; the production package holds the artwork, fonts and sources.
 
@@ -25,7 +25,7 @@ The production package is stored outside Git, as the [asset workflow](../../../.
 The canonical values and their uses are in `tokens.json`. The ones that define the feel:
 
 - **Ground and glass:** canvas `#0C110B`; panel glass `rgba(20, 28, 17, 0.86)` falling to `rgba(12, 17, 11, 0.86)`, HUD plates and the Say and Act bars at 84 %.
-- **Chosen and hover:** chosen rows, tabs, toggles and tiles `#2C2E1D` under a 1 px gold metal edge (2 px on a selected slot); button hover `#1F2A1A`.
+- **Chosen and hover:** chosen rows, segmented options, toggles and tiles `#2C2E1D` under a 1 px gold metal edge (2 px on a selected slot); button hover `#1F2A1A`. Ordinary navigation tabs stay transparent, with a gold label and metal underline.
 - **Text:** ivory `#EFE8D2`, secondary `#C3BDA5`, muted `#9A967E`, unselected silver `#B9BDB3`. Text is at least 4.5 : 1.
 - **Gold:** the highlight `#DBBE7C` (rims, the narrator's timer line); gold label text from `#F9EFD8` to `#D0B47B`; the primary button `#E9C264` with dark ink `#211A0B`, hover `#F0CD77`, pressed `#D8AA46`.
 - **Need bars, Cobalt pigments:** Health `#B43A31`, Food `#C1872B`, Energy `#268843`, Spirit `#2E5FB6`, on a near-black track; each is at least 3 : 1 against it. Food stays an amber, clear of the selection gold.
@@ -53,7 +53,7 @@ Gelasio italic is the narrator's voice; it is never used for people's speech.
 
 ## Spacing, sizes and corners
 
-Spacing uses only 4, 8, 12, 16, 24 and 32. Each surface has one left edge, equal paddings and aligned trailing columns; nothing is clipped or wraps by accident. Controls are 32 high (28 compact); rows 32, list rows 56; slots 48; hotbar tiles 52, its panel buttons 40; status icons 32; icons 16–20 (24–26 on the hotbar); every target at least 28 × 28. Corners: panel 10, window 8, control 6, slot 4.
+Spacing uses only 4, 8, 12, 16, 24 and 32. Each surface has one left edge, equal paddings and aligned trailing columns; nothing is clipped or wraps by accident. Controls are 32 high (28 compact); rows 32, list rows 56; slots 48; hotbar quick slots and Speak/Act/Combat tiles 52, its panel buttons 40; status icons 32; icons 16–20 (24–26 on the hotbar); every target at least 28 × 28. Corners: panel 10, window 8, control 6, slot 4.
 
 ## Icons
 
@@ -83,7 +83,7 @@ Item illustrations are separate from semantic glyphs. A world may author `presen
 ## The HUD
 
 - **Top left:** the character panel: your portrait (it opens Character), then each need's icon, bar and number, and your timed statuses and lasting effects beneath. It is one of the material study's 14 corner-panel styles, which players switch between; each style's layout places these pieces. The boards show a plain 284-wide plate, 24 from the top and left edges, with a 64 portrait.
-- **Top right:** the minimap fully in the corner — a 200 map in a 206 champagne rim, 24 from the right and top edges, with a North mark and zoom in/out buttons (round, 28, 4 apart) at its lower left. The place name sits under it in Gelasio.
+- **Top right:** the minimap group fully in the corner, 24 from the right and top edges — a 200 map in a 206 champagne rim, with the 20 round North badge on the top rim. The badge starts at y24 and the rim at y31 in the 1920×1080 board. The zoom in/out buttons are round magnifier controls, 28, staggered at the lower left. The place name sits under the map in Gelasio.
 - **Day-and-night dial:** a 72 round dial in the gap at the minimap's upper left — not a clock. Sunrise is on the left and sunset on the right; by day a small sun crosses the top half and by night a crescent moon crosses the bottom half, both clockwise. The face is shaded by daylight with soft fades. The left point is the world's dawn and the right its dusk, each half spread evenly over its own length, so the dial fits any world's hours. "Day 1 · Year 1" and the time sit centred beneath it; the day number changes at midnight. Year is an example value until a world defines years.
 - **Hotbar:** no panel behind it — ten slots, then Speak, Act and Combat mode (main's attack mode), then Character, Journal, Crafting, Build and the game menu, with thin gold metal dividers between the groups. The game-menu button is the Open Legend campfire seal in a champagne rim and opens the game menu, as Esc does. 986 wide, centred, 24 above the bottom edge; the Say and Act bars share its edges.
 - **Events quick view:** a button at the bottom left, level with the hotbar, opens a quick view of what you perceived — speech, actions and notable observations, newest at the bottom. While open it replaces the button and has its own minimize button.
@@ -100,6 +100,8 @@ At dusk the lantern light at the top of every surface turns amber and wider, and
 ## Runtime integration
 
 Mike authorized implementation on October 27, 2026. Integration follows the [interface production route](../../../../../docs/production-workflows/scenes-and-interfaces.md#art-directed-working-interfaces), the [UI rules](../../../../../.agents/rules/ui-ux.md) and the [current component owners](../README.md).
+
+Ordinary navigation uses the shared `ol-navigation-tab` role; selection changes its label, icon and underline without adding a button well. Segmented choices retain their separate filled treatment. The field and composer owners supply one inset well around the editable text, with a separate submit button; generic field defaults yield to those owners. Slot illustrations can retain the published image's native pixel dimensions inside their bounded well. Compact optional tools reuse the existing portaled disclosure owner for viewport fit, focus and Escape.
 
 Journal uses the Q-Journal composition: an icon sidebar, the existing event chronology and a separate selected-event reading column. Its filtering, search, time navigation, Show all events and source comparison retain their existing authority and remain reachable in the associated disclosures. Narrow layout preserves selection and drafts while switching between the list and reading with Back/Escape. Other Journal readers stay mounted while hidden; this presentation adds no event interpretation or second history query.
 

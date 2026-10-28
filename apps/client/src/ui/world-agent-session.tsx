@@ -594,7 +594,7 @@ export function WorldAgentSession({
             content: (
               <div className="ol-agent-reply-row">
                 <span className="ol-agent-avatar" aria-hidden="true">
-                  <Icon name="ui.world" />
+                  <Icon name="ui.agent" />
                 </span>
                 <ConversationMessage
                   role={turn.progress?.text || turn.response?.ok ? 'agent' : 'status'}
@@ -682,6 +682,7 @@ export function WorldAgentSession({
         >
           <Button
             size="sm"
+            className="ol-navigation-tab"
             variant="quiet"
             aria-pressed={view === 'conversation' && !detailsOpen}
             onPress={() => {
@@ -693,6 +694,7 @@ export function WorldAgentSession({
           </Button>
           <Button
             size="sm"
+            className="ol-navigation-tab"
             variant="quiet"
             aria-pressed={view === 'work' && !detailsOpen}
             disabled={!session}
@@ -706,6 +708,7 @@ export function WorldAgentSession({
           </Button>
           <Button
             size="sm"
+            className="ol-navigation-tab"
             variant="quiet"
             aria-expanded={detailsOpen}
             aria-controls={detailsId}
@@ -1010,8 +1013,9 @@ export function WorldAgentSession({
               placeholder={
                 sessionPurpose === 'creation'
                   ? 'Describe a new world opening…'
-                  : 'Investigate, design, or ask for a change…'
+                  : 'Ask the world a question, or ask for a change…'
               }
+              submitLabel="Ask"
               maxLength={2000}
               value={text}
               onChange={(value) => {

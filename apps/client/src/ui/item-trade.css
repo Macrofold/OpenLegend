@@ -1,5 +1,8 @@
 .ol-trade-workspace {
   min-inline-size: 0;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
   container-type: inline-size;
 }
 
@@ -17,7 +20,7 @@
   align-items: center;
   gap: var(--space-3);
   min-inline-size: 0;
-  font: 600 var(--title-xl-size) / var(--title-xl-leading) var(--font-heading);
+  font: 600 var(--title-lg-size) / var(--title-lg-leading) var(--font-heading);
   overflow-wrap: anywhere;
 }
 .ol-trade-heading h3 > span:last-child {
@@ -27,6 +30,11 @@
   display: flex;
   align-items: center;
   gap: var(--space-2);
+  min-block-size: 24px;
+}
+[data-theme='gildmoss'] .ol-trade-basket-heading,
+[data-theme='gildmoss'] .ol-trade-conversation > .ol-eyebrow {
+  font: 700 var(--text-label-size) / var(--text-label-leading) var(--font-ui);
 }
 .ol-trade-heading-actions {
   display: flex;
@@ -34,6 +42,11 @@
   justify-content: end;
   gap: var(--space-2);
   margin-inline-start: auto;
+}
+.ol-trade-heading-actions .ol-ibtn {
+  inline-size: 32px;
+  block-size: 32px;
+  min-block-size: 32px;
 }
 
 .ol-trade-heading h3,
@@ -44,18 +57,42 @@
 
 .ol-trade-layout {
   display: grid;
-  grid-template-columns: minmax(200px, 0.48fr) minmax(0, 1fr);
-  gap: var(--space-4);
-  padding-block-start: var(--space-3);
-  align-items: start;
+  flex: 1;
+  min-block-size: 0;
+  grid-template-columns: minmax(0, 308fr) minmax(0, 644fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--space-6);
+  padding-block-start: var(--space-4);
+  align-items: stretch;
+}
+.ol-trade-layout::before {
+  content: '';
+  grid-area: 1 / 1;
+  justify-self: end;
+  inline-size: 1px;
+  transform: translateX(13px);
+  background: var(--line);
+  pointer-events: none;
+}
+.ol-trade-workspace:not([data-heading]) .ol-trade-layout {
+  padding-block-start: 0;
 }
 
 .ol-trade-inventory {
+  grid-area: 1 / 1;
   min-inline-size: 0;
-  display: grid;
+  min-block-size: 0;
+  display: flex;
+  flex-direction: column;
   gap: var(--space-2);
-  padding-inline-end: var(--space-3);
-  border-inline-end: 1px solid var(--line);
+}
+.ol-trade-inventory .ol-inventory-collection {
+  flex: 1;
+  min-block-size: 0;
+}
+.ol-trade-inventory .ol-inventory-collection-header,
+.ol-trade-inventory .ol-inventory-collection-footer {
+  flex: none;
 }
 
 .ol-trade-inventory .ol-inventory-grid {
@@ -65,26 +102,38 @@
 
 .ol-trade-inventory [data-compact] .ol-inventory-cell {
   position: relative;
-  min-block-size: 44px;
+  min-block-size: 0;
   aspect-ratio: 1;
   justify-content: center;
   padding: var(--space-1);
 }
 
 .ol-trade-inventory .ol-inventory-grid-scroll {
-  max-block-size: min(48dvh, 460px);
+  flex: 1;
+  min-block-size: 0;
+  max-block-size: none;
 }
 
 .ol-trade-deal {
+  grid-area: 1 / 2;
   min-inline-size: 0;
+  min-block-size: 0;
   display: grid;
-  gap: var(--space-3);
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: var(--space-6);
+  overflow: auto;
+  overscroll-behavior: contain;
+  scroll-padding: var(--space-1);
+}
+.ol-trade-workspace .ol-trade-deal > p {
+  margin: 0;
 }
 
 .ol-trade-workspace .ol-trade-terms {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--space-4);
+  gap: var(--space-6);
 }
 
 .ol-trade-basket {
@@ -95,10 +144,13 @@
 
 .ol-trade-basket ul {
   display: grid;
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 48px));
   gap: var(--space-1);
   margin: 0;
-  padding: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-window, 8px);
+  background: var(--surface-offer, var(--surface-well, var(--surface)));
+  box-shadow: inset 0 0 0 1px var(--slot-edge, var(--line));
   list-style: none;
   align-content: start;
 }
@@ -117,10 +169,17 @@
 
 .ol-trade-slot.ol-btn,
 .ol-trade-slot-empty {
-  min-block-size: 44px;
-  border: 1px solid var(--line-control, var(--line));
-  border-radius: var(--radius-sm);
-  background: var(--surface-well, var(--surface));
+  min-block-size: 0;
+  border: 0;
+  border-radius: var(--radius-slot, var(--radius-sm));
+  background: var(--surface-slot, var(--surface-well, var(--surface)));
+  box-shadow:
+    inset 0 0 0 1px var(--slot-edge, var(--line-control, var(--line))),
+    var(--slot-inner-shadow, 0 0 transparent);
+}
+.ol-trade-slot-empty {
+  background: var(--surface-slot-empty, var(--surface-well, var(--surface)));
+  box-shadow: inset 0 0 0 1px var(--slot-empty-edge, var(--line));
 }
 
 .ol-trade-slot.ol-btn {
@@ -137,17 +196,19 @@
 }
 
 .ol-trade-slot.ol-btn[aria-pressed='true'] {
-  border-color: var(--highlight);
-  background: var(--surface-selected);
+  background: var(--surface-slot-selected, var(--surface-selected));
+  box-shadow: var(--selected-glow);
+}
+.ol-trade-slot.ol-btn[aria-pressed='true']::before {
+  padding: 2px;
 }
 
 .ol-trade-slot-quantity {
   position: absolute;
   inset-inline-end: 4px;
-  inset-block-end: 2px;
-  font-size: var(--text-detail-size);
+  inset-block-end: 4px;
+  font: 700 var(--text-label-size) / 12px var(--font-ui);
   font-variant-numeric: tabular-nums;
-  line-height: 1;
 }
 
 .ol-trade-lot-editor {
@@ -174,45 +235,81 @@
   gap: var(--space-2);
   align-items: center;
 }
+.ol-trade-request-details > summary {
+  cursor: pointer;
+  color: var(--ink-silver, var(--ink-muted));
+  font-size: var(--text-detail-size);
+}
+.ol-trade-request-details > .ol-trade-request {
+  margin-block-start: var(--space-3);
+}
 
 .ol-trade-request .ol-caption {
   flex-basis: 100%;
 }
 
-.ol-trade-decision {
+.ol-trade-decision.ol-actions {
   justify-content: end;
+  margin: 0;
 }
 
 .ol-trade-conversation {
   min-inline-size: 0;
-  padding-block-start: var(--space-3);
+  padding-block-start: var(--space-6);
   border-block-start: 1px solid var(--line);
   display: grid;
-  grid-template-rows: auto minmax(64px, 1fr) auto;
-  gap: var(--space-2);
+  grid-template-rows: auto auto auto;
+  gap: var(--space-3);
 }
 
 .ol-trade-conversation > .ol-thread-shell {
-  min-block-size: 64px;
-  max-block-size: 180px;
+  min-block-size: 0;
+  max-block-size: 76px;
   overflow: hidden;
 }
 
 .ol-trade-conversation .ol-thread {
-  max-block-size: 180px;
+  min-block-size: 0;
+  max-block-size: 76px;
+  gap: var(--space-2);
+  padding: 0;
 }
 
-.ol-trade-speech {
+.ol-trade-workspace .ol-trade-speech {
   display: grid;
-  grid-template-columns: minmax(70px, auto) minmax(0, 1fr) auto;
-  gap: var(--space-2);
+  grid-template-columns: 88px minmax(0, 1fr) auto;
+  gap: var(--space-3);
   align-items: baseline;
   margin: 0;
 }
+.ol-trade-speech > strong {
+  font: 600 var(--text-tab-size) / var(--text-body-leading) var(--font-heading);
+  color: var(--ink-world-name, var(--ink));
+}
+.ol-trade-speech[data-own] > strong {
+  font: 600 var(--text-body-size) / var(--text-body-leading) var(--font-ui);
+  color: var(--ink-muted);
+}
 
 .ol-trade-speech .ol-event-time {
-  color: var(--ink-muted);
-  font-size: var(--text-detail-size);
+  display: inline;
+  min-block-size: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ink-faint);
+  font: 500 var(--text-label-size) / var(--text-label-leading) var(--font-ui);
+}
+[data-theme='gildmoss'] .ol-trade-basket-heading > span:last-child,
+[data-theme='gildmoss'] .ol-trade-conversation > .ol-eyebrow {
+  background: var(--metal-gold-label);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
 }
 
 .ol-trade-negotiation-input .ol-world-composer {
@@ -229,14 +326,25 @@
 
 @container (max-width: 640px) {
   .ol-trade-layout {
-    grid-template-columns: minmax(0, 1fr);
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+  .ol-trade-deal {
+    flex: none;
+    overflow: visible;
   }
 
   .ol-trade-inventory {
+    flex: none;
     padding-inline-end: 0;
     padding-block-end: var(--space-3);
     border-inline-end: 0;
     border-block-end: 1px solid var(--line);
+  }
+  .ol-trade-layout::before {
+    display: none;
   }
 
   .ol-trade-inventory .ol-inventory-grid-scroll {
@@ -248,8 +356,8 @@
   .ol-trade-workspace .ol-trade-terms {
     grid-template-columns: minmax(0, 1fr);
   }
-  .ol-trade-speech {
-    grid-template-columns: auto minmax(0, 1fr);
+  .ol-trade-workspace .ol-trade-speech {
+    grid-template-columns: minmax(0, 88px) minmax(0, 1fr);
   }
   .ol-trade-speech .ol-event-time {
     grid-column: 2;
@@ -266,5 +374,13 @@
   }
   .ol-trade-negotiation-input .ol-composer > .ol-btn {
     justify-self: end;
+  }
+}
+@media (forced-colors: active) {
+  [data-theme='gildmoss'] .ol-trade-basket-heading > span:last-child,
+  [data-theme='gildmoss'] .ol-trade-conversation > .ol-eyebrow {
+    background: none;
+    color: Highlight;
+    -webkit-text-fill-color: Highlight;
   }
 }

@@ -87,6 +87,21 @@
   outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
+[data-theme='gildmoss'] .ol-operations-task-list {
+  gap: var(--space-1);
+  border-block-end: 1px solid var(--line);
+}
+[data-theme='gildmoss'] .ol-operations-task {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  box-shadow: none;
+}
+[data-theme='gildmoss'] .ol-operations-task[data-focus-visible],
+[data-theme='gildmoss'] .ol-operations-task-panel[data-focus-visible] {
+  outline-color: var(--focus);
+  outline-offset: 2px;
+}
 .ol-operations-task-panel[data-inert] {
   display: none;
 }
