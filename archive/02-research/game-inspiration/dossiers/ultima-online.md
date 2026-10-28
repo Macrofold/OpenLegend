@@ -1,6 +1,6 @@
 # Ultima Online — full research dossier
 
-**G19 · Complete research pass, September 26, 2026.** This dossier treats *Ultima Online* as a continuously operated virtual world whose rules changed substantially across 29 years. Historical mechanics are labeled where they differ from the current production shards. **New Legacy** is a separate seasonal shard/ruleset inside Ultima Online, not a replacement description for the main shards; Season 2 is scheduled for **October 15, 2026** and therefore remains future as of this research date. [Preserved ecology case](../games/ultima-online-s-ecology.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
+**G19 · October 28, 2026 refresh — incomplete checkpoint.** The complete September 26–27 dossier is preserved below while current rules, native creation, connected lore, commercial evidence and independent reception are being refreshed. Production shards and **New Legacy** are distinct contracts; Season 2 launched October 15, 2026 (see §24). Historical source captures remain dated and are not presented as newly reread. [Preserved ecology case](../games/ultima-online-s-ecology.md) · [Requirements](../research-requirements.md) · [Progress](../research-progress.md).
 
 Ultima Online is one of OpenLegend's most important precedents because it treats a game world less as a sequence of combat encounters and more as a place where players can become **blacksmiths, thieves, animal tamers, shopkeepers, homeowners, murderers, guildmates, treasure hunters, mages, fishermen and politicians of informal player society**. Its strongest systems interlock because ordinary actions change ownership, reputation, scarcity and relationships. Its most famous failed subsystem—the original simulated ecology—is equally valuable: elegant simulation collapsed when actual players harvested creatures far more aggressively than the designers' assumptions.
 
@@ -8,13 +8,15 @@ Ultima Online is one of OpenLegend's most important precedents because it treats
 
 Origin Systems launched Ultima Online on **September 24, 1997** as a persistent online version of Britannia/Sosaria. The official team marked its 29th anniversary on September 24, 2026, explicitly describing the project as an internet experiment expected to last only a few years that instead endured for 29. [UO01](#uo01)
 
-The current production game in September 2026 is still actively updated:
+The preserved September 2026 production snapshot records:
+
 - **Publish 124** rolled worldwide in August 2026;
 - anniversary rewards began September 24;
 - current live events include Shardfall / Echoes of Mondain and weekend events;
 - Publish 125 and further client work are publicly planned. [UO01](#uo01) [UO02](#uo02)
 
 The modern service can be accessed through:
+
 - subscription accounts;
 - **Endless Journey**, a free-access mode with restrictions;
 - special ruleset shards such as Siege Perilous/Mugen;
@@ -27,6 +29,7 @@ This matters because “Ultima Online mechanics” are not one frozen 1997 rules
 The main game is fundamentally **classless**.
 
 A character has:
+
 - **Strength, Dexterity, Intelligence**;
 - derived Hit Points, Stamina and Mana;
 - dozens of trainable skills;
@@ -40,6 +43,7 @@ The important design is not today's exact cap. It is the **budgeted identity mod
 > You are allowed to become very capable, but not equally masterful at everything on one character.
 
 A player can choose combinations such as:
+
 - swords + tactics + healing + anatomy;
 - magery + evaluate intelligence + meditation + inscription;
 - animal taming + animal lore + veterinary;
@@ -52,6 +56,7 @@ These are community “templates,” not engine-enforced classes.
 ### Skill atrophy makes identity editable
 
 Skills can be set to:
+
 - **Raise**;
 - **Lock**;
 - **Lower**.
@@ -61,6 +66,7 @@ When a capped character gains a skill, points can be pulled from skills set to L
 So changing profession is not a respec token that erases the character. It is **learning one capability while allowing another to decay**.
 
 OpenLegend could use the same idea for:
+
 - practiced skills;
 - forgotten expertise;
 - physical conditioning;
@@ -72,6 +78,7 @@ The character remains the same person while their usable competence changes over
 ## 3. Skill progression is use-based
 
 UO's core skill-gain system is explicitly **use based**:
+
 - successfully use a skill;
 - receive a chance to gain that skill;
 - increasingly difficult practice is required as skill rises.
@@ -79,6 +86,7 @@ UO's core skill-gain system is explicitly **use based**:
 The Guaranteed Gain System later added a backstop so unlucky/infrequent players eventually receive a gain after sufficient successful uses without one. [UO05](#uo05)
 
 Examples:
+
 - cast spells to improve Magery;
 - fight with swords to improve Swordsmanship;
 - tame increasingly difficult animals to improve Animal Taming;
@@ -94,6 +102,7 @@ A player does not kill ten wolves and spend abstract XP on tailoring.
 The action itself supplies the learning context.
 
 That gives the world causal legibility:
+
 - practice blacksmithing → become a blacksmith;
 - practice hiding → become better at hiding.
 
@@ -108,6 +117,7 @@ The lesson is not “use-based is always better.” The learning loop must remai
 ## 4. Stats and bodily capability
 
 Strength, Dexterity and Intelligence feed into:
+
 - hit points;
 - stamina;
 - mana.
@@ -115,6 +125,7 @@ Strength, Dexterity and Intelligence feed into:
 Stat gain is linked to skill usage and can also be set to Raise/Lower/Lock. [UO04](#uo04)
 
 This creates an interdependence between:
+
 - what you practice;
 - what your body/mind becomes good at;
 - what equipment/combat/magic you can sustain.
@@ -140,6 +151,7 @@ A blacksmith can also be a capable warrior if they invest the skill budget.
 ### Melee
 
 Weapon families include:
+
 - swords;
 - fencing;
 - macing;
@@ -161,12 +173,14 @@ The cost is balance complexity: an ability useful in PvE can become oppressive i
 Classic **Magery** remains one of UO's most expressive systems.
 
 It has **64 spells across eight circles**, with progressively greater:
+
 - skill requirements;
 - mana cost;
 - cast time;
 - reagent requirements. [UO10](#uo10)
 
 The spell vocabulary includes:
+
 - direct damage;
 - healing/cure;
 - poison;
@@ -182,6 +196,7 @@ The spell vocabulary includes:
 This matters because magic does more than damage.
 
 A mage can:
+
 - unlock a chest;
 - create food;
 - teleport;
@@ -192,6 +207,7 @@ A mage can:
 - manipulate encounters.
 
 UO later added additional schools such as:
+
 - Necromancy;
 - Chivalry;
 - Bushido;
@@ -204,6 +220,7 @@ Different schools use different costs/requirements: Magery, Necromancy and Mysti
 ### OpenLegend lesson
 
 A “magic system” is richer when spells interact with:
+
 - travel;
 - containers;
 - death;
@@ -217,6 +234,7 @@ The engine should expose world capabilities that magic can invoke rather than bu
 ## 7. Items, weapons, armor and property composition
 
 UO has accumulated decades of item systems:
+
 - mundane crafted equipment;
 - magical/random-property equipment;
 - artifacts;
@@ -228,6 +246,7 @@ UO has accumulated decades of item systems:
 - blessed/insured/cursed state.
 
 The important pattern is that **items remain transferable world objects**:
+
 - carried;
 - dropped;
 - placed in containers;
@@ -240,6 +259,7 @@ The important pattern is that **items remain transferable world objects**:
 - insured.
 
 Modern item insurance changes death risk:
+
 - insured items return to the player after resurrection;
 - uninsured items remain on the corpse and can be lost;
 - in Felucca other players may loot those items;
@@ -254,6 +274,7 @@ Crafting is one of UO's foundational strengths because crafted goods enter the s
 ### Blacksmithing
 
 Blacksmiths can:
+
 - craft/repair metal weapons and armor;
 - use different ingot/material types;
 - create exceptional items;
@@ -264,6 +285,7 @@ Blacksmiths can:
 ### Tailoring
 
 Tailors can:
+
 - shear sheep;
 - collect wool;
 - spin material;
@@ -275,6 +297,7 @@ Tailors can:
 ### Carpentry
 
 Carpenters turn lumber into:
+
 - furniture;
 - containers;
 - lockable objects;
@@ -286,6 +309,7 @@ Carpenters turn lumber into:
 ### Bulk Order Deeds
 
 Later crafting progression includes bulk-order jobs:
+
 - fill requested orders;
 - earn reward points/items;
 - store/trade orders in Bulk Order Books;
@@ -294,6 +318,7 @@ Later crafting progression includes bulk-order jobs:
 ### Why this matters for OpenLegend
 
 A profession becomes meaningful when:
+
 - it has inputs from the world;
 - its products persist;
 - someone else wants those products;
@@ -307,6 +332,7 @@ A profession becomes meaningful when:
 UO's economy is not merely an auction UI layered over combat loot.
 
 Players can place **NPC vendors in player houses**:
+
 - stock items;
 - set individual prices/descriptions;
 - pay the vendor's wages;
@@ -324,6 +350,7 @@ Search improves usability without fully deleting place.
 ### OpenLegend lesson
 
 Markets can preserve:
+
 - seller identity;
 - location;
 - logistics;
@@ -339,6 +366,7 @@ An abstract global market is convenient but erases many social/economic hooks.
 Housing is one of UO's defining systems.
 
 A house owner can:
+
 - place a house in eligible world space;
 - choose classic or customizable structures;
 - build custom walls/floors/doors/stairs;
@@ -352,6 +380,7 @@ A house owner can:
 - decorate it with crafted and collectible objects. [UO18](#uo18) [UO19](#uo19)
 
 The home can therefore be:
+
 - storage;
 - shop;
 - guild/social venue;
@@ -369,10 +398,12 @@ Third Dawn's 2001 review specifically praised the new Ilshenar landmass for forb
 In February 2026 the production game added a **raffle-style plot process** after decayed houses collapse, specifically to make newly available scarce land contestable without an immediate click-race. [UO21](#uo21)
 
 This is a rich design tension:
+
 - persistent property creates attachment;
 - permanent scarce property can crowd the world and entrench incumbents.
 
 OpenLegend should distinguish:
+
 - private instanced property;
 - scarce public land;
 - creator/admin land;
@@ -383,6 +414,7 @@ OpenLegend should distinguish:
 Death in UO historically created a striking world-state transition.
 
 A dead player becomes a **ghost** and must seek resurrection through:
+
 - healers;
 - shrines/ankhs;
 - other players capable of resurrection;
@@ -393,6 +425,7 @@ The current enhanced-client map can even show resurrection points and the locati
 The corpse remains a world object containing uninsured possessions. After resurrection, the player can return to recover it.
 
 This creates a sequence:
+
 1. lose body;
 2. persist as ghost;
 3. navigate socially/spatially for revival;
@@ -404,6 +437,7 @@ Modern insurance softens item consequences, but the underlying death-state model
 ### OpenLegend lesson
 
 Death does not have to be:
+
 > screen fades → reload checkpoint.
 
 It can be a **state with capabilities, dependencies and social rescue opportunities**.
@@ -413,6 +447,7 @@ It can be a **state with capabilities, dependencies and social rescue opportunit
 UO implements stealing as a normal skill family.
 
 A thief can:
+
 - steal from world containers;
 - steal special PvE items;
 - in Felucca/ruleset areas, steal from other players;
@@ -420,6 +455,7 @@ A thief can:
 - join the Thieves Guild under the relevant rules. [UO23](#uo23) [UO24](#uo24)
 
 Restrictions matter:
+
 - insured/blessed/container/heavy items cannot always be stolen;
 - stealing from a player is a hostile/criminal act;
 - ruleset determines whether the action is allowed.
@@ -427,6 +463,7 @@ Restrictions matter:
 This is systemically powerful because **the item and property model actually allows theft** rather than treating inventory as metaphysically private.
 
 OpenLegend should borrow the principle only with clear consent/safety design:
+
 - capability;
 - permission/ruleset;
 - witnesses;
@@ -438,6 +475,7 @@ OpenLegend should borrow the principle only with clear consent/safety design:
 In Felucca-style rulesets, attacking an innocent player can make the attacker criminal.
 
 If the victim dies and reports the murder:
+
 - murder counts accumulate;
 - at five or more successive reported murders the player becomes a red murderer;
 - murderers face travel/NPC/virtue restrictions;
@@ -446,6 +484,7 @@ If the victim dies and reports the murder:
 This is more interesting than simply enabling PvP damage.
 
 The system connects:
+
 - attack;
 - victim;
 - reporting;
@@ -457,6 +496,7 @@ The system connects:
 ### OpenLegend inspiration
 
 Crime should be **an interpreted event**:
+
 - who had jurisdiction?
 - was the target protected?
 - who observed/reported it?
@@ -470,6 +510,7 @@ UO's implementation is still mostly global/ruleset-based, but it points toward t
 UO also tracks broader reputation.
 
 Modern **Fame and Karma** derive from:
+
 - monster killing;
 - industry/rewards;
 - good/evil acts.
@@ -481,10 +522,12 @@ The **Virtue System** layers Ultima's eight virtues into gameplay. [UO27](#uo27)
 This is a more abstract morality layer than OpenLegend's intended observer-specific knowledge/reputation.
 
 The lesson is mixed:
+
 - broad moral identity is readable;
 - one global karma number can erase disagreement/context.
 
 OpenLegend should prefer:
+
 - per-person/faction beliefs;
 - evidence/provenance;
 - institutional law
@@ -494,11 +537,13 @@ while using global reputations only when the fiction genuinely supports them.
 ## 15. Animal taming: a creature can become a persistent partner
 
 Animal Taming allows characters to tame animals and monsters. Control depends on:
+
 - Animal Taming;
 - Animal Lore;
 - creature difficulty. [UO28](#uo28)
 
 Pets can:
+
 - follow;
 - fight;
 - transfer between owners;
@@ -506,6 +551,7 @@ Pets can:
 - develop through later **Animal Training**.
 
 Modern Animal Training can customize:
+
 - stats/resists;
 - skill caps;
 - magic schools;
@@ -520,6 +566,7 @@ The official wiki itself notes the irrational-seeming affection players form for
 ### Why pets acquire meaning
 
 A tamed creature is:
+
 - a persistent named object/actor;
 - useful;
 - trained over time;
@@ -527,6 +574,7 @@ A tamed creature is:
 - customized.
 
 OpenLegend can deepen this by adding:
+
 - memory;
 - personality;
 - needs;
@@ -538,6 +586,7 @@ The underlying attachment loop already existed without an LLM.
 ## 16. The failed ecology experiment
 
 Richard Garriott's retrospective describes an ambitious launch-era ecological simulation:
+
 - grass/resources;
 - herbivores;
 - predators;
@@ -546,6 +595,7 @@ Richard Garriott's retrospective describes an ambitious launch-era ecological si
 The designers expected a self-balancing food chain.
 
 Players instead:
+
 - killed animals;
 - harvested resources;
 - overwhelmed replenishment.
@@ -557,6 +607,7 @@ The simulated ecosystem collapsed so rapidly that the team eventually replaced m
 Not “ecology simulation.”
 
 The failure was a **model of player behavior**:
+
 - the designers expected ecosystem participants;
 - the game rewarded harvesting;
 - thousands of players optimized extraction.
@@ -564,6 +615,7 @@ The failure was a **model of player behavior**:
 ### OpenLegend application
 
 Any simulated resource/ecology must be stress-tested against:
+
 - maximum harvesting;
 - hoarding;
 - automation;
@@ -577,12 +629,14 @@ Do not rely on players to voluntarily preserve a system whose incentives reward 
 ## 17. Trammel and Felucca: one world split by consent philosophy
 
 **Ultima Online: Renaissance (2000)** created a famous ruleset split:
+
 - **Felucca** retained freeform hostile PvP/theft and harsher interaction;
 - **Trammel** mirrored much of the geography but prevented ordinary non-consensual harmful player interaction except in specific consensual structures such as guild wars. [UO31](#uo31)
 
 The change made UO much more accessible to players who did not want constant predation.
 
 It also became one of MMO design's enduring arguments:
+
 - supporters valued safety and broader participation;
 - critics believed separating risk reduced the density/meaning of player dependence and organic lawlessness.
 
@@ -590,15 +644,17 @@ A GameFAQs Renaissance review from one player specifically argues the split dama
 
 ### OpenLegend lesson
 
-Consent modes change the *social ecology*, not just damage flags.
+Consent modes change the _social ecology_, not just damage flags.
 
 If players can:
+
 - rob;
 - murder;
 - destroy;
 - betray
 
 then:
+
 - guards;
 - trust;
 - escorts;
@@ -614,6 +670,7 @@ OpenLegend can support worlds with different governance/violence contracts inste
 Players can form/join guilds, organize wars and create durable social identity.
 
 Over the game's history players also produced:
+
 - roleplay towns;
 - shops;
 - guild halls;
@@ -627,6 +684,7 @@ PC Gamer's retrospective identifies this as the core historical leap: UO was a w
 The system did not need every institution to be hard-coded.
 
 Housing + trade + guild identity + PvP + speech + persistent names already allowed players to invent:
+
 - social norms;
 - markets;
 - territorial identity;
@@ -635,6 +693,7 @@ Housing + trade + guild identity + PvP + speech + persistent names already allow
 ### OpenLegend opportunity
 
 AI inhabitants can make those institutions persist even with one human player:
+
 - town councils;
 - guild roles;
 - shops;
@@ -647,6 +706,7 @@ UO shows the power of the substrate; OpenLegend can supply persistent non-player
 ## 19. NPCs and AI
 
 UO NPCs include:
+
 - merchants;
 - trainers;
 - bankers;
@@ -655,6 +715,7 @@ UO NPCs include:
 - quest/event characters.
 
 Players historically interact through:
+
 - speech keywords;
 - context menus;
 - vendor/trainer services.
@@ -664,12 +725,14 @@ Current player-owned vendor NPCs have highly bounded functions; they are not aut
 The world feels social primarily because of **other human players**, not because NPCs possess deep cognition.
 
 This is the key OpenLegend contrast:
+
 - UO gives strong **economic/legal/object/world affordances**;
 - OpenLegend aims to give inhabitants much stronger **memory/planning/conversation** inside similar affordances.
 
 ## 20. World map, travel and dungeons
 
 The game's geography grew across expansions:
+
 - Britannia;
 - The Lost Lands;
 - Trammel/Felucca facets;
@@ -680,6 +743,7 @@ The game's geography grew across expansions:
 - later expansion regions/dungeons.
 
 Travel systems include:
+
 - walking/riding;
 - ships;
 - moongates;
@@ -690,9 +754,11 @@ Travel systems include:
 Third Dawn's Ilshenar deliberately disabled Mark/Recall/Gate travel in its reviewed rules, creating a different relationship to exploration. [UO20](#uo20)
 
 This is a useful pattern:
+
 - **the same engine can give regions different mobility laws**.
 
 OpenLegend world packages can similarly define:
+
 - teleport prohibited;
 - flight impossible;
 - magic unstable;
@@ -705,6 +771,7 @@ as world law rather than hardcoded universal game rules.
 UO was never defined by a single main quest.
 
 Activities include:
+
 - monster hunting;
 - treasure hunting;
 - dungeon/champion encounters;
@@ -724,6 +791,7 @@ Activities include:
 This variety makes the game closer to a **world activity platform** than a campaign RPG.
 
 Current 2026 publishes continue that model with:
+
 - Shardfall;
 - Echoes of Mondain;
 - weekend events;
@@ -733,6 +801,7 @@ Current 2026 publishes continue that model with:
 ## 22. Loot and reward loops
 
 Loot comes from:
+
 - monsters/bosses;
 - treasure maps;
 - dungeons;
@@ -743,6 +812,7 @@ Loot comes from:
 - player commerce.
 
 Because items remain tradable/worldly, one player's loot can become:
+
 - another player's equipment;
 - a shop's inventory;
 - a house decoration;
@@ -752,6 +822,7 @@ Because items remain tradable/worldly, one player's loot can become:
 That makes acquisition socially reusable.
 
 The long-running downside is item/economy complexity and inflation:
+
 - decades of property tiers;
 - legacy items;
 - event rewards;
@@ -762,6 +833,7 @@ A virtual economy becomes **history-bearing technical debt** as well as content.
 ## 23. UI, art and feel
 
 Classic UO uses:
+
 - isometric 2D world art;
 - freely movable UI “gumps”;
 - drag/drop physical item manipulation;
@@ -770,16 +842,19 @@ Classic UO uses:
 - text speech above characters.
 
 Later clients added:
+
 - enhanced 3D-ish rendering;
 - hotbars;
 - modernized maps and UI affordances.
 
 The original interface can feel opaque and archaic to modern players, but it reinforces object identity:
+
 - a bag is a bag you open;
 - an item can be dragged into another container;
 - a corpse is a container in the world.
 
 GameSpot's historical reviews repeatedly praised the unusual virtual-world depth while criticizing:
+
 - dated visuals;
 - choppy animation;
 - newcomer hostility;
@@ -790,6 +865,7 @@ GameSpot's historical reviews repeatedly praised the unusual virtual-world depth
 **New Legacy** launched its first season in 2024 as a separate shard designed to make UO feel more explicitly like an RPG again.
 
 Its systems intentionally differ from the main shards:
+
 - narrative-led progression;
 - faster skill gain;
 - job-board tasks;
@@ -806,22 +882,27 @@ That is a deliberate different design.
 
 ### September 26, 2026 status
 
-As of this research date:
+At the original September 26 research date:
+
 - Season 1 is at the end of its lifecycle;
 - final transfer date is **September 28, 2026**;
 - soft-launch/pre-season activity for Season 2 is planned for October 1;
 - final wipe is October 13;
 - **Season 2 launches October 15, 2026**. [UO35](#uo35)
 
-Do not write as though Season 2 is already live.
+### October 28, 2026 update
+
+Season 2 **launched on October 15**. Its delivered additions include contextual onboarding, a Paladin of Trinsic path through Chivalry, player-specific family heirlooms, and crafting that reuses scrap and improves equipment. These belong to this seasonal interpretation, rather than retroactively describing every production shard. The September plans above remain historical evidence of its transition. [S26-01](#s26-01)
 
 ### OpenLegend comparison
 
 New Legacy demonstrates:
+
 - same underlying world/content;
 - alternate progression/persistence contract.
 
 OpenLegend can support:
+
 - persistent main worlds;
 - seasonal scenario worlds;
 - challenge worlds
@@ -881,6 +962,7 @@ That is not evidence everyone enjoys full-loot danger. It is evidence that **con
 ### Trammel disagreement
 
 Historical player commentary remains divided:
+
 - one audience valued the ability to play without involuntary theft/murder;
 - some veteran sandbox players believed the split weakened player towns/dependence/community. [UO32](#uo32)
 
@@ -889,6 +971,7 @@ That conflict is valuable; there is no need to pick a universal winner. The rule
 ### Housing
 
 Long-running community attachment to:
+
 - houses;
 - vendors;
 - decorations;
@@ -899,6 +982,7 @@ is visible even in current 2026 development, where the team continues updating h
 ### Steam boundary
 
 **Steam review sampling is not applicable.** The current official UO service is not a Steam-distributed title. Historical player testimony comes from:
+
 - GameFAQs;
 - official/community forums;
 - retrospective articles;
@@ -909,6 +993,7 @@ This dossier does not fabricate a Steam review section.
 ## 27. Production history and major evolution
 
 Major milestones include:
+
 - **1997 — Ultima Online**
 - **1998 — The Second Age** adds Lost Lands/content
 - **2000 — Renaissance** creates Trammel/Felucca split
@@ -922,9 +1007,10 @@ Major milestones include:
 - **2015 — Time of Legends**
 - **2018 — Endless Journey** free-access mode
 - **2024 — New Legacy Season 1**
-- **2026 — Publish 124, 29th anniversary; New Legacy Season 2 pending**. [UO42](#uo42)
+- **2026 — Publish 124, 29th anniversary; New Legacy Season 2 launched October 15** (current boundary in §24). [UO42](#uo42)
 
 The game repeatedly changed foundational assumptions:
+
 - PvP consent;
 - item properties;
 - insurance;
@@ -941,6 +1027,7 @@ That means its longevity comes partly from **being willing to alter world rules*
 The existing focused case remains canonical for this subsystem.
 
 Richard Garriott's account:
+
 1. designers modeled grass/prey/predator relationships;
 2. expected an internally sustainable ecology;
 3. players killed/harvested creatures at industrial scale;
@@ -948,8 +1035,9 @@ Richard Garriott's account:
 5. the system was tuned and eventually replaced/removed as originally envisioned. [UO30](#uo30)
 
 This dossier adds the broader context:
+
 - UO succeeded as a virtual world despite this subsystem failing;
-- player economies and social systems worked partly because they *embraced* optimization and human incentives rather than assuming ecologically gentle behavior.
+- player economies and social systems worked partly because they _embraced_ optimization and human incentives rather than assuming ecologically gentle behavior.
 
 OpenLegend should stress-test every simulated commons against adversarial use.
 
@@ -960,11 +1048,13 @@ OpenLegend should stress-test every simulated commons against adversarial use.
 A tailor should not be “combat character who presses Tailoring in a menu.”
 
 The UO chain:
+
 > sheep → wool → spin → loom → cloth → crafted/marked item → vendor → another player
 
 is powerful because each step is a world fact.
 
 OpenLegend can do this for:
+
 - medicine;
 - construction;
 - farming;
@@ -976,9 +1066,10 @@ OpenLegend can do this for:
 
 ### B. Use a bounded skill budget instead of mandatory classes
 
-Characters become distinctive through actual practiced capability.
+A **world may choose** a bounded skill budget to make practiced capabilities distinctive. Neither a cap nor classlessness should become an engine-wide character rule; other authored worlds may use classes, uncapped expertise, or different costs for changing profession.
 
 This works especially well for AI actors because their competence can reflect:
+
 - life history;
 - job;
 - hobbies;
@@ -988,6 +1079,7 @@ This works especially well for AI actors because their competence can reflect:
 ### C. Ownership/access should be mechanics, not lore
 
 UO houses distinguish:
+
 - owner;
 - co-owner;
 - friend;
@@ -996,6 +1088,7 @@ UO houses distinguish:
 - vendor tenancy.
 
 OpenLegend's object/place permission model can support:
+
 - homes;
 - guild halls;
 - labs;
@@ -1012,6 +1105,7 @@ OpenLegend can expose search without collapsing all commerce into an omnipresent
 ### E. Death can create a social recovery state
 
 Ghost → healer/player resurrection → corpse recovery creates:
+
 - travel;
 - vulnerability;
 - rescue;
@@ -1024,6 +1118,7 @@ OpenLegend can make death consequences world-specific rather than defaulting to 
 UO's murder reporting is simple but directionally correct.
 
 The engine should represent:
+
 - victim;
 - actor;
 - observer;
@@ -1035,6 +1130,7 @@ The engine should represent:
 ### G. Pets become meaningful through useful persistence
 
 Tamed animals prove that:
+
 - usefulness;
 - persistence;
 - customization;
@@ -1047,12 +1143,14 @@ Adding cognition should deepen that, not replace the material relationship.
 ### H. Public housing creates society and scarcity at once
 
 Persistent player construction produces:
+
 - neighborhoods;
 - shops;
 - landmarks;
 - identity.
 
 It also produces:
+
 - sprawl;
 - scarce land;
 - inactive-owner problems.
@@ -1062,6 +1160,7 @@ OpenLegend needs explicit land/property lifecycle policies.
 ### I. Let worlds choose their risk contract
 
 Felucca and Trammel show how one flag changes:
+
 - markets;
 - travel;
 - strangers;
@@ -1070,6 +1169,7 @@ Felucca and Trammel show how one flag changes:
 - cooperation.
 
 Authored realities can choose:
+
 - full consequence;
 - protected social spaces;
 - consensual PvP;
@@ -1084,6 +1184,7 @@ The ecology failure is a permanent warning:
 ### K. Long-lived worlds accumulate rules debt
 
 Twenty-nine years of:
+
 - expansions;
 - items;
 - currencies;
@@ -1093,20 +1194,13 @@ Twenty-nine years of:
 
 creates enormous complexity.
 
-OpenLegend's invention packs need:
-- provenance;
-- versioning;
-- dependency visibility;
-- migration rules;
-- deprecation paths
-
-or extensibility will eventually become the same kind of layered archaeology.
+OpenLegend's invention packs need visible provenance, versions and dependencies so creators can understand the capabilities they adopt. Any continuity or replacement promise for a published pack should be explicit and scoped to its supported use. This does **not** impose legacy-development-save compatibility, automatic migration or deprecation infrastructure on the engine; experimental worlds may be rebuilt as their design changes.
 
 ## 30. Requirement and preservation check
 
 ### September 27 requirements-and-corrections audit
 
-A fresh audit against the explicit mechanics inventory found the production-shard dossier complete and confirms these version-sensitive boundaries:
+The September 27 audit against the then-current mechanics inventory found the production-shard dossier complete and confirms these version-sensitive boundaries:
 
 - **Identity / classes / attributes / skills / leveling / trees:** classless Strength/Dexterity/Intelligence plus use-based, capped skills and Raise/Lock/Lower atrophy define character development (§§2–4). Templates are emergent combinations rather than engine classes.
 - **Items / inventory / weapons / armor / equipment / crafting / upgrading:** world containers/corpses, equipment, crafted goods, repair, resources, vendors, housing storage and later item-property systems are covered across §§5–15.
@@ -1122,29 +1216,32 @@ A fresh audit against the explicit mechanics inventory found the production-shar
 - **Building / settlements / management:** player housing, customization, storage, vendors and community spaces are major persistent-world systems; these are property/community systems rather than worker-population colony simulation.
 - **Multiplayer / social / endgame / return loops:** the shared persistent shard, guild/player economy, housing, skills, collections, events and expansion/live-publish content supply the long-term loop rather than a finite campaign ending.
 
-**Current boundary check:** production shards remain on **Publish 124** after the August worldwide rollout and September hotfixes; the game marked its **29th anniversary on September 24, 2026**, with current weekend/live-event activity continuing. **New Legacy Season 2 is still future** on September 27: final Season 1 transfer deadline September 28, pre-season/soft launch October 1, final wipe October 13, and Season 2 launch October 15. Publish 125/client work is likewise announced future scope, not current production behavior. [UO01](#uo01) [UO02](#uo02) [UO35](#uo35)
+**September 27 boundary check (historical):** production shards remain on **Publish 124** after the August worldwide rollout and September hotfixes; the game marked its **29th anniversary on September 24, 2026**, with current weekend/live-event activity continuing. **New Legacy Season 2 is still future** on September 27: final Season 1 transfer deadline September 28, pre-season/soft launch October 1, final wipe October 13, and Season 2 launch October 15. Publish 125/client work is likewise announced future scope, not current production behavior. [UO01](#uo01) [UO02](#uo02) [UO35](#uo35)
 
-
-| Requirement | Coverage |
-| --- | --- |
-| R01 identity / scope / promise | §§1–3, 24, 27 |
-| R02 player actions / mechanics | §§3–23 |
-| R03 items / entities / composition | §§7–10, 15, 22 |
-| R04 progression / economy / time | §§2–3, 8–10, 24 |
-| R05 interactions / concrete situations | §§8–18 |
-| R06 people / AI / social / multiplayer | §§9–19 |
-| R07 art / audio / interface / feel | §23 |
-| R08 story / narrative | §§18, 21, 24 |
-| R09 production / development | §§27–28 |
-| R10 marketing / distribution / virality | §§1, 24, 27 |
-| R11 commercial / participation | active 29-year service; §1 and reviews; no unsupported current subscriber count |
-| R12 reviews / player feedback | §§25–26 |
-| R13 transferable inspiration / limits | §§28–29 |
-| R14 sources / preservation / navigation | this section + sources |
+| Requirement                             | Coverage                                                                        |
+| --------------------------------------- | ------------------------------------------------------------------------------- |
+| R01 identity / scope / promise          | §§1–3, 24, 27                                                                   |
+| R02 player actions / mechanics          | §§3–23                                                                          |
+| R03 items / entities / composition      | §§7–10, 15, 22                                                                  |
+| R04 progression / economy / time        | §§2–3, 8–10, 24                                                                 |
+| R05 interactions / concrete situations  | §§8–18                                                                          |
+| R06 people / AI / social / multiplayer  | §§9–19                                                                          |
+| R07 art / audio / interface / feel      | §23                                                                             |
+| R08 story / narrative                   | §§18, 21, 24                                                                    |
+| R09 production / development            | §§27–28                                                                         |
+| R10 marketing / distribution / virality | §§1, 24, 27                                                                     |
+| R11 commercial / participation          | active 29-year service; §1 and reviews; no unsupported current subscriber count |
+| R12 reviews / player feedback           | §§25–26                                                                         |
+| R13 transferable inspiration / limits   | §§28–29                                                                         |
+| R14 sources / preservation / navigation | this section + sources                                                          |
 
 **Preservation check:** the focused ecology case remains intact and linked. This dossier does not convert Garriott's anecdote into “simulation doesn't work”; it identifies the narrower failure of ecological assumptions under real harvesting incentives. Historical Trammel/Felucca opinions are attributed rather than resolved as one objective community verdict.
 
 ## Sources
+
+Original UO01–UO42 annotations record September 26–27, 2026 captures unless a specific October reread is stated. New S26 entries record this refresh; additional production, economics and reception evidence is pending at this checkpoint.
+
+<a id="s26-01"></a> **S26-01 — [New Legacy Season 2 — Now Available!](https://uo.com/2026/10/15/new-legacy-season-2-now-available/)**, UO Dev Team, October 15, 2026. Full primary announcement read October 28; establishes delivered launch and selected seasonal changes.
 
 <a id="uo01"></a>**UO01 — [Celebrating 29 years / Ultima Online home](https://uo.com/).** UO Team, 2026-09-24 snapshot. Primary current-service/anniversary evidence.
 
