@@ -1,6 +1,6 @@
 # Final Fantasy XI — full research dossier
 
-**G88 · October 28, 2026 assembled refresh; independent final review pending.** The September 26 research and corrective pass are preserved below. This dossier treats _Final Fantasy XI_ as a **24-year evolving MMORPG**, not a frozen 2002/2003 launch artifact. Launch-era reviews are preserved because they explain the game's original social contract; current-system claims are grounded in Square Enix's official 2023–2026 returning-player guides and October 2026 service boundary. PlayStation 2/Xbox 360 support, original level-cap assumptions, pre-Trust party requirements, and later PC-only operation are kept distinct. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
+**G88 · October 28, 2026 — researched and independently reviewed.** The September 26 research and corrective pass are preserved below. This dossier treats _Final Fantasy XI_ as a **24-year evolving MMORPG**, not a frozen 2002/2003 launch artifact. Launch-era reviews are preserved because they explain the game's original social contract; current-system claims are grounded in Square Enix's official 2023–2026 returning-player guides and October 2026 service boundary. PlayStation 2/Xbox 360 support, original level-cap assumptions, pre-Trust party requirements, and later PC-only operation are kept distinct. [Requirements](../research-requirements.md) · [Progress](../research-progress.md) · [Coverage audit](../coverage-audit-g81-g100.md).
 
 FFXI offers a useful OpenLegend comparison: FFXI models a persistent world in which **one character can inhabit many professions, social groups and long-term equipment identities**, while combat's most distinctive power comes from timed cooperation between separately controlled people. Its 2013→2026 Trust evolution shows a socially interdependent MMORPG making story and progression more solo-accessible; simultaneous changes prevent attributing the service’s longevity to that system alone.
 
@@ -56,7 +56,7 @@ PlayStation 2 and Xbox 360 service ended on **March 31, 2016**; accounts could c
 
 The Windows client continues to receive updates, Ambuscade and recurring service events. The September 9/10 update delivered the third 2026 Trust-upgrade phase. [FFXI06](#ffxi06) [FFXI07](#ffxi07) Windows 10/11 is the platform family on the inspected collection listing. [FFXI08](#ffxi08)
 
-Official support lists **16 Vana'diel Worlds** and explicitly says they are **not region-specific**. They are separate copies with limited concurrent capacity, not one globally shared history. Keep the existing distinctions among field zones, private Mog Houses and repeatable battle areas. [E01](#e01)
+Official support lists **16 Vana'diel Worlds** and explicitly says they are **not region-specific**. They are separate copies with limited concurrent capacity, not one globally shared history. Field zones, private Mog Houses and repeatable battle areas have different persistence boundaries. [E01](#e01)
 
 Character transfer preserves carried equipment, job levels and skills, but does not carry an entire community. The published US service costs **US$18 for up to 16 characters on one service account**, with a three-day repeat restriction. A conflicting name can require renaming. Linkshells/linkpearls/pearlsacks disappear; a departing leader leaves the old shell usable but without leader-only functions. Auction listings and delivery-box contents must be retrieved before transfer or are discarded. Destination availability remains conditional. [E02](#e02)
 
@@ -184,7 +184,7 @@ Examples:
 - Geomancer creates spatial buff/debuff fields;
 - Rune Fencer uses runes/wards and became partly inspired by a player-created Red Mage tanking style. [FFXI11](#ffxi11)
 
-The Rune Fencer history is especially valuable. Developer Yasuhiro Taniguchi says the team noticed players using **Red Mage as a tank** and used that emergent tactic as inspiration for a new magic-user tank job. [FFXI11](#ffxi11)
+The Rune Fencer history is especially valuable. Developer Masaru Taniguchi says the team noticed players using **Red Mage as a tank** and used that emergent tactic as inspiration for a new magic-user tank job. [FFXI11](#ffxi11)
 
 That is exactly the kind of feedback loop OpenLegend should support:
 
@@ -280,7 +280,7 @@ Players must coordinate:
 5. timing window;
 6. whether another party member can continue the chain.
 
-A coordinated group therefore has capabilities that do not exist in any one character sheet.
+A coordinated sequence creates an effect the attacks would not produce in isolation.
 
 ## 10. Magic Bursts turn party timing into cross-role composition
 
@@ -479,7 +479,7 @@ Original FFXI made distance socially/economically meaningful:
 - outposts;
 - later expansion travel.
 
-Classic reviews describe hundreds of hours before some transport options and substantial travel time. [FFXI23](#ffxi23)
+Bracken’s 2004 account describes hundreds of hours before some transport options and substantial travel time. [FFXI43](#ffxi43)
 
 Modern FFXI adds:
 
@@ -700,7 +700,7 @@ National missions raise rank and connect the player to:
 - transport permissions;
 - Conquest systems.
 
-Early FFXI linked open-world monster activity to **regional Conquest**, where national participation could affect region control and certain rewards/shop availability. RPGamer's 2003 review describes this as an institutional layer that made faction membership matter even while direct nation-vs-nation PvP was not the main game. [FFXI29](#ffxi29)
+RPGamer’s 2003 review describes **regional Conquest**: open-world monster activity affects territorial control, rewards and shop availability, making nation membership consequential without direct national PvP being central. [FFXI29](#ffxi29)
 
 The system is much less central to modern progression, but it remains an important precedent:
 
@@ -823,7 +823,7 @@ This supports different long-horizon goals:
 - collection;
 - social/endgame group leadership.
 
-**OpenLegend lesson:** persistent worlds survive longer when they support several durable identities rather than one universal “raid score.”
+**OpenLegend hypothesis:** several meaningful identities can offer more ways to keep enjoying a world than one mandatory progression score.
 
 ### Entry, objective, reward and persistence are different contracts
 
@@ -956,23 +956,7 @@ OpenLegend lesson:
 
 FFXI had to make a persistent world recognizable as Final Fantasy despite shared MMO constraints.
 
-The launch visual language includes:
-
-- stylized but comparatively grounded character proportions;
-- strongly differentiated races;
-- huge outdoor zones;
-- recognizable job armor;
-- monsters from Final Fantasy lineage;
-- weather/day/night;
-- spell/Weapon Skill VFX that make coordinated combat readable.
-
-RPGFan praised its character animation/world variety at launch while also noting muted colors and PC rendering limitations. [FFXI23](#ffxi23)
-
-Music was composed primarily by:
-
-- Naoshi Mizuta;
-- Kumi Tanioka;
-- Nobuo Uematsu contributions.
+Grounded, stylized characters, distinct races and job armor, expansive zones, familiar monsters, weather, day/night and coordinated-attack effects give the world its visual identity. Harris praised animation and variety but criticized muted colors and PC rendering limits. The score is primarily Naoshi Mizuta and Kumi Tanioka, with contributions from Nobuo Uematsu. [FFXI23](#ffxi23)
 
 The strongest aesthetic achievement is **place memory**:
 
@@ -997,7 +981,7 @@ The five launch-era assessments remain useful evidence of the original social co
 | **Greg Kasavin, GameSpot, PC, November 14, 2003** [FFXI09](#ffxi09)    | Job switching, coordinated attacks, presentation and established content/community made the game rewarding. Installation, unfamiliar controls, fees, compulsory grouping and slow initial combat obstructed access. This is a recommendation after play, not evidence of a later return or departure.                                                                                |
 | **Stephen Harris, RPGFan, PC, November 19, 2003** [FFXI23](#ffxi23)    | Story, recurring NPCs, complementary jobs and executed combat combinations made collective activity satisfying. He experienced helpful Japanese players, while acknowledging time/team dependence and visual/control problems. His positive cross-language experience differs from Tidwell’s.                                                                                        |
 | **Mike Bracken, RPGFan, PS2, May 28, 2004** [FFXI43](#ffxi43)          | He reported fourteen full days of play: story, varied pursuits and new professions sustained involvement. Yet a twelve-hour session could feel unproductive. Limited appearance choices, menu confusion, sparse instruction, PS2 visuals and narrow level-compatible party searches frustrated him. His “addiction” rhetoric is not evidence of well-being or a retention objective. |
-| **Mikel Tidwell, RPGamer, PC, November 14, 2003** [FFXI29](#ffxi29)    | After more than 150 hours, he had completed six missions and still lacked advanced jobs. Nations and Linkshell communities gave slow progress social purpose, but translation menus failed under time pressure. This is actual extended play with unresolved goals; his account of cultural separation is a situated disagreement with Harris, not a population estimate.            |
+| **Mikel Tidwell, RPGamer, PC, November 14, 2003** [FFXI29](#ffxi29)    | After over 150 hours, six missions were complete; advanced jobs remained locked. Nations and Linkshells supplied purpose, while translation menus failed under pressure. His cultural-separation account disagrees with Harris’s; it is not a population estimate.                                                                                                                   |
 | **Tyler Sager, Gaming Nexus, PC, December 30, 2003** [FFXI44](#ffxi44) | Preserved assessment: stable service, accessible character choices and extensive quests/social activity; lengthy installation, awkward interface, routine combat and demanding time commitment. The new partial retrieval confirms his initial skepticism changed into enjoyment, without establishing a later retention outcome.                                                    |
 
 **A return can recover the mechanics without recovering belonging.** Steven Messner’s **February 2020** return, republished June 2026, found pleasure in jobs, deliberate pacing and renewed exploration after difficult setup. NPC parties enabled progress but left him missing human companionship. He actually returned and played; whether he would continue remained unresolved. This is not October 2026 population evidence. [R26-01](#r26-01)
@@ -1177,7 +1161,7 @@ World mastery becomes infrastructure. **Next decision:** use a newly opened rout
 | Quests/events                  | Persistent quest/missions plus monthly/seasonal/service events                                                                            |
 | Building/settlements           | No freeform player settlement construction                                                                                                |
 | Endgame                        | Ambuscade encounters/exchanges, Omen objectives/branches, Odyssey expeditions/Gaol and Sortie conditions; distinct entry and reward rules |
-| Monetization                   | Box/digital collection + $12.95/30-day subscription; extra character options                                                              |
+| Monetization                   | US collection + $12.95/30 days for one character; extra characters and paid wardrobes (§31).                                              |
 | Current platform               | Windows service; PS2/Xbox 360 ended March 2016                                                                                            |
 | Current free-trial progression | Cap 75 and no fourteen-day expiry from September 30, 2026; social/economic restrictions remain (§31)                                      |
 
@@ -1271,7 +1255,7 @@ Classic party waits and travel helped create memorable social stories, but also 
 
 ## 40. Preservation and requirement audit
 
-The September record noted no FFXI-specific owner before G88. This October refresh preserves all 41 numbered sections, eight worked situations and FFXI01–57 anchors. It corrects the trial date, adds actual paid utility and continuity boundaries, strengthens commercial evidence, connects cosmology to national institutions, completes native/external creation, and distinguishes newly read reception from the earlier record. Recommendations remain hypotheses; independent final review is pending.
+The September record noted no FFXI-specific owner before G88. This October refresh preserves all 41 numbered sections, eight worked situations and FFXI01–57 anchors. It corrects the trial date, adds actual paid utility and continuity boundaries, strengthens commercial evidence, connects cosmology to national institutions, completes native/external creation, and distinguishes newly read reception from the earlier record. Recommendations remain hypotheses; independent final review is complete.
 
 | Requirement                                       | Coverage                                                                                                     |
 | ------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
@@ -1346,7 +1330,7 @@ For OpenLegend:
 
 <a id="ffxi10"></a>**FFXI10 — [Returning Adventurer Guide Vol. 6](https://we-are-vanadiel.finalfantasyxi.com/post/?id=721&lang=en).** Square Enix, 2023. Relevant progression/battle body reread October 28, 2026; FFXI55 preserves the narrower Sortie prerequisite.
 
-<a id="ffxi11"></a>**FFXI11 — [WE DISCUSS VANA'DIEL: Seekers job design](https://we-are-vanadiel.finalfantasyxi.com/post/?id=764&lang=en).** Square Enix. Developer interview with Yasuhiro Taniguchi; Rune Fencer was partly inspired by player-created Red Mage tanking.
+<a id="ffxi11"></a>**FFXI11 — [WE DISCUSS VANA'DIEL: Seekers job design](https://we-are-vanadiel.finalfantasyxi.com/post/?id=764&lang=en).** Square Enix. Relevant primary interview reread October 28, 2026; Masaru Taniguchi describes player Red Mage tanking inspiring Rune Fencer.
 
 <a id="ffxi12"></a>**FFXI12 — [10th Vana'diel Census: Combat/Magic Skills](https://www.playonline.com/ff11us/guide/development/census/10/3.html).** Square Enix. Official skill-family/merit data; historical census used for category evidence rather than current population.
 
@@ -1400,7 +1384,7 @@ For OpenLegend:
 
 <a id="ffxi37"></a>**FFXI37 — [Square Enix considered maintenance mode but player interest sustained support](https://www.gamespot.com/articles/square-enix-considered-ending-support-this-23-year-old-game-but-too-many-people-still-play-it/1100-6531645/).** GameSpot, 2025-05-19, reporting Yoji Fujito's Dengeki interview. Secondary current service-strategy evidence.
 
-<a id="ffxi38"></a>**FFXI38 — [Square Enix Support: FINAL FANTASY XI fee](https://support.na.square-enix.com/faqarticle.php?c=0&id=447&kid=59628&la=1&page=27&pv=10&ret=faq&sc=0&so=4).** Square Enix Support. Current $12.95 per 30 days base-service fee.
+<a id="ffxi38"></a>**FFXI38 — [Square Enix Support: FINAL FANTASY XI fee](https://support.na.square-enix.com/faqarticle.php?c=0&id=447&kid=59628&la=1&page=27&pv=10&ret=faq&sc=0&so=4).** Square Enix Support. US $12.95 per 30 days for one character; E07 separates basic service and options.
 
 <a id="ffxi39"></a>**FFXI39 — [2025 community install/return thread](https://www.reddit.com/r/ffxi/comments/1ny448s/did_you_know_that_the_critically_acclaimed_mmorpg/).** Reddit, October 2025. Qualitative current testimony that PlayOnline/account setup remains a notable onboarding barrier.
 
@@ -1500,7 +1484,7 @@ Accessed September 26, 2026. Primary guides and historical update text are disti
 
 <a id="r26-02"></a>**R26-02** — [Pete Davison, “Putting down the Zilart”](https://imnotdoctorwho.moegamer.net/2026/05/25/oneaday-day-717-putting-down-the-zilart/). May 25, 2026. Complete substantive body read through indexed retrieval after direct page challenge; personal play journal, not a tested guide.
 
-<a id="r26-03"></a>**R26-03** — [Steam most-helpful all-time, app 230330](https://steamcommunity.com/app/230330/reviews/?browsefilter=toprated). Full selected review bodies read October 28; dated returns and chosen goals. Ignore unsupported service-future or rule claims.
+<a id="r26-03"></a>**R26-03** — [Steam most-helpful all-time, app 230330](https://steamcommunity.com/app/230330/reviews/?browsefilter=toprated). Full selected review bodies read October 28; dated returns and chosen goals. Unsupported service-future or rule claims excluded.
 
 <a id="r26-04"></a>**R26-04** — [Steam weekly-helpful surface, app 230330](https://steamcommunity.com/app/230330/reviews/). Full selected bodies read October 28; displayed August dates omit year. Positive criticism and negative entry failure remain separate.
 
