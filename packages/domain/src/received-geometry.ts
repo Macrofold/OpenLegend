@@ -46,6 +46,7 @@ import {
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
 import { personalFactAlias } from './experience-source.js';
+import { nextId } from './data.js';
 import type { Position, WorldState } from './types.js';
 
 type Quad<T> = [T, T, T, T];
@@ -82,6 +83,8 @@ export interface ReceivedGeometryState {
   basis: string;
   /** Source provenance is independent of the eye used to certify current permission. */
   sourceBasis: string;
+  /** Opaque acquisition identity; dependency signatures are not copied into receipts. */
+  episodeId: string;
   frame: ObservationFrame;
   eye: Position;
   radius: number;
@@ -239,6 +242,7 @@ function patchBounds(fragment: GeometryFragment): Bounds3 {
 function emit(
   world: WorldState,
   input: NonNullable<ReturnType<typeof receptor>>,
+  state: ReceivedGeometryState,
   kind: 'surface-patch' | 'physical-boundary',
   value: ObservedSurfacePatch | ObservedBoundary,
   key: string,
@@ -250,7 +254,7 @@ function emit(
   return acquireObservation(world, input.observer, {
     origin: {
       kind: 'exposure',
-      episodeId: JSON.stringify(['geometry', input.basis]),
+      episodeId: state.episodeId,
       detectorId: JSON.stringify([kind, key]),
       measuredFrom: world.simTime,
       measuredThrough: world.simTime,
@@ -428,6 +432,7 @@ export function refreshReceivedGeometry(
     state = owner.geometry = {
       basis: input.basis,
       sourceBasis: input.sourceBasis,
+      episodeId: nextId(world, 'geometry-exposure'),
       frame: input.frame,
       eye: input.eye,
       radius: input.radius,
@@ -570,6 +575,7 @@ export function refreshReceivedGeometry(
       emit(
         world,
         input,
+        state,
         'surface-patch',
         {
           vertices: points,
@@ -709,6 +715,7 @@ export function refreshReceivedGeometry(
       const observation = emit(
         world,
         input,
+        state,
         'physical-boundary',
         {
           a,
@@ -1182,6 +1189,8 @@ export function validateReceivedGeometryState(
     !state.basis ||
     typeof state.sourceBasis !== 'string' ||
     !state.sourceBasis ||
+    typeof state.episodeId !== 'string' ||
+    !state.episodeId ||
     !state.frame ||
     !validPerceivedPoint(state.frame.positionAtObservation) ||
     (state.frame.forwardAtObservation !== undefined &&
