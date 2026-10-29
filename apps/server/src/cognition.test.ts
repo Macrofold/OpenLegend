@@ -449,14 +449,24 @@ describe('fixture: cognition vertical slice', () => {
         });
       }),
     );
+    // Admission journals real SQL before HTTP. Give that phase room, then cancel
+    // near the original deadline so the one-second receipt grace cannot win.
+    const deadlineMs = Date.now() + 2000;
     const pending = new MacrofoldBackend(s).judge({
       requestId: 'cancelled-original-deadline',
       signal: controller.signal,
-      deadlineMs: Date.now() + 100,
+      deadlineMs,
       state: {},
       questions: { notice: { type: 'noul', instructions: 'Did I notice it?' } },
     });
-    await dispatched;
+    await Promise.race([
+      dispatched,
+      pending.then((result) => {
+        throw new Error(`Request ended before dispatch: ${result.outcome}`);
+      }),
+    ]);
+    await new Promise((resolve) => setTimeout(resolve, Math.max(0, deadlineMs - Date.now() - 500)));
+    expect(Date.now()).toBeLessThan(deadlineMs);
     controller.abort();
     const result = await pending;
     expect(result.outcome).toBe('cancelled');

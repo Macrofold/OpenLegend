@@ -11,7 +11,7 @@ import {
   type ObserverSubject,
   type WorldState,
 } from '@open-legend/domain';
-import { entityLabel, projectEntityMarkers } from './entity-references.js';
+import { entityLabel, historicalAccountText } from './entity-references.js';
 import type { AttentionCandidate } from './recall.js';
 import { createHash } from 'node:crypto';
 
@@ -50,7 +50,7 @@ export function generalKnowledgeContext(world: WorldState, actorId: string) {
     ...(seeded ? { provenance: 'Authored starting understanding' } : {}),
     characters: characterCount(doc?.text ?? ''),
     maxCharacters: world.knowledgePolicy?.maxCharacters.general,
-    text: projectEntityMarkers(doc?.text ?? '', world, actorId),
+    text: historicalAccountText(doc?.text ?? ''),
   };
 }
 
@@ -79,7 +79,7 @@ export function subjectKnowledgeCandidates(
         {
           id: `notepad:${id}`,
           kind: 'knowledge' as const,
-          text: `Your map note about ${label}; read-only annotation, not an entity reference.\n${projectEntityMarkers(doc.text, world, actorId)}`,
+          text: `Your map note about ${label}; read-only annotation, not an entity reference.\n${historicalAccountText(doc.text)}`,
           embeddingText: `Map note about ${label}: ${doc.text}`,
           revision: JSON.stringify([doc.subjectId.kind, doc.revision, label]),
           required: false,
@@ -110,7 +110,7 @@ export function subjectKnowledgeCandidates(
       {
         id: `notepad:${id}`,
         kind: 'knowledge' as const,
-        text: `Notepad ${noteReference(actorId, doc.subjectId)} about ${label}${bound ? '' : '; no current identity binding'}; revision ${doc.revision}; ${doc.origin === 'authored-starting' ? 'authored starting understanding' : 'actor-edited understanding'}. ${characterCount(doc.text)}/${world.knowledgePolicy!.maxCharacters.subject} characters.\n${projectEntityMarkers(doc.text, world, actorId)}`,
+        text: `Notepad ${noteReference(actorId, doc.subjectId)} about ${label}${bound ? '' : '; no current identity binding'}; revision ${doc.revision}; ${doc.origin === 'authored-starting' ? 'authored starting understanding' : 'actor-edited understanding'}. ${characterCount(doc.text)}/${world.knowledgePolicy!.maxCharacters.subject} characters.\n${historicalAccountText(doc.text)}`,
         embeddingText: `Notes about ${name || 'a subject'}: ${doc.text}`,
         // A new preferred name changes semantic search text; exposure tokens do not.
         revision: JSON.stringify([doc.revision, name ?? '']),

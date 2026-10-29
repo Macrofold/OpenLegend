@@ -752,7 +752,9 @@ export function memoryForModel(
     at: memory.at,
     kind: memory.kind,
     source: memory.source,
-    summary: memory.summary,
+    // Canonical routing annotations in old prose are not retained recognition.
+    // Participant IDs below keep their own source scope after a stranger returns.
+    summary: historicalAccountText(memory.summary),
     entityIds: memory.entityIds.map(participant),
     ...(memory.speakerId ? { speakerId: participant(memory.speakerId) } : {}),
     ...(memory.eventType ? { eventType: memory.eventType } : {}),

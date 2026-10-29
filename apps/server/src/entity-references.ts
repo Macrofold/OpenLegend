@@ -4,6 +4,7 @@ import {
   recognizesSubject,
   currentBodyGrant,
   identitiesForEntity,
+  canAddressRememberedSubject,
   canonicalJson,
   coachingFor,
 } from '@open-legend/domain';
@@ -252,10 +253,11 @@ export function historicalAccountText(text: string): string {
   return text.replace(/[ \t]*\(ID:[^()\s]+\)/g, '');
 }
 
-/** Persist full identities in intentions, then reproject annotations in a later context. */
+/** A saved canonical annotation requires an acquired person association. Merely
+ * individuating today's unfamiliar body cannot identify an earlier unknown one. */
 export function projectEntityMarkers(text: string, world: WorldState, observerId: string): string {
   return text.replace(/\(ID:([^()\s]+)\)/g, (_original, id: string) =>
-    recognizesSubject(world, observerId, id)
+    canAddressRememberedSubject(world, observerId, id)
       ? `(ID:${entityHandle(world, observerId, id)})`
       : '(unrecognized identity)',
   );
