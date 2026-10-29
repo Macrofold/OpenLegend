@@ -91,6 +91,7 @@ interface PreparedRows {
   expired: string;
   rows: number;
   ownedAppends: Set<RowChange>;
+  ownedCreations: Set<RowChange>;
   parents: Map<string, Set<string>>;
   reclaimed: Set<string>;
 }
@@ -128,6 +129,16 @@ export function preparedRecordChanges(changes: RecordChanges): boolean {
 export function ownedAppendRow(changes: RecordChanges, row: RowChange): boolean {
   const proof = preparedRows.get(changes);
   return !!proof?.ownedAppends.has(row) && sameRow(row, proof.signatures.get(row));
+}
+/** Complete resident membership proves absence only in this exact accepted
+ * predecessor. Partial history and caller-invented baselines grant no proof. */
+export function ownedCreationRow(changes: RecordChanges, row: RowChange): boolean {
+  const proof = preparedRows.get(changes);
+  return (
+    !!proof?.acceptedParents &&
+    proof.ownedCreations.has(row) &&
+    sameRow(row, proof.signatures.get(row))
+  );
 }
 /** The store binds preparation to its exact accepted predecessor/head. A visited
  * existing parent is already canonical (possibly in the accepted journal suffix);
@@ -426,6 +437,7 @@ export class WorldRecords {
     if (before && !predecessor) predecessorTokens.set(before, (predecessor = {}));
     const retirement = this.retirements.get(after);
     const ownedAppends = new Set<RowChange>();
+    const ownedCreations = new Set<RowChange>();
     const existingParents = new Map<string, Set<string>>();
     const required = selectedTables ? new Set(selectedTables) : undefined;
     if (required)
@@ -445,6 +457,7 @@ export class WorldRecords {
       slot: string,
       position: number,
       oldPosition = position,
+      knownAbsent = false,
     ) => {
       if (required && !required.has(node.table)) return;
       if (old === next && oldPosition === position && !this.needsHotPrune) return;
@@ -490,7 +503,7 @@ export class WorldRecords {
           payload !== encodedBody(node, old)
         ) {
           const rows = changes.writes.get(node.table) ?? [];
-          rows.push({
+          const row: RowChange = {
             id,
             parent,
             slot,
@@ -500,7 +513,9 @@ export class WorldRecords {
             extra: Object.values(node.columns ?? {}).map((column) =>
               column.value(next as JsonRecord, path),
             ),
-          });
+          };
+          rows.push(row);
+          if (row.create && knownAbsent) ownedCreations.add(row);
           changes.writes.set(node.table, rows);
           changes.rows++;
         }
@@ -512,6 +527,8 @@ export class WorldRecords {
         if (previous === current && !(this.needsHotPrune && child.node.table === 'world_settings'))
           continue;
         const childPath = field === '$' ? path : [...path, field];
+        const complete =
+          !!before && child.complete && isImmutableData(previous) && isImmutableData(current);
         if (child.mode === 'one') {
           visit(child.node, previous ?? undefined, current ?? undefined, childPath, id, field, 0);
           continue;
@@ -547,6 +564,9 @@ export class WorldRecords {
           const prior = new Map(
             a.slice(start).map((entry, i) => [key(entry, start + i), { entry, index: start + i }]),
           );
+          // An append hint does not by itself prove that a new key is absent
+          // from the retained prefix. Complete collections can check it here.
+          const prefixIds = complete && start ? new Set(a.slice(0, start).map(key)) : undefined;
           const seen = new Set<string>();
           for (let i = start; i < b.length; i++) {
             const entry = b[i],
@@ -570,6 +590,7 @@ export class WorldRecords {
               String(position),
               position,
               oldIndex,
+              !!complete && !previousEntry && !prefixIds?.has(entryId),
             );
             if (
               (child.node.table === 'mind_temporal_segments' ||
@@ -626,6 +647,8 @@ export class WorldRecords {
                   id,
                   key,
                   0,
+                  0,
+                  !!complete && !Object.hasOwn(previous, key),
                 );
               continue;
             }
@@ -760,6 +783,7 @@ export class WorldRecords {
               key,
               position,
               oldPosition,
+              !!complete && !prior,
             );
             index++;
             oldEntries.delete(key);
@@ -847,6 +871,7 @@ export class WorldRecords {
         expired: JSON.stringify([...(changes.expired ?? [])]),
         rows: changes.rows,
         ownedAppends,
+        ownedCreations,
         parents: provenParents,
         reclaimed: new Set([
           ...(retirement?.rows.get('mind_perception_values') ?? []),

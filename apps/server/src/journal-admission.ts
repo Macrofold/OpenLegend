@@ -11,6 +11,7 @@ import {
 import { RECORD_NODES, RECORD_PARENTS, RECORD_PATH_DEPTHS } from './world-record-schema.js';
 import {
   ownedAppendRow,
+  ownedCreationRow,
   ownedParentRow,
   ownedPhysicalReclamation,
   preparedRecordChanges,
@@ -315,6 +316,7 @@ export function prepareJournalConstraints(
   );
   const wanted = new Map<string, Set<string>>();
   const positions = new Map<string, Array<{ parent_id: string; position: number }>>();
+  const positionQueries = new Map<string, Array<{ parent_id: string; position: number }>>();
   const positionKeys = new Set<string>();
   const physicalParents = new Map<string, string>();
   const add = (table: string, id: string) => {
@@ -331,14 +333,21 @@ export function prepareJournalConstraints(
       // their within-transition identities and positions.
       const newParent = ownsPreparation && !!parent && created.get(parent)?.has(row.parent);
       const append = ownsPreparation && ownedAppendRow(changes, row);
-      if (row.create && !append && !newParent) add(table, row.id);
+      const complete = ownsPreparation && ownedCreationRow(changes, row);
+      if (row.create && !append && !newParent && !complete) add(table, row.id);
       if (row.create && !append && !newParent && journalRecordPath(table, row.id).list) {
         const positionKey = JSON.stringify([table, row.parent, row.position]);
-        if (!positionKeys.has(positionKey)) {
+        const probe = { parent_id: row.parent, position: row.position };
+        const checks = positions.get(table) ?? [];
+        checks.push(probe);
+        positions.set(table, checks);
+        // Complete resident membership replaces the SQL lookup, not validation
+        // of conflicting positions in the accepted pending suffix.
+        if (!complete && !positionKeys.has(positionKey)) {
           positionKeys.add(positionKey);
-          const probes = positions.get(table) ?? [];
-          probes.push({ parent_id: row.parent, position: row.position });
-          positions.set(table, probes);
+          const probes = positionQueries.get(table) ?? [];
+          probes.push(probe);
+          positionQueries.set(table, probes);
         }
       }
       if (
@@ -372,7 +381,7 @@ export function prepareJournalConstraints(
     );
     params.push(worldId, [...ids]);
   }
-  for (const [table, probes] of positions) {
+  for (const [table, probes] of positionQueries) {
     queries.push(`SELECT '${table}' AS table_name,t.id,t.parent_id,t.position FROM ${table} t
       JOIN jsonb_to_recordset(?::jsonb) AS p(parent_id TEXT,position BIGINT)
         ON t.parent_id=p.parent_id AND t.position=p.position WHERE t.world_id=?`);
@@ -467,8 +476,8 @@ export async function journalConstraints(
         ids.add(row.id);
         slots.set(slot, ids);
       }
-  const exists = (table: string, id: string): boolean => {
-    let result = present.has(key(table, id));
+  const exists = (table: string, id: string, known = false): boolean => {
+    let result = known || present.has(key(table, id));
     for (const entry of overlays) {
       if (entry.writes.get(table)?.has(id)) result = true;
       if (entry.removedBy(table, id)) result = false;
@@ -489,8 +498,7 @@ export async function journalConstraints(
       if (
         parent &&
         !created.get(parent)?.has(row.parent) &&
-        !(ownsPreparation && ownedParentRow(changes, parent, row.parent)) &&
-        !exists(parent, row.parent)
+        !exists(parent, row.parent, ownsPreparation && ownedParentRow(changes, parent, row.parent))
       )
         throw new Error('A journal record has no committed parent.');
       const owner = table === 'sim_placements' ? physicalParents.get(row.id) : undefined;

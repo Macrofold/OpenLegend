@@ -37,6 +37,9 @@ export interface RecordCollection {
   unordered?: boolean;
   /** Ordered rolling maps retain surviving ordinals; genuine reorders renumber. */
   stablePositions?: boolean;
+  /** This collection never omits canonical members during load or compaction.
+   * Only an exact accepted immutable predecessor may prove new members absent. */
+  complete?: boolean;
 }
 const leaf = (table: string): RecordNode => ({ table });
 const map = (
@@ -215,20 +218,36 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         },
       }),
       perceptionEvidence: map('mind_perception_owners', {
-        originals: { ...map('mind_perception_originals'), unordered: true },
+        originals: { ...map('mind_perception_originals'), unordered: true, complete: true },
         // Rolling maps preserve iteration order without renumbering surviving rows.
-        current: { ...map('mind_perception_current'), stablePositions: true },
+        current: { ...map('mind_perception_current'), stablePositions: true, complete: true },
         // Confirmation clocks must not rewrite the unchanged scene and attention
         // candidates. These retain their existing ordered, observer-owned values.
         geometry: one('mind_perception_geometry', {
-          fragments: list('mind_perception_geometry_fragments', 'key'),
-          boundaries: list('mind_perception_geometry_boundaries', 'id'),
+          fragments: { ...list('mind_perception_geometry_fragments', 'key'), complete: true },
+          boundaries: { ...list('mind_perception_geometry_boundaries', 'id'), complete: true },
         }),
         attention: one('mind_perception_attention', {
-          candidates: { ...map('mind_perception_attention_candidates'), stablePositions: true },
-          latches: { ...map('mind_perception_attention_latches'), stablePositions: true },
-          relationDirty: { ...map('mind_perception_attention_dirty'), stablePositions: true },
-          relationScans: { ...map('mind_perception_attention_scans'), stablePositions: true },
+          candidates: {
+            ...map('mind_perception_attention_candidates'),
+            stablePositions: true,
+            complete: true,
+          },
+          latches: {
+            ...map('mind_perception_attention_latches'),
+            stablePositions: true,
+            complete: true,
+          },
+          relationDirty: {
+            ...map('mind_perception_attention_dirty'),
+            stablePositions: true,
+            complete: true,
+          },
+          relationScans: {
+            ...map('mind_perception_attention_scans'),
+            stablePositions: true,
+            complete: true,
+          },
         }),
       }),
       mapMarkers: actorMaps('mind_map_markers'),
@@ -270,7 +289,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
                 decode: (value) => decodeEvidenceOwner(value, 'receipts'),
               },
             },
-            captures: { ...map('mind_temporal_captures'), unordered: true },
+            captures: { ...map('mind_temporal_captures'), unordered: true, complete: true },
             supports: map('mind_temporal_supports'),
           }),
         }),
