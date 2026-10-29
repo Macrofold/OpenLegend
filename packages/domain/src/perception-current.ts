@@ -68,11 +68,29 @@ export function currentFacetOriginal(
 ): ReceivedObservation {
   return currentOriginal(owner, readOnlyDraftView(record).original);
 }
+const exposures = new WeakMap<
+  ObserverLife,
+  WeakMap<ReceivedObservation, { episodeId: string; value: ObservationExposure }>
+>();
 export function currentFacetExposure(
   owner: PerceptionEvidenceOwner,
-  record: CurrentFacetRecord,
+  input: CurrentFacetRecord,
 ): ObservationExposure {
-  return { observer: currentFacetObserver(owner), episodeId: readOnlyDraftView(record).exposure };
+  const observer = currentFacetObserver(owner),
+    record = readOnlyDraftView(input),
+    episodeId = record.exposure;
+  if (!isImmutableData(observer) || !isImmutableData(record)) return { observer, episodeId };
+  const source = currentFacetOriginal(owner, record);
+  if (!isImmutableData(source)) return { observer, episodeId };
+  let sources = exposures.get(observer);
+  const known = sources?.get(source);
+  if (known?.episodeId === episodeId) return known.value;
+  // The weak original bounds the memo to actual retained evidence. A lifetime
+  // observer→episode string map would retain every previously encountered episode.
+  const value = immutableDataSnapshot({ observer, episodeId });
+  if (!sources) exposures.set(observer, (sources = new WeakMap()));
+  sources.set(source, { episodeId, value });
+  return value;
 }
 export function currentFacetTimes(
   owner: PerceptionEvidenceOwner,
