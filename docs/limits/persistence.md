@@ -446,11 +446,13 @@ The former SQLite writer/read workers, 128-RPC bounds and 128-statement caches w
 
 ## SB21
 
-**Current 2026-09-28 · Restrictiveness: Safe.**
+**Current boundary with selected correction target · Restrictiveness: Safe.**
 
-**Commands and AI results still use synchronous saves.** Player commands, AI characters' finished actions and replies (including conversation updates) and other background-job results, world-editor changes, pause/resume and loads change the live world only after their own save completes, so each holds the mutation queue until it is written. Only simulation progress, which is already visible before it is saved, uses background saves. Under a slow database these synchronous saves are what still freeze the world ([evidence](../verification/ordered-async-saves.md#matched-scene-runs-pf00-delay-cases)).
+Commands and accepted AI effects hold mutation ownership until durable acceptance; background native progress already continues during its progress save. Eligible experimental journal writes can confirm after their exact delta and receipt commit, before ordinary query tables finish. Unsupported transitions retain synchronous atomic table application. This preserves acknowledged outcomes through crashes; releasing the existing command await without changing its later snapshot installation could overwrite newer world progress.
 
-**Reason / tradeoff:** Preserves the durable publication boundary (no effect is visible before it is durable). Pipelining these writes would need durability-gated view publication; see [PF05](../maintainers/performance.md#pf05--public-view-and-browser-responsiveness).
+The selected [runtime correction](../projects/attention-and-scenes-runtime-design.md#6-append-storage-and-a-short-durable-command-barrier) shortens that barrier through compact preparation, immutable suffix segments and the existing journal. It does not publish speculative command effects. Owner-proven append ranges will count actual state-dependent constraint probes instead of treating every appended row as an unknown constraint; the existing **512-probe**, **32-revision**, **32 MiB encoded-debt**, one-worker and eight-revision online-batch bounds remain. Pending prepared/worker buffers must be measured separately; encoded debt is not a heap bound. Unsupported constraints still use the synchronous owner. This target is not yet implemented or qualified.
+
+**Reason / tradeoff:** native work and optional AI can continue independently while preserving durable command results and coherent delayed readers. Slow durable writes can still hold the world, as the [controlled storage-delay evidence](../verification/ordered-async-saves.md#matched-scene-runs-pf00-delay-cases) demonstrates. Ordinary-table application still consumes real CPU/database capacity and must remain bounded. [Journal contract](../projects/performance-overhaul/journal-contract.md) and [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) own implementation and acceptance; [PF05](../maintainers/performance.md#pf05--public-view-and-browser-responsiveness) retains public-delivery qualification.
 
 ## RW-L01 — One protected world history
 

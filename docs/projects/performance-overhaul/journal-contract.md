@@ -12,6 +12,10 @@ Today a click waits while the database updates the world and its searchable hist
 
 This is an implementation experiment, not a measured improvement or a completed architecture. Current full-game evidence still fails smooth 3×. The five ordinary observation slots remain exhausted. Focused durable-boundary and recovery checks do not establish complete game capacity.
 
+## Selected compact-evidence extension
+
+The [PS04-A runtime design](../attention-and-scenes-runtime-design.md#6-append-storage-and-a-short-durable-command-barrier) specifies the unimplemented next correction: immutable append suffixes for received values/temporal receipts, compact online application inputs without whole-world roots, and owner-proven append-range admission. It preserves this contract's exact durable acknowledgement, ordered application and coherent read fences. The selected admission target bounds actual constraint probes at 512 rather than using safely proved append-row count as a proxy; 32 revisions/32 MiB, worker/batch bounds and unsupported-family synchronous fallback remain. Current row-based admission and the historical trials below remain implementation evidence, not proof of that target. Full recovery/worker qualification below remains required.
+
 ## Selected implementation and cost
 
 Reuse the existing canonical record changes, one world revision, PostgreSQL authority, history/memory owners and ordered service publication. Journal data contains typed canonical row changes, exact changed event bodies and their personal evidence, not SQL or instructions to rerun gameplay. The journal identifies the world, durable generation, predecessor and successor revision. Query tables have an explicit applied revision. A separate bounded application transaction can write those tables without holding the command-append connection for its entire duration; one game-server reservation protects the primary and every application connection; independent game servers still require exclusive acquisition.

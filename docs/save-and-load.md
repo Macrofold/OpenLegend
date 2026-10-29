@@ -78,6 +78,8 @@ Browser connection opening and closing join the existing world-mutation queue in
 
 ### Background and synchronous world saves
 
+The selected [compact runtime target](projects/attention-and-scenes-runtime-design.md#6-append-storage-and-a-short-durable-command-barrier) extends the existing save/journal owners with physical suffix segments, exact changed-owner preparation and bounded application inputs. It preserves the durable acknowledgement and restoration rules below. These representation/admission changes are unimplemented; the current-format identifier changes only when all actual codecs and consumers change together.
+
 Between checkpoints, the database itself is the save: every change to the world is written to it. All changes to the world take turns in one line (the `WorldService` mutation queue), one at a time. Changes are saved in one of two ways:
 
 - **Background save.** The world's own simulation progress — people and animals moving, needs changing, computed routes — is saved about once per real second. It takes its turn in the line only to prepare the save, then leaves; the database write happens while the game keeps running. This progress is already shown to players before it is saved, as it always was. In code this is `WorldService.saveProgress` and `backgroundSave`.

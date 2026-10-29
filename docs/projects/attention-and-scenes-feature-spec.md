@@ -4,7 +4,7 @@
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | In progress | Supported core regression and controlled semantic behavior are verified; normal-speed, operating-scale and broader scene acceptance remain open. | 2026-10-29   |
 
-**Architecture consulted and implementation reconciled 2026-10-28 19:50 UTC.**
+**Architecture consulted 2026-10-29 01:40 UTC; responsive-runtime design updated at the same time.**
 
 **Supported attention/memory core implemented; broader scene proposals remain separate.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds, timed speech and voice-media delivery remain separate proposals outside the implemented core.
 
@@ -356,6 +356,12 @@ A crowd's authored attention rule applies because of its actual situation. A ser
 
 Exact counts and thresholds remain qualified tuning rather than a universal attention law. The [PS limits inventory](../limits/product-scalability.md) owns attention/scene restrictions; the [hearing inventory](../limits/hearing-and-speech.md) retains current acoustic and caption settings. This proposal does not replace those numbers with unrelated research-study capacities.
 
+### 11.6 Responsive advancement without weaker perception
+
+**Selected implementation target; performance acceptance remains open.** The world continues while a character's AI interprets received facts. Due movement, physical consequences, actual sensing and required evidence finish in their native order; an AI answer becomes a possible later action checked against the world at that time. A late answer cannot undo an injury or recover an unseen route. Existing cause admission, model deadlines, spending and concurrency remain unchanged: this creates no periodic call entitlement.
+
+[Compact perception and independent runtime completion](attention-and-scenes-runtime-design.md) specifies the corrective implementation. Share exact received values and frames without embedding whole original observations in movement; update descriptions only when their inputs change; append new stored evidence without rewriting its growing collection. Optional detailed menus/history may load when opened while required visible controls stay current. Confirm commands after a short durable save, then apply ordinary database tables in the background. Preserve the current clock, sensing cadence, attention/retention defaults, chronology, privacy and source inspection. This is a performance correction, not a reduction in what characters can perceive or remember.
+
 ## 12. Concrete journeys and failure cases
 
 ### AS-J01 — Follow a conversation in a busy room
@@ -442,6 +448,7 @@ For the core attention slice, demonstrate:
 - A useful older experience becomes an explicitly less precise account while a trivial sequence disappears. Expired detail cannot survive in prose, vectors, retired summaries, handles or a hidden source archive. Exact support and approximate impression provenance have distinct correction behavior.
 - Correction, privacy forgetting, stale provider completion and restore preserve scope and original ages without replay, renewed discovery, duplicate memory or reintroduced forgotten facts. Include cold reads and affected saved snapshots.
 - Common exact values are shared while different observer variants remain exact. One actor cannot read another's historical receipt. Attention rotation cannot reset a relation alarm, and repeated ordinary proximity reuses a valid quiet continuation without repeated paid calls. Discovery reserve/dispatch/failure/restore follows one finite allowance.
+- Complete the [runtime correction acceptance](attention-and-scenes-runtime-design.md#10-acceptance-and-reporting): equal received/captured/cold facts, current validity of delayed actions, uninterrupted native progress during optional AI/read work, bounded append/reclamation and actual configured-1× measurements. Existing gameplay defaults stay fixed.
 - Account for native observer/source work, received-geometry preparation, recent writes/receipt metadata, complete retained closure and deletion lag, scene bytes, oldest unconsidered age, queue/provider/publication delay and cost. Compare ordinary-thinking-only with finite free-interval discovery; pure movement/familiarity/refresh must dispatch no model turns. Saturation/acceleration must not create a catch-up call debt. Dozens/hundreds, dense first exposure and ten-year retained-data capacity require their own qualified envelopes; no fixture proves semantic quality.
 
 The [verification record](../verification/attention-and-memory-core.md) identifies demonstrated native and fixture scope. Unqualified scenarios remain required; these criteria alone are not evidence that they passed.

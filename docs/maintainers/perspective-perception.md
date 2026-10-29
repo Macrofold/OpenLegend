@@ -18,6 +18,8 @@ Module A owns what an observer is permitted to detect, classify, associate, reco
 
 The inspected source baseline is `Macrofold/OpenLegend:codex/design-stealth-00-contracts` at `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`. Source inspection establishes existing foundations and missing behavior; it establishes no runtime, model-quality, capacity or player-enjoyment result. The current implementation boundary above records the selected integrated base; the source audit is design evidence.
 
+The [PS04-A runtime correction plan](../projects/attention-and-scenes-runtime-design.md) owns the outstanding compact representation, exact current/history/cut conversion, incremental ownership and append-storage work. PP's supported semantics remain required throughout that conversion; it does not close broader PP07/SAI-A acceptance or add future producers.
+
 ## Design disposition and existing work
 
 This design closes the observer evidence, recognition and retention slice, plus [ND03](needs-design.md#nd03--world-authored-stats-checks-and-their-effects)'s selected visual/recognition Perception consumers. It does not complete broader stat consumers, [ND16](needs-design.md#nd16--hearing-and-communication-beyond-direct-path-speech) hearing/communication, [ND19](needs-design.md#nd19--older-memory-transformation-and-dream-reinterpretation) memory transformation, or their implementation and gameplay acceptance. Broad central design-register and gameplay-priority reconciliation belongs to the final integration owner; these named A overlaps are the narrowly closed design slices.

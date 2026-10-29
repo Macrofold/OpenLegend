@@ -8,7 +8,7 @@
 
 **Speech integration:** [SPK](../maintainers/speech-and-social-perception.md) and its [technical design](speech-and-social-perception-tech-design.md) replace ordinary Conversation membership through exact actor/source/request ownership, permitted speech evidence and bounded history selection before hydration. The target sections below consume that replacement and the current WorldComposer/Events interface; they do not retain join/leave/merge state or restore Talk. Keep complete selected structured meaning, not only a rendered sentence. Source identity follows the shared evidence-dependent recognition policy: an unfamiliar first-heard voice alone does not identify the canonical speaker; familiarity, evidence quality and the installed Perception rule govern voice recognition. Legitimate recognized identity can survive loss of sight independently of name knowledge. Existing independently accepted outing/item/action terms, private scope and actual hearing remain required. Runtime and this project's other scene/compact-meaning/attention gates remain unchanged.
 
-**Architecture consulted and current evidence/publication implementation reviewed 2026-10-29 00:23 UTC.** §§5/7/8 specify the selected [core attention design](attention-and-scenes-research.md) for [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording). Supported native evidence, attention, source retention and ordinary consumers are implemented. The [verification record](../verification/attention-and-memory-core.md) distinguishes demonstrated deterministic, database, browser and controlled live behavior from remaining regression and scale qualification. The few-second objective is latency after a justified decision, not a recurring model-call cadence.
+**Architecture consulted 2026-10-29 01:40 UTC; compact-runtime extension designed at that time. Supported implementation review remains recorded in the verification owner.** §§5/7/8 specify the selected [core attention design](attention-and-scenes-research.md) for [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording). Supported native evidence, attention, source retention and ordinary consumers are implemented. The [verification record](../verification/attention-and-memory-core.md) distinguishes demonstrated deterministic, database, browser and controlled live behavior from remaining regression and scale qualification. The few-second objective is latency after a justified decision, not a recurring model-call cadence.
 
 ## Shared stealth integration
 
@@ -350,6 +350,8 @@ Restore preserves original ages, impressions, exact support and coverage, rebuil
 
 ### 5.8 Storage, APIs and implementation seams
 
+The [runtime correction contract](attention-and-scenes-runtime-design.md#6-append-storage-and-a-short-durable-command-barrier) specifies the selected physical append layout and ownership refinements still needed by these owners. Logical chunked persistence exists; efficient suffix-only physical append remains unimplemented.
+
 The following are additions to existing owners, not new services. Implement the producer/consumer cutover together; no old-format adapters, `V2` schemas, duplicate mind stores or compatibility readers.
 
 | Existing owner                                                                | Required implementation contract                                                                                                                                                                                                                      |
@@ -475,6 +477,12 @@ The selected world foreground capacity is a configurable gameplay limit, not mea
 Compact expressive meaning is now selected and technically specified in §§3.4–3.6/6.4. This replaces its earlier design gate; runtime implementation and qualification remain open. The exact attended slice still finishes independently. Keep ongoing aggregate vocal activity, timed speech, broader joint work, crowds and unattended operation under their separate existing gates. Compact source form authorizes none of their clocks, acoustic masking, collective choices or new physical effects.
 
 Implement the selected meaning representation through the existing source/hearing, memory, actor-decision and conversation owners together. Keep its selected observation/hearing policy in the world-owned profile. A materially different supported world could require exact speech throughout while reusing the same source discriminant, or exchange nonverbal meaning only through an actually supported sense; changing a string does not install that sense. No speculative scheduler, loader or scene service is required.
+
+### 7.4 Compact runtime and independent completion
+
+The selected [runtime correction design](attention-and-scenes-runtime-design.md) is the implementation contract for PS04-A's measured work amplification. It specifies one compact current/history sample form, flat pose/appearance references, exact change dependencies, changed-leaf finalization, incremental reference ownership, suffix-segment persistence, bounded existing-journal admission and selective public readers. These corrections are designed, not implemented. The current code still expands full original observations inside movement values and performs avoidable repeated work; the existing change-fed scoring and shared pool do not establish efficient complete behavior.
+
+AI calls already run asynchronously. Required native outcomes and exact received evidence remain ordered; optional interpretation, presentation and post-acceptance table application may finish later. Late proposals use current effect-specific admission without requiring an unchanged whole world. The design preserves current gameplay/defaults, model admission and acknowledged-command durability. Its R1–R7 sequence, caller map and acceptance supplement §§5/8; they do not replace broader vision, investigation, combat or scene qualification.
 
 ## 8. Verification and completion
 
