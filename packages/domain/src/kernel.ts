@@ -8178,7 +8178,8 @@ function* updateEncounters(
         : frame.nearby(actor.position, radius, 'contact');
       nativePrepared.set(actor.id, candidates);
     } else {
-      const changed = timing.sampledSight ? undefined : frame.changedPeople(actor.id);
+      const changed = frame.changedPeople(actor.id);
+      if (changed?.size === 0) continue;
       candidates = changed
         ? frame.selectedPeople(actor.position, radius + 2, changed)
         : frame.nearbySight(actor.id, actor.position, radius + 2);
@@ -8343,9 +8344,14 @@ function* updateEncounters(
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
-    const changedPeople = timing.sampledSight ? undefined : frame.changedPeople(actor.id);
+    // A due sample refreshes received evidence below; it does not invalidate an
+    // exact unchanged physical relation. Unknown dependencies still return undefined.
+    const changedPeople = frame.changedPeople(actor.id);
     let seen: string[];
-    if (changedPeople) {
+    if (changedPeople?.size === 0) {
+      countDomainWork('sensoryPairReuseObservers');
+      seen = previous;
+    } else if (changedPeople) {
       countDomainWork('sensoryPairReuseObservers');
       const retained = previous.filter((id) => !changedPeople.has(id));
       const candidates =
@@ -8363,7 +8369,7 @@ function* updateEncounters(
       seen = candidates.filter((e) => e.id !== actor.id && e.alive && sees(e)).map((e) => e.id);
     }
     let objectIds =
-      !timing.sampledSight && !frame.objectsChanged(actor.id) && original.visibleObjects?.[actor.id]
+      !frame.objectsChanged(actor.id) && original.visibleObjects?.[actor.id]
         ? original.visibleObjects[actor.id]!
         : frame
             .nearby(actor.position, radius, 'objects')

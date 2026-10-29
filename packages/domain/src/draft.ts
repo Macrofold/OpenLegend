@@ -109,8 +109,9 @@ const recordMapSuccessors = new WeakMap<
   object,
   { next: WeakRef<object>; changed: ReadonlySet<string> }
 >();
-/** Exact changed keys for key-only record maps, certified by publication rather than a caller hint.
- * Replaced maps, forks and collected/long lineages deliberately use the full codec. */
+/** Published write lineage is cheap when available. Otherwise compare immutable
+ * row identities on demand, never on every publication merely to prepare a future
+ * reader. Unknown mutable data and ordering changes keep the complete codec. */
 export function recordMapChangesBetween(
   before: object,
   after: object,
@@ -121,11 +122,27 @@ export function recordMapChangesBetween(
   for (let steps = 0; cursor !== after && steps < 1024; steps++) {
     const link = recordMapSuccessors.get(cursor),
       next = link?.next.deref();
-    if (!link || !next) return;
+    if (!link || !next) break;
     for (const id of link.changed) changed.add(id);
     cursor = next;
   }
-  return cursor === after ? changed : undefined;
+  if (cursor === after) return changed;
+  if (!isImmutableData(before) || !isImmutableData(after)) return;
+  const old = before as Record<string, unknown>,
+    current = after as Record<string, unknown>,
+    oldKeys = Object.keys(old),
+    nextKeys = Object.keys(current),
+    retained = oldKeys.filter((key) => Object.hasOwn(current, key));
+  let position = 0,
+    appended = false;
+  for (const key of nextKeys) {
+    if (!Object.hasOwn(old, key)) appended = true;
+    else if (appended || retained[position++] !== key) return;
+  }
+  const exact = new Set<string>();
+  for (const key of oldKeys) if (old[key] !== current[key]) exact.add(key);
+  for (const key of nextKeys) if (!Object.hasOwn(old, key)) exact.add(key);
+  return exact;
 }
 /** Exact immutable write lineage, bounded to one routine persistence window. Forks,
  * mutable builders, collected links and long gaps deliberately use the complete diff. */
@@ -785,42 +802,6 @@ export function finishWorld(
       if (before && after && before !== after && Object.isFrozen(before))
         recordMapSuccessors.set(before, { next: new WeakRef(after), changed });
     };
-    // Current evidence changes a few rows in a much larger visible collection.
-    // Compare opaque immutable row identities once, then let reference accounting
-    // and persistence consume the same exact delta instead of rebuilding graphs.
-    // A reorder must use the complete codec: key equality alone cannot prove order.
-    const publishCurrentMap = (
-      before: Record<string, unknown> | undefined,
-      after: Record<string, unknown> | undefined,
-    ) => {
-      if (
-        !before ||
-        !after ||
-        before === after ||
-        !isImmutableData(before) ||
-        !isImmutableData(after)
-      )
-        return;
-      const oldKeys = Object.keys(before),
-        nextKeys = Object.keys(after),
-        retained = oldKeys.filter((key) => Object.hasOwn(after, key));
-      let position = 0,
-        appended = false;
-      for (const key of nextKeys) {
-        if (!Object.hasOwn(before, key)) appended = true;
-        else if (appended || retained[position++] !== key) return;
-      }
-      const changed = new Set<string>();
-      for (const key of oldKeys) if (before[key] !== after[key]) changed.add(key);
-      for (const key of nextKeys) if (!Object.hasOwn(before, key)) changed.add(key);
-      publishMap(before, after, changed);
-    };
-    for (const [actorId, after] of Object.entries(result.perceptionEvidence ?? {})) {
-      const before = base.perceptionEvidence?.[actorId];
-      if (before === after) continue;
-      publishCurrentMap(before?.current, after.current);
-      publishCurrentMap(before?.originals, after.originals);
-    }
     if (!perceptionRootReplaced) {
       if (perceptionIds.size)
         publishMap(
