@@ -2042,24 +2042,15 @@ const CURRENT_BODY_FACET_KINDS = [
   'observed-motion',
 ] as const;
 /** Exact selected IDs avoid traversing and copying every unattended body's detail. */
-function selectedCurrentSupports(
-  world: WorldState,
-  observerId: string,
+function selectedCurrentFacets(
   current: PerceptionEvidenceOwner['current'] | undefined,
   exposures: ReadonlyMap<string, string>,
-  measuredSubjects?: ReadonlySet<string>,
-): LiveFacetSupport[] {
+): CurrentFacetRecord[] {
   const held = current && readOnlyDraftView(current);
   return [...exposures].flatMap(([id, exposure]) =>
     CURRENT_BODY_FACET_KINDS.flatMap((kind) => {
       const lease = held?.[`${id}:${kind}`];
-      return lease?.exposure === exposure
-        ? [
-            !measuredSubjects || measuredSubjects.has(id)
-              ? effectiveCurrentFacetSupport(world, observerId, lease)
-              : currentFacetSupport(world.perceptionEvidence![observerId]!, lease),
-          ]
-        : [];
+      return lease?.exposure === exposure ? [lease] : [];
     }),
   );
 }
@@ -3081,7 +3072,7 @@ export function reconcileAttendedTemporalEvidence(
     ? captureTemporalCurrent(
         world,
         observerId,
-        selectedCurrentSupports(world, observerId, current, selectedExposures, measured),
+        selectedCurrentFacets(current, selectedExposures),
         entering,
         selectedTemporalPolicy(world).recent,
         exiting,
@@ -3129,7 +3120,7 @@ export function reconcileAttendedTemporalEvidence(
           return body ? [[id, body.exposure] as const] : [];
         }),
       );
-      const leases = selectedCurrentSupports(world, observerId, current, exposures, affected);
+      const leases = selectedCurrentFacets(current, exposures);
       // Credit may change prominence. Retain the newly selected current baseline before
       // publication, without recursively awarding contacts for an attention-only change.
       captureTemporalCurrent(

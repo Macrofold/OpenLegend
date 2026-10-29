@@ -25,7 +25,9 @@ import {
   materializeObservedBody,
   receivedObservationFrame,
   receivedBodyParts,
+  effectiveCurrentFacetSupport,
 } from './perception-evidence.js';
+import type { CurrentFacetRecord } from './perception-current.js';
 import type {
   EvidenceSource,
   LiveFacetSupport,
@@ -832,7 +834,7 @@ export function captureTemporalSnapshot(
 export function captureTemporalCurrent(
   world: WorldState,
   actorId: string,
-  leases: readonly LiveFacetSupport[],
+  leases: readonly CurrentFacetRecord[],
   newlySelected: ReadonlySet<string>,
   policy: TemporalRetentionPolicy,
   endingSelection: ReadonlySet<string> = new Set(),
@@ -846,16 +848,20 @@ export function captureTemporalCurrent(
   const keep = new Set<string>();
   const grouped = new Map<string, LiveFacetSupport[]>();
   const prepared = new Map<string, TemporalCaptureInput['facets'][number]>();
-  for (const lease of leases) {
-    keep.add(lease.id);
+  for (const stored of leases) {
+    const record = readOnlyDraftView(stored);
+    keep.add(record.id);
     if (
       changedSubjects &&
-      !changedSubjects.has(lease.subjectId) &&
-      !newlySelected.has(lease.subjectId) &&
-      !endingSelection.has(lease.subjectId) &&
-      !(lease.value.kind === 'body' && contactSubjects.has(lease.subjectId))
+      !changedSubjects.has(record.subjectId) &&
+      !newlySelected.has(record.subjectId) &&
+      !endingSelection.has(record.subjectId) &&
+      !(record.value.kind === 'body' && contactSubjects.has(record.subjectId))
     )
       continue;
+    // Unchanged selected rows only retain their existing comparison marks. Resolve
+    // complete personal support after filtering, never merely to retain an ID.
+    const lease = effectiveCurrentFacetSupport(world, actorId, record);
     // Comparing an existing capture does not modify its source block. Avoid
     // drafting every retained value merely to discover it is unchanged.
     const reference = readOnlyDraftView(owned.actor.captures)[lease.id];
