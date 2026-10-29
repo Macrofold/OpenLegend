@@ -1,6 +1,6 @@
 import { entityGet } from './entity-collection.js';
 import { seesEntity, hearsEntity } from './perception.js';
-import { hasRecordFields, isSafeRecordId } from './records.js';
+import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
 import { finitePoint, type SurfacePoint } from '@open-legend/spatial';
 import { cloneValue } from './draft.js';
 import { isOfferLot } from './handover.js';
@@ -303,7 +303,9 @@ function personallyReceived(world: WorldState, actorId: string): Received {
   const entries = world.experience?.awareness[actorId] ?? [],
     forgotten = world.experience?.forgotten[actorId],
     corrections = world.experience?.corrections?.[actorId],
-    cached = Object.isFrozen(entries) ? received.get(entries) : undefined;
+    immutable =
+      isImmutableData(entries) && isImmutableData(forgotten) && isImmutableData(corrections),
+    cached = immutable ? received.get(entries) : undefined;
   if (cached && cached.forgotten === forgotten && cached.corrections === corrections)
     return cached.value;
   const omitted = new Set(forgotten ?? []),
@@ -343,7 +345,7 @@ function personallyReceived(world: WorldState, actorId: string): Received {
     }
   }
   const value = { movement: [...movement.values()], offers: [...offers.values()], disclosures };
-  if (Object.isFrozen(entries)) received.set(entries, { forgotten, corrections, value });
+  if (immutable) received.set(entries, { forgotten, corrections, value });
   return value;
 }
 export function perceivedMovementOutings(
