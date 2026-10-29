@@ -24,9 +24,13 @@ export function setPlayerAttention(
       const next =
         targetId !== undefined && !key
           ? world
-          : updateWorld(world, (draft) => {
-              accepted = setAttentionFocus(draft, scope.actorId, key ? [key] : []);
-            });
+          : updateWorld(
+              world,
+              (draft) => {
+                accepted = setAttentionFocus(draft, scope.actorId, key ? [key] : []);
+              },
+              { retainNativeValues: true },
+            );
       return {
         world: accepted ? next : world,
         events: [],

@@ -288,11 +288,15 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
 
 export const RECORD_NODES = new Map<string, RecordNode>();
 export const RECORD_PARENTS = new Map<string, string>();
-function register(node: RecordNode, parent?: RecordNode) {
+/** Canonical identity lengths include collection keys, but not transparent `$` fields. */
+export const RECORD_PATH_DEPTHS = new Map<string, number>();
+function register(node: RecordNode, parent?: RecordNode, depth = 0) {
   if (RECORD_NODES.has(node.table)) throw new Error(`Duplicate record table: ${node.table}`);
   RECORD_NODES.set(node.table, node);
+  RECORD_PATH_DEPTHS.set(node.table, depth);
   if (parent) RECORD_PARENTS.set(node.table, parent.table);
-  for (const child of Object.values(node.children ?? {})) register(child.node, node);
+  for (const [field, child] of Object.entries(node.children ?? {}))
+    register(child.node, node, depth + (field === '$' ? 0 : 1) + (child.mode === 'one' ? 0 : 1));
 }
 register(WORLD_RECORD_SCHEMA);
 function columns(table: string, value: NonNullable<RecordNode['columns']>, indexes: string[][]) {

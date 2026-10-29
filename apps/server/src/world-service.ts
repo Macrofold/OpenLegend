@@ -379,6 +379,18 @@ function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
   return { ...current, actorMilestones: byActor };
 }
 
+/** The durable receipt replaces this hot duplicate, without settling unrelated
+ * characters. Finish this owned bookkeeping edit before storage takes its snapshot. */
+function releaseCommandReceipt(world: WorldState, id: string): WorldState {
+  if (!orderedRecordOwn(world.commandReceipts, id)) return world;
+  return freezeWorld(
+    updateWorld(world, (draft) => orderedRecordSet(draft.commandReceipts, id, undefined), {
+      retainNativeValues: true,
+    }),
+    { completedTransition: true },
+  );
+}
+
 /** Latest durable world commit, in one process-local `generation` (it changes on restart and
  * load). `sequence` orders snapshots: a durability ticket is saved once `sequence >= ticket`.
  * Bounds for records created at or before the cut: awareness/memory `sequence <= nextId`,
@@ -1363,9 +1375,13 @@ export class WorldService {
       if (generation !== this.generation || !entityGet(this.world.entities, actorId)?.actor)
         return false;
       let accepted = false;
-      const next = updateWorld(this.world, (world) => {
-        accepted = operation(world);
-      });
+      const next = updateWorld(
+        this.world,
+        (world) => {
+          accepted = operation(world);
+        },
+        { retainNativeValues: true },
+      );
       if (!accepted) return false;
       return (
         next === this.world || this.commit({ ...this.saved, world: next }, undefined, 'unchanged')
@@ -2811,8 +2827,10 @@ export class WorldService {
   async prepareCognitionEvidence(actorId: string): Promise<void> {
     await this.mutate(async () => {
       await this.ready;
-      const world = updateWorld(this.world, (draft) =>
-        captureCurrentGeometrySupport(draft, actorId),
+      const world = updateWorld(
+        this.world,
+        (draft) => captureCurrentGeometrySupport(draft, actorId),
+        { retainNativeValues: true },
       );
       if (
         world !== this.world &&
@@ -2875,11 +2893,15 @@ export class WorldService {
     // Prove space for every possible retain before paying. This discarded draft
     // reuses native admission and cannot publish knowledge or advance the cursor.
     let retentionBlocked = false;
-    updateWorld(original.world, (draft) => {
-      draft.actionExperience.occurrences[actorId] = rows.map((row) => row.entry);
-      for (const candidate of discovered.candidates)
-        if (!retainActivity(draft, actorId, candidate)) retentionBlocked = true;
-    });
+    updateWorld(
+      original.world,
+      (draft) => {
+        draft.actionExperience.occurrences[actorId] = rows.map((row) => row.entry);
+        for (const candidate of discovered.candidates)
+          if (!retainActivity(draft, actorId, candidate)) retentionBlocked = true;
+      },
+      { retainNativeValues: true },
+    );
     const capacityBlocked =
       retentionBlocked ||
       proposedAssessments.length > ACTIVITY_LIMITS.assessed ||
@@ -2972,46 +2994,50 @@ export class WorldService {
         this.store.adoptHistory(this.saved, prepared);
         this.saved = prepared;
       }
-      const world = updateWorld(this.world, (draft) => {
-        const cursor = draft.actionExperience.learning[batch.actorId];
-        if (!cursor) return;
-        for (const [index, candidate] of batch.candidates.entries()) {
-          if (dispatched) {
-            if (
-              !cursor.assessed.includes(candidate.signature) &&
-              (cursor.assessed.length >= ACTIVITY_LIMITS.assessed ||
-                Buffer.byteLength(JSON.stringify([...cursor.assessed, candidate.signature])) >
-                  ACTIVITY_LIMITS.assessmentBytes)
-            )
-              throw new Error('Activity assessment allowance is full; learning remains pending.');
-            if (!cursor.assessed.includes(candidate.signature))
-              cursor.assessed.push(candidate.signature);
-          } else if (judgments[index] === 'retain') {
-            const denied = new Set(draft.experience?.forgotten[batch.actorId] ?? []);
-            const valid = candidate.occurrenceIds.every((id) => {
-              const entry = rows.find((row) => row.entry.id === id)?.entry;
-              return (
-                entry &&
-                !entry.revoked &&
-                !denied.has(id) &&
-                !entry.evidenceIds.some((source) => denied.has(source))
-              );
-            });
-            if (!valid || !retainActivity(draft, batch.actorId, candidate))
-              throw new Error(
-                'Learning could not be retained; no partial publication was committed.',
-              );
+      const world = updateWorld(
+        this.world,
+        (draft) => {
+          const cursor = draft.actionExperience.learning[batch.actorId];
+          if (!cursor) return;
+          for (const [index, candidate] of batch.candidates.entries()) {
+            if (dispatched) {
+              if (
+                !cursor.assessed.includes(candidate.signature) &&
+                (cursor.assessed.length >= ACTIVITY_LIMITS.assessed ||
+                  Buffer.byteLength(JSON.stringify([...cursor.assessed, candidate.signature])) >
+                    ACTIVITY_LIMITS.assessmentBytes)
+              )
+                throw new Error('Activity assessment allowance is full; learning remains pending.');
+              if (!cursor.assessed.includes(candidate.signature))
+                cursor.assessed.push(candidate.signature);
+            } else if (judgments[index] === 'retain') {
+              const denied = new Set(draft.experience?.forgotten[batch.actorId] ?? []);
+              const valid = candidate.occurrenceIds.every((id) => {
+                const entry = rows.find((row) => row.entry.id === id)?.entry;
+                return (
+                  entry &&
+                  !entry.revoked &&
+                  !denied.has(id) &&
+                  !entry.evidenceIds.some((source) => denied.has(source))
+                );
+              });
+              if (!valid || !retainActivity(draft, batch.actorId, candidate))
+                throw new Error(
+                  'Learning could not be retained; no partial publication was committed.',
+                );
+            }
           }
-        }
-        // Advance only a fully prepared page. Durable records retain deferred
-        // endpoints; dispatched signatures prevent uncertain work being retried.
-        cursor.examined = [...new Set([...(cursor.examined ?? []), ...batch.examined])];
-        if (!batch.more) {
-          cursor.position = batch.through;
-          cursor.examined = [];
-        }
-        if (!batch.more) cursor.pending = cursor.pending.filter((id) => !completedIds.has(id));
-      });
+          // Advance only a fully prepared page. Durable records retain deferred
+          // endpoints; dispatched signatures prevent uncertain work being retried.
+          cursor.examined = [...new Set([...(cursor.examined ?? []), ...batch.examined])];
+          if (!batch.more) {
+            cursor.position = batch.through;
+            cursor.examined = [];
+          }
+          if (!batch.more) cursor.pending = cursor.pending.filter((id) => !completedIds.has(id));
+        },
+        { retainNativeValues: true },
+      );
       return this.commit({ ...this.saved, world }, undefined, 'unchanged');
     });
   }
@@ -4952,11 +4978,7 @@ export class WorldService {
           !result.invalidatedMemoryIds
         )
           return { ...response };
-        const world = receipt
-          ? updateWorld(result.world, (draft) => {
-              orderedRecordSet(draft.commandReceipts, receipt.id, undefined);
-            })
-          : result.world;
+        const world = receipt ? releaseCommandReceipt(result.world, receipt.id) : result.world;
         if (
           !(await this.commit(
             { ...this.saved, world },
@@ -5147,9 +5169,7 @@ export class WorldService {
           expiresAt: Number.MAX_SAFE_INTEGER,
           result: result.outcome,
         };
-        const world = updateWorld(result.world, (draft) => {
-          orderedRecordSet(draft.commandReceipts, id, undefined);
-        });
+        const world = releaseCommandReceipt(result.world, id);
         if (
           !(await this.commit(
             { ...this.saved, world },
@@ -5402,9 +5422,13 @@ export class WorldService {
           },
         };
       let result: import('@open-legend/domain').Outcome;
-      const candidate = updateWorld(world, (draft) => {
-        result = editMapMarker(draft, scope.actorId, value);
-      });
+      const candidate = updateWorld(
+        world,
+        (draft) => {
+          result = editMapMarker(draft, scope.actorId, value);
+        },
+        { retainNativeValues: true },
+      );
       return { world: result!.ok ? candidate : world, events: [], outcome: result! };
     });
   }
@@ -5444,9 +5468,15 @@ export class WorldService {
         throw error;
       }
       let result!: import('@open-legend/domain').Outcome;
-      const candidate = updateWorld(world, (draft) => {
-        result = assignNickname(draft, scope.actorId, { ...value, subjectId: subject }, [subject]);
-      });
+      const candidate = updateWorld(
+        world,
+        (draft) => {
+          result = assignNickname(draft, scope.actorId, { ...value, subjectId: subject }, [
+            subject,
+          ]);
+        },
+        { retainNativeValues: true },
+      );
       return { world: result.ok ? candidate : world, events: [], outcome: result };
     });
   }
@@ -5521,91 +5551,95 @@ export class WorldService {
         code: 'knowledge-rejected',
         message: 'Knowledge edit rejected.',
       };
-      const candidate = updateWorld(world, (draft) => {
-        const subject = value.subjectId;
-        const person = subject && validObserverSubject(subject) ? subject : undefined;
-        const recognized =
-          person &&
-          (person.kind === 'entity'
-            ? canRememberSubject(draft, value.actorId, person.entityId)
-            : !!observerIndividual(draft, value.actorId, person)?.individualId);
-        const permitted =
-          subject &&
-          (subject.kind === 'place'
-            ? rememberedPlace === subject.placeId
-            : subject.kind === 'map-marker'
-              ? !!draft.mapMarkers?.[value.actorId]?.[subject.markerId]
-              : mode === 'creator' ||
-                recognized ||
-                knowledgeDocument(draft, value.actorId, subject))
-            ? [subject]
-            : [];
-        const permittedPeople = person && permitted.length ? [person] : [];
-        if ((value.nickname !== undefined || value.givenName !== undefined) && !person) {
-          edited = {
-            ok: false,
-            code: 'unpermitted-subject',
-            message: 'Choose a remembered person before editing a name.',
-          };
-          return;
-        }
-        if (value.nickname !== undefined && person) {
-          if (mode !== 'owner') {
+      const candidate = updateWorld(
+        world,
+        (draft) => {
+          const subject = value.subjectId;
+          const person = subject && validObserverSubject(subject) ? subject : undefined;
+          const recognized =
+            person &&
+            (person.kind === 'entity'
+              ? canRememberSubject(draft, value.actorId, person.entityId)
+              : !!observerIndividual(draft, value.actorId, person)?.individualId);
+          const permitted =
+            subject &&
+            (subject.kind === 'place'
+              ? rememberedPlace === subject.placeId
+              : subject.kind === 'map-marker'
+                ? !!draft.mapMarkers?.[value.actorId]?.[subject.markerId]
+                : mode === 'creator' ||
+                  recognized ||
+                  knowledgeDocument(draft, value.actorId, subject))
+              ? [subject]
+              : [];
+          const permittedPeople = person && permitted.length ? [person] : [];
+          if ((value.nickname !== undefined || value.givenName !== undefined) && !person) {
             edited = {
               ok: false,
-              code: 'forbidden',
-              message: 'Only the current character can choose a nickname.',
+              code: 'unpermitted-subject',
+              message: 'Choose a remembered person before editing a name.',
             };
             return;
           }
-          const named = assignNickname(
-            draft,
-            value.actorId,
-            {
-              subjectId: person,
-              expectedRevision: value.nameRevision ?? 0,
-              nickname: value.nickname,
-            },
-            permittedPeople,
-          );
-          if (!named.ok) {
-            edited = named;
-            return;
+          if (value.nickname !== undefined && person) {
+            if (mode !== 'owner') {
+              edited = {
+                ok: false,
+                code: 'forbidden',
+                message: 'Only the current character can choose a nickname.',
+              };
+              return;
+            }
+            const named = assignNickname(
+              draft,
+              value.actorId,
+              {
+                subjectId: person,
+                expectedRevision: value.nameRevision ?? 0,
+                nickname: value.nickname,
+              },
+              permittedPeople,
+            );
+            if (!named.ok) {
+              edited = named;
+              return;
+            }
           }
-        }
-        if (value.givenName !== undefined && person) {
-          const named =
-            mode === 'creator' && person.kind === 'entity'
-              ? assignGivenName(
-                  draft,
-                  value.actorId,
-                  {
-                    subjectId: person.entityId,
-                    givenName: value.givenName,
-                    expectedRevision: value.nameRevision ?? 0,
-                  },
-                  [person.entityId],
-                  true,
-                )
-              : assignSubjectName(
-                  draft,
-                  value.actorId,
-                  {
-                    subjectId: person,
-                    givenName: value.givenName,
-                    expectedRevision: value.nameRevision ?? 0,
-                  },
-                  permittedPeople,
-                );
-          if (!named.ok) {
-            edited = named;
-            return;
+          if (value.givenName !== undefined && person) {
+            const named =
+              mode === 'creator' && person.kind === 'entity'
+                ? assignGivenName(
+                    draft,
+                    value.actorId,
+                    {
+                      subjectId: person.entityId,
+                      givenName: value.givenName,
+                      expectedRevision: value.nameRevision ?? 0,
+                    },
+                    [person.entityId],
+                    true,
+                  )
+                : assignSubjectName(
+                    draft,
+                    value.actorId,
+                    {
+                      subjectId: person,
+                      givenName: value.givenName,
+                      expectedRevision: value.nameRevision ?? 0,
+                    },
+                    permittedPeople,
+                  );
+            if (!named.ok) {
+              edited = named;
+              return;
+            }
           }
-        }
-        edited = editKnowledge(draft, value.actorId, value, permitted);
-        if (edited.ok && subject?.kind === 'entity')
-          rememberSubject(draft, value.actorId, subject.entityId, mode === 'creator');
-      });
+          edited = editKnowledge(draft, value.actorId, value, permitted);
+          if (edited.ok && subject?.kind === 'entity')
+            rememberSubject(draft, value.actorId, subject.entityId, mode === 'creator');
+        },
+        { retainNativeValues: true },
+      );
       return { world: edited.ok ? candidate : world, events: [], outcome: edited };
     });
   }

@@ -1099,7 +1099,7 @@ type ObservationInput = Omit<
   ObservationContribution,
   'id' | 'revision' | 'observer' | 'acquiredAt' | 'facets'
 > & {
-  facets: Array<Omit<ObservationFacet, 'ordinal' | 'acquiredAt'>>;
+  facets: Array<Omit<ObservationFacet, 'ordinal' | 'acquiredAt'> & { acquiredAt?: number }>;
 };
 
 function acquireReceivedObservation(
@@ -1147,6 +1147,9 @@ function acquireReceivedObservation(
           ...(facet.asOf !== facet.measuredThrough ? { asOf: facet.asOf } : {}),
           ...(facet.measuredFrom !== from ? { measuredFrom: facet.measuredFrom } : {}),
           ...(facet.measuredThrough !== through ? { measuredThrough: facet.measuredThrough } : {}),
+          ...(facet.acquiredAt !== undefined && facet.acquiredAt !== world.simTime
+            ? { acquiredAt: facet.acquiredAt }
+            : {}),
           value: retained.value,
         };
       }),
@@ -1979,6 +1982,8 @@ function finalizeLease(world: WorldState, observer: Entity, lease: LiveFacetSupp
         asOf: lease.valueMeasuredThrough,
         measuredFrom: lease.valueMeasuredFrom,
         measuredThrough: lease.valueMeasuredThrough,
+        // Ending support creates this account now, not a newly acquired sample.
+        acquiredAt: snapshot.valueAcquiredAt,
         value: snapshot.value,
         support: {
           original: snapshot.original,
@@ -2772,11 +2777,12 @@ export function reconcileAttendedTemporalEvidence(
         ])
       : undefined;
   const contacts = new Map<string, ObserverSubject>();
+  const contactSubject = creditContacts ? prepareCurrentBodySubjects(world, observerId) : undefined;
   if (creditContacts)
     for (const id of selected) {
       const body = current?.[`${id}:body`];
       if (!body) continue;
-      const subject = currentBodyAssociation(world, observerId, id) ?? body.localSubject;
+      const subject = contactSubject?.(id) ?? body.localSubject;
       if (!subject || !selectedAttentionContactDue(world, observerId, subject, world.simTime))
         continue;
       const lease = effectiveCurrentFacetSupport(world, observerId, body);

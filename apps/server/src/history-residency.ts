@@ -8,6 +8,7 @@ import {
   markPartialContributions,
   terminalContributionOwners,
   updateWorld,
+  freezeWorld,
   projectWorldHistory,
   selectedTemporalPolicy,
   referencedReceivedValues,
@@ -78,20 +79,25 @@ export function compactContributionHistory(world: WorldState): WorldState {
   if (!owners.size) return world;
   // Keep unrelated physical/source indexes and the SQL write lineage through this
   // residency-only change using the existing immutable publication path.
-  return updateWorld(world, (draft) => {
-    for (const id of owners) {
-      const entity = entityGet(world.entities, id);
-      if (!entity?.statusEffects) continue;
-      const statusEffects = Object.fromEntries(
-        Object.entries(entity.statusEffects).filter(
-          ([, state]) => !state.contribution || state.active,
-        ),
-      );
-      markPartialContributions(statusEffects);
-      retainMapPositions(entity.statusEffects, statusEffects);
-      entityGet(draft.entities, id)!.statusEffects = statusEffects;
-    }
-  });
+  const projected = updateWorld(
+    world,
+    (draft) => {
+      for (const id of owners) {
+        const entity = entityGet(world.entities, id);
+        if (!entity?.statusEffects) continue;
+        const statusEffects = Object.fromEntries(
+          Object.entries(entity.statusEffects).filter(
+            ([, state]) => !state.contribution || state.active,
+          ),
+        );
+        markPartialContributions(statusEffects);
+        retainMapPositions(entity.statusEffects, statusEffects);
+        entityGet(draft.entities, id)!.statusEffects = statusEffects;
+      }
+    },
+    { retainNativeValues: true },
+  );
+  return Object.isFrozen(world) ? freezeWorld(projected, { completedTransition: true }) : projected;
 }
 const compactedAppraisals = new WeakSet<object>();
 const compactedAppraisalOwners = new WeakSet<object>();

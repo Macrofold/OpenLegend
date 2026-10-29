@@ -1010,7 +1010,9 @@ export function completeNavigationBatch(
   answers: readonly NavigationCompletion[],
 ): WorldState {
   if (!answers.length) return original;
-  const world = draftWorld(original);
+  const world = draftWorld(original, {
+    materializeNativeEntities: [...new Set(answers.map((answer) => answer.actorId))],
+  });
   let accepted = false;
   for (const answer of answers) {
     const transition = completeNavigationResult(
@@ -1062,7 +1064,10 @@ function completeNavigationResult(
   )
     return stale();
   const failure = navigationResultProblem(spatialMap(original), request, result, profile);
-  const world = batched && isDraft(original) ? original : draftWorld(original),
+  const world =
+      batched && isDraft(original)
+        ? original
+        : draftWorld(original, { materializeNativeEntities: [actorId] }),
     current = entityGet(world.entities, actorId)!.actor!.action!;
   if (failure) current.navigation!.failure = failure;
   else {
@@ -2941,7 +2946,8 @@ function nativeMovementTransition(
         'No proposed native movement remains available.',
       ),
     };
-  const selecting = available.length > 1 ? draftWorld(original) : original;
+  const selecting =
+    available.length > 1 ? draftWorld(original, { retainNativeValues: true }) : original;
   let selected = available[0]!,
     draw: number | undefined;
   if (available.length > 1) {
@@ -3092,7 +3098,7 @@ function executeCommandNative(
   if ('ok' in consumption) {
     if (!consumption.ok || options.preview)
       return { world: original, events: [], outcome: consumption };
-    const world = draftWorld(original);
+    const world = draftWorld(original, { retainNativeValues: true });
     if (!options.nativeController)
       orderedRecordSet(world.commandReceipts, command.id, { digest, outcome: consumption });
     return finish(world, [], consumption);
@@ -3112,7 +3118,7 @@ function executeCommandNative(
   let action = prepared && !('ok' in prepared) ? prepared : undefined;
   if (command.type === 'operate-gate' && prepared && 'ok' in prepared && prepared.ok) {
     if (options.preview) return { world: original, events: [], outcome: prepared };
-    const recorded = draftWorld(original);
+    const recorded = draftWorld(original, { retainNativeValues: true });
     orderedRecordSet(recorded.commandReceipts, command.id, { digest, outcome: prepared });
     return finish(recorded, [], prepared);
   }
@@ -3332,7 +3338,12 @@ function executeCommandNative(
       };
   }
   const inDraft = ownedNativeMovement && action?.type === 'move' && action.stage === 'approaching';
-  const world = inDraft ? original : draftWorld(original);
+  // Uncoupled numeric continuations belong to each character. Starting this
+  // command settles its actor only; target setters/effect/work owners settle
+  // their own exact episodes. Generic builder drafts keep the complete barrier.
+  const world = inDraft
+    ? original
+    : draftWorld(original, { materializeNativeEntities: [command.actorId] });
   const actor = entityGet(world.entities, command.actorId)!;
   const component = actor.actor!;
   const events: WorldEvent[] = [];

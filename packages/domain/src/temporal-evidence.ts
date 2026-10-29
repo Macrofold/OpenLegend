@@ -559,22 +559,24 @@ export function appendTemporalReceipt(
   // Charge only newly encoded header members. The retained prefix is unchanged;
   // JSON escaping and UTF-8 still own every byte of each new member.
   const appendBytes = (chunk: TemporalChunk) => {
+    const held = readOnlyDraftView(chunk);
     let delta =
       byteLength(receipt.at) -
-      byteLength(chunk.throughAt) +
+      byteLength(held.throughAt) +
       byteLength(receipt.ordinal) -
-      byteLength(chunk.throughOrdinal) +
-      byteLength(chunk.count + 1) -
-      byteLength(chunk.count);
+      byteLength(held.throughOrdinal) +
+      byteLength(held.count + 1) -
+      byteLength(held.count);
     for (const key of headerKeys) {
-      let count = chunk[key].length;
+      const values = readOnlyDraftView(held[key]);
+      let count = values.length;
       for (const value of headers[key])
-        if (!chunk[key].includes(value)) delta += byteLength(value) + (count++ > 0 ? 1 : 0);
+        if (!values.includes(value)) delta += byteLength(value) + (count++ > 0 ? 1 : 0);
     }
-    const base = chunk.bytes + bytes + (chunk.count > 0 ? 1 : 0) + delta;
+    const base = held.bytes + bytes + (held.count > 0 ? 1 : 0) + delta;
     let result = base;
     for (let n = 0; n < 4; n++) {
-      const next = base + byteLength(result) - byteLength(chunk.bytes);
+      const next = base + byteLength(result) - byteLength(held.bytes);
       if (next === result) break;
       result = next;
     }
@@ -620,8 +622,11 @@ export function appendTemporalReceipt(
   chunk.count++;
   chunk.throughAt = receipt.at;
   chunk.throughOrdinal = receipt.ordinal;
-  for (const key of headerKeys)
-    for (const value of headers[key]) if (!chunk[key].includes(value)) chunk[key].push(value);
+  for (const key of headerKeys) {
+    const held = readOnlyDraftView(readOnlyDraftView(chunk)[key]);
+    const additions = headers[key].filter((value) => !held.includes(value));
+    if (additions.length) chunk[key] = [...held, ...additions];
+  }
   chunk.bytes = nextBytes;
   actor.bytes += nextBytes - previousBytes;
   actor.count++;
@@ -819,7 +824,8 @@ export function captureTemporalCurrent(
       },
       policy,
     );
-    const receipt = owned.actor.chunks.at(-1)?.receipts.at(-1);
+    const chunk = readOnlyDraftView(owned.actor.chunks).at(-1);
+    const receipt = chunk && readOnlyDraftView(readOnlyDraftView(chunk).receipts).at(-1);
     if (receipt) {
       captured.push({
         subjectId: group[0]!.subjectId,

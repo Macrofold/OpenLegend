@@ -8,7 +8,7 @@ import {
   type WorldState,
   type WorldEvent,
 } from '@open-legend/domain';
-import { RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
+import { RECORD_NODES, RECORD_PARENTS, RECORD_PATH_DEPTHS } from './world-record-schema.js';
 import {
   ownedAppendRow,
   ownedParentRow,
@@ -271,11 +271,26 @@ function postgresJson(value: unknown): boolean {
   return true;
 }
 const key = (table: string, id: string) => JSON.stringify([table, id]);
-const ancestor = (parent: string, id: string): boolean => {
-  const a = JSON.parse(parent) as string[],
-    b = JSON.parse(id) as string[];
-  return a.length <= b.length && a.every((part, index) => part === b[index]);
-};
+/** Canonical rows have one schema-owned parent chain. Deleting a sibling cannot
+ * remove a row: use exact membership, not every write × every deleted path. The
+ * attempt-local path cache is shared across pending overlays and never retains a world. */
+function deletionLookup(changes: RecordChanges, paths: Map<string, string[]>) {
+  const deleted = new Map([...changes.deletes].map(([table, ids]) => [table, new Set(ids)]));
+  return (table: string, id: string): boolean => {
+    if (deleted.get(table)?.has(id)) return true;
+    for (let owner = RECORD_PARENTS.get(table); owner; owner = RECORD_PARENTS.get(owner)) {
+      const ids = deleted.get(owner);
+      if (!ids?.size) continue;
+      let path = paths.get(id);
+      if (!path) {
+        path = JSON.parse(id) as string[];
+        paths.set(id, path);
+      }
+      if (ids.has(JSON.stringify(path.slice(0, RECORD_PATH_DEPTHS.get(owner)!)))) return true;
+    }
+    return false;
+  };
+}
 
 /** Owned by one exact save attempt; this only prepares which current facts to
  * read. It does not certify database membership or permission. */
@@ -401,15 +416,16 @@ export async function journalConstraints(
         });
     }
   }
-  const removedBy = (table: string, id: string, delta: RecordChanges): boolean => {
-    for (const [removedTable, ids] of delta.deletes) {
-      let owner: string | undefined = table;
-      while (owner && owner !== removedTable) owner = RECORD_PARENTS.get(owner);
-      if (owner && ids.some((parent) => ancestor(parent, id))) return true;
-    }
-    return false;
-  };
-  for (const entry of pending) {
+  const paths = new Map<string, string[]>();
+  const removedBy = deletionLookup(changes, paths);
+  const overlays = pending.map((entry) => ({
+    writes: new Map(
+      [...entry.changes.writes].map(([table, rows]) => [table, new Set(rows.map((row) => row.id))]),
+    ),
+    changes: entry.changes,
+    removedBy: deletionLookup(entry.changes, paths),
+  }));
+  for (const entry of overlays) {
     for (const [table, rows] of entry.changes.writes)
       if (positions.has(table))
         for (const row of rows)
@@ -419,8 +435,7 @@ export async function journalConstraints(
             parent: row.parent,
             position: row.position,
           });
-    for (const [id, row] of placed)
-      if (removedBy(row.table, row.id, entry.changes)) placed.delete(id);
+    for (const [id, row] of placed) if (entry.removedBy(row.table, row.id)) placed.delete(id);
   }
   // Finite plans discard completed steps and move retained steps in the same
   // transition that appends the next one. Check their final positions: a slot
@@ -436,7 +451,7 @@ export async function journalConstraints(
         });
   const slots = new Map<string, Set<string>>();
   for (const row of placed.values()) {
-    if (removedBy(row.table, row.id, changes)) continue;
+    if (removedBy(row.table, row.id)) continue;
     const slot = JSON.stringify([row.table, row.parent, row.position]),
       ids = slots.get(slot) ?? new Set<string>();
     ids.add(row.id);
@@ -452,21 +467,11 @@ export async function journalConstraints(
         ids.add(row.id);
         slots.set(slot, ids);
       }
-  const overlays = pending.map((entry) => ({
-    writes: new Map(
-      [...entry.changes.writes].map(([table, rows]) => [table, new Set(rows.map((row) => row.id))]),
-    ),
-    changes: entry.changes,
-  }));
   const exists = (table: string, id: string): boolean => {
     let result = present.has(key(table, id));
     for (const entry of overlays) {
       if (entry.writes.get(table)?.has(id)) result = true;
-      for (const [removedTable, ids] of entry.changes.deletes) {
-        let owner: string | undefined = table;
-        while (owner && owner !== removedTable) owner = RECORD_PARENTS.get(owner);
-        if (owner && ids.some((parent) => ancestor(parent, id))) result = false;
-      }
+      if (entry.removedBy(table, id)) result = false;
     }
     return result;
   };
@@ -491,12 +496,8 @@ export async function journalConstraints(
       const owner = table === 'sim_placements' ? physicalParents.get(row.id) : undefined;
       if (owner && !exists('sim_entities', owner))
         throw new Error('A journal item has no committed physical parent.');
-      if (owner && removedBy('sim_entities', owner, changes)) return false;
-      for (const [removedTable, ids] of changes.deletes) {
-        let owner: string | undefined = table;
-        while (owner && owner !== removedTable) owner = RECORD_PARENTS.get(owner);
-        if (owner && ids.some((id) => ancestor(id, row.id))) return false;
-      }
+      if (owner && removedBy('sim_entities', owner)) return false;
+      if (removedBy(table, row.id)) return false;
     }
   return true;
 }

@@ -36,7 +36,7 @@ import { reconcileSemanticInterval } from './semantic-opportunities.js';
 import { isImmutableData, immutableDataSnapshot } from './records.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import { materializeNativeValuesInPlace } from './native-values.js';
+import { materializeNativeEntity, materializeNativeValuesInPlace } from './native-values.js';
 
 // One isolated instance: drafts never cross the domain boundary. Unchanged branches
 // retain identity for persistence and projection; legacy seed/migration data stays mutable.
@@ -587,10 +587,12 @@ function immutableDraftSnapshot<T>(value: T): T {
   return immutableDataSnapshot(value, readOnlyDraftView);
 }
 
-export function draftWorld(
-  world: WorldState,
-  options: { retainNativeValues?: boolean } = {},
-): WorldState {
+interface WorldDraftOptions {
+  retainNativeValues?: boolean;
+  /** Commands settle their participants, while exact setters own foreign effects. */
+  materializeNativeEntities?: readonly string[];
+}
+export function draftWorld(world: WorldState, options: WorldDraftOptions = {}): WorldState {
   sealAppends(world);
   const draft = isDraft(world),
     perception = world.perceptionEvidence,
@@ -622,7 +624,9 @@ export function draftWorld(
   captureKnownPlaceEvidence(world)(result);
   inheritRootIndex(result, world);
   inheritSensoryChanges(result, world);
-  if (!options.retainNativeValues) materializeNativeValuesInPlace(result);
+  if (options.materializeNativeEntities)
+    for (const id of options.materializeNativeEntities) materializeNativeEntity(result, id);
+  else if (!options.retainNativeValues) materializeNativeValuesInPlace(result);
   return result;
 }
 /** Both publication and an admitted private command reconcile the same changed
@@ -871,7 +875,7 @@ export function updateWorld(
   change: (draft: WorldState) => void,
   // Evidence/accounting edits preserve the existing numeric continuation instead
   // of rewriting every character's physical anchors as an incidental save effect.
-  options: { retainNativeValues?: boolean } = {},
+  options: WorldDraftOptions = {},
 ): WorldState {
   const draft = draftWorld(world, options);
   change(draft);
