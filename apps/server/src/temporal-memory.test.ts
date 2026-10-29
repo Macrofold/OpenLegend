@@ -1296,6 +1296,7 @@ describe('bounded personal temporal storage', () => {
     await editWorld(service, (world) => {
       for (const [index, text] of [
         'Earlier short observation',
+        'Later short observation',
         words,
         'Unrelated newer one',
         'Unrelated newer two',
@@ -1305,7 +1306,7 @@ describe('bounded personal temporal storage', () => {
           world,
           PLAYER_ID,
           {
-            subject: index < 2 ? 'fixture-large-source' : 'fixture-unrelated-source',
+            subject: index < 3 ? 'fixture-large-source' : 'fixture-unrelated-source',
             change: 'occurrence',
             facets: [
               {
@@ -1343,7 +1344,10 @@ describe('bounded personal temporal storage', () => {
       { subjects: ['fixture-large-source'], limit: 1, bytes: 1024 },
       service.world,
     );
-    expect(first.entries).toHaveLength(0);
+    // Packed chunks can skip an oversized receipt and return an older complete
+    // one in the same page; the cursor still must reach the remaining history.
+    expect(first.entries).toHaveLength(1);
+    expect(first.entries[0]!.values[0]).toMatchObject({ text: 'Later short observation' });
     expect(first.incomplete).toBe(true);
     expect(first.hasMore).toBe(true);
     expect(first.nextBefore).toBeDefined();
