@@ -1,11 +1,15 @@
-import { restoreEvidenceLayout } from './evidence-segments.js';
+import { restoreEvidenceLayout, snapshotEvidenceOwner } from './evidence-segments.js';
 import {
   selectedTemporalPolicy,
   canonicalJson,
   appendedRecordCount,
   selectedAttentionPolicy,
   temporalFacetEligible,
+  temporalReceiptLogicalBytes,
+  temporalValueLogicalBytes,
+  receivedTemporalFragment,
   retireTemporalChunks,
+  retireTemporalReceipts,
   temporalReceiptWithinPrefix,
   materializeTemporalValue,
   temporalReceiptForRead,
@@ -70,6 +74,8 @@ export interface PreparedMemoryRetention {
   state: SavedWorld;
   rows: Map<string, string[]>;
   positions?: Map<string, Map<string, number>>;
+  /** Exact SQL-loaded predecessors for editing segmented owners absent from the hot baseline. */
+  previous?: Map<string, Map<string, unknown>>;
   versions?: SourceVersionPlan;
 }
 export interface TemporalHistoryPage extends TemporalHistorySelection {
@@ -184,6 +190,8 @@ export function retentionNeedsPreparation(world: WorldState): boolean {
 }
 
 interface ChunkMetadata {
+  position?: number;
+  encodedBytes?: number;
   id: string;
   sourceId: string;
   at: number;
@@ -514,6 +522,21 @@ export async function prepareTemporalRetention(
 ): Promise<PreparedMemoryRetention> {
   const temporal = state.world.experience?.temporal;
   const rows = new Map<string, string[]>();
+  const positions = new Map<string, Map<string, number>>();
+  const coldPrevious = new Map<string, Map<string, unknown>>();
+  const remember = (table: string, id: string, value: unknown) => {
+    let records = coldPrevious.get(table);
+    if (!records) coldPrevious.set(table, (records = new Map()));
+    records.set(id, value);
+  };
+  let preparationBytes = 0;
+  const partials: Array<{
+    actorId: string;
+    metadata: ChunkMetadata;
+    bytes: number;
+    count: number;
+    followingAt?: number;
+  }> = [];
   const policy = selectedTemporalPolicy(state.world).recent;
   const cutoff = state.world.simTime - policy.maxAgeSeconds;
   const retired: Array<{
@@ -538,12 +561,14 @@ export async function prepareTemporalRetention(
       ? []
       : await db
           .prepare(
-            `SELECT id,source_id,first_at,last_at,first_order,receipt_epoch,first_ordinal,logical_bytes,receipt_count,source_refs
+            `SELECT id,position,encoded_bytes,source_id,first_at,last_at,first_order,receipt_epoch,first_ordinal,logical_bytes,receipt_count,source_refs
       FROM mind_temporal_chunks_read WHERE world_id=? AND actor_id=? ORDER BY first_at,first_order,receipt_epoch,first_ordinal LIMIT ?`,
           )
           .all(state.world.id, actorId, maximumRows + 1))
       metadata.set(String(row['source_id']), {
         id: String(row['id']),
+        position: Number(row['position']),
+        encodedBytes: Number(row['encoded_bytes']),
         sourceId: String(row['source_id']),
         at: Number(row['first_at']),
         through: Number(row['last_at']),
@@ -557,6 +582,7 @@ export async function prepareTemporalRetention(
     for (const chunk of actor.chunks)
       metadata.set(chunk.id, {
         id: temporalChunkRecordId(actorId, chunk.id),
+        position: metadata.get(chunk.id)?.position,
         sourceId: chunk.id,
         at: chunk.fromAt,
         through: chunk.throughAt,
@@ -575,12 +601,24 @@ export async function prepareTemporalRetention(
     const ids: string[] = [],
       recordIds: string[] = [];
     let nextDue: number | null = null;
-    for (const chunk of [...metadata.values()].sort(
+    const ordered = [...metadata.values()].sort(
       (a, b) =>
         a.at - b.at || a.order - b.order || a.epoch.localeCompare(b.epoch) || a.ordinal - b.ordinal,
-    )) {
-      if (chunk.through > cutoff && bytes <= policy.maxBytes && count <= policy.maxChanges) {
+    );
+    for (let index = 0; index < ordered.length; index++) {
+      const chunk = ordered[index]!;
+      const excessBytes = Math.max(0, bytes - policy.maxBytes);
+      const excessCount = Math.max(0, count - policy.maxChanges);
+      if (chunk.through > cutoff && excessBytes < chunk.bytes && excessCount < chunk.count) {
         nextDue = chunk.at + policy.maxAgeSeconds;
+        if (chunk.at <= cutoff || excessBytes || excessCount)
+          partials.push({
+            actorId,
+            metadata: chunk,
+            bytes: excessBytes,
+            count: excessCount,
+            followingAt: ordered[index + 1]?.at,
+          });
         break;
       }
       if (ids.length >= maximumRows) {
@@ -596,31 +634,193 @@ export async function prepareTemporalRetention(
       through = Math.max(through, chunk.through);
       for (const source of chunk.sources) possibleSources.add(source);
     }
-    if (bytes > policy.maxBytes || count > policy.maxChanges)
+    if (
+      (bytes > policy.maxBytes || count > policy.maxChanges) &&
+      !partials.some((partial) => partial.actorId === actorId)
+    )
       throw new MemoryRetentionError(
         'Required native recording cannot fit the qualified recent-history envelope.',
       );
-    if (ids.length) {
+    if (ids.length || actor.maintenanceDue || actor.nextDue !== nextDue) {
       retired.push({ actorId, ids, bytes: removedBytes, count: removedCount, nextDue, through });
-      rows.set('mind_temporal_chunks', [...(rows.get('mind_temporal_chunks') ?? []), ...recordIds]);
+      if (recordIds.length)
+        rows.set('mind_temporal_chunks', [
+          ...(rows.get('mind_temporal_chunks') ?? []),
+          ...recordIds,
+        ]);
     }
   }
   for (const id of receivedValueReleaseCandidates(previous, state.world)) possibleSources.add(id);
   const beforeSources = previous?.receivedValues?.sources ?? {};
-  if (!retired.length && !possibleSources.size) return { state, rows };
+  if (!retired.length && !partials.length && !possibleSources.size) return { state, rows };
   let world = retired.length
-    ? updateWorld(state.world, (draft) => {
-        for (const release of retired)
-          retireTemporalChunks(
-            draft,
-            release.actorId,
-            release.ids,
-            release,
-            release.nextDue,
-            release.through,
-          );
-      })
+    ? updateWorld(
+        state.world,
+        (draft) => {
+          for (const release of retired)
+            retireTemporalChunks(
+              draft,
+              release.actorId,
+              release.ids,
+              release,
+              release.nextDue,
+              release.through,
+            );
+        },
+        { retainNativeValues: true },
+      )
     : state.world;
+  if (partials.length) {
+    // A logical chunk can span several receptions. Expire the exact old prefix,
+    // not its still-recent suffix, and hydrate only the boundary chunks selected
+    // above. Existing semantic retirement also revokes their old perspective rows.
+    const chunks = new Map<string, TemporalChunk>();
+    const coldIds: string[] = [];
+    for (const { actorId, metadata } of partials) {
+      const resident = world.experience!.temporal!.actors[actorId]!.chunks.find(
+        (chunk) => chunk.id === metadata.sourceId,
+      );
+      if (resident) chunks.set(metadata.id, resident);
+      else {
+        if (complete || metadata.encodedBytes === undefined)
+          throw new MemoryRetentionError('Recent expiry has no complete boundary chunk.');
+        preparationBytes += metadata.encodedBytes;
+        coldIds.push(metadata.id);
+      }
+    }
+    if (preparationBytes > maximumPreparation)
+      throw new MemoryRetentionError('Recent expiry exceeds bounded preparation.');
+    if (coldIds.length)
+      for (const row of await db
+        .prepare(
+          'SELECT id,payload,segments,value_refs FROM mind_temporal_chunks_read WHERE world_id=? AND id=ANY(?::text[])',
+        )
+        .all(world.id, coldIds)) {
+        const chunk = snapshotEvidenceOwner(readTemporalChunkRecord(row), 'receipts');
+        chunks.set(String(row['id']), chunk);
+        remember('mind_temporal_chunks', String(row['id']), chunk);
+      }
+    const missing = new Set<string>();
+    for (const { actorId, metadata } of partials) {
+      const chunk = chunks.get(metadata.id);
+      if (!chunk || chunk.actorId !== actorId || chunk.id !== metadata.sourceId)
+        throw new MemoryRetentionError('Recent expiry boundary chunk is unavailable.');
+      for (const id of chunk.sourceRefs) {
+        possibleSources.add(id);
+        if (!world.receivedValues?.sources[id]) missing.add(id);
+      }
+    }
+    const loaded = new Map<string, ReceivedValueBlock>();
+    if (missing.size && !complete) {
+      const size = await db
+        .prepare(
+          'SELECT SUM(encoded_bytes) AS bytes FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
+        )
+        .get(world.id, [...missing]);
+      preparationBytes += Number(size?.['bytes'] ?? 0);
+      if (preparationBytes > maximumPreparation)
+        throw new MemoryRetentionError('Recent expiry exceeds bounded preparation.');
+      for (const row of await db
+        .prepare(
+          'SELECT id,payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
+        )
+        .all(world.id, [...missing])) {
+        const block = snapshotEvidenceOwner(
+          restoreEvidenceLayout(JSON.parse(String(row['payload'])), 'values', row['segments']),
+          'values',
+        ) as unknown as ReceivedValueBlock;
+        loaded.set(block.id, block);
+        remember('mind_perception_values', String(row['id']), block);
+        let held = positions.get('mind_perception_values');
+        if (!held) positions.set('mind_perception_values', (held = new Map()));
+        held.set(String(row['id']), 0);
+      }
+    }
+    if ([...missing].some((id) => !loaded.has(id)))
+      throw new MemoryRetentionError('Recent expiry requires an unavailable received value.');
+    world = updateWorld(
+      world,
+      (draft) => {
+        for (const [id, block] of loaded) draft.receivedValues!.sources[id] = block;
+        for (const { actorId, metadata } of partials) {
+          const actor = draft.experience!.temporal!.actors[actorId]!;
+          const chunk = chunks.get(metadata.id)!;
+          if (!actor.chunks.some((current) => current.id === chunk.id)) {
+            actor.chunks.push({ ...chunk, receipts: [...chunk.receipts] });
+            actor.chunks.sort((a, b) => a.fromAt - b.fromAt || a.fromOrdinal - b.fromOrdinal);
+          }
+          const pressure = partials.find((partial) => partial.metadata === metadata)!;
+          const expired = new Set<number>();
+          let releasedBytes = 0;
+          for (const receipt of chunk.receipts) {
+            if (
+              receipt.at > cutoff &&
+              expired.size >= pressure.count &&
+              releasedBytes >= pressure.bytes
+            )
+              break;
+            expired.add(receipt.ordinal);
+            releasedBytes += temporalReceiptLogicalBytes(receipt) + 1;
+            for (const facet of receipt.facets) {
+              const value = receivedTemporalFragment(
+                (loaded.get(facet.blockId) ?? world.receivedValues?.sources[facet.blockId])?.values[
+                  facet.valueOrdinal
+                ] ?? undefined,
+              );
+              if (!value)
+                throw new MemoryRetentionError(
+                  'Recent expiry requires an unavailable received value.',
+                );
+              releasedBytes += temporalValueLogicalBytes(facet, value);
+            }
+          }
+          if (!expired.size)
+            throw new MemoryRetentionError('Recent expiry metadata disagrees with its receipts.');
+          const first = chunk.receipts.find((receipt) => !expired.has(receipt.ordinal));
+          retireTemporalReceipts(
+            draft,
+            actorId,
+            chunk.id,
+            expired,
+            first
+              ? first.at + policy.maxAgeSeconds
+              : pressure.followingAt === undefined
+                ? null
+                : pressure.followingAt + policy.maxAgeSeconds,
+          );
+          // The exact owner also recalculates the small header. If a longer leading
+          // timestamp/ordinal uses the final available bytes, release the next whole
+          // receipt; never truncate received words or keep an oversized history.
+          while (actor.bytes > policy.maxBytes || actor.count > policy.maxChanges) {
+            const current = actor.chunks.find((value) => value.id === chunk.id);
+            const receipt = current?.receipts[0];
+            if (!receipt)
+              throw new MemoryRetentionError(
+                'Required native recording cannot fit the qualified recent-history envelope.',
+              );
+            const at = current!.receipts[1]?.at ?? pressure.followingAt;
+            retireTemporalReceipts(
+              draft,
+              actorId,
+              chunk.id,
+              new Set([receipt.ordinal]),
+              at === undefined ? null : at + policy.maxAgeSeconds,
+            );
+          }
+          rows.set('mind_temporal_chunks', [
+            ...(rows.get('mind_temporal_chunks') ?? []),
+            metadata.id,
+          ]);
+          if (metadata.position !== undefined) {
+            let held = positions.get('mind_temporal_chunks');
+            if (!held) positions.set('mind_temporal_chunks', (held = new Map()));
+            held.set(metadata.id, metadata.position);
+          }
+        }
+      },
+      { retainNativeValues: true },
+    );
+  }
   // Capture marks locate prior recording; they cannot keep an expired value
   // alive by themselves. Current receipt/original and real chunk owners can.
   const resident = referencedReceivedValues(world, { captures: false });
@@ -632,7 +832,12 @@ export async function prepareTemporalRetention(
   };
   const candidates = [...possibleSources].filter(needsPruning);
   if (!candidates.length)
-    return { state: world === state.world ? state : { ...state, world }, rows };
+    return {
+      state: world === state.world ? state : { ...state, world },
+      rows,
+      ...(positions.size ? { positions } : {}),
+      ...(coldPrevious.size ? { previous: coldPrevious } : {}),
+    };
   // Resident ownership is shared with residency/kernel validation. Only candidate
   // blocks acquire additional cold/pending owners; never mutate the cached proof.
   const candidateIds = new Set(candidates);
@@ -642,7 +847,6 @@ export async function prepareTemporalRetention(
     ...(pending?.deletes.get('mind_temporal_chunks') ?? []),
     ...(pending?.writes.get('mind_temporal_chunks') ?? []).map((row) => row.id),
   ];
-  let preparationBytes = 0;
   if (!complete) {
     const cold = await db
       .prepare(
@@ -650,7 +854,7 @@ export async function prepareTemporalRetention(
          WHERE world_id=? AND source_refs && ?::text[] AND id<>ALL(?::text[]) LIMIT ?`,
       )
       .all(world.id, candidates, replaced, maximumRows + 1);
-    preparationBytes = cold.reduce((sum, row) => sum + Number(row['bytes']), 0);
+    preparationBytes += cold.reduce((sum, row) => sum + Number(row['bytes']), 0);
     if (cold.length > maximumRows || preparationBytes > maximumPreparation)
       throw new MemoryRetentionError(
         'Complete received-value ownership exceeds bounded preparation.',
@@ -670,7 +874,6 @@ export async function prepareTemporalRetention(
     }),
   );
   const missing = candidates.filter((id) => !available.has(id));
-  const positions = new Map<string, Map<string, number>>();
   if (missing.length && !complete) {
     const sizes = await db
       .prepare(
@@ -687,12 +890,12 @@ export async function prepareTemporalRetention(
         'SELECT id,payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
       )
       .all(world.id, missing)) {
-      const block = restoreEvidenceLayout(
-        JSON.parse(String(row['payload'])),
+      const block = snapshotEvidenceOwner(
+        restoreEvidenceLayout(JSON.parse(String(row['payload'])), 'values', row['segments']),
         'values',
-        row['segments'],
       ) as unknown as ReceivedValueBlock;
       available.set(block.id, block);
+      remember('mind_perception_values', String(row['id']), block);
       let placement = positions.get('mind_perception_values');
       if (!placement) positions.set('mind_perception_values', (placement = new Map()));
       placement.set(String(row['id']), 0);
@@ -705,7 +908,13 @@ export async function prepareTemporalRetention(
     const next = pruneReceivedValueBlock(block, keep.get(id) ?? new Set());
     if (next !== block) changes.set(id, next);
   }
-  if (!changes.size) return { state: world === state.world ? state : { ...state, world }, rows };
+  if (!changes.size)
+    return {
+      state: world === state.world ? state : { ...state, world },
+      rows,
+      ...(positions.size ? { positions } : {}),
+      ...(coldPrevious.size ? { previous: coldPrevious } : {}),
+    };
   // A value can be created and reclaimed before its first save. Placement marks
   // certify existing canonical rows; applying one to a new block would suppress
   // its insertion proof while its newly sealed segments still need that parent.
@@ -731,43 +940,48 @@ export async function prepareTemporalRetention(
     .map(([id]) => JSON.stringify(['world', 'receivedValues', 'sources', id]));
   // Empty retirements still carry existing-row placement for a cold block update.
   rows.set('mind_perception_values', deleted);
-  world = updateWorld(world, (draft) => {
-    const received = draft.receivedValues;
-    if (!received) throw new MemoryRetentionError('Received-value owner is unavailable.');
-    for (const [id, value] of changes) {
-      if (value) received.sources[id] = value;
-      else delete received.sources[id];
-    }
-    if (
-      received.activeSource &&
-      changes.has(received.activeSource) &&
-      !changes.get(received.activeSource)
-    ) {
-      delete received.activeSource;
-    }
-    if (received.activeSources) {
-      const group = received.activeSources.filter((id) => !!received.sources[id]);
-      if (group.length !== received.activeSources.length) {
-        if (group.length) received.activeSources = group;
-        else {
-          delete received.activeSources;
-          delete received.activeAt;
+  world = updateWorld(
+    world,
+    (draft) => {
+      const received = draft.receivedValues;
+      if (!received) throw new MemoryRetentionError('Received-value owner is unavailable.');
+      for (const [id, value] of changes) {
+        if (value) received.sources[id] = value;
+        else delete received.sources[id];
+      }
+      if (
+        received.activeSource &&
+        changes.has(received.activeSource) &&
+        !changes.get(received.activeSource)
+      ) {
+        delete received.activeSource;
+      }
+      if (received.activeSources) {
+        const group = received.activeSources.filter((id) => !!received.sources[id]);
+        if (group.length !== received.activeSources.length) {
+          if (group.length) received.activeSources = group;
+          else {
+            delete received.activeSources;
+            delete received.activeAt;
+          }
         }
       }
-    }
-    for (const actor of Object.values(draft.experience?.temporal?.actors ?? {}))
-      for (const [key, reference] of Object.entries(actor.captures)) {
-        if (!changes.has(reference.blockId)) continue;
-        const block = changes.get(reference.blockId);
-        if (!block?.values[reference.valueOrdinal]) {
-          delete actor.captures[key];
-          actor.capturesInvalidated = true;
+      for (const actor of Object.values(draft.experience?.temporal?.actors ?? {}))
+        for (const [key, reference] of Object.entries(actor.captures)) {
+          if (!changes.has(reference.blockId)) continue;
+          const block = changes.get(reference.blockId);
+          if (!block?.values[reference.valueOrdinal]) {
+            delete actor.captures[key];
+            actor.capturesInvalidated = true;
+          }
         }
-      }
-  });
+    },
+    { retainNativeValues: true },
+  );
   return {
     state: world === state.world ? state : { ...state, world },
     rows,
     ...(positions.size ? { positions } : {}),
+    ...(coldPrevious.size ? { previous: coldPrevious } : {}),
   };
 }

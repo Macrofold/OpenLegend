@@ -829,7 +829,12 @@ export class MemoryRepository {
         for (const [id, position] of ordinals) combined.set(id, position);
         positions.set(table, combined);
       }
-      return { state: cleaned, rows, ...(positions.size ? { positions } : {}) };
+      return {
+        state: cleaned,
+        rows,
+        ...(positions.size ? { positions } : {}),
+        ...(recent.previous ? { previous: recent.previous } : {}),
+      };
     });
   }
   /** Revalidate the actual selected facts, not merely a surviving receipt address.

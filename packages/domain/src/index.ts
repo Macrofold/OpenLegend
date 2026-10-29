@@ -1,6 +1,8 @@
 export * from './observed-animation.js';
+export { inheritUnchangedExposure } from './encounter-cache.js';
 export * from './entity-collection.js';
 export * from './ordered-record.js';
+export { immutableDataSnapshot } from './records.js';
 export * from './world-creation.js';
 export * from './world-composition.js';
 export { itemIllustration, type ItemArt } from './presentation-art.js';

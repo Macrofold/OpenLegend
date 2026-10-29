@@ -77,15 +77,20 @@ export interface RecordChanges {
   expired?: Map<string, string[]>;
 }
 interface PreparedRows {
+  owner: WorldRecords;
+  predecessor: object | undefined;
+  acceptedParents: boolean;
   writes: Map<string, readonly RowChange[]>;
   signatures: Map<RowChange, Omit<RowChange, 'extra'> & { extra: string }>;
   deletes: string;
   expired: string;
   rows: number;
   ownedAppends: Set<RowChange>;
+  parents: Map<string, Set<string>>;
   reclaimed: Set<string>;
 }
 const preparedRows = new WeakMap<RecordChanges, PreparedRows>();
+const predecessorTokens = new WeakMap<SavedWorld, object>();
 const rowSignature = (row: RowChange) => ({ ...row, extra: JSON.stringify(row.extra) });
 const sameRow = (row: RowChange, saved: ReturnType<typeof rowSignature> | undefined) =>
   !!saved &&
@@ -118,6 +123,13 @@ export function preparedRecordChanges(changes: RecordChanges): boolean {
 export function ownedAppendRow(changes: RecordChanges, row: RowChange): boolean {
   const proof = preparedRows.get(changes);
   return !!proof?.ownedAppends.has(row) && sameRow(row, proof.signatures.get(row));
+}
+/** The store binds preparation to its exact accepted predecessor/head. A visited
+ * existing parent is already canonical (possibly in the accepted journal suffix);
+ * no world graph is retained by this compact membership proof. */
+export function ownedParentRow(changes: RecordChanges, table: string, id: string): boolean {
+  const proof = preparedRows.get(changes);
+  return !!proof?.acceptedParents && !!proof.parents.get(table)?.has(id);
 }
 /** Only the retention owner can certify complete current/cold dependency closure. */
 export function ownedPhysicalReclamation(changes: RecordChanges, id: string): boolean {
@@ -226,17 +238,32 @@ export class WorldRecords {
   constructor(readonly db: SqlDatabase) {}
   private readonly retirements = new WeakMap<
     SavedWorld,
-    { rows: Map<string, string[]>; positions: Map<string, Map<string, number>> }
+    {
+      rows: Map<string, string[]>;
+      positions: Map<string, Map<string, number>>;
+      previous: Map<string, Map<string, unknown>>;
+    }
   >();
   stageRetirements(
     state: SavedWorld,
     rows: Map<string, string[]>,
     positions = new Map<string, Map<string, number>>(),
+    previous = new Map<string, Map<string, unknown>>(),
   ): void {
     for (const table of rows.keys())
       if (!retainedSourceTables.has(table))
         throw new Error('Unsupported personal-history retirement.');
-    this.retirements.set(state, { rows, positions });
+    this.retirements.set(state, { rows, positions, previous });
+  }
+  /** Called by the store only after it has checked the exact accepted baseline.
+   * Frozen but caller-invented predecessors never authorize skipped SQL probes. */
+  bindAcceptedParents(changes: RecordChanges, before: SavedWorld): void {
+    const proof = preparedRows.get(changes);
+    if (!proof) return;
+    proof.acceptedParents =
+      proof.owner === this &&
+      proof.predecessor !== undefined &&
+      proof.predecessor === predecessorTokens.get(before);
   }
   needsHotPrune = false;
   private currentContributionsPredicate(alias = ''): string {
@@ -390,7 +417,11 @@ export class WorldRecords {
     selectedTables?: ReadonlySet<string>,
   ): RecordChanges {
     const changes: RecordChanges = { writes: new Map(), deletes: new Map(), rows: 0 };
+    let predecessor = before && predecessorTokens.get(before);
+    if (before && !predecessor) predecessorTokens.set(before, (predecessor = {}));
+    const retirement = this.retirements.get(after);
     const ownedAppends = new Set<RowChange>();
+    const existingParents = new Map<string, Set<string>>();
     const required = selectedTables ? new Set(selectedTables) : undefined;
     if (required)
       for (const table of selectedTables!) {
@@ -413,6 +444,25 @@ export class WorldRecords {
       if (required && !required.has(node.table)) return;
       if (old === next && oldPosition === position && !this.needsHotPrune) return;
       const id = recordId(path);
+      // A scoped cold edit supplies its exact canonical predecessor, not a new
+      // logical owner. Segment descendants must diff that stored layout too.
+      if (
+        old === undefined &&
+        next !== undefined &&
+        retirement?.previous.get(node.table)?.has(id)
+      ) {
+        old = retirement.previous.get(node.table)!.get(id);
+        const storedPosition = retirement.positions.get(node.table)?.get(id);
+        if (storedPosition !== undefined) {
+          oldPosition = position = storedPosition;
+          if (node.table === 'mind_temporal_chunks') slot = String(position);
+        }
+      }
+      if (old !== undefined && next !== undefined && node.children && before) {
+        let ids = existingParents.get(node.table);
+        if (!ids) existingParents.set(node.table, (ids = new Set()));
+        ids.add(id);
+      }
       if (next === undefined) {
         // Foreign keys remove this owned subtree, never another actor's records.
         const ids = changes.deletes.get(node.table) ?? [];
@@ -724,8 +774,7 @@ export class WorldRecords {
       }
     };
     visit(WORLD_RECORD_SCHEMA, before, after, [], '', '', 0);
-    const retirement = this.retirements.get(after),
-      retired = retirement?.rows;
+    const retired = retirement?.rows;
     if (retired?.size) {
       // Placement-only metadata can mark a cold update as an existing row. It
       // does not delete a record or require the synchronous expiry save path.
@@ -768,8 +817,23 @@ export class WorldRecords {
         if (deletes.size) changes.deletes.set(table, [...deletes]);
       }
     }
+    const provenParents = new Map<string, Set<string>>();
+    for (const [table, rows] of changes.writes) {
+      const parent = RECORD_PARENTS.get(table);
+      const known = parent && existingParents.get(parent);
+      if (!known) continue;
+      for (const row of rows) {
+        if (!known.has(row.parent)) continue;
+        let ids = provenParents.get(parent!);
+        if (!ids) provenParents.set(parent!, (ids = new Set()));
+        ids.add(row.parent);
+      }
+    }
     if (Object.isFrozen(after.world))
       preparedRows.set(changes, {
+        owner: this,
+        predecessor,
+        acceptedParents: false,
         writes: new Map([...changes.writes].map(([table, rows]) => [table, [...rows]])),
         signatures: new Map(
           [...changes.writes.values()].flat().map((row) => [row, rowSignature(row)]),
@@ -778,6 +842,7 @@ export class WorldRecords {
         expired: JSON.stringify([...(changes.expired ?? [])]),
         rows: changes.rows,
         ownedAppends,
+        parents: provenParents,
         reclaimed: new Set([
           ...(retirement?.rows.get('mind_perception_values') ?? []),
           ...(retirement?.positions.get('mind_perception_values')?.keys() ?? []),

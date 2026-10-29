@@ -1,4 +1,8 @@
-import { retentionNeedsPreparation, receivedValueReleaseCandidates } from './temporal-storage.js';
+import {
+  retentionNeedsPreparation,
+  receivedValueReleaseCandidates,
+  type PreparedMemoryRetention,
+} from './temporal-storage.js';
 import {
   sourceVersionPreparationNeeded,
   restoredSourceVersions,
@@ -16,6 +20,7 @@ import { personalAccountRevision } from './personal-accounts.js';
 import { RETRIEVAL_ROWS, RETRIEVAL_BYTES, memorySourceProof } from './memory-repository.js';
 import {
   captureKnownPlaceEvidence,
+  inheritUnchangedExposure,
   knownPlaceEvidenceReady,
   installKnownPlaceEvidence,
   prepareKnownPlaceEvidence,
@@ -1644,6 +1649,8 @@ export class WorldService {
   ): void {
     captureKnownPlaceEvidence(historyWorld)(saved.world);
     freezeWorld(saved.world);
+    inheritUnchangedExposure(this.saved.world, saved.world);
+    inheritUnchangedExposure(historyWorld, saved.world);
     this.saved = saved;
     if (currentAppendCount) this.acceptAttackEvents(historyWorld.events.slice(-currentAppendCount));
     if (currentAppendCount === undefined || saved.world.events !== historyWorld.events)
@@ -1710,7 +1717,12 @@ export class WorldService {
         );
       const retention = await this.prepareRetention(saved, !!restore);
       const prepared = this.prepareSnapshot(retention.state);
-      this.store.records?.stageRetirements(prepared.snapshot, retention.rows, retention.positions);
+      this.store.records?.stageRetirements(
+        prepared.snapshot,
+        retention.rows,
+        retention.positions,
+        retention.previous,
+      );
       this.store.memories?.stageSourceVersions(prepared.snapshot.world, retention.versions);
       const { historyWorld, appendEventCount, currentAppendCount } = prepared;
       saved = prepared.snapshot;
@@ -1927,7 +1939,12 @@ export class WorldService {
       allocation = this.hostWork.reserve(saved.world);
       const retention = await this.prepareRetention(saved);
       const prepared = this.prepareSnapshot(retention.state);
-      store.records?.stageRetirements(prepared.snapshot, retention.rows, retention.positions);
+      store.records?.stageRetirements(
+        prepared.snapshot,
+        retention.rows,
+        retention.positions,
+        retention.previous,
+      );
       store.memories?.stageSourceVersions(prepared.snapshot.world, retention.versions);
       // Preparation assigns canonical record positions; release reuses them.
       const changes = store.prepareCommit(this.persistedRevision, prepared.snapshot, {
@@ -2105,12 +2122,18 @@ export class WorldService {
         versions: undefined,
       };
     await this.backgroundSave?.done;
+    let retained: PreparedMemoryRetention;
     if (!complete) {
       if (!this.store.prepareRetainedSourceClosure)
         throw new Error('Exact retained source preparation is unavailable.');
-      return this.store.prepareRetainedSourceClosure(saved);
-    }
-    return this.store.memories.prepareRetention(saved, complete);
+      retained = await this.store.prepareRetainedSourceClosure(saved);
+    } else retained = await this.store.memories.prepareRetention(saved, complete);
+    // Account expiry and payload reclamation do not settle physical arithmetic.
+    // Their editable intermediate wrappers are complete now; preserve preparation
+    // only after the exposure owner proves every actual input stayed identical.
+    freezeWorld(retained.state.world);
+    inheritUnchangedExposure(saved.world, retained.state.world);
+    return retained;
   }
 
   private async acceptProgress(saved: SavedWorld): Promise<boolean> {

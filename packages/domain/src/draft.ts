@@ -866,8 +866,14 @@ export function finishWorld(
   }
   return result;
 }
-export function updateWorld(world: WorldState, change: (draft: WorldState) => void): WorldState {
-  const draft = draftWorld(world);
+export function updateWorld(
+  world: WorldState,
+  change: (draft: WorldState) => void,
+  // Evidence/accounting edits preserve the existing numeric continuation instead
+  // of rewriting every character's physical anchors as an incidental save effect.
+  options: { retainNativeValues?: boolean } = {},
+): WorldState {
+  const draft = draftWorld(world, options);
   change(draft);
   return finishWorld(draft);
 }

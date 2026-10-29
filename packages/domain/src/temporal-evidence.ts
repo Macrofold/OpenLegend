@@ -5,14 +5,17 @@ import {
   type ReceivedValueState,
   type ReceivedValueFragment,
 } from './received-values.js';
-import { cloneValue, readOnlyDraftView, touchNativeEvidence } from './draft.js';
+import { cloneValue, readOnlyDraftView, touchNativeEvidence, appendSnapshot } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
 import { ensureExperienceAccounting } from './remembered-impressions.js';
 import { personalFactAlias } from './experience-source.js';
 import { isImmutableData, immutableDataSnapshot, jsonEncoding, jsonText } from './records.js';
-import { selectedRecognitionSupportSourceIds } from './world-composition.js';
+import {
+  selectedRecognitionSupportSourceIds,
+  selectedTemporalPolicy,
+} from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
 import {
@@ -130,7 +133,6 @@ export interface TemporalChunk {
   bytes: number;
   count: number;
   receipts: TemporalReceipt[];
-  boundary: string;
 }
 export interface TemporalActorHistory {
   physicalLife: number;
@@ -211,7 +213,6 @@ export interface TemporalCaptureInput {
 
 const encoder = new TextEncoder();
 const byteLength = (value: unknown) => encoder.encode(JSON.stringify(value)).byteLength;
-const boundary = (world: WorldState) => `${world.sequence}:${world.simTime}`;
 function valueEncoding(value: TemporalFragment): { json: string; bytes: number } {
   const held = readOnlyDraftView(value);
   // Encode common geometry components once through their existing immutable
@@ -394,14 +395,6 @@ export function temporalSupportLogicalBytes(capsule: TemporalSupportCapsule): nu
   });
   return bytes;
 }
-/** Append-only header arrays charge only their new encoded strings and separators.
- * The retained prefix is unchanged; JSON escaping and UTF-8 still own every byte. */
-function appendHeaderValue(values: string[], value: string): number {
-  if (values.includes(value)) return 0;
-  const bytes = byteLength(value) + (values.length ? 1 : 0);
-  values.push(value);
-  return bytes;
-}
 export function receivedTemporalFragment(
   value: ReceivedValueFragment | undefined,
 ): TemporalFragment | undefined {
@@ -428,22 +421,6 @@ function initialBytes(value: { bytes: number }, measure = () => byteLength(value
     value.bytes = bytes;
   }
   return value.bytes;
-}
-function adjustHeaderBytes<T extends { bytes: number }>(
-  value: T,
-  previousHeader: number,
-  header: () => number,
-): number {
-  let change = 0;
-  for (let attempt = 0; attempt < 4; attempt++) {
-    const next = header();
-    const delta = next - previousHeader;
-    if (!delta) break;
-    value.bytes += delta;
-    change += delta;
-    previousHeader = next;
-  }
-  return change;
 }
 
 function state(world: WorldState): TemporalEvidenceState | undefined {
@@ -567,13 +544,48 @@ export function appendTemporalReceipt(
   // Logical accounting charges each observer's full support even when storage shares it.
   const receiptBytes = temporalReceiptLogicalBytes(receipt);
   const bytes = receiptBytes + sourceBytes;
-  const atBoundary = boundary(world);
+  const headers = {
+    subjects: [...new Set([receipt.subject, ...(receipt.contextSubjects ?? [])])],
+    sourceIds: [
+      ...new Set([
+        ...receipt.sourceIds,
+        ...temporalReceiptAliases(receipt, world.receivedValues?.sources ?? {}, world),
+      ]),
+    ],
+    individualIds: temporalReceiptIndividualIds(receipt, world.receivedValues?.sources ?? {}),
+    sourceRefs: [...new Set(receipt.facets.map((facet) => facet.blockId))],
+  };
+  const headerKeys = ['subjects', 'sourceIds', 'individualIds', 'sourceRefs'] as const;
+  // Charge only newly encoded header members. The retained prefix is unchanged;
+  // JSON escaping and UTF-8 still own every byte of each new member.
+  const appendBytes = (chunk: TemporalChunk) => {
+    let delta =
+      byteLength(receipt.at) -
+      byteLength(chunk.throughAt) +
+      byteLength(receipt.ordinal) -
+      byteLength(chunk.throughOrdinal) +
+      byteLength(chunk.count + 1) -
+      byteLength(chunk.count);
+    for (const key of headerKeys) {
+      let count = chunk[key].length;
+      for (const value of headers[key])
+        if (!chunk[key].includes(value)) delta += byteLength(value) + (count++ > 0 ? 1 : 0);
+    }
+    const base = chunk.bytes + bytes + (chunk.count > 0 ? 1 : 0) + delta;
+    let result = base;
+    for (let n = 0; n < 4; n++) {
+      const next = base + byteLength(result) - byteLength(chunk.bytes);
+      if (next === result) break;
+      result = next;
+    }
+    return result;
+  };
   let chunk = actor.chunks.at(-1);
+  let nextBytes = chunk && chunk.epoch === actor.epoch ? appendBytes(chunk) : undefined;
   if (
     !chunk ||
-    chunk.boundary !== atBoundary ||
     chunk.epoch !== actor.epoch ||
-    chunk.bytes + bytes > policy.chunkBytes
+    (chunk.count > 0 && nextBytes !== undefined && nextBytes > policy.chunkBytes)
   ) {
     chunk = {
       id: nextId(world, 'temporal-chunk'),
@@ -591,41 +603,27 @@ export function appendTemporalReceipt(
       bytes: 0,
       count: 0,
       receipts: [],
-      boundary: atBoundary,
     };
     initialBytes(chunk);
     actor.bytes += chunk.bytes;
     actor.chunks.push(chunk);
+    nextBytes = appendBytes(chunk);
   }
-  const previousByteDigits = byteLength(chunk.bytes);
-  let headerDelta =
-    byteLength(receipt.at) -
-    byteLength(chunk.throughAt) +
-    byteLength(receipt.ordinal) -
-    byteLength(chunk.throughOrdinal) +
-    byteLength(chunk.count + 1) -
-    byteLength(chunk.count);
-  chunk.receipts.push(receipt);
+  const previousBytes = chunk.bytes;
+  if (nextBytes === undefined) throw new Error('A temporal append has no complete byte charge.');
+  // Storage pages seal at durable boundaries. The logical chunk spans actual
+  // receipt times until full; a game timestamp is not a reason to start a page.
+  chunk.receipts = appendSnapshot(readOnlyDraftView(chunk.receipts), [receipt], world) ?? [
+    ...chunk.receipts,
+    receipt,
+  ];
   chunk.count++;
-  chunk.bytes += bytes + (chunk.receipts.length > 1 ? 1 : 0);
   chunk.throughAt = receipt.at;
   chunk.throughOrdinal = receipt.ordinal;
-  for (const subject of [receipt.subject, ...(receipt.contextSubjects ?? [])])
-    headerDelta += appendHeaderValue(chunk.subjects, subject);
-  for (const id of receipt.sourceIds) headerDelta += appendHeaderValue(chunk.sourceIds, id);
-  for (const id of temporalReceiptIndividualIds(receipt, world.receivedValues?.sources ?? {}))
-    headerDelta += appendHeaderValue(chunk.individualIds, id);
-  for (const id of temporalReceiptAliases(receipt, world.receivedValues?.sources ?? {}, world))
-    headerDelta += appendHeaderValue(chunk.sourceIds, id);
-  for (const facet of receipt.facets)
-    headerDelta += appendHeaderValue(chunk.sourceRefs, facet.blockId);
-  // The existing fixed-point adjustment accounts for the byte count's own digits.
-  const headerChange = adjustHeaderBytes(
-    chunk,
-    previousByteDigits,
-    () => headerDelta + byteLength(chunk.bytes),
-  );
-  actor.bytes += bytes + (chunk.receipts.length > 1 ? 1 : 0) + headerChange;
+  for (const key of headerKeys)
+    for (const value of headers[key]) if (!chunk[key].includes(value)) chunk[key].push(value);
+  chunk.bytes = nextBytes;
+  actor.bytes += nextBytes - previousBytes;
   actor.count++;
   const due = chunk.fromAt + policy.maxAgeSeconds;
   actor.nextDue = actor.nextDue === null ? due : Math.min(actor.nextDue, due);
@@ -705,6 +703,13 @@ export function captureTemporalSnapshot(
       facets: [
         {
           value: snapshot.value,
+          support: {
+            original: snapshot.original,
+            confirmation: snapshot.confirmation,
+            confirmedFrom: snapshot.confirmedFrom,
+            confirmedThrough: snapshot.confirmedThrough,
+            ...(snapshot.originalAliases ? { aliases: snapshot.originalAliases } : {}),
+          },
           role: snapshot.role,
           asOf: snapshot.valueMeasuredThrough,
           measuredFrom: snapshot.valueMeasuredFrom,
@@ -989,6 +994,41 @@ export function retireTemporalChunks(
   if (releasedThrough !== undefined)
     actor.releasedThrough = Math.max(actor.releasedThrough ?? 0, releasedThrough);
   actor.maintenanceDue = false;
+}
+
+/** Expiry can cut inside an open logical chunk. Physical pages keep stable
+ * ordinals; deleting a prefix does not keep its expired payload alive. */
+export function retireTemporalReceipts(
+  world: WorldState,
+  actorId: string,
+  chunkId: string,
+  ordinals: ReadonlySet<number>,
+  nextDue: number | null,
+): void {
+  const temporal = world.experience?.temporal,
+    actor = temporal?.actors[actorId];
+  const chunk = actor?.chunks.find((chunk) => chunk.id === chunkId);
+  if (!temporal || !actor || !chunk || !ordinals.size) return;
+  const removed = chunk.receipts.filter((receipt) => ordinals.has(receipt.ordinal));
+  if (!removed.length) return;
+  touchNativeEvidence(world, 'temporal', actorId);
+  const oldBytes = chunk.bytes,
+    oldCount = chunk.count;
+  chunk.receipts = chunk.receipts.filter((receipt) => !ordinals.has(receipt.ordinal));
+  if (chunk.receipts.length) refreshChunk(chunk, temporal, world);
+  else actor.chunks = actor.chunks.filter((value) => value.id !== chunkId);
+  actor.bytes -= oldBytes - (chunk.receipts.length ? chunk.bytes : 0);
+  actor.count -= oldCount - chunk.receipts.length;
+  actor.releasedThrough = Math.max(
+    actor.releasedThrough ?? 0,
+    ...removed.map((receipt) => receipt.at),
+  );
+  actor.nextDue = nextDue;
+  const policy = selectedTemporalPolicy(world).recent;
+  actor.maintenanceDue =
+    actor.bytes > policy.maxBytes ||
+    actor.count > policy.maxChanges ||
+    (nextDue !== null && nextDue <= world.simTime);
 }
 
 export interface TemporalHistorySelection {

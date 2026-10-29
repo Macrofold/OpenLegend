@@ -3,6 +3,7 @@ import {
   appendSnapshot,
   canonicalJson,
   isImmutableData,
+  immutableDataSnapshot,
   jsonText,
   type TemporalChunk,
 } from '@open-legend/domain';
@@ -26,6 +27,34 @@ const layouts = new WeakMap<object, Layout>();
 const encoded = new WeakMap<object, Owner>();
 const ordinal = (field: Field, value: unknown, index: number) =>
   field === 'receipts' ? Number((value as Owner)['ordinal']) : index;
+
+/** Cold edit preparation retains only a selected immutable predecessor. Keep its
+ * verified physical pages attached to the copied logical vector so a later edit
+ * compares the actual stored pages instead of inventing new page boundaries. */
+export function snapshotEvidenceOwner<T extends object>(value: T, field: Field): T {
+  const snapshot = immutableDataSnapshot(value);
+  if (snapshot === value) return snapshot;
+  const held = layouts.get((value as Owner)[field] as object);
+  if (!held) return snapshot;
+  const values = (snapshot as Owner)[field] as unknown[];
+  const receipts =
+    field === 'receipts'
+      ? new Map(values.map((entry, index) => [ordinal(field, entry, index), entry]))
+      : undefined;
+  const segments = held.segments.map((segment) =>
+    immutableDataSnapshot({
+      ...segment,
+      values: Array.from({ length: segment.end - segment.start }, (_, index) =>
+        receipts ? (receipts.get(segment.start + index) ?? null) : values[segment.start + index],
+      ),
+    }),
+  );
+  layouts.set(values, {
+    ...held,
+    segments: Object.freeze(segments) as unknown as EvidenceSegment[],
+  });
+  return snapshot;
+}
 
 export function receiptStorageIndex(receipts: TemporalChunk['receipts']) {
   const references: Record<string, number[]> = {};

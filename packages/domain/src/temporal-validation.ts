@@ -441,8 +441,7 @@ export function validateTemporalEvidenceState(
         !strings(chunk.sourceRefs) ||
         !Array.isArray(chunk.receipts) ||
         !chunk.receipts.length ||
-        chunk.receipts.length !== chunk.count ||
-        typeof chunk.boundary !== 'string'
+        chunk.receipts.length !== chunk.count
       )
         throw new Error('Invalid personal temporal chunk.');
       chunks.add(chunk.id);

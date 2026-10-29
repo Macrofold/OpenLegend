@@ -104,9 +104,13 @@ export async function releaseUnusedTemporalSupports(
   return {
     state: {
       ...state,
-      world: updateWorld(state.world, (draft) => {
-        for (const id of ids) releaseTemporalSupport(draft, actorId, id);
-      }),
+      world: updateWorld(
+        state.world,
+        (draft) => {
+          for (const id of ids) releaseTemporalSupport(draft, actorId, id);
+        },
+        { retainNativeValues: true },
+      ),
     },
     ids: ids.map((id) =>
       JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'supports', id]),
@@ -303,12 +307,16 @@ export async function cleanupRetiredIndividuals(
         );
       }
     const released = aliases.filter((id) => !retained.has(id));
-    world = updateWorld(world, (draft) => {
-      selectedPruneObserverIndividuals(draft, actorId, {
-        releasedSourceIds: released,
-        retainedIndividualIds: individuals,
-      });
-    });
+    world = updateWorld(
+      world,
+      (draft) => {
+        selectedPruneObserverIndividuals(draft, actorId, {
+          releasedSourceIds: released,
+          retainedIndividualIds: individuals,
+        });
+      },
+      { retainNativeValues: true },
+    );
   }
   return world === after.world ? after : { ...after, world };
 }

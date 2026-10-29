@@ -2307,6 +2307,10 @@ try {
       cpuProfileWindow.stopBeforeUs = Number(process.hrtime.bigint() / 1000n);
       const { profile } = await profiler.post('Profiler.stop');
       cpuProfileWindow.stopAfterUs = Number(process.hrtime.bigint() / 1000n);
+      // V8 and process.hrtime can have different origins. The profile is wholly
+      // inside measurement; sample attribution must use its own timestamp basis.
+      cpuProfileWindow.profileStartedUs = profile.startTime;
+      cpuProfileWindow.profileEndedUs = profile.endTime;
       await writeFile(resolve(output) + '.cpuprofile', JSON.stringify(profile), {
         flag: 'wx',
         mode: 0o600,

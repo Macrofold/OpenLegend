@@ -159,7 +159,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '32';
+export const DATABASE_SCHEMA = '33';
 
 export interface AttemptBudget {
   id: string;
@@ -455,9 +455,10 @@ export class SqlGameRepository implements GameRepository {
   ): Promise<import('./temporal-storage.js').PreparedMemoryRetention> {
     let state = initial;
     const rows = new Map<string, string[]>(),
-      positions = new Map<string, Map<string, number>>();
+      positions = new Map<string, Map<string, number>>(),
+      previous = new Map<string, Map<string, unknown>>();
     for (let round = 0; round < 4; round++) {
-      this.records.stageRetirements(state, rows, positions);
+      this.records.stageRetirements(state, rows, positions, previous);
       // Retention joins only personal source changes. Preparing unrelated physical
       // and current-perception records again in each closure round repeats the save.
       const changes = this.records.prepare(
@@ -479,8 +480,14 @@ export class SqlGameRepository implements GameRepository {
         for (const [id, value] of values) target.set(id, value);
         positions.set(table, target);
       }
+      for (const [table, records] of retained.previous ?? []) {
+        const target = previous.get(table) ?? new Map();
+        for (const [id, value] of records) if (!target.has(id)) target.set(id, value);
+        previous.set(table, target);
+      }
       state = retained.state;
-      if (state === planned.state) return { state, rows, positions, versions: planned.plan };
+      if (state === planned.state)
+        return { state, rows, positions, previous, versions: planned.plan };
     }
     throw new Error('Exact source closure cannot fit its complete retained account allowance.');
   }
@@ -944,6 +951,9 @@ export class SqlGameRepository implements GameRepository {
       if (this.journalActive) this.journal.synchronized(state.world.id, canonical.revision);
       // A failed read, audit or validation cannot restore a lost incremental baseline.
       this.baselineLost = false;
+      // Accepted canonical records are immutable predecessors. Physical evidence
+      // page layouts must survive the next diff, including direct store callers.
+      freezeWorld(state.world);
       this.acceptedState = canonical.state;
       this.acceptedRevision = canonical.revision;
       return { revision: canonical.revision, state };
@@ -1009,6 +1019,7 @@ export class SqlGameRepository implements GameRepository {
     const restoreBaseline = historyProjection?.restore
       ? ((await this.records.load())?.state ?? null)
       : undefined;
+    if (restoreBaseline) freezeWorld(restoreBaseline.world);
     if (historyProjection?.restore) this.acceptedState = restoreBaseline ?? null;
     this.memories.configureWorld(state.world);
     const prepared = historyProjection?.prepared;
@@ -1267,6 +1278,7 @@ export class SqlGameRepository implements GameRepository {
       countMetric('persistence.journalFallback.boundary');
       return false;
     }
+    this.records.bindAcceptedParents(write.changes, before);
     if (!journalTableFamily(before.world, state.world, write.changes, preparedHistory.changed)) {
       countMetric('persistence.journalFallback.family');
       return false;

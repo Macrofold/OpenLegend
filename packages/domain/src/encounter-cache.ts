@@ -333,6 +333,36 @@ function bindingCurrent(binding: ExposureBinding | undefined): binding is Exposu
     binding.revision === binding.cache.revision
   );
 }
+/** Storage can replace a world wrapper while retaining identical sensory authority.
+ * Reuse only the existing immutable binding and every physical/prepared-output input;
+ * history/accounting fields grant no new exposure. Changed or restored inputs rebuild.
+ * docs/performance/preparation.md#inactive-history-residency */
+export function inheritUnchangedExposure(before: WorldState, after: WorldState): void {
+  if (before === after || !Object.isFrozen(before) || !Object.isFrozen(after)) return;
+  const binding = caches.get(before);
+  if (!bindingCurrent(binding)) return;
+  const dependencies: readonly (keyof WorldState)[] = [
+    'id',
+    'simTime',
+    'sequence',
+    'entities',
+    'map',
+    'assemblyGeometryRevision',
+    'moduleManifest',
+    'statusEffectPolicy',
+    'itemDefinitions',
+    'assemblyFamilies',
+    'pendingNativeIntegration',
+    'workState',
+    'visiblePeople',
+    'visibleObjects',
+    'perceptionEpisodes',
+    'perceptionFeatures',
+    'places',
+    'visiblePlaces',
+  ];
+  if (dependencies.every((key) => before[key] === after[key])) caches.set(after, binding);
+}
 function mergeDeferredWrites(
   audit: ReturnType<typeof sensoryDraftWrites>,
   dirty: ExposureBinding['dirty'],

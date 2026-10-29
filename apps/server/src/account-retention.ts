@@ -121,19 +121,23 @@ export async function prepareAccountRetention(
               world.id,
               actorId,
             );
-      world = updateWorld(world, (draft) => {
-        ensureExperienceAccounting(draft, actorId);
-        const value = draft.experience!.temporal!.actors[actorId]!.accounts!;
-        if (totals.length)
-          for (const category of ['optional', 'required', 'speech'] as const) {
-            const found = totals.find((row) => row['category'] === category);
-            value[category] = {
-              bytes: Number(found?.['bytes'] ?? 0),
-              count: Number(found?.['count'] ?? 0),
-            };
-          }
-        value.nextDue = 0;
-      });
+      world = updateWorld(
+        world,
+        (draft) => {
+          ensureExperienceAccounting(draft, actorId);
+          const value = draft.experience!.temporal!.actors[actorId]!.accounts!;
+          if (totals.length)
+            for (const category of ['optional', 'required', 'speech'] as const) {
+              const found = totals.find((row) => row['category'] === category);
+              value[category] = {
+                bytes: Number(found?.['bytes'] ?? 0),
+                count: Number(found?.['count'] ?? 0),
+              };
+            }
+          value.nextDue = 0;
+        },
+        { retainNativeValues: true },
+      );
       accounts = world.experience!.temporal!.actors[actorId]!.accounts!;
     }
     if (
@@ -148,9 +152,13 @@ export async function prepareAccountRetention(
     const priorSupportIds = Object.keys(
       world.experience!.temporal!.actors[actorId]!.supports ?? {},
     );
-    world = updateWorld(world, (draft) => {
-      selectedExpireRecognitionSeeds(draft, actorId);
-    });
+    world = updateWorld(
+      world,
+      (draft) => {
+        selectedExpireRecognitionSeeds(draft, actorId);
+      },
+      { retainNativeValues: true },
+    );
     const released = await releaseUnusedTemporalSupports(
       db,
       { ...state, world },
@@ -418,60 +426,70 @@ export async function prepareAccountRetention(
           positions.set(table, selected);
         }
       }
-      world = updateWorld(world, (draft) => {
-        // Residency is preparation only: preserve exact SQL positions on the selected
-        // old bodies so removing them cannot renumber untouched cold history.
-        for (const kind of Object.keys(tables) as Kind[]) {
-          const old =
-            kind === 'memory'
-              ? (draft.memories[actorId] ?? [])
-              : kind === 'awareness'
-                ? (draft.experience!.awareness[actorId] ?? [])
-                : (draft.experience!.summaries[actorId] ?? []);
-          const placement = historyPositions.get(old),
-            positions = new Map(
-              placement?.positions ?? old.map((value, index) => [historyKey(value), index]),
+      world = updateWorld(
+        world,
+        (draft) => {
+          // Residency is preparation only: preserve exact SQL positions on the selected
+          // old bodies so removing them cannot renumber untouched cold history.
+          for (const kind of Object.keys(tables) as Kind[]) {
+            const old =
+              kind === 'memory'
+                ? (draft.memories[actorId] ?? [])
+                : kind === 'awareness'
+                  ? (draft.experience!.awareness[actorId] ?? [])
+                  : (draft.experience!.summaries[actorId] ?? []);
+            const placement = historyPositions.get(old),
+              positions = new Map(
+                placement?.positions ?? old.map((value, index) => [historyKey(value), index]),
+              );
+            const merged = new Map(old.map((value) => [historyKey(value), value]));
+            for (const candidate of batch)
+              if (candidate.kind === kind && candidate.value) {
+                merged.set(candidate.id, candidate.value.value);
+                positions.set(candidate.id, candidate.position);
+              }
+            const values = [...merged.values()].sort(
+              (a, b) => (positions.get(historyKey(a)) ?? 0) - (positions.get(historyKey(b)) ?? 0),
             );
-          const merged = new Map(old.map((value) => [historyKey(value), value]));
-          for (const candidate of batch)
-            if (candidate.kind === kind && candidate.value) {
-              merged.set(candidate.id, candidate.value.value);
-              positions.set(candidate.id, candidate.position);
-            }
-          const values = [...merged.values()].sort(
-            (a, b) => (positions.get(historyKey(a)) ?? 0) - (positions.get(historyKey(b)) ?? 0),
-          );
-          historyPositions.set(values, {
-            positions,
-            next:
-              placement?.next ??
-              Math.max(
-                0,
-                ...metadata
-                  .filter((row) => row['source_kind'] === kind)
-                  .map((row) => Number(row['position']) + 1),
-              ),
-            complete: placement?.complete,
-          });
-          if (kind === 'memory')
-            draft.memories[actorId] = values as (typeof draft.memories)[string];
-          else if (kind === 'awareness')
-            draft.experience!.awareness[actorId] = values as NonNullable<
-              typeof draft.experience
-            >['awareness'][string];
-          else
-            draft.experience!.summaries[actorId] = values as NonNullable<
-              typeof draft.experience
-            >['summaries'][string];
-        }
-        if (!expireExperience(draft, actorId, expired, replacements))
-          throw new MemoryRetentionError('Personal memory changed before retention installation.');
-      });
+            historyPositions.set(values, {
+              positions,
+              next:
+                placement?.next ??
+                Math.max(
+                  0,
+                  ...metadata
+                    .filter((row) => row['source_kind'] === kind)
+                    .map((row) => Number(row['position']) + 1),
+                ),
+              complete: placement?.complete,
+            });
+            if (kind === 'memory')
+              draft.memories[actorId] = values as (typeof draft.memories)[string];
+            else if (kind === 'awareness')
+              draft.experience!.awareness[actorId] = values as NonNullable<
+                typeof draft.experience
+              >['awareness'][string];
+            else
+              draft.experience!.summaries[actorId] = values as NonNullable<
+                typeof draft.experience
+              >['summaries'][string];
+          }
+          if (!expireExperience(draft, actorId, expired, replacements))
+            throw new MemoryRetentionError(
+              'Personal memory changed before retention installation.',
+            );
+        },
+        { retainNativeValues: true },
+      );
       for (const candidate of hydrated) delete candidate.value;
     }
-    world = updateWorld(world, (draft) => {
-      draft.experience!.temporal!.actors[actorId]!.accounts!.nextDue = nextDue;
-    });
+    world = updateWorld(
+      world,
+      (draft) => {
+        draft.experience!.temporal!.actors[actorId]!.accounts!.nextDue = nextDue;
+      },
+      { retainNativeValues: true },
+    );
     const finalSupports = await releaseUnusedTemporalSupports(
       db,
       { ...state, world },

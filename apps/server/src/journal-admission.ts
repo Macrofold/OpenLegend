@@ -11,6 +11,7 @@ import {
 import { RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
 import {
   ownedAppendRow,
+  ownedParentRow,
   ownedPhysicalReclamation,
   preparedRecordChanges,
   type RecordChanges,
@@ -325,7 +326,12 @@ export function prepareJournalConstraints(
           positions.set(table, probes);
         }
       }
-      if (parent && !created.get(parent)?.has(row.parent)) add(parent, row.parent);
+      if (
+        parent &&
+        !created.get(parent)?.has(row.parent) &&
+        !(ownsPreparation && ownedParentRow(changes, parent, row.parent))
+      )
+        add(parent, row.parent);
       if (table === 'sim_placements' && row.create) {
         const placement = JSON.parse(row.payload) as Record<string, unknown>;
         if (placement['mode'] !== 'contained' || typeof placement['parentEntityId'] !== 'string')
@@ -378,6 +384,7 @@ export async function journalConstraints(
   pending: readonly JournalTransition[],
 ): Promise<boolean> {
   const { changes, positions, physicalParents, sql, params } = plan;
+  const ownsPreparation = preparedRecordChanges(changes);
   const present = new Set<string>();
   const placed = new Map<string, { table: string; id: string; parent: string; position: number }>();
   if (sql) {
@@ -474,7 +481,12 @@ export async function journalConstraints(
       if (row.create && exists(table, row.id))
         throw new Error('A journal insertion reuses an existing canonical record.');
       const parent = RECORD_PARENTS.get(table);
-      if (parent && !created.get(parent)?.has(row.parent) && !exists(parent, row.parent))
+      if (
+        parent &&
+        !created.get(parent)?.has(row.parent) &&
+        !(ownsPreparation && ownedParentRow(changes, parent, row.parent)) &&
+        !exists(parent, row.parent)
+      )
         throw new Error('A journal record has no committed parent.');
       const owner = table === 'sim_placements' ? physicalParents.get(row.id) : undefined;
       if (owner && !exists('sim_entities', owner))

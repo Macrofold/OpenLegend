@@ -80,19 +80,23 @@ export function restoredSourceVersions(
     totals.set(actorId, value);
     return [{ ...row, retention_class: category, logical_bytes: bytes }];
   });
-  const world = updateWorld(state.world, (draft) => {
-    for (const [actorId, actor] of Object.entries(draft.experience?.temporal?.actors ?? {})) {
-      const old = actor.accounts?.archives ?? zero(),
-        next = totals.get(actorId) ?? zero();
-      if (JSON.stringify(old) === JSON.stringify(next)) continue;
-      ensureExperienceAccounting(draft, actorId);
-      for (const category of ['optional', 'required', 'speech'] as const) {
-        actor.accounts![category].bytes += next[category].bytes - old[category].bytes;
-        actor.accounts![category].count += next[category].count - old[category].count;
+  const world = updateWorld(
+    state.world,
+    (draft) => {
+      for (const [actorId, actor] of Object.entries(draft.experience?.temporal?.actors ?? {})) {
+        const old = actor.accounts?.archives ?? zero(),
+          next = totals.get(actorId) ?? zero();
+        if (JSON.stringify(old) === JSON.stringify(next)) continue;
+        ensureExperienceAccounting(draft, actorId);
+        for (const category of ['optional', 'required', 'speech'] as const) {
+          actor.accounts![category].bytes += next[category].bytes - old[category].bytes;
+          actor.accounts![category].count += next[category].count - old[category].count;
+        }
+        actor.accounts!.archives = next;
       }
-      actor.accounts!.archives = next;
-    }
-  });
+    },
+    { retainNativeValues: true },
+  );
   return { state: world === state.world ? state : { ...state, world }, rows: retained };
 }
 const tables = {
@@ -290,18 +294,22 @@ export async function prepareSourceVersions(
     }
     const old = world.experience?.temporal?.actors[actorId]?.accounts?.archives ?? zero();
     if (JSON.stringify(old) !== JSON.stringify(totals))
-      world = updateWorld(world, (draft) => {
-        ensureExperienceAccounting(draft, actorId);
-        const accounts = draft.experience!.temporal!.actors[actorId]!.accounts!;
-        for (const category of ['optional', 'required', 'speech'] as const) {
-          accounts[category].bytes += totals[category].bytes - old[category].bytes;
-          accounts[category].count += totals[category].count - old[category].count;
-          if (accounts[category].bytes < 0 || accounts[category].count < 0)
-            throw new Error('Exact archived support accounting underflow.');
-        }
-        accounts.archives = totals;
-        accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, draft.simTime);
-      });
+      world = updateWorld(
+        world,
+        (draft) => {
+          ensureExperienceAccounting(draft, actorId);
+          const accounts = draft.experience!.temporal!.actors[actorId]!.accounts!;
+          for (const category of ['optional', 'required', 'speech'] as const) {
+            accounts[category].bytes += totals[category].bytes - old[category].bytes;
+            accounts[category].count += totals[category].count - old[category].count;
+            if (accounts[category].bytes < 0 || accounts[category].count < 0)
+              throw new Error('Exact archived support accounting underflow.');
+          }
+          accounts.archives = totals;
+          accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, draft.simTime);
+        },
+        { retainNativeValues: true },
+      );
   }
   return {
     state: world === state.world ? state : { ...state, world },
