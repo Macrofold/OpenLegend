@@ -1,4 +1,8 @@
-import { evidenceReadView, restoreEvidenceLayout } from './evidence-segments.js';
+import {
+  evidenceReadView,
+  restoreEvidenceLayout,
+  validateReceiptPageSources,
+} from './evidence-segments.js';
 import { sqlRecordBatches, SqlWriteBatch } from './sql-rows.js';
 import { tableRows } from './record-pages.js';
 import { readTemporalChunkRecord } from './temporal-storage.js';
@@ -43,6 +47,7 @@ import {
   isSafeRecordId,
   isImmutableData,
   jsonText,
+  canonicalJson,
   type Appraisal,
   type Entity,
   type ItemInstance,
@@ -473,8 +478,8 @@ export class WorldRecords {
       if (node.encode) {
         const previous = old;
         const bytes = selectedTemporalPolicy(after.world).recent.chunkBytes;
-        old = old === undefined ? undefined : node.encode(old, undefined, bytes);
-        next = node.encode(next, previous, bytes);
+        old = old === undefined ? undefined : node.encode(old, undefined, bytes, before?.world);
+        next = node.encode(next, previous, bytes, after.world);
       }
       if (!selectedTables || selectedTables.has(node.table)) {
         const payload = encodedBody(node, next);
@@ -1234,6 +1239,8 @@ export class WorldRecords {
           received.sources[source.id] = source;
         }
     }
+    for (const actor of Object.values(state.world.experience?.temporal?.actors ?? {}))
+      for (const chunk of actor.chunks) validateReceiptPageSources(chunk, state.world);
     if (active) {
       await this.validateHistoricalMaterialOrigins(state);
       markPartialObjectHistory(state.world.entities);
@@ -1795,6 +1802,20 @@ export function assembleWorldRecords(
   const assemble = (node: RecordNode, row: JsonRecord): Value => {
     consumed++;
     const value: Value = JSON.parse(String(row['payload']));
+    if (node.table === 'mind_temporal_segments') {
+      const path = JSON.parse(String(row['id'])) as string[];
+      for (const [name, column] of Object.entries(node.columns ?? {})) {
+        const expected = column.value(value as JsonRecord, path);
+        const actual =
+          typeof expected === 'number'
+            ? Number(row[name])
+            : /^BIGINT\[\]/.test(column.sql) && Array.isArray(row[name])
+              ? row[name].map(Number)
+              : row[name];
+        if (canonicalJson(actual) !== canonicalJson(expected))
+          throw new Error('Receipt page lookup metadata disagrees with its record.');
+      }
+    }
     for (const [field, child] of Object.entries(node.children ?? {})) {
       const placeholder = field === '$' ? value : own(value, field);
       const children = groups.get(child.node.table)?.get(String(row['id'])) ?? [];

@@ -18,6 +18,9 @@ import {
   selectTemporalReceiptFacets,
   receivedObservationValueReferences,
   receivedFacetValueReferences,
+  currentOriginal,
+  currentFacetOriginal,
+  recordMapChangesBetween,
   referencedReceivedValues,
   pruneReceivedValueBlock,
   updateWorld,
@@ -118,9 +121,18 @@ export function receivedValueReleaseCandidates(
       const nextFrame = current?.visualConfirmation?.frameRef;
       if (frame && (!nextFrame || frame[0] !== nextFrame[0] || frame[1] !== nextFrame[1]))
         candidates.add(frame[0]);
+      if (owner.originals !== current?.originals) {
+        const changed =
+          current?.originals && recordMapChangesBetween(owner.originals, current.originals);
+        for (const key of changed ?? Object.keys(owner.originals)) {
+          const original = owner.originals[key];
+          if (original && original !== current?.originals[key]) addObservation(original);
+        }
+      }
       if (owner.received !== current?.received) {
         const retained = new Set(current?.received);
-        for (const source of owner.received) if (!retained.has(source)) addObservation(source);
+        for (const source of owner.received)
+          if (!retained.has(source)) addObservation(currentOriginal(owner, source));
       }
       if (owner.current !== current?.current)
         for (const [key, lease] of Object.entries(owner.current)) {
@@ -138,7 +150,7 @@ export function receivedValueReleaseCandidates(
             )
           ) {
             for (const reference of beforeRefs) candidates.add(reference.blockId);
-            addObservation(lease.original);
+            addObservation(currentFacetOriginal(owner, lease));
           }
         }
     }
@@ -234,9 +246,9 @@ export async function readTemporalHistory(
     .prepare(
       `SELECT id,source_refs,logical_bytes,receipt_count,
       first_at,first_order,receipt_epoch,first_ordinal,
-      encoded_bytes FROM mind_temporal_chunks_read
+      encoded_bytes FROM mind_temporal_chunks_read c
     WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=?
-      ${subjects.length ? 'AND subjects && ?::text[]' : ''}
+      ${subjects.length ? 'AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.subjects && ?::text[])' : ''}
       ${query.measurements ? 'AND last_supported_at>=? AND first_measured_at<=?' : ''}
       ${query.physicalLife === undefined ? '' : 'AND physical_life=?'}
       ${query.epoch === undefined ? '' : 'AND receipt_epoch=?'}
@@ -850,8 +862,13 @@ export async function prepareTemporalRetention(
   if (!complete) {
     const cold = await db
       .prepare(
-        `SELECT value_refs,octet_length(value_refs::text) AS bytes FROM mind_temporal_chunks_read
-         WHERE world_id=? AND source_refs && ?::text[] AND id<>ALL(?::text[]) LIMIT ?`,
+        `SELECT value_refs,octet_length(value_refs::text) AS bytes FROM (
+          SELECT parent_id,jsonb_object_agg(block,ordinals) AS value_refs FROM (
+            SELECT s.parent_id,refs.key AS block,jsonb_agg(DISTINCT ordinal ORDER BY ordinal) AS ordinals
+            FROM mind_temporal_segments s CROSS JOIN LATERAL jsonb_each(s.value_refs) refs
+            CROSS JOIN LATERAL jsonb_array_elements(refs.value) ordinal
+            WHERE s.world_id=? AND s.source_refs && ?::text[] AND s.parent_id<>ALL(?::text[])
+            GROUP BY s.parent_id,refs.key) blocks GROUP BY parent_id) owners LIMIT ?`,
       )
       .all(world.id, candidates, replaced, maximumRows + 1);
     preparationBytes += cold.reduce((sum, row) => sum + Number(row['bytes']), 0);

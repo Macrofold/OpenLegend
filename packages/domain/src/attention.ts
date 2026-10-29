@@ -5,7 +5,12 @@ import { sameSubject, validObserverSubject, type ObserverSubject } from './knowl
 import { countDomainWork } from './diagnostic-counters.js';
 import {
   prepareCurrentBodySubjects,
-  effectiveCurrentFacetSupport,
+  effectiveCurrentFacetTimes,
+  effectiveCurrentFacetDescriptor,
+  currentFacetOriginal,
+  currentFacetTimes,
+  currentFacetExposure,
+  receivedBodyParts,
   publicAttributeMeanings,
   receivedFacetValue,
   reconcileAttendedTemporalEvidence,
@@ -298,10 +303,14 @@ function currentPoint(
   observerId: string,
 ): AttentionPoint | undefined {
   const source = readOnlyDraftView(owner.current)[`${sourceId}:location`];
-  const lease = source && effectiveCurrentFacetSupport(world, observerId, source),
-    value = lease && receivedFacetValue(world, readOnlyDraftView(lease.value));
+  const lease = source && readOnlyDraftView(source),
+    value =
+      lease && receivedFacetValue(world, effectiveCurrentFacetDescriptor(world, observerId, lease));
   return value?.kind === 'location'
-    ? point(readOnlyDraftView(value.location), lease!.valueMeasuredThrough)
+    ? point(
+        readOnlyDraftView(value.location),
+        effectiveCurrentFacetTimes(world, observerId, lease!).valueMeasuredThrough,
+      )
     : undefined;
 }
 function descriptionInputKey(owner: PerceptionEvidenceOwner, id: string): string {
@@ -310,7 +319,8 @@ function descriptionInputKey(owner: PerceptionEvidenceOwner, id: string): string
     ['body', 'carried', 'public-attributes', 'association'].map((kind) => {
       const source = current[`${id}:${kind}`],
         lease = source && readOnlyDraftView(source);
-      return lease ? [lease.original.id, lease.original.revision, lease.originalOrdinal] : null;
+      const original = lease && currentFacetOriginal(owner, lease);
+      return original ? [original.id, original.revision, lease!.originalOrdinal] : null;
     }),
   );
 }
@@ -326,13 +336,16 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
       ? receivedFacetValue(world, readOnlyDraftView(readOnlyDraftView(lease).value))
       : undefined;
   };
-  const body = facet('body'),
-    appearance = body?.kind === 'body' ? readOnlyDraftView(body.body) : undefined;
+  // Description novelty depends on outward detail, never a reconstructed pose.
+  const bodySource = current[`${id}:body`],
+    bodyDescriptor = bodySource && readOnlyDraftView(bodySource).value,
+    parts = bodyDescriptor && receivedBodyParts(world, bodyDescriptor),
+    appearance = parts && readOnlyDraftView(parts.details);
   const association = facet('association'),
     attributes = facet('public-attributes');
   const value = JSON.stringify(
     [
-      body?.kind === 'body'
+      appearance
         ? {
             kind: appearance!.kind,
             appearance: appearance!.appearance,
@@ -485,9 +498,9 @@ export function updateAttention(
   for (const sourceId of changed) {
     const bodySource = readOnlyDraftView(owner.current)[`${sourceId}:body`];
     const body = bodySource && readOnlyDraftView(bodySource),
-      bodyValue = body && receivedFacetValue(world, readOnlyDraftView(body.value));
+      bodyParts = body && receivedBodyParts(world, readOnlyDraftView(body.value));
     const previousKey = existingBySource.get(sourceId);
-    if (!body || bodyValue?.kind !== 'body') {
+    if (!body || !bodyParts) {
       if (previousKey) {
         lostWitness(previousKey);
         delete state.candidates[previousKey];
@@ -496,7 +509,10 @@ export function updateAttention(
       }
       continue;
     }
-    const key = attentionSubjectKey(sourceId, body.exposure);
+    const exposure = currentFacetExposure(owner, body),
+      bodyTimes = currentFacetTimes(owner, body),
+      bodyOriginal = currentFacetOriginal(owner, body);
+    const key = attentionSubjectKey(sourceId, exposure);
     if (previousKey && readOnlyDraftView(state.candidates)[previousKey]?.leaseId !== body.id)
       lostWitness(previousKey);
     if (previousKey && previousKey !== key) delete state.candidates[previousKey];
@@ -504,6 +520,8 @@ export function updateAttention(
     const old = originalCandidate && readOnlyDraftView(originalCandidate);
     const locationSource = readOnlyDraftView(owner.current)[`${sourceId}:location`];
     const location = locationSource && readOnlyDraftView(locationSource);
+    const locationTimes = location && currentFacetTimes(owner, location),
+      locationOriginal = location && currentFacetOriginal(owner, location);
     const motionSource = readOnlyDraftView(owner.current)[`${sourceId}:observed-motion`];
     const motion = motionSource && readOnlyDraftView(motionSource);
     const measured = currentPoint(owner, sourceId, world, observerId);
@@ -513,9 +531,9 @@ export function updateAttention(
       : {
           sourceId,
           leaseId: body.id,
-          exposure: cloneValue(body.exposure),
+          exposure: cloneValue(exposure),
           order: state.nextOrder++,
-          acquiredAt: body.valueAcquiredAt,
+          acquiredAt: bodyTimes.valueAcquiredAt,
           urgency: 0,
           direct: false,
           score: 0,
@@ -534,18 +552,18 @@ export function updateAttention(
     } else candidate.descriptionRevision = descriptions(world, owner, sourceId);
     candidate.descriptionSourceRevision = descriptionKey;
     candidate.changeRevision = JSON.stringify([
-      readOnlyDraftView(body.original).id,
+      bodyOriginal.id,
       body.originalOrdinal,
-      body.valueAcquiredAt,
-      location ? readOnlyDraftView(location.original).id : null,
+      bodyTimes.valueAcquiredAt,
+      locationOriginal?.id ?? null,
       location?.originalOrdinal ?? null,
-      location?.valueAcquiredAt ?? null,
+      locationTimes?.valueAcquiredAt ?? null,
     ]);
     const geometryRevision = JSON.stringify([
       measured?.point,
       measured?.errorRadius,
-      readOnlyDraftView(bodyValue.body).radius,
-      readOnlyDraftView(bodyValue.body).height,
+      readOnlyDraftView(bodyParts.details).radius,
+      readOnlyDraftView(bodyParts.details).height,
       body.id,
       body.revision,
       location?.id,

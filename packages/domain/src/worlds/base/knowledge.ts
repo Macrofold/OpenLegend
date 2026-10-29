@@ -10,6 +10,7 @@ import {
   currentObservedFacetValues,
   receivedFacetValue,
   observationFactKey,
+  currentFacetOriginal,
 } from '../../perception-evidence.js';
 import { namePhrase, type Named, type NameArticle } from '@open-legend/language';
 import { outcome } from '../../events.js';
@@ -269,11 +270,13 @@ export function associateBodyFamiliarity(
   observerId: string,
   sourceId: string,
 ): void {
-  const body = world.perceptionEvidence?.[observerId]?.current[`${sourceId}:body`];
-  const association = world.perceptionEvidence?.[observerId]?.current[`${sourceId}:association`];
+  const owner = world.perceptionEvidence?.[observerId];
+  const body = owner?.current[`${sourceId}:body`];
+  const association = owner?.current[`${sourceId}:association`];
   const local = currentBodyLocalSubject(world, observerId, sourceId);
   const matched = currentBodyAssociation(world, observerId, sourceId);
-  if (!body || !association || association.bodyLeaseId !== body.id || !local || !matched) return;
+  if (!owner || !body || !association || association.bodyLeaseId !== body.id || !local || !matched)
+    return;
   const from = observerIndividual(world, observerId, local),
     to = observerIndividual(world, observerId, matched);
   if (!from || !to) return;
@@ -282,7 +285,13 @@ export function associateBodyFamiliarity(
     world,
     from,
     candidate,
-    JSON.stringify(observationFactKey(world, association.original, association.originalOrdinal)),
+    JSON.stringify(
+      observationFactKey(
+        world,
+        currentFacetOriginal(owner, association),
+        association.originalOrdinal,
+      ),
+    ),
   );
   if (candidate.individualId)
     commitObserverIdentity(world, observerId, candidate.individualId, candidate);

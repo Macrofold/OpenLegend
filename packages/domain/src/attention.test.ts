@@ -14,6 +14,11 @@ import {
   perceptionEvidenceOwner,
   currentBodyObservation,
   receivedFacetValue,
+  receivedPerceptionObservations,
+  currentFacetOriginal,
+  currentFacetSupport,
+  compactCurrentFacet,
+  removeCurrentFacets,
   type LiveFacetSupport,
   type SensoryFacet,
 } from './perception-evidence.js';
@@ -113,7 +118,9 @@ function scene(count: number, capacity = 10) {
         measuredThrough: 0,
       })),
     });
-    const received = owner.received.find((value) => value.id === original.id)!;
+    const received = receivedPerceptionObservations(owner).find(
+      (value) => value.id === original.id,
+    )!;
     const individualId = `fixture-local-${index}`;
     ((world.observerIdentities ??= {})[PLAYER_ID] ??= {})[individualId] = {
       individualId,
@@ -143,7 +150,7 @@ function scene(count: number, capacity = 10) {
           ? { localSubject: { kind: 'individual', individualId } as const }
           : {}),
       };
-      owner.current[`${id}:${value.kind}`] = lease;
+      owner.current[`${id}:${value.kind}`] = compactCurrentFacet(owner, lease);
     }
   }
   updateAttention(world, PLAYER_ID);
@@ -236,7 +243,9 @@ describe('received detailed attention', () => {
             distanceLower: 1,
             distanceUpper: 1.1,
             decreaseLower: 1,
-            proof: [observationFactKey(world, lease.original, lease.originalOrdinal)],
+            proof: [
+              observationFactKey(world, currentFacetOriginal(owner, lease), lease.originalOrdinal),
+            ],
           },
         ],
       },
@@ -272,7 +281,7 @@ describe('received detailed attention', () => {
     // Correction withdraws the source-supported condition, rather than recording
     // an invented negative observation or retaining a free-standing alarm.
     const draft = structuredClone(world);
-    revokeAttentionEvidence(draft, PLAYER_ID, new Set([lease.original.id]));
+    revokeAttentionEvidence(draft, PLAYER_ID, new Set([currentFacetOriginal(owner, lease).id]));
     expect(currentAttentionCues(draft, PLAYER_ID)).toHaveLength(0);
   });
   it('bounds detail without hiding the other current sources or learning private identities', () => {
@@ -490,12 +499,14 @@ describe('received detailed attention', () => {
       { kind: 'location', location: { ...value.location, point: { x: 10, y: 0, z: 2 } } },
       selectedAttentionPolicy(world).retention.recent.chunkBytes,
     );
-    location.value = {
-      ...location.value,
+    const updated = currentFacetSupport(owner, location);
+    updated.value = {
+      ...updated.value,
       reference: [retained.reference.blockId, retained.reference.valueOrdinal],
     };
-    location.valueMeasuredThrough = 120;
-    location.valueAcquiredAt = 120;
+    updated.valueMeasuredThrough = 120;
+    updated.valueAcquiredAt = 120;
+    owner.current[`${id}:location`] = compactCurrentFacet(owner, updated);
     updateAttention(world, PLAYER_ID, { changedSourceIds: [id] });
     acknowledgeAttention(world, PLAYER_ID, provided);
     const candidate = Object.values(owner.attention!.candidates).find(
@@ -510,7 +521,9 @@ describe('received detailed attention', () => {
     const { world, owner } = scene(2, 2);
     const anchor = currentDetailedAttention(world, PLAYER_ID)[0]!;
     const lease = owner.current[`${anchor.sourceId}:body`]!;
-    const proof = [observationFactKey(world, lease.original, lease.originalOrdinal)];
+    const proof = [
+      observationFactKey(world, currentFacetOriginal(owner, lease), lease.originalOrdinal),
+    ];
     const evaluation = {
       anchorKey: anchor.key,
       family: 'closing-drop' as const,
@@ -578,7 +591,7 @@ describe('received detailed attention', () => {
       distanceLower: 2,
       distanceUpper: 2.25,
       decreaseLower: 0.5,
-      proof: [observationFactKey(world, body.original, body.originalOrdinal)],
+      proof: [observationFactKey(world, currentFacetOriginal(owner, body), body.originalOrdinal)],
     };
     const evaluation = {
       anchorKey: anchor!.key,
@@ -598,8 +611,10 @@ describe('received detailed attention', () => {
     world.simTime = 10;
     applyAttentionRelationEvaluations(world, PLAYER_ID, [clear]);
     world.simTime = 20;
-    delete owner.current[`${neighbor!.sourceId}:body`];
-    delete owner.current[`${neighbor!.sourceId}:location`];
+    removeCurrentFacets(world, PLAYER_ID, [
+      `${neighbor!.sourceId}:body`,
+      `${neighbor!.sourceId}:location`,
+    ]);
     updateAttention(world, PLAYER_ID, { changedSourceIds: [neighbor!.sourceId] });
     world.simTime = 30;
     owner.current[`${neighbor!.sourceId}:body`] = { ...body, id: `${body.id}-returned` };
@@ -637,7 +652,7 @@ describe('received detailed attention', () => {
     expect(attentionRelationOpportunity(world, PLAYER_ID)).toBeUndefined();
     markAttentionRelationsDirty(world, PLAYER_ID);
     expect(attentionRelationOpportunity(world, PLAYER_ID)?.anchors).toHaveLength(2);
-    delete owner.current[`${opportunity.anchors[0]!.sourceId}:body`];
+    removeCurrentFacets(world, PLAYER_ID, [`${opportunity.anchors[0]!.sourceId}:body`]);
     updateAttention(world, PLAYER_ID);
     expect(
       Object.values(owner.attention!.latches).some(

@@ -24,6 +24,7 @@ import {
   splitObservedBody,
   materializeObservedBody,
   receivedObservationFrame,
+  receivedBodyParts,
 } from './perception-evidence.js';
 import type {
   EvidenceSource,
@@ -439,14 +440,8 @@ function currentTemporalProjection(
   if (!value || value.kind !== descriptor.kind) return;
   const reception = descriptor.reception;
   if (value.kind === 'body') {
-    if (reception?.kind !== 'body') return;
-    const pose = receivedValueAt(world.receivedValues?.sources ?? {}, {
-      blockId: reception.poseRef[0],
-      valueOrdinal: reception.poseRef[1],
-    });
-    return pose?.kind === 'body-pose'
-      ? { value, reception: { kind: 'body', pose: pose.pose } }
-      : undefined;
+    const parts = receivedBodyParts(world, descriptor);
+    return parts ? { value, reception: { kind: 'body', pose: parts.pose } } : undefined;
   }
   if (value.kind === 'location')
     return reception?.kind === 'location'

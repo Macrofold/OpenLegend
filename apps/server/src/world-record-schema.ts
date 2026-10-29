@@ -1,9 +1,13 @@
-import { accountClass, experienceIndividualIds, type ExperienceEntry } from '@open-legend/domain';
+import {
+  accountClass,
+  experienceIndividualIds,
+  type ExperienceEntry,
+  type WorldState,
+} from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
 import { encodeEvidenceOwner, decodeEvidenceOwner } from './evidence-segments.js';
 import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
-import { encodePerceptionOwner, decodePerceptionOwner } from './perception-records.js';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
  * a world/actor history container. New growing collections belong here explicitly.
  * docs/architecture.md#current-consuming-data-contracts
@@ -16,7 +20,12 @@ export interface RecordNode {
   uniqueIndexes?: string[][];
   constraints?: string[];
   /** Normalize a shared native value within this same owned record subtree. */
-  encode?: (value: unknown, previous?: unknown, segmentBytes?: number) => unknown;
+  encode?: (
+    value: unknown,
+    previous?: unknown,
+    segmentBytes?: number,
+    world?: WorldState,
+  ) => unknown;
   decode?: (value: unknown) => unknown;
 }
 export type JsonRecord = Record<string, unknown>;
@@ -205,27 +214,23 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           unordered: true,
         },
       }),
-      perceptionEvidence: map(
-        'mind_perception_owners',
-        {
-          originals: { ...map('mind_perception_originals'), unordered: true },
-          // Rolling maps preserve iteration order without renumbering surviving rows.
-          current: { ...map('mind_perception_current'), stablePositions: true },
-          // Confirmation clocks must not rewrite the unchanged scene and attention
-          // candidates. These retain their existing ordered, observer-owned values.
-          geometry: one('mind_perception_geometry', {
-            fragments: list('mind_perception_geometry_fragments', 'key'),
-            boundaries: list('mind_perception_geometry_boundaries', 'id'),
-          }),
-          attention: one('mind_perception_attention', {
-            candidates: { ...map('mind_perception_attention_candidates'), stablePositions: true },
-            latches: { ...map('mind_perception_attention_latches'), stablePositions: true },
-            relationDirty: { ...map('mind_perception_attention_dirty'), stablePositions: true },
-            relationScans: { ...map('mind_perception_attention_scans'), stablePositions: true },
-          }),
-        },
-        { encode: encodePerceptionOwner, decode: decodePerceptionOwner },
-      ),
+      perceptionEvidence: map('mind_perception_owners', {
+        originals: { ...map('mind_perception_originals'), unordered: true },
+        // Rolling maps preserve iteration order without renumbering surviving rows.
+        current: { ...map('mind_perception_current'), stablePositions: true },
+        // Confirmation clocks must not rewrite the unchanged scene and attention
+        // candidates. These retain their existing ordered, observer-owned values.
+        geometry: one('mind_perception_geometry', {
+          fragments: list('mind_perception_geometry_fragments', 'key'),
+          boundaries: list('mind_perception_geometry_boundaries', 'id'),
+        }),
+        attention: one('mind_perception_attention', {
+          candidates: { ...map('mind_perception_attention_candidates'), stablePositions: true },
+          latches: { ...map('mind_perception_attention_latches'), stablePositions: true },
+          relationDirty: { ...map('mind_perception_attention_dirty'), stablePositions: true },
+          relationScans: { ...map('mind_perception_attention_scans'), stablePositions: true },
+        }),
+      }),
       mapMarkers: actorMaps('mind_map_markers'),
       // A subject leaving view must not renumber every remaining sight binding.
       // Episode identities fence recognition by key, never by iteration order.
@@ -260,8 +265,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
               node: {
                 table: 'mind_temporal_chunks',
                 children: { receipts: list('mind_temporal_segments', 'start') },
-                encode: (value, previous, bytes) =>
-                  encodeEvidenceOwner(value, 'receipts', previous, bytes!),
+                encode: (value, previous, bytes, world) =>
+                  encodeEvidenceOwner(value, 'receipts', previous, bytes!, world),
                 decode: (value) => decodeEvidenceOwner(value, 'receipts'),
               },
             },
@@ -553,18 +558,6 @@ columns(
     },
     logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
     receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
-    subjects: { sql: 'TEXT[] NOT NULL', value: (value) => value['subjects'] },
-    source_refs: { sql: 'TEXT[] NOT NULL', value: (value) => value['sourceRefs'] },
-    value_refs: {
-      sql: 'JSONB NOT NULL',
-      value: (value) => receiptIndex(value).references,
-    },
-    source_ids: { sql: 'TEXT[] NOT NULL', value: (value) => value['sourceIds'] },
-    individual_ids: { sql: 'TEXT[] NOT NULL', value: (value) => value['individualIds'] },
-    receipt_ordinals: {
-      sql: 'BIGINT[] NOT NULL',
-      value: (value) => receiptIndex(value).ordinals,
-    },
   },
   [
     ['actor_id', 'first_at', 'first_order', 'receipt_epoch', 'first_ordinal'],
@@ -574,6 +567,32 @@ columns(
     ['actor_id', 'last_at', 'last_order', 'receipt_epoch', 'last_ordinal'],
     ['actor_id', 'last_supported_at', 'last_order', 'receipt_epoch', 'last_ordinal'],
   ],
+);
+const segmentReceiptIndex = (value: JsonRecord) =>
+  value['index'] as import('./evidence-segments.js').ReceiptSegmentIndex;
+columns(
+  'mind_temporal_segments',
+  {
+    actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path[4] },
+    first_ordinal: { sql: 'BIGINT NOT NULL', value: (value) => value['start'] },
+    last_ordinal: { sql: 'BIGINT NOT NULL', value: (value) => Number(value['end']) - 1 },
+    subjects: { sql: 'TEXT[] NOT NULL', value: (value) => segmentReceiptIndex(value).subjects },
+    source_refs: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value) => segmentReceiptIndex(value).sourceRefs,
+    },
+    value_refs: { sql: 'JSONB NOT NULL', value: (value) => segmentReceiptIndex(value).references },
+    source_ids: { sql: 'TEXT[] NOT NULL', value: (value) => segmentReceiptIndex(value).sourceIds },
+    individual_ids: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value) => segmentReceiptIndex(value).individualIds,
+    },
+    receipt_ordinals: {
+      sql: 'BIGINT[] NOT NULL',
+      value: (value) => segmentReceiptIndex(value).ordinals,
+    },
+  },
+  [['actor_id', 'parent_id', 'first_ordinal']],
 );
 columns(
   'mind_temporal_actors',

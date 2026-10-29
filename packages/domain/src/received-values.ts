@@ -15,6 +15,7 @@ import type {
   ReceivedObservationHeader,
 } from './perception-evidence.js';
 import type { TemporalFragment } from './temporal-evidence.js';
+import { currentOriginal, type CurrentFacetRecord } from './perception-current.js';
 
 /** Shared exact payloads are data, never evidence that an actor received them. */
 export type ReceivedValueFragment =
@@ -247,6 +248,7 @@ interface ReferenceOwner {
   references: ReceivedValueReferences;
   receipts?: TemporalReceipt[];
   perception?: {
+    originals: PerceptionOwner['originals'];
     received: PerceptionOwner['received'];
     current: PerceptionOwner['current'];
     frame: readonly [string, number] | undefined;
@@ -298,16 +300,13 @@ function originalReferences(
   if (isImmutableData(source)) observationReferences.set(source, references);
   return references;
 }
-function currentReferences(
-  input: import('./perception-evidence.js').LiveFacetSupport,
-): ReceivedValueReferences {
+function currentReferences(input: CurrentFacetRecord): ReceivedValueReferences {
   const lease = readOnlyDraftView(input);
   const cached = leaseReferences.get(lease);
   if (cached) return cached;
-  const references = combineReferences([
-    collectReferences(receivedFacetValueReferences(readOnlyDraftView(lease.value))),
-    originalReferences(lease.original),
-  ]);
+  const references = collectReferences(
+    receivedFacetValueReferences(readOnlyDraftView(lease.value)),
+  );
   if (isImmutableData(lease)) leaseReferences.set(lease, references);
   return references;
 }
@@ -317,12 +316,14 @@ function perceptionReferences(
 ): ReferenceOwner {
   const owner = readOnlyDraftView(input);
   const received = readOnlyDraftView(owner.received);
+  const originals = readOnlyDraftView(owner.originals);
   const current = readOnlyDraftView(owner.current);
   const frame = owner.visualConfirmation && readOnlyDraftView(owner.visualConfirmation.frameRef);
   const old = previous?.perception;
   if (
     previous &&
     old &&
+    old.originals === originals &&
     old.received === received &&
     old.current === current &&
     old.frame?.[0] === frame?.[0] &&
@@ -334,12 +335,18 @@ function perceptionReferences(
   if (frame) fragments.push(collectReferences([{ blockId: frame[0], valueOrdinal: frame[1] }]));
   // Original bodies shared by several leases are prepared once through their weak
   // identity cache, never re-materialized or recursively copied here.
-  for (const source of received) fragments.push(originalReferences(source));
-  for (const lease of Object.values(current)) fragments.push(currentReferences(lease));
+  const usedOriginals = new Set(received);
+  for (const stored of Object.values(current)) {
+    const lease = readOnlyDraftView(stored);
+    usedOriginals.add(lease.original);
+    fragments.push(currentReferences(lease));
+  }
+  for (const reference of usedOriginals)
+    fragments.push(originalReferences(currentOriginal(owner, reference)));
   return {
     identity: owner,
     references: combineReferences(fragments),
-    perception: { received, current, frame },
+    perception: { received, originals, current, frame },
   };
 }
 function receiptReferences(

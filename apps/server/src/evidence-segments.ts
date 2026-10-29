@@ -5,7 +5,10 @@ import {
   isImmutableData,
   immutableDataSnapshot,
   jsonText,
+  temporalReceiptAliases,
+  temporalReceiptIndividualIds,
   type TemporalChunk,
+  type WorldState,
 } from '@open-legend/domain';
 
 /** Physical append pages belong to the existing record codec, not to character history.
@@ -15,6 +18,13 @@ export interface EvidenceSegment {
   end: number;
   values: unknown[];
   bytes: number;
+  index?: ReceiptSegmentIndex;
+}
+export interface ReceiptSegmentIndex extends ReturnType<typeof receiptStorageIndex> {
+  subjects: string[];
+  sourceIds: string[];
+  individualIds: string[];
+  sourceRefs: string[];
 }
 interface Layout {
   segments: EvidenceSegment[];
@@ -78,11 +88,77 @@ export function receiptStorageIndex(receipts: TemporalChunk['receipts']) {
   };
 }
 
+const receiptHeaders = ['subjects', 'sourceIds', 'individualIds', 'sourceRefs'] as const;
+const unique = <T>(values: Iterable<T>): T[] => [...new Set(values)];
+function segmentIndex(receipts: TemporalChunk['receipts'], world: WorldState): ReceiptSegmentIndex {
+  const sources = world.receivedValues?.sources ?? {};
+  // The same semantic visitors own native and stored provenance. Partial source
+  // closure cannot silently produce a narrower correction/reclamation index.
+  for (const receipt of receipts)
+    for (const facet of receipt.facets)
+      if (!sources[facet.blockId]?.values[facet.valueOrdinal])
+        throw new Error('Receipt page index requires complete received source support.');
+  return {
+    ...receiptStorageIndex(receipts),
+    subjects: unique(
+      receipts.flatMap((receipt) => [receipt.subject, ...(receipt.contextSubjects ?? [])]),
+    ),
+    sourceIds: unique(
+      receipts.flatMap((receipt) => temporalReceiptAliases(receipt, sources, world)),
+    ),
+    individualIds: unique(
+      receipts.flatMap((receipt) => temporalReceiptIndividualIds(receipt, sources)),
+    ),
+    sourceRefs: unique(receipts.flatMap((receipt) => receipt.facets.map((facet) => facet.blockId))),
+  };
+}
+/** Current-format restore has the complete selected source closure. Validate page
+ * provenance there, not by trusting a correct parent union with misassigned pages. */
+export function validateReceiptPageSources(chunk: TemporalChunk, world: WorldState): void {
+  const layout = layouts.get(chunk.receipts);
+  if (!layout) throw new Error('Missing restored receipt page ownership.');
+  for (const segment of layout.segments)
+    if (
+      canonicalJson(segment.index) !==
+      canonicalJson(
+        segmentIndex(segment.values.filter(Boolean) as TemporalChunk['receipts'], world),
+      )
+    )
+      throw new Error('Receipt page provenance disagrees with its received source support.');
+}
+function pageHeaders(segments: readonly EvidenceSegment[]) {
+  return Object.fromEntries(
+    receiptHeaders.map((key) => [key, unique(segments.flatMap((segment) => segment.index![key]))]),
+  );
+}
+function receiptBounds(segments: readonly EvidenceSegment[]) {
+  const indices = segments
+    .map((segment) => segment.index!)
+    .filter((index) => index.ordinals.length);
+  return {
+    firstOrder: indices[0]?.firstOrder,
+    lastOrder: indices.at(-1)?.lastOrder,
+    firstMeasured: Math.min(...indices.map((index) => index.firstMeasured)),
+    lastSupported: Math.max(...indices.map((index) => index.lastSupported)),
+  };
+}
+function sealSegment(segment: EvidenceSegment): void {
+  if (segment.index) segment.index = immutableDataSnapshot(segment.index);
+  for (let pass = 0; pass < 4; pass++) {
+    const size = Buffer.byteLength(JSON.stringify(segment));
+    if (segment.bytes === size) break;
+    segment.bytes = size;
+  }
+  Object.freeze(segment.values);
+  Object.freeze(segment);
+}
+
 export function encodeEvidenceOwner(
   value: unknown,
   field: Field,
   previous: unknown,
   maxBytes: number,
+  world?: WorldState,
 ): Owner {
   const owner = value as Owner;
   const reusable = isImmutableData(owner);
@@ -146,13 +222,14 @@ export function encodeEvidenceOwner(
     }
     for (const segment of segments) {
       if (!Object.isFrozen(segment)) {
-        for (let pass = 0; pass < 4; pass++) {
-          const size = Buffer.byteLength(JSON.stringify(segment));
-          if (segment.bytes === size) break;
-          segment.bytes = size;
+        if (field === 'receipts') {
+          if (!world) throw new Error('Receipt page preparation requires its world.');
+          segment.index = segmentIndex(
+            segment.values.filter(Boolean) as TemporalChunk['receipts'],
+            world,
+          );
         }
-        Object.freeze(segment.values);
-        Object.freeze(segment);
+        sealSegment(segment);
       }
     }
     const sealed =
@@ -162,16 +239,26 @@ export function encodeEvidenceOwner(
     layout = { segments: sealed, start: segments[0]?.start ?? 0, end: segments.at(-1)?.end ?? 0 };
     if (isImmutableData(values)) layouts.set(values, layout);
   }
+  if (field === 'receipts') {
+    const headers = pageHeaders(layout.segments);
+    if (receiptHeaders.some((key) => canonicalJson(headers[key]) !== canonicalJson(owner[key])))
+      throw new Error('Receipt page indexes disagree with their logical owner.');
+  }
+  const physical = { ...owner };
+  if (field === 'receipts') for (const key of receiptHeaders) delete physical[key];
   const result = {
-    ...owner,
+    ...physical,
     [field]: layout.segments,
     storage: {
       start: layout.start,
       end: layout.end,
       segmentBytes: layout.segments.reduce((sum, segment) => sum + segment.bytes, 0),
-      ...(field === 'receipts'
-        ? { index: receiptStorageIndex(values as TemporalChunk['receipts']) }
-        : {}),
+      metadataBytes: Buffer.byteLength(
+        JSON.stringify(
+          layout.segments.map(({ values, ...segment }) => ({ ...segment, length: values.length })),
+        ),
+      ),
+      ...(field === 'receipts' ? { index: receiptBounds(layout.segments) } : {}),
     },
   };
   if (reusable) encoded.set(owner, result);
@@ -185,6 +272,7 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
     end: number;
     index?: ReturnType<typeof receiptStorageIndex>;
     segmentBytes: number;
+    metadataBytes: number;
   };
   const segments = owner[field] as EvidenceSegment[];
   if (
@@ -221,28 +309,65 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
       }
       values.push(entry);
     }
+    if (field === 'receipts') {
+      const index = segment.index;
+      if (
+        !index ||
+        receiptHeaders.some(
+          (key) =>
+            !Array.isArray(index[key]) ||
+            index[key].some((value) => typeof value !== 'string') ||
+            new Set(index[key]).size !== index[key].length,
+        )
+      )
+        throw new Error('Invalid receipt page index.');
+      const { subjects, sourceIds, individualIds, sourceRefs, ...stored } = index;
+      const receipts = segment.values.filter(Boolean) as TemporalChunk['receipts'];
+      if (
+        canonicalJson(stored) !== canonicalJson(receiptStorageIndex(receipts)) ||
+        canonicalJson(subjects) !==
+          canonicalJson(
+            unique(
+              receipts.flatMap((receipt) => [receipt.subject, ...(receipt.contextSubjects ?? [])]),
+            ),
+          ) ||
+        canonicalJson(sourceRefs) !==
+          canonicalJson(
+            unique(receipts.flatMap((receipt) => receipt.facets.map((facet) => facet.blockId))),
+          )
+      )
+        throw new Error('Receipt page index disagrees with its receipts.');
+    }
     next = segment.end;
   }
   if (
     next !== storage.end ||
     storage.segmentBytes !== segments.reduce((sum, segment) => sum + segment.bytes, 0) ||
+    storage.metadataBytes !==
+      Buffer.byteLength(
+        JSON.stringify(
+          segments.map(({ values, ...segment }) => ({ ...segment, length: values.length })),
+        ),
+      ) ||
     (field === 'values' && storage.start !== 0)
   )
     throw new Error('Evidence segment range disagrees with its owner.');
   if (
     field === 'receipts' &&
     (values.length !== owner['count'] ||
-      canonicalJson(receiptStorageIndex(values as TemporalChunk['receipts'])) !==
-        canonicalJson(storage.index))
+      canonicalJson(receiptBounds(segments)) !== canonicalJson(storage.index))
   )
     throw new Error('Evidence segment index disagrees with its receipts.');
   for (const segment of segments) {
+    if (segment.index && !Object.isFrozen(segment))
+      segment.index = immutableDataSnapshot(segment.index);
     Object.freeze(segment.values);
     Object.freeze(segment);
   }
   Object.freeze(segments);
   layouts.set(values, { segments, start: storage.start, end: storage.end });
   const { storage: _storage, ...result } = owner;
+  if (field === 'receipts') Object.assign(result, pageHeaders(segments));
   result[field] = values;
   return result;
 }
@@ -283,15 +408,54 @@ export function evidenceReadView(table: string, field: Field, columns: string[])
   const children = field === 'receipts' ? 'mind_temporal_segments' : 'mind_perception_segments';
   // JSON preserves encoded fragment member order. JSONB would reorder nested
   // values and defeat the existing exact-encoding sharing index after active load.
+  const union = (column: string) => `ARRAY(SELECT item FROM (
+    SELECT DISTINCT ON (v.item) v.item,s.position,v.ordinality FROM ${children} s
+    CROSS JOIN LATERAL unnest(s.${column}) WITH ORDINALITY v(item,ordinality)
+    WHERE s.world_id=p.world_id AND s.parent_id=p.id ORDER BY v.item,s.position,v.ordinality
+    ) selected ORDER BY position,ordinality)`;
+  const projected =
+    field === 'receipts'
+      ? {
+          subjects: union('subjects'),
+          source_refs: union('source_refs'),
+          source_ids: union('source_ids'),
+          individual_ids: union('individual_ids'),
+          receipt_ordinals: `ARRAY(SELECT ordinal FROM ${children} s CROSS JOIN LATERAL unnest(s.receipt_ordinals) ordinal WHERE s.world_id=p.world_id AND s.parent_id=p.id ORDER BY ordinal)`,
+          value_refs: `(SELECT COALESCE(jsonb_object_agg(block,ordinals),'{}'::jsonb) FROM (
+      SELECT refs.key AS block,jsonb_agg(DISTINCT ordinal ORDER BY ordinal) AS ordinals FROM ${children} s
+      CROSS JOIN LATERAL jsonb_each(s.value_refs) refs CROSS JOIN LATERAL jsonb_array_elements(refs.value) ordinal
+      WHERE s.world_id=p.world_id AND s.parent_id=p.id GROUP BY refs.key) refs)`,
+        }
+      : {};
+  const nativeHeaders =
+    field === 'receipts'
+      ? ` UNION ALL SELECT key,to_json(value) FROM (VALUES ${receiptHeaders
+          .map((key) => {
+            const column = (
+              {
+                subjects: 'subjects',
+                sourceIds: 'source_ids',
+                individualIds: 'individual_ids',
+                sourceRefs: 'source_refs',
+              } as const
+            )[key];
+            return `('${key}',${projected[column]})`;
+          })
+          .join(',')}) headers(key,value)`
+      : '';
   return `CREATE OR REPLACE VIEW ${table}_read AS SELECT
     p.world_id,p.id,p.parent_id,p.slot,p.position,p.revision,
-    octet_length(p.payload)+(p.payload::jsonb#>>'{storage,segmentBytes}')::bigint AS encoded_bytes,
+    octet_length(p.payload)+(p.payload::jsonb#>>'{storage,segmentBytes}')::bigint+(p.payload::jsonb#>>'{storage,metadataBytes}')::bigint AS encoded_bytes,
     (SELECT json_object_agg(e.key,CASE WHEN e.key='${field}' THEN
       COALESCE((SELECT json_agg(v.value ORDER BY s.position,v.ordinality)
         FROM ${children} s CROSS JOIN LATERAL json_array_elements(s.payload::json->'values') WITH ORDINALITY v(value,ordinality)
         WHERE s.world_id=p.world_id AND s.parent_id=p.id ${field === 'receipts' ? "AND v.value::text<>'null'" : ''}), '[]'::json)
-      ELSE e.value END)::text FROM json_each(p.payload::json) e) AS payload,
+      ELSE e.value END)::text FROM (SELECT * FROM json_each(p.payload::json) ${nativeHeaders}) e) AS payload,
     (SELECT COALESCE(jsonb_agg(((s.payload::jsonb-'values') || jsonb_build_object('length',jsonb_array_length(s.payload::jsonb->'values'))) ORDER BY s.position),'[]'::jsonb) FROM ${children} s
-      WHERE s.world_id=p.world_id AND s.parent_id=p.id) AS segments${columns.length ? ',' + columns.map((column) => `p.${column}`).join(',') : ''}
+      WHERE s.world_id=p.world_id AND s.parent_id=p.id) AS segments${columns.length ? ',' + columns.map((column) => `p.${column}`).join(',') : ''}${Object.entries(
+        projected,
+      )
+        .map(([column, sql]) => `,${sql} AS ${column}`)
+        .join('')}
     FROM ${table} p`;
 }

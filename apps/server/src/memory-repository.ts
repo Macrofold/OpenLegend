@@ -768,10 +768,10 @@ export class MemoryRepository {
     `);
     await this.lexical.initialize();
     await this.db
-      .exec(`CREATE INDEX IF NOT EXISTS temporal_chunk_subjects ON mind_temporal_chunks USING GIN(subjects);
-      CREATE INDEX IF NOT EXISTS temporal_chunk_sources ON mind_temporal_chunks USING GIN(source_refs);
-      CREATE INDEX IF NOT EXISTS temporal_chunk_aliases ON mind_temporal_chunks USING GIN(source_ids);
-      CREATE INDEX IF NOT EXISTS temporal_chunk_individuals ON mind_temporal_chunks USING GIN(individual_ids);`);
+      .exec(`CREATE INDEX IF NOT EXISTS temporal_segment_subjects ON mind_temporal_segments USING GIN(subjects);
+      CREATE INDEX IF NOT EXISTS temporal_segment_sources ON mind_temporal_segments USING GIN(source_refs);
+      CREATE INDEX IF NOT EXISTS temporal_segment_aliases ON mind_temporal_segments USING GIN(source_ids);
+      CREATE INDEX IF NOT EXISTS temporal_segment_individuals ON mind_temporal_segments USING GIN(individual_ids);`);
   }
   temporalHistory(
     scope: MemoryScope,
@@ -880,11 +880,12 @@ export class MemoryRepository {
       q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint,header jsonb,facets jsonb,values jsonb)
       WHERE EXISTS(SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
         EXISTS(SELECT 1 FROM LATERAL (
-          SELECT payload,last_ordinal,receipt_ordinals FROM mind_temporal_chunks_read c
+          SELECT payload,last_ordinal FROM mind_temporal_chunks_read c
           WHERE c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife" AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
+          AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.receipt_ordinals @> ARRAY[q.ordinal])
           ORDER BY c.first_ordinal DESC LIMIT 1
         ) chunk CROSS JOIN LATERAL jsonb_array_elements(chunk.payload::jsonb->'receipts') r(receipt)
-          WHERE chunk.last_ordinal>=q.ordinal AND chunk.receipt_ordinals @> ARRAY[q.ordinal]
+          WHERE chunk.last_ordinal>=q.ordinal
           AND (r.receipt->>'ordinal')::bigint=q.ordinal
           AND (r.receipt-'facets'-'sourceIds')=q.header
           AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(q.facets) WITH ORDINALITY f(value,position)
@@ -921,11 +922,12 @@ export class MemoryRepository {
       q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
       WHERE EXISTS (SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
         EXISTS (SELECT 1 FROM LATERAL (
-          SELECT last_ordinal,receipt_ordinals FROM mind_temporal_chunks_read c
+          SELECT last_ordinal FROM mind_temporal_chunks c
           WHERE c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
             AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
+            AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.receipt_ordinals @> ARRAY[q.ordinal])
           ORDER BY c.first_ordinal DESC LIMIT 1
-        ) current WHERE current.last_ordinal>=q.ordinal AND current.receipt_ordinals @> ARRAY[q.ordinal])
+        ) current WHERE current.last_ordinal>=q.ordinal)
         OR EXISTS (SELECT 1 FROM mind_temporal_supports s WHERE s.world_id=? AND s.actor_id=q."actorId"
           AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal))`,
       )

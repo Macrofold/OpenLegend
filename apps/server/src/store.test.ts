@@ -179,7 +179,7 @@ describe('PostgreSQL committed world boundary', () => {
     }
     expect(store.history.canDeferAppend(world, history)).toBe(true);
     const columnIndex = (name: string) =>
-      Object.keys(RECORD_NODES.get('mind_temporal_chunks')!.columns!).indexOf(name);
+      Object.keys(RECORD_NODES.get('mind_temporal_segments')!.columns!).indexOf(name);
     for (const [column, invalid] of [
       ['subjects', 'not-an-array'],
       ['subjects', [42]],
@@ -192,7 +192,7 @@ describe('PostgreSQL committed world boundary', () => {
       ['receipt_ordinals', new Array(1)],
     ] as const) {
       const changed = structuredClone(prepared.changes);
-      changed.writes.get('mind_temporal_chunks')![0]!.extra[columnIndex(column)] = invalid;
+      changed.writes.get('mind_temporal_segments')![0]!.extra[columnIndex(column)] = invalid;
       expect(journalTableFamily(initial.world, world, changed, history.changed)).toBe(false);
     }
     const raw = Reflect.get(store, 'rawDb') as SqlDatabase;

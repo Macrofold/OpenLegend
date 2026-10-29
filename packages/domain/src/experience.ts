@@ -106,7 +106,14 @@ import {
 } from './remembered-impressions.js';
 import { revokeReceivedGeometryEvidence } from './received-geometry.js';
 import { revokeAttentionEvidence } from './attention.js';
-import { receivedFacetValue, materializeObservation } from './perception-evidence.js';
+import {
+  receivedFacetValue,
+  materializeObservation,
+  currentOriginal,
+  currentFacetOriginal,
+  removeCurrentFacets,
+  receivedPerceptionObservations,
+} from './perception-evidence.js';
 
 export const EXPERIENCE_LIMITS = {
   rawHours: 6,
@@ -1708,6 +1715,8 @@ export function invalidateExperience(
     (state.privacyRevisions ??= {})[actorId] = (state.privacyRevisions?.[actorId] ?? 0) + 1;
   ensureExperienceAccounting(world, actorId);
   const accounting = experienceEntries(world, actorId);
+  const nativeOwner = world.perceptionEvidence?.[actorId];
+  const nativeObservations = nativeOwner ? receivedPerceptionObservations(nativeOwner) : [];
   invalidateKnownPlaceEvidence(world, actorId);
   const roots = new Set(temporalAccountAliasClosure(world, actorId, sourceIds));
   const affected = new Set(roots);
@@ -1752,7 +1761,7 @@ export function invalidateExperience(
         for (const observation of observations) include(observation.id);
       }
     }
-    for (const observation of world.perceptionEvidence?.[actorId]?.received ?? []) {
+    for (const observation of nativeObservations) {
       if (
         (observation.origin.kind === 'occurrence' && affected.has(observation.origin.eventId)) ||
         observation.facets.some((facet) => {
@@ -1840,7 +1849,7 @@ export function invalidateExperience(
     ])
       learningEdge(source.id, entry.id);
   }
-  for (const observation of world.perceptionEvidence?.[actorId]?.received ?? [])
+  for (const observation of nativeObservations)
     for (const source of observationLearningSources([materializeObservation(world, observation)]))
       learningEdge(source.id, observation.id);
   const learningQueue = [...recognitionAffected];
@@ -1871,7 +1880,7 @@ export function invalidateExperience(
     for (const observation of entry.originals) markAssociationFacts(observation);
   for (const summary of state.summaries[actorId] ?? [])
     for (const observation of summary.manifest.observations) markAssociationFacts(observation);
-  for (const observation of world.perceptionEvidence?.[actorId]?.received ?? [])
+  for (const observation of nativeObservations)
     markAssociationFacts(materializeObservation(world, observation));
   invalidateTemporalFacets(
     world,
@@ -1920,8 +1929,12 @@ export function invalidateExperience(
   const native = world.perceptionEvidence?.[actorId];
   if (native) {
     const remap = new Map<number, number>();
-    native.received = native.received.filter((value, index) => {
-      if (affected.has(value.id)) return false;
+    const removedOriginals: string[] = [];
+    native.received = native.received.filter((reference, index) => {
+      if (affected.has(currentOriginal(native, reference).id)) {
+        removedOriginals.push(reference);
+        return false;
+      }
       remap.set(index, remap.size);
       return true;
     });
@@ -1931,23 +1944,25 @@ export function invalidateExperience(
         return position === undefined ? [] : [[key, position]];
       }),
     );
+    const revokedCurrent: string[] = [];
     for (const [id, lease] of Object.entries(native.current)) {
+      const original = currentFacetOriginal(native, lease);
       let revoke =
-        affected.has(lease.original.id) ||
-        (lease.original.origin.kind === 'occurrence' &&
-          affected.has(lease.original.origin.eventId));
+        affected.has(original.id) ||
+        (original.origin.kind === 'occurrence' && affected.has(original.origin.eventId));
       if (!revoke && lease.value.kind === 'association') {
         const value = receivedFacetValue(world, lease.value);
         if (!value || value.kind !== 'association')
           throw new Error('Unavailable native association support.');
         revoke =
-          recognitionAffected.has(lease.original.id) ||
+          recognitionAffected.has(original.id) ||
           recognitionSupportSources(value.learningSupport ?? []).some((source) =>
             recognitionAffected.has(source.id),
           );
       }
-      if (revoke) delete native.current[id];
+      if (revoke) revokedCurrent.push(id);
     }
+    removeCurrentFacets(world, actorId, revokedCurrent, removedOriginals);
   }
   revokeRecognitionEvidence(
     world,

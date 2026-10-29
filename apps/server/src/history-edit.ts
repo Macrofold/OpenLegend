@@ -171,7 +171,8 @@ export async function prepareHistoryEdit(
             `SELECT t.actor_id,t.source_id,t.payload,t.position,t.value_refs,t.segments,t.encoded_bytes AS bytes
         FROM mind_temporal_chunks_read t WHERE t.world_id=? AND NOT (t.source_id=ANY(?::text[])) AND EXISTS (
           SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text)
-          WHERE a.actor_id=t.actor_id AND t.source_ids @> ARRAY[a.source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
+          WHERE a.actor_id=t.actor_id AND EXISTS (SELECT 1 FROM mind_temporal_segments s
+            WHERE s.world_id=t.world_id AND s.parent_id=t.id AND s.source_ids @> ARRAY[a.source_id]::text[])) ORDER BY t.actor_id,t.position LIMIT 8193`,
           )
           .all(worldId, [...loadedChunks], scope);
         chunkCount += selected.length;

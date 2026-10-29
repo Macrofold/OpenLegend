@@ -17,6 +17,7 @@ import {
   captureEvidenceCut,
   validatePerceptionEvidenceState,
   validateObservationContribution,
+  currentFacetTimes,
 } from './perception-evidence.js';
 import { invalidateExperience } from './experience.js';
 import { emit } from './events.js';
@@ -863,16 +864,17 @@ it('reports an empty change window as unavailable without renewing an older acqu
 
 it('confirms unchanged sight without rewriting every detail and freezes the last actual sample on loss', () => {
   const world = scene(49);
-  const raw = world.perceptionEvidence![PLAYER_ID]!.current[`${NPC_ID}:body`]!;
-  const originalTime = raw.valueMeasuredThrough;
+  const owner = world.perceptionEvidence![PLAYER_ID]!,
+    raw = owner.current[`${NPC_ID}:body`]!;
+  const originalTime = currentFacetTimes(owner, raw).valueMeasuredThrough;
   for (const at of [1, 2, 3]) {
     world.simTime = at;
     initializePerception(world, []);
     expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)!.valueMeasuredThrough).toBe(at);
   }
-  expect(
-    world.perceptionEvidence![PLAYER_ID]!.current[`${NPC_ID}:body`]!.valueMeasuredThrough,
-  ).toBe(originalTime);
+  expect(currentFacetTimes(owner, owner.current[`${NPC_ID}:body`]!).valueMeasuredThrough).toBe(
+    originalTime,
+  );
   const cut = captureEvidenceCut(world, PLAYER_ID);
   const location = currentObservedFacets(world, PLAYER_ID, NPC_ID).find(
     (f) => f.value.kind === 'location',
@@ -889,9 +891,8 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   )!;
   expect(motion.value.kind === 'observed-motion' && motion.value.earlier.measuredThrough).toBe(3);
   expect(
-    cut.current.find(
-      (f) => f.exposure.episodeId === raw.exposure.episodeId && f.value.kind === 'body',
-    )!.valueMeasuredThrough,
+    cut.current.find((f) => f.exposure.episodeId === raw.exposure && f.value.kind === 'body')!
+      .valueMeasuredThrough,
   ).toBe(3);
   world.simTime = 5;
   setSpatialPosition(world, npc, { x: 100, y: 0, z: 2 }, worldSupport(npc), {

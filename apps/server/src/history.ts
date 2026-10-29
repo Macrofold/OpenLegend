@@ -620,25 +620,27 @@ export class HistoryRepository {
     await batch.flush({ worldId: world.id, removedEvents }, sharedWrites);
     // A partial correction may remove a receipt while its shared chunk remains.
     // Retire only those derived rows, before any reader can resolve a stale grant.
-    const changedChunks = (sourceChanges?.writes.get('mind_temporal_chunks') ?? [])
-      .filter((row) => !row.create)
-      .map((row) => ({
-        id: row.id,
-        ordinals: (JSON.parse(row.payload) as { storage: { index: { ordinals: number[] } } })
-          .storage.index.ordinals,
-      }));
+    const changedChunks = [
+      ...new Set(
+        (sourceChanges?.writes.get('mind_temporal_segments') ?? [])
+          .filter((row) => !row.create)
+          .map((row) => row.parent),
+      ),
+    ];
     if (changedChunks.length) {
       await sharedWrites?.flush();
       const retired = await this.db
         .prepare(
           `WITH retired AS (
-        DELETE FROM history_perspectives p USING jsonb_to_recordset(?::jsonb) q(id text,ordinals integer[])
-        WHERE p.world_id=? AND p.temporal_chunk_id=q.id
-          AND (p.payload::jsonb#>>'{account,receipt,ordinal}')::int<>ALL(q.ordinals)
+        DELETE FROM history_perspectives p
+        WHERE p.world_id=? AND p.temporal_chunk_id=ANY(?::text[])
+          AND NOT EXISTS (SELECT 1 FROM mind_temporal_segments s
+            WHERE s.world_id=p.world_id AND s.parent_id=p.temporal_chunk_id
+              AND s.receipt_ordinals @> ARRAY[(p.payload::jsonb#>>'{account,receipt,ordinal}')::bigint])
         RETURNING p.actor_id,p.event_id)
         SELECT actor_id,event_id FROM retired`,
         )
-        .all(JSON.stringify(changedChunks), world.id);
+        .all(world.id, changedChunks);
       for (const row of retired)
         for (const principal of this.principals.filter(
           (value) => value.actorId === row['actor_id'],

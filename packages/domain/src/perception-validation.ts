@@ -16,6 +16,9 @@ import {
   validateReceivedParticipantObservers,
   validateSensoryFacet,
   validateObservedBodyPose,
+  currentOriginalKey,
+  currentFacetSupport,
+  receivedPerceptionObservations,
 } from './perception-evidence.js';
 import { validateDetectionSupportState } from './perception-support.js';
 import { validateReceivedGeometryState } from './received-geometry.js';
@@ -242,6 +245,9 @@ export function validatePerceptionEvidenceState(
       state.receivedAtSequence < 0 ||
       state.receivedAtSequence > world.sequence ||
       !Array.isArray(state.received) ||
+      !state.originals ||
+      typeof state.originals !== 'object' ||
+      Array.isArray(state.originals) ||
       !state.receipts ||
       typeof state.receipts !== 'object' ||
       Array.isArray(state.receipts) ||
@@ -253,6 +259,11 @@ export function validatePerceptionEvidenceState(
       Array.isArray(state.gaps)
     )
       throw new Error('Invalid active perception owner.');
+    if (
+      state.observer &&
+      (state.observer.actorId !== observerId || state.observer.physicalLife !== state.life)
+    )
+      throw new Error('Invalid current perception receiver.');
     if (
       Object.values(state.gaps).some(
         (gap) =>
@@ -281,6 +292,21 @@ export function validatePerceptionEvidenceState(
       throw new Error('Invalid completed visual confirmation.');
     if (state.support) validateDetectionSupportState(world, observerId, state.support, originals);
     if (state.geometry) validateReceivedGeometryState(world, observerId, state.geometry, originals);
+    const received = receivedPerceptionObservations(state);
+    const usedOriginals = new Set(state.received);
+    if (usedOriginals.size !== state.received.length)
+      throw new Error('Duplicate current perception reception.');
+    for (const [key, source] of Object.entries(state.originals)) {
+      validateOriginal(source);
+      const header = receivedObservationHeader(world, source);
+      if (
+        key !== currentOriginalKey(source) ||
+        header.observer.actorId !== observerId ||
+        header.observer.physicalLife !== state.life ||
+        header.acquiredAt > world.simTime
+      )
+        throw new Error('Invalid current perception original catalogue.');
+    }
     if (
       Object.entries(state.receipts).some(
         ([key, index]) =>
@@ -289,13 +315,13 @@ export function validatePerceptionEvidenceState(
           index >= state.received.length ||
           key !==
             observationAcquisitionKey({
-              ...receivedObservationHeader(world, state.received[index]!),
-              origin: state.received[index]!.origin,
+              ...receivedObservationHeader(world, received[index]!),
+              origin: received[index]!.origin,
             }),
       )
     )
       throw new Error('Invalid perception acquisition receipt.');
-    for (const observation of state.received) {
+    for (const observation of received) {
       validateOriginal(observation);
       const header = receivedObservationHeader(world, observation);
       if (
@@ -305,9 +331,45 @@ export function validatePerceptionEvidenceState(
       )
         throw new Error('Invalid perception observer life.');
     }
-    for (const [key, lease] of Object.entries(readOnlyDraftView(state.current))) {
-      if (!lease || typeof lease !== 'object' || !lease.observer || !lease.value)
+    for (const [key, record] of Object.entries(readOnlyDraftView(state.current))) {
+      if (
+        !record ||
+        !hasRecordFields(
+          record,
+          [
+            'id',
+            'revision',
+            'subjectId',
+            'subjectPhysicalLife',
+            'value',
+            'original',
+            'originalOrdinal',
+            'exposure',
+            'modality',
+          ],
+          [
+            'bodyLeaseId',
+            'localSubject',
+            'motionContinuityRevision',
+            'sourcePlacementRevision',
+            'at',
+            'from',
+            'acquiredAt',
+            'confirmedFrom',
+            'confirmedThrough',
+          ],
+        ) ||
+        typeof record.original !== 'string' ||
+        !Object.hasOwn(state.originals, record.original) ||
+        !state.observer ||
+        state.observer.actorId !== observerId ||
+        state.observer.physicalLife !== state.life ||
+        typeof record.exposure !== 'string' ||
+        !record.exposure
+      )
         throw new Error('Invalid current perception facet.');
+      usedOriginals.add(record.original);
+      const lease = currentFacetSupport(state, record);
       validateOriginal(lease.original);
       const header = receivedObservationHeader(world, lease.original);
       const value = validateReceivedFacetValue(world, lease.value, originals);
@@ -385,5 +447,7 @@ export function validatePerceptionEvidenceState(
       )
         throw new Error('Invalid current perception facet.');
     }
+    if (usedOriginals.size !== Object.keys(state.originals).length)
+      throw new Error('An unreferenced current perception original was retained.');
   }
 }

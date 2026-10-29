@@ -10,6 +10,8 @@ import {
   observationFactKey,
   receivedFacetValue,
   receivedObservationHeader,
+  currentFacetOriginal,
+  currentFacetTimes,
 } from './perception-evidence.js';
 import { receivedScene } from './received-scene.js';
 
@@ -24,24 +26,29 @@ it('shares only complete outward source values while preserving independent rece
   setSpatialPosition(world, first, { x: 1, y: 0, z: 2 }, worldSupport(first));
   setSpatialPosition(world, source, { x: 3, y: 0, z: 3 }, worldSupport(source));
   initializePerception(world, []);
-  const a = world.perceptionEvidence![first.id]!.current[`${source.id}:body`]!,
-    b = world.perceptionEvidence![second.id]!.current[`${source.id}:body`]!;
+  const aOwner = world.perceptionEvidence![first.id]!,
+    bOwner = world.perceptionEvidence![second.id]!,
+    a = aOwner.current[`${source.id}:body`]!,
+    b = bOwner.current[`${source.id}:body`]!;
+  const aOriginal = currentFacetOriginal(aOwner, a),
+    bOriginal = currentFacetOriginal(bOwner, b),
+    aTimes = currentFacetTimes(aOwner, a);
   const aValue = receivedFacetValue(world, a.value)!;
   expect(a.value.reference).toEqual(b.value.reference);
   expect(aValue).toBe(receivedFacetValue(world, b.value));
   expect(Object.isFrozen(aValue)).toBe(true);
   expect(a.original).not.toBe(b.original);
-  expect(receivedObservationHeader(world, a.original).observer.actorId).toBe(first.id);
-  expect(receivedObservationHeader(world, b.original).observer.actorId).toBe(second.id);
+  expect(receivedObservationHeader(world, aOriginal).observer.actorId).toBe(first.id);
+  expect(receivedObservationHeader(world, bOriginal).observer.actorId).toBe(second.id);
   const point = (id: string) =>
     currentObservedFacets(world, id, source.id).find((value) => value.value.kind === 'location')!;
   const firstLocation = point(first.id),
     secondLocation = point(second.id);
   const received = receivedScene(world, first.id).bodies.get(source.id)!;
   expect(received.sample).toEqual({
-    valueMeasuredFrom: a.valueMeasuredFrom,
-    valueMeasuredThrough: a.valueMeasuredThrough,
-    fact: observationFactKey(world, a.original, a.originalOrdinal),
+    valueMeasuredFrom: aTimes.valueMeasuredFrom,
+    valueMeasuredThrough: aTimes.valueMeasuredThrough,
+    fact: observationFactKey(world, aOriginal, a.originalOrdinal),
   });
   expect(received.location!.fact).toEqual(firstLocation.original);
   expect(

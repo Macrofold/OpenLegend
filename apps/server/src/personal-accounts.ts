@@ -157,7 +157,7 @@ export function storyAccountSql(alias = 'p'): string {
       AND c.physical_life=(${alias}.payload::jsonb#>>'{account,receipt,physicalLife}')::int
       AND c.receipt_epoch=${alias}.payload::jsonb#>>'{account,receipt,epoch}'
       AND r.receipt->>'actorId'=${alias}.actor_id
-      AND (r.receipt->>'ordinal')::int=(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::int
+      AND (r.receipt->>'ordinal')::bigint=(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint
   ) account LIMIT 1)`;
 }
 

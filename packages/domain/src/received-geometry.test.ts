@@ -965,8 +965,7 @@ describe('native received relation producers', () => {
     const interrupted = JSON.parse(JSON.stringify(world)) as WorldState;
     const witness = Object.values(interrupted.perceptionEvidence![PLAYER_ID]!.current).find(
       (lease) =>
-        lease.value.kind === 'body' &&
-        lease.exposure.episodeId === attention.latches[key]!.witnessId,
+        lease.value.kind === 'body' && lease.exposure === attention.latches[key]!.witnessId,
     )!;
     expect(witness).toBeDefined();
     interrupted.simTime = deadline + 15;

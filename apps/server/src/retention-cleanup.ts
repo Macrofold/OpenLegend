@@ -30,7 +30,7 @@ async function retainedSourceAliases(
       retained_accounts AS MATERIALIZED (
         SELECT world_id,actor_id,id,source_kind,event_id FROM recall_sources
         WHERE world_id=? AND actor_id=? AND memory_kind IS DISTINCT FROM 'impression' AND record_id<>ALL(?::text[]))
-      ${removedChunks === undefined ? '' : `SELECT q.id FROM requested q JOIN mind_temporal_chunks c ON c.world_id=? AND c.actor_id=? AND c.source_ids @> ARRAY[q.id]::text[] WHERE c.id<>ALL(?::text[]) UNION`}
+      ${removedChunks === undefined ? '' : `SELECT q.id FROM requested q WHERE EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=? AND s.actor_id=? AND s.source_ids @> ARRAY[q.id]::text[] AND s.parent_id<>ALL(?::text[])) UNION`}
       SELECT q.id FROM requested q JOIN retained_accounts r ON r.id=q.id
       UNION SELECT q.id FROM requested q JOIN retained_accounts r ON r.event_id=q.id
       UNION SELECT q.id FROM requested q JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=? AND d.source_id=q.id
@@ -216,7 +216,7 @@ export async function cleanupRetiredIndividuals(
     if (!complete)
       for (const row of await db
         .prepare(
-          'SELECT actor_id,source_ids,individual_ids FROM mind_temporal_chunks WHERE world_id=? AND id=ANY(?::text[])',
+          'SELECT actor_id,source_ids,individual_ids FROM mind_temporal_segments WHERE world_id=? AND parent_id=ANY(?::text[])',
         )
         .all(before.world.id, retiredChunks)) {
         const value = actor(String(row['actor_id']));
@@ -247,11 +247,11 @@ export async function cleanupRetiredIndividuals(
   }
   let world = after.world;
   const removedAccounts = tables.flatMap((table) => rows.get(table) ?? []);
-  const individualTables = [...tables, 'mind_temporal_chunks'];
+  const individualTables = [...tables, 'mind_temporal_segments'];
   const individualMembership = individualTables
     .map(
       (table) =>
-        `SELECT individual_ids FROM ${table} WHERE world_id=? AND actor_id=? AND individual_ids && ?::text[] AND id<>ALL(?::text[])`,
+        `SELECT individual_ids FROM ${table} WHERE world_id=? AND actor_id=? AND individual_ids && ?::text[] AND ${table === 'mind_temporal_segments' ? 'parent_id' : 'id'}<>ALL(?::text[])`,
     )
     .join(' UNION ALL ');
   for (const [actorId, candidate] of affected) {
@@ -289,7 +289,12 @@ export async function cleanupRetiredIndividuals(
       for (const row of await db
         .prepare(individualMembership)
         .all(
-          ...individualTables.flatMap((table) => [world.id, actorId, ids, rows.get(table) ?? []]),
+          ...individualTables.flatMap((table) => [
+            world.id,
+            actorId,
+            ids,
+            table === 'mind_temporal_segments' ? retiredChunks : (rows.get(table) ?? []),
+          ]),
         ))
         for (const id of row['individual_ids'] as string[]) individuals.add(id);
     for (const [source, entries] of [
