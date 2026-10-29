@@ -11,6 +11,7 @@ import {
   observationFactKey,
   captureAttentionPresentation,
   currentObservedFacets,
+  currentFacetTimes,
   currentReceivedGeometry,
   receivedScene,
   receivedNear,
@@ -434,6 +435,7 @@ export function captureSituation(
   const detailIds = new Set(entries.map((entry) => entry.sourceId));
   const bodyFacts = (id: string, kinds?: readonly string[]) => {
     const facets = currentObservedFacets(world, actorId, id);
+    const owner = world.perceptionEvidence?.[actorId];
     const rendered = facets
       .filter(
         (facet) =>
@@ -447,8 +449,8 @@ export function captureSituation(
         ]);
         allCurrentReferences[reference] = facet;
         const entry = entryBySource.get(id);
-        const candidate =
-          entry && world.perceptionEvidence?.[actorId]?.attention?.candidates[entry.key];
+        const candidate = entry && owner?.attention?.candidates[entry.key];
+        const recorded = owner?.current[`${id}:${facet.value.kind}`];
         if (
           supportsCue(facet) ||
           (facet.value.kind === 'observed-motion' &&
@@ -457,7 +459,10 @@ export function captureSituation(
             )) ||
           (entry &&
             candidate?.presentedChange !== candidate?.changeRevision &&
-            facet.valueAcquiredAt > entry.startedAt)
+            recorded &&
+            // A completed sight phase refreshes effective acquisition without
+            // changing the received value. Rank actual source changes, not age.
+            currentFacetTimes(owner!, recorded).valueAcquiredAt > entry.startedAt)
         )
           salientFacts.add(reference);
 
