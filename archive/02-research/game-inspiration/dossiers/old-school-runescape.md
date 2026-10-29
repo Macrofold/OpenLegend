@@ -1,6 +1,6 @@
 # Old School RuneScape — full research dossier
 
-**G49 · Complete research pass, September 26, 2026.** Scope: the separately operated Old School RuneScape service, including released Sailing and the September 2026 dog quest; historical reviews are version-labelled. This is neither modern RuneScape/RS3 nor RuneScape: Dragonwilds. Research interpretations below are **not accepted OpenLegend requirements**.
+**G49 · Original complete pass: September 26, 2026. R01–R15/amendment refresh researched and reviewed: October 27, 2026.** Scope: the separately operated Old School RuneScape service, including released Sailing and the September 2026 dog quest; historical reviews are version-labelled. This is neither modern RuneScape/RS3 nor RuneScape: Dragonwilds. Research interpretations below are **not accepted OpenLegend requirements**.
 
 [Requirements](../research-requirements.md) · [Roster](../research-roster.md) · [Progress](../research-progress.md) · [Modern RuneScape](runescape.md)
 
@@ -10,20 +10,22 @@ Jagex launched OSRS in 2013 from a 2007 snapshot in response to community demand
 
 **Sailing is released.** The launch press page carries a November 14, 2025 publication label but a November 19 launch dateline; the dated launch notes establish November 19 as the release event. The current game has **24 skills**, not the 23 described in older reviews. Jagex lists PC, Steam, iOS and Android with cross-platform play/progression. Modern RuneScape's ability bars, Necromancy skill, rebuilt Construction 120 housing and Treasure Hunter history do not belong here. [S1](#s1) [S2](#s2) [M1](#m1)
 
+**October refresh:** The Fractured Archive, OSRS's fourth raid, released October 20, 2026; its distinct danger contract supplements the established loops below. [S26-05](#s26-05)
+
 OSRS is useful for OpenLegend because its players can care about being a cook, collector or house-builder without those activities being mere delays before the only legitimate endgame. Its warning is equally important: persistence can dignify effort, but cannot make every repetitive action enjoyable.
 
 ## 2. Character identity and the full skill lattice
 
 Appearance is customizable; combat class is not permanently selected at creation. A character can develop every skill. Equipment requirements, quest access and player-imposed restrictions create practical builds. A low-defence PvP specialist and an all-round main can therefore use the same character system without belonging to different engine-level species. The skill roster is:
 
-| Family | Skills and ordinary functions |
-| --- | --- |
-| Combat | Attack, Strength, Defence, Hitpoints, Ranged, Magic and Prayer: accuracy, damage, survival, styles and supernatural support. |
-| Extraction | Mining, Woodcutting, Fishing and Hunter: ores, logs, fish and captured creatures/materials. |
-| Production | Smithing, Crafting, Fletching, Cooking, Herblore and Runecraft: equipment, ammunition, food, potions and runes. |
-| Land/time | Farming: planted resources and return visits. |
-| Movement/property | Agility, Construction and Sailing: traversal efficiency, homes and ships/oceans. |
-| Specialized activities | Thieving, Firemaking and Slayer: theft, fire-related training/activities and assigned monster hunting. |
+| Family                 | Skills and ordinary functions                                                                                                |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------- |
+| Combat                 | Attack, Strength, Defence, Hitpoints, Ranged, Magic and Prayer: accuracy, damage, survival, styles and supernatural support. |
+| Extraction             | Mining, Woodcutting, Fishing and Hunter: ores, logs, fish and captured creatures/materials.                                  |
+| Production             | Smithing, Crafting, Fletching, Cooking, Herblore and Runecraft: equipment, ammunition, food, potions and runes.              |
+| Land/time              | Farming: planted resources and return visits.                                                                                |
+| Movement/property      | Agility, Construction and Sailing: traversal efficiency, homes and ships/oceans.                                             |
+| Specialized activities | Thieving, Firemaking and Slayer: theft, fire-related training/activities and assigned monster hunting.                       |
 
 Ordinary skill progression reaches 99, while experience accumulation and collection goals can continue beyond practical unlocks. Total level, combat level and quest completion are different measures; one number does not explain an account. Skills have prerequisites and unlocks, but not one universal talent tree or mandatory class specialization. [M1](#m1) [M8](#m8)
 
@@ -31,7 +33,7 @@ Ordinary skill progression reaches 99, while experience accumulation and collect
 
 ## 3. Core interactions and material chains
 
-The recurring grammar is select a destination, select an entity or item, choose an interaction, wait or intervene, collect a result, and decide whether to repeat, process, bank or travel. Context menus and item-on-item/item-on-object actions let the same modest interface cover talking, opening doors, chopping, lighting, mixing and equipping. This is broad authored interaction, **not arbitrary physical invention**. Recipes and valid targets remain designed rules. [R1](#r1) [R3](#r3)
+The recurring grammar is choose a destination or target, act, collect, then repeat, process, bank or travel. [R3](#r3) Desktop left-click executes a default action; right-click exposes alternatives, with adjustable attack-option priority and single-button behavior. [S26-09](#s26-09) Item-on-item/object processing follows authored recipes and valid targets; this is broad interaction, not arbitrary physical invention.
 
 The economy connects recognizable transformations: ore to metal equipment; logs to fires, ammunition or construction inputs; fish to food; hides/gems to wearable goods; herbs and secondary ingredients to potions. Tools, stations, skill requirements, travel and inventory capacity constrain those transformations. A sword made through Smithing is not automatically the best possible sword: monster/quest/reward sources also compete with production. [M1](#m1) [M11](#m11) [M12](#m12)
 
@@ -49,7 +51,7 @@ Item families include tools, raw materials, food, potions, runes/ammunition, arm
 
 Combat combines persistent stats, equipment bonuses, attack styles, positioning, supplies and timing. Melee weapons expose stab/slash/crush suitability; a weapon's appearance or nominal tier is not the whole damage model. Ranged equipment separates accuracy and strength considerations, with bows/crossbows/ammunition and thrown weapons behaving differently. Current ranged damage types also create monster-specific preferences. [M2](#m2) [M3](#m3)
 
-Selecting an enemy can sustain ordinary attacks, but harder encounters require changing targets, stepping away from hazards, switching protection, managing food and choosing special-attack or equipment use. Safespots exploit reach and pathing; they are not proof of sophisticated opponent planning. Bosses turn this positional/timing grammar into authored tests. OSRS is not modern RuneScape's Revolution/Evolution of Combat system. [M3](#m3) [R1](#r1)
+Selecting an enemy sustains ordinary attacks; harder encounters require movement, protection/supply management and target or equipment changes. Safespots exploit reach and pathing, not general opponent planning. Bosses compose authored timing tests. This differs from modern RuneScape's Revolution/Evolution of Combat system. [M3](#m3) [R1](#r1)
 
 Prayer adds an independently draining combat resource. Protection and offensive prayers can be changed during a fight; equipment affects drain, while potions, altars and suitable housing facilities restore points. Skilled flicking is timing-sensitive, and different monsters evaluate protection at different moments. It is wrong to reduce all encounters to one universal 'pray when the projectile arrives' rule. [M4](#m4)
 
@@ -67,6 +69,17 @@ Gielinor is navigable geography containing towns such as Lumbridge, Varrock and 
 
 Agility is consequently both a training activity and a logistical capability. Sailing adds navigable ocean rather than merely another instant destination menu. **Interpretation:** unlocks that change familiar routes make progress physically legible. OpenLegend can adapt this to learned paths, trusted hosts and access rights, but should avoid making every trip a test of whether the player has memorized an external wiki.
 
+### Persistent progression and separate world copies
+
+Ordinary OSRS worlds are selectable copies of Gielinor. Country, membership, activity and special rules distinguish them; changing a normal world carries character progress into a different population and local resource situation. Jagex's switcher is subject to logout/combat restrictions. Detailed current topology is indexed documentation, not a fully retrieved server specification. [E26-05](#e26-05) [E26-11](#e26-11)
+
+| Boundary                     | What persists or changes                                                                                                                                                                                                                                                                                    |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Ordinary world hop/logout    | Normal progress carries between copies; occupants and shop/resource availability can differ. This is an enduring shared-world MMO, not one globally mutable landmass. [E26-11](#e26-11)                                                                                                                     |
+| Personal/encounter space     | Quest state and private homes coexist with shared geography and repeatable encounters. Advertised home admission requires the host to be home in the same world; admitted guests are not necessarily expelled when the host leaves. [S26-04](#s26-04) [S26-06](#s26-06)                                     |
+| Absence and loss             | Farming distinguishes offline growth from mature-crop retention. Ordinary gravestones preserve stored items across world hops/reboots; special retrieval, PvP and Ultimate rules require separate treatment. [M10](#m10) [M17](#m17)                                                                        |
+| Access and separate progress | Members-only areas are unavailable on free worlds even to paying members. Shared RuneScape/OSRS membership does not merge stats/items. Leagues, Deadman, beta and speedrunning have separate progress boundaries, not routine ordinary-account wipes. [E26-03](#e26-03) [E26-04](#e26-04) [E26-11](#e26-11) |
+
 ## 8. Sailing: another layer of the world, not an isolated XP bar
 
 Pandemonium introduces captaining, docking and a starting raft/Captain's log. Boats can be upgraded and fitted with facilities; crew can operate relevant stations. Port tasks, charting, salvaging and Barracuda Trials provide different activity structures. Offshore places introduce resources and encounters that connect back to existing skills. [S2](#s2) [M20](#m20)
@@ -83,6 +96,20 @@ Farming uses planted crops with growth stages, disease risk, harvesting and loca
 
 Construction turns resources and skill into a player-owned house. Its rooms/furniture are not only decoration: pools restore selected resources; portal facilities and jewellery storage support travel; altars can support spellbook switching; displays and logs express achievements. Unlocks therefore reduce friction in other activities as well as furnish a home. This is **OSRS's house system**, not the modern game's 2026 housing rebuild. [M9](#m9)
 
+### Native house creation, revision and visiting
+
+Obtain a house from an estate agent or through _Daddy's Home_, then enter its portal. [S26-06](#s26-06)
+
+In Building Mode, choose a door for a room or a furniture hotspot. The menu lists required level/materials; most furniture requires a hammer and saw. [M9](#m9)
+
+The 2016 House Viewer selects, moves, rotates, adds or deletes rooms, then commits with Done. Moving or rotating preserves contents; linked floors must fit together, and a trapped player can return to the entrance. Gardens and galleries connect expression to achievement: a boss topiary requires the relevant kill. [S26-01](#s26-01) Later trophy menus allow adding and switching collected mounted heads without rebuilding the display. [S26-07](#s26-07)
+
+Removal differs from rearrangement. It normally returns no building materials, while some displayed equipment can be recovered; rooms supporting an upper floor have removal constraints. Preview the room's ghost and aligned doors before committing. The inspected native sharing route is visiting and using a finished place; no built-in export/import of an entire house design was established. [S26-06](#s26-06)
+
+The delivered 2019 advertisement board lists useful facilities—altar, pool, jewellery box, portals, armour repair—and permits entry when the host is home on that world. Its discovery mechanism makes another person's investment useful. [S26-04](#s26-04)
+
+Current indexed documentation separates admission from continued presence: guests can remain after the host leaves. Privacy and Ignore settings restrict entry; kicking a visitor alone does not prevent return. Ordinary and Group Ironman access restrictions still apply. [S26-06](#s26-06)
+
 Other management content exists, but OSRS is not a generalized settlement simulation in which every NPC household autonomously consumes the player's crops. The broader lesson is to connect property to recurring activity rather than strand it as a decorative menu.
 
 ## 10. Quests, authored character and story
@@ -95,11 +122,21 @@ A modern example is **A Ruff Situation**, launched September 8, 2026. It connect
 
 NPCs primarily deliver authored roles, dialogue and encounter behavior. Personal quest flags can make a player feel recognized, but there is no evidence here of generalized autobiographical memory, unscripted political planning or a fully simulated daily economy. Gods, factions and regions supply story continuity without one universal reputation slider controlling every relationship.
 
+### Powers, histories and present obligations — spoilers
+
+The Stone of Jas links cosmic power to ordinary geography. Jagex's OSRS account describes an artefact associated with the first runes and Zaros's fall; Zamorak's catastrophic use at the end of the God Wars ruined Forinthry into the Wilderness. Guthix then banished the gods and concealed the Stone to protect balance. The Mahjarrat, shaped by warfare and deadly ritual, continue to seek it while he sleeps. _While Guthix Sleeps_ makes that danger a personal investigation beginning with Ivy Sophista in Taverley; its aftermath unlocks the ancient temple and tormented demons, whose drops become specialized demonbane weapons. History thus changes a place, its dangers and its material opportunities. This is the 2024 OSRS telling, not permission to import RS3's later divine chronology. [S26-02](#s26-02)
+
+The elf storyline connects institutions to deception. King Lathas sends the player against his brother Tyras, presenting Lord Iorwerth as an ally against a supposed threat. Arianwyn's resistance reveals that the player helped remove their opposition. The manufactured plague conceals excavation toward the Temple of Light, where the conspirators seek the Dark Lord's return. The player's task moves from obedience to investigation, intricate light puzzles and attempted repair of past harm. A familiar city becomes politically different without requiring a simulated election or autonomous NPC government. Completing _Song of the Elves_ opens Prifddinas, whose eight clan districts embody specialties: Hefin Agility and Trahaern mining/smithing are cultural institutions the player can use. Its crystal architecture, Tower of Voices and library give that history a place. [S26-03](#s26-03)
+
+Varlamore supplies another cultural connection. Pilgrims visit Ralos' Rise, remembered as a divine visitation site, to offer bone shards and blessed wine; prayer becomes a ritual using goods brought from elsewhere. The national quetzal is also local transport, with nests the player helps establish. Beneath Cam Torum, dwarves need help containing ancient entities disturbed in their temple; the Perilous Moons activity grows from that problem. These are specific authored institutions and obligations, not evidence that every resident follows an independently simulated religion or economy. [S26-08](#s26-08)
+
 ## 11. Activities, rewards and endgame variety
 
 Slayer assigns monster tasks through masters with differing requirements. Task completion, streaks, equipment needs and points create a continuing reason to move among enemies rather than farm only one optimal target. Skipping/blocking and task-specific rewards add planning. Named masters can even change after story events, connecting service roles to quest history. [M12](#m12)
 
 Minigames and raids are not one homogeneous system. Barbarian Assault gives five players differentiated roles across waves and a final queen; it has its own supplies, reward currency and safety exceptions. Tombs of Amascut supports configurable Invocations: parties choose additional constraints/mechanics that increase raid level and alter reward prospects. This makes learning and mastery more continuous than a single compulsory difficulty jump. [M13](#m13) [M22](#m22)
+
+The Fractured Archive extends this history: Lucien's interference with the Stone opens Guthix's collection, attracting divine agents with competing aims. It follows _While Guthix Sleeps_ and supports difficult group or aspirational solo encounters. Its deaths are unsafe for Hardcore statuses. Release notes acknowledge live tuning, so neither launch tactics nor advertised difficulty are permanent balance facts. [S26-05](#s26-05)
 
 Treasure Trails transform drops into routes, puzzles, required items and reward caskets. Even beginner clues can arise from ordinary skilling, connecting fishing/mining/woodcutting to exploration. Higher goals also include equipment completion, skill capes, achievement diaries, combat achievements and collection hunting. Finishing one quest line is not a global ending. [M19](#m19) [M21](#m21) [M22](#m22)
 
@@ -111,7 +148,9 @@ Most ordinary accounts can trade, allowing specialization and exchange rather th
 
 The durable design issue is stock versus flow: permanent items accumulate, while consumption, fees and removal systems help maintain demand. A new reward can also invalidate an old activity. This is why economy stewardship is part of content design, not a dashboard added afterward.
 
-The service combines a free-access portion with membership for broader content. Bonds connect real-money purchase and in-game exchange/membership under supported rules. Ironman access to the Grand Exchange is narrowly limited, including bond purchase rather than ordinary trade. Avoid equating a bond with modern RuneScape's removed Treasure Hunter system. [M7](#m7) [M8](#m8) [S1](#s1)
+Free play is a restricted portion of the game. Membership supplies regions, quests, bosses, storage and nine exclusive skills, including Sailing, Herblore and Construction: substantial capabilities beyond appearance. OSRS Bonds can be purchased, sold to ordinary players for gold, or bought with earned gold and redeemed for membership or a name-change cooldown bypass. Membership covers both game versions while their inventories remain separate. [E26-01](#e26-01) [E26-02](#e26-02) [E26-12](#e26-12)
+
+**Interpretation:** cash-to-Bond-to-gold can fund tradeable equipment/materials, shortening resource acquisition without satisfying skill, quest or execution requirements. Iron accounts may buy Bonds through the Grand Exchange but cannot sell them or buy ordinary items there; that cash route does not supply their equipment progression. Paid advantage depends on the account rules. [E26-06](#e26-06)
 
 ## 13. Death, danger and ruleset variants
 
@@ -133,7 +172,11 @@ There is no general recruitable tactical companion party, romance-affection syst
 
 The low-poly aesthetic, compact icons, textual dialogue and context menus preserve recognizability across a long-lived world. That continuity is valued by veteran reviewers but can look crude to newcomers. Small mobile controls and tiny text create a real portability tradeoff: the same persistent game is available on a phone, yet high-precision activities may remain more comfortable on desktop. [R2](#r2) [R4](#r4)
 
+The view can rotate and zoom, with roof-hiding and wheel/pinch options. Current indexed settings also allow replacing Ape Atoll rockfall camera shake with a shadow warning. **Interpretation:** making motion optional can retain hazard information, rather than force a choice between comfort and necessary feedback. [S26-09](#s26-09)
+
 Audio also makes geography collectible and memorable. Music tracks unlock at places or events; Museum Medley explicitly recombines recognizable themes, including Sea Shanty 2, into an anniversary/location reward. The sound library therefore participates in memory and completion rather than functioning only as interchangeable background scoring. This is a documented soundtrack structure, not a claim that footage was watched or tracks were newly auditioned for this pass. [M15](#m15)
+
+A concrete 2025 housing update distinguishes swamp-like Canifis walls from brighter Civitas styling and documents revised sitting, combat-ring entry/exit, chest-opening and globe-spinning animations. Alphabetizing the house bookcase addresses a different problem: finding a remembered text. These are publisher-described changes, not newly watched animation or claims that appearance alone repairs input friction. [S26-07](#s26-07)
 
 **Interpretation:** progress feedback can be modest and still potent when an icon, sound or familiar location carries accumulated meaning. The interface lesson is less 'copy the old UI' than 'preserve a stable vocabulary while improving discoverability and input access'.
 
@@ -143,33 +186,72 @@ Jagex develops and publishes OSRS. Its corporate history distinguishes the 2013 
 
 The February 2026 cannonball poll explicitly specifies a **70% threshold**; older reviews' 75% references are historical. Polling is not absolute delegation of every operational choice: integrity and service changes can follow other processes. An approved proposal and its released implementation are separate evidence states. [S3](#s3) [M7](#m7)
 
-Desktop/mobile continuity, Steam discovery, returning veterans, community discussion, challenge accounts and visible progression all provide distribution surfaces. The five reviews give direct evidence that portability and personal history matter to some players, not a measured causal decomposition of growth. The September 2026 dog update also links an in-game story to a charity livestream; that is a documented promotional/community event, not proof that charity activity caused retention. [R2](#r2) [R3](#r3) [R5](#r5) [S6](#s6)
+Desktop/mobile continuity, Steam discovery, returning veterans, community discussion, challenge accounts and visible progression all provide distribution surfaces. The written accounts give direct evidence that portability and personal history matter to some players, not a measured causal decomposition of growth. [R2](#r2) [R3](#r3) [R5](#r5)
+
+The September 2026 dog update also links an in-game story to a charity livestream; that is a documented promotional/community event, not proof that charity activity caused retention. [S6](#s6)
+
+In their 2023 Sailing interview, Kieren Charles and Elena Nordmark described a larger production team—roughly 50–60 core staff, compared with about 11 in 2015—and the need to resolve navigation and training before treating a new skill as settled. Geography itself created a problem: an island described as distant sat only a few map tiles offshore. They proposed testing mechanics without revealing every discovery, and connecting Sailing to useful gaps in existing skills without making it a compulsory first step for everything else. Those are contemporary design intentions, subsequently distinguished from the delivered rules in §8. **Interpretation:** preservation requires understanding what players value while allowing the underlying implementation to change; consultation identifies problems but does not remove the designers' responsibility to solve them. [P26-01](#p26-01)
+
+**Project Zanaris is not a delivered custom-world editor.** On June 3, 2025, Jagex paused the player-hosted-world initiative indefinitely, saying its expected quality was too distant and core play, infrastructure and services needed attention. Staff and technology were redirected; curated temporary community events were proposed as another way to explore variants. This is the publisher's prioritization account, not proof that all creator worlds are commercially unsound or an announced-event idea already shipped. [P26-02](#p26-02)
+
+Actual promotion includes the June 20, 2026 **Deadman All Stars** finale in Chicago. Jagex's June 22 report describes six creator-led teams, a Twitch broadcast, sponsors and event merchandise, with Solo Mission credited for the format. It reports over 4,000 attendees; inconsistent online-audience wording is not converted into a reliable unique-viewer figure. The event turns expert play and familiar characters into a shared spectacle, but establishes neither acquisition conversion nor causal retention. [P26-03](#p26-03)
+
+### Popular mods: RuneLite and external plugins
+
+**R15: yes.** RuneLite's plugin directory showed about 620,000 active installations of Zoinkwiz's **Quest Helper** and 432,000 of **117 HD** on October 27, 2026. These are the directory's install measures, not unique players or total OSRS population. [M26-01](#m26-01) Quest Helper supplies requirements, route arrows, highlighted objects and puzzle guidance; 117 HD changes rendering. Both projects request optional financial support. Their purpose is clearer guidance or a different visual experience, not adding authoritative server quests or changing item ownership. No creator income or profitability was established. [M26-02](#m26-02) [M26-03](#m26-03)
+
+**Documented author-to-player path:**
+
+1. **Create or extend.** RuneLite's hub guide recommends a Java 11 environment, its example plugin and a public repository. Configure the descriptor and `runelite-plugin.properties`; code is Java, while labels, icons and other packaged resources provide data. Contributing to an existing suitable plugin is encouraged to reduce fragmentation. [M26-04](#m26-04)
+2. **Preview a concrete creation.** For a new Quest Helper guide, copy an existing helper's structure, identify the supported quest, then define item requirements, locations, NPC/object steps and conditions. Run `QuestHelperPluginTest` with developer tools to inspect behavior, and compare a normal configuration. These declarations are still code; they describe guidance for an existing quest rather than inventing a server-side adventure. [M26-05](#m26-05)
+3. **Package, review and share.** The hub builds JAR packages; resources must work from the packaged classpath. Submit a manifest naming the repository and exact commit, then resolve build/review findings. Extra dependencies require verified hashes and additional review. The documented licensing path uses BSD 2-Clause; that code license does not grant rights to Jagex's game assets. [M26-04](#m26-04)
+4. **Install and use.** A recipient opens RuneLite's configuration panel, enters Plugin Hub and selects Install. Quest Helper then adds a sidebar: choose an unfinished quest to show its requirements, current step and route. Optional integration with Shortest Path has its own configuration. The hub also exposes Remove and a link to the maintainer's issue tracker. This closes the creation-to-use loop without requiring recipients to run the developer project. [M26-06](#m26-06) [M26-02](#m26-02)
+5. **Update and recover.** An author submits a new commit in the manifest for review; changing the source repository alone is not the published hub update. [M26-04](#m26-04)
+
+   RuneLite's FAQ documents safe mode, which disables hub plugins and GPU mode to isolate faults. Configuration and some plugin data have distinct persistence: cloud profile sync does not include every third-party setting or screenshot. Removing a plugin is therefore different from clearing every local record. The FAQ explicitly excludes a RuneLite mobile client. [M26-07](#m26-07)
+
+**Boundaries and lifecycle risk:** Jagex's published third-party-client rules list RuneLite and HDOS as approved clients, but prohibit specified combat prediction, automatic position/prayer guidance and certain menu/interface alterations. Client approval is not permission for any conceivable extension. [M26-08](#m26-08) RuneLite's June 2026 review policy emphasizes security and rule compliance; it does not certify performance, factual accuracy, usefulness or compatibility with every other plugin. Destabilizing plugins may be disabled. The user guide requires disclosures when a plugin sends data to another server and expressly avoids promising that every reviewed plugin works correctly. [M26-09](#m26-09) [M26-06](#m26-06)
+
+**OpenLegend interpretation:** make useful contributions discoverable, previewable and removable, with a clear distinction between executable logic, data and authoritative world changes. Guidance can reduce obscure prerequisites while also replacing discovery with instructions; choose where the intended experience benefits from each. These observations inform existing authoring, capability and UI owners, not a new RuneLite-style client requirement or an OSRS polling constitution.
 
 ## 17. Commercial and participation evidence
 
 The Steam listing identifies Jagex as developer/publisher and gives OSRS's original February 22, 2013 release date; a store's game release field should not be mistaken for the date Steam distribution began. Store review counts and positive percentages are mutable, client-specific reception measures, not total player counts. [S8](#s8)
 
-Jagex's accessed Sailing press release describes **300 million-plus accounts and more than $3 billion lifetime revenue for the RuneScape franchise**. These must **not** be relabelled as OSRS active users, OSRS unit sales or OSRS annual revenue. No independently audited, separately attributable current OSRS revenue/MAU figure was established in this pass. Subscription and bond design can be analyzed without inventing one. [S1](#s1)
+| Date and scope                                 | Observed evidence                                                                            | Limit                                                                                                                                                                                                        |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| FY2020; Jagex company, GBP                     | Publisher reported £120 million revenue and £53.8 million operating profit.                  | Company results, not OSRS profit. [E26-07](#e26-07)                                                                                                                                                          |
+| 2020; OSRS participation                       | Publisher reported more than 170,000 concurrent players.                                     | Historical peak, not current MAU. [E26-07](#e26-07)                                                                                                                                                          |
+| November 2025; RuneScape franchise, lifetime   | Publisher reported 300 million-plus accounts and over US$3 billion revenue.                  | Franchise cumulative totals, not OSRS sales or unique active people. [S1](#s1)                                                                                                                               |
+| FY2025; Jagex Limited, GBP                     | Secondary extraction reports £178.452 million turnover and £54.856 million operating profit. | Standalone company accounts; Companies House confirms August 6, 2026 filing, but the PDF was inaccessible. Extraction not independently reconciled; no title allocation. [E26-08](#e26-08) [E26-09](#e26-09) |
+| June 2026 interview, published August 14; OSRS | Kieren Charles estimated over one million active subscribers.                                | Developer estimate, not audited subscribers, unique people, MAU or October concurrency. [E26-10](#e26-10)                                                                                                    |
+| OSRS development, operations and marketing     | No separable original development total or complete lifetime cost/profit established.        | Shared subscriptions, inherited assets and undisclosed allocation prevent a defensible standalone estimate.                                                                                                  |
 
-## 18. Five independent written assessments
+**Outcome inference:** durable demand and positive operator earnings are supported; an OSRS margin is not. [E26-07](#e26-07) [E26-09](#e26-09) [E26-10](#e26-10) Do not multiply subscribers by today's price or allocate company profit using public concurrency. That lacks realized subscription/Bond revenue, geographic/plan mix, duplicate-character information, costs and a shared-entitlement allocation basis. **Standalone OSRS revenue, lifetime profit and ROI are not estimable** from these disclosures. The useful design question is how enduring capabilities and chosen constraints make returning worthwhile.
 
-The fifth is a substantive firsthand retrospective rather than a scored launch review. The first four are direct reviews. Steam player testimony is additional, not substituted for these five.
+<a id="18-five-independent-written-assessments"></a>
 
-| Written assessment | What it values | Criticism and evidence boundary |
-| --- | --- | --- |
-| **Austin Wood, PC Gamer; original 2018 review, republished February 24, 2021** | Self-selected goals, distinctive quests and connections among skills. His Recipe for Disaster project makes preparation personally meaningful. | Repetitive Herblore, slow progress and weak initial direction remain genuine costs. Historical 23-skill game, not current Sailing verification. [R1](#r1) |
-| **Harry Slater, Pocket Gamer, November 1, 2018** | A substantial shared-account game on mobile, not a shallow spin-off. | Early drudgery, ageing presentation and small-screen controls; portability does not automatically improve onboarding. [R2](#r2) |
-| **Eli Hodapp, TouchArcade, October 30, 2018** | Discovery, long-term depth and useful short sessions; he chose not to optimize every decision through guides. | Initial uncertainty and small touch targets. His concert-side fishing is a personal anecdote, not proof all activities suit phones equally. [R3](#r3) |
-| **Madeline Ricchiuto, Bleeding Cool, February 10, 2019** | Click-based structure adapts naturally to mobile; continuity and nostalgia. | Tiny text, graphics and limited control/customization. 'Same game' is reception language, not evidence of RS3-to-OSRS save transfer. [R4](#r4) |
-| **Andrew Brown, GamesRadar+, 2025 retrospective** | Non-combat goals, authored comic quests and alternatives that make an initially disliked skill enjoyable. | Personal difficulty with quest bosses and criticism of a publisher community decision. An affectionate veteran reappraisal, not a neutral newcomer trial or scored review. [R5](#r5) |
+## 18. Independent written assessments
+
+The original reviews and retrospective were reread October 27, 2026. Ricchiuto's brief port impression supplements five substantial independent reviews or firsthand essays; a further personal account follows changed play over time. Historical mobile judgments do not establish current controls or live rules. Steam testimony remains additional.
+
+| Written assessment                                                             | What it values                                                                                                                                                                              | Criticism and evidence boundary                                                                                                                                                                                                                                 |
+| ------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Austin Wood, PC Gamer; original 2018 review, republished February 24, 2021** | Self-selected goals, distinctive quests and connections among skills. His Recipe for Disaster project makes preparation personally meaningful.                                              | Repetitive Herblore, slow progress and weak initial direction remain genuine costs. Historical 23-skill game, not current Sailing verification. [R1](#r1)                                                                                                       |
+| **Harry Slater, Pocket Gamer, November 1, 2018**                               | A substantial shared-account game on mobile, not a shallow spin-off.                                                                                                                        | Early drudgery, ageing presentation and small-screen controls; portability does not automatically improve onboarding. [R2](#r2)                                                                                                                                 |
+| **Eli Hodapp, TouchArcade, October 30, 2018**                                  | Discovery, long-term depth and useful short sessions; he chose not to optimize every decision through guides.                                                                               | Initial uncertainty and small touch targets. His concert-side fishing is a personal anecdote, not proof all activities suit phones equally. [R3](#r3)                                                                                                           |
+| **Madeline Ricchiuto, Bleeding Cool, February 10, 2019**                       | Click-based structure adapts naturally to mobile; continuity and nostalgia.                                                                                                                 | Tiny text, graphics and limited control/customization. 'Same game' is reception language, not evidence of RS3-to-OSRS save transfer. [R4](#r4)                                                                                                                  |
+| **Andrew Brown, GamesRadar+, 2025 retrospective**                              | Non-combat goals, authored comic quests and alternatives that make an initially disliked skill enjoyable.                                                                                   | Personal difficulty with quest bosses and criticism of a publisher community decision. An affectionate veteran reappraisal, not a neutral newcomer trial or scored review. [R5](#r5)                                                                            |
+| **Frank, The Frank Gamer; September 26, 2024, updated July 10, 2026**          | Returned after years away on a new Ironman, completed a first quest cape and built a restoration pool. Self-sourcing made cheap equipment valuable; the pool goal prompted learning Zulrah. | Supply preparation was tiring. At this stage he reduced intensive bossing to lighter activities to avoid burnout. Quest-cape completion preceded Varlamore Part 2; a personal midgame account, not population retention. [R26-01](#r26-01)                      |
+| **Ryan, Trying Out Before Buying In; September and December 2025**             | Completed the quest cape and later Final Dawn quests, enjoying a chosen goal and new stories.                                                                                               | Skill/drop planning crowded out other priorities, prompting a step back. September's possible return became December's actual continued, much lighter play. This does not establish permanent quitting or a retention rate. [R26-02](#r26-02) [R26-03](#r26-03) |
 
 **Synthesis:** enthusiasm centers on meaningful continuity and self-direction. Criticism clusters around the time cost and the effort of learning/controlling the game. Both can be true: a compelling multi-month objective does not make every hour on its path compelling.
 
+**Interpretation:** completing a personal goal, returning and comfortably reducing play can all be good outcomes. Qualify chosen capability and remembered enjoyment; accumulated hours cannot establish either.
+
 ## 19. Helpful Steam player evidence
 
-The English most-helpful/all-time surface was read on September 26, 2026. These are selected accounts, not a representative survey. The lengthy positive review by **$11**, dated February 24, 2021, combines praise for goal freedom and questing with complaints about bots, account support and tensions between PvM and Wilderness PvP incentives. Historical prices, client-market-share guesses and today's displayed playtime are not adopted as verified facts.
-
-**Aerdis117's January 16, 2025 negative review** objects to subscription increases and monetization-survey ideas. Its advertising/support-paywall concerns are feared proposals, not evidence that those systems shipped. Other helpful positives foreground childhood memories and returning after breaks. This sample separates dissatisfaction with service stewardship from dissatisfaction with the progression game. Helpful-vote totals are omitted because they change. [P1](#p1)
+Reread October 27, 2026: **$11** (February 24, 2021; 1,135 helpful; 410.9 displayed hours) praises goals/quests but criticizes bots, support and PvP incentives. **Aerdis117** (January 16, 2025; 967 helpful; 2.5 displayed hours) objects to prices and feared survey proposals, not shipped advertising/support paywalls; cancellation is not reported. Hours are current displayed Steam totals, not posting-time play or complete account history. This selected, mutable sample cannot establish population retention. [P1](#p1)
 
 ## 20. Worked situations
 
@@ -219,32 +301,50 @@ After the dog-shelter quest, a player nurtures a puppy and later brings the grow
 
 **Do not copy the grind uncritically.** Long-lived accomplishment depends on durable value, not solely on time required. A simulation with autonomous agents also changes the economics: labour that a human MMO treats as scarce attention may become cheap delegated computation.
 
+### Route into existing design and tasks
+
+These findings refine existing qualification rather than select an OSRS-style game for every OpenLegend world.
+
+| Evidence                                                      | Existing owner and concrete next use                                                                                                                                                                                                                             |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| A chosen long goal can contain unrewarding repetition         | [FPV06–08](../../../../docs/maintainers/first-playable-validation.md): observe a useful partial outcome, voluntary stopping and return; do not count repeated inputs as enjoyment.                                                                               |
+| Skills, supplies and routes give another person value         | [DG14](../../../../docs/maintainers/needs-design.md#dg14--useful-competence-and-practice), [CP10](../../../../docs/maintainers/first-playable-cooperation.md): qualify visible competence and independently chosen useful aid, including refusal and withdrawal. |
+| Property changes the next expedition                          | [DG13 / SH12](../../../../docs/maintainers/needs-design.md#dg13--editable-shelter-and-useful-places): follow acquisition, building, use, contribution, revision and later return.                                                                                |
+| Personal achievements survive separately from scene state     | [DG29](../../../../docs/maintainers/needs-design.md#dg29--more-participants-and-travel-between-worlds): state world, character, property, visitor and ruleset boundaries explicitly.                                                                             |
+| Helpful community tools need a complete lifecycle             | [ND12](../../../../docs/maintainers/needs-design.md#nd12--cross-world-invention-libraries-and-usable-pack-publishing): resolve preview, dependencies, sharing, updates and removal through the existing pack design; retain accepted paid authoring.             |
+| Revenue and tolerable monetization answer different questions | [CO01–03](../../../../docs/maintainers/commercial-offers.md): compare actual paid capability, continued costs and chosen use; community popularity does not select our price or subscription.                                                                    |
+
+World authors retain decisions about progression and danger. Long-lived public-game trust does not introduce development save compatibility or reverse the project's no-legacy policy.
+
 ## 22. Requirement, inventory and preservation review
 
-| Requirement | Substantive coverage |
-| --- | --- |
-| R01 identity, version, audience promise | §§1–2, 17 |
-| R02 full action/mechanics inventory | §§2–14 |
-| R03 objects/resources/equipment/composition | §§3–6, 8–9, 11–13 |
-| R04 progression, economy, time, failure/endgame | §§2, 7–13 |
-| R05 worked interactions | §20, seven constructed examples |
-| R06 people, AI, social, multiplayer and absences | §§8, 10–11, 13–14 |
-| R07 art, audio, controls, interface and friction | §15 and mobile reviews |
-| R08 story and gameplay links | §§7, 10–11, 20A/G |
-| R09 production, evolution and evidence limits | §16 |
-| R10 distribution, promotion and community | §§16, 18–19 |
-| R11 commercial/participation definitions | §§12, 17 |
-| R12 five written assessments plus helpful Steam contrast | §§18–19 |
-| R13 inspiration, dependencies and counterexamples | §21 and section-level interpretations |
-| R14 adjacent evidence, reading routes and preservation | this section and annotated sources |
+| Requirement                                                                           | Substantive coverage                                                                                       |
+| ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| R01 identity, version, audience promise                                               | §§1–2, 17                                                                                                  |
+| R02 full action/mechanics inventory                                                   | §§2–14                                                                                                     |
+| R03 objects/resources/equipment/composition                                           | §§3–6, 8–9, 11–13                                                                                          |
+| R04 progression, economy, time, failure/endgame                                       | §§2, 7–13                                                                                                  |
+| R05 worked interactions                                                               | §20, seven constructed examples                                                                            |
+| R06 people, AI, social, multiplayer and absences                                      | §§8, 10–11, 13–14                                                                                          |
+| R07 art, audio, controls, interface and friction                                      | §15 and mobile reviews                                                                                     |
+| R08 story and gameplay links                                                          | §§7, 10–11, 20A/G: connected divine history, elven institutions and Varlamorian rituals                    |
+| R09 production, evolution and evidence limits                                         | §16                                                                                                        |
+| R10 distribution, promotion and community                                             | §§16, 18–19                                                                                                |
+| R11 payment effects, scoped commercial table and explicit profit limits               | §§12, 17                                                                                                   |
+| R12 five substantial assessments plus port/return evidence and helpful Steam contrast | §§18–19                                                                                                    |
+| R13 inspiration, limits and concrete existing-task routes                             | §21 and section-level interpretations                                                                      |
+| R14 adjacent evidence, reading routes and preservation                                | this section and annotated sources                                                                         |
+| R15 popular modding and complete author/use lifecycle                                 | §16, RuneLite author/test/package/review/activation/update/removal; native house creation separately in §9 |
 
 **Inventory check:** creation/classlessness; all 24 skills; material chains; weapons/armour/items; spells/prayer; traversal; context interactions; quests/theft; combat/loot; death; markets; NPC/party/romance boundaries; houses/farming; pets/crew; clans/MP; modes and endgame are explicitly addressed. This is a design dossier, not an exhaustive price table, optimal build guide or catalogue of every quest/boss.
 
-**Preservation:** G49 was a post-packet roster addition with no identified prior full chapter. The earlier 47-game packet, existing game/mechanics chapters and G48 remain untouched. This file owns OSRS evidence; shared franchise material is repeated only to establish the boundary.
+**Preservation:** G49 was a post-packet roster addition with no identified prior full chapter. The earlier 47-game packet, existing game/mechanics chapters and G48 remain untouched. This file owns OSRS evidence; shared franchise material establishes the boundary. The existing [G49 engagement entry](../references/fun-and-engagement-dossier-evidence.md) retains offline crops, useful old places, uncertain rare-drop horizons and conflicting Wilderness expectations. No separate OSRS UI owner was found; sibling dossiers remain distinct.
 
 **Evidence/access review:** primary release/poll pages and substantive review bodies were read. Several OSRS Wiki bodies were robots-blocked; cited mechanics rely on the accessible indexed sections, explicitly identified below. Secondary reproductions of official patch text are labelled as mirrors. Metro/Digital Fix bodies were not accessible and are not counted as read reviews. No video, gameplay session or audio audition is claimed. The requirement map and local source anchors were checked while composing this final pass; repository-wide integration gates remain separate.
 
 **Reading/viewing route:** start with the PC Gamer review for the experiential loop, the official Sailing launch material for extension design, the Construction and Ironman references for altered value, and Tombs of Amascut's Invocation documentation for difficulty composition. Official trailers linked from release pages are optional viewing routes; their footage was not watched for this pass.
+
+**October refresh status:** core, economics, reception and external-creation additions are integrated and independently reviewed. All seven cases, original source IDs and changed-heading aliases are preserved. This documented pass did not execute gameplay or authoring tools and does not complete separate packet-wide gates.
 
 ## Annotated sources
 
@@ -280,7 +380,7 @@ After the dog-shelter quest, a player nurtures a puppy and later brings the grow
 
 <a id="m8"></a>**M8 — OSRS Wiki, [Ironman Mode](https://oldschool.runescape.wiki/w/Ironman_Mode), [Ultimate Ironman Guide](https://oldschool.runescape.wiki/w/Ultimate_ironman_guide).** Indexed rules/mode distinctions and alternate-mode index; not a complete exception table.
 
-<a id="m9"></a>**M9 — OSRS Wiki, [Construction](https://oldschool.runescape.wiki/w/Construction).** Indexed pools, portal nexus and achievement-gallery functions; OSRS-specific housing.
+<a id="m9"></a>**M9 — OSRS Wiki, [Construction](https://oldschool.runescape.wiki/w/Construction).** Indexed facilities and current building-hotspot requirements read; OSRS housing, not the RS3 rebuild.
 
 <a id="m10"></a>**M10 — OSRS Wiki, [Farming](https://oldschool.runescape.wiki/w/Farming).** Indexed crop inputs, offline growth, disease and mature-crop persistence.
 
@@ -296,7 +396,7 @@ After the dog-shelter quest, a player nurtures a puppy and later brings the grow
 
 <a id="m16"></a>**M16 — OSRS Wiki, [Worn Equipment](https://oldschool.runescape.wiki/w/Osrs_slot_table).** Indexed worn-slot/backpack distinction. Older alias resolves to the equipment article; not an independent second source.
 
-<a id="m17"></a>**M17 — Jagex, June 24–26, 2020.** [Death Changes, official-news mirror](https://oldschool.runescape.wiki/w/Update%3ADeath_Changes). Historical recovery-system overhaul; later exceptions are not assumed unchanged.
+<a id="m17"></a>**M17 — Jagex, June 25, 2020, with June 26 hotfixes.** [Death Changes](https://secure.runescape.com/m=news/death-changes?oldschool=1). Full relevant primary body reread October 27; historical recovery architecture, with later exceptions not assumed unchanged.
 
 <a id="m18"></a>**M18 — RuneScape Wiki, [OSRS history/account boundary](https://runescape.wiki/w/RS2007).** Indexed snapshot history and non-transferable progression, corroborated by Jagex's lineage statement.
 
@@ -318,4 +418,78 @@ After the dog-shelter quest, a player nurtures a puppy and later brings the grow
 
 <a id="r5"></a>**R5 — Andrew Brown, GamesRadar+, 2025.** [Firsthand retrospective](https://www.gamesradar.com/games/mmo/10-years-later-old-school-runescape-is-still-the-best-mmo-ive-ever-played-and-seeing-over-200-000-people-jumping-on-reminds-me-why-i-fell-in-love-with-it-in-the-first-place/). Substantive body read; reflective criticism rather than a formal scored review.
 
-<a id="p1"></a>**P1 — Steam Community.** [Most helpful OSRS reviews, all time](https://steamcommunity.com/app/1343370/reviews/?browsefilter=toprated). Read September 26, 2026; selected positive and negative accounts dated in §19. Mutable helpful counts/playtime omitted.
+<a id="p1"></a>**P1 — Steam Community.** [Helpful/all-time, English](https://steamcommunity.com/app/1343370/reviews/?browsefilter=toprated). September 26 capture; October 27 reread. Selected, mutable testimony.
+
+### October 27, 2026 refresh sources
+
+<a id="s26-01"></a>**S26-01 — Jagex, August 25, 2016.** [Construction expansion, publisher-text mirror](https://oldschool.runescape.wiki/w/Update%3AThe_Construction_Expansion). Complete relevant indexed publisher text read; original/direct mirror retrieval failed. Historical room workflow, not current-price verification.
+
+<a id="s26-02"></a>**S26-02 — Jagex, July 10–11, 2024.** [While Guthix Sleeps](https://secure.runescape.com/m=news/while-guthix-sleeps?oldschool=1). Relevant complete primary lore, requirement and reward sections read; OSRS adaptation distinguished from the original quest.
+
+<a id="s26-03"></a>**S26-03 — Jagex, July 25, 2019.** [Song of the Elves](https://secure.runescape.com/m=news/song-of-the-elves?oldschool=1). Full relevant primary story recap and city explanation read; not RS3's quest ending.
+
+<a id="s26-04"></a>**S26-04 — Jagex, September 12, 2019.** [POH board](https://secure.runescape.com/m=news/poh-board-and-pvp-balancing?oldschool=1). Complete primary housing section read; advertised facilities and admission, not indefinite guest availability.
+
+<a id="s26-05"></a>**S26-05 — Jagex, October 20, 2026.** [Delivered raid notes](https://secure.runescape.com/m=news/the-fractured-archive---out-today?oldschool=1) and [launch release](https://www.jagex.com/news/old-school-runescape-challenges-the-toughest-players-to-overcome-the-fractured-archive-raid). Relevant complete primary bodies read; release, narrative/access and danger, without a mutable tactics catalogue.
+
+<a id="s26-06"></a>**S26-06 — OSRS Wiki, current community documentation.** [Player-owned house](https://oldschool.runescape.wiki/w/Player-owned_house). Substantial indexed acquisition, editing, recovery and guest-access sections read October 27; direct body blocked. Exceptions retained; not a runtime test.
+
+<a id="s26-07"></a>**S26-07 — Jagex, February 26–27, 2025.** [POH improvements](https://secure.runescape.com/m=news/game-jam-poh-improvements?oldschool=1). Complete relevant primary housing body read; trophy revision, styling, animation and bookcase UI. Media not viewed.
+
+<a id="s26-08"></a>**S26-08 — Jagex, March 20–22, 2024.** [Varlamore Part One](https://secure.runescape.com/m=news/varlamore-part-one?oldschool=1). Full relevant primary cultural/activity sections read; dates distinguish launch from feedback revision. No obsolete loot or XP tables reused.
+
+<a id="p26-01"></a>**P26-01 — Austin Wood, GamesRadar+, 2023 developer interview.** [Sailing design](https://www.gamesradar.com/osrs-devs-answer-our-burning-questions-about-sailing-the-mmos-first-new-skill-in-17-years/). Full interview body read; attributed team estimates, technical/design problems and testing intentions, not delivered-feature proof. Exact day absent from extraction.
+
+<a id="p26-02"></a>**P26-02 — Jagex, June 3, 2025.** [Pausing Zanaris](https://secure.runescape.com/m=news/pausing-project-zanaris--whats-next?oldschool=1). Full primary body read; indefinite pause, resource priorities and proposed alternatives. No later released custom-server service established in the bounded current check.
+
+<a id="p26-03"></a>**P26-03 — Jagex, June 22, 2026.** [Deadman finale report](https://www.jagex.com/news/dino-nuggets-takes-the-crown-in-an-epic-old-school-runescape-all-stars-live-final). Full primary event report read; actual promotion and attributed attendance, not unique-viewer or conversion evidence.
+
+<a id="m26-01"></a>**M26-01 — RuneLite, current plugin directory.** [Plugin Hub](https://runelite.net/plugin-hub/). Relevant listings and install labels read October 27; mutable install measures, not unique people.
+
+<a id="m26-02"></a>**M26-02 — Zoinkwiz, Quest Helper README.** [Project](https://github.com/Zoinkwiz/quest-helper). Full README read, including activation, optional integrations and support channels; no personal use claimed.
+
+<a id="m26-03"></a>**M26-03 — 117 HD maintainers, README.** [Project](https://github.com/117HD/RLHD). Full README read; renderer purpose, installation and original-author support, not current performance testing.
+
+<a id="m26-04"></a>**M26-04 — RuneLite maintainers, plugin-hub README.** [Authoring and distribution](https://github.com/runelite/plugin-hub). Full primary README read at blob 221325853ef921143dff99f51b82f1f071e72124; Java, packaging, dependencies, exact-commit review and update process, not reproduced.
+
+<a id="m26-05"></a>**M26-05 — Zoinkwiz, June 30, 2026 revision.** [Contribution guide](https://github.com/Zoinkwiz/quest-helper/wiki/Contribution-guide). Relevant complete author/test and quest-step sections read; helper logic does not author new server quests.
+
+<a id="m26-06"></a>**M26-06 — RuneLite maintainers, June 19, 2026 revision.** [Using the hub](https://github.com/runelite/runelite/wiki/Information-about-the-Plugin-Hub). Full user-guide body read; installation/removal, data warnings and support/quality limits.
+
+<a id="m26-07"></a>**M26-07 — RuneLite maintainers, March 14, 2025 revision.** [FAQ](https://github.com/runelite/runelite/wiki/FAQ). Relevant complete safe-mode, profile-transfer and platform sections read; distinct settings/data boundaries, not a universal uninstall guarantee.
+
+<a id="m26-08"></a>**M26-08 — Jagex, June 1, 2022 published guidelines.** [Third-party clients](https://secure.runescape.com/m=news/third-party-client-guidelines?oldschool=1). Current accessible primary body read; approved clients and feature constraints, not permission for arbitrary mods.
+
+<a id="m26-09"></a>**M26-09 — RuneLite maintainers, June 19, 2026 revision.** [Review policy](https://github.com/runelite/runelite/wiki/Plugin-Hub-Review). Relevant complete policy read; review objectives/non-goals and disabling authority, not an independent security audit.
+
+<a id="s26-09"></a>**S26-09 — OSRS Wiki, current settings reference.** [Controls/display](https://oldschool.runescape.wiki/w/Settings). Complete relevant indexed controls, zoom/roof and camera-effect passages read October 27; direct wiki access blocked. Not a personal client test.
+
+<a id="r26-01"></a>**R26-01 — Frank, The Frank Gamer.** [Runescape Just Keeps Pulling Me Back In](https://frankgamer.com/2024/09/26/runescape-just-keeps-pulling-me-back-in/). Full personal essay read; 2024 account with July 2026 update label. Midgame progress and reduced intensity, not representative retention.
+
+<a id="r26-02"></a>**R26-02 — Ryan, September 22, 2025.** [Games and Goals](https://qryguy.com/2025/09/22/games-and-goals/). Full firsthand essay read; completed goals, actual step back and uncertain future return.
+
+<a id="r26-03"></a>**R26-03 — Ryan, December 31, 2025.** [Reflecting on the Year of Swing](https://qryguy.com/2025/12/31/reflecting-on-the-year-of-swing/). Full follow-up read; actual lower-intensity play. Same author, not independent confirmation.
+
+<a id="e26-01"></a>**E26-01 — Jagex, current membership page.** [Benefits](https://osrs.runescape.com/membership). Full primary body read; access, exclusive skills and storage. Dynamic prices unreadable; none asserted.
+
+<a id="e26-02"></a>**E26-02 — Jagex, current Bonds explanation.** [Old School Bonds](https://oldschool.runescape.com/oldschool/bonds). Full primary trade/redemption body read; other-game shop references not used as current RS3 verification.
+
+<a id="e26-03"></a>**E26-03 — Jagex Support.** [RuneScape and Old School](https://support.runescape.com/hc/en-gb/articles/360001247349-RuneScape-and-Old-School). Full primary account-boundary explanation read; strengthens M18 without merging profiles.
+
+<a id="e26-04"></a>**E26-04 — Jagex Support.** [Free-world access](https://support.runescape.com/hc/en-gb/articles/5164024442513-To-access-this-free-world-log-into-a-members-world-and-move-your-character-to-a-non-members-area). Full primary restriction body read; not a complete membership-lapse custody policy.
+
+<a id="e26-05"></a>**E26-05 — Jagex, May 21, 2015; June 14, 2023.** [World Switcher](https://secure.runescape.com/m=news/world-switcher--rotg-i?oldschool=1); [publisher Steam update](https://store.steampowered.com/news/posts/?enddate=1686736855&feed=steam_community_announcements). Relevant full bodies read; only OSRS material in the multi-game feed used. Historical numeric timers omitted.
+
+<a id="e26-06"></a>**E26-06 — Jagex, October 6, 2021.** [Group Ironman launch](https://secure.runescape.com/m=news/group-ironman?oldschool=1). Full relevant primary body read; delivered Bond-buying exception, excluding sales/ordinary GE trade.
+
+<a id="e26-07"></a>**E26-07 — Jagex, January 6, 2022.** [FY2020 results](https://www.jagex.com/news/jagex-announces-record-revenues-of-120million). Full primary body read; company finances and dated OSRS peak, with scope retained.
+
+<a id="e26-08"></a>**E26-08 — Companies House.** [Jagex filing history](https://find-and-update.company-information.service.gov.uk/company/03982706/filing-history). Primary filing record read; the FY2025 60-page accounts PDF failed retrieval and was not read.
+
+<a id="e26-09"></a>**E26-09 — The Accounts.** [Jagex Limited extraction](https://theaccounts.uk/company/03982706/jagex-limited/). Secondary standalone financial body read; no independent PDF reconciliation or OSRS allocation.
+
+<a id="e26-10"></a>**E26-10 — PC Gamer, August 14, 2026.** [Charles interview](https://www.pcgamer.com/games/mmo/old-school-runescape-began-when-a-dev-found-the-2007-server-in-their-desk-drawer-13-years-later-its-setting-subscriber-records-for-the-long-lived-mmo/). June interview body read; approximate subscription estimate, not audited financials.
+
+<a id="e26-11"></a>**E26-11 — OSRS Wiki.** [New-player guide](https://oldschool.runescape.wiki/w/New_player_guide); [worlds](https://oldschool.runescape.wiki/w/Worlds). Substantial current indexed passages read; direct bodies blocked. Copies and separate progress, without unverified capacity/server claims.
+
+<a id="e26-12"></a>**E26-12 — Jagex Support.** [Find my Bond](https://support.runescape.com/hc/en-gb/articles/207126289-Find-my-Bond). Full primary purchase/shared-membership explanation read; mistaken-purchase correction is not routine item transfer.
