@@ -1,8 +1,8 @@
 # Attention, crowds and scenes — product and behavior specification
 
-| Status      | Current progress                                                                                                                                 | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Supported core regression and controlled semantic behavior are verified; normal-speed, operating-scale and broader scene acceptance remain open. | 2026-10-29   |
+| Status      | Current progress                                                                                                                    | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Supported core behavior is implemented; current regression, normal-speed, operating-scale and broader scene acceptance remain open. | 2026-10-29   |
 
 **Architecture consulted and ground-confirmation behavior updated 2026-10-29 06:53 UTC.**
 

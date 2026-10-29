@@ -18,7 +18,7 @@ Module A owns what an observer is permitted to detect, classify, associate, reco
 
 The inspected source baseline is `Macrofold/OpenLegend:codex/design-stealth-00-contracts` at `a3d40b4d71e29d6504e9f3fcc21e76344a0a284e`. Source inspection establishes existing foundations and missing behavior; it establishes no runtime, model-quality, capacity or player-enjoyment result. The current implementation boundary above records the selected integrated base; the source audit is design evidence.
 
-The [PS04-A runtime correction plan](../projects/attention-and-scenes-runtime-design.md) owns the outstanding compact representation, exact current/history/cut conversion, incremental ownership and append-storage work. PP's supported semantics remain required throughout that conversion; it does not close broader PP07/SAI-A acceptance or add future producers.
+The [PS04-A runtime correction plan](../projects/attention-and-scenes-runtime-design.md) owns the delivered compact current/history/cut conversion, incremental ownership and append storage, with complete runtime qualification still open. PP's supported semantics remain required; this conversion does not close broader PP07/SAI-A acceptance or add future producers.
 
 ## Design disposition and existing work
 
