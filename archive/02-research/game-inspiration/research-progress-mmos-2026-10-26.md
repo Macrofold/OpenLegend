@@ -4,7 +4,7 @@
 
 ## Current progress
 
-All twenty-two scoped subjects are researched and independently reviewed against the applicable R01–R15 requirements. The delivery table below links the complete set. GW3 uses five independent observer previews because it is unreleased; the other twenty-one retain five substantive firsthand written assessments. Completed dossiers are committed with their ledger updates, and earlier dossier evidence and worked cases are preserved. Final comparison and integration checks remain open below. The run began October 26 and continued October 27–28; each source retains its actual access date.
+All twenty-two scoped subjects are researched and independently reviewed against the applicable R01–R15 requirements. The delivery table below links the complete set. GW3 uses five independent observer previews because it is unreleased; the other twenty-one retain five substantive firsthand written assessments. Completed dossiers are committed with their ledger updates, and earlier dossier evidence and worked cases are preserved. The comparison and final integration checks are complete; finalization occurred October 29. The run began October 26 and continued October 27–28; each source retains its actual access date.
 
 **Integration reconciliation (October 28):** preserve published `main` at `5e490f9a4b766785b50a6eeaa2f255f133a9f025`, including Crimson Desert as G185 and its existing design routes. This branch’s sixteen additions now use G186–G201; the earlier checkpoint labels G185–G200 were provisional and are superseded. Dossier filenames and the six refreshed subjects remain unchanged.
 
@@ -47,9 +47,17 @@ All twenty-two scoped subjects are researched and independently reviewed against
 
 ## Final integration gates
 
-- [ ] All scoped per-game passes researched, reviewed and committed, with unavailable evidence stated honestly.
-- [ ] Success/participation evidence and persistent-world comparison checked for mismatched definitions.
-- [ ] Cross-game conclusions include positive opportunities, failure conditions, counterexamples and OpenLegend relevance.
-- [ ] Existing design owners, focused work IDs and concrete acceptance routes cover each selected lesson; proposals and current behavior remain distinct.
-- [ ] Roster, research navigation, local links and source boundaries reconciled without certifying unrelated coverage.
-- [ ] Complete affected diff reviewed for unsupported causality, duplicate requirements, lost meaning and undue emphasis on recent research.
+- [x] All scoped per-game passes researched, reviewed and committed, with unavailable evidence stated honestly.
+- [x] Success/participation evidence and persistent-world comparison checked for mismatched definitions.
+- [x] Cross-game conclusions include positive opportunities, failure conditions, counterexamples and OpenLegend relevance.
+- [x] Existing design owners, focused work IDs and concrete acceptance routes cover each selected lesson; proposals and current behavior remain distinct.
+- [x] Roster, research navigation, local links and source boundaries reconciled without certifying unrelated coverage.
+- [x] Complete affected diff reviewed for unsupported causality, duplicate requirements, lost meaning and undue emphasis on recent research.
+
+## Final review and verification
+
+All twenty-two dossier passes are available at `7ae2dcb812ff1240ddc65602f2fcb97d5d7d0dc1`. The [comparison](essays/mmo-persistence-trust-and-durable-worlds.md) preserves positive opportunities, counterexamples and twelve routes into existing design/task owners. Independent review found no need for another feature specification or needs-design ID. The selected refinements remain in the initial commercial-offer brief, CO01 and PT06; ND02/ND22 provide evidence links. Other delivery statuses and accepted product directions remain unchanged. The final table-rendering issue was corrected.
+
+Final document checks on October 29 passed: 34 changed Markdown files conform to the formatter; all 1,018 new or added internal links and their anchors resolve; the 22 comparison rows match the 22 delivery links; roster IDs are unique through G201. The source inventory has 203 keys and the game matrix has 7,105 cells. All 187 original source rows retain their topic assessments; only 525 newly available MMO cells move W→U, and the independently published Crimson Desert source adds 35 U cells. Existing assessment revisions and unrelated queued research remain intact. These are document checks, not runtime, capacity or player-experience qualification.
+
+Interrupted repository saves were recovered from verified branch heads before retrying; a checkpoint was a Git save boundary, not a claim that the research or review was finished. The maintained dossiers, comparison and canonical owners contain the substantive findings, qualifications and selected decisions from this run.
