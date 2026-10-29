@@ -30,7 +30,7 @@ The [source audit](../projects/stealth-player-experience-tech-design.md#contract
 
 Dependencies: integrated shared schema; A current/history/reference families; B visible patch/detail/illumination; C cue precision; existing server authority.
 
-- [ ] Consume canonical A evidence/reference families, B's frozen 50 ms visual samples and B/C movement composition. Preserve exact revision types and measurement times; do not derive fresh transforms between samples.
+- [ ] Consume canonical A evidence/reference families and the installed producer's frozen visual values, including future B/C movement composition. Preserve exact revision types and measurement/acquisition times; do not derive fresh transforms between samples. The [ordinary sight target](../worlds/base/attention.md#selected-acquisition-cadence) and [future B sampled law](../worlds/base/vision-and-gaze.md#canonical-temporal-sampling) retain their separate implementation acceptance.
 - [x] Replace whole-entity publication with permitted facet/contact records across full views, patches, descriptions, histories and all lazy reads.
 - [x] Separate current body, historical/source association and anonymous cue references; bind action targeting only through eligible current body references.
 - [ ] Restrict map/dynamic geometry, appearance assets, animation, shadow, light, sound, DOM/accessibility and diagnostic metadata to the same audience.
@@ -38,7 +38,7 @@ Dependencies: integrated shared schema; A current/history/reference families; B 
 - [ ] Qualify historical art and source-free current glow with their actual B/G producers.
 - [ ] Apply facet removals and scope invalidation before rendering; fence async reads/asset loads/receipts and stale patches.
 - [x] Connect broad current facts, exact recent receipts and fallible lasting impressions to ordinary World/Character/Events readers, including actor-scoped cold reads and exact delayed-read expiry/correction fences. Historical measurements use retained compatible-time facts, not current hidden sources.
-- [ ] Complete integrated PS04-A qualification for broad current context, shared-receipt recent history and remembered-impression fidelity through ordinary World/Character/Events readers. Preserve human visibility/choice beyond detailed-attention capacity and actor-first cold hydration; AI noticing is not a rendering gate.
+- [ ] Complete [PS04-A SR02/SR03/SR06](product-scalability.md#ps04-a--core-attention-and-recording) conversion and qualification for compact personal frames, contextual features, broad current context, recent history and remembered-impression fidelity through ordinary World/Character/Events readers. Preserve human visibility/choice beyond detailed-attention capacity and actor-first cold hydration; AI noticing is not a rendering gate.
       The Character reader now includes searchable recent observations; its native/PostgreSQL and narrow-screen browser checks pass. [Core evidence](../verification/attention-and-memory-core.md) tracks the remaining combined acceptance.
 - [ ] Qualify G-AC01–12 and all applicable lifecycle/projection cases in the technical acceptance table.
 

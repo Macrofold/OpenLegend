@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                                                        | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | SPX01 publication and recent-history consumers implemented; current movement/action controls are connected; future producers and full player qualification remain open. | 2026-10-27   |
+| In progress | SPX01 publication and recent-history consumers implemented; current movement/action controls are connected; future producers and full player qualification remain open. | 2026-10-29   |
 
-Design used for scoped implementation and review: **2026-10-27 10:15 UTC**.
+Architecture used for this design: **2026-10-29 17:49 UTC**.
 
 **Core attention consumer integration:** the [selected perception/attention/memory contract](attention-and-scenes-tech-design.md#5-perception-attention-interpretation-and-memory) adds broad current surroundings, automatic detail history and explicitly less precise remembered impressions through these same permitted projections. A ten-subject detail limit cannot hide other received bodies/static terrain from the human; no AI interpretation gates ordinary rendering or controls. History/cold detail must materialize this observer's receipts, never the shared source archive directly. SPX01 includes this consumer conversion and searchable Character recent observations, with scoped native, PostgreSQL and responsive browser [evidence](../verification/attention-and-memory-core.md). Future physical producers and full player/security/capacity qualification remain open.
 
@@ -80,7 +80,7 @@ Each independently changeable facet carries:
 
 A's concrete fact families remain canonical. For `CapturedCurrentFacet`, public `measurementAt` comes from `valueMeasuredThrough`; `confirmedThrough` retains its separate availability meaning. Preserve a meaningful measurement interval when the facet supplies one. Native `valueAcquiredAt` determines when the value entered the captured evidence and cannot be backdated by its original fact key or publication. G does not require every field on a facet where it has no meaning, and may compose these semantics into existing structures rather than wrapping every scalar. A missing field is absent, not zero/false. Explicit patch removal must remove the old field; omitted unchanged fields in a patch are different from revoked fields.
 
-Live display means the latest admitted sample remains eligible at the published cut, not that its coordinates were measured at that cut. B evaluates active-scope visual samples on its canonical **50 ms normal-play grid** and actual physical discontinuities, supplying frozen values with their original measurement times. Publication can reuse those values but cannot refresh their age, read a newer hidden transform or extrapolate between measurements. The evaluation cut states completed native work separately from each facet’s measurement time. The client cannot know an undelivered observation loss; it holds only the last authorized sample until a new sample or explicit loss arrives.
+Live display means the latest admitted sample remains eligible under its producer's published support, not that its coordinates were measured at the publication cut. Consume the installed producer's frozen A values and original measurement times; G supplies no sampling clock. The [ordinary sight target](../worlds/base/attention.md#selected-acquisition-cadence) and [future B physical law](../worlds/base/vision-and-gaze.md#canonical-temporal-sampling) are separate implementation scopes. Publication cannot refresh a sample's age, read a newer hidden transform or supply an interpolated position as evidence. Existing display smoothing remains presentation only. The evaluation cut states completed native work separately from each facet's measurement time. A client holds its last authorized published sample until replacement or explicit loss/revocation; it cannot infer an undelivered loss or renewed authorization.
 
 ### Public record families
 
@@ -219,7 +219,7 @@ The Look selector captures arrow keys for yaw/pitch, Tab for installed gaze-grou
 
 A fixed world point remains fixed while walking. A relative pose is not permanent tracking of a world bearing. On target loss, stop or retain only the last permitted point according to the selected directive; never update from hidden truth. Head-only gaze leaves guard body/shield facing unchanged. Body assistance requires explicit admission and its actual movement/guard consequences.
 
-B's native moving-goal control and 50 ms normal-play visual sampling are independent of input packets, display frames and the server publication ceiling. G neither samples its own perception nor reruns detection on pointer movement. Use B's accepted-and-turning, reached, explicitly-limited, blocked/incompatible, stale-target and ended states, keeping technical incomplete separate.
+B's native moving-goal control and [producer-owned visual sampling](../worlds/base/vision-and-gaze.md#canonical-temporal-sampling) are independent of input packets, display frames and the server publication ceiling. G neither samples its own perception nor reruns detection on pointer movement. Use B's accepted-and-turning, reached, explicitly-limited, blocked/incompatible, stale-target and ended states, keeping technical incomplete separate.
 
 ### Posture, pace and work replacement
 
