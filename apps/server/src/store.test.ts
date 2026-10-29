@@ -190,6 +190,12 @@ describe('PostgreSQL committed world boundary', () => {
       ['receipt_ordinals', [Number.MAX_SAFE_INTEGER + 1]],
       ['receipt_ordinals', ['1']],
       ['receipt_ordinals', new Array(1)],
+      ['lookup_buckets', 'not-an-array'],
+      ['lookup_buckets', [1.5]],
+      ['lookup_buckets', [32768]],
+      ['lookup_buckets', [-32769]],
+      ['lookup_buckets', ['1']],
+      ['lookup_buckets', new Array(1)],
     ] as const) {
       const changed = structuredClone(prepared.changes);
       changed.writes.get('mind_temporal_segments')![0]!.extra[columnIndex(column)] = invalid;

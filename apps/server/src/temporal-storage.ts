@@ -1,4 +1,8 @@
-import { restoreEvidenceLayout, snapshotEvidenceOwner } from './evidence-segments.js';
+import {
+  receiptLookupBuckets,
+  restoreEvidenceLayout,
+  snapshotEvidenceOwner,
+} from './evidence-segments.js';
 import {
   selectedTemporalPolicy,
   canonicalJson,
@@ -248,7 +252,7 @@ export async function readTemporalHistory(
       first_at,first_order,receipt_epoch,first_ordinal,
       encoded_bytes FROM mind_temporal_chunks_read c
     WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=?
-      ${subjects.length ? 'AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.subjects && ?::text[])' : ''}
+      ${subjects.length ? 'AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.lookup_buckets && ?::smallint[] AND s.subjects && ?::text[])' : ''}
       ${query.measurements ? 'AND last_supported_at>=? AND first_measured_at<=?' : ''}
       ${query.physicalLife === undefined ? '' : 'AND physical_life=?'}
       ${query.epoch === undefined ? '' : 'AND receipt_epoch=?'}
@@ -261,7 +265,7 @@ export async function readTemporalHistory(
       scope.actorId,
       from,
       through,
-      ...(subjects.length ? [subjects] : []),
+      ...(subjects.length ? [receiptLookupBuckets('subjects', subjects), subjects] : []),
       ...(query.measurements ? [query.measurements.from, query.measurements.through] : []),
       ...(query.physicalLife === undefined ? [] : [query.physicalLife]),
       ...(query.epoch === undefined ? [] : [query.epoch]),
@@ -867,10 +871,16 @@ export async function prepareTemporalRetention(
             SELECT s.parent_id,refs.key AS block,jsonb_agg(DISTINCT ordinal ORDER BY ordinal) AS ordinals
             FROM mind_temporal_segments s CROSS JOIN LATERAL jsonb_each(s.value_refs) refs
             CROSS JOIN LATERAL jsonb_array_elements(refs.value) ordinal
-            WHERE s.world_id=? AND s.source_refs && ?::text[] AND s.parent_id<>ALL(?::text[])
+            WHERE s.world_id=? AND s.lookup_buckets && ?::smallint[] AND s.source_refs && ?::text[] AND s.parent_id<>ALL(?::text[])
             GROUP BY s.parent_id,refs.key) blocks GROUP BY parent_id) owners LIMIT ?`,
       )
-      .all(world.id, candidates, replaced, maximumRows + 1);
+      .all(
+        world.id,
+        receiptLookupBuckets('sourceRefs', candidates),
+        candidates,
+        replaced,
+        maximumRows + 1,
+      );
     preparationBytes += cold.reduce((sum, row) => sum + Number(row['bytes']), 0);
     if (cold.length > maximumRows || preparationBytes > maximumPreparation)
       throw new MemoryRetentionError(

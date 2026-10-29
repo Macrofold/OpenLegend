@@ -12,6 +12,7 @@ import {
   type ExperienceEntry,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
+import { receiptLookupBucket, receiptLookupBuckets } from './evidence-segments.js';
 
 /** Resolve a batch as relations, rather than rescanning the same actor rows for
  * every alias. Sparse-proof release deliberately omits recent-history ownership.
@@ -26,11 +27,11 @@ async function retainedSourceAliases(
 ): Promise<string[]> {
   const rows = await db
     .prepare(
-      `WITH requested AS MATERIALIZED (SELECT unnest(?::text[]) AS id),
+      `WITH requested AS MATERIALIZED (SELECT * FROM unnest(?::text[],?::smallint[]) AS q(id,lookup_bucket)),
       retained_accounts AS MATERIALIZED (
         SELECT world_id,actor_id,id,source_kind,event_id FROM recall_sources
         WHERE world_id=? AND actor_id=? AND memory_kind IS DISTINCT FROM 'impression' AND record_id<>ALL(?::text[]))
-      ${removedChunks === undefined ? '' : `SELECT q.id FROM requested q WHERE EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=? AND s.actor_id=? AND s.source_ids @> ARRAY[q.id]::text[] AND s.parent_id<>ALL(?::text[])) UNION`}
+      ${removedChunks === undefined ? '' : `SELECT q.id FROM requested q WHERE EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=? AND s.actor_id=? AND s.lookup_buckets @> ARRAY[q.lookup_bucket]::smallint[] AND s.source_ids @> ARRAY[q.id]::text[] AND s.parent_id<>ALL(?::text[])) UNION`}
       SELECT q.id FROM requested q JOIN retained_accounts r ON r.id=q.id
       UNION SELECT q.id FROM requested q JOIN retained_accounts r ON r.event_id=q.id
       UNION SELECT q.id FROM requested q JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=? AND d.source_id=q.id
@@ -40,6 +41,7 @@ async function retainedSourceAliases(
     )
     .all(
       aliases,
+      aliases.map((alias) => receiptLookupBucket('sourceIds', alias)),
       worldId,
       actorId,
       removedAccounts,
@@ -251,7 +253,7 @@ export async function cleanupRetiredIndividuals(
   const individualMembership = individualTables
     .map(
       (table) =>
-        `SELECT individual_ids FROM ${table} WHERE world_id=? AND actor_id=? AND individual_ids && ?::text[] AND ${table === 'mind_temporal_segments' ? 'parent_id' : 'id'}<>ALL(?::text[])`,
+        `SELECT individual_ids FROM ${table} WHERE world_id=? AND actor_id=? ${table === 'mind_temporal_segments' ? 'AND lookup_buckets && ?::smallint[]' : ''} AND individual_ids && ?::text[] AND ${table === 'mind_temporal_segments' ? 'parent_id' : 'id'}<>ALL(?::text[])`,
     )
     .join(' UNION ALL ');
   for (const [actorId, candidate] of affected) {
@@ -292,6 +294,9 @@ export async function cleanupRetiredIndividuals(
           ...individualTables.flatMap((table) => [
             world.id,
             actorId,
+            ...(table === 'mind_temporal_segments'
+              ? [receiptLookupBuckets('individualIds', ids)]
+              : []),
             ids,
             table === 'mind_temporal_segments' ? retiredChunks : (rows.get(table) ?? []),
           ]),

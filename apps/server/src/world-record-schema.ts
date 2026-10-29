@@ -606,6 +606,10 @@ columns(
       sql: 'TEXT[] NOT NULL',
       value: (value) => segmentReceiptIndex(value).individualIds,
     },
+    lookup_buckets: {
+      sql: 'SMALLINT[] NOT NULL',
+      value: (value) => segmentReceiptIndex(value).lookupBuckets,
+    },
     receipt_ordinals: {
       sql: 'BIGINT[] NOT NULL',
       value: (value) => segmentReceiptIndex(value).ordinals,

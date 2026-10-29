@@ -217,20 +217,20 @@ export function journalTableFamily(
         }
         // Current temporal/search indexes include typed arrays. Check their
         // elements before scalar prefixes; for-of also rejects sparse holes.
-        if (/^(?:TEXT|BIGINT)\[\]/.test(column.sql)) {
+        if (/^(?:TEXT|BIGINT|SMALLINT)\[\]/.test(column.sql)) {
           if (!Array.isArray(value)) return false;
           for (const part of value)
             if (
               /^TEXT/.test(column.sql)
                 ? typeof part !== 'string' || !postgresText(part)
-                : typeof part !== 'number' || !Number.isSafeInteger(part)
+                : !postgresInteger(part, column.sql)
             )
               return false;
-        } else if (/^(?:BIGINT|DOUBLE PRECISION)/.test(column.sql)) {
+        } else if (/^(?:BIGINT|SMALLINT|DOUBLE PRECISION)/.test(column.sql)) {
           if (
             typeof value !== 'number' ||
             !Number.isFinite(value) ||
-            (/^BIGINT/.test(column.sql) && !Number.isSafeInteger(value))
+            (/^(?:BIGINT|SMALLINT)/.test(column.sql) && !postgresInteger(value, column.sql))
           )
             return false;
         } else if (/^TEXT/.test(column.sql) && (typeof value !== 'string' || !postgresText(value)))
@@ -253,6 +253,14 @@ export function journalTableFamily(
       return false;
   return true;
 }
+function postgresInteger(value: unknown, sql: string): boolean {
+  return (
+    typeof value === 'number' &&
+    Number.isSafeInteger(value) &&
+    (!/^SMALLINT/.test(sql) || (value >= -32768 && value <= 32767))
+  );
+}
+
 function postgresText(text: string): boolean {
   return !text.includes('\0') && toUSVString(text) === text;
 }

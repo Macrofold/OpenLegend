@@ -25,6 +25,7 @@ export interface ReceiptSegmentIndex extends ReturnType<typeof receiptStorageInd
   sourceIds: string[];
   individualIds: string[];
   sourceRefs: string[];
+  lookupBuckets: number[];
 }
 interface Layout {
   segments: EvidenceSegment[];
@@ -90,6 +91,25 @@ export function receiptStorageIndex(receipts: TemporalChunk['receipts']) {
 
 const receiptHeaders = ['subjects', 'sourceIds', 'individualIds', 'sourceRefs'] as const;
 const unique = <T>(values: Iterable<T>): T[] => [...new Set(values)];
+type ReceiptLookup = (typeof receiptHeaders)[number];
+/** A GIN dictionary retains empty keys. Bound its vocabulary, then always recheck
+ * exact arrays: this hash is a candidate filter, never identity or authorization.
+ * docs/projects/attention-and-scenes-runtime-design.md#61-segmented-physical-layout */
+export function receiptLookupBucket(kind: ReceiptLookup, value: string): number {
+  let hash = 2166136261;
+  for (const text of [kind, '\0', value])
+    for (let index = 0; index < text.length; index++)
+      hash = Math.imul(hash ^ text.charCodeAt(index), 16777619);
+  return hash & 16383;
+}
+export function receiptLookupBuckets(kind: ReceiptLookup, values: readonly string[]): number[] {
+  return unique(values.map((value) => receiptLookupBucket(kind, value))).sort((a, b) => a - b);
+}
+function pageLookupBuckets(index: Pick<ReceiptSegmentIndex, ReceiptLookup>): number[] {
+  return unique(
+    receiptHeaders.flatMap((kind) => index[kind].map((value) => receiptLookupBucket(kind, value))),
+  ).sort((a, b) => a - b);
+}
 function segmentIndex(receipts: TemporalChunk['receipts'], world: WorldState): ReceiptSegmentIndex {
   const sources = world.receivedValues?.sources ?? {};
   // The same semantic visitors own native and stored provenance. Partial source
@@ -98,7 +118,7 @@ function segmentIndex(receipts: TemporalChunk['receipts'], world: WorldState): R
     for (const facet of receipt.facets)
       if (!sources[facet.blockId]?.values[facet.valueOrdinal])
         throw new Error('Receipt page index requires complete received source support.');
-  return {
+  const index = {
     ...receiptStorageIndex(receipts),
     subjects: unique(
       receipts.flatMap((receipt) => [receipt.subject, ...(receipt.contextSubjects ?? [])]),
@@ -111,6 +131,7 @@ function segmentIndex(receipts: TemporalChunk['receipts'], world: WorldState): R
     ),
     sourceRefs: unique(receipts.flatMap((receipt) => receipt.facets.map((facet) => facet.blockId))),
   };
+  return { ...index, lookupBuckets: pageLookupBuckets(index) };
 }
 /** Current-format restore has the complete selected source closure. Validate page
  * provenance there, not by trusting a correct parent union with misassigned pages. */
@@ -321,9 +342,10 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
         )
       )
         throw new Error('Invalid receipt page index.');
-      const { subjects, sourceIds, individualIds, sourceRefs, ...stored } = index;
+      const { subjects, sourceIds, individualIds, sourceRefs, lookupBuckets, ...stored } = index;
       const receipts = segment.values.filter(Boolean) as TemporalChunk['receipts'];
       if (
+        canonicalJson(lookupBuckets) !== canonicalJson(pageLookupBuckets(index)) ||
         canonicalJson(stored) !== canonicalJson(receiptStorageIndex(receipts)) ||
         canonicalJson(subjects) !==
           canonicalJson(

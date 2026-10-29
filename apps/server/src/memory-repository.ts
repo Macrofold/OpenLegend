@@ -767,11 +767,8 @@ export class MemoryRepository {
       CREATE INDEX IF NOT EXISTS memory_vector_scope ON memory_vectors(world_id,actor_id,generation,model,dimensions,source_id,source_revision);
     `);
     await this.lexical.initialize();
-    await this.db
-      .exec(`CREATE INDEX IF NOT EXISTS temporal_segment_subjects ON mind_temporal_segments USING GIN(subjects);
-      CREATE INDEX IF NOT EXISTS temporal_segment_sources ON mind_temporal_segments USING GIN(source_refs);
-      CREATE INDEX IF NOT EXISTS temporal_segment_aliases ON mind_temporal_segments USING GIN(source_ids);
-      CREATE INDEX IF NOT EXISTS temporal_segment_individuals ON mind_temporal_segments USING GIN(individual_ids);`);
+    await this.db.exec(`CREATE INDEX IF NOT EXISTS temporal_segment_lookup
+      ON mind_temporal_segments USING GIN(lookup_buckets);`);
   }
   temporalHistory(
     scope: MemoryScope,
