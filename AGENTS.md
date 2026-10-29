@@ -8,6 +8,8 @@ Before acting, ensure these instructions are available through the end of [Compl
 
 Write for Mike as someone who knows the game and general software concepts but has not read this code. Explain what the person, object, action, or computer does before naming code. Make references specific; introduce unfamiliar terms in plain language. Use verified examples and distinguish current behavior, proposals, and measured evidence. Be concise without omitting consequential decisions or limitations.
 
+Never apologize or add self-deprecating commentary about your wording, judgment or performance. State facts, corrections and next actions objectively and matter-of-factly.
+
 Progress updates state delivered behavior, current work, next completion boundary, and actual blockers. Distinguish implementation from verification activity. They do not require a formal handoff or repeat unchanged decisions.
 
 ### Reporting work
