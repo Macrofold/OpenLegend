@@ -638,8 +638,14 @@ export function appendTemporalReceipt(
   const headerKeys = ['subjects', 'sourceIds', 'individualIds', 'sourceRefs'] as const;
   // Charge only newly encoded header members. The retained prefix is unchanged;
   // JSON escaping and UTF-8 still own every byte of each new member.
-  const appendBytes = (chunk: TemporalChunk) => {
+  const prepareAppend = (chunk: TemporalChunk) => {
     const held = readOnlyDraftView(chunk);
+    const additions: typeof headers = {
+      subjects: [],
+      sourceIds: [],
+      individualIds: [],
+      sourceRefs: [],
+    };
     let delta =
       byteLength(receipt.at) -
       byteLength(held.throughAt) +
@@ -649,9 +655,14 @@ export function appendTemporalReceipt(
       byteLength(held.count);
     for (const key of headerKeys) {
       const values = readOnlyDraftView(held[key]);
+      const existing = headers[key].length > 1 ? new Set(values) : undefined;
       let count = values.length;
       for (const value of headers[key])
-        if (!values.includes(value)) delta += byteLength(value) + (count++ > 0 ? 1 : 0);
+        if (!(existing ? existing.has(value) : values.includes(value))) {
+          existing?.add(value);
+          additions[key].push(value);
+          delta += byteLength(value) + (count++ > 0 ? 1 : 0);
+        }
     }
     const base = held.bytes + bytes + (held.count > 0 ? 1 : 0) + delta;
     let result = base;
@@ -660,14 +671,14 @@ export function appendTemporalReceipt(
       if (next === result) break;
       result = next;
     }
-    return result;
+    return { bytes: result, additions };
   };
   let chunk = actor.chunks.at(-1);
-  let nextBytes = chunk && chunk.epoch === actor.epoch ? appendBytes(chunk) : undefined;
+  let append = chunk && chunk.epoch === actor.epoch ? prepareAppend(chunk) : undefined;
   if (
     !chunk ||
     chunk.epoch !== actor.epoch ||
-    (chunk.count > 0 && nextBytes !== undefined && nextBytes > policy.chunkBytes)
+    (chunk.count > 0 && append !== undefined && append.bytes > policy.chunkBytes)
   ) {
     chunk = {
       id: nextId(world, 'temporal-chunk'),
@@ -689,10 +700,10 @@ export function appendTemporalReceipt(
     initialBytes(chunk);
     actor.bytes += chunk.bytes;
     actor.chunks.push(chunk);
-    nextBytes = appendBytes(chunk);
+    append = prepareAppend(chunk);
   }
   const previousBytes = chunk.bytes;
-  if (nextBytes === undefined) throw new Error('A temporal append has no complete byte charge.');
+  if (append === undefined) throw new Error('A temporal append has no complete byte charge.');
   // Storage pages seal at durable boundaries. The logical chunk spans actual
   // receipt times until full; a game timestamp is not a reason to start a page.
   chunk.receipts = appendSnapshot(readOnlyDraftView(chunk.receipts), [receipt], world) ?? [
@@ -704,11 +715,14 @@ export function appendTemporalReceipt(
   chunk.throughOrdinal = receipt.ordinal;
   for (const key of headerKeys) {
     const held = readOnlyDraftView(readOnlyDraftView(chunk)[key]);
-    const additions = headers[key].filter((value) => !held.includes(value));
-    if (additions.length) chunk[key] = [...held, ...additions];
+    const additions = append.additions[key];
+    // The exact additions own both the charge and the write. Reuse the existing
+    // turn-local append buffer instead of copying a growing header per receipt.
+    if (additions.length)
+      chunk[key] = appendSnapshot(held, additions, world) ?? [...held, ...additions];
   }
-  chunk.bytes = nextBytes;
-  actor.bytes += nextBytes - previousBytes;
+  chunk.bytes = append.bytes;
+  actor.bytes += append.bytes - previousBytes;
   actor.count++;
   const due = chunk.fromAt + policy.maxAgeSeconds;
   actor.nextDue = actor.nextDue === null ? due : Math.min(actor.nextDue, due);
