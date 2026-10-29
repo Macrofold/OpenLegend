@@ -6949,7 +6949,7 @@ function* advanceWorldNative(
           });
           const successor = completedNativeWorld(transition.world);
           participants = nativeParticipants(successor);
-          world = draftWorld(successor);
+          world = draftWorld(successor, { retainNativeValues: true });
           beginNativeChangeFeed(world);
           events.push(...transition.events);
           absorbConstructionPermissionBatch(constructionBatch, transition);
@@ -6992,7 +6992,7 @@ function* advanceWorldNative(
             };
         const successor = completedNativeWorld(transition.world);
         participants = nativeParticipants(successor);
-        world = draftWorld(successor);
+        world = draftWorld(successor, { retainNativeValues: true });
         beginNativeChangeFeed(world);
         discardMechanics();
         events.push(...transition.events);
@@ -7146,7 +7146,9 @@ function* advanceWorldNative(
             ...(intention.movement ? { nativeMovement: intention.movement } : {}),
           });
           if (transition.world !== world) {
-            world = draftWorld(completedNativeWorld(transition.world));
+            world = draftWorld(completedNativeWorld(transition.world), {
+              retainNativeValues: true,
+            });
             beginNativeChangeFeed(world);
           }
           events.push(...transition.events);
@@ -7221,7 +7223,7 @@ function* advanceWorldNative(
               );
         const inDraft = transition.world === world;
         if (!inDraft) {
-          world = draftWorld(completedNativeWorld(transition.world));
+          world = draftWorld(completedNativeWorld(transition.world), { retainNativeValues: true });
           beginNativeChangeFeed(world);
           participants = nativeParticipants(world);
         }
@@ -7730,7 +7732,7 @@ function* advanceWorldNative(
         Object.isFrozen(original),
       );
       if (transition.world !== world) {
-        world = draftWorld(completedNativeWorld(transition.world));
+        world = draftWorld(completedNativeWorld(transition.world), { retainNativeValues: true });
         beginNativeChangeFeed(world);
         participants = nativeParticipants(world);
         movementEffects = true;

@@ -116,10 +116,9 @@ export function retainReceivedValue(
   maxBytes: number,
   retained?: ReceivedValueReference,
 ): { reference: ReceivedValueReference; addedBytes: number; valueBytes: number } {
-  const state = receivedValueState(world),
-    held = readOnlyDraftView(value),
+  const held = readOnlyDraftView(value),
     encoded = jsonEncoding(held),
-    existing = retained && receivedValueAt(readOnlyDraftView(state.sources), retained);
+    existing = retained && receivedValueAt(world.receivedValues?.sources ?? {}, retained);
   if (retained && existing && (existing === held || jsonEncoding(existing).json === encoded.json))
     // A capture watermark also carries reception/confirmation metadata. Only its
     // address may survive here; spreading it would overwrite this new receipt.
@@ -128,6 +127,7 @@ export function retainReceivedValue(
       addedBytes: 0,
       valueBytes: encoded.bytes,
     };
+  const state = receivedValueState(world);
   if (state.activeAt !== world.simTime) {
     state.activeAt = world.simTime;
     state.activeSources = emptyGroup;

@@ -23,6 +23,7 @@ import {
   sensoryFacetDependencies,
   splitObservedBody,
   materializeObservedBody,
+  receivedObservationFrame,
 } from './perception-evidence.js';
 import type {
   EvidenceSource,
@@ -39,6 +40,7 @@ import type {
   ReceivedFacetProof,
   ObservedBodyDetails,
   ObservedBodyPose,
+  ReceivedFacetValue,
 } from './perception-evidence.js';
 
 /** An address proves neither reception nor access. Readers first select the actor's receipt. */
@@ -84,6 +86,10 @@ export type TemporalReception =
       later: Omit<ReceivedLocationSample, 'location'>;
       correspondence: 'unambiguous-received-continuity';
     };
+interface TemporalValueProjection {
+  value: TemporalFragment;
+  reception?: TemporalReception;
+}
 export interface TemporalFacetReference extends TemporalValueReference {
   support?: ReceivedFacetProof;
   ordinal: number;
@@ -195,20 +201,30 @@ export interface TemporalCaptureInput {
   required?: boolean;
   sourceIds?: string[];
   origin?: ObservationOrigin;
-  facets: Array<{
-    support?: ReceivedFacetProof;
-    value: TemporalValue | Extract<SensoryFacet, { kind: 'observed-motion' }>;
-    role: TemporalFacetReference['role'];
-    asOf: number;
-    measuredFrom: number;
-    measuredThrough: number;
-    acquiredAt: number;
-    confirmedThrough?: number;
-    original?: ObservationFactKey;
-    receivedFrom?: EvidenceSource;
-    /** A saved producer watermark; reuse still verifies the received value. */
-    retainedValue?: TemporalValueReference;
-  }>;
+  facets: Array<
+    {
+      support?: ReceivedFacetProof;
+      role: TemporalFacetReference['role'];
+      asOf: number;
+      measuredFrom: number;
+      measuredThrough: number;
+      acquiredAt: number;
+      confirmedThrough?: number;
+      original?: ObservationFactKey;
+      receivedFrom?: EvidenceSource;
+    } & (
+      | {
+          value: TemporalValue;
+          /** A saved producer watermark; reuse still verifies the received value. */
+          retainedValue?: TemporalValueReference;
+        }
+      | {
+          /** Prepared from an already selected current descriptor. Admission still
+           * verifies that this exact neutral object occupies the selected address. */
+          received: { projection: TemporalValueProjection; reference: TemporalValueReference };
+        }
+    )
+  >;
 }
 
 const encoder = new TextEncoder();
@@ -236,10 +252,7 @@ function valueEncoding(value: TemporalFragment): { json: string; bytes: number }
 }
 
 /** This projection changes storage identity, never the received measurement. */
-export function splitTemporalValue(value: TemporalValue): {
-  value: TemporalFragment;
-  reception?: TemporalReception;
-} {
+export function splitTemporalValue(value: TemporalValue): TemporalValueProjection {
   const held = readOnlyDraftView(value);
   if (held.kind === 'body') {
     const parts = splitObservedBody(held.body);
@@ -411,8 +424,58 @@ function retainedValueAt(
   const value = receivedValueAt(sources, reference);
   return receivedTemporalFragment(value);
 }
-function temporalValue(value: TemporalCaptureInput['facets'][number]['value']): TemporalValue {
-  return value;
+/** Retain neutral authority directly. Expanding a body/motion only to split it
+ * again copies shared measurements and serializes an identical new wrapper for
+ * every witness. Personal reception stays inline in the unchanged receipt shape. */
+function currentTemporalProjection(
+  world: WorldState,
+  descriptor: ReceivedFacetValue,
+): TemporalValueProjection | undefined {
+  const fragment = receivedValueAt(world.receivedValues?.sources ?? {}, {
+    blockId: descriptor.reference[0],
+    valueOrdinal: descriptor.reference[1],
+  });
+  const value = receivedTemporalFragment(fragment);
+  if (!value || value.kind !== descriptor.kind) return;
+  const reception = descriptor.reception;
+  if (value.kind === 'body') {
+    if (reception?.kind !== 'body') return;
+    const pose = receivedValueAt(world.receivedValues?.sources ?? {}, {
+      blockId: reception.poseRef[0],
+      valueOrdinal: reception.poseRef[1],
+    });
+    return pose?.kind === 'body-pose'
+      ? { value, reception: { kind: 'body', pose: pose.pose } }
+      : undefined;
+  }
+  if (value.kind === 'location')
+    return reception?.kind === 'location'
+      ? {
+          value,
+          reception: {
+            kind: 'location',
+            frame: receivedObservationFrame(world, reception.frameRef),
+          },
+        }
+      : undefined;
+  if (value.kind === 'observed-motion') {
+    if (reception?.kind !== 'observed-motion') return;
+    const sample = (input: typeof reception.earlier): Omit<ReceivedLocationSample, 'location'> => {
+      const { frameRef, ...proof } = readOnlyDraftView(input);
+      return { ...proof, frame: receivedObservationFrame(world, frameRef) };
+    };
+    return {
+      value,
+      reception: {
+        kind: 'observed-motion',
+        exposure: reception.exposure,
+        earlier: sample(reception.earlier),
+        later: sample(reception.later),
+        correspondence: reception.correspondence,
+      },
+    };
+  }
+  return reception === undefined ? { value } : undefined;
 }
 function initialBytes(value: { bytes: number }, measure = () => byteLength(value)): number {
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -521,8 +584,28 @@ export function appendTemporalReceipt(
       change: input.change,
       required: input.required === true,
       sourceIds: [...new Set(input.sourceIds ?? [])],
-      facets: input.facets.map(({ value, retainedValue, ...metadata }, ordinal) => {
-        const projected = splitTemporalValue(temporalValue(value));
+      facets: input.facets.map((facet, ordinal) => {
+        let projected: TemporalValueProjection;
+        let retainedValue: TemporalValueReference | undefined;
+        let metadata: Omit<
+          TemporalFacetReference,
+          'ordinal' | 'blockId' | 'valueOrdinal' | 'reception'
+        >;
+        if ('received' in facet) {
+          const { received, ...fields } = facet;
+          projected = received.projection;
+          retainedValue = received.reference;
+          if (
+            receivedValueAt(world.receivedValues?.sources ?? {}, retainedValue) !== projected.value
+          )
+            throw new Error('The selected current temporal value changed before capture.');
+          metadata = fields;
+        } else {
+          const { value, retainedValue: preferred, ...fields } = facet;
+          projected = splitTemporalValue(value);
+          retainedValue = preferred;
+          metadata = fields;
+        }
         const retained = retainReceivedValue(
           world,
           projected.value,
@@ -652,14 +735,33 @@ export function appendTemporalReceipt(
 export function temporalFacetInput(
   world: WorldState,
   lease: LiveFacetSupport,
+  projection = currentTemporalProjection(world, lease.value),
 ): TemporalCaptureInput['facets'][number] {
+  if (!projection) throw new Error('The selected current temporal value is unavailable.');
   const observer = immutableDataSnapshot(lease.observer, readOnlyDraftView);
+  const reference = {
+    blockId: lease.value.reference[0],
+    valueOrdinal: lease.value.reference[1],
+  };
+  let selected:
+    | { received: { projection: TemporalValueProjection; reference: TemporalValueReference } }
+    | { value: TemporalValue; retainedValue: TemporalValueReference };
+  if (isImmutableData(projection.value))
+    selected = {
+      received: {
+        projection: immutableDataSnapshot(projection, readOnlyDraftView),
+        reference,
+      },
+    };
+  else {
+    // A foreign mutable builder has no reusable value certificate. Own its cut;
+    // ordinary admission compares it with any still-retained address afresh.
+    const value = receivedFacetValue(world, lease.value);
+    if (!value) throw new Error('The selected current temporal value is unavailable.');
+    selected = { value: immutableDataSnapshot(value, readOnlyDraftView), retainedValue: reference };
+  }
   return {
-    value: receivedFacetValue(world, lease.value)!,
-    retainedValue:
-      lease.value.kind === 'observed-motion'
-        ? world.experience?.temporal?.actors[lease.observer.actorId]?.captures[lease.id]
-        : { blockId: lease.value.reference[0], valueOrdinal: lease.value.reference[1] },
+    ...selected,
     role: lease.original.facets[lease.originalOrdinal]?.role ?? 'direct',
     asOf: lease.valueMeasuredThrough,
     measuredFrom: lease.valueMeasuredFrom,
@@ -748,6 +850,7 @@ export function captureTemporalCurrent(
     [];
   const keep = new Set<string>();
   const grouped = new Map<string, LiveFacetSupport[]>();
+  const prepared = new Map<string, TemporalCaptureInput['facets'][number]>();
   for (const lease of leases) {
     keep.add(lease.id);
     if (
@@ -761,7 +864,8 @@ export function captureTemporalCurrent(
     // Comparing an existing capture does not modify its source block. Avoid
     // drafting every retained value merely to discover it is unchanged.
     const reference = readOnlyDraftView(owned.actor.captures)[lease.id];
-    const current = receivedFacetValue(world, lease.value)!;
+    const projected = currentTemporalProjection(world, lease.value);
+    if (!projected) throw new Error('The selected current temporal value is unavailable.');
     const previous =
       reference &&
       retainedValueAt(
@@ -772,21 +876,11 @@ export function captureTemporalCurrent(
       !newlySelected.has(lease.subjectId) &&
       !endingSelection.has(lease.subjectId) &&
       !(lease.value.kind === 'body' && contactSubjects.has(lease.subjectId));
-    // One synchronous read resolved the same retained payload. Geometry with a
-    // personal reception still needs its independent frame/proof comparison.
     if (
       maySkip &&
       previous &&
-      current === previous &&
-      reference?.reception === undefined &&
-      lease.value.reception === undefined
-    )
-      continue;
-    const projected = splitTemporalValue(temporalValue(current));
-    if (
-      maySkip &&
-      previous &&
-      valueEncoding(previous).json === valueEncoding(projected.value).json &&
+      (previous === projected.value ||
+        valueEncoding(previous).json === valueEncoding(projected.value).json) &&
       (reference?.reception === projected.reception ||
         (reference?.reception !== undefined &&
           projected.reception !== undefined &&
@@ -796,6 +890,7 @@ export function captureTemporalCurrent(
     const group = grouped.get(lease.subjectId) ?? [];
     group.push(lease);
     grouped.set(lease.subjectId, group);
+    prepared.set(lease.id, temporalFacetInput(world, lease, projected));
   }
   for (const group of grouped.values()) {
     const association = leases.find(
@@ -820,7 +915,7 @@ export function captureTemporalCurrent(
             ? 'baseline'
             : 'change',
         sourceIds: [...new Set(group.map((lease) => lease.original.id))],
-        facets: group.map((lease) => temporalFacetInput(world, lease)),
+        facets: group.map((lease) => prepared.get(lease.id)!),
       },
       policy,
     );

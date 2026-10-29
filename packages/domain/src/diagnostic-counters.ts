@@ -148,6 +148,8 @@ export const DOMAIN_COUNTERS = [
   /** Common outward values prepared once or reused across receivers in one actual sight phase. */
   'visualSourcePreparations',
   'visualSourcePreparationReuses',
+  'currentFacetMapCopies',
+  'currentFacetWrites',
   'attentionCandidatesChanged',
   'attentionCandidatesUnchanged',
   'attentionSelectionsRanked',

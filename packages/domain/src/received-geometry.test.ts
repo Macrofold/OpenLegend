@@ -25,6 +25,7 @@ import {
 import {
   selectTemporalHistory,
   retireTemporalChunks,
+  retireTemporalReceipts,
   clearTemporalCaptureReferences,
 } from './temporal-evidence.js';
 import { validateTemporalEvidenceState } from './temporal-validation.js';
@@ -544,18 +545,16 @@ describe('native received relation producers', () => {
     world.simTime = 21616;
     const temporal = world.experience!.temporal!;
     for (const [actorId, history] of Object.entries(temporal.actors)) {
-      const old = history.chunks.filter((chunk) => chunk.throughAt <= 15);
-      retireTemporalChunks(
-        world,
-        actorId,
-        old.map((chunk) => chunk.id),
-        {
-          bytes: old.reduce((n, chunk) => n + chunk.bytes, 0),
-          count: old.reduce((n, chunk) => n + chunk.count, 0),
-        },
-        null,
-        15,
-      );
+      for (const chunk of history.chunks)
+        retireTemporalReceipts(
+          world,
+          actorId,
+          chunk.id,
+          new Set(
+            chunk.receipts.filter((receipt) => receipt.at <= 15).map((receipt) => receipt.ordinal),
+          ),
+          null,
+        );
     }
     expect(
       Object.values(temporal.actors)
@@ -649,18 +648,16 @@ describe('native received relation producers', () => {
     ).toBe(true);
     validateTemporalEvidenceState(world);
     const history = world.experience!.temporal!.actors[PLAYER_ID]!;
-    const released = history.chunks.filter((chunk) => chunk.throughAt <= 15);
-    retireTemporalChunks(
-      world,
-      PLAYER_ID,
-      released.map((chunk) => chunk.id),
-      {
-        bytes: released.reduce((n, chunk) => n + chunk.bytes, 0),
-        count: released.reduce((n, chunk) => n + chunk.count, 0),
-      },
-      null,
-      15,
-    );
+    for (const chunk of history.chunks)
+      retireTemporalReceipts(
+        world,
+        PLAYER_ID,
+        chunk.id,
+        new Set(
+          chunk.receipts.filter((receipt) => receipt.at <= 15).map((receipt) => receipt.ordinal),
+        ),
+        null,
+      );
     const expired = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       through: 15,

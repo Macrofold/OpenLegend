@@ -464,6 +464,9 @@ function receivedBodyValue(
     readOnlyDraftView,
   );
   if (reusable) {
+    // Materialization already knows these exact immutable parts. Recording and
+    // comparison must not split/copy the same appearance again for each pose.
+    bodyParts.set(value.body, immutableDataSnapshot({ details, pose }));
     if (!poses) receivedBodies.set(details, (poses = new WeakMap()));
     poses.set(pose, value);
   }
@@ -603,14 +606,65 @@ const locationFragments = new WeakMap<
   ObservedLocation,
   { kind: 'location'; location: ObservedLocation }
 >();
+const bodyFragments = new WeakMap<
+  ReturnType<typeof splitObservedBody>,
+  {
+    details: { kind: 'body'; body: ObservedBodyDetails };
+    pose: { kind: 'body-pose'; pose: ObservedBodyPose };
+  }
+>();
+
+function receivedBodyFragments(body: ObservedBody) {
+  const parts = splitObservedBody(body),
+    previous = bodyFragments.get(parts);
+  if (previous?.details.body === parts.details && previous.pose.pose === parts.pose)
+    return previous;
+  // The common source already owns these immutable parts. Rebuilding wrappers
+  // per receiver would serialize the same appearance and pose again for each.
+  const fragments = immutableDataSnapshot(
+    {
+      details: { kind: 'body' as const, body: parts.details },
+      pose: { kind: 'body-pose' as const, pose: parts.pose },
+    },
+    readOnlyDraftView,
+  );
+  bodyFragments.set(parts, fragments);
+  return fragments;
+}
+const motionFragments = new WeakMap<
+  ObservedLocation,
+  WeakMap<
+    ObservedLocation,
+    { kind: 'observed-motion'; earlier: ObservedLocation; later: ObservedLocation }
+  >
+>();
+function receivedMotionFragment(earlier: ObservedLocation, later: ObservedLocation) {
+  earlier = readOnlyDraftView(earlier);
+  later = readOnlyDraftView(later);
+  const reusable = isImmutableData(earlier) && isImmutableData(later);
+  let endings = reusable ? motionFragments.get(earlier) : undefined;
+  const previous = endings?.get(later);
+  if (previous) return previous;
+  // Geometry is common; the receiver's timing, frames and proof stay separate.
+  const fragment = immutableDataSnapshot(
+    { kind: 'observed-motion' as const, earlier, later },
+    readOnlyDraftView,
+  );
+  if (reusable) {
+    if (!endings) motionFragments.set(earlier, (endings = new WeakMap()));
+    endings.set(later, fragment);
+  }
+  return fragment;
+}
 
 function retainFacetValue(world: WorldState, value: SensoryFacet, previous?: ReceivedFacetValue) {
   value = readOnlyDraftView(value);
+  const body = value.kind === 'body' ? receivedBodyFragments(value.body) : undefined;
   let fragment: import('./received-values.js').ReceivedValueFragment =
     value.kind === 'observed-motion'
-      ? { kind: 'observed-motion', earlier: value.earlier.location, later: value.later.location }
+      ? receivedMotionFragment(value.earlier.location, value.later.location)
       : value.kind === 'body'
-        ? { kind: 'body', body: splitObservedBody(value.body).details }
+        ? body!.details
         : value;
   let reception: ReceivedFacetValue['reception'];
   let frameBytes = 0;
@@ -628,10 +682,9 @@ function retainFacetValue(world: WorldState, value: SensoryFacet, previous?: Rec
     frameBytes = received.addedBytes;
   }
   if (value.kind === 'body') {
-    const { pose } = splitObservedBody(value.body);
     const retained = retainReceivedValue(
       world,
-      { kind: 'body-pose', pose },
+      body!.pose,
       selectedTemporalPolicy(world).recent.chunkBytes,
       previous?.reception?.kind === 'body'
         ? { blockId: previous.reception.poseRef[0], valueOrdinal: previous.reception.poseRef[1] }
@@ -645,19 +698,16 @@ function retainFacetValue(world: WorldState, value: SensoryFacet, previous?: Rec
   }
   if (value.kind === 'observed-motion') {
     const sample = (input: ReceivedLocationSample) => {
-      const { location, frame, ...proof } = readOnlyDraftView(input);
+      const { location: _location, frame, ...proof } = readOnlyDraftView(input);
       const retained = retainObservationFrame(world, frame);
       frameBytes += retained.addedBytes;
-      return { location, support: { ...proof, frameRef: retained.reference } };
+      return { ...proof, frameRef: retained.reference };
     };
-    const earlier = sample(value.earlier),
-      later = sample(value.later);
-    fragment = { kind: 'observed-motion', earlier: earlier.location, later: later.location };
     reception = {
       kind: 'observed-motion',
       exposure: value.exposure,
-      earlier: earlier.support,
-      later: later.support,
+      earlier: sample(value.earlier),
+      later: sample(value.later),
       correspondence: value.correspondence,
     };
   }
@@ -1036,14 +1086,19 @@ function writableCurrent(
   state: PerceptionEvidenceOwner,
   observerId: string,
 ): PerceptionEvidenceOwner['current'] {
+  countDomainWork('currentFacetWrites');
   touchNativeEvidence(world, 'perception', observerId);
   const current = state.current;
   if (isDraft(current)) {
+    countDomainWork('currentFacetMapCopies');
     const view = readOnlyDraftView(current);
     // Editable input worlds still need Immer's child isolation. Published
     // immutable leases can bypass those proxies without exposing prior writes.
     state.current = { ...(isImmutableData(view) ? view : current) };
-  } else if (Object.isFrozen(current)) state.current = { ...current };
+  } else if (Object.isFrozen(current)) {
+    countDomainWork('currentFacetMapCopies');
+    state.current = { ...current };
+  }
   return state.current;
 }
 /** Completed live envelopes use the same immutable ownership as their originals.
