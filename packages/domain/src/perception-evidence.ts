@@ -1125,26 +1125,52 @@ function replaceCurrentFacet(
       ? immutableDataSnapshot(stored, readOnlyDraftView)
       : stored;
 }
-export const observationFactKey = (
+const observationFactKeys = new WeakMap<
+  object,
+  { observer: ObserverLife; keys: Map<number, ObservationFactKey> }
+>();
+export function observationFactKey(
   world: WorldState,
   observation:
     | Pick<ObservationContribution, 'id' | 'revision' | 'observer'>
     | Pick<ReceivedObservation, 'id' | 'revision' | 'headerRef'>,
   ordinal: number,
-): ObservationFactKey => ({
-  source: {
-    family: 'native-exposure',
-    observer: immutableDataSnapshot(
-      'headerRef' in observation
-        ? receivedObservationHeader(world, observation).observer
-        : observation.observer,
-      readOnlyDraftView,
-    ),
-    id: observation.id,
-    revision: observation.revision,
-  },
-  ordinal,
-});
+): ObservationFactKey {
+  observation = readOnlyDraftView(observation);
+  // Resolve the actual header before reuse: a remembered address never revives
+  // missing received evidence. Only the original's own finite facets are cached.
+  const observer = readOnlyDraftView(
+    'headerRef' in observation
+      ? receivedObservationHeader(world, observation).observer
+      : observation.observer,
+  );
+  const facets = (observation as { facets?: unknown[] }).facets;
+  const reusable =
+    isImmutableData(observation) &&
+    isImmutableData(observer) &&
+    Array.isArray(facets) &&
+    Number.isInteger(ordinal) &&
+    ordinal >= 0 &&
+    ordinal < facets.length;
+  let held = reusable ? observationFactKeys.get(observation) : undefined;
+  const previous = held?.observer === observer ? held.keys.get(ordinal) : undefined;
+  if (previous) return previous;
+  const key = immutableDataSnapshot<ObservationFactKey>({
+    source: {
+      family: 'native-exposure',
+      observer: immutableDataSnapshot(observer),
+      id: observation.id,
+      revision: observation.revision,
+    },
+    ordinal,
+  });
+  if (reusable) {
+    if (!held || held.observer !== observer)
+      observationFactKeys.set(observation, (held = { observer, keys: new Map() }));
+    held.keys.set(ordinal, key);
+  }
+  return key;
+}
 
 /** Trusted producers pass an already-permitted body. No source lookup strengthens it here.
  * The transition's actual receipts survive nested event callbacks. Durable memory owns its
