@@ -20,6 +20,10 @@ The [implementation gallery](runtime/README.md) contains **74 annotated capture 
 
 **Contract review: October 14, 2026.** The foundation hardening reconciles [inventory continuity](inventory.md), [draft cleanup](chat-and-invention.md#composer-contract), [private detail reads](react.md#effects-asynchronous-work-and-mutations), and [Resume presentation](world-interaction.md#paused-game-tabs). These are current contracts; the [foundation tracker](../maintainers/foundation-review-todos.md) records implementation and still-open verification. The dated research evidence below is not a new usability certification.
 
+## Selected follow-on workflow design
+
+The October 14 [inventory, crafting and building feature specification](../projects/inventory-crafting-building-workflows-feature-spec.md) and [technical design](../projects/inventory-crafting-building-workflows-tech-design.md) propose additions to the delivered PW04/activity/shelter foundations: a finite player crafting list, explicit equipment destinations and clearer placement/correction workflows. [ICB01–ICB07](../maintainers/inventory-crafting-building-workflows.md) owns the detailed implementation breakdown; [proposed limits](../limits/inventory-crafting-building-workflows.md) records the narrow scope. This is a new design, not delivered behavior, a replacement handbook or closure of existing UIUX/PW04/SH qualification. The missing current Rust screenshot sequence remains a separate research limitation.
+
 ## Start here, not everywhere
 
 Every UI/UX or frontend task loads the short [essential rules](../../.agents/rules/ui-ux.md), then only relevant chapter sections. A spacing correction does not require trading or the research ledger; an inventory search change normally needs Controls, Inventory and relevant React sections. Reuse already-loaded current guidance.
