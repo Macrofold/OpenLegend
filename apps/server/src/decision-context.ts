@@ -44,6 +44,7 @@ import {
   entityHandle,
   projectEntityMarkers,
   personalAttributionRevision,
+  intentionEntityReferences,
 } from './entity-references.js';
 import { digest } from './store.js';
 import { contextSections, type SharedModelExperience } from './perceived-context.js';
@@ -1176,6 +1177,11 @@ export async function prepareDecision(
     };
     attempts.set(JSON.stringify(binding), binding);
   }
+  const visibleEntityReferences = entityReferenceMap(
+    currentWorld,
+    currentObserved.visibleEntities.map((entity) => entity.id),
+    actorId,
+  );
   return {
     situation: capturedSituation,
     readSituationHistory: async (query: import('./temporal-storage.js').TemporalHistoryQuery) => {
@@ -1208,11 +1214,11 @@ export async function prepareDecision(
     validateConversation: validatePrepared,
     attemptBindings: [...attempts.values()],
     entityReferences,
-    visibleEntityReferences: entityReferenceMap(
-      currentWorld,
-      currentObserved.visibleEntities.map((entity) => entity.id),
-      actorId,
-    ),
+    intentionReferences: intentionEntityReferences(currentWorld, actorId, {
+      ...visibleEntityReferences,
+      ...entityReferences,
+    }),
+    visibleEntityReferences,
     diagnostics: {
       inventoryCoverage: currentObserved.inventoryCoverage,
       conversation: conversation.diagnostics,

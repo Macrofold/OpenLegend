@@ -3433,6 +3433,7 @@ export class AiDirector {
                 ? (resolveResponseEntities(
                     { operations: [(({ appraise: _appraise, ...rest }) => rest)(operation)] },
                     prepared.entityReferences,
+                    prepared.intentionReferences,
                     prepared.binding.knowledgeReferences,
                     activityRequestDescriptors(this.service.world),
                     prepared.binding.identityReferences,
@@ -3747,6 +3748,7 @@ export class AiDirector {
     const nativeReply = resolveResponseEntities(
       { operations: reply.operations },
       prepared.entityReferences,
+      prepared.intentionReferences,
       prepared.binding.knowledgeReferences,
       activityRequestDescriptors(this.service.world),
       prepared.binding.identityReferences,

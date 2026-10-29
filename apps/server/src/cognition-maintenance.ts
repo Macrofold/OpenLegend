@@ -5,7 +5,7 @@ import { CognitionExecution, type ExecutionLease } from './cognition-execution.j
 import { acquiredActivities, ACTIVITY_SYNTAX } from '@open-legend/domain';
 import type { TypedQuestionMap } from '@open-legend/ai';
 import { bindReflectionAppraisals } from './appraisal-context.js';
-import { resolveResponseEntities } from './entity-references.js';
+import { resolveResponseEntities, resolveIntentionMarkers } from './entity-references.js';
 import { dreamStatus, dreamPolicy } from '@open-legend/domain';
 import {
   bodyThinkingBlocked,
@@ -1245,6 +1245,7 @@ export class CognitionMaintenance {
           ],
         },
         prepared.entityReferences,
+        prepared.intentionReferences,
         prepared.binding.knowledgeReferences,
         [],
         prepared.binding.identityReferences,
@@ -1265,6 +1266,19 @@ export class CognitionMaintenance {
       });
       controller.signal.throwIfAborted();
       const appraisalChanges = appraisals.resolve(parsedReflection.appraisalChanges);
+      const goalChanges = parsedReflection.goalChanges.map((goal) => ({
+        ...goal,
+        objective: goal.objective
+          ? resolveIntentionMarkers(
+              goal.objective,
+              prepared.entityReferences,
+              prepared.intentionReferences,
+            )
+          : goal.objective,
+      }));
+      const thoughts = parsedReflection.thoughts.map((thought) =>
+        resolveIntentionMarkers(thought, prepared.entityReferences, prepared.intentionReferences),
+      );
       const accepted = await this.service.transition(
         (world) => {
           controller.signal.throwIfAborted();
@@ -1285,11 +1299,11 @@ export class CognitionMaintenance {
             job.id,
             value.revision,
             value.files,
-            value.thoughts,
+            thoughts,
             prepared.binding.evidenceIds,
             null,
             0,
-            value.goalChanges,
+            goalChanges,
             edits.operations.flatMap((op) =>
               op.note
                 ? [

@@ -263,10 +263,37 @@ export function projectEntityMarkers(text: string, world: WorldState, observerId
   );
 }
 
+/** Only associations acquired when this request was prepared may become lasting
+ * canonical prose. A current unfamiliar body handle is temporary permission. */
+export function intentionEntityReferences(
+  world: WorldState,
+  actorId: string,
+  references: Readonly<Record<string, string>>,
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(references).filter(([, id]) => canAddressRememberedSubject(world, actorId, id)),
+  );
+}
+
+export function resolveIntentionMarkers(
+  text: string,
+  references: Readonly<Record<string, string>>,
+  intentions: Readonly<Record<string, string>>,
+): string {
+  return text.replace(/([ \t]*)\(ID:([^()\s]+)\)/g, (_marker, spacing: string, handle: string) => {
+    if (!Object.hasOwn(references, handle))
+      throw new Error(`Unpermitted entity reference: ${handle}`);
+    return Object.hasOwn(intentions, handle)
+      ? `${spacing}(ID:${intentions[handle]})`
+      : `${spacing}(unidentified)`;
+  });
+}
+
 /** Resolve structured references only; prose cannot grant a mechanical target. */
 export function resolveResponseEntities(
   response: ActorResponse,
   references: Record<string, string>,
+  intentionReferences: Readonly<Record<string, string>>,
   knowledgeReferences: Record<string, ObserverSubject> = {},
   activityRequests: ActivityRequestDescriptor[] = [],
   identityReferences: Record<string, ObserverSubject> = {},
@@ -310,7 +337,7 @@ export function resolveResponseEntities(
                   ? op.note.subjectId
                   : resolve(op.note.subjectId)
                 : null,
-              text: resolveEntityMarkers(op.note.text, references),
+              text: resolveIntentionMarkers(op.note.text, references, intentionReferences),
             },
           }
         : {}),
@@ -376,7 +403,7 @@ export function resolveResponseEntities(
       think: op.think
         ? {
             ...op.think,
-            text: resolveEntityMarkers(op.think.text, references),
+            text: resolveIntentionMarkers(op.think.text, references, intentionReferences),
             aboutEntityIds: op.think.aboutEntityIds.map(resolve),
           }
         : null,
@@ -384,7 +411,7 @@ export function resolveResponseEntities(
         ? {
             ...op.goal,
             objective: op.goal.objective
-              ? resolveEntityMarkers(op.goal.objective, references)
+              ? resolveIntentionMarkers(op.goal.objective, references, intentionReferences)
               : null,
           }
         : null,

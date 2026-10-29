@@ -272,6 +272,7 @@ export async function prepareReconsideration(
         reply = resolveResponseEntities(
           { operations },
           prepared.entityReferences,
+          prepared.intentionReferences,
           prepared.binding.knowledgeReferences,
           activityRequestDescriptors(service.world),
           prepared.binding.identityReferences,
