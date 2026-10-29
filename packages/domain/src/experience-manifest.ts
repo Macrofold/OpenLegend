@@ -19,7 +19,10 @@ import { canonicalJson } from './events.js';
 import { temporalReceiptId } from './temporal-evidence.js';
 import type { Awareness, ExperienceSummary } from './experience.js';
 import type { ExperienceEntry, MemoryRecord } from './types.js';
-import { validateObservationContribution } from './perception-evidence.js';
+import {
+  validateObservationContribution,
+  sensoryFacetDependencies,
+} from './perception-evidence.js';
 import type {
   EvidenceSource,
   SensoryFacet,
@@ -330,24 +333,8 @@ export function observationDependencies(
     });
   };
   const facet = (value: SensoryFacet) => {
-    if (value.kind === 'claim') {
-      const aliases = (value.supportAliases ?? []).map((alias) => alias.id);
-      for (const support of value.support) add(support.source, support.ordinal, aliases);
-    } else if (value.kind === 'physical-boundary') {
-      for (const support of [value.boundary.nearSurface.support, value.boundary.farSurface.support])
-        add(support.source, support.ordinal, [
-          personalFactAlias(support.source.id, support.ordinal),
-        ]);
-    } else if (value.kind === 'confirmation') {
-      visit(value.snapshot.original);
-      add(value.snapshot.confirmation, value.snapshot.originalOrdinal, []);
-      facet(value.snapshot.value);
-    } else if (value.kind === 'observed-motion') {
-      for (const sample of [value.earlier, value.later]) {
-        visit(sample.original);
-        add(sample.confirmation, sample.originalOrdinal, []);
-      }
-    }
+    for (const dependency of sensoryFacetDependencies(value))
+      add(dependency.source, dependency.ordinal, dependency.aliases);
   };
   const visit = (observation: ObservationContribution) => {
     add(
@@ -360,7 +347,17 @@ export function observationDependencies(
       null,
       observation.origin.kind === 'occurrence' ? [observation.origin.eventId] : [],
     );
-    for (const item of observation.facets) facet(item.value);
+    for (const item of observation.facets) {
+      if (item.support) {
+        add(
+          item.support.original.source,
+          item.support.original.ordinal,
+          item.support.aliases ?? [],
+        );
+        add(item.support.confirmation, item.support.original.ordinal, []);
+      }
+      facet(item.value);
+    }
   };
   for (const observation of observations) visit(observation);
   return [...dependencies.values()];
@@ -376,12 +373,6 @@ export function observationLearningSources(
     if (value.kind === 'physical-boundary')
       for (const support of [value.boundary.nearSurface.support, value.boundary.farSurface.support])
         sources.set(canonicalJson(support.source), support.source);
-    if (value.kind === 'confirmation') {
-      visit(value.snapshot.original);
-      facet(value.snapshot.value);
-    }
-    if (value.kind === 'observed-motion')
-      for (const sample of [value.earlier, value.later]) visit(sample.original);
   };
   const visit = (observation: ObservationContribution) => {
     for (const item of observation.facets) facet(item.value);
@@ -403,8 +394,6 @@ export function ownedObservationSources(
       revision: observation.revision,
     };
     sources.set(canonicalJson(source), source);
-    for (const item of observation.facets)
-      if (item.value.kind === 'confirmation') visit(item.value.snapshot.original);
   };
   for (const observation of observations) visit(observation);
   return [...sources.values()];

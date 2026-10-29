@@ -8,6 +8,10 @@ import type {
 } from './temporal-evidence.js';
 import {
   validateEvidenceSource,
+  validateReceivedFacetProof,
+  validateObservedBodyDetails,
+  validateObservedBodyPose,
+  type ObservedBodyDetails,
   validateReceivedParticipantObservers,
   validateSensoryFacet,
   validateObservedLocation,
@@ -47,8 +51,6 @@ export function validateTemporalValue(
 ): asserts value is TemporalValue {
   if (!record(value) || typeof value['kind'] !== 'string')
     throw new Error('Invalid temporal value.');
-  if (value['kind'] === 'observed-motion')
-    throw new Error('Current motion needs its typed temporal conversion.');
   if (value['kind'] === 'observation-header' || value['kind'] === 'observation-frame')
     throw new Error('Personal metadata is not a temporal fact.');
   if (value['kind'] === 'personal-account') {
@@ -62,52 +64,9 @@ export function validateTemporalValue(
       (value['data'] !== undefined && !record(value['data']))
     )
       throw new Error('Invalid temporal personal account.');
-  } else if (value['kind'] === 'received-motion') {
-    const motion = value as unknown as Extract<TemporalValue, { kind: 'received-motion' }>;
-    if (
-      !record(motion.exposure) ||
-      !record(motion.exposure.observer) ||
-      !isSafeRecordId(motion.exposure.observer.actorId) ||
-      !ordinal(motion.exposure.observer.physicalLife) ||
-      typeof motion.exposure.episodeId !== 'string' ||
-      !motion.exposure.episodeId ||
-      motion.correspondence !== 'unambiguous-received-continuity'
-    )
-      throw new Error('Invalid received motion exposure.');
-    for (const sample of [motion.earlier, motion.later]) {
-      if (
-        !record(sample) ||
-        !finite(sample.measuredFrom) ||
-        !finite(sample.measuredThrough) ||
-        !finite(sample.acquiredAt) ||
-        sample.measuredFrom < 0 ||
-        sample.measuredFrom > sample.measuredThrough ||
-        sample.measuredThrough > sample.acquiredAt ||
-        !sample.original ||
-        !ordinal(sample.original.ordinal)
-      )
-        throw new Error('Invalid received motion measurement.');
-      validateSensoryFacet(
-        { kind: 'location', location: sample.location, frame: sample.frame },
-        originals,
-      );
-      for (const source of [sample.original.source, sample.confirmation]) {
-        validateEvidenceSource(source);
-        if (
-          source.observer.actorId !== motion.exposure.observer.actorId ||
-          source.observer.physicalLife !== motion.exposure.observer.physicalLife
-        )
-          throw new Error('Foreign received motion.');
-      }
-    }
-    if (
-      motion.earlier.measuredThrough >= motion.later.measuredThrough ||
-      motion.earlier.acquiredAt > motion.later.acquiredAt
-    )
-      throw new Error('Unordered received motion.');
   } else
     validateSensoryFacet(
-      value as unknown as Exclude<TemporalValue, { kind: 'personal-account' | 'received-motion' }>,
+      value as unknown as Exclude<TemporalValue, { kind: 'personal-account' }>,
       originals,
     );
 }
@@ -118,11 +77,21 @@ export function validateTemporalFragment(
   originals?: Map<string, string>,
 ): asserts value is TemporalFragment {
   if (!record(value)) throw new Error('Invalid temporal fragment.');
-  if (value['kind'] === 'location') {
+  if (value['kind'] === 'body') {
+    if (
+      !hasRecordFields(value, ['kind', 'body']) ||
+      !record(value['body']) ||
+      ['position', 'heading', 'supportSurfaceId'].some((key) =>
+        Object.hasOwn(value['body'] as object, key),
+      )
+    )
+      throw new Error('Invalid shared body details.');
+    validateObservedBodyDetails(value['body'] as unknown as ObservedBodyDetails);
+  } else if (value['kind'] === 'location') {
     if (!hasRecordFields(value, ['kind', 'location']))
       throw new Error('Invalid shared temporal location.');
     validateObservedLocation(value['location'] as ObservedLocation);
-  } else if (value['kind'] === 'received-motion') {
+  } else if (value['kind'] === 'observed-motion') {
     if (!hasRecordFields(value, ['kind', 'earlier', 'later']))
       throw new Error('Invalid shared temporal motion.');
     validateObservedLocation(value['earlier'] as ObservedLocation);
@@ -131,34 +100,46 @@ export function validateTemporalFragment(
 }
 
 function validateStoredValue(
-  reference: Pick<TemporalFacetReference, 'reception'>,
+  reference: Pick<TemporalFacetReference, 'reception' | 'support'>,
   fragment: TemporalFragment,
   originals: Map<string, string>,
+  observer: ObserverLife,
+  through: number,
 ): TemporalValue {
   const reception = reference.reception;
   if (reception !== undefined) {
     if (!record(reception)) throw new Error('Invalid temporal reception.');
-    if (reception.kind === 'location') {
+    if (reception.kind === 'body') {
+      if (!hasRecordFields(reception, ['kind', 'pose'])) throw new Error('Invalid body reception.');
+      validateObservedBodyPose(reception.pose);
+    } else if (reception.kind === 'location') {
       if (!hasRecordFields(reception, ['kind', 'frame']))
         throw new Error('Invalid temporal location reception.');
-    } else if (reception.kind === 'received-motion') {
+    } else if (reception.kind === 'observed-motion') {
       if (
         !hasRecordFields(reception, ['kind', 'exposure', 'earlier', 'later', 'correspondence']) ||
         [reception.earlier, reception.later].some(
           (sample) =>
-            !hasRecordFields(sample, [
-              'frame',
-              'measuredFrom',
-              'measuredThrough',
-              'acquiredAt',
-              'original',
-              'confirmation',
-            ]),
+            !hasRecordFields(
+              sample,
+              [
+                'frame',
+                'measuredFrom',
+                'measuredThrough',
+                'acquiredAt',
+                'original',
+                'confirmation',
+                'confirmedFrom',
+                'confirmedThrough',
+              ],
+              ['aliases'],
+            ),
         )
       )
         throw new Error('Invalid temporal motion reception.');
     } else throw new Error('Unsupported temporal reception.');
   }
+  if (reference.support) validateReceivedFacetProof(reference.support, observer, through);
   const value = materializeTemporalValue(reference, fragment);
   if (!value) throw new Error('Temporal fragment has no matching personal reception.');
   validateTemporalValue(value, originals);
@@ -169,11 +150,13 @@ function validateReceiver(value: TemporalValue, observer: ObserverLife, acquired
   if (value.kind === 'event' || value.kind === 'speech' || value.kind === 'sound')
     validateReceivedParticipantObservers(value, observer);
   if (
-    value.kind === 'received-motion' &&
+    value.kind === 'observed-motion' &&
     (value.exposure.observer.actorId !== observer.actorId ||
       value.exposure.observer.physicalLife !== observer.physicalLife ||
       value.earlier.acquiredAt > acquiredAt ||
-      value.later.acquiredAt > acquiredAt)
+      value.later.acquiredAt > acquiredAt ||
+      value.earlier.confirmedThrough > acquiredAt ||
+      value.later.confirmedThrough > acquiredAt)
   )
     throw new Error('Foreign or future temporal motion reception.');
 }
@@ -234,7 +217,13 @@ export function validateTemporalEvidenceState(
     };
     for (const reference of Object.values(actor.captures)) {
       const fragment = validateReference(reference);
-      const captured = validateStoredValue(reference, fragment, originals);
+      const captured = validateStoredValue(
+        reference,
+        fragment,
+        originals,
+        { actorId, physicalLife: actor.physicalLife },
+        world.simTime,
+      );
       validateReceiver(captured, { actorId, physicalLife: actor.physicalLife }, world.simTime);
       if (
         (reference.confirmedThrough !== undefined &&
@@ -360,7 +349,13 @@ export function validateTemporalEvidenceState(
         const fragment = fragments ? fragments[index] : validateReference(facet);
         if (fragments) validateTemporalFragment(fragment, originals);
         if (!fragment) throw new Error('Unavailable retained temporal fragment.');
-        const value = validateStoredValue(facet, fragment, originals);
+        const value = validateStoredValue(
+          facet,
+          fragment,
+          originals,
+          { actorId, physicalLife: receipt.physicalLife },
+          receipt.at,
+        );
         if (
           !['direct', 'inference', 'testimony'].includes(facet.role) ||
           !finite(facet.asOf) ||
@@ -386,7 +381,12 @@ export function validateTemporalEvidenceState(
           )
             throw new Error('Invalid held geometry confirmation.');
         }
-        for (const source of [facet.original?.source, facet.receivedFrom])
+        for (const source of [
+          facet.original?.source,
+          facet.receivedFrom,
+          facet.support?.original.source,
+          facet.support?.confirmation,
+        ])
           if (source) {
             validateEvidenceSource(source);
             if (

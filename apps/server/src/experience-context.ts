@@ -12,6 +12,8 @@ import {
   type MemoryRecord,
   type SensoryFacet,
   type CapturedCurrentFacet,
+  type ReceivedLocationSample,
+  type ReceivedFacetProof,
   type PerceivedSpeech,
   type PerceivedSound,
   soundExperience,
@@ -279,17 +281,12 @@ export function facetValueForModel(
           frame,
         ),
       };
-    case 'confirmation':
-      return {
-        kind: value.kind,
-        snapshot: currentFacetForModel(world, actorId, value.snapshot, frame),
-      };
     case 'observed-motion':
       return {
         kind: value.kind,
         receivedSubject: receivedSubjectHandle(world, actorId, value.exposure.episodeId),
-        earlier: currentFacetForModel(world, actorId, value.earlier, frame),
-        later: currentFacetForModel(world, actorId, value.later, frame),
+        earlier: motionSampleForModel(world, actorId, value.earlier, frame),
+        later: motionSampleForModel(world, actorId, value.later, frame),
         correspondence: value.correspondence,
       };
     // Physical feature vectors and intensity margins are native matching inputs.
@@ -358,6 +355,25 @@ function factSupportStatus(world: WorldState, actorId: string, id: string, ordin
       ? 'disputed'
       : 'retained';
 }
+function motionSampleForModel(
+  world: WorldState,
+  actorId: string,
+  sample: ReceivedLocationSample,
+  frame: ModelSpatialFrame,
+) {
+  return {
+    source: evidenceSourceHandle(world, actorId, sample.original.source),
+    ordinal: sample.original.ordinal,
+    confirmation: evidenceSourceHandle(world, actorId, sample.confirmation),
+    location: modelObservedLocation(frame, sample.location),
+    ...modelObservationFrame(frame, sample.frame),
+    measuredFrom: sample.measuredFrom,
+    measuredThrough: sample.measuredThrough,
+    acquiredAt: sample.acquiredAt,
+    confirmedFrom: sample.confirmedFrom,
+    confirmedThrough: sample.confirmedThrough,
+  };
+}
 export function currentFacetForModel(
   world: WorldState,
   actorId: string,
@@ -365,18 +381,13 @@ export function currentFacetForModel(
   frame = captureModelSpatialFrame(world, actorId),
 ) {
   return {
-    source: evidenceSourceHandle(world, actorId, {
-      family: 'native-exposure',
-      observer: snapshot.original.observer,
-      id: snapshot.original.id,
-      revision: snapshot.original.revision,
-    }),
-    ordinal: snapshot.originalOrdinal,
+    source: evidenceSourceHandle(world, actorId, snapshot.original.source),
+    ordinal: snapshot.original.ordinal,
     supportStatus: factSupportStatus(
       world,
       actorId,
-      snapshot.original.id,
-      snapshot.originalOrdinal,
+      snapshot.original.source.id,
+      snapshot.original.ordinal,
     ),
     confirmation: evidenceSourceHandle(world, actorId, snapshot.confirmation),
     modality: snapshot.modality,
@@ -389,7 +400,7 @@ export function currentFacetForModel(
           },
         }
       : {}),
-    value: facetValueForModel(world, actorId, snapshot.value, snapshot.original.id, frame),
+    value: facetValueForModel(world, actorId, snapshot.value, snapshot.original.source.id, frame),
     measuredFrom: snapshot.valueMeasuredFrom,
     measuredThrough: snapshot.valueMeasuredThrough,
     acquiredAt: snapshot.valueAcquiredAt,
@@ -400,6 +411,24 @@ export function currentFacetForModel(
 
 /** These defaults encode equal metadata, never a normalized time or inferred
  * continuity. A differing or absent optional confirmation stays facet-local. */
+export function facetSupportForModel(
+  world: WorldState,
+  actorId: string,
+  support: ReceivedFacetProof,
+) {
+  return {
+    original: supportForModel(world, actorId, support.original),
+    confirmation: evidenceSourceHandle(world, actorId, support.confirmation),
+    confirmedFrom: support.confirmedFrom,
+    confirmedThrough: support.confirmedThrough,
+    supportStatus: factSupportStatus(
+      world,
+      actorId,
+      support.original.source.id,
+      support.original.ordinal,
+    ),
+  };
+}
 export function modelFacetMetadata(
   facets: readonly {
     role: string;
@@ -408,6 +437,7 @@ export function modelFacetMetadata(
     measuredThrough: number;
     acquiredAt: number;
     confirmedThrough?: number;
+    support?: ReceivedFacetProof;
   }[],
 ) {
   const keys = [
@@ -462,6 +492,7 @@ export function observationForModel(
         ? { supportStatus: factSupportStatus(world, actorId, observation.id, facet.ordinal) }
         : {}),
       ...metadata.overrides[index],
+      ...(facet.support ? { support: facetSupportForModel(world, actorId, facet.support) } : {}),
       value: facetValueForModel(world, actorId, facet.value, observation.id, frame),
     })),
   };

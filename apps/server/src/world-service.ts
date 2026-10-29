@@ -3,7 +3,8 @@ import {
   sourceVersionPreparationNeeded,
   restoredSourceVersions,
 } from './source-version-retention.js';
-import { historyPositions } from './history-residency.js';
+import { historyKey, historyPositions } from './history-residency.js';
+import { experienceRetentionDue } from '@open-legend/domain';
 import {
   resolveCommandContactReferences,
   resolveSpeechTarget,
@@ -2331,26 +2332,136 @@ export class WorldService {
     }
   }
 
-  /** Cold actor history is scoped to one serialized operation, then released. */
+  /** Select cold evidence outside the writer, then merge only those exact sources into
+   * its current immutable world. Native progress must not wait for optional hydration.
+   * docs/projects/attention-and-scenes-runtime-design.md#7-world-advancement-and-asynchronous-cognition */
   async withActorHistory<T>(
-    actorIds: string[] | undefined,
+    actorId: string,
+    batch: ConsolidationBatch,
     operation: () => Promise<T>,
-    sourceIds?: string[],
   ): Promise<T> {
-    return this.mutate(async () => {
-      await this.flush();
-      if (this.store.hydrateHistory)
-        this.saved = await this.store.hydrateHistory(this.saved, actorIds, sourceIds);
-      freezeWorld(this.saved.world);
-      try {
-        return await operation();
-      } finally {
-        if (this.storageError)
-          this.saved = { ...this.saved, world: compactHistory(this.saved.world) };
-        else if (this.store.releaseHistory) this.saved = this.store.releaseHistory(this.saved);
+    await this.flush();
+    await this.store.memories?.synchronizeSources();
+    const original = this.saved;
+    const generation = this.generation;
+    const { selection } = batch;
+    const sourceIds = batch.sources.map((source) =>
+      source.source === 'awareness' ? source.value.eventId : source.value.id,
+    );
+    const sourceFence =
+      selection &&
+      this.store.memories?.captureCanonicalSourceFence(selection.scope, selection.revisions);
+    const unchanged = () =>
+      generation === this.generation &&
+      original.world.id === this.world.id &&
+      (!sourceFence || sourceFence.current()) &&
+      batch.sources.every((entry) => {
+        const due = experienceRetentionDue(this.world, entry);
+        return due === null || due > this.world.simTime;
+      }) &&
+      original.world.experience?.forgotten[actorId] === this.world.experience?.forgotten[actorId] &&
+      original.world.experience?.corrections?.[actorId] ===
+        this.world.experience?.corrections?.[actorId];
+    try {
+      const materialized = this.store.records
+        ? await this.store.records.withHistory(original, [actorId], sourceIds)
+        : original;
+      if (!unchanged()) throw new Error('Memory sources changed during publication preparation.');
+      const sourcesCurrent =
+        !selection || !!(await this.store.memories?.current(selection.scope, selection.revisions));
+      if (!sourcesCurrent || !unchanged())
+        throw new Error('Memory sources changed during publication preparation.');
+      return await this.mutate(async () => {
+        await this.flush();
+        if (!unchanged()) throw new Error('Memory sources changed before publication.');
+        const world = this.world;
+        if (this.store.records && this.store.adoptHistory && world.experience) {
+          const selected = new Set(sourceIds);
+          // The earlier read owns only selected cold rows. It must not reinstall its
+          // captured world, expired resident rows or an older subject's physical state.
+          const merge = <T extends { id?: string; eventId?: string }>(
+            current: T[] | undefined,
+            prepared: T[] | undefined,
+          ): T[] | undefined => {
+            const present = new Set((current ?? []).map(historyKey));
+            const added = (prepared ?? []).filter(
+              (entry) =>
+                !present.has(historyKey(entry)) &&
+                (selected.has(historyKey(entry)) ||
+                  (entry.eventId !== undefined && selected.has(entry.eventId))),
+            );
+            if (!added.length) return current;
+            const values = [...(current ?? []), ...added];
+            const oldPositions = current && historyPositions.get(current);
+            const preparedPositions = prepared && historyPositions.get(prepared);
+            if (preparedPositions)
+              historyPositions.set(values, {
+                complete: oldPositions?.complete ?? false,
+                positions: new Map([
+                  ...(current ?? []).map(
+                    (entry, index) =>
+                      [
+                        historyKey(entry),
+                        oldPositions?.positions.get(historyKey(entry)) ?? index,
+                      ] as const,
+                  ),
+                  ...added.map((entry) => {
+                    const key = historyKey(entry);
+                    const position = preparedPositions.positions.get(key);
+                    if (position === undefined)
+                      throw new Error('Prepared memory source has no canonical position.');
+                    return [key, position] as const;
+                  }),
+                ]),
+                next: Math.max(oldPositions?.next ?? 0, preparedPositions.next),
+              });
+            return values;
+          };
+          const mergeOwner = <T extends { id?: string; eventId?: string }>(
+            current: Record<string, T[]>,
+            prepared: Record<string, T[]> | undefined,
+          ): Record<string, T[]> => {
+            const values = merge(current[actorId], prepared?.[actorId]);
+            // Absent family owners are meaningful canonical state. Inventing an
+            // empty owner here would make a later first row skip its SQL parent.
+            return values === undefined || values === current[actorId]
+              ? current
+              : { ...current, [actorId]: values };
+          };
+          const next: SavedWorld = {
+            ...this.saved,
+            world: {
+              ...world,
+              memories: mergeOwner(world.memories, materialized.world.memories),
+              experience: {
+                ...world.experience,
+                awareness: mergeOwner(
+                  world.experience.awareness,
+                  materialized.world.experience?.awareness,
+                ),
+                summaries: mergeOwner(
+                  world.experience.summaries,
+                  materialized.world.experience?.summaries,
+                ),
+              },
+            },
+          };
+          this.store.adoptHistory(this.saved, next);
+          this.saved = next;
+        }
         freezeWorld(this.saved.world);
-      }
-    });
+        try {
+          return await operation();
+        } finally {
+          if (this.storageError)
+            this.saved = { ...this.saved, world: compactHistory(this.saved.world) };
+          else if (this.store.releaseHistory) this.saved = this.store.releaseHistory(this.saved);
+          freezeWorld(this.saved.world);
+        }
+      });
+    } finally {
+      sourceFence?.release();
+    }
   }
 
   /** Enter the world lane before operational SQL: reversing that order can deadlock Apply.
@@ -2569,14 +2680,6 @@ export class WorldService {
       pressure: !!this.memoryBacklog,
     };
   }
-  async historySnapshot(actorId: string): Promise<WorldState> {
-    return this.mutate(async () => {
-      await this.flush();
-      return this.store.records
-        ? (await this.store.records.withHistory(this.saved, [actorId])).world
-        : this.world;
-    });
-  }
   /** Internal actor-context caller; external callers must use inspectActivities. */
   async activityHistoryForActor(
     actorId: string,
@@ -2767,27 +2870,41 @@ export class WorldService {
     dispatched = false,
     checkCurrent?: (world: WorldState) => void,
   ): Promise<boolean> {
+    await this.flush();
+    checkCurrent?.(this.world);
+    const eligible = () =>
+      !batch.capacityBlocked &&
+      !this.paused &&
+      this.generation === batch.generation &&
+      !!entityGet(this.world.entities, batch.actorId)?.actor?.alive;
+    if (!eligible()) return false;
+    const original = this.world;
+    const generation = this.generation;
+    const unchanged = () =>
+      generation === this.generation &&
+      original.id === this.world.id &&
+      original.actionExperience.occurrences[batch.actorId] ===
+        this.world.actionExperience.occurrences[batch.actorId] &&
+      original.experience?.forgotten[batch.actorId] ===
+        this.world.experience?.forgotten[batch.actorId] &&
+      original.experience?.corrections?.[batch.actorId] ===
+        this.world.experience?.corrections?.[batch.actorId];
+    // Optional source hydration owns no world writer. Its final publication below
+    // checks source/privacy inputs and current maintenance eligibility again.
+    const rows = this.store.records
+      ? await this.store.records.activityPage(
+          original.id,
+          batch.actorId,
+          -1,
+          batch.rows.map((row) => row.entry.id),
+        )
+      : batch.rows;
     return this.mutate(async () => {
       await this.flush();
-      checkCurrent?.(this.world);
-      if (
-        batch.capacityBlocked ||
-        this.paused ||
-        this.generation !== batch.generation ||
-        !entityGet(this.world.entities, batch.actorId)?.actor?.alive
-      )
-        return false;
-      const rows = this.store.records
-        ? await this.store.records.activityPage(
-            this.world.id,
-            batch.actorId,
-            -1,
-            batch.rows.map((row) => row.entry.id),
-          )
-        : batch.rows;
       // Background eligibility can change while history is read. The maintenance
       // caller owns that admission; this writer rechecks it before any publication.
       checkCurrent?.(this.world);
+      if (!eligible() || !unchanged()) return false;
       const deniedNow = new Set(this.world.experience?.forgotten[batch.actorId] ?? []);
       if (
         batch.candidates.some((candidate) =>

@@ -1,3 +1,4 @@
+import { restoreEvidenceLayout } from './evidence-segments.js';
 import type {
   WorldEvent,
   Appraisal,
@@ -167,8 +168,8 @@ export async function prepareHistoryEdit(
       if (world.experience.temporal) {
         const selected = await db
           .prepare(
-            `SELECT t.actor_id,t.source_id,t.payload,t.position,t.value_refs,octet_length(t.payload) AS bytes
-        FROM mind_temporal_chunks t WHERE t.world_id=? AND NOT (t.source_id=ANY(?::text[])) AND EXISTS (
+            `SELECT t.actor_id,t.source_id,t.payload,t.position,t.value_refs,t.segments,t.encoded_bytes AS bytes
+        FROM mind_temporal_chunks_read t WHERE t.world_id=? AND NOT (t.source_id=ANY(?::text[])) AND EXISTS (
           SELECT 1 FROM jsonb_to_recordset(?::jsonb) a(actor_id text,source_id text)
           WHERE a.actor_id=t.actor_id AND t.source_ids @> ARRAY[a.source_id]::text[]) ORDER BY t.actor_id,t.position LIMIT 8193`,
           )
@@ -219,7 +220,7 @@ export async function prepareHistoryEdit(
         if (missing.length) {
           const size = await db
             .prepare(
-              'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+              'SELECT SUM(encoded_bytes) AS bytes FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
             )
             .get(worldId, missing);
           sourceBytes += Number(size?.['bytes'] ?? 0);
@@ -227,10 +228,14 @@ export async function prepareHistoryEdit(
             throw new Error('Complete personal source correction exceeds bounded preparation.');
           for (const row of await db
             .prepare(
-              'SELECT payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+              'SELECT payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
             )
             .all(worldId, missing)) {
-            const source = JSON.parse(String(row['payload'])) as ReceivedValueBlock;
+            const source = restoreEvidenceLayout(
+              JSON.parse(String(row['payload'])),
+              'values',
+              row['segments'],
+            ) as unknown as ReceivedValueBlock;
             received.sources[source.id] = source;
           }
         }

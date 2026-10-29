@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   validateNarration,
   validEncounterExposure,
+  isImmutableData,
   type WorldEvent,
   type WorldState,
 } from '@open-legend/domain';
@@ -10,6 +11,7 @@ import { prepareHistory } from './history-preparation.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import {
   WorldRecords,
+  preparedRecordChanges,
   assembleWorldRecords,
   type RecordChanges,
   type RowChange,
@@ -90,6 +92,7 @@ export interface EncodedJournalTransition {
   readonly bytes: number;
 }
 const validatedEncodings = new WeakMap<EncodedJournalTransition, JournalTransition>();
+const ownedEncodings = new WeakSet<EncodedJournalTransition>();
 const checksum = (payload: string) => createHash('sha256').update(payload).digest('hex');
 
 /** Resolve the schema's real logical path, including transparent actor-owned `$` collections. */
@@ -180,11 +183,23 @@ export function encodeJournalTransition(
   });
   const bytes = Buffer.byteLength(payload);
   if (bytes > JOURNAL_ENTRY_BYTES) return;
-  // The same current decoder protects both accepted encoding and restart recovery.
   const hash = checksum(payload);
-  const transition = decodeJournalTransition(payload, hash);
+  // Owned canonical preparation already extracted and checked these exact rows.
+  // Foreign inputs and every persisted recovery entry retain the complete decoder.
+  const owned = preparedRecordChanges(changes) && history.changed.every(isImmutableData);
+  const transition = owned
+    ? {
+        changes,
+        history: {
+          append: history.fastAppend,
+          changed: [...history.changed],
+          removed: [...history.removed],
+        },
+      }
+    : decodeJournalTransition(payload, hash);
   const encoded = Object.freeze({ payload, checksum: hash, bytes });
   validatedEncodings.set(encoded, transition);
+  if (owned) ownedEncodings.add(encoded);
   return encoded;
 }
 /** Reuse only this owner's sealed exact encoding; foreign preparation is decoded.
@@ -192,9 +207,10 @@ export function encodeJournalTransition(
 export function validatedJournalTransition(encoded: EncodedJournalTransition): JournalTransition {
   if (Buffer.byteLength(encoded.payload) !== encoded.bytes)
     throw new Error('Journal byte count changed.');
-  return (
-    validatedEncodings.get(encoded) ?? decodeJournalTransition(encoded.payload, encoded.checksum)
-  );
+  const held = validatedEncodings.get(encoded);
+  if (held && ownedEncodings.has(encoded) && !preparedRecordChanges(held.changes))
+    throw new Error('Prepared journal records changed after encoding.');
+  return held ?? decodeJournalTransition(encoded.payload, encoded.checksum);
 }
 export function decodeJournalTransition(
   payload: string,

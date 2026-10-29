@@ -483,7 +483,7 @@ export function itemTradeView(
   };
   return {
     maximumLots: STOCK_TRANSFER_LIMITS.movedLots,
-    scope: JSON.stringify([scope, person.id]),
+    scope,
     personId: person.id,
     personName: observerName(world, actorId, person.id).name,
     labels: {

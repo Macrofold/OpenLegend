@@ -15,6 +15,7 @@ import {
   validateObservationContribution,
   validateReceivedParticipantObservers,
   validateSensoryFacet,
+  validateObservedBodyPose,
 } from './perception-evidence.js';
 import { validateDetectionSupportState } from './perception-support.js';
 import { validateReceivedGeometryState } from './received-geometry.js';
@@ -102,11 +103,14 @@ export function validateReceivedValueState(
           !validObservationDetector(header.detector)
         )
           throw new Error('Invalid received observation header.');
+      } else if (fragment?.kind === 'body-pose') {
+        if (!hasRecordFields(fragment, ['kind', 'pose']))
+          throw new Error('Invalid shared body pose.');
+        validateObservedBodyPose(fragment.pose);
       } else if (fragment?.kind === 'observation-frame') {
         if (!hasRecordFields(fragment, ['kind', 'frame']) || !validObservationFrame(fragment.frame))
           throw new Error('Invalid shared observation frame.');
-      } else if (fragment?.kind === 'observed-motion') validateSensoryFacet(fragment, originals);
-      else validateTemporalFragment(fragment, originals);
+      } else validateTemporalFragment(fragment, originals);
     }
   }
 }
@@ -122,11 +126,54 @@ export function validateReceivedFacetValue(
     !hasRecordFields(input, ['kind', 'reference'], ['reception']) ||
     typeof input.kind !== 'string' ||
     !validReceivedReference(input.reference) ||
-    (input.kind === 'location'
-      ? !hasRecordFields(input.reception, ['kind', 'frameRef']) ||
-        input.reception.kind !== 'location' ||
-        !validReceivedReference(input.reception.frameRef)
-      : input.reception !== undefined)
+    (input.kind === 'body'
+      ? !hasRecordFields(input.reception, ['kind', 'poseRef']) ||
+        input.reception.kind !== 'body' ||
+        !validReceivedReference(input.reception.poseRef)
+      : input.kind === 'location'
+        ? !hasRecordFields(input.reception, ['kind', 'frameRef']) ||
+          input.reception.kind !== 'location' ||
+          !validReceivedReference(input.reception.frameRef)
+        : input.kind === 'observed-motion'
+          ? !hasRecordFields(input.reception, [
+              'kind',
+              'exposure',
+              'earlier',
+              'later',
+              'correspondence',
+            ]) ||
+            input.reception.kind !== 'observed-motion' ||
+            !hasRecordFields(
+              input.reception.earlier,
+              [
+                'frameRef',
+                'original',
+                'confirmation',
+                'measuredFrom',
+                'measuredThrough',
+                'acquiredAt',
+                'confirmedFrom',
+                'confirmedThrough',
+              ],
+              ['aliases'],
+            ) ||
+            !hasRecordFields(
+              input.reception.later,
+              [
+                'frameRef',
+                'original',
+                'confirmation',
+                'measuredFrom',
+                'measuredThrough',
+                'acquiredAt',
+                'confirmedFrom',
+                'confirmedThrough',
+              ],
+              ['aliases'],
+            ) ||
+            !validReceivedReference(input.reception.earlier.frameRef) ||
+            !validReceivedReference(input.reception.later.frameRef)
+          : input.reception !== undefined)
   )
     throw new Error('Invalid received facet reference.');
   const value = receivedFacetValue(world, input as unknown as ReceivedFacetValue);
@@ -157,7 +204,7 @@ export function validateReceivedObservation(
       !hasRecordFields(
         facet,
         ['value'],
-        ['ordinal', 'role', 'asOf', 'measuredFrom', 'measuredThrough', 'acquiredAt'],
+        ['ordinal', 'role', 'asOf', 'measuredFrom', 'measuredThrough', 'acquiredAt', 'support'],
       ) ||
       (facet.ordinal !== undefined && facet.ordinal !== ordinal) ||
       (facet.role !== undefined && !['direct', 'testimony', 'inference'].includes(facet.role)) ||

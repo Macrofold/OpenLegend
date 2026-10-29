@@ -1,8 +1,8 @@
 # Compact perception and independent runtime completion
 
-| Status      | Current progress                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------- | ------------ |
-| In progress | Design complete; runtime corrections and their performance acceptance are unimplemented. | 2026-10-29   |
+| Status      | Current progress                                                                                                                           | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Implementation active: compact evidence and connected storage/delivery conversion; integrated semantic and performance acceptance pending. | 2026-10-29   |
 
 **Design selected 2026-10-29 01:40 UTC. Architecture consulted: local `codex/stealth-runtime-01-evidence` at `cd981a2af`, Macrofold/OpenLegend.** This is the implementation extension of the [feature specification](attention-and-scenes-feature-spec.md) and [technical design](attention-and-scenes-tech-design.md), not another perception or persistence architecture. [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) owns delivery. The [verification record](../verification/attention-and-memory-core.md) owns measurements and qualification. No runtime improvement is demonstrated by this document.
 
@@ -260,7 +260,7 @@ Retained-history qualification still includes real physical database/index bytes
 
 Rejected alternatives are smaller sensory/history defaults, lossier observations, moving the same excessive copying to workers, per-coordinate database rows, an endlessly rewritten blob, all-pairs relational context, per-character timed model polling, and published speculative commands before durable acceptance. Each either changes gameplay or preserves/adds the measured amplification.
 
-Runtime implementation R1–R7 is outstanding. The underlying branch is not merge-ready on this design's evidence: normal-clock and retained-data operating qualification remain failed or open. This design completes the requested correction plan, not those implementation gates.
+Runtime implementation R1–R7 is active; completion is not yet demonstrated. The underlying branch is not merge-ready on this design's evidence: normal-clock and retained-data operating qualification remain failed or open. This design completes the requested correction plan, not those implementation gates.
 
 ## Maintained records
 

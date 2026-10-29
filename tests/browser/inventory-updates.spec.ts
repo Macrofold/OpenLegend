@@ -85,7 +85,7 @@ test('inventory keeps its search and focus during unrelated motion and refreshes
     await blockExternalBrowserRequests(page);
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
-    await page.locator('.ol-rail').getByRole('button', { name: 'Inventory', exact: true }).click();
+    await page.getByRole('button', { name: 'Character (C)', exact: true }).click();
     const panel = page.locator('#inventoryPanel');
     const search = panel.getByRole('textbox', { name: /^Search / }).first();
     await expect(search).toBeVisible();

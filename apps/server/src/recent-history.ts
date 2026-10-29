@@ -45,13 +45,9 @@ function receivedText(values: readonly (TemporalValue | SensoryFacet)[]): string
     else if (value.kind === 'event')
       parts.push(value.eventType === 'speech' ? value.text : historicalAccountText(value.text));
     else if (value.kind === 'claim') parts.push(value.wordsAsHeard);
-    else if (value.kind === 'received-motion')
-      parts.push(
-        `${receivedLocation(value.earlier.location)} → ${receivedLocation(value.later.location)}`,
-      );
     else if (value.kind === 'observed-motion')
       parts.push(
-        `${receivedLocation(value.earlier.value.location)} → ${receivedLocation(value.later.value.location)}`,
+        `${receivedLocation(value.earlier.location)} → ${receivedLocation(value.later.location)}`,
       );
     else if (value.kind === 'surface-patch')
       parts.push(
@@ -83,8 +79,7 @@ function receivedText(values: readonly (TemporalValue | SensoryFacet)[]): string
         if (exposure.inscription) parts.push(`Inscription: ${exposure.inscription}`);
         if (exposure.observedLocation) parts.push(exposure.observedLocation.label);
       }
-    } else if (value.kind === 'confirmation') parts.push(receivedText([value.snapshot.value]));
-    else if (value.kind === 'contact')
+    } else if (value.kind === 'contact')
       parts.push(value.detail === 'moving' ? 'Movement noticed.' : 'Presence noticed.');
     else if (value.kind === 'detected') parts.push(`${value.detected} detected.`);
   }

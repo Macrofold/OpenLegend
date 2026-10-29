@@ -224,7 +224,7 @@ export function selectedVoiceReception(
       features,
       clarityMarginDb,
       body ? visibleSourceId : undefined,
-      body ? observationFactKey(world, body.original, body.originalOrdinal) : undefined,
+      body ? body.original : undefined,
     ),
   };
 }

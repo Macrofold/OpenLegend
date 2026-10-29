@@ -55,6 +55,7 @@ routes(
     '/api/inventory',
     '/api/inventory/bindings',
     '/api/trade/disclosures',
+    '/api/trade',
     '/api/inventory/access',
     '/api/inventory/destinations',
     '/api/inventory/history',

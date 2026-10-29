@@ -3,6 +3,7 @@ import {
   receivedEventEvidence,
   receivedEventAwareness,
   temporalReceiptId,
+  canonicalJson,
   type Awareness,
   type EventEvidence,
   type TemporalReceipt,
@@ -109,7 +110,7 @@ export function encodeTemporalStoryAccount(
 ) {
   const account: TemporalAccountReference = {
     kind: 'temporal',
-    revision: personalAccountRevision(JSON.stringify(source.evidence)),
+    revision: personalAccountRevision(canonicalJson(source.evidence)),
     receipt: temporal.receipt,
     bytes: temporal.bytes,
   };
@@ -147,9 +148,9 @@ export function storyAccountSql(alias = 'p'): string {
     SELECT '{"receipt":'||r.receipt::text||',"values":['||(
       SELECT string_agg((s.payload::json->'values'->(f.value->>'valueOrdinal')::int)::text,',' ORDER BY f.ordinal)
       FROM json_array_elements(r.receipt->'facets') WITH ORDINALITY f(value,ordinal)
-      JOIN mind_perception_values s ON s.world_id=${alias}.world_id AND s.source_id=f.value->>'blockId'
+      JOIN mind_perception_values_read s ON s.world_id=${alias}.world_id AND s.source_id=f.value->>'blockId'
       WHERE s.payload::json->'values'->(f.value->>'valueOrdinal')::int->>'kind' IN ('event','sound')
-    )||']}' FROM mind_temporal_chunks c
+    )||']}' FROM mind_temporal_chunks_read c
       CROSS JOIN LATERAL json_array_elements(c.payload::json->'receipts') r(receipt)
       WHERE ${kind}='temporal' AND c.world_id=${alias}.world_id AND c.id=${alias}.temporal_chunk_id
       AND c.actor_id=${alias}.actor_id
@@ -164,13 +165,15 @@ export function decodeStoryAccount(payload: string, body: unknown): StorySource 
   const stored = JSON.parse(payload) as StoredStorySource;
   if (stored.account?.kind === 'temporal') {
     if (typeof body !== 'string') throw new Error('Recent personal receipt is unavailable.');
+    const selected = JSON.parse(body) as { receipt: TemporalReceipt; values: TemporalValue[] };
     if (
       !Number.isSafeInteger(stored.account.bytes) ||
       stored.account.bytes < 1 ||
-      Buffer.byteLength(body) !== stored.account.bytes
+      // SQL reconstruction may reorder JSON keys or add whitespace. Logical
+      // evidence charging measures the compact data, never database rendering.
+      Buffer.byteLength(JSON.stringify(selected)) !== stored.account.bytes
     )
       throw new Error('Recent personal receipt byte accounting disagrees with its source.');
-    const selected = JSON.parse(body) as { receipt: TemporalReceipt; values: TemporalValue[] };
     const receipt = selected.receipt,
       locator = stored.account.receipt;
     if (
@@ -184,7 +187,7 @@ export function decodeStoryAccount(payload: string, body: unknown): StorySource 
     )
       throw new Error('Recent personal receipt has a different owner or occurrence.');
     const evidence = receivedEventEvidence(locator.actorId, selected.values);
-    if (!evidence || personalAccountRevision(JSON.stringify(evidence)) !== stored.account.revision)
+    if (!evidence || personalAccountRevision(canonicalJson(evidence)) !== stored.account.revision)
       throw new Error('Recent personal event disagrees with its retained receipt.');
     return {
       id: stored.id,

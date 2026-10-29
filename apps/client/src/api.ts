@@ -419,6 +419,29 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
       entities = order.map((id) => byId.get(id)!);
     } else entities = [...byId.values()];
   }
+  let events = current.events;
+  if (patch.events) {
+    const byId = new Map(events.map((event) => [event.id, event]));
+    const touched = new Set<string>();
+    for (const id of patch.events.remove) {
+      touched.add(id);
+      if (!byId.delete(id)) throw new Error('Missing removed game event.');
+    }
+    for (const event of patch.events.upsert) {
+      if (touched.has(event.id)) throw new Error('Conflicting game event changes.');
+      touched.add(event.id);
+      byId.set(event.id, event);
+    }
+    const order = patch.events.order;
+    if (
+      order &&
+      (order.length !== byId.size ||
+        new Set(order).size !== order.length ||
+        order.some((id) => !byId.has(id)))
+    )
+      throw new Error('Invalid game event order.');
+    events = order ? order.map((id) => byId.get(id)!) : [...byId.values()];
+  }
   const next: GameView = {
     ...current,
     revision: patch.revision,
@@ -442,7 +465,7 @@ export function applyGamePatch(current: GameView, patch: GamePatch): GameView {
     player: applyFields(current.player, patch.player, patch.remove?.player),
     ...(patch.entities ? { entities } : {}),
     ...(patch.recipes ? { recipes: patch.recipes } : {}),
-    ...(patch.events ? { events: patch.events } : {}),
+    ...(patch.events ? { events } : {}),
     ...(patch.conversation ? { conversation: patch.conversation } : {}),
     ai: applyFields(current.ai, patch.ai, patch.remove?.ai),
     ...(patch.milestones ? { milestones: patch.milestones } : {}),

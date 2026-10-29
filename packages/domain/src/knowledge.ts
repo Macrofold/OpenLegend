@@ -15,7 +15,7 @@ import {
   temporalReceiptId,
 } from './temporal-evidence.js';
 import { selectedTemporalPolicy } from './world-composition.js';
-import { updateWorld, cloneValue } from './draft.js';
+import { touchNativeEvidence, updateWorld, cloneValue } from './draft.js';
 import type { KnowledgeRecord } from './types.js';
 
 export type ObserverSubject =
@@ -163,6 +163,8 @@ export function learnRecipe(
       });
     });
     if (!accepted) return 'capacity';
+    touchNativeEvidence(world, 'temporal', actorId);
+    touchNativeEvidence(world, 'received');
     const received = prepared.experience!.temporal!;
     const temporal = world.experience!.temporal;
     if (!temporal) world.experience!.temporal = cloneValue(received);

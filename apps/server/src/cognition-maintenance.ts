@@ -1027,37 +1027,21 @@ export class CognitionMaintenance {
         });
         if (controller.signal.aborted || this.service.paused)
           throw new Error('Consolidation canceled before publication.');
-        const accepted = await this.service.withActorHistory(
-          [actorId],
-          async () => {
-            if (controller.signal.aborted || this.service.paused)
-              throw new Error('Consolidation canceled before publication.');
-            if (
-              batch.selection &&
-              !(await this.service.store.memories?.current(
-                batch.selection.scope,
-                batch.selection.revisions,
-              ))
-            )
-              throw new Error('Consolidation sources or timeline changed before publication.');
-            return this.service.transition((world) => {
-              this.assertAdmission(world);
-              return acceptConsolidation(
-                world,
-                actorId,
-                job.id,
-                batch.sources,
-                groups,
-                batch.prepared,
-              );
-            });
-          },
-          batch.selection
-            ? batch.sources.map((source) =>
-                source.source === 'awareness' ? source.value.eventId : source.value.id,
-              )
-            : undefined,
-        );
+        const accepted = await this.service.withActorHistory(actorId, batch, async () => {
+          if (controller.signal.aborted || this.service.paused)
+            throw new Error('Consolidation canceled before publication.');
+          return this.service.transition((world) => {
+            this.assertAdmission(world);
+            return acceptConsolidation(
+              world,
+              actorId,
+              job.id,
+              batch.sources,
+              groups,
+              batch.prepared,
+            );
+          });
+        });
         if (!accepted.ok) throw new Error(accepted.message);
         committed = true;
         await this.log.record(`${job.id}:publication`, 'Summary publication', {}, accepted);

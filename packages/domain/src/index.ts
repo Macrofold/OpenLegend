@@ -166,6 +166,7 @@ export {
   updateWorld,
   appendedEventCount,
   appendedRecordCount,
+  appendSnapshot,
   freezeWorld,
   entityChangesBetween,
   recordMapChangesBetween,

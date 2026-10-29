@@ -4,6 +4,7 @@ import {
   recognizesSubject,
   currentBodyGrant,
   canonicalJson,
+  coachingFor,
 } from '@open-legend/domain';
 import type { EncounterPreferenceBinding } from '@open-legend/domain';
 import type { CatalogueAction } from '@open-legend/protocol';
@@ -70,6 +71,7 @@ export function contextActionRevision(
   target: Entity,
   binding: EncounterPreferenceBinding | undefined,
 ): string {
+  const coaching = coachingFor(world, actor.id);
   return createHmac('sha256', bodyReferenceKey)
     .update(
       canonicalJson([
@@ -79,6 +81,9 @@ export function contextActionRevision(
         actor.actor?.physicalLife ?? null,
         target.actor?.physicalLife ?? null,
         binding ?? null,
+        coaching && [coaching.coachId, coaching.learnerId].includes(target.id)
+          ? [coaching.id, coaching.phase, coaching.pin, coaching.observed?.eventId]
+          : null,
         (actor.actor?.combatReadyAt ?? 0) > world.simTime,
         actor.actor?.action?.ranged?.ready ?? null,
       ]),

@@ -5,6 +5,8 @@ import {
   currentBodySubject,
   currentSightConfirmedThrough,
   observerIndividual,
+  bodyEligibilityRevision,
+  availableItemQuantity,
 } from '@open-legend/domain';
 import { worldClockParts, worldDayText } from '@open-legend/protocol';
 import { receivedEventAccounts } from './received-event-accounts.js';
@@ -33,13 +35,11 @@ import {
 import { permittedSourceHandle, evidenceSourceHandle } from './entity-references.js';
 import { entityGet } from '@open-legend/domain';
 import { selectedEventPresentation } from '@open-legend/domain';
-import { nativeCommandSupported } from '@open-legend/domain';
-import { nativeCommandKind } from './native-command-kind.js';
 import { outingViews } from './outing-view.js';
 
 import { recipeDetailsView } from './recipe-view.js';
 import { guardWorkLabel, BASE_RANGED_TEXT, nativeActivityViews } from '@open-legend/domain';
-import { competenceOptions, waitingForFeedback } from './competence-actions.js';
+import { waitingForFeedback } from './competence-actions.js';
 import {
   ownPractice,
   coachingFor,
@@ -67,8 +67,8 @@ import {
   type RequestScope,
 } from './authority.js';
 import { observerName } from '@open-legend/domain';
-import { handoverOptions, itemTradeView, tradeOwnLots } from './handover-actions.js';
-import { canHandleItems } from '@open-legend/domain';
+import { tradeSummary } from './trade-view.js';
+import { rememberedTradeDisclosureIndex } from '@open-legend/domain';
 import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
 import { attackSubject, bodyPolicy } from '@open-legend/domain';
 import { isConversationEvent } from '@open-legend/domain';
@@ -127,6 +127,7 @@ interface ViewCache {
   values: Map<string, { deps: unknown[]; value: unknown }>;
   sections: Map<string, { token: unknown; value?: unknown }>;
   entities: Map<string, Map<string, { deps: unknown[]; value: unknown }>>;
+  eventChunks: import('./received-event-accounts.js').ReceivedEventAccountIndex;
 }
 const projections = new WeakMap<WorldService, Map<string, ViewCache>>();
 function scopedCache(service: WorldService, scope: RequestScope): ViewCache {
@@ -140,7 +141,13 @@ function scopedCache(service: WorldService, scope: RequestScope): ViewCache {
       scopes.delete(scopes.keys().next().value!);
     scopes.set(
       key,
-      (cache = { scope, values: new Map(), sections: new Map(), entities: new Map() }),
+      (cache = {
+        scope,
+        values: new Map(),
+        sections: new Map(),
+        entities: new Map(),
+        eventChunks: new Map(),
+      }),
     );
   }
   return cache;
@@ -359,7 +366,6 @@ export async function projectView(
     actor.alive &&
     !actor.incapacitated &&
     service.currentScope(scope, 'play', true);
-  const coaching = coachingFor(world, scope.actorId);
   const action = (
     id: string,
     label: string,
@@ -470,9 +476,62 @@ export async function projectView(
       preferences: new Set(attention?.explicit ?? []),
     }),
   );
+  const tradeDefinitions = memo(
+    'tradeDefinitions',
+    [
+      world.itemDefinitions,
+      world.presentation?.itemArt,
+      world.itemHandling,
+      world.constructionProfile,
+    ],
+    () =>
+      permittedSourceHandle(world, player.id, [
+        'trade-definitions',
+        world.itemDefinitions,
+        world.presentation?.itemArt,
+        world.itemHandling,
+        world.constructionProfile,
+      ]),
+  );
+  const tradeBodyRevision = bodyEligibilityRevision(world, player);
+  const tradeHeldStock = memo(
+    'tradeHeldStock',
+    [world.resourceReservations, observation.inventory],
+    () => observation.inventory.map((item) => [item.id, availableItemQuantity(world, item.id)]),
+  );
+  const coaching = coachingFor(world, player.id);
+  const playerCanSpeak = canSpeak(player) && !capabilityBlocked(world, player, 'speech');
+  const tradeReaderRevision = memo(
+    'tradeReaderRevision',
+    [
+      player.inventoryRevision,
+      tradeBodyRevision,
+      actor.action?.id,
+      actor.action?.stage,
+      tradeHeldStock,
+      world.moduleManifest.revision,
+      world.map.spatial.revision,
+      tradeDefinitions,
+    ],
+    () =>
+      permittedSourceHandle(world, player.id, [
+        'trade-reader-owner',
+        player.inventoryRevision,
+        tradeBodyRevision,
+        actor.action?.id,
+        actor.action?.stage,
+        tradeHeldStock,
+        world.moduleManifest.revision,
+        world.map.spatial.revision,
+        tradeDefinitions,
+      ]),
+  );
   const entities: EntityView[] = observation.visibleEntities
     .filter((entity) => entity.id !== scope.actorId)
     .map((entity) => {
+      let values = cache.entities.get(entity.id);
+      if (!values) cache.entities.set(entity.id, (values = new Map()));
+      const entityMemo = memoizer({ values });
       const facets = currentObservedFacetValues(world, player.id, entity.id, publicDetailKinds);
       const received = facets.find((facet) => facet.value.kind === 'body');
       if (received?.value.kind !== 'body') throw new ViewChangedError();
@@ -484,11 +543,15 @@ export async function projectView(
         publicAttributes?.value.kind === 'public-attributes'
           ? publicAttributes.value.attributes.find((attribute) => attribute.bodyHealth)?.value
           : undefined;
-      const display = observerName(world, player.id, entity.id);
       const individualSubject = currentBodySubject(world, player.id, entity.id);
       const identity = individualSubject
         ? observerIndividual(world, player.id, individualSubject)
         : undefined;
+      const display = entityMemo(
+        'name',
+        [identity, body.label?.name, body.label?.nameForm, body.label?.indefiniteArticle],
+        () => observerName(world, player.id, entity.id),
+      );
       const kind: EntityView['kind'] =
         body.kind === 'animal'
           ? 'animal'
@@ -503,38 +566,32 @@ export async function projectView(
                   : body.kind === 'practice-target'
                     ? 'practice-target'
                     : 'station';
-      const controls: ActionOption[] = [];
-      if (entity.actor) {
-        if (coaching && [coaching.learnerId, coaching.coachId].includes(entity.id))
-          for (const option of competenceOptions(world, player.id, entity, [])) {
-            const preview = service.previewCommand(option.command, scope);
-            controls.push(
-              action(option.id, option.label, option.command, preview.ok, preview.message),
-            );
-          }
-        for (const option of handoverOptions(world, player.id, observation.inventory, entity, {
-          offers: false,
-        })) {
-          const preview = service.previewCommand(option.command, scope);
-          controls.push(
-            action(option.id, option.shortLabel, option.command, preview.ok, preview.message),
-          );
-        }
-      }
       const rememberedAddressee = currentCommunicationSubject(world, player.id, entity.id);
-      const installedControls = controls.filter((option) =>
-        nativeCommandSupported(world, nativeCommandKind(option.command.type)),
-      );
+      const grant = currentBodyGrant(world, player.id, entity.id)!;
+      const binding = perceivedEncounterPreferenceBinding(world, player, entity);
+      const tradeDisclosures = entity.actor
+        ? rememberedTradeDisclosureIndex(world, player.id, entity.id)
+        : undefined;
 
       return {
-        id: currentContactReference(world, scope, entity),
-        bodyReference: entityBodyReference(scopeKey(scope), entity),
-        contextActionRevision: contextActionRevision(
-          scopeKey(scope),
-          world,
-          player,
-          entity,
-          perceivedEncounterPreferenceBinding(world, player, entity),
+        id: entityMemo('contact', [grant.leaseId, grant.physicalLife], () =>
+          currentContactReference(world, scope, entity),
+        ),
+        bodyReference: entityMemo('body', [entity.actor?.physicalLife ?? 0], () =>
+          entityBodyReference(scopeKey(scope), entity),
+        ),
+        contextActionRevision: entityMemo(
+          'contextActions',
+          [
+            world.moduleManifest.revision,
+            actor.physicalLife,
+            entity.actor?.physicalLife,
+            JSON.stringify(binding),
+            coaching,
+            (actor.combatReadyAt ?? 0) > world.simTime,
+            actor.action?.ranged?.ready,
+          ],
+          () => contextActionRevision(scopeKey(scope), world, player, entity, binding),
         ),
         ...(body.assembly
           ? {
@@ -555,21 +612,39 @@ export async function projectView(
         ...display,
         ...(identity && !identity.seedOnly
           ? {
-              identity: {
-                ...(identity.givenName ? { knownName: identity.givenName } : {}),
-                ...(identity.nickname ? { nickname: identity.nickname } : {}),
-                revision: identity.revision,
-              },
+              identity: entityMemo(
+                'identity',
+                [identity.givenName, identity.nickname, identity.revision],
+                () => ({
+                  ...(identity.givenName ? { knownName: identity.givenName } : {}),
+                  ...(identity.nickname ? { nickname: identity.nickname } : {}),
+                  revision: identity.revision,
+                }),
+              ),
             }
           : {}),
-        observation: {
-          kind: 'current',
-          modality: 'sight',
-          measurementAt: detailTime(received.valueMeasuredThrough),
-          acquiredAt: detailTime(received.valueAcquiredAt),
-          confirmedThrough: detailTime(received.confirmedThrough),
-          sourceReference: evidenceSourceHandle(world, player.id, received.source),
-        },
+        observation: entityMemo(
+          'observation',
+          [
+            received.valueMeasuredThrough,
+            received.valueAcquiredAt,
+            received.confirmedThrough,
+            sightConfirmedThrough,
+            received.source.family,
+            received.source.id,
+            received.source.revision,
+            received.source.observer.actorId,
+            received.source.observer.physicalLife,
+          ],
+          () => ({
+            kind: 'current',
+            modality: 'sight',
+            measurementAt: detailTime(received.valueMeasuredThrough),
+            acquiredAt: detailTime(received.valueAcquiredAt),
+            confirmedThrough: detailTime(received.confirmedThrough),
+            sourceReference: evidenceSourceHandle(world, player.id, received.source),
+          }),
+        ),
         kind,
         subtype: body.subtype ?? body.kind,
         ...(body.icon ? { icon: body.icon } : {}),
@@ -585,7 +660,7 @@ export async function projectView(
         appearance: body.appearance,
         ...(entity.actor ? { portrait: portraitArt(world, body.appearance) } : {}),
         radius: body.radius,
-        bodySize: memo(`bodySize:${entity.id}`, [body.radius, body.height], () => ({
+        bodySize: entityMemo('bodySize', [body.radius, body.height], () => ({
           width: body.radius * 2,
           height: body.height,
         })),
@@ -625,12 +700,9 @@ export async function projectView(
           : {}),
         ...(entity.actor
           ? {
-              canTalk:
-                body.outward[0] === 'alive' &&
-                canSpeak(player) &&
-                !capabilityBlocked(world, player, 'speech'),
+              canTalk: body.outward[0] === 'alive' && playerCanSpeak,
               talkRequiresAi: entity.actor.controller === 'npc',
-              ...(!canSpeak(player) || capabilityBlocked(world, player, 'speech')
+              ...(!playerCanSpeak
                 ? { talkUnavailableReason: 'Your character cannot speak now.' }
                 : {}),
               ...(rememberedAddressee
@@ -640,39 +712,19 @@ export async function projectView(
                     }),
                   }
                 : {}),
-              ...(entity.actor.alive && canHandleItems(world, entity)
-                ? {
-                    trade: projectCommandContactReferences(
-                      world,
-                      scope,
-                      itemTradeView(
-                        world,
-                        player.id,
-                        memo(
-                          'tradeOwnLots',
-                          [
-                            observation.inventory,
-                            world.itemDefinitions,
-                            world.presentation?.itemArt,
-                          ],
-                          () => tradeOwnLots(world, observation.inventory),
-                        ),
-                        entity,
-                        JSON.stringify([privateDraftScopeKey(scope), service.timelineId]),
-                        installedControls,
-                      ),
-                    ),
-                  }
-                : {}),
-            }
-          : {}),
-        ...(installedControls.length
-          ? {
-              controls: installedControls.map((option) => ({
-                ...option,
-                id: permittedSourceHandle(world, player.id, ['control', option.id]),
-                command: projectCommandContactReferences(world, scope, option.command),
-              })),
+              trade: tradeSummary(
+                world,
+                scope,
+                entity,
+                tradeReaderRevision,
+                entityMemo('tradeDisclosures', [tradeDisclosures], () =>
+                  permittedSourceHandle(world, player.id, [
+                    'trade-disclosures',
+                    entity.id,
+                    [...tradeDisclosures!],
+                  ]),
+                ),
+              ),
             }
           : {}),
       };
@@ -696,23 +748,44 @@ export async function projectView(
         .slice(-512)
         .map((entry) => entry.eventId),
     ]);
-    const visible = [...receivedEventAccounts(world, scope.actorId, wanted, { current: true })]
+    const visible = [
+      ...receivedEventAccounts(world, scope.actorId, wanted, {
+        current: true,
+        evidenceOnly: true,
+        index: cache.eventChunks,
+      }),
+    ]
       .flatMap(([id, account]) => {
         const event = service.worldEvent(id);
-        return event ? [projectEventEvidence(event, account.evidence)] : [];
+        return event
+          ? [
+              memo(`eventAccount:${id}`, [event, account.awareness ?? account.evidence], () =>
+                projectEventEvidence(event, account.evidence),
+              ),
+            ]
+          : [];
       })
       .sort((a, b) => (b.order ?? b.sequence) - (a.order ?? a.sequence));
     const bounded: ActorEvent[] = [];
     let journal = 0;
     let conversation = 0;
     for (const event of visible) {
-      bounded.push(event);
-      if (isJournalEvent(event)) journal++;
-      if (isConversationEvent(event)) conversation++;
+      const inJournal = isJournalEvent(event) && journal < 60;
+      const inConversation = isConversationEvent(event) && conversation < 30;
+      if (inJournal || inConversation) bounded.push(event);
+      if (inJournal) journal++;
+      if (inConversation) conversation++;
       if (journal >= 60 && conversation >= 30) break;
     }
     return bounded.reverse();
   });
+  const selectedEventIds = new Set(events.map((event) => event.id));
+  for (const key of cache.values.keys())
+    if (
+      (key.startsWith('eventAccount:') && !selectedEventIds.has(key.slice(13))) ||
+      (key.startsWith('event:') && !selectedEventIds.has(key.slice(6)))
+    )
+      cache.values.delete(key);
   const usage = optional(
     service,
     cache,
@@ -1376,18 +1449,31 @@ export async function projectView(
       ],
       () =>
         events
-          // Recognize legacy movement records that predate structured action types.
           .filter(isJournalEvent)
           .slice(-60)
-          .map((event) =>
-            publicEvent(
-              event,
-              selectedEventPresentation(world),
-              player.id,
-              JSON.stringify([world.id, `${service.timelineId}:${scopeKey(scope)}`]),
-              (receivedEvent) => perceivedParticipantReferences(world, scope, receivedEvent),
-            ),
-          ),
+          .map((event) => {
+            const roles = perceivedParticipantReferences(world, scope, event);
+            const presentation = selectedEventPresentation(world);
+            return memo(
+              `event:${event.id}`,
+              [
+                event,
+                presentation,
+                roles.actor?.contactReference,
+                roles.actor?.communicationReference,
+                roles.target?.contactReference,
+                roles.target?.communicationReference,
+              ],
+              () =>
+                publicEvent(
+                  event,
+                  presentation,
+                  player.id,
+                  JSON.stringify([world.id, `${service.timelineId}:${scopeKey(scope)}`]),
+                  () => roles,
+                ),
+            );
+          }),
     ),
     conversation: conversationEntries.map((event) => {
       const reply = replies.get(event.id);
@@ -1484,8 +1570,16 @@ export async function projectView(
   // evidence owners changed; unrelated motion must not invalidate their view.
   if (eventEvidenceOwners(service.world).some((owner, i) => owner !== capturedEventOwners[i])) {
     const wanted = new Set(events.map((event) => event.id));
-    const before = receivedEventAccounts(world, scope.actorId, wanted, { current: true });
-    const after = receivedEventAccounts(service.world, scope.actorId, wanted, { current: true });
+    const before = receivedEventAccounts(world, scope.actorId, wanted, {
+      current: true,
+      evidenceOnly: true,
+      index: cache.eventChunks,
+    });
+    const after = receivedEventAccounts(service.world, scope.actorId, wanted, {
+      current: true,
+      evidenceOnly: true,
+      index: cache.eventChunks,
+    });
     if (
       events.some(
         (event) =>
@@ -1522,6 +1616,22 @@ function removedFields<T extends object>(previous: T, next: T): Array<keyof T> |
     (key) => previous[key] !== undefined && next[key] === undefined,
   );
   return keys.length ? keys : undefined;
+}
+
+function eventChanges(previous: GameView['events'], next: GameView['events']): GamePatch['events'] {
+  if (previous === next) return;
+  const before = new Map(previous.map((event) => [event.id, event]));
+  const after = new Set(next.map((event) => event.id));
+  const upsert = next.filter((event) => !same(before.get(event.id), event));
+  const remove = previous.filter((event) => !after.has(event.id)).map((event) => event.id);
+  const order = next.map((event) => event.id);
+  const reordered = !same(
+    previous.map((event) => event.id),
+    order,
+  );
+  return upsert.length || remove.length || reordered
+    ? { upsert, remove, ...(reordered ? { order } : {}) }
+    : undefined;
 }
 
 /** Public transport delta only. Authoritative/private state never enters this comparison. */
@@ -1585,6 +1695,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
   const removedClock = removedFields(previous.clock, next.clock);
   const removedPlayer = removedFields(previous.player, next.player);
   const removedAi = removedFields(previous.ai, next.ai);
+  const events = eventChanges(previous.events, next.events);
   return {
     schemaVersion: 3,
     evaluationCut: next.evaluationCut,
@@ -1624,7 +1735,7 @@ export function projectPatch(previous: GameView, next: GameView): GamePatch | nu
       ? { entities: { add, update, remove, ...(order ? { order } : {}) } }
       : {}),
     ...(!same(previous.recipes, next.recipes) ? { recipes: next.recipes } : {}),
-    ...(!same(previous.events, next.events) ? { events: next.events } : {}),
+    ...(events ? { events } : {}),
     ...(!same(previous.conversation, next.conversation) ? { conversation: next.conversation } : {}),
     ...(ai ? { ai } : {}),
     ...(!same(previous.milestones, next.milestones) ? { milestones: next.milestones } : {}),

@@ -460,12 +460,14 @@ describe('event-time observer facts', () => {
     ).toBe(false);
     // Three actual received position changes publish separate chunks; ordinary
     // residency releases the older receipt body while retaining its SQL reference.
-    for (let sample = 0; sample < 3; sample++)
+    for (let sample = 0; sample < 3; sample++) {
+      await service.setPresence('event-disclosure-fixture', true);
       await editWorld(service, (world) => {
         world.simTime += 1;
         place(world, PLAYER_ID, 32.6 + sample * 0.1);
         initializePerception(world, []);
       });
+    }
     expect(
       service.world
         .experience!.temporal!.actors[NPC_ID]!.chunks.flatMap((chunk) => chunk.receipts)

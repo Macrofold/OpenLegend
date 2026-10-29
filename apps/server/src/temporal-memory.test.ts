@@ -186,7 +186,7 @@ describe('bounded personal temporal storage', () => {
       (
         await store.db
           .prepare(
-            'SELECT payload FROM mind_temporal_chunks WHERE world_id=? AND source_refs @> ARRAY[?]::text[]',
+            'SELECT payload FROM mind_temporal_chunks_read WHERE world_id=? AND source_refs @> ARRAY[?]::text[]',
           )
           .all(service.world.id, block)
       ).flatMap((row) => {

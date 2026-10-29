@@ -1,6 +1,12 @@
 import { nextId } from './data.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import { readOnlyDraftView } from './draft.js';
+import {
+  appendedRecordCount,
+  appendSnapshot,
+  isAppendBuffer,
+  readOnlyDraftView,
+  touchNativeEvidence,
+} from './draft.js';
 import { immutableDataSnapshot, isImmutableData, jsonEncoding } from './records.js';
 import type { WorldState } from './types.js';
 import type {
@@ -13,7 +19,7 @@ import type { TemporalFragment } from './temporal-evidence.js';
 /** Shared exact payloads are data, never evidence that an actor received them. */
 export type ReceivedValueFragment =
   | TemporalFragment
-  | Extract<SensoryFacet, { kind: 'observed-motion' }>
+  | { kind: 'body-pose'; pose: import('./perception-evidence.js').ObservedBodyPose }
   | { kind: 'observation-header'; header: ReceivedObservationHeader }
   | { kind: 'observation-frame'; frame: ObservationFrame };
 export interface ReceivedValueReference {
@@ -54,7 +60,9 @@ function activeValueIndex(world: WorldState, state: ReceivedValueState): ValueIn
     if (!block) throw new Error('The received append group is unavailable.');
     return readOnlyDraftView(readOnlyDraftView(block).values);
   });
-  const reusable = isImmutableData(group) && vectors.every(isImmutableData);
+  const reusable =
+    isImmutableData(group) &&
+    vectors.every((value) => isImmutableData(value) || isAppendBuffer(value));
   const previous = reusable ? indexes.get(world) : undefined;
   if (
     previous &&
@@ -152,16 +160,21 @@ export function retainReceivedValue(
     prepared.group = readOnlyDraftView(state.activeSources);
     prepared.vectors.push(block.values);
   }
+  touchNativeEvidence(world, 'received', block.id);
   countDomainWork('receivedValueAppends');
   const ordinal = block.values.length,
     before = block.bytes;
   let previousDigits = String(before).length;
-  // Immutable vectors make index dependencies exact even for raw builders:
-  // replace the vector to edit it; a shallow-frozen outer owner proves nothing.
-  block.values = immutableDataSnapshot(
-    [...readOnlyDraftView(block.values), immutableDataSnapshot(held, readOnlyDraftView)],
-    readOnlyDraftView,
-  );
+  // The existing owned append buffer copies this prefix once per native turn.
+  // Only its mutation owner updates the comparison index; unknown mutable vectors rebuild.
+  const previousValues = readOnlyDraftView(block.values);
+  block.values =
+    appendSnapshot(previousValues, [immutableDataSnapshot(held, readOnlyDraftView)], world) ??
+    immutableDataSnapshot(
+      [...previousValues, immutableDataSnapshot(held, readOnlyDraftView)],
+      readOnlyDraftView,
+    );
+  if (block.values !== previousValues) countDomainWork('receivedValueVectorCopies');
   block.bytes += encoded.bytes + (block.values.length > 1 ? 1 : 0);
   for (let count = 0; count < 4; count++) {
     const digits = String(block.bytes).length,
@@ -203,12 +216,16 @@ export function pruneReceivedValueBlock(
 export function receivedFacetValueReferences(
   value: import('./perception-evidence.js').ReceivedFacetValue,
 ): ReceivedValueReference[] {
-  return [
-    { blockId: value.reference[0], valueOrdinal: value.reference[1] },
-    ...(value.reception
-      ? [{ blockId: value.reception.frameRef[0], valueOrdinal: value.reception.frameRef[1] }]
-      : []),
-  ];
+  const result = [{ blockId: value.reference[0], valueOrdinal: value.reference[1] }];
+  const frame = (ref: readonly [string, number]) =>
+    result.push({ blockId: ref[0], valueOrdinal: ref[1] });
+  if (value.reception?.kind === 'body') frame(value.reception.poseRef);
+  if (value.reception?.kind === 'location') frame(value.reception.frameRef);
+  if (value.reception?.kind === 'observed-motion') {
+    frame(value.reception.earlier.frameRef);
+    frame(value.reception.later.frameRef);
+  }
+  return result;
 }
 
 export function receivedObservationValueReferences(
@@ -220,44 +237,239 @@ export function receivedObservationValueReferences(
   ];
 }
 
+/** Derived ownership only. Callers adding cold/pending ownership copy the affected
+ * block sets instead of modifying this shared complete resident result. */
+export type ReceivedValueReferences = ReadonlyMap<string, ReadonlySet<number>>;
+type TemporalReceipt = import('./temporal-evidence.js').TemporalReceipt;
+type PerceptionOwner = import('./perception-evidence.js').PerceptionEvidenceOwner;
+interface ReferenceOwner {
+  identity: object;
+  references: ReceivedValueReferences;
+  receipts?: TemporalReceipt[];
+  perception?: {
+    received: PerceptionOwner['received'];
+    current: PerceptionOwner['current'];
+    frame: readonly [string, number] | undefined;
+  };
+}
+interface ReferenceIndex {
+  owners: Map<string, ReferenceOwner>;
+  counts: ReadonlyMap<string, ReadonlyMap<number, number>>;
+  references: ReceivedValueReferences;
+}
+const emptyPerceptionRoot: NonNullable<WorldState['perceptionEvidence']> = immutableDataSnapshot(
+  {},
+);
+const emptyTemporalRoot: import('./temporal-evidence.js').TemporalEvidenceState['actors'] =
+  immutableDataSnapshot({});
+const referenceIndexes = new WeakMap<object, WeakMap<object, [ReferenceIndex?, ReferenceIndex?]>>();
+const observationReferences = new WeakMap<object, ReceivedValueReferences>();
+const leaseReferences = new WeakMap<object, ReceivedValueReferences>();
+const receiptReferenceOwners = new WeakMap<object, ReferenceOwner>();
+// A weak last result allows incremental normal execution without retaining prior
+// worlds or an indefinitely growing chain of receipt arrays.
+let previousReferenceIndex: WeakRef<ReferenceIndex> | undefined;
+
+function collectReferences(values: Iterable<ReceivedValueReference>): ReceivedValueReferences {
+  const result = new Map<string, Set<number>>();
+  for (const { blockId, valueOrdinal } of values) {
+    let ordinals = result.get(blockId);
+    if (!ordinals) result.set(blockId, (ordinals = new Set()));
+    ordinals.add(valueOrdinal);
+  }
+  return result;
+}
+function combineReferences(values: Iterable<ReceivedValueReferences>): ReceivedValueReferences {
+  return collectReferences(
+    (function* () {
+      for (const references of values)
+        for (const [blockId, ordinals] of references)
+          for (const valueOrdinal of ordinals) yield { blockId, valueOrdinal };
+    })(),
+  );
+}
+function originalReferences(
+  input: import('./perception-evidence.js').ReceivedObservation,
+): ReceivedValueReferences {
+  const source = readOnlyDraftView(input);
+  const cached = observationReferences.get(source);
+  if (cached) return cached;
+  const references = collectReferences(receivedObservationValueReferences(source));
+  if (isImmutableData(source)) observationReferences.set(source, references);
+  return references;
+}
+function currentReferences(
+  input: import('./perception-evidence.js').LiveFacetSupport,
+): ReceivedValueReferences {
+  const lease = readOnlyDraftView(input);
+  const cached = leaseReferences.get(lease);
+  if (cached) return cached;
+  const references = combineReferences([
+    collectReferences(receivedFacetValueReferences(readOnlyDraftView(lease.value))),
+    originalReferences(lease.original),
+  ]);
+  if (isImmutableData(lease)) leaseReferences.set(lease, references);
+  return references;
+}
+function perceptionReferences(
+  input: PerceptionOwner,
+  previous: ReferenceOwner | undefined,
+): ReferenceOwner {
+  const owner = readOnlyDraftView(input);
+  const received = readOnlyDraftView(owner.received);
+  const current = readOnlyDraftView(owner.current);
+  const frame = owner.visualConfirmation && readOnlyDraftView(owner.visualConfirmation.frameRef);
+  const old = previous?.perception;
+  if (
+    previous &&
+    old &&
+    old.received === received &&
+    old.current === current &&
+    old.frame?.[0] === frame?.[0] &&
+    old.frame?.[1] === frame?.[1]
+  )
+    return { ...previous, identity: owner };
+  countDomainWork('receivedReferenceOwnersRebuilt');
+  const fragments: ReceivedValueReferences[] = [];
+  if (frame) fragments.push(collectReferences([{ blockId: frame[0], valueOrdinal: frame[1] }]));
+  // Original bodies shared by several leases are prepared once through their weak
+  // identity cache, never re-materialized or recursively copied here.
+  for (const source of received) fragments.push(originalReferences(source));
+  for (const lease of Object.values(current)) fragments.push(currentReferences(lease));
+  return {
+    identity: owner,
+    references: combineReferences(fragments),
+    perception: { received, current, frame },
+  };
+}
+function receiptReferences(
+  input: TemporalReceipt[],
+  previous: ReferenceOwner | undefined,
+): ReferenceOwner {
+  const receipts = readOnlyDraftView(input);
+  const cached = receiptReferenceOwners.get(receipts);
+  if (cached) return cached;
+  if (previous?.identity === receipts) return previous;
+  countDomainWork('receivedReferenceOwnersRebuilt');
+  const appended = previous?.receipts && appendedRecordCount(previous.receipts, receipts);
+  const start = appended === undefined ? 0 : receipts.length - appended;
+  const changed = collectReferences(
+    (function* () {
+      for (let index = start; index < receipts.length; index++) {
+        countDomainWork('receivedReferenceReceiptsVisited');
+        for (const facet of readOnlyDraftView(receipts[index]!).facets) yield facet;
+      }
+    })(),
+  );
+  let references = changed;
+  if (appended !== undefined && previous) {
+    const next = new Map(previous.references);
+    for (const [blockId, ordinals] of changed) {
+      const old = next.get(blockId);
+      if (!old || [...ordinals].some((ordinal) => !old.has(ordinal)))
+        next.set(blockId, new Set([...(old ?? []), ...ordinals]));
+    }
+    references = next;
+  }
+  const owner = { identity: receipts, receipts, references };
+  if (isImmutableData(receipts)) receiptReferenceOwners.set(receipts, owner);
+  return owner;
+}
+
 /** Native rows are resident; the persistence owner adds exact cold receipt
  * references before reclaiming. Capture marks aid residency, but are not an
- * independent retention grant and must be omitted for last-owner deletion. */
+ * independent retention grant and must be omitted for last-owner deletion.
+ * Exact immutable roots reuse one result across retention, residency and kernel
+ * checks. Changed owners update the counted union without scanning other receipts.
+ * docs/projects/attention-and-scenes-runtime-design.md#52-one-derived-resident-reference-index */
 export function referencedReceivedValues(
   world: WorldState,
   options: { captures?: boolean } = {},
-): Map<string, Set<number>> {
-  const references = new Map<string, Set<number>>();
-  const add = (reference: ReceivedValueReference) => {
-    const ordinals = references.get(reference.blockId) ?? new Set<number>();
-    ordinals.add(reference.valueOrdinal);
-    references.set(reference.blockId, ordinals);
-  };
-  const originals = new WeakSet<object>();
-  const observation = (source: import('./perception-evidence.js').ReceivedObservation) => {
-    source = readOnlyDraftView(source);
-    if (originals.has(source)) return;
-    originals.add(source);
-    for (const reference of receivedObservationValueReferences(source)) add(reference);
-  };
-  for (const owner of Object.values(world.perceptionEvidence ?? {})) {
-    if (owner.visualConfirmation)
-      add({
-        blockId: owner.visualConfirmation.frameRef[0],
-        valueOrdinal: owner.visualConfirmation.frameRef[1],
-      });
-    for (const source of owner.received) observation(readOnlyDraftView(source));
-    for (const lease of Object.values(readOnlyDraftView(owner.current))) {
-      for (const reference of receivedFacetValueReferences(readOnlyDraftView(lease.value)))
-        add(reference);
-      observation(readOnlyDraftView(lease.original));
+): ReceivedValueReferences {
+  const perception = world.perceptionEvidence
+    ? readOnlyDraftView(world.perceptionEvidence)
+    : emptyPerceptionRoot;
+  const temporal = world.experience?.temporal?.actors;
+  const actors = temporal ? readOnlyDraftView(temporal) : emptyTemporalRoot;
+  const mode = options.captures === false ? 0 : 1;
+  const immutable = isImmutableData(perception) && isImmutableData(actors);
+  const cached = immutable && referenceIndexes.get(perception)?.get(actors)?.[mode];
+  if (cached) {
+    countDomainWork('receivedReferenceRootsReused');
+    previousReferenceIndex = new WeakRef(cached);
+    return cached.references;
+  }
+  const previous = previousReferenceIndex?.deref();
+  const owners = new Map<string, ReferenceOwner>();
+  for (const [actorId, owner] of Object.entries(perception)) {
+    const key = JSON.stringify(['perception', actorId]);
+    owners.set(key, perceptionReferences(owner, previous?.owners.get(key)));
+  }
+  for (const [actorId, input] of Object.entries(actors)) {
+    const actor = readOnlyDraftView(input);
+    for (const input of readOnlyDraftView(actor.chunks)) {
+      const chunk = readOnlyDraftView(input);
+      const key = JSON.stringify(['temporal', actorId, chunk.id]);
+      owners.set(key, receiptReferences(chunk.receipts, previous?.owners.get(key)));
+    }
+    if (mode) {
+      const captures = readOnlyDraftView(actor.captures);
+      const key = JSON.stringify(['capture', actorId]);
+      const old = previous?.owners.get(key);
+      owners.set(
+        key,
+        old?.identity === captures
+          ? old
+          : { identity: captures, references: collectReferences(Object.values(captures)) },
+      );
     }
   }
-  for (const actor of Object.values(world.experience?.temporal?.actors ?? {})) {
-    for (const chunk of actor.chunks)
-      for (const receipt of chunk.receipts) for (const facet of receipt.facets) add(facet);
-    if (options.captures !== false)
-      for (const reference of Object.values(actor.captures)) add(reference);
+  const counts = new Map(previous?.counts);
+  const references = new Map(previous?.references);
+  const touched = new Map<string, Map<number, number>>();
+  const change = (blockId: string, ordinal: number, amount: number) => {
+    let block = touched.get(blockId);
+    if (!block) touched.set(blockId, (block = new Map(counts.get(blockId))));
+    const next = (block.get(ordinal) ?? 0) + amount;
+    if (next < 0) throw new Error('Received-value ownership changed without its source proof.');
+    if (next) block.set(ordinal, next);
+    else block.delete(ordinal);
+  };
+  const changedOwners = new Set([...(previous?.owners.keys() ?? []), ...owners.keys()]);
+  for (const key of changedOwners) {
+    const before = previous?.owners.get(key)?.references;
+    const after = owners.get(key)?.references;
+    if (before === after) continue;
+    for (const [blockId, ordinals] of before ?? []) {
+      const next = after?.get(blockId);
+      if (ordinals !== next)
+        for (const ordinal of ordinals) if (!next?.has(ordinal)) change(blockId, ordinal, -1);
+    }
+    for (const [blockId, ordinals] of after ?? []) {
+      const old = before?.get(blockId);
+      if (ordinals !== old)
+        for (const ordinal of ordinals) if (!old?.has(ordinal)) change(blockId, ordinal, 1);
+    }
+  }
+  for (const [blockId, block] of touched) {
+    if (!block.size) {
+      counts.delete(blockId);
+      references.delete(blockId);
+      continue;
+    }
+    counts.set(blockId, block);
+    const old = references.get(blockId);
+    if (!old || old.size !== block.size || [...block.keys()].some((ordinal) => !old.has(ordinal)))
+      references.set(blockId, new Set(block.keys()));
+  }
+  const index = { owners, counts, references };
+  if (immutable) {
+    let byTemporal = referenceIndexes.get(perception);
+    if (!byTemporal) referenceIndexes.set(perception, (byTemporal = new WeakMap()));
+    let modes = byTemporal.get(actors);
+    if (!modes) byTemporal.set(actors, (modes = []));
+    modes[mode] = index;
+    previousReferenceIndex = new WeakRef(index);
   }
   return references;
 }

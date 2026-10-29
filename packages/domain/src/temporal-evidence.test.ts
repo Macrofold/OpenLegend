@@ -796,8 +796,6 @@ it('shares equal received values without granting another observer the earlier h
   });
   const encoded = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
   const completeValue = (reference: TemporalFacetReference, fragment: ReceivedValueFragment) => {
-    if (fragment.kind === 'observed-motion')
-      throw new Error('Temporal receipts need their received-motion value.');
     const value = materializeTemporalValue(reference, fragment);
     expect(value).toBeDefined();
     return value;
@@ -889,9 +887,7 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   const motion = currentObservedFacets(world, PLAYER_ID, NPC_ID).find(
     (f) => f.value.kind === 'observed-motion',
   )!;
-  expect(motion.value.kind === 'observed-motion' && motion.value.earlier.valueMeasuredThrough).toBe(
-    3,
-  );
+  expect(motion.value.kind === 'observed-motion' && motion.value.earlier.measuredThrough).toBe(3);
   expect(
     cut.current.find(
       (f) => f.exposure.episodeId === raw.exposure.episodeId && f.value.kind === 'body',

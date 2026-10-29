@@ -694,7 +694,7 @@ export function commitActorResponse(
                 at: world.simTime,
                 privacyRevision: binding.privacyRevision,
                 lastIncludedOrder: 0,
-                acquired: [snapshot.original],
+                acquired: [],
                 current: [snapshot],
               })
             ) {

@@ -20,11 +20,6 @@ export function experienceIndividualIds(entry: ExperienceEntry): string[] {
     if (value.kind === 'association') subject(value.subject);
     else if (value.kind === 'claim' && value.speaker.kind === 'individual')
       subject(value.speaker.subject);
-    else if (value.kind === 'confirmation') {
-      observation(value.snapshot.original);
-      facet(value.snapshot.value);
-    } else if (value.kind === 'observed-motion')
-      for (const sample of [value.earlier, value.later]) observation(sample.original);
   };
   const observation = (value: import('./perception-evidence.js').ObservationContribution) => {
     const key = JSON.stringify([value.id, value.revision]);

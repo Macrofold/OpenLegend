@@ -33,6 +33,8 @@ export function actionSubjectKey(subject: EntityView | undefined): string {
         subject.storage?.revision,
         subject.assembly?.revision,
         subject.actionRevision,
+        subject.contextActionRevision,
+        subject.trade?.revision,
         subject.canTalk,
         subject.statusEffects?.map((effect) => effect.id),
         subject.controls?.map(choice),

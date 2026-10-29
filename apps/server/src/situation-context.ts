@@ -37,6 +37,7 @@ import {
 import {
   facetValueForModel,
   modelFacetMetadata,
+  facetSupportForModel,
   observationForModel,
 } from './experience-context.js';
 import type { TemporalHistoryPage } from './temporal-storage.js';
@@ -164,7 +165,8 @@ function prepareTemporalHistoryForModel(
       change: receipt.change,
       facetDefaults: metadata.defaults,
       facts: values.map((value, index) => {
-        const original = receipt.facets[index]?.original;
+        const original = receipt.facets[index]?.original,
+          support = receipt.facets[index]?.support;
         const supplied = original && suppliedFacts?.get(canonicalJson(original));
         // An onset key can also accompany a later resolved variant. Only the
         // complete equal value in this exact decision frame may reuse its body.
@@ -183,6 +185,7 @@ function prepareTemporalHistoryForModel(
             );
         return {
           ...metadata.overrides[index],
+          ...(support ? { support: facetSupportForModel(world, actorId, support) } : {}),
           value: same
             ? { kind: 'supplied-fact', source: supplied.source, ordinal: supplied.ordinal }
             : temporalValueForModel(
@@ -264,7 +267,7 @@ function temporalValueForModel(
       text: historicalAccountText(value.text),
       ...(value.eventType !== undefined ? { eventType: value.eventType } : {}),
     };
-  if (value.kind === 'received-motion')
+  if (value.kind === 'observed-motion')
     return {
       kind: value.kind,
       earlier: indexedFrame(
@@ -424,8 +427,8 @@ export function captureSituation(
   const cueFacts = new Set(
     activeCues.flatMap((cue) => cue.proof.map((fact) => canonicalJson(fact))),
   );
-  const supportsCue = (sample: Pick<CapturedCurrentFacet, 'original' | 'originalOrdinal'>) =>
-    cueFacts.has(canonicalJson(observationFactKey(world, sample.original, sample.originalOrdinal)));
+  const supportsCue = (sample: Pick<CapturedCurrentFacet, 'original'>) =>
+    cueFacts.has(canonicalJson(sample.original));
   const entryBySource = new Map(entries.map((entry) => [entry.sourceId, entry]));
   const salientFacts = new Set<string>();
   const detailIds = new Set(entries.map((entry) => entry.sourceId));
@@ -439,8 +442,8 @@ export function captureSituation(
       .map((facet) => {
         const reference = permittedSourceHandle(world, actorId, [
           'current-fact',
-          facet.original.id,
-          facet.originalOrdinal,
+          facet.original.source.id,
+          facet.original.ordinal,
         ]);
         allCurrentReferences[reference] = facet;
         const entry = entryBySource.get(id);
@@ -449,10 +452,12 @@ export function captureSituation(
         if (
           supportsCue(facet) ||
           (facet.value.kind === 'observed-motion' &&
-            [facet.value.earlier, facet.value.later].some(supportsCue)) ||
+            [facet.value.earlier, facet.value.later].some((sample) =>
+              cueFacts.has(canonicalJson(sample.original)),
+            )) ||
           (entry &&
             candidate?.presentedChange !== candidate?.changeRevision &&
-            facet.original.acquiredAt > entry.startedAt)
+            facet.valueAcquiredAt > entry.startedAt)
         )
           salientFacts.add(reference);
 
@@ -464,19 +469,19 @@ export function captureSituation(
                 correspondence: facet.value.correspondence,
                 earlier: indexedFrame(
                   {
-                    location: modelObservedLocation(frame, facet.value.earlier.value.location),
-                    measuredFrom: facet.value.earlier.valueMeasuredFrom,
-                    measuredThrough: facet.value.earlier.valueMeasuredThrough,
+                    location: modelObservedLocation(frame, facet.value.earlier.location),
+                    measuredFrom: facet.value.earlier.measuredFrom,
+                    measuredThrough: facet.value.earlier.measuredThrough,
                   },
-                  modelObservationFrame(frame, facet.value.earlier.value.frame),
+                  modelObservationFrame(frame, facet.value.earlier.frame),
                 ),
                 later: indexedFrame(
                   {
-                    location: modelObservedLocation(frame, facet.value.later.value.location),
-                    measuredFrom: facet.value.later.valueMeasuredFrom,
-                    measuredThrough: facet.value.later.valueMeasuredThrough,
+                    location: modelObservedLocation(frame, facet.value.later.location),
+                    measuredFrom: facet.value.later.measuredFrom,
+                    measuredThrough: facet.value.later.measuredThrough,
                   },
-                  modelObservationFrame(frame, facet.value.later.value.frame),
+                  modelObservationFrame(frame, facet.value.later.frame),
                 ),
               }
             : facet.value.kind === 'location'
@@ -487,7 +492,7 @@ export function captureSituation(
                   },
                   modelObservationFrame(frame, facet.value.frame),
                 )
-              : facetValueForModel(world, actorId, facet.value, facet.original.id, frame);
+              : facetValueForModel(world, actorId, facet.value, facet.original.source.id, frame);
         return {
           reference,
           value,
@@ -1038,6 +1043,9 @@ export async function expandSituation(
             measuredFrom: reference.measuredFrom,
             measuredThrough: reference.measuredThrough,
             acquiredAt: reference.acquiredAt,
+            ...(reference.support
+              ? { support: facetSupportForModel(world, actorId, reference.support) }
+              : {}),
             ...(reference.confirmedThrough !== undefined
               ? { confirmedThrough: reference.confirmedThrough }
               : {}),

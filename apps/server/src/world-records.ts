@@ -1,3 +1,4 @@
+import { evidenceReadView, restoreEvidenceLayout } from './evidence-segments.js';
 import { sqlRecordBatches, SqlWriteBatch } from './sql-rows.js';
 import { tableRows } from './record-pages.js';
 import { readTemporalChunkRecord } from './temporal-storage.js';
@@ -74,6 +75,53 @@ export interface RecordChanges {
   rows: number;
   /** Actor-permitted semantic expiry, never re-archived as an old source version. */
   expired?: Map<string, string[]>;
+}
+interface PreparedRows {
+  writes: Map<string, readonly RowChange[]>;
+  signatures: Map<RowChange, Omit<RowChange, 'extra'> & { extra: string }>;
+  deletes: string;
+  expired: string;
+  rows: number;
+  ownedAppends: Set<RowChange>;
+  reclaimed: Set<string>;
+}
+const preparedRows = new WeakMap<RecordChanges, PreparedRows>();
+const rowSignature = (row: RowChange) => ({ ...row, extra: JSON.stringify(row.extra) });
+const sameRow = (row: RowChange, saved: ReturnType<typeof rowSignature> | undefined) =>
+  !!saved &&
+  row.id === saved.id &&
+  row.parent === saved.parent &&
+  row.slot === saved.slot &&
+  row.position === saved.position &&
+  row.payload === saved.payload &&
+  row.create === saved.create &&
+  JSON.stringify(row.extra) === saved.extra;
+/** Proof belongs to an exact record preparation, never to caller-supplied flags. */
+export function preparedRecordChanges(changes: RecordChanges): boolean {
+  const proof = preparedRows.get(changes);
+  return (
+    !!proof &&
+    changes.rows === proof.rows &&
+    changes.writes.size === proof.writes.size &&
+    [...changes.writes].every(
+      ([table, rows]) =>
+        rows.length === proof.writes.get(table)?.length &&
+        rows.every(
+          (row, index) =>
+            row === proof.writes.get(table)?.[index] && sameRow(row, proof.signatures.get(row)),
+        ),
+    ) &&
+    proof.deletes === JSON.stringify([...changes.deletes]) &&
+    proof.expired === JSON.stringify([...(changes.expired ?? [])])
+  );
+}
+export function ownedAppendRow(changes: RecordChanges, row: RowChange): boolean {
+  const proof = preparedRows.get(changes);
+  return !!proof?.ownedAppends.has(row) && sameRow(row, proof.signatures.get(row));
+}
+/** Only the retention owner can certify complete current/cold dependency closure. */
+export function ownedPhysicalReclamation(changes: RecordChanges, id: string): boolean {
+  return !!preparedRows.get(changes)?.reclaimed.has(id);
 }
 export const retainedSourceTables: ReadonlySet<string> = new Set([
   'mind_awareness',
@@ -278,6 +326,13 @@ export class WorldRecords {
         .join('\n')}`;
     };
     await this.db.exec(create(WORLD_RECORD_SCHEMA));
+    for (const [table, field] of [
+      ['mind_temporal_chunks', 'receipts'],
+      ['mind_perception_values', 'values'],
+    ] as const)
+      await this.db.exec(
+        evidenceReadView(table, field, Object.keys(RECORD_NODES.get(table)!.columns ?? {})),
+      );
     const lineageCustodian = "(payload::jsonb ->> 'custodianId')";
     await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
       ON sim_object_lineage(world_id,(${lineageCustodian}),slot)`);
@@ -335,6 +390,7 @@ export class WorldRecords {
     selectedTables?: ReadonlySet<string>,
   ): RecordChanges {
     const changes: RecordChanges = { writes: new Map(), deletes: new Map(), rows: 0 };
+    const ownedAppends = new Set<RowChange>();
     const required = selectedTables ? new Set(selectedTables) : undefined;
     if (required)
       for (const table of selectedTables!) {
@@ -365,8 +421,10 @@ export class WorldRecords {
         return;
       }
       if (node.encode) {
-        old = old === undefined ? undefined : node.encode(old);
-        next = node.encode(next);
+        const previous = old;
+        const bytes = selectedTemporalPolicy(after.world).recent.chunkBytes;
+        old = old === undefined ? undefined : node.encode(old, undefined, bytes);
+        next = node.encode(next, previous, bytes);
       }
       if (!selectedTables || selectedTables.has(node.table)) {
         const payload = encodedBody(node, next);
@@ -458,6 +516,16 @@ export class WorldRecords {
               position,
               oldIndex,
             );
+            if (
+              (child.node.table === 'mind_temporal_segments' ||
+                child.node.table === 'mind_perception_segments') &&
+              (previous === undefined || appended !== undefined) &&
+              isImmutableData(current)
+            ) {
+              const row = changes.writes.get(child.node.table)?.at(-1);
+              if (row?.create && row.id === recordId([...childPath, entryId]))
+                ownedAppends.add(row);
+            }
             prior.delete(entryId);
           }
           if (nextPlacement)
@@ -663,7 +731,10 @@ export class WorldRecords {
       // does not delete a record or require the synchronous expiry save path.
       const expired = new Map(
         [...retired].filter(
-          ([table, ids]) => ids.length && (!selectedTables || selectedTables.has(table)),
+          ([table, ids]) =>
+            table !== 'mind_perception_values' &&
+            ids.length &&
+            (!selectedTables || selectedTables.has(table)),
         ),
       );
       if (expired.size) changes.expired = expired;
@@ -697,6 +768,21 @@ export class WorldRecords {
         if (deletes.size) changes.deletes.set(table, [...deletes]);
       }
     }
+    if (Object.isFrozen(after.world))
+      preparedRows.set(changes, {
+        writes: new Map([...changes.writes].map(([table, rows]) => [table, [...rows]])),
+        signatures: new Map(
+          [...changes.writes.values()].flat().map((row) => [row, rowSignature(row)]),
+        ),
+        deletes: JSON.stringify([...changes.deletes]),
+        expired: JSON.stringify([...(changes.expired ?? [])]),
+        rows: changes.rows,
+        ownedAppends,
+        reclaimed: new Set([
+          ...(retirement?.rows.get('mind_perception_values') ?? []),
+          ...(retirement?.positions.get('mind_perception_values')?.keys() ?? []),
+        ]),
+      });
     return changes;
   }
   async write(
@@ -914,7 +1000,15 @@ export class WorldRecords {
     // Startup recovery loads the simulation working set. Ordinary feature reads use
     // scoped repositories below, not this complete reconstruction path.
     for (const table of RECORD_NODES.keys()) {
-      if (active && ['mind_temporal_chunks', 'mind_perception_values'].includes(table)) {
+      if (
+        active &&
+        [
+          'mind_temporal_chunks',
+          'mind_perception_values',
+          'mind_temporal_segments',
+          'mind_perception_segments',
+        ].includes(table)
+      ) {
         groups.set(table, new Map());
         continue;
       }
@@ -1033,9 +1127,9 @@ export class WorldRecords {
       const chunks = temporal
         ? await this.db
             .prepare(
-              `SELECT c.id,c.actor_id,c.position,c.payload,c.value_refs
+              `SELECT c.id,c.actor_id,c.position,c.payload,c.value_refs,c.segments
         FROM mind_temporal_actors a CROSS JOIN LATERAL (
-          SELECT id,actor_id,position,payload,value_refs FROM mind_temporal_chunks
+          SELECT id,actor_id,position,payload,value_refs,segments FROM mind_temporal_chunks_read
           WHERE world_id=a.world_id AND actor_id=a.actor_id ORDER BY position DESC LIMIT ?
         ) c WHERE a.world_id=? ORDER BY c.actor_id,c.position`,
             )
@@ -1064,10 +1158,14 @@ export class WorldRecords {
       for (let offset = 0, ids = [...references]; offset < ids.length; offset += 800)
         for (const row of await this.db
           .prepare(
-            'SELECT payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+            'SELECT payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
           )
           .all(head.worldId, ids.slice(offset, offset + 800))) {
-          const source = JSON.parse(String(row['payload'])) as ReceivedValueBlock;
+          const source = restoreEvidenceLayout(
+            JSON.parse(String(row['payload'])),
+            'values',
+            row['segments'],
+          ) as unknown as ReceivedValueBlock;
           received.sources[source.id] = source;
         }
     }
@@ -1631,10 +1729,7 @@ export function assembleWorldRecords(
   let consumed = 0;
   const assemble = (node: RecordNode, row: JsonRecord): Value => {
     consumed++;
-    const value: Value =
-      node.table === 'mind_temporal_chunks'
-        ? readTemporalChunkRecord(row)
-        : JSON.parse(String(row['payload']));
+    const value: Value = JSON.parse(String(row['payload']));
     for (const [field, child] of Object.entries(node.children ?? {})) {
       const placeholder = field === '$' ? value : own(value, field);
       const children = groups.get(child.node.table)?.get(String(row['id'])) ?? [];
@@ -1664,6 +1759,13 @@ export function assembleWorldRecords(
             throw new Error('Duplicate gameplay record placement; recovery refused.');
           slots.add(slot);
           const entryValue = assemble(child.node, entry);
+          if (
+            (child.node.table === 'mind_temporal_segments' ||
+              child.node.table === 'mind_perception_segments') &&
+            String((entryValue as JsonRecord)['start']) !==
+              (JSON.parse(String(entry['id'])) as string[]).at(-1)
+          )
+            throw new Error('Evidence segment identity disagrees with its ordinal.');
           if (child.mode === 'entity-map') {
             entitySet(
               target as SavedWorld['world']['entities'],
@@ -1713,7 +1815,10 @@ export function assembleWorldRecords(
         if (field !== '$') put(value, field, target);
       }
     }
-    return node.decode ? node.decode(value) : value;
+    const result = node.decode ? node.decode(value) : value;
+    if (node.table === 'mind_temporal_chunks' && row['value_refs'] !== undefined)
+      readTemporalChunkRecord({ ...row, payload: JSON.stringify(result) });
+    return result;
   };
   const roots = groups.get(schema.table)?.get('') ?? [];
   if (roots.length !== 1) throw new Error('Missing world control record; recovery refused.');

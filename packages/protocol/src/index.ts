@@ -501,7 +501,7 @@ export interface EntityView extends Named {
   art?: ItemArt;
   /** Native root placement is public; contents revision requires current contents access. */
   storage?: { containerId: string; placementRevision: number; revision?: number };
-  trade?: ItemTradeView;
+  trade?: ItemTradeSummary;
   bodySize?: { width: number; height: number };
   assembly?: AssemblyView;
   /** Opaque scoped refresh signal, never permission or an operational grant. */
@@ -621,6 +621,15 @@ export interface TradeDisclosuresPage {
   scanLimited: boolean;
 }
 /** Participant-only pending terms and remembered disclosures, never other live stock. */
+export interface ItemTradeSummary {
+  scope: string;
+  personId: string;
+  personName: string;
+  labels: Pick<ItemTradeView['labels'], 'title'>;
+  offers: Array<Pick<ItemTradeView['offers'][number], 'id' | 'revision'>>;
+  /** Viewer-scoped changes affecting the deliberately opened trade reader. */
+  revision: string;
+}
 export interface ItemTradeView {
   maximumLots: number;
   scope: string;
@@ -1282,7 +1291,11 @@ export interface GamePatch {
     order?: string[];
   };
   recipes?: GameView['recipes'];
-  events?: GameView['events'];
+  events?: {
+    upsert: PublicEvent[];
+    remove: string[];
+    order?: string[];
+  };
   conversation?: GameView['conversation'];
   ai?: Partial<GameView['ai']>;
   milestones?: GameView['milestones'];

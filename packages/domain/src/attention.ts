@@ -1,5 +1,6 @@
+import { isImmutableData } from './records.js';
 import { entityGet } from './entity-collection.js';
-import { cloneValue, readOnlyDraftView } from './draft.js';
+import { cloneValue, readOnlyDraftView, touchNativeEvidence } from './draft.js';
 import { sameSubject, validObserverSubject, type ObserverSubject } from './knowledge.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import {
@@ -139,6 +140,7 @@ export interface AttentionCandidate {
   exposure: ObservationExposure;
   subject?: ObserverSubject;
   descriptionRevision: string;
+  descriptionSourceRevision: string;
   changeRevision: string;
   geometryRevision: string;
   presentedDescription?: string;
@@ -266,6 +268,7 @@ const relationKey = (key: string, family: AttentionRelationFamily) => JSON.strin
 const owned = (world: WorldState, id: string): PerceptionEvidenceOwner | undefined =>
   world.perceptionEvidence?.[id];
 function stateFor(world: WorldState, id: string): AttentionState | undefined {
+  touchNativeEvidence(world, 'perception', id);
   const owner = owned(world, id);
   if (!owner) return undefined;
   return (owner.attention ??= {
@@ -301,10 +304,22 @@ function currentPoint(
     ? point(readOnlyDraftView(value.location), lease!.valueMeasuredThrough)
     : undefined;
 }
+function descriptionInputKey(owner: PerceptionEvidenceOwner, id: string): string {
+  const current = readOnlyDraftView(owner.current);
+  return JSON.stringify(
+    ['body', 'carried', 'public-attributes', 'association'].map((kind) => {
+      const source = current[`${id}:${kind}`],
+        lease = source && readOnlyDraftView(source);
+      return lease ? [lease.original.id, lease.original.revision, lease.originalOrdinal] : null;
+    }),
+  );
+}
 function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: string): string {
   // A new receipt can measure the same appearance at another position. Receipt
   // identity is provenance; it must not invent new descriptive novelty.
   const current = readOnlyDraftView(owner.current);
+  countDomainWork('attentionDescriptionPreparations');
+
   const facet = (kind: string) => {
     const lease = current[`${id}:${kind}`];
     return lease
@@ -315,7 +330,7 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
     appearance = body?.kind === 'body' ? readOnlyDraftView(body.body) : undefined;
   const association = facet('association'),
     attributes = facet('public-attributes');
-  return JSON.stringify(
+  const value = JSON.stringify(
     [
       body?.kind === 'body'
         ? {
@@ -341,6 +356,7 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
     ],
     (_key, value) => (value && typeof value === 'object' ? readOnlyDraftView(value) : value),
   );
+  return value;
 }
 function rank(a: AttentionCandidate, b: AttentionCandidate) {
   return b.score - a.score || a.order - b.order;
@@ -504,13 +520,19 @@ export function updateAttention(
           direct: false,
           score: 0,
           descriptionRevision: '',
+          descriptionSourceRevision: '',
           changeRevision: '',
           geometryRevision: '',
         };
     candidate.leaseId = body.id;
     candidate.subject =
       old?.subject && subject && sameSubject(old.subject, subject) ? old.subject : subject;
-    candidate.descriptionRevision = descriptions(world, owner, sourceId);
+    const descriptionKey = descriptionInputKey(owner, sourceId);
+    if (old && isImmutableData(old) && old.descriptionSourceRevision === descriptionKey) {
+      candidate.descriptionRevision = old.descriptionRevision;
+      countDomainWork('attentionDescriptionReuses');
+    } else candidate.descriptionRevision = descriptions(world, owner, sourceId);
+    candidate.descriptionSourceRevision = descriptionKey;
     candidate.changeRevision = JSON.stringify([
       readOnlyDraftView(body.original).id,
       body.originalOrdinal,
@@ -518,7 +540,6 @@ export function updateAttention(
       location ? readOnlyDraftView(location.original).id : null,
       location?.originalOrdinal ?? null,
       location?.valueAcquiredAt ?? null,
-      location?.modality === 'sight' ? (owner.visualConfirmation?.frameRevision ?? null) : null,
     ]);
     const geometryRevision = JSON.stringify([
       measured?.point,
@@ -613,9 +634,9 @@ export function updateAttention(
       (Object.keys(candidate) as Array<keyof AttentionCandidate>).every(
         (field) => Object.hasOwn(old, field) && candidate[field] === old[field],
       )
-    )
+    ) {
       countDomainWork('attentionCandidatesUnchanged');
-    else {
+    } else {
       state.candidates[key] = candidate;
       countDomainWork('attentionCandidatesChanged');
     }
@@ -1243,6 +1264,8 @@ export function validateAttentionState(
       !candidate.leaseId ||
       !validExposure(candidate.exposure) ||
       key !== attentionSubjectKey(candidate.sourceId, candidate.exposure) ||
+      typeof candidate.descriptionSourceRevision !== 'string' ||
+      !candidate.descriptionSourceRevision ||
       typeof candidate.descriptionRevision !== 'string' ||
       !candidate.descriptionRevision ||
       typeof candidate.changeRevision !== 'string' ||

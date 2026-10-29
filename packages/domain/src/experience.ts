@@ -59,6 +59,7 @@ import { changeGoal, type GoalChange } from './agency.js';
 import { initializeIdentity } from './identity.js';
 import { hasMemory } from './living.js';
 import {
+  touchNativeEvidence,
   draftWorld,
   finishWorld,
   cloneValue,
@@ -1864,10 +1865,6 @@ export function invalidateExperience(
           ))
       )
         revokedFacts.add(personalFactAlias(observation.id, facet.ordinal));
-      if (facet.value.kind === 'confirmation') markAssociationFacts(facet.value.snapshot.original);
-      if (facet.value.kind === 'observed-motion')
-        for (const sample of [facet.value.earlier, facet.value.later])
-          markAssociationFacts(sample.original);
     }
   };
   for (const entry of recognitionEntries)
@@ -1919,6 +1916,7 @@ export function invalidateExperience(
           retainedDirect.add(observation.id);
       }
   }
+  touchNativeEvidence(world, 'perception', actorId);
   const native = world.perceptionEvidence?.[actorId];
   if (native) {
     const remap = new Map<number, number>();

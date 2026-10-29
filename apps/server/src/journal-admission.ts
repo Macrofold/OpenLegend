@@ -9,7 +9,12 @@ import {
   type WorldEvent,
 } from '@open-legend/domain';
 import { RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
-import type { RecordChanges } from './world-records.js';
+import {
+  ownedAppendRow,
+  ownedPhysicalReclamation,
+  preparedRecordChanges,
+  type RecordChanges,
+} from './world-records.js';
 import type { SqlDatabase } from './store.js';
 import { journalRecordPath, type JournalTransition } from './world-journal-data.js';
 
@@ -25,9 +30,12 @@ export function journalTableFamily(
   events: readonly WorldEvent[] = [],
 ): boolean {
   if (events.some((event) => !postgresJson(event))) return false;
-  let relatedRows = changes.rows;
+  const ownsPreparation = preparedRecordChanges(changes);
+  const reclaims = (id: string) => ownsPreparation && ownedPhysicalReclamation(changes, id);
+  // Count real summary-dependency preparation here; canonical membership probes
+  // have their own deduplicated ceiling in prepareJournalConstraints.
+  let relatedRows = 0;
   if (
-    changes.rows > CONSTRAINT_LOOKUPS ||
     before.responseReceipts !== after.responseReceipts ||
     before.declarationReceipts !== after.declarationReceipts ||
     before.innerWorlds !== after.innerWorlds ||
@@ -100,6 +108,8 @@ export function journalTableFamily(
     )
       return false;
     for (const row of rows) {
+      if (table === 'mind_perception_segments' && !row.create && !reclaims(row.parent))
+        return false;
       if (![row.id, row.parent, row.slot].every(postgresText)) return false;
       const entityId = physical.has(table) ? (JSON.parse(row.id) as string[])[2]! : undefined;
       if (physical.has(table) && row.create && !newItems.has(entityId!)) return false;
@@ -217,8 +227,11 @@ export function journalTableFamily(
       }
     }
   }
-  for (const [table] of changes.deletes)
+  for (const [table, ids] of changes.deletes)
     if (
+      (table === 'mind_perception_values' && ids.some((id) => !reclaims(id))) ||
+      (table === 'mind_perception_segments' &&
+        ids.some((id) => !reclaims(JSON.stringify((JSON.parse(id) as string[]).slice(0, -2))))) ||
       !allowed(table) ||
       physical.has(table) ||
       sources.has(table) ||
@@ -270,6 +283,7 @@ export function prepareJournalConstraints(
 ): JournalConstraintPlan | undefined {
   const wanted = new Map<string, Set<string>>();
   const positions = new Map<string, Array<{ parent_id: string; position: number }>>();
+  const positionKeys = new Set<string>();
   const physicalParents = new Map<string, string>();
   const add = (table: string, id: string) => {
     const ids = wanted.get(table) ?? new Set();
@@ -279,11 +293,15 @@ export function prepareJournalConstraints(
   for (const [table, rows] of changes.writes)
     for (const row of rows) {
       if (!RECORD_NODES.has(table)) throw new Error('Unknown journal constraint table.');
-      if (row.create) add(table, row.id);
-      if (row.create && journalRecordPath(table, row.id).list) {
-        const probes = positions.get(table) ?? [];
-        probes.push({ parent_id: row.parent, position: row.position });
-        positions.set(table, probes);
+      if (row.create && !ownedAppendRow(changes, row)) add(table, row.id);
+      if (row.create && !ownedAppendRow(changes, row) && journalRecordPath(table, row.id).list) {
+        const positionKey = JSON.stringify([table, row.parent, row.position]);
+        if (!positionKeys.has(positionKey)) {
+          positionKeys.add(positionKey);
+          const probes = positions.get(table) ?? [];
+          probes.push({ parent_id: row.parent, position: row.position });
+          positions.set(table, probes);
+        }
       }
       const parent = RECORD_PARENTS.get(table);
       if (parent) add(parent, row.parent);
@@ -299,7 +317,11 @@ export function prepareJournalConstraints(
         add('sim_entities', owner);
       }
     }
-  if ([...wanted.values()].reduce((total, ids) => total + ids.size, 0) > CONSTRAINT_LOOKUPS) return;
+  if (
+    [...wanted.values()].reduce((total, ids) => total + ids.size, positionKeys.size) >
+    CONSTRAINT_LOOKUPS
+  )
+    return;
   const queries: string[] = [],
     params: unknown[] = [];
   for (const [table, ids] of wanted) {

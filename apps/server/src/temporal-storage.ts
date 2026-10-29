@@ -1,3 +1,4 @@
+import { restoreEvidenceLayout } from './evidence-segments.js';
 import {
   selectedTemporalPolicy,
   canonicalJson,
@@ -51,7 +52,10 @@ export function temporalChunkValueReferences(chunk: TemporalChunk): Record<strin
 /** This projection controls payload reclamation, so a malformed saved index
  * must refuse before it can erase a still-owned value. */
 export function readTemporalChunkRecord(row: Record<string, unknown>): TemporalChunk {
-  const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
+  const parsed = JSON.parse(String(row['payload']));
+  const chunk = (
+    parsed.storage ? restoreEvidenceLayout(parsed, 'receipts', row['segments']) : parsed
+  ) as TemporalChunk;
   if (canonicalJson(row['value_refs']) !== canonicalJson(temporalChunkValueReferences(chunk)))
     throw new MemoryRetentionError('Temporal value ownership metadata disagrees with its receipt.');
   return chunk;
@@ -222,7 +226,7 @@ export async function readTemporalHistory(
     .prepare(
       `SELECT id,source_refs,logical_bytes,receipt_count,
       first_at,first_order,receipt_epoch,first_ordinal,
-      octet_length(payload) AS encoded_bytes FROM mind_temporal_chunks
+      encoded_bytes FROM mind_temporal_chunks_read
     WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=?
       ${subjects.length ? 'AND subjects && ?::text[]' : ''}
       ${query.measurements ? 'AND last_supported_at>=? AND first_measured_at<=?' : ''}
@@ -297,7 +301,7 @@ export async function readTemporalHistory(
   if (selected.length)
     for (const row of await db
       .prepare(
-        'SELECT payload,value_refs FROM mind_temporal_chunks WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
+        'SELECT payload,segments,value_refs FROM mind_temporal_chunks_read WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
       )
       .all(scope.worldId, scope.actorId, selected)) {
       const chunk = readTemporalChunkRecord(row);
@@ -361,7 +365,7 @@ export async function readTemporalHistory(
   if (missing.length) {
     const sizes = await db
       .prepare(
-        'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+        'SELECT SUM(encoded_bytes) AS bytes FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
       )
       .get(scope.worldId, missing);
     preparationBytes += Number(sizes?.['bytes'] ?? 0);
@@ -374,10 +378,14 @@ export async function readTemporalHistory(
       };
     for (const row of await db
       .prepare(
-        'SELECT payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+        'SELECT payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
       )
       .all(scope.worldId, missing)) {
-      const source = JSON.parse(String(row['payload'])) as ReceivedValueBlock;
+      const source = restoreEvidenceLayout(
+        JSON.parse(String(row['payload'])),
+        'values',
+        row['segments'],
+      ) as unknown as ReceivedValueBlock;
       sources[source.id] = source;
     }
   }
@@ -531,7 +539,7 @@ export async function prepareTemporalRetention(
       : await db
           .prepare(
             `SELECT id,source_id,first_at,last_at,first_order,receipt_epoch,first_ordinal,logical_bytes,receipt_count,source_refs
-      FROM mind_temporal_chunks WHERE world_id=? AND actor_id=? ORDER BY first_at,first_order,receipt_epoch,first_ordinal LIMIT ?`,
+      FROM mind_temporal_chunks_read WHERE world_id=? AND actor_id=? ORDER BY first_at,first_order,receipt_epoch,first_ordinal LIMIT ?`,
           )
           .all(state.world.id, actorId, maximumRows + 1))
       metadata.set(String(row['source_id']), {
@@ -615,16 +623,20 @@ export async function prepareTemporalRetention(
     : state.world;
   // Capture marks locate prior recording; they cannot keep an expired value
   // alive by themselves. Current receipt/original and real chunk owners can.
-  const keep = referencedReceivedValues(world, { captures: false });
+  const resident = referencedReceivedValues(world, { captures: false });
   const sources = world.receivedValues?.sources ?? {};
   const needsPruning = (id: string) => {
     const block = sources[id] ?? beforeSources[id];
-    const ordinals = keep.get(id);
+    const ordinals = resident.get(id);
     return !block || block.values.some((value, ordinal) => value && !ordinals?.has(ordinal));
   };
   const candidates = [...possibleSources].filter(needsPruning);
   if (!candidates.length)
     return { state: world === state.world ? state : { ...state, world }, rows };
+  // Resident ownership is shared with residency/kernel validation. Only candidate
+  // blocks acquire additional cold/pending owners; never mutate the cached proof.
+  const candidateIds = new Set(candidates);
+  const keep = new Map(candidates.map((id) => [id, new Set(resident.get(id))]));
   const replaced = [
     ...(rows.get('mind_temporal_chunks') ?? []),
     ...(pending?.deletes.get('mind_temporal_chunks') ?? []),
@@ -634,7 +646,7 @@ export async function prepareTemporalRetention(
   if (!complete) {
     const cold = await db
       .prepare(
-        `SELECT value_refs,octet_length(value_refs::text) AS bytes FROM mind_temporal_chunks
+        `SELECT value_refs,octet_length(value_refs::text) AS bytes FROM mind_temporal_chunks_read
          WHERE world_id=? AND source_refs && ?::text[] AND id<>ALL(?::text[]) LIMIT ?`,
       )
       .all(world.id, candidates, replaced, maximumRows + 1);
@@ -645,7 +657,7 @@ export async function prepareTemporalRetention(
       );
     for (const row of cold)
       for (const [id, ordinals] of Object.entries(row['value_refs'] as Record<string, number[]>)) {
-        if (!possibleSources.has(id)) continue;
+        if (!candidateIds.has(id)) continue;
         const owned = keep.get(id) ?? new Set<number>();
         for (const ordinal of ordinals) owned.add(ordinal);
         keep.set(id, owned);
@@ -662,7 +674,7 @@ export async function prepareTemporalRetention(
   if (missing.length && !complete) {
     const sizes = await db
       .prepare(
-        'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+        'SELECT SUM(encoded_bytes) AS bytes FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
       )
       .get(world.id, missing);
     preparationBytes += Number(sizes?.['bytes'] ?? 0);
@@ -672,10 +684,14 @@ export async function prepareTemporalRetention(
       );
     for (const row of await db
       .prepare(
-        'SELECT id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
+        'SELECT id,payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
       )
       .all(world.id, missing)) {
-      const block = JSON.parse(String(row['payload'])) as ReceivedValueBlock;
+      const block = restoreEvidenceLayout(
+        JSON.parse(String(row['payload'])),
+        'values',
+        row['segments'],
+      ) as unknown as ReceivedValueBlock;
       available.set(block.id, block);
       let placement = positions.get('mind_perception_values');
       if (!placement) positions.set('mind_perception_values', (placement = new Map()));
@@ -690,8 +706,28 @@ export async function prepareTemporalRetention(
     if (next !== block) changes.set(id, next);
   }
   if (!changes.size) return { state: world === state.world ? state : { ...state, world }, rows };
+  // A value can be created and reclaimed before its first save. Placement marks
+  // certify existing canonical rows; applying one to a new block would suppress
+  // its insertion proof while its newly sealed segments still need that parent.
+  const persisted = (id: string) =>
+    !!beforeSources[id] ||
+    positions
+      .get('mind_perception_values')
+      ?.has(JSON.stringify(['world', 'receivedValues', 'sources', id]));
+  positions.set(
+    'mind_perception_values',
+    new Map([
+      ...(positions.get('mind_perception_values') ?? []),
+      ...[...changes.keys()]
+        .filter(persisted)
+        .map((id): [string, number] => [
+          JSON.stringify(['world', 'receivedValues', 'sources', id]),
+          0,
+        ]),
+    ]),
+  );
   const deleted = [...changes]
-    .filter(([, value]) => !value)
+    .filter(([id, value]) => !value && persisted(id))
     .map(([id]) => JSON.stringify(['world', 'receivedValues', 'sources', id]));
   // Empty retirements still carry existing-row placement for a cold block update.
   rows.set('mind_perception_values', deleted);

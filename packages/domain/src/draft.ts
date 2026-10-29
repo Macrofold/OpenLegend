@@ -48,6 +48,39 @@ type RecordLineage = { tip: unknown[] };
 const recordLineages = new WeakMap<unknown[], RecordLineage>();
 const admittedRecords = new WeakMap<WorldState, object[]>();
 const recordArrays = new WeakMap<WorldState, Map<object, Set<string>>>();
+type NativeEvidenceFamily = 'perception' | 'temporal' | 'received';
+interface NativeEvidenceSnapshot {
+  revision: number;
+  sealedRevision?: number;
+  latest?: object;
+  snapshot?: object;
+}
+const nativeEvidenceSnapshots = new WeakMap<
+  WorldState,
+  Map<NativeEvidenceFamily, Map<string, NativeEvidenceSnapshot>>
+>();
+/** Mutation owners invalidate only the actor/block they will edit. This process-local
+ * registration permits reuse of a detached private-preview snapshot, never skips
+ * validation or certifies a raw builder. Omitted identity discards unknown coverage.
+ * docs/projects/attention-and-scenes-runtime-design.md#51-immutable-publication */
+export function touchNativeEvidence(
+  world: WorldState,
+  family: NativeEvidenceFamily,
+  ownerId?: string,
+): void {
+  if (!isDraft(world)) return;
+  let families = nativeEvidenceSnapshots.get(world);
+  if (ownerId === undefined) {
+    families?.delete(family);
+    return;
+  }
+  if (!families) nativeEvidenceSnapshots.set(world, (families = new Map()));
+  let owners = families.get(family);
+  if (!owners) families.set(family, (owners = new Map()));
+  const owner = owners.get(ownerId);
+  if (owner) owner.revision++;
+  else owners.set(ownerId, { revision: 1 });
+}
 /** History owners register changed arrays, not every retained record. At publication we
  * seal one plain snapshot before Immer's generic finalizer/patch generator visits it.
  * Registration does not certify an append: prefix identity is checked after all edits.
@@ -473,20 +506,68 @@ function freezeData(value: unknown): void {
  * changed snapshot before a nested native preview/transition, rather than asking
  * Immer to copy the same thousands of latest facets for every candidate command.
  * This changes representation only; the next actual evidence edit drafts it again. */
-function sealNativeEvidence(world: WorldState): void {
+function sealNativeOwner<T extends object>(
+  world: WorldState,
+  family: NativeEvidenceFamily,
+  id: string,
+  value: T,
+  reuse: boolean,
+): T {
+  const latest = readOnlyDraftView(value);
+  if (isImmutableData(latest)) return latest;
+  const held = nativeEvidenceSnapshots.get(world)?.get(family)?.get(id);
+  if (reuse && held?.snapshot && held.latest === latest && held.sealedRevision === held.revision) {
+    countDomainWork('nativeEvidenceSnapshotsReused');
+    return held.snapshot as T;
+  }
+  countDomainWork('nativeEvidenceOwnersSealed');
+  const snapshot = immutableDraftSnapshot(value);
+  if (reuse && held) {
+    held.latest = latest;
+    held.snapshot = snapshot;
+    held.sealedRevision = held.revision;
+  }
+  return snapshot;
+}
+function sealNativeOwners<T extends object>(
+  world: WorldState,
+  family: NativeEvidenceFamily,
+  values: Record<string, T>,
+  reuse: boolean,
+): Record<string, T> {
+  const latest = readOnlyDraftView(values);
+  if (isImmutableData(latest)) return latest;
+  // Shallow owner enumeration is bounded by resident actors/blocks. Unchanged
+  // immutable children stop here; only changed or unknown owners are traversed.
+  return immutableDataSnapshot(
+    Object.fromEntries(
+      Object.entries(latest).map(([id, value]) => [
+        id,
+        sealNativeOwner(world, family, id, value, reuse),
+      ]),
+    ),
+  );
+}
+function sealNativeEvidence(world: WorldState, reuse = true): void {
   if (!isDraft(world)) return;
   const value = world.perceptionEvidence;
   if (value && !isImmutableData(readOnlyDraftView(value)))
-    world.perceptionEvidence = immutableDraftSnapshot(value);
+    world.perceptionEvidence = sealNativeOwners(world, 'perception', value, reuse);
   // Automatic movement can prepare a nested command after recent observations
   // were appended. Seal that same owned history once: otherwise current(world)
   // recursively copies every earlier receipt for each moving animal.
   const temporal = world.experience?.temporal;
   if (temporal && !isImmutableData(readOnlyDraftView(temporal)))
-    world.experience!.temporal = immutableDraftSnapshot(temporal);
+    world.experience!.temporal = immutableDraftSnapshot({
+      ...readOnlyDraftView(temporal),
+      actors: sealNativeOwners(world, 'temporal', temporal.actors, reuse),
+    });
   const received = world.receivedValues;
   if (received && !isImmutableData(readOnlyDraftView(received)))
-    world.receivedValues = immutableDraftSnapshot(received);
+    world.receivedValues = immutableDraftSnapshot({
+      ...readOnlyDraftView(received),
+      sources: sealNativeOwners(world, 'received', received.sources, reuse),
+    });
 }
 
 /** Resolve a JSON DAG once, rather than Immer.current's repeated copying of a shared
@@ -555,7 +636,10 @@ export function finishWorld(
   // Seal immutable publications before Immer traverses the same shared facts
   // through many working paths. Editable builders must retain writable owners
   // for direct native effects after this turn.
-  if (isDraft(world) && Object.isFrozen(original(world)!)) sealNativeEvidence(world);
+  if (isDraft(world) && Object.isFrozen(original(world)!)) sealNativeEvidence(world, false);
+  // Final publication observes all edits, including foreign builder writes that
+  // did not enter a native mutation owner. Preview certificates end with this turn.
+  nativeEvidenceSnapshots.delete(world);
   if (!isDraft(world)) {
     // Re-completing an editable result cannot certify its earlier write set.
     pendingPublications.delete(world);

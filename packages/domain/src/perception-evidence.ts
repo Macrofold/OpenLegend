@@ -18,7 +18,7 @@ import { chargeWork } from './work-budget.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { personalFactAlias } from './experience-source.js';
 import type { DetectionSupportState } from './perception-support.js';
-import { cloneValue, readOnlyDraftView } from './draft.js';
+import { cloneValue, readOnlyDraftView, touchNativeEvidence } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { effectiveBodyProfile, worldPosition, worldSupport } from './spatial-state.js';
 import { outwardStates } from './perception-frame.js';
@@ -81,7 +81,11 @@ import { freeze, isDraft, original as draftOriginal } from 'immer';
 import { validatePerceivedSpeech, validateReceivedFeatures } from './speech.js';
 import { validObserverSubject } from './knowledge.js';
 import { activelyParticipates } from './participation-state.js';
-import { receivedValueAt, retainReceivedValue } from './received-values.js';
+import {
+  receivedValueAt,
+  retainReceivedValue,
+  receivedObservationValueReferences,
+} from './received-values.js';
 import { capabilityBlocked, projectStatusEffects } from './status-capabilities.js';
 import { sensesFor, visionRadius } from './perception.js';
 import { projectAttributes, type AttributeView } from './world-modules.js';
@@ -200,6 +204,34 @@ export interface ObservedBody {
   subtype?: string;
   icon?: string;
 }
+export type ObservedBodyPose = Pick<ObservedBody, 'position' | 'heading' | 'supportSurfaceId'>;
+export type ObservedBodyDetails = Omit<ObservedBody, keyof ObservedBodyPose>;
+const bodyParts = new WeakMap<
+  ObservedBody,
+  { details: ObservedBodyDetails; pose: ObservedBodyPose }
+>();
+export function splitObservedBody(body: ObservedBody): {
+  details: ObservedBodyDetails;
+  pose: ObservedBodyPose;
+} {
+  body = readOnlyDraftView(body);
+  const reusable = isImmutableData(body),
+    previous = reusable && bodyParts.get(body);
+  if (previous) return previous;
+  const { position, heading, supportSurfaceId, ...details } = body;
+  const value = immutableDataSnapshot(
+    { details, pose: { position, heading, supportSurfaceId } },
+    readOnlyDraftView,
+  );
+  if (reusable) bodyParts.set(body, value);
+  return value;
+}
+export function materializeObservedBody(
+  details: ObservedBodyDetails,
+  pose: ObservedBodyPose,
+): ObservedBody {
+  return { ...details, ...pose };
+}
 export type SensoryFacet =
   | { kind: 'surface-patch'; patch: import('./received-geometry.js').ObservedSurfacePatch }
   | { kind: 'physical-boundary'; boundary: import('./received-geometry.js').ObservedBoundary }
@@ -221,11 +253,10 @@ export type SensoryFacet =
   | {
       kind: 'observed-motion';
       exposure: ObservationExposure;
-      earlier: CapturedLocationSample;
-      later: CapturedLocationSample;
+      earlier: ReceivedLocationSample;
+      later: ReceivedLocationSample;
       correspondence: 'unambiguous-received-continuity';
     }
-  | { kind: 'confirmation'; snapshot: CapturedCurrentFacet }
   | { kind: 'contact'; exposure: ObservationExposure; detail: 'present' | 'moving' }
   | {
       kind: 'speech';
@@ -279,7 +310,15 @@ export type SensoryFacet =
       /** Correction/forgetting aliases only; exact fact keys above remain authority. */
       supportAliases?: Array<{ family: 'awareness'; id: string }>;
     };
+export interface ReceivedFacetProof {
+  original: ObservationFactKey;
+  confirmation: EvidenceSource;
+  confirmedFrom: number;
+  confirmedThrough: number;
+  aliases?: string[];
+}
 export interface ObservationFacet {
+  support?: ReceivedFacetProof;
   ordinal: number;
   role: 'direct' | 'testimony' | 'inference';
   asOf: number;
@@ -316,9 +355,23 @@ export interface ObservationContribution {
 export interface ReceivedFacetValue {
   kind: SensoryFacet['kind'];
   reference: readonly [blockId: string, valueOrdinal: number];
-  reception?: { kind: 'location'; frameRef: readonly [blockId: string, valueOrdinal: number] };
+  reception?:
+    | { kind: 'body'; poseRef: readonly [string, number] }
+    | { kind: 'location'; frameRef: readonly [blockId: string, valueOrdinal: number] }
+    | {
+        kind: 'observed-motion';
+        exposure: ObservationExposure;
+        earlier: Omit<ReceivedLocationSample, 'location' | 'frame'> & {
+          frameRef: readonly [string, number];
+        };
+        later: Omit<ReceivedLocationSample, 'location' | 'frame'> & {
+          frameRef: readonly [string, number];
+        };
+        correspondence: 'unambiguous-received-continuity';
+      };
 }
 export interface ReceivedObservationFacet {
+  support?: ReceivedFacetProof;
   ordinal?: number;
   role?: ObservationFacet['role'];
   asOf?: number;
@@ -385,6 +438,7 @@ export function receivedObservationFacetMetadata(
     measuredFrom: facet.measuredFrom ?? from,
     measuredThrough,
     ...(facet.acquiredAt !== undefined ? { acquiredAt: facet.acquiredAt } : {}),
+    ...(facet.support ? { support: facet.support } : {}),
   };
 }
 
@@ -393,6 +447,28 @@ const receivedLocations = new WeakMap<
   WeakMap<ObservationFrame, Extract<SensoryFacet, { kind: 'location' }>>
 >();
 
+const receivedBodies = new WeakMap<
+  ObservedBodyDetails,
+  WeakMap<ObservedBodyPose, Extract<SensoryFacet, { kind: 'body' }>>
+>();
+function receivedBodyValue(
+  details: ObservedBodyDetails,
+  pose: ObservedBodyPose,
+): Extract<SensoryFacet, { kind: 'body' }> {
+  const reusable = isImmutableData(details) && isImmutableData(pose);
+  let poses = reusable ? receivedBodies.get(details) : undefined;
+  const existing = poses?.get(pose);
+  if (existing) return existing;
+  const value = immutableDataSnapshot(
+    { kind: 'body' as const, body: materializeObservedBody(details, pose) },
+    readOnlyDraftView,
+  );
+  if (reusable) {
+    if (!poses) receivedBodies.set(details, (poses = new WeakMap()));
+    poses.set(pose, value);
+  }
+  return value;
+}
 /** A reference resolves only an already selected personal facet. It grants no
  * observer/life, source identity, current body or historical membership. */
 export function receivedFacetValue(
@@ -404,6 +480,15 @@ export function receivedFacetValue(
     valueOrdinal: descriptor.reference[1],
   });
   if (!value || value.kind !== descriptor.kind) return;
+  if (value.kind === 'body') {
+    if (descriptor.reception?.kind !== 'body') return;
+    const pose = receivedValueAt(world.receivedValues?.sources ?? {}, {
+      blockId: descriptor.reception.poseRef[0],
+      valueOrdinal: descriptor.reception.poseRef[1],
+    });
+    if (pose?.kind !== 'body-pose') return;
+    return receivedBodyValue(value.body, pose.pose);
+  }
   if (value.kind === 'location') {
     if (descriptor.reception?.kind !== 'location') return;
     const location = readOnlyDraftView(value.location),
@@ -423,6 +508,24 @@ export function receivedFacetValue(
     frames.set(frame, result);
     return result;
   }
+  if (value.kind === 'observed-motion') {
+    const reception = descriptor.reception;
+    if (reception?.kind !== 'observed-motion') return;
+    const sample = (
+      location: ObservedLocation,
+      support: typeof reception.earlier,
+    ): ReceivedLocationSample => {
+      const { frameRef, ...proof } = support;
+      return { ...proof, location, frame: receivedObservationFrame(world, frameRef) };
+    };
+    return {
+      kind: 'observed-motion',
+      exposure: reception.exposure,
+      earlier: sample(value.earlier, reception.earlier),
+      later: sample(value.later, reception.later),
+      correspondence: reception.correspondence,
+    };
+  }
   if (descriptor.reception) return;
   return value;
 }
@@ -439,17 +542,8 @@ export function materializeObservation(
   source: ReceivedObservation,
 ): ObservationContribution {
   source = readOnlyDraftView(source);
-  const fragments = [
-    { reference: source.headerRef },
-    ...source.facets.map((facet) => facet.value),
-    ...source.facets.flatMap((facet) =>
-      facet.value.reception ? [{ reference: facet.value.reception.frameRef }] : [],
-    ),
-  ].map((value) =>
-    receivedValueAt(world.receivedValues?.sources ?? {}, {
-      blockId: value.reference[0],
-      valueOrdinal: value.reference[1],
-    }),
+  const fragments = receivedObservationValueReferences(source).map((reference) =>
+    receivedValueAt(world.receivedValues?.sources ?? {}, reference),
   );
   if (fragments.some((value) => !value))
     throw new Error('The selected received observation has unavailable values.');
@@ -510,9 +604,14 @@ const locationFragments = new WeakMap<
   { kind: 'location'; location: ObservedLocation }
 >();
 
-function retainFacetValue(world: WorldState, value: SensoryFacet) {
+function retainFacetValue(world: WorldState, value: SensoryFacet, previous?: ReceivedFacetValue) {
   value = readOnlyDraftView(value);
-  let fragment: import('./received-values.js').ReceivedValueFragment = value;
+  let fragment: import('./received-values.js').ReceivedValueFragment =
+    value.kind === 'observed-motion'
+      ? { kind: 'observed-motion', earlier: value.earlier.location, later: value.later.location }
+      : value.kind === 'body'
+        ? { kind: 'body', body: splitObservedBody(value.body).details }
+        : value;
   let reception: ReceivedFacetValue['reception'];
   let frameBytes = 0;
   if (value.kind === 'location') {
@@ -528,10 +627,45 @@ function retainFacetValue(world: WorldState, value: SensoryFacet) {
     reception = { kind: 'location', frameRef: received.reference };
     frameBytes = received.addedBytes;
   }
+  if (value.kind === 'body') {
+    const { pose } = splitObservedBody(value.body);
+    const retained = retainReceivedValue(
+      world,
+      { kind: 'body-pose', pose },
+      selectedTemporalPolicy(world).recent.chunkBytes,
+      previous?.reception?.kind === 'body'
+        ? { blockId: previous.reception.poseRef[0], valueOrdinal: previous.reception.poseRef[1] }
+        : undefined,
+    );
+    frameBytes += retained.addedBytes;
+    reception = {
+      kind: 'body',
+      poseRef: [retained.reference.blockId, retained.reference.valueOrdinal],
+    };
+  }
+  if (value.kind === 'observed-motion') {
+    const sample = (input: ReceivedLocationSample) => {
+      const { location, frame, ...proof } = readOnlyDraftView(input);
+      const retained = retainObservationFrame(world, frame);
+      frameBytes += retained.addedBytes;
+      return { location, support: { ...proof, frameRef: retained.reference } };
+    };
+    const earlier = sample(value.earlier),
+      later = sample(value.later);
+    fragment = { kind: 'observed-motion', earlier: earlier.location, later: later.location };
+    reception = {
+      kind: 'observed-motion',
+      exposure: value.exposure,
+      earlier: earlier.support,
+      later: later.support,
+      correspondence: value.correspondence,
+    };
+  }
   const retained = retainReceivedValue(
     world,
     fragment,
     selectedTemporalPolicy(world).recent.chunkBytes,
+    previous ? { blockId: previous.reference[0], valueOrdinal: previous.reference[1] } : undefined,
   );
   return {
     value: {
@@ -576,9 +710,12 @@ export interface CapturedCurrentFacet
     | 'motionContinuityRevision'
     | 'sourcePlacementRevision'
     | 'original'
+    | 'originalOrdinal'
     | 'value'
   > {
-  original: ObservationContribution;
+  original: ObservationFactKey;
+  role: ObservationFacet['role'];
+  originalAliases?: string[];
   value: SensoryFacet;
   confirmation: Extract<EvidenceSource, { family: 'native-exposure' | 'native-response' }>;
 }
@@ -588,9 +725,19 @@ export type CurrentFacetValue = Pick<
   LiveFacetSupport,
   'id' | 'valueMeasuredFrom' | 'valueMeasuredThrough' | 'valueAcquiredAt' | 'confirmedThrough'
 > & { value: SensoryFacet; source: EvidenceSource };
-export type CapturedLocationSample = CapturedCurrentFacet & {
-  value: Extract<SensoryFacet, { kind: 'location' }>;
-};
+/** A received endpoint keeps exact selected geometry and proof, never the whole original. */
+export interface ReceivedLocationSample {
+  location: ObservedLocation;
+  frame: ObservationFrame;
+  measuredFrom: number;
+  measuredThrough: number;
+  acquiredAt: number;
+  confirmedFrom: number;
+  confirmedThrough: number;
+  original: ObservationFactKey;
+  confirmation: EvidenceSource;
+  aliases?: string[];
+}
 /** Current spatial readers need measured values and their exact provenance, not
  * a second historical account/confirmation wrapper for every body and location. */
 export interface BodyGeometrySample {
@@ -834,6 +981,7 @@ export function perceptionEvidenceOwner(
   world: WorldState,
   observer: Entity,
 ): PerceptionEvidenceOwner {
+  touchNativeEvidence(world, 'perception', observer.id);
   const states = (world.perceptionEvidence ??= {});
   let state = states[observer.id];
   const life = observer.actor?.physicalLife ?? 0;
@@ -864,6 +1012,7 @@ export function beginPerceptionPhase(world: WorldState, observerId: string): voi
     )
   )
     return;
+  touchNativeEvidence(world, 'perception', observerId);
   state.received = state.received.filter(
     (observation) => receivedObservationHeader(world, observation).acquiredAt >= world.simTime,
   );
@@ -882,7 +1031,12 @@ const owner = perceptionEvidenceOwner;
 /** A working phase owns this map after its first write. Replacing its container
  * once avoids drafting every changed key; publication and private forks still
  * seal independent snapshots through the existing world owner. */
-function writableCurrent(state: PerceptionEvidenceOwner): PerceptionEvidenceOwner['current'] {
+function writableCurrent(
+  world: WorldState,
+  state: PerceptionEvidenceOwner,
+  observerId: string,
+): PerceptionEvidenceOwner['current'] {
+  touchNativeEvidence(world, 'perception', observerId);
   const current = state.current;
   if (isDraft(current)) {
     const view = readOnlyDraftView(current);
@@ -903,11 +1057,15 @@ function replaceCurrentFacet(
   let stored: LiveFacetSupport;
   if ('reference' in value.value) stored = value as LiveFacetSupport;
   else {
-    const retained = retainFacetValue(world, value.value);
+    const retained = retainFacetValue(
+      world,
+      value.value,
+      readOnlyDraftView(state.current)[key]?.value,
+    );
     if (retained.addedBytes) chargeWork({ outputBytes: retained.addedBytes });
     stored = { ...value, value: retained.value };
   }
-  writableCurrent(state)[key] =
+  writableCurrent(world, state, value.observer.actorId)[key] =
     isDraft(world) && Object.isFrozen(draftOriginal(world)!)
       ? immutableDataSnapshot(stored, readOnlyDraftView)
       : stored;
@@ -984,6 +1142,7 @@ function acquireReceivedObservation(
         const retained = retainFacetValue(world, facet.value);
         addedBytes += retained.addedBytes;
         return {
+          ...(facet.support ? { support: facet.support } : {}),
           ...(facet.role !== 'direct' ? { role: facet.role } : {}),
           ...(facet.asOf !== facet.measuredThrough ? { asOf: facet.asOf } : {}),
           ...(facet.measuredFrom !== from ? { measuredFrom: facet.measuredFrom } : {}),
@@ -1059,23 +1218,24 @@ export function captureEvidenceCut(
   if (!entity?.actor) throw new Error('An evidence cut requires an existing observer.');
   const life = observerLife(entity);
   const state = world.perceptionEvidence?.[observerId];
-  const current =
+  const leases =
     state?.life === life.physicalLife &&
     entity.actor.alive &&
     activelyParticipates(entity) &&
     !capabilityBlocked(world, entity, 'perception')
-      ? Object.values(state.current)
-          .filter((lease) => currentLeaseEligible(world, observerId, lease))
-          .map((lease) =>
-            captureCurrentFacet(world, effectiveCurrentFacetSupport(world, observerId, lease)),
-          )
+      ? Object.values(state.current).filter((lease) =>
+          currentLeaseEligible(world, observerId, lease),
+        )
       : [];
+  const current = leases.map((lease) =>
+    captureCurrentFacet(world, effectiveCurrentFacetSupport(world, observerId, lease)),
+  );
   const acquired = new Map<string, ObservationContribution>();
   for (const contribution of [
     ...retained,
     ...currentReceivedObservations(world, observerId).observations,
     ...currentReceivedGeometry(world, observerId).observations,
-    ...current.map((facet) => facet.original),
+    ...leases.map((lease) => materializeObservation(world, lease.original)),
   ]) {
     if (
       contribution.observer.actorId !== observerId ||
@@ -1121,10 +1281,28 @@ export function evidenceCutEligible(world: WorldState, cut: EvidenceCut): boolea
         : []),
     ];
     if (aliases.some((id) => forgotten.has(id) || Object.hasOwn(corrections, id))) return false;
-    return observation.facets.every(({ value, ordinal }) => {
-      if (value.kind === 'confirmation') return supported(value.snapshot.original);
+    return observation.facets.every(({ value, ordinal, support }) => {
+      if (
+        !sensoryFacetDependencies(value, support).every((dependency) =>
+          [
+            dependency.source.id,
+            ...dependency.aliases,
+            ...(dependency.ordinal !== null
+              ? [personalFactAlias(dependency.source.id, dependency.ordinal)]
+              : []),
+          ].every((id) => !forgotten.has(id) && !Object.hasOwn(corrections, id)),
+        )
+      )
+        return false;
       if (value.kind === 'observed-motion')
-        return supported(value.earlier.original) && supported(value.later.original);
+        return [value.earlier, value.later].every((sample) =>
+          [
+            sample.original.source.id,
+            personalFactAlias(sample.original.source.id, sample.original.ordinal),
+            sample.confirmation.id,
+            ...(sample.aliases ?? []),
+          ].every((id) => !forgotten.has(id) && !Object.hasOwn(corrections, id)),
+        );
       if (value.kind === 'association')
         return (
           associationEvidenceStatus(world, cut.observer.actorId, value, observation, ordinal) ===
@@ -1137,7 +1315,38 @@ export function evidenceCutEligible(world: WorldState, cut: EvidenceCut): boolea
       ].every((id) => !forgotten.has(id) && !Object.hasOwn(corrections, id));
     });
   };
-  return cut.acquired.every(supported) && cut.current.every((facet) => supported(facet.original));
+  return (
+    cut.acquired.every(supported) &&
+    cut.current.every((facet) => {
+      const ids = [
+        facet.original.source.id,
+        personalFactAlias(facet.original.source.id, facet.original.ordinal),
+        facet.confirmation.id,
+        ...(facet.originalAliases ?? []),
+      ];
+      if (ids.some((id) => forgotten.has(id) || Object.hasOwn(corrections, id))) return false;
+      if (
+        facet.value.kind === 'association' &&
+        associationEvidenceStatus(
+          world,
+          cut.observer.actorId,
+          facet.value,
+          { id: facet.original.source.id },
+          facet.original.ordinal,
+        ) !== 'retained'
+      )
+        return false;
+      return sensoryFacetDependencies(facet.value).every((dependency) =>
+        [
+          dependency.source.id,
+          ...dependency.aliases,
+          ...(dependency.ordinal !== null
+            ? [personalFactAlias(dependency.source.id, dependency.ordinal)]
+            : []),
+        ].every((id) => !forgotten.has(id) && !Object.hasOwn(corrections, id)),
+      );
+    })
+  );
 }
 /** Fully immutable originals share directly; mutable builder/restored sources must
  * detach their current facts on every read without changing an earlier captured cut. */
@@ -1161,6 +1370,39 @@ function copyFacetValue(value: SensoryFacet): SensoryFacet {
   // children, including nested original observations and prior motion samples.
   return immutableDataSnapshot(value, readOnlyDraftView);
 }
+export function captureReceivedLocationSample(
+  world: WorldState,
+  lease: LiveFacetSupport,
+): ReceivedLocationSample {
+  const held = readOnlyDraftView(lease),
+    value = receivedFacetValue(world, held.value);
+  if (value?.kind !== 'location') throw new Error('A received location sample is required.');
+  return immutableDataSnapshot(
+    {
+      location: value.location,
+      frame: value.frame,
+      measuredFrom: held.valueMeasuredFrom,
+      measuredThrough: held.valueMeasuredThrough,
+      acquiredAt: held.valueAcquiredAt,
+      confirmedFrom: held.confirmedFrom,
+      confirmedThrough: held.confirmedThrough,
+      original: observationFactKey(world, held.original, held.originalOrdinal),
+      confirmation: {
+        family: 'native-exposure' as const,
+        observer: held.observer,
+        id: held.id,
+        revision: held.revision,
+      },
+      ...(held.original.origin.kind === 'occurrence'
+        ? { aliases: [held.original.origin.eventId] }
+        : held.original.origin.source
+          ? { aliases: [held.original.origin.source.id] }
+          : {}),
+    },
+    readOnlyDraftView,
+  );
+}
+
 export function captureCurrentFacet(
   world: WorldState,
   lease: LiveFacetSupport,
@@ -1172,6 +1414,7 @@ export function captureCurrentFacet(
     motionContinuityRevision: _continuity,
     sourcePlacementRevision: _placement,
     original,
+    originalOrdinal,
     value: latest,
     ...fields
   } = readOnlyDraftView(lease);
@@ -1180,7 +1423,13 @@ export function captureCurrentFacet(
   return immutableDataSnapshot<CapturedCurrentFacet>(
     {
       ...fields,
-      original: materializeObservation(world, original),
+      original: observationFactKey(world, original, originalOrdinal),
+      role: original.facets[originalOrdinal]?.role ?? 'direct',
+      ...(original.origin.kind === 'occurrence'
+        ? { originalAliases: [original.origin.eventId] }
+        : original.origin.source
+          ? { originalAliases: [original.origin.source.id] }
+          : {}),
       value,
       confirmation: {
         family: 'native-exposure' as const,
@@ -1346,22 +1595,29 @@ export function currentBodyGeometryInputs(
     valueMeasuredThrough: lease.valueMeasuredThrough,
     fact: observationFactKey(world, lease.original, lease.originalOrdinal),
   });
-  const locationSample = (
-    lease: Pick<
-      CapturedLocationSample,
-      'value' | 'valueMeasuredFrom' | 'valueMeasuredThrough' | 'original' | 'originalOrdinal'
-    >,
-  ): LocationGeometrySample => ({
-    ...interval(lease),
-    location: cloneValue(lease.value.location),
+  const locationSample = (sample: ReceivedLocationSample): LocationGeometrySample => ({
+    valueMeasuredFrom: sample.measuredFrom,
+    valueMeasuredThrough: sample.measuredThrough,
+    fact: sample.original,
+    location: cloneValue(sample.location),
   });
   for (const stored of Object.values(scope.current)) {
     const lease = readOnlyDraftView(stored);
     if (lease.value.kind !== 'body' || lease.subjectId === observerId) continue;
     const admitted = scope.body(lease.subjectId);
     if (!admitted || admitted.value.kind !== 'body') continue;
-    const bodyValue = receivedFacetValue(world, admitted.value);
-    if (bodyValue?.kind !== 'body') continue;
+    const descriptor = admitted.value;
+    const bodyDetails = receivedValueAt(world.receivedValues?.sources ?? {}, {
+      blockId: descriptor.reference[0],
+      valueOrdinal: descriptor.reference[1],
+    });
+    const pose =
+      descriptor.reception?.kind === 'body' &&
+      receivedValueAt(world.receivedValues?.sources ?? {}, {
+        blockId: descriptor.reception.poseRef[0],
+        valueOrdinal: descriptor.reception.poseRef[1],
+      });
+    if (bodyDetails?.kind !== 'body' || !pose || pose.kind !== 'body-pose') continue;
     const body = effectiveCurrentFacetSupport(world, observerId, admitted);
     const location = scope.current[`${lease.subjectId}:location`];
     const point = location && effectiveCurrentFacetSupport(world, observerId, location);
@@ -1372,9 +1628,9 @@ export function currentBodyGeometryInputs(
       sourceId: lease.subjectId,
       exposure: lease.exposure.episodeId,
       body: {
-        position: cloneValue(bodyValue.body.position),
-        radius: bodyValue.body.radius,
-        height: bodyValue.body.height,
+        position: cloneValue(pose.pose.position),
+        radius: bodyDetails.body.radius,
+        height: bodyDetails.body.height,
       },
       sample: interval(body),
       ...(pointValue?.kind === 'location'
@@ -1723,7 +1979,14 @@ function finalizeLease(world: WorldState, observer: Entity, lease: LiveFacetSupp
         asOf: lease.valueMeasuredThrough,
         measuredFrom: lease.valueMeasuredFrom,
         measuredThrough: lease.valueMeasuredThrough,
-        value: { kind: 'confirmation', snapshot },
+        value: snapshot.value,
+        support: {
+          original: snapshot.original,
+          confirmation: snapshot.confirmation,
+          confirmedFrom: snapshot.confirmedFrom,
+          confirmedThrough: snapshot.confirmedThrough,
+          ...(snapshot.originalAliases ? { aliases: snapshot.originalAliases } : {}),
+        },
       },
     ],
   });
@@ -1842,12 +2105,11 @@ export function reconcileVisualEvidence(
         lostIndividuals.add(lease.localSubject.individualId);
       retainVisualGap(world, state, lease, episodeGraceSeconds);
       finalizeLease(world, observer, lease);
-      delete writableCurrent(state)[key];
+      delete writableCurrent(world, state, observer.id)[key];
     }
   }
   for (const subject of subjects) {
     chargeWork({ tests: 1 });
-    if (frameChanged) attentionChanges.add(subject.id);
     delete state.gaps[subject.id];
     const exposed = world.perceptionEpisodes?.[observer.id]?.[subject.id];
     if (subject.placement?.mode !== 'world') continue;
@@ -1870,7 +2132,7 @@ export function reconcileVisualEvidence(
       if (motion && location && world.simTime > motion.valueMeasuredThrough) {
         attentionChanges.add(subject.id);
         finalizeLease(world, observer, motion);
-        delete writableCurrent(state)[motionKey];
+        delete writableCurrent(world, state, observer.id)[motionKey];
       }
       if (subject.actor && !heldBody.localSubject) {
         const local = selectedBodyIndividual(world, observer.id, subject.id);
@@ -1952,7 +2214,7 @@ export function reconcileVisualEvidence(
         : { observer: receivedObserver, episodeId: original.id },
       readOnlyDraftView,
     );
-    let earlierLocation: CapturedLocationSample | undefined;
+    let earlierLocation: ReceivedLocationSample | undefined;
     values.forEach((facet, ordinal) => {
       chargeWork({ tests: 1 });
       const key = `${subject.id}:${facet.kind}`;
@@ -1967,7 +2229,12 @@ export function reconcileVisualEvidence(
         !previousValue ||
         (previousValue.kind === 'location' && facet.kind === 'location'
           ? jsonText(previousValue.location) !== jsonText(facet.location)
-          : jsonText(previousValue) !== jsonText(facet));
+          : previousValue.kind === 'body' && facet.kind === 'body'
+            ? jsonText(splitObservedBody(previousValue.body).details) !==
+                jsonText(splitObservedBody(facet.body).details) ||
+              jsonText(splitObservedBody(previousValue.body).pose) !==
+                jsonText(splitObservedBody(facet.body).pose)
+            : jsonText(previousValue) !== jsonText(facet));
       if (changed) attentionChanges.add(subject.id);
       if (
         prior &&
@@ -1989,7 +2256,7 @@ export function reconcileVisualEvidence(
         // only for an earlier motion sample that will actually use that support.
         const previous = effectiveCurrentFacetSupport(world, observer.id, prior);
         if (previous.valueMeasuredThrough < world.simTime)
-          earlierLocation = captureCurrentFacet(world, previous) as CapturedLocationSample;
+          earlierLocation = captureReceivedLocationSample(world, previous);
       }
       let facetOriginal = original;
       if (prior && previousValue && changed && semanticFacetChanged(previousValue, facet)) {
@@ -2023,7 +2290,7 @@ export function reconcileVisualEvidence(
             confirmedFrom: world.simTime,
           };
         } else {
-          delete writableCurrent(state)[key];
+          delete writableCurrent(world, state, observer.id)[key];
           prior = undefined;
         }
       }
@@ -2112,20 +2379,18 @@ export function reconcileVisualEvidence(
       locationLease = storedLocation && readOnlyDraftView(storedLocation);
     const motionKey = `${subject.id}:observed-motion`;
     const laterLocation =
-      earlierLocation &&
-      locationLease &&
-      (captureCurrentFacet(world, locationLease) as CapturedLocationSample | undefined);
+      earlierLocation && locationLease && captureReceivedLocationSample(world, locationLease);
     const motion =
       earlierLocation &&
       laterLocation &&
-      earlierLocation.value.location.kind === 'point' &&
-      laterLocation.value.location.kind === 'point' &&
+      earlierLocation.location.kind === 'point' &&
+      laterLocation.location.kind === 'point' &&
       Math.hypot(
-        earlierLocation.value.location.point.x - laterLocation.value.location.point.x,
-        earlierLocation.value.location.point.y - laterLocation.value.location.point.y,
-        earlierLocation.value.location.point.z - laterLocation.value.location.point.z,
+        earlierLocation.location.point.x - laterLocation.location.point.x,
+        earlierLocation.location.point.y - laterLocation.location.point.y,
+        earlierLocation.location.point.z - laterLocation.location.point.z,
       ) >
-        earlierLocation.value.location.errorRadius + laterLocation.value.location.errorRadius
+        earlierLocation.location.errorRadius + laterLocation.location.errorRadius
         ? immutableDataSnapshot(
             {
               kind: 'observed-motion' as const,
@@ -2150,14 +2415,14 @@ export function reconcileVisualEvidence(
       ) {
         attentionChanges.add(subject.id);
         finalizeLease(world, observer, priorMotion);
-        delete writableCurrent(state)[motionKey];
+        delete writableCurrent(world, state, observer.id)[motionKey];
       }
     } else if (priorMotion) {
       replaceCurrentFacet(world, state, motionKey, {
         ...priorMotion,
         revision: priorMotion.revision + 1,
         value: motion,
-        valueMeasuredFrom: earlierLocation!.valueMeasuredFrom,
+        valueMeasuredFrom: earlierLocation!.measuredFrom,
         valueMeasuredThrough: world.simTime,
         valueAcquiredAt: world.simTime,
         confirmedThrough: world.simTime,
@@ -2168,7 +2433,7 @@ export function reconcileVisualEvidence(
           kind: 'exposure',
           episodeId: locationLease!.exposure.episodeId,
           detectorId: `${detector.id}:motion`,
-          measuredFrom: earlierLocation!.valueMeasuredFrom,
+          measuredFrom: earlierLocation!.measuredFrom,
           measuredThrough: world.simTime,
         },
         modality: 'sight',
@@ -2177,7 +2442,7 @@ export function reconcileVisualEvidence(
           {
             role: 'direct',
             asOf: world.simTime,
-            measuredFrom: earlierLocation!.valueMeasuredFrom,
+            measuredFrom: earlierLocation!.measuredFrom,
             measuredThrough: world.simTime,
             value: motion,
           },
@@ -2195,7 +2460,7 @@ export function reconcileVisualEvidence(
         originalOrdinal: 0,
         modality: 'sight',
         value: motion,
-        valueMeasuredFrom: earlierLocation!.valueMeasuredFrom,
+        valueMeasuredFrom: earlierLocation!.measuredFrom,
         valueMeasuredThrough: world.simTime,
         valueAcquiredAt: world.simTime,
         confirmedFrom: world.simTime,
@@ -2209,7 +2474,7 @@ export function reconcileVisualEvidence(
       if (removed && !kinds.has(kind)) {
         attentionChanges.add(subject.id);
         finalizeLease(world, observer, readOnlyDraftView(removed));
-        delete writableCurrent(state)[key];
+        delete writableCurrent(world, state, observer.id)[key];
       }
     }
     const measured = readOnlyDraftView(state.current)[`${subject.id}:body`];
@@ -2221,6 +2486,7 @@ export function reconcileVisualEvidence(
   }
   pruneLostBodyIndividuals(world, observer.id, lostIndividuals);
   const revision = (priorConfirmation?.revision ?? 0) + 1;
+  touchNativeEvidence(world, 'perception', observer.id);
   state.visualConfirmation = {
     through: world.simTime,
     revision,
@@ -2238,6 +2504,7 @@ export function reconcileVisualEvidence(
     [...attentionChanges],
     true,
     newGeometry,
+    frameChanged,
   );
 }
 
@@ -2258,6 +2525,7 @@ function reconcileReceivedAttention(
   attentionChanges: readonly string[],
   creditContacts: boolean,
   newGeometry: readonly ObservationContribution[],
+  receiverFrameChanged = false,
 ): void {
   const priorCues = new Set(currentAttentionCues(world, observerId).map((cue) => cue.id));
   const recordedGeometry = reconcileAttendedTemporalEvidence(
@@ -2268,6 +2536,7 @@ function reconcileReceivedAttention(
     attentionChanges,
     creditContacts,
     newGeometry,
+    { receiverFrameChanged },
   );
   evaluateAttentionRelations(world, observerId);
   const newCues = currentAttentionCues(world, observerId).filter((cue) => !priorCues.has(cue.id));
@@ -2465,8 +2734,9 @@ export function reconcileAttendedTemporalEvidence(
   changedSourceIds?: readonly string[],
   creditContacts = true,
   newGeometry: readonly ObservationContribution[] = [],
-  cues: Pick<AttentionUpdate, 'urgency' | 'proofs'> = {},
+  cues: Pick<AttentionUpdate, 'urgency' | 'proofs'> & { receiverFrameChanged?: boolean } = {},
 ): ReadonlySet<string> | undefined {
+  touchNativeEvidence(world, 'perception', observerId);
   const observer = entityGet(world.entities, observerId);
   if (!observer || !hasMemory(observer)) return;
   const history = world.experience?.temporal?.actors[observerId];
@@ -2474,7 +2744,12 @@ export function reconcileAttendedTemporalEvidence(
   const priorEntries = currentDetailedAttention(world, observerId).filter((entry) =>
     before.has(entry.sourceId),
   );
-  const result = updateAttention(world, observerId, { directSubjects, changedSourceIds, ...cues });
+  const { receiverFrameChanged = false, ...attentionCues } = cues;
+  const result = updateAttention(world, observerId, {
+    directSubjects,
+    changedSourceIds,
+    ...attentionCues,
+  });
   const after = new Set(result.after);
   const selected = new Set([...before, ...after]);
   const storedCurrent = world.perceptionEvidence?.[observerId]?.current;
@@ -2489,7 +2764,12 @@ export function reconcileAttendedTemporalEvidence(
     exiting = new Set([...before].filter((id) => !after.has(id)));
   const measured =
     changedSourceIds && !rebaseline
-      ? new Set([...changedSourceIds.filter((id) => selected.has(id)), ...entering, ...exiting])
+      ? new Set([
+          ...changedSourceIds.filter((id) => selected.has(id)),
+          ...entering,
+          ...exiting,
+          ...(receiverFrameChanged ? selected : []),
+        ])
       : undefined;
   const contacts = new Map<string, ObserverSubject>();
   if (creditContacts)
@@ -2519,7 +2799,11 @@ export function reconcileAttendedTemporalEvidence(
         selectedTemporalPolicy(world).recent,
         exiting,
         new Set(contacts.keys()),
-        changedSourceIds && !rebaseline ? new Set(changedSourceIds) : undefined,
+        changedSourceIds && !rebaseline
+          ? receiverFrameChanged
+            ? measured
+            : new Set(changedSourceIds)
+          : undefined,
       )
     : [];
   const creditedSources: string[] = [];
@@ -2588,6 +2872,7 @@ export function endCurrentEvidence(
   episodeGraceSeconds = 0,
   subjectId?: string,
 ): void {
+  touchNativeEvidence(world, 'perception', observerId);
   const state = world.perceptionEvidence?.[observerId];
   if (!state) return;
   const observer = entityGet(world.entities, observerId);
@@ -2605,7 +2890,7 @@ export function endCurrentEvidence(
       retainVisualGap(world, state, lease, episodeGraceSeconds);
       if (observer?.actor && state.life === (observer.actor.physicalLife ?? 0))
         finalizeLease(world, observer, lease);
-      delete writableCurrent(state)[key];
+      delete writableCurrent(world, state, observerId)[key];
       changed = true;
     }
   if (subjectId !== undefined && !changed) return;
@@ -3190,7 +3475,7 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
     ) {
       if (contact) renewed.set(lease.subjectId, { previous: lease.id, newLife });
       finalizeLease(world, observer, lease);
-      delete writableCurrent(state)[key];
+      delete writableCurrent(world, state, observer.id)[key];
     }
   }
   for (const [sourceId, contact] of Object.entries(contacts)) {
@@ -3307,7 +3592,6 @@ export function validateObservationContribution(
           'pile-contents',
           'public-attributes',
           'observed-motion',
-          'confirmation',
           'contact',
           'speech',
           'perceived-feature',
@@ -3367,13 +3651,17 @@ export function validateObservationContribution(
     throw new Error('Conflicting original observation revision.');
   originals.set(key, body);
   for (const facet of observation.facets) {
+    if (facet.support)
+      validateReceivedFacetProof(facet.support, observation.observer, observation.acquiredAt);
     validateSensoryFacet(facet.value, originals);
     validateReceivedParticipantObservers(facet.value, observation.observer);
     if (
-      (facet.value.kind === 'confirmation' &&
-        facet.value.snapshot.valueAcquiredAt > observation.acquiredAt) ||
-      (facet.value.kind === 'observed-motion' &&
-        facet.value.later.valueAcquiredAt > observation.acquiredAt)
+      facet.value.kind === 'observed-motion' &&
+      [facet.value.earlier, facet.value.later].some(
+        (sample) =>
+          sample.acquiredAt > observation.acquiredAt ||
+          sample.confirmedThrough > observation.acquiredAt,
+      )
     )
       throw new Error('Perception support was acquired after its containing contribution.');
   }
@@ -3413,14 +3701,154 @@ export function validateReceivedParticipantObservers(
   if (value.kind === 'claim' && value.speaker.kind === 'exposure')
     owners.push(value.speaker.exposure.observer);
   if (value.kind === 'observed-motion')
-    owners.push(value.exposure.observer, value.earlier.observer, value.later.observer);
-  if (value.kind === 'confirmation') owners.push(value.snapshot.observer);
+    owners.push(
+      value.exposure.observer,
+      value.earlier.original.source.observer,
+      value.later.original.source.observer,
+    );
   if (
     owners.some(
       (owner) => owner.actorId !== observer.actorId || owner.physicalLife !== observer.physicalLife,
     )
   )
     throw new Error('Foreign received participant.');
+}
+
+export function validateReceivedFacetProof(
+  proof: ReceivedFacetProof,
+  observer: ObserverLife,
+  through = Infinity,
+): void {
+  if (
+    !proof ||
+    !hasRecordFields(
+      proof,
+      ['original', 'confirmation', 'confirmedFrom', 'confirmedThrough'],
+      ['aliases'],
+    ) ||
+    !hasRecordFields(proof.original, ['source', 'ordinal'])
+  )
+    throw new Error('Invalid selected facet support.');
+  validateEvidenceSource(proof.original.source);
+  validateEvidenceSource(proof.confirmation);
+  if (
+    !Number.isSafeInteger(proof.original.ordinal) ||
+    proof.original.ordinal < 0 ||
+    !Number.isFinite(proof.confirmedFrom) ||
+    !Number.isFinite(proof.confirmedThrough) ||
+    proof.confirmedFrom > proof.confirmedThrough ||
+    proof.confirmedThrough > through ||
+    canonicalJson(proof.original.source.observer) !== canonicalJson(observer) ||
+    canonicalJson(proof.confirmation.observer) !== canonicalJson(observer) ||
+    (proof.aliases !== undefined &&
+      (!Array.isArray(proof.aliases) || proof.aliases.some((id) => !isSafeRecordId(id))))
+  )
+    throw new Error('Invalid selected facet support.');
+}
+
+export interface ObservationDependency {
+  source: EvidenceSource;
+  ordinal: number | null;
+  aliases: string[];
+}
+export function sensoryFacetDependencies(
+  value: SensoryFacet,
+  support?: ReceivedFacetProof,
+): ObservationDependency[] {
+  const result: ObservationDependency[] = [];
+  const fact = (key: ObservationFactKey, aliases: string[] = []) =>
+    result.push({ source: key.source, ordinal: key.ordinal, aliases });
+  if (support) {
+    fact(support.original, support.aliases ?? []);
+    result.push({ source: support.confirmation, ordinal: support.original.ordinal, aliases: [] });
+  }
+  if (value.kind === 'claim')
+    for (const key of value.support)
+      fact(
+        key,
+        (value.supportAliases ?? []).map((alias) => alias.id),
+      );
+  if (value.kind === 'physical-boundary')
+    for (const support of [value.boundary.nearSurface.support, value.boundary.farSurface.support])
+      fact(support, [personalFactAlias(support.source.id, support.ordinal)]);
+  if (value.kind === 'observed-motion')
+    for (const sample of [value.earlier, value.later]) {
+      fact(sample.original, sample.aliases ?? []);
+      result.push({ source: sample.confirmation, ordinal: sample.original.ordinal, aliases: [] });
+    }
+  return result;
+}
+
+export function validateObservedBodyPose(pose: ObservedBodyPose): void {
+  if (
+    !pose ||
+    !validPoint(pose.position) ||
+    !Number.isFinite(pose.heading) ||
+    (pose.supportSurfaceId !== null && typeof pose.supportSurfaceId !== 'string')
+  )
+    throw new Error('Invalid observed body placement.');
+}
+export function validateObservedBodyDetails(body: ObservedBodyDetails): void {
+  if (
+    !body ||
+    typeof body.kind !== 'string' ||
+    typeof body.appearance !== 'string' ||
+    !Number.isFinite(body.radius) ||
+    body.radius < 0 ||
+    !Number.isFinite(body.height) ||
+    body.height <= 0 ||
+    !Array.isArray(body.outward) ||
+    body.outward.length !== 4 ||
+    body.outward.some((state) => typeof state !== 'string')
+  )
+    throw new Error('Invalid observed body.');
+  if (
+    (body.quantity !== undefined && (!Number.isFinite(body.quantity) || body.quantity < 0)) ||
+    (body.description !== undefined && typeof body.description !== 'string') ||
+    (body.heatLit !== undefined && typeof body.heatLit !== 'boolean') ||
+    (body.remainsPhase !== undefined &&
+      !['fresh', 'rotting', 'removed'].includes(body.remainsPhase)) ||
+    (body.storage !== undefined &&
+      (!hasRecordFields(body.storage, ['placementRevision']) ||
+        !Number.isSafeInteger(body.storage.placementRevision) ||
+        body.storage.placementRevision < 0)) ||
+    (body.label !== undefined && (typeof body.label.name !== 'string' || !body.label.name))
+  )
+    throw new Error('Invalid observed outward detail.');
+  if (body.assembly !== undefined) validateObservedAssembly(body.assembly);
+  if (
+    (body.subtype !== undefined && typeof body.subtype !== 'string') ||
+    (body.icon !== undefined && typeof body.icon !== 'string') ||
+    (body.bodyPlan !== undefined && !['biped', 'quadruped', 'avian'].includes(body.bodyPlan)) ||
+    (body.effects !== undefined &&
+      (!Array.isArray(body.effects) ||
+        body.effects.some(
+          (effect) =>
+            !effect ||
+            typeof effect.id !== 'string' ||
+            typeof effect.label !== 'string' ||
+            (effect.pose !== undefined && effect.pose !== 'horizontal') ||
+            (effect.particle !== undefined &&
+              (typeof effect.particle.text !== 'string' ||
+                effect.particle.anchor !== 'head' ||
+                effect.particle.motion !== 'floatAway')),
+        )))
+  )
+    throw new Error('Invalid observed outward presentation.');
+  if (
+    body.animation !== undefined &&
+    body.animation !== null &&
+    (typeof body.animation.id !== 'string' ||
+      !['punch', 'melee'].includes(body.animation.kind) ||
+      !['windup', 'recovery'].includes(body.animation.phase) ||
+      !Number.isFinite(body.animation.progress) ||
+      body.animation.progress < 0 ||
+      body.animation.progress > 1 ||
+      !Number.isFinite(body.animation.direction?.x) ||
+      !Number.isFinite(body.animation.direction?.z) ||
+      (body.animation.tool !== undefined && typeof body.animation.tool !== 'string'))
+  )
+    throw new Error('Invalid observed action pose.');
 }
 
 export function validateSensoryFacet(
@@ -3451,73 +3879,10 @@ export function validateSensoryFacet(
       if (!validObservationFrame(value.frame))
         throw new Error('Invalid original observation frame.');
       break;
-    case 'body': {
-      const body = value.body;
-      if (
-        !body ||
-        typeof body.kind !== 'string' ||
-        !validPoint(body.position) ||
-        !Number.isFinite(body.heading) ||
-        typeof body.appearance !== 'string' ||
-        !Number.isFinite(body.radius) ||
-        body.radius < 0 ||
-        !Number.isFinite(body.height) ||
-        body.height <= 0 ||
-        (body.supportSurfaceId !== null && typeof body.supportSurfaceId !== 'string') ||
-        !Array.isArray(body.outward) ||
-        body.outward.length !== 4 ||
-        body.outward.some((state) => typeof state !== 'string')
-      )
-        throw new Error('Invalid observed body.');
-      if (
-        (body.quantity !== undefined && (!Number.isFinite(body.quantity) || body.quantity < 0)) ||
-        (body.description !== undefined && typeof body.description !== 'string') ||
-        (body.heatLit !== undefined && typeof body.heatLit !== 'boolean') ||
-        (body.remainsPhase !== undefined &&
-          !['fresh', 'rotting', 'removed'].includes(body.remainsPhase)) ||
-        (body.storage !== undefined &&
-          (!hasRecordFields(body.storage, ['placementRevision']) ||
-            !Number.isSafeInteger(body.storage.placementRevision) ||
-            body.storage.placementRevision < 0)) ||
-        (body.label !== undefined && (typeof body.label.name !== 'string' || !body.label.name))
-      )
-        throw new Error('Invalid observed outward detail.');
-      if (body.assembly !== undefined) validateObservedAssembly(body.assembly);
-      if (
-        (body.subtype !== undefined && typeof body.subtype !== 'string') ||
-        (body.icon !== undefined && typeof body.icon !== 'string') ||
-        (body.bodyPlan !== undefined && !['biped', 'quadruped', 'avian'].includes(body.bodyPlan)) ||
-        (body.effects !== undefined &&
-          (!Array.isArray(body.effects) ||
-            body.effects.some(
-              (effect) =>
-                !effect ||
-                typeof effect.id !== 'string' ||
-                typeof effect.label !== 'string' ||
-                (effect.pose !== undefined && effect.pose !== 'horizontal') ||
-                (effect.particle !== undefined &&
-                  (typeof effect.particle.text !== 'string' ||
-                    effect.particle.anchor !== 'head' ||
-                    effect.particle.motion !== 'floatAway')),
-            )))
-      )
-        throw new Error('Invalid observed outward presentation.');
-      if (
-        body.animation !== undefined &&
-        body.animation !== null &&
-        (typeof body.animation.id !== 'string' ||
-          !['punch', 'melee'].includes(body.animation.kind) ||
-          !['windup', 'recovery'].includes(body.animation.phase) ||
-          !Number.isFinite(body.animation.progress) ||
-          body.animation.progress < 0 ||
-          body.animation.progress > 1 ||
-          !Number.isFinite(body.animation.direction?.x) ||
-          !Number.isFinite(body.animation.direction?.z) ||
-          (body.animation.tool !== undefined && typeof body.animation.tool !== 'string'))
-      )
-        throw new Error('Invalid observed action pose.');
+    case 'body':
+      validateObservedBodyPose(value.body);
+      validateObservedBodyDetails(value.body);
       break;
-    }
     case 'carried':
       if (
         !Array.isArray(value.items) ||
@@ -3599,24 +3964,38 @@ export function validateSensoryFacet(
       break;
     case 'observed-motion': {
       for (const sample of [value.earlier, value.later]) {
+        validateObservedLocation(sample.location);
+        validateEvidenceSource(sample.original.source);
+        validateEvidenceSource(sample.confirmation);
         if (
-          !sample ||
-          sample.value.kind !== 'location' ||
-          sample.value.location.kind !== 'point' ||
-          sample.valueMeasuredFrom !== sample.valueMeasuredThrough ||
-          sample.valueMeasuredThrough > sample.valueAcquiredAt
+          sample.location.kind !== 'point' ||
+          !validObservationFrame(sample.frame) ||
+          !Number.isSafeInteger(sample.original.ordinal) ||
+          sample.original.ordinal < 0 ||
+          ![
+            sample.measuredFrom,
+            sample.measuredThrough,
+            sample.acquiredAt,
+            sample.confirmedFrom,
+            sample.confirmedThrough,
+          ].every(Number.isFinite) ||
+          sample.measuredFrom !== sample.measuredThrough ||
+          sample.measuredThrough > sample.acquiredAt ||
+          sample.confirmedFrom > sample.confirmedThrough ||
+          (sample.aliases !== undefined &&
+            (!Array.isArray(sample.aliases) || sample.aliases.some((id) => !isSafeRecordId(id)))) ||
+          canonicalJson(sample.original.source.observer) !==
+            canonicalJson(value.exposure.observer) ||
+          canonicalJson(sample.confirmation.observer) !== canonicalJson(value.exposure.observer)
         )
           throw new Error('Received motion requires completed point samples.');
-        validateSensoryFacet({ kind: 'confirmation', snapshot: sample }, originals);
       }
       if (
         value.correspondence !== 'unambiguous-received-continuity' ||
         !value.exposure?.episodeId ||
-        value.earlier.valueMeasuredThrough >= value.later.valueMeasuredFrom ||
-        value.earlier.confirmation.id !== value.later.confirmation.id ||
-        value.earlier.exposure.episodeId !== value.exposure.episodeId ||
-        value.later.exposure.episodeId !== value.exposure.episodeId ||
-        JSON.stringify(value.earlier.observer) !== JSON.stringify(value.later.observer)
+        value.earlier.measuredThrough >= value.later.measuredFrom ||
+        value.earlier.acquiredAt > value.later.acquiredAt ||
+        value.earlier.confirmation.id !== value.later.confirmation.id
       )
         throw new Error('Invalid received motion correspondence.');
       break;
@@ -3726,37 +4105,6 @@ export function validateSensoryFacet(
       )
         throw new Error('Invalid permitted event detail.');
       break;
-    case 'confirmation': {
-      const snapshot = value.snapshot;
-      if (!snapshot || !snapshot.confirmation)
-        throw new Error('Invalid retained perception confirmation.');
-      validateEvidenceSource(snapshot.confirmation);
-      validateObservationContribution(snapshot.original, originals);
-      if (
-        !Number.isSafeInteger(snapshot.originalOrdinal) ||
-        !snapshot.original.facets[snapshot.originalOrdinal] ||
-        snapshot.original.facets[snapshot.originalOrdinal]!.value.kind !== snapshot.value.kind ||
-        !snapshot.observer ||
-        !snapshot.exposure ||
-        canonicalJson(snapshot.observer) !== canonicalJson(snapshot.original.observer) ||
-        canonicalJson(snapshot.observer) !== canonicalJson(snapshot.confirmation.observer) ||
-        canonicalJson(snapshot.observer) !== canonicalJson(snapshot.exposure.observer) ||
-        ![
-          snapshot.valueMeasuredFrom,
-          snapshot.valueMeasuredThrough,
-          snapshot.valueAcquiredAt,
-          snapshot.confirmedFrom,
-          snapshot.confirmedThrough,
-        ].every(Number.isFinite) ||
-        snapshot.valueMeasuredThrough < snapshot.valueMeasuredFrom ||
-        snapshot.valueMeasuredThrough > snapshot.valueAcquiredAt ||
-        snapshot.confirmedThrough < snapshot.confirmedFrom ||
-        snapshot.value.kind === 'confirmation'
-      )
-        throw new Error('Invalid retained facet timing.');
-      validateSensoryFacet(snapshot.value, originals);
-      break;
-    }
     case 'claim':
       validateObservedLocation(value.claim.where);
       if (

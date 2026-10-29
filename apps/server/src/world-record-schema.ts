@@ -1,8 +1,7 @@
 import { accountClass, experienceIndividualIds, type ExperienceEntry } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
-import { temporalChunkValueReferences } from './temporal-storage.js';
-import type { TemporalChunk } from '@open-legend/domain';
+import { encodeEvidenceOwner, decodeEvidenceOwner } from './evidence-segments.js';
 import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
 import { encodePerceptionOwner, decodePerceptionOwner } from './perception-records.js';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
@@ -17,7 +16,7 @@ export interface RecordNode {
   uniqueIndexes?: string[][];
   constraints?: string[];
   /** Normalize a shared native value within this same owned record subtree. */
-  encode?: (value: unknown) => unknown;
+  encode?: (value: unknown, previous?: unknown, segmentBytes?: number) => unknown;
   decode?: (value: unknown) => unknown;
 }
 export type JsonRecord = Record<string, unknown>;
@@ -193,7 +192,18 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       knowledgeRevisions: map('mind_knowledge_revisions'),
       observerIdentities: actorMaps('mind_recognition'),
       receivedValues: one('mind_perception_value_state', {
-        sources: { ...map('mind_perception_values'), unordered: true },
+        sources: {
+          ...map(
+            'mind_perception_values',
+            { values: list('mind_perception_segments', 'start') },
+            {
+              encode: (value, previous, bytes) =>
+                encodeEvidenceOwner(value, 'values', previous, bytes!),
+              decode: (value) => decodeEvidenceOwner(value, 'values'),
+            },
+          ),
+          unordered: true,
+        },
       }),
       perceptionEvidence: map(
         'mind_perception_owners',
@@ -245,7 +255,17 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         privacyRevisions: map('mind_privacy_revisions'),
         temporal: one('mind_temporal_state', {
           actors: map('mind_temporal_actors', {
-            chunks: list('mind_temporal_chunks', 'id'),
+            chunks: {
+              ...list('mind_temporal_chunks', 'id'),
+              node: {
+                table: 'mind_temporal_chunks',
+                children: { receipts: list('mind_temporal_segments', 'start') },
+                encode: (value, previous, bytes) =>
+                  encodeEvidenceOwner(value, 'receipts', previous, bytes!),
+                decode: (value) => decodeEvidenceOwner(value, 'receipts'),
+              },
+            },
+            captures: { ...map('mind_temporal_captures'), unordered: true },
             supports: map('mind_temporal_supports'),
           }),
         }),
@@ -494,19 +514,12 @@ columns(
   { actor_id: actorColumn, subject_id: textColumn('subjectId') },
   [['actor_id', 'subject_id']],
 );
-/** Conservative search bounds over the actually retained facet support, independent
- * of when the receipt containing that confirmation was issued. */
-function temporalSupportBound(value: JsonRecord, first: boolean): number {
-  let bound = first ? Infinity : -Infinity;
-  for (const receipt of value['receipts'] as JsonRecord[])
-    for (const facet of receipt['facets'] as JsonRecord[]) {
-      const at = (
-        first ? facet['measuredFrom'] : (facet['confirmedThrough'] ?? facet['measuredThrough'])
-      ) as number;
-      bound = first ? Math.min(bound, at) : Math.max(bound, at);
+const receiptIndex = (value: JsonRecord) =>
+  (
+    value['storage'] as {
+      index: ReturnType<typeof import('./evidence-segments.js').receiptStorageIndex>;
     }
-  return bound;
-}
+  ).index;
 columns(
   'mind_temporal_chunks',
   {
@@ -518,21 +531,21 @@ columns(
     last_ordinal: { ...numberColumn('throughOrdinal'), sql: 'BIGINT NOT NULL' },
     first_order: {
       sql: 'BIGINT NOT NULL',
-      value: (value) => (value['receipts'] as JsonRecord[])[0]!['order'],
+      value: (value) => receiptIndex(value).firstOrder,
     },
     last_order: {
       sql: 'BIGINT NOT NULL',
-      value: (value) => (value['receipts'] as JsonRecord[]).at(-1)!['order'],
+      value: (value) => receiptIndex(value).lastOrder,
     },
     first_at: { ...numberColumn('fromAt'), sql: 'DOUBLE PRECISION NOT NULL' },
     last_at: { ...numberColumn('throughAt'), sql: 'DOUBLE PRECISION NOT NULL' },
     first_measured_at: {
       sql: 'DOUBLE PRECISION NOT NULL',
-      value: (value) => temporalSupportBound(value, true),
+      value: (value) => receiptIndex(value).firstMeasured,
     },
     last_supported_at: {
       sql: 'DOUBLE PRECISION NOT NULL',
-      value: (value) => temporalSupportBound(value, false),
+      value: (value) => receiptIndex(value).lastSupported,
     },
     logical_bytes: { ...numberColumn('bytes'), sql: 'BIGINT NOT NULL' },
     receipt_count: { ...numberColumn('count'), sql: 'BIGINT NOT NULL' },
@@ -540,13 +553,13 @@ columns(
     source_refs: { sql: 'TEXT[] NOT NULL', value: (value) => value['sourceRefs'] },
     value_refs: {
       sql: 'JSONB NOT NULL',
-      value: (value) => temporalChunkValueReferences(value as unknown as TemporalChunk),
+      value: (value) => receiptIndex(value).references,
     },
     source_ids: { sql: 'TEXT[] NOT NULL', value: (value) => value['sourceIds'] },
     individual_ids: { sql: 'TEXT[] NOT NULL', value: (value) => value['individualIds'] },
     receipt_ordinals: {
       sql: 'BIGINT[] NOT NULL',
-      value: (value) => (value['receipts'] as JsonRecord[]).map((receipt) => receipt['ordinal']),
+      value: (value) => receiptIndex(value).ordinals,
     },
   },
   [

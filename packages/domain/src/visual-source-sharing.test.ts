@@ -43,9 +43,7 @@ it('shares only complete outward source values while preserving independent rece
     valueMeasuredThrough: a.valueMeasuredThrough,
     fact: observationFactKey(world, a.original, a.originalOrdinal),
   });
-  expect(received.location!.fact).toEqual(
-    observationFactKey(world, firstLocation.original, firstLocation.originalOrdinal),
-  );
+  expect(received.location!.fact).toEqual(firstLocation.original);
   expect(
     firstLocation.value.kind === 'location' && firstLocation.value.frame.positionAtObservation,
   ).toEqual({ x: 1, y: 0, z: 2 });
@@ -76,12 +74,8 @@ it('shares only complete outward source values while preserving independent rece
   const motion = world.perceptionEvidence![first.id]!.current[`${source.id}:observed-motion`]!;
   const motionValue = receivedFacetValue(world, motion.value);
   if (motionValue?.kind !== 'observed-motion') throw new Error('Actual motion is required.');
-  expect(restoredScene.motion!.earlier.fact).toEqual(
-    observationFactKey(world, motionValue.earlier.original, motionValue.earlier.originalOrdinal),
-  );
-  expect(restoredScene.motion!.later.fact).toEqual(
-    observationFactKey(world, motionValue.later.original, motionValue.later.originalOrdinal),
-  );
+  expect(restoredScene.motion!.earlier.fact).toEqual(motionValue.earlier.original);
+  expect(restoredScene.motion!.later.fact).toEqual(motionValue.later.original);
   // A mutable restored world still supplies owned scene values, not live aliases.
   restoredScene.body.position.x = 999;
   if (restoredScene.location!.location.kind !== 'point')

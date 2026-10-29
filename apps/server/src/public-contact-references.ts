@@ -460,6 +460,7 @@ function mapContactReferences<T>(
             'rootId',
             'assemblyId',
             'npcId',
+            'personId',
           ].includes(key) ||
             (key === 'sourceId' && command.kind === 'meal')) &&
           typeof part === 'string'

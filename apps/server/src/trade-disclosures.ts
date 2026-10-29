@@ -8,6 +8,7 @@ import { searchTerms, matchesSearch } from './text-search.js';
 import { digest } from './store.js';
 import { disclosedView } from './handover-actions.js';
 import type { WorldService } from './world-service.js';
+import { resolveContactTarget, ContactReferenceError } from './public-contact-references.js';
 
 const cursorSchema = z
   .object({
@@ -55,6 +56,7 @@ export async function tradeDisclosures(
   request: { personId: string; query?: string; cursor?: string },
 ): Promise<TradeDisclosuresPage> {
   service.assertScope(scope);
+  const personId = resolveContactTarget(service.world, scope, request.personId);
   const prepared = await prepare(service, scope.actorId);
   service.assertScope(scope);
   const terms = searchTerms(request.query);
@@ -68,12 +70,14 @@ export async function tradeDisclosures(
   const cursor = request.cursor ? cursorSchema.parse(openCursor(request.cursor)) : undefined;
   if (cursor && cursor.fence !== fence)
     throw new HistoryCursorError('Remembered trade items changed. Refresh this search.');
-  const page = await service.store.memories!.tradeDisclosurePage(prepared.scope, request.personId, {
+  const page = await service.store.memories!.tradeDisclosurePage(prepared.scope, personId, {
     ...(cursor ? { before: cursor.before } : {}),
     limit: DISCLOSURE_READ.scanRows,
   });
   service.assertScope(scope);
   assertPrepared(service, prepared);
+  if (resolveContactTarget(service.world, scope, request.personId) !== personId)
+    throw new ContactReferenceError();
   const items: TradeDisclosuresPage['items'] = [];
   let examined = 0;
   let before = cursor?.before;

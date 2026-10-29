@@ -54,10 +54,10 @@ export function inventoryPresentation(
         storage: entity.storage,
         trade: entity.trade,
         portrait: entity.portrait,
-        // World-container movement invalidates an open root. Other people's poses
-        // are neither displayed nor used to select recipients; those reads are scoped.
-        position: entity.storage ? entity.position : undefined,
-        supportSurfaceId: entity.storage ? entity.supportSurfaceId : undefined,
+        // Open roots and selected trade readers recheck physical availability.
+        // A closed trade reader performs no work from these compact pose fields.
+        position: entity.storage || entity.trade ? entity.position : undefined,
+        supportSurfaceId: entity.storage || entity.trade ? entity.supportSurfaceId : undefined,
       },
       before.get(entity.id),
     ),

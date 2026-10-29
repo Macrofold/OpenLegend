@@ -148,6 +148,7 @@ import {
   projectActivityChoicePage,
 } from './activity-requests.js';
 import { tradeDisclosures } from './trade-disclosures.js';
+import { readTradeView } from './trade-view.js';
 
 const clientId = z
   .string()
@@ -746,6 +747,13 @@ async function initializeGameServer(
   const privateStreams = new Set<{ check(): boolean; close(): void }>();
   let pendingStreams = 0;
   const projectionLane = new WorkLane('projection', config.capacity.requests);
+  // This lane only reads and formats already accepted state. Its failure must not
+  // become an authoritative storage failure that pauses unrelated players.
+  class PublicProjectionError extends Error {
+    constructor(cause: unknown) {
+      super('The current view could not be refreshed. Reconnect to try again.', { cause });
+    }
+  }
   const invalidateStream = (stream: ServerResponse) => {
     // No private payload accompanies revocation. A blocked connection is disconnected;
     // data already handed to the transport cannot be recalled.
@@ -815,7 +823,15 @@ async function initializeGameServer(
       return next;
     });
 
-    return pending;
+    return pending.catch((error: unknown) => {
+      if (
+        error instanceof AuthorityError ||
+        error instanceof OverloadError ||
+        error instanceof ViewChangedError
+      )
+        throw error;
+      throw new PublicProjectionError(error);
+    });
   };
   const pump = (stream: ServerResponse) => {
     const state = streams.get(stream);
@@ -898,6 +914,13 @@ async function initializeGameServer(
             await currentView(state.scope);
             pump(stream);
           } catch (error) {
+            if (error instanceof PublicProjectionError) {
+              console.error('Public projection failed for one viewer', error.cause);
+              channels.delete(scopeKey(state.scope));
+              streams.delete(stream);
+              stream.destroy();
+              continue;
+            }
             if (error instanceof OverloadError || error instanceof ViewChangedError) {
               publishQueued = true;
               continue;
@@ -1754,10 +1777,10 @@ async function initializeGameServer(
           '/api/invent',
           '/api/world-agent/messages',
         ].includes(url.pathname);
-        if (url.pathname === '/api/actions') {
-          // A synchronous menu read needs current durable permission, not a wait
-          // for unrelated saves or commands. All guards below run after this
-          // await; catalogue construction and disclosure have no further await.
+        if (['/api/actions', '/api/trade', '/api/trade/disclosures'].includes(url.pathname)) {
+          // Deliberate readers need current durable permission without holding
+          // the world lane through optional SQL. Async readers also recheck their
+          // exact scope/contact after hydration; send fences disclosure again.
           await store.authority.assertFence({ scope, capability: required, controlling, now });
         }
         const held = operations.maintenanceBlock(url.pathname, scope);
@@ -2203,6 +2226,10 @@ async function initializeGameServer(
                 .strict()
                 .parse(body);
               return send(response, 200, inventoryBindings(service, scope, value.itemIds));
+            }
+            case '/api/trade': {
+              const value = z.object({ personId: requestIdSchema }).strict().parse(body);
+              return send(response, 200, readTradeView(service, scope, value.personId));
             }
             case '/api/trade/disclosures': {
               const value = z
@@ -3898,6 +3925,8 @@ async function initializeGameServer(
         const perform = async () =>
           [
             '/api/actions',
+            '/api/trade',
+            '/api/trade/disclosures',
             '/api/presence',
             '/api/chat/receipt',
             '/api/inventions/receipt',
@@ -3928,6 +3957,12 @@ async function initializeGameServer(
         }
         return await perform();
       } catch (error) {
+        if (error instanceof PublicProjectionError)
+          return send(response, 503, {
+            ok: false,
+            code: 'view-unavailable',
+            message: error.message,
+          });
         if (error instanceof OverloadError || error instanceof ViewChangedError) {
           response.setHeader('Retry-After', '1');
           return send(response, 503, { ok: false, code: 'busy', message: error.message });

@@ -321,6 +321,10 @@ export interface CurrentMemorySource {
   revision: string;
   through?: SummarySourceBinding;
 }
+export interface CanonicalSourceFence {
+  current(): boolean;
+  release(): void;
+}
 export interface KnownPlaceSource {
   memory: MemoryRecord;
   revision: string;
@@ -438,6 +442,80 @@ export class MemoryRepository {
     { revision: number; reset: number; rows: Record<string, unknown>[] }
   >();
   private actorRevisions = new Map<string, number>();
+  private readonly canonicalSourceFences = new Set<{
+    worldId: string;
+    actorId: string;
+    tables: ReadonlySet<string>;
+    expected: ReadonlyMap<string, string>;
+    valid: boolean;
+  }>();
+  /** Watch exact selected account rows during an admitted asynchronous publication.
+   * Register before current() validates SQL; this token detects later accepted
+   * changes, but does not itself prove source eligibility or extend retention.
+   * Unlike an actor revision, unrelated new receipts cannot starve consolidation.
+   * docs/projects/attention-and-scenes-runtime-design.md#72-exact-requestanswer-sequence */
+  captureCanonicalSourceFence(
+    scope: MemoryScope,
+    sources: readonly CurrentMemorySource[],
+  ): CanonicalSourceFence {
+    const expected = new Map<string, string>();
+    const tables = new Set<string>();
+    for (const source of sources) {
+      if (source.receipt || source.through)
+        throw new Error('Canonical publication requires direct retained account sources.');
+      tables.add(sourceTables[source.sourceKind]);
+      expected.set(
+        JSON.stringify([sourceTables[source.sourceKind], scope.actorId, source.id]),
+        source.revision,
+      );
+    }
+    const fence = { worldId: scope.worldId, actorId: scope.actorId, tables, expected, valid: true };
+    this.canonicalSourceFences.add(fence);
+    return {
+      current: () => fence.valid,
+      release: () => {
+        fence.valid = false;
+        this.canonicalSourceFences.delete(fence);
+      },
+    };
+  }
+  /** Synchronous accepted-change notification, including journal-first acceptance.
+   * Applied-table notifications repeat safely; matching payloads keep the proof.
+   * No historical revision ledger or source body is retained by these short watches. */
+  acceptedSourceChanges(worldId: string, changes: RecordChanges, restored = false): void {
+    if (!this.canonicalSourceFences.size) return;
+    for (const fence of this.canonicalSourceFences) {
+      if (fence.worldId !== worldId) continue;
+      if (restored || changes.deletes.has('data_world')) {
+        fence.valid = false;
+        continue;
+      }
+      for (const table of fence.tables) {
+        const actorIndex = table === 'mind_memories' ? 2 : 3;
+        // Removing an owning collection cascades its selected rows even when the
+        // canonical change set does not enumerate every deleted child.
+        if (
+          changes.deletes
+            .get(`${table}_owners`)
+            ?.some((id) => (JSON.parse(id) as string[])[actorIndex] === fence.actorId)
+        ) {
+          fence.valid = false;
+          continue;
+        }
+        for (const row of changes.writes.get(table) ?? []) {
+          const path = JSON.parse(row.id) as string[];
+          const expected = fence.expected.get(JSON.stringify([table, path[actorIndex], row.slot]));
+          if (expected !== undefined && personalAccountRevision(row.payload) !== expected)
+            fence.valid = false;
+        }
+        for (const id of changes.deletes.get(table) ?? []) {
+          const path = JSON.parse(id) as string[];
+          if (fence.expected.has(JSON.stringify([table, path[actorIndex], path.at(-1)])))
+            fence.valid = false;
+        }
+      }
+    }
+  }
   private readonly placeReadEpoch = randomUUID();
   private placeReset = 0;
   /** Retained place capsules share the existing personal-memory revision. Current
@@ -516,7 +594,8 @@ export class MemoryRepository {
     for (const epoch of this.actorVectorEpochs.values())
       if (epoch.worldId === worldId && changed.has(epoch.actorId)) epoch.token = ++this.vectorToken;
   }
-  committed(changes: RecordChanges, restored = false) {
+  committed(worldId: string, changes: RecordChanges, restored = false) {
+    this.acceptedSourceChanges(worldId, changes, restored);
     const actors = new Set<string>();
     let unknownScope = changes.deletes.has('data_world') || changes.deletes.has('world_settings');
     // Current reception and attention are not retained memory. Their own grants
@@ -796,7 +875,7 @@ export class MemoryRepository {
       q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint,header jsonb,facets jsonb,values jsonb)
       WHERE EXISTS(SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
         EXISTS(SELECT 1 FROM LATERAL (
-          SELECT payload,last_ordinal,receipt_ordinals FROM mind_temporal_chunks c
+          SELECT payload,last_ordinal,receipt_ordinals FROM mind_temporal_chunks_read c
           WHERE c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife" AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
           ORDER BY c.first_ordinal DESC LIMIT 1
         ) chunk CROSS JOIN LATERAL jsonb_array_elements(chunk.payload::jsonb->'receipts') r(receipt)
@@ -805,7 +884,7 @@ export class MemoryRepository {
           AND (r.receipt-'facets'-'sourceIds')=q.header
           AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(q.facets) WITH ORDINALITY f(value,position)
             WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r.receipt->'facets') owned(facet)
-              JOIN mind_perception_values source ON source.world_id=? AND source.source_id=f.value->>'blockId'
+              JOIN mind_perception_values_read source ON source.world_id=? AND source.source_id=f.value->>'blockId'
               WHERE owned.facet=f.value AND source.payload::jsonb->'values'->(f.value->>'valueOrdinal')::int=q.values->(f.position::int-1))))
         OR EXISTS(SELECT 1 FROM mind_temporal_supports s
           WHERE s.world_id=? AND s.actor_id=q."actorId" AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal
@@ -837,7 +916,7 @@ export class MemoryRepository {
       q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint)
       WHERE EXISTS (SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
         EXISTS (SELECT 1 FROM LATERAL (
-          SELECT last_ordinal,receipt_ordinals FROM mind_temporal_chunks c
+          SELECT last_ordinal,receipt_ordinals FROM mind_temporal_chunks_read c
           WHERE c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
             AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
           ORDER BY c.first_ordinal DESC LIMIT 1

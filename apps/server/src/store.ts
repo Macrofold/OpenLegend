@@ -68,6 +68,7 @@ import {
 import { JournalWorker, type ApplicationStatistics } from './journal-worker-client.js';
 import {
   applyRecordSources,
+  JournalTableWriter,
   type JournalRange,
   type JournalApplied,
   type JournalTables,
@@ -158,7 +159,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '31';
+export const DATABASE_SCHEMA = '32';
 
 export interface AttemptBudget {
   id: string;
@@ -304,6 +305,14 @@ interface TableWrite {
   preparedSources?: PreparedMemorySources;
   restore: boolean;
   deferred?: true;
+}
+
+interface CompactJournalWrite extends JournalTables {
+  worldId: string;
+  revision: number;
+  restore: false;
+  deferred: true;
+  historyChanged: boolean;
 }
 
 /** Replaceable persistence boundary for committed world state. */
@@ -509,7 +518,7 @@ export class SqlGameRepository implements GameRepository {
   readonly memories: MemoryRepository;
   private readonly integrationValues: IntegrationValues;
   private readonly rawDb: SqlDatabase;
-  private readonly journal: WorldJournal<TableWrite>;
+  private readonly journal: WorldJournal<CompactJournalWrite>;
   private journalActive = false;
   private applicationWorker?: JournalWorker;
   private applicationLeaseShared = false;
@@ -1032,6 +1041,7 @@ export class SqlGameRepository implements GameRepository {
       restore: !!historyProjection?.restore,
     };
     const publish = () => {
+      this.memories.acceptedSourceChanges(state.world.id, changes, write.restore);
       this.publishWorldTables(write);
       if (this.journalActive) this.journal.synchronized(state.world.id, committedRevision);
     };
@@ -1053,8 +1063,18 @@ export class SqlGameRepository implements GameRepository {
         // validation remains at load/recovery; it is not a per-command history scan.
         write.preparedSources = this.memories.prepareSources(state.world.id, changes, state.world);
         write.deferred = true;
+        const compact: CompactJournalWrite = {
+          worldId: state.world.id,
+          revision: write.revision,
+          restore: false,
+          deferred: true,
+          changes,
+          sources: write.preparedSources,
+          history: prepareHistoryAppend(preparedHistory!),
+          historyChanged: !!preparedHistory!.changed.length || !!preparedHistory!.removed.length,
+        };
         const appended = await timed('persistence.journalAppend', () =>
-          this.journal.append(state.world.id, expectedRevision, encoded, write, async () => {
+          this.journal.append(state.world.id, expectedRevision, encoded, compact, async () => {
             if (this.applicationFailure) throw this.applicationFailure;
             if (!(await journalConstraints(this.rawDb, constraints, await this.journal.pending())))
               return { kind: 'synchronous' };
@@ -1069,6 +1089,7 @@ export class SqlGameRepository implements GameRepository {
         if (appended.kind === 'appended') {
           this.acceptedRevision = appended.revision;
           this.acceptedState = state;
+          this.memories.acceptedSourceChanges(state.world.id, changes);
           this.journal.schedule();
           return appended.revision;
         }
@@ -1221,6 +1242,9 @@ export class SqlGameRepository implements GameRepository {
       Object.isFrozen(before.world) &&
       Object.isFrozen(state.world) &&
       !!preparedHistory &&
+      !!preparedHistory.previous &&
+      preparedHistory.previous.storyPolicyRevision === preparedHistory.world.storyPolicyRevision &&
+      preparedHistory.previous.authorship === preparedHistory.world.authorship &&
       this.readyHistoryWorlds.has(state.world.id) &&
       !projection?.restore &&
       !write.changes.expired?.size &&
@@ -1240,12 +1264,19 @@ export class SqlGameRepository implements GameRepository {
     );
   }
 
-  private publishWorldTables(write: TableWrite, remoteSources?: PreparedMemorySources): void {
-    this.readyHistoryWorlds.add(write.state.world.id);
+  private publishWorldTables(
+    write: TableWrite | CompactJournalWrite,
+    remoteSources?: PreparedMemorySources,
+  ): void {
+    this.readyHistoryWorlds.add('worldId' in write ? write.worldId : write.state.world.id);
     this.records.needsHotPrune = false;
     const memoryRevision = this.memories.publicationRevision;
     this.history.committed();
-    this.memories.committed(write.changes, write.restore);
+    this.memories.committed(
+      'worldId' in write ? write.worldId : write.state.world.id,
+      write.changes,
+      write.restore,
+    );
     this.memories.lexicalCommitted(remoteSources);
     // The live world was already published at durable journal acknowledgement.
     // Its SQL-derived read tokens advance only here; quiet/paused clients need
@@ -1253,43 +1284,22 @@ export class SqlGameRepository implements GameRepository {
     if (
       write.deferred &&
       (memoryRevision !== this.memories.publicationRevision ||
-        !!write.preparedHistory?.changed.length ||
-        !!write.preparedHistory?.removed.length)
+        ('historyChanged' in write
+          ? write.historyChanged
+          : !!write.preparedHistory?.changed.length || !!write.preparedHistory?.removed.length))
     )
       for (const listener of this.projectionListeners) listener();
   }
   private async applyOnlineJournal(
     range: JournalRange,
-    retained: ReadonlyMap<number, RetainedJournal<TableWrite>>,
+    retained: ReadonlyMap<number, RetainedJournal<CompactJournalWrite>>,
   ): Promise<JournalApplied | undefined> {
     const worker = this.applicationWorker;
     if (!worker || retained.size !== range.through - range.first + 1) return;
-    const entries = new Map<number, RetainedJournal<JournalTables>>();
-    for (const [revision, entry] of retained) {
-      const write = entry.preparation,
-        inputs = write.preparedHistory;
-      // Keep every non-append history effect with its ordinary owner. This does
-      // not widen journal eligibility or invent a policy decision in the worker.
-      if (
-        !inputs ||
-        !write.preparedSources ||
-        !write.before ||
-        !inputs.previous ||
-        inputs.previous.storyPolicyRevision !== inputs.world.storyPolicyRevision ||
-        inputs.previous.authorship !== inputs.world.authorship
-      )
-        return;
-      if (write.revision !== revision || write.state.world.id !== range.worldId)
+    const entries: ReadonlyMap<number, RetainedJournal<JournalTables>> = retained;
+    for (const [revision, entry] of retained)
+      if (entry.preparation.revision !== revision || entry.preparation.worldId !== range.worldId)
         throw new Error('Journal application preparation has a different owner.');
-      entries.set(revision, {
-        ...entry,
-        preparation: {
-          changes: write.changes,
-          sources: write.preparedSources,
-          history: prepareHistoryAppend(inputs),
-        },
-      });
-    }
     let result: JournalApplied;
     let recovered = false;
     try {
@@ -1336,14 +1346,26 @@ export class SqlGameRepository implements GameRepository {
     // exclusive, durable-head proof). Future work uses the same local owner if
     // the supervised worker had to retire. An unapplied failure never retries.
     for (const entry of retained.values())
-      this.publishWorldTables(entry.preparation, entry.preparation.preparedSources);
+      this.publishWorldTables(entry.preparation, entry.preparation.sources);
     if (recovered) this.applicationFailure = undefined;
     return result;
   }
 
-  private async applyJournal(entry: JournalApplication, prepared?: TableWrite): Promise<void> {
-    let write = prepared;
-    if (!write) {
+  private localJournalWriter?: JournalTableWriter;
+  private async applyJournal(
+    entry: JournalApplication,
+    prepared?: CompactJournalWrite,
+  ): Promise<void> {
+    if (prepared) {
+      if (prepared.revision !== entry.revision || prepared.worldId !== entry.worldId)
+        throw new Error('Journal application preparation has a different owner.');
+      this.localJournalWriter ??= new JournalTableWriter(this.db);
+      await this.localJournalWriter.apply(entry, prepared);
+      this.db.afterCommit?.(() => this.publishWorldTables(prepared, prepared.sources));
+      return;
+    }
+    let write: TableWrite;
+    {
       this.recoveryState ??= (await this.records.loadApplied())?.state;
       if (!this.recoveryState) throw new Error('Journal recovery has no applied world.');
       freezeWorld(this.recoveryState.world);

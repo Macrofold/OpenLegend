@@ -134,6 +134,9 @@ const toolOptions = profilingOptions(process.argv.slice(2));
 const appProfiling = toolOptions.enabled;
 const [output, durationArgument = '15'] = toolOptions.arguments;
 const seconds = Number(durationArgument);
+const profileSpeed = Number(process.env['OPENLEGEND_PROFILE_SPEED'] ?? '3');
+if (![1, 3, 8].includes(profileSpeed))
+  throw new Error('OPENLEGEND_PROFILE_SPEED must be 1, 3 or 8.');
 if (
   toolOptions.arguments.length > 2 ||
   !output ||
@@ -941,7 +944,7 @@ try {
   prepareBaseInitialWorldState(seeded);
   const startupPreparationMs = performance.now() - startupAt;
   profilingStage = 'initial fixture save';
-  await store.commit(0, { world: seeded, speed: 3, manuallyPaused: true });
+  await store.commit(0, { world: seeded, speed: profileSpeed, manuallyPaused: true });
   const setupMs = performance.now() - setupAt;
   const recallPlans = collectRecallPlans
     ? { fresh: await captureRecallPlan('fresh', seeded.id, firstRecall) }
@@ -1198,6 +1201,8 @@ try {
   let measureStart = 0;
   let bytes = 0,
     updates = 0;
+  const publicationFrames = { patch: 0, reset: 0 };
+  const publicationSectionBytes: Record<string, number> = {};
   let stopActivity: (() => void) | undefined;
   let routineTask: Promise<void> | undefined;
   let routineScheduled = false;
@@ -1374,8 +1379,18 @@ try {
             if (
               measuring &&
               message.kind === 'event' &&
-              ['patch', 'snapshot'].includes(message.event)
+              ['patch', 'reset'].includes(message.event)
             ) {
+              publicationFrames[message.event as 'patch' | 'reset']++;
+              if (appProfiling) {
+                // Diagnostic JSON value bytes exclude property names and SSE framing;
+                // total wire bytes above remain the actual transfer measurement.
+                const fields = JSON.parse(message.data) as Record<string, unknown>;
+                for (const [field, value] of Object.entries(fields))
+                  publicationSectionBytes[field] =
+                    (publicationSectionBytes[field] ?? 0) +
+                    Buffer.byteLength(JSON.stringify(value));
+              }
               const at = performance.now();
               gaps.push(at - lastUpdate);
               if (at - lastUpdate > 150) {
@@ -1589,7 +1604,13 @@ try {
             ? { travel: { routes: travelRoutes, rehearsal: travelRehearsal } }
             : {}),
           ...(longSoak ? { longSoak, playerSurvival: longSoak.playerSurvival } : {}),
-          purpose: memoryHistoryFixture ? 'memory-ui-correctness' : 'three-times-capacity',
+          purpose: memoryHistoryFixture
+            ? 'memory-ui-correctness'
+            : profileSpeed === 3
+              ? 'three-times-capacity'
+              : profileSpeed === 1
+                ? 'normal-speed-capacity'
+                : 'eight-times-capacity',
           ...(memoryHistory ? { memoryHistory } : {}),
           sourceProvenance,
           instrumentation,
@@ -1609,8 +1630,10 @@ try {
           throw new Error('Browser profiler did not start within 120 seconds.');
         await new Promise<void>((done) => setTimeout(done, 50));
       }
-      if (!memoryHistoryFixture && (game.service.paused || game.service.speed !== 3))
-        throw new Error('The browser must resume the fixture at 3× before measurement.');
+      if (!memoryHistoryFixture && (game.service.paused || game.service.speed !== profileSpeed))
+        throw new Error(
+          `The browser must resume the fixture at ${profileSpeed}× before measurement.`,
+        );
     }
     const start = performance.now(),
       simStart = game.service.world.simTime;
@@ -2224,7 +2247,7 @@ try {
       ? { ok: true }
       : await post('/api/control', {
           paused: false,
-          speed: 3,
+          speed: profileSpeed,
           clientId: client,
           presenceSequence: 1,
         });
@@ -2256,7 +2279,7 @@ try {
           await new Promise<void>((done) => setImmediate(done));
         }
       })().catch((error: unknown) => failed('explicit tick pump', error));
-    console.error(`profile server ready: ${base}; PostgreSQL, ${seconds}s at 3x`);
+    console.error(`profile server ready: ${base}; PostgreSQL, ${seconds}s at ${profileSpeed}x`);
     await new Promise<void>((done) => setTimeout(done, seconds * 1000));
     clearInterval(commandTimer);
     clearInterval(presenceTimer);
@@ -2348,7 +2371,11 @@ try {
         ? 'layered-server-diagnostic'
         : memoryHistoryFixture
           ? 'memory-ui-correctness'
-          : 'three-times-capacity',
+          : profileSpeed === 3
+            ? 'three-times-capacity'
+            : profileSpeed === 1
+              ? 'normal-speed-capacity'
+              : 'eight-times-capacity',
       fixture: {
         startupPreparationMs,
         ...(travelFixture ? { travel: { routes: travelRoutes, rehearsal: travelRehearsal } } : {}),
@@ -2554,6 +2581,8 @@ try {
         measured: !browserFixture && (!layer || layer === 'viewer'),
         updates,
         bytes,
+        frames: publicationFrames,
+        ...(appProfiling ? { sectionValueBytes: publicationSectionBytes } : {}),
         p95GapMs: percentile(gaps, 0.95),
         p99GapMs: percentile(gaps, 0.99),
         maxGapMs: Math.max(0, ...gaps),

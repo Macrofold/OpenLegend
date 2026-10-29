@@ -5,7 +5,7 @@ import {
   type ReceivedValueState,
   type ReceivedValueFragment,
 } from './received-values.js';
-import { cloneValue, readOnlyDraftView } from './draft.js';
+import { cloneValue, readOnlyDraftView, touchNativeEvidence } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { hasMemory } from './living.js';
 import { chargeWork } from './work-budget.js';
@@ -15,7 +15,12 @@ import { isImmutableData, immutableDataSnapshot, jsonEncoding, jsonText } from '
 import { selectedRecognitionSupportSourceIds } from './world-composition.js';
 import type { WorldState } from './types.js';
 import type { ObserverSubject } from './knowledge.js';
-import { receivedFacetValue } from './perception-evidence.js';
+import {
+  receivedFacetValue,
+  sensoryFacetDependencies,
+  splitObservedBody,
+  materializeObservedBody,
+} from './perception-evidence.js';
 import type {
   EvidenceSource,
   LiveFacetSupport,
@@ -27,6 +32,10 @@ import type {
   ObservationOrigin,
   SensoryFacet,
   CapturedCurrentFacet,
+  ReceivedLocationSample,
+  ReceivedFacetProof,
+  ObservedBodyDetails,
+  ObservedBodyPose,
 } from './perception-evidence.js';
 
 /** An address proves neither reception nor access. Readers first select the actor's receipt. */
@@ -45,25 +54,8 @@ export interface TemporalValueReference {
   blockId: string;
   valueOrdinal: number;
 }
-export interface TemporalMotionSample {
-  location: ObservedLocation;
-  frame: ObservationFrame;
-  measuredFrom: number;
-  measuredThrough: number;
-  acquiredAt: number;
-  original: ObservationFactKey;
-  confirmation: EvidenceSource;
-}
-export interface TemporalMotionValue {
-  kind: 'received-motion';
-  exposure: ObservationExposure;
-  earlier: TemporalMotionSample;
-  later: TemporalMotionSample;
-  correspondence: 'unambiguous-received-continuity';
-}
 export type TemporalValue =
-  | Exclude<SensoryFacet, { kind: 'observed-motion' }>
-  | TemporalMotionValue
+  | SensoryFacet
   | {
       kind: 'personal-account';
       source: 'awareness' | 'memory';
@@ -75,19 +67,22 @@ export type TemporalValue =
     };
 /** Geometry may be shared; the receipt still owns exactly who received it and how. */
 export type TemporalFragment =
-  | Exclude<TemporalValue, { kind: 'location' | 'received-motion' }>
+  | Exclude<TemporalValue, { kind: 'body' | 'location' | 'observed-motion' }>
+  | { kind: 'body'; body: ObservedBodyDetails }
   | { kind: 'location'; location: ObservedLocation }
-  | { kind: 'received-motion'; earlier: ObservedLocation; later: ObservedLocation };
+  | { kind: 'observed-motion'; earlier: ObservedLocation; later: ObservedLocation };
 export type TemporalReception =
+  | { kind: 'body'; pose: ObservedBodyPose }
   | { kind: 'location'; frame: ObservationFrame }
   | {
-      kind: 'received-motion';
+      kind: 'observed-motion';
       exposure: ObservationExposure;
-      earlier: Omit<TemporalMotionSample, 'location'>;
-      later: Omit<TemporalMotionSample, 'location'>;
+      earlier: Omit<ReceivedLocationSample, 'location'>;
+      later: Omit<ReceivedLocationSample, 'location'>;
       correspondence: 'unambiguous-received-continuity';
     };
 export interface TemporalFacetReference extends TemporalValueReference {
+  support?: ReceivedFacetProof;
   ordinal: number;
   role: 'direct' | 'inference' | 'testimony';
   asOf: number;
@@ -199,6 +194,7 @@ export interface TemporalCaptureInput {
   sourceIds?: string[];
   origin?: ObservationOrigin;
   facets: Array<{
+    support?: ReceivedFacetProof;
     value: TemporalValue | Extract<SensoryFacet, { kind: 'observed-motion' }>;
     role: TemporalFacetReference['role'];
     asOf: number;
@@ -216,7 +212,6 @@ export interface TemporalCaptureInput {
 const encoder = new TextEncoder();
 const byteLength = (value: unknown) => encoder.encode(JSON.stringify(value)).byteLength;
 const boundary = (world: WorldState) => `${world.sequence}:${world.simTime}`;
-const motionValues = new WeakMap<object, TemporalMotionValue>();
 function valueEncoding(value: TemporalFragment): { json: string; bytes: number } {
   const held = readOnlyDraftView(value);
   // Encode common geometry components once through their existing immutable
@@ -226,10 +221,10 @@ function valueEncoding(value: TemporalFragment): { json: string; bytes: number }
     const prefix = '{"kind":"location","location":';
     return { json: `${prefix}${location.json}}`, bytes: prefix.length + location.bytes + 1 };
   }
-  if (held.kind === 'received-motion') {
+  if (held.kind === 'observed-motion') {
     const earlier = jsonEncoding(readOnlyDraftView(held.earlier));
     const later = jsonEncoding(readOnlyDraftView(held.later));
-    const prefix = '{"kind":"received-motion","earlier":';
+    const prefix = '{"kind":"observed-motion","earlier":';
     const between = ',"later":';
     return {
       json: `${prefix}${earlier.json}${between}${later.json}}`,
@@ -245,18 +240,25 @@ export function splitTemporalValue(value: TemporalValue): {
   reception?: TemporalReception;
 } {
   const held = readOnlyDraftView(value);
+  if (held.kind === 'body') {
+    const parts = splitObservedBody(held.body);
+    return {
+      value: { kind: 'body', body: parts.details },
+      reception: { kind: 'body', pose: parts.pose },
+    };
+  }
   if (held.kind === 'location')
     return {
       value: { kind: 'location', location: held.location },
       reception: { kind: 'location', frame: held.frame },
     };
-  if (held.kind === 'received-motion') {
+  if (held.kind === 'observed-motion') {
     const { location: earlier, ...earlierReception } = readOnlyDraftView(held.earlier);
     const { location: later, ...laterReception } = readOnlyDraftView(held.later);
     return {
-      value: { kind: 'received-motion', earlier, later },
+      value: { kind: 'observed-motion', earlier, later },
       reception: {
-        kind: 'received-motion',
+        kind: 'observed-motion',
         exposure: held.exposure,
         earlier: earlierReception,
         later: laterReception,
@@ -276,14 +278,18 @@ export function materializeTemporalValue(
   const value = receivedTemporalFragment(readOnlyDraftView(fragment));
   if (!value) return;
   const reception = reference.reception && readOnlyDraftView(reference.reception);
+  if (value.kind === 'body')
+    return reception?.kind === 'body'
+      ? { kind: 'body', body: materializeObservedBody(value.body, reception.pose) }
+      : undefined;
   if (value.kind === 'location')
     return reception?.kind === 'location'
       ? { kind: 'location', location: value.location, frame: reception.frame }
       : undefined;
-  if (value.kind === 'received-motion')
-    return reception?.kind === 'received-motion'
+  if (value.kind === 'observed-motion')
+    return reception?.kind === 'observed-motion'
       ? {
-          kind: 'received-motion',
+          kind: 'observed-motion',
           exposure: reception.exposure,
           earlier: { ...reception.earlier, location: value.earlier },
           later: { ...reception.later, location: value.later },
@@ -326,9 +332,16 @@ function valueLogicalBytes(
 ): number {
   const value = readOnlyDraftView(fragment);
   const reception = reference.reception && readOnlyDraftView(reference.reception);
+  if (value.kind === 'body' && reception?.kind === 'body')
+    return (
+      fragmentBytes +
+      addedFieldBytes('position', jsonEncoding(reception.pose.position).bytes) +
+      addedFieldBytes('heading', byteLength(reception.pose.heading)) +
+      addedFieldBytes('supportSurfaceId', byteLength(reception.pose.supportSurfaceId))
+    );
   if (value.kind === 'location' && reception?.kind === 'location')
     return fragmentBytes + addedFieldBytes('frame', jsonEncoding(reception.frame).bytes);
-  if (value.kind === 'received-motion' && reception?.kind === 'received-motion') {
+  if (value.kind === 'observed-motion' && reception?.kind === 'observed-motion') {
     const sample = (location: ObservedLocation, proof: typeof reception.earlier) =>
       jsonEncoding(readOnlyDraftView(proof)).bytes +
       addedFieldBytes('location', jsonEncoding(readOnlyDraftView(location)).bytes);
@@ -342,7 +355,7 @@ function valueLogicalBytes(
       addedFieldBytes('correspondence', byteLength(reception.correspondence))
     );
   }
-  if (value.kind === 'location' || value.kind === 'received-motion' || reception !== undefined)
+  if (value.kind === 'location' || value.kind === 'observed-motion' || reception !== undefined)
     throw new Error('Temporal geometry has no matching personal reception.');
   return fragmentBytes;
 }
@@ -392,7 +405,7 @@ function appendHeaderValue(values: string[], value: string): number {
 export function receivedTemporalFragment(
   value: ReceivedValueFragment | undefined,
 ): TemporalFragment | undefined {
-  return value?.kind === 'observed-motion' ||
+  return value?.kind === 'body-pose' ||
     value?.kind === 'observation-header' ||
     value?.kind === 'observation-frame'
     ? undefined
@@ -406,47 +419,7 @@ function retainedValueAt(
   return receivedTemporalFragment(value);
 }
 function temporalValue(value: TemporalCaptureInput['facets'][number]['value']): TemporalValue {
-  if (value.kind !== 'observed-motion') return value;
-  const original = readOnlyDraftView(value);
-  const reusable = isImmutableData(original);
-  const held = reusable ? motionValues.get(original) : undefined;
-  if (held) return held;
-  const sample = (input: typeof value.earlier): TemporalMotionSample => {
-    const received = readOnlyDraftView(input),
-      location = readOnlyDraftView(received.value),
-      observation = readOnlyDraftView(received.original);
-    return {
-      location: location.location,
-      frame: location.frame,
-      measuredFrom: received.valueMeasuredFrom,
-      measuredThrough: received.valueMeasuredThrough,
-      acquiredAt: received.valueAcquiredAt,
-      original: {
-        source: {
-          family: 'native-exposure',
-          id: observation.id,
-          revision: observation.revision,
-          observer: received.observer,
-        },
-        ordinal: received.originalOrdinal,
-      },
-      confirmation: received.confirmation,
-    };
-  };
-  const result = immutableDataSnapshot<TemporalMotionValue>(
-    {
-      kind: 'received-motion',
-      exposure: original.exposure,
-      earlier: sample(original.earlier),
-      later: sample(original.later),
-      correspondence: original.correspondence,
-    },
-    readOnlyDraftView,
-  );
-  // Only a complete immutable received value can retain this conversion. Raw
-  // builders must observe later endpoint edits without returning an older route.
-  if (reusable) motionValues.set(original, result);
-  return result;
+  return value;
 }
 function initialBytes(value: { bytes: number }, measure = () => byteLength(value)): number {
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -485,6 +458,7 @@ function actorHistory(
   world: WorldState,
   actorId: string,
 ): { state: TemporalEvidenceState; actor: TemporalActorHistory } | undefined {
+  touchNativeEvidence(world, 'temporal', actorId);
   const entity = entityGet(world.entities, actorId);
   if (!entity?.actor || !hasMemory(entity)) return;
   const temporal = state(world);
@@ -519,6 +493,7 @@ export function temporalActorHistory(
 }
 /** Restore starts a new append address space without replaying any perception. */
 export function beginTemporalReceiptEpoch(world: WorldState, namespace: string): void {
+  touchNativeEvidence(world, 'temporal');
   const temporal = world.experience?.temporal;
   if (!temporal) return;
   if (!namespace.trim() || namespace.length > 64)
@@ -722,24 +697,20 @@ export function captureTemporalSnapshot(
       ...(snapshot.localSubject ? { subjectIdentity: snapshot.localSubject } : {}),
       change: 'baseline',
       required: false,
-      sourceIds: [snapshot.original.id, snapshot.confirmation.id],
+      sourceIds: [
+        snapshot.original.source.id,
+        snapshot.confirmation.id,
+        ...(snapshot.originalAliases ?? []),
+      ],
       facets: [
         {
           value: snapshot.value,
-          role: snapshot.original.facets[snapshot.originalOrdinal]?.role ?? 'direct',
+          role: snapshot.role,
           asOf: snapshot.valueMeasuredThrough,
           measuredFrom: snapshot.valueMeasuredFrom,
           measuredThrough: snapshot.valueMeasuredThrough,
           acquiredAt: snapshot.valueAcquiredAt,
-          original: {
-            source: {
-              family: 'native-exposure',
-              id: snapshot.original.id,
-              revision: snapshot.original.revision,
-              observer: snapshot.observer,
-            },
-            ordinal: snapshot.originalOrdinal,
-          },
+          original: snapshot.original,
           receivedFrom: snapshot.confirmation,
         },
       ],
@@ -972,6 +943,7 @@ export function reconcileTemporalGeometryCaptures(
   active: ReadonlySet<string>,
   subjects: readonly string[],
 ): void {
+  touchNativeEvidence(world, 'temporal', actorId);
   const actor = world.experience?.temporal?.actors[actorId];
   if (!actor) return;
   for (const [id, capture] of Object.entries(actor.captures)) {
@@ -987,6 +959,7 @@ export function clearTemporalCaptureReferences(
   world: WorldState,
   blockIds: ReadonlySet<string>,
 ): void {
+  touchNativeEvidence(world, 'temporal');
   if (!blockIds.size) return;
   for (const actor of Object.values(world.experience?.temporal?.actors ?? {}))
     for (const [key, reference] of Object.entries(actor.captures))
@@ -1005,6 +978,7 @@ export function retireTemporalChunks(
   nextDue: number | null,
   releasedThrough?: number,
 ): void {
+  touchNativeEvidence(world, 'temporal', actorId);
   const actor = world.experience?.temporal?.actors[actorId];
   if (!actor) return;
   const removed = new Set(ids);
@@ -1175,6 +1149,7 @@ export function invalidateTemporalEvidence(
   actorId: string,
   sourceIds: ReadonlySet<string>,
 ): void {
+  touchNativeEvidence(world, 'temporal', actorId);
   const actor = world.experience?.temporal?.actors[actorId];
   if (!actor) return;
   for (const [id, support] of Object.entries(actor.supports ?? {}))
@@ -1268,6 +1243,7 @@ export function invalidateTemporalFacets(
     receipt: TemporalReceipt,
   ) => boolean,
 ): void {
+  touchNativeEvidence(world, 'temporal', actorId);
   const temporal = world.experience?.temporal;
   const actor = temporal?.actors[actorId];
   if (!temporal || !actor) return;
@@ -1333,38 +1309,23 @@ export function temporalReceiptAliases(
     if (value.kind === 'association')
       for (const id of selectedRecognitionSupportSourceIds(world, value.learningSupport ?? []))
         aliases.add(id);
-    if (value.kind === 'claim') {
-      for (const key of value.support) fact(key);
-      for (const alias of value.supportAliases ?? []) aliases.add(alias.id);
-    }
-    if (value.kind === 'received-motion')
-      for (const sample of [value.earlier, value.later]) {
-        fact(sample.original);
-        aliases.add(sample.confirmation.id);
+    if (value.kind !== 'personal-account')
+      for (const dependency of sensoryFacetDependencies(value)) {
+        aliases.add(dependency.source.id);
+        if (dependency.ordinal !== null)
+          aliases.add(personalFactAlias(dependency.source.id, dependency.ordinal));
+        for (const alias of dependency.aliases) aliases.add(alias);
       }
-    if (value.kind === 'physical-boundary') {
-      for (const key of [value.boundary.nearSurface?.support, value.boundary.farSurface?.support])
-        if (key) fact(key);
-    }
-    if (value.kind === 'confirmation') {
-      const snapshot = value.snapshot;
-      fact({
-        source: {
-          family: 'native-exposure',
-          observer: snapshot.observer,
-          id: snapshot.original.id,
-          revision: snapshot.original.revision,
-        },
-        ordinal: snapshot.originalOrdinal,
-      });
-      aliases.add(snapshot.confirmation.id);
-      dependencies(temporalValue(snapshot.value));
-    }
   };
   for (let index = 0; index < receipt.facets.length; index++) {
     const reference = receipt.facets[index]!;
     aliases.add(personalFactAlias(receipt.id, reference.ordinal));
     if (reference.original) fact(reference.original);
+    if (reference.support) {
+      fact(reference.support.original);
+      aliases.add(reference.support.confirmation.id);
+      for (const alias of reference.support.aliases ?? []) aliases.add(alias);
+    }
     if (reference.receivedFrom) aliases.add(reference.receivedFrom.id);
     const fragment = selectedFragments
       ? selectedFragments[index]
@@ -1373,9 +1334,8 @@ export function temporalReceiptAliases(
       !fragment ||
       (fragment.kind !== 'association' &&
         fragment.kind !== 'claim' &&
-        fragment.kind !== 'received-motion' &&
-        fragment.kind !== 'physical-boundary' &&
-        fragment.kind !== 'confirmation')
+        fragment.kind !== 'observed-motion' &&
+        fragment.kind !== 'physical-boundary')
     )
       continue;
     const value = materializeTemporalValue(reference, fragment);
@@ -1523,45 +1483,24 @@ export function temporalFacetEligible(
       (reference.receivedFrom.observer.actorId !== actorId || !allowed(reference.receivedFrom.id)))
   )
     return false;
+  if (
+    reference.support &&
+    (!factAllowed(reference.support.original) ||
+      !allowed(reference.support.confirmation.id) ||
+      !(reference.support.aliases ?? []).every(allowed))
+  )
+    return false;
   if (value.kind === 'association')
     return selectedRecognitionSupportSourceIds(world, value.learningSupport ?? []).every(allowed);
-  if (value.kind === 'claim')
-    return (
-      value.support.every(factAllowed) &&
-      (value.supportAliases ?? []).every((alias) => allowed(alias.id))
+  if (value.kind !== 'personal-account')
+    return sensoryFacetDependencies(value).every(
+      (dependency) =>
+        dependency.source.observer.actorId === actorId &&
+        allowed(dependency.source.id) &&
+        (dependency.ordinal === null ||
+          allowed(personalFactAlias(dependency.source.id, dependency.ordinal))) &&
+        dependency.aliases.every(allowed),
     );
-  if (value.kind === 'received-motion')
-    return [value.earlier, value.later].every(
-      (sample) =>
-        factAllowed(sample.original) &&
-        sample.confirmation.observer.actorId === actorId &&
-        allowed(sample.confirmation.id),
-    );
-  if (value.kind === 'physical-boundary')
-    return [value.boundary.nearSurface?.support, value.boundary.farSurface?.support].every(
-      (fact) => !fact || factAllowed(fact),
-    );
-  if (value.kind === 'confirmation') {
-    const snapshot = value.snapshot;
-    return temporalFacetEligible(
-      world,
-      actorId,
-      {
-        ...reference,
-        original: {
-          source: {
-            family: 'native-exposure',
-            observer: snapshot.observer,
-            id: snapshot.original.id,
-            revision: snapshot.original.revision,
-          },
-          ordinal: snapshot.originalOrdinal,
-        },
-        receivedFrom: snapshot.confirmation,
-      },
-      temporalValue(snapshot.value),
-    );
-  }
   return true;
 }
 
@@ -1656,6 +1595,7 @@ export function retainTemporalSupport(
     maxRecords: number;
   },
 ): TemporalSupportCapsule | undefined {
+  touchNativeEvidence(world, 'temporal', locator.actorId);
   const temporal = world.experience?.temporal;
   const actor = temporal?.actors[locator.actorId];
   if (!temporal || !actor) return;
@@ -1756,6 +1696,7 @@ export function releaseTemporalSupport(
   actorId: string,
   receiptId: string,
 ): void {
+  touchNativeEvidence(world, 'temporal', actorId);
   const actor = world.experience?.temporal?.actors[actorId];
   const capsule = actor?.supports?.[receiptId];
   if (!actor || !capsule) return;
@@ -1775,6 +1716,7 @@ export function setTemporalSupportRequired(
   required: boolean,
   limits: { maxBytes: number; maxRecords: number },
 ): boolean {
+  touchNativeEvidence(world, 'temporal', actorId);
   const actor = world.experience?.temporal?.actors[actorId];
   const capsule = actor?.supports?.[receiptId];
   if (!actor || !capsule) return false;

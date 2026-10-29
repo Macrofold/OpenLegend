@@ -629,9 +629,8 @@ export class HistoryRepository {
       .filter((row) => !row.create)
       .map((row) => ({
         id: row.id,
-        ordinals: (
-          JSON.parse(row.payload) as import('@open-legend/domain').TemporalChunk
-        ).receipts.map((receipt) => receipt.ordinal),
+        ordinals: (JSON.parse(row.payload) as { storage: { index: { ordinals: number[] } } })
+          .storage.index.ordinals,
       }));
     if (changedChunks.length) {
       await sharedWrites?.flush();
