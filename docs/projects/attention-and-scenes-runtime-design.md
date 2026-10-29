@@ -108,6 +108,8 @@ The acquisition result needs four separate signals: a subject-keyed map of chang
 
 Split attention's description/change watermark from spatial-frame and freshness dependencies. Removing the frame from a broad revision key alone is insufficient: recompute the spatial score components that genuinely changed and preserve the attended frame history. Reuse cached components only under their exact inputs. Rebuild one actor's final ordering only when a changed component can alter it; preserve deterministic tie-breaking, stable/lent slots and fair discovery.
 
+Ground observations use an adaptive subdivision anchored to the physical surface, not to the observer's moving view bounds. A changed eye recertifies previously received patches against the actual current range, cone, surface support and complete ray hull. Certified patches keep their original facts and acquisition frame; failed or unvisited patches lose current permission and close at their last supported time. No pending original can revive forgotten or corrected evidence. New discovery/subdivision still waits for the selected discovery interval. When discovery and recertification coincide, nearest-first preparation shares the existing patch budget, including retained candidates, so neither gets an extra allowance. Boundaries survive only with both currently certified support patches. Changed life, map revision, actual detector definition or geometry policy requires new acquisition. Incomplete preparation remains unknown. This corrects ground disappearing merely because its observer walks; it does not establish unseen terrain or change the configured limits.
+
 Correctness still costs work proportional to actual observer/source relationships and real received changes. A dense room can require many per-observer receipts; this design does not promise constant time for real information. It removes repeated payload construction, unrelated downstream work and repeated whole-resident scans. Existing spatial candidate selection remains conservative; no all-pairs semantic relation graph is added.
 
 ## 5. Seal once and account for ownership incrementally
@@ -117,6 +119,8 @@ Correctness still costs work proportional to actual observer/source relationship
 At the semantic writer, create and validate new leaves and establish their immutable ownership once. Reuse already-proven immutable children; finalize the changed container once at the native boundary. Remove the second recursive copy/freeze of unchanged perception, temporal and value-pool subtrees. No Immer draft, foreign mutable object or caller assertion of trust may cross publication.
 
 Use the existing owned-builder/lineage mechanism for proof. A shallow `Object.freeze`, an arbitrary `trusted: true` argument or merely matching a revision does not establish immutable children. Raw construction, restoration and provider/storage boundaries retain complete applicable validation. Mutation after proof invalidates that proof. A nested `draftWorld` preview must detach its changed rows while restoring its parent's writable append buffers afterward; never freeze a parent buffer and continue writing through it. Preserve the current persistent-state mechanism; do not introduce a general persistent-map library just to avoid a bounded shallow map copy. Measure remaining shallow-copy cost separately.
+
+At final publication, the current writer's newly owned map may seal in place only after every actual row proves immutable; foreign mutable rows keep detached snapshots. Private previews never seal their parent's working map.
 
 Evidence/accounting maintenance preserves pending native arithmetic instead of materializing every character's unchanged physical values. Ordinary commands settle their actual participants through the existing native-value owner; target mutation owners settle their affected episodes. Generic editable drafts retain the full barrier. The [simulation-time contract](../simulation-time.md) owns those exact arithmetic and eligibility guarantees. Reuse sensory preparation across a storage-only replacement only when all of its actual physical, definition, visibility and time inputs are unchanged.
 
@@ -279,6 +283,8 @@ Rejected alternatives are smaller sensory/history defaults, lossier observations
 Runtime implementation R1–R7 is active; completion is not yet demonstrated. The underlying branch is not merge-ready on this design's evidence: normal-clock and retained-data operating qualification remain failed or open. This design completes the requested correction plan, not those implementation gates.
 
 ## Maintained records
+
+**Geometry reuse design updated and architecture used 2026-10-29 06:53 UTC**, Macrofold/OpenLegend at `e50495982a704fc845d0c215f8333aad8a550225`; implementation and verification remain subject to §10.
 
 - [Feature specification](attention-and-scenes-feature-spec.md), [parent technical design](attention-and-scenes-tech-design.md) and [PS04-A delivery](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording).
 - [Evidence](../verification/attention-and-memory-core.md), [scalability limits](../limits/product-scalability.md#ps-l02--attention-and-sensory-grouping), [persistence limits](../limits/persistence.md) and [durable journal contract](performance-overhaul/journal-contract.md).

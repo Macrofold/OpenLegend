@@ -534,6 +534,9 @@ describe('native received relation producers', () => {
     const { world, player, people } = nativeScene(1, map());
     people[0]!.actor!.capabilities!.memory = false;
     world.simTime = 15;
+    // A new terrain source isolates this record from the still-held initial body
+    // payload. Moving the receiver alone correctly keeps the original terrain.
+    world.map.spatial.revision++;
     setSpatialPosition(world, player, { x: 1.25, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;

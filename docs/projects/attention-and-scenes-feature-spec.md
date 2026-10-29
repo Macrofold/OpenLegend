@@ -4,7 +4,7 @@
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
 | In progress | Supported core regression and controlled semantic behavior are verified; normal-speed, operating-scale and broader scene acceptance remain open. | 2026-10-29   |
 
-**Architecture consulted 2026-10-29 01:40 UTC; responsive-runtime design updated at the same time.**
+**Architecture consulted and ground-confirmation behavior updated 2026-10-29 06:53 UTC.**
 
 **Supported attention/memory core implemented; broader scene proposals remain separate.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds, timed speech and voice-media delivery remain separate proposals outside the implemented core.
 
@@ -102,6 +102,8 @@ Fair exposure runs across justified ordinary thinking and at most one optional d
 ### 4.6 Familiarity and reasons to think
 
 One valence-neutral acquaintance score can favor familiar people and supported places/things. A known enemy can be familiar; a familiar person need not be liked. Recognition gets a useful benefit early, while stronger acquaintance can keep influencing optional attention. Actual sensory profiles remain required: knowing a face does not identify a never-heard voice. Names, affection and recognition are not interchangeable.
+
+Ordinary walking can keep already-observed ground current when bounded native checks certify that the same region remains visible. Unverified ground remains unknown; newly exposed terrain still follows the existing discovery interval. The [geometry contract](attention-and-scenes-tech-design.md#51-received-scene-and-geometry) separates this confirmation from new memories.
 
 Most perception changes update native state and memory without calling AI. A genuine choice can arise from directed speech, an actual personal consequence, blocked chosen work, contradictory relevant evidence or a newly supported physical cue. Native geometry can flag decreasing separation around an attended person, including when that person is stationary, or approach to an observed physical drop. It does not declare hostility, family danger or intention. Repeated measurements and a continuing crowded situation do not repeatedly buy thought; a prior choice to continue quietly can remain adequate. Native warning checks keep independent progress for each kind of measured relation: a moving bystander does not restart an unrelated ground-clearance check. Correcting information interrupts any unsupported clearing interval and schedules the necessary recheck, without depending on another warning check.
 
