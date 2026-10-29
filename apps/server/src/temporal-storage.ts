@@ -864,17 +864,22 @@ export async function prepareTemporalRetention(
     ...(pending?.writes.get('mind_temporal_chunks') ?? []).map((row) => row.id),
   ];
   if (!complete) {
+    // A matching page can also reference unrelated blocks. Filter its keys before
+    // expanding ordinals so preparation charges only the ownership being resolved.
     const cold = await db
       .prepare(
         `SELECT value_refs,octet_length(value_refs::text) AS bytes FROM (
           SELECT parent_id,jsonb_object_agg(block,ordinals) AS value_refs FROM (
             SELECT s.parent_id,refs.key AS block,jsonb_agg(DISTINCT ordinal ORDER BY ordinal) AS ordinals
-            FROM mind_temporal_segments s CROSS JOIN LATERAL jsonb_each(s.value_refs) refs
+            FROM mind_temporal_segments s CROSS JOIN LATERAL (
+              SELECT key,value FROM jsonb_each(s.value_refs) WHERE key=ANY(?::text[])
+            ) refs
             CROSS JOIN LATERAL jsonb_array_elements(refs.value) ordinal
             WHERE s.world_id=? AND s.lookup_buckets && ?::smallint[] AND s.source_refs && ?::text[] AND s.parent_id<>ALL(?::text[])
             GROUP BY s.parent_id,refs.key) blocks GROUP BY parent_id) owners LIMIT ?`,
       )
       .all(
+        candidates,
         world.id,
         receiptLookupBuckets('sourceRefs', candidates),
         candidates,
