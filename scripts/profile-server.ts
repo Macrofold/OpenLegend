@@ -166,6 +166,9 @@ if (layer && !['viewer', 'no-view', 'pump'].includes(layer))
   throw new Error('OPENLEGEND_PROFILE_LAYER must be viewer, no-view or pump.');
 const browserFixture = process.env['OPENLEGEND_PROFILE_BROWSER'] === '1' && !layer;
 const expandedFixture = process.env['OPENLEGEND_PROFILE_EXPANDED'] === '1';
+// Keep the actual authored opening available alongside the historical crowded
+// comparison. Removing diagnostic additions must not remove starting-world content.
+const standardFixture = process.env['OPENLEGEND_PROFILE_STANDARD'] === '1';
 const routineFixture = process.env['OPENLEGEND_PROFILE_ROUTINES'] === '1';
 const routinePlanFixture = process.env['OPENLEGEND_PROFILE_ROUTINE_PLANS'] === '1';
 const longSoakFixture = process.env['OPENLEGEND_PROFILE_LONG_SOAK'] === '1';
@@ -204,6 +207,8 @@ const instrumentation = {
 } as const;
 if (routineFixture && !expandedFixture)
   throw new Error('Scripted resident routines require the expanded profiling fixture.');
+if (standardFixture && expandedFixture)
+  throw new Error('Standard opening and expanded profiling fixtures are separate workloads.');
 if (routinePlanFixture && !routineFixture)
   throw new Error('Native resident plans require the expanded scripted routine fixture.');
 if (longSoakFixture && ((!browserFixture && !layer) || !routinePlanFixture))
@@ -758,14 +763,16 @@ try {
     if (buildings.length !== 3) throw new Error('Could not place all three clear profiling sheds.');
     validateSpatialWorld(seed);
   }
-  const addedPopulation = expandedFixture
-    ? { people: 10, animals: 20, objects: 100, buildings: buildings.length }
-    : {
-        people: 20 - seedRoots.filter((e) => e.actor?.controller === 'npc').length,
-        animals: 21 - seedRoots.filter((e) => e.kind === 'animal').length,
-        objects: 100 - seedRoots.filter((e) => !e.actor).length,
-        buildings: 0,
-      };
+  const addedPopulation = standardFixture
+    ? { people: 0, animals: 0, objects: 0, buildings: 0 }
+    : expandedFixture
+      ? { people: 10, animals: 20, objects: 100, buildings: buildings.length }
+      : {
+          people: 20 - seedRoots.filter((e) => e.actor?.controller === 'npc').length,
+          animals: 21 - seedRoots.filter((e) => e.kind === 'animal').length,
+          objects: 100 - seedRoots.filter((e) => !e.actor).length,
+          buildings: 0,
+        };
   let seeded = populateScenario(
     seed,
     parseScenario({
@@ -775,15 +782,17 @@ try {
       // Historical totals and explicit additions are separate fixtures. Actual visibility
       // depends on the current integrated opening and is measured at both endpoints.
       animals: addedPopulation.animals,
-      objects: [
-        {
-          count: addedPopulation.objects,
-          name: 'Scene material',
-          properties: ['rigid'],
-          quantity: 3,
-          workSeconds: 2,
-        },
-      ],
+      objects: addedPopulation.objects
+        ? [
+            {
+              count: addedPopulation.objects,
+              name: 'Scene material',
+              properties: ['rigid'],
+              quantity: 3,
+              workSeconds: 2,
+            },
+          ]
+        : [],
     }),
   ).world;
   const seedIds = new Set(seedRoots.map((entity) => entity.id));
@@ -2382,6 +2391,7 @@ try {
               : 'eight-times-capacity',
       fixture: {
         startupPreparationMs,
+        standardOpening: standardFixture,
         ...(travelFixture ? { travel: { routes: travelRoutes, rehearsal: travelRehearsal } } : {}),
         expanded: expandedFixture,
         addedPopulation,

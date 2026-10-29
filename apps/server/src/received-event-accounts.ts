@@ -6,6 +6,7 @@ import {
   temporalFacetEligible,
   materializeTemporalValue,
   appendedRecordCount,
+  isImmutableData,
   type Awareness,
   type EventEvidence,
   type TemporalReceiptLocator,
@@ -29,7 +30,8 @@ type OccurrenceOffsets = Map<string, number[]>;
 const occurrenceIndexes = new WeakMap<TemporalReceipt[], OccurrenceOffsets>();
 function occurrenceOffsets(chunk: TemporalChunk, previous?: TemporalChunk): OccurrenceOffsets {
   const receipts = chunk.receipts;
-  const cached = occurrenceIndexes.get(receipts);
+  const immutable = isImmutableData(receipts);
+  const cached = immutable && occurrenceIndexes.get(receipts);
   if (cached) return cached;
   const prior = previous && occurrenceIndexes.get(previous.receipts);
   const appended = prior && previous && appendedRecordCount(previous.receipts, receipts);
@@ -44,7 +46,7 @@ function occurrenceOffsets(chunk: TemporalChunk, previous?: TemporalChunk): Occu
   // Keep immutable cuts independent. Only the sparse event-key map is copied on
   // append; motion receipts are neither rescanned nor hydrated. Unknown/forked/
   // replaced vectors rebuild instead of trusting a matching chunk ID.
-  if (Object.isFrozen(receipts)) occurrenceIndexes.set(receipts, offsets);
+  if (immutable) occurrenceIndexes.set(receipts, offsets);
   return offsets;
 }
 
