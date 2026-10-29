@@ -1,8 +1,8 @@
 # Attention and scenes — supporting research and alternatives
 
-| Status      | Current progress                                                                                             | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Selected design and conversation decisions reconciled; implementation and runtime qualification remain open. | 2026-10-25   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Research supports the selected design; the October 29 runtime redesign supersedes older recording mechanisms and remains unimplemented. | 2026-10-29   |
 
 ## Question and evidence boundary
 
@@ -123,3 +123,11 @@ This register preserves the reasoning and rejected alternatives without making t
 ## Maintained records
 
 [PS04-A implementation work](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) tracks delivery. The [feature specification](attention-and-scenes-feature-spec.md), [technical design](attention-and-scenes-tech-design.md), [world profile](../worlds/base/attention.md), [product limits](../limits/product-scalability.md) and [memory architecture](../memory-architecture.md) remain the policy and acceptance owners. No game/provider calls or runtime stress tests were performed for this study; game/provider spend is $0.
+
+## October 29 runtime redesign review
+
+The [runtime redesign](attention-and-scenes-runtime-design.md#11-decisions-and-remaining-work) replaces uniform sight and repeated observation envelopes after the actual standard opening failed normal speed. Earlier research/design rounds above retain their historical scope; they do not qualify the replacement.
+
+Three design passes were completed: independent top-down sensing, memory/storage and terrain/context proposals compared alternatives; integrated review challenged real work and information access; final cross-owner review checked current-format lifecycle, actual callers and task/limit consistency. Review corrected unique observer phases that would defeat shared moving samples, permanent unattended last-known maps, ordinary sample intervals confused with sight loss, vague terrain clipping, repeated terrain certification per anchor, broad-only provenance accidentally requiring history, lost deferred-cleanup intent and counting large frames as single query items. The selected design retains aligned phases, compact current support independent of history, exact personal frames/checkpoints, query-local feature certification and bounded existing-owner cleanup.
+
+The [alternative table](attention-and-scenes-runtime-design.md#11-alternatives-and-selection) explains why compacting today's envelopes, omniscient shared routes, future-visibility prediction and mandatory workers were rejected. These are code/document reasoning reviews, not new research experiments, execution, measured improvement or a claim of globally optimal design.

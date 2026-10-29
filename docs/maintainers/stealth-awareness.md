@@ -1,6 +1,6 @@
 # Stealth and awareness — design and implementation dependencies
 
-**Core cognition/retention integration:** [PS04-A](product-scalability.md#ps04-a--core-attention-and-recording) implements broad received surroundings, ordinary detailed attention, shared chronological receipts, subject-wide familiarity, native relation cues and separate lasting retention. [Evidence and limits](../verification/attention-and-memory-core.md) record controlled semantic checks and unfinished normal-clock/population qualification. Future physical vision/acoustics, attention/combat and full SAI-A acceptance remain separate.
+**Core cognition/retention integration:** [PS04-A](product-scalability.md#ps04-a--core-attention-and-recording) implements broad received surroundings, ordinary detailed attention, shared chronological receipts, subject-wide familiarity, native relation cues and separate lasting retention. [Evidence and limits](../verification/attention-and-memory-core.md) record controlled semantic checks and unfinished normal-clock/population qualification. The [selected runtime redesign](../projects/attention-and-scenes-runtime-design.md) changes sampling/representation through PS04-A SR01–SR07; it is not implemented. Future physical vision/acoustics, attention/combat and full SAI-A acceptance remain separate.
 
 ## Status and ownership
 

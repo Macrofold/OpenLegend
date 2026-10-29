@@ -2,6 +2,8 @@
 
 This is the canonical clock/integration contract. [Performance](performance.md) owns measurement and optimization; [PF13](maintainers/simulation-time.md#pf13--elapsed-time-simulation) owns delivery. The [boundary catalogue](maintainers/simulation-boundaries.md) is a running inventory of exact deadlines, conservative limits and still-unknown bounds, not a promise that every scenario is event-driven already.
 
+**Selected perception-runtime replacement, not implemented:** [the design](projects/attention-and-scenes-runtime-design.md#41-sight-scheduling-without-predicting-the-future) keeps physical/native ordering and this clock, but replaces uniform broad sight with aligned change-fed broad/detail acquisition at the [world-owned rates](worlds/base/attention.md#selected-acquisition-cadence). Required occurrences retain their actual boundaries; optional cognition and physical reclamation do not hold ordinary advancement. This is actual-change invalidation, not prediction of future visibility crossings.
+
 ## Player time controls
 
 P toggles manual pause/resume. Shift + ] selects the next faster speed and Shift + [ the next slower speed from the current 0.5×, 1×, 3× and 8× control choices, stopping at either end. These shortcuts use the same server requests as the visible controls; speed changes do not resume a paused world. Typing, composition, active popups, held-key repeats and disconnected states do not trigger time changes. Pause/resume remains unavailable during maintenance; changing speed does not release that pause. Projection switching remains available on the camera toolbar; P no longer changes projection.
