@@ -256,6 +256,8 @@ Retained-history qualification still includes real physical database/index bytes
 
 ## 11. Decisions and remaining work
 
+**Current implementation checkpoint:** R1–R6 corrections have connected native, database and browser evidence, but the first same-machine complete-game comparison still fails: original configured1× achieves0.122normal and candidate0.159normal over15seconds. These are failed acceptance results, not release capacity. R7 continues with measured fixes to repeated shared-definition cache tokens, sensory-cache ownership across private commands, and ordinary journal admission. Integrated regression, final operating-envelope qualification and configured development startup remain unfinished. [Verification](../verification/attention-and-memory-core.md) receives final exact sources and run conditions.
+
 **Open design questions: None.** Default gameplay and operator limits are preserved. The one selected admission change replaces raw append-row counting with bounded real constraint proofs; it does not weaken SQL integrity or acknowledgement durability. Physical storage segmentation and on-open optional detail are representation/delivery changes with the explicit consumer requirements above.
 
 Rejected alternatives are smaller sensory/history defaults, lossier observations, moving the same excessive copying to workers, per-coordinate database rows, an endlessly rewritten blob, all-pairs relational context, per-character timed model polling, and published speculative commands before durable acceptance. Each either changes gameplay or preserves/adds the measured amplification.

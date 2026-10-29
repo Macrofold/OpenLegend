@@ -7,7 +7,7 @@ import {
 } from './entity-collection.js';
 import { captureOutingIndex } from './outing-index.js';
 import { captureCompactIndex } from './social-compact-index.js';
-import { captureExposureCache } from './encounter-cache.js';
+import { captureExposureCache, inheritExposureSnapshot } from './encounter-cache.js';
 import { captureAppraisalIndex } from './appraisal-index.js';
 import { captureWorkAllocations } from './work-budget.js';
 import { captureAppraisalResidency } from './appraisal-residency.js';
@@ -48,6 +48,13 @@ type RecordLineage = { tip: unknown[] };
 const recordLineages = new WeakMap<unknown[], RecordLineage>();
 const admittedRecords = new WeakMap<WorldState, object[]>();
 const recordArrays = new WeakMap<WorldState, Map<object, Set<string>>>();
+// current() privately detaches an owned draft before its child starts. Its entity
+// table need not be frozen (which could freeze the parent's raw working buffers),
+// but it is not an externally editable builder baseline.
+const privateSnapshotDrafts = new WeakSet<WorldState>();
+export function hasPrivateDraftBase(world: WorldState): boolean {
+  return isDraft(world) && privateSnapshotDrafts.has(world);
+}
 type NativeEvidenceFamily = 'perception' | 'temporal' | 'received';
 interface NativeEvidenceSnapshot {
   revision: number;
@@ -354,7 +361,9 @@ export function sensoryDraftWrites(
   if (!isDraft(world)) return unknown();
   const entities = readOnlyDraftView(world).entities;
   if (!isDraft(entities)) {
-    return entities === original(world)!.entities && Object.isFrozen(entities) && !coverage.ids.size
+    return entities === original(world)!.entities &&
+      (Object.isFrozen(entities) || hasPrivateDraftBase(world)) &&
+      !coverage.ids.size
       ? proof
       : unknown();
   }
@@ -606,6 +615,10 @@ export function draftWorld(
   // docs/save-and-load.md#continuation-and-identity
   if (!completeObjectHistory(world.entities)) markPartialObjectHistory(base.entities);
   const result = drafts.createDraft(base);
+  if (draft && (isImmutableData(original(world)!.entities) || hasPrivateDraftBase(world))) {
+    privateSnapshotDrafts.add(result);
+    inheritExposureSnapshot(world, result);
+  }
   captureKnownPlaceEvidence(world)(result);
   inheritRootIndex(result, world);
   inheritSensoryChanges(result, world);

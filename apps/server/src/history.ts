@@ -237,13 +237,8 @@ export class HistoryRepository {
       : this.principals;
     const policy = world.storyPolicy ?? defaultStoryPolicy();
     for (const event of inputs.changed) {
-      for (const actorId of event.audience)
-        if (
-          !inputs.forgotten(actorId).has(event.id) &&
-          (!inputs.perspective(actorId, event.id) ||
-            inputs.perspective(actorId, event.id)?.evidence.retentionClass === 'sensory')
-        )
-          return false;
+      // Missing accounts grant no history access. Sensory accounts carry their
+      // exact temporal receipt through the same append writer and recovery path.
       for (const principal of principals) {
         if (
           inputs.forgotten(principal.actorId).has(event.id) ||

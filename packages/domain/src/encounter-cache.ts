@@ -2,7 +2,7 @@ import { observedActionAnimation } from './observed-animation.js';
 import { isImmutableData, jsonText } from './records.js';
 import { entityGet, entityKeys } from './entity-collection.js';
 import { current, isDraft, original } from 'immer';
-import { cloneValue, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
+import { cloneValue, hasPrivateDraftBase, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
 import { worldRootEntities } from './entity-index.js';
 import { objectAncestors } from './objects.js';
 import { hasMemory } from './living.js';
@@ -280,10 +280,13 @@ class Dimensions {
 }
 interface ExposureCache {
   owner: object;
+  revision: number;
   mapKey: string;
   manifestKey: string;
   policyKey: string;
   itemPresentationKey: string;
+  /** Exact shared definition key is held once; source tokens retain only this identity. */
+  itemPresentationIdentity: number;
   inputs: Map<string, Source>;
   /** Actual external inputs to outward poses and public source-sustained effects. */
   outwardDependencies: Map<string, ReadonlySet<string>>;
@@ -297,7 +300,6 @@ interface ExposureCache {
   radii: Dimensions;
   ranges: Dimensions;
   observers: Map<string, ObserverInput>;
-  dirty?: Omit<ReturnType<typeof sensoryDraftWrites>, 'coverage'>;
   /** Phase coverage for one owned working draft only, never its published successor. */
   coverage?: ReturnType<typeof sensoryDraftWrites>['coverage'];
   /** Exact current() snapshots, only for this private draft and never its successor. */
@@ -314,8 +316,63 @@ function ownerToken(world: object): object {
   if (!token) ownerTokens.set(world, (token = {}));
   return token;
 }
-const caches = new WeakMap<object, ExposureCache>();
+interface ExposureBinding {
+  cache: ExposureCache;
+  /** The index may be shared by unevaluated publications until a continuation edits it. */
+  owner: object;
+  revision: number;
+  dirty?: Omit<ReturnType<typeof sensoryDraftWrites>, 'coverage'>;
+}
+const caches = new WeakMap<object, ExposureBinding>();
+const inheritedSnapshots = new WeakMap<WorldState, ExposureBinding>();
 const pending = new WeakMap<WorldState, ExposureCache>();
+function bindingCurrent(binding: ExposureBinding | undefined): binding is ExposureBinding {
+  return (
+    !!binding &&
+    binding.owner === binding.cache.owner &&
+    binding.revision === binding.cache.revision
+  );
+}
+function mergeDeferredWrites(
+  audit: ReturnType<typeof sensoryDraftWrites>,
+  dirty: ExposureBinding['dirty'],
+): void {
+  if (!dirty) return;
+  audit.complete &&= dirty.complete;
+  audit.overflow ||= dirty.overflow;
+  audit.orderChanged ||= dirty.orderChanged;
+  for (const [target, ids] of [
+    [audit.sources, dirty.sources],
+    [audit.observers, dirty.observers],
+  ] as const)
+    for (const id of ids) {
+      if (audit.overflow) break;
+      if (!target.has(id) && audit.sources.size + audit.observers.size === MAX_CHANGE_SCOPES)
+        audit.overflow = true;
+      else target.add(id);
+    }
+  if (audit.overflow) {
+    audit.sources.clear();
+    audit.observers.clear();
+  }
+}
+/** draftWorld alone calls this after detaching an owned private snapshot. Retain
+ * the prepared source basis plus its exact pending edits, without claiming the
+ * parent's mutable index. A later parent evaluation invalidates the generation. */
+export function inheritExposureSnapshot(source: WorldState, target: WorldState): void {
+  const ancestor = original(source)!;
+  const evaluated = pending.get(source);
+  const binding = inheritedSnapshots.get(source) ?? caches.get(ancestor);
+  const cache = evaluated ?? binding?.cache;
+  if (!cache || (evaluated ? cache.owner !== ownerToken(source) : !bindingCurrent(binding))) return;
+  const audit = sensoryDraftWrites(source, evaluated?.coverage);
+  if (!evaluated) mergeDeferredWrites(audit, binding?.dirty);
+  const { coverage: _coverage, ...dirty } = audit;
+  inheritedSnapshots.set(target, { cache, owner: cache.owner, revision: cache.revision, dirty });
+}
+// Optimization identity only: never saved, emitted, or used as observation provenance.
+// Cold ownership rebuilds may reuse it only after comparing the complete shared key.
+let nextPresentationIdentity = 0;
 const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a &&
   a.position.x === b.position.x &&
@@ -334,9 +391,9 @@ const snapshot = <T extends object>(value: T): T => (isDraft(value) ? current(va
 const within = (a: Position, b: Position, radius: number) =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) <= radius;
 
-/** One continuation owns mutable derived indexes. Claiming them invalidates reuse by
- * ancestors/forks immediately; cancellation therefore costs a cold rebuild, never stale data.
- * Only successful finalization binds this ownership to another immutable snapshot. */
+/** One evaluated continuation owns mutable derived indexes. Unevaluated commands
+ * share a read-only binding, so a discarded preview cannot steal its parent's index.
+ * Actual index edits still invalidate ancestors/forks and require a cold rebuild. */
 export function* prepareExposure(
   world: WorldState,
   base: EncounterBaseline,
@@ -371,12 +428,13 @@ export function* prepareExposure(
   countDomainWork('sensoryPhases');
   const ancestor = isDraft(world) ? original(world)! : world;
   const working = pending.get(world);
+  const binding = inheritedSnapshots.get(world) ?? caches.get(ancestor);
   const dependencyKeys = isDraft(world)
     ? ((working?.owner === ownerToken(world) ? working.dependencyKeys : undefined) ??
       new WeakMap<object, string>())
     : undefined;
-  let cache = working ?? caches.get(ancestor);
-  const inherited = cache?.owner === ownerToken(ancestor) ? cache.dirty : undefined;
+  let cache = working ?? binding?.cache;
+  const inherited = !working && bindingCurrent(binding) ? binding.dirty : undefined;
   const audit = sensoryDraftWrites(
     world,
     working?.owner === ownerToken(world) ? working.coverage : undefined,
@@ -402,14 +460,22 @@ export function* prepareExposure(
       isDraft(world.statusEffectPolicy) ? dependencyKeys : undefined,
     ),
     itemKey = itemPresentationKey(world);
+  const itemIdentity =
+    cache?.itemPresentationKey === itemKey
+      ? cache.itemPresentationIdentity
+      : ++nextPresentationIdentity;
   let rebuild: 'cold' | 'unknown' | 'overflow' | 'policy' | undefined;
-  if (!cache || (cache.owner !== ownerToken(ancestor) && cache.owner !== ownerToken(world)))
+  if (!cache || (working ? cache.owner !== ownerToken(world) : !bindingCurrent(binding)))
     rebuild = 'cold';
   else if (!changes.complete) rebuild = changes.rebuildReason;
   // A mutable published builder can be edited outside draft change tracking.
   // Its first phase must rescan sources; later phases of this owned draft have
   // exact write coverage and can reuse unchanged settings by their complete key.
-  else if (working?.owner !== ownerToken(world) && !isImmutableData(ancestor.entities))
+  else if (
+    working?.owner !== ownerToken(world) &&
+    !hasPrivateDraftBase(world) &&
+    !isImmutableData(ancestor.entities)
+  )
     rebuild = 'unknown';
   else if (
     cache.mapKey !== mapKey ||
@@ -428,10 +494,12 @@ export function* prepareExposure(
     countDomainWork(counter[rebuild]);
     cache = {
       owner: ownerToken(world),
+      revision: 0,
       mapKey,
       manifestKey,
       policyKey,
       itemPresentationKey: itemKey,
+      itemPresentationIdentity: itemIdentity,
       inputs: new Map(),
       outwardDependencies: new Map(),
       order: new Map(),
@@ -448,9 +516,9 @@ export function* prepareExposure(
   }
   const prepared = cache!;
   prepared.owner = ownerToken(world);
+  prepared.revision++;
   prepared.coverage = audit.coverage;
   prepared.dependencyKeys = dependencyKeys;
-  delete prepared.dirty;
   pending.set(world, prepared);
   const previousPositions = new Map<string, Position | undefined>();
   const priorPositions = base.positions;
@@ -537,7 +605,7 @@ export function* prepareExposure(
         input.height,
         input.feature,
         input.detailSignature,
-        itemKey,
+        itemIdentity,
       ]),
     };
     prepared.inputs.set(id, source);
@@ -788,40 +856,22 @@ export function* prepareExposure(
 export function captureExposureCache(world: WorldState): (result: WorldState) => void {
   const ancestor = isDraft(world) ? original(world)! : world;
   const evaluated = pending.get(world);
-  const cache = evaluated ?? caches.get(ancestor);
+  const binding = inheritedSnapshots.get(world) ?? caches.get(ancestor);
+  const cache = evaluated ?? binding?.cache;
   const audit = sensoryDraftWrites(
     world,
     evaluated?.owner === ownerToken(world) ? evaluated.coverage : undefined,
   );
-  if (cache?.dirty && !evaluated) {
-    audit.complete &&= cache.dirty.complete;
-    audit.overflow ||= cache.dirty.overflow;
-    audit.orderChanged ||= cache.dirty.orderChanged;
-    for (const [target, ids] of [
-      [audit.sources, cache.dirty.sources],
-      [audit.observers, cache.dirty.observers],
-    ] as const)
-      for (const id of ids) {
-        if (audit.overflow) break;
-        if (!target.has(id) && audit.sources.size + audit.observers.size === MAX_CHANGE_SCOPES)
-          audit.overflow = true;
-        else target.add(id);
-      }
-    if (audit.overflow) {
-      audit.sources.clear();
-      audit.observers.clear();
-    }
-  }
+  if (!evaluated) mergeDeferredWrites(audit, binding?.dirty);
   pending.delete(world);
   if (evaluated) delete evaluated.dependencyKeys;
   return (result) => {
-    if (!cache || (cache.owner !== ownerToken(world) && cache.owner !== ownerToken(ancestor)))
+    if (!cache || (evaluated ? cache.owner !== ownerToken(world) : !bindingCurrent(binding)))
       return;
-    delete cache.coverage;
-    cache.owner = ownerToken(result);
     const { coverage: _coverage, ...dirty } = audit;
-    cache.dirty = dirty;
-    if (evaluated)
+    if (evaluated) {
+      delete cache.coverage;
+      cache.owner = ownerToken(result);
       for (const [id, input] of cache.observers) {
         input.people = result.visiblePeople?.[id];
         input.objects = result.visibleObjects?.[id];
@@ -829,7 +879,11 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
         input.contacts = entityGet(result.entities, id)?.actor?.contacts;
         input.objectsDirty = false;
       }
-    caches.set(result, cache);
+    }
+    // A command that did not evaluate senses has no index edits to publish. Keep
+    // its exact deferred writes beside the binding, without invalidating the real
+    // parent when this result belongs to a disposable admission preview.
+    caches.set(result, { cache, owner: cache.owner, revision: cache.revision, dirty });
   };
 }
 /** Phase baselines copy only observer bindings. Source positions are read through a
@@ -837,22 +891,23 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
 export function snapshotEncounters(world: WorldState): EncounterBaseline {
   const ancestor = isDraft(world) ? original(world)! : world;
   const evaluated = pending.get(world);
-  const cache = evaluated ?? caches.get(ancestor);
+  const binding = inheritedSnapshots.get(world) ?? caches.get(ancestor);
+  const cache = evaluated ?? binding?.cache;
   const available =
-    cache && (cache.owner === ownerToken(world) || cache.owner === ownerToken(ancestor))
+    cache && (evaluated ? cache.owner === ownerToken(world) : bindingCurrent(binding))
       ? cache
       : undefined;
+  const dirty = !evaluated ? binding?.dirty : undefined;
   // Deferred unknown/overflow writes can move an unlisted source before this baseline.
   // Rebuild starting positions too, or a stationary contact would appear to be moving.
-  const knownPositions =
-    available && available.dirty?.complete !== false && !available.dirty?.overflow;
+  const knownPositions = available && dirty?.complete !== false && !dirty?.overflow;
   const result: EncounterBaseline = {
     places: snapshot(world.places),
     ...(world.visiblePlaces ? { visiblePlaces: snapshot(world.visiblePlaces) } : {}),
     positions: knownPositions
       ? {
           get: (id) => {
-            if (available.dirty?.sources.has(id) || available.dirty?.observers.has(id)) {
+            if (dirty?.sources.has(id) || dirty?.observers.has(id)) {
               const entity = entityGet(readOnlyDraftView(world.entities), id);
               return entity?.placement?.mode === 'world' ? { ...worldPosition(entity) } : undefined;
             }

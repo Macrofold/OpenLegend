@@ -1058,6 +1058,8 @@ export class SqlGameRepository implements GameRepository {
     if (this.canDeferWorldTables(write, historyProjection, invalidatedMemoryIds)) {
       const constraints = prepareJournalConstraints(state.world.id, changes);
       const encoded = constraints && encodeJournalTransition(changes, preparedHistory!);
+      if (!constraints) countMetric('persistence.journalFallback.constraints');
+      else if (!encoded) countMetric('persistence.journalFallback.bytes');
       if (constraints && encoded) {
         // Prepare only changed source fields through their actual writer. Full current
         // validation remains at load/recovery; it is not a per-command history scan.
@@ -1087,12 +1089,14 @@ export class SqlGameRepository implements GameRepository {
           }),
         );
         if (appended.kind === 'appended') {
+          countMetric('persistence.journalAccepted');
           this.acceptedRevision = appended.revision;
           this.acceptedState = state;
           this.memories.acceptedSourceChanges(state.world.id, changes);
           this.journal.schedule();
           return appended.revision;
         }
+        countMetric('persistence.journalFallback.admission');
         delete write.deferred;
       }
     }
@@ -1233,7 +1237,7 @@ export class SqlGameRepository implements GameRepository {
     invalidated?: Record<string, string[]>,
   ): boolean {
     const { before, state, preparedHistory } = write;
-    return (
+    const eligible =
       this.journalActive &&
       !this.rawDb.transactionActive &&
       !!before &&
@@ -1258,10 +1262,20 @@ export class SqlGameRepository implements GameRepository {
       !projection?.campAssetFences?.length &&
       !projection?.authorityBindings?.length &&
       !projection?.authorityOwners?.size &&
-      !Object.values(invalidated ?? {}).some((ids) => ids.length) &&
-      journalTableFamily(before.world, state.world, write.changes, preparedHistory.changed) &&
-      this.history.canDeferAppend(write.historyAfter, preparedHistory)
-    );
+      !Object.values(invalidated ?? {}).some((ids) => ids.length);
+    if (!eligible) {
+      countMetric('persistence.journalFallback.boundary');
+      return false;
+    }
+    if (!journalTableFamily(before.world, state.world, write.changes, preparedHistory.changed)) {
+      countMetric('persistence.journalFallback.family');
+      return false;
+    }
+    if (!this.history.canDeferAppend(write.historyAfter, preparedHistory)) {
+      countMetric('persistence.journalFallback.history');
+      return false;
+    }
+    return true;
   }
 
   private publishWorldTables(

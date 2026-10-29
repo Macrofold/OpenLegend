@@ -157,20 +157,29 @@ export function journalTableFamily(
         )
           return false;
       }
-      const value: unknown = JSON.parse(row.payload);
-      if (!postgresJson(value)) return false;
+      // This owner produced payload with JSON.stringify. Its only PostgreSQL JSONB
+      // hazards are escaped NUL/unpaired surrogates; ordinary payloads need no
+      // second parse and complete graph traversal. Ambiguous escaped text takes
+      // the exact validator, as do unowned preparations.
+      let value: unknown;
+      const decoded = () => (value ??= JSON.parse(row.payload));
+      if (
+        (!ownsPreparation || /\\u(?:0000|d[89a-f][0-9a-f]{2})/i.test(row.payload)) &&
+        !postgresJson(decoded())
+      )
+        return false;
       // The entity's secondary unique key comes from its body; item/placement keys
       // come from the path. Keep those identities equal before deferring their SQL.
       if (
         table === 'sim_entities' &&
         row.create &&
-        (!value ||
-          typeof value !== 'object' ||
-          (value as Record<string, unknown>)['id'] !== entityId)
+        (!decoded() ||
+          typeof decoded() !== 'object' ||
+          (decoded() as Record<string, unknown>)['id'] !== entityId)
       )
         return false;
       if (table === 'sim_placements' && row.create) {
-        const placement = value as Record<string, unknown>,
+        const placement = decoded() as Record<string, unknown>,
           actual = entityGet(after.entities, entityId!)!.placement;
         if (
           !placement ||
@@ -184,7 +193,7 @@ export function journalTableFamily(
           return false;
       }
       if (table === 'mind_summaries') {
-        const summary = value as ExperienceSummary;
+        const summary = decoded() as ExperienceSummary;
         if (!Array.isArray(summary.sources) || !summary.manifest) return false;
         relatedRows +=
           summary.sources.length +
@@ -281,6 +290,13 @@ export function prepareJournalConstraints(
   worldId: string,
   changes: RecordChanges,
 ): JournalConstraintPlan | undefined {
+  const ownsPreparation = preparedRecordChanges(changes);
+  const created = new Map(
+    [...changes.writes].map(([table, rows]) => [
+      table,
+      new Set(rows.filter((row) => row.create).map((row) => row.id)),
+    ]),
+  );
   const wanted = new Map<string, Set<string>>();
   const positions = new Map<string, Array<{ parent_id: string; position: number }>>();
   const positionKeys = new Set<string>();
@@ -293,8 +309,14 @@ export function prepareJournalConstraints(
   for (const [table, rows] of changes.writes)
     for (const row of rows) {
       if (!RECORD_NODES.has(table)) throw new Error('Unknown journal constraint table.');
-      if (row.create && !ownedAppendRow(changes, row)) add(table, row.id);
-      if (row.create && !ownedAppendRow(changes, row) && journalRecordPath(table, row.id).list) {
+      const parent = RECORD_PARENTS.get(table);
+      // A newly created owner's absence is checked once. Its FK-owned children
+      // cannot already exist in canonical storage; the exact codec also proves
+      // their within-transition identities and positions.
+      const newParent = ownsPreparation && !!parent && created.get(parent)?.has(row.parent);
+      const append = ownsPreparation && ownedAppendRow(changes, row);
+      if (row.create && !append && !newParent) add(table, row.id);
+      if (row.create && !append && !newParent && journalRecordPath(table, row.id).list) {
         const positionKey = JSON.stringify([table, row.parent, row.position]);
         if (!positionKeys.has(positionKey)) {
           positionKeys.add(positionKey);
@@ -303,8 +325,7 @@ export function prepareJournalConstraints(
           positions.set(table, probes);
         }
       }
-      const parent = RECORD_PARENTS.get(table);
-      if (parent) add(parent, row.parent);
+      if (parent && !created.get(parent)?.has(row.parent)) add(parent, row.parent);
       if (table === 'sim_placements' && row.create) {
         const placement = JSON.parse(row.payload) as Record<string, unknown>;
         if (placement['mode'] !== 'contained' || typeof placement['parentEntityId'] !== 'string')
