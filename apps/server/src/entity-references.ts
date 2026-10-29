@@ -3,6 +3,7 @@ import {
   observerDescription,
   recognizesSubject,
   currentBodyGrant,
+  identitiesForEntity,
   canonicalJson,
   coachingFor,
 } from '@open-legend/domain';
@@ -207,6 +208,34 @@ export function experienceEntityReferences(
   for (const id of ids)
     if (!references.has(id)) references.set(id, entityHandle(world, observerId, id));
   return references;
+}
+
+/** Captured historical attribution survives loss of current bodily contact.
+ * Changing an acquired identity still invalidates its prepared presentation;
+ * physical proposals separately recheck their captured body lease at execution. */
+export function personalAttributionRevision(
+  world: WorldState,
+  observerId: string,
+  ids: Iterable<string>,
+): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(
+      canonicalJson([
+        world.id,
+        observerId,
+        [...ids].map((id) => [
+          id,
+          identitiesForEntity(world, observerId, id).map((identity) => [
+            identity.individualId ?? null,
+            identity.canonicalId ?? null,
+            identity.givenName,
+            identity.nickname ?? null,
+            identity.authored,
+          ]),
+        ]),
+      ]),
+    )
+    .digest('hex');
 }
 
 export function resolveEntityMarkers(text: string, references: Record<string, string>): string {

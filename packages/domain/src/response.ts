@@ -553,7 +553,7 @@ export function commitActorResponse(
     Object.fromEntries(
       entityIds.map((targetId) => [targetId, expectedEncounters[targetId] ?? null]),
     );
-  let world = draftWorld(input);
+  let world = draftWorld(input, { materializeNativeEntities: [actorId] });
   const construction = constructionPermissionBatch(
     input.id,
     permissions.constructionPermissions ?? [],
@@ -590,7 +590,7 @@ export function commitActorResponse(
   const command = (part: 'talk' | 'act', value: Command) => {
     const beforeEvents = isDraft(world.events) ? current(world.events) : world.events;
     let transition = executeCommand(world, value);
-    world = draftWorld(transition.world);
+    world = draftWorld(transition.world, { materializeNativeEntities: [actorId] });
     const emitted = new Set(transition.events.map((event) => event.id));
     const appended = appendedEventCount(beforeEvents, transition.world.events);
     appendOnlyCommands &&= appended !== undefined;
@@ -1583,7 +1583,7 @@ export function recordPlayerExpression(
       'invalid-expression',
       'The action description did not match its selected target.',
     );
-  const world = draftWorld(input),
+  const world = draftWorld(input, { materializeNativeEntities: [actorId] }),
     events: import('./types.js').WorldEvent[] = [];
   const parts = predicate
     .split('{target}')

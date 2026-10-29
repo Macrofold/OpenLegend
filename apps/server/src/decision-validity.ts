@@ -15,12 +15,12 @@ import { digest } from './content-digest.js';
 
 /** Additive personally experienced blows remain evidence for the next opportunity,
  * not an automatic veto of a still-legal choice after the one funded refresh.
- * Physical capability, exact work and selected subjects are checked again at admission. */
+ * Physical capability, exact work and selected subjects are checked again at admission.
+ * Other bodies losing contact revoke individual proposals, not independent interpretation. */
 export function preparedResponseValidity(
   world: WorldState,
   actorId: string,
   scopes: readonly AppraisalScope[],
-  entityLeases: Readonly<Record<string, string>> = {},
 ): string {
   const entity = entityGet(world.entities, actorId),
     actor = entity?.actor;
@@ -37,11 +37,6 @@ export function preparedResponseValidity(
       actor?.personality,
       actor?.backstory,
     ],
-    currentBodyLeases: Object.entries(entityLeases).map(([id, expected]) => [
-      id,
-      expected,
-      currentBodyGrant(world, actorId, id)?.leaseId ?? null,
-    ]),
     life: actor?.physicalLife,
     controller: actor?.controller,
     alive: actor?.alive,

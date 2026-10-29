@@ -1,8 +1,5 @@
 import { z } from 'zod';
 import {
-  entityGet,
-  observerDescription,
-  recognizesSubject,
   experienceReading,
   experienceSourceReference,
   experienceSourceKey,
@@ -13,7 +10,7 @@ import {
   type ExperienceSummary,
 } from '@open-legend/domain';
 import type { GenerateRequest } from '@open-legend/ai';
-import { entityHandle } from './entity-references.js';
+import { personalAttributionRevision } from './entity-references.js';
 import { memoryCandidate } from './recall.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { digest } from './store.js';
@@ -75,22 +72,6 @@ function conversationText(lines: string[]): string {
 }
 function projectionBytes(lines: string[], experience: unknown[]): number {
   return Buffer.byteLength(conversationText(lines)) + Buffer.byteLength(JSON.stringify(experience));
-}
-function perspective(world: WorldState, actorId: string, entityIds: string[]): string {
-  return digest(
-    entityIds.map((id) => {
-      const known = recognizesSubject(world, actorId, id);
-      const episode = world.perceptionEpisodes?.[actorId]?.[id];
-      return [
-        id,
-        !!entityGet(world.entities, id),
-        observerDescription(world, actorId, id),
-        known,
-        episode ?? null,
-        known || episode ? entityHandle(world, actorId, id) : null,
-      ];
-    }),
-  );
 }
 
 /** One actor/source owner for optional dialogue. Complete required causes travel
@@ -165,7 +146,7 @@ export async function buildConversationContext(input: {
       cached.generation !== scope?.generation ||
       !validExperienceSummary(cached.value, actorId) ||
       cached.sourceDigest !== digest(cached.value.sources) ||
-      perspective(world, actorId, cached.value.entityIds) !== cached.perspective ||
+      personalAttributionRevision(world, actorId, cached.value.entityIds) !== cached.perspective ||
       Buffer.byteLength(cached.value.text) > SUMMARY_BYTES ||
       !repository ||
       !scope ||
@@ -260,7 +241,7 @@ export async function buildConversationContext(input: {
         throw new Error('Personal speech disclosure changed.');
       if (
         expectedPerspective &&
-        perspective(service.world, actorId, boundEntities) !== expectedPerspective
+        personalAttributionRevision(service.world, actorId, boundEntities) !== expectedPerspective
       )
         throw new Error('Selected speech perspective changed.');
       if (!repository || !scope) {
@@ -404,7 +385,7 @@ export async function buildConversationContext(input: {
             ...boundSources.flatMap((source) => byId.get(source.id)!.entry.value.entityIds),
           ]),
         ];
-        expectedPerspective = perspective(world, actorId, boundEntities);
+        expectedPerspective = personalAttributionRevision(world, actorId, boundEntities);
         checkedWorld = new WeakRef(world);
         await check();
         const output = summarySchema.parse(
@@ -444,7 +425,7 @@ export async function buildConversationContext(input: {
           fromSequence: previous?.fromSequence ?? part[0]!.sequence,
           through: part.at(-1)!.sequence,
           sourceDigest: digest(value.sources),
-          perspective: perspective(world, actorId, value.entityIds),
+          perspective: personalAttributionRevision(world, actorId, value.entityIds),
           value,
         };
         // If structural attribution cannot fit, do not pay to expand it further.
@@ -486,7 +467,7 @@ export async function buildConversationContext(input: {
       ...exactTurns.flatMap((turn) => turn.entry.value.entityIds),
     ]),
   ];
-  expectedPerspective = perspective(world, actorId, boundEntities);
+  expectedPerspective = personalAttributionRevision(world, actorId, boundEntities);
   checkedWorld = new WeakRef(world);
   await check();
   const lines = [...(summary ? [summary.text] : []), ...exactTurns.map((turn) => turn.text)];

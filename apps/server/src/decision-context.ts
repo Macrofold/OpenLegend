@@ -43,6 +43,7 @@ import {
   entityReferenceMap,
   entityHandle,
   projectEntityMarkers,
+  personalAttributionRevision,
 } from './entity-references.js';
 import { digest } from './store.js';
 import { contextSections, type SharedModelExperience } from './perceived-context.js';
@@ -52,7 +53,6 @@ import {
   bodyContext,
   bodyPolicy,
   bodyEligibilityRevision,
-  subjectReferenceCurrent,
   attributeDefinition,
   readAttribute,
   supportsManualWork,
@@ -835,17 +835,18 @@ export async function prepareDecision(
       .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation')
       .flatMap((candidate) => candidate.entityIds),
   );
-  const rememberedEpisodes = new Map(
-    [...rememberedSubjects].map((id) => [id, world.perceptionEpisodes?.[actorId]?.[id] ?? null]),
-  );
+  const rememberedAttribution = personalAttributionRevision(world, actorId, rememberedSubjects);
   const validatePrepared = async (flush = true) => {
     await conversation.validate(flush, sources);
-    // Attention/generation can outlive an unnamed person's observation. Historical
-    // source revisions cannot authorize rebinding that old account to a new exposure.
+    // Keep this request's historical references after contact ends; never rebind
+    // them to a later exposure. Actual identity changes still revoke the prepared
+    // attribution, while physical proposals recheck their captured body lease.
     // docs/memory-architecture.md#personal-perspective-and-acquisition
-    for (const id of rememberedSubjects)
-      if (!subjectReferenceCurrent(service.world, actorId, id, rememberedEpisodes.get(id) ?? null))
-        throw new Error('A remembered participant changed observation; discard stale context.');
+    if (
+      personalAttributionRevision(service.world, actorId, rememberedSubjects) !==
+      rememberedAttribution
+    )
+      throw new Error('A remembered participant changed identity; discard stale context.');
     // The same fence runs after generation: a newly completed action is material
     // evidence even when none of the previously selected memory records changed.
     if (outcomeBinding !== JSON.stringify(requiredOutcomeMemoryIds(service.world, actorId)))

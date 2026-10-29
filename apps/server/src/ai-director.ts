@@ -2291,12 +2291,7 @@ export class AiDirector {
       ),
     };
     const validityFor = (world: WorldState) =>
-      preparedResponseValidity(
-        world,
-        actorId,
-        interpretations.scopes,
-        prepared.binding.entityLeases,
-      );
+      preparedResponseValidity(world, actorId, interpretations.scopes);
     run.validityFor = validityFor;
     run.validity = validityFor(this.service.world);
     const current = async () => {
