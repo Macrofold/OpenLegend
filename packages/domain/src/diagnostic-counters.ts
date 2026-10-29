@@ -163,6 +163,8 @@ export const DOMAIN_COUNTERS = [
   'receivedReferenceRootsReused',
   'receivedReferenceOwnersRebuilt',
   'receivedReferenceReceiptsVisited',
+  'receivedReferenceCurrentVisited',
+  'receivedReferenceOriginalsVisited',
   'nativeEvidenceOwnersSealed',
   'nativeEvidenceSnapshotsReused',
   /** Sighting-identity assignments (including redundant baseline writes), additions/removals. */

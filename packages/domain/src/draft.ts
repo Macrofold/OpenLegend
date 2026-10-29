@@ -785,6 +785,42 @@ export function finishWorld(
       if (before && after && before !== after && Object.isFrozen(before))
         recordMapSuccessors.set(before, { next: new WeakRef(after), changed });
     };
+    // Current evidence changes a few rows in a much larger visible collection.
+    // Compare opaque immutable row identities once, then let reference accounting
+    // and persistence consume the same exact delta instead of rebuilding graphs.
+    // A reorder must use the complete codec: key equality alone cannot prove order.
+    const publishCurrentMap = (
+      before: Record<string, unknown> | undefined,
+      after: Record<string, unknown> | undefined,
+    ) => {
+      if (
+        !before ||
+        !after ||
+        before === after ||
+        !isImmutableData(before) ||
+        !isImmutableData(after)
+      )
+        return;
+      const oldKeys = Object.keys(before),
+        nextKeys = Object.keys(after),
+        retained = oldKeys.filter((key) => Object.hasOwn(after, key));
+      let position = 0,
+        appended = false;
+      for (const key of nextKeys) {
+        if (!Object.hasOwn(before, key)) appended = true;
+        else if (appended || retained[position++] !== key) return;
+      }
+      const changed = new Set<string>();
+      for (const key of oldKeys) if (before[key] !== after[key]) changed.add(key);
+      for (const key of nextKeys) if (!Object.hasOwn(before, key)) changed.add(key);
+      publishMap(before, after, changed);
+    };
+    for (const [actorId, after] of Object.entries(result.perceptionEvidence ?? {})) {
+      const before = base.perceptionEvidence?.[actorId];
+      if (before === after) continue;
+      publishCurrentMap(before?.current, after.current);
+      publishCurrentMap(before?.originals, after.originals);
+    }
     if (!perceptionRootReplaced) {
       if (perceptionIds.size)
         publishMap(

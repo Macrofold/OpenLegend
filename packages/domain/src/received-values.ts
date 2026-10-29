@@ -5,6 +5,7 @@ import {
   appendSnapshot,
   isAppendBuffer,
   readOnlyDraftView,
+  recordMapChangesBetween,
   touchNativeEvidence,
 } from './draft.js';
 import { immutableDataSnapshot, isImmutableData, jsonEncoding } from './records.js';
@@ -241,22 +242,34 @@ export function receivedObservationValueReferences(
 /** Derived ownership only. Callers adding cold/pending ownership copy the affected
  * block sets instead of modifying this shared complete resident result. */
 export type ReceivedValueReferences = ReadonlyMap<string, ReadonlySet<number>>;
+type ReferenceCounts = ReadonlyMap<string, ReadonlyMap<number, number>>;
+interface CountedReferences {
+  counts: ReferenceCounts;
+  references: ReceivedValueReferences;
+}
 type TemporalReceipt = import('./temporal-evidence.js').TemporalReceipt;
 type PerceptionOwner = import('./perception-evidence.js').PerceptionEvidenceOwner;
 interface ReferenceOwner {
   identity: object;
   references: ReceivedValueReferences;
+  referenceChanges?: {
+    before: WeakRef<ReceivedValueReferences>;
+    blocks: ReadonlySet<string>;
+  };
   receipts?: TemporalReceipt[];
   perception?: {
     originals: PerceptionOwner['originals'];
     received: PerceptionOwner['received'];
     current: PerceptionOwner['current'];
     frame: readonly [string, number] | undefined;
+    receivedOriginals: ReadonlySet<string>;
+    originalUses: ReadonlyMap<string, number>;
+    counts: ReferenceCounts;
   };
 }
 interface ReferenceIndex {
   owners: Map<string, ReferenceOwner>;
-  counts: ReadonlyMap<string, ReadonlyMap<number, number>>;
+  counts: ReferenceCounts;
   references: ReceivedValueReferences;
 }
 const emptyPerceptionRoot: NonNullable<WorldState['perceptionEvidence']> = immutableDataSnapshot(
@@ -281,14 +294,73 @@ function collectReferences(values: Iterable<ReceivedValueReference>): ReceivedVa
   }
   return result;
 }
-function combineReferences(values: Iterable<ReceivedValueReferences>): ReceivedValueReferences {
-  return collectReferences(
-    (function* () {
-      for (const references of values)
-        for (const [blockId, ordinals] of references)
-          for (const valueOrdinal of ordinals) yield { blockId, valueOrdinal };
-    })(),
-  );
+/** Count each contributing piece once. Changed pieces copy only their affected
+ * blocks; the published sets keep identity when membership did not change. */
+function referenceDelta(previous?: CountedReferences) {
+  const touched = new Map<string, Map<number, number>>();
+  const changedBlocks = new Set<string>();
+  const change = (blockId: string, ordinal: number, amount: number) => {
+    let block = touched.get(blockId);
+    if (!block) touched.set(blockId, (block = new Map(previous?.counts.get(blockId))));
+    const next = (block.get(ordinal) ?? 0) + amount;
+    if (next < 0) throw new Error('Received-value ownership changed without its source proof.');
+    if (next) block.set(ordinal, next);
+    else block.delete(ordinal);
+  };
+  return {
+    changedBlocks,
+    update(
+      before: ReceivedValueReferences | undefined,
+      after: ReceivedValueReferences | undefined,
+      blocks?: ReadonlySet<string>,
+    ) {
+      if (before === after) return;
+      for (const blockId of blocks ?? before?.keys() ?? []) {
+        const ordinals = before?.get(blockId);
+        if (!ordinals) continue;
+        const next = after?.get(blockId);
+        if (ordinals !== next)
+          for (const ordinal of ordinals) if (!next?.has(ordinal)) change(blockId, ordinal, -1);
+      }
+      for (const blockId of blocks ?? after?.keys() ?? []) {
+        const ordinals = after?.get(blockId);
+        if (!ordinals) continue;
+        const old = before?.get(blockId);
+        if (ordinals !== old)
+          for (const ordinal of ordinals) if (!old?.has(ordinal)) change(blockId, ordinal, 1);
+      }
+    },
+    finish(): CountedReferences {
+      if (!touched.size && previous) return previous;
+      const counts = new Map(previous?.counts),
+        references = new Map(previous?.references);
+      for (const [blockId, block] of touched) {
+        if (!block.size) {
+          counts.delete(blockId);
+          if (references.has(blockId)) changedBlocks.add(blockId);
+          references.delete(blockId);
+          continue;
+        }
+        const prior = counts.get(blockId);
+        if (
+          !prior ||
+          prior.size !== block.size ||
+          [...block].some(([ordinal, count]) => prior.get(ordinal) !== count)
+        )
+          counts.set(blockId, block);
+        const old = references.get(blockId);
+        if (
+          !old ||
+          old.size !== block.size ||
+          [...block.keys()].some((ordinal) => !old.has(ordinal))
+        ) {
+          references.set(blockId, new Set(block.keys()));
+          changedBlocks.add(blockId);
+        }
+      }
+      return { counts, references };
+    },
+  };
 }
 function originalReferences(
   input: import('./perception-evidence.js').ReceivedObservation,
@@ -310,6 +382,9 @@ function currentReferences(input: CurrentFacetRecord): ReceivedValueReferences {
   if (isImmutableData(lease)) leaseReferences.set(lease, references);
   return references;
 }
+function frameReferences(frame: readonly [string, number] | undefined) {
+  return frame && collectReferences([{ blockId: frame[0], valueOrdinal: frame[1] }]);
+}
 function perceptionReferences(
   input: PerceptionOwner,
   previous: ReferenceOwner | undefined,
@@ -330,23 +405,87 @@ function perceptionReferences(
     old.frame?.[1] === frame?.[1]
   )
     return { ...previous, identity: owner };
-  countDomainWork('receivedReferenceOwnersRebuilt');
-  const fragments: ReceivedValueReferences[] = [];
-  if (frame) fragments.push(collectReferences([{ blockId: frame[0], valueOrdinal: frame[1] }]));
-  // Original bodies shared by several leases are prepared once through their weak
-  // identity cache, never re-materialized or recursively copied here.
-  const usedOriginals = new Set(received);
-  for (const stored of Object.values(current)) {
-    const lease = readOnlyDraftView(stored);
-    usedOriginals.add(lease.original);
-    fragments.push(currentReferences(lease));
+  const currentChanges = old && recordMapChangesBetween(old.current, current),
+    originalChanges = old && recordMapChangesBetween(old.originals, originals);
+  const incremental = !!old && !!currentChanges && !!originalChanges && isImmutableData(owner);
+  const delta = referenceDelta(
+    incremental ? { counts: old!.counts, references: previous!.references } : undefined,
+  );
+  const receivedOriginals = old?.received === received ? old.receivedOriginals : new Set(received);
+  let originalUses: ReadonlyMap<string, number> = incremental ? old!.originalUses : new Map();
+  let changedUses = incremental ? undefined : (originalUses as Map<string, number>);
+  const changedOriginals = new Set<string>();
+  const useOriginal = (reference: string, amount: number) => {
+    const count = (originalUses.get(reference) ?? 0) + amount;
+    if (count < 0) throw new Error('A current original lost unowned support.');
+    if (!changedUses) originalUses = changedUses = new Map(originalUses);
+    if (count) changedUses.set(reference, count);
+    else changedUses.delete(reference);
+    changedOriginals.add(reference);
+  };
+  if (incremental) {
+    for (const key of currentChanges!) {
+      const before = old!.current[key] && readOnlyDraftView(old!.current[key]!),
+        after = current[key] && readOnlyDraftView(current[key]!);
+      if (before === after) continue;
+      countDomainWork('receivedReferenceCurrentVisited');
+      delta.update(before && currentReferences(before), after && currentReferences(after));
+      if (before?.original !== after?.original) {
+        if (before) useOriginal(before.original, -1);
+        if (after) useOriginal(after.original, 1);
+      }
+    }
+    if (old!.receivedOriginals !== receivedOriginals) {
+      for (const reference of old!.receivedOriginals)
+        if (!receivedOriginals.has(reference)) useOriginal(reference, -1);
+      for (const reference of receivedOriginals)
+        if (!old!.receivedOriginals.has(reference)) useOriginal(reference, 1);
+    }
+    for (const reference of originalChanges!) changedOriginals.add(reference);
+    for (const reference of changedOriginals) {
+      const before = old!.originalUses.has(reference),
+        after = originalUses.has(reference);
+      if (!before && !after) continue;
+      if (before && after && old!.originals[reference] === originals[reference]) continue;
+      countDomainWork('receivedReferenceOriginalsVisited');
+      delta.update(
+        before
+          ? originalReferences(currentOriginal(previous!.identity as PerceptionOwner, reference))
+          : undefined,
+        after ? originalReferences(currentOriginal(owner, reference)) : undefined,
+      );
+    }
+    delta.update(frameReferences(old!.frame), frameReferences(frame));
+  } else {
+    countDomainWork('receivedReferenceOwnersRebuilt');
+    delta.update(undefined, frameReferences(frame));
+    for (const stored of Object.values(current)) {
+      const lease = readOnlyDraftView(stored);
+      countDomainWork('receivedReferenceCurrentVisited');
+      useOriginal(lease.original, 1);
+      delta.update(undefined, currentReferences(lease));
+    }
+    for (const reference of receivedOriginals) useOriginal(reference, 1);
+    // Several leases may share one exact original; catalogue membership alone
+    // grants nothing. Only current and received users retain its payloads.
+    for (const reference of originalUses.keys()) {
+      countDomainWork('receivedReferenceOriginalsVisited');
+      delta.update(undefined, originalReferences(currentOriginal(owner, reference)));
+    }
   }
-  for (const reference of usedOriginals)
-    fragments.push(originalReferences(currentOriginal(owner, reference)));
+  const { counts, references } = delta.finish();
   return {
     identity: owner,
-    references: combineReferences(fragments),
-    perception: { received, originals, current, frame },
+    references,
+    ...(incremental
+      ? {
+          referenceChanges: {
+            before: new WeakRef(previous!.references),
+            blocks: delta.changedBlocks,
+          },
+        }
+      : {}),
+    perception: { received, originals, current, frame, receivedOriginals, originalUses, counts },
   };
 }
 function receiptReferences(
@@ -378,7 +517,19 @@ function receiptReferences(
     }
     references = next;
   }
-  const owner = { identity: receipts, receipts, references };
+  const owner = {
+    identity: receipts,
+    receipts,
+    references,
+    ...(appended !== undefined && previous
+      ? {
+          referenceChanges: {
+            before: new WeakRef(previous.references),
+            blocks: new Set(changed.keys()),
+          },
+        }
+      : {}),
+  };
   if (isImmutableData(receipts)) receiptReferenceOwners.set(receipts, owner);
   return owner;
 }
@@ -431,44 +582,19 @@ export function referencedReceivedValues(
       );
     }
   }
-  const counts = new Map(previous?.counts);
-  const references = new Map(previous?.references);
-  const touched = new Map<string, Map<number, number>>();
-  const change = (blockId: string, ordinal: number, amount: number) => {
-    let block = touched.get(blockId);
-    if (!block) touched.set(blockId, (block = new Map(counts.get(blockId))));
-    const next = (block.get(ordinal) ?? 0) + amount;
-    if (next < 0) throw new Error('Received-value ownership changed without its source proof.');
-    if (next) block.set(ordinal, next);
-    else block.delete(ordinal);
-  };
+  const delta = referenceDelta(previous);
   const changedOwners = new Set([...(previous?.owners.keys() ?? []), ...owners.keys()]);
   for (const key of changedOwners) {
-    const before = previous?.owners.get(key)?.references;
-    const after = owners.get(key)?.references;
-    if (before === after) continue;
-    for (const [blockId, ordinals] of before ?? []) {
-      const next = after?.get(blockId);
-      if (ordinals !== next)
-        for (const ordinal of ordinals) if (!next?.has(ordinal)) change(blockId, ordinal, -1);
-    }
-    for (const [blockId, ordinals] of after ?? []) {
-      const old = before?.get(blockId);
-      if (ordinals !== old)
-        for (const ordinal of ordinals) if (!old?.has(ordinal)) change(blockId, ordinal, 1);
-    }
+    const before = previous?.owners.get(key)?.references,
+      after = owners.get(key),
+      changes = after?.referenceChanges;
+    delta.update(
+      before,
+      after?.references,
+      before && changes?.before.deref() === before ? changes.blocks : undefined,
+    );
   }
-  for (const [blockId, block] of touched) {
-    if (!block.size) {
-      counts.delete(blockId);
-      references.delete(blockId);
-      continue;
-    }
-    counts.set(blockId, block);
-    const old = references.get(blockId);
-    if (!old || old.size !== block.size || [...block.keys()].some((ordinal) => !old.has(ordinal)))
-      references.set(blockId, new Set(block.keys()));
-  }
+  const { counts, references } = delta.finish();
   const index = { owners, counts, references };
   if (immutable) {
     let byTemporal = referenceIndexes.get(perception);
