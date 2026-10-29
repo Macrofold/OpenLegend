@@ -18,7 +18,12 @@ import { chargeWork } from './work-budget.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { personalFactAlias } from './experience-source.js';
 import type { DetectionSupportState } from './perception-support.js';
-import { cloneValue, readOnlyDraftView, touchNativeEvidence } from './draft.js';
+import {
+  cloneValue,
+  readOnlyDraftView,
+  touchNativeEvidence,
+  trackOwnedCurrentMap,
+} from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { effectiveBodyProfile, worldPosition, worldSupport } from './spatial-state.js';
 import { outwardStates } from './perception-frame.js';
@@ -1150,9 +1155,11 @@ function writableCurrent(
     // Editable input worlds still need Immer's child isolation. Published
     // immutable leases can bypass those proxies without exposing prior writes.
     state.current = { ...(isImmutableData(view) ? view : current) };
+    trackOwnedCurrentMap(world, state.current);
   } else if (Object.isFrozen(current)) {
     countDomainWork('currentFacetMapCopies');
     state.current = { ...current };
+    trackOwnedCurrentMap(world, state.current);
   }
   return state.current;
 }

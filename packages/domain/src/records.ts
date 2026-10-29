@@ -77,6 +77,28 @@ export function isImmutableData(value: unknown): boolean {
   return true;
 }
 
+/** Seal an owned record container without copying already immutable children.
+ * Foreign mutable rows/accessors keep the ordinary detached snapshot path. */
+export function sealImmutableRecord(value: object): boolean {
+  if (isDraft(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) return false;
+  for (const key of Reflect.ownKeys(value)) {
+    const field = Object.getOwnPropertyDescriptor(value, key);
+    if (
+      typeof key !== 'string' ||
+      !field ||
+      !field.enumerable ||
+      !('value' in field) ||
+      !isImmutableData(field.value)
+    )
+      return false;
+  }
+  Object.freeze(value);
+  immutableData.add(value);
+  return true;
+}
+
 /** Construct an owned immutable JSON graph and establish its proof in the same walk.
  * The view callback resolves current draft children without exposing their proxies.
  * Foreign shallow-frozen inputs are checked, then detached when their children can

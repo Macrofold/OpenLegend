@@ -33,7 +33,7 @@ import {
   type Patch,
 } from 'immer';
 import { reconcileSemanticInterval } from './semantic-opportunities.js';
-import { isImmutableData, immutableDataSnapshot } from './records.js';
+import { isImmutableData, immutableDataSnapshot, sealImmutableRecord } from './records.js';
 import type { Entity, WorldEvent, WorldState } from './types.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { materializeNativeEntity, materializeNativeValuesInPlace } from './native-values.js';
@@ -66,6 +66,15 @@ const nativeEvidenceSnapshots = new WeakMap<
   WorldState,
   Map<NativeEvidenceFamily, Map<string, NativeEvidenceSnapshot>>
 >();
+const ownedCurrentMaps = new WeakMap<WorldState, WeakSet<object>>();
+/** Only the current writer registers a newly detached container. Its actual rows
+ * still require complete immutability proof at final publication, never a preview. */
+export function trackOwnedCurrentMap(world: WorldState, value: object): void {
+  if (!isDraft(world)) return;
+  let maps = ownedCurrentMaps.get(world);
+  if (!maps) ownedCurrentMaps.set(world, (maps = new WeakSet()));
+  maps.add(value);
+}
 /** Mutation owners invalidate only the actor/block they will edit. This process-local
  * registration permits reuse of a detached private-preview snapshot, never skips
  * validation or certifies a raw builder. Omitted identity discards unknown coverage.
@@ -541,6 +550,12 @@ function sealNativeOwner<T extends object>(
 ): T {
   const latest = readOnlyDraftView(value);
   if (isImmutableData(latest)) return latest;
+  if (!reuse && family === 'perception') {
+    const current = readOnlyDraftView(
+      (latest as import('./perception-evidence.js').PerceptionEvidenceOwner).current,
+    );
+    if (ownedCurrentMaps.get(world)?.has(current)) sealImmutableRecord(current);
+  }
   const held = nativeEvidenceSnapshots.get(world)?.get(family)?.get(id);
   if (reuse && held?.snapshot && held.latest === latest && held.sealedRevision === held.revision) {
     countDomainWork('nativeEvidenceSnapshotsReused');
@@ -671,6 +686,7 @@ export function finishWorld(
   // through many working paths. Editable builders must retain writable owners
   // for direct native effects after this turn.
   if (isDraft(world) && Object.isFrozen(original(world)!)) sealNativeEvidence(world, false);
+  ownedCurrentMaps.delete(world);
   // Final publication observes all edits, including foreign builder writes that
   // did not enter a native mutation owner. Preview certificates end with this turn.
   nativeEvidenceSnapshots.delete(world);
