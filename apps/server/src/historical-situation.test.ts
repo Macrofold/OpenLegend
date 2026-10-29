@@ -11,13 +11,27 @@ import {
   worldSupport,
   currentDetailedAttention,
   currentReceivedGeometry,
+  projectWorldHistory,
+  type WorldState,
 } from '@open-legend/domain';
-import { appendMemory } from '../../../packages/domain/src/events.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
 import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
 import { WorldService } from './world-service.js';
 import { captureSituation, expandSituation } from './situation-context.js';
 import { permittedSourceHandle } from './entity-references.js';
+
+/** Evict committed receipt placement explicitly; timestamps no longer force chunks. */
+function coldReceiptWorld(world: WorldState): WorldState {
+  const temporal = world.experience!.temporal!;
+  return projectWorldHistory(world, {
+    temporal: {
+      ...temporal,
+      actors: Object.fromEntries(
+        Object.entries(temporal.actors).map(([id, actor]) => [id, { ...actor, chunks: [] }]),
+      ),
+    },
+  });
+}
 
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -68,8 +82,7 @@ it('retrieves one shared terrain boundary from cold storage for both outgoing an
     initializePerception(world, []);
     expect(setAttentionFocus(world, PLAYER_ID, [entering[0]])).toBe(true);
   });
-  // Later actual selected movement creates two newer chunks, so the terrain
-  // boundary is read through the repository rather than the resident tail.
+  // Later actual movement extends the shared chronology before an explicit cold read.
   for (const at of [17, 18])
     await editWorld(service, (world) => {
       world.simTime = at;
@@ -85,10 +98,11 @@ it('retrieves one shared terrain boundary from cold storage for both outgoing an
     actorId: PLAYER_ID,
     generation: (await store.records.head())!.generation,
   };
+  const coldWorld = coldReceiptWorld(service.world);
   const subjects = [...previous.map((entry) => entry.exposure.episodeId), subject];
   const ids = new Set<string>();
   const resident = new Set(
-    service.world.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
+    coldWorld.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
       chunk.receipts.map((receipt) => receipt.id),
     ),
   );
@@ -102,7 +116,7 @@ it('retrieves one shared terrain boundary from cold storage for both outgoing an
         bytes: 65536,
         limit: 128,
       },
-      service.world,
+      coldWorld,
     );
     const matches = history.entries.filter((entry) =>
       entry.receipt.facets.some((facet) => facet.original?.source.id === original.id),
@@ -169,28 +183,20 @@ it('reads historical native distances through cold actor receipts, including a l
     world.map.spatial.revision++;
     initializePerception(world, []);
   });
-  for (let index = 0; index < 3; index++)
-    await editWorld(service, (world) => {
-      appendMemory(world, PLAYER_ID, {
-        kind: 'episode',
-        source: 'self_thought',
-        summary: `Separate fixture thought ${index}.`,
-        entityIds: [],
-        importance: 1,
-      });
-    });
   await service.flushMemorySources(PLAYER_ID);
   const head = await store.records.head(),
     scope = { worldId: service.world.id, actorId: PLAYER_ID, generation: head!.generation };
   const query = {
     subjects: [anchor, other],
-    kinds: ['body', 'location', 'physical-boundary', 'surface-patch'] as const,
+    // This initial pair-distance read needs body samples, not every associated terrain patch.
+    kinds: ['body', 'location'] as const,
     measurements: { from: 1, through: 2 },
     through: 3,
     bytes: 8192,
     limit: 128,
   };
-  const history = await store.memories.temporalHistory(scope, query, service.world);
+  const coldWorld = coldReceiptWorld(service.world);
+  const history = await store.memories.temporalHistory(scope, query, coldWorld);
   expect(
     history.entries.some(
       (entry) =>
@@ -198,14 +204,28 @@ it('reads historical native distances through cold actor receipts, including a l
         entry.receipt.at === 3 &&
         entry.receipt.facets.some((facet) => facet.measuredThrough === 2),
     ),
+    JSON.stringify({
+      incomplete: history.incomplete,
+      hasMore: history.hasMore,
+      entries: history.entries.map(({ receipt, values }) => ({
+        at: receipt.at,
+        subject: receipt.subject,
+        facets: receipt.facets.map((f, i) => ({
+          kind: values[i]?.kind,
+          from: f.measuredFrom,
+          through: f.measuredThrough,
+          confirmed: f.confirmedThrough,
+        })),
+      })),
+    }),
   ).toBe(true);
   const residentIds = new Set(
-    service.world.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
+    coldWorld.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
       chunk.receipts.map((receipt) => receipt.id),
     ),
   );
   expect(history.entries.some((entry) => !residentIds.has(entry.receipt.id))).toBe(true);
-  const captured = captureSituation(service.world, PLAYER_ID, 'cold-historical-spatial', history);
+  const captured = captureSituation(coldWorld, PLAYER_ID, 'cold-historical-spatial', history);
   const response = await expandSituation(
     captured,
     [
@@ -218,7 +238,7 @@ it('reads historical native distances through cold actor receipts, including a l
         radius: 20,
       },
     ],
-    (query) => store.memories.temporalHistory(scope, query, service.world),
+    (query) => store.memories.temporalHistory(scope, query, coldWorld),
   );
   const result = (
     response.results[0] as {
