@@ -1,17 +1,14 @@
 import {
   BoundsIndex,
-  clearConvexView,
   horizontalCone,
   distance3D,
   movingBodiesMinimumSeparation,
-  querySurfacesInBounds,
-  surfaceById,
-  surfaceHeight,
-  surfaceSupportsRectangle,
+  queryPhysicalFeatures,
+  physicalFeatureById,
+  queryConvexView,
   type Bounds3,
   type BoundsQueryCursor,
-  type SpatialMap,
-  type WalkableSurface,
+  type PhysicalFeature,
 } from '@open-legend/spatial';
 import { entityGet } from './entity-collection.js';
 import { effectiveBodyProfile, spatialMap, worldPosition } from './spatial-state.js';
@@ -21,6 +18,7 @@ import {
   acquireObservation,
   observationFactKey,
   validateObservationContribution,
+  currentObservedFacetValues,
   type ObservationContribution,
   type ObservationFactKey,
   type ObservationFrame,
@@ -29,6 +27,8 @@ import {
   applyAttentionRelationEvaluations,
   attentionRelationOpportunity,
   markAttentionRelationsDirty,
+  currentDetailedAttention,
+  SELF_RELATION_KEY,
   type AttentionRelationEvaluation,
   type AttentionRelationWitness,
 } from './attention.js';
@@ -45,6 +45,7 @@ import {
 } from './temporal-evidence.js';
 import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
 import { cloneValue, readOnlyDraftView } from './draft.js';
+import { jsonEncoding, hasRecordFields } from './records.js';
 import { personalFactAlias } from './experience-source.js';
 import { nextId } from './data.js';
 import type { Position, WorldState } from './types.js';
@@ -63,57 +64,47 @@ export interface ObservedBoundary {
   errorRadius: number;
   nearSurface: { point: Position; normal: Position; support: ObservationFactKey };
   farSurface: { point: Position; normal: Position; support: ObservationFactKey };
-  /** Signed vertical height decrease, already reduced by both measurement errors. */
   dropLower: number;
 }
-interface Rectangle {
-  minX: number;
-  maxX: number;
-  minZ: number;
-  maxZ: number;
+interface FeatureExtent {
+  featureId: string;
+  u0: number;
+  u1: number;
+  v0: number;
+  v1: number;
 }
-interface PendingPatch extends Rectangle {
-  surfaceId: string;
-}
-interface GeometryFragment extends PendingPatch {
+interface GeometryFragment extends FeatureExtent {
   key: string;
   observation: ObservationContribution;
 }
 export interface ReceivedGeometryState {
   basis: string;
-  /** Source provenance is independent of the eye used to certify current permission. */
   sourceBasis: string;
-  /** Opaque acquisition identity; dependency signatures are not copied into receipts. */
   episodeId: string;
   frame: ObservationFrame;
+  frameAt: number;
+  priorFrame?: { at:number; frame:ObservationFrame };
   eye: Position;
   radius: number;
   geometryRevision: number;
   supportedThrough: number;
   generation: number;
   nextAt: number;
-  pending: PendingPatch[];
-  surfaceCursor?: BoundsQueryCursor;
-  surfacesComplete: boolean;
+  queryKey: string;
+  featureCursor?: BoundsQueryCursor;
+  anchorCursor: number;
   fragments: GeometryFragment[];
   boundaries: ObservationContribution[];
   boundaryKeys: string[];
-  boundaryCursor: number;
-  boundaryChecked: number;
   finished: boolean;
+  unknown: boolean;
   complete: boolean;
-  unrepresented: boolean;
   visited: number;
+  bytes: number;
 }
 const epsilon = 1e-8;
-const rectangleKey = (rectangle: PendingPatch) =>
-  JSON.stringify([
-    rectangle.surfaceId,
-    rectangle.minX,
-    rectangle.maxX,
-    rectangle.minZ,
-    rectangle.maxZ,
-  ]);
+const extentKey = (value: FeatureExtent) =>
+  JSON.stringify([value.featureId, value.u0, value.u1, value.v0, value.v1]);
 const patchFacet = (fragment: GeometryFragment) => fragment.observation.facets[0]!.value;
 const intersects = (a: Bounds3, b: Bounds3) =>
   a.min.x <= b.max.x &&
@@ -126,7 +117,7 @@ function receptor(world: WorldState, observerId: string) {
   const observer = entityGet(world.entities, observerId);
   if (!observer?.actor?.alive || !activelyParticipates(observer)) return;
   const detector = sensesFor(world, observer).find(
-    (sense) => sense.implementation === 'vision-geometry-v1',
+    (s) => s.implementation === 'vision-geometry-v1',
   );
   const radius = visionRadius(world, observer),
     angle = visionFieldOfView(world, observer);
@@ -144,19 +135,11 @@ function receptor(world: WorldState, observerId: string) {
     policy.geometry,
   ]);
   const basis = JSON.stringify([
-    observer.actor.physicalLife ?? 0,
-    map.spatial.revision,
-    eye.x,
-    eye.y,
-    eye.z,
+    sourceBasis,
+    eye,
     radius,
     angle,
     angle < 2 * Math.PI ? observer.spatial.heading : null,
-    detector.id,
-    detector.version,
-    policy.id,
-    policy.version,
-    sourceBasis,
   ]);
   return {
     observer,
@@ -176,233 +159,212 @@ function boundsAround(point: Position, radius: number): Bounds3 {
     max: { x: point.x + radius, y: point.y + radius, z: point.z + radius },
   };
 }
-function vertices(surface: WalkableSurface, rectangle: Rectangle): Quad<Position> {
-  return [
-    [rectangle.minX, rectangle.minZ],
-    [rectangle.maxX, rectangle.minZ],
-    [rectangle.maxX, rectangle.maxZ],
-    [rectangle.minX, rectangle.maxZ],
-  ].map(([x, z]) => ({ x: x!, z: z!, y: surfaceHeight(surface, x!, z!) })) as Quad<Position>;
-}
-function normal(surface: WalkableSurface): Position {
-  const length = Math.hypot(surface.slopeX, 1, surface.slopeZ);
-  // Signed zero has no geometric meaning and JSON restores it as positive zero.
-  return {
-    x: surface.slopeX === 0 ? 0 : -surface.slopeX / length,
-    y: 1 / length,
-    z: surface.slopeZ === 0 ? 0 : -surface.slopeZ / length,
-  };
-}
-function priority(patch: PendingPatch, map: SpatialMap, eye: Position): number {
-  const surface = surfaceById(map, patch.surfaceId);
-  if (!surface) return Infinity;
-  const base = surfaceHeight(surface, patch.minX, patch.minZ),
-    riseX = (patch.maxX - patch.minX) * surface.slopeX,
-    riseZ = (patch.maxZ - patch.minZ) * surface.slopeZ;
-  // Affine surface extrema occur at its rectangle's corners. Include height so
-  // an occluded floor below cannot monopolize work ahead of nearby raised ground.
-  const minY = base + Math.min(0, riseX) + Math.min(0, riseZ),
-    maxY = base + Math.max(0, riseX) + Math.max(0, riseZ);
-  return (
-    Math.max(patch.minX - eye.x, eye.x - patch.maxX, 0) ** 2 +
-    Math.max(minY - eye.y, eye.y - maxY, 0) ** 2 +
-    Math.max(patch.minZ - eye.z, eye.z - patch.maxZ, 0) ** 2
-  );
-}
-function split(patch: PendingPatch): [PendingPatch, PendingPatch] {
-  if (patch.maxX - patch.minX >= patch.maxZ - patch.minZ) {
-    const middle = (patch.minX + patch.maxX) / 2;
-    return [
-      { ...patch, maxX: middle },
-      { ...patch, minX: middle },
-    ];
-  }
-  const middle = (patch.minZ + patch.maxZ) / 2;
-  return [
-    { ...patch, maxZ: middle },
-    { ...patch, minZ: middle },
-  ];
-}
-function patchBounds(fragment: GeometryFragment): Bounds3 {
-  const value = patchFacet(fragment);
-  if (value.kind !== 'surface-patch') throw new Error('Invalid native surface fragment.');
+function boundsOf(points: readonly Position[]): Bounds3 {
   return {
     min: {
-      x: fragment.minX,
-      y: Math.min(...value.patch.vertices.map((p) => p.y)),
-      z: fragment.minZ,
+      x: Math.min(...points.map((p) => p.x)),
+      y: Math.min(...points.map((p) => p.y)),
+      z: Math.min(...points.map((p) => p.z)),
     },
     max: {
-      x: fragment.maxX,
-      y: Math.max(...value.patch.vertices.map((p) => p.y)),
-      z: fragment.maxZ,
+      x: Math.max(...points.map((p) => p.x)),
+      y: Math.max(...points.map((p) => p.y)),
+      z: Math.max(...points.map((p) => p.z)),
     },
   };
 }
-function emit(
+function featurePoint(feature: PhysicalFeature, u: number, v: number): Position {
+  const [a, b, c, d] = feature.vertices;
+  return {
+    x: a.x * (1 - u) * (1 - v) + b.x * u * (1 - v) + c.x * u * v + d.x * (1 - u) * v,
+    y: a.y * (1 - u) * (1 - v) + b.y * u * (1 - v) + c.y * u * v + d.y * (1 - u) * v,
+    z: a.z * (1 - u) * (1 - v) + b.z * u * (1 - v) + c.z * u * v + d.z * (1 - u) * v,
+  };
+}
+function extentPoints(feature: PhysicalFeature, extent: FeatureExtent): Quad<Position> {
+  return [
+    featurePoint(feature, extent.u0, extent.v0),
+    featurePoint(feature, extent.u1, extent.v0),
+    featurePoint(feature, extent.u1, extent.v1),
+    featurePoint(feature, extent.u0, extent.v1),
+  ];
+}
+function dot(a: Position, b: Position) {
+  return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+function localExtent(feature: PhysicalFeature, anchor: Position, metres: number): FeatureExtent {
+  const [a, b, , d] = feature.vertices,
+    u = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z },
+    v = { x: d.x - a.x, y: d.y - a.y, z: d.z - a.z },
+    delta = { x: anchor.x - a.x, y: anchor.y - a.y, z: anchor.z - a.z };
+  const uLength = Math.hypot(u.x, u.y, u.z),
+    vLength = Math.hypot(v.x, v.y, v.z);
+  const tile = (coordinate: number, length: number) => {
+    const size = Math.min(1, metres / length),
+      count = Math.ceil(1 / size),
+      at = Math.min(count - 1, Math.max(0, Math.floor(coordinate / size)));
+    return [at * size, Math.min(1, (at + 1) * size)] as const;
+  };
+  const uu = dot(u, u),
+    vv = dot(v, v),
+    uv = dot(u, v),
+    determinant = uu * vv - uv * uv;
+  const [u0, u1] = tile((dot(delta, u) * vv - dot(delta, v) * uv) / determinant, uLength),
+    [v0, v1] = tile((dot(delta, v) * uu - dot(delta, u) * uv) / determinant, vLength);
+  return { featureId: feature.id, u0, u1, v0, v1 };
+}
+function splitExtent(
+  value: FeatureExtent,
+  feature: PhysicalFeature,
+): [FeatureExtent, FeatureExtent] {
+  const points = extentPoints(feature, value);
+  if (distance3D(points[0], points[1]) >= distance3D(points[0], points[3])) {
+    const middle = (value.u0 + value.u1) / 2;
+    return [
+      { ...value, u1: middle },
+      { ...value, u0: middle },
+    ];
+  }
+  const middle = (value.v0 + value.v1) / 2;
+  return [
+    { ...value, v1: middle },
+    { ...value, v0: middle },
+  ];
+}
+function distanceBounds(bounds: Bounds3, point: Position) {
+  return Math.hypot(
+    Math.max(bounds.min.x - point.x, point.x - bounds.max.x, 0),
+    Math.max(bounds.min.y - point.y, point.y - bounds.max.y, 0),
+    Math.max(bounds.min.z - point.z, point.z - bounds.max.z, 0),
+  );
+}
+function inputFor(
+  input: NonNullable<ReturnType<typeof receptor>>,
+  state: ReceivedGeometryState,
+  world: WorldState,
+  kind: 'surface-patch' | 'physical-boundary',
+  value: ObservedSurfacePatch | ObservedBoundary,
+  key: string,
+) {
+  return {
+    origin: {
+      kind: 'exposure' as const,
+      episodeId: state.episodeId,
+      detectorId: JSON.stringify([kind, key]),
+      measuredFrom: world.simTime,
+      measuredThrough: world.simTime,
+    },
+    modality: 'sight' as const,
+    detector: { id: input.detector.id, version: input.detector.version },
+    facets: [
+      {
+        role: 'direct' as const,
+        asOf: world.simTime,
+        measuredFrom: world.simTime,
+        measuredThrough: world.simTime,
+        value:
+          kind === 'surface-patch'
+            ? { kind, patch: value as ObservedSurfacePatch }
+            : { kind, boundary: value as ObservedBoundary },
+      },
+    ],
+  };
+}
+function admittedGeometry(
   world: WorldState,
   input: NonNullable<ReturnType<typeof receptor>>,
   state: ReceivedGeometryState,
   kind: 'surface-patch' | 'physical-boundary',
   value: ObservedSurfacePatch | ObservedBoundary,
   key: string,
-): ObservationContribution {
-  const facet =
-    kind === 'surface-patch'
-      ? { kind, patch: value as ObservedSurfacePatch }
-      : { kind, boundary: value as ObservedBoundary };
-  return acquireObservation(world, input.observer, {
-    origin: {
-      kind: 'exposure',
-      episodeId: state.episodeId,
-      detectorId: JSON.stringify([kind, key]),
-      measuredFrom: world.simTime,
-      measuredThrough: world.simTime,
-    },
-    modality: 'sight',
-    detector: { id: input.detector.id, version: input.detector.version },
-    facets: [
-      {
-        role: 'direct',
-        asOf: world.simTime,
-        measuredFrom: world.simTime,
-        measuredThrough: world.simTime,
-        value: facet,
-      },
-    ],
-  });
+  available: number,
+) {
+  const request = inputFor(input, state, world, kind, value, key);
+  // Complete logical accounting before allocating a pool/original. Only the
+  // generated ID is unknown; its maximum safe numeric spelling bounds that field.
+  const bound = jsonEncoding({
+    id: `perception-observation-${Number.MAX_SAFE_INTEGER}`,
+    revision: 1,
+    observer: { actorId: input.observer.id, physicalLife: input.observer.actor!.physicalLife ?? 0 },
+    acquiredAt: world.simTime,
+    ...request,
+    facets: request.facets.map((facet, ordinal) => ({
+      ...facet,
+      ordinal,
+      acquiredAt: world.simTime,
+    })),
+  }).bytes;
+  if (bound > available) return;
+  const observation = acquireObservation(world, input.observer, request),
+    bytes = jsonEncoding(observation).bytes;
+  if (bytes > bound) throw new Error('Geometry admission exceeded its complete logical bound.');
+  return { observation, bytes };
 }
-function surfaceRectangle(surface: WalkableSurface): PendingPatch {
-  // The subdivision belongs to the source. Moving the receiver must not change
-  // the vertices of every otherwise unchanged observed patch.
-  return {
-    surfaceId: surface.id,
-    minX: surface.minX,
-    maxX: surface.maxX,
-    minZ: surface.minZ,
-    maxZ: surface.maxZ,
-  };
-}
-
-function containsRectangle(outer: Rectangle, inner: Rectangle): boolean {
-  return (
-    outer.minX <= inner.minX &&
-    outer.maxX >= inner.maxX &&
-    outer.minZ <= inner.minZ &&
-    outer.maxZ >= inner.maxZ
+/** Context anchors use received placements. Broad regions remain available when
+ * body attention is full; the scan and feature query share one finite allowance. */
+function contextAnchors(
+  world: WorldState,
+  input: NonNullable<ReturnType<typeof receptor>>,
+  cursor: number,
+) {
+  const policy = selectedAttentionPolicy(world).geometry,
+    points = [input.frame.positionAtObservation];
+  const ids = new Set(
+    currentDetailedAttention(world, input.observer.id).map((entry) => entry.sourceId),
   );
-}
-
-/** Ancestors force discovery to descend around held cells instead of emitting an
- * overlapping larger polygon. This finite derived set owns no received evidence. */
-function fragmentAncestors(fragments: readonly GeometryFragment[], map: SpatialMap): Set<string> {
-  const ancestors = new Set<string>();
-  for (const fragment of fragments) {
-    const surface = surfaceById(map, fragment.surfaceId);
-    if (!surface) continue;
-    let rectangle = surfaceRectangle(surface);
-    while (rectangleKey(rectangle) !== fragment.key) {
-      ancestors.add(rectangleKey(rectangle));
-      const child = split(rectangle).find((part) => containsRectangle(part, fragment));
-      if (!child || rectangleKey(child) === rectangleKey(rectangle)) break;
-      rectangle = child;
+  if (input.observer.actor?.action?.targetId) ids.add(input.observer.actor.action.targetId);
+  const attention = world.perceptionEvidence?.[input.observer.id]?.attention;
+  for (const entry of Object.values(attention?.candidates ?? {}))
+    if (entry.direct) ids.add(entry.sourceId);
+  let visited = 0;
+  const add = (id: string) => {
+    if (visited >= Math.floor(policy.visits / 3)) return;
+    visited++;
+    const received = currentObservedFacetValues(world, input.observer.id, id, ['location']).find(
+      (value) => value.value.kind === 'location',
+    );
+    if (received?.value.kind === 'location' && received.value.location.kind === 'point')
+      points.push(received.value.location.point);
+  };
+  for (const id of ids) add(id);
+  const visible = [
+      ...(world.visiblePeople?.[input.observer.id] ?? []),
+      ...(world.visibleObjects?.[input.observer.id] ?? []),
+    ],
+    regions = new Set(
+      points.map((point) =>
+        JSON.stringify([
+          Math.floor(point.x / policy.extentMetres),
+          Math.floor(point.z / policy.extentMetres),
+        ]),
+      ),
+    );
+  const maximum = Math.floor(policy.visits / 3);
+  let scanned = 0;
+  while (scanned < visible.length && visited < maximum) {
+    const id = visible[(cursor + scanned++) % visible.length]!;
+    if (ids.has(id)) continue;
+    const before = points.length;
+    add(id);
+    if (points.length > before) {
+      const point = points.at(-1)!,
+        key = JSON.stringify([
+          Math.floor(point.x / policy.extentMetres),
+          Math.floor(point.z / policy.extentMetres),
+        ]);
+      if (regions.has(key)) points.pop();
+      else regions.add(key);
     }
   }
-  return ancestors;
-}
-
-function certifiedPatch(
-  input: NonNullable<ReturnType<typeof receptor>>,
-  surface: WalkableSurface,
-  rectangle: Rectangle,
-  points: Quad<Position>,
-): { visible: boolean; inRange: boolean; facing: boolean } {
-  const facing = input.eye.y - surfaceHeight(surface, input.eye.x, input.eye.z) > epsilon;
-  const inRange = points.every((point) => distance3D(input.eye, point) <= input.radius);
   return {
-    facing,
-    inRange,
-    visible:
-      facing &&
-      inRange &&
-      points.every(input.inCone) &&
-      surfaceSupportsRectangle(input.map, surface, rectangle) &&
-      clearConvexView(input.map, input.eye, points),
+    points,
+    visited,
+    partial: scanned < visible.length,
+    cursor: visible.length ? (cursor + scanned) % visible.length : 0,
   };
 }
-function actualEdges(
-  fragment: GeometryFragment,
-  surface: WalkableSurface,
-): Array<{ edge: number; a: Position; b: Position; outside: (far: GeometryFragment) => boolean }> {
-  const facet = patchFacet(fragment);
-  if (facet.kind !== 'surface-patch') return [];
-  const p = facet.patch.vertices;
-  return [
-    ...(Math.abs(fragment.minZ - surface.minZ) <= epsilon
-      ? [
-          {
-            edge: 0,
-            a: p[0],
-            b: p[1],
-            outside: (far: GeometryFragment) => Math.abs(far.maxZ - fragment.minZ) <= epsilon,
-          },
-        ]
-      : []),
-    ...(Math.abs(fragment.maxX - surface.maxX) <= epsilon
-      ? [
-          {
-            edge: 1,
-            a: p[1],
-            b: p[2],
-            outside: (far: GeometryFragment) => Math.abs(far.minX - fragment.maxX) <= epsilon,
-          },
-        ]
-      : []),
-    ...(Math.abs(fragment.maxZ - surface.maxZ) <= epsilon
-      ? [
-          {
-            edge: 2,
-            a: p[2],
-            b: p[3],
-            outside: (far: GeometryFragment) => Math.abs(far.minZ - fragment.maxZ) <= epsilon,
-          },
-        ]
-      : []),
-    ...(Math.abs(fragment.minX - surface.minX) <= epsilon
-      ? [
-          {
-            edge: 3,
-            a: p[3],
-            b: p[0],
-            outside: (far: GeometryFragment) => Math.abs(far.maxX - fragment.minX) <= epsilon,
-          },
-        ]
-      : []),
-  ];
-}
-function sharedEdge(
-  a: Position,
-  b: Position,
-  far: GeometryFragment,
-): [Position, Position] | undefined {
-  const axis = Math.abs(a.x - b.x) > epsilon ? 'x' : 'z';
-  const low = Math.max(Math.min(a[axis], b[axis]), axis === 'x' ? far.minX : far.minZ);
-  const high = Math.min(Math.max(a[axis], b[axis]), axis === 'x' ? far.maxX : far.maxZ);
-  if (high - low <= epsilon) return;
-  const at = (value: number): Position => {
-    const fraction = (value - a[axis]) / (b[axis] - a[axis]);
-    return {
-      x: a.x + (b.x - a.x) * fraction,
-      y: a.y + (b.y - a.y) * fraction,
-      z: a.z + (b.z - a.z) * fraction,
-    };
-  };
-  return [at(low), at(high)];
-}
-
-/** A finite native source over supported planar geometry. Each admitted rectangle's
- * entire ray hull is certified; occlusion/range fringes stay unknown. All tuning is
- * selected world data. No place names or hidden topology enter the received facet. */
+/** Acquire selected physical features, never a field-of-view ground grid. The
+ * finite cursor is over shared source features; split scratch dies at this boundary. */
 export function refreshReceivedGeometry(
   world: WorldState,
   observerId: string,
@@ -417,344 +379,351 @@ export function refreshReceivedGeometry(
     return { acquired: [], changed: false };
   }
   const policy = selectedAttentionPolicy(world).geometry,
-    acquired: ObservationContribution[] = [];
-  let state = owner.geometry,
-    changed = false;
-  const wasComplete = state?.complete ?? false;
-  let previous: ReceivedGeometryState | undefined;
-  let retainedCandidates: GeometryFragment[] = [];
-  if (!state || state.basis !== input.basis) {
-    previous = state && readOnlyDraftView(state);
-    if (previous?.sourceBasis === input.sourceBasis)
-      retainedCandidates = readOnlyDraftView(previous.fragments).map(readOnlyDraftView);
-    else if (previous) finalizeGeometry(world, observerId, previous);
-    const nextAt = state?.nextAt ?? 0;
-    state = owner.geometry = {
-      basis: input.basis,
-      sourceBasis: input.sourceBasis,
-      episodeId: nextId(world, 'geometry-exposure'),
-      frame: input.frame,
-      eye: input.eye,
-      radius: input.radius,
-      geometryRevision: input.map.spatial.revision,
-      supportedThrough: world.simTime,
-      generation: (state?.generation ?? -1) + 1,
-      nextAt,
-      pending: [],
-      surfacesComplete: false,
-      fragments: [],
-      boundaries: [],
-      boundaryKeys: [],
-      boundaryCursor: 0,
-      boundaryChecked: 0,
-      finished: false,
-      complete: false,
-      unrepresented: false,
-      visited: 0,
-    };
-    changed = true;
-  }
-  // Confirmation and discovery are separate: moving can recertify an already
-  // received region, but cannot acquire new terrain before its discovery deadline.
-  // Both use the same visit allowance when their opportunities coincide.
-  state.supportedThrough = world.simTime;
-  const discover =
-    world.simTime >= state.nextAt &&
-    !state.finished &&
-    state.fragments.length + state.boundaries.length < policy.maxFragments;
-  if (!discover && !retainedCandidates.length) {
-    if (changed) markAttentionRelationsDirty(world, observerId, ['closing-drop']);
-    return { acquired, changed };
-  }
-  if (discover) state.nextAt = world.simTime + policy.intervalSeconds;
-  let indexVisits = 0,
-    patchVisits = 0;
-  // The preparation list is bounded, and its rectangles are immutable values.
-  // Work on an owned array rather than making every nearest-first comparison
-  // create/read Immer proxies for the same hundreds of rectangles.
-  const prepare = (patch: PendingPatch, original?: GeometryFragment) => ({
-    patch,
-    priority: priority(patch, input.map, input.eye),
-    original,
-  });
-  const pending = (discover ? readOnlyDraftView(state.pending) : []).map((patch) =>
-    prepare(readOnlyDraftView(patch)),
-  );
-  const currentKeys = new Set(readOnlyDraftView(state.fragments).map((fragment) => fragment.key));
-  const candidatesByKey = new Map(retainedCandidates.map((fragment) => [fragment.key, fragment]));
-  const ancestors = discover
-    ? fragmentAncestors(
-        [...readOnlyDraftView(state.fragments).map(readOnlyDraftView), ...retainedCandidates],
-        input.map,
-      )
-    : new Set<string>();
-  const queued = new Set(pending.map((entry) => rectangleKey(entry.patch)));
-  const processed = new Set<string>();
-  const enqueue = (patches: PendingPatch[]) => {
-    for (const patch of patches) {
-      const key = rectangleKey(patch);
-      if (currentKeys.has(key) || queued.has(key) || processed.has(key)) continue;
-      const prepared = prepare(patch, candidatesByKey.get(key));
-      if (prepared.priority > input.radius * input.radius) continue;
-      if (pending.length < policy.preparationPatches) {
-        pending.push(prepared);
-        queued.add(key);
-      } else state.unrepresented = true;
+    previous = owner.geometry && readOnlyDraftView(owner.geometry);
+  if(previous && JSON.stringify(previous.frame.positionAtObservation)!==JSON.stringify(input.frame.positionAtObservation))
+    markAttentionRelationsDirty(world,observerId,['closing-body','closing-drop'],new Set([SELF_RELATION_KEY]));
+  if (previous && previous.sourceBasis === input.sourceBasis && world.simTime < previous.nextAt) {
+    if (previous.basis === input.basis && previous.supportedThrough !== world.simTime) {
+      owner.geometry!.supportedThrough = world.simTime;
+      return { acquired: [], changed: true };
     }
+    return { acquired: [], changed: false };
+  }
+  const anchors = contextAnchors(world, input, previous?.anchorCursor ?? 0),
+    radius = Math.min(input.radius, selectedAttentionPolicy(world).relation.drop.clear),
+    boxes = anchors.points.map((point) => boundsAround(point, radius));
+  const bounds = {
+    min: {
+      x: Math.min(...boxes.map((b) => b.min.x)),
+      y: Math.min(...boxes.map((b) => b.min.y)),
+      z: Math.min(...boxes.map((b) => b.min.z)),
+    },
+    max: {
+      x: Math.max(...boxes.map((b) => b.max.x)),
+      y: Math.max(...boxes.map((b) => b.max.y)),
+      z: Math.max(...boxes.map((b) => b.max.z)),
+    },
   };
-  enqueue(retainedCandidates);
-  if (discover && !state.surfacesComplete) {
-    const result = querySurfacesInBounds(
-      input.map,
-      boundsAround(input.eye, input.radius),
-      policy.indexVisits,
-      state.surfaceCursor,
-    );
-    indexVisits += result.visited;
-    state.surfaceCursor = result.cursor;
-    state.surfacesComplete = result.status === 'complete';
-    for (const surface of result.values) enqueue([surfaceRectangle(surface)]);
+  const queryKey = JSON.stringify([input.sourceBasis, bounds]);
+  const basis = input.basis;
+  if (previous?.basis === basis && previous.queryKey === queryKey && previous.finished) {
+    if (previous.supportedThrough === world.simTime) return { acquired: [], changed: false };
+    owner.geometry!.supportedThrough = world.simTime;
+    markAttentionRelationsDirty(world, observerId, ['closing-drop']);
+    return { acquired: [], changed: true };
   }
-  while (
-    patchVisits < policy.patchVisits &&
-    pending.length &&
-    state.fragments.length + state.boundaries.length < policy.maxFragments
-  ) {
-    let nearest = 0;
-    for (let index = 1; index < pending.length; index++)
-      if (pending[index]!.priority < pending[nearest]!.priority) nearest = index;
-    const entry = pending.splice(nearest, 1)[0]!,
-      rectangle = entry.patch;
-    const key = rectangleKey(rectangle);
-    queued.delete(key);
-    processed.add(key);
-    const surface = surfaceById(input.map, rectangle.surfaceId);
-    patchVisits++;
-    if (!surface) {
-      state.unrepresented = true;
-      continue;
-    }
-    const width = rectangle.maxX - rectangle.minX,
-      depth = rectangle.maxZ - rectangle.minZ;
-    if (ancestors.has(key)) {
-      enqueue(split(rectangle));
-      continue;
-    }
-    const oldValue = entry.original && patchFacet(entry.original);
-    const original =
-      oldValue?.kind === 'surface-patch' &&
-      oldValue.patch.vertices.every((point) => point.y === surfaceHeight(surface, point.x, point.z))
-        ? entry.original
-        : undefined;
-    if (entry.original && !original && !discover) {
-      state.unrepresented = true;
-      continue;
-    }
-    const points =
-      original && oldValue?.kind === 'surface-patch'
-        ? oldValue.patch.vertices
-        : vertices(surface, rectangle);
-    const { facing, inRange, visible } = certifiedPatch(input, surface, rectangle, points);
-    if (!facing) {
-      state.unrepresented = true;
-      continue;
-    }
-    if (!visible) {
-      if (
-        discover &&
-        Math.max(width, depth) > (inRange ? policy.errorMetres * 2 : policy.patchMetres)
+  const state: ReceivedGeometryState = {
+    basis,
+    sourceBasis: input.sourceBasis,
+    episodeId:
+      previous?.sourceBasis === input.sourceBasis
+        ? previous.episodeId
+        : nextId(world, 'geometry-exposure'),
+    frame: input.frame,
+    frameAt: world.simTime,
+    ...(previous?.sourceBasis===input.sourceBasis ? {priorFrame:previous.basis===input.basis ? previous.priorFrame : {at:previous.frameAt,frame:previous.frame}} : {}),
+    eye: input.eye,
+    radius: input.radius,
+    geometryRevision: input.map.spatial.revision,
+    supportedThrough: world.simTime,
+    generation: (previous?.generation ?? -1) + 1,
+    nextAt: world.simTime + policy.intervalSeconds,
+    queryKey,
+    anchorCursor: anchors.cursor,
+    fragments: [],
+    boundaries: [],
+    boundaryKeys: [],
+    finished: true,
+    unknown:
+      anchors.partial ||
+      (previous?.basis === basis &&
+        previous.queryKey === queryKey &&
+        !!previous.featureCursor &&
+        previous.unknown),
+    complete: true,
+    visited: anchors.visited,
+    bytes: 0,
+  };
+  const acquired: ObservationContribution[] = [];
+  const query = queryPhysicalFeatures(
+    input.map,
+    bounds,
+    Math.max(1, Math.floor((policy.visits - state.visited) / 3)),
+    previous?.queryKey === queryKey ? previous.featureCursor : undefined,
+  );
+  state.visited += query.visited;
+  state.featureCursor = query.cursor;
+  state.finished = query.status === 'complete';
+  const features = new Map(query.values.map((feature) => [feature.id, feature]));
+  const held = previous?.sourceBasis === input.sourceBasis ? previous.fragments : [];
+  for (const fragment of held) {
+    const feature = physicalFeatureById(input.map, fragment.featureId);
+    if (
+      feature &&
+      anchors.points.some(
+        (point) => distanceBounds(boundsOf(extentPoints(feature, fragment)), point) <= radius,
       )
-        enqueue(split(rectangle));
-      else state.unrepresented = true;
+    )
+      features.set(feature.id, feature);
+  }
+  type Candidate = {
+    extent: FeatureExtent;
+    feature: PhysicalFeature;
+    old?: GeometryFragment;
+    priority: number;
+  };
+  const pending: Candidate[] = [],
+    keys = new Set<string>();
+  const selectionLimit=Math.max(state.visited,Math.floor(policy.visits/2));
+  const enqueue = (extent: FeatureExtent, feature: PhysicalFeature, old?: GeometryFragment, allowance=selectionLimit) => {
+    const key = extentKey(extent);
+    if (keys.has(key)) return;
+    if(state.visited>=allowance){state.unknown=true;return;}
+    state.visited++;
+    keys.add(key);
+    const box = boundsOf(extentPoints(feature, extent)),
+      priority = Math.min(...anchors.points.map((point) => distanceBounds(box, point)));
+    if (priority <= radius) pending.push({ extent, feature, old, priority });
+  };
+  for (const fragment of held) {
+    const feature = features.get(fragment.featureId);
+    if (feature) enqueue(fragment, feature, fragment);
+  }
+  for (const feature of features.values())
+    for (const point of anchors.points) {
+      if (state.visited >= selectionLimit) {
+        state.unknown = true;
+        break;
+      }
+      if (distanceBounds(feature.bounds, point) > radius) continue;
+      if (
+        held.some(
+          (fragment) =>
+            fragment.featureId === feature.id &&
+            distanceBounds(boundsOf(extentPoints(feature, fragment)), point) <= epsilon,
+        )
+      )
+        continue;
+      enqueue(localExtent(feature, point, policy.extentMetres), feature);
+    }
+  pending.sort(
+    (a, b) =>
+      a.priority - b.priority ||
+      (a.old ? -1 : 0) - (b.old ? -1 : 0) ||
+      a.feature.id.localeCompare(b.feature.id),
+  );
+  const certified: Array<Candidate & { patch: ObservedSurfacePatch }> = [];
+  const certificateLimit = Math.max(state.visited, Math.floor(policy.visits * 0.75));
+  while (pending.length && state.visited < certificateLimit) {
+    const entry = pending.shift()!,
+      points = extentPoints(entry.feature, entry.extent);
+    state.visited++;
+    const delta = {
+      x: input.eye.x - points[0].x,
+      y: input.eye.y - points[0].y,
+      z: input.eye.z - points[0].z,
+    };
+    if (dot(delta, entry.feature.normal) <= epsilon) continue;
+    const local = points.every(
+      (point) => distance3D(input.eye, point) <= input.radius && input.inCone(point),
+    );
+    const visible = local
+      ? queryConvexView(input.map, input.eye, points, certificateLimit - state.visited)
+      : undefined;
+    state.visited += visible?.visited ?? 0;
+    if (!visible?.clear) {
+      state.unknown = true;
+      if (
+        (!visible || visible.complete) &&
+        Math.max(distance3D(points[0], points[1]), distance3D(points[0], points[3])) >
+          policy.errorMetres * 2
+      )
+        for (const extent of splitExtent(entry.extent, entry.feature))
+          enqueue(extent, entry.feature, undefined, certificateLimit);
       continue;
     }
-    // Only this still-owned original is eligible for reuse. Missing, corrected,
-    // unvisited or incompatible sources are never hidden in preparation state.
-    const observation =
-      original?.observation ??
-      emit(
+    certified.push({
+      ...entry,
+      patch: {
+        vertices: points,
+        normal: entry.feature.normal,
+        errorRadius: policy.errorMetres,
+        edges: [
+          entry.extent.v0 === 0 ? 'physical-boundary' : 'coverage-limit',
+          entry.extent.u1 === 1 ? 'physical-boundary' : 'coverage-limit',
+          entry.extent.v1 === 1 ? 'physical-boundary' : 'coverage-limit',
+          entry.extent.u0 === 0 ? 'physical-boundary' : 'coverage-limit',
+        ],
+        frame: input.frame,
+      },
+    });
+    if (entry.extent.u0 > 0 || entry.extent.u1 < 1 || entry.extent.v0 > 0 || entry.extent.v1 < 1)
+      state.unknown = true;
+  }
+  if (pending.length) state.unknown = true;
+  const selected = new Map<string, GeometryFragment>();
+  const admit = (candidate: (typeof certified)[number]) => {
+    const key = extentKey(candidate.extent),
+      known = selected.get(key);
+    if (known) return known;
+    if (state.fragments.length + state.boundaries.length >= policy.maxViews) return;
+    const retained = candidate.old && {
+      observation: candidate.old.observation,
+      bytes: jsonEncoding(candidate.old.observation).bytes,
+    };
+    const result =
+      retained ??
+      admittedGeometry(
         world,
         input,
         state,
         'surface-patch',
-        {
-          vertices: points,
-          normal: normal(surface),
-          errorRadius: policy.errorMetres,
-          edges: ['coverage-limit', 'coverage-limit', 'coverage-limit', 'coverage-limit'],
-          frame: cloneValue(input.frame),
-        },
-        JSON.stringify([state.generation, key]),
+        candidate.patch,
+        key,
+        policy.maxBytes - state.bytes,
       );
-    state.fragments.push(original ?? { ...rectangle, key, observation });
-    currentKeys.add(key);
-    state.boundaryChecked = 0;
-    if (!original) acquired.push(observation);
-  }
-  if (previous?.sourceBasis === input.sourceBasis) {
-    // Scheduling priority is not a change to a retained fact or its insertion
-    // order. Preserve that order so eye motion does not rewrite list positions.
-    const admitted = new Map(state.fragments.map((fragment) => [fragment.key, fragment]));
-    const retained = retainedCandidates.filter(
-      (fragment) => admitted.get(fragment.key)?.observation.id === fragment.observation.id,
-    );
-    const retainedKeys = new Set(retained.map((fragment) => fragment.key));
-    state.fragments = [
-      ...retained,
-      ...state.fragments.filter((fragment) => !retainedKeys.has(fragment.key)),
-    ];
-    const ids = new Set(
-      readOnlyDraftView(state.fragments).map((fragment) => fragment.observation.id),
-    );
-    readOnlyDraftView(previous.boundaries).forEach((raw, ordinal) => {
-      const observation = readOnlyDraftView(raw),
-        value = observation.facets[0]?.value;
+    if (!result || state.bytes + result.bytes > policy.maxBytes) return;
+    const fragment = { ...candidate.extent, key, observation: result.observation };
+    state.fragments.push(fragment);
+    selected.set(key, fragment);
+    state.bytes += result.bytes;
+    if (!retained) acquired.push(result.observation);
+    return fragment;
+  };
+  // Supported near/far pairs are prioritized as a complete dependency bundle.
+  // Coverage/range edges and a merely unseen far side never become a cliff.
+  for (const near of certified) {
+    if (near.feature.kind !== 'support') continue;
+    for (const far of certified) {
+      if (state.visited >= policy.visits) {
+        state.unknown = true;
+        break;
+      }
+      state.visited++;
+      if (far.feature.kind !== 'support' || near.feature.sourceId === far.feature.sourceId)
+        continue;
+      const fb = boundsOf(far.patch.vertices);
+      let edge: [Position, Position] | undefined;
+      for (let i = 0; i < 4; i++) {
+        if (near.patch.edges[i] !== 'physical-boundary') continue;
+        const a = near.patch.vertices[i]!,
+          b = near.patch.vertices[(i + 1) % 4]!;
+        const axis = Math.abs(a.x - b.x) > epsilon ? 'x' : 'z',
+          other = axis === 'x' ? 'z' : 'x';
+        if (
+          Math.abs(a[other] - fb.min[other]) > epsilon &&
+          Math.abs(a[other] - fb.max[other]) > epsilon
+        )
+          continue;
+        const low = Math.max(Math.min(a[axis], b[axis]), fb.min[axis]),
+          high = Math.min(Math.max(a[axis], b[axis]), fb.max[axis]);
+        if (high - low <= epsilon) continue;
+        const at = (n: number) => {
+          const t = (n - a[axis]) / (b[axis] - a[axis]);
+          return { x: a.x + (b.x - a.x) * t, y: a.y + (b.y - a.y) * t, z: a.z + (b.z - a.z) * t };
+        };
+        edge = [at(low), at(high)];
+        break;
+      }
+      if (!edge) continue;
+      const farHeight = (point: Position) => {
+        const p = far.patch.vertices[0],
+          n = far.patch.normal;
+        return p.y - (n.x * (point.x - p.x) + n.z * (point.z - p.z)) / n.y;
+      };
+      const lower =
+        Math.min(...edge.map((point) => point.y - farHeight(point))) - policy.errorMetres * 2;
+      if (lower <= 0) continue;
+      const key = JSON.stringify([extentKey(near.extent), extentKey(far.extent), edge]);
+      if (state.boundaryKeys.includes(key)) continue;
+      const oldIndex = previous?.boundaryKeys.indexOf(key) ?? -1,
+        old = oldIndex >= 0 ? previous!.boundaries[oldIndex] : undefined;
       if (
-        state.fragments.length + state.boundaries.length >= policy.maxFragments ||
-        value?.kind !== 'physical-boundary' ||
-        !ids.has(value.boundary.nearSurface.support.source.id) ||
-        !ids.has(value.boundary.farSurface.support.source.id)
-      )
-        return;
-      state.boundaries.push(observation);
-      state.boundaryKeys.push(previous!.boundaryKeys[ordinal]!);
-      ids.add(observation.id);
-    });
+        state.fragments.length +
+          state.boundaries.length +
+          (!selected.has(extentKey(near.extent)) ? 1 : 0) +
+          (!selected.has(extentKey(far.extent)) ? 1 : 0) +
+          1 >
+        policy.maxViews
+      ) {
+        state.unknown = true;
+        continue;
+      }
+      const a = admit(near),
+        b = admit(far);
+      if (!a || !b) {
+        state.unknown = true;
+        continue;
+      }
+      const middle = {
+        x: (edge[0].x + edge[1].x) / 2,
+        y: (edge[0].y + edge[1].y) / 2,
+        z: (edge[0].z + edge[1].z) / 2,
+      };
+      const value: ObservedBoundary = {
+        a: edge[0],
+        b: edge[1],
+        errorRadius: policy.errorMetres,
+        nearSurface: {
+          point: middle,
+          normal: near.patch.normal,
+          support: observationFactKey(world, a.observation, 0),
+        },
+        farSurface: {
+          point: { ...middle, y: farHeight(middle) },
+          normal: far.patch.normal,
+          support: observationFactKey(world, b.observation, 0),
+        },
+        dropLower: lower,
+      };
+      const oldValue = old?.facets[0]?.value;
+      const retained =
+        oldValue?.kind === 'physical-boundary' &&
+        JSON.stringify(oldValue.boundary) === JSON.stringify(value)
+          ? { observation: old!, bytes: jsonEncoding(old!).bytes }
+          : undefined;
+      const result =
+        retained ??
+        admittedGeometry(
+          world,
+          input,
+          state,
+          'physical-boundary',
+          value,
+          key,
+          policy.maxBytes - state.bytes,
+        );
+      if (!result || state.bytes + result.bytes > policy.maxBytes) {
+        state.unknown = true;
+        continue;
+      }
+      state.boundaries.push(result.observation);
+      state.boundaryKeys.push(key);
+      state.bytes += result.bytes;
+      if (!retained) acquired.push(result.observation);
+    }
+  }
+  for (const candidate of certified) if (!admit(candidate)) state.unknown = true;
+  if (
+    state.fragments.length + state.boundaries.length >= policy.maxViews ||
+    state.bytes >= policy.maxBytes
+  )
+    state.finished = true;
+  state.complete = state.finished && !state.unknown;
+  owner.geometry = state;
+  if (previous) {
+    const kept = new Set(geometryObservations(state).map((observation) => observation.id));
     finalizeTemporalGeometrySupport(
       world,
       observerId,
-      geometryObservations(previous).filter((observation) => !ids.has(observation.id)),
+      geometryObservations(previous).filter((observation) => !kept.has(observation.id)),
       previous.supportedThrough,
       selectedTemporalPolicy(world).recent,
     );
   }
-  // Pair only received adjacent patches. A clipped/occluded edge never invents a
-  // drop; an unseen far side remains unknown even if the physical map knows it.
-  if (discover)
-    state.pending = pending.map((entry) => ({
-      surfaceId: entry.patch.surfaceId,
-      minX: entry.patch.minX,
-      maxX: entry.patch.maxX,
-      minZ: entry.patch.minZ,
-      maxZ: entry.patch.maxZ,
-    }));
-  else {
-    state.visited = patchVisits;
-    markAttentionRelationsDirty(world, observerId, ['closing-drop']);
-    return { acquired, changed: true };
-  }
-  const ordered = readOnlyDraftView(state.fragments)
-    .map(readOnlyDraftView)
-    .sort((a, b) => a.key.localeCompare(b.key));
-  const edges = ordered.flatMap((fragment) => {
-    const surface = surfaceById(input.map, fragment.surfaceId);
-    return surface ? actualEdges(fragment, surface).map((edge) => ({ fragment, edge })) : [];
-  });
-  // A preparation opportunity can refine unknown patches without leaving any
-  // unvisited boundary work. Build the same local tree only if a query uses it.
-  // docs/performance.md#design-recurring-work-before-implementation
-  let index: BoundsIndex<(typeof ordered)[number]> | undefined;
-  let checked = 0;
-  while (
-    discover &&
-    edges.length &&
-    state.boundaryChecked < edges.length &&
-    checked < edges.length &&
-    indexVisits < policy.indexVisits &&
-    state.fragments.length + state.boundaries.length < policy.maxFragments
-  ) {
-    const at = state.boundaryCursor % edges.length,
-      { fragment, edge } = edges[at]!;
-    state.boundaryCursor = (at + 1) % edges.length;
-    checked++;
-    state.boundaryChecked++;
-    const b: Bounds3 = {
-      min: {
-        x: Math.min(edge.a.x, edge.b.x) - epsilon,
-        y: input.eye.y - input.radius,
-        z: Math.min(edge.a.z, edge.b.z) - epsilon,
-      },
-      max: {
-        x: Math.max(edge.a.x, edge.b.x) + epsilon,
-        y: input.eye.y + input.radius,
-        z: Math.max(edge.a.z, edge.b.z) + epsilon,
-      },
-    };
-    index ??= new BoundsIndex(
-      ordered.map((fragment) => ({ value: fragment, bounds: patchBounds(fragment) })),
-    );
-    const result = index.query((bounds) => intersects(b, bounds), policy.indexVisits - indexVisits);
-    indexVisits += result.visited;
-    if (result.status === 'partial') state.unrepresented = true;
-    for (const far of result.values) {
-      if (far.surfaceId === fragment.surfaceId || !edge.outside(far)) continue;
-      const overlap = sharedEdge(edge.a, edge.b, far);
-      if (!overlap) continue;
-      const [a, b] = overlap;
-      const nearValue = patchFacet(fragment),
-        farValue = patchFacet(far);
-      if (nearValue.kind !== 'surface-patch' || farValue.kind !== 'surface-patch') continue;
-      const farSurface = surfaceById(input.map, far.surfaceId);
-      if (!farSurface) continue;
-      const middle = {
-        x: (a.x + b.x) / 2,
-        y: (a.y + b.y) / 2,
-        z: (a.z + b.z) / 2,
-      };
-      const farPoint = { ...middle, y: surfaceHeight(farSurface, middle.x, middle.z) };
-      const lower =
-        Math.min(
-          a.y - surfaceHeight(farSurface, a.x, a.z),
-          b.y - surfaceHeight(farSurface, b.x, b.z),
-        ) -
-        nearValue.patch.errorRadius -
-        farValue.patch.errorRadius;
-      if (lower <= 0) continue;
-      const key = JSON.stringify([fragment.key, edge.edge, far.key]);
-      if (state.boundaryKeys.includes(key)) continue;
-      const observation = emit(
-        world,
-        input,
-        state,
-        'physical-boundary',
-        {
-          a,
-          b,
-          errorRadius: policy.errorMetres,
-          nearSurface: {
-            point: middle,
-            normal: nearValue.patch.normal,
-            support: observationFactKey(world, fragment.observation, 0),
-          },
-          farSurface: {
-            point: farPoint,
-            normal: farValue.patch.normal,
-            support: observationFactKey(world, far.observation, 0),
-          },
-          dropLower: lower,
-        },
-        JSON.stringify([state.generation, key]),
-      );
-      state.boundaries.push(observation);
-      state.boundaryKeys.push(key);
-      acquired.push(observation);
-    }
-  }
-  state.visited = indexVisits + patchVisits;
-  state.finished =
-    (state.surfacesComplete && !state.pending.length && state.boundaryChecked >= edges.length) ||
-    state.fragments.length + state.boundaries.length >= policy.maxFragments;
-  state.complete =
-    state.finished && !state.pending.length && state.surfacesComplete && !state.unrepresented;
-  if (acquired.length || changed || state.complete !== wasComplete) {
-    changed = true;
-    markAttentionRelationsDirty(world, observerId, ['closing-drop']);
-  }
-  return { acquired, changed };
+  markAttentionRelationsDirty(world, observerId, ['closing-drop']);
+  return { acquired, changed: true };
 }
-
-/** Originals are immutable. Do not turn their vertices/proofs into draft proxies
- * merely to record or describe the already received geometry. */
 function geometryObservations(state: ReceivedGeometryState): ObservationContribution[] {
   const held = readOnlyDraftView(state);
   return [
@@ -764,7 +733,6 @@ function geometryObservations(state: ReceivedGeometryState): ObservationContribu
     ...readOnlyDraftView(held.boundaries).map(readOnlyDraftView),
   ];
 }
-
 function finalizeGeometry(
   world: WorldState,
   observerId: string,
@@ -778,8 +746,6 @@ function finalizeGeometry(
     selectedTemporalPolicy(world).recent,
   );
 }
-
-/** Losing a view closes only the interval the native receiver actually certified. */
 export function endReceivedGeometry(world: WorldState, observerId: string): void {
   const owner = world.perceptionEvidence?.[observerId];
   if (!owner?.geometry) return;
@@ -788,9 +754,8 @@ export function endReceivedGeometry(world: WorldState, observerId: string): void
   reconcileTemporalGeometryCaptures(world, observerId, new Set(), []);
   markAttentionRelationsDirty(world, observerId, ['closing-drop']);
 }
-
-/** Pure current read: changed eye/range/geometry immediately removes stale grants
- * even before the bounded physical source gets its next native opportunity. */
+/** Ordinary motion keeps the last received context until its actual due check.
+ * Life, detector, geometry or policy replacement still withdraws current grants. */
 export function currentReceivedGeometry(
   world: WorldState,
   observerId: string,
@@ -802,7 +767,7 @@ export function currentReceivedGeometry(
 } {
   const input = receptor(world, observerId),
     state = world.perceptionEvidence?.[observerId]?.geometry;
-  return input && state?.basis === input.basis
+  return input && state?.sourceBasis === input.sourceBasis
     ? {
         observations: geometryObservations(state),
         complete: state.complete,
@@ -811,9 +776,6 @@ export function currentReceivedGeometry(
       }
     : { observations: [], complete: false, visited: 0, supportedThrough: 0 };
 }
-
-/** Existing personal-source correction removes the same received permission.
- * Re-measuring later creates a new original, never revives the revoked one. */
 export function revokeReceivedGeometryEvidence(
   world: WorldState,
   observerId: string,
@@ -827,45 +789,36 @@ export function revokeReceivedGeometryEvidence(
     affected.has(`memory:${id}`) ||
     affected.has(`summary:${id}`) ||
     affected.has(personalFactAlias(id, ordinal));
-  const removed = state.fragments.filter((fragment) => revoked(fragment.observation.id));
-  const removedIds = new Set(removed.map((fragment) => fragment.observation.id));
-  const retainedBoundaries = state.boundaries.filter((observation) => {
+  const removed = new Set(
+    state.fragments
+      .filter((fragment) => revoked(fragment.observation.id))
+      .map((fragment) => fragment.observation.id),
+  );
+  const retained = state.boundaries.filter((observation) => {
     const value = observation.facets[0]?.value;
     return (
       !revoked(observation.id) &&
       value?.kind === 'physical-boundary' &&
-      !removedIds.has(value.boundary.nearSurface.support.source.id) &&
-      !removedIds.has(value.boundary.farSurface.support.source.id) &&
-      !revoked(
-        value.boundary.nearSurface.support.source.id,
-        value.boundary.nearSurface.support.ordinal,
-      ) &&
-      !revoked(
-        value.boundary.farSurface.support.source.id,
-        value.boundary.farSurface.support.ordinal,
+      [value.boundary.nearSurface.support, value.boundary.farSurface.support].every(
+        (support) =>
+          !removed.has(support.source.id) && !revoked(support.source.id, support.ordinal),
       )
     );
   });
-  if (!removed.length && retainedBoundaries.length === state.boundaries.length) return;
-  const retainedIds = new Set(retainedBoundaries.map((value) => value.id));
-  state.boundaryKeys = state.boundaryKeys.filter((_, ordinal) =>
-    retainedIds.has(state.boundaries[ordinal]!.id),
+  if (!removed.size && retained.length === state.boundaries.length) return;
+  const ids = new Set(retained.map((observation) => observation.id));
+  state.boundaryKeys = state.boundaryKeys.filter((_, i) => ids.has(state.boundaries[i]!.id));
+  state.boundaries = retained;
+  state.fragments = state.fragments.filter((fragment) => !removed.has(fragment.observation.id));
+  state.bytes = geometryObservations(state).reduce(
+    (bytes, observation) => bytes + jsonEncoding(observation).bytes,
+    0,
   );
-  state.boundaries = retainedBoundaries;
-  state.fragments = state.fragments.filter((fragment) => !removedIds.has(fragment.observation.id));
-  for (const fragment of removed)
-    if (state.pending.length < selectedAttentionPolicy(world).geometry.preparationPatches)
-      state.pending.push({
-        surfaceId: fragment.surfaceId,
-        minX: fragment.minX,
-        maxX: fragment.maxX,
-        minZ: fragment.minZ,
-        maxZ: fragment.maxZ,
-      });
   state.generation++;
-  state.boundaryChecked = 0;
   state.finished = false;
+  state.unknown = true;
   state.complete = false;
+  delete state.featureCursor;
   markAttentionRelationsDirty(world, observerId, ['closing-drop']);
 }
 
@@ -888,17 +841,17 @@ export function receivedBoundarySeparation(
   decreaseLower?: number;
   dropLower?: number;
 } {
-  const at = Math.min(anchor.sample.valueMeasuredThrough, measurement.through);
+  const at = Math.min(anchor.sample.valueSupportedThrough ?? anchor.sample.valueMeasuredThrough, measurement.through);
   if (at < measurement.from) return { status: 'unavailable' };
   const sampleAt = (time: number) => {
     for (const sample of [anchor.location, anchor.motion?.earlier, anchor.motion?.later])
       if (
         sample?.location.kind === 'point' &&
-        time >= sample.valueMeasuredFrom &&
-        time <= sample.valueMeasuredThrough
+        time >= (sample.valueSupportedFrom ?? sample.valueMeasuredFrom) &&
+        time <= (sample.valueSupportedThrough ?? sample.valueMeasuredThrough)
       )
         return { point: sample.location.point, error: sample.location.errorRadius };
-    return time >= anchor.sample.valueMeasuredFrom && time <= anchor.sample.valueMeasuredThrough
+    return time >= (anchor.sample.valueSupportedFrom ?? anchor.sample.valueMeasuredFrom) && time <= (anchor.sample.valueSupportedThrough ?? anchor.sample.valueMeasuredThrough)
       ? { point: anchor.body.position, error: 0 }
       : undefined;
   };
@@ -913,15 +866,15 @@ export function receivedBoundarySeparation(
     });
   const d = distance(current.point),
     error = current.error + boundary.errorRadius;
-  const constantFrom = Math.max(anchor.sample.valueMeasuredFrom, measurement.from);
+  const constantFrom = Math.max(anchor.sample.valueSupportedFrom ?? anchor.sample.valueMeasuredFrom, measurement.from);
   const earlier = anchor.motion?.earlier;
   const before =
     constantFrom < at
       ? sampleAt(constantFrom)
       : earlier &&
-        earlier.valueMeasuredThrough >= measurement.from &&
-        earlier.valueMeasuredThrough < at &&
-        sampleAt(earlier.valueMeasuredThrough);
+        (earlier.valueSupportedThrough ?? earlier.valueMeasuredThrough) >= measurement.from &&
+        (earlier.valueSupportedThrough ?? earlier.valueMeasuredThrough) < at &&
+        sampleAt(earlier.valueSupportedThrough ?? earlier.valueMeasuredThrough);
   return {
     status: 'complete',
     asOf: at,
@@ -953,6 +906,13 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
   const bodiesByExposure = new Map(bodies.map((body) => [body.exposure, body]));
   const boundariesById = new Map(boundaries.map((value) => [value.observation.id, value]));
   const evaluations: AttentionRelationEvaluation[] = [];
+  const observer=entityGet(world.entities,observerId)!, ownPoint=worldPosition(observer),profile=effectiveBodyProfile(world,observer);
+  const heldGeometry=world.perceptionEvidence?.[observerId]?.geometry;
+  const oldFrame=heldGeometry && (distance3D(heldGeometry.frame.positionAtObservation,ownPoint)>epsilon ? {at:heldGeometry.frameAt,frame:heldGeometry.frame} : heldGeometry.priorFrame);
+  const ownSample={valueMeasuredFrom:world.simTime,valueMeasuredThrough:world.simTime};
+  const ownLocation={...ownSample,location:{kind:'point' as const,point:ownPoint,errorRadius:0}};
+  const ownBody:ReceivedBodyGeometry={body:{position:ownPoint,radius:profile.radius,height:profile.height},sample:ownSample,location:ownLocation,
+    ...(oldFrame && oldFrame.at<world.simTime && world.simTime-(heldGeometry?.frameAt ?? 0)<selectedAttentionPolicy(world).geometry.intervalSeconds ? {motion:{earlier:{valueMeasuredFrom:oldFrame.at,valueMeasuredThrough:oldFrame.at,location:{kind:'point' as const,point:oldFrame.frame.positionAtObservation,errorRadius:0}},later:ownLocation}} : {})};
   // A tree continuation cannot survive moving members. Rotating received rows
   // instead gives every member finite visits without pretending partial absence
   // is a negative answer. Only a complete unchanged-cut pass can clear a latch.
@@ -1041,14 +1001,15 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
   let remaining = opportunity.candidates;
   for (let ordinal = 0; ordinal < opportunity.anchors.length; ordinal++) {
     const entry = opportunity.anchors[ordinal]!,
-      anchor = scene.bodies.get(entry.sourceId),
+      anchor = entry.sourceId===observerId ? ownBody : scene.bodies.get(entry.sourceId),
       families = opportunity.families.get(entry.key)!;
     if (!anchor) continue;
+    const anchorProof=entry.sourceId===observerId ? [] : bodyProof(anchor as ReceivedSceneBody);
     const share = Math.floor(remaining / (opportunity.anchors.length - ordinal));
     const bodyKey = JSON.stringify([entry.key, 'closing-body']),
       bodyLatch = state.latches[bodyKey];
     const bodyMeasure = (neighbor: ReceivedSceneBody): AttentionRelationWitness | undefined => {
-      if (neighbor.sourceId === anchor.sourceId)
+      if (neighbor.sourceId === entry.sourceId)
         return {
           id: neighbor.exposure,
           distanceLower: Infinity,
@@ -1067,7 +1028,7 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
         distanceLower: relation.lower!,
         distanceUpper: relation.upper!,
         decreaseLower: relation.decreaseLower ?? 0,
-        proof: [...bodyProof(anchor), ...bodyProof(neighbor)].slice(0, 8),
+        proof: [...anchorProof, ...bodyProof(neighbor)].slice(0, 8),
       };
     };
     const priorBody = bodyLatch?.witnessId ? bodiesByExposure.get(bodyLatch.witnessId) : undefined;
@@ -1104,7 +1065,7 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
         decreaseLower: measured.decreaseLower ?? 0,
         dropLower: measured.dropLower,
         proof: [
-          ...bodyProof(anchor),
+          ...anchorProof,
           observationFactKey(world, value.observation, value.ordinal),
         ].slice(0, 8),
       };
@@ -1184,14 +1145,39 @@ export function validateReceivedGeometryState(
 ): void {
   const policy = selectedAttentionPolicy(world).geometry;
   if (
-    !state ||
-    typeof state.basis !== 'string' ||
-    !state.basis ||
-    typeof state.sourceBasis !== 'string' ||
-    !state.sourceBasis ||
-    typeof state.episodeId !== 'string' ||
-    !state.episodeId ||
+    !hasRecordFields(
+      state,
+      [
+        'basis',
+        'sourceBasis',
+        'episodeId',
+        'frame',
+        'frameAt',
+        'eye',
+        'radius',
+        'geometryRevision',
+        'supportedThrough',
+        'generation',
+        'nextAt',
+        'queryKey',
+        'anchorCursor',
+        'fragments',
+        'boundaries',
+        'boundaryKeys',
+        'finished',
+        'unknown',
+        'complete',
+        'visited',
+        'bytes',
+      ],
+      ['featureCursor','priorFrame'],
+    ) ||
+    [state.basis, state.sourceBasis, state.episodeId, state.queryKey].some(
+      (value) => typeof value !== 'string' || !value,
+    ) ||
     !state.frame ||
+    !Number.isFinite(state.frameAt) || state.frameAt<0 || state.frameAt>world.simTime ||
+    (state.priorFrame!==undefined && (!hasRecordFields(state.priorFrame,['at','frame']) || !Number.isFinite(state.priorFrame.at) || state.priorFrame.at<0 || state.priorFrame.at>state.frameAt || !validPerceivedPoint(state.priorFrame.frame?.positionAtObservation) || (state.priorFrame.frame.forwardAtObservation!==undefined && !Number.isFinite(state.priorFrame.frame.forwardAtObservation)))) ||
     !validPerceivedPoint(state.frame.positionAtObservation) ||
     (state.frame.forwardAtObservation !== undefined &&
       !Number.isFinite(state.frame.forwardAtObservation)) ||
@@ -1203,85 +1189,68 @@ export function validateReceivedGeometryState(
     !Number.isFinite(state.supportedThrough) ||
     state.supportedThrough < 0 ||
     state.supportedThrough > world.simTime ||
-    !Number.isSafeInteger(state.generation) ||
-    state.generation < 0 ||
-    !Number.isSafeInteger(state.boundaryChecked) ||
-    state.boundaryChecked < 0 ||
     !Number.isFinite(state.nextAt) ||
     state.nextAt < 0 ||
-    !Number.isSafeInteger(state.boundaryCursor) ||
-    state.boundaryCursor < 0 ||
+    [state.generation, state.anchorCursor, state.visited, state.bytes].some(
+      (value) => !Number.isSafeInteger(value) || value < 0,
+    ) ||
+    state.visited > policy.visits ||
+    state.bytes > policy.maxBytes ||
     typeof state.finished !== 'boolean' ||
+    typeof state.unknown !== 'boolean' ||
     typeof state.complete !== 'boolean' ||
-    typeof state.unrepresented !== 'boolean' ||
-    typeof state.surfacesComplete !== 'boolean' ||
-    !Number.isSafeInteger(state.visited) ||
-    state.visited < 0 ||
-    state.visited > policy.patchVisits + policy.indexVisits ||
-    !Array.isArray(state.pending) ||
-    state.pending.length > policy.preparationPatches ||
+    state.complete !== (state.finished && !state.unknown) ||
     !Array.isArray(state.fragments) ||
     !Array.isArray(state.boundaries) ||
-    state.fragments.length + state.boundaries.length > policy.maxFragments ||
+    state.fragments.length + state.boundaries.length > policy.maxViews ||
     !Array.isArray(state.boundaryKeys) ||
     state.boundaryKeys.length !== state.boundaries.length ||
-    new Set(state.boundaryKeys).size !== state.boundaryKeys.length ||
-    state.boundaryKeys.some((key) => typeof key !== 'string')
+    new Set(state.boundaryKeys).size !== state.boundaryKeys.length
   )
-    throw new Error('Invalid received geometry continuation.');
-  for (const patch of [...state.pending, ...state.fragments])
-    if (
-      !patch ||
-      typeof patch.surfaceId !== 'string' ||
-      !patch.surfaceId ||
-      ![patch.minX, patch.maxX, patch.minZ, patch.maxZ].every(Number.isFinite) ||
-      patch.minX >= patch.maxX ||
-      patch.minZ >= patch.maxZ
-    )
-      throw new Error('Invalid received geometry preparation.');
+    throw new Error('Invalid received contextual geometry.');
+  const cursor = state.featureCursor;
   if (
-    state.surfaceCursor &&
-    (!Array.isArray(state.surfaceCursor.pending) ||
-      state.surfaceCursor.pending.length > 64 ||
-      state.surfaceCursor.pending.some(
+    cursor &&
+    (!Array.isArray(cursor.pending) ||
+      cursor.pending.length > 64 ||
+      cursor.pending.some(
         (path) =>
           !Array.isArray(path) || path.length > 64 || path.some((part) => part !== 0 && part !== 1),
       ) ||
-      !Number.isSafeInteger(state.surfaceCursor.offset) ||
-      state.surfaceCursor.offset < 0 ||
-      state.surfaceCursor.offset > 4 ||
-      (state.surfaceCursor.leaf !== undefined && typeof state.surfaceCursor.leaf !== 'boolean'))
+      !Number.isSafeInteger(cursor.offset) ||
+      cursor.offset < 0 ||
+      cursor.offset > 4 ||
+      (cursor.leaf !== undefined && typeof cursor.leaf !== 'boolean'))
   )
-    throw new Error('Invalid received geometry cursor.');
-  const life = world.perceptionEvidence?.[observerId]?.life;
-  const observations = [
-    ...state.fragments.map((fragment) => fragment.observation),
-    ...state.boundaries,
-  ];
+    throw new Error('Invalid received feature continuation.');
+  const observations = geometryObservations(state),
+    life = world.perceptionEvidence?.[observerId]?.life;
+  if (
+    new Set(observations.map((value) => value.id)).size !== observations.length ||
+    new Set(state.fragments.map((fragment) => fragment.key)).size !== state.fragments.length
+  )
+    throw new Error('Invalid received feature membership or charging.');
   const patches = new Map(
     state.fragments.map((fragment) => [
       JSON.stringify([fragment.observation.id, fragment.observation.revision]),
       fragment.observation,
     ]),
   );
-  if (
-    new Set(observations.map((value) => value.id)).size !== observations.length ||
-    new Set(state.fragments.map((value) => value.key)).size !== state.fragments.length
-  )
-    throw new Error('Duplicate received geometry.');
   for (const fragment of state.fragments) {
-    const value = fragment.observation.facets[0]?.value;
     if (
-      fragment.key !== rectangleKey(fragment) ||
+      !hasRecordFields(fragment, ['featureId', 'u0', 'u1', 'v0', 'v1', 'key', 'observation']) ||
+      typeof fragment.featureId !== 'string' ||
+      !fragment.featureId ||
+      [fragment.u0, fragment.u1, fragment.v0, fragment.v1].some(
+        (value) => !Number.isFinite(value) || value < 0 || value > 1,
+      ) ||
+      fragment.u0 >= fragment.u1 ||
+      fragment.v0 >= fragment.v1 ||
+      fragment.key !== extentKey(fragment) ||
       fragment.observation.facets.length !== 1 ||
-      value?.kind !== 'surface-patch' ||
-      value.patch.vertices.some(
-        (point, ordinal) =>
-          point.x !== (ordinal === 0 || ordinal === 3 ? fragment.minX : fragment.maxX) ||
-          point.z !== (ordinal < 2 ? fragment.minZ : fragment.maxZ),
-      )
+      fragment.observation.facets[0]!.value.kind !== 'surface-patch'
     )
-      throw new Error('Invalid received surface binding.');
+      throw new Error('Invalid received feature extent.');
   }
   for (const observation of observations) {
     validateObservationContribution(observation, originals);
@@ -1297,8 +1266,8 @@ export function validateReceivedGeometryState(
     const value = observation.facets[0]!.value;
     if (value.kind === 'physical-boundary')
       for (const surface of [value.boundary.nearSurface, value.boundary.farSurface]) {
-        const source = surface.support.source;
-        const patch = patches.get(JSON.stringify([source.id, source.revision]));
+        const source = surface.support.source,
+          patch = patches.get(JSON.stringify([source.id, source.revision]));
         if (
           source.family !== 'native-exposure' ||
           source.observer.actorId !== observerId ||
@@ -1309,4 +1278,9 @@ export function validateReceivedGeometryState(
           throw new Error('Received boundary support is not an owned received surface.');
       }
   }
+  if (
+    observations.reduce((bytes, observation) => bytes + jsonEncoding(observation).bytes, 0) !==
+    state.bytes
+  )
+    throw new Error('Invalid received feature charging.');
 }

@@ -1,3 +1,4 @@
+import { temporalChunkReceipts } from './temporal-frames.js';
 import {
   experienceEntryKey,
   experienceSourceReference,
@@ -646,7 +647,7 @@ export function admitAutomaticExperience(
       if (locator && entry.source !== 'summary') entry.value.sourceReceipt = locator;
       if (locator && awareness?.exposure?.kind === 'place') {
         const temporal = world.experience!.temporal!;
-        const receipt = temporal.actors[actorId]!.chunks.flatMap((chunk) => chunk.receipts).find(
+        const receipt = temporal.actors[actorId]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk)).find(
           (candidate) =>
             candidate.epoch === locator!.epoch && candidate.ordinal === locator!.ordinal,
         );
@@ -1196,7 +1197,7 @@ export function retainedExperienceSource(
     return true;
   if (
     world.experience?.temporal?.actors[actorId]?.chunks.some((chunk) =>
-      chunk.receipts.some(
+      temporalChunkReceipts(chunk).some(
         (receipt) =>
           receipt.id === sourceId ||
           temporalReceiptAliases(receipt, world.receivedValues?.sources ?? {}, world).includes(

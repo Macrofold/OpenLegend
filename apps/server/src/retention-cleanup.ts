@@ -1,3 +1,4 @@
+import { temporalChunkReceipts } from '@open-legend/domain';
 import {
   experienceIndividualIds,
   selectedPruneObserverIndividuals,
@@ -270,7 +271,7 @@ export async function cleanupRetiredIndividuals(
           individuals.add(value.subject.individualId);
     }
     for (const chunk of history?.chunks ?? [])
-      for (const receipt of chunk.receipts) {
+      for (const receipt of temporalChunkReceipts(chunk)) {
         for (const id of temporalReceiptAliases(receipt, sources, world)) retained.add(id);
         for (const id of temporalReceiptIndividualIds(receipt, sources)) individuals.add(id);
       }

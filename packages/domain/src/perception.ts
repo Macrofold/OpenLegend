@@ -50,6 +50,7 @@ export type SenseDefinition = { id: string; version: 1 } & (
       routineTiming: 'boundary' | 'cadence';
       radius: number;
       sampleSeconds?: number;
+      detailSampleSeconds?: number;
       fieldOfViewRadians?: number;
     }
   | {
@@ -111,7 +112,7 @@ type ResolvedSenses = {
   reaches: Record<SpeechVolume, number>;
 };
 export interface RoutineSensePolicy {
-  sight?: { key: string; mode: 'boundary' | 'cadence'; seconds?: number };
+  sight?: { key: string; mode: 'boundary' | 'cadence'; seconds?: number; detailSeconds?: number };
   contact?: { key: string; mode: 'crossing' | 'sampled'; seconds?: number };
 }
 const resolvedSenses = new WeakMap<object, Map<string, ResolvedSenses>>();
@@ -148,6 +149,7 @@ function resolveSenses(world: WorldState, entity: Entity): ResolvedSenses {
         ),
         mode: vision.routineTiming,
         seconds: vision.sampleSeconds,
+        detailSeconds: vision.detailSampleSeconds,
       },
       contact: contact && {
         key: contentLabel(

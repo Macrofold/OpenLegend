@@ -8,6 +8,7 @@ import {
   reconcileVisualEvidence,
   currentBodyObservation,
   nextPerceptionWorkAt,
+  nextPerceptionMeasurementAt,
   continuePerceptionWork,
   reconcileAttendedTemporalEvidence,
 } from './perception-evidence.js';
@@ -33,11 +34,19 @@ import { canSteer, playerInputBoundary, preparePlayerSteering } from './player-s
 import {
   routineObservationDue,
   takeRoutineObservation,
+  initializeSightContinuation,
+  completeSightWork,
+  sightScopeDue,
   type RoutineObservation,
 } from './perception-timing.js';
 import { visibleFeature } from './perception-frame.js';
+import { currentDetailedAttention } from './attention.js';
 import { beginNativeChangeFeed, takeNativeChanges } from './native-change-feed.js';
-import { pendingNavigationEntityIds, navigationMembershipChanged } from './entity-index.js';
+import {
+  pendingNavigationEntityIds,
+  navigationMembershipChanged,
+  nativeEntityGroups,
+} from './entity-index.js';
 import { NativeStatusPreparation } from './native-status-preparation.js';
 import type { TemporalEvidenceState } from './temporal-evidence.js';
 import { foragingProfile } from './native-foraging.js';
@@ -556,6 +565,7 @@ import {
   contactViews,
   directProbe,
   sightPreparationQuery,
+  routineSensePolicy,
 } from './perception.js';
 import {
   distance,
@@ -6031,40 +6041,8 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
  * spawning/component mutations must also refresh this roster, never retain revoked draft entities.
  * docs/performance.md#simulation-cpu-and-growing-history
  */
-function nativeParticipants(world: WorldState): {
-  actors: string[];
-  ambient: string[];
-  ambientMovers: string[];
-  animals: string[];
-  heatSources: string[];
-  remains: string[];
-  plannedActors: string[];
-  territorial: string[];
-  statuses: string[];
-  projectileBodies: string[];
-} {
-  const roots = worldRootEntities(world, true);
-  const active = roots
-    .filter((e) => activelyParticipates(e) && (e.actor || e.animal || e.heat))
-    .sort((a, b) => a.id.localeCompare(b.id));
-  return {
-    actors: active.filter((e) => e.actor).map((e) => e.id),
-    ambient: active.map((e) => e.id),
-    // Flight/fall continue existing components; new native component producers must
-    // refresh this roster just as commands/body replacement already do.
-    ambientMovers: active
-      .filter((e) => e.animal || e.spatial.flight || e.spatial.fallVelocity !== undefined)
-      .map((e) => e.id),
-    animals: active.filter((e) => e.animal).map((e) => e.id),
-    heatSources: active.filter((e) => e.heat).map((e) => e.id),
-    remains: roots.filter((e) => e.remains && e.remains.phase !== 'removed').map((e) => e.id),
-    plannedActors: active.filter((e) => e.actor?.agency.plan).map((e) => e.id),
-    territorial: active.filter((e) => e.threat).map((e) => e.id),
-    statuses: roots.filter((e) => mayAdvanceStatusEffects(world, e)).map((e) => e.id),
-    projectileBodies: roots
-      .filter((e) => activelyParticipates(e) && (e.actor || e.practiceTarget))
-      .map((e) => e.id),
-  };
+function nativeParticipants(world: WorldState) {
+  return nativeEntityGroups(world);
 }
 
 /** Current decision eligibility, shared by global preparation and local invalidation. */
@@ -8071,6 +8049,7 @@ function* updateEncounters(
   initialize = false,
   beforeMeasurement?: () => Generator<void>,
 ): Generator<void | GeometryBatch, ReadonlySet<string>> {
+  initializeSightContinuation(world);
   // Held attention consumes only its received facts. A real physical sample
   // first applies earned rates through their existing owner, without discarding
   // the unrelated mechanical forecast merely because a sense is due.
@@ -8078,7 +8057,14 @@ function* updateEncounters(
     beforeMeasurement &&
     actorIds.some((id) => {
       const observer = entityGet(readOnlyDraftView(world.entities), id);
-      return !!observer && routineObservationDue(world, observer);
+      return (
+        !!observer &&
+        routineObservationDue(
+          world,
+          observer,
+          (nextPerceptionMeasurementAt(world, id) ?? Infinity) <= world.simTime,
+        )
+      );
     })
   )
     yield* beforeMeasurement();
@@ -8136,26 +8122,55 @@ function* updateEncounters(
       observer.actor.contacts = {};
   }
   const routine = new Map<string, RoutineObservation>();
+  const completedSight = new Map<string, 'broad' | 'detail'>();
+  const sightRevision = world.sensory!.revision;
   let observationDue = false;
   for (const id of actorIds) {
     const observer = entityGet(world.entities, id);
     if (!observer) continue;
-    const routineTiming = takeRoutineObservation(world, observer);
+    const scheduled = sightScopeDue(world, observer);
+    const routineTiming = takeRoutineObservation(
+      world,
+      observer,
+      (nextPerceptionMeasurementAt(world, id) ?? Infinity) <= world.simTime,
+    );
     // A fresh-world authoring cut requests its actual current sensory sample.
     // Ordinary advancement alone follows the selected recurring clock.
     const timing = initialize
-      ? { ...routineTiming, sight: true, contact: true, sampledSight: true, sampledContact: true }
+      ? {
+          ...routineTiming,
+          sight: true,
+          contact: true,
+          sampledSight: true,
+          sampledContact: true,
+          detail: false,
+          immediate: true,
+        }
       : routineTiming;
     if (!timing.sight) continuePerceptionWork(world, id);
     if (!timing.sight && !timing.contact) continue;
     routine.set(id, timing);
+    if (timing.sight && !initialize && scheduled) {
+      const policy = routineSensePolicy(world, observer).sight;
+      if (policy?.mode === 'cadence' && (!timing.detail || !completedSight.has(policy.key)))
+        completedSight.set(policy.key, scheduled);
+    }
     observationDue ||= timing.sight || timing.contact;
   }
   if (!observationDue) return new Set();
-  const frame = yield* prepareExposure(world, original, (entity) => motionReach(world, entity, 1));
+  const frame = yield* prepareExposure(
+    world,
+    original,
+    (entity) => motionReach(world, entity, 1),
+    world.sensory,
+  );
+  for (const [id, timing] of routine)
+    if (!initialize && timing.sampledSight && !timing.immediate && !frame.affected.has(id))
+      timing.sight = false;
   const { changedFeatures, maximumBodyHeight, maximumBodyRadius } = frame;
   const nativeSources = prepareNativeDangerSources(world, frame.sourceIds);
   const peoplePrepared = new Map<string, ReturnType<typeof frame.nearby>>();
+  const detailedSubjects = new Map<string, Set<string>>();
   const nativePrepared = new Map<string, ReturnType<typeof frame.nearby>>();
   const rays: Generator<SightRay | undefined>[] = [];
   for (const actor of frame.observers) {
@@ -8170,7 +8185,14 @@ function* updateEncounters(
     )
       continue;
     let candidates: ReturnType<typeof frame.nearby>;
-    if (actor.nativeResponse) {
+    if (timing.detail) {
+      const selected = new Set(
+        currentDetailedAttention(world, actor.id).map((entry) => entry.sourceId),
+      );
+      detailedSubjects.set(actor.id, selected);
+      candidates = frame.selectedContacts(actor.position, radius + 2, selected);
+      peoplePrepared.set(actor.id, candidates);
+    } else if (actor.nativeResponse) {
       if (!actor.entity.animal?.episode) continue;
       const selected = nativeSources(actor.entity);
       candidates = selected
@@ -8341,6 +8363,59 @@ function* updateEncounters(
         world.visiblePlaces![actor.id] = {};
       retirePerceptionEpisodes(world, actor.id);
       reconcileCombatSight(world, entityGet(world.entities, actor.id)!, [], events);
+      continue;
+    }
+    if (timing.detail) {
+      const selected =
+        detailedSubjects.get(actor.id) ??
+        new Set(currentDetailedAttention(world, actor.id).map((entry) => entry.sourceId));
+      const measured = [...selected].flatMap((id) => {
+        const source = entityGet(readOnlyDraftView(world.entities), id);
+        return source &&
+          source.placement?.mode === 'world' &&
+          sees({
+            id,
+            position: worldPosition(source),
+            height: effectiveBodyProfile(world, source).height,
+          })
+          ? [readOnlyDraftView(source)]
+          : [];
+      });
+      const visible = new Set(measured.map((source) => source.id));
+      const lost = [...selected].filter((id) => !visible.has(id));
+      if (lost.length) {
+        const removed = new Set(lost);
+        if (world.visiblePeople?.[actor.id])
+          world.visiblePeople[actor.id] = world.visiblePeople[actor.id]!.filter(
+            (id) => !removed.has(id),
+          );
+        if (world.visibleObjects?.[actor.id])
+          world.visibleObjects[actor.id] = world.visibleObjects[actor.id]!.filter(
+            (id) => !removed.has(id),
+          );
+        const episodes = world.perceptionEpisodes?.[actor.id];
+        if (episodes) for (const id of lost) delete episodes[id];
+      }
+      const detector = sensesFor(world, actor.entity).find(
+        (sense) => sense.implementation === 'vision-geometry-v1',
+      );
+      if (detector)
+        reconcileVisualEvidence(
+          world,
+          entityGet(world.entities, actor.id)!,
+          measured,
+          detector,
+          normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+          frame.sourceToken,
+          frame.publicAttributes,
+          selected,
+        );
+      reconcileCombatSight(
+        world,
+        entityGet(world.entities, actor.id)!,
+        world.visiblePeople?.[actor.id] ?? [],
+        events,
+      );
       continue;
     }
     const previous = original.visiblePeople?.[actor.id] ?? [];
@@ -8563,7 +8638,8 @@ function* updateEncounters(
     encounter.flush();
   }
   encounter.flush();
-  return frame.affected;
+  completeSightWork(world, completedSight, actorIds, sightRevision);
+  return new Set([...routine].filter(([, timing]) => timing.sight).map(([id]) => id));
 }
 
 /** Establish actual sight/contact for fresh worlds or an actually returned observer. Otherwise

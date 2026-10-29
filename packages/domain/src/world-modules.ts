@@ -2,7 +2,7 @@ import { validateCartography } from './cartography.js';
 import { validateItemArt, validatePortraitArt } from './presentation-art.js';
 import { validateAttackExecutions } from './combat-execution.js';
 import { validLethalPermission } from './combat-consent.js';
-import { validateSensoryProgress } from './perception-timing.js';
+import { validateSensoryProgress, validateSensoryContinuation } from './perception-timing.js';
 import { validatePersonalSocialEvidence } from './personal-social.js';
 import { validateSupplyOpportunities } from './supply-opportunities.js';
 import { validateNativeFeeding } from './native-feeding.js';
@@ -482,6 +482,7 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
               'implementation',
               'radius',
               'sampleSeconds',
+              'detailSampleSeconds',
               'fieldOfViewRadians',
               'routineTiming',
             ]
@@ -504,6 +505,10 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
       (sense.implementation === 'vision-geometry-v1' &&
         sense.sampleSeconds !== undefined &&
         (!finite(sense.sampleSeconds) || sense.sampleSeconds <= 0)) ||
+      (sense.implementation === 'vision-geometry-v1' &&
+        sense.detailSampleSeconds !== undefined &&
+        (!finite(sense.detailSampleSeconds) || sense.detailSampleSeconds <= 0 ||
+          sense.sampleSeconds === undefined || sense.detailSampleSeconds > sense.sampleSeconds)) ||
       (sense.implementation === 'vision-geometry-v1' &&
         sense.fieldOfViewRadians !== undefined &&
         (!finite(sense.fieldOfViewRadians) ||
@@ -1127,6 +1132,7 @@ export function advanceReservoirs(
   }
 }
 export function validateWorldModules(world: WorldState): void {
+  validateSensoryContinuation(world);
   if (world.socialOfferPolicy !== undefined) validateSocialOfferPolicy(world.socialOfferPolicy);
   if (Object.hasOwn(world, 'conversations'))
     throw new Error(
@@ -1260,7 +1266,7 @@ export function validateWorldModules(world: WorldState): void {
       throw new Error('Invalid actor attention capacity.');
   for (const owner of Object.values(world.perceptionEvidence ?? {}))
     if (owner.attention !== undefined)
-      validateAttentionState(owner.attention, selectedAttentionPolicy(world));
+      validateAttentionState(owner.attention, selectedAttentionPolicy(world), owner.observer!);
   for (const [actorId, entries] of Object.entries(world.memories))
     for (const memory of entries) {
       if (memory.retention) validateExperienceRetention(memory.retention, actorId);

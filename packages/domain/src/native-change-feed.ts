@@ -1,5 +1,6 @@
 import type { SemanticChange } from './dependencies.js';
 import type { WorldState } from './types.js';
+import { queueSightChange } from './perception-timing.js';
 
 type Feed = {
   complete: boolean;
@@ -19,6 +20,7 @@ export function nativeChangesComplete(world: WorldState): boolean {
   return feeds.get(world)?.complete === true;
 }
 export function recordNativeChange(world: WorldState, change: SemanticChange): void {
+  queueSightChange(world, change);
   const feed = feeds.get(world);
   if (!feed?.complete) return;
   const id =

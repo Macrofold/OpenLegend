@@ -1,3 +1,4 @@
+import { captureExperienceContext, type CapturedExperienceContext } from './experience-context.js';
 import { worldClockText } from '@open-legend/protocol';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { isEquipped } from '@open-legend/domain';
@@ -25,6 +26,7 @@ import {
   currentBodyValue,
   identityForEntity,
   observerIndividual,
+  subjectKey,
   speechDescription,
 } from '@open-legend/domain';
 import {
@@ -51,11 +53,13 @@ import {
   experiences,
   mindFor,
   type MemoryRecord,
+  type Entity,
   type WorldState,
   type Awareness,
   type ObserverSubject,
   type ExperienceEntry,
   experienceEntries,
+  experienceReading,
   experienceEntryKey,
 } from '@open-legend/domain';
 import { embeddingBatches } from './embedding-batches.js';
@@ -115,13 +119,8 @@ export function gameTime(at: number, offsetHours: number, dayLabel?: string): st
 }
 /** Identity follows the observer's retained role, never a raw history entity ID.
  * A later face/voice recognition cannot retroactively identify an unknown episode. */
-function retainedMemoryEntities(
-  world: WorldState,
-  actorId: string,
-  memory: MemoryRecord,
-  awareness?: Awareness,
-): Set<string> {
-  const subjects = [
+function retainedMemorySubjects(memory: MemoryRecord): ObserverSubject[] {
+  return [
     ...(memory.evidence?.sourceSubject ? [memory.evidence.sourceSubject] : []),
     ...(memory.manifest?.speech.flatMap((group) =>
       group.sourceSubject ? [group.sourceSubject] : [],
@@ -137,6 +136,14 @@ function retainedMemoryEntities(
       ),
     ),
   ];
+}
+function retainedMemoryEntities(
+  world: WorldState,
+  actorId: string,
+  memory: MemoryRecord,
+  awareness?: Awareness,
+): Set<string> {
+  const subjects = retainedMemorySubjects(memory);
   return new Set([
     actorId,
     ...subjects.flatMap((subject) => {
@@ -151,6 +158,68 @@ function retainedMemoryEntities(
     ),
   ]);
 }
+function summaryProjector(
+  actorId: string,
+  presentation: CapturedExperienceContext,
+  offset: number,
+  dayLabel: string | undefined,
+  canonicalSubjects: ReadonlyMap<string, string>,
+) {
+  return (entry: Extract<ExperienceEntry, { source: 'summary' }>) => {
+    const memory = experienceReading(entry, actorId);
+    const permitted = new Set([
+      actorId,
+      ...retainedMemorySubjects(memory).flatMap((subject) => {
+        const id =
+          subject.kind === 'entity' ? subject.entityId : canonicalSubjects.get(subjectKey(subject));
+        return id ? [id] : [];
+      }),
+    ]);
+    const summary = memory.summary.replace(/\(ID:([^()\s]+)\)/g, (marker, id: string) =>
+      permitted.has(id) ? marker : '',
+    );
+    return {
+      text: `${gameTime(memory.at, offset, dayLabel)} [${memory.source}]: ${summary}`,
+      experience: [
+        experienceForModel(
+          entry,
+          experienceModelBindings(
+            presentation,
+            actorId,
+            entry,
+            `source:${entry.source}:${digest([entry.source, memory.id]).slice(0, 12)}`,
+          ),
+        ),
+      ],
+      entityIds: [...permitted].filter((id) => id !== actorId || memory.entityIds.includes(id)),
+    };
+  };
+}
+/** Derived dialogue can be formatted after generation from finite source meaning;
+ * its participant associations are captured before that wait. */
+export function captureSummaryProjector(
+  world: WorldState,
+  actorId: string,
+  entries: readonly ExperienceEntry[],
+) {
+  const subjects = new Map<string, string>();
+  for (const entry of entries)
+    for (const subject of retainedMemorySubjects(experienceReading(entry, actorId))) {
+      const canonical =
+        subject.kind === 'entity'
+          ? subject.entityId
+          : observerIndividual(world, actorId, subject)?.canonicalId;
+      if (canonical) subjects.set(subjectKey(subject), canonical);
+    }
+  return summaryProjector(
+    actorId,
+    captureExperienceContext(world, actorId, undefined, entries),
+    world.statusEffectPolicy.clockOffsetHours,
+    world.presentation?.calendar?.dayLabel,
+    subjects,
+  );
+}
+
 export function memoryCandidate(
   memory: MemoryRecord,
   world: WorldState,
@@ -510,6 +579,46 @@ export function candidateSet(
   candidates.push(...subjectKnowledgeCandidates(world, actorId, involved));
   return candidates;
 }
+interface RecallAuthority {
+  worldId: string;
+  controller: NonNullable<Entity['actor']>['controller'] | undefined;
+  forgotten: string;
+  corrections: string;
+}
+function captureRecallAuthority(world: WorldState, actorId: string): RecallAuthority {
+  return {
+    worldId: world.id,
+    controller: entityGet(world.entities, actorId)?.actor?.controller,
+    forgotten: digest(world.experience?.forgotten[actorId] ?? []),
+    corrections: digest(world.experience?.corrections?.[actorId] ?? {}),
+  };
+}
+export function captureRecallSelection(
+  world: WorldState,
+  actorId: string,
+  peopleIds: Iterable<string>,
+) {
+  return {
+    authority: captureRecallAuthority(world, actorId),
+    worldId: world.id,
+    inner: world.innerWorlds?.[actorId]
+      ? {
+          text: world.innerWorlds[actorId]!.text,
+          revision: world.innerWorlds[actorId]!.revision,
+        }
+      : undefined,
+    records: mindFor(world, actorId).records,
+    people: [...peopleIds].filter((id) => !!entityGet(world.entities, id)?.actor),
+    goal: projectEntityMarkers(
+      currentGoal(entityGet(world.entities, actorId)!.actor!),
+      world,
+      actorId,
+    ),
+    forgotten: [...(world.experience?.forgotten[actorId] ?? [])],
+  };
+}
+export type RecallSelectionContext = ReturnType<typeof captureRecallSelection>;
+
 interface VectorCache {
   model: string;
   dimensions: number;
@@ -806,7 +915,7 @@ export class RecallService {
   }
 
   private recallCurrent(
-    world: WorldState,
+    authority: RecallAuthority,
     actorId: string,
     generation: string,
     signal: AbortSignal,
@@ -816,14 +925,11 @@ export class RecallService {
       !this.closed &&
       !signal.aborted &&
       generation === this.service.generation &&
-      world.id === now.id &&
+      authority.worldId === now.id &&
       !!entityGet(now.entities, actorId)?.actor &&
-      entityGet(now.entities, actorId)?.actor?.controller ===
-        entityGet(world.entities, actorId)?.actor?.controller &&
-      digest(now.experience?.forgotten[actorId] ?? []) ===
-        digest(world.experience?.forgotten[actorId] ?? []) &&
-      digest(now.experience?.corrections?.[actorId] ?? {}) ===
-        digest(world.experience?.corrections?.[actorId] ?? {})
+      entityGet(now.entities, actorId)?.actor?.controller === authority.controller &&
+      digest(now.experience?.forgotten[actorId] ?? []) === authority.forgotten &&
+      digest(now.experience?.corrections?.[actorId] ?? {}) === authority.corrections
     );
   }
 
@@ -846,7 +952,7 @@ export class RecallService {
     });
   }
   async candidates(
-    world: WorldState,
+    readWorld: () => WorldState,
     actorId: string,
     observed: NonNullable<ReturnType<WorldService['observe']>>,
     requiredIds: string[],
@@ -860,25 +966,33 @@ export class RecallService {
     mode: 'ordinary' | 'native-only' = 'ordinary',
   ): Promise<AttentionCandidate[]> {
     const generation = this.service.generation;
+    const authority = captureRecallAuthority(readWorld(), actorId);
     const repository = this.service.store.memories;
     const head = preparation?.scope ?? (await this.service.store.records?.head());
     if (!repository || !head)
-      return candidateSet(world, actorId, observed, requiredIds, automaticIds, conversationIds);
+      return candidateSet(
+        readWorld(),
+        actorId,
+        observed,
+        requiredIds,
+        automaticIds,
+        conversationIds,
+      );
     const scope: MemoryScope = preparation?.scope ?? {
-      worldId: world.id,
+      worldId: readWorld().id,
       actorId,
       generation: head.generation,
     };
-    const current = () => this.recallCurrent(world, actorId, generation, signal);
+    const current = () => this.recallCurrent(authority, actorId, generation, signal);
     const config = this.service.config;
     const coverage = await repository.coverage(scope, {
       model: config.embeddingModel,
       dimensions: config.embeddingDimensions,
     });
     const count = coverage.eligible;
-    const inner = world.innerWorlds?.[actorId];
-    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(entityGet(world.entities, actorId)!.actor!), world, actorId)}\n${inner?.text ?? ''}`;
-    const key = `memory-query:${world.id}:${actorId}`;
+    const inner = readWorld().innerWorlds?.[actorId];
+    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(entityGet(readWorld().entities, actorId)!.actor!), readWorld(), actorId)}\n${inner?.text ?? ''}`;
+    const key = `memory-query:${readWorld().id}:${actorId}`;
     const queryKey = digest({ query, generation: scope.generation });
     const cache = (await this.service.store.getIntegration(key)) as
       | { key: string; model: string; dimensions: number; query: number[] }
@@ -961,7 +1075,7 @@ export class RecallService {
       ).values(),
     ];
     const candidates = candidateSet(
-      world,
+      readWorld(),
       actorId,
       observed,
       requiredIds,
@@ -992,7 +1106,7 @@ export class RecallService {
     await this.indexWork;
   }
   async select(
-    world: WorldState,
+    captured: RecallSelectionContext,
     actorId: string,
     stimulus: string,
     jobId: string,
@@ -1006,12 +1120,7 @@ export class RecallService {
   ) {
     const config = this.service.config;
     const generation = this.service.generation;
-    const inner = world.innerWorlds?.[actorId];
-    const records = mindFor(world, actorId).records;
-    const people = candidates
-      .filter((candidate) => candidate.kind === 'entity')
-      .flatMap((candidate) => candidate.entityIds)
-      .filter((id) => !!entityGet(world.entities, id)?.actor);
+    const { inner, records, people, goal } = captured;
     // Cues are derived from the accepted text, never a second writable biography.
     const cues = (inner?.text ?? '')
       .split(/\n+/)
@@ -1019,7 +1128,7 @@ export class RecallService {
       .slice(0, 8)
       .join('\n')
       .slice(0, 1600);
-    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(entityGet(world.entities, actorId)!.actor!), world, actorId)}\n${cues}`;
+    const query = `${stimulus}\nMy current goal: ${goal}\n${cues}`;
     if (Buffer.byteLength(query) > 8000)
       throw new Error(
         'The complete semantic stimulus exceeds the embedding input allowance; split this opportunity.',
@@ -1076,7 +1185,7 @@ export class RecallService {
           : [];
     });
     const semanticIds = new Set(semanticPool.map((candidate) => candidate.id));
-    const key = `vectors:${world.id}:${actorId}`;
+    const key = `vectors:${captured.worldId}:${actorId}`;
     const vectors = this.service.store.vectors;
     let cache = (
       semanticPool.length && vectors ? await this.service.store.getIntegration(key) : undefined
@@ -1101,7 +1210,7 @@ export class RecallService {
     const queryKey = digest({
       query: query.trim().replace(/\s+/g, ' ').toLocaleLowerCase(),
       revision: inner?.revision,
-      forgotten: world.experience?.forgotten[actorId],
+      forgotten: captured.forgotten,
     });
     const cachedQuery = cache.queries[queryKey];
     const missing = embeddingBatches(unindexed, cachedQuery ? [] : [query]).next().value ?? [];
@@ -1143,7 +1252,7 @@ export class RecallService {
           },
           () =>
             this.embedCurrent({ requestId: id, texts, signal }, () =>
-              this.recallCurrent(world, actorId, generation, signal),
+              this.recallCurrent(captured.authority, actorId, generation, signal),
             ),
         );
         await this.service.store.settle(id, result.receipt);
@@ -1161,7 +1270,7 @@ export class RecallService {
     // Provider work above remains outside; an inherited callback context cannot bypass it.
     if (semanticPool.length && vectors)
       await this.service.publishRecall(async () => {
-        if (!this.recallCurrent(world, actorId, generation, signal))
+        if (!this.recallCurrent(captured.authority, actorId, generation, signal))
           throw new Error('Recall sources changed during embedding; discard stale context.');
         if (additions.length) {
           await vectors.put(scope, additions);
@@ -1248,11 +1357,7 @@ export class RecallService {
           {
             stimulus,
             ...(cues ? { innerWorldExcerpt: cues } : {}),
-            goal: projectEntityMarkers(
-              currentGoal(entityGet(world.entities, actorId)!.actor!),
-              world,
-              actorId,
-            ),
+            goal: goal,
             includedContext: {
               ...immediateContext,
               ...contextSections([...automatic, ...mandatory]),
@@ -1308,11 +1413,7 @@ export class RecallService {
         signals: {
           people,
           stimulus,
-          goal: projectEntityMarkers(
-            currentGoal(entityGet(world.entities, actorId)!.actor!),
-            world,
-            actorId,
-          ),
+          goal: goal,
           innerWorldExcerpt: cues,
           legacyFacetHints: records
             .filter((r) => ['concern', 'belief'].includes(r.kind))

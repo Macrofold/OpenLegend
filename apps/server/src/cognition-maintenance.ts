@@ -259,9 +259,10 @@ export class CognitionMaintenance {
     if (generation !== this.service.generation) return;
     if (this.service.config.jevOnly) return;
     if (!this.service.world.cognitionPolicy.reflection) return;
-    const world = this.service.world;
-    const actor = entityGet(world.entities, actorId)?.actor;
-    if (!actor?.alive) return;
+    const actor = entityGet(this.service.world.entities, actorId);
+    if (!actor?.actor?.alive) return;
+    const worldId = this.service.world.id,
+      actorName = actor.name;
     const current = (await this.readSchedule(() =>
       this.service.store.getIntegration(this.key(actorId)),
     )) as ReflectionRequest | undefined;
@@ -281,11 +282,11 @@ export class CognitionMaintenance {
       ? 'Reflection harness is not configured.'
       : undefined;
     await this.log.save({
-      id: `reflection-queued:${world.id}:${actorId}`,
+      id: `reflection-queued:${worldId}:${actorId}`,
       kind: 'Reflection opportunity',
-      worldId: world.id,
+      worldId,
       actorId,
-      actorName: entityGet(world.entities, actorId)!.name,
+      actorName,
       trigger: 'A meaningful new experience was queued for reflection.',
       triggerType: 'Background reflection opportunity',
       startedAt: new Date(request.at).toISOString(),
@@ -429,8 +430,11 @@ export class CognitionMaintenance {
           const batch = await this.service.prepareActivityLearning(entity.id);
           if (batch.capacityBlocked) continue;
           if (batch.candidates.length) {
-            await this.start(entity.id, 'activity-learning', generation, (controller) =>
-              this.learnActivities(batch, controller),
+            await this.start(
+              entity.id,
+              'activity-learning',
+              generation,
+              this.learnActivities.bind(this, batch),
             );
             return;
           }
@@ -551,20 +555,12 @@ export class CognitionMaintenance {
           )
             return;
           if (batch) {
-            await this.start(entity.id, 'consolidation', generation, async (controller) => {
-              const accepted = await this.consolidate(entity.id, batch, controller);
-              if (accepted)
-                await this.writeSchedule(generation, () =>
-                  this.service.store.putIntegration(reviewKey, {
-                    day: reviewDay,
-                    timeline: this.service.timelineId,
-                    failed: false,
-                    completed: batch.selection?.complete ?? true,
-                    throughRevision: batch.selection?.throughRevision,
-                    after: batch.selection?.after,
-                  }),
-                );
-            });
+            await this.start(
+              entity.id,
+              'consolidation',
+              generation,
+              this.consolidateReview.bind(this, entity.id, batch, generation, reviewKey, reviewDay),
+            );
             return;
           }
         }
@@ -598,8 +594,11 @@ export class CognitionMaintenance {
             ))
           )
             return;
-          await this.start(entity.id, 'consolidation', generation, (controller) =>
-            this.consolidate(entity.id, batch, controller).then(() => undefined),
+          await this.start(
+            entity.id,
+            'consolidation',
+            generation,
+            this.consolidateOnly.bind(this, entity.id, batch),
           );
           return;
         }
@@ -617,9 +616,7 @@ export class CognitionMaintenance {
           }))
         )
           return;
-        await this.start(entity.id, queued.reason, generation, (controller) =>
-          this.reflect(queued, controller),
-        );
+        await this.start(entity.id, queued.reason, generation, this.reflect.bind(this, queued));
         return;
       }
     } finally {
@@ -917,6 +914,33 @@ export class CognitionMaintenance {
     )
       throw new Error(
         'The body, installed policy or maintenance eligibility changed before completion.',
+      );
+  }
+  private async consolidateOnly(
+    actorId: string,
+    batch: ConsolidationBatch,
+    controller: AbortController,
+  ) {
+    await this.consolidate(actorId, batch, controller);
+  }
+  private async consolidateReview(
+    actorId: string,
+    batch: ConsolidationBatch,
+    generation: string,
+    reviewKey: string,
+    reviewDay: number,
+    controller: AbortController,
+  ) {
+    if (await this.consolidate(actorId, batch, controller))
+      await this.writeSchedule(generation, () =>
+        this.service.store.putIntegration(reviewKey, {
+          day: reviewDay,
+          timeline: this.service.timelineId,
+          failed: false,
+          completed: batch.selection?.complete ?? true,
+          throughRevision: batch.selection?.throughRevision,
+          after: batch.selection?.after,
+        }),
       );
   }
   private async consolidate(

@@ -10,8 +10,11 @@ import {
   type ExperienceSummary,
 } from '@open-legend/domain';
 import type { GenerateRequest } from '@open-legend/ai';
-import { personalAttributionRevision } from './entity-references.js';
-import { memoryCandidate } from './recall.js';
+import {
+  personalAttributionRevision,
+  capturePersonalAttributionReader,
+} from './entity-references.js';
+import { memoryCandidate, captureSummaryProjector } from './recall.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { digest } from './store.js';
 import { ContextBudgetError } from './context.js';
@@ -25,6 +28,7 @@ import {
   type ConversationSource,
   type CurrentMemorySource,
   type MemoryScope,
+  type MemoryRepository,
 } from './memory-repository.js';
 
 // Request bounds, never fictional forgetting or a social membership.
@@ -74,6 +78,119 @@ function projectionBytes(lines: string[], experience: unknown[]): number {
   return Buffer.byteLength(conversationText(lines)) + Buffer.byteLength(JSON.stringify(experience));
 }
 
+function projectConversationEntry(world: WorldState, actorId: string, entry: ExperienceEntry) {
+  const none = new Set<string>();
+  return memoryCandidate(
+    experienceReading(entry, actorId),
+    world,
+    actorId,
+    none,
+    none,
+    none,
+    {},
+    none,
+    entry,
+  );
+}
+function residentSpeechSources(state: WorldState, actorId: string) {
+  const forgotten = new Set(state.experience?.forgotten[actorId] ?? []);
+  const all = (state.experience?.awareness[actorId] ?? [])
+    .filter((entry) => hasLinguisticSpeech(entry) && !forgotten.has(entry.eventId))
+    .sort((a, b) => b.sequence - a.sequence || b.eventId.localeCompare(a.eventId));
+  const sources: ConversationSource[] = [];
+  let bytes = 0;
+  for (const entry of all) {
+    const bodyBytes = Buffer.byteLength(JSON.stringify(entry));
+    if (sources.length === RETRIEVAL_ROWS || bytes + bodyBytes > CONVERSATION_PREPARATION_BYTES)
+      return { sources: sources.reverse(), more: true };
+    bytes += bodyBytes;
+    sources.push({
+      id: entry.eventId,
+      revision: digest(entry),
+      sequence: entry.sequence,
+      correction: state.experience?.corrections?.[actorId]?.[entry.eventId] ?? '',
+      bodyBytes,
+    });
+  }
+  return { sources: sources.reverse(), more: false };
+}
+
+interface ConversationValidityState {
+  boundSources: ConversationSource[];
+  usedCache: Compaction | undefined;
+  boundEntities: string[];
+  expectedPerspective: string;
+  checkedWorld: WeakRef<WorldState>;
+}
+const speechPrivacy = (state: WorldState, actorId: string) =>
+  digest({
+    forgotten: state.experience?.forgotten[actorId] ?? [],
+    corrections: state.experience?.corrections?.[actorId] ?? {},
+  });
+function conversationValidity(
+  service: WorldService,
+  actorId: string,
+  generation: string,
+  signal: AbortSignal,
+  repository: MemoryRepository | undefined,
+  scope: MemoryScope | undefined,
+  privacyRevision: string,
+  state: ConversationValidityState,
+) {
+  const assertCurrent = () => {
+    signal.throwIfAborted();
+    if (service.generation !== generation)
+      throw new Error('World restored during speech preparation.');
+    if (service.world !== state.checkedWorld.deref()) {
+      if (speechPrivacy(service.world, actorId) !== privacyRevision)
+        throw new Error('Personal speech disclosure changed.');
+      if (
+        state.expectedPerspective &&
+        personalAttributionRevision(service.world, actorId, state.boundEntities) !==
+          state.expectedPerspective
+      )
+        throw new Error('Selected speech perspective changed.');
+      if (!repository || !scope) {
+        const current = new Map(
+          residentSpeechSources(service.world, actorId).sources.map((source) => [
+            source.id,
+            source,
+          ]),
+        );
+        if (
+          state.boundSources.some((source) => current.get(source.id)?.revision !== source.revision)
+        )
+          throw new Error('Selected personal speech changed.');
+      }
+      state.checkedWorld = new WeakRef(service.world);
+    }
+  };
+  const check = async (flush = true, additionalSources: CurrentMemorySource[] = []) => {
+    if (flush) await service.flushMemorySources(actorId, false);
+    assertCurrent();
+    if (repository && scope) {
+      for (let read = 0; read < 2; read++) {
+        const revision = repository.actorRevision(actorId),
+          historyEpoch = service.historyEpoch;
+        const valid = await repository.validatePreparation(
+          scope,
+          { sequence: 0, sources: state.boundSources },
+          additionalSources,
+        );
+        const coverage =
+          !state.usedCache ||
+          (await repository.currentCompactionSources(scope, state.usedCache.value.sources));
+        assertCurrent();
+        if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
+        if (repository.actorRevision(actorId) === revision && service.historyEpoch === historyEpoch)
+          return;
+      }
+      throw new Error('Personal speech changed during validation.');
+    }
+  };
+  return { check, assertCurrent };
+}
+
 /** One actor/source owner for optional dialogue. Complete required causes travel
  * independently; unrelated retained speech cannot make their decision unavailable. */
 export async function buildConversationContext(input: {
@@ -88,7 +205,8 @@ export async function buildConversationContext(input: {
   preparation?: CognitionPreparation;
 }) {
   const { service, actorId, signal } = input;
-  const world = service.world,
+  let world: WorldState | undefined = service.world;
+  const worldId = world.id,
     generation = service.generation;
   const repository = service.store.memories;
   const head = input.preparation?.scope ?? (await service.store.records?.head());
@@ -96,28 +214,6 @@ export async function buildConversationContext(input: {
     input.preparation?.scope ??
     (head ? { worldId: world.id, actorId, generation: head.generation } : undefined);
   const required = new Set(input.requiredIds);
-  const residentSources = (state: WorldState) => {
-    const forgotten = new Set(state.experience?.forgotten[actorId] ?? []);
-    const all = (state.experience?.awareness[actorId] ?? [])
-      .filter((entry) => hasLinguisticSpeech(entry) && !forgotten.has(entry.eventId))
-      .sort((a, b) => b.sequence - a.sequence || b.eventId.localeCompare(a.eventId));
-    const sources: ConversationSource[] = [];
-    let bytes = 0;
-    for (const entry of all) {
-      const bodyBytes = Buffer.byteLength(JSON.stringify(entry));
-      if (sources.length === RETRIEVAL_ROWS || bytes + bodyBytes > CONVERSATION_PREPARATION_BYTES)
-        return { sources: sources.reverse(), more: true };
-      bytes += bodyBytes;
-      sources.push({
-        id: entry.eventId,
-        revision: digest(entry),
-        sequence: entry.sequence,
-        correction: state.experience?.corrections?.[actorId]?.[entry.eventId] ?? '',
-        bodyBytes,
-      });
-    }
-    return { sources: sources.reverse(), more: false };
-  };
   const snapshot =
     input.preparation?.conversation ??
     (repository && scope
@@ -132,7 +228,9 @@ export async function buildConversationContext(input: {
             (latest, entry) => Math.max(latest, entry.sequence),
             0,
           ),
-          ...(input.includeConversation ? residentSources(world) : { sources: [], more: false }),
+          ...(input.includeConversation
+            ? residentSpeechSources(world, actorId)
+            : { sources: [], more: false }),
         });
   const sources = snapshot.sources;
   const maxBytes = Math.max(0, Math.min(CONVERSATION_BYTES, Math.floor(input.maxBytes)));
@@ -154,19 +252,6 @@ export async function buildConversationContext(input: {
   )
     cached = undefined;
 
-  const noIds = new Set<string>();
-  const project = (entry: ExperienceEntry) =>
-    memoryCandidate(
-      experienceReading(entry, actorId),
-      world,
-      actorId,
-      noIds,
-      noIds,
-      noIds,
-      {},
-      noIds,
-      entry,
-    );
   const selected = sources.filter((source) => source.sequence > (cached?.through ?? -1));
   const entries =
     repository && scope
@@ -195,7 +280,7 @@ export async function buildConversationContext(input: {
       sourceEntry.revision !== source.revision
     )
       throw new Error('Selected personal speech changed during preparation.');
-    const candidate = project(sourceEntry.entry);
+    const candidate = projectConversationEntry(world!, actorId, sourceEntry.entry);
     return {
       ...source,
       entry: sourceEntry.entry,
@@ -212,70 +297,43 @@ export async function buildConversationContext(input: {
   if (requiredTurns.length && projectionBytes(requiredLines, []) > maxBytes)
     throw new ContextBudgetError('Complete required conversation exceeds the input budget.');
   const optional = turns.filter((turn) => !required.has(turn.id));
+  const attribution = capturePersonalAttributionReader(world, actorId, [
+    ...(cached?.value.entityIds ?? []),
+    ...turns.flatMap((turn) => turn.entry.value.entityIds),
+  ]);
+  const projectSummary = captureSummaryProjector(world, actorId, [
+    ...(cached ? [{ source: 'summary' as const, value: cached.value }] : []),
+    ...turns.map((turn) => turn.entry),
+  ]);
   const summaryProjection = (value: Compaction | undefined) => {
     if (!value) return undefined;
-    const candidate = project({ source: 'summary', value: value.value });
+    const candidate = projectSummary({ source: 'summary', value: value.value });
     return {
       text: `Older personally experienced speech (derived, with exact source coverage): ${candidate.text}`,
       experience: candidate.experience ?? [],
       references: candidate.entityIds,
     };
   };
-  const privacy = (state: WorldState) =>
-    digest({
-      forgotten: state.experience?.forgotten[actorId] ?? [],
-      corrections: state.experience?.corrections?.[actorId] ?? {},
-    });
-  const privacyRevision = privacy(world);
-  let checkedWorld = new WeakRef(world);
-  let boundSources: ConversationSource[] = [];
-  let usedCache: Compaction | undefined;
-  let boundEntities: string[] = [];
-  let expectedPerspective = '';
-  const assertCurrent = () => {
-    signal.throwIfAborted();
-    if (service.generation !== generation)
-      throw new Error('World restored during speech preparation.');
-    if (service.world !== checkedWorld.deref()) {
-      if (privacy(service.world) !== privacyRevision)
-        throw new Error('Personal speech disclosure changed.');
-      if (
-        expectedPerspective &&
-        personalAttributionRevision(service.world, actorId, boundEntities) !== expectedPerspective
-      )
-        throw new Error('Selected speech perspective changed.');
-      if (!repository || !scope) {
-        const current = new Map(
-          residentSources(service.world).sources.map((source) => [source.id, source]),
-        );
-        if (boundSources.some((source) => current.get(source.id)?.revision !== source.revision))
-          throw new Error('Selected personal speech changed.');
-      }
-      checkedWorld = new WeakRef(service.world);
-    }
+  const validity: ConversationValidityState = {
+    checkedWorld: new WeakRef(world),
+    boundSources: [],
+    usedCache: undefined,
+    boundEntities: [],
+    expectedPerspective: '',
   };
-  const check = async (flush = true, additionalSources: CurrentMemorySource[] = []) => {
-    if (flush) await service.flushMemorySources(actorId, false);
-    assertCurrent();
-    if (repository && scope) {
-      for (let read = 0; read < 2; read++) {
-        const revision = repository.actorRevision(actorId),
-          historyEpoch = service.historyEpoch;
-        const valid = await repository.validatePreparation(
-          scope,
-          { sequence: 0, sources: boundSources },
-          additionalSources,
-        );
-        const coverage =
-          !usedCache || (await repository.currentCompactionSources(scope, usedCache.value.sources));
-        assertCurrent();
-        if (!valid || !coverage) throw new Error('Selected speech or recall sources changed.');
-        if (repository.actorRevision(actorId) === revision && service.historyEpoch === historyEpoch)
-          return;
-      }
-      throw new Error('Personal speech changed during validation.');
-    }
-  };
+  const { check, assertCurrent } = conversationValidity(
+    service,
+    actorId,
+    generation,
+    signal,
+    repository,
+    scope,
+    speechPrivacy(world, actorId),
+    validity,
+  );
+  // Preparation has copied its finite personal sources and presentation. No old
+  // world remains in this async frame while optional compaction is running.
+  world = undefined;
   const deriveSummary = (
     part: Turn[],
     previous: Compaction | undefined,
@@ -287,7 +345,7 @@ export async function buildConversationContext(input: {
       ...sourceEntries.map(experienceSourceReference),
     ];
     const value: ExperienceSummary = {
-      id: `dialogue-${digest([world.id, actorId]).slice(0, 24)}`,
+      id: `dialogue-${digest([worldId, actorId]).slice(0, 24)}`,
       text,
       from: Math.min(
         previous?.value.from ?? Infinity,
@@ -377,16 +435,18 @@ export async function buildConversationContext(input: {
               2,
           ),
         );
-        boundSources = [...boundSources, ...part];
-        usedCache = previous;
-        boundEntities = [
+        validity.boundSources = [...validity.boundSources, ...part];
+        validity.usedCache = previous;
+        validity.boundEntities = [
           ...new Set([
             ...(previous?.value.entityIds ?? []),
-            ...boundSources.flatMap((source) => byId.get(source.id)!.entry.value.entityIds),
+            ...validity.boundSources.flatMap(
+              (source) => byId.get(source.id)!.entry.value.entityIds,
+            ),
           ]),
         ];
-        expectedPerspective = personalAttributionRevision(world, actorId, boundEntities);
-        checkedWorld = new WeakRef(world);
+        validity.expectedPerspective = attribution(validity.boundEntities);
+
         await check();
         const output = summarySchema.parse(
           await input.generate(
@@ -425,7 +485,7 @@ export async function buildConversationContext(input: {
           fromSequence: previous?.fromSequence ?? part[0]!.sequence,
           through: part.at(-1)!.sequence,
           sourceDigest: digest(value.sources),
-          perspective: personalAttributionRevision(world, actorId, value.entityIds),
+          perspective: attribution(value.entityIds),
           value,
         };
         // If structural attribution cannot fit, do not pay to expand it further.
@@ -434,11 +494,11 @@ export async function buildConversationContext(input: {
         previous = next;
       }
       if (previous && previous !== cached) {
-        usedCache = previous;
+        validity.usedCache = previous;
         await check();
         await repository.publishConversationCompaction(
           scope,
-          boundSources,
+          validity.boundSources,
           previous.value.sources,
           saved,
           previous,
@@ -459,16 +519,16 @@ export async function buildConversationContext(input: {
   const recent = fitted.recent,
     summary = fitted.older;
   const exactTurns = [...requiredTurns, ...recent].sort((a, b) => a.sequence - b.sequence);
-  usedCache = summary ? cached : undefined;
-  boundSources = exactTurns;
-  boundEntities = [
+  validity.usedCache = summary ? cached : undefined;
+  validity.boundSources = exactTurns;
+  validity.boundEntities = [
     ...new Set([
-      ...(usedCache?.value.entityIds ?? []),
+      ...(validity.usedCache?.value.entityIds ?? []),
       ...exactTurns.flatMap((turn) => turn.entry.value.entityIds),
     ]),
   ];
-  expectedPerspective = personalAttributionRevision(world, actorId, boundEntities);
-  checkedWorld = new WeakRef(world);
+  validity.expectedPerspective = attribution(validity.boundEntities);
+
   await check();
   const lines = [...(summary ? [summary.text] : []), ...exactTurns.map((turn) => turn.text)];
   const experience = [...(summary?.experience ?? []), ...recent.flatMap((turn) => turn.experience)];
@@ -490,12 +550,12 @@ export async function buildConversationContext(input: {
     sharedExperiences,
     evidenceIds: exactTurns.map((turn) => turn.id),
     watermark: Math.max(
-      usedCache?.value.to ?? 0,
+      validity.usedCache?.value.to ?? 0,
       ...exactTurns.map((turn) => turn.entry.value.at),
       0,
     ),
     sourceKeys: [
-      ...(usedCache?.value.sources.map(experienceSourceKey) ?? []),
+      ...(validity.usedCache?.value.sources.map(experienceSourceKey) ?? []),
       ...exactTurns.map((turn) => experienceSourceKey({ kind: 'awareness', id: turn.id })),
     ],
     entityIds: [
@@ -515,19 +575,19 @@ export async function buildConversationContext(input: {
           (source) =>
             !required.has(source.id) &&
             !recent.some((turn) => turn.id === source.id) &&
-            !usedCache?.value.sources.some((covered) => covered.id === source.id),
+            !validity.usedCache?.value.sources.some((covered) => covered.id === source.id),
         ),
-      summaryFromSequence: usedCache?.fromSequence ?? null,
-      summaryThroughSequence: usedCache?.through ?? null,
+      summaryFromSequence: validity.usedCache?.fromSequence ?? null,
+      summaryThroughSequence: validity.usedCache?.through ?? null,
       firstSequence: exactTurns[0]?.sequence ?? null,
       lastSequence: exactTurns.at(-1)?.sequence ?? null,
-      summaryBytes: usedCache ? Buffer.byteLength(usedCache.value.text) : 0,
+      summaryBytes: validity.usedCache ? Buffer.byteLength(validity.usedCache.value.text) : 0,
       projectionBytes: projectionBytes(lines, experience),
       maxBytes,
       compactorVersion: CONVERSATION_COMPACTOR_VERSION,
       compactionCalls: calls,
       compactionFailure,
-      summary: usedCache?.value.text ?? null,
+      summary: validity.usedCache?.value.text ?? null,
       recent: exactTurns.map((turn) => turn.text),
       projection: conversationText(lines),
     },

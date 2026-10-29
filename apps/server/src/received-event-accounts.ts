@@ -1,4 +1,5 @@
 import {
+  temporalChunkReceipts,
   receivedEventEvidence,
   receivedEventAwareness,
   currentReceivedObservationSources,
@@ -27,16 +28,16 @@ export interface ReceivedEventAccount {
  * lookup stores offsets only; accepted receipts remain the sole evidence owner. */
 export type ReceivedEventAccountIndex = Map<string, TemporalChunk>;
 type OccurrenceOffsets = Map<string, number[]>;
-const occurrenceIndexes = new WeakMap<TemporalReceipt[], OccurrenceOffsets>();
+const occurrenceIndexes = new WeakMap<object, OccurrenceOffsets>();
 function occurrenceOffsets(chunk: TemporalChunk, previous?: TemporalChunk): OccurrenceOffsets {
-  const receipts = chunk.receipts;
-  const immutable = isImmutableData(receipts);
-  const cached = immutable && occurrenceIndexes.get(receipts);
+  const receipts = temporalChunkReceipts(chunk);
+  const immutable = isImmutableData(chunk.entries);
+  const cached = immutable && occurrenceIndexes.get(chunk.entries);
   if (cached) return cached;
-  const prior = previous && occurrenceIndexes.get(previous.receipts);
-  const appended = prior && previous && appendedRecordCount(previous.receipts, receipts);
+  const prior = previous && occurrenceIndexes.get(previous.entries);
+  const appended = prior && previous && appendedRecordCount(previous.entries, chunk.entries);
   const offsets = appended !== undefined ? new Map(prior) : new Map<string, number[]>();
-  const start = appended === undefined ? 0 : receipts.length - appended;
+  const start = appended === undefined ? 0 : temporalChunkReceipts(previous!).length;
   for (let index = start; index < receipts.length; index++) {
     const origin = receipts[index]!.origin;
     if (origin?.kind !== 'occurrence') continue;
@@ -46,7 +47,7 @@ function occurrenceOffsets(chunk: TemporalChunk, previous?: TemporalChunk): Occu
   // Keep immutable cuts independent. Only the sparse event-key map is copied on
   // append; motion receipts are neither rescanned nor hydrated. Unknown/forked/
   // replaced vectors rebuild instead of trusting a matching chunk ID.
-  if (immutable) occurrenceIndexes.set(receipts, offsets);
+  if (immutable) occurrenceIndexes.set(chunk.entries, offsets);
   return offsets;
 }
 
@@ -90,19 +91,19 @@ export function receivedEventAccounts(
     const offsets = occurrenceOffsets(chunk, options.index?.get(chunk.id) ?? prior);
     options.index?.set(chunk.id, chunk);
     const lower =
-      prior && appendedRecordCount(prior.receipts, chunk.receipts) !== undefined
-        ? prior.receipts.length
+      prior && appendedRecordCount(prior.entries, chunk.entries) !== undefined
+        ? temporalChunkReceipts(prior).length
         : 0;
     for (const eventId of wanted) {
       if (result.has(eventId) || forgotten.has(eventId)) continue;
       for (const offset of offsets.get(eventId) ?? []) {
-        if (offset < lower || offset >= chunk.receipts.length || result.has(eventId)) continue;
-        const receipt = chunk.receipts[offset]!;
+        if (offset < lower || offset >= temporalChunkReceipts(chunk).length || result.has(eventId)) continue;
+        const receipt = temporalChunkReceipts(chunk)[offset]!;
         const values = receipt.facets.flatMap((reference) => {
           const fragment =
             world.receivedValues?.sources[reference.blockId]?.values[reference.valueOrdinal];
           if (!fragment || (fragment.kind !== 'event' && fragment.kind !== 'sound')) return [];
-          const value = materializeTemporalValue(reference, fragment);
+          const value = materializeTemporalValue(reference, fragment,world.receivedValues?.sources??{});
           return value && temporalFacetEligible(world, actorId, reference, value) ? [value] : [];
         });
         const evidence = receivedEventEvidence(actorId, values);

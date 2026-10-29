@@ -3,7 +3,7 @@ import { initializeAppraisalWork, ownsAppraisalWork } from './appraisals.js';
 import { ownsCoachingWork } from './coaching.js';
 import { canonicalJson, contentLabel } from './events.js';
 import { isDraft, original } from 'immer';
-import { worldRootEntities } from './entity-index.js';
+import { worldRootCount } from './entity-index.js';
 import {
   admitWork,
   advanceWorkInterval,
@@ -107,7 +107,7 @@ export function validateStatusInstallation(world: WorldState, policy: StatusEffe
       combined = addWork(combined, { ...cost, subscriptions: 1 });
     }
   requireWork(combined, WORK_LIMITS.module);
-  const roots = worldRootEntities(world).length;
+  const roots = worldRootCount(world);
   requireWork(
     multiplyWork(
       { tests: combined.tests, effects: combined.effects, subscriptions: combined.subscriptions },
@@ -148,7 +148,7 @@ export function installedWorkAllocation(world: WorldState): WorkDemand {
   }
   return {
     retainedBytes: interfaces.retainedBytes,
-    subscriptions: interfaces.subscriptions! * worldRootEntities(world).length,
+    subscriptions: interfaces.subscriptions! * worldRootCount(world),
   };
 }
 export function admitStatusWork(

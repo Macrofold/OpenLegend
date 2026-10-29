@@ -1,3 +1,4 @@
+import { temporalChunkReceipts, temporalChunkReferences } from './temporal-frames.js';
 import { expect, it } from 'vitest';
 import { freeze } from 'immer';
 import { createWorld, NPC_ID, PLAYER_ID } from './data.js';
@@ -157,7 +158,7 @@ it('retains intermediate actually received movement and its exact last sample on
       receipt.change === 'loss' && values.some((value) => value.kind === 'body'),
   )!;
   expect(lostBody.receipt.at).toBe(3);
-  expect(lostBody.receipt.facets[0]!.measuredThrough).toBe(2);
+  expect(lostBody.receipt.facets[lostBody.values.findIndex(value=>value.kind==='body')]!.measuredThrough).toBe(2);
   expect(selected.incomplete).toBe(true);
 });
 
@@ -344,7 +345,7 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
       },
       selectedTemporalPolicy(world).recent,
     );
-    return world.experience!.temporal!.actors[PLAYER_ID]!.chunks.at(-1)!.receipts.at(-1)!
+    return temporalChunkReceipts(world.experience!.temporal!.actors[PLAYER_ID]!.chunks.at(-1)!).at(-1)!
       .facets[0]!;
   };
   const before = append(supplied);
@@ -696,20 +697,19 @@ it('retains only the exact qualifying contact capsule when familiarity uses a te
   const temporal = world.experience!.temporal!;
   const actor = temporal.actors[PLAYER_ID]!;
   const original = actor.chunks
-    .flatMap((chunk) => chunk.receipts)
+    .flatMap((chunk) => temporalChunkReceipts(chunk))
     .find((receipt) => receipt.id === support.receipt.id)!;
-  const location = original.facets.find(
-    (facet) =>
-      world.receivedValues!.sources[facet.blockId]!.values[facet.valueOrdinal]!.kind === 'location',
-  )!;
+  const additional = original.facets.find(facet=>!support.receipt.facets.some(held=>held.ordinal===facet.ordinal))!;
+  expect(additional).toBeDefined();
+  const additionalKind=world.receivedValues!.sources[additional.blockId]!.values[additional.valueOrdinal]!.kind;
   const before = { ...actor.accounts!.optional };
   const extended = retainTemporalSupport(world, support.receipt, {
-    facetOrdinals: [location.ordinal],
+    facetOrdinals: [additional.ordinal],
     maxBytes: 4 * 1024 * 1024,
     maxRecords: 2048,
   })!;
   expect(extended.values.map((value) => value.kind)).toEqual(
-    expect.arrayContaining(['body', 'location']),
+    expect.arrayContaining(['body', additionalKind]),
   );
   expect(actor.accounts!.optional.count).toBe(before.count);
   expect(actor.accounts!.optional.bytes).toBe(before.bytes - support.bytes + extended.bytes);
@@ -797,7 +797,7 @@ it('shares equal received values without granting another observer the earlier h
   });
   const encoded = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
   const completeValue = (reference: TemporalFacetReference, fragment: ReceivedValueFragment) => {
-    const value = materializeTemporalValue(reference, fragment);
+    const value = materializeTemporalValue(reference, fragment,world.receivedValues?.sources??{});
     expect(value).toBeDefined();
     return value;
   };
@@ -805,25 +805,10 @@ it('shares equal received values without granting another observer the earlier h
     expect(block.bytes).toBe(encoded(block));
   for (const actor of Object.values(world.experience!.temporal!.actors)) {
     for (const chunk of actor.chunks) {
-      const supportBytes = chunk.receipts.reduce(
-        (sum, receipt) =>
-          sum +
-          receipt.facets.reduce(
-            (n, reference) =>
-              n +
-              encoded(
-                completeValue(
-                  reference,
-                  world.receivedValues!.sources[reference.blockId]!.values[reference.valueOrdinal]!,
-                ),
-              ),
-            0,
-          ),
-        0,
-      );
-      expect(chunk.bytes).toBe(
-        encoded({ ...chunk, receipts: chunk.receipts.map(temporalReceiptForRead) }) + supportBytes,
-      );
+      let supportBytes=0;
+      for(const [blockId,ordinals] of temporalChunkReferences(chunk))
+        for(const ordinal of ordinals) supportBytes+=encoded(world.receivedValues!.sources[blockId]!.values[ordinal]);
+      expect(chunk.bytes).toBe(encoded(chunk)+supportBytes);
     }
     for (const capsule of Object.values(actor.supports ?? {}))
       expect(capsule.bytes).toBe(
@@ -870,7 +855,8 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   for (const at of [1, 2, 3]) {
     world.simTime = at;
     initializePerception(world, []);
-    expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)!.valueMeasuredThrough).toBe(at);
+    expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)!.valueMeasuredThrough).toBe(originalTime);
+    expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)!.confirmedThrough).toBe(at);
   }
   expect(currentFacetTimes(owner, owner.current[`${NPC_ID}:body`]!).valueMeasuredThrough).toBe(
     originalTime,
@@ -879,7 +865,7 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   const location = currentObservedFacets(world, PLAYER_ID, NPC_ID).find(
     (f) => f.value.kind === 'location',
   )!;
-  expect(location.valueMeasuredFrom).toBe(3);
+  expect(location.valueMeasuredFrom).toBe(originalTime);
   const npc = entityGet(world.entities, NPC_ID)!;
   world.simTime = 4;
   setSpatialPosition(world, npc, { x: 4, y: 0, z: 2 }, worldSupport(npc), {
@@ -889,11 +875,12 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   const motion = currentObservedFacets(world, PLAYER_ID, NPC_ID).find(
     (f) => f.value.kind === 'observed-motion',
   )!;
-  expect(motion.value.kind === 'observed-motion' && motion.value.earlier.measuredThrough).toBe(3);
+  expect(motion.value.kind === 'observed-motion' && motion.value.earlier.measuredThrough).toBe(originalTime);
+  expect(motion.value.kind === 'observed-motion' && motion.value.earlier.confirmedThrough).toBe(3);
   expect(
     cut.current.find((f) => f.exposure.episodeId === raw.exposure && f.value.kind === 'body')!
       .valueMeasuredThrough,
-  ).toBe(3);
+  ).toBe(originalTime);
   world.simTime = 5;
   setSpatialPosition(world, npc, { x: 100, y: 0, z: 2 }, worldSupport(npc), {
     continuity: 'physical',
@@ -905,7 +892,8 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   }).entries.filter(
     ({ receipt, values }) => receipt.change === 'loss' && values.some((v) => v.kind === 'body'),
   );
-  expect(losses.at(-1)!.receipt.facets[0]!.measuredThrough).toBe(4);
+  const loss=losses.at(-1)!;
+  expect(loss.receipt.facets[loss.values.findIndex(value=>value.kind==='body')]!.measuredThrough).toBe(4);
   validatePerceptionEvidenceState(JSON.parse(JSON.stringify(world)));
 });
 

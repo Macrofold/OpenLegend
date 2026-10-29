@@ -1,3 +1,4 @@
+import { temporalHistoryWindow } from './temporal-storage.js';
 import { afterEach, expect, it, vi } from 'vitest';
 import {
   PLAYER_ID,
@@ -176,8 +177,7 @@ it('persists receipt-only native movement before immediate recent browsing and d
   expect(
     await store.memories.temporalSelectionsCurrent(
       { worldId: service.world.id, actorId: PLAYER_ID, generation: head!.generation },
-      selected.entries,
-    ),
+      selected.entries, () => temporalHistoryWindow(service.world)),
   ).toBe(true);
 });
 

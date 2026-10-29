@@ -36,7 +36,7 @@ import {
   compactContributionHistory,
 } from './history-residency.js';
 import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
-import { WorldRecords, retainedSourceTables } from './world-records.js';
+import { WorldRecords, retainedSourceTables, type RecordChanges } from './world-records.js';
 import {
   assertAttemptReceiptContinuity,
   readAttemptBudget,
@@ -58,7 +58,13 @@ import {
 import { insertRows, SqlWriteBatch } from './sql-rows.js';
 import { IntegrationValues } from './integration-values.js';
 import { JournalDatabase } from './journal-database.js';
-import { WorldJournal, type JournalApplication } from './world-journal.js';
+import { WorldJournal, PERSISTENCE_DEBT_BYTES, type JournalApplication } from './world-journal.js';
+import {
+  prepareReceivedReclamation,
+  invalidateReceivedReclamation,
+  type ReceivedReclamationCapture,
+  type PreparedReceivedReclamation,
+} from './received-value-retirement.js';
 import { encodeJournalTransition, reconstructJournalWorld } from './world-journal-data.js';
 import {
   journalTableFamily,
@@ -318,7 +324,7 @@ interface CompactJournalWrite extends JournalTables {
 /** Replaceable persistence boundary for committed world state. */
 export interface WorldStore {
   /** Deferred query tables have caught up after durable acknowledgement. */
-  onProjection(listener: () => void): () => void;
+  onProjection(listener: (changed?: boolean) => void): () => void;
   /** A successful nonnull load is current-format validated and has passed its
    * required history audit. Invalid storage throws before installation. */
   load(active?: boolean): Promise<{ revision: number; state: SavedWorld } | null>;
@@ -356,6 +362,8 @@ export interface WorldStore {
 
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
+  readonly receivedReclamationDebt?: { journalBytes: number; maximumBytes: number };
+  prepareReceivedReclamation?(capture: ReceivedReclamationCapture): Promise<PreparedReceivedReclamation>;
   prepareRetainedSourceClosure?(
     state: SavedWorld,
     complete?: boolean,
@@ -491,10 +499,49 @@ export class SqlGameRepository implements GameRepository {
     }
     throw new Error('Exact source closure cannot fit its complete retained account allowance.');
   }
-  private readonly projectionListeners = new Set<() => void>();
-  onProjection(listener: () => void): () => void {
+  private readonly projectionListeners = new Set<(changed?: boolean) => void>();
+  onProjection(listener: (changed?: boolean) => void): () => void {
     this.projectionListeners.add(listener);
     return () => this.projectionListeners.delete(listener);
+  }
+  private receivedReclamation?: Pick<PreparedReceivedReclamation, 'capture' | 'changed'>;
+  private receivedReclamationDone?: Promise<void>;
+  private closing = false;
+  get receivedReclamationDebt() {
+    return { journalBytes: this.journal.unappliedBytes, maximumBytes: PERSISTENCE_DEBT_BYTES };
+  }
+  async prepareReceivedReclamation(capture: ReceivedReclamationCapture): Promise<PreparedReceivedReclamation> {
+    if (this.closing) throw new Error('The received cleanup owner is closing.');
+    if (this.receivedReclamation) throw new Error('Received cleanup already has an active batch.');
+    const ticket = { capture, changed: new Set<string>() };
+    this.receivedReclamation = ticket;
+    let completed!: () => void;
+    this.receivedReclamationDone = new Promise<void>((resolve) => { completed = resolve; });
+    const release = () => {
+      if (this.receivedReclamation === ticket) {
+        this.receivedReclamation = undefined;
+        this.receivedReclamationDone = undefined;
+      }
+      completed();
+    };
+    try {
+      // Snapshot may lag the accepted head; its finite pending suffix is an exact
+      // overlay, and the ticket fences subsequent ownership changes during I/O.
+      const pending = this.journalActive ? await this.journal.pending() : [];
+      for (const transition of pending)
+        for (const row of transition.changes.writes.get('mind_perception_values') ?? []) {
+          const id = (JSON.parse(row.id) as string[]).at(-1)!;
+          if (capture.candidates.some((candidate) => candidate.id === id)) ticket.changed.add(id);
+        }
+      const read = () => prepareReceivedReclamation(this.rawDb, capture, pending);
+      const prepared = this.rawDb.readTransaction
+        ? await this.rawDb.readTransaction(read) : await this.rawDb.transaction(read);
+      return { ...prepared, changed: ticket.changed, release };
+    } catch (error) { release(); throw error; }
+  }
+  private acceptedReceivedChanges(worldId: string, changes: RecordChanges, restored = false): void {
+    if (this.receivedReclamation)
+      invalidateReceivedReclamation(this.receivedReclamation, worldId, changes, restored);
   }
   private readonly settlementListeners = new Set<() => void>();
   onSettlement(listener: () => void): () => void {
@@ -1052,6 +1099,7 @@ export class SqlGameRepository implements GameRepository {
       restore: !!historyProjection?.restore,
     };
     const publish = () => {
+      this.acceptedReceivedChanges(state.world.id, changes, write.restore);
       this.memories.acceptedSourceChanges(state.world.id, changes, write.restore);
       this.publishWorldTables(write);
       if (this.journalActive) this.journal.synchronized(state.world.id, committedRevision);
@@ -1097,12 +1145,13 @@ export class SqlGameRepository implements GameRepository {
               ? this.commands.prepareSave(state.world.id, historyProjection.receipt, 'advanced')
               : undefined;
             return { kind: 'admitted', ...(receipt ? { receipt } : {}) };
-          }),
+          }, state.world.receivedValues?.retirement?.bytes ?? 0),
         );
         if (appended.kind === 'appended') {
           countMetric('persistence.journalAccepted');
           this.acceptedRevision = appended.revision;
           this.acceptedState = state;
+          this.acceptedReceivedChanges(state.world.id, changes);
           this.memories.acceptedSourceChanges(state.world.id, changes);
           this.journal.schedule();
           return appended.revision;
@@ -1307,14 +1356,16 @@ export class SqlGameRepository implements GameRepository {
     // The live world was already published at durable journal acknowledgement.
     // Its SQL-derived read tokens advance only here; quiet/paused clients need
     // this second notification rather than waiting for an unrelated world tick.
-    if (
+    const changed = !!(
       write.deferred &&
       (memoryRevision !== this.memories.publicationRevision ||
         ('historyChanged' in write
           ? write.historyChanged
           : !!write.preparedHistory?.changed.length || !!write.preparedHistory?.removed.length))
-    )
-      for (const listener of this.projectionListeners) listener();
+    );
+    // The same application notification services bounded cleanup even when
+    // searchable/player projections did not change. It does not await maintenance.
+    for (const listener of this.projectionListeners) listener(changed);
   }
   private async applyOnlineJournal(
     range: JournalRange,
@@ -2249,8 +2300,11 @@ export class SqlGameRepository implements GameRepository {
   }
 
   async close(): Promise<void> {
+    this.closing = true;
+    this.projectionListeners.clear();
     this.settlementListeners.clear();
     await this.ready.catch(() => undefined);
+    await this.receivedReclamationDone;
     try {
       if (this.journalActive) await this.journal.flush();
     } finally {

@@ -25,7 +25,8 @@ export type JournalAdmission =
   | { kind: 'synchronous' };
 export type JournalAppendResult = { kind: 'appended'; revision: number } | { kind: 'synchronous' };
 const PENDING_REVISIONS = 32;
-const PENDING_BYTES = 32 * 1024 * 1024;
+export const PERSISTENCE_DEBT_BYTES = 32 * 1024 * 1024;
+const PENDING_BYTES = PERSISTENCE_DEBT_BYTES;
 
 /** One durable ordered suffix beyond the canonical tables. Its application lane belongs
  * to the existing PostgreSQL writer, never to a second gameplay mutation owner.
@@ -109,12 +110,16 @@ export class WorldJournal<Preparation> {
     if (this.failure) throw this.failure;
     return this.applied === this.committed && !this.worker && !this.wake;
   }
+  get unappliedBytes(): number {
+    return this.pendingBytes;
+  }
   async append(
     worldId: string,
     expected: number,
     encoded: EncodedJournalTransition,
     preparation: Preparation,
     admit: () => Promise<JournalAdmission>,
+    unreclaimedBytes = 0,
   ): Promise<JournalAppendResult> {
     if (this.failure) throw this.failure;
     const transition = validatedJournalTransition(encoded);
@@ -133,9 +138,10 @@ export class WorldJournal<Preparation> {
       throw new Error('Deferred saving requires the initialized owned application lane.');
     if (
       this.committed - this.applied >= PENDING_REVISIONS ||
-      this.pendingBytes + encoded.bytes > PENDING_BYTES
+      this.pendingBytes + unreclaimedBytes + encoded.bytes > PENDING_BYTES
     )
       await this.flush();
+    if (unreclaimedBytes + encoded.bytes > PENDING_BYTES) return { kind: 'synchronous' };
     return this.db.transaction(async (): Promise<JournalAppendResult> => {
       const admission = await admit();
       if (admission.kind === 'synchronous') return admission;

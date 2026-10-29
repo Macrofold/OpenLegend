@@ -17,6 +17,7 @@ import {
   type PerceivedSpeech,
   type PerceivedSound,
   soundExperience,
+  selectedSubjectLabelReader,
 } from '@open-legend/domain';
 import {
   entityHandle,
@@ -40,6 +41,87 @@ import {
 // Strict provider serialization rejects a present field whose value is undefined.
 const suppliedFields = (fields: Record<string, unknown>) =>
   Object.fromEntries(Object.entries(fields).filter(([, value]) => value !== undefined));
+
+/** Finite request-owned presentation. No resolver may close over an old world. */
+export interface CapturedExperienceContext {
+  readonly kind: 'captured-experience';
+  readonly id: string;
+  readonly actorId: string;
+  readonly frame: ModelSpatialFrame;
+  readonly ownerHandle: string;
+  readonly subjectLabel: (subject: ObserverSubject) => string;
+  readonly forgotten: ReadonlySet<string>;
+  readonly corrected: ReadonlySet<string>;
+}
+export type ExperiencePresentation = WorldState | CapturedExperienceContext;
+
+/** Visit the already admitted finite DTO, not the actor's entire identity/history catalogue. */
+function presentationSubjects(values: readonly unknown[]): ObserverSubject[] {
+  const subjects: ObserverSubject[] = [],
+    seen = new WeakSet<object>();
+  const visit = (value: unknown): void => {
+    if (!value || typeof value !== 'object' || seen.has(value)) return;
+    seen.add(value);
+    if (
+      'kind' in value &&
+      value.kind === 'entity' &&
+      'entityId' in value &&
+      typeof value.entityId === 'string'
+    )
+      subjects.push({ kind: 'entity', entityId: value.entityId });
+    else if (
+      'kind' in value &&
+      value.kind === 'individual' &&
+      'individualId' in value &&
+      typeof value.individualId === 'string'
+    )
+      subjects.push({ kind: 'individual', individualId: value.individualId });
+    for (const child of Object.values(value)) visit(child);
+  };
+  for (const value of values) visit(value);
+  return subjects;
+}
+
+export function captureExperienceContext(
+  world: WorldState,
+  actorId: string,
+  frame = captureModelSpatialFrame(world, actorId),
+  values: readonly unknown[] = [],
+): CapturedExperienceContext {
+  return {
+    kind: 'captured-experience',
+    id: world.id,
+    actorId,
+    frame,
+    ownerHandle: entityHandle(world, actorId, actorId),
+    subjectLabel: selectedSubjectLabelReader(world, actorId, [
+      { kind: 'entity', entityId: actorId },
+      ...presentationSubjects(values),
+    ]),
+    forgotten: new Set(world.experience?.forgotten[actorId] ?? []),
+    corrected: new Set(Object.keys(world.experience?.corrections?.[actorId] ?? {})),
+  };
+}
+export function capturedExperience(
+  source: ExperiencePresentation,
+): source is CapturedExperienceContext {
+  return 'kind' in source && source.kind === 'captured-experience';
+}
+function evidenceFrame(source: ExperiencePresentation, actorId: string) {
+  if (!capturedExperience(source)) return captureModelSpatialFrame(source, actorId);
+  if (source.actorId !== actorId) throw new Error('Foreign captured experience.');
+  return source.frame;
+}
+function evidenceOwnerHandle(source: ExperiencePresentation, actorId: string) {
+  if (!capturedExperience(source)) return entityHandle(source, actorId, actorId);
+  if (source.actorId !== actorId) throw new Error('Foreign captured experience.');
+  return source.ownerHandle;
+}
+function sourceCorrected(source: ExperiencePresentation, actorId: string, id: string) {
+  return capturedExperience(source)
+    ? source.actorId !== actorId || source.corrected.has(id)
+    : !!source.experience?.corrections?.[actorId]?.[id];
+}
 
 function soundForModel(
   frame: ModelSpatialFrame,
@@ -83,17 +165,31 @@ function speechForModel(frame: ModelSpatialFrame, speech: PerceivedSpeech | unde
 /** The native source tuple stays in the binding. Models receive the same permitted
  * meaning with opaque roles, never the private producer/exposure routing key.
  * docs/memory-architecture.md#metadata-stays-in-the-server-binding */
-export function subjectForModel(world: WorldState, actorId: string, subject: ObserverSubject) {
+export function subjectForModel(
+  world: ExperiencePresentation,
+  actorId: string,
+  subject: ObserverSubject,
+) {
   return {
     reference: subjectHandle(world, actorId, subject),
-    label: subjectLabel(world, actorId, subject),
+    label: capturedExperience(world)
+      ? world.subjectLabel(subject)
+      : subjectLabel(world, actorId, subject),
   };
 }
-const supportForModel = (world: WorldState, actorId: string, key: ObservationFactKey) => ({
+const supportForModel = (
+  world: ExperiencePresentation,
+  actorId: string,
+  key: ObservationFactKey,
+) => ({
   source: evidenceSourceHandle(world, actorId, key.source),
   ordinal: key.ordinal,
 });
-function participantForModel(world: WorldState, actorId: string, participant: EvidenceParticipant) {
+function participantForModel(
+  world: ExperiencePresentation,
+  actorId: string,
+  participant: EvidenceParticipant,
+) {
   switch (participant.kind) {
     case 'individual':
       return {
@@ -116,7 +212,7 @@ function participantForModel(world: WorldState, actorId: string, participant: Ev
  * positions still need occurrence-scoped references; authored definition/recipe IDs
  * remain literal facts even when their spelling happens to match an entity ID. */
 export function eventFieldsForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   value: unknown,
   sourceScope: unknown,
@@ -137,11 +233,11 @@ export function eventFieldsForModel(
   );
 }
 export function facetValueForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   value: SensoryFacet,
   sourceScope: unknown,
-  frame = captureModelSpatialFrame(world, actorId),
+  frame = evidenceFrame(world, actorId),
 ): unknown {
   switch (value.kind) {
     case 'body':
@@ -238,9 +334,7 @@ export function facetValueForModel(
           sourceForgotten(world, actorId, alias.id),
         )
           ? 'forgotten'
-          : value.supportAliases?.some(
-                (alias) => world.experience?.corrections?.[actorId]?.[alias.id],
-              )
+          : value.supportAliases?.some((alias) => sourceCorrected(world, actorId, alias.id))
             ? 'disputed'
             : 'retained',
         speaker: participantForModel(world, actorId, value.speaker),
@@ -337,7 +431,8 @@ export function facetValueForModel(
   }
 }
 const forgottenIndexes = new WeakMap<readonly string[], ReadonlySet<string>>();
-function sourceForgotten(world: WorldState, actorId: string, id: string): boolean {
+function sourceForgotten(world: ExperiencePresentation, actorId: string, id: string): boolean {
+  if (capturedExperience(world)) return world.actorId !== actorId || world.forgotten.has(id);
   const values = world.experience?.forgotten[actorId];
   if (!values?.length) return false;
   let index = Object.isFrozen(values) ? forgottenIndexes.get(values) : undefined;
@@ -347,16 +442,21 @@ function sourceForgotten(world: WorldState, actorId: string, id: string): boolea
   }
   return index.has(id);
 }
-function factSupportStatus(world: WorldState, actorId: string, id: string, ordinal: number) {
+function factSupportStatus(
+  world: ExperiencePresentation,
+  actorId: string,
+  id: string,
+  ordinal: number,
+) {
   const alias = personalFactAlias(id, ordinal);
   return sourceForgotten(world, actorId, alias)
     ? 'unavailable'
-    : world.experience?.corrections?.[actorId]?.[alias]
+    : sourceCorrected(world, actorId, alias)
       ? 'disputed'
       : 'retained';
 }
 function motionSampleForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   sample: ReceivedLocationSample,
   frame: ModelSpatialFrame,
@@ -375,10 +475,10 @@ function motionSampleForModel(
   };
 }
 export function currentFacetForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   snapshot: CapturedCurrentFacet,
-  frame = captureModelSpatialFrame(world, actorId),
+  frame = evidenceFrame(world, actorId),
 ) {
   return {
     source: evidenceSourceHandle(world, actorId, snapshot.original.source),
@@ -412,7 +512,7 @@ export function currentFacetForModel(
 /** These defaults encode equal metadata, never a normalized time or inferred
  * continuity. A differing or absent optional confirmation stays facet-local. */
 export function facetSupportForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   support: ReceivedFacetProof,
 ) {
@@ -465,10 +565,10 @@ export function modelFacetMetadata(
   };
 }
 export function observationForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   observation: ObservationContribution,
-  frame = captureModelSpatialFrame(world, actorId),
+  frame = evidenceFrame(world, actorId),
 ) {
   if (observation.observer.actorId !== actorId) throw new Error('Foreign personal observation.');
   const metadata = modelFacetMetadata(observation.facets);
@@ -498,7 +598,7 @@ export function observationForModel(
   };
 }
 function subjectRelationForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   subject: ObserverSubject,
   observations: readonly ObservationContribution[],
@@ -540,10 +640,10 @@ function subjectRelationForModel(
   };
 }
 export function experienceManifestForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   manifest: ExperienceManifest,
-  frame = captureModelSpatialFrame(world, actorId),
+  frame = evidenceFrame(world, actorId),
 ) {
   return {
     coverage: manifest.coverage.map((source) => ({
@@ -622,15 +722,15 @@ function exposureForModel(
   });
 }
 export function memoryMeaningForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   memory: MemoryRecord,
-  frame = captureModelSpatialFrame(world, actorId),
+  frame = evidenceFrame(world, actorId),
 ) {
   const evidence = memory.evidence;
   const historyHandle = (id: string) =>
     id === actorId
-      ? entityHandle(world, actorId, actorId)
+      ? evidenceOwnerHandle(world, actorId)
       : permittedSourceHandle(world, actorId, [
           'historical-participant',
           memory.observation?.id ?? memory.id,
@@ -733,15 +833,15 @@ export function memoryMeaningForModel(
 /** A remembered occurrence keeps its own participant references. A later sighting
  * cannot turn an old unknown participant into today's body by native ID equality. */
 export function memoryForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   memory: MemoryRecord,
-  frame = captureModelSpatialFrame(world, actorId),
+  frame = evidenceFrame(world, actorId),
 ) {
   const source = permittedSourceHandle(world, actorId, ['experience', memory.id]);
   const participant = (id: string) =>
     id === actorId
-      ? entityHandle(world, actorId, actorId)
+      ? evidenceOwnerHandle(world, actorId)
       : permittedSourceHandle(world, actorId, [
           'historical-participant',
           memory.observation?.id ?? memory.id,

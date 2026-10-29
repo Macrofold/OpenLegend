@@ -1,5 +1,5 @@
 import { routineSensePolicy } from './perception.js';
-import { routineObservationRelevant } from './perception-timing.js';
+import { nextRoutineSightAt, routineObservationRelevant } from './perception-timing.js';
 import { actionHasMotion, strikeDefinition } from './strikes.js';
 import { nativeResponseProfile, nativeSensoryObserver } from './native-response.js';
 import {
@@ -1142,18 +1142,12 @@ export function sensoryCrossingBound(
       Object.values(entity.actor?.encounters?.pairs ?? {}).some((pair) => !!pair.watch) ||
       (entity.actor?.agency.plan?.activity?.control?.kind === 'finite' &&
         !!entity.actor.agency.plan.activity.control.stopWithin);
-    if (
-      cadence &&
-      body.radius > 0 &&
-      observing &&
-      (movingOrAlarmed ||
-        (policy.sight?.mode === 'cadence' && entity.sensoryProgress?.routineSight))
-    ) {
-      let at =
-        policy.sight?.mode === 'cadence'
-          ? (entity.sensoryProgress?.routineSight?.nextAt ?? now + cadence)
-          : (Math.floor(now / cadence) + 1) * cadence;
-      if (policy.sight?.mode !== 'cadence' && at - now <= TIME_EPSILON) at += cadence;
+    if (policy.sight?.mode === 'cadence') {
+      const at = nextRoutineSightAt(world, entity);
+      if (at !== undefined) sampleAt(at, true);
+    } else if (cadence && body.radius > 0 && observing && movingOrAlarmed) {
+      let at = (Math.floor(now / cadence) + 1) * cadence;
+      if (at - now <= TIME_EPSILON) at += cadence;
       sampleAt(at, true);
     }
   }

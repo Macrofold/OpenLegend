@@ -1,12 +1,14 @@
 import { currentBodyGrant } from '@open-legend/domain';
 import {
   captureTemporalReceiptPrefix,
+  contributionFactKey,
   PERSONAL_EVIDENCE_PREPARATION,
   selectedAttentionPolicy,
   currentDetailedAttention,
   selectTemporalHistory,
+  selectCapturedTemporalHistory,
 } from '@open-legend/domain';
-import { captureSituation } from './situation-context.js';
+import { captureSituation, completeSituationHistory } from './situation-context.js';
 import {
   prepareSupplyOpportunityContext,
   renderSupplyOpportunityContext,
@@ -45,6 +47,7 @@ import {
   projectEntityMarkers,
   personalAttributionRevision,
   intentionEntityReferences,
+  capturePersonalAttributionReader,
 } from './entity-references.js';
 import { digest } from './store.js';
 import { contextSections, type SharedModelExperience } from './perceived-context.js';
@@ -72,7 +75,7 @@ import {
   type CandidateAction,
 } from './context.js';
 import { domainCommand } from './cognition.js';
-import { candidateSet, gameTime, type RecallService } from './recall.js';
+import { candidateSet, gameTime, captureRecallSelection, type RecallService } from './recall.js';
 import type { WorldService } from './world-service.js';
 import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
 import {
@@ -94,7 +97,91 @@ import {
   CONVERSATION_PREPARATION_BYTES,
   type ConversationGenerate,
 } from './conversation-context.js';
+import { captureExperienceContext } from './experience-context.js';
 import { decisionFeelings } from './appraisal-context.js';
+
+import {
+  captureTemporalHistoryReadContext,
+  temporalHistoryWindow,
+  type TemporalHistoryReadContext,
+  type TemporalHistoryQuery,
+} from './temporal-storage.js';
+import type { MemoryScope, CurrentMemorySource } from './memory-repository.js';
+
+async function validateCapturedSituation(
+  service: WorldService,
+  generation: string,
+  capturedSituation: ReturnType<typeof captureSituation>,
+  evidenceScope: MemoryScope | undefined,
+) {
+  if (generation !== service.generation || !capturedSituation.valid(service.world))
+    throw new Error('Received situation evidence changed during this decision.');
+  if (evidenceScope && service.store.memories) {
+    const selections = Object.values(capturedSituation.receiptDetails);
+    for (let offset = 0; offset < selections.length; offset += 128)
+      if (
+        !(await service.store.memories.temporalSelectionsCurrent(
+          evidenceScope,
+          selections.slice(offset, offset + 128),
+          () => ({
+            at: service.world.simTime,
+            maxAgeSeconds: capturedSituation.historyMaxAgeSeconds,
+          }),
+        ))
+      )
+        throw new Error('Recent personal evidence expired during this decision.');
+  }
+  if (generation !== service.generation || !capturedSituation.valid(service.world))
+    throw new Error('Personal evidence changed during context validation.');
+}
+async function validateCapturedDecision(
+  service: WorldService,
+  actorId: string,
+  conversationValidate: Awaited<ReturnType<typeof buildConversationContext>>['validate'],
+  sources: CurrentMemorySource[],
+  rememberedSubjects: ReadonlySet<string>,
+  rememberedAttribution: string,
+  outcomeBinding: string,
+  validateSituation: () => Promise<void>,
+  flush = true,
+) {
+  await conversationValidate(flush, sources);
+  // Historical interpretation survives contact loss; identity/source grants and
+  // executable effects remain fenced by their separate existing owners.
+  if (
+    personalAttributionRevision(service.world, actorId, rememberedSubjects) !==
+    rememberedAttribution
+  )
+    throw new Error('A remembered participant changed identity; discard stale context.');
+  if (outcomeBinding !== JSON.stringify(requiredOutcomeMemoryIds(service.world, actorId)))
+    throw new Error(
+      'Action outcomes changed during the decision; reconsider with current memories.',
+    );
+  await validateSituation();
+}
+async function readCapturedSituationHistory(
+  service: WorldService,
+  evidenceScope: MemoryScope | undefined,
+  context: TemporalHistoryReadContext,
+  presentation: ReturnType<typeof captureExperienceContext>,
+  validate: (flush?: boolean) => Promise<void>,
+  query: TemporalHistoryQuery,
+) {
+  await validate();
+  const result =
+    service.store.memories && evidenceScope
+      ? await service.store.memories.temporalHistory(evidenceScope, query, context)
+      : selectCapturedTemporalHistory(context, query);
+  await validate(false);
+  const labels = captureExperienceContext(service.world, context.actorId, presentation.frame, [
+    result,
+  ]);
+  return {
+    ...result,
+    hasMore: result.hasMore ?? false,
+    presentation: { ...presentation, subjectLabel: labels.subjectLabel },
+  };
+}
 
 /** Reuse the same permitted perception used to select actions and budget the prompt. */
 function activityDecisionFacts(
@@ -350,9 +437,9 @@ export async function prepareDecision(
 ) {
   await service.prepareCognitionEvidence(actorId);
   await service.flushMemorySources(actorId);
-  const world = service.world;
+  const readWorld = () => service.world;
   const generation = service.generation;
-  const inspection = world.actionExperience.learning[actorId]?.inspection;
+  const inspection = readWorld().actionExperience.learning[actorId]?.inspection;
   const inspected =
     inspection && inspection.eventId === triggerEvidenceId
       ? await service.activityHistoryForActor(
@@ -361,20 +448,32 @@ export async function prepareDecision(
           inspection.methodAfter ?? 0,
         )
       : undefined;
-  stimulus = projectEntityMarkers(stimulus, world, actorId);
-  const observed = decisionObservation(world, actorId);
+  stimulus = projectEntityMarkers(stimulus, readWorld(), actorId);
+  const observed = decisionObservation(readWorld(), actorId);
+  const observedWorld = new WeakRef(service.world);
   if (!observed) throw new Error('Actor unavailable.');
   let includeConversation =
     includeCurrentConversation ||
     requiredIds.some((id) => service.worldEvent(id)?.type === 'speech');
+  const initialWorldId = readWorld().id;
+  const initialHistory = captureTemporalHistoryReadContext(readWorld(), actorId);
+  const receiptPrefix = captureTemporalReceiptPrefix(readWorld(), actorId);
+  const historyPolicy = selectedAttentionPolicy(readWorld()).scene;
+  const historySubjects = currentDetailedAttention(readWorld(), actorId).map(
+    (entry) => entry.exposure.episodeId,
+  );
+  const capturedSituation = captureSituation(readWorld(), actorId, jobId, {
+    entries: [],
+    incomplete: true,
+  });
   const head = await service.store.records?.head();
   // The singular trigger can sit outside the coalesced list; keep its source binding.
-  const outcomeIds = requiredOutcomeMemoryIds(world, actorId);
+  const outcomeIds = requiredOutcomeMemoryIds(readWorld(), actorId);
   const evidenceIds = [
     ...new Set([...requiredIds, ...(triggerEvidenceId ? [triggerEvidenceId] : [])]),
   ];
   const evidenceScope = head
-    ? { worldId: world.id, actorId, generation: head.generation }
+    ? { worldId: initialWorldId, actorId, generation: head.generation }
     : undefined;
   const bodies = new MemoryReadCache();
   const retainedEvidence =
@@ -383,27 +482,23 @@ export async function prepareDecision(
       : undefined;
   const evidence = retainedEvidence
     ? retainedEvidence.flatMap((entry) => (entry.awareness ? [entry.awareness] : []))
-    : (world.experience?.awareness[actorId] ?? []).filter((entry) =>
+    : (readWorld().experience?.awareness[actorId] ?? []).filter((entry) =>
         evidenceIds.includes(entry.eventId),
       );
-  const receiptPrefix = captureTemporalReceiptPrefix(world, actorId);
-  const historyPolicy = selectedAttentionPolicy(world).scene;
   const recentHistory =
     service.store.memories && evidenceScope
       ? await service.store.memories.temporalHistory(
           evidenceScope,
           {
-            subjects: currentDetailedAttention(world, actorId).map(
-              (entry) => entry.exposure.episodeId,
-            ),
-            through: world.simTime,
+            subjects: historySubjects,
+            through: initialHistory.at,
             cut: receiptPrefix,
             bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
             limit: historyPolicy.historyReceipts,
           },
-          world,
+          initialHistory,
         )
-      : selectTemporalHistory(world, actorId, {
+      : selectCapturedTemporalHistory(initialHistory, {
           cut: receiptPrefix,
           bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
           limit: historyPolicy.historyReceipts,
@@ -411,33 +506,29 @@ export async function prepareDecision(
   // Size the same received measurements that this decision will actually use,
   // before optional paid selection. Later waits cannot replace them with a new
   // scene or make older retained changes newly observed.
-  const capturedSituation = captureSituation(
-    world,
-    actorId,
-    jobId,
+  const representedObservations = evidence.flatMap((entry) => [
+    ...(entry.observation ? [entry.observation] : []),
+    ...(entry.observations ?? []),
+  ]);
+  completeSituationHistory(
+    capturedSituation,
     recentHistory,
-    evidence.flatMap((entry) => [
-      ...(entry.observation ? [entry.observation] : []),
-      ...(entry.observations ?? []),
+    representedObservations.map((observation) => ({
+      observation,
+      keys: observation.facets.map((facet) => contributionFactKey(observation, facet.ordinal)),
+    })),
+    captureExperienceContext(readWorld(), actorId, capturedSituation.frame, [
+      recentHistory,
+      representedObservations,
     ]),
   );
-  const validateSituation = async () => {
-    if (generation !== service.generation || !capturedSituation.valid(service.world))
-      throw new Error('Received situation evidence changed during this decision.');
-    if (evidenceScope && service.store.memories) {
-      const selections = Object.values(capturedSituation.receiptDetails);
-      for (let offset = 0; offset < selections.length; offset += 128)
-        if (
-          !(await service.store.memories.temporalSelectionsCurrent(
-            evidenceScope,
-            selections.slice(offset, offset + 128),
-          ))
-        )
-          throw new Error('Recent personal evidence expired during this decision.');
-    }
-    if (generation !== service.generation || !capturedSituation.valid(service.world))
-      throw new Error('Personal evidence changed during context validation.');
-  };
+  const validateSituation = validateCapturedSituation.bind(
+    undefined,
+    service,
+    generation,
+    capturedSituation,
+    evidenceScope,
+  );
   const knownSupplyPlaces = await prepareSupplyOpportunityContext(
     service.store.memories,
     evidenceScope,
@@ -450,7 +541,7 @@ export async function prepareDecision(
   if (triggerEvidenceId && evidence.some((entry) => entry.eventId === triggerEvidenceId))
     stimulus = projectEntityMarkers(
       responseTrigger(service, actorId, triggerEvidenceId, stimulus, evidence),
-      world,
+      readWorld(),
       actorId,
     );
   includeConversation ||= evidence.some((entry) => !!entry.speech);
@@ -468,7 +559,7 @@ export async function prepareDecision(
         }
       : undefined;
   const planning = requiredChoices ? [] : planningCandidates(service, actorId, observed);
-  const catalogueIds = acquiredActivities(world, actorId).map((method) => method.id);
+  const catalogueIds = acquiredActivities(readWorld(), actorId).map((method) => method.id);
   const actionInspection: ActionInspection | undefined =
     inspected && inspection
       ? {
@@ -491,7 +582,7 @@ export async function prepareDecision(
     : decisionActionCandidates(service, actorId, observed, actionInspection);
   const requiredNative = requiredChoices
     ? (() => {
-        const expected = currentWorkIdentity(world, actorId);
+        const expected = currentWorkIdentity(readWorld(), actorId);
         const choices = availableActions.flatMap((candidate) => {
           if (candidate.command && candidate.nativeInvocation)
             throw new Error('A prepared choice cannot bind two different first invocations.');
@@ -545,8 +636,159 @@ export async function prepareDecision(
   );
   // Work results and current causes remain required independently of optional dialogue.
   const recallIds = [...new Set([...evidenceIds, ...outcomeIds])];
+  const snapshotActor = observed.actor.actor!;
+  const requiredActivity = activityDecisionFacts(readWorld(), actorId, observed);
+  const requiredContext: Record<string, unknown> = {
+    situationQueries: mode !== 'native-only',
+    receivedSituation: capturedSituation.packet,
+    ...requiredActivity,
+    ...(supplyOpportunities.length ? { supplyOpportunities } : {}),
+    capabilities: {
+      speech: canSpeak(observed.actor),
+      expressions: supportsManualWork(observed.actor),
+    },
+    stimulus,
+    notepad: generalKnowledgeContext(readWorld(), actorId),
+    knowledgeInstructions: readWorld().knowledgePolicy
+      ? knowledgePolicyInstructions(readWorld().knowledgePolicy!)
+      : 'Knowledge is unavailable.',
+    triggerFacts:
+      responseTriggerContext(
+        service,
+        actorId,
+        triggerEvidenceId,
+        evidence,
+        capturedSituation.frame,
+      ) ?? null,
+    navigation: navigationInstructions(readWorld(), true),
+    namedTimes: namedClockTimes(readWorld()),
+    outputFamilies: itemOutputFamilies(readWorld()),
+    currentSupport: worldSupport(observed.actor),
+    publicSurfaces:
+      readWorld().map.spatial.disclosure === 'public'
+        ? readWorld().map.spatial.surfaces.map(({ id, name }) => ({ id, name }))
+        : [],
+    intentActions: intentActions.map(({ id, description }) => ({ id, description })),
+    planOffers: [],
+    references: responseReferences(
+      readWorld(),
+      actorId,
+      observed.visibleEntities.map((entity) => entity.id),
+      requiredIds,
+      socialEntityIds(readWorld(), actorId),
+      evidence,
+      [],
+      [],
+      activityDecisionReferences(requiredActivity),
+      [],
+      capturedSituation.frame,
+    ).references,
+    identity: `I am ${entityLabel(readWorld(), observed.actor, actorId)}. Species: ${snapshotActor.species ?? 'unknown'}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
+    feelings: decisionFeelings(readWorld(), actorId, requiredChoices?.feelings),
+    ...(requiredChoices ? { requiredChoices: requiredChoices.facts } : {}),
+    aboutMe:
+      readWorld().innerWorlds?.[actorId]?.text ??
+      mindFor(readWorld(), actorId)
+        .documents.map((document) => `${document.title}\n${document.text}`)
+        .join('\n'),
+    now: gameTime(
+      readWorld().simTime,
+      readWorld().statusEffectPolicy.clockOffsetHours,
+      readWorld().presentation?.calendar?.dayLabel,
+    ),
+    body: bodyContext(readWorld(), observed.actor),
+    contacts: observed.contacts.map((c) => c.text),
+    goal: currentGoal(snapshotActor),
+    commitments: (readWorld().memories[actorId] ?? [])
+      .filter(
+        (memory) =>
+          memory.obligation &&
+          !memory.resolved &&
+          ['active', 'overdue'].includes(memory.obligation.status) &&
+          !(readWorld().experience?.forgotten[actorId] ?? []).includes(memory.id),
+      )
+      .map(
+        (memory) =>
+          `${memory.summary}${memory.obligation?.dueAt !== undefined ? ` Due in ${Math.max(0, memory.obligation.dueAt - readWorld().simTime)} game seconds.` : ''}`,
+      ),
+    activityCoverage:
+      'At most four compatible personally learned activities are offered at once. Other activities can be inspected. An available first step does not promise that later steps can finish.',
+    agency: {
+      outcomeCoverage: '',
+      goals: snapshotActor.agency.goals,
+      plan: remainingActivityText(service.world, actorId),
+      paused: pausedWorkText(service.world, actorId),
+      choicesForCurrentWork: workTransitionContext(readWorld(), actorId),
+      planRevision: snapshotActor.agency.plan?.revision ?? 0,
+      attempts: snapshotActor.agency.attempts,
+    },
+    ...(inspected
+      ? {
+          inspectedActions: inspected.entries.map((entry) => entry.text),
+          inspectedMethods: inspected.methods.map((method) => `${method.text}. ${method.status}`),
+        }
+      : {}),
+    conversation: [],
+    surroundings: [],
+    possessions: [],
+    ...(observed.inventoryCoverage.paged ? { inventoryCoverage: observed.inventoryCoverage } : {}),
+  };
+  const carryingConcern = bodyPolicy(readWorld())?.carryingConcern;
+  const carryingMeter =
+    carryingConcern && attributeDefinition(readWorld(), carryingConcern.attributeId);
+  if (
+    carryingConcern &&
+    carryingMeter &&
+    readAttribute(readWorld(), observed.actor, carryingMeter) !== undefined &&
+    !observed.inventoryCoverage.paged &&
+    !observed.inventory.some((item) =>
+      readWorld().itemDefinitions[item.definitionId]?.properties.some(
+        (property) => property === carryingConcern.itemProperty,
+      ),
+    )
+  )
+    requiredContext['carryingConcern'] = renderNarration(
+      readWorld(),
+      narrationTemplate(carryingConcern.text, {
+        subject: entityGet(readWorld().entities, actorId),
+      }),
+      actorId,
+    );
+  if (readWorld().innerWorlds?.[actorId]?.reconsiderationRequired)
+    requiredContext['reconsideration'] =
+      'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
+  const allPlanActions = Object.fromEntries(
+    planOffers
+      .map((candidate) => [
+        candidate.id,
+        bindNativeChoice(
+          readWorld(),
+          actorId,
+          domainCommand(candidate.command!, actorId, jobId),
+          candidate.transition ?? 'replace',
+        ),
+      ])
+      .concat(
+        intentActions.map((candidate) => [
+          candidate.id,
+          bindNativeChoice(readWorld(), actorId, candidate.command, 'continue'),
+        ]),
+      ),
+  );
+  const recallSelection = captureRecallSelection(
+    readWorld(),
+    actorId,
+    observed.visibleEntities.map((entity) => entity.id),
+  );
+  const preparedPrivacy = digest({
+    forgotten: readWorld().experience?.forgotten[actorId] ?? [],
+    corrections: readWorld().experience?.corrections?.[actorId] ?? {},
+  });
+  const sourceWorld = observedWorld;
+  // All later optional work owns finite evidence and presentation, rather than
+  // retaining the immutable simulation root across a model wait.
   const candidates = await recall.candidates(
-    world,
+    () => service.world,
     actorId,
     observed,
     recallIds,
@@ -566,126 +808,12 @@ export async function prepareDecision(
   const outcomeCoverage = missingOutcomes
     ? `${missingOutcomes} recent work records are unavailable under current memory permissions/retention. Base decisions only on available memories and current evidence; do not reconstruct their effects from execution status.`
     : 'Recent work results are included through the same personal memories as other experiences.';
-  const snapshotActor = observed.actor.actor!;
-  const requiredActivity = activityDecisionFacts(world, actorId, observed);
-  const requiredContext: Record<string, unknown> = {
-    situationQueries: mode !== 'native-only',
-    receivedSituation: capturedSituation.packet,
-    ...requiredActivity,
-    ...(supplyOpportunities.length ? { supplyOpportunities } : {}),
-    capabilities: {
-      speech: canSpeak(observed.actor),
-      expressions: supportsManualWork(observed.actor),
-    },
-    stimulus,
-    notepad: generalKnowledgeContext(world, actorId),
-    knowledgeInstructions: world.knowledgePolicy
-      ? knowledgePolicyInstructions(world.knowledgePolicy)
-      : 'Knowledge is unavailable.',
-    triggerFacts:
-      responseTriggerContext(
-        service,
-        actorId,
-        triggerEvidenceId,
-        evidence,
-        capturedSituation.frame,
-      ) ?? null,
-    navigation: navigationInstructions(world, true),
-    namedTimes: namedClockTimes(world),
-    outputFamilies: itemOutputFamilies(world),
-    currentSupport: worldSupport(observed.actor),
-    publicSurfaces:
-      world.map.spatial.disclosure === 'public'
-        ? world.map.spatial.surfaces.map(({ id, name }) => ({ id, name }))
-        : [],
-    intentActions: intentActions.map(({ id, description }) => ({ id, description })),
-    planOffers: [],
-    references: responseReferences(
-      world,
-      actorId,
-      candidates
-        .filter((candidate) => candidate.kind === 'entity' && candidate.required)
-        .flatMap((candidate) => candidate.entityIds ?? []),
-      requiredIds,
-      socialEntityIds(world, actorId),
-      evidence,
-      [],
-      [],
-      activityDecisionReferences(requiredActivity),
-      [],
-      capturedSituation.frame,
-    ).references,
-    identity: `I am ${entityLabel(world, observed.actor, actorId)}. Species: ${snapshotActor.species ?? 'unknown'}.${snapshotActor.traits?.length ? ` My traits: ${snapshotActor.traits.map((trait) => `${trait.name}: ${trait.description}`).join('; ')}.` : ''}`,
-    feelings: decisionFeelings(world, actorId, requiredChoices?.feelings),
-    ...(requiredChoices ? { requiredChoices: requiredChoices.facts } : {}),
-    aboutMe:
-      world.innerWorlds?.[actorId]?.text ??
-      mindFor(world, actorId)
-        .documents.map((document) => `${document.title}\n${document.text}`)
-        .join('\n'),
-    now: gameTime(
-      world.simTime,
-      world.statusEffectPolicy.clockOffsetHours,
-      world.presentation?.calendar?.dayLabel,
-    ),
-    body: bodyContext(world, observed.actor),
-    contacts: observed.contacts.map((c) => c.text),
-    goal: currentGoal(snapshotActor),
-    commitments: (world.memories[actorId] ?? [])
-      .filter(
-        (memory) =>
-          memory.obligation &&
-          !memory.resolved &&
-          ['active', 'overdue'].includes(memory.obligation.status) &&
-          !(world.experience?.forgotten[actorId] ?? []).includes(memory.id),
-      )
-      .map(
-        (memory) =>
-          `${memory.summary}${memory.obligation?.dueAt !== undefined ? ` Due in ${Math.max(0, memory.obligation.dueAt - world.simTime)} game seconds.` : ''}`,
-      ),
-    activityCoverage:
-      'At most four compatible personally learned activities are offered at once. Other activities can be inspected. An available first step does not promise that later steps can finish.',
-    agency: {
-      outcomeCoverage,
-      goals: snapshotActor.agency.goals,
-      plan: remainingActivityText(service.world, actorId),
-      paused: pausedWorkText(service.world, actorId),
-      choicesForCurrentWork: workTransitionContext(world, actorId),
-      planRevision: snapshotActor.agency.plan?.revision ?? 0,
-      attempts: snapshotActor.agency.attempts,
-    },
-    ...(inspected
-      ? {
-          inspectedActions: inspected.entries.map((entry) => entry.text),
-          inspectedMethods: inspected.methods.map((method) => `${method.text}. ${method.status}`),
-        }
-      : {}),
-    conversation: [],
-    surroundings: [],
-    possessions: [],
-    ...(observed.inventoryCoverage.paged ? { inventoryCoverage: observed.inventoryCoverage } : {}),
-  };
-  const carryingConcern = bodyPolicy(world)?.carryingConcern;
-  const carryingMeter = carryingConcern && attributeDefinition(world, carryingConcern.attributeId);
-  if (
-    carryingConcern &&
-    carryingMeter &&
-    readAttribute(world, observed.actor, carryingMeter) !== undefined &&
-    !observed.inventoryCoverage.paged &&
-    !observed.inventory.some((item) =>
-      world.itemDefinitions[item.definitionId]?.properties.some(
-        (property) => property === carryingConcern.itemProperty,
-      ),
-    )
-  )
-    requiredContext['carryingConcern'] = renderNarration(
-      world,
-      narrationTemplate(carryingConcern.text, { subject: entityGet(world.entities, actorId) }),
-      actorId,
-    );
-  if (world.innerWorlds?.[actorId]?.reconsiderationRequired)
-    requiredContext['reconsideration'] =
-      'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
+  const attribution = capturePersonalAttributionReader(
+    service.world,
+    actorId,
+    candidates.flatMap((candidate) => candidate.entityIds),
+  );
+  (requiredContext['agency'] as Record<string, unknown>)['outcomeCoverage'] = outcomeCoverage;
   let requiredBytes =
     Buffer.byteLength(readableDecisionContext(requiredContext, [], false)) +
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
@@ -772,28 +900,14 @@ export async function prepareDecision(
   requiredBytes =
     Buffer.byteLength(readableDecisionContext(requiredContext, [], false)) +
     Buffer.byteLength(RESPONSE_INSTRUCTIONS);
-  const planActions = Object.fromEntries(
-    planOffers
-      .map((candidate) => [
-        candidate.id,
-        bindNativeChoice(
-          world,
-          actorId,
-          domainCommand(candidate.command!, actorId, jobId),
-          candidate.transition ?? 'replace',
-        ),
-      ])
-      .concat(
-        intentActions.map((candidate) => [
-          candidate.id,
-          bindNativeChoice(world, actorId, candidate.command, 'continue'),
-        ]),
-      ),
-  );
+  const planActions = Object.fromEntries([
+    ...planOffers.map((candidate) => [candidate.id, allPlanActions[candidate.id]]),
+    ...intentActions.map((candidate) => [candidate.id, allPlanActions[candidate.id]]),
+  ]);
   await validateSituation();
   const selection = await recall
     .select(
-      world,
+      recallSelection,
       actorId,
       stimulus,
       `${jobId}:attempt:${attempt}`,
@@ -836,41 +950,34 @@ export async function prepareDecision(
       .filter((candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation')
       .flatMap((candidate) => candidate.entityIds),
   );
-  const rememberedAttribution = personalAttributionRevision(world, actorId, rememberedSubjects);
-  const validatePrepared = async (flush = true) => {
-    await conversation.validate(flush, sources);
-    // Keep this request's historical references after contact ends; never rebind
-    // them to a later exposure. Actual identity changes still revoke the prepared
-    // attribution, while physical proposals recheck their captured body lease.
-    // docs/memory-architecture.md#personal-perspective-and-acquisition
-    if (
-      personalAttributionRevision(service.world, actorId, rememberedSubjects) !==
-      rememberedAttribution
-    )
-      throw new Error('A remembered participant changed identity; discard stale context.');
-    // The same fence runs after generation: a newly completed action is material
-    // evidence even when none of the previously selected memory records changed.
-    if (outcomeBinding !== JSON.stringify(requiredOutcomeMemoryIds(service.world, actorId)))
-      throw new Error(
-        'Action outcomes changed during the decision; reconsider with current memories.',
-      );
-    await validateSituation();
-  };
+  const rememberedAttribution = attribution(rememberedSubjects);
+  const validatePrepared = validateCapturedDecision.bind(
+    undefined,
+    service,
+    actorId,
+    conversation.validate,
+    sources,
+    rememberedSubjects,
+    rememberedAttribution,
+    outcomeBinding,
+    validateSituation,
+  );
   await validatePrepared(false);
   const currentWorld = service.world;
   if (generation !== service.generation)
     throw new Error('World restored during attention; discard this decision.');
   // Optional failure cannot revive evidence forgotten/corrected while the provider was running.
   // docs/memory-architecture.md#metadata-stays-in-the-server-binding
-  const privacyRevision = (snapshot: typeof world) =>
+  if (
+    preparedPrivacy !==
     digest({
-      forgotten: snapshot.experience?.forgotten[actorId] ?? [],
-      corrections: snapshot.experience?.corrections?.[actorId] ?? {},
-    });
-  if (privacyRevision(world) !== privacyRevision(currentWorld))
+      forgotten: currentWorld.experience?.forgotten[actorId] ?? [],
+      corrections: currentWorld.experience?.corrections?.[actorId] ?? {},
+    })
+  )
     throw new Error('Recall permissions changed during attention; discard this decision.');
   const currentObserved =
-    currentWorld === world ? observed : decisionObservation(currentWorld, actorId);
+    currentWorld === sourceWorld.deref() ? observed : decisionObservation(currentWorld, actorId);
   if (!currentObserved) throw new Error('Actor unavailable.');
   const actor = currentObserved.actor.actor!;
   const currentFacts = candidateSet(currentWorld, actorId, currentObserved, [], [], [], []);
@@ -1184,15 +1291,14 @@ export async function prepareDecision(
   );
   return {
     situation: capturedSituation,
-    readSituationHistory: async (query: import('./temporal-storage.js').TemporalHistoryQuery) => {
-      await validatePrepared();
-      const result =
-        service.store.memories && evidenceScope
-          ? await service.store.memories.temporalHistory(evidenceScope, query, currentWorld)
-          : selectTemporalHistory(currentWorld, actorId, query);
-      await validatePrepared(false);
-      return { ...result, hasMore: result.hasMore ?? false };
-    },
+    readSituationHistory: readCapturedSituationHistory.bind(
+      undefined,
+      service,
+      evidenceScope,
+      initialHistory,
+      capturedSituation.presentation,
+      validatePrepared,
+    ),
     context,
     prompt,
     includeActions: false,

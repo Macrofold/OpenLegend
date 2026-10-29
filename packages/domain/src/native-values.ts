@@ -272,18 +272,17 @@ export function retainNativeIntegration(
   for (const binding of bindings) {
     // Eligibility already proved whether any meter changes. Clamped accounting-only
     // continuation sends no invented attribute invalidation or repeated replay.
-    if (
-      Object.entries(binding.attributes).some(
-        ([id, attribute]) =>
-          attribute.changed && attributeDefinition(world, id)?.disclosure === 'public',
-      )
-    )
-      recordSensoryChange(world, binding.entityId);
+    const outwardChange = Object.entries(binding.attributes).some(
+      ([id, attribute]) =>
+        attribute.changed && attributeDefinition(world, id)?.disclosure === 'public',
+    );
+    if (outwardChange) recordSensoryChange(world, binding.entityId);
     if (Object.values(binding.attributes).some((attribute) => attribute.changed))
       recordSemanticChange(world, {
         kind: 'state',
         entityId: binding.entityId,
         field: 'attribute',
+        outwardChange,
       });
   }
   return new Set(bindings.map((binding) => binding.episode));

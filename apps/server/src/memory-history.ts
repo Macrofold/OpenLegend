@@ -56,8 +56,10 @@ export async function memoryHistory(
   const historyEpoch = service.historyEpoch;
   const head = await records.head();
   if (!head) throw new Error('Memory history requires the history database.');
-  const world = service.world,
+  const worldId = service.world.id,
     generation = service.generation;
+  const forgotten = service.world.experience?.forgotten[actorId],
+    corrections = service.world.experience?.corrections?.[actorId];
   const fence = digest([
     scopeKey(scope),
     head.generation,
@@ -77,22 +79,22 @@ export async function memoryHistory(
       throw new HistoryCursorError('Memories changed. Browse or search again.');
     before = { at: cursor.at, id: cursor.id, kind: cursor.kind };
   }
-  const sourceOwners = (snapshot: typeof world) => [
+  const sourceOwners = (snapshot: import('@open-legend/domain').WorldState) => [
     snapshot.memories[actorId],
     snapshot.experience?.awareness[actorId],
     snapshot.experience?.summaries[actorId],
     snapshot.experience?.temporal?.actors[actorId]?.accounts,
   ];
-  const capturedOwners = sourceOwners(world),
+  const capturedOwners = sourceOwners(service.world),
     sourceRevision = memories.actorRevision(actorId);
-  const memoryScope = { worldId: world.id, actorId, generation: head.generation };
+  const memoryScope = { worldId, actorId, generation: head.generation };
   const assertPermitted = () => {
     if (
       !permitted() ||
       generation !== service.generation ||
       historyEpoch !== service.historyEpoch ||
-      world.experience?.forgotten[actorId] !== service.world.experience?.forgotten[actorId] ||
-      world.experience?.corrections?.[actorId] !== service.world.experience?.corrections?.[actorId]
+      forgotten !== service.world.experience?.forgotten[actorId] ||
+      corrections !== service.world.experience?.corrections?.[actorId]
     )
       throw new HistoryCursorError('Memories changed. Browse or search again.');
   };
@@ -133,7 +135,7 @@ export async function memoryHistory(
   assertPermitted();
   return {
     ok: true,
-    worldId: world.id,
+    worldId,
     generation,
     entries: result.entries.map(memoryEntryView).reverse(),
     next: result.resume

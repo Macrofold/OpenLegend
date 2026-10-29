@@ -33,7 +33,7 @@ import {
 } from '../../temporal-evidence.js';
 import { BASE_ATTENTION_POLICY } from './attention.js';
 import config from './config/knowledge.generated.json' with { type: 'json' };
-import { learnRecipe, sameSubject, type ObserverSubject } from '../../knowledge.js';
+import { learnRecipe, sameSubject, subjectKey, type ObserverSubject } from '../../knowledge.js';
 import {
   installAuthoredVoice,
   associateIndividualFamiliarity,
@@ -926,6 +926,28 @@ export function subjectLabel(
       : identity?.voice
         ? 'unidentified voice'
         : 'unidentified individual')
+  );
+}
+
+function capturedSubjectLabels(labels: ReadonlyMap<string, string>) {
+  return (subject: ObserverSubject): string =>
+    labels.get(subjectKey(subject)) ??
+    (subject.kind === 'individual' ? 'unidentified individual' : 'unidentified subject');
+}
+
+/** Labels are a request's acquired perspective, not a later lookup of the same
+ * private body ID. The returned reader retains strings only, never its world. */
+export function captureSubjectLabelReader(
+  world: WorldState,
+  observerId: string,
+  additional: Iterable<ObserverSubject> = [],
+): (subject: ObserverSubject) => string {
+  const subjects = new Map<string, ObserverSubject>();
+  for (const subject of additional) subjects.set(subjectKey(subject), subject);
+  return capturedSubjectLabels(
+    new Map(
+      [...subjects].map(([key, subject]) => [key, subjectLabel(world, observerId, subject)]),
+    ),
   );
 }
 

@@ -581,6 +581,8 @@ export interface WorldState {
   simTime: number;
   /** Sampling progress affects evidence times; rates and perception caches are rebuilt. */
   nativeInterval?: { remainingSeconds: number; endsAt?: number };
+  /** Coalesced ordinary sensing work; no per-observer recurring empty timers. */
+  sensory?: import('./perception-timing.js').SensoryContinuation;
   paused: boolean;
   profile: { id: 'grounded-wilderness'; version: 1 };
   map: WorldMap;

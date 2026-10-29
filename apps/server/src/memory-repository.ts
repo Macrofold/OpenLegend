@@ -1,3 +1,4 @@
+import { newTemporalSourceWatch, temporalWatchChanges, installTemporalWitnesses, addTemporalWitness, sameSupportedSelection, type TemporalSourceWatch } from './temporal-source-fence.js';
 import {
   trimMemoryDerivatives,
   derivedMemoryUsage,
@@ -15,8 +16,12 @@ import { hasLinguisticSpeech } from './speech-recall.js';
 import { tableRows } from './record-pages.js';
 import {
   readTemporalHistory,
+  readTemporalChunkRecord,
   prepareTemporalRetention,
   type TemporalHistoryPage,
+  captureTemporalHistoryReadContext,
+  type TemporalHistoryReadContext,
+  type TemporalHistoryWindow,
   type TemporalHistoryQuery,
   type PreparedMemoryRetention,
 } from './temporal-storage.js';
@@ -43,7 +48,7 @@ import {
   storyAccountSql,
   temporalStoryAwareness,
   storyTemporalReceipt,
-  storyTemporalBytes,
+  storyTemporalPreparationBytesSql,
 } from './personal-accounts.js';
 import type {
   Awareness,
@@ -79,6 +84,11 @@ import {
   type TemporalReceiptLocator,
   type TemporalSupportCapsule,
   splitTemporalValue,
+  temporalChunkReceipt,
+  temporalReceiptEntries,
+  temporalReceiptForRead,
+  materializeTemporalValue,
+  type TemporalFacetReference,
   temporalKnownPlaceCapsules,
   selectedAttentionPolicy,
   validExperienceSummary,
@@ -325,6 +335,17 @@ export interface CanonicalSourceFence {
   current(): boolean;
   release(): void;
 }
+export interface TemporalSourceFence extends CanonicalSourceFence {
+  validate(selections: readonly TemporalHistorySelection['entries'][number][], currentWindow: () => TemporalHistoryWindow): Promise<boolean>;
+}
+interface CanonicalSourceWatch {
+  worldId: string;
+  actorId: string;
+  tables: ReadonlySet<string>;
+  expected: ReadonlyMap<string, string>;
+  valid: boolean;
+  temporal?: TemporalSourceWatch;
+}
 export interface KnownPlaceSource {
   memory: MemoryRecord;
   revision: string;
@@ -442,13 +463,7 @@ export class MemoryRepository {
     { revision: number; reset: number; rows: Record<string, unknown>[] }
   >();
   private actorRevisions = new Map<string, number>();
-  private readonly canonicalSourceFences = new Set<{
-    worldId: string;
-    actorId: string;
-    tables: ReadonlySet<string>;
-    expected: ReadonlyMap<string, string>;
-    valid: boolean;
-  }>();
+  private readonly canonicalSourceFences = new Set<CanonicalSourceWatch>();
   /** Watch exact selected account rows during an admitted asynchronous publication.
    * Register before current() validates SQL; this token detects later accepted
    * changes, but does not itself prove source eligibility or extend retention.
@@ -479,6 +494,47 @@ export class MemoryRepository {
       },
     };
   }
+  /** Use the same short source-watch owner for exact temporal dependencies.
+   * Registration precedes SQL alignment; unrelated appends preserve these slots. */
+  captureTemporalSourceFence(scope: MemoryScope, signal?: AbortSignal): TemporalSourceFence {
+    const temporal = newTemporalSourceWatch();
+    const fence: CanonicalSourceWatch = { worldId: scope.worldId, actorId: scope.actorId,
+      tables: new Set(), expected: new Map(), valid: true, temporal };
+    this.canonicalSourceFences.add(fence);
+    const release = () => {
+      fence.valid = false;
+      temporal.pending = [];
+      temporal.rows.clear();
+      temporal.ancestors.clear();
+      this.canonicalSourceFences.delete(fence);
+      signal?.removeEventListener('abort', release);
+    };
+    signal?.addEventListener('abort', release, { once: true });
+    if (signal?.aborted) release();
+    let pending: Promise<boolean> | undefined;
+    return {
+      current: () => fence.valid,
+      release,
+      validate: async (selections, currentWindow) => {
+        if (pending) await pending;
+        if (!fence.valid) return false;
+        temporal.collecting = true;
+        temporal.pending = [];
+        temporal.pendingBytes = 0;
+        const work = (async () => {
+          await this.synchronizeSources();
+          return fence.valid && await this.validateTemporalSelections(scope, selections, currentWindow, temporal);
+        })().finally(() => {
+          temporal.collecting = false;
+          temporal.pending = [];
+          temporal.pendingBytes = 0;
+        });
+        pending = work;
+        try { return (await work) && fence.valid; }
+        finally { if (pending === work) pending = undefined; }
+      },
+    };
+  }
   /** Synchronous accepted-change notification, including journal-first acceptance.
    * Applied-table notifications repeat safely; matching payloads keep the proof.
    * No historical revision ledger or source body is retained by these short watches. */
@@ -488,6 +544,10 @@ export class MemoryRepository {
       if (fence.worldId !== worldId) continue;
       if (restored || changes.deletes.has('data_world')) {
         fence.valid = false;
+        continue;
+      }
+      if (fence.temporal) {
+        if (fence.valid && !temporalWatchChanges(fence.temporal, fence.actorId, changes, RETRIEVAL_BYTES)) fence.valid = false;
         continue;
       }
       for (const table of fence.tables) {
@@ -540,6 +600,8 @@ export class MemoryRepository {
     else this.lexical.committed();
   }
   closeLexical() {
+    for (const fence of this.canonicalSourceFences) fence.valid = false;
+    this.canonicalSourceFences.clear();
     return this.lexical.close();
   }
   private retainCoverage(scope: MemoryScope, model: MemoryModel): CoverageEpochs {
@@ -773,9 +835,10 @@ export class MemoryRepository {
   temporalHistory(
     scope: MemoryScope,
     query: TemporalHistoryQuery,
-    world: WorldState,
+    source: WorldState | TemporalHistoryReadContext,
   ): Promise<TemporalHistoryPage> {
-    return this.snapshot(() => readTemporalHistory(this.db, scope, world, query));
+    const context = 'worldId' in source ? source : captureTemporalHistoryReadContext(source, scope.actorId);
+    return this.snapshot(() => readTemporalHistory(this.db, scope, context, query));
   }
   prepareRetention(
     state: SavedWorld,
@@ -839,66 +902,121 @@ export class MemoryRepository {
   async temporalSelectionsCurrent(
     scope: MemoryScope,
     selections: readonly TemporalHistorySelection['entries'][number][],
+    currentWindow: () => TemporalHistoryWindow,
+  ): Promise<boolean> {
+    const fence = this.captureTemporalSourceFence(scope);
+    try { return await fence.validate(selections, currentWindow); }
+    finally { fence.release(); }
+  }
+  private async validateTemporalSelections(
+    scope: MemoryScope, selections: readonly TemporalHistorySelection['entries'][number][],
+    currentWindow: () => TemporalHistoryWindow, watch: TemporalSourceWatch,
   ): Promise<boolean> {
     if (!selections.length) return true;
-    if (
-      selections.length > RETRIEVAL_ROWS ||
-      selections.some(
-        ({ receipt, values }) =>
-          receipt.actorId !== scope.actorId ||
-          !receipt.facets.length ||
-          receipt.facets.length !== values.length,
-      )
-    )
+    if (selections.length > RETRIEVAL_ROWS || selections.some(({ receipt, values }) =>
+      receipt.actorId !== scope.actorId || receipt.facets.length !== values.length ||
+      (!receipt.facets.length && (receipt.change !== 'receiver-frame' || !receipt.receiverFrame))))
       return false;
     const selected = selections.map(({ receipt, values }) => {
       const { facets, sourceIds: _aliases, ...header } = receipt;
-      // The public read contains full personal values. Reconstruct the exact
-      // stored pairing before comparing it within the scoped SQL snapshot.
       const fragments = values.map(splitTemporalValue);
-      return {
-        actorId: receipt.actorId,
-        physicalLife: receipt.physicalLife,
-        epoch: receipt.epoch,
-        ordinal: receipt.ordinal,
-        header,
-        facets: facets.map((facet, index) => ({
-          ...facet,
-          ...(fragments[index]!.reception ? { reception: fragments[index]!.reception } : {}),
-        })),
-        values: fragments.map(({ value }) => value),
-      };
+      return { header, facets: facets.map((facet, index) => ({ ...facet,
+        ...(fragments[index]!.reception ? { reception: fragments[index]!.reception } : {}),
+      })), values: fragments.map(({ value }) => value) };
     });
-    const payload = JSON.stringify(selected);
-    if (Buffer.byteLength(payload) > RETRIEVAL_BYTES) return false;
-    const row = await this.db
-      .prepare(
-        `SELECT COUNT(*) AS count FROM jsonb_to_recordset(?::jsonb)
-      q("actorId" text,"physicalLife" bigint,epoch text,ordinal bigint,header jsonb,facets jsonb,values jsonb)
-      WHERE EXISTS(SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
-        EXISTS(SELECT 1 FROM LATERAL (
-          SELECT payload,last_ordinal FROM mind_temporal_chunks_read c
-          WHERE c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife" AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
-          AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.receipt_ordinals @> ARRAY[q.ordinal])
-          ORDER BY c.first_ordinal DESC LIMIT 1
-        ) chunk CROSS JOIN LATERAL jsonb_array_elements(chunk.payload::jsonb->'receipts') r(receipt)
-          WHERE chunk.last_ordinal>=q.ordinal
-          AND (r.receipt->>'ordinal')::bigint=q.ordinal
-          AND (r.receipt-'facets'-'sourceIds')=q.header
-          AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(q.facets) WITH ORDINALITY f(value,position)
-            WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements(r.receipt->'facets') owned(facet)
-              JOIN mind_perception_values_read source ON source.world_id=? AND source.source_id=f.value->>'blockId'
-              WHERE owned.facet=f.value AND source.payload::jsonb->'values'->(f.value->>'valueOrdinal')::int=q.values->(f.position::int-1))))
-        OR EXISTS(SELECT 1 FROM mind_temporal_supports s
-          WHERE s.world_id=? AND s.actor_id=q."actorId" AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal
-          AND ((s.payload::jsonb->'receipt')-'facets'-'sourceIds')=q.header
-          AND NOT EXISTS(SELECT 1 FROM jsonb_array_elements(q.facets) WITH ORDINALITY f(value,position)
-            WHERE NOT EXISTS(SELECT 1 FROM jsonb_array_elements(s.payload::jsonb->'receipt'->'facets') WITH ORDINALITY owned(facet,position)
-              WHERE owned.facet=f.value AND s.payload::jsonb->'values'->(owned.position::int-1)=q.values->(f.position::int-1))))
-      )`,
-      )
-      .get(payload, scope.worldId, scope.generation, scope.worldId, scope.worldId, scope.worldId);
-    return Number(row?.['count'] ?? 0) === selections.length;
+    if (Buffer.byteLength(JSON.stringify(selected)) > RETRIEVAL_BYTES) return false;
+    return this.snapshot(async () => {
+      const window = currentWindow();
+      if ((await this.db.prepare('SELECT generation FROM world_head WHERE world_id=?').get(scope.worldId))?.['generation'] !== scope.generation)
+        return false;
+      const locators = selections.map(({ receipt }, key) => ({ key, actorId: receipt.actorId,
+        physicalLife: receipt.physicalLife, epoch: receipt.epoch, ordinal: receipt.ordinal, at: receipt.at }));
+      // Resolve actual receipt membership before decoding a bounded owner. Frame
+      // dictionaries are canonical storage, not a second SQL receipt format.
+      const owners = await this.db.prepare(`WITH requested AS (
+        SELECT * FROM jsonb_to_recordset(?::jsonb)
+          q(key int,"actorId" text,"physicalLife" bigint,epoch text,ordinal bigint,at double precision)
+      ) SELECT q.key,'chunk' AS kind,c.id,c.encoded_bytes FROM requested q
+        CROSS JOIN LATERAL (SELECT c.id,c.encoded_bytes FROM mind_temporal_chunks c
+          WHERE c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
+            AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal AND q.at>=?
+            AND EXISTS(SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id
+              AND s.parent_id=c.id AND s.receipt_ordinals @> ARRAY[q.ordinal])
+          ORDER BY c.first_ordinal DESC LIMIT 1) c
+        UNION ALL SELECT q.key,'support' AS kind,s.id,s.encoded_bytes FROM requested q
+        JOIN mind_temporal_supports s ON s.world_id=? AND s.actor_id=q."actorId"
+          AND s.physical_life=q."physicalLife" AND s.receipt_epoch=q.epoch AND s.receipt_ordinal=q.ordinal`)
+        .all(JSON.stringify(locators), scope.worldId, window.at - window.maxAgeSeconds, scope.worldId);
+      const unique = new Map(owners.map(owner => [`${owner['kind']}:${owner['id']}`, owner]));
+      if ([...unique.values()].reduce((bytes, owner) => bytes + Number(owner['encoded_bytes']), 0) > RETRIEVAL_BYTES)
+        return false;
+      const chunkIds = [...unique.values()].filter(owner => owner['kind'] === 'chunk').map(owner => String(owner['id']));
+      const supportIds = [...unique.values()].filter(owner => owner['kind'] === 'support').map(owner => String(owner['id']));
+      const chunks = new Map<string, ReturnType<typeof readTemporalChunkRecord>>();
+      if (chunkIds.length) for (const row of await this.db.prepare(
+        'SELECT id,payload,segments,value_refs FROM mind_temporal_chunks_read WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
+      ).all(scope.worldId, scope.actorId, chunkIds)) chunks.set(String(row['id']), readTemporalChunkRecord(row));
+      const supports = new Map<string, TemporalSupportCapsule>();
+      if (supportIds.length) for (const row of await this.db.prepare(
+        'SELECT id,payload FROM mind_temporal_supports WHERE world_id=? AND actor_id=? AND id=ANY(?::text[])',
+      ).all(scope.worldId, scope.actorId, supportIds)) supports.set(String(row['id']), JSON.parse(String(row['payload'])) as TemporalSupportCapsule);
+      const validSupport = (key: number, support: TemporalSupportCapsule) => {
+        const { facets, sourceIds: _aliases, ...header } = support.receipt, expected = selected[key]!;
+        return canonicalJson(header) === canonicalJson(expected.header) && expected.facets.every((facet, index) => {
+          const position = facets.findIndex(owned => canonicalJson(owned) === canonicalJson(facet));
+          return position >= 0 && canonicalJson(support.values[position]) === canonicalJson(expected.values[index]);
+        });
+      };
+      const valid = new Set<number>(), chunkSelections = new Set<number>();
+      for (const owner of owners) {
+        const key = Number(owner['key']), expected = selected[key]!;
+        const support = owner['kind'] === 'support' ? supports.get(String(owner['id'])) : undefined;
+        const chunk = owner['kind'] === 'chunk' ? chunks.get(String(owner['id'])) : undefined;
+        const receipt = support?.receipt ?? (chunk ? temporalChunkReceipt(chunk, selections[key]!.receipt.ordinal) : undefined);
+        if (!receipt) continue;
+        const { facets, sourceIds: _aliases, ...header } = receipt;
+        if (canonicalJson(header) !== canonicalJson(expected.header)) continue;
+        const positions = expected.facets.map(facet => facets.findIndex(owned => canonicalJson(owned) === canonicalJson(facet)));
+        if (positions.some(position => position < 0)) continue;
+        if (support) {
+          if (validSupport(key, support)) valid.add(key);
+        } else {
+          chunkSelections.add(key);
+          if (!expected.facets.length) valid.add(key);
+        }
+      }
+      const references = new Map<string, { block: string; ordinal: number; expected: unknown }>();
+      for (const key of chunkSelections) if (!valid.has(key))
+        for (const [index, facet] of selected[key]!.facets.entries()) {
+          const id = JSON.stringify([facet.blockId, facet.valueOrdinal]);
+          const expected = selected[key]!.values[index], prior = references.get(id);
+          if (prior && canonicalJson(prior.expected) !== canonicalJson(expected)) return false;
+          references.set(id, { block: facet.blockId, ordinal: facet.valueOrdinal, expected });
+        }
+      const matching = new Set<string>();
+      if (references.size) for (const row of await this.db.prepare(`
+        SELECT q.block,q.ordinal,
+          s.payload::jsonb->'values'->(q.ordinal-s.position)::int=q.expected AS matched
+        FROM jsonb_to_recordset(?::jsonb) q(block text,ordinal bigint,expected jsonb)
+        JOIN mind_perception_values p ON p.world_id=? AND p.source_id=q.block
+        CROSS JOIN LATERAL (SELECT s.position,s.payload FROM mind_perception_segments s
+          WHERE s.world_id=p.world_id AND s.parent_id=p.id AND s.position<=q.ordinal
+          ORDER BY s.position DESC LIMIT 1) s
+        WHERE (s.payload::jsonb->>'end')::bigint>q.ordinal
+          AND (s.payload::jsonb->>'start')::bigint=s.position`)
+        .all(JSON.stringify([...references.values()]), scope.worldId))
+        if (row['matched'] === true) matching.add(JSON.stringify([row['block'], Number(row['ordinal'])]));
+      for (const key of chunkSelections) if (selected[key]!.facets.every(facet =>
+        matching.has(JSON.stringify([facet.blockId, facet.valueOrdinal])))) valid.add(key);
+      // Physical cleanup may lag logical expiry. Independently matching capsule
+      // support is its own authority; the required flag on an old chunk is not.
+      const live = currentWindow();
+      for (const key of chunkSelections)
+        if (selected[key]!.header.at + live.maxAgeSeconds < live.at &&
+            !owners.some(owner => Number(owner['key']) === key && owner['kind'] === 'support' &&
+              supports.get(String(owner['id'])) && validSupport(key, supports.get(String(owner['id']))!))) valid.delete(key);
+      return valid.size === selections.length;
+    });
   }
   async temporalReceiptLocatorsCurrent(
     scope: MemoryScope,
@@ -3356,7 +3474,7 @@ export class MemoryRepository {
         temporalRows.push(
           ...(await this.db
             .prepare(
-              `SELECT p.event_id,p.payload FROM history_perspectives p
+              `SELECT p.event_id,p.payload,${storyTemporalPreparationBytesSql()} AS preparation_bytes FROM history_perspectives p
           WHERE p.world_id=? AND p.actor_id=? AND p.temporal_chunk_id IS NOT NULL
             AND p.event_id=ANY(?::text[]) AND (SELECT generation FROM world_head WHERE world_id=?)=?
             AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=p.world_id AND f.actor_id=p.actor_id AND f.source_id=p.event_id)`,
@@ -3365,16 +3483,17 @@ export class MemoryRepository {
         );
       }
       const temporalBytes = temporalRows.reduce(
-        (sum, row) => sum + (storyTemporalBytes(String(row['payload'])) ?? RETRIEVAL_BYTES + 1),
+        (sum, row) => sum + (row['preparation_bytes'] == null ? RETRIEVAL_BYTES + 1 : Number(row['preparation_bytes'])),
         0,
       );
       if (temporalBytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
+      const preparation = new Map(temporalRows.map(row => [String(row['event_id']), Number(row['preparation_bytes'])]));
       const result = await this.hydrate(rows, cache, temporalBytes);
       for (let offset = 0; offset < temporalRows.length; offset += 500) {
         const batch = temporalRows.slice(offset, offset + 500);
         const bodies = await this.db
           .prepare(
-            `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p
+            `SELECT p.event_id,p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p
           WHERE p.world_id=? AND p.actor_id=? AND p.event_id=ANY(?::text[])`,
           )
           .all(
@@ -3383,8 +3502,11 @@ export class MemoryRepository {
             batch.map((row) => String(row['event_id'])),
           );
         for (const row of bodies) {
+          const body = row['account_payload'];
+          if (typeof body !== 'string' || Buffer.byteLength(JSON.stringify(JSON.parse(body))) > preparation.get(String(row['event_id']))!)
+            throw new MemoryPreparationError();
           const payload = String(row['payload']),
-            awareness = temporalStoryAwareness(payload, row['account_payload']),
+            awareness = temporalStoryAwareness(payload, body),
             receipt = storyTemporalReceipt(payload);
           if (awareness && receipt)
             result.push({

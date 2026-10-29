@@ -1,3 +1,5 @@
+import { temporalHistoryWindow } from './temporal-storage.js';
+import { temporalChunkReceipts, temporalChunkReferences } from '@open-legend/domain';
 import { afterEach, expect, it } from 'vitest';
 import {
   NPC_ID,
@@ -103,7 +105,7 @@ it('retrieves one shared terrain boundary from cold storage for both outgoing an
   const ids = new Set<string>();
   const resident = new Set(
     coldWorld.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
-      chunk.receipts.map((receipt) => receipt.id),
+      temporalChunkReceipts(chunk).map((receipt) => receipt.id),
     ),
   );
   for (const subject of subjects) {
@@ -221,7 +223,7 @@ it('reads historical native distances through cold actor receipts, including a l
   ).toBe(true);
   const residentIds = new Set(
     coldWorld.experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
-      chunk.receipts.map((receipt) => receipt.id),
+      temporalChunkReceipts(chunk).map((receipt) => receipt.id),
     ),
   );
   expect(history.entries.some((entry) => !residentIds.has(entry.receipt.id))).toBe(true);
@@ -277,7 +279,7 @@ it('reads historical native distances through cold actor receipts, including a l
     expect(atTwo.other.endpointChange.decreaseLower).toBeGreaterThan(0.5);
   expect(atTwo.support.every((support) => captured.receiptDetails[support.reference])).toBe(true);
   expect(
-    await store.memories.temporalSelectionsCurrent(scope, Object.values(captured.receiptDetails)),
+    await store.memories.temporalSelectionsCurrent(scope, Object.values(captured.receiptDetails), () => temporalHistoryWindow(service.world)),
   ).toBe(true);
   const { expandedIds: _, ...wire } = response;
   expect(Buffer.byteLength(JSON.stringify(wire))).toBeLessThanOrEqual(8192);

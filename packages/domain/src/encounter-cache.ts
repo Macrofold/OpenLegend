@@ -3,6 +3,8 @@ import { isImmutableData, jsonText } from './records.js';
 import { entityGet, entityKeys } from './entity-collection.js';
 import { current, isDraft, original } from 'immer';
 import { cloneValue, hasPrivateDraftBase, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
+import { nativeChangesComplete } from './native-change-feed.js';
+import { queueSightChange } from './perception-timing.js';
 import { worldRootEntities } from './entity-index.js';
 import { objectAncestors } from './objects.js';
 import { hasMemory } from './living.js';
@@ -428,6 +430,7 @@ export function* prepareExposure(
   world: WorldState,
   base: EncounterBaseline,
   motionSpeed?: (entity: Entity) => number,
+  pendingScope?: Pick<import('./perception-timing.js').SensoryContinuation, 'all' | 'scopes'>,
 ): Generator<
   void,
   {
@@ -818,6 +821,37 @@ export function* prepareExposure(
             ids.add(id);
           }
   }
+  // A detail phase may already have refreshed the shared spatial index. Pending
+  // broad work still needs its original old/new scope to discover arrivals/losses.
+  if (pendingScope?.all) {
+    for (const observer of observers) {
+      affected.add(observer.id);
+      fullPeople.add(observer.id);
+      prepared.observers.get(observer.id)!.objectsDirty = true;
+    }
+  } else if (pendingScope) {
+    for (const [id, scope] of Object.entries(readOnlyDraftView(pendingScope.scopes))) {
+      if (scope.observer && prepared.observers.has(id)) {
+        affected.add(id);
+        fullPeople.add(id);
+        prepared.observers.get(id)!.objectsDirty = true;
+      }
+      const source = prepared.inputs.get(id);
+      for (const position of [scope.before, scope.after ?? source?.position]) {
+        if (!position) continue;
+        for (const observer of prepared.observerNear.query(position, prepared.ranges.maximum)) {
+          if (!within(position, observer.position, observer.radius)) continue;
+          affected.add(observer.id);
+          if (!source || source.object) prepared.observers.get(observer.id)!.objectsDirty = true;
+          if (!source?.object) {
+            let ids = peopleChanges.get(observer.id);
+            if (!ids) peopleChanges.set(observer.id, (ids = new Set()));
+            ids.add(id);
+          }
+        }
+      }
+    }
+  }
   countDomainWork('sensoryObserversSelected', affected.size);
   // Maintain the existing saved outward baseline only for sources this phase evaluated.
   if (rebuild) {
@@ -893,6 +927,53 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
     evaluated?.owner === ownerToken(world) ? evaluated.coverage : undefined,
   );
   if (!evaluated) mergeDeferredWrites(audit, binding?.dirty);
+  // Editor/foreign writes lack the native semantic-feed proof. Preserve their
+  // real pending sensing work in the save, not only this disposable cache.
+  if (world.sensory && !nativeChangesComplete(world)) {
+    let settingsChanged = [
+      'map',
+      'moduleManifest',
+      'statusEffectPolicy',
+      'itemDefinitions',
+      'assemblyFamilies',
+    ].some(
+      (key) =>
+        readOnlyDraftView(world[key as keyof WorldState] as object) !==
+        readOnlyDraftView(ancestor[key as keyof WorldState] as object),
+    );
+    if (settingsChanged && evaluated)
+      settingsChanged =
+        evaluated.mapKey !== exposureDependencyKey(spatialMap(world)) ||
+        evaluated.manifestKey !== exposureDependencyKey(snapshot(world.moduleManifest)) ||
+        evaluated.policyKey !== exposureDependencyKey(snapshot(world.statusEffectPolicy)) ||
+        evaluated.itemPresentationKey !== itemPresentationKey(world);
+    if ((!evaluated && (!audit.complete || audit.overflow)) || settingsChanged)
+      queueSightChange(world, { kind: 'geometry', before: 0, after: 0 });
+    else {
+      const ids =
+        !audit.complete || audit.overflow
+          ? new Set([
+              ...worldRootEntities(world, true, true).map((entity) => entity.id),
+              ...evaluated!.inputs.keys(),
+            ])
+          : new Set([...audit.sources, ...audit.observers]);
+      for (const id of ids) {
+        const entity = entityGet(readOnlyDraftView(world.entities), id);
+        const actual =
+          entity && entity.placement?.mode === 'world' ? captureExposure(world, entity) : null;
+        const measured = evaluated?.inputs.get(id);
+        if (evaluated && (actual ? equal(measured, actual) : !measured)) continue;
+        if (measured || actual)
+          queueSightChange(world, {
+            kind: 'spatial',
+            entityId: id,
+            before: measured?.position ?? null,
+            after: actual?.position ?? null,
+          });
+        else queueSightChange(world, { kind: 'state', entityId: id, field: 'behavior' });
+      }
+    }
+  }
   pending.delete(world);
   if (evaluated) delete evaluated.dependencyKeys;
   return (result) => {

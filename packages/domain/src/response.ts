@@ -105,7 +105,10 @@ export interface SituationProposalBinding {
   attentionReferences: Record<string, string>;
   retentionReferences: Record<string, TemporalReceiptLocator>;
   /** Exact already selected cold bodies; the server fences membership after awaits. */
-  receiptDetails?: Record<string, { receipt: TemporalReceipt; values: TemporalValue[] }>;
+  receiptDetails?: Record<
+    string,
+    { receipt: TemporalReceipt; values: TemporalValue[]; expiresAt: number }
+  >;
   observationReferences?: Record<string, ObservationContribution>;
   currentReferences?: Record<string, CapturedCurrentFacet>;
   presented?: readonly AttentionPresentation[];
@@ -439,6 +442,36 @@ export function unmetSlots(
 }
 
 /** One saved transition, independent component outcomes, no generated effects. */
+/** A captured body cannot renew optional evidence while waiting to publish.
+ * Independently retained capsule support is checked through the actual native owner. */
+export function situationReceiptDetailsCurrent(
+  world: WorldState,
+  details: SituationProposalBinding['receiptDetails'],
+): boolean {
+  return Object.values(details ?? {}).every((expected) => {
+    if (!Number.isFinite(expected.expiresAt)) return false;
+    if (world.simTime <= expected.expiresAt) return true;
+    const current = retainedTemporalReceipt(world, expected.receipt);
+    if (!current) return false;
+    const {
+      facets: expectedFacets,
+      sourceIds: _expectedAliases,
+      ...expectedHeader
+    } = expected.receipt;
+    const { facets, sourceIds: _aliases, ...header } = current.receipt;
+    return (
+      canonicalJson(header) === canonicalJson(expectedHeader) &&
+      expectedFacets.every((facet, index) => {
+        const position = facets.findIndex((value) => canonicalJson(value) === canonicalJson(facet));
+        return (
+          position >= 0 &&
+          canonicalJson(current.values[position]) === canonicalJson(expected.values[index])
+        );
+      })
+    );
+  });
+}
+
 export function commitActorResponse(
   input: WorldState,
   id: string,
@@ -547,6 +580,12 @@ export function commitActorResponse(
     return unavailable(
       `${namePhrase(actor, 'definite', { capitalize: true })} cannot respond in their current state.`,
     );
+  if (
+    situationBinding &&
+    (situationBinding.privacyRevision !== (input.experience?.privacyRevisions?.[actorId] ?? 0) ||
+      !situationReceiptDetailsCurrent(input, situationBinding.receiptDetails))
+  )
+    return reject('The supplied observations changed or expired before this response.');
   const permitted = new Set(entityIds);
   const targetEpisodes =
     expectedEncounters &&
@@ -673,6 +712,7 @@ export function commitActorResponse(
               getOwn(binding.receiptDetails ?? {}, reference);
             if (
               !captured ||
+              !captured.values.length ||
               locator.actorId !== actorId ||
               captured.receipt.actorId !== actorId ||
               locator.physicalLife !== captured.receipt.physicalLife ||

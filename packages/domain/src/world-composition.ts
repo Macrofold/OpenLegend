@@ -63,6 +63,7 @@ import {
   associateBodyFamiliarity,
   pruneObserverIndividuals,
   retainedIndividualEvidenceKeys,
+  captureSubjectLabelReader,
 } from './worlds/base/knowledge.js';
 import { DETECTION_SUPPORT_POLICY } from './worlds/base/senses.js';
 import { normalSpeedSeconds } from './simulation-time.js';
@@ -171,6 +172,19 @@ export function selectedRecognitionSupportSourceIds(
 ): string[] {
   selectedCreationProfileForWorld(world);
   return recognitionSupportSourceIds(keys);
+}
+/** Capture the installed pure source interpretation without retaining its world. */
+export function selectedRecognitionSupportReader(world: WorldState) {
+  selectedCreationProfileForWorld(world);
+  return recognitionSupportSourceIds;
+}
+export function selectedSubjectLabelReader(
+  world: WorldState,
+  observerId: string,
+  subjects?: Iterable<import('./knowledge.js').ObserverSubject>,
+) {
+  selectedCreationProfileForWorld(world);
+  return captureSubjectLabelReader(world, observerId, subjects);
 }
 export function selectedRetainedIndividualEvidenceKeys(
   world: WorldState,

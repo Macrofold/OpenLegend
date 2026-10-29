@@ -10,6 +10,7 @@ import {
   observationFactKey,
   receivedFacetValue,
   receivedObservationHeader,
+  receivedObservationFrame,
   currentFacetOriginal,
   currentFacetTimes,
 } from './perception-evidence.js';
@@ -129,6 +130,12 @@ it('shares only complete outward source values while preserving independent rece
     point(first.id).value.kind === 'location' &&
       (point(first.id).value as Extract<typeof firstLocation.value, { kind: 'location' }>).frame
         .positionAtObservation.x,
+  ).toBe(1);
+  expect(
+    receivedObservationFrame(
+      world,
+      world.perceptionEvidence![first.id]!.visualConfirmation!.frameRef,
+    ).positionAtObservation.x,
   ).toBe(1.5);
   expect(
     point(second.id).value.kind === 'location' &&

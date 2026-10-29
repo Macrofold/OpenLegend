@@ -12,7 +12,8 @@ import { z } from 'zod';
 import { gameTime } from './recall.js';
 import { actionReferencePermitted, applySlotControl, typedAction } from './typed-actions.js';
 import {
-  captureActionTargets,
+  captureActionTargetReader,
+  actionTargetIds,
   worldPosition,
   worldSupport,
   observerDescription,
@@ -97,16 +98,63 @@ const slotReferences = (slots?: IntentSlots | null) =>
  * docs/architecture.md#jev-first-action-grounding
  */
 export async function groundActionAttempts(
-  world: WorldState,
+  readWorld: () => WorldState,
   actorId: string,
   response: ActorResponse,
   bindings: AttemptBinding[],
   ports: GroundingPorts,
 ): Promise<AttemptBinding[]> {
-  const observed = observeActor(world, actorId);
+  const observed = observeActor(readWorld(), actorId);
   if (!observed) return [];
   const actor = observed.actor.actor!;
+  const manifestRevision = readWorld().moduleManifest.revision;
+  const activityRequests = {
+    requests: activityRequestDescriptors(readWorld()),
+    ...activityRequestChoices(readWorld(), actorId, observed),
+    simTime: readWorld().simTime,
+  };
+  const targetReader = captureActionTargetReader(readWorld(), actorId, [
+    actorId,
+    ...observed.visibleEntities.map((entity) => entity.id),
+    ...activityRequests.choices
+      .filter((choice) => choice.kind === 'entity')
+      .map((choice) => choice.id),
+    ...actionTargetIds(bindings.flatMap((binding) => binding.commands)),
+    ...response.operations.flatMap((op) => slotReferences(op.act?.slots)),
+  ]);
+  const invocationSchema = actionInvocationSchema(activityRequests.requests)
+    .extend({ until: namedTimeSchema(readWorld()) })
+    .nullable();
+  const navigation = navigationInstructions(readWorld());
   const entityIds = [actorId, ...observed.visibleEntities.map((e) => e.id)];
+  const labels = new Map(
+    [
+      ...new Set([
+        ...entityIds,
+        ...activityRequests.choices
+          .filter((choice) => choice.kind === 'entity')
+          .map((choice) => choice.id),
+        ...response.operations.flatMap((op) => slotReferences(op.act?.slots)),
+      ]),
+    ].map((id) => [id, observerDescription(readWorld(), actorId, id)]),
+  );
+  const definiteLabels = new Map(
+    observed.visibleEntities.map((entity) => [
+      entity.id,
+      observerDescription(readWorld(), actorId, entity.id, 'definite'),
+    ]),
+  );
+  const possessions = possessionSample(readWorld(), actorId);
+  const pileItems = pileSample(
+    readWorld(),
+    observed.visibleEntities.filter((entity) => entity.kind === 'item-pile'),
+  );
+  const publicSupports =
+    readWorld().map.spatial.disclosure === 'public'
+      ? readWorld().map.spatial.surfaces.map((surface) => ({ id: surface.id, name: surface.name }))
+      : [];
+  const capabilities = navigationCapabilities(readWorld());
+
   const proposals = response.operations
     .filter(
       (op) =>
@@ -114,10 +162,10 @@ export async function groundActionAttempts(
         op.act.description &&
         (!op.act.targetEntityId || entityIds.includes(op.act.targetEntityId)) &&
         slotReferences(op.act.slots).every((id) =>
-          actionReferencePermitted(world, actorId, entityIds, id),
+          actionReferencePermitted(readWorld(), actorId, entityIds, id),
         ) &&
         // A stopping time this world does not name is refused at commit, before paid work.
-        (!op.act.slots || validIntentSlots(world, op.act.slots)),
+        (!op.act.slots || validIntentSlots(readWorld(), op.act.slots)),
     )
     .slice(0, 4);
   const additions: AttemptBinding[] = [];
@@ -162,7 +210,7 @@ export async function groundActionAttempts(
     const matches = scoped.filter(
       (binding) =>
         normalize(binding.description).replace(/[.!?]+$/u, '') === description &&
-        !unmetSlots(world, binding.commands, slots).length,
+        !unmetSlots(readWorld(), binding.commands, slots).length,
     );
     if (matches.length === 1) {
       seen.set(normalized, op.localId);
@@ -176,7 +224,7 @@ export async function groundActionAttempts(
       };
       additions.push({
         operationId: op.localId,
-        manifestRevision: world.moduleManifest.revision,
+        manifestRevision,
         description: text,
         commands: matches[0]!.commands,
         fulfillment,
@@ -186,7 +234,7 @@ export async function groundActionAttempts(
     }
     // Recognized typed forms are free: they always rebind or restate their plain reason.
     const typed = typedAction(
-      world,
+      readWorld(),
       actorId,
       { text, targetId: act.targetEntityId, slots },
       op.localId,
@@ -207,12 +255,12 @@ export async function groundActionAttempts(
       actor.agency.attempts.some(
         (pending) =>
           sameAttempt(pending, text, act.targetEntityId, act.mode, slots) &&
-          pending.manifestRevision === world.moduleManifest.revision &&
+          pending.manifestRevision === readWorld().moduleManifest.revision &&
           (pending.status === 'awaiting-confirmation' ||
             (!ports.retryUnresolved &&
               (!pending.resolution ||
                 pending.resolution.signature ===
-                  resolutionSignature(world, actorId, pending.resolution.depends)))),
+                  resolutionSignature(readWorld(), actorId, pending.resolution.depends)))),
       )
     )
       continue;
@@ -227,10 +275,10 @@ export async function groundActionAttempts(
       await ports.record(kind, { text }, detail);
       additions.push({
         operationId: op.localId,
-        manifestRevision: world.moduleManifest.revision,
+        manifestRevision,
         description: text,
         commands: [],
-        resolution: refuseAction(world, actorId, category, reason, depends),
+        resolution: refuseAction(readWorld(), actorId, category, reason, depends),
         keep: true,
       });
     };
@@ -272,7 +320,7 @@ export async function groundActionAttempts(
           !followTargets.has(e.id),
       )) {
         scoped.push({
-          description: `Follow ${observerDescription(world, actorId, target.id, 'definite')} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
+          description: `Follow ${definiteLabels.get(target.id)} [${target.id}] at ordinary distance until cancelled, interrupted or lost from sight; no stealth or deadline.`,
           commands: [
             {
               id: op.localId,
@@ -286,13 +334,8 @@ export async function groundActionAttempts(
       }
       // Jev may only choose a complete handle that already keeps every requested detail.
       const honoring = scoped.filter(
-        (binding) => !unmetSlots(world, binding.commands, slots).length,
+        (binding) => !unmetSlots(readWorld(), binding.commands, slots).length,
       );
-      const activityRequests = {
-        requests: activityRequestDescriptors(world),
-        ...activityRequestChoices(world, actorId, observed),
-        simTime: world.simTime,
-      };
       const activityEntityIds = [
         ...new Set([
           ...entityIds,
@@ -306,9 +349,7 @@ export async function groundActionAttempts(
         targetEntityId: act.targetEntityId,
         slots: slots && {
           ...slots,
-          names: Object.fromEntries(
-            slotReferences(slots).map((id) => [id, observerDescription(world, actorId, id)]),
-          ),
+          names: Object.fromEntries(slotReferences(slots).map((id) => [id, labels.get(id)])),
         },
         actor: {
           name: observed.actor.name,
@@ -319,23 +360,17 @@ export async function groundActionAttempts(
         support: worldSupport(observed.actor),
         entities: visible.slice(0, 64).map((e) => ({
           id: e.id,
-          name: observerDescription(world, actorId, e.id),
+          name: labels.get(e.id),
           position: worldPosition(e),
           surfaceId: worldSupport(e),
           living: !!e.actor?.alive,
         })),
         entityCoverage: { available: visible.length, included: Math.min(visible.length, 64) },
         // Scoped item references let pickup/drop be interpreted without any shortlist.
-        possessions: possessionSample(world, actorId),
-        pileItems: pileSample(
-          world,
-          visible.filter((entity) => entity.kind === 'item-pile'),
-        ),
-        publicSupports:
-          world.map.spatial.disclosure === 'public'
-            ? world.map.spatial.surfaces.map((s) => ({ id: s.id, name: s.name }))
-            : [],
-        capabilities: navigationCapabilities(world),
+        possessions,
+        pileItems,
+        publicSupports,
+        capabilities,
         activityRequests,
         choices: scoped.map((c, index) => ({ id: `n${index}`, description: c.description })),
       };
@@ -373,7 +408,7 @@ export async function groundActionAttempts(
         };
         additions.push({
           operationId: op.localId,
-          manifestRevision: world.moduleManifest.revision,
+          manifestRevision,
           description: text,
           commands: chosen.commands,
           fulfillment,
@@ -414,9 +449,7 @@ export async function groundActionAttempts(
               z
                 .object({
                   actionId: handle,
-                  invocation: actionInvocationSchema(activityRequestDescriptors(world))
-                    .extend({ until: namedTimeSchema(world) })
-                    .nullable(),
+                  invocation: invocationSchema,
                 })
                 .strict(),
             )
@@ -428,7 +461,7 @@ export async function groundActionAttempts(
           instructions:
             ACTION_GROUNDING_POLICY +
             ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or invocation. Use only navigation and installed request fields supplied here; pickup/drop items must come from the supplied possessions or pileItems. A follow without until has no successful finite termination and cannot precede another step; do not promise unreachable continuation. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON. ' +
-            navigationInstructions(world),
+            navigation,
           context,
           schema: z.toJSONSchema(schema, { target: 'draft-7' }),
         }),
@@ -453,7 +486,7 @@ export async function groundActionAttempts(
           step.actionId !== null
             ? scoped[Number(step.actionId.slice(1))]?.commands[0]
             : bindActionInvocation(
-                world,
+                readWorld(),
                 actorId,
                 `${op.localId}:${index}`,
                 step.invocation,
@@ -513,11 +546,11 @@ export async function groundActionAttempts(
         if (command.type === 'move')
           return `Walk to x=${command.destination.x}, z=${command.destination.z} on ${command.destination.surfaceId}.`;
         if (command.type === 'pickup')
-          return `Pick up ${command.quantity ?? 'all'} ${command.itemId ? (world.itemDefinitions[itemFor(world, command.itemId)?.definitionId ?? '']?.name ?? 'items') : 'portable items'} from the pile.`;
+          return `Pick up ${command.quantity ?? 'all'} ${command.itemId ? (readWorld().itemDefinitions[itemFor(readWorld(), command.itemId)?.definitionId ?? '']?.name ?? 'items') : 'portable items'} from the pile.`;
         if (command.type === 'drop')
-          return `Drop ${command.quantity} ${world.itemDefinitions[itemFor(world, command.itemId)?.definitionId ?? '']?.name ?? 'items'} on the ground.`;
+          return `Drop ${command.quantity} ${readWorld().itemDefinitions[itemFor(readWorld(), command.itemId)?.definitionId ?? '']?.name ?? 'items'} on the ground.`;
         if (command.type === 'follow')
-          return `Follow ${observerDescription(world, actorId, command.targetId, 'definite')} at ${command.distance ?? FOLLOW_RULES.defaultDistance} world units${command.relation ? ` (${command.relation}, judged from their observed travel)` : ''} until ${command.until !== undefined ? 'the chosen clock time' : 'cancelled or interrupted'}; ${command.onLost ? 'on losing sight, walk to where they were last seen and stop there unless seen again' : 'stops on losing sight'}. No stealth.`;
+          return `Follow ${definiteLabels.get(command.targetId)} at ${command.distance ?? FOLLOW_RULES.defaultDistance} readWorld() units${command.relation ? ` (${command.relation}, judged from their observed travel)` : ''} until ${command.until !== undefined ? 'the chosen clock time' : 'cancelled or interrupted'}; ${command.onLost ? 'on losing sight, walk to where they were last seen and stop there unless seen again' : 'stops on losing sight'}. No stealth.`;
         return (
           scoped.find((choice) => choice.commands[0] === command)?.description ??
           `Perform ${command.type}.`
@@ -534,7 +567,7 @@ export async function groundActionAttempts(
         : undefined;
       const wrapped = requestedComposition
         ? boundCommands
-        : applySlotControl(world, actorId, boundCommands, slots, op.localId);
+        : applySlotControl(readWorld(), actorId, boundCommands, slots, op.localId);
       const composed =
         wrapped.length === 1 && wrapped[0]!.type === 'compose' ? wrapped[0] : undefined;
       const tail =
@@ -553,16 +586,17 @@ export async function groundActionAttempts(
                 const value = selectedParameters[key];
                 const description =
                   field.type === 'entity'
-                    ? observerDescription(world, actorId, String(value))
+                    ? labels.get(String(value))
                     : field.type === 'definition'
                       ? field.definitionKind === 'recipe'
-                        ? (world.recipes[String(value)]?.name ?? 'Unavailable known method')
-                        : (world.itemDefinitions[String(value)]?.name ?? 'Unavailable material')
+                        ? (readWorld().recipes[String(value)]?.name ?? 'Unavailable known method')
+                        : (readWorld().itemDefinitions[String(value)]?.name ??
+                          'Unavailable material')
                       : field.type === 'time' && typeof value === 'number'
                         ? gameTime(
                             value,
-                            world.statusEffectPolicy.clockOffsetHours,
-                            world.presentation?.calendar?.dayLabel,
+                            readWorld().statusEffectPolicy.clockOffsetHours,
+                            readWorld().presentation?.calendar?.dayLabel,
                           )
                         : String(value);
                 return `${field.label}: ${description}`;
@@ -605,7 +639,7 @@ export async function groundActionAttempts(
       let reason = result.reason;
       let omitted = result.omitted;
       // Native slot checks outrank the interpreter's claim that nothing was dropped.
-      const unmet = unmetSlots(world, boundCommands, slots);
+      const unmet = unmetSlots(readWorld(), boundCommands, slots);
       if (unmet.length && verdict === 'exact') {
         verdict = 'confirm';
         reason = 'The native action does not keep every requested detail; accept it only as shown.';
@@ -669,7 +703,7 @@ export async function groundActionAttempts(
       };
       additions.push({
         operationId: op.localId,
-        manifestRevision: world.moduleManifest.revision,
+        manifestRevision,
         description: text,
         commands: boundCommands,
         fulfillment,
@@ -691,6 +725,6 @@ export async function groundActionAttempts(
   }
   return additions.map((binding) => ({
     ...binding,
-    targetEpisodes: captureActionTargets(world, actorId, binding.commands),
+    targetEpisodes: targetReader(binding.commands),
   }));
 }

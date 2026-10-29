@@ -10,7 +10,9 @@ import {
   currentAttentionCues,
   observationFactKey,
   captureAttentionPresentation,
-  currentObservedFacets,
+  currentBodyGrant,
+  currentBodySubject,
+  entityGet,
   currentFacetTimes,
   currentReceivedGeometry,
   receivedScene,
@@ -19,6 +21,8 @@ import {
   receivedBoundarySeparation,
   historicalSpatialMeasurements,
   selectedAttentionPolicy,
+  selectedTemporalPolicy,
+  situationReceiptDetailsCurrent,
   type WorldState,
   type TemporalHistorySelection,
   type TemporalValue,
@@ -26,6 +30,8 @@ import {
   type SituationProposalBinding,
   type CapturedCurrentFacet,
   type ObservationContribution,
+  type ObservationFactKey,
+  type TemporalReceiptPrefix,
 } from '@open-legend/domain';
 import {
   entityHandle,
@@ -40,6 +46,10 @@ import {
   modelFacetMetadata,
   facetSupportForModel,
   observationForModel,
+  captureExperienceContext,
+  capturedExperience,
+  type CapturedExperienceContext,
+  type ExperiencePresentation,
 } from './experience-context.js';
 import type { TemporalHistoryPage } from './temporal-storage.js';
 import {
@@ -127,15 +137,15 @@ type SuppliedModelFacts = ReadonlyMap<string, SuppliedModelFact>;
 const inlineFrame = (value: object, frame: unknown) => ({ ...value, frame });
 
 export function temporalHistoryForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   selection: TemporalHistorySelection,
-  frame = captureModelSpatialFrame(world, actorId),
+  frame = capturedExperience(world) ? world.frame : captureModelSpatialFrame(world, actorId),
 ) {
   return prepareTemporalHistoryForModel(world, actorId, selection, frame).model;
 }
 function prepareTemporalHistoryForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   selection: TemporalHistorySelection,
   frame: ModelSpatialFrame,
@@ -163,6 +173,9 @@ function prepareTemporalHistoryForModel(
           }
         : {}),
       acquiredAt: receipt.at,
+      ...(receipt.receiverFrame
+        ? { receiverFrame: frames.indexed({}, modelObservationFrame(frame, receipt.receiverFrame)) }
+        : {}),
       change: receipt.change,
       facetDefaults: metadata.defaults,
       facts: values.map((value, index) => {
@@ -214,11 +227,11 @@ function prepareTemporalHistoryForModel(
 /** The model allowance counts its encoded rows, not native proof/receipt storage.
  * Hydration has its independent working-set bound; only emitted rows grant sources. */
 export function boundedTemporalHistoryForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   selection: TemporalHistorySelection,
   maxBytes: number,
-  frame = captureModelSpatialFrame(world, actorId),
+  frame = capturedExperience(world) ? world.frame : captureModelSpatialFrame(world, actorId),
   suppliedFacts?: SuppliedModelFacts,
 ) {
   const { model, throughFrames } = prepareTemporalHistoryForModel(
@@ -255,7 +268,7 @@ export function boundedTemporalHistoryForModel(
   };
 }
 function temporalValueForModel(
-  world: WorldState,
+  world: ExperiencePresentation,
   actorId: string,
   value: TemporalValue,
   scope: unknown,
@@ -311,7 +324,262 @@ function temporalValueForModel(
   return facetValueForModel(world, actorId, value, scope, frame);
 }
 
+interface SituationBodyRead {
+  actorId: string;
+  frame: ModelSpatialFrame;
+  presentation: CapturedExperienceContext;
+  currentBySource: ReadonlyMap<string, readonly CapturedCurrentFacet[]>;
+  acquiredAtById: ReadonlyMap<string, number>;
+  changedCandidates: ReadonlySet<string>;
+  entryBySource: ReadonlyMap<string, ReturnType<typeof currentDetailedAttention>[number]>;
+  cueFacts: ReadonlySet<string>;
+  allCurrentReferences: Record<string, CapturedCurrentFacet>;
+  salientFacts: Set<string>;
+  indexedFrame: ReturnType<typeof modelFrameTable>['indexed'];
+}
+function situationBodyFacts(read: SituationBodyRead, id: string, kinds?: readonly string[]) {
+  const {
+    actorId,
+    frame,
+    presentation: world,
+    allCurrentReferences,
+    salientFacts,
+    cueFacts,
+    indexedFrame,
+    entryBySource,
+  } = read;
+  const facets = read.currentBySource.get(id) ?? [];
+  const rendered = facets
+    .filter(
+      (facet) =>
+        facet.value.kind !== 'perceived-feature' && (!kinds || kinds.includes(facet.value.kind)),
+    )
+    .map((facet) => {
+      const reference = permittedSourceHandle(world, actorId, [
+        'current-fact',
+        facet.original.source.id,
+        facet.original.ordinal,
+      ]);
+      allCurrentReferences[reference] = facet;
+      const entry = entryBySource.get(id);
+      const changed = entry && read.changedCandidates.has(entry.key);
+      const acquiredAt = read.acquiredAtById.get(facet.id);
+      if (
+        cueFacts.has(canonicalJson(facet.original)) ||
+        (facet.value.kind === 'observed-motion' &&
+          [facet.value.earlier, facet.value.later].some((sample) =>
+            cueFacts.has(canonicalJson(sample.original)),
+          )) ||
+        (entry &&
+          changed &&
+          acquiredAt !== undefined &&
+          // A completed sight phase refreshes effective acquisition without
+          // changing the received value. Rank actual source changes, not age.
+          acquiredAt > entry.startedAt)
+      )
+        salientFacts.add(reference);
+
+      // Current motion carries exact received endpoints, not two recursively repeated accounts.
+      const value =
+        facet.value.kind === 'observed-motion'
+          ? {
+              kind: facet.value.kind,
+              correspondence: facet.value.correspondence,
+              earlier: indexedFrame(
+                {
+                  location: modelObservedLocation(frame, facet.value.earlier.location),
+                  measuredFrom: facet.value.earlier.measuredFrom,
+                  measuredThrough: facet.value.earlier.measuredThrough,
+                },
+                modelObservationFrame(frame, facet.value.earlier.frame),
+              ),
+              later: indexedFrame(
+                {
+                  location: modelObservedLocation(frame, facet.value.later.location),
+                  measuredFrom: facet.value.later.measuredFrom,
+                  measuredThrough: facet.value.later.measuredThrough,
+                },
+                modelObservationFrame(frame, facet.value.later.frame),
+              ),
+            }
+          : facet.value.kind === 'location'
+            ? indexedFrame(
+                {
+                  kind: facet.value.kind,
+                  location: modelObservedLocation(frame, facet.value.location),
+                },
+                modelObservationFrame(frame, facet.value.frame),
+              )
+            : facetValueForModel(world, actorId, facet.value, facet.original.source.id, frame);
+      return {
+        reference,
+        value,
+        measuredFrom: facet.valueMeasuredFrom,
+        measuredThrough: facet.valueMeasuredThrough,
+        acquiredAt: facet.valueAcquiredAt,
+        confirmedThrough: facet.confirmedThrough,
+        modality: facet.modality,
+      };
+    });
+  const defaults = rendered[0]
+    ? {
+        measuredFrom: rendered[0].measuredFrom,
+        measuredThrough: rendered[0].measuredThrough,
+        acquiredAt: rendered[0].acquiredAt,
+        confirmedThrough: rendered[0].confirmedThrough,
+        modality: rendered[0].modality,
+      }
+    : {};
+  return {
+    defaults,
+    facts: rendered.map((fact) =>
+      Object.fromEntries(
+        Object.entries(fact).filter(
+          ([key, value]) => !(key in defaults) || value !== defaults[key as keyof typeof defaults],
+        ),
+      ),
+    ),
+  };
+}
+
+function bindSituationHistory(
+  world: CapturedExperienceContext,
+  actorId: string,
+  maxAgeSeconds: number,
+  retentionReferences: Record<string, TemporalReceiptLocator>,
+  receiptDetails: NonNullable<SituationProposalBinding['receiptDetails']>,
+  selection: TemporalHistorySelection,
+) {
+  for (const entry of selection.entries) {
+    const receipt = entry.receipt,
+      handle = permittedSourceHandle(world, actorId, [
+        'receipt',
+        receipt.physicalLife,
+        receipt.epoch,
+        receipt.ordinal,
+      ]);
+    retentionReferences[handle] = {
+      actorId,
+      physicalLife: receipt.physicalLife,
+      epoch: receipt.epoch,
+      ordinal: receipt.ordinal,
+    };
+    receiptDetails[handle] = { ...entry, expiresAt: receipt.at + maxAgeSeconds };
+  }
+}
+
+function emittedSituationFacts(
+  emission: { rows: Map<string, ReturnType<typeof situationBodyFacts>['facts']> },
+  reference: string,
+) {
+  return emission.rows.get(reference) ?? [];
+}
+interface SituationQueryRead {
+  references: ReadonlyMap<string, string>;
+  scene: ReturnType<typeof receivedScene>;
+  regions: ReadonlyMap<string, string>;
+  handles: ReadonlyMap<string, string>;
+  bodyFacts: (id: string, kinds?: readonly string[]) => ReturnType<typeof situationBodyFacts>;
+  emittedFacts: (reference: string) => ReturnType<typeof situationBodyFacts>['facts'];
+}
+function validSituationCut(
+  cut: ReturnType<typeof captureEvidenceCut>,
+  details: SituationProposalBinding['receiptDetails'],
+  world: WorldState,
+) {
+  return evidenceCutEligible(world, cut) && situationReceiptDetailsCurrent(world, details);
+}
+function querySituationBodies(
+  read: SituationQueryRead,
+  input: Extract<SituationQuery, { kind: 'near' | 'separation' | 'expand' }>,
+  visits: number,
+) {
+  const { references, scene, regions, bodyFacts, emittedFacts, handles } = read;
+  if (input.kind === 'separation') {
+    const a = references.get(input.first),
+      b = references.get(input.second);
+    if (!a || !b) return { result: { status: 'unavailable' }, visited: 0 };
+    const measurement = receivedSeparation(scene.bodies.get(a)!, scene.bodies.get(b)!);
+    return {
+      result: {
+        ...measurement,
+        ...readableMeasurement(emittedFacts(input.first), measurement, emittedFacts(input.second)),
+      },
+      visited: 0,
+    };
+  }
+  const id = input.kind === 'near' ? references.get(input.anchor) : undefined;
+  const anchor = id ? scene.bodies.get(id) : undefined;
+  const region = input.kind === 'expand' ? regions.get(input.region) : undefined;
+  if (input.kind === 'near' ? !anchor : region === undefined)
+    return { result: { status: 'unavailable' }, visited: 0 };
+  const found =
+    input.kind === 'near'
+      ? receivedNear(scene, anchor!, input.radius, visits)
+      : scene.index.region(region!, visits);
+  const result = {
+    status: found.status,
+    bodies: found.values.map((body) => {
+      const facts = bodyFacts(body.sourceId);
+      const measurement = anchor && receivedSeparation(anchor, body);
+      return {
+        reference: handles.get(body.sourceId)!,
+        ...(measurement
+          ? {
+              separation: {
+                ...measurement,
+                ...readableMeasurement(
+                  emittedFacts(input.kind === 'near' ? input.anchor : ''),
+                  measurement,
+                  facts.facts,
+                ),
+              },
+            }
+          : {}),
+        facts,
+      };
+    }),
+  } as {
+    status: 'complete' | 'partial';
+    bodies: Array<{ reference: string; facts: ReturnType<typeof bodyFacts> }>;
+  };
+  return { result, visited: found.visited };
+}
+
 /** Captured permitted inputs, with private routing maps kept outside model/player text. */
+function unrepresentedSituationHistory(
+  retained: TemporalHistorySelection,
+  prefix: TemporalReceiptPrefix,
+  represented: ReadonlyMap<string, ObservationContribution['facets'][number]>,
+): TemporalHistorySelection {
+  return {
+    ...retained,
+    entries: retained.entries.filter(
+      ({ receipt, values }) =>
+        temporalReceiptWithinPrefix(receipt, prefix) &&
+        !(
+          receipt.change === 'occurrence' &&
+          receipt.facets.every((facet, index) => {
+            const original = facet.original && represented.get(canonicalJson(facet.original));
+            return (
+              original &&
+              facet.role === original.role &&
+              facet.asOf === original.asOf &&
+              facet.measuredFrom === original.measuredFrom &&
+              facet.measuredThrough === original.measuredThrough &&
+              facet.acquiredAt === original.acquiredAt &&
+              facet.confirmedThrough === undefined &&
+              canonicalJson(values[index]) === canonicalJson(original.value)
+            );
+          })
+        ),
+    ),
+    incomplete:
+      retained.incomplete ||
+      retained.entries.some(({ receipt }) => !temporalReceiptWithinPrefix(receipt, prefix)),
+  };
+}
+
 export function captureSituation(
   world: WorldState,
   actorId: string,
@@ -325,6 +593,11 @@ export function captureSituation(
   const geometry = currentReceivedGeometry(world, actorId);
   const cut = captureEvidenceCut(world, actorId, geometry.observations),
     entries = currentDetailedAttention(world, actorId);
+  const presentation = captureExperienceContext(world, actorId, frame, [
+    cut,
+    retainedHistory,
+    representedObservations,
+  ]);
   const staticRows: unknown[] = [];
   const suppliedFacts = new Map<string, SuppliedModelFact>();
   // Exact required observations are already rendered by their owning context;
@@ -366,37 +639,10 @@ export function captureSituation(
       ),
     ),
   );
-  const alreadyRepresented = ({ receipt, values }: TemporalHistorySelection['entries'][number]) =>
-    receipt.change === 'occurrence' &&
-    receipt.facets.every((facet, index) => {
-      const original = facet.original && representedFacts.get(canonicalJson(facet.original));
-      return (
-        original &&
-        facet.role === original.role &&
-        facet.asOf === original.asOf &&
-        facet.measuredFrom === original.measuredFrom &&
-        facet.measuredThrough === original.measuredThrough &&
-        facet.acquiredAt === original.acquiredAt &&
-        facet.confirmedThrough === undefined &&
-        canonicalJson(values[index]) === canonicalJson(original.value)
-      );
-    });
-  const historyEntries = retainedHistory.entries.filter(
-    (entry) =>
-      temporalReceiptWithinPrefix(entry.receipt, receiptPrefix) && !alreadyRepresented(entry),
-  );
   const boundedHistory = boundedTemporalHistoryForModel(
     world,
     actorId,
-    {
-      ...retainedHistory,
-      entries: historyEntries,
-      incomplete:
-        retainedHistory.incomplete ||
-        retainedHistory.entries.some(
-          ({ receipt }) => !temporalReceiptWithinPrefix(receipt, receiptPrefix),
-        ),
-    },
+    unrepresentedSituationHistory(retainedHistory, receiptPrefix, representedFacts),
     policy.historyBytes,
     frame,
     suppliedFacts,
@@ -428,107 +674,45 @@ export function captureSituation(
   const cueFacts = new Set(
     activeCues.flatMap((cue) => cue.proof.map((fact) => canonicalJson(fact))),
   );
-  const supportsCue = (sample: Pick<CapturedCurrentFacet, 'original'>) =>
-    cueFacts.has(canonicalJson(sample.original));
   const entryBySource = new Map(entries.map((entry) => [entry.sourceId, entry]));
   const salientFacts = new Set<string>();
   const detailIds = new Set(entries.map((entry) => entry.sourceId));
-  const bodyFacts = (id: string, kinds?: readonly string[]) => {
-    const facets = currentObservedFacets(world, actorId, id);
-    const owner = world.perceptionEvidence?.[actorId];
-    const rendered = facets
-      .filter(
-        (facet) =>
-          facet.value.kind !== 'perceived-feature' && (!kinds || kinds.includes(facet.value.kind)),
-      )
-      .map((facet) => {
-        const reference = permittedSourceHandle(world, actorId, [
-          'current-fact',
-          facet.original.source.id,
-          facet.original.ordinal,
-        ]);
-        allCurrentReferences[reference] = facet;
-        const entry = entryBySource.get(id);
-        const candidate = entry && owner?.attention?.candidates[entry.key];
-        const recorded = owner?.current[`${id}:${facet.value.kind}`];
-        if (
-          supportsCue(facet) ||
-          (facet.value.kind === 'observed-motion' &&
-            [facet.value.earlier, facet.value.later].some((sample) =>
-              cueFacts.has(canonicalJson(sample.original)),
-            )) ||
-          (entry &&
-            candidate?.presentedChange !== candidate?.changeRevision &&
-            recorded &&
-            // A completed sight phase refreshes effective acquisition without
-            // changing the received value. Rank actual source changes, not age.
-            currentFacetTimes(owner!, recorded).valueAcquiredAt > entry.startedAt)
-        )
-          salientFacts.add(reference);
-
-        // Current motion carries exact received endpoints, not two recursively repeated accounts.
-        const value =
-          facet.value.kind === 'observed-motion'
-            ? {
-                kind: facet.value.kind,
-                correspondence: facet.value.correspondence,
-                earlier: indexedFrame(
-                  {
-                    location: modelObservedLocation(frame, facet.value.earlier.location),
-                    measuredFrom: facet.value.earlier.measuredFrom,
-                    measuredThrough: facet.value.earlier.measuredThrough,
-                  },
-                  modelObservationFrame(frame, facet.value.earlier.frame),
-                ),
-                later: indexedFrame(
-                  {
-                    location: modelObservedLocation(frame, facet.value.later.location),
-                    measuredFrom: facet.value.later.measuredFrom,
-                    measuredThrough: facet.value.later.measuredThrough,
-                  },
-                  modelObservationFrame(frame, facet.value.later.frame),
-                ),
-              }
-            : facet.value.kind === 'location'
-              ? indexedFrame(
-                  {
-                    kind: facet.value.kind,
-                    location: modelObservedLocation(frame, facet.value.location),
-                  },
-                  modelObservationFrame(frame, facet.value.frame),
-                )
-              : facetValueForModel(world, actorId, facet.value, facet.original.source.id, frame);
-        return {
-          reference,
-          value,
-          measuredFrom: facet.valueMeasuredFrom,
-          measuredThrough: facet.valueMeasuredThrough,
-          acquiredAt: facet.valueAcquiredAt,
-          confirmedThrough: facet.confirmedThrough,
-          modality: facet.modality,
-        };
-      });
-    const defaults = rendered[0]
-      ? {
-          measuredFrom: rendered[0].measuredFrom,
-          measuredThrough: rendered[0].measuredThrough,
-          acquiredAt: rendered[0].acquiredAt,
-          confirmedThrough: rendered[0].confirmedThrough,
-          modality: rendered[0].modality,
-        }
-      : {};
-    return {
-      defaults,
-      facts: rendered.map((fact) =>
-        Object.fromEntries(
-          Object.entries(fact).filter(
-            ([key, value]) =>
-              !(key in defaults) || value !== defaults[key as keyof typeof defaults],
-          ),
-        ),
-      ),
-    };
+  const owner = world.perceptionEvidence?.[actorId];
+  const sourceByFact = new Map(
+    Object.values(owner?.current ?? {}).map((record) => [record.id, record.subjectId]),
+  );
+  const currentBySource = new Map<string, CapturedCurrentFacet[]>();
+  for (const fact of cut.current) {
+    const source = sourceByFact.get(fact.id);
+    if (source) {
+      const rows = currentBySource.get(source) ?? [];
+      rows.push(fact);
+      currentBySource.set(source, rows);
+    }
+  }
+  const bodyRead: SituationBodyRead = {
+    actorId,
+    frame,
+    presentation,
+    currentBySource,
+    entryBySource,
+    cueFacts,
+    allCurrentReferences,
+    salientFacts,
+    indexedFrame,
+    acquiredAtById: new Map(
+      Object.values(owner?.current ?? {}).map((record) => [
+        record.id,
+        currentFacetTimes(owner!, record).valueAcquiredAt,
+      ]),
+    ),
+    changedCandidates: new Set(
+      Object.entries(owner?.attention?.candidates ?? {})
+        .filter(([, candidate]) => candidate.presentedChange !== candidate.changeRevision)
+        .map(([key]) => key),
+    ),
   };
+  const bodyFacts = situationBodyFacts.bind(undefined, bodyRead);
   const detailed = entries
     .filter((entry) => scene.bodies.has(entry.sourceId))
     .map((entry) => ({
@@ -564,25 +748,16 @@ export function captureSituation(
       .filter(([, key]) => key !== undefined),
   );
   const retentionReferences: Record<string, TemporalReceiptLocator> = {};
-  const receiptDetails: Record<string, TemporalHistorySelection['entries'][number]> = {};
-  const bindHistory = (selection: TemporalHistorySelection) => {
-    for (const entry of selection.entries) {
-      const receipt = entry.receipt,
-        handle = permittedSourceHandle(world, actorId, [
-          'receipt',
-          receipt.physicalLife,
-          receipt.epoch,
-          receipt.ordinal,
-        ]);
-      retentionReferences[handle] = {
-        actorId,
-        physicalLife: receipt.physicalLife,
-        epoch: receipt.epoch,
-        ordinal: receipt.ordinal,
-      };
-      receiptDetails[handle] = entry;
-    }
-  };
+  const receiptDetails: NonNullable<SituationProposalBinding['receiptDetails']> = {};
+  const historyMaxAgeSeconds = selectedTemporalPolicy(world).recent.maxAgeSeconds;
+  const bindHistory = bindSituationHistory.bind(
+    undefined,
+    presentation,
+    actorId,
+    historyMaxAgeSeconds,
+    retentionReferences,
+    receiptDetails,
+  );
   bindHistory(history);
   const boundaries = geometry.observations.flatMap((observation) =>
     observation.facets.flatMap((facet) =>
@@ -695,12 +870,12 @@ export function captureSituation(
       discoveryRows: discovery.length,
     },
   };
-  let emittedRows = new Map<string, ReturnType<typeof bodyFacts>['facts']>();
-  const emittedFacts = (reference: string) => emittedRows.get(reference) ?? [];
+  const emission = { rows: new Map<string, ReturnType<typeof situationBodyFacts>['facts']>() };
+  const emittedFacts = emittedSituationFacts.bind(undefined, emission);
   const currentBytes = () => {
     // Narrowing can remove an association or entire row. Re-render from only
     // the kept facts so a name/description cannot outlive its disclosed proof.
-    emittedRows = new Map(
+    emission.rows = new Map(
       [...packet.detailed, ...packet.discovery].map((row) => [row.reference, row.facts.facts]),
     );
     for (const relation of packet.relations) {
@@ -835,72 +1010,55 @@ export function captureSituation(
       ),
     ),
   );
-  const queryBodies = (
-    input: Extract<SituationQuery, { kind: 'near' | 'separation' | 'expand' }>,
-    visits: number,
-  ) => {
-    if (input.kind === 'separation') {
-      const a = references.get(input.first),
-        b = references.get(input.second);
-      if (!a || !b) return { result: { status: 'unavailable' }, visited: 0 };
-      const measurement = receivedSeparation(scene.bodies.get(a)!, scene.bodies.get(b)!);
-      return {
-        result: {
-          ...measurement,
-          ...readableMeasurement(
-            emittedFacts(input.first),
-            measurement,
-            emittedFacts(input.second),
-          ),
-        },
-        visited: 0,
-      };
-    }
-    const id = input.kind === 'near' ? references.get(input.anchor) : undefined;
-    const anchor = id ? scene.bodies.get(id) : undefined;
-    const region = input.kind === 'expand' ? regions.get(input.region) : undefined;
-    if (input.kind === 'near' ? !anchor : region === undefined)
-      return { result: { status: 'unavailable' }, visited: 0 };
-    const found =
-      input.kind === 'near'
-        ? receivedNear(scene, anchor!, input.radius, visits)
-        : scene.index.region(region!, visits);
-    const result = {
-      status: found.status,
-      bodies: found.values.map((body) => {
-        const facts = bodyFacts(body.sourceId);
-        const measurement = anchor && receivedSeparation(anchor, body);
-        return {
-          reference: entityHandle(world, actorId, body.sourceId),
-          ...(measurement
-            ? {
-                separation: {
-                  ...measurement,
-                  ...readableMeasurement(
-                    emittedFacts(input.kind === 'near' ? input.anchor : ''),
-                    measurement,
-                    facts.facts,
-                  ),
-                },
-              }
-            : {}),
-          facts,
-        };
-      }),
-    } as {
-      status: 'complete' | 'partial';
-      bodies: Array<{ reference: string; facts: ReturnType<typeof bodyFacts> }>;
-    };
-    return { result, visited: found.visited };
-  };
+  const queryBodies = querySituationBodies.bind(undefined, {
+    references,
+    scene,
+    regions,
+    bodyFacts,
+    emittedFacts,
+    handles: new Map([...references].map(([handle, id]) => [id, handle])),
+  });
+  const bodyBindings = new Map(
+    [...scene.bodies.keys()].flatMap((id) => {
+      const grant = currentBodyGrant(world, actorId, id);
+      if (!grant) return [];
+      const subject =
+        currentBodySubject(world, actorId, id) ??
+        (!entityGet(world.entities, id)?.actor
+          ? { kind: 'entity' as const, entityId: id }
+          : undefined);
+      return [
+        [
+          id,
+          {
+            handle: entityHandle(world, actorId, id),
+            leaseId: grant.leaseId,
+            ...(subject ? { subject } : {}),
+            ...(world.perceptionEpisodes?.[actorId]?.[id]
+              ? { episode: world.perceptionEpisodes[actorId]![id]! }
+              : {}),
+          },
+        ] as const,
+      ];
+    }),
+  );
+  const allPresented = new Map(
+    captureAttentionPresentation(world, actorId, Object.values(allAttentionReferences)).map(
+      (entry) => [entry.key, entry],
+    ),
+  );
   return {
-    world,
+    presentation,
+    at: world.simTime,
+    bodyBindings,
+    allPresented,
     frame,
     actorId,
     jobId,
     packet,
     history,
     receiptPrefix,
+    historyMaxAgeSeconds,
     cut,
     frames,
     compactFrames,
@@ -923,10 +1081,50 @@ export function captureSituation(
     allAttentionReferences,
     allCurrentReferences,
     currentReferences,
-    valid: (current: WorldState) => evidenceCutEligible(current, cut),
+    valid: validSituationCut.bind(undefined, cut, receiptDetails),
   };
 }
+/** Complete asynchronous history preparation without replacing the original
+ * current cut, scene, attention allocation, frame or source prefix. */
+export function completeSituationHistory(
+  captured: ReturnType<typeof captureSituation>,
+  retainedHistory: TemporalHistorySelection,
+  represented: readonly {
+    observation: ObservationContribution;
+    keys: readonly ObservationFactKey[];
+  }[],
+  presentation: CapturedExperienceContext,
+) {
+  const representedFacts = new Map(
+    represented.flatMap(({ observation, keys }) =>
+      observation.facets.map((facet, index) => [canonicalJson(keys[index]), facet] as const),
+    ),
+  );
+  for (const { observation, keys } of represented) {
+    const key = keys[0];
+    if (key)
+      captured.observationReferences[
+        evidenceSourceHandle(presentation, captured.actorId, key.source)
+      ] = observation;
+  }
+  const bounded = boundedTemporalHistoryForModel(
+    presentation,
+    captured.actorId,
+    unrepresentedSituationHistory(retainedHistory, captured.receiptPrefix, representedFacts),
+    captured.policy.historyBytes,
+    captured.frame,
+    captured.suppliedFacts,
+  );
+  captured.history = bounded.selection;
+  captured.packet.recent = bounded.model;
+  captured.bindHistory(bounded.selection);
+  return captured;
+}
+
 export type CapturedSituation = ReturnType<typeof captureSituation>;
+export interface SituationHistoryPage extends TemporalHistoryPage {
+  presentation?: CapturedExperienceContext;
+}
 
 /** Both ordinary and reconsidered responses consume the same captured grants. */
 export function situationResponseCapabilities(captured: CapturedSituation) {
@@ -975,9 +1173,9 @@ export async function expandSituation(
   queries: readonly SituationQuery[],
   readHistory: (
     query: import('./temporal-storage.js').TemporalHistoryQuery,
-  ) => Promise<TemporalHistoryPage>,
+  ) => Promise<SituationHistoryPage>,
 ) {
-  const { policy, world, actorId } = captured;
+  const { policy, presentation: world, actorId, at } = captured;
   if (queries.length > policy.maximumQueries) throw new Error('Too many situation queries.');
   const results: unknown[] = [],
     expandedIds = new Set<string>();
@@ -1014,8 +1212,8 @@ export async function expandSituation(
         const history = await readHistory({
           subjects: [...new Set([anchor, ...(other ? [other] : [])])],
           kinds: ['body', 'location', 'physical-boundary', 'surface-patch'],
-          measurements: { from: query.from, through: Math.min(world.simTime, query.through) },
-          through: world.simTime,
+          measurements: { from: query.from, through: Math.min(at, query.through) },
+          through: at,
           cut: captured.receiptPrefix,
           bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
           limit: policy.expansionReceipts,
@@ -1027,7 +1225,7 @@ export async function expandSituation(
             anchor,
             ...(other ? { other } : {}),
             from: query.from,
-            through: Math.min(world.simTime, query.through),
+            through: Math.min(at, query.through),
             radius: query.radius,
           },
           visits,
@@ -1118,7 +1316,7 @@ export async function expandSituation(
           ...(subject ? { subjects: [subject] } : {}),
           cut: captured.receiptPrefix,
           from: query.from,
-          through: Math.min(world.simTime, query.through),
+          through: Math.min(at, query.through),
           bytes: PERSONAL_EVIDENCE_PREPARATION.bytes,
           limit: policy.expansionReceipts,
         });
@@ -1132,7 +1330,7 @@ export async function expandSituation(
             ? Buffer.byteLength('requested-batch') - Buffer.byteLength('partial')
             : 0);
         const bounded = boundedTemporalHistoryForModel(
-          world,
+          history.presentation ?? world,
           actorId,
           history,
           Math.max(0, policy.expansionBytes - encodedBytes() - envelopeBytes),
@@ -1229,7 +1427,7 @@ export async function expandSituation(
       const key = captured.allAttentionReferences[row.reference];
       if (key) {
         captured.attentionReferences[row.reference] = key;
-        const supplied = captureAttentionPresentation(world, actorId, [key])[0];
+        const supplied = captured.allPresented.get(key);
         if (supplied && !captured.presented.some((entry) => entry.key === key))
           captured.presented.push(supplied);
       }

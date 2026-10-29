@@ -83,12 +83,11 @@ export interface AttentionRetentionPolicy {
 export interface AttentionPolicy {
   geometry: {
     intervalSeconds: number;
-    patchVisits: number;
-    indexVisits: number;
-    patchMetres: number;
+    visits: number;
+    extentMetres: number;
     errorMetres: number;
-    maxFragments: number;
-    preparationPatches: number;
+    maxViews: number;
+    maxBytes: number;
   };
   semantic: { discovery: boolean };
   scene: {
@@ -219,12 +218,19 @@ export interface AttentionRelationScan {
 }
 export interface AttentionCue {
   id: string;
-  anchor: AttentionEntry;
+  anchor: AttentionRelationAnchor;
   family: AttentionRelationFamily;
   generation: number;
   proof: ObservationFactKey[];
   at: number;
 }
+export interface AttentionRelationAnchor {
+  key: string;
+  sourceId: string;
+  subject?: ObserverSubject;
+  descriptionRevision: string;
+}
+export const SELF_RELATION_KEY = '@self';
 export interface AttentionState {
   policy: string;
   nextOrder: number;
@@ -443,6 +449,7 @@ export function updateAttention(
     owner = owned(world, observerId);
   if (!observer?.actor || !owner) return { before: [], after: [] };
   const state = stateFor(world, observerId)!;
+  const previousRelationAnchors=new Set(attentionRelationAnchors(world,observerId).map((entry)=>entry.key));
   const bodySubject = prepareCurrentBodySubjects(world, observerId);
   const entriesBefore = readOnlyDraftView(state.entries).map((entry) => readOnlyDraftView(entry));
   const before = entriesBefore.map((entry) => entry.sourceId);
@@ -663,7 +670,7 @@ export function updateAttention(
   const explicit = readOnlyDraftView(state.explicit).filter((key) => live.has(key));
   if (explicit.length !== state.explicit.length) state.explicit = explicit;
   for (const [key, latch] of Object.entries(readOnlyDraftView(state.latches)))
-    if (!live.has(latch.anchorKey)) delete state.latches[key];
+    if (latch.anchorKey !== SELF_RELATION_KEY && !live.has(latch.anchorKey)) delete state.latches[key];
   if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > policy.maximumCapacity)
     throw new Error('Attention capacity exceeds the installed profile.');
   const current = new Map(
@@ -826,11 +833,11 @@ export function updateAttention(
     state.entries = nextEntries;
   for (const key of Object.keys(readOnlyDraftView(state.relationDirty))) {
     const [anchorKey] = JSON.parse(key) as [string, AttentionRelationFamily];
-    if (!live.has(anchorKey)) delete state.relationDirty[key];
+    if (anchorKey !== SELF_RELATION_KEY && !live.has(anchorKey)) delete state.relationDirty[key];
   }
   for (const key of Object.keys(readOnlyDraftView(state.relationScans))) {
     const [anchorKey] = JSON.parse(key) as [string, AttentionRelationFamily];
-    if (!live.has(anchorKey)) delete state.relationScans[key];
+    if (anchorKey !== SELF_RELATION_KEY && !live.has(anchorKey)) delete state.relationScans[key];
   }
   if (policyChanged) {
     // An interval under the old criterion/capacity cannot certify the new one.
@@ -842,14 +849,14 @@ export function updateAttention(
     // depends on that anchor's own geometry, not an unrelated moving neighbor.
     markAttentionRelationsDirty(world, observerId, ['closing-body']);
     const anchors = new Set(
-      readOnlyDraftView(state.entries)
+      attentionRelationAnchors(world, observerId)
         .filter((entry) => changedGeometryKeys.has(entry.key))
         .map((entry) => entry.key),
     );
     if (anchors.size) markAttentionRelationsDirty(world, observerId, ['closing-drop'], anchors);
   }
-  for (const entry of readOnlyDraftView(state.entries))
-    if (!current.has(entry.key))
+  for (const entry of attentionRelationAnchors(world, observerId))
+    if (!previousRelationAnchors.has(entry.key))
       for (const family of ['closing-body', 'closing-drop'] as const)
         state.relationDirty[relationKey(entry.key, family)] = state.relationRevision;
   return { before, after: state.entries.map((entry) => entry.sourceId) };
@@ -861,6 +868,25 @@ export function currentDetailedAttention(
 ): readonly AttentionEntry[] {
   const state = owned(world, observerId)?.attention;
   return state ? readOnlyDraftView(readOnlyDraftView(state).entries) : [];
+}
+/** Relation context is independent of descriptive attention slots. Work/direct
+ * anchors are still only current received bodies; a stale action target grants nothing. */
+export function attentionRelationAnchors(world: WorldState, observerId: string): AttentionRelationAnchor[] {
+  const owner=owned(world,observerId), state=owner?.attention;
+  if(!state)return [];
+  const result:AttentionRelationAnchor[]=[{key:SELF_RELATION_KEY,sourceId:observerId,descriptionRevision:JSON.stringify(['self',owner.life])}];
+  const selected=new Set<string>();
+  for(const entry of readOnlyDraftView(state.entries)) {
+    result.push(entry); selected.add(entry.key);
+  }
+  const target=entityGet(world.entities,observerId)?.actor?.action?.targetId;
+  const candidates=readOnlyDraftView(state.candidates);
+  for(const key in candidates) {
+    const candidate=readOnlyDraftView(candidates[key]!);
+    if(!selected.has(key) && (candidate.sourceId===target || (candidate.direct && (candidate.directThrough ?? Infinity)>world.simTime)))
+      result.push({key,sourceId:candidate.sourceId,descriptionRevision:candidate.descriptionRevision,...(candidate.subject?{subject:candidate.subject}:{})});
+  }
+  return result;
 }
 export function setAttentionFocus(
   world: WorldState,
@@ -950,7 +976,7 @@ export function markAttentionRelationsDirty(
   const state = owned(world, observerId)?.attention;
   if (!state) return;
   state.relationRevision++;
-  for (const entry of state.entries)
+  for (const entry of attentionRelationAnchors(world, observerId))
     if (!anchors || anchors.has(entry.key))
       for (const family of families)
         state.relationDirty[relationKey(entry.key, family)] = state.relationRevision;
@@ -966,7 +992,7 @@ export function nextAttentionWorkAt(world: WorldState, observerId: string): numb
   const latches = readOnlyDraftView(state.latches);
   const policy = selectedAttentionPolicy(world).relation;
   let next = Infinity;
-  for (const entry of readOnlyDraftView(state.entries)) {
+  for (const entry of attentionRelationAnchors(world, observerId)) {
     const candidate = candidates[entry.key];
     if (candidate?.urgency && candidate.urgencyThrough !== undefined)
       next = Math.min(next, candidate.urgencyThrough);
@@ -990,16 +1016,16 @@ export function attentionRelationOpportunity(
   observerId: string,
 ):
   | {
-      anchors: readonly AttentionEntry[];
+      anchors: readonly AttentionRelationAnchor[];
       families: ReadonlyMap<string, ReadonlySet<AttentionRelationFamily>>;
       candidates: number;
     }
   | undefined {
   const state = owned(world, observerId)?.attention;
-  if (!state || !state.entries.length || world.simTime < state.nextRelationAt) return undefined;
+  if (!state || world.simTime < state.nextRelationAt) return undefined;
   const policy = selectedAttentionPolicy(world);
   const families = new Map<string, Set<AttentionRelationFamily>>();
-  const due = state.entries.filter((entry) => {
+  const due = attentionRelationAnchors(world, observerId).filter((entry) => {
     const pending = new Set<AttentionRelationFamily>();
     for (const family of ['closing-body', 'closing-drop'] as const) {
       const key = relationKey(entry.key, family),
@@ -1046,8 +1072,9 @@ export function applyAttentionRelationEvaluations(
   if (!state) return [];
   const policy = selectedAttentionPolicy(world).relation,
     cues: AttentionCue[] = [];
+  const anchors=new Map(attentionRelationAnchors(world,observerId).map((entry)=>[entry.key,entry]));
   for (const evaluation of evaluations) {
-    const anchor = state.entries.find((entry) => entry.key === evaluation.anchorKey);
+    const anchor = anchors.get(evaluation.anchorKey);
     if (!anchor) continue;
     if (evaluation.exhausted)
       delete state.relationDirty[relationKey(anchor.key, evaluation.family)];
@@ -1127,6 +1154,7 @@ export function currentAttentionCues(
   id: string;
   anchorKey: string;
   sourceId: string;
+  descriptionRevision: string;
   subject?: ObserverSubject;
   family: AttentionRelationFamily;
   generation: number;
@@ -1136,15 +1164,17 @@ export function currentAttentionCues(
   const state = owned(world, observerId)?.attention;
   if (!state) return [];
   const candidates = readOnlyDraftView(state.candidates);
+  const self:AttentionRelationAnchor={key:SELF_RELATION_KEY,sourceId:observerId,descriptionRevision:JSON.stringify(['self',owned(world,observerId)!.life])};
   return Object.entries(readOnlyDraftView(state.latches)).flatMap(([key, value]) => {
     const latch = readOnlyDraftView(value),
-      candidate = candidates[latch.anchorKey];
+      candidate = latch.anchorKey===SELF_RELATION_KEY ? self : candidates[latch.anchorKey];
     return latch.active && candidate && latch.entryProof && latch.enteredAt !== undefined
       ? [
           {
             id: JSON.stringify([key, latch.generation]),
             anchorKey: latch.anchorKey,
             sourceId: candidate.sourceId,
+            descriptionRevision: candidate.descriptionRevision,
             ...(candidate.subject ? { subject: candidate.subject } : {}),
             family: latch.family,
             generation: latch.generation,
@@ -1211,6 +1241,7 @@ export function revokeAttentionEvidence(
 export function validateAttentionState(
   value: unknown,
   policy: Pick<AttentionPolicy, 'maximumCapacity' | 'maximumScore'>,
+  observer: ObservationExposure['observer'],
 ): asserts value is AttentionState {
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('Invalid attention continuation.');
@@ -1352,7 +1383,7 @@ export function validateAttentionState(
   for (const [key, latch] of Object.entries(state.latches)) {
     if (
       !latch ||
-      !state.candidates[latch.anchorKey] ||
+      (latch.anchorKey!==SELF_RELATION_KEY && !state.candidates[latch.anchorKey]) ||
       !['closing-body', 'closing-drop'].includes(latch.family) ||
       key !== relationKey(latch.anchorKey, latch.family) ||
       !Number.isSafeInteger(latch.generation) ||
@@ -1370,7 +1401,6 @@ export function validateAttentionState(
       throw new Error('Invalid attention relation latch.');
     validProof(latch.entryProof);
     validProof(latch.newestProof);
-    const observer = state.candidates[latch.anchorKey]!.exposure.observer;
     if (
       [...(latch.entryProof ?? []), ...(latch.newestProof ?? [])].some(
         (fact) =>
@@ -1390,7 +1420,7 @@ export function validateAttentionState(
     if (
       !Array.isArray(tuple) ||
       tuple.length !== 2 ||
-      !state.candidates[tuple[0]] ||
+      (tuple[0]!==SELF_RELATION_KEY && !state.candidates[tuple[0]]) ||
       !['closing-body', 'closing-drop'].includes(tuple[1]) ||
       !Number.isSafeInteger(revision) ||
       revision < 0 ||
@@ -1408,7 +1438,7 @@ export function validateAttentionState(
     if (
       !Array.isArray(tuple) ||
       tuple.length !== 2 ||
-      !state.candidates[tuple[0]] ||
+      (tuple[0]!==SELF_RELATION_KEY && !state.candidates[tuple[0]]) ||
       !['closing-body', 'closing-drop'].includes(tuple[1]) ||
       !scan ||
       !Number.isSafeInteger(scan.cursor) ||

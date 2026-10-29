@@ -95,6 +95,10 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         bindings: map('sim_native_value_bindings'),
         byEntity: map('sim_native_value_subjects'),
       }),
+      sensory: one('sim_sensory_continuation', {
+        scopes: { ...map('sim_sensory_scopes'), unordered: true, complete: true },
+        processed: { ...map('sim_sensory_policy_progress'), unordered: true, complete: true },
+      }),
       participationPolicy: one('config_participation'),
       nativeStrikes: map('config_native_strikes'),
       nativeResponseProfiles: map('config_native_response_profiles'),
@@ -204,6 +208,9 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       knowledgeRevisions: map('mind_knowledge_revisions'),
       observerIdentities: actorMaps('mind_recognition'),
       receivedValues: one('mind_perception_value_state', {
+        retirement: one('mind_perception_retirement', {
+          pending: { ...map('mind_perception_retirement_candidates'), unordered: true, complete: true },
+        }),
         sources: {
           ...map(
             'mind_perception_values',
@@ -221,6 +228,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         originals: { ...map('mind_perception_originals'), unordered: true, complete: true },
         // Rolling maps preserve iteration order without renumbering surviving rows.
         current: { ...map('mind_perception_current'), stablePositions: true, complete: true },
+        motionSamples: { ...map('mind_perception_motion_samples'), unordered: true, complete: true },
         // Confirmation clocks must not rewrite the unchanged scene and attention
         // candidates. These retain their existing ordered, observer-owned values.
         geometry: one('mind_perception_geometry', {
@@ -283,10 +291,10 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
               ...list('mind_temporal_chunks', 'id'),
               node: {
                 table: 'mind_temporal_chunks',
-                children: { receipts: list('mind_temporal_segments', 'start') },
+                children: { entries: list('mind_temporal_segments', 'start') },
                 encode: (value, previous, bytes, world) =>
-                  encodeEvidenceOwner(value, 'receipts', previous, bytes!, world),
-                decode: (value) => decodeEvidenceOwner(value, 'receipts'),
+                  encodeEvidenceOwner(value, 'entries', previous, bytes!, world),
+                decode: (value) => decodeEvidenceOwner(value, 'entries'),
               },
             },
             captures: { ...map('mind_temporal_captures'), unordered: true, complete: true },
@@ -631,6 +639,14 @@ columns(
   'mind_perception_values',
   { source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' }, at: numberColumn('at') },
   [['source_id']],
+);
+columns(
+  'mind_perception_segments',
+  {
+    first_ordinal: { sql: 'BIGINT NOT NULL', value: (value) => value['start'] },
+    last_ordinal: { sql: 'BIGINT NOT NULL', value: (value) => Number(value['end']) - 1 },
+  },
+  [['parent_id', 'first_ordinal']],
 );
 columns(
   'mind_temporal_supports',

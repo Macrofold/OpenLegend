@@ -7,12 +7,11 @@ import { readAttribute } from '../../world-modules.js';
 export const BASE_ATTENTION_POLICY: AttentionPolicy = {
   geometry: {
     intervalSeconds: 15,
-    patchVisits: 64,
-    indexVisits: 64,
-    patchMetres: 2,
+    visits: 128,
+    extentMetres: 16,
     errorMetres: 0.125,
-    maxFragments: 256,
-    preparationPatches: 512,
+    maxViews: 16,
+    maxBytes: 8 * 1024,
   },
   semantic: { discovery: true },
   scene: {

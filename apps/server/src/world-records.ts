@@ -370,7 +370,7 @@ export class WorldRecords {
     };
     await this.db.exec(create(WORLD_RECORD_SCHEMA));
     for (const [table, field] of [
-      ['mind_temporal_chunks', 'receipts'],
+      ['mind_temporal_chunks', 'entries'],
       ['mind_perception_values', 'values'],
     ] as const)
       await this.db.exec(

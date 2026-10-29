@@ -21,6 +21,10 @@ const targets = (command: ActionTarget) =>
     ...(command.subjects ?? []),
   ].filter((id): id is string => typeof id === 'string' && !!id && id !== command.actorId);
 
+export function actionTargetIds(commands: readonly ActionTarget[]): string[] {
+  return commands.flatMap(targets);
+}
+
 /** A saved entity ID is not proof that an anonymous person was re-identified.
  * Reuse the existing perception-episode/creator-authored identity boundary.
  * docs/architecture.md#reviewed-action-binding-and-approval-boundaries
@@ -30,16 +34,36 @@ export function captureActionTargets(
   actorId: string,
   commands: readonly ActionTarget[],
 ): ActionTargetEpisodes {
-  // Saved pins stay within their 16-entry bound; an unpinned extra actor later reads as a
-  // changed encounter, which refuses rather than trusting an unchecked identity.
-  return Object.fromEntries(
-    commands
-      .flatMap((command) =>
-        targets(command)
-          .filter((id) => !!entityGet(world.entities, id)?.actor)
-          .map((id) => [id, world.perceptionEpisodes?.[actorId]?.[id] ?? null] as const),
-      )
-      .slice(0, 16),
+  return captureActionTargetReader(world, actorId, actionTargetIds(commands))(commands);
+}
+
+function capturedTargetReader(episodes: ReadonlyMap<string, string | null>) {
+  return (commands: readonly ActionTarget[]): ActionTargetEpisodes =>
+    Object.fromEntries(
+      commands
+        .flatMap((command) =>
+          targets(command).flatMap((id) =>
+            episodes.has(id) ? [[id, episodes.get(id)!] as const] : [],
+          ),
+        )
+        .slice(0, 16),
+    );
+}
+/** A request captures offered actor episodes, never a whole world. Unknown new
+ * targets are still refused by normal native reference/admission checks. */
+export function captureActionTargetReader(
+  world: WorldState,
+  actorId: string,
+  ids: Iterable<string>,
+) {
+  return capturedTargetReader(
+    new Map(
+      [...new Set(ids)].flatMap((id) =>
+        entityGet(world.entities, id)?.actor
+          ? [[id, world.perceptionEpisodes?.[actorId]?.[id] ?? null] as const]
+          : [],
+      ),
+    ),
   );
 }
 

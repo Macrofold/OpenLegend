@@ -1,4 +1,7 @@
+import {temporalFacetValueReferences} from './temporal-evidence.js';
+import {temporalChunkReferences} from './temporal-frames.js';
 import { nextId } from './data.js';
+import { selectedTemporalPolicy } from './world-composition.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import {
   appendedRecordCount,
@@ -28,6 +31,7 @@ export interface ReceivedValueReference {
   blockId: string;
   valueOrdinal: number;
 }
+export type ReceivedValueLookup = Readonly<Record<string, {readonly values: readonly (ReceivedValueFragment | null | undefined)[]}>>;
 export interface ReceivedValueBlock {
   id: string;
   at: number;
@@ -41,6 +45,63 @@ export interface ReceivedValueState {
   activeAt?: number;
   activeSources?: string[];
   activeSource?: string;
+  retirement?: ReceivedValueRetirement;
+}
+
+/** Cleanup intent survives deletion of its last personal owner and journal pruning.
+ * A candidate grants no permission to delete; the server proves exact live ownership. */
+export interface ReceivedValueRetirement {
+  nextGeneration: number;
+  bytes: number;
+  optionalAdmissionBlocked: boolean;
+  cursor?: string;
+  pending: Record<string, {
+    generation: number;
+    bytes: number;
+    unknown?: true;
+    stage: 'candidate' | 'applying';
+    applicationRevision?: number;
+  }>;
+}
+
+export function receivedOptionalAdmissionBlocked(world: WorldState): boolean {
+  return world.receivedValues?.retirement?.optionalAdmissionBlocked === true;
+}
+
+export function nominateReceivedValueRetirement(
+  world: WorldState,
+  candidates: ReadonlyMap<string, number | null>,
+): void {
+  if (!candidates.size) return;
+  const owner = receivedValueState(world);
+  const retirement = owner.retirement ??= {
+    nextGeneration: 0, bytes: 0, optionalAdmissionBlocked: false, pending: {},
+  };
+  for (const [id, bytes] of candidates) {
+    const existing = retirement.pending[id];
+    retirement.pending[id] = {
+      generation: ++retirement.nextGeneration,
+      bytes: bytes ?? selectedTemporalPolicy(world).recent.chunkBytes,
+      ...(bytes === null ? { unknown: true as const } : {}),
+      stage: 'candidate',
+    };
+    retirement.bytes += retirement.pending[id]!.bytes - (existing?.bytes ?? 0);
+    if (bytes === null) retirement.optionalAdmissionBlocked = true;
+  }
+}
+
+/** Encoded journal debt and unresolved physical allocations share one server allowance.
+ * Unknown cold sizes block optional admission until the bounded header read resolves them. */
+export function updateReceivedRetirementPressure(
+  world: WorldState,
+  journalBytes: number,
+  maximumBytes: number,
+): void {
+  const retirement = world.receivedValues?.retirement;
+  if (!retirement) return;
+  retirement.optionalAdmissionBlocked =
+    retirement.bytes + journalBytes >= maximumBytes ||
+    Object.values(retirement.pending).some((value) => value.unknown);
 }
 
 interface ValueIndex {
@@ -94,7 +155,7 @@ export function receivedValueState(world: WorldState): ReceivedValueState {
 }
 
 export function receivedValueAt(
-  sources: ReceivedValueState['sources'],
+  sources: ReceivedValueLookup,
   reference: ReceivedValueReference,
 ): ReceivedValueFragment | undefined {
   const block = readOnlyDraftView(sources)[reference.blockId];
@@ -261,6 +322,7 @@ interface ReferenceOwner {
     originals: PerceptionOwner['originals'];
     received: PerceptionOwner['received'];
     current: PerceptionOwner['current'];
+    motion: PerceptionOwner['motionSamples'];
     frame: readonly [string, number] | undefined;
     receivedOriginals: ReadonlySet<string>;
     originalUses: ReadonlyMap<string, number>;
@@ -393,6 +455,7 @@ function perceptionReferences(
   const received = readOnlyDraftView(owner.received);
   const originals = readOnlyDraftView(owner.originals);
   const current = readOnlyDraftView(owner.current);
+  const motion=owner.motionSamples && readOnlyDraftView(owner.motionSamples);
   const frame = owner.visualConfirmation && readOnlyDraftView(owner.visualConfirmation.frameRef);
   const old = previous?.perception;
   if (
@@ -401,6 +464,7 @@ function perceptionReferences(
     old.originals === originals &&
     old.received === received &&
     old.current === current &&
+    old.motion === motion &&
     old.frame?.[0] === frame?.[0] &&
     old.frame?.[1] === frame?.[1]
   )
@@ -473,6 +537,11 @@ function perceptionReferences(
       delta.update(undefined, originalReferences(currentOriginal(owner, reference)));
     }
   }
+  if(!incremental || old!.motion!==motion) {
+    const before=incremental ? collectReferences(Object.values(old!.motion ?? {}).flatMap(track=>receivedFacetValueReferences(track.earlier.value))):undefined;
+    const after=collectReferences(Object.values(motion ?? {}).flatMap(track=>receivedFacetValueReferences(track.earlier.value)));
+    delta.update(before,after);
+  }
   const { counts, references } = delta.finish();
   return {
     identity: owner,
@@ -485,7 +554,7 @@ function perceptionReferences(
           },
         }
       : {}),
-    perception: { received, originals, current, frame, receivedOriginals, originalUses, counts },
+    perception: { received, originals, current, motion, frame, receivedOriginals, originalUses, counts },
   };
 }
 function receiptReferences(
@@ -568,7 +637,8 @@ export function referencedReceivedValues(
     for (const input of readOnlyDraftView(actor.chunks)) {
       const chunk = readOnlyDraftView(input);
       const key = JSON.stringify(['temporal', actorId, chunk.id]);
-      owners.set(key, receiptReferences(chunk.receipts, previous?.owners.get(key)));
+      const old=previous?.owners.get(key);
+      owners.set(key,old?.identity===chunk.entries ? old : {identity:chunk.entries,references:temporalChunkReferences(chunk)});
     }
     if (mode) {
       const captures = readOnlyDraftView(actor.captures);
@@ -578,7 +648,7 @@ export function referencedReceivedValues(
         key,
         old?.identity === captures
           ? old
-          : { identity: captures, references: collectReferences(Object.values(captures)) },
+          : { identity: captures, references: collectReferences(Object.values(captures).flatMap(temporalFacetValueReferences)) },
       );
     }
   }

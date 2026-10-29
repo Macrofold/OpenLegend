@@ -260,6 +260,24 @@ const choice = (answer: JudgmentAnswer | undefined) =>
 type ThoughtSchedule = ActorThoughtSchedule;
 
 /** Bounded actor-owned workflows; provider completions never bypass authoritative rules. */
+function captureActivityParameterTime(world: WorldState) {
+  return {
+    simTime: world.simTime,
+    namedDeadlines: namedClockTimes(world).map((name) => ({
+      name,
+      at: clockDeadline(world, name)!,
+    })),
+  };
+}
+function captureDiscoveryReservations(world: WorldState, active: ReadonlySet<string>) {
+  return Object.keys(world.minds ?? {}).flatMap((actorId) => {
+    const state = entityGet(world.entities, actorId)?.actor?.agency.semantic;
+    return state?.discovery === 'reserved' && state.reservation && !active.has(state.reservation)
+      ? [{ actorId, reservation: state.reservation }]
+      : [];
+  });
+}
+
 export class AiDirector {
   diagnosticCaptureSnapshot() {
     return this.log.captureSnapshot();
@@ -297,7 +315,7 @@ export class AiDirector {
   private readonly thoughtInputs = new ThoughtIntakeInputs();
   private thoughtInputWorld?: WorldState;
   private thoughtInputScope?: string;
-  private discoveryRecovery?: { world: WorldState; generation: string };
+  private discoveryRecovery?: { world: WeakRef<WorldState>; generation: string };
   private readonly unsubscribe: () => void;
   private readonly releasePlayerInteractionAdmission: () => void;
   private stopped = false;
@@ -646,40 +664,45 @@ export class AiDirector {
     bindings: AttemptBinding[],
     operation: string,
   ): Promise<AttemptBinding[]> {
-    const world = this.service.world;
-    const manifest = world.moduleManifest.revision;
+    const manifest = this.service.world.moduleManifest.revision;
     let serial = 0;
-    const resolved = await groundActionAttempts(world, actorId, response, bindings, {
-      signal: run.controller.signal,
-      retryUnresolved: run.job.kind === 'action',
-      judge: (request) =>
-        this.call(
-          run,
-          'jev',
-          `${operation}:classify:${serial++}`,
-          (requestId) =>
-            this.client.judge({ ...request, requestId, signal: run.controller.signal }),
-          judgeMeter('grounding', request),
-        ),
-      generate: (request) =>
-        this.generate<unknown>(
-          run,
-          {
-            ...request,
-            task: 'native_attempt_interpretation',
-            actorScope: actorId,
-            execution: 'fast',
-            model: this.service.config.macrofoldKey
-              ? this.service.config.macrofoldMiniModel
-              : this.service.config.miniModel,
-            reasoningEffort: 'low',
-            maxOutputTokens: 2200,
-          },
-          `${operation}:interpret:${serial++}`,
-        ),
-      record: (kind, input, output) =>
-        this.log.record(`${run.job.id}:${operation}:report:${serial++}`, kind, input, output),
-    });
+    const resolved = await groundActionAttempts(
+      () => this.service.world,
+      actorId,
+      response,
+      bindings,
+      {
+        signal: run.controller.signal,
+        retryUnresolved: run.job.kind === 'action',
+        judge: (request) =>
+          this.call(
+            run,
+            'jev',
+            `${operation}:classify:${serial++}`,
+            (requestId) =>
+              this.client.judge({ ...request, requestId, signal: run.controller.signal }),
+            judgeMeter('grounding', request),
+          ),
+        generate: (request) =>
+          this.generate<unknown>(
+            run,
+            {
+              ...request,
+              task: 'native_attempt_interpretation',
+              actorScope: actorId,
+              execution: 'fast',
+              model: this.service.config.macrofoldKey
+                ? this.service.config.macrofoldMiniModel
+                : this.service.config.miniModel,
+              reasoningEffort: 'low',
+              maxOutputTokens: 2200,
+            },
+            `${operation}:interpret:${serial++}`,
+          ),
+        record: (kind, input, output) =>
+          this.log.record(`${run.job.id}:${operation}:report:${serial++}`, kind, input, output),
+      },
+    );
     this.current(run);
     if (this.service.world.moduleManifest.revision !== manifest)
       throw new Error('Mechanics changed during action interpretation; submit a fresh action.');
@@ -3173,16 +3196,12 @@ export class AiDirector {
     const chosenFamily = requestFamilies.get(route);
     if (chosenFamily) {
       await prepared.validateConversation();
-      const selectedWorld = this.service.world;
+      const parameterTime = captureActivityParameterTime(this.service.world);
       let parameterRound = 0;
       requestedActivity = await chooseActivityRequest({
         descriptor: chosenFamily,
         choices: prepared.activityRequests.choices,
-        simTime: selectedWorld.simTime,
-        namedDeadlines: namedClockTimes(selectedWorld).map((name) => ({
-          name,
-          at: clockDeadline(selectedWorld, name)!,
-        })),
+        ...parameterTime,
         state: prepared.prompt,
         judge: (request) => judge(`activity-parameters:${parameterRound++}`)(request),
       });
@@ -3573,20 +3592,14 @@ export class AiDirector {
           );
           await prepared.validateConversation(false);
           for (const id of expansion.expandedIds) {
-            const handle = entityHandle(prepared.situation.world, actorId, id);
-            const body = currentBodyGrant(prepared.situation.world, actorId, id);
+            const body = prepared.situation.bodyBindings.get(id);
             if (!body) continue;
+            const { handle, leaseId, subject, episode } = body;
             prepared.entityReferences[handle] = id;
             prepared.binding.physicalEntityReferences![handle] = id;
-            prepared.binding.entityLeases![id] = body.leaseId;
-            const subject =
-              currentBodySubject(prepared.situation.world, actorId, id) ??
-              (!entityGet(prepared.situation.world.entities, id)?.actor
-                ? { kind: 'entity' as const, entityId: id }
-                : undefined);
+            prepared.binding.entityLeases![id] = leaseId;
             if (subject) (prepared.binding.identityReferences ??= {})[handle] = subject;
             if (!prepared.binding.entityIds.includes(id)) prepared.binding.entityIds.push(id);
-            const episode = prepared.situation.world.perceptionEpisodes?.[actorId]?.[id];
             if (episode) (prepared.binding.entityEpisodes ??= {})[id] = episode;
           }
           preview?.finish();
@@ -4546,20 +4559,20 @@ export class AiDirector {
   /** Restart may preserve the saved reservation after its local workflow vanished.
    * Durable dispatch proof, never elapsed time, decides whether permission was spent. */
   private async reconcileDiscoveryReservations(): Promise<void> {
-    const world = this.service.world,
-      generation = this.service.generation;
-    if (this.discoveryRecovery?.world === world && this.discoveryRecovery.generation === generation)
+    const generation = this.service.generation;
+    if (
+      this.discoveryRecovery?.world.deref() === this.service.world &&
+      this.discoveryRecovery.generation === generation
+    )
       return;
-    this.discoveryRecovery = { world, generation };
-    for (const actorId of Object.keys(world.minds ?? {})) {
-      const state = entityGet(world.entities, actorId)?.actor?.agency.semantic;
-      if (
-        state?.discovery !== 'reserved' ||
-        !state.reservation ||
-        [...this.activeRuns].some((run) => run.discovery?.reservation === state.reservation)
-      )
-        continue;
-      const reservation = state.reservation;
+    this.discoveryRecovery = { world: new WeakRef(this.service.world), generation };
+    const reservations = captureDiscoveryReservations(
+      this.service.world,
+      new Set(
+        [...this.activeRuns].flatMap((run) => (run.discovery ? [run.discovery.reservation] : [])),
+      ),
+    );
+    for (const { actorId, reservation } of reservations) {
       const attempts = await this.service.store.decisionAttempts(reservation);
       const dispatched = attempts.some((attempt) =>
         attempt.receipt

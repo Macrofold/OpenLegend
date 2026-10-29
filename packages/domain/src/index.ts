@@ -286,7 +286,7 @@ export {
 } from './worlds/base/shield-defense.js';
 
 export * from './dependencies.js';
-export { worldRootEntities } from './entity-index.js';
+export { worldRootEntities, worldRootEntityIds, worldRootCount } from './entity-index.js';
 export * from './work-budget.js';
 export * from './queries.js';
 export { initializeNativeWork, installedWorkAllocation } from './native-work.js';
@@ -402,6 +402,8 @@ export * from './worlds/base/recognition.js';
 
 export { normalSpeedSeconds } from './simulation-time.js';
 export * from './temporal-evidence.js';
+export * from './temporal-frames.js';
+export * from './temporal-read-context.js';
 export * from './remembered-impressions.js';
 export * from './attention.js';
 export * from './semantic-opportunities.js';

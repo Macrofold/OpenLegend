@@ -44,6 +44,9 @@ export type SemanticChange =
   | {
       kind: 'state';
       entityId: string;
+      /** A numeric owner may prove its changed fields have no outward sensory
+       * projection. Other consumers still receive the actual semantic change. */
+      outwardChange?: boolean;
       field:
         | 'body'
         | 'behavior'

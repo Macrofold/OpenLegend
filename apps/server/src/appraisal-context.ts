@@ -1,4 +1,5 @@
-import { memorySourceProof } from './memory-repository.js';
+import { memorySourceProof, type MemoryRepository, type MemoryScope } from './memory-repository.js';
+import { captureExperienceContext } from './experience-context.js';
 import { entityGet } from '@open-legend/domain';
 import {
   activeAppraisals,
@@ -105,10 +106,10 @@ async function bindAppraisals(
 ) {
   const { requiredFeelings = [], completeSources = false, guard = 'all' } = preparation;
   await service.flush();
-  const world = service.world,
-    generation = service.generation;
+  const generation = service.generation;
+  const state = captureAppraisalBindingState(service.world, actorId, purpose, preparation);
   const head = await service.store.records?.head();
-  const scope = head && { worldId: world.id, actorId, generation: head.generation };
+  const scope = head && { worldId: state.worldId, actorId, generation: head.generation };
   const repository = service.store.memories;
   const requested = [...new Set(evidenceIds)];
   if (completeSources && requested.length > 48)
@@ -146,7 +147,34 @@ async function bindAppraisals(
       },
     ]),
   );
+  state.presentation = captureExperienceContext(
+    service.world,
+    actorId,
+    state.presentation.frame,
+    selected.map((entry) => entry.entry),
+  );
+  return finishAppraisalBindings(
+    service,
+    actorId,
+    generation,
+    scope ?? undefined,
+    repository,
+    selected,
+    sources,
+    subjects,
+    state,
+  );
+}
+
+function captureAppraisalBindingState(
+  world: WorldState,
+  actorId: string,
+  purpose: 'reflection' | 'decision',
+  preparation: AppraisalPreparation,
+) {
+  const { requiredFeelings = [], guard = 'all' } = preparation;
   const worldId = world.id;
+  const installed = world.moduleManifest.appraisals;
   const appraisalState = world.appraisals?.[actorId];
   const requiredRevisions =
     guard === 'required'
@@ -157,7 +185,6 @@ async function bindAppraisals(
           ]),
         )
       : undefined;
-  const installed = world.moduleManifest.appraisals;
   const knowledgeRevision = world.knowledgeRevisions?.[actorId];
   const ownerAccount = world.authorship.playerAccountIds[actorId];
   const permitted = (definition: NonNullable<typeof installed>['definitions'][number]) =>
@@ -179,6 +206,51 @@ async function bindAppraisals(
       .filter(permitted)
       .map((definition, index) => [`policy${index + 1}`, definition]),
   );
+  return {
+    worldId,
+    appraisalState,
+    requiredRevisions,
+    knowledgeRevision,
+    ownerAccount,
+    installed,
+    records,
+    recordDefinitions,
+    definitions,
+    purpose,
+    preparation,
+    presentation: captureExperienceContext(world, actorId, preparation.frame),
+    requiredFeelings,
+  };
+}
+
+async function finishAppraisalBindings(
+  service: WorldService,
+  actorId: string,
+  generation: string,
+  scope: MemoryScope | undefined,
+  repository: MemoryRepository | undefined,
+  selected: Awaited<ReturnType<MemoryRepository['appraisalSources']>>,
+  sources: Map<string, AppraisalEvidence>,
+  subjects: Record<string, string>,
+  state: ReturnType<typeof captureAppraisalBindingState>,
+) {
+  const {
+    worldId,
+    appraisalState,
+    requiredRevisions,
+    knowledgeRevision,
+    ownerAccount,
+    installed,
+    records,
+    recordDefinitions,
+    definitions,
+    purpose,
+    preparation,
+    presentation,
+    requiredFeelings,
+  } = state;
+  const permitted = (definition: NonNullable<typeof installed>['definitions'][number]) =>
+    purpose === 'decision' ? definition.decision : definition.reflection;
   const proof = selected.map(memorySourceProof);
   const sourceCurrent = async () =>
     generation === service.generation &&
@@ -280,7 +352,7 @@ async function bindAppraisals(
           ? { reference: `character.experience[${shared.index}]` }
           : experienceForModel(
               entry.entry,
-              experienceModelBindings(world, actorId, entry.entry, handle, frame),
+              experienceModelBindings(presentation, actorId, entry.entry, handle, frame),
             ),
         coverage: source.coverage,
         subjects: source.subjectIds.flatMap((id) => (subjectRef(id) ? [subjectRef(id)] : [])),

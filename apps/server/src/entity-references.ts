@@ -22,6 +22,7 @@ import { createHmac, randomBytes } from 'node:crypto';
 // A life count has a small guessable range. A process-local key keeps the
 // presentation reference opaque; restart invalidation grants no authority.
 const bodyReferenceKey = randomBytes(32);
+export type PersonalReferenceScope = Pick<WorldState, 'id'>;
 /** Private life/recognition metadata never becomes wire fields. Restart invalidates
  * previews; committed requests still recover through their original receipts. */
 export function encounterControlReference(
@@ -96,7 +97,7 @@ export function contextActionRevision(
 // These are display/binding tokens, not native source revisions. 144 keyed bits
 // keep them opaque while repeated exact evidence stays within existing context budgets.
 export function permittedSourceHandle(
-  world: WorldState,
+  world: PersonalReferenceScope,
   observerId: string,
   identity: unknown,
 ): string {
@@ -108,12 +109,16 @@ export function permittedSourceHandle(
 }
 /** One acquired exposure can join its received history and event participants;
  * the token grants neither canonical identity nor a current physical target. */
-export function receivedSubjectHandle(world: WorldState, observerId: string, episodeId: string) {
+export function receivedSubjectHandle(
+  world: PersonalReferenceScope,
+  observerId: string,
+  episodeId: string,
+) {
   return permittedSourceHandle(world, observerId, ['received-subject', episodeId]);
 }
 /** Preserve exact evidence-family identity across fact, support and confirmation views. */
 export function evidenceSourceHandle(
-  world: WorldState,
+  world: PersonalReferenceScope,
   observerId: string,
   source: import('@open-legend/domain').EvidenceSource,
 ): string {
@@ -127,7 +132,7 @@ export function evidenceSourceHandle(
   ]);
 }
 export function personalSourceHandle(
-  world: WorldState,
+  world: PersonalReferenceScope,
   observerId: string,
   source: import('@open-legend/domain').PersonalSourceRef,
 ): string {
@@ -139,7 +144,7 @@ export function personalSourceHandle(
   ]);
 }
 export function subjectHandle(
-  world: WorldState,
+  world: PersonalReferenceScope,
   observerId: string,
   subject: ObserverSubject,
 ): string {
@@ -214,29 +219,68 @@ export function experienceEntityReferences(
 /** Captured historical attribution survives loss of current bodily contact.
  * Changing an acquired identity still invalidates its prepared presentation;
  * physical proposals separately recheck their captured body lease at execution. */
+type AttributionIdentity = readonly [string | null, string | null, string, string | null, boolean];
+function attributionRevision(
+  worldId: string,
+  observerId: string,
+  entries: Iterable<readonly [string, readonly AttributionIdentity[]]>,
+): string {
+  return createHmac('sha256', bodyReferenceKey)
+    .update(canonicalJson([worldId, observerId, [...entries]]))
+    .digest('hex');
+}
+function attributionIdentities(
+  world: WorldState,
+  observerId: string,
+  id: string,
+): AttributionIdentity[] {
+  return identitiesForEntity(world, observerId, id).map((identity) => [
+    identity.individualId ?? null,
+    identity.canonicalId ?? null,
+    identity.givenName,
+    identity.nickname ?? null,
+    identity.authored,
+  ]);
+}
 export function personalAttributionRevision(
   world: WorldState,
   observerId: string,
   ids: Iterable<string>,
 ): string {
-  return createHmac('sha256', bodyReferenceKey)
-    .update(
-      canonicalJson([
-        world.id,
-        observerId,
-        [...ids].map((id) => [
-          id,
-          identitiesForEntity(world, observerId, id).map((identity) => [
-            identity.individualId ?? null,
-            identity.canonicalId ?? null,
-            identity.givenName,
-            identity.nickname ?? null,
-            identity.authored,
-          ]),
-        ]),
-      ]),
-    )
-    .digest('hex');
+  return attributionRevision(
+    world.id,
+    observerId,
+    [...ids].map((id) => [id, attributionIdentities(world, observerId, id)]),
+  );
+}
+function capturedAttributionReader(
+  worldId: string,
+  observerId: string,
+  identities: ReadonlyMap<string, readonly AttributionIdentity[]>,
+) {
+  return (ids: Iterable<string>) =>
+    attributionRevision(
+      worldId,
+      observerId,
+      [...ids].map((id) => {
+        const value = identities.get(id);
+        if (!value) throw new Error('Uncaptured personal attribution.');
+        return [id, value] as const;
+      }),
+    );
+}
+/** Capture only selected historical participants; later formatting cannot keep
+ * an old whole world alive or silently acquire a later identity association. */
+export function capturePersonalAttributionReader(
+  world: WorldState,
+  observerId: string,
+  ids: Iterable<string>,
+) {
+  return capturedAttributionReader(
+    world.id,
+    observerId,
+    new Map([...new Set(ids)].map((id) => [id, attributionIdentities(world, observerId, id)])),
+  );
 }
 
 export function resolveEntityMarkers(text: string, references: Record<string, string>): string {

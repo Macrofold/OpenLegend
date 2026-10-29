@@ -13,6 +13,7 @@ import { HistoryCursorError } from './perceived-events.js';
 import { permittedSourceHandle, historicalAccountText } from './entity-references.js';
 import { digest } from './store.js';
 import { sealCursor, openCursor } from './scoped-cursor.js';
+import { captureTemporalHistoryReadContext, temporalHistoryWindow } from './temporal-storage.js';
 import type { WorldService } from './world-service.js';
 
 const cursorSchema = z
@@ -139,7 +140,10 @@ export async function recentHistory(
   if (!records || !memories) throw new Error('Recent observations require the history database.');
   const head = await records.head();
   if (!head) throw new Error('Recent observations are unavailable.');
-  const world = service.world,
+  const context = captureTemporalHistoryReadContext(service.world, actorId);
+  const worldId = context.worldId,
+    forgotten = service.world.experience?.forgotten[actorId],
+    corrections = service.world.experience?.corrections?.[actorId],
     generation = service.generation,
     historyEpoch = service.historyEpoch;
   const query = request.query?.trim().toLocaleLowerCase() ?? '';
@@ -156,14 +160,16 @@ export async function recentHistory(
   }
   if (!permitted()) throw new AuthorityError('forbidden');
   const selected = await memories.temporalHistory(
-    { worldId: world.id, actorId, generation: head.generation },
+    { worldId, actorId, generation: head.generation },
     { before, limit: 128, bytes: 8192 },
-    world,
+    context,
   );
-  const rows = selected.entries.map((entry) => ({
-    entry,
-    text: receivedText(entry.values),
-  }));
+  const rows = selected.entries
+    .filter(({ receipt }) => receipt.change !== 'receiver-frame')
+    .map((entry) => ({
+      entry,
+      text: receivedText(entry.values),
+    }));
   const matching = rows.filter((row) => !query || row.text.toLocaleLowerCase().includes(query));
   const page = matching.slice(-20),
     oldest =
@@ -172,24 +178,25 @@ export async function recentHistory(
         : (selected.nextBefore ?? rows[0]?.entry.receipt);
   const more = matching.length > 20 || selected.hasMore;
   const receiptsCurrent = await memories.temporalSelectionsCurrent(
-    { worldId: world.id, actorId, generation: head.generation },
+    { worldId, actorId, generation: head.generation },
     page.map((row) => row.entry),
+    () => temporalHistoryWindow(service.world),
   );
   if (
     !receiptsCurrent ||
     !permitted() ||
     generation !== service.generation ||
     historyEpoch !== service.historyEpoch ||
-    world.experience?.forgotten[actorId] !== service.world.experience?.forgotten[actorId] ||
-    world.experience?.corrections?.[actorId] !== service.world.experience?.corrections?.[actorId]
+    forgotten !== service.world.experience?.forgotten[actorId] ||
+    corrections !== service.world.experience?.corrections?.[actorId]
   )
     throw new HistoryCursorError('Recent observations changed. Browse again.');
   return {
     ok: true,
-    worldId: world.id,
+    worldId,
     generation,
     entries: page.map(({ entry: { receipt }, text }) => ({
-      id: permittedSourceHandle(world, actorId, [
+      id: permittedSourceHandle({ id: worldId }, actorId, [
         'receipt',
         receipt.physicalLife,
         receipt.epoch,
@@ -201,7 +208,7 @@ export async function recentHistory(
       editReference: sealCursor({
         purpose: 'recent-observation-edit',
         scope: scopeKey(scope),
-        worldId: world.id,
+        worldId,
         generation,
         receipt: {
           actorId,

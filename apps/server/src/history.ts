@@ -1,3 +1,4 @@
+import { temporalChunkReceipts } from '@open-legend/domain';
 import { hasMemory } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import {
@@ -76,7 +77,7 @@ export function validateHistoryEvidence(
   const receipts = new Map<string, TemporalReceipt>();
   for (const actor of Object.values(temporal?.actors ?? {}))
     for (const chunk of actor.chunks)
-      for (const receipt of chunk.receipts) receipts.set(receipt.id, receipt);
+      for (const receipt of temporalChunkReceipts(chunk)) receipts.set(receipt.id, receipt);
   for (const [actor, entries] of Object.entries(world.experience?.awareness ?? {}))
     for (const entry of entries) {
       const payload = JSON.stringify(entry);

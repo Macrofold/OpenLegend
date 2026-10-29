@@ -314,6 +314,176 @@ interface PreparedGeometry {
   shapeIndex: BoundsIndex<PreparedShape>;
   supportIndex: BoundsIndex<SupportEntry>;
   stances: WeakMap<SurfacePoint, StanceMemo>;
+  features?: { byId: Map<string, PhysicalFeature>; index: BoundsIndex<PhysicalFeature> };
+}
+/** Exact source-owned convex pieces, shared by all receivers. Source names and
+ * hidden topology stay here; receivers disclose only certified local extents. */
+export interface PhysicalFeature {
+  id: string;
+  sourceId: string;
+  kind: 'support' | 'solid-face';
+  vertices: [WorldPoint, WorldPoint, WorldPoint, WorldPoint];
+  normal: WorldPoint;
+  bounds: Bounds3;
+}
+function featureBounds(points: readonly WorldPoint[]): Bounds3 {
+  return {
+    min: {
+      x: Math.min(...points.map((p) => p.x)),
+      y: Math.min(...points.map((p) => p.y)),
+      z: Math.min(...points.map((p) => p.z)),
+    },
+    max: {
+      x: Math.max(...points.map((p) => p.x)),
+      y: Math.max(...points.map((p) => p.y)),
+      z: Math.max(...points.map((p) => p.z)),
+    },
+  };
+}
+function physicalFeatures(map: SpatialMap) {
+  const prepared = preparedShapes(map);
+  if (prepared.features) return prepared.features;
+  const values: PhysicalFeature[] = [];
+  const addSupport = (
+    surface: WalkableSurface,
+    minX: number,
+    maxX: number,
+    minZ: number,
+    maxZ: number,
+  ) => {
+    if (maxX <= minX || maxZ <= minZ) return;
+    const vertices = [
+      [minX, minZ],
+      [maxX, minZ],
+      [maxX, maxZ],
+      [minX, maxZ],
+    ].map(([x, z]) => ({
+      x: x!,
+      z: z!,
+      y: surfaceHeight(surface, x!, z!),
+    })) as PhysicalFeature['vertices'];
+    const length = Math.hypot(surface.slopeX, 1, surface.slopeZ);
+    values.push({
+      id: JSON.stringify(['support', surface.id, minX, maxX, minZ, maxZ]),
+      sourceId: surface.id,
+      kind: 'support',
+      vertices,
+      normal: { x: -surface.slopeX / length || 0, y: 1 / length, z: -surface.slopeZ / length || 0 },
+      bounds: featureBounds(vertices),
+    });
+  };
+  for (const surface of prepared.supports) {
+    if (!surface.terrain) {
+      addSupport(surface, surface.minX, surface.maxX, surface.minZ, surface.maxZ);
+      continue;
+    }
+    // Merge compatible actual cell runs once. A hole or differing authored cell
+    // remains a boundary; observers never independently subdivide the whole map.
+    let active = new Map<string, { minX: number; maxX: number; minZ: number; maxZ: number }>();
+    for (
+      let z = Math.max(0, Math.floor(surface.minZ + 0.5));
+      z <= Math.min(map.height - 1, Math.floor(surface.maxZ + 0.5));
+      z++
+    ) {
+      const row = new Map<string, { minX: number; maxX: number; minZ: number; maxZ: number }>();
+      let x = Math.max(0, Math.floor(surface.minX + 0.5));
+      while (x <= Math.min(map.width - 1, Math.floor(surface.maxX + 0.5))) {
+        const tile = map.tiles[z]?.[x];
+        if (!tile || !map.terrain[tile]?.walkable) {
+          x++;
+          continue;
+        }
+        const start = x++;
+        while (
+          x <= Math.min(map.width - 1, Math.floor(surface.maxX + 0.5)) &&
+          map.tiles[z]?.[x] === tile
+        )
+          x++;
+        const minX = Math.max(surface.minX, start - 0.5, 0),
+          maxX = Math.min(surface.maxX, x - 0.5, map.width - 1);
+        const key = JSON.stringify([tile, minX, maxX]),
+          old = active.get(key);
+        const rectangle = {
+          minX,
+          maxX,
+          minZ: old?.minZ ?? Math.max(surface.minZ, z - 0.5, 0),
+          maxZ: Math.min(surface.maxZ, z + 0.5, map.height - 1),
+        };
+        row.set(key, rectangle);
+        active.delete(key);
+      }
+      for (const rectangle of active.values())
+        addSupport(surface, rectangle.minX, rectangle.maxX, rectangle.minZ, rectangle.maxZ);
+      active = row;
+    }
+    for (const rectangle of active.values())
+      addSupport(surface, rectangle.minX, rectangle.maxX, rectangle.minZ, rectangle.maxZ);
+  }
+  for (let shapeIndex = 0; shapeIndex < prepared.shapes.length; shapeIndex++) {
+    const shape = prepared.shapes[shapeIndex]!;
+    // Terrain's planar support is already represented above. Slab sides and
+    // solid faces are useful finite context, never a disclosed hidden volume.
+    for (let ordinal = 0; ordinal < shape.planes.length; ordinal++) {
+      if (shape.kind === 'surface' && ordinal === 4) continue;
+      const [a, b, c, d] = shape.planes[ordinal]!,
+        length = Math.hypot(a, b, c),
+        normal = { x: a / length, y: b / length, z: c / length };
+      const points = shape.vertices.filter(
+        (p, index, vertices) =>
+          Math.abs(a * p.x + b * p.y + c * p.z - d) <= EPS * 4 &&
+          !vertices.slice(0, index).some((other) => distance3D(p, other) <= EPS),
+      );
+      if (points.length !== 3 && points.length !== 4) continue;
+      const centre = {
+        x: points.reduce((n, p) => n + p.x, 0) / points.length,
+        y: points.reduce((n, p) => n + p.y, 0) / points.length,
+        z: points.reduce((n, p) => n + p.z, 0) / points.length,
+      };
+      const u = {
+          x: points[0]!.x - centre.x,
+          y: points[0]!.y - centre.y,
+          z: points[0]!.z - centre.z,
+        },
+        v = cross(normal, u);
+      const dot = (p: WorldPoint, q: WorldPoint) =>
+        (p.x - centre.x) * q.x + (p.y - centre.y) * q.y + (p.z - centre.z) * q.z;
+      points.sort((p, q) => Math.atan2(dot(p, v), dot(p, u)) - Math.atan2(dot(q, v), dot(q, u)));
+      if (points.length === 3) points.push(points[2]!);
+      values.push({
+        id: JSON.stringify(['face', shape.kind, shape.id, shapeIndex, ordinal]),
+        sourceId: shape.id,
+        kind: 'solid-face',
+        vertices: points as PhysicalFeature['vertices'],
+        normal,
+        bounds: featureBounds(points),
+      });
+    }
+  }
+  return (prepared.features = {
+    byId: new Map(values.map((value) => [value.id, value])),
+    index: new BoundsIndex(values.map((value) => ({ value, bounds: value.bounds }))),
+  });
+}
+export function physicalFeatureById(map: SpatialMap, id: string): PhysicalFeature | undefined {
+  return physicalFeatures(map).byId.get(id);
+}
+export function queryPhysicalFeatures(
+  map: SpatialMap,
+  bounds: Bounds3,
+  allowance: number,
+  cursor?: BoundsQueryCursor,
+) {
+  return physicalFeatures(map).index.query(
+    (b) =>
+      b.min.x <= bounds.max.x &&
+      b.max.x >= bounds.min.x &&
+      b.min.y <= bounds.max.y &&
+      b.max.y >= bounds.min.y &&
+      b.min.z <= bounds.max.z &&
+      b.max.z >= bounds.min.z,
+    allowance,
+    cursor,
+  );
 }
 const shapeCache = new WeakMap<SpatialMap, PreparedGeometry>();
 function surfaceHull(s: WalkableSurface): { vertices: WorldPoint[]; edges: WorldPoint[] } {
@@ -1100,6 +1270,44 @@ export function clearConvexView(
   )
     throw new Error('Invalid convex sight target.');
   return sightObstacles(map, [from, ...target]).length === 0;
+}
+/** Bounded version for optional contextual acquisition. Exhaustion never grants
+ * a visible interior; the caller may keep the unproved fringe unknown. */
+export function queryConvexView(
+  map: SpatialMap,
+  from: WorldPoint,
+  target: readonly WorldPoint[],
+  allowance: number,
+) {
+  if (
+    !finitePoint(from) ||
+    target.length < 1 ||
+    target.length > 4 ||
+    target.some((point) => !finitePoint(point))
+  )
+    throw new Error('Invalid convex sight target.');
+  const points = [from, ...target],
+    bounds = featureBounds(points);
+  const result = preparedShapes(map).shapeIndex.query(
+    (b) =>
+      b.min.x <= bounds.max.x + EPS &&
+      b.max.x >= bounds.min.x - EPS &&
+      b.min.y <= bounds.max.y + EPS &&
+      b.max.y >= bounds.min.y - EPS &&
+      b.min.z <= bounds.max.z + EPS &&
+      b.max.z >= bounds.min.z - EPS,
+    allowance,
+  );
+  let hull: ReturnType<typeof prepareSightHull> | undefined;
+  const blocked = result.values.some(
+    (shape) =>
+      shape.sight && !hullSeparated(shape, points, () => (hull ??= prepareSightHull(points))),
+  );
+  return {
+    visited: result.visited,
+    complete: result.status === 'complete',
+    clear: !blocked && result.status === 'complete',
+  };
 }
 /** clearSegment for a segment inside the hull its obstacles were gathered from. */
 export function clearOf(

@@ -2,10 +2,14 @@ import {
   receiptLookupBuckets,
   restoreEvidenceLayout,
   snapshotEvidenceOwner,
+  receivedValueEncodedBytes,
 } from './evidence-segments.js';
 import {
   selectedTemporalPolicy,
+  captureTemporalReadContext,
+  type TemporalReadContext,
   canonicalJson,
+  immutableDataSnapshot,
   appendedRecordCount,
   selectedAttentionPolicy,
   temporalFacetEligible,
@@ -13,6 +17,8 @@ import {
   temporalValueLogicalBytes,
   receivedTemporalFragment,
   retireTemporalChunks,
+  temporalChunkReceipts,
+  temporalChunkReferences,
   retireTemporalReceipts,
   temporalReceiptWithinPrefix,
   materializeTemporalValue,
@@ -26,13 +32,15 @@ import {
   currentFacetOriginal,
   recordMapChangesBetween,
   referencedReceivedValues,
-  pruneReceivedValueBlock,
+  nominateReceivedValueRetirement,
   updateWorld,
   type WorldState,
   type TemporalChunk,
   type TemporalEvidenceState,
   type TemporalHistorySelection,
   type ReceivedValueBlock,
+  type ReceivedValueLookup,
+  type ReceivedValueFragment,
   type TemporalReceiptPrefix,
   type TemporalValue,
   type ReceivedObservation,
@@ -49,23 +57,16 @@ export const temporalChunkRecordId = (actorId: string, id: string) =>
 /** Exact value membership is a derived column on the existing chunk, not a
  * second owner or one SQL row per received coordinate. */
 export function temporalChunkValueReferences(chunk: TemporalChunk): Record<string, number[]> {
-  const references = new Map<string, Set<number>>();
-  for (const receipt of chunk.receipts)
-    for (const reference of receipt.facets) {
-      let ordinals = references.get(reference.blockId);
-      if (!ordinals) references.set(reference.blockId, (ordinals = new Set()));
-      ordinals.add(reference.valueOrdinal);
-    }
-  return Object.fromEntries(
-    [...references].map(([id, ordinals]) => [id, [...ordinals].sort((a, b) => a - b)]),
-  );
+  return Object.fromEntries([...temporalChunkReferences(chunk)].map(
+    ([id, ordinals]) => [id, [...ordinals].sort((a, b) => a - b)],
+  ));
 }
 /** This projection controls payload reclamation, so a malformed saved index
  * must refuse before it can erase a still-owned value. */
 export function readTemporalChunkRecord(row: Record<string, unknown>): TemporalChunk {
   const parsed = JSON.parse(String(row['payload']));
   const chunk = (
-    parsed.storage ? restoreEvidenceLayout(parsed, 'receipts', row['segments']) : parsed
+    parsed.storage ? restoreEvidenceLayout(parsed, 'entries', row['segments']) : parsed
   ) as TemporalChunk;
   if (canonicalJson(row['value_refs']) !== canonicalJson(temporalChunkValueReferences(chunk)))
     throw new MemoryRetentionError('Temporal value ownership metadata disagrees with its receipt.');
@@ -102,6 +103,57 @@ export interface TemporalHistoryQuery {
   cut?: TemporalReceiptPrefix;
   measurements?: { from: number; through: number };
   kinds?: readonly TemporalValue['kind'][];
+}
+
+/** Captured actor-local read inputs. Blocks are copied only for this actor's
+ * resident tail; the global received-value catalogue is never retained. */
+export interface TemporalHistoryWindow {
+  readonly at: number;
+  readonly maxAgeSeconds: number;
+}
+export function temporalHistoryWindow(world: WorldState): TemporalHistoryWindow {
+  return { at: world.simTime, maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds };
+}
+export interface TemporalHistoryReadContext {
+  readonly worldId: string;
+  readonly actorId: string;
+  readonly at: number;
+  readonly maxAgeSeconds: number;
+  readonly maximumSubjects: number;
+  readonly maximumOperations: number;
+  readonly chunks: readonly TemporalChunk[];
+  readonly releasedThrough?: number;
+  readonly recordingGap?: { readonly from: number; readonly through: number };
+  readonly sources: ReceivedValueLookup;
+  readonly disclosure: TemporalReadContext;
+}
+export function captureTemporalHistoryReadContext(
+  world: WorldState,
+  actorId: string,
+): TemporalHistoryReadContext {
+  const actor = world.experience?.temporal?.actors[actorId];
+  const chunks = (actor?.chunks ?? []).map(chunk => immutableDataSnapshot(chunk));
+  const sources: Record<string, ReceivedValueLookup[string]> = {};
+  for (const chunk of chunks)
+    for (const [id, ordinals] of temporalChunkReferences(chunk)) {
+      const source = world.receivedValues?.sources[id];
+      if (!source) continue;
+      const values = sources[id]?.values.slice() ?? [];
+      for (const ordinal of ordinals) {
+        const value = source.values[ordinal];
+        if (value) values[ordinal] = immutableDataSnapshot(value);
+      }
+      sources[id] = { values };
+    }
+  return {
+    worldId: world.id, actorId, at: world.simTime,
+    maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
+    maximumSubjects: selectedAttentionPolicy(world).maximumCapacity,
+    maximumOperations: selectedAttentionPolicy(world).scene.historyReceipts,
+    chunks, ...(actor?.releasedThrough === undefined ? {} : { releasedThrough: actor.releasedThrough }),
+    ...(actor?.recordingGap ? { recordingGap: { ...actor.recordingGap } } : {}),
+    sources, disclosure: captureTemporalReadContext(world, actorId),
+  };
 }
 
 /** Changed personal ownership selects candidate blocks before any global
@@ -167,7 +219,7 @@ export function receivedValueReleaseCandidates(
         const retained = chunks.get(chunk.id);
         if (
           chunk === retained ||
-          (retained && appendedRecordCount(chunk.receipts, retained.receipts) !== undefined)
+          (retained && appendedRecordCount(chunk.entries, retained.entries) !== undefined)
         )
           continue;
         // A surviving block ID can still lose an individual payload ordinal.
@@ -177,14 +229,40 @@ export function receivedValueReleaseCandidates(
   if (before?.receivedValues !== after.receivedValues) {
     const old = before?.receivedValues?.sources ?? {},
       current = after.receivedValues?.sources ?? {};
-    for (const [id, source] of Object.entries(current))
-      if (source !== old[id] && (old[id] || id !== after.receivedValues?.activeSource || !before))
-        candidates.add(id);
+    if (old !== current)
+      for (const id of recordMapChangesBetween(old, current) ?? new Set([...Object.keys(old), ...Object.keys(current)])) {
+        const source = current[id];
+        const prior = old[id];
+        if ((!source && prior) || (source && !prior && id !== after.receivedValues?.activeSource) ||
+            (source && prior && source !== prior &&
+             appendedRecordCount(prior.values, source.values) === undefined &&
+             prior.values.some((value, ordinal) => value && !source.values[ordinal]))) candidates.add(id);
+      }
     const append = before?.receivedValues?.activeSource;
     if (append && append !== after.receivedValues?.activeSource) candidates.add(append);
-    for (const id of Object.keys(old)) if (!current[id]) candidates.add(id);
   }
   return candidates;
+}
+
+/** The command path only records release intent; it performs no ownership SQL. */
+export function nominateReleasedReceivedValues(
+  before: Pick<WorldState, 'receivedValues' | 'perceptionEvidence' | 'experience'> | undefined,
+  world: WorldState,
+  candidates: ReadonlySet<string> = receivedValueReleaseCandidates(before, world),
+): WorldState {
+  const nominations = new Map<string, number | null>();
+  for (const id of candidates) {
+    const candidate = world.receivedValues?.retirement?.pending[id];
+    const prior = before?.receivedValues?.retirement?.pending[id];
+    // Closure preparation can revisit this same transition. Its already changed
+    // candidate, including a cleanup proposal, must not be nominated twice.
+    if (candidate && (!prior || candidate.generation !== prior.generation ||
+        candidate.stage !== prior.stage || candidate.applicationRevision !== prior.applicationRevision)) continue;
+    const block = world.receivedValues?.sources[id] ?? before?.receivedValues?.sources[id];
+    nominations.set(id, block ? receivedValueEncodedBytes(block, selectedTemporalPolicy(world).recent.chunkBytes) ?? null : null);
+  }
+  return nominations.size ? updateWorld(world,
+    (draft) => nominateReceivedValueRetirement(draft, nominations), { retainNativeValues: true }) : world;
 }
 
 export function retentionNeedsPreparation(world: WorldState): boolean {
@@ -228,21 +306,20 @@ export class MemoryRetentionError extends Error {
 export async function readTemporalHistory(
   db: SqlDatabase,
   scope: MemoryScope,
-  world: WorldState,
+  context: TemporalHistoryReadContext,
   query: TemporalHistoryQuery,
 ): Promise<TemporalHistoryPage> {
-  if (world.id !== scope.worldId) throw new MemoryRetentionError('Foreign temporal history scope.');
+  if (context.worldId !== scope.worldId || context.actorId !== scope.actorId) throw new MemoryRetentionError('Foreign temporal history scope.');
   if (query.cut?.epoch === null) return { entries: [], incomplete: true, hasMore: false };
   const head = await db
     .prepare('SELECT generation FROM world_head WHERE world_id=?')
     .get(scope.worldId);
   if (head?.['generation'] !== scope.generation)
     throw new MemoryRetentionError('Temporal history changed before selection.');
-  const policy = selectedTemporalPolicy(world).recent;
-  const from = Math.max(query.from ?? 0, world.simTime - policy.maxAgeSeconds);
-  const through = Math.min(query.through ?? world.simTime, world.simTime);
+  const from = Math.max(query.from ?? 0, context.at - context.maxAgeSeconds);
+  const through = Math.min(query.through ?? context.at, context.at);
   const subjects = query.subjects ?? [];
-  if (subjects.length > selectedAttentionPolicy(world).maximumCapacity)
+  if (subjects.length > context.maximumSubjects)
     throw new MemoryRetentionError('Temporal history selection exceeds its subject allowance.');
   const limit = Math.max(1, Math.min(128, query.limit ?? 128));
   const maxBytes = Math.max(1, Math.min(maximumPreparation, query.bytes ?? 8192));
@@ -292,7 +369,7 @@ export async function readTemporalHistory(
     );
   const chunks = new Map<string, TemporalChunk>();
   const selected: string[] = [];
-  const sourceIds = new Set<string>();
+  const sourceIds = new Map<string, Set<number>>();
   const metadataCursor = (row: Record<string, unknown>) => ({
     at: Number(row['first_at']),
     order: Number(row['first_order']),
@@ -302,7 +379,7 @@ export async function readTemporalHistory(
   let metadataBefore: TemporalHistoryPage['nextBefore'];
   let preparationBytes = 0,
     count = 0,
-    incomplete = metadata.length > limit,
+    incomplete = metadata.length > limit || !!context.recordingGap,
     hasMore = metadata.length > limit;
   for (const row of metadata.slice(0, limit)) {
     const size = Number(row['encoded_bytes']);
@@ -333,8 +410,7 @@ export async function readTemporalHistory(
         throw new MemoryRetentionError('Foreign temporal chunk.');
       chunks.set(chunk.id, chunk);
     }
-  const resident = world.experience?.temporal;
-  for (const chunk of resident?.actors[scope.actorId]?.chunks ?? [])
+  for (const chunk of context.chunks)
     if (
       chunk.throughAt >= from &&
       chunk.fromAt <= through &&
@@ -342,12 +418,12 @@ export async function readTemporalHistory(
       (query.physicalLife === undefined || chunk.physicalLife === query.physicalLife) &&
       (query.epoch === undefined || chunk.epoch === query.epoch) &&
       (!query.cut ||
-        chunk.receipts.some((receipt) => temporalReceiptWithinPrefix(receipt, query.cut!)))
+        temporalChunkReceipts(chunk).some((receipt) => temporalReceiptWithinPrefix(receipt, query.cut!)))
     ) {
       chunks.set(chunk.id, chunk);
     }
   const receipts = [...chunks.values()]
-    .flatMap((chunk) => chunk.receipts)
+    .flatMap(temporalChunkReceipts)
     .filter(
       (receipt) =>
         receipt.actorId === scope.actorId &&
@@ -383,9 +459,14 @@ export async function readTemporalHistory(
         (reference.measuredFrom <= query.measurements.through &&
           (reference.confirmedThrough ?? reference.measuredThrough) >= query.measurements.from)
       )
-        sourceIds.add(reference.blockId);
-  const sources: Record<string, ReceivedValueBlock> = {};
-  const missing = [...sourceIds].filter((id) => !world.receivedValues?.sources[id]);
+        {
+          let ordinals = sourceIds.get(reference.blockId);
+          if (!ordinals) sourceIds.set(reference.blockId, ordinals = new Set());
+          ordinals.add(reference.valueOrdinal);
+        }
+  const sources: Record<string, ReceivedValueLookup[string]> = {};
+  const missing = [...sourceIds].filter(([id, ordinals]) =>
+    [...ordinals].some(ordinal => !context.sources[id]?.values[ordinal])).map(([id]) => id);
   if (missing.length) {
     const sizes = await db
       .prepare(
@@ -413,14 +494,19 @@ export async function readTemporalHistory(
       sources[source.id] = source;
     }
   }
-  for (const id of sourceIds)
-    if (world.receivedValues?.sources[id]) sources[id] = world.receivedValues.sources[id]!;
+  for (const [id, ordinals] of sourceIds) {
+    const values: Array<ReceivedValueFragment | null | undefined> = [];
+    for (const ordinal of ordinals) {
+      const value = context.sources[id]?.values[ordinal] ?? sources[id]?.values[ordinal];
+      if (value) values[ordinal] = value;
+    }
+    sources[id] = { values };
+  }
   const entries: TemporalHistorySelection['entries'] = [];
-  const forgotten = new Set(world.experience?.forgotten[scope.actorId] ?? []);
-  const corrections = world.experience?.corrections?.[scope.actorId] ?? {};
-  const hasRevocations = forgotten.size > 0 || Object.keys(corrections).length > 0;
-  const revoked = (id: string) => forgotten.has(id) || Object.hasOwn(corrections, id);
-  let bytes = 0;
+  const { forgotten, corrected } = context.disclosure;
+  const hasRevocations = forgotten.size > 0 || corrected.size > 0;
+  const revoked = (id: string) => forgotten.has(id) || corrected.has(id);
+  let bytes = 0, operations = 0;
   let examined: TemporalHistoryPage['nextBefore'];
   for (const receipt of receipts) {
     if (entries.length >= limit) {
@@ -434,11 +520,19 @@ export async function readTemporalHistory(
       epoch: receipt.epoch,
       ordinal: receipt.ordinal,
     };
+    const work = Math.max(1, receipt.facets.length);
+    if (operations + work > context.maximumOperations) {
+      incomplete = true;
+      hasMore = true;
+      if (!entries.length) examined = before; // A whole oversized event cannot hide older pages.
+      break;
+    }
+    operations += work;
     if (
       hasRevocations &&
       (revoked(receipt.id) ||
         (receipt.sourceIds.some(revoked) &&
-          temporalReceiptAccountAliases(receipt, sources, world).some(revoked)))
+          temporalReceiptAccountAliases(receipt, sources, context.disclosure).some(revoked)))
     ) {
       incomplete = true;
       examined = before;
@@ -472,11 +566,11 @@ export async function readTemporalHistory(
             !temporalReceiptAliases(
               { ...receipt, sourceIds: [], facets: [facet] },
               sources,
-              world,
+              context.disclosure,
             ).some(revoked)) &&
-          temporalFacetEligible(world, scope.actorId, facet, value),
+          temporalFacetEligible(context.disclosure, scope.actorId, facet, value),
       );
-    if (!kept.length) {
+    if (!kept.length && receipt.change !== 'receiver-frame') {
       incomplete = true;
       examined = before;
       continue;
@@ -493,7 +587,7 @@ export async function readTemporalHistory(
           receipt,
           kept.map(({ facet }) => facet),
           sources,
-          world,
+          context.disclosure,
         ),
       ),
       values: kept.map(({ value }) => value!),
@@ -516,7 +610,7 @@ export async function readTemporalHistory(
     bytes += size;
     incomplete ||= receipt.change === 'loss' || receipt.change === 'attention-exit';
   }
-  const released = resident?.actors[scope.actorId]?.releasedThrough;
+  const released = context.releasedThrough;
   incomplete ||= released !== undefined && (query.from === undefined || query.from <= released);
   const nextBefore = hasMore ? (examined ?? metadataBefore) : undefined;
   return {
@@ -605,7 +699,7 @@ export async function prepareTemporalRetention(
         bytes: chunk.bytes,
         count: chunk.count,
         sources: chunk.sourceRefs,
-        order: chunk.receipts[0]!.order,
+        order: temporalChunkReceipts(chunk)[0]!.order,
         epoch: chunk.epoch,
         ordinal: chunk.fromOrdinal,
       });
@@ -667,7 +761,6 @@ export async function prepareTemporalRetention(
     }
   }
   for (const id of receivedValueReleaseCandidates(previous, state.world)) possibleSources.add(id);
-  const beforeSources = previous?.receivedValues?.sources ?? {};
   if (!retired.length && !partials.length && !possibleSources.size) return { state, rows };
   let world = retired.length
     ? updateWorld(
@@ -712,7 +805,7 @@ export async function prepareTemporalRetention(
           'SELECT id,payload,segments,value_refs FROM mind_temporal_chunks_read WHERE world_id=? AND id=ANY(?::text[])',
         )
         .all(world.id, coldIds)) {
-        const chunk = snapshotEvidenceOwner(readTemporalChunkRecord(row), 'receipts');
+        const chunk = snapshotEvidenceOwner(readTemporalChunkRecord(row), 'entries');
         chunks.set(String(row['id']), chunk);
         remember('mind_temporal_chunks', String(row['id']), chunk);
       }
@@ -762,13 +855,13 @@ export async function prepareTemporalRetention(
           const actor = draft.experience!.temporal!.actors[actorId]!;
           const chunk = chunks.get(metadata.id)!;
           if (!actor.chunks.some((current) => current.id === chunk.id)) {
-            actor.chunks.push({ ...chunk, receipts: [...chunk.receipts] });
+            actor.chunks.push({ ...chunk, entries: [...chunk.entries] });
             actor.chunks.sort((a, b) => a.fromAt - b.fromAt || a.fromOrdinal - b.fromOrdinal);
           }
           const pressure = partials.find((partial) => partial.metadata === metadata)!;
           const expired = new Set<number>();
           let releasedBytes = 0;
-          for (const receipt of chunk.receipts) {
+          for (const receipt of temporalChunkReceipts(chunk)) {
             if (
               receipt.at > cutoff &&
               expired.size >= pressure.count &&
@@ -792,7 +885,7 @@ export async function prepareTemporalRetention(
           }
           if (!expired.size)
             throw new MemoryRetentionError('Recent expiry metadata disagrees with its receipts.');
-          const first = chunk.receipts.find((receipt) => !expired.has(receipt.ordinal));
+          const first = temporalChunkReceipts(chunk).find((receipt) => !expired.has(receipt.ordinal));
           retireTemporalReceipts(
             draft,
             actorId,
@@ -809,12 +902,12 @@ export async function prepareTemporalRetention(
           // receipt; never truncate received words or keep an oversized history.
           while (actor.bytes > policy.maxBytes || actor.count > policy.maxChanges) {
             const current = actor.chunks.find((value) => value.id === chunk.id);
-            const receipt = current?.receipts[0];
+            const receipt = current && temporalChunkReceipts(current)[0];
             if (!receipt)
               throw new MemoryRetentionError(
                 'Required native recording cannot fit the qualified recent-history envelope.',
               );
-            const at = current!.receipts[1]?.at ?? pressure.followingAt;
+            const at = temporalChunkReceipts(current!)[1]?.at ?? pressure.followingAt;
             retireTemporalReceipts(
               draft,
               actorId,
@@ -837,179 +930,8 @@ export async function prepareTemporalRetention(
       { retainNativeValues: true },
     );
   }
-  // Capture marks locate prior recording; they cannot keep an expired value
-  // alive by themselves. Current receipt/original and real chunk owners can.
-  const resident = referencedReceivedValues(world, { captures: false });
-  const sources = world.receivedValues?.sources ?? {};
-  const needsPruning = (id: string) => {
-    const block = sources[id] ?? beforeSources[id];
-    const ordinals = resident.get(id);
-    return !block || block.values.some((value, ordinal) => value && !ordinals?.has(ordinal));
-  };
-  const candidates = [...possibleSources].filter(needsPruning);
-  if (!candidates.length)
-    return {
-      state: world === state.world ? state : { ...state, world },
-      rows,
-      ...(positions.size ? { positions } : {}),
-      ...(coldPrevious.size ? { previous: coldPrevious } : {}),
-    };
-  // Resident ownership is shared with residency/kernel validation. Only candidate
-  // blocks acquire additional cold/pending owners; never mutate the cached proof.
-  const candidateIds = new Set(candidates);
-  const keep = new Map(candidates.map((id) => [id, new Set(resident.get(id))]));
-  const replaced = [
-    ...(rows.get('mind_temporal_chunks') ?? []),
-    ...(pending?.deletes.get('mind_temporal_chunks') ?? []),
-    ...(pending?.writes.get('mind_temporal_chunks') ?? []).map((row) => row.id),
-  ];
-  if (!complete) {
-    // A matching page can also reference unrelated blocks. Filter its keys before
-    // expanding ordinals so preparation charges only the ownership being resolved.
-    const cold = await db
-      .prepare(
-        `SELECT value_refs,octet_length(value_refs::text) AS bytes FROM (
-          SELECT parent_id,jsonb_object_agg(block,ordinals) AS value_refs FROM (
-            SELECT s.parent_id,refs.key AS block,jsonb_agg(DISTINCT ordinal ORDER BY ordinal) AS ordinals
-            FROM mind_temporal_segments s CROSS JOIN LATERAL (
-              SELECT key,value FROM jsonb_each(s.value_refs) WHERE key=ANY(?::text[])
-            ) refs
-            CROSS JOIN LATERAL jsonb_array_elements(refs.value) ordinal
-            WHERE s.world_id=? AND s.lookup_buckets && ?::smallint[] AND s.source_refs && ?::text[] AND s.parent_id<>ALL(?::text[])
-            GROUP BY s.parent_id,refs.key) blocks GROUP BY parent_id) owners LIMIT ?`,
-      )
-      .all(
-        candidates,
-        world.id,
-        receiptLookupBuckets('sourceRefs', candidates),
-        candidates,
-        replaced,
-        maximumRows + 1,
-      );
-    preparationBytes += cold.reduce((sum, row) => sum + Number(row['bytes']), 0);
-    if (cold.length > maximumRows || preparationBytes > maximumPreparation)
-      throw new MemoryRetentionError(
-        'Complete received-value ownership exceeds bounded preparation.',
-      );
-    for (const row of cold)
-      for (const [id, ordinals] of Object.entries(row['value_refs'] as Record<string, number[]>)) {
-        if (!candidateIds.has(id)) continue;
-        const owned = keep.get(id) ?? new Set<number>();
-        for (const ordinal of ordinals) owned.add(ordinal);
-        keep.set(id, owned);
-      }
-  }
-  const available = new Map(
-    candidates.flatMap((id) => {
-      const block = sources[id] ?? beforeSources[id];
-      return block ? [[id, block] as const] : [];
-    }),
-  );
-  const missing = candidates.filter((id) => !available.has(id));
-  if (missing.length && !complete) {
-    const sizes = await db
-      .prepare(
-        'SELECT SUM(encoded_bytes) AS bytes FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
-      )
-      .get(world.id, missing);
-    preparationBytes += Number(sizes?.['bytes'] ?? 0);
-    if (preparationBytes > maximumPreparation)
-      throw new MemoryRetentionError(
-        'Complete received-value ownership exceeds bounded preparation.',
-      );
-    for (const row of await db
-      .prepare(
-        'SELECT id,payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
-      )
-      .all(world.id, missing)) {
-      const block = snapshotEvidenceOwner(
-        restoreEvidenceLayout(JSON.parse(String(row['payload'])), 'values', row['segments']),
-        'values',
-      ) as unknown as ReceivedValueBlock;
-      available.set(block.id, block);
-      remember('mind_perception_values', String(row['id']), block);
-      let placement = positions.get('mind_perception_values');
-      if (!placement) positions.set('mind_perception_values', (placement = new Map()));
-      placement.set(String(row['id']), 0);
-    }
-  }
-  if (missing.some((id) => !available.has(id) && keep.get(id)?.size))
-    throw new MemoryRetentionError('A retained received-value source is unavailable.');
-  const changes = new Map<string, ReceivedValueBlock | undefined>();
-  for (const [id, block] of available) {
-    const next = pruneReceivedValueBlock(block, keep.get(id) ?? new Set());
-    if (next !== block) changes.set(id, next);
-  }
-  if (!changes.size)
-    return {
-      state: world === state.world ? state : { ...state, world },
-      rows,
-      ...(positions.size ? { positions } : {}),
-      ...(coldPrevious.size ? { previous: coldPrevious } : {}),
-    };
-  // A value can be created and reclaimed before its first save. Placement marks
-  // certify existing canonical rows; applying one to a new block would suppress
-  // its insertion proof while its newly sealed segments still need that parent.
-  const persisted = (id: string) =>
-    !!beforeSources[id] ||
-    positions
-      .get('mind_perception_values')
-      ?.has(JSON.stringify(['world', 'receivedValues', 'sources', id]));
-  positions.set(
-    'mind_perception_values',
-    new Map([
-      ...(positions.get('mind_perception_values') ?? []),
-      ...[...changes.keys()]
-        .filter(persisted)
-        .map((id): [string, number] => [
-          JSON.stringify(['world', 'receivedValues', 'sources', id]),
-          0,
-        ]),
-    ]),
-  );
-  const deleted = [...changes]
-    .filter(([id, value]) => !value && persisted(id))
-    .map(([id]) => JSON.stringify(['world', 'receivedValues', 'sources', id]));
-  // Empty retirements still carry existing-row placement for a cold block update.
-  rows.set('mind_perception_values', deleted);
-  world = updateWorld(
-    world,
-    (draft) => {
-      const received = draft.receivedValues;
-      if (!received) throw new MemoryRetentionError('Received-value owner is unavailable.');
-      for (const [id, value] of changes) {
-        if (value) received.sources[id] = value;
-        else delete received.sources[id];
-      }
-      if (
-        received.activeSource &&
-        changes.has(received.activeSource) &&
-        !changes.get(received.activeSource)
-      ) {
-        delete received.activeSource;
-      }
-      if (received.activeSources) {
-        const group = received.activeSources.filter((id) => !!received.sources[id]);
-        if (group.length !== received.activeSources.length) {
-          if (group.length) received.activeSources = group;
-          else {
-            delete received.activeSources;
-            delete received.activeAt;
-          }
-        }
-      }
-      for (const actor of Object.values(draft.experience?.temporal?.actors ?? {}))
-        for (const [key, reference] of Object.entries(actor.captures)) {
-          if (!changes.has(reference.blockId)) continue;
-          const block = changes.get(reference.blockId);
-          if (!block?.values[reference.valueOrdinal]) {
-            delete actor.captures[key];
-            actor.capturesInvalidated = true;
-          }
-        }
-    },
-    { retainNativeValues: true },
-  );
+  // No cold ownership discovery on this path: only the exact logical release and intent.
+  world = nominateReleasedReceivedValues(previous, world, possibleSources);
   return {
     state: world === state.world ? state : { ...state, world },
     rows,

@@ -1,3 +1,4 @@
+import {temporalChunkReceipts} from './temporal-frames.js';
 import type { WorldState } from './types.js';
 import type {
   TemporalEvidenceState,
@@ -7,6 +8,7 @@ import type {
   TemporalFacetReference,
 } from './temporal-evidence.js';
 import {
+  validObservationFrame,
   validateEvidenceSource,
   validateReceivedFacetProof,
   validateObservedBodyDetails,
@@ -25,6 +27,8 @@ import {
   temporalReceiptAliases,
   temporalReceiptIndividualIds,
   temporalReceiptId,
+  temporalReceiptChangeCount,
+  temporalFacetValueReferences,
   materializeTemporalValue,
   temporalChunkLogicalBytes,
   temporalSupportLogicalBytes,
@@ -105,13 +109,18 @@ function validateStoredValue(
   originals: Map<string, string>,
   observer: ObserverLife,
   through: number,
+  sources: import('./received-values.js').ReceivedValueLookup,
 ): TemporalValue {
   const reception = reference.reception;
   if (reception !== undefined) {
     if (!record(reception)) throw new Error('Invalid temporal reception.');
     if (reception.kind === 'body') {
-      if (!hasRecordFields(reception, ['kind', 'pose'])) throw new Error('Invalid body reception.');
-      validateObservedBodyPose(reception.pose);
+      if(reception.poseRef) {
+        if(!hasRecordFields(reception,['kind','poseRef'])||!Array.isArray(reception.poseRef)||reception.poseRef.length!==2||typeof reception.poseRef[0]!=='string'||!ordinal(reception.poseRef[1]))throw new Error('Invalid shared body reception.');
+      } else {
+        if (!hasRecordFields(reception, ['kind', 'pose'])) throw new Error('Invalid body reception.');
+        validateObservedBodyPose(reception.pose);
+      }
     } else if (reception.kind === 'location') {
       if (!hasRecordFields(reception, ['kind', 'frame']))
         throw new Error('Invalid temporal location reception.');
@@ -140,7 +149,7 @@ function validateStoredValue(
     } else throw new Error('Unsupported temporal reception.');
   }
   if (reference.support) validateReceivedFacetProof(reference.support, observer, through);
-  const value = materializeTemporalValue(reference, fragment);
+  const value = materializeTemporalValue(reference, fragment,sources);
   if (!value) throw new Error('Temporal fragment has no matching personal reception.');
   validateTemporalValue(value, originals);
   return value;
@@ -199,6 +208,8 @@ export function validateTemporalEvidenceState(
       (actor.nextDue !== null && (!finite(actor.nextDue) || actor.nextDue < 0))
     )
       throw new Error('Invalid personal temporal owner.');
+    if(actor.lastReceiverFrame!==undefined&&!validObservationFrame(actor.lastReceiverFrame))throw new Error('Invalid last received viewpoint.');
+    if(actor.recordingGap!==undefined&&(!record(actor.recordingGap)||!finite(actor.recordingGap.from)||!finite(actor.recordingGap.through)||actor.recordingGap.from<0||actor.recordingGap.through<actor.recordingGap.from||actor.recordingGap.through>world.simTime))throw new Error('Invalid recording coverage gap.');
     let bytes = 0,
       count = 0;
     const chunks = new Set<string>(),
@@ -223,6 +234,7 @@ export function validateTemporalEvidenceState(
         originals,
         { actorId, physicalLife: actor.physicalLife },
         world.simTime,
+        sources,
       );
       validateReceiver(captured, { actorId, physicalLife: actor.physicalLife }, world.simTime);
       if (
@@ -289,22 +301,26 @@ export function validateTemporalEvidenceState(
         typeof receipt.epoch !== 'string' ||
         !receipt.epoch ||
         !ordinal(receipt.ordinal) ||
+        !ordinal(receipt.acquisition) ||
+        receipt.acquisition > receipt.ordinal ||
         receipt.id !== temporalReceiptId(receipt) ||
         !finite(receipt.at) ||
         receipt.at < 0 ||
         receipt.at > world.simTime ||
         !ordinal(receipt.order) ||
+        (receipt.receiverFrame!==undefined && !validObservationFrame(receipt.receiverFrame)) ||
+        (receipt.coverageGap!==undefined && (!finite(receipt.coverageGap.from)||!finite(receipt.coverageGap.through)||receipt.coverageGap.from<0||receipt.coverageGap.from>receipt.coverageGap.through||receipt.coverageGap.through>receipt.at)) ||
         typeof receipt.subject !== 'string' ||
         !receipt.subject ||
         (receipt.contextSubjects !== undefined &&
           (!strings(receipt.contextSubjects) ||
             receipt.contextSubjects.length > maximumContextSubjects)) ||
         (receipt.subjectIdentity !== undefined && !validObserverSubject(receipt.subjectIdentity)) ||
-        !['baseline', 'change', 'loss', 'occurrence', 'attention-exit'].includes(receipt.change) ||
+        !['baseline', 'change', 'loss', 'occurrence', 'attention-exit', 'receiver-frame'].includes(receipt.change) ||
         typeof receipt.required !== 'boolean' ||
         !strings(receipt.sourceIds) ||
         !Array.isArray(receipt.facets) ||
-        !receipt.facets.length
+        (!receipt.facets.length && receipt.change!=='receiver-frame')
       )
         throw new Error('Invalid personal temporal receipt.');
       if (receipt.origin) {
@@ -355,6 +371,7 @@ export function validateTemporalEvidenceState(
           originals,
           { actorId, physicalLife: receipt.physicalLife },
           receipt.at,
+          sources,
         );
         if (
           !['direct', 'inference', 'testimony'].includes(facet.role) ||
@@ -439,9 +456,9 @@ export function validateTemporalEvidenceState(
         !strings(chunk.individualIds) ||
         !strings(chunk.sourceIds) ||
         !strings(chunk.sourceRefs) ||
-        !Array.isArray(chunk.receipts) ||
-        !chunk.receipts.length ||
-        chunk.receipts.length !== chunk.count
+        !Array.isArray(chunk.entries) ||
+        !temporalChunkReceipts(chunk).length ||
+        temporalChunkReceipts(chunk).reduce((sum,row)=>sum+temporalReceiptChangeCount(row),0) !== chunk.count
       )
         throw new Error('Invalid personal temporal chunk.');
       chunks.add(chunk.id);
@@ -453,7 +470,7 @@ export function validateTemporalEvidenceState(
         individuals = new Set<string>();
       let lastOrdinal = chunk.fromOrdinal - 1,
         lastAt = chunk.fromAt;
-      for (const receipt of chunk.receipts) {
+      for (const receipt of temporalChunkReceipts(chunk)) {
         const key = JSON.stringify([receipt.physicalLife, receipt.epoch, receipt.ordinal]);
         if (
           !record(receipt) ||
@@ -471,13 +488,13 @@ export function validateTemporalEvidenceState(
           !receipt.subject ||
           (receipt.subjectIdentity !== undefined &&
             !validObserverSubject(receipt.subjectIdentity)) ||
-          !['baseline', 'change', 'loss', 'occurrence', 'attention-exit'].includes(
+          !['baseline', 'change', 'loss', 'occurrence', 'attention-exit', 'receiver-frame'].includes(
             receipt.change,
           ) ||
           typeof receipt.required !== 'boolean' ||
           !strings(receipt.sourceIds) ||
           !Array.isArray(receipt.facets) ||
-          !receipt.facets.length
+          (!receipt.facets.length && receipt.change!=='receiver-frame')
         )
           throw new Error('Invalid personal temporal receipt.');
         validateReceipt(receipt);
@@ -488,14 +505,14 @@ export function validateTemporalEvidenceState(
         for (const subject of receipt.contextSubjects ?? []) subjects.add(subject);
         for (const alias of temporalReceiptAliases(receipt, sources, world)) aliases.add(alias);
         for (const id of temporalReceiptIndividualIds(receipt, sources)) individuals.add(id);
-        for (const facet of receipt.facets) {
-          references.add(facet.blockId);
+        for (const facet of receipt.facets) for(const reference of temporalFacetValueReferences(facet)) {
+          references.add(reference.blockId);
         }
       }
       if (
-        chunk.receipts[0]!.ordinal !== chunk.fromOrdinal ||
+        temporalChunkReceipts(chunk)[0]!.ordinal !== chunk.fromOrdinal ||
         lastOrdinal !== chunk.throughOrdinal ||
-        chunk.receipts[0]!.at !== chunk.fromAt ||
+        temporalChunkReceipts(chunk)[0]!.at !== chunk.fromAt ||
         lastAt !== chunk.throughAt ||
         subjects.size !== chunk.subjects.length ||
         chunk.subjects.some((subject) => !subjects.has(subject)) ||

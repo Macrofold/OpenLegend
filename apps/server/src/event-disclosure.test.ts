@@ -1,3 +1,4 @@
+import { temporalChunkReceipts, temporalChunkReferences } from '@open-legend/domain';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -470,7 +471,7 @@ describe('event-time observer facts', () => {
     }
     expect(
       service.world
-        .experience!.temporal!.actors[NPC_ID]!.chunks.flatMap((chunk) => chunk.receipts)
+        .experience!.temporal!.actors[NPC_ID]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk))
         .some(
           (receipt) => receipt.origin?.kind === 'occurrence' && receipt.origin.eventId === event.id,
         ),
@@ -587,7 +588,7 @@ describe('event-time observer facts', () => {
       ),
     ).toBe(false);
     const temporal = missingReceivedFacts.state.world.experience!.temporal!;
-    const receipt = temporal.actors[NPC_ID]!.chunks.flatMap((chunk) => chunk.receipts).find(
+    const receipt = temporal.actors[NPC_ID]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk)).find(
       (entry) => entry.origin?.kind === 'occurrence' && entry.origin.eventId === event.id,
     )!;
     const eventValue = receipt.facets

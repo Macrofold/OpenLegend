@@ -1,5 +1,9 @@
 import { namePhrase } from '@open-legend/language';
-import { memoryForModel } from './experience-context.js';
+import {
+  memoryForModel,
+  capturedExperience,
+  type ExperiencePresentation,
+} from './experience-context.js';
 import { experienceReading, type ExperienceEntry } from '@open-legend/domain';
 import {
   currentObservedFacetValues,
@@ -32,7 +36,7 @@ export interface SharedModelExperience {
   experience: ReturnType<typeof experienceForModel>;
 }
 export function experienceModelBindings(
-  world: WorldState,
+  world: ExperiencePresentation,
   ownerId: string,
   entry: ExperienceEntry,
   source: string,
@@ -40,7 +44,7 @@ export function experienceModelBindings(
 ): ExperienceModelBindings {
   return {
     source,
-    owner: entityHandle(world, ownerId, ownerId),
+    owner: capturedExperience(world) ? world.ownerHandle : entityHandle(world, ownerId, ownerId),
     value: memoryForModel(world, ownerId, experienceReading(entry, ownerId), frame),
   };
 }
