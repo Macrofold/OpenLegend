@@ -118,6 +118,25 @@ function evidenceSettings(world) {
   };
 }
 
+/** Cached logical ownership only: no receipt traversal, decoding or hydration. */
+function recentOwnerCensus(world) {
+  const actors = Object.entries(world.experience?.temporal?.actors ?? {}).map(([id, actor]) => ({
+    id,
+    bytes: actor.bytes,
+    count: actor.count,
+    residentChunks: actor.chunks.length,
+    releasedThrough: actor.releasedThrough ?? null,
+    recordingGap: actor.recordingGap ? { ...actor.recordingGap } : null,
+  }));
+  const totals = { actors: actors.length, bytes: 0, count: 0, residentChunks: 0 };
+  for (const actor of actors) {
+    totals.bytes += actor.bytes;
+    totals.count += actor.count;
+    totals.residentChunks += actor.residentChunks;
+  }
+  return { actors, totals };
+}
+
 /** Finite authored diagnostic work uses the same commands as a selected NPC plan.
  * It is an activity workload, not a claim about unscripted/model-driven behavior. */
 function prepareResidents(input, controlled) {
@@ -958,6 +977,7 @@ async function main() {
   };
   const beginPhase = () => {
     const nativeStart = nativePopulation(game.service.world, cohortIds);
+    const recentStart = recentOwnerCensus(game.service.world);
     const nativeCounters = {},
       stages = {};
     if (appProfiling) observeDomainCounters(nativeCounters);
@@ -976,6 +996,7 @@ async function main() {
     return {
       before: performanceSnapshot(),
       nativeStart,
+      recentStart,
       nativeCounters,
       stages,
       loop,
@@ -1027,6 +1048,11 @@ async function main() {
       })),
       nativeStart: phase.nativeStart,
       nativeEnd: nativePopulation(game.service.world, cohortIds),
+      recentOwners: {
+        scope: 'Cached ownership metadata at phase boundaries, outside measured timing/CPU.',
+        start: phase.recentStart,
+        end: recentOwnerCensus(game.service.world),
+      },
       geometry: game.service.geometryStatistics,
       ...(pressure
         ? {
