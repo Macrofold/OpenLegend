@@ -15,6 +15,7 @@ export function useInventoryCollection({
   initialId,
   scope,
   displayOwner,
+  disclosureRevision,
   revisionKey,
   visible,
   connected,
@@ -26,6 +27,7 @@ export function useInventoryCollection({
   initialId: string;
   scope: string;
   displayOwner: string;
+  disclosureRevision: string;
   revisionKey: string;
   visible: boolean;
   connected: boolean;
@@ -49,12 +51,14 @@ export function useInventoryCollection({
   const paginationContext = JSON.stringify([
     scope,
     revisionKey,
+    disclosureRevision,
     availability.revision,
     queryIdentity,
   ]);
   const cursor = location.context === paginationContext ? location.cursor : undefined;
   const key = JSON.stringify([
     displayOwner,
+    disclosureRevision,
     scope,
     location.id,
     cursor,
@@ -69,6 +73,7 @@ export function useInventoryCollection({
     locationId: string;
     queryIdentity: string;
     displayOwner: string;
+    disclosureRevision: string;
     rootId: string;
     page?: ContainerPage;
     error?: string;
@@ -96,6 +101,7 @@ export function useInventoryCollection({
                 key,
                 locationId: location.id,
                 displayOwner,
+                disclosureRevision,
                 rootId: expectedRootId,
                 queryIdentity,
                 error: 'This container moved. Open it again from its current location.',
@@ -106,6 +112,7 @@ export function useInventoryCollection({
               key,
               locationId: location.id,
               displayOwner,
+              disclosureRevision,
               rootId: expectedRootId,
               queryIdentity,
               ...(page.ok
@@ -119,9 +126,11 @@ export function useInventoryCollection({
                 key,
                 locationId: location.id,
                 displayOwner,
+                disclosureRevision,
                 rootId: expectedRootId,
                 queryIdentity,
                 ...(previous?.displayOwner === displayOwner &&
+                previous.disclosureRevision === disclosureRevision &&
                 previous.rootId === expectedRootId &&
                 previous.locationId === location.id &&
                 previous.queryIdentity === queryIdentity
@@ -142,10 +151,12 @@ export function useInventoryCollection({
   // Quiet pause and same-owner refresh suspend actions, not the player's reading place.
   // Control renewal rotates executable read scope but keeps this private display owner.
   // The Inventory owner remounts on account/character/timeline changes. A refused read,
-  // changed container or revoked root removes these rows immediately.
+  // changed container, inspection/privacy withdrawal or revoked root removes
+  // these rows immediately without remounting the player's editable workspace.
   const displayed =
     !blockedReason &&
     result?.displayOwner === displayOwner &&
+    result.disclosureRevision === disclosureRevision &&
     result.rootId === expectedRootId &&
     result.locationId === location.id &&
     result.queryIdentity === queryIdentity

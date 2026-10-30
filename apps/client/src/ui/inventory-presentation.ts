@@ -9,6 +9,8 @@ type InventoryPlayer = Pick<
   | 'portrait'
   | 'inventory'
   | 'inventoryRevision'
+  | 'inventoryReadRevision'
+  | 'equipmentPorts'
   | 'canUseInventory'
   | 'alive'
   | 'participation'
@@ -75,6 +77,8 @@ export function inventoryPresentation(
       portrait: view.player.portrait,
       inventory: view.player.inventory,
       inventoryRevision: view.player.inventoryRevision,
+      inventoryReadRevision: view.player.inventoryReadRevision,
+      equipmentPorts: view.player.equipmentPorts,
       canUseInventory: view.player.canUseInventory,
       alive: view.player.alive,
       participation: view.player.participation,

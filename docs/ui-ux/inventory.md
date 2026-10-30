@@ -54,7 +54,9 @@ The current workspace keeps the two collection components mounted through ordina
 
 ## Quick-slot bindings
 
-The hotbar's ten slots retain exact item IDs for the current private character/session. Pressing a populated slot opens its current native actions; it stores no command authority. Right-click or Shift+F10 opens assignment, which reuses the inventory grid's search, continuation and carried-bag navigation. Choose an item, use **Open [bag]** to reach nested possessions, or choose **Empty slot**. Cancel preserves the previous binding. The slots resolve their own bounded current item facts, so owned items remain usable beyond the live view's summary window. Lost custody or container access makes a binding unavailable; neither a saved ID nor its earlier label authorizes an action. [Read envelope](../limits/interface.md#qs01--quick-slot-item-facts).
+The hotbar's ten slots retain exact item IDs for the current private character/session. Pressing a populated slot opens its current native actions; it stores no command authority. Right-click or Shift+F10 opens assignment, which reuses the inventory grid's search, continuation and carried-bag navigation. Choose an item, use **Open [bag]** to reach nested possessions, or choose **Empty slot**. Cancel preserves the previous binding. The slots resolve their own bounded compact item facts, so owned items remain usable beyond the live view's summary window. Lost custody or container access makes a binding unavailable; neither a saved ID nor its earlier label authorizes an action. [Read envelope](../limits/interface.md#qs01--quick-slot-item-facts).
+
+Ordinary world updates retain compact possession facts and the body’s actual equipment places. Item comparisons, packing, material condition and inspected method text arrive through the existing opened inventory pages. An item inspection keeps its reader open through replacement loading. Inspection or privacy withdrawal clears obsolete private page details before replacement reads finish; same-owner drafts retain their separate lifetime.
 
 ## Search, sorting and filtering at scale
 

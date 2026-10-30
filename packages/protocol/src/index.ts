@@ -552,28 +552,32 @@ export interface EntityView extends Named {
   quantity?: number;
 }
 
-/** Continuous permitted possession facts; native operations are read explicitly. */
-export interface InventoryItemSummary extends Named {
+/** Compact current possession facts for the HUD and exact shortcut bindings. */
+export interface InventoryItemBinding extends Named {
+  id: string;
+  definitionId: string;
   icon?: string;
   art?: ItemArt;
-  materialCondition?: { label: string; process: 'wetting' | 'drying'; coveredFraction: number };
   revision: number;
   placementRevision: number;
-  individual?: boolean;
-  /** Presentation grouping preserves every physical object and its provenance. */
+  quantity: number;
+  availableQuantity?: number;
+  equipped: boolean;
+  container?: { capacity: number };
+  /** Present only for a deliberately selected presentation group. */
   group?: {
     token: string;
     members: number;
     representativeQuantity: number;
     representativeAvailableQuantity: number;
   };
+}
+/** Deliberately requested item detail; native operations are read explicitly. */
+export interface InventoryItemSummary extends InventoryItemBinding {
+  materialCondition?: { label: string; process: 'wetting' | 'drying'; coveredFraction: number };
+  individual?: boolean;
   container?: { load?: number; capacity: number; revision?: number };
   declaredOwner?: { name: string; revision: number };
-  id: string;
-  definitionId: string;
-  quantity: number;
-  /** Available free units; omitted when availability has not been inspected. */
-  availableQuantity?: number;
   /** The admitted requirement for one unit, including contents for an indivisible bag. */
   packingLoad?: number;
   recipeRecord?: { method?: RecipeDetailsView; message: string };
@@ -582,7 +586,6 @@ export interface InventoryItemSummary extends Named {
   equipmentConflicts?: Array<Named & { id: string; characteristics: InventoryCharacteristic[] }>;
   category: 'material' | 'food' | 'equipment' | 'ammunition';
   description: string;
-  equipped: boolean;
   tags: string[];
 }
 export interface InventoryItemView extends InventoryItemSummary {
@@ -594,7 +597,7 @@ export interface InventoryItemView extends InventoryItemSummary {
 export interface InventoryBindingsView {
   ok: boolean;
   message?: string;
-  items: InventoryItemSummary[];
+  items: InventoryItemBinding[];
 }
 
 export interface TradeLotView {
@@ -1192,7 +1195,9 @@ export interface GameView {
     /** Personal history is fetched only by its visible reader; this marks committed changes. */
     memoryRevision: string;
     history?: string;
-    inventory: InventoryItemSummary[];
+    inventory: InventoryItemBinding[];
+    /** Scoped refresh hints, never custody, disclosure or action authority. */
+    inventoryReadRevision: { bindings: number; details: number; disclosure: string };
     /** The current body's installed places and actual attachments, including empty places. */
     equipmentPorts: Array<{
       id: string;

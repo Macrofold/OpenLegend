@@ -18,7 +18,7 @@ import type {
   ContainerPage,
   GameView,
   InventoryItemView,
-  InventoryItemSummary,
+  InventoryItemBinding,
   InventoryTransferSource,
   ApiResult,
 } from '@open-legend/protocol';
@@ -40,6 +40,10 @@ import { BagWindow } from './bag-window';
 import type { OpenContainerRequest } from './container-opening';
 import type { InventoryCollectionState } from './use-inventory-collection';
 
+type InventoryActionItem = Pick<
+  InventoryItemBinding,
+  'id' | 'name' | 'icon' | 'art' | 'availableQuantity' | 'group'
+>;
 type InventoryProps = {
   bagWindowHost: HTMLElement | null;
   bagWindowsVisible: boolean;
@@ -56,7 +60,7 @@ type InventoryProps = {
   chooseWork?(item: InventoryItemView): void;
   onTalkAbout?(context: { itemId: string; name: string; recipientId?: string }): void;
   browseActions?(
-    item: InventoryItemSummary,
+    item: InventoryActionItem,
     opener: Element,
     dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
   ): void;
@@ -173,7 +177,7 @@ export function Inventory(props: InventoryProps) {
       onTalkAbout: (context: { itemId: string; name: string; recipientId?: string }) =>
         latest.current.onTalkAbout?.(context),
       browseActions: (
-        item: InventoryItemSummary,
+        item: InventoryActionItem,
         opener: Element,
         dispatchCommand: (action: ActionOption) => Promise<ApiResult>,
       ) => latest.current.browseActions?.(item, opener, dispatchCommand),
@@ -351,21 +355,15 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
   }, []);
   // These are permitted native changes, not world-clock ticks. Exterior storage loses its
   // revision hint on lost reach/access; that invalidates any previously readable contents.
-  const inventoryKey = useMemo(
-    () =>
-      JSON.stringify(
-        view.player.inventory.map((item) => [
-          item.id,
-          item.equipped,
-          item.container?.revision,
-          item.characteristics,
-          item.equipmentConflicts,
-          item.recipeRecord,
-          item.materialCondition,
-          item.art,
-        ]),
-      ),
-    [view.player.inventory],
+  const equipped = useMemo(
+    () => [
+      ...new Map(
+        view.player.equipmentPorts.flatMap((port) =>
+          port.item ? [[port.item.id, port.item] as const] : [],
+        ),
+      ).values(),
+    ],
+    [view.player.equipmentPorts],
   );
   const recipeKey = useMemo(
     () => JSON.stringify(view.recipes.map((recipe) => recipe.id)),
@@ -387,7 +385,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         view.player.position,
         view.player.supportSurfaceId,
         view.map.spatial.revision,
-        inventoryKey,
+        view.player.inventoryReadRevision.details,
         recipeKey,
       ]),
     [
@@ -402,7 +400,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
       view.player.position,
       view.player.supportSurfaceId,
       view.map.spatial.revision,
-      inventoryKey,
+      view.player.inventoryReadRevision.details,
       recipeKey,
     ],
   );
@@ -410,6 +408,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     initialId: view.player.id,
     scope,
     displayOwner,
+    disclosureRevision: view.player.inventoryReadRevision.disclosure,
     revisionKey,
     visible: workspaceVisible,
     connected,
@@ -419,6 +418,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     initialId: '',
     scope,
     displayOwner,
+    disclosureRevision: view.player.inventoryReadRevision.disclosure,
     revisionKey: JSON.stringify([
       revisionKey,
       worldRoot,
@@ -478,11 +478,17 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
     epoch: view.commandEpoch,
     connected,
     command,
-    onResolved(result) {
+    onResolved(result, request) {
       left.refresh();
       right.refresh();
       for (const state of bagCollections.values()) state.refresh();
-      if (result.ok) {
+      // Inspection prepares the open reader; a mutation finishes its interaction.
+      const inspection =
+        request.command !== null &&
+        typeof request.command === 'object' &&
+        'type' in request.command &&
+        request.command.type === 'inspect-inventory';
+      if (result.ok && !inspection) {
         closeDetail(false);
       }
       if (result.ok && actionFocus.current)
@@ -1287,31 +1293,29 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
           </p>
         )}
       </details>
-      {view.player.inventory.some((entry) => entry.equipped) && (
+      {equipped.length > 0 && (
         <section className="ol-inventory-equipment" aria-label="Equipped items">
           <strong>Equipped</strong>
-          {view.player.inventory
-            .filter((entry) => entry.equipped)
-            .map((entry) => (
-              <div key={entry.id}>
-                <ItemIllustration art={entry.art} icon={entry.icon} label={entry.name} />
-                <span>{entry.name}</span>
-                {browseActions && (
-                  <Button
-                    size="sm"
-                    variant="quiet"
-                    disabled={!canAct}
-                    onPress={(event) =>
-                      browseActions(entry, event.target, (action) =>
-                        contextDispatch.current(action, 'belongings'),
-                      )
-                    }
-                  >
-                    Item actions
-                  </Button>
-                )}
-              </div>
-            ))}
+          {equipped.map((entry) => (
+            <div key={entry.id}>
+              <ItemIllustration art={entry.art} icon={entry.icon} label={entry.name} />
+              <span>{entry.name}</span>
+              {browseActions && (
+                <Button
+                  size="sm"
+                  variant="quiet"
+                  disabled={!canAct}
+                  onPress={(event) =>
+                    browseActions(entry, event.target, (action) =>
+                      contextDispatch.current(action, 'belongings'),
+                    )
+                  }
+                >
+                  Item actions
+                </Button>
+              )}
+            </div>
+          ))}
         </section>
       )}
     </>
@@ -1430,6 +1434,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
               initialId: bag.id,
               scope,
               displayOwner,
+              disclosureRevision: view.player.inventoryReadRevision.disclosure,
               revisionKey: JSON.stringify([
                 revisionKey,
                 bag.root,
@@ -1447,9 +1452,16 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
           </BagCollectionReader>
         );
       })}
+      {/* Inspection withdraws the previous private page before replacement loads.
+          Keep the chosen reader open, with only its loading state in that gap. */}
       <Popover
         triggerRef={anchor}
-        isOpen={detailOpen && !!selection && (!!item || !!tradeRecipientId) && workspaceVisible}
+        isOpen={
+          detailOpen &&
+          !!selection &&
+          (!!item || !!selectedCollection?.loading || !!tradeRecipientId) &&
+          workspaceVisible
+        }
         onOpenChange={(open) => {
           setDetailOpen(open);
         }}
@@ -1581,6 +1593,10 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
                 <LoadingIndicator
                   active={operations.pending?.status === 'sending'}
                   label="Sending inventory action"
+                />
+                <LoadingIndicator
+                  active={!item && !!selectedCollection?.loading}
+                  label="Loading item details"
                 />
                 {operations.pending && operations.pending.status !== 'sending' && (
                   <p className="ol-caption">

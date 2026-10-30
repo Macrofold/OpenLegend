@@ -36,7 +36,13 @@ type TradeContext = Pick<
 > & {
   player: Pick<
     GameView['player'],
-    'id' | 'inventoryRevision' | 'canUseInventory' | 'portrait' | 'position' | 'supportSurfaceId'
+    | 'id'
+    | 'inventoryRevision'
+    | 'inventoryReadRevision'
+    | 'canUseInventory'
+    | 'portrait'
+    | 'position'
+    | 'supportSurfaceId'
   >;
   entities: Array<
     Pick<GameView['entities'][number], 'id' | 'portrait'> &
@@ -233,7 +239,12 @@ function ItemTradeDetails({
     initialId: view.player.id,
     scope: view.access?.scope ?? trade.scope,
     displayOwner: privateOwner,
-    revisionKey: JSON.stringify([view.player.inventoryRevision, view.player.canUseInventory]),
+    disclosureRevision: view.player.inventoryReadRevision.disclosure,
+    revisionKey: JSON.stringify([
+      view.player.inventoryRevision,
+      view.player.inventoryReadRevision.details,
+      view.player.canUseInventory,
+    ]),
     visible,
     connected,
     expectedRootId: view.player.id,

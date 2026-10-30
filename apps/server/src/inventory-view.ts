@@ -59,6 +59,7 @@ import type {
   ActionOption,
   InventoryItemView,
   InventoryItemSummary,
+  InventoryItemBinding,
   InventoryBindingsView,
   ContainerPage,
   ContainerPageRequest,
@@ -1291,9 +1292,40 @@ export function inventoryBindings(
     items: [...new Set(itemIds)].flatMap((id) => {
       const item = itemFor(service.world, id);
       return item && accessiblePossession(service.world, scope.actorId, id)
-        ? [inventoryItemSummary(service, scope, item)]
+        ? [inventoryItemBinding(service, scope, item)]
         : [];
     }),
+  };
+}
+
+/** These owned facts need no method, comparison, packing or exposure preparation. */
+export function inventoryItemBinding(
+  service: WorldService,
+  scope: RequestScope,
+  item: ItemInstance,
+): InventoryItemBinding {
+  const world = service.world,
+    definition = world.itemDefinitions[item.definitionId]!;
+  return {
+    id: item.id,
+    definitionId: item.definitionId,
+    revision: item.revision ?? 0,
+    placementRevision: item.placementRevision ?? 0,
+    name: definition.name,
+    nameForm: definition.nameForm,
+    indefiniteArticle: definition.indefiniteArticle,
+    art: itemIllustration(world, item.definitionId),
+    ...(definition.icon ? { icon: definition.icon } : {}),
+    quantity: item.quantity,
+    availableQuantity: availableItemQuantity(world, item.id),
+    equipped: isEquipped(world, scope.actorId, item.id),
+    ...(item.container && canAccessContainer(world, scope.actorId, item.id)
+      ? {
+          container: {
+            capacity: itemContainerCapacity(world, entityGet(world.entities, item.id)!)!,
+          },
+        }
+      : {}),
   };
 }
 
@@ -1307,7 +1339,8 @@ export function inventoryItemSummary(
   const world = service.world,
     player = entityGet(world.entities, scope.actorId)!,
     actor = player.actor!,
-    definition = world.itemDefinitions[item.definitionId]!;
+    definition = world.itemDefinitions[item.definitionId]!,
+    binding = inventoryItemBinding(service, scope, item);
   let recipeRecord: InventoryItemSummary['recipeRecord'];
   if (recordRead) {
     if ('recipe' in recordRead) {
@@ -1360,17 +1393,15 @@ export function inventoryItemSummary(
     };
   });
   return {
-    id: item.id,
-    revision: item.revision ?? 0,
-    placementRevision: item.placementRevision ?? 0,
+    ...binding,
     individual: item.individuality === 'individual',
-    ...(item.container && canAccessContainer(world, scope.actorId, item.id)
+    ...(binding.container
       ? {
           container: {
-            capacity: itemContainerCapacity(world, entityGet(world.entities, item.id)!)!,
+            capacity: binding.container.capacity,
             ...(contentsKnown
               ? {
-                  load: item.container.load,
+                  load: item.container!.load,
                   revision: entityGet(world.entities, item.id)!.inventoryRevision ?? 0,
                 }
               : {}),
@@ -1388,18 +1419,10 @@ export function inventoryItemSummary(
           },
         }
       : {}),
-    definitionId: item.definitionId,
-    art: itemIllustration(world, item.definitionId),
-    ...(definition.icon ? { icon: definition.icon } : {}),
-    name: definition.name,
-    nameForm: definition.nameForm,
-    indefiniteArticle: definition.indefiniteArticle,
-    quantity: item.quantity,
     ...(recipeRecord ? { recipeRecord } : {}),
     materialCondition: materialExposureView(world, item.id),
     characteristics,
     ...(definition.equipment ? { equipmentConflicts: conflicts } : {}),
-    availableQuantity: availableItemQuantity(world, item.id),
     ...(!item.container || (contentsKnown && canAccessContainer(world, scope.actorId, item.id))
       ? { packingLoad: itemPackingLoad(world, item.id, 1) }
       : {}),
@@ -1414,11 +1437,10 @@ export function inventoryItemSummary(
     description: describePossession(
       item,
       definition,
-      isEquipped(world, scope.actorId, item.id),
+      binding.equipped,
       'accessible possession',
       Boolean(currentInventoryInspection(world, player.id)?.itemIds.includes(item.id)),
     ),
-    equipped: isEquipped(world, scope.actorId, item.id),
     tags: [...definition.properties, ...(definition.portable ? ['Portable'] : [])],
   };
 }

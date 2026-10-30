@@ -908,7 +908,7 @@ export class WildernessScene implements WorldRenderer {
           ?.slice(0, 12)
           .map((item) => `${item.definitionId}:${Math.min(3, item.quantity)}`)
           .join('|') ?? ''
-      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(studyAppearance(entity.appearance, this.artSettings.assetSources))?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.inventory.some((item) => item.equipped)}`;
+      }:${entity.assembly?.revision ?? ''}:${entity.kind}:${entity.subtype}:${entity.appearance}:${entity.kind === 'resource' ? entity.name : ''}:${entity.quantity === 0 && !!propDimensions(studyAppearance(entity.appearance, this.artSettings.assetSources))?.depletedUrl}:${entity.bodyState ?? ''}:${!!entity.heat?.lit}:${entity.kind === 'actor' && entity.id === view.player.id && view.player.equipmentPorts.some((port) => !!port.item)}`;
       // Restoring another valid construction branch can retain the same edit
       // count. The actual permitted pieces/palette decide appearance and picking.
       const signature = entity.assembly
@@ -1664,7 +1664,7 @@ export class WildernessScene implements WorldRenderer {
     const lit = !!view.heat?.lit;
     const person = view.kind === 'actor' || (view.kind === 'remains' && view.bodyPlan === 'biped');
     const equipped =
-      view.id === game.player.id && game.player.inventory.some((item) => item.equipped);
+      view.id === game.player.id && game.player.equipmentPorts.some((port) => !!port.item);
     const deer = view.subtype === 'deer',
       bird = view.subtype === 'bird',
       wolf = view.subtype === 'wolf',

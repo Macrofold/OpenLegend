@@ -7,6 +7,7 @@ import {
   observerIndividual,
   bodyEligibilityRevision,
   availableItemQuantity,
+  currentInventoryInspection,
 } from '@open-legend/domain';
 import { worldClockParts, worldDayText } from '@open-legend/protocol';
 import { receivedEventAccounts } from './received-event-accounts.js';
@@ -56,7 +57,7 @@ import {
 } from '@open-legend/domain';
 import { projectWork } from './work-view.js';
 import { projectActivityStatus } from './activity-requests.js';
-import { canUseInventory, inventoryItemSummary, inventoryStorageHint } from './inventory-view.js';
+import { canUseInventory, inventoryItemBinding, inventoryStorageHint } from './inventory-view.js';
 import { namedClockTimes, typedRequestVocabulary, nativeActionIcon } from '@open-legend/domain';
 import { exposedPlaces, worldPosition, worldSupport } from '@open-legend/domain';
 import {
@@ -90,7 +91,7 @@ import type {
   EntityView,
   GamePatch,
   GameView,
-  InventoryItemSummary,
+  InventoryItemBinding,
 } from '@open-legend/protocol';
 import {
   visionRadius,
@@ -226,6 +227,7 @@ export async function projectView(
     world.pendingNativeIntegration?.byEntity[id] ? world.pendingNativeIntegration : undefined;
   const revision = service.version;
   const memo = memoizer(cache);
+  const sectionRevision = (key: string, deps: unknown[]) => memo(key, deps, () => revision);
   const paused = service.paused;
   const pauseReason = service.pauseReason;
   const speed = service.speed;
@@ -412,7 +414,14 @@ export async function projectView(
     return { facts, detail };
   };
   const equipment = preferredTargetEquipment(world, scope.actorId);
-  const inventoryItems = observation.inventory.slice(0, 60);
+  const equippedInventory = memo(
+    'equippedInventory',
+    [actor.body?.equipmentPorts, player.inventoryRevision, world.itemDefinitions],
+    () => equippedItems(world, player.id),
+  );
+  const inventoryItems = memo('inventoryItems', [observation.inventory], () =>
+    observation.inventory.slice(0, 60),
+  );
   // Plain owned lots depend on their own records. Containers, method records,
   // declared ownership and exposed building materials retain the broader world
   // dependencies used by their access, validation, naming and roof/rain readers.
@@ -428,37 +437,68 @@ export async function projectView(
   const materialInventory = inventoryItems.some(
     (item) => world.itemDefinitions[item.definitionId]?.assemblyMaterial,
   );
-  const inventory = memo<InventoryItemSummary[]>(
-    'inventory',
-    [
-      observation.inventory,
-      broadInventory ? world.entities : undefined,
-      ...inventoryItems.map((item) => entityGet(world.entities, item.id)),
-      materialInventory ? world.finiteRain : undefined,
-      materialInventory ? world.simTime : undefined,
-      materialInventory ? world.assemblyFamilies : undefined,
-      world.map,
-      world.resourceReservations,
-      world.itemDefinitions,
-      world.recipes,
-      world.presentation?.itemArt,
-      actor.inventoryInspection,
-      world.knowledge[player.id],
-      player.inventoryRevision,
-      actor.action,
-      world.itemHandling,
-      player.spatial,
-      player.placement,
-      player.statusEffects,
-      world.statusEffectPolicy,
-      actor.attributes,
-      nativeValuesFor(player.id),
-      actor.body,
-      world.moduleManifest,
-      active,
-      paused,
-    ],
-    () => inventoryItems.map((item) => inventoryItemSummary(service, scope, item)),
+  const bindingDependencies = [
+    observation.inventory,
+    player.inventoryRevision,
+    actor.body?.equipmentPorts,
+    world.resourceReservations,
+    world.itemDefinitions,
+    world.presentation?.itemArt,
+  ];
+  const inventory = memo<InventoryItemBinding[]>('inventory', bindingDependencies, () =>
+    inventoryItems.map((item) => inventoryItemBinding(service, scope, item)),
+  );
+  // Open readers need to know that their facts changed, not receive sixty
+  // prepared comparisons/methods/exposure reads in every ordinary publication.
+  const inventoryBindingRevision = sectionRevision('inventoryBindingRevision', bindingDependencies);
+  const inventoryDetailRevision = sectionRevision('inventoryDetailRevision', [
+    observation.inventory,
+    broadInventory ? world.entities : undefined,
+    ...inventoryItems.map((item) => entityGet(world.entities, item.id)),
+    materialInventory ? world.finiteRain : undefined,
+    materialInventory ? world.simTime : undefined,
+    materialInventory ? world.assemblyFamilies : undefined,
+    world.map,
+    world.resourceReservations,
+    world.itemDefinitions,
+    world.recipes,
+    world.presentation?.itemArt,
+    actor.inventoryInspection,
+    world.knowledge[player.id],
+    player.inventoryRevision,
+    actor.action,
+    world.itemHandling,
+    player.spatial,
+    player.placement,
+    player.statusEffects,
+    world.statusEffectPolicy,
+    actor.attributes,
+    nativeValuesFor(player.id),
+    actor.body,
+    world.moduleManifest,
+    active,
+    paused,
+  ]);
+  const inspection = currentInventoryInspection(world, player.id);
+  const inventoryDisclosureRevision = memo(
+    'inventoryDisclosureRevision',
+    [inspection, world.experience?.privacyRevisions?.[player.id], service.historyEpoch],
+    () =>
+      permittedSourceHandle(world, player.id, [
+        'inventory-disclosure',
+        inspection,
+        world.experience?.privacyRevisions?.[player.id],
+        service.historyEpoch,
+      ]),
+  );
+  const inventoryReadRevision = memo(
+    'inventoryReadRevision',
+    [inventoryBindingRevision, inventoryDetailRevision, inventoryDisclosureRevision],
+    () => ({
+      bindings: inventoryBindingRevision,
+      details: inventoryDetailRevision,
+      disclosure: inventoryDisclosureRevision,
+    }),
   );
   // The current-channel producer owns measured values. Publication consumes its
   // frozen facets and does not rerun sight or fill missing detail from an Entity.
@@ -1319,6 +1359,7 @@ export async function projectView(
           }
         : {}),
       inventory,
+      inventoryReadRevision,
       equipmentPorts: memo(
         'equipment-ports',
         [
@@ -1328,7 +1369,7 @@ export async function projectView(
           world.presentation?.itemArt,
         ],
         () => {
-          const attached = equippedItems(world, player.id);
+          const attached = equippedInventory;
           return (actor.body?.equipmentPorts ?? []).map((port) => {
             const item = attached.find((item) =>
               world.itemDefinitions[item.definitionId]!.equipment!.ports.includes(port.id),
