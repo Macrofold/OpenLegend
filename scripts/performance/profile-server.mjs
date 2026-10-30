@@ -972,6 +972,18 @@ async function main() {
     phases: [],
   };
   let game, load, database, stopPhaseObserving, observedLoop, activePhase, capture, cpuProfiler;
+  let cpuRecording = false;
+  const saveCpuProfile = async () => {
+    if (!cpuRecording) return;
+    cpuRecording = false;
+    report.cpuProfileWindow.stopBeforeUs = Number(process.hrtime.bigint() / 1000n);
+    const { profile } = await cpuProfiler.post('Profiler.stop');
+    report.cpuProfileWindow.stopAfterUs = Number(process.hrtime.bigint() / 1000n);
+    await writeFile(resolve(output) + '.cpuprofile', JSON.stringify(profile), {
+      flag: 'wx',
+      mode: 0o600,
+    });
+  };
   let pressureFixture, pressureRun;
   let cohortIds = new Set();
   const participantBindings = [];
@@ -1306,6 +1318,7 @@ async function main() {
       await cpuProfiler.post('Profiler.enable');
       report.cpuProfileWindow = { startBeforeUs: Number(process.hrtime.bigint() / 1000n) };
       await cpuProfiler.post('Profiler.start');
+      cpuRecording = true;
       report.cpuProfileWindow.startAfterUs = Number(process.hrtime.bigint() / 1000n);
     }
     // Keep warm-up and measured work continuous: an intervening pause can itself
@@ -1445,15 +1458,7 @@ async function main() {
         await game.service.flush();
       }
     }
-    if (cpuProfiler) {
-      report.cpuProfileWindow.stopBeforeUs = Number(process.hrtime.bigint() / 1000n);
-      const { profile } = await cpuProfiler.post('Profiler.stop');
-      report.cpuProfileWindow.stopAfterUs = Number(process.hrtime.bigint() / 1000n);
-      await writeFile(resolve(output) + '.cpuprofile', JSON.stringify(profile), {
-        flag: 'wx',
-        mode: 0o600,
-      });
-    }
+    await saveCpuProfile();
     report.finalCounts = {
       entities: entityKeys(game.service.world.entities).length,
       events: game.service.world.events.length,
@@ -1485,6 +1490,14 @@ async function main() {
     report.error = String(error);
     process.exitCode = 1;
   } finally {
+    // An overloaded warm-up is evidence too. Stop before cleanup, retaining its
+    // CPU trace without replacing the original workload failure if capture fails.
+    try {
+      await saveCpuProfile();
+    } catch (error) {
+      report.cpuProfileError = String(error);
+      process.exitCode = 1;
+    }
     cpuProfiler?.disconnect();
     stopPhaseObserving?.();
     observedLoop?.disable();
