@@ -8,6 +8,8 @@ import {
   bodyEligibilityRevision,
   availableItemQuantity,
   currentInventoryInspection,
+  entityChangesBetween,
+  custodian,
 } from '@open-legend/domain';
 import { worldClockParts, worldDayText } from '@open-legend/protocol';
 import { receivedEventAccounts } from './received-event-accounts.js';
@@ -67,7 +69,7 @@ import {
   scopeKey,
   type RequestScope,
 } from './authority.js';
-import { observerName } from '@open-legend/domain';
+import { observerDescription, observerName } from '@open-legend/domain';
 import { tradeSummary } from './trade-view.js';
 import { rememberedTradeDisclosureIndex } from '@open-legend/domain';
 import { capabilityBlocked, projectStatusEffects } from '@open-legend/domain';
@@ -129,6 +131,11 @@ interface ViewCache {
   sections: Map<string, { token: unknown; value?: unknown }>;
   entities: Map<string, Map<string, { deps: unknown[]; value: unknown }>>;
   eventChunks: import('./received-event-accounts.js').ReceivedEventAccountIndex;
+  inventoryDetails?: {
+    entities: WeakRef<WorldState['entities']>;
+    contents: number | undefined;
+    revision: number;
+  };
 }
 const projections = new WeakMap<WorldService, Map<string, ViewCache>>();
 function scopedCache(service: WorldService, scope: RequestScope): ViewCache {
@@ -166,6 +173,36 @@ function memoizer(cache: Pick<ViewCache, 'values'>) {
       });
     return value;
   };
+}
+/** Item attributes can change without changing contents membership. Follow the
+ * existing exact native delta, not every world's item or only the HUD's first page.
+ * The weak baseline keeps this derived hint from retaining an old world. */
+function ownedInventoryDetailRevision(
+  cache: ViewCache,
+  world: WorldState,
+  actorId: string,
+  revision: number,
+): number {
+  const previous = cache.inventoryDetails,
+    before = previous?.entities.deref(),
+    contents = entityGet(world.entities, actorId)?.inventoryRevision;
+  let changed = !previous || contents !== previous.contents;
+  if (!changed && before !== world.entities) {
+    const ids = before && entityChangesBetween(before, world.entities);
+    changed =
+      !ids ||
+      [...ids].some((id) => {
+        const entity = entityGet(world.entities, id);
+        // Removed/retired rows are rare and require a conservative refresh;
+        // ordinary foreign actor/item movement never scans this inventory.
+        return (
+          !entity || !!entity.retirement || (!!entity.item && custodian(world, id) === actorId)
+        );
+      });
+  }
+  const selected = changed ? revision : previous!.revision;
+  cache.inventoryDetails = { entities: new WeakRef(world.entities), contents, revision: selected };
+  return selected;
 }
 /** An async result may populate only its original still-permitted private section. */
 function optional<T>(
@@ -422,20 +459,47 @@ export async function projectView(
   const inventoryItems = memo('inventoryItems', [observation.inventory], () =>
     observation.inventory.slice(0, 60),
   );
-  // Plain owned lots depend on their own records. Containers, method records,
-  // declared ownership and exposed building materials retain the broader world
-  // dependencies used by their access, validation, naming and roof/rain readers.
-  const broadInventory = inventoryItems.some((item) => {
-    const definition = world.itemDefinitions[item.definitionId];
-    return (
-      item.container ||
-      definition?.recipeRecord ||
-      definition?.assemblyMaterial ||
-      entityGet(world.entities, item.id)?.declaredOwner
-    );
-  });
-  const materialInventory = inventoryItems.some(
-    (item) => world.itemDefinitions[item.definitionId]?.assemblyMaterial,
+  const ownedDetailsRevision = observation.inventory.length
+    ? ownedInventoryDetailRevision(cache, world, player.id, revision)
+    : player.inventoryRevision;
+  const ownedInventoryRecords = memo(
+    'ownedInventoryRecords',
+    [observation.inventory, ownedDetailsRevision],
+    () => {
+      const next = observation.inventory.map((item) => entityGet(world.entities, item.id)!);
+      const previous = cache.values.get('ownedInventoryRecords')?.value as typeof next | undefined;
+      // Lost weak lineage requires a full owned-item check, not a fictional
+      // detail change when those exact records still agree.
+      return previous?.length === next.length && next.every((record, i) => record === previous[i])
+        ? previous
+        : next;
+    },
+  );
+  const inspection = currentInventoryInspection(world, player.id);
+  const inspectedRecords = [...new Set([...(inspection?.itemIds ?? []), inspection?.containerId])]
+    .filter((id): id is string => !!id)
+    .flatMap((id) => entityGet(world.entities, id) ?? []);
+  const inventoryRecords = memo(
+    'inventoryDetailRecords',
+    [ownedInventoryRecords, ...inspectedRecords],
+    () => [...ownedInventoryRecords, ...inspectedRecords],
+  );
+  const declaredHolders = memo('declaredInventoryHolders', [inventoryRecords], () => [
+    ...new Set(inventoryRecords.flatMap((record) => record.declaredOwner?.holderId ?? [])),
+  ]);
+  // Only the permitted label of a relevant declared holder can change this
+  // detail. Unrelated body movement must not fan out opened inventory reads.
+  const declaredHolderNames = declaredHolders.map((id) =>
+    observerDescription(world, scope.actorId, id),
+  );
+  const materialInventory = memo(
+    'materialInventory',
+    [inventoryRecords, world.itemDefinitions],
+    () =>
+      inventoryRecords.some(
+        (record) =>
+          record.item && world.itemDefinitions[record.item.definitionPin.id]?.assemblyMaterial,
+      ),
   );
   const bindingDependencies = [
     observation.inventory,
@@ -453,11 +517,14 @@ export async function projectView(
   const inventoryBindingRevision = sectionRevision('inventoryBindingRevision', bindingDependencies);
   const inventoryDetailRevision = sectionRevision('inventoryDetailRevision', [
     observation.inventory,
-    broadInventory ? world.entities : undefined,
-    ...inventoryItems.map((item) => entityGet(world.entities, item.id)),
+    inventoryRecords,
+    ...declaredHolderNames,
     materialInventory ? world.finiteRain : undefined,
     materialInventory ? world.simTime : undefined,
     materialInventory ? world.assemblyFamilies : undefined,
+    materialInventory ? world.assemblyGeometryRevision : undefined,
+    materialInventory ? world.dailyRainDefinitions : undefined,
+    materialInventory ? world.constructionProfile : undefined,
     world.map,
     world.resourceReservations,
     world.itemDefinitions,
@@ -479,7 +546,6 @@ export async function projectView(
     active,
     paused,
   ]);
-  const inspection = currentInventoryInspection(world, player.id);
   const inventoryDisclosureRevision = memo(
     'inventoryDisclosureRevision',
     [inspection, world.experience?.privacyRevisions?.[player.id], service.historyEpoch],
