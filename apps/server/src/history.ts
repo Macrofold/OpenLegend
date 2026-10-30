@@ -454,31 +454,12 @@ export class HistoryRepository {
         .run(worldId, story, owner);
     }
   }
-  /** Canonical pages must already reflect the accepted change. The worker resolves
-   * only affected saved principals, without capturing a live world in its job. */
+  /** Canonical pages must already reflect the accepted change. Expiring a raw
+   * account removes its grant, not an already delivered story. Semantic source
+   * revocation separately removes derived stories in project/removeEvent.
+   * docs/narration-and-conversations.md#7-proposed-persistence-and-indexes */
   async retireTemporalAccounts(worldId: string, changes: RecordChanges): Promise<void> {
-    const retired = await retireTemporalStoryAccounts(this.db, worldId, changes);
-    if (!retired.length) return;
-    let principals = this.principals;
-    if (this.bindLocalPrincipal && !principals.length) {
-      const actorIds = [...new Set(retired.map((row) => String(row['actor_id'])))];
-      const rows = await this.db
-        .prepare(
-          'SELECT slot,payload FROM world_player_accounts WHERE world_id=? AND id=ANY(?::text[])',
-        )
-        .all(
-          worldId,
-          actorIds.map((id) => JSON.stringify(['world', 'authorship', 'playerAccountIds', id])),
-        );
-      principals = rows.map((row) => ({
-        actorId: String(row['slot']),
-        ownerId: JSON.parse(String(row['payload'])) as string,
-      }));
-    }
-    for (const row of retired)
-      for (const principal of principals)
-        if (principal.actorId === row['actor_id'])
-          await this.revokeStories(worldId, String(row['event_id']), principal.ownerId);
+    await retireTemporalStoryAccounts(this.db, worldId, changes);
   }
   private async removeEvent(worldId: string, id: string) {
     await this.revokeStories(worldId, id);

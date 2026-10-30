@@ -2,7 +2,7 @@ import {
   receiptLookupBuckets,
   restoreEvidenceLayout,
   snapshotEvidenceOwner,
-  receivedValueEncodedBytes,
+  receivedValueRetirementBytes,
   receivedValueSql,
 } from './evidence-segments.js';
 import {
@@ -308,8 +308,16 @@ export function nominateReleasedReceivedValues(
         continue;
       }
     }
-    const block = current ?? before?.receivedValues?.sources[id];
-    nominations.set(id, block ? (receivedValueEncodedBytes(block) ?? null) : null);
+    const previous = before?.receivedValues?.sources[id];
+    nominations.set(
+      id,
+      current || previous
+        ? Math.max(
+            current ? receivedValueRetirementBytes(current) : 0,
+            previous ? receivedValueRetirementBytes(previous) : 0,
+          )
+        : null,
+    );
   }
   if (nominations.size) countMetric('persistence.receivedRetirementNominations', nominations.size);
   if (!nominations.size) return world;

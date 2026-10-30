@@ -19,6 +19,7 @@ import {
   temporalReceiptIndividualIds,
   type TemporalChunk,
   type WorldState,
+  type ReceivedValueBlock,
 } from '@open-legend/domain';
 
 /** Physical append pages belong to the existing record codec, not to character history.
@@ -529,19 +530,38 @@ export function restoreEvidenceLayout(value: Owner, field: Field, segments: unkn
   return decodeEvidenceOwner({ ...value, [field]: pages }, field);
 }
 
-/** Parent-only charge; reading it never hydrates a received payload vector. */
-export function receivedValueEncodedBytes(value: object): number | undefined {
+/** Reserve resident physical bytes without preparing or changing its page layout. */
+export function receivedValueRetirementBytes(value: ReceivedValueBlock): number {
   // Only save preparation knows the accepted predecessor's physical pages.
   // Preparing an unencoded append here would install a merged replacement page
-  // before that owner can preserve its immutable suffix layout. Unknown charges
-  // use the existing bounded cold-header read instead.
+  // before that owner can preserve its immutable suffix layout.
   const prepared = encoded.get(value);
-  if (!prepared) return;
-  const storage = prepared['storage'] as { segmentBytes: number; metadataBytes: number };
+  if (prepared) {
+    const storage = prepared['storage'] as { segmentBytes: number; metadataBytes: number };
+    return (
+      Buffer.byteLength(JSON.stringify({ ...prepared, values: [] })) +
+      storage.segmentBytes +
+      storage.metadataBytes
+    );
+  }
+  // The native owner already charges the complete exact JSON body. A save can
+  // split it into at most one nonempty page per slot. Reserve that worst-case
+  // wrapper/metadata cost (including their largest valid numeric encodings),
+  // without scanning payloads or treating a known resident body as cold unknown.
+  // The off-lane header read replaces this conservative charge with actual bytes.
+  const length = value.values.length;
+  const maximum = Number.MAX_SAFE_INTEGER;
+  const page = { start: length, end: length, values: [], bytes: maximum };
+  const metadata = { start: length, end: length, bytes: maximum, length };
+  const storage = {
+    storage: { start: 0, end: length, segmentBytes: maximum, metadataBytes: maximum },
+  };
   return (
-    Buffer.byteLength(JSON.stringify({ ...prepared, values: [] })) +
-    storage.segmentBytes +
-    storage.metadataBytes
+    value.bytes +
+    length *
+      (Buffer.byteLength(JSON.stringify(page)) + Buffer.byteLength(JSON.stringify(metadata)) + 2) +
+    Buffer.byteLength(JSON.stringify(storage)) +
+    2
   );
 }
 

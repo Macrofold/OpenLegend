@@ -8,6 +8,7 @@ import {
   TEMPORAL_CHANGE_DICTIONARY_ARRAY_FIELDS,
   TEMPORAL_FACET_DICTIONARY_FIELDS,
   TEMPORAL_FACET_REFERENCE_FIELDS,
+  TEMPORAL_DICTIONARY_REFERENCE_FIELDS,
   canonicalJson,
   type Awareness,
   type EventEvidence,
@@ -27,12 +28,12 @@ export const personalAccountRevision = (payload: string) =>
 
 /** Run after canonical page replacement in the same application transaction.
  * Whole-chunk deletion already cascades; a shortened surviving chunk must also
- * revoke its removed receipt grants. The history owner revokes their derived stories. */
+ * remove its expired receipt grants. Semantic revocation has its separate owner. */
 export async function retireTemporalStoryAccounts(
   db: SqlDatabase,
   worldId: string,
   changes: RecordChanges,
-): Promise<Record<string, unknown>[]> {
+): Promise<void> {
   const removedChunks = new Set(changes.deletes.get('mind_temporal_chunks') ?? []);
   const changedChunks = new Set(
     (changes.writes.get('mind_temporal_segments') ?? [])
@@ -42,18 +43,17 @@ export async function retireTemporalStoryAccounts(
   for (const id of changes.deletes.get('mind_temporal_segments') ?? [])
     changedChunks.add(JSON.stringify((JSON.parse(id) as string[]).slice(0, -2)));
   for (const id of removedChunks) changedChunks.delete(id);
-  if (!changedChunks.size) return [];
-  return db
+  if (!changedChunks.size) return;
+  await db
     .prepare(
       `DELETE FROM history_perspectives p
        WHERE p.world_id=? AND p.temporal_chunk_id=ANY(?::text[])
          AND p.payload::jsonb#>>'{account,kind}'='temporal'
          AND NOT EXISTS (SELECT 1 FROM mind_temporal_segments s
            WHERE s.world_id=p.world_id AND s.parent_id=p.temporal_chunk_id
-             AND s.receipt_ordinals @> ARRAY[(p.payload::jsonb#>>'{account,receipt,ordinal}')::bigint])
-       RETURNING p.actor_id,p.event_id`,
+             AND s.receipt_ordinals @> ARRAY[(p.payload::jsonb#>>'{account,receipt,ordinal}')::bigint])`,
     )
-    .all(worldId, [...changedChunks]);
+    .run(worldId, [...changedChunks]);
 }
 
 export function personalEventEvidence(awareness: EventEvidence): EventEvidence {
@@ -191,6 +191,9 @@ export function storyAccountSql(alias = 'p'): string {
     (field) =>
       `SELECT (f.value#>>'{${field},0}')::bigint AS ordinal FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') f(value)`,
   );
+  const dictionaryLinks = Object.entries(TEMPORAL_DICTIONARY_REFERENCE_FIELDS)
+    .flatMap(([kind, fields]) => Object.keys(fields).map((field) => `('${kind}','${field}')`))
+    .join(',');
   return `(SELECT account.payload FROM (
     SELECT a.payload FROM mind_awareness a WHERE ${kind}='awareness'
       AND a.world_id=${alias}.world_id AND a.actor_id=${alias}.actor_id
@@ -201,7 +204,7 @@ export function storyAccountSql(alias = 'p'): string {
       AND v.source_id=${alias}.event_id AND v.revision=${revision}
     UNION ALL
     SELECT body.payload FROM mind_temporal_chunks c CROSS JOIN LATERAL (
-      WITH selected AS MATERIALIZED (
+      WITH RECURSIVE selected AS MATERIALIZED (
         SELECT e.value AS change FROM mind_temporal_segments s
         CROSS JOIN LATERAL json_array_elements(s.payload::json->'values') e(value)
         WHERE s.world_id=c.world_id AND s.parent_id=c.id
@@ -211,9 +214,18 @@ export function storyAccountSql(alias = 'p'): string {
       ), needed AS (
         SELECT (r.change->>'frame')::bigint AS ordinal FROM selected r
         UNION ${[...scalar, ...arrays, ...facets, ...references].join(' UNION ')}
+      ), closure(ordinal) AS (
+        SELECT ordinal FROM needed WHERE ordinal IS NOT NULL
+        UNION
+        SELECT (e.entry#>>ARRAY['value','value',link.field])::bigint
+        FROM closure n JOIN mind_temporal_segments s ON s.world_id=c.world_id AND s.parent_id=c.id
+          AND s.first_ordinal<=n.ordinal AND s.last_ordinal>=n.ordinal
+        CROSS JOIN LATERAL (SELECT s.payload::json->'values'->(n.ordinal-s.first_ordinal)::int AS entry) e
+        JOIN (VALUES ${dictionaryLinks}) link(kind,field)
+          ON e.entry->>'kind'='dictionary' AND e.entry#>>'{value,kind}'=link.kind
       ), dependencies AS MATERIALIZED (
         SELECT s.payload::json->'values'->(n.ordinal-s.first_ordinal)::int AS entry
-        FROM needed n JOIN mind_temporal_segments s ON s.world_id=c.world_id AND s.parent_id=c.id
+        FROM closure n JOIN mind_temporal_segments s ON s.world_id=c.world_id AND s.parent_id=c.id
           AND s.first_ordinal<=n.ordinal AND s.last_ordinal>=n.ordinal
         WHERE n.ordinal IS NOT NULL
       ), entries AS (
