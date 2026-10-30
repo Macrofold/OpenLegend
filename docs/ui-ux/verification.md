@@ -46,7 +46,7 @@ Paths below are relative to `apps/client/src/`. Each listed surface has a destin
 
 ## Choose checks by changed behavior
 
-A spacing correction needs its view, realistic content and fit boundary, not a full game playthrough. Shared controls need meaningful caller/keyboard/async variants. Use focused existing checks and small manual/ad-hoc scenarios; do not author a new suite by default or run the whole repository just because UI is involved.
+For presentation-only checks, use the smallest controlled state that exercises the actual interface with realistic content and its fit boundary. Native simulation is required when the claim concerns native behavior or acceptance explicitly requires it. Confirm the requested viewport, scale and settled visual state before capturing evidence. Shared controls need meaningful caller/keyboard/async variants. Use focused existing checks and small manual/ad-hoc scenarios; do not author a new suite by default or run the whole repository just because UI is involved.
 
 Runtime changes require actual interaction and relevant failure/cancellation/stale-state behavior plus visual inspection where available. Typecheck/build alone is insufficient. Design-only docs specify these cases without pretending they ran.
 
