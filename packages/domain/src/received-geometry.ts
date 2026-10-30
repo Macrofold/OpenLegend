@@ -571,7 +571,10 @@ export function refreshReceivedGeometry(
   state.visited += query.visited;
   state.featureCursor = query.cursor;
   state.finished = !query.cursor;
-  state.unknown ||= query.status !== 'complete';
+  // A live index cursor is unfinished work, rather than a permanent visibility
+  // gap. Keep real uncertified fringe separately so the last page can complete
+  // an otherwise exact view without acquiring another fact.
+  state.unknown ||= query.status !== 'complete' && !query.cursor;
   const features = new Map(query.values.map((feature) => [feature.id, feature]));
   const held = previous?.sourceBasis === input.sourceBasis ? previous.fragments : [];
   for (const fragment of held) {
@@ -694,6 +697,8 @@ export function refreshReceivedGeometry(
       heldPatch?.kind === 'surface-patch'
     ) {
       certified.push({ ...entry, patch: heldPatch.patch });
+      if (entry.extent.u0 > 0 || entry.extent.u1 < 1 || entry.extent.v0 > 0 || entry.extent.v1 < 1)
+        state.unknown = true;
       continue;
     }
     const delta = {
@@ -779,17 +784,21 @@ export function refreshReceivedGeometry(
   };
   // Supported near/far pairs are prioritized as a complete dependency bundle.
   // Coverage/range edges and a merely unseen far side never become a cliff.
-  for (const near of certified) {
-    if (near.feature.kind !== 'support') continue;
-    for (const far of certified) {
+  const supports = certified
+    .filter((candidate) => candidate.feature.kind === 'support')
+    .map((candidate) => ({ ...candidate, bounds: boundsOf(candidate.patch.vertices) }))
+    .sort((a, b) => a.bounds.min.y - b.bounds.min.y);
+  // Test downward candidates before reverse/equal-height pairs consume the
+  // remaining allowance. Both surfaces still need their actual visibility proof.
+  for (const near of [...supports].sort((a, b) => b.bounds.max.y - a.bounds.max.y)) {
+    for (const far of supports) {
       if (state.visited >= policy.visits) {
         state.unknown = true;
         break;
       }
       state.visited++;
-      if (far.feature.kind !== 'support' || near.feature.sourceId === far.feature.sourceId)
-        continue;
-      const fb = boundsOf(far.patch.vertices);
+      if (near.feature.sourceId === far.feature.sourceId) continue;
+      const fb = far.bounds;
       let edge: [Position, Position] | undefined;
       for (let i = 0; i < 4; i++) {
         if (near.patch.edges[i] !== 'physical-boundary') continue;

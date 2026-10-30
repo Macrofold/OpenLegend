@@ -275,7 +275,7 @@ function nativeScene(
 
 describe('native received relation producers', () => {
   it('finishes stationary pending perception on the ordinary clock with JSON continuation and no exhausted-source spin', () => {
-    const { world } = nativeScene(18, map([surface('ground', -5, 25, 0)]));
+    const { world } = nativeScene(18, map([surface('ground', -5, 40, 0)]));
     world.paused = false;
     const key = currentDetailedAttention(world, PLAYER_ID)[0]!.key;
     expect(
@@ -349,7 +349,7 @@ describe('native received relation producers', () => {
     expect(nextPerceptionWorkAt(continued.world, PLAYER_ID)).toBe(180);
   });
   it('exhausts unchanged partial terrain once and rechecks actual received changes identically after restore', () => {
-    const { world, people } = nativeScene(2, map([surface('ground', -5, 25, 0)]));
+    const { world, people } = nativeScene(2, map([surface('ground', -5, 40, 0)]));
     const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
     expect(currentReceivedGeometry(world, PLAYER_ID).complete).toBe(false);
     expect(world.perceptionEvidence![PLAYER_ID]!.geometry!.finished).toBe(true);
