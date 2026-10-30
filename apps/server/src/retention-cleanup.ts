@@ -1,4 +1,3 @@
-import { temporalChunkReceipts } from '@open-legend/domain';
 import {
   experienceIndividualIds,
   selectedPruneObserverIndividuals,
@@ -6,9 +5,8 @@ import {
   temporalReceiptId,
   selectedRecognitionSupportSourceIds,
   releaseTemporalSupport,
-  temporalReceiptAliases,
   temporalSupportAliases,
-  temporalReceiptIndividualIds,
+  temporalEntryMetadataReader,
   updateWorld,
   type ExperienceEntry,
 } from '@open-legend/domain';
@@ -270,11 +268,15 @@ export async function cleanupRetiredIndividuals(
         if (value.kind === 'association' && value.subject.kind === 'individual')
           individuals.add(value.subject.individualId);
     }
-    for (const chunk of history?.chunks ?? [])
-      for (const receipt of temporalChunkReceipts(chunk)) {
-        for (const id of temporalReceiptAliases(receipt, sources, world)) retained.add(id);
-        for (const id of temporalReceiptIndividualIds(receipt, sources)) individuals.add(id);
-      }
+    for (const chunk of history?.chunks ?? []) {
+      // This membership is owned by actual occurrences. Reconstruction checkpoints
+      // and later confirmations must not prolong an otherwise forgotten person.
+      const metadata = temporalEntryMetadataReader(chunk, { world, sources })(
+        chunk.entries.filter((entry) => entry.kind === 'change'),
+      );
+      for (const id of metadata.sourceIds) retained.add(id);
+      for (const id of metadata.individualIds) individuals.add(id);
+    }
     const aliases = [...candidate.sources],
       ids = [...candidate.individuals];
     if (!complete && aliases.length) {
