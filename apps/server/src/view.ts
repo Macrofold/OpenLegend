@@ -1075,12 +1075,16 @@ export async function projectView(
   // Read the indexed latest passage before publishing the view. A temporary null
   // while this refreshes would dismiss and then reannounce the same old narration.
   // Narration completion already calls notifyHistory; unrelated telemetry is not a dependency.
-  const narrator = await memo(
+  const narratorRevision = service.store.history?.bannerRevision;
+  const narration = await memo(
     'narrator',
-    [service.store.history?.bannerRevision, historyEpoch],
+    [narratorRevision, historyEpoch],
     () =>
-      service.store.history?.latestNarration(world.id, scope.accountId) ?? Promise.resolve(null),
+      service.store.history?.latestNarration(world.id, scope.accountId) ??
+      Promise.resolve({ status: 'current' as const, item: null }),
   );
+  if (narration.status === 'stale') throw new ViewChangedError();
+  const narrator = narration.item;
   const assetAuthorityGeneration = service.assetAuthorityGeneration;
   const placesRevision =
     service.store.memories?.knownPlacesRevision(player.id) ?? service.generation;
@@ -1657,6 +1661,7 @@ export async function projectView(
   if (
     generation !== service.generation ||
     historyEpoch !== service.historyEpoch ||
+    narratorRevision !== service.store.history?.bannerRevision ||
     assetAuthorityGeneration !== service.assetAuthorityGeneration
   )
     throw new ViewChangedError();

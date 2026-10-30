@@ -1154,7 +1154,10 @@ export class HistoryRepository {
       before: rows.length > 100 ? Number(page.at(-1)!['position']) : undefined,
     };
   }
-  async latestNarration(worldId: string, ownerId: string): Promise<TranscriptItem | null> {
+  async latestNarration(
+    worldId: string,
+    ownerId: string,
+  ): Promise<{ status: 'current'; item: TranscriptItem | null } | { status: 'stale' }> {
     const principal = this.principals.find((p) => p.ownerId === ownerId);
     if (!principal) throw new Error('Unsupported history principal.');
     const revision = this.bannerRevision;
@@ -1163,14 +1166,19 @@ export class HistoryRepository {
         'SELECT payload FROM story_banners WHERE world_id=? AND owner_id=? ORDER BY position DESC,id DESC LIMIT 1',
       )
       .get(worldId, ownerId);
-    if (revision !== this.bannerRevision) throw new Error('Narration changed while loading.');
-    return row
-      ? publicTranscriptItem(
-          projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem),
-          worldId,
-          principal.actorId,
-        )
-      : null;
+    // A committed source change during this read is normal invalidation. The
+    // projection owner coalesces/retries it without closing a healthy stream.
+    if (revision !== this.bannerRevision) return { status: 'stale' };
+    return {
+      status: 'current',
+      item: row
+        ? publicTranscriptItem(
+            projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem),
+            worldId,
+            principal.actorId,
+          )
+        : null,
+    };
   }
   async perceivedEvents(
     worldId: string,
