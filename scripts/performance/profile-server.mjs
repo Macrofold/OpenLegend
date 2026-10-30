@@ -587,7 +587,21 @@ async function clientLoad() {
           operation,
         );
         const reading = stream.done.catch((error) => {
-          if (!streamAbort.signal.aborted) throw error;
+          if (!streamAbort.signal.aborted) {
+            // Traffic loops can continue until their offered deadline. Preserve
+            // the actual disconnect time, rather than calling all that time slow
+            // simulation if loss of the viewer subsequently pauses the world.
+            if (process.connected)
+              process.send({
+                streamFailure: {
+                  atUnixMs: timestamp(),
+                  actorId: client.actorId,
+                  clientId: client.clientId,
+                  error: String(error),
+                },
+              });
+            throw error;
+          }
         });
         // Attach before awaiting admission, so an early refused stream is not an unhandled rejection.
         void reading.catch(() => {});
@@ -783,6 +797,7 @@ async function startLoad(settings) {
     execArgv: ['--import', 'tsx'],
     stdio: ['ignore', 'inherit', 'inherit', 'ipc'],
   });
+  const diagnostics = {};
   let readyResolve, resultResolve, reject;
   const ready = new Promise((resolve, fail) => {
     readyResolve = resolve;
@@ -792,7 +807,10 @@ async function startLoad(settings) {
     resultResolve = resolve;
     child.on('error', fail);
     child.on('exit', (code) => {
-      if (code !== 0) fail(Error('Load generator exited ' + code));
+      if (code !== 0) {
+        diagnostics.exitedAtUnixMs = performance.timeOrigin + performance.now();
+        fail(Error('Load generator exited ' + code));
+      }
     });
   });
   result.catch(() => {}); // The startup path can fail before the caller awaits the result.
@@ -800,6 +818,8 @@ async function startLoad(settings) {
     if (message.booted) child.send(settings);
     if (message.ready) readyResolve();
     if (message.result) resultResolve(message.result);
+    if (message.streamFailure && !diagnostics.streamFailure)
+      diagnostics.streamFailure = message.streamFailure;
   });
   child.on('error', reject);
   child.on('exit', (code) => {
@@ -814,7 +834,7 @@ async function startLoad(settings) {
   } finally {
     clearTimeout(timeout);
   }
-  return { child, result };
+  return { child, result, diagnostics };
 }
 
 function metricDelta(before, after) {
@@ -1040,6 +1060,10 @@ async function main() {
       expectedSimSeconds: elapsed * config.baseRatio * game.service.speed,
       achievedSpeed: advanced / elapsed / nominalBaseRatio,
       achievedFraction: advanced / (elapsed * config.baseRatio * game.service.speed),
+      // Endpoint state is not a measurement of how long a phase was paused.
+      paused: game.service.paused,
+      pauseReason: game.service.pauseReason,
+      ...(load?.diagnostics.streamFailure ? { loadFailure: { ...load.diagnostics } } : {}),
       population: populationCensus(game.service.world),
       controlledActivity: phase.controlledStarts?.map((actor) => ({
         ...actor,
