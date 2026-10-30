@@ -337,7 +337,13 @@ export function temporalOperationHeader(
   chunk: TemporalFrameOwner,
   entry: Extract<TemporalFrameEntry, { kind: 'change' }>,
 ): Omit<TemporalReceipt, 'facets'> {
-  const index = frameIndex(readOnlyDraftView(chunk));
+  return operationHeader(chunk, entry, frameIndex(readOnlyDraftView(chunk)));
+}
+function operationHeader(
+  chunk: TemporalFrameOwner,
+  entry: Extract<TemporalFrameEntry, { kind: 'change' }>,
+  index: FrameIndex,
+): Omit<TemporalReceipt, 'facets'> {
   const prior = index.headers.get(entry.receipt);
   if (prior) return prior;
   const frame = index.entries.get(entry.frame);
@@ -380,7 +386,7 @@ function decode(
   const frame = index.entries.get(entry.frame);
   if (frame?.kind !== 'frame') throw new Error('Temporal change has no acquisition frame.');
   return immutableDataSnapshot({
-    ...temporalOperationHeader(chunk, entry),
+    ...operationHeader(chunk, entry, index),
     facets: decodeFacets(entry.facets, frame, index),
   });
 }
@@ -647,7 +653,13 @@ export function temporalConfirmationHeader(
   chunk: TemporalFrameOwner,
   entry: Extract<TemporalFrameEntry, { kind: 'confirmation' }>,
 ) {
-  const frame = frameIndex(readOnlyDraftView(chunk)).entries.get(entry.frame);
+  return confirmationHeader(frameIndex(readOnlyDraftView(chunk)), entry);
+}
+function confirmationHeader(
+  index: FrameIndex,
+  entry: Extract<TemporalFrameEntry, { kind: 'confirmation' }>,
+) {
+  const frame = index.entries.get(entry.frame);
   if (frame?.kind !== 'frame') throw new Error('Temporal confirmation has no acquisition frame.');
   return {
     entryOrdinal: entry.ordinal,
@@ -672,11 +684,18 @@ export function temporalConfirmationField(
   group: number,
   position: number,
 ): TemporalConfirmationRead {
-  const index = frameIndex(readOnlyDraftView(chunk)),
-    value = entry.subjects[group],
+  return confirmationField(frameIndex(readOnlyDraftView(chunk)), entry, group, position);
+}
+function confirmationField(
+  index: FrameIndex,
+  entry: Extract<TemporalFrameEntry, { kind: 'confirmation' }>,
+  group: number,
+  position: number,
+): TemporalConfirmationRead {
+  const value = entry.subjects[group],
     field = value?.fields[position];
   if (!value || !field) throw new Error('Temporal confirmation has no selected field.');
-  const header = temporalConfirmationHeader(chunk, entry),
+  const header = confirmationHeader(index, entry),
     fieldOrdinal =
       field.ordinal ??
       entry.subjects.slice(0, group).reduce((sum, value) => sum + value.fields.length, 0) +
@@ -705,10 +724,18 @@ export function temporalEntryConfirmations(
   chunk: TemporalFrameOwner,
   entries: readonly TemporalFrameEntry[] = chunk.entries,
 ): TemporalConfirmationRead[] {
+  return entryConfirmations(frameIndex(readOnlyDraftView(chunk)), entries);
+}
+function entryConfirmations(
+  index: FrameIndex,
+  entries: readonly TemporalFrameEntry[],
+): TemporalConfirmationRead[] {
+  // Cold/raw chunks deliberately have no reusable identity cache. One synchronous
+  // read still shares its prepared declarations across every selected field.
   return entries.flatMap((entry) =>
     entry.kind === 'confirmation'
       ? entry.subjects.flatMap((group, g) =>
-          group.fields.map((_, p) => temporalConfirmationField(chunk, entry, g, p)),
+          group.fields.map((_, p) => confirmationField(index, entry, g, p)),
         )
       : [],
   );
@@ -777,7 +804,7 @@ export function temporalEntryDependencies(
   return entries.flatMap<TemporalReceipt | TemporalCheckpoint | TemporalConfirmationDependency>(
     (entry) =>
       entry.kind === 'confirmation'
-        ? temporalEntryConfirmations(chunk, [entry]).map(confirmationDependencies)
+        ? entryConfirmations(index, [entry]).map(confirmationDependencies)
         : entry.kind === 'checkpoint'
           ? [decodedCheckpoint(chunk, entry, index)]
           : entry.kind === 'change'

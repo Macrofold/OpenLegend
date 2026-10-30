@@ -3,7 +3,6 @@ import {
   temporalEntryCheckpoints,
   temporalEntryConfirmations,
   temporalConfirmationChangeCount,
-  temporalChunkReceipt,
   temporalDictionaryDependencies,
   type TemporalCheckpointAvailability,
   temporalEntryDependencies,
@@ -760,12 +759,18 @@ export function validateTemporalEvidenceState(
         !strings(chunk.individualIds) ||
         !strings(chunk.sourceIds) ||
         !strings(chunk.sourceRefs) ||
-        !Array.isArray(chunk.entries) ||
-        !temporalChunkReceipts(chunk).length ||
-        temporalChunkReceipts(chunk).reduce(
-          (sum, row) => sum + temporalReceiptChangeCount(row),
-          0,
-        ) +
+        !Array.isArray(chunk.entries)
+      )
+        throw new Error('Invalid personal temporal chunk.');
+      // A restored mutable chunk cannot retain an identity cache. Validate each
+      // decoded family once, and resolve confirmation parents by exact ordinal.
+      const receipts = temporalChunkReceipts(chunk),
+        checkpoints = temporalEntryCheckpoints(chunk),
+        confirmations = temporalEntryConfirmations(chunk),
+        receiptsByOrdinal = new Map(receipts.map((receipt) => [receipt.ordinal, receipt]));
+      if (
+        !receipts.length ||
+        receipts.reduce((sum, row) => sum + temporalReceiptChangeCount(row), 0) +
           temporalConfirmationChangeCount(chunk.entries) !==
           chunk.count
       )
@@ -773,7 +778,7 @@ export function validateTemporalEvidenceState(
       chunks.add(chunk.id);
       bytes += chunk.bytes;
       count += chunk.count;
-      for (const checkpoint of temporalEntryCheckpoints(chunk)) {
+      for (const checkpoint of checkpoints) {
         if (
           checkpoint.chunkId !== chunk.id ||
           checkpoint.actorId !== actorId ||
@@ -793,8 +798,8 @@ export function validateTemporalEvidenceState(
         if (checkpoint.availability)
           validateFieldAvailability(checkpoint.availability, checkpoint.facets, checkpoint.at);
       }
-      for (const confirmation of temporalEntryConfirmations(chunk)) {
-        const parent = temporalChunkReceipt(chunk, confirmation.receiptOrdinal);
+      for (const confirmation of confirmations) {
+        const parent = receiptsByOrdinal.get(confirmation.receiptOrdinal);
         if (
           !ordinal(confirmation.receiptOrdinal) ||
           !ordinal(confirmation.acquisition) ||
@@ -846,7 +851,7 @@ export function validateTemporalEvidenceState(
         individuals = new Set<string>();
       let lastOrdinal = chunk.fromOrdinal - 1,
         lastAt = chunk.fromAt;
-      for (const receipt of temporalChunkReceipts(chunk)) {
+      for (const receipt of receipts) {
         const key = JSON.stringify([receipt.physicalLife, receipt.epoch, receipt.ordinal]);
         validateReceipt(receipt);
         if (
@@ -870,7 +875,7 @@ export function validateTemporalEvidenceState(
             references.add(reference.blockId);
           }
       }
-      for (const checkpoint of temporalEntryCheckpoints(chunk)) {
+      for (const checkpoint of checkpoints) {
         subjects.add(checkpoint.subject);
         for (const alias of temporalReceiptAliases(checkpoint, sources, world)) aliases.add(alias);
         for (const id of temporalReceiptIndividualIds(checkpoint, sources)) individuals.add(id);
@@ -878,7 +883,7 @@ export function validateTemporalEvidenceState(
           for (const reference of temporalFacetValueReferences(facet))
             references.add(reference.blockId);
       }
-      for (const confirmation of temporalEntryConfirmations(chunk)) {
+      for (const confirmation of confirmations) {
         subjects.add(confirmation.subject);
         const reference = temporalConfirmationReference(confirmation);
         for (const alias of temporalReceiptAliases(
@@ -892,9 +897,9 @@ export function validateTemporalEvidenceState(
         for (const value of temporalFacetValueReferences(reference)) references.add(value.blockId);
       }
       if (
-        temporalChunkReceipts(chunk)[0]!.ordinal !== chunk.fromOrdinal ||
+        receipts[0]!.ordinal !== chunk.fromOrdinal ||
         lastOrdinal !== chunk.throughOrdinal ||
-        temporalChunkReceipts(chunk)[0]!.at !== chunk.fromAt ||
+        receipts[0]!.at !== chunk.fromAt ||
         lastAt !== chunk.throughAt ||
         subjects.size !== chunk.subjects.length ||
         chunk.subjects.some((subject) => !subjects.has(subject)) ||
