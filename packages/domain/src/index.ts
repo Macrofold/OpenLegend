@@ -123,6 +123,7 @@ export {
   type PreparedNativeChoice,
   advanceWorld,
   projectWorldHistory,
+  preserveReceivedValuePreparation,
   navigationBlocked,
   navigationPending,
   observeActor,

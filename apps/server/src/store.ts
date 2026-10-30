@@ -1365,7 +1365,7 @@ export class SqlGameRepository implements GameRepository {
     this.readyHistoryWorlds.add('worldId' in write ? write.worldId : write.state.world.id);
     this.records.needsHotPrune = false;
     const memoryRevision = this.memories.publicationRevision;
-    this.history.committed();
+    this.history.committed(write.changes);
     this.memories.committed(
       'worldId' in write ? write.worldId : write.state.world.id,
       write.changes,
@@ -1584,6 +1584,7 @@ export class SqlGameRepository implements GameRepository {
     await applyRecordSources(
       this.records,
       this.memories,
+      this.history,
       state.world.id,
       revision,
       changes,

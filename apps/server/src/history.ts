@@ -44,6 +44,7 @@ import {
   storedStoryAccount,
   storyTemporalReceipt,
   storyTemporalBytes,
+  retireTemporalStoryAccounts,
 } from './personal-accounts.js';
 import { temporalChunkSourceId } from './temporal-storage.js';
 import type { ReceivedEventAccount } from './received-event-accounts.js';
@@ -221,7 +222,16 @@ export class HistoryRepository {
     };
   }
   /** Only called after commit; durable jobs recover a lost notification on restart. */
-  committed() {
+  committed(changes?: RecordChanges) {
+    // The journal worker has its own repository instance. Invalidate the live
+    // banner cache when its canonical application could have retired sources.
+    if (
+      changes &&
+      (changes.deletes.get('mind_temporal_chunks')?.length ||
+        changes.deletes.get('mind_temporal_segments')?.length ||
+        changes.writes.get('mind_temporal_segments')?.some((row) => !row.create))
+    )
+      this.bannerChanged();
     if (this.notifiedRevision === this.queuedRevision) return;
     this.notifiedRevision = this.queuedRevision;
     for (const listener of this.listeners) listener();
@@ -444,6 +454,32 @@ export class HistoryRepository {
         .run(worldId, story, owner);
     }
   }
+  /** Canonical pages must already reflect the accepted change. The worker resolves
+   * only affected saved principals, without capturing a live world in its job. */
+  async retireTemporalAccounts(worldId: string, changes: RecordChanges): Promise<void> {
+    const retired = await retireTemporalStoryAccounts(this.db, worldId, changes);
+    if (!retired.length) return;
+    let principals = this.principals;
+    if (this.bindLocalPrincipal && !principals.length) {
+      const actorIds = [...new Set(retired.map((row) => String(row['actor_id'])))];
+      const rows = await this.db
+        .prepare(
+          'SELECT slot,payload FROM world_player_accounts WHERE world_id=? AND id=ANY(?::text[])',
+        )
+        .all(
+          worldId,
+          actorIds.map((id) => JSON.stringify(['world', 'authorship', 'playerAccountIds', id])),
+        );
+      principals = rows.map((row) => ({
+        actorId: String(row['slot']),
+        ownerId: JSON.parse(String(row['payload'])) as string,
+      }));
+    }
+    for (const row of retired)
+      for (const principal of principals)
+        if (principal.actorId === row['actor_id'])
+          await this.revokeStories(worldId, String(row['event_id']), principal.ownerId);
+  }
   private async removeEvent(worldId: string, id: string) {
     await this.revokeStories(worldId, id);
     await this.db
@@ -619,35 +655,6 @@ export class HistoryRepository {
         )
         .run(world.id);
     await batch.flush({ worldId: world.id, removedEvents }, sharedWrites);
-    // A partial correction may remove a receipt while its shared chunk remains.
-    // Retire only those derived rows, before any reader can resolve a stale grant.
-    const changedChunks = [
-      ...new Set(
-        (sourceChanges?.writes.get('mind_temporal_segments') ?? [])
-          .filter((row) => !row.create)
-          .map((row) => row.parent),
-      ),
-    ];
-    if (changedChunks.length) {
-      await sharedWrites?.flush();
-      const retired = await this.db
-        .prepare(
-          `WITH retired AS (
-        DELETE FROM history_perspectives p
-        WHERE p.world_id=? AND p.temporal_chunk_id=ANY(?::text[])
-          AND NOT EXISTS (SELECT 1 FROM mind_temporal_segments s
-            WHERE s.world_id=p.world_id AND s.parent_id=p.temporal_chunk_id
-              AND s.receipt_ordinals @> ARRAY[(p.payload::jsonb#>>'{account,receipt,ordinal}')::bigint])
-        RETURNING p.actor_id,p.event_id)
-        SELECT actor_id,event_id FROM retired`,
-        )
-        .all(world.id, changedChunks);
-      for (const row of retired)
-        for (const principal of this.principals.filter(
-          (value) => value.actorId === row['actor_id'],
-        ))
-          await this.revokeStories(world.id, String(row['event_id']), principal.ownerId);
-    }
     endTiming('history.sourceBuild', buildStarted, batch.writeMilliseconds);
     candidates.sort(
       (a, b) =>

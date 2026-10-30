@@ -182,6 +182,69 @@ function featurePoint(feature: PhysicalFeature, u: number, v: number): Position 
     z: a.z * (1 - u) * (1 - v) + b.z * u * (1 - v) + c.z * u * v + d.z * (1 - u) * v,
   };
 }
+/** Split around a conservative projection of the actual occluder, then let
+ * the normal complete visibility query certify each proposed interior. This
+ * avoids blindly bisecting the long axis while a narrow shadow hides one edge. */
+function shadowPartition(
+  feature: PhysicalFeature,
+  extent: FeatureExtent,
+  eye: Position,
+  vertices: readonly Position[],
+): FeatureExtent[] | undefined {
+  const a = feature.vertices[0],
+    b = feature.vertices[1],
+    d = feature.vertices[3],
+    n = feature.normal,
+    u = { x: b.x - a.x, y: b.y - a.y, z: b.z - a.z },
+    v = { x: d.x - a.x, y: d.y - a.y, z: d.z - a.z },
+    uu = dot(u, u),
+    vv = dot(v, v),
+    uv = dot(u, v),
+    det = uu * vv - uv * uv;
+  if (det <= epsilon) return;
+  const numerator = n.x * (a.x - eye.x) + n.y * (a.y - eye.y) + n.z * (a.z - eye.z);
+  let lowU = Infinity,
+    highU = -Infinity,
+    lowV = Infinity,
+    highV = -Infinity;
+  for (const point of vertices) {
+    const delta = { x: point.x - eye.x, y: point.y - eye.y, z: point.z - eye.z },
+      denominator = dot(n, delta),
+      t = numerator / denominator;
+    // A crossing/eye-plane solid needs the ordinary conservative subdivision.
+    if (!Number.isFinite(t) || t < 1 - epsilon) return;
+    const projected = {
+        x: eye.x + t * delta.x - a.x,
+        y: eye.y + t * delta.y - a.y,
+        z: eye.z + t * delta.z - a.z,
+      },
+      du = dot(projected, u),
+      dv = dot(projected, v),
+      pu = (du * vv - dv * uv) / det,
+      pv = (dv * uu - du * uv) / det;
+    lowU = Math.min(lowU, pu);
+    highU = Math.max(highU, pu);
+    lowV = Math.min(lowV, pv);
+    highV = Math.max(highV, pv);
+  }
+  const left = Math.max(extent.u0, Math.min(extent.u1, lowU)),
+    right = Math.max(extent.u0, Math.min(extent.u1, highU)),
+    bottom = Math.max(extent.v0, Math.min(extent.v1, lowV)),
+    top = Math.max(extent.v0, Math.min(extent.v1, highV));
+  const result: FeatureExtent[] = [];
+  const add = (u0: number, u1: number, v0: number, v1: number) => {
+    if (u1 - u0 > epsilon && v1 - v0 > epsilon) result.push({ ...extent, u0, u1, v0, v1 });
+  };
+  const margin = epsilon * 16;
+  add(extent.u0, left - margin, extent.v0, extent.v1);
+  add(right + margin, extent.u1, extent.v0, extent.v1);
+  add(left, right, extent.v0, bottom - margin);
+  add(left, right, top + margin, extent.v1);
+  if (!result.length) return;
+  // The shadow itself remains last and unknown unless later work proves it.
+  add(left, right, bottom, top);
+  return result;
+}
 function extentPoints(feature: PhysicalFeature, extent: FeatureExtent): Quad<Position> {
   return [
     featurePoint(feature, extent.u0, extent.v0),
@@ -408,7 +471,10 @@ export function refreshReceivedGeometry(
       ['closing-body', 'closing-drop'],
       new Set([SELF_RELATION_KEY]),
     );
-  if (previous && previous.sourceBasis === input.sourceBasis && world.simTime < previous.nextAt) {
+  if (
+    geometryCertificateCurrent(world, observerId, input, previous) &&
+    world.simTime < previous.nextAt
+  ) {
     if (previous.basis === input.basis && previous.supportedThrough !== world.simTime) {
       owner.geometry!.supportedThrough = world.simTime;
       owner.geometry!.inputRevision = world.sensory?.revision ?? 0;
@@ -431,9 +497,16 @@ export function refreshReceivedGeometry(
       z: Math.max(...boxes.map((b) => b.max.z)),
     },
   };
-  const queryKey = JSON.stringify([input.sourceBasis, bounds]);
+  // The continuation owns its ordering inputs as well as its index. Receptor
+  // rejection happens in the hierarchy, before distant terrain spends the page.
+  const queryKey = JSON.stringify([input.basis, bounds, anchors.points]);
   const basis = input.basis;
-  if (previous?.basis === basis && previous.queryKey === queryKey && previous.finished) {
+  if (
+    previous?.basis === basis &&
+    previous.queryKey === queryKey &&
+    previous.finished &&
+    geometryCertificateCurrent(world, observerId, input, previous)
+  ) {
     if (previous.supportedThrough === world.simTime) return { acquired: [], changed: false };
     owner.geometry!.supportedThrough = world.simTime;
     owner.geometry!.inputRevision = world.sensory?.revision ?? 0;
@@ -480,15 +553,25 @@ export function refreshReceivedGeometry(
     bytes: 0,
   };
   const acquired: ObservationContribution[] = [];
+  const anchorDistance = (box: Bounds3) => {
+    let nearest = Infinity;
+    for (const point of anchors.points) nearest = Math.min(nearest, distanceBounds(box, point));
+    return nearest;
+  };
   const query = queryPhysicalFeatures(
     input.map,
     bounds,
     Math.max(1, Math.floor((policy.visits - state.visited) / 3)),
     previous?.queryKey === queryKey ? previous.featureCursor : undefined,
+    {
+      intersects: (box) => distanceBounds(box, input.eye) <= input.radius,
+      priority: anchorDistance,
+    },
   );
   state.visited += query.visited;
   state.featureCursor = query.cursor;
-  state.finished = query.status === 'complete';
+  state.finished = !query.cursor;
+  state.unknown ||= query.status !== 'complete';
   const features = new Map(query.values.map((feature) => [feature.id, feature]));
   const held = previous?.sourceBasis === input.sourceBasis ? previous.fragments : [];
   for (const fragment of held) {
@@ -543,8 +626,18 @@ export function refreshReceivedGeometry(
     const feature = features.get(fragment.featureId);
     if (feature && frontFacing(feature)) enqueue(fragment, feature, fragment);
   }
-  for (const feature of features.values()) {
+  const closestFeatures = [...features.values()].sort(
+    (a, b) => anchorDistance(a.bounds) - anchorDistance(b.bounds) || a.id.localeCompare(b.id),
+  );
+  for (const feature of closestFeatures) {
     if (!frontFacing(feature)) continue;
+    // A finite feature that already fits the actual receptor needs one proof,
+    // rather than several artificial tiles competing for the same allowance.
+    const whole = feature.vertices.every(
+      (point) => distance3D(input.eye, point) <= input.radius && input.inCone(point),
+    )
+      ? { featureId: feature.id, u0: 0, u1: 1, v0: 0, v1: 1 }
+      : undefined;
     for (const point of anchors.points) {
       if (state.visited >= selectionLimit) {
         state.unknown = true;
@@ -559,21 +652,50 @@ export function refreshReceivedGeometry(
         )
       )
         continue;
-      enqueue(localExtent(feature, point, policy.extentMetres), feature);
+      enqueue(whole ?? localExtent(feature, point, policy.extentMetres), feature);
     }
   }
   pending.sort(
     (a, b) =>
+      policy.featurePriority[a.feature.kind] - policy.featurePriority[b.feature.kind] ||
       a.priority - b.priority ||
       (a.old ? -1 : 0) - (b.old ? -1 : 0) ||
       a.feature.id.localeCompare(b.feature.id),
   );
+  // Give each selected physical source its first useful extent before spending
+  // the remaining allowance on another extent/face of the same source.
+  const seenSources = new Set<string>(),
+    first: Candidate[] = [],
+    additional: Candidate[] = [];
+  for (const candidate of pending) {
+    if (seenSources.has(candidate.feature.sourceId)) additional.push(candidate);
+    else {
+      seenSources.add(candidate.feature.sourceId);
+      first.push(candidate);
+    }
+  }
+  pending.splice(0, pending.length, ...first, ...additional);
   const certified: Array<Candidate & { patch: ObservedSurfacePatch }> = [];
-  const certificateLimit = Math.max(state.visited, Math.floor(policy.visits * 0.75));
+  // Keep a small relation pass, lending unused reservation to actual visibility
+  // proofs. A fixed quarter withheld here can prevent even one local feature
+  // from ever passing the hierarchy in an otherwise tiny visible scene.
+  const certificateLimit = Math.max(
+    state.visited,
+    policy.visits - Math.min(policy.maxViews, Math.max(2, pending.length)),
+  );
   while (pending.length && state.visited < certificateLimit) {
     const entry = pending.shift()!,
       points = extentPoints(entry.feature, entry.extent);
     state.visited++;
+    const heldPatch = entry.old?.observation.facets[0]?.value;
+    if (
+      previous?.basis === basis &&
+      geometryCertificateCurrent(world, observerId, input, previous) &&
+      heldPatch?.kind === 'surface-patch'
+    ) {
+      certified.push({ ...entry, patch: heldPatch.patch });
+      continue;
+    }
     const delta = {
       x: input.eye.x - points[0].x,
       y: input.eye.y - points[0].y,
@@ -593,9 +715,18 @@ export function refreshReceivedGeometry(
         (!visible || visible.complete) &&
         Math.max(distance3D(points[0], points[1]), distance3D(points[0], points[3])) >
           policy.errorMetres * 2
-      )
-        for (const extent of splitExtent(entry.extent, entry.feature))
+      ) {
+        const partitions =
+          visible?.blockingVertices &&
+          shadowPartition(entry.feature, entry.extent, input.eye, visible.blockingVertices);
+        const before = pending.length;
+        for (const extent of partitions ?? splitExtent(entry.extent, entry.feature))
           enqueue(extent, entry.feature, undefined, certificateLimit);
+        if (partitions) {
+          const next = pending.splice(before);
+          pending.unshift(...next);
+        }
+      }
       continue;
     }
     certified.push({
@@ -812,6 +943,22 @@ export function endReceivedGeometry(world: WorldState, observerId: string): void
 }
 /** Ordinary motion keeps the last received context until its actual due check.
  * Life, detector, geometry or policy replacement still withdraws current grants. */
+function geometryCertificateCurrent(
+  world: WorldState,
+  observerId: string,
+  input: NonNullable<ReturnType<typeof receptor>>,
+  state: ReceivedGeometryState | undefined,
+): state is ReceivedGeometryState {
+  return (
+    !!state &&
+    state.sourceBasis === input.sourceBasis &&
+    state.inputRevision >=
+      Math.max(
+        world.sensory?.invalidatedRevision ?? -1,
+        world.sensory?.scopes[observerId]?.invalidatedRevision ?? -1,
+      )
+  );
+}
 export function currentReceivedGeometry(
   world: WorldState,
   observerId: string,
@@ -823,13 +970,7 @@ export function currentReceivedGeometry(
 } {
   const input = receptor(world, observerId),
     state = world.perceptionEvidence?.[observerId]?.geometry;
-  return input &&
-    state?.sourceBasis === input.sourceBasis &&
-    state.inputRevision >=
-      Math.max(
-        world.sensory?.invalidatedRevision ?? -1,
-        world.sensory?.scopes[observerId]?.invalidatedRevision ?? -1,
-      )
+  return input && geometryCertificateCurrent(world, observerId, input, state)
     ? {
         observations: geometryObservations(state),
         complete: state.complete,
@@ -1328,12 +1469,20 @@ export function validateReceivedGeometryState(
       cursor.pending.length > 64 ||
       cursor.pending.some(
         (path) =>
-          !Array.isArray(path) || path.length > 64 || path.some((part) => part !== 0 && part !== 1),
+          !Array.isArray(path) ||
+          path.length > 64 ||
+          path.some(
+            (part, index) =>
+              part !== 0 &&
+              part !== 1 &&
+              !(index === path.length - 1 && Number.isInteger(part) && part >= -4 && part <= -1),
+          ),
       ) ||
       !Number.isSafeInteger(cursor.offset) ||
       cursor.offset < 0 ||
       cursor.offset > 4 ||
-      (cursor.leaf !== undefined && typeof cursor.leaf !== 'boolean'))
+      (cursor.leaf !== undefined && typeof cursor.leaf !== 'boolean') ||
+      (cursor.truncated !== undefined && cursor.truncated !== true))
   )
     throw new Error('Invalid received feature continuation.');
   const observations = geometryObservations(state),

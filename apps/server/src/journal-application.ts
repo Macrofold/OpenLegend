@@ -6,6 +6,7 @@ import { WorldRecords, type RecordChanges } from './world-records.js';
 import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
 import { HistoryAppendWriter, type AppendHistoryInput } from './history-append.js';
 import { personalEventEvidence } from './personal-accounts.js';
+import { HistoryRepository } from './history.js';
 import { SqlWriteBatch } from './sql-rows.js';
 
 export const APPLICATION_REVISIONS = 8;
@@ -112,6 +113,7 @@ export async function applyJournalRange<Preparation>(
 export async function applyRecordSources(
   records: WorldRecords,
   memories: MemoryRepository,
+  history: HistoryRepository,
   worldId: string,
   revision: number,
   changes: RecordChanges,
@@ -129,6 +131,7 @@ export async function applyRecordSources(
   if (prepared?.versions)
     await memories.applySourceVersionPlan(worldId, revision, prepared.versions);
   await records.write(worldId, revision, changes, writes);
+  await history.retireTemporalAccounts(worldId, changes);
   await memories.writeSources(worldId, changes, affected, prepared);
   if (records.needsHotPrune) {
     if (!state) throw new Error('Hot history pruning requires its complete owned world.');
@@ -141,9 +144,11 @@ export async function applyRecordSources(
 export class JournalTableWriter {
   private readonly records: WorldRecords;
   private readonly memories: MemoryRepository;
+  private readonly history: HistoryRepository;
   constructor(private readonly db: SqlDatabase) {
     this.records = new WorldRecords(db);
     this.memories = new MemoryRepository(db);
+    this.history = new HistoryRepository(db);
   }
   async apply(entry: JournalApplication, prepared?: JournalTables): Promise<void> {
     if (
@@ -176,6 +181,7 @@ export class JournalTableWriter {
     await applyRecordSources(
       this.records,
       this.memories,
+      this.history,
       entry.worldId,
       entry.revision,
       prepared.changes,

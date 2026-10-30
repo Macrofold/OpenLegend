@@ -88,6 +88,7 @@ export interface AttentionPolicy {
     errorMetres: number;
     maxViews: number;
     maxBytes: number;
+    featurePriority: Readonly<Record<'support' | 'solid-face', number>>;
   };
   semantic: { discovery: boolean };
   scene: {

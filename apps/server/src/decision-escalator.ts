@@ -42,7 +42,10 @@ export interface PreparedReconsideration {
   instructions?: string;
   bindingDigest: string;
   sourceTime: number;
+  dispose(): void;
   current(): Promise<boolean>;
+  /** One explicit evidence query may request a separately funded continuation. */
+  expand?(answers: Record<string, DecisionAnswer>): Promise<boolean>;
   publish(answers: Record<string, DecisionAnswer>, claim: DecisionPublication): Promise<ApiResult>;
 }
 type Prepare = (job: JobRecord, signal: AbortSignal) => Promise<PreparedReconsideration>;
@@ -66,6 +69,7 @@ export class DecisionEscalator {
       >;
       authority: JobRecord['authority'];
       validity?: string;
+      releasePreparation?: () => void;
     }
   >();
   private readonly ending = new Set<string>();
@@ -234,6 +238,7 @@ export class DecisionEscalator {
     reason: DecisionReason,
     response = false,
     initialPreparation: Prepare = this.prepare,
+    releasePreparation?: () => void,
   ): Promise<boolean> {
     if (!permitsEscalation(this.service.config, reason)) return false;
     let queued: JobRecord | undefined;
@@ -318,6 +323,7 @@ export class DecisionEscalator {
       },
       authority: queued.authority,
       validity: decisionValidity(this.service.world, state.actorId),
+      ...(releasePreparation ? { releasePreparation } : {}),
     });
     this.queued.add(rootId);
     const descriptor = {
@@ -349,6 +355,7 @@ export class DecisionEscalator {
       const waiting = this.awaiting.get(rootId);
       if (waiting) clearTimeout(waiting.timer);
       this.awaiting.delete(rootId);
+      this.scopes.get(rootId)?.releasePreparation?.();
       this.scopes.delete(rootId);
       await this.execution.cancel(new Set([rootId]));
       this.active.get(rootId)?.abort();
@@ -427,6 +434,7 @@ export class DecisionEscalator {
     let reservedId: string | undefined,
       dispatchIntent = false,
       completed = false;
+    let prepared: PreparedReconsideration | undefined;
     try {
       // A previous director can settle its last request after replacement. Read
       // the persisted account/model observation after acquiring shared execution,
@@ -479,7 +487,7 @@ export class DecisionEscalator {
         ),
       );
       timer.unref();
-      let prepared = await initialPreparation(job, controller.signal);
+      prepared = await initialPreparation(job, controller.signal);
       if (!controller.signal.aborted && !(await prepared.current())) {
         const refreshed = await this.service.store.mutateDecision(rootId, async (current) => {
           const live = current.decision!;
@@ -493,27 +501,16 @@ export class DecisionEscalator {
             return undefined;
           return { ...current, decision: { ...live, refreshUsed: true } };
         });
-        if (refreshed) prepared = await this.prepare(refreshed, controller.signal);
+        if (refreshed) {
+          prepared.dispose();
+          prepared = undefined;
+          prepared = await this.prepare(refreshed, controller.signal);
+        }
       }
       if (controller.signal.aborted || !(await prepared.current())) {
         await this.end(rootId, 'stale');
         return;
       }
-      const request = prepareDecisionTask(prepared.tasks, prepared.context, prepared.instructions);
-      const unresolved = Object.entries(state.groups)
-        .filter(([, group]) => group.state === 'open')
-        .map(([id]) => id)
-        .sort();
-      if (
-        JSON.stringify(unresolved) !== JSON.stringify(Object.keys(prepared.tasks).sort()) ||
-        unresolved.some((id) => prepared.tasks[id]?.kind !== state.groups[id]?.kind)
-      ) {
-        await this.end(rootId, 'unsupported');
-        return;
-      }
-      failure = 'missing-pricing';
-      const allowance = higherDecisionAllowance(this.service.config, request);
-      failure = 'preparation-failed';
       const ledger = new DecisionLedger(state.limits);
       for (const entry of await this.service.store.decisionAttempts(rootId)) {
         ledger.record({
@@ -527,257 +524,356 @@ export class DecisionEscalator {
         });
         if (entry.receipt) ledger.settle(entry.attemptId, entry.receipt);
       }
-      if (!ledger.admit('level', 4, allowance).ok) {
-        await this.end(rootId, 'budget-exhausted');
-        return;
-      }
-      job = await this.service.store.mutateDecision(rootId, async (current) => {
-        const live = current.decision!;
+      const preparation = prepared;
+      for (let queryRound = 0; queryRound < 2; queryRound++) {
+        const attemptId = queryRound ? `${child.id}:query` : child.id;
+        const dispatchBy = queryRound ? child.publishBy : child.dispatchBy;
+        const dispatchByMonotonic = queryRound
+          ? child.publishByMonotonic
+          : child.dispatchByMonotonic;
+        reservedId = undefined;
+        dispatchIntent = false;
+        completed = false;
+        if (controller.signal.aborted || !(await preparation.current())) {
+          await this.end(rootId, 'stale');
+          return;
+        }
+        const request = prepareDecisionTask(
+          preparation.tasks,
+          preparation.context,
+          preparation.instructions,
+        );
+        const unresolved = Object.entries(state.groups)
+          .filter(([, group]) => group.state === 'open')
+          .map(([id]) => id)
+          .sort();
         if (
-          !this.eligible(current, live) ||
-          live.higher?.state !== 'preparing' ||
-          this.now() >= live.higher.dispatchBy ||
-          performance.now() >= live.higher.dispatchByMonotonic ||
-          controller.signal.aborted
-        )
-          return undefined;
-        if (
-          !(await this.service.store.reserve(
-            child.id,
-            'openai',
-            allowance,
-            Math.max(0, this.service.config.budgetUsd - interactiveAllowance(this.service.config)),
-            live.actorId,
-            undefined,
-            undefined,
-            {
-              rootJobId: rootId,
-              category: 'level',
-              level: 4,
-              stage: 'decision-escalation',
-              executionClass: 'background',
-            },
-          ))
-        )
-          return undefined;
-        return {
-          ...current,
-          decision: {
-            ...live,
-            higher: {
-              ...live.higher,
-              state: 'reserved',
-              attemptId: child.id,
-              reservedAt: this.now(),
-              prepared: {
-                inputDigest: request.inputDigest,
-                schemaDigest: request.schemaDigest,
-                bindingDigest: prepared.bindingDigest,
-                sourceTime: prepared.sourceTime,
+          JSON.stringify(unresolved) !== JSON.stringify(Object.keys(preparation.tasks).sort()) ||
+          unresolved.some((id) => preparation.tasks[id]?.kind !== state.groups[id]?.kind)
+        ) {
+          await this.end(rootId, 'unsupported');
+          return;
+        }
+        failure = 'missing-pricing';
+        const allowance = higherDecisionAllowance(this.service.config, request);
+        failure = 'preparation-failed';
+        if (!ledger.admit('level', 4, allowance).ok) {
+          await this.end(rootId, 'budget-exhausted');
+          return;
+        }
+        const unavailableBeforeDispatch = (): DecisionEnd =>
+          this.now() >= dispatchBy || performance.now() >= dispatchByMonotonic
+            ? 'expired'
+            : controller.signal.aborted
+              ? 'cancelled'
+              : 'stale';
+        let reservationFailure: DecisionEnd = 'budget-exhausted';
+        job = await this.service.store.mutateDecision(rootId, async (current) => {
+          const live = current.decision!;
+          if (
+            !this.eligible(current, live) ||
+            live.higher?.state !== 'preparing' ||
+            this.now() >= dispatchBy ||
+            performance.now() >= dispatchByMonotonic ||
+            controller.signal.aborted
+          ) {
+            reservationFailure = unavailableBeforeDispatch();
+            return undefined;
+          }
+          if (
+            !(await this.service.store.reserve(
+              attemptId,
+              'openai',
+              allowance,
+              Math.max(
+                0,
+                this.service.config.budgetUsd - interactiveAllowance(this.service.config),
+              ),
+              live.actorId,
+              undefined,
+              undefined,
+              {
+                rootJobId: rootId,
+                category: 'level',
+                level: 4,
+                stage: 'decision-escalation',
+                executionClass: 'background',
+              },
+            ))
+          )
+            return undefined;
+          return {
+            ...current,
+            decision: {
+              ...live,
+              groups: Object.fromEntries(
+                Object.entries(live.groups).map(([id, group]) => [
+                  id,
+                  group.state === 'open' ? { ...group, attemptId } : group,
+                ]),
+              ),
+              higher: {
+                ...live.higher,
+                state: 'reserved',
+                attemptId: attemptId,
+                reservedAt: this.now(),
+                prepared: {
+                  inputDigest: request.inputDigest,
+                  schemaDigest: request.schemaDigest,
+                  bindingDigest: preparation.bindingDigest,
+                  sourceTime: preparation.sourceTime,
+                },
               },
             },
-          },
-        };
-      });
-      if (!job?.decision?.higher) {
-        await this.end(rootId, 'budget-exhausted');
-        return;
-      }
-      reservedId = child.id;
-      const rateAdmission = this.rate.beforeNext(
-        Buffer.byteLength(JSON.stringify(request)) + 4096 + DECISION_LIMITS.outputTokens,
-        this.now(),
-        child.id,
-      );
-      if (rateAdmission.blockedReason || rateAdmission.waitMs) {
-        await this.end(rootId, 'resource-unavailable');
-        return;
-      }
-      const dispatched = await this.service.store.mutateDecision(rootId, async (current) => {
-        const live = current.decision!;
-        if (
-          !this.eligible(current, live) ||
-          live.higher?.state !== 'reserved' ||
-          this.now() >= live.higher.dispatchBy ||
-          performance.now() >= live.higher.dispatchByMonotonic ||
-          controller.signal.aborted
-        )
-          return undefined;
-        // An acknowledgement can be lost after the transaction committed. From this
-        // boundary onward, missing evidence is never recorded as a free unsent call.
-        dispatchIntent = true;
-        if (!(await this.service.store.markDecisionDispatch(child.id))) return undefined;
-        return {
-          ...current,
-          decision: {
-            ...live,
-            higher: { ...live.higher, state: 'dispatched', dispatchedAt: this.now() },
-          },
-        };
-      });
-      if (!dispatched) {
-        await this.end(rootId, 'expired');
-        return;
-      }
-      dispatchIntent = true;
-      failure = 'provider-failed';
-      const c = this.service.config;
-      const client =
-        this.fixtureClient ??
-        createAiClient({
-          openai: {
-            apiKey: c.llmKey,
-            model: DECISION_MODEL,
-            modelPrices: c.llmModelPrices,
-            reasoningEffort: DECISION_EFFORT,
-          },
-          network: this.log.network,
-          timeoutMs: Math.max(1, child.publishBy - this.now()),
-          maxRequestBytes: 500_000,
-          maxResponseBytes: 500_000,
-          maxOutputTokens: DECISION_LIMITS.outputTokens,
+          };
         });
-      let receipt: AiReceipt | undefined;
-      try {
-        const semantic = entityGet(this.service.world.entities, state.actorId)?.actor?.agency
-          .semantic;
-        if (semantic?.discovery === 'reserved' && semantic.reservation === rootId) {
+        if (!job?.decision?.higher) {
+          await this.end(rootId, reservationFailure);
+          return;
+        }
+        reservedId = attemptId;
+        ledger.record({
+          requestId: attemptId,
+          stage: 'decision-escalation',
+          category: 'level',
+          level: 4,
+          provider: 'openai',
+          size: {
+            instructions: Buffer.byteLength(request.instructions),
+            context: Buffer.byteLength(request.context),
+            schema: Buffer.byteLength(JSON.stringify(request.schema)),
+          },
+          reservedUsd: allowance,
+        });
+        const rateAdmission = this.rate.beforeNext(
+          Buffer.byteLength(JSON.stringify(request)) + 4096 + DECISION_LIMITS.outputTokens,
+          this.now(),
+          attemptId,
+        );
+        if (rateAdmission.blockedReason || rateAdmission.waitMs) {
+          await this.end(rootId, 'resource-unavailable');
+          return;
+        }
+        const dispatched = await this.service.store.mutateDecision(rootId, async (current) => {
+          const live = current.decision!;
           if (
-            !(await this.service.publishAttention(state.actorId, state.generation, (world) =>
-              settleDiscovery(world, state.actorId, rootId, true),
-            ))
+            !this.eligible(current, live) ||
+            live.higher?.state !== 'reserved' ||
+            this.now() >= dispatchBy ||
+            performance.now() >= dispatchByMonotonic ||
+            controller.signal.aborted
+          )
+            return undefined;
+          // An acknowledgement can be lost after the transaction committed. From this
+          // boundary onward, missing evidence is never recorded as a free unsent call.
+          dispatchIntent = true;
+          if (!(await this.service.store.markDecisionDispatch(attemptId))) return undefined;
+          return {
+            ...current,
+            decision: {
+              ...live,
+              higher: { ...live.higher, state: 'dispatched', dispatchedAt: this.now() },
+            },
+          };
+        });
+        if (!dispatched) {
+          await this.end(rootId, dispatchIntent ? 'uncertain' : unavailableBeforeDispatch());
+          return;
+        }
+        dispatchIntent = true;
+        failure = 'provider-failed';
+        const c = this.service.config;
+        const client =
+          this.fixtureClient ??
+          createAiClient({
+            openai: {
+              apiKey: c.llmKey,
+              model: DECISION_MODEL,
+              modelPrices: c.llmModelPrices,
+              reasoningEffort: DECISION_EFFORT,
+            },
+            network: this.log.network,
+            timeoutMs: Math.max(1, child.publishBy - this.now()),
+            maxRequestBytes: 500_000,
+            maxResponseBytes: 500_000,
+            maxOutputTokens: DECISION_LIMITS.outputTokens,
+          });
+        let receipt: AiReceipt | undefined;
+        try {
+          const semantic = entityGet(this.service.world.entities, state.actorId)?.actor?.agency
+            .semantic;
+          if (semantic?.discovery === 'reserved' && semantic.reservation === rootId) {
+            if (
+              !(await this.service.publishAttention(state.actorId, state.generation, (world) =>
+                settleDiscovery(world, state.actorId, rootId, true),
+              ))
+            ) {
+              await this.end(rootId, 'stale');
+              return;
+            }
+          }
+          const result = await this.log.run(
+            'Higher-model decision',
+            {
+              requestId: attemptId,
+              requestedModel: DECISION_MODEL,
+              effort: DECISION_EFFORT,
+              instructions: request.instructions,
+              context: request.context,
+              schema: request.schema,
+            },
+            async () => {
+              if (controller.signal.aborted || !(await preparation.current())) {
+                failure = 'stale';
+                throw new Error('The selected evidence changed before model dispatch.');
+              }
+              return client.generate<unknown>({
+                requestId: attemptId,
+                model: DECISION_MODEL,
+                reasoningEffort: DECISION_EFFORT,
+                task: 'decision-escalation',
+                instructions: request.instructions,
+                context: request.context,
+                schema: request.schema,
+                schemaName: 'DecisionEscalation',
+                maxOutputTokens: DECISION_LIMITS.outputTokens,
+                signal: controller.signal,
+                actorScope: state.actorId,
+              });
+            },
+          );
+          receipt = normalizeReceiptCost(result.receipt);
+          const returnedAt = this.now();
+          await this.service.store.settle(attemptId, receipt);
+          ledger.settle(attemptId, receipt);
+          this.rate.release(attemptId);
+          completed = true;
+          await this.service.store.mutateDecision(rootId, async (current) =>
+            current.decision?.higher
+              ? {
+                  ...current,
+                  decision: {
+                    ...current.decision,
+                    higher: { ...current.decision.higher, returnedAt, accountedAt: this.now() },
+                  },
+                }
+              : undefined,
+          );
+          this.rate.observe(receipt, this.now());
+          await this.service.store.putIntegration(this.rateKey, this.rate.snapshot());
+          if (receipt.completionUncertain) lease.uncertain(attemptId);
+          if (receipt.completionUncertain) {
+            await this.end(rootId, 'uncertain');
+            return;
+          }
+          if (result.outcome !== 'value') {
+            await this.end(
+              rootId,
+              result.outcome === 'invalid' ? 'invalid-output' : 'provider-failed',
+            );
+            return;
+          }
+          failure = 'invalid-output';
+          const answers = request.decode(result.value);
+          if (
+            controller.signal.aborted ||
+            this.now() >= child.publishBy ||
+            performance.now() >= child.publishByMonotonic ||
+            !this.eligible(dispatched, dispatched.decision!) ||
+            !(await preparation.current())
           ) {
             await this.end(rootId, 'stale');
             return;
           }
-        }
-        const result = await this.log.run(
-          'Higher-model decision',
-          {
-            requestId: child.id,
-            requestedModel: DECISION_MODEL,
-            effort: DECISION_EFFORT,
-            instructions: request.instructions,
-            context: request.context,
-            schema: request.schema,
-          },
-          () =>
-            client.generate<unknown>({
-              requestId: child.id,
-              model: DECISION_MODEL,
-              reasoningEffort: DECISION_EFFORT,
-              task: 'decision-escalation',
-              instructions: request.instructions,
-              context: request.context,
-              schema: request.schema,
-              schemaName: 'DecisionEscalation',
-              maxOutputTokens: DECISION_LIMITS.outputTokens,
-              signal: controller.signal,
-              actorScope: state.actorId,
-            }),
-        );
-        receipt = normalizeReceiptCost(result.receipt);
-        const returnedAt = this.now();
-        await this.service.store.settle(child.id, receipt);
-        completed = true;
-        await this.service.store.mutateDecision(rootId, async (current) =>
-          current.decision?.higher
-            ? {
-                ...current,
-                decision: {
-                  ...current.decision,
-                  higher: { ...current.decision.higher, returnedAt, accountedAt: this.now() },
-                },
-              }
-            : undefined,
-        );
-        this.rate.observe(receipt, this.now());
-        await this.service.store.putIntegration(this.rateKey, this.rate.snapshot());
-        if (receipt.completionUncertain) lease.uncertain(child.id);
-        if (receipt.completionUncertain) {
-          await this.end(rootId, 'uncertain');
-          return;
-        }
-        if (result.outcome !== 'value') {
-          await this.end(
-            rootId,
-            result.outcome === 'invalid' ? 'invalid-output' : 'provider-failed',
-          );
-          return;
-        }
-        failure = 'invalid-output';
-        const answers = request.decode(result.value);
-        if (
-          controller.signal.aborted ||
-          this.now() >= child.publishBy ||
-          performance.now() >= child.publishByMonotonic ||
-          !this.eligible(dispatched, dispatched.decision!) ||
-          !(await prepared.current())
-        ) {
-          await this.end(rootId, 'stale');
-          return;
-        }
-        if (c.decisionEscalation.mode === 'observe') {
-          await this.service.store.mutateDecision(rootId, async (current) => ({
-            ...current,
-            result: { disposition: 'diagnostic-only', answers, receipt },
-          }));
-          await this.end(rootId, 'diagnostic-only');
-          return;
-        }
-        if (!Object.values(answers).some((answer) => answer.status === 'answered')) {
-          await this.end(rootId, 'abstained');
-          return;
-        }
-        const current = await this.service.store.getJob(rootId);
-        if (!current?.decision || !this.eligible(current, current.decision)) {
-          await this.end(rootId, 'stale');
-          return;
-        }
-        const ready = await this.service.store.mutateDecision(rootId, async (latest) =>
-          latest.decision?.phase === 'higher' && latest.decision.higher
-            ? {
+          if (c.decisionEscalation.mode === 'observe') {
+            await this.service.store.mutateDecision(rootId, async (current) => ({
+              ...current,
+              result: { disposition: 'diagnostic-only', answers, receipt },
+            }));
+            await this.end(rootId, 'diagnostic-only');
+            return;
+          }
+          if (!Object.values(answers).some((answer) => answer.status === 'answered')) {
+            await this.end(rootId, 'abstained');
+            return;
+          }
+          if (await preparation.expand?.(answers)) {
+            if (queryRound) {
+              await this.end(rootId, 'invalid-output');
+              return;
+            }
+            const continued = await this.service.store.mutateDecision(rootId, async (latest) => {
+              const live = latest.decision;
+              if (
+                !live ||
+                !this.eligible(latest, live) ||
+                live.higher?.state !== 'dispatched' ||
+                live.higher.attemptId !== attemptId ||
+                controller.signal.aborted
+              )
+                return;
+              return {
                 ...latest,
-                decision: {
-                  ...latest.decision,
-                  higher: { ...latest.decision.higher, usableAt: this.now() },
-                },
-              }
-            : undefined,
-        );
-        if (!ready?.decision) {
-          await this.end(rootId, 'stale');
+                decision: { ...live, higher: { ...live.higher, state: 'preparing' } },
+              };
+            });
+            if (!continued) {
+              await this.end(rootId, 'stale');
+              return;
+            }
+            continue;
+          }
+          const current = await this.service.store.getJob(rootId);
+          if (!current?.decision || !this.eligible(current, current.decision)) {
+            await this.end(rootId, 'stale');
+            return;
+          }
+          const ready = await this.service.store.mutateDecision(rootId, async (latest) =>
+            latest.decision?.phase === 'higher' && latest.decision.higher
+              ? {
+                  ...latest,
+                  decision: {
+                    ...latest.decision,
+                    higher: { ...latest.decision.higher, usableAt: this.now() },
+                  },
+                }
+              : undefined,
+          );
+          if (!ready?.decision) {
+            await this.end(rootId, 'stale');
+            return;
+          }
+          const claim: DecisionPublication = {
+            rootJobId: rootId,
+            attemptId: attemptId,
+            expectedRevision: ready.decision.revision,
+            receiptId: attemptId,
+            groups: {},
+            final: true,
+            now: this.now,
+          };
+          const outcome = await preparation.publish(answers, claim);
+          if (claim.deliveredAt !== undefined && claim.closed)
+            await recordDecisionTiming(
+              this.log,
+              ready,
+              'final',
+              claim.deliveredAt,
+              claim.deliveredElapsedMs,
+            );
+          const published = await this.service.store.getJob(rootId);
+          if (published) await this.record(published, { answers, outcome, receipt });
+          if (published?.decision?.phase !== 'closed')
+            await this.end(
+              rootId,
+              outcome.code === 'stale' || outcome.code === 'stale-publication'
+                ? 'stale'
+                : 'native-rejection',
+            );
           return;
+        } finally {
+          if (!receipt) lease.uncertain(attemptId); // Crossing durable dispatch intent makes missing completion uncertain.
         }
-        const claim: DecisionPublication = {
-          rootJobId: rootId,
-          attemptId: child.id,
-          expectedRevision: ready.decision.revision,
-          receiptId: child.id,
-          groups: {},
-          final: true,
-          now: this.now,
-        };
-        const outcome = await prepared.publish(answers, claim);
-        if (claim.deliveredAt !== undefined && claim.closed)
-          await recordDecisionTiming(
-            this.log,
-            ready,
-            'final',
-            claim.deliveredAt,
-            claim.deliveredElapsedMs,
-          );
-        const published = await this.service.store.getJob(rootId);
-        if (published) await this.record(published, { answers, outcome, receipt });
-        if (published?.decision?.phase !== 'closed')
-          await this.end(
-            rootId,
-            outcome.code === 'stale' || outcome.code === 'stale-publication'
-              ? 'stale'
-              : 'native-rejection',
-          );
-      } finally {
-        if (!receipt) lease.uncertain(child.id); // Crossing durable dispatch intent makes missing completion uncertain.
       }
     } catch (error) {
       await this.end(
@@ -791,6 +887,8 @@ export class DecisionEscalator {
               : failure,
       );
     } finally {
+      prepared?.dispose();
+      this.scopes.get(rootId)?.releasePreparation?.();
       if (reservedId && !dispatchIntent)
         await this.service.store.settle(
           reservedId,

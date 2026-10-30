@@ -44,7 +44,13 @@ import {
   type TemporalReceiptLocator,
 } from '@open-legend/domain';
 import { reconcileNativeControl } from '@open-legend/domain';
-import { entityGet, entityKeys, entityValues, projectWorldHistory } from '@open-legend/domain';
+import {
+  entityGet,
+  entityKeys,
+  entityValues,
+  projectWorldHistory,
+  preserveReceivedValuePreparation,
+} from '@open-legend/domain';
 import { selectedPlace } from './known-places.js';
 import type { PreparedNavigationPublication } from './navigation/messages.js';
 import { WorldInputOwner, type WorldInputState } from './world-input.js';
@@ -2175,7 +2181,10 @@ export class WorldService {
       },
       { retainNativeValues: true },
     );
-    if (Object.isFrozen(saved.world)) freezeWorld(world, { completedTransition: true });
+    if (Object.isFrozen(saved.world)) {
+      freezeWorld(world, { completedTransition: true });
+      preserveReceivedValuePreparation(saved.world, world);
+    }
     return world === saved.world ? saved : { ...saved, world };
   }
   private assertReceivedDebt(world: WorldState): void {
@@ -2216,24 +2225,31 @@ export class WorldService {
       clearTimeout(this.receivedCleanupTimer);
     }
     this.receivedCleanupDueAt = dueAt;
-    this.receivedCleanupTimer = setTimeout(() => {
-      this.receivedCleanupTimer = undefined;
-      this.receivedCleanupDueAt = undefined;
-      const running = this.runReceivedCleanup();
-      this.receivedCleanup = running;
-      void running
-        .finally(() => {
-          if (this.receivedCleanup === running) this.receivedCleanup = undefined;
-          this.scheduleReceivedCleanup(
-            this.receivedCleanupFailures
-              ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
-              : this.receivedCleanupIdle
-                ? 250
-                : undefined,
-          );
-        })
-        .catch(() => undefined);
-    }, delay);
+    // A timer can fire while its scheduling operation still awaits a save. It
+    // must enter as new queue work, never inherit that operation's nested-writer
+    // permission or request authority (the same rule as durable notifications).
+    this.receivedCleanupTimer = this.mutationContext.exit(() =>
+      this.authorityContext.run(undefined, () =>
+        setTimeout(() => {
+          this.receivedCleanupTimer = undefined;
+          this.receivedCleanupDueAt = undefined;
+          const running = this.runReceivedCleanup();
+          this.receivedCleanup = running;
+          void running
+            .finally(() => {
+              if (this.receivedCleanup === running) this.receivedCleanup = undefined;
+              this.scheduleReceivedCleanup(
+                this.receivedCleanupFailures
+                  ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
+                  : this.receivedCleanupIdle
+                    ? 250
+                    : undefined,
+              );
+            })
+            .catch(() => undefined);
+        }, delay),
+      ),
+    );
     this.receivedCleanupTimer.unref();
   }
   private async runReceivedCleanup(selection?: ReadonlySet<string>): Promise<boolean> {

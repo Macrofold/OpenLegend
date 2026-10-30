@@ -599,6 +599,7 @@ describe('enabled character decision reconsideration', () => {
                   status: 'answered',
                   reason: null,
                   value: {
+                    queries: null,
                     operations: [
                       {
                         localId: 'reply',

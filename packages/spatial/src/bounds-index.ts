@@ -18,6 +18,8 @@ export interface BoundsQueryCursor {
   offset: number;
   /** The last pending leaf was already charged/accepted before this page ended. */
   leaf?: boolean;
+  /** Prioritized coverage discarded distant frontier work; never proves absence. */
+  truncated?: true;
 }
 export interface BoundsCoverRow<T> {
   key: string;
@@ -114,17 +116,21 @@ export class BoundsIndex<T> {
   }
 
   /** Bound tree visits AND entries examined. A partial answer never proves absence.
-   * A cursor is tied to this exact immutable tree by its owning caller. */
+   * A cursor is tied to this exact immutable tree and query inputs. Optional
+   * priority orders branches/leaves before spending the finite allowance; it
+   * promises neither globally nearest results nor complete coverage. */
   query(
     intersects: (bounds: Bounds3) => boolean,
     allowance: number,
     cursor?: BoundsQueryCursor,
+    priority?: (bounds: Bounds3) => number,
   ): {
     values: T[];
     visited: number;
     status: 'complete' | 'partial';
     cursor?: BoundsQueryCursor;
   } {
+    if (priority) return this.prioritizedQuery(intersects, allowance, priority, cursor);
     const pending = cursor ? cursor.pending.map((path) => [...path]) : this.root ? [[]] : [];
     let offset = cursor?.offset ?? 0,
       visited = 0,
@@ -167,6 +173,123 @@ export class BoundsIndex<T> {
           cursor: { pending, offset, ...(enteredLeaf ? { leaf: true } : {}) },
         }
       : { values, visited, status: 'complete' };
+  }
+
+  /** Best-first bounded coverage. Negative terminal path parts identify one
+   * leaf entry, so a large enclosing node cannot spend the page on distant
+   * members before a closer sibling. A bounded frontier is explicit partial
+   * coverage; the ordinary exhaustive cursor above remains unchanged. */
+  private prioritizedQuery(
+    intersects: (bounds: Bounds3) => boolean,
+    allowance: number,
+    priority: (bounds: Bounds3) => number,
+    cursor?: BoundsQueryCursor,
+  ) {
+    type Task = { path: number[]; node: Node<T>; entry?: number; score: number };
+    const queue: Task[] = [],
+      values: T[] = [];
+    const less = (a: Task, b: Task) => {
+      const distance = a.score - b.score;
+      if (distance) return distance;
+      const length = Math.min(a.path.length, b.path.length);
+      for (let at = 0; at < length; at++) {
+        const part = a.path[at]! - b.path[at]!;
+        if (part) return part;
+      }
+      return a.path.length - b.path.length;
+    };
+    const push = (task: Task) => {
+      let at = queue.length;
+      queue.push(task);
+      while (at) {
+        const parent = (at - 1) >>> 1;
+        if (less(queue[parent]!, task) <= 0) break;
+        queue[at] = queue[parent]!;
+        at = parent;
+        queue[at] = task;
+      }
+    };
+    const pop = () => {
+      const first = queue[0]!,
+        last = queue.pop()!;
+      if (queue.length) {
+        let at = 0;
+        queue[0] = last;
+        for (;;) {
+          let child = at * 2 + 1;
+          if (child >= queue.length) break;
+          if (child + 1 < queue.length && less(queue[child + 1]!, queue[child]!) < 0) child++;
+          if (less(last, queue[child]!) <= 0) break;
+          queue[at] = queue[child]!;
+          at = child;
+          queue[at] = last;
+        }
+      }
+      return first;
+    };
+    for (const raw of cursor?.pending ?? (this.root ? [[]] : [])) {
+      const path = [...raw],
+        terminal = path.at(-1),
+        entry = terminal !== undefined && terminal < 0 ? -path.pop()! - 1 : undefined;
+      let node = this.root;
+      for (const part of path) {
+        if (part !== 0 && part !== 1) throw new Error('Invalid prioritized spatial cursor.');
+        node = node?.children?.[part];
+      }
+      if (!node || (entry !== undefined && !node.entries?.[entry]))
+        throw new Error('A spatial cursor does not belong to this index.');
+      push({
+        path: raw,
+        node,
+        ...(entry !== undefined ? { entry } : {}),
+        score: priority(entry === undefined ? node.bounds : node.entries![entry]!.bounds),
+      });
+    }
+    let visited = 0,
+      truncated = cursor?.truncated ?? false;
+    while (queue.length && visited < allowance) {
+      const task = pop();
+      visited++;
+      if (task.entry !== undefined) {
+        const entry = task.node.entries![task.entry]!;
+        if (intersects(entry.bounds)) values.push(entry.value);
+        continue;
+      }
+      if (!intersects(task.node.bounds)) continue;
+      if (task.node.children)
+        for (let part = 0; part < 2; part++) {
+          const node = task.node.children[part as 0 | 1];
+          push({ path: [...task.path, part], node, score: priority(node.bounds) });
+        }
+      else
+        task.node.entries!.forEach((entry, at) =>
+          push({
+            path: [...task.path, -at - 1],
+            node: task.node,
+            entry: at,
+            score: priority(entry.bounds),
+          }),
+        );
+    }
+    // At most one page's bounded expansion is temporary; retained scratch stays
+    // within the existing64-path continuation allowance.
+    if (queue.length > 64) {
+      queue.sort(less);
+      queue.length = 64;
+      truncated = true;
+    }
+    return queue.length
+      ? {
+          values,
+          visited,
+          status: 'partial' as const,
+          cursor: {
+            pending: queue.map((task) => task.path),
+            offset: 0,
+            ...(truncated ? { truncated: true as const } : {}),
+          },
+        }
+      : { values, visited, status: truncated ? ('partial' as const) : ('complete' as const) };
   }
 
   region(key: string, allowance: number, cursor?: BoundsQueryCursor) {

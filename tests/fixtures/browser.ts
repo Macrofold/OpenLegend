@@ -19,6 +19,11 @@ export async function enterGame(page: Page): Promise<void> {
   // These journeys exercise active play. Another browser window can own focus
   // on a local host, legitimately pausing this page before its first assertion.
   await page.bringToFront();
+  // Local fixtures use the ordinary session boundary too; initial entry may
+  // finish its authentication read after page.goto has returned.
+  const signIn = page.getByRole('link', { name: 'Sign in', exact: true });
+  await page.locator('#world').or(signIn).first().waitFor({ state: 'visible', timeout: 30_000 });
+  if (await signIn.isVisible()) await signIn.click();
   // Finish cold 3D allocation before checking controls; software rendering can
   // exceed a generic assertion deadline. Interaction deadlines remain unchanged.
   await expect(page.locator('#world')).toHaveAttribute('data-ready', 'true', { timeout: 30_000 });

@@ -18,6 +18,8 @@ Part of the [performance contract](../performance.md). Read for the matching mec
 
 Locally buffered authoritative state lives on the server. Browser buffers hold presentation, drafts and unacknowledged intentions only. RAM buffers are not durable. Do not introduce a second local authoritative database or write-ahead log in the immediate fix; that changes failure and recovery semantics under the [backup/recovery contract](../../archive/07-technical-architecture/data-delivery-and-scale.md#5-backup-and-recovery) and [journal adoption conditions](../../archive/07-technical-architecture/realtime-synchronization.md#optional-journal-first-persistence).
 
+Detached timers and callbacks must enter a fresh mutation/authority context before queue admission. An inherited asynchronous context can otherwise mistake background work for a nested command and bypass the single writer; reuse the owner's existing context-exit boundary.
+
 ## Triggered background work
 
 ### Narrator

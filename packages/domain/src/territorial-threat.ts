@@ -169,6 +169,14 @@ export function territorialReviewDue(world: WorldState, entity: Entity): boolean
         world.simTime >= threat.searchUntil))
   );
 }
+function awaitingActivation(entity: Entity): boolean {
+  return (
+    !!entity.threat?.policy.activation &&
+    entity.threat.mode === 'idle' &&
+    !(entity.actor?.action?.type === 'feed' && entity.actor.action.stage === 'working') &&
+    !(entity.animal?.foraging?.mode === 'resting' && !entity.actor?.action)
+  );
+}
 /** A due review can be a private wake-up when its sole change is scheduling the next
  * look. Any possible entrant or retained pursuit/action uses the full existing owner.
  * No pending linear body rate affects this guard: it reads only current life/health,
@@ -182,7 +190,18 @@ export function renewQuietTerritorialReview(world: WorldState, entity: Entity): 
     actor.controller !== 'native' ||
     actor.incapacitated ||
     !activelyParticipates(entity) ||
-    !territorialReviewDue(world, entity) ||
+    !territorialReviewDue(world, entity)
+  )
+    return false;
+  // The ordinary intention owner only renews its private review while the
+  // authored activation condition is absent. It cannot alter any body's rates,
+  // action or target, so keep the existing mechanical forecast intact.
+  if (awaitingActivation(entity)) {
+    threat.reviewAt = world.simTime + threat.policy.reviewSeconds;
+    countDomainWork('nativeTerritorialDeadlineReuses');
+    return true;
+  }
+  if (
     threat.mode !== 'idle' ||
     threat.relinquished ||
     actor.action ||
@@ -246,12 +265,7 @@ export function territorialIntention(
   )
     return null;
   const policy = threat.policy;
-  if (
-    policy.activation &&
-    threat.mode === 'idle' &&
-    !(entity.actor?.action?.type === 'feed' && entity.actor.action.stage === 'working') &&
-    !(entity.animal?.foraging?.mode === 'resting' && !entity.actor?.action)
-  ) {
+  if (awaitingActivation(entity)) {
     threat.reviewAt = world.simTime + policy.reviewSeconds;
     return null;
   }

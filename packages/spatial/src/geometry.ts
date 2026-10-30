@@ -472,6 +472,7 @@ export function queryPhysicalFeatures(
   bounds: Bounds3,
   allowance: number,
   cursor?: BoundsQueryCursor,
+  selection?: { intersects?: (bounds: Bounds3) => boolean; priority?: (bounds: Bounds3) => number },
 ) {
   return physicalFeatures(map).index.query(
     (b) =>
@@ -480,9 +481,11 @@ export function queryPhysicalFeatures(
       b.min.y <= bounds.max.y &&
       b.max.y >= bounds.min.y &&
       b.min.z <= bounds.max.z &&
-      b.max.z >= bounds.min.z,
+      b.max.z >= bounds.min.z &&
+      (!selection?.intersects || selection.intersects(b)),
     allowance,
     cursor,
+    selection?.priority,
   );
 }
 const shapeCache = new WeakMap<SpatialMap, PreparedGeometry>();
@@ -1299,7 +1302,7 @@ export function queryConvexView(
     allowance,
   );
   let hull: ReturnType<typeof prepareSightHull> | undefined;
-  const blocked = result.values.some(
+  const blocked = result.values.find(
     (shape) =>
       shape.sight && !hullSeparated(shape, points, () => (hull ??= prepareSightHull(points))),
   );
@@ -1307,6 +1310,7 @@ export function queryConvexView(
     visited: result.visited,
     complete: result.status === 'complete',
     clear: !blocked && result.status === 'complete',
+    ...(blocked ? { blockingVertices: blocked.vertices } : {}),
   };
 }
 /** clearSegment for a segment inside the hull its obstacles were gathered from. */

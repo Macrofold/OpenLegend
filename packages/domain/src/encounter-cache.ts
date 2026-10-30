@@ -427,6 +427,14 @@ const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a.detailSignature === b.detailSignature &&
   a.poseSignature === b.poseSignature;
 const snapshot = <T extends object>(value: T): T => (isDraft(value) ? current(value) : value);
+const receiverExposureKey = (world: WorldState, entity: Entity | undefined) =>
+  entity?.actor
+    ? JSON.stringify([
+        sensesFor(world, entity),
+        effectiveBodyProfile(world, entity).eyeHeight,
+        capabilityBlocked(world, entity, 'perception'),
+      ])
+    : '';
 const within = (a: Position, b: Position, radius: number) =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) <= radius;
 
@@ -937,7 +945,6 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
     world,
     evaluated?.owner === ownerToken(world) ? evaluated.coverage : undefined,
   );
-  if (!evaluated) mergeDeferredWrites(audit, binding?.dirty);
   // Editor/foreign writes lack the native semantic-feed proof. Preserve their
   // real pending sensing work in the save, not only this disposable cache.
   if (world.sensory && !nativeChangesComplete(world)) {
@@ -970,10 +977,23 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
           : new Set([...audit.sources, ...audit.observers]);
       for (const id of ids) {
         const entity = entityGet(readOnlyDraftView(world.entities), id);
+        const priorEntity = entityGet(readOnlyDraftView(ancestor.entities), id);
         const actual =
           entity && entity.placement?.mode === 'world' ? captureExposure(world, entity) : null;
-        const measured = evaluated?.inputs.get(id);
-        if (evaluated && (actual ? equal(measured, actual) : !measured)) continue;
+        const measured = evaluated
+          ? evaluated.inputs.get(id)
+          : priorEntity && priorEntity.placement?.mode === 'world'
+            ? captureExposure(ancestor, priorEntity)
+            : undefined;
+        // A status clock or private meter can copy an actor without changing
+        // any source fact. Compare the actual transition endpoints, while still
+        // retaining real receiver/capability changes that source equality alone
+        // cannot certify. Only the audited edited IDs reach this fallback.
+        if (
+          (actual ? equal(measured ?? undefined, actual) : !measured) &&
+          receiverExposureKey(world, entity) === receiverExposureKey(ancestor, priorEntity)
+        )
+          continue;
         if (measured || actual)
           queueSightChange(world, {
             kind: 'spatial',
@@ -985,6 +1005,11 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
       }
     }
   }
+  // Inherited deferred writes still need index preparation, but their actual
+  // source changes were already queued by the earlier owner. Re-queueing them
+  // during a storage-only edit invents a new sensory revision and discards the
+  // unchanged native continuation at every publication.
+  if (!evaluated) mergeDeferredWrites(audit, binding?.dirty);
   pending.delete(world);
   if (evaluated) delete evaluated.dependencyKeys;
   return (result) => {

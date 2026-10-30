@@ -19,9 +19,42 @@ import {
 import type { StorySource } from './history.js';
 import { temporalChunkRecordId } from './temporal-storage.js';
 import { evidenceEncodedBytesSql, receivedValueSql } from './evidence-segments.js';
+import type { RecordChanges } from './world-records.js';
+import type { SqlDatabase } from './store.js';
 
 export const personalAccountRevision = (payload: string) =>
   createHash('sha256').update(payload).digest('hex');
+
+/** Run after canonical page replacement in the same application transaction.
+ * Whole-chunk deletion already cascades; a shortened surviving chunk must also
+ * revoke its removed receipt grants. The history owner revokes their derived stories. */
+export async function retireTemporalStoryAccounts(
+  db: SqlDatabase,
+  worldId: string,
+  changes: RecordChanges,
+): Promise<Record<string, unknown>[]> {
+  const removedChunks = new Set(changes.deletes.get('mind_temporal_chunks') ?? []);
+  const changedChunks = new Set(
+    (changes.writes.get('mind_temporal_segments') ?? [])
+      .filter((row) => !row.create)
+      .map((row) => row.parent),
+  );
+  for (const id of changes.deletes.get('mind_temporal_segments') ?? [])
+    changedChunks.add(JSON.stringify((JSON.parse(id) as string[]).slice(0, -2)));
+  for (const id of removedChunks) changedChunks.delete(id);
+  if (!changedChunks.size) return [];
+  return db
+    .prepare(
+      `DELETE FROM history_perspectives p
+       WHERE p.world_id=? AND p.temporal_chunk_id=ANY(?::text[])
+         AND p.payload::jsonb#>>'{account,kind}'='temporal'
+         AND NOT EXISTS (SELECT 1 FROM mind_temporal_segments s
+           WHERE s.world_id=p.world_id AND s.parent_id=p.temporal_chunk_id
+             AND s.receipt_ordinals @> ARRAY[(p.payload::jsonb#>>'{account,receipt,ordinal}')::bigint])
+       RETURNING p.actor_id,p.event_id`,
+    )
+    .all(worldId, [...changedChunks]);
+}
 
 export function personalEventEvidence(awareness: EventEvidence): EventEvidence {
   const {

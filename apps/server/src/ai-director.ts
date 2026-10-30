@@ -1,11 +1,11 @@
 import { readableDecisionContext } from './response-context.js';
 import { entityHandle } from './entity-references.js';
+import { situationProposalBinding, situationResponseCapabilities } from './situation-context.js';
 import {
-  expandSituation,
-  situationQuerySchema,
-  situationProposalBinding,
-  situationResponseCapabilities,
-} from './situation-context.js';
+  expandDecisionSituation,
+  readSituationQueryResponse,
+  situationQueriesField,
+} from './decision-situation-query.js';
 import { entityGet, currentBodyGrant, currentBodySubject } from '@open-legend/domain';
 import {
   discoveryInterval,
@@ -1930,8 +1930,16 @@ export class AiDirector {
       retained
         ? (job, signal) => prepareReconsideration(this.service, this.recall, job, signal, retained)
         : undefined,
+      retained?.prepared.dispose,
     );
     if (handedOff) {
+      // The queued reconsideration now owns the same exact evidence proof.
+      // Primary completion must not revoke it while its child is preparing.
+      if (retained) {
+        run.releasePreparedSources = undefined;
+        run.temporalSourcesCurrent = undefined;
+        run.decisionPreparation = undefined;
+      }
       run.handedOff = true;
       run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
     }
@@ -3492,10 +3500,7 @@ export class AiDirector {
     let preview = startPreview();
     const querySchema = z
       .object({
-        queries: z
-          .array(situationQuerySchema)
-          .max(prepared.situation.policy.maximumQueries)
-          .nullable(),
+        queries: situationQueriesField(prepared.situation.policy.maximumQueries),
         ...schema.shape,
       })
       .strict();
@@ -3589,48 +3594,19 @@ export class AiDirector {
             `The level ${level} response exceeded its ${levelLimit.visibleOutputBytes}-byte visible-output allowance. No paid repair was attempted.`,
             'invalid',
           );
-        const queryEnvelope = z
-          .object({ queries: querySchema.shape.queries })
-          .passthrough()
-          .safeParse(value);
-        if (!queryEnvelope.success)
+        let queried: ReturnType<typeof readSituationQueryResponse>;
+        try {
+          queried = readSituationQueryResponse(value, prepared.situation.policy.maximumQueries);
+        } catch (error) {
           throw new StopJob(
             'failed',
-            'The response did not match the decision contract. No paid repair was attempted.',
+            error instanceof Error ? error.message : 'The situation query was invalid.',
             'invalid',
           );
-        const queried = queryEnvelope.data;
+        }
         if (queried.queries?.length) {
-          if (
-            !Array.isArray(queried['operations']) ||
-            queried['operations'].length ||
-            queried['invention']
-          )
-            throw new StopJob(
-              'failed',
-              'A situation query cannot execute response operations.',
-              'invalid',
-            );
-          await prepared.validateConversation();
-          const expansion = await expandSituation(
-            prepared.situation,
-            queried.queries,
-            prepared.readSituationHistory,
-          );
-          await prepared.validateConversation(false);
-          for (const id of expansion.expandedIds) {
-            const body = prepared.situation.bodyBindings.get(id);
-            if (!body) continue;
-            const { handle, leaseId, subject, episode } = body;
-            prepared.entityReferences[handle] = id;
-            prepared.binding.physicalEntityReferences![handle] = id;
-            prepared.binding.entityLeases![id] = leaseId;
-            if (subject) (prepared.binding.identityReferences ??= {})[handle] = subject;
-            if (!prepared.binding.entityIds.includes(id)) prepared.binding.entityIds.push(id);
-            if (episode) (prepared.binding.entityEpisodes ??= {})[id] = episode;
-          }
+          const disclosedExpansion = await expandDecisionSituation(prepared, queried.queries);
           preview?.finish();
-          const { expandedIds: _expandedIds, ...disclosedExpansion } = expansion;
           const finalContext = { ...prepared.context, situationQueries: false };
           const expandedContext = `${additionalContext}\nRequested received evidence: ${JSON.stringify(disclosedExpansion)}`;
           prepared = fitDecisionEnvelope(

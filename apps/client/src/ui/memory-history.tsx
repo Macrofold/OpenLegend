@@ -304,19 +304,21 @@ export function MemoryHistory({
         />
         {message
           ? 'Reading did not finish.'
-          : filtered
-            ? recent
-              ? `${shown.length} recent ${shown.length === 1 ? 'observation' : 'observations'}${scanLimited ? '. This view does not include every retained observation.' : ''}${next ? ' Older observations remain.' : ' End of retained observations.'}`
-              : `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
-                  scanLimited
-                    ? '. This search stopped at its record limit; older memories remain to search.'
-                    : next
-                      ? '. Older memories remain to search.'
-                      : '. End of the retained records.'
-                }`
-            : shownPage && !next
-              ? 'Reached the oldest retained memory.'
-              : 'Reading retained history, oldest first.'}
+          : !shownPage
+            ? null
+            : filtered
+              ? recent
+                ? `${shown.length} recent ${shown.length === 1 ? 'observation' : 'observations'}${scanLimited ? '. This view does not include every retained observation.' : ''}${next ? ' Older observations remain.' : ' End of retained observations.'}`
+                : `${shown.length} ${shown.length === 1 ? 'memory' : 'memories'}${query ? ` matching “${query}”` : ''}${
+                    scanLimited
+                      ? '. This search stopped at its record limit; older memories remain to search.'
+                      : next
+                        ? '. Older memories remain to search.'
+                        : '. End of the retained records.'
+                  }`
+              : shownPage && !next
+                ? 'Reached the oldest retained memory.'
+                : 'Reading retained history, oldest first.'}
       </p>
       {message && (
         <div className="ol-reading-error">

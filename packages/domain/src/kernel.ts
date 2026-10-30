@@ -1,4 +1,5 @@
 import { effectiveBodyProfile } from './spatial-state.js';
+import type { NativeMechanicsDiscard } from './diagnostic-counters.js';
 import { referencedReceivedValues, type ReceivedValueState } from './received-values.js';
 import { settleDetectionSupport } from './perception-support.js';
 import {
@@ -6377,7 +6378,19 @@ function retainsReceivedValueHistory(
   if (before === after) return true;
   if (
     !before ||
-    !sameResidencyFields(before, after, ['sources']) ||
+    [...new Set([...Object.keys(before), ...Object.keys(after)])].some(
+      (key) =>
+        key !== 'sources' &&
+        key !== 'retirement' &&
+        Reflect.get(before, key) !== Reflect.get(after, key),
+    )
+  )
+    return false;
+  // Retirement metadata changes no received value or mechanical input. In the
+  // common bookkeeping path, do not walk every personal owner to prove that the
+  // exact same immutable source map still contains its references.
+  if (before.sources === after.sources) return true;
+  if (
     !retainsHistory(Object.keys(before.sources), Object.keys(after.sources)) ||
     Object.entries(after.sources).some(([id, block]) => before.sources[id] !== block) ||
     after.activeSources?.some((id) => !after.sources[id]) ||
@@ -6394,6 +6407,64 @@ function retainsReceivedValueHistory(
     for (const ordinal of ordinals) if (!block.values[ordinal]) return false;
   }
   return true;
+}
+/** A completed received-value bookkeeping edit preserves physical preparation.
+ * This is narrower than a history projection: every other world root, including
+ * personal evidence and capture owners, must retain its exact identity. A raw
+ * builder, edited interval or replaced value always takes ordinary preparation.
+ * docs/save-and-load.md#continuation-and-identity */
+export function preserveReceivedValuePreparation(
+  before: WorldState,
+  after: WorldState,
+): WorldState {
+  countDomainWork('nativeReceivedPreparationCalls');
+  if (before === after) {
+    countDomainWork('nativeReceivedPreparationUnchanged');
+    return after;
+  }
+  if (!Object.isFrozen(before) || !Object.isFrozen(after)) {
+    countDomainWork('nativeReceivedPreparationMutable');
+    return after;
+  }
+  const continuation = nativeContinuations.get(before);
+  if (!continuation) {
+    countDomainWork('nativeReceivedPreparationMissing');
+    return after;
+  }
+  let changed = false;
+  for (const key of new Set([...Object.keys(before), ...Object.keys(after)]))
+    if (
+      key !== 'receivedValues' &&
+      key !== 'nativeInterval' &&
+      Reflect.get(before, key) !== Reflect.get(after, key)
+    ) {
+      changed = true;
+      if (!domainCountersEnabled()) break;
+      countDomainWork(`nativeReceivedPreparationRoot:${key as keyof WorldState}`);
+    }
+  if (changed) {
+    countDomainWork('nativeReceivedPreparationRootsChanged');
+    return after;
+  }
+  const previousInterval = before.nativeInterval,
+    nextInterval = after.nativeInterval;
+  if (
+    previousInterval !== nextInterval &&
+    (!previousInterval || !nextInterval || !sameResidencyFields(previousInterval, nextInterval, []))
+  ) {
+    countDomainWork('nativeReceivedPreparationIntervalChanged');
+    return after;
+  }
+  if (
+    !after.receivedValues ||
+    !retainsReceivedValueHistory(before, after.receivedValues, after.experience?.temporal)
+  ) {
+    countDomainWork('nativeReceivedPreparationSourceRejected');
+    return after;
+  }
+  nativeContinuations.set(after, continuation);
+  countDomainWork('nativeReceivedPreparationPreserved');
+  return after;
 }
 /** Relocate already committed history without settling unrelated physical calculations.
  * Record edits use ordinary mutation/materialization; only proven ordered removal
@@ -6708,7 +6779,8 @@ function* advanceWorldNative(
     }
     coarseElapsed.clear();
   };
-  const discardMechanics = () => {
+  const discardMechanics = (reason: NativeMechanicsDiscard) => {
+    if (mechanics) countDomainWork(`nativeMechanicsDiscard:${reason}`);
     materializeCoarse();
     mechanics = undefined;
     // Future crossing runs keep this interval's time origin. A new prediction
@@ -6756,12 +6828,12 @@ function* advanceWorldNative(
       ids.some((id) => current.referenced.has(id))
     ) {
       countDomainWork('nativeLocalFallbackCoupled');
-      discardMechanics();
+      discardMechanics('coupled');
     } else if (
       ids.some((id) => current.reactiveActors.includes(id) || nativeActorReactive(world, id))
     ) {
       countDomainWork('nativeLocalFallbackReactive');
-      discardMechanics();
+      discardMechanics('reactive');
     } else for (const id of ids) (localChanges ??= new Set()).add(id);
   };
   const localizeState = (cursor: ReturnType<typeof captureStateChanges>, manifest: number) => {
@@ -6769,14 +6841,14 @@ function* advanceWorldNative(
     const changes = stateChangesSince(world, cursor);
     if (!changes || !changes.length || world.moduleManifest.revision !== manifest) {
       countDomainWork('nativeLocalFallbackUnknown');
-      discardMechanics();
+      discardMechanics('unknown');
       return;
     }
     if (changes.some((change) => !participants.ambient.includes(change.entityId))) {
       // An inventory object or other unhandled owner can affect collision, stock,
       // equipment or another actor without having a native status participant.
       countDomainWork('nativeLocalFallbackUnknown');
-      discardMechanics();
+      discardMechanics('unknown');
       return;
     }
     if (
@@ -6789,7 +6861,7 @@ function* advanceWorldNative(
           ? 'nativeLocalFallbackMembership'
           : 'nativeLocalFallbackUnknown',
       );
-      discardMechanics();
+      discardMechanics('membership');
       return;
     }
     if (changes.some((change) => change.field === 'body')) {
@@ -6803,7 +6875,7 @@ function* advanceWorldNative(
         })
       ) {
         countDomainWork('nativeLocalFallbackMembership');
-        discardMechanics();
+        discardMechanics('membership');
         return;
       }
     }
@@ -6833,13 +6905,13 @@ function* advanceWorldNative(
           mechanicalRevision(world) - stateChangeRevision(world, 'attribute') !== physical ||
           events.length !== eventCount
         )
-          discardMechanics();
+          discardMechanics('observation-materialization');
         revision = mechanicalRevision(world);
         eventCount = events.length;
       },
       complete: () => {
         if (mechanicalRevision(world) !== revision || events.length !== eventCount)
-          discardMechanics();
+          discardMechanics('observation-effects');
       },
     };
   };
@@ -6853,14 +6925,14 @@ function* advanceWorldNative(
       yield* materialize();
       if (expireConstructionContributions(world, constructionBatch)) {
         reconcileConstructionAuthority(world, constructionBatch.permissions);
-        discardMechanics();
+        discardMechanics('contribution');
         participants = nativeParticipants(world);
       }
     }
     settleDetectionSupport(world);
     // A tiny retained remainder is a forecast, not authority to advance the clock.
     // Recompute from current state; only a real predicate may require a micro-interval.
-    if (mechanics && mechanics.remainingSeconds <= TIME_EPSILON) discardMechanics();
+    if (mechanics && mechanics.remainingSeconds <= TIME_EPSILON) discardMechanics('expired');
     if (!mechanics) {
       // Rebuilding prediction does not change already-earned ordinary meter operations.
       // Current getters read them; actual writers and changed bindings settle their own.
@@ -6935,7 +7007,7 @@ function* advanceWorldNative(
           component = actor.actor!;
           if (!transition.outcome.ok) territorialRefusal(world, actor, events);
         }
-        discardMechanics();
+        discardMechanics('territorial');
       }
       const step = readyPlanStep(world, actorId);
       if (step && admitActivityAttempt(world, actorId, component.agency.plan!, step)) {
@@ -6972,7 +7044,7 @@ function* advanceWorldNative(
         participants = nativeParticipants(successor);
         world = draftWorld(successor, { retainNativeValues: true });
         beginNativeChangeFeed(world);
-        discardMechanics();
+        discardMechanics('command');
         events.push(...transition.events);
         absorbConstructionPermissionBatch(constructionBatch, transition);
         actor = entityGet(world.entities, actorId)!;
@@ -7005,7 +7077,7 @@ function* advanceWorldNative(
         priorFollowStage &&
         (component.action?.stage !== priorFollowStage || component.action.path !== priorFollowPath)
       )
-        discardMechanics();
+        discardMechanics('follow');
       // Work begun here starts silently; the next prediction must bound its completion.
       if (priorStage === 'approaching' && component.action?.stage === 'working') {
         observeNativeAttackPreparation(world, actor, events);
@@ -7017,7 +7089,7 @@ function* advanceWorldNative(
       // Allocation alone supplies no affected-participant proof. Keep the deadline
       // fallback, while unchanged selected rate calculations can still be reused.
       countDomainWork('nativeLocalFallbackAllocation');
-      discardMechanics();
+      discardMechanics('allocation');
     }
     let occupancy: LandingOccupancy | undefined;
     const landingOccupancy = () => (occupancy ??= new LandingOccupancy(world));
@@ -7059,7 +7131,7 @@ function* advanceWorldNative(
     const takeoffs = flushFlight();
     const afterFlight = events.length;
     // Grounding predicates may change even without changing an active status episode.
-    if (afterFlight - beforeStartEvents !== takeoffs.length) discardMechanics();
+    if (afterFlight - beforeStartEvents !== takeoffs.length) discardMechanics('flight');
     else {
       if (mechanicalRevision(world) !== beforeState) localizeState(startChanges, startManifest);
       localize(takeoffs);
@@ -7082,7 +7154,8 @@ function* advanceWorldNative(
           if (localChanges!.has(id))
             retainedStatus.reconcile(world, entityGet(world.entities, id)!, events);
     }
-    if (events.length !== afterFlight || world.nextId !== statusAllocation) discardMechanics();
+    if (events.length !== afterFlight || world.nextId !== statusAllocation)
+      discardMechanics('status');
     else if (mechanicalRevision(world) !== statusState)
       localizeState(statusChanges, statusManifest);
     wanderQueue.synchronize(world, participants.animals);
@@ -7113,7 +7186,7 @@ function* advanceWorldNative(
           entityGet(world.entities, id)!,
           options.nativeRefuges,
         );
-        discardMechanics();
+        discardMechanics('foraging-review');
         if (intention === 'pending') {
           if (entityGet(world.entities, id)?.animal?.foraging?.proposal?.wait !== 'entity') break;
           continue;
@@ -7150,7 +7223,7 @@ function* advanceWorldNative(
               pendingAnimalDecisions.add(target.id);
             }
           }
-          discardMechanics();
+          discardMechanics('foraging-command');
         }
         continue;
       }
@@ -7163,7 +7236,7 @@ function* advanceWorldNative(
       // Waiting for another route can already stop the old movement. Reconcile
       // that change for every outcome, before pending/none can skip admission.
       if (events.length !== decisionEvents || world.nextId !== decisionAllocation)
-        discardMechanics();
+        discardMechanics('response');
       else if (mechanicalRevision(world) !== decisionState)
         localizeState(decisionChanges, decisionManifest);
       if (decision.status === 'pending') {
@@ -7179,7 +7252,7 @@ function* advanceWorldNative(
           events,
         );
         participants = nativeParticipants(world);
-        discardMechanics();
+        discardMechanics('response-flight');
       }
       if (decision.status === 'choices' || decision.status === 'stop') {
         yield* materialize();
@@ -7220,7 +7293,7 @@ function* advanceWorldNative(
           }
         }
         if (inDraft && transition.outcome.ok) localizeState(changesBeforeMove, manifestBeforeMove);
-        else discardMechanics();
+        else discardMechanics('response-move');
       }
     }
     // Due restoration and genuine immediate contacts share this current boundary.
@@ -7228,7 +7301,7 @@ function* advanceWorldNative(
     const poseChanged = settleLocalPoses(world, participants.projectileBodies, events);
     const projectileChanged = settleProjectiles(world, events);
     if (poseChanged || projectileChanged) {
-      discardMechanics();
+      discardMechanics('projectile');
       participants = nativeParticipants(world);
     }
     if (
@@ -7415,13 +7488,16 @@ function* advanceWorldNative(
       delete world.nativeInterval;
     }
     const { travelFor } = mechanics;
-    const territorialReviewAt = nextTerritorialReview(world, participants.territorial);
+    const privateReviewAt = Math.min(
+      nextTerritorialReview(world, participants.territorial),
+      wanderQueue.nextChoiceAt(world.simTime),
+    );
     const inputSeconds = playerInputBoundary(
       world,
       options.playerInputs ?? [],
       nativeMotionInterval(
         world,
-        Math.min(remaining, mechanics.remainingSeconds, territorialReviewAt - world.simTime),
+        Math.min(remaining, mechanics.remainingSeconds, privateReviewAt - world.simTime),
         mechanics.motionIds,
         travelFor,
         mechanics.interval.privateWalkers,
@@ -7560,11 +7636,11 @@ function* advanceWorldNative(
     wanderQueue.synchronize(world, participants.animals);
     // Reaching the interval's stored deadline lands on it exactly (PF13.16).
     const landing = mechanics.endsAt !== undefined && seconds >= mechanics.remainingSeconds;
-    const reviewLanding = seconds >= territorialReviewAt - world.simTime;
+    const reviewLanding = seconds >= privateReviewAt - world.simTime;
     let endpoint = landing
       ? mechanics.endsAt
       : reviewLanding
-        ? territorialReviewAt
+        ? privateReviewAt
         : seconds === contributionAt - world.simTime
           ? contributionAt
           : sensory.endsAt !== undefined && seconds === sensory.endsAt - world.simTime
@@ -7893,12 +7969,14 @@ function* advanceWorldNative(
     if (sharedBoundary) {
       countDomainWork('nativeSharedBoundaries');
       if (mechanics.remainingSeconds === 0)
-        for (const cause of mechanics.interval.endingCauses)
+        for (const cause of mechanics.interval.endingCauses) {
           countDomainWork(
             cause.kind === 'participant'
               ? 'nativeParticipantDeadlineCauses'
               : 'nativeSharedDeadlineCauses',
           );
+          countDomainWork(`nativeDeadline:${cause.reason}`);
+        }
       if (domainCountersEnabled())
         countDomainWork(
           mechanics.remainingSeconds === 0
@@ -7928,7 +8006,7 @@ function* advanceWorldNative(
         mechanics.remainingSeconds > TIME_EPSILON
       )
         localizeState(sliceChanges, sliceManifest);
-      else discardMechanics();
+      else discardMechanics('endpoint');
     } else {
       if (mechanics.interval.privateWalkers.size) countDomainWork('nativeWalkingForecastReuses');
       localize(flightSources);
@@ -7958,7 +8036,7 @@ function* advanceWorldNative(
       if (plan?.status === 'active' && plan.activity?.pending.at(-1)?.node.kind === 'wait') {
         const revision = plan.revision;
         readyPlanStep(world, id);
-        if (plan.revision !== revision) discardMechanics();
+        if (plan.revision !== revision) discardMechanics('activity');
       }
     }
     preparation.complete();
@@ -7973,7 +8051,7 @@ function* advanceWorldNative(
         reconcileCoaching(world, events);
         advanceCommitments(world, events);
         if (mechanicalRevision(world) !== teachingState || events.length !== teachingEvents)
-          discardMechanics();
+          discardMechanics('teaching');
       }
       before = snapshotEncounters(world);
     }
@@ -8006,7 +8084,7 @@ function* advanceWorldNative(
     () => {
       if (mechanicalRevision(world) !== publicationState || events.length !== publicationEvents) {
         countDomainWork('nativePublicationPreparationInvalidations');
-        discardMechanics();
+        discardMechanics('publication');
       }
     },
   );

@@ -38,6 +38,7 @@ import {
   nominateReceivedValueRetirement,
   updateWorld,
   freezeWorld,
+  preserveReceivedValuePreparation,
   type WorldState,
   type TemporalChunk,
   type TemporalEvidenceState,
@@ -328,7 +329,9 @@ export function nominateReleasedReceivedValues(
   );
   // This bookkeeping owner has finished its edit. Publish the derived physical
   // indexes now; a later generic freeze cannot certify this exact write set.
-  return Object.isFrozen(world) ? freezeWorld(next, { completedTransition: true }) : next;
+  return Object.isFrozen(world)
+    ? preserveReceivedValuePreparation(world, freezeWorld(next, { completedTransition: true }))
+    : next;
 }
 
 export function retentionNeedsPreparation(world: WorldState): boolean {

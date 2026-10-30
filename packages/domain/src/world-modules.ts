@@ -2,7 +2,11 @@ import { validateCartography } from './cartography.js';
 import { validateItemArt, validatePortraitArt } from './presentation-art.js';
 import { validateAttackExecutions } from './combat-execution.js';
 import { validLethalPermission } from './combat-consent.js';
-import { validateSensoryProgress, validateSensoryContinuation } from './perception-timing.js';
+import {
+  validateSensoryProgress,
+  validateSensoryContinuation,
+  requestDetailedSight,
+} from './perception-timing.js';
 import { validatePersonalSocialEvidence } from './personal-social.js';
 import { validateSupplyOpportunities } from './supply-opportunities.js';
 import { validateNativeFeeding } from './native-feeding.js';
@@ -113,7 +117,11 @@ import { validateReincarnation } from './reincarnation.js';
 import { validateTerritorialThreats } from './territorial-threat.js';
 import { validateCognitionPolicy } from './cognition-policy.js';
 import { validateSemanticContinuation } from './semantic-opportunities.js';
-import { selectedTemporalPolicy, selectedAttentionPolicy } from './world-composition.js';
+import {
+  selectedTemporalPolicy,
+  selectedAttentionPolicy,
+  selectedAttributeAffectsObservation,
+} from './world-composition.js';
 import { trustedRecipeImplementations } from './world-composition.js';
 import { validateRangedPolicy, validateRangedActions, type RangedPolicy } from './ranged-policy.js';
 import { validateInstalledRecipes, type RecipeFamilyDescriptor } from './invention-families.js';
@@ -897,7 +905,19 @@ export function setAttribute(
   const before = prior.value;
   prior.value = value;
   prior.revision++;
-  recordSemanticChange(world, { kind: 'state', entityId: entity.id, field: 'attribute' });
+  recordSemanticChange(world, {
+    kind: 'state',
+    entityId: entity.id,
+    field: 'attribute',
+    // Private meter arithmetic has the same sensory meaning whether applied
+    // eagerly here or retained by the native numeric owner. Any resulting body
+    // or condition transition records its own outward change.
+    outwardChange: d.disclosure === 'public',
+  });
+  // A private receiver parameter can change its own next interpretation without
+  // presenting that value to anyone else or sensing during the attribute write.
+  if (selectedAttributeAffectsObservation(world, entity, d.id))
+    requestDetailedSight(world, entity.id);
   // Notice actual one-off outcomes, never infer their cause from later meter readings.
   // Passive rate/transfer callers opt out, avoiding per-interval history and UI noise.
   if (

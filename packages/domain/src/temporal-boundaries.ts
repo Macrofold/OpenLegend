@@ -36,6 +36,37 @@ import {
 } from './status-effects.js';
 import type { WorldState } from './types.js';
 
+export type NativeDeadlineReason =
+  | 'lifetime'
+  | 'animal-pattern'
+  | 'threat'
+  | 'foraging-review'
+  | 'foraging-work'
+  | 'response-review'
+  | 'danger-expiry'
+  | 'response-settling'
+  | 'wander'
+  | 'serial-clamp'
+  | 'guard'
+  | 'evasion'
+  | 'encounter'
+  | 'activity'
+  | 'condition'
+  | 'attribute'
+  | 'follow'
+  | 'work'
+  | 'move-arrival'
+  | 'approach-sample'
+  | 'supply'
+  | 'fuel'
+  | 'status';
+type NativeDeadlineCause = {
+  at: number;
+  entityId?: string;
+  kind: 'participant' | 'shared';
+  reason: NativeDeadlineReason;
+};
+
 /** Finite-family composition, not an omniscient scheduler for arbitrary future rules.
  * docs/simulation-time.md and docs/maintainers/simulation-boundaries.md */
 export function nativeInterval(
@@ -55,11 +86,11 @@ export function nativeInterval(
   drains: NativeDrain[];
   privateWalkers: ReadonlySet<string>;
   endsAt?: number;
-  endingCauses: Array<{ at: number; entityId?: string; kind: 'participant' | 'shared' }>;
+  endingCauses: NativeDeadlineCause[];
 } {
   let ownerId: string | undefined;
-  let causes: Array<{ at: number; entityId?: string; kind: 'participant' | 'shared' }> = [];
-  const recordCause = (time: number, id = ownerId) => {
+  let causes: NativeDeadlineCause[] = [];
+  const recordCause = (time: number, reason: NativeDeadlineReason, id = ownerId) => {
     if (!Number.isFinite(time)) return;
     const first = causes[0]?.at ?? Infinity;
     if (time < first - TIME_EPSILON) causes = [];
@@ -68,19 +99,20 @@ export function nativeInterval(
         at: time,
         ...(id ? { entityId: id } : {}),
         kind: id ? 'participant' : 'shared',
+        reason,
       });
   };
-  const limit = (seconds: number) => {
-    recordCause(world.simTime + seconds);
+  const limit = (seconds: number, reason: NativeDeadlineReason = 'attribute') => {
+    recordCause(world.simTime + seconds, reason);
     bound = Math.min(bound, seconds);
   };
   let bound = Math.min(requested, BASE_TIME_POLICY.idleHorizonSeconds);
   // Owners compare the clock with stored absolute deadlines. Landing on that exact value,
   // not on a sum of slices, lets them fire at the boundary instead of 1e-6 s or more later.
   let deadline = Infinity;
-  const at = (time: number) => {
+  const at = (time: number, reason: NativeDeadlineReason = 'lifetime') => {
     if (!(time > world.simTime)) return;
-    recordCause(time);
+    recordCause(time, reason);
     deadline = Math.min(deadline, time);
     bound = Math.min(bound, time - world.simTime);
   };
@@ -92,37 +124,41 @@ export function nativeInterval(
     const entity = entityGet(world.entities, id),
       animal = entity?.animal;
     if (animal)
-      for (const pattern of Object.values(animal.acousticPatterns)) at(pattern.idleExpiresAt);
+      for (const pattern of Object.values(animal.acousticPatterns))
+        at(pattern.idleExpiresAt, 'animal-pattern');
     const threat = entity?.threat;
     if (threat && !(threat.relinquished && threat.mode === 'idle')) {
       // Ordinary reviews are private wake-ups. The owner certifies deadline-only
       // idle renewals; every real pursuit/action change still rebuilds preparation.
       if (['pursuit', 'search'].includes(threat.mode) && threat.episodeUntil !== undefined)
-        at(threat.episodeUntil);
-      if (threat.mode === 'search' && threat.searchUntil !== undefined) at(threat.searchUntil);
+        at(threat.episodeUntil, 'threat');
+      if (threat.mode === 'search' && threat.searchUntil !== undefined)
+        at(threat.searchUntil, 'threat');
     }
     if (animal?.foraging && !animal.episode) {
-      at(animal.foraging.reviewAt);
-      if (animal.foraging.work) at(animal.foraging.work.endsAt);
+      at(animal.foraging.reviewAt, 'foraging-review');
+      if (animal.foraging.work) at(animal.foraging.work.endsAt, 'foraging-work');
     }
     if (animal?.episode) {
-      at(animal.episode.reviewAt);
+      // Review is bounded by the native private slice. Its owner may retain the
+      // same movement; only actual effects end the shared mechanical forecast.
       const definition = nativeResponseProfile(world, animal.episode.profilePin);
       if (definition)
         for (const danger of Object.values(animal.episode.dangers)) {
-          at(nativeDangerExpiresAt(definition, danger));
+          at(nativeDangerExpiresAt(definition, danger), 'danger-expiry');
           if (definition.uncertaintyPerSecond > 0 && (danger.kind !== 'body' || !danger.visible))
             at(
               (danger.kind === 'body' ? danger.lostAt! : danger.observedAt) +
                 definition.maximumUncertainty / definition.uncertaintyPerSecond,
+              'danger-expiry',
             );
         }
       if (animal.episode.clearSince !== undefined) {
         const profile = nativeResponseProfile(world, animal.episode.profilePin);
-        if (profile) at(animal.episode.clearSince + profile.settlingSeconds);
+        if (profile) at(animal.episode.clearSince + profile.settlingSeconds, 'response-settling');
       }
     }
-    if (animal?.wander && 'dueAt' in animal.wander) at(animal.wander.dueAt);
+    if (animal?.wander && 'dueAt' in animal.wander) at(animal.wander.dueAt, 'wander');
   }
   ownerId = undefined;
   // Serial clamps depend on how an interval is divided; such values integrate every slice.
@@ -130,7 +166,7 @@ export function nativeInterval(
   // Health rates below require immediate integration, but do not select this fallback.
   let serialClamps = false;
   const serialClampFallback = () => {
-    limit(1);
+    limit(1, 'serial-clamp');
     serialClamps = true;
   };
   const rates = statusAttributeRates(status),
@@ -154,13 +190,14 @@ export function nativeInterval(
       const g = action.guard;
       at(
         g.phase === 'preparing' ? g.readyAt : g.phase === 'ready' ? g.expiresAt : g.recoveryUntil!,
+        'guard',
       );
     }
-    if (action?.evasion) at(action.evasion.endsAt);
+    if (action?.evasion) at(action.evasion.endsAt, 'evasion');
     const plan = actor.agency.plan;
-    if (actor.encounters?.nextAt !== undefined) at(actor.encounters.nextAt);
+    if (actor.encounters?.nextAt !== undefined) at(actor.encounters.nextAt, 'encounter');
     if (plan?.status === 'active' && plan.activity)
-      at(nextActivityBoundary(world, id, plan.activity));
+      at(nextActivityBoundary(world, id, plan.activity), 'activity');
     const waiting = plan?.status === 'active' && !action && plan.activity?.pending.at(-1);
     // Bound only what its owner can progress: readyPlanStep ignores a wait while actions are
     // restricted or its goal is inactive, and reviews need memory (PF13.16).
@@ -172,8 +209,8 @@ export function nativeInterval(
       (!plan.goalId ||
         actor.agency.goals.some((g) => g.id === plan.goalId && g.status === 'active'))
     )
-      at(elapsedDeadline(waiting.startedAt, waiting.node.seconds));
-    if (hasMemory(entity)) at(nextConditionReview(entity));
+      at(elapsedDeadline(waiting.startedAt, waiting.node.seconds), 'activity');
+    if (hasMemory(entity)) at(nextConditionReview(entity), 'condition');
     const reservoirs: NativeDrain[] = [];
     let coupledReservoir = false;
     for (const { definition: d, thresholds } of attributes.native) {
@@ -220,14 +257,15 @@ export function nativeInterval(
     if (!action || action.type === 'status-effect') continue;
     // A follow's chosen stopping time is an exact boundary, like a wait's timeout; its owner
     // compares the clock with this stored value, so the clock lands on it (PF13.16).
-    if (action.type === 'follow' && action.follow?.until !== undefined) at(action.follow.until);
+    if (action.type === 'follow' && action.follow?.until !== undefined)
+      at(action.follow.until, 'follow');
     // The kernel advances working actions only when locomotion is free, or pickups.
     if (
       action.stage === 'working' &&
       action.remainingSeconds > 0 &&
       (action.type === 'pickup' || !capabilityBlocked(world, entity, 'locomotion'))
     )
-      limit(action.remainingSeconds);
+      limit(action.remainingSeconds, 'work');
     if (
       action.stage === 'approaching' &&
       action.path.length &&
@@ -255,25 +293,26 @@ export function nativeInterval(
           if (point.surfaceId !== support) break;
           support = point.surfaceId;
         }
-        limit(Math.max(TIME_EPSILON, length / speed));
+        limit(Math.max(TIME_EPSILON, length / speed), 'move-arrival');
       } else
         limit(
           Math.min(
             travelFor(id) / speed,
             Math.max(TIME_EPSILON, distance3D(worldPosition(entity), action.path[0]!) / speed),
           ),
+          'approach-sample',
         );
     }
   }
   ownerId = undefined;
   for (const [id, demand] of supplies) {
     const remaining = entityGet(world.entities, id)?.replenisher?.remaining;
-    if (remaining !== undefined && remaining > 0) limit(remaining / demand);
+    if (remaining !== undefined && remaining > 0) limit(remaining / demand, 'supply');
   }
   for (const id of ambientIds) {
     const entity = entityGet(world.entities, id);
     if (!entity) continue;
-    if (entity.heat?.lit && entity.heat.fuelSeconds > 0) limit(entity.heat.fuelSeconds);
+    if (entity.heat?.lit && entity.heat.fuelSeconds > 0) limit(entity.heat.fuelSeconds, 'fuel');
   }
   // Main's independently owned lifetimes participate in elapsed integration. Skipping an
   // internal-source deadline would lose an occurrence; an expired claim cannot block stock.
@@ -289,10 +328,14 @@ export function nativeInterval(
   if (statusDeadline) {
     for (const id of statusIds) {
       ownerId = id;
-      at(statusDeadline(id, rates));
+      at(statusDeadline(id, rates), 'status');
     }
     ownerId = undefined;
-  } else limit(statusBoundary(world, statusIds, rates, attributes.byId, at));
+  } else
+    limit(
+      statusBoundary(world, statusIds, rates, attributes.byId, (time) => at(time, 'status')),
+      'status',
+    );
   const seconds = Math.min(requested, Math.max(TIME_EPSILON, bound));
   return {
     seconds,

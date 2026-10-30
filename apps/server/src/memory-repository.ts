@@ -541,12 +541,23 @@ export class MemoryRepository {
     signal?.addEventListener('abort', release, { once: true });
     if (signal?.aborted) release();
     let pending: Promise<boolean> | undefined;
+    let validatedInput: string | undefined;
     return {
       current: () => fence.valid && (!temporal.clock || temporal.clock() <= temporal.deadline),
       release,
       validate: async (selections, currentWindow, baselines = []) => {
         while (pending) await pending;
         if (!fence.valid) return false;
+        const window = currentWindow();
+        if (temporal.clock && window.at > temporal.deadline) {
+          fence.valid = false;
+          return false;
+        }
+        const input = digest([selections, baselines, window.maxAgeSeconds]);
+        // The installed witness already watches every selected accepted write.
+        // Hash actual input values so mutable/narrowed query results cannot reuse
+        // an earlier proof merely by keeping their object identity.
+        if (input === validatedInput) return true;
         temporal.collecting = true;
         temporal.pending = [];
         temporal.pendingBytes = 0;
@@ -571,6 +582,7 @@ export class MemoryRepository {
         try {
           const valid = (await work) && fence.valid;
           if (!valid) fence.valid = false;
+          else validatedInput = input;
           return valid;
         } finally {
           if (pending === work) pending = undefined;

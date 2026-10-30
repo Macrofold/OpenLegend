@@ -1131,32 +1131,28 @@ export class WorldRecords {
           ? this.currentEntityPredicate(table)
           : '');
       let rows: JsonRecord[] = [];
-      if (partial && table === 'activity_occurrences') {
+      if (partial && (table === 'activity_occurrences' || table === 'mind_awareness')) {
+        const awareness = table === 'mind_awareness';
+        // Seek each owner's bounded tail, union only identities, then hydrate.
+        // Hashing whole account bodies here needlessly detoasts/deduplicates
+        // megabytes before startup can consume the same selected records.
         rows = await this.db
           .prepare(
-            `SELECT a.id,a.parent_id,a.slot,a.position,a.payload
-          FROM activity_occurrences_owners o CROSS JOIN LATERAL (
-            SELECT id,parent_id,slot,position,payload FROM activity_occurrences
-            WHERE world_id=o.world_id AND actor_id=o.slot ORDER BY position DESC LIMIT 128
-          ) a WHERE o.world_id=?
-          UNION SELECT id,parent_id,slot,position,payload FROM activity_occurrences WHERE world_id=? AND status='running'`,
+            `WITH selected AS MATERIALIZED (
+            SELECT a.id FROM ${table}_owners o CROSS JOIN LATERAL (
+              SELECT id FROM ${table}
+              WHERE world_id=o.world_id AND actor_id=o.slot
+              ORDER BY position DESC LIMIT ${awareness ? HOT_AWARENESS_ROWS : 128}
+            ) a WHERE o.world_id=?
+            UNION SELECT id FROM ${table} WHERE world_id=? AND ${
+              awareness
+                ? 'agreement_head=1 AND agreement_open=1 AND (agreement_until IS NULL OR agreement_until>?)'
+                : "status='running'"
+            }
+          ) SELECT t.id,t.parent_id,t.slot,t.position,t.payload
+          FROM selected s JOIN ${table} t ON t.world_id=? AND t.id=s.id`,
           )
-          .all(head.worldId, head.worldId);
-      } else if (partial && table === 'mind_awareness') {
-        // Owner rows are independent of retained history size; each lateral read seeks
-        // one actor's indexed tail. docs/performance.md#inactive-history-residency
-        rows = await this.db
-          .prepare(
-            `SELECT a.id,a.parent_id,a.slot,a.position,a.payload
-          FROM mind_awareness_owners o CROSS JOIN LATERAL (
-            SELECT id,parent_id,slot,position,payload FROM mind_awareness
-            WHERE world_id=o.world_id AND actor_id=o.slot ORDER BY position DESC LIMIT ${HOT_AWARENESS_ROWS}
-          ) a WHERE o.world_id=?
-          UNION SELECT id,parent_id,slot,position,payload FROM mind_awareness
-          WHERE world_id=? AND agreement_head=1 AND agreement_open=1
-            AND (agreement_until IS NULL OR agreement_until>?)`,
-          )
-          .all(head.worldId, head.worldId, simTime);
+          .all(head.worldId, head.worldId, ...(awareness ? [simTime] : []), head.worldId);
       } else if (partial && table === 'mind_memories') {
         rows = await this.db
           .prepare(

@@ -30,6 +30,7 @@ export function prepareQuestionRead(
   const current = async () =>
     generation === service.generation && expected === digest(await read.currentRevisions());
   return {
+    dispose() {},
     tasks: read.questions,
     context: JSON.stringify({
       sourceTime: read.sourceTime,

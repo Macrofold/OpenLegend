@@ -70,6 +70,7 @@ import { normalSpeedSeconds } from './simulation-time.js';
 import {
   BASE_ATTENTION_POLICY,
   baseAttentionCapacity,
+  baseAttributeAffectsObservation,
   baseRecordingReason,
 } from './worlds/base/attention.js';
 import type { RecordingInput } from './attention.js';
@@ -97,6 +98,14 @@ export function selectedAttentionCapacity(
 ) {
   selectedCreationProfileForWorld(world);
   return baseAttentionCapacity(world, observer);
+}
+export function selectedAttributeAffectsObservation(
+  world: WorldState,
+  observer: Entity,
+  attributeId: string,
+): boolean {
+  selectedCreationProfileForWorld(world);
+  return hasMemory(observer) && baseAttributeAffectsObservation(observer, attributeId);
 }
 export function selectedAttentionFamiliarity(
   world: WorldState,

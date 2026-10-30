@@ -1,3 +1,32 @@
+import type { WorldState } from './types.js';
+import type { NativeDeadlineReason } from './temporal-boundaries.js';
+
+export type NativeMechanicsDiscard =
+  | 'coupled'
+  | 'reactive'
+  | 'unknown'
+  | 'membership'
+  | 'observation-materialization'
+  | 'observation-effects'
+  | 'contribution'
+  | 'expired'
+  | 'territorial'
+  | 'command'
+  | 'follow'
+  | 'allocation'
+  | 'flight'
+  | 'status'
+  | 'foraging-review'
+  | 'foraging-command'
+  | 'response'
+  | 'response-flight'
+  | 'response-move'
+  | 'projectile'
+  | 'endpoint'
+  | 'activity'
+  | 'teaching'
+  | 'publication';
+
 /** Process-local tallies for native profiling. They are never saved, projected or read by
  * simulation logic, so enabling them cannot change outcomes, RNG draws or audiences. With no
  * sink installed each call is one undefined check.
@@ -78,6 +107,14 @@ export const DOMAIN_COUNTERS = [
   'nativePublications',
   'nativePreparationCheckpoints',
   'nativeContinuationsReused',
+  'nativeReceivedPreparationCalls',
+  'nativeReceivedPreparationUnchanged',
+  'nativeReceivedPreparationMutable',
+  'nativeReceivedPreparationMissing',
+  'nativeReceivedPreparationRootsChanged',
+  'nativeReceivedPreparationIntervalChanged',
+  'nativeReceivedPreparationSourceRejected',
+  'nativeReceivedPreparationPreserved',
   'nativeMovementDraftReuses',
   'nativeMovementIsolated',
   'outingIndexed',
@@ -191,7 +228,11 @@ export const DOMAIN_COUNTERS = [
   'crossingTrackPeak',
   'crossingOutcomePeak',
 ] as const;
-export type DomainCounter = (typeof DOMAIN_COUNTERS)[number];
+export type DomainCounter =
+  | (typeof DOMAIN_COUNTERS)[number]
+  | `nativeDeadline:${NativeDeadlineReason}`
+  | `nativeMechanicsDiscard:${NativeMechanicsDiscard}`
+  | `nativeReceivedPreparationRoot:${keyof WorldState}`;
 export type DomainCounters = Partial<Record<DomainCounter, number>>;
 
 let sink: DomainCounters | undefined;

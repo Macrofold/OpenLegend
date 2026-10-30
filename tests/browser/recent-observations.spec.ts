@@ -15,13 +15,32 @@ import { canStand } from '@open-legend/spatial';
 import { closeTestDatabases, readConfig, testRepository } from '../fixtures/database.js';
 import { editWorld } from '../fixtures/service.js';
 import { enterGame } from '../fixtures/browser.js';
+import { createBaseStartingWorld } from '../../packages/domain/src/worlds/base/starting-worlds.js';
+import { prepareWorldForStartup } from '../../apps/server/src/initial-world-preparation.js';
+import { initializeCollisionRuntime } from '../../packages/spatial/src/rapier.js';
 
 test('the player can read and search actual recent observations on desktop and a narrow screen', async ({
   page,
 }, info) => {
+  const config = readConfig({ AI_BUDGET_USD: '0' });
+  await initializeCollisionRuntime();
+  // This sensory/UI specimen uses the actual Main opening without requesting
+  // an external artwork release in its disposable native repository.
+  const initial = createBaseStartingWorld('wilderness', 1087, {
+    creatorAccountIds: ['local-player'],
+    playerAccountId: 'local-player',
+  }).world;
+  const prepared = prepareWorldForStartup(
+    { world: initial, speed: 1, manuallyPaused: false },
+    config,
+    new Map(),
+    [],
+    true,
+    [],
+  );
   const game = await createGameServer({
-    config: readConfig({ AI_BUDGET_USD: '0' }),
-    store: await testRepository(),
+    config,
+    store: await testRepository(undefined, prepared.world),
     production: true,
     tick: false,
   });
@@ -45,7 +64,7 @@ test('the player can read and search actual recent observations on desktop and a
       ).toBe(true);
       other.name = 'Unseen private name';
       initializePerception(world, []);
-      world.simTime += 1;
+      world.simTime += 15;
       setSpatialPosition(world, other, point, point.surfaceId, {
         continuity: 'physical',
       });
@@ -53,8 +72,8 @@ test('the player can read and search actual recent observations on desktop and a
       return point;
     });
     const positionLabel = `(${point.x}, ${point.y}, ${point.z})`;
-    await page.getByRole('button', { name: 'In view', exact: true }).click();
-    await page.locator('[data-entity]').first().getByRole('button').click();
+    await page.keyboard.press('v');
+    await page.locator('[data-entity]').first().getByRole('button').click({ button: 'right' });
     await page.getByRole('button', { name: 'Focus here', exact: true }).focus();
     await page.getByRole('button', { name: 'Focus here', exact: true }).press('Enter');
     await expect(
@@ -62,8 +81,9 @@ test('the player can read and search actual recent observations on desktop and a
     ).toBeVisible();
     await page.getByRole('button', { name: 'Stop focusing here', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Focus here', exact: true })).toBeVisible();
-    await page.getByRole('button', { name: 'Character', exact: true }).click();
-    await page.getByRole('tab', { name: 'Record', exact: true }).click();
+    await page.getByRole('button', { name: 'Close action picker', exact: true }).click();
+    await page.getByRole('button', { name: 'Journal (J)', exact: true }).click();
+    await page.getByRole('tab', { name: 'Memories', exact: true }).click();
     const reader = page.locator('.ol-memory-history:visible');
     await reader.getByRole('checkbox', { name: 'Recent observations', exact: true }).check();
     await expect(reader).toContainText(positionLabel);

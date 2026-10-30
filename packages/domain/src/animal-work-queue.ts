@@ -219,6 +219,14 @@ export class AnimalWorkQueue {
     for (const [id, at] of this.acoustics) if (at <= world.simTime) due.push(id);
     return due;
   }
+  /** Controller review is a private wake-up, not expiration of every body's
+   * captured rates. The existing choice owner still checks actual predicates
+   * at this exact boundary; its real effects invalidate native preparation. */
+  nextChoiceAt(now: number): number {
+    let next = Infinity;
+    for (const at of this.choices.values()) if (at > now) next = Math.min(next, at);
+    return next;
+  }
   snapshot(): AnimalWorkPreparation {
     this.owned = false;
     return {

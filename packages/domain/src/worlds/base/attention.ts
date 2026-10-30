@@ -1,6 +1,7 @@
 import type { AttentionPolicy, RecordingInput, RecordingReason } from '../../attention.js';
 import type { Entity, WorldState } from '../../types.js';
 import { readAttribute } from '../../world-modules.js';
+import { FOCUS } from './attributes.js';
 
 /** The selected world's initial allowances, not measured population capacity.
  * docs/worlds/base/attention.md */
@@ -12,6 +13,7 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
     errorMetres: 0.125,
     maxViews: 16,
     maxBytes: 8 * 1024,
+    featurePriority: { support: 0, 'solid-face': 1 },
   },
   semantic: { discovery: true },
   scene: {
@@ -79,13 +81,19 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
 
 export function baseAttentionCapacity(world: WorldState, observer: Entity): number {
   if (observer.actor?.attentionCapacity !== undefined) return observer.actor.attentionCapacity;
-  const focus = world.moduleManifest.definitions.find(
-    (definition) => definition.id === 'wilderness:focus',
-  );
+  const focus = world.moduleManifest.definitions.find((definition) => definition.id === FOCUS.id);
   const value = (focus ? readAttribute(world, observer, focus) : undefined) ?? 50;
   if (typeof value !== 'number' || !Number.isFinite(value) || value < 0 || value > 100)
     throw new Error('Installed Focus must be in 0–100.');
   return Math.round(5 + value / 10);
+}
+
+export function baseAttributeAffectsObservation(observer: Entity, attributeId: string): boolean {
+  return (
+    !!observer.actor &&
+    ((observer.actor.attentionCapacity === undefined && attributeId === FOCUS.id) ||
+      observer.actor.individualRecognition?.attributeId === attributeId)
+  );
 }
 
 /** Lasting admission is separate from current receipt and attended recent capture. */
