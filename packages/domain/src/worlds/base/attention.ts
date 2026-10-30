@@ -2,12 +2,13 @@ import type { AttentionPolicy, RecordingInput, RecordingReason } from '../../att
 import type { Entity, WorldState } from '../../types.js';
 import { readAttribute } from '../../world-modules.js';
 import { FOCUS } from './attributes.js';
+import { ORDINARY_SIGHT_TIMING } from './senses.js';
 
 /** The selected world's initial allowances, not measured population capacity.
  * docs/worlds/base/attention.md */
 export const BASE_ATTENTION_POLICY: AttentionPolicy = {
   geometry: {
-    intervalSeconds: 15,
+    intervalSeconds: ORDINARY_SIGHT_TIMING.broadSeconds,
     visits: 128,
     extentMetres: 16,
     errorMetres: 0.125,
@@ -48,7 +49,7 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
   newDescriptionCue: 2,
   urgentCue: 8,
   relation: {
-    intervalSeconds: 15,
+    intervalSeconds: ORDINARY_SIGHT_TIMING.broadSeconds,
     candidates: 128,
     clearSeconds: 120,
     minimumDecrease: 0.25,

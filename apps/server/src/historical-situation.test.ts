@@ -1,6 +1,12 @@
 import { temporalHistoryWindow } from './temporal-storage.js';
 import { temporalChunkReceipts, temporalChunkReferences } from '@open-legend/domain';
-import { afterEach, expect, it } from 'vitest';
+import { afterEach, beforeEach, expect, it, vi } from 'vitest';
+import * as worldComposition from '../../../packages/domain/src/world-composition.js';
+import {
+  chronologyAttentionPolicy,
+  useChronologySightTiming,
+} from '../../../tests/fixtures/perception.js';
+
 import {
   NPC_ID,
   PLAYER_ID,
@@ -22,6 +28,12 @@ import { WorldService } from './world-service.js';
 import { captureSituation, expandSituation } from './situation-context.js';
 import { permittedSourceHandle } from './entity-references.js';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
+
+beforeEach(() => {
+  vi.spyOn(worldComposition, 'selectedAttentionPolicy').mockReturnValue(
+    chronologyAttentionPolicy(),
+  );
+});
 
 /** Evict committed receipt placement explicitly; timestamps no longer force chunks. */
 function coldReceiptWorld(world: WorldState): WorldState {
@@ -45,6 +57,7 @@ const HISTORY_FLOOR = 'historical-fixture-floor';
 /** Unobstructed authored support isolates cold evidence from Main's terrain and
  * scenery coverage. The real Main acquisition is qualified separately. */
 function prepareHistoryFloor(world: WorldState): void {
+  useChronologySightTiming(world);
   world.map.width = Math.max(64, world.map.width);
   world.map.tiles = world.map.tiles.map((row) => [
     ...row,

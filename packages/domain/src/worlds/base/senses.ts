@@ -1,6 +1,10 @@
 import type { SenseDefinition } from '../../perception.js';
 
 export const PERCEPTION_RULES = { sightRadius: 28 } as const;
+/** One aligned ordinary-sight policy keeps broad discovery, detailed sampling and
+ * contextual feature work on compatible opportunities. Physical effects and
+ * occurrence-time hearing retain their independent exact boundaries. */
+export const ORDINARY_SIGHT_TIMING = { broadSeconds: 20, detailSeconds: 10 } as const;
 export const DETECTION_SUPPORT_POLICY = {
   id: 'wilderness:detection-support',
   version: 1,
@@ -42,8 +46,8 @@ export const DEFAULT_SENSES: SenseDefinition[] = [
     implementation: 'vision-geometry-v1',
     routineTiming: 'cadence',
     radius: 28,
-    sampleSeconds: 15,
-    detailSampleSeconds: 6,
+    sampleSeconds: ORDINARY_SIGHT_TIMING.broadSeconds,
+    detailSampleSeconds: ORDINARY_SIGHT_TIMING.detailSeconds,
   },
   { id: 'wilderness:hearing', version: 1, implementation: 'hearing-db-v1', hearingFloorDbSpl: 0 },
 ];

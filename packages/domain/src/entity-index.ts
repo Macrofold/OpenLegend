@@ -83,6 +83,7 @@ export function navigationMembershipChanged(
   if (wait === 'world') blocking.add(id);
 }
 const roots = new WeakMap<WorldState['entities'], readonly string[]>();
+const rootViews = new WeakMap<WorldState['entities'], Entity[]>();
 export interface NativeEntityGroups {
   actors: string[];
   ambient: string[];
@@ -364,12 +365,28 @@ export function worldRootEntityIds(world: WorldState, rebuild = false): readonly
 export function worldRootCount(world: WorldState): number {
   return worldRootEntityIds(world).length;
 }
+export function worldRootEntities(
+  world: WorldState,
+  readOnly: true,
+  rebuild?: boolean,
+): readonly Entity[];
+export function worldRootEntities(world: WorldState, readOnly?: false, rebuild?: boolean): Entity[];
 export function worldRootEntities(world: WorldState, readOnly = false, rebuild = false): Entity[] {
+  const reusable = readOnly && !rebuild && !isDraft(world) && isImmutableData(world.entities);
+  const held = reusable ? rootViews.get(world.entities) : undefined;
+  if (held) return held;
   countDomainWork('rootScans');
   const entities = readOnly ? readOnlyDraftView(world.entities) : world.entities;
   const ids = worldRootEntityIds(world, rebuild);
   const result = ids.map((id) => entityGet(entities, id)!);
   countDomainWork('rootsVisited', result.length);
+  // The read-only contract includes its container. Reuse only the exact immutable
+  // entity collection; working/foreign builders and writable callers stay fresh.
+  // docs/projects/attention-and-scenes-runtime-design.md#43-lists-cohorts-and-downstream-reuse
+  if (reusable) {
+    Object.freeze(result);
+    rootViews.set(world.entities, result);
+  }
   return result;
 }
 /** The draft's exact entity write set routes membership maintenance. No serialized

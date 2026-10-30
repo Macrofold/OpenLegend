@@ -19,6 +19,7 @@ import {
   MAX_CHANGE_SCOPES,
 } from './dependencies.js';
 import { captureRootIndex, inheritRootIndex } from './entity-index.js';
+import { captureSpatialCandidateIndex } from './spatial.js';
 import { captureReservationIndex } from './resource-claims.js';
 import { captureContributionSources } from './status-capabilities.js';
 import { captureContributionResidency } from './contribution-residency.js';
@@ -580,14 +581,26 @@ function sealNativeOwners<T extends object>(
   if (isImmutableData(latest)) return latest;
   // Shallow owner enumeration is bounded by resident actors/blocks. Unchanged
   // immutable children stop here; only changed or unknown owners are traversed.
-  return immutableDataSnapshot(
-    Object.fromEntries(
-      Object.entries(latest).map(([id, value]) => [
-        id,
-        sealNativeOwner(world, family, id, value, reuse),
-      ]),
-    ),
-  );
+  const result: Record<string, T> = {};
+  for (const id of Object.keys(latest)) {
+    const value = sealNativeOwner(world, family, id, latest[id]!, reuse);
+    if (id === '__proto__')
+      Object.defineProperty(result, id, {
+        value,
+        enumerable: true,
+        writable: true,
+        configurable: true,
+      });
+    else result[id] = value;
+  }
+  return sealNativeContainer(result);
+}
+/** These containers were just constructed by this publication owner. Once their
+ * children are proved immutable, freezing that same container avoids allocating
+ * a second identical map/header. Foreign mutable children still detach normally.
+ * docs/projects/attention-and-scenes-runtime-design.md#51-immutable-publication */
+function sealNativeContainer<T extends object>(value: T): T {
+  return sealImmutableRecord(value) ? value : immutableDraftSnapshot(value);
 }
 function sealNativeEvidence(world: WorldState, reuse = true): void {
   if (!isDraft(world)) return;
@@ -599,13 +612,13 @@ function sealNativeEvidence(world: WorldState, reuse = true): void {
   // recursively copies every earlier receipt for each moving animal.
   const temporal = world.experience?.temporal;
   if (temporal && !isImmutableData(readOnlyDraftView(temporal)))
-    world.experience!.temporal = immutableDraftSnapshot({
+    world.experience!.temporal = sealNativeContainer({
       ...readOnlyDraftView(temporal),
       actors: sealNativeOwners(world, 'temporal', temporal.actors, reuse),
     });
   const received = world.receivedValues;
   if (received && !isImmutableData(readOnlyDraftView(received)))
-    world.receivedValues = immutableDraftSnapshot({
+    world.receivedValues = sealNativeContainer({
       ...readOnlyDraftView(received),
       sources: sealNativeOwners(world, 'received', received.sources, reuse),
     });
@@ -726,6 +739,7 @@ export function finishWorld(
   const publishChanges = captureSemanticChanges(world);
   const publishSensory = captureSensoryChanges(world);
   const publishRoots = captureRootIndex(world);
+  const publishSpatial = captureSpatialCandidateIndex(world);
   const publishReservations = captureReservationIndex(world);
   const publishContributionSources = captureContributionSources(world);
   const publishContributionResidency = captureContributionResidency(world);
@@ -851,6 +865,7 @@ export function finishWorld(
     publishChanges(result, result !== base);
     publishSensory(result);
     publishRoots(result, entityIds);
+    publishSpatial(result, entityIds);
     publishReservations(result);
     publishContributionSources(result, entityIds);
     publishContributionResidency(result, entityIds);

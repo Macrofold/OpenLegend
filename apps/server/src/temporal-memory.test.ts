@@ -248,7 +248,7 @@ describe('bounded personal temporal storage', () => {
     expect(JSON.stringify(remaining)).toContain('A later independent statement.');
   });
 
-  it('retires an explicit old prefix under recent-recording pressure without replacing retained movement with endpoints', async () => {
+  it('retains the newest whole operations under recent-recording pressure without replacing movement with endpoints', async () => {
     const { store, service } = await setup();
     await useNearCampSight(service);
     await editWorld(service, (world) => {
@@ -262,6 +262,7 @@ describe('bounded personal temporal storage', () => {
         person = entityGet(world.entities, NPC_ID)!;
       setSpatialPosition(world, observer, { x: 1, y: 0, z: 2 }, 'terrain');
       setSpatialPosition(world, person, { x: 3, y: 0, z: 2 }, 'terrain');
+      world.simTime += routineSensePolicy(world, observer).sight?.seconds ?? 0;
       initializePerception(world, []);
       const [key] = Object.entries(
         world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
@@ -269,6 +270,7 @@ describe('bounded personal temporal storage', () => {
       expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
     });
     const subject = currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.exposure.episodeId,
+      firstAt = service.world.simTime,
       installed = selectedTemporalPolicy(service.world);
     // This receiving operation includes nineteen held-field confirmations and one
     // position change. Fit several whole operations while still forcing a prefix
@@ -280,7 +282,9 @@ describe('bounded personal temporal storage', () => {
     try {
       for (const x of [4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4, 5, 6, 7, 8])
         await editWorld(service, (world) => {
-          world.simTime += 0.25;
+          world.simTime +=
+            routineSensePolicy(world, entityGet(world.entities, PLAYER_ID)!).sight?.detailSeconds ??
+            0;
           setSpatialPosition(
             world,
             entityGet(world.entities, NPC_ID)!,
@@ -309,7 +313,7 @@ describe('bounded personal temporal storage', () => {
       expect(positions).not.toContain(3);
       expect(
         service.world.experience!.temporal!.actors[PLAYER_ID]!.releasedThrough,
-      ).toBeGreaterThanOrEqual(0.25);
+      ).toBeGreaterThanOrEqual(firstAt);
       expect(
         Number(
           (await store.db

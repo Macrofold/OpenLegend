@@ -316,7 +316,9 @@ export class AiDirector {
     current: (ticket) => this.service.isDurable(ticket),
   });
   private readonly thoughtInputs = new ThoughtIntakeInputs();
-  private thoughtInputWorld?: WorldState;
+  // This is only a reusable intake baseline. Waiting providers must not pin an
+  // obsolete world; collection falls back to the existing complete reconciliation.
+  private thoughtInputWorld?: WeakRef<WorldState>;
   private thoughtInputScope?: string;
   private discoveryRecovery?: { world: WeakRef<WorldState>; generation: string };
   private readonly unsubscribe: () => void;
@@ -4084,8 +4086,9 @@ export class AiDirector {
       this.thoughtInputs.reset(this.service.generation);
       timedSync('cognition.thoughtRefresh', () => {
         try {
+          const previous = this.thoughtInputWorld?.deref();
           if (
-            this.thoughtInputWorld === readWorld() &&
+            previous === readWorld() &&
             this.thoughtInputScope === generation &&
             Object.isFrozen(readWorld())
           ) {
@@ -4097,8 +4100,8 @@ export class AiDirector {
             this.thoughtWork.refreshAffected(readWorld(), this.thoughtInputs.pendingExposure());
           } else {
             const affected =
-              this.thoughtInputWorld && this.thoughtInputScope === generation
-                ? this.thoughtInputs.affected(this.thoughtInputWorld, readWorld())
+              previous && this.thoughtInputScope === generation
+                ? this.thoughtInputs.affected(previous, readWorld())
                 : undefined;
             if (affected) {
               for (const id of this.thoughtInputs.pendingExposure()) affected.add(id);
@@ -4111,7 +4114,7 @@ export class AiDirector {
                 generation,
               );
             }
-            this.thoughtInputWorld = readWorld();
+            this.thoughtInputWorld = new WeakRef(readWorld());
             this.thoughtInputScope = generation;
           }
         } finally {

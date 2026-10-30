@@ -1,6 +1,11 @@
 import { temporalChunkReceipts, temporalChunkReferences } from './temporal-frames.js';
-import { describe, expect, it, vi } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as worldComposition from './world-composition.js';
+import {
+  chronologyAttentionPolicy,
+  useChronologySightTiming,
+} from '../../../tests/fixtures/perception.js';
+
 import {
   clearConvexView,
   clearSegment,
@@ -40,6 +45,12 @@ import {
   validateReceivedGeometryState,
 } from './received-geometry.js';
 
+beforeEach(() => {
+  vi.spyOn(worldComposition, 'selectedAttentionPolicy').mockReturnValue(
+    chronologyAttentionPolicy(),
+  );
+});
+
 function surface(id: string, minX: number, maxX: number, y: number): WalkableSurface {
   return {
     id,
@@ -75,6 +86,7 @@ function map(surfaces = [surface('terrain', 0, 4, 0)]): SpatialMap {
 }
 function worldWithGeometry(value: SpatialMap, position = { x: 1, y: 0, z: 1 }) {
   const world = createWorld();
+  useChronologySightTiming(world);
   world.map = value;
   const observer = entityGet(world.entities, PLAYER_ID)!;
   observer.placement = worldPlacement(position, null);
@@ -255,6 +267,7 @@ function nativeScene(
   const world = createWorld(117),
     player = entityGet(world.entities, PLAYER_ID)!,
     prototype = entityGet(world.entities, NPC_ID)!;
+  useChronologySightTiming(world);
   world.map = value;
   world.entities = emptyEntities();
   player.actor!.attentionCapacity = capacity;

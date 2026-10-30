@@ -1,3 +1,4 @@
+import { routineSensePolicy } from '../../../packages/domain/src/perception.js';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
@@ -345,7 +346,8 @@ describe('bounded received situation', () => {
         ([, candidate]) => candidate.sourceId === 'edge-person-0',
       )![0];
       expect(setAttentionFocus(draft, NPC_ID, [key])).toBe(true);
-      draft.simTime = 15;
+      draft.simTime +=
+        routineSensePolicy(draft, entityGet(draft.entities, NPC_ID)!).sight?.seconds ?? 0;
       setSpatialPosition(
         draft,
         entityGet(draft.entities, 'edge-person-0')!,

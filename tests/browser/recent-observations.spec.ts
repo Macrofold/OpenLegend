@@ -12,6 +12,7 @@ import {
   assemblySpatialMap,
 } from '@open-legend/domain';
 import { canStand } from '@open-legend/spatial';
+import { routineSensePolicy } from '../../packages/domain/src/perception.js';
 import { closeTestDatabases, readConfig, testRepository } from '../fixtures/database.js';
 import { editWorld } from '../fixtures/service.js';
 import { blockExternalBrowserRequests, enterGame } from '../fixtures/browser.js';
@@ -65,7 +66,7 @@ test('the player can read and search actual recent observations on desktop and a
       ).toBe(true);
       other.name = 'Unseen private name';
       initializePerception(world, []);
-      world.simTime += 15;
+      world.simTime += routineSensePolicy(world, player).sight?.seconds ?? 0;
       setSpatialPosition(world, other, point, point.surfaceId, {
         continuity: 'physical',
       });
