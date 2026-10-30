@@ -1,0 +1,57 @@
+[
+ {
+  "id": "r12-sway",
+  "cid": "R12-L1",
+  "name": "Sway",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "sway",
+  "frames": [
+   "r12-t1-sway-rest@1x.png",
+   "r12-t1-sway-sweep@1x.png",
+   "r12-t1-sway-stop@1x.png",
+   "r12-t1-sway-after@1x.png",
+   "r12-t1-sway-corner@1x.png",
+   "r12-t5-sway-rest@1x.png",
+   "r12-t5-sway-sweep@1x.png",
+   "r12-t5-sway-stop@1x.png",
+   "r12-t5-sway-after@1x.png",
+   "r12-t5-sway-corner@1x.png"
+  ],
+  "added": "r12-t1-light-added.png",
+  "moving_light": "r12-t1-moving-light.png",
+  "before": "r12-t1-round11-rest@1x.png",
+  "before_label": "Round 11's spreading glow",
+  "change": "The lantern light stays at the top. Soft pools of light spread through the jade shift a little while you move the pointer, the deeper ones against your movement and the nearer ones with it, and settle back when you stop.",
+  "good": "Answers movement, not the pointer's place: the light shifts while you move and settles when you stop, and nothing follows the pointer.",
+  "watch": "The pools make the light a little uneven across the panel even when nothing moves."
+ },
+ {
+  "id": "r12-parallax",
+  "cid": "R12-L2",
+  "name": "Parallax",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "parallax",
+  "frames": [
+   "r12-t1-parallax-rest@1x.png",
+   "r12-t1-parallax-sweep@1x.png",
+   "r12-t1-parallax-stop@1x.png",
+   "r12-t1-parallax-after@1x.png",
+   "r12-t1-parallax-corner@1x.png"
+  ],
+  "added": "r12-t1-light-added.png",
+  "moving_light": "r12-t1-moving-light.png",
+  "before": "r12-t1-round11-rest@1x.png",
+  "before_label": "Round 11's spreading glow",
+  "change": "The lantern light stays at the top. Soft pools of light spread through the jade shift slightly with where the pointer is, the deeper ones away from it and the nearer ones toward it, as if you looked into the slab from another angle.",
+  "good": "Like looking into the slab from another angle: the pools shift slightly with where the pointer is, the deeper ones away from it.",
+  "watch": "It depends on where the pointer rests, so a pointer left in a corner leaves the light shifted."
+ }
+]

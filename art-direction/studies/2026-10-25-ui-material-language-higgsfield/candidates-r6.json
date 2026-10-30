@@ -1,0 +1,57 @@
+[
+ {
+  "id": "r6-z1",
+  "cid": "HIG-R6-Z1",
+  "name": "Jade Monolith",
+  "stem": "r6-z01-jade-monolith-clean",
+  "before": "r4-w01-jade-lode-clean",
+  "before_label": "Jade Lode, the design it varies",
+  "change": "One enormous block of dark nephrite jade: broad, smooth planes and a few large fracture faces, faint natural veining and three long gold veins.",
+  "good": "The calmest surface that is still clearly jade: big, quiet planes that read as the corner of a much larger stone, with the gold kept to a few long, sweeping veins. Closest to Jade Lode in colour.",
+  "watch": "Its faint pale veining forms a soft network that, up close, can look a little like the veins of a leaf."
+ },
+ {
+  "id": "r6-z2",
+  "cid": "HIG-R6-Z2",
+  "name": "Carved Jade Plinth",
+  "stem": "r6-z02-carved-jade-plinth-clean",
+  "before": "r4-w01-jade-lode-clean",
+  "before_label": "Jade Lode, the design it varies",
+  "change": "A fragment of an ancient monument carved from jade: massive, softly worn blocks with chiselled faces and a stepped top edge.",
+  "good": "The most literal \"part of a larger structure\": matte, quiet blocks with clean planes, and the darkest, least distracting jade at 1:1.",
+  "watch": "The carved band of leaves asked for around the bezel did not appear. Its blocky outline is the most architectural of the five, though it stays as compact as Jade Lode."
+ },
+ {
+  "id": "r6-z3",
+  "cid": "HIG-R6-Z3",
+  "name": "Jade Ledge",
+  "stem": "r6-z03-jade-ledge-clean",
+  "before": "r4-w01-jade-lode-clean",
+  "before_label": "Jade Lode, the design it varies",
+  "change": "The end of a ledge of layered jade bedrock: a few broad strata running diagonally from the corner, with fracture faces and weathered lips.",
+  "good": "Reads as the edge of a cliff that continues off-screen; the diagonal strata give the corner a strong, natural direction.",
+  "watch": "Its fracture faces keep a fine granular grain, so it is the most textured of the five, though at a much larger scale than Jade Lode."
+ },
+ {
+  "id": "r6-z4",
+  "cid": "HIG-R6-Z4",
+  "name": "River Jade",
+  "stem": "r6-z04-river-jade-clean",
+  "before": "r4-w01-jade-lode-clean",
+  "before_label": "Jade Lode, the design it varies",
+  "change": "A huge water-worn jade boulder: smooth, softly undulating polished surfaces, long highlights and translucent edges.",
+  "good": "The least texture of all: smooth, polished jade with slow, cloudy depth and only two thin gold veins, like real worked nephrite.",
+  "watch": "The polish and long highlights can read a little wet or glossy up close."
+ },
+ {
+  "id": "r6-z5",
+  "cid": "HIG-R6-Z5",
+  "name": "Jade Seam",
+  "stem": "r6-z05-jade-seam-clean",
+  "before": "r4-w01-jade-lode-clean",
+  "before_label": "Jade Lode, the design it varies",
+  "change": "A broad seam of polished jade running through dark grey-green bedrock, with gold ore lines where the jade meets the rock.",
+  "good": "Two materials tell a clear geological story: the smooth jade band frames the portrait while the matte bedrock reads as the larger rock face.",
+  "watch": "There is less jade overall, and the grey bedrock has its own rough grain, which brings back some texture around the jade."
+ }
+]

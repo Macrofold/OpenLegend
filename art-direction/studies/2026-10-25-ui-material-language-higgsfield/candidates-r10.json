@@ -1,0 +1,78 @@
+[
+ {
+  "id": "r10-t1",
+  "cid": "R10-T1",
+  "name": "Jade Cloud",
+  "glass": "g5",
+  "stone": "t1",
+  "grain": "natural",
+  "light": "refract",
+  "scene": "r10-t1-scene@1x.png",
+  "close": [
+   "r10-t1-grain-1@2x.png",
+   "r10-t1-grain-2@2x.png"
+  ],
+  "before": "r9-t1-scene@1x.png",
+  "before_label": "Round 9's Jade Cloud with its even grain (in the round 9 archive)",
+  "change": "Milky clouds inside the glass in a few soft patches, like the clouds in nephrite jade; a fine grain gathers inside the clouds, with a few dark mineral specks.",
+  "good": "The grain now gathers inside the milky clouds, fine and uneven, the way inclusions make up the clouds in real jade, and the clear glass between the clouds stays clean.",
+  "watch": "On a 1x screen the grain inside the clouds reads slightly sandy; the few dark specks are almost too faint to find."
+ },
+ {
+  "id": "r10-t5",
+  "cid": "R10-T5",
+  "name": "Mottled Slab",
+  "glass": "g5",
+  "stone": "t5",
+  "grain": "natural",
+  "light": "refract",
+  "scene": "r10-t5-scene@1x.png",
+  "close": [
+   "r10-t5-grain-1@2x.png",
+   "r10-t5-grain-2@2x.png"
+  ],
+  "before": "r9-t5-scene@1x.png",
+  "before_label": "Round 9's Mottled Slab with its even grain (in the round 9 archive)",
+  "change": "Small lighter and darker mottles in broad patches, like serpentine or soapstone; fine dark grain gathers in the dark mottles and paler grain in the light ones.",
+  "good": "Fine dark grain makes up the dark mottles and a paler grain the light ones, so the stone looks made of grains rather than dusted with them.",
+  "watch": "The dark mottles read a little stronger than in round 9, and up close their grain can look like camera noise."
+ },
+ {
+  "id": "r10-l1",
+  "cid": "R10-L1",
+  "name": "Through the jade",
+  "glass": "g5",
+  "stone": "t1",
+  "light": "through",
+  "frames": [
+   "r10-t1-light-through-rest@1x.png",
+   "r10-t1-light-through-left@1x.png",
+   "r10-t1-light-through-right@1x.png"
+  ],
+  "added": "r10-t1-light-added.png",
+  "before": "r10-t1-light-round9-rest@1x.png",
+  "before_label": "Round 9's plain soft glow",
+  "change": "The glow shines through the glass and stone: brighter where the jade is milky or light, dimmer through dark mottles and uneven frosting, so it changes shape as it moves.",
+  "good": "The glow catches in the milky clouds and light mottles and dims through dark mottles and uneven frosting, so it changes shape as it moves, like light inside the stone.",
+  "watch": "Subtle: its brightness varies between about 0.7 and 1.3 times round 9's glow, so in a still view it can pass for the old light."
+ },
+ {
+  "id": "r10-l2",
+  "cid": "R10-L2",
+  "name": "Refracted",
+  "glass": "g5",
+  "stone": "t1",
+  "light": "refract",
+  "frames": [
+   "r10-t1-light-refract-rest@1x.png",
+   "r10-t1-light-refract-left@1x.png",
+   "r10-t1-light-refract-right@1x.png"
+  ],
+  "added": "r10-t1-light-added.png",
+  "before": "r10-t1-light-round9-rest@1x.png",
+  "before_label": "Round 9's plain soft glow",
+  "change": "Also bent by the glass: soft veins of brighter light inside the glow move less far than the glow, so it ripples and reshapes as it travels.",
+  "good": "Closest to the request: soft veins of brighter light inside the glow move more slowly than the glow, so it ripples and reshapes as it travels.",
+  "watch": "The most visible change to the light; stronger, its veins would read as smoke."
+ }
+]

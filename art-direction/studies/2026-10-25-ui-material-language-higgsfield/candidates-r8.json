@@ -1,0 +1,72 @@
+[
+ {
+  "id": "r8-c1",
+  "cid": "R8-C1",
+  "name": "Corner Strike",
+  "glass": "g5",
+  "cracks": "c1",
+  "scene": "r8-c1-scene@1x.png",
+  "close": "r8-c1-close@2x.png",
+  "before": "r8-none-scene@1x.png",
+  "before_label": "Clear Slab without cracks",
+  "change": "A chipped corner with cracks spreading from it and short arcs around the strike; two light hairlines elsewhere.",
+  "good": "The clearest story: something struck the corner and the glass held. The corner carries the drama while the rest of the slab stays calm, with two faint hairlines.",
+  "watch": "The busiest corner; on a smaller window the fracture takes a larger share of the panel."
+ },
+ {
+  "id": "r8-c2",
+  "cid": "R8-C2",
+  "name": "Hairline Age",
+  "glass": "g5",
+  "cracks": "c2",
+  "scene": "r8-c2-scene@1x.png",
+  "close": "r8-c2-close@2x.png",
+  "before": "r8-none-scene@1x.png",
+  "before_label": "Clear Slab without cracks",
+  "change": "A small chipped corner and three or four long, faint hairlines, like old glass under strain.",
+  "good": "The quietest: the slab looks old and strained rather than broken, and the long hairlines catch the light as the pointer moves.",
+  "watch": "Faint at normal size, and the long hairlines are the most likely to pass behind text, though lightly."
+ },
+ {
+  "id": "r8-c3",
+  "cid": "R8-C3",
+  "name": "Split Corners",
+  "glass": "g5",
+  "cracks": "c3",
+  "scene": "r8-c3-scene@1x.png",
+  "close": "r8-c3-close@2x.png",
+  "before": "r8-none-scene@1x.png",
+  "before_label": "Clear Slab without cracks",
+  "change": "Fractures at two opposite corners, one larger than the other, and a hairline between them.",
+  "good": "Frames the panel: damage at two opposite corners balances the slab, like a pane that was dropped.",
+  "watch": "Twice the corner detail; on every main window it could start to read as a pattern."
+ },
+ {
+  "id": "r8-c4",
+  "cid": "R8-C4",
+  "name": "Edge Chips",
+  "glass": "g5",
+  "cracks": "c4",
+  "scene": "r8-c4-scene@1x.png",
+  "close": "r8-c4-close@2x.png",
+  "before": "r8-none-scene@1x.png",
+  "before_label": "Clear Slab without cracks",
+  "change": "A chipped corner and two small chips knocked from the rim, each with a short crack running in; one hairline.",
+  "good": "Wear on the thick rim rather than a broken pane: small nicks with short cracks, the least dramatic damage.",
+  "watch": "The small chips can read as marks or notches at a glance, and they sit along edges where titles and buttons go."
+ },
+ {
+  "id": "r8-c5",
+  "cid": "R8-C5",
+  "name": "Deep Fracture",
+  "glass": "g5",
+  "cracks": "c5",
+  "scene": "r8-c5-scene@1x.png",
+  "close": "r8-c5-close@2x.png",
+  "before": "r8-none-scene@1x.png",
+  "before_label": "Clear Slab without cracks",
+  "change": "Fewer, longer breaks that run deep into the slab, seen as soft fracture planes inside the glass.",
+  "good": "The most like a real break in thick glass: long, nearly straight fractures with soft planes inside the slab, and the strongest flash as the light moves.",
+  "watch": "The largest marks: its long cracks reach well into the panel, behind its content."
+ }
+]

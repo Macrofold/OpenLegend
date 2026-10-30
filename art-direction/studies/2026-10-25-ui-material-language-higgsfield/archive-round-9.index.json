@@ -1,0 +1,286 @@
+{
+ "release": {
+  "owner": {
+   "kind": "collection",
+   "id": "openlegend-curated"
+  },
+  "assetId": "ui-material-language-higgsfield-2026-10-25-round-9",
+  "revisionId": "sha256-abfc773a394f6572d0f570acf209995d8ef36528affbeaf1ecce7ff8113ccf0c",
+  "manifestSha256": "e119e4fc973cf72827a86ee8d7cb6e8294eb7d35e86b714e532d220d4714f4ab"
+ },
+ "files": {
+  "boards/round9.html": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "72352a1513b0224dace3ff880174e164674435950a8b375580edc33220883ac5",
+   "bytes": 20098,
+   "mediaType": "text/html; charset=utf-8"
+  },
+  "build_board9.py": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "264a77b11d19bddf6a6c80ebbb447bbb6b406644c8478368a04e26aaf735b1d3",
+   "bytes": 9905,
+   "mediaType": "text/x-python; charset=utf-8"
+  },
+  "directions-r9.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "774770a38d11a4baf1aa02aa1a40704e27e157bfd8a86ccfec0f76d8ed759fe5",
+   "bytes": 2089,
+   "mediaType": "application/json"
+  },
+  "glass/assets/fill-main@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2e34f309ebd2bbae58ca3892b385927db8c4a05273054f80cc2e71bd382a0d11",
+   "bytes": 53555,
+   "mediaType": "image/png"
+  },
+  "glass/assets/fill-main@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "59969c5065f7e35825d04ffc9b565fe1ba55859662a62afae5245026041217b3",
+   "bytes": 179848,
+   "mediaType": "image/png"
+  },
+  "glass/assets/lantern-glint@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "cd17d9588aa7092019e484e71de72cc5784076e9c6a03489624ba4fb9d561cca",
+   "bytes": 1969,
+   "mediaType": "image/png"
+  },
+  "glass/assets/lantern-glint@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "431f00e72ff333d78a2d3b359f8153c29bdb2c732083608ff79a68d1938b18ec",
+   "bytes": 6806,
+   "mediaType": "image/png"
+  },
+  "glass/assets/world.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "28c2b2e975867183d36839b98ca3e875a271b0e9196e8d458d77489d34408d7b",
+   "bytes": 1258836,
+   "mediaType": "image/png"
+  },
+  "glass/glass-lab.html": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2a6ffd8614286d430fb9c5b6dccb212e128e398c17a2d88489afcb5a554f0ca8",
+   "bytes": 7187,
+   "mediaType": "text/html; charset=utf-8"
+  },
+  "glass/glass.js": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "06d2ce38772c0dbed122ae9e8f54b173b7cd45da540500a031c499a4f2ab8590",
+   "bytes": 4490,
+   "mediaType": "text/javascript; charset=utf-8"
+  },
+  "glass/light.js": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "70303109306f68213b4f259ecb3621e3a71765c7a314428c9849eae10caa3144",
+   "bytes": 4329,
+   "mediaType": "text/javascript; charset=utf-8"
+  },
+  "glass/render.mjs": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "02bb80f5cd04b9e62e0bf07accd0abb62ecad1c1eb6d42457cebd581d5905f91",
+   "bytes": 4487,
+   "mediaType": "text/javascript; charset=utf-8"
+  },
+  "glass/slab.css": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "69e8a3a62aaebc952b4306c4b3597b914ae79538fde4db7a53ea57018e0adce1",
+   "bytes": 1236,
+   "mediaType": "text/css; charset=utf-8"
+  },
+  "glass/stone.js": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0c575ef3a471889d44ceeebe929e7e4b75106daa38655c8a7dcfdaaecaedd6eb",
+   "bytes": 4468,
+   "mediaType": "text/javascript; charset=utf-8"
+  },
+  "glass/variants.js": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "64d89f08e5892d2f94f7a32f5a1d3fd95fd4a7257b6a991eb7f5156d2aa481ef",
+   "bytes": 6968,
+   "mediaType": "text/javascript; charset=utf-8"
+  },
+  "outputs/r9-none-scene@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "10b5f4b8f71176d643dd38df1aca6dd285d0d0011809a65b06c227d82b836f0d",
+   "bytes": 1129926,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t1-close@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0d468c5eb46533dd45f4abaec9f26750193396f220ab78d88cfc6b6a75835337",
+   "bytes": 284990,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t1-light-left@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2a4aae6b4ccfc7260f15a8cf4a21533841d6cd201e238c55d414fe07294f0971",
+   "bytes": 386666,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t1-light-rest@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b61300090c7e686565a66f653ae9bb8a1dd849412de51e180b1a10cebf13432f",
+   "bytes": 445871,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t1-light-right@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ca225532376c676fe116a84e4a0c4f3c77606377b9e08a77bf04c7cdd3657625",
+   "bytes": 398069,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t1-resize@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3bc57c29516270c49250f023f033ce3ed1e99321ec19917c7babd3ed99316574",
+   "bytes": 1447811,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t1-scene@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "84b022b9287855042f86969d6e13ef2341cb8b37c8830d9bda7a3969069c69c0",
+   "bytes": 1346938,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t1-variety@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4816d8983267d49e16c689f252e56887ff7406bc1502b26bca0ccf5c2768bddd",
+   "bytes": 1274986,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t2-close@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6b1d16fad9e8705af34b8f5283ea2db21054cb9638ccaa7aadd56cbffb487919",
+   "bytes": 135791,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t2-resize@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2beb12627442a531e3559ef7e91de16df110e7d530e3ce2777ba763a5ffeeddf",
+   "bytes": 1320330,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t2-scene@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d15e786ac146e72c5515d9494da2a94d72cb83c121bf1409e6b9e1a9df4718a4",
+   "bytes": 1170432,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t2-variety@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "47d17aa59c8f4a13c896efa9596ee8ddd333714f500853cda809cae46f1f38ef",
+   "bytes": 1071616,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t3-close@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "30dbc0cc00c207fd4b6a6307ee4f3dffadeb1c716da03870a256cd99065fc6a9",
+   "bytes": 322877,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t3-resize@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "cbc58c7449cefb03e5c9436b015a7c501bff43b1eaac78d4e0aecddb70e51c67",
+   "bytes": 1495432,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t3-scene@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "cb740249c1e2c544464957ec9aa2f205a533405c3bf847e2e0ed9639421b98ae",
+   "bytes": 1415267,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t3-variety@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8edc6bb9b6bee56e4ef0ba2ce7b4e8d6bb068a32af64ec680bd0937c7b294bd3",
+   "bytes": 1347145,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t4-close@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0fc1c3e44c7a1cf1d2f71cf8cc3c1d534fcd6d30bdede19bdb099a8db49a38c4",
+   "bytes": 171223,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t4-resize@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "65e9b80cd50a0811f63d58e70833943d45e86b1b000617d2662f69ab331f6368",
+   "bytes": 1319843,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t4-scene@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "66fc5753d8d6d6a3ef258bb4de07ee02180afc56ebd1ad8ab2a74110a25b06b8",
+   "bytes": 1194142,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t4-variety@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "45c70e030557543b2ae8818f2697dcc2ad3e8c29ac0c8e641338451c48c65edf",
+   "bytes": 1084907,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t5-close@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f0db37ba5f93d2c7dc52f85543207e69822b672e53aa8041708614352fb5b1be",
+   "bytes": 272428,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t5-resize@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c32e52acfbfd5419b16c2ee867001428af7240a547857bba4f3a7bd1c26cb84b",
+   "bytes": 1424557,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t5-scene@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ab743513b04a370136d73170813d860b7f2b7e3b17060c0101525a645e77b74f",
+   "bytes": 1325430,
+   "mediaType": "image/png"
+  },
+  "outputs/r9-t5-variety@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "3a035075a7af3ac6e52ff33cc1b5a6d4fa1669cb5b47826db70e23709c39f3b0",
+   "bytes": 1248839,
+   "mediaType": "image/png"
+  }
+ }
+}

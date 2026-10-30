@@ -1,0 +1,180 @@
+[
+ {
+  "id": "r14-round13",
+  "cid": "R14-L0",
+  "name": "Round 13",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "round13",
+  "frames": [
+   "r14-t1-round13-big-rest@1x.png",
+   "r14-t1-round13-big-left@1x.png",
+   "r14-t1-round13-big-right@1x.png",
+   "r14-t1-round13-journal-rest@1x.png",
+   "r14-t1-round13-journal-left@1x.png",
+   "r14-t1-round13-journal-right@1x.png",
+   "r14-t1-round13-camp-rest@1x.png",
+   "r14-t1-round13-camp-left@1x.png",
+   "r14-t1-round13-camp-right@1x.png",
+   "r14-t5-round13-big-rest@1x.png",
+   "r14-t5-round13-big-left@1x.png",
+   "r14-t5-round13-big-right@1x.png",
+   "r14-t5-round13-journal-rest@1x.png",
+   "r14-t5-round13-journal-left@1x.png",
+   "r14-t5-round13-journal-right@1x.png",
+   "r14-t5-round13-camp-rest@1x.png",
+   "r14-t5-round13-camp-left@1x.png",
+   "r14-t5-round13-camp-right@1x.png"
+  ],
+  "shift": [
+   "r14-t1-big-shift.png",
+   "r14-t1-journal-shift.png",
+   "r14-t1-camp-shift.png"
+  ],
+  "before": "r14-t1-still-big-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Round 13's Parallax, which Mike liked. The pools shift with where the pointer is, the deeper ones away from it and the nearer ones toward it; the deepest travel about a quarter of a panel from edge to edge, so on small panels the shift is slight.",
+  "good": "The version Mike liked: on the large window the pools slide clearly as the pointer crosses it.",
+  "watch": "On small panels the shift is a fraction of the large window's, so it barely shows."
+ },
+ {
+  "id": "r14-parallax",
+  "cid": "R14-L1",
+  "name": "Small panels too",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "parallax",
+  "frames": [
+   "r14-t1-parallax-big-rest@1x.png",
+   "r14-t1-parallax-big-left@1x.png",
+   "r14-t1-parallax-big-right@1x.png",
+   "r14-t1-parallax-journal-rest@1x.png",
+   "r14-t1-parallax-journal-left@1x.png",
+   "r14-t1-parallax-journal-right@1x.png",
+   "r14-t1-parallax-camp-rest@1x.png",
+   "r14-t1-parallax-camp-left@1x.png",
+   "r14-t1-parallax-camp-right@1x.png"
+  ],
+  "shift": [
+   "r14-t1-big-shift.png",
+   "r14-t1-journal-shift.png",
+   "r14-t1-camp-shift.png"
+  ],
+  "before": "r14-t1-still-big-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Round 13's Parallax, but on a panel smaller than the large window the pools shift as far at its edges as on the large window, so small panels show it too: the deepest pools travel about a quarter of the large window from edge to edge.",
+  "good": "Round 13's strength on the large window, and small panels now shift as far at their edges, so every panel shows it.",
+  "watch": "On a small panel the light moves further for the same movement of the pointer, so it can feel livelier there."
+ },
+ {
+  "id": "r14-strong",
+  "cid": "R14-L2",
+  "name": "1.5×",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "strong",
+  "frames": [
+   "r14-t1-strong-big-rest@1x.png",
+   "r14-t1-strong-big-left@1x.png",
+   "r14-t1-strong-big-right@1x.png",
+   "r14-t1-strong-journal-rest@1x.png",
+   "r14-t1-strong-journal-left@1x.png",
+   "r14-t1-strong-journal-right@1x.png",
+   "r14-t1-strong-camp-rest@1x.png",
+   "r14-t1-strong-camp-left@1x.png",
+   "r14-t1-strong-camp-right@1x.png"
+  ],
+  "shift": [
+   "r14-t1-big-shift.png",
+   "r14-t1-journal-shift.png",
+   "r14-t1-camp-shift.png"
+  ],
+  "before": "r14-t1-still-big-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Small panels too, half as strong again: the deepest pools travel about a third of the large window from edge to edge.",
+  "good": "Easier to see everywhere while still calm: the deepest pools travel about a third of the large window.",
+  "watch": "A small step up; the difference from Small panels too shows most on the large window."
+ },
+ {
+  "id": "r14-stronger",
+  "cid": "R14-L3",
+  "name": "2×",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "stronger",
+  "frames": [
+   "r14-t1-stronger-big-rest@1x.png",
+   "r14-t1-stronger-big-left@1x.png",
+   "r14-t1-stronger-big-right@1x.png",
+   "r14-t1-stronger-journal-rest@1x.png",
+   "r14-t1-stronger-journal-left@1x.png",
+   "r14-t1-stronger-journal-right@1x.png",
+   "r14-t1-stronger-camp-rest@1x.png",
+   "r14-t1-stronger-camp-left@1x.png",
+   "r14-t1-stronger-camp-right@1x.png",
+   "r14-t5-stronger-big-rest@1x.png",
+   "r14-t5-stronger-big-left@1x.png",
+   "r14-t5-stronger-big-right@1x.png",
+   "r14-t5-stronger-journal-rest@1x.png",
+   "r14-t5-stronger-journal-left@1x.png",
+   "r14-t5-stronger-journal-right@1x.png",
+   "r14-t5-stronger-camp-rest@1x.png",
+   "r14-t5-stronger-camp-left@1x.png",
+   "r14-t5-stronger-camp-right@1x.png"
+  ],
+  "shift": [
+   "r14-t1-big-shift.png",
+   "r14-t1-journal-shift.png",
+   "r14-t1-camp-shift.png"
+  ],
+  "before": "r14-t1-still-big-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Small panels too, twice as strong: the deepest pools travel about half the large window from edge to edge.",
+  "good": "Clearly visible: the deepest pools travel about half the large window, so the slab looks deep.",
+  "watch": "On small panels, pools slide out of view and others come in, so the light changes more than it shifts."
+ },
+ {
+  "id": "r14-strongest",
+  "cid": "R14-L4",
+  "name": "3×",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "strongest",
+  "frames": [
+   "r14-t1-strongest-big-rest@1x.png",
+   "r14-t1-strongest-big-left@1x.png",
+   "r14-t1-strongest-big-right@1x.png",
+   "r14-t1-strongest-journal-rest@1x.png",
+   "r14-t1-strongest-journal-left@1x.png",
+   "r14-t1-strongest-journal-right@1x.png",
+   "r14-t1-strongest-camp-rest@1x.png",
+   "r14-t1-strongest-camp-left@1x.png",
+   "r14-t1-strongest-camp-right@1x.png"
+  ],
+  "shift": [
+   "r14-t1-big-shift.png",
+   "r14-t1-journal-shift.png",
+   "r14-t1-camp-shift.png"
+  ],
+  "before": "r14-t1-still-big-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Small panels too, three times as strong: the deepest pools travel nearly three-quarters of the large window from edge to edge.",
+  "good": "Unmistakable: the light swims through the slab as the pointer crosses it.",
+  "watch": "Can feel busy and draw the eye from the text; on small panels the light is different at each edge."
+ }
+]

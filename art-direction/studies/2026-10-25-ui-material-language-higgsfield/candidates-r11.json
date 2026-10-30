@@ -1,0 +1,78 @@
+[
+ {
+  "id": "r11-spread",
+  "cid": "R11-L1",
+  "name": "Spreading glow",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "spread",
+  "frames": [
+   "r11-t1-spread-rest@1x.png",
+   "r11-t1-spread-moving@1x.png",
+   "r11-t1-spread-right@1x.png",
+   "r11-t1-spread-left@1x.png",
+   "r11-t5-spread-rest@1x.png",
+   "r11-t5-spread-moving@1x.png",
+   "r11-t5-spread-right@1x.png",
+   "r11-t5-spread-left@1x.png"
+  ],
+  "added": "r11-t1-light-added.png",
+  "glow_only": "r11-t1-glow-only.png",
+  "before": "r11-t1-still-rest@1x.png",
+  "before_label": "The lantern light alone, through the jade",
+  "change": "The lantern light stays at the top. A diffuse glow inside the jade stretches toward the pointer: its soft parts reach different distances at different speeds, so it lengthens as you move and gathers back into a soft cloud when you leave.",
+  "good": "Most like light moving inside the stone: it stretches toward the pointer and gathers back, and the lantern light never moves.",
+  "watch": "On small panels it has little room to stretch, so there it behaves like the drifting glow."
+ },
+ {
+  "id": "r11-drift",
+  "cid": "R11-L2",
+  "name": "Drifting glow",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "drift",
+  "frames": [
+   "r11-t1-drift-rest@1x.png",
+   "r11-t1-drift-moving@1x.png",
+   "r11-t1-drift-right@1x.png",
+   "r11-t1-drift-left@1x.png"
+  ],
+  "added": "r11-t1-light-added.png",
+  "glow_only": "r11-t1-glow-only.png",
+  "before": "r11-t1-still-rest@1x.png",
+  "before_label": "The lantern light alone, through the jade",
+  "change": "The lantern light stays at the top. A diffuse, uneven glow inside the jade drifts a third of the way toward the pointer as one, starting and settling slowly.",
+  "good": "The simplest: one soft, uneven cloud of light that drifts and settles slowly.",
+  "watch": "It moves as one piece, so it can still feel like a light pulled toward the pointer, only slower and softer."
+ },
+ {
+  "id": "r11-deep",
+  "cid": "R11-L3",
+  "name": "Deep glow",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "deep",
+  "frames": [
+   "r11-t1-deep-rest@1x.png",
+   "r11-t1-deep-moving@1x.png",
+   "r11-t1-deep-right@1x.png",
+   "r11-t1-deep-left@1x.png"
+  ],
+  "added": "r11-t1-light-added.png",
+  "glow_only": "r11-t1-glow-only.png",
+  "before": "r11-t1-still-rest@1x.png",
+  "before_label": "The lantern light alone, through the jade",
+  "change": "The lantern light stays at the top. A broad, faint glow deep in the jade shifts only a fifth of the way toward the pointer, slowly.",
+  "good": "The calmest: a broad glow that barely shifts, like light far inside the slab.",
+  "watch": "Easy to miss; most of what it adds is a slightly brighter middle."
+ }
+]

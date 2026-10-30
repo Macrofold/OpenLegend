@@ -1,0 +1,151 @@
+[
+ {
+  "id": "r15-bezel-glass",
+  "cid": "R15-B1",
+  "name": "Glass bevel",
+  "part": "bezel",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain, default",
+   "t5": "no grain, secondary"
+  },
+  "light": "parallax",
+  "frames": [
+   "r15-t1-glass-top@2x.png",
+   "r15-t1-glass-corner@2x.png",
+   "r15-t1-glass-small@2x.png",
+   "r15-t1-glass-soft-top@2x.png",
+   "r15-t1-glass-soft-corner@2x.png",
+   "r15-t1-glass-soft-small@2x.png"
+  ],
+  "sheets": [
+   "r15-scenes.png",
+   "r15-t1-edges.png",
+   "r15-t1-small.png"
+  ],
+  "before": "r15-t1-r14-top@2x.png",
+  "before_label": "Round 14's edge and glint",
+  "change": "The glass bevelled down to the panel's edge over 5 px, as on the kit's frame: the upper face catches the light, the lower one falls into shade, with a thin highlight along the top edge, all continuous around the rounded corners.",
+  "good": "Reads as the edge of a slab of glass, like the kit's frame, while staying continuous and silver/olive as decided for ordinary panels.",
+  "watch": "At 1x on small panels the bevel is only a few pixels, so it reads mostly as a lit top edge and a shaded bottom one."
+ },
+ {
+  "id": "r15-bezel-deep",
+  "cid": "R15-B2",
+  "name": "Deep bevel",
+  "part": "bezel",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain, default",
+   "t5": "no grain, secondary"
+  },
+  "light": "parallax",
+  "frames": [
+   "r15-t1-deep-lantern-top@2x.png",
+   "r15-t1-deep-lantern-corner@2x.png",
+   "r15-t1-deep-lantern-small@2x.png",
+   "r15-t1-deep-top@2x.png",
+   "r15-t1-deep-corner@2x.png",
+   "r15-t1-deep-small@2x.png"
+  ],
+  "sheets": [
+   "r15-scenes.png",
+   "r15-t1-edges.png",
+   "r15-t1-small.png"
+  ],
+  "before": "r15-t1-r14-top@2x.png",
+  "before_label": "Round 14's edge and glint",
+  "change": "A wider, 8 px bevel with a steeper slope, so it reads as thick cut glass: a brighter upper face and a darker lower one.",
+  "good": "The clearest bevel: thick cut glass that holds its shape on small panels too.",
+  "watch": "Heavier: the brighter upper face can compete with the top light, and it takes 3 px more of the panel's edge."
+ },
+ {
+  "id": "r15-top-lantern",
+  "cid": "R15-L1",
+  "name": "Lantern glow",
+  "part": "top",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain, default",
+   "t5": "no grain, secondary"
+  },
+  "light": "parallax",
+  "frames": [
+   "r15-t1-glass-top@2x.png",
+   "r15-t1-glass-corner@2x.png",
+   "r15-t1-glass-small@2x.png",
+   "r15-t1-deep-lantern-top@2x.png",
+   "r15-t1-deep-lantern-corner@2x.png",
+   "r15-t1-deep-lantern-small@2x.png"
+  ],
+  "sheets": [
+   "r15-scenes.png",
+   "r15-t1-edges.png",
+   "r15-t1-small.png"
+  ],
+  "before": "r15-t1-r14-top@2x.png",
+  "before_label": "Round 14's edge and glint",
+  "change": "A warm spot where the lantern catches the top of the bevel, fading along it, a small glow around it that reaches just above the panel, and a soft beam falling into the glass.",
+  "good": "A light rather than lines: one warm spot on the top edge, a small glow and a soft beam into the glass, as in the kit's study panels.",
+  "watch": "The beam adds a faint vertical streak behind the text near the top centre of tall panels."
+ },
+ {
+  "id": "r15-top-soft",
+  "cid": "R15-L2",
+  "name": "Soft glow",
+  "part": "top",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain, default",
+   "t5": "no grain, secondary"
+  },
+  "light": "parallax",
+  "frames": [
+   "r15-t1-glass-soft-top@2x.png",
+   "r15-t1-glass-soft-corner@2x.png",
+   "r15-t1-glass-soft-small@2x.png",
+   "r15-t1-deep-top@2x.png",
+   "r15-t1-deep-corner@2x.png",
+   "r15-t1-deep-small@2x.png"
+  ],
+  "sheets": [
+   "r15-scenes.png",
+   "r15-t1-edges.png",
+   "r15-t1-small.png"
+  ],
+  "before": "r15-t1-r14-top@2x.png",
+  "before_label": "Round 14's edge and glint",
+  "change": "A broader, gentler lantern: a long sheen along the top of the bevel, a wider, fainter glow and a wider beam.",
+  "good": "Gentler: the lantern's light spreads along the whole top edge.",
+  "watch": "Spread along the edge, it reads more like a lit rim than a lamp, closer to round 14's line."
+ },
+ {
+  "id": "r15-colour-g5",
+  "cid": "R15-C1",
+  "name": "Kit colour",
+  "part": "colour",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain, default",
+   "t5": "no grain, secondary"
+  },
+  "light": "parallax",
+  "frames": [
+   "r15-kit-scene@1x.png",
+   "r15-t1-r14-scene@1x.png",
+   "r15-t1-glass-scene@1x.png",
+   "r15-t5-r14-scene@1x.png",
+   "r15-t5-glass-scene@1x.png"
+  ],
+  "sheets": [
+   "r15-scenes.png",
+   "r15-t1-edges.png",
+   "r15-t1-small.png"
+  ],
+  "before": "r15-t1-r14-scene@1x.png",
+  "before_label": "Round 14's colour",
+  "change": "Clear Slab darker and a little more opaque, with fainter highlights, so that with its stone and light the panels measure the kit glass's colour over the same scene.",
+  "good": "Matches the original kit panels: over the same scene the glass measures within about one level of the kit's.",
+  "watch": "Darker glass also makes the stone's clouds and the light pools a little less visible than in round 14."
+ }
+]

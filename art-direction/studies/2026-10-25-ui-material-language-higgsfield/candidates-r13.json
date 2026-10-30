@@ -1,0 +1,178 @@
+[
+ {
+  "id": "r13-sway",
+  "cid": "R13-L1",
+  "name": "Sway",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "sway",
+  "frames": [
+   "r13-t1-sway-rest@1x.png",
+   "r13-t1-sway-left@1x.png",
+   "r13-t1-sway-sweep@1x.png",
+   "r13-t1-sway-stop@1x.png",
+   "r13-t1-sway-back@1x.png",
+   "r13-t1-sway-after@1x.png",
+   "r13-t1-sway-corner@1x.png",
+   "r13-t5-sway-rest@1x.png",
+   "r13-t5-sway-left@1x.png",
+   "r13-t5-sway-sweep@1x.png",
+   "r13-t5-sway-stop@1x.png",
+   "r13-t5-sway-back@1x.png",
+   "r13-t5-sway-after@1x.png",
+   "r13-t5-sway-corner@1x.png"
+  ],
+  "added": "r13-t1-light-added.png",
+  "moving_light": "r13-t1-moving-light.png",
+  "before": "r13-t1-still-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Round 12's sway. The lantern light stays at the top. Soft pools of light spread through the jade shift a little while you move the pointer, the deeper ones against your movement and the nearer ones with it, and settle back within about a second when you stop.",
+  "good": "Round 12's sway, which Mike liked: the light shifts while you move and settles within about a second when you stop, and nothing follows the pointer.",
+  "watch": "The pools make the light a little uneven across the panel even when nothing moves."
+ },
+ {
+  "id": "r13-longsway",
+  "cid": "R13-L2",
+  "name": "Long sway",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "longsway",
+  "frames": [
+   "r13-t1-longsway-rest@1x.png",
+   "r13-t1-longsway-left@1x.png",
+   "r13-t1-longsway-sweep@1x.png",
+   "r13-t1-longsway-stop@1x.png",
+   "r13-t1-longsway-back@1x.png",
+   "r13-t1-longsway-after@1x.png",
+   "r13-t1-longsway-corner@1x.png"
+  ],
+  "added": "r13-t1-light-added.png",
+  "moving_light": "r13-t1-moving-light.png",
+  "before": "r13-t1-still-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Like Sway, but the pools travel about half as far again and take about two seconds to settle, like light sloshing through the jade.",
+  "good": "Easier to notice: the pools travel about half as far again and drift back over about two seconds, like light sloshing in the jade.",
+  "watch": "It keeps moving for a while after the pointer stops, and its larger layers need about twice Sway's graphics memory."
+ },
+ {
+  "id": "r13-swing",
+  "cid": "R13-L3",
+  "name": "Swing",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "swing",
+  "frames": [
+   "r13-t1-swing-rest@1x.png",
+   "r13-t1-swing-left@1x.png",
+   "r13-t1-swing-sweep@1x.png",
+   "r13-t1-swing-stop@1x.png",
+   "r13-t1-swing-back@1x.png",
+   "r13-t1-swing-after@1x.png",
+   "r13-t1-swing-corner@1x.png"
+  ],
+  "added": "r13-t1-light-added.png",
+  "moving_light": "r13-t1-moving-light.png",
+  "before": "r13-t1-still-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Like Sway, but when you stop, the pools swing back past their place and return, like light in a liquid, before they settle.",
+  "good": "The most physical: when you stop, the pools swing back past their place and return once, like light in a liquid.",
+  "watch": "The swing is extra movement after you stop, which can draw the eye while you read."
+ },
+ {
+  "id": "r13-parallax",
+  "cid": "R13-L4",
+  "name": "Parallax",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "parallax",
+  "frames": [
+   "r13-t1-parallax-rest@1x.png",
+   "r13-t1-parallax-left@1x.png",
+   "r13-t1-parallax-sweep@1x.png",
+   "r13-t1-parallax-stop@1x.png",
+   "r13-t1-parallax-back@1x.png",
+   "r13-t1-parallax-after@1x.png",
+   "r13-t1-parallax-corner@1x.png",
+   "r13-t5-parallax-rest@1x.png",
+   "r13-t5-parallax-left@1x.png",
+   "r13-t5-parallax-sweep@1x.png",
+   "r13-t5-parallax-stop@1x.png",
+   "r13-t5-parallax-back@1x.png",
+   "r13-t5-parallax-after@1x.png",
+   "r13-t5-parallax-corner@1x.png"
+  ],
+  "added": "r13-t1-light-added.png",
+  "moving_light": "r13-t1-moving-light.png",
+  "before": "r13-t1-still-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Round 12's parallax, three times as strong. The pools shift with where the pointer is, the deeper ones away from it and the nearer ones toward it, as if you looked into the slab from another angle.",
+  "good": "Now visible: the pools slide as the pointer crosses the panel, the deeper ones away from it, like a change of viewing angle.",
+  "watch": "It depends on where the pointer rests, so a pointer left near an edge leaves the light shifted, and the light also shifts when the pointer only passes over a panel."
+ },
+ {
+  "id": "r13-deep",
+  "cid": "R13-L5",
+  "name": "Deep parallax",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "deep",
+  "frames": [
+   "r13-t1-deep-rest@1x.png",
+   "r13-t1-deep-left@1x.png",
+   "r13-t1-deep-sweep@1x.png",
+   "r13-t1-deep-stop@1x.png",
+   "r13-t1-deep-back@1x.png",
+   "r13-t1-deep-after@1x.png",
+   "r13-t1-deep-corner@1x.png"
+  ],
+  "added": "r13-t1-light-added.png",
+  "moving_light": "r13-t1-moving-light.png",
+  "before": "r13-t1-still-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Three layers of pools at three depths, the deepest moving furthest away from the pointer and the nearest, smaller pools toward it, so the slab looks thicker.",
+  "good": "The strongest sense of depth: three layers slide at different rates, the deepest furthest, so the slab looks thick.",
+  "watch": "Busier light, with more and smaller pools, and its three layers need about twice Sway's graphics memory."
+ },
+ {
+  "id": "r13-mixed",
+  "cid": "R13-L6",
+  "name": "Parallax with sway",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain",
+   "t5": "no grain"
+  },
+  "light": "mixed",
+  "frames": [
+   "r13-t1-mixed-rest@1x.png",
+   "r13-t1-mixed-left@1x.png",
+   "r13-t1-mixed-sweep@1x.png",
+   "r13-t1-mixed-stop@1x.png",
+   "r13-t1-mixed-back@1x.png",
+   "r13-t1-mixed-after@1x.png",
+   "r13-t1-mixed-corner@1x.png"
+  ],
+  "added": "r13-t1-light-added.png",
+  "moving_light": "r13-t1-moving-light.png",
+  "before": "r13-t1-still-rest@1x.png",
+  "before_label": "Top light only",
+  "change": "Both at once: the pools shift with where the pointer is, about half as much as Parallax, and sway while it moves, as in Sway.",
+  "good": "Both at once: a gentle shift with where the pointer is, plus Sway's response to movement.",
+  "watch": "Two motions together are harder to read than either alone."
+ }
+]

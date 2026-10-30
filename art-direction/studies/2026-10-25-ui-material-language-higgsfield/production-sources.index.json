@@ -5,428 +5,575 @@
    "id": "openlegend-curated"
   },
   "assetId": "ui-gildmoss-character-panels-production-sources",
-  "revisionId": "sha256-cbfaa7e00ed6f7229b7cb3604862897bfa04c9108265d0e3f775a07ba884babd",
-  "manifestSha256": "976192c30c0696ee5314f16d7a4b333e6d75b80d6f266d0d28eb67d837e26d8f"
+  "revisionId": "sha256-d5786c7b68098806986c062f3540c17c6401f2f7a981705162df96615a3d7eaa",
+  "manifestSha256": "69f77b062b69b38b3ae968b250c474613368995eac4f10a6a3f4f8643408afd5"
  },
  "files": {
   "README.md": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "54fad6f54357b2f99afff4ed3d8dd471a578d5d45bf60b1e88e7233c3dccc692",
-   "bytes": 10696,
+   "sha256": "26083f37c2b02598a532b080c4a1497b97af78364185000fb5268a3dbc21f909",
+   "bytes": 10905,
    "mediaType": "text/markdown; charset=utf-8"
+  },
+  "inspection/character-panels/carved-jade-plinth-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "123ebb923a734361aa6fef21ca2984b4c150ba03aaed301b80a0ce7227b0e20c",
+   "bytes": 216837,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/carved-jade-plinth-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ac9dd1c5e920cb22fb406085aed7f67caa4b58fb2eb431e21ae96ee9a06ed06c",
+   "bytes": 765407,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/carved-jade-plinth-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1e87255ff5ad25b6f82bfb420525bec36205e55ba99fc0bf5fcafa70819f1ba5",
+   "bytes": 210795,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/carved-jade-plinth-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4f4c76cc6efae93462e61680c64eab0dd707cce71132e7757e15c661f52637bb",
+   "bytes": 744793,
+   "mediaType": "image/png"
   },
   "inspection/character-panels/gold-quartz-slate-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "b8340e0ed8245b122b21d0f6a9a6eee90795b18cda8a272a967ae7b9002ae487",
-   "bytes": 245072,
+   "sha256": "346853eb54a954b2a97b95c5a2b3a56a7f683da12ed2239047ee96064dc1b5b2",
+   "bytes": 245125,
    "mediaType": "image/png"
   },
   "inspection/character-panels/gold-quartz-slate-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "b9ebcbf032f705ba38f413e0070cba1ea92c7a83dfe0d3bf2ab57cef1772ad92",
-   "bytes": 875184,
+   "sha256": "1e8b0df6382479664126253b44bf7a79f1e2a97152a7d7d4695d7c01fa04168d",
+   "bytes": 875005,
    "mediaType": "image/png"
   },
   "inspection/character-panels/gold-quartz-slate-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "2b4d2cf13f267ebccae173612dd6bd438a0f764f383e0d608e4f0211cf064c17",
-   "bytes": 239241,
+   "sha256": "bbab85faaa25d0f9584cf55728c7ae84f66e7c0d294969437f3e12dfe890fc4b",
+   "bytes": 239211,
    "mediaType": "image/png"
   },
   "inspection/character-panels/gold-quartz-slate-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "05147a4b2875cba82f729aaf02c77a29984864a70c1d722bef13737ac1a28a9c",
-   "bytes": 857140,
+   "sha256": "3a533c7176112b76e6b321e8492c2f0f3ce453a7da74c6ccd328b982bed18376",
+   "bytes": 857076,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-ledge-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "60a8ef6165170ac6788277886b1393ed2ef4718e3856115115f6895d7f66a91b",
+   "bytes": 242751,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-ledge-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e09738ebc703a93da7bae5647e2118278a3915636ea2a1a8048c874437791a8c",
+   "bytes": 860476,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-ledge-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "64438407992b74ecd8a5dd187bffe24def201a222c3a3a6e89f642971e98eead",
+   "bytes": 237226,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-ledge-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c3acbca25d4d6c394a654d3518e5a06df969971ab764580920136f8971911ae4",
+   "bytes": 841874,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-lode-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "277289a4d307982cc8fa396fb0c1e97fa52f60e1013a90f6d1df2bd5a6995d06",
-   "bytes": 222680,
+   "sha256": "cd0c880f8ace412de147e6e2e5a7a0ea30c7cd4bd1ca47102c94f5ccb94ef193",
+   "bytes": 222605,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-lode-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "dac95e0bf47272e65c741509116f3f1fb7576b6f0ea74d0f7ea996fe48d1c6f2",
-   "bytes": 799225,
+   "sha256": "226e1bf7c20d487d87b9d7f4bd02b0335654806a626b7fce0c358e4bfa7b3b3b",
+   "bytes": 799151,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-lode-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "0b340643ced4889c787fb7211894d2fcce1c5c5048329b8d9ace7fc72f16bc38",
-   "bytes": 216804,
+   "sha256": "68554c0ee727ce3c625f6b6389d0de79e70a0fb0a5ce694ac67d1e16aaee27ff",
+   "bytes": 216870,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-lode-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "24e09c960d51f451f01944e4d1de2217f3a430d88026d3e1b457e7c3a4a45cb5",
-   "bytes": 779745,
+   "sha256": "68d6c74e34f94e2ae764f0685c6912bcec112f4d1a1e9d1679df2a05f2a98bc9",
+   "bytes": 779703,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-medallion-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "ad1414ce3f0f1feefa8f897c88c7c7e730d4ec4180e0ce7d6548c8b630ef1647",
-   "bytes": 180744,
+   "sha256": "aad328222a93a1f15e47ee64de84c7a378ddf255c0b02b2ca88c72af88010d29",
+   "bytes": 180721,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-medallion-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "8d65d517295ee62c1d62c70b427bc0efba4bbaf9559124b8822506d09b625adf",
-   "bytes": 630032,
+   "sha256": "07ad04c8508a4734dbcefc2ab261ff89403abb613b0f301580eee1ab3f999f43",
+   "bytes": 630026,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-medallion-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "1760a36268c0aeeda641dedfdb90f5ab4b632bbcaf5ead15b4a699e483acc6f1",
-   "bytes": 175961,
+   "sha256": "a1f48c5649cc5c92c34101ebfdddca4530ea629ed711a75aa35b04ee4a6eb036",
+   "bytes": 175968,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-medallion-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "10a1e199b66b22c4d4630b58680c5dc62366e9a2a1f9a6f28096b1b3a3ee5d29",
-   "bytes": 612174,
+   "sha256": "ad56a3f21b811cc96e02583ab2b8e990d924695578574041fd4989e4165f60b3",
+   "bytes": 612224,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-monolith-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "21ce09b6205177676612088047cd965afeeefe4da40526ec061f6c389298969a",
+   "bytes": 217357,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-monolith-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "41ac12e835d919c7b7a0bd68cbf696436f59bd097f1793826bb194b44e0e007f",
+   "bytes": 772795,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-monolith-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "339d7781651fb662d6d2a9a762ee83b4dec3479f8c2928bd578f33b91e6c94ad",
+   "bytes": 211897,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-monolith-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a61fdc47ea30053644bfe6c118c8ee398e79b766c056c0e74c03f0c9df708437",
+   "bytes": 753365,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-seam-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b28d65cf46a5174fc61e035f5e44706262a1b1511cc765b03b695a8a8aed711e",
+   "bytes": 214355,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-seam-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "69a288adcbeedaec50a23f7f8f03147e249609a361bc49dccf3075540d7cdd13",
+   "bytes": 753141,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-seam-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "414cb13b829760bb83bafcbd9c4c6c71da62e66b931051f1a8665a046221834f",
+   "bytes": 208397,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/jade-seam-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e3dfecfd1602247244f39ab9af082b4d237c853e8820deb6d2fde78f11312316",
+   "bytes": 733012,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-set-band-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "6dae98f26c1be629b9e9f079ca47b1dd062ecad2fddd1d7ba475bbee9931c37d",
-   "bytes": 224099,
+   "sha256": "563625e134a722fddc94d61169bce63b52524ae70c6857b5cb2c6aef1e380208",
+   "bytes": 224122,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-set-band-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "d5ccd9b7e49a8a433944ec990eca0d26b1f1b83c28ea8cd8cec4d61282e4654f",
-   "bytes": 801744,
+   "sha256": "8e7537ca7f00d6698680fa1b63eb432bef2bb1e1485ee270439d1acbe79a5a0d",
+   "bytes": 801845,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-set-band-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "973c3460cfe64cfb312fa08433a579f96aeb99088af31a0b9b3216be8aed9eb9",
-   "bytes": 218398,
+   "sha256": "c55baf75eaeb3767934fa0ebeb3713256582dfdcb3520b73b6a82257ddd9eb8e",
+   "bytes": 218374,
    "mediaType": "image/png"
   },
   "inspection/character-panels/jade-set-band-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "5b2a15c97b771a620a8efdd5e10b3597e8cd25a9b34ecb6d7e83d1d17718d825",
-   "bytes": 782620,
+   "sha256": "530e7ccf7cbdf3a5c2a8e47d65e46d1e27e6bf52bdc666a07fc152ecd5138612",
+   "bytes": 782595,
    "mediaType": "image/png"
   },
   "inspection/character-panels/laurel-ring-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "3f65caea97e46564ccc4a0af2d784b16fbee2cf63935941a7a71f9394c9019f6",
-   "bytes": 227946,
+   "sha256": "a2afa1805bf4648ee2f8c15a08a8a3b082b347b4c80a50ba71d9a9c181a47135",
+   "bytes": 228057,
    "mediaType": "image/png"
   },
   "inspection/character-panels/laurel-ring-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "22f531d2ba8a1791f4c624b93ed89917231f0fc758d35df539664fff7566dcbe",
-   "bytes": 825075,
+   "sha256": "72a85f5dd8605da6aba014cdd1a83e5c49868b1ca1a4d88c01a9258a5f59984f",
+   "bytes": 824974,
    "mediaType": "image/png"
   },
   "inspection/character-panels/laurel-ring-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "f2c339fae6ce5c176a38ccf1eb1daa334af27563ddb52496241c6fd54b49b4ba",
-   "bytes": 222468,
+   "sha256": "fff0626f33be2dbdbaadfcb372d6552e8643c412e3f987fcf06bc6356529a733",
+   "bytes": 222576,
    "mediaType": "image/png"
   },
   "inspection/character-panels/laurel-ring-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "5109d759e579e7db9d2b88c84aacb6075aa4bf8450b4874bd99dc29024773e72",
-   "bytes": 807316,
+   "sha256": "f3ea3da96ea18dcd19293190ad1c6bf6972d180bf4a44acef3aaf91816c62718",
+   "bytes": 807364,
    "mediaType": "image/png"
   },
   "inspection/character-panels/malachite-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "5c051860e6da16f16f32873909184bec968e9690afb7f36d38ec22f9fd1a145f",
-   "bytes": 215727,
+   "sha256": "79238b10e9a2fd5555abec6c4bbcecc1eb05975eec6f6d012fcb9b026b23f7e0",
+   "bytes": 215754,
    "mediaType": "image/png"
   },
   "inspection/character-panels/malachite-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "1ec9afa317b7fc313dc0fc97e2eaf77c44e5ca45dce45c0d04e6ee404061d589",
-   "bytes": 773873,
+   "sha256": "5bab6a05c4faf7524022eba87e9aa3f5887fa93dd82bf8540c9b14d1ff642c35",
+   "bytes": 773802,
    "mediaType": "image/png"
   },
   "inspection/character-panels/malachite-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "c36bd70d44d1c95f2f9c7c9c71ad291d4c532b7692edbe11a52c98774f36f988",
-   "bytes": 209810,
+   "sha256": "c522e49aa6b7ca696fda43aeed63efdea494e2815c772e1f2f217bb987a16212",
+   "bytes": 209854,
    "mediaType": "image/png"
   },
   "inspection/character-panels/malachite-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "379d322181e6939727395afe2a274fe3c5ec2b3bd61dfd577f2aafdd1f2a81e1",
-   "bytes": 752740,
+   "sha256": "edac3bd90155d4c9bc40d3a1becfd6d3af855de4618be5cd922336f982364d03",
+   "bytes": 752583,
    "mediaType": "image/png"
   },
   "inspection/character-panels/mossbound-ruin-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "0f35a81cbfe37976101985ad4f72e1e90979a1bba15be1bd830984e331eae29a",
-   "bytes": 151620,
+   "sha256": "90529543a21b94e20b2e6bcf795769a70b24eb79144fcbffe2d3c4027e733dcb",
+   "bytes": 151557,
    "mediaType": "image/png"
   },
   "inspection/character-panels/mossbound-ruin-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "c2e8d30f2b7d289a5ca83f4fdc9b97e8a3a86fe33df7b0e9d6918e4f86329e39",
-   "bytes": 538806,
+   "sha256": "9d925bac5e5a5404e10af6228f30e7a2e1737010388d8dc3bb4567c9b617a6d2",
+   "bytes": 538873,
    "mediaType": "image/png"
   },
   "inspection/character-panels/mossbound-ruin-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "09983c99114af5bf12c8a00f54d54f92bd843c86cc1a5ca49bbcf7fb565842c3",
-   "bytes": 146711,
+   "sha256": "d966f8576b7fda9c82c6836746066dc48c1c8429d47d4941d9f0dfec718741f9",
+   "bytes": 146720,
    "mediaType": "image/png"
   },
   "inspection/character-panels/mossbound-ruin-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "ce05c311e4f243337e3fd1995a4a7905495ff69bba1efcd072176f80319d0192",
-   "bytes": 522259,
+   "sha256": "af905d27fcdbff230e08e2bfa7ca6400a6ea6a4c4207b71c6b917ecccf8d9714",
+   "bytes": 522325,
    "mediaType": "image/png"
   },
   "inspection/character-panels/nacre-shore-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "13b152fd2865e8ce4013ec5794815059991178b4baa0d925581debec997d6175",
-   "bytes": 171333,
+   "sha256": "a0869520e763290aaf081e55e45c30d177ff8727aaf6ce47506bc3a5a5121697",
+   "bytes": 171310,
    "mediaType": "image/png"
   },
   "inspection/character-panels/nacre-shore-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "421e6fa0d645bb79934b3957dbeb7fa6a3f40ba3c72ae48edb9123be4d060a00",
-   "bytes": 613625,
+   "sha256": "6c95fae458364c15c4c12db0a4783e7020df69ec411dafa8267bb19a7f42d36c",
+   "bytes": 613526,
    "mediaType": "image/png"
   },
   "inspection/character-panels/nacre-shore-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "1a46db86622c4366595a08636b4fedfd1386068e917feafb3754d3b0fdea932f",
-   "bytes": 167394,
+   "sha256": "3b524a86df735574174bc89fc14087fb2b8833df73e0bfed63ac9bc72acd3d3b",
+   "bytes": 167362,
    "mediaType": "image/png"
   },
   "inspection/character-panels/nacre-shore-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "4649a36adf3ee612fb316fafa806d228e0a704c2ef365c9178a6d34865fa7dc1",
-   "bytes": 598844,
+   "sha256": "a62eee6ce0852bc7cedd46adbd903071dfaa4904dac9d196b1b0bc93f651c768",
+   "bytes": 598867,
    "mediaType": "image/png"
   },
   "inspection/character-panels/overgrown-relic-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "65362e9ecad433062737b1d99e87ccd93cb8250ddf66035a58f244424263342f",
-   "bytes": 186741,
+   "sha256": "733e0858cb9919d239abd547e087cd6ef86a3cfabc65776705158b8b83479fbe",
+   "bytes": 186796,
    "mediaType": "image/png"
   },
   "inspection/character-panels/overgrown-relic-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "46743883637b46e9ec9b62da4f287c4d3c5070d8ef038728127f29c528441ebb",
-   "bytes": 676394,
+   "sha256": "82deba51bdafe50238ab2e440a7bb6916bcff83daf3ddc08156b1bb6de7879c6",
+   "bytes": 676296,
    "mediaType": "image/png"
   },
   "inspection/character-panels/overgrown-relic-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "968729bfa65df4fb88305ff09253378ef8cc091529cf24b95e78a633648bab47",
-   "bytes": 181837,
+   "sha256": "8830909ea5bb36859b504783112b8ba594d22e91e98700fab04be54d4ec8b0d5",
+   "bytes": 181829,
    "mediaType": "image/png"
   },
   "inspection/character-panels/overgrown-relic-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "0999d5944627ebd4d5b44074b4fa7ce29519be3c4539c56ad258bed5c1bdcf1c",
-   "bytes": 660492,
+   "sha256": "5cfb67744e3f523d6e615c99afd06e82c290696c04577e17594cf6514f5b2bb8",
+   "bytes": 660518,
    "mediaType": "image/png"
   },
   "inspection/character-panels/river-granite-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "c5815867e79ee84fcae1c9cdde04e5f92f12d6b6e5c09764ea9b898c1f009ec1",
-   "bytes": 211730,
+   "sha256": "a93bfecf0844a92da716f6c2fc19c0799714e647ccd98e965b40db91578af3ff",
+   "bytes": 211655,
    "mediaType": "image/png"
   },
   "inspection/character-panels/river-granite-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "ad1299993abfa1663a87533449c37f13d58cfc9c71912d24b294443bbf2cc0da",
-   "bytes": 775266,
+   "sha256": "8a3a6cc1dbeb060630e7c5e620218382179ce3bb43670248a7fab10b3050f95f",
+   "bytes": 775293,
    "mediaType": "image/png"
   },
   "inspection/character-panels/river-granite-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "5b692167ec9d41b19a95dbc84447f9bf6ebafe8c6d091c9ce50326417f43836b",
-   "bytes": 206438,
+   "sha256": "1836081a1973d44df65133b53f24234e8131211989de03c4c979272fe778ec52",
+   "bytes": 206448,
    "mediaType": "image/png"
   },
   "inspection/character-panels/river-granite-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "3c5384ee52f6e77e4ae96ddfd04d0fb597114f3b529cbfb5a9e73ffff892a938",
-   "bytes": 757343,
+   "sha256": "76df9f05f6f5c2d768118cdff176b7ccc52e6ddc0a2b496059bcd6f72297f94c",
+   "bytes": 757248,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-jade-bright@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "03fa5743a549f0ae8e161ae8109a5fa703896eb8c5880a848df23c4cd120b626",
+   "bytes": 231201,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-jade-bright@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f6187338767f5b0e30830c722aa3f225b48fb84aefc3a2f4df1680b57a823eca",
+   "bytes": 817927,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-jade-dark@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e1583bab2b2acfa201d07cbcbb02d1fcabb4f7bf85279b2b032bbba9dc9f261c",
+   "bytes": 225098,
+   "mediaType": "image/png"
+  },
+  "inspection/character-panels/river-jade-dark@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ec35e1d997000396a78c0302b316edf36b4f9154782611dd5ff26737d540b905",
+   "bytes": 794080,
    "mediaType": "image/png"
   },
   "inspection/character-panels/river-nacre-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "742b77b40989e3b642a18afee1d6126284afe74487c8268f8f37bd5382848ef8",
-   "bytes": 134203,
+   "sha256": "35e8912984d37959fee88d53564db4c2b9c21d2ba9bf4355c49a3222c1e94b49",
+   "bytes": 134242,
    "mediaType": "image/png"
   },
   "inspection/character-panels/river-nacre-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "eadbc8feb02757c59b476f38f02335c16edd80abc5fc19c10527b58ab8e8d384",
-   "bytes": 469347,
+   "sha256": "a8a66682712ffddb1ef2fca869b1cb3df4d8dc2a39c766cd6b1e15510d86f003",
+   "bytes": 469400,
    "mediaType": "image/png"
   },
   "inspection/character-panels/river-nacre-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "ac0b7f7a129df7313886e9cf01fd48c11b68d366261171dbaeebc7ef95bc6dad",
-   "bytes": 130128,
+   "sha256": "28367eb2e5990907198dbec4b9397d2087f016f60bced6903241eecf3cc3d22e",
+   "bytes": 130165,
    "mediaType": "image/png"
   },
   "inspection/character-panels/river-nacre-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "f1024395beac5319bbc103e39d0abdea10c040a4e808fa0473c5e161946aedf4",
-   "bytes": 453164,
+   "sha256": "2ac235de5d0c9b7f0c4d1bcd0b423ae35695a6dcf3b962df78f2dca5cebe30fc",
+   "bytes": 453133,
    "mediaType": "image/png"
   },
   "inspection/character-panels/rootbound-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "d1d2d84b13be5d3e03fd14be7cc5c98fb1804016d0ec8c492de330d0c0c58e90",
-   "bytes": 124890,
+   "sha256": "28cea883ad25a67460963b8258544c2f413f9df8b3b04dd3089c710ae73e0ef9",
+   "bytes": 124828,
    "mediaType": "image/png"
   },
   "inspection/character-panels/rootbound-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "bc763b344c225ee5b3be20961e196f0ed428b21bf78141b44ad75797848d58ac",
-   "bytes": 447486,
+   "sha256": "28b59243edb5f78fbb6b2a48b5284524fce7e81b500be669979dd5d230aa3960",
+   "bytes": 447672,
    "mediaType": "image/png"
   },
   "inspection/character-panels/rootbound-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "01d8a9c95a61727b1d118e01b5c183bacd711168de4055642349040eaae2dd4b",
-   "bytes": 121410,
+   "sha256": "15f6b0dc5a8a3c68038e715f5098d020899e5679f7fffe9fea4bd48c33c53afb",
+   "bytes": 121342,
    "mediaType": "image/png"
   },
   "inspection/character-panels/rootbound-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "fa7858de104a8bca4196a3331deb985d30f48f4fe4c832574df617825d27e902",
-   "bytes": 435533,
+   "sha256": "e7d18f73cb8ce7a0ecc3ef8569c787fc4d503babff42f3e64691d4acd958d9fb",
+   "bytes": 435534,
    "mediaType": "image/png"
   },
   "inspection/character-panels/star-iron-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "e377e47ae351a4f3f9c341847efc7ce0a15b93da428442ad74ed3298b191d5a6",
-   "bytes": 231130,
+   "sha256": "09bef67b2f4b46efa215a42be144ff8118a26fbe37afeeab34a70ce805061d63",
+   "bytes": 231183,
    "mediaType": "image/png"
   },
   "inspection/character-panels/star-iron-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "6485c5efee78ddf0268223a4da6550b35c32bd3d7b76c3e38b869bc22c4c4eb3",
-   "bytes": 842696,
+   "sha256": "f7a3099b1bfa88937a7cfc9c86899c5ac9ff454d02e557beedd218ba5e4ccdc3",
+   "bytes": 842598,
    "mediaType": "image/png"
   },
   "inspection/character-panels/star-iron-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "82e334f098d47fef79cb2459c4f50fce1abbc3554fa62c0fd541aff413f9234f",
-   "bytes": 224809,
+   "sha256": "774ba7a8c4b3558d5467274e854da735d94f13b85f42aeaae287c9c02cdb89c2",
+   "bytes": 224823,
    "mediaType": "image/png"
   },
   "inspection/character-panels/star-iron-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "6c52ff8319253281483b8a59353a07a1f00f0f9a149d74d04d3f7899fe0dd08c",
-   "bytes": 820368,
+   "sha256": "9318a28057b68acfb15aa4e919f43aad01fec7887ec3912fd446e774dad362b3",
+   "bytes": 820408,
    "mediaType": "image/png"
   },
   "inspection/character-panels/verde-antico-bright@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "3d3b67a11c547a312bd8e330d7901987b9279fef06e28e77dade48b3fa475cce",
-   "bytes": 175508,
+   "sha256": "0f3df7a36f33df64c557c14a7faa83140c8802474249637db16b2e0a4ce95362",
+   "bytes": 175500,
    "mediaType": "image/png"
   },
   "inspection/character-panels/verde-antico-bright@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "3d44d76fd711c209dbb1c94e73d2376cde0636da00579704173a23436fdf07ad",
-   "bytes": 619027,
+   "sha256": "e97560c9661d8a6fe4d741a174b084116efd7ce882c0075255ffba10612b2b19",
+   "bytes": 618883,
    "mediaType": "image/png"
   },
   "inspection/character-panels/verde-antico-dark@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "017008a0e370977287253a2ae9e172b18e9908f8b611e8897460712542afa2cd",
-   "bytes": 171942,
+   "sha256": "79e885183a5c39fc2d86273c97600ee5184489338e3eb2bd8b4b482a2739315e",
+   "bytes": 171915,
    "mediaType": "image/png"
   },
   "inspection/character-panels/verde-antico-dark@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "c3c0ede75890858d209383e3ce74402f5eaf27e2122d5f7d32adda13fd48e9e8",
-   "bytes": 603803,
+   "sha256": "6036a45f77d9d2d38627bd885f59e2c321f68b14a8bafd8ba17cbb1751f53ff1",
+   "bytes": 603804,
    "mediaType": "image/png"
   },
   "inspection/fidelity/fidelity-1.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "f61f4c7d5c541e3305f3131be25dbca74a3e7779b0c06caaa638694a300fbf26",
-   "bytes": 2193960,
+   "sha256": "2f3e88a457f578f147a3ef28ccfd84186a5660f83952bc6407f4cd0eac22a351",
+   "bytes": 2193885,
    "mediaType": "image/png"
   },
   "inspection/fidelity/fidelity-2.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "0253b8ab6e6aa8089f870d77b0c43f9d55a998720ffadc13ed70b9784dc748ba",
-   "bytes": 2842591,
+   "sha256": "2e6f3d575d16b1eeb6606eb0382df9ab3da9a0824a539ddb43ca891d94748f1c",
+   "bytes": 2842666,
+   "mediaType": "image/png"
+  },
+  "inspection/fidelity/fidelity-3.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "250d911f3692e4b302bcc86c15f7f8f075313206d7321a3740b4859c7fc98fa6",
+   "bytes": 2067815,
    "mediaType": "image/png"
   },
   "inspection/fidelity/glass-luma.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "9db596fd3621f2aaf87a84086322abf168717d9f035bf910d717fc589f3587c8",
-   "bytes": 896,
+   "sha256": "2417c0a7e4ca762d1fcb61c25314c135651edbd20076f84feb7ba1656667a40b",
+   "bytes": 1216,
    "mediaType": "application/json"
   },
   "inspection/fidelity/kit-bare.png": {
@@ -488,15 +635,15 @@
   "inspection/validation.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "52ae27aac9fa97efffc41d9637c8b6edef6f60cc96aad2ca4d564980ac400fd5",
-   "bytes": 1652,
+   "sha256": "96ff47a2a2ba17d2c6e6c25fd500d40453878b7dd83dbb5577a54baf4df64c7d",
+   "bytes": 2132,
    "mediaType": "application/json"
   },
   "recipe/character_panels.py": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "87138f3b43ef185f5176bef0232d7778f711d01aa60bb1185801636d6bfb6453",
-   "bytes": 34986,
+   "sha256": "99bcd612707b304de6fb7e5b61baa6aa3bab54eac4b42f1bf5848cc2cd081c0b",
+   "bytes": 35919,
    "mediaType": "text/x-python; charset=utf-8"
   },
   "recipe/common.py": {
@@ -523,8 +670,8 @@
   "recipe/inspect_fidelity.py": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "87eb200b564c249dd97799a286007c7eb144a8ad03af4f5a7035d1b39045ba60",
-   "bytes": 3211,
+   "sha256": "252dbe00f7c9513e3f1b02dd6a090248267a27a29a2acdb7d42ca7bf507eb9df",
+   "bytes": 3258,
    "mediaType": "text/x-python; charset=utf-8"
   },
   "recipe/inspect_kit.py": {
@@ -558,15 +705,29 @@
   "recipe/validate.py": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "e167d7e6e408a732b1e09df3862a315e64060324ad1b2be6dddfd6be2ce0fca7",
-   "bytes": 11215,
+   "sha256": "d3f0da4e760db731752edec11ed711dd6f0e24d3f9af2f84d3b529290f7daab4",
+   "bytes": 11356,
    "mediaType": "text/x-python; charset=utf-8"
+  },
+  "sources/character-panels/carved-jade-plinth-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4b2f248ded835d49b6c224996c0c6883c51474d6ef2959860ec4c3f51c5a0e4d",
+   "bytes": 790381,
+   "mediaType": "image/png"
   },
   "sources/character-panels/gold-quartz-slate-plate-master.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
    "sha256": "4fdbbac5fbc9b480d28bc28c0443b444e9a700cd4ff2b14dc8069c717ebfc959",
    "bytes": 1134163,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/jade-ledge-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "96976b1defd82e7b481effec0d0e54604a0bf0b741eeeff0a04ec4217900a1d2",
+   "bytes": 939603,
    "mediaType": "image/png"
   },
   "sources/character-panels/jade-lode-plate-master.png": {
@@ -581,6 +742,20 @@
    "accessDomain": "curated-private",
    "sha256": "c2bd961b7defb901d527c627e6531e71d41bbad145a2844be05a09a8f6751fa7",
    "bytes": 394613,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/jade-monolith-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d99bbadbcec3ac8601b5d79bf6b09c55cbf480898a016cdda7c5eed09f8cc87c",
+   "bytes": 1127666,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/jade-seam-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "76ffb8020f1db7de95f4b661c717a1934ce60a9284fa47b30d4472d94904a820",
+   "bytes": 939029,
    "mediaType": "image/png"
   },
   "sources/character-panels/jade-set-band-plate-master.png": {
@@ -630,6 +805,13 @@
    "accessDomain": "curated-private",
    "sha256": "ca8fb40ee467d46eccc56d67dc4bf1bedc74ff8ac475eb2fdfc81a4f215ab9bd",
    "bytes": 1170621,
+   "mediaType": "image/png"
+  },
+  "sources/character-panels/river-jade-plate-master.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c54112eeeead0638458f9a5fd604760db6c81fea4637afdf3e6b70c9f13cd5b6",
+   "bytes": 1089900,
    "mediaType": "image/png"
   },
   "sources/character-panels/river-nacre-plate-master.png": {

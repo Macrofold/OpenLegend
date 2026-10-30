@@ -5,28 +5,63 @@
    "id": "openlegend-curated"
   },
   "assetId": "ui-gildmoss-character-panels",
-  "revisionId": "sha256-706414807c04c61e786f9391f98bbea499fc37dd90d0f6313786fb88bd02668a",
-  "manifestSha256": "1248c8bd240de70e85431d75883a5f00d908a332b3bc4dce64d07a49ba432af3"
+  "revisionId": "sha256-a272da3d43f43e6aad03a5bc31a131774c1e534144327695318770aa23a6c7e3",
+  "manifestSha256": "d090c31f1bd2c58a6d01b1512a477d2386d4d090e81a102459c07f045d7f97c1"
  },
  "files": {
+  "apps/client/src/design-system/art/character-panels/carved-jade-plinth/glass@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0fde8a53dd35ad01c5c92ef5d21d20ac6710690d9dbeed587a6f7f81cdbb3836",
+   "bytes": 18762,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/carved-jade-plinth/glass@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "1f77f73852dd5a8510820a3d18d2e41637bb204c3f78b29f941bc2bf1e914ad7",
+   "bytes": 73403,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/carved-jade-plinth/layout.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f9fa9d080d7b4bf410ca04c5f1d08904175be99d7abd42f9d83b935bb3713d16",
+   "bytes": 4413,
+   "mediaType": "application/json"
+  },
+  "apps/client/src/design-system/art/character-panels/carved-jade-plinth/plate@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d437aec92f7c4b6f24066512fad6a6b1a7230c235a947700f4d1119ba94e9d86",
+   "bytes": 102779,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/carved-jade-plinth/plate@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2b1023f7f49f1ecd9960683a1cdab3f0d018a93ee05fbd4d89384267df08a574",
+   "bytes": 358279,
+   "mediaType": "image/png"
+  },
   "apps/client/src/design-system/art/character-panels/gold-quartz-slate/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "ff30ad7c9f4a868a6b4e5109dd0aab8d3f4b20b4f08653716358d0673c0c3818",
-   "bytes": 19160,
+   "sha256": "748e8b96ba10de98c5fe773fd1ed7c1f1e83ee52dfe149895c967e581bd73ce7",
+   "bytes": 19116,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/gold-quartz-slate/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "541ced7ecb115eb2cd208fd4d0fceaff43b440c16d263b4bd6a6d5e8e9df9c1b",
-   "bytes": 73502,
+   "sha256": "7f098e1507fb444347d13e718c7cc7614f0e20f552cc971b8136d974b5e3a610",
+   "bytes": 73536,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/gold-quartz-slate/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "abcbab86ce53e93353181672e06afde49f5f1c78d194ed88eddabd2622d2c6ba",
+   "sha256": "0c0a3588723dc569f7b114427d9a93c012f0a4f13def8ee1e0288f2b1fe027a7",
    "bytes": 4407,
    "mediaType": "application/json"
   },
@@ -44,24 +79,59 @@
    "bytes": 447368,
    "mediaType": "image/png"
   },
+  "apps/client/src/design-system/art/character-panels/jade-ledge/glass@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6f6b65b3a95fd9040be72d22b4293ad3377bd77db422946c3b493d44b9176ec9",
+   "bytes": 18082,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-ledge/glass@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "549b1e35b88aac7fd0ea4c521b0d42f1deed35d8f08233b1fd28ec0fa672b453",
+   "bytes": 73659,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-ledge/layout.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "cd997fd0677e4b3f9b82c0e88d20761609c2988adca15fbb734368fe88e5d4df",
+   "bytes": 4211,
+   "mediaType": "application/json"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-ledge/plate@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a16cbbc0458e89bdb58fcb573085b66bce732dce0d7139362ab0ec973d0e3f12",
+   "bytes": 122465,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-ledge/plate@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f40601c8bf6019f9212f6b510835d91a10b5d9f171752f0ae7a0af9daa846a8f",
+   "bytes": 432861,
+   "mediaType": "image/png"
+  },
   "apps/client/src/design-system/art/character-panels/jade-lode/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "7caf2daa248bb53e0ba9a2fab164fb0d503fd354f8d2d2602741a7dd3e157bc6",
-   "bytes": 18462,
+   "sha256": "8cbe8cfecb08f118b50219cf706c8d4924422365cd4670988a3f4f75db9a12f9",
+   "bytes": 18492,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/jade-lode/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "a0a47e5d445c4b2e841bcbaad7fd643d327d1a5ff1c34ab1428b8cf756ca4bc1",
-   "bytes": 73614,
+   "sha256": "15a7ec0694f633dab5a25b073f0ca5ffe97f3e445929f2d8341e8d6881594794",
+   "bytes": 73492,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/jade-lode/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "de98f9f42c5be53c7fe56bdf67e4dbd8c66cd3cda07fb2147c5d1aeed41b2e96",
+   "sha256": "dea80f87fe23dbc6ced14f1b1e855823617c1034a6a1dc554ac2b2273bb0f9a4",
    "bytes": 4304,
    "mediaType": "application/json"
   },
@@ -82,21 +152,21 @@
   "apps/client/src/design-system/art/character-panels/jade-medallion/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "605b154948df0e5b22c3b16d6ca579452f130bfd9c22575473099561ee99d879",
-   "bytes": 18741,
+   "sha256": "92516f5b2801445bbe05f34580acdbc1d510da481eab4d659b99951cf1c9c322",
+   "bytes": 18667,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/jade-medallion/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "12f6d88f2cf06867b718f1ffa6bd3571f4c933503c3422fc5a39df9e96b172ef",
-   "bytes": 73606,
+   "sha256": "86069b9f641dd848104dacce4abb635f922688899c11a83be20ef2841ad9d0c6",
+   "bytes": 73647,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/jade-medallion/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "d4f711621d0ea3e8aefdeec276df602b4ae43710757fed80ecbf9328af68e588",
+   "sha256": "884356c88607254959a25314068573805f43f88d2804c9026911d83fa6903407",
    "bytes": 4262,
    "mediaType": "application/json"
   },
@@ -114,24 +184,94 @@
    "bytes": 227468,
    "mediaType": "image/png"
   },
+  "apps/client/src/design-system/art/character-panels/jade-monolith/glass@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "80ad1c12d033c1fc0e8db86bc780db8ca64b3a8be6fdc9c1bf150216fe44ca0f",
+   "bytes": 18609,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-monolith/glass@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e6d6c9f99e59489d368cf092814a98fb8b255597c42363bef899627d3a19da29",
+   "bytes": 73125,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-monolith/layout.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e9de13ad4e42a870ee5097d729781276717f6fc7bf128bb05cad1f4fbaa9b658",
+   "bytes": 4235,
+   "mediaType": "application/json"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-monolith/plate@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c9ac2fd2f971f5177046a1eb02e649c58bfe2483a5e422ec783e0389641e42b3",
+   "bytes": 104539,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-monolith/plate@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "779ef0dd933b98169da338a0ada44d0ad1ad2f036888c5eb94d2249a7a8e3dbc",
+   "bytes": 364144,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-seam/glass@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "146cb44533ea0422f23f0b4ff76370b520e83135356a7584774345e8c63e92d5",
+   "bytes": 18805,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-seam/glass@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f01f4e6ba2e60214ecd7fd32ab7788e3c558c07cccd085fe15411b5aefacc23b",
+   "bytes": 73419,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-seam/layout.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "af80a722211d00173fa66121a478193977695e34ebdbce846ed8fb0e745ffa22",
+   "bytes": 4191,
+   "mediaType": "application/json"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-seam/plate@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0a6ae90794d23748ecdb7c266f65a62634985c4567cd9749f4625b3c55985dce",
+   "bytes": 102363,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/jade-seam/plate@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4abbbc47c8b63ca3fe99406a97cdf8583f0b9254092b677254eee9cf395cbf7e",
+   "bytes": 356569,
+   "mediaType": "image/png"
+  },
   "apps/client/src/design-system/art/character-panels/jade-set-band/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "54847e8a8dae1123bcdd7faa551e0737837b62ac2837ee1d78854b7359663a2b",
-   "bytes": 19228,
+   "sha256": "ffbd2bb363901e756ff5cb8edd33a30a887a849ec2d4e72f763bcd558e6146f5",
+   "bytes": 19242,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/jade-set-band/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "5b0edd747758676a15bd903f9ff055bd4061f57b78ce42f29087eb085e4cb0a0",
-   "bytes": 73575,
+   "sha256": "e38f9399222d9f20158df37567852c693c037f2f78c76b8ec7754abb91042144",
+   "bytes": 73486,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/jade-set-band/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "1a51018bb0b5b0d7e2aee46bea0a0b61b32fab905b433f90e9509eadf97b1121",
+   "sha256": "4f5ef1ba57c89c120a460585c23903137b1093ddf391cf8fc16878cbdddb5398",
    "bytes": 4364,
    "mediaType": "application/json"
   },
@@ -152,21 +292,21 @@
   "apps/client/src/design-system/art/character-panels/laurel-ring/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "511c06f907aa2427f22313cd7c2d0da1cc56b6cbeecb247bbaeffe755c5ecc39",
-   "bytes": 17994,
+   "sha256": "85a3debe27c14b9106e491ad8ae9486744767f7a89ae9aa47c7e573437f6a217",
+   "bytes": 17992,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/laurel-ring/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "bdb3b7e07d724de3b93c5329d14c78d3d572e561d4eb2cec925a9eaa710feb03",
-   "bytes": 73479,
+   "sha256": "9b330682238d06f26a202edbc211d4e204d93ecb660b2dec5bd90a8764547ff7",
+   "bytes": 73345,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/laurel-ring/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "6cb5e5f88b21c11c7f201a330056e2bae6cae0866473e2babc90d9afe9988d3e",
+   "sha256": "141cb6d0a384405fa556c7638a7aff50cd4875f7d18751920ab6076e446c3721",
    "bytes": 4345,
    "mediaType": "application/json"
   },
@@ -187,21 +327,21 @@
   "apps/client/src/design-system/art/character-panels/malachite/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "d40b95849dc1969fd0981bf8d3ee270880ac7a6e380f68bdb8bb121c8b1b57c4",
-   "bytes": 18577,
+   "sha256": "80ad1c12d033c1fc0e8db86bc780db8ca64b3a8be6fdc9c1bf150216fe44ca0f",
+   "bytes": 18609,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/malachite/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "ec3e8a4df5b06ace65a1149c9084f10e6167b1fd8856611014b8751ebafd8ac2",
-   "bytes": 73179,
+   "sha256": "e6d6c9f99e59489d368cf092814a98fb8b255597c42363bef899627d3a19da29",
+   "bytes": 73125,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/malachite/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "ffdcc56fb0237850ce783c1bccff9543d67de66a1b250fe378dd0acf5f692e49",
+   "sha256": "c8f312eb1a0a74f7c4b2aba6fb1ad66deb23d7fe8ee08f404031c4ee739fc39f",
    "bytes": 4186,
    "mediaType": "application/json"
   },
@@ -222,21 +362,21 @@
   "apps/client/src/design-system/art/character-panels/mossbound-ruin/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "06944dacbc5f530ac1f5313e06d91d31e5ab130a57fb2cc1bfe27c4acec2562a",
-   "bytes": 16521,
+   "sha256": "21fb14cd46f046e6a3480ddb0b9f252c846252246e17d8f390d6e405b8a3d997",
+   "bytes": 16510,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/mossbound-ruin/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "af75e321c5bc58b8550db1e25774cb5099518248ee2b28910576d65f9af51470",
-   "bytes": 73729,
+   "sha256": "26d85dfb91f4ca78f0a80713e6fe0a08b6f889edbe1f6ec5ffaffe558ca262b8",
+   "bytes": 73720,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/mossbound-ruin/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "47d86aaa761a521f365cb7b59b9a41fab86a7aba1e91e58b2d85e687c3df47d4",
+   "sha256": "947aa2d723101e32e76e8f83816229f1d70a527c6f552060b3b4a64cb9e38182",
    "bytes": 4415,
    "mediaType": "application/json"
   },
@@ -257,21 +397,21 @@
   "apps/client/src/design-system/art/character-panels/nacre-shore/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "a3b1eba7661a538b0a45f469e132c6598c5825b925d34efb6220bbe7f9bf72d4",
-   "bytes": 17878,
+   "sha256": "0d7fae6c59bb79977755b8658150daeff0336b1851d6040de860fb1bf72fae5a",
+   "bytes": 17844,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/nacre-shore/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "e050e1da59cad31a9eb5b1d3d302296f996fa01a42790b682bbb5a73ea0df98a",
-   "bytes": 73778,
+   "sha256": "c512e30ed6546c9148041322c09b10f694971ef53a7334b8f243e06fc993d9ca",
+   "bytes": 73758,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/nacre-shore/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "957e6f3215573c986dcea9aefaa7b4fb5c8582b44879ed42991b9c7bebc877b4",
+   "sha256": "0288a6c917a5d220ef51e79225520a7f0f2abd52856fff1d5325963e92fd8c8b",
    "bytes": 4200,
    "mediaType": "application/json"
   },
@@ -292,21 +432,21 @@
   "apps/client/src/design-system/art/character-panels/overgrown-relic/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "958fed60b447ad22ead2be1cff0d6bd69f0e484a8284d807719e529f44d91465",
-   "bytes": 17841,
+   "sha256": "ebc03f0ed62e6d913beb32a0a5b34abf87bc12d497e54ad886949179c31911e9",
+   "bytes": 17795,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/overgrown-relic/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "916d43285943b175c9f7f32ad12b23d57f204d6e29fb765604afe329d30dcd3b",
-   "bytes": 73482,
+   "sha256": "01aafbe753603cd4792b255c2dd687deb70c805a3014bf97126a526608f6061f",
+   "bytes": 73539,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/overgrown-relic/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "f3df0ea313cbb769cfc8e57f2d307d2ff78e275e1d02d97432041d3f9e7af9eb",
+   "sha256": "44ee5a84106e3863d14bca3ffd9abbabd203c99164707bd7a3baa4a761765b96",
    "bytes": 4369,
    "mediaType": "application/json"
   },
@@ -327,21 +467,21 @@
   "apps/client/src/design-system/art/character-panels/river-granite/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "447e319f330c9cda59f0809cbd25102379e9cab5bec9bba4b018c5a5c23e338f",
-   "bytes": 18241,
+   "sha256": "c92a95e3ec200e9668b2569cdb9bb847fb708e87bed8a63f71d7cd632ddf6ef8",
+   "bytes": 18257,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/river-granite/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "590e1af4adb25da9698b9279c3995604cdbde43c3b976a4effd200858da0331c",
-   "bytes": 73433,
+   "sha256": "5745d74cf7ddbfd2ac4649e73a71dc4f771632664071034cca887d071c9fe098",
+   "bytes": 73396,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/river-granite/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "0160bb4ad42608637fd222d1bc0478a1509c30a4e0d00ef05a9df886b6f30be2",
+   "sha256": "d5c19a0b1011168f3a5c6cf31bddfed67a7c87444aa5a01e630ff5ecd3587373",
    "bytes": 4369,
    "mediaType": "application/json"
   },
@@ -359,24 +499,59 @@
    "bytes": 367902,
    "mediaType": "image/png"
   },
+  "apps/client/src/design-system/art/character-panels/river-jade/glass@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9c9a31ab0a42933da27d4ef7b409dfc13d9c029a154fd2752eb9e886eedeaafa",
+   "bytes": 18845,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/river-jade/glass@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9c38cd6cb7e90f67f53f67993a38f7c9a591689311818701e63d895f69f34623",
+   "bytes": 73590,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/river-jade/layout.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bc2c739ce453607be6f4e617a21a89f7520a821f53ae434520b4397d001694ed",
+   "bytes": 4347,
+   "mediaType": "application/json"
+  },
+  "apps/client/src/design-system/art/character-panels/river-jade/plate@1x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "f2c4536c130603495b6406185acc3fb6dc13bf3512f3eca373650cba80e89fa5",
+   "bytes": 110078,
+   "mediaType": "image/png"
+  },
+  "apps/client/src/design-system/art/character-panels/river-jade/plate@2x.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b400a36caec32c55fb7a95385deedde4f5bc5454a7e6c09f65823554e6c963df",
+   "bytes": 383794,
+   "mediaType": "image/png"
+  },
   "apps/client/src/design-system/art/character-panels/river-nacre/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "ebc305591254c6b480bfd37bd0ceb3801c6688d3da0d41bff7ca475b8b0eedc0",
-   "bytes": 18014,
+   "sha256": "0da0d77b0ed2f7c7381e1c49e229b96350f41f58f3ba1701f6687a71dafb2d59",
+   "bytes": 18047,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/river-nacre/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "770dd796820feb1752edef10bf37cc5b2a3d9c3650793d0ad82d31420926755c",
-   "bytes": 73928,
+   "sha256": "cba3b81aeb22c3754f4a828e22527a4104fdad81fca79349dcd0aeff9fcd378c",
+   "bytes": 73867,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/river-nacre/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "012bfec9b31e3fef268bc0e1a8e9ed4368f9e6e049a0b881e35c832d290b9167",
+   "sha256": "1a28ce581e4dc24e83d56bee73949cc25c9ddec72f1a25fa7bd2c3ff42033164",
    "bytes": 4323,
    "mediaType": "application/json"
   },
@@ -397,21 +572,21 @@
   "apps/client/src/design-system/art/character-panels/rootbound/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "03c09c9991e9325efc964fbc8403fe4300462480fdd3a858e4d386237d04b8b7",
-   "bytes": 17019,
+   "sha256": "7c0758b7d52f2568259cf5445b98d763bf4e905eb0a8e73f6cfab9af7dd82d74",
+   "bytes": 16990,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/rootbound/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "bf9e38b3a050eed016b94b7f5ab91ef0c6213851ad7f3cf174126b2143deb808",
-   "bytes": 73780,
+   "sha256": "737d1667399d9f5cbe79f763b942d85dbe6a0350ebf7042425642b0f19c7169b",
+   "bytes": 73740,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/rootbound/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "44ea44f9e25c6b1bd38e5bee3f6032ef5800c752c94cfbc7e00f95a303ae44e3",
+   "sha256": "f9a04ed14bb9b34ca0fb37b6a93ad9bc182ffc7f83803fa25484e30990e717cc",
    "bytes": 4207,
    "mediaType": "application/json"
   },
@@ -432,21 +607,21 @@
   "apps/client/src/design-system/art/character-panels/star-iron/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "cdca72807ec4022023cfa495a00bd09dcc9cb351e5b0f553c2f2966ffd9ea474",
-   "bytes": 18329,
+   "sha256": "6c04aa6dd4464387ff57bdb26053252405ca524ab3ff11cc889a23491ac10cc1",
+   "bytes": 18344,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/star-iron/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "84017f6222bcc5695514c373b8c363d5c980225c9043e5f045fa2859794e83c9",
-   "bytes": 73378,
+   "sha256": "d551cf356e7fd77f924b921f68bfb7bcd94645412fa7f9af304f4f04c125fcb4",
+   "bytes": 73401,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/star-iron/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "0da091ca71089759a1a7ab04d0851b4680693b142fa5450d92c0a700707d0649",
+   "sha256": "ae5de08c60ca179c81a4560c57aa3d45b3f61da04b930bd02f648b5f11bc0ddc",
    "bytes": 4185,
    "mediaType": "application/json"
   },
@@ -467,28 +642,28 @@
   "apps/client/src/design-system/art/character-panels/styles.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "6412b5b5873f2d15c4495520a61dc8df2b6fb1da4d0de70d086267b86384b9e1",
-   "bytes": 3362,
+   "sha256": "a4ec0cb73cf3a10a7a8728f914fcc9c9c4cd78bd52512ebb7a8836a1459dc99d",
+   "bytes": 4281,
    "mediaType": "application/json"
   },
   "apps/client/src/design-system/art/character-panels/verde-antico/glass@1x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "ecb5d2eacce938d8113e28bbd88afed677da7602f84969ce857349bbc6068963",
-   "bytes": 18395,
+   "sha256": "dd520f905cd4f16213f2326a3b73abe6975f175b4f4abf498d8fc1dbb36c967a",
+   "bytes": 18388,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/verde-antico/glass@2x.png": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "e5c12a73582ed09702e3d6c0262f3a2e82b9d2094482b8e54ce5cf26184ade41",
-   "bytes": 73689,
+   "sha256": "102330edc77b0096e080f8387bb25d77e3e978acffdf4a0d81064a32cf760b6e",
+   "bytes": 73644,
    "mediaType": "image/png"
   },
   "apps/client/src/design-system/art/character-panels/verde-antico/layout.json": {
    "boundary": "art-library",
    "accessDomain": "curated-private",
-   "sha256": "403208f39367dd0f9dc3d2bf21d47637f39af50dff4e48ada1ad9d7278240a9e",
+   "sha256": "d5aef7981cdc4ccf448ae9f673ed0f0bb9395a45d23efbace93e270ea8eb371f",
    "bytes": 4205,
    "mediaType": "application/json"
   },

@@ -1,0 +1,102 @@
+/* Layers that glass/light.js builds inside a Gildmoss panel (UI material study, rounds 9 to 15).
+   The panel keeps its own edge, backdrop blur, shadow and top-edge gleam; these sit between its
+   background and its content, clipped to the inside of its 2 px edge. */
+.slab {
+  background-image: none !important;
+}
+.slab-fx {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  border-radius: 8px; /* the panel's 10 px corner, inside its 2 px edge */
+  pointer-events: none;
+}
+.slab-fx div {
+  position: absolute;
+}
+/* The glass, and any stone in it, get their own compositing layer, so the moving light never
+   makes the browser run their filters again. */
+.slab-glass {
+  inset: 0;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  will-change: transform;
+}
+/* What the lights pass through: a fixed map of the glass and stone, as a mask over them. */
+.slab-light {
+  inset: 0;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+/* The theme's lantern light, radial-gradient(ellipse 72% 52% at 50% 0%, …) across the panel,
+   drawn on a box that holds the whole ellipse; it never moves, so it needs no layer of its own.
+   --lamp is its strength (the theme's 0.15, more when the glass holds some back). */
+.slab-lamp {
+  left: -5%;
+  width: 110%;
+  top: -40%;
+  height: 82%;
+  background: radial-gradient(
+    ellipse 65.45% 63.41% at 50% 48.78%,
+    rgba(255, 222, 165, var(--lamp, 0.15)),
+    rgba(255, 222, 165, 0) 72%
+  );
+}
+/* Pools of light spread through the jade: a small canvas stretched larger than the panel, by its
+   margin, so it can shift without showing an edge. */
+.slab-field {
+  position: absolute;
+  will-change: transform;
+}
+/* The bezel: the glass bevelled down to the panel's edge, drawn over its own edge, which it hides
+   (plan decision 25: continuous, rounded, silver/olive, no gold, no repeated pieces). Above the
+   glass and its light, below the content. */
+.slab-beveled {
+  border-color: transparent !important;
+}
+.slab-bezel,
+.slab-halo,
+.slab-shaft {
+  position: absolute;
+  z-index: -1;
+  pointer-events: none;
+}
+.slab-bezel {
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+/* The top light replaces the kit's drawn glint: a halo where the lantern meets the top edge,
+   reaching a little above it, and a soft beam falling from there into the glass. Both brighten
+   what is under them; --glow is their opacity where they are brightest. */
+.slab-lit::after {
+  content: none !important;
+}
+.slab-halo,
+.slab-shaft {
+  left: 50%;
+  transform: translateX(-50%);
+  mix-blend-mode: screen;
+}
+.slab-halo {
+  background: radial-gradient(
+    closest-side,
+    rgba(255, 228, 176, var(--glow)),
+    rgba(255, 222, 165, calc(var(--glow) * 0.5)) 28%,
+    rgba(255, 222, 165, calc(var(--glow) * 0.16)) 60%,
+    rgba(255, 222, 165, calc(var(--glow) * 0.04)) 84%,
+    rgba(255, 222, 165, 0)
+  );
+}
+.slab-shaft {
+  background: radial-gradient(
+    ellipse 50% 100% at 50% 0%,
+    rgba(255, 222, 165, var(--glow)),
+    rgba(255, 222, 165, calc(var(--glow) * 0.6)) 22%,
+    rgba(255, 222, 165, calc(var(--glow) * 0.25)) 55%,
+    rgba(255, 222, 165, calc(var(--glow) * 0.06)) 82%,
+    rgba(255, 222, 165, 0)
+  );
+}

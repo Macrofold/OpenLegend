@@ -1,0 +1,62 @@
+[
+ {
+  "id": "r7-g1",
+  "cid": "HIG-R7-G1",
+  "name": "Cast Pane",
+  "variant": "g1",
+  "scene": "r7-g1-scene@1x.png",
+  "before": "r7-now-scene@1x.png",
+  "before_label": "the current kit glass, a 256 px tile repeated on every panel",
+  "change": "Broad, slow thickness waves across the whole pane; slightly thicker at the edges.",
+  "good": "Most like one cast slab in the current glass colour: slow, broad thickness drift with soft light, and nothing that reads as texture.",
+  "watch": "Very quiet; over a busy scene its drift can blend with the blurred world behind it."
+ },
+ {
+  "id": "r7-g2",
+  "cid": "HIG-R7-G2",
+  "name": "Drawn Sheet",
+  "variant": "g2",
+  "scene": "r7-g2-scene@1x.png",
+  "before": "r7-now-scene@1x.png",
+  "before_label": "the current kit glass, a 256 px tile repeated on every panel",
+  "change": "Long horizontal flow lines, like glass drawn into a sheet while hot.",
+  "good": "Unmistakably glass: long flow lines catch the light like old drawn window glass.",
+  "watch": "Its horizontal bands are the most visible pattern; behind text they can read as stripes or water."
+ },
+ {
+  "id": "r7-g3",
+  "cid": "HIG-R7-G3",
+  "name": "Rolled Glass",
+  "variant": "g3",
+  "scene": "r7-g3-scene@1x.png",
+  "before": "r7-now-scene@1x.png",
+  "before_label": "the current kit glass, a 256 px tile repeated on every panel",
+  "change": "A gentle, even ripple over the pane, like hand-rolled glass.",
+  "good": "The most surface character while staying smooth: an all-over gentle ripple with soft light.",
+  "watch": "Its soft, cloudy patches can read as smoke rather than glass."
+ },
+ {
+  "id": "r7-g4",
+  "cid": "HIG-R7-G4",
+  "name": "Deep Jade",
+  "variant": "g4",
+  "scene": "r7-g4-scene@1x.png",
+  "before": "r7-now-scene@1x.png",
+  "before_label": "the current kit glass, a 256 px tile repeated on every panel",
+  "change": "Stronger thickness: deep jade pockets and lighter thin spots, with brighter highlights.",
+  "good": "The richest jade: deep green pockets and lighter thin spots make the glass's thickness obvious.",
+  "watch": "The darkest pockets and brightest thin spots are the largest swings in brightness behind text."
+ },
+ {
+  "id": "r7-g5",
+  "cid": "HIG-R7-G5",
+  "name": "Clear Slab",
+  "variant": "g5",
+  "scene": "r7-g5-scene@1x.png",
+  "before": "r7-now-scene@1x.png",
+  "before_label": "the current kit glass, a 256 px tile repeated on every panel",
+  "change": "The quietest: almost even glass, a slow drift and a clearly thicker rim.",
+  "good": "The calmest behind dense text: nearly even glass that is a little thicker toward the rim.",
+  "watch": "So even that the one-big-pane character is hard to see at a glance."
+ }
+]

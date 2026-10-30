@@ -1,0 +1,72 @@
+[
+ {
+  "id": "r9-t1",
+  "cid": "R9-T1",
+  "name": "Jade Cloud",
+  "glass": "g5",
+  "stone": "t1",
+  "scene": "r9-t1-scene@1x.png",
+  "close": "r9-t1-close@2x.png",
+  "before": "r9-none-scene@1x.png",
+  "before_label": "Clear Slab without stone",
+  "change": "Milky clouds inside the glass in a few soft patches, like the clouds in nephrite jade, with a trace of grain.",
+  "good": "Closest to jade: soft milky clouds inside the glass, with a trace of grain, that appear in a few places and fade out.",
+  "watch": "The most visible of the five; stronger, its clouds would read as smoke."
+ },
+ {
+  "id": "r9-t2",
+  "cid": "R9-T2",
+  "name": "Marble Vein",
+  "glass": "g5",
+  "stone": "t2",
+  "scene": "r9-t2-scene@1x.png",
+  "close": "r9-t2-close@2x.png",
+  "before": "r9-none-scene@1x.png",
+  "before_label": "Clear Slab without stone",
+  "change": "Soft, faint mineral veins that wander through a few patches and fade out, like marble.",
+  "good": "The clearest sign of stone for the least change: a few soft veins wander through and fade out.",
+  "watch": "The sparsest: some panels show no vein at all, and a curled vein can read as a stray mark."
+ },
+ {
+  "id": "r9-t3",
+  "cid": "R9-T3",
+  "name": "Honed Grain",
+  "glass": "g5",
+  "stone": "t3",
+  "scene": "r9-t3-scene@1x.png",
+  "close": "r9-t3-close@2x.png",
+  "before": "r9-none-scene@1x.png",
+  "before_label": "Clear Slab without stone",
+  "change": "A fine stone grain of light and dark flecks, as on honed granite, in patches.",
+  "good": "Reads most as cut stone: a fine grain of light and dark flecks in patches, like honed granite.",
+  "watch": "The busiest up close; behind small text its flecks can look like grit."
+ },
+ {
+  "id": "r9-t4",
+  "cid": "R9-T4",
+  "name": "Speckled Jade",
+  "glass": "g5",
+  "stone": "t4",
+  "scene": "r9-t4-scene@1x.png",
+  "close": "r9-t4-close@2x.png",
+  "before": "r9-none-scene@1x.png",
+  "before_label": "Clear Slab without stone",
+  "change": "Sparse dark flecks of different sizes in a faint haze, like the mineral specks in natural jade.",
+  "good": "The quietest: sparse dark flecks of different sizes in a faint haze, like the mineral specks in natural jade.",
+  "watch": "Faint at a glance, and the flecks could be mistaken for dust on the glass."
+ },
+ {
+  "id": "r9-t5",
+  "cid": "R9-T5",
+  "name": "Mottled Slab",
+  "glass": "g5",
+  "stone": "t5",
+  "scene": "r9-t5-scene@1x.png",
+  "close": "r9-t5-close@2x.png",
+  "before": "r9-none-scene@1x.png",
+  "before_label": "Clear Slab without stone",
+  "change": "Small lighter and darker mottles with a trace of grain, like serpentine or soapstone, in broad patches.",
+  "good": "Soft lighter and darker mottling with a trace of grain, like serpentine: stone-like and still quiet behind text.",
+  "watch": "Its lighter mottles can read as clouds rather than stone at a glance."
+ }
+]

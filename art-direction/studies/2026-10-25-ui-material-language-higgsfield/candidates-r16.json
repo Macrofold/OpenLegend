@@ -1,0 +1,37 @@
+[
+ {
+  "id": "r16-colour-g5",
+  "cid": "R16-C1",
+  "name": "Game colour",
+  "part": "colour",
+  "glass": "g5",
+  "stones": {
+   "t1": "natural grain, default",
+   "t5": "no grain, secondary"
+  },
+  "light": "parallax",
+  "bezel": "glass",
+  "top": "soft",
+  "frames": [
+   "r16-game-scene@1x.png",
+   "r16-t1-r15-scene@1x.png",
+   "r16-t1-new-scene@1x.png",
+   "r16-t5-r15-scene@1x.png",
+   "r16-t5-new-scene@1x.png"
+  ],
+  "sheets": [
+   "r16-scenes.png",
+   "r16-t1-edges.png",
+   "r16-t1-small.png",
+   "r16-t5-edges.png",
+   "r16-t5-small.png"
+  ],
+  "reference": "r16-game-scene@1x.png",
+  "reference_label": "The game's own glass",
+  "before": "r16-t1-r15-scene@1x.png",
+  "before_label": "Round 15's colour",
+  "change": "Clear Slab in the colour and opacity of the game's own glass: as see-through as the game's, and with its stone and light measuring the game's dark olive over the same scene, band by band from the top of the panel, where the lantern lights it, to its darker foot.",
+  "good": "Over the same scene the panels let the same 14 % of the world through as the game's glass, and measure within about one level (of 255) of its colour; round 15's let 3 % through and were about 8 levels lighter and greyer.",
+  "watch": "The stone and the pools of light are part of the average, so between them the glass is a little darker and greener than the game's, and a small panel that a pool of light covers is lighter than the game's glass."
+ }
+]

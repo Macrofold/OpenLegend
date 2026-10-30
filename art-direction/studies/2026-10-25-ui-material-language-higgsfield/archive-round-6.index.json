@@ -1,0 +1,461 @@
+{
+ "release": {
+  "owner": {
+   "kind": "collection",
+   "id": "openlegend-curated"
+  },
+  "assetId": "ui-material-language-higgsfield-2026-10-25-round-6",
+  "revisionId": "sha256-0fafad2ef86d9e69573c840acc75348b61d8c4aaead3f546f9cc43a7adde0a44",
+  "manifestSha256": "321015e75a3963d14eeac193b888fee80c6f3a4d4dff903553380c5d7b34a1c8"
+ },
+ "files": {
+  "boards/img/r6-jade-compare.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a353a314047e5195ec840388bbc477c88e5834238a48b8a0cabb83671aa4dc29",
+   "bytes": 342076,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z1-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z1-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6eccc542569e303aac0b869b47fdf39d86711a291881808888426c790ec2386c",
+   "bytes": 601342,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z1-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bdeec36b49c92ed36b896a0db154417ca9e03aa9a6b92aab628d0730046a1eef",
+   "bytes": 242202,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z1-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e9e2632effc86be73825afc9ee50dd66829d61cadfc9dbc117fc6f4344344c01",
+   "bytes": 217572,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z2-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z2-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "767b4632a1d462e65706b671408b6e0323db3f76ef0f910f8e516ecf1d2ee120",
+   "bytes": 602850,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z2-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "43bead830b292a52f20ade1f5ee8535f9ce1b41566699f41effc22ce5687b25f",
+   "bytes": 241804,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z2-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "03d4a949fa9f23323c0be8ae5982bca830742ff049c29ac272a40c080c236b4b",
+   "bytes": 217600,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z3-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z3-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "84e2774d68530a6d33bea2f62a96e417c3631f0d566f9aeb7b081dab7b9ed969",
+   "bytes": 609956,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z3-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ecd733256ef54b2ae146f9d7fdb72dfed25ba565a64a9c8a5f3b37ae0f548c0b",
+   "bytes": 267517,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z3-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "359e6976d9d4cb57e5b6ebb823ae35264fef5e8175e25b065f85afae5437e584",
+   "bytes": 218348,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z4-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z4-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "451d41fedd8c0529371dcb1a3a51085bfde5dd2efac95398b754c618b1f52f90",
+   "bytes": 601542,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z4-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bd363abc67ea1ac20d25e393da5780e6ed3b851983991743872d4c2e1a164793",
+   "bytes": 235742,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z4-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "fa789499c9e0329f9bee50c0961e9a264fb533173922fd46f4545ccc27a85346",
+   "bytes": 217666,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z5-before.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "8866215a1e2e056394da9a454a4b57968918ea89881d81fc42ff0c920b70c7c1",
+   "bytes": 610892,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z5-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6526834764b50761fd45106c59992fab509664a096f368543c685a2c449b9242",
+   "bytes": 606858,
+   "mediaType": "image/png"
+  },
+  "boards/img/r6-z5-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "29d388e22c042093ca0ceca0f52bb35e773e4b6822eeda56463ef36fbda40d88",
+   "bytes": 236019,
+   "mediaType": "image/jpeg"
+  },
+  "boards/img/r6-z5-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "137f59836d88b73853733fbf0e541f6390174264e824eb964e3b0de13672276c",
+   "bytes": 218356,
+   "mediaType": "image/jpeg"
+  },
+  "boards/round6.html": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c988c50687687f619b6880669b27be60751f0727ae12c8b0c841d597bc81bc0b",
+   "bytes": 10216,
+   "mediaType": "text/html; charset=utf-8"
+  },
+  "directions-r6.json": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "2380153483ebe97358a46f45dd579a9f02fbcd48a4bf7f03187340ec36e36f71",
+   "bytes": 3186,
+   "mediaType": "application/json"
+  },
+  "outputs/r6-jade-compare.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a353a314047e5195ec840388bbc477c88e5834238a48b8a0cabb83671aa4dc29",
+   "bytes": 342076,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z01-jade-monolith-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "bcde54069054c6c7fdde64632e9208eed552557ce6dbe5d87985950e09e44a9a",
+   "bytes": 402865,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z01-jade-monolith-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6eccc542569e303aac0b869b47fdf39d86711a291881808888426c790ec2386c",
+   "bytes": 601342,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z01-jade-monolith-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ca4a4ef06d9e3a05ea669b65fef84eb0b01339c20bf7be716f000cb49db54104",
+   "bytes": 395129,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z01-jade-monolith-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "066dd87078ef6fdf70b8e98109f6001b23cf631aa24244422baea8e2d8f980f2",
+   "bytes": 3181150,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z01-jade-monolith.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9f3f4fe781e6ca5645d63f7b9a23eba88a092c952fcf3422a12ec9da6d075ec0",
+   "bytes": 3223462,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z01-jade-monolith.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a7e754d94274053fe8b877ee6cea3ed02d795affaaa85399a314e35166753a2b",
+   "bytes": 5574,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r6-z02-carved-jade-plinth-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b1230b0e817aef8c9af5cc95bc99d4278d746ea7be8bcd40262bdd80bb59f2f4",
+   "bytes": 284020,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z02-carved-jade-plinth-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "767b4632a1d462e65706b671408b6e0323db3f76ef0f910f8e516ecf1d2ee120",
+   "bytes": 602850,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z02-carved-jade-plinth-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "198d1c6bd585315f5f66db38df03f894796fd9148d3a8ab31a6e5af59799b3cc",
+   "bytes": 394617,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z02-carved-jade-plinth-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c7d2382c864f789978f63967edc7368f86e025769c8b7d706544e0eda94fc2cd",
+   "bytes": 2478371,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z02-carved-jade-plinth.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "57fe9ea6a70a7e19f6dcdce75bb0a8a787300c12635db1f61c40732f5634f585",
+   "bytes": 2514382,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z02-carved-jade-plinth.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "7107fafc07558e7eafd273156fea57a25a3a44a07d3af663891a28b61855deff",
+   "bytes": 5598,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r6-z03-jade-ledge-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0e98cd0413a45bb03a5830ef89aceb42b2dd7bc44816f0115cf442ffefc28654",
+   "bytes": 313464,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z03-jade-ledge-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "84e2774d68530a6d33bea2f62a96e417c3631f0d566f9aeb7b081dab7b9ed969",
+   "bytes": 609956,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z03-jade-ledge-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "9df6112eab35cb88d2e0f27defeaf592eb31d5df59d9417a675e28263dc012d6",
+   "bytes": 396680,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z03-jade-ledge-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4e9f3f0d16111d8845138300d2c48460381d0507bd6aed3a1d1e865b56bb0c18",
+   "bytes": 2638449,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z03-jade-ledge.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "dfba83b682ee07bafbd0d80aa844d98a59a8e22364bd72c1bcb8d3db20c22677",
+   "bytes": 2668442,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z03-jade-ledge.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a1254f9990bfaeeda2dfb7df73c979251b0b5b4854bf531539f0b9a798252560",
+   "bytes": 5447,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r6-z04-river-jade-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "49ea8427c307dbfbcf2e2433f99b46b84cdcd8bf2a24b67a586c40076d9f4322",
+   "bytes": 377572,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z04-river-jade-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "451d41fedd8c0529371dcb1a3a51085bfde5dd2efac95398b754c618b1f52f90",
+   "bytes": 601542,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z04-river-jade-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "fc08031280ead68b46bf7e18eb00436e9aa6219264795b952bbd8c8394df0461",
+   "bytes": 394233,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z04-river-jade-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "41aac0847bb332398476276af35a4510d8a4537181b769a6c29881309692e83d",
+   "bytes": 3058066,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z04-river-jade.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "a30c2006ade3d44b525bcbe8e3b56e638ee8ed3dd6df0556e5be9333652adad9",
+   "bytes": 3101946,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z04-river-jade.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "d32d60274d77012f264e5fdff31653252c26f6d0e7ff4fb8312097ec1dc7c419",
+   "bytes": 5386,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "outputs/r6-z05-jade-seam-clean-detail.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "801552fae77c5373f6b7408183afb0820dce16ceefa8ed8cbde8e2ac89145eda",
+   "bytes": 321148,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z05-jade-seam-clean-ingame-corner.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "6526834764b50761fd45106c59992fab509664a096f368543c685a2c449b9242",
+   "bytes": 606858,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z05-jade-seam-clean-ingame.jpg": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "00e893a398c9f754824e4a58eb83a10e6524d26a3f9a1426f2ec2c830bb46c07",
+   "bytes": 395915,
+   "mediaType": "image/jpeg"
+  },
+  "outputs/r6-z05-jade-seam-clean.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ea80598cc5df1d66c579ec9db90fed9f248f004093de0c1a2ca9927a369393d8",
+   "bytes": 2776805,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z05-jade-seam.png": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "e16472842ca1c35cea1b24dda1496fb0bf257f877779630dfec1ffb587bea6d3",
+   "bytes": 2816851,
+   "mediaType": "image/png"
+  },
+  "outputs/r6-z05-jade-seam.prompt.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "71230fa6e515fd6b096a67d2c55e6bea9cfb421aac451aa8ce95b6e92fe81fcd",
+   "bytes": 5428,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/_hud.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "4ba3a14844431dded89ca201f49596fd5130b4bdbf475ac1288189cfbeabc5a9",
+   "bytes": 4478,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/_ref-gold.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "0b728d54d810adccd8bd16e7ac8ff13ec0618d78f7919de09a13081bd6177006",
+   "bytes": 168,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/_ref-hud.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "13e77b4e00d1cf8fbd8b7bef9d3a5250e7debe662a8dc21c48ed4859a127772d",
+   "bytes": 502,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/_ref-panel.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "10ddb2d21bfb1416d12b6602b5b84952cf9c16ae32653ca881f5f9fbd09222e7",
+   "bytes": 159,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/_ref-ring.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "ce0d08c4cbbea029a659ab607d3f57f03ea700c6d6c89027c724eeba79820d9d",
+   "bytes": 167,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/z01-jade-monolith.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "b187f81e088054e6846d51b76f26c5ba760e90c4794c73c0375b3839b36e8cbe",
+   "bytes": 651,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/z02-carved-jade-plinth.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "7bfba9500284cc55d94667e9607a460184636a3ac062ea669d7248677bc02479",
+   "bytes": 680,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/z03-jade-ledge.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "cb8468b5324657f455c153745dc4ef5cf1e09d6674a8604a8129aeb6b0b2f995",
+   "bytes": 521,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/z04-river-jade.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "c04e8482a128d6a91768e3970d4b2799ccf785e061d106eb8fb1b1aa581385a9",
+   "bytes": 460,
+   "mediaType": "text/plain; charset=utf-8"
+  },
+  "prompts/r6/z05-jade-seam.txt": {
+   "boundary": "art-library",
+   "accessDomain": "curated-private",
+   "sha256": "be210426224afe8c3dabd1ec7eb153e646c3e104a5b450743c7650d32dd358f8",
+   "bytes": 501,
+   "mediaType": "text/plain; charset=utf-8"
+  }
+ }
+}
