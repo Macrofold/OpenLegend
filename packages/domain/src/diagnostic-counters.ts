@@ -151,6 +151,8 @@ export const DOMAIN_COUNTERS = [
   'sensoryOverflowRebuilds',
   'sensoryPolicyRebuilds',
   'sensoryObserversSelected',
+  'sensoryObserverGeometryPrepared',
+  'sensoryObserverCaptures',
   'sensoryPairReuseObservers',
   'sensoryPairsRetested',
   /** Entries installed in rebuilt or incrementally maintained spatial bins. */

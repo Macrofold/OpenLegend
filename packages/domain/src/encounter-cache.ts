@@ -1,10 +1,10 @@
 import { observedActionAnimation } from './observed-animation.js';
-import { isImmutableData, jsonText } from './records.js';
+import { isImmutableData, jsonText, immutableDataSnapshot } from './records.js';
 import { entityGet, entityKeys } from './entity-collection.js';
 import { current, isDraft, original } from 'immer';
-import { cloneValue, hasPrivateDraftBase, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
+import { hasPrivateDraftBase, readOnlyDraftView, sensoryDraftWrites } from './draft.js';
 import { nativeChangesComplete } from './native-change-feed.js';
-import { queueSightChange } from './perception-timing.js';
+import { queueSightChange, routineObservationRelevant } from './perception-timing.js';
 import { worldRootEntities } from './entity-index.js';
 import { objectAncestors } from './objects.js';
 import { hasMemory } from './living.js';
@@ -19,7 +19,12 @@ import {
   worldSupport,
 } from './spatial-state.js';
 import type { Entity, Position, WorldState } from './types.js';
-import { projectAttributes, type AttributeView } from './world-modules.js';
+import {
+  capturePublicAttributeProjection,
+  projectPublicAttributeProjection,
+  type PublicAttributeProjection,
+  type AttributeView,
+} from './world-modules.js';
 import { SpatialCandidateIndex, nearbySolidAssemblies } from './spatial.js';
 import { nextSensoryPhase, recordSensoryChange, MAX_CHANGE_SCOPES } from './dependencies.js';
 import { countDomainWork } from './diagnostic-counters.js';
@@ -45,6 +50,7 @@ export interface ExposureInput {
   detailSignature: string;
   poseSignature: string;
   publicAttributes?: AttributeView[];
+  publicAttributeProjection?: PublicAttributeProjection;
 }
 /** A new continuous-exposure episode identity. Its format is owned here with its parser. */
 export function perceptionEpisodeId(world: WorldState, sourceId: string): string {
@@ -195,7 +201,6 @@ function itemPresentationKey(world: WorldState): string {
   const families = world.assemblyFamilies && readOnlyDraftView(world.assemblyFamilies);
   return JSON.stringify([key, families ? jsonText(families) : null]);
 }
-const publicAttributeFamilies = new WeakMap<object, boolean>();
 function withPublicAttributes(
   world: WorldState,
   capture: ExposureCapture | null,
@@ -231,22 +236,12 @@ function withPublicAttributes(
       projectStatusEffects(world, entity),
     ]),
   };
-  const definitions = readOnlyDraftView(world.moduleManifest.definitions);
-  let installed = isImmutableData(definitions)
-    ? publicAttributeFamilies.get(definitions)
-    : undefined;
-  if (installed === undefined) {
-    installed = definitions.some((definition) => definition.disclosure === 'public');
-    if (isImmutableData(definitions)) publicAttributeFamilies.set(definitions, installed);
-  }
-  if (!installed) return capture;
-  // Prepared source inputs survive this draft. Attribute presentation can borrow
-  // nested definition values, so detach them once before the cache owns them.
-  const publicAttributes = cloneValue(projectAttributes(world, capture.entity, 'public'));
+  const publicAttributeProjection = capturePublicAttributeProjection(world, entity);
+  if (!publicAttributeProjection.inputs.length) return capture;
   return {
     ...capture,
-    publicAttributes,
-    detailSignature: JSON.stringify([capture.detailSignature, publicAttributes]),
+    publicAttributeProjection,
+    detailSignature: JSON.stringify([capture.detailSignature, publicAttributeProjection.key]),
   };
 }
 type Source = ExposureInput & {
@@ -263,7 +258,7 @@ interface ObserverInput {
   radius: number;
   signature: string;
   objectsDirty: boolean;
-  people: unknown;
+  people: readonly string[] | undefined;
   objects: unknown;
   episodes: unknown;
   contacts: unknown;
@@ -308,10 +303,35 @@ interface ExposureCache {
   radii: Dimensions;
   ranges: Dimensions;
   observers: Map<string, ObserverInput>;
+  /** Rebuildable inverse of actual completed visible-person membership. */
+  viewers: Map<string, Set<string>>;
+  completedObservers: Set<string>;
   /** Phase coverage for one owned working draft only, never its published successor. */
   coverage?: ReturnType<typeof sensoryDraftWrites>['coverage'];
   /** Exact current() snapshots, only for this private draft and never its successor. */
   dependencyKeys?: WeakMap<object, string>;
+}
+function bindObserverPeople(
+  cache: ExposureCache,
+  input: ObserverInput,
+  people: readonly string[] | undefined,
+): void {
+  if (input.people === people) return;
+  const next = new Set(people);
+  for (const id of input.people ?? [])
+    if (!next.has(id)) {
+      const viewers = cache.viewers.get(id);
+      viewers?.delete(input.id);
+      if (!viewers?.size) cache.viewers.delete(id);
+    }
+  const prior = new Set(input.people);
+  for (const id of people ?? [])
+    if (!prior.has(id)) {
+      let viewers = cache.viewers.get(id);
+      if (!viewers) cache.viewers.set(id, (viewers = new Set()));
+      viewers.add(input.id);
+    }
+  input.people = people;
 }
 export type EncounterBaseline = Pick<
   WorldState,
@@ -442,10 +462,33 @@ const within = (a: Position, b: Position, radius: number) =>
  * share a read-only binding, so a discarded preview cannot steal its parent's index.
  * Actual index edits still invalidate ancestors/forks and require a cold rebuild. */
 export function* prepareExposure(
+  ...args: Parameters<typeof prepareExposurePhase>
+): ReturnType<typeof prepareExposurePhase> {
+  let completed = false;
+  try {
+    const frame = yield* prepareExposurePhase(...args);
+    completed = true;
+    return frame;
+  } finally {
+    if (!completed) abandonExposure(args[0]);
+  }
+}
+function abandonExposure(world: WorldState): void {
+  const prepared = pending.get(world);
+  if (prepared?.owner === ownerToken(world)) {
+    prepared.owner = {};
+    pending.delete(world);
+  }
+}
+function* prepareExposurePhase(
   world: WorldState,
   base: EncounterBaseline,
   motionSpeed?: (entity: Entity) => number,
   pendingScope?: Pick<import('./perception-timing.js').SensoryContinuation, 'all' | 'scopes'>,
+  observerWork?: {
+    ids: ReadonlySet<string>;
+    capture: (id: string, affected: boolean) => boolean;
+  },
 ): Generator<
   void,
   {
@@ -472,6 +515,9 @@ export function* prepareExposure(
     sourceToken: (id: string) => string | undefined;
     sourceDetailsToken: (id: string) => object | undefined;
     publicAttributes: (id: string) => readonly AttributeView[];
+    /** A completed native reader, never a saved or optional callback. */
+    completeObserver: (id: string, broadSight: boolean) => void;
+    abandon: () => void;
   }
 > {
   countDomainWork('sensoryPhases');
@@ -561,6 +607,8 @@ export function* prepareExposure(
       radii: new Dimensions(),
       ranges: new Dimensions(),
       observers: new Map(),
+      viewers: new Map(),
+      completedObservers: new Set(),
     };
   }
   const prepared = cache!;
@@ -589,6 +637,8 @@ export function* prepareExposure(
         : [],
     ),
   );
+  const priorMaximumRadius = prepared.radii.maximum,
+    priorMaximumHeight = prepared.heights.maximum;
   let orderChanged = audit.orderChanged;
   const update = (id: string, entity: Entity | undefined) => {
     const old = prepared.inputs.get(id);
@@ -651,6 +701,13 @@ export function* prepareExposure(
     ]);
     const source: Source = {
       ...input,
+      ...(input.publicAttributeProjection &&
+      old?.publicAttributeProjection?.key === input.publicAttributeProjection.key
+        ? {
+            publicAttributeProjection: old.publicAttributeProjection,
+            ...(old.publicAttributes ? { publicAttributes: old.publicAttributes } : {}),
+          }
+        : {}),
       position: { ...input.position },
       order,
       detailKey,
@@ -718,15 +775,30 @@ export function* prepareExposure(
     prepared.nextOrder = roots.length;
     orderChanged = reordered;
   }
-  // Observer participation is maintained by changed source IDs. Rebuilds seed the roster.
-  const observerIds = rebuild
-    ? prepared.inputs.keys()
-    : new Set([...changes.sources, ...changes.observers]);
-  for (const id of observerIds) {
+  // Source/receiver notices maintain the roster and geometry. Unchanged actors
+  // need no repeated body, sense or capability preparation merely because another
+  // actor has a due sample. The due owner supplies actual eligible readers: a
+  // quiet native body remains a visible source without an unused receiver index.
+  // Global contact maxima are genuine shared dependencies.
+  const changedObservers = new Set([...changes.sources, ...changes.observers]);
+  if (pendingScope && !pendingScope.all)
+    for (const [id, scope] of Object.entries(readOnlyDraftView(pendingScope.scopes)))
+      if (scope.observer) changedObservers.add(id);
+  const observerIds = rebuild ? prepared.inputs.keys() : changedObservers;
+  const rosterIds = observerWork
+    ? new Set([...observerIds, ...observerWork.ids, ...prepared.observers.keys()])
+    : observerIds;
+  for (const id of rosterIds) {
     const source = prepared.inputs.get(id);
-    if (source?.alive && (source.memory || source.nativeResponse)) {
-      if (!prepared.observers.has(id))
-        prepared.observers.set(id, {
+    if (
+      source?.alive &&
+      (source.memory ||
+        (source.nativeResponse &&
+          (!observerWork ||
+            routineObservationRelevant(world, entityGet(readOnlyDraftView(world.entities), id)!))))
+    ) {
+      if (!prepared.observers.has(id)) {
+        const input: ObserverInput = {
           id,
           position: source.position,
           order: source.order,
@@ -737,20 +809,34 @@ export function* prepareExposure(
           objects: undefined,
           episodes: undefined,
           contacts: undefined,
-        });
+        };
+        prepared.observers.set(id, input);
+        changedObservers.add(id);
+        bindObserverPeople(prepared, input, base.visiblePeople?.[id]);
+      }
     } else {
       const prior = prepared.observers.get(id);
       if (prior) {
+        bindObserverPeople(prepared, prior, undefined);
         if (prior.signature) prepared.ranges.delete(prior.radius);
         prepared.observerNear.delete(id);
         prepared.observers.delete(id);
+        prepared.completedObservers.delete(id);
       }
     }
   }
-  const observers: ExposureCapture[] = [];
+  const refreshAll =
+    rebuild ||
+    orderChanged ||
+    priorMaximumRadius !== prepared.radii.maximum ||
+    priorMaximumHeight !== prepared.heights.maximum;
+  const refreshIds = refreshAll ? prepared.observers.keys() : changedObservers;
   let observerIndex = 0;
-  for (const input of [...prepared.observers.values()].sort((a, b) => a.order - b.order)) {
+  for (const id of refreshIds) {
+    const input = prepared.observers.get(id);
+    if (!input) continue;
     if (observerIndex++ % 64 === 0) yield;
+    countDomainWork('sensoryObserverGeometryPrepared');
     const source = prepared.inputs.get(input.id)!;
     const entity = entityGet(readOnlyDraftView(world.entities), input.id)!;
     const radius = visionRadius(world, entity),
@@ -805,7 +891,6 @@ export function* prepareExposure(
         order: input.order,
         radius: input.radius,
       });
-    observers.push({ ...source, entity });
   }
   // A rebuild already selected every observer; reverse queries would duplicate the
   // complete first-exposure work without changing its required audience.
@@ -825,27 +910,21 @@ export function* prepareExposure(
         if (source.object) prepared.observers.get(observer.id)!.objectsDirty = true;
       }
   }
-  if (!rebuild && !orderChanged) {
-    const changedIds = new Set(
-      changed.filter((source) => !source.object).map((source) => source.id),
-    );
-    if (changedIds.size)
-      for (const observer of observers)
-        for (const id of base.visiblePeople?.[observer.id] ?? [])
-          if (changedIds.has(id)) {
-            affected.add(observer.id);
-            let ids = peopleChanges.get(observer.id);
-            if (!ids) peopleChanges.set(observer.id, (ids = new Set()));
-            ids.add(id);
-          }
-  }
+  if (!rebuild && !orderChanged)
+    for (const id of new Set(changed.filter((source) => !source.object).map((source) => source.id)))
+      for (const observerId of prepared.viewers.get(id) ?? []) {
+        affected.add(observerId);
+        let ids = peopleChanges.get(observerId);
+        if (!ids) peopleChanges.set(observerId, (ids = new Set()));
+        ids.add(id);
+      }
   // A detail phase may already have refreshed the shared spatial index. Pending
   // broad work still needs its original old/new scope to discover arrivals/losses.
   if (pendingScope?.all) {
-    for (const observer of observers) {
-      affected.add(observer.id);
-      fullPeople.add(observer.id);
-      prepared.observers.get(observer.id)!.objectsDirty = true;
+    for (const input of prepared.observers.values()) {
+      affected.add(input.id);
+      fullPeople.add(input.id);
+      input.objectsDirty = true;
     }
   } else if (pendingScope) {
     for (const [id, scope] of Object.entries(readOnlyDraftView(pendingScope.scopes))) {
@@ -870,7 +949,15 @@ export function* prepareExposure(
       }
     }
   }
+  const observers = [...prepared.observers.values()]
+    .filter((input) => !observerWork || observerWork.capture(input.id, affected.has(input.id)))
+    .sort((a, b) => a.order - b.order)
+    .map((input) => ({
+      ...prepared.inputs.get(input.id)!,
+      entity: entityGet(readOnlyDraftView(world.entities), input.id)!,
+    }));
   countDomainWork('sensoryObserversSelected', affected.size);
+  countDomainWork('sensoryObserverCaptures', observers.length);
   // Maintain the existing saved outward baseline only for sources this phase evaluated.
   if (rebuild) {
     const values = Object.fromEntries([...prepared.inputs.values()].map((s) => [s.id, s.feature]));
@@ -911,7 +998,31 @@ export function* prepareExposure(
       [...ids].sort((a, b) => prepared.inputs.get(a)!.order - prepared.inputs.get(b)!.order),
     sourceToken: (id) => prepared.inputs.get(id)?.measurementKey,
     sourceDetailsToken: (id) => prepared.inputs.get(id)?.detailToken,
-    publicAttributes: (id) => prepared.inputs.get(id)?.publicAttributes ?? [],
+    publicAttributes: (id) => {
+      const source = prepared.inputs.get(id);
+      if (!source?.publicAttributeProjection) return [];
+      // Capture was finite at the source phase. A later receiver must not read
+      // changed world values, and sources without a detailed receiver build no DTO.
+      return (source.publicAttributes ??= immutableDataSnapshot(
+        projectPublicAttributeProjection(source.publicAttributeProjection),
+      ));
+    },
+    completeObserver: (id, broadSight) => {
+      const input = prepared.observers.get(id);
+      if (!input) return;
+      bindObserverPeople(prepared, input, snapshot(world.visiblePeople?.[id] ?? []));
+      input.objects = world.visibleObjects?.[id] && snapshot(world.visibleObjects[id]!);
+      input.episodes = world.perceptionEpisodes?.[id] && snapshot(world.perceptionEpisodes[id]!);
+      const contacts = entityGet(readOnlyDraftView(world.entities), id)?.actor?.contacts;
+      input.contacts = contacts && snapshot(contacts);
+      if (broadSight) input.objectsDirty = false;
+      prepared.completedObservers.add(id);
+    },
+    abandon: () => {
+      // An interrupted native generator cannot publish partial work as a completed
+      // exposure certificate, including through a previously shared ancestor.
+      if (pending.get(world) === prepared) abandonExposure(world);
+    },
     nearby: (position, radius, kind) => {
       const ordinary = (
         kind === 'contact'
@@ -1019,13 +1130,15 @@ export function captureExposureCache(world: WorldState): (result: WorldState) =>
     if (evaluated) {
       delete cache.coverage;
       cache.owner = ownerToken(result);
-      for (const [id, input] of cache.observers) {
-        input.people = result.visiblePeople?.[id];
+      for (const id of cache.completedObservers) {
+        const input = cache.observers.get(id);
+        if (!input) continue;
+        bindObserverPeople(cache, input, result.visiblePeople?.[id]);
         input.objects = result.visibleObjects?.[id];
         input.episodes = result.perceptionEpisodes?.[id];
         input.contacts = entityGet(result.entities, id)?.actor?.contacts;
-        input.objectsDirty = false;
       }
+      cache.completedObservers.clear();
     }
     // A command that did not evaluate senses has no index edits to publish. Keep
     // its exact deferred writes beside the binding, without invalidating the real
@@ -1075,14 +1188,6 @@ export function snapshotEncounters(world: WorldState): EncounterBaseline {
   for (const id of available?.observers.keys() ?? entityKeys(world.entities)) {
     const contacts = entityGet(world.entities, id)?.actor?.contacts;
     result.contacts.set(id, contacts ? snapshot(contacts) : contacts);
-    const input = available?.observers.get(id);
-    if (input && evaluated) {
-      input.people = result.visiblePeople?.[id];
-      input.objects = result.visibleObjects?.[id];
-      input.episodes = result.perceptionEpisodes?.[id];
-      input.contacts = result.contacts.get(id);
-      input.objectsDirty = false;
-    }
   }
   return result;
 }

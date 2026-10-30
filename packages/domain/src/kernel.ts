@@ -8241,486 +8241,523 @@ function* updateEncounters(
     original,
     (entity) => motionReach(world, entity, 1),
     world.sensory,
+    {
+      ids: new Set(routine.keys()),
+      capture: (id, affected) => {
+        const timing = routine.get(id);
+        if (!timing || (!timing.sight && !timing.contact)) return false;
+        if (affected || timing.immediate || timing.detail || timing.sampledContact || placesChanged)
+          return true;
+        const observer = entityGet(readOnlyDraftView(world.entities), id)!;
+        const encounterAt = observer.actor?.encounters?.nextAt;
+        return (
+          !!world.experience?.temporal?.actors[id]?.capturesInvalidated ||
+          (encounterAt !== undefined && encounterAt <= world.simTime) ||
+          (!!observer.animal?.episode && observer.animal.episode.reviewAt <= world.simTime) ||
+          Object.values(observer.actor?.contacts ?? {}).some(
+            (contact) => contact.detail === 'moving',
+          )
+        );
+      },
+    },
   );
-  for (const [id, timing] of routine)
-    if (!initialize && timing.sampledSight && !timing.immediate && !frame.affected.has(id))
-      timing.sight = false;
-  const { changedFeatures, maximumBodyHeight, maximumBodyRadius } = frame;
-  const nativeSources = prepareNativeDangerSources(world, frame.sourceIds);
-  const peoplePrepared = new Map<string, ReturnType<typeof frame.nearby>>();
-  const detailedSubjects = new Map<string, Set<string>>();
-  const nativePrepared = new Map<string, ReturnType<typeof frame.nearby>>();
-  const rays: Generator<SightRay | undefined>[] = [];
-  for (const actor of frame.observers) {
-    const timing = routine.get(actor.id);
-    if (!timing?.sight) continue;
-    const radius = visionRadius(world, actor.entity);
-    if (
-      !radius ||
-      (!timing.sampledSight &&
-        !frame.affected.has(actor.id) &&
-        !(actor.entity.animal?.episode && actor.entity.animal.episode.reviewAt <= world.simTime))
-    )
-      continue;
-    let candidates: ReturnType<typeof frame.nearby>;
-    if (timing.detail) {
-      const selected = new Set(
-        currentDetailedAttention(world, actor.id).map((entry) => entry.sourceId),
+  let exposureCompleted = false;
+  try {
+    for (const [id, timing] of routine)
+      if (!initialize && timing.sampledSight && !timing.immediate && !frame.affected.has(id)) {
+        timing.sight = false;
+        // A clean physical scope skips sensing, not already-due interpretation
+        // of held facts such as priority expiry or relation continuation.
+        continuePerceptionWork(world, id);
+      }
+    const { changedFeatures, maximumBodyHeight, maximumBodyRadius } = frame;
+    const nativeSources = prepareNativeDangerSources(world, frame.sourceIds);
+    const peoplePrepared = new Map<string, ReturnType<typeof frame.nearby>>();
+    const detailedSubjects = new Map<string, Set<string>>();
+    const nativePrepared = new Map<string, ReturnType<typeof frame.nearby>>();
+    const rays: Generator<SightRay | undefined>[] = [];
+    for (const actor of frame.observers) {
+      const timing = routine.get(actor.id);
+      if (!timing?.sight) continue;
+      const radius = visionRadius(world, actor.entity);
+      if (
+        !radius ||
+        (!timing.sampledSight &&
+          !frame.affected.has(actor.id) &&
+          !(actor.entity.animal?.episode && actor.entity.animal.episode.reviewAt <= world.simTime))
+      )
+        continue;
+      let candidates: ReturnType<typeof frame.nearby>;
+      if (timing.detail) {
+        const selected = new Set(
+          currentDetailedAttention(world, actor.id).map((entry) => entry.sourceId),
+        );
+        detailedSubjects.set(actor.id, selected);
+        candidates = frame.selectedContacts(actor.position, radius + 2, selected);
+        peoplePrepared.set(actor.id, candidates);
+      } else if (actor.nativeResponse) {
+        if (!actor.entity.animal?.episode) continue;
+        const selected = nativeSources(actor.entity);
+        candidates = selected
+          ? frame.selectedContacts(actor.position, radius, selected)
+          : frame.nearby(actor.position, radius, 'contact');
+        nativePrepared.set(actor.id, candidates);
+      } else {
+        const changed = frame.changedPeople(actor.id);
+        if (changed?.size === 0) continue;
+        candidates = changed
+          ? frame.selectedPeople(actor.position, radius + 2, changed)
+          : frame.nearbySight(actor.id, actor.position, radius + 2);
+        peoplePrepared.set(actor.id, candidates);
+      }
+      rays.push(
+        (function* () {
+          const prepareRay = sightPreparationQuery(world, actor.entity);
+          for (const source of candidates) {
+            if (
+              source.id === actor.id ||
+              source.assemblyId ||
+              !source.alive ||
+              (source.position.x - actor.position.x) ** 2 +
+                (source.position.y - actor.position.y) ** 2 +
+                (source.position.z - actor.position.z) ** 2 >
+                radius ** 2
+            ) {
+              yield;
+              continue;
+            }
+            yield prepareRay(source);
+          }
+        })(),
       );
-      detailedSubjects.set(actor.id, selected);
-      candidates = frame.selectedContacts(actor.position, radius + 2, selected);
-      peoplePrepared.set(actor.id, candidates);
-    } else if (actor.nativeResponse) {
-      if (!actor.entity.animal?.episode) continue;
-      const selected = nativeSources(actor.entity);
-      candidates = selected
-        ? frame.selectedContacts(actor.position, radius, selected)
-        : frame.nearby(actor.position, radius, 'contact');
-      nativePrepared.set(actor.id, candidates);
-    } else {
-      const changed = frame.changedPeople(actor.id);
-      if (changed?.size === 0) continue;
-      candidates = changed
-        ? frame.selectedPeople(actor.position, radius + 2, changed)
-        : frame.nearbySight(actor.id, actor.position, radius + 2);
-      peoplePrepared.set(actor.id, candidates);
     }
-    rays.push(
-      (function* () {
-        const prepareRay = sightPreparationQuery(world, actor.entity);
-        for (const source of candidates) {
-          if (
-            source.id === actor.id ||
-            source.assemblyId ||
-            !source.alive ||
-            (source.position.x - actor.position.x) ** 2 +
-              (source.position.y - actor.position.y) ** 2 +
-              (source.position.z - actor.position.z) ** 2 >
-              radius ** 2
-          ) {
+    // Round-robin preparation gives each observer bounded work before another turn.
+    // All required answers complete before canonical evidence application; no delayed
+    // world tick, dropped recipient or partial draft is exposed at these checkpoints.
+    let requests: SightRay[] = [];
+    const prepare = function* (): Generator<void | GeometryBatch> {
+      const batch = prepareSightBatch(spatialMap(world), requests);
+      requests = [];
+      if (batch) {
+        yield batch;
+        completeGeometryBatch(batch);
+      } else yield;
+    };
+    let visited = 0;
+    while (rays.length) {
+      for (let index = 0; index < rays.length; ) {
+        let finished = false;
+        for (let count = 0; count < 8; count++) {
+          const next = rays[index]!.next();
+          if (next.done) {
+            finished = true;
+            break;
+          }
+          if (next.value) requests.push(next.value);
+          if (requests.length === 128) yield* prepare();
+          // Cached/rejected candidates still consume preparation time. They must
+          // not prevent an I/O checkpoint merely because they need no worker ray.
+          if (++visited === 128) {
+            visited = 0;
             yield;
+          }
+        }
+        if (finished) rays.splice(index, 1);
+        else index++;
+      }
+    }
+    if (requests.length) yield* prepare();
+    // A blocked observer still reconciles the loss of its visual episodes. Skipping the
+    // observer here would let waking reuse an episode from before perception was lost.
+    for (const actor of frame.observers) {
+      const timing = routine.get(actor.id);
+      if (!timing || (!timing.sight && !timing.contact)) continue;
+      yield;
+      const radius = visionRadius(world, actor.entity);
+      if (actor.nativeResponse) {
+        const episode = actor.entity.animal?.episode;
+        const due = episode && episode.reviewAt <= world.simTime;
+        if (timing.sight && (timing.sampledSight || frame.affected.has(actor.id) || due)) {
+          if (!episode) {
+            // Quiet native bodies only maintain already acquired acoustic sources.
+            // No danger, human attention or full-body history consumer runs here.
+            reconcileNativeExposure(world, entityGet(world.entities, actor.id)!);
             continue;
           }
-          yield prepareRay(source);
+          let candidates = nativePrepared.get(actor.id);
+          if (!candidates) {
+            const selected = nativeSources(actor.entity);
+            candidates = selected
+              ? frame.selectedContacts(actor.position, radius, selected)
+              : frame.nearby(actor.position, radius, 'contact');
+          }
+          const subjects = candidates.flatMap(
+            (source) => entityGet(world.entities, source.id) ?? [],
+          );
+          const detector = sensesFor(world, actor.entity).find(
+            (sense) => sense.implementation === 'vision-geometry-v1',
+          );
+          if (detector) {
+            const sees = visionQuery(world, actor.entity);
+            reconcileVisualEvidence(
+              world,
+              entityGet(world.entities, actor.id)!,
+              subjects.filter(
+                (subject) =>
+                  subject.id !== actor.id &&
+                  sees({
+                    id: subject.id,
+                    position: worldPosition(subject),
+                    height: effectiveBodyProfile(world, subject).height,
+                  }),
+              ),
+              detector,
+              normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+              frame.sourceToken,
+              frame.publicAttributes,
+            );
+          }
+          reconcileNativeExposure(world, entityGet(world.entities, actor.id)!, subjects);
         }
-      })(),
-    );
-  }
-  // Round-robin preparation gives each observer bounded work before another turn.
-  // All required answers complete before canonical evidence application; no delayed
-  // world tick, dropped recipient or partial draft is exposed at these checkpoints.
-  let requests: SightRay[] = [];
-  const prepare = function* (): Generator<void | GeometryBatch> {
-    const batch = prepareSightBatch(spatialMap(world), requests);
-    requests = [];
-    if (batch) {
-      yield batch;
-      completeGeometryBatch(batch);
-    } else yield;
-  };
-  let visited = 0;
-  while (rays.length) {
-    for (let index = 0; index < rays.length; ) {
-      let finished = false;
-      for (let count = 0; count < 8; count++) {
-        const next = rays[index]!.next();
-        if (next.done) {
-          finished = true;
-          break;
-        }
-        if (next.value) requests.push(next.value);
-        if (requests.length === 128) yield* prepare();
-        // Cached/rejected candidates still consume preparation time. They must
-        // not prevent an I/O checkpoint merely because they need no worker ray.
-        if (++visited === 128) {
-          visited = 0;
-          yield;
-        }
+        continue;
       }
-      if (finished) rays.splice(index, 1);
-      else index++;
-    }
-  }
-  if (requests.length) yield* prepare();
-  // A blocked observer still reconciles the loss of its visual episodes. Skipping the
-  // observer here would let waking reuse an episode from before perception was lost.
-  for (const actor of frame.observers) {
-    const timing = routine.get(actor.id);
-    if (!timing || (!timing.sight && !timing.contact)) continue;
-    yield;
-    const radius = visionRadius(world, actor.entity);
-    if (actor.nativeResponse) {
-      const episode = actor.entity.animal?.episode;
-      const due = episode && episode.reviewAt <= world.simTime;
-      if (timing.sight && (timing.sampledSight || frame.affected.has(actor.id) || due)) {
-        if (!episode) {
-          // Quiet native bodies only maintain already acquired acoustic sources.
-          // No danger, human attention or full-body history consumer runs here.
-          reconcileNativeExposure(world, entityGet(world.entities, actor.id)!);
-          continue;
+      const sees = visionQuery(world, actor.entity);
+      const touch = sensesFor(world, actor.entity).find(
+        (s) => s.implementation === 'body-contact-v1',
+      );
+      const touchRadius =
+        Math.max(actor.radius + maximumBodyRadius, actor.height, maximumBodyHeight) +
+        SPATIAL_LIMITS.epsilon;
+      const contacts = Object.values(actor.entity.actor!.contacts ?? {});
+      const movingContacts = contacts.some((contact) => contact.detail === 'moving');
+      const blocked = capabilityBlocked(world, actor.entity, 'perception');
+      const encounterDue = actor.entity.actor?.encounters?.nextAt;
+      if (
+        !frame.affected.has(actor.id) &&
+        !(timing.sampledSight && timing.sight) &&
+        !(timing.sampledContact && timing.contact) &&
+        !movingContacts &&
+        !placesChanged &&
+        !world.experience?.temporal?.actors[actor.id]?.capturesInvalidated &&
+        !(encounterDue !== undefined && encounterDue <= world.simTime)
+      ) {
+        countDomainWork('observersSkipped');
+        continue;
+      }
+      countDomainWork('observersExamined');
+      // Captured entities are read-only phase views; contact writes belong to the live draft.
+      if (timing.contact && (touch || contacts.length))
+        yield* updateContactEpisodes(
+          world,
+          original.positions,
+          entityGet(world.entities, actor.id)!,
+          events,
+          () => frame.nearby(actor.position, touchRadius, 'contact'),
+        );
+      if (!timing.sight) continue;
+      if (radius === 0 || blocked) {
+        endCurrentEvidence(
+          world,
+          actor.id,
+          'sight',
+          normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+        );
+        if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
+        if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
+        if (Object.keys(world.visiblePlaces?.[actor.id] ?? {}).length)
+          world.visiblePlaces![actor.id] = {};
+        retirePerceptionEpisodes(world, actor.id);
+        reconcileCombatSight(world, entityGet(world.entities, actor.id)!, [], events);
+        continue;
+      }
+      if (timing.detail) {
+        const selected =
+          detailedSubjects.get(actor.id) ??
+          new Set(currentDetailedAttention(world, actor.id).map((entry) => entry.sourceId));
+        const measured = [...selected].flatMap((id) => {
+          const source = entityGet(readOnlyDraftView(world.entities), id);
+          return source &&
+            source.placement?.mode === 'world' &&
+            sees({
+              id,
+              position: worldPosition(source),
+              height: effectiveBodyProfile(world, source).height,
+            })
+            ? [readOnlyDraftView(source)]
+            : [];
+        });
+        const visible = new Set(measured.map((source) => source.id));
+        const lost = [...selected].filter((id) => !visible.has(id));
+        if (lost.length) {
+          const removed = new Set(lost);
+          if (world.visiblePeople?.[actor.id])
+            world.visiblePeople[actor.id] = world.visiblePeople[actor.id]!.filter(
+              (id) => !removed.has(id),
+            );
+          if (world.visibleObjects?.[actor.id])
+            world.visibleObjects[actor.id] = world.visibleObjects[actor.id]!.filter(
+              (id) => !removed.has(id),
+            );
+          const episodes = world.perceptionEpisodes?.[actor.id];
+          if (episodes) for (const id of lost) delete episodes[id];
         }
-        let candidates = nativePrepared.get(actor.id);
-        if (!candidates) {
-          const selected = nativeSources(actor.entity);
-          candidates = selected
-            ? frame.selectedContacts(actor.position, radius, selected)
-            : frame.nearby(actor.position, radius, 'contact');
-        }
-        const subjects = candidates.flatMap((source) => entityGet(world.entities, source.id) ?? []);
         const detector = sensesFor(world, actor.entity).find(
           (sense) => sense.implementation === 'vision-geometry-v1',
         );
-        if (detector) {
-          const sees = visionQuery(world, actor.entity);
+        if (detector)
           reconcileVisualEvidence(
             world,
             entityGet(world.entities, actor.id)!,
-            subjects.filter(
-              (subject) =>
-                subject.id !== actor.id &&
-                sees({
-                  id: subject.id,
-                  position: worldPosition(subject),
-                  height: effectiveBodyProfile(world, subject).height,
-                }),
-            ),
+            measured,
             detector,
             normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
             frame.sourceToken,
             frame.publicAttributes,
+            selected,
+            frame.sourceDetailsToken,
           );
-        }
-        reconcileNativeExposure(world, entityGet(world.entities, actor.id)!, subjects);
-      }
-      continue;
-    }
-    const sees = visionQuery(world, actor.entity);
-    const touch = sensesFor(world, actor.entity).find(
-      (s) => s.implementation === 'body-contact-v1',
-    );
-    const touchRadius =
-      Math.max(actor.radius + maximumBodyRadius, actor.height, maximumBodyHeight) +
-      SPATIAL_LIMITS.epsilon;
-    const contacts = Object.values(actor.entity.actor!.contacts ?? {});
-    const movingContacts = contacts.some((contact) => contact.detail === 'moving');
-    const blocked = capabilityBlocked(world, actor.entity, 'perception');
-    const encounterDue = actor.entity.actor?.encounters?.nextAt;
-    if (
-      !frame.affected.has(actor.id) &&
-      !(timing.sampledSight && timing.sight) &&
-      !(timing.sampledContact && timing.contact) &&
-      !movingContacts &&
-      !placesChanged &&
-      !world.experience?.temporal?.actors[actor.id]?.capturesInvalidated &&
-      !(encounterDue !== undefined && encounterDue <= world.simTime)
-    ) {
-      countDomainWork('observersSkipped');
-      continue;
-    }
-    countDomainWork('observersExamined');
-    // Captured entities are read-only phase views; contact writes belong to the live draft.
-    if (timing.contact && (touch || contacts.length))
-      yield* updateContactEpisodes(
-        world,
-        original.positions,
-        entityGet(world.entities, actor.id)!,
-        events,
-        () => frame.nearby(actor.position, touchRadius, 'contact'),
-      );
-    if (!timing.sight) continue;
-    if (radius === 0 || blocked) {
-      endCurrentEvidence(
-        world,
-        actor.id,
-        'sight',
-        normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
-      );
-      if (world.visiblePeople?.[actor.id]?.length) world.visiblePeople[actor.id] = [];
-      if (world.visibleObjects?.[actor.id]?.length) world.visibleObjects[actor.id] = [];
-      if (Object.keys(world.visiblePlaces?.[actor.id] ?? {}).length)
-        world.visiblePlaces![actor.id] = {};
-      retirePerceptionEpisodes(world, actor.id);
-      reconcileCombatSight(world, entityGet(world.entities, actor.id)!, [], events);
-      continue;
-    }
-    if (timing.detail) {
-      const selected =
-        detailedSubjects.get(actor.id) ??
-        new Set(currentDetailedAttention(world, actor.id).map((entry) => entry.sourceId));
-      const measured = [...selected].flatMap((id) => {
-        const source = entityGet(readOnlyDraftView(world.entities), id);
-        return source &&
-          source.placement?.mode === 'world' &&
-          sees({
-            id,
-            position: worldPosition(source),
-            height: effectiveBodyProfile(world, source).height,
-          })
-          ? [readOnlyDraftView(source)]
-          : [];
-      });
-      const visible = new Set(measured.map((source) => source.id));
-      const lost = [...selected].filter((id) => !visible.has(id));
-      if (lost.length) {
-        const removed = new Set(lost);
-        if (world.visiblePeople?.[actor.id])
-          world.visiblePeople[actor.id] = world.visiblePeople[actor.id]!.filter(
-            (id) => !removed.has(id),
-          );
-        if (world.visibleObjects?.[actor.id])
-          world.visibleObjects[actor.id] = world.visibleObjects[actor.id]!.filter(
-            (id) => !removed.has(id),
-          );
-        const episodes = world.perceptionEpisodes?.[actor.id];
-        if (episodes) for (const id of lost) delete episodes[id];
-      }
-      const detector = sensesFor(world, actor.entity).find(
-        (sense) => sense.implementation === 'vision-geometry-v1',
-      );
-      if (detector)
-        reconcileVisualEvidence(
+        reconcileCombatSight(
           world,
           entityGet(world.entities, actor.id)!,
-          measured,
-          detector,
-          normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
-          frame.sourceToken,
-          frame.publicAttributes,
-          selected,
-          frame.sourceDetailsToken,
-        );
-      reconcileCombatSight(
-        world,
-        entityGet(world.entities, actor.id)!,
-        world.visiblePeople?.[actor.id] ?? [],
-        events,
-      );
-      continue;
-    }
-    const previous = original.visiblePeople?.[actor.id] ?? [];
-    // A due sample refreshes received evidence below; it does not invalidate an
-    // exact unchanged physical relation. Unknown dependencies still return undefined.
-    const changedPeople = frame.changedPeople(actor.id);
-    let seen: string[];
-    if (changedPeople?.size === 0) {
-      countDomainWork('sensoryPairReuseObservers');
-      seen = previous;
-    } else if (changedPeople) {
-      countDomainWork('sensoryPairReuseObservers');
-      const retained = previous.filter((id) => !changedPeople.has(id));
-      const candidates =
-        peoplePrepared.get(actor.id) ??
-        frame.selectedPeople(actor.position, radius + 2, changedPeople);
-      countDomainWork('sensoryPairsRetested', candidates.length);
-      seen = frame.orderPeople([
-        ...retained,
-        ...candidates.filter((e) => e.id !== actor.id && e.alive && sees(e)).map((e) => e.id),
-      ]);
-    } else {
-      const candidates =
-        peoplePrepared.get(actor.id) ?? frame.nearbySight(actor.id, actor.position, radius + 2);
-      countDomainWork('sensoryPairsRetested', candidates.length);
-      seen = candidates.filter((e) => e.id !== actor.id && e.alive && sees(e)).map((e) => e.id);
-    }
-    let objectIds =
-      !frame.objectsChanged(actor.id) && original.visibleObjects?.[actor.id]
-        ? original.visibleObjects[actor.id]!
-        : frame
-            .nearby(actor.position, radius, 'objects')
-            .filter(sees)
-            .map((e) => e.id);
-    const previousObjects = original.visibleObjects?.[actor.id];
-    const samePeople = seen.length === previous.length && seen.every((id, i) => id === previous[i]);
-    const sameObjects =
-      !!previousObjects &&
-      (objectIds === previousObjects ||
-        (objectIds.length === previousObjects.length &&
-          objectIds.every((id, i) => id === previousObjects[i])));
-    if (samePeople) seen = previous;
-    if (sameObjects) objectIds = previousObjects!;
-    placeIndex ??= placeLandmarkIndex(world.places);
-    const places = exposedPlaces(world, actor.entity, objectIds, placeIndex);
-    const previousPlaces = original.visiblePlaces?.[actor.id] ?? {};
-    if (
-      places.some((place) => previousPlaces[place.id] !== place.revision) ||
-      places.length !== Object.keys(previousPlaces).length
-    ) {
-      const exposure: Record<string, number> = ((world.visiblePlaces ??= {})[actor.id] = {});
-      for (const place of places) {
-        exposure[place.id] = place.revision;
-        if (previousPlaces[place.id] === place.revision) continue;
-        acquireExposure(
-          world,
+          world.visiblePeople?.[actor.id] ?? [],
           events,
-          actor.entity,
-          place.landmarkId,
-          {
-            kind: 'place',
-            id: place.id,
-            revision: place.revision,
-            label: place.label,
-            description: place.description,
-            point: { ...place.point },
-            locationLabel:
-              surfaceById(spatialMap(world), place.point.surfaceId)?.name ?? 'Observed support',
-            landmarkId: place.landmarkId,
-            ...(place.mechanismFields ? { mechanismFields: place.mechanismFields } : {}),
-          },
-          place.exposure.importance,
         );
-        yield;
+        continue;
       }
-    }
-    // Arrivals, departures and brief returns (EPR03) read this observer's latest private
-    // sighting records once, and only when its visible people changed.
-    const sightings = samePeople
-      ? undefined
-      : recentSightings(world, actor.id, world.simTime - SIGHTING_POLICY.recordWindowSeconds);
-    if (!samePeople) {
-      const stillSeen = new Set(seen);
-      for (const id of previous) {
-        if (stillSeen.has(id)) continue;
-        countDomainWork('exposureExits');
-        const source = entityGet(world.entities, id);
-        // Death and removal have their own occurrences; one departure per record window.
-        if (
-          source?.actor?.alive &&
-          (hasMemory(source) || SIGHTING_POLICY.retainRoutineOnset) &&
-          sightings!.get(id)?.present !== false
-        )
-          encounter(actor.entity, id, SIGHTING_POLICY.departure, undefined, true);
-        yield;
+      const previous = original.visiblePeople?.[actor.id] ?? [];
+      // A due sample refreshes received evidence below; it does not invalidate an
+      // exact unchanged physical relation. Unknown dependencies still return undefined.
+      const changedPeople = frame.changedPeople(actor.id);
+      let seen: string[];
+      if (changedPeople?.size === 0) {
+        countDomainWork('sensoryPairReuseObservers');
+        seen = previous;
+      } else if (changedPeople) {
+        countDomainWork('sensoryPairReuseObservers');
+        const retained = previous.filter((id) => !changedPeople.has(id));
+        const candidates =
+          peoplePrepared.get(actor.id) ??
+          frame.selectedPeople(actor.position, radius + 2, changedPeople);
+        countDomainWork('sensoryPairsRetested', candidates.length);
+        seen = frame.orderPeople([
+          ...retained,
+          ...candidates.filter((e) => e.id !== actor.id && e.alive && sees(e)).map((e) => e.id),
+        ]);
+      } else {
+        const candidates =
+          peoplePrepared.get(actor.id) ?? frame.nearbySight(actor.id, actor.position, radius + 2);
+        countDomainWork('sensoryPairsRetested', candidates.length);
+        seen = candidates.filter((e) => e.id !== actor.id && e.alive && sees(e)).map((e) => e.id);
       }
-    }
-    // Persistent exposure episodes do not imply identity recognition across a disappearance;
-    // a return within the linger window is the same episode. docs/knowledge.md#subject-binding
-    const lingering = (id: string) => recentExposureEpisode(world, actor.id, id);
-    const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
-    const certified = Object.isFrozen(priorEpisodes)
-      ? episodeMembership.get(priorEpisodes)
-      : undefined;
-    if (certified?.people !== seen || certified.objects !== objectIds) {
-      const exposed = [...seen, ...objectIds];
-      const membership = new Set(exposed);
-      const removed = Object.keys(priorEpisodes).filter((id) => !membership.has(id));
-      const added = exposed.filter((id) => !priorEpisodes[id]);
-      if (removed.length || added.length) {
-        // Compare immutable membership before obtaining the draft. Continuing bindings are
-        // neither reconstructed nor reassigned. New identities retain exposed-array order.
-        // docs/projects/parallel-batch-01-playable-week/simulation-performance.md#2-update-sighting-identity-mappings-by-difference--6-hours
-        const episodes = ((world.perceptionEpisodes ??= {})[actor.id] ??= {});
-        for (const id of removed) delete episodes[id];
-        for (const id of added) {
-          episodes[id] = priorEpisodes[id] ?? lingering(id) ?? perceptionEpisodeId(world, id);
-        }
-        countDomainWork('episodeBindingsAssigned', added.length);
-        countDomainWork('episodeBindingsInserted', added.length);
-        countDomainWork('episodeBindingsDeleted', removed.length);
-      } else if (Object.isFrozen(priorEpisodes))
-        episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
-    }
-    const previouslySeen = samePeople ? null : new Set(previous);
-    const vision = sensesFor(world, actor.entity).find(
-      (sense) => sense.implementation === 'vision-geometry-v1',
-    );
-    if (vision)
-      reconcileVisualEvidence(
-        world,
-        entityGet(world.entities, actor.id)!,
-        [...seen, ...objectIds].flatMap((id) => {
-          const source = entityGet(readOnlyDraftView(world.entities), id);
-          return source ? [readOnlyDraftView(source)] : [];
-        }),
-        vision,
-        normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
-        frame.sourceToken,
-        frame.publicAttributes,
-        undefined,
-        frame.sourceDetailsToken,
-      );
-    const newlySeen = samePeople
-      ? []
-      : seen.filter(
-          (id) =>
-            !previouslySeen!.has(id) &&
-            (hasMemory(entityGet(world.entities, id)) || SIGHTING_POLICY.retainRoutineOnset),
-        );
-    if (newlySeen.length) {
-      for (const id of newlySeen) {
-        countDomainWork('exposureEntries');
-        // Sightings are awareness, not memories: one record per subject per window.
-        if (!sightings!.has(id))
-          // Seeing someone is evidence, not an obligation to reason. Ordinary animals
-          // remain visible and interest-matchable without a stored entry on each return.
-          // docs/memory-architecture.md#encounters-sensory-detail-and-reminder-continuity
-          encounter(
+      let objectIds =
+        !frame.objectsChanged(actor.id) && original.visibleObjects?.[actor.id]
+          ? original.visibleObjects[actor.id]!
+          : frame
+              .nearby(actor.position, radius, 'objects')
+              .filter(sees)
+              .map((e) => e.id);
+      const previousObjects = original.visibleObjects?.[actor.id];
+      const samePeople =
+        seen.length === previous.length && seen.every((id, i) => id === previous[i]);
+      const sameObjects =
+        !!previousObjects &&
+        (objectIds === previousObjects ||
+          (objectIds.length === previousObjects.length &&
+            objectIds.every((id, i) => id === previousObjects[i])));
+      if (samePeople) seen = previous;
+      if (sameObjects) objectIds = previousObjects!;
+      placeIndex ??= placeLandmarkIndex(world.places);
+      const places = exposedPlaces(world, actor.entity, objectIds, placeIndex);
+      const previousPlaces = original.visiblePlaces?.[actor.id] ?? {};
+      if (
+        places.some((place) => previousPlaces[place.id] !== place.revision) ||
+        places.length !== Object.keys(previousPlaces).length
+      ) {
+        const exposure: Record<string, number> = ((world.visiblePlaces ??= {})[actor.id] = {});
+        for (const place of places) {
+          exposure[place.id] = place.revision;
+          if (previousPlaces[place.id] === place.revision) continue;
+          acquireExposure(
+            world,
+            events,
             actor.entity,
-            id,
-            hasMemory(entityGet(world.entities, id))
-              ? SIGHTING_POLICY.social
-              : SIGHTING_POLICY.routine,
+            place.landmarkId,
+            {
+              kind: 'place',
+              id: place.id,
+              revision: place.revision,
+              label: place.label,
+              description: place.description,
+              point: { ...place.point },
+              locationLabel:
+                surfaceById(spatialMap(world), place.point.surfaceId)?.name ?? 'Observed support',
+              landmarkId: place.landmarkId,
+              ...(place.mechanismFields ? { mechanismFields: place.mechanismFields } : {}),
+            },
+            place.exposure.importance,
           );
-        yield;
-      }
-    }
-    let personallyChangedFeatures = changedFeatures;
-    if (timing.sampledSight) {
-      const observer = entityGet(world.entities, actor.id)!,
-        previousFeatures = observer.sensoryProgress?.features ?? {},
-        currentFeatures: Record<string, string> = {};
-      personallyChangedFeatures = new Map();
-      let changed = false;
-      for (const id of [...seen, ...objectIds]) {
-        const source = entityGet(readOnlyDraftView(world.entities), id);
-        if (!source) continue;
-        const feature = visibleFeature(source);
-        currentFeatures[id] = feature.feature;
-        if (previousFeatures[id] !== feature.feature) {
-          changed = true;
-          if (previousFeatures[id] !== undefined) personallyChangedFeatures.set(id, feature.detail);
-        }
-      }
-      if (changed || Object.keys(previousFeatures).length !== Object.keys(currentFeatures).length)
-        observer.sensoryProgress!.features = currentFeatures;
-    }
-    if (personallyChangedFeatures.size)
-      for (const id of seen) {
-        const detail = personallyChangedFeatures.get(id);
-        if (detail && (samePeople || previouslySeen!.has(id))) {
-          countDomainWork('exposureDetails');
-          encounter(actor.entity, id, SIGHTING_POLICY.changedBeing, detail);
-        }
-      }
-    if (!original.visiblePeople?.[actor.id] || !samePeople)
-      (world.visiblePeople ??= {})[actor.id] = seen;
-    reconcileCombatSight(world, entityGet(world.entities, actor.id)!, seen, events);
-    if (!sameObjects) {
-      // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
-      // Captions/speech still resolve event-time evidence independently of this visual cache.
-      if (SIGHTING_POLICY.retainRoutineOnset) {
-        const priorObjects = new Set(previousObjects ?? []);
-        for (const id of objectIds) {
-          if (!priorObjects.has(id)) encounter(actor.entity, id, SIGHTING_POLICY.routine);
           yield;
         }
       }
-      (world.visibleObjects ??= {})[actor.id] = objectIds;
-    }
-    if (personallyChangedFeatures.size) {
-      const priorObjects = sameObjects ? undefined : new Set(previousObjects);
-      for (const id of objectIds) {
-        const detail = personallyChangedFeatures.get(id);
-        if (detail && (sameObjects || priorObjects!.has(id))) {
-          countDomainWork('exposureDetails');
-          encounter(actor.entity, id, SIGHTING_POLICY.routine, detail);
+      // Arrivals, departures and brief returns (EPR03) read this observer's latest private
+      // sighting records once, and only when its visible people changed.
+      const sightings = samePeople
+        ? undefined
+        : recentSightings(world, actor.id, world.simTime - SIGHTING_POLICY.recordWindowSeconds);
+      if (!samePeople) {
+        const stillSeen = new Set(seen);
+        for (const id of previous) {
+          if (stillSeen.has(id)) continue;
+          countDomainWork('exposureExits');
+          const source = entityGet(world.entities, id);
+          // Death and removal have their own occurrences; one departure per record window.
+          if (
+            source?.actor?.alive &&
+            (hasMemory(source) || SIGHTING_POLICY.retainRoutineOnset) &&
+            sightings!.get(id)?.present !== false
+          )
+            encounter(actor.entity, id, SIGHTING_POLICY.departure, undefined, true);
+          yield;
         }
       }
+      // Persistent exposure episodes do not imply identity recognition across a disappearance;
+      // a return within the linger window is the same episode. docs/knowledge.md#subject-binding
+      const lingering = (id: string) => recentExposureEpisode(world, actor.id, id);
+      const priorEpisodes = original.perceptionEpisodes?.[actor.id] ?? {};
+      const certified = Object.isFrozen(priorEpisodes)
+        ? episodeMembership.get(priorEpisodes)
+        : undefined;
+      if (certified?.people !== seen || certified.objects !== objectIds) {
+        const exposed = [...seen, ...objectIds];
+        const membership = new Set(exposed);
+        const removed = Object.keys(priorEpisodes).filter((id) => !membership.has(id));
+        const added = exposed.filter((id) => !priorEpisodes[id]);
+        if (removed.length || added.length) {
+          // Compare immutable membership before obtaining the draft. Continuing bindings are
+          // neither reconstructed nor reassigned. New identities retain exposed-array order.
+          // docs/projects/parallel-batch-01-playable-week/simulation-performance.md#2-update-sighting-identity-mappings-by-difference--6-hours
+          const episodes = ((world.perceptionEpisodes ??= {})[actor.id] ??= {});
+          for (const id of removed) delete episodes[id];
+          for (const id of added) {
+            episodes[id] = priorEpisodes[id] ?? lingering(id) ?? perceptionEpisodeId(world, id);
+          }
+          countDomainWork('episodeBindingsAssigned', added.length);
+          countDomainWork('episodeBindingsInserted', added.length);
+          countDomainWork('episodeBindingsDeleted', removed.length);
+        } else if (Object.isFrozen(priorEpisodes))
+          episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
+      }
+      const previouslySeen = samePeople ? null : new Set(previous);
+      const vision = sensesFor(world, actor.entity).find(
+        (sense) => sense.implementation === 'vision-geometry-v1',
+      );
+      if (vision)
+        reconcileVisualEvidence(
+          world,
+          entityGet(world.entities, actor.id)!,
+          [...seen, ...objectIds].flatMap((id) => {
+            const source = entityGet(readOnlyDraftView(world.entities), id);
+            return source ? [readOnlyDraftView(source)] : [];
+          }),
+          vision,
+          normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
+          frame.sourceToken,
+          frame.publicAttributes,
+          undefined,
+          frame.sourceDetailsToken,
+        );
+      const newlySeen = samePeople
+        ? []
+        : seen.filter(
+            (id) =>
+              !previouslySeen!.has(id) &&
+              (hasMemory(entityGet(world.entities, id)) || SIGHTING_POLICY.retainRoutineOnset),
+          );
+      if (newlySeen.length) {
+        for (const id of newlySeen) {
+          countDomainWork('exposureEntries');
+          // Sightings are awareness, not memories: one record per subject per window.
+          if (!sightings!.has(id))
+            // Seeing someone is evidence, not an obligation to reason. Ordinary animals
+            // remain visible and interest-matchable without a stored entry on each return.
+            // docs/memory-architecture.md#encounters-sensory-detail-and-reminder-continuity
+            encounter(
+              actor.entity,
+              id,
+              hasMemory(entityGet(world.entities, id))
+                ? SIGHTING_POLICY.social
+                : SIGHTING_POLICY.routine,
+            );
+          yield;
+        }
+      }
+      let personallyChangedFeatures = changedFeatures;
+      if (timing.sampledSight) {
+        const observer = entityGet(world.entities, actor.id)!,
+          previousFeatures = observer.sensoryProgress?.features ?? {},
+          currentFeatures: Record<string, string> = {};
+        personallyChangedFeatures = new Map();
+        let changed = false;
+        for (const id of [...seen, ...objectIds]) {
+          const source = entityGet(readOnlyDraftView(world.entities), id);
+          if (!source) continue;
+          const feature = visibleFeature(source);
+          currentFeatures[id] = feature.feature;
+          if (previousFeatures[id] !== feature.feature) {
+            changed = true;
+            if (previousFeatures[id] !== undefined)
+              personallyChangedFeatures.set(id, feature.detail);
+          }
+        }
+        if (changed || Object.keys(previousFeatures).length !== Object.keys(currentFeatures).length)
+          observer.sensoryProgress!.features = currentFeatures;
+      }
+      if (personallyChangedFeatures.size)
+        for (const id of seen) {
+          const detail = personallyChangedFeatures.get(id);
+          if (detail && (samePeople || previouslySeen!.has(id))) {
+            countDomainWork('exposureDetails');
+            encounter(actor.entity, id, SIGHTING_POLICY.changedBeing, detail);
+          }
+        }
+      if (!original.visiblePeople?.[actor.id] || !samePeople)
+        (world.visiblePeople ??= {})[actor.id] = seen;
+      reconcileCombatSight(world, entityGet(world.entities, actor.id)!, seen, events);
+      if (!sameObjects) {
+        // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
+        // Captions/speech still resolve event-time evidence independently of this visual cache.
+        if (SIGHTING_POLICY.retainRoutineOnset) {
+          const priorObjects = new Set(previousObjects ?? []);
+          for (const id of objectIds) {
+            if (!priorObjects.has(id)) encounter(actor.entity, id, SIGHTING_POLICY.routine);
+            yield;
+          }
+        }
+        (world.visibleObjects ??= {})[actor.id] = objectIds;
+      }
+      if (personallyChangedFeatures.size) {
+        const priorObjects = sameObjects ? undefined : new Set(previousObjects);
+        for (const id of objectIds) {
+          const detail = personallyChangedFeatures.get(id);
+          if (detail && (sameObjects || priorObjects!.has(id))) {
+            countDomainWork('exposureDetails');
+            encounter(actor.entity, id, SIGHTING_POLICY.routine, detail);
+          }
+        }
+      }
+      encounter.flush();
     }
     encounter.flush();
+    for (const observer of frame.observers) {
+      const timing = routine.get(observer.id)!;
+      frame.completeObserver(observer.id, timing.sight && !timing.detail);
+    }
+    completeSightWork(world, completedSight, actorIds, sightRevision);
+    exposureCompleted = true;
+    return new Set([...routine].filter(([, timing]) => timing.sight).map(([id]) => id));
+  } finally {
+    if (!exposureCompleted) frame.abandon();
   }
-  encounter.flush();
-  completeSightWork(world, completedSight, actorIds, sightRevision);
-  return new Set([...routine].filter(([, timing]) => timing.sight).map(([id]) => id));
 }
 
 /** Establish actual sight/contact for fresh worlds or an actually returned observer. Otherwise

@@ -133,7 +133,12 @@ import {
   validateNativeValueWindow,
 } from './native-values.js';
 import { canonicalJson, contentLabel, emit } from './events.js';
-import { hasRecordFields, isSafeRecordId, isImmutableData } from './records.js';
+import {
+  hasRecordFields,
+  isSafeRecordId,
+  isImmutableData,
+  immutableDataSnapshot,
+} from './records.js';
 import { validateEquipment } from './equipment.js';
 import { validateContactDefense } from './contact-defense.js';
 import { validateEvasion } from './evasion.js';
@@ -1039,70 +1044,146 @@ function attributeCritical(
   const threshold = attributeThreshold(entity.actor, d, c.value, c.unit);
   return c.operator === 'lessThan' ? compared < threshold : compared <= threshold;
 }
+interface AttributeProjectionInput {
+  definition: AttributeDefinition;
+  value: AttributeValue;
+  range?: { min: number; max: number };
+  revision: number;
+  critical: boolean | undefined;
+  editorCritical: boolean | undefined;
+}
+function attributeProjectionInput(
+  world: WorldState,
+  entity: Entity,
+  definition: AttributeDefinition,
+  value: AttributeValue,
+): AttributeProjectionInput {
+  const actor = readOnlyDraftView(entity.actor!);
+  return {
+    definition,
+    value,
+    ...(definition.schema.kind === 'number' ? { range: attributeRange(actor, definition) } : {}),
+    revision:
+      actor.practice?.[definition.id]?.revision ??
+      currentAttributeState(world, entity, definition.id)?.revision ??
+      actor.body?.revision ??
+      0,
+    critical: attributeCritical(entity, definition, value, definition.critical),
+    editorCritical: attributeCritical(entity, definition, value, definition.editorCritical),
+  };
+}
+function projectAttributeInput(input: AttributeProjectionInput): AttributeView {
+  const { definition: d, value, range, revision, critical, editorCritical } = input;
+  return {
+    id: d.id,
+    version: d.version,
+    name: d.name,
+    display: d.schema.kind === 'number' ? 'meter' : 'category',
+    presentation: d.presentation,
+    ...((HOST_IMPLEMENTATIONS[d.implementation].storage === 'attributes' ||
+      d.implementation === 'native-health-v1') &&
+    d.schema.kind === 'number'
+      ? { changeFeedback: 'effects' as const }
+      : {}),
+    ...(d.implementation === 'native-health-v1' ? { bodyHealth: true } : {}),
+    value,
+    status: 'known',
+    critical,
+    editorCritical,
+    revision,
+    ...(d.schema.kind === 'number'
+      ? { min: range!.min, max: range!.max, unit: d.schema.unit }
+      : {}),
+  };
+}
+const publicProjectionDefinitions = new WeakMap<object, readonly AttributeDefinition[]>();
+function projectionDefinitions(world: WorldState, audience: 'owner' | 'public') {
+  const definitions = attributeDefinitions(world);
+  if (audience === 'owner') return definitions;
+  const immutable = isImmutableData(definitions);
+  let result = immutable ? publicProjectionDefinitions.get(definitions) : undefined;
+  if (!result) {
+    result = definitions.filter((definition) => definition.disclosure === 'public');
+    if (immutable) publicProjectionDefinitions.set(definitions, result);
+  }
+  return result;
+}
+export interface PublicAttributeProjection {
+  readonly key: string;
+  readonly inputs: readonly Readonly<AttributeProjectionInput>[];
+}
+/** A source phase captures numeric/category inputs without constructing presentation
+ * rows. Its later detailed receivers share these finite values, never a live world
+ * or draft definition that an earlier receiver could have changed. */
+export function capturePublicAttributeProjection(
+  world: WorldState,
+  entity: Entity,
+): PublicAttributeProjection {
+  const inputs: AttributeProjectionInput[] = [];
+  if (entity.actor)
+    for (const definition of projectionDefinitions(world, 'public')) {
+      const value = readAttribute(world, entity, definition);
+      if (value === undefined) continue;
+      const input = attributeProjectionInput(world, entity, definition, value);
+      input.definition = immutableDataSnapshot(definition, readOnlyDraftView);
+      if (input.range) Object.freeze(input.range);
+      inputs.push(Object.freeze(input));
+    }
+  // Every captured dynamic input participates, including future projection
+  // fields; static wording/presentation uses its existing exact definition pin.
+  const key = JSON.stringify(
+    inputs.map(({ definition, ...state }) => [definitionPin(definition), state]),
+  );
+  return Object.freeze({ key, inputs: Object.freeze(inputs) });
+}
+export function projectPublicAttributeProjection(
+  projection: PublicAttributeProjection,
+): AttributeView[] {
+  return projection.inputs.map(projectAttributeInput);
+}
 export function projectAttributes(
   world: WorldState,
   entity: Entity,
   audience: 'owner' | 'public',
 ): AttributeView[] {
   if (!entity.actor) return [];
-  return applicableAttributes(world, entity)
-    .filter((d) => audience === 'owner' || d.disclosure === 'public')
-    .map((d) => {
-      const value = readAttribute(world, entity, d);
-      const range = d.schema.kind === 'number' ? attributeRange(entity.actor, d) : undefined;
-      return {
-        id: d.id,
-        version: d.version,
-        name: d.name,
-        display: d.schema.kind === 'number' ? 'meter' : 'category',
-        presentation: d.presentation,
-        ...((HOST_IMPLEMENTATIONS[d.implementation].storage === 'attributes' ||
-          d.implementation === 'native-health-v1') &&
-        d.schema.kind === 'number'
-          ? { changeFeedback: 'effects' as const }
-          : {}),
-        ...(d.implementation === 'native-health-v1' ? { bodyHealth: true } : {}),
-        value: value ?? null,
-        status: value === undefined ? 'unknown' : 'known',
-        critical: attributeCritical(entity, d, value, d.critical),
-        editorCritical: attributeCritical(entity, d, value, d.editorCritical),
-        ...(audience === 'owner' && d.editorCritical && 'compare' in d.editorCritical
-          ? {
-              editorCriticalComparison: {
-                operator: d.editorCritical.compare.operator,
-                rounding: d.editorCritical.compare.rounding,
-                value: attributeThreshold(
-                  entity.actor,
-                  d,
-                  d.editorCritical.compare.value,
-                  d.editorCritical.compare.unit,
-                ),
-              },
-            }
-          : {}),
-        revision:
-          entity.actor!.practice?.[d.id]?.revision ??
-          currentAttributeState(world, entity, d.id)?.revision ??
-          entity.actor!.body?.revision ??
-          0,
-        ...(d.schema.kind === 'number'
-          ? { min: range!.min, max: range!.max, unit: d.schema.unit }
-          : {}),
-        ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
-        ...(audience === 'owner' && d.condition
-          ? { condition: conditionText(world, entity, d, value) }
-          : {}),
-        ...(audience === 'owner' && attributeConcernActive(entity, d, value)
-          ? {
-              concern: renderNarration(
-                world,
-                narrationTemplate(d.concern!.text, { subject: entity }),
-                entity.id,
+  const result: AttributeView[] = [];
+  // Disclosure precedes value preparation, and each selected value is read once.
+  for (const d of projectionDefinitions(world, audience)) {
+    const value = readAttribute(world, entity, d);
+    if (value === undefined) continue;
+    result.push({
+      ...projectAttributeInput(attributeProjectionInput(world, entity, d, value)),
+      ...(audience === 'owner' && d.editorCritical && 'compare' in d.editorCritical
+        ? {
+            editorCriticalComparison: {
+              operator: d.editorCritical.compare.operator,
+              rounding: d.editorCritical.compare.rounding,
+              value: attributeThreshold(
+                entity.actor,
+                d,
+                d.editorCritical.compare.value,
+                d.editorCritical.compare.unit,
               ),
-            }
-          : {}),
-      };
+            },
+          }
+        : {}),
+      ...(audience === 'owner' && d.meaning ? { meaning: d.meaning } : {}),
+      ...(audience === 'owner' && d.condition
+        ? { condition: conditionText(world, entity, d, value) }
+        : {}),
+      ...(audience === 'owner' && attributeConcernActive(entity, d, value)
+        ? {
+            concern: renderNarration(
+              world,
+              narrationTemplate(d.concern!.text, { subject: entity }),
+              entity.id,
+            ),
+          }
+        : {}),
     });
+  }
+  return result;
 }
 export function bodyContext(world: WorldState, entity: Entity): string {
   const actor = entity.actor!;

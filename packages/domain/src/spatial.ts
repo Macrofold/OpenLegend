@@ -1,4 +1,10 @@
 import { countDomainWork } from './diagnostic-counters.js';
+import {
+  objectIndexGet,
+  objectIndexSet,
+  objectIndexEntries,
+  type ObjectIndexNode,
+} from './object-index.js';
 import { takeNativeChanges } from './native-change-feed.js';
 import { chargeWork } from './work-budget.js';
 import { entityDraftAudit, entityGet, entityOrdering } from './entity-collection.js';
@@ -6,6 +12,7 @@ import { changedDraftEntityIds, readOnlyDraftView } from './draft.js';
 import { worldPosition, worldSupport } from './spatial-state.js';
 import { activelyParticipates } from './participation-state.js';
 import { physicalRoot, worldRootEntities } from './entity-index.js';
+import { isImmutableData } from './records.js';
 import { isDraft, original } from 'immer';
 import {
   MOVEMENT,
@@ -587,25 +594,64 @@ export function sameSurfacePoint(
 
 /** Ephemeral 3D point index for observed entity anchors. Exact body/geometry checks follow it.
  * Large static solids use the separate complete, bounded geometry provider, not this index. */
+interface CandidateEntry<T> {
+  entity: T;
+  order: number;
+}
+interface CandidateCell<T> {
+  x: number;
+  y: number;
+  z: number;
+  entries: readonly CandidateEntry<T>[];
+}
+interface SpatialCandidates<T extends { position: Position }> {
+  (position: Position, radius: number): T[];
+  page(
+    position: Position,
+    radius: number,
+    after?: number,
+    maximum?: number,
+  ): Array<{ value: T; after: number }>;
+  membership(position: Position, radius: number, key: (value: T) => unknown): string;
+  at(order: number): T | undefined;
+  fork(changes: ReadonlyMap<number, T>): SpatialCandidates<T>;
+}
+/** Pure point bins may fork only through exact ordinal replacements. Persistent
+ * cells keep earlier snapshots isolated and avoid rebuilding unchanged bodies. */
 export function spatialCandidates<T extends { position: Position }>(
   entities: T[],
   cellSize = CANDIDATE_CELL_SIZE,
-) {
-  type Entry = { entity: T; order: number };
-  type Cell = { x: number; y: number; z: number; entries: Entry[] };
-  const cells = new Map<string, Cell>();
-  countDomainWork('spatialBuilds');
-  countDomainWork('spatialEntriesPrepared', entities.length);
-  entities.forEach((entity, order) => {
-    const p = entity.position,
+): SpatialCandidates<T> {
+  const initial = entities.map((entity, order) => ({ entity, order }));
+  const prepared = new Map<
+    string,
+    { x: number; y: number; z: number; entries: CandidateEntry<T>[] }
+  >();
+  for (const entry of initial) {
+    const p = entry.entity.position,
       x = Math.floor(p.x / cellSize),
       y = Math.floor(p.y / cellSize),
-      z = Math.floor(p.z / cellSize);
-    const key = `${x},${y},${z}`;
-    let cell = cells.get(key);
-    if (!cell) cells.set(key, (cell = { x, y, z, entries: [] }));
-    cell.entries.push({ entity, order });
-  });
+      z = Math.floor(p.z / cellSize),
+      key = `${x},${y},${z}`;
+    let cell = prepared.get(key);
+    if (!cell) prepared.set(key, (cell = { x, y, z, entries: [] }));
+    cell.entries.push(entry);
+  }
+  let cells: ObjectIndexNode<CandidateCell<T>> | undefined;
+  for (const [key, cell] of prepared) cells = objectIndexSet(cells, key, cell);
+  countDomainWork('spatialBuilds');
+  countDomainWork('spatialEntriesPrepared', entities.length);
+  return spatialCandidateReader(initial, cells, prepared.size, cellSize);
+}
+function spatialCandidateReader<T extends { position: Position }>(
+  initial: readonly CandidateEntry<T>[],
+  cells: ObjectIndexNode<CandidateCell<T>> | undefined,
+  cellCount: number,
+  cellSize: number,
+  edits?: ObjectIndexNode<CandidateEntry<T>>,
+): SpatialCandidates<T> {
+  type Entry = CandidateEntry<T>;
+  type Cell = CandidateCell<T>;
   const candidates = (position: Position, radius: number): T[] => {
     const found: Entry[] = [];
     const minX = Math.floor((position.x - radius) / cellSize),
@@ -617,8 +663,8 @@ export function spatialCandidates<T extends { position: Position }>(
     const volume = (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
     // A large empty envelope should cost occupied cells, not its cubic volume.
     // Both paths return the same conservative cells in original entity order.
-    if (volume > cells.size) {
-      for (const cell of cells.values()) {
+    if (volume > cellCount) {
+      for (const [, cell] of objectIndexEntries(cells)) {
         chargeWork({ tests: 1 });
         if (
           cell.x >= minX &&
@@ -636,7 +682,7 @@ export function spatialCandidates<T extends { position: Position }>(
       for (let x = minX; x <= maxX; x++)
         for (let y = minY; y <= maxY; y++)
           for (let z = minZ; z <= maxZ; z++) {
-            const entries = cells.get(`${x},${y},${z}`)?.entries ?? [];
+            const entries = objectIndexGet(cells, `${x},${y},${z}`)?.entries ?? [];
             chargeWork({ tests: 1, candidates: entries.length });
             for (const entry of entries) found.push(entry);
           }
@@ -654,7 +700,7 @@ export function spatialCandidates<T extends { position: Position }>(
       maxY = Math.floor((position.y + radius) / cellSize),
       minZ = Math.floor((position.z - radius) / cellSize),
       maxZ = Math.floor((position.z + radius) / cellSize);
-    const selected: Array<{ entries: Entry[]; offset: number }> = [];
+    const selected: Array<{ entries: readonly Entry[]; offset: number }> = [];
     const include = (cell: Cell | undefined) => {
       if (!cell) return;
       let low = 0,
@@ -668,8 +714,8 @@ export function spatialCandidates<T extends { position: Position }>(
       if (low < cell.entries.length) selected.push({ entries: cell.entries, offset: low });
     };
     const volume = (maxX - minX + 1) * (maxY - minY + 1) * (maxZ - minZ + 1);
-    if (volume > cells.size) {
-      for (const cell of cells.values()) {
+    if (volume > cellCount) {
+      for (const [, cell] of objectIndexEntries(cells)) {
         chargeWork({ tests: 1 });
         if (
           cell.x >= minX &&
@@ -686,7 +732,7 @@ export function spatialCandidates<T extends { position: Position }>(
         for (let y = minY; y <= maxY; y++)
           for (let z = minZ; z <= maxZ; z++) {
             chargeWork({ tests: 1 });
-            include(cells.get(`${x},${y},${z}`));
+            include(objectIndexGet(cells, `${x},${y},${z}`));
           }
     }
     const values: Array<{ value: T; after: number }> = [];
@@ -720,7 +766,7 @@ export function spatialCandidates<T extends { position: Position }>(
       maxZ = Math.floor((position.z + radius) / cellSize);
     let keys = '[',
       examined = 0;
-    for (const cell of cells.values()) {
+    for (const [, cell] of objectIndexEntries(cells)) {
       if (
         cell.x < minX ||
         cell.x > maxX ||
@@ -735,57 +781,289 @@ export function spatialCandidates<T extends { position: Position }>(
       }
     }
     countDomainWork('spatialMembershipBuilds');
-    countDomainWork('spatialMembershipCells', cells.size);
+    countDomainWork('spatialMembershipCells', cellCount);
     countDomainWork('spatialMembershipCandidates', examined);
     return `${keys}]`;
+  };
+  candidates.at = (order: number) =>
+    (objectIndexGet(edits, String(order)) ?? initial[order])?.entity;
+  candidates.fork = (changes: ReadonlyMap<number, T>) => {
+    if (!changes.size) return candidates;
+    let nextCells = cells,
+      nextCount = cellCount,
+      nextEdits = edits;
+    const pending = new Map<
+      string,
+      { x: number; y: number; z: number; removed: Set<number>; added: Entry[] }
+    >();
+    const touch = (point: Position) => {
+      const x = Math.floor(point.x / cellSize),
+        y = Math.floor(point.y / cellSize),
+        z = Math.floor(point.z / cellSize),
+        key = `${x},${y},${z}`;
+      let cell = pending.get(key);
+      if (!cell) pending.set(key, (cell = { x, y, z, removed: new Set(), added: [] }));
+      return cell;
+    };
+    for (const [order, entity] of changes) {
+      const previous = objectIndexGet(edits, String(order)) ?? initial[order];
+      if (!previous) throw new Error('Cannot replace an unknown spatial candidate ordinal.');
+      touch(previous.entity.position).removed.add(order);
+      const entry = { entity, order };
+      touch(entity.position).added.push(entry);
+      nextEdits = objectIndexSet(nextEdits, String(order), entry);
+    }
+    // A moving crowd may share one cell. Copy that cell once for the complete
+    // native publication, rather than once per moving body.
+    for (const [key, change] of pending) {
+      const previous = objectIndexGet(cells, key);
+      const entries = [
+        ...(previous?.entries.filter((entry) => !change.removed.has(entry.order)) ?? []),
+        ...change.added,
+      ].sort((a, b) => a.order - b.order);
+      if (entries.length) {
+        nextCells = objectIndexSet(nextCells, key, {
+          x: change.x,
+          y: change.y,
+          z: change.z,
+          entries,
+        });
+        if (!previous) nextCount++;
+      } else if (previous) {
+        nextCells = objectIndexSet(nextCells, key, undefined);
+        nextCount--;
+      }
+    }
+    countDomainWork('spatialEntriesPrepared', changes.size);
+    return spatialCandidateReader(initial, nextCells, nextCount, cellSize, nextEdits);
   };
   return candidates;
 }
 
-type EntityCandidateIndex = ReturnType<
-  typeof spatialCandidates<{ entity: Entity; position: Position }>
-> & {
-  bodyExtent: number;
-  livingBodyExtent: number;
+type EntityCandidateValue = { entity: Entity; position: Position };
+type EntityCandidatePoint = {
+  id: string;
+  position: Position;
+  extent: number;
+  livingExtent: number;
   interactionHeight: number;
-  order: ReadonlyMap<string, number>;
 };
-const entityIndexes = new WeakMap<WorldState['entities'], EntityCandidateIndex>();
-const actorEntityIndexes = new WeakMap<WorldState['entities'], EntityCandidateIndex>();
-function entityIndex(world: WorldState, actorsOnly = false, rebuildRoots = false) {
+interface PreparedEntityCandidates {
+  near: SpatialCandidates<EntityCandidatePoint>;
+  extents?: ObjectIndexNode<number>;
+  livingExtents?: ObjectIndexNode<number>;
+  interactions?: ObjectIndexNode<number>;
+  order: ReadonlyMap<string, number>;
+}
+type EntityCandidateIndex = ((position: Position, radius: number) => EntityCandidateValue[]) &
+  Pick<SpatialCandidates<EntityCandidateValue>, 'page' | 'membership'> & {
+    bodyExtent: number;
+    livingBodyExtent: number;
+    interactionHeight: number;
+    order: ReadonlyMap<string, number>;
+    prepared: PreparedEntityCandidates;
+    policy: WorldState['moduleManifest']['rangedPolicy'];
+  };
+interface EntityCandidateCache {
+  prepared: PreparedEntityCandidates;
+  policy: WorldState['moduleManifest']['rangedPolicy'];
+  pending?: ObjectIndexNode<true>;
+  query?: EntityCandidateIndex;
+}
+const entityIndexes = new WeakMap<WorldState['entities'], EntityCandidateCache>();
+const actorEntityIndexes = new WeakMap<WorldState['entities'], EntityCandidateCache>();
+function entityCandidatePoint(world: WorldState, entity: Entity): EntityCandidatePoint {
+  const body = effectiveBodyProfile(world, entity),
+    extent = candidateBodyExtent(body);
+  return {
+    id: entity.id,
+    position: Object.freeze({ ...worldPosition(entity) }),
+    extent,
+    livingExtent: entity.actor?.alive ? extent : 0,
+    interactionHeight: body.interactionHeight,
+  };
+}
+/** Geometry carries IDs/scalars only. Bind returned neighbors to this exact
+ * collection without retaining a world, or mutating a shared older point. */
+function bindEntityCandidates(
+  entities: WorldState['entities'],
+  prepared: PreparedEntityCandidates,
+  policy: WorldState['moduleManifest']['rangedPolicy'],
+): EntityCandidateIndex {
+  const value = (point: EntityCandidatePoint): EntityCandidateValue => ({
+    entity: entityGet(entities, point.id)!,
+    position: point.position,
+  });
+  return Object.assign(
+    (position: Position, radius: number) => prepared.near(position, radius).map(value),
+    {
+      page: (position: Position, radius: number, after?: number, maximum?: number) =>
+        prepared.near
+          .page(position, radius, after, maximum)
+          .map((entry) => ({ value: value(entry.value), after: entry.after })),
+      membership: (
+        position: Position,
+        radius: number,
+        key: (point: EntityCandidateValue) => unknown,
+      ) => prepared.near.membership(position, radius, (point) => key(value(point))),
+      bodyExtent: prepared.extents?.maximum ?? 0,
+      livingBodyExtent: prepared.livingExtents?.maximum ?? 0,
+      interactionHeight: prepared.interactions?.maximum ?? 0,
+      order: prepared.order,
+      prepared,
+      policy,
+    },
+  );
+}
+function sameCandidatePoint(first: EntityCandidatePoint, second: EntityCandidatePoint): boolean {
+  return (
+    first.position.x === second.position.x &&
+    first.position.y === second.position.y &&
+    first.position.z === second.position.z &&
+    first.extent === second.extent &&
+    first.livingExtent === second.livingExtent &&
+    first.interactionHeight === second.interactionHeight
+  );
+}
+/** Resolve coalesced geometry only when a physical reader actually needs it. */
+function prepareChangedEntityCandidates(
+  world: WorldState,
+  state: EntityCandidateCache,
+): PreparedEntityCandidates | undefined {
+  const edits = new Map<number, EntityCandidatePoint>();
+  let { extents, livingExtents, interactions } = state.prepared;
+  for (const [id] of objectIndexEntries(state.pending)) {
+    const order = state.prepared.order.get(id),
+      entity = entityGet(world.entities, id),
+      previous = order === undefined ? undefined : state.prepared.near.at(order);
+    if (order === undefined || !entity || !previous) return;
+    const point = entityCandidatePoint(world, entity);
+    if (sameCandidatePoint(previous, point)) continue;
+    edits.set(order, point);
+    if (previous.extent !== point.extent) extents = objectIndexSet(extents, id, point.extent);
+    if (previous.livingExtent !== point.livingExtent)
+      livingExtents = objectIndexSet(livingExtents, id, point.livingExtent);
+    if (previous.interactionHeight !== point.interactionHeight)
+      interactions = objectIndexSet(interactions, id, point.interactionHeight);
+  }
+  return edits.size
+    ? {
+        ...state.prepared,
+        near: state.prepared.near.fork(edits),
+        extents,
+        livingExtents,
+        interactions,
+      }
+    : state.prepared;
+}
+function entityIndex(
+  world: WorldState,
+  actorsOnly = false,
+  rebuildRoots = false,
+): EntityCandidateIndex {
+  if (isDraft(world) && !rebuildRoots) return workingEntityIndex(world, actorsOnly);
   const indexes = actorsOnly ? actorEntityIndexes : entityIndexes;
-  let index =
-    !rebuildRoots && !isDraft(world.entities) && Object.isFrozen(world.entities)
-      ? indexes.get(world.entities)
-      : undefined;
-  if (!index) {
+  const policy = readOnlyDraftView(world.moduleManifest).rangedPolicy;
+  const reusable =
+    !isDraft(world.entities) && isImmutableData(world.entities) && isImmutableData(policy);
+  let state = !rebuildRoots && reusable ? indexes.get(world.entities) : undefined;
+  if (state?.policy !== policy) state = undefined;
+  if (state?.pending) {
+    const prepared = prepareChangedEntityCandidates(world, state);
+    state = prepared ? { prepared, policy } : undefined;
+    if (state && reusable) indexes.set(world.entities, state);
+  }
+  if (!state) {
     const entries = worldRootEntities(world, true, rebuildRoots)
       .filter((entity) => activelyParticipates(entity) && (!actorsOnly || !!entity.actor))
-      .map((entity) => ({ entity, position: worldPosition(entity) }));
-    let bodyExtent = 0,
-      livingBodyExtent = 0,
-      interactionHeight = 0;
-    for (const { entity } of entries) {
-      const body = effectiveBodyProfile(world, entity);
-      const extent = candidateBodyExtent(body);
-      bodyExtent = Math.max(bodyExtent, extent);
-      if (entity.actor?.alive) livingBodyExtent = Math.max(livingBodyExtent, extent);
-      interactionHeight = Math.max(interactionHeight, body.interactionHeight);
+      .map((entity) => entityCandidatePoint(world, entity));
+    let extents: ObjectIndexNode<number> | undefined,
+      livingExtents: ObjectIndexNode<number> | undefined,
+      interactions: ObjectIndexNode<number> | undefined;
+    for (const point of entries) {
+      extents = objectIndexSet(extents, point.id, point.extent);
+      livingExtents = objectIndexSet(livingExtents, point.id, point.livingExtent);
+      interactions = objectIndexSet(interactions, point.id, point.interactionHeight);
     }
-    index = Object.assign(
-      spatialCandidates(entries, actorsOnly ? BODY_CANDIDATE_CELL_SIZE : CANDIDATE_CELL_SIZE),
-      {
-        bodyExtent,
-        livingBodyExtent,
-        interactionHeight,
-        order: new Map(entries.map(({ entity }, order) => [entity.id, order])),
+    state = {
+      prepared: {
+        near: spatialCandidates(
+          entries,
+          actorsOnly ? BODY_CANDIDATE_CELL_SIZE : CANDIDATE_CELL_SIZE,
+        ),
+        extents,
+        livingExtents,
+        interactions,
+        order: new Map(entries.map((point, order) => [point.id, order])),
       },
-    );
-    if (!isDraft(world.entities) && Object.isFrozen(world.entities))
-      indexes.set(world.entities, index);
+      policy,
+    };
+    if (reusable) indexes.set(world.entities, state);
   }
-  return index;
+  return (state.query ??= bindEntityCandidates(world.entities, state.prepared, policy));
 }
+
+/** Completed owned transitions carry exact changed IDs. Fork existing immutable
+ * geometry only when membership/order and installed body policy still agree;
+ * edited builders, insertion/removal and unknown replacements rebuild normally.
+ * docs/save-and-load.md#continuation-and-identity */
+export function captureSpatialCandidateIndex(
+  draft: WorldState,
+): (world: WorldState, changed: ReadonlySet<string>) => void {
+  const base = original(draft)!,
+    complete = changedDraftEntityIds(draft) !== undefined;
+  const prior = [entityIndexes.get(base.entities), actorEntityIndexes.get(base.entities)] as const;
+  return (world, changed) => {
+    if (world.entities === base.entities) return;
+    if (!complete || !isImmutableData(base.entities) || !isImmutableData(world.entities)) return;
+    const policy = readOnlyDraftView(world.moduleManifest).rangedPolicy;
+    if (!isImmutableData(policy)) return;
+    for (const [kind, index] of prior.entries()) {
+      if (!index || index.policy !== policy) continue;
+      const actorsOnly = kind === 1;
+      let pending = index.pending;
+      let reusable = true;
+      for (const id of changed) {
+        const before = entityGet(base.entities, id),
+          after = entityGet(world.entities, id);
+        const eligible = (entity: Entity | undefined) =>
+          physicalRoot(entity) && activelyParticipates(entity) && (!actorsOnly || !!entity?.actor);
+        const was = eligible(before),
+          now = eligible(after);
+        if (
+          was !== now ||
+          (was &&
+            entityOrdering(base.entities, id)?.key !== entityOrdering(world.entities, id)?.key)
+        ) {
+          reusable = false;
+          break;
+        }
+        if (!now) continue;
+        // Needs, thoughts and ordinary action bookkeeping do not change the
+        // saved placement/body inputs or the alive/life-dependent pose rule.
+        if (
+          before?.placement === after?.placement &&
+          before?.spatial === after?.spatial &&
+          before?.actor?.alive === after?.actor?.alive &&
+          before?.actor?.physicalLife === after?.actor?.physicalLife
+        )
+          continue;
+        if (!index.prepared.order.has(id)) {
+          reusable = false;
+          break;
+        }
+        if (!objectIndexGet(pending, id)) pending = objectIndexSet(pending, id, true);
+      }
+      if (!reusable) continue;
+      (actorsOnly ? actorEntityIndexes : entityIndexes).set(world.entities, {
+        prepared: index.prepared,
+        policy,
+        ...(pending ? { pending } : {}),
+      });
+    }
+  };
+}
+
 type BodyCandidatePoint = {
   id: string;
   entity: Entity;
@@ -793,6 +1071,7 @@ type BodyCandidatePoint = {
   order: number;
   extent: number;
   livingExtent: number;
+  interactionHeight: number;
 };
 type BodyCandidates = ((position: Position, radius: number) => BodyCandidatePoint[]) & {
   bodyExtent: number;
@@ -800,137 +1079,181 @@ type BodyCandidates = ((position: Position, radius: number) => BodyCandidatePoin
   order: ReadonlyMap<string, number>;
 };
 type WorkingBodyIndex = {
+  base: PreparedEntityCandidates;
+  entities: WorldState['entities'];
+  policy: WorldState['moduleManifest']['rangedPolicy'];
   points: Map<string, BodyCandidatePoint>;
-  ordering: Map<string, string>;
+  changed: Set<string>;
   bins: SpatialCandidateIndex<BodyCandidatePoint>;
+  extents?: ObjectIndexNode<number>;
+  livingExtents?: ObjectIndexNode<number>;
+  interactions?: ObjectIndexNode<number>;
+  complete?: PreparedEntityCandidates;
   query: BodyCandidates;
 };
 const workingActorBodies = new WeakMap<WorldState, WorkingBodyIndex>();
 const workingRootBodies = new WeakMap<WorldState, WorkingBodyIndex>();
-/** Movement and local perception repeatedly query the same working world. Reuse its bins,
- * updating only proven entity writes; neither copied positions nor draft references
- * escape this draft's lifetime. Unknown/structural edits use actual root enumeration.
- * Exact collision, participation and living-body filters remain with their callers. */
+/** Working queries share compiled immutable points and index only bodies changed
+ * in this draft. A mutable overlay keeps per-mover updates cheap even when a
+ * crowd shares one cell; earlier worlds and their points are never mutated. */
 function workingBodyIndex(world: WorldState, actorsOnly: boolean) {
   if (!isDraft(world)) return entityIndex(world, actorsOnly);
   const frames = actorsOnly ? workingActorBodies : workingRootBodies;
   let frame = frames.get(world);
   const changed = (frame && takeNativeChanges(world, frame, true)) ?? changedDraftEntityIds(world),
     entities = readOnlyDraftView(world).entities,
-    audit = entityDraftAudit(entities);
-  if (!changed) {
+    audit = entityDraftAudit(entities),
+    base = original(world)!,
+    policy = readOnlyDraftView(world.moduleManifest).rangedPolicy;
+  if (!changed || !isImmutableData(base.entities) || (frame && frame.policy !== policy)) {
     frames.delete(world);
     return entityIndex(world, actorsOnly, true);
   }
-  if (!audit) return entityIndex(original(world)!, actorsOnly);
-  // Replacing the value at an existing identity preserves root order. Only an
-  // actual removal/reinsertion requires fresh ordinals. Recheck the collection
-  // owner's exact key, rather than treating every native-value write as a rebuild.
-  for (const id of audit.removed ?? [])
-    if (frame?.points.has(id) && entityOrdering(entities, id)?.key !== frame.ordering.get(id)) {
-      frames.delete(world);
-      frame = undefined;
-      break;
-    }
-  let boundsChanged = false;
+  if (!audit)
+    return entityIndex(
+      readOnlyDraftView(base.moduleManifest).rangedPolicy === policy ? base : world,
+      actorsOnly,
+      readOnlyDraftView(base.moduleManifest).rangedPolicy !== policy,
+    );
   if (!frame) {
+    const index = entityIndex(base, actorsOnly);
+    if (index.policy !== policy) return entityIndex(world, actorsOnly, true);
     const bins = new SpatialCandidateIndex<BodyCandidatePoint>(
-        actorsOnly ? BODY_CANDIDATE_CELL_SIZE : CANDIDATE_CELL_SIZE,
-      ),
-      points = new Map<string, BodyCandidatePoint>(),
-      ordering = new Map<string, string>(),
-      query = Object.assign(
+      actorsOnly ? BODY_CANDIDATE_CELL_SIZE : CANDIDATE_CELL_SIZE,
+    );
+    const owned: WorkingBodyIndex = {
+      base: index.prepared,
+      entities: base.entities,
+      policy,
+      points: new Map(),
+      changed: new Set(),
+      bins,
+      extents: index.prepared.extents,
+      livingExtents: index.prepared.livingExtents,
+      interactions: index.prepared.interactions,
+      query: Object.assign(
         (position: Position, radius: number) => {
-          const candidates = bins.query(position, radius);
-          // Current nonphysical fields belong to the selected entity, not the cached
-          // geometric point. Refresh only returned neighbors, without reinserting them.
-          for (const point of candidates)
-            point.entity = entityGet(readOnlyDraftView(world.entities), point.id)!;
-          return candidates;
+          const current = readOnlyDraftView(world.entities);
+          const original = owned.base.near(position, radius).flatMap((point) =>
+            owned.changed.has(point.id)
+              ? []
+              : [
+                  {
+                    ...point,
+                    order: owned.base.order.get(point.id)!,
+                    entity: entityGet(current, point.id)!,
+                  },
+                ],
+          );
+          const edited = owned.bins.query(position, radius);
+          for (const point of edited) point.entity = entityGet(current, point.id)!;
+          return [...original, ...edited].sort((a, b) => a.order - b.order);
         },
         {
-          bodyExtent: 0,
-          livingBodyExtent: 0,
-          order: new Map<string, number>(),
+          bodyExtent: index.prepared.extents?.maximum ?? 0,
+          livingBodyExtent: index.prepared.livingExtents?.maximum ?? 0,
+          order: index.order,
         },
-      );
-    for (const entity of worldRootEntities(world, true, audit.assigned.size > 0)) {
-      if ((actorsOnly && !entity.actor) || !activelyParticipates(entity)) continue;
-      const body = effectiveBodyProfile(world, entity),
-        extent = candidateBodyExtent(body),
-        point = {
-          id: entity.id,
-          entity,
-          position: { ...worldPosition(entity) },
-          order: points.size,
-          extent,
-          livingExtent: entity.actor?.alive ? extent : 0,
-        };
-      points.set(entity.id, point);
-      ordering.set(entity.id, entityOrdering(entities, entity.id)!.key);
-      query.order.set(entity.id, point.order);
-      bins.set(point);
-    }
-    frame = { bins, points, ordering, query };
+      ),
+    };
+    frame = owned;
     frames.set(world, frame);
     takeNativeChanges(world, frame, true);
-    boundsChanged = true;
+  }
+  for (const id of audit.removed ?? []) {
+    if (
+      frame.base.order.has(id) &&
+      entityOrdering(entities, id)?.key !== entityOrdering(frame.entities, id)?.key
+    ) {
+      frames.delete(world);
+      return entityIndex(world, actorsOnly, true);
+    }
   }
   for (const id of changed) {
     const value = entityGet(entities, id),
       entity = value && readOnlyDraftView(value),
-      previous = frame.points.get(id);
+      order = frame.base.order.get(id),
+      previous =
+        frame.points.get(id) ?? (order === undefined ? undefined : frame.base.near.at(order));
     if (
       !entity ||
       (actorsOnly && !entity.actor) ||
       !physicalRoot(entity) ||
       !activelyParticipates(entity)
     ) {
+      if (previous && !frame.changed.has(id)) frame.changed.add(id);
+      if (frame.points.delete(id)) frame.bins.delete(id);
       if (previous) {
-        frame.points.delete(id);
-        frame.bins.delete(id);
-        boundsChanged = true;
+        frame.extents = objectIndexSet(frame.extents, id, undefined);
+        frame.livingExtents = objectIndexSet(frame.livingExtents, id, undefined);
+        frame.interactions = objectIndexSet(frame.interactions, id, undefined);
+        frame.complete = undefined;
       }
       continue;
     }
-    if (!previous) {
-      // A contained body becoming a root can change its relative ordering.
+    if (order === undefined || !previous) {
       frames.delete(world);
       return entityIndex(world, actorsOnly, true);
     }
-    const position = worldPosition(entity),
-      body = effectiveBodyProfile(world, entity),
-      extent = candidateBodyExtent(body),
-      livingExtent = entity.actor?.alive ? extent : 0;
+    const before = entityGet(frame.entities, id);
     if (
-      previous.position.x !== position.x ||
-      previous.position.y !== position.y ||
-      previous.position.z !== position.z ||
-      previous.extent !== extent ||
-      previous.livingExtent !== livingExtent
-    ) {
-      const point = {
-        ...previous,
-        entity,
-        position: { ...position },
-        extent,
-        livingExtent,
-      };
-      frame.points.set(id, point);
-      frame.bins.set(point);
-      boundsChanged ||= previous.extent !== extent || previous.livingExtent !== livingExtent;
-    } else previous.entity = entity;
+      !frame.changed.has(id) &&
+      before?.placement === entity.placement &&
+      before?.spatial === entity.spatial &&
+      before?.actor?.alive === entity.actor?.alive &&
+      before?.actor?.physicalLife === entity.actor?.physicalLife
+    )
+      continue;
+    const point = entityCandidatePoint(world, entity);
+    if (sameCandidatePoint(previous, point) && (!frame.changed.has(id) || frame.points.has(id)))
+      continue;
+    const next = { ...point, entity, order };
+    frame.changed.add(id);
+    frame.points.set(id, next);
+    frame.bins.set(next);
+    frame.complete = undefined;
+    if (previous.extent !== point.extent || !objectIndexGet(frame.extents, id))
+      frame.extents = objectIndexSet(frame.extents, id, point.extent);
+    if (
+      previous.livingExtent !== point.livingExtent ||
+      objectIndexGet(frame.livingExtents, id) === undefined
+    )
+      frame.livingExtents = objectIndexSet(frame.livingExtents, id, point.livingExtent);
+    if (
+      previous.interactionHeight !== point.interactionHeight ||
+      objectIndexGet(frame.interactions, id) === undefined
+    )
+      frame.interactions = objectIndexSet(frame.interactions, id, point.interactionHeight);
   }
-  if (boundsChanged) {
-    frame.query.bodyExtent = 0;
-    frame.query.livingBodyExtent = 0;
-    for (const point of frame.points.values()) {
-      frame.query.bodyExtent = Math.max(frame.query.bodyExtent, point.extent);
-      frame.query.livingBodyExtent = Math.max(frame.query.livingBodyExtent, point.livingExtent);
-    }
-  }
+  frame.query.bodyExtent = frame.extents?.maximum ?? 0;
+  frame.query.livingBodyExtent = frame.livingExtents?.maximum ?? 0;
   return frame.query;
 }
+
+/** Optional discovery pages/continuation keys use the same working geometry.
+ * Pack its small changed overlay once only when such a reader is requested;
+ * ordinary physical queries retain their cheap mutable overlay. */
+function workingEntityIndex(world: WorldState, actorsOnly: boolean): EntityCandidateIndex {
+  const query = workingBodyIndex(world, actorsOnly);
+  if ('page' in query) return query;
+  const frame = (actorsOnly ? workingActorBodies : workingRootBodies).get(world);
+  if (!frame || frame.query !== query || frame.changed.size !== frame.points.size)
+    return entityIndex(world, actorsOnly, true);
+  if (!frame.complete) {
+    const edits = new Map<number, EntityCandidatePoint>();
+    for (const { entity: _entity, order, ...point } of frame.points.values())
+      edits.set(order, point);
+    frame.complete = {
+      ...frame.base,
+      near: edits.size ? frame.base.near.fork(edits) : frame.base.near,
+      extents: frame.extents,
+      livingExtents: frame.livingExtents,
+      interactions: frame.interactions,
+    };
+  }
+  return bindEntityCandidates(readOnlyDraftView(world.entities), frame.complete, frame.policy);
+}
+
 const entityMembershipKeys = new WeakMap<
   ReturnType<typeof entityIndex>,
   { bounds: string; key: string }
