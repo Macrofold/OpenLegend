@@ -1,6 +1,6 @@
 # Crimson Desert: reception, enjoyment, and friction
 
-**Research cutoff: 26 October 2026. Roster: G185.** This chapter examines what people found rewarding, where they struggled, how those assessments changed, and what Open Legend can reasonably learn. It is reception research, not an independent playtest. Recommendations below are research proposals, not approved Open Legend implementation work.
+**Base survey cutoff: 26 October 2026; transcript analysis: 29 October 2026. Roster: G185.** This chapter examines what people found rewarding, where they struggled, how those assessments changed, and what Open Legend can reasonably learn. It is reception research, not an independent playtest. Recommendations below are research proposals, not approved Open Legend implementation work.
 
 ## 1. The central finding
 
@@ -12,6 +12,7 @@ A simple critic/player divide is inadequate: favorable professional and Steam re
 
 - **Twelve independent outlets:** substantive written review bodies, including launch reviews, a May PS5 re-review, and a hardware-specific Steam Deck assessment. More than five complete substantive review bodies were read. Search-result headlines and scores alone were not counted as reviews.
 - **Forty-two unique Steam reviews:** a documented English-language convenience sample from five public review listings. Both recommendations and rejections, short reactions and detailed accounts, and low and high recorded playtime are retained.
+- **One user-supplied reaction transcript:** qualitative launch-period testimony with mixed speakers, supplied on 29 October; source identity and numerical claims are qualified below.
 - **Two community discussions:** selected comment branches in r/pcgaming and r/CrimsonDesert. These add disagreements about opening hours, limited leisure time, returning after patches, and changing the story during an existing playthrough. They were not exhaustively coded.
 - **Primary version evidence:** official patch notes and the Enhanced announcement. These establish that several launch complaints concerned systems subsequently changed.
 - **A current store snapshot and one individually accessible Steam review:** the latter exposes an edit date that the listing omits, an important limitation for historical interpretation.
@@ -33,7 +34,7 @@ A March review remains evidence about the launch experience. It cannot automatic
 | 11–12 September              | Official version 2.02.00 fixes; a MeriStation return assessment after Enhanced.                                                                                                                                                | Evidence of continuing maintenance and one favorable return assessment, not a comprehensive independent consensus on the current build. [P17] [P18]       |
 | 26 October                   | Current Steam store and accessible review-listing snapshot.                                                                                                                                                                    | A snapshot of recommendations and currently visible text, not a clean before/after experiment. [P19] [P20] [P21] [P22] [P23] [P24]                        |
 
-The forthcoming 29 October DLC is outside this cutoff's played reception. Its trailers and announcements should not be treated as evidence that its promised content has succeeded.
+The DLC announced for 29 October is outside the base survey's played reception; the transcript analysis does not assess that release. Its trailers and announcements should not be treated as evidence that its promised content has succeeded.
 
 MeriStation's September return article reports improved explanations, interfaces, narrative context, and Spanish voice acting after Enhanced. This is one favorable return assessment, not another full scored review or a consensus on the current game. [P18]
 
@@ -176,6 +177,34 @@ In the inspected later discussion, Reallyroundthefamily describes an existing lo
 
 This exposes two different update costs. A usability fix can make the existing journey easier to resume. Rewriting foundational context can create uncertainty about whether to continue, replay, or wait. For a future Open Legend release with supported player saves, patch planning should include continuity and an intelligible account of what returning players have missed. Current development saves remain disposable under the [root development-state policy](../../../../../AGENTS.md#development-save-policy); this comparison does not authorize compatibility work. That is an inference from the discussion, not evidence that Crimson Desert's overall update strategy failed.
 
+### Asmongold reaction transcript: breadth, friction and expected playtime
+
+**Source boundary:** Mike supplied this mixed-speaker transcript on 29 October 2026, identifying it as Asmongold reacting to a Crimson Desert review. The exact video URL, publication date and embedded reviewer's identity are unverified. Speaker switches and transcription errors prevent confident attribution of every line. Its discussion appears to concern the launch period and early patches; it is not a fresh assessment of the October build. No video was watched for this analysis. [P28]
+
+The account is valuable because enthusiasm and frustration coexist in the same experience. The speakers describe wanting to abandon the game, then continuing because another discovery, capability or self-chosen activity becomes compelling. That supports investigating what made continuing worthwhile. It does not establish that confusion caused the enjoyment, that every frustrated player should persist, or that the same tradeoff suits every audience.
+
+| What the speakers value                                                                                     | Where their experience breaks                                                                                                  | Transferable question                                                                |
+| ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ |
+| Seeing a distant place and being able to journey toward it; excursions keep suggesting another possibility. | Travel, prerequisite chains and unclear unlocks can consume the anticipated payoff.                                            | Does curiosity lead to a worthwhile action while the player still cares about it?    |
+| Combining a hook, movement, a palm strike and environmental objects; finding unexpected uses for abilities. | Overlapping contextual inputs can produce an unintended action or obscure whether an input was accepted.                       | Can players learn consistent actions and then discover expressive combinations?      |
+| Choosing among fighting, exploration, gathering, buying supplies and other activities.                      | Supposedly optional activities can become compulsory when a desired capability is locked behind them.                          | Are alternatives practical routes to a chosen goal, with understandable costs?       |
+| Ordinary errands, gathering companions and existing in a world like the beginning of a tabletop campaign.   | A weak central plot and disconnected reactions can leave events without personal meaning.                                      | Can a modest, self-chosen life acquire significance through people and consequences? |
+| Substantial remaining possibilities and confidence that another session will be worthwhile.                 | Buried food access, inventory handling, recipe-animation waits, poor feedback and unreadable visual effects tax repeated play. | What remains satisfying once discovery fades and these interactions become familiar? |
+
+These are accounts and research interpretations, not verified claims that each reported defect persists. Interface comprehension, accessibility and depth are separate qualities: clearer status, remapping and readable feedback can preserve demanding choices and expert combinations. Equally, not every delay is waste; preparation, physical commitment or travel can earn their time through meaningful decisions or pleasure. A high-pressure encounter needs legible threats and responses before its difficulty can be judged.
+
+The ordinary-person preference is especially relevant to Open Legend's range of possible lives, including craft, trade and exploration. It is not a reason to impose one recruit origin on every authored world. Likewise, tolerating a weak mandatory plot does not establish that story is unimportant: recognizable motives, remembered events and a consequence the player helped cause are part of the gameplay promise. The [application chapter](05-openlegend-lessons.md#8-give-discoveries-present-meaning-and-lasting-aftermath) retains that distinction.
+
+#### Claims that need qualification
+
+- **Expected hours are not completed hours.** The embedded reviewer says the game is going to get “at least 100 hours” from them; the reacting speaker agrees. This is an expectation of continued value, not a verified elapsed total for Asmongold, a typical player, or the future. [P28]
+- **Critic disagreement is not explained by presumed short exposure.** PC Gamer explicitly reports 75 hours; Game Informer reports 100 hours while criticizing stretched-out activity. These directly undermine a blanket claim that critics only played roughly twelve hours. Preferences, versions and selection also matter: enjoying a game can cause longer play, and players who stop early disappear from the long-play sample. [P01] [P07]
+- **“Nothing else to play” expresses an appetite.** It suggests this speaker wanted a substantial world with room to experiment; it does not measure a market shortage. Nor does the claim that flawed maximalism succeeded establish that ignoring usability practices was necessary. [P28]
+- **The four-hour sales window is unverified.** Pearl Abyss's published account reports two million copies on launch day, not an established four-hour interval. The transcript's concurrency and recommendation percentages are undated historical claims, not current figures or retention measurements. Commercial context remains in the [dated business ledger](03-production-business.md#21-a-dated-ledger). [P31]
+- **Patches establish changes, not a single cause of improving reception.** Pearl Abyss acknowledged control discomfort on 21 March. Version 1.00.03 added storage and improved inputs, puzzle feedback and early Force Palm access. Version 1.01.00 added direct recipe use and bulk storage; its running changes still required periodic input for full sprint, so “single-tap sprint” is an incomplete account. These changes support examining removable friction while keeping patch timing, acclimation and audience selection separate. [P29] [P14] [P30]
+
+The transferable longevity question is therefore what a player can continue enjoying after learning the systems. [Sustained playability and its observations](05-openlegend-lessons.md#91-sustained-playability-and-the-meaning-of-hours) develop that question for Open Legend without converting a commentator's enthusiasm into a retention result.
+
 ## 6. What makes the game great—and where that mechanism breaks
 
 ### 6.1 Discovery can turn curiosity into new possibilities
@@ -257,7 +286,7 @@ The best next evidence would be a small, deliberately varied set of **current-bu
 
 ## Source register
 
-All sources accessed 26 October 2026. “Review body” means substantive text was inspected, not merely an aggregate score. The Steam listings are dynamic and were not preserved as complete raw copyrighted copies. The chapter retains short paraphrases and reproducible locators. Dates shown here are publication or patch dates, not an assertion that every review reflects the latest build on that date.
+The base survey's sources were accessed 26 October 2026. The transcript was supplied on 29 October; [P01], [P07] and [P14] were checked again for its specific claims that day, alongside [P29]–[P31]. “Review body” means substantive text was inspected, not merely an aggregate score. The Steam listings are dynamic and were not preserved as complete raw copyrighted copies. The chapter retains short paraphrases and reproducible locators. Dates shown here are publication or patch dates, not an assertion that every review reflects the latest build on that date.
 
 | ID    | Source and date                                                     | Type / access note                                                                                 |
 | ----- | ------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
@@ -289,6 +318,12 @@ All sources accessed 26 October 2026. “Review body” means substantive text w
 | [P26] | r/pcgaming, “I strongly recommend Crimson Desert” review discussion | Selected branches inspected; exact thread date not established in retrieved body.                  |
 | [P27] | r/CrimsonDesert, “Is the game worth getting now?”                   | Selected later discussion branches inspected; exact thread date not established in retrieved body. |
 
+**[P28] — User-supplied transcript, received 29 October 2026.** Mike identifies Asmongold as the reacting speaker. Exact video URL/date and embedded reviewer remain unverified; the analysis uses the supplied text, not a watched video or an invented permalink.
+
+- **[P29]** — Pearl Abyss, “A Message to Our Players,” 21 March 2026; primary acknowledgement of control problems.
+- **[P30]** — Pearl Abyss, version 1.01.00, 28 March 2026; primary notes on movement, recipes, storage and feedback.
+- **[P31]** — Pearl Abyss publisher release distributed through Games Press, 11 June 2026; primary company account of two million copies sold on launch day. Later milestones are outside this transcript's sales-window check.
+
 [P01]: https://www.pcgamer.com/games/action/crimson-desert-review/
 [P02]: https://www.techradar.com/gaming/crimson-desert-review
 [P03]: https://www.tomsguide.com/gaming/crimson-desert-review
@@ -316,3 +351,6 @@ All sources accessed 26 October 2026. “Review body” means substantive text w
 [P25]: https://steamcommunity.com/id/Abdullrahman_HA/recommended/3321460/
 [P26]: https://www.reddit.com/r/pcgaming/comments/1sc916m/i_strongly_recommend_crimson_desert_review/
 [P27]: https://www.reddit.com/r/CrimsonDesert/comments/1vzh880/is_the_game_worth_getting_now/
+[P29]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=71
+[P30]: https://crimsondesert.pearlabyss.com/en-US/News/Notice/Detail?_boardNo=76
+[P31]: https://www.gamespress.com/de/Crimson-Desert-Surpasses-6-Million-Copies-Sold-Worldwide
