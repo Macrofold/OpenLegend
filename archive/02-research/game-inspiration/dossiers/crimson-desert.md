@@ -1,6 +1,6 @@
 # Crimson Desert — G185 full research dossier
 
-**Evidence cutoff: 26 October 2026.** This is a study of the released game, its post-launch changes and the Enhanced update. Announced expansion content is identified separately. It is a source-based research dossier, not a hands-on review, engine audit or approved Open Legend feature specification. The [scoped completion record](../research-progress-crimson-desert-2026-10-26.md) owns this assignment's status and evidence limits.
+**Base survey cutoff: 26 October 2026; transcript and sustained-playability analysis: 29 October 2026.** This is a study of the released game, its post-launch changes and the Enhanced update. Announced expansion content is identified separately. It is a source-based research dossier, not a hands-on review, engine audit or approved Open Legend feature specification. The [scoped completion record](../research-progress-crimson-desert-2026-10-26.md) owns the original survey's status and evidence limits; the transcript's provenance and claim checks are recorded in [reception](crimson-desert/02-reception.md#asmongold-reaction-transcript-breadth-friction-and-expected-playtime).
 
 ## Research judgment
 
@@ -43,6 +43,10 @@ The [production study](crimson-desert/03-production-business.md#4-the-production
 ### Community modifications reveal different desired experiences
 
 The [creator study](crimson-desert/04-creation-and-modding.md#3-representative-creations-and-the-desires-behind-them) includes players adding preparation costs, strengthening stealth, changing appearance, finding more opponents and removing a frustrating wait. These preferences point in different directions. A feature's popularity in a mod catalog is a reason to investigate its purpose and audience, not a mandate to impose it on everyone.
+
+### Sustained playability is a promising ambition that needs evidence
+
+The [reaction transcript](crimson-desert/02-reception.md#asmongold-reaction-transcript-breadth-friction-and-expected-playtime) makes the appeal of substantial remaining possibility vivid. Its expected hundred hours are personal enthusiasm, not measured retention. For Open Legend, [sustained playability](crimson-desert/05-openlegend-lessons.md#91-sustained-playability-and-the-meaning-of-hours) means that the developing world continues to support activities players value: mastery, chosen projects, people, discovery and satisfying routines. AI-generated quantity contributes when it creates useful possibilities or carries consequences forward. Assess hours alongside enjoyment, repeated friction, voluntary return, stopping reasons and operating cost; the existing player-validation work already provides the appropriate home.
 
 ## The revenue question
 

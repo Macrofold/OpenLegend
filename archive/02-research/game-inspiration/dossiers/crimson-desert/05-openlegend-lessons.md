@@ -1,8 +1,8 @@
 # Crimson Desert: applications through Open Legend's existing owners
 
-**Research synthesis, 26 October 2026.** These are proposals for interpreting and observing the experience already selected for Open Legend. They do not revise accepted designs, claim runtime delivery, allocate implementation, or add maintainer tasks. The owner documents below retain authority over delivered behavior, accepted designs and future proposals. Crimson Desert evidence stays in the [mechanics and world chapter](01-mechanics-world.md), [reception chapter](02-reception.md), [production chapter](03-production-business.md) and [creation study](04-creation-and-modding.md).
+**Research synthesis, 29 October 2026; base game survey through 26 October.** These are proposals for interpreting and observing the experience already selected for Open Legend. They do not revise accepted designs, claim runtime delivery, allocate implementation, or add maintainer tasks. The owner documents below retain authority over delivered behavior, accepted designs and future proposals. Crimson Desert evidence stays in the [mechanics and world chapter](01-mechanics-world.md), [reception chapter](02-reception.md), [production chapter](03-production-business.md) and [creation study](04-creation-and-modding.md).
 
-The most useful lesson is to connect capabilities, places and people into experiences the player wants to continue. A large feature inventory does not establish that connection. Open Legend already selects a complete survival-adventure with useful invention, independent people and remembered consequences inside its first playable loop. This dossier can sharpen how that existing ambition is judged. It provides neither a requirement for Crimson Desert's scale nor evidence that a particular implementation will be enjoyable.
+The most useful lesson is to connect capabilities, places and people into experiences the player wants to continue. Preserve the ambitious promise of many possible lives: curiosity should reveal somewhere worth going, something worth trying or an ambition the player can choose. Unfamiliar mechanics can deserve a bounded experiment when their prospective payoff is compelling; clear controls should help players explore their depth. A large feature inventory does not establish that connection. Open Legend already selects a complete survival-adventure with useful invention, independent people and remembered consequences inside its first playable loop. This dossier can sharpen how that existing ambition is judged. It provides neither a requirement for Crimson Desert's scale nor evidence that a particular implementation will be enjoyable.
 
 ## 1. Make capabilities useful in more than one situation
 
@@ -94,6 +94,49 @@ The [persistence and endgame chapter](01-mechanics-world.md#9-time-failure-persi
 
 **Small observation:** after a meaningful success, leave room for an unprompted next choice. Record wanting to repeat, wanting something different and being content to stop separately. None alone proves long-term retention or its absence.
 
+### 9.1 Sustained playability and the meaning of hours
+
+Mike identifies indefinitely continuing play as a central appeal of Open Legend. The [reaction transcript](02-reception.md#asmongold-reaction-transcript-breadth-friction-and-expected-playtime) illustrates the appeal of anticipating many more worthwhile sessions. Treat this as an ambition to demonstrate, not a claim that the current build already provides infinite enjoyment.
+
+**Hours matter when players value them.** Long voluntary play can be evidence of durable appeal and perceived value for money; a shorter satisfying experience can also be excellent. Recorded time mixes enjoyment with administration, stalled progress, waiting and obligation. The transcript's anticipated hundred hours and Game Informer's criticism of a hundred-hour experience show why duration needs the player's interpretation. Neither establishes a universal quality threshold.
+
+Distinguish **repeatability** (an activity can occur again), **replayability** (another run, character, approach or world is worthwhile) and **continuing playability** (the same developing world remains worth inhabiting). Open Legend's persistent-world ambition particularly depends on the last. Procedural or AI generation increases possible supply; it establishes continuing value only when people want what it makes possible.
+
+### 9.2 Renew reasons to play through connected consequences
+
+The useful hypothesis is a continuing cycle: a player pursues a wanted activity, produces an actual consequence, and encounters another possibility that matters in the changed world. Open Legend's potential advantage is that new situations can grow from the state players have created, reducing the need to author each next adventure in advance. Several sources of value can sustain that cycle:
+
+- **Mastery and alternatives:** familiar actions remain satisfying, or changed circumstances make another method useful.
+- **Projects and expression:** a home, craft, livelihood, collection or ambitious creation gives ordinary activity a chosen purpose.
+- **People and continuity:** remembered conduct, cooperation, rivalry and independent purposes give subsequent encounters context.
+- **Discovery and recombination:** a new place, relationship or constraint changes the options available through already understandable rules.
+
+These are possible sources of value, not a checklist every session must satisfy. A peaceful routine may remain enjoyable without novelty or a different optimal strategy. Combat is one legitimate path; craft, trade, exploration and company should be assessed on their own wanted outcomes.
+
+**Constructed illustration, not current runtime evidence or additional selected scope:** a player leaves to gather material for a better shelter, notices an intriguing ruin, and encounters someone with their own purpose there. The player chooses to bargain rather than fight, obtains a useful tool, and returns with both a practical improvement and a reason to revisit the place or person. Another player may bypass the ruin and enjoy finishing the shelter. The attraction is the connected adventure emerging from a personal goal, curiosity and choice; discovery need not interrupt every ordinary trip.
+
+The same principle applies when a player invents a useful tool and another person independently chooses to use it: that actual use or remembered contribution can affect a later opportunity. A different material constraint, purpose or prior relationship can change the next decision. Renaming the same request supplies less new decision value, while someone who enjoys repeating the craft needs no surprise crisis to justify continuing.
+
+The engine supplies supported actions, authoritative consequences and permitted information; each authored world chooses its laws, activities, roles and progression. AI can propose variation within those boundaries. A narrated outcome must not substitute for a committed change, and generation must not quietly grant new executable powers. For persistent multiplayer, examine what different participants can actually observe and affect; single-player testimony cannot establish fair shared access or durable social play.
+
+Long play also requires affordable operation. Existing cost evidence should distinguish active enjoyment from idle simulation and expensive invention from reuse of existing capabilities. Infinite generation is neither an operating plan nor a reason to run every NPC through paid inference continuously. This is a question for existing simulation and cost owners, not a proposal for an additional content service.
+
+### 9.3 Observe the quality and continuation of play
+
+Use the existing [player-learning plan][playtest], [FPV06][fpv06], [FPV07][fpv07] and [FPV08][fpv08]. A few observed sessions and brief follow-up notes can examine the hypothesis before a telemetry programme is warranted.
+
+| Evidence to record                                                     | What it helps distinguish                                                                                                                    |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| First satisfying self-chosen action, confusion, guide use and coaching | Depth that is enjoyable to learn versus a long admission cost before the promise becomes available.                                          |
+| Wanted next activity after a success, and the player's reason          | Continuing purpose, a satisfying stopping point, or repetition pursued only for a future reward.                                             |
+| Familiar activity under changed circumstances                          | A meaningful change of decision, satisfying mastery or routine, and superficial renamed repetition.                                          |
+| A later event affected by an earlier action                            | Actual continuity and understood consequences versus narrative claims without observable effects.                                            |
+| Enjoyed time, handling/waiting burden, and stopping reasons            | Worthwhile duration versus time inflated by friction; use player accounts rather than a fabricated enjoyment percentage.                     |
+| Voluntary return when a realistic opportunity exists                   | Actual return versus stated intention, requested QA attendance or social obligation; include early departures and relevant life constraints. |
+| AI cost and waits for the observed activity                            | Whether continued play is economically supportable; more elapsed hours alone do not improve margins.                                         |
+
+No fixed hundred-hour target, retention threshold, analytics system or new release gate follows from this research. Repeated sessions can reveal whether value persists after the opening; they cannot prove literal infinity. Preserve useful victories, legitimate rest and satisfied stopping while investigating whether players keep finding something they want to do.
+
 ## 10. Market representative player stories
 
 The [marketing analysis](03-production-business.md#7-marketing-a-sequence-of-promises-demonstrations-and-renewed-reasons-to-return) motivates showing a possibility clearly and checking whether the demonstrated experience represents what players can actually reach. Open Legend's existing guidance is well aligned: desire, choice and real consequence can carry the explanation.
@@ -123,7 +166,7 @@ Choose the relevant route when refining selected work or interpreting an actual 
 | 1–3, 5–7: capabilities, places, opening, home, progression and controls | [Complete first-playable design][world-spec]; selected [ND07][nd07], [ND13][nd13] and [ND38][nd38] owners | [FPV06][fpv06] observes the offered journey; [FPV08][fpv08] routes a concrete finding to the existing survival, shelter, control or execution owner.        |
 | 4: independent people                                                   | [People and voluntary cooperation][cooperation-spec]                                                      | [FPV06][fpv06] distinguishes preference, contribution and independent choice; [CP][cooperation-work] retains behavior delivery.                             |
 | 8: discoverable history and present meaning                             | [ND01's existing history-design item][nd01] and its linked authoring guides                               | Finish that selected design and delivery breakdown before implementation; no new campaign task is created by this example.                                  |
-| 9: return value and lasting outcomes                                    | [World target][opening] and [consequence production][aftermath]                                           | [FPV07][fpv07] observes continuing play; [FPV08][fpv08] routes supported corrections.                                                                       |
+| 9: return value, sustained playability and lasting outcomes             | [World target][opening] and [consequence production][aftermath]                                           | [FPV07][fpv07] observes continuing play; [FPV08][fpv08] routes supported corrections.                                                                       |
 | 10: representative player stories                                       | [Showcasing the game][showcase] and [ND26][nd26]                                                          | [FPV05][fpv05] owns audience material; compare expectations with ordinary [FPV06][fpv06] play.                                                              |
 | 11: revision and creator expression                                     | [ND01][nd01] and [ND12][nd12]                                                                             | Existing [OC03][oc03] preview and [OC05][oc05] first-play qualification cover supported openings. Broader reuse/publication retains ND12's design boundary. |
 
