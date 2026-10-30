@@ -1136,6 +1136,8 @@ export class WorldRecords {
         // Seek each owner's bounded tail, union only identities, then hydrate.
         // Hashing whole account bodies here needlessly detoasts/deduplicates
         // megabytes before startup can consume the same selected records.
+        // Native expiry owns sensory cues. Omitting an older cue at cold load
+        // would strand its row after that owner can no longer see its deadline.
         rows = await this.db
           .prepare(
             `WITH selected AS MATERIALIZED (
@@ -1149,10 +1151,23 @@ export class WorldRecords {
                 ? 'agreement_head=1 AND agreement_open=1 AND (agreement_until IS NULL OR agreement_until>?)'
                 : "status='running'"
             }
+            ${
+              awareness
+                ? `UNION SELECT a.id FROM ${table}_owners o CROSS JOIN LATERAL (
+                  SELECT id FROM ${table}
+                  WHERE world_id=o.world_id AND actor_id=o.slot AND retention_class='sensory'
+                ) a WHERE o.world_id=?`
+                : ''
+            }
           ) SELECT t.id,t.parent_id,t.slot,t.position,t.payload
           FROM selected s JOIN ${table} t ON t.world_id=? AND t.id=s.id`,
           )
-          .all(head.worldId, head.worldId, ...(awareness ? [simTime] : []), head.worldId);
+          .all(
+            head.worldId,
+            head.worldId,
+            ...(awareness ? [simTime, head.worldId] : []),
+            head.worldId,
+          );
       } else if (partial && table === 'mind_memories') {
         rows = await this.db
           .prepare(
