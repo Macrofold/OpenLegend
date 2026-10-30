@@ -1220,6 +1220,8 @@ describe('bounded personal temporal storage', () => {
       const visitor = entityGet(world.entities, 'fixture-brief-visitor')!;
       const destination = entityGet(world.entities, 'riverside-workshop')!;
       setSpatialPosition(world, visitor, worldPosition(destination), worldSupport(destination));
+      world.simTime +=
+        routineSensePolicy(world, entityGet(world.entities, PLAYER_ID)!).sight?.seconds ?? 0;
       initializePerception(world, []);
     });
     expect(service.world.observerIdentities?.[PLAYER_ID]?.[contact.individualId]).toBeUndefined();

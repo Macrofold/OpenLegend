@@ -2091,11 +2091,15 @@ export function selectCapturedTemporalHistory(
     if (receipt.coverageGap) incomplete = true;
     const values: TemporalValue[] = [];
     const references: TemporalFacetReference[] = [];
-    let missing = false;
+    // Skipping an oversized operation leaves coverage incomplete, but only
+    // exhausted examination work stops selection of older usable operations.
+    let missing = false,
+      exhausted = false;
     for (let position = 0; position < operation.facets.length; position++) {
       if (++examined > workLimit) {
         incomplete = true;
         hasMore = true;
+        exhausted = true;
         break;
       }
       const reference = temporalOperationFacet(chunk, operation, position);
@@ -2126,7 +2130,7 @@ export function selectCapturedTemporalHistory(
       values.push(value);
       references.push(reference);
     }
-    if (hasMore) break;
+    if (exhausted) break;
     if (missing || (!values.length && receipt.change !== 'receiver-frame')) {
       examinedBefore = {
         epoch: receipt.epoch,
