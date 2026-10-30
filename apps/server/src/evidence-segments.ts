@@ -1,12 +1,8 @@
 import {
-  temporalChunkReceipts,
-  temporalFacetValueReferences,
-  temporalEntryReceipts,
-  temporalEntryDependencies,
   temporalReceiptChangeCount,
+  temporalEntryMetadataReader,
+  type TemporalEntryMetadata,
   temporalConfirmationChangeCount,
-  temporalSpatialContextValue,
-  type TemporalReceipt,
   type TemporalFrameEntry,
   type TemporalFrameOwner,
   appendedRecordCount,
@@ -15,8 +11,6 @@ import {
   isImmutableData,
   immutableDataSnapshot,
   jsonText,
-  temporalReceiptAliases,
-  temporalReceiptIndividualIds,
   type TemporalChunk,
   type WorldState,
   type ReceivedValueBlock,
@@ -31,11 +25,8 @@ export interface EvidenceSegment {
   bytes: number;
   index?: ReceiptSegmentIndex;
 }
-export interface ReceiptSegmentIndex extends ReturnType<typeof receiptStorageIndex> {
-  subjects: string[];
-  sourceIds: string[];
-  individualIds: string[];
-  sourceRefs: string[];
+export interface ReceiptSegmentIndex
+  extends Omit<TemporalEntryMetadata, 'firstAt' | 'lastAt' | 'changes'> {
   lookupBuckets: number[];
 }
 interface Layout {
@@ -78,51 +69,6 @@ export function snapshotEvidenceOwner<T extends object>(value: T, field: Field):
   return snapshot;
 }
 
-type TemporalDependency = ReturnType<typeof temporalEntryDependencies>[number];
-
-export function receiptStorageIndex(
-  receipts: readonly TemporalReceipt[],
-  dependencies: readonly TemporalDependency[] = receipts,
-) {
-  const references: Record<string, number[]> = {};
-  let firstMeasured = Infinity,
-    lastSupported = -Infinity,
-    confirmations = 0;
-  for (const receipt of receipts) {
-    if (!receipt.facets.length) {
-      firstMeasured = Math.min(firstMeasured, receipt.at);
-      lastSupported = Math.max(lastSupported, receipt.at);
-    }
-    for (const facet of receipt.facets) {
-      firstMeasured = Math.min(firstMeasured, facet.measuredFrom);
-      lastSupported = Math.max(lastSupported, facet.confirmedThrough ?? facet.measuredThrough);
-    }
-  }
-  for (const dependency of dependencies) {
-    if ('confirmation' in dependency) {
-      confirmations += dependency.facets.length;
-      firstMeasured = Math.min(firstMeasured, dependency.from);
-      lastSupported = Math.max(lastSupported, dependency.through);
-    }
-    for (const facet of dependency.facets)
-      for (const reference of temporalFacetValueReferences(facet)) {
-        const values = (references[reference.blockId] ??= []);
-        if (!values.includes(reference.valueOrdinal)) values.push(reference.valueOrdinal);
-      }
-  }
-  for (const values of Object.values(references)) values.sort((a, b) => a - b);
-  return {
-    firstOrder: receipts[0]?.order,
-    lastOrder: receipts.at(-1)?.order,
-    firstMeasured: Number.isFinite(firstMeasured) ? firstMeasured : 0,
-    lastSupported: Number.isFinite(lastSupported) ? lastSupported : 0,
-    confirmations,
-    spatialContext: receipts.some((receipt) => receipt.spatialContext === true),
-    ordinals: receipts.map((receipt) => receipt.ordinal),
-    references,
-  };
-}
-
 const receiptHeaders = ['subjects', 'sourceIds', 'individualIds', 'sourceRefs'] as const;
 const unique = <T>(values: Iterable<T>): T[] => [...new Set(values)];
 type ReceiptLookup = (typeof receiptHeaders)[number];
@@ -144,61 +90,24 @@ function pageLookupBuckets(index: Pick<ReceiptSegmentIndex, ReceiptLookup>): num
     receiptHeaders.flatMap((kind) => index[kind].map((value) => receiptLookupBucket(kind, value))),
   ).sort((a, b) => a - b);
 }
-function segmentIndex(
-  owner: TemporalFrameOwner,
-  entries: readonly TemporalFrameEntry[],
-  world: WorldState,
-): ReceiptSegmentIndex {
-  const receipts = temporalEntryReceipts(owner, entries),
-    dependencies = temporalEntryDependencies(owner, entries);
-  const sources = world.receivedValues?.sources ?? {};
-  // The same semantic visitors own native and stored provenance. Partial source
-  // closure cannot silently produce a narrower correction/reclamation index.
-  for (const dependency of dependencies)
-    for (const facet of dependency.facets)
-      if (
-        temporalFacetValueReferences(facet).some(
-          (reference) => !sources[reference.blockId]?.values[reference.valueOrdinal],
-        )
-      )
-        throw new Error('Receipt page index requires complete received source support.');
-  const index = {
-    ...receiptStorageIndex(receipts, dependencies),
-    spatialContext: dependencies.some((dependency) =>
-      dependency.facets.some((facet) =>
-        temporalSpatialContextValue(sources[facet.blockId]!.values[facet.valueOrdinal]!),
-      ),
-    ),
-    subjects: unique(
-      dependencies.flatMap((dependency) => [
-        dependency.subject,
-        ...('contextSubjects' in dependency ? (dependency.contextSubjects ?? []) : []),
-      ]),
-    ),
-    sourceIds: unique(
-      dependencies.flatMap((dependency) => temporalReceiptAliases(dependency, sources, world)),
-    ),
-    individualIds: unique(
-      dependencies.flatMap((dependency) => temporalReceiptIndividualIds(dependency, sources)),
-    ),
-    sourceRefs: unique(
-      dependencies.flatMap((dependency) =>
-        dependency.facets.flatMap(temporalFacetValueReferences).map((facet) => facet.blockId),
-      ),
-    ),
-  };
-  return { ...index, lookupBuckets: pageLookupBuckets(index) };
+function withLookupBuckets(index: TemporalEntryMetadata): ReceiptSegmentIndex {
+  const { firstAt: _firstAt, lastAt: _lastAt, changes: _changes, ...stored } = index;
+  return { ...stored, lookupBuckets: pageLookupBuckets(stored) };
 }
 /** Current-format restore has the complete selected source closure. Validate page
  * provenance there, not by trusting a correct parent union with misassigned pages. */
 export function validateReceiptPageSources(chunk: TemporalChunk, world: WorldState): void {
   const layout = layouts.get(chunk.entries);
   if (!layout) throw new Error('Missing restored receipt page ownership.');
+  const metadata = temporalEntryMetadataReader(chunk, {
+    sources: world.receivedValues?.sources ?? {},
+    world,
+  });
   for (const segment of layout.segments)
     if (
       canonicalJson(segment.index) !==
       canonicalJson(
-        segmentIndex(chunk, segment.values.filter(Boolean) as TemporalFrameEntry[], world),
+        withLookupBuckets(metadata(segment.values.filter(Boolean) as TemporalFrameEntry[])),
       )
     )
       throw new Error('Receipt page provenance disagrees with its received source support.');
@@ -304,14 +213,19 @@ export function encodeEvidenceOwner(
       page.end = at + 1;
       bytes += size + 1;
     }
+    const metadata =
+      field === 'entries' && world
+        ? temporalEntryMetadataReader(owner as unknown as TemporalFrameOwner, {
+            sources: world.receivedValues?.sources ?? {},
+            world,
+          })
+        : undefined;
     for (const segment of segments) {
       if (!Object.isFrozen(segment)) {
         if (field === 'entries') {
-          if (!world) throw new Error('Receipt page preparation requires its world.');
-          segment.index = segmentIndex(
-            owner as unknown as TemporalFrameOwner,
-            segment.values.filter(Boolean) as TemporalFrameEntry[],
-            world,
+          if (!metadata) throw new Error('Receipt page preparation requires its world.');
+          segment.index = withLookupBuckets(
+            metadata(segment.values.filter(Boolean) as TemporalFrameEntry[]),
           );
         }
         sealSegment(segment);
@@ -355,7 +269,7 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
   const storage = owner['storage'] as {
     start: number;
     end: number;
-    index?: ReturnType<typeof receiptStorageIndex>;
+    index?: ReturnType<typeof receiptBounds>;
     segmentBytes: number;
     metadataBytes: number;
   };
@@ -403,7 +317,8 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
     epoch: String(owner['epoch']),
     entries: values as TemporalFrameEntry[],
   };
-  if (field === 'entries')
+  if (field === 'entries') {
+    const metadata = temporalEntryMetadataReader(frameOwner);
     for (const segment of segments) {
       const index = segment.index;
       if (
@@ -417,48 +332,30 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
       )
         throw new Error('Invalid receipt page index.');
       const {
-        subjects,
-        sourceIds,
-        individualIds,
-        sourceRefs,
+        sourceIds: _sourceIds,
+        individualIds: _individualIds,
         lookupBuckets,
         spatialContext,
         ...stored
       } = index;
-      const selected = segment.values.filter(Boolean) as TemporalFrameEntry[],
-        receipts = temporalEntryReceipts(frameOwner, selected),
-        dependencies = temporalEntryDependencies(frameOwner, selected);
-      const { spatialContext: receiptSpatialContext, ...expected } = receiptStorageIndex(
-        receipts,
-        dependencies,
-      );
+      const {
+        firstAt: _firstAt,
+        lastAt: _lastAt,
+        changes: _changes,
+        sourceIds: _expectedSourceIds,
+        individualIds: _expectedIndividualIds,
+        spatialContext: receiptSpatialContext,
+        ...expected
+      } = metadata(segment.values.filter(Boolean) as TemporalFrameEntry[]);
       if (
         canonicalJson(lookupBuckets) !== canonicalJson(pageLookupBuckets(index)) ||
         typeof spatialContext !== 'boolean' ||
         (receiptSpatialContext && !spatialContext) ||
-        canonicalJson(stored) !== canonicalJson(expected) ||
-        canonicalJson(subjects) !==
-          canonicalJson(
-            unique(
-              dependencies.flatMap((dependency) => [
-                dependency.subject,
-                ...('contextSubjects' in dependency ? (dependency.contextSubjects ?? []) : []),
-              ]),
-            ),
-          ) ||
-        canonicalJson(sourceRefs) !==
-          canonicalJson(
-            unique(
-              dependencies.flatMap((dependency) =>
-                dependency.facets
-                  .flatMap(temporalFacetValueReferences)
-                  .map((facet) => facet.blockId),
-              ),
-            ),
-          )
+        canonicalJson(stored) !== canonicalJson(expected)
       )
         throw new Error('Receipt page index disagrees with its receipts.');
     }
+  }
   if (
     next !== storage.end ||
     storage.segmentBytes !== segments.reduce((sum, segment) => sum + segment.bytes, 0) ||
@@ -473,8 +370,8 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
     throw new Error('Evidence segment range disagrees with its owner.');
   if (
     field === 'entries' &&
-    (temporalChunkReceipts(frameOwner).reduce(
-      (sum, receipt) => sum + temporalReceiptChangeCount(receipt),
+    (frameOwner.entries.reduce(
+      (sum, entry) => sum + (entry.kind === 'change' ? temporalReceiptChangeCount(entry) : 0),
       0,
     ) +
       temporalConfirmationChangeCount(frameOwner.entries) !==

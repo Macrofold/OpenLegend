@@ -3528,12 +3528,7 @@ export function reconcileAttendedTemporalEvidence(
   for (const entry of captured) {
     const subject = contacts.get(entry.subjectId);
     if (!subject || !entry.body || entry.body.confirmedThrough !== world.simTime) continue;
-    const ordinal = entry.receipt.facets.find(
-      (facet) =>
-        facet.receivedFrom?.id === entry.body!.id ||
-        (facet.detailSupport?.proof.original.source.id === entry.body!.original.id &&
-          facet.detailSupport.proof.original.ordinal === entry.body!.originalOrdinal),
-    )?.ordinal;
+    const ordinal = entry.bodyOrdinal;
     if (ordinal === undefined) continue;
     const retention = selectedTemporalPolicy(world).optional;
     const held = retainTemporalSupport(world, entry.receipt, {
@@ -3542,12 +3537,12 @@ export function reconcileAttendedTemporalEvidence(
     });
     if (!held) continue;
     const credited = selectedCreditAttentionContact(world, observerId, subject, {
-      sourceKey: JSON.stringify(temporalReceiptSource(entry.receipt)),
+      sourceKey: JSON.stringify(temporalReceiptSource(held.receipt)),
       at: entry.body.confirmedThrough,
       order: entry.receipt.ordinal,
-      support: [JSON.stringify({ source: temporalReceiptSource(entry.receipt), ordinal })],
+      support: [JSON.stringify({ source: temporalReceiptSource(held.receipt), ordinal })],
     });
-    if (!credited) releaseTemporalSupport(world, observerId, entry.receipt.id);
+    if (!credited) releaseTemporalSupport(world, observerId, held.receipt.id);
     else creditedSources.push(entry.subjectId);
   }
   if (creditedSources.length) {

@@ -186,6 +186,9 @@ export const DOMAIN_COUNTERS = [
   'visualSourcePreparations',
   'visualSourcePreparationReuses',
   'currentFacetMapCopies',
+  /** Performed native temporal append work, including tentative transitions. */
+  'temporalOperationsAppended',
+  'temporalFieldsAppended',
   'currentFacetWrites',
   'attentionCandidatesChanged',
   'attentionCandidatesUnchanged',

@@ -561,7 +561,10 @@ columns(
 const receiptIndex = (value: JsonRecord) =>
   (
     value['storage'] as {
-      index: ReturnType<typeof import('./evidence-segments.js').receiptStorageIndex>;
+      index: Pick<
+        import('./evidence-segments.js').ReceiptSegmentIndex,
+        'firstOrder' | 'lastOrder' | 'firstMeasured' | 'lastSupported'
+      >;
     }
   ).index;
 columns(

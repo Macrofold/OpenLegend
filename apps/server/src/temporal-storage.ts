@@ -16,6 +16,8 @@ import {
   temporalFacetEligible,
   retireTemporalChunks,
   temporalChunkReceipts,
+  temporalChunkOperations,
+  temporalOperationHeader,
   temporalReceiptChangeCount,
   temporalChunkConfirmationOperations,
   temporalConfirmationChangeCount,
@@ -584,7 +586,6 @@ export async function prepareTemporalRetention(
   const partials: Array<{
     actorId: string;
     metadata: ChunkMetadata;
-    count: number;
     followingAt?: number;
   }> = [];
   const policy = selectedTemporalPolicy(state.world).recent;
@@ -639,7 +640,7 @@ export async function prepareTemporalRetention(
         bytes: chunk.bytes,
         count: chunk.count,
         sources: chunk.sourceRefs,
-        order: temporalChunkReceipts(chunk)[0]!.order,
+        order: temporalOperationHeader(chunk, temporalChunkOperations(chunk)[0]!).order,
         epoch: chunk.epoch,
         ordinal: chunk.fromOrdinal,
       });
@@ -659,13 +660,18 @@ export async function prepareTemporalRetention(
       const chunk = ordered[index]!;
       const excessBytes = Math.max(0, bytes - policy.maxBytes);
       const excessCount = Math.max(0, count - policy.maxChanges);
-      if (chunk.through > cutoff && excessBytes < chunk.bytes && excessCount < chunk.count) {
+      // Retire completed oldest pages under optional pressure. A current page
+      // may itself exceed an authored count/byte allowance; retain its newest
+      // fitting complete operations through one exact prefix below.
+      if (
+        chunk.through > cutoff &&
+        ((!excessBytes && !excessCount) || index === ordered.length - 1)
+      ) {
         nextDue = chunk.at + policy.maxAgeSeconds;
         if (chunk.at <= cutoff || excessBytes || excessCount)
           partials.push({
             actorId,
             metadata: chunk,
-            count: excessCount,
             followingAt: ordered[index + 1]?.at,
           });
         break;
@@ -790,63 +796,84 @@ export async function prepareTemporalRetention(
       world,
       (draft) => {
         for (const [id, block] of loaded) draft.receivedValues!.sources[id] = block;
-        for (const { actorId, metadata } of partials) {
+        for (const { actorId, metadata, followingAt } of partials) {
           const actor = draft.experience!.temporal!.actors[actorId]!;
           const chunk = chunks.get(metadata.id)!;
           if (!actor.chunks.some((current) => current.id === chunk.id)) {
-            actor.chunks.push({ ...chunk, entries: [...chunk.entries] });
+            actor.chunks.push({ ...chunk });
             actor.chunks.sort((a, b) => a.fromAt - b.fromAt || a.fromOrdinal - b.fromOrdinal);
           }
-          const pressure = partials.find((partial) => partial.metadata === metadata)!;
-          const expired = new Set<number>();
-          const confirmationCounts = new Map<number, number>();
+          const actual = temporalChunkReceipts(chunk),
+            expired = new Set<number>(),
+            confirmations = new Map<number, number>();
           for (const operation of temporalChunkConfirmationOperations(chunk))
-            confirmationCounts.set(
+            confirmations.set(
               operation.receipt,
-              (confirmationCounts.get(operation.receipt) ?? 0) +
+              (confirmations.get(operation.receipt) ?? 0) +
                 temporalConfirmationChangeCount([operation]),
             );
-          let releasedCount = 0;
-          for (const receipt of temporalChunkReceipts(chunk)) {
-            if (receipt.at > cutoff && expired.size > 0 && releasedCount >= pressure.count) break;
+          const excessCount = Math.max(0, actor.count - policy.maxChanges),
+            quotaPressure = actor.bytes > policy.maxBytes || excessCount > 0;
+          let releasedCount = 0,
+            first: (typeof actual)[number] | undefined;
+          for (const receipt of actual) {
+            if (receipt.at > cutoff && releasedCount >= excessCount) {
+              first = receipt;
+              break;
+            }
             expired.add(receipt.ordinal);
             releasedCount +=
-              temporalReceiptChangeCount(receipt) + (confirmationCounts.get(receipt.ordinal) ?? 0);
+              temporalReceiptChangeCount(receipt) + (confirmations.get(receipt.ordinal) ?? 0);
           }
-          if (!expired.size)
-            throw new MemoryRetentionError('Recent expiry metadata disagrees with its receipts.');
-          const first = temporalChunkReceipts(chunk).find(
-            (receipt) => !expired.has(receipt.ordinal),
-          );
-          retireTemporalReceipts(
-            draft,
-            actorId,
-            chunk.id,
-            expired,
-            first
-              ? first.at + policy.maxAgeSeconds
-              : pressure.followingAt === undefined
-                ? null
-                : pressure.followingAt + policy.maxAgeSeconds,
-          );
-          // Packed dictionaries, checkpoints and shared values make expanded DTO
-          // bytes an incorrect quota estimate. Only the native retirement owner can
-          // recalculate the retained charge; release whole operations until it fits.
-          while (actor.bytes > policy.maxBytes || actor.count > policy.maxChanges) {
-            const current = actor.chunks.find((value) => value.id === chunk.id);
-            const receipt = current && temporalChunkReceipts(current)[0];
-            if (!receipt)
-              throw new MemoryRetentionError(
-                'Required native recording cannot fit the qualified recent-history envelope.',
-              );
-            const at = temporalChunkReceipts(current!)[1]?.at ?? pressure.followingAt;
+          const followingDue =
+            followingAt === undefined ? null : followingAt + policy.maxAgeSeconds;
+          if (expired.size)
             retireTemporalReceipts(
               draft,
               actorId,
               chunk.id,
-              new Set([receipt.ordinal]),
-              at === undefined ? null : at + policy.maxAgeSeconds,
+              expired,
+              first ? first.at + policy.maxAgeSeconds : followingDue,
             );
+          else if (!quotaPressure)
+            throw new MemoryRetentionError('Recent expiry metadata disagrees with its receipts.');
+          // Packed charge can change when a prefix needs carried state. A byte
+          // allowance smaller than a page gets one newest-operation fallback,
+          // rather than repeatedly replaying and repacking each prior receipt.
+          if (actor.bytes > policy.maxBytes || actor.count > policy.maxChanges) {
+            const current = actor.chunks.find((value) => value.id === chunk.id),
+              retained = current && temporalChunkReceipts(current),
+              newest = retained?.at(-1);
+            if (followingAt === undefined && current && newest && retained && retained.length > 1)
+              retireTemporalReceipts(
+                draft,
+                actorId,
+                current.id,
+                new Set(retained.slice(0, -1).map((receipt) => receipt.ordinal)),
+                newest.at + policy.maxAgeSeconds,
+              );
+            if (actor.bytes > policy.maxBytes || actor.count > policy.maxChanges) {
+              const remaining = actor.chunks.find((value) => value.id === chunk.id);
+              if (!remaining)
+                throw new MemoryRetentionError(
+                  'Required native recording cannot fit the qualified recent-history envelope.',
+                );
+              retireTemporalChunks(
+                draft,
+                actorId,
+                [remaining.id],
+                { bytes: remaining.bytes, count: remaining.count },
+                followingDue,
+                remaining.throughAt,
+              );
+            }
+          }
+          if (quotaPressure && !actor.chunks.some((current) => current.id === chunk.id)) {
+            actor.recordingGap = {
+              from: actor.recordingGap?.from ?? actual.at(-1)!.at,
+              through: draft.simTime,
+            };
+            actor.capturesInvalidated = true;
           }
           rows.set('mind_temporal_chunks', [
             ...(rows.get('mind_temporal_chunks') ?? []),

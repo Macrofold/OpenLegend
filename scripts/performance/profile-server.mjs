@@ -30,7 +30,9 @@ import {
   entityGet,
   entityKeys,
   entityValues,
+  selectedAttentionPolicy,
 } from '../../packages/domain/src/index.js';
+import { routineSensePolicy } from '../../packages/domain/src/perception.js';
 import { initializeCollisionRuntime } from '../../packages/spatial/src/rapier.js';
 import { createGameServer } from '../../apps/server/src/http.ts';
 import { WorldService } from '../../apps/server/src/world-service.ts';
@@ -86,6 +88,33 @@ function populationCensus(world) {
           (sense) => sense.implementation === 'vision-geometry-v1' && sense.radius > 0,
         ),
     ).length,
+  };
+}
+
+/** Capture installed resolution once before timing. Throughput comparisons must
+ * distinguish encoding/copy reductions from a world's changed sampling policy. */
+function evidenceSettings(world) {
+  const sight = new Map();
+  for (const entity of worldRootEntities(world, true)) {
+    if (!entity.actor?.alive) continue;
+    const policy = routineSensePolicy(world, entity).sight;
+    if (!policy) continue;
+    const timing = {
+      mode: policy.mode,
+      broadGameSeconds: policy.seconds ?? null,
+      detailGameSeconds: policy.detailSeconds ?? null,
+    };
+    const key = JSON.stringify(timing);
+    const group = sight.get(key);
+    if (group) group.actors++;
+    else sight.set(key, { ...timing, actors: 1 });
+  }
+  const attention = selectedAttentionPolicy(world);
+  return {
+    sight: [...sight.values()],
+    geometryIntervalGameSeconds: attention.geometry.intervalSeconds,
+    relationIntervalGameSeconds: attention.relation.intervalSeconds,
+    recent: { ...attention.retention.recent },
   };
 }
 
@@ -1212,6 +1241,7 @@ async function main() {
       diagnosticClockFactor,
       godMode: config.godMode,
       authoredClockRate,
+      evidence: evidenceSettings(game.service.world),
     };
     if (collectCpu) {
       cpuProfiler = new Session();
