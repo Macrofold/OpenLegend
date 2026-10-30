@@ -248,6 +248,19 @@ export function recordSemanticChange(world: WorldState, change: SemanticChange):
         : change,
   );
 }
+/** Private command forks preserve the batch's coalesced mutation notices without
+ * sharing writable maps with a sibling that may later be refused or rolled back. */
+export function inheritSemanticChanges(world: WorldState, base: WorldState): void {
+  const recorded = pending.get(base);
+  if (recorded)
+    pending.set(world, {
+      changes: new Map(recorded.changes),
+      conservative: recorded.conservative,
+      states: new Map(recorded.states),
+      stateSequence: recorded.stateSequence,
+      stateAt: new Map(recorded.stateAt),
+    });
+}
 export function captureSemanticChanges(
   world: WorldState,
 ): (result: WorldState, changed: boolean) => void {

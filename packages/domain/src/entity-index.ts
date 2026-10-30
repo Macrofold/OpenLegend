@@ -341,8 +341,11 @@ export function inheritRootIndex(child: WorldState, parent: WorldState): void {
  * their immutable records and roots already drafted in this transition are live drafts. */
 export function worldRootEntityIds(world: WorldState, rebuild = false): readonly string[] {
   if (rebuild) return enumerateRoots(world, true).map((entity) => entity.id);
-  if (!isDraft(world)) return snapshotRoots(world.entities);
+  const entities = readOnlyDraftView(readOnlyDraftView(world).entities);
+  if (!isDraft(world) || isImmutableData(entities)) return snapshotRoots(entities);
   const base = original(world)!;
+  if (!isDraft(world.entities) && entities !== base.entities)
+    return enumerateRoots(world, true).map((entity) => entity.id);
   if (rootOrderChanged(world, base)) return enumerateRoots(world, true).map((entity) => entity.id);
   let working = workingBaseRoots.get(world);
   if (!working)

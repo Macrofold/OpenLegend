@@ -171,6 +171,7 @@ export {
   appendedRecordCount,
   appendSnapshot,
   freezeWorld,
+  beginCommandBatch,
   entityChangesBetween,
   recordMapChangesBetween,
 } from './draft.js';

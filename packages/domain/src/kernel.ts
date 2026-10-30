@@ -521,6 +521,9 @@ import {
   cloneValue,
   readOnlyDraftView,
   entityChangesSince,
+  beginCommandBatch,
+  finishCommandWorld,
+  isPrivateCommandWorld,
 } from './draft.js';
 import { countDomainWork, domainCountersEnabled } from './diagnostic-counters.js';
 import { experiences } from './experience.js';
@@ -3024,12 +3027,28 @@ function nativeMovementTransition(
   reconcileAnimalWander(world, current);
   recordAnimalClockWrite(world, actorId);
   recordSemanticChange(world, { kind: 'state', entityId: actorId, field: 'behavior' });
-  const result = (inDraft ? finishInDraft : finish)(world, transition.events, transition.outcome);
+  const result = (inDraft ? finishInDraft : finishCommandTransition)(
+    world,
+    transition.events,
+    transition.outcome,
+  );
   // The next animal must not finalize every earlier walk again. Only an immutable
   // input grants ownership of these completed branches; mutable builders keep theirs.
   // docs/save-and-load.md#continuation-and-identity
-  if (sealCompleted && !inDraft) freezeWorld(result.world, { completedTransition: true });
+  if (sealCompleted && !inDraft && !isPrivateCommandWorld(result.world))
+    freezeWorld(result.world, { completedTransition: true });
   return result;
+}
+
+/** Commands keep their semantic boundary and isolated rollback even when their
+ * owning native batch can defer immutable publication until its final return. */
+function finishCommandTransition(
+  world: WorldState,
+  events: WorldEvent[],
+  result: Outcome,
+): Transition {
+  const completed = finishInDraft(world, events, result);
+  return { ...completed, world: finishCommandWorld(world) };
 }
 
 /** Accepted commands are idempotent by id+body. Rejections cause no physical effects. */
@@ -3112,7 +3131,7 @@ function executeCommandNative(
     const world = draftWorld(original, { retainNativeValues: true });
     if (!options.nativeController)
       orderedRecordSet(world.commandReceipts, command.id, { digest, outcome: consumption });
-    return finish(world, [], consumption);
+    return finishCommandTransition(world, [], consumption);
   }
   command = consumption;
   const activity = isActivityCommand(command);
@@ -3131,7 +3150,7 @@ function executeCommandNative(
     if (options.preview) return { world: original, events: [], outcome: prepared };
     const recorded = draftWorld(original, { retainNativeValues: true });
     orderedRecordSet(recorded.commandReceipts, command.id, { digest, outcome: prepared });
-    return finish(recorded, [], prepared);
+    return finishCommandTransition(recorded, [], prepared);
   }
   if (options.nativeMovement) {
     const actor = entityGet(original.entities, command.actorId)!;
@@ -4516,7 +4535,7 @@ function executeCommandNative(
     reconcileOutings(world, events, { changedOnly: true });
   reconcileCompacts(world, events);
   reconcileOwnOffenseCommitments(world, actor);
-  const committed = (inDraft ? finishInDraft : finish)(world, events, result);
+  const committed = (inDraft ? finishInDraft : finishCommandTransition)(world, events, result);
   return finishConstructionPermissionBatch(committed, constructionBatch);
 }
 
@@ -6677,13 +6696,21 @@ function* advanceWorldNative(
     stateChangeRevision(world, 'participation') +
     stateChangeRevision(world, 'attribute') +
     world.moduleManifest.revision;
-  // Immutable entry owns each completed private successor. Seal it before another
-  // native command so existing indexes can reuse their exact publication metadata.
-  // Mutable builders keep their existing ownership and cold-query behavior.
+  // Command checkpoints stay private to this native batch. Other completed
+  // results retain ordinary publication and editable-builder behavior.
   const completedNativeWorld = (next: WorldState) =>
-    Object.isFrozen(original) ? freezeWorld(next, { completedTransition: true }) : next;
-  let world = draftWorld(original, { retainNativeValues: true });
-  beginNativeChangeFeed(world);
+    isPrivateCommandWorld(next)
+      ? next
+      : Object.isFrozen(original)
+        ? freezeWorld(next, { completedTransition: true })
+        : next;
+  const workingNativeWorld = (next: WorldState) => {
+    const working = draftWorld(next, { retainNativeValues: true });
+    beginNativeChangeFeed(working);
+    beginCommandBatch(working);
+    return working;
+  };
+  let world = workingNativeWorld(original);
   expireSensoryAwareness(world);
   wanderQueue.beginNative(world);
   let before = snapshotEncounters(original);
@@ -6999,8 +7026,7 @@ function* advanceWorldNative(
           });
           const successor = completedNativeWorld(transition.world);
           participants = nativeParticipants(successor);
-          world = draftWorld(successor, { retainNativeValues: true });
-          beginNativeChangeFeed(world);
+          world = workingNativeWorld(successor);
           events.push(...transition.events);
           absorbConstructionPermissionBatch(constructionBatch, transition);
           actor = entityGet(world.entities, actorId)!;
@@ -7042,8 +7068,7 @@ function* advanceWorldNative(
             };
         const successor = completedNativeWorld(transition.world);
         participants = nativeParticipants(successor);
-        world = draftWorld(successor, { retainNativeValues: true });
-        beginNativeChangeFeed(world);
+        world = workingNativeWorld(successor);
         discardMechanics('command');
         events.push(...transition.events);
         absorbConstructionPermissionBatch(constructionBatch, transition);
@@ -7197,10 +7222,7 @@ function* advanceWorldNative(
             ...(intention.movement ? { nativeMovement: intention.movement } : {}),
           });
           if (transition.world !== world) {
-            world = draftWorld(completedNativeWorld(transition.world), {
-              retainNativeValues: true,
-            });
-            beginNativeChangeFeed(world);
+            world = workingNativeWorld(completedNativeWorld(transition.world));
           }
           events.push(...transition.events);
           noteNativeForagingAdmission(
@@ -7274,8 +7296,7 @@ function* advanceWorldNative(
               );
         const inDraft = transition.world === world;
         if (!inDraft) {
-          world = draftWorld(completedNativeWorld(transition.world), { retainNativeValues: true });
-          beginNativeChangeFeed(world);
+          world = workingNativeWorld(completedNativeWorld(transition.world));
           participants = nativeParticipants(world);
         }
         events.push(...transition.events);
@@ -7786,8 +7807,7 @@ function* advanceWorldNative(
         Object.isFrozen(original),
       );
       if (transition.world !== world) {
-        world = draftWorld(completedNativeWorld(transition.world), { retainNativeValues: true });
-        beginNativeChangeFeed(world);
+        world = workingNativeWorld(completedNativeWorld(transition.world));
         participants = nativeParticipants(world);
         movementEffects = true;
       } else quietNativeMove = true;

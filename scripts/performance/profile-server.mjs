@@ -33,6 +33,11 @@ import {
   selectedAttentionPolicy,
 } from '../../packages/domain/src/index.js';
 import { routineSensePolicy } from '../../packages/domain/src/perception.js';
+import {
+  beginCommandBatch,
+  draftWorld,
+  finishTransitionWorld,
+} from '../../packages/domain/src/draft.js';
 import { initializeCollisionRuntime } from '../../packages/spatial/src/rapier.js';
 import { createGameServer } from '../../apps/server/src/http.ts';
 import { WorldService } from '../../apps/server/src/world-service.ts';
@@ -285,7 +290,8 @@ async function startResidents(service, fixture, phase) {
         try {
           const result = await service.transition((initial) => {
             entered = true;
-            let world = initial;
+            let world = draftWorld(initial, { retainNativeValues: true });
+            beginCommandBatch(world);
             for (const actor of ready) {
               const entity = entityGet(world.entities, actor.id);
               if (!entity?.actor?.alive || entity.actor.action) {
@@ -324,6 +330,7 @@ async function startResidents(service, fixture, phase) {
                   (stats.rejected[result.outcome.code] ?? 0) + 1;
               }
             }
+            world = finishTransitionWorld(world);
             return {
               world,
               events: world.events.slice(initial.events.length),

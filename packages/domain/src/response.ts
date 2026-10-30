@@ -89,7 +89,13 @@ import {
 } from './agency.js';
 import { getOwn, isSafeRecordId } from './records.js';
 import { current, isDraft } from 'immer';
-import { appendSnapshot, appendedEventCount, cloneValue, draftWorld } from './draft.js';
+import {
+  appendSnapshot,
+  appendedEventCount,
+  beginCommandBatch,
+  cloneValue,
+  draftWorld,
+} from './draft.js';
 import { executeCommand, prepareNativeChoice, SIMULATION_RULES } from './kernel.js';
 import { appendMemory, canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { seesEntity } from './perception.js';
@@ -652,6 +658,10 @@ export function commitActorResponse(
       entityIds.map((targetId) => [targetId, expectedEncounters[targetId] ?? null]),
     );
   let world = draftWorld(input, { materializeNativeEntities: [actorId] });
+  // Each command keeps its isolated refusal boundary; only this response publishes.
+  // Forks also preserve rollback of a replacement whose later start is refused.
+  // docs/projects/attention-and-scenes-runtime-design.md#51-immutable-publication
+  beginCommandBatch(world);
   const baselineCaptures = new Map<string, { receipt: TemporalReceipt; values: TemporalValue[] }>();
   let admittedEvidenceIds = evidenceIds;
   const baselineEvidence = (reference: string) => {

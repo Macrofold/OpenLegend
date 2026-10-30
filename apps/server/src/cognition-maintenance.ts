@@ -77,7 +77,7 @@ interface PreparedMaintenanceInputs {
   values: readonly unknown[];
 }
 export class MaintenanceIntakeInputs {
-  private world?: WorldState;
+  private world?: WeakRef<WorldState>;
   private scope?: string;
   private readonly prepared = new Map<string, PreparedMaintenanceInputs>();
   private readonly external = new Map<string, readonly unknown[]>();
@@ -102,10 +102,11 @@ export class MaintenanceIntakeInputs {
   ): { population: readonly string[]; affected?: ReadonlySet<string> } {
     const reusable = Object.isFrozen(world) && this.scope === scope;
     let affected: Set<string> | undefined = reusable ? new Set() : undefined;
-    if (this.world !== world || !reusable) {
-      const changes = reusable && this.world ? activeIntakeChanges(this.world, world) : undefined;
+    const previous = this.world?.deref();
+    if (previous !== world || !reusable) {
+      const changes = reusable && previous ? activeIntakeChanges(previous, world) : undefined;
       affected = changes?.owners;
-      const previousLearning = this.world?.actionExperience.learning;
+      const previousLearning = previous?.actionExperience.learning;
       if (
         affected &&
         previousLearning &&
@@ -152,7 +153,7 @@ export class MaintenanceIntakeInputs {
         this.prepared.clear();
         this.external.clear();
       }
-      this.world = world;
+      this.world = new WeakRef(world);
       this.scope = scope;
     }
     if (affected)
@@ -176,7 +177,7 @@ export class MaintenanceIntakeInputs {
   ): unknown[] {
     // An inspection can finish after a newer publication, before the next
     // scheduler reconciliation. Its verification must read that newer world.
-    const reusable = world === this.world && Object.isFrozen(world);
+    const reusable = world === this.world?.deref() && Object.isFrozen(world);
     let prepared = reusable ? this.prepared.get(id) : undefined;
     if (!prepared) {
       const entity = entityGet(world.entities, id)!,

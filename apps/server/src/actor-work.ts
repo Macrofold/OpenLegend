@@ -50,7 +50,8 @@ export interface WorkCapture {
   inputs: readonly unknown[];
   /** Reasons pending when the read began; acknowledgement clears only these. */
   reasons: ReadonlySet<IntakeReason>;
-  world: WorldState;
+  /** Identity shortcut only; an optional inspection must not retain an old world. */
+  world: WeakRef<WorldState>;
 }
 
 /** Wake inputs plus the reason each position represents and the most urgent new cause. */
@@ -336,7 +337,7 @@ export class ActorWork {
           ),
           inputs: ticket.inputs,
           reasons: new Set(ticket.reasons),
-          world,
+          world: new WeakRef(world),
         }
       : undefined;
   }
@@ -364,7 +365,7 @@ export class ActorWork {
       dependenciesCurrent(current, capture.dependencies, scope) &&
       !!entityGet(current.entities, id)?.actor?.alive &&
       hasMemory(entityGet(current.entities, id)) &&
-      (current === capture.world || this.sameInputs(id, capture.inputs, current))
+      (current === capture.world.deref() || this.sameInputs(id, capture.inputs, current))
     ) {
       ticket.dependencies = capture.dependencies;
       ticket.dirty = false;

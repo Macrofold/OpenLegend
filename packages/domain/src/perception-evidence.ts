@@ -21,6 +21,7 @@ import { personalFactAlias } from './experience-source.js';
 import type { DetectionSupportState } from './perception-support.js';
 import {
   cloneValue,
+  hasPrivateDraftBase,
   readOnlyDraftView,
   touchNativeEvidence,
   trackOwnedCurrentMap,
@@ -1375,7 +1376,7 @@ function replaceCurrentFacet(
       ? ({ ...value, value: storedValue } as CurrentFacetRecord)
       : compactCurrentFacet(state, { ...value, value: storedValue } as LiveFacetSupport);
   writableCurrent(world, state, currentFacetObserver(state).actorId)[key] =
-    isDraft(world) && Object.isFrozen(draftOriginal(world)!)
+    isDraft(world) && (Object.isFrozen(draftOriginal(world)!) || hasPrivateDraftBase(world))
       ? immutableDataSnapshot(compact, readOnlyDraftView)
       : compact;
   if (prior && prior.original !== compact.original) retireCurrentOriginals(state, [prior.original]);

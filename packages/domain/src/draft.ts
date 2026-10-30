@@ -16,6 +16,7 @@ import {
   captureSemanticChanges,
   captureSensoryChanges,
   inheritSensoryChanges,
+  inheritSemanticChanges,
   MAX_CHANGE_SCOPES,
 } from './dependencies.js';
 import { captureRootIndex, inheritRootIndex } from './entity-index.js';
@@ -53,8 +54,80 @@ const recordArrays = new WeakMap<WorldState, Map<object, Set<string>>>();
 // table need not be frozen (which could freeze the parent's raw working buffers),
 // but it is not an externally editable builder baseline.
 const privateSnapshotDrafts = new WeakSet<WorldState>();
+interface CommandBatchScope {
+  /** One completed input, never a chain of earlier working drafts. */
+  origin: WorldState;
+  inheritedEntities: ReadonlySet<string> | undefined;
+  completedEntities?: {
+    value: WorldState['entities'];
+    changed: ReadonlySet<string> | undefined;
+    sensory: SensoryDraftProof;
+  };
+}
+interface SensoryDraftProof {
+  sources: Set<string>;
+  observers: Set<string>;
+  complete: boolean;
+  overflow: boolean;
+  orderChanged: boolean;
+  coverage: { ids: Set<string>; complete: boolean };
+}
+const commandBatches = new WeakMap<WorldState, CommandBatchScope>();
+const privateCommandWorlds = new WeakSet<WorldState>();
 export function hasPrivateDraftBase(world: WorldState): boolean {
   return isDraft(world) && privateSnapshotDrafts.has(world);
+}
+/** Only an owned working draft can defer nested command publication. Mutable
+ * builders and unrelated work started during a native yield retain ordinary completion.
+ * docs/projects/attention-and-scenes-runtime-design.md#51-immutable-publication */
+export function beginCommandBatch(world: WorldState): void {
+  if (!isDraft(world) || commandBatches.has(world) || !isImmutableData(original(world)!)) return;
+  commandBatches.set(world, { origin: original(world)!, inheritedEntities: new Set() });
+}
+export function isPrivateCommandWorld(world: WorldState): boolean {
+  return privateCommandWorlds.has(world);
+}
+function commandBatchEntities(world: WorldState, scope: CommandBatchScope) {
+  const local = changedDraftEntityIds(world);
+  return local && scope.inheritedEntities
+    ? new Set([...scope.inheritedEntities, ...local])
+    : undefined;
+}
+/** Semantic command completion already ran. Keep its isolated COW child private;
+ * the next draftWorld seals/snapshots it before another command can write. No
+ * publication, proxy revocation or old-world chain is needed between commands. */
+export function finishCommandWorld(world: WorldState): WorldState {
+  const batch = commandBatches.get(world);
+  if (!batch) return finishTransitionWorld(world);
+  reconcileDraftSemantics(world);
+  sealAppends(world);
+  for (const { before, after } of sealRecordArrays(world)) recordAppend(before, after);
+  // A completed command is forked before further writes. Retain these detached
+  // immutable leaves instead of repeatedly sealing/restoring its writable owners
+  // for later snapshots; its working parent remains independently editable.
+  sealNativeEvidence(world, false);
+  // current() recursively copies plain unfrozen prior snapshots. Seal this
+  // completed collection once so the next actor forks only its changed spine,
+  // without repeatedly copying every earlier actor in the same batch.
+  const changed = changedDraftEntityIds(world),
+    sensory = sensoryDraftWrites(world),
+    completeObjects = completeObjectHistory(world.entities),
+    publishObjects = captureObjectIndex(world),
+    publishRoots = captureRootIndex(world),
+    publishSpatial = captureSpatialCandidateIndex(world);
+  world.entities = immutableDraftSnapshot(world.entities);
+  if (!completeObjects) markPartialObjectHistory(world.entities);
+  batch.completedEntities = { value: world.entities, changed, sensory };
+  const ids = changed ?? new Set(entityKeys(world.entities));
+  publishObjects(world, ids);
+  publishRoots(world, ids);
+  publishSpatial(world, ids);
+  const inherited = original(world)!.nativeInterval;
+  const interval = readOnlyDraftView(world).nativeInterval;
+  if (interval === inherited || (interval && readOnlyDraftView(interval) === inherited))
+    delete world.nativeInterval;
+  privateCommandWorlds.add(world);
+  return world;
 }
 type NativeEvidenceFamily = 'perception' | 'temporal' | 'received';
 interface NativeEvidenceSnapshot {
@@ -369,7 +442,7 @@ type ImmerState = {
 export function sensoryDraftWrites(
   world: WorldState,
   previous?: { ids: ReadonlySet<string>; complete: boolean },
-) {
+): SensoryDraftProof {
   const sources = new Set<string>(),
     observers = new Set<string>();
   const coverage = { ids: new Set(previous?.ids), complete: previous?.complete ?? true };
@@ -387,6 +460,26 @@ export function sensoryDraftWrites(
   };
   if (!isDraft(world)) return unknown();
   const entities = readOnlyDraftView(world).entities;
+  const completed = commandBatches.get(world)?.completedEntities;
+  if (completed && entities === completed.value) {
+    const saved = completed.sensory;
+    for (const id of saved.sources) sources.add(id);
+    for (const id of saved.observers) observers.add(id);
+    for (const id of previous?.ids ?? []) {
+      sources.add(id);
+      observers.add(id);
+    }
+    for (const id of saved.coverage.ids) coverage.ids.add(id);
+    proof.orderChanged = saved.orderChanged;
+    proof.overflow = saved.overflow || sources.size + observers.size > MAX_CHANGE_SCOPES;
+    coverage.complete = proof.complete = coverage.complete && saved.complete;
+    if (proof.overflow) {
+      sources.clear();
+      observers.clear();
+      return unknown();
+    }
+    return proof;
+  }
   if (!isDraft(entities)) {
     return entities === original(world)!.entities &&
       (Object.isFrozen(entities) || hasPrivateDraftBase(world)) &&
@@ -510,6 +603,8 @@ export function sensoryDraftWrites(
 export function changedDraftEntityIds(world: WorldState): ReadonlySet<string> | undefined {
   if (!isDraft(world)) return;
   const entities = readOnlyDraftView(world).entities;
+  const completed = commandBatches.get(world)?.completedEntities;
+  if (completed && entities === completed.value) return completed.changed;
   if (!isDraft(entities)) return entities === original(world)!.entities ? new Set() : undefined;
   if (original(entities) !== original(world)!.entities) return;
   return entityDraftChanges(entities);
@@ -638,7 +733,10 @@ interface WorldDraftOptions {
   materializeNativeEntities?: readonly string[];
 }
 export function draftWorld(world: WorldState, options: WorldDraftOptions = {}): WorldState {
+  const batch = commandBatches.get(world);
+  const inheritedEntities = batch && commandBatchEntities(world, batch);
   sealAppends(world);
+  if (batch) for (const { before, after } of sealRecordArrays(world)) recordAppend(before, after);
   const draft = isDraft(world),
     perception = world.perceptionEvidence,
     temporal = world.experience?.temporal,
@@ -666,8 +764,22 @@ export function draftWorld(world: WorldState, options: WorldDraftOptions = {}): 
     privateSnapshotDrafts.add(result);
     inheritExposureSnapshot(world, result);
   }
+  if (batch) {
+    commandBatches.set(result, { origin: batch.origin, inheritedEntities });
+    inheritSemanticChanges(result, world);
+    // Custody/construction may have changed a privately held object index. Move
+    // that derived preparation with the exact snapshot, never a stale parent.
+    captureObjectIndex(world)(
+      base,
+      changedDraftEntityIds(world) ?? new Set(entityKeys(base.entities)),
+    );
+  }
   captureKnownPlaceEvidence(world)(result);
-  inheritRootIndex(result, world);
+  if (
+    !batch?.completedEntities ||
+    batch.completedEntities.value !== readOnlyDraftView(world).entities
+  )
+    inheritRootIndex(result, world);
   inheritSensoryChanges(result, world);
   if (options.materializeNativeEntities)
     for (const id of options.materializeNativeEntities) materializeNativeEntity(result, id);
@@ -689,28 +801,10 @@ export function invalidateInheritedNativeInterval(
 ): void {
   if (world.nativeInterval === inherited) delete world.nativeInterval;
 }
-export function finishWorld(
-  world: WorldState,
-  capturePatches?: (patches: readonly Patch[]) => void,
-): WorldState {
-  reconcileDraftSemantics(world);
-  sealAppends(world);
-  // Seal immutable publications before Immer traverses the same shared facts
-  // through many working paths. Editable builders must retain writable owners
-  // for direct native effects after this turn.
-  if (isDraft(world) && Object.isFrozen(original(world)!)) sealNativeEvidence(world, false);
-  ownedCurrentMaps.delete(world);
-  // Final publication observes all edits, including foreign builder writes that
-  // did not enter a native mutation owner. Preview certificates end with this turn.
-  nativeEvidenceSnapshots.delete(world);
-  if (!isDraft(world)) {
-    // Re-completing an editable result cannot certify its earlier write set.
-    pendingPublications.delete(world);
-    return world;
-  }
+function sealRecordArrays(world: WorldState): Array<{ before: unknown[]; after: unknown[] }> {
   for (const value of admittedRecords.get(world) ?? []) freezeData(value);
   admittedRecords.delete(world);
-  const sealedAppends: Array<{ before: unknown[]; after: unknown[] }> = [];
+  const sealed: Array<{ before: unknown[]; after: unknown[] }> = [];
   for (const [owner, keys] of recordArrays.get(world) ?? []) {
     const properties = owner as Record<string, unknown>;
     for (const key of keys) {
@@ -720,14 +814,40 @@ export function finishWorld(
       if (!Object.isFrozen(before)) continue;
       const after = current(value);
       if (after === before) continue;
-      // current() resolves every nested edit; the original array stays immutable even
-      // for append-then-edit/delete and branching histories in the same transition.
       properties[key] = frozenRecord(after);
       if (after.length >= before.length && before.every((entry, i) => entry === after[i]))
-        sealedAppends.push({ before, after });
+        sealed.push({ before, after });
     }
   }
   recordArrays.delete(world);
+  return sealed;
+}
+export function finishWorld(
+  world: WorldState,
+  capturePatches?: (patches: readonly Patch[]) => void,
+): WorldState {
+  const batch = commandBatches.get(world);
+  reconcileDraftSemantics(world);
+  const batchEntities = batch && commandBatchEntities(world, batch);
+  sealAppends(world);
+  // Seal immutable publications before Immer traverses the same shared facts
+  // through many working paths. Editable builders must retain writable owners
+  // for direct native effects after this turn.
+  if (isDraft(world) && (batch || Object.isFrozen(original(world)!)))
+    sealNativeEvidence(world, false);
+  ownedCurrentMaps.delete(world);
+  // Final publication observes all edits, including foreign builder writes that
+  // did not enter a native mutation owner. Preview certificates end with this turn.
+  nativeEvidenceSnapshots.delete(world);
+  if (!isDraft(world)) {
+    // Re-completing an editable result cannot certify its earlier write set.
+    pendingPublications.delete(world);
+    commandBatches.delete(world);
+    privateCommandWorlds.delete(world);
+    return world;
+  }
+  // current() resolves append-then-edit/delete before certifying its prefix.
+  const sealedAppends = sealRecordArrays(world);
   const publishKnownPlaces = captureKnownPlaceEvidence(world);
   const publishExposure = captureExposureCache(world);
   const publishObjects = captureObjectIndex(world);
@@ -738,7 +858,10 @@ export function finishWorld(
   const publishAppraisalResidency = captureAppraisalResidency(world);
   const publishChanges = captureSemanticChanges(world);
   const publishSensory = captureSensoryChanges(world);
-  const publishRoots = captureRootIndex(world);
+  const publishRoots =
+    batch?.completedEntities?.value === readOnlyDraftView(world).entities
+      ? () => undefined
+      : captureRootIndex(world);
   const publishSpatial = captureSpatialCandidateIndex(world);
   const publishReservations = captureReservationIndex(world);
   const publishContributionSources = captureContributionSources(world);
@@ -747,7 +870,7 @@ export function finishWorld(
   const before = base.events;
   let appendOnly = true;
   const arrays = new Map<unknown[], { path: (string | number)[]; appendOnly: boolean }>();
-  const knownEntityIds = changedDraftEntityIds(world);
+  const knownEntityIds = batch ? batchEntities : changedDraftEntityIds(world);
   const entityIds = new Set(knownEntityIds ?? entityKeys(base.entities));
   const perceptionIds = new Map<string, Set<string> | null>();
   let perceptionRootReplaced = false;
@@ -808,6 +931,8 @@ export function finishWorld(
           path[1] >= before.length),
     );
   });
+  commandBatches.delete(world);
+  privateCommandWorlds.delete(world);
   publishKnownPlaces(result);
   // A semantic mutation cannot inherit a native prediction's sampling progress. A no-op
   // (including load validation) preserves it; native advance publishes a new owned value.
@@ -818,6 +943,15 @@ export function finishWorld(
   pendingPublications.set(result, () => {
     if (base.entities !== result.entities && isImmutableData(base.entities))
       entitySuccessors.set(base.entities, {
+        next: new WeakRef(result.entities),
+        changed: entityIds,
+      });
+    if (
+      batch &&
+      batch.origin.entities !== result.entities &&
+      isImmutableData(batch.origin.entities)
+    )
+      entitySuccessors.set(batch.origin.entities, {
         next: new WeakRef(result.entities),
         changed: entityIds,
       });
@@ -832,6 +966,32 @@ export function finishWorld(
       if (before && after && before !== after && Object.isFrozen(before))
         recordMapSuccessors.set(before, { next: new WeakRef(after), changed });
     };
+    if (batch && batch.origin !== base) {
+      // Private COW checkpoints publish no map lineage. Bridge this completed
+      // branch directly to its one immutable input, comparing these unordered
+      // key maps once rather than recording every intermediate publication.
+      const changes = (before: object, after: object) => {
+        const old = before as Record<string, unknown>,
+          next = after as Record<string, unknown>;
+        return new Set(
+          [...new Set([...Object.keys(old), ...Object.keys(next)])].filter(
+            (key) => old[key] !== next[key],
+          ),
+        );
+      };
+      for (const [before, after] of [
+        [batch.origin.perceptionEpisodes, result.perceptionEpisodes],
+        [batch.origin.experience?.corrections, result.experience?.corrections],
+      ] as const) {
+        if (!before || !after || before === after) continue;
+        publishMap(before, after, changes(before, after));
+        for (const actorId of new Set([...Object.keys(before), ...Object.keys(after)])) {
+          const old = before[actorId],
+            next = after[actorId];
+          if (old && next && old !== next) publishMap(old, next, changes(old, next));
+        }
+      }
+    }
     if (!perceptionRootReplaced) {
       if (perceptionIds.size)
         publishMap(
@@ -934,7 +1094,8 @@ export function updateWorld(
  * existing cold-finalization contract. Use finishWorld for intermediate installation.
  * docs/save-and-load.md#continuation-and-identity */
 export function finishTransitionWorld(world: WorldState): WorldState {
-  const immutableSource = isDraft(world) && Object.isFrozen(original(world)!);
+  const immutableSource =
+    isDraft(world) && (isImmutableData(original(world)!) || commandBatches.has(world));
   const result = finishWorld(world);
   return immutableSource ? freezeWorld(result, { completedTransition: true }) : result;
 }
