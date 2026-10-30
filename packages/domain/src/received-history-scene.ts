@@ -25,11 +25,15 @@ interface EndpointChange {
   decreaseLower: number;
   support: HistoricalSpatialFact[];
 }
-export interface HistoricalSpatialFact {
-  entry: number;
-  facet: number;
-}
-interface Fact extends HistoricalSpatialFact {
+export type HistoricalSpatialFact =
+  | { entry: number; facet: number }
+  | { baseline: number; facet: number };
+interface Fact {
+  source: HistoricalSpatialFact;
+  order: number;
+  ordinal: number;
+  availableAt?: number;
+  unavailableAt?: number;
   subject: string;
   reference: TemporalFacetReference;
   value: TemporalValue;
@@ -37,17 +41,39 @@ interface Fact extends HistoricalSpatialFact {
 type BodyFact = Fact & { value: Extract<TemporalValue, { kind: 'body' }> };
 type BoundaryFact = Fact & { value: Extract<TemporalValue, { kind: 'physical-boundary' }> };
 
-const through = (fact: Fact) => fact.reference.confirmedThrough ?? fact.reference.measuredThrough;
+const from = (fact: Fact) =>
+  Math.max(
+    fact.reference.measuredFrom,
+    fact.reference.support?.confirmedFrom ?? fact.reference.measuredFrom,
+    fact.value.kind === 'body'
+      ? (fact.reference.detailSupport?.proof.confirmedFrom ?? -Infinity)
+      : -Infinity,
+    fact.availableAt ?? -Infinity,
+  );
+const through = (fact: Fact) =>
+  Math.min(
+    fact.reference.support?.confirmedThrough ??
+      fact.reference.confirmedThrough ??
+      fact.reference.measuredThrough,
+    fact.value.kind === 'body'
+      ? (fact.reference.detailSupport?.proof.confirmedThrough ?? Infinity)
+      : Infinity,
+  );
 const supports = (fact: Fact, at: number) =>
-  fact.reference.measuredFrom <= at && at <= through(fact);
+  from(fact) <= at && at <= through(fact) && at < (fact.unavailableAt ?? Infinity);
 const originalKey = (fact: Fact) =>
-  JSON.stringify(fact.reference.original ?? [fact.entry, fact.reference.ordinal]);
-const proof = (fact: Fact): HistoricalSpatialFact => ({ entry: fact.entry, facet: fact.facet });
+  JSON.stringify(fact.reference.original ?? [fact.source, fact.reference.ordinal]);
+const proof = (fact: Fact): HistoricalSpatialFact => fact.source;
 
 function geometry(fact: BodyFact, at: number, facts: Fact[]): ReceivedBodyGeometry {
   const location = facts.find(
     (candidate) =>
-      candidate.entry === fact.entry &&
+      (('entry' in candidate.source &&
+        'entry' in fact.source &&
+        candidate.source.entry === fact.source.entry) ||
+        ('baseline' in candidate.source &&
+          'baseline' in fact.source &&
+          candidate.source.baseline === fact.source.baseline)) &&
       candidate.value.kind === 'location' &&
       candidate.value.location.kind === 'point' &&
       candidate.value.location.point.x === fact.value.body.position.x &&
@@ -57,13 +83,20 @@ function geometry(fact: BodyFact, at: number, facts: Fact[]): ReceivedBodyGeomet
   );
   return {
     body: fact.value.body,
-    sample: { valueMeasuredFrom: fact.reference.measuredFrom, valueMeasuredThrough: at },
+    sample: {
+      valueMeasuredFrom: fact.reference.measuredFrom,
+      valueMeasuredThrough: fact.reference.measuredThrough,
+      valueSupportedFrom: from(fact),
+      valueSupportedThrough: at,
+    },
     ...(location?.value.kind === 'location'
       ? {
           location: {
             location: location.value.location,
             valueMeasuredFrom: location.reference.measuredFrom,
-            valueMeasuredThrough: through(location),
+            valueMeasuredThrough: location.reference.measuredThrough,
+            valueSupportedFrom: from(location),
+            valueSupportedThrough: Math.min(through(location), at),
           },
         }
       : {}),
@@ -100,9 +133,29 @@ export function historicalSpatialMeasurements(
     for (const [facet, value] of selected.values.entries()) {
       const reference = selected.receipt.facets[facet]!;
       facts.push({
-        entry,
-        facet,
+        source: { entry, facet },
+        order: selected.receipt.order,
+        ordinal: selected.receipt.ordinal,
+        unavailableAt: selected.receipt.availability?.find((group) =>
+          group.fields.includes(reference.ordinal),
+        )?.at,
         subject: selected.receipt.subject,
+        reference,
+        value,
+      });
+    }
+  for (const [baseline, selected] of (selection.baselines ?? []).entries())
+    for (const [facet, value] of selected.values.entries()) {
+      const reference = selected.checkpoint.facets[facet]!;
+      facts.push({
+        source: { baseline, facet },
+        order: selected.checkpoint.order,
+        ordinal: selected.checkpoint.ordinal,
+        availableAt: selected.availableAt,
+        unavailableAt: selected.checkpoint.availability?.find((group) =>
+          group.fields.includes(reference.ordinal),
+        )?.at,
+        subject: selected.checkpoint.subject,
         reference,
         value,
       });
@@ -113,22 +166,14 @@ export function historicalSpatialMeasurements(
       (fact) =>
         fact.subject === request.anchor &&
         through(fact) >= request.from &&
-        fact.reference.measuredFrom <= request.through,
+        from(fact) <= request.through &&
+        from(fact) <= through(fact),
     )
-    .sort(
-      (a, b) =>
-        through(b) - through(a) ||
-        selection.entries[b.entry]!.receipt.order - selection.entries[a.entry]!.receipt.order ||
-        selection.entries[b.entry]!.receipt.ordinal - selection.entries[a.entry]!.receipt.ordinal,
-    );
+    .sort((a, b) => through(b) - through(a) || b.order - a.order || b.ordinal - a.ordinal);
   const others = request.other
     ? bodies
         .filter((fact) => fact.subject === request.other)
-        .sort(
-          (a, b) =>
-            b.reference.measuredFrom - a.reference.measuredFrom ||
-            b.reference.acquiredAt - a.reference.acquiredAt,
-        )
+        .sort((a, b) => from(b) - from(a) || b.reference.acquiredAt - a.reference.acquiredAt)
     : [];
   const boundaries = facts.filter(
     (fact): fact is BoundaryFact => fact.value.kind === 'physical-boundary',
@@ -158,6 +203,7 @@ export function historicalSpatialMeasurements(
     }
     remaining--;
     const at = Math.min(through(anchor), request.through);
+    if (!supports(anchor, at)) continue;
     const sampleKey = JSON.stringify([
       at,
       anchor.value.body.position,
@@ -233,7 +279,7 @@ export function historicalSpatialMeasurements(
       if (usedBoundaries.has(key)) continue;
       usedBoundaries.add(key);
       const measurement = receivedBoundarySeparation(anchorGeometry, boundary.value.boundary, {
-        from: boundary.reference.measuredFrom,
+        from: from(boundary),
         through: through(boundary),
       });
       if (measurement.status === 'complete')
@@ -241,20 +287,24 @@ export function historicalSpatialMeasurements(
     }
     samples.push(sample);
   }
-  samples.sort(
-    (a, b) =>
-      a.at - b.at ||
-      selection.entries[a.support[0]!.entry]!.receipt.order -
-        selection.entries[b.support[0]!.entry]!.receipt.order ||
-      selection.entries[a.support[0]!.entry]!.receipt.ordinal -
-        selection.entries[b.support[0]!.entry]!.receipt.ordinal,
-  );
+  const position = (source: HistoricalSpatialFact) =>
+    'entry' in source
+      ? selection.entries[source.entry]!.receipt
+      : selection.baselines![source.baseline]!.checkpoint;
+  samples.sort((a, b) => {
+    const first = position(a.support[0]!),
+      second = position(b.support[0]!);
+    return a.at - b.at || first.order - second.order || first.ordinal - second.ordinal;
+  });
   let previousOther: { at: number; lower: number; support: HistoricalSpatialFact[] } | undefined;
   const previousEdges = new Map<
     string,
     { at: number; lower: number; support: HistoricalSpatialFact[] }
   >();
   for (const sample of samples) {
+    // A checkpoint is useful known state at its retained suffix, never another
+    // measured endpoint from which a route or approach can be manufactured.
+    if (!('entry' in sample.support[0]!)) continue;
     const direct = [...sample.support];
     if (
       sample.other?.status === 'complete' &&
@@ -271,8 +321,11 @@ export function historicalSpatialMeasurements(
       previousOther = { at: sample.at, lower: sample.other.lower, support: direct };
     }
     for (const edge of sample.boundaries) {
-      const reference = selection.entries[edge.support.entry]!.receipt.facets[edge.support.facet]!;
-      const key = JSON.stringify(reference.original ?? [edge.support.entry, reference.ordinal]),
+      const reference =
+        'entry' in edge.support
+          ? selection.entries[edge.support.entry]!.receipt.facets[edge.support.facet]!
+          : selection.baselines![edge.support.baseline]!.checkpoint.facets[edge.support.facet]!;
+      const key = JSON.stringify(reference.original ?? [edge.support, reference.ordinal]),
         previous = previousEdges.get(key),
         measurement = edge.measurement;
       if (measurement.lower === undefined || measurement.upper === undefined) continue;

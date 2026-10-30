@@ -1485,16 +1485,28 @@ export async function expandSituation(
         );
         visits -= native.visited;
         const support = (fact: import('@open-legend/domain').HistoricalSpatialFact) => {
-          const entry = history.entries[fact.entry]!,
-            reference = entry.receipt.facets[fact.facet]!;
+          const baseline = 'baseline' in fact ? history.baselines![fact.baseline]! : undefined;
+          const entry = 'entry' in fact ? history.entries[fact.entry]! : undefined;
+          const reference = (baseline?.checkpoint.facets ?? entry!.receipt.facets)[fact.facet]!;
+          const availability = baseline?.checkpoint.availability
+            ?.filter((group) => group.fields.includes(reference.ordinal))
+            .map(({ reason, at }) => ({ reason, at }));
           return {
-            reference: permittedSourceHandle(world, actorId, [
-              'receipt',
-              entry.receipt.physicalLife,
-              entry.receipt.epoch,
-              entry.receipt.ordinal,
-            ]),
+            reference: baseline
+              ? temporalBaselineHandle(world, actorId, baseline)
+              : permittedSourceHandle(world, actorId, [
+                  'receipt',
+                  entry!.receipt.physicalLife,
+                  entry!.receipt.epoch,
+                  entry!.receipt.ordinal,
+                ]),
             facet: reference.ordinal,
+            ...(baseline
+              ? {
+                  knownAt: baseline.availableAt,
+                  ...(availability?.length ? { availability } : {}),
+                }
+              : {}),
             asOf: reference.asOf,
             measuredFrom: reference.measuredFrom,
             measuredThrough: reference.measuredThrough,
@@ -1513,7 +1525,7 @@ export async function expandSituation(
           const record = value as Record<string, unknown>;
           if (
             Object.keys(record).length === 2 &&
-            typeof record['entry'] === 'number' &&
+            (typeof record['entry'] === 'number' || typeof record['baseline'] === 'number') &&
             typeof record['facet'] === 'number'
           )
             return support(

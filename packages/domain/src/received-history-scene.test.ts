@@ -114,6 +114,7 @@ it('measures retained body/edge history only through actually captured support i
     last.boundaries.some((edge) => (edge.measurement.endpointChange?.decreaseLower ?? 0) > 2),
   ).toBe(true);
   const support = last.boundaries[0]!.support;
+  if (!('entry' in support)) throw new Error('Expected the actual later issued terrain receipt.');
   expect(history.entries[support.entry]!.receipt.at).toBe(3);
   expect(history.entries[support.entry]!.receipt.facets[support.facet]).toMatchObject({
     measuredFrom: 0,
@@ -176,6 +177,7 @@ it('uses an ongoing received geometry interval sealed at the decision cut withou
   const sample = result.samples.find((sample) => sample.at === 2)!;
   expect(sample.boundaries.length).toBeGreaterThan(0);
   const source = sample.boundaries[0]!.support;
+  if (!('entry' in source)) throw new Error('Expected the actual sealed terrain receipt.');
   expect(history.entries[source.entry]!.receipt.at).toBe(2);
   expect(history.entries[source.entry]!.receipt.facets[source.facet]).toMatchObject({
     acquiredAt: 0,

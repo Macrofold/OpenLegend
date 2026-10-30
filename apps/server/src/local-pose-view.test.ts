@@ -20,7 +20,8 @@ import {
 import { definitionPin } from '../../../packages/domain/src/world-modules.js';
 import { draftWorld, finishWorld } from '../../../packages/domain/src/draft.js';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
-import { enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
+import { routineSensePolicy } from '../../../packages/domain/src/perception.js';
 import { readConfig, testRepository } from '../../../tests/fixtures/database.js';
 import { WorldService } from './world-service.js';
 import { projectView } from './view.js';
@@ -70,6 +71,11 @@ async function start(withWall = false, heightFactor?: number | null) {
   owned.push({ service, store });
   await enterLocalWorld(service);
   await service.setPresence('visible-shape-fixture', true);
+  await editWorld(service, (current) => {
+    current.simTime +=
+      routineSensePolicy(current, entityGet(current.entities, PLAYER_ID)!).sight?.seconds ?? 0;
+    initializePerception(current, []);
+  });
   return service;
 }
 async function pose(service: WorldService, id: string, duck: boolean) {
@@ -89,6 +95,10 @@ async function pose(service: WorldService, id: string, duck: boolean) {
       entity.spatial.localAvoidanceReadyAt = world.simTime + policy.localAvoidance!.cooldownSeconds;
     } else delete entity.spatial.localPose;
     spatialShapeChanged(world, entity);
+    // Public reads consume the next actual sample; changing shape is not a new
+    // visual measurement at the previous cut.
+    world.simTime +=
+      routineSensePolicy(world, entityGet(world.entities, PLAYER_ID)!).sight?.seconds ?? 0;
     initializePerception(world, []);
     return {
       world: finishWorld(world),
