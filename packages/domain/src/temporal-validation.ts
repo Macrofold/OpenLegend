@@ -63,15 +63,30 @@ const strings = (value: unknown): value is string[] =>
   value.every((entry) => typeof entry === 'string' && entry.length > 0) &&
   new Set(value).size === value.length;
 
-function validateFieldAvailability(groups: readonly TemporalCheckpointAvailability[], facets: readonly TemporalFacetReference[], at: number): void {
+function validateFieldAvailability(
+  groups: readonly TemporalCheckpointAvailability[],
+  facets: readonly TemporalFacetReference[],
+  at: number,
+): void {
   if (!Array.isArray(groups)) throw new Error('Invalid retained field availability.');
-  const assigned=new Set<number>(), fields=new Set(facets.map(facet=>facet.ordinal));
-  for(const group of groups) {
-    if(!record(group)||!hasRecordFields(group,['reason','at','fields'])||
-      (typeof group.reason !== 'string' || !['unavailable','unchecked','released'].includes(group.reason))||!finite(group.at)||group.at<0||group.at>at||
-      !Array.isArray(group.fields)||!group.fields.length)throw new Error('Invalid retained field availability.');
-    for(const field of group.fields){
-      if(!ordinal(field)||!fields.has(field)||assigned.has(field))throw new Error('Invalid retained field availability mask.');
+  const assigned = new Set<number>(),
+    fields = new Set(facets.map((facet) => facet.ordinal));
+  for (const group of groups) {
+    if (
+      !record(group) ||
+      !hasRecordFields(group, ['reason', 'at', 'fields']) ||
+      typeof group.reason !== 'string' ||
+      !['unavailable', 'unchecked', 'released'].includes(group.reason) ||
+      !finite(group.at) ||
+      group.at < 0 ||
+      group.at > at ||
+      !Array.isArray(group.fields) ||
+      !group.fields.length
+    )
+      throw new Error('Invalid retained field availability.');
+    for (const field of group.fields) {
+      if (!ordinal(field) || !fields.has(field) || assigned.has(field))
+        throw new Error('Invalid retained field availability mask.');
       assigned.add(field);
     }
   }
@@ -106,14 +121,32 @@ function validateFrameEntries(chunk: import('./temporal-evidence.js').TemporalCh
       )
         throw new Error('Invalid temporal declaration.');
       const stored = entry.value;
-      if (stored.kind === 'fact' && (!record(stored.value) || !hasRecordFields(stored.value,['source','ordinal']) || !ordinal(stored.value.ordinal)))
+      if (
+        stored.kind === 'fact' &&
+        (!record(stored.value) ||
+          !hasRecordFields(stored.value, ['source', 'ordinal']) ||
+          !ordinal(stored.value.ordinal))
+      )
         throw new Error('Invalid temporal fact declaration.');
-      if (stored.kind === 'proof' && (!record(stored.value) || !hasRecordFields(stored.value,['original','confirmation','confirmedFrom','confirmedThrough'],['aliases'])))
+      if (
+        stored.kind === 'proof' &&
+        (!record(stored.value) ||
+          !hasRecordFields(
+            stored.value,
+            ['original', 'confirmation', 'confirmedFrom', 'confirmedThrough'],
+            ['aliases'],
+          ))
+      )
         throw new Error('Invalid temporal proof declaration.');
-      if (stored.kind === 'detail' && (!record(stored.value) || !hasRecordFields(stored.value,['proof','from','through','acquiredAt'])))
+      if (
+        stored.kind === 'detail' &&
+        (!record(stored.value) ||
+          !hasRecordFields(stored.value, ['proof', 'from', 'through', 'acquiredAt']))
+      )
         throw new Error('Invalid temporal detail declaration.');
       for (const dependency of temporalDictionaryDependencies(entry)) {
-        if (!ordinal(dependency.ordinal)) throw new Error('Invalid temporal dictionary dependency.');
+        if (!ordinal(dependency.ordinal))
+          throw new Error('Invalid temporal dictionary dependency.');
         used.add(dependency.ordinal);
       }
       declarations.add(entry.ordinal);
@@ -132,20 +165,48 @@ function validateFrameEntries(chunk: import('./temporal-evidence.js').TemporalCh
       )
         throw new Error('Invalid temporal acquisition.');
       declarations.add(entry.ordinal);
-    } else if (entry.kind === 'change' || entry.kind === 'checkpoint' || entry.kind === 'confirmation') {
+    } else if (
+      entry.kind === 'change' ||
+      entry.kind === 'checkpoint' ||
+      entry.kind === 'confirmation'
+    ) {
       const raw = entry as unknown as Record<string, unknown>;
       const shape =
         entry.kind === 'change'
           ? hasRecordFields(
               entry,
               ['ordinal', 'kind', 'receipt', 'frame', 'subject', 'change', 'facets'],
-              ['order', 'contexts', 'identity', 'origin', 'required', 'sources', 'spatialContext', 'availabilityAt'],
+              [
+                'order',
+                'contexts',
+                'identity',
+                'origin',
+                'required',
+                'sources',
+                'spatialContext',
+                'availabilityAt',
+              ],
             ) &&
             ordinal(entry.receipt) &&
             (entry.required === undefined || entry.required === true)
-          : entry.kind === 'checkpoint' ? hasRecordFields(entry, ['ordinal', 'kind', 'frame', 'subject', 'facets'], ['order', 'availability'])
-          : hasRecordFields(entry,['ordinal','kind','frame','receipt','subjects'],['order']) && ordinal(entry.receipt) && Array.isArray(entry.subjects);
-      if (!shape || !ordinal(entry.frame) || (entry.kind !== 'confirmation' && !Array.isArray(entry.facets)))
+          : entry.kind === 'checkpoint'
+            ? hasRecordFields(
+                entry,
+                ['ordinal', 'kind', 'frame', 'subject', 'facets'],
+                ['order', 'availability'],
+              )
+            : hasRecordFields(
+                entry,
+                ['ordinal', 'kind', 'frame', 'receipt', 'subjects'],
+                ['order'],
+              ) &&
+              ordinal(entry.receipt) &&
+              Array.isArray(entry.subjects);
+      if (
+        !shape ||
+        !ordinal(entry.frame) ||
+        (entry.kind !== 'confirmation' && !Array.isArray(entry.facets))
+      )
         throw new Error('Invalid temporal operation.');
       used.add(entry.frame);
       for (const field of TEMPORAL_CHANGE_DICTIONARY_FIELDS)
@@ -162,33 +223,45 @@ function validateFrameEntries(chunk: import('./temporal-evidence.js').TemporalCh
             used.add(at);
           }
         }
-      const fields = entry.kind === 'confirmation' ? entry.subjects.flatMap(group => {
-        if (!record(group) || !hasRecordFields(group,['subject','fields']) || !ordinal(group.subject) || !Array.isArray(group.fields) || !group.fields.length)
-          throw new Error('Invalid temporal confirmation group.');
-        used.add(group.subject); return group.fields;
-      }) : entry.facets;
+      const fields =
+        entry.kind === 'confirmation'
+          ? entry.subjects.flatMap((group) => {
+              if (
+                !record(group) ||
+                !hasRecordFields(group, ['subject', 'fields']) ||
+                !ordinal(group.subject) ||
+                !Array.isArray(group.fields) ||
+                !group.fields.length
+              )
+                throw new Error('Invalid temporal confirmation group.');
+              used.add(group.subject);
+              return group.fields;
+            })
+          : entry.facets;
       for (const facet of fields) {
         if (
           !record(facet) ||
           !hasRecordFields(
             facet,
-            entry.kind === 'confirmation' ? ['value','original','source'] : ['value'],
-            entry.kind === 'confirmation' ? ['pose','reception','from','through','details','ordinal'] : [
-              'pose',
-              'poseFrame',
-              'ordinal',
-              'role',
-              'at',
-              'from',
-              'through',
-              'acquired',
-              'confirmed',
-              'original',
-              'source',
-              'support',
-              'reception',
-              'details',
-            ],
+            entry.kind === 'confirmation' ? ['value', 'original', 'source'] : ['value'],
+            entry.kind === 'confirmation'
+              ? ['pose', 'reception', 'from', 'through', 'details', 'ordinal']
+              : [
+                  'pose',
+                  'poseFrame',
+                  'ordinal',
+                  'role',
+                  'at',
+                  'from',
+                  'through',
+                  'acquired',
+                  'confirmed',
+                  'original',
+                  'source',
+                  'support',
+                  'reception',
+                  'details',
+                ],
           ) ||
           (facet.pose !== undefined && facet.reception !== undefined)
         )
@@ -208,12 +281,13 @@ function validateFrameEntries(chunk: import('./temporal-evidence.js').TemporalCh
       }
     } else throw new Error('Unsupported temporal frame entry.');
   }
-  const entries = new Map(chunk.entries.map(entry=>[entry.ordinal,entry]));
-  for (const entry of chunk.entries) for (const dependency of temporalDictionaryDependencies(entry)) {
-    const target=entries.get(dependency.ordinal);
-    if(target?.kind!=='dictionary'||target.value.kind!==dependency.kind)
-      throw new Error('Invalid typed temporal dictionary dependency.');
-  }
+  const entries = new Map(chunk.entries.map((entry) => [entry.ordinal, entry]));
+  for (const entry of chunk.entries)
+    for (const dependency of temporalDictionaryDependencies(entry)) {
+      const target = entries.get(dependency.ordinal);
+      if (target?.kind !== 'dictionary' || target.value.kind !== dependency.kind)
+        throw new Error('Invalid typed temporal dictionary dependency.');
+    }
   if (
     [...declarations].some((at) => !used.has(at)) ||
     [...used].some((at) => !declarations.has(at))
@@ -572,12 +646,20 @@ export function validateTemporalEvidenceState(
           (!strings(receipt.contextSubjects) ||
             receipt.contextSubjects.length > maximumContextSubjects)) ||
         (receipt.subjectIdentity !== undefined && !validObserverSubject(receipt.subjectIdentity)) ||
-        !['baseline', 'change', 'loss', 'unchecked', 'occurrence', 'attention-exit', 'receiver-frame', 'retained-state'].includes(
-          receipt.change,
-        ) ||
+        ![
+          'baseline',
+          'change',
+          'loss',
+          'unchecked',
+          'occurrence',
+          'attention-exit',
+          'receiver-frame',
+          'retained-state',
+        ].includes(receipt.change) ||
         (receipt.availabilityAt !== undefined &&
           (!['loss', 'unchecked', 'attention-exit'].includes(receipt.change) ||
-            !finite(receipt.availabilityAt) || receipt.availabilityAt < 0 ||
+            !finite(receipt.availabilityAt) ||
+            receipt.availabilityAt < 0 ||
             receipt.availabilityAt > receipt.at)) ||
         (receipt.change === 'retained-state' && !fragments) ||
         (receipt.availability !== undefined && receipt.change !== 'retained-state') ||
@@ -631,7 +713,8 @@ export function validateTemporalEvidenceState(
       )
         throw new Error('Invalid received feature context.');
       validateFields(receipt, fragments);
-      if(receipt.availability)validateFieldAvailability(receipt.availability,receipt.facets,receipt.at);
+      if (receipt.availability)
+        validateFieldAvailability(receipt.availability, receipt.facets, receipt.at);
     };
     if (actor.supports !== undefined) {
       if (!record(actor.supports)) throw new Error('Invalid temporal support owner.');
@@ -682,7 +765,9 @@ export function validateTemporalEvidenceState(
         temporalChunkReceipts(chunk).reduce(
           (sum, row) => sum + temporalReceiptChangeCount(row),
           0,
-        ) + temporalConfirmationChangeCount(chunk.entries) !== chunk.count
+        ) +
+          temporalConfirmationChangeCount(chunk.entries) !==
+          chunk.count
       )
         throw new Error('Invalid personal temporal chunk.');
       chunks.add(chunk.id);
@@ -705,27 +790,54 @@ export function validateTemporalEvidenceState(
         )
           throw new Error('Invalid retained field checkpoint.');
         validateFields(checkpoint);
-        if(checkpoint.availability)validateFieldAvailability(checkpoint.availability,checkpoint.facets,checkpoint.at);
+        if (checkpoint.availability)
+          validateFieldAvailability(checkpoint.availability, checkpoint.facets, checkpoint.at);
       }
       for (const confirmation of temporalEntryConfirmations(chunk)) {
         const parent = temporalChunkReceipt(chunk, confirmation.receiptOrdinal);
-        if (!ordinal(confirmation.receiptOrdinal) || !ordinal(confirmation.acquisition) ||
-          !finite(confirmation.at) || confirmation.at < 0 || confirmation.at > world.simTime ||
-          !ordinal(confirmation.order) || !confirmation.subject || !ordinal(confirmation.original.ordinal) ||
-          !parent || parent.acquisition !== confirmation.acquisition || parent.at !== confirmation.at ||
-          parent.order !== confirmation.order)
+        if (
+          !ordinal(confirmation.receiptOrdinal) ||
+          !ordinal(confirmation.acquisition) ||
+          !finite(confirmation.at) ||
+          confirmation.at < 0 ||
+          confirmation.at > world.simTime ||
+          !ordinal(confirmation.order) ||
+          !confirmation.subject ||
+          !ordinal(confirmation.original.ordinal) ||
+          !parent ||
+          parent.acquisition !== confirmation.acquisition ||
+          parent.at !== confirmation.at ||
+          parent.order !== confirmation.order
+        )
           throw new Error('Invalid temporal confirmation.');
-        const reference=temporalConfirmationReference(confirmation);
-        const fragment=validateReference(reference);
-        const supported=validateStoredValue(reference,fragment,originals,{actorId,physicalLife:chunk.physicalLife},confirmation.at,sources);
-        validateReceiver(supported,{actorId,physicalLife:chunk.physicalLife},confirmation.at);
-        const detail=confirmation.detailSupport;
+        const reference = temporalConfirmationReference(confirmation);
+        const fragment = validateReference(reference);
+        const supported = validateStoredValue(
+          reference,
+          fragment,
+          originals,
+          { actorId, physicalLife: chunk.physicalLife },
+          confirmation.at,
+          sources,
+        );
+        validateReceiver(supported, { actorId, physicalLife: chunk.physicalLife }, confirmation.at);
+        const detail = confirmation.detailSupport;
         if (detail) {
-          if (supported.kind!=='body' || !hasRecordFields(detail,['proof','from','through','acquiredAt']) ||
-            ![detail.from,detail.through,detail.acquiredAt].every(finite) || detail.from<0 ||
-            detail.from>detail.through || detail.through>detail.acquiredAt || detail.acquiredAt>confirmation.at)
+          if (
+            supported.kind !== 'body' ||
+            !hasRecordFields(detail, ['proof', 'from', 'through', 'acquiredAt']) ||
+            ![detail.from, detail.through, detail.acquiredAt].every(finite) ||
+            detail.from < 0 ||
+            detail.from > detail.through ||
+            detail.through > detail.acquiredAt ||
+            detail.acquiredAt > confirmation.at
+          )
             throw new Error('Invalid confirmed outward detail support.');
-          validateReceivedFacetProof(detail.proof,{actorId,physicalLife:chunk.physicalLife},confirmation.at);
+          validateReceivedFacetProof(
+            detail.proof,
+            { actorId, physicalLife: chunk.physicalLife },
+            confirmation.at,
+          );
         }
       }
       const subjects = new Set<string>(),
@@ -740,8 +852,10 @@ export function validateTemporalEvidenceState(
         if (
           receipt.physicalLife !== chunk.physicalLife ||
           receipt.epoch !== chunk.epoch ||
-          receipt.ordinal <= lastOrdinal || receiptKeys.has(key) ||
-          receipt.at < lastAt || receipt.at > chunk.throughAt
+          receipt.ordinal <= lastOrdinal ||
+          receiptKeys.has(key) ||
+          receipt.at < lastAt ||
+          receipt.at > chunk.throughAt
         )
           throw new Error('Invalid temporal chunk membership or order.');
         receiptKeys.add(key);
@@ -766,9 +880,15 @@ export function validateTemporalEvidenceState(
       }
       for (const confirmation of temporalEntryConfirmations(chunk)) {
         subjects.add(confirmation.subject);
-        const reference=temporalConfirmationReference(confirmation);
-        for (const alias of temporalReceiptAliases({facets:[reference],sourceIds:[]},sources,world)) aliases.add(alias);
-        for (const id of temporalReceiptIndividualIds({facets:[reference]},sources)) individuals.add(id);
+        const reference = temporalConfirmationReference(confirmation);
+        for (const alias of temporalReceiptAliases(
+          { facets: [reference], sourceIds: [] },
+          sources,
+          world,
+        ))
+          aliases.add(alias);
+        for (const id of temporalReceiptIndividualIds({ facets: [reference] }, sources))
+          individuals.add(id);
         for (const value of temporalFacetValueReferences(reference)) references.add(value.blockId);
       }
       if (

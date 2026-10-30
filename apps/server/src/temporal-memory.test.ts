@@ -1,4 +1,4 @@
-import {appendTemporalReceipt} from '../../../packages/domain/src/temporal-evidence.js';
+import { appendTemporalReceipt } from '../../../packages/domain/src/temporal-evidence.js';
 import { temporalHistoryWindow } from './temporal-storage.js';
 import { temporalChunkReceipts, temporalChunkReferences } from '@open-legend/domain';
 import { validateTemporalEvidenceState } from '../../../packages/domain/src/temporal-validation.js';
@@ -174,7 +174,9 @@ describe('bounded personal temporal storage', () => {
       )!.sourceReceipt!;
       expect(locator).toBeDefined();
       return service.world
-        .experience!.temporal!.actors[actorId]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk))
+        .experience!.temporal!.actors[
+          actorId
+        ]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk))
         .find((receipt) => receipt.epoch === locator.epoch && receipt.ordinal === locator.ordinal)!;
     };
     const own = received(PLAYER_ID),
@@ -1440,12 +1442,20 @@ describe('bounded personal temporal storage', () => {
     ).entries;
     expect(full).toHaveLength(1);
     expect(full[0]!.values).toHaveLength(2);
-    expect(await store.memories.temporalSelectionsCurrent(scope, full, () => temporalHistoryWindow(service.world))).toBe(true);
+    expect(
+      await store.memories.temporalSelectionsCurrent(scope, full, () =>
+        temporalHistoryWindow(service.world),
+      ),
+    ).toBe(true);
     let release!: () => void;
     const delayed = new Promise<void>((resolve) => {
       release = resolve;
     });
-    const pending = delayed.then(() => store.memories.temporalSelectionsCurrent(scope, full, () => temporalHistoryWindow(service.world)));
+    const pending = delayed.then(() =>
+      store.memories.temporalSelectionsCurrent(scope, full, () =>
+        temporalHistoryWindow(service.world),
+      ),
+    );
     await editWorld(service, (world) => {
       world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 1;
     });
@@ -1454,27 +1464,35 @@ describe('bounded personal temporal storage', () => {
     expect(await pending).toBe(false);
     const selected = full[0]!;
     expect(
-      await store.memories.temporalSelectionsCurrent(scope, [
-        {
-          receipt: { ...selected.receipt, facets: [selected.receipt.facets[0]!] },
-          values: [selected.values[0]!],
-        },
-      ], () => temporalHistoryWindow(service.world)),
+      await store.memories.temporalSelectionsCurrent(
+        scope,
+        [
+          {
+            receipt: { ...selected.receipt, facets: [selected.receipt.facets[0]!] },
+            values: [selected.values[0]!],
+          },
+        ],
+        () => temporalHistoryWindow(service.world),
+      ),
     ).toBe(true);
     expect(
-      await store.memories.temporalSelectionsCurrent(scope, [
-        {
-          receipt: { ...selected.receipt, facets: [selected.receipt.facets[0]!] },
-          values: [
-            {
-              kind: 'personal-account',
-              source: 'memory',
-              id: 'forged',
-              text: 'Different value at the same address.',
-            },
-          ],
-        },
-      ], () => temporalHistoryWindow(service.world)),
+      await store.memories.temporalSelectionsCurrent(
+        scope,
+        [
+          {
+            receipt: { ...selected.receipt, facets: [selected.receipt.facets[0]!] },
+            values: [
+              {
+                kind: 'personal-account',
+                source: 'memory',
+                id: 'forged',
+                text: 'Different value at the same address.',
+              },
+            ],
+          },
+        ],
+        () => temporalHistoryWindow(service.world),
+      ),
     ).toBe(false);
   });
 });

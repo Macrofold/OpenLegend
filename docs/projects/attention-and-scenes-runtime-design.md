@@ -1,7 +1,7 @@
 # Compact perception and independent runtime completion
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Compact acquisition, frames and finite consumers are integrated; lifecycle, regression and complete-game qualification are in progress. | 2026-10-29   |
 
 **Design updated and architecture used: 2026-10-29 18:19 UTC, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `6edf699f9b3535222308d09af6234b91b3b74fed`.** This is the implementation-level companion to the [feature specification](attention-and-scenes-feature-spec.md) and [technical design](attention-and-scenes-tech-design.md). The compact runtime is integrated in the working branch; required lifecycle, consumer and complete-game qualification is still in progress. [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) owns implementation tasks and current status.
@@ -16,7 +16,7 @@ The [recording census](../verification/attention-and-memory-core.md#standard-ope
 
 The redesign removes those amplification mechanisms, rather than only packing them more tightly:
 
-| Replaced cost                                                 | Selected replacement                                                                                             |
+| Replaced cost                                                | Selected replacement                                                                                             |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | Uniform three-game-second broad sight                        | Change-fed broad and detailed sampling with different world-owned rates                                          |
 | Full current/detail work for every changed body              | Cheap broad membership/placement; field-specific updates; materialize rich detail only for its consumer          |

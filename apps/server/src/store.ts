@@ -363,7 +363,9 @@ export interface WorldStore {
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
   readonly receivedReclamationDebt?: { journalBytes: number; maximumBytes: number };
-  prepareReceivedReclamation?(capture: ReceivedReclamationCapture): Promise<PreparedReceivedReclamation>;
+  prepareReceivedReclamation?(
+    capture: ReceivedReclamationCapture,
+  ): Promise<PreparedReceivedReclamation>;
   prepareRetainedSourceClosure?(
     state: SavedWorld,
     complete?: boolean,
@@ -510,13 +512,17 @@ export class SqlGameRepository implements GameRepository {
   get receivedReclamationDebt() {
     return { journalBytes: this.journal.unappliedBytes, maximumBytes: PERSISTENCE_DEBT_BYTES };
   }
-  async prepareReceivedReclamation(capture: ReceivedReclamationCapture): Promise<PreparedReceivedReclamation> {
+  async prepareReceivedReclamation(
+    capture: ReceivedReclamationCapture,
+  ): Promise<PreparedReceivedReclamation> {
     if (this.closing) throw new Error('The received cleanup owner is closing.');
     if (this.receivedReclamation) throw new Error('Received cleanup already has an active batch.');
     const ticket = { capture, changed: new Set<string>() };
     this.receivedReclamation = ticket;
     let completed!: () => void;
-    this.receivedReclamationDone = new Promise<void>((resolve) => { completed = resolve; });
+    this.receivedReclamationDone = new Promise<void>((resolve) => {
+      completed = resolve;
+    });
     const release = () => {
       if (this.receivedReclamation === ticket) {
         this.receivedReclamation = undefined;
@@ -535,9 +541,13 @@ export class SqlGameRepository implements GameRepository {
         }
       const read = () => prepareReceivedReclamation(this.rawDb, capture, pending);
       const prepared = this.rawDb.readTransaction
-        ? await this.rawDb.readTransaction(read) : await this.rawDb.transaction(read);
+        ? await this.rawDb.readTransaction(read)
+        : await this.rawDb.transaction(read);
       return { ...prepared, changed: ticket.changed, release };
-    } catch (error) { release(); throw error; }
+    } catch (error) {
+      release();
+      throw error;
+    }
   }
   private acceptedReceivedChanges(worldId: string, changes: RecordChanges, restored = false): void {
     if (this.receivedReclamation)
@@ -1135,17 +1145,26 @@ export class SqlGameRepository implements GameRepository {
           historyChanged: !!preparedHistory!.changed.length || !!preparedHistory!.removed.length,
         };
         const appended = await timed('persistence.journalAppend', () =>
-          this.journal.append(state.world.id, expectedRevision, encoded, compact, async () => {
-            if (this.applicationFailure) throw this.applicationFailure;
-            if (!(await journalConstraints(this.rawDb, constraints, await this.journal.pending())))
-              return { kind: 'synchronous' };
-            if (historyProjection?.authority)
-              await this.authority.assertFence(historyProjection.authority);
-            const receipt = historyProjection?.receipt
-              ? this.commands.prepareSave(state.world.id, historyProjection.receipt, 'advanced')
-              : undefined;
-            return { kind: 'admitted', ...(receipt ? { receipt } : {}) };
-          }, state.world.receivedValues?.retirement?.bytes ?? 0),
+          this.journal.append(
+            state.world.id,
+            expectedRevision,
+            encoded,
+            compact,
+            async () => {
+              if (this.applicationFailure) throw this.applicationFailure;
+              if (
+                !(await journalConstraints(this.rawDb, constraints, await this.journal.pending()))
+              )
+                return { kind: 'synchronous' };
+              if (historyProjection?.authority)
+                await this.authority.assertFence(historyProjection.authority);
+              const receipt = historyProjection?.receipt
+                ? this.commands.prepareSave(state.world.id, historyProjection.receipt, 'advanced')
+                : undefined;
+              return { kind: 'admitted', ...(receipt ? { receipt } : {}) };
+            },
+            state.world.receivedValues?.retirement?.bytes ?? 0,
+          ),
         );
         if (appended.kind === 'appended') {
           countMetric('persistence.journalAccepted');

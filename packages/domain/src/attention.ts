@@ -347,7 +347,8 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
     bodyDescriptor = bodySource && readOnlyDraftView(bodySource).value,
     parts = bodyDescriptor && receivedBodyParts(world, bodyDescriptor),
     appearance = parts && readOnlyDraftView(parts.details);
-  const description=facet('description'),association = facet('association'),
+  const description = facet('description'),
+    association = facet('association'),
     attributes = facet('public-attributes');
   const value = JSON.stringify(
     [
@@ -356,7 +357,8 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
             kind: appearance!.kind,
             appearance: appearance!.appearance,
             label: appearance!.label,
-            description: description?.kind==='description' ? description.text : appearance!.description,
+            description:
+              description?.kind === 'description' ? description.text : appearance!.description,
             radius: appearance!.radius,
             height: appearance!.height,
             outward: appearance!.outward,
@@ -449,7 +451,9 @@ export function updateAttention(
     owner = owned(world, observerId);
   if (!observer?.actor || !owner) return { before: [], after: [] };
   const state = stateFor(world, observerId)!;
-  const previousRelationAnchors=new Set(attentionRelationAnchors(world,observerId).map((entry)=>entry.key));
+  const previousRelationAnchors = new Set(
+    attentionRelationAnchors(world, observerId).map((entry) => entry.key),
+  );
   const bodySubject = prepareCurrentBodySubjects(world, observerId);
   const entriesBefore = readOnlyDraftView(state.entries).map((entry) => readOnlyDraftView(entry));
   const before = entriesBefore.map((entry) => entry.sourceId);
@@ -664,7 +668,8 @@ export function updateAttention(
   const explicit = readOnlyDraftView(state.explicit).filter((key) => live.has(key));
   if (explicit.length !== state.explicit.length) state.explicit = explicit;
   for (const [key, latch] of Object.entries(readOnlyDraftView(state.latches)))
-    if (latch.anchorKey !== SELF_RELATION_KEY && !live.has(latch.anchorKey)) delete state.latches[key];
+    if (latch.anchorKey !== SELF_RELATION_KEY && !live.has(latch.anchorKey))
+      delete state.latches[key];
   if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > policy.maximumCapacity)
     throw new Error('Attention capacity exceeds the installed profile.');
   const current = new Map(
@@ -865,20 +870,40 @@ export function currentDetailedAttention(
 }
 /** Relation context is independent of descriptive attention slots. Work/direct
  * anchors are still only current received bodies; a stale action target grants nothing. */
-export function attentionRelationAnchors(world: WorldState, observerId: string): AttentionRelationAnchor[] {
-  const owner=owned(world,observerId), state=owner?.attention;
-  if(!state)return [];
-  const result:AttentionRelationAnchor[]=[{key:SELF_RELATION_KEY,sourceId:observerId,descriptionRevision:JSON.stringify(['self',owner.life])}];
-  const selected=new Set<string>();
-  for(const entry of readOnlyDraftView(state.entries)) {
-    result.push(entry); selected.add(entry.key);
+export function attentionRelationAnchors(
+  world: WorldState,
+  observerId: string,
+): AttentionRelationAnchor[] {
+  const owner = owned(world, observerId),
+    state = owner?.attention;
+  if (!state) return [];
+  const result: AttentionRelationAnchor[] = [
+    {
+      key: SELF_RELATION_KEY,
+      sourceId: observerId,
+      descriptionRevision: JSON.stringify(['self', owner.life]),
+    },
+  ];
+  const selected = new Set<string>();
+  for (const entry of readOnlyDraftView(state.entries)) {
+    result.push(entry);
+    selected.add(entry.key);
   }
-  const target=entityGet(world.entities,observerId)?.actor?.action?.targetId;
-  const candidates=readOnlyDraftView(state.candidates);
-  for(const key in candidates) {
-    const candidate=readOnlyDraftView(candidates[key]!);
-    if(!selected.has(key) && (candidate.sourceId===target || (candidate.direct && (candidate.directThrough ?? Infinity)>world.simTime)))
-      result.push({key,sourceId:candidate.sourceId,descriptionRevision:candidate.descriptionRevision,...(candidate.subject?{subject:candidate.subject}:{})});
+  const target = entityGet(world.entities, observerId)?.actor?.action?.targetId;
+  const candidates = readOnlyDraftView(state.candidates);
+  for (const key in candidates) {
+    const candidate = readOnlyDraftView(candidates[key]!);
+    if (
+      !selected.has(key) &&
+      (candidate.sourceId === target ||
+        (candidate.direct && (candidate.directThrough ?? Infinity) > world.simTime))
+    )
+      result.push({
+        key,
+        sourceId: candidate.sourceId,
+        descriptionRevision: candidate.descriptionRevision,
+        ...(candidate.subject ? { subject: candidate.subject } : {}),
+      });
   }
   return result;
 }
@@ -969,7 +994,7 @@ export function markAttentionRelationsDirty(
 ): void {
   const state = owned(world, observerId)?.attention;
   if (!state) return;
-  touchNativeEvidence(world,'perception',observerId);
+  touchNativeEvidence(world, 'perception', observerId);
   state.relationRevision++;
   for (const entry of attentionRelationAnchors(world, observerId))
     if (!anchors || anchors.has(entry.key))
@@ -1018,7 +1043,7 @@ export function attentionRelationOpportunity(
   | undefined {
   const state = owned(world, observerId)?.attention;
   if (!state || world.simTime < state.nextRelationAt) return undefined;
-  touchNativeEvidence(world,'perception',observerId);
+  touchNativeEvidence(world, 'perception', observerId);
   const policy = selectedAttentionPolicy(world);
   const families = new Map<string, Set<AttentionRelationFamily>>();
   const due = attentionRelationAnchors(world, observerId).filter((entry) => {
@@ -1066,10 +1091,12 @@ export function applyAttentionRelationEvaluations(
 ): AttentionCue[] {
   const state = owned(world, observerId)?.attention;
   if (!state) return [];
-  touchNativeEvidence(world,'perception',observerId);
+  touchNativeEvidence(world, 'perception', observerId);
   const policy = selectedAttentionPolicy(world).relation,
     cues: AttentionCue[] = [];
-  const anchors=new Map(attentionRelationAnchors(world,observerId).map((entry)=>[entry.key,entry]));
+  const anchors = new Map(
+    attentionRelationAnchors(world, observerId).map((entry) => [entry.key, entry]),
+  );
   for (const evaluation of evaluations) {
     const anchor = anchors.get(evaluation.anchorKey);
     if (!anchor) continue;
@@ -1161,10 +1188,14 @@ export function currentAttentionCues(
   const state = owned(world, observerId)?.attention;
   if (!state) return [];
   const candidates = readOnlyDraftView(state.candidates);
-  const self:AttentionRelationAnchor={key:SELF_RELATION_KEY,sourceId:observerId,descriptionRevision:JSON.stringify(['self',owned(world,observerId)!.life])};
+  const self: AttentionRelationAnchor = {
+    key: SELF_RELATION_KEY,
+    sourceId: observerId,
+    descriptionRevision: JSON.stringify(['self', owned(world, observerId)!.life]),
+  };
   return Object.entries(readOnlyDraftView(state.latches)).flatMap(([key, value]) => {
     const latch = readOnlyDraftView(value),
-      candidate = latch.anchorKey===SELF_RELATION_KEY ? self : candidates[latch.anchorKey];
+      candidate = latch.anchorKey === SELF_RELATION_KEY ? self : candidates[latch.anchorKey];
     return latch.active && candidate && latch.entryProof && latch.enteredAt !== undefined
       ? [
           {
@@ -1380,7 +1411,7 @@ export function validateAttentionState(
   for (const [key, latch] of Object.entries(state.latches)) {
     if (
       !latch ||
-      (latch.anchorKey!==SELF_RELATION_KEY && !state.candidates[latch.anchorKey]) ||
+      (latch.anchorKey !== SELF_RELATION_KEY && !state.candidates[latch.anchorKey]) ||
       !['closing-body', 'closing-drop'].includes(latch.family) ||
       key !== relationKey(latch.anchorKey, latch.family) ||
       !Number.isSafeInteger(latch.generation) ||
@@ -1417,7 +1448,7 @@ export function validateAttentionState(
     if (
       !Array.isArray(tuple) ||
       tuple.length !== 2 ||
-      (tuple[0]!==SELF_RELATION_KEY && !state.candidates[tuple[0]]) ||
+      (tuple[0] !== SELF_RELATION_KEY && !state.candidates[tuple[0]]) ||
       !['closing-body', 'closing-drop'].includes(tuple[1]) ||
       !Number.isSafeInteger(revision) ||
       revision < 0 ||
@@ -1435,7 +1466,7 @@ export function validateAttentionState(
     if (
       !Array.isArray(tuple) ||
       tuple.length !== 2 ||
-      (tuple[0]!==SELF_RELATION_KEY && !state.candidates[tuple[0]]) ||
+      (tuple[0] !== SELF_RELATION_KEY && !state.candidates[tuple[0]]) ||
       !['closing-body', 'closing-drop'].includes(tuple[1]) ||
       !scan ||
       !Number.isSafeInteger(scan.cursor) ||

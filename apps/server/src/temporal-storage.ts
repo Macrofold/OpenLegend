@@ -62,19 +62,29 @@ export const temporalChunkRecordId = (actorId: string, id: string) =>
 /** Exact value membership is a derived column on the existing chunk, not a
  * second owner or one SQL row per received coordinate. */
 export function temporalChunkValueReferences(chunk: TemporalChunk): Record<string, number[]> {
-  return Object.fromEntries([...temporalChunkReferences(chunk)].map(
-    ([id, ordinals]) => [id, [...ordinals].sort((a, b) => a - b)],
-  ));
+  return Object.fromEntries(
+    [...temporalChunkReferences(chunk)].map(([id, ordinals]) => [
+      id,
+      [...ordinals].sort((a, b) => a - b),
+    ]),
+  );
 }
 /** This projection controls payload reclamation, so a malformed saved index
  * must refuse before it can erase a still-owned value. */
 export function readTemporalChunkRecord(row: Record<string, unknown>): TemporalChunk {
   const parsed = JSON.parse(String(row['payload']));
-  const chunk = restoreEvidenceLayout(parsed, 'entries', row['segments']) as unknown as TemporalChunk;
+  const chunk = restoreEvidenceLayout(
+    parsed,
+    'entries',
+    row['segments'],
+  ) as unknown as TemporalChunk;
   validateTemporalChunkValueReferences(chunk, row['value_refs']);
   return chunk;
 }
-export function validateTemporalChunkValueReferences(chunk: TemporalChunk, references: unknown): void {
+export function validateTemporalChunkValueReferences(
+  chunk: TemporalChunk,
+  references: unknown,
+): void {
   if (canonicalJson(references) !== canonicalJson(temporalChunkValueReferences(chunk)))
     throw new MemoryRetentionError('Temporal value ownership metadata disagrees with its receipt.');
 }
@@ -128,7 +138,7 @@ export interface TemporalHistoryReadContext {
   readonly maxAgeSeconds: number;
   readonly maximumSubjects: number;
   readonly maximumOperations: number;
-  readonly maximumCandidates:number;
+  readonly maximumCandidates: number;
   readonly chunks: readonly TemporalChunk[];
   readonly releasedThrough?: number;
   readonly recordingGap?: { readonly from: number; readonly through: number };
@@ -140,7 +150,7 @@ export function captureTemporalHistoryReadContext(
   actorId: string,
 ): TemporalHistoryReadContext {
   const actor = world.experience?.temporal?.actors[actorId];
-  const chunks = (actor?.chunks ?? []).map(chunk => immutableDataSnapshot(chunk));
+  const chunks = (actor?.chunks ?? []).map((chunk) => immutableDataSnapshot(chunk));
   const sources: Record<string, ReceivedValueLookup[string]> = {};
   for (const chunk of chunks)
     for (const [id, ordinals] of temporalChunkReferences(chunk)) {
@@ -154,14 +164,18 @@ export function captureTemporalHistoryReadContext(
       sources[id] = { values };
     }
   return {
-    worldId: world.id, actorId, at: world.simTime,
+    worldId: world.id,
+    actorId,
+    at: world.simTime,
     maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
     maximumSubjects: selectedAttentionPolicy(world).maximumCapacity,
     maximumOperations: selectedAttentionPolicy(world).scene.historyReceipts,
-    maximumCandidates:selectedAttentionPolicy(world).scene.candidateVisits,
-    chunks, ...(actor?.releasedThrough === undefined ? {} : { releasedThrough: actor.releasedThrough }),
+    maximumCandidates: selectedAttentionPolicy(world).scene.candidateVisits,
+    chunks,
+    ...(actor?.releasedThrough === undefined ? {} : { releasedThrough: actor.releasedThrough }),
     ...(actor?.recordingGap ? { recordingGap: { ...actor.recordingGap } } : {}),
-    sources, disclosure: captureTemporalReadContext(world, actorId),
+    sources,
+    disclosure: captureTemporalReadContext(world, actorId),
   };
 }
 
@@ -239,13 +253,20 @@ export function receivedValueReleaseCandidates(
     const old = before?.receivedValues?.sources ?? {},
       current = after.receivedValues?.sources ?? {};
     if (old !== current)
-      for (const id of recordMapChangesBetween(old, current) ?? new Set([...Object.keys(old), ...Object.keys(current)])) {
+      for (const id of recordMapChangesBetween(old, current) ??
+        new Set([...Object.keys(old), ...Object.keys(current)])) {
         const source = current[id];
         const prior = old[id];
-        if ((!source && prior) || (source && !prior && id !== after.receivedValues?.activeSource) ||
-            (source && prior && source !== prior &&
-             appendedRecordCount(prior.values, source.values) === undefined &&
-             prior.values.some((value, ordinal) => value && !source.values[ordinal]))) candidates.add(id);
+        if (
+          (!source && prior) ||
+          (source && !prior && id !== after.receivedValues?.activeSource) ||
+          (source &&
+            prior &&
+            source !== prior &&
+            appendedRecordCount(prior.values, source.values) === undefined &&
+            prior.values.some((value, ordinal) => value && !source.values[ordinal]))
+        )
+          candidates.add(id);
       }
     const append = before?.receivedValues?.activeSource;
     if (append && append !== after.receivedValues?.activeSource) candidates.add(append);
@@ -266,8 +287,14 @@ export function nominateReleasedReceivedValues(
     const prior = before?.receivedValues?.retirement?.pending[id];
     // Closure preparation can revisit this same transition. Its already changed
     // candidate, including a cleanup proposal, must not be nominated twice.
-    if (candidate && (!prior || candidate.generation !== prior.generation ||
-        candidate.stage !== prior.stage || candidate.applicationRevision !== prior.applicationRevision)) continue;
+    if (
+      candidate &&
+      (!prior ||
+        candidate.generation !== prior.generation ||
+        candidate.stage !== prior.stage ||
+        candidate.applicationRevision !== prior.applicationRevision)
+    )
+      continue;
     const current = world.receivedValues?.sources[id];
     if (current) {
       resident ??= referencedReceivedValues(world, { captures: false });
@@ -281,14 +308,24 @@ export function nominateReleasedReceivedValues(
       }
     }
     const block = current ?? before?.receivedValues?.sources[id];
-    nominations.set(id, block ? receivedValueEncodedBytes(block, selectedTemporalPolicy(world).recent.chunkBytes) ?? null : null);
+    nominations.set(
+      id,
+      block
+        ? (receivedValueEncodedBytes(block, selectedTemporalPolicy(world).recent.chunkBytes) ??
+            null)
+        : null,
+    );
   }
   if (nominations.size) countMetric('persistence.receivedRetirementNominations', nominations.size);
   if (!nominations.size) return world;
-  const next = updateWorld(world, (draft) => {
-    nominateReceivedValueRetirement(draft, nominations);
-    if (world.nativeInterval) draft.nativeInterval = { ...world.nativeInterval };
-  }, { retainNativeValues: true });
+  const next = updateWorld(
+    world,
+    (draft) => {
+      nominateReceivedValueRetirement(draft, nominations);
+      if (world.nativeInterval) draft.nativeInterval = { ...world.nativeInterval };
+    },
+    { retainNativeValues: true },
+  );
   // This bookkeeping owner has finished its edit. Publish the derived physical
   // indexes now; a later generic freeze cannot certify this exact write set.
   return Object.isFrozen(world) ? freezeWorld(next, { completedTransition: true }) : next;
@@ -338,7 +375,8 @@ export async function readTemporalHistory(
   context: TemporalHistoryReadContext,
   query: TemporalHistoryQuery,
 ): Promise<TemporalHistoryPage> {
-  if (context.worldId !== scope.worldId || context.actorId !== scope.actorId) throw new MemoryRetentionError('Foreign temporal history scope.');
+  if (context.worldId !== scope.worldId || context.actorId !== scope.actorId)
+    throw new MemoryRetentionError('Foreign temporal history scope.');
   if (query.cut?.epoch === null) return { entries: [], incomplete: true, hasMore: false };
   const head = await db
     .prepare('SELECT generation FROM world_head WHERE world_id=?')
@@ -443,54 +481,80 @@ export async function readTemporalHistory(
     if (
       chunk.throughAt >= from &&
       chunk.fromAt <= through &&
-      (!subjects.length || query.includeGeometry || chunk.subjects.some((subject) => subjects.includes(subject))) &&
+      (!subjects.length ||
+        query.includeGeometry ||
+        chunk.subjects.some((subject) => subjects.includes(subject))) &&
       (query.physicalLife === undefined || chunk.physicalLife === query.physicalLife) &&
       (query.epoch === undefined || chunk.epoch === query.epoch) &&
       (!query.cut ||
-        temporalChunkReceipts(chunk).some((receipt) => temporalReceiptWithinPrefix(receipt, query.cut!)))
+        temporalChunkReceipts(chunk).some((receipt) =>
+          temporalReceiptWithinPrefix(receipt, query.cut!),
+        ))
     ) {
       chunks.set(chunk.id, chunk);
     }
   // A bounded chunk is self-contained: its checkpoints and intervening scalar
   // assignments can support a selected suffix without another chunk chain.
-  for(const chunk of chunks.values())for(const[id,ordinals]of temporalChunkReferences(chunk)){
-    let selected=sourceIds.get(id);if(!selected)sourceIds.set(id,selected=new Set());
-    for(const ordinal of ordinals)selected.add(ordinal);
-  }
-  preparationBytes=[...chunks.values()].reduce((bytes,chunk)=>bytes+Buffer.byteLength(JSON.stringify(chunk)),0);
-  const sources:Record<string,{values:Array<ReceivedValueFragment|null|undefined>}>={},missing:Array<{block:string;ordinal:number}>=[];
-  for(const[id,ordinals]of sourceIds){
-    const values:Array<ReceivedValueFragment|null|undefined>=[];
-    for(const ordinal of ordinals){
-      const value=context.sources[id]?.values[ordinal];
-      if(value){values[ordinal]=value;preparationBytes+=Buffer.byteLength(JSON.stringify(value));}
-      else missing.push({block:id,ordinal});
+  for (const chunk of chunks.values())
+    for (const [id, ordinals] of temporalChunkReferences(chunk)) {
+      let selected = sourceIds.get(id);
+      if (!selected) sourceIds.set(id, (selected = new Set()));
+      for (const ordinal of ordinals) selected.add(ordinal);
     }
-    sources[id]={values};
+  preparationBytes = [...chunks.values()].reduce(
+    (bytes, chunk) => bytes + Buffer.byteLength(JSON.stringify(chunk)),
+    0,
+  );
+  const sources: Record<string, { values: Array<ReceivedValueFragment | null | undefined> }> = {},
+    missing: Array<{ block: string; ordinal: number }> = [];
+  for (const [id, ordinals] of sourceIds) {
+    const values: Array<ReceivedValueFragment | null | undefined> = [];
+    for (const ordinal of ordinals) {
+      const value = context.sources[id]?.values[ordinal];
+      if (value) {
+        values[ordinal] = value;
+        preparationBytes += Buffer.byteLength(JSON.stringify(value));
+      } else missing.push({ block: id, ordinal });
+    }
+    sources[id] = { values };
   }
-  const unavailable=()=>({entries:[],incomplete:true,hasMore:!!metadataBefore,...(metadataBefore?{nextBefore:metadataBefore}:{})});
-  if(preparationBytes>maximumPreparation||missing.length>maximumRows)return unavailable();
-  if(missing.length){
-    const slot=receivedValueSql('?', 'q.block','q.ordinal');
-    const sizes=await db.prepare(`SELECT SUM(octet_length((${slot})::text)) AS bytes
-      FROM jsonb_to_recordset(?::jsonb)q(block text,ordinal bigint)`)
-      .get(scope.worldId,JSON.stringify(missing));
-    preparationBytes+=Number(sizes?.['bytes']??0);
-    if(preparationBytes>maximumPreparation)return unavailable();
-    for(const row of await db.prepare(`SELECT q.block,q.ordinal,(${slot})::text AS payload
-      FROM jsonb_to_recordset(?::jsonb)q(block text,ordinal bigint)`)
-      .all(scope.worldId,JSON.stringify(missing))){
-      if(typeof row['payload']!=='string')continue;
-      sources[String(row['block'])]!.values[Number(row['ordinal'])]=JSON.parse(row['payload']) as ReceivedValueFragment;
+  const unavailable = () => ({
+    entries: [],
+    incomplete: true,
+    hasMore: !!metadataBefore,
+    ...(metadataBefore ? { nextBefore: metadataBefore } : {}),
+  });
+  if (preparationBytes > maximumPreparation || missing.length > maximumRows) return unavailable();
+  if (missing.length) {
+    const slot = receivedValueSql('?', 'q.block', 'q.ordinal');
+    const sizes = await db
+      .prepare(
+        `SELECT SUM(octet_length((${slot})::text)) AS bytes
+      FROM jsonb_to_recordset(?::jsonb)q(block text,ordinal bigint)`,
+      )
+      .get(scope.worldId, JSON.stringify(missing));
+    preparationBytes += Number(sizes?.['bytes'] ?? 0);
+    if (preparationBytes > maximumPreparation) return unavailable();
+    for (const row of await db
+      .prepare(
+        `SELECT q.block,q.ordinal,(${slot})::text AS payload
+      FROM jsonb_to_recordset(?::jsonb)q(block text,ordinal bigint)`,
+      )
+      .all(scope.worldId, JSON.stringify(missing))) {
+      if (typeof row['payload'] !== 'string') continue;
+      sources[String(row['block'])]!.values[Number(row['ordinal'])] = JSON.parse(
+        row['payload'],
+      ) as ReceivedValueFragment;
     }
   }
-  const selection=selectCapturedTemporalHistory({...context,chunks:[...chunks.values()],sources},
-    {...query,from,through,limit,bytes:maxBytes,operations:context.maximumOperations});
-  incomplete ||=selection.incomplete;
-  hasMore ||=selection.hasMore===true;
-  const nextBefore=hasMore?(selection.examinedBefore??metadataBefore):undefined;
-  return {...selection,incomplete,hasMore,...(nextBefore?{nextBefore}:{})};
-
+  const selection = selectCapturedTemporalHistory(
+    { ...context, chunks: [...chunks.values()], sources },
+    { ...query, from, through, limit, bytes: maxBytes, operations: context.maximumOperations },
+  );
+  incomplete ||= selection.incomplete;
+  hasMore ||= selection.hasMore === true;
+  const nextBefore = hasMore ? (selection.examinedBefore ?? metadataBefore) : undefined;
+  return { ...selection, incomplete, hasMore, ...(nextBefore ? { nextBefore } : {}) };
 }
 
 /** Exact canonical row deletions join the normal ordered world transaction.
@@ -739,19 +803,16 @@ export async function prepareTemporalRetention(
             );
           let releasedCount = 0;
           for (const receipt of temporalChunkReceipts(chunk)) {
-            if (
-              receipt.at > cutoff &&
-              expired.size > 0 &&
-              releasedCount >= pressure.count
-            )
-              break;
+            if (receipt.at > cutoff && expired.size > 0 && releasedCount >= pressure.count) break;
             expired.add(receipt.ordinal);
             releasedCount +=
               temporalReceiptChangeCount(receipt) + (confirmationCounts.get(receipt.ordinal) ?? 0);
           }
           if (!expired.size)
             throw new MemoryRetentionError('Recent expiry metadata disagrees with its receipts.');
-          const first = temporalChunkReceipts(chunk).find((receipt) => !expired.has(receipt.ordinal));
+          const first = temporalChunkReceipts(chunk).find(
+            (receipt) => !expired.has(receipt.ordinal),
+          );
           retireTemporalReceipts(
             draft,
             actorId,

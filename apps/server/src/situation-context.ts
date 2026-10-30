@@ -238,12 +238,12 @@ function prepareTemporalHistoryForModel(
           }
         : {}),
       acquiredAt: receipt.at,
-      ...(receipt.availabilityAt!==undefined?{availabilityAt:receipt.availabilityAt}:{}),
+      ...(receipt.availabilityAt !== undefined ? { availabilityAt: receipt.availabilityAt } : {}),
       ...(receipt.receiverFrame
         ? { receiverFrame: frames.indexed({}, modelObservationFrame(frame, receipt.receiverFrame)) }
         : {}),
       change: receipt.change,
-      ...(receipt.availability?.length?{availability:receipt.availability}:{}),
+      ...(receipt.availability?.length ? { availability: receipt.availability } : {}),
       ...temporalFactsForModel(
         world,
         actorId,
@@ -264,7 +264,9 @@ function prepareTemporalHistoryForModel(
     subject: receivedSubjectHandle(world, actorId, baseline.checkpoint.subject),
     entryAt: baseline.checkpoint.at,
     knownAt: baseline.availableAt,
-    ...(baseline.checkpoint.availability?.length?{availability:baseline.checkpoint.availability}:{}),
+    ...(baseline.checkpoint.availability?.length
+      ? { availability: baseline.checkpoint.availability }
+      : {}),
     forReceipt: permittedSourceHandle(world, actorId, [
       'receipt',
       baseline.forReceipt.physicalLife,
@@ -569,11 +571,16 @@ function situationBodyFacts(read: SituationBodyRead, id: string, kinds?: readonl
   };
 }
 
-function selectedBaselineFields(baseline:NonNullable<TemporalHistorySelection['baselines']>[number]) {
-  return baseline.origins.map((origin,index)=>({origin,
-    facet:{...baseline.checkpoint.facets[index]!,ordinal:origin.facetOrdinal},
-    value:baseline.values[index]!,
-    availability:baseline.checkpoint.availability?.find(group=>group.fields.includes(baseline.checkpoint.facets[index]!.ordinal)),
+function selectedBaselineFields(
+  baseline: NonNullable<TemporalHistorySelection['baselines']>[number],
+) {
+  return baseline.origins.map((origin, index) => ({
+    origin,
+    facet: { ...baseline.checkpoint.facets[index]!, ordinal: origin.facetOrdinal },
+    value: baseline.values[index]!,
+    availability: baseline.checkpoint.availability?.find((group) =>
+      group.fields.includes(baseline.checkpoint.facets[index]!.ordinal),
+    ),
   }));
 }
 function bindSituationHistory(
@@ -643,21 +650,28 @@ function bindSituationHistory(
       baselineDetails[handle] = { ...baseline, expiresAt: baseline.availableAt + maxAgeSeconds };
       continue;
     }
-    const { facets: _old, availability:_oldAvailability,...oldHeader } = previous.checkpoint,
-      { facets: _new, availability:_newAvailability,...newHeader } = baseline.checkpoint;
+    const { facets: _old, availability: _oldAvailability, ...oldHeader } = previous.checkpoint,
+      { facets: _new, availability: _newAvailability, ...newHeader } = baseline.checkpoint;
     if (
       canonicalJson(oldHeader) !== canonicalJson(newHeader) ||
       previous.availableAt !== baseline.availableAt ||
       canonicalJson(previous.forReceipt) !== canonicalJson(baseline.forReceipt)
     )
       throw new Error('Retained state changed during this request.');
-    const facts = new Map(selectedBaselineFields(previous).map(field=>[canonicalJson(field.origin),field]));
+    const facts = new Map(
+      selectedBaselineFields(previous).map((field) => [canonicalJson(field.origin), field]),
+    );
     for (const field of selectedBaselineFields(baseline)) {
-      const key = canonicalJson(field.origin),{facet,value,availability}=field,old = facts.get(key);
+      const key = canonicalJson(field.origin),
+        { facet, value, availability } = field,
+        old = facts.get(key);
       if (
         old &&
         (canonicalJson(old.facet) !== canonicalJson(facet) ||
-          canonicalJson(old.availability&&{reason:old.availability.reason,at:old.availability.at})!==canonicalJson(availability&&{reason:availability.reason,at:availability.at})||
+          canonicalJson(
+            old.availability && { reason: old.availability.reason, at: old.availability.at },
+          ) !==
+            canonicalJson(availability && { reason: availability.reason, at: availability.at }) ||
           canonicalJson(old.value) !== canonicalJson(value))
       )
         throw new Error('A selected retained state field changed during this request.');
@@ -666,7 +680,11 @@ function bindSituationHistory(
     const held = [...facts.values()];
     baselineDetails[handle] = {
       ...baseline,
-      checkpoint: { ...baseline.checkpoint, facets: held.map((value,ordinal) => ({...value.facet,ordinal})),availability:groupedTemporalAvailability(held.map(value=>value.availability)) },
+      checkpoint: {
+        ...baseline.checkpoint,
+        facets: held.map((value, ordinal) => ({ ...value.facet, ordinal })),
+        availability: groupedTemporalAvailability(held.map((value) => value.availability)),
+      },
       values: held.map((value) => value.value),
       origins: held.map((value) => value.origin),
       expiresAt: Math.min(previous.expiresAt, baseline.availableAt + maxAgeSeconds),
@@ -892,11 +910,13 @@ export function captureSituation(
   const sourceByFact = new Map(
     Object.values(owner?.current ?? {}).map((record) => [record.id, record.subjectId]),
   );
-  const sourceByExposure=new Map(Object.values(owner?.current??{}).map(record=>[record.exposure,record.subjectId]));
+  const sourceByExposure = new Map(
+    Object.values(owner?.current ?? {}).map((record) => [record.exposure, record.subjectId]),
+  );
   const currentBySource = new Map<string, CapturedCurrentFacet[]>();
   for (const fact of cut.current) {
     // Derived reads retain their real exposure but need no saved duplicate lease.
-    const source = sourceByFact.get(fact.id)??sourceByExposure.get(fact.exposure.episodeId);
+    const source = sourceByFact.get(fact.id) ?? sourceByExposure.get(fact.exposure.episodeId);
     if (source) {
       const rows = currentBySource.get(source) ?? [];
       rows.push(fact);

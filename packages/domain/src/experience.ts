@@ -649,7 +649,9 @@ export function admitAutomaticExperience(
       if (locator && entry.source !== 'summary') entry.value.sourceReceipt = locator;
       if (locator && awareness?.exposure?.kind === 'place') {
         const temporal = world.experience!.temporal!;
-        const receipt = temporal.actors[actorId]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk)).find(
+        const receipt = temporal.actors[actorId]!.chunks.flatMap((chunk) =>
+          temporalChunkReceipts(chunk),
+        ).find(
           (candidate) =>
             candidate.epoch === locator!.epoch && candidate.ordinal === locator!.ordinal,
         );
@@ -1956,7 +1958,7 @@ export function invalidateExperience(
       if (revoke) revokedCurrent.push(id);
     }
     removeCurrentFacets(world, actorId, revokedCurrent, removedOriginals);
-    revokeCurrentMotionEvidence(world,actorId,affected);
+    revokeCurrentMotionEvidence(world, actorId, affected);
   }
   revokeRecognitionEvidence(
     world,

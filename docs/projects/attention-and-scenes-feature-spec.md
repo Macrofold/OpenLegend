@@ -1,7 +1,7 @@
 # Attention, crowds and scenes — product and behavior specification
 
-| Status      | Current progress                                                                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                     | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Compact sensing and recording are integrated; lifecycle, regression and complete-game acceptance remain in progress. | 2026-10-29   |
 
 **Feature redesign updated and architecture used 2026-10-29 18:19 UTC**, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `6edf699f9b3535222308d09af6234b91b3b74fed`. Compact acquisition, independently timed fields and personal frame storage are integrated; required qualification remains open.

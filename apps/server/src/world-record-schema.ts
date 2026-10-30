@@ -209,7 +209,11 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       observerIdentities: actorMaps('mind_recognition'),
       receivedValues: one('mind_perception_value_state', {
         retirement: one('mind_perception_retirement', {
-          pending: { ...map('mind_perception_retirement_candidates'), unordered: true, complete: true },
+          pending: {
+            ...map('mind_perception_retirement_candidates'),
+            unordered: true,
+            complete: true,
+          },
         }),
         sources: {
           ...map(
@@ -228,7 +232,11 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         originals: { ...map('mind_perception_originals'), unordered: true, complete: true },
         // Rolling maps preserve iteration order without renumbering surviving rows.
         current: { ...map('mind_perception_current'), stablePositions: true, complete: true },
-        motionSamples: { ...map('mind_perception_motion_samples'), unordered: true, complete: true },
+        motionSamples: {
+          ...map('mind_perception_motion_samples'),
+          unordered: true,
+          complete: true,
+        },
         // Confirmation clocks must not rewrite the unchanged scene and attention
         // candidates. These retain their existing ordered, observer-owned values.
         geometry: one('mind_perception_geometry', {
@@ -627,7 +635,10 @@ columns(
       value: (value) => Number(segmentReceiptIndex(value).spatialContext),
     },
   },
-  [['actor_id', 'parent_id', 'first_ordinal'], ['actor_id', 'spatial_context', 'parent_id']],
+  [
+    ['actor_id', 'parent_id', 'first_ordinal'],
+    ['actor_id', 'spatial_context', 'parent_id'],
+  ],
 );
 columns(
   'mind_temporal_actors',

@@ -507,8 +507,10 @@ export function validateModuleManifest(manifest: WorldModuleManifest): void {
         (!finite(sense.sampleSeconds) || sense.sampleSeconds <= 0)) ||
       (sense.implementation === 'vision-geometry-v1' &&
         sense.detailSampleSeconds !== undefined &&
-        (!finite(sense.detailSampleSeconds) || sense.detailSampleSeconds <= 0 ||
-          sense.sampleSeconds === undefined || sense.detailSampleSeconds > sense.sampleSeconds)) ||
+        (!finite(sense.detailSampleSeconds) ||
+          sense.detailSampleSeconds <= 0 ||
+          sense.sampleSeconds === undefined ||
+          sense.detailSampleSeconds > sense.sampleSeconds)) ||
       (sense.implementation === 'vision-geometry-v1' &&
         sense.fieldOfViewRadians !== undefined &&
         (!finite(sense.fieldOfViewRadians) ||

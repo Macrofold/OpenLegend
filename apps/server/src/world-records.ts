@@ -5,7 +5,10 @@ import {
 } from './evidence-segments.js';
 import { sqlRecordBatches, SqlWriteBatch } from './sql-rows.js';
 import { tableRows } from './record-pages.js';
-import { readTemporalChunkRecord, validateTemporalChunkValueReferences } from './temporal-storage.js';
+import {
+  readTemporalChunkRecord,
+  validateTemporalChunkValueReferences,
+} from './temporal-storage.js';
 import { hotEventDependencies } from './hot-events.js';
 import {
   HISTORY_TABLES,
@@ -1928,7 +1931,10 @@ export function assembleWorldRecords(
     }
     const result = node.decode ? node.decode(value) : value;
     if (node.table === 'mind_temporal_chunks' && row['value_refs'] !== undefined)
-      validateTemporalChunkValueReferences(result as unknown as import('@open-legend/domain').TemporalChunk, row['value_refs']);
+      validateTemporalChunkValueReferences(
+        result as unknown as import('@open-legend/domain').TemporalChunk,
+        row['value_refs'],
+      );
     return result;
   };
   const roots = groups.get(schema.table)?.get('') ?? [];

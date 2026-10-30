@@ -17,9 +17,9 @@ export interface TemporalReadContext {
 export interface CapturedTemporalHistoryContext {
   readonly actorId: string;
   readonly maximumOperations?: number;
-  readonly maximumCandidates?:number;
-  readonly at?:number;
-  readonly maxAgeSeconds?:number;
+  readonly maximumCandidates?: number;
+  readonly at?: number;
+  readonly maxAgeSeconds?: number;
   readonly chunks: readonly TemporalChunk[];
   readonly releasedThrough?: number;
   readonly recordingGap?: { readonly from: number; readonly through: number };

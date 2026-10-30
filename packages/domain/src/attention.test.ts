@@ -223,7 +223,11 @@ describe('received detailed attention', () => {
       true,
     );
     expect(JSON.stringify(state)).not.toContain('Private identity');
-    validateAttentionState(state, selectedAttentionPolicy(world), world.perceptionEvidence![PLAYER_ID]!.observer!);
+    validateAttentionState(
+      state,
+      selectedAttentionPolicy(world),
+      world.perceptionEvidence![PLAYER_ID]!.observer!,
+    );
   });
   it('resolves only the actually accepted native condition generation and withdraws corrected proof', () => {
     let { world, owner } = scene(2, 2);
@@ -338,7 +342,9 @@ describe('received detailed attention', () => {
     expect(Object.values(state.candidates).every((candidate) => candidate.score === 1)).toBe(true);
     validateAttentionState(state, policy, owner.observer!);
     Object.values(state.candidates)[0]!.score = 2;
-    expect(() => validateAttentionState(state, policy, owner.observer!)).toThrow('Invalid attention candidate.');
+    expect(() => validateAttentionState(state, policy, owner.observer!)).toThrow(
+      'Invalid attention candidate.',
+    );
   });
 
   it('offers older quiet received people before continuing arrivals and acknowledges only supplied descriptions', () => {
@@ -652,7 +658,7 @@ describe('received detailed attention', () => {
     expect(attentionRelationOpportunity(world, PLAYER_ID)).toBeUndefined();
     markAttentionRelationsDirty(world, PLAYER_ID);
     expect(attentionRelationOpportunity(world, PLAYER_ID)?.anchors).toHaveLength(3);
-    const receivedAnchor=opportunity.anchors.find((entry)=>entry.sourceId!==PLAYER_ID)!;
+    const receivedAnchor = opportunity.anchors.find((entry) => entry.sourceId !== PLAYER_ID)!;
     removeCurrentFacets(world, PLAYER_ID, [`${receivedAnchor.sourceId}:body`]);
     updateAttention(world, PLAYER_ID);
     expect(

@@ -97,13 +97,18 @@ export function receivedEventAccounts(
     for (const eventId of wanted) {
       if (result.has(eventId) || forgotten.has(eventId)) continue;
       for (const offset of offsets.get(eventId) ?? []) {
-        if (offset < lower || offset >= temporalChunkReceipts(chunk).length || result.has(eventId)) continue;
+        if (offset < lower || offset >= temporalChunkReceipts(chunk).length || result.has(eventId))
+          continue;
         const receipt = temporalChunkReceipts(chunk)[offset]!;
         const values = receipt.facets.flatMap((reference) => {
           const fragment =
             world.receivedValues?.sources[reference.blockId]?.values[reference.valueOrdinal];
           if (!fragment || (fragment.kind !== 'event' && fragment.kind !== 'sound')) return [];
-          const value = materializeTemporalValue(reference, fragment,world.receivedValues?.sources??{});
+          const value = materializeTemporalValue(
+            reference,
+            fragment,
+            world.receivedValues?.sources ?? {},
+          );
           return value && temporalFacetEligible(world, actorId, reference, value) ? [value] : [];
         });
         const evidence = receivedEventEvidence(actorId, values);

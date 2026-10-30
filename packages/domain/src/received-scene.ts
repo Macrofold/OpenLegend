@@ -17,7 +17,7 @@ import type { Position, WorldState } from './types.js';
 
 export interface ReceivedBodyGeometry {
   body: CurrentBodyGeometryInput['body'];
-  sample: Omit<BodyGeometrySample,'fact'>;
+  sample: Omit<BodyGeometrySample, 'fact'>;
   location?: Omit<LocationGeometrySample, 'fact'>;
   motion?: {
     earlier: Omit<LocationGeometrySample, 'fact'>;
@@ -159,7 +159,10 @@ function measuredPoint(
       return { point: sample.location.point, error: sample.location.errorRadius };
   // The body producer's actually measured unchanged interval can support a stationary
   // participant while a neighbor moves; contact continuity alone cannot do so.
-  if (at >= (body.sample.valueSupportedFrom ?? body.sample.valueMeasuredFrom) && at <= (body.sample.valueSupportedThrough ?? body.sample.valueMeasuredThrough))
+  if (
+    at >= (body.sample.valueSupportedFrom ?? body.sample.valueMeasuredFrom) &&
+    at <= (body.sample.valueSupportedThrough ?? body.sample.valueMeasuredThrough)
+  )
     return {
       point: body.body.position,
       error: location?.location.kind === 'point' ? location.location.errorRadius : 0,
@@ -177,13 +180,19 @@ export function receivedSeparation(
   upper?: number;
   decreaseLower?: number;
 } {
-  const at = Math.min(first.sample.valueSupportedThrough ?? first.sample.valueMeasuredThrough, second.sample.valueSupportedThrough ?? second.sample.valueMeasuredThrough);
+  const at = Math.min(
+    first.sample.valueSupportedThrough ?? first.sample.valueMeasuredThrough,
+    second.sample.valueSupportedThrough ?? second.sample.valueMeasuredThrough,
+  );
   const a = measuredPoint(first, at),
     b = measuredPoint(second, at);
   if (!a || !b) return { status: 'unavailable' };
   const distance = bodySurfaceDistance(a.point, first.body, b.point, second.body),
     error = a.error + b.error;
-  const constantFrom = Math.max(first.sample.valueSupportedFrom ?? first.sample.valueMeasuredFrom, second.sample.valueSupportedFrom ?? second.sample.valueMeasuredFrom);
+  const constantFrom = Math.max(
+    first.sample.valueSupportedFrom ?? first.sample.valueMeasuredFrom,
+    second.sample.valueSupportedFrom ?? second.sample.valueMeasuredFrom,
+  );
   const earlierTimes = [
     ...new Set([
       first.motion?.earlier.valueSupportedThrough ?? first.motion?.earlier.valueMeasuredThrough,

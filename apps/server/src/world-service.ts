@@ -2162,16 +2162,28 @@ export class WorldService {
   private refreshReceivedPressure(saved: SavedWorld): SavedWorld {
     const debt = this.store.receivedReclamationDebt;
     if (!debt) return saved;
-    const world = updateWorld(saved.world, (draft) => {
-      const changed = updateReceivedRetirementPressure(draft, debt.journalBytes + 4 * 1024 * 1024, debt.maximumBytes);
-      if (changed && saved.world.nativeInterval) draft.nativeInterval = { ...saved.world.nativeInterval };
-    }, { retainNativeValues: true });
+    const world = updateWorld(
+      saved.world,
+      (draft) => {
+        const changed = updateReceivedRetirementPressure(
+          draft,
+          debt.journalBytes + 4 * 1024 * 1024,
+          debt.maximumBytes,
+        );
+        if (changed && saved.world.nativeInterval)
+          draft.nativeInterval = { ...saved.world.nativeInterval };
+      },
+      { retainNativeValues: true },
+    );
     if (Object.isFrozen(saved.world)) freezeWorld(world, { completedTransition: true });
     return world === saved.world ? saved : { ...saved, world };
   }
   private assertReceivedDebt(world: WorldState): void {
     const debt = this.store.receivedReclamationDebt;
-    if (debt && debt.journalBytes + (world.receivedValues?.retirement?.bytes ?? 0) > debt.maximumBytes) {
+    if (
+      debt &&
+      debt.journalBytes + (world.receivedValues?.retirement?.bytes ?? 0) > debt.maximumBytes
+    ) {
       this.scheduleReceivedCleanup();
       // No speculative installation or fatal save latch: bounded maintenance
       // must retain the ability to reduce debt before this intention is retried.
@@ -2179,9 +2191,15 @@ export class WorldService {
     }
   }
   private scheduleReceivedCleanup(delay?: number): void {
-    if (this.receivedCleanupClosed || this.receivedCleanup || this.receivedErasureWaiting ||
-        this.storageError || !this.store.prepareReceivedReclamation ||
-        !Object.keys(this.world.receivedValues?.retirement?.pending ?? {}).length) return;
+    if (
+      this.receivedCleanupClosed ||
+      this.receivedCleanup ||
+      this.receivedErasureWaiting ||
+      this.storageError ||
+      !this.store.prepareReceivedReclamation ||
+      !Object.keys(this.world.receivedValues?.retirement?.pending ?? {}).length
+    )
+      return;
     const debt = this.store.receivedReclamationDebt;
     // Physical cleanup has no gameplay deadline. Amortize low-debt work rather
     // than creating another durable save for every handful of released slots.
@@ -2190,7 +2208,8 @@ export class WorldService {
     delay ??= this.receivedCleanupFailures
       ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
       : debt && receivedReclamationNeedsPromptWork(this.world, debt.journalBytes, debt.maximumBytes)
-        ? 0 : 1000;
+        ? 0
+        : 1000;
     const dueAt = performance.now() + delay;
     if (this.receivedCleanupTimer) {
       if (this.receivedCleanupDueAt! <= dueAt) return;
@@ -2202,12 +2221,18 @@ export class WorldService {
       this.receivedCleanupDueAt = undefined;
       const running = this.runReceivedCleanup();
       this.receivedCleanup = running;
-      void running.finally(() => {
-        if (this.receivedCleanup === running) this.receivedCleanup = undefined;
-        this.scheduleReceivedCleanup(this.receivedCleanupFailures
-          ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
-          : this.receivedCleanupIdle ? 250 : undefined);
-      }).catch(() => undefined);
+      void running
+        .finally(() => {
+          if (this.receivedCleanup === running) this.receivedCleanup = undefined;
+          this.scheduleReceivedCleanup(
+            this.receivedCleanupFailures
+              ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
+              : this.receivedCleanupIdle
+                ? 250
+                : undefined,
+          );
+        })
+        .catch(() => undefined);
     }, delay);
     this.receivedCleanupTimer.unref();
   }
@@ -2221,14 +2246,28 @@ export class WorldService {
       prepared = await this.store.prepareReceivedReclamation(capture);
       const proposal = prepared;
       await this.mutate(async () => {
-        if (this.receivedCleanupClosed || this.generation !== generation || this.storageError) return;
+        if (this.receivedCleanupClosed || this.generation !== generation || this.storageError)
+          return;
         const debt = this.store.receivedReclamationDebt!;
-        const retention = applyReceivedReclamation(this.saved, proposal,
-          this.persistedRevision + 1, debt.journalBytes, debt.maximumBytes);
+        const retention = applyReceivedReclamation(
+          this.saved,
+          proposal,
+          this.persistedRevision + 1,
+          debt.journalBytes,
+          debt.maximumBytes,
+        );
         if (retention.state === this.saved) return;
         this.receivedCleanupIdle = false;
-        await this.commit(retention.state, undefined, 'unchanged', undefined,
-          undefined, undefined, undefined, retention);
+        await this.commit(
+          retention.state,
+          undefined,
+          'unchanged',
+          undefined,
+          undefined,
+          undefined,
+          undefined,
+          retention,
+        );
         countMetric('persistence.receivedCleanupCommits');
       });
       this.receivedCleanupFailures = 0;
@@ -2237,7 +2276,9 @@ export class WorldService {
       this.receivedCleanupFailures++;
       recordBackgroundFailure('world-commit', error);
       return false;
-    } finally { prepared?.release(); }
+    } finally {
+      prepared?.release();
+    }
   }
 
   /** Explicit privacy erasure waits for its own physical obligations, outside
@@ -2253,27 +2294,40 @@ export class WorldService {
     try {
       await this.receivedCleanup;
       while ([...ids].some((id) => this.world.receivedValues?.retirement?.pending[id])) {
-        if (generation !== this.generation || this.receivedCleanupClosed || performance.now() >= deadline)
+        if (
+          generation !== this.generation ||
+          this.receivedCleanupClosed ||
+          performance.now() >= deadline
+        )
           throw new OverloadError();
         await this.store.memories?.synchronizeSources();
-        if (this.receivedCleanup) { await this.receivedCleanup; continue; }
+        if (this.receivedCleanup) {
+          await this.receivedCleanup;
+          continue;
+        }
         const running = this.runReceivedCleanup(ids);
         this.receivedCleanup = running;
-        try { if (!(await running)) throw new OverloadError(); }
-        finally { if (this.receivedCleanup === running) this.receivedCleanup = undefined; }
+        try {
+          if (!(await running)) throw new OverloadError();
+        } finally {
+          if (this.receivedCleanup === running) this.receivedCleanup = undefined;
+        }
       }
-    } finally { this.receivedErasureWaiting--; this.scheduleReceivedCleanup(); }
+    } finally {
+      this.receivedErasureWaiting--;
+      this.scheduleReceivedCleanup();
+    }
   }
 
-  private async prepareRetention(saved: SavedWorld, complete = false): Promise<PreparedMemoryRetention> {
+  private async prepareRetention(
+    saved: SavedWorld,
+    complete = false,
+  ): Promise<PreparedMemoryRetention> {
     const nominated = nominateReleasedReceivedValues(this.persistedMemorySources, saved.world);
     if (nominated !== saved.world) saved = { ...saved, world: nominated };
     saved = this.refreshReceivedPressure(saved);
     const versions = sourceVersionPreparationNeeded(this.persistedMemorySources, saved.world);
-    if (
-      !this.store.memories ||
-      (!retentionNeedsPreparation(saved.world) && !versions)
-    )
+    if (!this.store.memories || (!retentionNeedsPreparation(saved.world) && !versions))
       return {
         state: saved,
         rows: new Map<string, string[]>(),

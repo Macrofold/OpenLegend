@@ -945,9 +945,7 @@ export function captureSubjectLabelReader(
   const subjects = new Map<string, ObserverSubject>();
   for (const subject of additional) subjects.set(subjectKey(subject), subject);
   return capturedSubjectLabels(
-    new Map(
-      [...subjects].map(([key, subject]) => [key, subjectLabel(world, observerId, subject)]),
-    ),
+    new Map([...subjects].map(([key, subject]) => [key, subjectLabel(world, observerId, subject)])),
   );
 }
 
