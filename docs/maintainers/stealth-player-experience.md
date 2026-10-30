@@ -2,7 +2,7 @@
 
 ## Status and ownership
 
-**Design: integrated for SAD-G's selected scope. Implementation: SPX01 existing-channel conversion is implemented with scoped native/browser verification. Broader UX, accessibility, performance and security qualification remains open.** Updated 2026-10-27.
+**Design: integrated for SAD-G's selected scope. Implementation: SPX01 existing-channel conversion is implemented with scoped native/browser verification. Broader UX, accessibility, performance and security qualification remains open.** Updated 2026-10-30.
 
 [Feature behavior](../projects/stealth-player-experience-feature-spec.md) owns controls, feedback and all ten player journeys. [Technical design](../projects/stealth-player-experience-tech-design.md) owns projection, input, component boundaries, invalid states and G-AC acceptance. [Limits](../limits/stealth-player-experience.md) owns discretionary defaults and remaining capacity questions. [SA coordination](stealth-awareness.md) owns A–G/I integration; this tracker is the focused SAI-G implementation owner.
 
@@ -38,7 +38,7 @@ Dependencies: integrated shared schema; A current/history/reference families; B 
 - [ ] Qualify historical art and source-free current glow with their actual B/G producers.
 - [ ] Apply facet removals and scope invalidation before rendering; fence async reads/asset loads/receipts and stale patches.
 - [x] Connect broad current facts, exact recent receipts and fallible lasting impressions to ordinary World/Character/Events readers, including actor-scoped cold reads and exact delayed-read expiry/correction fences. Historical measurements use retained compatible-time facts, not current hidden sources.
-- [ ] Complete [PS04-A SR02/SR03/SR06](product-scalability.md#ps04-a--core-attention-and-recording) conversion and qualification for compact personal frames, contextual features, broad current context, recent history and remembered-impression fidelity through ordinary World/Character/Events readers. Preserve human visibility/choice beyond detailed-attention capacity and actor-first cold hydration; AI noticing is not a rendering gate.
+- [ ] Qualify the integrated [PS04-A SR02/SR03/SR06](product-scalability.md#ps04-a--core-attention-and-recording) compact personal frames, contextual features, broad current context, recent history and remembered-impression fidelity through ordinary World/Character/Events readers. Preserve human visibility/choice beyond detailed-attention capacity and actor-first cold hydration; AI noticing is not a rendering gate.
       The Character reader now includes searchable recent observations; its native/PostgreSQL and narrow-screen browser checks pass. [Core evidence](../verification/attention-and-memory-core.md) tracks the remaining combined acceptance.
 - [ ] Qualify G-AC01–12 and all applicable lifecycle/projection cases in the technical acceptance table.
 

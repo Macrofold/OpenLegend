@@ -1,10 +1,10 @@
 # Attention, crowds and scenes — product and behavior specification
 
-| Status      | Current progress                                                                                                     | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Compact sensing and recording are integrated; lifecycle, regression and complete-game acceptance remain in progress. | 2026-10-30   |
+| Status      | Current progress                                                                                                           | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Compact sensing and recording are integrated; work amplification, semantic and complete-game acceptance remain unresolved. | 2026-10-30   |
 
-**Feature redesign updated and architecture used 2026-10-30 02:24 UTC**, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `a60ea242bfb56809948b59e94d73b3b4707ff97b`. Compact acquisition, independently timed fields and personal frame storage are integrated; required qualification remains open.
+**Feature redesign updated and architecture used 2026-10-30 04:47 UTC**, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `fc7b39a09c130ddb61e9aa560492d1848c48c705`. Compact acquisition, independently timed fields and personal frame storage are integrated; required qualification remains open.
 
 **Supported attention/memory core implemented; broader scene proposals remain separate.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds, timed speech and voice-media delivery remain separate proposals outside the implemented core.
 
