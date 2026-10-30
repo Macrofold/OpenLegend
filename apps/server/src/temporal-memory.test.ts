@@ -46,6 +46,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { temporalHistoryForModel } from './situation-context.js';
 import { memoryHistory } from './memory-history.js';
+import { routineSensePolicy } from '../../../packages/domain/src/perception.js';
 
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -405,6 +406,7 @@ describe('bounded personal temporal storage', () => {
       const plant = entityGet(world.entities, 'berries-west')!;
       setSpatialPosition(world, plant, { x: 6, y: 0, z: 1 }, 'terrain');
       const food = createItemLot(world, strangerId, 'berries', 1, 'sequence-food');
+      world.simTime += routineSensePolicy(world, player).sight?.seconds ?? 0;
       initializePerception(world, []);
       for (const observerId of [PLAYER_ID, NPC_ID]) {
         const key = Object.entries(
@@ -469,8 +471,11 @@ describe('bounded personal temporal storage', () => {
     );
     const walkingText = JSON.stringify(temporalHistoryForModel(service.world, PLAYER_ID, walking));
     expect(walkingText).not.toContain(hiddenName);
-    expect(walkingText).not.toContain('Anvil');
-    expect(walkingText).not.toContain('Berry bush');
+    // Received nearby state may identify visible objects. The actual movement
+    // sequence must not turn that context into an invented destination.
+    const movementText = JSON.stringify(walking.entries);
+    expect(movementText).not.toContain('Anvil');
+    expect(movementText).not.toContain('Berry bush');
     expect(walkingText).not.toMatch(/going to|intends to|destinationLabel/);
     const receivedPoints = walking.entries.flatMap(({ values }) =>
       values.flatMap((value) => (value.kind === 'body' ? [value.body.position.x] : [])),
@@ -1171,6 +1176,7 @@ describe('bounded personal temporal storage', () => {
       const player = entityGet(world.entities, PLAYER_ID)!;
       const at = worldPosition(player);
       setSpatialPosition(world, visitor, { ...at, x: at.x + 2 }, worldSupport(player));
+      world.simTime += routineSensePolicy(world, player).sight?.seconds ?? 0;
       initializePerception(world, []);
       const subject = currentBodyLocalSubject(world, PLAYER_ID, visitor.id)!;
       expect(subject.kind).toBe('individual');
@@ -1178,7 +1184,7 @@ describe('bounded personal temporal storage', () => {
         world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
       ).find(([, candidate]) => candidate.sourceId === visitor.id)!;
       expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
-      world.simTime += 1;
+      world.simTime += routineSensePolicy(world, player).sight?.detailSeconds ?? 0;
       initializePerception(world, []);
       if (subject.kind !== 'individual') throw new Error('Expected encounter-local person.');
       const identity = world.observerIdentities![PLAYER_ID]![subject.individualId]!;
@@ -1307,7 +1313,7 @@ describe('bounded personal temporal storage', () => {
         'Unrelated newer two',
       ].entries()) {
         world.simTime++;
-        appendTemporalReceipt(
+        const receipt = appendTemporalReceipt(
           world,
           PLAYER_ID,
           {
@@ -1331,6 +1337,10 @@ describe('bounded personal temporal storage', () => {
           },
           selectedTemporalPolicy(world).recent,
         );
+        expect(
+          receipt,
+          'The paging fixture must acquire each complete personal receipt.',
+        ).toBeDefined();
       }
     });
     await service.flush();
