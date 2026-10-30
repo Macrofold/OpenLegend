@@ -68,10 +68,12 @@ import {
   receivedObservationFrame,
   receivedBodyParts,
   effectiveCurrentFacetSupport,
+  effectiveCurrentFacetProof,
+  effectiveCurrentFacetDescriptor,
   contributionFactKey,
   currentFacetTimes,
 } from './perception-evidence.js';
-import type { CurrentFacetRecord } from './perception-current.js';
+import type { CurrentFacetRecord, CurrentFacetProof } from './perception-current.js';
 import type {
   EvidenceSource,
   LiveFacetSupport,
@@ -1121,16 +1123,11 @@ export function captureTemporalAvailability(
     );
 }
 
-export function temporalFacetInput(
-  world: WorldState,
-  lease: LiveFacetSupport,
-  projection = currentTemporalProjection(world, lease.value),
-): TemporalCaptureInput['facets'][number] {
-  if (!projection) throw new Error('The selected current temporal value is unavailable.');
+function temporalFacetProofInput(lease: CurrentFacetProof, body: boolean) {
   // This synchronous input is interned/detached by the compact frame writer;
   // copying the same observer again for every selected field adds no authority.
   const observer = readOnlyDraftView(lease.observer);
-  const fact = (value: LiveFacetSupport): ObservationFactKey => ({
+  const fact = (value: CurrentFacetProof): ObservationFactKey => ({
     source: {
       family: 'native-exposure',
       id: value.original.id,
@@ -1139,7 +1136,7 @@ export function temporalFacetInput(
     },
     ordinal: value.originalOrdinal,
   });
-  const confirmation = (value: LiveFacetSupport): EvidenceSource => ({
+  const confirmation = (value: CurrentFacetProof): EvidenceSource => ({
     family: 'native-exposure',
     id: value.id,
     revision: value.revision,
@@ -1152,7 +1149,7 @@ export function temporalFacetInput(
     receivedFrom = confirmation(lease),
     detailSupport: TemporalFacetReference['detailSupport'],
     poseFrame: ObservationFrame | undefined;
-  if (lease.value.kind === 'body' && lease.poseSupport) {
+  if (body && lease.poseSupport) {
     const pose = lease.poseSupport;
     from = pose.poseMeasuredFrom;
     through = pose.poseMeasuredThrough;
@@ -1172,12 +1169,7 @@ export function temporalFacetInput(
       acquiredAt: lease.valueAcquiredAt,
     };
   }
-  // Exact pooled addresses survive JSON loading and share one received pose.
   return {
-    received: {
-      projection,
-      reference: { blockId: lease.value.reference[0], valueOrdinal: lease.value.reference[1] },
-    },
     ...(detailSupport ? { detailSupport } : {}),
     ...(poseFrame ? { poseFrame } : {}),
     role: lease.original.facets[lease.originalOrdinal]?.role ?? 'direct',
@@ -1188,6 +1180,42 @@ export function temporalFacetInput(
     original,
     receivedFrom,
   };
+}
+
+export function temporalFacetInput(
+  world: WorldState,
+  lease: LiveFacetSupport,
+  projection = currentTemporalProjection(world, lease.value),
+): TemporalCaptureInput['facets'][number] & ReturnType<typeof temporalFacetProofInput> {
+  if (!projection) throw new Error('The selected current temporal value is unavailable.');
+  // Exact pooled addresses survive JSON loading and share one received pose.
+  return {
+    received: {
+      projection,
+      reference: { blockId: lease.value.reference[0], valueOrdinal: lease.value.reference[1] },
+    },
+    ...temporalFacetProofInput(lease, lease.value.kind === 'body'),
+  };
+}
+
+function sameCurrentTemporalReference(
+  previous: TemporalActorHistory['captures'][string],
+  descriptor: ReceivedFacetValue,
+): boolean {
+  if (
+    previous.blockId !== descriptor.reference[0] ||
+    previous.valueOrdinal !== descriptor.reference[1]
+  )
+    return false;
+  const reception = descriptor.reception;
+  if (!reception) return previous.reception === undefined;
+  if (reception.kind !== 'body' || previous.reception?.kind !== 'body') return false;
+  // Appearance and received pose have independent owners. Appearance identity
+  // alone cannot suppress a position change; inline frames retain the full path.
+  return (
+    reception.poseRef[0] === previous.reception.poseRef?.[0] &&
+    reception.poseRef[1] === previous.reception.poseRef?.[1]
+  );
 }
 
 /** Retain an already supplied current measurement without sensing again or
@@ -1331,6 +1359,48 @@ export function captureTemporalCurrent(
   const prepared = new Map<string, TemporalCaptureInput['facets'][number]>();
   const confirmations: TemporalConfirmation[] = [];
   const confirmedMarks = new Map<string, number>();
+  const confirm = (
+    record: CurrentFacetRecord,
+    proof: CurrentFacetProof,
+    reference: TemporalValueReference,
+    reception: TemporalReception | undefined,
+    previousThrough: number | undefined,
+    preparedInput?: ReturnType<typeof temporalFacetProofInput>,
+  ) => {
+    const confirmedThrough = proof.poseSupport?.confirmedThrough ?? proof.confirmedThrough;
+    const pose = record.value.kind === 'body' ? proof.poseSupport : undefined;
+    if (
+      confirmedThrough <=
+      (previousThrough ?? pose?.poseMeasuredThrough ?? proof.valueMeasuredThrough)
+    )
+      return;
+    const input = preparedInput ?? temporalFacetProofInput(proof, record.value.kind === 'body');
+    const detailSupport = input.detailSupport && {
+      ...input.detailSupport,
+      proof: {
+        ...input.detailSupport.proof,
+        confirmation: {
+          family: 'native-exposure' as const,
+          id: proof.id,
+          revision: proof.revision,
+          observer: proof.observer,
+        },
+        confirmedFrom: proof.confirmedFrom,
+        confirmedThrough: proof.confirmedThrough,
+      },
+    };
+    confirmations.push({
+      subject: record.exposure,
+      reference,
+      ...(reception ? { reception } : {}),
+      original: input.original,
+      confirmation: input.receivedFrom,
+      from: pose?.confirmedFrom ?? proof.confirmedFrom,
+      through: pose?.confirmedThrough ?? proof.confirmedThrough,
+      ...(detailSupport ? { detailSupport } : {}),
+    });
+    confirmedMarks.set(proof.id, confirmedThrough);
+  };
   for (const stored of leases) {
     const record = readOnlyDraftView(stored);
     keep.add(record.id);
@@ -1343,8 +1413,7 @@ export function captureTemporalCurrent(
         : checked?.broad.has(record.subjectId));
     // Motion is a read of two received samples, not another recorded payload.
     if (record.value.kind === 'location') {
-      const body = bodyRows.get(record.subjectId),
-        parts = body && receivedBodyParts(world, body.value);
+      const body = bodyRows.get(record.subjectId);
       if (
         body &&
         receivedValueAt(world.receivedValues?.sources ?? {}, {
@@ -1353,6 +1422,7 @@ export function captureTemporalCurrent(
         })?.kind === 'body-pose'
       )
         continue;
+      const parts = body && receivedBodyParts(world, body.value);
       const location = receivedFacetValue(world, record.value);
       if (
         body &&
@@ -1377,12 +1447,34 @@ export function captureTemporalCurrent(
       !(record.value.kind === 'body' && contactSubjects.has(record.subjectId))
     )
       continue;
-    // Unchanged selected rows only retain their existing comparison marks. Resolve
-    // complete personal support after filtering, never merely to retain an ID.
+    const reference = readOnlyDraftView(owned.actor.captures)[record.id];
+    const maySkip =
+      !newlySelected.has(record.subjectId) &&
+      !endingSelection.has(record.subjectId) &&
+      !(record.value.kind === 'body' && contactSubjects.has(record.subjectId));
+    if (
+      maySkip &&
+      reference &&
+      sameCurrentTemporalReference(
+        reference,
+        effectiveCurrentFacetDescriptor(world, actorId, record),
+      )
+    ) {
+      // A repeated value still needs its actual successful-check interval. Build
+      // that compact confirmation without hydrating the value or a rich lease.
+      if (actuallyChecked)
+        confirm(
+          record,
+          effectiveCurrentFacetProof(world, actorId, record),
+          { blockId: record.value.reference[0], valueOrdinal: record.value.reference[1] },
+          reference.reception,
+          reference.confirmedThrough,
+        );
+      continue;
+    }
     const lease = effectiveCurrentFacetSupport(world, actorId, record);
     // Comparing an existing capture does not modify its source block. Avoid
     // drafting every retained value merely to discover it is unchanged.
-    const reference = readOnlyDraftView(owned.actor.captures)[lease.id];
     const input = temporalFacetInput(world, lease);
     const projected =
       'received' in input ? input.received.projection : splitTemporalValue(input.value);
@@ -1392,10 +1484,6 @@ export function captureTemporalCurrent(
         readOnlyDraftView(world.receivedValues?.sources ?? {}),
         readOnlyDraftView(reference),
       );
-    const maySkip =
-      !newlySelected.has(lease.subjectId) &&
-      !endingSelection.has(lease.subjectId) &&
-      !(lease.value.kind === 'body' && contactSubjects.has(lease.subjectId));
     if (
       maySkip &&
       previous &&
@@ -1406,41 +1494,15 @@ export function captureTemporalCurrent(
           projected.reception !== undefined &&
           jsonText(readOnlyDraftView(reference.reception)) === jsonText(projected.reception)))
     ) {
-      const confirmedThrough = lease.poseSupport?.confirmedThrough ?? lease.confirmedThrough;
-      if (
-        actuallyChecked &&
-        confirmedThrough > (reference?.confirmedThrough ?? input.measuredThrough) &&
-        'received' in input &&
-        input.original &&
-        input.receivedFrom
-      ) {
-        const pose = lease.value.kind === 'body' ? lease.poseSupport : undefined;
-        const detailSupport = input.detailSupport && {
-          ...input.detailSupport,
-          proof: {
-            ...input.detailSupport.proof,
-            confirmation: {
-              family: 'native-exposure' as const,
-              id: lease.id,
-              revision: lease.revision,
-              observer: lease.observer,
-            },
-            confirmedFrom: lease.confirmedFrom,
-            confirmedThrough: lease.confirmedThrough,
-          },
-        };
-        confirmations.push({
-          subject: lease.exposure.episodeId,
-          reference: input.received.reference,
-          ...(projected.reception ? { reception: projected.reception } : {}),
-          original: input.original,
-          confirmation: input.receivedFrom,
-          from: pose?.confirmedFrom ?? lease.confirmedFrom,
-          through: pose?.confirmedThrough ?? lease.confirmedThrough,
-          ...(detailSupport ? { detailSupport } : {}),
-        });
-        confirmedMarks.set(lease.id, confirmedThrough);
-      }
+      if (actuallyChecked && 'received' in input)
+        confirm(
+          record,
+          lease,
+          input.received.reference,
+          projected.reception,
+          reference?.confirmedThrough,
+          input,
+        );
       continue;
     }
     const group = grouped.get(lease.subjectId) ?? [];

@@ -39,6 +39,21 @@ export type CurrentFacetRecord = Omit<LiveFacetSupport, keyof EnvelopeMetadata> 
   confirmedFrom?: number;
   confirmedThrough?: number;
 };
+/** Provenance and times do not require expanding a received value or exposure. */
+export type CurrentFacetProof = Pick<
+  LiveFacetSupport,
+  | 'id'
+  | 'revision'
+  | 'observer'
+  | 'original'
+  | 'originalOrdinal'
+  | 'valueMeasuredFrom'
+  | 'valueMeasuredThrough'
+  | 'valueAcquiredAt'
+  | 'confirmedFrom'
+  | 'confirmedThrough'
+  | 'poseSupport'
+>;
 
 const originalKeys = new WeakMap<ReceivedObservation, string>();
 export function currentOriginalKey(input: ReceivedObservation): string {
@@ -162,9 +177,24 @@ function compactTimes(
 }
 /** Complete logical metadata only for a selected capture/consumer. Hot selectors
  * use the compact fields and individual accessors instead of expanding every row. */
+export function currentFacetProof(
+  owner: PerceptionEvidenceOwner,
+  input: CurrentFacetRecord,
+): CurrentFacetProof {
+  const record = readOnlyDraftView(input);
+  return {
+    id: record.id,
+    revision: record.revision,
+    observer: currentFacetObserver(owner),
+    original: currentFacetOriginal(owner, record),
+    originalOrdinal: record.originalOrdinal,
+    ...currentFacetTimes(owner, record),
+  };
+}
 export function currentFacetSupport(
   owner: PerceptionEvidenceOwner,
   input: CurrentFacetRecord,
+  proof: CurrentFacetProof = currentFacetProof(owner, input),
 ): LiveFacetSupport {
   const {
     original: _original,
@@ -176,12 +206,12 @@ export function currentFacetSupport(
     confirmedThrough: _confirmedThrough,
     ...fields
   } = readOnlyDraftView(input);
+  const { observer, ...metadata } = proof;
   return {
     ...fields,
-    observer: currentFacetObserver(owner),
+    observer,
     exposure: currentFacetExposure(owner, input),
-    original: currentFacetOriginal(owner, input),
-    ...currentFacetTimes(owner, input),
+    ...metadata,
   };
 }
 export function receivedPerceptionObservations(

@@ -104,6 +104,7 @@ import {
   completePerceptionOriginal,
   currentFacetOriginal,
   currentFacetSupport,
+  currentFacetProof,
   currentFacetTimes,
   updateCurrentFacetTimes,
   currentFacetExposure,
@@ -114,6 +115,7 @@ import {
   retainPerceptionOriginal,
   prunePerceptionOriginals,
   type CurrentFacetRecord,
+  type CurrentFacetProof,
 } from './perception-current.js';
 export {
   compactCurrentFacet,
@@ -2043,23 +2045,19 @@ function currentBodyDescription(
     ? { ...value, body: { ...value.body, description: description.text } }
     : value;
 }
-export function effectiveCurrentFacetSupport(
+export function effectiveCurrentFacetProof(
   world: WorldState,
   observerId: string,
   lease: CurrentFacetRecord,
-): LiveFacetSupport {
+): CurrentFacetProof {
   const state = readOnlyDraftView(readCurrentEvidence(world, observerId)!);
   const record = readOnlyDraftView(lease),
-    value = currentFacetSupport(state, record);
-  const descriptor = effectiveCurrentFacetDescriptor(world, observerId, record),
+    value = currentFacetProof(state, record),
     poseSupport =
       record.value.kind === 'body'
         ? lastBodyPoseSupport(world, observerId, record.subjectId)
         : undefined;
-  const current =
-    descriptor === record.value && !poseSupport
-      ? value
-      : { ...value, value: descriptor, ...(poseSupport ? { poseSupport } : {}) };
+  const current = poseSupport ? { ...value, poseSupport } : value;
   const confirmation = currentFacetConfirmation(state, record, value.confirmedThrough);
   if (!confirmation) return current;
   const through = confirmation.through;
@@ -2068,6 +2066,19 @@ export function effectiveCurrentFacetSupport(
     revision: Math.max(value.revision, confirmation.revision),
     confirmedThrough: through,
   };
+}
+
+export function effectiveCurrentFacetSupport(
+  world: WorldState,
+  observerId: string,
+  lease: CurrentFacetRecord,
+): LiveFacetSupport {
+  const state = readOnlyDraftView(readCurrentEvidence(world, observerId)!);
+  const record = readOnlyDraftView(lease);
+  const proof = effectiveCurrentFacetProof(world, observerId, record);
+  const value = currentFacetSupport(state, record, proof);
+  const descriptor = effectiveCurrentFacetDescriptor(world, observerId, record);
+  return descriptor === record.value ? value : { ...value, value: descriptor };
 }
 
 export function currentBodyObservation(
