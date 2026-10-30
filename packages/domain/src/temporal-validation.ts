@@ -1,4 +1,17 @@
-import {temporalChunkReceipts} from './temporal-frames.js';
+import {
+  temporalChunkReceipts,
+  temporalEntryCheckpoints,
+  temporalEntryConfirmations,
+  temporalConfirmationChangeCount,
+  temporalChunkReceipt,
+  temporalDictionaryDependencies,
+  type TemporalCheckpointAvailability,
+  temporalEntryDependencies,
+  TEMPORAL_CHANGE_DICTIONARY_FIELDS,
+  TEMPORAL_CHANGE_DICTIONARY_ARRAY_FIELDS,
+  TEMPORAL_FACET_DICTIONARY_FIELDS,
+  TEMPORAL_FACET_REFERENCE_FIELDS,
+} from './temporal-frames.js';
 import type { WorldState } from './types.js';
 import type {
   TemporalEvidenceState,
@@ -25,6 +38,7 @@ import { hasRecordFields, isSafeRecordId } from './records.js';
 import { selectedAttentionPolicy } from './world-composition.js';
 import {
   temporalReceiptAliases,
+  temporalConfirmationReference,
   temporalReceiptIndividualIds,
   temporalReceiptId,
   temporalReceiptChangeCount,
@@ -48,6 +62,164 @@ const strings = (value: unknown): value is string[] =>
   Array.isArray(value) &&
   value.every((entry) => typeof entry === 'string' && entry.length > 0) &&
   new Set(value).size === value.length;
+
+function validateFieldAvailability(groups: readonly TemporalCheckpointAvailability[], facets: readonly TemporalFacetReference[], at: number): void {
+  if (!Array.isArray(groups)) throw new Error('Invalid retained field availability.');
+  const assigned=new Set<number>(), fields=new Set(facets.map(facet=>facet.ordinal));
+  for(const group of groups) {
+    if(!record(group)||!hasRecordFields(group,['reason','at','fields'])||
+      (typeof group.reason !== 'string' || !['unavailable','unchecked','released'].includes(group.reason))||!finite(group.at)||group.at<0||group.at>at||
+      !Array.isArray(group.fields)||!group.fields.length)throw new Error('Invalid retained field availability.');
+    for(const field of group.fields){
+      if(!ordinal(field)||!fields.has(field)||assigned.has(field))throw new Error('Invalid retained field availability mask.');
+      assigned.add(field);
+    }
+  }
+}
+
+/** Only current canonical frame shapes enter saved authority. Every declaration
+ * must belong to an operation; the decoded receipts validate its typed meaning. */
+function validateFrameEntries(chunk: import('./temporal-evidence.js').TemporalChunk): void {
+  const used = new Set<number>(),
+    declarations = new Set<number>();
+  let previous = -1;
+  for (const entry of chunk.entries) {
+    if (!record(entry) || !ordinal(entry.ordinal) || entry.ordinal <= previous)
+      throw new Error('Invalid temporal frame order.');
+    previous = entry.ordinal;
+    if (entry.kind === 'dictionary') {
+      if (
+        !hasRecordFields(entry, ['ordinal', 'kind', 'value']) ||
+        !record(entry.value) ||
+        !hasRecordFields(entry.value, ['kind', 'value']) ||
+        ![
+          'text',
+          'identity',
+          'source',
+          'fact',
+          'proof',
+          'origin',
+          'reception',
+          'detail',
+          'view',
+        ].includes(entry.value.kind)
+      )
+        throw new Error('Invalid temporal declaration.');
+      const stored = entry.value;
+      if (stored.kind === 'fact' && (!record(stored.value) || !hasRecordFields(stored.value,['source','ordinal']) || !ordinal(stored.value.ordinal)))
+        throw new Error('Invalid temporal fact declaration.');
+      if (stored.kind === 'proof' && (!record(stored.value) || !hasRecordFields(stored.value,['original','confirmation','confirmedFrom','confirmedThrough'],['aliases'])))
+        throw new Error('Invalid temporal proof declaration.');
+      if (stored.kind === 'detail' && (!record(stored.value) || !hasRecordFields(stored.value,['proof','from','through','acquiredAt'])))
+        throw new Error('Invalid temporal detail declaration.');
+      for (const dependency of temporalDictionaryDependencies(entry)) {
+        if (!ordinal(dependency.ordinal)) throw new Error('Invalid temporal dictionary dependency.');
+        used.add(dependency.ordinal);
+      }
+      declarations.add(entry.ordinal);
+    } else if (entry.kind === 'frame') {
+      if (
+        !hasRecordFields(
+          entry,
+          ['ordinal', 'kind', 'acquisition', 'at', 'order'],
+          ['receiverFrame', 'coverageGap'],
+        ) ||
+        !ordinal(entry.acquisition) ||
+        !finite(entry.at) ||
+        entry.at < 0 ||
+        !ordinal(entry.order) ||
+        (entry.receiverFrame !== undefined && !validObservationFrame(entry.receiverFrame))
+      )
+        throw new Error('Invalid temporal acquisition.');
+      declarations.add(entry.ordinal);
+    } else if (entry.kind === 'change' || entry.kind === 'checkpoint' || entry.kind === 'confirmation') {
+      const raw = entry as unknown as Record<string, unknown>;
+      const shape =
+        entry.kind === 'change'
+          ? hasRecordFields(
+              entry,
+              ['ordinal', 'kind', 'receipt', 'frame', 'subject', 'change', 'facets'],
+              ['order', 'contexts', 'identity', 'origin', 'required', 'sources', 'spatialContext', 'availabilityAt'],
+            ) &&
+            ordinal(entry.receipt) &&
+            (entry.required === undefined || entry.required === true)
+          : entry.kind === 'checkpoint' ? hasRecordFields(entry, ['ordinal', 'kind', 'frame', 'subject', 'facets'], ['order', 'availability'])
+          : hasRecordFields(entry,['ordinal','kind','frame','receipt','subjects'],['order']) && ordinal(entry.receipt) && Array.isArray(entry.subjects);
+      if (!shape || !ordinal(entry.frame) || (entry.kind !== 'confirmation' && !Array.isArray(entry.facets)))
+        throw new Error('Invalid temporal operation.');
+      used.add(entry.frame);
+      for (const field of TEMPORAL_CHANGE_DICTIONARY_FIELDS)
+        if (raw[field] !== undefined) {
+          if (!ordinal(raw[field])) throw new Error('Invalid temporal dictionary address.');
+          used.add(raw[field]);
+        }
+      for (const field of TEMPORAL_CHANGE_DICTIONARY_ARRAY_FIELDS)
+        if (raw[field] !== undefined) {
+          const values = raw[field];
+          if (!Array.isArray(values)) throw new Error('Invalid temporal dictionary list.');
+          for (const at of values) {
+            if (!ordinal(at)) throw new Error('Invalid temporal dictionary address.');
+            used.add(at);
+          }
+        }
+      const fields = entry.kind === 'confirmation' ? entry.subjects.flatMap(group => {
+        if (!record(group) || !hasRecordFields(group,['subject','fields']) || !ordinal(group.subject) || !Array.isArray(group.fields) || !group.fields.length)
+          throw new Error('Invalid temporal confirmation group.');
+        used.add(group.subject); return group.fields;
+      }) : entry.facets;
+      for (const facet of fields) {
+        if (
+          !record(facet) ||
+          !hasRecordFields(
+            facet,
+            entry.kind === 'confirmation' ? ['value','original','source'] : ['value'],
+            entry.kind === 'confirmation' ? ['pose','reception','from','through','details','ordinal'] : [
+              'pose',
+              'poseFrame',
+              'ordinal',
+              'role',
+              'at',
+              'from',
+              'through',
+              'acquired',
+              'confirmed',
+              'original',
+              'source',
+              'support',
+              'reception',
+              'details',
+            ],
+          ) ||
+          (facet.pose !== undefined && facet.reception !== undefined)
+        )
+          throw new Error('Invalid packed temporal field.');
+        for (const field of TEMPORAL_FACET_REFERENCE_FIELDS)
+          if (facet[field] !== undefined) {
+            const reference = facet[field];
+            if (!Array.isArray(reference) || reference.length !== 2 || !reference.every(ordinal))
+              throw new Error('Invalid temporal value address.');
+            used.add(reference[0]);
+          }
+        for (const field of TEMPORAL_FACET_DICTIONARY_FIELDS)
+          if (facet[field] !== undefined) {
+            if (!ordinal(facet[field])) throw new Error('Invalid temporal dictionary address.');
+            used.add(facet[field]);
+          }
+      }
+    } else throw new Error('Unsupported temporal frame entry.');
+  }
+  const entries = new Map(chunk.entries.map(entry=>[entry.ordinal,entry]));
+  for (const entry of chunk.entries) for (const dependency of temporalDictionaryDependencies(entry)) {
+    const target=entries.get(dependency.ordinal);
+    if(target?.kind!=='dictionary'||target.value.kind!==dependency.kind)
+      throw new Error('Invalid typed temporal dictionary dependency.');
+  }
+  if (
+    [...declarations].some((at) => !used.has(at)) ||
+    [...used].some((at) => !declarations.has(at))
+  )
+    throw new Error('Incomplete temporal declaration closure.');
+}
 
 export function validateTemporalValue(
   value: unknown,
@@ -81,6 +253,8 @@ export function validateTemporalFragment(
   originals?: Map<string, string>,
 ): asserts value is TemporalFragment {
   if (!record(value)) throw new Error('Invalid temporal fragment.');
+  if (value['kind'] === 'observed-motion')
+    throw new Error('Motion is derived from received points, not a stored payload.');
   if (value['kind'] === 'body') {
     if (
       !hasRecordFields(value, ['kind', 'body']) ||
@@ -95,11 +269,9 @@ export function validateTemporalFragment(
     if (!hasRecordFields(value, ['kind', 'location']))
       throw new Error('Invalid shared temporal location.');
     validateObservedLocation(value['location'] as ObservedLocation);
-  } else if (value['kind'] === 'observed-motion') {
-    if (!hasRecordFields(value, ['kind', 'earlier', 'later']))
-      throw new Error('Invalid shared temporal motion.');
-    validateObservedLocation(value['earlier'] as ObservedLocation);
-    validateObservedLocation(value['later'] as ObservedLocation);
+  } else if (value['kind'] === 'body-pose') {
+    if (!hasRecordFields(value, ['kind', 'pose'])) throw new Error('Invalid shared temporal pose.');
+    validateObservedBodyPose(value['pose'] as import('./perception-evidence.js').ObservedBodyPose);
   } else validateTemporalValue(value, originals);
 }
 
@@ -115,41 +287,27 @@ function validateStoredValue(
   if (reception !== undefined) {
     if (!record(reception)) throw new Error('Invalid temporal reception.');
     if (reception.kind === 'body') {
-      if(reception.poseRef) {
-        if(!hasRecordFields(reception,['kind','poseRef'])||!Array.isArray(reception.poseRef)||reception.poseRef.length!==2||typeof reception.poseRef[0]!=='string'||!ordinal(reception.poseRef[1]))throw new Error('Invalid shared body reception.');
+      if (reception.poseRef) {
+        if (
+          !hasRecordFields(reception, ['kind', 'poseRef']) ||
+          !Array.isArray(reception.poseRef) ||
+          reception.poseRef.length !== 2 ||
+          typeof reception.poseRef[0] !== 'string' ||
+          !ordinal(reception.poseRef[1])
+        )
+          throw new Error('Invalid shared body reception.');
       } else {
-        if (!hasRecordFields(reception, ['kind', 'pose'])) throw new Error('Invalid body reception.');
+        if (!hasRecordFields(reception, ['kind', 'pose']))
+          throw new Error('Invalid body reception.');
         validateObservedBodyPose(reception.pose);
       }
     } else if (reception.kind === 'location') {
       if (!hasRecordFields(reception, ['kind', 'frame']))
         throw new Error('Invalid temporal location reception.');
-    } else if (reception.kind === 'observed-motion') {
-      if (
-        !hasRecordFields(reception, ['kind', 'exposure', 'earlier', 'later', 'correspondence']) ||
-        [reception.earlier, reception.later].some(
-          (sample) =>
-            !hasRecordFields(
-              sample,
-              [
-                'frame',
-                'measuredFrom',
-                'measuredThrough',
-                'acquiredAt',
-                'original',
-                'confirmation',
-                'confirmedFrom',
-                'confirmedThrough',
-              ],
-              ['aliases'],
-            ),
-        )
-      )
-        throw new Error('Invalid temporal motion reception.');
     } else throw new Error('Unsupported temporal reception.');
   }
   if (reference.support) validateReceivedFacetProof(reference.support, observer, through);
-  const value = materializeTemporalValue(reference, fragment,sources);
+  const value = materializeTemporalValue(reference, fragment, sources);
   if (!value) throw new Error('Temporal fragment has no matching personal reception.');
   validateTemporalValue(value, originals);
   return value;
@@ -208,8 +366,18 @@ export function validateTemporalEvidenceState(
       (actor.nextDue !== null && (!finite(actor.nextDue) || actor.nextDue < 0))
     )
       throw new Error('Invalid personal temporal owner.');
-    if(actor.lastReceiverFrame!==undefined&&!validObservationFrame(actor.lastReceiverFrame))throw new Error('Invalid last received viewpoint.');
-    if(actor.recordingGap!==undefined&&(!record(actor.recordingGap)||!finite(actor.recordingGap.from)||!finite(actor.recordingGap.through)||actor.recordingGap.from<0||actor.recordingGap.through<actor.recordingGap.from||actor.recordingGap.through>world.simTime))throw new Error('Invalid recording coverage gap.');
+    if (actor.lastReceiverFrame !== undefined && !validObservationFrame(actor.lastReceiverFrame))
+      throw new Error('Invalid last received viewpoint.');
+    if (
+      actor.recordingGap !== undefined &&
+      (!record(actor.recordingGap) ||
+        !finite(actor.recordingGap.from) ||
+        !finite(actor.recordingGap.through) ||
+        actor.recordingGap.from < 0 ||
+        actor.recordingGap.through < actor.recordingGap.from ||
+        actor.recordingGap.through > world.simTime)
+    )
+      throw new Error('Invalid recording coverage gap.');
     let bytes = 0,
       count = 0;
     const chunks = new Set<string>(),
@@ -293,6 +461,89 @@ export function validateTemporalEvidenceState(
           throw new Error('Invalid exact source closure charge.');
       }
     }
+    const validateFields = (
+      receipt: Pick<TemporalReceipt, 'facets' | 'at' | 'physicalLife'>,
+      fragments?: TemporalFragment[],
+    ) => {
+      const ordinals = new Set<number>();
+      receipt.facets.forEach((facet: TemporalFacetReference, index: number) => {
+        if (facet.poseFrame !== undefined && !validObservationFrame(facet.poseFrame))
+          throw new Error('Invalid received pose viewpoint.');
+        if (!ordinal(facet.ordinal) || ordinals.has(facet.ordinal))
+          throw new Error('Invalid temporal fact ordinal.');
+        ordinals.add(facet.ordinal);
+        const fragment = fragments ? fragments[index] : validateReference(facet);
+        if (fragments) validateTemporalFragment(fragment, originals);
+        if (!fragment) throw new Error('Unavailable retained temporal fragment.');
+        const value = validateStoredValue(
+          facet,
+          fragment,
+          originals,
+          { actorId, physicalLife: receipt.physicalLife },
+          receipt.at,
+          sources,
+        );
+        if (
+          !['direct', 'inference', 'testimony'].includes(facet.role) ||
+          !finite(facet.asOf) ||
+          facet.asOf < 0 ||
+          !finite(facet.measuredFrom) ||
+          !finite(facet.measuredThrough) ||
+          !finite(facet.acquiredAt) ||
+          facet.measuredFrom < 0 ||
+          facet.measuredFrom > facet.measuredThrough ||
+          facet.measuredThrough > facet.acquiredAt ||
+          facet.acquiredAt > receipt.at ||
+          facet.asOf > receipt.at
+        )
+          throw new Error('Invalid temporal measurement interval.');
+        if (facet.detailSupport) {
+          const detail = facet.detailSupport;
+          if (
+            value.kind !== 'body' ||
+            !hasRecordFields(detail, ['proof', 'from', 'through', 'acquiredAt']) ||
+            ![detail.from, detail.through, detail.acquiredAt].every(finite) ||
+            detail.from < 0 ||
+            detail.from > detail.through ||
+            detail.through > detail.acquiredAt ||
+            detail.acquiredAt > receipt.at
+          )
+            throw new Error('Invalid independent outward detail support.');
+          validateReceivedFacetProof(
+            detail.proof,
+            { actorId, physicalLife: receipt.physicalLife },
+            receipt.at,
+          );
+        }
+        validateReceiver(value, { actorId, physicalLife: receipt.physicalLife }, facet.acquiredAt);
+        if (facet.confirmedThrough !== undefined) {
+          if (
+            !finite(facet.confirmedThrough) ||
+            facet.confirmedThrough < facet.measuredThrough ||
+            facet.confirmedThrough > receipt.at ||
+            !facet.original ||
+            (value?.kind !== 'surface-patch' && value?.kind !== 'physical-boundary')
+          )
+            throw new Error('Invalid held geometry confirmation.');
+        }
+        for (const source of [
+          facet.original?.source,
+          facet.receivedFrom,
+          facet.support?.original.source,
+          facet.support?.confirmation,
+        ])
+          if (source) {
+            validateEvidenceSource(source);
+            if (
+              source.observer.actorId !== actorId ||
+              source.observer.physicalLife !== receipt.physicalLife
+            )
+              throw new Error('Foreign temporal original.');
+          }
+        if (facet.original && !ordinal(facet.original.ordinal))
+          throw new Error('Invalid temporal original ordinal.');
+      });
+    };
     const validateReceipt = (receipt: TemporalReceipt, fragments?: TemporalFragment[]) => {
       if (
         !record(receipt) ||
@@ -308,19 +559,33 @@ export function validateTemporalEvidenceState(
         receipt.at < 0 ||
         receipt.at > world.simTime ||
         !ordinal(receipt.order) ||
-        (receipt.receiverFrame!==undefined && !validObservationFrame(receipt.receiverFrame)) ||
-        (receipt.coverageGap!==undefined && (!finite(receipt.coverageGap.from)||!finite(receipt.coverageGap.through)||receipt.coverageGap.from<0||receipt.coverageGap.from>receipt.coverageGap.through||receipt.coverageGap.through>receipt.at)) ||
+        (receipt.receiverFrame !== undefined && !validObservationFrame(receipt.receiverFrame)) ||
+        (receipt.coverageGap !== undefined &&
+          (!finite(receipt.coverageGap.from) ||
+            !finite(receipt.coverageGap.through) ||
+            receipt.coverageGap.from < 0 ||
+            receipt.coverageGap.from > receipt.coverageGap.through ||
+            receipt.coverageGap.through > receipt.at)) ||
         typeof receipt.subject !== 'string' ||
         !receipt.subject ||
         (receipt.contextSubjects !== undefined &&
           (!strings(receipt.contextSubjects) ||
             receipt.contextSubjects.length > maximumContextSubjects)) ||
         (receipt.subjectIdentity !== undefined && !validObserverSubject(receipt.subjectIdentity)) ||
-        !['baseline', 'change', 'loss', 'occurrence', 'attention-exit', 'receiver-frame'].includes(receipt.change) ||
+        !['baseline', 'change', 'loss', 'unchecked', 'occurrence', 'attention-exit', 'receiver-frame', 'retained-state'].includes(
+          receipt.change,
+        ) ||
+        (receipt.availabilityAt !== undefined &&
+          (!['loss', 'unchecked', 'attention-exit'].includes(receipt.change) ||
+            !finite(receipt.availabilityAt) || receipt.availabilityAt < 0 ||
+            receipt.availabilityAt > receipt.at)) ||
+        (receipt.change === 'retained-state' && !fragments) ||
+        (receipt.availability !== undefined && receipt.change !== 'retained-state') ||
+        (receipt.spatialContext !== undefined && receipt.spatialContext !== true) ||
         typeof receipt.required !== 'boolean' ||
         !strings(receipt.sourceIds) ||
         !Array.isArray(receipt.facets) ||
-        (!receipt.facets.length && receipt.change!=='receiver-frame')
+        (!receipt.facets.length && receipt.change !== 'receiver-frame')
       )
         throw new Error('Invalid personal temporal receipt.');
       if (receipt.origin) {
@@ -357,64 +622,16 @@ export function validateTemporalEvidenceState(
             throw new Error('Foreign temporal origin source.');
         }
       }
-      const ordinals = new Set<number>();
-      receipt.facets.forEach((facet: TemporalFacetReference, index: number) => {
-        if (!ordinal(facet.ordinal) || ordinals.has(facet.ordinal))
-          throw new Error('Invalid temporal fact ordinal.');
-        ordinals.add(facet.ordinal);
-        const fragment = fragments ? fragments[index] : validateReference(facet);
-        if (fragments) validateTemporalFragment(fragment, originals);
-        if (!fragment) throw new Error('Unavailable retained temporal fragment.');
-        const value = validateStoredValue(
-          facet,
-          fragment,
-          originals,
-          { actorId, physicalLife: receipt.physicalLife },
-          receipt.at,
-          sources,
-        );
-        if (
-          !['direct', 'inference', 'testimony'].includes(facet.role) ||
-          !finite(facet.asOf) ||
-          facet.asOf < 0 ||
-          !finite(facet.measuredFrom) ||
-          !finite(facet.measuredThrough) ||
-          !finite(facet.acquiredAt) ||
-          facet.measuredFrom < 0 ||
-          facet.measuredFrom > facet.measuredThrough ||
-          facet.measuredThrough > facet.acquiredAt ||
-          facet.acquiredAt > receipt.at ||
-          facet.asOf > receipt.at
-        )
-          throw new Error('Invalid temporal measurement interval.');
-        validateReceiver(value, { actorId, physicalLife: receipt.physicalLife }, facet.acquiredAt);
-        if (facet.confirmedThrough !== undefined) {
-          if (
-            !finite(facet.confirmedThrough) ||
-            facet.confirmedThrough < facet.measuredThrough ||
-            facet.confirmedThrough > receipt.at ||
-            !facet.original ||
-            (value?.kind !== 'surface-patch' && value?.kind !== 'physical-boundary')
-          )
-            throw new Error('Invalid held geometry confirmation.');
-        }
-        for (const source of [
-          facet.original?.source,
-          facet.receivedFrom,
-          facet.support?.original.source,
-          facet.support?.confirmation,
-        ])
-          if (source) {
-            validateEvidenceSource(source);
-            if (
-              source.observer.actorId !== actorId ||
-              source.observer.physicalLife !== receipt.physicalLife
-            )
-              throw new Error('Foreign temporal original.');
-          }
-        if (facet.original && !ordinal(facet.original.ordinal))
-          throw new Error('Invalid temporal original ordinal.');
-      });
+      if (
+        receipt.spatialContext &&
+        receipt.facets.some((reference, index) => {
+          const fragment = fragments?.[index] ?? validateReference(reference);
+          return fragment.kind !== 'surface-patch' && fragment.kind !== 'physical-boundary';
+        })
+      )
+        throw new Error('Invalid received feature context.');
+      validateFields(receipt, fragments);
+      if(receipt.availability)validateFieldAvailability(receipt.availability,receipt.facets,receipt.at);
     };
     if (actor.supports !== undefined) {
       if (!record(actor.supports)) throw new Error('Invalid temporal support owner.');
@@ -434,6 +651,7 @@ export function validateTemporalEvidenceState(
       }
     }
     for (const chunk of actor.chunks) {
+      if (Array.isArray(chunk?.entries)) validateFrameEntries(chunk);
       if (
         !record(chunk) ||
         !isSafeRecordId(chunk.id) ||
@@ -452,18 +670,64 @@ export function validateTemporalEvidenceState(
         chunk.throughAt > world.simTime ||
         !ordinal(chunk.bytes) ||
         !ordinal(chunk.count) ||
+        !ordinal(chunk.nextEntryOrdinal) ||
+        (Array.isArray(chunk.entries) &&
+          (chunk.entries.at(-1)?.ordinal ?? -1) >= chunk.nextEntryOrdinal) ||
         !strings(chunk.subjects) ||
         !strings(chunk.individualIds) ||
         !strings(chunk.sourceIds) ||
         !strings(chunk.sourceRefs) ||
         !Array.isArray(chunk.entries) ||
         !temporalChunkReceipts(chunk).length ||
-        temporalChunkReceipts(chunk).reduce((sum,row)=>sum+temporalReceiptChangeCount(row),0) !== chunk.count
+        temporalChunkReceipts(chunk).reduce(
+          (sum, row) => sum + temporalReceiptChangeCount(row),
+          0,
+        ) + temporalConfirmationChangeCount(chunk.entries) !== chunk.count
       )
         throw new Error('Invalid personal temporal chunk.');
       chunks.add(chunk.id);
       bytes += chunk.bytes;
       count += chunk.count;
+      for (const checkpoint of temporalEntryCheckpoints(chunk)) {
+        if (
+          checkpoint.chunkId !== chunk.id ||
+          checkpoint.actorId !== actorId ||
+          checkpoint.physicalLife !== chunk.physicalLife ||
+          checkpoint.epoch !== chunk.epoch ||
+          !ordinal(checkpoint.ordinal) ||
+          !ordinal(checkpoint.acquisition) ||
+          !finite(checkpoint.at) ||
+          checkpoint.at < 0 ||
+          checkpoint.at > world.simTime ||
+          !ordinal(checkpoint.order) ||
+          !checkpoint.subject ||
+          !checkpoint.facets.length
+        )
+          throw new Error('Invalid retained field checkpoint.');
+        validateFields(checkpoint);
+        if(checkpoint.availability)validateFieldAvailability(checkpoint.availability,checkpoint.facets,checkpoint.at);
+      }
+      for (const confirmation of temporalEntryConfirmations(chunk)) {
+        const parent = temporalChunkReceipt(chunk, confirmation.receiptOrdinal);
+        if (!ordinal(confirmation.receiptOrdinal) || !ordinal(confirmation.acquisition) ||
+          !finite(confirmation.at) || confirmation.at < 0 || confirmation.at > world.simTime ||
+          !ordinal(confirmation.order) || !confirmation.subject || !ordinal(confirmation.original.ordinal) ||
+          !parent || parent.acquisition !== confirmation.acquisition || parent.at !== confirmation.at ||
+          parent.order !== confirmation.order)
+          throw new Error('Invalid temporal confirmation.');
+        const reference=temporalConfirmationReference(confirmation);
+        const fragment=validateReference(reference);
+        const supported=validateStoredValue(reference,fragment,originals,{actorId,physicalLife:chunk.physicalLife},confirmation.at,sources);
+        validateReceiver(supported,{actorId,physicalLife:chunk.physicalLife},confirmation.at);
+        const detail=confirmation.detailSupport;
+        if (detail) {
+          if (supported.kind!=='body' || !hasRecordFields(detail,['proof','from','through','acquiredAt']) ||
+            ![detail.from,detail.through,detail.acquiredAt].every(finite) || detail.from<0 ||
+            detail.from>detail.through || detail.through>detail.acquiredAt || detail.acquiredAt>confirmation.at)
+            throw new Error('Invalid confirmed outward detail support.');
+          validateReceivedFacetProof(detail.proof,{actorId,physicalLife:chunk.physicalLife},confirmation.at);
+        }
+      }
       const subjects = new Set<string>(),
         references = new Set<string>(),
         aliases = new Set<string>(),
@@ -472,32 +736,14 @@ export function validateTemporalEvidenceState(
         lastAt = chunk.fromAt;
       for (const receipt of temporalChunkReceipts(chunk)) {
         const key = JSON.stringify([receipt.physicalLife, receipt.epoch, receipt.ordinal]);
+        validateReceipt(receipt);
         if (
-          !record(receipt) ||
-          receipt.actorId !== actorId ||
           receipt.physicalLife !== chunk.physicalLife ||
           receipt.epoch !== chunk.epoch ||
-          !ordinal(receipt.ordinal) ||
-          receipt.ordinal <= lastOrdinal ||
-          receiptKeys.has(key) ||
-          !finite(receipt.at) ||
-          receipt.at < lastAt ||
-          receipt.at > chunk.throughAt ||
-          !ordinal(receipt.order) ||
-          typeof receipt.subject !== 'string' ||
-          !receipt.subject ||
-          (receipt.subjectIdentity !== undefined &&
-            !validObserverSubject(receipt.subjectIdentity)) ||
-          !['baseline', 'change', 'loss', 'occurrence', 'attention-exit', 'receiver-frame'].includes(
-            receipt.change,
-          ) ||
-          typeof receipt.required !== 'boolean' ||
-          !strings(receipt.sourceIds) ||
-          !Array.isArray(receipt.facets) ||
-          (!receipt.facets.length && receipt.change!=='receiver-frame')
+          receipt.ordinal <= lastOrdinal || receiptKeys.has(key) ||
+          receipt.at < lastAt || receipt.at > chunk.throughAt
         )
-          throw new Error('Invalid personal temporal receipt.');
-        validateReceipt(receipt);
+          throw new Error('Invalid temporal chunk membership or order.');
         receiptKeys.add(key);
         lastOrdinal = receipt.ordinal;
         lastAt = receipt.at;
@@ -505,9 +751,25 @@ export function validateTemporalEvidenceState(
         for (const subject of receipt.contextSubjects ?? []) subjects.add(subject);
         for (const alias of temporalReceiptAliases(receipt, sources, world)) aliases.add(alias);
         for (const id of temporalReceiptIndividualIds(receipt, sources)) individuals.add(id);
-        for (const facet of receipt.facets) for(const reference of temporalFacetValueReferences(facet)) {
-          references.add(reference.blockId);
-        }
+        for (const facet of receipt.facets)
+          for (const reference of temporalFacetValueReferences(facet)) {
+            references.add(reference.blockId);
+          }
+      }
+      for (const checkpoint of temporalEntryCheckpoints(chunk)) {
+        subjects.add(checkpoint.subject);
+        for (const alias of temporalReceiptAliases(checkpoint, sources, world)) aliases.add(alias);
+        for (const id of temporalReceiptIndividualIds(checkpoint, sources)) individuals.add(id);
+        for (const facet of checkpoint.facets)
+          for (const reference of temporalFacetValueReferences(facet))
+            references.add(reference.blockId);
+      }
+      for (const confirmation of temporalEntryConfirmations(chunk)) {
+        subjects.add(confirmation.subject);
+        const reference=temporalConfirmationReference(confirmation);
+        for (const alias of temporalReceiptAliases({facets:[reference],sourceIds:[]},sources,world)) aliases.add(alias);
+        for (const id of temporalReceiptIndividualIds({facets:[reference]},sources)) individuals.add(id);
+        for (const value of temporalFacetValueReferences(reference)) references.add(value.blockId);
       }
       if (
         temporalChunkReceipts(chunk)[0]!.ordinal !== chunk.fromOrdinal ||
@@ -524,7 +786,9 @@ export function validateTemporalEvidenceState(
         chunk.individualIds.some((id) => !individuals.has(id)) ||
         chunk.bytes !== temporalChunkLogicalBytes(chunk, sources)
       )
-        throw new Error('Inconsistent temporal chunk metadata.');
+        throw new Error(
+          `Inconsistent temporal chunk metadata (${JSON.stringify({ subjects: [chunk.subjects.length, subjects.size], sources: [chunk.sourceIds.length, aliases.size], references: [chunk.sourceRefs.length, references.size], individuals: [chunk.individualIds.length, individuals.size], bytes: [chunk.bytes, temporalChunkLogicalBytes(chunk, sources)] })}).`,
+        );
       if (
         chunk.epoch === actor.epoch &&
         chunk.physicalLife === actor.physicalLife &&

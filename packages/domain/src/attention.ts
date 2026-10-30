@@ -322,7 +322,7 @@ function currentPoint(
 function descriptionInputKey(owner: PerceptionEvidenceOwner, id: string): string {
   const current = readOnlyDraftView(owner.current);
   return JSON.stringify(
-    ['body', 'carried', 'public-attributes', 'association'].map((kind) => {
+    ['body', 'description', 'carried', 'public-attributes', 'association'].map((kind) => {
       const source = current[`${id}:${kind}`],
         lease = source && readOnlyDraftView(source);
       const original = lease && currentFacetOriginal(owner, lease);
@@ -347,7 +347,7 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
     bodyDescriptor = bodySource && readOnlyDraftView(bodySource).value,
     parts = bodyDescriptor && receivedBodyParts(world, bodyDescriptor),
     appearance = parts && readOnlyDraftView(parts.details);
-  const association = facet('association'),
+  const description=facet('description'),association = facet('association'),
     attributes = facet('public-attributes');
   const value = JSON.stringify(
     [
@@ -356,7 +356,7 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
             kind: appearance!.kind,
             appearance: appearance!.appearance,
             label: appearance!.label,
-            description: appearance!.description,
+            description: description?.kind==='description' ? description.text : appearance!.description,
             radius: appearance!.radius,
             height: appearance!.height,
             outward: appearance!.outward,
@@ -529,8 +529,6 @@ export function updateAttention(
     const location = locationSource && readOnlyDraftView(locationSource);
     const locationTimes = location && currentFacetTimes(owner, location),
       locationOriginal = location && currentFacetOriginal(owner, location);
-    const motionSource = readOnlyDraftView(owner.current)[`${sourceId}:observed-motion`];
-    const motion = motionSource && readOnlyDraftView(motionSource);
     const measured = currentPoint(owner, sourceId, world, observerId);
     const subject = bodySubject(sourceId);
     const candidate: AttentionCandidate = old
@@ -575,10 +573,6 @@ export function updateAttention(
       body.revision,
       location?.id,
       location?.revision,
-      // Ending an actually received motion interval can establish stationary
-      // support without moving the point. Recheck once, not on every clock tick.
-      motion?.id,
-      motion?.revision,
     ]);
     if (candidate.geometryRevision !== geometryRevision) {
       geometryChanged = true;
@@ -975,6 +969,7 @@ export function markAttentionRelationsDirty(
 ): void {
   const state = owned(world, observerId)?.attention;
   if (!state) return;
+  touchNativeEvidence(world,'perception',observerId);
   state.relationRevision++;
   for (const entry of attentionRelationAnchors(world, observerId))
     if (!anchors || anchors.has(entry.key))
@@ -1023,6 +1018,7 @@ export function attentionRelationOpportunity(
   | undefined {
   const state = owned(world, observerId)?.attention;
   if (!state || world.simTime < state.nextRelationAt) return undefined;
+  touchNativeEvidence(world,'perception',observerId);
   const policy = selectedAttentionPolicy(world);
   const families = new Map<string, Set<AttentionRelationFamily>>();
   const due = attentionRelationAnchors(world, observerId).filter((entry) => {
@@ -1070,6 +1066,7 @@ export function applyAttentionRelationEvaluations(
 ): AttentionCue[] {
   const state = owned(world, observerId)?.attention;
   if (!state) return [];
+  touchNativeEvidence(world,'perception',observerId);
   const policy = selectedAttentionPolicy(world).relation,
     cues: AttentionCue[] = [];
   const anchors=new Map(attentionRelationAnchors(world,observerId).map((entry)=>[entry.key,entry]));

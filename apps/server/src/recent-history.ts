@@ -38,6 +38,7 @@ function receivedText(values: readonly (TemporalValue | SensoryFacet)[]): string
   const parts: string[] = [];
   for (const value of values) {
     if (value.kind === 'personal-account') parts.push(historicalAccountText(value.text));
+    else if(value.kind==='description')parts.push(value.text);
     else if (value.kind === 'speech') parts.push(speechDescription(value.speech));
     else if (value.kind === 'sound') parts.push(soundDescription(value.sound));
     else if (value.kind === 'location') parts.push(receivedLocation(value.location));

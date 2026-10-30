@@ -7,6 +7,7 @@ import {
 import {
   captureReceivedReclamation,
   applyReceivedReclamation,
+  receivedReclamationNeedsPromptWork,
   type PreparedReceivedReclamation,
 } from './received-value-retirement.js';
 import { updateReceivedRetirementPressure } from '@open-legend/domain';
@@ -880,6 +881,7 @@ export class WorldService {
     this.receivedCleanupClosed = true;
     if (this.receivedCleanupTimer) clearTimeout(this.receivedCleanupTimer);
     this.receivedCleanupTimer = undefined;
+    this.receivedCleanupDueAt = undefined;
     this.assetAuthorityUnsubscribe?.();
     this.assetAuthorityUnsubscribe = undefined;
     this.projectionUnsubscribe?.();
@@ -2151,6 +2153,7 @@ export class WorldService {
   }
 
   private receivedCleanupTimer?: ReturnType<typeof setTimeout>;
+  private receivedCleanupDueAt?: number;
   private receivedCleanup?: Promise<boolean>;
   private receivedCleanupClosed = false;
   private receivedCleanupFailures = 0;
@@ -2158,10 +2161,12 @@ export class WorldService {
   private receivedErasureWaiting = 0;
   private refreshReceivedPressure(saved: SavedWorld): SavedWorld {
     const debt = this.store.receivedReclamationDebt;
-    if (!debt || !saved.world.receivedValues?.retirement) return saved;
-    const world = updateWorld(saved.world, (draft) => updateReceivedRetirementPressure(
-      draft, debt.journalBytes + 4 * 1024 * 1024, debt.maximumBytes,
-    ), { retainNativeValues: true });
+    if (!debt) return saved;
+    const world = updateWorld(saved.world, (draft) => {
+      const changed = updateReceivedRetirementPressure(draft, debt.journalBytes + 4 * 1024 * 1024, debt.maximumBytes);
+      if (changed && saved.world.nativeInterval) draft.nativeInterval = { ...saved.world.nativeInterval };
+    }, { retainNativeValues: true });
+    if (Object.isFrozen(saved.world)) freezeWorld(world, { completedTransition: true });
     return world === saved.world ? saved : { ...saved, world };
   }
   private assertReceivedDebt(world: WorldState): void {
@@ -2173,19 +2178,35 @@ export class WorldService {
       throw new OverloadError();
     }
   }
-  private scheduleReceivedCleanup(delay = 0): void {
-    if (this.receivedCleanupClosed || this.receivedCleanup || this.receivedCleanupTimer || this.receivedErasureWaiting ||
+  private scheduleReceivedCleanup(delay?: number): void {
+    if (this.receivedCleanupClosed || this.receivedCleanup || this.receivedErasureWaiting ||
         this.storageError || !this.store.prepareReceivedReclamation ||
         !Object.keys(this.world.receivedValues?.retirement?.pending ?? {}).length) return;
+    const debt = this.store.receivedReclamationDebt;
+    // Physical cleanup has no gameplay deadline. Amortize low-debt work rather
+    // than creating another durable save for every handful of released slots.
+    // Unknown charges and real byte pressure still wake promptly; block count is
+    // a preparation bound, not a reason to defeat batching with tiny allocations.
+    delay ??= this.receivedCleanupFailures
+      ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
+      : debt && receivedReclamationNeedsPromptWork(this.world, debt.journalBytes, debt.maximumBytes)
+        ? 0 : 1000;
+    const dueAt = performance.now() + delay;
+    if (this.receivedCleanupTimer) {
+      if (this.receivedCleanupDueAt! <= dueAt) return;
+      clearTimeout(this.receivedCleanupTimer);
+    }
+    this.receivedCleanupDueAt = dueAt;
     this.receivedCleanupTimer = setTimeout(() => {
       this.receivedCleanupTimer = undefined;
+      this.receivedCleanupDueAt = undefined;
       const running = this.runReceivedCleanup();
       this.receivedCleanup = running;
       void running.finally(() => {
         if (this.receivedCleanup === running) this.receivedCleanup = undefined;
         this.scheduleReceivedCleanup(this.receivedCleanupFailures
           ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
-          : this.receivedCleanupIdle ? 250 : 25);
+          : this.receivedCleanupIdle ? 250 : undefined);
       }).catch(() => undefined);
     }, delay);
     this.receivedCleanupTimer.unref();
@@ -2208,6 +2229,7 @@ export class WorldService {
         this.receivedCleanupIdle = false;
         await this.commit(retention.state, undefined, 'unchanged', undefined,
           undefined, undefined, undefined, retention);
+        countMetric('persistence.receivedCleanupCommits');
       });
       this.receivedCleanupFailures = 0;
       return !this.storageError;
@@ -2226,6 +2248,7 @@ export class WorldService {
     const deadline = performance.now() + 5000;
     if (this.receivedCleanupTimer) clearTimeout(this.receivedCleanupTimer);
     this.receivedCleanupTimer = undefined;
+    this.receivedCleanupDueAt = undefined;
     this.receivedErasureWaiting++;
     try {
       await this.receivedCleanup;

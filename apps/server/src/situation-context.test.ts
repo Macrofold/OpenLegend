@@ -575,6 +575,7 @@ describe('bounded received situation', () => {
         'attentionReferences',
         'retentionReferences',
         'receiptDetails',
+        'baselineDetails',
         'observationReferences',
         'presented',
         'currentReferences',
@@ -820,6 +821,8 @@ describe('bounded received situation', () => {
     const entries = Array.from({ length: 12 }, (_, ordinal) => ({
       receipt: {
         ...source.receipt,
+        id: `temporal-receipt-formatting-fixture-${ordinal}`,
+        epoch: 'formatting-fixture',
         ordinal,
         order: ordinal,
         at: 0,

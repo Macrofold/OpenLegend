@@ -126,6 +126,7 @@ export function toolStream(
   init: RequestInit,
   consume: (chunk: Uint8Array) => void,
   timeoutMs: number,
+  parent?: NetworkOperation,
 ): { ready: Promise<void>; done: Promise<void> } {
   if (
     (init.method !== undefined && init.method !== 'GET') ||
@@ -139,7 +140,7 @@ export function toolStream(
     established = resolve;
     refused = reject;
   });
-  const done = http.run({ timeoutMs, signal: init.signal ?? undefined }, (operation) =>
+  const use = (operation: NetworkOperation) =>
     consumeHttp(
       operation,
       {
@@ -163,8 +164,10 @@ export function toolStream(
         },
         end() {},
       },
-    ),
-  );
+    );
+  const done = parent
+    ? parent.within(timeoutMs, use)
+    : http.run({ timeoutMs, signal: init.signal ?? undefined }, use);
   void done.catch(refused);
   return { ready, done };
 }

@@ -8409,6 +8409,7 @@ function* updateEncounters(
           frame.sourceToken,
           frame.publicAttributes,
           selected,
+          frame.sourceDetailsToken,
         );
       reconcileCombatSight(
         world,
@@ -8556,6 +8557,8 @@ function* updateEncounters(
         normalSpeedSeconds(world, SIGHTING_POLICY.episodeGraceSeconds),
         frame.sourceToken,
         frame.publicAttributes,
+        undefined,
+        frame.sourceDetailsToken,
       );
     const newlySeen = samePeople
       ? []

@@ -230,6 +230,8 @@ interface Running {
   validity?: string;
   decisionPreparation?: RetainedDecisionPreparation;
   validityFor?: (world: WorldState) => string;
+  temporalSourcesCurrent?: () => boolean;
+  releasePreparedSources?: () => void;
   preparedResponse?: boolean;
   invalidated?: boolean;
   /** Per-decision accounting and level limits; absent for non-decision jobs. */
@@ -405,6 +407,11 @@ export class AiDirector {
           active.controller.abort();
         }
       for (const run of this.activeRuns) {
+        if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent()) {
+          run.invalidated = true;
+          run.controller.abort();
+          continue;
+        }
         if (run?.job.authority && !service.currentScope(run.job.authority, 'play', true)) {
           run.cancelReason = 'Control or access changed.';
           run.controller.abort();
@@ -1516,7 +1523,22 @@ export class AiDirector {
     return job.kind === 'invention' ? job.request.invention?.actorId : job.request.npcId;
   }
 
+  private clearPreparedSources(run: Running): void {
+    run.releasePreparedSources?.();
+    run.releasePreparedSources = undefined;
+    run.temporalSourcesCurrent = undefined;
+  }
+  private holdPreparedSources(
+    run: Running,
+    prepared: Awaited<ReturnType<typeof prepareDecision>>,
+  ): void {
+    this.clearPreparedSources(run);
+    run.releasePreparedSources = prepared.dispose;
+    run.temporalSourcesCurrent = prepared.temporalSourcesCurrent;
+  }
   private current(run: Running): string {
+    if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent())
+      throw new StopJob('stale', 'The selected personal evidence changed or expired.');
     const decision = run.job.decision;
     if (
       decision &&
@@ -1818,6 +1840,7 @@ export class AiDirector {
         }),
       )
       .finally(async () => {
+        this.clearPreparedSources(run);
         this.activeRuns.delete(run);
         if (run.immediateTimer) clearTimeout(run.immediateTimer);
         if (run.expiryTimer) clearTimeout(run.expiryTimer);
@@ -2287,6 +2310,7 @@ export class AiDirector {
     );
     const required = preparedResponseChoices(catalogue, profile.instructions, subjectLabels);
     required.feelings = interpretations.scopes;
+    this.clearPreparedSources(run);
     let prepared = await prepareDecision(
       this.service,
       this.recall,
@@ -2306,6 +2330,7 @@ export class AiDirector {
       'native-only',
       required,
     );
+    this.holdPreparedSources(run, prepared);
     interpretations.context = {
       ...interpretations.context,
       ...interpretations.bound.contextForFrame(
@@ -2314,7 +2339,7 @@ export class AiDirector {
       ),
     };
     const validityFor = (world: WorldState) =>
-      preparedResponseValidity(world, actorId, interpretations.scopes);
+      `${preparedResponseValidity(world, actorId, interpretations.scopes)}:${prepared.temporalSourcesCurrent()}`;
     run.validityFor = validityFor;
     run.validity = validityFor(this.service.world);
     const current = async () => {
@@ -2902,6 +2927,7 @@ export class AiDirector {
     let attentionCall = 0;
     const contextStartedAt = new Date().toISOString();
     run.validateJudgmentSource = undefined;
+    this.clearPreparedSources(run);
     let prepared = await prepareDecision(
       this.service,
       this.recall,
@@ -2928,6 +2954,7 @@ export class AiDirector {
         : (request, operation) => this.generate<unknown>(run, request, operation),
       run.job.decision ? 'native-only' : 'ordinary',
     );
+    this.holdPreparedSources(run, prepared);
     run.validateJudgmentSource = () => prepared.validateConversation();
     this.current(run);
     const validity = run.job.decision ? decisionValidity(this.service.world, actorId) : undefined;
@@ -4068,8 +4095,9 @@ export class AiDirector {
           this.service.notify();
         });
       if (this.immediateRuns.size >= 2 || this.stopped || this.service.paused) return;
-      const world = this.service.world;
-      const policy = world.cognitionPolicy;
+      const readWorld = () => this.service.world;
+      const worldId = readWorld().id;
+      const policy = readWorld().cognitionPolicy;
       const generation = this.service.generation;
       // One change-fed intake: cheap per-character tokens; visibility reruns only for a
       // character whose own exposure or position changed (EPR05).
@@ -4077,73 +4105,72 @@ export class AiDirector {
       timedSync('cognition.thoughtRefresh', () => {
         try {
           if (
-            this.thoughtInputWorld === world &&
+            this.thoughtInputWorld === readWorld() &&
             this.thoughtInputScope === generation &&
-            Object.isFrozen(world)
+            Object.isFrozen(readWorld())
           ) {
             // A repeat poll of the exact same immutable world cannot acquire new
             // native evidence. Retained native arithmetic replaces that world even
             // when actor anchors stay identical, so current meter concerns refresh.
             // Deferred spatial preparation can complete meanwhile,
             // so those characters still refresh; deadlines/durability stay live below.
-            this.thoughtWork.refreshAffected(world, this.thoughtInputs.pendingExposure());
+            this.thoughtWork.refreshAffected(readWorld(), this.thoughtInputs.pendingExposure());
           } else {
             const affected =
               this.thoughtInputWorld && this.thoughtInputScope === generation
-                ? this.thoughtInputs.affected(this.thoughtInputWorld, world)
+                ? this.thoughtInputs.affected(this.thoughtInputWorld, readWorld())
                 : undefined;
             if (affected) {
               for (const id of this.thoughtInputs.pendingExposure()) affected.add(id);
-              this.thoughtWork.refreshAffected(world, affected);
+              this.thoughtWork.refreshAffected(readWorld(), affected);
             } else {
-              this.thoughtInputs.reconcile(world);
+              this.thoughtInputs.reconcile(readWorld());
               this.thoughtWork.refresh(
-                world,
-                (id, world, verify) => this.thoughtInputs.read(world, id, verify),
+                readWorld(),
+                (id, nativeWorld, verify) => this.thoughtInputs.read(nativeWorld, id, verify),
                 generation,
               );
             }
-            this.thoughtInputWorld = world;
+            this.thoughtInputWorld = readWorld();
             this.thoughtInputScope = generation;
           }
         } finally {
           this.thoughtInputs.refreshed();
         }
       });
-      const actors = this.thoughtWork
-        .ready(
-          this.now(),
-          world.simTime,
-          (id) =>
-            entityGet(world.entities, id)?.actor?.controller === 'npc' &&
-            !this.escalator.hasActor(id) &&
-            ![...this.activeRuns].some((run) => run.job.decision?.actorId === id) &&
-            !entityGet(world.entities, id)?.actor?.incapacitated &&
-            this.thoughtInputs.visible(id) !== undefined,
-        )
-        .map((id) => entityGet(world.entities, id)!);
+      const actors = this.thoughtWork.ready(
+        this.now(),
+        readWorld().simTime,
+        (id) =>
+          entityGet(readWorld().entities, id)?.actor?.controller === 'npc' &&
+          !this.escalator.hasActor(id) &&
+          ![...this.activeRuns].some((run) => run.job.decision?.actorId === id) &&
+          !entityGet(readWorld().entities, id)?.actor?.incapacitated &&
+          this.thoughtInputs.visible(id) !== undefined,
+      );
       const generations = new Map(
-        actors.map((entity) => [entity.id, this.thoughtWork.capture(world, entity.id)]),
+        actors.map((id) => [id, this.thoughtWork.capture(readWorld(), id)]),
       );
       const scheduled = new Map(
         await Promise.all(
           actors.map(
-            async (e) =>
-              [e.id, await this.readSchedule(`semantic-schedule:${world.id}:${e.id}`)] as const,
+            async (id) =>
+              [id, await this.readSchedule(`semantic-schedule:${worldId}:${id}`)] as const,
           ),
         ),
       );
       // `ready` already ordered characters fairly: urgent or long-waiting work, then the
       // longest-waiting; every returned character is inspected until one is admitted.
-      for (const entity of actors) {
-        const actor = entity.actor!;
-        if (!actor.alive || actor.incapacitated) continue;
-        const key = `semantic-schedule:${world.id}:${entity.id}`;
-        const last = scheduled.get(entity.id);
+      if (generation !== this.service.generation) return;
+      for (const actorId of actors) {
+        const initial = entityGet(readWorld().entities, actorId)?.actor;
+        if (!initial?.alive || initial.incapacitated) continue;
+        const key = `semantic-schedule:${worldId}:${actorId}`;
+        const last = scheduled.get(actorId);
         // Only records newer than the considered-evidence watermark, not all retained history.
         const { records: all, maxSequence } = unseenExperiences(
-          world,
-          entity.id,
+          readWorld(),
+          actorId,
           last?.watermark ?? 0,
           undefined,
           // Keep everything the trigger filter below could select, plus speech for ownership.
@@ -4164,6 +4191,10 @@ export class AiDirector {
             )
             .map((memory) => memory.eventId ?? memory.id),
         );
+        if (generation !== this.service.generation) return;
+        const entity = entityGet(readWorld().entities, actorId);
+        if (!entity?.actor?.alive || entity.actor.incapacitated) continue;
+        const actor = entity.actor;
         const unseen = all
           .filter((memory) => {
             // Spoken output and its native completion stay in memory. Neither is
@@ -4194,7 +4225,7 @@ export class AiDirector {
               typeof event.data['responseId'] === 'string' &&
               typeof event.data['appraisalInputSequence'] === 'number' &&
               typeof event.data['appraisalCauseIds'] === 'string' &&
-              !!world.responseReceipts?.[event.data['responseId']];
+              !!readWorld().responseReceipts?.[event.data['responseId']];
             // Only this pipeline's admitted interpretation receipts were consumed
             // internally. Its later physical results remain new personal evidence.
             return (
@@ -4210,15 +4241,12 @@ export class AiDirector {
         const interruptions = this.responseInterruptions(entity.id, last?.watermark ?? 0).filter(
           (entry) => unseenIds.has(entry.eventId),
         );
-        const preparedResult = preparedResponseResult(world, entity.id, [...unseenIds]);
-        const nativeCauses = currentAttentionCues(world, entity.id).flatMap((cue) => {
-          const candidate =
-            world.perceptionEvidence?.[entity.id]?.attention?.candidates[cue.anchorKey];
-          if (!candidate) return [];
+        const preparedResult = preparedResponseResult(readWorld(), entity.id, [...unseenIds]);
+        const nativeCauses = currentAttentionCues(readWorld(), entity.id).flatMap((cue) => {
           const key = JSON.stringify([cue.anchorKey, cue.family]),
-            qualitativeRevision = candidate.descriptionRevision,
-            severity = selectedAttentionPolicy(world).urgentCue;
-          return semanticCauseResolved(world, entity.id, key, qualitativeRevision, severity)
+            qualitativeRevision = cue.descriptionRevision,
+            severity = selectedAttentionPolicy(readWorld()).urgentCue;
+          return semanticCauseResolved(readWorld(), entity.id, key, qualitativeRevision, severity)
             ? []
             : [{ key, qualitativeRevision, severity, generation: cue.generation }];
         });
@@ -4253,7 +4281,7 @@ export class AiDirector {
           Math.max(last?.watermark ?? 0, maxSequence),
           this.service.durable.nextId,
         );
-        const review = this.thoughtInputs.stimulusReview(world, entity.id);
+        const review = this.thoughtInputs.stimulusReview(readWorld(), entity.id);
         if (
           !this.thoughtWork.inspected(
             entity.id,
@@ -4264,27 +4292,28 @@ export class AiDirector {
           )
         )
           continue;
-        const nativeProtection = nativeProtectionReason(world, entity.id);
+        const nativeProtection = nativeProtectionReason(readWorld(), entity.id);
         // These descriptions share the same permitted world and character. No
         // await or mutation separates comparison from the initiating sentence.
-        const attributes = projectAttributes(world, entity, 'owner');
+        const attributes = projectAttributes(readWorld(), entity, 'owner');
         const fingerprint = digest({
           nativeProtection,
           // Relevant intent/knowledge changes create an ordinary opportunity, not mandatory generation.
           // docs/architecture.md#change-driven-exposure-and-reaction-intake
           goal: currentGoal(actor),
-          techniques: (world.knowledge[entity.id] ?? []).map((record) => record.recipeId),
-          bodyInputs: bodyReconsiderationInputs(world, entity, 'director'),
-          bodyPolicyPin: world.moduleManifest.bodyPolicyPin,
+          techniques: (readWorld().knowledge[entity.id] ?? []).map((record) => record.recipeId),
+          bodyInputs: bodyReconsiderationInputs(readWorld(), entity, 'director'),
+          bodyPolicyPin: readWorld().moduleManifest.bodyPolicyPin,
           concerns: attributes
             .filter(
               (v) =>
                 v.concern &&
-                world.moduleManifest.definitions.find((d) => d.id === v.id)?.concern?.reconsider,
+                readWorld().moduleManifest.definitions.find((d) => d.id === v.id)?.concern
+                  ?.reconsider,
             )
             .map((v) => [v.id, v.concern]),
-          mind: world.innerWorlds?.[entity.id]?.revision,
-          knowledge: world.knowledgeRevisions?.[entity.id] ?? 0,
+          mind: readWorld().innerWorlds?.[entity.id]?.revision,
+          knowledge: readWorld().knowledgeRevisions?.[entity.id] ?? 0,
           policy: policy.revision,
           // A due review of an ongoing salient stimulus is a fresh opportunity (EPR06).
           reviews: review.key,
@@ -4295,7 +4324,7 @@ export class AiDirector {
           goals: actor.agency.goals
             .filter((goal) => goal.author !== 'actor')
             .map((goal) => [goal.id, goal.revision, goal.status]),
-          techniques: (world.knowledge[entity.id] ?? []).map((record) => [
+          techniques: (readWorld().knowledge[entity.id] ?? []).map((record) => [
             record.recipeId,
             record.evidenceId,
           ]),
@@ -4312,8 +4341,9 @@ export class AiDirector {
             .filter(
               (value) =>
                 value.concern &&
-                world.moduleManifest.definitions.find((definition) => definition.id === value.id)
-                  ?.concern?.reconsider,
+                readWorld().moduleManifest.definitions.find(
+                  (definition) => definition.id === value.id,
+                )?.concern?.reconsider,
             )
             .map((value) => [value.id, value.concern]),
         });
@@ -4325,11 +4355,11 @@ export class AiDirector {
           !nativeCauses.length &&
           !meaningfulChange &&
           !newReview &&
-          selectedAttentionPolicy(world).semantic.discovery &&
-          Object.values(world.perceptionEvidence?.[entity.id]?.attention?.candidates ?? {}).some(
-            (candidate) => candidate.presentedDescription !== candidate.descriptionRevision,
-          )
-            ? discoveryInterval(world, entity.id)
+          selectedAttentionPolicy(readWorld()).semantic.discovery &&
+          Object.values(
+            readWorld().perceptionEvidence?.[entity.id]?.attention?.candidates ?? {},
+          ).some((candidate) => candidate.presentedDescription !== candidate.descriptionRevision)
+            ? discoveryInterval(readWorld(), entity.id)
             : undefined;
         const opportunity = digest({
           semanticRevision,
@@ -4374,7 +4404,7 @@ export class AiDirector {
             : nativeCauses.length
               ? 'I notice a newly supported change in nearby physical relations.'
               : newReview
-                ? `I am still aware of ${observerDescription(world, entity.id, review.due[0]!, 'definite')}.`
+                ? `I am still aware of ${observerDescription(readWorld(), entity.id, review.due[0]!, 'definite')}.`
                 : discovery !== undefined
                   ? 'I have a free moment to consider my surroundings.'
                   : actor.agency.plan?.status === 'blocked'
@@ -4398,7 +4428,7 @@ export class AiDirector {
           await this.log.save({
             id,
             kind: 'Semantic trigger',
-            worldId: world.id,
+            worldId: readWorld().id,
             actorId: entity.id,
             actorName: entity.name,
             trigger: diagnosticTrigger,
@@ -4407,7 +4437,7 @@ export class AiDirector {
             status: 'completed',
             disposition: 'skipped',
             route: 'level0',
-            gameTime: world.simTime,
+            gameTime: readWorld().simTime,
             input: {
               reason: urgentNeed,
               stimulus: diagnosticTrigger,
@@ -4541,7 +4571,7 @@ export class AiDirector {
                 admittedAt: this.now(),
                 triggerGameTime: latest[0]?.at,
                 triggerAgeGameSeconds: latest[0]
-                  ? Math.max(0, world.simTime - latest[0].at)
+                  ? Math.max(0, readWorld().simTime - latest[0].at)
                   : undefined,
               },
               stimulus: diagnosticTrigger,

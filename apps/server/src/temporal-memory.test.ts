@@ -1,10 +1,10 @@
+import {appendTemporalReceipt} from '../../../packages/domain/src/temporal-evidence.js';
 import { temporalHistoryWindow } from './temporal-storage.js';
 import { temporalChunkReceipts, temporalChunkReferences } from '@open-legend/domain';
 import { validateTemporalEvidenceState } from '../../../packages/domain/src/temporal-validation.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import * as worldComposition from '../../../packages/domain/src/world-composition.js';
 import {
-  appendTemporalReceipt,
   selectedTemporalPolicy,
   PLAYER_ID,
   NPC_ID,
@@ -267,11 +267,12 @@ describe('bounded personal temporal storage', () => {
     });
     const subject = currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.exposure.episodeId,
       installed = selectedTemporalPolicy(service.world);
-    // A disposable authored allowance exercises the same pressure branch without
-    // manufacturing 131,073 changes or changing the bundled world's production policy.
+    // This receiving operation includes nineteen held-field confirmations and one
+    // position change. Fit several whole operations while still forcing a prefix
+    // release, without changing the bundled world's production allowance.
     const policy = vi.spyOn(worldComposition, 'selectedTemporalPolicy').mockReturnValue({
       ...installed,
-      recent: { ...installed.recent, maxChanges: 12 },
+      recent: { ...installed.recent, maxChanges: 64 },
     });
     try {
       for (const x of [4, 5, 6, 7, 8, 9, 8, 7, 6, 5, 4, 5, 6, 7, 8])
@@ -314,7 +315,7 @@ describe('bounded personal temporal storage', () => {
             )
             .get(service.world.id, PLAYER_ID))!['count'],
         ),
-      ).toBeLessThanOrEqual(12);
+      ).toBeLessThanOrEqual(64);
       expect(currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.value.kind).toBe('body');
       validateTemporalEvidenceState((await store.records.load(true))!.state.world);
     } finally {

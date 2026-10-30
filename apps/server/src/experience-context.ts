@@ -12,6 +12,8 @@ import {
   type MemoryRecord,
   type SensoryFacet,
   type CapturedCurrentFacet,
+  type CurrentBodyPoseSupport,
+  type CurrentDescriptionSupport,
   type ReceivedLocationSample,
   type ReceivedFacetProof,
   type PerceivedSpeech,
@@ -240,6 +242,8 @@ export function facetValueForModel(
   frame = evidenceFrame(world, actorId),
 ): unknown {
   switch (value.kind) {
+    case 'description':
+      return { kind: value.kind, text: value.text };
     case 'body':
       return {
         kind: value.kind,
@@ -474,6 +478,36 @@ function motionSampleForModel(
     confirmedThrough: sample.confirmedThrough,
   };
 }
+export function bodyPoseSupportForModel(
+  world: ExperiencePresentation,
+  actorId: string,
+  support: CurrentBodyPoseSupport,
+  frame: ModelSpatialFrame,
+  decorate: (value: object, frame: unknown) => object = (value, frame) => ({ ...value, frame }),
+) {
+  return decorate(
+    {
+      proof: facetSupportForModel(world, actorId, support),
+      measuredFrom: support.poseMeasuredFrom,
+      measuredThrough: support.poseMeasuredThrough,
+      acquiredAt: support.poseAcquiredAt,
+    },
+    modelObservationFrame(frame, support.frame),
+  );
+}
+export function bodyDescriptionSupportForModel(
+  world: ExperiencePresentation,
+  actorId: string,
+  support: CurrentDescriptionSupport,
+) {
+  return {
+    proof: facetSupportForModel(world, actorId, support),
+    measuredFrom: support.descriptionMeasuredFrom,
+    measuredThrough: support.descriptionMeasuredThrough,
+    acquiredAt: support.descriptionAcquiredAt,
+  };
+}
+
 export function currentFacetForModel(
   world: ExperiencePresentation,
   actorId: string,
@@ -501,6 +535,18 @@ export function currentFacetForModel(
         }
       : {}),
     value: facetValueForModel(world, actorId, snapshot.value, snapshot.original.source.id, frame),
+    ...(snapshot.poseSupport
+      ? { positionSupport: bodyPoseSupportForModel(world, actorId, snapshot.poseSupport, frame) }
+      : {}),
+    ...(snapshot.descriptionSupport
+      ? {
+          descriptionSupport: bodyDescriptionSupportForModel(
+            world,
+            actorId,
+            snapshot.descriptionSupport,
+          ),
+        }
+      : {}),
     measuredFrom: snapshot.valueMeasuredFrom,
     measuredThrough: snapshot.valueMeasuredThrough,
     acquiredAt: snapshot.valueAcquiredAt,

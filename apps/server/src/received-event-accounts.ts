@@ -163,14 +163,6 @@ export function receivedEventAccounts(
             world,
             actorId,
             {
-              blockId: '',
-              valueOrdinal: facet.ordinal,
-              ordinal: facet.ordinal,
-              role: facet.role,
-              asOf: facet.asOf,
-              measuredFrom: facet.measuredFrom,
-              measuredThrough: facet.measuredThrough,
-              acquiredAt: observation.acquiredAt,
               original: {
                 source: {
                   family: 'native-exposure',

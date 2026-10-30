@@ -190,7 +190,7 @@ export function storyAccountSql(alias = 'p'): string {
         FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') WITH ORDINALITY f(value,ordinal)
         JOIN dependencies d ON (d.entry->>'ordinal')::bigint=(f.value#>>'{value,0}')::bigint
       ) SELECT json_build_object('owner',json_build_object(
-          'actorId',c.actor_id,'physicalLife',c.physical_life,'epoch',c.receipt_epoch,
+          'id',c.source_id,'actorId',c.actor_id,'physicalLife',c.physical_life,'epoch',c.receipt_epoch,
           'entries',(SELECT json_agg(entry ORDER BY (entry->>'ordinal')::bigint) FROM entries)),
           'values',COALESCE((SELECT json_agg(value ORDER BY ordinal) FROM selected_values WHERE value->>'kind' IN ('event','sound')),'[]'::json))::text AS payload
       WHERE EXISTS (SELECT 1 FROM selected)

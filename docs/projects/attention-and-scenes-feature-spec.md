@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                          | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Supported core exists; replacement sensing/recording design is specified and its implementation and complete-game acceptance remain open. | 2026-10-29   |
+| In progress | Compact sensing and recording are integrated; lifecycle, regression and complete-game acceptance remain in progress. | 2026-10-29   |
 
-**Feature redesign updated and architecture used 2026-10-29 18:19 UTC**, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `6edf699f9b3535222308d09af6234b91b3b74fed`. This update specifies the design only; runtime behavior remains unchanged.
+**Feature redesign updated and architecture used 2026-10-29 18:19 UTC**, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `6edf699f9b3535222308d09af6234b91b3b74fed`. Compact acquisition, independently timed fields and personal frame storage are integrated; required qualification remains open.
 
 **Supported attention/memory core implemented; broader scene proposals remain separate.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds, timed speech and voice-media delivery remain separate proposals outside the implemented core.
 

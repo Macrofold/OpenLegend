@@ -205,14 +205,16 @@ export async function buildConversationContext(input: {
   preparation?: CognitionPreparation;
 }) {
   const { service, actorId, signal } = input;
-  let world: WorldState | undefined = service.world;
-  const worldId = world.id,
+  const readWorld = () => service.world;
+  const worldId = readWorld().id,
     generation = service.generation;
+  const initialWorld = new WeakRef(readWorld()),
+    initialPrivacy = speechPrivacy(readWorld(), actorId);
   const repository = service.store.memories;
   const head = input.preparation?.scope ?? (await service.store.records?.head());
   const scope: MemoryScope | undefined =
     input.preparation?.scope ??
-    (head ? { worldId: world.id, actorId, generation: head.generation } : undefined);
+    (head ? { worldId, actorId, generation: head.generation } : undefined);
   const required = new Set(input.requiredIds);
   const snapshot =
     input.preparation?.conversation ??
@@ -224,17 +226,17 @@ export async function buildConversationContext(input: {
           CONVERSATION_PREPARATION_BYTES,
         )
       : {
-          sequence: (world.experience?.awareness[actorId] ?? []).reduce(
+          sequence: (readWorld().experience?.awareness[actorId] ?? []).reduce(
             (latest, entry) => Math.max(latest, entry.sequence),
             0,
           ),
           ...(input.includeConversation
-            ? residentSpeechSources(world, actorId)
+            ? residentSpeechSources(readWorld(), actorId)
             : { sources: [], more: false }),
         });
   const sources = snapshot.sources;
   const maxBytes = Math.max(0, Math.min(CONVERSATION_BYTES, Math.floor(input.maxBytes)));
-  const key = conversationCompactionKey(world.id, actorId);
+  const key = conversationCompactionKey(worldId, actorId);
   const saved = input.includeConversation ? await service.store.getIntegration(key) : undefined;
   const parsed = cacheSchema.safeParse(saved);
   let cached: Compaction | undefined = parsed.success ? parsed.data : undefined;
@@ -244,7 +246,8 @@ export async function buildConversationContext(input: {
       cached.generation !== scope?.generation ||
       !validExperienceSummary(cached.value, actorId) ||
       cached.sourceDigest !== digest(cached.value.sources) ||
-      personalAttributionRevision(world, actorId, cached.value.entityIds) !== cached.perspective ||
+      personalAttributionRevision(readWorld(), actorId, cached.value.entityIds) !==
+        cached.perspective ||
       Buffer.byteLength(cached.value.text) > SUMMARY_BYTES ||
       !repository ||
       !scope ||
@@ -260,7 +263,7 @@ export async function buildConversationContext(input: {
           selected.map((source) => source.id),
           input.preparation?.bodies,
         )
-      : (world.experience?.awareness[actorId] ?? [])
+      : (readWorld().experience?.awareness[actorId] ?? [])
           .filter((entry) => selected.some((source) => source.id === entry.eventId))
           .map((entry) => ({
             entry: { source: 'awareness' as const, value: entry },
@@ -280,7 +283,7 @@ export async function buildConversationContext(input: {
       sourceEntry.revision !== source.revision
     )
       throw new Error('Selected personal speech changed during preparation.');
-    const candidate = projectConversationEntry(world!, actorId, sourceEntry.entry);
+    const candidate = projectConversationEntry(readWorld(), actorId, sourceEntry.entry);
     return {
       ...source,
       entry: sourceEntry.entry,
@@ -297,11 +300,11 @@ export async function buildConversationContext(input: {
   if (requiredTurns.length && projectionBytes(requiredLines, []) > maxBytes)
     throw new ContextBudgetError('Complete required conversation exceeds the input budget.');
   const optional = turns.filter((turn) => !required.has(turn.id));
-  const attribution = capturePersonalAttributionReader(world, actorId, [
+  const attribution = capturePersonalAttributionReader(readWorld(), actorId, [
     ...(cached?.value.entityIds ?? []),
     ...turns.flatMap((turn) => turn.entry.value.entityIds),
   ]);
-  const projectSummary = captureSummaryProjector(world, actorId, [
+  const projectSummary = captureSummaryProjector(readWorld(), actorId, [
     ...(cached ? [{ source: 'summary' as const, value: cached.value }] : []),
     ...turns.map((turn) => turn.entry),
   ]);
@@ -315,7 +318,7 @@ export async function buildConversationContext(input: {
     };
   };
   const validity: ConversationValidityState = {
-    checkedWorld: new WeakRef(world),
+    checkedWorld: initialWorld,
     boundSources: [],
     usedCache: undefined,
     boundEntities: [],
@@ -328,12 +331,11 @@ export async function buildConversationContext(input: {
     signal,
     repository,
     scope,
-    speechPrivacy(world, actorId),
+    initialPrivacy,
     validity,
   );
-  // Preparation has copied its finite personal sources and presentation. No old
-  // world remains in this async frame while optional compaction is running.
-  world = undefined;
+  // Only selected sources and their captured presentation cross compaction.
+  // Synchronous assembly reads current authority without retaining an old root.
   const deriveSummary = (
     part: Turn[],
     previous: Compaction | undefined,

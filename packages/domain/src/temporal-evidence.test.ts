@@ -465,7 +465,9 @@ it('records an actually attended resource target and a routine occurrence that d
   ];
   expect(setAttentionFocus(world, PLAYER_ID, keys)).toBe(true);
   world.simTime = 10;
-  branches.description = 'Newly exposed branches beside the path.';
+  // Broad reception can notice a changed outward label; unread rich prose cannot
+  // attract discovery before the subject actually receives detailed attention.
+  branches.name = 'Newly exposed branches beside the path.';
   initializePerception(world, []);
   expect(
     currentDetailedAttention(world, PLAYER_ID).some((entry) => entry.sourceId === branches.id),

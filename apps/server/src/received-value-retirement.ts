@@ -3,6 +3,7 @@ import {
   pruneReceivedValueBlock,
   updateReceivedRetirementPressure,
   updateWorld,
+  freezeWorld,
   type ReceivedValueBlock,
   type ReceivedValueRetirement,
   type WorldState,
@@ -24,9 +25,24 @@ const maximumOrdinals = 8192;
 const maximumBlocks = 32;
 const recordId = (id: string) => JSON.stringify(['world', 'receivedValues', 'sources', id]);
 type Candidate = ReceivedValueRetirement['pending'][string];
+
+/** Small known garbage can wait for the next coalesced batch. Unknown physical
+ * charges must be resolved promptly because they withhold optional recording. */
+export function receivedReclamationNeedsPromptWork(
+  world: WorldState,
+  journalBytes: number,
+  maximumDebtBytes: number,
+): boolean {
+  const retirement = world.receivedValues?.retirement;
+  return (
+    !!retirement &&
+    (retirement.bytes + journalBytes >= maximumDebtBytes / 8 ||
+      Object.values(retirement.pending).some((candidate) => candidate.unknown))
+  );
+}
 export interface ReceivedReclamationCapture {
   worldId: string;
-  candidates: Array<{ id: string; candidate: Candidate; resident?: ReceivedValueBlock }>;
+  candidates: Array<{ id: string; candidate: Candidate }>;
   resident: Map<string, ReadonlySet<number>>;
 }
 export interface PreparedReceivedReclamation {
@@ -42,7 +58,7 @@ export interface PreparedReceivedReclamation {
   release(): void;
 }
 
-/** Keep only the selected blocks and references across the SQL await, never a world root. */
+/** Keep only candidate metadata and references across the SQL await, never a world root. */
 export function captureReceivedReclamation(
   world: WorldState,
   selection?: ReadonlySet<string>,
@@ -53,14 +69,10 @@ export function captureReceivedReclamation(
   if (!ids.length) return;
   const start = retirement.cursor ? ids.indexOf(retirement.cursor) + 1 : 0;
   const candidates: ReceivedReclamationCapture['candidates'] = [];
-  let bytes = 0;
   for (let offset = 0; offset < ids.length && candidates.length < maximumBlocks; offset++) {
     const id = ids[(start + offset) % ids.length]!;
     const candidate = retirement.pending[id]!;
-    const resident = world.receivedValues!.sources[id];
-    const retained = resident && bytes + resident.bytes <= maximumBytes ? resident : undefined;
-    bytes += retained?.bytes ?? 0;
-    candidates.push({ id, candidate, ...(retained ? { resident: retained } : {}) });
+    candidates.push({ id, candidate });
   }
   if (!candidates.length) return;
   const all = referencedReceivedValues(world, { captures: false });
@@ -259,8 +271,13 @@ export async function prepareReceivedReclamation(
     // Its candidate remains generation-fenced through admission like every other.
     for (const id of ids)
       if (!sizes.has(id)) {
-        if (cold.get(id)?.size || capture.resident.get(id)?.size)
+        if (owned.has(id) || cold.get(id)?.size)
           throw new Error('A retained received-value source is unavailable.');
+        // Native progress can nominate a transient block before its first save.
+        // Its current owner is real, but absence from the durable snapshot proves
+        // neither corruption nor retirement. A later accepted write fences this
+        // ticket; otherwise the next bounded pass observes its save or release.
+        if (capture.resident.get(id)?.size) continue;
         unowned.add(id);
       }
   }
@@ -268,9 +285,9 @@ export async function prepareReceivedReclamation(
   const wantedBlocks: string[] = [],
     wantedOrdinals: number[] = [],
     buckets: number[] = [];
-  for (const { id, resident } of candidates) {
+  for (const { id } of candidates) {
     if (unowned.has(id)) continue;
-    const block = blocks.get(id) ?? resident;
+    const block = blocks.get(id);
     if (!block) continue;
     const unknown = block.values.flatMap((value, ordinal) =>
       value && !capture.resident.get(id)?.has(ordinal) && !cold.get(id)?.has(ordinal)
@@ -346,7 +363,12 @@ export function applyReceivedReclamation(
           ...(rows.get('mind_perception_values') ?? []),
           recordId(id),
         ]);
-      } else completed.add(id);
+      } else {
+        completed.add(id);
+        // A transient source can lose its final owner before its first save.
+        // Drop the resident bytes too; there is no durable allocation to await.
+        if (state.world.receivedValues?.sources[id]) changes.set(id, undefined);
+      }
       continue;
     }
     const cold = prepared.cold.get(id);
@@ -406,14 +428,16 @@ export function applyReceivedReclamation(
         delete retirement.pending[id];
       }
       for (const [id, block] of changes) {
-        const candidate = retirement.pending[id]!;
-        retirement.bytes += debts.get(id)! - (candidate.bytes ?? 0);
-        retirement.pending[id] = {
-          generation: candidate.generation,
-          bytes: debts.get(id)!,
-          stage: 'applying',
-          applicationRevision: revision,
-        };
+        if (!completed.has(id)) {
+          const candidate = retirement.pending[id]!;
+          retirement.bytes += debts.get(id)! - (candidate.bytes ?? 0);
+          retirement.pending[id] = {
+            generation: candidate.generation,
+            bytes: debts.get(id)!,
+            stage: 'applying',
+            applicationRevision: revision,
+          };
+        }
         if (block) owner.sources[id] = block;
         else delete owner.sources[id];
       }
@@ -441,9 +465,11 @@ export function applyReceivedReclamation(
             actor.capturesInvalidated = true;
           }
       updateReceivedRetirementPressure(draft, journalBytes, debtLimit);
+      if (state.world.nativeInterval) draft.nativeInterval = { ...state.world.nativeInterval };
     },
     { retainNativeValues: true },
   );
+  if (Object.isFrozen(state.world)) freezeWorld(world, { completedTransition: true });
   // Existing-row placement is a reclamation proof even when only a suffix changes.
   if (positions.size && !rows.has('mind_perception_values')) rows.set('mind_perception_values', []);
   return { state: world === state.world ? state : { ...state, world }, rows, positions, previous };

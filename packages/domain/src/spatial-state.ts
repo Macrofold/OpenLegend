@@ -264,6 +264,7 @@ export function setSpatialPosition(
     entityId: entity.id,
     before,
     after: point,
+    ...(movement?.continuity === 'physical' ? {} : { discontinuity: true as const }),
   });
   // One owned placement avoids proxy writes at every waypoint. Keep the physical
   // component attached: flight/fall controllers may hold its mutable progress.

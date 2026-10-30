@@ -71,7 +71,7 @@ export function experienceEmbeddingText(entry: ExperienceEntry, ownerId: string)
 
 /** Shared once by initial, routed and expanded received-history presentation. */
 export const RECEIVED_HISTORY_INSTRUCTIONS =
-  'Recent input contains selected historical receipts. A participant’s receivedSubject joins that occurrence to the same received subject, without revealing identity or intent. Partial coverage can omit retained intermediate events; request history when earlier detail is needed. Omission does not mean an event was never perceived or did not happen. History facts inherit facetDefaults; their own fields override them. A history frame number indexes frames in that same history result. A supplied-fact value reuses the exact already supplied source/ordinal value; its receipt timing, role and confirmations remain independent.';
+  'Recent input contains selected historical receipts. A participant’s receivedSubject joins that occurrence to the same received subject, without revealing identity or intent. Partial coverage can omit retained intermediate events; request history when earlier detail is needed. Omission does not mean an event was never perceived or did not happen. History facts inherit facetDefaults; their own fields override them. Baselines are previously received state supporting the named retained receipt at knownAt; their fact times remain original, and they are not new observations or earlier movement samples. Availability marks identify unchecked, unavailable or released field ordinals from the stated time; their last known values are not current observations or movement across that gap. A history frame number indexes frames in that same history result. A supplied-fact value reuses the exact already supplied source/ordinal value; its receipt timing, role and confirmations remain independent.';
 
 /** One owned frame per decision, shared by presentation and fixed-point movement.
  * Native evidence keeps its original world coordinates and acquisition frame. */
@@ -297,10 +297,12 @@ export function perceivedEntityText(
   ) =>
     `Measured at simulation second ${facet.valueMeasuredFrom}${facet.valueMeasuredThrough !== facet.valueMeasuredFrom ? `–${facet.valueMeasuredThrough}` : ''}; received at ${facet.valueAcquiredAt}.`;
   const text = [
-    `I can see ${label} (ID:${entityHandle(world, observerId, entityId)}). ${received(body)}`,
+    `I can see ${label} (ID:${entityHandle(world, observerId, entityId)}). Physical form: ${received(body)}`,
   ];
   if (body.value.body.description)
-    text.push(`Observed description: ${body.value.body.description}`);
+    text.push(
+      `Observed description: ${body.value.body.description}${body.descriptionSupport ? ` ${received({ valueMeasuredFrom: body.descriptionSupport.descriptionMeasuredFrom, valueMeasuredThrough: body.descriptionSupport.descriptionMeasuredThrough, valueAcquiredAt: body.descriptionSupport.descriptionAcquiredAt })}` : ''}`,
+    );
   const outward = body.value.body.outward.filter(Boolean);
   if (outward.length) text.push(`Observed outward signs: ${outward.join(', ')}.`);
   for (const facet of facts) {
@@ -347,7 +349,7 @@ export function relativeLocation(
     Math.abs(dy) < 0.1
       ? 'at roughly my elevation'
       : `about ${Math.abs(dy).toFixed(1)} m ${dy > 0 ? 'above' : 'below'} me`;
-  return `${horizontal < 0.1 ? 'At my horizontal position' : `About ${horizontal.toFixed(1)} m horizontally ${direction}`}, ${height}. Position measured at simulation second ${received.valueMeasuredFrom}; received at ${received.valueAcquiredAt}.`;
+  return `${horizontal < 0.1 ? 'At my horizontal position' : `About ${horizontal.toFixed(1)} m horizontally ${direction}`}, ${height}. Position measured at simulation second ${received.poseSupport?.poseMeasuredFrom ?? received.valueMeasuredFrom}; received at ${received.poseSupport?.poseAcquiredAt ?? received.valueAcquiredAt}.`;
 }
 
 export { describePossession as possessionText } from '@open-legend/domain';

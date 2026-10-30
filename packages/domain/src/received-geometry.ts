@@ -78,12 +78,13 @@ interface GeometryFragment extends FeatureExtent {
   observation: ObservationContribution;
 }
 export interface ReceivedGeometryState {
+  inputRevision: number;
   basis: string;
   sourceBasis: string;
   episodeId: string;
   frame: ObservationFrame;
   frameAt: number;
-  priorFrame?: { at:number; frame:ObservationFrame };
+  priorFrame?: { at: number; frame: ObservationFrame };
   eye: Position;
   radius: number;
   geometryRevision: number;
@@ -365,6 +366,21 @@ function contextAnchors(
 }
 /** Acquire selected physical features, never a field-of-view ground grid. The
  * finite cursor is over shared source features; split scratch dies at this boundary. */
+export function expireReceivedGeometryMotion(world: WorldState, observerId: string): void {
+  const state = world.perceptionEvidence?.[observerId]?.geometry;
+  if (
+    !state?.priorFrame ||
+    world.simTime < state.frameAt + selectedAttentionPolicy(world).geometry.intervalSeconds
+  )
+    return;
+  delete state.priorFrame;
+  markAttentionRelationsDirty(
+    world,
+    observerId,
+    ['closing-body', 'closing-drop'],
+    new Set([SELF_RELATION_KEY]),
+  );
+}
 export function refreshReceivedGeometry(
   world: WorldState,
   observerId: string,
@@ -380,11 +396,22 @@ export function refreshReceivedGeometry(
   }
   const policy = selectedAttentionPolicy(world).geometry,
     previous = owner.geometry && readOnlyDraftView(owner.geometry);
-  if(previous && JSON.stringify(previous.frame.positionAtObservation)!==JSON.stringify(input.frame.positionAtObservation))
-    markAttentionRelationsDirty(world,observerId,['closing-body','closing-drop'],new Set([SELF_RELATION_KEY]));
+  expireReceivedGeometryMotion(world, observerId);
+  if (
+    previous &&
+    JSON.stringify(previous.frame.positionAtObservation) !==
+      JSON.stringify(input.frame.positionAtObservation)
+  )
+    markAttentionRelationsDirty(
+      world,
+      observerId,
+      ['closing-body', 'closing-drop'],
+      new Set([SELF_RELATION_KEY]),
+    );
   if (previous && previous.sourceBasis === input.sourceBasis && world.simTime < previous.nextAt) {
     if (previous.basis === input.basis && previous.supportedThrough !== world.simTime) {
       owner.geometry!.supportedThrough = world.simTime;
+      owner.geometry!.inputRevision = world.sensory?.revision ?? 0;
       return { acquired: [], changed: true };
     }
     return { acquired: [], changed: false };
@@ -409,11 +436,12 @@ export function refreshReceivedGeometry(
   if (previous?.basis === basis && previous.queryKey === queryKey && previous.finished) {
     if (previous.supportedThrough === world.simTime) return { acquired: [], changed: false };
     owner.geometry!.supportedThrough = world.simTime;
-    markAttentionRelationsDirty(world, observerId, ['closing-drop']);
+    owner.geometry!.inputRevision = world.sensory?.revision ?? 0;
     return { acquired: [], changed: true };
   }
   const state: ReceivedGeometryState = {
     basis,
+    inputRevision: world.sensory?.revision ?? 0,
     sourceBasis: input.sourceBasis,
     episodeId:
       previous?.sourceBasis === input.sourceBasis
@@ -421,7 +449,14 @@ export function refreshReceivedGeometry(
         : nextId(world, 'geometry-exposure'),
     frame: input.frame,
     frameAt: world.simTime,
-    ...(previous?.sourceBasis===input.sourceBasis ? {priorFrame:previous.basis===input.basis ? previous.priorFrame : {at:previous.frameAt,frame:previous.frame}} : {}),
+    ...(previous?.sourceBasis === input.sourceBasis
+      ? {
+          priorFrame:
+            previous.basis === input.basis
+              ? owner.geometry?.priorFrame
+              : { at: previous.frameAt, frame: previous.frame },
+        }
+      : {}),
     eye: input.eye,
     radius: input.radius,
     geometryRevision: input.map.spatial.revision,
@@ -474,11 +509,30 @@ export function refreshReceivedGeometry(
   };
   const pending: Candidate[] = [],
     keys = new Set<string>();
-  const selectionLimit=Math.max(state.visited,Math.floor(policy.visits/2));
-  const enqueue = (extent: FeatureExtent, feature: PhysicalFeature, old?: GeometryFragment, allowance=selectionLimit) => {
+  // The shared index has already charged these source visits. Reject a whole
+  // back face before allocating anchor extents or spending convex-view work.
+  const frontFacing = (feature: PhysicalFeature) =>
+    dot(
+      {
+        x: input.eye.x - feature.vertices[0].x,
+        y: input.eye.y - feature.vertices[0].y,
+        z: input.eye.z - feature.vertices[0].z,
+      },
+      feature.normal,
+    ) > epsilon;
+  const selectionLimit = Math.max(state.visited, Math.floor(policy.visits / 2));
+  const enqueue = (
+    extent: FeatureExtent,
+    feature: PhysicalFeature,
+    old?: GeometryFragment,
+    allowance = selectionLimit,
+  ) => {
     const key = extentKey(extent);
     if (keys.has(key)) return;
-    if(state.visited>=allowance){state.unknown=true;return;}
+    if (state.visited >= allowance) {
+      state.unknown = true;
+      return;
+    }
     state.visited++;
     keys.add(key);
     const box = boundsOf(extentPoints(feature, extent)),
@@ -487,9 +541,10 @@ export function refreshReceivedGeometry(
   };
   for (const fragment of held) {
     const feature = features.get(fragment.featureId);
-    if (feature) enqueue(fragment, feature, fragment);
+    if (feature && frontFacing(feature)) enqueue(fragment, feature, fragment);
   }
-  for (const feature of features.values())
+  for (const feature of features.values()) {
+    if (!frontFacing(feature)) continue;
     for (const point of anchors.points) {
       if (state.visited >= selectionLimit) {
         state.unknown = true;
@@ -506,6 +561,7 @@ export function refreshReceivedGeometry(
         continue;
       enqueue(localExtent(feature, point, policy.extentMetres), feature);
     }
+  }
   pending.sort(
     (a, b) =>
       a.priority - b.priority ||
@@ -751,7 +807,7 @@ export function endReceivedGeometry(world: WorldState, observerId: string): void
   if (!owner?.geometry) return;
   finalizeGeometry(world, observerId, owner.geometry);
   delete owner.geometry;
-  reconcileTemporalGeometryCaptures(world, observerId, new Set(), []);
+  reconcileTemporalGeometryCaptures(world, observerId, new Set());
   markAttentionRelationsDirty(world, observerId, ['closing-drop']);
 }
 /** Ordinary motion keeps the last received context until its actual due check.
@@ -767,7 +823,13 @@ export function currentReceivedGeometry(
 } {
   const input = receptor(world, observerId),
     state = world.perceptionEvidence?.[observerId]?.geometry;
-  return input && state?.sourceBasis === input.sourceBasis
+  return input &&
+    state?.sourceBasis === input.sourceBasis &&
+    state.inputRevision >=
+      Math.max(
+        world.sensory?.invalidatedRevision ?? -1,
+        world.sensory?.scopes[observerId]?.invalidatedRevision ?? -1,
+      )
     ? {
         observations: geometryObservations(state),
         complete: state.complete,
@@ -841,7 +903,10 @@ export function receivedBoundarySeparation(
   decreaseLower?: number;
   dropLower?: number;
 } {
-  const at = Math.min(anchor.sample.valueSupportedThrough ?? anchor.sample.valueMeasuredThrough, measurement.through);
+  const at = Math.min(
+    anchor.sample.valueSupportedThrough ?? anchor.sample.valueMeasuredThrough,
+    measurement.through,
+  );
   if (at < measurement.from) return { status: 'unavailable' };
   const sampleAt = (time: number) => {
     for (const sample of [anchor.location, anchor.motion?.earlier, anchor.motion?.later])
@@ -851,7 +916,8 @@ export function receivedBoundarySeparation(
         time <= (sample.valueSupportedThrough ?? sample.valueMeasuredThrough)
       )
         return { point: sample.location.point, error: sample.location.errorRadius };
-    return time >= (anchor.sample.valueSupportedFrom ?? anchor.sample.valueMeasuredFrom) && time <= (anchor.sample.valueSupportedThrough ?? anchor.sample.valueMeasuredThrough)
+    return time >= (anchor.sample.valueSupportedFrom ?? anchor.sample.valueMeasuredFrom) &&
+      time <= (anchor.sample.valueSupportedThrough ?? anchor.sample.valueMeasuredThrough)
       ? { point: anchor.body.position, error: 0 }
       : undefined;
   };
@@ -866,7 +932,10 @@ export function receivedBoundarySeparation(
     });
   const d = distance(current.point),
     error = current.error + boundary.errorRadius;
-  const constantFrom = Math.max(anchor.sample.valueSupportedFrom ?? anchor.sample.valueMeasuredFrom, measurement.from);
+  const constantFrom = Math.max(
+    anchor.sample.valueSupportedFrom ?? anchor.sample.valueMeasuredFrom,
+    measurement.from,
+  );
   const earlier = anchor.motion?.earlier;
   const before =
     constantFrom < at
@@ -906,13 +975,44 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
   const bodiesByExposure = new Map(bodies.map((body) => [body.exposure, body]));
   const boundariesById = new Map(boundaries.map((value) => [value.observation.id, value]));
   const evaluations: AttentionRelationEvaluation[] = [];
-  const observer=entityGet(world.entities,observerId)!, ownPoint=worldPosition(observer),profile=effectiveBodyProfile(world,observer);
-  const heldGeometry=world.perceptionEvidence?.[observerId]?.geometry;
-  const oldFrame=heldGeometry && (distance3D(heldGeometry.frame.positionAtObservation,ownPoint)>epsilon ? {at:heldGeometry.frameAt,frame:heldGeometry.frame} : heldGeometry.priorFrame);
-  const ownSample={valueMeasuredFrom:world.simTime,valueMeasuredThrough:world.simTime};
-  const ownLocation={...ownSample,location:{kind:'point' as const,point:ownPoint,errorRadius:0}};
-  const ownBody:ReceivedBodyGeometry={body:{position:ownPoint,radius:profile.radius,height:profile.height},sample:ownSample,location:ownLocation,
-    ...(oldFrame && oldFrame.at<world.simTime && world.simTime-(heldGeometry?.frameAt ?? 0)<selectedAttentionPolicy(world).geometry.intervalSeconds ? {motion:{earlier:{valueMeasuredFrom:oldFrame.at,valueMeasuredThrough:oldFrame.at,location:{kind:'point' as const,point:oldFrame.frame.positionAtObservation,errorRadius:0}},later:ownLocation}} : {})};
+  const observer = entityGet(world.entities, observerId)!,
+    ownPoint = worldPosition(observer),
+    profile = effectiveBodyProfile(world, observer);
+  const heldGeometry = world.perceptionEvidence?.[observerId]?.geometry;
+  const oldFrame =
+    heldGeometry &&
+    (distance3D(heldGeometry.frame.positionAtObservation, ownPoint) > epsilon
+      ? { at: heldGeometry.frameAt, frame: heldGeometry.frame }
+      : heldGeometry.priorFrame);
+  const ownSample = { valueMeasuredFrom: world.simTime, valueMeasuredThrough: world.simTime };
+  const ownLocation = {
+    ...ownSample,
+    location: { kind: 'point' as const, point: ownPoint, errorRadius: 0 },
+  };
+  const ownBody: ReceivedBodyGeometry = {
+    body: { position: ownPoint, radius: profile.radius, height: profile.height },
+    sample: ownSample,
+    location: ownLocation,
+    ...(oldFrame &&
+    oldFrame.at < world.simTime &&
+    world.simTime - (heldGeometry?.frameAt ?? 0) <
+      selectedAttentionPolicy(world).geometry.intervalSeconds
+      ? {
+          motion: {
+            earlier: {
+              valueMeasuredFrom: oldFrame.at,
+              valueMeasuredThrough: oldFrame.at,
+              location: {
+                kind: 'point' as const,
+                point: oldFrame.frame.positionAtObservation,
+                errorRadius: 0,
+              },
+            },
+            later: ownLocation,
+          },
+        }
+      : {}),
+  };
   // A tree continuation cannot survive moving members. Rotating received rows
   // instead gives every member finite visits without pretending partial absence
   // is a negative answer. Only a complete unchanged-cut pass can clear a latch.
@@ -1001,10 +1101,10 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
   let remaining = opportunity.candidates;
   for (let ordinal = 0; ordinal < opportunity.anchors.length; ordinal++) {
     const entry = opportunity.anchors[ordinal]!,
-      anchor = entry.sourceId===observerId ? ownBody : scene.bodies.get(entry.sourceId),
+      anchor = entry.sourceId === observerId ? ownBody : scene.bodies.get(entry.sourceId),
       families = opportunity.families.get(entry.key)!;
     if (!anchor) continue;
-    const anchorProof=entry.sourceId===observerId ? [] : bodyProof(anchor as ReceivedSceneBody);
+    const anchorProof = entry.sourceId === observerId ? [] : bodyProof(anchor as ReceivedSceneBody);
     const share = Math.floor(remaining / (opportunity.anchors.length - ordinal));
     const bodyKey = JSON.stringify([entry.key, 'closing-body']),
       bodyLatch = state.latches[bodyKey];
@@ -1064,10 +1164,10 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
         distanceUpper: measured.upper!,
         decreaseLower: measured.decreaseLower ?? 0,
         dropLower: measured.dropLower,
-        proof: [
-          ...anchorProof,
-          observationFactKey(world, value.observation, value.ordinal),
-        ].slice(0, 8),
+        proof: [...anchorProof, observationFactKey(world, value.observation, value.ordinal)].slice(
+          0,
+          8,
+        ),
       };
     };
     const priorBoundary = dropLatch?.witnessId
@@ -1149,6 +1249,7 @@ export function validateReceivedGeometryState(
       state,
       [
         'basis',
+        'inputRevision',
         'sourceBasis',
         'episodeId',
         'frame',
@@ -1170,14 +1271,23 @@ export function validateReceivedGeometryState(
         'visited',
         'bytes',
       ],
-      ['featureCursor','priorFrame'],
+      ['featureCursor', 'priorFrame'],
     ) ||
     [state.basis, state.sourceBasis, state.episodeId, state.queryKey].some(
       (value) => typeof value !== 'string' || !value,
     ) ||
     !state.frame ||
-    !Number.isFinite(state.frameAt) || state.frameAt<0 || state.frameAt>world.simTime ||
-    (state.priorFrame!==undefined && (!hasRecordFields(state.priorFrame,['at','frame']) || !Number.isFinite(state.priorFrame.at) || state.priorFrame.at<0 || state.priorFrame.at>state.frameAt || !validPerceivedPoint(state.priorFrame.frame?.positionAtObservation) || (state.priorFrame.frame.forwardAtObservation!==undefined && !Number.isFinite(state.priorFrame.frame.forwardAtObservation)))) ||
+    !Number.isFinite(state.frameAt) ||
+    state.frameAt < 0 ||
+    state.frameAt > world.simTime ||
+    (state.priorFrame !== undefined &&
+      (!hasRecordFields(state.priorFrame, ['at', 'frame']) ||
+        !Number.isFinite(state.priorFrame.at) ||
+        state.priorFrame.at < 0 ||
+        state.priorFrame.at > state.frameAt ||
+        !validPerceivedPoint(state.priorFrame.frame?.positionAtObservation) ||
+        (state.priorFrame.frame.forwardAtObservation !== undefined &&
+          !Number.isFinite(state.priorFrame.frame.forwardAtObservation)))) ||
     !validPerceivedPoint(state.frame.positionAtObservation) ||
     (state.frame.forwardAtObservation !== undefined &&
       !Number.isFinite(state.frame.forwardAtObservation)) ||
@@ -1196,6 +1306,9 @@ export function validateReceivedGeometryState(
     ) ||
     state.visited > policy.visits ||
     state.bytes > policy.maxBytes ||
+    !Number.isSafeInteger(state.inputRevision) ||
+    state.inputRevision < 0 ||
+    state.inputRevision > (world.sensory?.revision ?? 0) ||
     typeof state.finished !== 'boolean' ||
     typeof state.unknown !== 'boolean' ||
     typeof state.complete !== 'boolean' ||

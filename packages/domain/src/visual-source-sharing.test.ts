@@ -49,6 +49,8 @@ it('shares only complete outward source values while preserving independent rece
   expect(received.sample).toEqual({
     valueMeasuredFrom: aTimes.valueMeasuredFrom,
     valueMeasuredThrough: aTimes.valueMeasuredThrough,
+    valueSupportedFrom: aTimes.valueMeasuredFrom,
+    valueSupportedThrough: aTimes.valueMeasuredThrough,
     fact: observationFactKey(world, aOriginal, a.originalOrdinal),
   });
   expect(received.location!.fact).toEqual(firstLocation.original);
@@ -71,7 +73,7 @@ it('shares only complete outward source values while preserving independent rece
   const movedValue = receivedFacetValue(world, movedA.value)!;
   expect(movedA.value.reference).toEqual(movedB.value.reference);
   expect(movedValue).toBe(receivedFacetValue(world, movedB.value));
-  expect(movedValue).not.toBe(previous);
+  expect(movedValue).toBe(previous);
   expect(currentBodyObservation(world, first.id, source.id)!.value.body.position.x).toBe(4);
   expect(received.body.position.x).toBe(3);
   expect(cut.current.find((value) => value.id === a.id)!.value).toBe(previous);
@@ -79,8 +81,9 @@ it('shares only complete outward source values while preserving independent rece
   const restored = JSON.parse(JSON.stringify(world)) as typeof world;
   const restoredScene = receivedScene(restored, first.id).bodies.get(source.id)!;
   expect(restoredScene.motion).toBeDefined();
-  const motion = world.perceptionEvidence![first.id]!.current[`${source.id}:observed-motion`]!;
-  const motionValue = receivedFacetValue(world, motion.value);
+  const motionValue = currentObservedFacets(world, first.id, source.id).find(
+    (facet) => facet.value.kind === 'observed-motion',
+  )?.value;
   if (motionValue?.kind !== 'observed-motion') throw new Error('Actual motion is required.');
   expect(restoredScene.motion!.earlier.fact).toEqual(motionValue.earlier.original);
   expect(restoredScene.motion!.later.fact).toEqual(motionValue.later.original);

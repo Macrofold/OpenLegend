@@ -21,6 +21,12 @@ import {
   captureTemporalObservation,
   captureTemporalSnapshot,
   retainedTemporalReceipt,
+  retainTemporalStateSupport,
+  temporalReceiptId,
+  temporalFacetEligible,
+  retainTemporalSupport,
+  temporalReceiptSource,
+  type TemporalHistorySelection,
   type TemporalReceiptLocator,
   type TemporalReceipt,
   type TemporalValue,
@@ -108,6 +114,10 @@ export interface SituationProposalBinding {
   receiptDetails?: Record<
     string,
     { receipt: TemporalReceipt; values: TemporalValue[]; expiresAt: number }
+  >;
+  baselineDetails?: Record<
+    string,
+    NonNullable<TemporalHistorySelection['baselines']>[number] & { expiresAt: number }
   >;
   observationReferences?: Record<string, ObservationContribution>;
   currentReferences?: Record<string, CapturedCurrentFacet>;
@@ -450,7 +460,7 @@ export function situationReceiptDetailsCurrent(
 ): boolean {
   return Object.values(details ?? {}).every((expected) => {
     if (!Number.isFinite(expected.expiresAt)) return false;
-    if (world.simTime <= expected.expiresAt) return true;
+    if (world.simTime < expected.expiresAt) return true;
     const current = retainedTemporalReceipt(world, expected.receipt);
     if (!current) return false;
     const {
@@ -470,6 +480,41 @@ export function situationReceiptDetailsCurrent(
       })
     );
   });
+}
+
+export function situationBaselineDetailsCurrent(
+  world: WorldState,
+  details: SituationProposalBinding['baselineDetails'],
+): boolean {
+  const age = selectedTemporalPolicy(world).recent.maxAgeSeconds;
+  return Object.values(details ?? {}).every(
+    (value) =>
+      Number.isFinite(value.expiresAt) &&
+      value.availableAt <= world.simTime &&
+      world.simTime < Math.min(value.expiresAt, value.availableAt + age) &&
+      value.checkpoint.actorId === value.forReceipt.actorId &&
+      value.checkpoint.physicalLife === value.forReceipt.physicalLife &&
+      value.checkpoint.epoch === value.forReceipt.epoch &&
+      value.checkpoint.facets.length === value.values.length &&
+      value.origins.length === value.values.length &&
+      value.checkpoint.facets.every((reference, index) =>
+        temporalFacetEligible(world, value.checkpoint.actorId, reference, value.values[index]!),
+      ),
+  );
+}
+
+/** A consumer may retain the exact state it was granted; this records no new
+ * sensory measurement and gives no access to a checkpoint's omitted siblings. */
+function retainBaselineSelection(
+  world:WorldState,actorId:string,
+  value:NonNullable<SituationProposalBinding['baselineDetails']>[string],
+  details:SituationProposalBinding['receiptDetails'],
+){
+  if(value.checkpoint.actorId!==actorId||!situationBaselineDetailsCurrent(world,{selected:value}))return;
+  const anchor=Object.values(details??{}).find(entry=>entry.receipt.id===temporalReceiptId(value.forReceipt));
+  if(!anchor)return;
+  const capsule=retainTemporalStateSupport(world,actorId,value,anchor.receipt,selectedTemporalPolicy(world).optional);
+  return capsule&&retainedTemporalReceipt(world,capsule.receipt);
 }
 
 export function commitActorResponse(
@@ -583,7 +628,8 @@ export function commitActorResponse(
   if (
     situationBinding &&
     (situationBinding.privacyRevision !== (input.experience?.privacyRevisions?.[actorId] ?? 0) ||
-      !situationReceiptDetailsCurrent(input, situationBinding.receiptDetails))
+      !situationReceiptDetailsCurrent(input, situationBinding.receiptDetails) ||
+      !situationBaselineDetailsCurrent(input, situationBinding.baselineDetails))
   )
     return reject('The supplied observations changed or expired before this response.');
   const permitted = new Set(entityIds);
@@ -593,6 +639,16 @@ export function commitActorResponse(
       entityIds.map((targetId) => [targetId, expectedEncounters[targetId] ?? null]),
     );
   let world = draftWorld(input, { materializeNativeEntities: [actorId] });
+  const baselineCaptures = new Map<string, { receipt: TemporalReceipt; values: TemporalValue[] }>();
+  let admittedEvidenceIds = evidenceIds;
+  const baselineEvidence = (reference: string) => {
+    const held = baselineCaptures.get(reference);
+    if (held) return held;
+    const selected = getOwn(situationBinding?.baselineDetails ?? {}, reference);
+    const retained = selected && retainBaselineSelection(world, actorId, selected,situationBinding?.receiptDetails);
+    if (retained) baselineCaptures.set(reference, retained);
+    return retained;
+  };
   const construction = constructionPermissionBatch(
     input.id,
     permissions.constructionPermissions ?? [],
@@ -701,15 +757,26 @@ export function commitActorResponse(
               'Those observations are no longer available for attention.',
             );
       } else if (op.remember) {
+        const beforeRemember=world,previousCaptures=new Set(baselineCaptures.keys());
+        world=draftWorld(world,{materializeNativeEntities:[actorId]});
         const received: Array<{ receipt: TemporalReceipt; values: TemporalValue[] }> = [];
         let available = true;
         // A repeated granted reference selects one source, not another captured receipt.
         for (const reference of new Set(op.remember.sources)) {
+          if (getOwn(binding.baselineDetails ?? {}, reference)) {
+            const captured = baselineEvidence(reference);
+            if (!captured) {
+              available = false;
+              break;
+            }
+            received.push(captured);
+            continue;
+          }
           const locator = getOwn(binding.retentionReferences, reference);
           if (locator) {
             const captured =
-              retainedTemporalReceipt(world, locator) ??
-              getOwn(binding.receiptDetails ?? {}, reference);
+              getOwn(binding.receiptDetails ?? {}, reference) ??
+              retainedTemporalReceipt(world, locator);
             if (
               !captured ||
               !captured.values.length ||
@@ -795,6 +862,7 @@ export function commitActorResponse(
             op.remember.text,
             received,
           );
+        if(!accepted){world=beforeRemember;for(const key of baselineCaptures.keys())if(!previousCaptures.has(key))baselineCaptures.delete(key);}
         components[localId] = accepted
           ? outcome(
               true,
@@ -940,13 +1008,48 @@ export function commitActorResponse(
       ...entityIds.map((entityId) => ({ kind: 'entity' as const, entityId })),
       ...Object.values(identityReferences),
     ];
+    let beforeKnowledge:WorldState|undefined,previousKnowledgeCaptures:Set<string>|undefined;
+    const previousEvidenceIds=admittedEvidenceIds;
+    if ((op.note || op.name) && Object.keys(situationBinding?.baselineDetails??{}).length) {
+      beforeKnowledge=world;previousKnowledgeCaptures=new Set(baselineCaptures.keys());
+      world=draftWorld(world,{materializeNativeEntities:[actorId]});
+      const additions: string[] = [];
+      let ready = true;
+      for (const reference of Object.keys(situationBinding!.baselineDetails!)) {
+        const captured = baselineEvidence(reference);
+        if (!captured) {
+          ready = false;
+          break;
+        }
+        const held = retainTemporalSupport(
+          world,
+          captured.receipt,
+          selectedTemporalPolicy(world).optional,
+        );
+        if (!held) {
+          ready = false;
+          break;
+        }
+        additions.push(JSON.stringify(temporalReceiptSource(held.receipt)));
+      }
+      if (!ready) {
+        world=beforeKnowledge;for(const key of baselineCaptures.keys())if(!previousKnowledgeCaptures.has(key))baselineCaptures.delete(key);
+        components[localId] = outcome(
+          false,
+          'evidence-unavailable',
+          'The selected evidence could not be retained.',
+        );
+        continue;
+      }
+      admittedEvidenceIds = [...new Set([...admittedEvidenceIds, ...additions])];
+    }
     if (op.name && subject)
       components[localId] = assignSubjectName(
         world,
         actorId,
         { ...op.name, subjectId: subject },
         permittedSubjects,
-        evidenceIds,
+        admittedEvidenceIds,
       );
     if (op.note) {
       const existingDocument = noteReference && knowledgeDocument(world, actorId, subject);
@@ -968,11 +1071,15 @@ export function commitActorResponse(
           actorId,
           { ...op.note, subjectId: subject },
           noteReference ? [noteReference] : permittedSubjects,
-          evidenceIds,
+          admittedEvidenceIds,
         );
         if (components[localId]!.ok && subject?.kind === 'entity' && !noteReference)
           rememberSubject(world, actorId, subject.entityId);
       }
+    }
+    if(beforeKnowledge&&!components[localId]?.ok){
+      world=beforeKnowledge;admittedEvidenceIds=previousEvidenceIds;
+      for(const key of baselineCaptures.keys())if(!previousKnowledgeCaptures!.has(key))baselineCaptures.delete(key);
     }
     if (op.talk) {
       const validTarget =
@@ -1561,7 +1668,7 @@ export function commitActorResponse(
       )
         resolveSemanticCause(world, actorId, cause.key, cause.qualitativeRevision, cause.severity);
     }
-    reinforceExperience(world, actorId, evidenceIds);
+    reinforceExperience(world, actorId, admittedEvidenceIds);
   }
   const receipts = (world.responseReceipts ??= {});
   receipts[id] = { digest, components, outcome: overall };

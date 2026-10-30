@@ -2,6 +2,8 @@ import {
   canonicalJson,
   materializeTemporalValue,
   temporalReceiptForRead,
+  projectTemporalOperation,
+  type TemporalFrameEntry,
   type TemporalHistorySelection,
   type TemporalSupportCapsule,
 } from '@open-legend/domain';
@@ -11,6 +13,7 @@ type Selection = TemporalHistorySelection['entries'][number];
 export interface TemporalRowWitness {
   header?: ReadonlyMap<string, string>;
   slots?: Map<number, string>;
+  projectedSlots?: Map<number, Map<string, string>>;
   supports?: Map<string, Selection>;
 }
 interface PendingRow {
@@ -26,48 +29,118 @@ export interface TemporalSourceWatch {
   pending: PendingRow[];
   pendingBytes: number;
   collecting: boolean;
+  deadline: number;
+  clock?: () => number;
 }
 export const newTemporalSourceWatch = (): TemporalSourceWatch => ({
-  rows: new Map(), ancestors: new Set(), pending: [], pendingBytes: 0, collecting: false,
+  rows: new Map(),
+  ancestors: new Set(),
+  pending: [],
+  pendingBytes: 0,
+  collecting: false,
+  deadline: Infinity,
 });
 
-export function sameSupportedSelection(support: TemporalSupportCapsule, expected: Selection): boolean {
+export function sameSupportedSelection(
+  support: TemporalSupportCapsule,
+  expected: Selection,
+): boolean {
   const current = temporalReceiptForRead(support.receipt);
   const { facets, sourceIds: _aliases, ...header } = current;
   const { facets: selected, sourceIds: _selectedAliases, ...selectedHeader } = expected.receipt;
-  return canonicalJson(header) === canonicalJson(selectedHeader) && selected.every((facet, index) => {
-    const position = facets.findIndex(owned => canonicalJson(owned) === canonicalJson(facet));
-    if (position < 0) return false;
-    const value = materializeTemporalValue(support.receipt.facets[position]!, support.values[position]!, {});
-    return value !== undefined && canonicalJson(value) === canonicalJson(expected.values[index]);
-  });
+  return (
+    canonicalJson(header) === canonicalJson(selectedHeader) &&
+    selected.every((facet, index) => {
+      const position = facets.findIndex((owned) => canonicalJson(owned) === canonicalJson(facet));
+      if (position < 0) return false;
+      const value = materializeTemporalValue(
+        support.receipt.facets[position]!,
+        support.values[position]!,
+        {},
+      );
+      return value !== undefined && canonicalJson(value) === canonicalJson(expected.values[index]);
+    })
+  );
 }
 function rowMatches(witness: TemporalRowWitness, payload: string): boolean {
   try {
     const row = JSON.parse(payload) as Record<string, unknown>;
-    if (witness.header && [...witness.header].some(([field, value]) => canonicalJson(row[field]) !== value)) return false;
+    if (
+      witness.header &&
+      [...witness.header].some(([field, value]) => canonicalJson(row[field]) !== value)
+    )
+      return false;
     if (witness.slots) {
       const values = row['values'];
       if (!Array.isArray(values) || !Number.isSafeInteger(row['start'])) return false;
       for (const [ordinal, value] of witness.slots)
         if (canonicalJson(values[ordinal - Number(row['start'])]) !== value) return false;
     }
-    if (witness.supports && [...witness.supports.values()].some(expected =>
-      !sameSupportedSelection(row as unknown as TemporalSupportCapsule, expected))) return false;
+    if (witness.projectedSlots) {
+      const values = row['values'];
+      if (!Array.isArray(values) || !Number.isSafeInteger(row['start'])) return false;
+      for (const [ordinal, projections] of witness.projectedSlots)
+        for (const [facets, expected] of projections)
+          if (
+            canonicalJson(
+              projectTemporalOperation(
+                values[ordinal - Number(row['start'])] as TemporalFrameEntry,
+                JSON.parse(facets) as number[],
+              ),
+            ) !== expected
+          )
+            return false;
+    }
+    if (
+      witness.supports &&
+      [...witness.supports.values()].some(
+        (expected) => !sameSupportedSelection(row as unknown as TemporalSupportCapsule, expected),
+      )
+    )
+      return false;
     return true;
-  } catch { return false; }
+  } catch {
+    return false;
+  }
 }
+const SOURCE_CAPTURE_TABLES = new Set([
+  'experience_state',
+  'mind_temporal_state',
+  'mind_temporal_actors',
+  'mind_temporal_chunks',
+  'mind_temporal_segments',
+  'mind_temporal_supports',
+  'mind_perception_value_state',
+  'mind_perception_values',
+  'mind_perception_segments',
+]);
 function relevantDuringCapture(table: string, id: string, actorId: string): boolean {
-  if (table === 'experience_state' || table === 'mind_temporal_state' ||
-      table === 'mind_perception_value_state' || table === 'mind_perception_values' ||
-      table === 'mind_perception_segments') return true;
-  if (!['mind_temporal_actors', 'mind_temporal_chunks', 'mind_temporal_segments', 'mind_temporal_supports'].includes(table)) return false;
+  if (
+    table === 'experience_state' ||
+    table === 'mind_temporal_state' ||
+    table === 'mind_perception_value_state' ||
+    table === 'mind_perception_values' ||
+    table === 'mind_perception_segments'
+  )
+    return true;
+  if (
+    ![
+      'mind_temporal_actors',
+      'mind_temporal_chunks',
+      'mind_temporal_segments',
+      'mind_temporal_supports',
+    ].includes(table)
+  )
+    return false;
   return (JSON.parse(id) as string[])[4] === actorId;
 }
 /** Synchronous accepted writes inspect only selected rows/slots. An unrelated
  * append or sibling tombstone cannot revoke an unchanged received fact. */
 export function temporalWatchChanges(
-  watch: TemporalSourceWatch, actorId: string, changes: RecordChanges, maximumBytes: number,
+  watch: TemporalSourceWatch,
+  actorId: string,
+  changes: RecordChanges,
+  maximumBytes: number,
 ): boolean {
   const inspect = (table: string, id: string, payload?: string): boolean => {
     const witness = watch.rows.get(table)?.get(id);
@@ -80,41 +153,79 @@ export function temporalWatchChanges(
     }
     return true;
   };
-  for (const [table, rows] of changes.writes)
+  for (const [table, rows] of changes.writes) {
+    if (!watch.rows.has(table) && (!watch.collecting || !SOURCE_CAPTURE_TABLES.has(table)))
+      continue;
     for (const row of rows) if (!inspect(table, row.id, row.payload)) return false;
+  }
   for (const [table, ids] of changes.deletes)
     for (const id of ids) if (!inspect(table, id)) return false;
   return true;
 }
 export function addTemporalWitness(
-  rows: TemporalSourceWatch['rows'], table: string, id: string, witness: TemporalRowWitness,
+  rows: TemporalSourceWatch['rows'],
+  table: string,
+  id: string,
+  witness: TemporalRowWitness,
 ): void {
   let tableRows = rows.get(table);
-  if (!tableRows) rows.set(table, tableRows = new Map());
+  if (!tableRows) rows.set(table, (tableRows = new Map()));
   const previous = tableRows.get(id);
-  if (!previous) { tableRows.set(id, witness); return; }
+  if (!previous) {
+    tableRows.set(id, witness);
+    return;
+  }
   if (witness.header) previous.header = witness.header;
   if (witness.slots) {
     previous.slots ??= new Map();
     for (const entry of witness.slots) previous.slots.set(...entry);
+  }
+  if (witness.projectedSlots) {
+    previous.projectedSlots ??= new Map();
+    for (const [ordinal, projections] of witness.projectedSlots) {
+      let values = previous.projectedSlots.get(ordinal);
+      if (!values) previous.projectedSlots.set(ordinal, (values = new Map()));
+      for (const entry of projections) values.set(...entry);
+    }
   }
   if (witness.supports) {
     previous.supports ??= new Map();
     for (const entry of witness.supports) previous.supports.set(...entry);
   }
 }
-export function installTemporalWitnesses(watch: TemporalSourceWatch, rows: TemporalSourceWatch['rows']): boolean {
+export function installTemporalWitnesses(
+  watch: TemporalSourceWatch,
+  rows: TemporalSourceWatch['rows'],
+  maximumBytes: number,
+): boolean {
   const ancestors = new Set<string>();
-  for (const tableRows of rows.values()) for (const id of tableRows.keys()) {
-    const path = JSON.parse(id) as string[];
-    for (let end = 1; end < path.length; end++) ancestors.add(JSON.stringify(path.slice(0, end)));
-  }
+  for (const tableRows of rows.values())
+    for (const id of tableRows.keys()) {
+      const path = JSON.parse(id) as string[];
+      for (let end = 1; end < path.length; end++) ancestors.add(JSON.stringify(path.slice(0, end)));
+    }
   for (const row of watch.pending) {
     const witness = rows.get(row.table)?.get(row.id);
-    if (row.payload === undefined ? witness || ancestors.has(row.id) : witness && !rowMatches(witness, row.payload)) return false;
+    if (
+      row.payload === undefined
+        ? witness || ancestors.has(row.id)
+        : witness && !rowMatches(witness, row.payload)
+    )
+      return false;
   }
-  for (const [table, tableRows] of rows)
-    for (const [id, witness] of tableRows) addTemporalWitness(watch.rows, table, id, witness);
-  for (const id of ancestors) watch.ancestors.add(id);
+  watch.rows = rows;
+  watch.ancestors = ancestors;
+  let bytes = 0;
+  for (const [table, tableRows] of watch.rows)
+    for (const [id, witness] of tableRows) {
+      bytes += Buffer.byteLength(table) + Buffer.byteLength(id);
+      for (const value of witness.header?.values() ?? []) bytes += Buffer.byteLength(value);
+      for (const value of witness.slots?.values() ?? []) bytes += Buffer.byteLength(value);
+      for (const projections of witness.projectedSlots?.values() ?? [])
+        for (const value of projections.values()) bytes += Buffer.byteLength(value);
+      for (const value of witness.supports?.values() ?? [])
+        bytes += Buffer.byteLength(JSON.stringify(value));
+      if (bytes > maximumBytes) return false;
+    }
   return true;
 }

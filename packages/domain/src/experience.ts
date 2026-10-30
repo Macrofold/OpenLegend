@@ -92,6 +92,7 @@ import {
   temporalReceiptAliases,
   temporalAccountAliasClosure,
   temporalSupportAliases,
+  hasRetainedTemporalSource,
   splitTemporalValue,
   type TemporalReceipt,
   type TemporalValue,
@@ -113,6 +114,7 @@ import {
   currentOriginal,
   currentFacetOriginal,
   removeCurrentFacets,
+  revokeCurrentMotionEvidence,
   receivedPerceptionObservations,
 } from './perception-evidence.js';
 
@@ -1195,18 +1197,7 @@ export function retainedExperienceSource(
     )
   )
     return true;
-  if (
-    world.experience?.temporal?.actors[actorId]?.chunks.some((chunk) =>
-      temporalChunkReceipts(chunk).some(
-        (receipt) =>
-          receipt.id === sourceId ||
-          temporalReceiptAliases(receipt, world.receivedValues?.sources ?? {}, world).includes(
-            sourceId,
-          ),
-      ),
-    )
-  )
-    return true;
+  if (hasRetainedTemporalSource(world, actorId, sourceId)) return true;
   const retained = experiences(world, actorId, true);
   if (retained.some((entry) => experienceDependsOn(entry, affected))) return true;
   // Memory projections carry original coverage. Read immediate typed summary sources
@@ -1950,6 +1941,7 @@ export function invalidateExperience(
       const original = currentFacetOriginal(native, lease);
       let revoke =
         affected.has(original.id) ||
+        affected.has(personalFactAlias(original.id, lease.originalOrdinal)) ||
         (original.origin.kind === 'occurrence' && affected.has(original.origin.eventId));
       if (!revoke && lease.value.kind === 'association') {
         const value = receivedFacetValue(world, lease.value);
@@ -1964,6 +1956,7 @@ export function invalidateExperience(
       if (revoke) revokedCurrent.push(id);
     }
     removeCurrentFacets(world, actorId, revokedCurrent, removedOriginals);
+    revokeCurrentMotionEvidence(world,actorId,affected);
   }
   revokeRecognitionEvidence(
     world,

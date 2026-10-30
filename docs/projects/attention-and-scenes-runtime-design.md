@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                     | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Replacement runtime design is specified; implementation and complete-game qualification remain open. | 2026-10-29   |
+| In progress | Compact acquisition, frames and finite consumers are integrated; lifecycle, regression and complete-game qualification are in progress. | 2026-10-29   |
 
-**Design updated and architecture used: 2026-10-29 18:19 UTC, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `6edf699f9b3535222308d09af6234b91b3b74fed`.** This is the implementation-level companion to the [feature specification](attention-and-scenes-feature-spec.md) and [technical design](attention-and-scenes-tech-design.md). The selected redesign is not implemented or performance-qualified. [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) owns implementation tasks and current status.
+**Design updated and architecture used: 2026-10-29 18:19 UTC, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `6edf699f9b3535222308d09af6234b91b3b74fed`.** This is the implementation-level companion to the [feature specification](attention-and-scenes-feature-spec.md) and [technical design](attention-and-scenes-tech-design.md). The compact runtime is integrated in the working branch; required lifecycle, consumer and complete-game qualification is still in progress. [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) owns implementation tasks and current status.
 
 ## 1. Outcome, evidence and scope
 
@@ -16,7 +16,7 @@ The [recording census](../verification/attention-and-memory-core.md#standard-ope
 
 The redesign removes those amplification mechanisms, rather than only packing them more tightly:
 
-| Current cost                                                 | Selected replacement                                                                                             |
+| Replaced cost                                                 | Selected replacement                                                                                             |
 | ------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
 | Uniform three-game-second broad sight                        | Change-fed broad and detailed sampling with different world-owned rates                                          |
 | Full current/detail work for every changed body              | Cheap broad membership/placement; field-specific updates; materialize rich detail only for its consumer          |
@@ -86,6 +86,10 @@ A source-only move changes its pose fields. The observer's own move changes one 
 
 An exact run can contain `first, step, count` only after each represented check actually completed under the same support and timing rule. A timestamp outside that encoded cadence, changed precision/dependency, missing check or availability change ends the run. There is no inference that all globally stored source samples between two received samples were seen. Repeated reads of held state produce no acquisition or confirmation. Unchanged physical dependencies can support reuse through the producer's certificate; that reuse keeps the original measurement time and exposes current validity separately.
 
+Support-invalidating changes produce an `unchecked` boundary, not an observed disappearance. Reacquisition restarts actual confirmation coverage even when the received value is unchanged. Coalesced invalidations retain the earliest boundary; if a later invalidation follows an intervening successful check, the unknown interval begins conservatively at that last check. It does not claim the hidden change occurred then. This bounded uncertainty avoids keeping a second physical-change history.
+
+An actual unchanged check records a compact confirmation witness: the subject, exact neutral value/reception variant, original fact, confirming source and actual supported interval. The acquisition frame supplies equal timing once. A witness cannot confirm a different pose merely because both poses share an original source. Independently timed body detail remains separate from pose support. Repeated checks at an already captured support boundary append nothing. A frame carrying another subject's change includes its genuinely confirmed subjects as context; this permits a stationary person's later support to be read without inventing a separate occurrence. Prefix cuts exclude later witnesses, and confirmation cannot bridge an unchecked gap.
+
 Capture and correction use one typed dependency visitor shared by current evidence, temporal chunks, knowledge capsules and storage indexes. Preserve original and later confirming support, source aliases, modality, frames and independently timed fields. Ordinary motion consumers do not expand complete original observations. Exact inspection materializes only the selected permitted closure.
 
 ### 3.3 Acquisition to consumption, literally
@@ -112,6 +116,8 @@ Split outward body data from placement. The received pose sample supplies only p
 On sight failure, keep the last known values and update one availability transition for affected fields. If six fields lose visual support together, one mask closes them; hearing or a retained name may remain valid. An actual support-invalidating discontinuity can make affected support **unchecked** before the next measurement; it is not proof the target disappeared. Record the uncertainty boundary when needed for attended history. Later successful checks must not silently fill it. Distinguish actual failed sight, attention release, correspondence/body replacement, technical missing coverage and source correction.
 
 Current last-known information and detailed history have different lifetimes. The attended deer’s last placement and gap remain queryable within retained coverage. An unattended deer's earlier route remains absent. Closed unattended current tracks release their fields after the [existing bounded correspondence grace](../worlds/base/perception-recognition.md#exposure-and-weak-evidence) unless a real current/required owner remains. Attended last-known data is read from retained frames; deliberately learned knowledge has its own bounded owner. Do not retain a permanent last-known map of every tree or stranger. The identity owner decides whether reentry supports the same local individual; the history codec never joins tracks merely because raw source IDs match.
+
+Explicit memory, naming and notes can retain selected checkpoint state through the existing sparse support-capsule owner. The capsule is marked `retained-state`, keeps original measurements and availability masks, and receives its own retention source address. It is absent from recent frame history: choosing to remember does not create a sighting, restore a route or refresh a value. Failed admission leaves no capsule, counter allocation or partial knowledge edit.
 
 ## 4. Change only the work whose input changed
 
@@ -176,6 +182,8 @@ Retain one private working world per native batch and the last completed world f
 Apply all actor/source changes to the same writer. Publish only on a coherent boundary, coalescing within the existing yield/return policy. Seal new leaves once, freeze the changed container once and reuse proven immutable children. No full history traversal for a pose update. A nested preview captures only the finite data its reader needs; it must not freeze a parent's working buffers or force an entire interim world publication.
 
 Use the existing owned-builder/lineage mechanism. Do not replace the whole engine with an ECS or add a persistent-map library before the compact row/chunk conversion is measured. Large append history belongs in immutable bounded segments with a small current tail; a pending model/save/view job never retains a chain of old worlds. Foreign/raw/restored values retain full current-format validation. A shallow freeze or a boolean “trusted” flag is not proof of safe children.
+
+Pure bookkeeping publication preserves the existing native interval and proven derived sight/continuation bindings through the ordinary completion owner. A cleanup/pressure change must not silently discard those proofs and force the next game step to rebuild unchanged inputs. Pure current-evidence reads resolve latest owned containers without creating writable draft children; they cache no mutable-world authorization.
 
 ### 5.2 One derived resident reference index
 
@@ -273,12 +281,12 @@ The AI director already runs calls asynchronously. This is not a new model execu
 6. Admit supported physical proposals against the **current** world. A still-valid remembered interpretation and a now-impossible physical action can have different validity under existing answer-group rules. Do not discard valid history solely because somebody walked elsewhere; do not execute a stale action because its prose is sensible.
 7. Commit permitted effects once through ordinary semantic owners and saving. Rejected/expired work does not automatically start another paid call. Cancellation that has not actually settled still owns capacity and real cost.
 
-**Outstanding request-memory conversion (SR05, continuing R5):** Optional waits release native advancement, but prepared requests still retain an entire old immutable world through the situation object and callbacks. This pins unrelated data; it is not a deep copy and is never the model's input. R5 remains incomplete until these existing owners use finite captured data:
+**Finite request ownership (SR05, continuing R5):** Prepared requests retain actor-permitted data rather than an old immutable world. These existing owners share the finite capture contract:
 
-- Replace the situation object's world and world-reading callbacks with its existing current/acquired cut, received scene/geometry, bounded history/prefix, frame dictionary, attention state and exact handle-to-body-lease/individual/episode bindings. Index current facts by subject during cut capture; reuse materialized values for body facts, expansion and history binding.
-- Give evidence formatting a narrow captured reference/label scope containing world ID, acquired labels/handles, frames and source tokens. Expanded body grants use the captured binding table, never an old or later physical world. Do not cast a partial object as a world.
-- Replace the history-reader callback's captured world with a typed actor-scoped resident-history/value closure plus existing SQL scope/prefix. Preserve accepted/applied revision, generation, exact source, logical-expiry and privacy fences; do not omit resident evidence.
-- Audit returned decision/conversation callbacks and appraisal frame formatting, which also capture the world. Build callbacks in separate factories accepting only finite data/proofs and the live service authority; deleting one property or using weak references does not remove the other strong references.
+- The situation object retains its existing current/acquired cut, received scene/geometry, bounded history/prefix, frame dictionary, attention state and exact handle-to-body-lease/individual/episode bindings. Index current facts by subject during cut capture; reuse materialized values for body facts, expansion and history binding.
+- Evidence formatting uses a narrow captured reference/label scope containing world ID, acquired labels/handles, frames and source tokens. Expanded body grants use the captured binding table, never an old or later physical world. Do not cast a partial object as a world.
+- The history reader captures a typed actor-scoped resident-history/value closure plus existing SQL scope/prefix. Preserve accepted/applied revision, generation, exact source, logical-expiry and privacy fences; do not omit resident evidence.
+- Returned decision/conversation callbacks and appraisal frame formatting use callbacks in separate factories accepting only finite data/proofs and the live service authority; deleting one property or using weak references does not remove the other strong references.
 
 Held direct, higher and reflection requests must retain equal current/history/boundary/query output and attribution; correction, expiry and restoration must still withdraw grants while native progress continues. A reachability/retained-heap specimen must show that unrelated old world data can be collected, with request data bounded by the existing preparation allowances.
 
@@ -368,9 +376,9 @@ Instrument: semantic-change notifications, coalesced pending scopes, affected-ob
 
 ## 11. Decisions and remaining work
 
-No product choice needs Mike to unblock this proposal. The selected rates and operating envelope are explicit, reversible engineering choices that require the stated implementation qualification. CPU workers, cohort-only reclamation/address relocation and a wider generic scene framework are not initial requirements; revisit only for a measured residual bottleneck.
+No product choice needs Mike to unblock implementation. The selected rates and operating envelope are explicit, reversible engineering choices that require the stated implementation qualification. CPU workers, cohort-only reclamation/address relocation and a wider generic scene framework are not initial requirements; revisit only for a measured residual bottleneck.
 
-**Current implementation remains unqualified.** [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) records the unfinished SR01–SR07 tasks; the [evidence owner](../verification/attention-and-memory-core.md) distinguishes prior functional passes, failed operating gates and source-only fixes. The underlying runtime branch is not ready to merge into local main on this evidence.
+**Complete-game qualification remains in progress.** [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) records the unfinished SR01–SR07 tasks; the [evidence owner](../verification/attention-and-memory-core.md) distinguishes prior functional passes, failed operating gates and source-only fixes. The underlying runtime branch is not ready to merge into local main on this evidence.
 
 ## Maintained records
 

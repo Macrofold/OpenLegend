@@ -39,6 +39,20 @@ export interface SensoryContinuation {
   invalidatedRevision?: number;
 }
 
+function widenSightScopes(pending: SensoryContinuation): void {
+  pending.all = true;
+  for (const scope of Object.values(pending.scopes))
+    if (scope.invalidatedAt !== undefined) {
+      pending.invalidatedAt = Math.min(pending.invalidatedAt ?? Infinity, scope.invalidatedAt);
+      pending.invalidatedRevision = Math.max(
+        pending.invalidatedRevision ?? -1,
+        scope.invalidatedRevision!,
+      );
+    }
+  pending.scopes = {};
+  pending.scopeCount = 0;
+}
+
 /** Called once by the actual semantic writer. Recipient fan-out belongs to the
  * next due batch, never to each movement microstep. */
 export function queueSightChange(world: WorldState, change: SemanticChange): void {
@@ -51,25 +65,34 @@ export function queueSightChange(world: WorldState, change: SemanticChange): voi
   )
     return;
   if (change.kind === 'membership' && change.family !== 'spatial-candidates') return;
+  const invalidates =
+    (change.kind === 'spatial' && change.discontinuity) ||
+    (change.kind === 'state' && change.field === 'participation');
   pending.revision++;
   pending.broadAt ??= world.simTime;
   pending.detailAt ??= world.simTime;
   if (change.kind === 'geometry' || change.kind === 'membership') {
-    pending.all = true;
+    widenSightScopes(pending);
     pending.invalidatedAt ??= world.simTime;
     pending.invalidatedRevision = pending.revision;
-    pending.scopes = {};
-    pending.scopeCount = 0;
     return;
   }
-  if (pending.all) return;
+  if (pending.all) {
+    if (invalidates) {
+      pending.invalidatedAt ??= world.simTime;
+      pending.invalidatedRevision = pending.revision;
+    }
+    return;
+  }
   const id = change.entityId;
   let scope = pending.scopes[id];
   if (!scope) {
     if (pending.scopeCount >= MAX_CHANGE_SCOPES) {
-      pending.all = true;
-      pending.scopes = {};
-      pending.scopeCount = 0;
+      widenSightScopes(pending);
+      if (invalidates) {
+        pending.invalidatedAt ??= world.simTime;
+        pending.invalidatedRevision = pending.revision;
+      }
       return;
     }
     scope = pending.scopes[id] = {
@@ -86,7 +109,7 @@ export function queueSightChange(world: WorldState, change: SemanticChange): voi
   scope.revision = pending.revision;
   if (change.kind === 'spatial' && change.after)
     scope.after = { x: change.after.x, y: change.after.y, z: change.after.z };
-  if (change.kind === 'state' && change.field === 'participation') {
+  if (invalidates) {
     scope.invalidatedAt ??= world.simTime;
     scope.invalidatedRevision = pending.revision;
   }
@@ -100,6 +123,30 @@ export function initializeSightContinuation(world: WorldState): void {
     scopeCount: 0,
     processed: {},
   };
+}
+
+/** A newly selected received body needs one actual detailed measurement. Focus
+ * itself neither reads its live properties nor starts a recurring clean-world job. */
+export function requestDetailedSight(world: WorldState, observerId: string): void {
+  initializeSightContinuation(world);
+  const pending = world.sensory!;
+  const prior = pending.scopes[observerId];
+  if (prior?.detail) return;
+  pending.revision++;
+  pending.detailAt ??= world.simTime;
+  if (pending.all) return;
+  if (!prior && pending.scopeCount >= MAX_CHANGE_SCOPES) {
+    widenSightScopes(pending);
+    return;
+  }
+  pending.scopes[observerId] = {
+    ...prior,
+    broad: prior?.broad ?? false,
+    detail: true,
+    observer: true,
+    revision: pending.revision,
+  };
+  if (!prior) pending.scopeCount++;
 }
 
 function pendingSightAt(

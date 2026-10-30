@@ -622,8 +622,12 @@ columns(
       sql: 'BIGINT[] NOT NULL',
       value: (value) => segmentReceiptIndex(value).ordinals,
     },
+    spatial_context: {
+      sql: 'BIGINT NOT NULL',
+      value: (value) => Number(segmentReceiptIndex(value).spatialContext),
+    },
   },
-  [['actor_id', 'parent_id', 'first_ordinal']],
+  [['actor_id', 'parent_id', 'first_ordinal'], ['actor_id', 'spatial_context', 'parent_id']],
 );
 columns(
   'mind_temporal_actors',

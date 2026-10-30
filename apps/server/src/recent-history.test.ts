@@ -1,3 +1,4 @@
+import { appendTemporalReceipt } from '../../../packages/domain/src/temporal-evidence.js';
 import { temporalHistoryWindow } from './temporal-storage.js';
 import { afterEach, expect, it, vi } from 'vitest';
 import {
@@ -9,7 +10,6 @@ import {
   worldSupport,
   worldPosition,
   executeCommand,
-  appendTemporalReceipt,
   selectedTemporalPolicy,
 } from '@open-legend/domain';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
@@ -129,9 +129,9 @@ it('persists receipt-only native movement before immediate recent browsing and d
     ).ok,
   ).toBe(true);
   const before = service.world;
-  // Reach the installed three-game-second sight sample; a held interval must
+  // Reach the installed detailed sight sample; a held interval must
   // not invent an observation merely because the actor physically moved.
-  await service.tick(0.05);
+  await service.tick(0.1);
   expect(worldPosition(entityGet(service.world.entities, NPC_ID)!).x).toBeGreaterThan(3);
   expect(service.world.memories[PLAYER_ID]).toBe(before.memories[PLAYER_ID]);
   expect(service.world.experience!.awareness[PLAYER_ID]).toBe(
@@ -177,7 +177,9 @@ it('persists receipt-only native movement before immediate recent browsing and d
   expect(
     await store.memories.temporalSelectionsCurrent(
       { worldId: service.world.id, actorId: PLAYER_ID, generation: head!.generation },
-      selected.entries, () => temporalHistoryWindow(service.world)),
+      selected.entries,
+      () => temporalHistoryWindow(service.world),
+    ),
   ).toBe(true);
 });
 

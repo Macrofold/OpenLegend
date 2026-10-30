@@ -536,6 +536,13 @@ export async function projectView(
       const received = facets.find((facet) => facet.value.kind === 'body');
       if (received?.value.kind !== 'body') throw new ViewChangedError();
       const body = received.value.body;
+      const detailMeasured =
+        received.descriptionSupport?.descriptionMeasuredThrough ?? received.valueMeasuredThrough;
+      const detailAcquired =
+        received.descriptionSupport?.descriptionAcquiredAt ?? received.valueAcquiredAt;
+      const detailConfirmed =
+        received.descriptionSupport?.confirmedThrough ?? received.confirmedThrough;
+      const detailSource = received.descriptionSupport?.confirmation ?? received.source;
       const pile = facets.find((facet) => facet.value.kind === 'pile-contents');
       const carried = facets.find((facet) => facet.value.kind === 'carried');
       const publicAttributes = facets.find((facet) => facet.value.kind === 'public-attributes');
@@ -626,23 +633,23 @@ export async function projectView(
         observation: entityMemo(
           'observation',
           [
-            received.valueMeasuredThrough,
-            received.valueAcquiredAt,
-            received.confirmedThrough,
+            detailMeasured,
+            detailAcquired,
+            detailConfirmed,
             sightConfirmedThrough,
-            received.source.family,
-            received.source.id,
-            received.source.revision,
-            received.source.observer.actorId,
-            received.source.observer.physicalLife,
+            detailSource.family,
+            detailSource.id,
+            detailSource.revision,
+            detailSource.observer.actorId,
+            detailSource.observer.physicalLife,
           ],
           () => ({
             kind: 'current',
             modality: 'sight',
-            measurementAt: detailTime(received.valueMeasuredThrough),
-            acquiredAt: detailTime(received.valueAcquiredAt),
-            confirmedThrough: detailTime(received.confirmedThrough),
-            sourceReference: evidenceSourceHandle(world, player.id, received.source),
+            measurementAt: detailTime(detailMeasured),
+            acquiredAt: detailTime(detailAcquired),
+            confirmedThrough: detailTime(detailConfirmed),
+            sourceReference: evidenceSourceHandle(world, player.id, detailSource),
           }),
         ),
         kind,

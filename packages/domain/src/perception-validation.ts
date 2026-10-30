@@ -18,6 +18,7 @@ import {
   validateObservedBodyPose,
   currentOriginalKey,
   currentFacetSupport,
+  captureReceivedLocationSample,
   receivedPerceptionObservations,
 } from './perception-evidence.js';
 import { validateDetectionSupportState } from './perception-support.js';
@@ -47,7 +48,11 @@ export function validateReceivedValueState(
   const state = world.receivedValues;
   if (state === undefined) return;
   if (
-    !hasRecordFields(state, ['sources'], ['activeAt', 'activeSources', 'activeSource', 'retirement']) ||
+    !hasRecordFields(
+      state,
+      ['sources'],
+      ['activeAt', 'activeSources', 'activeSource', 'retirement'],
+    ) ||
     !state.sources ||
     typeof state.sources !== 'object' ||
     Array.isArray(state.sources) ||
@@ -71,25 +76,47 @@ export function validateReceivedValueState(
   if (state.retirement) {
     const retirement = state.retirement;
     if (
-      !hasRecordFields(retirement, ['nextGeneration', 'bytes', 'optionalAdmissionBlocked', 'pending'], ['cursor']) ||
-      !Number.isSafeInteger(retirement.nextGeneration) || retirement.nextGeneration < 0 ||
-      !Number.isSafeInteger(retirement.bytes) || retirement.bytes < 0 ||
+      !hasRecordFields(
+        retirement,
+        ['nextGeneration', 'bytes', 'optionalAdmissionBlocked', 'pending'],
+        ['cursor'],
+      ) ||
+      !Number.isSafeInteger(retirement.nextGeneration) ||
+      retirement.nextGeneration < 0 ||
+      !Number.isSafeInteger(retirement.bytes) ||
+      retirement.bytes < 0 ||
       typeof retirement.optionalAdmissionBlocked !== 'boolean' ||
       (retirement.cursor !== undefined && !isSafeRecordId(retirement.cursor)) ||
-      !retirement.pending || typeof retirement.pending !== 'object' || Array.isArray(retirement.pending) ||
-      Object.entries(retirement.pending).some(([id, candidate]) =>
-        !isSafeRecordId(id) || !hasRecordFields(candidate, ['generation', 'bytes', 'stage'], ['applicationRevision', 'unknown']) ||
-        !Number.isSafeInteger(candidate.generation) || candidate.generation < 1 ||
-        candidate.generation > retirement.nextGeneration ||
-        (!Number.isSafeInteger(candidate.bytes) || candidate.bytes < 0) ||
-        (candidate.unknown !== undefined && candidate.unknown !== true) ||
-        !['candidate', 'applying'].includes(candidate.stage) ||
-        (candidate.stage === 'applying'
-          ? candidate.unknown || !Number.isSafeInteger(candidate.applicationRevision) || candidate.applicationRevision! < 1
-          : candidate.applicationRevision !== undefined)) ||
-      (!retirement.optionalAdmissionBlocked && Object.values(retirement.pending).some((candidate) => candidate.unknown)) ||
-      Object.values(retirement.pending).reduce((sum, candidate) => sum + candidate.bytes, 0) !== retirement.bytes
-    ) throw new Error('Invalid received value retirement.');
+      !retirement.pending ||
+      typeof retirement.pending !== 'object' ||
+      Array.isArray(retirement.pending) ||
+      Object.entries(retirement.pending).some(
+        ([id, candidate]) =>
+          !isSafeRecordId(id) ||
+          !hasRecordFields(
+            candidate,
+            ['generation', 'bytes', 'stage'],
+            ['applicationRevision', 'unknown'],
+          ) ||
+          !Number.isSafeInteger(candidate.generation) ||
+          candidate.generation < 1 ||
+          candidate.generation > retirement.nextGeneration ||
+          !Number.isSafeInteger(candidate.bytes) ||
+          candidate.bytes < 0 ||
+          (candidate.unknown !== undefined && candidate.unknown !== true) ||
+          !['candidate', 'applying'].includes(candidate.stage) ||
+          (candidate.stage === 'applying'
+            ? candidate.unknown ||
+              !Number.isSafeInteger(candidate.applicationRevision) ||
+              candidate.applicationRevision! < 1
+            : candidate.applicationRevision !== undefined),
+      ) ||
+      (!retirement.optionalAdmissionBlocked &&
+        Object.values(retirement.pending).some((candidate) => candidate.unknown)) ||
+      Object.values(retirement.pending).reduce((sum, candidate) => sum + candidate.bytes, 0) !==
+        retirement.bytes
+    )
+      throw new Error('Invalid received value retirement.');
   }
   for (const [id, block] of Object.entries(state.sources)) {
     if (
@@ -160,46 +187,7 @@ export function validateReceivedFacetValue(
         ? !hasRecordFields(input.reception, ['kind', 'frameRef']) ||
           input.reception.kind !== 'location' ||
           !validReceivedReference(input.reception.frameRef)
-        : input.kind === 'observed-motion'
-          ? !hasRecordFields(input.reception, [
-              'kind',
-              'exposure',
-              'earlier',
-              'later',
-              'correspondence',
-            ]) ||
-            input.reception.kind !== 'observed-motion' ||
-            !hasRecordFields(
-              input.reception.earlier,
-              [
-                'frameRef',
-                'original',
-                'confirmation',
-                'measuredFrom',
-                'measuredThrough',
-                'acquiredAt',
-                'confirmedFrom',
-                'confirmedThrough',
-              ],
-              ['aliases'],
-            ) ||
-            !hasRecordFields(
-              input.reception.later,
-              [
-                'frameRef',
-                'original',
-                'confirmation',
-                'measuredFrom',
-                'measuredThrough',
-                'acquiredAt',
-                'confirmedFrom',
-                'confirmedThrough',
-              ],
-              ['aliases'],
-            ) ||
-            !validReceivedReference(input.reception.earlier.frameRef) ||
-            !validReceivedReference(input.reception.later.frameRef)
-          : input.reception !== undefined)
+        : input.kind === 'observed-motion' || input.reception !== undefined)
   )
     throw new Error('Invalid received facet reference.');
   const value = receivedFacetValue(world, input as unknown as ReceivedFacetValue);
@@ -299,22 +287,42 @@ export function validatePerceptionEvidenceState(
       )
     )
       throw new Error('Invalid short exposure gap.');
-    if(state.motionSamples!==undefined) {
-      if(!hasRecordFields(state.motionSamples,[],Object.keys(state.motionSamples)))throw new Error('Invalid current motion tracks.');
-      let next=Infinity;
-      for(const [subjectId,track] of Object.entries(state.motionSamples)) {
-        const location=state.current[`${subjectId}:location`];
-        if(!location || !hasRecordFields(track,['earlier','through','continuityRevision','expiresAt']) || !Number.isFinite(track.through) || track.through>world.simTime || !Number.isFinite(track.expiresAt) || track.expiresAt<track.through || !Number.isSafeInteger(track.continuityRevision) || track.continuityRevision<0)throw new Error('Invalid current motion support.');
-        const {value,...proof}=track.earlier;
-        const prior=receivedFacetValue(world,value);
-        const latest=receivedFacetValue(world,location.value);
-        if(prior?.kind!=='location'||latest?.kind!=='location')throw new Error('Missing current motion point.');
-        const later={location:latest.location,frame:latest.frame,measuredFrom:track.through,measuredThrough:track.through,acquiredAt:track.through,confirmedFrom:track.through,confirmedThrough:track.through,original:track.earlier.original,confirmation:track.earlier.confirmation};
-        validateSensoryFacet({kind:'observed-motion',exposure:{observer:state.observer!,episodeId:location.exposure},earlier:{...proof,location:prior.location,frame:prior.frame},later,correspondence:'unambiguous-received-continuity'});
-        next=Math.min(next,track.expiresAt);
+    if (state.motionSamples !== undefined) {
+      if (!hasRecordFields(state.motionSamples, [], Object.keys(state.motionSamples)))
+        throw new Error('Invalid current motion tracks.');
+      let next = Infinity;
+      for (const [subjectId, track] of Object.entries(state.motionSamples)) {
+        const location = state.current[`${subjectId}:location`];
+        if (
+          !location ||
+          !hasRecordFields(track, ['earlier', 'through', 'continuityRevision', 'expiresAt']) ||
+          !Number.isFinite(track.through) ||
+          track.through > world.simTime ||
+          !Number.isFinite(track.expiresAt) ||
+          track.expiresAt < track.through ||
+          !Number.isSafeInteger(track.continuityRevision) ||
+          track.continuityRevision < 0
+        )
+          throw new Error('Invalid current motion support.');
+        const { value, ...proof } = track.earlier;
+        const prior = receivedFacetValue(world, value);
+        const latest = receivedFacetValue(world, location.value);
+        if (prior?.kind !== 'location' || latest?.kind !== 'location')
+          throw new Error('Missing current motion point.');
+        const later = captureReceivedLocationSample(world, currentFacetSupport(state, location));
+        validateSensoryFacet({
+          kind: 'observed-motion',
+          exposure: { observer: state.observer!, episodeId: location.exposure },
+          earlier: { ...proof, location: prior.location, frame: prior.frame },
+          later,
+          correspondence: 'unambiguous-received-continuity',
+        });
+        next = Math.min(next, track.expiresAt);
       }
-      if(state.motionExpiresAt!==(Number.isFinite(next)?next:undefined))throw new Error('Invalid current motion deadline.');
-    } else if(state.motionExpiresAt!==undefined)throw new Error('Current motion deadline has no support.');
+      if (state.motionExpiresAt !== (Number.isFinite(next) ? next : undefined))
+        throw new Error('Invalid current motion deadline.');
+    } else if (state.motionExpiresAt !== undefined)
+      throw new Error('Current motion deadline has no support.');
     if (
       state.visualConfirmation &&
       (!Number.isFinite(state.visualConfirmation.through) ||
@@ -332,16 +340,30 @@ export function validatePerceptionEvidenceState(
         state.visualConfirmation.completeInputRevision < 0 ||
         state.visualConfirmation.completeInputRevision > (world.sensory?.revision ?? 0) ||
         !state.visualConfirmation.subjects ||
-        Object.entries(state.visualConfirmation.subjects).some(([id, selected]) =>
-          !isSafeRecordId(id) || !selected ||
-          !Number.isFinite(selected.through) ||
-          selected.through < state.visualConfirmation!.completeThrough ||
-          selected.through > state.visualConfirmation!.through ||
-          !Number.isSafeInteger(selected.revision) ||
-          selected.revision < state.visualConfirmation!.completeRevision ||
-          selected.revision > state.visualConfirmation!.revision ||
-          !Number.isSafeInteger(selected.inputRevision) || selected.inputRevision < 0 ||
-          selected.inputRevision > (world.sensory?.revision ?? 0)
+        Object.entries(state.visualConfirmation.subjects).some(
+          ([id, selected]) =>
+            !isSafeRecordId(id) ||
+            !selected ||
+            !Number.isFinite(selected.through) ||
+            selected.through < state.visualConfirmation!.completeThrough ||
+            selected.through > state.visualConfirmation!.through ||
+            !Number.isSafeInteger(selected.revision) ||
+            selected.revision < state.visualConfirmation!.completeRevision ||
+            selected.revision > state.visualConfirmation!.revision ||
+            !Number.isSafeInteger(selected.inputRevision) ||
+            selected.inputRevision < 0 ||
+            selected.inputRevision > (world.sensory?.revision ?? 0) ||
+            (selected.detail !== undefined &&
+              (!hasRecordFields(selected.detail, ['through', 'revision', 'inputRevision']) ||
+                !Number.isFinite(selected.detail.through) ||
+                selected.detail.through < 0 ||
+                selected.detail.through > selected.through ||
+                !Number.isSafeInteger(selected.detail.revision) ||
+                selected.detail.revision < 1 ||
+                selected.detail.revision > selected.revision ||
+                !Number.isSafeInteger(selected.detail.inputRevision) ||
+                selected.detail.inputRevision < 0 ||
+                selected.detail.inputRevision > selected.inputRevision)),
         ) ||
         !Number.isSafeInteger(state.visualConfirmation.frameRevision) ||
         state.visualConfirmation.frameRevision < 1 ||
@@ -471,6 +493,7 @@ export function validatePerceptionEvidenceState(
           'detected',
           'location',
           'body',
+          'description',
           'carried',
           'pile-contents',
           'public-attributes',

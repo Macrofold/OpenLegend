@@ -34,6 +34,7 @@ import {
   activityRequestDescriptors,
   type ResolutionCategory,
   observeActor,
+  currentBodyValue,
   type ActionFulfillment,
   type IntentSlots,
   type ActorResponse,
@@ -104,7 +105,7 @@ export async function groundActionAttempts(
   bindings: AttemptBinding[],
   ports: GroundingPorts,
 ): Promise<AttemptBinding[]> {
-  const observed = observeActor(readWorld(), actorId);
+  const observed = observeActor(readWorld(), actorId, { includeMemories: false });
   if (!observed) return [];
   const actor = observed.actor.actor!;
   const manifestRevision = readWorld().moduleManifest.revision;
@@ -142,6 +143,12 @@ export async function groundActionAttempts(
     observed.visibleEntities.map((entity) => [
       entity.id,
       observerDescription(readWorld(), actorId, entity.id, 'definite'),
+    ]),
+  );
+  const outwardSigns = new Map(
+    observed.visibleEntities.map((entity) => [
+      entity.id,
+      currentBodyValue(readWorld(), actorId, entity.id)?.value.body.outward ?? [],
     ]),
   );
   const possessions = possessionSample(readWorld(), actorId);
@@ -363,7 +370,7 @@ export async function groundActionAttempts(
           name: labels.get(e.id),
           position: worldPosition(e),
           surfaceId: worldSupport(e),
-          living: !!e.actor?.alive,
+          outward: outwardSigns.get(e.id),
         })),
         entityCoverage: { available: visible.length, included: Math.min(visible.length, 64) },
         // Scoped item references let pickup/drop be interpreted without any shortlist.

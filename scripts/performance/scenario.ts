@@ -351,6 +351,45 @@ export function applyNativePressure(
   });
 }
 
+/** Supported long routes keep one-second command streams doing native work at
+ * the selected world's compressed clock. This prepares endpoints, not movement
+ * authority: every runtime command still uses ordinary admission/pathfinding. */
+export function prepareWalkingRoute(
+  world: WorldState,
+  actorId: string,
+): [SurfacePoint, SurfacePoint] {
+  const actor = entityGet(world.entities, actorId);
+  if (!actor?.actor) throw new Error('A walking workload needs an actual actor.');
+  const point = worldPosition(actor),
+    support = worldSupport(actor);
+  if (!support) throw new Error('A walking workload needs supported ground.');
+  const origin = { ...point, surfaceId: support };
+  const map = spatialMap(world),
+    body = bodyProfile(actor);
+  for (const distance of [32, 24, 16, 8])
+    for (const [dx, dz] of [
+      [1, 0],
+      [0, 1],
+      [-1, 0],
+      [0, -1],
+      [Math.SQRT1_2, Math.SQRT1_2],
+      [-Math.SQRT1_2, Math.SQRT1_2],
+    ]) {
+      const target = resolveSupport(map, {
+        x: origin.x + dx! * distance,
+        y: origin.y,
+        z: origin.z + dz! * distance,
+      });
+      if (
+        target &&
+        canStand(map, target, body) &&
+        occupiedBodySweepClear(world, actor, target, target)
+      )
+        return [target, origin];
+    }
+  throw new Error('The fixture has no supported continuing route for an actor.');
+}
+
 export function populateScenario(
   input: WorldState | undefined,
   scenario: Scenario,

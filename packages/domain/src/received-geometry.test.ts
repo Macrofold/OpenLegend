@@ -275,10 +275,7 @@ function nativeScene(
 
 describe('native received relation producers', () => {
   it('finishes stationary pending perception on the ordinary clock with JSON continuation and no exhausted-source spin', () => {
-    const { world } = nativeScene(
-      18,
-      map([surface('ground', 0, 4, 0), surface('unseen-upper-face', 0, 4, 10)]),
-    );
+    const { world } = nativeScene(18, map([surface('ground', -5, 25, 0)]));
     world.paused = false;
     const key = currentDetailedAttention(world, PLAYER_ID)[0]!.key;
     expect(
@@ -352,10 +349,7 @@ describe('native received relation producers', () => {
     expect(nextPerceptionWorkAt(continued.world, PLAYER_ID)).toBe(180);
   });
   it('exhausts unchanged partial terrain once and rechecks actual received changes identically after restore', () => {
-    const { world, people } = nativeScene(
-      2,
-      map([surface('ground', -5, 25, 0)]),
-    );
+    const { world, people } = nativeScene(2, map([surface('ground', -5, 25, 0)]));
     const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
     expect(currentReceivedGeometry(world, PLAYER_ID).complete).toBe(false);
     expect(world.perceptionEvidence![PLAYER_ID]!.geometry!.finished).toBe(true);
@@ -437,13 +431,13 @@ describe('native received relation producers', () => {
 
   it('rechecks newly completed physical coverage even when its last bounded pass emits no new fact', () => {
     const installed = worldComposition.selectedAttentionPolicy;
-    // A two-visit disposable source policy certifies one real patch first and
-    // its four edges on later opportunities. Production allowances stay intact.
+    // The finite shared-feature cursor finishes on a later opportunity; the
+    // last page can contain only back faces, without another received fact.
     const bounded = vi
       .spyOn(worldComposition, 'selectedAttentionPolicy')
       .mockImplementation((world) => {
         const policy = installed(world);
-        return { ...policy, geometry: { ...policy.geometry, visits: 64 } };
+        return { ...policy, geometry: { ...policy.geometry, visits: 24 } };
       });
     try {
       const { world } = nativeScene(1, map());
@@ -513,6 +507,7 @@ describe('native received relation producers', () => {
     expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBeGreaterThan(before);
     const sealed = selectTemporalHistory(world, PLAYER_ID, {
       subject,
+      includeGeometry: true,
       from: 2,
       through: 2,
       bytes: 1024 * 1024,
@@ -578,6 +573,7 @@ describe('native received relation producers', () => {
     initializePerception(world, []);
     const recent = selectTemporalHistory(world, PLAYER_ID, {
       subject,
+      includeGeometry: true,
       from: 21600,
       bytes: 1024 * 1024,
       limit: 1000,
@@ -609,13 +605,14 @@ describe('native received relation producers', () => {
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     const first = selectTemporalHistory(world, PLAYER_ID, {
       subject,
+      includeGeometry: true,
       bytes: 1024 * 1024,
       limit: 1000,
     });
     expect(
       first.entries.some(
         (entry) =>
-          entry.receipt.contextSubjects?.includes(subject) &&
+          entry.receipt.spatialContext === true &&
           entry.values.some((value) => value.kind === 'surface-patch'),
       ),
     ).toBe(true);
@@ -633,6 +630,7 @@ describe('native received relation producers', () => {
     expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(0);
     const old = selectTemporalHistory(world, PLAYER_ID, {
       subject,
+      includeGeometry: true,
       through: 15,
       bytes: 1024 * 1024,
       limit: 1000,
@@ -668,6 +666,7 @@ describe('native received relation producers', () => {
       );
     const expired = selectTemporalHistory(world, PLAYER_ID, {
       subject,
+      includeGeometry: true,
       through: 15,
       bytes: 1024 * 1024,
       limit: 1000,
@@ -675,7 +674,7 @@ describe('native received relation producers', () => {
     expect(expired.entries).toEqual([]);
     expect(expired.incomplete).toBe(true);
   });
-  it('shares one original-time terrain receipt across outgoing and entering attention through cold retrieval and retirement', () => {
+  it('shares independent original-time terrain across outgoing and entering attention without duplicating its baseline', () => {
     const { world, people } = nativeScene(3, map(), { x: 1, y: 0, z: 2 }, 2);
     const previous = currentDetailedAttention(world, PLAYER_ID);
     const outgoing = previous.map((entry) => entry.exposure.episodeId);
@@ -704,18 +703,36 @@ describe('native received relation producers', () => {
     expect(JSON.parse(JSON.stringify(world.experience!.temporal))).toEqual(
       restored.experience!.temporal,
     );
+    // Changing attention creates no new feature history. A later cognition cut
+    // explicitly seals the already held interval once, independently of subjects.
+    expect(
+      selectTemporalHistory(world, PLAYER_ID, {
+        from: 1,
+        through: 1,
+        kinds: ['surface-patch'],
+        bytes: 1024 * 1024,
+      }).entries,
+    ).toEqual([]);
+    captureCurrentGeometrySupport(world, PLAYER_ID);
+    captureCurrentGeometrySupport(restored, PLAYER_ID);
+    expect(JSON.parse(JSON.stringify(world.experience!.temporal))).toEqual(
+      restored.experience!.temporal,
+    );
     const baseline = selectTemporalHistory(world, PLAYER_ID, {
       subject: exposure,
+      includeGeometry: true,
+      from: 1,
+      through: 1,
       bytes: 1024 * 1024,
     });
     const terrain = baseline.entries.find((entry) =>
       entry.values.some((value) => value.kind === 'surface-patch'),
     )!;
     expect(terrain).toBeDefined();
-    expect(terrain.receipt.change).toBe('baseline');
+    expect(terrain.receipt.spatialContext).toBe(true);
     expect(terrain.receipt.facets[0]!.acquiredAt).toBe(observation.acquiredAt);
     expect(terrain.receipt.at).toBe(1);
-    expect(new Set(terrain.receipt.contextSubjects)).toEqual(new Set([...outgoing, exposure]));
+    expect(terrain.receipt.contextSubjects).toBeUndefined();
     expect(terrain.receipt.facets[0]!.confirmedThrough).toBe(1);
     const history = world.experience!.temporal!.actors[PLAYER_ID]!;
     expect(
@@ -731,6 +748,7 @@ describe('native received relation producers', () => {
       expect(
         selectTemporalHistory(world, PLAYER_ID, {
           subject,
+          includeGeometry: true,
           from: 1,
           through: 1,
           bytes: 1024 * 1024,
@@ -758,7 +776,7 @@ describe('native received relation producers', () => {
     );
     const cold = JSON.parse(JSON.stringify(world)) as WorldState;
     for (const subject of [...outgoing, exposure]) {
-      const query = { subject, from: 1, through: 1, bytes: 1024 * 1024 };
+      const query = { subject, includeGeometry: true, from: 1, through: 1, bytes: 1024 * 1024 };
       const retained = selectTemporalHistory(world, PLAYER_ID, query);
       expect(retained).toEqual(selectTemporalHistory(cold, PLAYER_ID, query));
       expect(retained.entries.some((entry) => entry.receipt.id === terrain.receipt.id)).toBe(true);
@@ -783,6 +801,7 @@ describe('native received relation producers', () => {
     expect(currentReceivedGeometry(world, PLAYER_ID).supportedThrough).toBe(2);
     const atMovement = selectTemporalHistory(world, PLAYER_ID, {
       subject,
+      includeGeometry: true,
       bytes: 1024 * 1024,
       limit: 1000,
     });
@@ -797,6 +816,7 @@ describe('native received relation producers', () => {
     initializePerception(world, []);
     const historical = selectTemporalHistory(world, PLAYER_ID, {
       subject,
+      includeGeometry: true,
       bytes: 1024 * 1024,
       limit: 1000,
     });
@@ -816,9 +836,9 @@ describe('native received relation producers', () => {
       valueOrdinal: first.receipt.facets[0]!.valueOrdinal,
     });
     expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(0);
-    const current=currentReceivedGeometry(world, PLAYER_ID).observations;
-    expect(current.some((value)=>value.id===original.id)).toBe(false);
-    expect(current.every((value)=>value.acquiredAt===3)).toBe(true);
+    const current = currentReceivedGeometry(world, PLAYER_ID).observations;
+    expect(current.some((value) => value.id === original.id)).toBe(false);
+    expect(current.every((value) => value.acquiredAt === 3)).toBe(true);
     validateTemporalEvidenceState(world);
   });
   it('keeps fifteen unfamiliar people present while an attended person approaches an actually received drop', () => {

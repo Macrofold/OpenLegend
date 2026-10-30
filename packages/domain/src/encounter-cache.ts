@@ -43,6 +43,7 @@ export interface ExposureInput {
   feature: string;
   /** Full currently disclosed detail dependency; separate from narrative salience. */
   detailSignature: string;
+  poseSignature: string;
   publicAttributes?: AttributeView[];
 }
 /** A new continuous-exposure episode identity. Its format is owned here with its parser. */
@@ -142,9 +143,7 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
         entity.resource?.quantity,
         entity.resource?.definitionId,
         entity.remains?.phase,
-        worldSupport(entity),
         entity.inventoryRevision ?? 0,
-        entity.spatial.heading,
         entity.actor?.physicalLife ?? null,
         entity.actor?.species,
         entity.actor?.description,
@@ -154,6 +153,7 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
           ? entity.placement?.revision
           : null,
       ]),
+      poseSignature: JSON.stringify([worldSupport(entity), entity.spatial.heading]),
       ...visibleFeature(entity),
     };
   }
@@ -249,7 +249,13 @@ function withPublicAttributes(
     detailSignature: JSON.stringify([capture.detailSignature, publicAttributes]),
   };
 }
-type Source = ExposureInput & { detail: string; order: number; measurementKey: string };
+type Source = ExposureInput & {
+  detail: string;
+  order: number;
+  measurementKey: string;
+  detailKey: string;
+  detailToken: object;
+};
 interface ObserverInput {
   id: string;
   position: Position;
@@ -418,7 +424,8 @@ const equal = (a: ExposureInput | undefined, b: ExposureInput) =>
   a.object === b.object &&
   a.assemblyId === b.assemblyId &&
   a.feature === b.feature &&
-  a.detailSignature === b.detailSignature;
+  a.detailSignature === b.detailSignature &&
+  a.poseSignature === b.poseSignature;
 const snapshot = <T extends object>(value: T): T => (isDraft(value) ? current(value) : value);
 const within = (a: Position, b: Position, radius: number) =>
   Math.hypot(a.x - b.x, a.y - b.y, a.z - b.z) <= radius;
@@ -455,6 +462,7 @@ export function* prepareExposure(
     /** Complete common outward-value token. This callback and its source inputs
      * belong to the finite prepared phase; receivers still sample their own frame. */
     sourceToken: (id: string) => string | undefined;
+    sourceDetailsToken: (id: string) => object | undefined;
     publicAttributes: (id: string) => readonly AttributeView[];
   }
 > {
@@ -626,20 +634,22 @@ export function* prepareExposure(
     let order = prepared.order.get(id);
     if (order === undefined) prepared.order.set(id, (order = prepared.nextOrder++));
     const { entity: _entity, ...input } = capture;
+    const detailKey = JSON.stringify([
+      input.radius,
+      input.height,
+      input.feature,
+      input.detailSignature,
+      itemIdentity,
+    ]);
     const source: Source = {
       ...input,
       position: { ...input.position },
       order,
+      detailKey,
+      detailToken: old?.detailKey === detailKey ? old.detailToken : Object.freeze({}),
       // Shared exact descriptor dependencies survive a cold/mutable cache rebuild.
       // Observer frames remain sampled independently at the receiving owner.
-      measurementKey: JSON.stringify([
-        input.position,
-        input.radius,
-        input.height,
-        input.feature,
-        input.detailSignature,
-        itemIdentity,
-      ]),
+      measurementKey: JSON.stringify([input.position, input.poseSignature, detailKey]),
     };
     prepared.inputs.set(id, source);
     if (source.alive) prepared.near.set(source);
@@ -892,6 +902,7 @@ export function* prepareExposure(
     orderPeople: (ids) =>
       [...ids].sort((a, b) => prepared.inputs.get(a)!.order - prepared.inputs.get(b)!.order),
     sourceToken: (id) => prepared.inputs.get(id)?.measurementKey,
+    sourceDetailsToken: (id) => prepared.inputs.get(id)?.detailToken,
     publicAttributes: (id) => prepared.inputs.get(id)?.publicAttributes ?? [],
     nearby: (position, radius, kind) => {
       const ordinary = (

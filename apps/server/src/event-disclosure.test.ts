@@ -471,7 +471,9 @@ describe('event-time observer facts', () => {
     }
     expect(
       service.world
-        .experience!.temporal!.actors[NPC_ID]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk))
+        .experience!.temporal!.actors[
+          NPC_ID
+        ]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk))
         .some(
           (receipt) => receipt.origin?.kind === 'occurrence' && receipt.origin.eventId === event.id,
         ),
@@ -512,6 +514,18 @@ describe('event-time observer facts', () => {
       place(world, PLAYER_ID, 33.1);
       initializePerception(world, []);
     });
+    // Speech is an actual same-time acquisition; changing coordinates alone
+    // does not manufacture a sight sample before the next sight opportunity.
+    expect(
+      (
+        await service.say(
+          'post-cut-same-time-speech',
+          PLAYER_ID,
+          'I spoke after your captured cut.',
+          NPC_ID,
+        )
+      ).ok,
+    ).toBe(true);
     expect(service.world.simTime).toBe(capturedAt);
     const laterSameTime = await store.memories.temporalHistory(
       scope,
@@ -588,9 +602,9 @@ describe('event-time observer facts', () => {
       ),
     ).toBe(false);
     const temporal = missingReceivedFacts.state.world.experience!.temporal!;
-    const receipt = temporal.actors[NPC_ID]!.chunks.flatMap((chunk) => temporalChunkReceipts(chunk)).find(
-      (entry) => entry.origin?.kind === 'occurrence' && entry.origin.eventId === event.id,
-    )!;
+    const receipt = temporal.actors[NPC_ID]!.chunks.flatMap((chunk) =>
+      temporalChunkReceipts(chunk),
+    ).find((entry) => entry.origin?.kind === 'occurrence' && entry.origin.eventId === event.id)!;
     const eventValue = receipt.facets
       .map(
         (reference) =>

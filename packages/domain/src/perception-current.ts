@@ -22,6 +22,8 @@ type EnvelopeMetadata = Pick<
   | 'valueAcquiredAt'
   | 'confirmedFrom'
   | 'confirmedThrough'
+  | 'poseSupport'
+  | 'descriptionSupport'
 >;
 
 /** The one native and persisted current representation. Defaults belong to the
@@ -256,6 +258,8 @@ export function compactCurrentFacet(
     original,
     originalOrdinal,
     modality,
+    poseSupport: _poseSupport,
+    descriptionSupport: _descriptionSupport,
     valueMeasuredFrom: from,
     valueMeasuredThrough: at,
     valueAcquiredAt: acquiredAt,

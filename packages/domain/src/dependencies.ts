@@ -39,7 +39,13 @@ export type QueryResult<T> =
   | { status: 'complete'; values: readonly T[]; dependencies: readonly Dependency[] }
   | { status: 'budget-exhausted' | 'unavailable'; dependencies: readonly Dependency[] };
 export type SemanticChange =
-  | { kind: 'spatial'; entityId: string; before: Position | null; after: Position | null }
+  | {
+      kind: 'spatial';
+      entityId: string;
+      before: Position | null;
+      after: Position | null;
+      discontinuity?: true;
+    }
   | { kind: 'membership'; family: QueryFamily; scopeId: string }
   | {
       kind: 'state';
@@ -232,7 +238,11 @@ export function recordSemanticChange(world: WorldState, change: SemanticChange):
   set.changes.set(
     key,
     change.kind === 'spatial' && prior?.kind === 'spatial'
-      ? { ...change, before: prior.before }
+      ? {
+          ...change,
+          before: prior.before,
+          ...(prior.discontinuity ? { discontinuity: true as const } : {}),
+        }
       : change.kind === 'geometry' && prior?.kind === 'geometry'
         ? { ...change, before: prior.before }
         : change,
