@@ -60,11 +60,13 @@ import { IntegrationValues } from './integration-values.js';
 import { JournalDatabase } from './journal-database.js';
 import { WorldJournal, PERSISTENCE_DEBT_BYTES, type JournalApplication } from './world-journal.js';
 import {
+  ReceivedValueAllocationCharges,
   prepareReceivedReclamation,
   invalidateReceivedReclamation,
   type ReceivedReclamationCapture,
   type PreparedReceivedReclamation,
 } from './received-value-retirement.js';
+import { evidenceEncodedBytesSql } from './evidence-segments.js';
 import { encodeJournalTransition, reconstructJournalWorld } from './world-journal-data.js';
 import {
   journalTableFamily,
@@ -165,7 +167,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '37';
+export const DATABASE_SCHEMA = '38';
 
 export interface AttemptBudget {
   id: string;
@@ -363,6 +365,7 @@ export interface WorldStore {
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
   readonly receivedReclamationDebt?: { journalBytes: number; maximumBytes: number };
+  receivedValueAllocationBytes?(worldId: string, id: string): number;
   prepareReceivedReclamation?(
     capture: ReceivedReclamationCapture,
   ): Promise<PreparedReceivedReclamation>;
@@ -508,6 +511,29 @@ export class SqlGameRepository implements GameRepository {
   }
   private receivedReclamation?: Pick<PreparedReceivedReclamation, 'capture' | 'changed'>;
   private receivedReclamationDone?: Promise<void>;
+  private readonly receivedValueAllocations = new ReceivedValueAllocationCharges();
+  private receivedValueAllocationWorld?: string;
+  private receivedValueAllocationsEmpty = false;
+  private async receivedAllocationHeaders(worldId: string): Promise<Array<[string, number]>> {
+    const rows = await this.rawDb
+      .prepare(
+        `SELECT source_id,${evidenceEncodedBytesSql('p')} AS encoded_bytes
+         FROM mind_perception_values p WHERE world_id=?`,
+      )
+      .all(worldId);
+    return rows.map((row) => [String(row['source_id']), Number(row['encoded_bytes'])]);
+  }
+  private initializeReceivedAllocations(worldId: string, headers: Array<[string, number]>): void {
+    this.receivedValueAllocations.initialize(worldId, headers);
+    this.receivedValueAllocationWorld = worldId;
+    this.receivedValueAllocationsEmpty = false;
+  }
+  receivedValueAllocationBytes(worldId: string, id: string): number {
+    // Startup proves whether a physical world exists. A fresh world's sources
+    // have no cold allocation until its first committed writes create them.
+    if (!this.receivedValueAllocationWorld && this.receivedValueAllocationsEmpty) return 0;
+    return this.receivedValueAllocations.bytes(worldId, id);
+  }
   private closing = false;
   get receivedReclamationDebt() {
     return { journalBytes: this.journal.unappliedBytes, maximumBytes: PERSISTENCE_DEBT_BYTES };
@@ -549,7 +575,15 @@ export class SqlGameRepository implements GameRepository {
       throw error;
     }
   }
-  private acceptedReceivedChanges(worldId: string, changes: RecordChanges, restored = false): void {
+  private acceptedReceivedChanges(
+    worldId: string,
+    revision: number,
+    changes: RecordChanges,
+    restored = false,
+  ): void {
+    if (!this.receivedValueAllocationWorld && this.receivedValueAllocationsEmpty)
+      this.initializeReceivedAllocations(worldId, []);
+    this.receivedValueAllocations.accepted(worldId, revision, changes);
     if (this.receivedReclamation)
       invalidateReceivedReclamation(this.receivedReclamation, worldId, changes, restored);
   }
@@ -753,7 +787,9 @@ export class SqlGameRepository implements GameRepository {
     );
     this.integrationValues = new IntegrationValues(this.db);
     this.records = new WorldRecords(this.db);
-    this.memories = new MemoryRepository(this.db);
+    this.memories = new MemoryRepository(this.db, (worldId, id) =>
+      this.receivedValueAllocationBytes(worldId, id),
+    );
     this.history = new HistoryRepository(this.db);
     this.saves = new GameSaves(this.db, join(dataDirectory, 'saves'), database.checkpointSource);
     // Revocation, authentication and retry recovery stay immediate even while query
@@ -864,6 +900,17 @@ export class SqlGameRepository implements GameRepository {
       await this.db
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
         .run('schema', DATABASE_SCHEMA);
+    });
+    // Recovery applies its pending suffix before ordinary load. Seed only
+    // physical headers here so each recovered COMMIT can update the same index.
+    const snapshot =
+      this.rawDb.readTransaction?.bind(this.rawDb) ?? this.rawDb.transaction.bind(this.rawDb);
+    await snapshot(async () => {
+      const head = await this.rawDb.prepare('SELECT world_id FROM world_head WHERE id=1').get();
+      if (head) {
+        const worldId = String(head['world_id']);
+        this.initializeReceivedAllocations(worldId, await this.receivedAllocationHeaders(worldId));
+      } else this.receivedValueAllocationsEmpty = true;
     });
     if (this.rawDb.materializationTransaction) {
       await this.journal.initialize();
@@ -987,13 +1034,14 @@ export class SqlGameRepository implements GameRepository {
       if (!loaded) return null;
       return {
         canonical: loaded,
+        receivedHeaders: await this.receivedAllocationHeaders(loaded.state.world.id),
         historyCount: await (active
           ? this.history.retainedEventCount(loaded.state.world.id)
           : this.history.auditEventCount(loaded.state.world.id)),
       };
     });
     if (captured) {
-      const { canonical, historyCount } = captured;
+      const { canonical, historyCount, receivedHeaders } = captured;
       const state = canonical.state;
       // These independently reconstructed values share one database cut. Heavy
       // synchronous validation needs no SQL and must not occupy its reader lane.
@@ -1011,6 +1059,7 @@ export class SqlGameRepository implements GameRepository {
       // Accepted canonical records are immutable predecessors. Physical evidence
       // page layouts must survive the next diff, including direct store callers.
       freezeWorld(state.world);
+      this.initializeReceivedAllocations(state.world.id, receivedHeaders);
       this.acceptedState = canonical.state;
       this.acceptedRevision = canonical.revision;
       return { revision: canonical.revision, state };
@@ -1018,6 +1067,9 @@ export class SqlGameRepository implements GameRepository {
     this.baselineLost = false;
     this.acceptedState = null;
     this.acceptedRevision = 0;
+    this.receivedValueAllocations.clear();
+    this.receivedValueAllocationWorld = undefined;
+    this.receivedValueAllocationsEmpty = true;
     return null;
   }
 
@@ -1108,8 +1160,11 @@ export class SqlGameRepository implements GameRepository {
       historyAfter: historyProjection?.after ?? state.world,
       restore: !!historyProjection?.restore,
     };
+    let restoredReceivedHeaders: Array<[string, number]> | undefined;
     const publish = () => {
-      this.acceptedReceivedChanges(state.world.id, changes, write.restore);
+      if (restoredReceivedHeaders)
+        this.initializeReceivedAllocations(state.world.id, restoredReceivedHeaders);
+      this.acceptedReceivedChanges(state.world.id, committedRevision, changes, write.restore);
       this.memories.acceptedSourceChanges(state.world.id, changes, write.restore);
       this.publishWorldTables(write);
       if (this.journalActive) this.journal.synchronized(state.world.id, committedRevision);
@@ -1170,7 +1225,7 @@ export class SqlGameRepository implements GameRepository {
           countMetric('persistence.journalAccepted');
           this.acceptedRevision = appended.revision;
           this.acceptedState = state;
-          this.acceptedReceivedChanges(state.world.id, changes);
+          this.acceptedReceivedChanges(state.world.id, appended.revision, changes);
           this.memories.acceptedSourceChanges(state.world.id, changes);
           this.journal.schedule();
           return appended.revision;
@@ -1281,6 +1336,8 @@ export class SqlGameRepository implements GameRepository {
           await this.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
         }
         await this.applyWorldTables(write);
+        if (write.restore)
+          restoredReceivedHeaders = await this.receivedAllocationHeaders(state.world.id);
         // Nested importer/restore transactions may still roll back after this call.
         // Keep their tentative baseline, but publish only after the outer COMMIT.
         this.db.afterRollback?.(() => {
@@ -1316,6 +1373,8 @@ export class SqlGameRepository implements GameRepository {
     invalidated?: Record<string, string[]>,
   ): boolean {
     const { before, state, preparedHistory } = write;
+    // Expiry metadata is part of the exact journal payload. Personal source
+    // edits/privacy still fail the family and immediate-authority gates below.
     const eligible =
       this.journalActive &&
       !this.rawDb.transactionActive &&
@@ -1330,7 +1389,6 @@ export class SqlGameRepository implements GameRepository {
       preparedHistory.previous.authorship === preparedHistory.world.authorship &&
       this.readyHistoryWorlds.has(state.world.id) &&
       !projection?.restore &&
-      !write.changes.expired?.size &&
       !projection?.bindingChange &&
       !projection?.controlChange &&
       !projection?.participationChange &&
@@ -1362,7 +1420,9 @@ export class SqlGameRepository implements GameRepository {
     write: TableWrite | CompactJournalWrite,
     remoteSources?: PreparedMemorySources,
   ): void {
-    this.readyHistoryWorlds.add('worldId' in write ? write.worldId : write.state.world.id);
+    const worldId = 'worldId' in write ? write.worldId : write.state.world.id;
+    this.receivedValueAllocations.applied(worldId, write.revision, write.changes);
+    this.readyHistoryWorlds.add(worldId);
     this.records.needsHotPrune = false;
     const memoryRevision = this.memories.publicationRevision;
     this.history.committed(write.changes);
@@ -2341,7 +2401,13 @@ export class SqlGameRepository implements GameRepository {
           try {
             await this.memories.closeLexical();
           } finally {
-            await this.db.close();
+            try {
+              await this.db.close();
+            } finally {
+              this.receivedValueAllocations.clear();
+              this.receivedValueAllocationWorld = undefined;
+              this.receivedValueAllocationsEmpty = false;
+            }
           }
         }
       }

@@ -646,7 +646,10 @@ export class MemoryRepository {
     return this.actorRevisions.get(actorId) ?? 0;
   }
   private readonly lexical: LexicalProjection;
-  constructor(private readonly db: SqlDatabase) {
+  constructor(
+    private readonly db: SqlDatabase,
+    private readonly receivedAllocationBytes?: (worldId: string, id: string) => number,
+  ) {
     this.lexical = new LexicalProjection(db);
     this.lexical.setDerivedAdmission((worldId, actors) => this.trimDerived(worldId, actors));
   }
@@ -914,6 +917,7 @@ export class MemoryRepository {
         complete,
         pending,
         previous,
+        this.receivedAllocationBytes,
       );
       const rows = new Map(accounts.rows);
       for (const [table, ids] of recent.rows) rows.set(table, [...(rows.get(table) ?? []), ...ids]);

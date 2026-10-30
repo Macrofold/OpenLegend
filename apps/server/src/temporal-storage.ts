@@ -282,8 +282,9 @@ export function nominateReleasedReceivedValues(
   before: Pick<WorldState, 'receivedValues' | 'perceptionEvidence' | 'experience'> | undefined,
   world: WorldState,
   candidates: ReadonlySet<string> = receivedValueReleaseCandidates(before, world),
+  allocationBytes?: (worldId: string, id: string) => number,
 ): WorldState {
-  const nominations = new Map<string, number | null>();
+  const nominations = new Map<string, number>();
   let resident: ReturnType<typeof referencedReceivedValues> | undefined;
   for (const id of candidates) {
     const candidate = world.receivedValues?.retirement?.pending[id];
@@ -294,6 +295,7 @@ export function nominateReleasedReceivedValues(
       candidate &&
       (!prior ||
         candidate.generation !== prior.generation ||
+        candidate.releaseRevision !== prior.releaseRevision ||
         candidate.stage !== prior.stage ||
         candidate.applicationRevision !== prior.applicationRevision)
     )
@@ -311,15 +313,19 @@ export function nominateReleasedReceivedValues(
       }
     }
     const previous = before?.receivedValues?.sources[id];
-    nominations.set(
-      id,
-      current || previous
-        ? Math.max(
-            current ? receivedValueRetirementBytes(current) : 0,
-            previous ? receivedValueRetirementBytes(previous) : 0,
-          )
-        : null,
+    const allocation = allocationBytes?.(world.id, id);
+    // Complete absence from both resident and durable/pending allocations leaves
+    // no physical payload to reclaim. No guessed chunk-sized debt is invented.
+    if (allocation === 0 && !current && !candidate) continue;
+    const charge = Math.max(
+      allocation ?? 0,
+      current ? receivedValueRetirementBytes(current) : 0,
+      previous ? receivedValueRetirementBytes(previous) : 0,
+      candidate?.bytes ?? 0,
     );
+    if (allocation === undefined && !current && !previous && !candidate)
+      throw new MemoryRetentionError('Complete received allocation headers are unavailable.');
+    nominations.set(id, charge);
   }
   if (nominations.size) countMetric('persistence.receivedRetirementNominations', nominations.size);
   if (!nominations.size) return world;
@@ -572,7 +578,15 @@ export async function prepareTemporalRetention(
   complete = false,
   pending?: RecordChanges,
   previous?: WorldState,
+  allocationBytes?: (worldId: string, id: string) => number,
 ): Promise<PreparedMemoryRetention> {
+  const nominated = nominateReleasedReceivedValues(
+    previous,
+    state.world,
+    undefined,
+    allocationBytes,
+  );
+  if (nominated !== state.world) state = { ...state, world: nominated };
   const temporal = state.world.experience?.temporal;
   const rows = new Map<string, string[]>();
   const positions = new Map<string, Map<string, number>>();
@@ -705,7 +719,6 @@ export async function prepareTemporalRetention(
         ]);
     }
   }
-  for (const id of receivedValueReleaseCandidates(previous, state.world)) possibleSources.add(id);
   if (!retired.length && !partials.length && !possibleSources.size) return { state, rows };
   let world = retired.length
     ? updateWorld(
@@ -890,7 +903,7 @@ export async function prepareTemporalRetention(
     );
   }
   // No cold ownership discovery on this path: only the exact logical release and intent.
-  world = nominateReleasedReceivedValues(previous, world, possibleSources);
+  world = nominateReleasedReceivedValues(state.world, world, possibleSources, allocationBytes);
   return {
     state: world === state.world ? state : { ...state, world },
     rows,

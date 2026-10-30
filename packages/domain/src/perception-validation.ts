@@ -95,24 +95,27 @@ export function validateReceivedValueState(
           !isSafeRecordId(id) ||
           !hasRecordFields(
             candidate,
-            ['generation', 'bytes', 'stage'],
-            ['applicationRevision', 'unknown'],
+            ['generation', 'releaseRevision', 'bytes', 'stage'],
+            ['applicationRevision', 'checkedRevision'],
           ) ||
           !Number.isSafeInteger(candidate.generation) ||
           candidate.generation < 1 ||
           candidate.generation > retirement.nextGeneration ||
+          !Number.isSafeInteger(candidate.releaseRevision) ||
+          candidate.releaseRevision < candidate.generation ||
+          candidate.releaseRevision > retirement.nextGeneration ||
           !Number.isSafeInteger(candidate.bytes) ||
           candidate.bytes < 0 ||
-          (candidate.unknown !== undefined && candidate.unknown !== true) ||
           !['candidate', 'applying'].includes(candidate.stage) ||
           (candidate.stage === 'applying'
-            ? candidate.unknown ||
-              !Number.isSafeInteger(candidate.applicationRevision) ||
-              candidate.applicationRevision! < 1
-            : candidate.applicationRevision !== undefined),
+            ? !Number.isSafeInteger(candidate.applicationRevision) ||
+              candidate.applicationRevision! < 1 ||
+              !Number.isSafeInteger(candidate.checkedRevision) ||
+              candidate.checkedRevision! < candidate.generation ||
+              candidate.checkedRevision! > candidate.releaseRevision
+            : candidate.applicationRevision !== undefined ||
+              candidate.checkedRevision !== undefined),
       ) ||
-      (!retirement.optionalAdmissionBlocked &&
-        Object.values(retirement.pending).some((candidate) => candidate.unknown)) ||
       Object.values(retirement.pending).reduce((sum, candidate) => sum + candidate.bytes, 0) !==
         retirement.bytes
     )

@@ -2021,14 +2021,17 @@ export class WorldService {
       write.snapshot.world,
       write.released.world,
     );
-    if (unsafe || write.changes.changes.expired?.size) {
+    // Ordinary expiry is carried by the durable journal with its row changes.
+    // Only releasing data not yet durable requires this foreground barrier;
+    // destructive evidence/authority families retain their own save gates.
+    if (unsafe) {
       // A record created or changed since the last durable save would leave memory before
       // SQL has it. Keep the invariant with today's order: write, then release (reusing the
       // same prepared change set and release, which are not idempotent to recompute).
       countMetric('persistence.synchronousProgressSaves');
       this.synchronousProgressSaves.set(
-        unsafe ?? 'personal-memory-expiry',
-        (this.synchronousProgressSaves.get(unsafe ?? 'personal-memory-expiry') ?? 0) + 1,
+        unsafe,
+        (this.synchronousProgressSaves.get(unsafe) ?? 0) + 1,
       );
       let revision: number;
       try {
@@ -2212,7 +2215,7 @@ export class WorldService {
     const debt = this.store.receivedReclamationDebt;
     // Physical cleanup has no gameplay deadline. Amortize low-debt work rather
     // than creating another durable save for every handful of released slots.
-    // Unknown charges and real byte pressure still wake promptly; block count is
+    // Real charged byte pressure still wakes promptly; block count is
     // a preparation bound, not a reason to defeat batching with tiny allocations.
     delay ??= this.receivedCleanupFailures
       ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
@@ -2339,7 +2342,12 @@ export class WorldService {
     saved: SavedWorld,
     complete = false,
   ): Promise<PreparedMemoryRetention> {
-    const nominated = nominateReleasedReceivedValues(this.persistedMemorySources, saved.world);
+    const nominated = nominateReleasedReceivedValues(
+      this.saved.world,
+      saved.world,
+      undefined,
+      this.store.receivedValueAllocationBytes?.bind(this.store),
+    );
     if (nominated !== saved.world) saved = { ...saved, world: nominated };
     saved = this.refreshReceivedPressure(saved);
     const versions = sourceVersionPreparationNeeded(this.persistedMemorySources, saved.world);
@@ -2373,7 +2381,12 @@ export class WorldService {
     try {
       // Native progress may be published before its durability batch. Charge
       // released sources at this acceptance boundary too, without a SQL read.
-      const nominated = nominateReleasedReceivedValues(this.saved.world, saved.world);
+      const nominated = nominateReleasedReceivedValues(
+        this.saved.world,
+        saved.world,
+        undefined,
+        this.store.receivedValueAllocationBytes?.bind(this.store),
+      );
       if (nominated !== saved.world) saved = { ...saved, world: nominated };
       saved = this.refreshReceivedPressure(saved);
       this.assertReceivedDebt(saved.world);

@@ -77,6 +77,7 @@ const deltaSchema = z
   .object({
     writes: z.array(z.tuple([z.string(), z.array(rowSchema)])),
     deletes: z.array(z.tuple([z.string(), z.array(z.string())])),
+    expired: z.array(z.tuple([z.string(), z.array(z.string())])),
     history: z
       .object({ append: z.boolean(), changed: z.array(eventSchema), removed: z.array(z.string()) })
       .strict(),
@@ -158,6 +159,20 @@ function validateChanges(changes: RecordChanges): void {
       if (writes.has(id)) throw new Error('Journal both replaces and deletes one record.');
     }
   }
+  // Expiry is a semantic deletion/replacement classification: recovery must
+  // never turn a released account into a newly archived source version.
+  for (const [table, ids] of changes.expired ?? []) {
+    if (!RECORD_NODES.has(table) || new Set(ids).size !== ids.length)
+      throw new Error('Unknown/repeated journal expiry.');
+    const changed = new Set([
+      ...(changes.writes.get(table)?.map((row) => row.id) ?? []),
+      ...(changes.deletes.get(table) ?? []),
+    ]);
+    for (const id of ids) {
+      journalRecordPath(table, id);
+      if (!changed.has(id)) throw new Error('Journal expiry has no record change.');
+    }
+  }
 }
 /** Oversized changes keep ordinary synchronous saving; the world itself is not capped. */
 export function encodeJournalTransition(
@@ -179,6 +194,7 @@ export function encodeJournalTransition(
   const payload = JSON.stringify({
     writes: [...changes.writes],
     deletes: [...changes.deletes],
+    expired: [...(changes.expired ?? [])],
     history: { append: history.fastAppend, changed: history.changed, removed: history.removed },
   });
   const bytes = Buffer.byteLength(payload);
@@ -221,12 +237,14 @@ export function decodeJournalTransition(
   const value = deltaSchema.parse(JSON.parse(payload));
   if (
     new Set(value.writes.map(([table]) => table)).size !== value.writes.length ||
-    new Set(value.deletes.map(([table]) => table)).size !== value.deletes.length
+    new Set(value.deletes.map(([table]) => table)).size !== value.deletes.length ||
+    new Set(value.expired.map(([table]) => table)).size !== value.expired.length
   )
     throw new Error('Repeated journal table.');
   const changes: RecordChanges = {
     writes: new Map(value.writes),
     deletes: new Map(value.deletes),
+    expired: new Map(value.expired),
     rows: value.writes.reduce((count, [, rows]) => count + rows.length, 0),
   };
   validateChanges(changes);

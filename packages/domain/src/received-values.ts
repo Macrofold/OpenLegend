@@ -1,7 +1,6 @@
 import { temporalFacetValueReferences } from './temporal-evidence.js';
 import { temporalChunkReferences } from './temporal-frames.js';
 import { nextId } from './data.js';
-import { selectedTemporalPolicy } from './world-composition.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import {
   appendedRecordCount,
@@ -60,8 +59,10 @@ export interface ReceivedValueRetirement {
     string,
     {
       generation: number;
+      /** Later releases do not replace an in-flight physical candidate. */
+      releaseRevision: number;
       bytes: number;
-      unknown?: true;
+      checkedRevision?: number;
       stage: 'candidate' | 'applying';
       applicationRevision?: number;
     }
@@ -74,7 +75,7 @@ export function receivedOptionalAdmissionBlocked(world: WorldState): boolean {
 
 export function nominateReceivedValueRetirement(
   world: WorldState,
-  candidates: ReadonlyMap<string, number | null>,
+  candidates: ReadonlyMap<string, number>,
 ): void {
   if (!candidates.size) return;
   const owner = receivedValueState(world);
@@ -86,19 +87,16 @@ export function nominateReceivedValueRetirement(
   });
   for (const [id, bytes] of candidates) {
     const existing = retirement.pending[id];
-    retirement.pending[id] = {
-      generation: ++retirement.nextGeneration,
-      bytes: bytes ?? selectedTemporalPolicy(world).recent.chunkBytes,
-      ...(bytes === null ? { unknown: true as const } : {}),
-      stage: 'candidate',
-    };
+    const releaseRevision = ++retirement.nextGeneration;
+    retirement.pending[id] = existing
+      ? { ...existing, releaseRevision, bytes: Math.max(existing.bytes, bytes) }
+      : { generation: releaseRevision, releaseRevision, bytes, stage: 'candidate' };
     retirement.bytes += retirement.pending[id]!.bytes - (existing?.bytes ?? 0);
-    if (bytes === null) retirement.optionalAdmissionBlocked = true;
   }
 }
 
-/** Encoded journal debt and unresolved physical allocations share one server allowance.
- * Unknown cold sizes block optional admission until the bounded header read resolves them. */
+/** Encoded journal debt and proven physical allocation charges share one server
+ * allowance. A pending ownership check alone is not storage pressure. */
 export function updateReceivedRetirementPressure(
   world: WorldState,
   journalBytes: number,
@@ -116,9 +114,7 @@ export function updateReceivedRetirementPressure(
     };
     created = true;
   }
-  const blocked =
-    retirement.bytes + journalBytes >= maximumBytes ||
-    Object.values(retirement.pending).some((value) => value.unknown);
+  const blocked = retirement.bytes + journalBytes >= maximumBytes;
   if (retirement.optionalAdmissionBlocked === blocked) return created;
   retirement.optionalAdmissionBlocked = blocked;
   return true;

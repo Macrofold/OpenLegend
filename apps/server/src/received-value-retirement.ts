@@ -26,19 +26,101 @@ const maximumBlocks = 32;
 const recordId = (id: string) => JSON.stringify(['world', 'receivedValues', 'sources', id]);
 type Candidate = ReceivedValueRetirement['pending'][string];
 
-/** Small known garbage can wait for the next coalesced batch. Unknown physical
- * charges must be resolved promptly because they withhold optional recording. */
+/** Derived allocation headers, not another source or ownership store. Accepted
+ * suffixes reserve their charge until actual table application acknowledges them.
+ * No world, payload or old immutable source is retained by this index. */
+export class ReceivedValueAllocationCharges {
+  private worldId?: string;
+  private readonly physical = new Map<string, number>();
+  private readonly pending = new Map<number, Map<string, number | undefined>>();
+  private readonly bySource = new Map<string, Map<number, number | undefined>>();
+  initialize(worldId: string, headers: Iterable<readonly [string, number]>): void {
+    this.clear();
+    for (const [id, bytes] of headers) {
+      if (!Number.isSafeInteger(bytes) || bytes < 0 || this.physical.has(id))
+        throw new Error('Invalid received allocation header.');
+      this.physical.set(id, bytes);
+    }
+    this.worldId = worldId;
+  }
+  clear(): void {
+    this.worldId = undefined;
+    this.physical.clear();
+    this.pending.clear();
+    this.bySource.clear();
+  }
+  private assertWorld(worldId: string): void {
+    if (this.worldId !== worldId)
+      throw new Error('Received allocation headers are not complete for this world.');
+  }
+  private changes(changes: RecordChanges): Map<string, number | undefined> {
+    const result = new Map<string, number | undefined>();
+    for (const id of changes.deletes.get('mind_perception_values') ?? [])
+      result.set((JSON.parse(id) as string[]).at(-1)!, undefined);
+    for (const row of changes.writes.get('mind_perception_values') ?? []) {
+      const storage = JSON.parse(row.payload).storage as
+        | { segmentBytes: number; metadataBytes: number }
+        | undefined;
+      if (
+        !storage ||
+        !Number.isSafeInteger(storage.segmentBytes) ||
+        storage.segmentBytes < 0 ||
+        !Number.isSafeInteger(storage.metadataBytes) ||
+        storage.metadataBytes < 0
+      )
+        throw new Error('Invalid received allocation layout.');
+      const bytes = Buffer.byteLength(row.payload) + storage.segmentBytes + storage.metadataBytes;
+      if (!Number.isSafeInteger(bytes)) throw new Error('Received allocation exceeds accounting.');
+      result.set((JSON.parse(row.id) as string[]).at(-1)!, bytes);
+    }
+    return result;
+  }
+  accepted(worldId: string, revision: number, changes: RecordChanges): void {
+    this.assertWorld(worldId);
+    const entries = this.changes(changes);
+    if (!entries.size) return;
+    if (this.pending.has(revision)) throw new Error('Received allocation revision repeated.');
+    this.pending.set(revision, entries);
+    for (const [id, bytes] of entries) {
+      let suffix = this.bySource.get(id);
+      if (!suffix) this.bySource.set(id, (suffix = new Map()));
+      suffix.set(revision, bytes);
+    }
+  }
+  applied(worldId: string, revision: number, changes: RecordChanges): void {
+    this.assertWorld(worldId);
+    for (const [id, bytes] of this.changes(changes)) {
+      if (bytes === undefined) this.physical.delete(id);
+      else this.physical.set(id, bytes);
+    }
+    for (const [at, entries] of this.pending) {
+      if (at > revision) continue;
+      for (const id of entries.keys()) {
+        const suffix = this.bySource.get(id)!;
+        suffix.delete(at);
+        if (!suffix.size) this.bySource.delete(id);
+      }
+      this.pending.delete(at);
+    }
+  }
+  bytes(worldId: string, id: string): number {
+    this.assertWorld(worldId);
+    let bytes = this.physical.get(id) ?? 0;
+    for (const pending of this.bySource.get(id)?.values() ?? [])
+      if (pending !== undefined) bytes = Math.max(bytes, pending);
+    return bytes;
+  }
+}
+
+/** Small charged garbage can wait for the next coalesced batch. Real byte
+ * pressure wakes maintenance promptly without treating nomination as a pause. */
 export function receivedReclamationNeedsPromptWork(
   world: WorldState,
   journalBytes: number,
   maximumDebtBytes: number,
 ): boolean {
   const retirement = world.receivedValues?.retirement;
-  return (
-    !!retirement &&
-    (retirement.bytes + journalBytes >= maximumDebtBytes / 8 ||
-      Object.values(retirement.pending).some((candidate) => candidate.unknown))
-  );
+  return !!retirement && retirement.bytes + journalBytes >= maximumDebtBytes / 8;
 }
 export interface ReceivedReclamationCapture {
   worldId: string;
@@ -347,12 +429,21 @@ export function applyReceivedReclamation(
   const current = referencedReceivedValues(state.world, { captures: false });
   const changes = new Map<string, ReceivedValueBlock | undefined>();
   const completed = new Set<string>();
+  const recheck = new Set<string>();
+  const finish = (id: string, latest: Candidate, checked: number) => {
+    if (latest.releaseRevision === checked) completed.add(id);
+    else recheck.add(id);
+  };
   const debts = new Map<string, number>();
+  const checkedRevisions = new Map(
+    prepared.capture.candidates.map(({ id, candidate }) => [id, candidate.releaseRevision]),
+  );
   for (const { id, candidate } of prepared.capture.candidates) {
     const latest = state.world.receivedValues?.retirement?.pending[id];
     if (!latest || latest.generation !== candidate.generation || prepared.changed.has(id)) continue;
     if (candidate.stage === 'applying') {
-      if (candidate.applicationRevision! <= prepared.appliedRevision) completed.add(id);
+      if (candidate.applicationRevision! <= prepared.appliedRevision)
+        finish(id, latest, candidate.checkedRevision!);
       continue;
     }
     if (prepared.unowned.has(id) && !current.get(id)?.size) {
@@ -364,7 +455,7 @@ export function applyReceivedReclamation(
           recordId(id),
         ]);
       } else {
-        completed.add(id);
+        finish(id, latest, candidate.releaseRevision);
         // A transient source can lose its final owner before its first save.
         // Drop the resident bytes too; there is no durable allocation to await.
         if (state.world.receivedValues?.sources[id]) changes.set(id, undefined);
@@ -376,7 +467,7 @@ export function applyReceivedReclamation(
     const stored = prepared.blocks.get(id);
     const block = state.world.receivedValues?.sources[id] ?? stored;
     if (!block) {
-      completed.add(id);
+      finish(id, latest, candidate.releaseRevision);
       continue;
     }
     const keep = new Set([
@@ -386,7 +477,7 @@ export function applyReceivedReclamation(
     ]);
     const next = pruneReceivedValueBlock(block, keep);
     if (next === block) {
-      completed.add(id);
+      finish(id, latest, candidate.releaseRevision);
       continue;
     }
     changes.set(id, next);
@@ -416,12 +507,17 @@ export function applyReceivedReclamation(
           latest.stage === 'candidate' &&
           !prepared.changed.has(id) &&
           size !== undefined &&
-          (latest.bytes !== size || latest.unknown)
+          latest.bytes !== size
         ) {
           retirement.bytes += size - (latest.bytes ?? 0);
           latest.bytes = size;
-          delete latest.unknown;
         }
+      }
+      for (const id of recheck) {
+        const candidate = retirement.pending[id]!;
+        candidate.stage = 'candidate';
+        delete candidate.applicationRevision;
+        delete candidate.checkedRevision;
       }
       for (const id of completed) {
         retirement.bytes -= retirement.pending[id]!.bytes ?? 0;
@@ -433,6 +529,8 @@ export function applyReceivedReclamation(
           retirement.bytes += debts.get(id)! - (candidate.bytes ?? 0);
           retirement.pending[id] = {
             generation: candidate.generation,
+            releaseRevision: candidate.releaseRevision,
+            checkedRevision: checkedRevisions.get(id)!,
             bytes: debts.get(id)!,
             stage: 'applying',
             applicationRevision: revision,
