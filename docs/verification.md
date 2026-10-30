@@ -133,6 +133,8 @@ Current 3× scene investigation: [plain-language results, before/after tables an
 
 ## Performance, hearing and spatial behavior
 
+- [Integrated attention runtime diagnosis](verification/performance/2026-10/attention-runtime.md): October 30 standard/crowded failures, exact processing and reader costs, delivered mechanisms and unimplemented root proposals.
+
 - [Native performance investigation](verification/performance-investigation.md): query amplification, mature worlds, snapshots and population measurements.
 - [Immediate gameplay limits](verification/immediate-gameplay-limits.md): work admission, publication, history and measured limits.
 - [Consolidation pressure and content limits](verification/consolidation-and-content-limits.md): continued walking, memory work and removed content ceilings.

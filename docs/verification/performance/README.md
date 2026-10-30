@@ -4,7 +4,7 @@ This established collection contains mixed historical campaigns and current summ
 
 [Optional profiling implementation and evidence](profiling-controls.md) records disabled work, process/worker/browser cleanup, tool modes and measured-overhead qualification separately from the smooth3× goal.
 
-Start with [Why OpenLegend is still slow](bottlenecks.md). It gives the actual outcome, ranked costs, gameplay trade-offs and missing evidence without requiring code knowledge.
+For the integrated attention branch, start with the [October 30 complete-game diagnosis](2026-10/attention-runtime.md): standard and crowded failures, literal processing steps, exact reader obstruction and proposed root corrections. The earlier whole-game campaigns start with [Why OpenLegend is still slow](bottlenecks.md). It gives the actual outcome, ranked costs, gameplay trade-offs and missing evidence without requiring code knowledge.
 
 For implementation and candidate dispositions, read [Performance Overhaul Ideas](../../projects/performance-overhaul-feature-spec.md). The October 16 project treats old measurements as directional evidence, identifies caveats in the [evidence audit](../../projects/performance-overhaul/evaluation.md), and records status in [PF17](../../maintainers/performance.md#pf17--performance-overhaul-ideas). The [ordinary implementation results](overhaul-implementation.md), [compromise trials](overhaul-compromises.md) and [changed-document index](overhaul-documents.md) describe what was actually built, checked, rejected and left open. Smooth 3× remains unmet.
 

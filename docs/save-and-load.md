@@ -44,6 +44,12 @@ application. It grants no live consent or hidden knowledge. The current database
 includes this metadata and rejects older database layouts before initialization;
 no migration is introduced.
 
+Sensory cues remain active until their native expiry owner removes them. Cold active
+loading selects every sensory cue alongside the bounded awareness tail and ongoing
+agreements, using indexed identities before hydrating payloads. A tail limit cannot
+hide a still-owned cue from expiry or leave its history dependencies stranded after
+restart; loading itself neither renews the cue nor turns it into lasting memory.
+
 ## Spatial state
 
 Native flight progress distinguishes ordinary loops, finite supported rest and exact corridor joins. An escaping flight retains its original profile, physical life, episode, generation, route digest, selection time, geometry revision and any consumed random draw. Air-node arrivals request a new native choice at the same clock; they never become supported rest. Control transfer ends native choices while an already airborne flight may continue only to a real landing, with explicit falling recovery when no continuation remains. These records share the existing entity record; current validation rejects incomplete or mismatched bindings.
