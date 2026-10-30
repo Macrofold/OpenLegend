@@ -1802,13 +1802,15 @@ export function invalidateExperience(
       }
   }
   revokeLearnedRecipeSupport(world, actorId, affected);
-  invalidateTemporalEvidence(world, actorId, affected);
+  const revokedProofs = invalidateTemporalEvidence(world, actorId, affected);
   revokeReceivedGeometryEvidence(world, actorId, affected);
   revokeAttentionEvidence(world, actorId, affected);
   revokeInventoryInspection(world, actorId, affected);
   // Learning depends on the actual selected earlier exemplar. Follow immediate
   // edges supplied by cold preparation without erasing later witnessed utterances.
-  const recognitionAffected = new Set(affected);
+  // A selected feature edit can release its sparse proof without revoking the
+  // whole original account. Learned identity still loses that exact proof.
+  const recognitionAffected = new Set([...affected, ...revokedProofs]);
   const recognitionEntries = [
     ...(state.awareness[actorId] ?? []).map((entry) => ({
       id: entry.eventId,

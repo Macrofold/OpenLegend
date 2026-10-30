@@ -2492,16 +2492,19 @@ export function invalidateTemporalEvidence(
   world: WorldState,
   actorId: string,
   sourceIds: ReadonlySet<string>,
-): void {
+): ReadonlySet<string> {
   touchNativeEvidence(world, 'temporal', actorId);
+  const released = new Set<string>();
   const actor = world.experience?.temporal?.actors[actorId];
-  if (!actor) return;
+  if (!actor) return released;
   for (const [id, support] of Object.entries(actor.supports ?? {}))
     if (
       sourceIds.has(id) ||
       temporalSupportAliases(support, world).some((source) => sourceIds.has(source))
-    )
+    ) {
       releaseTemporalSupport(world, actorId, id);
+      released.add(id);
+    }
   for (const chunk of actor.chunks) {
     const removed = temporalChunkReceipts(chunk).filter(
       (receipt) =>
@@ -2538,6 +2541,7 @@ export function invalidateTemporalEvidence(
       (id) => sourceIds.has(id),
     ),
   );
+  return released;
 }
 
 function refreshChunk(chunk: TemporalChunk, world: WorldState): void {
