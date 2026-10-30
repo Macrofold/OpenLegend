@@ -957,6 +957,7 @@ async function main() {
       cpu: process.cpuUsage(),
       threadCpu: typeof process.threadCpuUsage === 'function' ? process.threadCpuUsage() : null,
       start: performance.now(),
+      ...(collectCpu ? { cpuStartedUs: Number(process.hrtime.bigint() / 1000n) } : {}),
       startedAtUnixMs: performance.timeOrigin + performance.now(),
     };
   };
@@ -967,6 +968,7 @@ async function main() {
     phase.loop?.disable();
     observedLoop = undefined;
     const end = performance.now(),
+      cpuEndedUs = collectCpu ? Number(process.hrtime.bigint() / 1000n) : undefined,
       used = process.cpuUsage(phase.cpu),
       threadUsed = phase.threadCpu ? process.threadCpuUsage(phase.threadCpu) : null,
       after = performanceSnapshot(),
@@ -975,6 +977,14 @@ async function main() {
       advanced = game.service.world.simTime - phase.sim;
     return {
       startingSimTime: phase.sim,
+      ...(collectCpu
+        ? {
+            cpuWindow: {
+              fromUs: phase.cpuStartedUs,
+              throughUs: cpuEndedUs,
+            },
+          }
+        : {}),
       elapsedSeconds: elapsed,
       advancedSimSeconds: advanced,
       expectedSimSeconds: elapsed * config.baseRatio * game.service.speed,

@@ -530,14 +530,16 @@ export function restoreEvidenceLayout(value: Owner, field: Field, segments: unkn
 }
 
 /** Parent-only charge; reading it never hydrates a received payload vector. */
-export function receivedValueEncodedBytes(value: object, maxBytes: number): number | undefined {
-  // Normal save preparation seals these blocks already. Foreign mutable input
-  // gets the bounded cold-header path, never a second eager command encoding.
-  if (!isImmutableData(value)) return;
-  const encoded = encodeEvidenceOwner(value, 'values', undefined, maxBytes);
-  const storage = encoded['storage'] as { segmentBytes: number; metadataBytes: number };
+export function receivedValueEncodedBytes(value: object): number | undefined {
+  // Only save preparation knows the accepted predecessor's physical pages.
+  // Preparing an unencoded append here would install a merged replacement page
+  // before that owner can preserve its immutable suffix layout. Unknown charges
+  // use the existing bounded cold-header read instead.
+  const prepared = encoded.get(value);
+  if (!prepared) return;
+  const storage = prepared['storage'] as { segmentBytes: number; metadataBytes: number };
   return (
-    Buffer.byteLength(JSON.stringify({ ...encoded, values: [] })) +
+    Buffer.byteLength(JSON.stringify({ ...prepared, values: [] })) +
     storage.segmentBytes +
     storage.metadataBytes
   );

@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                        | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Compact acquisition, frames and finite consumers are integrated; lifecycle, regression and complete-game qualification are in progress. | 2026-10-29   |
+| In progress | Compact acquisition, frames and finite consumers are integrated; lifecycle, regression and complete-game qualification are in progress. | 2026-10-30   |
 
-**Design updated and architecture used: 2026-10-29 18:19 UTC, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `6edf699f9b3535222308d09af6234b91b3b74fed`.** This is the implementation-level companion to the [feature specification](attention-and-scenes-feature-spec.md) and [technical design](attention-and-scenes-tech-design.md). The compact runtime is integrated in the working branch; required lifecycle, consumer and complete-game qualification is still in progress. [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) owns implementation tasks and current status.
+**Design updated and architecture used: 2026-10-30 02:24 UTC, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence` at `a60ea242bfb56809948b59e94d73b3b4707ff97b`.** This is the implementation-level companion to the [feature specification](attention-and-scenes-feature-spec.md) and [technical design](attention-and-scenes-tech-design.md). The compact runtime is integrated in the working branch; required lifecycle, consumer and complete-game qualification is still in progress. [PS04-A](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) owns implementation tasks and current status.
 
 ## 1. Outcome, evidence and scope
 

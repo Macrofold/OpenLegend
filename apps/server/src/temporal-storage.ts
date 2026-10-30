@@ -309,13 +309,7 @@ export function nominateReleasedReceivedValues(
       }
     }
     const block = current ?? before?.receivedValues?.sources[id];
-    nominations.set(
-      id,
-      block
-        ? (receivedValueEncodedBytes(block, selectedTemporalPolicy(world).recent.chunkBytes) ??
-            null)
-        : null,
-    );
+    nominations.set(id, block ? (receivedValueEncodedBytes(block) ?? null) : null);
   }
   if (nominations.size) countMetric('persistence.receivedRetirementNominations', nominations.size);
   if (!nominations.size) return world;

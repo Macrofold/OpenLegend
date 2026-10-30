@@ -14,7 +14,7 @@ import {
 import { canStand } from '@open-legend/spatial';
 import { closeTestDatabases, readConfig, testRepository } from '../fixtures/database.js';
 import { editWorld } from '../fixtures/service.js';
-import { enterGame } from '../fixtures/browser.js';
+import { blockExternalBrowserRequests, enterGame } from '../fixtures/browser.js';
 import { createBaseStartingWorld } from '../../packages/domain/src/worlds/base/starting-worlds.js';
 import { prepareWorldForStartup } from '../../apps/server/src/initial-world-preparation.js';
 import { initializeCollisionRuntime } from '../../packages/spatial/src/rapier.js';
@@ -50,6 +50,7 @@ test('the player can read and search actual recent observations on desktop and a
   const errors: string[] = [];
   page.on('pageerror', (error) => errors.push(error.message));
   try {
+    await blockExternalBrowserRequests(page);
     await page.goto(`http://127.0.0.1:${address.port}`);
     await enterGame(page);
     const point = await editWorld(game.service, (world) => {
