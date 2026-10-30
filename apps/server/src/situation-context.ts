@@ -1189,11 +1189,23 @@ export function captureSituation(
     if (index < 0) break;
     omitDetailed(index);
   }
-  // Finite input cannot guarantee every selected detail. If even prioritized
-  // sources exceed the allowance, retain honest partial coverage without changing
-  // the character's ongoing attention or any already committed native outcome.
-  // Chosen focus, current work and direct address precede incidental routine
-  // changes, as they already do in the native attention selection.
+  // A current native cue's relational evidence precedes unrelated detailed
+  // bodies, including otherwise prioritized focus/work. Dropping the relation
+  // first would keep its subject visible while hiding the change that mattered.
+  while (currentBytes() > policy.maxBytes && packet.detailed.length) {
+    let index = packet.detailed.length - 1;
+    while (
+      index >= 0 &&
+      (cueAnchors.has(packet.detailed[index]!.reference) ||
+        entryBySource.get(references.get(packet.detailed[index]!.reference)!)?.basis ===
+          'discovery')
+    )
+      index--;
+    if (index < 0) break;
+    omitDetailed(index);
+  }
+  // Even current cues and reserved discovery can exceed a finite packet. Keep
+  // honest partial coverage; this read never changes native attention/outcomes.
   while (currentBytes() > policy.maxBytes && packet.relations.length) packet.relations.pop();
   while (currentBytes() > policy.maxBytes && packet.detailed.length) {
     let index = packet.detailed.length - 1;

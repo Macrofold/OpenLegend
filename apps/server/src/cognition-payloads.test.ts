@@ -45,6 +45,7 @@ import type { IntelligenceLog } from './intelligence-log.js';
 import type { JobRecord } from './store.js';
 import { WorldService } from './world-service.js';
 import { entityHandle } from './entity-references.js';
+import { routineSensePolicy } from '../../../packages/domain/src/perception.js';
 
 // CR01 deterministic payload inspection: the actual requests the director sends for a greeting,
 // a resource task, a promise and a hazard, measured against the per-level limits, plus output
@@ -1654,7 +1655,15 @@ describe('actual director situation query continuation', () => {
         return id;
       });
     });
-    await editWorld(h.service, (world) => initializePerception(world, []));
+    await editWorld(h.service, (world) => {
+      // Newly placed people require an actual broad acquisition opportunity;
+      // rebuilding the same instant cannot disclose them as current bodies.
+      world.simTime += routineSensePolicy(
+        world,
+        entityGet(world.entities, NPC_ID)!,
+      ).sight!.seconds!;
+      initializePerception(world, []);
+    });
     const subjects = new Map(
       crowdIds.map((id) => [id, currentBodySubject(h.service.world, NPC_ID, id)!]),
     );

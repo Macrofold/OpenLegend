@@ -27,7 +27,8 @@ import type { WorldService } from './world-service.js';
 import {
   expandDecisionSituation,
   readSituationQueryResponse,
-  situationQueriesField,
+  SITUATION_QUERY_INSTRUCTIONS,
+  withSituationQueries,
 } from './decision-situation-query.js';
 import { situationProposalBinding, situationResponseCapabilities } from './situation-context.js';
 
@@ -159,9 +160,7 @@ export async function prepareReconsideration(
       );
       return queryUsed
         ? schema
-        : schema.extend({
-            queries: situationQueriesField(prepared.situation.policy.maximumQueries),
-          });
+        : withSituationQueries(schema, prepared.situation.policy.maximumQueries);
     };
     const current = async () => {
       if (
@@ -192,9 +191,7 @@ export async function prepareReconsideration(
                 kind: 'response',
                 question:
                   'Propose the still-unresolved response to this initiating situation. Speech is optional unless an addressed reply is needed. Use only supplied operations and handles.' +
-                  (!queryUsed
-                    ? ' If received evidence is incomplete, request bounded queries in an empty-operations response; one final response can follow the returned evidence.'
-                    : ''),
+                  (!queryUsed ? ` ${SITUATION_QUERY_INSTRUCTIONS}` : ''),
                 valueSchema: responseSchemaFor(offered),
               }
             : {

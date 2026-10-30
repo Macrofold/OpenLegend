@@ -1,5 +1,7 @@
 import { definitionPin, validateModuleManifest } from '../../packages/domain/src/world-modules.js';
 import type { WorldState } from '../../packages/domain/src/index.js';
+import { entityGet, initializePerception, NPC_ID } from '../../packages/domain/src/index.js';
+import { routineSensePolicy } from '../../packages/domain/src/perception.js';
 import type { WorldService } from '../../apps/server/src/world-service.js';
 import { materializeNativeValues } from '../../packages/domain/src/native-values.js';
 import { invalidateInheritedNativeInterval } from '../../packages/domain/src/draft.js';
@@ -53,5 +55,10 @@ export async function useNearCampSight(service: WorldService): Promise<void> {
       sensePins: senses.map(definitionPin),
     };
     validateModuleManifest(world.moduleManifest);
+    // A changed detector cannot reuse its former received grants. Complete one
+    // actual selected-world opportunity before these fixtures address a body.
+    world.simTime +=
+      routineSensePolicy(world, entityGet(world.entities, NPC_ID)!).sight?.seconds ?? 0;
+    initializePerception(world, []);
   });
 }

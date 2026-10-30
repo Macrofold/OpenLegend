@@ -1230,7 +1230,9 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(request.requestId).toBe(`${job!.id}${ROUTE}`);
     // Loading pauses the world, and a pause aborts background cognition before the separate
     // generation check in AiDirector.current() is reached; resuming does not revive it.
-    expect(job?.status).toBe('cancelled');
+    expect(job?.status, JSON.stringify({ message: job?.message, result: job?.result })).toBe(
+      'cancelled',
+    );
     expect(job?.message).toBe('This request was cancelled before completion.');
     expect(admissions.filter((entry) => entry.id === job!.id)).toEqual([]);
     expect(h.service.world.responseReceipts?.[job!.id]).toBeUndefined();

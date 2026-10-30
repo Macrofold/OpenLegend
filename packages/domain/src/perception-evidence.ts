@@ -2872,7 +2872,8 @@ export function reconcileVisualEvidence(
     removeCurrentFacets(world, observer.id, lostKeys);
     const checkedSources = new Set<string>(),
       detailedSources = new Set<string>(),
-      reacquiredFields = new Set<string>();
+      reacquiredFields = new Set<string>(),
+      unboundBodies = new Set<string>();
     const processSubject = (subject: Entity, detailed: boolean) => {
       chargeWork({ tests: 1 });
       delete state.gaps[subject.id];
@@ -2899,14 +2900,7 @@ export function reconcileVisualEvidence(
           retiredMotion.add(subject.id);
           attentionChanges.add(subject.id);
         }
-        if (subject.actor && !heldBody.localSubject) {
-          const local = selectedBodyIndividual(world, observer.id, subject.id);
-          if (local)
-            replaceCurrentFacet(world, state, `${subject.id}:body`, {
-              ...readOnlyDraftView(heldBody),
-              localSubject: local,
-            });
-        }
+        if (subject.actor && !heldBody.localSubject) unboundBodies.add(subject.id);
         return;
       }
       const prepared = prepareVisualSourceValues(
@@ -3176,14 +3170,7 @@ export function reconcileVisualEvidence(
       });
       const storedBody = readOnlyDraftView(state.current)[`${subject.id}:body`],
         currentBody = storedBody && readOnlyDraftView(storedBody);
-      if (subject.actor && currentBody && !currentBody.localSubject) {
-        const localSubject = selectedBodyIndividual(world, observer.id, subject.id);
-        if (localSubject)
-          replaceCurrentFacet(world, state, `${subject.id}:body`, {
-            ...currentBody,
-            localSubject,
-          });
-      }
+      if (subject.actor && currentBody && !currentBody.localSubject) unboundBodies.add(subject.id);
       const storedLocation = readOnlyDraftView(state.current)[`${subject.id}:location`],
         locationLease = storedLocation && readOnlyDraftView(storedLocation);
       if (earlierLocation && locationLease) {
@@ -3285,12 +3272,26 @@ export function reconcileVisualEvidence(
         }
     }
     confirmDetailed();
+    // A broad body becomes eligible only after this completed phase installs its
+    // confirmation. Bind its local person now, including people outside detail;
+    // server reads must never create identities or require an extra sight sample.
+    if (hasMemory(observer))
+      for (const id of unboundBodies) {
+        const body = readOnlyDraftView(state.current)[`${id}:body`];
+        if (!body || body.localSubject) continue;
+        const localSubject = selectedBodyIndividual(world, observer.id, id);
+        if (localSubject)
+          replaceCurrentFacet(world, state, `${id}:body`, {
+            ...readOnlyDraftView(body),
+            localSubject,
+          });
+      }
     retireCurrentMotion(world, observer.id, retiredMotion);
     pruneLostBodyIndividuals(world, observer.id, lostIndividuals);
+    refreshMotionExpiry(state);
     // Memoryless native reactions consume received bodies; no current consumer asks
     // them for autobiographical scene geometry or detailed attention.
     if (!hasMemory(observer)) return;
-    refreshMotionExpiry(state);
     const newGeometry = refreshReceivedGeometry(world, observer.id).acquired;
     reconcileReceivedAttention(
       world,

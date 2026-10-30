@@ -4,7 +4,8 @@ import { situationProposalBinding, situationResponseCapabilities } from './situa
 import {
   expandDecisionSituation,
   readSituationQueryResponse,
-  situationQueriesField,
+  SITUATION_QUERY_INSTRUCTIONS,
+  withSituationQueries,
 } from './decision-situation-query.js';
 import { entityGet, currentBodyGrant, currentBodySubject } from '@open-legend/domain';
 import {
@@ -392,6 +393,7 @@ export class AiDirector {
       this.replyPreviews.recheck();
       for (const active of this.activeRuns)
         if (
+          !active.controller.signal.aborted &&
           active.job.decision &&
           (service.paused ||
             service.generation !== active.generation ||
@@ -407,6 +409,7 @@ export class AiDirector {
           active.controller.abort();
         }
       for (const run of this.activeRuns) {
+        if (run.controller.signal.aborted) continue;
         if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent()) {
           run.invalidated = true;
           run.controller.abort();
@@ -1537,6 +1540,29 @@ export class AiDirector {
     run.temporalSourcesCurrent = prepared.temporalSourcesCurrent;
   }
   private current(run: Running): string {
+    // A load abandons the request's timeline. Storage may revoke its source
+    // watches before the replacement world is published; that notification is
+    // not a separate in-world correction that should relabel the cancelled work.
+    if (run.generation !== this.service.generation)
+      throw new StopJob('cancelled', 'This request was cancelled before completion.');
+    // A later source/generation notification cannot change why an already stopped
+    // request ended. In particular, resuming a loaded game never revives work
+    // that was cancelled by its pause.
+    if (
+      this.stopped ||
+      run.invalidated ||
+      run.controller.signal.aborted ||
+      (this.service.paused && (run.job.kind === 'thought' || !!run.job.decision))
+    )
+      throw new StopJob(
+        run.invalidated ? 'stale' : 'cancelled',
+        run.cancelReason ??
+          (this.stopped
+            ? 'This request was cancelled when the server closed.'
+            : this.service.paused
+              ? 'This request was cancelled when the game paused.'
+              : 'This request was cancelled before completion.'),
+      );
     if (run.temporalSourcesCurrent && !run.temporalSourcesCurrent())
       throw new StopJob('stale', 'The selected personal evidence changed or expired.');
     const decision = run.job.decision;
@@ -1553,21 +1579,6 @@ export class AiDirector {
         'stale',
         'This decision expired or its approved model settings changed.',
         'expired',
-      );
-    if (
-      this.stopped ||
-      run.invalidated ||
-      run.controller.signal.aborted ||
-      (this.service.paused && (run.job.kind === 'thought' || !!decision))
-    )
-      throw new StopJob(
-        run.invalidated ? 'stale' : 'cancelled',
-        run.cancelReason ??
-          (this.stopped
-            ? 'This request was cancelled when the server closed.'
-            : this.service.paused
-              ? 'This request was cancelled when the game paused.'
-              : 'This request was cancelled before completion.'),
       );
     if (run.job.authority && !this.service.currentScope(run.job.authority, 'play', true))
       throw new StopJob('stale', 'Control or access changed; no new effects were applied.');
@@ -3498,12 +3509,7 @@ export class AiDirector {
           })
         : undefined;
     let preview = startPreview();
-    const querySchema = z
-      .object({
-        queries: situationQueriesField(prepared.situation.policy.maximumQueries),
-        ...schema.shape,
-      })
-      .strict();
+    const querySchema = withSituationQueries(schema, prepared.situation.policy.maximumQueries);
     const responseSchema = z.toJSONSchema(querySchema, { target: 'draft-7', io: 'input' });
     let value: unknown;
     if (requestedActivity) value = requestedActivity;
@@ -3537,9 +3543,7 @@ export class AiDirector {
             ? { macrofoldDeployment: selected.macrofoldDeployment }
             : { model: selected.model, reasoningEffort: selected.reasoningEffort }),
           maxOutputTokens: selected.maxOutputTokens,
-          instructions:
-            instructions +
-            ' First choose one mode and write queries before operations. Set queries to null for a complete decision. You may make one batch of the supplied read-only situation queries when needed. For a query batch return an empty operations list, queries, and no invention. A final continuation follows only if funded; otherwise the character continues current behavior. For a complete decision set queries to null. Coordinates and geometry are received measurements, never inferred intent. Partial coverage does not prove absence.',
+          instructions: instructions + ` ${SITUATION_QUERY_INSTRUCTIONS}`,
           context,
           schema: responseSchema,
           ...(preview ? { onProgress: preview.progress } : {}),
