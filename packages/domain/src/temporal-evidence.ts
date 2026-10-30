@@ -3104,10 +3104,10 @@ export function retainedTemporalReceipt(
   return { receipt: cloneValue(temporalReceiptForRead(selected)), values: cloneValue(values) };
 }
 
-export function temporalReceiptSource(receipt: TemporalReceipt): EvidenceSource {
+export function temporalReceiptSource(receipt: TemporalReceiptLocator): EvidenceSource {
   return {
     family: 'native-exposure',
-    id: receipt.id,
+    id: temporalReceiptId(receipt),
     revision: 1,
     observer: { actorId: receipt.actorId, physicalLife: receipt.physicalLife },
   };

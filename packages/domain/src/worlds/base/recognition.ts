@@ -16,6 +16,7 @@ import {
   temporalReceiptForSource,
   captureTemporalObservation,
   retainTemporalSupport,
+  temporalReceiptId,
   temporalReceiptSource,
 } from '../../temporal-evidence.js';
 import { adjustRetainedKnowledgeAccounting } from '../../remembered-impressions.js';
@@ -876,17 +877,25 @@ export function retainRecognitionEvidence(
   );
   const seedKey = `voice-seed-${evidence.eventId}`;
   if (records[seedKey]) ids.add(seedKey);
+  const provisional = `awareness:${evidence.eventId}`;
+  const rebaseContacts = (identity: ObserverIdentity, retained: string) => {
+    for (const root of identity.familiarity?.roots ?? [])
+      if (root.sourceKey === provisional) {
+        root.sourceKey = retained;
+        root.key = JSON.stringify(['contact', retained, root.at]);
+        root.support = root.support.map((source) => (source === provisional ? retained : source));
+      }
+  };
   for (const key of ids) {
     const prior = records[key];
     if (!prior) continue;
     const modalities = (['voice', 'sight'] as const).filter((modality) =>
-      prior[modality]?.samples.some(
-        (sample) => sample.sourceKey === `awareness:${evidence.eventId}`,
-      ),
+      prior[modality]?.samples.some((sample) => sample.sourceKey === provisional),
     );
-    if (!modalities.length) continue;
+    const hasContact = prior.familiarity?.roots.some((root) => root.sourceKey === provisional);
+    if (!modalities.length && !hasContact) continue;
     let receipt = temporalReceiptForSource(world, observerId, evidence.eventId);
-    if (!receipt)
+    if (!receipt && modalities.length)
       receipt = captureTemporalObservation(
         world,
         observerId,
@@ -900,17 +909,48 @@ export function retainRecognitionEvidence(
         (facet) => facet.value.kind === 'perceived-feature' || facet.value.kind === 'association',
       )
       .map((facet) => facet.ordinal);
+    const alreadyHeld =
+      receipt &&
+      world.experience?.temporal?.actors[observerId]?.supports?.[temporalReceiptId(receipt)];
     const held =
       receipt &&
+      modalities.length > 0 &&
       retainTemporalSupport(world, receipt, {
         facetOrdinals: ordinals,
         ...BASE_ATTENTION_POLICY.retention.optional,
       });
-    if (held) continue;
+    const proof = held ? held.receipt : !modalities.length ? receipt : undefined;
+    if (proof) {
+      // The raw utterance can expire independently of its received proof.
+      // A contact alone keeps its ordinary recent receipt, not lasting proof.
+      const candidate = cloneValue(prior);
+      const retained = JSON.stringify(temporalReceiptSource(proof));
+      const rebase = (support: string[]) =>
+        support.map((source) => (source === provisional ? retained : source));
+      for (const modality of modalities)
+        for (const sample of candidate[modality]!.samples)
+          if (sample.sourceKey === provisional) {
+            sample.sourceKey = retained;
+            sample.support = rebase(sample.support);
+          }
+      rebaseContacts(candidate, retained);
+      if (commitObserverIdentity(world, observerId, key, candidate)) continue;
+      if (held && !alreadyHeld) releaseTemporalSupport(world, observerId, held.receipt.id);
+    }
     const candidate = cloneValue(prior);
     for (const modality of modalities)
       candidate[modality]!.samples = candidate[modality]!.samples.filter(
-        (sample) => sample.sourceKey !== `awareness:${evidence.eventId}`,
+        (sample) => sample.sourceKey !== provisional,
+      );
+    const recent = receipt && JSON.stringify(temporalReceiptSource(receipt));
+    if (modalities.length && hasContact && recent) {
+      rebaseContacts(candidate, recent);
+      if (candidate.individualId && commitObserverIdentity(world, observerId, key, candidate))
+        continue;
+    }
+    if (candidate.familiarity)
+      candidate.familiarity.roots = candidate.familiarity.roots.filter(
+        (root) => root.sourceKey !== provisional && root.sourceKey !== recent,
       );
     if (candidate.individualId) commitObserverIdentity(world, observerId, key, candidate);
     else retireRecognitionIdentity(world, observerId, key, prior);
