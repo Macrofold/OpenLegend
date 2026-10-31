@@ -8,25 +8,37 @@
 - **Read base:** published `main`, commit `8626e9e319553157fe738ae78270e29ec09c62b3`.
 - **Work branch:** `docs/phantom-blade-zero-dossier-20261031`.
 - **Authority:** research only; no accepted product behavior, runtime code, paid campaign, branch merge or deployment.
-- **Prior-material check:** no Phantom Blade Zero dossier filename exists in the inspected dossier directory; a GitHub connector search for “Phantom Blade” returned no matches. The older source packet contains no known requested PBZ case. Earlier research is preserved in place; this pass does not certify unrelated packet-wide gates.
+- **Prior-material check:** no Phantom Blade Zero dossier filename existed in the inspected dossier directory; a GitHub connector search for “Phantom Blade” returned no matches. Earlier research is preserved in place; this pass does not certify unrelated packet-wide gates.
 
-## Current progress
+## Completion
 
-**In progress.** Five substantive chapters are written, covering mechanics/world, reception, studio production, marketing/business and Open Legend applications. Independent studio/marketing review fixes are incorporated. Next: complete the whole-dossier review, finalize the entry page and R01–R15 map, inspect internal links and formatting, and commit the completed record.
+**Completed within the October 31, 2026 evidence boundary.** The [entry page](dossiers/phantom-blade-zero.md) links five substantive chapters and maps the requested research to R01–R15. G186 is registered in the [roster](research-roster.md) and [research index](README.md); the existing [showcasing guide](../../06-marketing/showcasing-the-game.md) links the campaign case.
 
-| Dimension                                                                   | State                                                                               |
-| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
-| Released mechanics, equipment, economy, world, lore and concrete situations | Written; final dossier review pending                                               |
-| Five-plus substantive reviews and contrasting direct Steam testimony        | Nine critic comparisons and sixteen selected English/Chinese Steam accounts written |
-| Studio, earlier games, production and funding                               | Written and independently reviewed                                                  |
-| Campaign, channels, audience and commercial metrics                         | Written; independent review corrections incorporated                                |
-| R15 modding screen and evidence boundaries                                  | Unofficial tools observed; sustained-popularity finding remains uncertain at launch |
-| Open Legend transfer, coverage map, navigation and review                   | Applications written; entry page, coverage map and final verification pending       |
+| Dimension                                                                   | Completed coverage                                                                                                                                                      |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Released mechanics, equipment, economy, world, lore and concrete situations | Major connected systems, acquisition and spending, recoverable versus nonrecoverable investment, narrative progression, failure/replay and five labeled worked examples |
+| Substantive reviews and direct Steam testimony                              | Nine written critic comparisons and sixteen selected English/Chinese Steam accounts, with sampling, play-stage and review-copy limits                                   |
+| Studio, earlier games, production and funding                               | Rainblood/Phantom Blade history, earlier reception, production stages, outside contributors and dated financial/team claims                                             |
+| Campaign, channels, audience and commercial metrics                         | Chronology, concrete placements, public demonstrations, partners, incentives, measured versus inferred audiences and sales-definition checks                            |
+| R15 modding applicability                                                   | Early unofficial tools observed; sustained popularity remains uncertain after roughly two launch days, so a mature-ecosystem deep dive is not certified                 |
+| Open Legend transfer and navigation                                         | Applications linked to existing design, validation, narrative, production and marketing owners; no new implementation commitment                                        |
+
+## Review and verification
+
+The root reviewed the complete chapters and their source boundaries. Cross-review covered studio versus marketing claims, the mechanics/reception comparison, the Open Legend applications, the entry page and the marketing backlink. Corrections include the distinction between map icons and custom pins; weapon-refund exceptions; story discovery's health reward; named faction relationships; upgrade inflows and sinks; and the timing limit on inferring preorder effects from launch-day advertisements.
+
+Pinned **Prettier 3.6.2**, using the repository's configuration, passes on all ten changed Markdown files. The content/link review verified newly introduced internal file targets and section anchors against the staged documents and fetched repository owners. Existing links on edited index lines were distinguished from newly introduced targets. Source and chapter references were checked during review; inaccessible embedded media and volatile Steam collection URLs retain explicit limitations. No unrelated formatting changes were introduced in the existing index, roster or showcasing guide.
+
+This documentation-only change requires no runtime, game-stress or provider checks under the repository's verification guidance. No automated test suite was added.
 
 ## Evidence boundaries to preserve
 
 The million-plus claim is a third-party extrapolation from a Steam/PS5 estimate plus undisclosed WeGame purchases. A million wishlists in fifteen days is a separate 2025 announcement. Actual ad spend, channel conversion, audited net receipts/profit and long-term reception are unavailable. Publisher patch notes do not prove all launch faults fixed; sampled reviews do not establish issue prevalence.
 
-## Completion record
+The dossier does not claim personal play, a complete numerical database, independently watched video, a confirmed universal ending count or a sustained popular mod ecosystem. These are explicit research limits, not unfinished work silently moved to another batch.
 
-This checkpoint is incomplete. The final commit and coverage audit will replace the current-progress section when all requested documentation and review are complete.
+## Commit evidence and disposition
+
+The reviewed dossier content and navigation are recorded in [commit `4eba3ce56e5a54a48b8026737fbf6a42059bf833`](https://github.com/Macrofold/OpenLegend/commit/4eba3ce56e5a54a48b8026737fbf6a42059bf833), following the initial scope and substantive-research checkpoints. This completion record is finalized in the subsequent commit on the same branch.
+
+**Remaining requested research work: none.** Private commercial data and future launch outcomes remain unknown. This research selects no new product contract, requests no external campaign and does not merge the branch.
