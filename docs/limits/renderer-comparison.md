@@ -30,7 +30,7 @@ Three `WebGPURenderer`/TSL and PlayCanvas WebGPU are later explicit experiments,
 
 **Status:** Proposed — selected diagnostic envelope, unmeasured. **Restrictiveness:** Safe.
 
-One replay recording is limited to **120 seconds of timeline**, **32 MiB (33,554,432 bytes) of retained UTF-8 encoded manifest/timeline data**, and **10,000 timeline records**, whichever is reached first. View and control entries both count. External asset payloads are referenced exactly and remain governed by their existing asset owner; they are not embedded to evade this allowance.
+One replay recording is limited to **120 seconds of timeline**, **32 MiB (33,554,432 bytes) of retained UTF-8 encoded manifest/timeline data**, and **10,000 timeline records**, whichever is reached first. Presentation-change/event batches and control entries both count. External asset payloads are referenced exactly and remain governed by their existing asset owner; they are not embedded to evade this allowance.
 
 Check remaining count/time before accepting an entry and enforce the byte allowance during bounded encoding before retaining it. Reserve enough bytes for the bounded manifest and terminal status/coverage before the first append, within the same 32 MiB allowance; finalizing an overflow reason cannot exceed the artifact limit. Do not first build an unbounded serialized copy. Stop before an offending append, retain explicit stop reason/coverage and mark the recording **incomplete**. An incomplete stream may support diagnosis but cannot produce a renderer winner or whole-workload parity claim. No silent dropping of records.
 
@@ -40,11 +40,13 @@ The values provide a practical finite comparison without a recording/archive ser
 
 **Status:** Proposed — selected repeatability defaults, unmeasured. **Restrictiveness:** Safe.
 
-The default timed replay uses **10 seconds of explicit warm-up followed by 60 seconds of measured steady state**. Startup/download/decode and first-use preparation are separately reported. Custom positive finite phase durations are written into the manifest; warm-up plus measured timeline must fit within RCP-L03's 120-second total. Do not hide preparation within an unlabeled exclusion or call a preloaded run cold.
+The default timed replay uses **10 seconds of explicit warm-up followed by 60 seconds of measured steady state**. Startup/download/decode and first-use preparation are separately reported. Collection stops after initial preparation, remains stopped during warm-up, and starts afresh at the measured boundary without resetting playback. Record actual boundaries/overshoot; a delayed start that misses the entire measured interval is invalid. Custom positive finite phase durations are written into the manifest; warm-up plus measured timeline must fit within RCP-L03's 120-second total. Do not hide preparation within an unlabeled exclusion or call a preloaded run cold.
 
 Run a finite **six-attempt campaign**, interleaved **A–B–B–A–A–B**; state which engine is A. Qualification requires three valid captures per backend. Preserve failed/invalid runs and reasons instead of automatically retrying until six favorable captures remain. Hidden/background execution, failed assets or unequal required work makes the affected comparison inconclusive. An explicitly repeated campaign preserves the prior summary and needs a stated variance or diagnosis question.
 
 The existing browser driver's explicit renderer-comparison mode owns that campaign; scene-study's short measurement button remains a single-run diagnostic. Replay mode does not sign in, take control, select world speed, resume, write the live start marker or drive native commands. Headed/headless and graphics launch choices are recorded; real-display smoothness requires its actual display evidence.
+
+The driver retains its 30-second browser-launch limit. Each attempt has one 60-second preparation deadline shared by page creation/navigation/install/readiness, then `warmupMs + measureMs + 30_000` ms for playback/finalization, owned outside the page. The 30-second margin is failure/reporting allowance, not extra workload. Page cleanup has 10 seconds; unresolved cleanup ends the campaign with remaining slots unattempted. Timeouts retain invalid evidence and do not trigger retries. Revisit a bound only for a named useful workload, consistently for both candidates.
 
 These are inexpensive comparison defaults rather than statistical guarantees or game performance budgets. Use the same build/device/browser/quality conditions; report thermal/power changes. See RCP10/RCP11.
 
@@ -64,7 +66,7 @@ Live capture and its unexported private inputs are bound to the current access/v
 
 Use [OB01](observability.md#ob01--explicit-browser-performance-capture) for raw-sample, histogram, timer-query and diagnostic allowances, including its stated current gaps. Do not create a second per-engine profiler with different invisible limits. Bound additional backend metadata before copying it; missing, unavailable, omitted and zero remain distinct.
 
-Collection is opt-in and disabled preparation is skipped. Stop releases measurement interest and handles; late GPU results cannot enter a new recording. GPU timestamps remain capability-dependent. Tracked resource counts and estimated bytes are labelled by scope and are not exact portable VRAM. Existing CPU/GPU spans can overlap and are never added as disjoint costs. See RCP10 and [browser profiling](../maintainers/performance-profiling.md#browser-frames-and-actual-walking).
+Collection is opt-in and disabled preparation is skipped. Stop releases measurement interest and handles; late GPU results cannot enter a new recording. GPU timestamps remain capability-dependent. Tracked resource counts and estimated bytes are labelled by scope and are not exact portable VRAM. Existing CPU/GPU spans can overlap and are never added as disjoint costs. Required semantic inputs/cues must match; frame-dependent pose/draw/resource counts can differ. Replay excludes live projection/change calculation and reports that scope; live attribution covers those costs. See RCP10 and [browser profiling](../maintainers/performance-profiling.md#browser-frames-and-actual-walking).
 
 Report callback cadence separately from actual draw/postrender cadence, counts and trailing no-draw time. A responsive scheduler with a frozen canvas is not a smoothness pass, and a submitted draw is not proof of physical screen presentation.
 

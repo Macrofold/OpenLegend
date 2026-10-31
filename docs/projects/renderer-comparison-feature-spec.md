@@ -80,7 +80,7 @@ Changing renderer is presentation-only. It neither resets the world nor freezes 
 4. Run the other renderer separately on the same device/browser/build conditions. Alternate run order and repeat; retain every valid run and the reasons for exclusions.
 5. Inspect visual and behavioral equivalence. A missing character, shadow, pose update, effect, asset or view transition makes the affected comparison incomplete.
 6. Review frame-time distributions, stalls, CPU attribution, available GPU measurements, loading, response and retained resources. State uncertainty and workload limits.
-7. Follow with a real live session through the normal server/client path. Replay establishes presentation cost and repeatability; it cannot prove independent AI behavior, network responsiveness, usefulness of invention or player enjoyment.
+7. Follow with a real live session through the normal server/client path. Replay measures shared change application/frame work and native rendering from the same admitted visual changes; live view projection/change calculation and server/network/model cost are measured in the normal client. It cannot prove independent AI behavior, usefulness of invention or player enjoyment.
 
 The hot selector serves visual and lifecycle comparison. Clean sequential launches serve timing. Running both renderers at once, whether on two canvases or in competing tabs, does not qualify their standalone performance.
 
