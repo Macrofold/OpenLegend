@@ -1301,7 +1301,12 @@ export function temporalEntryMetadataReader(
       subjects.add(text(entry.subject));
       if (entry.identity != null) {
         const identity = declaration(entry.identity, 'identity');
-        if (identity.kind === 'individual') addIndividual(identity.individualId);
+        if (identity.kind === 'individual') {
+          addIndividual(identity.individualId);
+          // A carried track's acquired person role is still an actual user of
+          // that individual. This does not renew its old sample/source aliases.
+          if (entry.kind === 'checkpoint') occurrenceIndividuals.add(identity.individualId);
+        }
       }
       let receiptId: string | undefined;
       if (entry.kind === 'change') {
