@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — feature specification
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Deer stride and wolf forepaws are refined; bear access and broader visual qualification remain open. | 2026-10-18   |
+| Status      | Current progress                                                                                                      | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Character-production design is specified; existing art studies, family coverage and broader visual qualification remain open. | 2026-10-31 |
 
 Deer/stag travel uses the correct four-foot sequence, fixed-length leg articulation, distinct front/rear bends and continuous foot velocity through contact. Wolf travel preserves source timing and wrist rotation with fixed foreleg lengths and a neutral toe shape. Source anatomy, sizes, finishes and runtime ownership remain unchanged. The [gait study](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/studies/2026-10-17-grounded-animal-gaits/comparison.html) preserves exported/editable sources and moving comparisons; [evidence and limits](../verification/natural-source-replacements.md#deer-stride-and-wolf-forepaws--october-17-2026) remain distinct from creator acceptance and broader action/device qualification.
 
@@ -26,7 +26,7 @@ The bundled world's [visual requirements](../../art-direction/decisions.md#curre
 - Authorized first-scene work and asset study: [starting-scene art plan](3d-pixel-art-first-scene-plan.md), with implementation and experiment tasks under V3D01.
 - Focused details: [appearance families and composition](3d-pixel-art-appearance-families.md), [generation and publication](3d-pixel-art-asset-pipeline.md), and [visual/operational qualification](3d-pixel-art-validation.md).
 - Existing authorities: [world presentation](../world-presentation.md), [spatial world](../spatial-world.md), and [runtime art/publication](../invention-art-pipeline.md).
-- Development production: [shared workflows](../production-workflows/README.md) and [object/character routes](../production-workflows/assets-and-animation.md); these supply reusable offline methods while this project retains its proposed product scope.
+- Development production: [shared workflows](../production-workflows/README.md), [object/character routes](../production-workflows/assets-and-animation.md) and the detailed [character recipe](../production-workflows/character-production.md). [AF04](../maintainers/art-direction.md#character-production-follow-through) owns its scoped execution and handoff; V3D retains runtime family qualification.
 
 ## 1. Recommendation
 
@@ -44,7 +44,7 @@ Normal camera scale, sampling/filtering, light thresholds, outline treatment, an
 
 ## 2. What remains controlling
 
-The later [mercenary pilot](completed/mercenary-scene-pilot.md) is delivered: a separate default NPC uses idle/walk animation, cloth and fixed-resolution character color/depth rendering. Its [scoped evidence](../verification/mercenary-default.md) and [A3D15 limits](../limits/3d-pixel-art.md#a3d15--bundled-mercenary-pilot) supersede the original sprite-only baseline, not the broader proposed family, publication or generation work. Reuse the delivered camera, lighting and character-resource owners; do not implement the pilot again.
+The later [mercenary pilot](completed/mercenary-scene-pilot.md) is delivered: a separate default NPC uses idle/walk animation, cloth and fixed-resolution character color/depth rendering. Its [scoped evidence](../verification/mercenary-default.md) and [A3D15 limits](../limits/3d-pixel-art.md#a3d15--bundled-mercenary-pilot) supersede the original sprite-only baseline, not the broader proposed family, publication or generation work. Reuse the delivered camera, lighting, and character-resource owners; do not implement the pilot again.
 
 OpenLegend already uses a 3D spatial scene, simple meshes, camera-facing artwork, continuous orbit/pitch, support-aware motion, dynamic projected shadows, and lit sprites. Arbitrary generated-model loading, generalized rigs, and safe complete representation replacement are not delivered capabilities merely because the renderer is 3D. See the [current presentation specification](../world-presentation.md) and [SW18](../maintainers/spatial-world.md#sw18--world-presentation-delivery).
 
@@ -67,6 +67,29 @@ Where a player or creator is authorized to choose an appearance, preserve the fe
 Use the [offline production workflow](../production-workflows/README.md) to explore and deliver the needed representation. A full articulated route can be idea → art → 3D source → rig/motion → working entity, while exact reuse, direct modeling, procedural composition and final 2D art skip unnecessary stages. Develop the supported native interaction with a rough representation alongside visual exploration so scale, use and meaningful choices can be judged early. Choose a coherent example before expanding a family, rather than requiring finished art before any play or producing a large library before discovering whether its source works.
 
 The [asset and animation route](../production-workflows/assets-and-animation.md) defines source handoffs and repair paths; [scenes and interfaces](../production-workflows/scenes-and-interfaces.md) connects the result to light, environment and item presentation. Evaluate the resulting person or object in the actual game: recognizable identity, expressive motion, readable contact and a useful supported interaction. Preserve the accepted source and demonstrate a meaningful revision when repeatability is the purpose. These methods deepen the proposed delivery approach without accepting new art direction, arbitrary rigs or equipment capabilities, and without treating the mercenary pilot as general production qualification.
+
+### Repeatable character production
+
+**Selected offline workflow: Done — designed; production execution and family qualification remain open.** The [step-by-step character recipe](../production-workflows/character-production.md) supplies inputs, decisions, outputs, repair paths and checks from brief through preserved handoff. The [technical handoff](3d-pixel-art-tech-design.md#character-production-contract-and-delivery) maps those outputs to existing owners. This is a refinement of the existing production route, not a new runtime generation service or a replacement for the first-playable roadmap.
+
+The intended benefit is more deliberate, recognizable people and useful equipment at sustainable revision cost. Production should first serve the selected playable cast, actions, inventions and encounters, not a catalogue of impressive but unrelated heroes. Quiet enjoyment, independent refusal, danger and achievement can all need expressive presentation. No new repair chore, prescribed NPC reaction or compulsory demonstration outcome is introduced to justify an animation.
+
+An artist may produce an important part separately when that improves control over its design, while preserving a successful body or outfit. The final asset remains joined or separate according to actual deformation, editing and equipment needs. A head repaired separately is not a detachable body part; a generated jacket is not automatically compatible with every body. Direct refinement of a usable mesh, local reconstruction and optional high-detail baking are alternatives chosen by the observed deficiency. None of high-poly-first production, all-quad topology, a fixed part count or a named provider is mandatory.
+
+Preserve selected anatomy and identity; correct weak faces, UV allocation, materials, fitting and motion in the responsible source. Prove rough fit and useful movement before expanding dependent detail or clips. Review motion as start, use, interruption and recovery through actual supported actions. Use settled clothing or simple authored movement where adequate; extra cloth, hair, tail, facial or voice systems must earn their scope and do not block an otherwise adequate character.
+
+The workflow serves these distinct journeys:
+
+| Journey | Expected result | Failure and recovery |
+| --- | --- | --- |
+| Improve a liked character locally | A weak head, eye treatment or garment region is corrected without drifting the approved body, identity or unrelated gear | Return to the offending source; recheck affected seams, materials, weights and derived views rather than regenerate the whole person |
+| Produce a useful body/equipment case | The chosen person moves and uses the required supported item; a meaningful compatible variation reuses the reviewed master | Unknown fit, missing hands/feet contact or unsupported actions remain explicit; retain an adequate approved representation and route the missing capability to its existing owner |
+| Communicate an actual game moment | Movement, preparation, interruption, contact and ending help the player understand the actual action or state at normal play size | A beautiful clip that delays controls or depicts a false success fails integration; repair timing/binding without inventing a different native result |
+| Resume or revise the work | A new contributor retrieves the exact sources, knows the compatibility and can execute the next named step without private conversation history | Missing files, rights or source dependencies are recorded as the affected stage's blocker, not silently replaced with fresh generation |
+
+A **study** delivers requested concepts and construction evidence; **production** delivers the actual inspected export package for a named consumer; **integration** additionally delivers the working game result. Standard and Higgsfield share those finish definitions. They do not change the art direction or authorize later stages automatically. An image or movie can be useful reference without being usable geometry or animation data.
+
+For a production-family proof, choose one rights-cleared subject and one gameplay-relevant item/action from existing selected work. Reuse the current mercenary as a control where appropriate, not as a mandatory source. Complete the requested representation, then one meaningful local revision or compatible variation. Integrate only when authorized and the required native mechanics exist. A second body, quadruped, universal wardrobe, broad crowd or provider comparison is included only when it is the actual selected question. The first connected proof is not a substitute for the wider V3D05–V3D06 acceptance scope.
 
 ## 4. Player and creator scenarios
 
@@ -187,6 +210,23 @@ It does not preserve incompatible development saves or add old-format migration.
 It does not ship reference artwork merely because that artwork appears in the art-direction library. Rights and provenance must be established for production assets and provider inputs.
 
 ## 12. Acceptance and unresolved choices
+
+### Character-production acceptance and execution choices
+
+Use the exact subject, source/export revisions, required actions/equipment, camera/light conditions and selected consumer from the brief. Apply the checks relevant to the requested finish; a study is not required to pass integration checks, and its completion cannot be reported as integration.
+
+| Evidence class | Required result for the applicable finish | Meaning of a failure |
+| --- | --- | --- |
+| Source and construction pass | Protected identity, coherent views, usable geometry/UVs/materials, required fit and deformation | Repair the responsible source before dependent final production; do not hide the defect in a flattering preview |
+| Export pass | Freshly reopened actual files contain the required geometry, materials, rig, non-root motion and dependencies | Package is not ready for that consumer; provider success or a correct source viewport is insufficient |
+| Integration pass | Required actions, transitions, equipment custody, state, visibility and loading/removal remain truthful in the actual game | Keep the previous adequate representation and fix the affected native-to-presentation consumer; art cannot invent successful mechanics |
+| Required measurement | Record real production/revision effort, discarded attempts and costs; measure the relevant exported resource and runtime workload where integration is included | Unknown values remain unknown; no efficiency, latency or population claim may be made without evidence. Existing consumer budgets still apply |
+| Artistic review | Review normal-play recognition, expressive readable motion, coherent materials, camera stability and fit with the accepted style | Technical success is not artistic acceptance; preserve alternatives and the specific repair decision |
+| Player evidence | Where the selected delivery requires enjoyment or understanding evidence, use its existing playtest owner and record unprompted reading/response | A showcase or an agent's score does not establish fun, recognition or independent character appeal |
+
+The recipe and handoff contract have no unresolved core design decision. Exact asset/source rights, the appropriate source/rig/tool for a particular brief, actual provider quality/cost, compatible outfits/actions and final aesthetic approval are execution choices or evidence gates with their existing owners. A missing consequential choice blocks only dependent work; it is not silently answered by a generator. Broader final rendering profiles, device budgets and general runtime appearance publication retain the unresolved choices below.
+
+The [source research](../../art-direction/research/3d-pixel-worlds/character-production-workflows.md) distinguishes the supplied tutorial, professional practice, vendor claims and our adaptation. Its reported one-character timings are not production estimates, a provider ranking or proof of an inexpensive compatible population. [AF04](../maintainers/art-direction.md#character-production-follow-through) records execution separately from design completion; no production or player acceptance is closed by this specification.
 
 ### Environmental hierarchy and identity acceptance
 
