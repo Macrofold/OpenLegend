@@ -4,7 +4,7 @@
 | ----------- | ------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | All three additional performance corrections are integrated; complete-game operating acceptance remains open. | 2026-10-31   |
 
-**Feature encoding updated 2026-10-31 02:57 UTC; architecture used 2026-10-31 01:17 UTC**, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`. Compact current grants, independently timed personal frames, derived retention/ownership metadata and deferred native wording are integrated; gameplay/defaults are unchanged and required qualification remains open.
+**Feature encoding updated 2026-10-31 05:12 UTC; architecture used 2026-10-31 05:12 UTC**, Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`. Compact current grants, independently timed personal frames, derived retention/ownership metadata and deferred native wording are integrated; gameplay/defaults are unchanged and required qualification remains open.
 
 **Supported attention/memory core implemented; broader scene proposals remain separate.** This extends the accepted PS04 direction. The [technical design](attention-and-scenes-tech-design.md) defines the exact attended slice and the selected two-NPC background family: compact expressive meaning, followed by the listener's independent interpretation, optional personal reaction and optional reply. Existing exact hearing evidence and captions retain their current behavior. Aggregate vocal activity, crowds, timed speech and voice-media delivery remain separate proposals outside the implemented core.
 
@@ -369,6 +369,10 @@ Store one received pose and derive motion from the person's own consecutive samp
 Keep the current clock, attention capacity, preferred recent horizon and useful-only lasting-memory policy. Bound stale current tracks as well as history: walking past millions of things cannot leave a permanent last-known map. After recent detail expires, a warranted short account or required knowledge may survive; trivial sequences can disappear without a model call. No reliable-old-history promise depends on funded consolidation arriving before expiry.
 
 Maintain counts and reusable participant/indexed views instead of rebuilding entity lists for routine totals. Use one working native batch and one immutable publication. A command acknowledges its short durable acceptance; optional interpretation, rich readers and bounded physical reclamation may finish afterward. Forgotten information becomes inaccessible immediately even when its physical bytes await deletion. Finite captured requests replace old whole-world references. These choices remove work, rather than merely move the same excessive bookkeeping to another thread.
+
+### 11.7 Proposed simplification of received state
+
+**Design proposal, not installed behavior.** [Runtime §13](attention-and-scenes-runtime-design.md#13-proposed-structural-replacement-contacts-and-grouped-receipts) recommends one personal contact with grouped received values/checks, replacing separate writable and persisted records for every field. Details with different evidence or freshness remain independent exceptions. Exact sampled movement, meaningful occurrences, unknown identity, correction, forgetting and cold recovery keep their existing guarantees. Broad crowd visibility and relevant surroundings stay independent of ten detailed slots. No new AI calls, slower clock, retroactive unattended routes or compulsory memory of trivial movement is selected. Existing rates/retention/defaults remain the comparison baseline; [SR08–SR11](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) track the proposed complete conversion and unmet operating checks.
 
 ## 12. Concrete journeys and failure cases
 
