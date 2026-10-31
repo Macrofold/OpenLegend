@@ -1,8 +1,8 @@
 # Progressive 3D pixel art — technical design
 
-| Status      | Current progress                                                                                                         | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Existing rendering/resource owners support the finite art increment; the broader pipeline architecture remains proposed. | 2026-10-18   |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Offline character-production handoffs and delivery are designed; existing runtime owners and broader pipeline qualification remain unchanged. | 2026-10-31 |
 
 The [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026) require believable proportions and beautiful dimensional pixel art while rejecting visibly low-poly, blocky and cutesy styles. These are selected-world art constraints; the broader appearance, generation and publication architecture below remains proposed.
 
@@ -13,7 +13,7 @@ The finite source-based implementation reuses the existing renderer, camera, lig
 - Work, dependencies, and acceptance: [V3D tracker](../maintainers/3d-pixel-art.md); the [first-scene plan](3d-pixel-art-first-scene-plan.md) sequences the next visual delivery without duplicating the broader pipeline.
 - New asset-work bounds: [A3D inventory](../limits/3d-pixel-art.md). Shared [interface](../limits/interface.md), [AI execution](../limits/ai-execution.md), [spatial](../limits/spatial.md), [objects](../limits/objects.md), and [persistence](../limits/persistence.md) inventories remain controlling.
 - Detailed mechanisms: [generation pipeline](3d-pixel-art-asset-pipeline.md), [appearance families](3d-pixel-art-appearance-families.md), [qualification](3d-pixel-art-validation.md).
-- Offline source-to-game handoffs: [production workflow](../production-workflows/README.md) and [asset/animation route](../production-workflows/assets-and-animation.md); their working records feed the existing appearance/artifact owners below.
+- Offline source-to-game handoffs: [production workflow](../production-workflows/README.md), [asset/animation route](../production-workflows/assets-and-animation.md) and the executable [character recipe](../production-workflows/character-production.md). [AF04](../maintainers/art-direction.md#character-production-follow-through) tracks the scoped production proof without duplicating V3D runtime tasks.
 - Existing boundaries: [engine/world](../engine-and-world-boundaries.md), [spatial renderer contract](../../archive/07-technical-architecture/spatial-world-runtime.md#10-playcanvas-isolation-and-hybrid-assets), [world presentation](../world-presentation.md), [runtime art/publication](../invention-art-pipeline.md), and [AI providers](../ai-providers.md).
 
 ## 1. Original inspected application and smallest useful change
@@ -87,6 +87,60 @@ The [offline production route](../production-workflows/assets-and-animation.md) 
 This is a handoff requirement for the selected production work, not a new universal authoring schema, public manifest payload or asset-management service. A small study can keep its source links and review notes in the established [art record](../maintainers/art-direction.md); runtime intake retains only the metadata and dependencies its actual consumer requires. Editable DCC projects and private references do not become client downloads merely because a runtime asset derives from them.
 
 Use the dependency graph below to repair the responsible source. A material edit can refresh maps and their dependent representation without rebuilding the rig; a body or rig change can require renewed skin, clip and attachment checks. Derive alternate icons or sprites from the accepted identity and record intentional finishing differences. Preserve existing validated outputs until their replacement passes the relevant intake/publication path. Source retention and offline review do not bypass immutable publication, grant private reuse, or establish broad rig and equipment support.
+
+### Character-production contract and delivery
+
+The [selected production outcomes](3d-pixel-art-feature-spec.md#repeatable-character-production) are implemented as an offline procedure feeding the existing owners, not a new database, service, endpoint, manifest type or in-game job state. The detailed [character recipe](../production-workflows/character-production.md) is the canonical sequence for artists; this section owns the technical handoff and implementation boundaries. Runtime logic affected by this design delivery: **zero lines**. Future integration estimates belong to the concrete V3D slice and its then-current consumers.
+
+**Start with the actual consumer.** Read the installed renderer/importer, existing family, source rig and current export profile when executing; the original inspected application above is not permission to assume an old tool version is still installed. A trusted fixed-asset preparation can use its existing path without first implementing the proposed general manifests. Conversely, an offline package cannot claim arbitrary intake, universal wardrobe support or a new runtime feature that its consumer lacks.
+
+The existing study/package record carries the following information as ordinary sections or tables. These are required meanings when relevant, not a new serialized schema, naming system or parallel source of truth:
+
+| Information | Producer and responsible owner | Required consumer check |
+| --- | --- | --- |
+| Purpose, protected identity and selected finish | Art contributor with the actual world/character facts; existing brief | The chosen person, permitted public features and requested study/production/integration scope agree |
+| Source and rights pins | Existing source/provenance record and asset workflow | Exact source revision, permitted use/upload/distribution, visibility and dependency locations are known; unavailable rights stop only the dependent promotion |
+| Part plan | Modeler, following the actual body and equipment requirements | Each part states whether it is a temporary authoring split, continuous deforming surface, fitted garment, rigid attachment or optional moving detail |
+| Body/rig and fitting contract | Existing appearance-family owner plus technical artist | Units, rest/bind transforms, hierarchy/semantic joints, fit range and the actual tested source revisions agree; names alone are insufficient |
+| Material and UV contract | Material artist and installed export/renderer profile | Important regions, mapping, supported channels/color spaces, normal orientation, alpha and dependencies survive the export; no implicit editor shader conversion |
+| Motion coverage | Animator and existing action/presentation consumer | Required clips, start/held-or-loop/contact/exit meaning, interruptions, loop ranges, root policy and compatible rig revision are explicit |
+| Runtime export | Existing asset preparation/export owner | Actual file digests, format/extensions, bounds, geometry/images, material divisions, non-root channels and required dependencies are inspected after a fresh import |
+| Artistic and runtime evidence | Existing study, V3D and applicable gameplay verification owners | Record the exact subject, revision, device/view/lighting/workload and which source, export, integration or human checks ran; unrun work is not a pass |
+| Revision and handoff | One integrator for the shared source | A meaningful requested revision can be reproduced, the affected dependents are identified, and exact retained files can be retrieved by a fresh contributor |
+
+**Part production is not runtime assembly.** Fit separately produced pieces in the agreed coordinate/rest convention. Preserve the relation to the original body and protected identity; inspect connection surfaces and normals. Join continuous surfaces or retain a deliberate concealed seam only when the selected deformation and views work. Keep actual removable equipment separate through the equipment family. A rigid accessory can be attached or weighted rigidly according to the existing consumer; a flexible garment requires suitable skinning or another explicitly supported representation. Do not add one independent draw, skeleton or material per generated fragment merely because the provider returned separate files.
+
+**Geometry route selection.** Reuse a suitable source, refine a directly usable generated mesh, repair a failing region, or reconstruct/bake only where the required shape, deformation or delivery cannot otherwise be achieved. A high-detail source is not obligatory. Baking geometric maps from the working mesh and transferring fine detail from a separate high-detail mesh are different operations; either is optional according to the actual material need. Preserve a working source while comparing changed candidates. Quads are an authoring option, not a runtime feature; inspect the actual triangulated export, vertex splits, materials and image costs.
+
+**Motion and equipment binding.** Prepare an explicit coverage row for each required action/state using existing semantic pose/action mapping. The row identifies the clip/rig revision, entry/loop or hold/exit, meaningful visual contact, interruption transition, root policy, attachment roles and fallback. It does not define a second action state machine. The projection supplies permitted actual state and recent-past timing; a clip neither grants a future target nor commits a strike, transfer, recipe result or death. Confirm a tool's real equipped/drop/transfer result before displaying its attachment. Unknown two-handed contact, fit or unsupported states remain explicit capability gaps. Continue using the existing adequate representation when possible rather than silently showing success or losing gear.
+
+**Export preflight.** Record the installed exporter and selected export mode, exact body/rig/material/clip inputs, units/axes, selection/collection, action/track ranges, sampling/interpolation and supported extensions. Resolve constraints or authoring controls into channels the actual consumer reads. An FBX used between authoring tools or a Higgsfield movie is not a runtime GLB. An Unreal cloth/physics setup does not carry its executable behavior into PlayCanvas. Export only required dependency bytes, reopen without the source scene and inspect the actual package. Reusable local export instructions or a saved preset can be retained through the existing study; a generic orchestration service is not required.
+
+**Dependency-directed revision.** Use the graph in §4; do not invalidate every stage for a local correction:
+
+| Changed source | Recheck | Preserve unless independently invalidated |
+| --- | --- | --- |
+| Facial paint or material values | Consumed maps, face readability, required lighting, derived icon/portrait agreement | Unchanged geometry, rig, clip timing and mechanical state |
+| UV layout or geometry | Affected texture/bake alignment, normals, bounds, weights, fit and exported resources | Unchanged character purpose and actual equipment identity |
+| Head/body proportions or rig/bind transforms | Connected surfaces, skinning, garment fit, contacts, dependent clips and derived views | Other independent assets and unrelated world systems |
+| One garment or rigid item | Its fit/coverage, relevant poses/attachments, drop/transfer views and material/export dependencies | Unchanged body master and unrelated equipment; no whole-person regeneration |
+| Clip or transition | Relevant contacts, interruptions, action timing, dependent secondary motion and export channels | Unchanged design/texture sources |
+| Exporter/profile or consumer support | Affected fresh imports and real consuming paths | Authoritative world state; re-export does not require regeneration |
+
+A valid unchanged check can be reused with its exact revision. Changing a brief's protected identity is a design choice, not an automatic repair. Keep useful alternatives and approved bytes through the existing storage/publication policy. Never substitute a stale candidate for a newer correction, and never interpret retained source permissions as permission to publish private reference material.
+
+**Smallest delivery sequence.** AF04 supplies the source-production coordination, with runtime acceptance left in V3D:
+
+1. Pin one real selected brief and rights-cleared baseline, its actual consumer, required useful item/action and stopping point. Inventory existing sources before creating anything. Unknown core consumer support is a named dependency, not a reason to implement a new renderer as part of an export request.
+2. Make one coherent rough body/part arrangement, fit it to the selected rig and inspect demanding required poses. Complete identity and materials, selected clips and attachments only after the approach works. Reuse satisfied work rather than redoing all recipe stages.
+3. Export, freshly import and inspect the actual package. Record required coverage and failures. Correct the responsible source until the requested package passes; passing a generic viewer does not close game integration.
+4. Demonstrate one meaningful local revision or compatible variation when reuse is the goal. Record retained and changed dependencies, correction effort and total actual cost. Add another provider only if an unresolved quality/control/cost question requires a comparison.
+5. For separately authorized integration, use the existing entity, representation, equipment and action owners. Test a connected ordinary-play episode, relevant failure/interruption, camera/light conditions and the affected loading/lifetime behavior. Reuse the applicable V3D qualification rather than creating a second family test programme.
+6. Preserve and hand off exact sources/exports and the scoped evidence in the existing art/study record. Close only satisfied production tasks; broader family, device and human acceptance remain open until their own evidence exists.
+
+No universal polygon, texture, bone, animation-rate or time budget is selected by this route. Apply established consumer constraints; measure before claiming efficiency. Secondary motion is optional and must identify its supported pause/reset/contact behavior and adequate simpler representation. Appearance compatibility, private disclosure, publication, spending, resource lifetime and actual native mechanics remain with the existing owners below. Source artistry may proceed without the proposed live-generation service; an integrated live-generation capability still requires its separate implementation and qualification.
+
+**Open design decisions:** none preventing this offline procedure or handoff. Source-specific rights, exact tools/rigs, measured cost/quality and final artistic acceptance remain execution selections with explicit gates. This does not resolve the broader render/profile, device or publication-policy choices owned elsewhere in this project.
 
 ## 4. Dependency and invalidation graph
 
@@ -209,6 +263,8 @@ The [PlayCanvas ContainerResource documentation](https://api.playcanvas.com/engi
 The [Khronos glTF 2.0 specification](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html) defines the interchange structure for scenes, meshes, materials, skins, animations, buffers, and extensions. OpenLegend deliberately accepts a narrower sanitized profile. Format conformance is not visual quality, trustworthy mechanics, safe resource consumption, or rights clearance.
 
 Provider observations and their limitations are in the [pipeline design](3d-pixel-art-asset-pipeline.md#10-provider-selection-and-evidence). No vendor's demo establishes OpenLegend's repeatable art quality, arbitrary-rig support, cost, or latency.
+
+The [character-production research](../../art-direction/research/3d-pixel-worlds/character-production-workflows.md) adds the supplied part-generation tutorial, professional design/animation accounts and primary export/material documentation. These support the offline procedure, not a claim that its source tools or every export feature are already qualified in this runtime.
 
 ## 12. Delivery and verification
 
