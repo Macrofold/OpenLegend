@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                      | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The finite source-based study is implemented; grounded art requirements are clarified, while creator acceptance and the broader pipeline remain open. | 2026-10-17   |
+| In progress | Reusable body, garment and motion qualification is specified; general family delivery and creator acceptance remain open. | 2026-10-31   |
 
 **Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 
@@ -85,6 +85,25 @@ A family-owned attachment contract includes semantic role, local axes/pivot, com
 Use explicit garment regions and order for skin, underlayer, outer clothing, armor, and decorative overlays. Hide covered body regions using reviewed masks or alternate geometry to prevent obvious clipping. Specify hair/helmet compatibility and fallback hair selection; do not silently erase a distinctive hairstyle from the identity record. A garment's palette can vary independently of its geometry.
 
 Some combinations require authored fit variants rather than runtime collision-solving cloth. Unsupported fit must be visible in authoring validation. During ordinary play, a mechanically valid equipped item may use an honest alternate visual, but the player should not see gear vanish without explanation. Do not prohibit legitimate gameplay equipment merely because one renderer lacks a perfect model.
+
+### Qualify the reusable fit envelope
+
+Keep one compact compatibility record with the existing family/source handoff. This is authoring evidence, not another public runtime schema. Record the following before calling a body, garment or clip reusable:
+
+| Record | Concrete content and acceptance |
+| --- | --- |
+| Body and rig | Exact source/export revisions; hierarchy and semantic joint mapping; rest/bind transforms; metres, up/forward axes and support root; the enumerated bodies or measured proportion range actually inspected. Record exceptions rather than claiming every interpolation between two bodies works. |
+| Deformation | Required shoulder/arm raise, elbow/wrist/tool grip, hip/knee bend and torso/neck turn for the selected actions. Inspect joint volume, seams, skin weights and silhouette on the actual exported skin. Only the applicable anatomy/actions are required. |
+| Garment coverage | Host body/rig, layer order, covered regions, hem/interior, closures, and the masks or fit variants used. Exercise overlap, sitting/reaching where supported, and the selected movement extremes; hiding a region must not reveal a hole when a garment is removed or replaced. Keep the editable body regions needed by supported outfits. |
+| Rigid attachments | Exact item/attachment role, pivot and local axes, handedness, permitted scale and primary grip; check feet, hips, pack, hair/helmet and neighboring layers at the needed poses. A second-hand target is recorded only when the consumer supports it. |
+| Motion coverage | Exact rig/clip dependencies, entry/exit/loop behavior, useful contacts and native timing alignment. Mark a missing required action, incompatible clip or unsupported secondary solver explicitly; a neutral pose cannot stand in for a visibly successful action. |
+| Export and cost | Exact runtime artifacts, material/mesh/skin counts and decoded texture/geometry costs; the real view, light, motion and selected population tested. Source component count is not a draw-call measurement. |
+
+Build this envelope incrementally. First qualify one coherent person/outfit through the selected playable sequence. Then use the same rig on a meaningfully different compatible body/outfit and make one actual equipment change. Choose variations that stress the intended range: a wider shoulder/waist fit, a longer garment, a pack beside an arm, or a two-handed grip where that action exists. Test the applicable limits and combinations most likely to interact; neither random cosmetic recolors nor an exhaustive cross-product establishes useful compatibility. A new body outside the checked envelope requires its own fit/deformation review, not a speculative universal fitting system.
+
+Production separation does not require independent runtime meshes. A head generated independently may join the body; a garment that changes during play may need a separate skin or an approved assembled variant; a rigid tool follows the real item. Preserve editable source parts and combine runtime pieces only where this keeps equipment/visibility/material/state behavior correct and the measured rendering cost benefits. Joint sharing alone does not remove draws, material switches or shadow/reveal work. Start with the existing resource owners and extract a shared operation only for an actual second qualified use.
+
+Use geometry/weight repair for a bad bend, a fitted garment or mask for a coverage defect, and a compatible authored pose for a contact problem before adding a cloth or IK solver. A needed solver remains a separate supported capability with its own cost and lifecycle evidence. Reject a candidate or qualify it as a one-off when reuse would cost more than it saves; that is a valid production outcome.
 
 ### Contact and carrying
 

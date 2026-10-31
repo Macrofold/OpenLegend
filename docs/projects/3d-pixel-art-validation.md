@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                   | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The new art comparisons have scoped source/browser/performance evidence; bear access and broader visual qualification remain open. | 2026-10-17   |
+| In progress | Matched character-production and fit checks are specified; production trials, creator acceptance and broader qualification remain open. | 2026-10-31   |
 
 **Detail/foliage checks — 2026-10-17 01:33 UTC:** [Current evidence](../verification/small-subject-art-and-atmosphere.md#coarser-detail-and-open-foliage--october-17-2026) covers the reduced-density comparison, source geometry/color grouping, diffuse canopy response, preserved options and moving-scene cost. The critical moving-art criteria below remain mandatory; no universal no-shimmer or device/crowd qualification follows from a scoped study.
 
@@ -167,6 +167,45 @@ Native fixtures establish correctness of contracts, not provider usefulness. Aft
 Track time to fallback, sprite and model separately; actual settled and uncertain spending; rejected attempts; references used; identity/style defects; functional-envelope mismatches; rig/part/animation failures; human correction effort; usable reuse across instances; and artifact/runtime complexity. Record whether a result was authored, generated, manually corrected, or procedurally composed. All stages and unsuccessful work count in useful-asset cost.
 
 An attractive single object is not evidence for arbitrary constructions or creatures. Automatic publication of a family requires evidence about dangerous false acceptance as well as rejection rate. Provider/API/model terms and limits must be rechecked at the time of real use.
+
+### Matched character-production comparison
+
+This is the execution detail of the [existing Meshy/Tripo comparison](../../art-direction/research/3d-pixel-worlds/generative-pipeline.md#a-focused-comparison-before-committing-to-volume), owned by V3D05 with provider/promotion follow-through in V3D08. It is an offline production experiment, distinct from the during-play proof above. It can run through the trusted asset path before the general generation service exists. No calls or assets are produced by this design, and one result cannot establish reliable population production.
+
+#### Freeze a useful, comparable assignment
+
+Select one approved person with a meaningful current-game use. Hold identity, natural proportions, actual body dimensions, construction references, required outfit/tool, intended action set, ordinary camera and light settings constant. Select the existing compatible rig and exported-motion requirements before finishing. Use the same reviewer and acceptance cases across routes. A private or uncleared source is not a permitted provider input merely because it exists locally.
+
+Compare an appropriate authored/reused baseline, the current Meshy route and a Tripo route whose actual account operation supports the task. A provider's web application and API are separate routes; record which was used, exact geometry/texture model revisions, seeds when available, topology/face settings, rigging/export options and actual returned result. Do not treat P2 as supporting an undocumented part-generation operation. If a route is unavailable, outside authorized cost or unclear on rights, record it as **not evaluated**, not a zero-cost failure or a losing quality score. Finish independent evaluation with available routes.
+
+Before dispatch, record the small planned sample, maximum attempts, hands-on effort allowance and authorized total monetary ceiling in the existing study record. They are experiment stopping rules, not universal production limits. Start with the smallest sample that can reveal a useful difference. Reuse valid retained evidence where its source, rights and required checks match. Do not generate additional candidates just to fill a comparison table or retry automatically after failure.
+
+Use two interpretable decisions. First compare untextured form and rough deformation against the same brief; this can expose a source that is not worth finishing. Then compare each promising route's complete best effort under the declared allowance, including manual cleanup and integration. If a route uses different rigging, reconstruction or assembly, report a **workflow comparison**, not proof that its underlying model is superior. A required repair is part of its cost, not a reason to omit it from the record.
+
+#### Run the same acceptance path
+
+| Check and purpose | Required observation | If it fails |
+| --- | --- | --- |
+| Identity at real scale | Ordinary-play and labeled close views preserve face/hair, body proportions, sided details and distinctive possessions; turning does not mirror identity. A reviewer can follow the same individual through the selected outfit change. | Repair silhouette/material grouping or source identity. A portrait-only success does not pass world-character readability. |
+| Rough skin and garment fit | The selected rig's actual exported skin survives the action's shoulder/elbow/wrist/hip/knee and torso extremes, with useful volume, coverage and seam continuity. Include the most restrictive selected outfit. | Repair the failed topology/weights/fit or choose another source. Do not require rebuilding areas that already work. |
+| Action and contact | Stand, walk, turn, stop, use the supported tool and change real equipment. Inspect feet/grips, entry/exit, applicable loop joins and interruption before/after the consequential moment. Include failed/refused use where applicable. | Correct clip/retargeting/integration. No false hit, transferred item, completed work or added input delay is acceptable. Missing native mechanics are labeled visual fixtures and do not pass the native path. |
+| Material and temporal clarity | Same asset in daylight, shade and firelight; separately inspect stationary, camera-only, pose-only and light-change cases. Eyes, garments, narrow tools and asymmetric details remain intelligible without strong baked lighting, distracting shimmer or excess secondary motion. | Fix the responsible source/material/sampling/motion step; do not hide defects in a favorable still or add complexity without an observable benefit. |
+| Export and consumer fit | Reopen the final GLB/dependencies and inspect it in the pinned project's supported path. Required joints genuinely deform; hierarchy, materials, clips, support anchors and bounds survive. | Repair export or record an unsupported feature. A successful import alone is insufficient. |
+| Reuse and a useful revision | Change a requested head/detail or compatible outfit while preserving approved work, then repeat affected checks. Qualify a meaningfully different compatible body/outfit before claiming a reusable human family. | Record one-off acceptance or remaining repair; do not advertise arbitrary interchangeability or redo unrelated accepted components. |
+
+Only the current selected actions and body family are required for this first assignment. The [repertoire audit](../../art-direction/research/3d-pixel-worlds/character-production-2026-10-31.md#repertoire-coverage-and-selected-auditions) supplies existing examples for later relevant probes; signing, unusual anatomy, weather, disguises and transformations do not become prerequisites or implemented mechanics because the catalog mentions them. V3D06 retains the genuinely nonhuman proof.
+
+#### Record economics, cost and disposition
+
+Use one row per attempted candidate with its exact sources and final disposition. Record hands-on time separately for brief/reference preparation, generation setup, shape/part assembly, topology/UV/material repair, rig/skin/contact correction, animation, export/integration and review. Record waiting separately from hands-on labor; overlap is not additive elapsed time. Keep one-time family setup, per-asset finishing and the subsequent useful revision separate, so a reusable baseline is neither charged all its setup on every variant nor treated as free.
+
+Record actual paid operations, rejected attempts, reported charges, unsettled commitments and account/license constraints. Include retained source/runtime bytes, exported triangles/vertices, meshes/materials, joints/channels and decoded texture size. Measure the selected scene's complete rendering/pose cost using the existing performance protocol; many parts sharing a rig are not one draw. Existing cached assets and new unique assets have different memory/load costs. This assignment does not require the whole crowd/device campaign before selecting a source route, and does not close that campaign.
+
+Report total completed cost per accepted deliverable only when at least one deliverable is accepted; otherwise report cost with no accepted result. Give attempt/acceptance counts and sample scope, not a reliability percentage presented as population evidence. Do not convert the video's reported generation times into this record or estimate labor savings from output polygon count.
+
+**Required passes:** the selected identity, fit, action/contact, export and rights criteria must pass before an asset is promoted for that use. **Required measurements:** complete effort, cost and relevant runtime complexity may show a route is uneconomic; recording that finding satisfies the experiment, not production qualification. **Exploration:** alternate topology, part separation, cloth/secondary motion or a provider is optional unless the selected comparison specifically needs it. **Human acceptance:** artist/creator judgment at gameplay scale and existing player-comprehension/fun evidence remain distinct from structural checks; technical success does not prove appeal.
+
+Choose **qualified for the recorded use**, **acceptable one-off**, **needs repair**, **rejected**, or **not evaluated** with a concrete reason. Qualify reusable family coverage separately from one accepted asset. Select the simplest route that passes the intended use and supports worthwhile revision; different families may have different winners. If all candidates fail, keep the adequate existing representation, record the specific next repair in V3D05/V3D08, and make no bulk-production commitment.
 
 ## 7. Evidence record and decision rule
 

@@ -191,10 +191,18 @@ for the source and its native object relationship.
 Follow [articulated entities](../assets-and-animation.md#articulated-people-and-creatures)
 and the selected body's compatibility owner.
 
+Standard and Higgsfield share this finishing route. Either may supply concepts or selected
+parts; neither a generated turnaround nor a motion video establishes rigged output. Use the
+[fit envelope](../../projects/3d-pixel-art-appearance-families.md#qualify-the-reusable-fit-envelope)
+and [matched production evidence](../../projects/3d-pixel-art-validation.md#matched-character-production-comparison)
+when qualifying reuse. A study-only request still stops at the agreed study deliverable.
+
 1. Resolve inconsistent concept views into one accepted construction. Select the supported
    body/rig family, scale, rest pose and required attachment conventions before final modeling.
-2. Finish topology for intended deformation, UVs, materials and separable clothing/equipment.
-   Preserve identity and readable proportions across the required views.
+2. Refine a usable mesh directly, or repair/rebuild the specific topology that fails the needed
+   deformation or silhouette. Generate a part separately only when the extra control earns its
+   fitting work. Finish UVs/materials and separate runtime clothing/equipment according to actual
+   use; generator parts need not remain separate draw units. Preserve identity and proportions.
 3. Build or adapt the skeleton, skin the body and fit attachments. Test relevant joint extremes,
    face/expression controls where requested, hands/feet and clothing contact. Matching bone
    names alone does not establish compatible proportions, rest transforms or weights.
@@ -210,7 +218,8 @@ and the selected body's compatibility owner.
 1. Pin the actual rig/source revision and requested actions. Define clip identity, duration,
    time units, loop behavior, start/end poses, supported blending and root-motion convention.
    Art follows native movement/action timing; it does not become a second gameplay authority.
-2. Author, capture or retarget motion onto that rig. Resolve rest-pose/proportion differences,
+2. Block and review the intended poses/contact at gameplay scale before polishing motion.
+   Author, capture or retarget onto that rig. Resolve rest-pose/proportion differences,
    then repair foot sliding, hand/grip contact, joint limits and unintended root drift.
 3. Review required loops, transitions, interruption/recovery poses and attachments. Include
    presentation markers only as supported metadata tied to existing action semantics.

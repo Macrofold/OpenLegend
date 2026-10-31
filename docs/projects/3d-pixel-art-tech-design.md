@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                         | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Existing rendering/resource owners support the finite art increment; the broader pipeline architecture remains proposed. | 2026-10-18   |
+| In progress | Source, fit and exported-motion handoffs are specified; general family integration and runtime publication remain proposed. | 2026-10-31   |
 
 The [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026) require believable proportions and beautiful dimensional pixel art while rejecting visibly low-poly, blocky and cutesy styles. These are selected-world art constraints; the broader appearance, generation and publication architecture below remains proposed.
 
@@ -83,10 +83,22 @@ The [offline production route](../production-workflows/assets-and-animation.md) 
 | Editable geometry/material graph, fitted parts, rig or clips actually used | Source-artifact metadata or study source locations, with meaningful tool/source revisions; supports a later repair without reconstructing identity |
 | Exported runtime bytes and conversion settings                             | Artifact digests, processing-profile identity and RepresentationManifest dependencies; lets the consumer inspect what it will load                 |
 | Required views, states, attachments and the observed result                | Existing family compatibility and candidate-validation records; separates covered cases from unperformed qualification                             |
+| Production choice and component dependencies | The same source/study record: exact reuse versus separate-part generation versus mesh repair/rebuild; which edited part invalidates skins, garment fits, materials or clips. Preserve the accepted body when only the head needs correction. |
+| Rig/fit envelope and action timing | The [family compatibility record](3d-pixel-art-appearance-families.md#qualify-the-reusable-fit-envelope), exact bind/clip revisions and supported native cue mapping; a successful neutral pose does not qualify the action set. |
+| Complete finishing and repeat-change effort | The [matched comparison](3d-pixel-art-validation.md#matched-character-production-comparison): generation and rejection cost, hands-on repair, waiting, export/integration and one meaningful subsequent revision, with untested cases explicit. |
 
 This is a handoff requirement for the selected production work, not a new universal authoring schema, public manifest payload or asset-management service. A small study can keep its source links and review notes in the established [art record](../maintainers/art-direction.md); runtime intake retains only the metadata and dependencies its actual consumer requires. Editable DCC projects and private references do not become client downloads merely because a runtime asset derives from them.
 
 Use the dependency graph below to repair the responsible source. A material edit can refresh maps and their dependent representation without rebuilding the rig; a body or rig change can require renewed skin, clip and attachment checks. Derive alternate icons or sprites from the accepted identity and record intentional finishing differences. Preserve existing validated outputs until their replacement passes the relevant intake/publication path. Source retention and offline review do not bypass immutable publication, grant private reuse, or establish broad rig and equipment support.
+
+The offline implementation sequence reuses existing owners:
+
+1. **Source preparation:** the artist preserves the selected identity and editable body, records the actual family envelope, and tests rough geometry/skin before detailed textures or a large motion set. Source components are organized for editing; runtime partition follows real equipment/state variation and measured cost.
+2. **Export preparation:** the existing DCC/export recipe normalizes the declared transforms, bakes only needed supported channels, packages exact material/image dependencies and produces the selected current-format runtime artifact. Compare the reimported artifact with the source, including non-root joint motion and actual exported complexity. Do not introduce a new importer to avoid fixing a bad export.
+3. **Trusted family integration:** the existing scene/model resource owners consume the qualified artifacts and current permitted pose/equipment state. Add only missing family-specific mappings; root translation, consequences and knowledge remain native. General manifest/replacement work retains V3D02/V3D03 rather than being bypassed by arbitrary URLs or a second scene graph.
+4. **Qualification and reuse:** V3D05 records compatible human body/outfit/contact coverage and the matched production evidence; V3D06 adds a genuinely different family only when selected; V3D08 retains generated promotion and during-play requirements. A trusted offline rehearsal can precede general service implementation, but cannot close its privacy, publication, spending or lifecycle gates.
+
+The first release needs no procedural population factory, new job type, compatibility adapter or separately persisted animation authority. Existing immutable source/artifact references and the family record carry the dependencies. Unsupported exporter features, untested fit ranges and missing runtime contacts remain explicit capability gaps; the selected asset can be repaired, restricted to its qualified use or retained as evaluation-only without weakening the broader contract.
 
 ## 4. Dependency and invalidation graph
 
