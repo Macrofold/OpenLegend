@@ -76,8 +76,8 @@ it('measures retained body/edge history only through actually captured support i
   const { world, bodies } = scene(),
     anchor = bodies[0]!,
     other = bodies[1]!;
-  const subject = currentBodyObservation(world, PLAYER_ID, anchor.id)!.exposure.episodeId;
-  const second = currentBodyObservation(world, PLAYER_ID, other.id)!.exposure.episodeId;
+  const subject = currentBodyObservation(world, PLAYER_ID, anchor.id)!.exposure.track;
+  const second = currentBodyObservation(world, PLAYER_ID, other.id)!.exposure.track;
   expect(
     currentReceivedGeometry(world, PLAYER_ID).observations.some((observation) =>
       observation.facets.some((facet) => facet.value.kind === 'physical-boundary'),
@@ -153,7 +153,7 @@ it('measures retained body/edge history only through actually captured support i
 it('uses an ongoing received geometry interval sealed at the decision cut without looking again', () => {
   const { world, bodies } = scene();
   const anchor = bodies[0]!,
-    subject = currentBodyObservation(world, PLAYER_ID, anchor.id)!.exposure.episodeId;
+    subject = currentBodyObservation(world, PLAYER_ID, anchor.id)!.exposure.track;
   world.simTime = 2;
   setSpatialPosition(world, anchor, { x: 18, y: 2, z: 2 }, null, { continuity: 'physical' });
   initializePerception(world, []);
@@ -191,8 +191,8 @@ it('refuses a counterpart position when actual changes share one timestamp witho
   const { world, bodies } = scene();
   const anchor = bodies[0]!,
     other = bodies[1]!;
-  const first = currentBodyObservation(world, PLAYER_ID, anchor.id)!.exposure.episodeId;
-  const second = currentBodyObservation(world, PLAYER_ID, other.id)!.exposure.episodeId;
+  const first = currentBodyObservation(world, PLAYER_ID, anchor.id)!.exposure.track;
+  const second = currentBodyObservation(world, PLAYER_ID, other.id)!.exposure.track;
   world.simTime = 2;
   setSpatialPosition(world, anchor, { x: 18, y: 2, z: 2 }, null, { continuity: 'physical' });
   setSpatialPosition(world, other, { x: 17, y: 2, z: 2 }, null, { continuity: 'physical' });

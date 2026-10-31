@@ -3,15 +3,22 @@ import {
   currentFacetGet,
   currentFacetValues,
   currentContactFacetGet,
+  receivedAttentionSources,
+  receivedAttentionSource,
+  currentFacetKey,
+  type CurrentFacetRecord,
+  type CurrentFacetSelector,
 } from './perception-current.js';
 import { isImmutableData } from './records.js';
 import { contentLabel } from './events.js';
 import { entityGet } from './entity-collection.js';
 import { cloneValue, readOnlyDraftView, touchNativeEvidence } from './draft.js';
-import { validObserverSubject, type ObserverSubject } from './knowledge.js';
+import { validObserverSubject, subjectKey, type ObserverSubject } from './knowledge.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import {
   prepareCurrentBodySubjects,
+  currentBodyGrant,
+  currentChannelEligible,
   effectiveCurrentFacetTimes,
   currentFacetOriginal,
   currentFacetTimes,
@@ -22,7 +29,11 @@ import {
   receivedFacetValue,
   reconcileAttendedTemporalEvidence,
 } from './perception-evidence.js';
-import { validPerceivedPoint, validateEvidenceSource } from './perception-values.js';
+import {
+  validPerceivedPoint,
+  validObservationExposure,
+  validateEvidenceSource,
+} from './perception-values.js';
 import { personalFactAlias } from './experience-source.js';
 import { elapsedDeadline } from './simulation-time.js';
 import type {
@@ -283,7 +294,7 @@ export const attentionSubjectKey = (sourceId: string, exposure: ObservationExpos
   JSON.stringify([
     exposure.observer.actorId,
     exposure.observer.physicalLife,
-    exposure.episodeId,
+    exposure.track,
     sourceId,
   ]);
 const relationKey = (key: string, family: AttentionRelationFamily) => JSON.stringify([key, family]);
@@ -318,8 +329,9 @@ function currentPoint(
   sourceId: string,
   world: WorldState,
   observerId: string,
+  selector?: CurrentFacetSelector,
 ): AttentionPoint | undefined {
-  const source = currentFacetGet(owner, `${sourceId}:location`);
+  const source = currentFacetGet(owner, `${sourceId}:location`, selector);
   if (!source) return;
   const lease = readOnlyDraftView(source);
   const value = receivedValueAt(world.receivedValues?.sources ?? {}, lease.value.reference);
@@ -333,30 +345,37 @@ interface DescriptionMeaning {
 }
 const descriptionMeanings = new WeakMap<object, DescriptionMeaning>();
 const absentDescriptionInput = Object.freeze({});
-function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: string): string {
+function descriptions(
+  world: WorldState,
+  owner: PerceptionEvidenceOwner,
+  id: string,
+  selector?: CurrentFacetSelector,
+): string {
   // A new receipt can measure the same appearance at another position. Receipt
   // identity is provenance; it must not invent new descriptive novelty.
   const current = readOnlyDraftView(owner.current);
 
   const facet = (kind: string) => {
-    const lease = currentContactFacetGet(current, `${id}:${kind}`);
+    const lease = currentContactFacetGet(current, `${id}:${kind}`, selector);
     return lease
       ? receivedFacetValue(world, readOnlyDraftView(readOnlyDraftView(lease).value))
       : undefined;
   };
   // Description novelty depends on outward detail, never a reconstructed pose.
-  const bodySource = currentContactFacetGet(current, `${id}:body`),
+  const bodySource = currentContactFacetGet(current, `${id}:body`, selector),
     bodyDescriptor = bodySource && readOnlyDraftView(bodySource).value,
     parts = bodyDescriptor && receivedBodyParts(world, bodyDescriptor),
     appearance = parts && readOnlyDraftView(parts.details);
   const description = facet('description'),
     association = facet('association'),
     attributes = facet('public-attributes'),
-    carried = facet('carried');
+    carried = facet('carried'),
+    detected = facet('detected'),
+    contact = facet('contact');
   // Source-only pose/receipt changes preserve these actual received fragments.
   // Share their descriptive meaning across compatible receivers without retaining
   // a world or treating a comparison cache as a new acquisition or identity grant.
-  const inputs = [description, carried, attributes, association];
+  const inputs = [description, carried, attributes, association, detected, contact];
   const reusable =
     appearance &&
     isImmutableData(appearance) &&
@@ -396,6 +415,8 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
           }
         : null,
       carried ?? null,
+      detected ?? null,
+      contact?.kind === 'contact' ? contact.detail : null,
       attributes?.kind === 'public-attributes'
         ? { kind: attributes.kind, attributes: publicAttributeMeanings(attributes) }
         : null,
@@ -429,12 +450,17 @@ export function attentionCandidates(
     const annotationSource = annotations[key];
     if (!annotationSource) continue;
     const annotation = readOnlyDraftView(annotationSource);
-    const body = currentFacetGet(owner, `${annotation.sourceId}:body`);
-    if (!body || body.id !== annotation.leaseId) continue;
-    const location = currentFacetGet(owner, `${annotation.sourceId}:location`);
-    const measured = currentPoint(owner, annotation.sourceId, world, observerId);
-    const subject = subjectFor(annotation.sourceId);
-    const descriptionRevision = descriptions(world, owner, annotation.sourceId);
+    const body = receivedAttentionSource(owner, annotation.sourceId, annotation.leaseId);
+    if (!body || !currentChannelEligible(world, observerId, body.grant.channel)) continue;
+    const selector = { channel: body.grant.channel, exposure: body.grant.exposure };
+    const location = currentFacetGet(owner, `${annotation.sourceId}:location`, selector);
+    const measured = currentPoint(owner, annotation.sourceId, world, observerId, selector);
+    const subject =
+      (body.value.kind === 'body' &&
+      currentBodyGrant(world, observerId, annotation.sourceId)?.leaseId === body.id
+        ? subjectFor(annotation.sourceId)
+        : undefined) ?? body.localSubject;
+    const descriptionRevision = descriptions(world, owner, annotation.sourceId, selector);
     const displacement =
       measured && annotation.anchor
         ? Math.max(
@@ -549,7 +575,7 @@ export function updateAttention(
   world: WorldState,
   observerId: string,
   update: AttentionUpdate = {},
-): { before: string[]; after: string[] } {
+): { before: string[]; after: string[]; subjects?: ReadonlyMap<string, ObserverSubject> } {
   const observer = entityGet(world.entities, observerId),
     owner = owned(world, observerId);
   if (!observer?.actor || !owner) return { before: [], after: [] };
@@ -583,12 +609,17 @@ export function updateAttention(
       : [
           ...new Set([
             ...currentFacetValues(owner)
-              .filter((lease) => lease.value.kind === 'body')
+              .filter((lease) => ['body', 'contact', 'detected'].includes(lease.value.kind))
               .map((lease) => currentFacetGrant(owner, lease).subjectId),
             ...annotationEntries.map(([, value]) => value.sourceId),
           ]),
         ];
-  const existingBySource = new Map(annotationEntries.map(([key, value]) => [value.sourceId, key]));
+  const existingBySource = new Map<string, string[]>();
+  for (const [key, value] of annotationEntries) {
+    const keys = existingBySource.get(value.sourceId) ?? [];
+    keys.push(key);
+    existingBySource.set(value.sourceId, keys);
+  }
   const changedGeometrySources = new Set(update.geometrySourceIds ?? changed);
   const changedGeometryKeys = new Set<string>();
   let geometryChanged = false;
@@ -596,81 +627,136 @@ export function updateAttention(
     const previous = readOnlyDraftView(state.annotations)[key];
     if (!previous) return;
     for (const [latchKey, latch] of Object.entries(readOnlyDraftView(state.latches)))
-      if (latch.witnessId === previous.exposure.episodeId && latch.clearSince !== undefined)
+      if (latch.witnessId === previous.exposure.track && latch.clearSince !== undefined)
         delete state.latches[latchKey]!.clearSince;
   };
   for (const sourceId of changed) {
-    const body = currentFacetGet(owner, `${sourceId}:body`);
-    const previousKey = existingBySource.get(sourceId);
-    if (!body || !receivedBodyParts(world, readOnlyDraftView(body.value))) {
-      if (previousKey) {
+    const liveKeys = new Set<string>();
+    for (const body of receivedAttentionSources(owner, sourceId)) {
+      if (!currentChannelEligible(world, observerId, body.grant.channel)) continue;
+      const previousKey = (existingBySource.get(sourceId) ?? []).find(
+        (key) => state.annotations[key]?.leaseId === body.id,
+      );
+      const exposure = currentFacetExposure(owner, body);
+      const key = attentionSubjectKey(sourceId, exposure);
+      liveKeys.add(key);
+      if (previousKey && readOnlyDraftView(state.annotations)[previousKey]?.leaseId !== body.id)
         lostWitness(previousKey);
-        delete state.annotations[previousKey];
+      if (previousKey && previousKey !== key) delete state.annotations[previousKey];
+      const original = readOnlyDraftView(state.annotations)[key];
+      const old = original && readOnlyDraftView(original);
+      const annotation: AttentionAnnotation = old
+        ? { ...old, leaseId: body.id }
+        : {
+            sourceId,
+            leaseId: body.id,
+            exposure: cloneValue(exposure),
+            order: state.nextOrder++,
+            acquiredAt: currentFacetTimes(owner, body).valueAcquiredAt,
+            urgency: 0,
+            direct: false,
+          };
+      annotation.anchor ??= currentPoint(owner, sourceId, world, observerId, {
+        channel: body.grant.channel,
+        exposure: body.grant.exposure,
+      });
+      if (!old || changedGeometrySources.has(sourceId)) {
         geometryChanged = true;
+        changedGeometryKeys.add(key);
       }
-      continue;
+      if ((annotation.urgencyThrough ?? Infinity) <= world.simTime) {
+        annotation.urgency = 0;
+        delete annotation.urgencyThrough;
+        delete annotation.urgencySource;
+      }
+      if ((annotation.directThrough ?? Infinity) <= world.simTime) {
+        annotation.direct = false;
+        delete annotation.directThrough;
+        delete annotation.directSource;
+      }
+      const urgency = update.urgency?.[sourceId] ?? 0;
+      if (urgency > 0 && urgency >= annotation.urgency) {
+        annotation.urgency = urgency;
+        annotation.urgencyThrough = world.simTime + policy.stabilitySeconds;
+        annotation.urgencySource = update.proofs?.[sourceId]
+          ? cloneValue(update.proofs[sourceId])
+          : undefined;
+      }
+      if (update.directSubjects?.includes(sourceId)) {
+        annotation.direct = true;
+        annotation.directThrough = world.simTime + policy.stabilitySeconds;
+        annotation.directSource = update.proofs?.[sourceId]
+          ? cloneValue(update.proofs[sourceId])
+          : undefined;
+      }
+      if (
+        !old ||
+        Object.keys(annotation).length !== Object.keys(old).length ||
+        (Object.keys(annotation) as Array<keyof AttentionAnnotation>).some(
+          (field) => annotation[field] !== old[field],
+        )
+      ) {
+        state.annotations[key] = annotation;
+        countDomainWork('attentionCandidatesChanged');
+      } else countDomainWork('attentionCandidatesUnchanged');
     }
-    const exposure = currentFacetExposure(owner, body);
-    const key = attentionSubjectKey(sourceId, exposure);
-    if (previousKey && readOnlyDraftView(state.annotations)[previousKey]?.leaseId !== body.id)
-      lostWitness(previousKey);
-    if (previousKey && previousKey !== key) delete state.annotations[previousKey];
-    const original = readOnlyDraftView(state.annotations)[key];
-    const old = original && readOnlyDraftView(original);
-    const annotation: AttentionAnnotation = old
-      ? { ...old, leaseId: body.id }
-      : {
-          sourceId,
-          leaseId: body.id,
-          exposure: cloneValue(exposure),
-          order: state.nextOrder++,
-          acquiredAt: currentFacetTimes(owner, body).valueAcquiredAt,
-          urgency: 0,
-          direct: false,
-        };
-    annotation.anchor ??= currentPoint(owner, sourceId, world, observerId);
-    if (!old || changedGeometrySources.has(sourceId)) {
+    for (const key of existingBySource.get(sourceId) ?? []) {
+      if (liveKeys.has(key)) continue;
+      lostWitness(key);
+      delete state.annotations[key];
       geometryChanged = true;
-      changedGeometryKeys.add(key);
     }
-    if ((annotation.urgencyThrough ?? Infinity) <= world.simTime) {
-      annotation.urgency = 0;
-      delete annotation.urgencyThrough;
-      delete annotation.urgencySource;
-    }
-    if ((annotation.directThrough ?? Infinity) <= world.simTime) {
-      annotation.direct = false;
-      delete annotation.directThrough;
-      delete annotation.directSource;
-    }
-    const urgency = update.urgency?.[sourceId] ?? 0;
-    if (urgency > 0 && urgency >= annotation.urgency) {
-      annotation.urgency = urgency;
-      annotation.urgencyThrough = world.simTime + policy.stabilitySeconds;
-      annotation.urgencySource = update.proofs?.[sourceId]
-        ? cloneValue(update.proofs[sourceId])
-        : undefined;
-    }
-    if (update.directSubjects?.includes(sourceId)) {
-      annotation.direct = true;
-      annotation.directThrough = world.simTime + policy.stabilitySeconds;
-      annotation.directSource = update.proofs?.[sourceId]
-        ? cloneValue(update.proofs[sourceId])
-        : undefined;
-    }
-    if (
-      !old ||
-      Object.keys(annotation).length !== Object.keys(old).length ||
-      (Object.keys(annotation) as Array<keyof AttentionAnnotation>).some(
-        (field) => annotation[field] !== old[field],
-      )
-    ) {
-      state.annotations[key] = annotation;
-      countDomainWork('attentionCandidatesChanged');
-    } else countDomainWork('attentionCandidatesUnchanged');
   }
   const candidateView = attentionCandidates(world, observerId);
-  const candidateEntriesBefore = Object.entries(candidateView);
+  // Only an acquired subject can join channels. Keep a received visual body as
+  // its representative so physical relation anchors never borrow an anonymous
+  // signal's routing ID. Other tracks still carry their own times and proofs.
+  const groups = new Map<string, Array<readonly [string, AttentionCandidate]>>();
+  const subjects = new Map<string, ObserverSubject>();
+  for (const item of Object.entries(candidateView)) {
+    if (item[1].subject) subjects.set(item[1].exposure.track, item[1].subject);
+    const identity = item[1].subject
+      ? subjectKey(item[1].subject)
+      : JSON.stringify(['track', item[0]]);
+    const group = groups.get(identity);
+    if (group) group.push(item);
+    else groups.set(identity, [item]);
+  }
+  const selectionView: Record<string, AttentionCandidate> = {};
+  const representativeKeys = new Map<string, string>();
+  const incumbentKeys = new Set(entriesBefore.map((entry) => entry.key));
+  for (const group of groups.values()) {
+    const representative =
+      (group.length > 1 &&
+        group.find(
+          ([, candidate]) =>
+            currentBodyGrant(world, observerId, candidate.sourceId)?.leaseId === candidate.leaseId,
+        )) ||
+      group.find(([key]) => incumbentKeys.has(key)) ||
+      group[0]!;
+    const [key, candidate] = representative;
+    let score = candidate.score,
+      urgency = candidate.urgency,
+      direct = candidate.direct,
+      directThrough = candidate.directThrough;
+    for (const [member, value] of group) {
+      representativeKeys.set(member, key);
+      score = Math.max(score, value.score);
+      urgency = Math.max(urgency, value.urgency);
+      if (value.direct) {
+        direct = true;
+        directThrough = Math.max(directThrough ?? 0, value.directThrough ?? 0);
+      }
+    }
+    selectionView[key] =
+      score === candidate.score &&
+      urgency === candidate.urgency &&
+      direct === candidate.direct &&
+      directThrough === candidate.directThrough
+        ? candidate
+        : { ...candidate, score, urgency, direct, directThrough };
+  }
+  const candidateEntriesBefore = Object.entries(selectionView);
   const live = new Set(Object.keys(candidateView));
   const explicit = readOnlyDraftView(state.explicit).filter((key) => live.has(key));
   if (explicit.length !== state.explicit.length) state.explicit = explicit;
@@ -680,7 +766,9 @@ export function updateAttention(
   if (!Number.isSafeInteger(capacity) || capacity < 1 || capacity > policy.maximumCapacity)
     throw new Error('Attention capacity exceeds the installed profile.');
   const current = new Map(
-    entriesBefore.filter((entry) => live.has(entry.key)).map((entry) => [entry.key, entry]),
+    entriesBefore
+      .filter((entry) => Object.hasOwn(selectionView, entry.key))
+      .map((entry) => [entry.key, entry]),
   );
   let retained: Array<{ key: string; basis: AttentionBasis }> | undefined;
   if (
@@ -705,7 +793,7 @@ export function updateAttention(
     countDomainWork('attentionSelectionsReused');
   } else {
     countDomainWork('attentionSelectionsRanked');
-    const candidates = Object.entries(candidateView).map(
+    const candidates = candidateEntriesBefore.map(
       ([key, value]) => [key, readOnlyDraftView(value)] as const,
     );
     const candidateMap = new Map(candidates);
@@ -727,6 +815,7 @@ export function updateAttention(
       state.discoveryCursor = candidateMap.get(discoveryKey)!.order;
     selected = [];
     const take = (key: string, basis: AttentionBasis) => {
+      key = representativeKeys.get(key) ?? key;
       const reservation =
         discoveryKey &&
         key !== discoveryKey &&
@@ -862,7 +951,11 @@ export function updateAttention(
     if (!previousRelationAnchors.has(entry.key))
       for (const family of ['closing-body', 'closing-drop'] as const)
         state.relationDirty[relationKey(entry.key, family)] = state.relationRevision;
-  return { before, after: state.entries.map((entry) => entry.sourceId) };
+  return {
+    before,
+    after: state.entries.map((entry) => entry.sourceId),
+    subjects,
+  };
 }
 
 export function currentDetailedAttention(
@@ -890,6 +983,9 @@ export function attentionRelationAnchors(
   ];
   const selected = new Set<string>();
   for (const entry of readOnlyDraftView(state.entries)) {
+    // A selected anonymous signal cannot borrow a separately seen body's
+    // geometry through its private routing ID.
+    if (currentBodyGrant(world, observerId, entry.sourceId)?.leaseId !== entry.leaseId) continue;
     result.push(entry);
     selected.add(entry.key);
   }
@@ -908,6 +1004,7 @@ export function attentionRelationAnchors(
     const candidate = readOnlyDraftView(candidates[key]!);
     if (
       !selected.has(key) &&
+      currentBodyGrant(world, observerId, candidate.sourceId)?.leaseId === candidate.leaseId &&
       (candidate.sourceId === target ||
         (candidate.direct && (candidate.directThrough ?? Infinity) > world.simTime))
     )
@@ -964,7 +1061,10 @@ export function captureAttentionPresentation(
             key,
             descriptionRevision: candidate.descriptionRevision,
             changeRevision: candidate.changeRevision,
-            point: currentPoint(owner, candidate.sourceId, world, observerId),
+            point: currentPoint(owner, candidate.sourceId, world, observerId, {
+              channel: receivedAttentionSource(owner, candidate.sourceId, candidate.leaseId)!.grant
+                .channel,
+            }),
           },
         ]
       : [];
@@ -1331,15 +1431,9 @@ export function validateAttentionState(
       Number.isFinite(value.at) &&
       value.at >= 0);
   const validExposure = (value: ObservationExposure | undefined) =>
-    !!value &&
-    !!value.observer &&
-    typeof value.observer.actorId === 'string' &&
+    validObservationExposure(value) &&
     value.observer.actorId === observer.actorId &&
-    value.observer.physicalLife === observer.physicalLife &&
-    Number.isSafeInteger(value.observer.physicalLife) &&
-    value.observer.physicalLife >= 0 &&
-    typeof value.episodeId === 'string' &&
-    !!value.episodeId;
+    value.observer.physicalLife === observer.physicalLife;
   const validProof = (proof: ObservationFactKey[] | undefined) => {
     if (proof === undefined) return;
     if (!Array.isArray(proof) || !proof.length || proof.length > 8)

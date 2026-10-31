@@ -105,14 +105,14 @@ import {
   type TemporalReceiptLocator,
   type TemporalSupportCapsule,
   temporalFacetValueReferences,
-  temporalAvailability,
+  temporalFieldAvailability,
   type TemporalValue,
   type TemporalFragment,
   temporalChunkReceipt,
   temporalChunkCheckpoint,
   temporalReceiptEntries,
   temporalCheckpointEntries,
-  temporalConfirmationForFacet,
+  temporalConfirmationsForFacet,
   temporalConfirmationEntries,
   temporalConfirmationReference,
   applyTemporalConfirmation,
@@ -1197,10 +1197,15 @@ export class MemoryRepository {
           if (
             value.kind === 'change' ||
             value.kind === 'checkpoint' ||
-            value.kind === 'confirmation'
+            value.kind === 'confirmation' ||
+            (value.kind === 'dictionary' && value.value[0] === 'members')
           ) {
+            const selected =
+              value.kind === 'dictionary' && value.value[0] === 'members'
+                ? value.value[1].flatMap((field, position) => (field ? [position] : []))
+                : facets;
             held.projections ??= new Map();
-            held.projections.set(JSON.stringify(facets), value);
+            held.projections.set(JSON.stringify(selected), value);
           }
         }
       };
@@ -1289,28 +1294,34 @@ export class MemoryRepository {
             const metadata = (reference: TemporalFacetReference) =>
               (({ reception: _reception, ...fields }) => fields)(reference);
             if (canonicalJson(metadata(owned)) !== canonicalJson(expectedFacet)) {
-              const confirmation = temporalConfirmationForFacet(chunk, {
-                ...expectedFacet,
-                ...(owned.reception ? { reception: owned.reception } : {}),
-              });
+              const confirmations = temporalConfirmationsForFacet(
+                chunk,
+                {
+                  ...expectedFacet,
+                  ...(owned.reception ? { reception: owned.reception } : {}),
+                },
+                owned,
+              );
+              const confirmed = confirmations.reduce(applyTemporalConfirmation, owned);
               if (
-                !confirmation ||
-                canonicalJson(metadata(applyTemporalConfirmation(owned, confirmation))) !==
-                  canonicalJson(expectedFacet)
+                !confirmations.length ||
+                canonicalJson(metadata(confirmed)) !== canonicalJson(expectedFacet)
               ) {
                 matches = false;
                 break;
               }
-              const fields = [confirmation.fieldOrdinal];
-              addDeclarations(
-                ownerId,
-                temporalConfirmationEntries(chunk, confirmation.entryOrdinal, fields),
-                fields,
-              );
-              for (const reference of temporalFacetValueReferences(
-                temporalConfirmationReference(confirmation),
-              ))
-                needed.push(addReference(reference));
+              for (const confirmation of confirmations) {
+                const fields = [confirmation.fieldOrdinal];
+                addDeclarations(
+                  ownerId,
+                  temporalConfirmationEntries(chunk, confirmation.entryOrdinal, fields),
+                  fields,
+                );
+                for (const reference of temporalFacetValueReferences(
+                  temporalConfirmationReference(confirmation),
+                ))
+                  needed.push(addReference(reference));
+              }
             }
             if (expected.kind === 'checkpoint') {
               const state = expected.selection.checkpoint.availability?.find((group) =>
@@ -1335,7 +1346,7 @@ export class MemoryRepository {
                       ? support.availability?.find((group) =>
                           group.fields.includes(availability.facetOrdinal),
                         )
-                      : temporalAvailability(support.change, support.availabilityAt ?? support.at));
+                      : temporalFieldAvailability(support, availability.facetOrdinal));
                 if (
                   !support ||
                   !field ||

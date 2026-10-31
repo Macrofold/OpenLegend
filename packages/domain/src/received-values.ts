@@ -414,7 +414,7 @@ export function referencedReceivedValues(
         );
       }
       if (mode) {
-        const captures = readOnlyDraftView(actor.captures),
+        const captures = readOnlyDraftView(actor.geometryCaptures),
           key = JSON.stringify(['capture', actorId]);
         const old = objectIndexGet(owners, key);
         keys.push(key);

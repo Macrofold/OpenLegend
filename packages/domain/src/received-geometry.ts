@@ -1,3 +1,4 @@
+import { definitionPin } from './world-modules.js';
 import {
   BoundsIndex,
   horizontalCone,
@@ -15,7 +16,7 @@ import { effectiveBodyProfile, spatialMap, worldPosition } from './spatial-state
 import { activelyParticipates } from './participation-state.js';
 import { visionRadius, visionFieldOfView, sensesFor } from './perception.js';
 import {
-  acquireObservation,
+  receiveObservation,
   observationFactKey,
   validateObservationContribution,
   currentObservedFacetValues,
@@ -145,6 +146,7 @@ function receptor(world: WorldState, observerId: string) {
   return {
     observer,
     detector,
+    channel: definitionPin(detector),
     radius,
     inCone: horizontalCone(p, observer.spatial.heading, angle),
     eye,
@@ -319,6 +321,7 @@ function inputFor(
       measuredThrough: world.simTime,
     },
     modality: 'sight' as const,
+    channel: input.channel,
     detector: { id: input.detector.id, version: input.detector.version },
     facets: [
       {
@@ -359,7 +362,7 @@ function admittedGeometry(
     })),
   }).bytes;
   if (bound > available) return;
-  const observation = acquireObservation(world, input.observer, request),
+  const observation = receiveObservation(world, input.observer, request),
     bytes = jsonEncoding(observation).bytes;
   if (bytes > bound) throw new Error('Geometry admission exceeded its complete logical bound.');
   return { observation, bytes };
@@ -1122,7 +1125,7 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
   );
   const bodies = [...scene.bodies.values()];
   const state = world.perceptionEvidence![observerId]!.attention!;
-  const bodiesByExposure = new Map(bodies.map((body) => [body.exposure, body]));
+  const bodiesByTrack = new Map(bodies.map((body) => [body.track, body]));
   const boundariesById = new Map(boundaries.map((value) => [value.observation.id, value]));
   const evaluations: AttentionRelationEvaluation[] = [];
   const observer = entityGet(world.entities, observerId)!,
@@ -1261,7 +1264,7 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
     const bodyMeasure = (neighbor: ReceivedSceneBody): AttentionRelationWitness | undefined => {
       if (neighbor.sourceId === entry.sourceId)
         return {
-          id: neighbor.exposure,
+          id: neighbor.track,
           distanceLower: Infinity,
           distanceUpper: Infinity,
           decreaseLower: 0,
@@ -1274,14 +1277,14 @@ export function evaluateAttentionRelations(world: WorldState, observerId: string
       )
         return undefined;
       return {
-        id: neighbor.exposure,
+        id: neighbor.track,
         distanceLower: relation.lower!,
         distanceUpper: relation.upper!,
         decreaseLower: relation.decreaseLower ?? 0,
         proof: [...anchorProof, ...bodyProof(neighbor)].slice(0, 8),
       };
     };
-    const priorBody = bodyLatch?.witnessId ? bodiesByExposure.get(bodyLatch.witnessId) : undefined;
+    const priorBody = bodyLatch?.witnessId ? bodiesByTrack.get(bodyLatch.witnessId) : undefined;
     const body = page(
       entry,
       'closing-body',

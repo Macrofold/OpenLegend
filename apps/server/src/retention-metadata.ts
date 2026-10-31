@@ -1,4 +1,10 @@
-import type { PersonalSourceRef, WorldState } from '@open-legend/domain';
+import {
+  temporalSupportAliases,
+  temporalValueIndividualId,
+  type PersonalSourceRef,
+  type WorldState,
+} from '@open-legend/domain';
+import { maximumTemporalPreparationRows } from './temporal-storage.js';
 import { RECORD_NODES, RECORD_PARENTS, liveEvidenceRowSql } from './world-record-schema.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import type { SqlDatabase } from './store.js';
@@ -49,6 +55,8 @@ const selectedColumns: Record<(typeof indexedTables)[number], readonly string[]>
     'value_refs',
     'occurrence_source_ids',
     'occurrence_individual_ids',
+    'source_ids',
+    'individual_ids',
   ],
   mind_temporal_supports: ['actor_id', 'source_id', 'logical_bytes', 'required'],
 };
@@ -70,7 +78,10 @@ export function retentionChangedActors(changes: RecordChanges, world: WorldState
     else for (const id of Object.keys(world.experience?.temporal?.actors ?? {})) actors.add(id);
   };
   for (const [table, rows] of changes.writes)
-    if (indexed.has(table)) for (const row of rows) include(table, row.id);
+    if (accountTables.includes(table as (typeof accountTables)[number]))
+      for (const row of rows)
+        if (accountWriteNeedsRetentionClosure(table as (typeof accountTables)[number], row))
+          include(table, row.id);
   for (const [table, ids] of changes.deletes) for (const id of ids) include(table, id);
   return actors;
 }
@@ -150,6 +161,23 @@ function metadata(table: Table, row: RowChange): RetentionRow {
   preparedMetadata.set(row, result);
   return result;
 }
+/** Native counters account ordinary appends. A prior account edit or actual
+ * dependency is the shared boundary for capturing cold accounts and replacing
+ * their exact version closure; an empty manifest does not change that closure. */
+export function accountWriteNeedsRetentionClosure(
+  table: (typeof accountTables)[number],
+  row: RowChange,
+): boolean {
+  return !row.create || accountWriteHasRetentionDependencies(table, row);
+}
+export function accountWriteHasRetentionDependencies(
+  table: (typeof accountTables)[number],
+  row: RowChange,
+): boolean {
+  const support = metadata(table, row).columns['retention_metadata'] as AccountRetentionMetadata;
+  return support.versions.length > 0 || support.learning.length > 0;
+}
+
 function deletedBy(
   changes: { deletes: ReadonlyMap<string, readonly string[]> },
   table: string,
@@ -179,6 +207,7 @@ export class RetentionMetadata {
   private readonly membership = new Map<string, Memberships>();
   private parents = new Map<string, Set<string>>();
   private readonly versions = new Map<string, Map<string, RetainedSourceVersion>>();
+  private membershipKeys?: { aliases: ReadonlySet<string>; individuals: ReadonlySet<string> };
   revision = 0;
 
   clear(): void {
@@ -189,6 +218,7 @@ export class RetentionMetadata {
     this.parents.clear();
     this.versions.clear();
     this.revision = 0;
+    this.membershipKeys = undefined;
   }
   assertWorld(worldId: string): void {
     if (this.worldId !== worldId)
@@ -198,38 +228,183 @@ export class RetentionMetadata {
     db: SqlDatabase,
     worldId: string,
     actorIds: readonly string[],
+    selection: {
+      recentActors: readonly string[];
+      changes: RecordChanges;
+      world: WorldState;
+      previous?: WorldState;
+    },
   ): Promise<{
     worldId: string;
     revision: number;
     rows: RetentionRow[];
     versions: RetainedSourceVersion[];
+    recentMembership: Array<{ actorId: string; kind: MembershipKind; id: string; count: number }>;
+    membershipKeys: { aliases: string[]; individuals: string[] };
   }> {
     const head = await db.prepare('SELECT world_id,revision FROM world_head WHERE id=1').get();
     if (head?.['world_id'] !== worldId) throw new Error('Retention metadata world changed.');
-    const selection = indexedTables.map((table) => {
-      const names = selectedColumns[table];
+    const projection = (table: Table) => {
       const encoded =
         table === 'mind_temporal_chunks'
-          ? "octet_length(payload)+COALESCE((payload::jsonb#>>'{storage,segmentBytes}')::bigint,0)+COALESCE((payload::jsonb#>>'{storage,metadataBytes}')::bigint,0)"
-          : 'octet_length(payload)';
-      return `SELECT '${table}' AS table_name,id,parent_id,position,actor_id,
-        jsonb_build_object(${names.flatMap((name) => [`'${name}'`, name]).join(',')}) AS columns,
-        ${encoded} AS encoded_bytes FROM ${table} t WHERE world_id=? AND actor_id=ANY(?::text[])
-        ${liveEvidenceRowSql(table) ? ` AND ${liveEvidenceRowSql(table)}` : ''}`;
-    });
-    const rows: RetentionRow[] = (
+          ? "octet_length(t.payload)+COALESCE((t.payload::jsonb#>>'{storage,segmentBytes}')::bigint,0)+COALESCE((t.payload::jsonb#>>'{storage,metadataBytes}')::bigint,0)"
+          : 'octet_length(t.payload)';
+      return `SELECT '${table}' AS table_name,t.id,t.parent_id,t.position,t.actor_id,
+        jsonb_build_object(${selectedColumns[table].flatMap((name) => [`'${name}'`, `t.${name}`]).join(',')}) AS columns,
+        ${encoded} AS encoded_bytes`;
+    };
+    const rows = new Map<string, RetentionRow>();
+    const add = (values: Record<string, unknown>[]) => {
+      for (const row of values) {
+        const value: RetentionRow = {
+          table: String(row['table_name']) as Table,
+          id: String(row['id']),
+          parent: String(row['parent_id']),
+          position: Number(row['position']),
+          actorId: String(row['actor_id']),
+          columns: row['columns'] as RetentionRow['columns'],
+          encodedBytes: Number(row['encoded_bytes']),
+        };
+        rows.set(identity(value.table, value.id), value);
+      }
+    };
+    const smallTables = [...accountTables, 'mind_temporal_supports'] as const;
+    add(
       await db
-        .prepare(selection.join(' UNION ALL '))
-        .all(...indexedTables.flatMap(() => [worldId, actorIds]))
-    ).map((row) => ({
-      table: String(row['table_name']) as Table,
-      id: String(row['id']),
-      parent: String(row['parent_id']),
-      position: Number(row['position']),
-      actorId: String(row['actor_id']),
-      columns: row['columns'] as RetentionRow['columns'],
-      encodedBytes: Number(row['encoded_bytes']),
-    }));
+        .prepare(
+          smallTables
+            .map(
+              (table) => `${projection(table)} FROM ${table} t
+      WHERE t.world_id=? AND t.actor_id=ANY(?::text[])`,
+            )
+            .join(' UNION ALL '),
+        )
+        .all(...smallTables.flatMap(() => [worldId, actorIds])),
+    );
+
+    // Only actual retirement asks for an ordered cold prefix. The extra row is
+    // the existing retention loop's next-boundary sentinel, not another catalogue.
+    const retired = selection.changes.deletes.get('mind_temporal_chunks') ?? [];
+    const retirementParents = new Set(retired);
+    let completeRecent = false;
+    for (
+      let parent = RECORD_PARENTS.get('mind_temporal_chunks');
+      parent;
+      parent = RECORD_PARENTS.get(parent)
+    )
+      if (selection.changes.deletes.get(parent)?.length) completeRecent = true;
+    // Removing a whole history owner must subtract every affected membership;
+    // ordinary row deletion and maintenance use only exact IDs/an oldest prefix.
+    const recentActors = completeRecent ? actorIds : selection.recentActors;
+    if (recentActors.length) {
+      const oldest = await db
+        .prepare(
+          `${projection('mind_temporal_chunks')}
+        FROM unnest(?::text[]) AS actors(actor_id) CROSS JOIN LATERAL (
+          SELECT * FROM mind_temporal_chunks c WHERE c.world_id=? AND c.actor_id=actors.actor_id
+          AND c.retired_revision IS NULL AND NOT(c.id=ANY(?::text[]))
+          ORDER BY c.first_at,c.first_order,c.receipt_epoch,c.first_ordinal
+          LIMIT ${completeRecent ? 'ALL' : maximumTemporalPreparationRows + 1}
+        ) t`,
+        )
+        .all(recentActors, worldId, retired);
+      add(oldest);
+      for (const row of oldest) retirementParents.add(String(row['id']));
+    }
+    const changed = (table: Table) => [
+      ...new Set([
+        ...(selection.changes.deletes.get(table) ?? []),
+        ...(selection.changes.writes.get(table) ?? [])
+          .filter((row) => !row.create)
+          .map((row) => row.id),
+      ]),
+    ];
+    const headers = changed('mind_temporal_chunks');
+    if (headers.length)
+      add(
+        await db
+          .prepare(
+            `${projection('mind_temporal_chunks')} FROM mind_temporal_chunks t
+        WHERE t.world_id=? AND t.actor_id=ANY(?::text[]) AND t.id=ANY(?::text[]) AND ${liveEvidenceRowSql('mind_temporal_chunks')}`,
+          )
+          .all(worldId, actorIds, headers),
+      );
+    const segments = changed('mind_temporal_segments');
+    if (retirementParents.size || segments.length)
+      add(
+        await db
+          .prepare(
+            `${projection('mind_temporal_segments')} FROM mind_temporal_segments t
+        WHERE t.world_id=? AND t.actor_id=ANY(?::text[])
+        AND (t.parent_id=ANY(?::text[]) OR t.id=ANY(?::text[])) AND ${liveEvidenceRowSql('mind_temporal_segments')}`,
+          )
+          .all(worldId, actorIds, [...retirementParents], segments),
+      );
+
+    const aliases = new Set<string>(),
+      individuals = new Set<string>();
+    const keys = (row: RetentionRow) => {
+      for (const [kind, ids] of rowMembership(row))
+        for (const id of ids) (kind === 'individual' ? individuals : aliases).add(id);
+      if (row.table === 'mind_temporal_segments') {
+        for (const id of row.columns['source_ids'] as string[]) aliases.add(id);
+        for (const id of row.columns['individual_ids'] as string[]) individuals.add(id);
+      }
+    };
+    for (const row of rows.values()) keys(row);
+    for (const [table, writes] of selection.changes.writes)
+      if (indexed.has(table)) for (const row of writes) keys(metadata(table as Table, row));
+    for (const world of [selection.previous, selection.world]) {
+      if (!world) continue;
+      for (const actorId of actorIds) {
+        for (const chunk of world.experience?.temporal?.actors[actorId]?.chunks ?? []) {
+          for (const id of chunk.sourceIds) aliases.add(id);
+          for (const id of chunk.individualIds) individuals.add(id);
+        }
+        for (const capsule of Object.values(
+          world.experience?.temporal?.actors[actorId]?.supports ?? {},
+        )) {
+          for (const id of temporalSupportAliases(capsule, world)) aliases.add(id);
+          if (capsule.receipt.subjectIdentity?.kind === 'individual')
+            individuals.add(capsule.receipt.subjectIdentity.individualId);
+          for (const value of capsule.values) {
+            const id = temporalValueIndividualId(value);
+            if (id) individuals.add(id);
+          }
+        }
+      }
+    }
+    const membershipKeys = { aliases: [...aliases], individuals: [...individuals] };
+    const requests = [
+      { kind: 'recent-alias', column: 'occurrence_source_ids', keys: membershipKeys.aliases },
+      { kind: 'individual', column: 'occurrence_individual_ids', keys: membershipKeys.individuals },
+    ] as const;
+    const recentMembership: Array<{
+      actorId: string;
+      kind: MembershipKind;
+      id: string;
+      count: number;
+    }> = [];
+    for (const { kind, column, keys } of requests) {
+      if (!keys.length) continue;
+      // Filter indexed actor/source membership before expanding arrays. Only the
+      // identities being retired need a proof that some other cold batch survives.
+      for (const row of await db
+        .prepare(
+          `SELECT t.actor_id,member.id,count(*)::bigint AS count
+        FROM mind_temporal_segments t CROSS JOIN LATERAL unnest(t.${column}) AS member(id)
+        WHERE t.world_id=? AND t.actor_id=ANY(?::text[]) AND t.${column} && ?::text[]
+        AND member.id=ANY(?::text[]) AND ${liveEvidenceRowSql('mind_temporal_segments')}
+        GROUP BY t.actor_id,member.id`,
+        )
+        .all(worldId, actorIds, keys, keys))
+        recentMembership.push({
+          actorId: String(row['actor_id']),
+          kind,
+          id: String(row['id']),
+          count: Number(row['count']),
+        });
+    }
     const versions = (
       await db
         .prepare(
@@ -244,7 +419,14 @@ export class RetentionMetadata {
       category: row['retention_class'] as RetainedSourceVersion['category'],
       bytes: Number(row['logical_bytes']),
     }));
-    return { worldId, revision: Number(head['revision']), rows, versions };
+    return {
+      worldId,
+      revision: Number(head['revision']),
+      rows: [...rows.values()],
+      versions,
+      recentMembership,
+      membershipKeys,
+    };
   }
   initialize(snapshot: Awaited<ReturnType<RetentionMetadata['capture']>>): void {
     this.clear();
@@ -253,6 +435,22 @@ export class RetentionMetadata {
     for (const row of snapshot.rows) {
       this.setLogical(row);
     }
+    // The sparse SQL counts include all surviving cold batches for just these
+    // candidate identities; selected batch rows must not be counted twice.
+    for (const row of snapshot.rows)
+      if (row.table === 'mind_temporal_segments')
+        adjustMembership(this.membership.get(row.actorId)!, row, -1);
+    for (const value of snapshot.recentMembership) {
+      let membership = this.membership.get(value.actorId);
+      if (!membership) this.membership.set(value.actorId, (membership = new Map()));
+      let counts = membership.get(value.kind);
+      if (!counts) membership.set(value.kind, (counts = new Map()));
+      counts.set(value.id, (counts.get(value.id) ?? 0) + value.count);
+    }
+    this.membershipKeys = {
+      aliases: new Set(snapshot.membershipKeys.aliases),
+      individuals: new Set(snapshot.membershipKeys.individuals),
+    };
     for (const version of snapshot.versions) this.setVersion(version);
   }
   initializeEmpty(worldId: string): void {
@@ -417,6 +615,14 @@ export class RetentionMetadata {
     return this.logical.get(table)?.get(id);
   }
   membershipCount(actorId: string, kind: MembershipKind, id: string): number {
+    if (
+      this.membershipKeys &&
+      kind !== 'account-alias' &&
+      !(kind === 'individual' ? this.membershipKeys.individuals : this.membershipKeys.aliases).has(
+        id,
+      )
+    )
+      throw new Error('Retirement requires an uncaptured cold membership proof.');
     return this.membership.get(actorId)?.get(kind)?.get(id) ?? 0;
   }
   removedRows(deletes: ReadonlyMap<string, readonly string[]>): Set<RetentionRow> {

@@ -1,5 +1,7 @@
+import { sensesFor } from './perception.js';
+import { definitionPin } from './world-modules.js';
 import { attentionCandidates } from './attention.js';
-import { currentFacetValues } from './perception-current.js';
+import { currentFacetValues, receivedTrackKey } from './perception-current.js';
 import { currentFacetGet, currentFacetSet } from './perception-current.js';
 import { describe, expect, it, vi } from 'vitest';
 import * as worldComposition from './world-composition.js';
@@ -12,7 +14,7 @@ import {
   emptyEntities,
 } from './entity-collection.js';
 import {
-  acquireObservation,
+  receiveObservation,
   observationFactKey,
   perceptionEvidenceOwner,
   currentBodyObservation,
@@ -65,6 +67,12 @@ import { commitHealthChange } from './living.js';
 import { updateWorld } from './draft.js';
 import { advanceWithNavigation } from '../../../tests/fixtures/navigation.js';
 
+function fixtureSight(world: WorldState) {
+  return sensesFor(world, entityGet(world.entities, PLAYER_ID)!).find(
+    (sense) => sense.implementation === 'vision-geometry-v1',
+  )!;
+}
+
 function scene(count: number, capacity = 10) {
   const world = createWorld();
   const observer = entityGet(world.entities, PLAYER_ID)!;
@@ -103,16 +111,17 @@ function scene(count: number, capacity = 10) {
         frame: { positionAtObservation: { x: 0, y: 0, z: 0 } },
       },
     ];
-    const original = acquireObservation(world, observer, {
+    const original = receiveObservation(world, observer, {
       origin: {
         kind: 'exposure',
         episodeId: `fixture-exposure-${index}`,
-        detectorId: 'fixture-sight',
+        detectorId: fixtureSight(world).id,
         measuredFrom: 0,
         measuredThrough: 0,
       },
       modality: 'sight',
-      detector: { id: 'fixture-sight', version: 1 },
+      detector: { id: fixtureSight(world).id, version: fixtureSight(world).version },
+      channel: definitionPin(fixtureSight(world)),
       facets: facets.map((value) => ({
         value,
         role: 'direct',
@@ -139,7 +148,11 @@ function scene(count: number, capacity = 10) {
         observer: original.observer,
         subjectId: id,
         subjectPhysicalLife: source.actor!.physicalLife ?? 0,
-        exposure: { observer: original.observer, episodeId: original.id },
+        exposure: {
+          observer: original.observer,
+          episodeId: original.id,
+          track: receivedTrackKey(original.id, definitionPin(fixtureSight(world))),
+        },
         original: received,
         originalOrdinal: ordinal,
         modality: 'sight',
@@ -153,7 +166,11 @@ function scene(count: number, capacity = 10) {
           ? { localSubject: { kind: 'individual', individualId } as const }
           : {}),
       };
-      currentFacetSet(owner, `${id}:${value.kind}`, compactCurrentFacet(owner, lease));
+      currentFacetSet(
+        owner,
+        `${id}:${value.kind}`,
+        compactCurrentFacet(owner, lease, definitionPin(fixtureSight(world))),
+      );
     }
   }
   updateAttention(world, PLAYER_ID);
@@ -518,7 +535,11 @@ describe('received detailed attention', () => {
     };
     updated.valueMeasuredThrough = 120;
     updated.valueAcquiredAt = 120;
-    currentFacetSet(owner, `${id}:location`, compactCurrentFacet(owner, updated));
+    currentFacetSet(
+      owner,
+      `${id}:location`,
+      compactCurrentFacet(owner, updated, definitionPin(fixtureSight(world))),
+    );
     updateAttention(world, PLAYER_ID, { changedSourceIds: [id] });
     acknowledgeAttention(world, PLAYER_ID, provided);
     const candidate = Object.values(attentionCandidates(world, PLAYER_ID)).find(

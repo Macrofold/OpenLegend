@@ -1,8 +1,13 @@
+import { validObservationExposure } from './perception-values.js';
+import { isDefinitionPin, sameDefinitionPin } from './definition-pins.js';
 import { canonicalJson } from './events.js';
 import {
   currentFacetGet,
   currentFacetEntries,
   currentFacetCheckScope,
+  currentFacetKey,
+  currentFieldIdentity,
+  receivedTrackKey,
   type CurrentContact,
 } from './perception-current.js';
 import { validateOrderedRecord, orderedRecordEntries } from './ordered-record.js';
@@ -88,7 +93,11 @@ export function validateReceivedValueState(
         const header = fragment.header;
         if (
           !hasRecordFields(fragment, ['kind', 'header']) ||
-          !hasRecordFields(header, ['observer', 'acquiredAt', 'modality', 'detector']) ||
+          !hasRecordFields(
+            header,
+            ['observer', 'acquiredAt', 'modality', 'detector'],
+            ['channel'],
+          ) ||
           !hasRecordFields(header.observer, ['actorId', 'physicalLife']) ||
           !isSafeRecordId(header.observer.actorId) ||
           typeof header.observer.physicalLife !== 'number' ||
@@ -99,7 +108,11 @@ export function validateReceivedValueState(
           header.acquiredAt < 0 ||
           header.acquiredAt > world.simTime ||
           !['sight', 'hearing', 'touch'].includes(header.modality) ||
-          !validObservationDetector(header.detector)
+          !validObservationDetector(header.detector) ||
+          (header.channel !== undefined &&
+            (!isDefinitionPin(header.channel) ||
+              header.detector.id !== header.channel.id ||
+              header.detector.version !== header.channel.version))
         )
           throw new Error('Invalid received observation header.');
       } else if (fragment?.kind === 'body-pose') {
@@ -244,14 +257,20 @@ export function validatePerceptionEvidenceState(
         contexts = new Set<string>();
       for (const group of contact.content.groups) {
         if (
-          !hasRecordFields(group, ['grant', 'times', 'check', 'fields']) ||
+          !hasRecordFields(
+            group,
+            ['grant', 'times', 'check', 'fields'],
+            ['recording', 'availability'],
+          ) ||
           !hasRecordFields(group.grant, [
             'subjectId',
             'subjectPhysicalLife',
             'original',
             'exposure',
             'modality',
+            'channel',
           ]) ||
+          !isDefinitionPin(group.grant.channel) ||
           group.grant.subjectId !== subjectId ||
           !isSafeRecordId(subjectId) ||
           (group.grant.subjectPhysicalLife !== null &&
@@ -281,13 +300,61 @@ export function validatePerceptionEvidenceState(
           !Object.keys(group.fields).length
         )
           throw new Error('Invalid acquired current group.');
-        const context = canonicalJson([group.grant, group.times, group.check]);
+        const sourceHeader = receivedObservationHeader(
+          world,
+          contact.content.originals[group.grant.original]!,
+        );
+        // An acquired identity can be heard and then associated with the exact
+        // currently seen body. Its source remains hearing; the body-bound view
+        // does not manufacture another physical acquisition through vision.
+        if (
+          sourceHeader.channel &&
+          !sameDefinitionPin(sourceHeader.channel, group.grant.channel) &&
+          Object.keys(group.fields).some((kind) => kind !== 'association')
+        )
+          throw new Error('Current group channel disagrees with its received source.');
+        const recording = group.recording;
+        if (
+          recording !== undefined &&
+          (!hasRecordFields(recording, [
+            'epoch',
+            'chunkId',
+            'entryOrdinal',
+            'count',
+            'through',
+            'revision',
+          ]) ||
+            !Number.isSafeInteger(recording.revision) ||
+            recording.revision < 0 ||
+            !isSafeRecordId(recording.epoch) ||
+            !isSafeRecordId(recording.chunkId) ||
+            !Number.isSafeInteger(recording.entryOrdinal) ||
+            recording.entryOrdinal < 0 ||
+            !Number.isSafeInteger(recording.count) ||
+            recording.count < 1 ||
+            recording.count > Object.keys(group.fields).length ||
+            !Number.isFinite(recording.through) ||
+            recording.through < 0 ||
+            recording.through > world.simTime)
+        )
+          throw new Error('Invalid current recording checkpoint.');
+        const availability = group.availability;
+        if (
+          availability !== undefined &&
+          (!hasRecordFields(availability, ['state', 'at']) ||
+            availability.state !== 'unchecked' ||
+            !Number.isFinite(availability.at) ||
+            availability.at < 0 ||
+            availability.at > world.simTime)
+        )
+          throw new Error('Invalid current availability.');
+        const context = canonicalJson([group.grant, group.times, group.check, group.availability]);
         if (contexts.has(context)) throw new Error('Duplicate current receipt group.');
         contexts.add(context);
         used.add(group.grant.original);
         for (const [kind, field] of Object.entries(group.fields)) {
           if (
-            kinds.has(kind) ||
+            kinds.has(currentFieldIdentity(kind, group.grant.channel)) ||
             !hasRecordFields(
               field,
               ['id', 'revision', 'value', 'originalOrdinal'],
@@ -302,7 +369,7 @@ export function validatePerceptionEvidenceState(
             group.check !== currentFacetCheckScope(kind, group.grant.modality)
           )
             throw new Error('Invalid current group membership.');
-          kinds.add(kind);
+          kinds.add(currentFieldIdentity(kind, group.grant.channel));
         }
       }
       if (
@@ -374,7 +441,7 @@ export function validatePerceptionEvidenceState(
         throw new Error('Invalid current motion tracks.');
       let next = Infinity;
       for (const [subjectId, track] of Object.entries(state.motionSamples)) {
-        const location = currentFacetGet(state, `${subjectId}:location`);
+        const location = currentFacetGet(state, `${subjectId}:location`, { modality: 'sight' });
         if (
           !location ||
           !hasRecordFields(track, ['earlier', 'through', 'continuityRevision', 'expiresAt']) ||
@@ -397,6 +464,10 @@ export function validatePerceptionEvidenceState(
           exposure: {
             observer: state.observer!,
             episodeId: currentFacetGrant(state, location).exposure,
+            track: receivedTrackKey(
+              currentFacetGrant(state, location).exposure,
+              currentFacetGrant(state, location).channel,
+            ),
           },
           earlier: { ...proof, location: prior.location, frame: prior.frame },
           later,
@@ -410,7 +481,8 @@ export function validatePerceptionEvidenceState(
       throw new Error('Current motion deadline has no support.');
     if (
       state.visualConfirmation &&
-      (!Number.isFinite(state.visualConfirmation.through) ||
+      (!isDefinitionPin(state.visualConfirmation.channel) ||
+        !Number.isFinite(state.visualConfirmation.through) ||
         state.visualConfirmation.through < 0 ||
         state.visualConfirmation.through > world.simTime ||
         !Number.isSafeInteger(state.visualConfirmation.revision) ||
@@ -498,16 +570,16 @@ export function validatePerceptionEvidenceState(
         (lease.modality === 'sight' &&
           value.kind === 'location' &&
           state.visualConfirmation &&
+          sameDefinitionPin(record.grant.channel, state.visualConfirmation.channel) &&
           lease.revision > state.visualConfirmation.revision) ||
         lease.observer.actorId !== observerId ||
         lease.observer.physicalLife !== state.life ||
         !isSafeRecordId(lease.subjectId) ||
         (lease.subjectPhysicalLife !== null &&
           (!Number.isSafeInteger(lease.subjectPhysicalLife) || lease.subjectPhysicalLife < 0)) ||
-        key !== `${lease.subjectId}:${value.kind}` ||
-        !lease.exposure ||
-        typeof lease.exposure.episodeId !== 'string' ||
-        !lease.exposure.episodeId ||
+        key !== currentFacetKey(lease.subjectId, value.kind, record.grant.channel) ||
+        !validObservationExposure(lease.exposure) ||
+        lease.exposure.track !== receivedTrackKey(record.grant.exposure, record.grant.channel) ||
         lease.exposure.observer?.actorId !== observerId ||
         lease.exposure.observer.physicalLife !== state.life ||
         !['sight', 'hearing', 'touch'].includes(lease.modality) ||
@@ -535,7 +607,8 @@ export function validatePerceptionEvidenceState(
         ].includes(value.kind) ||
         (value.kind === 'association' &&
           (typeof lease.bodyLeaseId !== 'string' ||
-            currentFacetGet(state, `${lease.subjectId}:body`)?.id !== lease.bodyLeaseId)) ||
+            currentFacetGet(state, `${lease.subjectId}:body`, { channel: record.grant.channel })
+              ?.id !== lease.bodyLeaseId)) ||
         header.observer.actorId !== observerId ||
         header.observer.physicalLife !== state.life ||
         !Number.isSafeInteger(lease.originalOrdinal) ||

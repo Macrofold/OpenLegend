@@ -465,7 +465,7 @@ export async function prepareDecision(
     const receiptPrefix = captureTemporalReceiptPrefix(readWorld(), actorId);
     const historyPolicy = selectedAttentionPolicy(readWorld()).scene;
     const historySubjects = currentDetailedAttention(readWorld(), actorId).map(
-      (entry) => entry.exposure.episodeId,
+      (entry) => entry.exposure.track,
     );
     const capturedSituation = captureSituation(readWorld(), actorId, jobId, {
       entries: [],

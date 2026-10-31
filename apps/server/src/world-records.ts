@@ -338,6 +338,10 @@ export class WorldRecords {
     await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
       ON sim_object_lineage(world_id,(${lineageCustodian}),slot)`);
     await this.db.exec(`
+      CREATE INDEX IF NOT EXISTS mind_temporal_segments_occurrence_sources
+        ON mind_temporal_segments USING GIN(occurrence_source_ids);
+      CREATE INDEX IF NOT EXISTS mind_temporal_segments_occurrence_individuals
+        ON mind_temporal_segments USING GIN(occurrence_individual_ids);
       CREATE INDEX IF NOT EXISTS mind_memories_recent ON mind_memories(world_id,at);
       CREATE INDEX IF NOT EXISTS mind_memories_unresolved ON mind_memories(world_id,parent_id,position) WHERE unresolved=1;
       CREATE INDEX IF NOT EXISTS mind_corrections_world_source ON mind_corrections(world_id,source_id,actor_id);
@@ -388,6 +392,35 @@ export class WorldRecords {
     selectedTables?: ReadonlySet<string>,
   ): RecordChanges {
     return this.prepareRecords(before, after, selectedTables, false);
+  }
+  /** A resident tail cannot prove a proposed key is new. Before dependency
+   * preparation, resolve only those exact IDs against the accepted read cut;
+   * final compare-and-swap still owns whether this candidate can commit. */
+  async proveRecordCreates(
+    worldId: string,
+    revision: number,
+    table: string,
+    rows: readonly RowChange[],
+  ): Promise<void> {
+    if (!rows.length) return;
+    if (!RECORD_NODES.has(table)) throw new Error('Unknown canonical record table.');
+    for (let offset = 0; offset < rows.length; offset += 800) {
+      const batch = rows.slice(offset, offset + 800);
+      const existing = await this.db
+        .prepare(
+          `SELECT h.world_id,h.revision,t.id
+        FROM world_head h LEFT JOIN ${table} t ON t.world_id=h.world_id AND t.id=ANY(?::text[])
+        WHERE h.id=1`,
+        )
+        .all(batch.map((row) => row.id));
+      if (
+        !existing.length ||
+        existing.some((row) => row['world_id'] !== worldId || Number(row['revision']) !== revision)
+      )
+        throw new Error('Save conflict: another writer changed this world.');
+      const ids = new Set(existing.map((row) => row['id']));
+      for (const row of batch) if (!ids.has(row.id)) row.create = true;
+    }
   }
   /** Captures a complete candidate without rebinding live collection ordinals.
    * Coverage is checked separately; a rejected resident tail must leave its
@@ -1205,7 +1238,7 @@ export class WorldRecords {
         const selected = byActor.get(actorId) ?? [];
         actor.chunks = selected.map(readTemporalChunkRecord);
         for (const chunk of actor.chunks) for (const id of chunk.sourceRefs) references.add(id);
-        for (const reference of Object.values(actor.captures))
+        for (const reference of Object.values(actor.geometryCaptures))
           for (const id of temporalFacetValueReferences(reference)) references.add(id);
       }
       for (let offset = 0, ids = [...references]; offset < ids.length; offset += 800)

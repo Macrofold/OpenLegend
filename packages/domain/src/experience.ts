@@ -88,12 +88,15 @@ import {
 import {
   appendTemporalReceipt,
   captureTemporalObservation,
+  captureTemporalSnapshot,
   invalidateTemporalEvidence,
   invalidateTemporalFacets,
   retainTemporalSupport,
+  retainedTemporalReceipt,
   temporalFacetEligible,
   temporalReceiptSource,
   temporalReceiptId,
+  temporalReceiptForSource,
   temporalReceiptAliases,
   temporalAccountAliasClosure,
   temporalSupportAliases,
@@ -118,10 +121,117 @@ import {
   materializeObservation,
   finishAwarenessObservation,
   currentFacetOriginal,
+  observationFactKey,
   removeCurrentFacets,
   revokeCurrentMotionEvidence,
   receivedPerceptionObservations,
 } from './perception-evidence.js';
+
+/** Explicit consumers retain received proof here; acquisition and attention alone
+ * never request durable support. The caller names the already-owned dependency. */
+export type RecordingSupportAdmission =
+  | { kind: 'deliberate' }
+  | {
+      kind: 'retained-support';
+      owner: import('./perception-evidence.js').EvidenceSource;
+      required: boolean;
+    };
+function supportOwnerEligible(
+  world: WorldState,
+  actorId: string,
+  observer: import('./perception-evidence.js').ObserverLife,
+  admission: RecordingSupportAdmission,
+): boolean {
+  const actor = entityGet(world.entities, actorId)?.actor;
+  if (!actor || observer.actorId !== actorId) return false;
+  // Retaining an owned historical source does not make it a current sensation.
+  // Body replacement cannot relabel the life that actually received its facts.
+  return admission.kind === 'deliberate'
+    ? observer.physicalLife === (actor.physicalLife ?? 0)
+    : admission.owner.observer.actorId === actorId &&
+        admission.owner.observer.physicalLife === observer.physicalLife;
+}
+export function recordObservationSupport(
+  world: WorldState,
+  actorId: string,
+  observation: import('./perception-evidence.js').ObservationContribution,
+  request: {
+    sourceIds: readonly string[];
+    admission: RecordingSupportAdmission;
+    ordinals?: ReadonlySet<number>;
+  },
+): import('./temporal-evidence.js').TemporalReceiptLocator | undefined {
+  if (!supportOwnerEligible(world, actorId, observation.observer, request.admission)) return;
+  if (
+    observation.observer.physicalLife !==
+    (entityGet(world.entities, actorId)?.actor?.physicalLife ?? 0)
+  ) {
+    // Historical proof keeps the receiving body's life and chronology. Reuse
+    // owned proof; appending it now would invent a sensation in the new body.
+    const ordinals = request.ordinals ?? new Set(observation.facets.map((facet) => facet.ordinal));
+    const recent = temporalReceiptForSource(world, actorId, observation.id);
+    const candidates = [
+      ...(recent ? [recent] : []),
+      ...Object.values(world.experience?.temporal?.actors[actorId]?.supports ?? {})
+        .filter((capsule) =>
+          capsule.receipt.facets.some((facet) => facet.original?.source.id === observation.id),
+        )
+        .map(({ receipt }) => ({
+          actorId: receipt.actorId,
+          physicalLife: receipt.physicalLife,
+          epoch: receipt.epoch,
+          ordinal: receipt.ordinal,
+        })),
+    ];
+    for (const locator of candidates) {
+      if (locator.physicalLife !== observation.observer.physicalLife) continue;
+      const retained = retainedTemporalReceipt(world, locator);
+      if (retained && observationReceiptOrdinals(world, observation, ordinals, retained.receipt))
+        return locator;
+    }
+    return;
+  }
+  return captureTemporalObservation(
+    world,
+    actorId,
+    observation,
+    [...request.sourceIds],
+    request.admission.kind === 'retained-support' && request.admission.required,
+    selectedTemporalPolicy(world).recent,
+    request.ordinals ? { ordinals: request.ordinals } : {},
+  );
+}
+/** A sparse receipt has its own member ordinals. Retain logical original facts,
+ * never assume that their observation offsets survived packing unchanged. */
+export function observationReceiptOrdinals(
+  world: WorldState,
+  observation: import('./perception-evidence.js').ObservationContribution,
+  ordinals: ReadonlySet<number>,
+  receipt: TemporalReceipt,
+): number[] | undefined {
+  if (!ordinals.size) return;
+  const wanted = new Set(
+    [...ordinals].map((ordinal) => canonicalJson(observationFactKey(world, observation, ordinal))),
+  );
+  const found = new Set<string>(),
+    selected: number[] = [];
+  for (const facet of receipt.facets) {
+    if (!facet.original) continue;
+    const key = canonicalJson(facet.original);
+    if (!wanted.has(key)) continue;
+    found.add(key);
+    selected.push(facet.ordinal);
+  }
+  return found.size === wanted.size ? selected : undefined;
+}
+export function recordSnapshotSupport(
+  world: WorldState,
+  actorId: string,
+  snapshot: import('./perception-evidence.js').CapturedCurrentFacet,
+): import('./temporal-evidence.js').TemporalReceiptLocator | undefined {
+  if (!supportOwnerEligible(world, actorId, snapshot.observer, { kind: 'deliberate' })) return;
+  return captureTemporalSnapshot(world, actorId, snapshot, selectedTemporalPolicy(world).recent);
+}
 
 export const EXPERIENCE_LIMITS = {
   rawHours: 6,
@@ -632,7 +742,7 @@ export function admitAutomaticExperience(
             policy,
             observation.context
               ? {
-                  contextSubjects: observation.context.subjects.map((subject) => subject.episodeId),
+                  contextSubjects: observation.context.subjects.map((subject) => subject.track),
                 }
               : {},
           );
@@ -654,7 +764,7 @@ export function admitAutomaticExperience(
                     ...new Set(
                       observations.flatMap(
                         (observation) =>
-                          observation.context?.subjects.map((subject) => subject.episodeId) ?? [],
+                          observation.context?.subjects.map((subject) => subject.track) ?? [],
                       ),
                     ),
                   ],

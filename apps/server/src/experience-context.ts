@@ -12,7 +12,6 @@ import {
   mindFor,
   type MemoryRecord,
   type SensoryFacet,
-  type CapturedCurrentFacet,
   type CurrentBodyPoseSupport,
   type CurrentDescriptionSupport,
   type ReceivedLocationSample,
@@ -205,7 +204,7 @@ function participantForModel(
     case 'exposure':
       return {
         kind: participant.kind,
-        receivedSubject: receivedSubjectHandle(world, actorId, participant.exposure.episodeId),
+        receivedSubject: receivedSubjectHandle(world, actorId, participant.exposure.track),
       };
     case 'described':
       return { ...participant };
@@ -329,7 +328,7 @@ export function facetValueForModel(
       return {
         kind: value.kind,
         detail: value.detail,
-        receivedSubject: receivedSubjectHandle(world, actorId, value.exposure.episodeId),
+        receivedSubject: receivedSubjectHandle(world, actorId, value.exposure.track),
       };
     case 'claim':
       return {
@@ -350,7 +349,7 @@ export function facetValueForModel(
       const participants = new Map(
         value.participants?.map(({ referenceOrdinal, participant }) => [
           referenceOrdinal,
-          receivedSubjectHandle(world, actorId, participant.exposure.episodeId),
+          receivedSubjectHandle(world, actorId, participant.exposure.track),
         ]),
       );
       return {
@@ -383,7 +382,7 @@ export function facetValueForModel(
     case 'observed-motion':
       return {
         kind: value.kind,
-        receivedSubject: receivedSubjectHandle(world, actorId, value.exposure.episodeId),
+        receivedSubject: receivedSubjectHandle(world, actorId, value.exposure.track),
         earlier: motionSampleForModel(world, actorId, value.earlier, frame),
         later: motionSampleForModel(world, actorId, value.later, frame),
         correspondence: value.correspondence,
@@ -489,9 +488,11 @@ export function bodyPoseSupportForModel(
   return decorate(
     {
       proof: facetSupportForModel(world, actorId, support),
+      role: support.role,
       measuredFrom: support.poseMeasuredFrom,
       measuredThrough: support.poseMeasuredThrough,
       acquiredAt: support.poseAcquiredAt,
+      ...(support.availability ? { availability: support.availability } : {}),
     },
     modelObservationFrame(frame, support.frame),
   );
@@ -503,56 +504,11 @@ export function bodyDescriptionSupportForModel(
 ) {
   return {
     proof: facetSupportForModel(world, actorId, support),
+    role: support.role,
     measuredFrom: support.descriptionMeasuredFrom,
     measuredThrough: support.descriptionMeasuredThrough,
     acquiredAt: support.descriptionAcquiredAt,
-  };
-}
-
-export function currentFacetForModel(
-  world: ExperiencePresentation,
-  actorId: string,
-  snapshot: CapturedCurrentFacet,
-  frame = evidenceFrame(world, actorId),
-) {
-  return {
-    source: evidenceSourceHandle(world, actorId, snapshot.original.source),
-    ordinal: snapshot.original.ordinal,
-    supportStatus: factSupportStatus(
-      world,
-      actorId,
-      snapshot.original.source.id,
-      snapshot.original.ordinal,
-    ),
-    confirmation: evidenceSourceHandle(world, actorId, snapshot.confirmation),
-    modality: snapshot.modality,
-    ...(snapshot.localSubject
-      ? {
-          bodyLocalSubject: {
-            ...subjectForModel(world, actorId, snapshot.localSubject),
-            temporalRole: 'historical',
-            currentBody: false,
-          },
-        }
-      : {}),
-    value: facetValueForModel(world, actorId, snapshot.value, snapshot.original.source.id, frame),
-    ...(snapshot.poseSupport
-      ? { positionSupport: bodyPoseSupportForModel(world, actorId, snapshot.poseSupport, frame) }
-      : {}),
-    ...(snapshot.descriptionSupport
-      ? {
-          descriptionSupport: bodyDescriptionSupportForModel(
-            world,
-            actorId,
-            snapshot.descriptionSupport,
-          ),
-        }
-      : {}),
-    measuredFrom: snapshot.valueMeasuredFrom,
-    measuredThrough: snapshot.valueMeasuredThrough,
-    acquiredAt: snapshot.valueAcquiredAt,
-    confirmedFrom: snapshot.confirmedFrom,
-    confirmedThrough: snapshot.confirmedThrough,
+    ...(support.availability ? { availability: support.availability } : {}),
   };
 }
 

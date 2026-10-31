@@ -123,13 +123,9 @@ export function reconcileNativeControl(world: WorldState, entity: Entity): void 
   changed(world, entity);
 }
 
-/** Receives the exact committed occurrence, with independently checked sight or
- * actual bodily contact. It never asks hidden source state for a location. */
-export function acquireNativeResponseEvent(
-  world: WorldState,
-  event: Readonly<WorldEvent>,
-  events: WorldEvent[],
-): void {
+/** A native receiver needs the actual received occurrence independently of
+ * whether its world chooses a lasting personal account. */
+function nativeResponseReceiver(world: WorldState, event: Readonly<WorldEvent>) {
   if (
     ![
       'struck',
@@ -140,7 +136,7 @@ export function acquireNativeResponseEvent(
       'action-started',
     ].includes(event.type)
   )
-    return;
+    return undefined;
   const animal = event.targetId ? entityGet(world.entities, event.targetId) : undefined;
   if (
     !animal?.animal ||
@@ -149,8 +145,27 @@ export function acquireNativeResponseEvent(
     !activelyParticipates(animal) ||
     (animal.threat && !animal.threat.relinquished && !animal.animal.foraging)
   )
-    return;
+    return undefined;
   if (event.scope === 'private' && !event.audience.includes(animal.id)) return;
+  return animal;
+}
+export function nativeResponseNeedsEventReception(
+  world: WorldState,
+  event: Readonly<WorldEvent>,
+  observerId: string,
+): boolean {
+  return event.targetId === observerId && nativeResponseReceiver(world, event) !== undefined;
+}
+
+/** Receives the exact committed occurrence, with independently checked sight or
+ * actual bodily contact. It never asks hidden source state for a location. */
+export function acquireNativeResponseEvent(
+  world: WorldState,
+  event: Readonly<WorldEvent>,
+  events: WorldEvent[],
+): void {
+  const animal = nativeResponseReceiver(world, event);
+  if (!animal) return;
   const observation = receivedEventObservation(world, animal.id, event.id);
   if (!observation) return;
   const permittedEvent = observation.facets.find((facet) => facet.value.kind === 'event')?.value;

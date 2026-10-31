@@ -645,7 +645,7 @@ describe('bounded received situation', () => {
     world.simTime += 120;
     expect(captured.packet.measuredAt).toBe(at);
     expect(captured.valid(world)).toBe(true);
-    const source = captured.cut.acquired[0]!;
+    const source = captured.cut.current[0]!.original.source;
     (world.experience!.forgotten[PLAYER_ID] ??= []).push(source.id);
     expect(captured.valid(world)).toBe(false);
   });

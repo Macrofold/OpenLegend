@@ -1,10 +1,10 @@
 # Observer-specific perception, evidence and recognition — technical design
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Existing-channel evidence is implemented; shared reception is designed, with conversion and broader qualification open. | 2026-10-31   |
+| Status      | Current progress                                                                                        | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared reception is implemented for existing channels; operating and broader qualification remain open. | 2026-10-31   |
 
-Architecture consulted for the supported-channel temporal/familiarity implementation **2026-10-27 10:15 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
+Architecture applied to shared reception **2026-10-31 22:44 UTC**; the temporal/familiarity foundation used it **2026-10-27 10:15 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
 
 ## Authority, scope and implementation boundary
 
@@ -44,7 +44,7 @@ The new Perception attribute and recognizability profiles are explicitly absent 
 
 ## Evidence records and permitted references
 
-The [shared reception runtime design](perspective-perception-runtime-design.md) owns the selected common mutation procedure for received state and occurrences. PP08 converts currently separate visual/contact/occurrence bookkeeping through the existing BK contact/groups and RU consumers. The field shapes below express permitted meaning and exact read products; they do not require one mutable object, database row or historical confirmation per field. Group storage and the common procedure are designed targets, not claims about the delivered representation.
+The [shared reception runtime design](perspective-perception-runtime-design.md) owns the selected common mutation procedure for received state and occurrences. PP08 unifies visual/contact/occurrence bookkeeping through the existing BK contact/groups and RU consumers. The field shapes below express permitted meaning and exact read products; they do not require one mutable object, database row or historical confirmation per field. The runtime companion records the installed representation; the tracker/evidence distinguish supported-channel mechanical checks from unqualified operating and future physical scope.
 
 ### Three representations, one observation
 

@@ -76,7 +76,7 @@ import {
   baseRecordingReason,
 } from './worlds/base/attention.js';
 import type { RecordingInput } from './attention.js';
-import { sightingNarration } from './worlds/base/senses.js';
+import { sightingNarration } from './worlds/base/event-presentation.js';
 import type { ObserverSubject } from './knowledge.js';
 import {
   subjectFamiliarity,

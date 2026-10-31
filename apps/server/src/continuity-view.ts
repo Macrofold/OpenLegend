@@ -1,6 +1,5 @@
-import { currentFacetValues } from '@open-legend/domain';
+import { currentObservedBodyIds } from '@open-legend/domain';
 import { acceptedMindText } from '@open-legend/domain';
-import { currentFacetGrant } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import {
   appraisalPage,
@@ -230,27 +229,20 @@ export function continuitySubjects(
   }
   const currentBodies = new Map<string, Position>();
   const currentSubjects: ObserverSubject[] = [];
-  const owner = world.perceptionEvidence?.[actorId];
-  if (owner)
-    for (const lease of currentFacetValues(owner)) {
-      if (lease.value.kind !== 'body') continue;
-      const subjectId = currentFacetGrant(owner, lease).subjectId;
-      const body = currentBodyValue(world, actorId, subjectId);
-      if (!body) continue;
-      const supported = currentBodySubjects(world, actorId, subjectId);
-      if (!supported.length && !entityGet(world.entities, subjectId)?.actor)
-        supported.push({ kind: 'entity', entityId: subjectId });
-      for (const subject of supported) {
-        currentSubjects.push(subject);
-        currentBodies.set(subjectKey(subject), body.value.body.position);
-      }
-      const known = currentCommunicationSubject(world, actorId, subjectId);
-      if (known)
-        currentBodies.set(
-          subjectKey({ kind: 'entity', entityId: known }),
-          body.value.body.position,
-        );
+  for (const subjectId of currentObservedBodyIds(world, actorId)) {
+    const body = currentBodyValue(world, actorId, subjectId);
+    if (!body) continue;
+    const supported = currentBodySubjects(world, actorId, subjectId);
+    if (!supported.length && !entityGet(world.entities, subjectId)?.actor)
+      supported.push({ kind: 'entity', entityId: subjectId });
+    for (const subject of supported) {
+      currentSubjects.push(subject);
+      currentBodies.set(subjectKey(subject), body.value.body.position);
     }
+    const known = currentCommunicationSubject(world, actorId, subjectId);
+    if (known)
+      currentBodies.set(subjectKey({ kind: 'entity', entityId: known }), body.value.body.position);
+  }
   if (request.subjectId) {
     // Exact lookup for the note editor: a subject's notes may lie on any notes page.
     const selected = subjectView(world, actorId, request.subjectId, currentBodies);

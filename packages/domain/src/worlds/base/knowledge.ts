@@ -1,5 +1,6 @@
+import { recordObservationSupport, observationReceiptOrdinals } from '../../experience.js';
 import { currentFacetValues } from '../../perception-current.js';
-import { currentFacetGet } from '../../perception-current.js';
+import { currentFacetGet, currentFacetGrant } from '../../perception-current.js';
 import { entityGet } from '../../entity-collection.js';
 import { hasMemory } from '../../living.js';
 import { accessiblePossession } from '../../object-access.js';
@@ -27,11 +28,14 @@ import { isImmutableData, isSafeRecordId } from '../../records.js';
 import { cloneValue, readOnlyDraftView } from '../../draft.js';
 import { adjustRetainedKnowledgeAccounting } from '../../remembered-impressions.js';
 import {
-  captureTemporalObservation,
   retainTemporalSupport,
   releaseTemporalSupport,
   temporalReceiptForSource,
   temporalReceiptSource,
+  temporalReceiptId,
+  retainedTemporalReceipt,
+  type TemporalValue,
+  type TemporalReceiptLocator,
 } from '../../temporal-evidence.js';
 import { BASE_ATTENTION_POLICY } from './attention.js';
 import config from './config/knowledge.generated.json' with { type: 'json' };
@@ -113,6 +117,28 @@ export function commitObserverIdentity(
   }
   return true;
 }
+function nameEvidenceOrdinals(
+  facets: readonly { ordinal: number; value: Pick<TemporalValue, 'kind'> }[],
+): Set<number> | undefined {
+  const speech = facets.filter((facet) => facet.value.kind === 'speech');
+  const described = facets.filter((facet) =>
+    ['event', 'personal-account', 'description', 'encounter-exposure'].includes(facet.value.kind),
+  );
+  const primary = speech.length
+    ? speech
+    : described.length
+      ? described
+      : facets.filter((facet) => ['body', 'contact', 'detected'].includes(facet.value.kind));
+  // Recognition alone cannot establish what name was actually offered. Explicit
+  // named-source edits may instead retain their actual described/physical source.
+  if (!primary.length) return;
+  return new Set([
+    ...primary.map((facet) => facet.ordinal),
+    ...facets
+      .filter((facet) => ['perceived-feature', 'association'].includes(facet.value.kind))
+      .map((facet) => facet.ordinal),
+  ]);
+}
 /** A name learned from actual words keeps those exact words and their permitted
  * participant proof, rather than pinning the whole speech log indefinitely. */
 function retainNameEvidence(
@@ -127,30 +153,69 @@ function retainNameEvidence(
     if (!reference.startsWith('awareness:')) continue;
     const eventId = reference.slice('awareness:'.length);
     const supports = world.experience?.temporal?.actors[observerId]?.supports ?? {};
-    const prior = Object.values(supports).find((value) =>
-      value.receipt.sourceIds.includes(eventId),
+    const stored = world.experience?.awareness[observerId]?.find(
+      (entry) => entry.eventId === eventId,
     );
-    const awareness =
-      actual?.eventId === eventId
-        ? actual
-        : world.experience?.awareness[observerId]?.find((entry) => entry.eventId === eventId);
-    let receipt = prior?.receipt ?? temporalReceiptForSource(world, observerId, eventId);
-    if (!receipt && awareness?.observation)
-      receipt = captureTemporalObservation(
-        world,
-        observerId,
-        awareness.observation,
-        [eventId],
-        true,
-        BASE_ATTENTION_POLICY.retention.recent,
-      );
+    const awareness = actual?.eventId === eventId ? actual : stored;
+    const observation = awareness?.observation ?? stored?.observation;
+    const requested = observation && nameEvidenceOrdinals(observation.facets);
+    let selected: { receipt: TemporalReceiptLocator; ordinals: number[] } | undefined;
+    function* candidates() {
+      // Native delivery and retained placement can use separate wrappers. Prefer
+      // their exact common receipt before searching older sparse capsules.
+      yield awareness?.sourceReceipt ?? stored?.sourceReceipt;
+      yield temporalReceiptForSource(world, observerId, eventId);
+      for (const value of Object.values(supports))
+        if (value.receipt.sourceIds.includes(eventId)) yield value.receipt;
+    }
+    const considered = new Set<string>();
+    for (const receipt of candidates()) {
+      if (!receipt || considered.has(temporalReceiptId(receipt))) continue;
+      considered.add(temporalReceiptId(receipt));
+      const retained = retainedTemporalReceipt(world, receipt);
+      if (!retained) continue;
+      const ordinals = observation
+        ? requested && observationReceiptOrdinals(world, observation, requested, retained.receipt)
+        : [
+            ...(nameEvidenceOrdinals(
+              retained.values.map((value, index) => ({
+                value,
+                ordinal: retained.receipt.facets[index]!.ordinal,
+              })),
+            ) ?? []),
+          ];
+      if (ordinals?.length) {
+        selected = { receipt, ordinals };
+        break;
+      }
+    }
+    if (!selected && observation && requested?.size) {
+      const receipt = recordObservationSupport(world, observerId, observation, {
+        sourceIds: [eventId],
+        ordinals: requested,
+        admission: {
+          kind: 'retained-support',
+          owner: observationFactKey(world, observation, requested.values().next().value!).source,
+          required: true,
+        },
+      });
+      const retained = receipt && retainedTemporalReceipt(world, receipt);
+      const ordinals =
+        retained && observationReceiptOrdinals(world, observation, requested, retained.receipt);
+      if (receipt && ordinals) selected = { receipt, ordinals };
+    }
+    const alreadyHeld = selected && Object.hasOwn(supports, temporalReceiptId(selected.receipt));
     const held =
-      receipt && retainTemporalSupport(world, receipt, BASE_ATTENTION_POLICY.retention.optional);
+      selected &&
+      retainTemporalSupport(world, selected.receipt, {
+        ...BASE_ATTENTION_POLICY.retention.optional,
+        facetOrdinals: selected.ordinals,
+      });
     if (!held) {
       for (const id of created) releaseTemporalSupport(world, observerId, id);
       return;
     }
-    if (!prior) created.push(held.receipt.id);
+    if (!alreadyHeld) created.push(held.receipt.id);
     ids.push(JSON.stringify(temporalReceiptSource(held.receipt)));
   }
   return { ids: [...new Set(ids)], created };
@@ -273,8 +338,13 @@ export function associateBodyFamiliarity(
   sourceId: string,
 ): void {
   const owner = world.perceptionEvidence?.[observerId];
-  const body = currentFacetGet(owner, `${sourceId}:body`);
-  const association = currentFacetGet(owner, `${sourceId}:association`);
+  const body = currentFacetGet(owner, `${sourceId}:body`, { modality: 'sight' });
+  const association =
+    owner &&
+    body &&
+    currentFacetGet(owner, `${sourceId}:association`, {
+      channel: currentFacetGrant(owner, body).channel,
+    });
   const local = currentBodyLocalSubject(world, observerId, sourceId);
   const matched = currentBodyAssociation(world, observerId, sourceId);
   if (!owner || !body || !association || association.bodyLeaseId !== body.id || !local || !matched)
@@ -994,9 +1064,16 @@ export function learnSpeechIntroduction(
       )
     )
       continue;
-    const subject =
-      evidence.sourceSubject ??
-      (evidence.sourceId ? { kind: 'entity' as const, entityId: evidence.sourceId } : undefined);
+    const binding = evidence.sourceBody;
+    const body = binding && currentBodyGrant(world, observerId, binding.entityId);
+    const bodySubject =
+      body && body.leaseId === binding!.leaseId && body.physicalLife === binding!.physicalLife
+        ? (currentBodyAssociation(world, observerId, binding!.entityId) ??
+          currentBodyLocalSubject(world, observerId, binding!.entityId))
+        : undefined;
+    // Seeing this speaker can name the acquired local individual. A private
+    // routing entity ID alone never turns an unfamiliar body into a known person.
+    const subject = evidence.sourceSubject ?? bodySubject;
     if (!subject) {
       const seed = world.observerIdentities?.[observerId]?.[`voice-seed-${event.id}`];
       if (seed?.seedOnly) {

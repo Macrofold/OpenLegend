@@ -21,7 +21,7 @@ import {
   selectedTemporalPolicy,
   reviveActor,
   receivedScene,
-  captureEvidenceCut,
+  currentReceivedObservations,
   experienceEntry,
   queryMemories,
 } from '@open-legend/domain';
@@ -189,7 +189,7 @@ describe('event-time observer facts', () => {
     const life = entityGet(restored.entities, NPC_ID)!.actor!.physicalLife ?? 0;
     expect(restored.perceptionEvidence![NPC_ID]!.life).not.toBe(life);
     expect(receivedScene(restored, NPC_ID)).toMatchObject({ physicalLife: life, nonlocalized: 0 });
-    expect(captureEvidenceCut(restored, NPC_ID).acquired).toHaveLength(0);
+    expect(currentReceivedObservations(restored, NPC_ID).observations).toHaveLength(0);
     // The combined account reader includes the independently retained finite
     // buffer. It is dated evidence from the old life, never the fresh body's
     // current received scene or autobiographical recall.
@@ -509,7 +509,7 @@ describe('event-time observer facts', () => {
       entries: [],
       incomplete: true,
     });
-    const subject = captured.scene.bodies.get(PLAYER_ID)!.exposure;
+    const subject = captured.scene.bodies.get(PLAYER_ID)!.track;
     const capturedAt = service.world.simTime;
     await editWorld(service, (world) => {
       place(world, PLAYER_ID, 33.1);

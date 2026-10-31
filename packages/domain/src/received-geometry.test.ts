@@ -514,7 +514,7 @@ describe('native received relation producers', () => {
   it('seals an actually held geometry interval at a cognition cut without sensing or duplicate confirmation', () => {
     const { world, people } = nativeScene(1, map());
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
-    const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.episodeId;
+    const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.track;
     world.simTime = 2;
     setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
@@ -552,8 +552,8 @@ describe('native received relation producers', () => {
     setSpatialPosition(world, player, { x: 1.25, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
-    const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.episodeId;
-    const oldBlock = world.experience!.temporal!.actors[PLAYER_ID]!.captures[original.id]!
+    const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.track;
+    const oldBlock = world.experience!.temporal!.actors[PLAYER_ID]!.geometryCaptures[original.id]!
       .valueRef as string;
     world.simTime = 21610;
     setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, { continuity: 'physical' });
@@ -613,7 +613,7 @@ describe('native received relation producers', () => {
   it('retains contemporaneous received terrain without an alarm and never substitutes a later view', () => {
     const { world, player, people } = nativeScene(1, map());
     const person = people[0]!,
-      subject = currentBodyObservation(world, PLAYER_ID, person.id)!.exposure.episodeId;
+      subject = currentBodyObservation(world, PLAYER_ID, person.id)!.exposure.track;
     expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(0);
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     const first = selectTemporalHistory(world, PLAYER_ID, {
@@ -690,10 +690,10 @@ describe('native received relation producers', () => {
   it('shares independent original-time terrain across outgoing and entering attention without duplicating its baseline', () => {
     const { world, people } = nativeScene(3, map(), { x: 1, y: 0, z: 2 }, 2);
     const previous = currentDetailedAttention(world, PLAYER_ID);
-    const outgoing = previous.map((entry) => entry.exposure.episodeId);
+    const outgoing = previous.map((entry) => entry.exposure.track);
     const selected = new Set(previous.map((entry) => entry.sourceId));
     const other = people.find((person) => !selected.has(person.id))!;
-    const exposure = currentBodyObservation(world, PLAYER_ID, other.id)!.exposure.episodeId;
+    const exposure = currentBodyObservation(world, PLAYER_ID, other.id)!.exposure.track;
     const observation = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     expect(
       selectTemporalHistory(world, PLAYER_ID, {
@@ -801,7 +801,7 @@ describe('native received relation producers', () => {
     value.tiles = Array.from({ length: 5 }, () => Array(42).fill('grass'));
     const { world, people } = nativeScene(1, value, { x: 25, y: 2, z: 2 });
     const person = people[0]!;
-    const subject = currentBodyObservation(world, PLAYER_ID, person.id)!.exposure.episodeId;
+    const subject = currentBodyObservation(world, PLAYER_ID, person.id)!.exposure.track;
     const original = currentReceivedGeometry(world, PLAYER_ID).observations.find((observation) =>
       observation.facets.some((facet) => facet.value.kind === 'physical-boundary'),
     )!;

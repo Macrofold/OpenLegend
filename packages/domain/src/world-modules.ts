@@ -1,4 +1,4 @@
-import { currentFacetGet, currentFacetGrant } from './perception-current.js';
+import { currentFacetGet, currentFacetGrant, receivedTrackKey } from './perception-current.js';
 import { validateCartography } from './cartography.js';
 import { validateItemArt, validatePortraitArt } from './presentation-art.js';
 import { validateAttackExecutions } from './combat-execution.js';
@@ -6,7 +6,7 @@ import { validLethalPermission } from './combat-consent.js';
 import {
   validateSensoryProgress,
   validateSensoryContinuation,
-  requestDetailedSight,
+  requestSightWork,
 } from './perception-timing.js';
 import { validatePersonalSocialEvidence } from './personal-social.js';
 import { validateSupplyOpportunities } from './supply-opportunities.js';
@@ -32,6 +32,7 @@ import {
 } from './remembered-impressions.js';
 import { validateTemporalEvidenceState } from './temporal-validation.js';
 import { validateAttentionState } from './attention.js';
+import { receivedAttentionSource } from './perception-current.js';
 import { validateNativeResponse } from './native-response.js';
 import { entityGet, entityValues } from './entity-collection.js';
 import { validateEntityCollection } from './entity-collection.js';
@@ -923,7 +924,7 @@ export function setAttribute(
   // A private receiver parameter can change its own next interpretation without
   // presenting that value to anyone else or sensing during the attribute write.
   if (selectedAttributeAffectsObservation(world, entity, d.id))
-    requestDetailedSight(world, entity.id);
+    requestSightWork(world, entity.id, 'detail');
   // Notice actual one-off outcomes, never infer their cause from later meter readings.
   // Passive rate/transfer callers opt out, avoiding per-interval history and UI noise.
   if (
@@ -1372,13 +1373,17 @@ export function validateWorldModules(world: WorldState): void {
     if (owner.attention !== undefined) {
       validateAttentionState(owner.attention, selectedAttentionPolicy(world), owner.observer!);
       for (const annotation of Object.values(owner.attention.annotations)) {
-        const body = currentFacetGet(owner, `${annotation.sourceId}:body`);
+        const body = receivedAttentionSource(owner, annotation.sourceId, annotation.leaseId);
         if (
           !body ||
           body.id !== annotation.leaseId ||
-          currentFacetGrant(owner, body).exposure !== annotation.exposure.episodeId
+          annotation.exposure.track !==
+            receivedTrackKey(
+              currentFacetGrant(owner, body).exposure,
+              currentFacetGrant(owner, body).channel,
+            )
         )
-          throw new Error('Attention annotation has no matching received body.');
+          throw new Error('Attention annotation has no matching received source.');
       }
     }
   for (const [actorId, entries] of Object.entries(world.memories))

@@ -274,7 +274,7 @@ describe('bounded personal temporal storage', () => {
       ).find(([, candidate]) => candidate.sourceId === NPC_ID)!;
       expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
     });
-    const subject = currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.exposure.episodeId,
+    const subject = currentBodyObservation(service.world, PLAYER_ID, NPC_ID)!.exposure.track,
       firstAt = service.world.simTime,
       installed = selectedTemporalPolicy(service.world);
     // This receiving operation includes nineteen held-field confirmations and one

@@ -6,6 +6,7 @@ import { setSpatialPosition, worldSupport } from './spatial-state.js';
 import { captureAttentionPresentation } from './attention.js';
 import {
   captureEvidenceCut,
+  currentReceivedObservations,
   evidenceCutEligible,
   currentObservedFacets,
 } from './perception-evidence.js';
@@ -187,7 +188,9 @@ it('retains a supplied current measurement even when recent history omits it and
 
 it('acknowledges only supplied attention on accepted interpretation and fences privacy edits', () => {
   const { world, binding, candidate, commit } = setup();
-  const cut = captureEvidenceCut(world, NPC_ID);
+  const cut = captureEvidenceCut(world, NPC_ID, {
+    acquired: [...currentReceivedObservations(world, NPC_ID).observations],
+  });
   const accepted = commit([], 'response-quiet');
   expect(accepted.outcome.ok).toBe(true);
   const current = accepted.world.perceptionEvidence![NPC_ID]!.attention!.annotations[candidate[0]]!;

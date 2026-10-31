@@ -1,5 +1,5 @@
 import { receivedCurrentOwnerTables } from './received-record-references.js';
-import { retentionDueActors } from './temporal-storage.js';
+import { retentionDueActors, recentRetentionDue } from './temporal-storage.js';
 import type { PreparedDiagnosticRecord } from './diagnostic-capture.js';
 import {
   readDecisionState,
@@ -41,6 +41,8 @@ import { MemoryRepository, type PreparedMemorySources } from './memory-repositor
 import { WorldRecords, retainedSourceTables, type RecordChanges } from './world-records.js';
 import {
   RetentionMetadata,
+  accountTables,
+  accountWriteHasRetentionDependencies,
   retentionChangedActors,
   type RetentionMetadataView,
 } from './retention-metadata.js';
@@ -147,7 +149,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '48';
+export const DATABASE_SCHEMA = '49';
 
 export interface AttemptBudget {
   id: string;
@@ -515,18 +517,39 @@ export class SqlGameRepository implements GameRepository {
       metadata.assertCandidateCoverage(state.world);
       return metadata.view(state.world.id);
     }
-    const actors = new Set([
-      ...retentionDueActors(state.world),
-      ...retentionChangedActors(changes, state.world),
-    ]);
-    if (!this.acceptedState || !actors.size) metadata.initializeEmpty(state.world.id);
-    else {
-      const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
-      metadata.initialize(
-        await snapshot(() => metadata.capture(this.db, state.world.id, [...actors])),
-      );
+    const accepted = this.acceptedState;
+    const revision = this.acceptedRevision;
+    const due = [...retentionDueActors(state.world)];
+    const actors = new Set([...due, ...retentionChangedActors(changes, state.world)]);
+    if (!accepted || !actors.size) {
+      metadata.initializeEmpty(state.world.id);
+      return metadata.view(state.world.id, changes);
     }
-    return metadata.view(state.world.id, changes);
+    const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
+    return snapshot(async () => {
+      // Resolve only uncertain, dependency-free account IDs. A genuinely new
+      // empty reflection needs no cold actor catalogue; an update still does.
+      for (const table of accountTables) {
+        const candidates = (changes.writes.get(table) ?? []).filter(
+          (row) => !row.create && !accountWriteHasRetentionDependencies(table, row),
+        );
+        await this.records.proveRecordCreates(state.world.id, revision, table, candidates);
+      }
+      const selected = new Set([...due, ...retentionChangedActors(changes, state.world)]);
+      if (!selected.size) metadata.initializeEmpty(state.world.id);
+      else
+        metadata.initialize(
+          await metadata.capture(this.db, state.world.id, [...selected], {
+            recentActors: [...selected].filter((actorId) =>
+              recentRetentionDue(state.world, actorId),
+            ),
+            changes,
+            world: state.world,
+            previous: accepted.world,
+          }),
+        );
+      return metadata.view(state.world.id, changes);
+    });
   }
   private readonly settlementListeners = new Set<() => void>();
   onSettlement(listener: () => void): () => void {

@@ -1,5 +1,44 @@
 import type { Position } from './types.js';
-import type { EvidenceSource, ObservedLocation } from './perception-evidence.js';
+import { isDefinitionPin } from './definition-pins.js';
+import type {
+  EvidenceSource,
+  ObservedLocation,
+  ObservationExposure,
+} from './perception-evidence.js';
+
+/** Canonical compound track identity is not a primitive record ID. Validate the
+ * installed pin's parts without imposing the primitive ID limit on the tuple. */
+export function validReceivedTrackKey(value: unknown, exposure?: string): value is string {
+  if (typeof value !== 'string') return false;
+  try {
+    const parts: unknown = JSON.parse(value);
+    return (
+      Array.isArray(parts) &&
+      parts.length === 4 &&
+      typeof parts[0] === 'string' &&
+      !!parts[0] &&
+      (exposure === undefined || parts[0] === exposure) &&
+      isDefinitionPin({ id: parts[1], version: parts[2], digest: parts[3] }) &&
+      JSON.stringify(parts) === value
+    );
+  } catch {
+    return false;
+  }
+}
+export function validObservationExposure(value: unknown): value is ObservationExposure {
+  if (!value || typeof value !== 'object') return false;
+  const exposure = value as ObservationExposure;
+  return (
+    !!exposure.observer &&
+    typeof exposure.observer.actorId === 'string' &&
+    !!exposure.observer.actorId &&
+    Number.isSafeInteger(exposure.observer.physicalLife) &&
+    exposure.observer.physicalLife >= 0 &&
+    typeof exposure.episodeId === 'string' &&
+    !!exposure.episodeId &&
+    validReceivedTrackKey(exposure.track, exposure.episodeId)
+  );
+}
 
 export const validPerceivedPoint = (value: unknown): value is Position =>
   !!value &&

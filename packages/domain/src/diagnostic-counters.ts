@@ -190,7 +190,12 @@ export const DOMAIN_COUNTERS = [
   'currentFacetMapCopies',
   /** Performed native temporal append work, including tentative transitions. */
   'temporalOperationsAppended',
+  /** Logical covered fields for quota accounting, not the number of field visits. */
   'temporalFieldsAppended',
+  'temporalGroupsVisited',
+  'temporalCaptureFieldsExpanded',
+  'temporalMembershipFieldsPacked',
+  'temporalMembershipDeclarationsReused',
   'currentFacetWrites',
   'attentionCandidatesChanged',
   'attentionCandidatesUnchanged',

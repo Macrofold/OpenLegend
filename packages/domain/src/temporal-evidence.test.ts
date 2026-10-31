@@ -113,28 +113,10 @@ it('binds history to the captured receipt prefix even when later measurements sh
   ).toEqual(prior);
 });
 
-it('releases stale deduplication references without changing current sensory support', () => {
-  const world = scene(),
-    actor = world.experience!.temporal!.actors[PLAYER_ID]!;
-  const current = currentBodyObservation(world, PLAYER_ID, NPC_ID)!;
-  const references = Object.values(actor.captures);
-  expect(references.length).toBeGreaterThan(0);
-  const shared = references.find((reference) => typeof reference.valueRef === 'string')!;
-  expect(shared).toBeDefined();
-  const retired = new Set([shared.valueRef as string]);
-  clearTemporalCaptureReferences(world, retired);
-  expect(
-    Object.values(actor.captures).every(
-      (reference) => typeof reference.valueRef !== 'string' || !retired.has(reference.valueRef),
-    ),
-  ).toBe(true);
-  expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)!.id).toBe(current.id);
-});
-
 it('retains intermediate actually received movement and its exact last sample on loss', () => {
   const world = scene();
   const npc = entityGet(world.entities, NPC_ID)!;
-  const exposure = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  const exposure = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.track;
   for (const [at, x] of [
     [1, 4],
     [2, 5],
@@ -202,7 +184,7 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
   initializePerception(world, []);
   const secondBody = currentBodyObservation(world, PLAYER_ID, second.id)!,
     secondSubject = currentBodyLocalSubject(world, PLAYER_ID, second.id)!;
-  expect(secondBody.exposure.episodeId).not.toBe(firstBody.exposure.episodeId);
+  expect(secondBody.exposure.track).not.toBe(firstBody.exposure.track);
   expect(secondSubject.kind).toBe('individual');
   expect(secondSubject).not.toEqual(firstSubject);
   for (const subject of [firstSubject, secondSubject]) {
@@ -217,8 +199,8 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
       limit: 1000,
       bytes: 1024 * 1024,
     });
-  const oldHistory = read(firstBody.exposure.episodeId),
-    newHistory = read(secondBody.exposure.episodeId);
+  const oldHistory = read(firstBody.exposure.track),
+    newHistory = read(secondBody.exposure.track);
   expect(oldHistory.entries.some(({ receipt }) => receipt.change === 'loss')).toBe(true);
   expect(oldHistory.entries.every(({ receipt }) => receipt.at <= 1)).toBe(true);
   expect(newHistory.entries.length).toBeGreaterThan(0);
@@ -230,7 +212,7 @@ it('keeps a lost unfamiliar deer separate from a different deer entering the sam
   const restored = JSON.parse(JSON.stringify(world));
   expect(
     selectTemporalHistory(restored, PLAYER_ID, {
-      subject: firstBody.exposure.episodeId,
+      subject: firstBody.exposure.track,
       limit: 1000,
       bytes: 1024 * 1024,
     }),
@@ -249,7 +231,7 @@ it('distinguishes leaving attention, losing actual sight and no longer retaining
   setSpatialPosition(world, npc, { x: 3, y: 0, z: 2 }, 'terrain');
   player.actor!.attentionCapacity = 1;
   initializePerception(world, []);
-  const subject = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  const subject = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.track;
   expect(currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId)).toEqual([
     NPC_ID,
   ]);
@@ -492,7 +474,7 @@ it('records an actually attended resource target and a routine occurrence that d
       })),
     ),
   ).toBe(false);
-  const exposure = currentBodyObservation(world, PLAYER_ID, branches.id)!.exposure.episodeId;
+  const exposure = currentBodyObservation(world, PLAYER_ID, branches.id)!.exposure.track;
   const started = executeCommand(world, {
     id: 'attended-target-gather',
     actorId: NPC_ID,
@@ -530,7 +512,7 @@ it('records an actually attended resource target and a routine occurrence that d
   expect(currentDetailedAttention(later, PLAYER_ID).map((entry) => entry.sourceId)).toEqual([
     branches.id,
   ]);
-  const personExposure = currentBodyObservation(later, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  const personExposure = currentBodyObservation(later, PLAYER_ID, NPC_ID)!.exposure.track;
   later.simTime = 20;
   const nativeEvents: WorldEvent[] = [];
   const performer = entityGet(later.entities, NPC_ID)!;
@@ -590,7 +572,7 @@ it('captures an attended person recipient while the actually visible speaker is 
   expect(currentDetailedAttention(world, PLAYER_ID).map((entry) => entry.sourceId)).toEqual([
     NPC_ID,
   ]);
-  const exposure = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  const exposure = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.track;
   expect(currentBodyObservation(world, PLAYER_ID, speaker.id)).toBeDefined();
   const result = executeCommand(world, {
     id: 'addressed-attended-person',
@@ -625,7 +607,7 @@ it('captures an attended person recipient while the actually visible speaker is 
 
 it('keeps an actually heard unseen voice separate from a previously seen body', () => {
   let world = scene(54);
-  const exposure = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.episodeId;
+  const exposure = currentBodyObservation(world, PLAYER_ID, NPC_ID)!.exposure.track;
   entityGet(world.entities, NPC_ID)!.appearance = entityGet(world.entities, 'branches')!.appearance;
   initializePerception(world, []);
   const visible = executeCommand(world, {
@@ -755,7 +737,7 @@ it('shares equal received values without granting another observer the earlier h
     continuity: 'physical',
   });
   initializePerception(world, []);
-  const exposure = currentBodyObservation(world, NPC_ID, 'branches')!.exposure.episodeId;
+  const exposure = currentBodyObservation(world, NPC_ID, 'branches')!.exposure.track;
   expect(
     selectTemporalHistory(world, NPC_ID, {
       subject: exposure,
@@ -772,7 +754,7 @@ it('shares equal received values without granting another observer the earlier h
   });
   expect(promoted.entries.length).toBeGreaterThan(0);
   expect(promoted.entries.every(({ receipt }) => receipt.at === 2)).toBe(true);
-  const playerExposure = currentBodyObservation(world, PLAYER_ID, 'branches')!.exposure.episodeId;
+  const playerExposure = currentBodyObservation(world, PLAYER_ID, 'branches')!.exposure.track;
   const playerHistory = selectTemporalHistory(world, PLAYER_ID, {
     subject: playerExposure,
     from: 1,
@@ -879,7 +861,9 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   expect(
     currentFacetTimes(owner, currentFacetGet(owner, `${NPC_ID}:body`)!).valueMeasuredThrough,
   ).toBe(originalTime);
-  const cut = captureEvidenceCut(world, PLAYER_ID);
+  const cut = captureEvidenceCut(world, PLAYER_ID, {
+    current: currentObservedFacets(world, PLAYER_ID, NPC_ID),
+  });
   const location = currentObservedFacets(world, PLAYER_ID, NPC_ID).find(
     (f) => f.value.kind === 'location',
   )!;
@@ -900,7 +884,7 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   expect(
     cut.current.find(
       (f) =>
-        f.exposure.episodeId ===
+        f.exposure.track ===
           currentFacetGrant(world.perceptionEvidence![PLAYER_ID]!, raw).exposure &&
         f.value.kind === 'body',
     )!.valueMeasuredThrough,

@@ -1,8 +1,13 @@
-import { acquireNativeResponseEvent, acquireNativeSound } from './native-response-controller.js';
+import {
+  acquireNativeResponseEvent,
+  acquireNativeSound,
+  nativeResponseNeedsEventReception,
+} from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
-import { observeEvent } from './event-observation.js';
+import { prepareEventObservation } from './event-observation.js';
 import {
   acquireAwarenessObservation,
+  attendedEventParticipants,
   acquireOrdinaryWarning,
   deferAwarenessObservation,
 } from './perception-evidence.js';
@@ -44,7 +49,11 @@ import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import { selectedSocialPolicy } from './social-policy.js';
-import { selectedEventDisclosure, selectedSightingNarration } from './world-composition.js';
+import {
+  selectedEventDisclosure,
+  selectedSightingNarration,
+  selectedRecordingReason,
+} from './world-composition.js';
 import { activelyParticipates } from './participation-state.js';
 import { acquireCombatObservation } from './combat-encounters.js';
 import type {
@@ -464,9 +473,62 @@ function recordEvent(
   const acquired: Awareness[] = [];
   if (world.experience || audience.length) {
     for (const actorId of audience) {
-      if (hasMemory(entityGet(world.entities, actorId))) countDomainWork('awarenessWritten');
+      const nativeContact = actorId === nativeTarget?.id && type === 'projectile-contact';
+      const modality: Awareness['modality'] =
+        feltTargetId === actorId || nativeContact
+          ? 'felt'
+          : scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
+            ? type === 'contact'
+              ? 'felt'
+              : type === 'encounter'
+                ? 'observed'
+                : 'internal'
+            : type === 'speech'
+              ? 'heard'
+              : 'observed';
+      const triggerKind: Awareness['triggerKind'] =
+        data?.['acquisition'] === true
+          ? 'observed_event'
+          : source?.id === actorId
+            ? 'self_event'
+            : targetId === actorId
+              ? 'directed_action'
+              : 'observed_event';
+      // This notice is the already-applied native reception, not another sight/contact
+      // sample. Its required receiver effects still consume the exact event below;
+      // a declined personal account needs no labels, clones or reconstructed proof.
+      // docs/projects/perspective-perception-runtime-design.md#5-attention-recording-and-cognition-context
+      if (
+        data?.['acquisition'] === true &&
+        scope === 'private' &&
+        source?.id === actorId &&
+        selectedRecordingReason(world, {
+          source: 'awareness',
+          eventType: type,
+          modality,
+          triggerKind,
+          own: true,
+          hasExposure: !!event.exposure,
+          ...(event.exposure ? { exposureKind: event.exposure.kind } : {}),
+          consequence: false,
+        }) === 'none'
+      ) {
+        acquireCombatObservation(
+          world,
+          {
+            actorId,
+            sourceId: source.id,
+            targetId,
+            eventType: type,
+            sequence: event.order ?? event.sequence,
+          },
+          event,
+        );
+        continue;
+      }
       const speech = speechAwareness.get(actorId);
       if (speech) {
+        if (hasMemory(entityGet(world.entities, actorId))) countDomainWork('awarenessWritten');
         speech.observation = acquireAwarenessObservation(world, event, speech);
         const warning = acquireOrdinaryWarning(world, event, speech);
         if (warning) speech.observations = [warning];
@@ -476,13 +538,47 @@ function recordEvent(
       // Native participants and grammar are rendered once for this observer; literal
       // prose/quotes retain their supplied ownership. Speech has listener-specific evidence.
       // docs/architecture.md#private-perception-and-evidence-batches
-      const nativeContact = actorId === nativeTarget?.id && type === 'projectile-contact';
-      const perceived = observeEvent(
+      const prepared = prepareEventObservation(
         world,
         event,
         actorId,
         nativeContact ? { feltImpact: true } : undefined,
       );
+      const recording = selectedRecordingReason(world, {
+        source: 'awareness',
+        eventType: prepared.eventType,
+        modality,
+        triggerKind,
+        own: prepared.sourceId === actorId || triggerKind === 'self_event',
+        hasExposure: !!event.exposure,
+        ...(event.exposure ? { exposureKind: event.exposure.kind } : {}),
+        consequence: triggerKind === 'self_event' || triggerKind === 'directed_action',
+      });
+      if (
+        recording === 'none' &&
+        !nativeResponseNeedsEventReception(world, event, actorId) &&
+        !attendedEventParticipants(
+          world,
+          actorId,
+          prepared.references.map((reference) => reference.id),
+          event.at,
+        )
+      ) {
+        acquireCombatObservation(
+          world,
+          {
+            actorId,
+            sourceId: prepared.sourceId,
+            targetId: prepared.targetId,
+            eventType: prepared.eventType,
+            sequence: event.order ?? event.sequence,
+          },
+          event,
+        );
+        continue;
+      }
+      if (hasMemory(entityGet(world.entities, actorId))) countDomainWork('awarenessWritten');
+      const perceived = prepared.materialize();
       const perceivedText = perceived.text;
       const awareness: Awareness = {
         retentionClass: 'memory',
@@ -492,18 +588,7 @@ function recordEvent(
         text: perceivedText,
         at: event.at,
         sequence: event.order ?? event.sequence,
-        modality:
-          feltTargetId === actorId || nativeContact
-            ? 'felt'
-            : scope === 'private' && source?.id === actorId && data?.['acquisition'] !== true
-              ? type === 'contact'
-                ? 'felt'
-                : type === 'encounter'
-                  ? 'observed'
-                  : 'internal'
-              : type === 'speech'
-                ? 'heard'
-                : 'observed',
+        modality,
         entityEpisodes: Object.fromEntries(
           [...new Set(perceived.references.map((reference) => reference.id))].flatMap((id) => {
             const episode = id && world.perceptionEpisodes?.[actorId]?.[id];
@@ -523,14 +608,7 @@ function recordEvent(
         references: perceived.references,
         ...(perceived.sourceId ? { sourceId: perceived.sourceId } : {}),
         ...(perceived.targetId ? { targetId: perceived.targetId } : {}),
-        triggerKind:
-          data?.['acquisition'] === true
-            ? 'observed_event'
-            : source?.id === actorId
-              ? 'self_event'
-              : targetId === actorId
-                ? 'directed_action'
-                : 'observed_event',
+        triggerKind,
         content:
           typeof perceived.eventData['text'] === 'string'
             ? perceived.eventData['text']

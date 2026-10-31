@@ -1,3 +1,5 @@
+import { isDefinitionPin, sameDefinitionPin } from './definition-pins.js';
+import type { DefinitionPin } from './world-modules.js';
 import { canonicalJson } from './events.js';
 import { cloneValue } from './draft.js';
 import { entityGet } from './entity-collection.js';
@@ -5,14 +7,17 @@ import { nextId } from './data.js';
 import { chargeWork } from './work-budget.js';
 import { selectedDetectionSupportPolicy } from './world-composition.js';
 import {
-  acquireObservation,
+  receiveObservation,
+  currentChannelEligible,
   perceptionEvidenceOwner,
   validateObservationContribution,
 } from './perception-evidence.js';
-import { sensesFor } from './perception.js';
-import { capabilityBlocked } from './status-capabilities.js';
 import { activelyParticipates } from './participation-state.js';
-import { validateEvidenceSource, validateObservedLocation } from './perception-values.js';
+import {
+  validObservationExposure,
+  validateEvidenceSource,
+  validateObservedLocation,
+} from './perception-values.js';
 import type { Entity, WorldState } from './types.js';
 import type {
   EvidenceSource,
@@ -26,6 +31,7 @@ import type {
  * deduplicate delivery only: they are never a producer-identity correlation proof. */
 export interface DetectionSupportInput {
   source: EvidenceSource;
+  channel: DefinitionPin;
   sample: number;
   modality: ObservationContribution['modality'];
   detector: ObservationContribution['detector'];
@@ -46,6 +52,7 @@ interface SupportReceipt {
 }
 interface SupportPattern {
   id: string;
+  channel: DefinitionPin;
   detector: ObservationContribution['detector'];
   modality: ObservationContribution['modality'];
   beganAt: number;
@@ -69,7 +76,8 @@ const life = (observer: Entity) => ({
   actorId: observer.id,
   physicalLife: observer.actor?.physicalLife ?? 0,
 });
-const sourceKey = (input: DetectionSupportInput) => canonicalJson(input.source);
+const sourceKey = (input: Pick<DetectionSupportInput, 'source' | 'channel'>) =>
+  canonicalJson([input.source, input.channel]);
 const supportOwners = new WeakMap<WorldState, readonly string[]>();
 function observerIds(world: WorldState): readonly string[] {
   let ids = supportOwners.get(world);
@@ -95,13 +103,12 @@ const eligible = (
   world: WorldState,
   observer: Entity,
   detector: ObservationContribution['detector'],
+  channel: DefinitionPin,
 ) =>
-  !!observer.actor?.alive &&
-  activelyParticipates(observer) &&
-  !capabilityBlocked(world, observer, 'perception') &&
-  sensesFor(world, observer).some(
-    (sense) => sense.id === detector.id && sense.version === detector.version,
-  );
+  channel.id === detector.id &&
+  channel.version === detector.version &&
+  currentChannelEligible(world, observer.id, channel) &&
+  activelyParticipates(observer);
 /** A conservative common sphere is contained in every accepted estimate. This does
  * not transitively join a chain of merely adjacent source regions. Changed bearing
  * origins require an explicit supplied continuity proof or remain separate. */
@@ -134,6 +141,7 @@ function intersection(
 function validateInput(world: WorldState, observer: Entity, input: DetectionSupportInput): void {
   validateEvidenceSource(input.source);
   if (
+    !isDefinitionPin(input.channel) ||
     !same(input.source.observer, life(observer)) ||
     !['native-exposure', 'native-response'].includes(input.source.family) ||
     !Number.isSafeInteger(input.sample) ||
@@ -152,9 +160,8 @@ function validateInput(world: WorldState, observer: Entity, input: DetectionSupp
     (input.contradictory !== undefined && typeof input.contradictory !== 'boolean') ||
     (input.support.kind === 'impulse' && input.from !== input.through) ||
     (input.continuity &&
-      (!same(input.continuity.observer, life(observer)) ||
-        typeof input.continuity.episodeId !== 'string' ||
-        !input.continuity.episodeId))
+      (!validObservationExposure(input.continuity) ||
+        !same(input.continuity.observer, life(observer))))
   )
     throw new Error('Invalid supplied detection support.');
   if (input.location) {
@@ -180,7 +187,7 @@ function detect(
   input: DetectionSupportInput,
 ): ObservationContribution {
   if (pattern.observation) return pattern.observation;
-  const facets: Parameters<typeof acquireObservation>[2]['facets'] = [
+  const facets: Parameters<typeof receiveObservation>[2]['facets'] = [
     {
       role: 'direct',
       asOf: world.simTime,
@@ -207,7 +214,7 @@ function detect(
     });
   // Immediate strong producers and a completed weak crossing share this exact
   // received-evidence receipt. No autobiography, name or body is invented here.
-  const observation = acquireObservation(world, observer, {
+  const observation = receiveObservation(world, observer, {
     origin: {
       kind: 'exposure',
       episodeId: pattern.id,
@@ -217,6 +224,7 @@ function detect(
       source: cloneValue(input.source),
     },
     modality: input.modality,
+    channel: pattern.channel,
     detector: input.detector,
     facets,
   });
@@ -234,7 +242,8 @@ function settlePattern(
   const policy = selectedDetectionSupportPolicy(world),
     active = pattern.active;
   let through = pattern.through;
-  if (active && !eligible(world, observer, active.input.detector)) delete pattern.active;
+  if (active && !eligible(world, observer, active.input.detector, pattern.channel))
+    delete pattern.active;
   else if (active) {
     const input = active.input,
       from = Math.max(through, input.from),
@@ -295,7 +304,7 @@ export function receiveDetectionSupport(
   validateInput(world, observer, input);
   if (input.support.kind === 'impulse' && input.from !== world.simTime)
     throw new Error('A weak impulse requires its actual native reception boundary.');
-  if (!eligible(world, observer, input.detector))
+  if (!eligible(world, observer, input.detector, input.channel))
     throw new Error('The supplied detector is not available to this observer.');
   const owner = state(world, observer),
     key = sourceKey(input),
@@ -318,7 +327,7 @@ export function receiveDetectionSupport(
     continuity = input.continuity && canonicalJson(input.continuity);
   if (input.contradictory && continuity)
     for (const pattern of Object.values(owner.patterns))
-      if (pattern.continuity === continuity) {
+      if (sameDefinitionPin(pattern.channel, input.channel) && pattern.continuity === continuity) {
         settlePattern(world, observer, owner, pattern, Math.max(pattern.through, input.from), true);
         pattern.progress = 0;
         delete pattern.active;
@@ -328,6 +337,7 @@ export function receiveDetectionSupport(
     ? []
     : Object.values(owner.patterns).filter(
         (pattern) =>
+          sameDefinitionPin(pattern.channel, input.channel) &&
           pattern.modality === input.modality &&
           same(pattern.detector, input.detector) &&
           input.from - pattern.lastSupportedAt <= policy.graceSeconds &&
@@ -352,6 +362,7 @@ export function receiveDetectionSupport(
     const id = nextId(world, 'perception-pattern');
     pattern = owner.patterns[id] = {
       id,
+      channel: cloneValue(input.channel),
       detector: cloneValue(input.detector),
       modality: input.modality,
       beganAt: Math.max(input.from, prior?.through ?? input.from),
@@ -444,11 +455,12 @@ export function retireDetectionSupportSource(
   world: WorldState,
   observerId: string,
   source: EvidenceSource,
+  channel: DefinitionPin,
 ): void {
   settleDetectionSupport(world, observerId);
   const owner = world.perceptionEvidence?.[observerId]?.support;
   if (!owner) return;
-  const key = canonicalJson(source),
+  const key = sourceKey({ source, channel }),
     receipt = owner.sources[key];
   if (!receipt) return;
   delete owner.sources[key];
@@ -497,6 +509,7 @@ export function validateDetectionSupportState(
     if (
       sourceKey(input) !== key ||
       input.sample !== receipt.sample ||
+      !sameDefinitionPin(pattern.channel, input.channel) ||
       !same(pattern.detector, input.detector) ||
       pattern.modality !== input.modality
     )
@@ -509,6 +522,7 @@ export function validateDetectionSupportState(
   }
   for (const [id, pattern] of Object.entries(value.patterns)) {
     if (
+      !isDefinitionPin(pattern.channel) ||
       pattern.id !== id ||
       !id.startsWith('perception-pattern-') ||
       ![pattern.beganAt, pattern.through, pattern.lastSupportedAt, pattern.progress].every(

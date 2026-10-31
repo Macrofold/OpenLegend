@@ -639,7 +639,7 @@ function hostile(
  * Raw IDs bind integrity after source/subject disclosure, never establish recognition. */
 export function acquireCombatObservation(
   world: WorldState,
-  observation: Awareness,
+  observation: Pick<Awareness, 'actorId' | 'sourceId' | 'targetId' | 'eventType' | 'sequence'>,
   event: Readonly<WorldEvent>,
 ): void {
   const observer = entityGet(world.entities, observation.actorId);

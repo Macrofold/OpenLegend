@@ -1,3 +1,4 @@
+import { recordObservationSupport, observationReceiptOrdinals } from '../../experience.js';
 import { cloneValue, readOnlyDraftView } from '../../draft.js';
 import { entityGet, entityValues } from '../../entity-collection.js';
 import {
@@ -14,17 +15,21 @@ import {
   setTemporalSupportRequired,
   releaseTemporalSupport,
   temporalReceiptForSource,
-  captureTemporalObservation,
   retainTemporalSupport,
   temporalReceiptId,
   temporalReceiptSource,
+  retainedTemporalReceipt,
 } from '../../temporal-evidence.js';
 import { adjustRetainedKnowledgeAccounting } from '../../remembered-impressions.js';
 import { BASE_ATTENTION_POLICY } from './attention.js';
 import { normalSpeedSeconds } from '../../simulation-time.js';
 import { isSafeRecordId } from '../../records.js';
 import { validateEvidenceSource } from '../../perception-values.js';
-import type { EvidenceSource, ObservationFactKey } from '../../perception-evidence.js';
+import {
+  observationFactKey,
+  type EvidenceSource,
+  type ObservationFactKey,
+} from '../../perception-evidence.js';
 import type { FamiliarityRoot, FamiliarityState } from '../../attention.js';
 
 /** Selected fictional descriptors; never derived from an identity or rendering asset.
@@ -886,6 +891,13 @@ export function retainRecognitionEvidence(
         root.support = root.support.map((source) => (source === provisional ? retained : source));
       }
   };
+  const requested = new Set(
+    evidence.observation.facets
+      .filter(
+        (facet) => facet.value.kind === 'perceived-feature' || facet.value.kind === 'association',
+      )
+      .map((facet) => facet.ordinal),
+  );
   for (const key of ids) {
     const prior = records[key];
     if (!prior) continue;
@@ -895,25 +907,32 @@ export function retainRecognitionEvidence(
     const hasContact = prior.familiarity?.roots.some((root) => root.sourceKey === provisional);
     if (!modalities.length && !hasContact) continue;
     let receipt = temporalReceiptForSource(world, observerId, evidence.eventId);
-    if (!receipt && modalities.length)
-      receipt = captureTemporalObservation(
-        world,
-        observerId,
-        evidence.observation,
-        [evidence.eventId],
-        false,
-        BASE_ATTENTION_POLICY.retention.recent,
-      );
-    const ordinals = evidence.observation.facets
-      .filter(
-        (facet) => facet.value.kind === 'perceived-feature' || facet.value.kind === 'association',
-      )
-      .map((facet) => facet.ordinal);
+    let retained = receipt && retainedTemporalReceipt(world, receipt);
+    let ordinals =
+      retained &&
+      observationReceiptOrdinals(world, evidence.observation, requested, retained.receipt);
+    if (!ordinals && modalities.length && requested.size) {
+      receipt = recordObservationSupport(world, observerId, evidence.observation, {
+        sourceIds: [evidence.eventId],
+        ordinals: requested,
+        admission: {
+          kind: 'retained-support',
+          owner: observationFactKey(world, evidence.observation, requested.values().next().value!)
+            .source,
+          required: false,
+        },
+      });
+      retained = receipt && retainedTemporalReceipt(world, receipt);
+      ordinals =
+        retained &&
+        observationReceiptOrdinals(world, evidence.observation, requested, retained.receipt);
+    }
     const alreadyHeld =
       receipt &&
       world.experience?.temporal?.actors[observerId]?.supports?.[temporalReceiptId(receipt)];
     const held =
       receipt &&
+      ordinals &&
       modalities.length > 0 &&
       retainTemporalSupport(world, receipt, {
         facetOrdinals: ordinals,

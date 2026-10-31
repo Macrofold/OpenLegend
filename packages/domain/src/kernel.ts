@@ -1,6 +1,4 @@
-import { currentFacetValues } from './perception-current.js';
 import { selectedCommitmentLimit, selectedOutwardBodyNotice } from './world-composition.js';
-import { currentFacetGrant } from './perception-current.js';
 import { effectiveBodyProfile } from './spatial-state.js';
 import type { NativeMechanicsDiscard } from './diagnostic-counters.js';
 import { referencedReceivedValues, type ReceivedValueState } from './received-values.js';
@@ -10,7 +8,8 @@ import {
   endCurrentEvidence,
   recentExposureEpisode,
   reconcileVisualEvidence,
-  currentBodyObservation,
+  currentBodyValue,
+  currentObservedBodyIds,
   nextPerceptionWorkAt,
   nextPerceptionMeasurementAt,
   continuePerceptionWork,
@@ -8792,16 +8791,13 @@ export function observeActor(
   // This is a private native menu/admission read. Eligible bodies and their
   // transforms come only from already acquired current evidence; downstream model
   // and player projections consume facets rather than these authority records.
-  const owner = world.perceptionEvidence?.[actorId];
-  const visibleEntities = (owner ? currentFacetValues(owner) : []).flatMap((lease) => {
-    if (!owner || lease.value.kind !== 'body') return [];
-    const subjectId = currentFacetGrant(owner, lease).subjectId;
+  const visibleEntities = currentObservedBodyIds(world, actorId).flatMap((subjectId) => {
     if (
       subjectId === actorId ||
       (options.visibleEntityIds && !options.visibleEntityIds.has(subjectId))
     )
       return [];
-    const received = currentBodyObservation(world, actorId, subjectId);
+    const received = currentBodyValue(world, actorId, subjectId);
     const entity = entityGet(world.entities, subjectId);
     if (!received || !entity) return [];
     // Shape the permitted view before its one final deep copy. Cloning a private plan or

@@ -1,10 +1,10 @@
 # Observer-specific perception, evidence and recognition — feature specification
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Existing-channel evidence is implemented; shared reception is designed, with conversion and broader qualification open. | 2026-10-31   |
+| Status      | Current progress                                                                                        | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared reception is implemented for existing channels; operating and broader qualification remain open. | 2026-10-31   |
 
-Architecture consulted for the supported-channel temporal/familiarity implementation **2026-10-27 10:15 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
+Architecture applied to shared reception **2026-10-31 22:44 UTC**; the temporal/familiarity foundation used it **2026-10-27 10:15 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
 
 ## Purpose and selected scope
 
@@ -38,7 +38,7 @@ Different senses still determine what reaches someone: a wall can block sight an
 - **Received occurrences** describe something that happened: actual words, an impact or an observed outcome. They keep both event and reception time. Speech does not need a fabricated continuing track or a later loss event.
 - **Acquisition and change** mean new received information, not compulsory lasting memories. A repeated successful availability check need not duplicate every fact. A new measurement of an unchanged value still has its own honest measurement time.
 - **Loss and uncertainty** stop or qualify current support for the affected channel/details. They do not erase retained experience, imply physical disappearance or automatically generate a departure story. Skipping or delaying a check is not proof of absence.
-- **Attention** selects richer checking and ordered recent recording through the existing policy. It is automatic or explicitly focused, not a prerequisite follow action. The base world’s default ten detailed subjects do not cap broad awareness, independent surroundings or all cognition context. Changing focus without a new observation retains an existing baseline with its old times; it does not sense again.
+- **Attention** joins explicitly associated channel tracks into one detailed subject while keeping anonymous tracks distinct. It selects richer checking and ordered recent recording through the existing policy. It is automatic or explicitly focused, not a prerequisite follow action. The base world’s default ten detailed subjects do not cap broad awareness, independent surroundings or all cognition context. Changing focus without a new observation retains an existing baseline with its old times; it does not sense again.
 - **Memory** retains useful admitted experience and needed support; trivial detail may fade. Selection, loss, reconnect and panel reads do not themselves create autobiography. No universal lifetime diary or model call per change is required.
 
 Movement uses this same rule: retain the positions actually received while attended, in order, with their gaps and precision. No special approach/work/eat episode classifier guesses intent or discards intermediate turns. An actor can call an observed room a kitchen from its contents and acquired understanding; a label or introduction is not universally required. Neither an internal room ID nor unseen geometry supplies that knowledge.

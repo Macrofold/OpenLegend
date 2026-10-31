@@ -63,7 +63,9 @@ it('shares only complete outward source values while preserving independent rece
     secondLocation.value.kind === 'location' && secondLocation.value.frame.positionAtObservation,
   ).toEqual({ x: 1, y: 0, z: 4 });
   expect(aValue.kind === 'body' && aValue.body.label?.name).toBe('person');
-  const cut = captureEvidenceCut(world, first.id),
+  const cut = captureEvidenceCut(world, first.id, {
+      current: [currentBodyObservation(world, first.id, source.id)!],
+    }),
     previous = aValue;
   world.simTime = 1;
   setSpatialPosition(world, source, { x: 4, y: 0, z: 3 }, worldSupport(source), {

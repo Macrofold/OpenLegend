@@ -125,15 +125,21 @@ export function initializeSightContinuation(world: WorldState): void {
   };
 }
 
-/** A newly selected received body needs one actual detailed measurement. Focus
- * itself neither reads its live properties nor starts a recurring clean-world job. */
-export function requestDetailedSight(world: WorldState, observerId: string): void {
+/** Request one actual producer opportunity for a newly selected or withdrawn
+ * received member. This reuses aligned due scopes; it never fabricates reception
+ * or starts recurring clean-world polling. */
+export function requestSightWork(
+  world: WorldState,
+  observerId: string,
+  coverage: 'broad' | 'detail',
+): void {
   initializeSightContinuation(world);
   const pending = world.sensory!;
   const prior = pending.scopes[observerId];
-  if (prior?.detail) return;
+  if (coverage === 'broad' ? prior?.broad : prior?.detail) return;
   pending.revision++;
   pending.detailAt ??= world.simTime;
+  if (coverage === 'broad') pending.broadAt ??= world.simTime;
   if (pending.all) return;
   if (!prior && pending.scopeCount >= MAX_CHANGE_SCOPES) {
     widenSightScopes(pending);
@@ -141,7 +147,7 @@ export function requestDetailedSight(world: WorldState, observerId: string): voi
   }
   pending.scopes[observerId] = {
     ...prior,
-    broad: prior?.broad ?? false,
+    broad: coverage === 'broad' || (prior?.broad ?? false),
     detail: true,
     observer: true,
     revision: pending.revision,

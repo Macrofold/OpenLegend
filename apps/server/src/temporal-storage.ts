@@ -58,7 +58,7 @@ import type { RetentionMetadataView } from './retention-metadata.js';
 import { countMetric } from './performance.js';
 
 const maximumPreparation = 4 * 1024 * 1024;
-const maximumRows = 8192;
+export const maximumTemporalPreparationRows = 8192;
 export const temporalChunkRecordId = (actorId: string, id: string) =>
   JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'chunks', id]);
 /** Exact value membership is a derived column on the existing chunk, not a
@@ -245,15 +245,26 @@ export function receivedValueReleaseCandidates(
   return candidates;
 }
 
+/** Recent history already owns exact totals/deadlines; do not query cold pages
+ * merely because a current frame appended. */
+export function recentRetentionDue(world: WorldState, actorId: string): boolean {
+  const actor = world.experience?.temporal?.actors[actorId];
+  if (!actor) return false;
+  const policy = selectedTemporalPolicy(world).recent;
+  return (
+    actor.maintenanceDue ||
+    actor.bytes > policy.maxBytes ||
+    actor.count > policy.maxChanges ||
+    (actor.nextDue !== null && actor.nextDue <= world.simTime)
+  );
+}
+
 /** Saved counters select actors before any cold metadata is read. */
 export function* retentionDueActors(world: WorldState): Generator<string> {
   const policy = selectedTemporalPolicy(world);
   for (const [id, actor] of Object.entries(world.experience?.temporal?.actors ?? {}))
     if (
-      actor.maintenanceDue ||
-      actor.bytes > policy.recent.maxBytes ||
-      actor.count > policy.recent.maxChanges ||
-      (actor.nextDue !== null && actor.nextDue <= world.simTime) ||
+      recentRetentionDue(world, id) ||
       !actor.accounts ||
       (actor.accounts.nextDue !== null && actor.accounts.nextDue <= world.simTime) ||
       (['optional', 'required', 'speech'] as const).some(
@@ -435,7 +446,8 @@ export async function readTemporalHistory(
     hasMore: !!metadataBefore,
     ...(metadataBefore ? { nextBefore: metadataBefore } : {}),
   });
-  if (preparationBytes > maximumPreparation || missing.length > maximumRows) return unavailable();
+  if (preparationBytes > maximumPreparation || missing.length > maximumTemporalPreparationRows)
+    return unavailable();
   if (missing.length) {
     const args = [scope.worldId, missing];
     const sizes = await db
@@ -590,7 +602,7 @@ export async function prepareTemporalRetention(
           });
         break;
       }
-      if (ids.length >= maximumRows) {
+      if (ids.length >= maximumTemporalPreparationRows) {
         nextDue = chunk.at + policy.maxAgeSeconds;
         break;
       }

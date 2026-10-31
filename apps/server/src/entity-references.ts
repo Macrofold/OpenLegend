@@ -112,9 +112,9 @@ export function permittedSourceHandle(
 export function receivedSubjectHandle(
   world: PersonalReferenceScope,
   observerId: string,
-  episodeId: string,
+  track: string,
 ) {
-  return permittedSourceHandle(world, observerId, ['received-subject', episodeId]);
+  return permittedSourceHandle(world, observerId, ['received-subject', track]);
 }
 /** Preserve exact evidence-family identity across fact, support and confirmation views. */
 export function evidenceSourceHandle(

@@ -11,7 +11,7 @@ import {
   initializePerception,
   advanceWorld,
 } from './index.js';
-import { captureEvidenceCut } from './perception-evidence.js';
+import { captureEvidenceCut, currentReceivedObservations } from './perception-evidence.js';
 
 it('sees distant objects without extending speech exposure', () => {
   const world = createWorld();
@@ -108,7 +108,7 @@ it("ends a memoryless listener's transient sound at the next later native percep
     text: 'Actually spoken words.',
   });
   expect(spoken.outcome.ok).toBe(true);
-  const heard = captureEvidenceCut(spoken.world, PLAYER_ID).acquired;
+  const heard = currentReceivedObservations(spoken.world, PLAYER_ID).observations;
   expect(
     heard.some((observation) => observation.facets.some((facet) => facet.value.kind === 'sound')),
   ).toBe(true);
@@ -117,7 +117,7 @@ it("ends a memoryless listener's transient sound at the next later native percep
   ).toBe(false);
   const later = advanceWorld(spoken.world, 0.01).world;
   expect(
-    captureEvidenceCut(later, PLAYER_ID).acquired.some((observation) =>
+    currentReceivedObservations(later, PLAYER_ID).observations.some((observation) =>
       observation.facets.some((facet) => facet.value.kind === 'sound'),
     ),
   ).toBe(false);
@@ -130,7 +130,7 @@ it("ends a memoryless listener's transient sound at the next later native percep
   });
   expect(again.outcome.ok).toBe(true);
   expect(
-    captureEvidenceCut(again.world, PLAYER_ID).acquired.some((observation) =>
+    currentReceivedObservations(again.world, PLAYER_ID).observations.some((observation) =>
       observation.facets.some((facet) => facet.value.kind === 'sound'),
     ),
   ).toBe(true);

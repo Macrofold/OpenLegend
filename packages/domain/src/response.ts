@@ -1,3 +1,4 @@
+import { recordObservationSupport, recordSnapshotSupport } from './experience.js';
 import { attentionCandidates } from './attention.js';
 import {
   constructionPermissionBatch,
@@ -19,8 +20,6 @@ import {
 } from './attention.js';
 import { rememberInterpretation, reinforceExperience } from './experience.js';
 import {
-  captureTemporalObservation,
-  captureTemporalSnapshot,
   retainedTemporalReceipt,
   retainTemporalStateSupport,
   temporalReceiptId,
@@ -835,12 +834,7 @@ export function commitActorResponse(
               available = false;
               break;
             }
-            const issued = captureTemporalSnapshot(
-              world,
-              actorId,
-              snapshot,
-              selectedTemporalPolicy(world).recent,
-            );
+            const issued = recordSnapshotSupport(world, actorId, snapshot);
             const captured = issued && retainedTemporalReceipt(world, issued);
             if (!captured) {
               available = false;
@@ -865,14 +859,10 @@ export function commitActorResponse(
             available = false;
             break;
           }
-          const issued = captureTemporalObservation(
-            world,
-            actorId,
-            observation,
-            [observation.id],
-            false,
-            selectedTemporalPolicy(world).recent,
-          );
+          const issued = recordObservationSupport(world, actorId, observation, {
+            sourceIds: [observation.id],
+            admission: { kind: 'deliberate' },
+          });
           const captured = issued && retainedTemporalReceipt(world, issued);
           if (!captured) {
             available = false;

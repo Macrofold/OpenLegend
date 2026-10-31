@@ -1,4 +1,27 @@
+import { person, type Narration } from '../../narration.js';
 import type { EventPresentation, EventPresentationPolicy } from '../../event-presentation.js';
+
+/** Native sight wording stays world-authored; names bind to the received moment. */
+export function sightingNarration(
+  observerId: string,
+  subjectId: string,
+  detail?: string,
+  departed = false,
+): Narration {
+  return {
+    parts: [
+      person(observerId),
+      ' ',
+      departed ? 'lost sight of ' : detail ? 'noticed ' : 'saw ',
+      {
+        entityId: subjectId,
+        role: 'name',
+        article: departed || detail ? 'definite' : 'indefinite',
+      },
+      !departed && detail ? `: ${detail}.` : '.',
+    ],
+  };
+}
 
 const types: Record<string, EventPresentation> = {};
 function register(

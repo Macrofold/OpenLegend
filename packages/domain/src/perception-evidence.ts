@@ -1,3 +1,12 @@
+import {
+  effectiveReceivedFacetSupport,
+  receivedBodyPoseSupport,
+  receivedDescriptionSupport,
+  effectiveReceivedFacetDescriptor,
+  captureReceivedFacet,
+  composeReceivedFacetValue,
+} from './perception-capture.js';
+import { isDefinitionPin, sameDefinitionPin } from './definition-pins.js';
 import type { OrderedRecord } from './ordered-record.js';
 import { nativeText } from './narration.js';
 import { observedActionAnimation, type ObservedActionAnimation } from './observed-animation.js';
@@ -10,6 +19,7 @@ import {
 } from './assembly-presentation.js';
 import {
   validPerceivedPoint as validPoint,
+  validObservationExposure,
   validateEvidenceSource,
   validateObservedLocation,
 } from './perception-values.js';
@@ -18,15 +28,10 @@ import { nextId } from './data.js';
 import { canonicalJson } from './events.js';
 import { chargeWork } from './work-budget.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import { requestDetailedSight } from './perception-timing.js';
+import { requestSightWork } from './perception-timing.js';
 import { personalFactAlias } from './experience-source.js';
 import type { DetectionSupportState } from './perception-support.js';
-import {
-  cloneValue,
-  hasPrivateDraftBase,
-  readOnlyDraftView,
-  touchNativeEvidence,
-} from './draft.js';
+import { cloneValue, readOnlyDraftView, touchNativeEvidence } from './draft.js';
 import { entityGet } from './entity-collection.js';
 import { effectiveBodyProfile, worldPosition, worldSupport } from './spatial-state.js';
 import { outwardStates } from './perception-frame.js';
@@ -46,6 +51,7 @@ import {
   captureTemporalAvailability,
   withTemporalAcquisition,
   captureTemporalCurrent,
+  type TemporalCurrentGroupInput,
   captureTemporalObservation,
   temporalReceiptSource,
   retainTemporalSupport,
@@ -87,13 +93,14 @@ import {
   selectedCreditAttentionContact,
   selectedAssociateBodyFamiliarity,
 } from './world-composition.js';
-import { freeze, isDraft, original as draftOriginal } from 'immer';
+import { freeze } from 'immer';
 import { validatePerceivedSpeech, validateReceivedFeatures } from './speech.js';
-import { validObserverSubject } from './knowledge.js';
+import { validObserverSubject, subjectKey } from './knowledge.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   receivedValueAt,
   type ReceivedValueReference,
+  type ReceivedValueLookup,
   retainReceivedValue,
   receivedObservationValueReferences,
 } from './received-values.js';
@@ -104,6 +111,12 @@ import type { Awareness } from './experience.js';
 import type { ObserverSubject } from './knowledge.js';
 import type { Entity, Position, WorldEvent, WorldState } from './types.js';
 import {
+  receivedAttentionSource,
+  receivedAttentionSources,
+  currentSelectionTracks,
+  currentSelectionSubjects,
+  currentTracksForSubjects,
+  type SelectedReceivedTracks,
   currentContactFacetGet,
   currentFacetGet,
   currentFacetSet,
@@ -111,11 +124,27 @@ import {
   currentFacetValues,
   type CurrentContact,
   currentContactGet,
+  currentContactEntries,
+  currentContactFacetValues,
   setCurrentSightCheck,
   currentFacetCheckScope,
   compactCurrentFacet,
   currentFacetGrant,
   type CurrentFacetGrant,
+  currentFacetKey,
+  receivedTrackKey,
+  currentFieldIdentity,
+  currentFacetMembership,
+  currentGroupsSetRecording,
+  currentGroupFacetRecord,
+  currentGroupTimes,
+  currentSetUnchecked,
+  type CurrentAvailability,
+  type CurrentReceivedGroup,
+  currentConfirmGroups,
+  withCurrentContactBatch,
+  currentFacetAddress,
+  type CurrentFacetSelector,
   completePerceptionOriginal,
   currentFacetOriginal,
   currentFacetSupport,
@@ -130,15 +159,26 @@ import {
   type CurrentFacetProof,
 } from './perception-current.js';
 export {
+  currentSelectionTracks,
+  type CurrentTrackSelection,
   currentContactFacetGet,
   currentFacetGet,
-  currentFacetSet,
   currentFacetEntries,
   currentFacetValues,
   type CurrentContact,
   compactCurrentFacet,
   currentFacetGrant,
   type CurrentFacetGrant,
+  currentFacetKey,
+  receivedTrackKey,
+  currentFieldIdentity,
+  currentFacetMembership,
+  currentGroupFacetRecord,
+  currentGroupTimes,
+  type CurrentAvailability,
+  type CurrentReceivedGroup,
+  currentFacetAddress,
+  type CurrentFacetSelector,
   currentFacetOriginal,
   currentFacetSupport,
   currentFacetTimes,
@@ -174,6 +214,7 @@ export interface ObservationFactKey {
   ordinal: number;
 }
 export interface ObservationExposure {
+  track: string;
   observer: ObserverLife;
   episodeId: string;
 }
@@ -220,8 +261,8 @@ export function validObservationFrame(value: unknown): value is ObservationFrame
     (value.forwardAtObservation === undefined || Number.isFinite(value.forwardAtObservation))
   );
 }
-/** Native producers may retain a complete installed sense definition here. Readers
- * require its exact identity/version; its additional received metadata is preserved. */
+/** Detector identity names the trusted receiving rule. The installed definition
+ * is pinned separately; reception does not copy authored detector tuning. */
 export function validObservationDetector(
   value: unknown,
 ): value is ObservationContribution['detector'] {
@@ -404,6 +445,7 @@ export interface ObservationContribution {
   origin: ObservationOrigin;
   acquiredAt: number;
   modality: 'sight' | 'hearing' | 'touch';
+  channel?: import('./world-modules.js').DefinitionPin;
   detector: { id: string; version: number };
   /** Received bodies sharing this occurrence's recording scope. Participant roles
    * belong to its typed facets; this scope grants no later body access. */
@@ -431,7 +473,7 @@ export interface ReceivedObservationFacet {
 }
 export type ReceivedObservationHeader = Pick<
   ObservationContribution,
-  'observer' | 'acquiredAt' | 'modality' | 'detector'
+  'observer' | 'acquiredAt' | 'modality' | 'detector' | 'channel'
 >;
 export interface ReceivedObservation
   extends Omit<
@@ -517,8 +559,11 @@ function receivedBodyValue(
 }
 /** A reference resolves only an already selected personal facet. It grants no
  * observer/life, source identity, current body or historical membership. */
-export function receivedBodyParts(
-  world: WorldState,
+export function receivedBodyParts(world: WorldState, descriptor: ReceivedFacetValue) {
+  return receivedBodyPartsFromSources(readReceivedSources(world), descriptor);
+}
+export function receivedBodyPartsFromSources(
+  sources: ReceivedValueLookup,
   descriptor: ReceivedFacetValue,
 ):
   | {
@@ -527,7 +572,6 @@ export function receivedBodyParts(
     }
   | undefined {
   if (descriptor.kind !== 'body' || descriptor.reception?.kind !== 'body') return;
-  const sources = readReceivedSources(world);
   const details = receivedValueAt(sources, descriptor.reference);
   const pose = receivedValueAt(sources, descriptor.reception.poseRef);
   if (details?.kind !== 'body' || pose?.kind !== 'body-pose') return;
@@ -537,11 +581,17 @@ export function receivedFacetValue(
   world: WorldState,
   descriptor: ReceivedFacetValue,
 ): SensoryFacet | undefined {
+  return receivedFacetValueFromSources(readReceivedSources(world), descriptor);
+}
+export function receivedFacetValueFromSources(
+  sources: ReceivedValueLookup,
+  descriptor: ReceivedFacetValue,
+): SensoryFacet | undefined {
   if (descriptor.kind === 'body') {
-    const parts = receivedBodyParts(world, descriptor);
+    const parts = receivedBodyPartsFromSources(sources, descriptor);
     return parts && receivedBodyValue(parts.details, parts.pose);
   }
-  const value = receivedValueAt(readReceivedSources(world), descriptor.reference);
+  const value = receivedValueAt(sources, descriptor.reference);
   if (!value) return;
   if (descriptor.kind === 'location' && (value.kind === 'location' || value.kind === 'body-pose')) {
     if (descriptor.reception?.kind !== 'location') return;
@@ -549,7 +599,10 @@ export function receivedFacetValue(
         value.kind === 'body-pose'
           ? observedPoseLocation(value.pose)
           : readOnlyDraftView(value.location),
-      frame = readOnlyDraftView(receivedObservationFrame(world, descriptor.reception.frameRef));
+      frameValue = receivedValueAt(sources, descriptor.reception.frameRef);
+    if (frameValue?.kind !== 'observation-frame')
+      throw new Error('The captured observation frame is unavailable.');
+    const frame = readOnlyDraftView(frameValue.frame);
     // Resolve the live address before reuse. Only exact immutable geometry and
     // the receiver's immutable frame can share this complete read wrapper.
     if (!isImmutableData(location) || !isImmutableData(frame))
@@ -743,6 +796,7 @@ function retainFacetValue(
   };
 }
 export interface LiveFacetSupport {
+  availability?: CurrentAvailability;
   /** Read-only current pose metadata; original appearance keeps its own times. */
   poseSupport?: CurrentBodyPoseSupport;
   descriptionSupport?: CurrentDescriptionSupport;
@@ -792,19 +846,29 @@ export interface CapturedCurrentFacet
  * complete original/confirmation envelope needed by evidence consumers. */
 export type CurrentFacetValue = Pick<
   LiveFacetSupport,
-  'id' | 'valueMeasuredFrom' | 'valueMeasuredThrough' | 'valueAcquiredAt' | 'confirmedThrough'
+  | 'id'
+  | 'valueMeasuredFrom'
+  | 'valueMeasuredThrough'
+  | 'valueAcquiredAt'
+  | 'confirmedThrough'
+  | 'availability'
 > & {
+  role: ObservationFacet['role'];
   value: SensoryFacet;
   source: EvidenceSource;
   poseSupport?: CurrentBodyPoseSupport;
   descriptionSupport?: CurrentDescriptionSupport;
 };
 export interface CurrentDescriptionSupport extends ReceivedFacetProof {
+  role: ObservationFacet['role'];
+  availability?: CurrentAvailability;
   descriptionMeasuredFrom: number;
   descriptionMeasuredThrough: number;
   descriptionAcquiredAt: number;
 }
 export interface CurrentBodyPoseSupport extends ReceivedFacetProof {
+  role: ObservationFacet['role'];
+  availability?: CurrentAvailability;
   frame: ObservationFrame;
   poseMeasuredFrom: number;
   poseMeasuredThrough: number;
@@ -839,7 +903,7 @@ export interface LocationGeometrySample extends BodyGeometrySample {
 export interface CurrentBodyGeometryInput {
   /** Private routing; player/model projection supplies its scoped reference. */
   sourceId: string;
-  exposure: string;
+  track: string;
   /** Distance queries do not copy appearance; current facts still own those details. */
   body: Pick<ObservedBody, 'position' | 'radius' | 'height'>;
   sample: BodyGeometrySample;
@@ -858,6 +922,7 @@ export interface PerceptionEvidenceOwner {
    * Independent values/losses remain in current. Effective readers apply this
    * actual receiver frame and timing without rewriting stationary detail. */
   visualConfirmation?: {
+    channel: import('./world-modules.js').DefinitionPin;
     through: number;
     revision: number;
     completeThrough: number;
@@ -1130,12 +1195,13 @@ function prepareVisualSourceValues(
   return values;
 }
 export const observationAcquisitionKey = (
-  input: Pick<ObservationContribution, 'modality' | 'detector' | 'origin'>,
+  input: Pick<ObservationContribution, 'modality' | 'detector' | 'origin' | 'channel'>,
 ): string =>
   JSON.stringify([
     input.modality,
     input.detector.id,
     input.detector.version,
+    input.channel ? [input.channel.id, input.channel.version, input.channel.digest] : null,
     input.origin.kind === 'occurrence'
       ? ['occurrence', input.origin.eventId, input.origin.at, input.origin.order]
       : [
@@ -1210,6 +1276,402 @@ export function beginPerceptionPhase(world: WorldState, observerId: string): voi
   state.receivedAtSequence = world.sequence;
 }
 const owner = perceptionEvidenceOwner;
+export type ReceivedCurrentSample = (
+  | Omit<LiveFacetSupport, 'value'>
+  | (Omit<CurrentFacetRecord, 'value'> & {
+      observer?: never;
+      valueMeasuredFrom?: never;
+      valueMeasuredThrough?: never;
+      valueAcquiredAt?: never;
+    })
+) & { value: SensoryFacet | ReceivedFacetValue };
+/** Detector adapters supply exact coverage; missing input is never inferred as loss. */
+export type ReceivedCurrentChange =
+  | { kind: 'sample'; source: ReceivedObservationInput }
+  | {
+      kind: 'sample';
+      key: string;
+      channel: import('./world-modules.js').DefinitionPin;
+      value: ReceivedCurrentSample;
+    }
+  | {
+      kind: 'confirm';
+      subjectId: string;
+      channel: import('./world-modules.js').DefinitionPin;
+      through: number;
+      scopes?: ReadonlySet<string>;
+      exposures?: ReadonlySet<string>;
+      kinds?: ReadonlySet<string>;
+      sight?: import('./perception-current.js').CurrentSightCheck;
+    }
+  | {
+      kind: 'availability';
+      keys?: Iterable<string>;
+      groups?: readonly { subjectId: string; group: CurrentReceivedGroup }[];
+      state: 'unchecked' | 'ended';
+      at?: number;
+    }
+  | { kind: 'occurrence'; contribution: ReceivedObservationInput };
+interface ReceivedPhaseDelta {
+  measured: Set<string>;
+  checkedGroups: Set<object>;
+  checked: Set<string>;
+  ended: Set<string>;
+  selected: SelectedReceivedTracks;
+  entry: SelectedReceivedTracks;
+  subjects: ReadonlySet<string>;
+  resolvedSubjects?: ReadonlyMap<string, ObserverSubject>;
+  validChannels: Set<string>;
+  channelPins: Map<string, import('./world-modules.js').DefinitionPin>;
+  sightChannel?: import('./world-modules.js').DefinitionPin;
+  reconciled?: boolean;
+}
+const receivedPhaseDeltas = new WeakMap<PerceptionEvidenceOwner, ReceivedPhaseDelta>();
+/** Capability/binding cannot change inside a native received phase; queued edits
+ * invalidate the native prefix before another phase. Validate each actual pin once. */
+function phaseChannelEligible(
+  world: WorldState,
+  observer: Entity,
+  channel: import('./world-modules.js').DefinitionPin,
+): boolean {
+  const phase = receivedPhaseDeltas.get(world.perceptionEvidence![observer.id]!),
+    key = currentFieldIdentity('', channel);
+  if (phase?.validChannels.has(key)) return true;
+  if (!currentChannelEligible(world, observer.id, channel)) return false;
+  phase?.validChannels.add(key);
+  return true;
+}
+/** The one native current/change owner. Physical eligibility and authored policy stay in adapters. */
+export function receiveCurrentChange(
+  world: WorldState,
+  observer: Entity,
+  change: ReceivedCurrentChange,
+): ReceivedObservation | undefined {
+  const state = owner(world, observer);
+  return withCurrentPerceptionBatch(world, observer.id, state, () => {
+    const delta = receivedPhaseDeltas.get(state)!;
+    switch (change.kind) {
+      case 'sample': {
+        if ('source' in change) {
+          if (
+            !change.source.channel ||
+            !phaseChannelEligible(world, observer, change.source.channel)
+          )
+            throw new Error('Prepared reception uses an inactive channel.');
+          if (
+            change.source.detector.id !== change.source.channel.id ||
+            change.source.detector.version !== change.source.channel.version
+          )
+            throw new Error('Physical reception detector differs from its installed channel.');
+          if (
+            change.source.facets.some(
+              (facet) =>
+                (facet.value.kind === 'body' ||
+                  facet.value.kind === 'location' ||
+                  facet.value.kind === 'observed-motion') &&
+                facet.role !== 'direct',
+            )
+          )
+            throw new Error('Physical body and location samples require direct reception.');
+          return acquireReceivedObservation(world, observer, change.source);
+        }
+        if (!phaseChannelEligible(world, observer, change.channel))
+          throw new Error('Received sample uses an inactive channel.');
+        enrollReceivedCorrespondence(world, state, currentFacetAddress(change.key).subjectId);
+        if (!installReceivedSample(world, state, change.key, change.value, change.channel)) return;
+        const sourceId = currentFacetAddress(change.key).subjectId;
+        delta.reconciled = false;
+        delta.measured.add(sourceId);
+        const sample = change.value,
+          exposure = 'grant' in sample ? sample.grant.exposure : sample.exposure.episodeId;
+        if (sample.localSubject && delta.subjects.has(subjectKey(sample.localSubject))) {
+          let bindings = delta.selected.get(sourceId);
+          if (!bindings) delta.selected.set(sourceId, (bindings = new Map()));
+          bindings.set(receivedTrackKey(exposure, change.channel), {
+            exposure,
+            channel: change.channel,
+          });
+        }
+        return;
+      }
+      case 'confirm': {
+        enrollReceivedCorrespondence(world, state, change.subjectId);
+        if (!phaseChannelEligible(world, observer, change.channel)) return;
+        const checked = currentConfirmGroups(
+          state,
+          change.subjectId,
+          change.channel,
+          change.through,
+          change.scopes,
+          change.exposures,
+          change.kinds,
+        );
+        if (!checked.length) return;
+        delta.reconciled = false;
+        for (const group of checked) delta.checkedGroups.add(readOnlyDraftView(group.fields));
+        if (
+          change.sight &&
+          change.sight.through >=
+            (currentContactGet(state, change.subjectId)?.sight?.through ?? -Infinity)
+        )
+          setCurrentSightCheck(state, change.subjectId, change.sight);
+        delta.checked.add(change.subjectId);
+        return;
+      }
+      case 'availability': {
+        const keys = [...(change.keys ?? [])];
+        const sourceIds = new Set([
+          ...(change.groups ?? []).map((source) => source.subjectId),
+          ...keys.map((key) => currentFacetAddress(key).subjectId),
+        ]);
+        for (const id of sourceIds) enrollReceivedCorrespondence(world, state, id);
+        if (change.state === 'ended') {
+          for (const source of change.groups ?? [])
+            for (const kind of Object.keys(source.group.fields))
+              keys.push(currentFacetKey(source.subjectId, kind, source.group.grant.channel));
+          for (const key of keys) {
+            const current = currentFacetGet(state, key);
+            if (!current) continue;
+            finalizeLease(world, observer, current);
+            delta.reconciled = false;
+            delta.ended.add(current.grant.subjectId);
+          }
+          removeCurrentFacets(world, observer.id, keys, { requestReception: false });
+          return;
+        }
+        const coverage: import('./perception-current.js').CurrentGroupCoverage[] = (
+          change.groups ?? []
+        ).map((source) => ({
+          subjectId: source.subjectId,
+          fields: readOnlyDraftView(source.group.fields),
+        }));
+        const masks = new Map<object, { subjectId: string; kinds: Set<string> }>();
+        for (const key of keys) {
+          const field = currentFacetGet(state, key);
+          if (!field) continue;
+          const members = currentFacetMembership(state, field);
+          let mask = masks.get(members);
+          if (!mask)
+            masks.set(members, (mask = { subjectId: field.grant.subjectId, kinds: new Set() }));
+          mask.kinds.add(field.value.kind);
+        }
+        coverage.push(...[...masks].map(([fields, mask]) => ({ fields, ...mask })));
+        const historical: LiveFacetSupport[] = [];
+        if (hasMemory(observer))
+          for (const covered of coverage) {
+            const contact = currentContactGet(state, covered.subjectId);
+            if (!contact) continue;
+            const group = contact.content.groups.find(
+              (group) => readOnlyDraftView(group.fields) === covered.fields,
+            );
+            if (
+              !group ||
+              group.availability ||
+              (change.at ?? world.simTime) < currentGroupTimes(group).confirmedThrough
+            )
+              continue;
+            const track = receivedTrackKey(group.grant.exposure, group.grant.channel);
+            if (!delta.selected.get(covered.subjectId)?.has(track)) continue;
+            for (const kind of covered.kinds ?? Object.keys(group.fields)) {
+              const field = currentGroupFacetRecord(
+                group,
+                contact.content.originals[group.grant.original]!,
+                kind,
+              );
+              if (field) historical.push(effectiveCurrentFacetSupport(world, observer.id, field));
+            }
+          }
+        currentSetUnchecked(state, coverage, change.at ?? world.simTime);
+        if (historical.length)
+          captureTemporalAvailability(
+            world,
+            observer.id,
+            historical,
+            selectedTemporalPolicy(world).recent,
+            { change: 'unchecked', at: change.at ?? world.simTime },
+          );
+        return;
+      }
+      case 'occurrence': {
+        if (
+          change.contribution.channel &&
+          !phaseChannelEligible(world, observer, change.contribution.channel)
+        )
+          throw new Error('Prepared occurrence uses an inactive channel.');
+        const received = acquireReceivedObservation(world, observer, change.contribution);
+        return received;
+      }
+    }
+  });
+}
+/** One detector phase or causal receiver boundary, including source construction. */
+export function withReceivedChanges<T>(world: WorldState, observer: Entity, work: () => T): T {
+  return withCurrentPerceptionBatch(world, observer.id, owner(world, observer), work);
+}
+export function receiveCurrentChanges(
+  world: WorldState,
+  observer: Entity,
+  changes: readonly ReceivedCurrentChange[],
+): ReceivedObservation[] {
+  return withReceivedChanges(world, observer, () =>
+    changes.flatMap((change) => receiveCurrentChange(world, observer, change) ?? []),
+  );
+}
+function receiveCurrentSample(
+  world: WorldState,
+  state: PerceptionEvidenceOwner,
+  key: string,
+  value: ReceivedCurrentSample,
+): void {
+  const observer = entityGet(world.entities, currentFacetObserver(state).actorId)!;
+  const body =
+    value.value.kind === 'association' && value.bodyLeaseId
+      ? currentVisualFacetGet(
+          state,
+          `${'grant' in value ? value.grant.subjectId : value.subjectId}:body`,
+        )
+      : undefined;
+  const channel =
+    'grant' in value
+      ? value.grant.channel
+      : body && body.id === value.bodyLeaseId
+        ? body.grant.channel
+        : receivedChannelPin(
+            world,
+            observer,
+            value.modality,
+            receivedObservationHeader(world, value.original).detector.id,
+          );
+  receiveCurrentChange(world, observer, { kind: 'sample', key, value, channel });
+}
+function attentionTracks(
+  state: PerceptionEvidenceOwner,
+  entries: Iterable<AttentionEntry>,
+  candidateIds: Iterable<string> = [],
+  resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
+): SelectedReceivedTracks {
+  return currentSelectionTracks(state, [...entries], candidateIds, resolvedSubjects);
+}
+function mergeReceivedTracks(target: SelectedReceivedTracks, added: SelectedReceivedTracks): void {
+  for (const [id, bindings] of added) {
+    let held = target.get(id);
+    if (!held) target.set(id, (held = new Map()));
+    for (const [key, binding] of bindings) held.set(key, binding);
+  }
+}
+/** Resolve only the requested tracks through the existing retained identity
+ * owner. A saved attention annotation cannot preserve a withdrawn association. */
+function receivedTrackSubjects(
+  world: WorldState,
+  state: PerceptionEvidenceOwner,
+  sourceIds: Iterable<string>,
+): ReadonlyMap<string, ObserverSubject> {
+  const result = new Map<string, ObserverSubject>();
+  for (const id of sourceIds)
+    for (const source of receivedAttentionSources(state, id)) {
+      let subject = source.localSubject;
+      if (source.value.kind === 'body' && source.grant.modality === 'sight') {
+        const association = currentFacetGet(state, `${id}:association`, {
+          channel: source.grant.channel,
+          exposure: source.grant.exposure,
+        });
+        subject =
+          receivedBodyAssociation(
+            world,
+            currentFacetObserver(state).actorId,
+            source,
+            association,
+          ) ?? subject;
+      }
+      if (subject)
+        result.set(receivedTrackKey(source.grant.exposure, source.grant.channel), subject);
+    }
+  return result;
+}
+/** Consider only the bucket actually receiving work. Old correspondence is
+ * captured before mutation; new acquired identity is reconsidered afterward. */
+function enrollReceivedCorrespondence(
+  world: WorldState,
+  state: PerceptionEvidenceOwner,
+  sourceId: string,
+): void {
+  const phase = receivedPhaseDeltas.get(state);
+  if (
+    !phase ||
+    !phase.subjects.size ||
+    phase.measured.has(sourceId) ||
+    phase.checked.has(sourceId) ||
+    phase.ended.has(sourceId)
+  )
+    return;
+  const linked = currentTracksForSubjects(
+    state,
+    phase.subjects,
+    [sourceId],
+    receivedTrackSubjects(world, state, [sourceId]),
+  );
+  mergeReceivedTracks(phase.entry, linked);
+  mergeReceivedTracks(phase.selected, linked);
+}
+function selectionChanged(
+  before: readonly AttentionEntry[],
+  after: readonly AttentionEntry[],
+): boolean {
+  return (
+    before.length !== after.length ||
+    before.some(
+      (entry, index) =>
+        entry.key !== after[index]?.key ||
+        JSON.stringify(entry.subject) !== JSON.stringify(after[index]?.subject),
+    )
+  );
+}
+function candidateSourceIds(state: PerceptionEvidenceOwner): string[] {
+  return [
+    ...new Set(
+      Object.values(state.attention?.annotations ?? {}).map((annotation) => annotation.sourceId),
+    ),
+  ];
+}
+function noteReceivedAttention(
+  state: PerceptionEvidenceOwner,
+  ids: Iterable<string>,
+  candidates: Iterable<string> = [],
+  resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
+): void {
+  const phase = receivedPhaseDeltas.get(state);
+  if (!phase) return;
+  const selected = new Set(ids),
+    entries = (state.attention?.entries ?? []).filter((entry) => selected.has(entry.sourceId));
+  phase.resolvedSubjects = resolvedSubjects;
+  phase.subjects = new Set([
+    ...phase.subjects,
+    ...currentSelectionSubjects(state, entries, resolvedSubjects),
+  ]);
+  mergeReceivedTracks(
+    phase.selected,
+    attentionTracks(state, entries, candidates, resolvedSubjects),
+  );
+}
+function selectedReceivedExposures(
+  state: PerceptionEvidenceOwner,
+  ids: ReadonlySet<string>,
+  candidates: Iterable<string> = [],
+  resolvedSubjects?: ReadonlyMap<string, ObserverSubject>,
+): SelectedReceivedTracks {
+  const tracks: SelectedReceivedTracks = new Map();
+  mergeReceivedTracks(tracks, receivedPhaseDeltas.get(state)?.selected ?? new Map());
+  mergeReceivedTracks(
+    tracks,
+    attentionTracks(
+      state,
+      (state.attention?.entries ?? []).filter((entry) => ids.has(entry.sourceId)),
+      candidates,
+      resolvedSubjects,
+    ),
+  );
+  return tracks;
+}
 const currentPerceptionBatches = new WeakSet<PerceptionEvidenceOwner>();
 const unavailableCurrent = new WeakMap<PerceptionEvidenceOwner, LiveFacetSupport[]>();
 function withCurrentPerceptionBatch<T>(
@@ -1226,86 +1688,242 @@ function withCurrentPerceptionBatch<T>(
         forwardAtObservation: observer.spatial.heading,
       }
     : undefined;
-  return withTemporalAcquisition(world, observerId, frame, () => {
-    currentPerceptionBatches.add(state);
-    unavailableCurrent.set(state, []);
-    try {
-      return work();
-    } finally {
-      const unavailable = unavailableCurrent.get(state)!;
-      unavailableCurrent.delete(state);
-      if (unavailable.length)
-        captureTemporalAvailability(
+  return withCurrentContactBatch(state, () =>
+    withTemporalAcquisition(world, observerId, frame, () => {
+      currentPerceptionBatches.add(state);
+      unavailableCurrent.set(state, []);
+      const entryEntries = currentDetailedAttention(world, observerId),
+        entrySubjects = receivedTrackSubjects(
           world,
-          observerId,
-          unavailable,
-          selectedTemporalPolicy(world).recent,
+          state,
+          new Set(entryEntries.map((entry) => entry.sourceId)),
         );
-      currentPerceptionBatches.delete(state);
-    }
-  });
+      receivedPhaseDeltas.set(state, {
+        measured: new Set(),
+        checkedGroups: new Set(),
+        checked: new Set(),
+        ended: new Set(),
+        selected: attentionTracks(state, entryEntries, [], entrySubjects),
+        entry: attentionTracks(state, entryEntries, [], entrySubjects),
+        subjects: currentSelectionSubjects(state, entryEntries, entrySubjects),
+        resolvedSubjects: entrySubjects,
+        validChannels: new Set(),
+        channelPins: new Map(),
+      });
+      let completed = false;
+      try {
+        const result = work();
+        completed = true;
+        return result;
+      } finally {
+        try {
+          const delta = receivedPhaseDeltas.get(state)!;
+          if (
+            completed &&
+            !delta.reconciled &&
+            (delta.measured.size || delta.checked.size || delta.ended.size)
+          )
+            reconcileAttendedTemporalEvidence(
+              world,
+              observerId,
+              new Set(delta.selected.keys()),
+              [],
+              [...new Set([...delta.measured, ...delta.ended])],
+              false,
+              [],
+              { checked: { broad: delta.checked, detailed: new Set() } },
+            );
+          const unavailable = unavailableCurrent.get(state)!;
+          if (completed && unavailable.length)
+            captureTemporalAvailability(
+              world,
+              observerId,
+              unavailable,
+              selectedTemporalPolicy(world).recent,
+            );
+        } finally {
+          unavailableCurrent.delete(state);
+          receivedPhaseDeltas.delete(state);
+          currentPerceptionBatches.delete(state);
+        }
+      }
+    }),
+  );
 }
 export function removeCurrentFacets(
   world: WorldState,
   observerId: string,
   keys: Iterable<string>,
+  options: { requestReception?: boolean } = {},
 ): void {
   const state = world.perceptionEvidence?.[observerId];
   if (!state) return;
-  const retiredMotion = new Set<string>();
-  for (const key of keys) {
-    const previous = currentFacetGet(state, key);
-    if (!previous) continue;
-    const body = currentFacetGet(state, `${currentFacetGrant(state, previous).subjectId}:body`);
-    // A later real check must fill a removed field even when its physical source
-    // is unchanged. This token only proves a complete prior acquisition.
-    if (body) measuredSources.delete(currentFacetOriginal(state, body));
-    if (
-      (previous.value.kind === 'body' || previous.value.kind === 'location') &&
-      state.motionSamples?.[currentFacetGrant(state, previous).subjectId]
-    ) {
-      retiredMotion.add(currentFacetGrant(state, previous).subjectId);
+  return withCurrentContactBatch(state, () => {
+    const retiredMotion = new Set<string>();
+    let needSight: 'broad' | 'detail' | undefined;
+    for (const key of keys) {
+      const previous = currentFacetGet(state, key);
+      if (!previous) continue;
+      const body = currentFacetGet(state, `${currentFacetGrant(state, previous).subjectId}:body`, {
+        channel: currentFacetGrant(state, previous).channel,
+      });
+      // A later real check must fill a removed field even when its physical source
+      // is unchanged. This token only proves a complete prior acquisition.
+      if (body) measuredSources.delete(currentFacetOriginal(state, body));
+      if (
+        (previous.value.kind === 'body' || previous.value.kind === 'location') &&
+        state.visualConfirmation &&
+        sameDefinitionPin(state.visualConfirmation.channel, previous.grant.channel) &&
+        state.motionSamples?.[currentFacetGrant(state, previous).subjectId]
+      ) {
+        retiredMotion.add(currentFacetGrant(state, previous).subjectId);
+      }
+      const nativeChannel =
+        receivedPhaseDeltas.get(state)?.sightChannel ?? state.visualConfirmation?.channel;
+      if (
+        options.requestReception !== false &&
+        nativeChannel &&
+        sameDefinitionPin(nativeChannel, previous.grant.channel)
+      ) {
+        const coverage = currentFacetCheckScope(previous.value.kind, previous.grant.modality);
+        if (coverage === 'broad') needSight = 'broad';
+        else if (coverage === 'detail' && !needSight) needSight = 'detail';
+      }
+      touchNativeEvidence(world, 'perception', observerId);
+      currentFacetSet(state, key, undefined);
     }
-    touchNativeEvidence(world, 'perception', observerId);
-    currentFacetSet(state, key, undefined);
-  }
-  retireCurrentMotion(world, observerId, retiredMotion);
+    retireCurrentMotion(world, observerId, retiredMotion);
+    if (needSight) requestSightWork(world, observerId, needSight);
+  });
 }
 /** Completed live envelopes use the same immutable ownership as their originals.
  * Later native changes replace the envelope; raw world builders stay editable. */
-function replaceCurrentFacet(
+export function currentChannelEligible(
+  world: WorldState,
+  observerId: string,
+  channel: import('./world-modules.js').DefinitionPin,
+): boolean {
+  const observer = entityGet(world.entities, observerId);
+  if (!observer?.actor || !observer.actor.alive || capabilityBlocked(world, observer, 'perception'))
+    return false;
+  const pin = world.moduleManifest.sensePins.find((pin) => pin.id === channel.id);
+  return (
+    !!pin &&
+    pin.version === channel.version &&
+    pin.digest === channel.digest &&
+    sensesFor(world, observer).some((sense) => sense.id === channel.id)
+  );
+}
+export function receivedChannelPin(
+  world: WorldState,
+  observer: Entity,
+  modality: ObservationContribution['modality'],
+  detectorId?: string,
+): import('./world-modules.js').DefinitionPin {
+  const phase =
+      world.perceptionEvidence?.[observer.id] &&
+      receivedPhaseDeltas.get(world.perceptionEvidence[observer.id]!),
+    key = JSON.stringify([modality, detectorId ?? null]);
+  const previous = phase?.channelPins.get(key);
+  if (previous) return previous;
+  const implementation =
+    modality === 'sight'
+      ? 'vision-geometry-v1'
+      : modality === 'hearing'
+        ? 'hearing-db-v1'
+        : 'body-contact-v1';
+  const sense =
+    sensesFor(world, observer).find((sense) => sense.id === detectorId) ??
+    sensesFor(world, observer).find((sense) => sense.implementation === implementation);
+  const pin =
+    sense &&
+    world.moduleManifest.sensePins.find(
+      (pin) => pin.id === sense.id && pin.version === sense.version,
+    );
+  if (!pin) throw new Error('Received current state has no installed channel.');
+  phase?.channelPins.set(key, pin);
+  return pin;
+}
+function installReceivedSample(
   world: WorldState,
   state: PerceptionEvidenceOwner,
   key: string,
-  value: (
-    | Omit<LiveFacetSupport, 'value'>
-    | (Omit<CurrentFacetRecord, 'value'> & {
-        observer?: never;
-        valueMeasuredFrom?: never;
-        valueMeasuredThrough?: never;
-        valueAcquiredAt?: never;
-      })
-  ) & { value: SensoryFacet | ReceivedFacetValue },
-): void {
+  value: ReceivedCurrentSample,
+  channel: import('./world-modules.js').DefinitionPin,
+): boolean {
+  const source = 'grant' in value ? value.originalSource : value.original;
+  const header = receivedObservationHeader(world, source),
+    observer = currentFacetObserver(state),
+    grant = 'grant' in value ? value.grant : value;
+  const subject = grant.subjectId,
+    exposure = 'grant' in value ? value.grant.exposure : value.exposure.episodeId;
+  if (
+    currentFacetAddress(key).subjectId !== subject ||
+    header.observer.actorId !== observer.actorId ||
+    header.observer.physicalLife !== observer.physicalLife ||
+    ('grant' in value && !sameDefinitionPin(value.grant.channel, channel))
+  )
+    throw new Error('Received current state has no exact source/receiving owner.');
+  const boundBody =
+    value.value.kind === 'association' && value.bodyLeaseId
+      ? currentFacetGet(state, `${subject}:body`, { channel })
+      : undefined;
+  const correspondence =
+    boundBody && boundBody.id === value.bodyLeaseId && boundBody.grant.exposure === exposure;
+  if ((!header.channel || !sameDefinitionPin(header.channel, channel)) && !correspondence)
+    throw new Error(
+      'Received current state has no same-channel source or acquired body correspondence.',
+    );
+  const ordinal = value.originalOrdinal;
+  if (
+    (value.value.kind === 'body' || value.value.kind === 'location') &&
+    (source.facets[ordinal]?.role ?? 'direct') !== 'direct'
+  )
+    throw new Error('Physical current body/location requires direct received evidence.');
+  if (source.facets[ordinal]?.value.kind !== value.value.kind)
+    throw new Error('Received current field has no matching acquired source member.');
+  const previous = currentFacetGet(state, key, { channel });
+  const incomingMeasured =
+    'grant' in value
+      ? currentFacetTimes(state, value as CurrentFacetRecord).valueMeasuredThrough
+      : value.valueMeasuredThrough;
+  if (previous && incomingMeasured < currentFacetTimes(state, previous).valueMeasuredThrough)
+    return false;
+  const unresolved =
+    previous?.availability && incomingMeasured < previous.availability.at
+      ? previous.availability
+      : undefined;
   let storedValue: ReceivedFacetValue;
   if ('reference' in value.value) storedValue = value.value;
   else {
-    const retained = retainFacetValue(world, value.value, currentFacetGet(state, key)?.value);
+    const retained = retainFacetValue(
+      world,
+      value.value,
+      currentFacetGet(state, key, { channel })?.value,
+    );
     if (retained.addedBytes) chargeWork({ outputBytes: retained.addedBytes });
     storedValue = retained.value;
   }
-  const prior = currentFacetGet(state, key);
   const compact =
     'grant' in value
       ? ({ ...value, value: storedValue } as CurrentFacetRecord)
-      : compactCurrentFacet(state, { ...value, value: storedValue } as LiveFacetSupport);
+      : compactCurrentFacet(state, { ...value, value: storedValue } as LiveFacetSupport, channel);
   touchNativeEvidence(world, 'perception', currentFacetObserver(state).actorId);
-  currentFacetSet(
+  if (unresolved) compact.availability = unresolved;
+  else delete compact.availability;
+  currentFacetSet(state, key, compact);
+  return true;
+}
+function currentVisualFacetGet(
+  state: PerceptionEvidenceOwner | undefined,
+  key: string,
+): CurrentFacetRecord | undefined {
+  const channel =
+    state && (receivedPhaseDeltas.get(state)?.sightChannel ?? state.visualConfirmation?.channel);
+  return currentFacetGet(
     state,
     key,
-    isDraft(world) && (Object.isFrozen(draftOriginal(world)!) || hasPrivateDraftBase(world))
-      ? immutableDataSnapshot(compact, readOnlyDraftView)
-      : compact,
+    channel ? { channel, modality: 'sight' } : { modality: 'sight' },
   );
 }
 const observationFactKeys = new WeakMap<
@@ -1371,7 +1989,7 @@ export function observationFactKey(
  * The transition's actual receipts survive nested event callbacks. Durable memory owns its
  * contribution afterward; active exposure is not a second lifetime history database.
  * docs/projects/perspective-perception-tech-design.md#three-representations-one-observation */
-type ObservationInput = Omit<
+export type ReceivedObservationInput = Omit<
   ObservationContribution,
   'id' | 'revision' | 'observer' | 'acquiredAt' | 'facets'
 > & {
@@ -1382,11 +2000,11 @@ type ObservationInput = Omit<
     }
   >;
 };
-function receivedEndpointInput(input: ObservationInput): ObservationInput {
+function receivedEndpointInput(input: ReceivedObservationInput): ReceivedObservationInput {
   if (!input.facets.some((facet) => facet.value.kind === 'observed-motion')) return input;
   return {
     ...input,
-    facets: input.facets.flatMap<ObservationInput['facets'][number]>((facet) =>
+    facets: input.facets.flatMap<ReceivedObservationInput['facets'][number]>((facet) =>
       facet.value.kind === 'observed-motion'
         ? [facet.value.earlier, facet.value.later].map((sample) => ({
             role: facet.role,
@@ -1411,7 +2029,7 @@ function receivedEndpointInput(input: ObservationInput): ObservationInput {
 function acquireReceivedObservation(
   world: WorldState,
   observer: Entity,
-  input: ObservationInput,
+  input: ReceivedObservationInput,
 ): ReceivedObservation {
   input = receivedEndpointInput(input);
   const state = owner(world, observer),
@@ -1430,7 +2048,8 @@ function acquireReceivedObservation(
           observer: observerLife(observer),
           acquiredAt: world.simTime,
           modality: input.modality,
-          detector: input.detector,
+          detector: { id: input.detector.id, version: input.detector.version },
+          ...(input.channel ? { channel: input.channel } : {}),
         },
       },
       readOnlyDraftView,
@@ -1471,19 +2090,49 @@ function acquireReceivedObservation(
   return contribution;
 }
 
-/** Semantic accounts own a complete immutable proof. Routine native current
- * reception uses the compact constructor above instead of expanding every pair. */
-export function acquireObservation(
+/** Actual received physical/native sources enter the common sample/occurrence boundary. */
+function receiveReceivedObservation(
   world: WorldState,
   observer: Entity,
-  input: ObservationInput,
+  input: ReceivedObservationInput,
+): ReceivedObservation {
+  const prepared =
+    input.origin.kind === 'exposure' && !input.channel
+      ? {
+          ...input,
+          channel: receivedChannelPin(world, observer, input.modality, input.detector.id),
+        }
+      : input;
+  return receiveCurrentChange(
+    world,
+    observer,
+    input.origin.kind === 'exposure'
+      ? { kind: 'sample', source: prepared }
+      : { kind: 'occurrence', contribution: input },
+  )!;
+}
+export function receiveObservation(
+  world: WorldState,
+  observer: Entity,
+  input: ReceivedObservationInput,
 ): ObservationContribution {
-  input = receivedEndpointInput(input);
+  if (input.origin.kind === 'exposure' && !input.channel)
+    throw new Error('Prepared physical reception requires its captured channel pin.');
   const existing = owner(world, observer).receipts[observationAcquisitionKey(input)] !== undefined;
-  const source = acquireReceivedObservation(world, observer, input);
-  const complete = materializeObservation(world, source);
+  const source = receiveReceivedObservation(world, observer, input),
+    complete = materializeObservation(world, source);
   if (!existing) chargeWork({ outputBytes: jsonEncoding(complete).bytes });
   return complete;
+}
+/** Interpretations reuse their actual source proof; they never sample a sense. */
+export function acquireInterpretedObservation(
+  world: WorldState,
+  observer: Entity,
+  input: ReceivedObservationInput,
+): ObservationContribution {
+  if (input.facets.some((facet) => facet.role !== 'testimony' && facet.role !== 'inference'))
+    throw new Error('An interpreted observation cannot grant direct sensory evidence.');
+  return materializeObservation(world, acquireReceivedObservation(world, observer, input));
 }
 
 /** Old originals may remain after body replacement until the next native phase.
@@ -1522,48 +2171,31 @@ export function currentReceivedObservations(
 export function captureEvidenceCut(
   world: WorldState,
   observerId: string,
-  retained: readonly ObservationContribution[] = [],
+  input: {
+    acquired?: readonly ObservationContribution[];
+    current?: readonly CapturedCurrentFacet[];
+  } = {},
 ): EvidenceCut {
   const entity = entityGet(world.entities, observerId);
   if (!entity?.actor) throw new Error('An evidence cut requires an existing observer.');
-  const life = observerLife(entity);
-  const state = world.perceptionEvidence?.[observerId];
-  const leases =
-    state?.life === life.physicalLife &&
-    entity.actor.alive &&
-    activelyParticipates(entity) &&
-    !capabilityBlocked(world, entity, 'perception')
-      ? currentFacetValues(state).filter((lease) => currentLeaseEligible(world, observerId, lease))
-      : [];
-  const current = leases.map((lease) =>
-    captureCurrentFacet(world, effectiveCurrentFacetSupport(world, observerId, lease)),
-  );
-  if (state?.motionSamples)
-    for (const subjectId of Object.keys(state.motionSamples)) {
-      const motion = currentMotionFacet(world, observerId, subjectId);
-      if (motion) current.push(motion);
-    }
+  const life = observerLife(entity),
+    sameObserver = (observer: ObserverLife) =>
+      observer.actorId === life.actorId && observer.physicalLife === life.physicalLife;
   const acquired = new Map<string, ObservationContribution>();
-  for (const contribution of [
-    ...retained,
-    ...currentReceivedObservations(world, observerId).observations,
-    ...currentReceivedGeometry(world, observerId).observations,
-    ...leases.map((lease) => materializeObservation(world, currentFacetOriginal(state!, lease))),
-  ]) {
-    if (
-      contribution.observer.actorId !== observerId ||
-      contribution.observer.physicalLife !== life.physicalLife
-    )
-      continue;
-    acquired.set(`${contribution.id}:${contribution.revision}`, immutableObservation(contribution));
-  }
+  for (const contribution of input.acquired ?? [])
+    if (sameObserver(contribution.observer))
+      acquired.set(
+        `${contribution.id}:${contribution.revision}`,
+        immutableObservation(contribution),
+      );
+  const current = (input.current ?? []).filter((fact) => sameObserver(fact.observer));
   const lastIncludedOrder = Math.max(
     world.events.at(-1)?.order ?? 0,
     ...[...acquired.values()].map((entry) =>
       entry.origin.kind === 'occurrence' ? entry.origin.order : 0,
     ),
   );
-  return freeze(
+  return immutableDataSnapshot(
     {
       observer: life,
       privacyRevision: world.experience?.privacyRevisions?.[observerId] ?? 0,
@@ -1572,7 +2204,7 @@ export function captureEvidenceCut(
       acquired: [...acquired.values()],
       current,
     },
-    true,
+    readOnlyDraftView,
   );
 }
 /** Physical loss and later lease advancement do not rewrite a captured result. Only
@@ -1748,63 +2380,53 @@ export function captureCurrentFacet(
   world: WorldState,
   lease: LiveFacetSupport,
 ): CapturedCurrentFacet {
-  const {
-    subjectId: _subject,
-    subjectPhysicalLife: _sourceLife,
-    revision,
-    motionContinuityRevision: _continuity,
-    sourcePlacementRevision: _placement,
-    original,
-    originalOrdinal,
-    value: latest,
-    ...fields
-  } = readOnlyDraftView(lease);
-  const originalValue = receivedFacetValue(world, latest);
-  if (!originalValue) throw new Error('Selected current value is unavailable.');
-  const value = currentBodyDescription(
-    world,
-    lease.observer.actorId,
-    lease.subjectId,
-    originalValue,
-  );
-  // Rich presentation belongs to the selected read, not every native field check.
-  const descriptionSupport =
-    originalValue.kind === 'body'
-      ? currentDescriptionSupport(world, lease.observer.actorId, lease.subjectId)
+  const channel = (
+    lease as LiveFacetSupport & { channel?: import('./world-modules.js').DefinitionPin }
+  ).channel;
+  const description =
+    lease.value.kind === 'body'
+      ? currentDescriptionSupport(
+          world,
+          lease.observer.actorId,
+          lease.subjectId,
+          channel
+            ? { channel, exposure: lease.exposure.episodeId }
+            : { modality: lease.modality, exposure: lease.exposure.episodeId },
+        )
       : undefined;
-  return immutableDataSnapshot<CapturedCurrentFacet>(
-    {
-      ...fields,
-      ...(descriptionSupport ? { descriptionSupport } : {}),
-      original: observationFactKey(world, original, originalOrdinal),
-      role: original.facets[originalOrdinal]?.role ?? 'direct',
-      ...(original.origin.kind === 'occurrence'
-        ? { originalAliases: [original.origin.eventId] }
-        : original.origin.source
-          ? { originalAliases: [original.origin.source.id] }
-          : {}),
-      value,
-      confirmation: {
-        family: 'native-exposure' as const,
-        observer: lease.observer,
-        id: lease.id,
-        revision,
-      },
-    },
-    readOnlyDraftView,
+  const descriptionRecord =
+    description?.role === 'direct' && !description.availability
+      ? currentFacetGet(
+          readCurrentEvidence(world, lease.observer.actorId),
+          `${lease.subjectId}:description`,
+          channel
+            ? { channel, exposure: lease.exposure.episodeId }
+            : { modality: lease.modality, exposure: lease.exposure.episodeId },
+        )
+      : undefined;
+  const described = descriptionRecord && receivedFacetValue(world, descriptionRecord.value);
+  return captureReceivedFacet(
+    { ...lease, ...(descriptionRecord ? { descriptionSupport: description } : {}) },
+    readReceivedSources(world),
+    described,
   );
 }
 
 /** Read the last actually completed sight phase without mutating every held value.
  * A missing facet cannot be revived, and inferred identity never gets a new value time. */
 export function currentFacetConfirmation(
-  state: PerceptionEvidenceOwner,
+  state: Pick<PerceptionEvidenceOwner, 'observer' | 'life' | 'current' | 'visualConfirmation'>,
   value: CurrentFacetRecord,
   confirmedThrough: number,
   presenceOnly = false,
 ) {
+  const grant = currentFacetGrant(state, value);
+  if (value.availability || grant.modality !== 'sight') return;
   const completed = state.visualConfirmation;
   const phase = completed && readOnlyDraftView(completed);
+  if (!phase || !sameDefinitionPin(grant.channel, phase.channel)) return;
+  const body = currentFacetGet(state, `${grant.subjectId}:body`, { channel: grant.channel });
+  if (!body || body.grant.exposure !== grant.exposure) return;
   const selected = currentContactGet(state, currentFacetGrant(state, value).subjectId)?.sight;
   const rich =
     currentFacetCheckScope(
@@ -1865,18 +2487,16 @@ export function effectiveCurrentFacetDescriptor(
   observerId: string,
   lease: CurrentFacetRecord,
 ): ReceivedFacetValue {
-  const record = readOnlyDraftView(lease);
-  if (record.value.kind === 'body') {
-    const location = currentContactFacetGet(
-      readCurrentFields(world, observerId),
-      `${currentFacetGrant(readCurrentEvidence(world, observerId)!, record).subjectId}:location`,
-    );
-    const descriptor = location && readOnlyDraftView(location).value;
-    const value = descriptor && receivedValueAt(readReceivedSources(world), descriptor.reference);
-    if (value?.kind === 'body-pose')
-      return { ...record.value, reception: { kind: 'body', poseRef: descriptor!.reference } };
-  }
-  return record.value;
+  const record = readOnlyDraftView(lease),
+    state = readCurrentEvidence(world, observerId)!;
+  const location =
+    record.value.kind === 'body'
+      ? currentFacetGet(state, `${record.grant.subjectId}:location`, {
+          channel: record.grant.channel,
+          exposure: record.grant.exposure,
+        })
+      : undefined;
+  return effectiveReceivedFacetDescriptor(readReceivedSources(world), record, location);
 }
 /** A current reader selects the actual pose owner separately from appearance. */
 export function currentBodyPoseSupport(
@@ -1884,8 +2504,9 @@ export function currentBodyPoseSupport(
   observerId: string,
   subjectId: string,
 ): CurrentBodyPoseSupport | undefined {
-  return eligibleBodyLease(world, observerId, subjectId)
-    ? lastBodyPoseSupport(world, observerId, subjectId)
+  const body = eligibleBodyLease(world, observerId, subjectId);
+  return body
+    ? lastBodyPoseSupport(world, observerId, subjectId, body.grant.channel, body.grant.exposure)
     : undefined;
 }
 /** Closing a withdrawn grant still needs the last actually received pose and its
@@ -1894,129 +2515,79 @@ function lastBodyPoseSupport(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  channel?: import('./world-modules.js').DefinitionPin,
+  exposure?: string,
 ): CurrentBodyPoseSupport | undefined {
   const state = readCurrentEvidence(world, observerId),
     location = currentContactFacetGet(
       readCurrentFields(world, observerId),
       `${subjectId}:location`,
+      channel ? { channel, exposure } : { modality: 'sight', exposure },
     );
   if (!state || !location) return;
-  const record = readOnlyDraftView(location),
-    fragment = receivedValueAt(readReceivedSources(world), record.value.reference);
-  if (fragment?.kind !== 'body-pose' || record.value.reception?.kind !== 'location') return;
-  const times = effectiveCurrentFacetTimes(world, observerId, record),
-    confirmation = currentFacetConfirmation(
-      state,
-      record,
-      currentFacetTimes(state, record).confirmedThrough,
-    );
-  return {
-    frame: receivedObservationFrame(world, record.value.reception.frameRef),
-    poseMeasuredFrom: times.valueMeasuredFrom,
-    poseMeasuredThrough: times.valueMeasuredThrough,
-    poseAcquiredAt: times.valueAcquiredAt,
-    original: observationFactKey(
-      world,
-      currentFacetOriginal(state, record),
-      record.originalOrdinal,
-    ),
-    confirmation: {
-      family: 'native-exposure',
-      observer: currentFacetObserver(state),
-      id: record.id,
-      revision: Math.max(record.revision, confirmation?.revision ?? 0),
-    },
-    confirmedFrom: times.confirmedFrom,
-    confirmedThrough: times.confirmedThrough,
-  };
+  return receivedBodyPoseSupport(state, readReceivedSources(world), readOnlyDraftView(location));
 }
 export function currentDescriptionSupport(
   world: WorldState,
   observerId: string,
   subjectId: string,
+  selector: CurrentFacetSelector = { modality: 'sight' },
 ): CurrentDescriptionSupport | undefined {
   const state = readCurrentEvidence(world, observerId),
     stored = currentContactFacetGet(
       readCurrentFields(world, observerId),
       `${subjectId}:description`,
+      selector,
     );
   if (!state || !stored || !currentLeaseEligible(world, observerId, stored)) return;
-  const record = readOnlyDraftView(stored),
-    times = effectiveCurrentFacetTimes(world, observerId, record),
-    confirmation = currentFacetConfirmation(
-      state,
-      record,
-      currentFacetTimes(state, record).confirmedThrough,
-    );
-  return {
-    descriptionMeasuredFrom: times.valueMeasuredFrom,
-    descriptionMeasuredThrough: times.valueMeasuredThrough,
-    descriptionAcquiredAt: times.valueAcquiredAt,
-    original: observationFactKey(
-      world,
-      currentFacetOriginal(state, record),
-      record.originalOrdinal,
-    ),
-    confirmation: {
-      family: 'native-exposure',
-      observer: currentFacetObserver(state),
-      id: record.id,
-      revision: Math.max(record.revision, confirmation?.revision ?? 0),
-    },
-    confirmedFrom: times.confirmedFrom,
-    confirmedThrough: times.confirmedThrough,
-  };
-}
-function currentBodyDescription(
-  world: WorldState,
-  observerId: string,
-  subjectId: string,
-  value: SensoryFacet,
-): SensoryFacet {
-  if (value.kind !== 'body') return value;
-  const record = currentContactFacetGet(
-    readCurrentFields(world, observerId),
-    `${subjectId}:description`,
-  );
-  const description = record && receivedFacetValue(world, readOnlyDraftView(record).value);
-  return description?.kind === 'description' && currentLeaseEligible(world, observerId, record!)
-    ? { ...value, body: { ...value.body, description: description.text } }
-    : value;
+  return receivedDescriptionSupport(state, readOnlyDraftView(stored));
 }
 export function effectiveCurrentFacetProof(
   world: WorldState,
   observerId: string,
   lease: CurrentFacetRecord,
 ): CurrentFacetProof {
-  const state = readOnlyDraftView(readCurrentEvidence(world, observerId)!);
-  const record = readOnlyDraftView(lease),
-    value = currentFacetProof(state, record),
+  const state = readCurrentEvidence(world, observerId)!,
+    record = readOnlyDraftView(lease),
+    held = effectiveReceivedFacetSupport(state, record);
+  const proof = currentFacetProof(state, record),
     poseSupport =
       record.value.kind === 'body'
-        ? lastBodyPoseSupport(world, observerId, currentFacetGrant(state, record).subjectId)
+        ? lastBodyPoseSupport(
+            world,
+            observerId,
+            record.grant.subjectId,
+            record.grant.channel,
+            record.grant.exposure,
+          )
         : undefined;
-  const current = poseSupport ? { ...value, poseSupport } : value;
-  const confirmation = currentFacetConfirmation(state, record, value.confirmedThrough);
-  if (!confirmation) return current;
-  const through = confirmation.through;
   return {
-    ...current,
-    revision: Math.max(value.revision, confirmation.revision),
-    confirmedThrough: through,
+    ...proof,
+    revision: held.revision,
+    confirmedThrough: held.confirmedThrough,
+    ...(poseSupport ? { poseSupport } : {}),
   };
 }
-
 export function effectiveCurrentFacetSupport(
   world: WorldState,
   observerId: string,
   lease: CurrentFacetRecord,
 ): LiveFacetSupport {
-  const state = readOnlyDraftView(readCurrentEvidence(world, observerId)!);
-  const record = readOnlyDraftView(lease);
-  const proof = effectiveCurrentFacetProof(world, observerId, record);
-  const value = currentFacetSupport(state, record, proof);
-  const descriptor = effectiveCurrentFacetDescriptor(world, observerId, record);
-  return descriptor === record.value ? value : { ...value, value: descriptor };
+  const state = readCurrentEvidence(world, observerId)!,
+    record = readOnlyDraftView(lease),
+    held = effectiveReceivedFacetSupport(state, record),
+    value = effectiveCurrentFacetDescriptor(world, observerId, record);
+  const poseSupport =
+    record.value.kind === 'body'
+      ? lastBodyPoseSupport(
+          world,
+          observerId,
+          record.grant.subjectId,
+          record.grant.channel,
+          record.grant.exposure,
+        )
+      : undefined;
+  return { ...held, value, ...(poseSupport ? { poseSupport } : {}) };
 }
 
 export function currentBodyObservation(
@@ -2079,6 +2650,10 @@ function bodyReadScope(world: WorldState, observerId: string) {
     state?.life !== (observer.actor.physicalLife ?? 0)
   )
     return;
+  const installed = sensesFor(world, observer).find(
+    (sense) => sense.implementation === 'vision-geometry-v1',
+  )!;
+  const visualPin = world.moduleManifest.sensePins.find((pin) => pin.id === installed.id)!;
   const current = readOnlyDraftView(state.current);
   // This reader exists only for one synchronous batch. It never grants later
   // execution and no draft/current record leaves the owned projection below.
@@ -2087,7 +2662,7 @@ function bodyReadScope(world: WorldState, observerId: string) {
     state,
     current,
     body(subjectId: string): CurrentFacetRecord | undefined {
-      const stored = currentContactFacetGet(current, `${subjectId}:body`),
+      const stored = currentContactFacetGet(current, `${subjectId}:body`, { channel: visualPin }),
         lease = stored && readOnlyDraftView(stored),
         subject = entityGet(entities, subjectId);
       const pending = readOnlyDraftView(world).sensory;
@@ -2105,8 +2680,11 @@ function bodyReadScope(world: WorldState, observerId: string) {
           true,
         );
       return lease &&
+        !lease.availability &&
+        sameDefinitionPin(visualPin, lease.grant.channel) &&
         (confirmed?.inputRevision ?? -1) >= invalidated &&
         lease.value.kind === 'body' &&
+        (lease.originalSource.facets[lease.originalOrdinal]?.role ?? 'direct') === 'direct' &&
         activelyParticipates(subject) &&
         currentFacetGrant(state, lease).subjectPhysicalLife ===
           (subject?.actor ? (subject.actor.physicalLife ?? 0) : null)
@@ -2123,14 +2701,16 @@ function eligibleBodyLease(
   return bodyReadScope(world, observerId)?.body(subjectId);
 }
 /** Iterate eligible current bodies once without expanding description or proof payloads. */
-function* observedBodies(world: WorldState, observerId: string) {
-  const scope = bodyReadScope(world, observerId);
+function* observedBodies(
+  world: WorldState,
+  observerId: string,
+  scope = bodyReadScope(world, observerId),
+) {
   if (!scope) return;
-  for (const held of currentFacetValues(scope.state)) {
-    const lease = readOnlyDraftView(held);
-    if (lease.value.kind !== 'body') continue;
-    const id = currentFacetGrant(scope.state, lease).subjectId;
-    if (id !== observerId && scope.body(id)) yield { id, lease };
+  for (const [id] of currentContactEntries(scope.state).sort((a, b) => a[1].order - b[1].order)) {
+    if (id === observerId) continue;
+    const lease = scope.body(id);
+    if (lease) yield { id, lease };
   }
 }
 /** Scalar acquired classification for intake; never performs sensing or reads hidden definitions. */
@@ -2151,6 +2731,12 @@ export function currentObservedBodyIds(world: WorldState, observerId: string): s
   const ids: string[] = [];
   for (const { id } of observedBodies(world, observerId)) ids.push(id);
   return ids;
+}
+export function currentObservedBodyGrants(
+  world: WorldState,
+  observerId: string,
+): { id: string; leaseId: string }[] {
+  return [...observedBodies(world, observerId)].map(({ id, lease }) => ({ id, leaseId: lease.id }));
 }
 function refreshMotionExpiry(state: PerceptionEvidenceOwner): void {
   let next = Infinity;
@@ -2218,7 +2804,7 @@ function currentMotionValue(
     !eligibleBodyLease(world, observerId, subjectId)
   )
     return;
-  const location = currentFacetGet(state, `${subjectId}:location`);
+  const location = currentVisualFacetGet(state, `${subjectId}:location`);
   if (
     !location ||
     (location.motionContinuityRevision ?? 0) !== track.continuityRevision ||
@@ -2268,8 +2854,8 @@ function currentMotionFacet(
 ): CapturedCurrentFacet | undefined {
   const value = currentMotionValue(world, observerId, subjectId),
     state = readCurrentEvidence(world, observerId),
-    location = currentContactFacetGet(
-      readCurrentFields(world, observerId),
+    location = currentVisualFacetGet(
+      readCurrentEvidence(world, observerId),
       `${subjectId}:location`,
     );
   if (!value || !location) return;
@@ -2304,7 +2890,7 @@ export function currentBodyGeometryInputs(
     const point =
       lease.value.kind === 'location'
         ? lease
-        : currentFacetGet(state, `${currentFacetGrant(state, lease).subjectId}:location`);
+        : currentVisualFacetGet(state, `${currentFacetGrant(state, lease).subjectId}:location`);
     const pointTimes = point && effectiveCurrentFacetTimes(world, observerId, point);
     const source = entityGet(
       readOnlyDraftView(world.entities),
@@ -2335,18 +2921,14 @@ export function currentBodyGeometryInputs(
     fact: sample.original,
     location: cloneValue(sample.location),
   });
-  for (const stored of currentFacetValues(state)) {
-    const lease = readOnlyDraftView(stored);
-    if (lease.value.kind !== 'body' || currentFacetGrant(state, lease).subjectId === observerId)
-      continue;
-    const admitted = scope.body(currentFacetGrant(state, lease).subjectId);
-    if (!admitted || admitted.value.kind !== 'body') continue;
+  for (const { lease: admitted } of observedBodies(world, observerId, scope)) {
+    const lease = admitted;
     const parts = receivedBodyParts(
       world,
       effectiveCurrentFacetDescriptor(world, observerId, admitted),
     );
     if (!parts) continue;
-    const location = currentFacetGet(
+    const location = currentVisualFacetGet(
       state,
       `${currentFacetGrant(state, lease).subjectId}:location`,
     );
@@ -2356,7 +2938,7 @@ export function currentBodyGeometryInputs(
     const motion = currentMotionValue(world, observerId, currentFacetGrant(state, lease).subjectId);
     result.push({
       sourceId: currentFacetGrant(state, lease).subjectId,
-      exposure: currentFacetGrant(state, lease).exposure,
+      track: currentFacetExposure(state, lease).track,
       body: {
         position: cloneValue(parts.pose.position),
         radius: parts.details.radius,
@@ -2407,7 +2989,10 @@ export function currentBodyAssociation(
   subjectId: string,
 ): ObserverSubject | undefined {
   const stored = readCurrentEvidence(world, observerId)?.current;
-  const held = stored && currentContactFacetGet(stored, `${subjectId}:association`);
+  const held = currentVisualFacetGet(
+    readCurrentEvidence(world, observerId),
+    `${subjectId}:association`,
+  );
   const association = held && readOnlyDraftView(held);
   if (association?.value.kind !== 'association') return;
   const body = eligibleBodyLease(world, observerId, subjectId);
@@ -2447,7 +3032,7 @@ export function prepareCurrentBodySubjects(
     if (!scope) return;
     const body = scope.body(subjectId);
     if (!body) return;
-    const held = currentFacetGet(scope.state, `${subjectId}:association`);
+    const held = currentVisualFacetGet(scope.state, `${subjectId}:association`);
     const association = held && readOnlyDraftView(held);
     const subject =
       receivedBodyAssociation(world, observerId, body, association) ?? body.localSubject;
@@ -2528,18 +3113,48 @@ const CURRENT_BODY_FACET_KINDS = [
   'association',
   'observed-motion',
 ] as const;
-/** Exact selected IDs avoid traversing and copying every unattended body's detail. */
-function selectedCurrentFacets(
-  state: PerceptionEvidenceOwner | undefined,
-  exposures: ReadonlyMap<string, string>,
-): CurrentFacetRecord[] {
-  const held = state && readOnlyDraftView(state.current);
-  return [...exposures].flatMap(([id, exposure]) =>
-    CURRENT_BODY_FACET_KINDS.flatMap((kind) => {
-      const lease = currentContactFacetGet(held, `${id}:${kind}`);
-      return lease && currentFacetGrant(state!, lease).exposure === exposure ? [lease] : [];
-    }),
+/** Selected native groups carry exact admission masks. Ordinary confirmations
+ * never turn the group's members into individual proof/envelope read products. */
+function selectedCurrentGroups(
+  state: PerceptionEvidenceOwner,
+  selected: SelectedReceivedTracks,
+  entry: SelectedReceivedTracks,
+  final: SelectedReceivedTracks,
+): TemporalCurrentGroupInput[] {
+  const phase = receivedPhaseDeltas.get(state),
+    groups: TemporalCurrentGroupInput[] = [];
+  for (const [id, tracks] of selected) {
+    const contact = currentContactGet(state, id);
+    if (!contact) continue;
+    for (const group of contact.content.groups) {
+      const key = receivedTrackKey(group.grant.exposure, group.grant.channel);
+      if (!tracks.has(key)) continue;
+      groups.push({
+        subjectId: id,
+        group,
+        originalSource: contact.content.originals[group.grant.original]!,
+        checked:
+          !group.availability &&
+          (phase?.checkedGroups.has(readOnlyDraftView(group.fields)) ?? false),
+        entering: !entry.get(id)?.has(key),
+        exiting: !final.get(id)?.has(key),
+      });
+    }
+  }
+  return groups;
+}
+
+/** Exact selected native memberships for a lazily opened history boundary. */
+export function selectedTemporalCurrentGroups(
+  state: PerceptionEvidenceOwner,
+): TemporalCurrentGroupInput[] {
+  const tracks = selectedReceivedExposures(
+    state,
+    new Set((state.attention?.entries ?? []).map((entry) => entry.sourceId)),
+    candidateSourceIds(state),
+    receivedPhaseDeltas.get(state)?.resolvedSubjects,
   );
+  return selectedCurrentGroups(state, tracks, tracks, tracks);
 }
 
 function currentObservedSupports(
@@ -2560,7 +3175,7 @@ function currentObservedSupports(
   const subject = entityGet(readOnlyDraftView(world.entities), subjectId);
   if (!subject) return [];
   return kinds
-    .flatMap((kind) => currentFacetGet(state, `${subjectId}:${kind}`) ?? [])
+    .flatMap((kind) => currentVisualFacetGet(state, `${subjectId}:${kind}`) ?? [])
     .filter(
       (lease) =>
         currentLeaseEligible(world, observerId, lease) &&
@@ -2600,6 +3215,7 @@ export function currentObservedFacetValues(
   if (motion)
     facets.push({
       id: motion.id,
+      role: motion.role,
       value: motion.value,
       valueMeasuredFrom: motion.valueMeasuredFrom,
       valueMeasuredThrough: motion.valueMeasuredThrough,
@@ -2622,33 +3238,43 @@ function projectCurrentFacetValue(
   const value = effectiveCurrentFacetDescriptor(world, observerId, record);
   const received = receivedFacetValue(world, value);
   if (!received) throw new Error('Selected current value is unavailable.');
+  const description =
+    received.kind === 'body'
+      ? currentDescriptionSupport(world, observerId, record.grant.subjectId, {
+          channel: record.grant.channel,
+          exposure: record.grant.exposure,
+        })
+      : undefined;
+  const descriptionRecord =
+    description?.role === 'direct' && !description.availability
+      ? currentFacetGet(state, `${record.grant.subjectId}:description`, {
+          channel: record.grant.channel,
+          exposure: record.grant.exposure,
+        })
+      : undefined;
+  const descriptionValue = descriptionRecord && receivedFacetValue(world, descriptionRecord.value);
   return immutableDataSnapshot<CurrentFacetValue>(
     {
       id: record.id,
-      value: currentBodyDescription(
-        world,
-        observerId,
-        currentFacetGrant(state, record).subjectId,
-        received,
-      ),
+      role: record.originalSource.facets[record.originalOrdinal]?.role ?? 'direct',
+      ...(record.availability ? { availability: record.availability } : {}),
+      value: composeReceivedFacetValue(received, descriptionValue, description),
       valueMeasuredFrom: effective.valueMeasuredFrom,
       valueMeasuredThrough: effective.valueMeasuredThrough,
       valueAcquiredAt: effective.valueAcquiredAt,
       confirmedThrough: effective.confirmedThrough,
       ...(record.value.kind === 'body'
         ? {
-            poseSupport: currentBodyPoseSupport(
+            poseSupport: lastBodyPoseSupport(
               world,
               observerId,
-              currentFacetGrant(state, record).subjectId,
-            ),
-            descriptionSupport: currentDescriptionSupport(
-              world,
-              observerId,
-              currentFacetGrant(state, record).subjectId,
+              record.grant.subjectId,
+              record.grant.channel,
+              record.grant.exposure,
             ),
           }
         : {}),
+      ...(descriptionRecord ? { descriptionSupport: description } : {}),
       source: observationFactKey(world, currentFacetOriginal(state, record), record.originalOrdinal)
         .source,
     },
@@ -2667,11 +3293,27 @@ export function hasCurrentObservedFacet(
     ? currentMotionValue(world, observerId, subjectId) !== undefined
     : currentObservedSupports(world, observerId, subjectId, [kind]).length > 0;
 }
-function currentLeaseEligible(
+export function currentLeaseEligible(
   world: WorldState,
   observerId: string,
   lease: CurrentFacetRecord,
+  options: { allowUnchecked?: boolean } = {},
 ): boolean {
+  if (lease.availability && !options.allowUnchecked) return false;
+  if (
+    !options.allowUnchecked &&
+    (lease.value.kind === 'body' || lease.value.kind === 'location') &&
+    (lease.originalSource.facets[lease.originalOrdinal]?.role ?? 'direct') !== 'direct'
+  )
+    return false;
+  if (
+    !currentChannelEligible(
+      world,
+      observerId,
+      currentFacetGrant(readCurrentEvidence(world, observerId)!, lease).channel,
+    )
+  )
+    return false;
   const association = lease.value.kind === 'association' && receivedFacetValue(world, lease.value);
   if (
     association &&
@@ -2685,44 +3327,43 @@ function currentLeaseEligible(
     ) !== 'retained'
   )
     return false;
-  const subject = entityGet(
-    readOnlyDraftView(world.entities),
-    currentFacetGrant(readCurrentEvidence(world, observerId)!, lease).subjectId,
-  );
+  const state = readCurrentEvidence(world, observerId)!,
+    grant = currentFacetGrant(state, lease);
+  const subject = entityGet(readOnlyDraftView(world.entities), grant.subjectId);
   if (
-    !activelyParticipates(subject) ||
-    currentFacetGrant(readCurrentEvidence(world, observerId)!, lease).subjectPhysicalLife !==
-      (subject?.actor ? (subject.actor.physicalLife ?? 0) : null)
+    grant.subjectPhysicalLife !== null &&
+    (!subject?.actor ||
+      !activelyParticipates(subject) ||
+      grant.subjectPhysicalLife !== (subject.actor.physicalLife ?? 0))
   )
     return false;
-  if (currentFacetGrant(readCurrentEvidence(world, observerId)!, lease).modality === 'sight')
-    return !!eligibleBodyLease(
-      world,
-      observerId,
-      currentFacetGrant(readCurrentEvidence(world, observerId)!, lease).subjectId,
-    );
-  const observer = entityGet(readOnlyDraftView(world.entities), observerId);
-  return (
-    !!observer &&
-    sensesFor(world, observer).some(
-      (sense) =>
-        sense.id ===
-        receivedObservationHeader(
-          world,
-          currentFacetOriginal(readCurrentEvidence(world, observerId)!, lease),
-        ).detector.id,
-    )
-  );
+  const body = currentFacetGet(state, `${grant.subjectId}:body`, { channel: grant.channel });
+  if (body && grant.modality === 'sight' && !options.allowUnchecked)
+    return !!eligibleBodyLease(world, observerId, grant.subjectId);
+  return true;
 }
 
 function finalizeLease(world: WorldState, observer: Entity, record: CurrentFacetRecord): void {
   if (!hasMemory(observer)) return;
   const state = world.perceptionEvidence![observer.id]!;
   if (
+    !receivedPhaseDeltas
+      .get(state)
+      ?.selected.get(currentFacetGrant(state, record).subjectId)
+      ?.has(
+        receivedTrackKey(
+          currentFacetGrant(state, record).exposure,
+          currentFacetGrant(state, record).channel,
+        ),
+      ) &&
     !currentDetailedAttention(world, observer.id).some(
       (entry) =>
         entry.sourceId === currentFacetGrant(state, record).subjectId &&
-        entry.exposure.episodeId === currentFacetGrant(state, record).exposure,
+        entry.exposure.track ===
+          receivedTrackKey(
+            currentFacetGrant(state, record).exposure,
+            currentFacetGrant(state, record).channel,
+          ),
     )
   )
     return;
@@ -2797,7 +3438,9 @@ export function reconcileVisualEvidence(
   onBodyChange?: (id: string, before: ObservedBody, after: ObservedBody) => void,
 ): void {
   const state = owner(world, observer);
+  const phaseChannel = receivedChannelPin(world, observer, 'sight', detector.id);
   return withCurrentPerceptionBatch(world, observer.id, state, () => {
+    receivedPhaseDeltas.get(state)!.sightChannel = phaseChannel;
     const observerPosition = readOnlyDraftView(worldPosition(observer));
     const observerFrame: ObservationFrame = immutableDataSnapshot(
       {
@@ -2810,10 +3453,12 @@ export function reconcileVisualEvidence(
     if (receivedFrame.addedBytes) chargeWork({ outputBytes: receivedFrame.addedBytes });
     const completed = readOnlyDraftView(state).visualConfirmation;
     const priorConfirmation = completed && readOnlyDraftView(completed);
-    const frameChanged = !sameObservationFrame(
-      priorConfirmation ? receivedObservationFrame(world, priorConfirmation.frameRef) : undefined,
-      observerFrame,
-    );
+    const frameChanged =
+      (priorConfirmation && !sameDefinitionPin(priorConfirmation.channel, phaseChannel)) ||
+      !sameObservationFrame(
+        priorConfirmation ? receivedObservationFrame(world, priorConfirmation.frameRef) : undefined,
+        observerFrame,
+      );
     const beforeAttention = new Set(
       currentDetailedAttention(world, observer.id).map((entry) => entry.sourceId),
     );
@@ -2823,7 +3468,7 @@ export function reconcileVisualEvidence(
     const lostKeys: string[] = [],
       retiredMotion = new Set<string>(),
       uncheckedSubjects = new Set<string>();
-    const unchecked = new Map<number, LiveFacetSupport[]>();
+    const unchecked = new Map<number, Array<{ subjectId: string; group: CurrentReceivedGroup }>>();
     const pending = world.sensory;
     for (const [id, gap] of Object.entries(state.gaps))
       if (gap.through < world.simTime) delete state.gaps[id];
@@ -2832,79 +3477,99 @@ export function reconcileVisualEvidence(
         (entity) => [entity.id, entity.actor ? (entity.actor.physicalLife ?? 0) : null] as const,
       ),
     );
-    for (const [key, stored] of currentFacetEntries(state)) {
-      const lease = readOnlyDraftView(stored),
-        grant = currentFacetGrant(state, lease);
-      if (
-        grant.modality === 'sight' &&
-        priorConfirmation &&
-        (!measuredSubjects || measuredSubjects.has(grant.subjectId))
-      ) {
-        const completed = currentContactGet(state, grant.subjectId)?.sight;
-        const inputRevision =
-          completed && completed.through > priorConfirmation.completeThrough
-            ? completed.inputRevision
-            : priorConfirmation.completeInputRevision;
-        const invalidations = [
-          pending,
-          pending?.scopes[observer.id],
-          pending?.scopes[grant.subjectId],
-        ].filter(
-          (scope) =>
-            scope?.invalidatedAt !== undefined && (scope.invalidatedRevision ?? -1) > inputRevision,
-        );
-        if (invalidations.length) {
-          uncheckedSubjects.add(grant.subjectId);
-          retiredMotion.add(grant.subjectId);
-          if (beforeAttention.has(grant.subjectId) && hasMemory(observer)) {
-            // A coalesced marker may predate a detail check that already handled
-            // its first change. Bound the unknown interval by that last actual
-            // support, never invent an exact later hidden-change occurrence time.
-            const at = Math.max(
-              completed?.through ?? priorConfirmation.completeThrough,
-              Math.min(...invalidations.map((scope) => scope!.invalidatedAt!)),
-            );
-            const group = unchecked.get(at) ?? [];
-            group.push(effectiveCurrentFacetSupport(world, observer.id, lease));
-            unchecked.set(at, group);
+    // Reception/loss is a contact/group decision. Stable contacts never expand
+    // every independent field merely to rediscover the same support revision.
+    for (const [id, contact] of currentContactEntries(state).sort(
+      (a, b) => a[1].order - b[1].order,
+    )) {
+      if (measuredSubjects && !measuredSubjects.has(id)) continue;
+      const completed = contact.sight;
+      const inputRevision =
+        completed && priorConfirmation && completed.through > priorConfirmation.completeThrough
+          ? completed.inputRevision
+          : (priorConfirmation?.completeInputRevision ?? -1);
+      const invalidations = priorConfirmation
+        ? [pending, pending?.scopes[observer.id], pending?.scopes[id]].filter(
+            (scope) =>
+              scope?.invalidatedAt !== undefined &&
+              (scope.invalidatedRevision ?? -1) > inputRevision,
+          )
+        : [];
+      const uncheckedAt = invalidations.length
+        ? Math.max(
+            completed?.through ?? priorConfirmation!.completeThrough,
+            Math.min(...invalidations.map((scope) => scope!.invalidatedAt!)),
+          )
+        : undefined;
+      const ownedExposures = new Set(
+        contact.content.groups.flatMap((group) => {
+          const pin = group.grant.channel;
+          if (
+            !sameDefinitionPin(pin, phaseChannel) &&
+            !(priorConfirmation && sameDefinitionPin(pin, priorConfirmation.channel))
+          )
+            return [];
+          const original = contact.content.originals[group.grant.original];
+          return group.fields['body'] ||
+            original?.facets.some((facet) => facet.value.kind === 'body')
+            ? [group.grant.exposure]
+            : [];
+        }),
+      );
+      for (const group of contact.content.groups) {
+        const grant = group.grant;
+        if (
+          grant.modality !== 'sight' ||
+          !ownedExposures.has(grant.exposure) ||
+          (!sameDefinitionPin(grant.channel, phaseChannel) &&
+            !(priorConfirmation && sameDefinitionPin(grant.channel, priorConfirmation.channel)))
+        )
+          continue;
+        const ended =
+          grant.subjectPhysicalLife !== eligible.get(id) ||
+          !sameDefinitionPin(grant.channel, phaseChannel);
+        if (uncheckedAt !== undefined) {
+          uncheckedSubjects.add(id);
+          retiredMotion.add(id);
+        }
+        if (uncheckedAt !== undefined) {
+          const groups = unchecked.get(uncheckedAt) ?? [];
+          groups.push({ subjectId: id, group });
+          unchecked.set(uncheckedAt, groups);
+        }
+        if (!ended) continue;
+        if (ended) {
+          attentionChanges.add(id);
+          geometryChanges.add(id);
+          const body = group.fields['body'];
+          if (body?.localSubject?.kind === 'individual')
+            lostIndividuals.add(body.localSubject.individualId);
+        }
+        for (const kind of Object.keys(group.fields)) {
+          const key = currentFacetKey(id, kind, grant.channel),
+            lease = currentFacetGet(state, key)!;
+          if (ended) {
+            retainVisualGap(world, state, lease, episodeGraceSeconds);
+            lostKeys.push(key);
           }
         }
-      }
-      if (
-        grant.modality === 'sight' &&
-        (!measuredSubjects || measuredSubjects.has(grant.subjectId)) &&
-        grant.subjectPhysicalLife !== eligible.get(grant.subjectId)
-      ) {
-        attentionChanges.add(grant.subjectId);
-        geometryChanges.add(grant.subjectId);
-        if (lease.value.kind === 'body' && lease.localSubject?.kind === 'individual')
-          lostIndividuals.add(lease.localSubject.individualId);
-        retainVisualGap(world, state, lease, episodeGraceSeconds);
-        finalizeLease(world, observer, lease);
-        lostKeys.push(key);
       }
     }
     // Publish the actual uncertainty boundary before the later successful or
     // failed check. It cannot be silently bridged by a new pose sample.
-    for (const [at, leases] of unchecked) {
-      captureTemporalAvailability(
-        world,
-        observer.id,
-        leases,
-        selectedTemporalPolicy(world).recent,
-        { change: 'unchecked', at },
-      );
-      // The next successful check must close the uncertainty even when the value
-      // itself is unchanged. Release only these comparison marks, not history.
-      const history = world.experience?.temporal?.actors[observer.id];
-      if (history) for (const lease of leases) delete history.captures[lease.id];
-    }
+    for (const [at, groups] of unchecked)
+      receiveCurrentChange(world, observer, {
+        kind: 'availability',
+        state: 'unchecked',
+        groups,
+        at,
+      });
     for (const id of uncheckedSubjects) {
       attentionChanges.add(id);
       geometryChanges.add(id);
     }
     retireCurrentMotion(world, observer.id, retiredMotion);
-    removeCurrentFacets(world, observer.id, lostKeys);
+    receiveCurrentChange(world, observer, { kind: 'availability', keys: lostKeys, state: 'ended' });
     const checkedSources = new Set<string>(),
       detailedSources = new Set<string>(),
       reacquiredFields = new Set<string>(),
@@ -2918,7 +3583,7 @@ export function reconcileVisualEvidence(
       checkedSources.add(subject.id);
       if (detailed) detailedSources.add(subject.id);
       const token = sourceToken?.(subject.id),
-        heldBody = currentFacetGet(state, `${subject.id}:body`),
+        heldBody = currentVisualFacetGet(state, `${subject.id}:body`),
         heldOriginal = heldBody && currentFacetOriginal(state, heldBody),
         measuredSource = heldOriginal && measuredSources.get(heldOriginal);
       if (
@@ -2975,7 +3640,7 @@ export function reconcileVisualEvidence(
             : facet,
         ),
       ];
-      const receivedInput = (facet: SensoryFacet): ObservationInput['facets'][number] => ({
+      const receivedInput = (facet: SensoryFacet): ReceivedObservationInput['facets'][number] => ({
         role: 'direct',
         asOf: world.simTime,
         measuredFrom: world.simTime,
@@ -2992,13 +3657,13 @@ export function reconcileVisualEvidence(
         if (retained.addedBytes) chargeWork({ outputBytes: retained.addedBytes });
         return retained.value;
       };
-      const detected = currentFacetGet(state, `${subject.id}:detected`),
+      const detected = currentVisualFacetGet(state, `${subject.id}:detected`),
         detectedLease = detected && readOnlyDraftView(detected);
       let original = detectedLease && currentFacetOriginal(state, detectedLease),
         admittedOriginal: ReceivedObservation | undefined;
       if (!original) {
         const before = state.received.length;
-        original = acquireReceivedObservation(world, observer, {
+        original = receiveReceivedObservation(world, observer, {
           origin: {
             kind: 'exposure',
             episodeId: exposed ?? nextId(world, 'perception-exposure'),
@@ -3019,7 +3684,11 @@ export function reconcileVisualEvidence(
           priorExposure.observer.actorId === receivedObserver.actorId &&
           priorExposure.observer.physicalLife === receivedObserver.physicalLife
           ? priorExposure
-          : { observer: receivedObserver, episodeId: original.id },
+          : {
+              observer: receivedObserver,
+              episodeId: original.id,
+              track: receivedTrackKey(original.id, phaseChannel),
+            },
         readOnlyDraftView,
       );
       let earlierLocation: CurrentMotionSample['earlier'] | undefined;
@@ -3028,7 +3697,7 @@ export function reconcileVisualEvidence(
         const key = `${subject.id}:${facet.kind}`;
         const reacquired = uncheckedSubjects.has(subject.id) && !reacquiredFields.has(key);
         if (reacquired) reacquiredFields.add(key);
-        let prior = currentFacetGet(state, key);
+        let prior = currentVisualFacetGet(state, key);
         // Equality and semantic comparison read completed values, not deep Immer proxies.
         // Drafting every unchanged nested body here makes later native previews copy it.
         const priorLease = prior && readOnlyDraftView(prior),
@@ -3114,8 +3783,9 @@ export function reconcileVisualEvidence(
           }
         }
         let facetOriginal = original;
+        let freshOriginal = facetOriginal === admittedOriginal;
         if (prior && previousValue && changed && semanticFacetChanged(previousValue, facet)) {
-          facetOriginal = acquireReceivedObservation(world, observer, {
+          facetOriginal = receiveReceivedObservation(world, observer, {
             origin: {
               kind: 'exposure',
               episodeId: exposure.episodeId,
@@ -3124,43 +3794,52 @@ export function reconcileVisualEvidence(
               measuredThrough: world.simTime,
             },
             modality: 'sight',
+            channel: phaseChannel,
             detector,
             facets: [receivedInput(facet)],
           });
+          freshOriginal = true;
           if (facet.kind === 'body' || facet.kind === 'public-attributes') {
             // The same observed body/contact continues while its semantic fact changes.
             prior = {
-              ...compactCurrentFacet(state, {
-                ...currentFacetSupport(state, prior),
-                original: facetOriginal,
-                originalOrdinal: 0,
-                confirmedFrom: world.simTime,
-              }),
+              ...compactCurrentFacet(
+                state,
+                {
+                  ...currentFacetSupport(state, prior),
+                  original: facetOriginal,
+                  originalOrdinal: 0,
+                  confirmedFrom: world.simTime,
+                },
+                currentFacetGrant(state, prior).channel,
+              ),
             };
           } else {
-            removeCurrentFacets(world, observer.id, [key]);
+            removeCurrentFacets(world, observer.id, [key], { requestReception: false });
             prior = undefined;
           }
         }
         if (!prior) {
+          const leaseId = nextId(world, 'perception-lease');
           if (
-            facetOriginal?.facets[ordinal]?.value.kind !== facet.kind &&
-            facetOriginal?.facets[0]?.value.kind !== facet.kind
+            !freshOriginal ||
+            (facetOriginal?.facets[ordinal]?.value.kind !== facet.kind &&
+              facetOriginal?.facets[0]?.value.kind !== facet.kind)
           )
-            facetOriginal = acquireReceivedObservation(world, observer, {
+            facetOriginal = receiveReceivedObservation(world, observer, {
               origin: {
                 kind: 'exposure',
                 episodeId: exposure.episodeId,
-                detectorId: `${detector.id}:${facet.kind}`,
+                detectorId: `${detector.id}:${facet.kind}:${leaseId}`,
                 measuredFrom: world.simTime,
                 measuredThrough: world.simTime,
               },
               modality: 'sight',
+              channel: phaseChannel,
               detector,
               facets: [receivedInput(facet)],
             });
-          replaceCurrentFacet(world, state, key, {
-            id: nextId(world, 'perception-lease'),
+          receiveCurrentSample(world, state, key, {
+            id: leaseId,
             revision: 1,
             observer: exposure.observer,
             subjectId: subject.id,
@@ -3199,7 +3878,7 @@ export function reconcileVisualEvidence(
             currentFacetOriginal(state, prior),
             prior.originalOrdinal,
           ).measuredThrough;
-          replaceCurrentFacet(world, state, key, {
+          receiveCurrentSample(world, state, key, {
             ...unchanged,
             revision: prior.revision + 1,
             value: currentValue(facet, priorLease?.value),
@@ -3214,10 +3893,10 @@ export function reconcileVisualEvidence(
           });
         }
       });
-      const storedBody = currentFacetGet(state, `${subject.id}:body`),
+      const storedBody = currentVisualFacetGet(state, `${subject.id}:body`),
         currentBody = storedBody && readOnlyDraftView(storedBody);
       if (subject.actor && currentBody && !currentBody.localSubject) unboundBodies.add(subject.id);
-      const storedLocation = currentFacetGet(state, `${subject.id}:location`),
+      const storedLocation = currentVisualFacetGet(state, `${subject.id}:location`),
         locationLease = storedLocation && readOnlyDraftView(storedLocation);
       if (earlierLocation && locationLease) {
         const policy = routineSensePolicy(world, observer).sight;
@@ -3246,14 +3925,17 @@ export function reconcileVisualEvidence(
         ? ['description', 'pile-contents', 'public-attributes']
         : []) as ('description' | 'pile-contents' | 'public-attributes')[]) {
         const key = `${subject.id}:${kind}`;
-        const removed = currentFacetGet(state, key);
+        const removed = currentVisualFacetGet(state, key);
         if (removed && !kinds.has(kind)) {
           attentionChanges.add(subject.id);
-          finalizeLease(world, observer, readOnlyDraftView(removed));
-          removeCurrentFacets(world, observer.id, [key]);
+          receiveCurrentChange(world, observer, {
+            kind: 'availability',
+            keys: [currentFacetKey(subject.id, kind, currentFacetGrant(state, removed).channel)],
+            state: 'ended',
+          });
         }
       }
-      const measured = currentFacetGet(state, `${subject.id}:body`);
+      const measured = currentVisualFacetGet(state, `${subject.id}:body`);
       if (token && measured)
         measuredSources.set(currentFacetOriginal(state, measured), {
           leaseId: measured.id,
@@ -3266,6 +3948,7 @@ export function reconcileVisualEvidence(
     const revision = (priorConfirmation?.revision ?? 0) + 1;
     touchNativeEvidence(world, 'perception', observer.id);
     state.visualConfirmation = {
+      channel: receivedChannelPin(world, observer, 'sight', detector.id),
       through: world.simTime,
       revision,
       completeThrough: measuredSubjects ? (priorConfirmation?.completeThrough ?? 0) : world.simTime,
@@ -3276,24 +3959,45 @@ export function reconcileVisualEvidence(
       frameRef: receivedFrame.reference,
       frameRevision: frameChanged ? revision : priorConfirmation!.frameRevision,
     };
-    if (measuredSubjects)
-      for (const id of measuredSubjects)
-        if (eligible.has(id)) {
-          const selected = currentContactGet(state, id)?.sight;
-          setCurrentSightCheck(state, id, {
-            ...selected,
+    const channel = receivedChannelPin(world, observer, 'sight', detector.id);
+    for (const id of checkedSources)
+      receiveCurrentChange(world, observer, {
+        kind: 'confirm',
+        subjectId: id,
+        channel,
+        through: world.simTime,
+        scopes: new Set(['broad']),
+        exposures: new Set([currentVisualFacetGet(state, `${id}:body`)?.grant.exposure ?? '']),
+        ...(measuredSubjects
+          ? {
+              sight: {
+                ...currentContactGet(state, id)?.sight,
+                through: world.simTime,
+                revision,
+                inputRevision: world.sensory?.revision ?? 0,
+              },
+            }
+          : {}),
+      });
+    const confirmDetailed = () => {
+      for (const id of detailedSources)
+        receiveCurrentChange(world, observer, {
+          kind: 'confirm',
+          subjectId: id,
+          channel,
+          through: world.simTime,
+          scopes: new Set(['broad', 'detail']),
+          exposures: new Set([currentVisualFacetGet(state, `${id}:body`)?.grant.exposure ?? '']),
+          sight: {
             through: world.simTime,
             revision,
             inputRevision: world.sensory?.revision ?? 0,
-          });
-        }
-    const confirmDetailed = () => {
-      for (const id of detailedSources)
-        setCurrentSightCheck(state, id, {
-          through: world.simTime,
-          revision,
-          inputRevision: world.sensory?.revision ?? 0,
-          detail: { through: world.simTime, revision, inputRevision: world.sensory?.revision ?? 0 },
+            detail: {
+              through: world.simTime,
+              revision,
+              inputRevision: world.sensory?.revision ?? 0,
+            },
+          },
         });
     };
     confirmDetailed();
@@ -3302,6 +4006,7 @@ export function reconcileVisualEvidence(
         changedSourceIds: [...attentionChanges],
         geometrySourceIds: [...geometryChanges],
       }).after;
+      noteReceivedAttention(state, selected);
       const byId = new Map(subjects.map((subject) => [subject.id, subject]));
       for (const id of selected)
         if (!beforeAttention.has(id)) {
@@ -3315,11 +4020,11 @@ export function reconcileVisualEvidence(
     // server reads must never create identities or require an extra sight sample.
     if (hasMemory(observer))
       for (const id of unboundBodies) {
-        const body = currentFacetGet(state, `${id}:body`);
+        const body = currentVisualFacetGet(state, `${id}:body`);
         if (!body || body.localSubject) continue;
         const localSubject = selectedBodyIndividual(world, observer.id, id);
         if (localSubject)
-          replaceCurrentFacet(world, state, `${id}:body`, {
+          receiveCurrentSample(world, state, `${id}:body`, {
             ...readOnlyDraftView(body),
             localSubject,
           });
@@ -3391,7 +4096,7 @@ function captureReceivedFeatureHistory(
   if (!acquired.length && !options.confirmHeld && !options.rebaselineMissing) return;
   const geometry = currentReceivedGeometry(world, observerId),
     available = geometry.observations;
-  const captures = world.experience?.temporal?.actors[observerId]?.captures;
+  const captures = world.experience?.temporal?.actors[observerId]?.geometryCaptures;
   const selected = new Set(acquired.map((observation) => observation.id));
   if (options.confirmHeld || options.rebaselineMissing)
     for (const observation of available)
@@ -3484,28 +4189,45 @@ export function reconcileAttendedTemporalEvidence(
   touchNativeEvidence(world, 'perception', observerId);
   const observer = entityGet(world.entities, observerId);
   if (!observer || !hasMemory(observer)) return;
+  const phase = receivedPhaseDeltas.get(world.perceptionEvidence![observerId]!);
+  if (phase) phase.reconciled = true;
   const history = world.experience?.temporal?.actors[observerId];
   const rebaseline = history?.capturesInvalidated === true;
   const priorEntries = currentDetailedAttention(world, observerId).filter((entry) =>
     before.has(entry.sourceId),
   );
-  const { receiverFrameChanged = false, checked, ...attentionCues } = cues;
+  const { receiverFrameChanged: _receiverFrameChanged, checked: _checked, ...attentionCues } = cues;
   const result = updateAttention(world, observerId, {
     directSubjects,
     changedSourceIds,
     ...attentionCues,
   });
+  const state = world.perceptionEvidence![observerId]!,
+    afterEntries = currentDetailedAttention(world, observerId);
+  const siblingIds = selectionChanged(priorEntries, afterEntries)
+    ? candidateSourceIds(state)
+    : [
+        ...new Set([
+          ...(phase?.measured ?? changedSourceIds ?? []),
+          ...(phase?.checked ?? []),
+          ...(phase?.ended ?? []),
+        ]),
+      ];
+  const finalTracks = attentionTracks(state, afterEntries, siblingIds, result.subjects);
+  const entryTracks =
+    phase?.entry ?? attentionTracks(state, priorEntries, siblingIds, result.subjects);
   const after = new Set(result.after);
-  const selected = new Set([...before, ...after]);
-  const storedCurrent = world.perceptionEvidence?.[observerId]?.current;
-  const current = storedCurrent && readOnlyDraftView(storedCurrent);
-  const selectedExposures = new Map(
-    [...selected].flatMap((id) => {
-      const body = currentContactFacetGet(current, `${id}:body`);
-      return body
-        ? [[id, currentFacetGrant(world.perceptionEvidence![observerId]!, body).exposure] as const]
-        : [];
-    }),
+  const selected = new Set([
+    ...before,
+    ...(receivedPhaseDeltas.get(world.perceptionEvidence![observerId]!)?.selected.keys() ?? []),
+    ...after,
+  ]);
+  noteReceivedAttention(state, after, siblingIds, result.subjects);
+  const selectedExposures = selectedReceivedExposures(
+    world.perceptionEvidence![observerId]!,
+    selected,
+    siblingIds,
+    result.subjects,
   );
   const entering = new Set([...after].filter((id) => !before.has(id))),
     exiting = new Set([...before].filter((id) => !after.has(id)));
@@ -3516,57 +4238,28 @@ export function reconcileAttendedTemporalEvidence(
         world.simTime,
     )
   )
-    requestDetailedSight(world, observerId);
-  const measured =
-    changedSourceIds && !rebaseline
-      ? new Set([
-          ...changedSourceIds.filter((id) => selected.has(id)),
-          ...entering,
-          ...exiting,
-          ...(receiverFrameChanged ? selected : []),
-        ])
-      : undefined;
+    requestSightWork(world, observerId, 'detail');
   const contacts = new Map<string, ObserverSubject>();
   const contactSubject = creditContacts ? prepareCurrentBodySubjects(world, observerId) : undefined;
   if (creditContacts)
     for (const id of selected) {
-      const body = currentContactFacetGet(current, `${id}:body`);
-      if (!body) continue;
+      const body = currentVisualFacetGet(world.perceptionEvidence?.[observerId], `${id}:body`);
+      if (!body || body.availability) continue;
       const subject = contactSubject?.(id) ?? body.localSubject;
       if (!subject || !selectedAttentionContactDue(world, observerId, subject, world.simTime))
         continue;
       const lease = effectiveCurrentFacetSupport(world, observerId, body);
       if (lease.confirmedThrough === world.simTime) {
         contacts.set(id, subject);
-        measured?.add(id);
       }
     }
-  // Unchanged leases still keep their deduplication ownership. They need no
-  // newly allocated confirmation view when this capture will skip them.
-  // The completed phase proves that neither the selected values nor recording
-  // scope changed. Keep watermarks intact without scanning them to rediscover it.
-  const captureNeeded =
-    !measured ||
-    measured.size > 0 ||
-    (!!checked && [...selected].some((id) => checked.broad.has(id)));
-  const captured = captureNeeded
-    ? captureTemporalCurrent(
-        world,
-        observerId,
-        selectedCurrentFacets(world.perceptionEvidence?.[observerId], selectedExposures),
-        entering,
-        selectedTemporalPolicy(world).recent,
-        exiting,
-        new Set(contacts.keys()),
-        changedSourceIds && !rebaseline
-          ? receiverFrameChanged
-            ? measured
-            : new Set(changedSourceIds)
-          : undefined,
-        checked,
-      )
-    : [];
-  const creditedSources: string[] = [];
+  const captured = captureTemporalCurrent(
+    world,
+    observerId,
+    selectedCurrentGroups(state, selectedExposures, entryTracks, finalTracks),
+    selectedTemporalPolicy(world).recent,
+    new Set(contacts.keys()),
+  );
   for (const entry of captured) {
     const subject = contacts.get(entry.subjectId);
     if (!subject || !entry.body || entry.body.confirmedThrough !== world.simTime) continue;
@@ -3585,46 +4278,10 @@ export function reconcileAttendedTemporalEvidence(
       support: [JSON.stringify({ source: temporalReceiptSource(held.receipt), ordinal })],
     });
     if (!credited) releaseTemporalSupport(world, observerId, held.receipt.id);
-    else creditedSources.push(entry.subjectId);
   }
-  if (creditedSources.length) {
-    const rescored = updateAttention(world, observerId, {
-      changedSourceIds: creditedSources,
-      geometrySourceIds: [],
-    });
-    const final = new Set(rescored.after);
-    const entering = new Set([...final].filter((id) => !after.has(id)));
-    const exiting = new Set([...after].filter((id) => !final.has(id)));
-    if (entering.size || exiting.size) {
-      const affected = new Set([...entering, ...exiting]);
-      const exposures = new Map(
-        [...new Set([...after, ...final])].flatMap((id) => {
-          const body = currentContactFacetGet(current, `${id}:body`);
-          return body
-            ? [
-                [
-                  id,
-                  currentFacetGrant(world.perceptionEvidence![observerId]!, body).exposure,
-                ] as const,
-              ]
-            : [];
-        }),
-      );
-      const leases = selectedCurrentFacets(world.perceptionEvidence?.[observerId], exposures);
-      // Credit may change prominence. Retain the newly selected current baseline before
-      // publication, without recursively awarding contacts for an attention-only change.
-      captureTemporalCurrent(
-        world,
-        observerId,
-        leases,
-        entering,
-        selectedTemporalPolicy(world).recent,
-        exiting,
-        undefined,
-        affected,
-      );
-    }
-  }
+  // Contact credit is acknowledged immediately. Its score participates at the
+  // next existing attention opportunity; recording does not grant another
+  // selection/promotion pass in this received phase.
   const geometry = captureReceivedFeatureHistory(world, observerId, newGeometry, {
     rebaselineMissing: rebaseline,
   });
@@ -3658,15 +4315,75 @@ export function endCurrentEvidence(
         if (lease.value.kind === 'body' && lease.localSubject?.kind === 'individual')
           lostIndividuals.add(lease.localSubject.individualId);
         retainVisualGap(world, state, lease, episodeGraceSeconds);
-        if (observer?.actor && state.life === (observer.actor.physicalLife ?? 0))
-          finalizeLease(world, observer, lease);
         lostKeys.push(key);
         changed = true;
       }
-    removeCurrentFacets(world, observerId, lostKeys);
+    if (observer?.actor && state.life === (observer.actor.physicalLife ?? 0))
+      receiveCurrentChange(world, observer, {
+        kind: 'availability',
+        keys: lostKeys,
+        state: 'ended',
+      });
+    else removeCurrentFacets(world, observerId, lostKeys, { requestReception: false });
     if (subjectId !== undefined && !changed) return;
     pruneLostBodyIndividuals(world, observerId, lostIndividuals);
     reconcileAttendedTemporalEvidence(world, observerId);
+  });
+}
+
+function receivedEventBody(
+  world: WorldState,
+  scope: NonNullable<ReturnType<typeof bodyReadScope>>,
+  id: string,
+  at: number,
+  episode?: string | null,
+) {
+  const state = scope.state,
+    lease = scope.body(id),
+    detected = currentVisualFacetGet(state, `${id}:detected`),
+    detectedOriginal = detected && currentFacetOriginal(state, detected);
+  if (
+    !lease ||
+    !detected ||
+    lease.value.kind !== 'body' ||
+    !detectedOriginal ||
+    detectedOriginal.origin.kind !== 'exposure' ||
+    (lease.grant.subjectPhysicalLife !== null &&
+      (episode === undefined || detectedOriginal.origin.episodeId !== episode)) ||
+    detected.grant.exposure !== lease.grant.exposure ||
+    receivedObservationHeader(world, currentFacetOriginal(state, lease)).acquiredAt > at
+  )
+    return;
+  return { lease, episodeId: detectedOriginal.origin.episodeId };
+}
+/** Minimum event intake checks permitted participants before building names,
+ * prose or a witness envelope. Unknown routing IDs alone grant no attention. */
+export function attendedEventParticipants(
+  world: WorldState,
+  observerId: string,
+  ids: readonly string[],
+  at: number,
+): boolean {
+  const scope = bodyReadScope(world, observerId);
+  if (!scope || !ids.length) return false;
+  const state = scope.state,
+    entries = currentDetailedAttention(world, observerId);
+  if (!entries.length) return false;
+  const selected = currentSelectionTracks(
+    state,
+    entries,
+    ids,
+    receivedTrackSubjects(world, state, ids),
+  );
+  return ids.some((id) => {
+    const received = receivedEventBody(
+      world,
+      scope,
+      id,
+      at,
+      world.perceptionEpisodes?.[observerId]?.[id],
+    );
+    return received && selected.get(id)?.has(currentFacetExposure(state, received.lease).track);
   });
 }
 
@@ -3701,26 +4418,13 @@ function awarenessBodyContext(
     const episode =
       awareness.entityEpisodes?.[id] ??
       (visibleSound?.entityId === id ? visibleSound.episodeId : undefined);
-    const lease = scope.body(id),
-      storedDetected = currentFacetGet(state, `${id}:detected`),
-      detected = storedDetected && readOnlyDraftView(storedDetected);
-    const detectedOriginal = detected && currentFacetOriginal(state, detected);
-    if (
-      !lease ||
-      !detected ||
-      lease.value.kind !== 'body' ||
-      !detectedOriginal ||
-      detectedOriginal.origin.kind !== 'exposure' ||
-      (currentFacetGrant(state, lease).subjectPhysicalLife !== null &&
-        (episode === undefined || detectedOriginal.origin.episodeId !== episode)) ||
-      currentFacetGrant(state, detected).exposure !== currentFacetGrant(state, lease).exposure ||
-      receivedObservationHeader(world, currentFacetOriginal(state, lease)).acquiredAt > awareness.at
-    )
-      continue;
+    const received = receivedEventBody(world, scope, id, awareness.at, episode);
+    if (!received) continue;
+    const { lease, episodeId } = received;
     const receivedSoundSource =
       visibleSound?.entityId === id &&
       visibleSound.physicalLife === (currentFacetGrant(state, lease).subjectPhysicalLife ?? 0) &&
-      visibleSound.episodeId === detectedOriginal.origin.episodeId;
+      visibleSound.episodeId === episodeId;
     if (awareness.sound && !receivedSoundSource) continue;
     if (
       currentFacetGrant(state, lease).subjectPhysicalLife === null &&
@@ -3748,7 +4452,7 @@ function awarenessBodyContext(
       kind: 'exposure',
       exposure: cloneValue(currentFacetExposure(state, lease)),
     };
-    if (!result.some((context) => context.episodeId === currentFacetGrant(state, lease).exposure))
+    if (!result.some((context) => context.track === participant.exposure.track))
       result.push(participant.exposure);
     // Preserve the correspondence proved now. The recording scope alone cannot
     // tell a later reader which unknown person performed each event role.
@@ -3767,10 +4471,7 @@ function awarenessBodyContext(
     attended ||=
       entries?.some((stored) => {
         const entry = readOnlyDraftView(stored);
-        return (
-          entry.sourceId === id &&
-          entry.exposure.episodeId === currentFacetGrant(state, lease).exposure
-        );
+        return entry.sourceId === id && entry.exposure.track === participant.exposure.track;
       }) === true;
   }
   return result.length
@@ -3829,6 +4530,19 @@ export function acquireAwarenessObservation(
   awareness: Awareness,
   receivedPoint?: Position,
 ): ObservationContribution | undefined {
+  if (awareness.modality === 'internal') return;
+  const observer = entityGet(world.entities, awareness.actorId);
+  if (!observer?.actor) return;
+  return withReceivedChanges(world, observer, () =>
+    prepareAwarenessObservation(world, event, awareness, receivedPoint),
+  );
+}
+function prepareAwarenessObservation(
+  world: WorldState,
+  event: WorldEvent,
+  awareness: Awareness,
+  receivedPoint?: Position,
+): ObservationContribution | undefined {
   if (
     awareness.eventId === event.id &&
     awareness.observation &&
@@ -3867,8 +4581,9 @@ export function acquireAwarenessObservation(
     const exposure: ObservationExposure = {
       observer: observerLife(observer),
       episodeId: contactId,
+      track: receivedTrackKey(contactId, receivedChannelPin(world, observer, 'touch', senseId)),
     };
-    return acquireObservation(world, observer, {
+    return receiveObservation(world, observer, {
       origin: {
         kind: 'exposure',
         episodeId: contactId,
@@ -3877,6 +4592,7 @@ export function acquireAwarenessObservation(
         measuredThrough: event.at,
       },
       modality: 'touch',
+      channel: receivedChannelPin(world, observer, 'touch', senseId),
       detector: { id: senseId, version: 1 },
       facets: [
         {
@@ -4056,7 +4772,16 @@ export function acquireAwarenessObservation(
       subject: cloneValue(awareness.sourceSubject),
       strength: awareness.recognized ? 'supported' : 'possible',
     });
-  let contribution = acquireObservation(world, observer, {
+  const family =
+    modality === 'sight'
+      ? 'vision-geometry-v1'
+      : modality === 'hearing'
+        ? 'hearing-db-v1'
+        : 'body-contact-v1';
+  const receivingSense = sensesFor(world, observer).find(
+    (sense) => sense.implementation === family,
+  );
+  let contribution = receiveObservation(world, observer, {
     ...(receivedContext ? { context: receivedContext.context } : {}),
     origin: {
       kind: 'occurrence',
@@ -4065,7 +4790,12 @@ export function acquireAwarenessObservation(
       order: event.order ?? event.sequence,
     },
     modality,
-    detector: { id: `native:${modality}`, version: 1 },
+    ...(receivingSense
+      ? { channel: receivedChannelPin(world, observer, modality, receivingSense.id) }
+      : {}),
+    detector: receivingSense
+      ? { id: receivingSense.id, version: receivingSense.version }
+      : { id: `native:${modality}`, version: 1 },
     facets: values.map((value) => ({
       role:
         value.kind === 'association'
@@ -4110,7 +4840,7 @@ export function acquireAwarenessObservation(
         original = readOnlyDraftView(
           state.received[state.receipts[observationAcquisitionKey(contribution)]!]!,
         );
-      replaceCurrentFacet(world, state, `${binding!.entityId}:association`, {
+      receiveCurrentSample(world, state, `${binding!.entityId}:association`, {
         id: nextId(world, 'perception-lease'),
         revision: 1,
         observer: observerLife(observer),
@@ -4154,7 +4884,7 @@ export function acquireAwarenessObservation(
     capturedContext &&
     !capturedContext.attended &&
     state.attention?.entries.some((entry) =>
-      capturedContext.subjects.some((subject) => subject.episodeId === entry.exposure.episodeId),
+      capturedContext.subjects.some((subject) => subject.track === entry.exposure.track),
     )
   ) {
     // Selection belongs to this same atomic receipt boundary. No native callback
@@ -4223,9 +4953,17 @@ export function acquireOrdinaryWarning(
   const source = awareness.observation;
   const speechOrdinal = source.facets.findIndex((facet) => facet.value.kind === 'speech');
   if (speechOrdinal < 0) return;
+  if (!awareness.sourceSubject && !source.channel) return;
   const speaker: EvidenceParticipant = awareness.sourceSubject
     ? { kind: 'individual', subject: cloneValue(awareness.sourceSubject) }
-    : { kind: 'exposure', exposure: { observer: { ...source.observer }, episodeId: source.id } };
+    : {
+        kind: 'exposure',
+        exposure: {
+          observer: { ...source.observer },
+          episodeId: source.id,
+          track: receivedTrackKey(source.id, source.channel!),
+        },
+      };
   const value: SensoryFacet = {
     kind: 'claim',
     claim: {
@@ -4253,7 +4991,7 @@ export function acquireOrdinaryWarning(
       ...(place.sourceEventId ? [{ family: 'awareness' as const, id: place.sourceEventId }] : []),
     ],
   };
-  return acquireObservation(world, observer, {
+  return acquireInterpretedObservation(world, observer, {
     ...(source.context ? { context: source.context } : {}),
     origin: {
       kind: 'occurrence',
@@ -4299,37 +5037,40 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
       ) {
         if (contact)
           renewed.set(currentFacetGrant(state, lease).subjectId, { previous: lease.id, newLife });
-        finalizeLease(world, observer, lease);
-        removeCurrentFacets(world, observer.id, [key]);
+        receiveCurrentChange(world, observer, {
+          kind: 'availability',
+          keys: [key],
+          state: 'ended',
+        });
       }
     }
     for (const [sourceId, contact] of Object.entries(contacts)) {
       const key = `${sourceId}:contact`;
-      const held = currentFacetGet(state, key);
+      const held = currentFacetGet(state, key, { modality: 'touch' });
       const existing = held && readOnlyDraftView(held);
       if (existing) {
-        if (currentFacetTimes(state, existing).confirmedThrough < world.simTime) {
-          replaceCurrentFacet(world, state, key, {
-            ...updateCurrentFacetTimes(state, existing, {
-              confirmedThrough: world.simTime,
-              valueMeasuredThrough: world.simTime,
-              valueAcquiredAt: world.simTime,
-            }),
-            revision: existing.revision + 1,
-          });
-        }
+        receiveCurrentChange(world, observer, {
+          kind: 'confirm',
+          subjectId: sourceId,
+          channel: currentFacetGrant(state, existing).channel,
+          through: world.simTime,
+        });
         continue;
       }
       const exposure: ObservationExposure = {
         observer: observerLife(observer),
         episodeId: contact.id,
+        track: receivedTrackKey(
+          contact.id,
+          receivedChannelPin(world, observer, 'touch', contact.senseId),
+        ),
       };
       const subject = entityGet(world.entities, sourceId),
         physicalLife = subject?.actor ? (subject.actor.physicalLife ?? 0) : null,
         renewal = renewed.get(sourceId),
         measuredFrom = renewal?.newLife ? world.simTime : contact.changedAt;
       const value: SensoryFacet = { kind: 'contact', exposure, detail: contact.detail };
-      const original = acquireReceivedObservation(world, observer, {
+      const original = receiveReceivedObservation(world, observer, {
         origin: {
           kind: 'exposure',
           episodeId: contact.id,
@@ -4354,7 +5095,7 @@ export function reconcileContactEvidence(world: WorldState, observer: Entity): v
           },
         ],
       });
-      replaceCurrentFacet(world, state, key, {
+      receiveCurrentSample(world, state, key, {
         id: nextId(world, 'perception-lease'),
         revision: 1,
         observer: observerLife(observer),
@@ -4395,6 +5136,10 @@ export function validateObservationContribution(
     !Number.isFinite(observation.acquiredAt) ||
     !['sight', 'hearing', 'touch'].includes(observation.modality) ||
     !validObservationDetector(observation.detector) ||
+    (observation.channel !== undefined && !isDefinitionPin(observation.channel)) ||
+    (observation.origin?.kind === 'exposure' &&
+      observation.facets?.some((facet) => facet.role === 'direct') &&
+      !observation.channel) ||
     !observation.origin ||
     !Array.isArray(observation.facets) ||
     observation.facets.some(
@@ -4439,13 +5184,10 @@ export function validateObservationContribution(
       typeof context.attended !== 'boolean' ||
       !Array.isArray(context.subjects) ||
       !context.subjects.length ||
-      new Set(context.subjects.map((subject) => subject?.episodeId)).size !==
-        context.subjects.length ||
+      new Set(context.subjects.map((subject) => subject?.track)).size !== context.subjects.length ||
       context.subjects.some(
         (subject) =>
-          !hasRecordFields(subject, ['observer', 'episodeId']) ||
-          !hasRecordFields(subject.observer, ['actorId', 'physicalLife']) ||
-          !isSafeRecordId(subject.episodeId) ||
+          !validObservationExposure(subject) ||
           subject.observer.actorId !== observation.observer.actorId ||
           subject.observer.physicalLife !== observation.observer.physicalLife,
       ))
@@ -4501,13 +5243,7 @@ function validReceivedExposureParticipant(
   return (
     hasRecordFields(value, ['kind', 'exposure']) &&
     value.kind === 'exposure' &&
-    hasRecordFields(value.exposure, ['observer', 'episodeId']) &&
-    isSafeRecordId(value.exposure.episodeId) &&
-    hasRecordFields(value.exposure.observer, ['actorId', 'physicalLife']) &&
-    isSafeRecordId(value.exposure.observer.actorId) &&
-    typeof value.exposure.observer.physicalLife === 'number' &&
-    Number.isSafeInteger(value.exposure.observer.physicalLife) &&
-    value.exposure.observer.physicalLife >= 0
+    validObservationExposure(value.exposure)
   );
 }
 
@@ -4797,6 +5533,8 @@ export function validateSensoryFacet(
         throw new Error('Invalid observed public attributes.');
       break;
     case 'observed-motion': {
+      if (!validObservationExposure(value.exposure))
+        throw new Error('Invalid received motion track.');
       for (const sample of [value.earlier, value.later]) {
         validateObservedLocation(sample.location);
         validateEvidenceSource(sample.original.source);
@@ -4865,8 +5603,7 @@ export function validateSensoryFacet(
       break;
     case 'contact':
       if (
-        !value.exposure ||
-        typeof value.exposure.episodeId !== 'string' ||
+        !validObservationExposure(value.exposure) ||
         !['present', 'moving'].includes(value.detail)
       )
         throw new Error('Invalid anonymous contact evidence.');
@@ -4985,3 +5722,9 @@ export function validateSensoryFacet(
       throw new Error('Invalid received sensory facet.');
   }
 }
+
+export {
+  captureCurrentSources,
+  captureCurrentSource,
+  type CapturedCurrentSources,
+} from './perception-capture.js';

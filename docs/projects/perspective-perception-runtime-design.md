@@ -1,8 +1,8 @@
 # Shared reception and change runtime
 
-| Status      | Current progress                                                                                                             | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Not started | Shared lifecycle design is complete; PP08 extends the installed BK foundation and requires implementation and qualification. | 2026-10-31   |
+| Status      | Current progress                                                                                        | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | PP08 and the three bookkeeping removals are installed; integrated operating qualification remains open. | 2026-10-31   |
 
 This is the implementation companion to the [perspective-perception feature specification](perspective-perception-feature-spec.md#shared-reception-and-change) and [technical contract](perspective-perception-tech-design.md). It owns the common receiving procedure, not new physical senses, attention policy, a new context compiler or storage engine. [PP08](../maintainers/perspective-perception.md#pp08--shared-reception-and-change) owns the conversion; [branch integration](attention-and-scenes-runtime-design.md#139-branch-ownership-and-integration) assigns overlapping implementation to BK and RU. Design does not authorize runtime edits.
 
@@ -46,7 +46,7 @@ An event account may contain several channels. Its adapter partitions their supp
 
 ### 3.1 Track, group and occurrence
 
-A **track** is one observer's ongoing reception through a supported channel. It can concern a body, a contact, a feature, a continuing signal or the observer's own supported sensation; it need not be a recognized person, one known entity or a spatial point. Reuse the existing exposure/source family identities and observer life. Key a track by the observer life, local contact/exposure identity, installed sense identity and trusted detector role, using the existing structured-key helper/nested maps. Measurement time, pose, value hash and storage position are not track identity; movement cannot create a new track per sample. Definition pins and changing physical dependencies belong to support. Existing continuity rules decide whether a capability/definition change ends that track. Private producer routing and public observer-local correspondence remain separate.
+A **track** is one observer's ongoing reception through a supported channel. It can concern a body, a contact, a feature, a continuing signal or the observer's own supported sensation; it need not be a recognized person, one known entity or a spatial point. Reuse the existing exposure/source family identities and observer life. Within that life, `receivedTrackKey` combines the local exposure with the complete installed channel pin; its trusted detector has the same definition ID/version. Replacing the channel ends that current track without rewriting historical support. Measurement time, pose, value hash and storage position are not track identity; movement cannot create a new track per sample. Changing physical dependencies belong to support. Private producer routing and public observer-local correspondence remain separate.
 
 BK's persistent contact collection is the storage foundation, not a second track database. A contact contains its channel tracks and received groups. An internal source bucket may optimize routing, but a reader cannot join unknown hearing and visual references just because both route to the same hidden entity. A permitted association from the existing identity owner is required to present them as one known source. Different channels can contribute to the same attended individual only through that association or an actual supported current correspondence. Unassociated signals can supply a candidate or region without a person ID. Their number and separability must come from received evidence: two hidden emitter IDs do not prove two distinguishable sounds or two people. The producer may provide one unresolved received mixture; private routing buckets cannot become public subject counts, discovery candidates or assumed correspondence.
 
@@ -59,6 +59,8 @@ Do not merge value identity, occurrence identity, track continuity or learned id
 ### 3.2 Conceptual native interface
 
 These names specify semantic roles; extend the existing types/entry points instead of introducing wrappers solely to match the names. `TrackKey`, `FieldMask`, typed values and source references reuse the owning identities and group layout. A field mask selects already defined members; it is not a dictionary of arbitrary sensor property names.
+
+The implementation uses `ReceivedCurrentChange` and `receiveCurrentChange`, batched by `withReceivedChanges`/`receiveCurrentChanges` inside the existing observer boundary. `receiveObservation` admits actual source contributions; `acquireInterpretedObservation` admits supported non-direct interpretation separately. Current contact groups retain actual check/unchecked state and an optional recording cursor. Recent chunks declare membership once and append actual check stamps by address; they have no actor-wide per-field capture/check maps. Pure live/frozen projection shares `perception-capture.ts`; evidence cuts contain only explicitly selected facts.
 
 ```ts
 type ReceivedUpdate =
@@ -155,6 +157,8 @@ The reducer performs no world-policy classification of footsteps, danger, kinshi
 
 Broad acquired state is not restricted to ten subjects. Detailed attention selects richer checking and chronological retention of supported temporal changes across channels; it is not an explicit follow action. Supported correspondence lets one selected person carry their received visual and auditory details. Without that correspondence, the body and anonymous voice remain distinct candidates. A sound/region can receive attention without an entity, while independent physical-feature context continues to support native cues and model surroundings without consuming all body slots.
 
+Familiarity credit applies immediately from its admitted proof; attention uses the new score at its next existing opportunity, rather than adding a third selection pass. Explicitly supported same-subject candidates use one slot, with maximum received salience rather than summed duplicate cues. Prefer its eligible visual body as representative so native physical anchors retain their exact body permission; otherwise preserve an incumbent track. Linked tracks keep independent evidence and times, and bounded context selection can omit detail honestly. Private routing equality never establishes this correspondence.
+
 Explicit focus or a due attention decision can change selection with **no reception batch**. The attention owner sends its existing before/after transition to the same recorder: entry captures already acquired group references with their original measurement/check times, exit ends future detailed coverage, and a no-op creates nothing. Do not synthesize a `sample`/`confirm`, refresh currentness, credit familiarity or rerun sensing to satisfy that call. Any newly requested detail arrives only through its real producer. Selection and an actual received change at the same boundary are captured once under §4’s bounded selected-set union.
 
 Keep native world-authored salience, actual focus/work/direct cues, permitted familiarity and current discovery/stability rules. Do not map a personality interest to a pre-enumerated inventory of object IDs, run a model per sensory update, or introduce an extra background sample list. General semantic relevance to a novel object or portrait can be considered during existing justified cognition using available properties. The framework does not solve or silently expand personality interpretation.
@@ -239,7 +243,7 @@ A future authored channel might report a continuing vibration and a bearing with
 
 ## 9. Implementation sequence and removal checklist
 
-**Execution is not authorized by this design.** Implement once on the existing owners/branches; the table gives reviewable order, not another set of independent parallel projects.
+The conversion uses the existing owners; the table defines its implementation and removal boundaries, with delivery status in PP08.
 
 | Step and owner                     | Concrete work                                                                                                                                                                                                                                                                                   | Remove only after connected proof                                                                                                                            |
 | ---------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |

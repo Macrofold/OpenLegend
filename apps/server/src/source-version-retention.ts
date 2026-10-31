@@ -11,7 +11,10 @@ import {
 import { personalAccountRevision } from './personal-accounts.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { RecordChanges } from './world-records.js';
-import type { RetentionMetadataView } from './retention-metadata.js';
+import {
+  accountWriteNeedsRetentionClosure,
+  type RetentionMetadataView,
+} from './retention-metadata.js';
 
 type Category = 'optional' | 'required' | 'speech';
 interface VersionKey {
@@ -190,7 +193,7 @@ export async function prepareSourceVersions(
       const value = JSON.parse(row.payload) as ExperienceEntry['value'];
       const manifest = 'manifest' in value ? value.manifest : undefined;
       const sources = 'sources' in value ? value.sources : [];
-      if (!row.create || manifest || sources?.length) actors.add(actorId);
+      if (accountWriteNeedsRetentionClosure(table, row)) actors.add(actorId);
       changed(actorId, kind, row.id, !row.create);
       if ('kind' in value && value.kind === 'impression') continue;
       const category = accountClass({ source: kind, value } as ExperienceEntry);

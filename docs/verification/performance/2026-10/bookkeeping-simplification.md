@@ -80,7 +80,7 @@ Raw evidence: `/tmp/ol-bookkeeping-review-focused-final.txt`, `/tmp/ol-bookkeepi
 
 ### Residual design targets
 
-These are next investigation/design targets, **not additional delivered changes or proven speedups**:
+These targets describe the earlier BK cut. PP08 implements the first three below; its integrated section records the connected checks and operating evidence. The command-durability decision remains unchanged:
 
 - **Stop repeating unchanged check membership.** Current checks share clocks/provenance but still encode their selected fields at every opportunity. Reuse one exact field-membership declaration and encode only actual subsequent check stamps or lossless regular timestamp/revision runs. Keep changed samples, sampling gaps, captured prefixes, correction and independent stale detail exact. Measure complete logical/index bytes, not only tuple count; any run format must preserve atomic required events and native addresses.
 - **Admit minimum received events before rich witness preparation.** Crowded native activity fans events out to nearby witnesses before optional retention is settled. Keep physical reception and cheap native cues for every lawful receiver, select detailed/required/useful retention, then construct richer personal accounts only for consumers that require them. Share compatible source preparation and publish changed owners once per coherent boundary where rollback semantics allow. Never skip cues by merely filtering unattended witnesses.
@@ -92,3 +92,24 @@ These are next investigation/design targets, **not additional delivered changes 
 Physical table/index bytes grow during the three rapid cleanup cycles even after dead canonical rows disappear. PostgreSQL autovacuum/reuse and sustained foreground cleanup are unqualified. A clock jump is no evidence about lifetime encounter distributions. Hundreds of active characters, faster clocks, mature cold retrieval and multi-account responsiveness retain their actual SR07/BK07 requirements.
 
 Do not start the full larger/faster/mature matrix or repeatedly rerun unchanged failures while standard play and one substantial scene cannot meet their gates. Attribute a remaining failure using one bounded complete-path capture, report the owners and proposed next change, and retain the failed acceptance. No slower sensing, smaller memory quota, larger timeout or hidden queue debt qualifies the original normal-speed promise.
+
+## PP08 integrated reception and bookkeeping
+
+Implementation uses the merged BK/RU/SR owners on `codex/stealth-runtime-01-evidence`, based on `Macrofold/OpenLegend` commit `ceeff7ca678b49acb1cc01b5972fd5310244df19`. The common receiver handles supported channel samples, checks, unchecked/ended availability and occurrences; current groups and selected history keep exact channel pins and independent times. No sensing, attention, retention, command-durability or AI defaults were tuned to improve the result.
+
+The three bookkeeping removals are installed: exact temporal membership is declared once and reused by subsequent actual check stamps; minimum event admission precedes rich witness preparation; ordinary appends use native counters instead of loading cold actor catalogues. Exact-ID checks distinguish new empty-manifest accounts from cold edits; due retirement selects indexed oldest/affected rows and surviving membership. These are structural removals, not a measured speedup.
+
+Disposable native/codec/PostgreSQL checks, without the unit suite or paid providers, establish:
+
+- An unchanged three-member group visits one group, expands zero fields and reuses one declaration. Reconsuming the same phase/proof adds no operation; a real same-time sight revision 1→2 records a distinct stamp. Irregular times, captured prefixes, sparse erasure, partial baseline complements and cold replay preserve exact meaning.
+- Actual movement and speech retain chronology through PostgreSQL restoration and scoped forgetting. Appearance and position confirmations remain independent; sparse composite support resolves both actual stamps. Unknown actors remain local roles rather than hidden canonical names.
+- Sixteen broadly received people remain present with ten detailed subjects; a selected mover approaching an actually received drop produces a native geometry-backed cue before AI. This controlled specimen is not autonomous protective judgment or population qualification.
+- A native hare receives sound without words or human autobiography; its temporary sensory state expires at the later native phase. Ordinary-clock forgetting/reacquisition supplies a fresh source without restoring the old cut.
+- Command-driven travel to Mending Clearing and back acquires the real authored place. Cold preparation grounds an understood warning as testimony. Minimum place support survives raw-account expiry; forgetting rebuilds the dirty index before native intake and prevents a later unknown-label warning from becoming a grounded place claim.
+- Names/recognition retain only selected words, features and association proof; source expiry, unseen voice recognition, cold restoration and old-life support preserve ownership. Revoked support cannot append a foreign-life receipt. Live/frozen current projection shares role/time/support construction; anonymous touch has its own track and opaque handle.
+
+Type checking includes existing test sources; the production build passes with the existing bundle-size warning. No new maintained tests were authored and no unit suite ran. Additional/cumulative Jev and cloud cost: $0. No cloud resources were provisioned. Uncoached play, model quality, future physical senses and full PP07/SAI-A are unassessed.
+
+The configured development destination was reset from incompatible schema 48 to 49 through the current initializer and cold reopened: `wilderness-1087`, 163 entities, seven people. All 39 access/asset tables and external assets were preserved; paid/operational tables were empty. Prior development gameplay progress was replaced.
+
+Final source review and operating measurements are pending. Performance gates remain open; historical results above do not qualify PP08.

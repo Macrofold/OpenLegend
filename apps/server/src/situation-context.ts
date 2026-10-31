@@ -1,8 +1,13 @@
-import { currentFacetValues } from '@open-legend/domain';
-import { currentFacetGrant } from '@open-legend/domain';
 import { z } from 'zod';
 import {
   captureEvidenceCut,
+  captureCurrentSources,
+  captureCurrentSource,
+  receivedTrackKey,
+  currentSelectionTracks,
+  receivedValueAt,
+  sameDefinitionPin,
+  sameSubject,
   canonicalJson,
   PERSONAL_EVIDENCE_PREPARATION,
   captureTemporalReceiptPrefix,
@@ -16,7 +21,6 @@ import {
   currentBodyGrant,
   currentBodySubject,
   entityGet,
-  currentFacetTimes,
   currentReceivedGeometry,
   receivedScene,
   receivedNear,
@@ -38,6 +42,9 @@ import {
   type ObservationContribution,
   type ObservationFactKey,
   type TemporalReceiptPrefix,
+  type DefinitionPin,
+  type SensoryFacet,
+  type ObserverSubject,
 } from '@open-legend/domain';
 import {
   entityHandle,
@@ -53,6 +60,7 @@ import {
   facetSupportForModel,
   bodyPoseSupportForModel,
   bodyDescriptionSupportForModel,
+  subjectForModel,
   observationForModel,
   captureExperienceContext,
   capturedExperience,
@@ -190,6 +198,7 @@ function temporalFactsForModel(
           ? {
               detailSupport: {
                 proof: facetSupportForModel(world, actorId, detailSupport.proof),
+                role: detailSupport.role,
                 measuredFrom: detailSupport.from,
                 measuredThrough: detailSupport.through,
                 acquiredAt: detailSupport.acquiredAt,
@@ -233,6 +242,9 @@ function prepareTemporalHistoryForModel(
         receipt.ordinal,
       ]),
       subject: receivedSubjectHandle(world, actorId, receipt.subject),
+      ...(receipt.subjectIdentity
+        ? { localSubject: subjectForModel(world, actorId, receipt.subjectIdentity) }
+        : {}),
       ...(receipt.contextSubjects?.length
         ? {
             contextFor: receipt.contextSubjects.map((subject) =>
@@ -265,6 +277,9 @@ function prepareTemporalHistoryForModel(
   ) => ({
     reference: temporalBaselineHandle(world, actorId, baseline),
     subject: receivedSubjectHandle(world, actorId, baseline.checkpoint.subject),
+    ...(baseline.checkpoint.subjectIdentity
+      ? { localSubject: subjectForModel(world, actorId, baseline.checkpoint.subjectIdentity) }
+      : {}),
     entryAt: baseline.checkpoint.at,
     knownAt: baseline.availableAt,
     ...(baseline.checkpoint.availability?.length
@@ -436,20 +451,62 @@ function temporalValueForModel(
   return facetValueForModel(world, actorId, value, scope, frame);
 }
 
+interface SituationCurrentTrack {
+  sourceId: string;
+  exposure: string;
+  channel: DefinitionPin;
+}
+const currentTrackKey = (track: SituationCurrentTrack) =>
+  canonicalJson([
+    track.sourceId,
+    track.exposure,
+    track.channel.id,
+    track.channel.version,
+    track.channel.digest,
+  ]);
+const sameCurrentTrack = (first: SituationCurrentTrack, second?: SituationCurrentTrack) =>
+  !!second &&
+  first.sourceId === second.sourceId &&
+  first.exposure === second.exposure &&
+  sameDefinitionPin(first.channel, second.channel);
+function receivedTrack(
+  current: ReturnType<typeof captureCurrentSources>,
+  sourceId: string,
+  track: string,
+  leaseId?: string,
+): SituationCurrentTrack | undefined {
+  const group = current.sources[sourceId]?.groups.find(
+    (group) =>
+      receivedTrackKey(group.grant.exposure, group.grant.channel) === track &&
+      (leaseId
+        ? ['body', 'contact', 'detected'].some((kind) => group.fields[kind]?.id === leaseId)
+        : group.grant.modality === 'sight' && group.fields['body']),
+  );
+  return group && { sourceId, exposure: group.grant.exposure, channel: group.grant.channel };
+}
 interface SituationBodyRead {
   actorId: string;
   frame: ModelSpatialFrame;
   presentation: CapturedExperienceContext;
-  currentBySource: ReadonlyMap<string, readonly CapturedCurrentFacet[]>;
-  acquiredAtById: ReadonlyMap<string, number>;
+  current: ReturnType<typeof captureCurrentSources>;
+  visualTracks: ReadonlyMap<string, SituationCurrentTrack>;
+  captured: Map<
+    string,
+    { kinds: SensoryFacet['kind'][]; facts: Map<SensoryFacet['kind'], CapturedCurrentFacet[]> }
+  >;
   changedCandidates: ReadonlySet<string>;
-  entryBySource: ReadonlyMap<string, ReturnType<typeof currentDetailedAttention>[number]>;
+  entryByTrack: ReadonlyMap<string, ReturnType<typeof currentDetailedAttention>[number]>;
   cueFacts: ReadonlySet<string>;
   allCurrentReferences: Record<string, CapturedCurrentFacet>;
   salientFacts: Set<string>;
   indexedFrame: ReturnType<typeof modelFrameTable>['indexed'];
 }
-function situationBodyFacts(read: SituationBodyRead, id: string, kinds?: readonly string[]) {
+function situationBodyFacts(
+  read: SituationBodyRead,
+  id: string,
+  kinds?: readonly SensoryFacet['kind'][],
+  selectedTrack = read.visualTracks.get(id),
+) {
   const {
     actorId,
     frame,
@@ -458,101 +515,142 @@ function situationBodyFacts(read: SituationBodyRead, id: string, kinds?: readonl
     salientFacts,
     cueFacts,
     indexedFrame,
-    entryBySource,
+    entryByTrack,
   } = read;
-  const facets = read.currentBySource.get(id) ?? [];
-  const rendered = facets
-    .filter(
-      (facet) =>
-        facet.value.kind !== 'perceived-feature' && (!kinds || kinds.includes(facet.value.kind)),
-    )
-    .map((facet) => {
-      const reference = permittedSourceHandle(world, actorId, [
-        'current-fact',
-        facet.original.source.id,
-        facet.original.ordinal,
-      ]);
-      allCurrentReferences[reference] = facet;
-      const entry = entryBySource.get(id);
-      const changed = entry && read.changedCandidates.has(entry.key);
-      const acquiredAt = read.acquiredAtById.get(facet.id);
-      if (
-        cueFacts.has(canonicalJson(facet.original)) ||
-        (facet.value.kind === 'observed-motion' &&
-          [facet.value.earlier, facet.value.later].some((sample) =>
-            cueFacts.has(canonicalJson(sample.original)),
-          )) ||
-        (entry &&
-          changed &&
-          acquiredAt !== undefined &&
-          // A completed sight phase refreshes effective acquisition without
-          // changing the received value. Rank actual source changes, not age.
-          acquiredAt > entry.startedAt)
+  const key = selectedTrack && currentTrackKey(selectedTrack);
+  let captured = key ? read.captured.get(key) : undefined;
+  if (key && selectedTrack && !captured) {
+    const fields = new Set(
+      read.current.sources[id]?.groups
+        .filter(
+          (group) =>
+            group.grant.exposure === selectedTrack.exposure &&
+            sameDefinitionPin(group.grant.channel, selectedTrack.channel),
+        )
+        .flatMap((group) => Object.keys(group.fields) as SensoryFacet['kind'][]) ?? [],
+    );
+    if (fields.has('location')) fields.add('observed-motion');
+    captured = { kinds: [...fields], facts: new Map() };
+    read.captured.set(key, captured);
+  }
+  const selected = captured
+    ? captured.kinds.filter(
+        (kind) => kind !== 'perceived-feature' && (!kinds || kinds.includes(kind)),
       )
-        salientFacts.add(reference);
+    : [];
+  if (captured && selectedTrack) {
+    const missing = selected.filter((kind) => !captured.facts.has(kind));
+    if (missing.length) {
+      const facts = captureCurrentSource(read.current, id, {
+        exposure: selectedTrack.exposure,
+        channel: selectedTrack.channel,
+        kinds: missing,
+      });
+      for (const kind of missing) captured.facts.set(kind, []);
+      for (const facet of facts) captured.facts.get(facet.value.kind)!.push(facet);
+    }
+  }
+  const facets = selected.flatMap((kind) => captured?.facts.get(kind) ?? []);
+  const rendered = facets.map((facet) => {
+    const reference = permittedSourceHandle(world, actorId, [
+      'current-fact',
+      facet.original.source.id,
+      facet.original.ordinal,
+    ]);
+    allCurrentReferences[reference] = facet;
+    const entry = key && entryByTrack.get(key);
+    const changed = entry && read.changedCandidates.has(entry.key);
+    const group =
+      selectedTrack &&
+      read.current.sources[id]?.groups.find(
+        (group) =>
+          group.grant.exposure === selectedTrack.exposure &&
+          sameDefinitionPin(group.grant.channel, selectedTrack.channel) &&
+          group.fields[facet.value.kind]?.id === facet.id,
+      );
+    const acquiredAt = group && (group.times[2] ?? group.times[0]);
+    if (
+      cueFacts.has(canonicalJson(facet.original)) ||
+      (facet.value.kind === 'observed-motion' &&
+        [facet.value.earlier, facet.value.later].some((sample) =>
+          cueFacts.has(canonicalJson(sample.original)),
+        )) ||
+      (entry &&
+        changed &&
+        acquiredAt !== undefined &&
+        // A completed sight phase refreshes effective acquisition without
+        // changing the received value. Rank actual source changes, not age.
+        acquiredAt > entry.startedAt)
+    )
+      salientFacts.add(reference);
 
-      // Current motion carries exact received endpoints, not two recursively repeated accounts.
-      const value =
-        facet.value.kind === 'observed-motion'
-          ? {
-              kind: facet.value.kind,
-              correspondence: facet.value.correspondence,
-              earlier: indexedFrame(
-                {
-                  location: modelObservedLocation(frame, facet.value.earlier.location),
-                  measuredFrom: facet.value.earlier.measuredFrom,
-                  measuredThrough: facet.value.earlier.measuredThrough,
-                },
-                modelObservationFrame(frame, facet.value.earlier.frame),
-              ),
-              later: indexedFrame(
-                {
-                  location: modelObservedLocation(frame, facet.value.later.location),
-                  measuredFrom: facet.value.later.measuredFrom,
-                  measuredThrough: facet.value.later.measuredThrough,
-                },
-                modelObservationFrame(frame, facet.value.later.frame),
-              ),
-            }
-          : facet.value.kind === 'location'
-            ? indexedFrame(
-                {
-                  kind: facet.value.kind,
-                  location: modelObservedLocation(frame, facet.value.location),
-                },
-                modelObservationFrame(frame, facet.value.frame),
-              )
-            : facetValueForModel(world, actorId, facet.value, facet.original.source.id, frame);
-      return {
-        reference,
-        value,
-        measuredFrom: facet.valueMeasuredFrom,
-        measuredThrough: facet.valueMeasuredThrough,
-        acquiredAt: facet.valueAcquiredAt,
-        ...(facet.descriptionSupport
-          ? {
-              descriptionSupport: bodyDescriptionSupportForModel(
-                world,
-                actorId,
-                facet.descriptionSupport,
-              ),
-            }
-          : {}),
-        ...(facet.poseSupport
-          ? {
-              positionSupport: bodyPoseSupportForModel(
-                world,
-                actorId,
-                facet.poseSupport,
-                frame,
-                indexedFrame,
-              ),
-            }
-          : {}),
-        confirmedThrough: facet.confirmedThrough,
-        modality: facet.modality,
-      };
-    });
+    // Current motion carries exact received endpoints, not two recursively repeated accounts.
+    const value =
+      facet.value.kind === 'observed-motion'
+        ? {
+            kind: facet.value.kind,
+            correspondence: facet.value.correspondence,
+            earlier: indexedFrame(
+              {
+                location: modelObservedLocation(frame, facet.value.earlier.location),
+                measuredFrom: facet.value.earlier.measuredFrom,
+                measuredThrough: facet.value.earlier.measuredThrough,
+              },
+              modelObservationFrame(frame, facet.value.earlier.frame),
+            ),
+            later: indexedFrame(
+              {
+                location: modelObservedLocation(frame, facet.value.later.location),
+                measuredFrom: facet.value.later.measuredFrom,
+                measuredThrough: facet.value.later.measuredThrough,
+              },
+              modelObservationFrame(frame, facet.value.later.frame),
+            ),
+          }
+        : facet.value.kind === 'location'
+          ? indexedFrame(
+              {
+                kind: facet.value.kind,
+                location: modelObservedLocation(frame, facet.value.location),
+              },
+              modelObservationFrame(frame, facet.value.frame),
+            )
+          : facetValueForModel(world, actorId, facet.value, facet.original.source.id, frame);
+    return {
+      reference,
+      role: facet.role,
+      ...(facet.localSubject
+        ? { localSubject: subjectForModel(world, actorId, facet.localSubject) }
+        : {}),
+      value,
+      measuredFrom: facet.valueMeasuredFrom,
+      measuredThrough: facet.valueMeasuredThrough,
+      acquiredAt: facet.valueAcquiredAt,
+      ...(facet.availability ? { availability: facet.availability } : {}),
+      ...(facet.descriptionSupport
+        ? {
+            descriptionSupport: bodyDescriptionSupportForModel(
+              world,
+              actorId,
+              facet.descriptionSupport,
+            ),
+          }
+        : {}),
+      ...(facet.poseSupport
+        ? {
+            positionSupport: bodyPoseSupportForModel(
+              world,
+              actorId,
+              facet.poseSupport,
+              frame,
+              indexedFrame,
+            ),
+          }
+        : {}),
+      confirmedThrough: facet.confirmedThrough,
+      modality: facet.modality,
+    };
+  });
   const defaults = rendered[0]
     ? {
         measuredFrom: rendered[0].measuredFrom,
@@ -706,7 +804,10 @@ interface SituationQueryRead {
   scene: ReturnType<typeof receivedScene>;
   regions: ReadonlyMap<string, string>;
   handles: ReadonlyMap<string, string>;
-  bodyFacts: (id: string, kinds?: readonly string[]) => ReturnType<typeof situationBodyFacts>;
+  bodyFacts: (
+    id: string,
+    kinds?: readonly SensoryFacet['kind'][],
+  ) => ReturnType<typeof situationBodyFacts>;
   emittedFacts: (reference: string) => ReturnType<typeof situationBodyFacts>['facts'];
 }
 function validSituationCut(
@@ -823,12 +924,150 @@ export function captureSituation(
     scene = receivedScene(world, actorId),
     frame = captureModelSpatialFrame(world, actorId);
   const geometry = currentReceivedGeometry(world, actorId);
-  const cut = captureEvidenceCut(world, actorId, geometry.observations),
-    entries = currentDetailedAttention(world, actorId);
+  const current = captureCurrentSources(world, actorId);
+  const phaseCut = captureEvidenceCut(world, actorId, { acquired: geometry.observations });
+  const cut = { ...phaseCut, current: [] as CapturedCurrentFacet[] };
+  const entries = currentDetailedAttention(world, actorId),
+    candidates = attentionCandidates(world, actorId);
+  const visualTracks = new Map(
+    [...scene.bodies].flatMap(([id, body]) => {
+      const track = receivedTrack(current, id, body.track);
+      return track ? [[id, track] as const] : [];
+    }),
+  );
+  const bodyBindings = new Map(
+    [...scene.bodies.keys()].flatMap((id) => {
+      const grant = currentBodyGrant(world, actorId, id);
+      if (!grant) return [];
+      const subject =
+        currentBodySubject(world, actorId, id) ??
+        (!entityGet(world.entities, id)?.actor
+          ? { kind: 'entity' as const, entityId: id }
+          : undefined);
+      return [
+        [
+          id,
+          {
+            handle: entityHandle(world, actorId, id),
+            leaseId: grant.leaseId,
+            ...(subject ? { subject } : {}),
+            ...(world.perceptionEpisodes?.[actorId]?.[id]
+              ? { episode: world.perceptionEpisodes[actorId]![id]! }
+              : {}),
+          },
+        ] as const,
+      ];
+    }),
+  );
+  const candidateTracks = new Map(
+    Object.entries(candidates).flatMap(([key, candidate]) => {
+      const track = receivedTrack(
+        current,
+        candidate.sourceId,
+        candidate.exposure.track,
+        candidate.leaseId,
+      );
+      return track ? [[key, track] as const] : [];
+    }),
+  );
+  const candidateByTrack = new Map(
+    [...candidateTracks].map(([key, track]) => [currentTrackKey(track), key]),
+  );
+  const resolvedSubjects = new Map<string, ObserverSubject>();
+  for (const [key, track] of candidateTracks) {
+    const candidate = candidates[key]!,
+      subject = candidate.subject;
+    if (!subject) continue;
+    const groups = current.sources[track.sourceId]!.groups.filter(
+      (group) =>
+        group.grant.exposure === track.exposure &&
+        sameDefinitionPin(group.grant.channel, track.channel),
+    );
+    const binding = bodyBindings.get(track.sourceId);
+    const boundSubject =
+      sameCurrentTrack(track, visualTracks.get(track.sourceId)) &&
+      binding?.leaseId === candidate.leaseId &&
+      binding.subject !== undefined &&
+      sameSubject(binding.subject, subject);
+    const supported =
+      boundSubject ||
+      groups.some((group) => {
+        const local = ['body', 'contact', 'detected'].some((kind) => {
+          const field = group.fields[kind];
+          return (
+            field?.id === candidate.leaseId &&
+            field.localSubject !== undefined &&
+            sameSubject(field.localSubject, subject)
+          );
+        });
+        const association = group.fields['association'],
+          value = association && receivedValueAt(current.values, association.value.reference);
+        return local || (value?.kind === 'association' && sameSubject(value.subject, subject));
+      });
+    // The frozen catalogue omits expired/revoked association proof. A live
+    // candidate label cannot restore it or make routing IDs a personal match.
+    if (supported) resolvedSubjects.set(receivedTrackKey(track.exposure, track.channel), subject);
+  }
+  const selectedTracks = new Map<string, SituationCurrentTrack>();
+  const selectTrack = (track: SituationCurrentTrack) => {
+    if (
+      current.sources[track.sourceId]?.groups.some(
+        (group) =>
+          group.grant.exposure === track.exposure &&
+          sameDefinitionPin(group.grant.channel, track.channel),
+      )
+    )
+      selectedTracks.set(currentTrackKey(track), track);
+  };
+  // Keep deliberate primary selections before supported sibling channels. The
+  // same personal matcher drives recording; no source-bucket identity join.
+  for (const entry of entries) {
+    const track = candidateTracks.get(entry.key);
+    if (track) selectTrack(track);
+  }
+  for (const [sourceId, tracks] of currentSelectionTracks(
+    current.reader,
+    entries,
+    Object.keys(current.sources),
+    resolvedSubjects,
+  ))
+    for (const track of tracks.values()) selectTrack({ sourceId, ...track });
+  const trackReference = (track: SituationCurrentTrack) =>
+    sameCurrentTrack(track, visualTracks.get(track.sourceId))
+      ? entityHandle(world, actorId, track.sourceId)
+      : permittedSourceHandle(world, actorId, ['received-track', currentTrackKey(track)]);
+  const referenceByEntry = new Map(
+    [...candidateTracks].map(([key, track]) => [key, trackReference(track)]),
+  );
+  const allAttentionReferences = Object.fromEntries(
+    [...referenceByEntry].map(([key, reference]) => [reference, key]),
+  );
+  const subjectReferences = new Map(
+    [...visualTracks].map(([id, track]) => [
+      entityHandle(world, actorId, id),
+      receivedTrackKey(track.exposure, track.channel),
+    ]),
+  );
+  for (const [key, track] of candidateTracks)
+    subjectReferences.set(
+      referenceByEntry.get(key)!,
+      receivedTrackKey(track.exposure, track.channel),
+    );
+  for (const track of selectedTracks.values())
+    subjectReferences.set(trackReference(track), receivedTrackKey(track.exposure, track.channel));
+  const entryByReference = new Map(
+    entries.flatMap((entry) => {
+      const reference = referenceByEntry.get(entry.key);
+      return reference ? [[reference, entry] as const] : [];
+    }),
+  );
   const presentation = captureExperienceContext(world, actorId, frame, [
     cut,
     retainedHistory,
     representedObservations,
+    current.subjects,
+    [...bodyBindings.values()].map((value) => value.subject),
+    Object.values(candidates).map((value) => value.subject),
   ]);
   const staticRows: unknown[] = [];
   const suppliedFacts = new Map<string, SuppliedModelFact>();
@@ -901,50 +1140,33 @@ export function captureSituation(
     ...cueAnchors,
     ...entries
       .filter((entry) => ['explicit', 'work', 'direct'].includes(entry.basis))
-      .map((entry) => entityHandle(world, actorId, entry.sourceId)),
+      .flatMap((entry) => referenceByEntry.get(entry.key) ?? []),
   ]);
   const cueFacts = new Set(
     activeCues.flatMap((cue) => cue.proof.map((fact) => canonicalJson(fact))),
   );
-  const entryBySource = new Map(entries.map((entry) => [entry.sourceId, entry]));
+  const entryByTrack = new Map(
+    entries.flatMap((entry) => {
+      const track = candidateTracks.get(entry.key);
+      return track ? [[currentTrackKey(track), entry] as const] : [];
+    }),
+  );
   const salientFacts = new Set<string>();
-  const detailIds = new Set(entries.map((entry) => entry.sourceId));
-  const owner = world.perceptionEvidence?.[actorId];
-  const sourceByFact = new Map<string, string>();
-  const sourceByExposure = new Map<string, string>();
-  if (owner)
-    for (const record of currentFacetValues(owner)) {
-      const grant = currentFacetGrant(owner, record);
-      sourceByFact.set(record.id, grant.subjectId);
-      sourceByExposure.set(grant.exposure, grant.subjectId);
-    }
-  const currentBySource = new Map<string, CapturedCurrentFacet[]>();
-  for (const fact of cut.current) {
-    // Derived reads retain their real exposure but need no saved duplicate lease.
-    const source = sourceByFact.get(fact.id) ?? sourceByExposure.get(fact.exposure.episodeId);
-    if (source) {
-      const rows = currentBySource.get(source) ?? [];
-      rows.push(fact);
-      currentBySource.set(source, rows);
-    }
-  }
-  const candidates = attentionCandidates(world, actorId);
+  const detailKeys = new Set(
+    [...selectedTracks.keys()].flatMap((key) => candidateByTrack.get(key) ?? []),
+  );
   const bodyRead: SituationBodyRead = {
     actorId,
     frame,
     presentation,
-    currentBySource,
-    entryBySource,
+    current,
+    visualTracks,
+    captured: new Map(),
+    entryByTrack,
     cueFacts,
     allCurrentReferences,
     salientFacts,
     indexedFrame,
-    acquiredAtById: new Map(
-      currentFacetValues(owner).map((record) => [
-        record.id,
-        currentFacetTimes(owner!, record).valueAcquiredAt,
-      ]),
-    ),
     changedCandidates: new Set(
       Object.entries(candidates)
         .filter(([, candidate]) => candidate.presentedChange !== candidate.changeRevision)
@@ -952,35 +1174,48 @@ export function captureSituation(
     ),
   };
   const bodyFacts = situationBodyFacts.bind(undefined, bodyRead);
-  const detailed = entries
-    .filter((entry) => scene.bodies.has(entry.sourceId))
-    .map((entry) => ({
-      reference: entityHandle(world, actorId, entry.sourceId),
-      subject: receivedSubjectHandle(world, actorId, entry.exposure.episodeId),
-      facts: bodyFacts(entry.sourceId),
-    }));
+  const detailed = [...selectedTracks.values()].slice(0, policy.maxRows).flatMap((track) => {
+    const reference = trackReference(track),
+      facts = bodyFacts(track.sourceId, undefined, track);
+    return facts.facts.length
+      ? [
+          {
+            reference,
+            subject: receivedSubjectHandle(
+              world,
+              actorId,
+              receivedTrackKey(track.exposure, track.channel),
+            ),
+            facts,
+          },
+        ]
+      : [];
+  });
   const waiting = Object.entries(candidates)
     .filter(([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision)
     .sort((a, b) => a[1].order - b[1].order);
   const discovery: Array<{ reference: string; facts: ReturnType<typeof bodyFacts> }> = [];
   let discoveryBytes = 0;
-  const presentedKeys = entries.map((entry) => entry.key);
+  const presentedKeys = detailed.flatMap((row) => allAttentionReferences[row.reference] ?? []);
   for (const [key, candidate] of waiting) {
-    if (detailIds.has(candidate.sourceId)) continue;
+    if (detailKeys.has(key)) continue;
     if (discovery.length >= policy.discoveryRows) break;
-    const facts = bodyFacts(candidate.sourceId, ['body', 'association', 'carried']);
-    const row = { reference: entityHandle(world, actorId, candidate.sourceId), facts };
+    const track = candidateTracks.get(key),
+      reference = referenceByEntry.get(key);
+    if (!track || !reference) continue;
+    const visual = visualTracks.get(track.sourceId);
+    const kinds: readonly SensoryFacet['kind'][] = sameCurrentTrack(track, visual)
+      ? ['body', 'association', 'carried']
+      : ['detected', 'contact', 'location', 'association'];
+    const facts = bodyFacts(candidate.sourceId, kinds, track);
+    if (!facts.facts.length) continue;
+    const row = { reference, facts };
     const bytes = Buffer.byteLength(JSON.stringify(row));
     if (discoveryBytes + bytes > policy.discoveryBytes) continue;
     discoveryBytes += bytes;
     discovery.push(row);
     presentedKeys.push(key);
   }
-  const allAttentionReferences = Object.fromEntries(
-    Object.entries(candidates)
-      .filter(([, candidate]) => references.has(entityHandle(world, actorId, candidate.sourceId)))
-      .map(([key, candidate]) => [entityHandle(world, actorId, candidate.sourceId), key]),
-  );
   const attentionReferences = Object.fromEntries(
     [...detailed, ...discovery]
       .map((row) => [row.reference, allAttentionReferences[row.reference]!])
@@ -1009,7 +1244,10 @@ export function captureSituation(
   );
   let initialVisits = 0;
   const relations = entries.flatMap((entry, index) => {
-    const anchor = scene.bodies.get(entry.sourceId);
+    const track = candidateTracks.get(entry.key),
+      visual = visualTracks.get(entry.sourceId);
+    const anchor =
+      track && sameCurrentTrack(track, visual) ? scene.bodies.get(entry.sourceId) : undefined;
     if (!anchor) return [];
     const allowance = Math.min(
       policy.perAnchorVisits,
@@ -1144,14 +1382,14 @@ export function captureSituation(
       detail: 'unexpanded',
     }));
   }
-  let omittedDetailedSubjects = 0;
+  let omittedDetailedSubjects = Math.max(0, selectedTracks.size - policy.maxRows);
   let omittedFacets = 0;
   for (const row of [...packet.detailed].reverse()) {
     for (let i = row.facts.facts.length - 1; currentBytes() > policy.maxBytes && i >= 0; i--) {
       const fact = row.facts.facts[i]!;
       const value = fact['value'] as { kind: string };
       if (
-        ['body', 'location', 'association'].includes(value.kind) ||
+        ['body', 'contact', 'detected', 'location', 'association'].includes(value.kind) ||
         salientFacts.has(fact['reference'] as string)
       )
         continue;
@@ -1183,7 +1421,7 @@ export function captureSituation(
     let index = packet.detailed.length - 1;
     while (index >= 0) {
       const row = packet.detailed[index]!;
-      const entry = entryBySource.get(references.get(row.reference)!);
+      const entry = entryByReference.get(row.reference);
       if (
         entry?.basis !== 'discovery' &&
         !prioritizedDetails.has(row.reference) &&
@@ -1203,8 +1441,7 @@ export function captureSituation(
     while (
       index >= 0 &&
       (cueAnchors.has(packet.detailed[index]!.reference) ||
-        entryBySource.get(references.get(packet.detailed[index]!.reference)!)?.basis ===
-          'discovery')
+        entryByReference.get(packet.detailed[index]!.reference)?.basis === 'discovery')
     )
       index--;
     if (index < 0) break;
@@ -1218,8 +1455,7 @@ export function captureSituation(
     while (
       index >= 0 &&
       (prioritizedDetails.has(packet.detailed[index]!.reference) ||
-        entryBySource.get(references.get(packet.detailed[index]!.reference)!)?.basis ===
-          'discovery')
+        entryByReference.get(packet.detailed[index]!.reference)?.basis === 'discovery')
     )
       index--;
     omitDetailed(index < 0 ? packet.detailed.length - 1 : index);
@@ -1263,6 +1499,7 @@ export function captureSituation(
       ),
     ),
   );
+  cut.current = Object.values(currentReferences);
   const queryBodies = querySituationBodies.bind(undefined, {
     references,
     scene,
@@ -1271,30 +1508,6 @@ export function captureSituation(
     emittedFacts,
     handles: new Map([...references].map(([handle, id]) => [id, handle])),
   });
-  const bodyBindings = new Map(
-    [...scene.bodies.keys()].flatMap((id) => {
-      const grant = currentBodyGrant(world, actorId, id);
-      if (!grant) return [];
-      const subject =
-        currentBodySubject(world, actorId, id) ??
-        (!entityGet(world.entities, id)?.actor
-          ? { kind: 'entity' as const, entityId: id }
-          : undefined);
-      return [
-        [
-          id,
-          {
-            handle: entityHandle(world, actorId, id),
-            leaseId: grant.leaseId,
-            ...(subject ? { subject } : {}),
-            ...(world.perceptionEpisodes?.[actorId]?.[id]
-              ? { episode: world.perceptionEpisodes[actorId]![id]! }
-              : {}),
-          },
-        ] as const,
-      ];
-    }),
-  );
   const allPresented = new Map(
     captureAttentionPresentation(world, actorId, Object.values(allAttentionReferences)).map(
       (entry) => [entry.key, entry],
@@ -1320,6 +1533,7 @@ export function captureSituation(
     geometry,
     policy,
     references,
+    subjectReferences,
     regions,
     presented,
     attentionReferences,
@@ -1449,10 +1663,9 @@ export async function expandSituation(
   });
   const encodedBytes = () => Buffer.byteLength(JSON.stringify(wire()));
   const subjects = new Map<string, string>();
-  for (const [handle, id] of captured.references) {
-    const body = captured.scene.bodies.get(id)!;
-    subjects.set(handle, body.exposure);
-    subjects.set(receivedSubjectHandle(world, actorId, body.exposure), body.exposure);
+  for (const [handle, track] of captured.subjectReferences) {
+    subjects.set(handle, track);
+    subjects.set(receivedSubjectHandle(world, actorId, track), track);
   }
   for (const { receipt } of captured.history.entries)
     for (const subject of [receipt.subject, ...(receipt.contextSubjects ?? [])])
@@ -1729,5 +1942,6 @@ export async function expandSituation(
       delete captured.observationReferences[key];
   for (const key of Object.keys(captured.baselineDetails))
     if (!originalBaselines.has(key) && !disclosed.has(key)) delete captured.baselineDetails[key];
+  captured.cut.current = Object.values(captured.currentReferences);
   return { ...wire(), expandedIds };
 }

@@ -1,5 +1,4 @@
-import { currentFacetValues } from '@open-legend/domain';
-import { currentFacetGrant } from '@open-legend/domain';
+import { currentObservedBodyIds } from '@open-legend/domain';
 import { createHmac, randomBytes } from 'node:crypto';
 import {
   accessiblePossession,
@@ -12,7 +11,6 @@ import {
   currentBodyGrant,
   currentBodyValue,
   currentBodySubject,
-  receivedFacetValue,
   type ObserverSubject,
   observerIndividual,
   currentCommunicationSubject,
@@ -294,7 +292,6 @@ export function physicalContactReference(
 /** Select only this observer's active bodies or learned associations, never all world IDs.
  * Resolving an opaque reference grants its exact role; native admission still checks use. */
 function contactTargetResolver(world: WorldState, scope: RequestScope, communication = false) {
-  const owner = world.perceptionEvidence?.[scope.actorId];
   let bodies: Map<string, string> | undefined,
     parts: Map<string, string> | undefined,
     people: Map<string, string> | undefined;
@@ -304,28 +301,21 @@ function contactTargetResolver(world: WorldState, scope: RequestScope, communica
     if (reference.startsWith('contact-')) {
       if (!bodies) {
         bodies = new Map();
-        if (owner)
-          for (const lease of currentFacetValues(owner)) {
-            if (lease.value.kind !== 'body') continue;
-            const entity = entityGet(world.entities, currentFacetGrant(owner, lease).subjectId);
-            if (entity && currentBodyGrant(world, scope.actorId, entity.id))
-              bodies.set(currentContactReference(world, scope, entity), entity.id);
-          }
+        for (const id of currentObservedBodyIds(world, scope.actorId)) {
+          const entity = entityGet(world.entities, id);
+          if (entity) bodies.set(currentContactReference(world, scope, entity), entity.id);
+        }
       }
       selected = bodies;
     } else if (reference.startsWith('part-')) {
       if (!parts) {
         parts = new Map();
-        if (owner)
-          for (const lease of currentFacetValues(owner)) {
-            if (lease.value.kind !== 'body') continue;
-            const subjectId = currentFacetGrant(owner, lease).subjectId;
-            if (!currentBodyGrant(world, scope.actorId, subjectId)) continue;
-            const value = receivedFacetValue(world, lease.value);
-            if (value?.kind !== 'body') continue;
-            for (const part of value.body.assembly?.parts ?? [])
-              parts.set(assemblyPartReference(world, scope, subjectId, part.id), part.id);
-          }
+        for (const subjectId of currentObservedBodyIds(world, scope.actorId)) {
+          const value = currentBodyValue(world, scope.actorId, subjectId)?.value;
+          if (value?.kind !== 'body') continue;
+          for (const part of value.body.assembly?.parts ?? [])
+            parts.set(assemblyPartReference(world, scope, subjectId, part.id), part.id);
+        }
       }
       selected = parts;
     } else if (communication && reference.startsWith('person-')) {
