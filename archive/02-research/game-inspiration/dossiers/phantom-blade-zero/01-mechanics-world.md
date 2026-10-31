@@ -10,13 +10,13 @@ Phantom Blade Zero follows Soul through a single-player martial-arts adventure c
 
 The following loop model is an interpretation of the documented systems:
 
-| Scale | Player activity | What sustains it |
-|---|---|---|
-| Moment | Attack, read a threat, defend, reposition, change weapon | Immediate feedback and a chance to turn defense into another attack |
-| Encounter | Learn an opponent, protect resources, exploit an opening | A readable problem with several potential responses |
-| Region | Follow the campaign, investigate branches, speak to people, revisit an obstacle | New equipment, personal stories and hidden encounters |
-| Campaign | Resolve the survival mystery and determine how much optional work to pursue | A directed journey with a fuller resolution available through additional investigation |
-| Replay | Reuse acquired knowledge and equipment under a chosen challenge | Mastery, alternative equipment and the limited-life mode |
+| Scale     | Player activity                                                                 | What sustains it                                                                       |
+| --------- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| Moment    | Attack, read a threat, defend, reposition, change weapon                        | Immediate feedback and a chance to turn defense into another attack                    |
+| Encounter | Learn an opponent, protect resources, exploit an opening                        | A readable problem with several potential responses                                    |
+| Region    | Follow the campaign, investigate branches, speak to people, revisit an obstacle | New equipment, personal stories and hidden encounters                                  |
+| Campaign  | Resolve the survival mystery and determine how much optional work to pursue     | A directed journey with a fuller resolution available through additional investigation |
+| Replay    | Reuse acquired knowledge and equipment under a chosen challenge                 | Mastery, alternative equipment and the limited-life mode                               |
 
 This distinction matters when assessing the design. An impressive individual animation is only one part of the offer. The larger structure must make players want another encounter, another discovery and another experiment after the initial spectacle becomes familiar.
 
@@ -24,24 +24,24 @@ This distinction matters when assessing the design. An impressive individual ani
 
 ### Inputs and Sha-Chi
 
-The launch PlayStation explanation documents ordinary attacks on Square, stronger attacks on Triangle, held guard or timed parry on L1, dodge on R1, and weapon switching on D-pad Left. Sha-Chi is the shared combat resource: guarding and stronger techniques spend it; exhaustion leaves a character guard-broken. Attacks and successful defensive timing erode an opponent's corresponding meter, creating an opening. Switching between the two equipped primary weapons replenishes Soul's Sha-Chi. [M01](#m01)
+PS5 controls: Square attacks, Triangle delivers stronger blows, L1 guards/parries, R1 dodges, and D-pad Left switches weapons. Guarding spends Sha-Chi; exhaustion breaks defense. Attacks and timed defenses pressure the opponent's meter; switching refills Soul's. Landing attacks also builds Sha-Chi Essence for a Power Surge. [M01](#m01)
 
 The resulting decision is broader than choosing attack or defense. Both compete for capacity, while weapon switching helps maintain pressure. A player who spends aggressively must still read the next threat. A player who only protects themselves can survive ordinary sequences but still needs a way to convert that safety into progress. This is an analysis of the resource relationship, not a claim that every build or difficulty produces the same optimal rhythm.
 
-Blue attacks call attention to a timed parry; red attacks favor a precise dodge. Successful responses can trigger Ghoststep positioning and a counter opportunity. Another warning briefly darkens the screen: the documented danger is severe Sha-Chi loss, so these attacks should not be treated as ordinary safe blocks. Main weapons fall into one-handed, two-handed and dual-wield categories. [M02](02-reception.md#m02)
+Blue attacks permit blocking or parrying; red attacks require a perfectly timed dodge. Successful responses enable Ghoststep counters. Screen-darkening attacks heavily drain Sha-Chi. Stronger Sha-Chi combos also spend the resource. Primary weapons have one-handed, two-handed and dual-wield categories. [M02](02-reception.md#m02)
 
 ### Layered combat resources
 
-| Resource or state | Documented purpose | Decision it creates |
-|---|---|---|
-| Health | Survival | How much exposure is acceptable before healing or disengaging |
-| Sha-Chi | Guarding and stronger offense; also an enemy defense to break | Whether to spend, defend or change weapon |
-| Weapon-switch cooldown | Limits immediate repeated recovery through switching | When to spend the next recovery opportunity |
-| Guard break | A temporary vulnerability after the defense resource fails | Whether the opening is worth committing a stronger attack |
-| Shield layer | Additional protection on some opponents | Whether to change equipment for better shield breaking |
-| Medicine charges | Limited recovery between replenishment opportunities | When to heal and how much risk to accept |
-| Remnant Spark | Cost for specified Phantom Edge actions | When a secondary tool is worth using |
-| Sha-Chi Essence | Cost shown on certain main-weapon special attacks | When to spend a powerful move |
+| Resource or state      | Documented purpose                                            | Decision it creates                                           |
+| ---------------------- | ------------------------------------------------------------- | ------------------------------------------------------------- |
+| Health                 | Survival                                                      | How much exposure is acceptable before healing or disengaging |
+| Sha-Chi                | Guarding and stronger offense; also an enemy defense to break | Whether to spend, defend or change weapon                     |
+| Weapon-switch cooldown | Limits immediate repeated recovery through switching          | When to spend the next recovery opportunity                   |
+| Guard break            | A temporary vulnerability after the defense resource fails    | Whether the opening is worth committing a stronger attack     |
+| Shield layer           | Additional protection on some opponents                       | Whether to change equipment for better shield breaking        |
+| Medicine charges       | Limited recovery between replenishment opportunities          | When to heal and how much risk to accept                      |
+| Remnant Spark          | Cost for specified Phantom Edge actions                       | When a secondary tool is worth using                          |
+| Sha-Chi Essence        | Accumulates through attacks and enables Power Surges          | When to spend a powerful move                                 |
 
 These names should not be collapsed into one generic “stamina” or “mana” bar. The cooldown, shield and guard examples come from a launch guide; the two named special-attack resources are visible in documented equipment cards. [M08](#m08) [M32](#m32)
 
@@ -57,13 +57,19 @@ Stealth is present in a modest form: attacking an unaware enemy from behind can 
 
 The developer's August announcement describes more than 30 main weapons, 25 Phantom Edges, accessory-based builds and reforging that refunds upgrade materials. Launch store wording uses “over 30” primary weapons and “more than 20” secondary tools. Keep the categories separate: descriptions of “50+ weapons” may combine them. [M03](#m03) [M04](#m04)
 
+Most primary weapons come from defeated bosses: the opponent demonstrates a capability before the player inherits it. [M01](#m01)
+
 Soul's ability progression expands accessory capacity, improves resource handling and reduces cooldowns. Weapons and accessories also have individual upgrades. VGC found early investment sufficiently constrained to encourage selecting favorites despite the refund mechanism. [M07](02-reception.md#m07)
+
+Combat and exploration supply Remnant Dust; exploration and shops supply weapon materials. Both feed upgrades. [M02](02-reception.md#m02) AUTOMATON reports that accessory polishing costs cannot be refunded, so recoverable weapon investment does not make every upgrade reversible. [M17](02-reception.md#m17)
 
 The economy therefore has two questions. First, can a player recover an investment when discovering a more enjoyable weapon? Second, is there enough reason to change once a favorite works? Refunding materials addresses the first question, but does not automatically solve the second. Understanding an unfamiliar moveset, navigating menus and rebuilding a useful combination still take effort. The [reception analysis](02-reception.md#3-where-reviewers-disagree) also records evidence that the value of resources changes later in the campaign.
 
 ### Medicine and Bells
 
 Medicine uses charges. Bells replenish health and medicine and provide travel, equipment upgrading, ability training and saving. The Healing Gourd begins as percentage-based healing; upgrades improve recovery or uses, with Remnant Dust and Healer's Memory items involved. Documented abilities can add medicine capacity, make kills restore supplies, or reward assassinations and executions with recovery. These are separate investments from merely raising a weapon's damage. [M06](#m06)
+
+Bells also sell supplies; hidden shops stock materials. A consumable Talisman returns Soul to a Bell. [M17](02-reception.md#m17)
 
 The return loop combines recovery and preparation. A player can stop, replenish, reconsider equipment and resume a problem. That is materially different from treating a checkpoint as only a respawn location. It can make experimentation comfortable, but it also means menu friction and unclear upgrade explanations can interrupt the otherwise fast action. The latter is a design implication, not a measured usability result.
 
@@ -80,6 +86,10 @@ This creates two layers of exploration: discovering which route is meaningful, a
 Quests can continue across regions, and some become unavailable after progression. Backtracking is consequently more than a completionist preference, but the evidence does not support a universal real-time deadline for all sidequests. [M08](#m08)
 
 ## 5. World, characters and narrative mechanisms
+
+Soul belongs to the Order, a martial-arts organization, and is framed for its leader's murder. His sworn brother Zuo Shang pierces his heart. The Maskwalkers are a faceless warrior sect entangled in wider alliances. [M02](02-reception.md#m02)
+
+Completing a story's set of Memory Flowers increases Soul's health. [M01](#m01) This gives listening and discovery a progression reward, while the [reception chapter](02-reception.md#3-where-reviewers-disagree) examines whether the delivery sustains players' attention.
 
 ### The heart bargain and the limits of choice
 
@@ -143,28 +153,34 @@ A player decides that a favorite blade is poorly suited to an encounter. Recover
 
 “Not established” means the reviewed evidence does not support a claim. It should not be silently upgraded into a universal statement that a feature is impossible or will never exist.
 
-| Category | Evidence disposition |
-|---|---|
-| Melee, defense, guard breaks and weapon switching | Present; central linked systems described above |
-| Ranged attacks, elemental tools and temporary summons | Present through specialized equipment |
-| Stealth | Basic assassinations and chaining; deeper detection simulation not established |
-| Character development | Abilities, equipment, accessories and medicines; every numerical cap not audited |
-| Healing and resource management | Present; currencies, charges and cooldowns have different roles |
-| Exploration and traversal | Authored regions, tool-gated routes, return visits and contextual movement |
-| Quests and narrative progression | Main route, optional chains, milestones and ending-related dependencies |
-| Death and checkpoints | Retry support without an ordinary dropped-currency retrieval loop |
-| Replay | New Game Plus and unlocked limited-life challenge supported |
-| Character creator and selectable protagonist classes | Not established; the documented campaign follows Soul |
-| Party management and relationship simulation | Temporary allies do not establish these systems |
-| Multiplayer, co-op, PvP and player trading | Current product is single-player; director explicitly distinguishes its design from PvP/multiplayer [M31](#m31) |
-| Building, settlements and production chains | Not established; equipment upgrading is not evidence of these systems |
-| Persistent world simulation while absent | Not established; defeated enemies and changing dialogue alone do not imply it |
-| Procedural narrative or generated quests | Not established |
-| Official UGC tools or Workshop support | Not verified in reviewed official material |
-| Community modification | Present in early unofficial PC releases; sustained popularity remains uncertain |
-| Boss rush or older promised endgame modes | No shipped claim accepted here without current evidence |
+| Category                                              | Evidence disposition                                                                                            |
+| ----------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| Melee, defense, guard breaks and weapon switching     | Present; central linked systems described above                                                                 |
+| Ranged attacks, elemental tools and temporary summons | Present through specialized equipment                                                                           |
+| Stealth                                               | Basic assassinations and chaining; deeper detection simulation not established                                  |
+| Character development                                 | Abilities, equipment, accessories and medicines; every numerical cap not audited                                |
+| Healing and resource management                       | Present; currencies, charges and cooldowns have different roles                                                 |
+| Exploration and traversal                             | Authored regions, tool-gated routes, return visits and contextual movement                                      |
+| Quests and narrative progression                      | Main route, optional chains, milestones and ending-related dependencies                                         |
+| Death and checkpoints                                 | Retry support without an ordinary dropped-currency retrieval loop                                               |
+| Replay                                                | New Game Plus and unlocked limited-life challenge supported                                                     |
+| Character creator and selectable protagonist classes  | Not established; the documented campaign follows Soul                                                           |
+| Party management and relationship simulation          | Temporary allies do not establish these systems                                                                 |
+| Multiplayer, co-op, PvP and player trading            | Current product is single-player; director explicitly distinguishes its design from PvP/multiplayer [M31](#m31) |
+| Building, settlements and production chains           | Not established; equipment upgrading is not evidence of these systems                                           |
+| Persistent world simulation while absent              | Not established; defeated enemies and changing dialogue alone do not imply it                                   |
+| Procedural narrative or generated quests              | Not established                                                                                                 |
+| Official UGC tools or Workshop support                | Not verified in reviewed official material                                                                      |
+| Community modification                                | Present in early unofficial PC releases; sustained popularity remains uncertain                                 |
+| Boss rush or older promised endgame modes             | No shipped claim accepted here without current evidence                                                         |
 
-## 9. Accessibility and the modding applicability screen
+## 9. Presentation, accessibility and the modding applicability screen
+
+### How presentation communicates action
+
+The game's martial-arts movement, industrial machinery and occult imagery give its encounters a specific visual identity; the [studio chapter](03-studio-production.md#kungfupunk-and-the-animation-pipeline) explains the production approach. Combat warning colors and defensive responses communicate immediate choices. The relevant design question is whether the resulting animation, camera and sound let the player read that choice and its effect.
+
+The [reception comparison](02-reception.md#3-where-reviewers-disagree) preserves both admiration for choreography and complaints about obscured inputs or targets. Its [technical and accessibility section](02-reception.md#5-technical-performance-and-accessibility) covers audio balance, adjustable blade-clash sound, camera and blur options. This makes feel a relationship among control, feedback and readability, rather than a synonym for attractive animation. Those source-specific judgments are not independent measurements by this dossier.
 
 Official PlayStation accessibility information lists difficulty adjustment, audio levels, subtitles, control and tutorial reminders, pausing and manual saving. This is a platform declaration, not a complete independent accessibility audit. Color-independent combat cues, screen-reader support and the full range of assistive inputs were not verified. The [reception chapter](02-reception.md#5-technical-performance-and-accessibility) records the more specific PS5 reviewer observations and distinguishes them from PC controls. [M25](#m25)
 

@@ -16,17 +16,17 @@ Neither sample establishes long-term retention, final completion rates or how op
 
 These are reviewer accounts of review copies or review-period play. Their conditions, routes and sensitivities differ. The table preserves those differences instead of turning all favorable scores into identical endorsements.
 
-| Outlet, reviewer and publication | Stated scope | What the review contributes |
-|---|---|---|
-| **GamesRadar+ — Luke Kemp, October 26** [M12](#m12) | PC, publisher code; Steam endorsement lists 9/10 | Strong weapon differentiation and rewarding discovery. Criticizes excessive notes, stationary Memory Flower delivery and an abrupt initial ending. |
-| **VGC — Dave Aubrey, October 26** [M07](#m07) | Full written review; 4/5 | Fast, distinctive combat, but barrages sometimes encouraged hopeful parry repetition. Restrictive routes and unexciting sidequests weakened the surrounding experience. |
-| **Creative Bloq — Alan Wen, October 26** [M13](#m13) | PS5 Pro | Praises motion capture, dense environments and Pangzhen. Criticizes prolonged bosses, poor readability, constrained traversal and serious technical failures. |
-| **RPGamer — Jordan McClain, published October 25, updated October 26** [M02](#m02) | PS5; 4.5/5; page labels 40–60 hours and hard difficulty | Praises combat and a compelling story. Finds late-game currency and upgrades excessive, weakening ordinary enemies and exploration rewards. |
-| **Wccftech — Francesco De Meo, October 25 at 8 p.m. EDT** [M20](#m20) | PC; 10/10; more than 30 hours | Praises attack/defense flow, boss diversity and animation. Criticizes initially overwhelming terminology, English delivery and limited reasons to refight cleared enemies. |
-| **AUTOMATON — Killy J, October 28** [M17](#m17) | Completed 40-hour review; 92/100; prior Rainblood familiarity | Finds NPC stories and weapon schools compelling. Objects to erratic lock-on, view-obscuring effects and lack of saved equipment loadouts. |
-| **Push Square — Liam Croft, October 26; Robert Ramsey second opinion** [M18](#m18) | PS5 Pro performance mode; 9/10 | Strong game feel, varied bosses and scenery. Main review sharply criticizes confused exposition and narration that stops movement. |
-| **Game Informer — Wesley LeBlanc, October 27** [M21](#m21) | PS5; 9.5/10 | Praises encounter variety and phase checkpoints. Permanent ordinary-enemy removal feels like tangible progress rather than missing reset functionality. |
-| **IGN — Travis Northup, October 26** [M19](#m19) | PC; approximately 50-hour run; 9/10 | Finds combat consistently satisfying and bosses surprising. Identifies a conventional revenge story, invisible boundaries and a badly performing area. |
+| Outlet, reviewer and publication                                                   | Stated scope                                                  | What the review contributes                                                                                                                                                |
+| ---------------------------------------------------------------------------------- | ------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **GamesRadar+ — Luke Kemp, October 26** [M12](#m12)                                | PC, publisher code; Steam endorsement lists 9/10              | Strong weapon differentiation and rewarding discovery. Criticizes excessive notes, stationary Memory Flower delivery and an abrupt initial ending.                         |
+| **VGC — Dave Aubrey, October 26** [M07](#m07)                                      | Full written review; 4/5                                      | Fast, distinctive combat, but barrages sometimes encouraged hopeful parry repetition. Restrictive routes and unexciting sidequests weakened the surrounding experience.    |
+| **Creative Bloq — Alan Wen, October 26** [M13](#m13)                               | PS5 Pro                                                       | Praises motion capture, dense environments and Pangzhen. Criticizes prolonged bosses, poor readability, constrained traversal and serious technical failures.              |
+| **RPGamer — Jordan McClain, published October 25, updated October 26** [M02](#m02) | PS5; 4.5/5; page labels 40–60 hours and hard difficulty       | Praises combat and a compelling story. Finds late-game currency and upgrades excessive, weakening ordinary enemies and exploration rewards.                                |
+| **Wccftech — Francesco De Meo, October 25 at 8 p.m. EDT** [M20](#m20)              | PC; 10/10; more than 30 hours                                 | Praises attack/defense flow, boss diversity and animation. Criticizes initially overwhelming terminology, English delivery and limited reasons to refight cleared enemies. |
+| **AUTOMATON — Killy J, October 28** [M17](#m17)                                    | Completed 40-hour review; 92/100; prior Rainblood familiarity | Finds NPC stories and weapon schools compelling. Objects to erratic lock-on, view-obscuring effects and lack of saved equipment loadouts.                                  |
+| **Push Square — Liam Croft, October 26; Robert Ramsey second opinion** [M18](#m18) | PS5 Pro performance mode; 9/10                                | Strong game feel, varied bosses and scenery. Main review sharply criticizes confused exposition and narration that stops movement.                                         |
+| **Game Informer — Wesley LeBlanc, October 27** [M21](#m21)                         | PS5; 9.5/10                                                   | Praises encounter variety and phase checkpoints. Permanent ordinary-enemy removal feels like tangible progress rather than missing reset functionality.                    |
+| **IGN — Travis Northup, October 26** [M19](#m19)                                   | PC; approximately 50-hour run; 9/10                           | Finds combat consistently satisfying and bosses surprising. Identifies a conventional revenge story, invisible boundaries and a badly performing area.                     |
 
 The unusually favorable scores are supported by detailed descriptions of actual enjoyment, not merely expectations from trailers. At the same time, the lower-level explanations contain the information most useful for design: what sustained interest, where effort felt worthwhile, what interrupted play, and which tradeoffs split the audience.
 
@@ -76,38 +76,38 @@ Hours below are the displayed current “on record” values, which can exceed p
 
 The following five observations come from one live collection. A marked free advance copy is separated from ordinary launch experience. [M22](#m22)
 
-| Display name | Posted; displayed time | Observed view |
-|---|---|---|
-| Gab-. | October 28; 10.7h | Welcomes actual gameplay matching trailer spectacle. |
-| m7md | October 29; 49.2h | Praises ambitious combat and its presentation. |
-| Xukaku | October 28; 3.4h | Enjoys action and animations; also reports frame-generation and cutscene problems. |
-| Haze | October 28; 57.3h | Praises feel and weapon identity; **free advance copy and preview attendance disclosed**. |
-| 997 | October 28; 13.2h | Praises fighting and higher-difficulty pressure. Its review-bombing allegation is unverified. |
+| Display name | Posted; displayed time | Observed view                                                                                 |
+| ------------ | ---------------------- | --------------------------------------------------------------------------------------------- |
+| Gab-.        | October 28; 10.7h      | Welcomes actual gameplay matching trailer spectacle.                                          |
+| m7md         | October 29; 49.2h      | Praises ambitious combat and its presentation.                                                |
+| Xukaku       | October 28; 3.4h       | Enjoys action and animations; also reports frame-generation and cutscene problems.            |
+| Haze         | October 28; 57.3h      | Praises feel and weapon identity; **free advance copy and preview attendance disclosed**.     |
+| 997          | October 28; 13.2h      | Praises fighting and higher-difficulty pressure. Its review-bombing allegation is unverified. |
 
 ### English negative/helpful examples
 
 These six comments expose different reasons to withhold a recommendation. A short session can establish opening friction, but cannot establish the difficulty of every later encounter. [M23](#m23)
 
-| Display name | Posted; displayed time | Observed view |
-|---|---|---|
-| rainy days in tokyo | October 29; 11.4h | Reports graphical corruption and a system crash on AMD hardware. |
-| andrescmarin | October 29; 1.7h | Feels elaborate animation disconnects inputs from action, despite selecting hard difficulty. |
-| Samheq | October 28; 2.2h | Expected demanding control; perceives too much automatic action. |
-| Retribution888 | October 29; 10.2h | Likes the world; reports Linux cutscene failure and unstable performance. |
-| SpetsTheHollow | October 29; 29.1h | Likes visuals and weapons; criticizes ease, characterization and cleared areas. |
-| saurilian | October 29; 1.8h | Reports unclear input feedback, crashes and a missing mini-boss. |
+| Display name        | Posted; displayed time | Observed view                                                                                |
+| ------------------- | ---------------------- | -------------------------------------------------------------------------------------------- |
+| rainy days in tokyo | October 29; 11.4h      | Reports graphical corruption and a system crash on AMD hardware.                             |
+| andrescmarin        | October 29; 1.7h       | Feels elaborate animation disconnects inputs from action, despite selecting hard difficulty. |
+| Samheq              | October 28; 2.2h       | Expected demanding control; perceives too much automatic action.                             |
+| Retribution888      | October 29; 10.2h      | Likes the world; reports Linux cutscene failure and unstable performance.                    |
+| SpetsTheHollow      | October 29; 29.1h      | Likes visuals and weapons; criticizes ease, characterization and cleared areas.              |
+| saurilian           | October 29; 1.8h       | Reports unclear input feedback, crashes and a missing mini-boss.                             |
 
 ### Chinese-language examples
 
 These five translated summaries are qualitative examples, not a representative Chinese audience. Positive votes can contain substantial criticism. [M34](#m34)
 
-| Display name | Posted; hours; vote | Observed view |
-|---|---|---|
-| e^ix=cosx+isinx | October 29; 19.1h; positive | Disabling blur improved comfort. |
-| UpWeGoOoOo | October 28; 15.1h; positive | Opening rewarded preorder anticipation; Chinese voice acting disappointed. |
-| Edmund D.Zhang | October 29; 19.6h; positive | Praises weapon differences, executions and task-map clarity. |
-| 无虚妄 | October 28; 11.8h; positive | Criticizes dull prose despite recommending the game. |
-| 难回答的问题又不回答 | October 29; 6.8h; negative | Criticizes combo confirmation, enemy readability and actionable feedback. |
+| Display name         | Posted; hours; vote         | Observed view                                                              |
+| -------------------- | --------------------------- | -------------------------------------------------------------------------- |
+| e^ix=cosx+isinx      | October 29; 19.1h; positive | Disabling blur improved comfort.                                           |
+| UpWeGoOoOo           | October 28; 15.1h; positive | Opening rewarded preorder anticipation; Chinese voice acting disappointed. |
+| Edmund D.Zhang       | October 29; 19.6h; positive | Praises weapon differences, executions and task-map clarity.               |
+| 无虚妄               | October 28; 11.8h; positive | Criticizes dull prose despite recommending the game.                       |
+| 难回答的问题又不回答 | October 29; 6.8h; negative  | Criticizes combo confirmation, enemy readability and actionable feedback.  |
 
 ### What the samples support—and what they do not
 

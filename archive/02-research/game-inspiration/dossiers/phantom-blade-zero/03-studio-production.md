@@ -1,41 +1,41 @@
 # S-GAME: studio history, production and creative identity
 
-**Research date:** 2026-10-31. **Scope:** the company and production history behind *Phantom Blade Zero*, with dated evidence distinguished from company claims and analysis. For audience acquisition, advertising and sales, see [marketing and business](04-marketing-business.md).
+**Research date:** 2026-10-31. **Scope:** the company and production history behind _Phantom Blade Zero_, with dated evidence distinguished from company claims and analysis. For audience acquisition, advertising and sales, see [marketing and business](04-marketing-business.md).
 
 ## Why the studio's history matters
 
-S-GAME already had years of experience developing the world, characters, combat and commercial products behind its 3D action presentation. Its route included commercial PC action, Chinese mobile games, outside investment and international publishing. Calling *Phantom Blade Zero* a debut without qualification obscures that preparation. [S02](#s02) [S03](#s03)
+S-GAME already had years of experience developing the world, characters, combat and commercial products behind its 3D action presentation. Its route included commercial PC action, Chinese mobile games, outside investment and international publishing. Calling _Phantom Blade Zero_ a debut without qualification obscures that preparation. [S02](#s02) [S03](#s03)
 
 The useful interpretation is accumulated capability, accompanied by considerable risk. A recognizable creative identity survived several changes of format, but the commercial history includes financial pressure, monetization criticism and a decision to concentrate production on one large project. Neither the founder's passion nor launch demand establishes profitability or makes this a low-risk model for another studio. [S04](#s04) [S05](#s05)
 
 ## From Rainblood to Phantom Blade
 
-| Period | Work or milestone | What the evidence establishes |
-| --- | --- | --- |
-| Late 2000s–2010 | *Rainblood: Town of Death* | Liang Qiwei, known as Soulframe Liang, created an RPG Maker game while studying architecture. Retrospectives date an initial Chinese release to 2008; an English commercial version demonstrably existed in 2010. Preserve the release-stage distinction. [S04](#s04) [S06](#s06) |
-| 2011 | S-GAME established; *Rainblood 2: City of Flame* | The company followed the earlier Soulframe project identity. Contemporary tenth-anniversary material supports 2011; the sequel is reported as a December 2011 release. [S02](#s02) [S04](#s04) |
-| 2013 | *Rain Blood Chronicles: Mirage* | The lineage moved into side-scrolling action. Steam dates its English PC release to November 11, 2013, with Origo Games publishing. [S07](#s07) |
-| 2014 | *Phantom Blade* / 影之刃 | Contemporary announcements give September 17 for iOS and September 28 for Android in China, under NetEase. [S08](#s08) |
-| 2016 | *Phantom Blade 2* | Publisher HERO records Android release on October 12 and iOS on November 18. [S09](#s09) |
-| 2021 | *Phantom Blade 3* | The official game account announced January 28, 2021 public release. [S10](#s10) |
-| 2023 | *Phantom Blade: Executioners* | S-GAME announced a November 2 worldwide release, describing it as the series' first global release. [S03](#s03) |
-| 2017–2026 | *Phantom Blade Zero* | Liang dates initial planning to 2017 and full production to 2022. The game reached its October 2026 release after a 50-day postponement. [S11](#s11) [S12](#s12) |
+| Period          | Work or milestone                                | What the evidence establishes                                                                                                                                                                                                                                                     |
+| --------------- | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Late 2000s–2010 | _Rainblood: Town of Death_                       | Liang Qiwei, known as Soulframe Liang, created an RPG Maker game while studying architecture. Retrospectives date an initial Chinese release to 2008; an English commercial version demonstrably existed in 2010. Preserve the release-stage distinction. [S04](#s04) [S06](#s06) |
+| 2011            | S-GAME established; _Rainblood 2: City of Flame_ | The company followed the earlier Soulframe project identity. Contemporary tenth-anniversary material supports 2011; the sequel is reported as a December 2011 release. [S02](#s02) [S04](#s04)                                                                                    |
+| 2013            | _Rain Blood Chronicles: Mirage_                  | The lineage moved into side-scrolling action. Steam dates its English PC release to November 11, 2013, with Origo Games publishing. [S07](#s07)                                                                                                                                   |
+| 2014            | _Phantom Blade_ / 影之刃                         | Contemporary announcements give September 17 for iOS and September 28 for Android in China, under NetEase. [S08](#s08)                                                                                                                                                            |
+| 2016            | _Phantom Blade 2_                                | Publisher HERO records Android release on October 12 and iOS on November 18. [S09](#s09)                                                                                                                                                                                          |
+| 2021            | _Phantom Blade 3_                                | The official game account announced January 28, 2021 public release. [S10](#s10)                                                                                                                                                                                                  |
+| 2023            | _Phantom Blade: Executioners_                    | S-GAME announced a November 2 worldwide release, describing it as the series' first global release. [S03](#s03)                                                                                                                                                                   |
+| 2017–2026       | _Phantom Blade Zero_                             | Liang dates initial planning to 2017 and full production to 2022. The game reached its October 2026 release after a 50-day postponement. [S11](#s11) [S12](#s12)                                                                                                                  |
 
 ### The original games established identity before spectacle
 
-The first *Rainblood* was a compact turn-based RPG with hand-drawn presentation. Its author's 2010 description emphasized a dark martial world, a concentrated story in one town, and a distinction between manageable main-story combat and more demanding side challenges. The contemporary post also advertised *City of Flame* as its forthcoming continuation. These are roots of the series' mood and storytelling, rather than evidence that Zero retained its original combat structure. [S06](#s06)
+The first _Rainblood_ was a compact turn-based RPG with hand-drawn presentation. Its author's 2010 description emphasized a dark martial world, a concentrated story in one town, and a distinction between manageable main-story combat and more demanding side challenges. The contemporary post also advertised _City of Flame_ as its forthcoming continuation. These are roots of the series' mood and storytelling, rather than evidence that Zero retained its original combat structure. [S06](#s06)
 
-RPGFan's Neal Chandran awarded *Town of Death* 88/100 in June 2010. He particularly valued its distinctive artwork and atmosphere, while describing a short experience and less distinctive stock sound effects. This is evidence of an early favorable critical response from one reviewer, not a broad consensus or proof of commercial scale. [S13](#s13)
+RPGFan's Neal Chandran awarded _Town of Death_ 88/100 in June 2010. He particularly valued its distinctive artwork and atmosphere, while describing a short experience and less distinctive stock sound effects. This is evidence of an early favorable critical response from one reviewer, not a broad consensus or proof of commercial scale. [S13](#s13)
 
-*Mirage* already combined recognizable protagonists with real-time action: players could switch between Soul and Shang or play locally together, collect equipment and abilities, and discover story through documents. Its Steam page showed 71% positive among 148 reviews when accessed, and displayed a Metacritic score of 68. That modest, platform-specific record is a useful corrective to treating the earlier catalog as uniformly acclaimed. [S07](#s07)
+_Mirage_ already combined recognizable protagonists with real-time action: players could switch between Soul and Shang or play locally together, collect equipment and abilities, and discover story through documents. Its Steam page showed 71% positive among 148 reviews when accessed, and displayed a Metacritic score of 68. That modest, platform-specific record is a useful corrective to treating the earlier catalog as uniformly acclaimed. [S07](#s07)
 
 ### Mobile games supplied experience and a commercial base
 
-The Chinese *Phantom Blade* games gave S-GAME repeated opportunities to develop action, presentation and progression around the same fictional world. Liang's later account says mobile proceeds initially financed a smaller version of Zero before outside investment expanded its scope. That establishes a financial bridge between formats; it does not disclose the amount of retained earnings invested. [S14](#s14)
+The Chinese _Phantom Blade_ games gave S-GAME repeated opportunities to develop action, presentation and progression around the same fictional world. Liang's later account says mobile proceeds initially financed a smaller version of Zero before outside investment expanded its scope. That establishes a financial bridge between formats; it does not disclose the amount of retained earnings invested. [S14](#s14)
 
 The mobile era also brought tension between creative identity and monetization. A reported history describes criticism of the second and third games for commercialization and paid advantages. Treat that as documented criticism, not a claim that every player rejected those titles or that those complaints automatically apply to Zero. [S04](#s04)
 
-*Executioners* matters because it prevents an inaccurate “first overseas game” narrative. S-GAME's 2023 announcement presented a free-to-play side-scrolling RPG with four heroes, skill-chain combinations, Phantom bonuses, equipment, procedural dungeons and cooperative play. Its global launch was an earlier publishing exercise and a way for overseas players to encounter the same universe. [S03](#s03)
+_Executioners_ matters because it prevents an inaccurate “first overseas game” narrative. S-GAME's 2023 announcement presented a free-to-play side-scrolling RPG with four heroes, skill-chain combinations, Phantom bonuses, equipment, procedural dungeons and cooperative play. Its global launch was an earlier publishing exercise and a way for overseas players to encounter the same universe. [S03](#s03)
 
 Individual App Store comments from 2023–2024 praise its art, direct combat and customization; others describe freezing, overheating, repetition or dissatisfaction with mobile monetization. These examples show divergent player experiences, not representative prevalence or verified current defects. Regional storefront availability is also insufficient to establish a worldwide service closure. [S15](#s15)
 
@@ -51,7 +51,7 @@ Liang's August 2025 interview again described S-GAME retaining development and p
 
 ### The budget figure has a traceable but limited meaning
 
-The commonly repeated **RMB300–400 million** development figure appeared as Liang's projection of eventual research and development cost in an August 2024 *China Business Journal* interview. Launch reporting repeated the range. The careful description is a founder-reported development budget, initially projected in 2024, rather than an audited final all-in expenditure. [S17](#s17) [S18](#s18)
+The commonly repeated **RMB300–400 million** development figure appeared as Liang's projection of eventual research and development cost in an August 2024 _China Business Journal_ interview. Launch reporting repeated the range. The careful description is a founder-reported development budget, initially projected in 2024, rather than an audited final all-in expenditure. [S17](#s17) [S18](#s18)
 
 Public evidence does not establish an advertising budget, complete contractor costs, financing returns, taxes, refunds, platform deductions or developer net receipts. Gross preorder revenue therefore cannot simply be compared with that development estimate to declare the project profitable. Recoupment calculations need consistent cost and revenue definitions.
 
@@ -111,11 +111,11 @@ An existing audience can explain why an apparently unfamiliar overseas studio ha
 
 Several corrections keep the history usable:
 
-- Use **2014** for the first mobile *Phantom Blade*. A later retrospective's September 2017 date conflicts with contemporary coverage. [S08](#s08)
+- Use **2014** for the first mobile _Phantom Blade_. A later retrospective's September 2017 date conflicts with contemporary coverage. [S08](#s08)
 - Qualify “debut” with **large-scale 3D AAA production**; earlier PC and global releases are documented. [S03](#s03) [S07](#s07)
 - Keep fan counts, downloads, paid copies, wishlists, gross billings and profits separate.
 - Treat ownership, team size, budget and production plans as dated evidence, with their stated boundaries.
-- Do not infer a worldwide *Executioners* shutdown from an isolated storefront removal, or a complete canceled-project list from a general statement that projects were cut.
+- Do not infer a worldwide _Executioners_ shutdown from an isolated storefront removal, or a complete canceled-project list from a general statement that projects were cut.
 
 The unresolved items are current audited ownership, final all-in costs, advertising expenditure, the older games' comparable financial results and service status by region. These gaps limit financial conclusions; they do not prevent identifying the studio's accumulated creative and production experience.
 
@@ -157,7 +157,7 @@ All sources accessed **2026-10-31**. Company statements establish what the compa
 
 ### S09
 
-**HERO Games, corporate history.** [Publisher timeline](https://www.hero.com/p/story.html). Primary retrospective listing the 2016 platform release dates for *Phantom Blade 2*.
+**HERO Games, corporate history.** [Publisher timeline](https://www.hero.com/p/story.html). Primary retrospective listing the 2016 platform release dates for _Phantom Blade 2_.
 
 ### S10
 

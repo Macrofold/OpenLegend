@@ -14,14 +14,14 @@
 
 **In progress.** Five substantive chapters are written, covering mechanics/world, reception, studio production, marketing/business and Open Legend applications. Independent studio/marketing review fixes are incorporated. Next: complete the whole-dossier review, finalize the entry page and R01–R15 map, inspect internal links and formatting, and commit the completed record.
 
-| Dimension | State |
-| --- | --- |
-| Released mechanics, equipment, economy, world, lore and concrete situations | Written; final dossier review pending |
-| Five-plus substantive reviews and contrasting direct Steam testimony | Nine critic comparisons and sixteen selected English/Chinese Steam accounts written |
-| Studio, earlier games, production and funding | Written and independently reviewed |
-| Campaign, channels, audience and commercial metrics | Written; independent review corrections incorporated |
-| R15 modding screen and evidence boundaries | Unofficial tools observed; sustained-popularity finding remains uncertain at launch |
-| Open Legend transfer, coverage map, navigation and review | Applications written; entry page, coverage map and final verification pending |
+| Dimension                                                                   | State                                                                               |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Released mechanics, equipment, economy, world, lore and concrete situations | Written; final dossier review pending                                               |
+| Five-plus substantive reviews and contrasting direct Steam testimony        | Nine critic comparisons and sixteen selected English/Chinese Steam accounts written |
+| Studio, earlier games, production and funding                               | Written and independently reviewed                                                  |
+| Campaign, channels, audience and commercial metrics                         | Written; independent review corrections incorporated                                |
+| R15 modding screen and evidence boundaries                                  | Unofficial tools observed; sustained-popularity finding remains uncertain at launch |
+| Open Legend transfer, coverage map, navigation and review                   | Applications written; entry page, coverage map and final verification pending       |
 
 ## Evidence boundaries to preserve
 
