@@ -178,4 +178,6 @@ Current 3× scene investigation: [plain-language results, before/after tables an
 
 ## Shared procedure
 
+Before selecting or running checks, follow [Verification](../.agents/rules/verification.md#choose-the-execution-location), including its required execution-location choice and conditional managed-worker instructions.
+
 Before bounded live gameplay or character-behavior experiments, use the [playtest protocol](verification/playtest-protocol.md#bounded-live-playtest-protocol). Project-specific playtest plans own their particular session.

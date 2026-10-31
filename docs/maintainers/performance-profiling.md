@@ -2,6 +2,8 @@
 
 The native-only profiler runs disposable deterministic scenarios without a database or provider. The full-server profiler below explicitly selects a disposable database. Neither changes a live save, enables gameplay mechanics or permits paid dispatch. These are performance experiments, not automated correctness tests. [Performance tracker](performance.md) owns remaining work; [Verification](../verification.md) owns measured evidence.
 
+Before running a profile, select its local/remote environment under [Verification](../../.agents/rules/verification.md#choose-the-execution-location); remote execution must follow the linked worker procedure. [VW01–VW04](verification-workers.md) track the designed reusable pool and setup-timing workflow, separately from these existing profilers and game-performance acceptance.
+
 ## Choose collection explicitly
 
 Ordinary `pnpm dev` / `pnpm start` skip optional server performance collection. Set `OPEN_LEGEND_PROFILING=on` before starting to collect it; absent or `off` disables it, and other values (including empty) are refused. Restart to change the choice. Browser scene collection is independent: add `?profile=1` to that tab’s URL. Its Stop releases unfinished GPU timer queries immediately and preserves one completed bounded report; Start begins a fresh capture. The visible FPS meter remains available without profiling.

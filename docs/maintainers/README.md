@@ -211,6 +211,8 @@ Actual evidence: [continuation](../verification/workshop-continuation.md), [tran
 
 [Agent guidance](agent-guidance.md) and the [instruction-system guide](../../.agents/README.md) own developer tooling and cross-agent practices.
 
+[Verification workers](verification-workers.md) tracks the reusable AWS pool, exclusive claims, preparation reuse and complete server/browser experiment reporting.
+
 ## Supporting references
 
 | Subject                     | References                                                                                                                                                                                                                                                                                                                      |

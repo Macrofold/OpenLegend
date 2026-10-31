@@ -10,7 +10,7 @@ Mike clarified that local development sign-in/access records and historical AI s
 
 ## October 24, 2026 — Local verification only
 
-Mike requires repository checks to run locally and prohibits GitHub CI. The Code checks and Spatial world checks workflows are disabled, and their repository definitions are removed. The [verification policy](../../../.agents/rules/verification.md#local-verification-only) retains impact-based check selection, disposable local PostgreSQL databases and explicit authorization for full validation. Historical CI references do not authorize another hosted run or an automatic full-suite rerun. This replaces the previous automatic push/pull-request workflow; runtime correctness, privacy, accounting and existing acceptance requirements remain unchanged.
+Mike requires repository checks to run locally and prohibits GitHub CI. The Code checks and Spatial world checks workflows are disabled, and their repository definitions are removed. The [verification policy](../../../.agents/rules/verification.md#choose-the-execution-location) retains impact-based check selection, disposable local PostgreSQL databases and explicit authorization for full validation. Historical CI references do not authorize another hosted run or an automatic full-suite rerun. This replaces the previous automatic push/pull-request workflow; runtime correctness, privacy, accounting and existing acceptance requirements remain unchanged.
 
 ## October 24, 2026 — Extend deployment selection to native judgments
 
