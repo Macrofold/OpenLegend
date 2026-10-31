@@ -12,16 +12,16 @@
 
 ## Current progress
 
-**In progress.** Release and sales/wishlist distinctions are documented; mechanics, launch reception, studio and marketing source investigations have been collected. Next: assemble and review the detailed chapters, reconcile navigation and R01–R15 coverage, inspect internal links and commit the completed dossier.
+**In progress.** Five substantive chapters are written, covering mechanics/world, reception, studio production, marketing/business and Open Legend applications. Independent studio/marketing review fixes are incorporated. Next: complete the whole-dossier review, finalize the entry page and R01–R15 map, inspect internal links and formatting, and commit the completed record.
 
 | Dimension | State |
 | --- | --- |
-| Released mechanics, equipment, economy, world, lore and concrete situations | Research collected; canonical chapters pending |
-| Five-plus substantive reviews and contrasting direct Steam testimony | Research collected; canonical evidence inventory pending |
-| Studio, earlier games, production and funding | Research collected; canonical chapter pending |
-| Campaign, channels, audience and commercial metrics | Research collected; canonical chapter pending |
-| R15 modding screen and evidence boundaries | Research collected; conservative sustained-adoption finding pending |
-| Open Legend transfer, coverage map, navigation and review | Pending |
+| Released mechanics, equipment, economy, world, lore and concrete situations | Written; final dossier review pending |
+| Five-plus substantive reviews and contrasting direct Steam testimony | Nine critic comparisons and sixteen selected English/Chinese Steam accounts written |
+| Studio, earlier games, production and funding | Written and independently reviewed |
+| Campaign, channels, audience and commercial metrics | Written; independent review corrections incorporated |
+| R15 modding screen and evidence boundaries | Unofficial tools observed; sustained-popularity finding remains uncertain at launch |
+| Open Legend transfer, coverage map, navigation and review | Applications written; entry page, coverage map and final verification pending |
 
 ## Evidence boundaries to preserve
 
