@@ -20,19 +20,19 @@ The [reception chapter](02-reception.md) records disagreement about how cinemati
 
 Open Legend's relevant question is whether an input produces a recognizable, responsive action whose result follows from the situation. A player should be able to explain what they attempted, why it succeeded or failed, and what they might try next. Satisfying feedback matters, including ordinary actions used repeatedly. It should support the player's choice rather than hide a canned result.
 
-This fits the existing [ND38 execution design](../../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution). That owner already separates ordinary attacks, optional timed input, character competence and authoritative consequences. This research supplies a contrasting experience to examine; it does not adopt Sha-Chi, automatic combinations, universal parries or a new timing minigame.
+This fits the existing [ND38 execution design](../../../../../docs/maintainers/needs-design.md#nd38--player-skill-during-action-execution) and [ASE12 combat-enjoyment qualification](../../../../../docs/maintainers/action-execution-and-skill-expression.md#ase12--integrated-verification-performance-and-player-enjoyment). The selected scope separates ordinary attacks, optional timed input, character competence and authoritative consequences. The questions here inform the remaining independent player observations without reopening completed design.
 
 **Useful observation:** compare a novice's initial impression with a player who has learned a reliable technique. Can both explain the relationship between input, opponent behavior and consequence? Do they voluntarily keep using the interaction when its visual novelty is familiar? Distinguish an assistance preference from poor feedback or a broken rule.
 
 ## 3. Let rewards change a wanted activity
 
-The [mechanics study](01-mechanics-world.md) illustrates equipment as a change in action vocabulary and access. Its broader interpretation is that a reward can be understood through what it enables, including something the player previously encountered.
+The [mechanics study](01-mechanics-world.md) connects encountering an opponent's capability with acquiring it, and new tools with previously blocked routes. A reward can become intelligible through something the player already recognizes and wants to try.
 
 For Open Legend, a useful tool, method, piece of knowledge or willing relationship can connect activities. An expedition might reveal an obstacle; a practical improvement can make a later attempt worthwhile; the resulting achievement can matter to a person or to the player's home. The interesting question is the resulting possibility, not whether every discovery awards another statistic.
 
 The alternative matters too. An attractive place, performance, conversation or keepsake may be a satisfying reward without a combat advantage. Connecting systems should not turn every quiet activity into mandatory preparation or a completion checklist.
 
-**Existing owner:** [Playable game first](../../../../../docs/repertoires/gameplay-priorities.md), especially its complete activity strands and continuing-play questions. Existing inventory, world content and progression owners retain their authority; the dossier creates no parallel loot system.
+**Existing owners:** Use [gameplay priorities](../../../../../docs/repertoires/gameplay-priorities.md) to select the activity; [AV01 rewarding expeditions](../../../../../docs/maintainers/parallel-batch-05-adventure-defense-and-home.md#av01--rewarding-expeditions) owns reward, learning, manufacture/use and equipment-comparison qualification. Engineer-assessed usefulness remains distinct from uncoached enjoyment.
 
 **Useful observation:** after acquiring an improvement, can the player identify something they want to do with it? Follow that intended use through to its result. If the supposed reward only adds inventory management or a higher future requirement, its practical value has not been established.
 
@@ -54,7 +54,7 @@ The [world and narrative account](01-mechanics-world.md) and [contrasting story 
 
 Open Legend's opportunity is to let a person have a concrete want, a reason for acting and a relationship to something the player can encounter. A past event becomes useful when it changes interpretation or choice: who might help, why someone refuses, what a place means, or what an object makes possible. Background descriptions alone do not establish an independent person or a consequential history.
 
-This is already compatible with [narrative guidance](../../../../../docs/narrative/README.md) and [characters and play](../../../../../docs/production-workflows/characters-and-play.md). The latter's production route connects intended character behavior with actual situations and consequences. The research does not introduce a prescribed martial-arts setting, new factions or an exhaustive lore encyclopedia.
+The existing [discoverable-history guide](../../../../../docs/narrative/authoring-discoverable-history.md#connect-the-place-the-object-and-the-encounter) connects places, objects and encounters; [characters and play](../../../../../docs/production-workflows/characters-and-play.md) supplies the authoring, rehearsal and delivery route for actual situations and consequences.
 
 **Useful observation:** ask what the player remembers about a person and why it matters to their next decision. Distinguish remembering a name from caring about an unresolved situation. Do not require a predetermined sympathetic reaction; dislike, mistrust, rivalry and indifference can all be informative.
 
@@ -92,4 +92,4 @@ No new needs-design item is created by this dossier. ND26, ND38, gameplay priori
 
 Start with the specific question: action/control in [mechanics](01-mechanics-world.md), disagreement in [reception](02-reception.md), capacity and cost in [studio production](03-studio-production.md), or discovery/conversion in [marketing](04-marketing-business.md). Each chapter retains its source dates and limits.
 
-The small evaluation questions here fit existing [FPV06–FPV08](../../../../../docs/maintainers/first-playable-validation.md#fpv06--observe-survival-building-and-character-choice). They are interpretation aids for already-owned work, not an additional mandatory test suite, a promise of a new study or permission to contact participants.
+Use the [playtest plan's existing journeys](../../../../../docs/projects/first-playable-playtest-plan.md#step-4--observe-distinct-player-journeys) for observations and [FPV06–FPV08](../../../../../docs/maintainers/first-playable-validation.md#fpv06--observe-survival-building-and-character-choice) for coordination. The questions here refine that work without adding another study or acceptance gate.

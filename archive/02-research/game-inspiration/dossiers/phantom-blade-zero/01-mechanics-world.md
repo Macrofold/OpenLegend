@@ -61,7 +61,7 @@ The developer's August announcement describes more than 30 main weapons, 25 Phan
 
 Most primary weapons come from defeated bosses: the opponent demonstrates a capability before the player inherits it. [M01](#m01)
 
-Soul's ability progression expands accessory capacity, improves resource handling and reduces cooldowns. Weapons and accessories also have individual upgrades. VGC found early investment sufficiently constrained to encourage selecting favorites despite the refund mechanism. [M07](02-reception.md#m07)
+Soul's ability progression expands accessory capacity, improves resource handling and reduces cooldowns. Weapons and accessories also have individual upgrades. VGC found investment sufficiently constrained to encourage selecting favorites despite the refund mechanism. [M07](02-reception.md#m07)
 
 Combat and exploration supply Remnant Dust; exploration and shops supply weapon materials. Both feed upgrades. [M02](02-reception.md#m02) AUTOMATON reports that accessory polishing costs cannot be refunded, so recoverable weapon investment does not make every upgrade reversible. [M17](02-reception.md#m17)
 
@@ -133,11 +133,11 @@ These are **rules-based illustrations**, not recorded personal play sessions. Th
 
 ### 1. A defensive opening becomes renewed pressure
 
-A player uses stronger attacks, then spends more Sha-Chi blocking a response. Switching weapon restores capacity, but its cooldown prevents treating repeated swaps as unrestricted recovery. The decision is when to exchange styles and when to keep enough room to respond. The hypothetical success is not “press swap and win”; it depends on recognizing what the enemy will do next. [M01](#m01) [M08](#m08)
+A player uses stronger attacks, then spends more Sha-Chi blocking a response. Switching weapon restores capacity, but its cooldown prevents treating repeated swaps as unrestricted recovery. Choosing when to exchange styles or preserve capacity depends on the next threat. [M01](#m01) [M08](#m08)
 
 ### 2. A secondary tool changes a group encounter
 
-Suppose a player facing a group chooses a temporary summon instead of another direct damaging tool. Allies may create an opportunity to attack or recover, while spending the tool's finite capacity. The value is situational: an additional actor can change pressure even if it does not maximize immediate damage. This illustration follows the published Puppeteer's Bell function; it does not assert a permanent companion system. [M05](#m05)
+Suppose a player facing a group chooses a temporary summon instead of another direct damaging tool. Allies may create an opportunity to attack or recover, while spending the tool's finite capacity. The value is situational: an additional actor can change pressure even if it does not maximize immediate damage. This illustration follows the published Puppeteer's Bell function. [M05](#m05)
 
 ### 3. Recovery preserves the unsolved problem
 
@@ -145,7 +145,7 @@ A player learns a boss's first phase, reaches the next phase and fails. Resuming
 
 ### 4. A flower becomes a reason to remember someone
 
-After meeting Yu'er, a player later discovers the flower she needs and returns to continue the relationship. The object connects memory, combat and travel. A technically identical collectible without that prior person would have a different emotional role. This is an interpretation of the documented quest structure, not evidence that every player remembers or cares equally. [M15](#m15)
+After meeting Yu'er, a player later discovers the flower she needs and returns to continue the relationship. The object connects memory, combat and travel. A technically identical collectible without that prior person would have a different emotional role. [M15](#m15)
 
 ### 5. Preparation is cheaper than restarting an identity
 
@@ -226,7 +226,7 @@ Accessed October 31, 2026. Developer statements establish intent or advertised f
 
 ### M09
 
-[Push Square: How Difficult Is Phantom Blade Zero?](https://www.pushsquare.com/features/how-difficult-is-phantom-blade-zero), October 29, 2026. Specialist assessment of difficulty and failure rules; judgments remain reviewer-specific.
+[Push Square: How Difficult Is Phantom Blade Zero?](https://www.pushsquare.com/features/how-difficult-is-phantom-blade-zero), October 2026. Specialist assessment of difficulty and failure rules; judgments remain reviewer-specific.
 
 ### M10
 
