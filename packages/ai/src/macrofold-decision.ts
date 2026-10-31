@@ -1,4 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
+import { generationRequestAccounting } from './request-accounting.js';
 import { NetworkError, type NetworkOwner } from '@open-legend/network';
 import { MacrofoldTransport, MacrofoldHttpError, macrofoldObject as object } from './macrofold.js';
 import {
@@ -441,6 +442,7 @@ interface PreparedInference<T> {
   input: Record<string, unknown>;
   maxOutputTokens: number;
   decode(raw: unknown): { value: T } | { refused: true };
+  accounting?: AiReceipt['requestAccounting'];
 }
 
 function outputTokenLimit(value: number): number {
@@ -570,6 +572,11 @@ function createMacrofoldExecutor(
           };
           const preparedBody = new PreparedJson(body, 500_000);
           receipt.providerRequestDigest = digest(preparedBody.text(500_000));
+          if (prepared.accounting)
+            receipt.requestAccounting = {
+              ...prepared.accounting,
+              transportBytes: Buffer.byteLength(preparedBody.text(500_000)),
+            };
           signal.throwIfAborted();
           receipt.dispatched = true;
           receipt.completionUncertain = true;
@@ -815,16 +822,22 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
         }
         const preparedSchema = prepareSchema(request.schema, 500_000);
         const maxOutputTokens = outputTokenLimit(request.maxOutputTokens ?? 4096);
+        const input = prepareMacrofoldGenerationInput(
+          {
+            ...request,
+            ...(deployment ? { macrofoldDeployment: deployment } : {}),
+            maxOutputTokens,
+          },
+          preparedSchema,
+          config.macrofoldOutputMode,
+        );
         return {
           maxOutputTokens,
-          input: prepareMacrofoldGenerationInput(
-            {
-              ...request,
-              ...(deployment ? { macrofoldDeployment: deployment } : {}),
-              maxOutputTokens,
-            },
-            preparedSchema,
-            config.macrofoldOutputMode,
+          input,
+          accounting: generationRequestAccounting(
+            { ...request, schema: preparedSchema.schema },
+            deployment ? `deployment:${deployment.modelBinding.deployment_id}` : config.model!,
+            { input, transport: '', maxOutputTokens },
           ),
           decode: (raw) => decodeMacrofoldGeneration<T>(raw, preparedSchema),
         };

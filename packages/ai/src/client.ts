@@ -13,6 +13,7 @@ import {
   validateJudgmentSize,
 } from './validation.js';
 import { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
+import { generationRequestAccounting } from './request-accounting.js';
 import type {
   AiClient,
   AiClientConfig,
@@ -153,6 +154,19 @@ export function createAiClient(config: AiClientConfig = {}): AiClient {
       const prepared = prepare(model, contextJson);
       const body = serialize(prepared.body, maxRequestBytes);
       receipt.providerRequestDigest = digest(body);
+      if (provider === 'openai') {
+        const generation = request as GenerateRequest;
+        const captured = prepared.body as Record<string, unknown>;
+        receipt.requestAccounting = generationRequestAccounting(generation, model, {
+          input: {
+            instructions: captured['instructions'],
+            input: captured['input'],
+            text: captured['text'],
+          },
+          transport: body,
+          maxOutputTokens: captured['max_output_tokens'] as number,
+        });
+      }
       const remaining = Math.min(
         timeoutMs,
         (request.deadlineMs ?? started + timeoutMs) - Date.now(),

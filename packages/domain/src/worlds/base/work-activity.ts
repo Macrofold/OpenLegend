@@ -18,6 +18,7 @@ import { hasRecordFields, isSafeRecordId } from '../../records.js';
 import { outcome } from '../../events.js';
 import { observeActor } from '../../kernel.js';
 import { definitionPin } from '../../world-modules.js';
+import { recipeRequestDescription } from './activity-descriptions.js';
 
 function requestsFor(world: WorldState): ActivityRequestDescriptor[] {
   const work = world.workBatchPolicy,
@@ -32,7 +33,12 @@ function requestsFor(world: WorldState): ActivityRequestDescriptor[] {
       maximum,
       required: true as const,
     }),
-    entity = (label: string) => ({ type: 'entity' as const, label, required: true as const });
+    entity = (label: string) => ({
+      type: 'entity' as const,
+      label,
+      required: true as const,
+      discovery: { source: 'choices' as const },
+    });
   const presentation = ({ id, label, description }: WorkRequestPresentation['gather']) => ({
     id,
     label,
@@ -44,7 +50,7 @@ function requestsFor(world: WorldState): ActivityRequestDescriptor[] {
       requires: ['gather'],
       fields: {
         sourceId: entity(text.gather.selectionLabel),
-        instrumentId: entity(work.toolLabel),
+        instrumentId: { ...entity(work.toolLabel), dependencies: ['sourceId'] },
         batches: count(work.countLabel, work.maximumBatches),
         mode,
       },
@@ -58,6 +64,7 @@ function requestsFor(world: WorldState): ActivityRequestDescriptor[] {
           definitionKind: 'recipe',
           label: text.craft.selectionLabel,
           required: true,
+          discovery: { source: 'definitions' },
         },
         batches: count(work.countLabel, work.maximumBatches),
         mode,
@@ -75,6 +82,8 @@ function requestsFor(world: WorldState): ActivityRequestDescriptor[] {
                 definitionKind: 'item',
                 label: text.foodLabel,
                 required: true,
+                dependencies: ['sourceId'],
+                discovery: { source: 'choices' },
               },
               units: count(meal.countLabel, meal.maximumUnits),
               mode,
@@ -233,7 +242,7 @@ function choice(
     const category = craftCatalogueCategory(world, recipe);
     return {
       id,
-      label: `${category?.label ? `${category.label}: ` : ''}${recipe.name}; ${recipe.workSeconds} game seconds per batch; spends ${recipe.inputs.map((input) => `${input.quantity} ${world.itemDefinitions[input.definitionId]!.name}`).join(', ')}; makes ${recipe.outputs.map((output) => `${output.quantity} ${world.itemDefinitions[output.definition.id]!.name}`).join(', ')}${recipe.retainedTools.length ? `; keeps ${recipe.retainedTools.map((tool) => `${tool.quantity} ${tool.allowedDefinitions.map((pin) => world.itemDefinitions[pin.id]!.name).join(' or ')}`).join(', ')}` : ''}.`,
+      label: `${category?.label ? `${category.label}: ` : ''}${recipeRequestDescription(world, recipe)}`,
       kind: 'definition',
       roles: [field],
       requestIds: [family],
@@ -284,12 +293,14 @@ export const BASE_WORK_ACTIVITY_HOST: ActivityHostDescriptor = {
   },
   requestDescriptors: requestsFor,
   compileRequest: bind,
-  requestChoice: choice,
-  requestChoices(world, actorId, prepared) {
+  requestChoice(world, actorId, family, field, id) {
+    return choice(world, actorId, family, field, id);
+  },
+  requestChoices(world, actorId, prepared, query) {
     const work = world.workBatchPolicy,
       text = work?.presentation;
     if (!work || !text) return { choices: [], warnings: [] };
-    const observed = prepared ?? observeActor(world, actorId),
+    const observed = prepared ?? observeActor(world, actorId, { includeMemories: false }),
       choices: ActivityRequestChoice[] = [],
       warnings: string[] = [];
     if (!observed) return { choices, warnings };
@@ -305,16 +316,20 @@ export const BASE_WORK_ACTIVITY_HOST: ActivityHostDescriptor = {
       requestIds: [text.gather.id],
       accessible: true,
     });
+    const selectedSource =
+      query?.field === 'instrumentId' && typeof query.arguments.sourceId === 'string'
+        ? entityGet(world.entities, query.arguments.sourceId)?.resource?.definitionId
+        : undefined;
     for (const selected of carriedGatheringChoices(
       world,
       actorId,
-      undefined,
+      selectedSource,
       undefined,
       observed.inventory,
     ))
       choices.push({
         id: selected.item.id,
-        label: `${selected.definition.name} (up to ${selected.quantity} per compatible collection)`,
+        label: `${selected.definition.name} (up to ${selected.quantity} per compatible collection; gathers ${world.itemDefinitions[selected.definition.gatheringTool!.resourceId]?.name ?? selected.definition.gatheringTool!.resourceId})`,
         kind: 'entity',
         roles: ['instrumentId'],
         requestIds: [text.gather.id],
@@ -339,11 +354,19 @@ export const BASE_WORK_ACTIVITY_HOST: ActivityHostDescriptor = {
     }
     const foods = new Set<string>();
     for (const item of observed.inventory) {
-      if (!admitted.has(item.ownerId) || !accessiblePossession(world, actorId, item.id)) continue;
+      if (!accessiblePossession(world, actorId, item.id)) continue;
       const selected = choice(world, actorId, text.meal.id, 'definitionId', item.id);
-      if (selected && !foods.has(selected.id)) {
-        choices.push(selected);
-        foods.add(selected.id);
+      if (!selected) continue;
+      // The actor scope includes accessible carried stock. A deliberately inspected
+      // own bag also remains a distinct selectable stock scope under the meal owner.
+      for (const sourceId of [
+        actorId,
+        ...(item.ownerId !== actorId && admitted.has(item.ownerId) ? [item.ownerId] : []),
+      ]) {
+        const key = JSON.stringify([sourceId, selected.id]);
+        if (foods.has(key)) continue;
+        choices.push({ ...selected, requires: { sourceId } });
+        foods.add(key);
       }
     }
     return { choices, warnings };

@@ -9,6 +9,48 @@ import { digest } from './store.js';
 
 export const ACTION_RETRIEVAL_LIMIT = 300;
 
+/** Spread optional discovery across the actual executable families. Preserve
+ * relevance order within each family; a large set of variants must not hide
+ * unrelated opportunities before the relevance model can consider them.
+ * This is coverage, not endorsement or permission to execute a choice. */
+export function diverseActionCandidates(
+  candidates: readonly CandidateAction[],
+  limit = candidates.length,
+): CandidateAction[] {
+  return interleaveActionFamilies(
+    candidates,
+    (candidate) => candidate.nativeInvocation?.type ?? candidate.command?.type ?? null,
+    limit,
+  );
+}
+
+/** The same coverage rule applies after judgment when only bound offers remain. */
+export function interleaveActionFamilies<T>(
+  candidates: readonly T[],
+  familyOf: (candidate: T) => string | null,
+  limit = candidates.length,
+): T[] {
+  const families = new Map<string | null, T[]>();
+  for (const candidate of candidates) {
+    const family = familyOf(candidate);
+    const group = families.get(family);
+    if (group) group.push(candidate);
+    else families.set(family, [candidate]);
+  }
+  let active = [...families.values()];
+  const selected: T[] = [];
+  for (let index = 0; active.length && selected.length < limit; index++) {
+    const remaining: T[][] = [];
+    for (const group of active) {
+      if (selected.length >= limit) break;
+      selected.push(group[index]!);
+      if (index + 1 < group.length) remaining.push(group);
+    }
+    active = remaining;
+  }
+  return selected;
+}
+
 /** Rank the whole actor-permitted library, never the first insertion-order slice.
  * docs/memory-architecture.md#4-jev-attention-before-context-inclusion
  */
@@ -25,9 +67,10 @@ export async function retrieveActions(
   execution?: CognitionExecution,
 ) {
   const fallback = (status: string) => ({
-    candidates: [...candidates]
-      .sort((a, b) => a.id.localeCompare(b.id))
-      .slice(0, ACTION_RETRIEVAL_LIMIT),
+    candidates: diverseActionCandidates(
+      [...candidates].sort((a, b) => a.id.localeCompare(b.id)),
+      ACTION_RETRIEVAL_LIMIT,
+    ),
     status,
     eligible: candidates.length,
   });
@@ -43,7 +86,7 @@ export async function retrieveActions(
   const vectors = store.vectors;
   if (!vectors || !config.embeddingKey)
     return fallback(
-      'semantic retrieval unavailable; deterministic ID fallback, incomplete coverage',
+      'semantic retrieval unavailable; deterministic family-diverse fallback, incomplete coverage',
     );
   const scope = {
     key: `actions:${service.world.id}:${actorId}`,
@@ -201,9 +244,19 @@ export async function retrieveActions(
     } while (offset < missing.length);
     const matches = await vectors.search(scope, queryVector!, sources, ACTION_RETRIEVAL_LIMIT);
     const byId = new Map(candidates.map((candidate) => [candidate.id, candidate]));
+    const ranked = matches.map((match) => byId.get(match.id)!);
+    const matched = new Set(matches.map((match) => match.id));
     return {
-      candidates: matches.map((match) => byId.get(match.id)!),
-      status: 'semantic top-300 across complete permitted library',
+      candidates: diverseActionCandidates(
+        [
+          ...ranked,
+          ...candidates
+            .filter((candidate) => !matched.has(candidate.id))
+            .sort((a, b) => a.id.localeCompare(b.id)),
+        ],
+        ACTION_RETRIEVAL_LIMIT,
+      ),
+      status: 'family-diverse semantic top-300 across complete permitted library',
       eligible: candidates.length,
     };
   } catch (error) {

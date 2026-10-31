@@ -19,6 +19,8 @@ import {
   membershipDependency,
   spatialCandidateMembershipKey,
   activityRequestDescriptors,
+  activityRequestChoices,
+  activityRequestFieldDependencies,
   clockDeadline,
   namedClockTimes,
   type WorldState,
@@ -103,7 +105,7 @@ export function activityRequests(
   targetId?: string,
 ): ActivityRequestsView {
   service.assertScope(scope);
-  const requests = activityRequestDescriptors(service.world);
+  const requests = activityRequestDescriptors(service.world, scope.actorId);
   // Reuse exact role reads: selection supplies context, never permission or a nearby scan.
   const entries = targetId
     ? requests.flatMap((request) => {
@@ -162,11 +164,12 @@ export interface ActivityChoiceRequest {
   selectedId?: string;
   witnessId?: string;
   approach?: boolean;
+  arguments?: Readonly<Record<string, string | number | boolean>>;
 }
 const choiceCursor = z
   .object({
     binding: z.string(),
-    phase: z.enum(['owned', 'spatial', 'done']),
+    phase: z.enum(['owned', 'spatial', 'roles', 'done']),
     parent: z.string(),
     after: z.string(),
     spatialAfter: z.number().int().min(-1),
@@ -186,12 +189,41 @@ export function activityChoicePage(
   const world = service.world,
     actor = entityGet(world.entities, scope.actorId)!;
   const host = activityRequestHost(world, request.family);
-  const field = (
-    host && activityHostRequests(world, host).find((entry) => entry.id === request.family)
-  )?.fields[request.field];
+  const descriptor =
+    host &&
+    activityHostRequests(world, host, scope.actorId).find((entry) => entry.id === request.family);
+  const field = descriptor?.fields[request.field];
   if (!host?.requestChoice || !field?.discovery)
     throw new HistoryCursorError('Choose an installed searchable activity field.');
   const source = field.discovery.source;
+  const arguments_ = {
+    ...request.arguments,
+    ...(request.sourceId && field.discovery.sourceField
+      ? { [field.discovery.sourceField]: request.sourceId }
+      : {}),
+  };
+  if (
+    Object.entries(arguments_).some(
+      ([key, value]) =>
+        !descriptor?.fields[key] ||
+        !['string', 'number', 'boolean'].includes(typeof value) ||
+        (typeof value === 'number' && !Number.isFinite(value)),
+    )
+  )
+    throw new HistoryCursorError('Choose declared activity parameters.');
+  if (
+    activityRequestFieldDependencies(field).some(
+      (dependency) => !Object.hasOwn(arguments_, dependency),
+    )
+  )
+    return {
+      ok: true,
+      scope: scopeKey(scope),
+      status: 'unavailable',
+      choices: [],
+      evidence: '',
+      message: 'Choose the preceding details first.',
+    };
   if (
     (request.sourceId && !field.discovery.sourceField) ||
     (request.witnessId && source !== 'materials') ||
@@ -213,6 +245,7 @@ export function activityChoicePage(
         request.field,
         host.definition,
         request.sourceId,
+        arguments_,
         (request.query ?? '').trim().toLocaleLowerCase(),
         actor.inventoryRevision,
         actor.placement,
@@ -245,6 +278,82 @@ export function activityChoicePage(
     choices: [],
     evidence,
   };
+  if (
+    source === 'known-places' ||
+    source === 'definitions' ||
+    source === 'outputs' ||
+    source === 'choices'
+  ) {
+    const supplied = activityRequestChoices(world, scope.actorId, undefined, {
+      family: request.family,
+      field: request.field,
+      arguments: arguments_,
+    });
+    const eligible = supplied.choices;
+    // Exact role/source associations join the scoped cursor. Definition and remembered
+    // references are never reinterpreted as a current visible physical entity.
+    const roleBinding = createHash('sha256')
+      .update(JSON.stringify([binding, eligible]))
+      .digest('hex');
+    const projectChoice = (choice: (typeof eligible)[number]): ActivityChoice => ({
+      ...choice,
+      ...(source === 'known-places'
+        ? { location: 'Personally known place; current conditions may differ' }
+        : {}),
+    });
+    if (request.selectedId)
+      return {
+        ...result,
+        evidence: roleBinding,
+        selected:
+          eligible.find((choice) => choice.id === request.selectedId) &&
+          projectChoice(eligible.find((choice) => choice.id === request.selectedId)!),
+      };
+    let after = -1;
+    if (request.cursor) {
+      try {
+        const cursor = choiceCursor.parse(openCursor(request.cursor));
+        if (cursor.binding !== roleBinding || cursor.phase !== 'roles') throw new Error();
+        after = cursor.spatialAfter;
+      } catch {
+        return {
+          ...result,
+          status: 'stale',
+          message: 'These choices changed. Refresh the search.',
+        };
+      }
+    }
+    const query = (request.query ?? '').trim().toLocaleLowerCase();
+    let examined = 0,
+      index = after + 1;
+    for (
+      ;
+      index < eligible.length && examined < 200 && result.choices.length < 40;
+      index++, examined++
+    ) {
+      const choice = eligible[index]!;
+      if (!query || choice.label.toLocaleLowerCase().includes(query))
+        result.choices.push(projectChoice(choice));
+    }
+    countMetric('discovery.activityExamined', examined);
+    countMetric('discovery.activityReturned', result.choices.length);
+    return {
+      ...result,
+      evidence: roleBinding,
+      ...(index < eligible.length
+        ? {
+            status: 'partial' as const,
+            next: sealCursor({
+              binding: roleBinding,
+              phase: 'roles',
+              parent: '',
+              after: '',
+              spatialAfter: index - 1,
+            }),
+          }
+        : {}),
+    };
+  }
   const permitted = (id: string) => {
     const target = entityGet(world.entities, id);
     return (
@@ -291,7 +400,14 @@ export function activityChoicePage(
       } else if (inspection?.containerId !== selected.id || !inspection?.itemIds.includes(id))
         return;
     }
-    const choice = host.requestChoice!(world, actor.id, request.family, request.field, id);
+    const choice = host.requestChoice!(
+      world,
+      actor.id,
+      request.family,
+      request.field,
+      id,
+      arguments_,
+    );
     if (!choice) return;
     const separation = distance(effectivePosition(world, actor.id), effectivePosition(world, id));
     return {

@@ -11,6 +11,8 @@ import type { AiReceipt } from '@open-legend/ai';
 import { entityGet } from '@open-legend/domain';
 import pg from 'pg';
 import { WorldService } from './world-service.js';
+import { CognitionLab } from './cognition-lab.js';
+import { readAssetIndex } from './asset-configuration.js';
 import { CognitionLabRunController } from './cognition-lab-control.js';
 import type { AppConfig } from './config.js';
 import { performanceSnapshot } from './performance.js';
@@ -244,7 +246,15 @@ describe('isolated lab HTTP journey', () => {
           ]);
           holdFirstReceiptResult = true;
           const olderRefresh = refresh();
-          await firstReceiptResult;
+          await Promise.race([
+            firstReceiptResult,
+            olderRefresh.then(async (response) => {
+              if (releaseOldReceipt) return;
+              throw new Error(
+                `Receipt inspection ended before the expected provider gate: HTTP ${response.status}, ${JSON.stringify(await response.json())}`,
+              );
+            }),
+          ]);
           const response = await refresh();
           // An older uncertain observation arrives after definitive unpriced
           // completion. Neither the ledger nor the captured mirror may regress.
@@ -355,7 +365,45 @@ describe('isolated lab HTTP journey', () => {
     120_000,
   );
   it('opens held from the current initializer and applies native edits without touching the game', async () => {
-    const h = await start();
+    const release = (await readAssetIndex()).release;
+    const selectedArtwork = Object.getOwnPropertyDescriptor(
+      WorldService.prototype,
+      'presentationRelease',
+    )!.get!;
+    let gameDirectory: string | undefined;
+    // Supply the game's selection at its read boundary, without fabricating
+    // publication records. This qualifies Lab isolation, not artwork publication.
+    vi.spyOn(WorldService.prototype, 'presentationRelease', 'get').mockImplementation(function (
+      this: WorldService,
+    ) {
+      return this.config.dataDirectory === gameDirectory ? release : selectedArtwork.call(this);
+    });
+    let lab: CognitionLab | undefined;
+    const workspace = CognitionLab.prototype.workspace;
+    vi.spyOn(CognitionLab.prototype, 'workspace').mockImplementation(function (
+      this: CognitionLab,
+      ...args
+    ) {
+      lab = this;
+      return workspace.apply(this, args);
+    });
+    const h = await start(false, false, (config) => {
+      gameDirectory = config.dataDirectory;
+    });
+    expect(h.game.service.presentationRelease).toEqual(release);
+    expect(lab!.runtime.service.presentationRelease).toBeUndefined();
+    for (const store of [h.game.service.store, lab!.runtime.service.store]) {
+      expect(
+        Number(
+          (await store.assets!.db.prepare('SELECT COUNT(*) AS count FROM asset_revisions').get())![
+            'count'
+          ],
+        ),
+      ).toBe(0);
+      await expect(store.assets!.revision(release, { accountId: 'local-player' })).rejects.toThrow(
+        'The exact asset revision is unknown.',
+      );
+    }
     expect(h.workspace.state).toBe('ready');
     expect(h.workspace.worldId).not.toBe(h.game.service.world.id);
     expect(h.workspace.provider.available).toBe(false);

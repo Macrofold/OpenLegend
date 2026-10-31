@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                        | Last updated         |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Shared runtime, desktop workspace and Library implemented and technically qualified; human and broader behavior acceptance remain open under CL11/CL13. | 2026-10-26 21:21 UTC |
+| In progress | Shared runtime, desktop workspace and Library implemented and technically qualified; human and broader behavior acceptance remain open under CL11/CL13. | 2026-10-28 06:33 UTC |
 
 ## 1. Purpose and product outcome
 
@@ -174,7 +174,7 @@ A normal edit changes the value once. An explicit **Hold during this experiment*
 
 ### Memory, history and world authoring
 
-The developer can fabricate starting experiences, alter past speech, add/remove memories and set a mistaken belief deliberately. Existing actor-scoped editing/forgetting owners handle supported operations and invalidate dependent summaries/feelings/search material where required. The editor displays the affected scope before application when the edit changes more than its own record.
+The developer can fabricate starting experiences, alter past speech, add/remove memories and set a mistaken belief deliberately. Existing actor-scoped editing/forgetting owners handle supported operations and invalidate dependent summaries/feelings/search material where required. The editor displays the affected scope before application when the edit changes more than its own record. Inserted memories must be episodes of an observed, heard, felt or internal experience, including a private thought. Lasting beliefs and reflections belong to the person’s inner world; the editor rejects those as history entries rather than accepting records ordinary recall cannot read.
 
 Creating a revised starting situation is distinct from rewriting a completed run's recorded evidence. Substantial authored-history changes create a revised current scenario or continuation with the intervention recorded; previous completed run results remain what actually happened. There is no requirement to retain incompatible development saves or build a general historical reconciliation system.
 
@@ -400,6 +400,6 @@ Any remaining question that actually blocks an implementation decision must be r
 - Implementation: [Cognition Lab tasks](../maintainers/cognition-lab.md).
 - Limits and constraints: [Cognition Lab inventory](../limits/cognition-lab.md).
 - Technical counterpart: [Cognition Lab technical design](cognition-lab-tech-design.md).
-- Current shared cognition: [Memory architecture](../memory-architecture.md#god-mode-cognition-debugger), [current runtime](../architecture.md#current-runtime), [situation-aware context design](situation-aware-cognition-context-feature-spec.md).
+- Current shared cognition: [Memory architecture](../memory-architecture.md#god-mode-cognition-debugger), [current runtime](../architecture.md#current-runtime), [situation-aware context design](../features/situation-aware-cognition-context.md).
 - Character intent: [Compelling characters](compelling-characters-feature-spec.md), [intelligent simulation evaluation](intelligent-simulation-evaluation-feature-spec.md), [gameplay priorities](../repertoires/gameplay-priorities.md).
 - UI principles: [UI essentials](../../.agents/rules/ui-ux.md), [foundations](../ui-ux/foundations.md), [controls](../ui-ux/controls.md), [system feedback](../ui-ux/system-feedback.md), [chat](../ui-ux/chat-and-invention.md), [production components](../../apps/client/src/design-system/README.md).

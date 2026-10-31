@@ -6,6 +6,7 @@ These established documents own supported behavior and explicitly labeled remain
 | ------------------------------------------------ | --------------------------------------------------------------------------------------------------------------- |
 | Actions, offered choices and execution           | [Actions](../action-capabilities.md), [agency](../agent-agency.md)                                              |
 | Character experience, recollection and knowledge | [Memory](../memory-architecture.md), [knowledge](../knowledge.md), [action experience](../action-experience.md) |
+| Situation-aware character decisions              | [Context behavior](situation-aware-cognition-context.md)                                                        |
 | Speech, hearing and narration                    | [Hearing](../hearing-and-speech.md), [narration/conversations](../narration-and-conversations.md)               |
 | World creation and reviewed invention            | [World Agent](../world-agent-runtime.md), [invention foundation](../invention-foundation.md)                    |
 | Saving and return                                | [Save/load](../save-and-load.md)                                                                                |

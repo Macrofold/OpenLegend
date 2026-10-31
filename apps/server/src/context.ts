@@ -200,6 +200,14 @@ export const CONTEXT_BYTE_LIMIT = 100_000;
 export class ContextBudgetError extends Error {
   constructor(
     message = 'Required actor facts exceed the 100KB context budget; this context was not sent.',
+    readonly details?: {
+      guard: string;
+      inputBytes: number;
+      limitBytes: number;
+      sections: Record<string, number>;
+      /** A preflight reservation, rather than bytes in a final serialized request. */
+      reservedBytes?: number;
+    },
   ) {
     super(message);
     this.name = 'ContextBudgetError';
@@ -915,7 +923,13 @@ export function npcCandidates(
           'Attempt using the last terms I personally received; current availability is checked when I act.',
       });
     if (previewChoice(choice.command).ok)
-      actions.push({ id: choice.id, description: choice.description, command: choice.command });
+      actions.push({
+        id: choice.id,
+        // The label carries the operation (for example accept versus decline);
+        // the description can contain only the shared terms or destination.
+        description: `${choice.label}. ${choice.description}`,
+        command: choice.command,
+      });
   }
   // Timed alternatives declare their handling of current work; admission rechecks
   // the exact action before a transition can stop that work.

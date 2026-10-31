@@ -71,6 +71,19 @@ it('extends a genuinely colliding new token without changing already rendered re
   expect(resolver.resolvedCount).toBe(2);
 });
 
+it('does not disclose hidden world membership through unrecognized stored annotations', () => {
+  const world = stockedCamp();
+  const id = 'unrecognized-goal-subject';
+  const text = `Find the subject (ID:${id}).`;
+  const absent = projectEntityMarkers(text, world, NPC_ID);
+  entitySet(world.entities, id, {
+    ...structuredClone(entityGet(world.entities, PLAYER_ID)!),
+    id,
+  });
+  expect(projectEntityMarkers(text, world, NPC_ID)).toBe(absent);
+  expect(absent).toBe('Find the subject (unrecognized identity).');
+});
+
 it('keeps remembered-only identities separate and rebuilds recognition in a new snapshot', () => {
   const world = stockedCamp();
   const unknown = 'departed-person';
@@ -88,4 +101,7 @@ it('keeps remembered-only identities separate and rebuilds recognition in a new 
   expect(known).toMatch(/^[a-f0-9]{4,64}$/);
   expect(known).not.toBe(remembered);
   expect(entityGet(changed.entities, unknown)).toBeUndefined();
+  expect(projectEntityMarkers(`Find (ID:${unknown}).`, changed, NPC_ID)).toBe(
+    `Find (ID:${known}).`,
+  );
 });

@@ -107,6 +107,8 @@ export interface CognitionBinding {
   actions: Record<string, ActionChoice>;
   restEpisode: string | null;
   bodyEligibility: string;
+  /** Captured native movement meaning for generated actor-relative invocations. */
+  capturedActorFrame?: string;
 }
 export const wordCount = (text: string): number =>
   text.normalize('NFKC').trim().split(/\s+/u).filter(Boolean).length;

@@ -3,7 +3,12 @@ import {
   validBoundaryRepairInputFields,
 } from './boundary-repair-inputs.js';
 import { isNativeInputField } from './native-inputs.js';
-import type { ActivityNode, ActivityBinding, ActivityArgument } from './action-experience.js';
+import type {
+  ActivityNode,
+  ActivityBinding,
+  ActivityArgument,
+  ActivityOutput,
+} from './action-experience.js';
 import { STOCK_TRANSFER_LIMITS } from './stock-transfer.js';
 import { isSafeRecordId } from './records.js';
 import type { Command } from './types.js';
@@ -329,18 +334,44 @@ export function commandBindingFields(command: Command): string[] {
 }
 
 /** Entity references selected for an activity. Text and places never become
- * entity IDs; future produced outputs bind separately at their native dispatch. */
+ * entity IDs. Optional actual outputs supply only the exact referenced ports;
+ * future outputs and unrelated output history grant no current object. */
 export function activityEntityReferences(
   root: ActivityNode,
   bindings: Record<string, ActivityBinding>,
+  actualOutputs?: Readonly<Record<string, readonly ActivityOutput[]>>,
 ): string[] {
+  const produced: string[] = [];
+  if (actualOutputs) {
+    const pending = [root];
+    const visited = new Set<ActivityNode>();
+    while (pending.length) {
+      const node = pending.pop()!;
+      if (visited.has(node)) continue;
+      visited.add(node);
+      if (node.kind === 'invoke')
+        for (const [field, argument] of Object.entries(node.args)) {
+          if (nativeBindingKind(field) !== 'object' || !('output' in argument)) continue;
+          const output = actualOutputs[argument.output]?.find(
+            (output) => output.port === argument.port && output.quantity >= argument.quantity,
+          );
+          if (output) produced.push(output.itemId);
+        }
+      else if (node.kind === 'sequence') for (const child of node.children) pending.push(child);
+      else if (node.kind === 'branch') {
+        pending.push(node.yes);
+        if (node.no) pending.push(node.no);
+      } else if (node.kind === 'repeat') pending.push(node.body);
+    }
+  }
   return [
-    ...new Set(
-      [...activityRoleKinds(root)].flatMap(([role, kind]) => {
+    ...new Set([
+      ...[...activityRoleKinds(root)].flatMap(([role, kind]) => {
         const value = bindings[role];
         return kind === 'object' && typeof value === 'string' ? [value] : [];
       }),
-    ),
+      ...produced,
+    ]),
   ];
 }
 

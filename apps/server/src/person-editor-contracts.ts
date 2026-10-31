@@ -205,6 +205,10 @@ export const authoredHistory: z.ZodType<import('@open-legend/domain').AuthoredHi
             entityIds: true,
             eventId: true,
           })
+          .extend({
+            kind: z.literal('episode'),
+            source: z.enum(['observed', 'heard', 'felt', 'internal', 'self_thought']),
+          })
           .strict(),
       })
       .strict(),

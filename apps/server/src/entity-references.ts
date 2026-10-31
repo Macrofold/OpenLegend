@@ -121,7 +121,7 @@ export function entityHandles(
       if (existing || !available(id)) return existing;
       // Labels and evidence request exact permitted subjects before hashing. Never
       // enumerate the world to shorten a local reference table (SC03/SC08).
-      // docs/projects/situation-aware-cognition-context-tech-design.md#73-exact-name-to-id-mappings-remain
+      // docs/technical/situation-aware-cognition-context.md#73-exact-name-to-id-mappings-remain
       const hash = createHash('sha256')
         .update(
           canonicalJson([
@@ -214,16 +214,13 @@ export function resolveEntityMarkers(text: string, references: Record<string, st
   });
 }
 
-/** Persist full identities in intentions, then reproject annotations in a later context. */
+/** Stored annotations reveal recognized identities, never hidden world membership. */
 export function projectEntityMarkers(text: string, world: WorldState, observerId: string): string {
   const handles = entityHandles(world, observerId);
-  return text.replace(/\(ID:([^()\s]+)\)/g, (original, id: string) =>
-    handles.has(id)
-      ? recognizesSubject(world, observerId, id)
-        ? `(ID:${handles.get(id)})`
-        : '(unrecognized identity)'
-      : original,
-  );
+  return text.replace(/\(ID:([^()\s]+)\)/g, (_, id: string) => {
+    const reference = recognizesSubject(world, observerId, id) ? handles.get(id) : undefined;
+    return reference ? `(ID:${reference})` : '(unrecognized identity)';
+  });
 }
 
 /** Resolve structured references only; prose cannot grant a mechanical target. */

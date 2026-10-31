@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Physical combat, animal responses and busy-character choices are installed; Ada’s counterattacks and final combined qualification remain open. | 2026-10-26   |
+| In progress | Physical combat, animal responses and busy-character choices are installed; Ada’s counterattacks and final combined qualification remain open. | 2026-10-28   |
 
-**Behavior alignment updated:** 2026-10-26T07:50:00Z.
+**Behavior alignment updated:** 2026-10-28T06:02:00Z.
 
 ## Purpose and authority
 
@@ -142,6 +142,8 @@ This is a quality requirement on this character's free choice and its supporting
 Pre-authored purposes avoid requiring a new monologue for routine danger responses; whether the complete two-stage route is fast enough remains an early playability gate. The catalogue includes stopping an assault, driving someone away, holding a place, evading, leaving, following an assailant, checking their last-seen point, letting them leave, helping a particular person, seeking help, asking whether contact was accidental, warning, de-escalating, retaliating and returning to interrupted life. These are different reasons for similar physical actions and different reasons to stop. The [full world catalogue](../worlds/base/threat-response-options.md#3-first-delivery-purposes) is canonical; the engine does not contain a generic moral ranking of its motives.
 
 Native preparation first removes impossible bindings and exposes the real costs of leaving current work. A first cheap Decision API stage selects situation-relevant purposes and supported source-linked appraisals. A second stage chooses one fully grounded response from those purposes. Each normally uses one request; complete independent question sets may be packed into additional bounded requests under the same source, deadline and spending limits. No choice is dropped to fit, and a failed batch grants no retry or generated fallback. Protecting someone is absent when there is no actual person or feasible protective action; deciding that an available person matters enough to protect remains Ada's judgment. Uncertain relevance remains explicit and available to the final choice. No change, continuation and unavailable judgment have distinct outcomes.
+
+A person can also independently choose to speak in their own voice while evading, defending or attacking. The same second-stage judgment asks whether words are warranted; silence and uncertainty buy no generation. Any selected native action commits first. An explicitly selected utterance then uses at most one bounded fast-model request and the ordinary speech admission, without replacing work or performing another action. A selected finite catalogue line already supplies the words and needs no duplicate generation. A failed or stale utterance leaves committed action and feelings intact. This is an optional response component, not an automatic fallback from an uncertain physical choice.
 
 All cognition triggers must have complete relevant context and choices, including while the person is gathering, moving or crafting. Being busy supplies consequential information—remaining work, spent inputs, recovery and whether interruption can resume—not an early exit that hides strikes or guards. A new action carries an explicit compatible continue/replace/interrupt meaning, and the native owner may refuse a currently impossible interruption before it stops or spends anything.
 

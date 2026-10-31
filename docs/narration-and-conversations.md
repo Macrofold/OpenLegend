@@ -301,11 +301,15 @@ of the former duplicate-recipient representation remains scoped to that build.
 
 The existing `conversation-context.ts` owner selects a bounded actor-scoped recent
 suffix from indexed linguistic eligibility and complete payload-size metadata before
-hydration. Complete structured sources and their readable prose share the existing
-allowance. Required current causes, committed work results, commitments and
-corrections retain their independent exact-source paths. Older unselected speech
+hydration. Each selected summary or exact turn appears once in the shared
+`character.experience` array, retaining its narrative and complete permitted structure.
+The chronological conversation section references those slots; trigger, recall and
+appraisal consumers use the same final mapping and byte allowance. Required current
+causes, committed work results, commitments and corrections retain their independent exact-source paths. Older unselected speech
 remains available through scoped recall and history, without an all-history count
-or compulsory compaction rebuild.
+or compulsory compaction rebuild. Complete attributed selected turns also supply
+bounded discovery cues, so a follow-up need not repeat the earlier topic’s name.
+Cue selection, relevance and memory contents retain the [memory owner](memory-architecture.md#4-jev-attention-before-context-inclusion).
 
 **Accepted NST integration:** all context/recall/compaction entry points enforce the [memory owner's terminal eligibility boundary](memory-architecture.md#progressive-speech--accepted-target-not-current-execution) by default, before ranking, limits, cursor maxima, hydration or summarization. A committed open prefix can appear in the human's Events reader while remaining absent from model-facing context. Closing an older utterance makes it eligible once without changing its original order; owned appends do not invalidate a captured unrelated semantic prefix. Final partial/interrupted evidence preserves its actual permitted words and lifecycle meaning. No per-part paid compaction or embedding is added. Exact readiness, source revisions and consumer changes belong to the [shared speech technical design](projects/npc-speech-streaming-tech-design.md); [NST](maintainers/npc-speech-streaming.md) owns their pending implementation.
 

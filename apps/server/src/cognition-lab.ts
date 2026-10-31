@@ -396,7 +396,9 @@ export class CognitionLab {
         execution: this.game.execution,
         labControl: this.control,
         automaticAutosaves: false,
-        presentationRelease: this.game.service.presentationRelease,
+        // The Lab is renderer-free and owns a separate catalogue. The game's
+        // artwork selection grants no publication or retention authority here.
+        // docs/projects/cognition-lab-tech-design.md#22-shared-runtime-extraction
         runtimeAuthority: (scope) => this.scopeCurrent(scope),
         initialWorldId: `lab-${this.workspaceId}`,
       });

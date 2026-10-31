@@ -18,7 +18,11 @@ import { memoryCandidate } from './recall.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { digest } from './store.js';
 import type { WorldService } from './world-service.js';
-import type { SharedModelExperience } from './perceived-context.js';
+import {
+  modelEvidenceReference,
+  type ModelEvidenceSource,
+  type SharedModelExperience,
+} from './perceived-context.js';
 import {
   conversationCompactionKey,
   RETRIEVAL_BYTES,
@@ -73,7 +77,10 @@ function conversationText(lines: string[]): string {
   return lines.map((line) => `- ${line.replace(/\n/g, '\n  ')}`).join('\n');
 }
 function projectionBytes(lines: string[], experience: unknown[]): number {
-  return Buffer.byteLength(conversationText(lines)) + Buffer.byteLength(JSON.stringify(experience));
+  return (
+    Buffer.byteLength(conversationText(lines.map((_, index) => modelEvidenceReference(index)))) +
+    Buffer.byteLength(JSON.stringify(experience))
+  );
 }
 function perspective(world: WorldState, actorId: string, entityIds: string[]): string {
   const handles = entityHandles(world, actorId);
@@ -366,9 +373,8 @@ export async function buildConversationContext(input: {
         while (pending.length) {
           const next = pending[0]!;
           const context = {
-            previousSummary: prefix ? { text: prefix.text, experience: prefix.experience } : null,
+            previousSummary: prefix ? { experience: prefix.experience } : null,
             olderDialogue: [...part, next].map((turn) => ({
-              text: turn.text,
               experience: turn.experience,
             })),
           };
@@ -417,11 +423,8 @@ export async function buildConversationContext(input: {
               maxOutputTokens: 4096,
               instructions: `${instructions}\nThe summary must fit ${textBytes} UTF-8 bytes.`,
               context: {
-                previousSummary: prefix
-                  ? { text: prefix.text, experience: prefix.experience }
-                  : null,
+                previousSummary: prefix ? { experience: prefix.experience } : null,
                 olderDialogue: part.map((turn) => ({
-                  text: turn.text,
                   experience: turn.experience,
                 })),
               },
@@ -487,6 +490,22 @@ export async function buildConversationContext(input: {
   await check();
   const lines = [...(summary ? [summary.text] : []), ...recent.map((turn) => turn.text)];
   const experience = [...(summary?.experience ?? []), ...recent.flatMap((turn) => turn.experience)];
+  const modelSources: ModelEvidenceSource[] = [
+    ...(usedCache && summary
+      ? summary.experience.map((experience) => ({
+          key: experienceSourceKey({ kind: 'summary', id: usedCache!.value.id }),
+          revision: digest(usedCache.value),
+          experience,
+        }))
+      : []),
+    ...recent.flatMap((turn) =>
+      turn.experience.map((experience) => ({
+        key: experienceSourceKey({ kind: 'awareness', id: turn.id }),
+        revision: turn.revision,
+        experience,
+      })),
+    ),
+  ];
   const sharedExperiences = new Map<string, SharedModelExperience>();
   let experienceIndex = summary?.experience.length ?? 0;
   for (const turn of recent) {
@@ -504,6 +523,7 @@ export async function buildConversationContext(input: {
   return {
     lines,
     experience,
+    modelSources,
     sharedExperiences,
     evidenceIds: recent.map((turn) => turn.id),
     watermark: Math.max(usedCache?.value.to ?? 0, ...recent.map((turn) => turn.entry.value.at), 0),

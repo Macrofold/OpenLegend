@@ -25,10 +25,12 @@ it('forwards explicit typed effort to direct, full and reflection wire requests 
   await enterLocalWorld(service);
   const bodies: Array<{
     path: string;
+    transport: string;
     body: {
       model?: string;
       model_parameters?: unknown;
       input?: unknown;
+      prompt?: string;
       limits?: { max_output_tokens?: number; max_cost_micro_usd?: string };
     };
   }> = [];
@@ -42,7 +44,8 @@ it('forwards explicit typed effort to direct, full and reflection wire requests 
       const url = new URL(raw),
         path = url.pathname,
         method = init.method ?? 'GET';
-      if (method === 'POST') bodies.push({ path, body: JSON.parse(String(init.body)) });
+      if (method === 'POST')
+        bodies.push({ path, transport: String(init.body), body: JSON.parse(String(init.body)) });
       if (path === '/v1/models')
         return Response.json({
           data: [...new Set([config.macrofoldModel, config.macrofoldSummaryModel])].map((id) => ({
@@ -194,6 +197,38 @@ it('forwards explicit typed effort to direct, full and reflection wire requests 
           provider: { require_parameters: true },
         });
         if (execution !== 'full') expect(actual.body.limits?.max_output_tokens).toBe(128);
+        const worker = execution === 'full';
+        const inputBytes = Buffer.byteLength(
+          worker ? actual.body.prompt! : JSON.stringify(actual.body.input),
+        );
+        expect(result.receipt.requestAccounting).toEqual({
+          instructionsBytes: Buffer.byteLength(request.instructions),
+          contextBytes: Buffer.byteLength(JSON.stringify(request.context)),
+          schemaBytes: Buffer.byteLength(JSON.stringify(request.schema)),
+          toolDefinitionBytes: worker ? null : 0,
+          toolResultBytes: worker ? null : 0,
+          inputScope: worker ? 'worker-prompt-only' : 'adapter-input',
+          encodedInputBytes: inputBytes,
+          transportBytes: Buffer.byteLength(actual.transport),
+          maxOutputTokens: worker ? null : 128,
+          estimatedInputTokens: {
+            value: Math.ceil(inputBytes / 3),
+            basis: 'captured-input-utf8-divided-by-three',
+            model: service.config.macrofoldModel,
+            exact: false,
+          },
+        });
+        if (execution === 'fast' && !effort) {
+          const admissionCount = bodies.length;
+          const replay = await backend.generate({
+            ...request,
+            requestId: 'fast-omitted',
+            execution,
+          });
+          expect(replay.outcome).toBe('value');
+          expect(replay.receipt.requestAccounting).toEqual(result.receipt.requestAccounting);
+          expect(bodies).toHaveLength(admissionCount);
+        }
       }
     }
     const reflectionSchema = {
@@ -228,6 +263,15 @@ it('forwards explicit typed effort to direct, full and reflection wire requests 
       expect(actual.body.limits?.max_cost_micro_usd).toBeDefined();
       expect(actual.body.model).toBe(service.config.macrofoldModel);
       expect(result.receipt.requestedModel).toBe(service.config.macrofoldModel);
+      expect(result.receipt.requestAccounting).toMatchObject({
+        inputScope: 'worker-prompt-only',
+        encodedInputBytes: Buffer.byteLength(actual.body.prompt!),
+        transportBytes: Buffer.byteLength(actual.transport),
+        schemaBytes: Buffer.byteLength(JSON.stringify(reflectionSchema)),
+        maxOutputTokens: null,
+        toolDefinitionBytes: null,
+        toolResultBytes: null,
+      });
     }
     expect(bodies.filter((item) => item.path === '/v1/runs')).toHaveLength(4);
     expect(bodies.filter((item) => item.path === '/v1/inferences')).toHaveLength(4);

@@ -549,15 +549,18 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
     ];
     const definitions = new Set<string>(),
       warnings: string[] = [];
-    const addDefinition = (definitionId: string) => {
+    const addDefinition = (definitionId: string, requestId: string, sourceId: string) => {
       const definition = world.itemDefinitions[definitionId];
-      if (!definition || !isFuel(definition) || definitions.has(definitionId)) return;
-      definitions.add(definitionId);
+      const key = JSON.stringify([requestId, sourceId, definitionId]);
+      if (!definition || !isFuel(definition) || definitions.has(key)) return;
+      definitions.add(key);
       choices.push({
         id: definitionId,
         label: definition.name,
         kind: 'definition',
         roles: ['definitionId'],
+        requestIds: [requestId],
+        requires: { sourceId },
         accessible: true,
       });
     };
@@ -581,7 +584,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
         distance,
         accessible: true,
       });
-      if (target.resource) addDefinition(target.resource.definitionId);
+      if (target.resource) addDefinition(target.resource.definitionId, requests[0]!.id, target.id);
       if (target.heat)
         warnings.push(
           `${observerDescription(world, actorId, target.id)}: ${fireFuelDescription(target.heat)}. A full fire can refuse additional fuel; waiting alone is not a fuel-care result.`,
@@ -593,7 +596,7 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
         warnings.push('Some possessions are omitted. Inspect or narrow your selected supply.');
         break;
       }
-      addDefinition(item.definitionId);
+      addDefinition(item.definitionId, requests[1]!.id, actorId);
       if (item.container) {
         const choice = {
           id: item.id,
@@ -623,7 +626,9 @@ export const BASE_CAMP_ACTIVITY_HOST: ActivityHostDescriptor = {
         { ...choice, roles: ['containerId'], requestIds: [requests[0]!.id] },
         { ...choice, roles: ['sourceId'], requestIds: [requests[1]!.id] },
       );
-      selected.items.forEach((item) => addDefinition(item.definitionId));
+      selected.items.forEach((item) =>
+        addDefinition(item.definitionId, requests[1]!.id, selected.id),
+      );
       if (selected.inspection.more)
         warnings.push(
           'The selected cache has further inspection pages; this page is not a complete stock count.',

@@ -30,15 +30,24 @@ import {
 } from './decision-task.js';
 import { decisionValidity, preparedResponseValidity } from './decision-validity.js';
 import { decisionObservation } from './decision-observation.js';
-import { preparedResponseChoices } from './prepared-response-context.js';
+import { contextUnitKey, finalizeDecisionRequest } from './decision-context-selection.js';
+import {
+  preparedResponseChoices,
+  preparedResponseDecisionContext,
+} from './prepared-response-context.js';
 import { prepareResponseAppraisals } from './prepared-response-appraisals.js';
 import {
   preparedResponseRelevanceRequest,
   preparedResponseRelevance,
   preparedResponseChoiceRequest,
+  preparedResponseVoiceSelected,
 } from './prepared-response-questions.js';
 import { recordDecisionTiming, type DecisionPublication } from './decision-publication.js';
-import { bindDecisionAppraisals, decisionFeelings } from './appraisal-context.js';
+import {
+  bindDecisionAppraisals,
+  captureDecisionAppraisalContext,
+  decisionFeelings,
+} from './appraisal-context.js';
 import { namePhrase } from '@open-legend/language';
 import { normalizeReceiptCost } from '@open-legend/ai';
 import {
@@ -49,7 +58,11 @@ import {
   type LedgerCategory,
 } from './cognition-budget.js';
 import { namedClockTimes, clockDeadline, activityRequestDescriptors } from '@open-legend/domain';
-import { requestRoutes, chooseActivityRequest } from './activity-request-choice.js';
+import {
+  requestRoutes,
+  chooseActivityRequest,
+  activityRequestChoiceFacts,
+} from './activity-request-choice.js';
 import type { RequestScope } from './authority.js';
 import { NpcReplyPreviews } from './npc-reply-preview.js';
 import {
@@ -128,12 +141,17 @@ import {
   prepareDecision,
   refreshDecisionActions,
   selectDecisionActions,
+  type DecisionInputMeasure,
 } from './decision-context.js';
-import { responseTrigger } from './response-context.js';
+import { renderDecisionContext, responseTrigger } from './response-context.js';
 import {
   RESPONSE_INSTRUCTIONS,
+  DECISION_INSTRUCTIONS,
   LEVEL_LIMITS,
   boundResponseSchema,
+  nativeResponse,
+  nativeResponseOperation,
+  boundSpeechResponseSchema,
   COGNITION_VERSION,
   previewSpeechOperation,
 } from './cognition-contracts.js';
@@ -234,6 +252,8 @@ interface Running {
   decisionPreparation?: RetainedDecisionPreparation;
   validityFor?: (world: WorldState) => string;
   preparedResponse?: boolean;
+  /** Once a component committed, an interruption cannot replay its selection. */
+  preparedResponseCommitted?: boolean;
   invalidated?: boolean;
   /** Per-decision accounting and level limits; absent for non-decision jobs. */
   ledger?: DecisionLedger;
@@ -1496,17 +1516,24 @@ export class AiDirector {
       run.job = updated;
       await this.service.store.putJob(run.job);
     }
+    // A native publication may already have closed this job with independently
+    // accepted components. Its durable result wins over a later stage's stale
+    // completion arguments in diagnostics and live updates as well as storage.
+    const publishedTerminal = ['completed', 'failed', 'cancelled', 'stale'].includes(
+      run.job.status,
+    );
+    const publishedResult = run.job.result;
     const scope = run.job.request.invention;
     if (
-      terminal &&
-      status === 'failed' &&
+      publishedTerminal &&
+      run.job.status === 'failed' &&
       scope?.authority.origin === 'agent' &&
       scope.worldId === this.service.world.id &&
       scope.timelineId === this.service.timelineId
     ) {
       await this.service.transition((world) =>
         scope.worldId === world.id && scope.timelineId === this.service.timelineId
-          ? recordInventionFeedback(world, scope.actorId, run.job.id, message)
+          ? recordInventionFeedback(world, scope.actorId, run.job.id, run.job.message)
           : {
               world,
               events: [],
@@ -1518,7 +1545,7 @@ export class AiDirector {
             },
       );
     }
-    if (terminal && run.ledger?.entries.length) {
+    if (publishedTerminal && run.ledger?.entries.length) {
       const used = new Set(run.ledger.entries.flatMap((entry) => entry.level ?? []));
       await this.log.record(
         `${run.job.id}:decision-accounting`,
@@ -1535,22 +1562,28 @@ export class AiDirector {
     if (trace)
       await this.log.save({
         ...trace,
-        status: terminal ? (status === 'completed' ? 'completed' : 'failed') : 'running',
+        status: publishedTerminal
+          ? run.job.status === 'completed'
+            ? 'completed'
+            : 'failed'
+          : 'running',
         disposition:
-          result && typeof result === 'object' && 'disposition' in result
-            ? String(result.disposition)
-            : status,
-        output: { message, result },
-        ...(terminal ? { completedAt: new Date().toISOString() } : {}),
+          publishedResult && typeof publishedResult === 'object' && 'disposition' in publishedResult
+            ? String(publishedResult.disposition)
+            : run.job.status,
+        output: { message: run.job.message, result: publishedResult },
+        ...(publishedTerminal ? { completedAt: new Date().toISOString() } : {}),
       });
     await this.service.cognitionControl?.emit({
       kind: 'job',
       jobId: run.job.id,
       actorId: this.selectedActorId(run.job),
-      status,
-      result,
+      status: run.job.status,
+      result: publishedResult,
       primaryStageId: run.primaryRequestId,
-      ...(terminal ? { publication: this.service.world.responseReceipts?.[run.job.id] } : {}),
+      ...(publishedTerminal
+        ? { publication: this.service.world.responseReceipts?.[run.job.id] }
+        : {}),
     });
     this.service.notify();
   }
@@ -1845,6 +1878,7 @@ export class AiDirector {
             };
           await this.log.record(`${run.job.id}:failure`, 'Workflow failure', {
             reason: error instanceof Error ? error.message : 'Unknown failure',
+            ...(error instanceof ContextBudgetError ? { contextBudget: error.details } : {}),
           });
           await this.update(
             run,
@@ -2447,7 +2481,7 @@ export class AiDirector {
         if (result.receipt.completionUncertain)
           throw new StopJob(
             'failed',
-            'The original provider execution is still uncertain; no world effect or second request was allowed.',
+            'This call’s outcome is still uncertain. Its output applied no effects and it was not resubmitted.',
             'uncertain',
           );
         await this.log.record(
@@ -2475,7 +2509,7 @@ export class AiDirector {
         if (result.outcome !== 'value')
           throw new StopJob(
             result.outcome === 'cancelled' ? 'cancelled' : 'failed',
-            `${provider === 'jev' ? 'Jev' : 'Language model'} returned ${result.outcome}: ${result.reason}. No world effect or automatic retry followed.`,
+            `${provider === 'jev' ? 'Jev' : 'Language model'} returned ${result.outcome}: ${result.reason}. This call applied no effects and was not automatically retried.`,
             // An adapter may report a dispatched, unknown completion as failed; the receipt decides.
             result.outcome !== 'cancelled' && result.receipt.completionUncertain
               ? 'uncertain'
@@ -2518,7 +2552,7 @@ export class AiDirector {
   private selectKnownAction(
     prepared: Awaited<ReturnType<typeof prepareDecision>>,
     selected: string,
-  ): ActorResponse {
+  ): ReturnType<typeof knownDecisionResponse> {
     return knownDecisionResponse(prepared, selected);
   }
 
@@ -2550,8 +2584,8 @@ export class AiDirector {
     return { answers };
   }
 
-  /** Two sequential supplied stages use this actor's existing job, reservations,
-   * refresh allowance and native response owner. No route gate or generator runs. */
+  /** Supplied stages share one job and budget. A separately selected utterance
+   * can follow the native commit without delaying or replacing physical conduct. */
   private async preparedResponse(
     run: Running,
     actorId: string,
@@ -2594,6 +2628,13 @@ export class AiDirector {
       triggerEvidenceId,
     );
     const required = preparedResponseChoices(catalogue, profile.instructions, subjectLabels);
+    const voice =
+      profile.voice &&
+      !this.service.config.jevOnly &&
+      hasNpcGenerationAccess(this.service.config, 'npc_response_fast') &&
+      canSpeak(entityGet(this.service.world.entities, actorId))
+        ? profile.voice
+        : undefined;
     required.feelings = interpretations.scopes;
     let prepared = await prepareDecision(
       this.service,
@@ -2648,6 +2689,7 @@ export class AiDirector {
     preparedResponseChoiceRequest(
       prepared,
       Object.fromEntries(catalogue.purposes.map((_, index) => [`p${index}`, 'uncertain' as const])),
+      voice,
     );
     await current();
     const first = await this.judgeIndependentQuestions(
@@ -2696,6 +2738,7 @@ export class AiDirector {
               prepared.binding.knowledgeReferences,
               interpretations.bound.bindings,
               this.service.nativeExecutionPermissions,
+              prepared.binding.capturedActorFrame,
             );
             // Only this serialized native result can advance the expected feeling revisions.
             // Subscribers see the postcommit guard, while external changes stay fenced.
@@ -2750,7 +2793,7 @@ export class AiDirector {
       },
     };
     await current();
-    const choice = preparedResponseChoiceRequest(prepared, relevance);
+    const choice = preparedResponseChoiceRequest(prepared, relevance, voice);
     const answer = await this.judgeIndependentQuestions(
       run,
       `attempt:${attempt}:threat-choice`,
@@ -2764,14 +2807,51 @@ export class AiDirector {
     });
     run.level1 = level1.outcome;
     await current();
+    const chosenHandle =
+      level1.outcome.kind === 'act' || level1.outcome.kind === 'continue'
+        ? level1.outcome.handle
+        : undefined;
+    // A selected complete utterance already expresses this decision. Do not buy
+    // another rendition, while keeping language independent of action confidence.
+    const voiceSelected =
+      !!voice &&
+      preparedResponseVoiceSelected(answer, choice.request.questions) &&
+      (!chosenHandle || choice.prepared.binding.actions[chosenHandle]?.invocation?.type !== 'say');
+    if (voiceSelected && run.job.decision) {
+      const saved = await this.service.store.mutateDecision(run.job.id, async (job) => {
+        if (!job.decision || job.decision.phase === 'closed') return undefined;
+        return {
+          ...job,
+          decision: {
+            ...job.decision,
+            groups: {
+              ...job.decision.groups,
+              q1: { kind: 'response' as const, state: 'open' as const, attemptId: job.id },
+            },
+          },
+        };
+      });
+      if (!saved) throw new StopJob('stale', 'This response opportunity already ended.');
+      run.job = saved;
+    }
     await this.log.record(
       `${run.job.id}:attempt:${attempt}:threat-choice`,
       'Independent personal choice',
       { request: choice.request },
-      { ...level1, elapsedMs: performance.now() - started },
+      { ...level1, voiceSelected, elapsedMs: performance.now() - started },
     );
     if (level1.outcome.kind !== 'act' && level1.outcome.kind !== 'continue') {
       run.responseWatch = undefined;
+      if (voiceSelected)
+        await this.preparedVoice(
+          run,
+          actorId,
+          attempt,
+          stimulus,
+          requiredEvidenceIds,
+          triggerEvidenceId,
+          voice!.instructions,
+        );
       await this.update(run, 'completed', level1Message(level1.outcome), {
         disposition: 'deferred',
         level1: level1.outcome,
@@ -2779,7 +2859,7 @@ export class AiDirector {
       return;
     }
     const handle = level1.outcome.handle;
-    const reply = this.selectKnownAction(choice.prepared, handle);
+    const reply = nativeResponse(this.selectKnownAction(choice.prepared, handle));
     run.responseWatch = undefined;
     await this.prepareResponseAdmission(run);
     const root = run.job.decision ? await this.service.store.getJob(run.job.id) : undefined;
@@ -2819,6 +2899,7 @@ export class AiDirector {
             choice.prepared.binding.knowledgeReferences,
             undefined,
             this.service.nativeExecutionPermissions,
+            choice.prepared.binding.capturedActorFrame,
           );
         },
         undefined,
@@ -2838,6 +2919,7 @@ export class AiDirector {
           commit,
         )
       : await commit();
+    run.preparedResponseCommitted ||= result.ok;
     await this.log.record(
       `${run.job.id}:commit`,
       'Supplied response admission',
@@ -2856,10 +2938,220 @@ export class AiDirector {
         publication.deliveredAt,
         publication.deliveredElapsedMs,
       );
+    // Native precondition refusal does not consume an independently selected voice.
+    // preparedVoice rechecks its own life, source, authority and original lifetime.
+    if (voiceSelected)
+      await this.preparedVoice(
+        run,
+        actorId,
+        attempt,
+        stimulus,
+        requiredEvidenceIds,
+        triggerEvidenceId,
+        voice!.instructions,
+      );
     await this.update(run, result.ok ? 'completed' : 'failed', result.message, {
       disposition: result.ok && level1.outcome.kind === 'continue' ? 'continued' : result.code,
       level1: level1.outcome,
     });
+  }
+
+  /** One explicitly selected speech component, after any independent physical
+   * commit. It shares this job's original lifetime, reservations and cancellation. */
+  private async preparedVoice(
+    run: Running,
+    actorId: string,
+    attempt: number,
+    stimulus: string,
+    evidenceIds: string[],
+    triggerEvidenceId: string | undefined,
+    voiceInstructions: string,
+  ): Promise<void> {
+    this.current(run);
+    const receiptId = `${run.job.id}:voice`;
+    // Rebuild through the same permitted context owner after native admission.
+    // The old complete catalogue must not masquerade as current physical state.
+    const prepared = await prepareDecision(
+      this.service,
+      this.recall,
+      actorId,
+      receiptId,
+      stimulus,
+      evidenceIds,
+      async () => {
+        throw new Error('Selected speech preparation cannot buy another judgment.');
+      },
+      run.controller.signal,
+      this.service.config.budgetUsd,
+      true,
+      attempt,
+      triggerEvidenceId,
+      undefined,
+      'native-only',
+    );
+    const current = async () => {
+      this.current(run);
+      if (
+        !canSpeak(entityGet(this.service.world.entities, actorId)) ||
+        (run.validityFor && run.validity !== run.validityFor(this.service.world))
+      )
+        throw new StopJob('stale', 'The character or source changed before the utterance.');
+      // Words can finish while the independently admitted work progresses. Keep
+      // all captured source/privacy/participant proofs; only this speech-only
+      // schema lacks the action/goal authority requiring unchanged work outcomes.
+      await prepared.validateEvidence();
+    };
+    run.validateJudgmentSource = current;
+    const schema = boundSpeechResponseSchema(Object.keys(prepared.entityReferences));
+    const instructions = `${DECISION_INSTRUCTIONS}\n\n${voiceInstructions}\nReturn only the supplied JSON. Choose at most one talk operation or {"operations":[]}. Use localId, requiresAccepted:[], and the exact supplied addressee handle (or null). Speech can include brief expressive asides but does not perform physical actions. Context is a captured view; ongoing native work may progress while words form. Do not claim an offered or planned action happened, or that work completed without a supplied actual result.`;
+    const c = this.service.config;
+    const limit = levelLimits(c)[2];
+    const capturedRequest = finalizeDecisionRequest({
+      scope: prepared.manifest.scope,
+      context: prepared.prompt,
+      instructions,
+      schema: z.toJSONSchema(schema, { target: 'draft-7' }),
+      sourceKeys: prepared.manifest.units.map((unit) => unit.key),
+      references: prepared.entityReferences,
+    });
+    const responseSchema = capturedRequest.schema;
+    const inputBytes = textBytes(instructions) + textBytes(prepared.prompt);
+    if (inputBytes > CONTEXT_BYTE_LIMIT)
+      throw new ContextBudgetError(
+        'The complete selected speech context exceeds its input allowance.',
+        {
+          guard: 'selected-speech-input',
+          inputBytes,
+          limitBytes: CONTEXT_BYTE_LIMIT,
+          sections: { instructions: textBytes(instructions), context: textBytes(prepared.prompt) },
+        },
+      );
+    const schemaBytes = textBytes(responseSchema);
+    if (schemaBytes > limit.schemaBytes)
+      throw new ContextBudgetError('The selected speech schema exceeds its input allowance.', {
+        guard: 'selected-speech-schema',
+        inputBytes: schemaBytes,
+        limitBytes: limit.schemaBytes,
+        sections: { schema: schemaBytes },
+      });
+    const selected = resolveNpcGenerationConfig(
+      this.executionSource === 'live-model' ? c : { ...c, modelTargets: undefined },
+      'npc_response_fast',
+      { maxOutputTokens: LEVEL_LIMITS[2].outputTokens, reasoningEffort: LEVEL_LIMITS[2].effort },
+    );
+    let request: Omit<GenerateRequest, 'requestId' | 'signal'> = {
+      task: 'npc_response',
+      actorScope: actorId,
+      execution: 'fast',
+      ...('macrofoldDeployment' in selected
+        ? { macrofoldDeployment: selected.macrofoldDeployment }
+        : { model: selected.model, reasoningEffort: selected.reasoningEffort }),
+      maxOutputTokens: selected.maxOutputTokens,
+      instructions: capturedRequest.instructions,
+      context: capturedRequest.context,
+      schema: responseSchema,
+    };
+    await current();
+    if (request.macrofoldDeployment && c.budgetUsd > 0)
+      request = await this.macrofold.prepareDeploymentGeneration(
+        request,
+        selected.structuredOutput,
+        run.controller.signal,
+        current,
+      );
+    const value = await this.generate<unknown>(run, request, `attempt:${attempt}:voice`, {
+      category: 'level',
+      level: 2,
+    });
+    if (textBytes(value) > limit.visibleOutputBytes)
+      throw new StopJob(
+        'failed',
+        'The selected utterance exceeded its output allowance.',
+        'invalid',
+      );
+    const parsed = schema.safeParse(value);
+    if (!parsed.success || !validResponseEnvelope(parsed.data))
+      throw new StopJob(
+        'failed',
+        'The selected utterance did not match its speech contract.',
+        'invalid',
+      );
+    const reply = resolveResponseEntities(parsed.data, prepared.entityReferences);
+    await current();
+    await this.prepareResponseAdmission(run);
+    const root = run.job.decision ? await this.service.store.getJob(run.job.id) : undefined;
+    const publication: DecisionPublication | undefined = root?.decision
+      ? {
+          rootJobId: root.id,
+          expectedRevision: root.decision.revision,
+          attemptId: root.id,
+          receiptId,
+          final: true,
+          ...(run.level1?.kind === 'defer' ? { unresolvedReason: 'abstained' as const } : {}),
+          now: this.now,
+          groups: {
+            q1: {
+              operations: reply.operations.map((operation) => operation.localId),
+              continued: reply.operations.length === 0,
+            },
+          },
+        }
+      : undefined;
+    const commit = () =>
+      this.service.transition(
+        (world) => {
+          this.current(run);
+          return commitActorResponse(
+            world,
+            receiptId,
+            actorId,
+            reply,
+            {},
+            prepared.binding.entityIds,
+            prepared.binding.expectedPlan,
+            [],
+            prepared.binding.entityEpisodes,
+            prepared.binding.evidenceIds,
+            prepared.binding.knowledgeReferences,
+            undefined,
+            this.service.nativeExecutionPermissions,
+            prepared.binding.capturedActorFrame,
+          );
+        },
+        undefined,
+        run.job.id,
+        async () => {
+          await current();
+          return true;
+        },
+        undefined,
+        publication,
+      );
+    const result = run.job.authority
+      ? await this.service.authorized(
+          run.job.authority,
+          run.job.operatorAuthored ? 'create' : 'play',
+          !run.job.operatorAuthored,
+          commit,
+        )
+      : await commit();
+    run.preparedResponseCommitted ||= result.ok;
+    await this.log.record(
+      `${run.job.id}:voice:commit`,
+      'Independent utterance admission',
+      { proposed: reply },
+      { ...result, components: this.service.world.responseReceipts?.[receiptId]?.components },
+    );
+    if (!result.ok)
+      throw new StopJob(result.code === 'storage' ? 'failed' : 'stale', result.message);
+    if (publication?.deliveredAt !== undefined)
+      await recordDecisionTiming(
+        this.log,
+        run.job,
+        'final',
+        publication.deliveredAt,
+        publication.deliveredElapsedMs,
+      );
   }
 
   private async generate<T>(
@@ -3030,6 +3322,7 @@ export class AiDirector {
       const supersession = run.supersession;
       if (
         (!run.job.decision || run.preparedResponse) &&
+        !run.preparedResponseCommitted &&
         attempt === 0 &&
         supersession?.attempt === attempt &&
         !run.invalidated &&
@@ -3200,6 +3493,58 @@ export class AiDirector {
     let attentionCall = 0;
     const contextStartedAt = new Date().toISOString();
     run.validateJudgmentSource = undefined;
+    const generationAvailable =
+      !this.service.config.jevOnly &&
+      (hasNpcGenerationAccess(this.service.config, 'npc_response_fast') ||
+        hasNpcGenerationAccess(this.service.config, 'npc_response_complex'));
+    // Capture late support before optional fitting. The actual dispatch uses the
+    // same renderer; only native source binding/validation waits for selection.
+    const capturedInvention = generationAvailable
+      ? await prepareActorInvention(this.service, actorId)
+      : undefined;
+    const appraisalView =
+      capturedInvention &&
+      this.service.world.moduleManifest.appraisals?.definitions.some(
+        (definition) => definition.decision,
+      )
+        ? captureDecisionAppraisalContext(this.service.world, actorId)
+        : undefined;
+    const renderSupport = (
+      invention: Pick<
+        Awaited<ReturnType<typeof prepareActorInvention>>,
+        'instructions' | 'context'
+      >,
+      appraisalContext?: ReturnType<NonNullable<typeof appraisalView>['project']>,
+    ) => {
+      const support = [
+        invention.context,
+        appraisalContext ? 'Permitted feeling proposals: ' + JSON.stringify(appraisalContext) : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+      return {
+        instructions: `${RESPONSE_INSTRUCTIONS} ${invention.instructions}`,
+        appendix: support ? `\n\n## Current decision support\n${support}` : '',
+      };
+    };
+    const inputMeasure: DecisionInputMeasure | undefined = capturedInvention
+      ? (input) => {
+          const support = renderSupport(
+            capturedInvention,
+            appraisalView?.project({ ...input.sources, triggerEvidenceId }),
+          );
+          const rendered = renderDecisionContext(
+            input.context,
+            [...input.offered],
+            input.includeActions,
+          );
+          return (
+            Buffer.byteLength(rendered.prompt) +
+            Buffer.byteLength(support.instructions) +
+            Buffer.byteLength(support.appendix)
+          );
+        }
+      : undefined;
     let prepared = await prepareDecision(
       this.service,
       this.recall,
@@ -3223,6 +3568,8 @@ export class AiDirector {
         ? undefined
         : (request, operation) => this.generate<unknown>(run, request, operation),
       run.job.decision ? 'native-only' : 'ordinary',
+      undefined,
+      inputMeasure,
     );
     run.validateJudgmentSource = () => prepared.validateConversation();
     this.current(run);
@@ -3309,10 +3656,6 @@ export class AiDirector {
     };
     if (await retryForUrgentAwareness()) return;
     const policy = this.service.world.cognitionPolicy;
-    const generationAvailable =
-      !this.service.config.jevOnly &&
-      (hasNpcGenerationAccess(this.service.config, 'npc_response_fast') ||
-        hasNpcGenerationAccess(this.service.config, 'npc_response_complex'));
     const questions = decisionQuestions(
       addressedSpeech,
       policy.maxImmediateLevel,
@@ -3322,10 +3665,7 @@ export class AiDirector {
     const routeQuestion = questions['route'];
     if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
     const criteria = routeQuestion.criteria;
-    const requestFamilies = requestRoutes(
-      prepared.activityRequests.requests,
-      prepared.activityRequests.choices,
-    );
+    const requestFamilies = requestRoutes(prepared.activityRequests.requests);
     for (const [key, descriptor] of requestFamilies)
       criteria[key] = activityRouteCriterion(descriptor);
     const offeredRoutes = Object.keys(criteria);
@@ -3532,21 +3872,35 @@ export class AiDirector {
       return;
     }
     if (route !== 'level1' && (await this.handoff(run, 'semantic-escalation', true))) return;
-    let requestedActivity: ActorResponse | undefined;
+    let requestedActivity: Awaited<ReturnType<typeof chooseActivityRequest>>;
     const chosenFamily = requestFamilies.get(route);
     if (chosenFamily) {
       await prepared.validateConversation();
       const selectedWorld = this.service.world;
+      const selectedObservation = decisionObservation(selectedWorld, actorId);
       let parameterRound = 0;
       requestedActivity = await chooseActivityRequest({
         descriptor: chosenFamily,
         choices: prepared.activityRequests.choices,
+        resolveChoices: async (field, parameters) => {
+          await prepared.validateConversation();
+          this.current(run);
+          return activityRequestChoiceFacts(
+            selectedWorld,
+            actorId,
+            chosenFamily,
+            field,
+            parameters,
+            prepared.entityReferences,
+            selectedObservation ?? undefined,
+          );
+        },
         simTime: selectedWorld.simTime,
         namedDeadlines: namedClockTimes(selectedWorld).map((name) => ({
           name,
           at: clockDeadline(selectedWorld, name)!,
         })),
-        state: prepared.prompt,
+        state: { character: preparedResponseDecisionContext(prepared.context) },
         judge: (request) => judge(`activity-parameters:${parameterRound++}`)(request),
       });
       this.current(run);
@@ -3702,7 +4056,7 @@ export class AiDirector {
     const actorInvention =
       executedRoute === 'level1' || requestedActivity
         ? { enabled: false, policyRevision: 0, schema: z.null(), instructions: '', context: '' }
-        : await prepareActorInvention(this.service, actorId);
+        : (capturedInvention ?? (await prepareActorInvention(this.service, actorId)));
     const appraisals = this.service.world.moduleManifest.appraisals?.definitions.some(
       (definition) => definition.decision,
     )
@@ -3713,17 +4067,17 @@ export class AiDirector {
           prepared.binding.evidenceIds ?? evidenceIds,
           prepared.entityReferences,
           triggerEvidenceId,
-          { sharedExperiences: prepared.sharedExperiences },
+          { sharedExperiences: prepared.sharedExperiences, contextSnapshot: appraisalView },
         )
       : undefined;
-    const instructions = `${RESPONSE_INSTRUCTIONS} ${actorInvention.instructions}`;
-    const support = [
-      actorInvention.context,
-      appraisals ? 'Permitted feeling proposals: ' + JSON.stringify(appraisals.context) : '',
-    ]
-      .filter(Boolean)
-      .join('\n');
-    const appendix = support ? `\n\n## Current decision support\n${support}` : '';
+    if (appraisalView && !appraisalView.current(this.service.world))
+      throw new StopJob('stale', 'The character’s interpretation changed during preparation.');
+    if (
+      capturedInvention &&
+      capturedInvention.policyRevision !== this.service.world.inventionPolicy.revision
+    )
+      throw new StopJob('stale', 'The available invention policy changed during preparation.');
+    const { instructions, appendix } = renderSupport(actorInvention, appraisals?.context);
     const reservedBytes =
       Buffer.byteLength(instructions) -
       Buffer.byteLength(RESPONSE_INSTRUCTIONS) +
@@ -3745,7 +4099,7 @@ export class AiDirector {
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
       namedClockTimes(this.service.world),
-      activityRequestDescriptors(this.service.world),
+      activityRequestDescriptors(this.service.world, actorId),
       appraisals?.schema,
     );
     const schema = actorInvention.enabled
@@ -3800,10 +4154,16 @@ export class AiDirector {
               const operation = previewSpeechOperation(baseSchema.shape.operations.element, value);
               return operation
                 ? (resolveResponseEntities(
-                    { operations: [(({ appraise: _appraise, ...rest }) => rest)(operation)] },
+                    {
+                      operations: [
+                        nativeResponseOperation(
+                          (({ appraise: _appraise, ...rest }) => rest)(operation),
+                        ),
+                      ],
+                    },
                     prepared.entityReferences,
                     prepared.binding.knowledgeReferences,
-                    activityRequestDescriptors(this.service.world),
+                    activityRequestDescriptors(this.service.world, actorId),
                   ).operations[0] ?? null)
                 : null;
             },
@@ -3834,6 +4194,46 @@ export class AiDirector {
             reasoningEffort: limits.effort,
           },
         );
+        const capturedRequest = finalizeDecisionRequest({
+          scope: prepared.manifest.scope,
+          context,
+          instructions,
+          schema: responseSchema,
+          sourceKeys: [
+            ...new Set([
+              ...prepared.manifest.units.map((unit) => unit.key),
+              ...[...(appraisals?.sources.values() ?? [])].map((source) =>
+                contextUnitKey(prepared.manifest.scope, {
+                  family: 'evidence',
+                  id: JSON.stringify([source.sourceKind, source.sourceId]),
+                  revision: source.sourceVersion,
+                }),
+              ),
+              ...(actorInvention.enabled
+                ? [
+                    contextUnitKey(prepared.manifest.scope, {
+                      family: 'instruction',
+                      id: 'actor-invention',
+                      revision: String(actorInvention.policyRevision),
+                    }),
+                  ]
+                : []),
+            ]),
+          ],
+          references: prepared.entityReferences,
+        });
+        await this.log.record(
+          `${run.job.id}:attempt:${attempt}:context-final`,
+          'Final decision context',
+          {
+            digest: capturedRequest.digest,
+            scope: capturedRequest.scope,
+            bytes: capturedRequest.bytes,
+            selectedSources: prepared.manifest.sourceKeys.length,
+            dependencies: capturedRequest.sourceKeys.length,
+            units: prepared.manifest.units.length,
+          },
+        );
         let generationRequest: Omit<GenerateRequest, 'requestId' | 'signal'> = {
           task: 'npc_response',
           actorScope: actorId,
@@ -3842,9 +4242,9 @@ export class AiDirector {
             ? { macrofoldDeployment: selected.macrofoldDeployment }
             : { model: selected.model, reasoningEffort: selected.reasoningEffort }),
           maxOutputTokens: selected.maxOutputTokens,
-          instructions,
-          context,
-          schema: responseSchema,
+          instructions: capturedRequest.instructions,
+          context: capturedRequest.context,
+          schema: capturedRequest.schema,
           ...(preview ? { onProgress: preview.progress } : {}),
         };
         if (generationRequest.macrofoldDeployment && !c.jevOnly && c.budgetUsd > 0) {
@@ -3959,11 +4359,12 @@ export class AiDirector {
               throw new Error('This route did not bind feeling proposals.');
             return { ...op, ...(appraise ? { appraise: changes[next++] } : {}) };
           });
-          if (!validResponseEnvelope({ operations }))
+          const native = nativeResponse({ operations });
+          if (!validResponseEnvelope(native))
             throw new Error(
               'Invalid decision envelope: use exactly one non-null operation kind per entry, unique localIds and dependencies on earlier entries only.',
             );
-          return { ...parsed, operations };
+          return { ...parsed, operations: native.operations };
         },
         { id: `${run.job.id}:attempt:${attempt}:parse` },
       )
@@ -3984,7 +4385,7 @@ export class AiDirector {
       { operations: reply.operations },
       prepared.entityReferences,
       prepared.binding.knowledgeReferences,
-      activityRequestDescriptors(this.service.world),
+      activityRequestDescriptors(this.service.world, actorId),
     );
     const proposedInvention =
       actorInvention.enabled && 'invention' in reply
@@ -4062,6 +4463,7 @@ export class AiDirector {
             prepared.binding.knowledgeReferences,
             appraisals?.bindings,
             this.service.nativeExecutionPermissions,
+            prepared.binding.capturedActorFrame,
           );
         },
         undefined,

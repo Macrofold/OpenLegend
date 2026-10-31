@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                          | Last updated         |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-27 22:53 UTC |
+| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-28 19:47 UTC |
 
 Last used for implementation/review: **2026-10-28 05:00 UTC**.
 
@@ -98,6 +98,20 @@ Body effects end with their physical life; appraisals retain their separately de
 Stages 1–4 are delivered for the explicitly bounded PG02 slice, including the October 6 quiet-reflection completion. Repeated stockpiling, freely chosen resumption and lasting psychological influence remain explicitly unqualified broader CE work. The separately selected emotional-physiology design does not close broader character qualification or automatic personality-development work.
 
 Required reads are actor-scoped and batched through existing retrieval/cache and byte admission. The history-edit owner adds an index on an action’s result reference for reverse correction/forgetting; it does not scan all historical actions. No synchronous I/O is added to simulation and no new scheduler or paid call is added to preparation. Rendering traverses already bounded native facts once. Local 33-record preparation measurements are recorded in the evidence report, not a population-scale claim. Existing observer-reference population work remains CR/PF09.
+
+## End-to-end cognition integration
+
+The [situation-aware context implementation](../technical/situation-aware-cognition-context.md) connects the [product behavior](compelling-characters-feature-spec.md#coherent-decisions-from-event-to-consequence) through existing owners while preserving current defaults. It owns detailed source, selection, action and response contracts; broader character-life and enjoyment qualification remains with CE. Last used for implementation/review: **2026-10-28 22:30 UTC**.
+
+1. **Opportunity and scheduling:** existing event/perception and internal-change owners feed `ActorWork` and `AiDirector`; shared `CognitionExecution` retains capacity, urgency and fairness. Unchanged circumstances and native continuation create no extra paid turn. Goals, plans and their actual outcomes retain their current owners.
+2. **One prepared account:** derive one actor-scoped evidence manifest per preparation from existing sources, with source/time/role, coverage and freshness bindings. Compose concurrent situation requirements, reuse each supported fact consistently, and project only the evidence needed by each stage. The manifest is neither new memory nor writable authority; omission cannot turn uncertainty into absence or erase a required contrary fact.
+3. **Useful choices before combinations:** discover relevant installed action families before expanding dependent parameter combinations where that permits an informed choice. Preserve material costs, purposes, stopping conditions and required alternatives; urgent details remain available without a mandatory extra model round. Native family owners supply legality and exact parameter binding. [Capability discovery](../technical/situation-aware-cognition-context.md#8-detail-access-without-a-mandatory-second-generation) owns the complete contract.
+4. **Execution and accounting:** existing purpose-based model resolution supplies the actual target, credential scope, native options, limits and pricing to admission and execution. Preserve frozen request/schema identity, original deadlines, receipts and uncertain obligations through recovery. Stage changes do not create a new paid entitlement or authorize resubmission; measure preparation and every selected model stage together.
+5. **Publication and feedback:** native admission validates current references, resources, permissions and dependencies, then commits independent components through existing receipts. Feed actual outcomes and refusals, with their source and disposition, into permitted personal experience and subsequent reconsideration. Written emotion remains presentation, and silence remains optional; neither implies a physical effect or an automatic goal transition.
+
+Independently selected voice remains eligible after physical success, abstention or an ordinary native precondition refusal. Its own source, life, authority and lifetime guards still apply. A native regression demonstrates refused stale physical work with valid speech, plus forgotten-source and incapacitation controls that suppress speech. This establishes component independence, not natural emotional quality; [qualification](../verification/situation-aware-cognition-context.md#independent-operations-and-lifecycle) retains the evidence boundary.
+
+Use the [existing matched panels](cognition-lab-behavior-study.md#experiment-contract) for evidence inclusion, character interpretation, actual effects and changed-condition follow-through; retain failures and unattempted positions. Add relevant same-owner controls for busy actors, urgent concurrent events, budget refusal, partial admission and restore without duplicate effects or dispatch. Record time to useful speech/action and complete costs separately from voice quality. SC06–SC09, AG04/AG06/AG07/AG12 and CE03–CE05 retain delivery and qualification; [encounter pacing](../maintainers/needs-design.md#believable-encounter-pacing) remains undesigned here. No second scheduler, evidence store, mandatory critic/planner or fine-tuning dependency is introduced.
 
 ## Production and comparative evaluation
 

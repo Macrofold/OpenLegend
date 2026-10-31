@@ -1,4 +1,10 @@
-import { entityGet, entityHas } from '@open-legend/domain';
+import {
+  canonicalJson,
+  entityGet,
+  entityHas,
+  type ActivityRequestChoice,
+  type ActivityRequestDescriptor,
+} from '@open-legend/domain';
 import { accessiblePossession, worldPosition } from '@open-legend/domain';
 import { knowledgeDocument, characterCount, recognizesSubject } from '@open-legend/domain';
 import {
@@ -15,12 +21,52 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { gameTime } from './recall.js';
-import { experienceForModel, experienceModelBindings } from './perceived-context.js';
+import {
+  experienceForModel,
+  experienceModelBindings,
+  modelEvidenceReference,
+} from './perceived-context.js';
 import type { WorldService } from './world-service.js';
 import type { DecisionActionOffer } from './context.js';
 
 export const KNOWN_ACTION_MODE_INSTRUCTION =
   'For a known action, copy its offered mode exactly; it specifies how that choice handles current work. Continuing choices use enqueue to preserve current work.';
+
+export interface ModelActivityRequests {
+  requests: ActivityRequestDescriptor[];
+  choices: Array<
+    Omit<ActivityRequestChoice, 'id'> & { entityId?: string; definitionId?: string; value?: string }
+  >;
+  warnings: string[];
+}
+
+/** Factor repeated transport metadata without selecting or shortening a choice.
+ * The authoritative catalogue and exact bindings keep their ordinary shape. */
+export function compactActivityRequests(catalogue: ModelActivityRequests) {
+  const groups = new Map<string, number>();
+  const choiceGroups: Array<
+    Pick<ActivityRequestChoice, 'kind' | 'roles' | 'accessible' | 'requestIds'>
+  > = [];
+  const choices = catalogue.choices.map(({ kind, roles, accessible, requestIds, ...choice }) => {
+    const common = { kind, roles, accessible, ...(requestIds ? { requestIds } : {}) };
+    const key = canonicalJson(common);
+    let group = groups.get(key);
+    if (group === undefined) {
+      group = choiceGroups.length;
+      groups.set(key, group);
+      choiceGroups.push(common);
+    }
+    return { group, ...choice };
+  });
+  return {
+    requests: catalogue.requests,
+    choiceGroups,
+    choices,
+    warnings: catalogue.warnings,
+    reading:
+      'Each choice inherits every field from choiceGroups[group], a zero-based metadata index, not an entity ID. Choices remain separate exact alternatives; group membership is not a requirement to perform them together.',
+  };
+}
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */
 export function responseTrigger(
@@ -113,6 +159,15 @@ export function responseTriggerContext(
   };
 }
 
+/** Keep current visibility/age/roles beside the cause, but reference the complete
+ * source already admitted to the request instead of copying its payload or words. */
+export function referenceTriggerContext(facts: Record<string, unknown>, index: number) {
+  return {
+    triggerFacts: { ...facts, experience: modelEvidenceReference(index) },
+    stimulus: `Current cause: ${modelEvidenceReference(index)}`,
+  };
+}
+
 export function readableDecisionContext(
   context: Record<string, unknown>,
   actions: DecisionActionOffer[],
@@ -121,13 +176,19 @@ export function readableDecisionContext(
   return renderDecisionContext(context, actions, includeActions).prompt;
 }
 
+/** Shared rendering lets final fitting measure only changed offers, rather than
+ * repeatedly formatting the unchanged identity, conversation and source bodies. */
+export function renderActionChoices(actions: readonly DecisionActionOffer[]): string {
+  return `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.id}: ${action.description} [mode=${action.mode}]`).join('\n') : 'No shortlisted mechanical action.'}\nI may propose an unlisted action. I should not prefer an existing action just because it is listed. A proposal is an intention, not a completed action; unsupported mechanics cannot execute. A useful partial interpretation must report omissions; uncertain revisions require explicit initiator acceptance, not automatic invention.`;
+}
+
 /** Keep the response-only supplement seam with the renderer, never by searching
  * authored text for headings or serializing the complete selected context again. */
 export function renderDecisionContext(
   context: Record<string, unknown>,
   actions: DecisionActionOffer[],
   includeActions = false,
-): { prompt: string; responseSupplementOffset: number } {
+): { prompt: string; responseSupplementOffset: number; actionSectionBytes: number } {
   const capabilities = context['capabilities'] as
     | { speech: boolean; expressions: string[] }
     | undefined;
@@ -150,12 +211,12 @@ export function renderDecisionContext(
   const memories =
     hasItems(context['recall']) || context['reconsideration']
       ? [
-          `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
+          `## Recalled memories\nReferences into the complete personal evidence array:\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
         ]
       : [];
   const conversation = hasItems(context['conversation'])
     ? [
-        `## Conversation so far\nSelected speech I personally experienced, in chronological order; older unselected history may remain:\n${list(context['conversation'])}\nA turn marked "I said" is my own speech, not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
+        `## Conversation so far\nReferences to selected speech I personally experienced, in chronological order; older unselected history may remain:\n${list(context['conversation'])}\nEach referenced record preserves who spoke to whom. My own speech is not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
       ]
     : [];
   const sections = [
@@ -179,7 +240,7 @@ export function renderDecisionContext(
       : []),
     ...(context['navigation'] || context['currentPosition']
       ? [
-          `## Native navigation\n${context['navigation'] ?? ''}${context['currentPosition'] ? `\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport'] ?? 'unavailable'}` : ''}${hasItems(context['publicSurfaces']) ? `\nPublic supports: ${JSON.stringify(context['publicSurfaces'])}` : ''}`,
+          `## Native navigation\n${context['navigation'] ?? ''}${context['currentPosition'] ? `\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport'] ?? 'unavailable'}` : ''}${context['currentFacing'] ? `\nFacing in world X/Z directions: ${JSON.stringify(context['currentFacing'])}` : ''}${hasItems(context['publicSurfaces']) ? `\nPublic supports: ${JSON.stringify(context['publicSurfaces'])}` : ''}${context['publicSurfacesCoverage'] ? `\n${context['publicSurfacesCoverage']}` : ''}`,
         ]
       : []),
     ...(context['now'] || typeof context['simTime'] === 'number'
@@ -189,7 +250,7 @@ export function renderDecisionContext(
       : []),
     ...(context['activityRequests']
       ? [
-          `## Optional installed activity requests\n${JSON.stringify(context['activityRequests'])}\nUse these exact installed definitions and situation-specific choices. They are optional compositions, not goals, learned methods or completed work. An installed request selects its exact family/closed parameters, leaves navigation fields null, and keeps its mode equal to act.mode. Current native prerequisites still apply.`,
+          `## Optional installed activity requests\n${JSON.stringify(compactActivityRequests(context['activityRequests'] as ModelActivityRequests))}\nUse these exact installed definitions and situation-specific choices. They are optional compositions, not goals, learned methods or completed work. An installed request selects its exact family and only that family's declared parameters. When its parameters declare the same work mode, keep it equal to act.mode. Current native prerequisites still apply.`,
         ]
       : []),
     ...(context['inspectedContainer']
@@ -218,10 +279,8 @@ export function renderDecisionContext(
       : []),
     ...(hasItems(context['knowledge']) ? [`## Knowledge\n${list(context['knowledge'])}`] : []),
   ];
-  if (includeActions)
-    sections.push(
-      `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.id}: ${action.description} [mode=${action.mode}]`).join('\n') : 'No shortlisted mechanical action.'}\nI may propose an unlisted action. I should not prefer an existing action just because it is listed. A proposal is an intention, not a completed action; unsupported mechanics cannot execute. A useful partial interpretation must report omissions; uncertain revisions require explicit initiator acceptance, not automatic invention.`,
-    );
+  const actionSection = includeActions ? renderActionChoices(actions) : '';
+  if (includeActions) sections.push(actionSection);
   // Schema-use and optional-silence guidance improved matched responses beyond the schema alone.
   // docs/verification/cognition-lab-native-model-study.md#october-28--prompt-voice-and-context-comparison
   sections.push(
@@ -249,7 +308,11 @@ ${list(context['references'])}`);
     ...(context['stimulus'] ? [`## Trigger\n${context['stimulus']}`] : []),
     `## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat.${triggerFacts?.['observerRelationship'] === 'addressed_speech' ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.`,
   );
-  return { prompt: sections.join('\n\n'), responseSupplementOffset };
+  return {
+    prompt: sections.join('\n\n'),
+    responseSupplementOffset,
+    actionSectionBytes: Buffer.byteLength(actionSection),
+  };
 }
 
 /** Only visible or explicitly perceived identities enter the reference contract. */

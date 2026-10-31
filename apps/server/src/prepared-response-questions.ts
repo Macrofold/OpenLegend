@@ -113,7 +113,11 @@ export function preparedResponseRelevance(
   );
 }
 
-export function preparedResponseChoiceRequest(prepared: Prepared, relevance: PurposeRelevance) {
+export function preparedResponseChoiceRequest(
+  prepared: Prepared,
+  relevance: PurposeRelevance,
+  voice?: NonNullable<PreparedResponseProfile['voice']>,
+) {
   const retained = prepared.actionCandidates.filter(
     (candidate) =>
       !candidate.purposeHandle ||
@@ -150,8 +154,25 @@ export function preparedResponseChoiceRequest(prepared: Prepared, relevance: Pur
       },
     ]),
   );
+  if (voice)
+    questions.voice = {
+      type: 'choice',
+      instructions: voice.question,
+      // Silence wins ties and covers uncertainty; it never buys a repair call.
+      criteria: { a_silent: voice.silent, b_speak: voice.speak },
+    };
   return {
     prepared: selected,
     request: checkedRequest(requestState(selected), questions),
   };
+}
+
+export function preparedResponseVoiceSelected(value: JudgeValue, questions: TypedQuestionMap) {
+  if (!questions.voice) return false;
+  const answer = decodeJudge(value, { voice: questions.voice }).answers.voice;
+  return (
+    answer?.type === 'choice' &&
+    answer.choice === 'b_speak' &&
+    (answer.probabilities.b_speak ?? 0) > (answer.probabilities.a_silent ?? 0)
+  );
 }

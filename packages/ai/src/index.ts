@@ -71,3 +71,5 @@ export {
 export type { PreparedSchema } from './validation.js';
 
 export { OpenAiRateGate } from './rate-gate.js';
+
+export { generationRequestAccounting } from './request-accounting.js';

@@ -1,4 +1,5 @@
 import { stockedCamp } from '../../../tests/fixtures/world.js';
+import { fixtureTriggerExperience } from '../../../tests/fixtures/cognition-ai.js';
 import { entityGet } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -11,6 +12,8 @@ import {
   createItemLot,
   flattenFiles,
   quantityOf,
+  worldPosition,
+  worldSupport,
   wordCount,
 } from '@open-legend/domain';
 import {
@@ -246,7 +249,7 @@ const KNOWN_HEADINGS = new Set([
   'Current time',
   'Actions I chose to inspect',
   'Activities I chose to inspect',
-  'Recent memories',
+  'Recalled memories',
   'Nearby actors and objects',
   'Inventory',
   'General knowledge notepad',
@@ -514,6 +517,7 @@ async function harness(
   options: {
     script?: Script;
     reply?: (request: GenerateRequest) => unknown;
+    judge?: (request: JudgeRequest) => AiResult<JudgeValue> | Promise<AiResult<JudgeValue>>;
     food?: boolean;
   } = {},
 ) {
@@ -542,7 +546,7 @@ async function harness(
   const client: AiClient = {
     async judge(request) {
       calls.judges.push(request);
-      return answer(request, state.script);
+      return options.judge ? options.judge(request) : answer(request, state.script);
     },
     async generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
       calls.generations.push(request);
@@ -812,6 +816,119 @@ describe(
     timeout: 180_000,
   },
   () => {
+    it.each(['physical-refusal', 'forgotten-source', 'incapacitated'] as const)(
+      'keeps selected prepared voice independent while enforcing %s',
+      async (condition) => {
+        let changed = false;
+        let source = '';
+        const h = await harness({
+          reply: (request) => ({
+            operations: [
+              operation('reaction', { talk: talk('Get away from me!', speakerHandle(request)) }),
+            ],
+          }),
+          judge: async (request) => {
+            if (!request.requestId.includes(':threat-')) return answer(request, {});
+            const answers: Record<string, JudgmentAnswer> = {};
+            const evasion = Object.entries(request.questions).find(
+              ([key, question]) => handleKey(key) && /evad/i.test(question.instructions ?? ''),
+            )?.[0];
+            for (const [key, question] of Object.entries(request.questions))
+              answers[key] =
+                question.type === 'choice'
+                  ? distribution(Object.keys(question.criteria), {
+                      [key === 'voice' ? 'b_speak' : 'b_relevant']: 1,
+                    })
+                  : question.type === 'noul'
+                    ? noul(key === evasion ? 0.99 : 0.1)
+                    : {
+                        type: 'score',
+                        score: 0,
+                        legend: Object.fromEntries(
+                          question.criteria.map((label, index) => [String(index), label]),
+                        ),
+                        probabilities: Object.fromEntries(
+                          question.criteria.map((_, index) => [String(index), Number(index === 0)]),
+                        ),
+                      };
+            if (request.requestId.includes(':threat-choice') && !changed) {
+              changed = true;
+              expect(evasion, 'actual supplied evasion option').toBeDefined();
+              if (condition === 'physical-refusal') {
+                // Ordinary work begins during model latency. The old physical
+                // binding must refuse; a fresh, independently selected voice remains legal.
+                const position = worldPosition(entityGet(h.service.world.entities, NPC_ID)!);
+                const result = await h.service.command(
+                  'intervening-movement',
+                  {
+                    type: 'move',
+                    position: {
+                      ...position,
+                      x: position.x + 0.5,
+                      surfaceId: worldSupport(entityGet(h.service.world.entities, NPC_ID)!)!,
+                    },
+                  },
+                  NPC_ID,
+                );
+                expect(result.ok, result.message).toBe(true);
+              } else if (condition === 'forgotten-source') {
+                expect((await h.service.forgetMemory(NPC_ID, source)).ok).toBe(true);
+              } else {
+                await editWorld(h.service, (world) => {
+                  entityGet(world.entities, NPC_ID)!.actor!.incapacitated = true;
+                });
+              }
+            }
+            return value(request.requestId, 'jev', { answers });
+          },
+        });
+        expect(
+          (
+            await h.service.command('voice-trigger-punch', {
+              type: 'strike',
+              definitionId: 'punch',
+              targetId: NPC_ID,
+            })
+          ).ok,
+        ).toBe(true);
+        for (let step = 0; step < 400 && !source; step++) {
+          await h.service.tick(0.5);
+          source =
+            h.service.world.events.find(
+              (event) => event.type === 'struck' && event.targetId === NPC_ID,
+            )?.id ?? '';
+        }
+        expect(source, 'native punch landed').not.toBe('');
+        const job = await h.thought();
+        expect(changed, JSON.stringify(job.result)).toBe(true);
+        const generated = h.jobCalls(job.id).generations;
+        if (condition === 'physical-refusal') {
+          expect(
+            h.service.world.responseReceipts?.[job.id]?.outcome.ok,
+            JSON.stringify({ job, failures: (await h.trace(job.id)).stage('Workflow failure') }),
+          ).toBe(false);
+          expect(
+            Object.values(h.service.world.responseReceipts![job.id]!.components).map(
+              (component) => component.code,
+            ),
+          ).toContain('stale-plan');
+          expect(generated).toHaveLength(1);
+          expect(h.service.world.responseReceipts?.[`${job.id}:voice`]?.outcome.ok).toBe(true);
+          expect(
+            h.service.world.events.some(
+              (event) =>
+                event.type === 'speech' &&
+                event.actorId === NPC_ID &&
+                event.data?.['text'] === 'Get away from me!',
+            ),
+          ).toBe(true);
+        } else {
+          expect(generated).toHaveLength(0);
+          expect(h.service.world.responseReceipts?.[`${job.id}:voice`]).toBeUndefined();
+        }
+      },
+    );
+
     it('greeting: routing and one level-2 generation within limits, empty facts stated', async () => {
       const h = await harness({
         script: { route: { level2: 0.9 } },
@@ -1015,11 +1132,6 @@ describe(
                     kind: 'known',
                     actionId: eat![1],
                     mode: selection === 'offered' ? eat![3] : 'interrupt',
-                    verb: null,
-                    targetEntityId: null,
-                    description: null,
-                    invocation: null,
-                    slots: null,
                   },
                 }),
                 operation('feeling', { think: { text: 'I feel hungry.', aboutEntityIds: [] } }),
@@ -1165,7 +1277,7 @@ describe(
       const route = decisionJudges(dispatched.judges)[0]!;
       const decisionContext = (route.state as { decisionContext: Record<string, unknown> })
         .decisionContext;
-      expect(String(decisionContext['stimulus'])).toMatch(/punched/);
+      expect(fixtureTriggerExperience(decisionContext).value['text']).toMatch(/punched/);
       expect(Object.keys(route.questions).some(handleKey)).toBe(true);
       expect(dispatched.generations).toHaveLength(1);
       const [generation] = dispatched.generations;
@@ -1175,7 +1287,7 @@ describe(
       expect(ledger.summary.groups).toEqual({ level1: dispatched.judges.length, level3: 1 });
       expect(ledger.summary.requests).toBe(dispatched.judges.length + 1);
       const parts = sections(String(generation!.context));
-      expect(section(parts, 'Trigger').body).toMatch(/punched/);
+      expect(fixtureTriggerExperience(generation!.context).value['text']).toMatch(/punched/);
       report('hazard', {
         trigger: section(parts, 'Trigger').body,
         requests: [
@@ -1335,11 +1447,6 @@ describe(
               act: {
                 kind: 'known',
                 actionId: 'a99',
-                verb: null,
-                targetEntityId: null,
-                description: null,
-                invocation: null,
-                slots: null,
                 mode: 'enqueue',
               },
             }),
@@ -1353,12 +1460,19 @@ describe(
       expect(unknownAction.providerAccepts).toBe(false);
       expect(unknownAction.parse.map((entry) => entry.status)).toEqual(['failed']);
       expect(disposition(unknownAction.job)).toBe('invalid');
-      // The act-only shape fails on exactly one field: the handle is not an offered value.
+      // The act family rejects the unknown handle; its known-action alternative
+      // has exactly one defect, distinct from unrelated invocation alternatives.
       const actBranch = unionBranches(unknownAction.parse).find((branch) =>
         branch.every((issue) => issue.path[0] === 'act'),
       );
       expect(actBranch).toHaveLength(1);
-      expect(actBranch![0]).toMatchObject({ code: 'invalid_value', path: ['act', 'actionId'] });
+      expect(actBranch![0]).toMatchObject({
+        code: 'invalid_union',
+        path: ['act'],
+        errors: expect.arrayContaining([
+          [expect.objectContaining({ code: 'invalid_value', path: ['actionId'] })],
+        ]),
+      });
       report('output-rejection', { visibleOutputBytes: limit, outcomes });
     });
 

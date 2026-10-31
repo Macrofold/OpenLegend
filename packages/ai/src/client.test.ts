@@ -294,6 +294,63 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
     expect(result.receipt.estimatedCostUsd).toBeCloseTo(0.0001139, 12);
   });
 
+  it.each(['retained', 'mutated'])(
+    'captures exact request accounting and preserves the submitted schema across mutation: %s',
+    async (answer) => {
+      const schema = {
+        type: 'object',
+        properties: { text: { type: 'string', enum: ['retained'] } },
+        required: ['text'],
+        additionalProperties: false,
+      };
+      const context = { observation: 'Mara said “bonjour”.' };
+      const originalContext = structuredClone(context);
+      const originalSchema = structuredClone(schema);
+      const instructions = 'Réponds with the permitted value.';
+      let transport = '';
+      const fetcher = vi.fn<FetchTransport>(async (_url, init) => {
+        transport = String(init.body);
+        schema.properties.text.enum[0] = 'mutated';
+        context.observation = 'A different observation.';
+        return response(generateResponse(JSON.stringify({ text: answer })));
+      });
+      const result = await createAiClient({
+        openai: { apiKey: 'fixture' },
+        fetch: fetcher,
+      }).generate({ ...generation, instructions, context, schema, maxOutputTokens: 128 });
+      expect(result.outcome).toBe(answer === 'retained' ? 'value' : 'invalid');
+      const sent = JSON.parse(transport);
+      expect(sent.text.format.schema).toEqual(originalSchema);
+      expect(JSON.parse(sent.input)).toEqual(originalContext);
+      const inputBytes = Buffer.byteLength(
+        JSON.stringify({
+          instructions: sent.instructions,
+          input: sent.input,
+          text: sent.text,
+        }),
+      );
+      expect(result.receipt.requestAccounting).toEqual({
+        instructionsBytes: Buffer.byteLength(instructions),
+        contextBytes: Buffer.byteLength(JSON.stringify(originalContext)),
+        schemaBytes: Buffer.byteLength(JSON.stringify(originalSchema)),
+        toolDefinitionBytes: 0,
+        toolResultBytes: 0,
+        inputScope: 'adapter-input',
+        encodedInputBytes: inputBytes,
+        transportBytes: Buffer.byteLength(transport),
+        maxOutputTokens: 128,
+        estimatedInputTokens: {
+          value: Math.ceil(inputBytes / 3),
+          basis: 'captured-input-utf8-divided-by-three',
+          model: 'gpt-5.6-luna',
+          exact: false,
+        },
+      });
+      expect(result.receipt.usage?.inputTokens).toBe(100);
+      expect(fetcher).toHaveBeenCalledTimes(1);
+    },
+  );
+
   it.each(['{"text":12}', '{"text":"hi","extra":true}', '```json\n{}\n```'])(
     'rejects invalid generated data: %s',
     async (text) => {

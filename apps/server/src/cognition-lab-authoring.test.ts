@@ -289,6 +289,21 @@ describe('native cognition lab authoring', () => {
         entityIds: [],
       },
     };
+    for (const memory of [
+      { ...history.memory, kind: 'belief' as const },
+      { ...history.memory, kind: 'reflection' as const },
+      { ...history.memory, source: 'inferred' as const },
+    ]) {
+      await expect(
+        h.authoring.apply([edit(create, labJson({ ...history, memory }))], h.scope),
+      ).rejects.toThrow();
+      expect(
+        await h.service.authorHistory(
+          { generation: h.service.generation, history: { ...history, memory } },
+          h.scope,
+        ),
+      ).toMatchObject({ ok: false, code: 'history-rejected' });
+    }
     expect(await h.authoring.apply([edit(create, labJson(history))], h.scope)).toMatchObject({
       ok: true,
     });

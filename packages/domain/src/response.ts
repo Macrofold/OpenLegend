@@ -36,6 +36,7 @@ import {
   type ActionInvocation,
   type ActionFulfillment,
   choiceWorkCurrent,
+  captureActorFrame,
   type ActionChoice,
 } from './action-capabilities.js';
 import { discardSuspended, proposeActionRevision } from './agency.js';
@@ -347,6 +348,7 @@ export function commitActorResponse(
   knowledgeReferences: Record<string, string> = {},
   appraisalBindings?: AppraisalBindings,
   permissions: NativeExecutionPermissions = {},
+  capturedActorFrame?: string,
 ): Transition {
   const reject = (message: string): Transition => ({
     world: input,
@@ -371,6 +373,7 @@ export function commitActorResponse(
     evidenceIds,
     knowledgeReferences,
     ...(appraisalBindings ? { appraisalBindings } : {}),
+    ...(capturedActorFrame !== undefined ? { capturedActorFrame } : {}),
   });
   const prior = getOwn(input.responseReceipts ?? {}, id);
   if (prior) {
@@ -674,6 +677,19 @@ export function commitActorResponse(
         'The proposed action fields do not match its kind.',
       );
     } else if (act?.kind === 'invoke') {
+      if (
+        act.invocation?.family === 'move' &&
+        act.invocation.frame === 'actor' &&
+        (capturedActorFrame === undefined ||
+          capturedActorFrame !== captureActorFrame(world, actorId))
+      ) {
+        components[localId] = outcome(
+          false,
+          'stale-actor-frame',
+          'Your position, support or facing changed after this relative movement was chosen.',
+        );
+        continue;
+      }
       const bound = bindActionInvocation(
         world,
         actorId,

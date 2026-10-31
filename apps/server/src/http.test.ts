@@ -139,7 +139,7 @@ describe('local HTTP boundary', () => {
     ).toBe(403);
   });
   it('uses the event connection for opted-in background play and pauses after departure exposure', async () => {
-    const { game, base, cookie, post } = await start();
+    const { game, base, cookie, post } = await start(true);
     const controller = new AbortController();
     try {
       const stream = await fetch(`${base}/api/events`, {
@@ -158,9 +158,9 @@ describe('local HTTP boundary', () => {
         pauseWhenHidden: false,
         showUnavailableActions: true,
       });
-      await post('/api/control', { speed: 0.5 });
+      expect((await (await post('/api/control', { speed: 0.5 })).json()).ok).toBe(true);
       await game.service.tick(1);
-      expect(game.service.world.simTime).toBe(30);
+      expect(game.service.world.simTime).toBeCloseTo(30, 9);
       controller.abort();
       await expect
         .poll(() => entityGet(game.service.world.entities, PLAYER_ID)?.actor?.participation?.phase)
@@ -279,18 +279,33 @@ describe('local HTTP boundary', () => {
     expect(game.service.pauseReason).toBe('away');
   }, 60_000);
   it('does not renew presence from speed changes or while manually pausing', async () => {
-    const { post, game } = await start();
-    await post('/api/control', { speed: 3, clientId: 'away-tab', presenceSequence: 1 });
+    const { post, game } = await start(true);
+    const speed = await post('/api/control', {
+      speed: 3,
+      clientId: 'away-tab',
+      presenceSequence: 1,
+    });
+    expect((await speed.json()).ok).toBe(true);
     expect(game.service.present).toBe(false);
-    await post('/api/control', { paused: true, clientId: 'away-tab', presenceSequence: 2 });
+    const pause = await post('/api/control', {
+      paused: true,
+      clientId: 'away-tab',
+      presenceSequence: 2,
+    });
+    expect((await pause.json()).ok).toBe(true);
     expect(game.service.present).toBe(false);
     expect(game.service.pauseReason).toBe('manual');
-    await post('/api/control', { paused: false, clientId: 'away-tab', presenceSequence: 3 });
+    const resume = await post('/api/control', {
+      paused: false,
+      clientId: 'away-tab',
+      presenceSequence: 3,
+    });
+    expect((await resume.json()).ok).toBe(true);
     expect(game.service.paused).toBe(false);
     expect(game.service.speed).toBe(3);
   }, 60_000);
   it('supports presence, controls and idempotent native actions without AI', async () => {
-    const { post, game } = await start();
+    const { post, game } = await start(true);
     await post('/api/presence', { clientId: 'test-client', visible: true });
     expect(game.service.paused).toBe(false);
     // New starts carry no food; see docs/worlds/base/survival.md.
@@ -309,14 +324,14 @@ describe('local HTTP boundary', () => {
     await post('/api/command', body);
     expect(itemFor(game.service.world, food.id)?.quantity).toBe(food.quantity - 1);
     expect((await game.service.store.usage(0)).usage.llmCalls).toBe(0);
-    await post('/api/control', { paused: true, speed: 3 });
+    expect((await (await post('/api/control', { paused: true, speed: 3 })).json()).ok).toBe(true);
     const time = game.service.world.simTime;
     await game.service.tick(1);
     expect(game.service.world.simTime).toBe(time);
     expect(game.service.speed).toBe(3);
   });
   it('rejects extra authority, unbounded text and unsupported controls', async () => {
-    const { post } = await start();
+    const { post, game } = await start();
     expect(
       (
         await post('/api/command', {
@@ -332,6 +347,11 @@ describe('local HTTP boundary', () => {
       ).status,
     ).toBe(400);
     expect((await post('/api/control', { speed: 10000 })).status).toBe(400);
+    expect(await (await post('/api/control', { speed: 3 })).json()).toMatchObject({
+      ok: false,
+      code: 'forbidden',
+    });
+    expect(game.service.speed).toBe(1);
     expect((await post('/api/chat', { requestId: 'x', text: 'x'.repeat(1001) })).status).toBe(400);
   });
   it('returns an explicit unavailable result rather than a pretend generated recipe', async () => {

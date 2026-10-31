@@ -17,3 +17,5 @@ Projects own proposed/accepted scope and delivery plans; their focused trackers 
 The [Spirit and mental-status design note](spirit-and-mental-statuses-design-note.md) records the selected naming and coexistence model. [Character and map additions](character-and-map-additions-feature-spec.md) specifies Spirit, stats, more equipment slots, map markers and nicknames.
 
 Other project families are linked from the [maintainer index](../maintainers/README.md); list/search this directory for a known subject. [Completed projects](completed/README.md) are filed separately; their current contracts remain discoverable through [features](../features/README.md) and [technical owners](../technical/README.md).
+
+The completed [situation-aware cognition context project](completed/2026/situation-aware-cognition-context-evidence-and-decisions.md) has current [feature](../features/situation-aware-cognition-context.md) and [technical](../technical/situation-aware-cognition-context.md) owners; optional SC12 remains in its [focused tracker](../maintainers/cognition-context.md).

@@ -36,6 +36,8 @@ import {
   outingInvitationProblem,
   BASE_COMBAT_HELP,
   activityRequestHost,
+  activityRequestDescriptors,
+  activityRequestChoices,
   observerDescription,
 } from '@open-legend/domain';
 import { outingActions, cooperationProposals, cooperativePurposeChoice } from './outing-view.js';
@@ -1242,6 +1244,21 @@ function* nativeActionCatalogue(
       );
   }
   if (!context.itemId && activityRequestHost(world, BASE_OUTING.family)) {
+    const cooperativeRequests = activityRequestDescriptors(world, actorId).filter(
+      (request) =>
+        request.presentation?.kind === 'cooperation-proposal' &&
+        request.id !== BASE_COMBAT_HELP.family,
+    );
+    const cooperativeTargets = new Map<string, Set<string>>();
+    for (const choice of activityRequestChoices(world, actorId, observation).choices) {
+      for (const family of choice.requestIds ?? []) {
+        const request = cooperativeRequests.find((entry) => entry.id === family);
+        if (!request || !choice.roles.includes(request.presentation!.target)) continue;
+        let targets = cooperativeTargets.get(family);
+        if (!targets) cooperativeTargets.set(family, (targets = new Set()));
+        targets.add(choice.id);
+      }
+    }
     const helpingPlans = constructionHelpPlans(
       world,
       actorId,
@@ -1251,6 +1268,20 @@ function* nativeActionCatalogue(
     );
     for (const target of actionTargets) {
       if (!BASE_OUTING.participant(target) || target.id === actorId) continue;
+      for (const request of cooperativeRequests) {
+        const field = request.presentation!.target;
+        if (!cooperativeTargets.get(request.id)?.has(target.id)) continue;
+        actions.push({
+          id: `activity:${request.id}:${target.id}`,
+          label: request.label,
+          category: 'Social',
+          description: request.description,
+          keywords: [],
+          targetId: target.id,
+          enabled: controlling,
+          intent: { kind: 'activity', family: request.id, arguments: { [field]: target.id } },
+        });
+      }
       for (const choice of cooperationProposals(world, actorId, target.id, helpingPlans))
         yield* add(choice.id, choice.label, 'Social', choice.command, [], target.id, {
           description: choice.description,

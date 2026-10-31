@@ -76,7 +76,7 @@ Reuse prepared target/capability data; do not perform Hugging Face lookups, host
 
 Streaming transport does not grant public speech authority. Retained private preview and [NST public speech](../maintainers/npc-speech-streaming.md) each keep their existing parsing, screening and publication rules. A completed-output-only runtime remains usable. No extra call obtains token counts or repairs malformed output.
 
-Native Jev-style scoring uses its actual SystemOne protocol. Chat remains a separate protocol; neither substitutes for the other. Embeddings, arbitrary multimodal interfaces, full tool harnesses, automatic player-local setup, training and fine-tuning remain outside this integration. It also does not require completing the independent [situation-aware context project](situation-aware-cognition-context-tech-design.md); it uses whichever single current schema/context contract is installed.
+Native Jev-style scoring uses its actual SystemOne protocol. Chat remains a separate protocol; neither substitutes for the other. Embeddings, arbitrary multimodal interfaces, full tool harnesses, automatic player-local setup, training and fine-tuning remain outside this integration. It also does not require completing the independent [situation-aware context project](../technical/situation-aware-cognition-context.md); it uses whichever single current schema/context contract is installed.
 
 ## 5. Failure behavior and release acceptance
 

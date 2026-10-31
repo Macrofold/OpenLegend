@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                    | Last updated         |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-28 05:00 UTC |
+| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-28 19:47 UTC |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The authorship clarification is developed in the [scoped technical design](compelling-characters-tech-design.md). [Emotional physiology and adaptive reappraisal](emotional-physiology-feature-spec.md) specifies the selected general emotion system; broader psychological-needs mechanics and automatic personality development remain separately scoped. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
@@ -165,6 +165,8 @@ This illustrates product intent, not a drop-in replacement for current trusted i
 
 The desired ordinary voice is an inhabitant's voice: concrete, context-sensitive and particular to the person. A character can be terse, playful, formal, awkward, irritated or quiet when appropriate. Do not force every resident into generic politeness, therapeutic dialogue, constant helpfulness or endlessly renewed greetings.
 
+Supplied context is information, not a checklist to mention or act on; shared instructions ask for what the person would naturally do now. A memory may remain unspoken. Silence or absence of explicit recollection alone does not establish a behavioral failure or prove that supplied evidence was unused.
+
 Written emotional expression and expressive asides are allowed in character responses. They do not need conversion into an expression or action operation. Text alone produces no movement, contact, injury, item transfer or other mechanical effect; those require the corresponding admitted structured action. Do not infer or execute actions from prose. No additional emotion catalogue, output channel or prose parser is selected for this purpose.
 
 The shared speech-schema description and response instructions permit these asides and compatible sparse-history elaboration. Memory attention receives the complete accepted profile; response context distinguishes observer, speaker, addressee and perceived source using acquired evidence. Optional [authored voice examples](../worlds/base/cognition-lab-characters.md) demonstrate style without creating history or prescribing reactions. The [bounded comparison](../verification/cognition-lab-native-model-study.md#october-28--prompt-voice-and-context-comparison) supports retaining concise operation-selection and optional-silence guidance alongside the schema. Existing knowledge and action boundaries remain. Neither the policy nor prompt-only comparisons establish zero hallucinations, reliable personality or completed action.
@@ -195,6 +197,16 @@ An activity needs a meaningful ending. Stop or reconsider when enough has been a
 Continued pressure can remain salient without growing on every read. Repeated greetings are not automatic social progress. Recalling one insult does not create repeated new insults. A declined invitation can be remembered without becoming proven permanent rejection. Emotion can persist after a practical problem ends. A genuinely new eligible experience follows the existing source-bound creation/update path; an authorized same-cause reassessment follows the emotional-review contract without inventing another event or refreshing an unchanged curve.
 
 Player requests are opportunities for independent response. NPCs may agree, suggest a change, refuse, help for their own reasons or compete within supported rules. A thought about cooperation cannot supply another person's agreement. Neither a social wish nor a personality trait grants authority over a human-controlled character's speech, movement, goals or private interpretation.
+
+### Coherent decisions from event to consequence
+
+**Proposed design target, 2026-10-28 19:47 UTC; not implementation or execution authorization.** Preserve current defaults and accepted character, stealth and emotion scope. The [technical integration](compelling-characters-tech-design.md#proposed-end-to-end-cognition-integration) connects existing owners rather than introducing another character controller.
+
+Each decision should have a consistent account of what this person perceived, remembered and intended, with clear speaker, listener, subject, source and time. Concurrent concerns remain available together: conversation does not erase danger, unfinished work or a relevant promise. Missing evidence or unavailable cognition must remain distinguishable from deliberate silence. Context supports interpretation and choice; it is not a checklist of memories to recite or instructions for scripted reactions.
+
+A person can speak while acting, keep working without speaking, or change one choice without discarding another independent choice. Actual results, including refusal or partial success, should inform the next permitted opportunity. Familiarity, fear, gratitude or grief may influence tone or conduct without requiring agreement, therapeutic advice, an explicit memory mention or a different decision in every control.
+
+Qualify these connections through the [existing scenario study](cognition-lab-behavior-study.md#thirty-representative-situations) and [native follow-up situations](cognition-lab-repertoire-review.md#native-follow-up-situations), alongside the complete flows below. Keep knowledge, voice, native effects, responsiveness and complete cost separate. [Believable encounter pacing](../maintainers/needs-design.md#believable-encounter-pacing) remains a separate design task; this target adds no compulsory pauses, emotion-to-action conversion, mandatory critic/planner or model training.
 
 ## Complete behavioral flows
 

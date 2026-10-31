@@ -1820,9 +1820,16 @@ async function initializeGameServer(
                   query: z.string().max(160).optional(),
                   cursor: z.string().max(3000).optional(),
                   sourceId: requestIdSchema.optional(),
-                  selectedId: requestIdSchema.optional(),
+                  // Definition-owned choices can be literals, not entity IDs.
+                  selectedId: z.string().min(1).max(120).optional(),
                   witnessId: requestIdSchema.optional(),
                   approach: z.boolean().optional(),
+                  arguments: z
+                    .record(
+                      requestIdSchema,
+                      z.union([z.string().max(120), z.number().finite(), z.boolean()]),
+                    )
+                    .optional(),
                 })
                 .strict()
                 .parse(body);

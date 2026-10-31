@@ -6,6 +6,7 @@ import { createDisposableDatabase } from '../../scripts/disposable-postgres.mjs'
 import { createGameServer } from '../../apps/server/src/http.js';
 import { PostgresDatabase } from '../../apps/server/src/postgres.js';
 import { SqlGameRepository } from '../../apps/server/src/store.js';
+import { WorldService } from '../../apps/server/src/world-service.js';
 import { readConfig } from './database.js';
 import { fixtureCognitionAi } from './cognition-ai.js';
 import type { AppConfig } from '../../apps/server/src/config.js';
@@ -62,6 +63,15 @@ export async function startCognitionLabFixture(
   try {
     await store.ready;
     await options.prepareGame?.(store, config);
+    // Cognition specimens retain ordinary Main's native content, with native
+    // presentation. Art qualification needs its real publication catalogue;
+    // an empty fixture database must never fabricate approval for a real release.
+    const nativeOpening = new WorldService(store, config);
+    try {
+      await nativeOpening.ready;
+    } finally {
+      nativeOpening.releaseHostWork();
+    }
     await listen();
     const address = game!.server.address();
     if (!address || typeof address === 'string') throw new Error('Missing fixture listener.');

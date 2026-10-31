@@ -39,6 +39,52 @@ export interface SharedModelExperience {
   experience: ReturnType<typeof experienceForModel>;
 }
 
+export interface ModelEvidenceSource {
+  /** Complete source kind/identity inside the caller's captured actor/view scope. */
+  key: string;
+  revision: string;
+  experience: SharedModelExperience['experience'];
+}
+
+/** One complete account per exact occurrence. This does not join similar text or
+ * alias a summary to its covered original events. The caller retains source guards.
+ * docs/technical/situation-aware-cognition-context.md#one-complete-evidence-occurrence */
+export function assembleModelEvidence(entries: Iterable<ModelEvidenceSource>) {
+  const experience: SharedModelExperience['experience'][] = [];
+  const sources = new Map<string, SharedModelExperience>();
+  for (const entry of entries) {
+    const previous = sources.get(entry.key);
+    if (previous) {
+      if (
+        previous.revision !== entry.revision ||
+        previous.experience.owner !== entry.experience.owner ||
+        previous.experience.source !== entry.experience.source
+      )
+        throw new Error('Selected evidence has conflicting source versions or perspectives.');
+      continue;
+    }
+    const index = experience.length;
+    experience.push(entry.experience);
+    sources.set(entry.key, { index, revision: entry.revision, experience: entry.experience });
+  }
+  return { experience, sources };
+}
+
+export const modelEvidenceReference = (index: number): string => `character.experience[${index}]`;
+
+export function candidateModelSources(
+  candidates: readonly AttentionCandidate[],
+  revisions?: ReadonlyMap<string, string>,
+): ModelEvidenceSource[] {
+  return candidates.flatMap((candidate) =>
+    (candidate.experience ?? []).map((experience, index) => {
+      const key = candidate.sourceKeys?.[index];
+      if (!key) throw new Error('A complete personal experience has no exact source binding.');
+      return { key, revision: revisions?.get(key) ?? candidate.revision, experience };
+    }),
+  );
+}
+
 // Only typed reference fields are rewritten. Literal notes, labels and quotations
 // are never scanned for ID-looking words. Definition IDs identify content, not people.
 const eventEntityFields = new Set([
@@ -442,7 +488,10 @@ export function relativeLocation(observer: Entity, target: Entity): string {
 export { describePossession as possessionText } from '@open-legend/domain';
 
 /** The same category names reach attention and the final actor context; metadata stays server-side. */
-export function contextSections(candidates: AttentionCandidate[]): Record<string, unknown[]> {
+export function contextSections(
+  candidates: AttentionCandidate[],
+  sharedSources?: ReadonlyMap<string, SharedModelExperience>,
+): Record<string, unknown[]> {
   const names: Record<AttentionCandidate['kind'], string> = {
     conversation: 'conversation',
     memory: 'recall',
@@ -452,9 +501,20 @@ export function contextSections(candidates: AttentionCandidate[]): Record<string
     action: 'actions',
   };
   const sections: Record<string, unknown[]> = {};
+  const evidence = sharedSources
+    ? undefined
+    : assembleModelEvidence(candidateModelSources(candidates));
+  const sources = sharedSources ?? evidence!.sources;
   for (const candidate of candidates) {
-    (sections[names[candidate.kind]] ??= []).push(candidate.text);
-    if (candidate.experience) (sections['experience'] ??= []).push(...candidate.experience);
+    const section = (sections[names[candidate.kind]] ??= []);
+    if (candidate.experience?.length) {
+      for (const key of candidate.sourceKeys ?? []) {
+        const source = sources.get(key);
+        if (!source) throw new Error('A selected personal experience has no supplied array slot.');
+        section.push(modelEvidenceReference(source.index));
+      }
+    } else section.push(candidate.text);
   }
+  if (evidence?.experience.length) sections['experience'] = evidence.experience;
   return sections;
 }

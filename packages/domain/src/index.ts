@@ -76,6 +76,7 @@ export {
   sensesFor,
   seesEntity,
   entityVisionQuery,
+  visibleEntitiesFor,
   pointVisionQuery,
   hearsEntity,
   speechPerception,
@@ -202,6 +203,7 @@ export { gatheringDescription } from './worlds/base/actions.js';
 export { recordInventionFeedback } from './invention-feedback.js';
 
 export * from './spatial-state.js';
+export { headingFrame } from './follow.js';
 export * from './spatial-mutations.js';
 
 export {

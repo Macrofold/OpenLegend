@@ -877,6 +877,51 @@ describe('standalone Macrofold schema generation', () => {
     expect(f.paths).toEqual(['/v1/inferences']);
   });
 
+  it.each(['rest', 'invented'])(
+    'accounts for actual native chat transport and retains its frozen schema: %s',
+    async (answer) => {
+      const request = structuredClone(generationRequest);
+      const originalSchema = structuredClone(request.schema);
+      const originalContext = structuredClone(request.context);
+      const f = fixture({ value: generationRaw(JSON.stringify({ action: answer })) });
+      let transport = '';
+      const fetcher: FetchTransport = async (url, init) => {
+        if (new URL(url).pathname === '/v1/inferences') {
+          transport = String(init.body);
+          const properties = request.schema.properties as Record<string, { enum: string[] }>;
+          properties.action!.enum = ['invented'];
+          request.context = { encounter: 'Mutated after admission.' };
+        }
+        return f.fetcher(url, init);
+      };
+      const result = await generationClient(fetcher).generate(request);
+      expect(result.outcome).toBe(answer === 'rest' ? 'value' : 'invalid');
+      const sent = JSON.parse(transport);
+      expect(sent.input.response_format.json_schema.schema).toEqual(originalSchema);
+      expect(JSON.parse(sent.input.messages[1].content)).toEqual(originalContext);
+      const inputBytes = Buffer.byteLength(JSON.stringify(sent.input));
+      expect(result.receipt.requestAccounting).toEqual({
+        instructionsBytes: Buffer.byteLength(request.instructions),
+        contextBytes: Buffer.byteLength(JSON.stringify(originalContext)),
+        schemaBytes: Buffer.byteLength(JSON.stringify(originalSchema)),
+        toolDefinitionBytes: 0,
+        toolResultBytes: 0,
+        inputScope: 'adapter-input',
+        encodedInputBytes: inputBytes,
+        transportBytes: Buffer.byteLength(transport),
+        maxOutputTokens: sent.limits.max_output_tokens,
+        estimatedInputTokens: {
+          value: Math.ceil(inputBytes / 3),
+          basis: 'captured-input-utf8-divided-by-three',
+          model: 'meta/muse-spark-1.3-contributor',
+          exact: false,
+        },
+      });
+      expect(result.receipt.usage?.inputTokens).toBe(100);
+      expect(f.paths).toEqual(['/v1/inferences']);
+    },
+  );
+
   it.each([
     { schema: { type: 'object', properties: { action: { type: 'string' } } } },
     { model: 'another/model' },

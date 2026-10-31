@@ -54,7 +54,7 @@ export interface ActivityHostDescriptor {
   ) => { value: boolean | undefined; depends: string[]; nextBoundary?: number };
   acceptsTarget?: (world: WorldState, targetId: string) => boolean;
   /** Trusted data projection from this world's installed policy; it grants no executor. */
-  requestDescriptors?: (world: WorldState) => ActivityRequestDescriptor[];
+  requestDescriptors?: (world: WorldState, actorId?: string) => ActivityRequestDescriptor[];
   compileRequest?: (
     world: WorldState,
     actorId: string,
@@ -68,6 +68,7 @@ export interface ActivityHostDescriptor {
     world: WorldState,
     actorId: string,
     observed?: ActivityRequestObservation,
+    query?: ActivityRequestChoiceQuery,
   ) => { choices: ActivityRequestChoice[]; warnings: string[] };
   /** Trusted role predicate after the caller has proved permitted disclosure. */
   requestChoice?: (
@@ -76,6 +77,7 @@ export interface ActivityHostDescriptor {
     requestId: string,
     fieldId: string,
     candidateId: string,
+    arguments_?: Readonly<Record<string, string | number | boolean>>,
   ) => ActivityRequestChoice | undefined;
 }
 export interface ActivityActionMeaning {
@@ -147,12 +149,19 @@ export interface ActivityRequestObservation {
 export interface ActivityRequestChoice {
   id: string;
   label: string;
-  kind: 'entity' | 'definition';
+  kind: 'entity' | 'definition' | 'choice';
   roles: string[];
   requestIds?: string[];
   distance?: number;
   accessible: boolean;
   reason?: string;
+  /** Permitted parent associations, not authority to use another reference. */
+  requires?: Readonly<Record<string, string | number | boolean>>;
+}
+export interface ActivityRequestChoiceQuery {
+  family: string;
+  field: string;
+  arguments: Readonly<Record<string, string | number | boolean>>;
 }
 export interface ActivityRequest {
   family: string;
@@ -162,10 +171,21 @@ export interface ActivityRequest {
  * docs/projects/game-interaction-redesign-tech-design.md#replace-generic-activity-forms-with-semantic-presentations */
 export type ActivityRequestPresentation = {
   target: string;
-  workMode: string;
+  workMode?: string;
 } & (
   | { kind: 'replenish-session' }
   | { kind: 'outing-invitation'; destination: string }
+  | {
+      kind: 'cooperation-proposal';
+      destination?: string;
+      quarry?: string;
+      method?: string;
+      output?: string;
+      quantity?: string;
+      agreement?: string;
+      offer?: string;
+      opponent?: string;
+    }
   | {
       kind: 'resource-care';
       supply: string;
@@ -192,13 +212,23 @@ export type ActivityRequestField = {
   minimumDuration?: number;
   maximumDuration?: number;
   required: true;
+  /** Resolve these fields before querying this role; changing one invalidates dependents. */
+  dependencies?: readonly string[];
   discovery?: {
-    source: 'spatial' | 'storage' | 'materials';
+    source:
+      | 'spatial'
+      | 'storage'
+      | 'materials'
+      | 'known-places'
+      | 'definitions'
+      | 'outputs'
+      | 'choices';
     /** Materials from this selected source require current character evidence. */
     sourceField?: string;
   };
 } & (
   | { type: 'definition'; definitionKind: 'item' | 'recipe' }
+  | { type: 'choice'; choices: readonly { value: string; label: string }[]; definitionKind?: never }
   | { type: 'entity' | 'integer' | 'time' | 'mode'; definitionKind?: never }
 );
 export interface ActivityRequestDescriptor {
@@ -212,12 +242,28 @@ export interface ActivityRequestDescriptor {
   presentation?: ActivityRequestPresentation;
   fields: Record<string, ActivityRequestField>;
 }
+export function activityRequestFieldDependencies(field: ActivityRequestField): readonly string[] {
+  return [
+    ...new Set([
+      ...(field.dependencies ?? []),
+      ...(field.discovery?.sourceField ? [field.discovery.sourceField] : []),
+    ]),
+  ];
+}
+/** Only a field with the declared work-mode meaning controls outer work handling.
+ * An unrelated literal parameter named "mode" keeps its own family semantics. */
+export function activityRequestWorkModeField(
+  request: ActivityRequestDescriptor,
+): string | undefined {
+  return Object.entries(request.fields).find(([, field]) => field.type === 'mode')?.[0];
+}
 export function activityHostRequests(
   world: WorldState,
   host: ActivityHostDescriptor,
+  actorId?: string,
 ): readonly ActivityRequestDescriptor[] {
   return host.requestDescriptors
-    ? host.requestDescriptors(world)
+    ? host.requestDescriptors(world, actorId)
     : (host.definition.requests ?? []);
 }
 export function validateInstalledActivityRequests(world: WorldState): void {
@@ -227,11 +273,31 @@ export function validateInstalledActivityRequests(world: WorldState): void {
       if (seen.has(request.id))
         throw new Error('Two installed hosts cannot own the same activity request.');
       seen.add(request.id);
+      if (Object.values(request.fields).filter((field) => field.type === 'mode').length > 1)
+        throw new Error('An activity request must identify at most one work-mode field.');
+      const visiting = new Set<string>(),
+        visited = new Set<string>();
+      const visit = (name: string): void => {
+        if (visited.has(name)) return;
+        if (visiting.has(name) || !Object.hasOwn(request.fields, name))
+          throw new Error(
+            'Activity request dependencies must name an acyclic set of declared fields.',
+          );
+        visiting.add(name);
+        for (const dependency of activityRequestFieldDependencies(request.fields[name]!))
+          visit(dependency);
+        visiting.delete(name);
+        visited.add(name);
+      };
+      for (const name of Object.keys(request.fields)) visit(name);
     }
 }
-export function activityRequestDescriptors(world: WorldState): ActivityRequestDescriptor[] {
+export function activityRequestDescriptors(
+  world: WorldState,
+  actorId?: string,
+): ActivityRequestDescriptor[] {
   return selectedDescriptors(world)
-    .flatMap((host) => activityHostRequests(world, host))
+    .flatMap((host) => activityHostRequests(world, host, actorId))
     .filter(
       (request) =>
         request.requires?.every((command) => nativeCommandSupported(world, command)) !== false,
@@ -253,17 +319,31 @@ export function activityRequestChoices(
   world: WorldState,
   actorId: string,
   observed?: ActivityRequestObservation,
+  query?: ActivityRequestChoiceQuery,
 ) {
-  const supported = new Set(activityRequestDescriptors(world).map((request) => request.id));
+  const supported = new Set(
+    activityRequestDescriptors(world, actorId).map((request) => request.id),
+  );
   const results = selectedDescriptors(world).flatMap((host) => {
     return host.requestChoices &&
-      activityHostRequests(world, host).some((entry) => supported.has(entry.id))
-      ? [host.requestChoices(world, actorId, observed)]
+      activityHostRequests(world, host, actorId).some(
+        (entry) => supported.has(entry.id) && (!query || query.family === entry.id),
+      )
+      ? [host.requestChoices(world, actorId, observed, query)]
       : [];
   });
   return {
     choices: results.flatMap((result) =>
       result.choices.flatMap((choice) => {
+        if (
+          query &&
+          (!choice.roles.includes(query.field) ||
+            (choice.requestIds && !choice.requestIds.includes(query.family)) ||
+            Object.entries(choice.requires ?? {}).some(
+              ([key, value]) => query.arguments[key] !== value,
+            ))
+        )
+          return [];
         if (!choice.requestIds) return [choice];
         const requestIds = choice.requestIds.filter((id) => supported.has(id));
         return requestIds.length ? [{ ...choice, requestIds }] : [];

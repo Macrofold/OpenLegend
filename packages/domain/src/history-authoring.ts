@@ -48,6 +48,18 @@ export function authorHistory(
         ].filter((id): id is string => !!id);
   if (references.some((id) => !entityGet(original.entities, id)))
     return reject('A historical participant is unavailable in this scenario.');
+  // Beliefs/reflections have an inner-world owner. These record kinds (and
+  // inferred episodes) are not personal recall sources; accepting one here
+  // would report success for history the character cannot subsequently recall.
+  if (
+    input.kind === 'memory' &&
+    (input.memory.kind === 'belief' ||
+      input.memory.kind === 'reflection' ||
+      input.memory.source === 'inferred')
+  )
+    return reject(
+      'Add an episode for a remembered experience or private thought. Edit lasting beliefs and reflections in the person’s inner world.',
+    );
   if (
     input.kind === 'memory' &&
     (input.memory.kind === 'commitment' ||

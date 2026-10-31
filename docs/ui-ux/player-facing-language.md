@@ -137,6 +137,8 @@ For generated-text work, the relevant instructions and examples must establish:
 
 Share common requirements through existing owners rather than copying divergent prompt rules. Keep world vocabulary and laws with their authored source. Follow the [AI workflow](../../.agents/skills/openlegend-ai/SKILL.md) when changing prompts or model behavior; this writing standard grants no extra generation calls, retries or new output filtering.
 
+Generated character prose must not use em dashes; use commas, periods, colons or parentheses instead. The shared [character instructions](../../apps/server/src/character-service-instructions.ts) carry this direction across response, higher-decision and reflection routes. This is a prompt requirement, not guaranteed model compliance or permission to rewrite stored evidence or human messages.
+
 Review complete outputs, not just prompt intent or isolated string fragments. Include relevant successful, unavailable, failed and uncertain states; the current player and another person; unknown names; singular/plural quantities; and fallback text. Select cases by the changed surface instead of creating a universal test matrix. Preserve literal names, quoted speech, temporal meaning and accessible context during composition.
 
 ## Review the complete player experience

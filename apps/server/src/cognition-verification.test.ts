@@ -1,6 +1,7 @@
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
+import { fixtureTriggerExperience } from '../../../tests/fixtures/cognition-ai.js';
 import {
   closeTestDatabases,
   testRepository,
@@ -156,12 +157,9 @@ function answers(
 }
 /** The permitted handle of the person whose speech triggered the decision. */
 function speaker(context: string): string {
-  const trigger = context.match(/## Trigger facts\n([^\n]+)/)?.[1];
-  const facts = trigger
-    ? (JSON.parse(trigger) as { experience?: { value?: { sourceId?: string } } })
-    : undefined;
-  const handle = facts?.experience?.value?.sourceId;
-  if (!handle) throw new Error('Fixture context has no permitted speaker reference.');
+  const handle = fixtureTriggerExperience(context).value['sourceId'];
+  if (typeof handle !== 'string' || !handle)
+    throw new Error('Fixture context has no permitted speaker reference.');
   return handle;
 }
 function talk(context: string, text: string) {
@@ -579,9 +577,9 @@ describe(
         expect.arrayContaining(['route', 'reflection', 'a0']),
       );
       expect(decisionJudges(h, job.id)).toEqual([`${job.id}:attempt:0:route`]);
-      const stimulus = (route.state as { decisionContext: { stimulus: string } }).decisionContext
-        .stimulus;
-      expect(stimulus).toContain('The deer died');
+      const decisionContext = (route.state as { decisionContext: { stimulus: string } })
+        .decisionContext;
+      expect(fixtureTriggerExperience(decisionContext).value['text']).toContain('The deer died');
 
       // The decision finished on its own (continuing existing behavior) without waiting for reflection.
       expect(job).toMatchObject({
@@ -621,9 +619,14 @@ describe(
       expect(Object.keys(receipt?.components ?? { missing: true })).toEqual([]);
       expect({ action: ada().action ?? null, plan: ada().agency.plan ?? null }).toEqual(before);
 
-      // The reflection answer queued this decision's stimulus for background reflection.
-      const queued = await h.store.getIntegration(h.reflectionKey);
-      expect(queued).toMatchObject({ actorId: NPC_ID, origin: job.id, reason: stimulus });
+      // Reflection keeps the native reason, not a request-local model evidence index.
+      const queued = (await h.store.getIntegration(h.reflectionKey)) as { reason: string };
+      expect(queued).toMatchObject({
+        actorId: NPC_ID,
+        origin: job.id,
+        reason: expect.stringContaining('The deer died'),
+      });
+      expect(queued.reason).not.toBe(decisionContext.stimulus);
       await h.flush();
       // No reflection harness is configured in fixtures, so the opportunity row reports that the
       // queued entry is waiting rather than dispatched.
@@ -631,7 +634,7 @@ describe(
         kind: 'Reflection opportunity',
         actorId: NPC_ID,
         disposition: 'deferred',
-        input: { origin: job.id, reason: stimulus },
+        input: { origin: job.id, reason: queued.reason },
         output: { reason: 'Reflection harness is not configured.' },
       });
       expect(
@@ -669,6 +672,15 @@ describe(
       });
       expect(h.director.executionSource).toBe('test-fixture');
       const first = await h.chat('fresh-1', 'Hello');
+      expect(
+        h.service.world.experience?.awareness[NPC_ID]?.filter(
+          (entry) => entry.sourceId === NPC_ID && entry.speech,
+        ),
+      ).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ content: 'Welcome to the river camp.' }),
+        ]),
+      );
       const second = await h.chat('fresh-2', 'What are you making?');
       expect(first).toMatchObject({ status: 'completed', result: { disposition: 'responded' } });
       expect(second).toMatchObject({
@@ -716,7 +728,11 @@ describe(
       const section = secondInput.indexOf('## Conversation so far');
       expect(section).toBeGreaterThanOrEqual(0);
       const conversation = secondInput.slice(section, secondInput.indexOf('\n## ', section + 1));
-      expect(conversation).toContain('I said');
+      const conversationIndexes = Array.from(
+        conversation.matchAll(/^- character\.experience\[(\d+)\]$/gm),
+        (match) => Number(match[1]),
+      );
+      expect(conversationIndexes.length).toBeGreaterThan(0);
       const evidenceSection = secondInput.match(/## Complete personal evidence\n([^\n]+)/)?.[1];
       const evidence = JSON.parse(evidenceSection ?? '[]') as Array<{
         value: {
@@ -725,6 +741,9 @@ describe(
           speech?: { segments: Array<{ kind: string; text?: string }> };
         };
       }>;
+      for (const index of conversationIndexes) expect(evidence[index]).toBeDefined();
+      // A recent own turn may already be a required unseen cause, so it need not
+      // also appear in the optional conversation list. Its complete source remains.
       expect(
         evidence.some(
           (entry) =>
@@ -1015,16 +1034,17 @@ describe(
       const native = await h.think();
       await record('native', native);
       // Control for the reflection test: with reflection answered "no", the significant event
-      // alone queues the coalesced event sentence, never the decision's stimulus.
-      const nativeStimulus = (
+      // alone queues the native event sentence, never a request-local model evidence index.
+      const nativeContext = (
         routeRequest(h, native.id)!.state as { decisionContext: { stimulus: string } }
-      ).decisionContext.stimulus;
-      expect(nativeStimulus).toContain('The deer died');
+      ).decisionContext;
+      expect(fixtureTriggerExperience(nativeContext).value['text']).toContain('The deer died');
       const eventQueued = (await h.store.getIntegration(h.reflectionKey)) as
         | { origin: string; reason: string }
         | undefined;
       expect(eventQueued).toMatchObject({ actorId: NPC_ID, origin: native.id });
-      expect(eventQueued!.reason).not.toBe(nativeStimulus);
+      expect(eventQueued!.reason).toContain('The deer died');
+      expect(eventQueued!.reason).not.toBe(nativeContext.stimulus);
 
       await h.kill('hare-1');
       h.state.policy = {

@@ -222,7 +222,9 @@ export interface RetrievedMemory {
   /** A current eligible summary that admitted this exact retained original. */
   through?: SummarySourceBinding;
 }
-type MemoryRetrievalQuery = (MemoryModel & { query: number[] }) | { text: string };
+type MemoryRetrievalQuery =
+  | (MemoryModel & { query: number[] })
+  | { text: string | readonly string[] };
 export interface SummarySourceBinding {
   id: string;
   revision: string;
@@ -1989,21 +1991,74 @@ export class MemoryRepository {
    * with exclusions applied before ranking, limits and body hydration. */
   private async lexicalMatches(
     scope: MemoryScope,
-    expression: string,
+    expression: string | readonly string[],
     limit: number,
     excludedIds: string[] = [],
   ): Promise<Record<string, unknown>[]> {
+    const clauses = typeof expression === 'string' ? [expression] : expression;
     // Fresh projection statistics can estimate one row and choose a prefix scan
     // per match (millions of comparisons for a few thousand memories). Keep the
     // indexed metadata join on a hash/merge path only for this read; the exact
     // previous setting is restored on the same snapshot/connection.
-    const previous = String(
-      (await this.db.prepare("SELECT current_setting('enable_nestloop') AS value").get())!['value'],
-    );
-    const changed = previous !== 'off';
-    if (changed) await this.db.prepare("SELECT set_config('enable_nestloop','off',true)").get();
+    const settings = (await this.db
+      .prepare(
+        "SELECT current_setting('enable_nestloop') AS nested,current_setting('enable_mergejoin') AS merged",
+      )
+      .get())!;
+    const previous = [String(settings['nested']), String(settings['merged'])];
+    // A correlated multi-cue merge plan rescans the actor's metadata for each cue.
+    // Hashing that same eligible metadata once preserves ranking and current scope.
+    const wanted = ['off', clauses.length > 1 ? 'off' : previous[1]!];
+    const changed = wanted.some((value, index) => value !== previous[index]);
+    const configure = () =>
+      this.db.prepare(
+        "SELECT set_config('enable_nestloop',?,true),set_config('enable_mergejoin',?,true)",
+      );
+    if (changed) await configure().get(...wanted);
     let failed = false;
     try {
+      if (clauses.length > 1) {
+        // Bounded multi-cue retrieval ordinal: retain each source's best per-query
+        // position so an unrelated turn cannot drown a specific current cue. Raw
+        // ts_rank magnitudes from different term sets are not comparable. This is
+        // discovery order, not final context fitting. Hydrate only the final window.
+        return await this.db
+          .prepare(
+            `
+          WITH ranked AS MATERIALIZED (
+            SELECT matches.*,ROW_NUMBER() OVER (
+              PARTITION BY cue.ordinal ORDER BY matches.score DESC,matches.importance DESC,matches.at DESC,matches.id
+            ) AS cue_rank
+            FROM jsonb_array_elements_text(?::jsonb) WITH ORDINALITY AS cue(expression,ordinal)
+            CROSS JOIN LATERAL (
+              SELECT r.id,r.source_kind,r.revision,r.importance,r.at,
+                ts_rank(d.search_vector,cue.expression::tsquery) AS score
+              FROM recall_sources r JOIN memory_lexical_documents d ON d.world_id=r.world_id
+                AND d.actor_id=r.actor_id AND d.id=r.id AND d.source_kind=r.source_kind AND d.source_revision=r.revision
+              WHERE ${this.eligible} AND d.search_vector @@ cue.expression::tsquery
+                AND NOT (r.id = ANY(?::text[]) OR COALESCE(r.event_id,'') = ANY(?::text[]))
+              ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?
+            ) matches
+          ), selected AS (
+            SELECT id,source_kind,revision,MIN(cue_rank) AS rank
+            FROM ranked GROUP BY id,source_kind,revision ORDER BY rank,id LIMIT ?
+          )
+          SELECT ${sourceColumns},1.0/selected.rank AS score
+          FROM selected JOIN recall_sources r ON r.id=selected.id
+            AND r.source_kind=selected.source_kind AND r.revision=selected.revision
+          WHERE ${this.eligible} ORDER BY selected.rank,r.id
+        `,
+          )
+          .all(
+            JSON.stringify(clauses),
+            ...this.params(scope),
+            excludedIds,
+            excludedIds,
+            limit,
+            limit,
+            ...this.params(scope),
+          );
+      }
       return await this.db
         .prepare(
           `SELECT ${sourceColumns},ts_rank(d.search_vector,?::tsquery) AS score
@@ -2013,14 +2068,14 @@ export class MemoryRepository {
             AND NOT (r.id = ANY(?::text[]) OR COALESCE(r.event_id,'') = ANY(?::text[]))
           ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
         )
-        .all(expression, ...this.params(scope), expression, excludedIds, excludedIds, limit);
+        .all(clauses[0], ...this.params(scope), clauses[0], excludedIds, excludedIds, limit);
     } catch (error) {
       failed = true;
       throw error;
     } finally {
       if (changed)
         try {
-          await this.db.prepare("SELECT set_config('enable_nestloop',?,true)").get(previous);
+          await configure().get(...previous);
         } catch (error) {
           // A SQL failure aborts the snapshot; its rollback also restores LOCAL
           // settings. Do not mask that original error with the aborted restore.
@@ -2198,22 +2253,26 @@ export class MemoryRepository {
     ids: string[],
     existing: RetrievedMemory[],
     kinds: readonly SourceKind[] = ['awareness', 'memory'],
+    exact?: readonly ExperienceSourceReference[],
   ): Promise<RetrievedMemory[]> {
     const present = new Set(
       existing.map((source) => sourceKey(source.sourceKind, source.memory.id)),
     );
-    const wanted = [...new Set(ids)].flatMap((id) =>
-      kinds.filter((kind) => !present.has(sourceKey(kind, id))).map((kind) => ({ kind, id })),
-    );
+    const wanted = exact
+      ? exact.filter(({ kind, id }) => !present.has(sourceKey(kind, id)))
+      : [...new Set(ids)].flatMap((id) =>
+          kinds.filter((kind) => !present.has(sourceKey(kind, id))).map((kind) => ({ kind, id })),
+        );
     if (!wanted.length) return existing;
     if (wanted.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     const window = Math.floor(RETRIEVAL_ROWS / wanted.length);
     const rows = await this.db
       .prepare(
         `SELECT q.kind,q.id,s.source_revision,r.id AS parent_id,r.revision AS parent_revision,r.eligible
-      FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT)
+      FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT)
       JOIN LATERAL (SELECT summary_id,source_revision FROM mind_summary_sources s
         WHERE s.world_id=? AND s.actor_id=? AND s.source_kind=q.kind AND s.source_id=q.id AND s.support_key=''
+          AND (q.revision IS NULL OR s.source_revision=q.revision)
         ORDER BY summary_id,source_revision LIMIT ${window}) s ON true
       LEFT JOIN recall_sources r ON r.world_id=? AND r.actor_id=? AND r.source_kind='summary' AND r.id=s.summary_id
       WHERE (SELECT generation FROM world_head WHERE id=1)=?
@@ -2466,19 +2525,30 @@ export class MemoryRepository {
   }
   /** Exact, bounded sources already selected into one appraisal/reflection context.
    * No required-history union or whole actor hydration is needed for this binding. */
-  async appraisalSources(scope: MemoryScope, ids: string[]): Promise<RetrievedMemory[]> {
+  async appraisalSources(
+    scope: MemoryScope,
+    ids: string[],
+    exact?: readonly ExperienceSourceReference[],
+  ): Promise<RetrievedMemory[]> {
     const unique = [...new Set(ids)];
     if (unique.length > 48) throw new Error('Too many appraisal source bindings.');
     if (!unique.length) return [];
+    if (exact && exact.some((source) => !unique.includes(source.id)))
+      throw new Error('An appraisal source is outside its selected identity set.');
+    if (exact && exact.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    if (exact && !exact.length) return [];
     return this.snapshot(async () => {
       const selected = await this.hydrate(
         await this.db
           .prepare(
-            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND (r.id IN (${unique.map(() => '?').join(',')}) OR r.event_id IN (${unique.map(() => '?').join(',')})) ORDER BY r.id`,
+            `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND ${exact ? `EXISTS (SELECT 1 FROM jsonb_to_recordset(?::jsonb) AS q(kind TEXT,id TEXT,revision TEXT) WHERE (r.source_kind,r.id,r.revision)=(q.kind,q.id,q.revision))` : `(r.id IN (${unique.map(() => '?').join(',')}) OR r.event_id IN (${unique.map(() => '?').join(',')}))`} ORDER BY r.id`,
           )
-          .all(...this.params(scope), ...unique, ...unique),
+          .all(
+            ...this.params(scope),
+            ...(exact ? [JSON.stringify(exact)] : [...unique, ...unique]),
+          ),
       );
-      return this.requiredOriginals(scope, unique, selected);
+      return this.requiredOriginals(scope, unique, selected, undefined, exact);
     });
   }
   async required(
@@ -2532,8 +2602,19 @@ export class MemoryRepository {
     excludedIds: string[] = [],
     cache?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
-    const expression =
-      query && 'text' in query ? lexicalQuery([...new Set(searchWords(query.text))]) : undefined;
+    const texts =
+      query && 'text' in query ? (typeof query.text === 'string' ? [query.text] : query.text) : [];
+    if (
+      texts.length > RETRIEVAL_ROWS ||
+      texts.reduce((sum, text) => sum + Buffer.byteLength(text), 0) > RETRIEVAL_BYTES
+    )
+      throw new MemoryPreparationError();
+    const clauses = [
+      ...new Set(
+        texts.map((text) => lexicalQuery([...new Set(searchWords(text))])).filter(Boolean),
+      ),
+    ];
+    const expression = clauses.length ? clauses : undefined;
     const semantic = query && 'query' in query ? query : undefined;
     const read = () => this.readSelection(scope, limit, semantic, excludedIds, cache, expression);
     return expression ? this.lexical.snapshot(scope, read) : this.snapshot(read);
@@ -2544,7 +2625,7 @@ export class MemoryRepository {
     semantic?: MemoryModel & { query: number[] },
     excludedIds: string[] = [],
     cache?: MemoryReadCache,
-    expression?: string,
+    expression?: string | readonly string[],
   ): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
       throw new Error('Invalid memory selection size.');

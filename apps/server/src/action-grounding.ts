@@ -5,6 +5,7 @@ import {
 } from './jev-questions.js';
 import {
   namedTimeSchema,
+  nativeActionInvocation,
   actionInvocationSchema,
   navigationInstructions,
 } from './navigation-contracts.js';
@@ -289,7 +290,7 @@ export async function groundActionAttempts(
         (binding) => !unmetSlots(world, binding.commands, slots).length,
       );
       const activityRequests = {
-        requests: activityRequestDescriptors(world),
+        requests: activityRequestDescriptors(world, actorId),
         ...activityRequestChoices(world, actorId, observed),
         simTime: world.simTime,
       };
@@ -414,9 +415,9 @@ export async function groundActionAttempts(
               z
                 .object({
                   actionId: handle,
-                  invocation: actionInvocationSchema(activityRequestDescriptors(world))
-                    .extend({ until: namedTimeSchema(world) })
-                    .nullable(),
+                  invocation: actionInvocationSchema(activityRequestDescriptors(world, actorId), {
+                    until: namedTimeSchema(world),
+                  }).nullable(),
                 })
                 .strict(),
             )
@@ -428,7 +429,7 @@ export async function groundActionAttempts(
           instructions:
             ACTION_GROUNDING_POLICY +
             ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or invocation. Use only navigation and installed request fields supplied here; pickup/drop items must come from the supplied possessions or pileItems. A follow without until has no successful finite termination and cannot precede another step; do not promise unreachable continuation. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON. ' +
-            navigationInstructions(world),
+            navigationInstructions(world, { actorId }),
           context,
           schema: z.toJSONSchema(schema, { target: 'draft-7' }),
         }),
@@ -452,13 +453,15 @@ export async function groundActionAttempts(
         const selectedCommand =
           step.actionId !== null
             ? scoped[Number(step.actionId.slice(1))]?.commands[0]
-            : bindActionInvocation(
-                world,
-                actorId,
-                `${op.localId}:${index}`,
-                step.invocation,
-                step.invocation?.parameters ? activityEntityIds : entityIds,
-              );
+            : step.invocation
+              ? bindActionInvocation(
+                  world,
+                  actorId,
+                  `${op.localId}:${index}`,
+                  nativeActionInvocation(step.invocation),
+                  step.invocation.parameters ? activityEntityIds : entityIds,
+                )
+              : undefined;
         if (
           !selectedCommand ||
           'ok' in selectedCommand ||

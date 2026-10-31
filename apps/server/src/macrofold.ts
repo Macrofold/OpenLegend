@@ -28,6 +28,7 @@ import {
   macrofoldString as string,
   validateMacrofoldValue,
   prepareSchema,
+  generationRequestAccounting,
   PreparedJson,
   InvalidData,
   prepareQuestions,
@@ -460,6 +461,7 @@ export class MacrofoldBackend implements AiClient {
       prepareBody: () => Promise<unknown>;
     },
     api = this.api,
+    accounting?: { receipt: AiReceipt; value: NonNullable<AiReceipt['requestAccounting']> },
   ): Promise<Record<string, unknown>> {
     // Ordinary callers capture before the journal wait. Capability-dependent callers
     // first resolve the exact logical input's prior outcome, before new eligibility.
@@ -477,6 +479,7 @@ export class MacrofoldBackend implements AiClient {
       rejected?: boolean;
       status?: number;
       code?: string;
+      requestAccounting?: AiReceipt['requestAccounting'];
     }>(`operation:${name}`);
     if (previous) {
       if (
@@ -486,6 +489,8 @@ export class MacrofoldBackend implements AiClient {
       )
         throw new Error('Macrofold operation ID conflicts with earlier input.');
       api.currentOperation()?.throwIfStopped();
+      if (accounting && previous.requestAccounting)
+        accounting.receipt.requestAccounting = previous.requestAccounting;
       if (previous.response) {
         onDispatch?.();
         return previous.response;
@@ -503,9 +508,15 @@ export class MacrofoldBackend implements AiClient {
     if (!captured) throw new InvalidData('missing_request_body');
     const { preparedBody, fingerprint } = captured;
     body = captured.body;
+    if (accounting)
+      accounting.receipt.requestAccounting = {
+        ...accounting.value,
+        transportBytes: Buffer.byteLength(preparedBody.text(500_000)),
+      };
     const identity = {
       fingerprint,
       ...(preparation ? { inputFingerprint: preparation.inputFingerprint } : {}),
+      ...(accounting ? { requestAccounting: accounting.receipt.requestAccounting } : {}),
     };
     // Unknown admission retains the exact inference. Once a Run is accepted,
     // retain its original serialized binding until the final receipt can persist
@@ -1220,6 +1231,7 @@ export class MacrofoldBackend implements AiClient {
     reflection = false,
     worldAgent?: WorldAgentTurn,
     generationSettings?: Pick<GenerateRequest, 'reasoningEffort' | 'maxOutputTokens'>,
+    requestAccounting?: NonNullable<AiReceipt['requestAccounting']>,
   ): Promise<string> {
     if (this.busy.has(name)) throw new Error('This agent already has work in progress.');
     this.busy.add(name);
@@ -1400,6 +1412,10 @@ export class MacrofoldBackend implements AiClient {
           receipt.dispatched = true;
           receipt.completionUncertain = true;
         },
+        undefined,
+        undefined,
+        this.api,
+        requestAccounting ? { receipt, value: requestAccounting } : undefined,
       );
       lane.run = string(accepted['run_id']);
       receipt.providerRequestId = lane.run;
@@ -1546,7 +1562,7 @@ export class MacrofoldBackend implements AiClient {
     AiResult<{
       thoughts: string[];
       appraisalChanges?: import('./cognition-contracts.js').AppraisalProposal[];
-      goalChanges: import('@open-legend/domain').GoalChange[];
+      goalChanges: import('./cognition-contracts.js').ModelGoalChange[];
       knowledgeChanges: import('@open-legend/domain').KnowledgeEdit[];
       nameChanges: import('@open-legend/domain').GivenNameEdit[];
       files: import('@open-legend/domain').InnerWorld['files'];
@@ -1590,31 +1606,42 @@ export class MacrofoldBackend implements AiClient {
           );
           const adapter = new ActorWorkspaceFiles(this.api, this.service.store);
           await adapter.seed(workspace.worktreeId, files, request.requestId, signal);
+          const prompt = JSON.stringify({
+            instructions: request.instructions,
+            context: request.context,
+            schema: preparedSchema.schema,
+            workspace: {
+              directory: 'mind',
+              files: files.map((file) => `mind/${file.path}`),
+              guidance:
+                'Use relative paths. List mind directly if needed; / and . are not valid tool paths. identity.md is read-only.',
+            },
+          });
           const output = await this.native(
             `reflection-v2:${actorId}`,
             request.requestId,
-            JSON.stringify({
-              instructions: request.instructions,
-              context: request.context,
-              schema: preparedSchema.schema,
-              workspace: {
-                directory: 'mind',
-                files: files.map((file) => `mind/${file.path}`),
-                guidance:
-                  'Use relative paths. List mind directly if needed; / and . are not valid tool paths. identity.md is read-only.',
-              },
-            }),
+            prompt,
             false,
             signal,
             receipt,
             true,
             undefined,
             request,
+            generationRequestAccounting(
+              { ...request, schema: preparedSchema.schema },
+              receipt.requestedModel,
+              {
+                input: prompt,
+                transport: '',
+                maxOutputTokens: null,
+                inputScope: 'worker-prompt-only',
+              },
+            ),
           );
           const value = validateMacrofoldValue<{
             thoughts: string[];
             appraisalChanges?: import('./cognition-contracts.js').AppraisalProposal[];
-            goalChanges: import('@open-legend/domain').GoalChange[];
+            goalChanges: import('./cognition-contracts.js').ModelGoalChange[];
             knowledgeChanges: import('@open-legend/domain').KnowledgeEdit[];
             nameChanges: import('@open-legend/domain').GivenNameEdit[];
           }>(preparedSchema, JSON.parse(output));
@@ -1722,21 +1749,32 @@ export class MacrofoldBackend implements AiClient {
             ) > 98000
           )
             throw new InvalidData('Full cognition request exceeds the Macrofold prompt limit.');
+          const prompt = JSON.stringify({
+            instructions: request.instructions,
+            response_format: 'Return only a JSON value matching this schema. Do not use tools.',
+            schema: preparedSchema.schema,
+            context: request.context,
+          });
           const output = await this.native(
             request.actorScope ?? `typed:${request.task}`,
             request.requestId,
-            JSON.stringify({
-              instructions: request.instructions,
-              response_format: 'Return only a JSON value matching this schema. Do not use tools.',
-              schema: preparedSchema.schema,
-              context: request.context,
-            }),
+            prompt,
             false,
             operationSignal,
             receipt,
             false,
             undefined,
             request,
+            generationRequestAccounting(
+              { ...request, schema: preparedSchema.schema },
+              receipt.requestedModel,
+              {
+                input: prompt,
+                transport: '',
+                maxOutputTokens: null,
+                inputScope: 'worker-prompt-only',
+              },
+            ),
           );
           const value = validateMacrofoldValue<T>(preparedSchema, JSON.parse(output));
           signal.throwIfAborted();
@@ -1910,6 +1948,14 @@ export class MacrofoldBackend implements AiClient {
         },
       },
       api,
+      {
+        receipt,
+        value: generationRequestAccounting({ ...request, schema: preparedSchema.schema }, model, {
+          input: logicalBody.input,
+          transport: '',
+          maxOutputTokens: limits.max_output_tokens,
+        }),
+      },
     );
     const run = string(accepted['run_id']);
     receipt.providerRequestId = run;

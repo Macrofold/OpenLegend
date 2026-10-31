@@ -73,6 +73,7 @@ beforeEach(() => {
 });
 afterEach(async () => {
   for (const close of cleanup.splice(0)) await close();
+  vi.useRealTimers();
   vi.unstubAllGlobals();
 }, 60_000);
 function receipt(
@@ -410,6 +411,9 @@ describe('enabled character decision reconsideration', () => {
     await pool.close();
   });
   it('E01/E05 uses a valid fast choice once without buying a second opinion', async () => {
+    // This specimen advances neither decision clock. Control their wake-up timer
+    // too, so host/DB contention cannot turn a logically immediate choice late.
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout'] });
     const h = await harness({ judge: async (request) => primary(request) });
     const job = await h.thought();
     expect(
@@ -421,6 +425,11 @@ describe('enabled character decision reconsideration', () => {
     expect(job.decision?.groups['q0']?.state).toBe('resolved');
     expect(job.decision?.immediate.kind).toBe('acted');
     expect(job.status).toBe('completed');
+    await h.director.close();
+    expect((await h.store.intelligenceCall(job.id))?.output).toEqual({
+      message: job.message,
+      result: job.result,
+    });
   });
   it('E02/E06 hands invalid completed ratings to one funded model and commits the offered choice', async () => {
     const h = await harness();

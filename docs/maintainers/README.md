@@ -60,7 +60,7 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Situation-aware cognition context
 
-[Context implementation and qualification (SC01–SC12)](cognition-context.md) coordinates the [feature specification](../projects/situation-aware-cognition-context-feature-spec.md), [technical design](../projects/situation-aware-cognition-context-tech-design.md), [supplied-request evidence and conversation decisions](../projects/situation-aware-cognition-context-evidence-and-decisions.md), [complete repertoire review](../projects/situation-aware-cognition-context-repertoire-review.md) and [SCX constraints](../limits/cognition.md#situation-aware-context-selection). The selected design is complete; runtime and gameplay qualification remain open. CR/CE/IS/PF retain their existing semantic and acceptance owners, including full accepted identity, required evidence, exact References, compatible speech/action and distinct SPK/CTR scope.
+[Optional cognition refinements (SC12)](cognition-context.md#sc12--bind-derivable-metadata-optionally-factor-local-schemas) retain deferred metadata/schema optimizations. Core [behavior](../features/situation-aware-cognition-context.md), [technical contracts](../technical/situation-aware-cognition-context.md), [filed delivery](completed/2026/cognition-context.md) and [qualification](../verification/situation-aware-cognition-context.md) distinguish implemented construction/native/provider evidence from broader character/player acceptance. CR/CE/IS/PF, speech and threat-response owners retain their separate scope.
 
 ## Standalone character cognition laboratory
 

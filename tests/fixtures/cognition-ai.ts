@@ -8,6 +8,32 @@ import type {
   JudgmentAnswer,
 } from '@open-legend/ai';
 
+/** Resolve the current source index in either native decision facts or rendered input. */
+export function fixtureTriggerExperience(context: unknown): { value: Record<string, unknown> } {
+  const native =
+    context && typeof context === 'object' && 'nativeContext' in context
+      ? context.nativeContext
+      : context;
+  const structured =
+    typeof native === 'string'
+      ? {
+          triggerFacts: JSON.parse(native.match(/## Trigger facts\n([^\n]+)/)?.[1] ?? 'null'),
+          experience: JSON.parse(
+            native.match(/## Complete personal evidence\n([^\n]+)/)?.[1] ?? '[]',
+          ),
+        }
+      : (native as {
+          triggerFacts?: { experience?: string };
+          experience?: Array<{ value: Record<string, unknown> }>;
+        } | null);
+  const index = structured?.triggerFacts?.experience?.match(
+    /^character\.experience\[(\d+)\]$/,
+  )?.[1];
+  const experience = index === undefined ? undefined : structured?.experience?.[Number(index)];
+  if (!experience?.value) throw new Error('Fixture context has no supplied triggering experience.');
+  return experience;
+}
+
 /** Native pipeline fixture, not evidence about model quality. It never makes a provider call. */
 export function fixtureCognitionAi() {
   const calls: Array<JudgeRequest | GenerateRequest> = [];
@@ -47,20 +73,8 @@ export function fixtureCognitionAi() {
       calls.push(request);
       let value: unknown = { operations: [] };
       if (request.task === 'npc_response') {
-        const suppliedContext = request.context;
-        const nativeContext =
-          suppliedContext &&
-          typeof suppliedContext === 'object' &&
-          'nativeContext' in suppliedContext
-            ? suppliedContext.nativeContext
-            : suppliedContext;
-        const context = typeof nativeContext === 'string' ? nativeContext : '';
-        const facts = context.match(/## Trigger facts\n([^\n]+)/)?.[1];
-        const trigger = facts
-          ? (JSON.parse(facts) as { experience?: { value?: { sourceId?: string } } })
-          : undefined;
-        const addressee = trigger?.experience?.value?.sourceId;
-        if (!addressee)
+        const addressee = fixtureTriggerExperience(request.context).value['sourceId'];
+        if (typeof addressee !== 'string' || !addressee)
           throw new Error('Fixture generation has no permitted triggering speaker handle.');
         value = {
           operations: [

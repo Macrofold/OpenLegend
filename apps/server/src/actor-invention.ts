@@ -1,7 +1,7 @@
 import { z } from 'zod';
 import { installedRecipeFamilies } from '@open-legend/domain';
 import { declarationSchema } from './ai-schemas.js';
-import { inventionMaterials } from './invention-context.js';
+import { inventionMaterialsFor } from './invention-context.js';
 import type { WorldService } from './world-service.js';
 
 /** Private context is read only for this actor. A response proposes; the shared gateway admits.
@@ -22,6 +22,8 @@ export async function prepareActorInvention(service: WorldService, actorId: stri
     candidate: job.invention?.candidate ?? job.request.invention?.candidate,
     continuedBy: job.invention?.continuedBy,
   }));
+  const materials = enabled ? inventionMaterialsFor(service.world, actorId) : undefined;
+  if (materials === null) throw new Error('The inventor is unavailable.');
   return {
     enabled,
     policyRevision,
@@ -70,7 +72,7 @@ export async function prepareActorInvention(service: WorldService, actorId: stri
               }),
             ),
             candidateSchema: declarationSchema,
-            inventionMaterials: inventionMaterials(service.world, service.observe(actorId)!),
+            inventionMaterials: materials,
             continuation: 'Set parentId to an uncontinued result ID when revising; otherwise null.',
           }
         : {}),

@@ -1,5 +1,9 @@
 import { entityGet } from '../../entity-collection.js';
-import type { ActivityHostDescriptor, ActivityRequestDescriptor } from '../../activity-hosts.js';
+import type {
+  ActivityHostDescriptor,
+  ActivityRequestDescriptor,
+  ActivityRequestObservation,
+} from '../../activity-hosts.js';
 import { attackPermissionProblem } from '../../combat-consent.js';
 import { seesEntity } from '../../perception.js';
 import { outcome } from '../../events.js';
@@ -7,6 +11,12 @@ import { observeActor } from '../../kernel.js';
 import { observerDescription } from './knowledge.js';
 import { outingDestination, outingInvitationProblem } from '../../outings.js';
 import { BASE_OUTING, BASE_COMBAT_HELP } from './outing-policy.js';
+import {
+  cooperationRequestDescriptors,
+  cooperationRequestChoices,
+  bindCooperationRequest,
+  COOPERATION_REQUESTS,
+} from './cooperation-requests.js';
 
 const fields: ActivityRequestDescriptor['fields'] = {
   recipientId: {
@@ -35,9 +45,9 @@ const fields: ActivityRequestDescriptor['fields'] = {
 export const BASE_OUTING_HOST: ActivityHostDescriptor = {
   definition: {
     id: 'base:outings',
-    version: 2,
+    version: 3,
     interface: 'activity-host-v1',
-    implementationVersion: 2,
+    implementationVersion: 3,
     commands: ['outing'],
     deadlineSafeCommands: [],
     requests: [
@@ -46,12 +56,18 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
         label: BASE_COMBAT_HELP.label,
         submitLabel: 'Ask for help',
         description: BASE_COMBAT_HELP.description,
+        presentation: {
+          kind: 'cooperation-proposal',
+          target: 'recipientId',
+          opponent: 'opponentId',
+        },
         fields: {
           recipientId: { ...fields.recipientId!, label: 'Potential helper' },
           opponentId: {
             type: 'entity',
             label: 'Opponent',
             required: true,
+            dependencies: ['recipientId'],
             discovery: { source: 'spatial' },
           },
         },
@@ -72,7 +88,15 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
       },
     ],
   },
+  requestDescriptors(world, actorId) {
+    return [
+      ...(BASE_OUTING_HOST.definition.requests ?? []),
+      ...cooperationRequestDescriptors(world, actorId),
+    ];
+  },
   compileRequest(world, actorId, id, request, permitted) {
+    if (Object.values(COOPERATION_REQUESTS).some((family) => family === request.family))
+      return bindCooperationRequest(world, actorId, id, request, permitted);
     if (request.family === BASE_COMBAT_HELP.family) {
       const { recipientId, opponentId } = request.arguments;
       if (
@@ -95,7 +119,28 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
       return outcome(false, 'activity-choices', BASE_OUTING.messages.terms);
     return { id, actorId, type: 'outing', operation: 'invite', recipientId, destinationId, mode };
   },
-  requestChoice(world, actorId, requestId, fieldId, candidateId) {
+  requestChoice(world, actorId, requestId, fieldId, candidateId, arguments_ = {}) {
+    if (Object.values(COOPERATION_REQUESTS).some((family) => family === requestId)) {
+      let observed: ActivityRequestObservation | undefined;
+      if (fieldId === 'recipientId' || fieldId === 'quarryId') {
+        const actor = entityGet(world.entities, actorId),
+          candidate = entityGet(world.entities, candidateId);
+        if (
+          !actor?.actor ||
+          !candidate ||
+          candidate.id === actorId ||
+          candidate.placement?.mode !== 'world' ||
+          !seesEntity(world, actor, candidate)
+        )
+          return;
+        observed = { actor, visibleEntities: [candidate], inventory: [] };
+      }
+      return cooperationRequestChoices(world, actorId, observed, {
+        family: requestId,
+        field: fieldId,
+        arguments: arguments_,
+      }).choices.find((choice) => choice.id === candidateId);
+    }
     if (requestId !== BASE_OUTING.family && requestId !== BASE_COMBAT_HELP.family) return;
     const allowed =
       fieldId === 'recipientId'
@@ -106,7 +151,8 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
             requestId === BASE_COMBAT_HELP.family ? 'combat-help' : 'travel',
           )
         : fieldId === 'opponentId' && requestId === BASE_COMBAT_HELP.family
-          ? !!entityGet(world.entities, candidateId)?.actor &&
+          ? candidateId !== arguments_.recipientId &&
+            !!entityGet(world.entities, candidateId)?.actor &&
             seesEntity(
               world,
               entityGet(world.entities, actorId)!,
@@ -129,7 +175,9 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
       accessible: true,
     };
   },
-  requestChoices(world, actorId, observed) {
+  requestChoices(world, actorId, observed, query) {
+    if (query && Object.values(COOPERATION_REQUESTS).some((family) => family === query.family))
+      return cooperationRequestChoices(world, actorId, observed, query);
     const observation = observed ?? observeActor(world, actorId, { includeMemories: false });
     const choices =
       observation?.visibleEntities.flatMap((entity) =>
@@ -161,6 +209,12 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
             : []),
         ].filter((choice): choice is NonNullable<typeof choice> => !!choice),
       ) ?? [];
-    return { choices, warnings: [] };
+    return {
+      choices: [
+        ...choices,
+        ...cooperationRequestChoices(world, actorId, observation ?? undefined, query).choices,
+      ],
+      warnings: [],
+    };
   },
 };

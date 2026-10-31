@@ -536,6 +536,7 @@ import {
   hearsEntity,
   seesEntity,
   entityVisionQuery,
+  visibleEntitiesFor,
   visionRadius,
   visionQuery,
   sensesFor,
@@ -8359,11 +8360,20 @@ export function queryMemories(
 export function observeActor(
   world: WorldState,
   actorId: string,
-  options: { includeMemories?: boolean } = {},
+  options: {
+    includeMemories?: boolean;
+    /** Trusted synchronous projection over this actor's permitted metadata.
+     * Selection precedes definition expansion/deep copying; returned IDs cannot
+     * add another actor's stock. Omission still means the complete inventory. */
+    selectInventory?: (
+      inventory: readonly ItemInstance[],
+      counts: { visibleEntities: number; knownRecipes: number },
+    ) => ReadonlySet<string> | undefined;
+  } = {},
 ): ActorObservation | null {
   const actor = entityOwn(world.entities, actorId);
   if (!actor?.actor) return null;
-  const inventory = inventoryFor(world, actorId);
+  const permittedInventory = inventoryFor(world, actorId);
   const knownRecipes = (world.knowledge[actorId] ?? [])
     .map((record) => world.recipes[record.recipeId])
     .filter((recipe) => !!recipe)
@@ -8372,70 +8382,76 @@ export function observeActor(
       dependencyReferences: recipeVisibleDependencies(world, recipe),
     }));
   const knownRecipeIds = new Set(knownRecipes.map((recipe) => recipe.id));
+  const visibleDefinitionIds: string[] = [];
+  const visibleEntities = visibleEntitiesFor(world, actor).map((entity) => {
+    // Shape the permitted view before its one final deep copy. Cloning a private plan or
+    // long future route just to erase it wastes work proportional to invisible state.
+    // docs/architecture.md#dependencies-and-authority
+    const copy: Entity = {
+      ...entity,
+      ...observerName(world, actorId, entity.id),
+      spatial: { ...entity.spatial },
+      ...(entity.actor
+        ? {
+            actor: {
+              ...entity.actor,
+              action: entity.actor.action
+                ? {
+                    id: entity.actor.action.id,
+                    type: entity.actor.action.type,
+                    stage: entity.actor.action.stage,
+                    strikePhase: entity.actor.action.strikePhase,
+                    remainingSeconds: entity.actor.action.remainingSeconds,
+                    totalSeconds: entity.actor.action.totalSeconds,
+                    path: [],
+                    consumed: [],
+                  }
+                : null,
+            },
+          }
+        : {}),
+    };
+    // A visible body is evidence of its current activity, not access to its future route.
+    delete copy.spatial.flight;
+    delete copy.statusEffects;
+    delete copy.attributes;
+    delete copy.mechanismFields;
+    delete copy.declaredOwner;
+    // Seeing a bag does not disclose its private contents or packing load.
+    delete copy.container;
+    delete copy.inventoryRevision;
+    if (copy.actor?.action) {
+      delete copy.actor.action.destination;
+      delete copy.actor.action.navigation;
+      delete copy.actor.action.follow;
+    }
+    if (copy.actor) {
+      // Sparse state is owner-private; explicit permitted projections carry public values.
+      delete copy.actor.encounters;
+      delete copy.actor.attributes;
+      delete copy.actor.contacts;
+      delete copy.actor.conditions;
+      delete copy.actor.inventoryInspection;
+      delete copy.actor.combatReadyAt;
+      copy.actor.agency = seedAgency();
+      delete copy.actor.initialGoals;
+      delete copy.actor.personality;
+      delete copy.actor.backstory;
+      delete copy.actor.participation;
+      copy.actor.planGeneration = 0;
+    }
+    if (copy.resource) visibleDefinitionIds.push(copy.resource.definitionId);
+    return copy;
+  });
+  const inventoryIds = options.selectInventory?.(permittedInventory, {
+    visibleEntities: visibleEntities.length,
+    knownRecipes: knownRecipes.length,
+  });
+  const inventory = inventoryIds
+    ? permittedInventory.filter((item) => inventoryIds.has(item.id))
+    : permittedInventory;
   const definitionIds = new Set(inventory.map((item) => item.definitionId));
-  const sees = entityVisionQuery(world, actor);
-  const visibleEntities = nearbyEntities(world, worldPosition(actor), visionRadius(world, actor))
-    .filter((entity) => entity.id !== actorId && sees(entity))
-    .map((entity) => {
-      // Shape the permitted view before its one final deep copy. Cloning a private plan or
-      // long future route just to erase it wastes work proportional to invisible state.
-      // docs/architecture.md#dependencies-and-authority
-      const copy: Entity = {
-        ...entity,
-        ...observerName(world, actorId, entity.id),
-        spatial: { ...entity.spatial },
-        ...(entity.actor
-          ? {
-              actor: {
-                ...entity.actor,
-                action: entity.actor.action
-                  ? {
-                      id: entity.actor.action.id,
-                      type: entity.actor.action.type,
-                      stage: entity.actor.action.stage,
-                      strikePhase: entity.actor.action.strikePhase,
-                      remainingSeconds: entity.actor.action.remainingSeconds,
-                      totalSeconds: entity.actor.action.totalSeconds,
-                      path: [],
-                      consumed: [],
-                    }
-                  : null,
-              },
-            }
-          : {}),
-      };
-      // A visible body is evidence of its current activity, not access to its future route.
-      delete copy.spatial.flight;
-      delete copy.statusEffects;
-      delete copy.attributes;
-      delete copy.mechanismFields;
-      delete copy.declaredOwner;
-      // Seeing a bag does not disclose its private contents or packing load.
-      delete copy.container;
-      delete copy.inventoryRevision;
-      if (copy.actor?.action) {
-        delete copy.actor.action.destination;
-        delete copy.actor.action.navigation;
-        delete copy.actor.action.follow;
-      }
-      if (copy.actor) {
-        // Sparse state is owner-private; explicit permitted projections carry public values.
-        delete copy.actor.encounters;
-        delete copy.actor.attributes;
-        delete copy.actor.contacts;
-        delete copy.actor.conditions;
-        delete copy.actor.inventoryInspection;
-        delete copy.actor.combatReadyAt;
-        copy.actor.agency = seedAgency();
-        delete copy.actor.initialGoals;
-        delete copy.actor.personality;
-        delete copy.actor.backstory;
-        delete copy.actor.participation;
-        copy.actor.planGeneration = 0;
-      }
-      if (copy.resource) definitionIds.add(copy.resource.definitionId);
-      return copy;
-    });
+  for (const id of visibleDefinitionIds) definitionIds.add(id);
   const pileIds = new Set(visibleEntities.filter((e) => e.kind === 'item-pile').map((e) => e.id));
   const groundItems = [...pileIds].flatMap((id) => itemsForOwner(world, id));
   for (const item of groundItems) definitionIds.add(item.definitionId);

@@ -40,9 +40,16 @@ afterEach(async () => {
     await service.store.close();
   }
 });
-async function setup(opening: WorldState = stockedCamp(), wallClock?: () => number) {
+async function setup(
+  opening: WorldState = stockedCamp(),
+  options: { wallClock?: () => number; godMode?: boolean } = {},
+) {
   const store = await testRepository(undefined, opening);
-  const service = new WorldService(store, readConfig(), wallClock);
+  const service = new WorldService(
+    store,
+    readConfig(options.godMode ? { OPEN_LEGEND_GOD_MODE: 'true' } : {}),
+    options.wallClock,
+  );
   services.push(service);
   await enterLocalWorld(service);
   await service.setPresence('test-client', true);
@@ -103,7 +110,7 @@ const begin = (scope: WorldInputScope, itemId: string, sequence = 1): CommandInp
 describe('native held attack service and control authority', () => {
   it('invalidates expired reviews and old life/control input even with a higher sequence', async () => {
     let wallTime = Date.now();
-    const f = await setup(stockedCamp(), () => wallTime);
+    const f = await setup(stockedCamp(), { wallClock: () => wallTime });
     await editWorld(f.service, (world) => {
       entityGet(world.entities, NPC_ID)!.actor!.health = 1;
     });
@@ -1148,7 +1155,7 @@ describe('native held attack service and control authority', () => {
   }, 30000);
   it('retains real pending-navigation debt without lending it to fresh or expired input windows', async () => {
     await initializeNavigationRuntime();
-    const f = await setup();
+    const f = await setup(undefined, { godMode: true });
     let walkerId = '';
     await editWorld(f.service, (world) => {
       walkerId = entityValues(world.entities).find(
@@ -1270,7 +1277,8 @@ describe('native held attack service and control authority', () => {
     expect((await renew(2)).releaseAccepted).toBe(true);
     expect((await steer(2, 0, -1)).ok).toBe(true);
     f.setNow(f.now() + 100);
-    expect((await f.service.control({ speed: 3 })).ok).toBe(true);
+    const speed = await f.service.control({ speed: 3 });
+    expect(speed.ok, speed.message).toBe(true);
     expect((await renew(3, false)).releaseAccepted).toBe(true);
     f.setNow(f.now() + 300);
     await publishRoute();
@@ -1575,7 +1583,7 @@ describe('native held attack service and control authority', () => {
     validateWorldModules(f.service.world);
   }, 30000);
   it('excludes paused commit time and settles admitted input time at the old speed before changing it', async () => {
-    const f = await setup();
+    const f = await setup(undefined, { godMode: true });
     await f.service.control({ paused: true });
     const original = f.service.store.commit.bind(f.service.store);
     const commit = vi.spyOn(f.service.store, 'commit').mockImplementation((...args) => {
@@ -1597,7 +1605,8 @@ describe('native held attack service and control authority', () => {
       f.service.localScope,
     );
     f.setNow(f.now() + 100);
-    await f.service.control({ speed: 3 });
+    const speed = await f.service.control({ speed: 3 });
+    expect(speed.ok, speed.message).toBe(true);
     f.setNow(f.now() + 100);
     await f.service.tick(0.2, 0, { offeredUntil: f.now() });
     expect(f.service.world.simTime).toBeCloseTo(before + 6 + 18, 8);

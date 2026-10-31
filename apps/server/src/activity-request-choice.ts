@@ -1,8 +1,12 @@
 import {
   isSafeRecordId,
+  activityRequestChoices,
+  activityRequestFieldDependencies,
+  activityRequestWorkModeField,
   type ActivityRequestChoice,
   type ActivityRequestDescriptor,
-  type ActorResponse,
+  type ActivityRequestObservation,
+  type WorldState,
 } from '@open-legend/domain';
 import {
   decodeJudge,
@@ -14,12 +18,89 @@ import {
   type TypedQuestionMap,
 } from '@open-legend/ai';
 import { ACTION_GROUNDING_POLICY } from './jev-questions.js';
+import type { ModelResponseOperation } from './cognition-contracts.js';
 
 /** Prepared actor-permitted references, possibly replaced by request-local handles. */
 export type ActivityRequestChoiceFact = Omit<ActivityRequestChoice, 'id'> & {
   entityId?: string;
   definitionId?: string;
+  value?: string;
 };
+
+/** Parent associations use the same namespace as their declared parameter. Never
+ * expose a native entity ID because a custom field name escaped ordinary projection. */
+export function projectActivityRequestRequirements(
+  descriptors: readonly ActivityRequestDescriptor[],
+  choice: Pick<ActivityRequestChoice, 'requestIds' | 'requires'>,
+  entityReference: (id: string) => string | undefined,
+): Record<string, string | number | boolean> | undefined {
+  const result: Record<string, string | number | boolean> = {};
+  const applicable = descriptors.filter(
+    (descriptor) => !choice.requestIds || choice.requestIds.includes(descriptor.id),
+  );
+  for (const [name, value] of Object.entries(choice.requires ?? {})) {
+    const meanings = new Set(
+      applicable.flatMap((descriptor) =>
+        descriptor.fields[name] ? [descriptor.fields[name]!.type] : [],
+      ),
+    );
+    if (!meanings.size || (meanings.has('entity') && meanings.size > 1)) return;
+    if (meanings.has('entity')) {
+      const reference = typeof value === 'string' ? entityReference(value) : undefined;
+      if (reference === undefined) return;
+      result[name] = reference;
+    } else result[name] = value;
+  }
+  return result;
+}
+
+/** Query a dependent role through its existing native owner. The caller retains
+ * source/authority guards; this projection can only reuse its captured references.
+ * A newly visible object needs a fresh decision, not an ambient alias extension. */
+export function activityRequestChoiceFacts(
+  world: WorldState,
+  actorId: string,
+  descriptor: ActivityRequestDescriptor,
+  field: string,
+  parameters: Readonly<Record<string, string | number | boolean>>,
+  entityReferences: Readonly<Record<string, string>>,
+  observed?: ActivityRequestObservation,
+): ActivityRequestChoiceFact[] {
+  const handles = new Map(Object.entries(entityReferences).map(([handle, id]) => [id, handle]));
+  const arguments_: Record<string, string | number | boolean> = {};
+  for (const [name, value] of Object.entries(parameters)) {
+    if (descriptor.fields[name]?.type === 'entity') {
+      const id = typeof value === 'string' ? entityReferences[value] : undefined;
+      if (!id) return [];
+      arguments_[name] = id;
+    } else arguments_[name] = value;
+  }
+  return activityRequestChoices(world, actorId, observed, {
+    family: descriptor.id,
+    field,
+    arguments: arguments_,
+  }).choices.flatMap(({ id, requires, ...choice }) => {
+    const conditions = projectActivityRequestRequirements(
+      [descriptor],
+      { ...choice, requires },
+      (id) => handles.get(id),
+    );
+    if (!conditions) return [];
+    const reference = choice.kind === 'entity' ? handles.get(id) : id;
+    if (reference === undefined) return [];
+    return [
+      {
+        ...choice,
+        ...(choice.kind === 'entity'
+          ? { entityId: reference }
+          : choice.kind === 'definition'
+            ? { definitionId: reference }
+            : { value: reference }),
+        ...(requires ? { requires: conditions } : {}),
+      },
+    ];
+  });
+}
 type Scalar = string | number | boolean;
 type Field = ActivityRequestDescriptor['fields'][string];
 type Selection =
@@ -67,14 +148,25 @@ function compatibleChoices(
   name: string,
   field: Field,
   choices: readonly ActivityRequestChoiceFact[],
+  parameters: Readonly<Record<string, Scalar>> = {},
 ): Array<{ choice: ActivityRequestChoiceFact; reference: string }> {
   return choices.flatMap((choice) => {
-    const reference = field.type === 'entity' ? choice.entityId : choice.definitionId;
+    const reference =
+      field.type === 'entity'
+        ? choice.entityId
+        : field.type === 'choice'
+          ? choice.value
+          : choice.definitionId;
+    if (typeof reference !== 'string') return [];
     return choice.accessible &&
       choice.kind === field.type &&
       choice.roles.includes(name) &&
       (!choice.requestIds || choice.requestIds.includes(descriptor.id)) &&
-      isSafeRecordId(reference)
+      Object.entries(choice.requires ?? {}).every(([key, value]) => parameters[key] === value) &&
+      (field.type === 'choice'
+        ? typeof reference === 'string' &&
+          field.choices.some((option) => option.value === reference)
+        : isSafeRecordId(reference))
       ? [{ choice, reference }]
       : [];
   });
@@ -102,20 +194,20 @@ function durationBounds(field: Field): [number, number] | undefined {
 /** Route choices describe possibilities, never manufacture a plan or its parameters. */
 export function requestRoutes(
   requests: readonly ActivityRequestDescriptor[],
-  choices: readonly ActivityRequestChoiceFact[],
 ): Map<string, ActivityRequestDescriptor> {
   const routes = new Map<string, ActivityRequestDescriptor>();
   requests.forEach((descriptor, index) => {
     if (
-      descriptor.fields.mode?.type === 'mode' &&
-      Object.entries(descriptor.fields).every(([name, field]) =>
+      Object.values(descriptor.fields).every((field) =>
         field.type === 'entity' || field.type === 'definition'
-          ? compatibleChoices(descriptor, name, field, choices).length > 0
-          : field.type === 'integer'
-            ? !!integerBounds(field)
-            : field.type === 'time'
-              ? !!durationBounds(field)
-              : field.type === 'mode' && name === 'mode',
+          ? true
+          : field.type === 'choice'
+            ? field.choices.length > 0
+            : field.type === 'integer'
+              ? !!integerBounds(field)
+              : field.type === 'time'
+                ? !!durationBounds(field)
+                : field.type === 'mode',
       )
     )
       routes.set(`request_${index}`, descriptor);
@@ -130,19 +222,27 @@ function fieldSelection(
   choices: readonly ActivityRequestChoiceFact[],
   simTime: number,
   namedDeadlines: readonly NamedActivityDeadline[],
+  parameters: Readonly<Record<string, Scalar>>,
 ): Selection | undefined {
   if (field.type === 'integer') {
     const bounds = integerBounds(field);
     return bounds && { kind: 'integer', minimum: bounds[0], maximum: bounds[1], offset: 0 };
   }
   let options: Option[];
-  if (field.type === 'entity' || field.type === 'definition') {
-    options = compatibleChoices(descriptor, name, field, choices).map(({ choice, reference }) => ({
-      label: `${choice.label} (permitted ${choice.kind} reference ${reference})${choice.distance !== undefined ? `; distance ${choice.distance} metres` : ''}`,
-      result: reference,
-    }));
+  if (
+    field.type === 'choice' &&
+    !field.discovery &&
+    !activityRequestFieldDependencies(field).length
+  )
+    options = field.choices.map((choice) => ({ label: choice.label, result: choice.value }));
+  else if (field.type === 'entity' || field.type === 'definition' || field.type === 'choice') {
+    options = compatibleChoices(descriptor, name, field, choices, parameters).map(
+      ({ choice, reference }) => ({
+        label: `${choice.label} (permitted ${choice.kind} reference ${reference})${choice.distance !== undefined ? `; distance ${choice.distance} metres` : ''}`,
+        result: reference,
+      }),
+    );
   } else if (field.type === 'mode') {
-    if (name !== 'mode') return;
     options = Object.entries(field.modeLabels ?? modes).map(([result, label]) => ({
       label,
       result,
@@ -221,6 +321,7 @@ export async function chooseActivityRequest({
   namedDeadlines,
   state,
   judge,
+  resolveChoices,
 }: {
   descriptor: ActivityRequestDescriptor;
   choices: readonly ActivityRequestChoiceFact[];
@@ -228,24 +329,47 @@ export async function chooseActivityRequest({
   namedDeadlines: readonly NamedActivityDeadline[];
   state: unknown;
   judge: (request: Omit<JudgeRequest, 'requestId' | 'signal'>) => Promise<JudgeValue>;
-}): Promise<ActorResponse | undefined> {
-  if (
-    !isSafeRecordId(descriptor.id) ||
-    descriptor.fields.mode?.type !== 'mode' ||
-    !Number.isFinite(simTime) ||
-    simTime < 0
-  )
-    return;
+  /** Scoped native role read; no model call. Returned references must remain within
+   * this decision's captured disclosure and exact binding set. */
+  resolveChoices?: (
+    field: string,
+    parameters: Readonly<Record<string, Scalar>>,
+  ) => Promise<readonly ActivityRequestChoiceFact[]>;
+}): Promise<{ operations: ModelResponseOperation[] } | undefined> {
+  if (!isSafeRecordId(descriptor.id) || !Number.isFinite(simTime) || simTime < 0) return;
   const family = descriptor.id;
   const parameters: Record<string, Scalar> = {};
   const pending: PendingField[] = [];
-  for (const [name, field] of Object.entries(descriptor.fields)) {
-    if (!isSafeRecordId(name)) return;
-    const selection = fieldSelection(descriptor, name, field, choices, simTime, namedDeadlines);
-    if (!selection) return;
-    pending.push({ name, label: field.label, selection });
-  }
-  for (let round = 0; pending.length && round < MAX_ROUNDS; round++) {
+  const unresolved = new Set(Object.keys(descriptor.fields));
+  for (let round = 0; unresolved.size && round < MAX_ROUNDS; round++) {
+    for (const name of unresolved) {
+      if (pending.some((field) => field.name === name)) continue;
+      const field = descriptor.fields[name]!;
+      if (!isSafeRecordId(name)) return;
+      if (
+        activityRequestFieldDependencies(field).some(
+          (dependency) => !Object.hasOwn(parameters, dependency),
+        )
+      )
+        continue;
+      const available =
+        resolveChoices &&
+        (field.type === 'entity' || field.type === 'definition' || field.type === 'choice')
+          ? await resolveChoices(name, parameters)
+          : choices;
+      const selection = fieldSelection(
+        descriptor,
+        name,
+        field,
+        available,
+        simTime,
+        namedDeadlines,
+        parameters,
+      );
+      if (!selection) return;
+      pending.push({ name, label: field.label, selection });
+    }
+    if (!pending.length) return;
     const offered = pending.map((field) => offeredOptions(field.selection));
     const questions: TypedQuestionMap = Object.fromEntries(
       pending.map((field, index) => [
@@ -297,12 +421,16 @@ export async function chooseActivityRequest({
       else {
         if (typeof option.result === 'number' && !Number.isFinite(option.result)) return;
         parameters[field.name] = option.result;
+        unresolved.delete(field.name);
         pending.splice(index, 1);
       }
     }
   }
-  if (pending.length) return;
-  const mode = parameters.mode;
+  if (unresolved.size) return;
+  // Instantaneous requests have no inner work mode. The neutral outer transition
+  // does not interrupt work; their native command owner retains actual semantics.
+  const modeField = activityRequestWorkModeField(descriptor);
+  const mode = modeField ? parameters[modeField] : 'enqueue';
   if (mode !== 'enqueue' && mode !== 'replace' && mode !== 'interrupt') return;
   return {
     operations: [
@@ -311,27 +439,10 @@ export async function chooseActivityRequest({
         requiresAccepted: [],
         act: {
           kind: 'invoke',
-          actionId: null,
-          verb: null,
-          targetEntityId: null,
-          description: null,
-          slots: null,
           mode,
           invocation: {
             family,
             parameters,
-            x: null,
-            z: null,
-            surfaceId: null,
-            frame: null,
-            place: null,
-            targetEntityId: null,
-            distance: null,
-            relation: null,
-            onLost: null,
-            until: null,
-            itemId: null,
-            quantity: null,
           },
         },
       },
