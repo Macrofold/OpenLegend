@@ -55,6 +55,8 @@ Baseline: `Macrofold/OpenLegend` commit `7e95b415f18cc58828eacbddc88da8a86693c3d
 
 An imported `pc` type does not make the whole file irreducibly engine-specific. Replace incidental vector math with existing plain spatial math where useful. Conversely, do not translate a whole material/pass implementation line by line through a nominally generic wrapper. The adapter is narrow in responsibility but remains substantial code.
 
+The source baseline includes entity-level remembered images, retained-fire illumination and current support-aware motion smoothing. The selected [per-fact disclosure target](../world-presentation.md#selected-per-fact-stealth-disclosure) adds dated/partial facts, held admitted samples for other subjects and no live light/shadow/target role for historical images through SPX/VG. RCP does not claim to deliver that upstream work. When those contracts land, both backends consume the current projection; do not keep an older disclosure or interpolation path solely to reproduce an obsolete benchmark. Record which semantics each manifest actually uses.
+
 ## 3. Module ownership and contracts
 
 Keep the initial work inside `apps/client/src`. Suggested homes are `presentation/` for shared behavior and `renderers/playcanvas/`, `renderers/three/` for native integration. Use existing small pure modules where they already own a concept; do not move them merely to fill a directory template. The names below identify responsibilities, not a requirement for one file per row.
@@ -98,6 +100,7 @@ interface PresentationBackend {
   install(view: RenderWorldView): void;
   apply(changes: PresentationChanges): void;
   start(prepare: (nowMs: number) => FrameSample): void;
+  setSuspended(suspended: boolean): void;
   resize(viewport: Viewport): void;
   rayAt(point: ScreenPoint): WorldRay | undefined;
   pickGeometry(ray: WorldRay, candidates: PickCandidates): PickHit | undefined;
@@ -107,7 +110,7 @@ interface PresentationBackend {
 }
 ```
 
-`start()` installs exactly one backend-owned scheduler. It calls shared `prepare()` once per rendered frame, applies the returned display state, and renders through the engine's existing cadence. It never advances the world or independently chooses animation time. `install()` is for initialization or a real world reset; ordinary updates use `apply()`. `project()` can write into caller-owned scratch storage to avoid high-frequency allocation. Batch queries only where an actual consumer needs them. A narrow study interface exposes existing art settings, diagnostic presentation and capture readiness; do not expand `WorldRenderer` with every study-only method or expose an engine object.
+`start()` installs exactly one backend-owned scheduler. It calls shared `prepare()` once per presentation tick, applies the returned display state, and renders through the engine's existing draw admission. A tick skipped by GPU backpressure is not a rendered frame; observe actual draws separately. It never advances the world or independently chooses animation time. `install()` is for initialization or a real world reset; ordinary updates use `apply()`. `project()` can write into caller-owned scratch storage to avoid high-frequency allocation. Batch queries only where an actual consumer needs them. A narrow study interface exposes existing art settings, diagnostic presentation and capture readiness; do not expand `WorldRenderer` with every study-only method or expose an engine object.
 
 Factories are asynchronous and own partial initialization. They accept the new canvas, exact backend choice, source services and an abort signal; they return a **device-ready** backend or a typed initialization failure. Installing a view starts its scoped asset/pass preparation; it is not yet **scene-ready**. Reuse the existing loading/readiness callbacks, tagged with the active view/backend owner, to report preparing, ready or failed. Scene readiness includes required artwork, visible preparation and a completed first device frame. On factory failure/abort release partial resources before settling. Invalid/cancelled completion cannot register callbacks, mutate DOM or publish a backend.
 
@@ -151,13 +154,15 @@ The source baseline uses scene-owned application ticks and native animation upda
 
 ### 4.3 Animation, cloth and discontinuities
 
-The shared motion controller owns desired clip, elapsed sample position, heading smoothing, transition intent, pause state and held-8/held-12 cadence when selected by the existing art profile. Backends evaluate that requested pose; they must not each integrate their own elapsed `dt` and drift. A transition descriptor identifies its start time and source/target clip state so reinstalling a backend can reconstruct the current transition without replaying old frames.
+The shared motion controller owns desired clip, absolute sample position, heading smoothing, transition intent, pause state and held-8/held-12 cadence when selected by the existing art profile. Backends evaluate that requested pose; an adapter may derive the required native mixer/layer delta from consecutive shared samples, but must not integrate its own wall time and drift. Preserve the existing normal-session blend duration/semantics. On install or seek, reset a transient blend to the currently requested clip/sample; a short blend discontinuity during the already-visible loading gap is accepted. Exact interrupted multi-clip fade reconstruction is not required and cannot be promised from a start timestamp alone.
 
 One evaluated skeleton/morph pose supplies color, shadow, outline/read-through, attachments and cloth bindings. A second pass must not cause a second independent animation update. PlayCanvas interrupted-blend reset workarounds stay in its adapter; Three supplies the same clean-idle semantic through its mixer/actions. Skeleton cloning, inverse-bind transforms, animated bounds and equipment offsets are verified on the actual source assets, not assumed from glTF compatibility.
 
 Extract the existing cloth solver's numeric particles/constraints/step policy only where its two consumers need it. The backend supplies bone/world transforms and publishes changed vertices/normals. Preserve pause/tab-gap resets and existing work quality. A future GPU implementation may execute differently while preserving the same declared visual behavior and bounds; a CPU-only common interface must not prohibit that optimization. No new cloth physics or gameplay authority is introduced.
 
 Teleports, support/world/observer changes and long gaps use existing explicit motion reset semantics. Do not interpolate through hidden space, catch up thousands of missed cloth steps or replay expired captions when a renderer returns. Camera motion while paused remains usable without advancing the authoritative simulation.
+
+Suspending a game tab is separate from pausing the simulation or destroying a backend. Preserve `setSuspended`: cancel held input, reset frame-rate sampling, stop recurring draws while retaining resources, and permit the current one-shot fresh-view frame behind the pause dialog. `setView` still applies permission revocation and removes invalid reveal while suspended. Resume resets frame timing without replaying missed animation/cloth steps. Do not map suspension to terminal `stop()` or send a new world pause command.
 
 ## 5. Input, projection and picking
 
@@ -174,6 +179,8 @@ Preserve the distinction between selection, physical aim and movement destinatio
 Backend tests/manual checks must include alpha-cutout foliage, sprites and their virtual body/depth, animated people, geometry above/below another surface, a thin construction panel, occluded/revealed selection and viewport resize. Both backends may use different acceleration structures; the resulting supported hit semantics remain the same. A Three BVH may help a measured workload, but is not an initial mandatory dependency or authoritative collision replacement.
 
 Use projected displayed positions for captions/aim/blur, not an independently advanced transform. Reuse the existing caption/status/blur owners; no React Three Fiber migration is required to keep the React HUD.
+
+Screen-space ray/projection inputs and outputs are canvas-local CSS pixels with top-left origin and positive Y downward. Convert DOM `clientX/clientY` using the current canvas bounding rectangle; native framebuffer pixels/DPR conversion stays in the backend. Existing viewport-client coordinates for menus/hover callbacks remain distinct. Recompute after resize/scroll/canvas replacement; do not apply devicePixelRatio twice.
 
 ## 6. Assets, appearance replacement and resource lifetime
 
@@ -193,7 +200,7 @@ Decoding a source in the other engine is real work. It cannot share the first en
 
 ### Stop and settled disposal are different
 
-`stop()` is synchronous and idempotent: stop drawing/ticking, detach world input and active callbacks, invalidate completion tokens and terminate profiling collection. `dispose()` settles only after this backend's downloads, noncancelable parses and native teardown are resolved or have produced an explicit cleanup failure. A returned request to destroy is not proof of released resources.
+The controller cancels/detaches shared world input. Backend `stop()` is synchronous and idempotent: stop its drawing/ticking and native callbacks, invalidate publication tokens and terminate its profiling collection. `dispose()` settles only after this backend's downloads, noncancelable parses and native teardown are resolved or have produced an explicit cleanup failure. A returned request to destroy is not proof of released resources.
 
 PlayCanvas's current `destroyModelApplication()` stops ticking before delayed application destruction and contains a same-canvas registry workaround. Keep that implementation local while extracting an observable settled promise. Three disposal explicitly releases geometries, materials, textures, render targets, native listeners and owned decoded image resources; scene removal alone is not disposal. Shared instances/refcounts release once. Do not call global engine/cache disposal that can affect another owner.
 
@@ -205,9 +212,13 @@ The public `WorldRenderer.destroy(): void` may remain a synchronous stop/request
 
 The existing scene factory returns the stable shared `WorldRenderer` handle immediately. It stores early settings/view calls while the selected backend initializes. Engine modules are dynamically imported only when selected. An ordinary PlayCanvas launch must not initialize or evaluate an inactive Three scene or allocate its GPU resources. Build output can contain both lazy chunks; unused bytes are not loaded solely for the selector.
 
+Change the factory's canvas argument to a stable host element in both `main.tsx` and scene-study. React owns the host; the controller owns canvas creation/replacement inside it. Do not replace a React-owned canvas behind its ref. Migrate existing `canvas.current` consumers together: HUD layout observation, context/current-owner checks, focus restoration, container opening, direct event-target comparisons, resize/profiling hooks and cleanup. Use a current-canvas lookup or semantic controller method only where the caller needs it; retain the active canvas's `#world`, accessibility/tabIndex/inert and loading semantics deliberately. This small caller change is required even while `WorldRenderer` methods remain stable.
+
 Use explicit developer query values `renderer=playcanvas|three` and `graphics=webgl2|webgpu`; the initial supported combinations are both renderers with WebGL2, and absent values select PlayCanvas/WebGL2. A fixed registry lists implemented combinations and their factory, pipeline name and required capabilities. It is not a general plugin system. Only add WebGPU entries when their materials/passes and workload coverage are implemented.
 
-Put the selector and requested/effective API/status in `/scene-study.html`'s existing **Measurement and source details** section, beside **Reload renderer**; bind it in `scene-study.ts` through the shared controller. That section already contains shadow/metrics and the short measurement control. The existing profiling controls are an opt-in API/driver, not a player settings panel. The ordinary live page selects a backend through the explicit URL values; no permanent player HUD selector is added. Neither selection path requires `profile=1` or starts collection. Query settings describe developer navigation only; never put world views, private IDs or drafts in the URL. No persisted world/save field is added. Unknown values produce a visible developer configuration error with an explicit route to the default; never silently label a fallback as the requested combination.
+Put the selector and requested/effective API/status in `/scene-study.html`'s existing **Measurement and source details** section, beside **Reload renderer**; bind it in `scene-study.ts` through the shared controller. For an in-place live switch, reuse the existing development-only `?artLab` **Art comparisons** panel. Move its mounting/lifetime from `scene.ts` to the shared controller so it survives backend replacement. Extract the panel and pure art profiles/settings out of the mixed `art-treatment.ts` module; shared/Three code must not import PlayCanvas `ArtMaterials` through that module. Reuse the same small selector binding in both hosts. Keep labels, keyboard focus, disabled-during-switch state and input-event priority.
+
+The live panel keeps its existing `import.meta.env.DEV` plus `?artLab` gate. Production/live comparisons can select through the explicit URL without a permanent player HUD control. Existing profiling controls are an opt-in API/driver, not a player settings panel. Selection never requires `profile=1` or starts collection. Query settings describe developer navigation only; never put world views, private IDs or drafts in the URL. No persisted world/save field is added. Unknown values produce a visible developer configuration error with an explicit route to the default; never silently label a fallback as the requested combination.
 
 ### Serialized replacement sequence
 
@@ -284,11 +295,33 @@ Use absolute monotonic elapsed time for normal replay. Synthetic fixed frame ste
 
 The [RCP limits inventory](../limits/renderer-comparison.md) owns the selected envelope: one active recording/replay, at most 120 seconds total timeline, 32 MiB serialized UTF-8 manifest/timeline content and 10,000 records, whichever comes first. Count source records before retaining another full copy. Stop before an append would cross a bound; record why the capture is incomplete. A partial capture can help diagnosis but cannot silently stand in for the full selected journey.
 
+Count the bounded manifest and reserve space for the bounded terminal status before admitting timeline bytes. The final encoded artifact, including its stop reason, must fit the same allowance. Stream/count entry encoding against remaining capacity instead of first allocating an arbitrarily large JSON string. This is one local recording envelope, not a general serialization framework.
+
 Default measurement is 10 seconds of explicit warm-up followed by 60 seconds of steady-state replay, within that total envelope. These are repeatable initial measurement choices, not world limits or proof that 10 seconds warms every shader. Readiness includes required visible assets/shaders; remaining failures and first-use hitches are reported. A warm-up extension or different duration changes the manifest consistently for both engines. Cold-load/first-use runs deliberately retain those costs.
 
 Record only through an explicit developer action. Ordinary play retains no growing presentation history. Reuse one bounded current/final report and explicit local export; no background archive/database/service. Imported serialized size is not a bound on decoded heap overhead. Do not materialize unlimited input before checking length, record counts and references. Existing profiler bounds still apply independently.
 
 Bind a live capture and its unexported replay/report to its current access/private-view owner. Stop capture and clear protected retained inputs on logout, observer replacement or access-scope loss/renewal; another observer cannot replay the previous observer's private views. This capture reset does not require destroying still-permitted public scene resources. Synthetic authored fixtures can explicitly exercise scope transitions without importing a private live capture. Export is explicit and follows existing privacy/storage policy; this feature adds no automatic sharing.
+
+### Operator and driver integration
+
+Add an explicit mode to the existing driver; this command is a **planned interface**, not an available command in the baseline:
+
+```sh
+node scripts/performance/profile-browser.mjs \
+  --renderer-comparison /absolute/path/workload.json \
+  /absolute/path/new-report.json \
+  --origin=http://127.0.0.1:PORT \
+  --app-profiling=on
+```
+
+Dispatch this mode before the existing `READY.json` live-game setup. The current driver can sign in, take control, select 3×, resume a world and drive gameplay; none of that happens implicitly in replay mode. The manifest owns durations and coverage. Use the existing studies build/server route and exact source authorization, not a new server service or upload endpoint. Default to authored fixtures whose study assets are already available. A captured private workload can run only in an explicitly selected currently authorized context; missing permission is a preparation failure, never a request to embed credentials or widen asset access.
+
+Expose a narrow study-only `loadReplay`, `startReplay`, `stopReplay` and readiness/coverage read surface for the driver, using the same controller as manual study. It accepts the already-size-checked manifest through local browser automation or an explicit file input in the study details; it never puts private records in a URL or invokes server intentions. Keep profiling collection on the existing `window.__openLegendSceneProfile` owner. The replay surface does not create a second profiler or expose raw game/server state.
+
+Each attempt loads a fresh study page/canvas in the selected browser context and installs the same manifest before timing. Reusing HTTP/context asset caches is explicit warm-run policy; a fresh page alone is not a cold-cache claim. The driver serially closes its own preceding page before launching the next. Stop closes only task-owned pages/hooks and emits the finite attempted-run summary even on failure.
+
+Do not inherit the baseline driver's hardcoded headless/ANGLE Metal launch choices blindly. Default comparative display qualification to headed execution on the recorded actual device; select supported graphics backend flags deliberately. Headless CI-style rendering may diagnose CPU/GPU work but cannot establish physical-device smoothness or input/display response. No GitHub Actions or cloud benchmark infrastructure is added.
 
 ## 10. Measurement integration
 
@@ -298,7 +331,7 @@ Reuse `ScenePerformance` and the profiling-controls capture lifecycle, report sh
 
 | Measurement | Definition and cautions |
 | --- | --- |
-| Frame interval | Actual foreground callback-to-callback wall time with raw bounded samples, coverage and gaps; record refresh/vsync rather than treating FPS as headroom |
+| Frame intervals and drawing | Record browser/presentation callback intervals separately from actual draw/postrender submission intervals and counts, full observation duration and trailing time with no render. Existing update callbacks can outnumber draws under backpressure; a responsive RAF with a frozen canvas cannot qualify smoothness. Retain bounded raw samples, coverage/gaps and display cadence. Submission does not prove physical screen presentation. |
 | Shared update CPU | Time preparing shared view/frame state; separate view reconciliation from recurring update |
 | Backend CPU | Native pose/resource work and render submission at defined boundaries; engine-reported submetrics retain their own names/scope |
 | GPU duration | Optional asynchronous supported API timer; record unavailable/disjoint/lost/pending/dropped distinctly from zero |
@@ -319,7 +352,7 @@ GPU query completion belongs to the exact backend and capture that issued it. Ba
 2. Run one foreground renderer page. Close/pause competing task-owned workloads; do not stop another contributor's processes. Keep browser devtools sampling off for smoothness qualification.
 3. Run W0/coverage verification first. Failed required activity or an unsupported effect blocks a matched ranking, even if frame times are excellent.
 4. Prepare cold and warm campaigns separately. A fresh page does not empty OS/HTTP/GPU driver caches; report actual cache control rather than claiming universal cold start. Do not clear unrelated user browser data.
-5. For the default steady campaign run three valid captures per renderer in the balanced order A, B, B, A, A, B. Retain all valid repetitions and explicit excluded-run causes. Extend only to resolve actual variance or a required gate, not to search for a preferred winner.
+5. The existing `scripts/performance/profile-browser.mjs` owns a new explicit renderer-comparison mode that launches fresh pages sequentially in the balanced order A, B, B, A, A, B from one selected manifest. Six attempted runs is the default finite campaign; three valid captures per renderer qualify that campaign. Retain invalid runs and reasons instead of silently retrying until favorable results remain. An explicit repeat campaign can resolve a named failure/variance question, preserving the prior campaign's summary; no background retry queue or unbounded browser history. The study's existing short measurement button remains a single-run diagnostic, not this matched campaign.
 6. Report per-run p50/p95/p99, meaningful hitch counts/maxima, interval coverage, work counts and variance across runs. The existing profiler owns histogram/sample methods; avoid implying a sampled percentile is an exact full-run population value.
 7. Capture attribution separately from unprofiled smoothness using the same relevant workload. A profiled advantage is provisional if collection overhead differs. Preserve existing profiling-overhead qualification separately.
 8. Exercise the corresponding live normal client/server journey. Separate server/network/model waits from presentation cost, and do not claim a replay proves live gameplay.
@@ -374,7 +407,7 @@ Unity/Unreal/Godot are not required merely to make modern-looking 3D graphics. N
 
 ## 13. Step-by-step implementation and stop conditions
 
-[RCP01–RCP12](../maintainers/renderer-comparison.md) own checkboxes/dependencies. Work in this order; each step leaves a usable PlayCanvas client or an explicitly limited developer slice. Update current callers together rather than retaining compatibility aliases. Implementation should use the then-current branch instructions and selected existing checks; this design is not permission to author a new automated test suite.
+[RCP01–RCP12](../maintainers/renderer-comparison.md) own checkboxes/dependencies. Each step leaves a usable PlayCanvas client or an explicitly limited developer slice. After the first shared view/input boundary and minimal PlayCanvas adapter work, use a thin W0 Three probe to challenge the real interface before extracting every cloth/effect detail. Full RCP04/RCP05 work still precedes complete RCP07 parity. Update current callers together rather than retaining compatibility aliases. Implementation should use the then-current branch instructions and selected existing checks; this design is not permission to author a new automated test suite.
 
 ### A. Establish the baseline — RCP01
 
@@ -388,6 +421,7 @@ Unity/Unreal/Godot are not required merely to make modern-looking 3D graphics. N
 
 1. Define client-local records and shared reconciliation around the current scene's decisions. Move scope invalidation/signatures/visibility policy first; leave native object creation behind the initial adapter.
 2. Route camera and DOM projection consumers through the shared owner without changing their math or settings. Extract input gestures and shared picking decisions; retain native ray/hit details.
+   Once this minimal PlayCanvas path remains usable, RCP06's limited W0 probe can expose missing adapter meaning. It does not require premature extraction of all custom materials or cloth and is not a completed backend or a speed claim.
 3. Move motion/pose clocks, source-light selection, reusable geometry and asset lifecycle policy only as their state ownership becomes explicit. Keep source transfers in `asset-files.ts`; keep decoded resources local.
 4. Adapt PlayCanvas ticking, callbacks and cleanup to the single frame/lifecycle contract. Update `main.tsx` and scene-study callers together. Remove superseded mixed ownership after ordinary consumers pass.
 5. Check the real PlayCanvas W0–W4 behavior, current permission/scope resets and loading/removal failure. Compare before/after appearance and captured workload costs; investigate a material new regression before adding Three complexity.

@@ -2,17 +2,21 @@
 
 | Research status                                             | Progress                                                                                                   | Last updated |
 | ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
-| Completed desk research; comparative performance unmeasured | Evaluates a programmable rendering-library route rather than treating it as a complete native game engine. | 2026-10-15   |
+| Browser comparison selected; implementation and performance unmeasured | Evaluates the selected shared-presentation candidate and its native integration responsibilities. | 2026-10-31   |
 
 ## Position in the shortlist
 
 Three.js is a credible option when the team deliberately wants to own a custom presentation architecture around a capable rendering library. It is especially relevant to a server-driven world with bespoke interface and asset behavior. Its lower-level flexibility is both the attraction and the cost.
 
-The important comparison is not whether Three.js can draw the world—it can support substantial 3D rendering—but how much animation, scene management, effect tooling, input, physics integration and production infrastructure the team would need to assemble and maintain.
+Three.js and PlayCanvas are separate implementations; PlayCanvas does not use Three.js. Open Legend's [selected feature](../../../docs/projects/renderer-comparison-feature-spec.md), [technical design](../../../docs/projects/renderer-comparison-tech-design.md) and [RCP tracker](../../../docs/maintainers/renderer-comparison.md) specify shared browser presentation with native adapters. The first comparison uses Three's classic `WebGLRenderer`/WebGL2 against the existing PlayCanvas path. PlayCanvas remains the default; Three is not yet installed and no comparative result or migration is selected.
+
+The useful question is how much animation, resource management, effect integration and production infrastructure this route costs for Open Legend's actual scene. Existing server physics, navigation, AI and persistence remain shared; the comparison does not require rebuilding unused full-engine features.
 
 ## Performance and hardware
 
 The current [WebGPURenderer](https://threejs.org/docs/pages/WebGPURenderer.html) prefers WebGPU when available and can fall back to WebGL 2. This is a useful backend path, not a promise that all custom effects and algorithms behave identically on both.
+
+Both engines run GPU shaders and expose upstream WebGPU compute facilities. Choosing Three does not surrender direct browser GPU programming; the API remains the browser's supported graphics/compute interface. Three's WebGPU/TSL route is a separate material/post-processing integration from classic `WebGLRenderer`, and requested WebGPU may fall back to WebGL2. The [capability assessment and primary sources](../../../docs/projects/renderer-comparison-tech-design.md#12-engine-capabilities-and-ecosystem-decisions) distinguish compute, indirect drawing, clustered lighting, shader portability and fallback. These are upstream capabilities reviewed on October 31, 2026, not features enabled in Open Legend's current client. Pin and verify the actual Three release and addons at implementation.
 
 A custom architecture can avoid unnecessary object processing and arrange rendering around Open Legend's actual permitted views. It can also accidentally recreate a slower scene graph, duplicate caches or introduce excessive buffer uploads. A rendering library is not automatically faster than a fuller engine; its smaller scope merely gives the application more responsibility for the work surrounding rendering.
 
@@ -25,6 +29,8 @@ Three.js supports substantial model and material workflows and a programmable re
 The [glTF loader](https://threejs.org/docs/pages/GLTFLoader.html) documents a concrete runtime model-loading path and supported extensions. A practical Open Legend asset profile should specify required extensions, textures, animations and failure behavior rather than accept every file advertised as glTF.
 
 The tradeoff is greatest in production: an individually impressive custom effect is not a complete toolchain for producing, previewing, validating and optimizing many effects across devices. A small library may be an excellent foundation when that toolchain is intentionally part of the team's product. It is less attractive when the goal is to stop building graphics infrastructure.
+
+Leaving PlayCanvas transfers responsibility for the integrated application/scene lifecycle, asset and animation integration, material/shadow variants, rendering passes and resource diagnostics into Open Legend's Three adapter and chosen libraries. Existing pixel treatment, read-through, outlines and shadow code still need native integration and qualification. R3F, Drei, post-processing and BVH libraries may help a concrete feature; none is mandatory, and the existing React HUD can remain. The detailed comparison owns those choices rather than adding a second dependency catalogue here.
 
 ## Gameplay and networking
 
@@ -60,4 +66,5 @@ Choose Three.js when custom rendering is a deliberate strategic capability and t
 
 Reject it when the objective is primarily to reduce custom engine work, gain native platform integrations or obtain a mature integrated animation/effects workflow. Replacing one browser renderer with a library is not an automatic solution to browser limits.
 
-**Research judgment:** viable, but not the leading Open Legend route today. It needs a specific architectural advantage that PlayCanvas or Babylon cannot provide economically. No such decisive advantage or matched performance result has been established here.
+**Research judgment:** a selected browser comparison candidate with a concrete shared-presentation question. Its eventual adoption depends on equivalent player-visible behavior, measured performance, useful development advantages and recurring integration cost. No decisive advantage or matched performance result is established; keeping PlayCanvas or retiring a limited Three experiment remains a valid outcome.
+

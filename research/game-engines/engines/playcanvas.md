@@ -2,7 +2,7 @@
 
 | Research status                                             | Progress                                                                            | Last updated |
 | ----------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------ |
-| Completed desk research; comparative performance unmeasured | Evaluates PlayCanvas on its own merits, not as the incumbent that must be defended. | 2026-10-15   |
+| Browser baseline retained; comparison selected but unmeasured | Evaluates PlayCanvas and its integrated facilities against the selected Three.js presentation adapter. | 2026-10-31   |
 
 ## Position in the shortlist
 
@@ -10,11 +10,15 @@ PlayCanvas is a credible game-oriented browser engine, not merely a lightweight 
 
 Open Legend currently pins PlayCanvas 2.22.2 in [the client package](../../../apps/client/package.json). Current public documentation and API examples may describe later releases. An available engine feature is neither evidence that the pinned version includes it nor proof that Open Legend enables or qualifies it.
 
+PlayCanvas and Three.js are separate implementations; PlayCanvas does not use Three.js. The [selected feature](../../../docs/projects/renderer-comparison-feature-spec.md), [technical design](../../../docs/projects/renderer-comparison-tech-design.md) and [RCP tracker](../../../docs/maintainers/renderer-comparison.md) specify shared presentation with a second browser backend. PlayCanvas remains the default, and the initial pair keeps the current PlayCanvas path and Three `WebGLRenderer` on WebGL2. The new backend, switcher and matched evidence remain implementation work; no migration or performance winner is selected.
+
 ## Performance and hardware
 
 PlayCanvas submits rendering to the player's GPU through browser graphics APIs. Its documented browser route defaults to WebGL 2, with a separately requested WebGPU path and fallback behavior. Device/OS/browser support must be checked together. [Supported browsers and backends](https://developer.playcanvas.com/user-manual/engine/supported-browsers/).
 
 The current graphics overview labels WebGPU beta. That is not a reason to dismiss it, but it is a reason to test custom materials, shadows, fallback, device loss and target hardware rather than assume a painless switch. A newer backend can help submission-heavy or compute-suitable work; it will not solve excessive overdraw or server database latency.
+
+GPU programming is available on both engines. Upstream PlayCanvas and Three expose WebGPU compute and indirect work; this is not a capability lost merely by choosing Three. Actual support depends on the engine release, pipeline, browser and device. Open Legend's inspected PlayCanvas scene does not explicitly initialize WebGPU. The [capability assessment and primary sources](../../../docs/projects/renderer-comparison-tech-design.md#12-engine-capabilities-and-ecosystem-decisions) own the October 31 review and the distinction between current client behavior and upstream facilities.
 
 [Hardware instancing](https://developer.playcanvas.com/user-manual/graphics/advanced-rendering/hardware-instancing/) can render many repeated meshes efficiently. The documented implementation does not individually frustum-cull instances by default. Spatial grouping therefore matters: one giant group can keep unnecessary work visible. Unique animated characters with different equipment are not equivalent to repeated rocks.
 
@@ -46,6 +50,8 @@ A genuine advantage is the ability to combine the 3D view with ordinary web inte
 
 The engine can be used directly from code or through its separate editor. The [engine overview](https://developer.playcanvas.com/user-manual/engine/) explicitly supports standalone use and describes its MIT license. Open Legend currently uses a code-based integration; the hosted editor is an optional different workflow, not a dependency we must adopt.
 
+The integrated facilities currently valuable to Open Legend include application/scene lifecycle, asset and animation integration, material/shadow variants, layers/passes and rendering diagnostics. A Three backend must supply or select and maintain those integrations, including the existing custom pixel, outline, read-through and shadow behavior. Shared camera/input, permitted state, asset-source policy and numeric preparation reduce duplication; they do not make native resources or shaders automatically interchangeable. Existing server gameplay and React UI need no replacement, and losing unused hosted-editor features is not a current migration cost.
+
 A browser-first asset pipeline is a plausible fit for models and textures fetched after a world changes. Every required format/extension, animation and material still needs a runtime compatibility test. Asset arrival, texture decoding, shader preparation, temporary memory and cancellation can create stalls even when steady rendering is fast.
 
 This route keeps JavaScript/TypeScript integration and text-based application tooling straightforward. The counterweight is custom production work: world streaming policy, advanced character pipelines, authoring tools and specialized effects may need more team ownership than in a full native editor ecosystem. Evaluate the actual tools needed, not just language familiarity.
@@ -62,4 +68,5 @@ Use PlayCanvas when local browser rendering and a rich web interface are actual 
 
 Reject it when a required native/console experience has no economically credible web path, when sustained client performance repeatedly misses targets for platform-level reasons, or when rebuilding tools costs more than the access benefits are worth. Existing code investment is not an independent reason to stay.
 
-**Research judgment:** PlayCanvas remains the leading browser-game baseline for this project, but not a proven best overall route. Its position should survive a fair browser-engine comparison and a native-client trial. A server bottleneck alone does not disqualify it; a browser-specific failure in the required scene can.
+**Research judgment:** PlayCanvas remains the ordinary browser baseline while the selected Three.js comparison examines actual quality, performance and maintenance cost. Native trials remain conditional and are not prerequisites for the playable milestone. A server bottleneck alone does not disqualify PlayCanvas; a demonstrated browser-specific failure or a credible production advantage can justify a broader comparison.
+

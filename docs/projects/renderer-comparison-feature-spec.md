@@ -42,7 +42,7 @@ The renderer may depict only supplied action/appearance information. It must not
 
 ### 3.2 Make creation visibly rewarding
 
-The player can place a real supported wall, alter a camp layout, use a useful invented object and later recognize the result. Reuse source dimensions, meaningful materials and silhouettes. Keep placement feedback, the committed shape, picking and the native geometry aligned. A pending or unavailable custom asset has a usable existing fallback; imagery arriving late replaces presentation without changing identity or function.
+The player can place a real supported wall, alter a camp layout, use a useful invented object and later recognize the result. Reuse source dimensions, meaningful materials and silhouettes. Keep placement feedback, the committed shape, picking and the native geometry aligned. A visual family that permits runtime fallback retains that behavior; imagery arriving late replaces presentation without changing identity or function. Initial required artwork retains the existing opaque loading/readiness gate and explicit retry on failure; this project does not replace it with fallback entry.
 
 One recognizable finished change is more valuable than an inventory of decorative graphics features. The comparison must include replacement, alteration and return, rather than only a static stock scene. It does not require new construction mechanics or a paid generation call to obtain a renderer fixture.
 
@@ -62,7 +62,7 @@ After an outing, the same camp and objects can carry real alterations, depleted 
 
 ### 4.1 Compare appearance while keeping the current session
 
-1. Open the existing developer scene-study or opted-in profiling controls and choose a renderer. Ordinary players do not need to understand graphics frameworks.
+1. For a study, open `/scene-study.html`, expand **Measurement and source details**, and use the renderer selector beside **Reload renderer**. For in-place live comparison in a development build, open the existing `?artLab` **Art comparisons** panel; the same selector is added there. Production/live launch selection also supports explicit developer URL values. Ordinary players do not need to understand graphics frameworks.
 2. See the requested renderer and graphics API, and the actual active combination. Initially the supported combinations are PlayCanvas/WebGL2 and Three.js/WebGL2. Unsupported combinations remain unavailable with a reason.
 3. Switching cancels held pointer/keyboard gestures through their existing cancellation owner before detaching the old canvas. It must not commit an attack, movement or construction operation as a side effect.
 4. The authoritative session and React interface remain. Preserve valid camera state, selected entity, presentation quality and the latest permitted view. Preserve applicable UI drafts and reading position through their existing owners.
@@ -74,7 +74,7 @@ Changing renderer is presentation-only. It neither resets the world nor freezes 
 
 ### 4.2 Run a meaningful comparison
 
-1. Choose a named current-version workload and fixed quality profile in the existing study/profiling workflow.
+1. Choose a named current-version workload and fixed quality profile, then start the existing browser profiling driver's explicit renderer-comparison mode. It owns the clean sequential six-run campaign; the scene-study selector and short measurement control remain visual/single-run diagnostics.
 2. Validate its permitted inputs, source asset revisions, expected activity and required feature coverage before recording timings.
 3. Launch one renderer in a fresh page/canvas. Load the same prepared workload, use the same camera path and settings, and distinguish first-use work from steady-state work.
 4. Run the other renderer separately on the same device/browser/build conditions. Alternate run order and repeat; retain every valid run and the reasons for exclusions.
@@ -150,8 +150,8 @@ Use 60 Hz/16.67 ms as a comparison reference where the actual display supports i
 ## 9. Staged delivery and decisions
 
 1. Record the existing baseline and freeze a small named workload.
-2. Extract shared presentation behind the working PlayCanvas path; verify its ordinary consumers before introducing a second engine.
-3. Add a Three.js vertical slice and use it to refine only real adapter needs.
+2. Extract the initial shared view/input boundary behind the working PlayCanvas path and verify its ordinary consumers.
+3. Add a thin Three.js W0 probe to refine real adapter needs, then finish shared preparation and the meaningful native vertical slice; do not require speculative extraction of every effect before seeing a second consumer.
 4. Complete currently supported presentation and safe developer switching.
 5. Add bounded replay and equivalent existing-profiler collectors; run the matched and live comparisons.
 6. Review whether to keep PlayCanvas as default, change the default, or maintain a limited comparison backend. Expand support only where measured benefit or concrete development advantage justifies its recurring cost.

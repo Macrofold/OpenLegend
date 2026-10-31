@@ -21,7 +21,7 @@ The public `WorldRenderer` boundary stays with the browser client. One shared pr
 
 RCP owns the selected dual-backend extraction and comparison implementation. [SW10.1/SW10.2](spatial-world.md#sw10--renderer-boundary-and-mixed-representation) and [SW18.8](spatial-world.md#sw18--world-presentation-delivery) consume its shared boundary/input result; their other motion, refresh and representation requirements stay open. [SW11](spatial-world.md#sw11--surface-picking-floor-focus-and-safe-cutaways) retains broader exact picking/device acceptance. [V3D03/V3D05/V3D11](3d-pixel-art.md) retain general representation, rig/equipment and device qualification. Reuse matching evidence without duplicating those task bodies or marking an unfinished parent done.
 
-Implementation order is RCP01 → RCP02 → RCP03/RCP04 → RCP05 → RCP06 → RCP07, with RCP08 after both backend lifecycles exist. RCP09 and RCP10 consume the shared controller and backend contracts and converge with RCP07/RCP08 at RCP11. RCP12 evaluates the evidence. This is dependency order, not authorization for parallel work that depends on another worker's unfinished output.
+Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle boundary in RCP05. Start the RCP06 W0 probe as soon as that boundary and its required source/pose inputs are usable; do not wait for full cloth, lighting or material extraction to learn from the real second consumer. RCP04 and the complete RCP05 remain prerequisites for RCP07 parity. RCP08 follows usable backend lifecycles; full switching acceptance consumes RCP07. RCP09/RCP10 converge with parity and switching at RCP11; RCP12 evaluates the evidence. This is dependency order, not authorization for workers to depend on another parallel assignment's unfinished output.
 
 ### RCP-D01 — Complete and reconcile the selected design
 
@@ -34,6 +34,7 @@ Implementation order is RCP01 → RCP02 → RCP03/RCP04 → RCP05 → RCP06 → 
 - [ ] Inspect the actual current revision and callers, including `world-renderer.ts`, `scene.ts`, `scene-study.ts`, `scene-performance.ts`, current art settings and the pinned dependency. Record changes since the design baseline rather than assuming old source details still hold.
 - [ ] Select W0 and the available W1–W4 scenarios from the feature specification, plus W5 lifecycle operations. Record exact permitted views, asset references, art/quality choices, camera/projection and required supported cues. Keep absent future gameplay explicit.
 - [ ] Record baseline asset/pose/light/shadow/transparency/UI work and supported conservative versus exact picking behavior. Separate current delivery from V3D/SW acceptance still open.
+- [ ] Distinguish the current source baseline from selected-but-undelivered SPX/stealth controls and perception contracts. Consume any such scope actually integrated by implementation time; keep the remaining [SPX](stealth-player-experience.md) implementation and player acceptance with its owner rather than quietly making it a renderer prerequisite.
 - [ ] Observe the current PlayCanvas scene through the ordinary app and study. Retain representative still/moving evidence and meaningful interaction outcomes through existing evidence/asset owners.
 - [ ] Define the comparison manifest and coverage checklist before implementing Three. Use the recording/run envelope in RCP-L03–L05; no arbitrary population requirement or paid generation.
 
@@ -45,6 +46,7 @@ Implementation order is RCP01 → RCP02 → RCP03/RCP04 → RCP05 → RCP06 → 
 
 - [ ] Keep the existing application-facing `WorldRenderer` and callbacks. Introduce the smallest internal visual projection needed by actual backend consumers; do not create a second server protocol or pass raw world state.
 - [ ] Move world/timeline/player/access invalidation, appearance signatures, observed-versus-remembered handling, add/update/remove decisions and valid selection retention into shared presentation records.
+- [ ] Preserve the distinction between true world/timeline/player/private-view replacement and same-character access renewal. Reauthorize renewed selection and clear obsolete transient/private information without rebuilding still-permitted public artwork or landscape solely for renewal.
 - [ ] Establish one owner for displayed position/support and motion history. Engine transforms consume this state instead of becoming a second writable source.
 - [ ] Preserve immutable source identity reuse and changed-record work. Reconcile membership at the view boundary; avoid serializing or cloning a whole scene each frame.
 - [ ] Check a normal update, removal, appearance replacement, restored timeline and observer/control change through existing callers or a disposable no-GPU recording fixture. Reject stale async results and clear protected presentation promptly.
@@ -68,9 +70,9 @@ Implementation order is RCP01 → RCP02 → RCP03/RCP04 → RCP05 → RCP06 → 
 **Outcome:** reusable preparation and visual decisions have one implementation. **Dependencies:** RCP02; coordinate projection consumers with RCP03.
 
 - [ ] Reuse `asset-files.ts`, exact selected releases and existing appearance/source mappings. Separate fetched source data from backend decoding and mutable GPU resources.
-- [ ] Extract desired clip/transition, pause behavior, pose cadence, heading and sample-time decisions. Use one shared presentation clock; distinguish it from authoritative simulation time and browser wall-clock measurement.
+- [ ] Extract desired clip/transition, pause behavior, pose cadence, heading and absolute sample-time decisions. Use one shared presentation clock; native deltas derive from requested samples, not another wall clock. Preserve normal-session blending; installation/seek resets transient blending to the current requested clip/sample rather than reconstructing interrupted fade history.
 - [ ] Extract pure scenery/perception/billboard geometry calculations where actually consumed; use stable typed arrays and dirty updates rather than per-vertex command objects.
-- [ ] Extract the existing CPU cloth solver and quality choice where the selected assets need it. Keep only required animated-anchor reads and mesh publication in adapters; one evaluated skeleton serves every pass and attachment.
+- [ ] Extract the existing CPU cloth solver and quality choice where the selected assets need it. Execute native pose → current bone anchors → shared cloth step → changed vertex publication → drawing. Keep required anchor reads and mesh publication in adapters; one evaluated skeleton serves every pass and attachment.
 - [ ] Extract permitted light-source selection, retention preference, sunlight calculations and profile choices. Preserve current quality budgets through their owning inventory.
 - [ ] Exercise paused/unpaused motion, a long frame gap, changing support, pose changes, late/failed assets, source replacement and light-set changes. Confirm source fetching is reused without sharing disposable native resources.
 
@@ -78,31 +80,33 @@ Implementation order is RCP01 → RCP02 → RCP03/RCP04 → RCP05 → RCP06 → 
 
 ## RCP05 — Isolate the PlayCanvas backend and effects
 
-**Outcome:** the existing presentation runs through the new boundary before the second engine is added. **Dependencies:** RCP03 and RCP04.
+**Outcome:** the existing presentation runs through the new boundary without a regression. **Dependencies:** RCP03 for the initial narrow boundary; RCP04 for completion. The usable view/camera/lifecycle portion enables the RCP06 probe before this entire task is finished.
 
 - [ ] Move native entities, camera application, decoder integration, meshes, materials, shadow/reveal layers, render targets and disposal behind the PlayCanvas backend.
 - [ ] Preserve current art treatment, pixel-grid/coverage reconstruction, shadow filtering, sprite virtual depth, read-through, outlines and shader preparation. Share portable kernels only when their language/contracts fit; retain PC bindings and cache details locally.
-- [ ] Establish exactly one scheduler and shared clock. Preserve the actual pinned application's render/update lifecycle without introducing private renderer monkey patches.
-- [ ] Expose actual API, declared feature coverage, readiness, stop-now and disposal-settled states. Track backend resources using existing ownership.
-- [ ] Run the RCP01 ordinary journey and lifecycle checks against the extracted backend. Compare the same retained visual profile and investigate a concrete regression before adding Three.
+- [ ] Retain the PlayCanvas native tick as its sole scheduler and call shared preparation from the existing update callback before native drawing. Prevent automatic and manual animation from advancing the same managed actor twice. Do not add a controller RAF or another render call.
+- [ ] Expose actual API, declared feature coverage, device-ready versus scoped scene-ready, stop-now and disposal-settled states. Initial required artwork keeps the opaque loading/readiness gate; only already-supported runtime families use fallback. Track backend resources using existing ownership.
+- [ ] Preserve suspension separately from world pause and disposal: cancel held input, retain resources, stop recurring draws, allow the existing one-shot fresh-view frame and apply privacy removals while suspended.
+- [ ] Run the RCP01 ordinary journey and lifecycle checks against the extracted backend. Compare the same retained visual profile and investigate a concrete regression before extending parity; an early limited Three probe does not close this task.
 
 **Done evidence:** the default PlayCanvas app works through the adapter, with meaningful visual/interaction evidence and applicable local formatting/type/build checks. Existing art approval, wider devices and uninterrupted frame-tail goals remain their owners' acceptance.
 
 ## RCP06 — Build the Three.js vertical slice
 
-**Outcome:** a real second backend renders and interacts with W0 through shared behavior. **Dependencies:** RCP05.
+**Outcome:** a real second backend renders and interacts with W0 through shared behavior. **Dependencies:** RCP02/RCP03, the verified narrow PlayCanvas view/camera/lifecycle boundary from RCP05, and only the RCP04 source/pose inputs W0 consumes. Full cloth/material/light extraction and complete RCP05 are not prerequisites for this probe.
 
 - [ ] Select an exact compatible Three.js release and required typings/addons; pin them through the existing package/lockfile owner. Start with `WebGLRenderer`/WebGL2. Do not add R3F, a physics package or a UI framework by default.
 - [ ] Implement backend initialization, camera/projection, supported surface/scenery drawing, one sprite and one current GLB, source dimensions/pivots and native resource disposal.
 - [ ] Connect shared camera/input/selection/overlays and asset/motion preparation. Implement the real decoder/skeleton path; do not use a static model as evidence for animated parity.
 - [ ] Match W0's selected quality and required shadows/depth/picking. Keep unsupported effects visibly marked incomplete.
 - [ ] Exercise late load, failed asset, changed scope and teardown, including removal while a load is pending.
+- [ ] Feed actual second-consumer findings back into the smallest shared contract before completing broad extraction. Keep unsupported effects explicit; do not use the W0 probe to rank whole-scene speed.
 
 **Done evidence:** W0 works in both backends with actual effective API/coverage recorded; failures remain explicit. No claim of whole-game parity or performance superiority.
 
 ## RCP07 — Complete current presentation parity
 
-**Outcome:** both backends deliver the declared currently supported W1–W4 presentation. **Dependencies:** RCP06.
+**Outcome:** both backends deliver the declared currently supported W1–W4 presentation. **Dependencies:** completed RCP04, RCP05 and RCP06.
 
 - [ ] Port remaining native material/pass integration for the selected art treatment, pixel coverage, shadows, read-through/outline, supported effects, scenery instancing, animation and cloth.
 - [ ] Check color-space/tone-mapping, output alpha, depth/stencil, filtering, transparency and shadow assumptions explicitly. A similarly named setting is not evidence of an equivalent result.
@@ -116,11 +120,12 @@ Implementation order is RCP01 → RCP02 → RCP03/RCP04 → RCP05 → RCP06 → 
 
 **Outcome:** developers can compare the current session without duplicate renderers or unintended commands. **Dependencies:** RCP05 and RCP06; full-coverage acceptance also consumes RCP07.
 
-- [ ] Add the selector to the existing study/opted-in diagnostic surface. Show requested and actual renderer/API and unavailable combinations; ordinary gameplay keeps PlayCanvas as default.
+- [ ] Add the selector to scene-study's existing measurement/source section and the live development-only `?artLab` panel. Move panel lifetime and pure settings out of the PlayCanvas-containing `art-treatment.ts` module into shared ownership so Three selection does not load an inactive PC backend. Show requested/actual API, status and disabled transitions; selection alone never starts profiling.
+- [ ] Change the factory to accept a stable host owned by React or scene-study; the controller owns its canvases. Migrate layout, focus, context-currentness, event-target, resize/profiler and cleanup consumers together. Preserve active `#world`, entry-loading, accessibility, tabIndex and inert semantics.
 - [ ] Preserve the authoritative connection, shared controller, valid camera/selection/settings and latest permitted view. Cancel held gestures before replacing the canvas.
-- [ ] Disable replacement controls while one transition/disposal is in flight. Stop old drawing/input immediately, await settled disposal and use a new canvas before activating the next backend.
+- [ ] Disable replacement controls while one transition/disposal is in flight. The shared owner cancels/detaches world gestures; the backend stops its scheduler/native callbacks immediately. Await settled disposal and use a new canvas before activating the next backend; stale UI callbacks cannot prevent owned cleanup from draining.
 - [ ] Fence initialization/download/parser results by active owner and exact view/appearance scope. A world/access change while loading must discard stale presentation.
-- [ ] Expose initialization/disposal failure without relabeling fallback as the requested engine. Preserve non-canvas UI; support explicit reopening/reload through the existing session.
+- [ ] Expose initialization/disposal failure without relabeling fallback as the requested engine. Keep the opaque entry gate until required art/preparation and a completed device frame qualify the latest view. Preserve non-canvas UI; support explicit reopening/reload through the existing session.
 - [ ] Exercise A→B→A, same-backend reselection, failure, scope change during loading, repeated transitions and full client destruction. Confirm no world reset, paid work or action commit results from switching.
 
 **Done evidence:** W5 interaction and resource evidence, no duplicate active input/frame loop, no accumulating retired owner, and honest cleanup completion. Hot switching is not the timed benchmark route.
@@ -130,9 +135,10 @@ Implementation order is RCP01 → RCP02 → RCP03/RCP04 → RCP05 → RCP06 → 
 **Outcome:** the same finite workload can drive either backend without variable server/AI timing. **Dependencies:** RCP02–RCP04 and RCP06.
 
 - [ ] Extend the existing scene-study path with the current-version manifest and ordered permitted view/control timeline. Store no raw authoritative world or ungranted private data.
-- [ ] Enforce duration, encoded bytes and record count before retaining an offending append; expose truncation/incomplete coverage. Reuse immutable inputs and bounded encoding, not a full additional world copy.
+- [ ] Enforce the 120-second total timeline, 32 MiB UTF-8 and 10,000-record envelope before retaining an offending append. Reserve bounded manifest/final-status bytes inside that same allowance before recording, so reporting overflow cannot itself exceed the limit. Reuse immutable inputs and bounded encoding, not a full additional world copy.
 - [ ] Drive replay from one monotonic epoch and shared controller clock. Process each due meaningful record once in order; retain speech/removal/scope transitions when visual transforms can coalesce.
 - [ ] Make replay interaction read-only with respect to the server: recorded controls alter presentation, not actual gameplay. Stage movement only when labelled presentation-only.
+- [ ] Bind live capture and unexported private inputs to their access/view owner. Stop and clear protected retained input on logout, observer replacement or access-scope loss/renewal. Use synthetic authored fixtures for deliberate scope-transition playback; no automatic export or sharing.
 - [ ] Record actual processed records, final cursor, elapsed playback and lag. A lost record, incomplete capture or background interruption prevents a winner conclusion.
 - [ ] Exercise normal completion, a budget boundary, out-of-date capture refusal, scope change and stop/restart using the existing study or a disposable scenario.
 
@@ -145,8 +151,11 @@ Implementation order is RCP01 → RCP02 → RCP03/RCP04 → RCP05 → RCP06 → 
 - [ ] Extract backend-independent recorder/report semantics from `scene-performance.ts`; supply PC/Three collectors for actual native counters and supported GPU timing.
 - [ ] Keep optional collection off by default and skip its preparation when disabled. Bind async measurements to the exact recording session and discard invalid/disjoint/context-lost samples explicitly.
 - [ ] Record exact build/engine/addon/API versions, workload/asset identity, requested/effective settings, activity/coverage, actual phase clocks and collector state.
+- [ ] Record presentation/browser callback intervals separately from actual draw/postrender intervals, counts and trailing time without a draw. GPU backpressure can skip drawing while callbacks remain responsive; submission is still not physical-screen proof.
 - [ ] Preserve existing OB01 sample/histogram/query allowances rather than creating parallel limits. Label engine-specific resource counts/estimated bytes; never report unavailable GPU data as zero or estimates as exact VRAM.
-- [ ] Support clean single-renderer production launches, explicit warm-up and measured windows, three valid runs per side in the prescribed interleaved order, and cold/steady-state separation.
+- [ ] Add the documented `--renderer-comparison` mode to `scripts/performance/profile-browser.mjs`, dispatching before its live READY/sign-in/control/speed/resume/start-marker/gameplay path. Transfer the bounded selected manifest through the study import surface; preserve explicit loopback origin and new output-path checks. Do not put private capture content in URLs.
+- [ ] Launch one fresh production page at a time for exactly six scheduled ABBAAB attempts, with 10 seconds warm-up and 60 seconds measured by default inside the total 120-second envelope. Three valid runs per side qualify the campaign; an invalid slot remains visible and prevents a complete winner claim. Explicit new campaigns preserve prior evidence rather than auto-retrying.
+- [ ] Separate cold and steady-state campaigns and recorded headed/headless/API launch conditions. Do not inherit the old driver's forced ANGLE Metal setting on another OS or treat headless timing as real-display smoothness.
 - [ ] Generate comparison results only after coverage/equivalence validation; include all runs, variance, exclusions, remaining limitations and matched versus best-practical mode.
 - [ ] Check Stop, late results, context loss/restoration and invalid/unequal work. Confirm raw/presentation/server attribution is not conflated and CPU/GPU durations are not added.
 

@@ -18,6 +18,8 @@ This is a focused child tracker for the proposed 3D appearance pipeline. [SW13](
 
 Use these task IDs for appearance-specific deliverables and link evidence back to the relevant parent. Do not duplicate whole parent task bodies or mark an entire SW/INV/PO task complete because one renderer case passes. Same-version save integrity, privacy, funding, and lifecycle are required in every affected slice rather than deferred to a final hardening phase.
 
+The selected [renderer comparison design](../projects/renderer-comparison-feature-spec.md), currently under review, uses [RCP](renderer-comparison.md) for shared presentation extraction, PlayCanvas/Three.js backends and comparative evidence. It preserves the current art target and consumes these appearance families; it does not deliver or close their qualification.
+
 ## Dependency order
 
 Start with V3D01's visual comparison. V3D02/V3D03 establish manifests and safe replacement; V3D04 adds useful rigid families. V3D05/V3D06 establish qualified actors, equipment and state composition. V3D07 adds durable image generation; V3D08 adds validated model production. V3D09 joins the existing workshop/invention flow. V3D10 expands portable reuse. V3D11 runs with each slice; V3D12 decides the release scope from evidence.
@@ -236,6 +238,8 @@ The accepted [asset-storage/reference design](../projects/game-asset-storage-tec
 
 **Owners:** WorldRenderer/scene/presentation. **Depends on:** V3D02.
 
+V3D03 owns replacing one object's representation. [RCP04/RCP08](renderer-comparison.md) own shared source preparation and replacing the active engine, with one frame owner, stopped input/drawing and settled native teardown. Use their shared lifecycle contract without conflating an engine switch with a qualified appearance-family replacement; the V3D03 scenarios and exit below remain open.
+
 - [ ] Extract only the shared representation responsibility needed for sprite and mesh resources. Retain the existing camera, input, support-motion, captions, status, reveal and lighting owners.
 - [ ] Implement bounded load/decode/residency, stale-world/entity/revision/authority fences, prepared current-state handoff, one effective caster/picker, shared-resource ownership and teardown.
 - [ ] Exercise Q01–Q06, Q10–Q13, Q17, Q19 and Q23 where applicable: moving/support transitions, equipment, deleted corpse, missing pose, context loss, restore, private remembered appearance and concurrent publication.
@@ -323,6 +327,8 @@ The [animation research](../../art-direction/research/3d-pixel-worlds/animation-
 
 [V3D01.11's current first-scene measurements](#v3d0111--integrated-scene-varied-subjects-and-device-evidence) and [A3D19](../limits/3d-pixel-art.md#a3d19--first-scene-experiment-profiles) provide a finite 1440×960 M1 Pro result for one rig with ordinary sprites and shared props, including requested 1×/8× operation. They are a partial contribution to this gate. The lower-end device, matched multi-mercenary populations, actual 1920×1080/eight-fire workload, long native acceleration, command tails and wider fallback matrix below remain unqualified.
 
+[RCP10/RCP11](renderer-comparison.md) extend the existing profiler for an initial PlayCanvas/WebGL2 versus Three.js/WebGL2 comparison. Reuse only evidence whose actual device, activity, art and measurement scope matches a requirement here. A valid narrower replay or a faster backend does not close V3D11's physical-device, live-game, accessibility or art acceptance.
+
 - [ ] Measure actual physical-GPU cold/warm behavior, asset diversity, skinning, material/alpha/shadow cost, decode/upload stalls, simultaneous swap residency and cleanup. Use A3D targets as proposals, not results. Include a named physical lower-end integrated GPU and the M1 Pro reference at actual 1920×1080, Detailed/Economy, matched sprite and moving mercenary populations, eight shadowed fires and requested 3× native progress. Record achieved game-time ratio/debt, displayed-frame and CPU/GPU p50/p95/p99/max, command-to-display tails, peak/retained memory and visual fallback correctness. Lower-end hardware is not currently available; SwiftShader does not close this gate. The earlier eight-fire sprite result does not establish the model workload. Coordinate long sessions/storage contention with PF00/PF11 and cold/reveal correctness with SW18.16.
 - [ ] Prove quality degradation preserves identity/state/gear, captions, input, reveal permissions and non-canvas alternatives. Test reduced motion, narrow screens, resize/DPR and unsupported/context-lost graphics.
 - [ ] Profile the full application at ordinary and supported accelerated speeds, including the 8× goal. Distinguish renderer work from native spatial/sensory/cognition/persistence limits. Optimize the measured source instead of assuming mesh count or pixel count explains everything.
@@ -356,3 +362,4 @@ The earlier first-scene direction, design and tasks were revised from the then-c
 ### Original proposal inspection
 
 The baseline was read through the GitHub connector, including root/routed guidance, current presentation/spatial contracts, art-direction brief, runtime/procedural art, invention tracker, public entity view, renderer boundary and pinned PlayCanvas package. Public engine/glTF/provider documentation informs the proposed adapter boundaries with stated limitations. No application run, browser art comparison, paid execution, or runtime performance qualification was performed for this design-only task. Content/link/diff review of the completed documentation package is the applicable verification, not a runtime pass.
+
