@@ -4,6 +4,7 @@ import type { AiReceipt, GenerateRequest } from './types.js';
 /** Projection of Macrofold's canonical deployment binding, not another inference wire schema. */
 export interface MacrofoldDeploymentTarget {
   readonly workspaceId: string;
+  readonly chatTemplateKwargs?: Readonly<{ enable_thinking: boolean }>;
   readonly modelBinding: {
     readonly deployment_id: string;
     readonly deployment_revision_id?: string;
@@ -28,7 +29,13 @@ export function captureMacrofoldDeploymentTarget(
     (target.modelBinding.deployment_revision_id !== undefined &&
       (typeof target.modelBinding.deployment_revision_id !== 'string' ||
         !uuid.test(target.modelBinding.deployment_revision_id))) ||
-    Object.keys(target).some((key) => !['workspaceId', 'modelBinding'].includes(key)) ||
+    (target.chatTemplateKwargs !== undefined &&
+      (!record(target.chatTemplateKwargs) ||
+        typeof target.chatTemplateKwargs.enable_thinking !== 'boolean' ||
+        Object.keys(target.chatTemplateKwargs).some((key) => key !== 'enable_thinking'))) ||
+    Object.keys(target).some(
+      (key) => !['workspaceId', 'modelBinding', 'chatTemplateKwargs'].includes(key),
+    ) ||
     Object.keys(target.modelBinding).some(
       (key) => !['deployment_id', 'deployment_revision_id'].includes(key),
     )
@@ -37,6 +44,9 @@ export function captureMacrofoldDeploymentTarget(
   // PostgreSQL/API projections use canonical UUID spelling; casing cannot select a different service.
   return Object.freeze({
     workspaceId: target.workspaceId.toLowerCase(),
+    ...(target.chatTemplateKwargs
+      ? { chatTemplateKwargs: Object.freeze({ ...target.chatTemplateKwargs }) }
+      : {}),
     modelBinding: Object.freeze({
       deployment_id: target.modelBinding.deployment_id.toLowerCase(),
       ...(target.modelBinding.deployment_revision_id === undefined
@@ -75,12 +85,16 @@ export function prepareMacrofoldGenerationInput(
     !['none', 'low', 'medium', 'high'].includes(request.reasoningEffort)
   )
     throw new InvalidData('invalid_reasoning_effort');
+  const target = request.macrofoldDeployment
+    ? captureMacrofoldDeploymentTarget(request.macrofoldDeployment)
+    : undefined;
   const context = serialize(request.context, 500_000);
   const instructions =
     mode === 'json_object' || mode === 'prompted_json'
       ? `${request.instructions}\n\nReturn only JSON matching this schema. Do not use Markdown fences or tools.\n${serialize(preparedSchema.schema, 500_000)}`
       : request.instructions;
   return {
+    ...(target?.chatTemplateKwargs ? { chat_template_kwargs: target.chatTemplateKwargs } : {}),
     messages: [
       { role: 'system', content: instructions },
       { role: 'user', content: typeof request.context === 'string' ? request.context : context },

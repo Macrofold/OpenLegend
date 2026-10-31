@@ -1,4 +1,14 @@
-import { entityGet, validatePerceivedSound, type PerceivedSound } from '@open-legend/domain';
+import { createWorldRuntime } from './world-runtime.js';
+import { CognitionLab } from './cognition-lab.js';
+import { cognitionLabRoute } from './cognition-lab-routes.js';
+import {
+  godPersonEditor,
+  godMemoryEdit,
+  editorHash,
+  godWorldEvent,
+  godPersonCreation,
+} from './person-editor-contracts.js';
+import { entityGet } from '@open-legend/domain';
 import { recoverPlayerAction } from './action-request-recovery.js';
 import { recoverHumanRequest } from './human-request-recovery.js';
 import { CognitionExecution } from './cognition-execution.js';
@@ -9,7 +19,7 @@ import { foundationCapabilities } from './foundation-capabilities.js';
 import { continuitySubjects, continuityView } from './continuity-view.js';
 import { memoryHistory } from './memory-history.js';
 import { knownPlaces, inspectKnownPlace, knownPlaceReference } from './known-places.js';
-import { validEncounterExposure, selectedEventPresentation } from '@open-legend/domain';
+import { selectedEventPresentation } from '@open-legend/domain';
 import { commitmentPage } from './commitment-view.js';
 import {
   AuthorityError,
@@ -25,7 +35,7 @@ import { MaintenanceSchedule } from './maintenance.js';
 import { OpenIdAuthentication, browserLoginToken } from './authentication.js';
 import { NavigationCoordinator } from './navigation/coordinator.js';
 import { HistoryCursorError } from './perceived-events.js';
-import { readHttpJson } from './http-json.js';
+import { readHttpJson, receiveBodyDeadline, LAB_IMPORT_BODY_TIMEOUT_MS } from './http-json.js';
 import { WorldAgentRunner } from './world-agent-runner.js';
 import { WorldAgentStore } from './world-agent-store.js';
 import { PrivateSnapshotStream } from './private-snapshot-stream.js';
@@ -68,7 +78,6 @@ import {
   recordBackgroundFailure,
 } from './performance.js';
 import {
-  ACTIVITY_LIMITS,
   SPEECH_VOLUMES,
   amendCommitment,
   stateOwnerCapabilities,
@@ -231,179 +240,6 @@ const godSpawnType = z.enum([
   'river-reeds',
   'river-stones',
 ]);
-const godPerson = z
-  .object({
-    name: z.string().trim().min(1).max(80),
-    personality: z.string().trim().max(1000),
-    backstory: z.string().trim().max(4000),
-    traitIds: z.array(requestIdSchema).max(8),
-    initialGoals: z.array(z.string().trim().min(1).max(500)).max(8),
-  })
-  .strict();
-const godPersonEditor = z
-  .object({
-    inventory: z
-      .array(
-        z
-          .object({
-            definitionId: requestIdSchema,
-            quantity: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER),
-          })
-          .strict(),
-      )
-      .optional(),
-    name: z.string().trim().min(1).max(80),
-    description: z.string().trim().max(2000),
-    personality: z.string().trim().max(1000),
-    backstory: z.string().trim().max(4000),
-    traitIds: z.array(requestIdSchema).max(8),
-    goals: z.array(z.string().trim().min(1).max(500)).max(8),
-    meters: z.record(requestIdSchema, z.number().finite()),
-  })
-  .strict();
-const godAwareness = z
-  .object({
-    retentionClass: z.literal('memory'),
-    sound: z
-      .custom<PerceivedSound>((value) => {
-        try {
-          validatePerceivedSound(value);
-          return true;
-        } catch {
-          return false;
-        }
-      })
-      .optional(),
-    exposure: z
-      .custom<import('@open-legend/domain').EncounterExposure>(validEncounterExposure)
-      .optional(),
-    change: z.enum(['onset', 'detail', 'end']).optional(),
-    eventType: z.string().max(200).optional(),
-    sourceId: requestIdSchema.optional(),
-    targetId: requestIdSchema.optional(),
-    triggerKind: z
-      .enum([
-        'addressed_speech',
-        'overheard_speech',
-        'self_event',
-        'directed_action',
-        'observed_event',
-      ])
-      .optional(),
-    content: z.string().max(20_000).optional(),
-    eventId: requestIdSchema,
-    actorId: requestIdSchema,
-    text: z.string().max(20_000),
-    at: z.number().finite().min(0),
-    sequence: z.number().int().min(0),
-    modality: z.enum(['heard', 'observed', 'felt', 'internal']),
-    recognized: z.boolean(),
-    intelligible: z.boolean(),
-    entityIds: z.array(requestIdSchema).max(100),
-    importance: z.number().finite(),
-    urgency: z.number().finite().min(0).max(10).optional(),
-  })
-  .strict();
-const godMemory = z
-  .object({
-    activityId: requestIdSchema.optional(),
-    obligation: z
-      .object({
-        revision: z.number().int().min(0),
-        status: z.enum(['active', 'fulfilled', 'cancelled', 'overdue']),
-        dueAt: z.number().finite().min(0).optional(),
-        completion: z
-          .object({ eventType: z.string().max(200), targetId: requestIdSchema.optional() })
-          .strict()
-          .optional(),
-        evidenceId: requestIdSchema,
-      })
-      .strict()
-      .optional(),
-    eventType: z.string().max(200).optional(),
-    speakerId: requestIdSchema.optional(),
-    sequence: z.number().int().min(0).optional(),
-    id: requestIdSchema,
-    actorId: requestIdSchema,
-    kind: z.enum(['episode', 'belief', 'commitment', 'reflection']),
-    source: z.enum(['observed', 'heard', 'felt', 'internal', 'inferred', 'self_thought']),
-    responseId: requestIdSchema.optional(),
-    // A native result can fill its existing 32 KiB source allowance. Do not reject
-    // an unchanged result merely because the creator edits its importance.
-    summary: z.string().max(ACTIVITY_LIMITS.recordBytes),
-    at: z.number().finite().min(0),
-    entityIds: z.array(requestIdSchema).max(100),
-    eventId: requestIdSchema.optional(),
-    importance: z.number().finite(),
-    resolved: z.boolean().optional(),
-  })
-  .strict();
-const godExperienceSource = z
-  .object({
-    kind: z.enum(['awareness', 'memory', 'summary']),
-    id: requestIdSchema,
-    revision: z.string().regex(/^[a-f0-9]{64}$/),
-  })
-  .strict();
-const godSpeechAttribution = z
-  .object({
-    version: z.literal(1),
-    groups: z
-      .array(
-        z
-          .object({
-            speakerId: requestIdSchema.nullable(),
-            targetId: requestIdSchema.nullable(),
-            addressing: z.enum(['ambient', 'directed']).nullable(),
-            observerRelation: z.enum(['self', 'addressed', 'overheard', 'ambient', 'seen']),
-            acquisition: z.enum(['self', 'heard', 'seen']),
-            intelligibility: z.enum(['none', 'partial', 'clear']),
-            firstAt: z.number().finite().min(0),
-            lastAt: z.number().finite().min(0),
-            sourceCount: z.number().int().positive(),
-            supportKey: z.string().regex(/^[a-f0-9]{64}$/),
-            sources: z.array(godExperienceSource).max(8192),
-          })
-          .strict(),
-      )
-      .max(8192),
-  })
-  .strict();
-const godSummary = z
-  .object({
-    id: requestIdSchema,
-    text: z.string().max(20_000),
-    sequence: z.number().int().min(0).optional(),
-    from: z.number().finite().min(0),
-    to: z.number().finite().min(0),
-    sources: z.array(godExperienceSource).max(8192),
-    attribution: godSpeechAttribution,
-    entityIds: z.array(requestIdSchema).max(100),
-    importance: z.number().finite(),
-    revision: z.number().int().min(0).optional(),
-  })
-  .strict();
-const godMemoryEdit = z.discriminatedUnion('source', [
-  z.object({ source: z.literal('awareness'), value: godAwareness }).strict(),
-  z.object({ source: z.literal('memory'), value: godMemory }).strict(),
-  z.object({ source: z.literal('summary'), value: godSummary }).strict(),
-]);
-const editorHash = z.string().regex(/^[a-f0-9]{64}$/);
-const godWorldEvent = z
-  .object({
-    id: requestIdSchema,
-    sequence: z.number().int().min(0),
-    at: z.number().finite().min(0),
-    type: z.string().trim().min(1).max(200),
-    text: z.string().max(20_000),
-    actorId: requestIdSchema.optional(),
-    targetId: requestIdSchema.optional(),
-    audience: z.array(requestIdSchema).max(1000),
-    importance: z.number().finite().min(0).max(10).optional(),
-    urgency: z.number().finite().min(0).max(10).optional(),
-    data: z.record(z.string(), z.union([z.string(), z.number(), z.boolean(), z.null()])).optional(),
-  })
-  .strict();
 
 function writeJson(response: ServerResponse, status: number, value: unknown) {
   response.writeHead(status, {
@@ -527,28 +363,25 @@ async function initializeGameServer(
         }),
     });
   }
-  const service = new WorldService(store, config, options.now, {
+  const runtime = await createWorldRuntime({
+    store,
+    config,
+    now: options.now,
+    aiClient: options.aiClient,
     createdActivation: options.createdActivation,
     presentationRelease: assetIndex.release,
   });
-  onFailure(() => service.releaseHostWork());
-  const autosaves = new Autosaves(service);
-  onFailure(() => autosaves.close());
-  await service.ready;
-  await autosaves.initialize();
-  let wakeAfterNavigation: (() => void) | undefined;
-  const navigation = new NavigationCoordinator(service, () => wakeAfterNavigation?.());
-  onFailure(() => navigation.close());
-  const cognitionExecution = new CognitionExecution(store, options.now);
-  onFailure(() => cognitionExecution.close());
-  let director = new AiDirector(
-    service,
-    options.aiClient,
-    options.now,
-    undefined,
-    cognitionExecution,
-  );
-  onFailure(() => director.close());
+  const { service, autosaves, navigation } = runtime;
+  const cognitionExecution = runtime.execution;
+  let director = runtime.director;
+  onFailure(() => runtime.close());
+  const cognitionLab = new CognitionLab(runtime, config, {
+    store,
+    now: options.now,
+    aiClient: options.aiClient,
+  });
+  onFailure(() => cognitionLab.close());
+  await cognitionLab.prepare();
   let loadingSave = false;
   const worldTools = new WorldToolService(service);
   const authoring = new WorldAuthoringService(
@@ -834,6 +667,7 @@ async function initializeGameServer(
     }));
   if (!options.clientAssets) onFailure(() => clientAssets.close());
   const server = createServer(async (request, response) => {
+    receiveBodyDeadline(request, response, (request.url ?? '/').split('?')[0]!);
     const arrivedAt = options.profileCommand ? performance.now() : 0;
     let responseScope: RequestScope | undefined;
     let responseCapability: Capability = 'play';
@@ -1034,10 +868,26 @@ async function initializeGameServer(
       try {
         let token = readCookie(request, 'ol_session');
         if (
+          token &&
+          config.authentication.mode === 'local' &&
+          request.method === 'GET' &&
+          url.pathname === '/api/cognition-lab/workspace'
+        ) {
+          try {
+            await store.authority.authenticate(token, now());
+          } catch (error) {
+            if (!(error instanceof AuthorityError)) throw error;
+            // Loopback development already issues the current local session on
+            // first entry. A cookie from another local port must use that same
+            // issuer, rather than sending a local user to the OIDC-only form.
+            token = undefined;
+          }
+        }
+        if (
           !token &&
           config.authentication.mode === 'local' &&
           request.method === 'GET' &&
-          url.pathname === '/api/state'
+          (url.pathname === '/api/state' || url.pathname === '/api/cognition-lab/workspace')
         ) {
           token = service.localSessionToken;
           response.setHeader('Set-Cookie', cookie('ol_session', token));
@@ -1094,6 +944,28 @@ async function initializeGameServer(
           service.timelineId,
           connectionId,
         );
+        if (url.pathname.startsWith('/api/cognition-lab/')) {
+          responseScope = scope;
+          responseCapability = 'create';
+          const session = await store.authority.authenticate(token, now());
+          return await cognitionLabRoute({
+            lab: cognitionLab,
+            request,
+            response,
+            url,
+            hostScope: scope,
+            session,
+            connectionId,
+            ownOrigin,
+            send,
+            readJson: () =>
+              readHttpJson(request, url.pathname, (bytes) => {
+                if (retainedBodyBytes + bytes > 16 * 1024 * 1024) throw new OverloadError();
+                retainedBodyBytes += bytes;
+                requestBytes += bytes;
+              }),
+          });
+        }
         if (isCharacterless(scope) && !characterlessRoute(request.method, url.pathname))
           return send(response, 403, {
             ok: false,
@@ -1888,6 +1760,7 @@ async function initializeGameServer(
                   message: 'Another request is finishing. Try loading again shortly.',
                 });
               loadingSave = true;
+              runtime.clock.setBlocked(true);
               let stopping = false;
               let drained = false;
               try {
@@ -1912,13 +1785,7 @@ async function initializeGameServer(
                 return send(response, 200, { ok: true, message: 'Saved world loaded and paused.' });
               } finally {
                 if (drained) {
-                  director = new AiDirector(
-                    service,
-                    options.aiClient,
-                    options.now,
-                    undefined,
-                    cognitionExecution,
-                  );
+                  director = await runtime.replaceDirector();
                   mcp = makeMcp();
                   agentRuns.resume();
                 }
@@ -1930,6 +1797,7 @@ async function initializeGameServer(
                   service.notify();
                 }
                 loadingSave = false;
+                runtime.clock.setBlocked(false);
                 publish();
               }
             }
@@ -2338,7 +2206,7 @@ async function initializeGameServer(
             case '/api/god/person': {
               if (!config.godMode)
                 return send(response, 403, { ok: false, message: 'God access required.' });
-              const value = godPerson
+              const value = godPersonCreation
                 .extend({ id: requestIdSchema, position })
                 .strict()
                 .parse(body);
@@ -2396,7 +2264,7 @@ async function initializeGameServer(
               return send(
                 response,
                 200,
-                await service.godAttributeEdit(request, expectedGeneration),
+                await service.godAttributeEdit(request, expectedGeneration, scope),
               );
             }
             case '/api/god/invention-policy': {
@@ -2465,6 +2333,7 @@ async function initializeGameServer(
                 await service.godAttributeDeclaration(
                   request as import('@open-legend/domain').AttributeDeclarationRequest,
                   expectedGeneration,
+                  scope,
                 ),
               );
             }
@@ -3699,100 +3568,11 @@ async function initializeGameServer(
     }
     await clientAssets.serve(request, response, url);
   });
-  server.requestTimeout = 10_000;
+  // Per-request receive deadlines above preserve the ordinary ten-second limit.
+  // The parser-wide ceiling must also admit the explicit streamed file route.
+  server.requestTimeout = LAB_IMPORT_BODY_TIMEOUT_MS;
   server.headersTimeout = 10_000;
-  let previous = performance.now();
-  let previousCallback = previous;
-  let suspendedSeconds = 0;
-  let ticking = false;
-  let activeTick: Promise<void> | undefined;
-  let thinking: Promise<void> | undefined;
-  let clockContinuation: ReturnType<typeof setImmediate> | undefined;
-  const wakeClock = () => {
-    if (disposed || loadingSave || ticking) return;
-    if (clockContinuation) clearImmediate(clockContinuation);
-    clockContinuation = undefined;
-    ticking = true;
-    const current = performance.now();
-    // Real time from before the latest resume is never simulated.
-    const elapsed = (current - Math.max(previous, service.clockStartedAt)) / 1000;
-    previous = current;
-    const excluded = suspendedSeconds;
-    suspendedSeconds = 0;
-    let more = false;
-    activeTick = (async () => {
-      more = await timed('tick.wall', () =>
-        service.tick(elapsed, excluded, { drain: false, offeredUntil: current }),
-      );
-      // Resume may have committed while the offered tick waited for its turn.
-      // Automatic checkpoint cadence follows the same active interval as native time.
-      const admittedElapsed = Math.min(
-        elapsed,
-        Math.max(0, (current - service.clockStartedAt) / 1000),
-      );
-      autosaves.advance(Math.max(0, admittedElapsed - excluded));
-      // Background admission must not hold the native clock (docs/performance.md#triggered-background-work).
-      if (!thinking)
-        thinking = director
-          .considerThought()
-          .catch((error: unknown) => {
-            if (error instanceof OverloadError) return;
-            recordBackgroundFailure('decision-admission', error);
-            service.storageError =
-              'Character decision admission failed; simulation paused. Restart after resolving the recorded failure.';
-            service.notify();
-          })
-          .finally(() => {
-            thinking = undefined;
-          });
-    })()
-      .catch((error: unknown) => {
-        if (error instanceof OverloadError) return;
-        recordBackgroundFailure('simulation-tick', error);
-        service.storageError =
-          'Automatic simulation failed; simulation paused. Restart after resolving the recorded failure.';
-        service.notify();
-      })
-      .finally(() => {
-        ticking = false;
-        // One owned continuation preserves catch-up throughput without keeping an
-        // old elapsed-time offer open. The interval remains the idle wake owner.
-        if (more && !disposed && !loadingSave && !clockContinuation)
-          clockContinuation = setImmediate(() => {
-            clockContinuation = undefined;
-            wakeClock();
-          });
-      });
-  };
-  if (options.tick !== false) service.useMonotonicClock();
-  const interval =
-    options.tick === false
-      ? undefined
-      : setInterval(() => {
-          if (disposed || loadingSave) return;
-          const callbackAt = performance.now();
-          const callbackGap = (callbackAt - previousCallback) / 1000;
-          // Busy ticks still receive timer callbacks; only missing callbacks imply suspension.
-          if (callbackGap > 2) suspendedSeconds += callbackGap;
-          if (profilingEnabled())
-            recordDuration('timer.lateness', Math.max(0, callbackGap * 1000 - 50));
-          previousCallback = callbackAt;
-          if (ticking) {
-            countMetric('timer.skippedWhileBusy');
-            return;
-          }
-          wakeClock();
-        }, 50);
-  if (interval)
-    wakeAfterNavigation = () => {
-      // A completed route removes the physical wait now. Reuse the one owned
-      // clock continuation; admission still charges only actual elapsed time.
-      if (disposed || loadingSave || clockContinuation) return;
-      clockContinuation = setImmediate(() => {
-        clockContinuation = undefined;
-        wakeClock();
-      });
-    };
+  if (options.tick !== false) runtime.clock.start();
 
   return {
     server,
@@ -3816,6 +3596,7 @@ async function initializeGameServer(
    * report states whether the final save completed and the last revision confirmed durable. */
   async function shutdownOnce(deadlineMs: number): Promise<ShutdownReport> {
     disposed = true;
+    cognitionLab.stopAdmission();
     clearInterval(streamHeartbeat);
     creationRecoveryStop.abort();
     maintenance.close();
@@ -3845,10 +3626,7 @@ async function initializeGameServer(
         clearTimeout(timer);
       }
     };
-    if (interval) clearInterval(interval);
-    wakeAfterNavigation = undefined;
-    if (clockContinuation) clearImmediate(clockContinuation);
-    clockContinuation = undefined;
+    runtime.clock.stop();
     if (publishTimer) clearTimeout(publishTimer);
     unsubscribe();
     director.macrofold.stop();
@@ -3857,14 +3635,8 @@ async function initializeGameServer(
     await stage('MCP requests', () => mcp.close(), 0.2);
     await stage('World Agent turns', () => agentRuns.drain(), 0.2);
     await stage('Creation receipt recovery', () => creationRecovery, 0.1);
-    await stage('Native tick', () => activeTick, 0.2);
-    await stage('Background admission', () => thinking, 0.2);
-    await stage('Checkpoint drain', () => autosaves.close(), 0.3);
-    await stage('AI director', () => director.close(), 0.2);
-    cognitionExecution.close();
-    await stage('Publication', () => publicationDone, 0.1);
-    await stage('Navigation', () => navigation.close(), 0.1);
-    // Intake stopped when shutdown began; let already admitted requests finish first.
+    // Keep native owners alive until every admitted mutation has settled. Closing
+    // them first can strand a lab import or publish after its store is disposed.
     await stage(
       'Admitted requests',
       async () => {
@@ -3872,6 +3644,10 @@ async function initializeGameServer(
       },
       0.3,
     );
+    await stage('Cognition Lab', () => cognitionLab.close(), 0.2);
+    await stage('Native tick', () => runtime.clock.idle(), 0.2);
+    await stage('World runtime', () => runtime.close(), 0.5);
+    await stage('Publication', () => publicationDone, 0.1);
     // A latched storage failure means no later state can be written honestly.
     const latched = service.storageError;
     let saved = false;

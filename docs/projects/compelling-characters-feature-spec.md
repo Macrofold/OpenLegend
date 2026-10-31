@@ -1,8 +1,8 @@
 # Compelling characters — integrated product and behavior specification
 
-| Status      | Current progress                                                                                                                    | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-25   |
+| Status      | Current progress                                                                                                                    | Last updated         |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-28 05:00 UTC |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The authorship clarification is developed in the [scoped technical design](compelling-characters-tech-design.md). [Emotional physiology and adaptive reappraisal](emotional-physiology-feature-spec.md) specifies the selected general emotion system; broader psychological-needs mechanics and automatic personality development remain separately scoped. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
@@ -13,6 +13,8 @@ This project is the early character-experience part of [DG02](../maintainers/nee
 **Accepted owner clarification, October 4, 2026.** Author the person and the world circumstances that cognition can interpret; do not author the character’s decision procedure in biography, traits, dispositions, memories or hidden prompts. This boundary applies to character creation/editing, behavior experiments, default residents, generated characters, personality change and cognition/context work. It is not limited to the bundled resident or to TypeScript conditionals: natural-language instructions can prescribe behavior too.
 
 Backstory records explicitly authored personal history; personality, values, interests and dispositions describe the person's current tendencies. These can develop through lived experience and accepted self-understanding, and can also be changed through authorized creator edits. “Relatively persistent” does not mean immutable or continually reset from a seed. Keep the historical experience distinct from a later reinterpretation of it. A preference influences a choice without requiring it or proving satisfaction.
+
+Reasonable elaboration of sparse pre-game history is acceptable for now. It must remain compatible with established history, attribution, time and knowledge permissions; it cannot establish that an action in the running game occurred. The [observed elaboration limitation](../memory-architecture.md#3-one-compact-model-facing-context) remains relevant when judging memory use. A richer pre-game-history system is a separate future consideration, not a prerequisite or a selected new mechanism here.
 
 When authored history says two existing people already know each other, bind that acquaintance through their observer-specific knowledge/recognition owner as well as the prose. Naming a companion in a biography does not identify a perceived body to cognition. Verify each person's actual decision context and an uninformed visitor's view; do not fabricate remembered events or grant everyone the same knowledge. The [Watchpost correction](../verification/rivals-and-contested-ground.md#healthy-controlled-follow-up-and-consent-correction--october-13-2026) demonstrated this gap. This section is already required by the root character-authorship route.
 
@@ -162,6 +164,10 @@ An illustrative direction for later prompt comparison is:
 This illustrates product intent, not a drop-in replacement for current trusted instructions, schemas or permissions. The eventual prompt must still preserve the established action and evidence boundaries. It must not tell the model that describing an act makes it happen, invent another person's response, conceal service failure, or claim that a fictional self-report proves consciousness.
 
 The desired ordinary voice is an inhabitant's voice: concrete, context-sensitive and particular to the person. A character can be terse, playful, formal, awkward, irritated or quiet when appropriate. Do not force every resident into generic politeness, therapeutic dialogue, constant helpfulness or endlessly renewed greetings.
+
+Written emotional expression and expressive asides are allowed in character responses. They do not need conversion into an expression or action operation. Text alone produces no movement, contact, injury, item transfer or other mechanical effect; those require the corresponding admitted structured action. Do not infer or execute actions from prose. No additional emotion catalogue, output channel or prose parser is selected for this purpose.
+
+The shared speech-schema description and response instructions permit these asides and compatible sparse-history elaboration. Memory attention receives the complete accepted profile; response context distinguishes observer, speaker, addressee and perceived source using acquired evidence. Optional [authored voice examples](../worlds/base/cognition-lab-characters.md) demonstrate style without creating history or prescribing reactions. The [bounded comparison](../verification/cognition-lab-native-model-study.md#october-28--prompt-voice-and-context-comparison) supports retaining concise operation-selection and optional-silence guidance alongside the schema. Existing knowledge and action boundaries remain. Neither the policy nor prompt-only comparisons establish zero hallucinations, reliable personality or completed action.
 
 ### Thoughts and attention between conversations
 

@@ -1,7 +1,6 @@
 import {
   decodeJudge,
-  validateJudgmentSize,
-  validateQuestions,
+  batchJudgmentQuestions,
   InvalidData,
   type JudgeValue,
   type TypedQuestionMap,
@@ -9,6 +8,7 @@ import {
 import type { compilePreparedResponses, PreparedResponseProfile } from '@open-legend/domain';
 import { ContextBudgetError } from './context.js';
 import { offerPreparedActions, type prepareDecision } from './decision-context.js';
+import { preparedResponseDecisionContext } from './prepared-response-context.js';
 
 type Prepared = Awaited<ReturnType<typeof prepareDecision>>;
 type Catalogue = NonNullable<ReturnType<typeof compilePreparedResponses>>;
@@ -17,9 +17,8 @@ export type PurposeRelevance = Record<string, 'uncertain' | 'relevant' | 'irrele
 /** Keep complete required questions or refuse before dispatch. Both transport
  * adapters use these existing limits and the same offered-key Choice decoder. */
 function checkedRequest(state: Record<string, unknown>, questions: TypedQuestionMap) {
-  validateQuestions(questions);
   try {
-    validateJudgmentSize(state, questions);
+    batchJudgmentQuestions(state, questions);
   } catch (error) {
     if (!(error instanceof InvalidData)) throw error;
     throw new ContextBudgetError(
@@ -29,23 +28,12 @@ function checkedRequest(state: Record<string, unknown>, questions: TypedQuestion
   return { state, questions };
 }
 
-function requestState(prepared: Prepared, offered?: { id: string; description: string }[]) {
+function requestState(prepared: Prepared) {
   return {
-    decisionContext: Object.fromEntries(
-      Object.entries(prepared.context).filter(
-        // This closed strategy selects exact supplied invocations. Freeform
-        // activity forms belong to the independent generated-response route;
-        // current agreements and every offered physical choice remain here.
-        ([key]) =>
-          !['knowledgeInstructions', 'navigation', 'planOffers', 'activityRequests'].includes(key),
-      ),
-    ),
+    decisionContext: preparedResponseDecisionContext(prepared.context),
     // One full authored rubric is shared, rather than copied into every independent
     // question. Default Noul yes/no still judges these exact supplied meanings.
     personalChoiceRubric: prepared.actionGuidance,
-    ...(offered
-      ? { choices: Object.fromEntries(offered.map((choice) => [choice.id, choice.description])) }
-      : {}),
   };
 }
 
@@ -85,13 +73,10 @@ export function preparedResponseRelevanceRequest(
     }
   return checkedRequest(
     {
-      ...requestState(
-        prepared,
-        prepared.actionCandidates.map((candidate, index) => ({
-          id: `a${index}`,
-          description: candidate.description,
-        })),
-      ),
+      // Complete purposes/methods already occur in requiredChoices. Repeating
+      // every opaque purpose-method pairing here can exceed the per-question
+      // state limit without adding meaning; each purpose question names its people.
+      ...requestState(prepared),
       ...(appraisals ? { appraisals: appraisals.context } : {}),
     },
     questions,

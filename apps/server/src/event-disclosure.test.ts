@@ -338,6 +338,13 @@ describe('event-time observer facts', () => {
     const trigger = responseTriggerContext(service, NPC_ID, event.id, retrieved);
     expect(JSON.stringify(trigger)).not.toContain('branches');
     expect(JSON.stringify(trigger)).not.toContain('wood');
+    expect(trigger?.['participants']).toEqual({
+      observer: expect.any(String),
+      perceivedSource: expect.any(String),
+      subject: null,
+    });
+    const roles = trigger?.['participants'] as Record<string, unknown>;
+    expect(roles['observer']).not.toBe(roles['perceivedSource']);
     const page = await readPerceivedEvents(store.db, service.world.id, NPC_ID, 'fixture-scope', {
       type: 'activity-observed',
       limit: 100,

@@ -190,6 +190,7 @@ const invocationFields: Partial<
     optional: ['facingHeading', 'restingPlaceId', 'restingBay'],
   },
   say: { required: ['text'], optional: ['targetId', 'volume'] },
+  express: { required: ['verb'], optional: ['targetId'] },
 };
 /** Native boundary phases and finite activities use the same operation fields. */
 export function boundaryOperationFields(

@@ -6,7 +6,7 @@ import { projectAttributes } from '../../world-modules.js';
 import type { WorldState } from '../../types.js';
 import type { RangedPolicy } from '../../ranged-policy.js';
 import { BASE_RANGED_TEXT } from './ranged-counterplay.js';
-import { BASE_ACTION_DEFAULTS } from './actions.js';
+import { BASE_ACTION_DEFAULTS } from './action-defaults.js';
 
 export const BASE_RANGED_POLICY: RangedPolicy = {
   id: 'base:ranged-actions',

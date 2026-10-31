@@ -30,6 +30,8 @@ type ConfiguredModelTarget = NonNullable<AppConfig['modelTargets']>['purposes'];
 function deploymentSetting(target: ConfiguredModelTarget[keyof ConfiguredModelTarget]): string {
   if (!target) return 'Use existing provider settings';
   const output = 'structured_output' in target ? target.structured_output : undefined;
+  const thinking =
+    'chat_template_kwargs' in target ? target.chat_template_kwargs?.enable_thinking : undefined;
   const formats = {
     auto: 'automatic JSON format',
     json_schema: 'JSON Schema',
@@ -45,6 +47,7 @@ function deploymentSetting(target: ConfiguredModelTarget[keyof ConfiguredModelTa
       ? 'current output allowance'
       : `at most ${target.max_output_tokens} output tokens`,
     output ? formats[output] : 'native decisions',
+    ...(thinking === undefined ? [] : [`native thinking ${thinking ? 'enabled' : 'disabled'}`]),
   ].join('; ');
 }
 
@@ -79,7 +82,12 @@ export function creationOperatingConfiguration(config: AppConfig) {
     playerCapacity: config.capacity.players,
     departureGraceMs: config.exitGraceMs,
     creatorToolsEnabled: config.godMode,
-    liveAiConfigured: Boolean(config.macrofoldKey || config.jevKey || config.llmKey),
+    liveAiConfigured: Boolean(
+      config.macrofoldKey ||
+        config.jevKey ||
+        config.llmKey ||
+        (config.macrofoldModelKey && config.modelTargets),
+    ),
     jevOnly: config.jevOnly,
     jevModel: config.jevModel,
     macrofoldJevModel: macrofoldJudgmentModel(config),
@@ -92,6 +100,7 @@ export function creationOperatingConfiguration(config: AppConfig) {
     languageModel: config.llmModel,
     miniModel: config.miniModel,
     complexModel: config.complexModel,
+    higherDecisionModel: config.higherDecisionModel,
     summaryModel: config.summaryModel,
     macrofoldMiniModel: config.macrofoldMiniModel,
     macrofoldComplexModel: config.macrofoldComplexModel,
@@ -136,6 +145,7 @@ export function creationOperatingSettings(values: Record<string, string | number
     languageModel: 'Language model',
     miniModel: 'Routine character thinking model',
     complexModel: 'Complex character thinking model',
+    higherDecisionModel: 'Higher decision and dialogue model',
     summaryModel: 'Character memory summary model',
     macrofoldMiniModel: 'Routine character thinking model through Macrofold',
     macrofoldComplexModel: 'Complex character thinking model through Macrofold',

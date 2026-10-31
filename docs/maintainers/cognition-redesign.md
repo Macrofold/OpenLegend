@@ -523,7 +523,7 @@ Current-conversation projection and its deferred coverage are owned by [NC12 com
 
 - [x] Design the isolated developer workspace, current-left/historical-right distinction, actual-stage capture, one-shot prepared-request editing and retained-run inspection. The [paired design](../projects/cognition-lab-feature-spec.md) and [CL00–CL11](cognition-lab.md) own this selected design and its implementation breakdown.
 
-The lab reuses ordinary cognition, memory and action owners through a shared runtime; it is not a new cognition pipeline or a replacement for the in-game Intelligence panel. CR11/CR12 and the inspector qualification below remain open at their recorded scopes. Lab retention/export and compact navigation are now specified, but their implementation is CL05/CL08/CL11; provider-side missing history, live permissions, complete-cost evidence and other existing inspector gaps are not closed by that design.
+The lab reuses ordinary cognition, memory and action owners through a shared runtime; it is not a new cognition pipeline or a replacement for the in-game Intelligence panel. CR11/CR12 and the inspector qualification below remain open at their recorded scopes. Lab retention/export, exact captured inspection and compact navigation are implemented under CL05/CL08; [integrated qualification](../verification/cognition-lab.md) and CL11 bound their evidence. Provider-side missing history, live permissions, complete-cost evidence and other existing in-game inspector gaps retain their own acceptance.
 
 ### Intelligence call inspector — deferred validation and documentation
 

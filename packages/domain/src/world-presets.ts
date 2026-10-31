@@ -61,9 +61,13 @@ export const RESERVOIR_DEMO_ATTRIBUTES: AttributeDefinition[] = [
     schema: { kind: 'category', choices: ['cautious', 'curious'], initial: 'cautious' },
   },
 ];
-export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts): WorldState {
-  const world = createBaseDiagnosticWorld(seed, accounts);
-  world.id = `reservoir-demo-${seed}`;
+export function createReservoirDemo(
+  seed = 73,
+  accounts?: WorldCreationAccounts,
+  worldId?: string,
+): WorldState {
+  const world = createBaseDiagnosticWorld(seed, accounts, worldId);
+  world.id = worldId ?? `reservoir-demo-${seed}`;
   world.presentation = {
     worldName: 'Clockwork inhabitants',
     locationName: 'The clockwork camp',
@@ -167,9 +171,13 @@ export function createReservoirDemo(seed = 73, accounts?: WorldCreationAccounts)
 }
 
 /** The player retains normal sight; the resident has only coarse, unidentified contact. */
-export function createTouchDemo(seed = 73, accounts?: WorldCreationAccounts): WorldState {
-  const world = createReservoirDemo(seed, accounts);
-  world.id = `touch-demo-${seed}`;
+export function createTouchDemo(
+  seed = 73,
+  accounts?: WorldCreationAccounts,
+  worldId?: string,
+): WorldState {
+  const world = createReservoirDemo(seed, accounts, worldId);
+  world.id = worldId ?? `touch-demo-${seed}`;
   const manifest = world.moduleManifest;
   world.moduleManifest = createModuleManifest(
     manifest.definitions,

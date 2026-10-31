@@ -44,7 +44,7 @@ Include the bounded general pad directly in cognition and relevance context. Exp
 
 Map notes use the same owner-private retrieval limits. They are read-only annotations in cognition context, with no physical entity reference or model note-edit token. Their labels come from the actor's marker or retained place knowledge, never hidden current place facts. Player edits use the existing knowledge owner; place edits require the exact retained observation and marker edits require the current actor's marker.
 
-Unbound remembered subjects can contribute subjective note text to recall without claiming that they match a currently visible individual. Do not expose a hidden document's revision, contents or name through a newly observed stranger's reference. New observations alone create no pads; deliberate editing or naming establishes a sparse personal record.
+Unbound remembered subjects can contribute subjective note text to recall without claiming that they match a currently visible individual. Do not expose a hidden document's revision, contents or name through a newly observed stranger's reference. New observations alone create no pads; deliberate editing or naming establishes a sparse personal record. Owner and authorized inspector editors also offer permitted remembered subjects as unwritten revision-zero drafts; opening or paging these editors creates no document.
 
 ## Persistence and evolution
 

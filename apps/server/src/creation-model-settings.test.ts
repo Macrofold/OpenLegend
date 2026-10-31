@@ -34,6 +34,10 @@ it('includes effective deployment settings in exact world-host review and config
       npc_response_fast: { ...target, structured_output: 'prompted_json' },
     }),
     config({ judgment: target, npc_response_fast: target, npc_response_complex: target }),
+    config({
+      judgment: target,
+      npc_response_fast: { ...target, chat_template_kwargs: { enable_thinking: false } },
+    }),
   ])
     expect(digest(creationOperatingConfiguration(changed))).not.toBe(fingerprint);
   expect(original.macrofoldJevModel).toBe(`deployment:${deployment}`);
@@ -42,6 +46,31 @@ it('includes effective deployment settings in exact world-host review and config
     value: expect.stringContaining(deployment),
   });
   expect(JSON.stringify(original)).not.toContain('fixture-only-secret');
+
+  const modelOnly = creationOperatingConfiguration(
+    readConfig({
+      MACROFOLD_API_KEY: undefined,
+      MACROFOLD_MODEL_API_KEY: 'model-only-secret',
+      DECISION_ESCALATION_MODEL: 'gpt-6-luna',
+      OPENLEGEND_MODEL_TARGETS_JSON: JSON.stringify({
+        schema_version: 1,
+        workspace_id: workspace,
+        purposes: {
+          npc_response_complex: {
+            ...target,
+            chat_template_kwargs: { enable_thinking: false },
+          },
+        },
+      }),
+    }),
+  );
+  expect(modelOnly.liveAiConfigured).toBe(true);
+  expect(modelOnly.macrofoldComplexDeployment).toContain('native thinking disabled');
+  expect(creationOperatingSettings(modelOnly)).toContainEqual({
+    label: 'Higher decision and dialogue model',
+    value: 'gpt-6-luna',
+  });
+  expect(JSON.stringify(modelOnly)).not.toContain('model-only-secret');
 });
 
 it('retains existing provider selections when deployment configuration is absent', () => {

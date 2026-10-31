@@ -19,6 +19,7 @@ interface ActiveCapture {
   call?: IntelligenceCall;
   exchangeBytes: number;
   exchangeSizes: number[];
+  exchangeOmitted: boolean;
   release: () => void;
 }
 
@@ -70,7 +71,13 @@ export class IntelligenceLog {
       },
     ),
   });
-  constructor(private store: GameRepository) {}
+  constructor(
+    private store: GameRepository,
+    private readonly onCapture?: (
+      requestId: string,
+      call: { exchanges: IntelligenceCall['exchanges']; partial: boolean } | undefined,
+    ) => Promise<void>,
+  ) {}
   private pending = new Map<string, PreparedDiagnosticRecord>();
   private retention = new DiagnosticRetention();
   private draining?: Promise<void>;
@@ -220,6 +227,24 @@ export class IntelligenceLog {
       >
     > = {},
   ): Promise<T> {
+    const requestId =
+      input &&
+      typeof input === 'object' &&
+      'requestId' in input &&
+      typeof input.requestId === 'string'
+        ? input.requestId
+        : metadata.id;
+    const report = async (call?: {
+      exchanges: IntelligenceCall['exchanges'];
+      partial: boolean;
+    }) => {
+      if (!requestId || !this.onCapture) return;
+      try {
+        await this.onCapture(requestId, call);
+      } catch (error) {
+        recordBackgroundFailure('lab-wire-capture', error);
+      }
+    };
     const reservationBytes = DIAGNOSTIC_LIMITS.recordBytes * 3;
     const release =
       !this.closed && this.makeRoom(reservationBytes)
@@ -227,7 +252,13 @@ export class IntelligenceLog {
         : undefined;
     if (!release) {
       this.omitted.captures++;
-      return this.context.run(undefined, execute);
+      return this.context.run(undefined, async () => {
+        try {
+          return await execute();
+        } finally {
+          await report();
+        }
+      });
     }
     const prepared = prepareDiagnosticRecord(
       {
@@ -246,12 +277,19 @@ export class IntelligenceLog {
     if (!prepared) {
       release();
       this.omitted.captures++;
-      return this.context.run(undefined, execute);
+      return this.context.run(undefined, async () => {
+        try {
+          return await execute();
+        } finally {
+          await report();
+        }
+      });
     }
     const capture: ActiveCapture = {
       call: { ...prepared.value, exchanges: [], timings: {} },
       exchangeBytes: 0,
       exchangeSizes: [],
+      exchangeOmitted: false,
       release,
     };
     this.captures.add(capture);
@@ -311,6 +349,11 @@ export class IntelligenceLog {
               durationMs: Math.max(0, Date.parse(call.completedAt) - Date.parse(call.startedAt)),
             };
             await this.save(call);
+            // Provider capture owns its bounded sanitized exchanges independently
+            // of the rolling diagnostic record, which may omit them to fit its
+            // combined input/output ceiling. Ordinary game calls copy nothing here.
+            if (this.onCapture)
+              await report({ exchanges: call.exchanges.slice(), partial: capture.exchangeOmitted });
           }
         } finally {
           this.retireCapture(capture);
@@ -338,11 +381,16 @@ export class IntelligenceLog {
     const active = this.context.getStore();
     const call = active?.call;
     if (!call || this.closed) return;
+    const omitted = () => {
+      active.exchangeOmitted = true;
+      this.omitContent();
+    };
+    active.exchangeOmitted ||= !!observed.streaming;
     const exchange: IntelligenceCall['exchanges'][number] = {
       path: new URL(observed.url).pathname,
       method: observed.method,
       startedAt: new Date(observed.startedAt).toISOString(),
-      input: observed.requestBody === undefined ? null : this.decode(observed.requestBody),
+      input: observed.requestBody === undefined ? null : this.decode(observed.requestBody, omitted),
       httpStatus: observed.status,
       completedAt: new Date(observed.completedAt).toISOString(),
       durationMs: Math.max(0, observed.completedAt - observed.startedAt),
@@ -350,15 +398,14 @@ export class IntelligenceLog {
       output: observed.streaming
         ? { unavailable: 'Streaming body omitted; final result is recorded.' }
         : observed.bytes
-          ? this.decode(new TextDecoder().decode(observed.bytes))
+          ? this.decode(new TextDecoder().decode(observed.bytes), omitted)
           : { unavailable: observed.error?.kind ?? 'Response body unavailable.' },
     };
-    const captured = captureDiagnosticValue(
-      exchange,
-      DIAGNOSTIC_LIMITS.recordBytes,
-      this.omitContent,
-    );
-    if (!captured || typeof captured !== 'object' || !('path' in captured)) return;
+    const captured = captureDiagnosticValue(exchange, DIAGNOSTIC_LIMITS.recordBytes, omitted);
+    if (!captured || typeof captured !== 'object' || !('path' in captured)) {
+      active.exchangeOmitted = true;
+      return;
+    }
     const bytes = diagnosticValueBytes(captured);
     while (
       call.exchanges.length &&
@@ -368,13 +415,14 @@ export class IntelligenceLog {
       const index = poll >= 0 ? poll : 0;
       call.exchanges.splice(index, 1);
       active.exchangeBytes -= active.exchangeSizes.splice(index, 1)[0]!;
+      active.exchangeOmitted = true;
       this.omitContent();
     }
     active.exchangeBytes += bytes;
     active.exchangeSizes.push(bytes);
     call.exchanges.push(captured as IntelligenceCall['exchanges'][number]);
   };
-  private decode(text: string): unknown {
-    return captureDiagnosticValue(text, DIAGNOSTIC_LIMITS.recordBytes, this.omitContent);
+  private decode(text: string, omitted: () => void): unknown {
+    return captureDiagnosticValue(text, DIAGNOSTIC_LIMITS.recordBytes, omitted);
   }
 }

@@ -39,7 +39,7 @@ export async function memoryHistory(
   service: WorldService,
   actorId: string,
   scope: RequestScope,
-  request: { cursor?: string; query?: string; thoughts?: boolean },
+  request: { cursor?: string; query?: string; thoughts?: boolean; limit?: number },
 ): Promise<MemoryHistoryPage> {
   const permitted = () =>
     service.mayInspectPrivate(actorId, scope) &&
@@ -76,7 +76,18 @@ export async function memoryHistory(
   }
   const result = await memories.browse(
     { worldId: world.id, actorId, generation: head.generation },
-    { before, terms, thoughts: !!request.thoughts, limit: MEMORY_PAGE, scan: SEARCH_SCAN_ROWS },
+    {
+      before,
+      terms,
+      thoughts: !!request.thoughts,
+      limit: z
+        .number()
+        .int()
+        .min(1)
+        .max(100)
+        .parse(request.limit ?? MEMORY_PAGE),
+      scan: SEARCH_SCAN_ROWS,
+    },
   );
   // Forgetting, correction, restore or lost access during the read invalidates the page.
   if (

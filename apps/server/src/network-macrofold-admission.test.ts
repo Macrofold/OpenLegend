@@ -149,9 +149,10 @@ describe('protected authoring admission through the actual server and PostgreSQL
       journalAllowed.resolve();
       await cancelled.promise;
       // Inspect the actual persisted owner records after the background cleanup starts.
-      const keys = retained.filter((key) => key.includes(':operation:run:'));
-      expect(keys).toHaveLength(1);
-      expect(await store.getIntegration(keys[0]!)).toMatchObject({
+      // The retention hook selects this exact accepted Run. Its integration key
+      // is opaque runtime addressing, not a journal-type discriminator.
+      expect(retained).toEqual([journalKey]);
+      expect(await store.getIntegration(journalKey)).toMatchObject({
         response: {
           run_id: 'late-original-run',
           worker_id: 'fixture-worker',

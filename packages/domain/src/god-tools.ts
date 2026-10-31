@@ -63,6 +63,24 @@ import type {
 import { GOD_SPAWN_OPTIONS } from './worlds/base/catalogue.js';
 export { GOD_SPAWN_OPTIONS } from './worlds/base/catalogue.js';
 
+/** Read the same supported native authoring vocabulary used by spawn/edit admission.
+ * This owner currently implements the bundled world's fixed creation family.
+ * Extend admission and this catalogue together for another family; see
+ * docs/projects/cognition-lab-tech-design.md#3-shared-owners-and-installed-modules. */
+export function godAuthoringCatalogue(world: WorldState, actorId?: string) {
+  return {
+    spawnOptions: GOD_SPAWN_OPTIONS,
+    traits: [
+      ...new Map(
+        [
+          ...TRAIT_BANK,
+          ...(actorId ? (entityGet(world.entities, actorId)?.actor?.traits ?? []) : []),
+        ].map((trait) => [trait.id, trait]),
+      ).values(),
+    ],
+  };
+}
+
 function reject(world: WorldState, code: string, message: string): Transition {
   return { world, events: [], outcome: outcome(false, code, message) };
 }

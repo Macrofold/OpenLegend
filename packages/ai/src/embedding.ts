@@ -11,7 +11,16 @@ import type {
 import { captureModelPrices, estimateCostUsd, modelTokenPrices } from './usage.js';
 import { decodeUsage, record } from './validation.js';
 /** Adapter admission limits shared by callers planning bounded batches. */
-export const EMBEDDING_LIMITS = { texts: 33, textBytes: 8000, batchBytes: 64000 } as const;
+export const EMBEDDING_LIMITS = {
+  texts: 33,
+  textBytes: 8000,
+  batchBytes: 64000,
+  dimensions: 3072,
+  responseBytes: 2_000_000,
+  // Decoding compact exponent notation can enlarge JSON on capture. At most
+  // 33 × 3,072 finite doubles fit below 3 MB, including their bounded receipt.
+  resultBytes: 3_000_000,
+} as const;
 export interface EmbeddingRequest extends RequestControl {
   texts: string[];
 }
@@ -56,7 +65,7 @@ export function createEmbeddingClient(config: {
         if (
           !Number.isInteger(config.dimensions) ||
           config.dimensions < 64 ||
-          config.dimensions > 3072 ||
+          config.dimensions > EMBEDDING_LIMITS.dimensions ||
           !request.texts.length ||
           request.texts.length > EMBEDDING_LIMITS.texts ||
           request.texts.some(
@@ -97,7 +106,7 @@ export function createEmbeddingClient(config: {
                   body,
                   redirect: 'error',
                 },
-                bodyPolicy: { kind: 'bounded', maxBytes: 2000000 },
+                bodyPolicy: { kind: 'bounded', maxBytes: EMBEDDING_LIMITS.responseBytes },
               },
               (metadata) => {
                 receipt.httpStatus = metadata.status;

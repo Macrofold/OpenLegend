@@ -1,7 +1,7 @@
 import type { AttributeDefinition } from '../../world-modules.js';
 import { canonicalJson, contentLabel } from '../../events.js';
 import { BASE_RECIPE_FAMILIES } from './recipe-families.js';
-import { BASE_ACTION_DEFAULTS } from './actions.js';
+import { BASE_ACTION_DEFAULTS } from './action-defaults.js';
 import { BASE_PROJECTILE_CONTACT_WARNING } from './ranged-counterplay.js';
 
 export const SLING_HANDLING: AttributeDefinition = {

@@ -14,6 +14,7 @@ import type {
   BoundaryImpactPlan,
 } from './construction.js';
 export * from './construction.js';
+export * from './cognition-lab.js';
 import type { WorkBatchRequest, WorkBatchSelection } from './work-batches.js';
 export * from './work-batches.js';
 import type {
@@ -78,6 +79,7 @@ export interface CommandInput {
     | 'activity'
     | 'activity-request'
     | 'say'
+    | 'express'
     | 'pickup'
     | 'drop'
     | 'transfer-item'
@@ -137,6 +139,7 @@ export interface CommandInput {
   after?: string;
   containerId?: string;
   expectedScope?: string;
+  verb?: string;
   text?: string;
   volume?: SpeechVolume;
   facing?: number;
@@ -1380,7 +1383,7 @@ export interface GodMindView {
   notepads?: {
     subjectId: string | null;
     subjectKind?: 'place' | 'map-marker';
-    origin: 'authored-starting' | 'actor-edit';
+    origin: 'authored-starting' | 'actor-edit' | 'unwritten';
     label: string;
     text: string;
     revision: number;

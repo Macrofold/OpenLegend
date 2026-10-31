@@ -137,6 +137,9 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     .number()
     .int()
     .parse(numberSetting(env, 'OPEN_LEGEND_PLAYER_CAPACITY', 100, 1, 10000));
+  const dataDirectory = resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data');
+  const labUrl = new URL(databaseUrl);
+  labUrl.pathname = `${labUrl.pathname}_cognition_lab`;
   return {
     ...generation,
     creation: {
@@ -164,6 +167,32 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     },
     worldPreset,
     databaseUrl,
+    cognitionLab: {
+      databaseUrl: env['OPEN_LEGEND_LAB_DATABASE_URL']?.trim() || labUrl.href,
+      dataDirectory: resolve(env['OPEN_LEGEND_LAB_DATA_DIR'] ?? `${dataDirectory}/cognition-lab`),
+      // A second database never duplicates the game's real spending entitlement.
+      budgetUsd: numberSetting(env, 'OPEN_LEGEND_LAB_BUDGET_USD', 0, 0, 100),
+      storageAllowanceBytes:
+        numberSetting(
+          env,
+          'OPEN_LEGEND_LAB_STORAGE_MIB',
+          2048,
+          1,
+          Math.floor(Number.MAX_SAFE_INTEGER / 1024 ** 2),
+        ) *
+        1024 *
+        1024,
+      runCaptureAllowanceBytes:
+        numberSetting(
+          env,
+          'OPEN_LEGEND_LAB_CAPTURE_MIB',
+          64,
+          1,
+          Math.floor(Number.MAX_SAFE_INTEGER / 1024 ** 2),
+        ) *
+        1024 *
+        1024,
+    },
     sqlWriteGroups: sqlWriteGroups === 'on',
     profiling: z.enum(['off', 'on']).parse(env['OPEN_LEGEND_PROFILING'] ?? 'off') === 'on',
     mcpRead: readMcpConfig(env),
@@ -177,7 +206,7 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     host,
     godMode: env['OPEN_LEGEND_GOD_MODE'] === 'true',
     port,
-    dataDirectory: resolve(env['OPEN_LEGEND_DATA_DIR'] ?? '.data'),
+    dataDirectory,
     seed: numberSetting(env, 'WORLD_SEED', 1086, 1, 0x7fffffff),
     baseRatio: 60,
     exitGraceMs: numberSetting(env, 'OPEN_LEGEND_EXIT_GRACE_SECONDS', 15, 1, 60) * 1000,
@@ -186,7 +215,8 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     decisionEscalation: env['DECISION_ESCALATION_JSON']
       ? decisionEscalationConfigSchema.parse(JSON.parse(env['DECISION_ESCALATION_JSON']))
       : defaultDecisionEscalation(
-          macrofoldKey
+          macrofoldKey ||
+            (generation.macrofoldModelKey && generation.modelTargets?.purposes.judgment)
             ? `macrofold/${macrofoldJudgmentModel({ ...generation, macrofoldJevModel })}`
             : `jev/${jevModel}`,
         ),

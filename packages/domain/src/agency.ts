@@ -1466,6 +1466,11 @@ export function isPhysicalCommand(command: Command): boolean {
   )
     return false;
   switch (command.type) {
+    case 'express':
+      return (
+        isSafeRecordId(command.verb) &&
+        (command.targetId === undefined || isSafeRecordId(command.targetId))
+      );
     case 'impact-boundary':
       return validBoundaryImpactIntent(nativeOperationFields(command));
     case 'operate-gate': {

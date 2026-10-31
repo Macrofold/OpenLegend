@@ -98,13 +98,18 @@ export function namedTimeSchema(world: WorldState) {
   return names.length ? z.enum(names as [string, ...string[]]).nullable() : z.null();
 }
 /** Built per world: the stopping-time names come from the world's own clock policy. */
-export function navigationInstructions(world: WorldState): string {
+export function navigationInstructions(
+  world: WorldState,
+  { includeActivityRequests = true }: { includeActivityRequests?: boolean } = {},
+): string {
   const times = namedClockTimes(world);
   const navigation = NAVIGATION_TEXT.replace(
     '{until}',
     times.length ? `, until ${times.join('/')} to end it` : '',
   );
-  const requests = activityRequestDescriptors(world);
+  // Decision context already carries the typed catalog and its current choices.
+  // Standalone action grounding still needs the complete installed catalog here.
+  const requests = includeActivityRequests ? activityRequestDescriptors(world) : [];
   return requests.length
     ? `${navigation}\nOptional installed activity requests: ${JSON.stringify(requests)}. To explicitly choose one, set invocation.family to its exact id and invocation.parameters to all its selected closed fields. Every navigation field must be null. Keep its selected mode equal to act.mode. These are requested activities, never evidence that a method is learned. Choosing no new work and ordinary actions remain available; a request alone creates no goal or completed work.`
     : navigation;

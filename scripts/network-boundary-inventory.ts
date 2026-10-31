@@ -32,6 +32,12 @@ export const localProcessOwners: Readonly<Record<string, string>> = {
   'scripts/decision-benchmark/run.ts': 'Local Git revision/diff inspection only.',
   'scripts/decision-benchmark/escalation.ts': 'Local Git revision/diff inspection only.',
   'scripts/profile-server.ts': 'Local Git revision inspection only.',
+  'scripts/performance/cognition-lab-actions.ts':
+    'Local Git revision inspection only; native action measurements use an owned disposable loopback PostgreSQL fixture.',
+  'scripts/performance/cognition-lab-storage.ts':
+    'Local Git revision inspection only; measurements use disposable loopback PostgreSQL through the existing repository.',
+  'scripts/performance/cognition-lab-runtime.ts':
+    'Local Git revision inspection only; disposable native HTTP specimens use the existing bounded tool HTTP owner.',
   'scripts/performance/profile-server.mjs':
     'Local profiling server child; outgoing work uses script network boundary.',
   'scripts/stress-data.ts': 'Local Git revision inspection only.',
@@ -51,6 +57,9 @@ export const localGitCommands: Readonly<Record<string, readonly string[]>> = {
   'scripts/decision-benchmark/run.ts': ['rev-parse', 'ls-files', 'diff'],
   'scripts/decision-benchmark/escalation.ts': ['rev-parse', 'diff'],
   'scripts/profile-server.ts': ['rev-parse', 'ls-files', 'branch'],
+  'scripts/performance/cognition-lab-actions.ts': ['rev-parse'],
+  'scripts/performance/cognition-lab-storage.ts': ['rev-parse'],
+  'scripts/performance/cognition-lab-runtime.ts': ['rev-parse'],
   'scripts/stress-data.ts': ['rev-parse'],
   'scripts/check-agent-guidance.mjs': ['ls-files'],
   'scripts/check-assets.ts': ['ls-files'],
@@ -160,6 +169,10 @@ export const generatedNetworkArtifacts: Readonly<Record<string, string>> = {
 export const fixtureToolOwners: Readonly<Record<string, string>> = {
   'scripts/performance/profile-action-input.ts':
     'Disposable PostgreSQL-backed native input measurement; no listener, inference worker or provider calls.',
+  'scripts/performance/cognition-lab-actions.ts':
+    'Owned disposable native action catalogue fixture; uses zero-budget config and no HTTP or inference client.',
+  'scripts/performance/cognition-lab-runtime.ts':
+    'Owned disposable game/lab HTTP fixture with native providers disabled; actual requests use the bounded tool HTTP owner.',
   'scripts/capture-starting-art-study.ts':
     'Disposable native HTTP journey through bounded test helper; no app deployment import.',
   'scripts/decision-benchmark/escalation-load.ts':

@@ -179,9 +179,35 @@ function targetKey(target: MacrofoldDeploymentTarget): string {
   ]);
 }
 
+// These assertions have the same meaning in draft7 and 2020-12. Keep dialect
+// conversion deliberately smaller than general JSON Schema (notably no tuples,
+// references or dependencies); unsupported schemas retain explicit mode refusal.
+const portableKeywords = new Set([
+  'type',
+  'properties',
+  'required',
+  'additionalProperties',
+  'items',
+  'enum',
+  'const',
+  'anyOf',
+  'minimum',
+  'maximum',
+  'minItems',
+  'maxItems',
+  'minLength',
+  'maxLength',
+  'pattern',
+  // These annotations retain their meaning across both dialects. They still
+  // require advertised support; dropping descriptions would erase model guidance.
+  'title',
+  'description',
+]);
 /** Property names and enum/example values are data, not JSON-schema keywords. */
-function schemaKeywords(schema: JsonSchema): Set<string> {
+function schemaFeatures(schema: JsonSchema) {
   const found = new Set<string>();
+  let portable = true;
+  let nestedDialect = false;
   const maps = new Set([
     'properties',
     'patternProperties',
@@ -190,16 +216,22 @@ function schemaKeywords(schema: JsonSchema): Set<string> {
     'dependencies',
     'dependentSchemas',
   ]);
-  function visit(value: unknown): void {
+  function visit(value: unknown, root = false): void {
     if (Array.isArray(value)) {
-      value.forEach(visit);
+      value.forEach((child) => visit(child));
       return;
     }
     if (!value || typeof value !== 'object') return;
     for (const [key, child] of Object.entries(value)) {
       found.add(key);
+      if (key === '$schema' && !root) nestedDialect = true;
+      if (
+        (key === '$schema' ? !root : !portableKeywords.has(key)) ||
+        (key === 'items' && Array.isArray(child))
+      )
+        portable = false;
       if (maps.has(key) && child && typeof child === 'object' && !Array.isArray(child))
-        Object.values(child).forEach(visit);
+        Object.values(child).forEach((child) => visit(child));
       else if (
         [
           'items',
@@ -221,8 +253,8 @@ function schemaKeywords(schema: JsonSchema): Set<string> {
         visit(child);
     }
   }
-  visit(schema);
-  return found;
+  visit(schema, true);
+  return { keywords: found, portable, nestedDialect };
 }
 
 function knownDialect(value: unknown): string | undefined {
@@ -339,17 +371,45 @@ export class ModelTargetPreparation {
       );
     // Macrofold's protocol admits structural chat fields separately from optional parameters.
     // A missing optional-parameter declaration must not reject required messages/token bounds.
+    if (
+      target.chatTemplateKwargs &&
+      !capability.accepted_parameters.includes('chat_template_kwargs')
+    )
+      throw new ModelTargetPreparationError(
+        'unsupported',
+        'unsupported_model_capability',
+        'The selected deployment does not support the configured chat template options.',
+      );
     const supportedKeywords = new Set(capability.schema_keywords);
     const requestedDialect = knownDialect(schema['$schema']);
     const declaredDialect = knownDialect(capability.schema_dialect);
+    const features = schemaFeatures(schema);
+    const portableDialect =
+      requestedDialect === 'draft7' && declaredDialect === '2020-12' && features.portable;
     const compatibleDialect =
       requestedDialect === undefined ||
       declaredDialect === undefined ||
-      requestedDialect === declaredDialect;
+      requestedDialect === declaredDialect ||
+      portableDialect;
+    // $schema declares the dialect, not an output assertion. For the checked
+    // common subset, the serving dialect preserves every constraint. Capture
+    // this exact projection for local validation, accounting and wire output.
+    let nativeInputSchema = schema;
+    const keywords = new Set(features.keywords);
+    if (
+      requestedDialect &&
+      declaredDialect &&
+      compatibleDialect &&
+      (portableDialect || !supportedKeywords.has('$schema'))
+    ) {
+      const { $schema: _declaration, ...projected } = schema;
+      nativeInputSchema = projected;
+      if (!features.nestedDialect) keywords.delete('$schema');
+    }
     const nativeSchema =
       capability.json_schema &&
       compatibleDialect &&
-      [...schemaKeywords(schema)].every((keyword) => supportedKeywords.has(keyword));
+      [...keywords].every((keyword) => supportedKeywords.has(keyword));
     const mode =
       outputPolicy === 'auto'
         ? nativeSchema
@@ -377,6 +437,7 @@ export class ModelTargetPreparation {
     return Object.freeze({
       macrofoldDeployment: target,
       macrofoldOutputMode: mode,
+      schema: mode === 'json_schema' ? nativeInputSchema : schema,
       maxOutputTokens: Math.min(maxOutputTokens, capability.max_output_tokens),
       stream: request.stream !== false && capability.streaming,
     });

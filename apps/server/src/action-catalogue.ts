@@ -1,3 +1,5 @@
+import { selectedExpressions } from '@open-legend/domain';
+import { setImmediate as yieldScan } from 'node:timers/promises';
 import { constructionHelpPlans } from './construction.js';
 import { knownCeasefireConsequence } from '@open-legend/domain';
 import { contributionWithdrawals } from './handover-actions.js';
@@ -76,6 +78,8 @@ import type {
 } from '@open-legend/protocol';
 import type { WorldService } from './world-service.js';
 import { ACTION_DESCRIPTIONS, actionDescriptions } from './action-descriptions.js';
+import { digest } from './content-digest.js';
+import { beginTiming, endTiming, countMetric } from './performance.js';
 
 /** Safe selected-subject failures; other exceptions remain generic at the HTTP boundary. */
 export class ActionCatalogueUnavailable extends Error {}
@@ -138,38 +142,255 @@ export function actionCatalogue(
   context: ActionContext,
   scope: RequestScope = service.localScope,
 ): ActionCatalogue {
-  const catalogue = nativeActionCatalogue(service, context, scope),
-    policy = service.world.workBatchPolicy;
+  return finishCatalogue(catalogueForActor(service, context, scope, scope.actorId, false));
+}
+
+/** Creator inspection keeps the selected body distinct from the principal's native scope. */
+export function operatorActionCatalogue(
+  service: WorldService,
+  context: ActionContext,
+  actorId: string,
+  scope: RequestScope = service.localScope,
+): ActionCatalogue {
+  return finishCatalogue(operatorCatalogue(service, context, actorId, scope));
+}
+
+function finishCatalogue(scan: Generator<void, ActionCatalogue>): ActionCatalogue {
+  let step = scan.next();
+  while (!step.done) step = scan.next();
+  return step.value;
+}
+
+interface DeferredPreviews {
+  commands: Map<CommandInput, () => ReturnType<WorldService['previewCommand']>>;
+  actions: Map<string, () => ReturnType<WorldService['previewCommand']>>;
+  descriptions: Map<CommandInput, () => string>;
+  render: Map<CatalogueAction, () => string>;
+}
+function operatorCatalogue(
+  service: WorldService,
+  context: ActionContext,
+  actorId: string,
+  scope: RequestScope,
+  deferred?: DeferredPreviews,
+) {
+  service.assertScope(scope, 'create');
+  service.assertScope(scope, 'inspect');
+  if (!service.mayInspectPrivate(actorId, scope))
+    throw new ActionCatalogueUnavailable('This character is unavailable to the operator.');
+  return catalogueForActor(service, context, scope, actorId, true, deferred);
+}
+
+/** Browse a bounded window before kernel previews. The permitted descriptor scan
+ * remains explicit; unavailable-only windows may be empty with a next cursor. */
+export async function operatorActionCataloguePage(
+  service: WorldService,
+  context: ActionContext,
+  actorId: string,
+  scope: RequestScope,
+  options: { query?: string; cursor?: string; limit?: number; available?: boolean } = {},
+) {
+  const started = beginTiming();
+  try {
+    const limit = options.limit ?? 50;
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100)
+      throw new ActionCatalogueUnavailable('Choose an action page size from 1 to 100.');
+    const query = options.query?.trim().toLocaleLowerCase();
+    const fingerprint = digest({
+      revision: service.version,
+      world: service.world.id,
+      actorId,
+      scope: scopeKey(scope),
+      context,
+      query,
+      available: !!options.available,
+    });
+    let offset = 0;
+    if (options.cursor) {
+      let cursor: unknown;
+      try {
+        cursor = JSON.parse(Buffer.from(options.cursor, 'base64url').toString('utf8'));
+      } catch {
+        throw new ActionCatalogueUnavailable('Refresh this action page.');
+      }
+      if (
+        !Array.isArray(cursor) ||
+        cursor[0] !== fingerprint ||
+        !Number.isSafeInteger(cursor[1]) ||
+        cursor[1] < 0
+      )
+        throw new ActionCatalogueUnavailable(
+          'The native action page changed. Refresh its first page.',
+        );
+      offset = cursor[1];
+    }
+    const deferred: DeferredPreviews = {
+      commands: new Map(),
+      actions: new Map(),
+      descriptions: new Map(),
+      render: new Map(),
+    };
+    const revision = service.version;
+    const scan = operatorCatalogue(service, context, actorId, scope, deferred);
+    const current = () => {
+      service.assertScope(scope, 'create');
+      service.assertScope(scope, 'inspect');
+      if (service.version !== revision || !service.mayInspectPrivate(actorId, scope))
+        throw new ActionCatalogueUnavailable(
+          'The native action page changed. Refresh its first page.',
+        );
+    };
+    const next = () => {
+      const chunk = beginTiming();
+      try {
+        return scan.next();
+      } finally {
+        endTiming('actionCatalogue.scanChunk', chunk);
+      }
+    };
+    let step = next();
+    while (!step.done) {
+      await yieldScan();
+      countMetric('actionCatalogue.scanYields');
+      current();
+      step = next();
+    }
+    const catalogue = step.value;
+    const candidates: CatalogueAction[] = [];
+    let searched = 0;
+    for (const action of catalogue.actions) {
+      if (++searched % 32 === 0) {
+        await yieldScan();
+        current();
+      }
+      // Search native labels, keywords and exact bindings. Descriptions and
+      // current refusals are projected only after selecting this window.
+      if (
+        !query ||
+        JSON.stringify({
+          id: action.id,
+          label: action.label,
+          keywords: action.keywords,
+          intent: action.intent,
+        })
+          .toLocaleLowerCase()
+          .includes(query)
+      )
+        candidates.push(action);
+    }
+    candidates.sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    countMetric('actionCatalogue.candidates', candidates.length);
+    const window = candidates.slice(offset, offset + limit);
+    let previewed = 0;
+    for (const action of window) {
+      if (++previewed % 8 === 0) {
+        await yieldScan();
+        current();
+      }
+      const description = deferred.render.get(action);
+      if (description) action.description = description();
+      const check = deferred.actions.get(action.id);
+      if (action.enabled && check) {
+        const result = check();
+        action.enabled = result.ok;
+        if (!result.ok) action.reason = result.message;
+      }
+    }
+    current();
+    return {
+      items: options.available
+        ? window.filter((action) => action.enabled && action.intent.kind === 'command')
+        : window,
+      ...(offset + limit < candidates.length
+        ? {
+            nextCursor: Buffer.from(JSON.stringify([fingerprint, offset + limit])).toString(
+              'base64url',
+            ),
+          }
+        : {}),
+    };
+  } finally {
+    endTiming('actionCatalogue.page', started);
+  }
+}
+
+function* catalogueForActor(
+  service: WorldService,
+  context: ActionContext,
+  scope: RequestScope,
+  actorId: string,
+  operator: boolean,
+  deferred?: DeferredPreviews,
+): Generator<void, ActionCatalogue> {
+  const catalogue = yield* nativeActionCatalogue(
+    service,
+    context,
+    scope,
+    actorId,
+    operator,
+    deferred,
+  );
+  const policy = service.world.workBatchPolicy;
+  const description = (action: CatalogueAction) =>
+    deferred?.render.get(action)?.() ?? action.description;
+  let projected = 0;
+  if (deferred)
+    for (const action of catalogue.actions) {
+      if (++projected % 32 === 0) yield;
+      if (action.intent.kind === 'command') {
+        const check = deferred.commands.get(action.intent.command);
+        if (check) deferred.actions.set(action.id, check);
+        const render = deferred.descriptions.get(action.intent.command);
+        if (render) deferred.render.set(action, render);
+      }
+    }
   for (const action of [...catalogue.actions]) {
+    if (++projected % 32 === 0) yield;
     if (action.intent.kind !== 'command') continue;
-    const choice = cooperativePurposeChoice(service.world, scope.actorId, action.intent.command);
+    const choice = cooperativePurposeChoice(service.world, actorId, action.intent.command);
     if (!choice) continue;
-    catalogue.actions.push({
+    const id = JSON.stringify(['cooperative-purpose', choice.agreementId, action.id]);
+    const check = deferred?.actions.get(action.id);
+    if (check) deferred!.actions.set(id, check);
+    const derived: CatalogueAction = {
       ...action,
-      id: JSON.stringify(['cooperative-purpose', choice.agreementId, action.id]),
+      id,
       intent: { kind: 'command', command: choice.command },
       label: `${choice.label}: ${action.label}`,
       description: `${choice.description} ${action.description}`,
-    });
+    };
+    if (deferred) {
+      const render = deferred.render.get(action) ?? (() => action.description);
+      deferred.render.set(derived, () => `${choice.description} ${render()}`);
+    }
+    catalogue.actions.push(derived);
   }
   for (const action of catalogue.actions) {
+    if (++projected % 32 === 0) yield;
     if (action.intent.kind !== 'command') continue;
     const command = action.intent.command,
       consequence = knownCeasefireConsequence(
         service.world,
-        scope.actorId,
+        actorId,
         command.type,
         command.targetId,
       );
-    if (consequence) action.description += ' ' + consequence;
+    if (consequence) {
+      const render = deferred?.render.get(action);
+      if (render) deferred!.render.set(action, () => `${render()} ${consequence}`);
+      else action.description += ' ' + consequence;
+    }
   }
   if (!policy) return catalogue;
-  const actions = catalogue.actions.flatMap((action) => {
-    if (action.intent.kind !== 'command' || action.intent.command.cooperation) return [action];
+  const actions: CatalogueAction[] = [];
+  for (const action of catalogue.actions) {
+    if (++projected % 32 === 0) yield;
+    actions.push(action);
+    if (action.intent.kind !== 'command' || action.intent.command.cooperation) continue;
     const command = action.intent.command,
       meal =
         command.type === 'eat' && command.itemId
-          ? mealChoiceForItem(service.world, scope.actorId, command.itemId)
+          ? mealChoiceForItem(service.world, actorId, command.itemId)
           : undefined;
     const selection = meal
       ? meal.selection
@@ -188,42 +409,66 @@ export function actionCatalogue(
               ...(command.tools ? { tools: command.tools } : {}),
             }
           : undefined;
-    return selection
-      ? [
-          action,
-          {
-            ...action,
-            id: `repeat:${action.id}`,
-            label:
-              selection.kind === 'meal'
-                ? meal!.label
-                : `${policy.repeatLabel}: ${selection.kind === 'craft' ? service.world.recipes[selection.recipe.id]!.name : action.label}`,
-            description: `${action.description} ${selection.kind === 'meal' ? meal!.description : policy.help}`,
-            enabled: service.currentScope(scope, 'play', true),
-            reason: undefined,
-            intent: { kind: 'work-batch' as const, selection },
-          },
-        ]
-      : [action];
-  });
+    if (selection) {
+      const derived: CatalogueAction = {
+        ...action,
+        id: `repeat:${action.id}`,
+        label:
+          selection.kind === 'meal'
+            ? meal!.label
+            : `${policy.repeatLabel}: ${selection.kind === 'craft' ? service.world.recipes[selection.recipe.id]!.name : action.label}`,
+        description: `${action.description} ${selection.kind === 'meal' ? meal!.description : policy.help}`,
+        enabled: operator || service.currentScope(scope, 'play', true),
+        reason: undefined,
+        intent: { kind: 'work-batch' as const, selection },
+      };
+      if (deferred)
+        deferred.render.set(
+          derived,
+          () =>
+            `${description(action)} ${selection.kind === 'meal' ? meal!.description : policy.help}`,
+        );
+      actions.push(derived);
+    }
+  }
   return { ...catalogue, actions };
 }
-function nativeActionCatalogue(
+function* nativeActionCatalogue(
   service: WorldService,
   context: ActionContext,
-  scope: RequestScope = service.localScope,
-): ActionCatalogue {
-  service.assertScope(scope);
-  const controlling = service.currentScope(scope, 'play', true);
+  scope: RequestScope,
+  actorId: string,
+  operator: boolean,
+  deferred?: DeferredPreviews,
+): Generator<void, ActionCatalogue> {
+  service.assertScope(scope, operator ? 'create' : 'play');
+  const controlling = operator || service.currentScope(scope, 'play', true);
   const controlUnavailable = { ok: false, message: 'Take control of your character to act here.' };
   const selectedItem = context.itemId ? itemFor(service.world, context.itemId) : undefined;
   if (
     context.itemId &&
-    (!selectedItem || !accessiblePossession(service.world, scope.actorId, selectedItem.id))
+    (!selectedItem || !accessiblePossession(service.world, actorId, selectedItem.id))
   )
     throw new ActionCatalogueUnavailable('This possession is unavailable.');
-  const observation = service.observe(scope.actorId, { includeMemories: false })!;
+  const observation = service.observe(actorId, { includeMemories: false })!;
   const descriptions = actionDescriptions(observation, service.world);
+  const describe = (command: CommandInput) => {
+    const render = () => {
+      countMetric('actionCatalogue.descriptions');
+      return descriptions.describe(command);
+    };
+    if (
+      deferred &&
+      context.catalogue &&
+      !context.itemId &&
+      !context.recipeId &&
+      !context.equipped
+    ) {
+      deferred.descriptions.set(command, render);
+      return '';
+    }
+    return render();
+  };
   const actions: CatalogueAction[] = [];
   const unavailableCategories = new Set<string>();
   // All calls below share this unchanged synchronous world/control read. Reuse
@@ -234,14 +479,24 @@ function nativeActionCatalogue(
   const preview = (command: CommandInput) => {
     let result = previews.get(command);
     if (!result) {
-      result = service.previewCommand(command, scope);
+      const check = () => {
+        countMetric('actionCatalogue.previews');
+        return operator
+          ? service.previewOperatorCommand(command, actorId, scope)
+          : service.previewCommand(command, scope);
+      };
+      if (deferred) {
+        let prepared: ReturnType<WorldService['previewCommand']> | undefined;
+        deferred.commands.set(command, () => (prepared ??= check()));
+        result = { ok: true, code: 'prepared', message: '' };
+      } else result = check();
       previews.set(command, result);
     }
     return result;
   };
   const world = service.world;
-  const craftCommand = prepareManufactureChoices(world, scope.actorId);
-  const itemActions = prepareNativeInventoryActions(world, scope.actorId);
+  const craftCommand = prepareManufactureChoices(world, actorId);
+  const itemActions = prepareNativeInventoryActions(world, actorId);
   if (context.recipeId) {
     const recipe = observation.knownRecipes.find((entry) => entry.id === context.recipeId);
     if (!recipe) throw new ActionCatalogueUnavailable('This method is no longer known.');
@@ -254,7 +509,7 @@ function nativeActionCatalogue(
             label: 'Craft one batch',
             category: 'Create',
             icon: nativeActionIcon(command.type),
-            description: descriptions.describe(command),
+            description: describe(command),
             facts: descriptions.facts(command),
             keywords: [recipe.name, 'craft'],
             enabled: availability.ok,
@@ -270,16 +525,16 @@ function nativeActionCatalogue(
     };
   }
   if (context.equipped) {
-    const equipment = preferredTargetEquipment(world, scope.actorId);
+    const equipment = preferredTargetEquipment(world, actorId);
     if (!equipment || equipment.id !== context.itemId)
       throw new ActionCatalogueUnavailable('The held item changed. Choose a target again.');
     const target = observation.visibleEntities.find((entry) => entry.id === context.targetId);
-    if (!target || target.id === scope.actorId)
+    if (!target || target.id === actorId)
       throw new ActionCatalogueUnavailable('That target is no longer in view.');
     const definition = world.itemDefinitions[equipment.definitionId]!;
     const commands: { id: string; label: string; category: string; command: CommandInput }[] = [];
     if (target.actor)
-      for (const strike of availableStrikes(world, scope.actorId, target))
+      for (const strike of availableStrikes(world, actorId, target))
         if (strike.weaponItemId === equipment.id)
           commands.push({
             id: `${strike.id}-${target.id}`,
@@ -307,7 +562,7 @@ function nativeActionCatalogue(
           id: `${type}:${target.id}:${equipment.id}`,
           label: rangedChoiceLabel(
             type,
-            observerDescription(world, scope.actorId, target.id),
+            observerDescription(world, actorId, target.id),
             definition.name,
           ),
           category: 'Combat',
@@ -331,7 +586,7 @@ function nativeActionCatalogue(
         category: 'Hunt',
         command: { type: 'hunt', targetId: target.id, itemId: equipment.id, ammunitionId },
       });
-    for (const option of competenceOptions(world, scope.actorId, target, [equipment]))
+    for (const option of competenceOptions(world, actorId, target, [equipment]))
       if (option.command.type === 'practice-shot' && option.command.itemId === equipment.id)
         commands.push({ ...option, category: 'Practice' });
     const selected = equippedTargetAction(
@@ -352,7 +607,7 @@ function nativeActionCatalogue(
           label: selected.label,
           category: selected.category,
           icon: nativeActionIcon(selected.command.type),
-          description: descriptions.describe(selected.command),
+          description: describe(selected.command),
           facts: descriptions.facts(selected.command),
           keywords: [],
           targetId: target.id,
@@ -370,7 +625,10 @@ function nativeActionCatalogue(
       : { ok: false, message: option.reason ?? controlUnavailable.message };
   if (selectedItem) {
     const item = selectedItem;
-    const projected = inventoryItemChoices(service, scope, item, preview, itemActions);
+    const projected = inventoryItemChoices(service, scope, item, preview, itemActions, {
+      actorId,
+      controlling,
+    });
     const options = projected.actions
       .filter((option) => !context.inventoryGroup || option.command.type !== 'split-item')
       .map(
@@ -389,7 +647,7 @@ function nativeActionCatalogue(
       );
     if (context.destinationId) {
       const destination = entityGet(service.world.entities, context.destinationId);
-      if (!destination || custodian(service.world, destination.id) !== scope.actorId)
+      if (!destination || custodian(service.world, destination.id) !== actorId)
         throw new ActionCatalogueUnavailable('This destination is unavailable.');
       const command: CommandInput = {
         type: 'transfer-item',
@@ -420,7 +678,7 @@ function nativeActionCatalogue(
           category: 'Possessions',
           description: option.command.inventoryGroup
             ? `Move ${option.command.quantity} units from this stack.`
-            : `${context.inventoryGroup ? `Uses one stack of ${item.quantity} units. ` : ''}${descriptions.describe(option.command)}`,
+            : `${context.inventoryGroup ? `Uses one stack of ${item.quantity} units. ` : ''}${describe(option.command)}`,
           facts: option.command.inventoryGroup ? [] : descriptions.facts(option.command),
           keywords: [service.world.itemDefinitions[item.definitionId]!.name],
           enabled: availability.ok,
@@ -431,21 +689,23 @@ function nativeActionCatalogue(
     );
   }
   const itemUses = selectedItem ? [selectedItem] : observation.inventory;
-  const targets = observation.visibleEntities.filter((entity) => entity.id !== scope.actorId);
+  const targets = observation.visibleEntities.filter((entity) => entity.id !== actorId);
   const targetById = new Map(targets.map((entity) => [entity.id, entity]));
   const selected =
-    context.targetId === scope.actorId
-      ? entityGet(world.entities, scope.actorId)
+    context.targetId === actorId
+      ? entityGet(world.entities, actorId)
       : targetById.get(context.targetId ?? '');
   if (context.targetId && !selected)
     throw new ActionCatalogueUnavailable('That target is no longer in view.');
   const actionTargets = context.catalogue || context.itemId ? targets : selected ? [selected] : [];
-  const personal = !!context.catalogue || selected?.id === scope.actorId;
+  const personal = !!context.catalogue || selected?.id === actorId;
   const sites = selected ? [selected] : context.catalogue || context.itemId ? targets : [];
   const fires = sites.filter((entity) => entity.heat);
   const fishingSources = sites.filter((entity) => entity.resource?.cast);
+  const contactExpressions = selectedExpressions(world, observation.actor).filter((d) => d.contact);
   const actionIds = new Set(actions.map((action) => action.id));
-  const add = (
+  let scanned = 0;
+  function* add(
     id: string,
     label: string,
     category: string,
@@ -454,7 +714,8 @@ function nativeActionCatalogue(
     targetId?: string,
     provided?: { availability: { ok: boolean; message: string }; description: string },
     icon = nativeActionIcon(command.type),
-  ) => {
+  ): Generator<void> {
+    if (++scanned % 32 === 0) yield;
     if (actionIds.has(id) || !nativeCommandSupported(world, nativeCommandKind(command.type)))
       return;
     // Ground exposes chosen destination movement, including a short evasive step. Personal work belongs to self;
@@ -477,7 +738,7 @@ function nativeActionCatalogue(
       !context.catalogue &&
       selected &&
       targetId !== selected.id &&
-      !(selected.id === scope.actorId && !targetId)
+      !(selected.id === actorId && !targetId)
     )
       return;
     const result = controlling ? (provided?.availability ?? preview(command)) : controlUnavailable;
@@ -487,7 +748,7 @@ function nativeActionCatalogue(
       label,
       icon,
       category,
-      description: provided?.description ?? descriptions.describe(command),
+      description: provided?.description ?? describe(command),
       facts: descriptions.facts(command),
       keywords,
       ...(targetId ? { targetId } : {}),
@@ -495,13 +756,13 @@ function nativeActionCatalogue(
       ...(!result.ok ? { reason: result.message } : {}),
       intent: { kind: 'command', command },
     });
-  };
+  }
   for (const shield of (personal || context.itemId || actionTargets.length ? itemUses : []).filter(
     (item) => world.itemDefinitions[item.definitionId]?.contactDefense,
   )) {
     const definition = world.itemDefinitions[shield.definitionId]!;
-    if (context.catalogue || selected?.id === scope.actorId || context.itemId)
-      add(
+    if (context.catalogue || selected?.id === actorId || context.itemId)
+      yield* add(
         `guard:${shield.id}:facing`,
         guardChoiceLabel(definition.name),
         'Defense',
@@ -514,7 +775,7 @@ function nativeActionCatalogue(
         BASE_GUARD_TEXT.keywords,
       );
     for (const target of actionTargets.filter((e) => e.actor?.alive))
-      add(
+      yield* add(
         `guard:${shield.id}:${target.id}`,
         guardChoiceLabel(definition.name, target.name),
         'Defense',
@@ -523,8 +784,8 @@ function nativeActionCatalogue(
         target.id,
       );
   }
-  if (selected?.actor?.alive && selected.id !== scope.actorId)
-    add(
+  if (selected?.actor?.alive && selected.id !== actorId)
+    yield* add(
       `follow:${selected.id}`,
       `Follow ${selected.name}`,
       'Movement',
@@ -556,7 +817,7 @@ function nativeActionCatalogue(
       !context.itemId &&
       !context.catalogue &&
       targetId !== selected?.id &&
-      !(selected?.id === scope.actorId && !targetId && personalFamily)
+      !(selected?.id === actorId && !targetId && personalFamily)
     )
       return false;
     unavailableCategories.add(category);
@@ -598,7 +859,7 @@ function nativeActionCatalogue(
   // Evasion remains a native capability. Deliberate menu browsing is not its
   // player interaction; a future quick control will use the same native admission.
   if (position)
-    add(
+    yield* add(
       'move',
       'Walk here',
       'Movement',
@@ -607,8 +868,8 @@ function nativeActionCatalogue(
       selected?.id,
     );
   if (!selected && !context.itemId && context.position)
-    for (const option of hearthPlacementOptions(world, scope.actorId, context.position))
-      add(option.id, option.label, 'Create', option.command, [], undefined, {
+    for (const option of hearthPlacementOptions(world, actorId, context.position))
+      yield* add(option.id, option.label, 'Create', option.command, [], undefined, {
         availability: controlling ? preview(option.command) : controlUnavailable,
         description: option.description,
       });
@@ -617,24 +878,32 @@ function nativeActionCatalogue(
     : selected
       ? [selected]
       : [])
-    for (const option of statusEffectActions(
-      world,
-      entityGet(world.entities, scope.actorId)!,
-      target,
-    ))
-      add(option.id, option.label, 'States', option.command, [], target.id, undefined, option.icon);
-  const self = entityGet(world.entities, scope.actorId)!.actor!;
+    for (const option of statusEffectActions(world, entityGet(world.entities, actorId)!, target))
+      yield* add(
+        option.id,
+        option.label,
+        'States',
+        option.command,
+        [],
+        target.id,
+        undefined,
+        option.icon,
+      );
+  const self = entityGet(world.entities, actorId)!.actor!;
   if (personal) {
     for (const option of learnedActivityCandidates(
       service,
-      scope.actorId,
+      actorId,
       undefined,
       0,
       undefined,
       'complete',
     ))
       if (option.command)
-        add(option.id, option.description, 'Activities', option.command, ['learned', 'activity']);
+        yield* add(option.id, option.description, 'Activities', option.command, [
+          'learned',
+          'activity',
+        ]);
     const reincarnation = reincarnationPolicy(world),
       treatment = reincarnation?.treatment;
     if (reincarnation && treatment && observation.actor.actor?.alive) {
@@ -653,15 +922,18 @@ function nativeActionCatalogue(
         )) {
           const command: CommandInput = { type: 'treat-scar', targetId: rest.id, scarId: scar.id };
           // These are personal choices even though their command names the permitted rest site.
-          add(`treat-${scar.id}`, `${reincarnation.treatmentLabel} ${scar.name}`, 'Body', command, [
-            'scar',
-            'treatment',
-          ]);
+          yield* add(
+            `treat-${scar.id}`,
+            `${reincarnation.treatmentLabel} ${scar.name}`,
+            'Body',
+            command,
+            ['scar', 'treatment'],
+          );
         }
     }
   }
   if (self.action?.ranged?.manual && self.action.targetId)
-    add(
+    yield* add(
       `release-shot:${self.action.id}`,
       BASE_RANGED_TEXT.shootingName,
       'Combat',
@@ -677,7 +949,7 @@ function nativeActionCatalogue(
           (!context.itemId || item.id === context.itemId) &&
           (world.itemDefinitions[item.definitionId]?.rangedWeapon ||
             world.itemDefinitions[item.definitionId]?.melee) &&
-          accessiblePossession(world, scope.actorId, item.id),
+          accessiblePossession(world, actorId, item.id),
       )
     : [];
   const rangedWeapons = tools.filter(
@@ -686,8 +958,7 @@ function nativeActionCatalogue(
   const projectiles = new Map<string, string | undefined>();
   for (const item of tools) {
     const kind = world.itemDefinitions[item.definitionId]?.rangedWeapon?.ammunitionKind;
-    if (kind && !projectiles.has(kind))
-      projectiles.set(kind, ammoFor(world, scope.actorId, kind)?.id);
+    if (kind && !projectiles.has(kind)) projectiles.set(kind, ammoFor(world, actorId, kind)?.id);
   }
   if (
     personal &&
@@ -696,26 +967,26 @@ function nativeActionCatalogue(
       self.agency.plan?.status === 'active' ||
       self.agency.plan?.status === 'blocked')
   )
-    add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
+    yield* add('cancel', 'Stop current work', 'Movement', { type: 'cancel' }, ['cancel', 'stop']);
   else includeUnavailableCategory('cancel', 'Movement');
   const recovery = bodyPolicy(world)?.recovery;
   if (personal && recovery)
-    add('recover', recovery.label, 'Body', { type: 'recover' }, ['recovery']);
-  const impactOptions = prepareBoundaryImpactOptions(world, scope.actorId, itemUses);
+    yield* add('recover', recovery.label, 'Body', { type: 'recover' }, ['recovery']);
+  const impactOptions = prepareBoundaryImpactOptions(world, actorId, itemUses);
   for (const target of actionTargets) {
     for (const option of impactOptions(target))
-      add(option.id, option.label, 'Build', option.command, [], target.id, {
+      yield* add(option.id, option.label, 'Build', option.command, [], target.id, {
         availability: controlling ? preview(option.command) : controlUnavailable,
         description: option.description,
       });
     if (!context.itemId)
       for (const option of gateUseOptions(world, target))
-        add(option.id, option.label, 'Build', option.command, [], target.id, {
+        yield* add(option.id, option.label, 'Build', option.command, [], target.id, {
           availability: controlling ? preview(option.command) : controlUnavailable,
           description: option.description,
         });
     if (context.catalogue && target.actor?.alive)
-      add(
+      yield* add(
         `follow:${target.id}`,
         `Follow ${target.name}`,
         'Movement',
@@ -724,7 +995,7 @@ function nativeActionCatalogue(
         target.id,
       );
     if (context.catalogue && worldSupport(target))
-      add(
+      yield* add(
         `move:${target.id}`,
         `Walk to ${target.name}`,
         'Movement',
@@ -735,7 +1006,7 @@ function nativeActionCatalogue(
     for (const option of context.itemId
       ? []
       : pickupActions(world, observation.actor, target, preview))
-      add(
+      yield* add(
         option.id,
         option.label,
         'Pick Up',
@@ -744,16 +1015,16 @@ function nativeActionCatalogue(
         target.id,
         { availability: option.availability, description: option.description },
       );
-    if (target.actor && target.id !== scope.actorId)
+    if (target.actor && target.id !== actorId)
       for (const definition of [
-        ...availableStrikes(world, scope.actorId, target),
+        ...availableStrikes(world, actorId, target),
         ...tools.flatMap((item) => {
-          if (isEquipped(world, scope.actorId, item.id)) return [];
+          if (isEquipped(world, actorId, item.id)) return [];
           const strike = strikeDefinition(item.definitionId, world, item.id, target);
           return strike ? [strike] : [];
         }),
       ])
-        add(
+        yield* add(
           `${definition.id}-${target.id}${definition.weaponItemId ? `:${definition.weaponItemId}` : ''}`,
           definition.label,
           'Combat',
@@ -768,13 +1039,26 @@ function nativeActionCatalogue(
           target.id,
         );
 
+    if (!context.itemId && target.actor?.alive && target.id !== actorId)
+      for (const definition of contactExpressions) {
+        const command: CommandInput = { type: 'express', verb: definition.id, targetId: target.id };
+        yield* add(
+          `express:${definition.id}:${target.id}`,
+          definition.label,
+          'Social',
+          command,
+          [definition.label],
+          target.id,
+        );
+      }
+
     if (target.replenisher) {
       const definition = attributeDefinition(world, target.replenisher.attributeId);
       if (
         definition?.reservoir &&
         readAttribute(world, observation.actor, definition) !== undefined
       )
-        add(
+        yield* add(
           `replenish-${target.id}`,
           definition.reservoir.actionLabel,
           'Survival',
@@ -784,7 +1068,7 @@ function nativeActionCatalogue(
         );
     }
     if (target.resource && !target.resource.cast)
-      add(
+      yield* add(
         `gather-${target.id}`,
         nativeGatherShortcut(world, target.resource.definitionId)?.label ?? `Gather ${target.name}`,
         'Gather',
@@ -792,10 +1076,10 @@ function nativeActionCatalogue(
         [world.itemDefinitions[target.resource.definitionId]!.name, 'collect'],
         target.id,
       );
-    if (rangedTargetAllowed(world, target) && target.id !== scope.actorId)
+    if (rangedTargetAllowed(world, target) && target.id !== actorId)
       for (const item of rangedWeapons)
         for (const type of ['aim', 'shoot-once'] as const)
-          add(
+          yield* add(
             `${type}:${target.id}:${item.id}`,
             rangedChoiceLabel(type, target.name, world.itemDefinitions[item.definitionId]!.name),
             'Combat',
@@ -813,7 +1097,7 @@ function nativeActionCatalogue(
           );
     if (rangedTargetAllowed(world, target) && target.animal) {
       if (!rangedWeapons.length)
-        add(
+        yield* add(
           `hunt-${target.id}`,
           `${rangedPolicy(world)!.actionLabel} ${target.name}`,
           'Hunt',
@@ -822,7 +1106,7 @@ function nativeActionCatalogue(
           target.id,
         );
       for (const item of rangedWeapons)
-        add(
+        yield* add(
           `hunt-${target.id}:${item.id}`,
           `${rangedPolicy(world)!.actionLabel} ${target.name} with ${world.itemDefinitions[item.definitionId]!.name}`,
           'Hunt',
@@ -840,7 +1124,7 @@ function nativeActionCatalogue(
         );
     }
     if (target.remains)
-      add(
+      yield* add(
         `harvest-${target.id}`,
         `Harvest ${target.name}`,
         'Gather',
@@ -848,10 +1132,10 @@ function nativeActionCatalogue(
         ['butcher', 'meat', 'remains'],
         target.id,
       );
-    if (!context.itemId && target.id !== scope.actorId && canSpeak(target) && target.actor?.alive) {
-      const binding = encounterPreferenceBinding(world, scope.actorId, target.id),
+    if (!context.itemId && target.id !== actorId && canSpeak(target) && target.actor?.alive) {
+      const binding = encounterPreferenceBinding(world, actorId, target.id),
         controls = bodyPolicy(world)?.combat?.encounters?.controls,
-        pair = personalEncounter(world, scope.actorId, target.id),
+        pair = personalEncounter(world, actorId, target.id),
         preferSpeech = !!(
           pair &&
           (pair.own ||
@@ -901,13 +1185,13 @@ function nativeActionCatalogue(
             reference: encounterControlReference(scopeKey(scope), 'stop', binding),
           },
         };
-        add(`stop-offense-${target.id}`, control.label, 'Combat', command, [], target.id, {
+        yield* add(`stop-offense-${target.id}`, control.label, 'Combat', command, [], target.id, {
           availability: controlling ? preview(command) : controlUnavailable,
           description: control.description,
         });
       }
       for (const recipe of target.actor.controller === 'npc' ? observation.knownRecipes : [])
-        add(
+        yield* add(
           `teach-${target.id}-${recipe.id}`,
           `Teach ${target.name}: ${recipe.name}`,
           'Social',
@@ -921,10 +1205,13 @@ function nativeActionCatalogue(
   for (const item of personal || context.itemId ? itemUses : []) {
     const definition = world.itemDefinitions[item.definitionId]!;
     if (context.catalogue) {
-      const projected = inventoryItemChoices(service, scope, item, preview, itemActions);
+      const projected = inventoryItemChoices(service, scope, item, preview, itemActions, {
+        actorId,
+        controlling,
+      });
       for (const option of projected.actions)
         if (!actionIds.has(option.id))
-          add(
+          yield* add(
             option.id,
             `${option.label} (${definition.name})`,
             'Possessions',
@@ -933,12 +1220,12 @@ function nativeActionCatalogue(
             undefined,
             {
               availability: possessionAvailability(option),
-              description: descriptions.describe(option.command),
+              description: describe(option.command),
             },
           );
     }
     if (definition.equipment && (context.catalogue || context.itemId))
-      add(
+      yield* add(
         `equip-${item.id}`,
         `Equip ${definition.name}`,
         'Equipment',
@@ -946,7 +1233,7 @@ function nativeActionCatalogue(
         ['weapon', 'ranged weapon'],
       );
     if (definition.nutrition && bodyPolicy(world)?.consumption)
-      add(
+      yield* add(
         `eat-${item.id}`,
         `${bodyPolicy(world)!.consumption!.label} ${definition.name}`,
         'Body',
@@ -957,19 +1244,19 @@ function nativeActionCatalogue(
   if (!context.itemId && activityRequestHost(world, BASE_OUTING.family)) {
     const helpingPlans = constructionHelpPlans(
       world,
-      scope.actorId,
+      actorId,
       observation.inventory,
       service.store.authority!.constructionPermissions(world.id),
       observation.visibleEntities,
     );
     for (const target of actionTargets) {
-      if (!BASE_OUTING.participant(target) || target.id === scope.actorId) continue;
-      for (const choice of cooperationProposals(world, scope.actorId, target.id, helpingPlans))
-        add(choice.id, choice.label, 'Social', choice.command, [], target.id, {
+      if (!BASE_OUTING.participant(target) || target.id === actorId) continue;
+      for (const choice of cooperationProposals(world, actorId, target.id, helpingPlans))
+        yield* add(choice.id, choice.label, 'Social', choice.command, [], target.id, {
           description: choice.description,
           availability: preview(choice.command),
         });
-      const helpRefused = outingInvitationProblem(world, scope.actorId, target.id, 'combat-help');
+      const helpRefused = outingInvitationProblem(world, actorId, target.id, 'combat-help');
       if (activityRequestHost(world, BASE_COMBAT_HELP.family))
         actions.push({
           id: `invite-help:${target.id}`,
@@ -978,7 +1265,7 @@ function nativeActionCatalogue(
           description: BASE_COMBAT_HELP.description,
           keywords: [
             ...BASE_COMBAT_HELP.keywords,
-            observerDescription(world, scope.actorId, target.id, 'definite'),
+            observerDescription(world, actorId, target.id, 'definite'),
           ],
           targetId: target.id,
           enabled: controlling && !helpRefused,
@@ -989,17 +1276,13 @@ function nativeActionCatalogue(
             arguments: { recipientId: target.id },
           },
         });
-      const refused = outingInvitationProblem(world, scope.actorId, target.id);
+      const refused = outingInvitationProblem(world, actorId, target.id);
       actions.push({
         id: `invite-travel:${target.id}`,
         label: BASE_OUTING.label,
         category: 'Social',
         description: BASE_OUTING.description,
-        keywords: [
-          'travel',
-          'company',
-          observerDescription(world, scope.actorId, target.id, 'definite'),
-        ],
+        keywords: ['travel', 'company', observerDescription(world, actorId, target.id, 'definite')],
         targetId: target.id,
         enabled: controlling && !refused,
         ...(refused ? { reason: refused.message } : {}),
@@ -1010,17 +1293,25 @@ function nativeActionCatalogue(
         },
       });
     }
-    for (const choice of personal ? outingActions(world, scope.actorId) : [])
-      add(choice.id, choice.label, 'Social', choice.command, ['outing', 'travel'], undefined, {
-        description: choice.description,
-        availability: choice.received
-          ? {
-              ok: true,
-              message:
-                'Attempt using your last received terms; current conditions are checked when you act.',
-            }
-          : preview(choice.command),
-      });
+    for (const choice of personal ? outingActions(world, actorId) : [])
+      yield* add(
+        choice.id,
+        choice.label,
+        'Social',
+        choice.command,
+        ['outing', 'travel'],
+        undefined,
+        {
+          description: choice.description,
+          availability: choice.received
+            ? {
+                ok: true,
+                message:
+                  'Attempt using your last received terms; current conditions are checked when you act.',
+              }
+            : preview(choice.command),
+        },
+      );
   }
   const preparations =
     fires.length || selectedItem
@@ -1040,7 +1331,7 @@ function nativeActionCatalogue(
       );
   for (const fire of fires)
     for (const option of cookingOptions(preparations, fire.id)) {
-      add(
+      yield* add(
         option.id,
         `${option.label} at ${fire.name}`,
         'Create',
@@ -1053,7 +1344,7 @@ function nativeActionCatalogue(
   const castTools = fishingSources.length ? fishingTools(world, itemUses) : new Map();
   for (const source of fishingSources)
     for (const option of fishingOptions(world, castTools, source))
-      add(
+      yield* add(
         option.id,
         option.label,
         'Gather',
@@ -1064,14 +1355,14 @@ function nativeActionCatalogue(
 
   for (const option of contributionWithdrawals(
     world,
-    scope.actorId,
+    actorId,
     service.store.authority!.constructionPermissions(world.id),
   ))
-    add(option.id, option.label, 'Social', option.command, [option.description]);
+    yield* add(option.id, option.label, 'Social', option.command, [option.description]);
   // Each offer/reply binds its exact perceived person; the recipient alone can accept.
   for (const target of actionTargets) {
-    for (const option of competenceOptions(world, scope.actorId, target, itemUses))
-      add(
+    for (const option of competenceOptions(world, actorId, target, itemUses))
+      yield* add(
         option.id,
         option.label,
         target.practiceTarget ? 'Practice' : 'Social',
@@ -1082,7 +1373,7 @@ function nativeActionCatalogue(
     for (const option of target.actor
       ? handoverOptions(
           world,
-          scope.actorId,
+          actorId,
           itemUses,
           target,
           context.catalogue || context.itemId
@@ -1090,7 +1381,7 @@ function nativeActionCatalogue(
             : {},
         )
       : [])
-      add(
+      yield* add(
         option.id,
         option.label,
         'Social',
@@ -1112,12 +1403,12 @@ function nativeActionCatalogue(
     for (const option of target.heat
       ? fireCareOptions(world, itemUses, target, { eachLot: !!context.catalogue })
       : [])
-      add(option.id, option.label, 'Survival', option.command, ['fire'], target.id);
+      yield* add(option.id, option.label, 'Survival', option.command, ['fire'], target.id);
   }
   for (const { recipe, command, item } of context.catalogue || context.itemId || selected
-    ? inspectedRecipeRecords(world, scope.actorId)
+    ? inspectedRecipeRecords(world, actorId)
     : [])
-    add(
+    yield* add(
       `learn-record-${item.id}`,
       `Learn ${recipe.name}`,
       'Knowledge',
@@ -1126,7 +1417,7 @@ function nativeActionCatalogue(
       item.ownerId,
     );
   for (const recipe of personal ? observation.knownRecipes : [])
-    add(`craft-${recipe.id}`, `Craft ${recipe.name}`, 'Create', craftCommand(recipe), [
+    yield* add(`craft-${recipe.id}`, `Craft ${recipe.name}`, 'Create', craftCommand(recipe), [
       recipe.description,
       recipe.source.kind === 'family' ? recipe.source.candidate.family.id : recipe.name,
       'make',
@@ -1165,10 +1456,11 @@ function nativeActionCatalogue(
   // Prepare once per explicit catalogue request, never per frame or per offer.
   // The world ranks permitted exact choices; ordinary command dispatch still admits
   // the selected binding and obtains any required lethal confirmation.
-  const present = selectedContextActions(world, scope.actorId, selected?.id);
+  const present = selectedContextActions(world, actorId, selected?.id);
   let preferred: CatalogueAction | undefined;
   let preferredFacts: CatalogueAction['facts'];
   for (const action of actions) {
+    if (++scanned % 32 === 0) yield;
     const intent = action.intent;
     const strikeTarget =
       intent.kind === 'command' && intent.command.type === 'strike'
@@ -1230,7 +1522,7 @@ function nativeActionCatalogue(
               scopeKey(scope),
               observation.actor,
               selected,
-              encounterPreferenceBinding(world, scope.actorId, selected.id),
+              encounterPreferenceBinding(world, actorId, selected.id),
               preferred,
               preferredFacts,
             ),

@@ -204,6 +204,8 @@ export interface SavedWorld {
 }
 
 export interface JobRecord extends AiJobView {
+  /** Creator-authored action keeps the operator's authority separate from its acting body. */
+  operatorAuthored?: true;
   decision?: DecisionState;
   authority?: RequestScope;
   responseReady?: boolean;
@@ -461,6 +463,14 @@ export class SqlGameRepository implements GameRepository {
   readonly invites: InviteRepository;
   readonly maintenance: MaintenanceRepository;
   readonly db: SqlDatabase;
+  /** Trusted nonrewindable SQL owners must remain durable while world tables lag.
+   * Shares this repository's database adapter/transactions; canonical joins or mixed work
+   * must enter through db's fence instead. No world-state reader belongs here.
+   * docs/projects/performance-overhaul/journal-contract.md#reader-revision-and-wait-matrix
+   */
+  get operationalDatabase(): SqlDatabase {
+    return this.rawDb;
+  }
   readonly records: WorldRecords;
   readonly memories: MemoryRepository;
   private readonly integrationValues: IntegrationValues;
@@ -641,8 +651,8 @@ export class SqlGameRepository implements GameRepository {
     this.saves = new GameSaves(this.db, join(dataDirectory, 'saves'), database.checkpointSource);
     // Revocation, authentication and retry recovery stay immediate even while query
     // tables trail the durable journal. Their existing transactional fences remain.
-    this.commands = new CommandReceipts(database);
-    this.authority = new AuthorityRepository(database);
+    this.commands = new CommandReceipts(this.operationalDatabase);
+    this.authority = new AuthorityRepository(this.operationalDatabase);
     this.invites = new InviteRepository(this.db);
     this.maintenance = new MaintenanceRepository(this.db);
     this.assets = new AssetRepository(this.db);
@@ -951,6 +961,10 @@ export class SqlGameRepository implements GameRepository {
       ? ((await this.records.load())?.state ?? null)
       : undefined;
     if (historyProjection?.restore) this.acceptedState = restoreBaseline ?? null;
+    const previousWorldId = this.acceptedState?.world.id ?? state.world.id;
+    const replacesWorld = previousWorldId !== state.world.id;
+    if (replacesWorld && !historyProjection?.restore)
+      throw new Error('World replacement requires native restore admission.');
     const prepared = historyProjection?.prepared;
     // A prepared change set is valid only against the exact baseline it was diffed from.
     if (
@@ -968,7 +982,7 @@ export class SqlGameRepository implements GameRepository {
     const changes =
       prepared?.changes ??
       timedSync('persistence.prepareRecords', () =>
-        this.records.prepare(this.acceptedState ?? undefined, state),
+        this.records.prepare(replacesWorld ? undefined : (this.acceptedState ?? undefined), state),
       );
     let committedRevision = expectedRevision;
     const write: TableWrite = {
@@ -1071,10 +1085,16 @@ export class SqlGameRepository implements GameRepository {
           await this.authority.saveExit(state.world.id, actorId, attempt);
         }
         await historyProjection?.operationalChange?.();
+        if (replacesWorld) {
+          if (this.journalActive && !this.journal.writeAligned())
+            throw new Error('Drain native changes before replacing the active world.');
+          await this.memories.releaseWorldSources(previousWorldId);
+        }
         const revision = await this.records.advance(
           state.world.id,
           expectedRevision,
           !!historyProjection?.restore,
+          previousWorldId,
         );
         committedRevision = revision;
         write.revision = revision;
@@ -1770,9 +1790,11 @@ export class SqlGameRepository implements GameRepository {
     const amount = micro(amountUsd);
     const ceiling = micro(ceilingUsd);
 
+    // A known zero request fee still needs its one durable attempt and receipt.
+    // Callers separately enforce whether model execution is enabled at all.
     if (
       !Number.isFinite(amountUsd) ||
-      amountUsd <= 0 ||
+      amountUsd < 0 ||
       !Number.isFinite(ceilingUsd) ||
       ceilingUsd < 0 ||
       !actorId ||
@@ -1885,6 +1907,13 @@ export class SqlGameRepository implements GameRepository {
         // definitive billing later without authorizing another dispatch.
         if (!prior?.dispatched || usdToMicroUsd(prior.estimatedCostUsd) !== undefined) return;
       }
+      const observedCostUsd = receipt.estimatedCostUsd;
+      const completionAlreadyConfirmed =
+        prior?.dispatched && !prior.completionUncertain && receipt.completionUncertain;
+      // A slower observation cannot reopen completed execution. Keep its definitive
+      // receipt, while retaining any larger provisional charge only as a spending hold:
+      // copying that charge into the completed receipt would falsely settle unknown billing.
+      if (completionAlreadyConfirmed) receipt = prior;
       receipt = retainKnownAttemptCost(receipt, prior?.estimatedCostUsd);
       const reserve = Number(row['reserved']);
       const estimated = receipt.estimatedCostUsd;
@@ -1900,6 +1929,7 @@ export class SqlGameRepository implements GameRepository {
               Number(row['spent']),
               prior?.estimatedCostUsd,
               estimated,
+              observedCostUsd,
             )
           : micro(estimated!);
       const priorCharge = usdToMicroUsd(prior?.estimatedCostUsd) ?? -1;
@@ -1908,7 +1938,7 @@ export class SqlGameRepository implements GameRepository {
       // A higher known charge is worth retaining even while below the reserve.
       if (
         row['status'] === 'uncertain' &&
-        receipt.completionUncertain &&
+        (receipt.completionUncertain || completionAlreadyConfirmed) &&
         prior?.providerRequestId === receipt.providerRequestId &&
         prior?.completionUncertain === receipt.completionUncertain &&
         prior?.macrofoldBillingMode === receipt.macrofoldBillingMode &&

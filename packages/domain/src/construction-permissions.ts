@@ -1,3 +1,4 @@
+import type { NativeValueHold } from './native-value-holds.js';
 import { freeze } from 'immer';
 import { isImmutableData } from './records.js';
 import { nextId } from './data.js';
@@ -21,6 +22,7 @@ import { canonicalJson } from './events.js';
 /** Operational grants supplied by the application at current admission. They are
  * never part of a saved activity, model proposal or gameplay checkpoint. */
 export interface NativeExecutionPermissions {
+  nativeValueHolds?: readonly NativeValueHold[];
   constructionPermissions?: readonly ConstructionPermission[];
   campAssetPermissions?: readonly CampAssetPermission[];
 }

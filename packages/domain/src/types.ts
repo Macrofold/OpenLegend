@@ -879,6 +879,7 @@ export type Command = Envelope &
         selfIntroduction?: string;
         volume?: import('./acoustics.js').SpeechVolume;
       }
+    | { type: 'express'; verb: string; targetId?: string }
     | { type: 'goal'; text: string }
     | { type: 'withdraw-attempt' | 'confirm-attempt'; attemptId: string }
     | { type: 'teach'; targetId: string; recipeId: string }

@@ -1,16 +1,16 @@
 # Better decisions without stopping the game — feature specification
 
-| Status      | Current progress                                                                                                    | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Luna Low is enabled by default; background concurrency is expanded to 100, with broader release qualification open. | 2026-10-22   |
+| Status      | Current progress                                                                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Higher requests use configured deployments, catalog inference or direct Luna Low; broader release qualification remains open. | 2026-10-26   |
 
-Specification updated **2026-10-22T21:59:22Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
+Specification updated **2026-10-26T02:07:26Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
 
 ## Purpose
 
-Keep ordinary character decisions fast, while giving difficult or unusable decisions one opportunity to benefit from **GPT-6 Luna at low reasoning effort**. The character's existing activity, native reactions and the rest of the world continue while that extra reasoning happens. The stronger model proposes an answer; the game checks whether that answer can still be used.
+Keep ordinary character decisions fast, while giving difficult or unusable decisions one opportunity for higher-model reasoning. The configured complex deployment supplies that request when present; otherwise the default remains **GPT-6 Luna at low reasoning effort**. An explicit direct-model selection takes precedence. The character's existing activity, native reactions and the rest of the world continue while that extra reasoning happens. The stronger model proposes an answer; the game checks whether that answer can still be used.
 
-The server owns one bounded reconsideration attempt. The fast decision model remains configurable; the fallback choice does not imply that every primary request meets a sub-second deadline.
+The server owns one bounded reconsideration attempt. Both the fast decision model and higher model are configurable through their existing server owners. Direct models require their exact configured prices; deployment request fees remain separate from shared hosting. The default fallback choice does not imply that every primary request meets a sub-second deadline.
 
 ## Current behavior
 
@@ -18,9 +18,9 @@ Ordinary operation still chooses a generative route when no supplied action is s
 
 The implemented capability records why reconsideration is allowed, schedules one stronger-model attempt separately, and saves its final outcome. The immediate coordinator is released after a durable action, continuation or deferral, while a separate execution limit still counts the original remote request. It does not edit personality files, grant new actions, repair missing engine rules or turn a conversation into a mandatory long deliberation.
 
-The capability defaults to apply for the configured originating model and existing permitted recovery reasons. An operator can explicitly disable it or override that scope. A finite existing spending allowance and direct OpenAI credentials remain required; default standard Luna pricing is supplied unless an operator catalogue overrides it. Existing generation-disabled operation continues to prohibit it. The [technical design](decision-escalation-tech-design.md#adoption-and-current-policy) owns exact configuration and admission contracts.
+The capability defaults to apply for the configured originating model and existing permitted recovery reasons. An operator can explicitly disable it or override that scope. Existing spending/no-call admission and credentials for the selected route remain required; default standard Luna pricing is supplied unless an operator catalogue overrides it. Existing generation-disabled operation continues to prohibit it. The [technical design](decision-escalation-tech-design.md#adoption-and-current-policy) owns exact configuration and admission contracts.
 
-## Why Luna Low is the selected fallback
+## Why Luna Low remains the direct default
 
 The [complete known-miss comparison](../benchmarks/decision-fallback-models.md#all-267-recorded-jev-misses-complete-comparison) tested all 267 recorded Jev misses. Excluding 59 calculations that belong in native code, Low and Medium matched 132/208 (63.46%) and 135/208 (64.90%). They earned 83.99% and 84.11% of possible points, with mean requests of 2.66 and 3.68 seconds. Low trades three net accepted answers for faster delayed reasoning.
 
@@ -103,11 +103,11 @@ The new feeling-output capability requires explicit permission in each installed
 
 The implementation permits one stronger-model request per decision, with no recursive escalation or automatic same-model repetition. Its cost shares the existing decision/account budgets, including money still reserved for uncertain earlier requests. The benchmark's $100 experiment allowance is not a gameplay operating budget.
 
-Preparing that fallback cannot silently buy other AI calls for memory ranking, summaries, embeddings or action interpretation. It uses permitted current facts and valid cached information, then makes at most one additional model invocation. Missing required context ends preparation explicitly. The configured direct route must also be priced as direct OpenAI even when ordinary generation uses Macrofold.
+Preparing that fallback cannot silently buy other AI calls for memory ranking, summaries, embeddings or action interpretation. It uses permitted current facts and valid cached information, then makes at most one additional model invocation. Missing required context ends preparation explicitly. An unnamespaced direct selection is priced as direct OpenAI even when ordinary generation uses Macrofold. A namespaced catalog selection uses the existing Macrofold inference route, broader backend credential and configured Run reserve; missing access refuses dispatch. A configured deployment uses its native zero request-fee reservation while shared hosting remains separately funded; zero actor allowance still prevents dispatch.
 
 Only an operator may choose the provider/model and permit the extra spending. A character's thoughts, a player message or a generated world description cannot grant it. A cheaper replacement, different billing mode or different data-sharing route requires explicit configuration rather than silent substitution.
 
-The server permits 100 simultaneous background operations, shared across character reconsideration, maintenance/indexing and urgent decisions, plus its separate primary-inference allowance. Each uncertain execution occupies one position; unrelated work can use the remainder without discarding possible charges. Queues and concurrent execution are bounded under [DE-L02](../limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention). Native simulation and ordinary player interaction must remain responsive under overload. Declining additional optional deliberation is preferable to accumulating an unlimited backlog of obsolete answers. The inspector records why a request was declined, cancelled, unusable or still financially uncertain.
+The server permits 100 simultaneous background operations, shared across character reconsideration, maintenance/indexing and urgent decisions, plus its separate primary-inference allowance. Each uncertain execution occupies one position; unrelated work can use the remainder without discarding possible charges. When the primary request has ended locally but its external completion remains unknown, one independent ordinary request at a time may also use an available background position. This never retries the uncertain decision or increases capacity. Queues and concurrent execution are bounded under [DE-L02](../limits/ai-execution.md#de-l02--bounded-scheduling-and-context-retention). Native simulation and ordinary player interaction must remain responsive under overload. Declining additional optional deliberation is preferable to accumulating an unlimited backlog of obsolete answers. The inspector records why a request was declined, cancelled, unusable or still financially uncertain.
 
 Pausing, shutdown and restart end unfinished delayed decisions. Resuming or restarting does not automatically send or apply them again. Completed actions and real spending records survive; a later genuine event may create a new decision. If a provider might still be executing, its occupied execution capacity remains accounted for until completion is known, even across restart. Missing price alone retains the financial allowance without occupying execution capacity forever.
 
@@ -122,7 +122,7 @@ The authorized cognition inspector links the original decision and its stronger 
 Detailed tasks and unchecked gates belong to [DE01–DE05](../maintainers/cognition-redesign.md#decision-escalation), not a second checklist here.
 
 1. **Native checks and request meaning:** identify task-specific deterministic facts, supported output shapes, the unresolved decision and its legal alternatives. Preserve source/effect distinctions.
-2. **One asynchronous stronger attempt:** deliver Luna Low for a bounded existing action-selection case, with shared accounting, fresh admission, cancellation and no shared-slot wait during remote execution.
+2. **One asynchronous stronger attempt:** deliver the configured higher route for a bounded existing action-selection case, with shared accounting, fresh admission, cancellation and no shared-slot wait during remote execution.
 3. **Complete consumer integration:** cover explicit independent decisions, appraisal and attention consumers where supported, conversation integration, restart/restore, privacy and the existing inspector.
 4. **Measured selection policy:** extend the benchmark to exercise actual escalation triggers, new prompts, timing and state changes; qualify any optional uncertainty thresholds before enabling them.
 
@@ -132,7 +132,7 @@ Human review remains necessary for emotional appropriateness, character consiste
 
 ## Scope boundaries and decisions
 
-This feature implements one low-effort generative fallback and explicit eligible fast-model origins. It does not add universal emotional laws, new injury mechanics, a planning agent with tools, a multi-model voting system, unlimited retries, silent provider switching or automatic personal-file edits. Those capabilities retain their existing owners and separate approval boundaries.
+This feature implements one generative fallback and explicit eligible fast-model origins, with low effort on the direct default and supported native settings on a selected deployment. It does not add universal emotional laws, new injury mechanics, a planning agent with tools, a multi-model voting system, unlimited retries, silent provider switching or automatic personal-file edits. Those capabilities retain their existing owners and separate approval boundaries.
 
 Implementation and live Low gameplay checks are complete. A small live policy comparison triggered no fallback and therefore demonstrated no added quality benefit. Human character review, natural primary-failure integration and representative deployment capacity remain explicit [release qualification limits](../verification/decision-escalation.md#remaining-release-qualification). Default activation is authorized; those limits are not implied to have passed.
 

@@ -1,5 +1,8 @@
 import { z } from 'zod';
-import type { AiClient } from '@open-legend/ai';
+import type { AiClient, GenerateRequest } from '@open-legend/ai';
+import { CognitionExecution, type ExecutionLease } from './cognition-execution.js';
+import { stageAllowance } from './cognition-stage-budget.js';
+import { undispatchedReceipt } from './decision-state.js';
 import type { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import type { StoryJob } from './history.js';
@@ -39,11 +42,16 @@ export class Narrator {
   private dirty = false;
   private unsubscribe: () => void;
   private unsubscribeHistory: () => void;
+  private readonly unsubscribeControl?: () => void;
   constructor(
     private service: WorldService,
     private client: AiClient,
     private log: IntelligenceLog,
+    private execution?: CognitionExecution,
   ) {
+    this.unsubscribeControl = service.cognitionControl?.subscribe(() => {
+      if (!service.cognitionControl?.held) this.tick();
+    });
     this.unsubscribeHistory = service.store.history?.subscribe(() => this.tick()) ?? (() => {});
     let paused = true;
     this.unsubscribe = service.subscribe(() => {
@@ -62,7 +70,7 @@ export class Narrator {
   tick(): void {
     if (this.stopped) return;
     this.dirty = true;
-    if (this.pending || this.service.paused) return;
+    if (this.pending || this.service.paused || this.service.cognitionControl?.held) return;
     clearTimeout(this.timer);
     this.pending = this.drain()
       .catch(async () => {
@@ -74,16 +82,23 @@ export class Narrator {
       .finally(() => {
         this.pending = null;
         this.controller = null;
-        if (this.dirty && !this.stopped && !this.service.paused) this.tick();
+        if (
+          this.dirty &&
+          !this.stopped &&
+          !this.service.paused &&
+          !this.service.cognitionControl?.held
+        )
+          this.tick();
       });
   }
   private async drain() {
     await this.ready;
     do {
       this.dirty = false;
-      if (this.stopped || this.service.paused) return;
+      if (this.stopped || this.service.paused || this.service.cognitionControl?.held) return;
       const due = await this.service.store.history?.nextDue(this.service.world.id);
-      if (due == null || this.stopped || this.service.paused) return;
+      if (due == null || this.stopped || this.service.paused || this.service.cognitionControl?.held)
+        return;
       const delay = due + this.service.config.narrationBatchMs - Date.now();
       if (delay > 0) {
         this.timer = setTimeout(() => this.tick(), delay);
@@ -91,12 +106,13 @@ export class Narrator {
       }
       await this.run();
       this.dirty = true;
-    } while (!this.stopped && !this.service.paused);
+    } while (!this.stopped && !this.service.paused && !this.service.cognitionControl?.held);
   }
   private async run() {
     await this.ready;
     const repository = this.service.store.history;
-    if (!repository || this.stopped || this.service.paused) return;
+    if (!repository || this.stopped || this.service.paused || this.service.cognitionControl?.held)
+      return;
     // Register cancellation before claim I/O; pause/shutdown can happen during that await.
     // See docs/architecture.md#paid-work-absence-and-recovery.
     this.controller = new AbortController();
@@ -122,9 +138,11 @@ export class Narrator {
       exchanges: [],
     };
     await this.log.save(root);
+    const releaseNative = this.service.cognitionControl?.registerNative(id);
     try {
       await this.log.withTrigger(id, () => this.generate(job, id));
     } finally {
+      releaseNative?.();
       await this.log.save({
         ...root,
         status: job.state === 'completed' || job.state === 'fallback' ? 'completed' : 'failed',
@@ -194,54 +212,198 @@ export class Narrator {
       );
       return;
     }
-    const amount = generationAllowance(config, config.llmModel, 26_000, 1800, config.llmReserveUsd);
-    if (!(await repository.selectionCurrent(() => this.service.world, job))) {
-      await repository.cancel(world.id, job);
-      return;
-    }
-    if (this.stopped || this.service.paused || this.controller?.signal.aborted) {
-      await this.service.publishNarration(job, null, 'Cancelled before reservation.');
-      return;
-    }
-    if (!(await store.reserve(id, 'openai', amount, config.budgetUsd, 'narrator'))) {
-      await this.service.publishNarration(job, null, 'Monthly Narrator allowance exhausted.');
-      return;
-    }
-    // Reservation awaits storage; recheck immediately before crossing the provider boundary.
-    if (
-      !(await repository.selectionCurrent(() => this.service.world, job)) ||
-      job.selection?.policyRevision !== (this.service.world.storyPolicyRevision ?? 0)
-    ) {
-      const at = new Date().toISOString();
-      await store.settle(id, {
+    const control = this.service.cognitionControl;
+    let result: import('@open-legend/ai').AiResult<unknown>;
+    if (!control) {
+      const amount = generationAllowance(
+        config,
+        config.llmModel,
+        26_000,
+        1800,
+        config.llmReserveUsd,
+      );
+      if (!(await repository.selectionCurrent(() => this.service.world, job))) {
+        await repository.cancel(world.id, job);
+        return;
+      }
+      if (this.stopped || this.service.paused || this.controller?.signal.aborted) {
+        await this.service.publishNarration(job, null, 'Cancelled before reservation.');
+        return;
+      }
+      if (!(await store.reserve(id, 'openai', amount, config.budgetUsd, 'narrator'))) {
+        await this.service.publishNarration(job, null, 'Monthly Narrator allowance exhausted.');
+        return;
+      }
+      // Reservation awaits storage; recheck immediately before crossing the provider boundary.
+      if (
+        !(await repository.selectionCurrent(() => this.service.world, job)) ||
+        job.selection?.policyRevision !== (this.service.world.storyPolicyRevision ?? 0)
+      ) {
+        const at = new Date().toISOString();
+        await store.settle(id, {
+          requestId: id,
+          provider: 'openai',
+          requestedModel: config.llmModel,
+          model: config.llmModel,
+          modelVersionStatus: 'unavailable',
+          contextDigest: '',
+          startedAt: at,
+          completedAt: at,
+          latencyMs: 0,
+          dispatched: false,
+          completionUncertain: false,
+        });
+        await repository.cancel(world.id, job);
+        return;
+      }
+      result = await this.client.generate<unknown>({
         requestId: id,
-        provider: 'openai',
-        requestedModel: config.llmModel,
-        model: config.llmModel,
-        modelVersionStatus: 'unavailable',
-        contextDigest: '',
-        startedAt: at,
-        completedAt: at,
-        latencyMs: 0,
-        dispatched: false,
-        completionUncertain: false,
+        actorScope: job.actorId,
+        execution: 'fast',
+        task: 'Private narration',
+        instructions,
+        context,
+        schema: z.toJSONSchema(output, { target: 'draft-7' }),
+        schemaName: 'private_narration',
+        maxOutputTokens: 1800,
+        signal: this.controller!.signal,
       });
-      await repository.cancel(world.id, job);
-      return;
+      await store.settle(id, result.receipt);
+    } else {
+      const generation = this.service.generation,
+        epoch = control?.epoch;
+      const current = async () => {
+        control?.assertCurrent(epoch);
+        if (
+          generation !== this.service.generation ||
+          this.stopped ||
+          this.service.paused ||
+          this.controller?.signal.aborted ||
+          !(await repository.selectionCurrent(() => this.service.world, job)) ||
+          job.selection?.policyRevision !== (this.service.world.storyPolicyRevision ?? 0)
+        )
+          throw new Error('Narration source changed before publication.');
+      };
+      const request: Omit<GenerateRequest, 'requestId'> = {
+        actorScope: job.actorId,
+        execution: 'fast',
+        task: 'Private narration',
+        instructions,
+        context,
+        schema: z.toJSONSchema(output, { target: 'draft-7' }),
+        schemaName: 'private_narration',
+        maxOutputTokens: 1800,
+        signal: this.controller!.signal,
+      };
+      const prepared = control
+        ? await control.prepare(
+            {
+              id,
+              rootId: id,
+              actorId: job.actorId,
+              purpose: 'narration',
+              generation,
+              responseBoundBytes: config.macrofoldKey ? 1_000_000 : 500_000,
+              wireBoundBytes: 1_000_000,
+              signal: request.signal,
+              current,
+            },
+            { kind: 'generate', request },
+          )
+        : undefined;
+      const selected = prepared?.input ?? { kind: 'generate' as const, request };
+      let lease: ExecutionLease | undefined;
+      if (this.execution) {
+        lease = await this.execution.background();
+        if (!lease) {
+          if (prepared)
+            await control!.decline(prepared.stage, 'Background execution capacity is occupied.');
+          await this.service.publishNarration(
+            job,
+            null,
+            'Background execution capacity is occupied.',
+          );
+          return;
+        }
+      }
+      const amount = control
+        ? stageAllowance(config, selected)
+        : generationAllowance(config, config.llmModel, 26_000, 1800, config.llmReserveUsd);
+      let reserved = false,
+        dispatchIntent = false,
+        providerStarted = false,
+        completed = false;
+      const labResult = await (async () => {
+        try {
+          await current();
+          reserved = await store.reserve(
+            id,
+            'openai',
+            amount,
+            config.budgetUsd,
+            'narrator',
+            undefined,
+            undefined,
+            lease
+              ? {
+                  rootJobId: id,
+                  category: 'preparation',
+                  stage: 'narration',
+                  executionClass: lease.executionClass,
+                }
+              : undefined,
+          );
+          if (!reserved) {
+            if (prepared)
+              await control!.decline(prepared.stage, 'Monthly Narrator allowance exhausted.');
+            return undefined;
+          }
+          await current();
+          if (lease) {
+            dispatchIntent = true;
+            if (!(await store.markDecisionDispatch(id)))
+              throw new Error('Narration dispatch was already claimed.');
+          }
+          const dispatch = () => {
+            providerStarted = true;
+            return this.client.generate<unknown>({
+              ...request,
+              ...selected.request,
+              requestId: id,
+            });
+          };
+          const result =
+            prepared && control
+              ? await control.dispatch(prepared.stage, dispatch)
+              : await dispatch();
+          if (result.receipt.completionUncertain) lease?.uncertain(id);
+          await store.settle(id, result.receipt);
+          completed = true;
+          return result;
+        } finally {
+          try {
+            try {
+              if (reserved && !providerStarted && !completed) {
+                await store.settle(id, undispatchedReceipt(id, 'openai', Date.now()));
+                completed = true;
+              }
+            } finally {
+              if (prepared && prepared.stage.status !== 'consumed')
+                await control!.decline(prepared.stage, 'Narration ended before provider dispatch.');
+            }
+          } finally {
+            if (dispatchIntent && !completed) lease?.uncertain(id);
+            lease?.release();
+          }
+        }
+      })();
+      if (!labResult) {
+        await this.service.publishNarration(job, null, 'Monthly Narrator allowance exhausted.');
+        return;
+      }
+      result = labResult;
+      control?.assertCurrent(epoch);
     }
-    const result = await this.client.generate<unknown>({
-      requestId: id,
-      actorScope: job.actorId,
-      execution: 'fast',
-      task: 'Private narration',
-      instructions,
-      context,
-      schema: z.toJSONSchema(output, { target: 'draft-7' }),
-      schemaName: 'private_narration',
-      maxOutputTokens: 1800,
-      signal: this.controller!.signal,
-    });
-    await store.settle(id, result.receipt);
     if (!(await repository.selectionCurrent(() => this.service.world, job))) {
       await repository.cancel(world.id, job, result.receipt);
       return;
@@ -290,6 +452,7 @@ export class Narrator {
     clearTimeout(this.timer);
     this.unsubscribe();
     this.unsubscribeHistory();
+    this.unsubscribeControl?.();
     this.controller?.abort();
     await this.ready;
     await this.pending;

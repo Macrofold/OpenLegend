@@ -1,4 +1,7 @@
-import { createEmbeddingClient } from '@open-legend/ai';
+import { createEmbeddingClient, EMBEDDING_LIMITS } from '@open-legend/ai';
+import type { CognitionExecution } from './cognition-execution.js';
+import { stageAllowance } from './cognition-stage-budget.js';
+import { undispatchedReceipt } from './decision-state.js';
 import type { CandidateAction } from './context.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import type { WorldService } from './world-service.js';
@@ -19,6 +22,7 @@ export async function retrieveActions(
   signal: AbortSignal,
   ready: () => Promise<void>,
   nativeOnly = false,
+  execution?: CognitionExecution,
 ) {
   const fallback = (status: string) => ({
     candidates: [...candidates]
@@ -77,19 +81,117 @@ export async function retrieveActions(
       }
       if (!texts.length) throw new Error('Action description exceeds embedding input budget.');
       const id = `${jobId}:action-embeddings:${offset}`;
-      if (
-        !(await store.reserve(id, 'openai', config.embeddingReserveUsd, config.budgetUsd, actorId))
-      )
+      const control = service.cognitionControl;
+      const prepared = control
+        ? await control.prepare(
+            {
+              id,
+              rootId: jobId,
+              actorId,
+              purpose: 'action-retrieval',
+              generation: service.generation,
+              responseBoundBytes: EMBEDDING_LIMITS.resultBytes,
+              wireBoundBytes: 1_000_000,
+              signal,
+              current: ready,
+            },
+            { kind: 'embedding', request: { texts } },
+          )
+        : undefined;
+      const selected = prepared?.input ?? { kind: 'embedding' as const, request: { texts } };
+      const lease = execution ? await execution.primary() : undefined;
+      if (execution && !lease) {
+        if (prepared)
+          await control!.decline(prepared.stage, 'Shared model execution capacity is occupied.');
+        return fallback('semantic retrieval unavailable: shared capacity; incomplete coverage');
+      }
+      let reserved = false,
+        dispatchIntent = false,
+        providerStarted = false,
+        completed = false;
+      const result = await (async () => {
+        try {
+          await ready();
+          reserved = await store.reserve(
+            id,
+            'openai',
+            control ? stageAllowance(config, selected) : config.embeddingReserveUsd,
+            config.budgetUsd,
+            actorId,
+            undefined,
+            undefined,
+            lease
+              ? {
+                  rootJobId: jobId,
+                  category: 'preparation',
+                  stage: 'action-retrieval',
+                  executionClass: lease.executionClass,
+                }
+              : undefined,
+          );
+          if (!reserved) {
+            if (prepared) await control!.decline(prepared.stage, 'Spending allowance unavailable.');
+            return undefined;
+          }
+          await ready();
+          if (lease) {
+            dispatchIntent = true;
+            if (!(await store.markDecisionDispatch(id)))
+              throw new Error('Action retrieval dispatch was already claimed.');
+          }
+          const result = await log.run(
+            'Action embeddings',
+            {
+              requestId: id,
+              actorId,
+              model: scope.model,
+              sources: batch.map((source) => source.id),
+            },
+            () => {
+              const dispatch = () => {
+                providerStarted = true;
+                return embeddings.embed({ requestId: id, ...selected.request, signal });
+              };
+              return prepared && control ? control.dispatch(prepared.stage, dispatch) : dispatch();
+            },
+          );
+          if (result.receipt.completionUncertain) lease?.uncertain(id);
+          await store.settle(id, result.receipt);
+          completed = true;
+          return result;
+        } finally {
+          try {
+            try {
+              if (reserved && !providerStarted && !completed) {
+                await store.settle(id, undispatchedReceipt(id, 'openai', Date.now()));
+                completed = true;
+              }
+            } finally {
+              if (prepared && prepared.stage.status !== 'consumed')
+                await control!.decline(
+                  prepared.stage,
+                  'Action retrieval ended before provider dispatch.',
+                );
+            }
+          } finally {
+            if (dispatchIntent && !completed) lease?.uncertain(id);
+            lease?.release();
+          }
+        }
+      })();
+      if (!result)
         return fallback('semantic retrieval unavailable: spending cap; incomplete coverage');
-      const result = await log.run(
-        'Action embeddings',
-        { requestId: id, actorId, model: scope.model, sources: batch.map((s) => s.id) },
-        () => embeddings.embed({ requestId: id, texts, signal }),
-      );
-      await store.settle(id, result.receipt);
       await ready();
       if (result.outcome !== 'value')
         return fallback(`semantic retrieval ${result.outcome}; incomplete coverage`);
+      if (
+        selected.request.texts.some(
+          (text, index) => index >= (queryVector ? 0 : 1) && text !== texts[index],
+        )
+      )
+        return fallback(
+          'experimental source embedding captured; original source cache remains unmodified',
+        );
       let index = 0;
       if (!queryVector) queryVector = result.value[index++]!;
       await vectors.put(

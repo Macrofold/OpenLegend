@@ -1,6 +1,52 @@
 import { describe, expect, it, vi } from 'vitest';
-import { createAiClient, estimateCostUsd } from './index.js';
+import {
+  createAiClient,
+  estimateCostUsd,
+  batchJudgmentQuestions,
+  validateJudgmentSize,
+  JUDGMENT_STATE_QUESTION_CHARACTERS,
+} from './index.js';
 import type { FetchTransport, GenerateRequest, JudgeRequest } from './types.js';
+
+describe('complete independent judgment packing', () => {
+  it('preserves every offered question in order across bounded requests', () => {
+    const state = { evidence: 'x'.repeat(80_000) };
+    const questions = Object.fromEntries(
+      Array.from({ length: 400 }, (_, index) => [
+        `q${index}`,
+        { type: 'noul' as const, instructions: `${index}: ${'detail '.repeat(170)}` },
+      ]),
+    );
+    const batches = batchJudgmentQuestions(state, questions);
+    expect(batches.length).toBeGreaterThan(1);
+    expect(batches.flatMap((batch) => Object.keys(batch))).toEqual(Object.keys(questions));
+    expect(Object.assign({}, ...batches)).toEqual(questions);
+    for (const batch of batches) expect(() => validateJudgmentSize(state, batch)).not.toThrow();
+  });
+  it('keeps an ordinary complete map in one request', () => {
+    const questions = { one: { type: 'noul' as const, instructions: 'Choose this now?' } };
+    expect(batchJudgmentQuestions({ evidence: 'A current fact.' }, questions)).toEqual([questions]);
+  });
+  it('retains every valid question identity, including prototype property names', () => {
+    const questions = Object.fromEntries(
+      ['__proto__', 'constructor', 'okay'].map((id) => [
+        id,
+        { type: 'noul' as const, instructions: 'Choose this now?' },
+      ]),
+    );
+    const batches = batchJudgmentQuestions({}, questions);
+    expect(Object.keys(batches[0]!)).toEqual(Object.keys(questions));
+    expect(Object.getPrototypeOf(batches[0]!)).toBeNull();
+  });
+  it('refuses a shared state and individual question that cannot fit', () => {
+    expect(() =>
+      batchJudgmentQuestions(
+        { evidence: 'x'.repeat(JUDGMENT_STATE_QUESTION_CHARACTERS) },
+        { one: { type: 'noul', instructions: 'Choose this now?' } },
+      ),
+    ).toThrow('judgment_state_question_exceeds_28000_estimated_tokens');
+  });
+});
 
 const question: JudgeRequest = {
   requestId: 'judge-1',

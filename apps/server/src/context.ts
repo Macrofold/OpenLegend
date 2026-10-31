@@ -285,7 +285,7 @@ export function buildContext(
             alive: entity.actor.alive,
             ...(() => {
               const combat = observedCombatActivity(service.world, observed.actor, entity);
-              return combat ? { combat } : {};
+              return combat ? { combat: combat.text } : {};
             })(),
           }
         : {}),
@@ -493,8 +493,26 @@ export function candidateChoice(
           }
         : null,
     ...(candidate.purpose ? { purpose: candidate.purpose } : {}),
-    transition: candidate.transition ?? suggestedWorkTransition(candidate.command),
+    transition: candidateWorkTransition(candidate),
     expectedWork,
+  };
+}
+export function candidateWorkTransition(candidate: CandidateAction) {
+  return candidate.transition ?? suggestedWorkTransition(candidate.command);
+}
+export interface DecisionActionOffer {
+  id: string;
+  description: string;
+  mode: 'enqueue' | 'replace' | 'interrupt';
+}
+/** Model-visible handling of current work must match the exact native binding.
+ * Continuing choices use enqueue, the response mode that preserves existing work. */
+export function candidateOffer(candidate: CandidateAction, id = candidate.id): DecisionActionOffer {
+  const transition = candidateWorkTransition(candidate);
+  return {
+    id,
+    description: candidate.description,
+    mode: transition === 'continue' ? 'enqueue' : transition,
   };
 }
 export function npcCandidates(

@@ -222,6 +222,7 @@ export interface RetrievedMemory {
   /** A current eligible summary that admitted this exact retained original. */
   through?: SummarySourceBinding;
 }
+type MemoryRetrievalQuery = (MemoryModel & { query: number[] }) | { text: string };
 export interface SummarySourceBinding {
   id: string;
   revision: string;
@@ -284,6 +285,11 @@ export interface MemoryModel {
  * interpretation remains with domain/AI owners; this repository invents no semantics.
  */
 export class MemoryRepository {
+  /** The native replacement transaction discards only this active world's
+   * derived source projection. Canonical history is preserved in its recovery cut. */
+  async releaseWorldSources(worldId: string): Promise<void> {
+    await this.db.prepare('DELETE FROM recall_sources WHERE world_id=?').run(worldId);
+  }
   publicationRevision = 0;
   private coverageCache = new Map<
     string,
@@ -1944,21 +1950,8 @@ export class MemoryRepository {
         return this.hydrate(cached.rows);
       // Token-prefix search uses the database's inverted index. Substring matching
       // required reparsing every retained JSON body; docs/memory-architecture.md#retrieval-preparation-admission.
-      let matched: Record<string, unknown>[] = [];
       const expression = lexicalQuery(terms);
-      if (expression) {
-        matched = await this.db
-          .prepare(
-            `SELECT ${sourceColumns},
-            ts_rank(d.search_vector,?::tsquery) AS score
-            FROM recall_sources r JOIN memory_lexical_documents d ON d.world_id=r.world_id
-              AND d.actor_id=r.actor_id AND d.id=r.id AND d.source_kind=r.source_kind AND d.source_revision=r.revision
-            WHERE ${this.eligible}
-            AND d.search_vector @@ ?::tsquery
-            ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
-          )
-          .all(expression, ...this.params(scope), expression, limit);
-      }
+      const matched = expression ? await this.lexicalMatches(scope, expression, limit) : [];
       const fallback = await this.db
         .prepare(
           `SELECT ${sourceColumns} FROM recall_sources r
@@ -1992,6 +1985,50 @@ export class MemoryRepository {
     };
     return lexicalQuery(terms) ? this.lexical.snapshot(scope, read) : this.snapshot(read);
   }
+  /** Both ordinary recall and inspected context use the current indexed source,
+   * with exclusions applied before ranking, limits and body hydration. */
+  private async lexicalMatches(
+    scope: MemoryScope,
+    expression: string,
+    limit: number,
+    excludedIds: string[] = [],
+  ): Promise<Record<string, unknown>[]> {
+    // Fresh projection statistics can estimate one row and choose a prefix scan
+    // per match (millions of comparisons for a few thousand memories). Keep the
+    // indexed metadata join on a hash/merge path only for this read; the exact
+    // previous setting is restored on the same snapshot/connection.
+    const previous = String(
+      (await this.db.prepare("SELECT current_setting('enable_nestloop') AS value").get())!['value'],
+    );
+    const changed = previous !== 'off';
+    if (changed) await this.db.prepare("SELECT set_config('enable_nestloop','off',true)").get();
+    let failed = false;
+    try {
+      return await this.db
+        .prepare(
+          `SELECT ${sourceColumns},ts_rank(d.search_vector,?::tsquery) AS score
+          FROM recall_sources r JOIN memory_lexical_documents d ON d.world_id=r.world_id
+            AND d.actor_id=r.actor_id AND d.id=r.id AND d.source_kind=r.source_kind AND d.source_revision=r.revision
+          WHERE ${this.eligible} AND d.search_vector @@ ?::tsquery
+            AND NOT (r.id = ANY(?::text[]) OR COALESCE(r.event_id,'') = ANY(?::text[]))
+          ORDER BY score DESC,r.importance DESC,r.at DESC,r.id LIMIT ?`,
+        )
+        .all(expression, ...this.params(scope), expression, excludedIds, excludedIds, limit);
+    } catch (error) {
+      failed = true;
+      throw error;
+    } finally {
+      if (changed)
+        try {
+          await this.db.prepare("SELECT set_config('enable_nestloop',?,true)").get(previous);
+        } catch (error) {
+          // A SQL failure aborts the snapshot; its rollback also restores LOCAL
+          // settings. Do not mask that original error with the aborted restore.
+          if (!failed) throw error;
+        }
+    }
+  }
+
   private async hydrate(
     rows: Record<string, unknown>[],
     cache?: MemoryReadCache,
@@ -2491,11 +2528,15 @@ export class MemoryRepository {
   async select(
     scope: MemoryScope,
     limit: number,
-    semantic?: MemoryModel & { query: number[] },
+    query?: MemoryRetrievalQuery,
     excludedIds: string[] = [],
     cache?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
-    return this.snapshot(() => this.readSelection(scope, limit, semantic, excludedIds, cache));
+    const expression =
+      query && 'text' in query ? lexicalQuery([...new Set(searchWords(query.text))]) : undefined;
+    const semantic = query && 'query' in query ? query : undefined;
+    const read = () => this.readSelection(scope, limit, semantic, excludedIds, cache, expression);
+    return expression ? this.lexical.snapshot(scope, read) : this.snapshot(read);
   }
   private async readSelection(
     scope: MemoryScope,
@@ -2503,6 +2544,7 @@ export class MemoryRepository {
     semantic?: MemoryModel & { query: number[] },
     excludedIds: string[] = [],
     cache?: MemoryReadCache,
+    expression?: string,
   ): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
       throw new Error('Invalid memory selection size.');
@@ -2514,39 +2556,53 @@ export class MemoryRepository {
         `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND ${optional} ORDER BY r.importance DESC,r.at DESC,r.id LIMIT ?`,
       )
       .all(...this.params(scope), excludedIds, excludedIds, limit);
-    if (!semantic) return this.hydrate(fallback, cache);
-    this.validateVector(semantic, semantic.query);
-    const rows = await this.db
-      .prepare(
-        `WITH matches AS MATERIALIZED (
+    if (!semantic && !expression) return this.hydrate(fallback, cache);
+    if (semantic) this.validateVector(semantic, semantic.query);
+    // A request uses one relevance scale. A usable semantic query retains its
+    // existing vector path; otherwise indexed text ranks current native cues.
+    const rows = semantic
+      ? await this.db
+          .prepare(
+            `WITH matches AS MATERIALIZED (
           SELECT source_id,source_revision,1-(embedding OPERATOR(public.<=>) ?::public.vector) AS score
           FROM memory_vectors WHERE world_id=? AND actor_id=? AND generation=? AND model=? AND dimensions=?
             AND (SELECT generation FROM world_head WHERE id=1)=? AND source_id <> ALL(?::text[])
           ORDER BY embedding OPERATOR(public.<=>) ?::public.vector,source_id LIMIT ?)
         SELECT ${sourceColumns},m.score FROM matches m JOIN recall_sources r ON r.id=m.source_id AND r.revision=m.source_revision
         WHERE ${this.eligible} AND ${optional} ORDER BY m.score DESC,r.id`,
-      )
-      .all(
-        JSON.stringify(semantic.query),
-        scope.worldId,
-        scope.actorId,
-        scope.generation,
-        semantic.model,
-        semantic.dimensions,
-        scope.generation,
-        excludedIds,
-        JSON.stringify(semantic.query),
-        limit,
-        ...this.params(scope),
-        excludedIds,
-        excludedIds,
-      );
+          )
+          .all(
+            JSON.stringify(semantic.query),
+            scope.worldId,
+            scope.actorId,
+            scope.generation,
+            semantic.model,
+            semantic.dimensions,
+            scope.generation,
+            excludedIds,
+            JSON.stringify(semantic.query),
+            limit,
+            ...this.params(scope),
+            excludedIds,
+            excludedIds,
+          )
+      : await this.lexicalMatches(scope, expression!, limit, excludedIds);
     const combined = [
-      ...new Map([...rows, ...fallback].map((row) => [row['id'], row])).values(),
+      ...new Map(
+        [...rows, ...fallback].map((row) => [
+          sourceKey(String(row['source_kind']), String(row['id'])),
+          row,
+        ]),
+      ).values(),
     ].slice(0, limit);
-    // Map above must prefer the semantic row when its fallback copy is also present.
-    const scores = new Map(rows.map((row) => [row['id'], row['score']]));
-    for (const row of combined) if (scores.has(row['id'])) row['score'] = scores.get(row['id']);
+    // Preserve query relevance when the same source also appears in the fallback.
+    const scores = new Map(
+      rows.map((row) => [sourceKey(String(row['source_kind']), String(row['id'])), row['score']]),
+    );
+    for (const row of combined) {
+      const key = sourceKey(String(row['source_kind']), String(row['id']));
+      if (scores.has(key)) row['score'] = scores.get(key);
+    }
     return this.hydrate(combined, cache);
   }
   async pending(scope: MemoryScope, model: MemoryModel, limit = 32): Promise<RetrievedMemory[]> {

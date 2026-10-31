@@ -16,6 +16,14 @@ import {
 import { evaluateTimedRelease, type AdmittedWorldInput } from './execution-input.js';
 import { moveAlongPath, orderedMovementTracks } from './action-movement.js';
 import { canSteer, playerInputBoundary, preparePlayerSteering } from './player-steering.js';
+import { BASE_ACTION_DEFAULTS } from './worlds/base/action-defaults.js';
+import { expressionProblem, commitExpression } from './expressions.js';
+import {
+  prepareNativeValueHolds,
+  heldStatusRates,
+  type NativeValueHold,
+  type NativeValueHoldContext,
+} from './native-value-holds.js';
 import { takeRoutineObservation, type RoutineObservation } from './perception-timing.js';
 import { visibleFeature } from './perception-frame.js';
 import { beginNativeChangeFeed, takeNativeChanges } from './native-change-feed.js';
@@ -382,11 +390,7 @@ import {
   type ResourceOperation,
 } from './resource-claims.js';
 import { sameDefinitionPin } from './state-owners.js';
-import {
-  BASE_ACTION_DEFAULTS,
-  BASE_FAMILY_FACTS,
-  nativeMovementSpeed,
-} from './worlds/base/actions.js';
+import { BASE_FAMILY_FACTS, nativeMovementSpeed } from './worlds/base/actions.js';
 import { nativeInterval, refineNativeInterval } from './temporal-boundaries.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
@@ -872,6 +876,7 @@ function approach(world: WorldState, actor: Entity, action: Action): Outcome | n
  * in the public barrier indicator. docs/architecture.md#navigation-preparation
  */
 type NativeConstruction = ConstructionPermissionBatch & {
+  nativeValueHolds?: NativeValueHoldContext;
   boundaryExits?: BoundaryExitPreparations;
 };
 
@@ -1958,6 +1963,7 @@ function prepareNativeOperation(
     executing?: boolean;
     skipLethalReview?: true;
     constructionPermissions?: readonly ConstructionPermission[];
+    nativeValueHolds?: readonly NativeValueHold[];
     campAssetPermissions?: readonly CampAssetPermission[];
     boundaryExits?: BoundaryExitPreparations;
     work?: ProspectiveWork;
@@ -2096,6 +2102,11 @@ function prepareNativeOperation(
       )!;
       action.constructionGrant = { id: grant.id, revision: grant.revision };
       action.destination = assemblyStances(world, phase, actorId)[0]!;
+      break;
+    }
+    case 'express': {
+      const problem = expressionProblem(world, actor.id, command.verb, command.targetId);
+      if (problem) return problem;
       break;
     }
     case 'say': {
@@ -3001,6 +3012,7 @@ export function executeCommand(
     nativeController?: true;
     nativeMovement?: { binding: NativeLocomotion; path?: SurfacePoint[] };
     constructionPermissions?: readonly ConstructionPermission[];
+    nativeValueHolds?: readonly NativeValueHold[];
     campAssetPermissions?: readonly CampAssetPermission[];
     boundaryExits?: BoundaryExitPreparations;
     tradeDisclosures?: import('./handover.js').TradeDisclosureContext;
@@ -3027,6 +3039,7 @@ function executeCommandNative(
     nativeController?: true;
     nativeMovement?: { binding: NativeLocomotion; path?: SurfacePoint[] };
     constructionPermissions?: readonly ConstructionPermission[];
+    nativeValueHolds?: readonly NativeValueHold[];
     campAssetPermissions?: readonly CampAssetPermission[];
     boundaryExits?: BoundaryExitPreparations;
     tradeDisclosures?: import('./handover.js').TradeDisclosureContext;
@@ -3319,6 +3332,7 @@ function executeCommandNative(
     options.campAssetPermissions ?? [],
   );
   constructionBatch.boundaryExits = options.boundaryExits;
+  constructionBatch.nativeValueHolds = prepareNativeValueHolds(world, options.nativeValueHolds);
   if (component.action?.guard && world.simTime >= component.action.guard.expiresAt)
     recoverGuard(world, actor, component.action.guard.expiresAt);
   // A drop preview still checks the structural transfer, but never installs its action
@@ -3892,6 +3906,9 @@ function executeCommandNative(
           events,
           'consumption',
           'transition',
+          'effect',
+          undefined,
+          constructionBatch.nativeValueHolds,
         );
         if (written.status !== 'applied' && written.status !== 'unchanged')
           return reject('not-applicable', consumption.unavailableText);
@@ -3900,7 +3917,7 @@ function executeCommandNative(
           property: meter.id,
           unit: meter.schema.unit,
           before: before.value,
-          after,
+          after: written.value,
         });
         emit(
           world,
@@ -4122,6 +4139,10 @@ function executeCommandNative(
               { kind: 'replace', value },
               events,
               'recovery',
+              'now',
+              'effect',
+              undefined,
+              constructionBatch.nativeValueHolds,
             );
             if (written.status !== 'applied' && written.status !== 'unchanged')
               return reject('cannot-recover', bodyPolicy(world)!.recovery!.refusalText);
@@ -4143,6 +4164,10 @@ function executeCommandNative(
           actor,
         );
         result = outcome(true, 'recovered', bodyPolicy(world)!.recovery!.successText);
+        break;
+      }
+      case 'express': {
+        result = commitExpression(world, events, actor.id, command.verb, command.targetId);
         break;
       }
       case 'say': {
@@ -4874,7 +4899,13 @@ function completeAction(
       break;
     }
     case 'feed': {
-      const problem = completeNativeFeeding(world, actor, action, events);
+      const problem = completeNativeFeeding(
+        world,
+        actor,
+        action,
+        events,
+        constructionBatch.nativeValueHolds,
+      );
       if (problem) {
         failAction(world, actor, events, problem);
         return;
@@ -6227,6 +6258,7 @@ const nativeContinuations = new WeakMap<
   WorldState,
   {
     mechanics?: NativeMechanics;
+    valueHoldIdentity?: readonly NativeValueHold[];
     participants?: ReturnType<typeof nativeParticipants>;
     /** Selected operations are always rechecked before reuse; these are not truth certificates. */
     statusIntegration?: ReturnType<typeof prepareStatusIntegration>;
@@ -6371,6 +6403,7 @@ export function advanceWorld(
     maxIntervals?: number;
     nativeRefuges?: NativeRefugePreparations;
     constructionPermissions?: readonly ConstructionPermission[];
+    nativeValueHolds?: readonly NativeValueHold[];
     campAssetPermissions?: readonly CampAssetPermission[];
     boundaryExits?: BoundaryExitPreparations;
   } = {},
@@ -6391,6 +6424,7 @@ export function* advanceWorldSlices(
     maxIntervals?: number;
     nativeRefuges?: NativeRefugePreparations;
     constructionPermissions?: readonly ConstructionPermission[];
+    nativeValueHolds?: readonly NativeValueHold[];
     campAssetPermissions?: readonly CampAssetPermission[];
     boundaryExits?: BoundaryExitPreparations;
   } = {},
@@ -6417,6 +6451,7 @@ function* advanceWorldNative(
     maxIntervals?: number;
     nativeRefuges?: NativeRefugePreparations;
     constructionPermissions?: readonly ConstructionPermission[];
+    nativeValueHolds?: readonly NativeValueHold[];
     campAssetPermissions?: readonly CampAssetPermission[];
     boundaryExits?: BoundaryExitPreparations;
   } = {},
@@ -6469,7 +6504,8 @@ function* advanceWorldNative(
     };
   // Only the exact immutable native successor can reuse this prediction. Commands,
   // edits and recovery create another identity and rebuild; forks copy the countdown.
-  const continuation = Object.isFrozen(original) ? nativeContinuations.get(original) : undefined;
+  const cached = Object.isFrozen(original) ? nativeContinuations.get(original) : undefined;
+  const continuation = cached?.valueHoldIdentity === options.nativeValueHolds ? cached : undefined;
   if (continuation?.mechanics) countDomainWork('nativeContinuationsReused');
   let outingBaseline = continuation?.outingBaseline?.deref();
   let offerBaseline = continuation?.offerBaseline?.deref();
@@ -6500,6 +6536,7 @@ function* advanceWorldNative(
     options.campAssetPermissions ?? [],
   );
   constructionBatch.boundaryExits = options.boundaryExits;
+  constructionBatch.nativeValueHolds = prepareNativeValueHolds(world, options.nativeValueHolds);
   const requestedEnd = original.simTime + elapsedSimSeconds;
   let remaining = elapsedSimSeconds,
     intervals = 0,
@@ -6535,7 +6572,10 @@ function* advanceWorldNative(
     statusBaseline = original;
   };
   const prepareParticipantStatus = (id: string) =>
-    retainedStatus.rates(world, entityGet(world.entities, id)!);
+    heldStatusRates(
+      retainedStatus.rates(world, entityGet(world.entities, id)!),
+      constructionBatch.nativeValueHolds,
+    );
   const prepareIntegration = (
     status: ReturnType<typeof prepareStatusRates>,
     drains: NativeMechanics['interval']['drains'],
@@ -6774,6 +6814,7 @@ function* advanceWorldNative(
           const transition = executeCommand(world, intent, {
             nativeController: true,
             constructionPermissions: constructionBatch.permissions,
+            nativeValueHolds: options.nativeValueHolds,
             campAssetPermissions: constructionBatch.campAssets,
             boundaryExits: constructionBatch.boundaryExits,
           });
@@ -6799,6 +6840,7 @@ function* advanceWorldNative(
           ? actionTargetsCurrent(world, actorId, [command], step.targetEpisodes)
             ? executeCommand(world, command, {
                 constructionPermissions: constructionBatch.permissions,
+                nativeValueHolds: options.nativeValueHolds,
                 campAssetPermissions: constructionBatch.campAssets,
                 boundaryExits: constructionBatch.boundaryExits,
               })
@@ -7838,6 +7880,7 @@ function* advanceWorldNative(
     // never a mutable result that could be edited before a later freeze.
     freezeWorld(result.world, { completedTransition: true });
     nativeContinuations.set(result.world, {
+      valueHoldIdentity: options.nativeValueHolds,
       outingBaseline: outingBaseline ? new WeakRef(outingBaseline) : undefined,
       offerBaseline: offerBaseline ? new WeakRef(offerBaseline) : undefined,
       statusBaseline: statusBaseline ? new WeakRef(statusBaseline) : undefined,

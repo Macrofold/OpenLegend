@@ -5,6 +5,7 @@ export {
   decodeOpenAiDecision,
 } from './openai-decisions.js';
 export {
+  MACROFOLD_DECISION_MODELS,
   createMacrofoldDecisionClient,
   createMacrofoldGenerationClient,
   macrofoldInferenceEvidence,
@@ -61,6 +62,7 @@ export {
   InvalidData,
   validateQuestions,
   validateJudgmentSize,
+  batchJudgmentQuestions,
   JUDGMENT_MAX_CHARACTERS,
   JUDGMENT_STATE_QUESTION_CHARACTERS,
   decodeJudge,

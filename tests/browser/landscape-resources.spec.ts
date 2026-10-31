@@ -176,9 +176,13 @@ test('edited landscape recovers its graphics context, drawing, picking and camer
     const beforeDraw = await page.evaluate(
       () => window.__openLegendSceneProfile!.snapshot().renderedFrames.count,
     );
+    // Restoring the software graphics context repeats cold shader preparation
+    // (~4 s CPU submission plus 3–4 s GPU fences in the diagnostic). Use the
+    // initial scene's preparation allowance; this checks recovery, not frame rate.
     await expect
-      .poll(() =>
-        page.evaluate(() => window.__openLegendSceneProfile!.snapshot().renderedFrames.count),
+      .poll(
+        () => page.evaluate(() => window.__openLegendSceneProfile!.snapshot().renderedFrames.count),
+        { timeout: 30_000 },
       )
       .toBeGreaterThan(beforeDraw + 1);
     await expect(canvas).toHaveAttribute('data-landscape-resource-count', resources!);

@@ -309,12 +309,6 @@ export async function chooseActivityRequest({
       {
         localId: 'activity_request',
         requiresAccepted: [],
-        talk: null,
-        think: null,
-        goal: null,
-        plan: null,
-        note: null,
-        name: null,
         act: {
           kind: 'invoke',
           actionId: null,

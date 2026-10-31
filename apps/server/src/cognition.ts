@@ -140,6 +140,13 @@ export function domainCommand(input: CommandInput, actorId: string, id: string):
         bindings: input.bindings!,
         ...(input.resume ? { resume: true } : {}),
       };
+    case 'express':
+      return {
+        ...base,
+        type: 'express',
+        verb: input.verb!,
+        ...(input.targetId ? { targetId: input.targetId } : {}),
+      };
     case 'say':
       return {
         ...base,

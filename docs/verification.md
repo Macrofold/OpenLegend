@@ -5,6 +5,7 @@
 - [Character mechanics prototype](verification/character-and-map-additions.md) — separate-branch historical equipment, stat, carrying and native consumer evidence; not current Gildmoss mechanics delivery.
 
 - [Skilled action execution](verification/action-execution-and-skill-expression.md) — native effects, exact input/receipt ownership, fitted capacity, rendered controls, isolated measurements and separate player acceptance.
+- [Cognition Lab](verification/cognition-lab.md) — isolated native experiments, exact captures, prepared calls, saved comparisons, failure recovery, browser isolation and bounded storage/runtime profiling. [Library and model iteration](verification/cognition-lab-model-iteration.md) records the live help, humor and witness panel; the [native model study](verification/cognition-lab-native-model-study.md) records the 30-situation, 15-configuration matrix, custom hosting and coverage limits. Deterministic mechanisms remain separate from live behavior and human acceptance.
 
 - [First-playable entry](verification/first-playable-entry.md) — actual loading bar, held/failed required artwork, explicit Retry and current Main selection; bounded animal feeding evidence remains separate.
 

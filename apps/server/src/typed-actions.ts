@@ -1533,7 +1533,7 @@ export function typedAction(
  */
 export async function commitTypedAction(
   service: WorldService,
-  job: Pick<JobRecord, 'id' | 'authority' | 'fingerprint'>,
+  job: Pick<JobRecord, 'id' | 'authority' | 'fingerprint' | 'operatorAuthored'>,
   actorId: string,
   request: TypedActionRequest,
   mode: 'enqueue' | 'replace' | 'interrupt',

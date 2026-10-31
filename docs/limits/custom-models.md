@@ -6,7 +6,7 @@ The production mechanisms and optional benchmark extensions are implemented. [Ve
 
 ## MX-L01 — Caller and output support
 
-**Implemented · Restrictiveness: Medium.** Server settings independently select native judgment and fast/complex NPC chat generation. Native judgment requires SystemOne named Choice/Score/Noul answers and completed-only delivery. Chat requires OpenAI-compatible output and the same complete local response schema; JSON-schema, JSON-object and explicitly prompted-JSON strategies retain existing streaming/publication boundaries. Embeddings and full harnesses retain their own protocols.
+**Implemented · Restrictiveness: Medium.** Server settings independently select native judgment and fast/complex NPC chat generation; higher decision generation defaults to the complex deployment unless a direct model is explicitly selected, under its existing schema and entitlement. Native judgment requires SystemOne named Choice/Score/Noul answers and completed-only delivery. Chat requires OpenAI-compatible output and the same complete local response schema; JSON-schema, JSON-object and explicitly prompted-JSON strategies retain existing streaming/publication boundaries. Embeddings and full harnesses retain their own protocols.
 
 **Reason / boundary:** Execution labels and matching model names do not identify semantic callers. Unsupported purposes/modes fail explicitly; omitted purposes retain their existing configuration. A text-only runtime can use explicitly selected prompted JSON, accepting a higher invalid-output risk without relaxing action validation.
 
@@ -14,9 +14,9 @@ The production mechanisms and optional benchmark extensions are implemented. [Ve
 
 ## MX-L02 — Trusted configuration shape
 
-**Implemented · Restrictiveness: Safe.** `OPENLEGEND_MODEL_TARGETS_JSON` uses current schema version `1`, required workspace UUID and one or more `judgment`, `npc_response_fast` or `npc_response_complex` purpose keys. Each target has a required deployment UUID, optional revision UUID and optional positive safe-integer output reduction. Only chat purposes accept a declared output strategy; native judgment rejects it. Unknown properties fail startup; no prompts, endpoint credentials or arbitrary schemas belong here.
+**Implemented · Restrictiveness: Safe.** `OPENLEGEND_MODEL_TARGETS_JSON` uses current schema version `1`, required workspace UUID and one or more `judgment`, `npc_response_fast` or `npc_response_complex` purpose keys. Each target has a required deployment UUID, optional revision UUID and optional positive safe-integer output reduction. Only chat purposes accept a declared output strategy and strict `chat_template_kwargs:{enable_thinking:boolean}`; native judgment rejects both. The native option requires the serving revision to advertise it. Unknown properties fail startup; no prompts, endpoint credentials or arbitrary schemas belong here.
 
-**Reason / boundary:** A small ordinary configuration has no need for free-form provider registries or unbounded nesting. The pure configuration owner supplies the same meaning to the game and optional tools. Current-format validation follows normal config bounds; no legacy readers are introduced.
+**Reason / boundary:** A small ordinary configuration has no need for free-form provider registries or unbounded nesting. The pure configuration owner supplies the same meaning to the game and optional tools. Optional server-only `MACROFOLD_MODEL_API_KEY` separates deployment access from the existing backend credential; omission retains that credential. Current-format validation follows normal config bounds; no legacy readers are introduced.
 
 **Removed restriction:** Experiment IDs, comparison scopes and deployment activation IDs are absent from runtime configuration. Study metadata is tool-owned and never required for normal play.
 
@@ -32,7 +32,7 @@ The production mechanisms and optional benchmark extensions are implemented. [Ve
 
 **Implemented · Restrictiveness: Medium.** Effective input/output bounds intersect the actual caller envelope with the runtime's capability. Optional configured output reductions cannot enlarge the current role allowance. No new universal context minimum, global prompt truncation ceiling or mandatory provider token-count call is added.
 
-**Reason / boundary:** Preserve required actor identity/evidence/reference closure and the single local response schema. A small model may return context-capability failure; existing context selection alone owns optional evidence. Native enforcement is preferred when supported; weaker output modes use schema-derived guidance and the same decoder. Unsupported format/schema features fail without silent downgrade or a repair call.
+**Reason / boundary:** Preserve required actor identity/evidence/reference closure and the single local response schema. A small model may return context-capability failure; existing context selection alone owns optional evidence. Native enforcement is preferred when supported; weaker output modes use schema-derived guidance and the same decoder. Native thinking controls do not grant extra context or make reasoning text a final answer. Unsupported format/schema features fail without silent downgrade or a repair call.
 
 ## MX-L05 — Deadlines, replay and streaming
 
@@ -42,7 +42,7 @@ The production mechanisms and optional benchmark extensions are implemented. [Ve
 
 ## MX-L06 — Request cost versus shared service cost
 
-**Implemented · Restrictiveness: Safe.** Existing actor/task admission and no-call/zero-budget controls remain. A known zero separate inference fee can settle the exact request while infrastructure cost is excluded. Standalone deployment clients permit a zero or positive request-fee ceiling; catalog clients keep positive ceilings, and the game's zero-budget/no-call guard still forbids dispatch. Hosting startup/idle/busy/storage cost is owned and displayed by Macrofold over deployment/time windows, with unknown bills explicit. Game per-call/monthly budgets do not claim to cap independently funded hosting.
+**Implemented · Restrictiveness: Safe.** Existing actor/task admission and no-call/zero-budget controls remain. Native deployment request fees and reservations are zero; this settles only the request fee while infrastructure cost is excluded. Standalone deployment clients permit a zero or positive request-fee ceiling; catalog clients keep positive ceilings, and the game's zero-budget/no-call guard still forbids dispatch. Hosting startup/idle/busy/storage cost is owned and displayed by Macrofold over deployment/time windows, with unknown bills explicit. Game per-call/monthly budgets do not claim to cap independently funded hosting.
 
 **Reason / boundary:** Count each obligation once. Missing usage or hosting invoice finality is not proof of free compute and does not independently invalidate an answer. Uncertain dispatch keeps the existing financial/execution protections. Provider shutdown/billing uncertainty remains a real operational limit.
 
@@ -58,6 +58,6 @@ The production mechanisms and optional benchmark extensions are implemented. [Ve
 
 ## MX-L08 — Evidence scope
 
-**Implemented · Restrictiveness: Medium.** Production acceptance covers native named answers and usable NPC chat output, actual authority boundaries, service recovery, cancellation, costs and measured performance. Upstream managed official Kev evidence is separate from OpenLegend live acceptance; Huihui imported-endpoint evidence does not qualify the protected managed chat runtime. Native scoring, provider interval and complete-request latency have distinct meanings. Model quality and player suitability use evidence appropriate to the selected role and existing release owners. No model winner, universal refusal-rate threshold or automatic default selection follows from this design.
+**Implemented · Restrictiveness: Medium.** Production acceptance covers native named answers and usable NPC chat output, actual authority boundaries, service recovery, cancellation, costs and measured performance. Upstream managed official Kev evidence is separate from OpenLegend live acceptance; earlier Huihui imported-endpoint evidence does not qualify the current managed service through this caller. Native scoring, provider interval and complete-request latency have distinct meanings. Model quality and player suitability use evidence appropriate to the selected role and existing release owners. No model winner, universal refusal-rate threshold or automatic default selection follows from this design.
 
 **Removed restriction:** A fixed benchmark cohort, two reviewers, study completion or a qualification-certificate match is not a universal production release/runtime gate. Independent blinded reviewers and held-out families remain useful for consequential comparative claims. Missing evidence limits the claim it supports; it must not be converted into an unrelated engine restriction. Existing content/privacy/publication requirements remain effective.

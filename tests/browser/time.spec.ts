@@ -174,10 +174,17 @@ test('time settings persist with sole-tab entry, explicit transfer, logout and m
       await expect(page.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();
       await page.setViewportSize({ width: 390, height: 844 });
       await expect(page.locator('.ol-hud')).toHaveAttribute('data-narrow', 'true');
-      const bounds = await page.getByRole('dialog').boundingBox();
-      expect(bounds!.x).toBeGreaterThanOrEqual(0);
-      expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(390);
-      await page.screenshot({ path: info.outputPath('tab-resume-narrow.png'), clip: bounds! });
+      const pausedDialog = page.getByRole('dialog', { name: 'Game Paused', exact: true });
+      // Foreground authority refresh can briefly hide this overlay on resize.
+      // Check the readable replacement instead of dereferencing its stale box.
+      await expect(pausedDialog).toBeVisible();
+      await expect
+        .poll(async () => {
+          const bounds = await pausedDialog.boundingBox();
+          return bounds !== null && bounds.x >= 0 && bounds.x + bounds.width <= 390;
+        })
+        .toBe(true);
+      await pausedDialog.screenshot({ path: info.outputPath('tab-resume-narrow.png') });
       await page.getByRole('button', { name: 'Resume Here', exact: true }).click();
       await expect(page.getByRole('dialog')).toBeHidden();
       await expect(other.getByRole('dialog', { name: 'Game Paused', exact: true })).toBeVisible();

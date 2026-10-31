@@ -3,7 +3,9 @@ import { entityGet, entityValues } from '@open-legend/domain';
 import { isEquipped } from '@open-legend/domain';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import { recordBackgroundFailure } from './performance.js';
+import { undispatchedReceipt } from './decision-state.js';
 import type { CognitionExecution, ExecutionLease } from './cognition-execution.js';
+import type { PreparedCognitionStage } from './cognition-runtime-control.js';
 import { personalPronoun } from '@open-legend/language';
 import {
   MemoryPreparationError,
@@ -53,6 +55,7 @@ import {
 import { embeddingBatches } from './embedding-batches.js';
 import {
   createEmbeddingClient,
+  EMBEDDING_LIMITS,
   type EmbeddingClient,
   type EmbeddingRequest,
   type AiResult,
@@ -65,6 +68,7 @@ import type { WorldService } from './world-service.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { randomUUID } from 'node:crypto';
 import { interactiveAllowance } from './cognition-budget.js';
+import { stageAllowance } from './cognition-stage-budget.js';
 export interface AttentionCandidate {
   id: string;
   kind: 'memory' | 'conversation' | 'entity' | 'possession' | 'knowledge' | 'action';
@@ -458,10 +462,17 @@ interface VectorCache {
   dimensions: number;
   queries: Record<string, number[]>;
 }
+interface PreparedEmbedding {
+  edited?: boolean;
+  request: EmbeddingRequest;
+  stage?: PreparedCognitionStage;
+  lease?: ExecutionLease;
+}
 /** Scope is resolved before vector lookup. Every batch and result is bounded and revision-keyed. */
 export class RecallService {
   private embeddings: EmbeddingClient;
   private readonly unsubscribe: () => void;
+  private readonly unsubscribeControl?: () => void;
   private observedMemoryRevision = -1;
   private indexQueued = false;
   private indexWork: Promise<void> = Promise.resolve();
@@ -504,13 +515,28 @@ export class RecallService {
       this.observedMemoryRevision = revision;
       this.scheduleMemoryIndex();
     });
+    const control = service.cognitionControl;
+    if (control) {
+      let held = control.held;
+      this.unsubscribeControl = control.subscribe(() => {
+        const resumed = held && !control.held;
+        held = control.held;
+        if (resumed) {
+          // Each interval may select different autonomous people. A previous
+          // partial round must not hide newly selected people after release.
+          this.indexActors = [];
+          this.scheduleMemoryIndex();
+        }
+      });
+    }
     this.scheduleMemoryIndex();
   }
 
   withExecution<T>(rootId: string, lease: ExecutionLease, operation: () => Promise<T>): Promise<T> {
-    return this.executionOwner.run({ rootId, lease }, operation);
+    const release = this.service.cognitionControl?.registerNative(rootId);
+    return this.executionOwner.run({ rootId, lease }, operation).finally(() => release?.());
   }
-  private attemptLink(stage: string) {
+  private attemptLink(stage: string, requestId?: string, prepared?: PreparedEmbedding) {
     const owner = this.executionOwner.getStore();
     return owner
       ? {
@@ -519,12 +545,20 @@ export class RecallService {
           stage,
           executionClass: 'background' as const,
         }
-      : undefined;
+      : prepared?.lease && requestId
+        ? {
+            rootJobId: requestId,
+            category: 'preparation' as const,
+            stage,
+            executionClass: prepared.lease.executionClass,
+          }
+        : undefined;
   }
 
   private scheduleMemoryIndex(): void {
     if (
       this.closed ||
+      this.service.cognitionControl?.held ||
       this.indexQueued ||
       !this.service.store.vectors ||
       !this.service.config.embeddingKey ||
@@ -595,58 +629,170 @@ export class RecallService {
   private async embedCurrent(
     request: EmbeddingRequest,
     current: () => boolean | Promise<boolean>,
+    prepared?: PreparedEmbedding,
   ): Promise<AiResult<number[][]>> {
-    const admitted = await this.service.publishRecall(async () => {
-      const valid = await current();
-      const owner = this.executionOwner.getStore();
-      if (
-        valid &&
-        !this.closed &&
-        !this.service.paused &&
-        !request.signal?.aborted &&
-        !owner?.lease.uncertainCompletion
-      ) {
-        if (owner) {
-          try {
-            if (!(await this.service.store.markDecisionDispatch(request.requestId)))
-              throw new Error('Embedding dispatch was already claimed.');
-          } catch (error) {
-            // The write may have committed despite a lost acknowledgement.
-            owner.lease.uncertain(request.requestId);
-            throw error;
-          }
-        }
-        return { result: this.embeddings.embed(request) };
-      }
-      const now = new Date().toISOString();
-      const cancelled: AiResult<number[][]> = {
-        outcome: 'cancelled',
-        reason: 'Embedding context changed before dispatch.',
-        receipt: {
-          requestId: request.requestId,
-          provider: 'openai',
-          requestedModel: this.service.config.embeddingModel,
-          model: this.service.config.embeddingModel,
-          modelVersionStatus: 'unavailable',
-          contextDigest: digest(request.texts),
-          startedAt: now,
-          completedAt: now,
-          latencyMs: 0,
-          dispatched: false,
-          completionUncertain: false,
-        },
-      };
-      return { result: Promise.resolve(cancelled) };
-    });
+    let providerStarted = false,
+      dispatchIntent = false;
     try {
+      const admitted = await this.service.publishRecall(async () => {
+        const valid = await current();
+        const owner = this.executionOwner.getStore();
+        if (
+          valid &&
+          !this.closed &&
+          !this.service.paused &&
+          !request.signal?.aborted &&
+          !owner?.lease.uncertainCompletion
+        ) {
+          if (owner || prepared?.lease) {
+            try {
+              dispatchIntent = true;
+              if (!(await this.service.store.markDecisionDispatch(request.requestId)))
+                throw new Error('Embedding dispatch was already claimed.');
+            } catch (error) {
+              // The write may have committed despite a lost acknowledgement.
+              (prepared?.lease ?? owner?.lease)?.uncertain(request.requestId);
+              throw error;
+            }
+          }
+          const dispatch = () => {
+            providerStarted = true;
+            return this.embeddings.embed(prepared?.request ?? request);
+          };
+          return {
+            result:
+              prepared?.stage && this.service.cognitionControl
+                ? this.service.cognitionControl.dispatch(prepared.stage, dispatch)
+                : dispatch(),
+          };
+        }
+        const now = new Date().toISOString();
+        const cancelled: AiResult<number[][]> = {
+          outcome: 'cancelled',
+          reason: 'Embedding context changed before dispatch.',
+          receipt: {
+            requestId: request.requestId,
+            provider: 'openai',
+            requestedModel: this.service.config.embeddingModel,
+            model: this.service.config.embeddingModel,
+            modelVersionStatus: 'unavailable',
+            contextDigest: digest(request.texts),
+            startedAt: now,
+            completedAt: now,
+            latencyMs: 0,
+            dispatched: false,
+            completionUncertain: false,
+          },
+        };
+        return { result: Promise.resolve(cancelled) };
+      });
       const result = await admitted.result;
       if (result.receipt.completionUncertain)
-        this.executionOwner.getStore()?.lease.uncertain(request.requestId);
+        (prepared?.lease ?? this.executionOwner.getStore()?.lease)?.uncertain(request.requestId);
       return result;
     } catch (error) {
-      this.executionOwner.getStore()?.lease.uncertain(request.requestId);
+      if (prepared?.stage && !providerStarted) {
+        try {
+          await this.service.store.settle(
+            request.requestId,
+            undispatchedReceipt(request.requestId, 'openai', Date.now()),
+          );
+        } catch (settlementError) {
+          if (dispatchIntent)
+            (prepared?.lease ?? this.executionOwner.getStore()?.lease)?.uncertain(
+              request.requestId,
+            );
+          throw settlementError;
+        }
+      } else
+        (prepared?.lease ?? this.executionOwner.getStore()?.lease)?.uncertain(request.requestId);
+      throw error;
+    } finally {
+      try {
+        if (prepared?.stage && prepared.stage.status !== 'consumed')
+          await this.service.cognitionControl!.decline(
+            prepared.stage,
+            'Embedding ended before provider dispatch.',
+          );
+      } finally {
+        prepared?.lease?.release();
+      }
+    }
+  }
+
+  private async prepareEmbedding(
+    request: EmbeddingRequest,
+    actorId: string,
+    current: () => boolean | Promise<boolean>,
+  ): Promise<PreparedEmbedding> {
+    const control = this.service.cognitionControl;
+    if (!control) return { request };
+    const owner = this.executionOwner.getStore();
+    if (owner?.lease.uncertainCompletion)
+      throw new Error('An earlier embedding has uncertain external completion.');
+    owner?.lease.release();
+    const gate = await control.prepare(
+      {
+        id: request.requestId,
+        rootId: owner?.rootId ?? request.requestId,
+        actorId,
+        purpose: 'embedding',
+        generation: this.service.generation,
+        responseBoundBytes: EMBEDDING_LIMITS.resultBytes,
+        wireBoundBytes: 1_000_000,
+        signal: request.signal,
+        current: async () => {
+          request.signal?.throwIfAborted();
+          if (this.closed || !(await current()))
+            throw new Error('Embedding evidence changed before dispatch.');
+        },
+      },
+      { kind: 'embedding', request: { texts: request.texts } },
+    );
+    try {
+      const lease = this.execution
+        ? owner
+          ? await this.execution.background()
+          : await this.execution.primary()
+        : undefined;
+      if (this.execution && !lease) throw new Error('Model execution capacity is occupied.');
+      if (owner && lease) owner.lease = lease;
+      return {
+        request: { ...request, texts: gate.input.request.texts },
+        stage: gate.stage,
+        lease,
+        edited: JSON.stringify(request.texts) !== JSON.stringify(gate.input.request.texts),
+      };
+    } catch (error) {
+      await control.decline(gate.stage, 'Embedding capacity admission failed.');
       throw error;
     }
+  }
+  private async admitEmbedding(
+    prepared: PreparedEmbedding,
+    admit: () => Promise<boolean>,
+  ): Promise<boolean> {
+    try {
+      return await admit();
+    } catch (error) {
+      await this.discardEmbedding(prepared);
+      throw error;
+    }
+  }
+  private async discardEmbedding(
+    prepared: PreparedEmbedding,
+    reason = 'Embedding admission ended before dispatch.',
+  ): Promise<void> {
+    prepared.lease?.release();
+    if (prepared.stage) await this.service.cognitionControl?.decline(prepared.stage, reason);
+  }
+  private embeddingAllowance(prepared: PreparedEmbedding): number {
+    return this.service.cognitionControl
+      ? stageAllowance(this.service.config, {
+          kind: 'embedding',
+          request: { texts: prepared.request.texts },
+        })
+      : this.service.config.embeddingReserveUsd;
   }
 
   private async indexMemories(): Promise<boolean> {
@@ -659,7 +805,11 @@ export class RecallService {
     const model = { model: config.embeddingModel, dimensions: config.embeddingDimensions };
     if (!this.indexActors.length || this.indexGeneration !== generation) {
       this.indexActors = entityValues(this.service.world.entities)
-        .filter((entity) => entity.actor?.controller === 'npc')
+        .filter(
+          (entity) =>
+            entity.actor?.controller === 'npc' &&
+            (this.service.cognitionControl?.allowsAutonomousActor(entity.id) ?? true),
+        )
         .map((entity) => entity.id)
         .sort();
       this.indexGeneration = generation;
@@ -669,7 +819,10 @@ export class RecallService {
     // One batch per actor per round prevents a long-lived actor monopolizing the index budget.
     while (actors.length && !this.closed) {
       const actorId = actors.shift()!;
-      if (entityGet(this.service.world.entities, actorId)?.actor?.controller !== 'npc') continue;
+      const eligible = () =>
+        entityGet(this.service.world.entities, actorId)?.actor?.controller === 'npc' &&
+        (this.service.cognitionControl?.allowsAutonomousActor(actorId) ?? true);
+      if (!eligible()) continue;
       const scope: MemoryScope = { worldId: head.worldId, actorId, generation: head.generation };
       const pending = await repository.pending(scope, model);
       const batch =
@@ -682,7 +835,7 @@ export class RecallService {
       if (!batch.length) continue;
       const current = async () =>
         generation === this.service.generation &&
-        entityGet(this.service.world.entities, actorId)?.actor?.controller === 'npc' &&
+        eligible() &&
         (await repository.current(
           scope,
           batch.map((source) => ({
@@ -692,26 +845,38 @@ export class RecallService {
           })),
         ));
       const requestId = `memory-index:${randomUUID()}`;
-      const admitted = await repository.markAttempt(
-        scope,
-        model,
-        batch,
-        requestId,
-        async () =>
-          entityGet(this.service.world.entities, actorId)?.actor?.controller === 'npc' &&
-          !this.closed &&
-          this.service.store.reserve(
+      const prepared = await this.prepareEmbedding(
+        { requestId, texts: batch.map((source) => source.text), signal: controller.signal },
+        actorId,
+        current,
+      );
+      let spendingRefused = false;
+      const admitted = await this.admitEmbedding(prepared, () =>
+        repository.markAttempt(scope, model, batch, requestId, async () => {
+          if (!eligible() || this.closed) return false;
+          const funded = await this.service.store.reserve(
             requestId,
             'openai',
-            config.embeddingReserveUsd,
+            this.embeddingAllowance(prepared),
             Math.max(0, config.budgetUsd - interactiveAllowance(config)),
             actorId,
             undefined,
             undefined,
-            this.attemptLink('memory-index'),
-          ),
+            this.attemptLink('memory-index', requestId, prepared),
+          );
+          spendingRefused = !funded;
+          return funded;
+        }),
       );
-      if (!admitted) continue; // A denied actor must not starve the next actor.
+      if (!admitted) {
+        await this.discardEmbedding(
+          prepared,
+          spendingRefused
+            ? 'Embedding spending admission was refused.'
+            : 'Embedding source or run eligibility changed before dispatch.',
+        );
+        continue; // A denied actor must not starve the next actor.
+      }
       const result = await this.log.run(
         'Background memory embeddings',
         { requestId, actorId, ...model, sourceIds: batch.map((source) => source.memory.id) },
@@ -723,10 +888,11 @@ export class RecallService {
               signal: controller.signal,
             },
             current,
+            prepared,
           ),
       );
       await this.service.store.settle(requestId, result.receipt);
-      if (result.outcome !== 'value') return false;
+      if (result.outcome !== 'value' || prepared.edited) return false;
       await this.service.publishRecall(async () => {
         if (this.closed || controller.signal.aborted || !(await current())) return;
         await repository.putVectors(
@@ -772,7 +938,14 @@ export class RecallService {
 
   private readonly retrieval = new WeakMap<
     AttentionCandidate[],
-    { eligible: number; indexed: number; missing: number; status: string; generation: string }
+    {
+      eligible: number;
+      indexed: number;
+      missing: number;
+      status: string;
+      ranking: 'semantic' | 'lexical' | 'importance-recency';
+      generation: string;
+    }
   >();
   private readonly sourceBindings = new WeakMap<
     AttentionCandidate[],
@@ -820,7 +993,12 @@ export class RecallService {
     });
     const count = coverage.eligible;
     const inner = world.innerWorlds?.[actorId];
-    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(entityGet(world.entities, actorId)!.actor!), world, actorId)}\n${inner?.text ?? ''}`;
+    const goal = projectEntityMarkers(
+      currentGoal(entityGet(world.entities, actorId)!.actor!),
+      world,
+      actorId,
+    );
+    const query = `${stimulus}\nMy current goal: ${goal}\n${inner?.text ?? ''}`;
     const key = `memory-query:${world.id}:${actorId}`;
     const queryKey = digest({ query, generation: scope.generation });
     const cache = (await this.service.store.getIntegration(key)) as
@@ -834,7 +1012,7 @@ export class RecallService {
         : undefined;
     let status =
       count <= 300
-        ? 'direct: all eligible sources fit'
+        ? 'direct: eligible sources fit discovery row limit'
         : vector
           ? 'cached query'
           : 'structured fallback: query embedding unavailable';
@@ -848,50 +1026,67 @@ export class RecallService {
     ) {
       const id = `${requestId}:memory-query`;
       signal.throwIfAborted();
+      const prepared = await this.prepareEmbedding(
+        { requestId: id, texts: [query], signal },
+        actorId,
+        current,
+      );
       if (
-        await this.service.store.reserve(
-          id,
-          'openai',
-          config.embeddingReserveUsd,
-          budgetCeiling,
-          actorId,
-          undefined,
-          undefined,
-          this.attemptLink('memory-query'),
+        await this.admitEmbedding(prepared, () =>
+          this.service.store.reserve(
+            id,
+            'openai',
+            this.embeddingAllowance(prepared),
+            budgetCeiling,
+            actorId,
+            undefined,
+            undefined,
+            this.attemptLink('memory-query', id, prepared),
+          ),
         )
       ) {
         const result = await this.log.run(
           'Memory query embedding',
           { requestId: id, actorId, model: config.embeddingModel },
-          () => this.embedCurrent({ requestId: id, texts: [query], signal }, current),
+          () => this.embedCurrent({ requestId: id, texts: [query], signal }, current, prepared),
         );
         await this.service.store.settle(id, result.receipt);
         status = result.outcome;
         if (result.outcome === 'value') {
           vector = result.value[0];
-          await this.service.publishRecall(async () => {
-            if (!current()) throw new Error('Recall context changed during query embedding.');
-            await this.service.store.putIntegration(key, {
-              key: queryKey,
-              model: config.embeddingModel,
-              dimensions: config.embeddingDimensions,
-              query: vector,
+          if (!prepared.edited)
+            await this.service.publishRecall(async () => {
+              if (!current()) throw new Error('Recall context changed during query embedding.');
+              await this.service.store.putIntegration(key, {
+                key: queryKey,
+                model: config.embeddingModel,
+                dimensions: config.embeddingDimensions,
+                query: vector,
+              });
             });
-          });
         }
-      } else status = 'structured fallback: spending cap';
+      } else {
+        await this.discardEmbedding(prepared, 'Embedding spending admission was refused.');
+        status = 'structured fallback: spending cap';
+      }
     }
     const required = await repository.required(
       scope,
       [...requiredIds, ...automaticIds, ...conversationIds],
       preparation?.bodies,
     );
+    // Search the native opportunity, not the entire biography: recurring persona
+    // words would otherwise outrank the particular cue that prompted recall.
+    const lexicalQuery = `${stimulus}\n${goal}`;
+    const lexical = !vector && Buffer.byteLength(lexicalQuery) <= 8000 ? lexicalQuery : undefined;
     const optional = await repository.select(
       scope,
       300,
       vector
         ? { query: vector, model: config.embeddingModel, dimensions: config.embeddingDimensions }
-        : undefined,
+        : lexical
+          ? { text: lexical }
+          : undefined,
       preparation?.conversation.sources.map((source) => source.id),
       preparation?.bodies,
     );
@@ -916,8 +1111,17 @@ export class RecallService {
       sources.map((source) => [experienceEntryKey(source.entry), source.score]),
     );
     for (const candidate of candidates)
-      if (scores.get(candidate.id) !== undefined) candidate.score = scores.get(candidate.id);
-    this.retrieval.set(candidates, { ...coverage, status, generation: scope.generation });
+      for (const key of candidate.sourceKeys ?? [candidate.id]) {
+        const score = scores.get(key);
+        if (score !== undefined && (candidate.score === undefined || score > candidate.score))
+          candidate.score = score;
+      }
+    this.retrieval.set(candidates, {
+      ...coverage,
+      status,
+      ranking: vector ? 'semantic' : lexical ? 'lexical' : 'importance-recency',
+      generation: scope.generation,
+    });
     this.sourceBindings.set(candidates, {
       scope,
       sources: new Map(
@@ -930,6 +1134,7 @@ export class RecallService {
   async close(): Promise<void> {
     this.closed = true;
     this.unsubscribe();
+    this.unsubscribeControl?.();
     this.indexController.abort();
     if (this.indexSlotId) await this.execution?.cancel(new Set([this.indexSlotId]));
     await this.indexWork;
@@ -999,15 +1204,29 @@ export class RecallService {
       'knowledge',
     ];
     const peopleSet = new Set(people);
-    const ranked = [...optionalCandidates].sort(
-      (a, b) =>
-        Number(b.entityIds.some((id) => peopleSet.has(id))) -
-          Number(a.entityIds.some((id) => peopleSet.has(id))) ||
-        b.salience - a.salience ||
-        b.at - a.at,
-    );
+    const metadataOrder = (a: AttentionCandidate, b: AttentionCandidate) =>
+      Number(b.entityIds.some((id) => peopleSet.has(id))) -
+        Number(a.entityIds.some((id) => peopleSet.has(id))) ||
+      b.salience - a.salience ||
+      b.at - a.at;
+    const memoryOrder = (a: AttentionCandidate, b: AttentionCandidate) => {
+      // Discovery relevance must survive the later byte shortlist. Scores within
+      // this source family come from one query/method, never mixed with other
+      // families' salience or attention probabilities.
+      if (a.score !== undefined || b.score !== undefined) {
+        if (a.score === undefined) return 1;
+        if (b.score === undefined) return -1;
+        if (a.score !== b.score) return b.score - a.score;
+      }
+      return metadataOrder(a, b);
+    };
     const sections = new Map(
-      sectionKinds.map((kind) => [kind, ranked.filter((candidate) => candidate.kind === kind)]),
+      sectionKinds.map((kind) => [
+        kind,
+        optionalCandidates
+          .filter((candidate) => candidate.kind === kind)
+          .sort(kind === 'memory' || kind === 'conversation' ? memoryOrder : metadataOrder),
+      ]),
     );
     const sectionLimit = (_kind: AttentionCandidate['kind']) => 300;
     const semanticPool = sectionKinds.flatMap((kind) => {
@@ -1018,7 +1237,6 @@ export class RecallService {
           ? section
           : [];
     });
-    const semanticIds = new Set(semanticPool.map((candidate) => candidate.id));
     const key = `vectors:${world.id}:${actorId}`;
     const vectors = this.service.store.vectors;
     let cache = (
@@ -1038,9 +1256,9 @@ export class RecallService {
         : new Set<string>();
 
     // Preserve structured priority while indexing only sections large enough to need semantic top-N.
-    const unindexed = ranked.filter(
-      (candidate) => semanticIds.has(candidate.id) && !indexed.has(candidate.id),
-    );
+    const unindexed = semanticPool
+      .filter((candidate) => !indexed.has(candidate.id))
+      .sort(metadataOrder);
     const queryKey = digest({
       query: query.trim().replace(/\s+/g, ' ').toLocaleLowerCase(),
       revision: inner?.revision,
@@ -1054,49 +1272,68 @@ export class RecallService {
         ? 'cache'
         : 'unavailable: PostgreSQL with pgvector required';
     const additions: { id: string; revision: string; vector: number[] }[] = [];
+    let experimentalQuery: number[] | undefined;
     if (semanticPool.length && vectors && (missing.length || !cachedQuery)) {
       const id = `${jobId}:embeddings`;
       if (mode === 'native-only') embeddingStatus = 'native-only: cached evidence';
       else if (!config.embeddingKey) embeddingStatus = 'unavailable: no embedding credentials';
-      else if (
-        !(await this.service.store.reserve(
-          id,
-          'openai',
-          config.embeddingReserveUsd,
-          budgetCeiling,
-          actorId,
-          undefined,
-          undefined,
-          this.attemptLink('recall-embeddings'),
-        ))
-      )
-        embeddingStatus = 'deferred: spending cap';
       else {
         const texts = [
           ...(!cachedQuery ? [query] : []),
           ...missing.map((c) => c.embeddingText ?? c.text),
         ];
-        const result = await this.log.run(
-          'Embeddings',
-          {
-            requestId: id,
-            model: config.embeddingModel,
-            dimensions: config.embeddingDimensions,
-            texts,
-          },
-          () =>
-            this.embedCurrent({ requestId: id, texts, signal }, () =>
-              this.recallCurrent(world, actorId, generation, signal),
-            ),
+        const prepared = await this.prepareEmbedding(
+          { requestId: id, texts, signal },
+          actorId,
+          () => this.recallCurrent(world, actorId, generation, signal),
         );
-        await this.service.store.settle(id, result.receipt);
-        embeddingStatus = result.outcome;
-        if (result.outcome === 'value') {
-          let i = 0;
-          if (!cachedQuery) cache.queries[queryKey] = result.value[i++]!;
-          for (const c of missing)
-            additions.push({ id: c.id, revision: c.revision, vector: result.value[i++]! });
-          for (const id of Object.keys(cache.queries).slice(0, -16)) delete cache.queries[id];
+        const funded = await this.admitEmbedding(prepared, () =>
+          this.service.store.reserve(
+            id,
+            'openai',
+            this.embeddingAllowance(prepared),
+            budgetCeiling,
+            actorId,
+            undefined,
+            undefined,
+            this.attemptLink('recall-embeddings', id, prepared),
+          ),
+        );
+        if (!funded) {
+          await this.discardEmbedding(prepared, 'Embedding spending admission was refused.');
+          embeddingStatus = 'deferred: spending cap';
+        } else {
+          const result = await this.log.run(
+            'Embeddings',
+            {
+              requestId: id,
+              model: config.embeddingModel,
+              dimensions: config.embeddingDimensions,
+              texts,
+            },
+            () =>
+              this.embedCurrent(
+                { requestId: id, texts, signal },
+                () => this.recallCurrent(world, actorId, generation, signal),
+                prepared,
+              ),
+          );
+          await this.service.store.settle(id, result.receipt);
+          embeddingStatus = result.outcome;
+          if (result.outcome === 'value') {
+            let i = 0;
+            if (!cachedQuery) {
+              if (prepared.edited) experimentalQuery = result.value[i++]!;
+              else cache.queries[queryKey] = result.value[i++]!;
+            }
+            if (!prepared.edited)
+              for (const c of missing)
+                additions.push({ id: c.id, revision: c.revision, vector: result.value[i++]! });
+            else
+              embeddingStatus =
+                'experimental vectors captured; original source caches remain unmodified';
+            for (const id of Object.keys(cache.queries).slice(0, -16)) delete cache.queries[id];
+          }
         }
       }
     }
@@ -1112,7 +1349,7 @@ export class RecallService {
         }
         await this.service.store.putIntegration(key, cache);
       });
-    const q = cache.queries[queryKey];
+    const q = experimentalQuery ?? cache.queries[queryKey];
     const byId = new Map(searchable.map((c) => [c.id, c]));
     const priority = (c: AttentionCandidate) =>
       (c.score ?? 0) + (c.entityIds.some((id) => peopleSet.has(id)) ? 0.15 : 0) + c.salience * 0.01;
@@ -1190,7 +1427,6 @@ export class RecallService {
         const request = attentionRequest(
           {
             stimulus,
-            ...(cues ? { innerWorldExcerpt: cues } : {}),
             goal: projectEntityMarkers(
               currentGoal(entityGet(world.entities, actorId)!.actor!),
               world,

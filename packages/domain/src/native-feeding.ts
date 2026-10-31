@@ -1,3 +1,4 @@
+import type { NativeValueHoldContext } from './native-value-holds.js';
 import { TIME_EPSILON } from './simulation-time.js';
 import { itemFor } from './objects.js';
 import { subjectNarration } from './narration.js';
@@ -120,6 +121,7 @@ export function completeNativeFeeding(
   actor: Entity,
   action: Action,
   events: WorldEvent[],
+  valueHolds?: NativeValueHoldContext,
 ): string | undefined {
   const problem = nativeFeedingProblem(world, actor, action);
   if (problem) return problem;
@@ -168,6 +170,9 @@ export function completeNativeFeeding(
     events,
     'consumption',
     'transition',
+    'effect',
+    undefined,
+    valueHolds,
   );
   if (written.status !== 'applied' && written.status !== 'unchanged')
     throw new Error('A prepared native meal lost its same-transition attribute write.');

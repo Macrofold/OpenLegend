@@ -6,7 +6,7 @@ import type { EventDisclosurePolicy } from '../../event-observation.js';
  * Participant/private producers still own deliberate grants (for example barter terms).
  */
 const fields: Record<string, readonly string[]> = {
-  expression: ['mechanical', 'descriptive'],
+  expression: ['mechanical', 'descriptive', 'expressionId', 'contactKind', 'contactFelt'],
   'attribute-changed': [
     'changeKind',
     'attributeId',
@@ -84,7 +84,9 @@ const shared = ['responseId', 'conversationRelevant', 'semanticTrigger'];
 const contactMetrics = ['rawInjury', 'preventedInjury', 'healthBefore', 'healthAfter', 'damage'];
 export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
   feltTarget: (event) =>
-    ['struck', 'projectile-contact'].includes(event.type) && event.data?.['contactInjury'] === true
+    (['struck', 'projectile-contact'].includes(event.type) &&
+      event.data?.['contactInjury'] === true) ||
+    (event.type === 'expression' && typeof event.data?.['contactKind'] === 'string')
       ? event.targetId
       : undefined,
   // Seeing two people does not disclose their carried lot's exact terms. Native
@@ -98,15 +100,32 @@ export const BASE_EVENT_DISCLOSURE: EventDisclosurePolicy = {
       typeof event.data?.[key] === 'string' ? [event.data[key] as string] : [],
     ),
   partial: (event, sourceId, targetId) =>
-    !sourceId && targetId && event.data?.['contactInjury'] === true
-      ? subjectNarration(targetId, 'felt a physical impact from an unseen source.')
-      : sourceId
-        ? subjectNarration(sourceId, activity[event.type] ?? 'was active.')
-        : targetId
-          ? subjectNarration(targetId, 'was involved in activity.')
-          : 'Activity was observed.',
+    !sourceId &&
+    targetId &&
+    event.type === 'expression' &&
+    typeof event.data?.['contactFelt'] === 'string'
+      ? subjectNarration(targetId, `${event.data['contactFelt']} from an unseen source.`)
+      : !sourceId && targetId && event.data?.['contactInjury'] === true
+        ? subjectNarration(targetId, 'felt a physical impact from an unseen source.')
+        : sourceId
+          ? subjectNarration(sourceId, activity[event.type] ?? 'was active.')
+          : targetId
+            ? subjectNarration(targetId, 'was involved in activity.')
+            : 'Activity was observed.',
   data: (event, observerId, detailed) => {
     if (!detailed) {
+      if (
+        event.type === 'expression' &&
+        event.targetId === observerId &&
+        typeof event.data?.['contactKind'] === 'string'
+      )
+        return {
+          mechanical: true,
+          contactKind: event.data['contactKind'],
+          ...(event.data['contactFelt'] !== undefined
+            ? { contactFelt: event.data['contactFelt'] }
+            : {}),
+        };
       // An impact grants one's bodily result, not the unseen weapon/definition,
       // performer, execution identity or position referenced by the raw occurrence.
       if (event.targetId !== observerId || event.data?.['contactInjury'] !== true) return {};

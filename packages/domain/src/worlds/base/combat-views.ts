@@ -98,20 +98,30 @@ export function observedCombatActivity(
   world: WorldState,
   observer: Entity,
   target: Pick<Entity, 'id'>,
-): string | undefined {
+): { text: string; actionId?: string } | undefined {
   const current = entityGet(world.entities, target.id);
   if (!current?.actor?.alive) return;
+  const action = current.actor.action;
   let description = preparationDescription(current);
+  let actionId = description ? action?.id : undefined;
   if (!description) {
     const recovery = combatRecoveryDeadline(world, current) - world.simTime;
-    description =
-      recovery > 0
-        ? `Recovering from combat; ${Math.ceil(recovery)} game seconds remain. Movement is still possible.`
-        : current.actor.action?.evasion
-          ? 'Making a chosen short evasive movement. It grants no immunity.'
-          : undefined;
+    if (recovery > 0) {
+      description = `Recovering from combat; ${Math.ceil(recovery)} game seconds remain. Movement is still possible.`;
+      // Recovery may outlive the action and coexist with independent movement.
+      // Only suppress a coarse label for the action whose phase this text describes.
+      if (
+        action?.strikePhase === 'recovery' ||
+        (action?.guard &&
+          (action.guard.phase === 'recovery' || world.simTime >= action.guard.expiresAt))
+      )
+        actionId = action.id;
+    } else if (action?.evasion) {
+      description = 'Making a chosen short evasive movement. It grants no immunity.';
+      actionId = action.id;
+    }
   }
   if (!description || !seesEntity(world, observer, current)) return;
   const cue = observedAttackCue(world, observer, current);
-  return cue ? `${cue} ${description}` : description;
+  return { text: cue ? `${cue} ${description}` : description, ...(actionId ? { actionId } : {}) };
 }

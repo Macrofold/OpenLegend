@@ -62,8 +62,10 @@ fi
 
 if [[ "$dry_run" -eq 1 ]]; then
     echo 'Would run: pnpm install --frozen-lockfile'
+    echo 'Would run: pnpm setup:lab'
 else
     cd "$target_root"
     # Each checkout needs its own dependency links for its current lockfile.
     pnpm install --frozen-lockfile
+    pnpm setup:lab
 fi

@@ -142,14 +142,6 @@ function operation(localId: string, fields: Partial<Record<Kind, unknown>>) {
   return {
     localId,
     requiresAccepted: [],
-    talk: null,
-    act: null,
-    think: null,
-    goal: null,
-    plan: null,
-    note: null,
-    name: null,
-    appraise: null,
     ...fields,
   };
 }
@@ -262,6 +254,7 @@ const KNOWN_HEADINGS = new Set([
   'Actions',
   'Response format',
   'References',
+  'Current decision support',
 ]);
 /** Section sizes account for every byte of the rendered text, under known unique headings. */
 function expectCompleteSections(text: string, parts: Section[]) {
@@ -855,20 +848,20 @@ describe(
 
       const context = String(generation!.context);
       const parts = sections(context);
-      // Routing and generation share every section except the action shortlist; the
-      // generation additionally carries the actor-invention context after References.
+      // Routing and generation share the same facts; response-only support has its
+      // own section before the current evidence, trigger and final task.
       const routeParts = sections(route!.state as string);
-      for (const part of routeParts.filter((entry) => entry.heading !== 'References'))
+      for (const part of routeParts)
         expect(section(parts, part.heading).body, part.heading).toBe(part.body);
       expect(
         parts
           .map((part) => part.heading)
           .filter((heading) => !routeParts.some((entry) => entry.heading === heading)),
-      ).toEqual(['Actions']);
-      const routeReferences = section(routeParts, 'References').body;
-      expect(section(parts, 'References').body.startsWith(routeReferences)).toBe(true);
-      // Text the generation carries after the reference list, under no heading of its own.
-      const unheaded = section(parts, 'References').body.slice(routeReferences.length);
+      ).toEqual(['Actions', 'Current decision support']);
+      expect(parts.at(-1)?.heading).toBe('Task');
+      expect(parts.findIndex((part) => part.heading === 'Current decision support')).toBeLessThan(
+        parts.findIndex((part) => part.heading === 'Complete personal evidence'),
+      );
       // Meaningful empty facts survive as explicit statements rather than blank sections.
       const commitments = section(parts, 'My commitments').body.split('\n');
       expect(commitments[0]).toBe('None supplied.');
@@ -885,7 +878,7 @@ describe(
       const input = inspected.at(-1)!.bytes;
       report('greeting', {
         requests: inspected,
-        unheadedAfterReferences: unheaded,
+        decisionSupportBytes: section(parts, 'Current decision support').bytes,
         aboutMe: {
           acceptedBytes: Buffer.byteLength(aboutMe),
           meSectionBytes: section(parts, 'Me').bytes,
@@ -977,6 +970,11 @@ describe(
       const actions = [...section(parts, 'Actions').body.matchAll(/^- (a\d+): (.+)$/gm)];
       const eat = actions.find(([, , description]) => isEat(description ?? ''))?.[1];
       expect(eat).toBeDefined();
+      expect(
+        actions.every(([, , description]) =>
+          /\[mode=(enqueue|replace|interrupt)\]$/.test(description!),
+        ),
+      ).toBe(true);
       const route = decisionJudges(dispatched.judges)[0]!;
       expect(
         (route.state as { decisionContext: Record<string, unknown> }).decisionContext[
@@ -995,6 +993,53 @@ describe(
         accounting: ledger.summary,
       });
     });
+
+    it.each(['offered', 'mismatch'] as const)(
+      'known actions expose their exact work mode and admit only that mode: %s',
+      async (selection) => {
+        const h = await harness({
+          food: true,
+          script: { route: { level2: 0.9 } },
+          reply: (request) => {
+            const actions = section(sections(String(request.context)), 'Actions').body;
+            const eat = [
+              ...actions.matchAll(/^- (a\d+): (.+) \[mode=(enqueue|replace|interrupt)\]$/gm),
+            ].find(([, , description]) => isEat(description!));
+            expect(eat).toBeDefined();
+            expect(eat![3]).toBe('replace');
+            expect(String(request.context)).toContain('copy its offered mode exactly');
+            return {
+              operations: [
+                operation('eat', {
+                  act: {
+                    kind: 'known',
+                    actionId: eat![1],
+                    mode: selection === 'offered' ? eat![3] : 'interrupt',
+                    verb: null,
+                    targetEntityId: null,
+                    description: null,
+                    invocation: null,
+                    slots: null,
+                  },
+                }),
+                operation('feeling', { think: { text: 'I feel hungry.', aboutEntityIds: [] } }),
+              ],
+            };
+          },
+        });
+        const job = await h.thought();
+        expect(job.status).toBe('completed');
+        const component = h.service.world.responseReceipts?.[job.id]?.components['eat'];
+        expect(h.service.world.responseReceipts?.[job.id]?.components['feeling']?.ok).toBe(true);
+        if (selection === 'offered') expect(component?.ok, component?.message).toBe(true);
+        else expect(component).toMatchObject({ ok: false, code: 'action-mode' });
+        await h.service.tick(0.1);
+        expect(quantityOf(h.service.world, NPC_ID, 'berries')).toBe(
+          selection === 'offered' ? 1 : 2,
+        );
+        expect(h.jobCalls(job.id).generations).toHaveLength(1);
+      },
+    );
 
     it('resource task without food: "I have no food." reaches Jev and generation', async () => {
       const h = await harness({ food: false, script: { route: { level2: 0.9 } } });
@@ -1158,6 +1203,7 @@ describe(
         code: string;
         path: (string | number)[];
         expected?: string;
+        keys?: string[];
         values?: unknown[];
       };
       /** Per-variant issues of the single-kind union, as the parse stage recorded them. */
@@ -1271,11 +1317,11 @@ describe(
       // each fail on exactly one field, the other kind, so the second kind alone is the defect.
       const twoKindSingles = unionBranches(twoKinds.parse)
         .filter((branch) => branch.length === 1)
-        .map(([issue]) => ({ path: issue!.path.join('.'), expected: issue!.expected }));
+        .map(([issue]) => ({ code: issue!.code, keys: issue!.keys }));
       expect(twoKindSingles).toEqual(
         expect.arrayContaining([
-          { path: 'think', expected: 'null' },
-          { path: 'talk', expected: 'null' },
+          { code: 'unrecognized_keys', keys: ['think'] },
+          { code: 'unrecognized_keys', keys: ['talk'] },
         ]),
       );
       expect(twoKindSingles).toHaveLength(2);

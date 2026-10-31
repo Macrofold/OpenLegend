@@ -144,6 +144,40 @@ export function validateJudgmentSize(state: unknown, questions: TypedQuestionMap
     throw new InvalidData('judgment_state_question_exceeds_28000_estimated_tokens');
 }
 
+/** Pack a complete independent question set without dropping offered alternatives.
+ * This plans requests only; the caller owns each dispatch, source check and charge. */
+export function batchJudgmentQuestions(
+  state: unknown,
+  questions: TypedQuestionMap,
+): TypedQuestionMap[] {
+  validateQuestions(questions);
+  const stateCharacters = JSON.stringify(state).length;
+  const emptyRequestCharacters = JSON.stringify({ state, questions: {} }).length;
+  const batches: TypedQuestionMap[] = [];
+  let batch: TypedQuestionMap = Object.create(null) as TypedQuestionMap;
+  let characters = emptyRequestCharacters;
+  let count = 0;
+  for (const [id, question] of Object.entries(questions)) {
+    const questionCharacters = JSON.stringify(question).length;
+    const entryCharacters = JSON.stringify({ [id]: question }).length - 2;
+    if (stateCharacters + questionCharacters > JUDGMENT_STATE_QUESTION_CHARACTERS)
+      throw new InvalidData('judgment_state_question_exceeds_28000_estimated_tokens');
+    if (emptyRequestCharacters + entryCharacters > JUDGMENT_MAX_CHARACTERS)
+      throw new InvalidData('judgment_exceeds_55000_estimated_tokens');
+    if (characters + entryCharacters + (count ? 1 : 0) > JUDGMENT_MAX_CHARACTERS) {
+      batches.push(batch);
+      batch = Object.create(null) as TypedQuestionMap;
+      characters = emptyRequestCharacters;
+      count = 0;
+    }
+    batch[id] = question;
+    characters += entryCharacters + (count ? 1 : 0);
+    count++;
+  }
+  batches.push(batch);
+  return batches;
+}
+
 function probabilities(value: unknown, keys: string[]): Record<string, number> {
   if (!record(value)) throw new InvalidData('invalid_probabilities');
   const result: Record<string, number> = Object.create(null) as Record<string, number>;

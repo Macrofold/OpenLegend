@@ -17,6 +17,10 @@ import {
 import { gameTime } from './recall.js';
 import { experienceForModel, experienceModelBindings } from './perceived-context.js';
 import type { WorldService } from './world-service.js';
+import type { DecisionActionOffer } from './context.js';
+
+export const KNOWN_ACTION_MODE_INSTRUCTION =
+  'For a known action, copy its offered mode exactly; it specifies how that choice handles current work. Continuing choices use enqueue to preserve current work.';
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */
 export function responseTrigger(
@@ -62,11 +66,25 @@ export function responseTriggerContext(
       ? entityGet(world.entities, recipientId)
       : undefined;
   const observer = entityGet(world.entities, actorId);
+  const experience = experienceForModel(
+    { source: 'awareness', value: aware },
+    experienceModelBindings(world, actorId, { source: 'awareness', value: aware }, 'trigger'),
+  );
   return {
-    experience: experienceForModel(
-      { source: 'awareness', value: aware },
-      experienceModelBindings(world, actorId, { source: 'awareness', value: aware }, 'trigger'),
-    ),
+    experience,
+    // Awareness.actorId identifies the observer, not necessarily the acting person.
+    // An unknown source stays unknown; contact alone does not identify an attacker.
+    participants: aware.speech
+      ? {
+          observer: experience.owner,
+          speaker: experience.value['sourceId'] ?? null,
+          intendedAddressee: experience.value['targetId'] ?? null,
+        }
+      : {
+          observer: experience.owner,
+          perceivedSource: experience.value['sourceId'] ?? null,
+          subject: experience.value['targetId'] ?? null,
+        },
     eventTime: gameTime(
       aware.at,
       world.statusEffectPolicy.clockOffsetHours,
@@ -97,34 +115,54 @@ export function responseTriggerContext(
 
 export function readableDecisionContext(
   context: Record<string, unknown>,
-  actions: { id: string; description: string }[],
+  actions: DecisionActionOffer[],
   includeActions = false,
 ): string {
+  return renderDecisionContext(context, actions, includeActions).prompt;
+}
+
+/** Keep the response-only supplement seam with the renderer, never by searching
+ * authored text for headings or serializing the complete selected context again. */
+export function renderDecisionContext(
+  context: Record<string, unknown>,
+  actions: DecisionActionOffer[],
+  includeActions = false,
+): { prompt: string; responseSupplementOffset: number } {
   const capabilities = context['capabilities'] as
-    | { speech: boolean; expressions: boolean }
+    | { speech: boolean; expressions: string[] }
     | undefined;
-  // Stopping-time names and output families come from the world, never from this text.
-  const namedTimes = Array.isArray(context['namedTimes'])
-    ? (context['namedTimes'] as string[])
-    : [];
+  // Output families come from the selected world, never from this text.
   const outputs = Array.isArray(context['outputFamilies'])
     ? (context['outputFamilies'] as string[]).join(', ')
     : 'none supplied';
-  const expressionGuidance = capabilities?.expressions
-    ? 'Supported gestures: nod, smile, frown, wave, shrug, shake_head, slap. Expressions have no mechanical effects; a slap requires contact range.'
-    : 'This body has no supported gesture expressions. Do not use act.kind=expression or describe human gestures as performed.';
+  const supportsExpressions = !!capabilities?.expressions.length;
+  const expressionGuidance = supportsExpressions
+    ? `Supported expressions:\n${((context['expressionDescriptions'] as string[]) ?? []).join('; ')}`
+    : 'This body has no supported gesture expressions; act.kind=expression is unavailable. Descriptive emotion in speech is still allowed and does not perform a gesture.';
+  const hasItems = (value: unknown): value is unknown[] => Array.isArray(value) && value.length > 0;
   const list = (value: unknown) =>
-    Array.isArray(value) && value.length
+    hasItems(value)
       ? value.map((line) => `- ${String(line).replace(/\n/g, '\n  ')}`).join('\n')
       : 'None supplied.';
+  const triggerFacts = context['triggerFacts'] as Record<string, unknown> | null | undefined;
+  // Organization follows an acquired event role, not a guessed scene or personality.
+  const speechCause = triggerFacts?.['observerRelation'] !== undefined;
+  const memories =
+    hasItems(context['recall']) || context['reconsideration']
+      ? [
+          `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
+        ]
+      : [];
+  const conversation = hasItems(context['conversation'])
+    ? [
+        `## Conversation so far\nSelected speech I personally experienced, in chronological order; older unselected history may remain:\n${list(context['conversation'])}\nA turn marked "I said" is my own speech, not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
+      ]
+    : [];
   const sections = [
-    `## Me\n${context['identity']}\n${context['aboutMe']}\n${context['body']} ${context['feelings'] ?? ''}${context['carryingConcern'] ? `\n${context['carryingConcern']}` : ''}\n${expressionGuidance}${capabilities?.speech === false ? '\nI cannot speak; talk must be null.' : ''}`,
-    `## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`,
-    `## Trigger\n${context['stimulus']}`,
-    `## Trigger facts\n${JSON.stringify(context['triggerFacts'] ?? {})}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
-    `## Complete personal evidence\n${JSON.stringify(context['experience'] ?? [])}\nThese structured records preserve who experienced each event, acquisition, exact heard fragments and participant roles. Quoted words remain the speaker's words. Self, addressed, overheard, ambient and seen-only are distinct; none grants consent or forces a reply.`,
-    `## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat.${(context['triggerFacts'] as { observerRelationship?: string } | undefined)?.observerRelationship === 'addressed_speech' ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.`,
-    `## Conversation so far\nSelected speech I personally experienced, in chronological order; older unselected history may remain:\n${list(context['conversation'])}\nA turn marked "I said" is my own speech, not a reply from someone else. Avoid repeating an unanswered greeting or question unless the situation warrants it.`,
+    `## Me\n${[context['identity'], context['aboutMe'], context['body'], context['feelings'], context['carryingConcern']].filter((value) => typeof value === 'string' && value.length > 0).join('\n')}\n${expressionGuidance}${capabilities?.speech === false ? '\nI cannot speak; do not emit talk operations.' : ''}`,
+    ...(hasItems(context['commitments']) || context['activityCoverage']
+      ? [`## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`]
+      : []),
     ...(Array.isArray(context['planOffers']) && context['planOffers'].length
       ? [
           `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\nPrerequisites must be obtained first. These handles can be queued without a current action shortlist.`,
@@ -139,11 +177,19 @@ export function readableDecisionContext(
     ...(Array.isArray(context['supplyOpportunities']) && context['supplyOpportunities'].length
       ? [`## Optional personal supply considerations\n${list(context['supplyOpportunities'])}`]
       : []),
-    `## Native navigation\n${context['navigation'] ?? ''}\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport']}\nPublic supports: ${JSON.stringify(context['publicSurfaces'] ?? [])}`,
-    `## Current time\n${context['now']} (simulation seconds: ${context['simTime'] ?? 'unavailable'})`,
+    ...(context['navigation'] || context['currentPosition']
+      ? [
+          `## Native navigation\n${context['navigation'] ?? ''}${context['currentPosition'] ? `\nPosition: ${JSON.stringify(context['currentPosition'])}; support: ${context['currentSupport'] ?? 'unavailable'}` : ''}${hasItems(context['publicSurfaces']) ? `\nPublic supports: ${JSON.stringify(context['publicSurfaces'])}` : ''}`,
+        ]
+      : []),
+    ...(context['now'] || typeof context['simTime'] === 'number'
+      ? [
+          `## Current time\n${context['now'] ?? ''}${typeof context['simTime'] === 'number' ? ` (simulation seconds: ${context['simTime']})` : ''}`,
+        ]
+      : []),
     ...(context['activityRequests']
       ? [
-          `## Optional installed activity requests\n${JSON.stringify(context['activityRequests'])}\nThese are optional selected compositions, not goals or learned behavior. Use exact authored parameters only. Later native checks can refuse changed prerequisites.`,
+          `## Optional installed activity requests\n${JSON.stringify(context['activityRequests'])}\nUse these exact installed definitions and situation-specific choices. They are optional compositions, not goals, learned methods or completed work. An installed request selects its exact family/closed parameters, leaves navigation fields null, and keeps its mode equal to act.mode. Current native prerequisites still apply.`,
         ]
       : []),
     ...(context['inspectedContainer']
@@ -157,29 +203,53 @@ export function readableDecisionContext(
     ...(context['inspectedMethods']
       ? [`## Activities I chose to inspect\n${list(context['inspectedMethods'])}`]
       : []),
-    `## Recent memories\n${list(context['recall'])}${context['reconsideration'] ? `\n${context['reconsideration']}` : ''}`,
-    `## Nearby actors and objects\n${list(context['surroundings'])}${Array.isArray(context['contacts']) && context['contacts'].length ? `\nContact evidence:\n${list(context['contacts'])}` : ''}`,
-    `## Inventory\n${list(context['possessions'])}${context['inventoryCoverage'] ? `\nPartial inventory preparation: ${JSON.stringify(context['inventoryCoverage'])}. Only this page and bound tools were considered. Other possessions may be useful; explicitly inspect another page when needed. Omission is not absence.` : ''}`,
-    `## General knowledge notepad\n${JSON.stringify(context['notepad'] ?? {})}`,
-    `## Knowledge\n${list(context['knowledge'])}`,
+    ...(hasItems(context['surroundings']) || hasItems(context['contacts'])
+      ? [
+          `## Nearby actors and objects\n${list(context['surroundings'])}${hasItems(context['contacts']) ? `\nContact evidence:\n${list(context['contacts'])}` : ''}`,
+        ]
+      : []),
+    ...(hasItems(context['possessions']) || context['inventoryCoverage']
+      ? [
+          `## Inventory\n${list(context['possessions'])}${context['inventoryCoverage'] ? `\nPartial inventory preparation: ${JSON.stringify(context['inventoryCoverage'])}. Only this page and bound tools were considered. Other possessions may be useful; explicitly inspect another page when needed. Omission is not absence.` : ''}`,
+        ]
+      : []),
+    ...(context['notepad']
+      ? [`## General knowledge notepad\n${JSON.stringify(context['notepad'])}`]
+      : []),
+    ...(hasItems(context['knowledge']) ? [`## Knowledge\n${list(context['knowledge'])}`] : []),
   ];
   if (includeActions)
     sections.push(
-      `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.id}: ${action.description}`).join('\n') : 'No shortlisted mechanical action.'}\nI may propose an unlisted action. I should not prefer an existing action just because it is listed. A proposal is an intention, not a completed action; unsupported mechanics cannot execute. A useful partial interpretation must report omissions; uncertain revisions require explicit initiator acceptance, not automatic invention.`,
+      `## Actions\nOptional relevant executable choices; selection is not mandatory:\n${actions.length ? actions.map((action) => `- ${action.id}: ${action.description} [mode=${action.mode}]`).join('\n') : 'No shortlisted mechanical action.'}\nI may propose an unlisted action. I should not prefer an existing action just because it is listed. A proposal is an intention, not a completed action; unsupported mechanics cannot execute. A useful partial interpretation must report omissions; uncertain revisions require explicit initiator acceptance, not automatic invention.`,
     );
+  // Schema-use and optional-silence guidance improved matched responses beyond the schema alone.
+  // docs/verification/cognition-lab-native-model-study.md#october-28--prompt-voice-and-context-comparison
   sections.push(
-    `## Response format\nReturn {"operations":[]} to continue without intervention. At most 16 operations and 40000 UTF-8 bytes in total. Each operation has localId (unique lowercase letter followed by letters/digits/underscores, max 24), requiresAccepted (earlier operation localIds only, never entity IDs; [] for independent speech), and exactly one non-null field among talk, act, think, goal, plan, note, name, appraise; all seven unused fields must be null. Operations are admitted in order; requiresAccepted means admission, never physical completion.
-Speech: talk={"text":"words","addresseeEntityId":null,"selfIntroduction":null,"volume":"normal"}, max 1200 characters. Use null for ambient speech or copy one permitted ID for directed speech; never inherit a prior recipient. Choose volume whisper, normal or shout; whispering is not guaranteed private. Thought: think={"text":"brief private feeling","aboutEntityIds":[]}, max 240 characters.
-Action: act={"kind":"${capabilities?.expressions ? 'known|expression|proposal|invoke' : 'known|proposal|invoke'}","actionId":null,"verb":null,"targetEntityId":null,"description":null,"invocation":null,"slots":null,"mode":"enqueue|replace|interrupt"}. For known, fill only actionId; ${capabilities?.expressions ? 'for expression, fill verb and optionally targetEntityId; ' : ''}for proposal, fill description (max 500), optionally targetEntityId, and optionally slots={"itemId":null,"instrumentId":null,"recipientId":null,"quantity":null,"quantityMode":null,"until":null,"method":null}: exact permitted IDs for the item acted on, the tool used and the recipient; a whole quantity with quantityMode exact (units handled) or held (total to carry afterwards); ${namedTimes.length ? `until ${namedTimes.join('|')}` : 'until null (this world names no stopping times)'}; method keeps required wording such as quietly. Slots are null for other kinds. Complete typed proposals such as "drop 2 ITEM", "pick up ITEM" or "follow NAME at 4 m" bind without interpretation; a refused one states why. For invoke, fill invocation using Native navigation or an optional installed activity request; actionId, verb, description and top-level targetEntityId remain null. Request families use only their exact parameters and null navigation fields; their selected mode equals act.mode. A chosen request is neither a learned method nor completed work. Unlisted attempts remain available with no action suggestions. No unsupported effects are implied.
-Goal: goal={"operation":"create|revise|pause|resume|complete|abandon","goalId":null,"expectedRevision":null,"objective":null,"parentId":null}. Create supplies objective (max 500), optional parentId; revise supplies existing goalId/revision, objective and optional parentId. Status changes supply only existing goalId/revision. Eight active/paused goals maximum. Completion is a subjective declaration.
-Plan: plan={"mode":"enqueue|replace|cancel","expectedRevision":0,"goalId":null,"steps":[]}. Copy current plan revision (0 if absent). At most eight sequential steps. A step selects {"actionId":"supplied handle","itemFromStep":null,"useItemAs":null}, or consumes an earlier item output with {"actionId":null,"itemFromStep":0,"useItemAs":"equip"} (also "eat"). Indexes are zero-based within this submitted frontier. Only ${outputs} supply item outputs. Later steps wait for earlier completion and recheck prerequisites. Cancel has empty steps and null goalId. A new goal may be referenced as "$localId" only with that localId in requiresAccepted. Physical work takes simulation time. A plan may have no goal.
-${context['knowledgeInstructions'] ?? 'Knowledge edits are unavailable.'}
-Examples: empty {"operations":[]}; speech alone {"operations":[{"localId":"reply","requiresAccepted":[],"talk":{"text":"Hello.","addresseeEntityId":"COPY_PERMITTED_ID","selfIntroduction":null,"volume":"normal"},"act":null,"think":null,"goal":null,"plan":null,"note":null,"name":null,"appraise":null}]}; combined decisions can contain separate speech and thought operations, repeated kinds, or a goal creation followed by a plan requiring that goal's admission. Never invent a goal or thought just to fill the schema. No reasoning transcript or fabricated completion.`,
+    `## Response format\nUse the supplied JSON schema: each operation contains localId, requiresAccepted and only its selected nonnull payload. Return {"operations":[]} to continue without intervention. Independent speech and action can coexist as separate operations; requiresAccepted refers only to earlier localIds and means admission, never physical completion. Do not invent a thought or goal to fill the response.
+Speech addresses only a supplied reference or explicitly nobody; never inherit a recipient. Whispering is not guaranteed private. Express the person's voice and feelings in their speech; emotional asides need no matching action. A relationship or past playful response is evidence, not permanent permission. Distinguish memory, another person's claim, inference and deliberate deception. You may elaborate a sparse pre-game past consistently with this person's supplied identity; do not contradict established history or present an invented detail as a retrieved memory, shared experience or current fact.
+${KNOWN_ACTION_MODE_INSTRUCTION} Proposals preserve exact references, amounts and qualifiers in slots: quantityMode exact means units handled; held means total to carry afterward. A proposal or descriptive gesture does not perform contact, injury, equipment changes or movement. Only native admitted operations produce their declared effects; unsupported intentions remain unperformed.
+Goals are private intentions; marking one complete grants no reward. Copy current goal/plan revisions. Plans wait for actual earlier completion, recheck prerequisites and stop on failure; a new goal alias "$localId" requires that earlier goal's admission. Only ${outputs} supply a single item receipt for later equip/eat steps; do not invent future item IDs. Empty or blocked work does not require restarting it. Native navigation and installed requests retain their exact parameters and work modes.
+${context['knowledgeInstructions'] ?? 'Knowledge edits are unavailable.'}`,
   );
   sections.push(`## References
 Names are display prose, never identifiers. Copy the opaque ID token from (ID:token) into structured entity fields. Never invent a token or use a species name as an ID. Include (ID:token) in an unlisted proposal when identifying its target.
 ${list(context['references'])}`);
-  return sections.join('\n\n');
+  const responseSupplementOffset = sections.reduce(
+    (size, section, index) => size + section.length + (index ? 2 : 0),
+    0,
+  );
+  sections.push(
+    `## Complete personal evidence\n${JSON.stringify(context['experience'] ?? [])}\nThis array is character.experience; an index reference is zero-based. A record's owner, and value.actorId when present, identify the experiencer, not necessarily who acted. In speech awareness, sourceId is the acquired speaker and targetId the acquired addressee; eventData retains the event's own role names. A perceived source need not be the agent or cause. Source, acquisition, event time, exact heard fragments and uncertainty retain their recorded meaning. Quoted "I" and "you" belong to that speaker and addressee. Self, addressed, overheard, ambient and seen-only are distinct; none grants consent or forces a reply.`,
+    ...(speechCause ? [...memories, ...conversation] : [...conversation, ...memories]),
+    ...(triggerFacts
+      ? [
+          `## Trigger facts\n${JSON.stringify(triggerFacts)}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
+        ]
+      : []),
+    ...(context['stimulus'] ? [`## Trigger\n${context['stimulus']}`] : []),
+    `## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat.${triggerFacts?.['observerRelationship'] === 'addressed_speech' ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.`,
+  );
+  return { prompt: sections.join('\n\n'), responseSupplementOffset };
 }
 
 /** Only visible or explicitly perceived identities enter the reference contract. */
@@ -320,14 +390,13 @@ function formatIntentions(value: unknown): string {
       }
     | undefined;
   return [
-    ...(agency?.goals ?? []).map((goal) => `${goal.status} goal: ${goal.objective}`),
     typeof agency?.plan === 'string' ? agency.plan : 'No remaining work supplied.',
     ...(typeof agency?.paused === 'string' ? [agency.paused] : []),
     ...(agency?.outcomeCoverage ? [agency.outcomeCoverage] : []),
     `For structured plan changes, current plan revision: ${agency?.planRevision ?? 0}.`,
     ...(agency?.goals?.length
       ? [
-          `Goal controls for structured goal changes: ${JSON.stringify(agency.goals.map(({ id, revision, objective }) => ({ id, revision, objective })))}`,
+          `Goals and their current controls: ${JSON.stringify(agency.goals.map(({ id, revision, objective, status }) => ({ id, revision, objective, status })))}`,
         ]
       : []),
     ...(agency?.attempts ?? []).map((attempt) => `Unresolved intention: ${attempt.description}`),

@@ -1,10 +1,10 @@
+import { selectedExpressions } from '@open-legend/domain';
 import {
   entityGet,
   activityRequestDescriptors,
   canSpeak,
   commitActorResponse,
   namedClockTimes,
-  supportsManualWork,
   validResponseEnvelope,
   type ActorResponse,
 } from '@open-legend/domain';
@@ -15,7 +15,11 @@ import {
   type DecisionAppraisalProposal,
   responseSchema,
 } from './cognition-contracts.js';
-import { fallbackDecisionActions, prepareDecision } from './decision-context.js';
+import {
+  fallbackDecisionActions,
+  offerPreparedActions,
+  prepareDecision,
+} from './decision-context.js';
 import type { PreparedReconsideration } from './decision-escalator.js';
 import { decisionValidity } from './decision-validity.js';
 import { resolveResponseEntities } from './entity-references.js';
@@ -24,6 +28,7 @@ import { digest, type JobRecord } from './store.js';
 import { compileDecisionTask, prepareDecisionTask, type DecisionTask } from './decision-task.js';
 import { DECISION_LIMITS } from './decision-state.js';
 import type { WorldService } from './world-service.js';
+import { KNOWN_ACTION_MODE_INSTRUCTION } from './response-context.js';
 
 /** The same response owner handles a supplied action on either model route. */
 export function knownDecisionResponse(
@@ -64,6 +69,11 @@ export async function prepareReconsideration(
   const higher = state.higher;
   const actorId = state.actorId,
     generation = service.generation;
+  const response = Object.values(state.groups).some(
+    (group) => group.state === 'open' && group.kind === 'response',
+  );
+  const appraisalOnly = state.groups['q0']?.kind === 'appraisal';
+  const closedChoice = !response && !appraisalOnly;
   const evidenceIds = [
     ...new Set([
       ...(job.playerSpeechEventId ? [job.playerSpeechEventId] : (job.stimulusEvidenceIds ?? [])),
@@ -73,11 +83,15 @@ export async function prepareReconsideration(
   // Routing has already paid for the complete actor-scoped read. Keep its exact
   // source proofs through handoff; unrelated publications do not invalidate them.
   // The existing conversation/source guards and current native admission remain
-  // mandatory. This is request-owned, never restored or shared across decisions.
+  // mandatory. A snapshot budgeted for optional suggestions cannot promise the
+  // complete alternative set of a closed choice: rebuild through the same native
+  // owner under that requirement. No additional paid preparation is permitted.
+  // This is request-owned, never restored or shared across decisions.
   const reusable =
     retained?.rootId === job.id &&
     retained.generation === generation &&
-    retained.validity === decisionValidity(service.world, actorId)
+    retained.validity === decisionValidity(service.world, actorId) &&
+    (!closedChoice || retained.prepared.choiceCoverage === 'complete-required')
       ? retained.prepared
       : undefined;
   if (reusable) await reusable.validateConversation(false);
@@ -100,12 +114,18 @@ export async function prepareReconsideration(
       job.triggerEvidenceId ?? job.playerSpeechEventId,
       undefined,
       'native-only',
+      closedChoice ? 'available-native' : undefined,
     ));
   const sourceTime = base.diagnostics.sourceTime;
-  const prepared = fallbackDecisionActions(
-    { ...base, binding: { ...base.binding, decisionId: higher.id } },
-    'Native candidates for one reconsideration',
-  );
+  const rebound = { ...base, binding: { ...base.binding, decisionId: higher.id } };
+  const prepared =
+    base.choiceCoverage === 'complete-required'
+      ? offerPreparedActions(
+          rebound,
+          base.actionCandidates,
+          'Complete native reconsideration choices',
+        )
+      : fallbackDecisionActions(rebound, 'Native candidates for one reconsideration');
   const validity = decisionValidity(service.world, actorId);
   const appraisal = service.world.moduleManifest.appraisals?.definitions.some(
     (definition) => definition.decision,
@@ -120,10 +140,6 @@ export async function prepareReconsideration(
         { sharedExperiences: prepared.sharedExperiences },
       )
     : undefined;
-  const response = Object.values(state.groups).some(
-    (group) => group.state === 'open' && group.kind === 'response',
-  );
-  const appraisalOnly = state.groups['q0']?.kind === 'appraisal';
   if (appraisalOnly && !appraisal?.schema)
     throw new Error('No installed decision appraisal is available.');
   const responseSchemaFor = (offered: typeof prepared.offered) =>
@@ -134,7 +150,10 @@ export async function prepareReconsideration(
       ),
       {
         speech: canSpeak(entityGet(service.world.entities, actorId)),
-        expressions: supportsManualWork(entityGet(service.world.entities, actorId)),
+        expressions: selectedExpressions(
+          service.world,
+          entityGet(service.world.entities, actorId),
+        ).map((d) => d.id),
         proposals: false,
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
@@ -169,8 +188,7 @@ export async function prepareReconsideration(
         : response
           ? {
               kind: 'response',
-              question:
-                'Propose the still-unresolved response to this initiating situation. Speech is optional unless an addressed reply is needed. Use only supplied operations and handles.',
+              question: `Propose the still-unresolved response to this initiating situation. Speech is optional unless an addressed reply is needed. Use only supplied operations and handles. ${KNOWN_ACTION_MODE_INSTRUCTION}`,
               valueSchema: responseSchemaFor(offered),
             }
           : {
@@ -180,7 +198,7 @@ export async function prepareReconsideration(
               choices: Object.fromEntries(offered.map((option) => [option.id, option.description])),
             },
     } satisfies Record<string, DecisionTask>,
-    context: JSON.stringify({
+    context: {
       sourceTime,
       observationPolicy:
         'Continuous meters and feeling decay are observations from sourceTime; their meaningful conditions must remain unchanged. All current execution prerequisites are checked again.',
@@ -188,7 +206,7 @@ export async function prepareReconsideration(
       ...(response ? { choices: offered } : {}),
       appraisals: appraisal?.context,
       reconsiderationReason: higher.reason,
-    }),
+    },
     instructions: JSON.stringify(prepared.actionGuidance),
   });
   const fits = (offered: typeof prepared.offered) => {
@@ -201,7 +219,7 @@ export async function prepareReconsideration(
     );
   };
   let offered = prepared.offered;
-  // The higher-decision wrapper escapes the context and adds its own questions.
+  // The compiler serializes this structured context once with its own questions.
   // Fit optional actions against that complete consumer, preserving all personal
   // evidence and mandatory busy choices rather than lifting either byte limit.
   // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
@@ -219,6 +237,9 @@ export async function prepareReconsideration(
   prepareDecisionTask(input.tasks, input.context, input.instructions);
   return {
     ...input,
+    // Eligibility checks await after preparation. Keep the observations captured
+    // at sourceTime detached from retained preparation and appraisal source objects.
+    context: structuredClone(input.context),
     bindingDigest: digest({ binding: prepared.binding, validity }),
     sourceTime,
     current,
@@ -239,13 +260,6 @@ export async function prepareReconsideration(
             {
               localId: 'appraisal',
               requiresAccepted: [],
-              talk: null,
-              act: null,
-              think: null,
-              goal: null,
-              plan: null,
-              note: null,
-              name: null,
               appraise: changes[0]!,
             },
           ],

@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { createNetworkOwner } from '@open-legend/network';
 import {
+  MACROFOLD_DECISION_MODELS,
   createMacrofoldDecisionClient,
   createMacrofoldGenerationClient,
   decodeJudge,
@@ -380,7 +381,7 @@ describe('standalone Macrofold native decisions', () => {
     }
   });
 
-  it.each<MacrofoldDecisionModel>(['typesafe/jev-1.13', 'microsoft/microsoft-decision-1'])(
+  it.each<MacrofoldDecisionModel>(MACROFOLD_DECISION_MODELS)(
     'retains native question maps and score evidence for %s',
     async (model) => {
       const f = fixture();
@@ -525,20 +526,36 @@ describe('standalone Macrofold native decisions', () => {
   });
 
   it.each([
-    { admitStatus: 402, admitCode: 'insufficient_credit' },
-    { admitStatus: 503, admitCode: 'inference_disabled' },
-  ])('marks definitive admission rejection as undispatched without retry: %j', async (options) => {
-    const f = fixture(options);
-    const result = await client(f.fetcher).judge(request);
-    expect(result.outcome).toBe('unavailable');
-    expect(result).toMatchObject({ reason: options.admitCode });
-    expect(result.receipt).toMatchObject({
-      dispatched: false,
-      completionUncertain: false,
-      httpStatus: options.admitStatus,
-    });
-    expect(f.fetcher).toHaveBeenCalledOnce();
-  });
+    { admitStatus: 402, admitCode: 'insufficient_credit', rejected: true },
+    { admitStatus: 402, admitCode: 'run_budget_exhausted', rejected: true },
+    { admitStatus: 402, admitCode: 'deployment_budget_exhausted', rejected: true },
+    { admitStatus: 503, admitCode: 'run_budget_exhausted', rejected: false },
+    { admitStatus: 503, admitCode: 'inference_disabled', rejected: true },
+    { admitStatus: 503, admitCode: 'inference_admission_timeout', rejected: true },
+    { admitStatus: 503, admitCode: 'inference_admission_unknown', rejected: false },
+    { admitStatus: 503, admitCode: 'worker_retry_exhausted', rejected: false },
+    { admitStatus: 503, admitCode: 'provider_timeout', rejected: false },
+    { admitStatus: 502, admitCode: 'inference_admission_timeout', rejected: false },
+  ])(
+    'distinguishes definitive admission rejection from uncertain execution without retry: %j',
+    async (options) => {
+      for (const kind of ['judge', 'generate'] as const) {
+        const f = fixture(options);
+        const result =
+          kind === 'judge'
+            ? await client(f.fetcher).judge(request)
+            : await generationClient(f.fetcher).generate(generationRequest);
+        expect(result.outcome).toBe(options.rejected ? 'unavailable' : 'uncertain');
+        expect(result).toMatchObject({ reason: options.admitCode });
+        expect(result.receipt).toMatchObject({
+          dispatched: !options.rejected,
+          completionUncertain: !options.rejected,
+          httpStatus: options.admitStatus,
+        });
+        expect(f.fetcher).toHaveBeenCalledOnce();
+      }
+    },
+  );
 
   it('does not repeat admission when the accepted-Run journal callback fails', async () => {
     const f = fixture();

@@ -39,7 +39,11 @@ import type {
   TokenUsage,
 } from './types.js';
 
-export type MacrofoldDecisionModel = 'typesafe/jev-1.13' | 'microsoft/microsoft-decision-1';
+export const MACROFOLD_DECISION_MODELS = [
+  'typesafe/jev-1.13',
+  'microsoft/microsoft-decision-1',
+] as const;
+export type MacrofoldDecisionModel = (typeof MACROFOLD_DECISION_MODELS)[number];
 export type MacrofoldBillingMode = NonNullable<AiReceipt['macrofoldBillingMode']>;
 
 interface MacrofoldTransportConfig {
@@ -740,8 +744,8 @@ export function createMacrofoldDecisionClient(configuration: MacrofoldDecisionCo
   judge(request: MacrofoldDecisionRequest): Promise<AiResult<JudgeValue>>;
 } {
   if (
-    !configuration.macrofoldDeployment &&
-    !['typesafe/jev-1.13', 'microsoft/microsoft-decision-1'].includes(configuration.model)
+    configuration.macrofoldDeployment?.chatTemplateKwargs !== undefined ||
+    (!configuration.macrofoldDeployment && !MACROFOLD_DECISION_MODELS.includes(configuration.model))
   )
     throw new Error('Invalid Macrofold decision configuration.');
   const execute = createMacrofoldExecutor(configuration, 'decision');
@@ -789,7 +793,9 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
               selected.workspaceId !== deployment.workspaceId ||
               selected.modelBinding.deployment_id !== deployment.modelBinding.deployment_id ||
               selected.modelBinding.deployment_revision_id !==
-                deployment.modelBinding.deployment_revision_id
+                deployment.modelBinding.deployment_revision_id ||
+              selected.chatTemplateKwargs?.enable_thinking !==
+                deployment.chatTemplateKwargs?.enable_thinking
             )
               throw new InvalidData('deployment_not_authorized');
           }
@@ -812,7 +818,11 @@ export function createMacrofoldGenerationClient(configuration: MacrofoldGenerati
         return {
           maxOutputTokens,
           input: prepareMacrofoldGenerationInput(
-            { ...request, maxOutputTokens },
+            {
+              ...request,
+              ...(deployment ? { macrofoldDeployment: deployment } : {}),
+              maxOutputTokens,
+            },
             preparedSchema,
             config.macrofoldOutputMode,
           ),

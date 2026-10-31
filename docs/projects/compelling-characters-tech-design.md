@@ -1,8 +1,10 @@
 # Compelling characters — authorship, evidence and perspective design
 
-| Status      | Current progress                                                                                                                          | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-25   |
+| Status      | Current progress                                                                                                                          | Last updated         |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-27 22:53 UTC |
+
+Last used for implementation/review: **2026-10-28 05:00 UTC**.
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
 
@@ -47,6 +49,8 @@ Use existing actor-local history/indexes, scoped repository lookup and request-b
 Native qualification covers optional relevance failure with 33 cold required records, correction, linked action/result forgetting, stale decisions, no-yield refusal/cancellation, native interruption/resumption and current-format reload. Speech reuses its listener-specific account instead of generating a second utterance narrative. Plan preparation retains indispensable execution status and remaining work. This coordinated replacement has no legacy reader or parallel writable history.
 
 ## Shared personal presentation
+
+Ordinary and higher response schemas share one [talk payload description](../memory-architecture.md#3-one-compact-model-facing-context), aligned with the [feature contract](compelling-characters-feature-spec.md#prompting-behavior): written emotional asides are presentation, and admitted structured actions own actual effects. Shared response instructions allow compatible sparse-history elaboration while preserving source, time and current-effect boundaries. Memory attention includes the complete accepted profile and feelings. Response rendering distinguishes acquired participant roles, keeps the immediate cause/task together, omits empty optional sections and reuses exact shared experience references for appraisal support. Service instructions, native permissions and output admission remain unchanged. No extra model call, saved field, factuality parser or action executor is added. Prompt-only comparisons do not qualify native behavior or semantic truth.
 
 **Implemented for native producers and consumers:** the language/observer-reference owners render explicit participants and grammatical roles. Native producers should supply facts/attribution rather than choosing “I,” “me,” a global name or an arbitrary person’s perspective. The shared renderer receives the intended observer/owner and chooses subject/object/reflexive/possessive forms and permitted names. World narration remains an explicitly different view of the same eligible fact.
 

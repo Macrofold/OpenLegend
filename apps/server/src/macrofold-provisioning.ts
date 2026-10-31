@@ -32,6 +32,7 @@ export class MacrofoldProvisioner {
     private config: AppConfig,
     private store: GameRepository,
     private worldId: string,
+    private executionNamespace = '',
   ) {
     this.api = new MacrofoldTransport(config.macrofoldUrl, config.macrofoldKey);
   }
@@ -91,7 +92,12 @@ export class MacrofoldProvisioner {
     name: string,
     profile?: WorkspaceToolProfile,
   ): Promise<ActorWorkspace> {
-    const key = `macrofold-actor-v2:${digest(this.config.macrofoldUrl)}:${this.worldId}:${actorId}`;
+    const key = `macrofold-actor:${digest([
+      this.config.macrofoldUrl,
+      this.executionNamespace,
+      this.worldId,
+      actorId,
+    ])}`;
     const state = (await this.store.getIntegration(key)) as
       | {
           operationId: string;

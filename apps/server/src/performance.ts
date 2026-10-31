@@ -153,9 +153,12 @@ export function gaugeMetric(name: string, value: number): void {
   else owned.omitted.gaugeEvents++;
 }
 type BackgroundFailureOperation =
+  | 'lab-wire-capture'
   | 'memory-search'
   | 'memory-index'
   | 'intelligence-write'
+  | 'lab-retained-cleanup'
+  | 'lab-command-completion'
   | 'navigation-preview'
   | 'simulation-tick'
   | 'decision-admission'

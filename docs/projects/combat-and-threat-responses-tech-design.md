@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                               | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Physical combat, animal responses and busy-character choices are installed; Ada’s counterattacks and final combined qualification remain open. | 2026-10-25   |
+| In progress | Physical combat, animal responses and busy-character choices are installed; Ada’s counterattacks and final combined qualification remain open. | 2026-10-26   |
 
-**Implementation reference recorded:** `2026-10-22T22:45:16Z` (current branch implementation/review). **Last used:** 2026-10-25 22:19:26 UTC.
+**Implementation reference recorded:** `2026-10-22T22:45:16Z` (current branch implementation/review). **Last used:** 2026-10-26 07:50 UTC.
 
 ## Design baseline and integration
 
@@ -530,7 +530,7 @@ Apply the canonical [prepared-choice](../action-capabilities.md#prepared-choices
 
 Qualify two purposes sharing the same first strike, two supported transitions with different work consequences, and complete-set overflow before dispatch. The [shared-contract qualification](../maintainers/combat-and-threat-responses.md#shared-contract-qualification) also requires ordinary work replacement, optional speech and direct player choices through the same owners. Shared semantic identity and valid physical preparation retain the canonical contracts' scope and lifetime.
 
-If addressed speech and an assault arrive together, retain the permitted speech and available replies in this same threat snapshot. The ordinary addressed-speech route must not replace the selected threat deliberation or purchase another routing gate. The two required calls below are the route's relevance/appraisal and actual-choice calls. Optional recall retains its existing separate accounting; automatic route judgment, another action-attention pass and a fallback generator are not hidden additional stages.
+If addressed speech and an assault arrive together, retain the permitted speech and available replies in this same threat snapshot. The ordinary addressed-speech route must not replace the selected threat deliberation or purchase another routing gate. The two required semantic stages below are relevance/appraisal and actual choice. Each ordinarily uses one call. The shared question packer preserves complete independent questions across bounded requests when needed; every batch retains the same captured state, exact IDs, source checks, original deadline and ordinary reservation/receipt. All batches of a stage must succeed before its answer is consumed. Compact purpose rows retain their exact available method IDs, without repeating a verbose row for every pairing. Optional recall retains its existing separate accounting; automatic route judgment, another action-attention pass and a fallback generator are not hidden additional stages.
 
 ### Stage one: situation relevance and independent appraisals
 
@@ -616,7 +616,7 @@ The two selected stages remain sequential because choice depends on admitted rel
 
 Share immutable world catalogue preparation, actor/tool feasibility and current source retrieval inside each valid request scope. Reuse required current observations and cause-bound memory across both stages where their dependencies remain valid; do not retrieve the same history again merely because the second call has a new request ID. Hydrate only selected actor-permitted optional records. Retain each job's own immutable prepared data across awaits rather than depending on a single mutable “latest context” cache that concurrent actors overwrite.
 
-Measure perception-to-enqueue, queue wait, native/source preparation, first provider stage, appraisal admission, option binding, second provider stage, final native admission and first visible physical response separately. Record cold versus warm preparation, repeated hits, two unrelated simultaneous actors, a long ordinary generation beside urgent combat, provider cancellation/failure and dense visible threats. Count candidates visited, exact checks, source rows/bytes and every paid call, including calls that selected continuation or were superseded. Report precise cumulative Jev cost and unavailable billing separately. Two short calls are an architectural choice, not evidence that the route is already fast.
+Measure perception-to-enqueue, queue wait, native/source preparation, first provider stage, appraisal admission, option binding, second provider stage, final native admission and first visible physical response separately. Record cold versus warm preparation, repeated hits, two unrelated simultaneous actors, a long ordinary generation beside urgent combat, provider cancellation/failure and dense visible threats. Count candidates visited, exact checks, source rows/bytes and every paid call, including calls that selected continuation or were superseded. Report precise cumulative Jev cost and unavailable billing separately. Two semantic stages are the architectural choice; actual batch count and complete latency require measurement.
 
 No host pause, tactical slow motion, free reflex counterattack or invisible catch-up movement compensates for provider delay. The selected design must preserve playable native input and ongoing physics while waiting. Initial optimization targets and measured release timing belong with CTR10's actual offered model/service workload; a failed performance comparison remains open work, not a claim that asynchronous code is fast.
 

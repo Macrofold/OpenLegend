@@ -6,7 +6,7 @@ import {
   buildBaseInitialWorld,
   createBaseOpeningCandidate,
 } from './initial-opening.js';
-import { createWorld, PLAYER_ID } from './world.js';
+import { createWorld, PLAYER_ID, NPC_ID } from './world.js';
 import { BASE_MAIN_ARTWORK } from './main-opening.js';
 
 export const BASE_STARTING_WORLD_PRESETS = [
@@ -23,19 +23,27 @@ export function createBaseStartingWorld(
   preset: BaseStartingWorldPreset,
   seed: number,
   accounts: WorldCreationAccounts,
+  worldId?: string,
 ): Pick<InitialWorldPreparation, 'world' | 'useInstalledArtwork'> {
   switch (preset) {
     case 'wilderness':
-      return { world: createWorld(seed, accounts), ...BASE_MAIN_ARTWORK };
+      return {
+        world: createWorld(
+          seed,
+          accounts,
+          worldId ? { worldId, playerId: PLAYER_ID, residentId: NPC_ID } : undefined,
+        ),
+        ...BASE_MAIN_ARTWORK,
+      };
     case 'reservoir-demo':
-      return { world: createReservoirDemo(seed, accounts) };
+      return { world: createReservoirDemo(seed, accounts, worldId) };
     case 'touch-demo':
-      return { world: createTouchDemo(seed, accounts) };
+      return { world: createTouchDemo(seed, accounts, worldId) };
     case 'solo': {
       const normalizedSeed = Number.isInteger(seed) ? seed >>> 0 : 73;
       const candidate = createBaseOpeningCandidate(
         {
-          worldId: `solo-${normalizedSeed}`,
+          worldId: worldId ?? `solo-${normalizedSeed}`,
           playerId: PLAYER_ID,
           objects: Object.fromEntries(
             BASE_OPENING_IDENTITY_KEYS.map((key) => [key, `solo-${key}`]),

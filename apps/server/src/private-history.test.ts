@@ -90,6 +90,42 @@ function hold(h: Awaited<ReturnType<typeof setup>>, surface: Surface) {
 }
 
 describe('private history disclosure after storage waits', () => {
+  it('keeps time-ordered canonical event pages inside the authenticated observer before limiting', async () => {
+    const h = await setup();
+    const ids = await editWorld(h.service, (world) => {
+      const events: import('@open-legend/domain').WorldEvent[] = [];
+      emit(
+        world,
+        events,
+        'thought',
+        'Own timeline privacy specimen.',
+        entityGet(world.entities, PLAYER_ID),
+        undefined,
+        undefined,
+        'private',
+      );
+      emit(
+        world,
+        events,
+        'thought',
+        'Foreign timeline privacy specimen.',
+        entityGet(world.entities, NPC_ID),
+        undefined,
+        undefined,
+        'private',
+      );
+      return events.map((event) => event.id);
+    });
+    const page = await h.store.history!.eventPage(h.service.world.id, undefined, PLAYER_ID, {
+      limit: 1,
+      byTime: true,
+      types: ['thought'],
+      search: 'timeline privacy specimen',
+    });
+    expect(page.events.map((event) => event.id)).toEqual([ids[0]]);
+    expect(JSON.stringify(page)).not.toContain('Foreign timeline');
+    expect(page.before).toBeUndefined();
+  });
   it.each<Surface>(['inspect', 'graph', 'evidence', 'editor', 'json'])(
     '%s rejects text forgotten by a committed edit during retrieval',
     async (surface) => {

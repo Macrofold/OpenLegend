@@ -18,6 +18,7 @@ import { memoryCandidate } from './recall.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { digest } from './store.js';
 import type { WorldService } from './world-service.js';
+import type { SharedModelExperience } from './perceived-context.js';
 import {
   conversationCompactionKey,
   RETRIEVAL_BYTES,
@@ -486,9 +487,24 @@ export async function buildConversationContext(input: {
   await check();
   const lines = [...(summary ? [summary.text] : []), ...recent.map((turn) => turn.text)];
   const experience = [...(summary?.experience ?? []), ...recent.flatMap((turn) => turn.experience)];
+  const sharedExperiences = new Map<string, SharedModelExperience>();
+  let experienceIndex = summary?.experience.length ?? 0;
+  for (const turn of recent) {
+    // A summary's coverage is not an original experience. Share only an exact
+    // single-record projection, retaining its own already-validated revision.
+    // docs/memory-architecture.md#personal-perspective-and-acquisition
+    if (turn.experience.length === 1)
+      sharedExperiences.set(experienceSourceKey({ kind: 'awareness', id: turn.id }), {
+        index: experienceIndex,
+        revision: turn.revision,
+        experience: turn.experience[0]!,
+      });
+    experienceIndex += turn.experience.length;
+  }
   return {
     lines,
     experience,
+    sharedExperiences,
     evidenceIds: recent.map((turn) => turn.id),
     watermark: Math.max(usedCache?.value.to ?? 0, ...recent.map((turn) => turn.entry.value.at), 0),
     sourceKeys: [

@@ -131,6 +131,7 @@ const actionIcons: Readonly<Partial<Record<string, string>>> = {
   recover: 'meter.health',
   replenish: 'meter.energy',
   teach: 'action.talk',
+  express: 'action.talk',
   'status-effect': 'ui.cognition',
 };
 export function nativeActionIcon(type: string): string {

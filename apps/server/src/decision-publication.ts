@@ -1,5 +1,10 @@
 import { entityGet, type Outcome, type WorldState } from '@open-legend/domain';
-import { DECISION_LIMITS, DecisionClaimLost, type DecisionState } from './decision-state.js';
+import {
+  DECISION_LIMITS,
+  DecisionClaimLost,
+  decisionEndMessage,
+  type DecisionState,
+} from './decision-state.js';
 import type { JobRecord, GameRepository } from './store.js';
 import type { DecisionAnswer } from './decision-task.js';
 import type { WorldService } from './world-service.js';
@@ -143,6 +148,11 @@ export async function finishDecisionPublication(
     return {
       ...job,
       status: pending ? job.status : resolved ? 'completed' : 'failed',
+      message: pending
+        ? job.message
+        : resolved || !outcome.ok
+          ? outcome.message
+          : decisionEndMessage('native-rejection'),
       decision: {
         ...state,
         groups,
@@ -184,6 +194,7 @@ export async function publishQuestionAnswers(
   answers: Record<string, DecisionAnswer>,
   sourcesCurrent: () => Promise<boolean>,
 ): Promise<ApiResult> {
+  const deliveredMessage = 'The scoped reader received the structured judgments.';
   return service.publishRecall(async () => {
     if (service.paused || !(await sourcesCurrent()))
       return { ok: false, code: 'stale', message: 'The question’s permitted evidence changed.' };
@@ -251,6 +262,11 @@ export async function publishQuestionAnswers(
       return {
         ...job,
         status: pending ? job.status : resolved ? 'completed' : 'failed',
+        message: pending
+          ? job.message
+          : resolved
+            ? deliveredMessage
+            : decisionEndMessage('abstained'),
         ...(!pending ? { completedAt: at, totalLatencyMs: Math.max(0, at - job.createdAt) } : {}),
         decision: {
           ...job.decision,
@@ -281,7 +297,7 @@ export async function publishQuestionAnswers(
       ? {
           ok: true,
           code: 'answered',
-          message: 'The scoped reader received the structured judgments.',
+          message: deliveredMessage,
         }
       : {
           ok: false,

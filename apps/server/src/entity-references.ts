@@ -1,4 +1,4 @@
-import { entityKeys } from '@open-legend/domain';
+import { entityHas } from '@open-legend/domain';
 import type { NameArticle } from '@open-legend/language';
 import { observerDescription, recognizesSubject, canonicalJson } from '@open-legend/domain';
 import type { EncounterPreferenceBinding } from '@open-legend/domain';
@@ -11,7 +11,13 @@ import type {
 } from '@open-legend/domain';
 import { createHash, createHmac, randomBytes } from 'node:crypto';
 
-const cache = new WeakMap<WorldState, Map<string, Map<string, string>>>();
+interface EntityReferenceResolver {
+  get(id: string): string | undefined;
+  has(id: string): boolean;
+  /** Counts only exact subjects actually requested by this observer's consumers. */
+  readonly resolvedCount: number;
+}
+const cache = new WeakMap<WorldState, Map<string, EntityReferenceResolver>>();
 // A life count has a small guessable range. A process-local key keeps the
 // presentation reference opaque; restart invalidation grants no authority.
 const bodyReferenceKey = randomBytes(32);
@@ -96,50 +102,57 @@ export function entityBodyReference(scope: string, entity: Entity): string {
 export function entityHandles(
   world: WorldState,
   observerId = world.identity?.controlledEntityId ?? '',
-): Map<string, string> {
+): EntityReferenceResolver {
   const cached = cache.get(world)?.get(observerId);
   if (cached) return cached;
-  const hashes = [
-    ...new Set([
-      ...entityKeys(world.entities),
-      ...Object.keys(world.observerIdentities?.[observerId] ?? {}),
-    ]),
-  ].map(
-    (id) =>
-      [
-        id,
-        createHash('sha256')
-          .update(
-            canonicalJson([
-              observerId,
-              id,
-              recognizesSubject(world, observerId, id)
-                ? 'known'
-                : (world.perceptionEpisodes?.[observerId]?.[id] ?? world.sequence),
-            ]),
-          )
-          .digest('hex'),
-      ] as const,
-  );
-  const groups = new Map<string, typeof hashes>();
-  for (const entry of hashes) {
-    const prefix = entry[1].slice(0, 4);
-    const group = groups.get(prefix) ?? [];
-    group.push(entry);
-    groups.set(prefix, group);
-  }
-  const handles = new Map<string, string>();
-  for (const group of groups.values()) {
-    let length = 4;
-    while (new Set(group.map(([, hash]) => hash.slice(0, length))).size !== group.length) {
-      if (++length > 64) throw new Error('Entity reference collision.');
-    }
-    for (const [id, hash] of group) handles.set(id, hash.slice(0, length));
-  }
-  const observers = cache.get(world) ?? new Map<string, Map<string, string>>();
-  observers.set(observerId, handles);
+  const resolved = new Map<string, string>();
+  const tokenOwners = new Map<string, string>();
+  const digestOwners = new Map<string, string>();
+  const available = (id: string) =>
+    entityHas(world.entities, id) ||
+    Object.hasOwn(world.observerIdentities?.[observerId] ?? {}, id);
+  const resolver: EntityReferenceResolver = {
+    has: available,
+    get resolvedCount() {
+      return resolved.size;
+    },
+    get(id) {
+      const existing = resolved.get(id);
+      if (existing || !available(id)) return existing;
+      // Labels and evidence request exact permitted subjects before hashing. Never
+      // enumerate the world to shorten a local reference table (SC03/SC08).
+      // docs/projects/situation-aware-cognition-context-tech-design.md#73-exact-name-to-id-mappings-remain
+      const hash = createHash('sha256')
+        .update(
+          canonicalJson([
+            observerId,
+            id,
+            recognizesSubject(world, observerId, id)
+              ? 'known'
+              : (world.perceptionEpisodes?.[observerId]?.[id] ?? world.sequence),
+          ]),
+        )
+        .digest('hex');
+      const sameDigest = digestOwners.get(hash);
+      if (sameDigest && sameDigest !== id) throw new Error('Entity reference collision.');
+      let length = 4;
+      while (tokenOwners.has(hash.slice(0, length))) {
+        if (++length > hash.length) throw new Error('Entity reference collision.');
+      }
+      // Exact tokens, rather than prefix matches, resolve references. Preserve an
+      // earlier emitted label; only a newly colliding token grows. This keeps every
+      // current caller's rendered evidence and captured binding in agreement.
+      const handle = hash.slice(0, length);
+      resolved.set(id, handle);
+      tokenOwners.set(handle, id);
+      digestOwners.set(hash, id);
+      return handle;
+    },
+  };
+  const observers = cache.get(world) ?? new Map<string, EntityReferenceResolver>();
+  observers.set(observerId, resolver);
   cache.set(world, observers);
-  return handles;
+  return resolver;
 }
 
 export function entityLabel(
@@ -242,76 +255,84 @@ export function resolveResponseEntities(
           }
         : {}),
       ...(op.name ? { name: { ...op.name, subjectId: resolve(op.name.subjectId) } } : {}),
-      talk: op.talk
+      ...(op.talk
         ? {
-            ...op.talk,
-            addresseeEntityId:
-              op.talk.addresseeEntityId === null ? null : resolve(op.talk.addresseeEntityId),
+            talk: {
+              ...op.talk,
+              addresseeEntityId:
+                op.talk.addresseeEntityId === null ? null : resolve(op.talk.addresseeEntityId),
+            },
           }
-        : null,
-      act: op.act
+        : {}),
+      ...(op.act
         ? {
-            ...op.act,
-            ...(op.act.invocation
-              ? {
-                  invocation: {
-                    ...op.act.invocation,
-                    targetEntityId: op.act.invocation.targetEntityId
-                      ? resolve(op.act.invocation.targetEntityId)
-                      : null,
-                    itemId: op.act.invocation.itemId ? resolve(op.act.invocation.itemId) : null,
-                    ...(op.act.invocation.parameters
-                      ? {
-                          parameters: Object.fromEntries(
-                            Object.entries(op.act.invocation.parameters).map(([key, value]) => [
-                              key,
-                              activityRequests.find(
-                                (request) => request.id === op.act!.invocation!.family,
-                              )?.fields[key]?.type === 'entity'
-                                ? resolve(String(value))
-                                : value,
-                            ]),
-                          ),
-                        }
-                      : {}),
-                  },
-                }
-              : {}),
-            ...(op.act.slots
-              ? {
-                  slots: {
-                    ...op.act.slots,
-                    itemId: op.act.slots.itemId ? resolve(op.act.slots.itemId) : null,
-                    instrumentId: op.act.slots.instrumentId
-                      ? resolve(op.act.slots.instrumentId)
-                      : null,
-                    recipientId: op.act.slots.recipientId
-                      ? resolve(op.act.slots.recipientId)
-                      : null,
-                  },
-                }
-              : {}),
-            targetEntityId: op.act.targetEntityId ? resolve(op.act.targetEntityId) : null,
-            description: op.act.description
-              ? resolveEntityMarkers(op.act.description, references)
-              : null,
+            act: {
+              ...op.act,
+              ...(op.act.invocation
+                ? {
+                    invocation: {
+                      ...op.act.invocation,
+                      targetEntityId: op.act.invocation.targetEntityId
+                        ? resolve(op.act.invocation.targetEntityId)
+                        : null,
+                      itemId: op.act.invocation.itemId ? resolve(op.act.invocation.itemId) : null,
+                      ...(op.act.invocation.parameters
+                        ? {
+                            parameters: Object.fromEntries(
+                              Object.entries(op.act.invocation.parameters).map(([key, value]) => [
+                                key,
+                                activityRequests.find(
+                                  (request) => request.id === op.act!.invocation!.family,
+                                )?.fields[key]?.type === 'entity'
+                                  ? resolve(String(value))
+                                  : value,
+                              ]),
+                            ),
+                          }
+                        : {}),
+                    },
+                  }
+                : {}),
+              ...(op.act.slots
+                ? {
+                    slots: {
+                      ...op.act.slots,
+                      itemId: op.act.slots.itemId ? resolve(op.act.slots.itemId) : null,
+                      instrumentId: op.act.slots.instrumentId
+                        ? resolve(op.act.slots.instrumentId)
+                        : null,
+                      recipientId: op.act.slots.recipientId
+                        ? resolve(op.act.slots.recipientId)
+                        : null,
+                    },
+                  }
+                : {}),
+              targetEntityId: op.act.targetEntityId ? resolve(op.act.targetEntityId) : null,
+              description: op.act.description
+                ? resolveEntityMarkers(op.act.description, references)
+                : null,
+            },
           }
-        : null,
-      think: op.think
+        : {}),
+      ...(op.think
         ? {
-            ...op.think,
-            text: resolveEntityMarkers(op.think.text, references),
-            aboutEntityIds: op.think.aboutEntityIds.map(resolve),
+            think: {
+              ...op.think,
+              text: resolveEntityMarkers(op.think.text, references),
+              aboutEntityIds: op.think.aboutEntityIds.map(resolve),
+            },
           }
-        : null,
-      goal: op.goal
+        : {}),
+      ...(op.goal
         ? {
-            ...op.goal,
-            objective: op.goal.objective
-              ? resolveEntityMarkers(op.goal.objective, references)
-              : null,
+            goal: {
+              ...op.goal,
+              objective: op.goal.objective
+                ? resolveEntityMarkers(op.goal.objective, references)
+                : null,
+            },
           }
-        : null,
+        : {}),
     })),
   };
 }

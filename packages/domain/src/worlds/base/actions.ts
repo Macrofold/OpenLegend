@@ -1,19 +1,8 @@
 import { nativeResponseProfile, nativeResponseMovementFactor } from '../../native-response.js';
-import { WILDERNESS_NEEDS } from './needs.js';
-import { PERCEPTION_RULES } from './senses.js';
 import { scarFactor } from '../../scar-effects.js';
 import { readOnlyDraftView } from '../../draft.js';
 
-// Bundled balance values consumed by the existing finite native adapters.
-// docs/worlds/base/survival.md
-export const BASE_ACTION_DEFAULTS = {
-  movementTilesPerSecond: 0.11,
-  sightRadius: PERCEPTION_RULES.sightRadius,
-  interactionRadius: 1.6,
-  ...WILDERNESS_NEEDS,
-  harvestSeconds: 84,
-  shotSeconds: 18,
-} as const;
+import { BASE_ACTION_DEFAULTS } from './action-defaults.js';
 
 /** Describe current carried capability, never a future invention's possible maximum.
  * Paged possessions disclose the missing tool knowledge. docs/worlds/base/actions.md */
@@ -75,13 +64,3 @@ export function nativeMovementSpeed(
       : scarFactor(world, entity, 'movementFactor'))
   );
 }
-
-export const BASE_EXPRESSION_VERBS = {
-  nod: 'nod',
-  smile: 'smile',
-  frown: 'frown',
-  wave: 'wave',
-  shrug: 'shrug',
-  shake_head: 'shake',
-  slap: 'slap',
-} as const;

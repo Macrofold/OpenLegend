@@ -1,5 +1,13 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { NPC_ID, type MemoryRecord, type WorldEvent } from '@open-legend/domain';
+import {
+  NPC_ID,
+  PLAYER_ID,
+  entityGet,
+  setSpatialPosition,
+  worldSupport,
+  type MemoryRecord,
+  type WorldEvent,
+} from '@open-legend/domain';
 import { appendMemory, emit } from '../../../packages/domain/src/events.js';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
 import { editWorld, enterLocalWorld } from '../../../tests/fixtures/service.js';
@@ -11,10 +19,10 @@ afterEach(async () => {
   for (const store of stores) await store.close();
   stores.clear();
 });
-async function setup() {
+async function setup(now?: () => number) {
   const store = await testRepository();
   stores.add(store);
-  const service = new WorldService(store, readConfig({ OPEN_LEGEND_GOD_MODE: 'true' }));
+  const service = new WorldService(store, readConfig({ OPEN_LEGEND_GOD_MODE: 'true' }), now);
   await enterLocalWorld(service);
   await service.setPresence('fixture', true);
   expect((await service.control({ paused: false })).ok).toBe(true);
@@ -33,6 +41,39 @@ async function addEvent(service: WorldService, text: string) {
 }
 
 describe('God editor three-way saves', () => {
+  it('reads a committed native injury while time is held before the periodic save', async () => {
+    const service = await setup(() => 10_000);
+    try {
+      await editWorld(service, (world) => {
+        for (const [id, z] of [
+          [PLAYER_ID, 13],
+          [NPC_ID, 14],
+        ] as const) {
+          const person = entityGet(world.entities, id)!;
+          setSpatialPosition(world, person, { x: 12, y: 0, z }, worldSupport(person));
+        }
+      });
+      const before = entityGet(service.world.entities, NPC_ID)!.actor!.health;
+      expect(
+        await service.command('held-history-strike', {
+          type: 'strike',
+          definitionId: 'punch',
+          targetId: NPC_ID,
+        }),
+      ).toMatchObject({ ok: true });
+      await service.tick(30 / service.config.baseRatio);
+      expect(entityGet(service.world.entities, NPC_ID)!.actor!.health).toBeLessThan(before);
+      const event = service.world.events.find((entry) => entry.type === 'struck')!;
+      expect(event).toBeDefined();
+      expect(await service.store.history!.event(service.world.id, event.id)).toBeUndefined();
+      const opened = await service.worldEventsEditor();
+      expect(opened.events.some((entry) => entry.id === event.id)).toBe(true);
+      expect((await service.worldEventJson(event.id)).ok).toBe(true);
+    } finally {
+      service.releaseHostWork();
+    }
+  });
+
   it('edits one memory without erasing a memory added while the editor was open, then rejects a same-entry stale edit', async () => {
     const service = await setup();
     await editWorld(service, (world) => {

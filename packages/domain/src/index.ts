@@ -1,3 +1,5 @@
+export * from './expression-definitions.js';
+export * from './expressions.js';
 export * from './entity-collection.js';
 export * from './ordered-record.js';
 export * from './world-creation.js';
@@ -102,6 +104,7 @@ export {
 } from './worlds/base/missing-belonging.js';
 export {
   GOD_SPAWN_OPTIONS,
+  godAuthoringCatalogue,
   editPerson,
   editWorldEvents,
   reviveActor,
@@ -147,6 +150,7 @@ export {
 export * from './mind.js';
 
 export * from './experience.js';
+export * from './history-authoring.js';
 export * from './experience-sources.js';
 export * from './status-effects.js';
 export * from './status-condition-references.js';
@@ -423,3 +427,11 @@ export { canSteer } from './player-steering.js';
 export { itemContainerCapacity } from './objects.js';
 
 export * from './cartography.js';
+export { BASE_COGNITION_LAB_RECIPES } from './worlds/base/cognition-lab-recipes.js';
+
+export {
+  nativeValueHoldSupported,
+  nativeValueHoldCurrent,
+  validateNativeValueHolds,
+  type NativeValueHold,
+} from './native-value-holds.js';

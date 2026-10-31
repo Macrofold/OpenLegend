@@ -8,6 +8,7 @@
     "node": ">=22.13.0"
   },
   "scripts": {
+    "setup:lab": "tsx --env-file-if-exists=.env scripts/setup-cognition-lab.ts",
     "dev": "pnpm config:generate && tsx watch --env-file-if-exists=.env apps/server/src/main.ts",
     "start": "pnpm config:generate && node --import tsx --env-file-if-exists=.env apps/server/src/main.ts --production",
     "build": "pnpm config:generate && tsc --noEmit -p tsconfig.build.json && vite build --config apps/client/vite.config.ts && pnpm assets:check --build",

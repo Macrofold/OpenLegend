@@ -16,6 +16,7 @@ import {
 } from '@open-legend/domain';
 import {
   compileSchema,
+  createAiClient,
   type AiClient,
   type AiReceipt,
   type AiResult,
@@ -46,13 +47,15 @@ import {
 import { decisionValidity } from './decision-validity.js';
 import { levelLimits } from './cognition-budget.js';
 import { IntelligenceLog } from './intelligence-log.js';
-import type { GameRepository, JobRecord } from './store.js';
+import { digest, type GameRepository, type JobRecord } from './store.js';
 import { prepareQuestionRead } from './decision-question-reader.js';
 import type { DecisionPublication } from './decision-publication.js';
 import { RecallService } from './recall.js';
 import { prepareReconsideration } from './decision-preparation.js';
 import { entityHandles } from './entity-references.js';
 import { boundResponseSchema, decisionAppraisalSchema } from './cognition-contracts.js';
+import { CognitionRuntimeControl } from './cognition-runtime-control.js';
+import { readGenerationConfig } from './generation-config.js';
 
 // Approved E01–E37 use real disposable PostgreSQL, native owners and blocked external I/O.
 // These fixtures establish orchestration behavior, never model accuracy or provider latency.
@@ -142,15 +145,19 @@ async function harness(
     mode?: 'off' | 'observe' | 'apply';
     judge?: AiClient['judge'];
     generate?: (request: GenerateRequest) => Promise<AiResult<unknown>> | AiResult<unknown>;
+    ordinaryGenerate?: (request: GenerateRequest) => Promise<AiResult<unknown>> | AiResult<unknown>;
     reasons?: string[];
     budget?: string;
     preset?: 'reservoir-demo';
+    higherModel?: string;
+    control?: CognitionRuntimeControl;
   } = {},
 ) {
   let now = 10_000;
   const config = readConfig({
     TYPESAFE_API_KEY: 'fixture',
     OPENAI_API_KEY: 'fixture',
+    DECISION_ESCALATION_MODEL: options.higherModel,
     ...(options.preset ? { OPEN_LEGEND_WORLD_PRESET: options.preset } : {}),
     AI_BUDGET_USD: options.budget ?? '10',
     OPENAI_MODEL_PRICES_JSON: JSON.stringify([
@@ -163,7 +170,9 @@ async function harness(
     }),
   });
   const store = await testRepository(undefined, options.preset ? undefined : stockedCamp());
-  const service = new WorldService(store, config, () => now);
+  const service = new WorldService(store, config, () => now, {
+    cognitionControl: options.control,
+  });
   await enterLocalWorld(service);
   await service.setConnection('fixture', true);
   await service.setPresence('fixture', true);
@@ -175,19 +184,27 @@ async function harness(
     if (attributes['wilderness:fullness']) attributes['wilderness:fullness'].value = 30;
     if (attributes['clockwork:charge']) attributes['clockwork:charge'].value = 100;
   });
-  const calls = { primary: [] as JudgeRequest[], higher: [] as GenerateRequest[] };
+  const calls = {
+    primary: [] as JudgeRequest[],
+    higher: [] as GenerateRequest[],
+    generations: [] as GenerateRequest[],
+  };
   const client: AiClient = {
     async judge(request) {
       calls.primary.push(request);
       return options.judge ? options.judge(request) : primary(request, 0.95, true);
     },
     async generate<T>(request: GenerateRequest): Promise<AiResult<T>> {
-      // This specimen supplies higher decision answers only. Optional memory
-      // maintenance must not consume the deferred answer intended for that decision.
-      if (['memory_consolidation', 'background_reflection'].includes(request.task))
+      calls.generations.push(request);
+      if (request.task === 'npc_response' && options.ordinaryGenerate)
+        return (await options.ordinaryGenerate(request)) as AiResult<T>;
+      // By default this specimen supplies higher decision answers only. Optional memory
+      // maintenance and ordinary replies must not consume that task's deferred answer.
+      // Keep all generation attempts observable instead of calling every one "higher".
+      if (request.task !== 'decision-escalation')
         return {
           outcome: 'unavailable',
-          reason: 'Memory generation is outside this decision fixture.',
+          reason: `Generation task ${request.task} is outside this decision fixture.`,
           receipt: receipt(request.requestId, 'openai', {
             dispatched: false,
             estimatedCostUsd: 0,
@@ -205,7 +222,7 @@ async function harness(
   const director = new AiDirector(service, client, () => now, undefined, execution);
   cleanup.push(async () => {
     await director.close();
-    execution.close();
+    await execution.close();
     service.releaseHostWork();
     await store.close();
   });
@@ -390,7 +407,7 @@ describe('enabled character decision reconsideration', () => {
     expect(start).not.toHaveBeenCalled();
     expect(declined).toHaveBeenCalledExactlyOnceWith('cancelled');
     expect(pool.enqueue({ ...entry, id: 'another-opportunity' })).toBe(false);
-    pool.close();
+    await pool.close();
   });
   it('E01/E05 uses a valid fast choice once without buying a second opinion', async () => {
     const h = await harness({ judge: async (request) => primary(request) });
@@ -492,7 +509,11 @@ describe('enabled character decision reconsideration', () => {
     expect(h.calls.higher).toHaveLength(0);
     expect(h.food()).toBe(2);
     expect(job.result).toMatchObject({ disposition: 'uncertain' });
-    expect(await h.execution.primary()).toBeUndefined();
+    expect(h.calls.primary).toHaveLength(1);
+    expect(h.execution.snapshot().primary).toBe('unknown');
+    const independent = await h.execution.primary();
+    expect(independent?.executionClass).toBe('background');
+    independent?.release();
     expect(await h.store.occupiedDecisionSlots()).toEqual(
       expect.arrayContaining([expect.objectContaining({ executionClass: 'primary' })]),
     );
@@ -606,13 +627,6 @@ describe('enabled character decision reconsideration', () => {
                           selfIntroduction: null,
                           volume: 'normal',
                         },
-                        act: null,
-                        think: null,
-                        goal: null,
-                        plan: null,
-                        note: null,
-                        name: null,
-                        appraise: null,
                       },
                     ],
                   },
@@ -930,7 +944,40 @@ describe('enabled character decision reconsideration', () => {
     expect(h.food()).toBe(2);
   });
   it('E34 uses no paid embedding or attention preparation for the higher call', async () => {
-    const h = await harness();
+    const higherModel = 'gpt-5.6-luna';
+    let submitted: GenerateRequest | undefined;
+    const bodies: Record<string, unknown>[] = [];
+    const transport = createAiClient({
+      openai: {
+        apiKey: 'fixture',
+        model: higherModel,
+        modelPrices: readConfig().llmModelPrices,
+      },
+      maxOutputTokens: 8192,
+      fetch: async (url, init) => {
+        expect(url).toBe('https://api.openai.com/v1/responses');
+        bodies.push(JSON.parse(String(init.body)));
+        return Response.json({
+          id: 'higher-model-selection-fixture',
+          status: 'completed',
+          model: higherModel,
+          output: [
+            {
+              type: 'message',
+              content: [{ type: 'output_text', text: JSON.stringify(chooseFood(submitted!)) }],
+            },
+          ],
+          usage: { input_tokens: 20, output_tokens: 10 },
+        });
+      },
+    });
+    const h = await harness({
+      higherModel,
+      generate: async (request) => {
+        submitted = request;
+        return transport.generate(request);
+      },
+    });
     const job = await h.thought();
     const attempts = await h.store.decisionAttempts(job.id);
     expect(attempts.map((attempt) => attempt.stage)).toEqual([
@@ -938,9 +985,17 @@ describe('enabled character decision reconsideration', () => {
       'decision-escalation',
     ]);
     expect(h.calls.higher[0]).toMatchObject({
-      model: DECISION_MODEL,
+      model: higherModel,
       reasoningEffort: 'low',
       maxOutputTokens: 8192,
+    });
+    expect(bodies).toHaveLength(1);
+    expect(bodies[0]).toMatchObject({ model: higherModel, max_output_tokens: 8192 });
+    expect(job.message).not.toContain('reconsidering');
+    expect(attempts[1]?.receipt).toMatchObject({
+      requestedModel: higherModel,
+      model: higherModel,
+      completionUncertain: false,
     });
   });
   it('uses the same native action consumer for the installed clockwork world and finite charging supply', async () => {
@@ -1034,7 +1089,7 @@ describe('closed structured question contract', () => {
         question: 'Reply.',
         valueSchema: boundResponseSchema(['me', 'speaker'], ['rest'], {
           speech: true,
-          expressions: true,
+          expressions: ['smile'],
           proposals: false,
         }),
       },
@@ -1110,6 +1165,7 @@ describe('durable reader publication and bounded scheduling', () => {
     const result = await h.store.getJob(job.id);
     expect(calls).toHaveLength(1);
     expect(result?.status).toBe('completed');
+    expect(result?.message).toBe('The scoped reader received the structured judgments.');
     expect(result?.result).toMatchObject({
       answers: {
         q0: { value: { category: 1 } },
@@ -1118,6 +1174,23 @@ describe('durable reader publication and bounded scheduling', () => {
       },
     });
     expect(h.food()).toBe(2);
+  });
+  it('snapshots structured reader evidence before asynchronous revision checks', async () => {
+    const h = await harness();
+    const source = { experience: [{ content: 'The complete observed account.', at: 0 }] };
+    const read = prepareQuestionRead(h.service, {
+      questions: { q0: { kind: 'likelihood', question: 'How likely is this heard account?' } },
+      inputs: { evidence: { owner: 'fixture-scoped-reader', revision: 'one', value: source } },
+      sourceTime: h.service.world.simTime,
+      currentRevisions: async () => ({ evidence: 'one' }),
+    });
+    // This caller-owned buffer can be reused without mutating the admitted reading.
+    source.experience[0]!.content = 'A later buffer value.';
+    expect(await read.current()).toBe(true);
+    const request = prepareDecisionTask(read.tasks, read.context, read.instructions);
+    expect(JSON.parse(request.context).permittedContext.inputs.evidence).toEqual({
+      experience: [{ content: 'The complete observed account.', at: 0 }],
+    });
   });
   it('delivers typed abstentions and an independent answered group through the scoped reader', async () => {
     const h = await harness(),
@@ -1179,6 +1252,123 @@ describe('durable reader publication and bounded scheduling', () => {
     expect(await h.store.decisionAttempts(job.id)).toHaveLength(1);
     expect(h.service.storageError).toBeNull();
   });
+  it.each(['cancel', 'stop'] as const)(
+    '%s during handoff admission cannot create a fresh higher-model lifetime',
+    async (operation) => {
+      const control = new CognitionRuntimeControl();
+      const h = await harness({ control });
+      control.resume();
+      const job = await admitted(h),
+        source = new AbortController(),
+        { escalator, calls } = readerCoordinator(h),
+        entered = deferred<void>(),
+        release = deferred<void>();
+      const attempts = h.store.decisionAttempts.bind(h.store);
+      const read = vi.spyOn(h.store, 'decisionAttempts').mockImplementationOnce(async (id) => {
+        entered.resolve();
+        await release.promise;
+        return attempts(id);
+      });
+      const pending = escalator.enqueue(job.id, 'abstained', false, undefined, {
+        signal: source.signal,
+        labEpoch: control.epoch,
+      });
+      try {
+        await entered.promise;
+        if (operation === 'cancel') source.abort();
+        else control.stop();
+        release.resolve();
+        expect(await pending).toBe(false);
+        await h.execution.idle();
+        expect(calls).toHaveLength(0);
+        expect(await h.store.decisionAttempts(job.id)).toHaveLength(0);
+        expect((await h.store.getJob(job.id))?.decision?.higherEntitlement).toBe('available');
+      } finally {
+        release.resolve();
+        await pending;
+        read.mockRestore();
+      }
+    },
+    60_000,
+  );
+  it('ends a handoff cancelled while its durable claim is being written', async () => {
+    const h = await harness(),
+      job = await admitted(h),
+      source = new AbortController(),
+      { escalator, calls } = readerCoordinator(h),
+      entered = deferred<void>(),
+      release = deferred<void>();
+    const write = h.store.putJob.bind(h.store);
+    const put = vi.spyOn(h.store, 'putJob').mockImplementation(async (record) => {
+      await write(record);
+      if (record.id === job.id && record.decision?.phase === 'higher') {
+        entered.resolve();
+        await release.promise;
+      }
+    });
+    const pending = escalator.enqueue(job.id, 'abstained', false, undefined, {
+      signal: source.signal,
+    });
+    try {
+      await entered.promise;
+      source.abort();
+      release.resolve();
+      expect(await pending).toBe(true);
+      await h.execution.idle();
+      expect(calls).toHaveLength(0);
+      expect(await h.store.decisionAttempts(job.id)).toHaveLength(0);
+      expect((await h.store.getJob(job.id))?.decision?.end).toBe('cancelled');
+    } finally {
+      release.resolve();
+      await pending;
+      put.mockRestore();
+    }
+  }, 60_000);
+  it.each(['cancel', 'lab restart'] as const)(
+    'retains %s through higher preparation after the handoff returns',
+    async (operation) => {
+      const control = new CognitionRuntimeControl();
+      const h = await harness({ control });
+      control.resume();
+      const job = await admitted(h),
+        source = new AbortController(),
+        entered = deferred<void>(),
+        release = deferred<void>();
+      const { escalator, calls } = readerCoordinator(h, {
+        prepare: async () => {
+          entered.resolve();
+          await release.promise;
+        },
+      });
+      try {
+        expect(
+          await escalator.enqueue(job.id, 'abstained', false, undefined, {
+            signal: source.signal,
+            labEpoch: control.epoch,
+          }),
+        ).toBe(true);
+        await entered.promise;
+        if (operation === 'cancel') source.abort();
+        else {
+          control.stop();
+          control.resume();
+        }
+        release.resolve();
+        await h.execution.idle();
+        await vi.waitFor(async () => {
+          expect((await h.store.getJob(job.id))?.decision?.phase).toBe('closed');
+        });
+        if (operation === 'cancel')
+          expect((await h.store.getJob(job.id))?.decision?.end).toBe('cancelled');
+        expect(calls).toHaveLength(0);
+        expect(await h.store.decisionAttempts(job.id)).toHaveLength(0);
+        expect(h.service.storageError).toBeNull();
+      } finally {
+        release.resolve();
+      }
+    },
+    60_000,
+  );
   it('E18 rejects changed exact evidence and E21 cannot extend eligibility by turning the wall clock back', async () => {
     const h = await harness(),
       job = await admitted(h);
@@ -1289,14 +1479,6 @@ describe('durable reader publication and bounded scheduling', () => {
       job = await admitted(h, { q0: 'response', q1: 'rating' });
     const operation = {
       requiresAccepted: [],
-      talk: null,
-      act: null,
-      think: null,
-      goal: null,
-      plan: null,
-      note: null,
-      name: null,
-      appraise: null,
     };
     await h.service.transition(
       (world) =>
@@ -1465,13 +1647,6 @@ describe('durable reader publication and bounded scheduling', () => {
                 {
                   localId: 'thought',
                   requiresAccepted: [],
-                  talk: null,
-                  act: null,
-                  goal: null,
-                  plan: null,
-                  note: null,
-                  name: null,
-                  appraise: null,
                   think: { text: 'I want a quiet break.', aboutEntityIds: [] },
                 },
               ],
@@ -1584,7 +1759,7 @@ describe('durable reader publication and bounded scheduling', () => {
             answers: { q0: { status: 'abstained', value: null, reason: 'insufficient-evidence' } },
           }) as AiResult<T>;
         const outer = JSON.parse(request.context as string),
-          context = JSON.parse(outer.permittedContext);
+          context = outer.permittedContext;
         const policy = context.appraisals.policies.find(
           (p: { label: string }) => p.label === 'frustration',
         );
@@ -1644,7 +1819,7 @@ describe('durable reader publication and bounded scheduling', () => {
     const first = await run();
     expect(first?.decision?.groups['q0']?.state).toBe('resolved');
     const firstInput = JSON.parse(calls[0]!.context as string);
-    const feelingContext = JSON.parse(firstInput.permittedContext).appraisals;
+    const feelingContext = firstInput.permittedContext.appraisals;
     const validate = compileSchema(calls[0]!.schema);
     const invalidValue = (value: unknown) => ({
       answers: {
@@ -1741,26 +1916,38 @@ describe('durable reader publication and bounded scheduling', () => {
       declined: async () => {},
     });
     await entered.promise;
-    const { escalator } = readerCoordinator(h);
-    await escalator.enqueue(job.id, 'abstained');
-    const queued = (await h.store.getJob(job.id))!;
-    const prepared = await prepareReconsideration(
-      h.service,
-      recall,
-      queued,
-      new AbortController().signal,
-    );
-    blocker.resolve();
-    await h.execution.idle();
+    let prepared: Awaited<ReturnType<typeof prepareReconsideration>>;
+    try {
+      const { escalator } = readerCoordinator(h);
+      await escalator.enqueue(job.id, 'abstained');
+      const queued = (await h.store.getJob(job.id))!;
+      prepared = await prepareReconsideration(
+        h.service,
+        recall,
+        queued,
+        new AbortController().signal,
+      );
+    } finally {
+      blocker.resolve();
+      await h.execution.idle();
+    }
+    expect(Object.keys(prepared.tasks['q0']!.choices ?? {}).length).toBeGreaterThan(0);
+    const contextText = JSON.stringify(prepared.context);
     for (const index of [0, 269, 538])
-      expect(prepared.context).toContain(`Required unique constraint ${index}`);
-    expect(prepared.context).toContain('Authored fixture need 19');
+      expect(contextText).toContain(`Required unique constraint ${index}`);
+    expect(contextText).toContain('Authored fixture need 19');
     const boundary = prepareDecisionTask(prepared.tasks, prepared.context, prepared.instructions);
     const currentBytes =
       Buffer.byteLength(boundary.instructions) + Buffer.byteLength(boundary.context);
     const padding = 'x'.repeat(100_000 - currentBytes + 1);
+    const requiredContext = prepared.context;
+    if (typeof requiredContext === 'string') throw new Error('Expected structured actor context.');
     expect(() =>
-      prepareDecisionTask(prepared.tasks, prepared.context + padding, prepared.instructions),
+      prepareDecisionTask(
+        prepared.tasks,
+        { ...requiredContext, additionalRequiredEvidence: padding },
+        prepared.instructions,
+      ),
     ).toThrow(/byte allowance/);
   });
   it('E24 caps descriptors at sixteen and expires unstarted entries without preparing them', async () => {
@@ -1957,7 +2144,9 @@ describe('durable reader publication and bounded scheduling', () => {
       id,
       receipt(id, 'jev', { completionUncertain: true, estimatedCostUsd: undefined }),
     );
-    expect(await h.execution.primary()).toBeUndefined();
+    const independent = await h.execution.primary();
+    expect(independent?.executionClass).toBe('background');
+    independent?.release();
     await h.store.settle(id, receipt(id, 'jev', { estimatedCostUsd: undefined }));
     await h.execution.reconcile(h.store);
     const next = await h.execution.primary();
@@ -2046,93 +2235,572 @@ describe('durable reader publication and bounded scheduling', () => {
     expect(prepare).not.toHaveBeenCalled();
     expect((await h.store.getJob(job.id))?.decision?.end).toBe('budget-exhausted');
   });
-  it('E33 uses direct Responses with exact low binding even when ordinary generation uses Macrofold', async () => {
-    const h = await harness();
-    h.config.macrofoldKey = 'fixture-macrofold';
-    h.config.decisionEscalation.origins = [decisionOrigin(h.config)];
-    const job = await admitted(h);
-    const requests: { url: string; body: Record<string, unknown> }[] = [];
-    vi.stubGlobal(
-      'fetch',
-      vi.fn(async (url: string, init: RequestInit) => {
-        requests.push({ url, body: JSON.parse(init.body as string) });
-        return new Response(
-          JSON.stringify({
-            id: 'resp_fixture_fallback',
-            model: DECISION_MODEL,
-            status: 'completed',
-            output: [
-              {
-                type: 'message',
-                content: [
-                  {
-                    type: 'output_text',
-                    text: JSON.stringify({
-                      answers: {
-                        q0: {
-                          status: 'answered',
-                          value: { category: 1 },
-                          reason: null,
+  it.each([true, false])(
+    'claims ordinary higher-model entitlement from the submitted override: selects higher=%s',
+    async (selectHigher) => {
+      const control = new CognitionRuntimeControl();
+      const invalidGeneration = (request: GenerateRequest) =>
+        value(request.requestId, 'openai', { invalid: true });
+      const h = await harness({
+        control,
+        reasons: ['invalid-output'],
+        judge: async (request) => {
+          const result = primary(request);
+          if (request.questions['route']?.type === 'choice' && result.outcome === 'value') {
+            const criteria = request.questions['route'].criteria;
+            result.value.answers['route'] = {
+              type: 'choice',
+              choice: 'level2',
+              probabilities: Object.fromEntries(
+                Object.keys(criteria).map((key) => [key, Number(key === 'level2')]),
+              ),
+            };
+          }
+          return result;
+        },
+        generate: invalidGeneration,
+        ordinaryGenerate: invalidGeneration,
+      });
+      const ordinaryModel = h.config.miniModel;
+      h.config.llmModelPrices = [
+        ...h.config.llmModelPrices,
+        { model: ordinaryModel, prices: { inputUsdPerMillion: 0.2, outputUsdPerMillion: 1.2 } },
+      ];
+      if (!selectHigher) h.config.miniModel = h.config.higherDecisionModel;
+      const selected = selectHigher ? h.config.higherDecisionModel : ordinaryModel;
+      control.setInputTransform((stage, input) =>
+        stage.modelPurpose === 'responseFast' && input.kind === 'generate'
+          ? { ...input, request: { ...input.request, model: selected } }
+          : input,
+      );
+      control.resume();
+      expect(
+        (await h.director.submit('chat', randomUUID(), 'Could we discuss the plan?', NPC_ID)).ok,
+      ).toBe(true);
+      await h.director.idle();
+      expect(h.calls.generations.map(({ task, model }) => ({ task, model }))).toEqual(
+        selectHigher
+          ? [{ task: 'npc_response', model: selected }]
+          : [
+              { task: 'npc_response', model: selected },
+              { task: 'decision-escalation', model: h.config.higherDecisionModel },
+            ],
+      );
+      expect(h.calls.higher.map((call) => call.model)).toEqual(
+        selectHigher ? [] : [h.config.higherDecisionModel],
+      );
+      expect((await h.root()).decision?.higherEntitlement).toBe(
+        selectHigher ? 'used-direct' : 'claimed-child',
+      );
+    },
+  );
+  it.each([false, true])(
+    'E33 uses direct Responses with exact low binding even when ordinary generation uses Macrofold (custom complex=%s)',
+    async (customComplex) => {
+      const control = new CognitionRuntimeControl(),
+        selectedModel = 'gpt-5.6-luna',
+        h = await harness({ control });
+      control.setInputTransform((stage, input) =>
+        stage.modelPurpose === 'higherDecision' && input.kind === 'generate'
+          ? { ...input, request: { ...input.request, model: selectedModel } }
+          : input,
+      );
+      control.resume();
+      h.config.llmModelPrices = [
+        ...h.config.llmModelPrices,
+        { model: selectedModel, prices: { inputUsdPerMillion: 0.2, outputUsdPerMillion: 1.2 } },
+      ];
+      h.config.macrofoldKey = 'fixture-macrofold';
+      if (customComplex) {
+        const configured = readGenerationConfig({
+          MACROFOLD_API_KEY: h.config.macrofoldKey,
+          DECISION_ESCALATION_MODEL: h.config.higherDecisionModel,
+          OPENLEGEND_MODEL_TARGETS_JSON: JSON.stringify({
+            schema_version: 1,
+            workspace_id: '11111111-1111-4111-8111-111111111111',
+            purposes: {
+              npc_response_complex: {
+                model_binding: { deployment_id: '22222222-2222-4222-8222-222222222222' },
+              },
+            },
+          }),
+        });
+        h.config.modelTargets = configured.modelTargets;
+        h.config.configuredHigherDecisionTarget = configured.configuredHigherDecisionTarget;
+      }
+      h.config.decisionEscalation.origins = [decisionOrigin(h.config)];
+      const job = await admitted(h);
+      const requests: { url: string; body: Record<string, unknown> }[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string, init: RequestInit) => {
+          requests.push({ url, body: JSON.parse(init.body as string) });
+          return new Response(
+            JSON.stringify({
+              id: 'resp_fixture_fallback',
+              model: selectedModel,
+              status: 'completed',
+              output: [
+                {
+                  type: 'message',
+                  content: [
+                    {
+                      type: 'output_text',
+                      text: JSON.stringify({
+                        answers: {
+                          q0: {
+                            status: 'answered',
+                            value: { category: 1 },
+                            reason: null,
+                          },
                         },
+                      }),
+                    },
+                  ],
+                },
+              ],
+              usage: { input_tokens: 100, output_tokens: 40 },
+            }),
+            {
+              status: 200,
+              headers: {
+                'content-type': 'application/json',
+                'x-ratelimit-remaining-requests': '0',
+                'x-ratelimit-reset-requests': '60s',
+              },
+            },
+          );
+        }),
+      );
+      const log = new IntelligenceLog(h.store);
+      const escalator = new DecisionEscalator(
+        h.service,
+        h.execution,
+        log,
+        async () =>
+          prepareQuestionRead(h.service, {
+            questions: {
+              q0: {
+                kind: 'rating',
+                question: 'Preference for quiet.',
+                categories: { 0: 'Low', 1: 'High' },
+              },
+            },
+            inputs: {
+              evidence: {
+                value: 'The character asked for quiet.',
+                revision: 'one',
+                owner: 'permitted reader',
+              },
+            },
+            sourceTime: 0,
+            currentRevisions: async () => ({ evidence: 'one' }),
+          }),
+        undefined,
+        h.now,
+      );
+      cleanup.unshift(async () => {
+        await escalator.close();
+        await log.close();
+      });
+      await escalator.enqueue(job.id, 'abstained');
+      await h.execution.idle();
+      expect(requests).toHaveLength(1);
+      expect(requests[0]!.url).toBe('https://api.openai.com/v1/responses');
+      expect(requests[0]!.body).toMatchObject({
+        model: selectedModel,
+        store: false,
+        max_output_tokens: 8192,
+        reasoning: { effort: 'low' },
+        text: { format: { type: 'json_schema', strict: true } },
+      });
+      expect(requests[0]!.body['stream']).toBeUndefined();
+      expect(requests[0]!.body['tools']).toBeUndefined();
+      expect((await h.store.getJob(job.id))?.decision?.groups['q0']?.state).toBe('resolved');
+      expect((await h.store.decisionAttempts(job.id))[0]?.provider).toBe('openai');
+      const poolKey = (model: string) =>
+        'decision-resource:' + digest({ account: digest(h.config.llmKey), model });
+      expect(await h.store.getIntegration(poolKey(selectedModel))).toMatchObject({
+        requests: { remaining: 0 },
+      });
+      expect(await h.store.getIntegration(poolKey(DECISION_MODEL))).toBeUndefined();
+      const next = await admitted(h);
+      await escalator.enqueue(next.id, 'abstained');
+      await h.execution.idle();
+      expect(requests).toHaveLength(1);
+      expect((await h.store.getJob(next.id))?.decision?.end).toBe('resource-unavailable');
+    },
+  );
+  it.each(['value', 'failed', 'no-backend'] as const)(
+    'routes catalogue higher decisions through ordinary Macrofold inference (%s)',
+    async (outcome) => {
+      const h = await harness();
+      const model = 'z-ai/fixture-catalogue-model';
+      Object.assign(
+        h.config,
+        readGenerationConfig({
+          MACROFOLD_API_KEY: outcome === 'no-backend' ? '' : 'fixture-broad-backend',
+          MACROFOLD_MODEL_API_KEY: 'fixture-deployment-only',
+          MACROFOLD_BASE_URL: 'https://macrofold.fixture.invalid',
+          MACROFOLD_BILLING_MODE: 'managed',
+          MACROFOLD_RUN_MAX_USD: '0.007',
+          DECISION_ESCALATION_MODEL: model,
+          OPENAI_API_KEY: '',
+        }),
+      );
+      h.config.decisionEscalation.origins = [decisionOrigin(h.config)];
+      const job = await admitted(h);
+      const requests: Record<string, unknown>[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string, init: RequestInit) => {
+          expect(url).toBe('https://macrofold.fixture.invalid/v1/inferences');
+          expect(new Headers(init.headers).get('authorization')).toBe(
+            'Bearer fixture-broad-backend',
+          );
+          expect(new Headers(init.headers).get('idempotency-key')).toBeTruthy();
+          requests.push(JSON.parse(String(init.body)));
+          return Response.json({
+            run_id: 'higher-catalogue-fixture',
+            kind: 'inference',
+            status: outcome === 'failed' ? 'failed' : 'succeeded',
+            result: {
+              run_id: 'higher-catalogue-fixture',
+              final: true,
+              execution_outcome: outcome === 'failed' ? 'failure' : 'success',
+              inference: {
+                outcome: outcome === 'failed' ? 'failed' : 'value',
+                provider_outcome: 'responded',
+                ...(outcome === 'failed'
+                  ? { error: { code: 'fixture_failure' } }
+                  : {
+                      value: {
+                        choices: [
+                          {
+                            finish_reason: 'stop',
+                            message: {
+                              content: JSON.stringify({
+                                answers: {
+                                  q0: {
+                                    status: 'answered',
+                                    value: { category: 1 },
+                                    reason: null,
+                                  },
+                                },
+                              }),
+                            },
+                          },
+                        ],
                       },
                     }),
-                  },
-                ],
+                billing: {
+                  billing_mode: 'managed',
+                  charged_micro_usd: '5',
+                  budget_cost_micro_usd: '5',
+                  reported_micro_usd: '5',
+                  provisional: false,
+                },
+                usage: { completeness: 'complete', input_tokens: '100', output_tokens: '40' },
               },
-            ],
-            usage: { input_tokens: 100, output_tokens: 40 },
-          }),
-          { status: 200, headers: { 'content-type': 'application/json' } },
-        );
-      }),
-    );
-    const log = new IntelligenceLog(h.store);
-    const escalator = new DecisionEscalator(
-      h.service,
-      h.execution,
-      log,
-      async () =>
-        prepareQuestionRead(h.service, {
-          questions: {
-            q0: {
-              kind: 'rating',
-              question: 'Preference for quiet.',
-              categories: { 0: 'Low', 1: 'High' },
             },
-          },
-          inputs: {
-            evidence: {
-              value: 'The character asked for quiet.',
-              revision: 'one',
-              owner: 'permitted reader',
-            },
-          },
-          sourceTime: 0,
-          currentRevisions: async () => ({ evidence: 'one' }),
+          });
         }),
-      undefined,
-      h.now,
-    );
-    cleanup.unshift(async () => {
-      await escalator.close();
-      await log.close();
-    });
-    await escalator.enqueue(job.id, 'abstained');
-    await h.execution.idle();
-    expect(requests).toHaveLength(1);
-    expect(requests[0]!.url).toBe('https://api.openai.com/v1/responses');
-    expect(requests[0]!.body).toMatchObject({
-      model: DECISION_MODEL,
-      store: false,
-      max_output_tokens: 8192,
-      reasoning: { effort: 'low' },
-      text: { format: { type: 'json_schema', strict: true } },
-    });
-    expect(requests[0]!.body['stream']).toBeUndefined();
-    expect(requests[0]!.body['tools']).toBeUndefined();
-    expect((await h.store.getJob(job.id))?.decision?.groups['q0']?.state).toBe('resolved');
-    expect((await h.store.decisionAttempts(job.id))[0]?.provider).toBe('openai');
-  });
+      );
+      const log = new IntelligenceLog(h.store);
+      const escalator = new DecisionEscalator(
+        h.service,
+        h.execution,
+        log,
+        async () =>
+          prepareQuestionRead(h.service, {
+            questions: {
+              q0: {
+                kind: 'rating',
+                question: 'Preference for quiet.',
+                categories: { 0: 'Low', 1: 'High' },
+              },
+            },
+            inputs: {
+              evidence: {
+                value: 'The character asked for quiet.',
+                revision: 'one',
+                owner: 'permitted reader',
+              },
+            },
+            sourceTime: 0,
+            currentRevisions: async () => ({ evidence: 'one' }),
+          }),
+        undefined,
+        h.now,
+      );
+      cleanup.unshift(async () => {
+        await escalator.close();
+        await log.close();
+      });
+      await escalator.enqueue(job.id, 'abstained');
+      await h.execution.idle();
+      expect(requests).toHaveLength(outcome === 'no-backend' ? 0 : 1);
+      if (outcome === 'no-backend') {
+        expect(await h.store.decisionAttempts(job.id)).toHaveLength(0);
+        return;
+      }
+      expect(requests[0]).toMatchObject({
+        model_binding: { provider: 'openrouter', model, billing_mode: 'managed' },
+        input: { max_tokens: DECISION_LIMITS.outputTokens, reasoning: { effort: 'low' } },
+        limits: { max_cost_micro_usd: '7000', max_output_tokens: DECISION_LIMITS.outputTokens },
+      });
+      const attempt = (await h.store.decisionAttempts(job.id))[0]!;
+      expect(attempt.reservedUsd).toBe(0.007);
+      expect(attempt.receipt).toMatchObject({
+        provider: 'macrofold',
+        requestedModel: model,
+        estimatedCostUsd: 0.000005,
+      });
+      expect((await h.store.getJob(job.id))?.decision?.groups['q0']?.state).toBe(
+        outcome === 'value' ? 'resolved' : 'ended-unresolved',
+      );
+      const poolKey = 'decision-resource:' + digest({ account: digest(h.config.llmKey), model });
+      expect(await h.store.getIntegration(poolKey)).toBeUndefined();
+    },
+  );
+  it.each([
+    'value',
+    'lab-value',
+    'reasoning-only',
+    'failed',
+    'stopped',
+    'disabled',
+    'expired-source',
+  ] as const)(
+    'routes higher decisions through the configured deployment and preserves admission (%s)',
+    async (outcome) => {
+      const control = outcome === 'lab-value' ? new CognitionRuntimeControl() : undefined;
+      control?.resume();
+      const h = await harness({ control });
+      const workspaceId = '11111111-1111-4111-8111-111111111111';
+      const deploymentId = '22222222-2222-4222-8222-222222222222';
+      const revisionId = '33333333-3333-4333-8333-333333333333';
+      Object.assign(
+        h.config,
+        readGenerationConfig({
+          MACROFOLD_API_KEY: 'fixture-broad-backend',
+          MACROFOLD_MODEL_API_KEY: 'fixture-model-only',
+          MACROFOLD_BASE_URL: 'https://macrofold.fixture.invalid',
+          OPENLEGEND_MODEL_TARGETS_JSON: JSON.stringify({
+            schema_version: 1,
+            workspace_id: workspaceId,
+            purposes: {
+              npc_response_complex: {
+                model_binding: {
+                  deployment_id: deploymentId,
+                  deployment_revision_id: revisionId,
+                },
+                structured_output: 'json_schema',
+                max_output_tokens: 1024,
+                chat_template_kwargs: { enable_thinking: false },
+              },
+            },
+          }),
+        }),
+      );
+      h.config.decisionEscalation.origins = [decisionOrigin(h.config)];
+      const job = await admitted(h);
+      if (outcome === 'disabled') h.config.budgetUsd = 0;
+      const requests: { path: string; body?: Record<string, unknown> }[] = [];
+      vi.stubGlobal(
+        'fetch',
+        vi.fn(async (url: string, init: RequestInit) => {
+          const path = new URL(url).pathname;
+          expect(new URL(url).origin).toBe('https://macrofold.fixture.invalid');
+          expect(new Headers(init.headers).get('authorization')).toBe('Bearer fixture-model-only');
+          requests.push({ path, ...(init.body ? { body: JSON.parse(String(init.body)) } : {}) });
+          if (path === `/v1/model-deployments/${deploymentId}`)
+            return Response.json({
+              deployment_id: deploymentId,
+              serving_revision_id: revisionId,
+              state: outcome === 'stopped' ? 'stopped' : 'ready',
+              admission_open: outcome !== 'stopped',
+              ready_replicas: outcome === 'stopped' ? 0 : 1,
+              capabilities: {
+                protocol: 'openai_chat',
+                input_modalities: ['text'],
+                chat_completions: true,
+                json_object: true,
+                json_schema: true,
+                streaming: false,
+                schema_dialect: 'http://json-schema.org/draft-07/schema#',
+                schema_keywords: [
+                  'type',
+                  'properties',
+                  'required',
+                  'additionalProperties',
+                  'anyOf',
+                  'oneOf',
+                  'enum',
+                  'const',
+                  'items',
+                  'minItems',
+                  'maxItems',
+                  'minimum',
+                  'maximum',
+                  'description',
+                  'title',
+                  '$schema',
+                  '$defs',
+                  '$ref',
+                ],
+                accepted_parameters: [
+                  'messages',
+                  'max_tokens',
+                  'response_format',
+                  'chat_template_kwargs',
+                ],
+                context_window_tokens: 4096,
+                max_output_tokens: 1024,
+                max_concurrent_requests: 1,
+              },
+            });
+          expect(path).toBe('/v1/inferences');
+          expect(new Headers(init.headers).get('idempotency-key')).toBeTruthy();
+          const inference =
+            outcome === 'failed'
+              ? {
+                  outcome: 'failed',
+                  provider_outcome: 'responded',
+                  error: { code: 'fixture_failure' },
+                }
+              : {
+                  outcome: 'value',
+                  provider_outcome: 'responded',
+                  value: {
+                    choices: [
+                      {
+                        finish_reason: 'stop',
+                        message:
+                          outcome === 'reasoning-only'
+                            ? {
+                                content: null,
+                                reasoning:
+                                  '{"answers":{"q0":{"status":"answered","value":{"category":1},"reason":null}}}',
+                              }
+                            : {
+                                content: JSON.stringify({
+                                  answers: {
+                                    q0: {
+                                      status: 'answered',
+                                      value: { category: 1 },
+                                      reason: null,
+                                    },
+                                  },
+                                }),
+                              },
+                      },
+                    ],
+                  },
+                };
+          return Response.json({
+            run_id: 'higher-deployment-fixture',
+            kind: 'inference',
+            status: outcome === 'failed' ? 'failed' : 'succeeded',
+            result: {
+              run_id: 'higher-deployment-fixture',
+              final: true,
+              execution_outcome: outcome === 'failed' ? 'failure' : 'success',
+              inference: {
+                ...inference,
+                deployment: { deployment_id: deploymentId, deployment_revision_id: revisionId },
+                cost_attribution: {
+                  basis: 'deployment',
+                  deployment_id: deploymentId,
+                  infrastructure_cost_included: false,
+                },
+                billing: {
+                  billing_mode: 'byok',
+                  charged_micro_usd: '0',
+                  budget_cost_micro_usd: '0',
+                  reported_micro_usd: '0',
+                  provisional: false,
+                },
+                usage: { completeness: 'complete', input_tokens: '100', output_tokens: '40' },
+              },
+            },
+          });
+        }),
+      );
+      const log = new IntelligenceLog(h.store);
+      let sourceReads = 0;
+      const escalator = new DecisionEscalator(
+        h.service,
+        h.execution,
+        log,
+        async () =>
+          prepareQuestionRead(h.service, {
+            questions: {
+              q0: {
+                kind: 'rating',
+                question: 'Preference for quiet.',
+                categories: { 0: 'Low', 1: 'High' },
+              },
+            },
+            inputs: {
+              evidence: {
+                value: 'The character asked for quiet.',
+                revision: 'one',
+                owner: 'permitted reader',
+              },
+            },
+            sourceTime: 0,
+            currentRevisions: async () => {
+              if (outcome === 'expired-source' && ++sourceReads === 3) h.advance(2100);
+              return { evidence: 'one' };
+            },
+          }),
+        undefined,
+        h.now,
+      );
+      cleanup.unshift(async () => {
+        await escalator.close();
+        await log.close();
+      });
+      await escalator.enqueue(job.id, 'abstained');
+      await h.execution.idle();
+      const posts = requests.filter((entry) => entry.body);
+      if (outcome === 'disabled') expect(requests).toHaveLength(0);
+      expect(
+        posts,
+        JSON.stringify({ requests, decision: (await h.store.getJob(job.id))?.decision?.end }),
+      ).toHaveLength(
+        outcome === 'stopped' || outcome === 'disabled' || outcome === 'expired-source' ? 0 : 1,
+      );
+      if (outcome === 'expired-source')
+        expect((await h.store.getJob(job.id))?.decision?.end).toBe('expired');
+      if (outcome !== 'stopped' && outcome !== 'disabled' && outcome !== 'expired-source') {
+        expect(posts[0]!.body).toMatchObject({
+          workspace_id: workspaceId,
+          model_binding: { deployment_id: deploymentId, deployment_revision_id: revisionId },
+          input: {
+            chat_template_kwargs: { enable_thinking: false },
+            max_tokens: 1024,
+            response_format: { type: 'json_schema' },
+          },
+          limits: { max_cost_micro_usd: '0', max_output_tokens: 1024, timeout_seconds: 30 },
+        });
+        const attempt = (await h.store.decisionAttempts(job.id))[0]!;
+        expect(attempt.reservedUsd).toBe(0);
+        expect(attempt.receipt?.macrofoldDeployment).toMatchObject({
+          deploymentId,
+          deploymentRevisionId: revisionId,
+        });
+      }
+      expect((await h.store.getJob(job.id))?.decision?.groups['q0']?.state).toBe(
+        outcome === 'disabled'
+          ? 'open'
+          : outcome === 'value' || outcome === 'lab-value'
+            ? 'resolved'
+            : 'ended-unresolved',
+      );
+    },
+  );
   it('ordered primary ratings round only when the consumer explicitly requests it', () => {
     const scale = { 0: 'Low', 1: 'Medium', 2: 'High' };
     expect(orderedRating(1.11, scale, true)).toEqual({ raw: 1.11, category: 1 });

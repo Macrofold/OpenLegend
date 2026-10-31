@@ -1,3 +1,4 @@
+import { selectedExpressions } from '../../expressions.js';
 import { gateUseLabel } from '../../gate-operations.js';
 import { entityGet } from '../../entity-collection.js';
 import { observedBodyHealth } from './hunting.js';
@@ -15,7 +16,7 @@ import { worldPosition } from '../../spatial-state.js';
 import { seesEntity } from '../../perception.js';
 import { observerDescription } from './knowledge.js';
 import { strikeDefinition, describeAttack } from '../../strikes.js';
-import { BASE_ACTION_DEFAULTS } from './actions.js';
+import { BASE_ACTION_DEFAULTS } from './action-defaults.js';
 import { rangedPolicy, rangedApproachRange, shotPreparationSeconds } from '../../ranged-policy.js';
 import { fireCareFacts, fireFuelDescription } from './fire.js';
 import { attributeDefinition } from '../../world-modules.js';
@@ -370,6 +371,13 @@ function activityView(
       value: world.recipes[command.recipeId]?.name ?? 'a known technique',
       critical: true,
     });
+  if (command.type === 'express') {
+    const expression = selectedExpressions(world).find((d) => d.id === command.verb);
+    if (expression) {
+      view.name = expression.label;
+      view.facts.push({ name: 'effect', value: expression.description, critical: true });
+    }
+  }
   if (command.type === 'say') {
     for (let at = 0; at < command.text.length; at += 500)
       view.facts.push({

@@ -1,8 +1,8 @@
 # Custom model deployments — feature specification
 
-| Status      | Current progress                                                                                                                     | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Native judgment, chat routing and tools are implemented; live Kev/Huihui qualification is blocked by current application-key access. | 2026-10-24   |
+| Status      | Current progress                                                                                                                      | Last updated         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Current-service routing, native options and equivalent-schema projection are implemented; live gameplay qualification is in progress. | 2026-10-26 06:45 UTC |
 
 ## 1. Purpose and selected outcome
 
@@ -16,7 +16,7 @@ Performance, functional model choice and reusable provider integration are the p
 
 The original custom-model implementation began at `Macrofold/OpenLegend` `main` `27c6fb8152ec58c34334e74ba91a9d5bec6a30ff`. The native decision extension uses the newer `origin/main` integration base `a60f15ac4`, recorded in the [implementation plan](custom-models-implementation-plan.md#native-kev-and-huihui-integration). Macrofold generation uses `/v1/inferences`, durable Run identity, local structured-output validation and per-request accounting. The existing fast and complex NPC reply settings select chat deployments. The native decision extension selects a SystemOne deployment for existing named judgments; omitted purposes retain their provider settings. [AI providers](../ai-providers.md) owns installed routing, while [MX06](../maintainers/custom-models.md#mx06--production-contract-recovery-and-operating-acceptance) identifies the remaining operating qualification.
 
-The canonical [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/design/huggingface-model-deployments-2026-10-22/docs/projects/hugging-face-model-deployments-contract.md) owns hosting, source/runtime configuration, current deployment selection, permissions, readiness, recovery, capacity and infrastructure costs. OpenLegend owns model selection for each game purpose, actor-permitted context, local response validation, native action admission and publication. The game receives a restricted deployment reference, not Hugging Face or hosting credentials.
+The canonical [Macrofold deployment contract](https://github.com/Macrofold/Macrofold/blob/main/docs/projects/hugging-face-model-deployments-contract.md) owns hosting, source/runtime configuration, current deployment selection, permissions, readiness, recovery, capacity and infrastructure costs. OpenLegend owns model selection for each game purpose, actor-permitted context, local response validation, native action admission and publication. The game receives a restricted deployment reference, not Hugging Face or hosting credentials.
 
 `packages/ai` provides reusable typed inference; `apps/server` selects targets and owns the existing request lifecycle; `packages/domain` remains deterministic and provider-independent. Model choice is operational configuration outside world saves. World laws, character identity, permitted observations and action effects continue through their existing authored and native owners. Another world can use the same model connection without inheriting the bundled world's rules or vocabulary.
 
@@ -28,17 +28,17 @@ The operator supplies a Hugging Face repository or URL to Macrofold, selects a s
 
 Macrofold maintains desired running/stopped state and readiness. Warm production capacity avoids downloading or starting a model during each character response. Provider recovery stays inside the approved service configuration and spending policy. Stopping OpenLegend does not destroy a shared host; stopping a deployment explicitly in Macrofold does not automatically restart it on the next NPC request.
 
-The operator grants the game principal read/use access in the trusted Macrofold workspace and configures its judgment and NPC generation targets independently. Embeddings, reflection and full-agent execution keep their existing routes. No production model default changes merely because this design or its implementation is merged.
+The operator grants the game principal read/use access in the trusted Macrofold workspace and configures its judgment and NPC generation targets independently. A separate deployment-only application credential can leave the existing backend credential in place for other Macrofold features. Embeddings, reflection and full-agent execution keep their existing routes. No production model default changes merely because this design or its implementation is merged.
 
 ### J2 — A character uses the selected model
 
 When a character needs a native judgment, the existing decision adapter submits the same permitted state and independent named questions to the configured SystemOne deployment. Choice, continuous Score and Noul answers retain their ordinary consumers, probabilities and uncertainty. Native decisions do not become chat generation or authorize game effects.
 
-When an NPC needs a generated response, the server selects the target for that request's purpose, assembles the ordinary permitted context and current response schema, and submits through the existing inference route. Fast and complex NPC response targets can be configured independently. An omitted target uses its existing setting; invalid supplied configuration fails visibly.
+When an NPC needs a generated response, the server selects the target for that request's purpose, assembles the ordinary permitted context and current response schema, and submits through the existing inference route. Fast and complex NPC response targets can be configured independently. Higher decision generation defaults to the complex deployment unless an explicit direct model is selected, with the existing decision policy, schema and one-call entitlement. An omitted target uses its existing setting; invalid supplied configuration fails visibly.
 
-OpenLegend prefers native JSON-schema output when supported. JSON-object or explicitly selected prompted-JSON output can serve models without that feature; all modes use the same complete local schema validator and action admission. A weaker remote output guarantee may cause more invalid replies, but does not require a second gameplay parser or authority path. The selected mode is fixed before the request; a failure does not silently trigger another model call or downgrade.
+OpenLegend prefers native JSON-schema output when supported. A compatible schema-dialect projection must preserve every constraint; unsupported semantics still refuse or use the explicitly selected supported mode. JSON-object or explicitly selected prompted-JSON output can serve models without that feature; all modes use the same complete local schema validator and action admission. A weaker remote output guarantee may cause more invalid replies, but does not require a second gameplay parser or authority path. The selected mode is fixed before the request; a failure does not silently trigger another model call or downgrade. A supported native Qwen3 thinking control is an explicit target setting. Only final answer content is validated; reasoning text cannot substitute for a missing answer. A small context window may make the model unusable for a complete character decision; required evidence is not silently removed to make it fit.
 
-The answer follows the same reference resolution, current-world checks and publication rules as any other generator. Ordinary configured decision escalation remains separate and unchanged. A host lifecycle failure does not create another escalation entitlement. Native movement and already-admitted work continue under their existing owners while model service is unavailable.
+The answer follows the same reference resolution, current-world checks and publication rules as any other generator. The existing decision-escalation policy and publication checks remain unchanged. A host lifecycle failure does not create another escalation entitlement. Native movement and already-admitted work continue under their existing owners while model service is unavailable.
 
 ### J3 — Recover from an ordinary restart
 
@@ -62,15 +62,15 @@ The [optional evaluation design](custom-models-tech-design.md#8-optional-evaluat
 
 ## 4. Scope, extensibility and performance
 
-| Area               | First delivery and boundary                                                                                                                                       |
-| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Reusable inference | One deployment-target alternative shared by native decisions, server generation and standalone adapters; no experiment-specific transport or executor.            |
-| Game integration   | Independent native judgment and fast/complex NPC response selection through trusted configuration; further producers retain their existing context and authority. |
-| Hosting            | Macrofold-managed RunPod native Kev or vLLM, plus operator-trusted protocol-compatible endpoints. Other runtimes extend Macrofold's provider ports.               |
-| Output             | Native named-answer validation for judgments; existing strict local response schema for chat. SystemOne is completed-only; chat streams only when supported.      |
-| Lifecycle          | Persistent desired service state, automatic same-revision recovery, deliberate updates and optional revision pins. No boot or study identity in game admission.   |
-| Cost               | Existing per-request accounting plus separately displayed shared deployment cost; no GPU bill multiplied by NPC count.                                            |
-| Evaluation         | Optional benchmark arms and reports using the production target, with no mandatory hosting orchestration or experimental data collection.                         |
+| Area               | First delivery and boundary                                                                                                                                                                     |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Reusable inference | One deployment-target alternative shared by native decisions, server generation and standalone adapters; no experiment-specific transport or executor.                                          |
+| Game integration   | Independent native judgment and fast/complex NPC response selection through trusted configuration; configured complex generation also supplies higher decisions under their existing authority. |
+| Hosting            | Macrofold-managed RunPod native Kev or vLLM, plus operator-trusted protocol-compatible endpoints. Other runtimes extend Macrofold's provider ports.                                             |
+| Output             | Native named-answer validation for judgments; existing strict local response schema for chat. SystemOne is completed-only; chat streams only when supported.                                    |
+| Lifecycle          | Persistent desired service state, automatic same-revision recovery, deliberate updates and optional revision pins. No boot or study identity in game admission.                                 |
+| Cost               | Existing per-request accounting plus separately displayed shared deployment cost; no GPU bill multiplied by NPC count.                                                                          |
+| Evaluation         | Optional benchmark arms and reports using the production target, with no mandatory hosting orchestration or experimental data collection.                                                       |
 
 Reuse prepared target/capability data; do not perform Hugging Face lookups, hosting-status polls, invoice reconciliation or experiment bookkeeping on each NPC turn. Bound requests through the existing scheduler, network owner and original deadline. Avoid an additional game-side queue or per-NPC model process. Macrofold owns serving concurrency and capacity; increasing GPU capacity does not silently raise the game's existing cognition concurrency.
 
@@ -92,7 +92,7 @@ Native Jev-style scoring uses its actual SystemOne protocol. Chat remains a sepa
 
 Production integration acceptance covers native multiple-question Choice/Score/Noul decisions and real NPC generation through their independently configured deployments, ordinary and pinned selection, same-revision recovery, deliberate model update, cancellation/uncertainty, strict local validation, existing escalation isolation, representative warm/concurrent load and honest costs. Runtime fixtures establish contracts; live provider/game checks establish their measured operating scope. Experiment reports are not dependencies of this acceptance.
 
-Existing [content/privacy and companion requirements](../agent-content-and-companion-safety.md), PD release work and CE/CR/AG gameplay evidence retain their owners. “Low refusal” is not permission to bypass those requirements. No claim of production capacity, character quality or live-host acceptance follows from this design alone. Official `jaredpalmer/kev-4b` is a native decision checkpoint, not an uncensored model. The pinned Huihui chat model has upstream imported-endpoint evidence; its protected managed chat runtime remains unqualified. [Operator setup](../live-ai-setup.md#use-existing-model-deployments-for-decisions-and-replies) records exact sources and separates upstream evidence from this game's current-service checks.
+Existing [content/privacy and companion requirements](../agent-content-and-companion-safety.md), PD release work and CE/CR/AG gameplay evidence retain their owners. “Low refusal” is not permission to bypass those requirements. No claim of production capacity, character quality or live-host acceptance follows from this design alone. Official `jaredpalmer/kev-4b` is a native decision checkpoint, not an uncensored model. Earlier Huihui evidence used an imported endpoint. The current managed service still needs this OpenLegend caller’s own qualification; availability of a supported serving image is not gameplay or capacity evidence. [Operator setup](../live-ai-setup.md#use-existing-model-deployments-for-decisions-and-replies) records exact sources and separates upstream evidence from this game's current-service checks.
 
 ## Maintained records
 

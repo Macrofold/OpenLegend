@@ -2,6 +2,18 @@ import { canonicalJson, type compilePreparedResponses } from '@open-legend/domai
 import type { CandidateAction } from './context.js';
 import type { RequiredDecisionChoices } from './decision-context.js';
 
+/** Closed supplied choices cannot emit freeform operations. Project their actual
+ * input before admission as well as dispatch; unused generation forms must not
+ * make a complete native choice refuse its context budget. */
+export function preparedResponseDecisionContext(context: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(context).filter(
+      ([key]) =>
+        !['knowledgeInstructions', 'navigation', 'planOffers', 'activityRequests'].includes(key),
+    ),
+  );
+}
+
 /** Describe shared physical means once without collapsing different purposes or
  * changing their bound invocations. These tables are included intact in both
  * semantic stages, under the existing complete-context allowance. */
@@ -11,7 +23,7 @@ export function preparedResponseChoices(
   subjectLabels: ReadonlyMap<string, string>,
 ): RequiredDecisionChoices {
   const methods = new Map<string, { id: string; description: string; workHandling: string }>();
-  const purposes: Array<{ id: string; description: string }> = [];
+  const purposes: Array<{ id: string; description: string; firstActionIds: string[] }> = [];
   const candidates: CandidateAction[] = [];
   for (const [index, purpose] of catalogue.purposes.entries()) {
     const purposeHandle = `p${index}`;
@@ -26,10 +38,13 @@ export function preparedResponseChoices(
     // question still names the complete short purpose and its exact people.
     const purposeDescription = `${purpose.label}${participants}`;
     const purposeMeaning = `${purposeDescription}. ${purpose.meaning}`;
-    purposes.push({
+    const purposeRow = {
       id: purposeHandle,
       description: purposeMeaning,
-    });
+      firstActionIds: [] as string[],
+    };
+    purposes.push(purposeRow);
+    const firstActionIds = new Set<string>();
     for (const option of purpose.options) {
       const {
         id: _id,
@@ -81,6 +96,10 @@ export function preparedResponseChoices(
         };
         methods.set(key, method);
       }
+      if (!firstActionIds.has(method.id)) {
+        firstActionIds.add(method.id);
+        purposeRow.firstActionIds.push(method.id);
+      }
       candidates.push({
         id: `${purposeHandle}:${method.id}`,
         description: `Choose purpose ${purposeHandle} with first action ${method.id}.`,
@@ -106,7 +125,7 @@ export function preparedResponseChoices(
     facts: {
       instructions,
       reading:
-        'Each offered choice names one fully described purpose and one first action below. Judge that entire bound combination, including its exact people, work handling and stopping conditions. A shared method does not merge its different purposes. Selected visible people remain personally bound observations: losing a passive person prompts reconsideration but stops physical work only when that work requires them. Work handling refers to the current and paused work and consequences supplied in this same context.',
+        'Each purpose lists its complete available firstActionIds from the shared methods table. Judge only those bound combinations, including exact people, work handling and stopping conditions. A shared method does not merge its different purposes. Selected visible people remain personally bound observations: losing a passive person prompts reconsideration but stops physical work only when that work requires them. Work handling refers to the current and paused work and consequences supplied in this same context.',
       purposes,
       methods: [...methods.values()],
       unavailable: catalogue.unavailable.map(({ purposeId, roles, description, reason }) => ({

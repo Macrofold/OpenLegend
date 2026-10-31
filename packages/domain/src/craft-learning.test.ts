@@ -8,8 +8,8 @@ import { createItemLot, custodian, itemContainerCapacity } from './objects.js';
 import { freezeWorld } from './draft.js';
 import { PLAYER_ID } from './data.js';
 import { normalizeActivity, retainActivity } from './activity-learning.js';
-import { occurrenceFor } from './action-experience.js';
-import { validateWorldModules } from './world-modules.js';
+import { ACTIVITY_LIMITS, occurrenceFor } from './action-experience.js';
+import { activityManifest, validateWorldModules } from './world-modules.js';
 import type { Command, WorldState } from './types.js';
 
 function fixture() {
@@ -80,9 +80,19 @@ describe('ordinary learned manufacture', () => {
   it('retains a craft/output method and replays through current ordinary manufacture', () => {
     const f = fixture();
     const ordinary = makeAndSetDown(f.world, f.recipeId, 'ordinary');
+    const canonical = JSON.stringify(ordinary.entries);
     const candidate = normalizeActivity(ordinary.world, PLAYER_ID, ordinary.entries)!;
     expect(candidate).toBeDefined();
     expect(JSON.stringify(candidate.method.root)).toContain('"output"');
+    expect(JSON.stringify(ordinary.entries)).toBe(canonical);
+    expect(new TextEncoder().encode(JSON.stringify(candidate.method)).length).toBeLessThanOrEqual(
+      ACTIVITY_LIMITS.recordBytes,
+    );
+    const changedMeaning = structuredClone(ordinary.world);
+    // A definition edit still invalidates learned work without a version bump.
+    changedMeaning.moduleManifest.appraisals!.definitions[0]!.label += ' changed';
+    expect(activityManifest(changedMeaning)).not.toBe(candidate.method.manifest);
+    expect(retainActivity(changedMeaning, PLAYER_ID, candidate)).toBeUndefined();
     let world = structuredClone(ordinary.world);
     const methodId = retainActivity(world, PLAYER_ID, candidate)!;
     expect(methodId).toBeTruthy();

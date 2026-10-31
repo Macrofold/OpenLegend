@@ -8,7 +8,11 @@ import { SaveFiles, compareSaves, type SavePosition, type SaveFileMetadata } fro
 import { writeCheckpoint, readCheckpoint } from './checkpoint.js';
 import { CheckpointWorker, type CheckpointSource } from './checkpoint-worker-client.js';
 import { randomUUID } from 'node:crypto';
+import { rm } from 'node:fs/promises';
+import { join } from 'node:path';
 import { z } from 'zod';
+import { beginTiming, endTiming, timed, timedSync } from './performance.js';
+import { sqlRowBatches } from './sql-rows.js';
 import {
   assertAssetBinding,
   assertAssetRevisionReference,
@@ -71,6 +75,8 @@ export interface SavePayload {
   memory?: Record<(typeof MEMORY_HISTORY_TABLES)[number], Rows>;
 }
 export interface RestoreSave {
+  /** Exact package identity when the selected UI slot is the recovery alias. */
+  fileId?: string;
   id: string;
   requestId: string;
   payload: SavePayload;
@@ -84,10 +90,24 @@ export interface RestoreSave {
 }
 
 /** The database captures authority; manual slots publish to local files after capture. */
+export interface CheckpointAccounting {
+  admit(capture: {
+    id: string;
+    worldId: string;
+    kind: SaveFileMetadata['kind'];
+  }): Promise<((published: SaveFileMetadata | undefined) => Promise<void>) | undefined>;
+  removed(published: SaveFileMetadata): Promise<void>;
+}
 export class GameSaves {
   private readonly files: SaveFiles;
   private readonly assets: AssetRepository;
   private readonly worker?: CheckpointWorker;
+  private accounting?: CheckpointAccounting;
+  /** An isolated runtime can account native recovery captures without replacing their
+   * capture/validation/retention owner. Ordinary gameplay installs no extra hook. */
+  setAccounting(accounting: CheckpointAccounting): void {
+    this.accounting = accounting;
+  }
   private active?: {
     id: string;
     label: string;
@@ -438,8 +458,14 @@ export class GameSaves {
       captured();
       options.captured?.();
     };
+    let account: ((published: SaveFileMetadata | undefined) => Promise<void>) | undefined;
     const done = Promise.resolve()
       .then(async () => {
+        account = await this.accounting?.admit({
+          id,
+          worldId: state.world.id,
+          kind: options.kind ?? 'manual',
+        });
         await this.db.synchronizeProjection?.();
         const prior = await this.files.metadata(id);
         if (prior) {
@@ -496,8 +522,14 @@ export class GameSaves {
           await this.assets.releaseSaveSnapshot(state.world.id, id, true);
         throw error;
       })
-      .finally(() => {
-        this.active = undefined;
+      .finally(async () => {
+        try {
+          // A failed acknowledgement can still leave a valid published file. Its
+          // retained bytes remain charged; only proven absence releases admission.
+          if (account) await account((await this.files.metadata(id)) ?? undefined);
+        } finally {
+          this.active = undefined;
+        }
       });
     this.active = {
       id,
@@ -526,6 +558,7 @@ export class GameSaves {
     for (const candidate of candidates)
       if (!keep.has(candidate.id)) {
         await this.files.delete(candidate.id);
+        await this.accounting?.removed(candidate);
         await this.assets.releaseSaveSnapshot(worldId, candidate.id);
       }
   }
@@ -563,22 +596,87 @@ export class GameSaves {
     return id;
   }
   async read(worldId: string, id: string): Promise<SavePayload> {
-    id = await this.assetSlotId(worldId, id);
-    const row = await this.files.metadata(id);
-    if (!row) throw new GameSaveError('That save no longer exists.');
-    if (row.worldId !== worldId) throw new GameSaveError('Save belongs to another world.');
-    if (row.format !== SAVE_FORMAT)
-      throw new GameSaveError('Unsupported save format; existing data was not changed.');
-    const payload = await readCheckpoint(this.files.lines(row), worldId, row.format);
+    const row = await this.metadata(worldId, id);
+    const payload = await timed('save.readPackage', () =>
+      readCheckpoint(this.files.lines(row), row.worldId, row.format),
+    );
     if (
       payload.format !== SAVE_FORMAT ||
       payload.format !== row['format'] ||
-      payload.state?.world?.id !== worldId ||
+      payload.state?.world?.id !== row.worldId ||
       !HISTORY_TABLES.every((table) => Array.isArray(payload.history?.[table]))
     )
       throw new GameSaveError('Save integrity check failed.');
     this.validatePayload(payload);
     return payload;
+  }
+  /** Exact bounded manifest for the native capture owner. Paths stay server-owned. */
+  async metadata(worldId: string, id: string): Promise<SaveFileMetadata> {
+    const selected = await this.files.metadata(await this.assetSlotId(worldId, id));
+    if (
+      !selected ||
+      (id === 'before-load' ? selected.kind !== 'recovery' : selected.worldId !== worldId)
+    )
+      throw new GameSaveError('That checkpoint is unavailable in the selected world.');
+    if (selected.format !== SAVE_FORMAT)
+      throw new GameSaveError('Unsupported save format; existing data was not changed.');
+    return selected;
+  }
+  async *exportLines(worldId: string, id: string): AsyncGenerator<string> {
+    for await (const line of this.files.lines(await this.metadata(worldId, id))) yield `${line}\n`;
+  }
+  /** Logical JSONL rows from caller-owned bounded, integrity-checked staging. */
+  async validateLines(worldId: string, lines: AsyncIterable<string>): Promise<void> {
+    this.validatePayload(await readCheckpoint(lines, worldId, SAVE_FORMAT));
+  }
+  /** Copies a current native package without installing it or importing operational authority.
+   * Decode/validation uses the same owner as load, before publication to the save catalogue.
+   * docs/projects/cognition-lab-tech-design.md#113-game-import-and-current-format-bundles */
+  async importLines(
+    manifest: SaveFileMetadata,
+    lines: AsyncIterable<string>,
+  ): Promise<{ metadata: SaveFileMetadata; created: boolean }> {
+    if (manifest.format !== SAVE_FORMAT)
+      throw new GameSaveError('Unsupported save format; existing data was not changed.');
+    const prior = await this.files.metadata(manifest.id);
+    if (prior) {
+      if (prior.worldId !== manifest.worldId || prior.checksum !== manifest.checksum)
+        throw new GameSaveError('Imported checkpoint identity conflicts.');
+      await this.files.confirmPublished(prior);
+      return { metadata: prior, created: false };
+    }
+    const stagingDirectory = join(this.directory, `.import-${process.pid}-${randomUUID()}`);
+    const staging = new SaveFiles(stagingDirectory);
+    try {
+      await staging.writeStream(manifest, lines);
+      const copied = await staging.metadata(manifest.id);
+      if (
+        !copied ||
+        copied.checksum !== manifest.checksum ||
+        copied.bytes !== manifest.bytes ||
+        copied.rows !== manifest.rows
+      )
+        throw new GameSaveError('Imported checkpoint integrity check failed.');
+      const payload = await readCheckpoint(staging.lines(copied), manifest.worldId, SAVE_FORMAT);
+      this.validatePayload(payload);
+      await this.files.writeStream(
+        manifest,
+        (async function* () {
+          for await (const line of staging.lines(copied)) yield `${line}\n`;
+        })(),
+      );
+      return { metadata: await this.metadata(manifest.worldId, manifest.id), created: true };
+    } catch (error) {
+      // The slot was absent before this import. Publication can succeed before
+      // directory synchronization or the final manifest read rejects, so inspect
+      // the exact immutable identity before releasing its caller's admission.
+      const published = await this.files.metadata(manifest.id);
+      if (published?.worldId === manifest.worldId && published.checksum === manifest.checksum)
+        await this.files.delete(manifest.id);
+      throw error;
+    } finally {
+      await rm(stagingDirectory, { recursive: true, force: true });
+    }
   }
   async delete(worldId: string, id: string) {
     // A creation still waiting for its capture would publish after this deletion.
@@ -597,6 +695,7 @@ export class GameSaves {
       if (metadata && metadata.worldId !== worldId)
         throw new GameSaveError('Save belongs to another world.');
       await this.files.delete(id);
+      if (metadata) await this.accounting?.removed(metadata);
       await this.assets.releaseSaveSnapshot(worldId, id);
       return;
     }
@@ -605,24 +704,26 @@ export class GameSaves {
   /** Called inside the world commit. Keep accounting and external operation journals untouched. */
   /** Checks that need no database; loads run them before writing the pre-load checkpoint. */
   validatePayload(payload: SavePayload) {
-    if (payload.format !== SAVE_FORMAT)
-      throw new GameSaveError('Unsupported save format; existing data was not changed.');
-    const totals = payload.history.history_totals;
-    if (
-      totals.length !== 1 ||
-      Number(totals[0]!['event_count']) !== payload.history.history_events.length
-    )
-      throw new GameSaveError('Save event count disagrees with retained records.');
-    validateCurrentWorldState(payload.state.world);
-    assertAssetBinding(
-      payload.state.presentationRelease,
-      payload.state.presentationReleaseRevision,
-    );
-    validateHistoryEvidence(
-      payload.history,
-      payload.state.world,
-      payload.memory?.mind_source_versions ?? [],
-    );
+    timedSync('save.validatePayload', () => {
+      if (payload.format !== SAVE_FORMAT)
+        throw new GameSaveError('Unsupported save format; existing data was not changed.');
+      const totals = payload.history.history_totals;
+      if (
+        totals.length !== 1 ||
+        Number(totals[0]!['event_count']) !== payload.history.history_events.length
+      )
+        throw new GameSaveError('Save event count disagrees with retained records.');
+      validateCurrentWorldState(payload.state.world);
+      assertAssetBinding(
+        payload.state.presentationRelease,
+        payload.state.presentationReleaseRevision,
+      );
+      validateHistoryEvidence(
+        payload.history,
+        payload.state.world,
+        payload.memory?.mind_source_versions ?? [],
+      );
+    });
   }
   async assertAssetDependencies(
     payload: SavePayload,
@@ -658,18 +759,19 @@ export class GameSaves {
       );
   }
   async install(current: SavedWorld, restore: RestoreSave) {
+    const targetWorldId = restore.payload.state.world.id;
     this.validatePayload(restore.payload);
     await this.assertAssetDependencies(
       restore.payload,
       undefined,
       restore.assetPrincipal,
-      restore.id,
+      restore.fileId ?? restore.id,
     );
     await this.assets.restoreWorldBinding(
       restore.assetPrincipal,
-      current.world.id,
+      targetWorldId,
       restore.payload.state.presentationRelease,
-      await this.assetSlotId(current.world.id, restore.id),
+      restore.fileId ?? (await this.assetSlotId(targetWorldId, restore.id)),
     );
     const { recoveryId } = restore;
     const prepared = await this.files.metadata(recoveryId);
@@ -684,7 +786,7 @@ export class GameSaves {
       )
       .run(
         'before-load',
-        current.world.id,
+        targetWorldId,
         'Before last load',
         new Date().toISOString(),
         current.world.simTime,
@@ -692,8 +794,10 @@ export class GameSaves {
         digest(pointer),
         JSON.stringify(pointer),
       );
+    const historyStarted = beginTiming();
     for (const table of [...HISTORY_TABLES, ...MEMORY_HISTORY_TABLES]) {
-      await this.db.prepare(`DELETE FROM ${table} WHERE world_id=?`).run(current.world.id);
+      for (const worldId of new Set([current.world.id, targetWorldId]))
+        await this.db.prepare(`DELETE FROM ${table} WHERE world_id=?`).run(worldId);
       const rows =
         table in restore.payload.history
           ? restore.payload.history[table as keyof SavePayload['history']]
@@ -706,7 +810,7 @@ export class GameSaves {
         let bytes = 0;
         while (offset < rows.length) {
           const row = rows[offset]!;
-          if (row['world_id'] !== current.world.id || Object.keys(row).join() !== columns.join())
+          if (row['world_id'] !== targetWorldId || Object.keys(row).join() !== columns.join())
             throw new GameSaveError('Invalid save history.');
           const size = Buffer.byteLength(JSON.stringify(row));
           if (
@@ -734,14 +838,15 @@ export class GameSaves {
         .run(JSON.stringify(job), row['id']);
     }
     // Captured pending narration is not permission to repeat an uncertain paid request.
+    endTiming('save.install.history', historyStarted);
     await this.db
       .prepare(
         "UPDATE story_jobs SET state='cancelled' WHERE world_id=? AND state IN ('running','queued')",
       )
-      .run(current.world.id);
+      .run(targetWorldId);
     for (const [key, value] of [
-      [`command-epoch:${current.world.id}`, restore.epoch],
-      [`world-timeline:${current.world.id}`, restore.timeline],
+      [`command-epoch:${targetWorldId}`, restore.epoch],
+      [`world-timeline:${targetWorldId}`, restore.timeline],
       [`load-request:${restore.requestId}`, { saveId: restore.id }],
     ] as const)
       await this.db
@@ -750,13 +855,22 @@ export class GameSaves {
         )
         .run(`integration:${key}`, JSON.stringify(value));
     // These are queued opportunities / derived caches, not billing or attempt records.
-    for (const actorId of new Set([
-      ...entityKeys(current.world.entities),
-      ...entityKeys(restore.payload.state.world.entities),
-    ]))
-      for (const prefix of ['vectors', 'interests', 'reflection-queue', 'semantic-schedule'])
-        await this.db
-          .prepare('DELETE FROM meta WHERE key=?')
-          .run(`integration:${prefix}:${current.world.id}:${actorId}`);
+    function* cacheKeys() {
+      for (const worldId of new Set([current.world.id, targetWorldId]))
+        for (const actorId of new Set([
+          ...entityKeys(current.world.entities),
+          ...entityKeys(restore.payload.state.world.entities),
+        ]))
+          for (const prefix of ['vectors', 'interests', 'reflection-queue', 'semantic-schedule'])
+            yield [`integration:${prefix}:${worldId}:${actorId}`];
+    }
+    // Exact derived keys have the same lifetime, but separate round trips per
+    // entity keep the restore transaction and every competing writer waiting.
+    const cacheStarted = beginTiming();
+    for (const batch of sqlRowBatches(cacheKeys()))
+      await this.db
+        .prepare(`DELETE FROM meta WHERE key IN (${batch.map(() => '?').join(',')})`)
+        .run(...batch.flat());
+    endTiming('save.install.clearDerived', cacheStarted);
   }
 }

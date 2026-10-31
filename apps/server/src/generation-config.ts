@@ -32,6 +32,7 @@ const captureConfiguredTarget = <T extends z.infer<typeof configuredTargetSchema
 const configuredJudgmentTargetSchema = configuredTargetSchema.transform(captureConfiguredTarget);
 const configuredNpcTargetSchema = configuredTargetSchema
   .extend({
+    chat_template_kwargs: z.object({ enable_thinking: z.boolean() }).strict().readonly().optional(),
     structured_output: z
       .enum(['auto', 'json_schema', 'json_object', 'prompted_json'])
       .default('auto'),
@@ -198,17 +199,23 @@ export function numberSetting(
   return value;
 }
 
+/** Shared native-deployment credential selection; Worker/World Agent access keeps its own key. */
+export function modelDeploymentApiKey(env: NodeJS.ProcessEnv = process.env): string {
+  return env['MACROFOLD_MODEL_API_KEY'] ?? env['MACROFOLD_API_KEY'] ?? '';
+}
+
 /** Shared trusted generation settings; reading them never starts a server or opens a database. */
 export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
   const macrofoldKey = env['MACROFOLD_API_KEY'] ?? '';
+  const macrofoldModelKey = modelDeploymentApiKey(env);
   const configuredBillingMode = env['MACROFOLD_BILLING_MODE'] ?? 'byok';
   if (configuredBillingMode !== 'byok' && configuredBillingMode !== 'managed')
     throw new Error('MACROFOLD_BILLING_MODE must be byok or managed.');
   const macrofoldBillingMode: MacrofoldBillingMode = configuredBillingMode;
   const modelTargets = readModelTargetsConfig(env['OPENLEGEND_MODEL_TARGETS_JSON']);
-  if (modelTargets && !macrofoldKey)
+  if (modelTargets && !macrofoldModelKey)
     throw new Error(
-      'OPENLEGEND_MODEL_TARGETS_JSON requires the configured Macrofold adapter (MACROFOLD_API_KEY).',
+      'OPENLEGEND_MODEL_TARGETS_JSON requires MACROFOLD_MODEL_API_KEY or MACROFOLD_API_KEY.',
     );
   if (
     env['OPENAI_MODEL'] &&
@@ -231,6 +238,20 @@ export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
   )
     throw new Error('A custom JEV_MODEL requires an explicit JEV_INPUT_USD_PER_MILLION.');
   const llmModel = env['OPENAI_MODEL'] ?? 'gpt-5.6-luna';
+  // The higher caller may select the same configured chat target independently
+  // of a later Lab response-tier choice; this is one immutable selection snapshot.
+  const configuredHigherDecisionTarget = modelTargets?.purposes.npc_response_complex
+    ? Object.freeze({
+        workspaceId: modelTargets.workspace_id,
+        target: modelTargets.purposes.npc_response_complex,
+      })
+    : undefined;
+  const higherDecisionModel = modelIdentity.parse(
+    env['DECISION_ESCALATION_MODEL'] ??
+      (configuredHigherDecisionTarget
+        ? `deployment:${configuredHigherDecisionTarget.target.model_binding.deployment_id.toLowerCase()}`
+        : DECISION_MODEL),
+  );
   const llmPrices = Object.freeze({
     inputUsdPerMillion: numberSetting(env, 'LLM_INPUT_USD_PER_MILLION', 0.2, 0, 1000),
     outputUsdPerMillion: numberSetting(env, 'LLM_OUTPUT_USD_PER_MILLION', 1.2, 0, 1000),
@@ -282,6 +303,8 @@ export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
   return Object.freeze({
     modelTargets,
     macrofoldKey,
+    macrofoldModelKey,
+    configuredHigherDecisionTarget,
     macrofoldUrl: env['MACROFOLD_BASE_URL'] ?? 'http://localhost:3210',
     macrofoldBillingMode,
     // Connection IDs select credentials already stored in Macrofold, not raw keys.
@@ -296,6 +319,7 @@ export function readGenerationConfig(env: NodeJS.ProcessEnv = process.env) {
     summaryModel: env['COGNITION_SUMMARY_MODEL'] ?? 'gpt-5-nano',
     llmKey: env['OPENAI_API_KEY'] ?? '',
     llmModel,
+    higherDecisionModel,
     // Explicit operator estimates; no claim of invoice totals.
     llmPrices,
     llmModelPrices,
@@ -341,16 +365,7 @@ export function resolveNpcGenerationConfig(
   const allowance = options.maxOutputTokens ?? LEVEL_LIMITS[fast ? 2 : 3].outputTokens;
   const target = npcGenerationTarget(config.modelTargets, purpose);
   if (target && config.modelTargets) {
-    return Object.freeze({
-      transport: 'macrofold' as const,
-      macrofoldDeployment: captureMacrofoldDeploymentTarget({
-        workspaceId: config.modelTargets.workspace_id,
-        modelBinding: target.model_binding,
-      }),
-      structuredOutput: target.structured_output,
-      maxOutputTokens: npcGenerationOutputTokens(allowance, target),
-      billingMode: 'byok' as const,
-    });
+    return resolveDeploymentGeneration(config.modelTargets.workspace_id, target, allowance);
   }
   const transport = config.macrofoldKey ? ('macrofold' as const) : ('openai' as const);
   const model =
@@ -374,4 +389,136 @@ export function resolveNpcGenerationConfig(
         }
       : { prices: modelTokenPrices(config.llmModelPrices, model) }),
   });
+}
+
+function resolveDeploymentGeneration(
+  workspaceId: string,
+  target: ConfiguredNpcGenerationTarget,
+  allowance: number,
+): ResolvedNpcGenerationConfig {
+  return Object.freeze({
+    transport: 'macrofold' as const,
+    macrofoldDeployment: captureMacrofoldDeploymentTarget({
+      workspaceId,
+      modelBinding: target.model_binding,
+      ...(target.chat_template_kwargs ? { chatTemplateKwargs: target.chat_template_kwargs } : {}),
+    }),
+    structuredOutput: target.structured_output,
+    maxOutputTokens: npcGenerationOutputTokens(allowance, target),
+    billingMode: 'byok' as const,
+  });
+}
+
+/** Exact configured selection only; an arbitrary deployment-looking string grants nothing. */
+export function higherDecisionDeploymentTarget(
+  config: GenerationConfig,
+): MacrofoldDeploymentTarget | undefined {
+  const configured = config.configuredHigherDecisionTarget;
+  if (
+    !configured ||
+    config.higherDecisionModel !==
+      `deployment:${configured.target.model_binding.deployment_id.toLowerCase()}`
+  )
+    return undefined;
+  return resolveDeploymentGeneration(
+    configured.workspaceId,
+    configured.target,
+    Number.MAX_SAFE_INTEGER,
+  ).macrofoldDeployment;
+}
+
+/** Exact deployment bindings resolve separately; unbound higher models use one
+ * route classification in selection and prepared-input admission. */
+export function higherDecisionModelTransport(model: string): 'macrofold' | 'openai' {
+  return model.includes('/') ? 'macrofold' : 'openai';
+}
+
+export function assertHigherDecisionModelTransport(original: string, selected: string): void {
+  if (higherDecisionModelTransport(original) !== higherDecisionModelTransport(selected))
+    throw new Error(
+      'Choose this model in Lab model settings and prepare a new stage to change provider routes.',
+    );
+}
+
+export function resolveHigherDecisionGenerationConfig(
+  config: GenerationConfig,
+  options: { maxOutputTokens: number; reasoningEffort?: GenerateRequest['reasoningEffort'] },
+): ResolvedNpcGenerationConfig {
+  const configured = config.configuredHigherDecisionTarget;
+  if (configured && higherDecisionDeploymentTarget(config))
+    return resolveDeploymentGeneration(
+      configured.workspaceId,
+      configured.target,
+      options.maxOutputTokens,
+    );
+  // Catalogue identities include their provider namespace. Keep these on the
+  // existing inference adapter; an absent backend credential must prevent
+  // dispatch rather than send an OpenRouter identity to OpenAI Responses.
+  const transport = higherDecisionModelTransport(config.higherDecisionModel);
+  return Object.freeze({
+    transport,
+    model: config.higherDecisionModel,
+    structuredOutput: 'json_schema' as const,
+    maxOutputTokens: options.maxOutputTokens,
+    reasoningEffort: options.reasoningEffort,
+    ...(transport === 'macrofold'
+      ? {
+          billingMode: config.macrofoldBillingMode,
+          providerConnectionId: config.macrofoldProviderConnectionId,
+        }
+      : { prices: modelTokenPrices(config.llmModelPrices, config.higherDecisionModel) }),
+  });
+}
+
+export function hasHigherDecisionGenerationAccess(config: GenerationConfig): boolean {
+  const selected = resolveHigherDecisionGenerationConfig(config, { maxOutputTokens: 1 });
+  return !!(selected.macrofoldDeployment
+    ? config.macrofoldModelKey
+    : selected.transport === 'macrofold'
+      ? config.macrofoldKey
+      : config.llmKey);
+}
+
+export function npcGenerationModel(
+  config: GenerationConfig,
+  purpose: NpcGenerationPurpose,
+): string {
+  const selected = resolveNpcGenerationConfig(config, purpose);
+  return selected.macrofoldDeployment
+    ? `deployment:${selected.macrofoldDeployment.modelBinding.deployment_id}`
+    : selected.model;
+}
+
+export function configuredDeploymentModel(
+  config: GenerationConfig,
+  model: string | undefined,
+): boolean {
+  if (!model) return false;
+  const configured = [
+    config.modelTargets?.purposes.npc_response_fast,
+    config.modelTargets?.purposes.npc_response_complex,
+    config.configuredHigherDecisionTarget?.target,
+  ];
+  return configured.some(
+    (target) =>
+      target && model === `deployment:${target.model_binding.deployment_id.toLowerCase()}`,
+  );
+}
+
+export function hasJudgmentAccess(config: GenerationConfig & { jevKey: string }): boolean {
+  return !!(
+    config.macrofoldKey ||
+    config.jevKey ||
+    (config.macrofoldModelKey && judgmentDeploymentTarget(config.modelTargets))
+  );
+}
+
+export function hasNpcGenerationAccess(
+  config: GenerationConfig,
+  purpose: NpcGenerationPurpose,
+): boolean {
+  const selected = resolveNpcGenerationConfig(config, purpose);
+  return selected.macrofoldDeployment
+    ? !!config.macrofoldModelKey
+    : !!(config.macrofoldKey || config.llmKey);
 }

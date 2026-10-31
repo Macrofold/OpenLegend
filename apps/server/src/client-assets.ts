@@ -105,9 +105,13 @@ export async function createClientAssets(
         return;
       }
       try {
+        const applicationEntry =
+          url.pathname === '/' ||
+          url.pathname === '/cognition' ||
+          url.pathname.startsWith('/cognition/');
         const path = resolve(
           assets,
-          `.${decodeURIComponent(url.pathname === '/' ? '/index.html' : url.pathname)}`,
+          `.${decodeURIComponent(applicationEntry ? '/index.html' : url.pathname)}`,
         );
         if (!path.startsWith(`${assets}${sep}`)) {
           response.writeHead(403);

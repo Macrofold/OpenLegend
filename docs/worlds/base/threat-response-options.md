@@ -81,7 +81,7 @@ Relevance is personal. A nearby stranger does not automatically become someone A
 
 ### 3.1 Executable finite speech choices
 
-The two-call route can select complete authored speech as its one response without buying a generator to fill in the words. The option holds the exact utterance, ordinary speech volume, actual permitted addressee or supported addressed audience, current source/role binding and native speech admission. Stage two sees the complete words before selection. The following initial utterances are alternatives, not required lines or assertions about what a character already said.
+The two-stage route can select complete authored speech as its one response without buying a generator to fill in the words. The option holds the exact utterance, ordinary speech volume, actual permitted addressee or supported addressed audience, current source/role binding and native speech admission. Stage two sees the complete words before selection. The following initial utterances are alternatives, not required lines or assertions about what a character already said.
 
 | Speech ID | Exact offered words                    | Eligible purpose/condition and delivery                                                                                                                                                                                               |
 | --------- | -------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

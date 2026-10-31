@@ -369,7 +369,7 @@ export function perceivedEntityText(
   const combat =
     entityGet(world.entities, observerId) &&
     observedCombatActivity(world, entityGet(world.entities, observerId)!, entity);
-  if (combat) facts.push(combat);
+  if (combat) facts.push(combat.text);
   const health = observedBodyHealth(world, observerId, entity.id);
   if (health) facts.push(health);
   if (entity.actor && !entity.actor.alive) facts.push('It is dead.');
@@ -386,7 +386,7 @@ export function perceivedEntityText(
           : action.hearthWork
             ? world.hearthDefinitions?.[action.hearthWork.definition.id]?.activityText
             : activities[action.type];
-    if (activity) facts.push(`It is ${activity}.`);
+    if (activity && combat?.actionId !== action.id) facts.push(`It is ${activity}.`);
   }
   if (entity.resource?.cast) {
     const definition = world.castDefinitions[entity.resource.cast.definitionId];

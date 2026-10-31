@@ -1,3 +1,4 @@
+import { heldNativeValue, type NativeValueHoldContext } from './native-value-holds.js';
 import { isDefinitionPin, sameDefinitionPin } from './definition-pins.js';
 export { isDefinitionPin, sameDefinitionPin } from './definition-pins.js';
 import { currentAttributeState } from './native-values.js';
@@ -163,6 +164,7 @@ export function writeState(
   conditionTiming: 'now' | 'transition' = 'now',
   feedback: 'effect' | 'silent' = 'effect',
   completingInvocationId?: string,
+  valueHolds?: NativeValueHoldContext,
 ): StateWriteResult {
   if (!isStateAddress(address) || !isStateOperation(operation)) return { status: 'invalid' };
   const definition = resolve(world, address);
@@ -186,6 +188,7 @@ export function writeState(
   } catch {
     return { status: 'invalid' };
   }
+  value = heldNativeValue(valueHolds, address.entityId, definition.id) ?? value;
   if (value === prior.value) return { status: 'unchanged', value, revision: prior.revision };
   if (!Number.isSafeInteger(prior.revision + 1)) return { status: 'invalid' };
   const storage = HOST_IMPLEMENTATIONS[definition.implementation].storage;

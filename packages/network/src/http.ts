@@ -150,6 +150,11 @@ export async function openHttp(
         response,
         setReader(value) {
           reader = value;
+          // The guarded read can settle cancellation before the raw fetch body
+          // reports AbortError. Observe that terminal proof independently; a
+          // resolved `closed` after cancel is not proof its cleanup has finished.
+          // docs/projects/completed/bounded-network-requests-tech-design.md#52-lease-state-machine
+          void value.closed.catch((error: unknown) => owned?.terminalReadError(error));
         },
         cancel() {
           if (finished || cancelRequested) return;

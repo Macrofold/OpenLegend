@@ -1,14 +1,36 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
+import { boundResponseSchema } from './cognition-contracts.js';
 import { createNetworkOwner } from '@open-legend/network';
-import { MacrofoldTransport, type TypedQuestionMap } from '@open-legend/ai';
+import {
+  MACROFOLD_DECISION_MODELS,
+  compileSchema,
+  MacrofoldTransport,
+  type TypedQuestionMap,
+} from '@open-legend/ai';
+import type { CognitionLabSettings } from '@open-legend/protocol';
 import { testRepository, readConfig } from '../../../tests/fixtures/database.js';
 import { enterLocalWorld } from '../../../tests/fixtures/service.js';
-import { readModelTargetsConfig } from './generation-config.js';
+import {
+  readModelTargetsConfig,
+  resolveHigherDecisionGenerationConfig,
+  resolveNpcGenerationConfig,
+  hasJudgmentAccess,
+  hasNpcGenerationAccess,
+  configuredDeploymentModel,
+} from './generation-config.js';
 import { readConfig as readApplicationConfig } from './config.js';
 import { describeMacrofoldDeployment, ModelTargetPreparation } from './generation-targets.js';
 import { decisionOrigin, decisionPolicyDigest } from './decision-task.js';
 import { MacrofoldBackend } from './macrofold.js';
 import { WorldService } from './world-service.js';
+import {
+  applyLabModelSettings,
+  labModelChoices,
+  labModelDefaults,
+  resolveLabSettings,
+  validateLabSettings,
+} from './cognition-lab-settings.js';
 
 const workspace = '11111111-1111-4111-8111-111111111111';
 const deployment = '22222222-2222-4222-8222-222222222222';
@@ -65,6 +87,57 @@ describe('configured native and chat model targets', () => {
       OPENLEGEND_MODEL_TARGETS_JSON: raw,
     });
     expect(ordinary.decisionEscalation.origins).toEqual([decisionOrigin(ordinary)]);
+    const settings: CognitionLabSettings = {
+      policy: {
+        mode: 'oneResponse',
+        autonomousActorIds: [],
+        durationSeconds: 60,
+        maximumCalls: 4,
+        activeWallSeconds: 30,
+      },
+      models: labModelDefaults(ordinary),
+      storageAllowanceBytes: 10_000_000,
+      runCaptureAllowanceBytes: 1_000_000,
+    };
+    expect(labModelChoices(ordinary).judgment).toEqual([
+      `deployment:${deployment}`,
+      ...MACROFOLD_DECISION_MODELS,
+    ]);
+    const effective = { ...ordinary };
+    for (const model of MACROFOLD_DECISION_MODELS) {
+      const selected = resolveLabSettings(ordinary, settings, { models: { judgment: model } });
+      applyLabModelSettings(effective, ordinary, selected);
+      expect(decisionOrigin(effective)).toBe(`macrofold/${model}`);
+      expect(effective.modelTargets?.purposes.judgment).toBeUndefined();
+      expect(selected.policy).toEqual(settings.policy);
+    }
+    applyLabModelSettings(effective, ordinary, settings);
+    expect(decisionOrigin(effective)).toBe(`macrofold/deployment:${deployment}`);
+    expect(effective.modelTargets?.purposes.judgment).toEqual(parsed.purposes.judgment);
+    expect(ordinary.modelTargets).toEqual(parsed);
+    expect(settings.models.higherDecision).toBe('gpt-6-luna');
+    const selectedHigher = resolveLabSettings(ordinary, settings, {
+      models: { higherDecision: ordinary.llmModel },
+    });
+    applyLabModelSettings(effective, ordinary, selectedHigher);
+    expect(effective.higherDecisionModel).toBe(ordinary.llmModel);
+    expect(labModelChoices(ordinary).higherDecision).toContain('openai/gpt-5-mini');
+    expect(decisionPolicyDigest(effective)).not.toBe(decisionPolicyDigest(ordinary));
+    const selectedReflection = resolveLabSettings(ordinary, settings, {
+      models: { reflection: ordinary.macrofoldSummaryModel },
+    });
+    applyLabModelSettings(effective, ordinary, selectedReflection);
+    expect(effective.macrofoldModel).toBe(ordinary.macrofoldSummaryModel);
+    expect(validateLabSettings(ordinary, settings)).toEqual(settings);
+    for (const purpose of Object.keys(settings.models)) {
+      const models = { ...settings.models };
+      delete models[purpose];
+      expect(() => validateLabSettings(ordinary, { ...settings, models })).toThrow(
+        'Retain every configured model purpose.',
+      );
+    }
+    const direct = readConfig({ JEV_MODEL: 'jev-1.13.0' });
+    expect(labModelChoices(direct).judgment).toEqual(['jev-1.13.0']);
     const digest = decisionPolicyDigest(ordinary);
     ordinary.modelTargets = readModelTargetsConfig(
       targets({
@@ -73,6 +146,64 @@ describe('configured native and chat model targets', () => {
       }),
     );
     expect(decisionPolicyDigest(ordinary)).not.toBe(digest);
+    const modelOnly = readConfig({
+      DECISION_ESCALATION_JSON: undefined,
+      MACROFOLD_MODEL_API_KEY: 'model-fixture',
+      OPENLEGEND_MODEL_TARGETS_JSON: JSON.stringify({
+        schema_version: 1,
+        workspace_id: workspace,
+        purposes: {
+          judgment: { model_binding: { deployment_id: deployment } },
+          npc_response_complex: {
+            model_binding: { deployment_id: deployment },
+            max_output_tokens: 1024,
+            chat_template_kwargs: { enable_thinking: false },
+          },
+        },
+      }),
+    });
+    expect(modelOnly.macrofoldKey).toBe('');
+    expect(modelOnly.macrofoldModelKey).toBe('model-fixture');
+    expect(hasJudgmentAccess(modelOnly)).toBe(true);
+    expect(modelOnly.decisionEscalation.origins).toEqual([decisionOrigin(modelOnly)]);
+    expect(hasNpcGenerationAccess(modelOnly, 'npc_response_complex')).toBe(true);
+    expect(hasNpcGenerationAccess(modelOnly, 'npc_response_fast')).toBe(false);
+    expect(modelOnly.higherDecisionModel).toBe(`deployment:${deployment}`);
+    const selected = resolveHigherDecisionGenerationConfig(modelOnly, { maxOutputTokens: 8192 });
+    expect(selected).toMatchObject({
+      transport: 'macrofold',
+      maxOutputTokens: 1024,
+      macrofoldDeployment: { chatTemplateKwargs: { enable_thinking: false } },
+    });
+    expect(Object.isFrozen(selected.macrofoldDeployment?.chatTemplateKwargs)).toBe(true);
+    expect(
+      resolveHigherDecisionGenerationConfig(
+        { ...modelOnly, modelTargets: undefined },
+        { maxOutputTokens: 8192 },
+      ),
+    ).toEqual(selected);
+    expect(configuredDeploymentModel(modelOnly, `deployment:${deployment}`)).toBe(true);
+    expect(configuredDeploymentModel(modelOnly, `deployment:${workspace}`)).toBe(false);
+    expect(
+      resolveHigherDecisionGenerationConfig(
+        { ...modelOnly, higherDecisionModel: 'gpt-6-luna' },
+        { maxOutputTokens: 8192 },
+      ),
+    ).toMatchObject({ transport: 'openai', model: 'gpt-6-luna' });
+    expect(
+      resolveNpcGenerationConfig(modelOnly, 'npc_response_complex').macrofoldDeployment,
+    ).toEqual(selected.macrofoldDeployment);
+    expect(readConfig({ MACROFOLD_API_KEY: 'broad-fixture' }).macrofoldModelKey).toBe(
+      'broad-fixture',
+    );
+    expect(() =>
+      readModelTargetsConfig(
+        targets({
+          model_binding: target.modelBinding,
+          chat_template_kwargs: { enable_thinking: false },
+        }),
+      ),
+    ).toThrow();
   });
 
   it('rejects chat output policy on a native target and refuses invalid supplied configuration', () => {
@@ -235,7 +366,8 @@ describe('native decisions through the actual server adapter and durable journal
     async (recovery) => {
       const config = readConfig({
         AI_BUDGET_USD: '1',
-        MACROFOLD_API_KEY: 'fixture',
+        MACROFOLD_API_KEY: 'backend-fixture',
+        MACROFOLD_MODEL_API_KEY: 'model-fixture',
         MACROFOLD_BASE_URL: 'https://macrofold.fixture.invalid',
         OPENLEGEND_MODEL_TARGETS_JSON: targets({
           model_binding: { deployment_id: deployment, deployment_revision_id: revision },
@@ -294,6 +426,7 @@ describe('native decisions through the actual server adapter and durable journal
         'fetch',
         vi.fn(async (url: string, init: RequestInit) => {
           const path = new URL(url).pathname;
+          expect(new Headers(init.headers).get('authorization')).toBe('Bearer model-fixture');
           paths.push(path);
           if (path === `/v1/model-deployments/${deployment}`) {
             if (!serviceAvailable)
@@ -358,7 +491,7 @@ describe('native decisions through the actual server adapter and durable journal
           workspace_id: workspace,
           model_binding: { deployment_id: deployment, deployment_revision_id: revision },
           input: { state: request.state, questions },
-          limits: { max_cost_micro_usd: '0', max_output_tokens: 512, timeout_seconds: 35 },
+          limits: { max_cost_micro_usd: '0', max_output_tokens: 512, timeout_seconds: 30 },
           stream: false,
         });
         serviceAvailable = false;
@@ -552,3 +685,134 @@ describe('native decisions through the actual server adapter and durable journal
     }
   });
 });
+
+const chatSchemaCapabilities = {
+  ...nativeCapabilities,
+  protocol: 'openai_chat' as const,
+  chat_completions: true,
+  json_object: true,
+  json_schema: true,
+  schema_dialect: 'https://json-schema.org/draft/2020-12/schema',
+  schema_keywords: [
+    'type',
+    'properties',
+    'required',
+    'additionalProperties',
+    'items',
+    'enum',
+    'const',
+    'anyOf',
+    'minimum',
+    'maximum',
+    'minItems',
+    'maxItems',
+    'minLength',
+    'maxLength',
+    'pattern',
+    'description',
+  ],
+};
+function prepareChatSchema(
+  schema: Record<string, unknown>,
+  keywords = chatSchemaCapabilities.schema_keywords,
+) {
+  const preparation = new ModelTargetPreparation(async () => ({
+    deploymentId: deployment,
+    revisionId: revision,
+    capabilities: { ...chatSchemaCapabilities, schema_keywords: keywords },
+  }));
+  const owner = createNetworkOwner({ role: 'portable-schema-fixture', capacity: 1 });
+  return owner.run({ timeoutMs: 1000 }, (operation) =>
+    preparation.prepare({
+      target,
+      schema,
+      outputPolicy: 'json_schema',
+      maxOutputTokens: 1024,
+      operation,
+    }),
+  );
+}
+it('preserves the complete current response constraints across compatible serving dialects', async () => {
+  const schema = z.toJSONSchema(
+    boundResponseSchema(['person'], ['a0'], {
+      speech: true,
+      expressions: ['smile'],
+    }),
+    { target: 'draft-7' },
+  );
+  const selected = await prepareChatSchema(schema);
+  expect(selected.macrofoldOutputMode).toBe('json_schema');
+  expect(selected.schema).not.toHaveProperty('$schema');
+  expect(schema.$schema).toBe('http://json-schema.org/draft-07/schema#');
+  const { $schema: _dialect, ...unchanged } = schema;
+  expect(selected.schema).toEqual(unchanged);
+  await expect(
+    prepareChatSchema(
+      schema,
+      chatSchemaCapabilities.schema_keywords.filter((keyword) => keyword !== 'description'),
+    ),
+  ).rejects.toMatchObject({ code: 'unsupported_model_capability' });
+  const original = compileSchema(schema),
+    projected = compileSchema(selected.schema);
+  const speech = {
+    operations: [
+      {
+        localId: 'reply',
+        requiresAccepted: [],
+        talk: {
+          text: 'Hello.',
+          addresseeEntityId: 'person',
+          selfIntroduction: null,
+          volume: 'normal',
+        },
+      },
+    ],
+  };
+  for (const [value, valid] of [
+    [{ operations: [] }, true],
+    [speech, true],
+    [{ operations: [{ ...speech.operations[0], extra: true }] }, false],
+    [
+      {
+        operations: [
+          {
+            ...speech.operations[0],
+            talk: { ...speech.operations[0]!.talk, addresseeEntityId: 'unpermitted' },
+          },
+        ],
+      },
+      false,
+    ],
+  ] as const) {
+    expect(original(value)).toBe(valid);
+    expect(projected(value)).toBe(valid);
+  }
+});
+it.each([
+  {
+    type: 'object',
+    properties: { values: { type: 'array', items: [{ type: 'string' }] } },
+    required: ['values'],
+    additionalProperties: false,
+  },
+  {
+    type: 'object',
+    properties: {},
+    required: [],
+    additionalProperties: false,
+    dependencies: { missing: ['other'] },
+  },
+  {
+    type: 'object',
+    properties: { value: { $schema: 'http://json-schema.org/draft-07/schema#', type: 'string' } },
+    required: ['value'],
+    additionalProperties: false,
+  },
+])(
+  'refuses dialect projection when semantics need more than the portable subset',
+  async (shape) => {
+    await expect(
+      prepareChatSchema({ $schema: 'http://json-schema.org/draft-07/schema#', ...shape }),
+    ).rejects.toMatchObject({ code: 'unsupported_model_capability' });
+  },
+);

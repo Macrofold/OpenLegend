@@ -379,7 +379,6 @@ export function commitCognition(
             {
               localId: 'choice',
               requiresAccepted: [],
-              talk: null,
               act: {
                 kind: 'known',
                 actionId: proposal.actionId,
@@ -388,9 +387,6 @@ export function commitCognition(
                 targetEntityId: null,
                 description: null,
               },
-              think: null,
-              goal: null,
-              plan: null,
             },
           ],
         },

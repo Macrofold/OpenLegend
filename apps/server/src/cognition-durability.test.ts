@@ -1,4 +1,10 @@
-import { entityValues } from '@open-legend/domain';
+import {
+  entityValues,
+  entityGet,
+  PLAYER_ID,
+  setSpatialPosition,
+  worldSupport,
+} from '@open-legend/domain';
 import { randomUUID } from 'node:crypto';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -133,6 +139,49 @@ async function setup(config: NodeJS.ProcessEnv = {}) {
 }
 
 describe('durable character decision admission', () => {
+  it('admits actual felt contact before offering idle maintenance', async () => {
+    const h = await setup();
+    await editWorld(h.service, (world) => {
+      for (const [id, z] of [
+        [PLAYER_ID, 13],
+        [NPC_ID, 14],
+      ] as const) {
+        const person = entityGet(world.entities, id)!;
+        setSpatialPosition(world, person, { x: 12, y: 0, z }, worldSupport(person));
+      }
+    });
+    const receipt = await h.service.command(randomUUID(), {
+      type: 'express',
+      verb: 'tickle',
+      targetId: NPC_ID,
+    });
+    expect(receipt).toMatchObject({ ok: true, code: 'contacted' });
+    const acquired = h.service.world.experience?.awareness[NPC_ID]?.find(
+      (entry) => entry.eventType === 'expression' && entry.modality === 'felt',
+    );
+    expect(acquired?.triggerKind).toBe('directed_action');
+    const started = barrier(),
+      released = barrier();
+    h.respond(async (request) => {
+      started.resolve();
+      await released.promise;
+      return nativeDecision(request);
+    });
+    const maintenance = vi.spyOn(h.director['maintenance'], 'tick');
+    try {
+      await h.director.considerThought();
+      await started.promise;
+      expect(maintenance).not.toHaveBeenCalled();
+      expect(JSON.stringify(h.calls[0]!.state)).toContain('tickles');
+      expect(JSON.stringify(h.calls[0]!.state)).not.toContain(
+        'Safe idle time to reconsider remembered experience',
+      );
+    } finally {
+      released.resolve();
+    }
+    await h.director.idle();
+  });
+
   it('skips automatic model preparation with zero allowance without consuming experience', async () => {
     const h = await setup({ AI_BUDGET_USD: '0' });
     const experience = h.service.world.experience;

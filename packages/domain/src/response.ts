@@ -8,10 +8,9 @@ import { reconcileCompacts } from './social-compacts.js';
 import { entityGet, entityHas, entityOwn } from './entity-collection.js';
 import { changeAppraisal, type AppraisalChange, type AppraisalBindings } from './appraisals.js';
 import { accessiblePossession } from './object-access.js';
-import { subjectNarration, presentVerb, person } from './narration.js';
+import { subjectNarration, person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
-import { worldPosition } from './spatial-state.js';
-import { BASE_EXPRESSION_VERBS } from './worlds/base/actions.js';
+import { commitExpression } from './expressions.js';
 import { installedActionMeaning } from './activity-hosts.js';
 import { activelyParticipates } from './participation-state.js';
 import {
@@ -41,7 +40,7 @@ import {
 } from './action-capabilities.js';
 import { discardSuspended, proposeActionRevision } from './agency.js';
 import { isSpeechVolume, type SpeechVolume } from './acoustics.js';
-import { hasMemory, supportsManualWork } from './living.js';
+import { hasMemory } from './living.js';
 import {
   resolveAttempt,
   deferAttempt,
@@ -55,40 +54,39 @@ import {
 import { getOwn, isSafeRecordId } from './records.js';
 import { current, isDraft } from 'immer';
 import { appendSnapshot, appendedEventCount, cloneValue, draftWorld } from './draft.js';
-import { executeCommand, prepareNativeChoice, SIMULATION_RULES } from './kernel.js';
+import { executeCommand, prepareNativeChoice } from './kernel.js';
 import { appendMemory, canonicalJson, contentLabel, emit, finish, outcome } from './events.js';
 import { seesEntity } from './perception.js';
-import { distance, hasLineOfSight } from './spatial.js';
 import type { Command, Outcome, Transition, WorldState } from './types.js';
 import type { ActivityNode, ActivityPredicate } from './action-experience.js';
 import { reconcileOutings } from './outings.js';
 
 export interface ResponseOperation {
-  appraise?: AppraisalChange | null;
-  note?: KnowledgeEdit | null;
-  name?: GivenNameEdit | null;
+  appraise?: AppraisalChange;
+  note?: KnowledgeEdit;
+  name?: GivenNameEdit;
   localId: string;
   requiresAccepted: string[];
-  talk: {
+  talk?: {
     text: string;
     addresseeEntityId: string | null;
     volume: SpeechVolume;
     selfIntroduction?: string | null;
-  } | null;
-  act: {
+  };
+  act?: {
     kind: 'known' | 'expression' | 'proposal' | 'invoke';
     invocation?: ActionInvocation | null;
     /** Proposal-only exact references; see unmetSlots for the admission check. */
     slots?: IntentSlots | null;
     actionId: string | null;
-    verb: 'nod' | 'smile' | 'frown' | 'wave' | 'shrug' | 'shake_head' | 'slap' | null;
+    verb: string | null;
     targetEntityId: string | null;
     description: string | null;
     mode: 'enqueue' | 'replace' | 'interrupt';
-  } | null;
-  think: { text: string; aboutEntityIds: string[] } | null;
-  goal: GoalChange | null;
-  plan: {
+  };
+  think?: { text: string; aboutEntityIds: string[] };
+  goal?: GoalChange;
+  plan?: {
     mode: 'enqueue' | 'replace' | 'interrupt' | 'cancel';
     expectedRevision: number;
     goalId: string | null;
@@ -97,7 +95,7 @@ export interface ResponseOperation {
       itemFromStep: number | null;
       useItemAs: 'equip' | 'eat' | null;
     }[];
-  } | null;
+  };
 }
 export interface ActorResponse {
   operations: ResponseOperation[];
@@ -140,7 +138,7 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
     if (
       !op ||
       Object.keys(op).some((key) => !['localId', 'requiresAccepted', ...fields].includes(key)) ||
-      Object.keys(op).length < 7 ||
+      Object.keys(op).length !== 3 ||
       !/^[a-z][a-z0-9_]{0,23}$/.test(op.localId) ||
       !isSafeRecordId(op.localId) ||
       ids.has(op.localId) ||
@@ -150,8 +148,7 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
       op.requiresAccepted.some((id) => !ids.has(id)) ||
       fields.some(
         (field) =>
-          (!['note', 'name', 'appraise'].includes(field) && !(field in op)) ||
-          (op[field] != null && (typeof op[field] !== 'object' || Array.isArray(op[field]))),
+          field in op && (!op[field] || typeof op[field] !== 'object' || Array.isArray(op[field])),
       ) ||
       fields.filter((field) => op[field] != null).length !== 1
     )
@@ -726,11 +723,16 @@ export function commitActorResponse(
         selected = choice.invocation;
       if (
         !choiceWorkCurrent(world, actorId, choice) ||
-        (choice.transition !== 'continue' && act.mode !== choice.transition) ||
         (act.mode !== 'enqueue' &&
           entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan)
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
+      else if (choice.transition !== 'continue' && act.mode !== choice.transition)
+        components[localId] = outcome(
+          false,
+          'action-mode',
+          'The chosen action handles current work differently from the offered choice.',
+        );
       else if (selected && choice.transition === 'continue' && isActivityCommand(selected)) {
         const prepared = prepareNativeChoice(
           world,
@@ -807,69 +809,10 @@ export function commitActorResponse(
             : 'Existing behavior continues.',
         );
     } else if (act?.kind === 'expression') {
-      const source = entityGet(world.entities, actorId)!;
-      const target = act.targetEntityId ? entityGet(world.entities, act.targetEntityId) : undefined;
-      const invalidTarget =
-        !!act.targetEntityId &&
-        (!permitted.has(act.targetEntityId) || !entityHas(world.entities, act.targetEntityId));
-      const reachable =
-        act.verb !== 'slap' ||
-        (!!target &&
-          !invalidTarget &&
-          activelyParticipates(target) &&
-          target.id !== actorId &&
-          distance(worldPosition(source), worldPosition(target)) <=
-            SIMULATION_RULES.interactionRadius &&
-          hasLineOfSight(world, worldPosition(source), worldPosition(target)));
-      if (
-        !supportsManualWork(source) ||
-        !act.verb ||
-        !Object.hasOwn(BASE_EXPRESSION_VERBS, act.verb) ||
-        invalidTarget ||
-        !reachable ||
-        (target &&
-          (!seesEntity(world, source, target) ||
-            !hasLineOfSight(world, worldPosition(source), worldPosition(target)) ||
-            (target.actor && !target.actor.alive)))
-      )
-        components[localId] = outcome(
-          false,
-          supportsManualWork(source) ? 'invalid-expression' : 'unsupported-body',
-          supportsManualWork(source)
-            ? 'The expression target is unavailable or out of reach.'
-            : 'This gesture requires a supported biped body.',
-        );
-      else {
-        emit(
-          world,
-          events,
-          'expression',
-          subjectNarration(source, [
-            presentVerb(source, BASE_EXPRESSION_VERBS[act.verb!]),
-            ...(act.verb === 'shake_head' ? [' ', person(source, 'possessive'), ' head'] : []),
-            ...(target
-              ? [
-                  act.verb === 'slap' ? ' ' : ' toward ',
-                  person(target, target.id === source.id ? 'reflexive' : 'object'),
-                ]
-              : []),
-            '.',
-          ]),
-          source,
-          target?.id,
-          {
-            mechanical: false,
-            responseId: id,
-            semanticTrigger: true,
-            ...(target ? { targetReference: true } : {}),
-          },
-        );
-        components[localId] = outcome(
-          true,
-          'expressed',
-          'Expression accepted without mechanical effects.',
-        );
-      }
+      components[localId] =
+        !act.verb || (act.targetEntityId && !permitted.has(act.targetEntityId))
+          ? outcome(false, 'invalid-expression', 'The expression target is unavailable.')
+          : commitExpression(world, events, actorId, act.verb, act.targetEntityId ?? undefined, id);
     } else if (act?.kind === 'proposal') {
       // Server-scoped interpretation chooses existing commands, never effects. Admission
       // remains native and a composition queues sequential work rather than executing it here.

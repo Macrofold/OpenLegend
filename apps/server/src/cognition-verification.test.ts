@@ -170,19 +170,12 @@ function talk(context: string, text: string) {
       {
         localId: 'reply',
         requiresAccepted: [],
-        note: null,
-        name: null,
-        appraise: null,
         talk: {
           text,
           addresseeEntityId: speaker(context),
           selfIntroduction: null,
           volume: 'normal',
         },
-        act: null,
-        goal: null,
-        plan: null,
-        think: null,
       },
     ],
   };
@@ -365,7 +358,7 @@ async function harness(
   const log = (director as unknown as { log: IntelligenceLog }).log;
   cleanup.push(async () => {
     await director.close();
-    execution.close();
+    await execution.close();
     await store.close();
   });
   const reflectionKey = `reflection-queue:${service.world.id}:${NPC_ID}`;
@@ -380,9 +373,9 @@ async function harness(
     reflectionRow: `reflection-queued:${service.world.id}:${NPC_ID}`,
     npcResponses: () => calls.generations.filter((request) => request.task === 'npc_response'),
     async confirmCompletion(requestId: string, provider: 'jev' | 'openai') {
-      // Independent outcome specimens can proceed only after the simulated provider
-      // confirms the preceding unknown execution ended. Unpriced cost remains accounted for.
-      expect(await execution.primaryAvailable()).toBe(false);
+      // Definitive completion frees this exact occupied position; an independent
+      // request could borrow background capacity while its unpriced cost remains held.
+      expect(execution.snapshot().primary).toBe('unknown');
       await store.settle(requestId, receipt(requestId, provider, { estimatedCostUsd: undefined }));
       await execution.reconcile(store);
       expect(await execution.primaryAvailable()).toBe(true);

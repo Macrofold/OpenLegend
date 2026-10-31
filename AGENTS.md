@@ -20,7 +20,7 @@ Report the exact repository/remote, ref and commit for base selection or reconci
 
 Notify Mike immediately and again in the final handoff for **every** worktree/checkout creation or switch and branch creation, checkout or rename, including an unchecked-out new branch or a worktree switch retaining its branch. Name absolute paths and branches; identify detached HEAD by commit. Show branch changes as `previous branch → new branch` and checkout changes as `previous path → new path`. Identify which checkout receives edits and whether the main checkout is affected. Worktrees share Git history and branch references.
 
-For Jev-related reports, including progress, follow [Jev cost reporting](.agents/rules/verification.md#jev-cost-reporting) for scoped/cumulative cost, precision and uncertainty.
+When reporting costs, follow [Cost reporting](.agents/rules/verification.md#cost-reporting). Jev-related reports, including progress, also follow [Jev cost reporting](.agents/rules/verification.md#jev-cost-reporting).
 
 ## Plan before implementation
 

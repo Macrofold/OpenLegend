@@ -26,6 +26,14 @@ import {
 import { lunaPrices, outputTokens, type BenchmarkArm } from './arms.js';
 import type { BenchmarkManifest } from './journal.js';
 import { sha256 } from './corpus.js';
+import { modelDeploymentApiKey } from '../../apps/server/src/generation-config.js';
+
+/** Deployment grants use the model-only key; catalogue arms retain backend access. */
+export function benchmarkMacrofoldKey(arm: BenchmarkArm): string {
+  return arm.macrofoldDeployment
+    ? modelDeploymentApiKey()
+    : (process.env['MACROFOLD_API_KEY'] ?? '');
+}
 
 export interface PreparedTask {
   id: string;
@@ -60,7 +68,7 @@ export type PreparedDeploymentArm = {
 };
 /** Passive online preparation is explicit and uses the production capability owner. */
 export function benchmarkDeploymentPreparation(manifest: BenchmarkManifest) {
-  const api = new MacrofoldTransport(manifest.baseUrl, process.env['MACROFOLD_API_KEY'] ?? '');
+  const api = new MacrofoldTransport(manifest.baseUrl, modelDeploymentApiKey());
   const preparation = new ModelTargetPreparation((target, operation) =>
     describeMacrofoldDeployment(api, target, operation),
   );
@@ -150,7 +158,7 @@ export async function executeArm(
   const input = preparedArmInput(arm, task);
   const macrofold = {
     baseUrl: manifest.baseUrl,
-    apiKey: process.env['MACROFOLD_API_KEY'] ?? '',
+    apiKey: benchmarkMacrofoldKey(arm),
     model: arm.model,
     billingMode: arm.billingMode ?? manifest.billingMode,
     providerConnectionId: arm.providerConnectionId ?? manifest.providerConnectionId,

@@ -107,8 +107,7 @@ import {
   inventoryFor,
   quantityOf,
   canRecoverAtCamp,
-  GOD_SPAWN_OPTIONS,
-  TRAIT_BANK,
+  godAuthoringCatalogue,
   type WorldEvent,
   type WorldState,
 } from '@open-legend/domain';
@@ -809,7 +808,7 @@ export async function projectView(
                 ? ((entity.remains?.phase === 'rotting'
                     ? bodyPolicy(world)?.remains?.rottingLabel
                     : bodyPolicy(world)?.remains?.freshLabel) ?? '')
-                : (observedCombatActivity(world, player, entity) ??
+                : (observedCombatActivity(world, player, entity)?.text ??
                   (effects.length
                     ? effects.map((d) => d.label).join(', ')
                     : entity.actor.action
@@ -1227,8 +1226,10 @@ export async function projectView(
       ? {
           godTools: {
             familyLabel: BASE_FAMILY_POLICY.title,
-            traits: TRAIT_BANK.map((trait) => ({ ...trait })),
-            spawnOptions: GOD_SPAWN_OPTIONS.map((option) => ({ ...option })),
+            traits: godAuthoringCatalogue(world).traits.map((trait) => ({ ...trait })),
+            spawnOptions: godAuthoringCatalogue(world).spawnOptions.map((option) => ({
+              ...option,
+            })),
             itemOptions: memo('god-items', [world.itemDefinitions], () =>
               Object.values(world.itemDefinitions)
                 .map((definition) => ({

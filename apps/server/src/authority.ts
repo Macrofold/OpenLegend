@@ -865,6 +865,45 @@ export class AuthorityRepository {
       return id;
     });
   }
+  async accountIdentity(accountId: string): Promise<VerifiedIdentity> {
+    const row = await this.db
+      .prepare('SELECT issuer,subject FROM auth_accounts WHERE id=?')
+      .get(accountId);
+    if (!row) throw new AuthorityError('session');
+    return { issuer: String(row['issuer']), subject: String(row['subject']) };
+  }
+  /** A host-authenticated session can address a separately stored lab through the
+   * same principal. Callers retain the live host fence; this creates no browser login.
+   * docs/projects/cognition-lab-tech-design.md#23-runtime-and-tab-scope
+   */
+  async admitHostSession(
+    worldId: string,
+    session: LoginSession,
+    identity: VerifiedIdentity,
+    binding: AccountBinding,
+    now: number,
+  ): Promise<void> {
+    if (session.accountId !== binding.accountId || session.expiresAt <= now)
+      throw new AuthorityError('session');
+    await this.db.transaction(async () => {
+      await this.account(identity, session.accountId);
+      await this.provision(worldId, binding);
+      const current = this.sessions.get(session.id);
+      if (current?.revision === session.revision && current.expiresAt === session.expiresAt) return;
+      await this.db
+        .prepare(
+          'INSERT INTO auth_sessions VALUES (?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET account_id=excluded.account_id,revision=excluded.revision,expires_at=excluded.expires_at',
+        )
+        .run(
+          session.id,
+          hash(`host:${session.id}`),
+          session.accountId,
+          session.revision,
+          session.expiresAt,
+        );
+      this.changed(() => this.sessions.set(session.id, { ...session }));
+    });
+  }
   async provision(worldId: string, binding: AccountBinding): Promise<void> {
     await this.db.transaction(async () => {
       await this.account(binding, binding.accountId);

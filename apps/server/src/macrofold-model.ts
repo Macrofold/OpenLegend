@@ -4,9 +4,12 @@ export const DEFAULT_MACROFOLD_MODEL = 'meta/muse-spark-1.3-contributor';
 
 /** OpenRouter wire parameters. Macrofold must forward these without dropping or
  * downgrading unsupported options, including on continued harness sessions. */
-export function macrofoldModelParameters(execution?: GenerateRequest['execution']) {
+export function macrofoldModelParameters(
+  execution?: GenerateRequest['execution'],
+  effort?: GenerateRequest['reasoningEffort'],
+) {
   return {
-    reasoning: { effort: execution === 'full' ? ('xhigh' as const) : ('low' as const) },
+    reasoning: { effort: effort ?? (execution === 'full' ? ('xhigh' as const) : ('low' as const)) },
     provider: { require_parameters: true },
   };
 }
