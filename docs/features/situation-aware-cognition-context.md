@@ -1,8 +1,8 @@
 # Situation-aware cognition context: feature specification
 
-| Status      | Current progress                                                                                                                                       | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Core delivery remains qualified within its recorded scope; request-audit refinements are designed, with implementation and behavioral comparison open. | 2026-10-31   |
+| Status      | Current progress                                                                                                                    | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Core delivery retains its qualified scope; the refinement baseline is captured, with implementation and behavioral comparison open. | 2026-10-31   |
 
 ## 1. Purpose and intended experience
 

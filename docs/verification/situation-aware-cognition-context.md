@@ -6,6 +6,41 @@ October 28–29, 2026 (UTC). Core implementation checkpoint `7030c67d5` in `Macr
 
 This qualifies construction and admission through current consumers. It does not establish reliable personality, universal recall, hallucination-free prose, human enjoyment, public speech streaming or optional SC12 refinements. Runtime defaults, relevance thresholds and financial limits remain unchanged. All native/fixture checks use disposable PostgreSQL worlds and zero provider budget.
 
+## October 31 — Shared preparation baseline
+
+Captured October 31, 2026, 19:47–19:55 UTC, from `Macrofold/OpenLegend`, `codex/cognition-lab`, `9c7f9aebe98c006af1292e1f274f1374681b343f`. This is technical §17 step 1's shared preparation checkpoint. Runtime code, defaults and world rules are unchanged. The [starting interfaces and parallel responsibilities](../technical/situation-aware-cognition-context.md#171-shared-preparation-and-parallel-ownership) distinguish this completed preparation from SC01–SC04 implementation and combined SC09 acceptance.
+
+Eight native walkthroughs use the real `WorldService`, PostgreSQL repositories, `AiDirector`, recall and maintenance owners, with existing Lab observers and controlled callbacks. Setup uses the existing `stockedCamp` fixture, one NPC, the fixture's 14-metre sight configuration and two berries. The history specimens contain one year-old authored episode and twelve intervening routine episodes; other specimens use four episodes or no added history. These are authored test histories, not a simulated year. External transport is denied, credentials are noncredential fixture values, embeddings are disabled, and all databases are owned/disposable. A nominal $10 isolated fixture allowance permits ordinary admission arithmetic; it is not live spending permission. The outer process uses `AI_BUDGET_USD=0`; **actual additional and cumulative spend for this checkpoint is $0, including Jev $0**. No provider, Macrofold Worker or hosting capacity was invoked.
+
+There are **17 SDK/backend request captures and two earlier recall-attention callback captures**. Every field of all 17 matching Lab prepared inputs agrees with the submitted request; trusted SDK identity/deadline fields remain separate. Original inputs, controlled values, schema, source/index/revision diagnostics, stage identities, job outcomes, work counters, source digests and cleanup outcomes are retained privately. The two callback captures explicitly precede SDK identity assignment.
+
+| Current stage                                       |   Input bytes | Separate schema bytes |
+| --------------------------------------------------- | ------------: | --------------------: |
+| Recall attention callback, two matching reads       |   15,160 each |                     — |
+| Ordinary routing/reflection question set            |        70,347 |                     — |
+| Native-only routing and independent action ratings  |       154,339 |                     — |
+| Action consideration                                |        96,922 |                     — |
+| Selected activity parameters, three rounds          | 22,839–23,114 |                     — |
+| Supplied relevance/appraisal                        |        83,759 |                     — |
+| Supplied native choice and optional-voice selection |       127,220 |                     — |
+| Ordinary response generation                        |        84,767 |                26,741 |
+| Higher closed choice                                |        41,318 |                 1,351 |
+| Higher response generation                          |        86,181 |                25,793 |
+| Separate talk-only continuation                     |        35,603 |                 1,514 |
+| Reflection attention                                |        15,155 |                     — |
+| Reflection generation                               |        75,008 |                 3,362 |
+| Memory consolidation                                |         4,075 |                   428 |
+
+Judgment input measures compact UTF-8 `{state, questions}`, including that wrapper. Generation input means instructions plus context; its schema is separately counted. These are actual application fields, not recovered provider wire bytes, provider tokens or measured charges. The supplied and higher-choice paths have different native stage wrappers and question sets; do not apply a generation-context byte limit to the judgment totals. The captured ordinary final-request record agrees exactly with its generation's 4,467 instruction, 80,300 context and 26,741 schema bytes. Its preparation includes a 36,622-byte activity-request section before routing, a concrete baseline for question-first preparation.
+
+The separate 13-memory preparation runs the actual `prepareDecision` and final source validation once cold and once warm: wall 167.91 / 58.79 ms, CPU 162.58 / 52.48 ms. Both retain the same 57,647-byte prompt, 140 units, 126 required roots and 13 source keys; every required root and dependency is present. The existing work meter reports the same 420 candidates, 571 tests, 84,385 input bytes and 57,318 output bytes. Those counters describe charged preparation work, not model tokens or complete hidden-work coverage. Setup is excluded; fixture attention and capture overhead are included. Two samples establish a comparison specimen, not a latency SLA, population bound or optimization benefit. Other complete native walkthroughs take 21.82–832.01 ms, including their controlled callbacks and recording; their different workloads are not an isolated preparation comparison.
+
+**Outcomes and limits:** ordinary generation intentionally returns an empty response. Activity selection reaches all three parameter stages, then native admission refuses the offer because the recipient is outside arm's reach; no transfer is claimed. The supplied-response case reaches its independent talk-only continuation. Higher cases retain controlled abstention. Reflection and consolidation stop with explicit unavailable fixture results after capture, retaining original memories. These are request-acquisition outcomes, not model-quality passes. An initially held control and an incomplete maintenance fixture port are excluded setup failures; their original records remain retained. A first unavailable activity choice and a within-eight-memory required-baseline specimen also remain retained, without replacing the valid wider captures.
+
+Ordinary/higher diagnostics expose source keys, revisions, indexes and counts, not their complete native binding objects or dependency graphs. The direct preparation specimen retains those objects; it does not prove every route's final closure. No production producer of an appraisal-only higher group was found; its generic reader remains inventoried rather than manufacturing an admitted job. Narration and intention/fulfillment keep their existing contracts; this checkpoint does not exercise them or authorize new calls. Provider wire accounting, live behavior, reference/closure integration after the refinements and broader character quality remain unqualified. The current plan-reference filter still requires a genuine activity invocation. Automated suites and test authoring remain paused.
+
+Private evidence is at `/Users/mzw/.codex/worktrees/c00b/OpenLegend/.data/cognition-context-baseline-20261031/`: `capture.mts` records the exact fixture setup and existing capture hooks; `accepted-summary.json` indexes the eight accepted JSON captures and their SHA-256 digests. Complete inputs stay out of Git. They are local evidence, not a portable save or required dependency for new worktrees; the captured request shapes, measurements and contracts above remain available in Git. All task-owned directors, controls, maintenance workers and databases closed without cleanup errors; no shared runtime was started or stopped.
+
 ## Sources and privacy
 
 - Native speech and implicit follow-up retrieve an authored year-old account among 400 intervening memories, through both ready-vector and unavailable-index/direct paths. This tests source availability and attribution, not a year of simulated experience or natural model influence.
