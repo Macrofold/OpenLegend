@@ -8,16 +8,23 @@ import { headingFrame } from './follow.js';
 import {
   bindActionInvocation,
   captureActorFrame,
+  bindNativeChoice,
+  createItemLot,
+  inventoryFor,
+  currentInventoryInspection,
   commitActorResponse,
   currentWorkIdentity,
   entityGet,
   executeCommand,
   PLAYER_ID,
+  NPC_ID,
   setSpatialPosition,
   worldPosition,
   worldSupport,
   type ActionInvocation,
   type ActorResponse,
+  type ActionChoice,
+  type Command,
   type WorldState,
 } from './index.js';
 
@@ -58,8 +65,9 @@ const response: ActorResponse = {
     },
   ],
 };
-function walking() {
+function walking(prepare?: (world: WorldState) => void) {
   const world = stockedCamp();
+  prepare?.(world);
   world.paused = false;
   const actor = entityGet(world.entities, PLAYER_ID)!;
   setSpatialPosition(world, actor, { x: 12, y: 0, z: 13 }, worldSupport(actor));
@@ -101,6 +109,164 @@ describe('generated actor-relative movement binding', () => {
     const result = commit(world, captureActorFrame(world, PLAYER_ID));
     expect(components(result.world).voice!.ok).toBe(true);
     expect(components(result.world).step!.ok).toBe(true);
+    for (const operation of ['inspection', 'busy-equipment', 'durative-move'] as const) {
+      const outcomes: Array<{ ok: boolean; code: string }> = [];
+      for (const kind of ['known', 'invoke'] as const) {
+        let tool = '';
+        const native = walking((world) => {
+          const definition = Object.values(world.itemDefinitions).find((entry) => entry.equipment)!;
+          tool = createItemLot(world, PLAYER_ID, definition.id, 1, 'parity-equipment');
+        });
+        const before = currentWorkIdentity(native, PLAYER_ID);
+        const command: Command =
+          operation === 'inspection'
+            ? { type: 'inspect-inventory', actorId: PLAYER_ID, id: 'selected-inspection' }
+            : operation === 'busy-equipment'
+              ? { type: 'equip', actorId: PLAYER_ID, id: 'selected-equipment', itemId: tool }
+              : {
+                  type: 'move',
+                  actorId: PLAYER_ID,
+                  id: 'selected-move',
+                  destination: { x: 19, y: 0, z: 13, surfaceId: 'terrain' },
+                };
+        const invocation: ActionInvocation =
+          operation === 'durative-move'
+            ? { ...relative, frame: 'world', x: 19, z: 13 }
+            : {
+                ...relative,
+                family:
+                  operation === 'inspection' ? 'base:inspect-possessions' : 'base:equip-possession',
+                parameters: operation === 'inspection' ? {} : { itemId: tool },
+                x: null,
+                z: null,
+                frame: null,
+              };
+        const reply = structuredClone(response);
+        reply.operations[1]!.act = {
+          ...reply.operations[1]!.act!,
+          kind,
+          invocation: kind === 'invoke' ? invocation : null,
+          actionId: kind === 'known' ? 'selected' : null,
+        };
+        const actions: Record<string, ActionChoice> =
+          kind === 'known'
+            ? {
+                selected: bindNativeChoice(
+                  native,
+                  PLAYER_ID,
+                  command,
+                  operation === 'durative-move' ? 'enqueue' : 'continue',
+                ),
+              }
+            : {};
+        const refs = [PLAYER_ID, ...inventoryFor(native, PLAYER_ID).map((item) => item.id)];
+        const responseId = `parity-${operation}-${kind}`;
+        const apply = (world: WorldState) =>
+          commitActorResponse(
+            world,
+            responseId,
+            PLAYER_ID,
+            reply,
+            actions,
+            refs,
+            before.generation,
+          );
+        const selected = apply(native);
+        const receipt = selected.world.responseReceipts![responseId]!;
+        expect(receipt.components.voice!.ok).toBe(true);
+        expect(entityGet(selected.world.entities, PLAYER_ID)!.actor!.action?.id).toBe(
+          before.actionId,
+        );
+        if (operation === 'inspection') {
+          expect(receipt.components.step!.ok).toBe(true);
+          expect(currentInventoryInspection(selected.world, PLAYER_ID)).toBeDefined();
+        } else if (operation === 'busy-equipment')
+          expect(receipt.components.step).toMatchObject({ ok: false, code: 'not-equippable' });
+        else {
+          expect(receipt.components.step!.ok).toBe(true);
+          expect(
+            entityGet(selected.world.entities, PLAYER_ID)!.actor!.agency.plan?.steps.length,
+          ).toBe(1);
+        }
+        const replay = apply(selected.world);
+        expect(replay.outcome.code).toBe('duplicate');
+        expect(replay.events).toEqual([]);
+        outcomes.push({ ok: receipt.components.step!.ok, code: receipt.components.step!.code });
+        if (kind === 'known') {
+          const stopped = executeCommand(native, {
+            id: 'stop-before-response',
+            actorId: PLAYER_ID,
+            type: 'cancel',
+          });
+          const stale = apply(stopped.world);
+          expect(stale.world.responseReceipts![responseId]!.components.voice!.ok).toBe(true);
+          expect(stale.world.responseReceipts![responseId]!.components.step).toMatchObject({
+            ok: false,
+            code: 'stale-plan',
+          });
+        }
+      }
+      expect(outcomes[0]).toEqual(outcomes[1]);
+    }
+    // A trusted selection or exact prose binding cannot hide replacement inside
+    // a command when the response explicitly chose to enqueue it.
+    for (const kind of ['known', 'proposal'] as const) {
+      const selected: Command = {
+        type: 'outing',
+        actorId: PLAYER_ID,
+        id: 'mismatched-outing',
+        operation: 'invite',
+        recipientId: NPC_ID,
+        destination: { x: 19, y: 0, z: 13, surfaceId: 'terrain' },
+        mode: 'replace',
+      };
+      const reply = structuredClone(response);
+      reply.operations[1]!.act = {
+        ...reply.operations[1]!.act!,
+        kind,
+        invocation: null,
+        actionId: kind === 'known' ? 'selected' : null,
+        description: kind === 'proposal' ? 'Invite them for a walk.' : null,
+      };
+      const responseId = `mode-agreement-${kind}`;
+      const guarded = commitActorResponse(
+        world,
+        responseId,
+        PLAYER_ID,
+        reply,
+        kind === 'known'
+          ? { selected: bindNativeChoice(world, PLAYER_ID, selected, 'continue') }
+          : {},
+        [PLAYER_ID, NPC_ID],
+        entityGet(world.entities, PLAYER_ID)!.actor!.planGeneration,
+        kind === 'proposal'
+          ? [
+              {
+                operationId: 'step',
+                manifestRevision: world.moduleManifest.revision,
+                targetEpisodes: {},
+                description: 'Invite them for a walk.',
+                commands: [selected],
+                fulfillment: {
+                  requested: 'Invite them for a walk.',
+                  executableDescription: 'Invite them for a walk.',
+                  verdict: 'exact',
+                  supported: ['Invite them for a walk.'],
+                  omitted: [],
+                  reason: 'The native invitation expresses the requested walk.',
+                },
+              },
+            ]
+          : [],
+      );
+      expect(guarded.world.responseReceipts![responseId]!.components).toMatchObject({
+        voice: { ok: true },
+        step: { ok: false, code: 'activity-choices' },
+      });
+      expect(currentWorkIdentity(guarded.world, PLAYER_ID)).toEqual(
+        currentWorkIdentity(world, PLAYER_ID),
+      );
+    }
   });
   it('refuses changed position/facing while the same native work continues, without dropping speech', () => {
     const world = walking();

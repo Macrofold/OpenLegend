@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Higher requests use configured deployments, catalog inference or direct Luna Low; broader release qualification remains open. | 2026-10-26   |
+| In progress | Higher requests use configured deployments, catalog inference or direct Luna Low; broader release qualification remains open. | 2026-10-29   |
 
-Design synchronized **2026-10-26T05:32:00Z**. Existing provider, storage, action and world-boundary architecture used **2026-10-26T05:32:00Z**. [Feature specification](decision-escalation-feature-spec.md).
+Design synchronized **2026-10-29T18:59:00Z**. Existing provider, storage, action and world-boundary architecture used **2026-10-29T18:59:00Z**. [Feature specification](decision-escalation-feature-spec.md).
 
 ## Adoption and current policy
 
@@ -245,7 +245,7 @@ type Answer<Value> =
 type Output = { answers: { q0: Answer<{ choice: 'a0' | 'a1' }> } };
 ```
 
-For strict provider schemas, a fixed object with required `status/value/reason` and nullable value/reason is acceptable; the shared local decoder enforces the two legal combinations above. This follows the existing response schema's avoidance of unsupported nested `oneOf` forms. Missing/null answered values, a reason attached to an answered value, extra questions, unoffered handles or an invalid whole envelope end the attempt as unusable. Do not trim prose around malformed JSON, invent an omitted answer, request a repair, or convert abstention to a zero score. Whole-envelope failure yields zero effects; a valid envelope with some abstentions can resolve its independent answered groups.
+The provider-facing schema uses two strict `anyOf` alternatives for the legal combinations above, including the exact task value schema only in the answered arm. The shared parser enforces the same combinations; nested `oneOf` is unnecessary. Missing/null answered values, a reason attached to an answered value, extra questions, unoffered handles or an invalid whole envelope end the attempt as unusable. Do not trim prose around malformed JSON, invent an omitted answer, request a repair, or convert abstention to a zero score. Whole-envelope failure yields zero effects; a valid envelope with some abstentions can resolve its independent answered groups.
 
 | Question kind       | Exact answered `value`                                                           | Binding/decoding rule                                                                                                                                                                                                                                                                                                         |
 | ------------------- | -------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

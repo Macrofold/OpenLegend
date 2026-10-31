@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import {
@@ -13,6 +14,8 @@ import {
   previewSpeechOperation,
   responseSchema,
   RESPONSE_INSTRUCTIONS,
+  RESPONSE_OPERATION_GUIDE,
+  RESPONSE_PORTRAYAL_GUIDE,
   DECISION_INSTRUCTIONS,
   REFLECTION_INSTRUCTIONS,
   responsePayloads,
@@ -22,7 +25,11 @@ import {
 import { navigationInstructions, nativeActionInvocation } from './navigation-contracts.js';
 import { compileSchema, createAiClient } from '@open-legend/ai';
 import { validActionInvocation, commitActorResponse, entityGet, NPC_ID } from '@open-legend/domain';
-import { compactActivityRequests, readableDecisionContext } from './response-context.js';
+import {
+  compactActivityRequests,
+  judgmentDecisionContext,
+  readableDecisionContext,
+} from './response-context.js';
 import { resolveResponseEntities } from './entity-references.js';
 import { CHARACTER_SERVICE_INSTRUCTIONS } from './character-service-instructions.js';
 
@@ -158,6 +165,13 @@ it('compacts repeated instructions/catalogs without changing complete identity, 
     },
   ];
   const warnings = ['A real prerequisite remains unavailable.'];
+  const planOffers = [
+    {
+      id: 'p0',
+      description: 'A known method needs two units of material at start.',
+      mode: 'enqueue',
+    },
+  ];
   const prompt = readableDecisionContext(
     {
       identity: 'A person',
@@ -166,19 +180,73 @@ it('compacts repeated instructions/catalogs without changing complete identity, 
       experience,
       navigation: navigationInstructions(world, { includeActivityRequests: false }),
       activityRequests: { requests: definitions, choices, warnings },
+      planOffers,
     },
     [],
   );
+  expect(prompt.startsWith('## Task\nDecide what to say or do next as this person')).toBe(true);
+  expect(prompt).toContain('## Context\n');
+  expect(prompt).toContain('## Available activities, optional\n');
+  expect(prompt).toContain('not requests someone else has made or assigned goals');
   expect(prompt).toContain(aboutMe);
   expect(prompt).toContain(JSON.stringify(experience));
   const compact = compactActivityRequests({ requests: definitions, choices, warnings });
   expect(prompt).toContain(JSON.stringify(compact));
+  const judgment = judgmentDecisionContext({
+    aboutMe,
+    experience,
+    activityRequests: { requests: definitions, choices, warnings },
+    knowledgeInstructions: 'Generator-only instructions',
+    navigation: 'Generator-only invocation syntax',
+    planOffers,
+  });
+  expect(judgment).toEqual({
+    aboutMe,
+    experience,
+    activityRequests: compact,
+    planOffers,
+    planningMeaning: expect.stringContaining('not actions guaranteed executable now'),
+  });
+  expect(prompt).toContain(JSON.stringify(planOffers));
+  expect(prompt).toContain('not actions guaranteed executable now');
   expect(
     compact.choices.map(({ group, ...choice }) => ({ ...compact.choiceGroups[group], ...choice })),
   ).toEqual(choices);
-  expect(prompt.split(JSON.stringify(definitions))).toHaveLength(2);
+  const sharedChoice = {
+    ...choices[0]!,
+    requires: { recipientId: 'friend' },
+  };
+  const related: Parameters<typeof compactActivityRequests>[0]['choices'] = [
+    { ...sharedChoice, requestIds: ['first'] },
+    { ...sharedChoice, requestIds: ['second'] },
+    { ...sharedChoice, roles: ['recipientId'], requestIds: ['third'] },
+    { ...sharedChoice, requires: { recipientId: 'stranger' }, requestIds: ['fourth'] },
+    { ...sharedChoice, label: 'Different acquired meaning', requestIds: ['fifth'] },
+    { ...sharedChoice, accessible: false, requestIds: ['sixth'] },
+    sharedChoice,
+  ];
+  const merged = compactActivityRequests({ requests: definitions, choices: related, warnings });
+  const restored = merged.choices.map(({ group, ...choice }) => ({
+    ...merged.choiceGroups[group],
+    ...choice,
+  }));
+  expect(restored).toHaveLength(related.length - 1);
+  expect(restored[0]!.requestIds).toEqual(['first', 'second']);
+  expect(
+    restored.flatMap(({ requestIds, ...choice }) =>
+      requestIds ? requestIds.map((id) => ({ ...choice, requestIds: [id] })) : [choice],
+    ),
+  ).toEqual(related);
+  expect(related[0]!.requestIds).toEqual(['first']);
+  expect(compact.requests).toEqual(definitions.map(({ covers: _covers, ...request }) => request));
+  expect(prompt.split(JSON.stringify(compact.requests))).toHaveLength(2);
+  expect(prompt).not.toContain('"covers":');
   expect(prompt).toContain('descriptive gesture does not perform contact');
   expect(prompt).toContain('Independent speech and action can coexist');
+  expect(prompt).toContain(RESPONSE_OPERATION_GUIDE);
+  expect(prompt.split(RESPONSE_OPERATION_GUIDE)).toHaveLength(2);
+  expect(prompt.split(RESPONSE_PORTRAYAL_GUIDE)).toHaveLength(2);
+  expect(prompt).toContain('give each operation a unique localId');
   expect(prompt).not.toContain('all seven unused fields must be null');
   expect(prompt).not.toContain('## Inventory');
   expect(prompt).not.toContain('## Knowledge');
@@ -193,6 +261,12 @@ describe('sparse nested payloads', () => {
   it('binds installed families to their own fields through schema, resolution and native validation', () => {
     const world = stockedCamp();
     const requests: ActivityRequestDescriptor[] = [
+      {
+        id: 'inspect-empty',
+        label: 'Inspect',
+        description: 'A parameterless capability',
+        fields: {},
+      },
       {
         id: 'take-count',
         label: 'Counted work',
@@ -222,7 +296,50 @@ describe('sparse nested payloads', () => {
       [],
       requests,
     );
-    const validate = compileSchema(z.toJSONSchema(schema, { target: 'draft-7' }));
+    const validate = compileSchema(modelJsonSchema(schema));
+    const growth = [8, 32, 64, 128].map((count) => {
+      const refs = Array.from({ length: count }, (_, i) => `ref-${i}`);
+      const expanded = boundResponseSchema(
+        refs,
+        ['a0'],
+        { speech: true, expressions: [] },
+        [],
+        [],
+        Array.from({ length: 43 }, (_, i) => ({
+          id: `form-${i}`,
+          label: `Form ${i}`,
+          description: 'Supported targeted work',
+          fields: { target: { type: 'entity' as const, label: 'Target', required: true as const } },
+        })),
+      );
+      const compact = modelJsonSchema(expanded);
+      expect(JSON.stringify(compact)).toContain('#/$defs/');
+      const check = compileSchema(compact);
+      const response = {
+        operations: [
+          {
+            localId: 'form',
+            requiresAccepted: [],
+            act: {
+              kind: 'invoke',
+              mode: 'enqueue',
+              invocation: { family: 'form-42', parameters: { target: refs.at(-1) } },
+            },
+          },
+        ],
+      };
+      expect(check(response)).toBe(true);
+      expect(expanded.safeParse(response).success).toBe(true);
+      response.operations[0]!.act.invocation.parameters.target = 'unpermitted';
+      expect(check(response)).toBe(false);
+      return {
+        inline: Buffer.byteLength(JSON.stringify(z.toJSONSchema(expanded, { target: 'draft-7' }))),
+        compact: Buffer.byteLength(JSON.stringify(compact)),
+      };
+    });
+    expect(growth[3]!.compact).toBeLessThan(65_536);
+    expect(growth[3]!.compact).toBeLessThan(growth[3]!.inline);
+    expect(growth[3]!.compact - growth[0]!.compact).toBeLessThan(2000);
     const invoke = (invocation: unknown) => ({
       operations: [
         {
@@ -233,6 +350,7 @@ describe('sparse nested payloads', () => {
       ],
     });
     for (const invocation of [
+      { family: 'inspect-empty', parameters: {} },
       { family: 'take-count', parameters: { amount: 2 } },
       { family: 'take-target', parameters: { target: 'person' } },
       { family: 'move', frame: 'world', x: 0, z: 2, surfaceId: null },
@@ -251,6 +369,7 @@ describe('sparse nested payloads', () => {
       expect(validate(invoke(invocation))).toBe(true);
     }
     for (const invocation of [
+      { family: 'inspect-empty', parameters: { invented: true } },
       { family: 'take-count', parameters: { target: 'person' } },
       { family: 'take-target', parameters: { target: 'unpermitted' } },
       { family: 'take-count', parameters: { amount: 4 } },
@@ -337,7 +456,7 @@ describe('sparse nested payloads', () => {
   });
 
   it('keeps reflection interpretation alternatives sparse without dropping revisions or meaningful null values', () => {
-    const validate = compileSchema(z.toJSONSchema(reflectionSchema, { target: 'draft-7' }));
+    const validate = compileSchema(modelJsonSchema(reflectionSchema));
     const base = {
       thoughts: ['I can trust her a little more.'],
       goalChanges: [],
@@ -371,7 +490,7 @@ describe('sparse nested payloads', () => {
       expressions: [],
       proposals: false,
     });
-    expect(() => compileSchema(z.toJSONSchema(schema, { target: 'draft-7' }))).not.toThrow();
+    expect(() => compileSchema(modelJsonSchema(schema))).not.toThrow();
     expect(schema.safeParse({ operations: [action] }).success).toBe(false);
     expect(
       schema.safeParse({
@@ -400,7 +519,7 @@ it('carries the same sparse contract through the direct provider adapter and nat
       { localId: 'stop', requiresAccepted: [], plan: { mode: 'cancel', expectedRevision: 0 } },
     ],
   };
-  const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7' });
+  const jsonSchema = modelJsonSchema(schema);
   let calls = 0;
   const client = createAiClient({
     openai: { apiKey: 'fixture', reasoningEffort: 'low' },

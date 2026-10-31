@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { selectedExpressions } from '@open-legend/domain';
 import { continuationProof, type ReconstitutedDecision } from './cognition-continuation.js';
 import { stageAllowance, stageSize } from './cognition-stage-budget.js';
@@ -143,7 +144,11 @@ import {
   selectDecisionActions,
   type DecisionInputMeasure,
 } from './decision-context.js';
-import { renderDecisionContext, responseTrigger } from './response-context.js';
+import {
+  judgmentDecisionContext,
+  renderDecisionContext,
+  responseTrigger,
+} from './response-context.js';
 import {
   RESPONSE_INSTRUCTIONS,
   DECISION_INSTRUCTIONS,
@@ -2076,6 +2081,17 @@ export class AiDirector {
     this.current(run);
   }
 
+  private async awaitLabRelease(run: Running): Promise<void> {
+    await this.service.cognitionControl?.waitUntilReleased({
+      rootId: run.job.id,
+      signal: run.controller.signal,
+      current: () => {
+        this.current(run);
+      },
+      holdTiming: () => this.holdDecisionTiming(run),
+    });
+  }
+
   private armDecisionTimers(run: Running): void {
     if (run.immediateTimer) clearTimeout(run.immediateTimer);
     if (run.expiryTimer) clearTimeout(run.expiryTimer);
@@ -2330,7 +2346,9 @@ export class AiDirector {
           );
         run.continuation = undefined;
       }
-      const lease = await this.execution.primary(run.urgent);
+      const lease = prepared
+        ? await this.execution.acquirePrepared(prepared.stage, 'primary', run.urgent)
+        : await this.execution.primary(run.urgent);
       if (!lease)
         throw new StopJob(
           'failed',
@@ -2461,10 +2479,14 @@ export class AiDirector {
           },
           () =>
             prepared && control
-              ? control.dispatch(prepared.stage, () => {
-                  providerStarted = true;
-                  return dispatch(id, providerInput);
-                })
+              ? control.dispatch(
+                  prepared.stage,
+                  () => {
+                    providerStarted = true;
+                    return dispatch(id, providerInput);
+                  },
+                  lease,
+                )
               : dispatch(id, providerInput),
         );
         const accountingStartedAt = new Date().toISOString();
@@ -3010,7 +3032,7 @@ export class AiDirector {
       scope: prepared.manifest.scope,
       context: prepared.prompt,
       instructions,
-      schema: z.toJSONSchema(schema, { target: 'draft-7' }),
+      schema: modelJsonSchema(schema),
       sourceKeys: prepared.manifest.units.map((unit) => unit.key),
       references: prepared.entityReferences,
     });
@@ -3352,7 +3374,13 @@ export class AiDirector {
     interruptionEvidenceIds: string[],
   ): Promise<void> {
     const actorId = this.current(run);
-    if (!(await this.execution.primaryAvailable(run.urgent)))
+    const control = this.service.cognitionControl;
+    let available: boolean;
+    do {
+      if (control) await this.awaitLabRelease(run);
+      available = await this.execution.primaryAvailable(run.urgent);
+    } while (control?.held);
+    if (!available)
       throw new StopJob(
         'failed',
         `${this.execution.primaryCapacityReason(run.urgent) ?? 'Model execution is unavailable.'} This opportunity was deferred without preparing more model input.`,
@@ -3766,7 +3794,11 @@ export class AiDirector {
       }
     }
     const judged =
-      combined?.routing ?? (await judge('route')({ state: prepared.prompt, questions }));
+      combined?.routing ??
+      (await judge('route')({
+        state: { decisionContext: judgmentDecisionContext(prepared.context) },
+        questions,
+      }));
     if (await retryForUrgentAwareness()) return;
     const routeAnswer = judged.answers['route'];
     // Routing spends a bounded allowance; it does not authorize a world effect.
@@ -3871,9 +3903,14 @@ export class AiDirector {
       );
       return;
     }
-    if (route !== 'level1' && (await this.handoff(run, 'semantic-escalation', true))) return;
-    let requestedActivity: Awaited<ReturnType<typeof chooseActivityRequest>>;
     const chosenFamily = requestFamilies.get(route);
+    if (
+      route !== 'level1' &&
+      !chosenFamily &&
+      (await this.handoff(run, 'semantic-escalation', true))
+    )
+      return;
+    let requestedActivity: Awaited<ReturnType<typeof chooseActivityRequest>>;
     if (chosenFamily) {
       await prepared.validateConversation();
       const selectedWorld = this.service.world;
@@ -4169,7 +4206,7 @@ export class AiDirector {
             },
           })
         : undefined;
-    const responseSchema = z.toJSONSchema(schema, { target: 'draft-7' });
+    const responseSchema = modelJsonSchema(schema);
     let value: unknown;
     if (requestedActivity) value = requestedActivity;
     else if (executedRoute === 'level1') {

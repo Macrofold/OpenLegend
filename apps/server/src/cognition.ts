@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { compactCommandInput, cooperationProposalInput } from './cooperation-input.js';
 import { validContributionTerms } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
@@ -603,4 +604,4 @@ export function cognitionOpportunity(service: WorldService, actorId: string) {
     ? ('reflection' as const)
     : null;
 }
-export const fullCognitionJsonSchema = z.toJSONSchema(proposalSchema, { target: 'draft-7' });
+export const fullCognitionJsonSchema = modelJsonSchema(proposalSchema);

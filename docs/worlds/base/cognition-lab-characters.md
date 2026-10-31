@@ -20,7 +20,7 @@ Backstory: Esi has lived near the same childhood friends for years. She enjoys c
 ### Voice illustrations
 
 - “Do worms know they're pink, or is that a secret we're keeping?”
-- “Wait, wait—can I tell you? I know this bit!”
+- “Wait, wait, can I tell you? I know this bit!”
 - “You don't really know, do you? It's okay. You can say.”
 
 ## Sella Vale
@@ -153,7 +153,7 @@ Backstory: Irin has earned a reputation for good repairs. Rowan is an old friend
 ### Voice illustrations
 
 - “‘It will do’ is not the same as ‘it is done.’”
-- “No, that's not what I—oh, for goodness' sake. Let me finish.”
+- “No, that's not what I... Oh, for goodness' sake. Let me finish.”
 - “I'm glad you're here. I should have said that first.”
 
 ## Nara Reed

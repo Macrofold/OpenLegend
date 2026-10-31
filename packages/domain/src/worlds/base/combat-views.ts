@@ -36,6 +36,7 @@ export function evasionChoices(world: WorldState, actor: Entity) {
     const destination = { ...interpolate(from, point, fraction), surfaceId: point.surfaceId };
     return [
       {
+        direction: direction.label,
         label: `${profile.label} ${direction.label}`,
         description: evasionDescription(world, actor, destination),
         destination,

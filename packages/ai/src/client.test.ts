@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   createAiClient,
+  compileSchema,
   estimateCostUsd,
   batchJudgmentQuestions,
   validateJudgmentSize,
@@ -266,7 +267,16 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
     const result = await createAiClient({
       openai: { apiKey: 'fixture', prices, reasoningEffort: 'low' },
       fetch: fetcher,
-    }).generate<{ text: string }>(generation);
+    }).generate<{ text: string }>({
+      ...generation,
+      schema: {
+        type: 'object',
+        properties: { text: { $ref: '#/$defs/allowed~1text~0value' } },
+        required: ['text'],
+        additionalProperties: false,
+        $defs: { 'allowed/text~value': { type: 'string', enum: ['I should find food.'] } },
+      },
+    });
     expect(result.outcome).toBe('value');
     if (result.outcome === 'value') expect(result.value.text).toBe('I should find food.');
     const [url, init] = fetcher.mock.calls[0]!;
@@ -278,7 +288,17 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
       max_output_tokens: 2048,
       reasoning: { effort: 'low' },
       text: {
-        format: { type: 'json_schema', strict: true, name: 'thought', schema: generation.schema },
+        format: {
+          type: 'json_schema',
+          strict: true,
+          name: 'thought',
+          schema: expect.objectContaining({
+            properties: { text: { $ref: '#/$defs/allowed~1text~0value' } },
+            $defs: {
+              'allowed/text~value': { type: 'string', enum: ['I should find food.'] },
+            },
+          }),
+        },
       },
     });
     expect(result.receipt).toMatchObject({
@@ -443,6 +463,44 @@ describe('provider boundary with injected HTTP fixtures (no live calls)', () => 
     expect((await client.generate({ ...generation, maxOutputTokens: 1_000_000 })).outcome).toBe(
       'invalid',
     );
+    const local = {
+      type: 'object',
+      properties: { text: { $ref: '#/$defs/text' } },
+      required: ['text'],
+      additionalProperties: false,
+      $defs: { text: { type: 'string', enum: ['permitted'] } },
+    };
+    const valid = compileSchema(local);
+    expect(valid({ text: 'permitted' })).toBe(true);
+    expect(valid({ text: 'invented' })).toBe(false);
+    for (const ref of [
+      '#',
+      '#/definitions/text',
+      '#/$defs/missing',
+      '#/$defs/text/type',
+      '#/$defs/te%78t',
+      '#/$defs/text~2',
+      'https://example.com/schema',
+    ])
+      expect(() => compileSchema({ ...local, properties: { text: { $ref: ref } } })).toThrow();
+    for (const definitions of [
+      { text: { $ref: '#/$defs/text' } },
+      { text: { $ref: '#/$defs/other' }, other: { $ref: '#/$defs/text' } },
+      {
+        text: {
+          type: 'object',
+          properties: { undeclared: { type: 'string' } },
+          required: [],
+          additionalProperties: false,
+        },
+      },
+      { text: { type: 'string' }, unused: { type: 'object', properties: {}, required: [] } },
+      { text: { $dynamicRef: '#/$defs/text' } },
+      { text: { $ref: '#/$defs/other', minLength: 1 }, other: { type: 'string' } },
+      { text: { $id: 'https://example.com/text', type: 'string' } },
+      { text: { $async: true, type: 'string' } },
+    ])
+      expect(() => compileSchema({ ...local, $defs: definitions })).toThrow();
     expect(fetcher).not.toHaveBeenCalled();
   });
 

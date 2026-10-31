@@ -622,8 +622,6 @@ export class DecisionEscalator {
           : { model: target.model, reasoningEffort: target.reasoningEffort }),
       };
       const control = this.service.cognitionControl;
-      let holdWall = 0,
-        holdMonotonic = 0;
       if (control) lease.release();
       const gate = control
         ? await control.prepare(
@@ -651,17 +649,40 @@ export class DecisionEscalator {
                 const wall = this.now(),
                   monotonic = performance.now();
                 if (timer) clearTimeout(timer);
-                return () => {
-                  if (controller.signal.aborted) return;
-                  holdWall = this.now() - wall;
-                  holdMonotonic = performance.now() - monotonic;
+                return async () => {
+                  if (controller.signal.aborted || providerStarted) return;
+                  const holdWall = this.now() - wall,
+                    holdMonotonic = performance.now() - monotonic;
+                  // Each unpaid hold shifts the native clocks once, including a
+                  // later hold after funding but before actual provider entry.
+                  const shifted = await this.service.store.mutateDecision(
+                    rootId,
+                    async (current) =>
+                      !controller.signal.aborted &&
+                      this.controlCurrent(current) &&
+                      current.decision?.phase !== 'closed' &&
+                      current.decision?.higher &&
+                      ['preparing', 'reserved'].includes(current.decision.higher.state)
+                        ? {
+                            ...current,
+                            decision: shiftUndispatchedDecision(
+                              current.decision,
+                              holdWall,
+                              holdMonotonic,
+                            ),
+                          }
+                        : undefined,
+                  );
+                  if (!shifted?.decision?.higher) throw new Error('The held decision changed.');
+                  Object.assign(state, shifted.decision);
+                  Object.assign(child, shifted.decision.higher);
                   timer = setTimeout(
                     () => controller.abort(),
                     Math.max(
                       1,
                       Math.min(
-                        child.publishBy + holdWall - this.now(),
-                        child.publishByMonotonic + holdMonotonic - performance.now(),
+                        child.publishBy - this.now(),
+                        child.publishByMonotonic - performance.now(),
                       ),
                     ),
                   );
@@ -677,20 +698,7 @@ export class DecisionEscalator {
         : undefined;
       preparedStage = gate?.stage;
       if (control) {
-        if (holdWall || holdMonotonic) {
-          const shifted = await this.service.store.mutateDecision(rootId, async (current) =>
-            current.decision?.higher?.state === 'preparing'
-              ? {
-                  ...current,
-                  decision: shiftUndispatchedDecision(current.decision, holdWall, holdMonotonic),
-                }
-              : undefined,
-          );
-          if (!shifted?.decision?.higher) throw new Error('The held decision changed.');
-          Object.assign(state, shifted.decision);
-          Object.assign(child, shifted.decision.higher);
-        }
-        const resumedLease = await this.execution.background();
+        const resumedLease = await this.execution.acquirePrepared(gate!.stage, 'background');
         if (!resumedLease) throw new Error('Background execution capacity is occupied.');
         lease = resumedLease;
       }
@@ -855,34 +863,7 @@ export class DecisionEscalator {
         await this.end(rootId, 'resource-unavailable');
         return;
       }
-      const dispatched = await this.service.store.mutateDecision(rootId, async (current) => {
-        const live = current.decision!;
-        if (
-          !this.eligible(current, live) ||
-          live.higher?.state !== 'reserved' ||
-          this.now() >= live.higher.dispatchBy ||
-          performance.now() >= live.higher.dispatchByMonotonic ||
-          controller.signal.aborted
-        )
-          return undefined;
-        // An acknowledgement can be lost after the transaction committed. From this
-        // boundary onward, missing evidence is never recorded as a free unsent call.
-        dispatchIntent = true;
-        if (!(await this.service.store.markDecisionDispatch(child.id))) return undefined;
-        return {
-          ...current,
-          decision: {
-            ...live,
-            higher: { ...live.higher, state: 'dispatched', dispatchedAt: this.now() },
-          },
-        };
-      });
-      if (!dispatched) {
-        await this.end(rootId, 'expired');
-        return;
-      }
-      dispatchIntent = true;
-      failure = 'provider-failed';
+      let dispatched: JobRecord | undefined;
       const c = this.service.config;
       const client =
         this.fixtureClient ??
@@ -915,17 +896,57 @@ export class DecisionEscalator {
             schema: generationRequest.schema,
           },
           () => {
-            const dispatch = () => {
+            const dispatch = async () => {
+              await validateSource();
+              // Funding may precede an operator hold. Claim dispatch only at the
+              // shared provider-entry boundary, never while waiting to continue.
+              dispatched = await this.service.store.mutateDecision(rootId, async (current) => {
+                const live = current.decision!;
+                if (
+                  !this.eligible(current, live) ||
+                  live.higher?.state !== 'reserved' ||
+                  this.now() >= live.higher.dispatchBy ||
+                  performance.now() >= live.higher.dispatchByMonotonic ||
+                  controller.signal.aborted
+                )
+                  return undefined;
+                // A lost acknowledgement still leaves a durable dispatch claim
+                // for conservative recovery; this callback is never retried.
+                dispatchIntent = true;
+                if (!(await this.service.store.markDecisionDispatch(child.id))) return undefined;
+                return {
+                  ...current,
+                  decision: {
+                    ...live,
+                    higher: { ...live.higher, state: 'dispatched', dispatchedAt: this.now() },
+                  },
+                };
+              });
+              if (!dispatched) {
+                failure = 'expired';
+                throw new Error('The original decision dispatch deadline passed.');
+              }
+              await validateSource();
+              failure = 'provider-failed';
               providerStarted = true;
               return client.generate<unknown>({
                 ...generationRequest,
+                deadlineMs:
+                  Date.now() +
+                  Math.max(
+                    0,
+                    Math.min(
+                      child.publishBy - this.now(),
+                      child.publishByMonotonic - performance.now(),
+                    ),
+                  ),
                 requestId: child.id,
                 signal: controller.signal,
                 actorScope: state.actorId,
               });
             };
             const execute = () =>
-              gate && control ? control.dispatch(gate.stage, dispatch) : dispatch();
+              gate && control ? control.dispatch(gate.stage, dispatch, lease) : dispatch();
             return backend ? backend.withSourceValidation(validateSource, execute) : execute();
           },
         );
@@ -966,7 +987,8 @@ export class DecisionEscalator {
           controller.signal.aborted ||
           this.now() >= child.publishBy ||
           performance.now() >= child.publishByMonotonic ||
-          !this.eligible(dispatched, dispatched.decision!) ||
+          !dispatched?.decision ||
+          !this.eligible(dispatched, dispatched.decision) ||
           !(await prepared.current())
         ) {
           await this.end(rootId, 'stale');

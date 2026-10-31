@@ -180,9 +180,12 @@ function targetKey(target: MacrofoldDeploymentTarget): string {
 }
 
 // These assertions have the same meaning in draft7 and 2020-12. Keep dialect
-// conversion deliberately smaller than general JSON Schema (notably no tuples,
-// references or dependencies); unsupported schemas retain explicit mode refusal.
+// conversion deliberately smaller than general JSON Schema (notably no tuples
+// or dependencies). Captured acyclic refs have no assertion siblings and retain
+// the same root $defs targets in both dialects; unsupported schemas still refuse.
 const portableKeywords = new Set([
+  '$defs',
+  '$ref',
   'type',
   'properties',
   'required',

@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { z } from 'zod';
 import type { AiClient, GenerateRequest } from '@open-legend/ai';
 import { CognitionExecution, type ExecutionLease } from './cognition-execution.js';
@@ -263,7 +264,7 @@ export class Narrator {
         task: 'Private narration',
         instructions,
         context,
-        schema: z.toJSONSchema(output, { target: 'draft-7' }),
+        schema: modelJsonSchema(output),
         schemaName: 'private_narration',
         maxOutputTokens: 1800,
         signal: this.controller!.signal,
@@ -290,7 +291,7 @@ export class Narrator {
         task: 'Private narration',
         instructions,
         context,
-        schema: z.toJSONSchema(output, { target: 'draft-7' }),
+        schema: modelJsonSchema(output),
         schemaName: 'private_narration',
         maxOutputTokens: 1800,
         signal: this.controller!.signal,
@@ -314,7 +315,9 @@ export class Narrator {
       const selected = prepared?.input ?? { kind: 'generate' as const, request };
       let lease: ExecutionLease | undefined;
       if (this.execution) {
-        lease = await this.execution.background();
+        lease = prepared
+          ? await this.execution.acquirePrepared(prepared.stage, 'background')
+          : await this.execution.background();
         if (!lease) {
           if (prepared)
             await control!.decline(prepared.stage, 'Background execution capacity is occupied.');
@@ -374,7 +377,7 @@ export class Narrator {
           };
           const result =
             prepared && control
-              ? await control.dispatch(prepared.stage, dispatch)
+              ? await control.dispatch(prepared.stage, dispatch, lease)
               : await dispatch();
           if (result.receipt.completionUncertain) lease?.uncertain(id);
           await store.settle(id, result.receipt);

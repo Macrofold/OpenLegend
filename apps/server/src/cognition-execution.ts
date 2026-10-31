@@ -1,11 +1,18 @@
 import { DECISION_LIMITS, type ExecutionClass } from './decision-state.js';
 import type { GameRepository } from './store.js';
-import type { CognitionRuntimeControl } from './cognition-runtime-control.js';
+import type {
+  CognitionRuntimeControl,
+  PreparedCognitionStage,
+} from './cognition-runtime-control.js';
 
 export interface ExecutionLease {
   readonly executionClass: ExecutionClass;
   readonly uncertainCompletion: boolean;
   uncertain(attemptId: string): void;
+  /** Only an undispatched Lab request can yield its slot during a deliberate hold. */
+  suspend(): void;
+  /** Reacquire the same accounting class without queuing or reopening released work. */
+  resume(): boolean;
   release(): void;
 }
 interface Waiting {
@@ -213,6 +220,7 @@ export class CognitionExecution {
     const entry: Execution = { scope: this, uncertainAttempts: new Set(), released: false };
     owner.executions[kind].add(entry);
     if (borrowedPrimary) owner.primaryBorrower = entry;
+    let suspended = false;
     return {
       executionClass: kind,
       get uncertainCompletion() {
@@ -220,6 +228,32 @@ export class CognitionExecution {
       },
       uncertain: (attemptId) => {
         entry.uncertainAttempts.add(attemptId);
+        // A failed local refund can become uncertain while human wait has
+        // yielded the slot. Preserve that accounting fence until reconciliation.
+        if (suspended) {
+          suspended = false;
+          owner.executions[kind].add(entry);
+          if (borrowedPrimary && !owner.primaryBorrower) owner.primaryBorrower = entry;
+        }
+      },
+      suspend: () => {
+        if (entry.released || suspended) return;
+        if (entry.uncertainAttempts.size)
+          throw new Error('Unconfirmed provider work cannot release execution capacity.');
+        suspended = true;
+        if (owner.primaryBorrower === entry) owner.primaryBorrower = undefined;
+        owner.executions[kind].delete(entry);
+        owner.wake();
+      },
+      resume: () => {
+        if (entry.released || (requestOnly ? this.closed || owner.closed : !this.eligible()))
+          return false;
+        if (!suspended) return true;
+        if (!this.available(kind) || (borrowedPrimary && owner.primaryBorrower)) return false;
+        suspended = false;
+        owner.executions[kind].add(entry);
+        if (borrowedPrimary) owner.primaryBorrower = entry;
+        return true;
       },
       release: () => {
         if (entry.released) return;
@@ -238,6 +272,20 @@ export class CognitionExecution {
   async background(): Promise<ExecutionLease | undefined> {
     await this.ready;
     return this.lease('background');
+  }
+  /** Resume prepared native work after human wait, retaining ordinary capacity
+   * refusal. A hold racing the awaited check must release its acquired slot. */
+  async acquirePrepared(
+    stage: PreparedCognitionStage,
+    kind: 'primary' | 'background',
+    urgent = false,
+  ): Promise<ExecutionLease | undefined> {
+    for (;;) {
+      await this.control?.waitForStage(stage);
+      const lease = kind === 'primary' ? await this.primary(urgent) : await this.background();
+      if (!this.control?.held) return lease;
+      lease?.release();
+    }
   }
   /** An explicitly admitted pure comparison uses host capacity without reopening native
    * simulation/queued work. It still cannot bypass occupied or uncertain executions. */

@@ -138,7 +138,18 @@ export function activityRequests(
     );
   return {
     ...activityStatus(service, scope),
-    requests,
+    // Expose the public form contract, not native preparation/coverage hints.
+    requests: requests.map(
+      ({ id, label, description, purposeLabel, submitLabel, presentation, fields }) => ({
+        id,
+        label,
+        description,
+        purposeLabel,
+        submitLabel,
+        presentation,
+        fields,
+      }),
+    ),
     entries,
     ...(timing.length
       ? {

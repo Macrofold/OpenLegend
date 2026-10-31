@@ -8,6 +8,7 @@ import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { createItemLot, itemFor, retireItem, setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
 import { materializeNativeValues } from './native-values.js';
+import { updateWorld } from './draft.js';
 import {
   advanceWithNavigation as advanceWorld,
   prepareWorldNavigation,
@@ -381,27 +382,38 @@ describe('bounded invented mechanisms', () => {
     ).toBe('missing-material');
   });
   it('completes a generated sling → hunt → finite harvest → cook → eat loop', () => {
-    let world = makeSling();
+    let world = freezeWorld(makeSling());
     // Controlled stationary prey qualifies the successful custody/meal chain; moving misses
     // use the separate flight specimen below. This is not a natural hunting success rate.
-    entityGet(world.entities, 'hare-1')!.actor!.incapacitated = true;
-    setSpatialPosition(
-      world,
-      entityGet(world.entities, 'hare-1')!,
-      {
-        ...worldPosition(entityGet(world.entities, PLAYER_ID)!),
-        x: worldPosition(entityGet(world.entities, PLAYER_ID)!).x + 2,
-      },
-      worldSupport(entityGet(world.entities, PLAYER_ID)!),
+    // Run the gameplay intervals on ordinary published snapshots, rather than
+    // keeping mutable authoring builders that disable native preparation reuse.
+    world = freezeWorld(
+      updateWorld(world, (draft) => {
+        entityGet(draft.entities, 'hare-1')!.actor!.incapacitated = true;
+        setSpatialPosition(
+          draft,
+          entityGet(draft.entities, 'hare-1')!,
+          {
+            ...worldPosition(entityGet(draft.entities, PLAYER_ID)!),
+            x: worldPosition(entityGet(draft.entities, PLAYER_ID)!).x + 2,
+          },
+          worldSupport(entityGet(draft.entities, PLAYER_ID)!),
+        );
+        draft.rngState = 73;
+      }),
     );
-    world.rngState = 73;
     const ammoBefore = quantityOf(world, PLAYER_ID, 'stone');
     world = confirmedAttack(world, { type: 'hunt', targetId: 'hare-1' });
     world = advanceWorld(world, 18).world;
-    entityGet(world.entities, 'hare-1')!.actor!.incapacitated = false;
     // Controlled missing sight prevents anticipatory flight without preventing
     // actual zero-health death. This fixture qualifies custody, not hunting.
-    entityGet(world.entities, 'hare-1')!.actor!.senses = [];
+    world = freezeWorld(
+      updateWorld(world, (draft) => {
+        const prey = entityGet(draft.entities, 'hare-1')!;
+        prey.actor!.incapacitated = false;
+        prey.actor!.senses = [];
+      }),
+    );
     world = advanceWorld(world, 24).world;
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(ammoBefore - 1);
     expect(entityGet(world.entities, 'hare-1')!.actor!.alive).toBe(false);

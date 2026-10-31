@@ -1,10 +1,10 @@
 # Cognition Lab — technical design
 
-| Status      | Current progress                                                                                                                                 | Last updated         |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | -------------------- |
-| In progress | Shared runtime, isolated records and desktop workspace implemented; technical qualification passed, with human/broader behavior acceptance open. | 2026-10-27 18:22 UTC |
+| Status      | Current progress                                                                                                   | Last updated         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------ | -------------------- |
+| In progress | Shared runtime and desktop workspace implemented; final native behavior and startup qualification are in progress. | 2026-10-29 22:01 UTC |
 
-Last used for implementation/review: **2026-10-28 06:33 UTC**. The feature specification records the current interaction contract.
+Last used for implementation/review: **2026-10-29 22:01 UTC**. The feature specification records the current interaction contract.
 
 ## 1. Scope, authority and baseline
 
@@ -144,7 +144,7 @@ Supply trusted lab participation configuration to the shared runtime/service at 
 
 The lab binding prevents absence caused solely by the missing game renderer. It remains in force across ordinary Hold, prepared editing and browser disconnect while that isolated runtime is held. Before resuming or installing a restored scene, revalidate the exact actor, timeline, current operator authority and native eligibility. A declared participant remains eligible while the exact actor is alive, unretired, human-controlled and owned by the current operator. Removing the binding permits native departure; explicitly re-adding it permits the ordinary participation owner to return that actor from exiting/inactive state. No reconciliation revives a dead or removed actor. Source construction preserves genuine saved exits until an explicit participation edit, and replacement establishes only the selected scene's declared set; disposal clears it. This is a lab-scoped source of operational participation, not a new world law or a second participation state machine.
 
-The run owner gates new cognition admission at the shared director boundary, the execution owner's scoped queue-start/lease boundary, and every actual provider dispatch, including later child stages and independently scheduled escalation, maintenance or indexing. A closed gate blocks new dispatch even when that stage has no input editor. It does not cancel or pretend to finish an undispatched continuation. Settling observes already-dispatched attempts and accepted publication/commit work, excluding held continuations and a native action's future completion. Do not use `AiDirector.idle()` for Hold: it waits for the deliberately held pending work too. These gates belong to the lab registration only; the game runtime remains active.
+The run owner gates new cognition admission at the shared director boundary, the execution owner's scoped queue-start/lease boundary, and every actual provider dispatch, including later child stages and independently scheduled escalation, maintenance or indexing. A closed gate blocks new dispatch even when that stage has no input editor. An already admitted job waits through another job's hold, retaining its identity and undispatched timing instead of reporting lost model capacity. Held continuations yield unpaid execution slots and remain outside active-provider counts; Continue revalidates sources, deadlines and actual capacity before entry. Settling observes already-dispatched attempts and accepted publication/commit work, excluding held continuations and a native action's future completion. Do not use `AiDirector.idle()` for Hold: it waits for the deliberately held pending work too. These gates belong to the lab registration only; the game runtime remains active.
 
 Native processing also holds the lab clock across the actual job's preparation, provider wait and accepted publication. This keeps host/network delay from spending the default 60 simulated seconds before an immediate response can publish. It changes lab timing deliberately; ordinary gameplay clock behavior is unchanged. Captures distinguish simulation, active orchestration, processing, provider and operator-hold time, whose spans can overlap. Advance time accepts simulation seconds and the shared clock owns conversion through its native base ratio and current speed.
 
@@ -202,6 +202,8 @@ Every held gate observes the owning abort signal and runtime generation, includi
 
 While that native root has no provider call in flight, awaited lab recording excludes its actual elapsed wait from a still-pending immediate inference opportunity. Nested waits count once and cannot revive an expired opportunity. This exclusion never extends the native useful lifetime, an in-flight provider deadline or the run's active-wall limit. Deliberate prepared-input human waits retain their existing suspension of undispatched timing.
 
+Native capture writes and terminal interval recording/release share one ordered controller owner. Retain interval credit until earlier admitted observations finish writing, even when another root is already held. Capture each event's original run/interval at admission. Native settlement stays outside that recording lane so cancellation and held-input cleanup can complete without waiting on themselves.
+
 No debug hook is enabled for the gameplay runtime. With the lab hook disabled, ordinary callers receive the same inputs, route choices and outcomes, without diagnostic deep-copy work.
 
 ### 6.2 Request kinds and editable material
@@ -217,6 +219,8 @@ An operator may remove, replace or invent fictional information inside the reque
 ### 6.3 Handle state machine
 
 A prepared-call handle moves through `prepared → submitted → consumed`, or from `prepared` to `invalidated` or `cancelled`. The server issues it after preparation and accepts it exactly once. It binds an immutable original request and the exact scenario revision/generation. A duplicate Submit returns the same accepted submission outcome; it never makes a second provider request.
+
+Concurrent native roots may prepare several inputs. Present one fully retained input at a time in native preparation order; Continue consumes only its exact handle and exposes the next pending input. Hold can end the interval while preserving these handles; Continue or Run starts the next interval using the existing prepared input. Keep admission held until every pending input is handled. Capture completion order and duplicate Continue must never hide, overwrite or consume another input. Stop cancels all remaining handles through their native owners.
 
 Only the payload modal's Submit sends its replacement envelope with that handle. Ordinary composer Submit has no override parameter and always prepares from the current scenario. Closing the modal discards its override draft and leaves the call visibly held. It does not dispatch or leave a persistent hidden override. Continue original submits the unchanged prepared request; Stop cancels it through the shared owner. Applying a left-panel edit invalidates prepared handles before further dispatch and visibly disables their Submit action. Restore, scenario load, principal change and runtime replacement do the same.
 
@@ -519,6 +523,8 @@ Store captured collection summaries and exact source/item identities in these in
 Retained evidence has explicit completeness. A failed artifact write means the call/run cannot be described as fully retained. [CLL07–CLL09](../limits/cognition-lab.md#cll07) owns byte allowances, reservation and payload-chunk values. No age-based cleanup silently removes saved scenarios or retained runs. Remove/export/increase allowance are deliberate developer operations.
 
 The lab layout has a current marker derived from the native save format and its own installed metadata layout. Incompatible development lab data is rejected before schema/index mutation; rebuild it from the current initializer. Native game packages keep their own unchanged format contract. No migrations or old-layout adapters are provided.
+
+After an explicit offline development-world replacement, the closed records owner resets the exact current workspace and active custom inputs before normal startup captures its protected initial origin. Otherwise New could restore an incompatible old origin. This [development boundary](../save-and-load.md#active-development-policy) preserves retained evidence and external-request accounting; it is not a gameplay reset endpoint or automatic compatibility path.
 
 Saved-work management rechecks current host and lab create authority. An owned record withheld by current correction/privacy rules exposes only its ID, kind, creation time and an unavailable label so the developer can remove it deliberately. It exposes no old name, summary, actor, world, payload or byte claim. Content, export and rerun remain under strict native disclosure guards. Removal uses indexed metadata/reference ownership, without reading a withheld payload. Imported owner labels never confer management authority.
 

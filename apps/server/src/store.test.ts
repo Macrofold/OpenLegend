@@ -316,7 +316,8 @@ describe('durable AI allowances outside simulated time', () => {
     expect((await store.usage(1)).budget.reservedUsd).toBe(0);
   });
   it('does not erase paid usage when a world snapshot is restored', async () => {
-    const store = await open();
+    const path = diskPath();
+    let store = await open(path);
     const original = save();
     let revision = await store.commit(0, original);
     await store.reserve('paid', 'openai', 0.08, 1);
@@ -325,10 +326,78 @@ describe('durable AI allowances outside simulated time', () => {
       ...original,
       world: { ...original.world, simTime: 4000 },
     });
-    await store.commit(revision, original);
+    revision = await store.commit(revision, original);
     expect((await store.load())!.state.world.simTime).toBe(0);
     expect((await store.usage(1)).budget.spentUsd).toBe(0.03);
     await expect(async () => await store.reserve('paid', 'openai', 0.08, 1)).rejects.toThrow(
+      /already admitted/,
+    );
+    expect(
+      await store.reserve('uncertain-paid', 'openai', 0.08, 1, PLAYER_ID, undefined, undefined, {
+        rootJobId: 'original-uncertain-root',
+        category: 'level',
+        level: 1,
+        stage: 'primary',
+        executionClass: 'primary',
+      }),
+    ).toBe(true);
+    await store.markDecisionDispatch('uncertain-paid');
+    await store.settle(
+      'uncertain-paid',
+      receipt('uncertain-paid', {
+        completionUncertain: true,
+        providerRequestId: 'original-external-run',
+        estimatedCostUsd: undefined,
+        usage: undefined,
+      }),
+    );
+    const journal = { body: { input: 'original native input' }, idempotencyKey: 'original-key' };
+    await store.putIntegration('macrofold:original-admission', journal);
+    await store.putJob(job('original-operational-job'));
+    const finance = await store.attemptReceipt('uncertain-paid');
+    const slots = await store.occupiedDecisionSlots();
+    const operationalJob = await store.getJob('original-operational-job');
+    const fresh: SavedWorld = { world: stockedCamp(74), speed: 1, manuallyPaused: false };
+    const adopted = (await store.records.head())!;
+    await expect(store.replaceDevelopmentWorld(adopted, fresh)).rejects.toThrow(/unopened/);
+
+    // Model an incompatible development definition without loading it as current.
+    // Replacement must never decode or repair the old native host pin.
+    const incompatible = structuredClone(original);
+    incompatible.world.moduleManifest.activityHosts[0] = {
+      ...incompatible.world.moduleManifest.activityHosts[0]!,
+      digest: 'incompatible-development-host',
+    };
+    await store.commit(revision, incompatible);
+    await close(store);
+    store = await open(path);
+    await expect(store.load()).rejects.toThrow(/trusted activity host/);
+    const head = (await store.records.head())!;
+    await expect(
+      store.replaceDevelopmentWorld({ ...head, revision: head.revision + 1 }, fresh),
+    ).rejects.toThrow(/Save conflict/);
+    const invalidFresh = structuredClone(fresh);
+    invalidFresh.world.moduleManifest.activityHosts[0] = {
+      ...invalidFresh.world.moduleManifest.activityHosts[0]!,
+      digest: 'invalid-new-host',
+    };
+    await expect(store.replaceDevelopmentWorld(head, invalidFresh)).rejects.toThrow(
+      /trusted activity host/,
+    );
+    expect(await store.records.head()).toEqual(head);
+    await store.replaceDevelopmentWorld(head, fresh);
+    expect((await store.load())!.state.world.id).toBe(fresh.world.id);
+    await close(store);
+    store = await open(path);
+    validateCurrentWorldState((await store.load())!.state.world);
+    expect((await store.records.head())!.worldId).toBe(fresh.world.id);
+    expect(await store.attemptReceipt('uncertain-paid')).toEqual(finance);
+    expect(await store.occupiedDecisionSlots()).toEqual(slots);
+    expect(await store.getIntegration('macrofold:original-admission')).toEqual(journal);
+    expect(await store.getJob('original-operational-job')).toEqual(operationalJob);
+    expect((await store.usage(1)).budget.spentUsd).toBe(0.11);
+    await expect(store.reserve('paid', 'openai', 0.08, 1)).rejects.toThrow(/already admitted/);
+    await expect(store.reserve('uncertain-paid', 'openai', 0.08, 1)).rejects.toThrow(
       /already admitted/,
     );
   });

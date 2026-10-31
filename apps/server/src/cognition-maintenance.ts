@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { stageAllowance } from './cognition-stage-budget.js';
 import type { ApiResult } from '@open-legend/protocol';
 import type { CognitionStageInput } from './cognition-runtime-control.js';
@@ -959,8 +960,8 @@ export class CognitionMaintenance {
       providerStarted = false,
       completed = false;
     try {
-      if (control && this.execution) {
-        this.executionLease = await this.execution.background();
+      if (prepared && this.execution) {
+        this.executionLease = await this.execution.acquirePrepared(prepared.stage, 'background');
         if (!this.executionLease)
           throw new Error('Background model execution capacity is occupied.');
       }
@@ -1008,10 +1009,14 @@ export class CognitionMaintenance {
         }
         result = await this.macrofold.withSourceValidation(validateSource, () =>
           prepared && control
-            ? control.dispatch(prepared.stage, () => {
-                providerStarted = true;
-                return execute(selected);
-              })
+            ? control.dispatch(
+                prepared.stage,
+                () => {
+                  providerStarted = true;
+                  return execute(selected);
+                },
+                this.executionLease,
+              )
             : ((providerStarted = true), execute(selected)),
         );
         result.receipt = normalizeReceiptCost(result.receipt);
@@ -1117,7 +1122,7 @@ export class CognitionMaintenance {
               task: 'memory_consolidation',
               instructions: CONSOLIDATION_INSTRUCTIONS,
               context,
-              schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
+              schema: modelJsonSchema(summarySchema),
               signal: controller.signal,
             };
             const value = summarySchema.parse(
@@ -1354,7 +1359,7 @@ export class CognitionMaintenance {
         task: 'background_reflection',
         instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Use appraisalChanges only for supported private interpretations, usually empty. Copy supplied feeling handles/revisions, policy and cause handles, and subject tokens. For create, select policy, source, subject (null when none) and value. For reframe, select appraisal, expectedRevision, source and value. For resolve, supply only appraisal and expectedRevision. Qualitative values are null. Include only the fields declared for that kind. Never claim a typed change in prose unless proposing it atomically. Do not echo identity file contents.`,
         context: prepared.context,
-        schema: z.toJSONSchema(reflectionSchema, { target: 'draft-7' }),
+        schema: modelJsonSchema(reflectionSchema),
         signal: controller.signal,
       };
       if (

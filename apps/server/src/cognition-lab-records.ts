@@ -1483,6 +1483,52 @@ export class CognitionLabRecords {
         .run(bytes, id);
     });
   }
+  /** Offline companion to an explicit fresh development-world replacement.
+   * The caller stops the runtime, captures this exact workspace and closes this
+   * owner first. Old actor-bound inputs and the protected starting-origin pointer
+   * must not bootstrap the new world. Retained evidence and financial records
+   * are separate owners; ordinary startup captures the new initialized origin.
+   * AGENTS.md#development-save-policy */
+  async resetDevelopmentWorkspace(
+    expectedWorkspace: LabRecord | undefined,
+  ): Promise<{ workspaceId?: string; customFields: number }> {
+    await this.ready;
+    if (
+      !this.closed ||
+      this.db.transactionActive ||
+      this.fileWrites.size ||
+      this.cleanupWrites.size
+    )
+      throw new LabStorageError(
+        'invalid',
+        'Close the offline lab record owner before resetting its development workspace.',
+      );
+    if (expectedWorkspace && expectedWorkspace.kind !== 'workspace')
+      throw new LabStorageError('invalid', 'Select the current development workspace.');
+    return this.db.transaction(async () => {
+      const current = await this.pageRecords('workspace', { limit: 2 });
+      if (
+        current.items.length !== (expectedWorkspace ? 1 : 0) ||
+        (expectedWorkspace &&
+          (current.items[0]?.id !== expectedWorkspace.id ||
+            encode(await this.getRecord(expectedWorkspace.id, 'workspace')) !==
+              encode(expectedWorkspace)))
+      )
+        throw new LabStorageError('conflict', 'The development workspace changed before reset.');
+      let customFields = 0;
+      let cursor: string | undefined;
+      do {
+        const page = await this.pageRecords('customField', { cursor, limit: 100 });
+        for (const field of page.items) {
+          await this.removeRecord(field.id);
+          customFields++;
+        }
+        cursor = page.nextCursor;
+      } while (cursor);
+      if (expectedWorkspace) await this.removeRecord(expectedWorkspace.id);
+      return { ...(expectedWorkspace ? { workspaceId: expectedWorkspace.id } : {}), customFields };
+    });
+  }
   async removeRecord(
     id: string,
     beforePublish?: () => void,

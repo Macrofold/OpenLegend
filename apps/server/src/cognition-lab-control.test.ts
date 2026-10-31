@@ -1220,6 +1220,72 @@ describe('ordinary native cognition experiments', () => {
       h.scope,
     );
     await h.runtime.director.idle();
+    const control = h.runtime.service.cognitionControl!;
+    control.hold();
+    const interval = h.controller['interval']!,
+      originalReservation = interval.reservation;
+    const persist = h.controller['persistRun'].bind(h.controller);
+    const recording = h.controller as unknown as {
+      persistRun: (typeof h.controller)['persistRun'];
+    };
+    let entered!: () => void, releaseCapture!: () => void, nativeSettled!: () => void;
+    const capturing = new Promise<void>((resolve) => (entered = resolve)),
+      captureGate = new Promise<void>((resolve) => (releaseCapture = resolve)),
+      settled = new Promise<void>((resolve) => (nativeSettled = resolve));
+    let delayed = false;
+    const recordingSpy = vi.spyOn(recording, 'persistRun').mockImplementation(async (...args) => {
+      if (!delayed && h.controller.current?.prepared?.purpose === 'credit-race' && !args[1]) {
+        delayed = true;
+        entered();
+        await captureGate;
+      }
+      return persist(...args);
+    });
+    const settleNative = h.runtime.director.settleDispatched.bind(h.runtime.director);
+    const settleSpy = vi
+      .spyOn(h.runtime.director, 'settleDispatched')
+      .mockImplementation(async () => {
+        await settleNative();
+        nativeSettled();
+      });
+    const read = vi.spyOn(h.records, 'getRecord');
+    const rootId = randomUUID(),
+      releaseNative = control.registerNative(rootId);
+    const pending = control
+      .prepare(
+        {
+          id: randomUUID(),
+          rootId,
+          actorId: NPC_ID,
+          purpose: 'credit-race',
+          generation: h.runtime.service.generation,
+          responseBoundBytes: 1000,
+          current: () => {},
+        },
+        { kind: 'judge', request: { state: {}, questions: {} } },
+      )
+      .finally(releaseNative);
+    void pending.catch(() => {});
+    await capturing;
+    const handle = h.controller.current!.prepared!.id;
+    const held = h.controller.controlRun({ commandId: randomUUID(), action: 'hold' }, h.scope);
+    await settled;
+    await new Promise<void>((resolve) => setImmediate(resolve));
+    try {
+      expect(read).not.toHaveBeenCalledWith(interval.rootId, 'stage');
+      expect(interval.reservation).toBe(originalReservation);
+    } finally {
+      releaseCapture();
+    }
+    await held;
+    expect(h.controller.current?.completeness).toBe('complete');
+    expect(h.controller.current?.prepared?.id).toBe(handle);
+    expect(interval.reservation).toBe('');
+    recordingSpy.mockRestore();
+    settleSpy.mockRestore();
+    read.mockRestore();
+    await h.controller.submitPrepared(randomUUID(), handle, undefined, h.scope);
+    await control.decline((await pending).stage, 'The diagnostic source made no provider request.');
     const write = h.records.putRecord.bind(h.records);
     let fail = true;
     const put = vi.spyOn(h.records, 'putRecord').mockImplementation(async (record, options) => {
@@ -1729,6 +1795,7 @@ describe('ordinary native cognition experiments', () => {
 
   it('keeps renderer-free participation active and submits directed speech once through the native chat job', async () => {
     const h = await harness();
+    h.settings.policy.autonomousActorIds = [];
     expect(h.runtime.service.runtimeParticipants.has(PLAYER_ID)).toBe(true);
     h.runtime.service.cognitionControl!.resume();
     await h.runtime.clock.advance(15, false);
@@ -1737,6 +1804,52 @@ describe('ordinary native cognition experiments', () => {
       entityGet(h.runtime.service.world.entities, PLAYER_ID)?.actor?.participation?.phase ??
         'active',
     ).toBe('active');
+    // Another root can hold the Lab while this admitted speech job awaits its
+    // queued-event capture. A later hold can also win the awaited lease lookup.
+    const control = h.runtime.service.cognitionControl!;
+    const emit = control.emit.bind(control);
+    let heldBeforePreparation = false;
+    let speechJobId: string | undefined,
+      terminalSeen = false;
+    const speechCalls = () =>
+      h.calls.filter((request) => request.requestId.startsWith(`${speechJobId}:`));
+    let hold: Promise<unknown> | undefined;
+    let finish!: () => void;
+    const finished = new Promise<void>((resolve) => {
+      finish = resolve;
+    });
+    const operatorHold = () => {
+      control.hold();
+      // Do not await settle inside the native observer that must reach the hold.
+      hold = h.controller.controlRun({ commandId: randomUUID(), action: 'hold' }, h.scope);
+    };
+    vi.spyOn(control, 'emit').mockImplementation(async (event) => {
+      await emit(event);
+      if (
+        event.kind === 'job' &&
+        event.actorId === NPC_ID &&
+        event.status === 'queued' &&
+        !heldBeforePreparation
+      ) {
+        heldBeforePreparation = true;
+        speechJobId = event.jobId;
+        operatorHold();
+      } else if (
+        event.kind === 'job' &&
+        event.jobId === speechJobId &&
+        ['completed', 'failed', 'cancelled'].includes(event.status)
+      ) {
+        terminalSeen = true;
+        operatorHold();
+        finish();
+      }
+    });
+    const execution = h.runtime.director['execution'];
+    const primary = execution.primary.bind(execution);
+    vi.spyOn(execution, 'primary').mockImplementationOnce(async (urgent) => {
+      operatorHold();
+      return primary(urgent);
+    });
     const commandId = randomUUID();
     const first = await h.controller.submitStimulus(
       { commandId, stimulus: h.stimulus, policy: h.settings.policy },
@@ -1745,8 +1858,34 @@ describe('ordinary native cognition experiments', () => {
     expect(first, first.message).toMatchObject({ sourceAccepted: true });
     expect(first.sourceId).toBeTruthy();
     await h.controller.waitHeld();
+    await hold;
     expect(h.controller.state).toBe('held');
-    expect(h.calls.length, JSON.stringify(h.controller.current)).toBeGreaterThan(0);
+    expect(heldBeforePreparation).toBe(true);
+    expect(speechCalls()).toHaveLength(0);
+    expect((await h.runtime.service.store.getSpeechJob(first.sourceId!))?.status).not.toBe(
+      'failed',
+    );
+    const continueUntil = async (done: () => boolean) => {
+      // Background narration may expose another real prepared input. Drive the
+      // actual inspector until this exact speech job reaches its next boundary.
+      for (let step = 0; !done() && step < 8; step++) {
+        await h.controller.controlRun({ commandId: randomUUID(), action: 'run' }, h.scope);
+        await h.controller.waitHeld();
+        await hold;
+      }
+      expect(done(), JSON.stringify(h.controller.current)).toBe(true);
+    };
+    await continueUntil(() => vi.mocked(execution.primary).mock.calls.length > 0);
+    expect(execution.primary).toHaveBeenCalledOnce();
+    expect(speechCalls()).toHaveLength(0);
+    expect((await h.runtime.service.store.getSpeechJob(first.sourceId!))?.status).not.toBe(
+      'failed',
+    );
+    await continueUntil(() => terminalSeen);
+    await finished;
+    await hold;
+    await h.controller.waitHeld();
+    expect(speechCalls().length, JSON.stringify(h.controller.current)).toBeGreaterThan(0);
     const repeated = await h.controller.submitStimulus(
       { commandId, stimulus: h.stimulus, policy: h.settings.policy },
       h.scope,
@@ -1756,6 +1895,7 @@ describe('ordinary native cognition experiments', () => {
       h.runtime.service.world.events.filter((event) => event.id === first.sourceId),
     ).toHaveLength(1);
     const nativeJob = await h.runtime.service.store.getSpeechJob(first.sourceId!);
+    expect(nativeJob?.id).toBe(speechJobId);
     expect(nativeJob?.playerSpeechEventId).toBe(first.sourceId);
     expect(['completed', 'failed']).toContain(nativeJob?.status);
     const stages = await h.records.pageRecords('stage', { runId: first.runId, limit: 100 });
@@ -1830,6 +1970,83 @@ describe('ordinary native cognition experiments', () => {
       .reverse()
       .find((call): call is JudgeRequest => 'questions' in call);
     expect(JSON.stringify(lastJudgment?.state)).not.toContain('experimentalMarker');
+
+    // Two actual native preparation roots can finish capture while the operator
+    // still holds an older inspector handle. Continuing either must retain the other.
+    const control = h.runtime.service.cognitionControl!;
+    const emit = control.emit.bind(control);
+    const captures = new Map<string, (handle: string) => void>();
+    const captureOrder: string[] = [];
+    vi.spyOn(control, 'emit').mockImplementation(async (event) => {
+      await emit(event);
+      if (event.kind === 'prepared') {
+        captureOrder.push(event.stage.handle);
+        captures.get(event.stage.rootId)?.(event.stage.handle);
+      }
+    });
+    h.settings.policy.autonomousActorIds = [];
+    const calls = h.calls.length;
+    for (const first of [0, 1] as const) {
+      await h.controller.controlRun({ commandId: randomUUID(), action: 'step' }, h.scope);
+      control.hold();
+      captureOrder.length = 0;
+      const pair = [0, 1].map(() => {
+        const rootId = randomUUID(),
+          id = randomUUID(),
+          release = control.registerNative(rootId);
+        const captured = new Promise<string>((resolve) => captures.set(rootId, resolve));
+        const work = control
+          .prepare(
+            {
+              id,
+              rootId,
+              actorId: NPC_ID,
+              purpose: 'concurrent-preparation',
+              generation: h.runtime.service.generation,
+              responseBoundBytes: 1000,
+              current: () => {},
+            },
+            { kind: 'judge', request: { state: { rootId }, questions: {} } },
+          )
+          .finally(release);
+        return { id, captured, work };
+      });
+      const handles = await Promise.all(pair.map((entry) => entry.captured));
+      expect(captureOrder).toEqual(handles);
+      expect(h.controller.current?.prepared?.id).toBe(handles[0]);
+      await h.controller.submitPrepared(randomUUID(), handles[first]!, undefined, h.scope);
+      const other = first === 0 ? 1 : 0;
+      expect(h.controller.current?.prepared?.id).toBe(handles[other]);
+      expect(control.held).toBe(true);
+      expect(h.calls).toHaveLength(calls);
+      const selected = await pair[first]!.work;
+      await h.controller.submitPrepared(randomUUID(), handles[first]!, undefined, h.scope);
+      expect(h.controller.current?.prepared?.id).toBe(handles[other]);
+      await control.decline(selected.stage, 'The diagnostic source made no provider request.');
+      if (first === 0) {
+        await h.controller.submitPrepared(randomUUID(), handles[other]!, undefined, h.scope);
+        await control.decline(
+          (await pair[other]!.work).stage,
+          'The diagnostic source made no provider request.',
+        );
+        await h.controller.controlRun({ commandId: randomUUID(), action: 'hold' }, h.scope);
+      } else {
+        const cancelled = expect(pair[other]!.work).rejects.toThrow('stopped');
+        await h.controller.controlRun({ commandId: randomUUID(), action: 'stop' }, h.scope);
+        await cancelled;
+      }
+      expect(control.prepared).toHaveLength(0);
+      expect(h.controller.current?.prepared).toBeUndefined();
+      for (const entry of pair) {
+        const retained = await h.records.pageRecords('stage', {
+          runId: h.controller.current!.id,
+          sourceId: entry.id,
+          limit: 1,
+        });
+        expect(retained.items[0]?.status).toBe('cancelled');
+      }
+      expect(h.calls).toHaveLength(calls);
+    }
   }, 60_000);
   it('continues a real saved decision boundary with fresh native bindings and no duplicate speech or prerequisite purchase', async () => {
     const h = await harness();

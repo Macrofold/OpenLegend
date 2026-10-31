@@ -145,6 +145,7 @@ interface Capture {
   artifacts: Array<{ kind: 'artifact' | 'record'; id: string }>;
   provenance: ReturnType<CognitionLabRunController['provenance']>;
   wireDone?: boolean;
+  preparedReady?: boolean;
   terminal?: boolean;
   wireCapture?: 'captured' | 'partial' | 'unavailable';
 }
@@ -163,6 +164,7 @@ export class CognitionLabRunController {
   private stateValue: CognitionLabState = 'ready';
   private interval?: Interval;
   private readonly captures = new Map<string, Capture>();
+  private captureTail: Promise<void> = Promise.resolve();
   private readonly contexts = new Map<
     string,
     { stageId: string; available: boolean; count: number }
@@ -208,70 +210,76 @@ export class CognitionLabRunController {
     if (!control) throw new Error('A lab runtime requires its scoped cognition controller.');
     this.control = control;
     this.lastSequence = runtime.service.world.sequence;
-    control.setObserver(async (event) => {
-      const captureStarted = performance.now();
-      const interval = this.interval;
-      const release = event.kind === 'control' ? undefined : runtime.clock.holdBoundary();
-      try {
-        await this.observe(event);
-      } catch (error) {
-        if (this.run) {
-          this.run.completeness = 'partial';
-          this.run.reason =
-            error instanceof Error ? error.message : 'Experiment evidence could not be retained.';
-        }
-        this.control.hold();
-        this.options.changed();
-        if (
-          event.kind === 'prepared' ||
-          event.kind === 'wire' ||
-          event.kind === 'settled' ||
-          event.kind === 'failed' ||
-          event.kind === 'cancelled' ||
-          event.kind === 'reused'
-        ) {
-          const capture =
-            event.kind === 'wire'
-              ? [...this.captures.values()].find((item) => item.native.id === event.attemptId)
-              : this.captures.get(event.stage.handle);
-          try {
-            if (capture) {
-              capture.stage.completeness = 'partial';
-              capture.stage.status = 'captureFailed';
-              capture.stage.summary =
-                this.run?.reason ?? 'The native result could not be retained completely.';
-              await this.writeCapture(capture).catch(() => undefined);
-              await this.records.release(capture.reservation);
-              this.captures.delete(capture.native.handle);
+    control.setObserver((event) => {
+      if (event.kind === 'control') return;
+      const interval = this.interval,
+        run = this.run,
+        captureStarted = performance.now(),
+        release = runtime.clock.holdBoundary();
+      return this.captureWrite(async () => {
+        try {
+          await this.observe(event, interval, run);
+        } catch (error) {
+          if (run) {
+            run.completeness = 'partial';
+            run.reason =
+              error instanceof Error ? error.message : 'Experiment evidence could not be retained.';
+          }
+          this.control.hold();
+          this.options.changed();
+          if (
+            event.kind === 'prepared' ||
+            event.kind === 'wire' ||
+            event.kind === 'settled' ||
+            event.kind === 'failed' ||
+            event.kind === 'cancelled' ||
+            event.kind === 'reused'
+          ) {
+            const capture =
+              event.kind === 'wire'
+                ? [...this.captures.values()].find((item) => item.native.id === event.attemptId)
+                : this.captures.get(event.stage.handle);
+            try {
+              if (capture) {
+                capture.stage.completeness = 'partial';
+                capture.stage.status = 'captureFailed';
+                capture.stage.summary =
+                  run?.reason ?? 'The native result could not be retained completely.';
+                await this.writeCapture(capture).catch(() => undefined);
+                await this.records.release(capture.reservation);
+                this.captures.delete(capture.native.handle);
+              }
+            } finally {
+              // Background preparation has no decision-job terminal event to wake
+              // Held waiters. Cleanup failure must not prevent native settlement;
+              // unreleased capture credit remains recorded for reconciliation.
+              if (this.run === run && this.interval === interval)
+                this.background(
+                  this.finish(
+                    run?.reason ?? 'Native work settled with incomplete experiment evidence.',
+                    false,
+                    true,
+                  ),
+                );
             }
-          } finally {
-            // Background preparation has no decision-job terminal event to wake
-            // Held waiters. Cleanup failure must not prevent native settlement;
-            // unreleased capture credit remains recorded for reconciliation.
+          }
+          if (
+            event.kind === 'job' &&
+            ['completed', 'failed', 'cancelled', 'stale'].includes(event.status) &&
+            this.run === run &&
+            this.interval === interval
+          )
             this.background(
               this.finish(
-                this.run?.reason ?? 'Native work settled with incomplete experiment evidence.',
-                false,
-                true,
+                run?.reason ?? 'Native work settled with incomplete experiment evidence.',
               ),
             );
-          }
+          else throw error;
+        } finally {
+          release?.();
+          if (interval) interval.captureMs += performance.now() - captureStarted;
         }
-        if (
-          event.kind === 'job' &&
-          ['completed', 'failed', 'cancelled', 'stale'].includes(event.status)
-        )
-          this.background(
-            this.finish(
-              this.run?.reason ?? 'Native work settled with incomplete experiment evidence.',
-            ),
-          );
-        else throw error;
-      } finally {
-        release?.();
-        if (interval && event.kind !== 'control')
-          interval.captureMs += performance.now() - captureStarted;
-      }
+      });
     });
     control.setAuthorityCheck(() => {
       if (this.interval) runtime.service.assertScope(this.interval.scope, 'create');
@@ -590,49 +598,52 @@ export class CognitionLabRunController {
     this.run.status = 'Running';
     delete this.run.reason;
     delete this.run.prepared;
+    const run = this.run;
     try {
-      await this.records.putRecord(
-        {
-          id: interval.id,
-          kind: 'interval',
-          runId: this.run.id,
-          createdAt: new Date().toISOString(),
-          name: `Interval ${this.run.counts.intervals}`,
-          status: 'running',
-          summary: labJson({
-            policy,
-            startedSim: interval.startedSim,
-            configuration,
-            ...(await this.disclosureForRun(this.run)),
-          }),
-          data: labJson({
-            policy,
-            settings,
-            // The immutable origin and explicit interventions retain experiment
-            // values. Copying the full snapshot here makes every interval grow
-            // with unrelated/disabled fields and can exceed the metadata bound.
-            configuration,
-            generation: interval.generation,
-          }),
-        },
-        { reservationId: reservation },
-      );
-      const root = this.rootStage(interval);
-      await this.records.putRecord(
-        {
-          id: interval.rootId,
-          kind: 'stage',
-          runId: this.run.id,
-          parentId: interval.id,
-          createdAt: new Date().toISOString(),
-          name: 'Experiment interval',
-          status: 'running',
-          summary: labJson({ ...root, ...this.provenance(root.actorId) }),
-          data: labJson(root),
-        },
-        { reservationId: reservation },
-      );
-      await this.persistRun(reservation);
+      await this.captureWrite(async () => {
+        await this.records.putRecord(
+          {
+            id: interval.id,
+            kind: 'interval',
+            runId: run.id,
+            createdAt: new Date().toISOString(),
+            name: `Interval ${run.counts.intervals}`,
+            status: 'running',
+            summary: labJson({
+              policy,
+              startedSim: interval.startedSim,
+              configuration,
+              ...(await this.disclosureForRun(run)),
+            }),
+            data: labJson({
+              policy,
+              settings,
+              // The immutable origin and explicit interventions retain experiment
+              // values. Copying the full snapshot here makes every interval grow
+              // with unrelated/disabled fields and can exceed the metadata bound.
+              configuration,
+              generation: interval.generation,
+            }),
+          },
+          { reservationId: reservation },
+        );
+        const root = this.rootStage(interval);
+        await this.records.putRecord(
+          {
+            id: interval.rootId,
+            kind: 'stage',
+            runId: run.id,
+            parentId: interval.id,
+            createdAt: new Date().toISOString(),
+            name: 'Experiment interval',
+            status: 'running',
+            summary: labJson({ ...root, ...this.provenance(root.actorId) }),
+            data: labJson(root),
+          },
+          { reservationId: reservation },
+        );
+        await this.persistRun(reservation);
+      });
       this.control.setAutonomousActors(policy.autonomousActorIds);
       this.lastSequence = this.runtime.service.world.sequence;
       current();
@@ -798,39 +809,41 @@ export class CognitionLabRunController {
       interval.submitted = true;
       const accepted = outcome.ok || interval.sourceIds.size > 0;
       const timelineId = randomUUID();
-      await this.records.putRecord(
-        {
-          id: timelineId,
-          kind: 'timeline',
-          runId: this.run!.id,
-          parentId: interval.rootId,
-          ...(stimulus.kind !== 'event' || stimulus.actorId ? { actorId: stimulus.actorId } : {}),
-          ...(interval.sourceIds.size ? { sourceId: [...interval.sourceIds][0] } : {}),
-          createdAt: new Date().toISOString(),
-          name: stimulus.kind,
-          status: accepted ? 'accepted' : 'refused',
-          summary: labJson({
+      await this.captureWrite(async () => {
+        await this.records.putRecord(
+          {
             id: timelineId,
+            kind: 'timeline',
             runId: this.run!.id,
-            rootId: interval.rootId,
-            actorId: stimulus.actorId,
-            actorName: stimulus.actorId
-              ? entityGet(this.runtime.service.world.entities, stimulus.actorId)?.name
-              : undefined,
-            targetId: stimulus.kind === 'say' ? stimulus.targetId : undefined,
-            sourceId: [...interval.sourceIds][0],
-            recordedAt: Date.now(),
-            gameTime: this.runtime.service.world.simTime,
-            text: outcome.message,
-            kind: 'stimulus',
+            parentId: interval.rootId,
+            ...(stimulus.kind !== 'event' || stimulus.actorId ? { actorId: stimulus.actorId } : {}),
+            ...(interval.sourceIds.size ? { sourceId: [...interval.sourceIds][0] } : {}),
+            createdAt: new Date().toISOString(),
+            name: stimulus.kind,
             status: accepted ? 'accepted' : 'refused',
-            sourceAccepted: accepted,
-            ...this.provenance(stimulus.actorId),
-          }),
-          data: labJson({ stimulus, outcome, sourceIds: [...interval.sourceIds] }),
-        },
-        { reservationId: interval.reservation },
-      );
+            summary: labJson({
+              id: timelineId,
+              runId: this.run!.id,
+              rootId: interval.rootId,
+              actorId: stimulus.actorId,
+              actorName: stimulus.actorId
+                ? entityGet(this.runtime.service.world.entities, stimulus.actorId)?.name
+                : undefined,
+              targetId: stimulus.kind === 'say' ? stimulus.targetId : undefined,
+              sourceId: [...interval.sourceIds][0],
+              recordedAt: Date.now(),
+              gameTime: this.runtime.service.world.simTime,
+              text: outcome.message,
+              kind: 'stimulus',
+              status: accepted ? 'accepted' : 'refused',
+              sourceAccepted: accepted,
+              ...this.provenance(stimulus.actorId),
+            }),
+            data: labJson({ stimulus, outcome, sourceIds: [...interval.sourceIds] }),
+          },
+          { reservationId: interval.reservation },
+        );
+      });
       if (!accepted) await this.finish(outcome.message);
       else {
         this.runtime.clock.setBlocked(false);
@@ -915,7 +928,21 @@ export class CognitionLabRunController {
     }
     this.options.changed();
   }
-  private async observe(event: CognitionRuntimeEvent): Promise<void> {
+  /** Recording and interval-credit release share one ordered owner. Native
+   * settlement remains outside this lane, so a held observer can always finish. */
+  private captureWrite<T>(write: () => Promise<T>): Promise<T> {
+    const result = this.captureTail.then(write);
+    this.captureTail = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  }
+  private async observe(
+    event: CognitionRuntimeEvent,
+    interval: Interval | undefined,
+    run: CognitionLabRun | undefined,
+  ): Promise<void> {
     const captureStarted = performance.now();
     if (event.kind === 'wire') {
       const comparison = this.comparisons.get(event.attemptId);
@@ -940,8 +967,6 @@ export class CognitionLabRunController {
         return;
       }
     }
-    const interval = this.interval,
-      run = this.run;
     if (!interval || !run || this.closed) return;
     if (event.kind === 'control') return;
     await this.authorize(interval.scope);
@@ -1260,14 +1285,20 @@ export class CognitionLabRunController {
           related &&
           job.request.npcId === interval.policy.focalActorId &&
           interval.policy.mode === 'oneResponse' &&
-          interval.submitted
+          interval.submitted &&
+          !interval.completed &&
+          this.interval === interval &&
+          this.run === run
         )
           this.background(this.finish(job.message));
         if (
           interval.submitted &&
           interval.policy.mode === 'untilCondition' &&
           interval.policy.stopCondition?.kind === 'nextDecision' &&
-          job.request.npcId === interval.policy.stopCondition.id
+          job.request.npcId === interval.policy.stopCondition.id &&
+          !interval.completed &&
+          this.interval === interval &&
+          this.run === run
         )
           this.background(this.finish(job.message));
       }
@@ -1377,22 +1408,8 @@ export class CognitionLabRunController {
         await this.writeCapture(capture);
         run.counts.stages++;
         if (native.heldAt !== undefined) {
-          run.prepared = {
-            id: native.handle,
-            stageId: id,
-            actorId: native.actorId,
-            purpose: native.purpose,
-            kind: native.original.kind === 'embedding' ? 'embed' : native.original.kind,
-            editable: true,
-            originalArtifactId: original.id,
-            status: 'held',
-          };
-          if (!this.finishing) {
-            this.stateValue = run.state = 'held';
-            run.status = 'Held before stage';
-            run.reason = 'Inspect the prepared input, then explicitly continue or stop.';
-            this.signalHeld();
-          }
+          capture.preparedReady = true;
+          this.refreshPrepared();
         }
         await this.persistRun(interval.reservation);
         return;
@@ -1507,6 +1524,7 @@ export class CognitionLabRunController {
       this.captures.delete(native.handle);
     }
     if (run.prepared?.id === native.handle) delete run.prepared;
+    this.refreshPrepared();
     await this.persistRun(interval.reservation);
   }
   private provenance(actorId?: string) {
@@ -1607,6 +1625,51 @@ export class CognitionLabRunController {
     for (const resolve of this.heldWaiters) resolve();
     this.heldWaiters.clear();
   }
+  /** Concurrent native roots share one inspected input. Derive that view from
+   * pending native handles, rather than letting a late capture overwrite or
+   * another input's Continue erase a still-unsubmitted request. */
+  private refreshPrepared(): void {
+    const run = this.run,
+      interval = this.interval;
+    if (
+      !run ||
+      !interval ||
+      this.closed ||
+      interval.generation !== this.runtime.service.generation ||
+      run.worldId !== this.runtime.service.world.id ||
+      run.timeline !== this.runtime.service.timelineId
+    )
+      return;
+    const pending = this.control.prepared.filter(
+      (native) => native.generation === interval.generation,
+    );
+    if (run.prepared && !pending.some((native) => native.handle === run.prepared!.id))
+      delete run.prepared;
+    if (!pending.length) return;
+    if (!this.control.held) this.control.hold();
+    // Native preparation order is stable even when retained captures finish in
+    // another order. Never expose an input until its artifact is fully retained.
+    const native = pending[0]!,
+      capture = this.captures.get(native.handle);
+    if (!capture?.preparedReady || capture.stage.runId !== run.id) return;
+    run.prepared = {
+      id: native.handle,
+      stageId: capture.id,
+      actorId: native.actorId,
+      purpose: native.purpose,
+      kind: native.original.kind === 'embedding' ? 'embed' : native.original.kind,
+      editable: true,
+      originalArtifactId: capture.stage.artifacts.find((artifact) => artifact.kind === 'request')!
+        .id,
+      status: 'held',
+    };
+    if (!this.finishing && !interval.completed) {
+      this.stateValue = run.state = 'held';
+      run.status = 'Held before stage';
+      run.reason = 'Inspect the prepared input, then explicitly continue or stop.';
+      this.signalHeld();
+    }
+  }
   async waitHeld(): Promise<void> {
     while (this.finishing || this.stateValue === 'running' || this.stateValue === 'settling') {
       if (this.finishing) await this.finishing;
@@ -1634,6 +1697,7 @@ export class CognitionLabRunController {
     run.reason = reason;
     const state = ended ? 'ended' : 'held';
     const status = ended ? 'Ended' : 'Held';
+    let settlementError: unknown;
     try {
       let cancellationFailure: PromiseRejectedResult | undefined;
       if (cancel) {
@@ -1645,75 +1709,82 @@ export class CognitionLabRunController {
       }
       await this.runtime.director.settleDispatched();
       if (cancellationFailure) throw cancellationFailure.reason;
-      if (this.interval !== interval) return;
-      run.reason = reason;
-      if (ended) run.endedAt = Date.now();
-      if (interval.completed) {
-        // The native interval and its capture are already settled. Its source may
-        // since have been forgotten; ending the run needs no historical read or
-        // repeated terminal capture, and preserves the original disclosure proof.
-        await this.persistRun(undefined, { state, status });
-        return;
-      }
-      interval.completed = true;
-      run.timing = {
-        processingMs: this.control.processingMs - interval.processingStartMs,
-        captureMs: interval.captureMs,
-        operatorHoldMs: interval.operatorHoldMs,
-      };
-      const root = this.rootStage(interval);
-      root.summary = reason;
-      root.resultText = reason;
-      const oldRoot = await this.records.getRecord(interval.rootId, 'stage');
-      if (oldRoot)
-        await this.records.putRecord(
-          {
-            ...oldRoot,
-            status: state,
-            summary: labJson({ ...(oldRoot.summary as object), ...root, status: state }),
-            data: labJson({ ...root, status: state }),
-          },
-          { reservationId: interval.reservation },
-        );
-      const oldInterval = await this.records.getRecord(interval.id, 'interval');
-      if (oldInterval)
-        await this.records.putRecord(
-          {
-            ...oldInterval,
-            status: state,
-            summary: labJson({
-              ...(oldInterval.summary as object),
-              reason,
-              policy: interval.policy,
-              calls: interval.calls,
-              sourceIds: [...interval.sourceIds],
-              activeMs: interval.activeMs,
-              configuration: interval.configuration,
-            }),
-          },
-          { reservationId: interval.reservation },
-        );
-      await this.persistRun(interval.reservation, { state, status });
     } catch (error) {
-      run.completeness = 'partial';
-      run.reason = `${reason} Terminal evidence could not be fully saved.`;
-      throw error;
-    } finally {
-      if (this.interval === interval) {
-        try {
-          if (interval.reservation) {
-            await this.records.release(interval.reservation);
-            interval.reservation = '';
+      settlementError = error;
+    }
+    await this.captureWrite(async () => {
+      try {
+        if (settlementError) throw settlementError;
+        if (this.interval !== interval) return;
+        run.reason = reason;
+        if (ended) run.endedAt = Date.now();
+        if (interval.completed) {
+          // The native interval and its capture are already settled. Its source may
+          // since have been forgotten; ending the run needs no historical read or
+          // repeated terminal capture, and preserves the original disclosure proof.
+          await this.persistRun(undefined, { state, status });
+          return;
+        }
+        interval.completed = true;
+        run.timing = {
+          processingMs: this.control.processingMs - interval.processingStartMs,
+          captureMs: interval.captureMs,
+          operatorHoldMs: interval.operatorHoldMs,
+        };
+        const root = this.rootStage(interval);
+        root.summary = reason;
+        root.resultText = reason;
+        const oldRoot = await this.records.getRecord(interval.rootId, 'stage');
+        if (oldRoot)
+          await this.records.putRecord(
+            {
+              ...oldRoot,
+              status: state,
+              summary: labJson({ ...(oldRoot.summary as object), ...root, status: state }),
+              data: labJson({ ...root, status: state }),
+            },
+            { reservationId: interval.reservation },
+          );
+        const oldInterval = await this.records.getRecord(interval.id, 'interval');
+        if (oldInterval)
+          await this.records.putRecord(
+            {
+              ...oldInterval,
+              status: state,
+              summary: labJson({
+                ...(oldInterval.summary as object),
+                reason,
+                policy: interval.policy,
+                calls: interval.calls,
+                sourceIds: [...interval.sourceIds],
+                activeMs: interval.activeMs,
+                configuration: interval.configuration,
+              }),
+            },
+            { reservationId: interval.reservation },
+          );
+        await this.persistRun(interval.reservation, { state, status });
+      } catch (error) {
+        run.completeness = 'partial';
+        run.reason = `${reason} Terminal evidence could not be fully saved.`;
+        throw error;
+      } finally {
+        if (this.interval === interval) {
+          try {
+            if (interval.reservation) {
+              await this.records.release(interval.reservation);
+              interval.reservation = '';
+            }
+          } finally {
+            interval.completed = true;
+            this.stateValue = run.state = state;
+            run.status = status;
+            this.options.changed();
+            this.signalHeld();
           }
-        } finally {
-          interval.completed = true;
-          this.stateValue = run.state = state;
-          run.status = status;
-          this.options.changed();
-          this.signalHeld();
         }
       }
-    }
+    });
   }
   private validateInput(
     original: CognitionStageInput,
@@ -1794,6 +1865,9 @@ export class CognitionLabRunController {
     if (!held) {
       // Accepted duplicate consumption is idempotent; it never prepares a second call.
       this.control.submit(handleId);
+      this.refreshPrepared();
+      if (this.run?.prepared)
+        await this.captureWrite(() => this.persistRun(this.interval?.reservation));
       return {
         ok: true,
         commandId,
@@ -1813,11 +1887,14 @@ export class CognitionLabRunController {
     this.assertAdmission(admission);
     this.stateValue = this.run!.state = 'running';
     this.run!.status = 'Running';
-    delete this.run!.prepared;
+    if (this.run!.prepared?.id === handleId) delete this.run!.prepared;
     this.control.submit(handleId, selected);
     // Release this request before arming the next native boundary. Both changes
     // are synchronous, so a fast adapter cannot slip through between them.
     this.control.resume(step ? () => true : this.stageBoundary(this.interval!.policy));
+    this.refreshPrepared();
+    if (this.run!.prepared)
+      await this.captureWrite(() => this.persistRun(this.interval!.reservation));
     this.options.changed();
     return {
       ok: true,
@@ -1877,7 +1954,7 @@ export class CognitionLabRunController {
       );
       if (!result.ok) throw new Error(result.message);
       if (input.action === 'pause') await this.finish('Native manual pause applied.');
-    } else if (this.run?.prepared && !this.interval?.completed) {
+    } else if (this.run?.prepared) {
       this.assertAdmission(admission);
       if (input.action === 'advanceTime' || input.action === 'advanceToOutcome')
         throw new Error('Continue or stop the prepared input before advancing simulation time.');
@@ -2805,7 +2882,7 @@ export class CognitionLabRunController {
     };
   }
   async refreshAccounting(): Promise<void> {
-    await this.persistRun(this.interval?.reservation || undefined);
+    await this.captureWrite(() => this.persistRun(this.interval?.reservation || undefined));
   }
   async bindComparison(
     runId: string,
@@ -2813,7 +2890,7 @@ export class CognitionLabRunController {
   ): Promise<void> {
     if (this.run?.id === runId) {
       this.run.comparison = structuredClone(metadata);
-      await this.persistRun(this.interval?.reservation || undefined);
+      await this.captureWrite(() => this.persistRun(this.interval?.reservation || undefined));
       return;
     }
     const record = await this.records.getRecord(runId, 'run');

@@ -90,7 +90,7 @@ Core delivery complete; [filed task record](completed/2026/cognition-context.md#
 
 ## SC12 — Bind derivable metadata; optionally factor local schemas
 
-**Status: Designed, deferred optional follow-up; outside core SC delivery.** Current expected revisions, meaningful mode fields and inline sparse schemas are the core contract. No item in SC12 must be implemented or evaluated to close SC11.
+**Status: Local schema factoring implemented; live qualification in progress. Revision/work-mode projection remains deferred, outside core SC delivery.** Current expected revisions and meaningful mode fields remain unchanged. No item in SC12 is required to close SC11.
 
 **Owner:** prepared response bindings, native mutation/receipt owners, installed-request definitions and AI schema validator. **Design:** technical §§9.5–10. **Dependencies if separately selected:** qualified SC04/SC07, followed by affected lifecycle requalification; integrate current callers through SC06/SC10.
 
@@ -105,8 +105,8 @@ Core delivery complete; [filed task record](completed/2026/cognition-context.md#
 
 ### Conditional refinement: local schema references
 
-- [x] Choose inline sparse definitions as the initial/default contract; provider support alone is insufficient to enable local references.
-- [ ] Measure complete remaining duplication after sparsity. Record either a justified decision to retain inline definitions or an admitted local-reference implementation with exact configured-route evidence.
-- [ ] If adopted, permit only the bounded captured-schema local nonrecursive subset specified in technical §9.5. Reject external/missing/cyclic/dynamic forms locally, retain strict validation through references and update every adapter/parser/preview consumer. Do not build an external schema loader.
+- [x] Deliver inline sparse definitions first; provider support alone is insufficient to enable local references.
+- [x] Measure remaining duplication after sparsity. Repeated permitted-ID enums across the installed forms justify sharing exact definitions; the current compiler selects the smaller encoding. [Campaign evidence](../verification/cognition-lab/2026/2026-10-29-final-native-panel.md) distinguishes component measurements from full native requests.
+- [ ] Finish configured-route live qualification of the bounded local nonrecursive subset in technical §9.5. Local validation, direct/Macrofold transport and custom-dialect fixtures pass; external/missing/cyclic/dynamic forms and assertion siblings refuse. Preview retains the bound value parser. No external loader is installed.
 
 **Exit:** one current schema generator remains, with proven equivalent allowed meaning and a measured net benefit if references are enabled. A historical size sketch is neither a target nor evidence of compatibility.

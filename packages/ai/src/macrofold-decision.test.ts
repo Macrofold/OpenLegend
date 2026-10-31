@@ -788,6 +788,13 @@ describe('standalone Macrofold schema generation', () => {
     const observedAcceptanceCounts: number[] = [];
     const result = await generationClient(f.fetcher).generate({
       ...generationRequest,
+      schema: {
+        type: 'object',
+        properties: { action: { $ref: '#/$defs/action' } },
+        required: ['action'],
+        additionalProperties: false,
+        $defs: { action: { type: 'string', enum: ['rest'] } },
+      },
       stream: true,
       onAccepted: accepted,
       onProgress: () => observedAcceptanceCounts.push(accepted.mock.calls.length),
@@ -805,7 +812,19 @@ describe('standalone Macrofold schema generation', () => {
     expect(accepted).toHaveBeenCalledExactlyOnceWith('run-fixture');
     expect(observedAcceptanceCounts.length).toBeGreaterThan(0);
     expect(observedAcceptanceCounts.every((count) => count === 1)).toBe(true);
-    expect(f.bodies[0]).toMatchObject({ stream: true });
+    expect(f.bodies[0]).toMatchObject({
+      stream: true,
+      input: {
+        response_format: {
+          json_schema: {
+            schema: {
+              properties: { action: { $ref: '#/$defs/action' } },
+              $defs: { action: { type: 'string', enum: ['rest'] } },
+            },
+          },
+        },
+      },
+    });
     expect(f.paths).toEqual(['/v1/inferences']);
   });
 
@@ -880,7 +899,16 @@ describe('standalone Macrofold schema generation', () => {
   it.each(['rest', 'invented'])(
     'accounts for actual native chat transport and retains its frozen schema: %s',
     async (answer) => {
-      const request = structuredClone(generationRequest);
+      const request = {
+        ...structuredClone(generationRequest),
+        schema: {
+          type: 'object',
+          properties: { action: { $ref: '#/$defs/action' } },
+          required: ['action'],
+          additionalProperties: false,
+          $defs: { action: { type: 'string', enum: ['rest'] } },
+        },
+      };
       const originalSchema = structuredClone(request.schema);
       const originalContext = structuredClone(request.context);
       const f = fixture({ value: generationRaw(JSON.stringify({ action: answer })) });
@@ -888,8 +916,7 @@ describe('standalone Macrofold schema generation', () => {
       const fetcher: FetchTransport = async (url, init) => {
         if (new URL(url).pathname === '/v1/inferences') {
           transport = String(init.body);
-          const properties = request.schema.properties as Record<string, { enum: string[] }>;
-          properties.action!.enum = ['invented'];
+          request.schema.$defs.action.enum = ['invented'];
           request.context = { encounter: 'Mutated after admission.' };
         }
         return f.fetcher(url, init);

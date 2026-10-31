@@ -232,6 +232,12 @@ export type ActivityRequestField = {
   | { type: 'entity' | 'integer' | 'time' | 'mode'; definitionKind?: never }
 );
 export interface ActivityRequestDescriptor {
+  /** Complete direct meanings supplied by this form. This prunes optional
+   * concrete preparation only; it grants no permission or required-set omission. */
+  covers?: readonly {
+    type: Command['type'];
+    equals?: Readonly<Record<string, string | number | boolean>>;
+  }[];
   /** Exact native operations this composition needs; no equipment/material grant. */
   requires?: readonly Command['type'][];
   purposeLabel?: string;
@@ -242,6 +248,26 @@ export interface ActivityRequestDescriptor {
   presentation?: ActivityRequestPresentation;
   fields: Record<string, ActivityRequestField>;
 }
+/** Prepare once for the actor's optional catalogue. A compound request's
+ * prerequisites do not imply complete coverage of those primitive meanings. */
+export function prepareActivityRequestCoverage(requests: readonly ActivityRequestDescriptor[]) {
+  const byType = new Map<Command['type'], Array<Array<[string, string | number | boolean]>>>();
+  for (const request of requests)
+    for (const coverage of request.covers ?? []) {
+      const predicates = byType.get(coverage.type) ?? [];
+      predicates.push(Object.entries(coverage.equals ?? {}));
+      byType.set(coverage.type, predicates);
+    }
+  return <C extends Pick<Command, 'type'>>(command: C) =>
+    byType
+      .get(command.type)
+      ?.some((equals) =>
+        equals.every(
+          ([field, value]) => (command as unknown as Record<string, unknown>)[field] === value,
+        ),
+      ) ?? false;
+}
+
 export function activityRequestFieldDependencies(field: ActivityRequestField): readonly string[] {
   return [
     ...new Set([

@@ -1,3 +1,4 @@
+import { compileSchema } from '../../packages/ai/src/index.js';
 import type {
   AiClient,
   AiReceipt,
@@ -7,6 +8,42 @@ import type {
   JudgeValue,
   JudgmentAnswer,
 } from '@open-legend/ai';
+
+/** Inspect the permitted known actions of a captured sparse response schema.
+ * Enum literals supply candidates only; the actual adapter validator decides
+ * whether a complete response admits that action, including through local refs. */
+export function fixtureResponseActionHandles(schema: unknown): string[] {
+  const validate = compileSchema(schema);
+  const candidates = new Set<string>();
+  function collect(node: unknown): void {
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node)) {
+      for (const child of node) collect(child);
+      return;
+    }
+    const value = node as Record<string, unknown>;
+    if (Array.isArray(value.enum))
+      for (const entry of value.enum)
+        if (typeof entry === 'string' && /^a\d+$/.test(entry)) candidates.add(entry);
+    for (const child of Object.values(value)) collect(child);
+  }
+  collect(schema);
+  return [...candidates]
+    .filter((actionId) =>
+      ['enqueue', 'replace', 'interrupt'].some((mode) =>
+        validate({
+          operations: [
+            {
+              localId: 'fixture_action',
+              requiresAccepted: [],
+              act: { kind: 'known', actionId, mode },
+            },
+          ],
+        }),
+      ),
+    )
+    .sort();
+}
 
 /** Resolve the current source index in either native decision facts or rendered input. */
 export function fixtureTriggerExperience(context: unknown): { value: Record<string, unknown> } {

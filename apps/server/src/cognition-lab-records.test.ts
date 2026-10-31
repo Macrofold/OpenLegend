@@ -619,8 +619,32 @@ describe('retained cognition experiment records', () => {
 
   it('reopens retained evidence and interrupts pending metadata operations without repeating native work', async () => {
     const saved = await records.putArtifact('retained exact request', 'application/json');
+    const initial = record('scenario'),
+      runId = randomUUID(),
+      retained = record('run', { id: runId, runId, data: { retained: true } }),
+      workspace = record('workspace', {
+        data: { initialOriginId: initial.id, holds: [{ entityId: 'old-person' }] },
+      });
+    await records.putRecord(initial);
+    await records.configureRun(runId);
+    await records.putRecord(retained, {
+      references: [
+        { kind: 'record', id: initial.id },
+        { kind: 'artifact', id: saved.id },
+      ],
+    });
+    await records.putRecord(workspace, { references: [{ kind: 'record', id: initial.id }] });
+    await records.putRecord(record('customField', { data: { recipientActorIds: ['old-person'] } }));
+    await records.reconcileAttempt(
+      runId,
+      'retained-unknown',
+      { requestId: 'remote' },
+      undefined,
+      true,
+    );
     const id = randomUUID();
     await records.beginOperation(id, { kind: 'save' });
+    await records.close();
     const reopened = new CognitionLabRecords(db, directory);
     await reopened.recoverInterrupted();
     expect((await reopened.receipt(id))?.state).toBe('interrupted');
@@ -628,6 +652,46 @@ describe('retained cognition experiment records', () => {
       'retained exact request',
     );
     expect((await reopened.usage()).reservedBytes).toBe(LAB_STORAGE_DEFAULTS.terminalBytes);
+    const expected = await reopened.getRecord(workspace.id, 'workspace');
+    if (!expected) throw new Error('Expected the retained workspace before offline reset.');
+    const costs = await reopened.costs(runId),
+      receipt = await reopened.receipt(id),
+      usage = await reopened.usage(),
+      runUsage = await reopened.runUsage(runId);
+    const attempts = await db
+      .prepare('SELECT * FROM cognition_lab.attempts ORDER BY attempt_id')
+      .all();
+    await expect(reopened.resetDevelopmentWorkspace(expected)).rejects.toThrow(/Close the offline/);
+    await reopened.close();
+    await expect(
+      reopened.resetDevelopmentWorkspace({ ...expected, data: { initialOriginId: 'changed' } }),
+    ).rejects.toThrow(/changed before reset/);
+    expect(await reopened.usage()).toEqual(usage);
+    expect(await reopened.resetDevelopmentWorkspace(expected)).toEqual({
+      workspaceId: workspace.id,
+      customFields: 1,
+    });
+    expect((await reopened.pageRecords('workspace')).items).toEqual([]);
+    expect((await reopened.pageRecords('customField')).items).toEqual([]);
+    expect(await reopened.getRecord(initial.id)).toEqual(initial);
+    expect(await reopened.getRecord(runId)).toEqual(retained);
+    expect(await reopened.references('record', initial.id)).toBe(true);
+    expect((await reopened.readArtifactChunk(saved.id)).bytes.toString()).toBe(
+      'retained exact request',
+    );
+    expect(await reopened.costs(runId)).toEqual(costs);
+    expect(await reopened.runUsage(runId)).toEqual(runUsage);
+    expect(await reopened.receipt(id)).toEqual(receipt);
+    expect(
+      await db.prepare('SELECT * FROM cognition_lab.attempts ORDER BY attempt_id').all(),
+    ).toEqual(attempts);
+    expect((await reopened.usage()).reservedBytes).toBe(usage.reservedBytes);
+    expect((await reopened.usage()).usedBytes).toBeLessThan(usage.usedBytes);
+    const current = new CognitionLabRecords(db, directory);
+    expect((await current.pageRecords('workspace')).items).toEqual([]);
+    expect((await current.pageRecords('customField')).items).toEqual([]);
+    expect(await current.costs(runId)).toEqual(costs);
+    await current.close();
   });
 
   it.each([false, true])(

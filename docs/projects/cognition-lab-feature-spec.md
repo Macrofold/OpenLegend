@@ -1,8 +1,8 @@
 # Cognition Lab — feature specification
 
-| Status      | Current progress                                                                                                                                        | Last updated         |
-| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Shared runtime, desktop workspace and Library implemented and technically qualified; human and broader behavior acceptance remain open under CL11/CL13. | 2026-10-28 06:33 UTC |
+| Status      | Current progress                                                                                                                                            | Last updated         |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Shared runtime, desktop workspace and Library implemented; final native behavior qualification is in progress under CL13, with human acceptance still open. | 2026-10-29 22:01 UTC |
 
 ## 1. Purpose and product outcome
 

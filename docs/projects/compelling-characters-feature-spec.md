@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                    | Last updated         |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-28 19:47 UTC |
+| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-29 05:04 UTC |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The authorship clarification is developed in the [scoped technical design](compelling-characters-tech-design.md). [Emotional physiology and adaptive reappraisal](emotional-physiology-feature-spec.md) specifies the selected general emotion system; broader psychological-needs mechanics and automatic personality development remain separately scoped. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
@@ -165,7 +165,7 @@ This illustrates product intent, not a drop-in replacement for current trusted i
 
 The desired ordinary voice is an inhabitant's voice: concrete, context-sensitive and particular to the person. A character can be terse, playful, formal, awkward, irritated or quiet when appropriate. Do not force every resident into generic politeness, therapeutic dialogue, constant helpfulness or endlessly renewed greetings.
 
-Supplied context is information, not a checklist to mention or act on; shared instructions ask for what the person would naturally do now. A memory may remain unspoken. Silence or absence of explicit recollection alone does not establish a behavioral failure or prove that supplied evidence was unused.
+The generation Task is distinct from character Context, acquired evidence, available capabilities and response rules; judgment questions receive permitted context without generation-only output instructions. Optional activity forms are supported choices, not assignments or incoming requests. Supplied context is information, not a checklist to mention or act on; shared instructions ask for what the person would naturally do now. A memory may remain unspoken. Silence or absence of explicit recollection alone does not establish a behavioral failure or prove that supplied evidence was unused.
 
 Written emotional expression and expressive asides are allowed in character responses. They do not need conversion into an expression or action operation. Text alone produces no movement, contact, injury, item transfer or other mechanical effect; those require the corresponding admitted structured action. Do not infer or execute actions from prose. No additional emotion catalogue, output channel or prose parser is selected for this purpose.
 
@@ -178,6 +178,8 @@ Characters may have short fictional thoughts, reflections, associations, anticip
 Private fictional thought is separate from the model provider's hidden reasoning and from public narration. Evaluation may inspect authorized game records and submitted context; it does not require provider reasoning traces. Ordinary players learn about the character through permitted expression and conduct. A resident need not explain every feeling or resolve every contradiction aloud.
 
 Meaningful internal changes should reach the existing attention and decision-opportunity process. An eligible emotional review can change supported interpretation without publishing a thought or selecting conduct; its own receipt does not create a recursive emotional cause. Repeated exposure to the same condition, an unchanged wish, and a newly stored thought do not each require another model call. Choosing to remain at rest or continue meaningful work is a legitimate outcome. The system must also avoid starving psychological opportunities behind a permanent survival-only shortlist.
+
+The [optional intent/detail and diagnostic comparison](compelling-characters-tech-design.md#optional-response-decomposition-and-diagnostics) remains unselected. The current response still uses one ordinary generation and the existing independent-operation contract.
 
 ## Integrated behavior and its lifecycle
 

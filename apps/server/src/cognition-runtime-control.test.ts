@@ -196,11 +196,69 @@ describe('scoped cognition holds', () => {
     expect(prepared.input).toEqual(edited);
     expect(held.original).toEqual(input);
     expect(restoreTiming).toHaveBeenCalledOnce();
+    const game = repository(),
+      lab = repository();
+    const host = new CognitionExecution(game.store);
+    const labScope = host.register(lab.store, control);
+    close.push(() => host.close());
+    const lease = (await labScope.acquirePrepared(prepared.stage, 'primary'))!;
+    const unregister = control.registerNative(prepared.stage.rootId);
+    control.setObserver((event) => {
+      if (event.kind === 'dispatched') control.hold();
+    });
     const provider = vi.fn(async () => result());
-    await control.dispatch(prepared.stage, provider);
+    const dispatched = control.dispatch(prepared.stage, provider, lease);
+    await turn();
+    await control.settle();
+    expect(provider).not.toHaveBeenCalled();
+    expect(control.activeCalls).toBe(0);
+    // A late human hold yields the actual slot rather than blocking ordinary play.
+    const gameLease = (await host.primary())!;
+    expect(gameLease).toBeDefined();
+    expect(await labScope.primary()).toBeUndefined();
+    gameLease.release();
+    control.resume();
+    await dispatched;
+    unregister();
+    lease.release();
+    expect(lease.resume()).toBe(false);
+    expect(holdTiming).toHaveBeenCalledTimes(2);
+    expect(restoreTiming).toHaveBeenCalledTimes(2);
     expect(control.submit(held.handle)).toBe(held);
     expect(provider).toHaveBeenCalledOnce();
     expect(control.activeCalls).toBe(0);
+
+    // Source validation itself can yield to a hold after dispatch capture.
+    control.setObserver(() => {});
+    let holdDuringSource = false;
+    const sourceStage = await control.prepare(
+      {
+        ...context(),
+        id: 'source-await',
+        current: async () => {
+          if (holdDuringSource) {
+            holdDuringSource = false;
+            control.hold();
+          }
+        },
+      },
+      input,
+    );
+    const sourceLease = (await labScope.acquirePrepared(sourceStage.stage, 'primary'))!;
+    const releaseSource = control.registerNative(sourceStage.stage.rootId);
+    holdDuringSource = true;
+    const sourceDispatch = control.dispatch(sourceStage.stage, provider, sourceLease);
+    await turn();
+    await control.settle();
+    expect(provider).toHaveBeenCalledOnce();
+    const ordinary = (await host.primary())!;
+    expect(ordinary).toBeDefined();
+    ordinary.release();
+    control.resume();
+    await sourceDispatch;
+    sourceLease.release();
+    releaseSource();
+    expect(provider).toHaveBeenCalledTimes(2);
   });
 
   it('rejects already aborted and invalidated waits, so close never depends on a UI Continue', async () => {
@@ -220,6 +278,34 @@ describe('scoped cognition holds', () => {
     await turn();
     control.close();
     await closed;
+
+    const resumed = new CognitionRuntimeControl();
+    close.push(() => resumed.close());
+    resumed.resume();
+    const signal = new AbortController();
+    const stage = await resumed.prepare(context(signal.signal), input);
+    const unregister = resumed.registerNative(stage.stage.rootId);
+    resumed.hold();
+    const provider = vi.fn(async () => result());
+    const dispatch = resumed.dispatch(stage.stage, provider);
+    const aborted = expect(dispatch).rejects.toThrow('cancelled');
+    await turn();
+    await resumed.settle();
+    signal.abort();
+    await aborted;
+    unregister();
+    resumed.resume();
+    expect(provider).not.toHaveBeenCalled();
+
+    const stale = await resumed.prepare(context(), input);
+    resumed.hold();
+    const staleDispatch = resumed.dispatch(stale.stage, provider);
+    const invalidated = expect(staleDispatch).rejects.toThrow('stopped');
+    await turn();
+    resumed.invalidate();
+    await invalidated;
+    resumed.resume();
+    expect(provider).not.toHaveBeenCalled();
   });
 
   it('does not expose protected execution controls in editable generation input', async () => {
@@ -310,6 +396,10 @@ describe('one host inference pool', () => {
     expect(host.snapshot().background).toBe('unknown');
     await labScope.close();
     expect(host.snapshot().background).toBe('unknown');
+    const closingLease = (await host.primary())!;
+    await host.close();
+    expect(closingLease.resume()).toBe(false);
+    closingLease.release();
   });
 
   it('borrows one existing background position only after uncertain primary work releases locally', async () => {
@@ -326,6 +416,8 @@ describe('one host inference pool', () => {
     expect(await host.requestOnly()).toBeUndefined();
     original.uncertain('original');
     game.occupied.push({ attemptId: 'original', executionClass: 'primary' });
+    expect(() => original.suspend()).toThrow('Unconfirmed provider work');
+    expect(host.snapshot().primary).toBe('unknown');
     expect(await host.primaryAvailable()).toBe(false);
     expect(await host.primary()).toBeUndefined();
     original.release();
@@ -333,6 +425,12 @@ describe('one host inference pool', () => {
     expect(await labScope.primary()).toBeUndefined(); // Native lab gate is held.
     const borrowed = (await labScope.requestOnly())!;
     expect(borrowed.executionClass).toBe('background');
+    borrowed.suspend();
+    const replacement = (await host.requestOnly())!;
+    expect(replacement).toBeDefined();
+    expect(borrowed.resume()).toBe(false); // Preserve the single ordinary borrower.
+    replacement.release();
+    expect(borrowed.resume()).toBe(true);
     expect(host.snapshot().primary).toBe('unknown');
     expect(await host.primaryAvailable()).toBe(false);
     expect(await host.requestOnly()).toBeUndefined();
@@ -341,7 +439,10 @@ describe('one host inference pool', () => {
     await host.reconcile(game.store);
     expect(host.snapshot().primary).toBe('available');
     expect(await host.primary()).toBeUndefined(); // Settlement cannot multiply ordinary work.
+    borrowed.suspend();
     borrowed.uncertain('borrowed');
+    expect(host.snapshot().background).toBe('unknown');
+    expect(await host.primary()).toBeUndefined();
     lab.occupied.push({ attemptId: 'borrowed', executionClass: 'background' });
     borrowed.release();
     const next = (await host.primary())!;

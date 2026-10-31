@@ -25,6 +25,7 @@ import {
   experienceSourceKey,
   activityRequestChoices,
   activityRequestDescriptors,
+  type ActivityRequestDescriptor,
   itemOutputFamilies,
   portableItems,
   worldPosition,
@@ -88,8 +89,7 @@ import {
   responseTrigger,
   responseTriggerContext,
   referenceTriggerContext,
-  compactActivityRequests,
-  type ModelActivityRequests,
+  judgmentDecisionContext,
 } from './response-context.js';
 import { attentionRequest } from './attention-request.js';
 import {
@@ -272,6 +272,10 @@ function decisionPublicSurfaces(
   });
 }
 
+function continuationCandidates(candidates: readonly CandidateAction[]): CandidateAction[] {
+  return candidates.filter((candidate) => !candidate.command && !candidate.nativeInvocation);
+}
+
 function fitActionCandidates(
   context: Record<string, unknown>,
   candidates: CandidateAction[],
@@ -290,13 +294,29 @@ function fitActionCandidates(
       throw new ContextBudgetError('The complete required choice set exceeds the input budget.');
     return candidates;
   }
+  // Keep the exact no-intervention choice selectable before optional examples.
+  // Its actual interface was reserved before optional personal evidence was fitted.
+  const continuing = continuationCandidates(candidates);
   let remaining =
     CONTEXT_BYTE_LIMIT -
     reservedBytes -
-    Buffer.byteLength(readableDecisionContext(context, [], true)) -
-    Buffer.byteLength(RESPONSE_INSTRUCTIONS);
-  const selected = diverseActionCandidates(candidates).filter((candidate, index) => {
-    const offer = candidateOffer(candidate, `a${index}`);
+    (measure
+      ? measure(continuing)
+      : Buffer.byteLength(
+          readableDecisionContext(
+            context,
+            continuing.map((candidate, index) => candidateOffer(candidate, `a${index}`)),
+            true,
+          ),
+        ) + Buffer.byteLength(RESPONSE_INSTRUCTIONS));
+  if (remaining < 0) {
+    if (continuing.length) throw new ContextBudgetError();
+    return []; // Optional planning examples need not fit their own action interface.
+  }
+  const optional = diverseActionCandidates(
+    candidates.filter((candidate) => !!candidate.command || !!candidate.nativeInvocation),
+  ).filter((candidate, index) => {
+    const offer = candidateOffer(candidate, `a${index + continuing.length}`);
     const bytes =
       Buffer.byteLength(`- ${offer.id} (mode=${offer.mode}): ${offer.description}\n`) + 64;
     if (bytes > remaining) {
@@ -305,9 +325,9 @@ function fitActionCandidates(
     remaining -= bytes;
     return true;
   });
+  const selected = [...continuing, ...optional];
   if (!measure || measure(selected) + reservedBytes <= CONTEXT_BYTE_LIMIT) return selected;
-  if (measure([]) + reservedBytes > CONTEXT_BYTE_LIMIT) throw new ContextBudgetError();
-  let low = 0,
+  let low = continuing.length,
     high = selected.length;
   while (low < high) {
     const count = Math.ceil((low + high) / 2);
@@ -353,6 +373,7 @@ function decisionActionCandidates(
   actorId: string,
   observed: ReturnType<typeof decisionObservation>,
   inspection?: ActionInspection,
+  requests: readonly ActivityRequestDescriptor[] = [],
 ): CandidateAction[] {
   const current = service.world.actionExperience.learning[actorId]?.inspection;
   const sameInspection =
@@ -407,7 +428,7 @@ function decisionActionCandidates(
           },
         ]
       : []),
-    ...npcCandidates(service, actorId, observed),
+    ...npcCandidates(service, actorId, observed, 'suggestions', requests),
     ...planningCandidates(service, actorId, observed),
   ]);
 }
@@ -760,9 +781,16 @@ export async function prepareDecision(
           catalogueIds,
         }
       : undefined;
+  const requiredActivity = activityDecisionFacts(world, actorId, observed, !closedChoice);
   const availableActions = suppliedChoices
     ? distinctActions(suppliedChoices.candidates)
-    : decisionActionCandidates(service, actorId, observed, actionInspection);
+    : decisionActionCandidates(
+        service,
+        actorId,
+        observed,
+        actionInspection,
+        requiredActivity.activityRequests.requests,
+      );
   const measuredOffers =
     inputMeasure && closedChoice
       ? availableActions.map((candidate, index) => candidateOffer(candidate, `a${index}`))
@@ -772,11 +800,12 @@ export async function prepareDecision(
     capturedWorld: WorldService['world'],
     sources?: DecisionInputSources,
     includeActions = false,
+    offered = measuredOffers,
   ) =>
     inputMeasure
       ? inputMeasure({
           context,
-          offered: measuredOffers,
+          offered,
           sourceTime: capturedWorld.simTime,
           actionGuidance: capturedWorld.cognitionPolicy.actionGuidance,
           sources: sources!,
@@ -851,7 +880,6 @@ export async function prepareDecision(
     ? `${missingOutcomes} recent work records are unavailable under current memory permissions/retention. Base decisions only on available memories and current evidence; do not reconstruct their effects from execution status.`
     : 'Recent work results are included through the same personal memories as other experiences.';
   const snapshotActor = observed.actor.actor!;
-  const requiredActivity = activityDecisionFacts(world, actorId, observed, !closedChoice);
   const requiredReferences = responseReferences(
     world,
     actorId,
@@ -1030,6 +1058,9 @@ export async function prepareDecision(
         : Buffer.byteLength(readableDecisionContext(requiredContext, largestActionOffers, true)) +
           Buffer.byteLength(RESPONSE_INSTRUCTIONS);
   const desiredActionBytes = Math.max(0, actionPromptBytes - requiredBytes);
+  const continuingOffers = continuationCandidates(availableActions).map((candidate, index) =>
+    candidateOffer(candidate, `a${index}`),
+  );
   // Ordinary action shortlists are optional. Reserve mandatory busy choices,
   // then fit optional actions only after complete personal evidence/conversation.
   // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
@@ -1039,10 +1070,21 @@ export async function prepareDecision(
   const actionReserveBytes = inputMeasure
     ? closedChoice
       ? 0
-      : Math.max(0, measureInput(required.context, world, required.sources, true) - requiredBytes)
+      : Math.max(
+          0,
+          measureInput(required.context, world, required.sources, true, continuingOffers) -
+            requiredBytes,
+        )
     : requiredChoices && !suppliedChoices
       ? desiredActionBytes
-      : 0;
+      : closedChoice
+        ? 0
+        : Math.max(
+            0,
+            Buffer.byteLength(readableDecisionContext(required.context, continuingOffers, true)) +
+              Buffer.byteLength(RESPONSE_INSTRUCTIONS) -
+              requiredBytes,
+          );
   const requiredRecallBytes = () =>
     candidates
       .filter((candidate) => candidate.required)
@@ -2206,16 +2248,7 @@ export async function selectDecisionActions(
     {
       // Jev judges relevance, not the generative response schema or formatting instructions.
       // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
-      decisionContext: Object.fromEntries(
-        Object.entries(prepared.context)
-          .filter(([key]) => !['knowledgeInstructions', 'navigation', 'planOffers'].includes(key))
-          .map(([key, value]) => [
-            key,
-            key === 'activityRequests'
-              ? compactActivityRequests(value as ModelActivityRequests)
-              : value,
-          ]),
-      ),
+      decisionContext: judgmentDecisionContext(prepared.context),
       attentionPolicy: `${prepared.actionGuidance.reasons} ${ACTION_EVIDENCE_POLICY}${purpose === 'actions' ? ' Include uncertain but plausible options without choosing a final action. Listing is not endorsement; no action and unlisted attempts remain valid.' : ''}`,
     },
     Object.entries(candidateDescriptions),
@@ -2305,6 +2338,7 @@ export function refreshDecisionActions(
       prepared.binding.actorId,
       observed,
       prepared.actionInspection,
+      prepared.activityRequests.requests,
     ),
     expectedPlanRevision: actor.agency.plan?.revision ?? 0,
     replaceChosenPlan:

@@ -9,6 +9,7 @@ import { settleProjectiles } from './ranged.js';
 import { validateWorldModules } from './world-modules.js';
 import type { WorldEvent, WorldState } from './types.js';
 import type { AdmittedWorldInput } from './execution-input.js';
+import { freezeWorld, updateWorld } from './draft.js';
 
 function released(): WorldState {
   let { world } = fixture();
@@ -191,23 +192,28 @@ describe('native projectile chronology', () => {
   });
 
   it('forecasts steering in actual occupancy order when the first mover frees a follower', () => {
-    const world = released(),
-      source = entityGet(world.entities, PLAYER_ID)!,
-      target = entityGet(world.entities, NPC_ID)!,
-      p = worldPosition(source),
-      flight = Object.values(world.projectiles!)[0]!;
-    setSpatialPosition(world, target, { ...p, x: p.x + 0.5 }, worldSupport(source));
-    flight.position = { x: p.x + 0.75, y: p.y + 0.2, z: p.z - 1 };
-    flight.direction = { x: 0, y: 0, z: 1 };
-    flight.speed = 0.3;
-    flight.sourceExited = true;
-    flight.handling = 0;
+    const world = freezeWorld(
+      updateWorld(freezeWorld(released()), (draft) => {
+        const source = entityGet(draft.entities, PLAYER_ID)!,
+          target = entityGet(draft.entities, NPC_ID)!,
+          p = worldPosition(source),
+          flight = Object.values(draft.projectiles!)[0]!;
+        setSpatialPosition(draft, target, { ...p, x: p.x + 0.5 }, worldSupport(source));
+        flight.position = { x: p.x + 0.75, y: p.y + 0.2, z: p.z - 1 };
+        flight.direction = { x: 0, y: 0, z: 1 };
+        flight.speed = 0.3;
+        flight.sourceExited = true;
+        flight.handling = 0;
+      }),
+    );
     const inputs = [NPC_ID, PLAYER_ID].map((actorId) => ({
       actorId,
       steering: { direction: { x: 1, z: 0 }, startsAt: world.simTime, endsAt: world.simTime + 4 },
     }));
-    const large = cut(structuredClone(world), 4, 4, inputs),
-      small = cut(structuredClone(world), 4, 0.1, inputs);
+    // Both cuts start from the same immutable publication, as native runtime
+    // continuations do. A plain clone would discard that reuse boundary.
+    const large = cut(world, 4, 4, inputs),
+      small = cut(world, 4, 0.1, inputs);
     expect(large.events.some((e) => e.type === 'projectile-contact')).toBe(true);
     expect(combatFacts(large.events)).toEqual(combatFacts(small.events));
     for (const id of [PLAYER_ID, NPC_ID])

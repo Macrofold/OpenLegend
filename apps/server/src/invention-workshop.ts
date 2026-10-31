@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { z } from 'zod';
 import {
   InventionFailure,
@@ -23,7 +24,7 @@ const workshopTurn = z
     baseRecipeId: z.string().min(1).max(180).nullable(),
   })
   .strict();
-const workshopSchema = z.toJSONSchema(workshopTurn, { target: 'draft-7' });
+const workshopSchema = modelJsonSchema(workshopTurn);
 export const WORKSHOP_LIMITS = {
   rounds: 4,
   tools: 8,

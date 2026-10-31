@@ -181,7 +181,7 @@ export class CognitionRuntimeControl {
   private settings: { effort?: GenerationInput['reasoningEffort']; maxOutputTokens?: number } = {};
   private readonly stageChecks = new Map<
     string,
-    { epoch: number; current(): void | Promise<void> }
+    { epoch: number } & Pick<CognitionStageContext, 'current' | 'signal' | 'holdTiming'>
   >();
   private breakpoint?: (stage: PreparedCognitionStage) => boolean;
   private readonly heldStages = new Map<string, HeldStage>();
@@ -192,7 +192,7 @@ export class CognitionRuntimeControl {
     string,
     Set<{
       epoch: number;
-      held: boolean;
+      held: number;
       captureTiming?: () => (() => void | Promise<void>) | undefined;
     }>
   >();
@@ -355,7 +355,7 @@ export class CognitionRuntimeControl {
     rootId: string,
     captureTiming?: () => (() => void | Promise<void>) | undefined,
   ): () => void {
-    const activity = { epoch: this.epochValue, held: false, captureTiming };
+    const activity = { epoch: this.epochValue, held: 0, captureTiming };
     let jobs = this.nativeJobs.get(rootId);
     if (!jobs) this.nativeJobs.set(rootId, (jobs = new Set()));
     jobs.add(activity);
@@ -376,12 +376,90 @@ export class CognitionRuntimeControl {
     for (const resolve of this.settledWaiters) resolve();
     this.settledWaiters.clear();
   }
+  private holdNativeRoot(rootId: string): () => void {
+    const jobs = [...(this.nativeJobs.get(rootId) ?? [])];
+    for (const job of jobs) job.held++;
+    this.signalSettled();
+    return () => {
+      for (const job of jobs) job.held--;
+    };
+  }
+  /** An already admitted native job waits through another root's Lab hold.
+   * A hold is not capacity loss; stop, restore and cancellation still retire it. */
+  async waitUntilReleased(
+    context: Pick<CognitionStageContext, 'rootId' | 'signal' | 'current' | 'holdTiming'>,
+    beforeHold?: () => void,
+  ): Promise<void> {
+    const epoch = this.epochValue;
+    const check = () => {
+      this.assertCurrent(epoch);
+      if (context.signal?.aborted)
+        throw new CognitionControlError('The cognition request was cancelled.');
+    };
+    for (;;) {
+      check();
+      await context.current();
+      check();
+      if (!this.held) return;
+      beforeHold?.();
+      const releaseNative = this.holdNativeRoot(context.rootId);
+      let resumeTiming: ReturnType<NonNullable<CognitionStageContext['holdTiming']>> | undefined;
+      try {
+        resumeTiming = context.holdTiming?.();
+        await new Promise<void>((resolve, reject) => {
+          let unsubscribe = () => {};
+          const finish = (error?: unknown) => {
+            unsubscribe();
+            context.signal?.removeEventListener('abort', changed);
+            if (error) reject(error);
+            else resolve();
+          };
+          const changed = () => {
+            try {
+              check();
+              if (!this.held) finish();
+            } catch (error) {
+              finish(error);
+            }
+          };
+          unsubscribe = this.subscribe(changed);
+          context.signal?.addEventListener('abort', changed, { once: true });
+          changed();
+        });
+      } finally {
+        try {
+          await resumeTiming?.();
+        } finally {
+          releaseNative();
+        }
+      }
+    }
+  }
+  async waitForStage(stage: PreparedCognitionStage, beforeHold?: () => void): Promise<void> {
+    const check = this.stageChecks.get(stage.handle);
+    if (!check) throw new CognitionControlError('This prepared request is no longer available.');
+    this.assertCurrent(check.epoch);
+    await this.waitUntilReleased(
+      {
+        rootId: stage.rootId,
+        signal: check.signal,
+        holdTiming: check.holdTiming,
+        current: async () => {
+          this.assertCurrent(check.epoch);
+          await check.current();
+          this.assertCurrent(check.epoch);
+        },
+      },
+      beforeHold,
+    );
+  }
   invalidate(reason = 'The scenario changed before this prepared call was submitted.'): void {
     this.epochValue++;
     for (const held of [...this.heldStages.values()]) {
       held.stage.status = 'invalidated';
       held.finish(undefined, reason);
     }
+    this.changed();
   }
   stop(reason = 'The experiment stopped.'): void {
     this.epochValue++;
@@ -465,7 +543,12 @@ export class CognitionRuntimeControl {
     };
     this.stages.set(stage.handle, stage);
     this.stageRoots.set(stage.id, { handle: stage.handle, rootId: stage.rootId });
-    this.stageChecks.set(stage.handle, { epoch: this.epochValue, current: context.current });
+    this.stageChecks.set(stage.handle, {
+      epoch: this.epochValue,
+      current: context.current,
+      signal: context.signal,
+      holdTiming: context.holdTiming,
+    });
     // Keep only live or recent handles; retained experiment evidence belongs to its store.
     while (this.stages.size > 256) {
       const removable = [...this.stages].find(([, value]) => value.status !== 'prepared');
@@ -481,10 +564,10 @@ export class CognitionRuntimeControl {
       let selected = input;
       if (shouldHold) {
         stage.heldAt = this.now();
-        for (const job of this.nativeJobs.get(context.rootId) ?? []) job.held = true;
-        this.signalSettled();
-        const resumeTiming = context.holdTiming?.();
+        const releaseNative = this.holdNativeRoot(context.rootId);
+        let resumeTiming: ReturnType<NonNullable<CognitionStageContext['holdTiming']>> | undefined;
         try {
+          resumeTiming = context.holdTiming?.();
           selected = await new Promise<CognitionStageInput>((resolve, reject) => {
             const cancelled = () => finish(undefined, 'The cognition request was cancelled.');
             const finish = (replacement?: CognitionStageInput, reason?: string) => {
@@ -515,7 +598,7 @@ export class CognitionRuntimeControl {
           try {
             await resumeTiming?.();
           } finally {
-            for (const job of this.nativeJobs.get(context.rootId) ?? []) job.held = false;
+            releaseNative();
           }
         }
       } else {
@@ -539,19 +622,29 @@ export class CognitionRuntimeControl {
   async dispatch<T>(
     stage: PreparedCognitionStage,
     operation: () => Promise<AiResult<T>>,
+    lease?: { suspend(): void; resume(): boolean },
   ): Promise<AiResult<T>> {
-    this.assertCurrent();
-    if (this.held || this.disposed)
-      throw new CognitionControlError('The experiment is held; no model request was dispatched.');
-    this.dispatched.add(stage.id);
-    stage.status = 'consumed';
     let operationStarted = false;
     try {
+      this.assertCurrent(this.stageChecks.get(stage.handle)?.epoch);
+      if (this.held) await this.waitForStage(stage, () => lease?.suspend());
+      stage.status = 'consumed';
       await this.emit({ kind: 'dispatched', stage });
-      const check = this.stageChecks.get(stage.handle);
-      this.assertCurrent(check?.epoch);
-      await check?.current();
-      if (this.held) throw new CognitionControlError('The experiment was held before dispatch.');
+      for (;;) {
+        if (this.held) lease?.suspend();
+        await this.waitForStage(stage, () => lease?.suspend());
+        if (this.held) continue;
+        const check = this.stageChecks.get(stage.handle);
+        this.assertCurrent(check?.epoch);
+        if (check?.signal?.aborted)
+          throw new CognitionControlError('The cognition request was cancelled.');
+        // No await separates slot reacquisition from provider entry. A held,
+        // undispatched request neither blocks settle nor pins Main's capacity.
+        if (lease && !lease.resume())
+          throw new CognitionControlError('Model execution capacity is occupied.');
+        break;
+      }
+      this.dispatched.add(stage.id);
       operationStarted = true;
       this.providerRoots.set(stage.rootId, (this.providerRoots.get(stage.rootId) ?? 0) + 1);
       this.changed();

@@ -2,6 +2,8 @@
 
 Status: implementation and technical qualification passed; human usability and broader character/player acceptance remain in progress, October 25, 2026. This record separates installed behavior, deterministic mechanism evidence, measured limits and independent acceptance. [CL01–CL11](../maintainers/cognition-lab.md) owns delivery; the [feature specification](../projects/cognition-lab-feature-spec.md), [technical design](../projects/cognition-lab-tech-design.md) and [limits](../limits/cognition-lab.md) remain current contracts.
 
+The [October 29 behavior panel](cognition-lab/2026/2026-10-29-final-native-panel.md) separately records live model/character evidence and unfinished follow-through; the mechanism evidence below retains its original source and scope.
+
 ## Scope and source
 
 Repository: `https://github.com/Macrofold/OpenLegend.git`. Implementation base: local `main` and `origin/main`, `63263abd72e85f4c180cf7d7c5b7bb1bfbefe086`, containing the selected design squash from `54af3639cb6cf155b2aa25cfe4608ee1ad39ae5d`. Implementation checkout: `/Users/mzw/.codex/worktrees/c00b/OpenLegend`, branch `codex/cognition-lab`. No implementation push or merge is part of this task.

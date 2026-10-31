@@ -10,6 +10,10 @@ import {
 
 export type InstalledActivityRequests = ReturnType<typeof activityRequestDescriptors>;
 
+export const ACTIVITY_REQUEST_LABEL = 'Available activities, optional';
+export const ACTIVITY_REQUEST_MEANING =
+  'These are supported activity forms and eligible parameter choices I may choose, not requests someone else has made or assigned goals. Availability does not establish a learned method, an accepted commitment or completed work.';
+
 /** Provider mirror of the domain IntentSlots validator; references are request-scoped. */
 export const intentSlotsSchema = z
   .object({
@@ -166,7 +170,7 @@ export function navigationInstructions(
   // Standalone action grounding still needs the complete installed catalog here.
   const requests = includeActivityRequests ? activityRequestDescriptors(world, actorId) : [];
   return requests.length
-    ? `${navigation}\nOptional installed activity requests: ${JSON.stringify(requests)}. To explicitly choose one, set invocation.family to its exact id and invocation.parameters to all its selected closed fields. Include only its parameters, with no navigation fields. If it declares a work mode, keep that value equal to act.mode. These are requested activities, never evidence that a method is learned. Choosing no new work and ordinary actions remain available; a request alone creates no goal or completed work.`
+    ? `${navigation}\n${ACTIVITY_REQUEST_LABEL}\n${ACTIVITY_REQUEST_MEANING}\n${JSON.stringify(requests)}\nTo explicitly choose one, set invocation.family to its exact id and invocation.parameters to all its selected closed fields. Include only its parameters, with no navigation fields. If it declares a work mode, keep that value equal to act.mode. Choosing no new work and ordinary actions remain available; a request alone creates no goal or completed work.`
     : navigation;
 }
 const NAVIGATION_TEXT =

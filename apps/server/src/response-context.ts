@@ -28,9 +28,14 @@ import {
 } from './perceived-context.js';
 import type { WorldService } from './world-service.js';
 import type { DecisionActionOffer } from './context.js';
-
-export const KNOWN_ACTION_MODE_INSTRUCTION =
-  'For a known action, copy its offered mode exactly; it specifies how that choice handles current work. Continuing choices use enqueue to preserve current work.';
+import { ACTIVITY_REQUEST_LABEL, ACTIVITY_REQUEST_MEANING } from './navigation-contracts.js';
+import {
+  RESPONSE_OPERATION_GUIDE,
+  RESPONSE_PORTRAYAL_GUIDE,
+  responseTaskInstructions,
+} from './cognition-contracts.js';
+const KNOWN_PLANNING_MEANING =
+  'These choices describe planning techniques, not actions guaranteed executable now. Prerequisites must be obtained first. These handles can be queued without a current action shortlist.';
 
 export interface ModelActivityRequests {
   requests: ActivityRequestDescriptor[];
@@ -43,11 +48,32 @@ export interface ModelActivityRequests {
 /** Factor repeated transport metadata without selecting or shortening a choice.
  * The authoritative catalogue and exact bindings keep their ordinary shape. */
 export function compactActivityRequests(catalogue: ModelActivityRequests) {
+  const shared = new Map<
+    string,
+    {
+      choice: Omit<ModelActivityRequests['choices'][number], 'requestIds'>;
+      requestIds?: Set<string>;
+    }
+  >();
+  for (const { requestIds, ...choice } of catalogue.choices) {
+    // Merge only the same complete fact. Combining different role or parent
+    // bindings would invent relationships between a form and its parameters.
+    const key = canonicalJson({ choice, scoped: requestIds !== undefined });
+    const prior = shared.get(key);
+    if (prior) for (const id of requestIds ?? []) prior.requestIds!.add(id);
+    else
+      shared.set(key, {
+        choice,
+        ...(requestIds ? { requestIds: new Set(requestIds) } : {}),
+      });
+  }
   const groups = new Map<string, number>();
   const choiceGroups: Array<
     Pick<ActivityRequestChoice, 'kind' | 'roles' | 'accessible' | 'requestIds'>
   > = [];
-  const choices = catalogue.choices.map(({ kind, roles, accessible, requestIds, ...choice }) => {
+  const choices = [...shared.values()].map(({ choice: sharedChoice, requestIds: familyIds }) => {
+    const { kind, roles, accessible, ...choice } = sharedChoice;
+    const requestIds = familyIds && [...familyIds];
     const common = { kind, roles, accessible, ...(requestIds ? { requestIds } : {}) };
     const key = canonicalJson(common);
     let group = groups.get(key);
@@ -59,13 +85,34 @@ export function compactActivityRequests(catalogue: ModelActivityRequests) {
     return { group, ...choice };
   });
   return {
-    requests: catalogue.requests,
+    // Native catalogue coverage is server preparation metadata, not model evidence.
+    requests: catalogue.requests.map(({ covers: _covers, ...request }) => request),
     choiceGroups,
     choices,
     warnings: catalogue.warnings,
     reading:
       'Each choice inherits every field from choiceGroups[group], a zero-based metadata index, not an entity ID. Choices remain separate exact alternatives; group membership is not a requirement to perform them together.',
   };
+}
+
+/** Judgment questions own the task. Reuse the actor's evidence and available forms
+ * without embedding the generator's response-format instructions in its state. */
+export function judgmentDecisionContext(context: Record<string, unknown>) {
+  const projected = Object.fromEntries(
+    Object.entries(context)
+      .filter(([key]) => !['knowledgeInstructions', 'navigation'].includes(key))
+      .map(([key, value]) => [
+        key,
+        key === 'activityRequests'
+          ? compactActivityRequests(value as ModelActivityRequests)
+          : value,
+      ]),
+  );
+  // Known techniques can matter before their materials are owned. Preserve their
+  // exact handles and costs without presenting planning vocabulary as feasibility.
+  if (Array.isArray(context['planOffers']) && context['planOffers'].length)
+    projected['planningMeaning'] = KNOWN_PLANNING_MEANING;
+  return projected;
 }
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */
@@ -220,13 +267,15 @@ export function renderDecisionContext(
       ]
     : [];
   const sections = [
+    `## Task\n${responseTaskInstructions(triggerFacts?.['observerRelationship'] === 'addressed_speech')}`,
+    '## Context\nMy identity, present state, acquired evidence and available choices follow. These are information for my decision, not a checklist of things to mention or goals to adopt. Keep current facts, memories, claims and interpretations distinct.',
     `## Me\n${[context['identity'], context['aboutMe'], context['body'], context['feelings'], context['carryingConcern']].filter((value) => typeof value === 'string' && value.length > 0).join('\n')}\n${expressionGuidance}${capabilities?.speech === false ? '\nI cannot speak; do not emit talk operations.' : ''}`,
     ...(hasItems(context['commitments']) || context['activityCoverage']
       ? [`## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`]
       : []),
     ...(Array.isArray(context['planOffers']) && context['planOffers'].length
       ? [
-          `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\nPrerequisites must be obtained first. These handles can be queued without a current action shortlist.`,
+          `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\n${KNOWN_PLANNING_MEANING}`,
         ]
       : []),
     ...(Array.isArray(context['intentActions']) && context['intentActions'].length
@@ -250,7 +299,7 @@ export function renderDecisionContext(
       : []),
     ...(context['activityRequests']
       ? [
-          `## Optional installed activity requests\n${JSON.stringify(compactActivityRequests(context['activityRequests'] as ModelActivityRequests))}\nUse these exact installed definitions and situation-specific choices. They are optional compositions, not goals, learned methods or completed work. An installed request selects its exact family and only that family's declared parameters. When its parameters declare the same work mode, keep it equal to act.mode. Current native prerequisites still apply.`,
+          `## ${ACTIVITY_REQUEST_LABEL}\n${ACTIVITY_REQUEST_MEANING}\n${JSON.stringify(compactActivityRequests(context['activityRequests'] as ModelActivityRequests))}\nUse these exact world-defined forms and situation-specific choices. Select the exact family and only that family's declared parameters. When its parameters declare the same work mode, keep it equal to act.mode. Current native prerequisites still apply.`,
         ]
       : []),
     ...(context['inspectedContainer']
@@ -283,13 +332,11 @@ export function renderDecisionContext(
   if (includeActions) sections.push(actionSection);
   // Schema-use and optional-silence guidance improved matched responses beyond the schema alone.
   // docs/verification/cognition-lab-native-model-study.md#october-28--prompt-voice-and-context-comparison
-  sections.push(
-    `## Response format\nUse the supplied JSON schema: each operation contains localId, requiresAccepted and only its selected nonnull payload. Return {"operations":[]} to continue without intervention. Independent speech and action can coexist as separate operations; requiresAccepted refers only to earlier localIds and means admission, never physical completion. Do not invent a thought or goal to fill the response.
-Speech addresses only a supplied reference or explicitly nobody; never inherit a recipient. Whispering is not guaranteed private. Express the person's voice and feelings in their speech; emotional asides need no matching action. A relationship or past playful response is evidence, not permanent permission. Distinguish memory, another person's claim, inference and deliberate deception. You may elaborate a sparse pre-game past consistently with this person's supplied identity; do not contradict established history or present an invented detail as a retrieved memory, shared experience or current fact.
-${KNOWN_ACTION_MODE_INSTRUCTION} Proposals preserve exact references, amounts and qualifiers in slots: quantityMode exact means units handled; held means total to carry afterward. A proposal or descriptive gesture does not perform contact, injury, equipment changes or movement. Only native admitted operations produce their declared effects; unsupported intentions remain unperformed.
+  const responseRules = `## Response rules\n${RESPONSE_OPERATION_GUIDE}
+${RESPONSE_PORTRAYAL_GUIDE}
+Proposals preserve exact references, amounts and qualifiers in slots: quantityMode exact means units handled; held means total to carry afterward.
 Goals are private intentions; marking one complete grants no reward. Copy current goal/plan revisions. Plans wait for actual earlier completion, recheck prerequisites and stop on failure; a new goal alias "$localId" requires that earlier goal's admission. Only ${outputs} supply a single item receipt for later equip/eat steps; do not invent future item IDs. Empty or blocked work does not require restarting it. Native navigation and installed requests retain their exact parameters and work modes.
-${context['knowledgeInstructions'] ?? 'Knowledge edits are unavailable.'}`,
-  );
+${context['knowledgeInstructions'] ?? 'Knowledge edits are unavailable.'}`;
   sections.push(`## References
 Names are display prose, never identifiers. Copy the opaque ID token from (ID:token) into structured entity fields. Never invent a token or use a species name as an ID. Include (ID:token) in an unlisted proposal when identifying its target.
 ${list(context['references'])}`);
@@ -306,7 +353,7 @@ ${list(context['references'])}`);
         ]
       : []),
     ...(context['stimulus'] ? [`## Trigger\n${context['stimulus']}`] : []),
-    `## Task\nChoose only warranted speech, actions, private thoughts, goals or a short native plan. Each kind is optional and may repeat.${triggerFacts?.['observerRelationship'] === 'addressed_speech' ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. Respond as this person, not as an observer reporting the prompt. A small action shortlist does not mean I can only speak.`,
+    responseRules,
   );
   return {
     prompt: sections.join('\n\n'),

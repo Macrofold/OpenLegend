@@ -13,6 +13,8 @@ import { bindDecisionAppraisals, captureDecisionAppraisalContext } from './appra
 import {
   boundResponseSchema,
   nativeResponse,
+  RESPONSE_OPERATION_GUIDE,
+  responseTaskInstructions,
   type ModelResponseOperation,
   type DecisionAppraisalProposal,
 } from './cognition-contracts.js';
@@ -30,7 +32,7 @@ import { digest, type JobRecord } from './store.js';
 import { compileDecisionTask, prepareDecisionTask, type DecisionTask } from './decision-task.js';
 import { DECISION_LIMITS } from './decision-state.js';
 import type { WorldService } from './world-service.js';
-import { KNOWN_ACTION_MODE_INSTRUCTION } from './response-context.js';
+import { compactActivityRequests, type ModelActivityRequests } from './response-context.js';
 
 /** The same response owner handles a supplied action on either model route. */
 export function knownDecisionResponse(
@@ -94,14 +96,21 @@ function reconsiderationInput(
               question:
                 kind === 'appraisal'
                   ? 'Propose one supported change to my feelings about the initiating situation, using an installed policy and permitted cause. Abstain if no change is justified.'
-                  : `Propose the still-unresolved response to this initiating situation. Speech is optional unless an addressed reply is needed. Use only supplied operations and handles. ${KNOWN_ACTION_MODE_INSTRUCTION}`,
+                  : `${responseTaskInstructions((input.context['triggerFacts'] as { observerRelationship?: string } | undefined)?.observerRelationship === 'addressed_speech')} Answer with the still-unresolved response in this question's value, using only supplied operations and handles. ${RESPONSE_OPERATION_GUIDE}`,
               ...(valueSchema ? { valueSchema } : {}),
             },
     } satisfies Record<string, DecisionTask>,
     context: {
       sourceTime: input.sourceTime,
       observationPolicy: RECONSIDERATION_OBSERVATION_POLICY,
-      character: input.context,
+      character: input.context['activityRequests']
+        ? {
+            ...input.context,
+            activityRequests: compactActivityRequests(
+              input.context['activityRequests'] as ModelActivityRequests,
+            ),
+          }
+        : input.context,
       ...(kind === 'response' ? { choices: input.offered } : {}),
       ...(kind !== 'choice' ? { appraisals } : {}),
       reconsiderationReason,

@@ -247,49 +247,92 @@ export function decodeJudge(data: unknown, questions: TypedQuestionMap): JudgeVa
   return { answers };
 }
 
-/** Trusted caller schemas only. No references, external loading, coercion, mutation, or default insertion. */
+/** Trusted caller schemas only. Local acyclic definitions share meaning, never
+ * external loading, coercion, mutation, or default insertion.
+ * docs/technical/situation-aware-cognition-context.md#95-ref-is-a-separate-gated-refinement */
 export function compileSchema(schema: unknown): ValidateFunction {
   if (!record(schema) || schema.type !== 'object' || schema.anyOf !== undefined)
     throw new InvalidData('invalid_schema');
-  function inspect(node: unknown): void {
+  const definitions = schema.$defs;
+  if (definitions !== undefined && !record(definitions)) throw new InvalidData('invalid_schema');
+  const inspected = new Set<object>();
+  const active = new Set<object>();
+  let nodes = 0;
+  function inspect(node: unknown, depth = 0): void {
+    if (++nodes > 20_000 || depth > 32) throw new InvalidData('json_complexity_limit');
+    if (!node || typeof node !== 'object') return;
+    if (active.has(node)) throw new InvalidData('unsupported_schema_reference');
+    if (inspected.has(node)) return;
+    active.add(node);
     if (Array.isArray(node)) {
-      node.forEach(inspect);
-      return;
-    }
-    if (!record(node)) return;
-    if (
-      Object.keys(node).some((k) =>
-        ['$ref', '$dynamicRef', '$recursiveRef', '$id', '$async'].includes(k),
-      )
-    )
-      throw new InvalidData('unsupported_schema_reference');
-    if (
-      node.type === 'object' ||
-      (Array.isArray(node.type) && node.type.includes('object')) ||
-      node.properties !== undefined
-    ) {
+      for (const child of node) inspect(child, depth + 1);
+    } else {
+      if (!record(node)) throw new InvalidData('invalid_schema');
       if (
-        !record(node.properties) ||
-        node.additionalProperties !== false ||
-        !Array.isArray(node.required) ||
-        !node.required.every((k) => typeof k === 'string') ||
-        node.required.length !== Object.keys(node.properties).length ||
-        !Object.keys(node.properties).every((k) => (node.required as unknown[]).includes(k))
+        Object.keys(node).some((k) =>
+          [
+            '$dynamicRef',
+            '$recursiveRef',
+            '$dynamicAnchor',
+            '$recursiveAnchor',
+            '$anchor',
+            '$id',
+            '$async',
+          ].includes(k),
+        )
       )
-        throw new InvalidData('schema_must_require_all_properties');
-    }
-    // Property maps contain arbitrary field names (including "properties"); they are not schemas.
-    // docs/architecture.md#shared-invention-workflow
-    for (const [key, value] of Object.entries(node)) {
+        throw new InvalidData('unsupported_schema_reference');
+      if (node.$ref !== undefined) {
+        // Assertions beside a ref have different semantics in draft7 and 2020-12.
+        if (Object.keys(node).some((key) => !['$ref', 'title', 'description'].includes(key)))
+          throw new InvalidData('unsupported_schema_reference');
+        // One JSON Pointer token, not a URI/resolver or a path into arbitrary data.
+        // Percent escapes are excluded so AJV and this admission resolve identically.
+        const match =
+          typeof node.$ref === 'string' ? /^#\/\$defs\/((?:[^~/%]|~[01])*)$/.exec(node.$ref) : null;
+        const key = match?.[1]?.replace(/~1/g, '/').replace(/~0/g, '~');
+        if (
+          key === undefined ||
+          !record(definitions) ||
+          !Object.hasOwn(definitions, key) ||
+          !record(definitions[key])
+        )
+          throw new InvalidData('unsupported_schema_reference');
+        inspect(definitions[key], depth + 1);
+      }
       if (
-        ['properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas'].includes(
-          key,
-        ) &&
-        record(value)
-      )
-        Object.values(value).forEach(inspect);
-      else if (!['const', 'enum', 'default', 'examples'].includes(key)) inspect(value);
+        node.type === 'object' ||
+        (Array.isArray(node.type) && node.type.includes('object')) ||
+        node.properties !== undefined
+      ) {
+        if (
+          !record(node.properties) ||
+          node.additionalProperties !== false ||
+          !Array.isArray(node.required) ||
+          !node.required.every((k) => typeof k === 'string') ||
+          node.required.length !== Object.keys(node.properties).length ||
+          !Object.keys(node.properties).every((k) => (node.required as unknown[]).includes(k))
+        )
+          throw new InvalidData('schema_must_require_all_properties');
+      }
+      // Property maps contain arbitrary field names (including "properties"); they are not schemas.
+      // docs/architecture.md#shared-invention-workflow
+      for (const [key, value] of Object.entries(node)) {
+        if (key === 'definitions' || (key === '$defs' && node !== schema))
+          throw new InvalidData('unsupported_schema_reference');
+        if (
+          ['properties', 'patternProperties', '$defs', 'definitions', 'dependentSchemas'].includes(
+            key,
+          ) &&
+          record(value)
+        )
+          for (const child of Object.values(value)) inspect(child, depth + 1);
+        else if (!['const', 'enum', 'default', 'examples', '$ref'].includes(key))
+          inspect(value, depth + 1);
+      }
     }
+    active.delete(node);
+    inspected.add(node);
   }
   inspect(schema);
   try {
@@ -298,6 +341,7 @@ export function compileSchema(schema: unknown): ValidateFunction {
       allErrors: false,
       ownProperties: true,
       validateFormats: false,
+      inlineRefs: false,
     }).compile(schema);
   } catch {
     throw new InvalidData('invalid_schema');

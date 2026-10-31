@@ -1,4 +1,10 @@
-import { entityGet, entityValues } from '@open-legend/domain';
+import { fixtureResponseActionHandles } from '../../../tests/fixtures/cognition-ai.js';
+import {
+  activityRequestDescriptors,
+  currentInventoryInspection,
+  entityGet,
+  entityValues,
+} from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -206,27 +212,6 @@ function replyAddressee(request: GenerateRequest): string {
     if (entry.triggerRoles.some((role) => role.role === 'source')) return entry.entityId;
   }
   throw new Error('The fixture has no permitted speaker reference.');
-}
-
-/** Every action handle a generation schema permits (act and plan-step `actionId` enums). */
-function actionHandles(schema: unknown): string[] {
-  const found = new Set<string>();
-  const collect = (node: unknown): void => {
-    if (!node || typeof node !== 'object') return;
-    const record = node as Record<string, unknown>;
-    if (Array.isArray(record['enum']))
-      for (const entry of record['enum']) if (typeof entry === 'string') found.add(entry);
-    for (const child of Object.values(record)) collect(child);
-  };
-  const visit = (node: unknown): void => {
-    if (!node || typeof node !== 'object') return;
-    const record = node as Record<string, unknown>;
-    const properties = record['properties'] as Record<string, unknown> | undefined;
-    if (properties?.['actionId']) collect(properties['actionId']);
-    for (const child of Object.values(record)) visit(child);
-  };
-  visit(schema);
-  return [...found].filter(handleKey).sort();
 }
 
 async function harness(
@@ -509,6 +494,68 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(h.jobCalls(job.id).decisions).toHaveLength(1);
     expect(h.jobCalls(job.id).generations).toHaveLength(0);
     expect(h.ada().action).toEqual(before.action);
+
+    // The native form is a real selectable route even when higher generation is
+    // configured. It must not be mistaken for a generative escalation level.
+    let inspectionLabel = '';
+    const forms = await harness({
+      judge: (request) => {
+        if (Object.keys(request.questions).some((key) => key.startsWith('field_')))
+          return value(request.requestId, 'jev', {
+            answers: Object.fromEntries(
+              Object.entries(request.questions).map(([key, question]) => {
+                if (question.type !== 'choice') throw new Error('Expected native role choices.');
+                return [key, distribution(Object.keys(question.criteria), { option_0: 1 })];
+              }),
+            ),
+          });
+        const question = request.questions['route'];
+        if (!question) return answer(request, { rate: () => noul(0.1) });
+        expect(question.type).toBe('choice');
+        if (question?.type !== 'choice') throw new Error('Expected native family route.');
+        const selected = Object.entries(question.criteria).find(
+          ([, text]) => typeof text === 'string' && text.includes(inspectionLabel),
+        );
+        expect(selected).toBeDefined();
+        return answer(request, {
+          route: { [selected![0]]: 1 },
+          rate: () => noul(0.1),
+        });
+      },
+    });
+    inspectionLabel = activityRequestDescriptors(forms.service.world, NPC_ID).find(
+      (request) => request.id === 'base:inspect-possessions',
+    )!.label;
+    await editWorld(forms.service, (world) => {
+      for (const entity of entityValues(world.entities))
+        if (entity.actor?.controller === 'npc' && entity.id !== NPC_ID)
+          entity.actor.controller = 'native';
+    });
+    expect(
+      (await forms.service.command('form-follow', { type: 'follow', targetId: PLAYER_ID }, NPC_ID))
+        .ok,
+    ).toBe(true);
+    const walking = structuredClone(forms.ada().action);
+    const inspected = await forms.thought();
+    expect(inspected.status).toBe('completed');
+    expect(currentInventoryInspection(forms.service.world, NPC_ID)).toBeDefined();
+    expect(forms.ada().action).toEqual(walking);
+    expect(forms.jobCalls(inspected.id).generations).toHaveLength(0);
+    expect(forms.service.world.responseReceipts?.[inspected.id]?.components).toMatchObject({
+      activity_request: { ok: true },
+    });
+    inspectionLabel = activityRequestDescriptors(forms.service.world, NPC_ID).find(
+      (request) => request.id === 'base:evade-direction',
+    )!.label;
+    const queued = await forms.chat('queued-native-form', 'What will you do next?');
+    expect(queued.status).toBe('completed');
+    expect(forms.ada().action).toEqual(walking);
+    expect(forms.ada().agency.plan?.steps).toHaveLength(1);
+    expect(forms.ada().agency.plan?.steps[0]?.command.type).toBe('evade');
+    expect(forms.jobCalls(queued.id).generations).toHaveLength(0);
+    expect(forms.service.world.responseReceipts?.[queued.id]?.components).toMatchObject({
+      activity_request: { ok: true },
+    });
   });
 
   it.each([
@@ -596,7 +643,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     expect(
       input.ratings.find((entry) => entry.description?.startsWith('Drop 2 Wild berries')),
     ).toMatchObject({ rating: 0.1, status: 'rated' });
-    expect(actionHandles(generation!.schema)).toEqual([eat.handle]);
+    expect(fixtureResponseActionHandles(generation!.schema)).toEqual([eat.handle]);
   });
 
   it.each([
@@ -611,7 +658,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
           answer(request, { rate: (description) => noul(isEat(description) ? 0.6 : 0.1) }),
       });
       const job = await h.thought();
-      expect(job.status).toBe('completed');
+      expect(job.status, job.message).toBe('completed');
       expect(job.result).toMatchObject({
         disposition: 'deferred',
         reason: 'uncertain-selection',
@@ -794,8 +841,14 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
   });
 
   it('keeps dependent speech questions in a separate second request', async () => {
-    const h = await harness({ judge: (request) => answer(request, {}) });
-    const job = await h.chat('dependent', 'Ada, you look hungry.');
+    // A bounded optional shortlist need not retain the same food example after
+    // complete family forms are reserved. Select a supplied physical alternative.
+    const isDrop = (description: string) => description.startsWith('Drop 2 Wild berries');
+    const h = await harness({
+      judge: (request) =>
+        answer(request, { rate: (description) => noul(isDrop(description) ? 0.9 : 0.1) }),
+    });
+    const job = await h.chat('dependent', 'Ada, could you set down those berries?');
     expect(job.status).toBe('completed');
     expect(job.result).toMatchObject({
       disposition: 'responded',
@@ -822,16 +875,16 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     ).toBe(true);
     expect(h.calls.generations).toHaveLength(0);
     await h.service.tick(0.1);
-    expect(h.berries()).toBe(1);
+    expect(h.berries()).toBe(0);
     const { input, output } = await level1Stage(h, job.id);
     expect(input.selectionRequest).toBe('dependent');
     // The selection resolves exactly the second request's questions, not the routing request.
     expect(input.ratings.map((entry) => entry.handle)).toEqual(ratings);
-    const eat = input.ratings.find((entry) => isEat(entry.description ?? ''))!;
+    const dropped = input.ratings.find((entry) => isDrop(entry.description ?? ''))!;
     expect(output.outcome).toEqual({
       kind: 'act',
       reason: 'selected',
-      handle: eat.handle,
+      handle: dropped.handle,
       rating: 0.9,
     });
   });
@@ -979,7 +1032,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
     // The escalated generation cannot reference the unoffered handle either, and nothing
     // rated below the 0.5 relevance line is offered to it.
     expect(JSON.stringify(h.calls.generations[0]!.schema)).not.toContain(JSON.stringify(unoffered));
-    expect(actionHandles(h.calls.generations[0]!.schema)).toEqual([]);
+    expect(fixtureResponseActionHandles(h.calls.generations[0]!.schema)).toEqual([]);
     await h.service.tick(0.1);
     expect(h.berries()).toBe(2);
     expect(h.ada().agency.plan ?? null).toBeNull();

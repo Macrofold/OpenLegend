@@ -1,9 +1,11 @@
 import { stockedCamp } from '../../../tests/fixtures/world.js';
-import { fixtureTriggerExperience } from '../../../tests/fixtures/cognition-ai.js';
+import {
+  fixtureTriggerExperience,
+  fixtureResponseActionHandles,
+} from '../../../tests/fixtures/cognition-ai.js';
 import { entityGet } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
 import {
   MIND_LIMITS,
   NPC_ID,
@@ -17,6 +19,7 @@ import {
   wordCount,
 } from '@open-legend/domain';
 import {
+  compileSchema,
   validateJudgmentSize,
   type AiClient,
   type AiReceipt,
@@ -206,29 +209,8 @@ function speakerHandle(request: GenerateRequest): string {
   if (!speaker) throw new Error('No addressable speaker reference.');
   return speaker.entityId;
 }
-/** Every action handle a generation schema permits (act and plan-step `actionId` enums). */
-function actionHandles(schema: unknown): string[] {
-  const found = new Set<string>();
-  const collect = (node: unknown): void => {
-    if (!node || typeof node !== 'object') return;
-    const record = node as Record<string, unknown>;
-    if (Array.isArray(record['enum']))
-      for (const entry of record['enum']) if (typeof entry === 'string') found.add(entry);
-    for (const child of Object.values(record)) collect(child);
-  };
-  const visit = (node: unknown): void => {
-    if (!node || typeof node !== 'object') return;
-    const record = node as Record<string, unknown>;
-    const properties = record['properties'] as Record<string, unknown> | undefined;
-    if (properties?.['actionId']) collect(properties['actionId']);
-    for (const child of Object.values(record)) visit(child);
-  };
-  visit(schema);
-  return [...found].filter(handleKey).sort();
-}
-/** The provider JSON Schema actually sent, as a validator for candidate fixture replies. */
-const providerSchema = (request: GenerateRequest) =>
-  z.fromJSONSchema(request.schema as Parameters<typeof z.fromJSONSchema>[0]);
+/** Use the same frozen-schema validator as the actual configured adapters. */
+const providerSchema = (request: GenerateRequest) => compileSchema(request.schema);
 
 /** Every heading readableDecisionContext can emit; anything else means a split inside content. */
 const KNOWN_HEADINGS = new Set([
@@ -240,11 +222,10 @@ const KNOWN_HEADINGS = new Set([
   'Task',
   'Conversation so far',
   'Known planning techniques',
-  'Optional installed activity requests',
+  'Available activities, optional',
   'Private intent controls',
   'Private intentions and native work',
   'Native navigation',
-  'Optional installed activity requests',
   'Container I chose to inspect',
   'Current time',
   'Actions I chose to inspect',
@@ -255,13 +236,14 @@ const KNOWN_HEADINGS = new Set([
   'General knowledge notepad',
   'Knowledge',
   'Actions',
-  'Response format',
+  'Response rules',
+  'Context',
   'References',
   'Current decision support',
 ]);
 /** Section sizes account for every byte of the rendered text, under known unique headings. */
 function expectCompleteSections(text: string, parts: Section[]) {
-  expect(text.startsWith('## Me\n')).toBe(true);
+  expect(text.startsWith('## Task\n')).toBe(true);
   const headings = parts.map((part) => part.heading);
   expect(headings.filter((heading) => !KNOWN_HEADINGS.has(heading))).toEqual([]);
   expect(new Set(headings).size).toBe(headings.length);
@@ -338,7 +320,7 @@ function embeddedJson(line: string): { start: number; end: number; value: unknow
 // Format and reference sections legitimately describe nullable fields and empty role lists;
 // only whole-line JSON there is inspected, which exposes content appended without a heading.
 // Complete observer records use null to preserve unknown/unacquired facts.
-const SCAFFOLDING_EXEMPT = new Set(['Response format', 'References', 'Complete personal evidence']);
+const SCAFFOLDING_EXEMPT = new Set(['Response rules', 'References', 'Complete personal evidence']);
 /** Null/empty scaffolding in model-facing sections: empty bodies, whole-line empty JSON,
  * null/empty values inside embedded JSON, bare `null` prose, separators left by empty values
  * and blank lines. Reported, never asserted to exist. The accepted About-me text is authored
@@ -947,8 +929,14 @@ describe(
       expect(Object.keys(route!.questions)).toEqual(
         expect.arrayContaining(['route', 'reflection', 'possibleAction']),
       );
-      // Speech routing sees the same readable context the generation later receives.
-      expect(typeof route!.state).toBe('string');
+      // Routing receives actor-permitted facts, not the generator's output task.
+      const routeContext = (route!.state as { decisionContext: Record<string, unknown> })
+        .decisionContext;
+      expect(routeContext).toBeDefined();
+      expect(routeContext).not.toHaveProperty('knowledgeInstructions');
+      expect(routeContext).not.toHaveProperty('navigation');
+      expect(Array.isArray(routeContext['planOffers'])).toBe(true);
+      expect(JSON.stringify(route!.state)).not.toContain('Use the supplied JSON schema');
       expect(decisionJudges(dispatched.judges).map((request) => request.requestId)).toEqual([
         `${job.id}${ROUTE}`,
         `${job.id}:attempt:0:action-attention`,
@@ -965,17 +953,16 @@ describe(
 
       const context = String(generation!.context);
       const parts = sections(context);
-      // Routing and generation share the same facts; response-only support has its
-      // own section before the current evidence, trigger and final task.
-      const routeParts = sections(route!.state as string);
-      for (const part of routeParts)
-        expect(section(parts, part.heading).body, part.heading).toBe(part.body);
-      expect(
-        parts
-          .map((part) => part.heading)
-          .filter((heading) => !routeParts.some((entry) => entry.heading === heading)),
-      ).toEqual(['Actions', 'Current decision support']);
-      expect(parts.at(-1)?.heading).toBe('Task');
+      // Both consumers retain the same complete evidence and acquired event roles.
+      expect(routeContext['experience']).toEqual(
+        JSON.parse(section(parts, 'Complete personal evidence').body.split('\n')[0]!),
+      );
+      expect(routeContext['triggerFacts']).toEqual(
+        JSON.parse(section(parts, 'Trigger facts').body.split('\n')[0]!),
+      );
+      expect(parts[0]?.heading).toBe('Task');
+      expect(parts[1]?.heading).toBe('Context');
+      expect(parts.at(-1)?.heading).toBe('Response rules');
       expect(parts.findIndex((part) => part.heading === 'Current decision support')).toBeLessThan(
         parts.findIndex((part) => part.heading === 'Complete personal evidence'),
       );
@@ -991,7 +978,7 @@ describe(
       const aboutMe = h.aboutMe();
       expect(Buffer.byteLength(aboutMe)).toBeGreaterThan(0);
       expect(section(parts, 'Me').body).toContain(aboutMe);
-      expect(section(routeParts, 'Me').body).toContain(aboutMe);
+      expect(routeContext['aboutMe']).toBe(aboutMe);
       const input = inspected.at(-1)!.bytes;
       report('greeting', {
         requests: inspected,
@@ -1008,10 +995,10 @@ describe(
           overTargetBy: input.instructions + input.context - GREETING_TARGET_BYTES,
         },
         scaffolding: scaffolding(parts, h.aboutMe()),
-        routeStateScaffolding: scaffolding(routeParts, h.aboutMe()),
+        routeStateBytes: Buffer.byteLength(JSON.stringify(route!.state)),
         // The byte ceiling the model-facing format states, beside the enforced level-2 limit.
         responseFormatStatedBytes: Number(
-          /and (\d+) UTF-8 bytes in total/.exec(section(parts, 'Response format').body)?.[1] ?? NaN,
+          /and (\d+) UTF-8 bytes in total/.exec(section(parts, 'Response rules').body)?.[1] ?? NaN,
         ),
         enforcedVisibleOutputBytes: levelLimits(h.config)[2].visibleOutputBytes,
         accounting: ledger.summary,
@@ -1099,7 +1086,7 @@ describe(
         ],
       ).toBeUndefined();
       // The listed eat option's handle is one the generation schema permits.
-      expect(actionHandles(generation!.schema)).toContain(eat);
+      expect(fixtureResponseActionHandles(generation!.schema)).toContain(eat);
       report('resource-task:level2', {
         trigger: section(parts, 'Trigger').body.trim(),
         requests: inspected,
@@ -1376,7 +1363,7 @@ describe(
         const sent = h.state.reply(generation);
         const bytes = Buffer.byteLength(JSON.stringify(sent));
         // Whether the provider JSON Schema actually sent would itself admit this reply.
-        const providerAccepts = providerSchema(generation).safeParse(sent).success;
+        const providerAccepts = providerSchema(generation)(sent);
         outcomes.push({
           case: name,
           status: job.status,
@@ -1386,7 +1373,7 @@ describe(
           failure,
           responseBytes: bytes,
           providerSchemaAccepts: providerAccepts,
-          offeredActionHandles: actionHandles(generation.schema),
+          offeredActionHandles: fixtureResponseActionHandles(generation.schema),
           parseStage: parse.map((entry) => entry.status),
           parseError: parse.map((entry) => JSON.stringify(entry.output ?? null).slice(0, 240)),
           generations: dispatched.generations.length,
@@ -1454,7 +1441,7 @@ describe(
         }),
         { route: { level2: 0.9 }, possibleAction: { yes: 0.9 } },
       );
-      const offered = actionHandles(unknownAction.generation.schema);
+      const offered = fixtureResponseActionHandles(unknownAction.generation.schema);
       expect(offered.length).toBeGreaterThan(0);
       expect(offered).not.toContain('a99');
       expect(unknownAction.providerAccepts).toBe(false);
@@ -1573,8 +1560,10 @@ describe(
                 event.data?.['responseId'] === job.id,
             )
             .map((event) => event.data?.['text']),
-          routeHasCompleteSnapshot:
-            typeof route?.state === 'string' ? route.state.includes(text) : null,
+          routeHasCompleteSnapshot: route
+            ? (route.state as { decisionContext: { aboutMe: unknown } }).decisionContext.aboutMe ===
+              text
+            : null,
           generationInputBytes: generation
             ? Buffer.byteLength(generation.instructions) +
               Buffer.byteLength(String(generation.context))
@@ -1599,7 +1588,12 @@ describe(
       // The large snapshots must refuse before dispatch. A small accepted snapshot supplies
       // a positive control independently of growing authored starting context.
       const sixFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
-      const positiveSix = await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6));
+      probes.push(await probe(sixFiles, 'fresh-six-files', 6, files.slice(0, 6)));
+      // Installed forms are required context too. Their authored growth can move
+      // this boundary; preserve a complete multi-document positive rather than
+      // treating an old successful document count as a new identity quota.
+      const threeFiles = await harness({ script: { route: { level2: 0.9 } }, reply });
+      const positiveMultiple = await probe(threeFiles, 'fresh-three-files', 3, files.slice(0, 3));
       const control = await harness({ script: { route: { level2: 0.9 } }, reply });
       const positive = await probe(control, 'fresh-control', 1, files.slice(0, 1));
       report('inner-world-quota', {
@@ -1607,7 +1601,7 @@ describe(
         fileBytes: fileBytes[0],
         level2InputLimit: levelLimits(h.config)[2].inputSize,
         level1InputLimit: levelLimits(h.config)[1].inputSize,
-        probes: [...probes, positiveSix, positive],
+        probes: [...probes, positiveMultiple, positive],
       });
       const exceeded =
         'Complete accepted inner world and required context exceed the input budget.';
@@ -1629,8 +1623,8 @@ describe(
           generationInputBytes: null,
           accounting: null,
         });
-      expect(positiveSix).toMatchObject({
-        files: 6,
+      expect(positiveMultiple).toMatchObject({
+        files: 3,
         status: 'completed',
         disposition: 'responded',
         routeHasCompleteSnapshot: true,

@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import {
   ACTION_GROUNDING_POLICY,
   actionGroundingQuestions,
@@ -431,7 +432,7 @@ export async function groundActionAttempts(
             ' Return a faithful executable subset only when useful. Account for every meaningful clause as supported or omitted; the revised description must disclose actual termination and effects. Use confirm when unsure an omission is acceptable, especially changed safety, stealth, recipient, instrument, scope or cost. Never treat a skipped prerequisite as successful. Existing handles keep their exact arguments. Each step selects exactly one actionId or invocation. Use only navigation and installed request fields supplied here; pickup/drop items must come from the supplied possessions or pileItems. A follow without until has no successful finite termination and cannot precede another step; do not promise unreachable continuation. Return unresolved with no steps when nothing faithful is executable. Do not invent capabilities, definitions, completed effects or output IDs. Return only specified JSON. ' +
             navigationInstructions(world, { actorId }),
           context,
-          schema: z.toJSONSchema(schema, { target: 'draft-7' }),
+          schema: modelJsonSchema(schema),
         }),
       );
       if (result.disposition === 'unresolved' || !result.steps.length) {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { boundResponseSchema } from './cognition-contracts.js';
+import { compileSchema } from '@open-legend/ai';
+import { boundResponseSchema, RESPONSE_PORTRAYAL_GUIDE } from './cognition-contracts.js';
 import { DECISION_LIMITS } from './decision-state.js';
 import {
   compileDecisionTask,
@@ -65,6 +66,7 @@ describe('complete structured decision input', () => {
 
     const request = prepareDecisionTask(tasks, context, guidance);
     expect(request.instructions.startsWith(CHARACTER_SERVICE_INSTRUCTIONS)).toBe(true);
+    expect(request.instructions.split(RESPONSE_PORTRAYAL_GUIDE)).toHaveLength(2);
     expect(inputBytes(request)).toBeLessThanOrEqual(DECISION_LIMITS.inputBytes);
     expect(inputBytes(encodedTwice) - inputBytes(request)).toBeGreaterThan(9_000);
     const wire = JSON.parse(request.context);
@@ -95,12 +97,34 @@ describe('complete structured decision input', () => {
     ).toThrow(/byte allowance/);
   });
 
-  it('preserves literal prose while keeping the schema allowance independent', () => {
+  it('preserves literal prose, exact answer forms and an independent schema allowance', () => {
     const prose = 'A person said "keep this exact account".\nIts cause is uncertain.';
     const tasks = {
       q0: { kind: 'choice', question: 'Choose.', choices: { rest: 'Rest' } },
     } satisfies Record<string, DecisionTask>;
-    expect(JSON.parse(prepareDecisionTask(tasks, prose).context).permittedContext).toBe(prose);
+    const request = prepareDecisionTask(tasks, prose);
+    expect(JSON.parse(request.context).permittedContext).toBe(prose);
+    expect(request.instructions).not.toContain(RESPONSE_PORTRAYAL_GUIDE);
+    const validate = compileSchema(request.schema);
+    for (const answer of [
+      { status: 'answered', value: { choice: 'rest' }, reason: null },
+      { status: 'abstained', value: null, reason: 'no-suitable-option' },
+    ]) {
+      const output = { answers: { q0: answer } };
+      expect(validate(output)).toBe(true);
+      expect(request.decode(output)).toEqual(output.answers);
+    }
+    // These combinations were schema-permitted but unusable in live higher replies.
+    for (const answer of [
+      { status: 'answered', value: null, reason: null },
+      { status: 'answered', value: { choice: 'rest' }, reason: 'unsupported' },
+      { status: 'abstained', value: null, reason: null },
+      { status: 'abstained', value: { choice: 'rest' }, reason: 'unsupported' },
+    ]) {
+      const output = { answers: { q0: answer } };
+      expect(validate(output)).toBe(false);
+      expect(() => request.decode(output)).toThrow();
+    }
 
     const largeSchema = {
       q0: {

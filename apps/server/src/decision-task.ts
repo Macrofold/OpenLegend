@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { z } from 'zod';
 import {
   DECISION_LIMITS,
@@ -17,6 +18,7 @@ import {
 } from './generation-config.js';
 import {
   responseSchema,
+  RESPONSE_PORTRAYAL_GUIDE,
   decisionAppraisalSchema,
   type DecisionAppraisalProposal,
 } from './cognition-contracts.js';
@@ -217,27 +219,39 @@ export function compileDecisionTask(
 ) {
   const keys = Object.keys(tasks);
   if (!keys.length) throw new Error('A decision requires an unresolved question.');
+  // Do not advertise schema-valid combinations the decoder cannot use.
+  // docs/projects/decision-escalation-tech-design.md#exact-answer-envelope
   const answerSchemas = Object.fromEntries(
-    keys.map((key) => [
-      key,
-      z
-        .object({
-          status: z.enum(['answered', 'abstained']),
-          value: valueSchema(tasks[key]!).nullable(),
-          reason: z.enum(abstentionReasons).nullable(),
-        })
-        .strict(),
-    ]),
+    keys.map((key) => {
+      const answeredValue = valueSchema(tasks[key]!);
+      return [
+        key,
+        z.union([
+          z
+            .object({ status: z.literal('answered'), value: answeredValue, reason: z.null() })
+            .strict(),
+          z
+            .object({
+              status: z.literal('abstained'),
+              value: z.null(),
+              reason: z.enum(abstentionReasons),
+            })
+            .strict(),
+        ]),
+      ];
+    }),
   );
   const schema = z.object({ answers: z.object(answerSchemas).strict() }).strict();
-  const jsonSchema = z.toJSONSchema(schema, { target: 'draft-7', unrepresentable: 'throw' });
+  const jsonSchema = modelJsonSchema(schema);
   const questions = Object.fromEntries(
     Object.entries(tasks).map(([id, task]) => {
       const { valueSchema: _schema, ...description } = task;
       return [id, description];
     }),
   );
-  const instructions = DECISION_INSTRUCTIONS;
+  const instructions = Object.values(tasks).some((task) => task.kind === 'response')
+    ? `${DECISION_INSTRUCTIONS}\nFor response questions only, the following portrayal policy permits compatible fictional expression within its limits. Other question kinds use only supplied evidence.\n${RESPONSE_PORTRAYAL_GUIDE}`
+    : DECISION_INSTRUCTIONS;
   // Keep structured evidence as data until this wire encoding; encoding an
   // already stringified context can alone exhaust the complete input allowance.
   // docs/memory-architecture.md#3-one-compact-model-facing-context
@@ -257,17 +271,9 @@ export function compileDecisionTask(
       const answers: Record<string, DecisionAnswer> = {};
       for (const key of keys) {
         const answer = parsed.answers[key]!;
-        if (answer.status === 'answered') {
-          if (answer.value === null || answer.reason !== null)
-            throw new Error('Invalid answered decision.');
-          const value = answer.value;
-          if ('keep' in value) value.keep = [...new Set(value.keep)];
-          answers[key] = { status: 'answered', value, reason: null };
-        } else {
-          if (answer.value !== null || answer.reason === null)
-            throw new Error('Invalid abstained decision.');
-          answers[key] = { status: 'abstained', value: null, reason: answer.reason };
-        }
+        if (answer.status === 'answered' && 'keep' in answer.value)
+          answer.value.keep = [...new Set(answer.value.keep)];
+        answers[key] = answer;
       }
       return answers;
     },

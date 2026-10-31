@@ -11,7 +11,11 @@ import { accessiblePossession } from './object-access.js';
 import { subjectNarration, person } from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { commitExpression } from './expressions.js';
-import { installedActionMeaning } from './activity-hosts.js';
+import {
+  activityRequestDescriptors,
+  activityRequestWorkModeField,
+  installedActionMeaning,
+} from './activity-hosts.js';
 import { activelyParticipates } from './participation-state.js';
 import {
   actionTargetsCurrent,
@@ -488,6 +492,116 @@ export function commitActorResponse(
     );
     components[localId] = transition.outcome;
   };
+  /** Selection syntax does not change native admission. Known choices, typed
+   * invocations and exact single-command grounding share this owner; finite
+   * multi-command plans retain their separate physical-work contract. */
+  const admitSelected = (
+    selected: Command,
+    mode: 'enqueue' | 'replace' | 'interrupt',
+    continuation: 'offered' | 'probe' | null = null,
+    declaredMode?: string | number | boolean,
+  ) => {
+    // A trusted binder may carry the work choice in the command or its declared
+    // request field. Neither representation can silently override the response.
+    const nativeMode =
+      selected.type === 'compose' ||
+      (selected.type === 'outing' && ['invite', 'accept', 'work'].includes(selected.operation))
+        ? 'mode' in selected
+          ? selected.mode
+          : undefined
+        : undefined;
+    if (
+      (nativeMode !== undefined && nativeMode !== mode) ||
+      (declaredMode !== undefined && declaredMode !== mode)
+    ) {
+      components[localId] = outcome(
+        false,
+        'activity-choices',
+        'The requested activity and action must choose the same handling of current work.',
+      );
+      return;
+    }
+    const direct = [
+      'activity',
+      'compose',
+      'inspect-activities',
+      'teach',
+      'handover',
+      'outing',
+      'transfer-item',
+      'cancel',
+      'resume-work',
+      'recover',
+      'release-shot',
+      'withdraw-attempt',
+      'confirm-attempt',
+    ].includes(selected.type);
+    if (
+      !direct &&
+      (continuation === 'offered' || (continuation === 'probe' && mode === 'enqueue'))
+    ) {
+      // The native owner proves whether this exact operation can happen while
+      // current work continues. A prepared durative action refuses continue;
+      // that does not revoke the explicitly selected outer work transition.
+      const prepared = prepareNativeChoice(
+        world,
+        actorId,
+        selected,
+        'continue',
+        construction.permissions,
+        undefined,
+        construction.campAssets,
+      );
+      const available = 'ok' in prepared ? prepared : prepared.outcome;
+      if (available.ok) {
+        command('act', { ...selected, actorId, id: `${id}:${localId}` });
+        return;
+      }
+      if (continuation === 'offered') {
+        components[localId] = available;
+        return;
+      }
+    }
+    if (direct) {
+      const beforeAction = world,
+        beforeEventCount = events.length;
+      const beforeAppendOnly: boolean = appendOnlyCommands;
+      let start = true;
+      if (selected.type === 'activity' && !selected.resume && mode === 'replace') {
+        command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
+        start = components[localId]?.ok === true;
+      }
+      // Native activity start pauses atomically; replacement refusal must also
+      // preserve old work and any independently accepted speech.
+      if (start)
+        command('act', {
+          ...selected,
+          ...(selected.type === 'activity' && !selected.resume && mode === 'interrupt'
+            ? { interrupt: true }
+            : {}),
+          actorId,
+          id: `${id}:${localId}`,
+        });
+      if (!components[localId]?.ok && selected.type === 'activity') {
+        world = beforeAction;
+        events.length = beforeEventCount;
+        appendOnlyCommands = beforeAppendOnly;
+      }
+      return;
+    }
+    components[localId] = admitPlan(
+      world,
+      entityGet(world.entities, actorId)!.actor!,
+      `${id}:${localId}`,
+      [{ ...selected, actorId, id: `${id}:${localId}` }],
+      mode,
+      entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
+      null,
+    );
+  };
+  let invocationRequests:
+    | Map<string, ReturnType<typeof activityRequestDescriptors>[number]>
+    | undefined;
   for (const op of response.operations) {
     localId = op.localId;
     if (op.requiresAccepted.some((dependency) => !components[dependency]?.ok)) {
@@ -534,6 +648,22 @@ export function commitActorResponse(
           : [];
     const directTarget =
       op.talk?.addresseeEntityId ?? op.act?.invocation?.targetEntityId ?? op.act?.targetEntityId;
+    const invocation = op.act?.kind === 'invoke' ? op.act.invocation : undefined;
+    const invocationParameters = invocation?.parameters;
+    if (invocationParameters)
+      invocationRequests ??= new Map(
+        activityRequestDescriptors(input, actorId).map((request) => [request.id, request]),
+      );
+    const invocationEntities = invocationParameters
+      ? Object.fromEntries(
+          Object.entries(invocationRequests!.get(invocation!.family)?.fields ?? {}).flatMap(
+            ([field, descriptor]) =>
+              descriptor.type === 'entity' && typeof invocationParameters[field] === 'string'
+                ? [[field, invocationParameters[field] as string]]
+                : [],
+          ),
+        )
+      : {};
     const slotReferences = [
       op.act?.slots?.itemId,
       op.act?.slots?.instrumentId,
@@ -546,6 +676,7 @@ export function commitActorResponse(
     // entity kinds cannot be probed through slot errors.
     if (
       (directTarget && !permitted.has(directTarget)) ||
+      Object.values(invocationEntities).some((ref) => !permitted.has(ref)) ||
       slotReferences.some((ref) => !permitted.has(ref))
     ) {
       components[localId] = outcome(
@@ -576,6 +707,8 @@ export function commitActorResponse(
       continue;
     }
     if (directTarget) actionCommands.push({ actorId, targetId: directTarget });
+    if (Object.keys(invocationEntities).length)
+      actionCommands.push({ actorId, bindings: invocationEntities });
     if (op.act?.slots?.recipientId)
       actionCommands.push({ actorId, targetId: op.act.slots.recipientId });
     if (targetEpisodes && !actionTargetsCurrent(world, actorId, actionCommands, targetEpisodes)) {
@@ -703,31 +836,11 @@ export function commitActorResponse(
         entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
       )
         components[localId] = outcome(false, 'stale-plan', 'The current task changed.');
-      else if (
-        bound.type === 'outing' &&
-        bound.operation !== 'invite' &&
-        bound.operation !== 'accept' &&
-        bound.operation !== 'work'
-      )
-        command('act', bound);
-      else if (bound.type === 'compose' || bound.type === 'outing') {
-        if (('mode' in bound ? bound.mode : undefined) !== act.mode)
-          components[localId] = outcome(
-            false,
-            'activity-choices',
-            'The requested activity and action must choose the same handling of current work.',
-          );
-        else command('act', bound);
-      } else
-        components[localId] = admitPlan(
-          world,
-          entityGet(world.entities, actorId)!.actor!,
-          `${id}:${localId}`,
-          [bound],
-          act.mode,
-          entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
-          null,
-        );
+      else {
+        const descriptor = invocationRequests?.get(act.invocation!.family);
+        const field = descriptor && activityRequestWorkModeField(descriptor);
+        admitSelected(bound, act.mode, 'probe', field ? invocationParameters?.[field] : undefined);
+      }
     } else if (act?.kind === 'known' && !Object.hasOwn(actions, act.actionId!)) {
       components[localId] = outcome(
         false,
@@ -749,73 +862,8 @@ export function commitActorResponse(
           'action-mode',
           'The chosen action handles current work differently from the offered choice.',
         );
-      else if (selected && choice.transition === 'continue' && isActivityCommand(selected)) {
-        const prepared = prepareNativeChoice(
-          world,
-          actorId,
-          selected,
-          'continue',
-          construction.permissions,
-          undefined,
-          construction.campAssets,
-        );
-        const available = 'ok' in prepared ? prepared : prepared.outcome;
-        if (!available.ok) components[localId] = available;
-        else command('act', { ...selected, actorId, id: `${id}:${localId}` });
-      } else if (
-        selected &&
-        [
-          'activity',
-          'compose',
-          'inspect-activities',
-          'teach',
-          'handover',
-          'outing',
-          'transfer-item',
-          'cancel',
-          'resume-work',
-          'recover',
-          'release-shot',
-          'withdraw-attempt',
-          'confirm-attempt',
-        ].includes(selected.type)
-      ) {
-        const beforeAction = world,
-          beforeEventCount = events.length;
-        const beforeAppendOnly: boolean = appendOnlyCommands;
-        let start = true;
-        if (selected.type === 'activity' && !selected.resume && act.mode === 'replace') {
-          command('act', { type: 'cancel', actorId, id: `${id}:${localId}:cancel` });
-          start = components[localId]?.ok === true;
-        }
-        // The kernel pauses and starts together, so a refused start leaves work running.
-        if (start)
-          command('act', {
-            ...selected,
-            ...(selected.type === 'activity' && !selected.resume && act.mode === 'interrupt'
-              ? { interrupt: true }
-              : {}),
-            actorId,
-            id: `${id}:${localId}`,
-          });
-        // A chosen method may become unavailable during the decision wait. Its
-        // replacement and start form one operation; retain independently accepted
-        // speech, but never commit just the cancellation when the start refuses.
-        if (!components[localId]?.ok && selected.type === 'activity') {
-          world = beforeAction;
-          events.length = beforeEventCount;
-          appendOnlyCommands = beforeAppendOnly;
-        }
-      } else if (selected)
-        components[localId] = admitPlan(
-          world,
-          entityGet(world.entities, actorId)!.actor!,
-          `${id}:${localId}`,
-          [{ ...selected, actorId, id: `${id}:${localId}` }],
-          act.mode,
-          entityGet(world.entities, actorId)!.actor!.agency.plan?.revision ?? 0,
-          null,
-        );
+      else if (selected)
+        admitSelected(selected, act.mode, choice.transition === 'continue' ? 'offered' : null);
       else
         components[localId] = outcome(
           true,
@@ -959,22 +1007,15 @@ export function commitActorResponse(
           entityGet(input.entities, actorId)!.actor!.planGeneration !== expectedPlan
         )
           components[localId] = outcome(false, 'stale-plan', 'The current native task changed.');
-        else if (selected.length === 1 && selected[0]!.type === 'compose')
-          command('act', { ...selected[0]!, mode: act.mode, actorId, id: `${id}:${localId}` });
-        else if (
-          selected.length === 1 &&
-          [
-            'teach',
-            'handover',
-            'outing',
-            'transfer-item',
-            'cancel',
-            'recover',
-            'withdraw-attempt',
-            'confirm-attempt',
-          ].includes(selected[0]!.type)
-        )
-          command('act', { ...selected[0]!, actorId, id: `${id}:${localId}` });
+        else if (selected.length === 1)
+          admitSelected(
+            {
+              ...selected[0]!,
+              ...(selected[0]!.type === 'compose' ? { mode: act.mode } : {}),
+            },
+            act.mode,
+            'probe',
+          );
         else
           components[localId] = admitPlan(
             world,

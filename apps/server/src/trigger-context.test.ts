@@ -82,10 +82,9 @@ it('keeps coalesced evidence in context without adding it to the literal trigger
     expect(JSON.stringify(decision.context['publicSurfaces'])).toContain('Nearby fixture support');
     expect(JSON.stringify(decision.context)).not.toContain('Distant fixture support');
     const actions = await selectDecisionActions(decision, async (request) => {
-      // Selection keeps evidence but omits generative instructions and duplicate offers.
-      const { knowledgeInstructions, navigation, planOffers, ...evidenceContext } =
-        decision.context;
-      expect(request.state).toHaveProperty('decisionContext', {
+      // Selection keeps evidence and planning capabilities, without output instructions.
+      const { knowledgeInstructions, navigation, ...evidenceContext } = decision.context;
+      expect((request.state as { decisionContext: unknown }).decisionContext).toMatchObject({
         ...evidenceContext,
         activityRequests: compactActivityRequests(
           evidenceContext['activityRequests'] as ModelActivityRequests,

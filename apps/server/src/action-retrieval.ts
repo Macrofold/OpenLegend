@@ -142,7 +142,11 @@ export async function retrieveActions(
           )
         : undefined;
       const selected = prepared?.input ?? { kind: 'embedding' as const, request: { texts } };
-      const lease = execution ? await execution.primary() : undefined;
+      const lease = execution
+        ? prepared
+          ? await execution.acquirePrepared(prepared.stage, 'primary')
+          : await execution.primary()
+        : undefined;
       if (execution && !lease) {
         if (prepared)
           await control!.decline(prepared.stage, 'Shared model execution capacity is occupied.');
@@ -195,7 +199,9 @@ export async function retrieveActions(
                 providerStarted = true;
                 return embeddings.embed({ requestId: id, ...selected.request, signal });
               };
-              return prepared && control ? control.dispatch(prepared.stage, dispatch) : dispatch();
+              return prepared && control
+                ? control.dispatch(prepared.stage, dispatch, lease)
+                : dispatch();
             },
           );
           if (result.receipt.completionUncertain) lease?.uncertain(id);

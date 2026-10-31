@@ -153,6 +153,10 @@ The selected [native player-rule contract](projects/emotional-physiology-tech-de
 
 The binding rule is maintained only in [AGENTS.md — Development save policy](../AGENTS.md#development-save-policy). Consult it before state/storage work. [RP02](maintainers/revisitable-policies.md#rp02--development-state-compatibility) records the future review trigger. Implementation descriptions and historical migration evidence in this document are descriptive, not additional compatibility requirements or exceptions to that rule.
 
+Offline tooling can replace incompatible simulated progress through `SqlGameRepository.replaceDevelopmentWorld` before a runtime adopts that repository. It requires the exact existing head, a distinct fresh current-format world with complete history, and the current initializer's explicit bootstrap inputs. One transaction replaces canonical world records, history and source projections without decoding the old world. Operational authority, asset libraries, spending, jobs and original external-request journals/fences remain intact; replacement supplies no new execution allowance or request replay. This boundary is not exposed through gameplay or a client reset API.
+
+For a Lab replacement, also reset its closed coordinator through `CognitionLabRecords.resetDevelopmentWorkspace` with the exact workspace snapshot. This removes only the current workspace and active custom inputs; ordinary startup captures a current protected starting origin for New. Saved scenarios, runs, artifacts, receipts and financial records remain separate. Replacing native world tables alone cannot repair an old starting-origin pointer.
+
 ## Purpose and recovery promises
 
 A player should be able to retain a world at a committed point, leave it, and continue from that point later. Loading a pre-death save restores the coherent world from before the death, including its other consequences; selectively reviving a character is a separate gameplay operation.

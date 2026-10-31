@@ -905,6 +905,88 @@ export class SqlGameRepository implements GameRepository {
     return null;
   }
 
+  /** Offline development replacement, before a runtime adopts any world. Unlike
+   * gameplay restore, incompatible simulated progress is deliberately discarded;
+   * operational authority, spending and external-request identities stay intact.
+   * AGENTS.md#development-save-policy */
+  async replaceDevelopmentWorld(
+    expected: NonNullable<Awaited<ReturnType<WorldRecords['head']>>>,
+    state: SavedWorld,
+    bootstrap: Pick<
+      NonNullable<Parameters<WorldStore['commit']>[4]>,
+      'authorityBindings' | 'authorityOwners' | 'constructionSeeds'
+    > = {},
+  ): Promise<number> {
+    await this.ready;
+    if (this.applicationFailure) throw this.applicationFailure;
+    if (this.acceptedState || this.acceptedRevision !== -1 || this.db.transactionActive)
+      throw new Error('Development replacement requires an unopened standalone world repository.');
+    if (state.world.id === expected.worldId)
+      throw new Error('Development replacement requires a distinct fresh world identity.');
+    assertAssetBinding(state.presentationRelease, state.presentationReleaseRevision);
+    validateCurrentWorldState(state.world);
+    if (state.world.archivedEventCount)
+      throw new Error('A fresh development world cannot depend on external archived history.');
+    if (this.journalActive) await this.journal.flush();
+    const write: TableWrite = {
+      before: null,
+      state,
+      revision: expected.revision + 1,
+      changes: this.records.prepare(undefined, state),
+      historyAfter: state.world,
+      preparedHistory: this.prepareHistoryWrite(state, undefined, state.world, true),
+      restore: true,
+    };
+    const publish = () => {
+      this.acceptedState = state;
+      this.acceptedRevision = write.revision;
+      this.baselineLost = false;
+      this.readyHistoryWorlds.clear();
+      this.integrationValues.clear();
+      this.publishWorldTables(write);
+      if (this.journalActive) this.journal.synchronized(state.world.id, write.revision);
+    };
+    let publicationDeferred = false;
+    const revision = await this.db.transaction(async () => {
+      if (this.applicationFailure) throw this.applicationFailure;
+      const head = await this.records.head();
+      if (
+        !head ||
+        head.worldId !== expected.worldId ||
+        head.revision !== expected.revision ||
+        head.generation !== expected.generation ||
+        head.appliedRevision !== expected.appliedRevision ||
+        (this.journalActive && !this.journal.writeAligned())
+      )
+        throw new Error('Save conflict: the development world changed before replacement.');
+      // A replacement may retain an already authorized release, but it cannot
+      // manufacture an asset binding or substitute a missing library revision.
+      if (state.presentationRelease)
+        await this.assets.worldReleaseStatus(state.world.id, state.presentationRelease);
+      for (const permission of bootstrap.constructionSeeds ?? [])
+        await this.authority.seedConstruction(permission);
+      for (const binding of bootstrap.authorityBindings ?? [])
+        await this.authority.provision(state.world.id, binding);
+      for (const [actorId, accountId] of bootstrap.authorityOwners ?? [])
+        await this.authority.retainActorOwner(state.world.id, actorId, accountId);
+      await this.memories.releaseWorldSources(expected.worldId);
+      write.revision = await this.records.advance(
+        state.world.id,
+        expected.revision,
+        true,
+        expected.worldId,
+      );
+      await this.applyWorldTables(write);
+      if (this.db.afterCommit) {
+        this.db.afterCommit(publish);
+        publicationDeferred = true;
+      }
+      return write.revision;
+    });
+    if (!publicationDeferred) publish();
+    return revision;
+  }
+
   private readonly readyHistoryWorlds = new Set<string>();
   async commit(
     expectedRevision: number,

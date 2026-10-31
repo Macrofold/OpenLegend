@@ -7,6 +7,7 @@ import { NPC_ID } from '@open-legend/domain';
 import { afterEach, describe, expect, it } from 'vitest';
 import {
   advanceWorld,
+  activityRequestDescriptors,
   executeCommand,
   inventoryFor,
   navigationBlocked,
@@ -27,6 +28,7 @@ import {
 import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 import { domainCommand } from './cognition.js';
+import { decisionObservation } from './decision-observation.js';
 
 const stores: SqlGameRepository[] = [];
 async function setup(): Promise<WorldService> {
@@ -70,6 +72,24 @@ afterEach(async () => {
 describe('bounded actor context', () => {
   it('preserves complete context and trimming order with exact UTF-8 accounting', async () => {
     const service = await setup();
+    const observed = decisionObservation(service.world, NPC_ID)!;
+    const form = activityRequestDescriptors(service.world, NPC_ID).find(
+      (request) => request.id === 'base:camp-supply-method',
+    )!;
+    expect(form).toBeDefined();
+    const full = npcCandidates(service, NPC_ID, observed);
+    expect(full.some((candidate) => candidate.command?.type === 'gather')).toBe(true);
+    // Controlled coverage metadata isolates this consumer; the actual form's
+    // native semantics are qualified in its domain owner cases.
+    const requests = [{ ...form, covers: [{ type: 'gather' as const }] }];
+    const parameterized = npcCandidates(service, NPC_ID, observed, 'suggestions', requests);
+    expect(parameterized.some((candidate) => candidate.command?.type === 'gather')).toBe(false);
+    expect(parameterized.some((candidate) => candidate.command?.type === 'move')).toBe(true);
+    expect(
+      npcCandidates(service, NPC_ID, observed, 'complete-physical', requests).some(
+        (candidate) => candidate.command?.type === 'gather',
+      ),
+    ).toBe(true);
     const base = buildContext(service, NPC_ID, '');
     const reference = (query: string) => {
       const context = structuredClone(base);

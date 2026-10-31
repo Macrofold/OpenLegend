@@ -1,5 +1,5 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { z } from 'zod';
 import { boundResponseSchema } from './cognition-contracts.js';
 import { createNetworkOwner } from '@open-legend/network';
 import {
@@ -694,6 +694,8 @@ const chatSchemaCapabilities = {
   json_schema: true,
   schema_dialect: 'https://json-schema.org/draft/2020-12/schema',
   schema_keywords: [
+    '$defs',
+    '$ref',
     'type',
     'properties',
     'required',
@@ -733,13 +735,13 @@ function prepareChatSchema(
   );
 }
 it('preserves the complete current response constraints across compatible serving dialects', async () => {
-  const schema = z.toJSONSchema(
-    boundResponseSchema(['person'], ['a0'], {
+  const schema = modelJsonSchema(
+    boundResponseSchema(['person', ...Array.from({ length: 32 }, (_, i) => `ref-${i}`)], ['a0'], {
       speech: true,
       expressions: ['smile'],
     }),
-    { target: 'draft-7' },
   );
+  expect(JSON.stringify(schema)).toContain('#/$defs/');
   const selected = await prepareChatSchema(schema);
   expect(selected.macrofoldOutputMode).toBe('json_schema');
   expect(selected.schema).not.toHaveProperty('$schema');
@@ -750,6 +752,12 @@ it('preserves the complete current response constraints across compatible servin
     prepareChatSchema(
       schema,
       chatSchemaCapabilities.schema_keywords.filter((keyword) => keyword !== 'description'),
+    ),
+  ).rejects.toMatchObject({ code: 'unsupported_model_capability' });
+  await expect(
+    prepareChatSchema(
+      schema,
+      chatSchemaCapabilities.schema_keywords.filter((keyword) => keyword !== '$ref'),
     ),
   ).rejects.toMatchObject({ code: 'unsupported_model_capability' });
   const original = compileSchema(schema),

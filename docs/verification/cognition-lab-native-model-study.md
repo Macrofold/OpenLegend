@@ -4,7 +4,7 @@ Primary evidence snapshot: 2026-10-26T21:18:49.890683+00:00; separately bounded 
 
 The completed manual comparison covers seven ordinary panels: M01 (`openai/gpt-5-mini`), M03 (`z-ai/glm-5.3-flash`), M04 (`xiaomi/mimo-v2.6-pro`), R01 (`moonshotai/kimi-k3`), R02 (`z-ai/glm-5.3`), R04 (`meta/muse-spark-open`) and R08 (`meta/muse-spark-1.3-contributor`). R05 and S02 now have all 41 ordinary outcomes reviewed, including invalid outputs, observed abstention and blocked opportunities. The original eight R03 ordinary cells and all 31 explicitly authorized first-valid-origin recovery occurrences are reviewed; old zero-provider setup failures remain separate. M05 has one reviewable farewell within an otherwise uncertain route, and partial S01 evidence retains its separate validity and startup limits. Accepted responses include recognizable personalities and specific grounded old-memory replies, but also sometimes publish stage directions, command-like text or syntax fragments as ordinary speech. Such text produces no native pickup, eating or protection effect in the cited cases. These ordinal observations are not a reliability ranking or a measured player-enjoyment result.
 
-Accepted scope: [behavior study](../projects/cognition-lab-behavior-study.md) and [model selection](../research/character-models/selection.md).
+Accepted scope: [behavior study](../projects/cognition-lab-behavior-study.md) and [model selection](../research/character-models/selection.md). The separately bounded [October 29 native panel](cognition-lab/2026/2026-10-29-final-native-panel.md) records its 108-cell baseline, shared repairs, final follow-through and distinct costs; it does not replace these historical matrices.
 
 ## Evidence and fairness
 

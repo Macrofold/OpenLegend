@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                          | Last updated         |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-28 19:47 UTC |
+| In progress | PG02's bounded evidence path is qualified and shared stealth/emotion integration is designed; broader character reliability remains open. | 2026-10-29 05:04 UTC |
 
-Last used for implementation/review: **2026-10-28 05:00 UTC**.
+Last used for implementation/review: **2026-10-29 05:04 UTC**.
 
 [Feature contract](compelling-characters-feature-spec.md#character-authorship-and-changing-personality) · [CE implementation and acceptance](../maintainers/character-experience.md) · [Memory contract](../memory-architecture.md) · [Agency contract](../agent-agency.md).
 
@@ -101,7 +101,7 @@ Required reads are actor-scoped and batched through existing retrieval/cache and
 
 ## End-to-end cognition integration
 
-The [situation-aware context implementation](../technical/situation-aware-cognition-context.md) connects the [product behavior](compelling-characters-feature-spec.md#coherent-decisions-from-event-to-consequence) through existing owners while preserving current defaults. It owns detailed source, selection, action and response contracts; broader character-life and enjoyment qualification remains with CE. Last used for implementation/review: **2026-10-28 22:30 UTC**.
+The [situation-aware context implementation](../technical/situation-aware-cognition-context.md) connects the [product behavior](compelling-characters-feature-spec.md#coherent-decisions-from-event-to-consequence) through existing owners while preserving current defaults. It owns detailed source, selection, action and response contracts; broader character-life and enjoyment qualification remains with CE. Last used for implementation/review: **2026-10-29 05:04 UTC**.
 
 1. **Opportunity and scheduling:** existing event/perception and internal-change owners feed `ActorWork` and `AiDirector`; shared `CognitionExecution` retains capacity, urgency and fairness. Unchanged circumstances and native continuation create no extra paid turn. Goals, plans and their actual outcomes retain their current owners.
 2. **One prepared account:** derive one actor-scoped evidence manifest per preparation from existing sources, with source/time/role, coverage and freshness bindings. Compose concurrent situation requirements, reuse each supported fact consistently, and project only the evidence needed by each stage. The manifest is neither new memory nor writable authority; omission cannot turn uncertainty into absence or erase a required contrary fact.
@@ -112,6 +112,12 @@ The [situation-aware context implementation](../technical/situation-aware-cognit
 Independently selected voice remains eligible after physical success, abstention or an ordinary native precondition refusal. Its own source, life, authority and lifetime guards still apply. A native regression demonstrates refused stale physical work with valid speech, plus forgotten-source and incapacitation controls that suppress speech. This establishes component independence, not natural emotional quality; [qualification](../verification/situation-aware-cognition-context.md#independent-operations-and-lifecycle) retains the evidence boundary.
 
 Use the [existing matched panels](cognition-lab-behavior-study.md#experiment-contract) for evidence inclusion, character interpretation, actual effects and changed-condition follow-through; retain failures and unattempted positions. Add relevant same-owner controls for busy actors, urgent concurrent events, budget refusal, partial admission and restore without duplicate effects or dispatch. Record time to useful speech/action and complete costs separately from voice quality. SC06–SC09, AG04/AG06/AG07/AG12 and CE03–CE05 retain delivery and qualification; [encounter pacing](../maintainers/needs-design.md#believable-encounter-pacing) remains undesigned here. No second scheduler, evidence store, mandatory critic/planner or fine-tuning dependency is introduced.
+
+### Optional response decomposition and diagnostics
+
+**Unselected future comparison.** Compare the current single response with choosing communication/action intentions before filling their exact details. Speaking, acting, both or neither remain legitimate; retain all enabled operations without a mandatory thought, reasoning transcript or fixed scene classifier. A later stage cannot invent missing evidence or authority. Keep one admitted snapshot, exact references, native validation, lifetime and shared spending allowance; no stage commits effects merely by describing an intention, interprets prose as actions or blindly buys a replacement answer. Adopt extra stages only for demonstrated quality gains worth their complete cost and latency.
+
+Native checks can cheaply compare typed references, exact quantities and revisions with current records; mechanical prerequisites retain their existing admission owners. Free-form factual claims require model or human interpretation and, for model calls, additional spending; this is not a free general fact checker. A selective offline or separately admitted background diagnostic could compare problematic claims with permitted sources, distinguishing current facts, attributed memories, subjective expression and allowed sparse-history elaboration. It grants no authority, changes no character speech or effects, adds no always-on checker/scheduler and does not automatically retry. [CH03](../maintainers/cognition-redesign.md#later-harness-extensions), [CE03/CE05](../maintainers/character-experience.md) and [CL13](../maintainers/cognition-lab.md#cl13--bounded-live-model-and-behavior-iteration) retain comparison and qualification ownership; this is separate from persistent-intention encounter pacing.
 
 ## Production and comparative evaluation
 

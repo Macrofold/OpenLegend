@@ -1,3 +1,4 @@
+import { modelJsonSchema } from './ai-schemas.js';
 import { z } from 'zod';
 import {
   entityGet,
@@ -428,7 +429,7 @@ export async function buildConversationContext(input: {
                   experience: turn.experience,
                 })),
               },
-              schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
+              schema: modelJsonSchema(summarySchema),
             },
             `attempt:${input.attempt}:conversation-compaction:${calls++}`,
           ),

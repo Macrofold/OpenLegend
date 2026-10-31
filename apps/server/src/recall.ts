@@ -659,7 +659,7 @@ export class RecallService {
           return {
             result:
               prepared?.stage && this.service.cognitionControl
-                ? this.service.cognitionControl.dispatch(prepared.stage, dispatch)
+                ? this.service.cognitionControl.dispatch(prepared.stage, dispatch, prepared.lease)
                 : dispatch(),
           };
         }
@@ -747,11 +747,10 @@ export class RecallService {
       { kind: 'embedding', request: { texts: request.texts } },
     );
     try {
-      const lease = this.execution
-        ? owner
-          ? await this.execution.background()
-          : await this.execution.primary()
-        : undefined;
+      const lease = await this.execution?.acquirePrepared(
+        gate.stage,
+        owner ? 'background' : 'primary',
+      );
       if (this.execution && !lease) throw new Error('Model execution capacity is occupied.');
       if (owner && lease) owner.lease = lease;
       return {

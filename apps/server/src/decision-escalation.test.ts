@@ -53,7 +53,11 @@ import type { DecisionPublication } from './decision-publication.js';
 import { RecallService } from './recall.js';
 import { prepareReconsideration } from './decision-preparation.js';
 import { entityHandles } from './entity-references.js';
-import { boundResponseSchema, decisionAppraisalSchema } from './cognition-contracts.js';
+import {
+  boundResponseSchema,
+  decisionAppraisalSchema,
+  RESPONSE_OPERATION_GUIDE,
+} from './cognition-contracts.js';
 import { CognitionRuntimeControl } from './cognition-runtime-control.js';
 import { readGenerationConfig } from './generation-config.js';
 
@@ -496,7 +500,12 @@ describe('enabled character decision reconsideration', () => {
       'invalid-output',
     ],
   ] as const)('E11 ends %s without effects or another purchase', async (_name, answer, end) => {
-    const h = await harness({ generate: (request) => value(request.requestId, 'openai', answer) });
+    const h = await harness({
+      generate: (request) => {
+        expect(compileSchema(request.schema)(answer)).toBe(end === 'abstained');
+        return value(request.requestId, 'openai', answer);
+      },
+    });
     const job = await h.thought();
     expect(h.calls.higher).toHaveLength(1);
     expect(h.food()).toBe(2);
@@ -657,6 +666,11 @@ describe('enabled character decision reconsideration', () => {
     const job = (await h.store.recentJobs(50)).find((job) => job.kind === 'chat')!;
     const jobId = job.id;
     expect(h.calls.higher).toHaveLength(1);
+    const question = JSON.parse(String(h.calls.higher[0]!.context)).questions.q0.question;
+    expect(question).toContain('Decide what to say or do next as this person');
+    expect(question).toContain('Silence is also a valid choice.');
+    expect(question).toContain(RESPONSE_OPERATION_GUIDE);
+    expect(question).toContain("in this question's value");
     expect(job.decision?.groups['q0']?.state).toBe('resolved');
     expect(
       h.service.world.events.filter(

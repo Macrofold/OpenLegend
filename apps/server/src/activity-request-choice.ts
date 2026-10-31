@@ -427,8 +427,8 @@ export async function chooseActivityRequest({
     }
   }
   if (unresolved.size) return;
-  // Instantaneous requests have no inner work mode. The neutral outer transition
-  // does not interrupt work; their native command owner retains actual semantics.
+  // A family without an inner work choice defaults to enqueue. Native admission
+  // proves whether it can continue immediately or must queue behind current work.
   const modeField = activityRequestWorkModeField(descriptor);
   const mode = modeField ? parameters[modeField] : 'enqueue';
   if (mode !== 'enqueue' && mode !== 'replace' && mode !== 'interrupt') return;
