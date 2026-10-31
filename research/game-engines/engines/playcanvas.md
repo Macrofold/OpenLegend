@@ -1,7 +1,7 @@
 # PlayCanvas dossier
 
-| Research status                                             | Progress                                                                            | Last updated |
-| ----------------------------------------------------------- | ----------------------------------------------------------------------------------- | ------------ |
+| Research status                                               | Progress                                                                                               | Last updated |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------ |
 | Browser baseline retained; comparison selected but unmeasured | Evaluates PlayCanvas and its integrated facilities against the selected Three.js presentation adapter. | 2026-10-31   |
 
 ## Position in the shortlist
@@ -16,7 +16,7 @@ PlayCanvas and Three.js are separate implementations; PlayCanvas does not use Th
 
 PlayCanvas submits rendering to the player's GPU through browser graphics APIs. Its documented browser route defaults to WebGL 2, with a separately requested WebGPU path and fallback behavior. Device/OS/browser support must be checked together. [Supported browsers and backends](https://developer.playcanvas.com/user-manual/engine/supported-browsers/).
 
-The current graphics overview labels WebGPU beta. That is not a reason to dismiss it, but it is a reason to test custom materials, shadows, fallback, device loss and target hardware rather than assume a painless switch. A newer backend can help submission-heavy or compute-suitable work; it will not solve excessive overdraw or server database latency.
+The WebGPU path needs separate qualification of custom materials, shadows, fallback, device loss and target hardware against the selected release. A newer backend can help submission-heavy or compute-suitable work; it will not solve excessive overdraw or server database latency. Do not treat an upstream maturity label or a successful demonstration as complete application support.
 
 GPU programming is available on both engines. Upstream PlayCanvas and Three expose WebGPU compute and indirect work; this is not a capability lost merely by choosing Three. Actual support depends on the engine release, pipeline, browser and device. Open Legend's inspected PlayCanvas scene does not explicitly initialize WebGPU. The [capability assessment and primary sources](../../../docs/projects/renderer-comparison-tech-design.md#12-engine-capabilities-and-ecosystem-decisions) own the October 31 review and the distinction between current client behavior and upstream facilities.
 
@@ -69,4 +69,3 @@ Use PlayCanvas when local browser rendering and a rich web interface are actual 
 Reject it when a required native/console experience has no economically credible web path, when sustained client performance repeatedly misses targets for platform-level reasons, or when rebuilding tools costs more than the access benefits are worth. Existing code investment is not an independent reason to stay.
 
 **Research judgment:** PlayCanvas remains the ordinary browser baseline while the selected Three.js comparison examines actual quality, performance and maintenance cost. Native trials remain conditional and are not prerequisites for the playable milestone. A server bottleneck alone does not disqualify PlayCanvas; a demonstrated browser-specific failure or a credible production advantage can justify a broader comparison.
-

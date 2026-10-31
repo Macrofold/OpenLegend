@@ -1,7 +1,7 @@
 # Three.js dossier
 
-| Research status                                             | Progress                                                                                                   | Last updated |
-| ----------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
+| Research status                                                        | Progress                                                                                          | Last updated |
+| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | ------------ |
 | Browser comparison selected; implementation and performance unmeasured | Evaluates the selected shared-presentation candidate and its native integration responsibilities. | 2026-10-31   |
 
 ## Position in the shortlist
@@ -24,7 +24,7 @@ For repeated objects, batching/instancing and correct bounds matter. For persona
 
 ## Rendering and special effects
 
-Three.js supports substantial model and material workflows and a programmable renderer. The current renderer's node-oriented facilities can support modern effects, while custom shaders and backend differences require careful qualification. Do not assume shaders written for another engine transfer directly.
+Three.js supports substantial model and material workflows and a programmable renderer. `WebGPURenderer`'s node-oriented facilities can support modern effects through an integration distinct from classic `WebGLRenderer`; custom shaders and backend differences require careful qualification. Do not assume shaders written for another engine transfer directly.
 
 The [glTF loader](https://threejs.org/docs/pages/GLTFLoader.html) documents a concrete runtime model-loading path and supported extensions. A practical Open Legend asset profile should specify required extensions, textures, animations and failure behavior rather than accept every file advertised as glTF.
 
@@ -67,4 +67,3 @@ Choose Three.js when custom rendering is a deliberate strategic capability and t
 Reject it when the objective is primarily to reduce custom engine work, gain native platform integrations or obtain a mature integrated animation/effects workflow. Replacing one browser renderer with a library is not an automatic solution to browser limits.
 
 **Research judgment:** a selected browser comparison candidate with a concrete shared-presentation question. Its eventual adoption depends on equivalent player-visible behavior, measured performance, useful development advantages and recurring integration cost. No decisive advantage or matched performance result is established; keeping PlayCanvas or retiring a limited Three experiment remains a valid outcome.
-

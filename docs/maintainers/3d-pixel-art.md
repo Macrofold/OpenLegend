@@ -18,7 +18,7 @@ This is a focused child tracker for the proposed 3D appearance pipeline. [SW13](
 
 Use these task IDs for appearance-specific deliverables and link evidence back to the relevant parent. Do not duplicate whole parent task bodies or mark an entire SW/INV/PO task complete because one renderer case passes. Same-version save integrity, privacy, funding, and lifecycle are required in every affected slice rather than deferred to a final hardening phase.
 
-The selected [renderer comparison design](../projects/renderer-comparison-feature-spec.md), currently under review, uses [RCP](renderer-comparison.md) for shared presentation extraction, PlayCanvas/Three.js backends and comparative evidence. It preserves the current art target and consumes these appearance families; it does not deliver or close their qualification.
+The completed [renderer comparison design](../projects/renderer-comparison-feature-spec.md) uses [RCP](renderer-comparison.md) for shared presentation extraction, PlayCanvas/Three.js backends and comparative evidence. It preserves the current art target and consumes these appearance families; it does not deliver or close their qualification.
 
 ## Dependency order
 
@@ -362,4 +362,3 @@ The earlier first-scene direction, design and tasks were revised from the then-c
 ### Original proposal inspection
 
 The baseline was read through the GitHub connector, including root/routed guidance, current presentation/spatial contracts, art-direction brief, runtime/procedural art, invention tracker, public entity view, renderer boundary and pinned PlayCanvas package. Public engine/glTF/provider documentation informs the proposed adapter boundaries with stated limitations. No application run, browser art comparison, paid execution, or runtime performance qualification was performed for this design-only task. Content/link/diff review of the completed documentation package is the applicable verification, not a runtime pass.
-

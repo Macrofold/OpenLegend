@@ -1,8 +1,8 @@
 # Shared world presentation and renderer comparison
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | The selected design is being reconciled; runtime extraction, the Three.js backend and comparative qualification are not implemented. | 2026-10-31 |
+| Status      | Current progress                                                                                                | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Design is complete; shared extraction, the Three.js backend and comparative qualification remain unimplemented. | 2026-10-31   |
 
 ## 1. Purpose and selected direction
 
@@ -22,13 +22,13 @@ The [current visual requirements](../../art-direction/decisions.md#current-visua
 
 Source baseline: `Macrofold/OpenLegend` at `7e95b415f18cc58828eacbddc88da8a86693c3d0`.
 
-| Area | Existing baseline | Selected addition |
-| --- | --- | --- |
-| Application boundary | `WorldRenderer` exposes permitted views, camera, picking, settings and callbacks without PlayCanvas types; the factory always creates `WildernessScene`. | Keep that caller-facing boundary; put a shared presentation controller and replaceable backend behind it. |
-| Shared behavior | Camera math, support-aware motion, asset fetching and much DOM caption/status behavior already have independent owners. | Extract the remaining input, reconciliation, visibility, light selection, pose scheduling and reusable geometry/math from the PlayCanvas scene. |
-| Rendering | The client pins PlayCanvas 2.22.2 and uses its existing WebGL-oriented scene, materials, effects, animation and profiling. | Implement a separately pinned Three.js `WebGLRenderer` backend first; preserve the same required presentation. |
-| Comparison | Scene studies and optional profiling exist; the engine research plan describes matched and best-practical comparisons. | Reuse those surfaces for a backend selector, permitted-view replay, equivalent instrumentation and interpretable reports. |
-| Evidence | Existing PlayCanvas studies qualify only their recorded workloads; no matched Three.js result exists. | Require behavior/quality equivalence before attributing performance differences; retain actual versions, settings, workload and coverage. |
+| Area                 | Existing baseline                                                                                                                                        | Selected addition                                                                                                                               |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| Application boundary | `WorldRenderer` exposes permitted views, camera, picking, settings and callbacks without PlayCanvas types; the factory always creates `WildernessScene`. | Keep that caller-facing boundary; put a shared presentation controller and replaceable backend behind it.                                       |
+| Shared behavior      | Camera math, support-aware motion, asset fetching and much DOM caption/status behavior already have independent owners.                                  | Extract the remaining input, reconciliation, visibility, light selection, pose scheduling and reusable geometry/math from the PlayCanvas scene. |
+| Rendering            | The client pins PlayCanvas 2.22.2 and uses its existing WebGL-oriented scene, materials, effects, animation and profiling.                               | Implement a separately pinned Three.js `WebGLRenderer` backend first; preserve the same required presentation.                                  |
+| Comparison           | Scene studies and optional profiling exist; the engine research plan describes matched and best-practical comparisons.                                   | Reuse those surfaces for a backend selector, permitted-view replay, equivalent instrumentation and interpretable reports.                       |
+| Evidence             | Existing PlayCanvas studies qualify only their recorded workloads; no matched Three.js result exists.                                                    | Require behavior/quality equivalence before attributing performance differences; retain actual versions, settings, workload and coverage.       |
 
 This does not change native collision, navigation, AI, authority, discovery, world rules or save semantics. Rendering an opening does not make it traversable. Showing a shadow does not establish native sight. A remembered image does not become a currently visible target.
 
@@ -92,14 +92,14 @@ A developer changes camera recovery, selection policy, animation cadence or perm
 
 The workload manifest records exact inputs and counts; these scenarios are selection criteria, not invented capacity claims. Use existing scene-study views and current asset releases first. Added scenes use actual supported state. A replay containing staged movement is labelled presentation-only.
 
-| Workload | Activity and payoff | Required visual/behavior coverage | Evidence boundary |
-| --- | --- | --- | --- |
-| W0: Small compatibility scene | Walk, orbit, select and inspect beside a model, sprite, scenery and raised support. | Correct XYZ/support picking, occlusion, current/remembered distinction, camera and overlays, fallback-to-loaded representation. | First adapter gate; not proof of a playable opening. |
-| W1: Inhabited camp | Approach recognizable people, see motion/equipment, select a resident, read speech and an ongoing action. | Moving and still poses, overlap, captions/status, read-through, light/shadow and normal play zoom. | Use actual available people/assets; future first-playable cast remains FPV scope. |
-| W2: Woodland outing | Follow a route, turn the camera, encounter foliage/raised ground, enter and leave the scene. | Loading/reuse, depth/alpha, movement, pixel stability, route/support accuracy, no hidden-source reveal. | No new streaming-world system is required. |
-| W3: Making a place | Preview, place/alter a supported shape, change an appearance, leave and return. | Shared placement policy, real geometry alignment, changed work only, asset cancellation/replacement and recognizable result. | Authored replay does not qualify live invention or construction admission. |
-| W4: Readable danger and darkness | Track a permitted moving target, aim, see supported action cues, retreat past cover under different light. | Displayed pose/aim consistency, selected-vs-physical target distinction, shared light selection, stable shadows and input cancellation. | Do not simulate hit authority or invent NPC decisions in a renderer. |
-| W5: Repeated transitions | Repeat scene entry/replacement, pause/resume, resize, asset failure and renderer replacement. | Stop/disposal ownership, bounded retention, current scope, functional recovery and ordinary non-canvas UI. | Lifecycle/resource qualification; frame timing during replacement is separate. |
+| Workload                         | Activity and payoff                                                                                        | Required visual/behavior coverage                                                                                                       | Evidence boundary                                                                 |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| W0: Small compatibility scene    | Walk, orbit, select and inspect beside a model, sprite, scenery and raised support.                        | Correct XYZ/support picking, occlusion, current/remembered distinction, camera and overlays, fallback-to-loaded representation.         | First adapter gate; not proof of a playable opening.                              |
+| W1: Inhabited camp               | Approach recognizable people, see motion/equipment, select a resident, read speech and an ongoing action.  | Moving and still poses, overlap, captions/status, read-through, light/shadow and normal play zoom.                                      | Use actual available people/assets; future first-playable cast remains FPV scope. |
+| W2: Woodland outing              | Follow a route, turn the camera, encounter foliage/raised ground, enter and leave the scene.               | Loading/reuse, depth/alpha, movement, pixel stability, route/support accuracy, no hidden-source reveal.                                 | No new streaming-world system is required.                                        |
+| W3: Making a place               | Preview, place/alter a supported shape, change an appearance, leave and return.                            | Shared placement policy, real geometry alignment, changed work only, asset cancellation/replacement and recognizable result.            | Authored replay does not qualify live invention or construction admission.        |
+| W4: Readable danger and darkness | Track a permitted moving target, aim, see supported action cues, retreat past cover under different light. | Displayed pose/aim consistency, selected-vs-physical target distinction, shared light selection, stable shadows and input cancellation. | Do not simulate hit authority or invent NPC decisions in a renderer.              |
+| W5: Repeated transitions         | Repeat scene entry/replacement, pause/resume, resize, asset failure and renderer replacement.              | Stop/disposal ownership, bounded retention, current scope, functional recovery and ordinary non-canvas UI.                              | Lifecycle/resource qualification; frame timing during replacement is separate.    |
 
 Every initial comparison includes W0 plus the currently available parts of W1–W4 and W5. Missing coverage is named; narrower evidence never becomes “whole game parity.” First-playable-only mechanics are added when their existing owners deliver them. Their absence does not force a renderer project to reimplement those systems or falsely close FPV.
 
@@ -123,17 +123,17 @@ WebGPU, compute, indirect drawing, different anti-aliasing, screen-space illumin
 
 ## 7. Quality and performance acceptance
 
-| Obligation | Classification | What completion means |
-| --- | --- | --- |
-| Shared authority and interaction semantics | Required pass | No private/current-state disclosure, invented native effects, changed camera/gesture meaning, incorrect support picking or duplicate commands. |
-| Supported visual coverage | Required pass | All declared coverage works on both backends, including motion, depth, loaded/fallback assets and current/remembered images; deviations are fixed or the scope remains incomplete. |
-| Switch/replacement lifecycle | Required pass | Old drawing/input stops, disposal settles or a recoverable failure is exposed, and stale work cannot affect the replacement. |
-| Valid matched capture | Required pass | The report demonstrates equal required activity, real effective settings, complete timeline processing and truthful missing data. Invalid comparisons are rejected, not ranked. |
-| Performance on selected devices | Required measurement | Report repeated frame distributions, hitch/loading/response behavior, resources and variance. A slow honest result is useful evidence, not automatic project failure. |
-| Existing 3×/wider-device goals | Existing owner requirement | Those independent gates remain with scene-performance/V3D/FPV owners; this project does not close them with a smaller replay. |
-| Art and ordinary play readability | Human acceptance | Review normal-speed motion and interaction as well as stills against accepted art direction; record who reviewed what and remaining concerns. |
-| Fun, useful invention and independent people | Existing gameplay acceptance | Use real player/AI activity through FPV and subsystem owners. Renderer fixtures provide no substitute. |
-| Optional GPU/new-effect experiments | Exploration | A bounded question and honest result; no new feature commitment or production support promise follows automatically. |
+| Obligation                                   | Classification               | What completion means                                                                                                                                                              |
+| -------------------------------------------- | ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Shared authority and interaction semantics   | Required pass                | No private/current-state disclosure, invented native effects, changed camera/gesture meaning, incorrect support picking or duplicate commands.                                     |
+| Supported visual coverage                    | Required pass                | All declared coverage works on both backends, including motion, depth, loaded/fallback assets and current/remembered images; deviations are fixed or the scope remains incomplete. |
+| Switch/replacement lifecycle                 | Required pass                | Old drawing/input stops, disposal settles or a recoverable failure is exposed, and stale work cannot affect the replacement.                                                       |
+| Valid matched capture                        | Required pass                | The report demonstrates equal required activity, real effective settings, complete timeline processing and truthful missing data. Invalid comparisons are rejected, not ranked.    |
+| Performance on selected devices              | Required measurement         | Report repeated frame distributions, hitch/loading/response behavior, resources and variance. A slow honest result is useful evidence, not automatic project failure.              |
+| Existing 3×/wider-device goals               | Existing owner requirement   | Those independent gates remain with scene-performance/V3D/FPV owners; this project does not close them with a smaller replay.                                                      |
+| Art and ordinary play readability            | Human acceptance             | Review normal-speed motion and interaction as well as stills against accepted art direction; record who reviewed what and remaining concerns.                                      |
+| Fun, useful invention and independent people | Existing gameplay acceptance | Use real player/AI activity through FPV and subsystem owners. Renderer fixtures provide no substitute.                                                                             |
+| Optional GPU/new-effect experiments          | Exploration                  | A bounded question and honest result; no new feature commitment or production support promise follows automatically.                                                               |
 
 Use 60 Hz/16.67 ms as a comparison reference where the actual display supports it, not a universal hardware promise or an instruction to clamp the application. Report actual display cadence and uncapped CPU/GPU headroom where measurable. A stable 60 FPS readout can hide substantial cost differences; p95/p99 and repeated stalls matter. Do not add CPU and GPU durations as though they could not overlap.
 

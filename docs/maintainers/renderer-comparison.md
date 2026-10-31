@@ -2,7 +2,7 @@
 
 ## Current progress
 
-The selected browser renderer design is under review. The existing client remains PlayCanvas-only; shared extraction, a Three.js backend, a switcher and matched comparative qualification are not delivered. This document owns the remaining implementation, integration and evidence. Documentation completion does not authorize executable work or decide the ordinary renderer default.
+The selected browser renderer design is complete. The existing client remains PlayCanvas-only; shared extraction, a Three.js backend, a switcher and matched comparative qualification are not delivered. This document owns the remaining implementation, integration and evidence. Documentation completion does not authorize executable work or decide the ordinary renderer default.
 
 Source baseline: `Macrofold/OpenLegend` at `7e95b415f18cc58828eacbddc88da8a86693c3d0`. PlayCanvas remains the default while this project is implemented and evaluated. No matched Three.js performance result is claimed.
 
@@ -25,7 +25,9 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 
 ### RCP-D01 — Complete and reconcile the selected design
 
-- [ ] Finish the feature specification, technical design, repertoire review, implementation breakdown and limits inventory; review their complete affected diff. Reconcile SW, V3D, profiling, engine research, navigation and selected design dispositions. Record actual open decisions without treating missing runtime evidence as missing design. **Done evidence:** a complete crosslinked design, consistent owners and dispositions, reviewed links/content and committed documentation. All RCP01–RCP12 implementation/evidence checkboxes remain open.
+- [x] Finish the feature specification, technical design, repertoire review, implementation breakdown and limits inventory; review their complete affected diff. Reconcile SW, V3D, profiling, engine research, navigation and selected design dispositions. Record actual open decisions without treating missing runtime evidence as missing design. **Done evidence:** a complete crosslinked design, consistent owners and dispositions, reviewed links/content and committed documentation. All RCP01–RCP12 implementation/evidence checkboxes remain open.
+
+**Design evidence:** The complete design and affected-owner diff were reviewed against the pinned source and current contracts. Prettier 3.6.2 and focused new/changed relative-link and heading checks pass. The 42-file repertoire review records actual coverage; no runtime, benchmark or player result is claimed.
 
 ## RCP01 — Establish the baseline and exact workload
 
@@ -191,4 +193,3 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 This tracker creates no automatic paid calls, hardware purchase, browser campaign or new test-authoring authorization. Design review needs content/link consistency; runtime tasks use the existing local verification policy after implementation is authorized. No CI dispatch is part of this project.
 
 The design can complete under RCP-D01 while runtime RCP01–RCP12 remains open. The project cannot be called delivered merely because an adapter draws the scene. Conversely, a valid comparison that finds no compelling migration advantage is a useful outcome; the project does not require Three.js to win.
-

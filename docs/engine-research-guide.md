@@ -120,4 +120,3 @@ No additional generic engine, cognition, presentation, simulation-scale or evalu
 The snapshot's date is part of its meaning. Before relying on a release-sensitive claim for implementation or adoption, verify the affected feature and package against current primary documentation. Refresh the particular claim, its source register and its consuming decision together. Preserve an earlier limitation only when clearly labeled as historical or still relevant to a supported version.
 
 Retain concrete distinctions that prevent an invalid conclusion: pending versus negative results, visual versus mechanical effects, individual knowledge versus shared data, retained population versus active work, and serialization versus continuity. These are useful tools for finding opportunities as well as avoiding mistakes. A research prototype can suggest a controlled comparison; successful engineering and an enjoyable game each still need their own evidence.
-

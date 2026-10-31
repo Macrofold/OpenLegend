@@ -1,8 +1,8 @@
 # Shared world presentation and renderer comparison — technical design
 
-| Status | Current progress | Last updated |
-| --- | --- | --- |
-| In progress | The selected architecture is being reconciled; implementation and comparative qualification remain open. | 2026-10-31 |
+| Status      | Current progress                                                              | Last updated |
+| ----------- | ----------------------------------------------------------------------------- | ------------ |
+| In progress | Design is complete; implementation and comparative qualification remain open. | 2026-10-31   |
 
 ## 1. Contract and architecture
 
@@ -36,22 +36,24 @@ Only one backend is active. Arrows describe ownership and calls, not network ser
 
 Baseline: `Macrofold/OpenLegend` commit `7e95b415f18cc58828eacbddc88da8a86693c3d0`. Recheck touched source before implementation if the base advances. PlayCanvas is pinned to 2.22.2; Three.js is not installed. The current scene creates a PlayCanvas application without an explicit WebGPU initialization path. Current upstream capabilities must not be reported as enabled in this client.
 
-| Current owner | Reuse or extract once | Backend-specific work |
-| --- | --- | --- |
-| `world-renderer.ts`, `main.tsx`, `scene.ts` factory | Public methods/callbacks and one stable caller-facing renderer handle | Factory loads selected backend; scene object creation moves behind it |
-| `world-camera.ts`, `world-motion.ts` | Existing camera commands/pose and support-aware visual interpolation | Apply projection/pose and displayed transforms using native objects |
-| `scene.ts:setView` | Scope changes, current/remembered image reconciliation, appearance signatures, selection validity, changed/moving sets | Create/update/remove native objects and resources |
-| `scene.ts` pointer/key methods | Gesture priority, drag/click classification, focus/cancel, target/placement/attack callbacks | Camera ray, rendered-geometry hit, projected anchor, markers |
-| `speech-captions.tsx`, `character-status.tsx`, `status-indicators.ts`, `vision-blur.ts` | Existing DOM/React behavior and content | Supply consistent projected anchors/radii through a narrow query |
-| `asset-files.ts`, `study-assets.ts` | Exact selected releases, URLs, transfer queue, cancellation, bytes/checksums, source identity/dimensions | Decode/upload/instantiate per engine |
-| `bundled-models.ts`, `scene-props.ts` | Loading state, deduplication, stale-result rejection, fallback and source-normalization policy | PlayCanvas registry/parser workarounds, Three loader/decoder/disposal |
-| `library-actors.ts`, `characters/mercenary-motion.ts` | Clip selection, transition intent, pause, heading smoothing, held-pose schedule | Native skeleton/morph evaluation and engine blend-reset mechanics |
-| `characters/mercenary-cloth.ts` | Typed-array particles, constraints, tethers, fixed stepping and quality decisions | Read bone transforms, publish positions/normals and release mesh resources |
-| `library-scenery.ts`, `billboard.ts`, `perception-overlay.ts` | Plain geometry, bounds, instance transforms, billboard math and guide geometry | Native meshes/buffers, alpha/depth integration and drawing |
-| `world-presentation.ts`, `sunlight.ts` | Sun/daylight math, permitted light-source selection, read-through eligibility and reveal strengths | Lights/layers, stencil/depth, shadow passes and native skin/morph sharing |
-| `art-treatment.ts`, `scene-pixels.ts`, `pixel-effects.ts`, `shadow-material.ts` | Art parameters, portable math/kernel fragments and required compositing behavior | Shader chunks/nodes, bindings, targets, formats, variants, pass ordering and cache preparation |
-| `scene-performance.ts` | Measurement names, bounded report, intervals, histograms, missing-data semantics | PlayCanvas stats/WebGL query collector or Three/actual-API collector |
-| `scene-study.ts` | Workloads, camera path, selected quality and study actions | Access through the shared controller plus a narrow study interface |
+Start source inspection at the [public renderer boundary](../../apps/client/src/world-renderer.ts), [current scene](../../apps/client/src/scene.ts), [scene study](../../apps/client/src/scene-study.ts) and [browser profiling driver](../../scripts/performance/profile-browser.mjs). These existing callers determine the extraction and integration steps below.
+
+| Current owner                                                                           | Reuse or extract once                                                                                                  | Backend-specific work                                                                          |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| `world-renderer.ts`, `main.tsx`, `scene.ts` factory                                     | Public methods/callbacks and one stable caller-facing renderer handle                                                  | Factory loads selected backend; scene object creation moves behind it                          |
+| `world-camera.ts`, `world-motion.ts`                                                    | Existing camera commands/pose and support-aware visual interpolation                                                   | Apply projection/pose and displayed transforms using native objects                            |
+| `scene.ts:setView`                                                                      | Scope changes, current/remembered image reconciliation, appearance signatures, selection validity, changed/moving sets | Create/update/remove native objects and resources                                              |
+| `scene.ts` pointer/key methods                                                          | Gesture priority, drag/click classification, focus/cancel, target/placement/attack callbacks                           | Camera ray, rendered-geometry hit, projected anchor, markers                                   |
+| `speech-captions.tsx`, `character-status.tsx`, `status-indicators.ts`, `vision-blur.ts` | Existing DOM/React behavior and content                                                                                | Supply consistent projected anchors/radii through a narrow query                               |
+| `asset-files.ts`, `study-assets.ts`                                                     | Exact selected releases, URLs, transfer queue, cancellation, bytes/checksums, source identity/dimensions               | Decode/upload/instantiate per engine                                                           |
+| `bundled-models.ts`, `scene-props.ts`                                                   | Loading state, deduplication, stale-result rejection, fallback and source-normalization policy                         | PlayCanvas registry/parser workarounds, Three loader/decoder/disposal                          |
+| `library-actors.ts`, `characters/mercenary-motion.ts`                                   | Clip selection, transition intent, pause, heading smoothing, held-pose schedule                                        | Native skeleton/morph evaluation and engine blend-reset mechanics                              |
+| `characters/mercenary-cloth.ts`                                                         | Typed-array particles, constraints, tethers, fixed stepping and quality decisions                                      | Read bone transforms, publish positions/normals and release mesh resources                     |
+| `library-scenery.ts`, `billboard.ts`, `perception-overlay.ts`                           | Plain geometry, bounds, instance transforms, billboard math and guide geometry                                         | Native meshes/buffers, alpha/depth integration and drawing                                     |
+| `world-presentation.ts`, `sunlight.ts`                                                  | Sun/daylight math, permitted light-source selection, read-through eligibility and reveal strengths                     | Lights/layers, stencil/depth, shadow passes and native skin/morph sharing                      |
+| `art-treatment.ts`, `scene-pixels.ts`, `pixel-effects.ts`, `shadow-material.ts`         | Art parameters, portable math/kernel fragments and required compositing behavior                                       | Shader chunks/nodes, bindings, targets, formats, variants, pass ordering and cache preparation |
+| `scene-performance.ts`                                                                  | Measurement names, bounded report, intervals, histograms, missing-data semantics                                       | PlayCanvas stats/WebGL query collector or Three/actual-API collector                           |
+| `scene-study.ts`                                                                        | Workloads, camera path, selected quality and study actions                                                             | Access through the shared controller plus a narrow study interface                             |
 
 An imported `pc` type does not make the whole file irreducibly engine-specific. Replace incidental vector math with existing plain spatial math where useful. Conversely, do not translate a whole material/pass implementation line by line through a nominally generic wrapper. The adapter is narrow in responsibility but remains substantial code.
 
@@ -61,30 +63,30 @@ The source baseline includes entity-level remembered images, retained-fire illum
 
 Keep the initial work inside `apps/client/src`. Suggested homes are `presentation/` for shared behavior and `renderers/playcanvas/`, `renderers/three/` for native integration. Use existing small pure modules where they already own a concept; do not move them merely to fill a directory template. The names below identify responsibilities, not a requirement for one file per row.
 
-| Owner | State and callers | May depend on |
-| --- | --- | --- |
-| `presentation/controller.ts` | Implements `WorldRenderer`; latest permitted view, reconciled records, displayed motion, selected backend, settings | Existing protocol/spatial/math, interaction, preparation and backend contract |
-| `presentation/view.ts` | Visual image records, scope identity, appearance signatures and change calculation | Permitted `GameView`, exact asset/source descriptors; no native graphics objects |
-| `presentation/interaction.ts` | Pointer/key gestures, cancellation, picking policy, ordinary callbacks | DOM input, current shared state and backend query functions |
-| `presentation/animation.ts` | Desired clip, transition and absolute sample schedule; motion and cloth preparation as needed | Existing numeric helpers and source metadata |
-| `presentation/backend.ts` | Native backend/factory contract and capabilities | Plain visual records and geometry types only |
-| Backend implementation | Scene/camera, decoded assets, native animation, meshes/materials/passes, native resource handles | Its own engine and shared records; not React command submission or server authority |
-| Existing study/profiler owners | Selected workload, replay cursor, report and bounded collection | Controller/study interface, semantic measurements and backend collector |
+| Owner                          | State and callers                                                                                                   | May depend on                                                                       |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `presentation/controller.ts`   | Implements `WorldRenderer`; latest permitted view, reconciled records, displayed motion, selected backend, settings | Existing protocol/spatial/math, interaction, preparation and backend contract       |
+| `presentation/view.ts`         | Visual image records, scope identity, appearance signatures and change calculation                                  | Permitted `GameView`, exact asset/source descriptors; no native graphics objects    |
+| `presentation/interaction.ts`  | Pointer/key gestures, cancellation, picking policy, ordinary callbacks                                              | DOM input, current shared state and backend query functions                         |
+| `presentation/animation.ts`    | Desired clip, transition and absolute sample schedule; motion and cloth preparation as needed                       | Existing numeric helpers and source metadata                                        |
+| `presentation/backend.ts`      | Native backend/factory contract and capabilities                                                                    | Plain visual records and geometry types only                                        |
+| Backend implementation         | Scene/camera, decoded assets, native animation, meshes/materials/passes, native resource handles                    | Its own engine and shared records; not React command submission or server authority |
+| Existing study/profiler owners | Selected workload, replay cursor, report and bounded collection                                                     | Controller/study interface, semantic measurements and backend collector             |
 
 ### 3.1 Minimal visual data
 
 Define the actual TypeScript types by extracting the fields consumed in the source map, rather than copying the entire `GameView`. Reuse existing IDs and spatial types instead of introducing competing coordinate wrappers. The minimal schema has these meanings:
 
-| Record | Required meaning | Lifetime |
-| --- | --- | --- |
-| `PresentationScope` | Separate world identity (`worldId`, save timeline, player ID, private-draft scope), access/control scope and selected presentation release/settings | World replacement clears old state; same-character access renewal reauthorizes without rebuilding still-valid public resources |
-| `RenderImage` | Stable displayed-image ID, represented entity ID when permitted, current/remembered status, supplied appearance/representation, authorized XYZ/support, dimensions/orientation, motion/pose input, selected presentation flags | Controller-owned immutable record per accepted visual revision |
-| `AppearanceBinding` | Exact asset reference or existing procedural/fallback recipe, authored dimensions/material roles and normalization inputs | Shared source descriptor; no native texture, mesh or parser handle |
-| `RenderWorldView` | Current scope, environment/map reference and complete current set of permitted visual records for installation | Reused between updates; not rebuilt per frame |
-| `PresentationChanges` | Added/replaced/changed records, removed IDs, invalidated geometry/settings/environment, changed projected overlays | Produced at a view/settings boundary; stable records can be reused |
-| `FrameSample` | Shared monotonic presentation time, current camera pose/viewport, changed displayed transforms, desired pose samples and current visual effect parameters | Borrowed for the synchronous frame; stable storage reused |
-| `PickHit` | Permitted image/entity ID if any, hit XYZ/support, distance along the current ray and surface/body information needed by existing policy | Query result; never a new action permission |
-| `BackendInfo` | Engine/version, pipeline, requested/effective API, required-feature support, measured resource-counter availability | Fixed at initialization except explicit context/device availability changes |
+| Record                | Required meaning                                                                                                                                                                                                               | Lifetime                                                                                                                       |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------ |
+| `PresentationScope`   | Separate world identity (`worldId`, save timeline, player ID, private-draft scope), access/control scope and selected presentation release/settings                                                                            | World replacement clears old state; same-character access renewal reauthorizes without rebuilding still-valid public resources |
+| `RenderImage`         | Stable displayed-image ID, represented entity ID when permitted, current/remembered status, supplied appearance/representation, authorized XYZ/support, dimensions/orientation, motion/pose input, selected presentation flags | Controller-owned immutable record per accepted visual revision                                                                 |
+| `AppearanceBinding`   | Exact asset reference or existing procedural/fallback recipe, authored dimensions/material roles and normalization inputs                                                                                                      | Shared source descriptor; no native texture, mesh or parser handle                                                             |
+| `RenderWorldView`     | Current scope, environment/map reference and complete current set of permitted visual records for installation                                                                                                                 | Reused between updates; not rebuilt per frame                                                                                  |
+| `PresentationChanges` | Added/replaced/changed records, removed IDs, invalidated geometry/settings/environment, changed projected overlays                                                                                                             | Produced at a view/settings boundary; stable records can be reused                                                             |
+| `FrameSample`         | Shared monotonic presentation time, current camera pose/viewport, changed displayed transforms, desired pose samples and current visual effect parameters                                                                      | Borrowed for the synchronous frame; stable storage reused                                                                      |
+| `PickHit`             | Permitted image/entity ID if any, hit XYZ/support, distance along the current ray and surface/body information needed by existing policy                                                                                       | Query result; never a new action permission                                                                                    |
+| `BackendInfo`         | Engine/version, pipeline, requested/effective API, required-feature support, measured resource-counter availability                                                                                                            | Fixed at initialization except explicit context/device availability changes                                                    |
 
 Do not put entity thoughts, hidden routes, undisclosed inventory, private health or inferred current positions into a visual record. The controller can retain the latest authorized `GameView` for nonvisual callbacks; a backend needs only its projection. A remembered image keeps its last permitted image and its existing historical styling/selection behavior, not live hidden transforms.
 
@@ -251,16 +253,16 @@ In particular:
 
 ### Parity checklist before timing
 
-| Area | Check in the actual rendered result |
-| --- | --- |
-| Color pipeline | Linear/sRGB interpretation, source texture encoding, HDR formats, exposure/tone mapping order and final output conversion; no double gamma/tone map |
-| Pixel treatment | World anchoring, coverage/alpha, small subject detail, resolution, normal-play zoom and moving-camera stability |
-| Depth/alpha | Near/far/projection, opaque/cutout/blended sorting, sprites/virtual depth, fine foliage, support/feet and transparent edges |
-| Models/animation | Source scale/orientation, bind pose, clip time/blends, skin/morph/equipment, held cadence and shared multi-pass pose |
-| Lighting | Same selected sources, shadow coverage/distance/resolution/quality intent, material response, day/night and local-light cases |
-| Effects | Existing bloom/grading/compose ordering, read-through, selected/hover outline, placement and range guides |
-| UI projection | Same camera/state for captions/status/aim, resize/DPR, missing/behind-camera anchors and focus/input ownership |
-| Lifecycle | Fallback, successful replacement, removal during load, explicit failure/retry, scene/scope reset and disposal |
+| Area             | Check in the actual rendered result                                                                                                                 |
+| ---------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Color pipeline   | Linear/sRGB interpretation, source texture encoding, HDR formats, exposure/tone mapping order and final output conversion; no double gamma/tone map |
+| Pixel treatment  | World anchoring, coverage/alpha, small subject detail, resolution, normal-play zoom and moving-camera stability                                     |
+| Depth/alpha      | Near/far/projection, opaque/cutout/blended sorting, sprites/virtual depth, fine foliage, support/feet and transparent edges                         |
+| Models/animation | Source scale/orientation, bind pose, clip time/blends, skin/morph/equipment, held cadence and shared multi-pass pose                                |
+| Lighting         | Same selected sources, shadow coverage/distance/resolution/quality intent, material response, day/night and local-light cases                       |
+| Effects          | Existing bloom/grading/compose ordering, read-through, selected/hover outline, placement and range guides                                           |
+| UI projection    | Same camera/state for captions/status/aim, resize/DPR, missing/behind-camera anchors and focus/input ownership                                      |
+| Lifecycle        | Fallback, successful replacement, removal during load, explicit failure/retry, scene/scope reset and disposal                                       |
 
 Exact pixel identity across engines is not a realistic acceptance requirement. Record tolerated harmless image differences; materially changed silhouettes, visibility, attack timing, pixel shimmer, missing effects or different work remain defects/incomplete parity. Do not tune the shared art target down to excuse a deficient backend.
 
@@ -329,16 +331,16 @@ Reuse `ScenePerformance` and the profiling-controls capture lifecycle, report sh
 
 ### Required report fields and meaning
 
-| Measurement | Definition and cautions |
-| --- | --- |
+| Measurement                 | Definition and cautions                                                                                                                                                                                                                                                                                                                                                                                                                      |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Frame intervals and drawing | Record browser/presentation callback intervals separately from actual draw/postrender submission intervals and counts, full observation duration and trailing time with no render. Existing update callbacks can outnumber draws under backpressure; a responsive RAF with a frozen canvas cannot qualify smoothness. Retain bounded raw samples, coverage/gaps and display cadence. Submission does not prove physical screen presentation. |
-| Shared update CPU | Time preparing shared view/frame state; separate view reconciliation from recurring update |
-| Backend CPU | Native pose/resource work and render submission at defined boundaries; engine-reported submetrics retain their own names/scope |
-| GPU duration | Optional asynchronous supported API timer; record unavailable/disjoint/lost/pending/dropped distinctly from zero |
-| Interaction response | Pointer/action release to first corresponding displayed local/acknowledged response where observed; distinguish local preview, server acknowledgement and world consequence |
-| Loading and hitches | Module/network/decode/upload/first-use preparation, first usable scene and switch gap; separate from warm steady state |
-| Work performed | Processed views/events, evaluated poses, active lights/shadows, required image/assets and semantic coverage; no ranking without it |
-| Resources | Engine-tracked object/geometry/texture/target counts, transferred/retained bytes where known, JS heap when exposed, post-disposal trend; not a portable exact-VRAM claim |
+| Shared update CPU           | Time preparing shared view/frame state; separate view reconciliation from recurring update                                                                                                                                                                                                                                                                                                                                                   |
+| Backend CPU                 | Native pose/resource work and render submission at defined boundaries; engine-reported submetrics retain their own names/scope                                                                                                                                                                                                                                                                                                               |
+| GPU duration                | Optional asynchronous supported API timer; record unavailable/disjoint/lost/pending/dropped distinctly from zero                                                                                                                                                                                                                                                                                                                             |
+| Interaction response        | Pointer/action release to first corresponding displayed local/acknowledged response where observed; distinguish local preview, server acknowledgement and world consequence                                                                                                                                                                                                                                                                  |
+| Loading and hitches         | Module/network/decode/upload/first-use preparation, first usable scene and switch gap; separate from warm steady state                                                                                                                                                                                                                                                                                                                       |
+| Work performed              | Processed views/events, evaluated poses, active lights/shadows, required image/assets and semantic coverage; no ranking without it                                                                                                                                                                                                                                                                                                           |
+| Resources                   | Engine-tracked object/geometry/texture/target counts, transferred/retained bytes where known, JS heap when exposed, post-disposal trend; not a portable exact-VRAM claim                                                                                                                                                                                                                                                                     |
 
 Shared CPU and backend CPU boundaries must not double-count a nested call as additive totals. GPU work overlaps CPU/frames; do not add durations to manufacture total frame time. PlayCanvas and Three draw/resource counters may count passes, instancing and allocations differently; label their definitions and use them diagnostically rather than as universally equal units.
 
@@ -460,17 +462,17 @@ Unity/Unreal/Godot are not required merely to make modern-looking 3D graphics. N
 
 ## 14. Verification matrix and evidence limits
 
-| Connected check | Required observations | Owner |
-| --- | --- | --- |
-| Ordinary walk/orbit/select/inspect | Same support/XYZ, input policy, caption anchors, current camera and selected image | RCP02/03/05/07 |
-| Current → remembered → removed/scope reset | No live hidden transform, exact historical treatment, cleared obsolete targets/captions/assets | RCP02/07/08 |
-| Aim/placement during camera movement | Fresh release pick, selected target distinct from physical point, no commit on switch/cancel | RCP03/07/08 |
-| Pose/gear/shadow/read-through | One shared time and one evaluated pose; no detached gear/cloth or duplicate animation work | RCP04/05/07 |
-| Asset changes while loading | Correct source identity, usable fallback, same body/support, no stale installation or leaked native owner | RCP04/06/08 |
-| Repeated switching and viewport changes | Exactly one active backend, old callbacks inert, disposal completion/failure visible and bounded retention | RCP08/11 |
-| Replay lag/overflow/unsupported feature | No skipped meaningful work disguised as speed; incomplete scope visible and excluded from matched ranking | RCP09/10/11 |
-| Profiling off, stop, restart and destroy | Existing zero-collection path, immutable completed report, correct current capture query ownership | RCP10/11 |
-| Normal live outing and return | Functional interaction and recognizable real change; rendering costs distinct from network/server/model time | RCP11 plus existing gameplay owners |
+| Connected check                            | Required observations                                                                                        | Owner                               |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------ | ----------------------------------- |
+| Ordinary walk/orbit/select/inspect         | Same support/XYZ, input policy, caption anchors, current camera and selected image                           | RCP02/03/05/07                      |
+| Current → remembered → removed/scope reset | No live hidden transform, exact historical treatment, cleared obsolete targets/captions/assets               | RCP02/07/08                         |
+| Aim/placement during camera movement       | Fresh release pick, selected target distinct from physical point, no commit on switch/cancel                 | RCP03/07/08                         |
+| Pose/gear/shadow/read-through              | One shared time and one evaluated pose; no detached gear/cloth or duplicate animation work                   | RCP04/05/07                         |
+| Asset changes while loading                | Correct source identity, usable fallback, same body/support, no stale installation or leaked native owner    | RCP04/06/08                         |
+| Repeated switching and viewport changes    | Exactly one active backend, old callbacks inert, disposal completion/failure visible and bounded retention   | RCP08/11                            |
+| Replay lag/overflow/unsupported feature    | No skipped meaningful work disguised as speed; incomplete scope visible and excluded from matched ranking    | RCP09/10/11                         |
+| Profiling off, stop, restart and destroy   | Existing zero-collection path, immutable completed report, correct current capture query ownership           | RCP10/11                            |
+| Normal live outing and return              | Functional interaction and recognizable real change; rendering costs distinct from network/server/model time | RCP11 plus existing gameplay owners |
 
 Use existing checks and disposable manual/diagnostic scenarios through real consumers. Typecheck/build validate the implementation changes; source and link review validate this documentation task. A no-GPU sink cannot prove shader, animation, depth, device, responsiveness or visual quality. A screenshot cannot prove temporal stability. A timed replay cannot prove live independent decisions or fun. Existing V3D/SW/FPV required acceptance remains open unless its actual criteria are independently met.
 
@@ -492,6 +494,7 @@ Reviewed 2026-10-31; recheck release-specific details before using them in code.
 - [Three animation mixer](https://threejs.org/docs/pages/AnimationMixer.html), [glTF loader](https://threejs.org/docs/pages/GLTFLoader.html), [shader material](https://threejs.org/docs/pages/ShaderMaterial.html): native execution/resource responsibilities.
 - [Three SSGI](https://threejs.org/docs/pages/SSGINode.html): screen-space illumination and quality/cost controls.
 - [PlayCanvas shaders](https://developer.playcanvas.com/user-manual/graphics/shaders/), [compute](https://developer.playcanvas.com/user-manual/graphics/shaders/compute-shaders/), [indirect drawing](https://developer.playcanvas.com/user-manual/graphics/advanced-rendering/indirect-drawing/): shader languages and WebGPU-specific features.
+- [Pinned PlayCanvas application lifecycle](https://github.com/playcanvas/engine/blob/v2.22.2/src/framework/app-base.js), [animation layer](https://github.com/playcanvas/engine/blob/v2.22.2/src/framework/components/anim/component-layer.js), [animation controller](https://github.com/playcanvas/engine/blob/v2.22.2/src/framework/anim/controller/anim-controller.js): actual update/render ordering and native transition/sample behavior used by the initial adapter.
 - [PlayCanvas CameraFrame](https://developer.playcanvas.com/user-manual/graphics/posteffects/cameraframe/), [custom passes](https://developer.playcanvas.com/user-manual/graphics/posteffects/cameraframe/custom-passes/), [shader migrations](https://developer.playcanvas.com/user-manual/graphics/shaders/migrations/): integrated pipeline and maintenance cost.
 - [PlayCanvas React](https://developer.playcanvas.com/user-manual/react/), [React Three Fiber](https://r3f.docs.pmnd.rs/getting-started/introduction), [Drei](https://drei.docs.pmnd.rs/getting-started/introduction), [Three mesh BVH](https://github.com/gkjohnson/three-mesh-bvh), [postprocessing](https://github.com/pmndrs/postprocessing): optional ecosystems, not selected mandatory dependencies.
 - [Browser animation frames](https://developer.mozilla.org/en-US/docs/Web/API/Window/requestAnimationFrame), [WebGL best practices](https://developer.mozilla.org/en-US/docs/Web/API/WebGL_API/WebGL_best_practices), [WebGPU features](https://developer.mozilla.org/en-US/docs/Web/API/GPUSupportedFeatures): scheduling/resource-measurement limitations and optional timestamps.

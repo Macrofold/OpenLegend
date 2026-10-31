@@ -1,7 +1,7 @@
 # Engine recommendation for Open Legend
 
-| Research status                                           | Progress                                                                                                                              | Last updated |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Research status                                                 | Progress                                                                                                             | Last updated |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
 | Browser comparison selected; no migration or comparative result | Retains playable-first delivery and conditional native choices; routes the shared PlayCanvas/Three.js design to RCP. | 2026-10-31   |
 
 ## Recommendation
@@ -86,7 +86,7 @@ That is a legitimate product and engineering argument, not sunk-cost reasoning. 
 
 The weak version of that argument is “we have already written it” or “server-side simulation means the client cannot be a problem.” Both are inadequate. Judge the browser on measured client performance, reliable loading, production effort and player value. The next milestone collects that evidence rather than treating browser adequacy as proven.
 
-Babylon should be considered when it solves a specific browser production/rendering gap. The selected Three.js comparison tests the cost and value of deliberately owning a shared presentation architecture. Both libraries use the GPU; compute is not a PlayCanvas-only advantage. Their native integration and ecosystem costs differ, as the [capability assessment](../../docs/projects/renderer-comparison-tech-design.md#12-engine-capabilities-and-ecosystem-decisions) explains. Replacing PlayCanvas with another web renderer does not remove browser-platform constraints. Improving the existing agent/browser feedback loop may also address a production problem without changing the renderer.
+Babylon should be considered when it solves a specific browser production/rendering gap. The selected Three.js comparison tests the cost and value of deliberately owning a shared presentation architecture. Both implementations use the GPU; compute is not a PlayCanvas-only advantage. Their native integration and ecosystem costs differ, as the [capability assessment](../../docs/projects/renderer-comparison-tech-design.md#12-engine-capabilities-and-ecosystem-decisions) explains. Replacing PlayCanvas with another web renderer does not remove browser-platform constraints. Improving the existing agent/browser feedback loop may also address a production problem without changing the renderer.
 
 ## 8. Conditions that change the recommendation
 
@@ -97,7 +97,7 @@ Babylon should be considered when it solves a specific browser production/render
 | Native game selected, current open-engine/AGPL policy retained                         | Godot candidate with explicit performance/production gates.                                                              |
 | Broad native platforms and mature production tools, proprietary-client rights resolved | Unity native/URP is the balanced proprietary choice to test.                                                             |
 | High-end close-up animation, lighting and native action stack are central              | Unreal deserves the leading trial.                                                                                       |
-| Local-rendered browser access remains mandatory                                        | PlayCanvas default and the selected Three.js comparison; consider Babylon for a specific integrated-tooling gap.          |
+| Local-rendered browser access remains mandatory                                        | PlayCanvas default and the selected Three.js comparison; consider Babylon for a specific integrated-tooling gap.         |
 | Need a reduced Godot browser edition alongside native                                  | Qualify Compatibility/web separately; do not promise native parity.                                                      |
 | Main slowdown is server history, interaction density or database work                  | Improve server architecture independently of renderer choice.                                                            |
 | Native benefits are not demonstrated and browser meets targets                         | Stay with the browser without treating this as a failure to progress.                                                    |
@@ -123,4 +123,3 @@ The [benchmark plan](benchmark-plan.md) defines common-feature and best-practica
 **Decision history:** the October 15 native-evaluation-first recommendation was too strong for the evidence and insufficiently reconciled with the existing platform decision. The October 17 update retains its useful alternatives while changing the immediate sequence to integrated browser play, player observation and attributed performance/cost evidence. The new Godot research expands the reasons a later comparison could be worthwhile; it does not reverse that sequence.
 
 Prove a worthwhile, responsive Open Legend session and use the bounded browser comparison to assess the presentation architecture. Keep Godot available for a justified native or AI-production comparison, Unity as the balanced proprietary alternative and Unreal for deliberately high-end requirements. Choose the eventual engine on the complete experience and total future effort.
-

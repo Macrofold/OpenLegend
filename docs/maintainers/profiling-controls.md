@@ -39,4 +39,3 @@ PC01/PC02 corrections omit an unsampled event-loop delay and skip the diagnostic
 ## Remaining PC06 verification
 
 The existing requirement for the same successful activity is not met by matching screen coordinates alone. Before any further comparison, use the corrected paused capture preparation, account for interface-obstructed inputs, verify comparable sustained actual actions and separate HTTP errors from postmeasurement teardown. Current causal evidence is the exact-work finite service comparison, not the two unequal live observations. Additional full-game allowance is required; the implementation and all focused correctness scenarios remain complete.
-

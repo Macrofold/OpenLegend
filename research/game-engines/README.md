@@ -1,7 +1,7 @@
 # Game engine and platform research
 
-| Research status                                                        | Progress                                                                                               | Last updated |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------ |
+| Research status                                                 | Progress                                                                                                              | Last updated |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
 | Browser comparison selected; no migration or comparative result | Routes the shared PlayCanvas/Three.js design while retaining playable-first delivery and conditional native research. | 2026-10-31   |
 
 ## Start here
@@ -61,4 +61,3 @@ The October 17 review also corrects the recommendation's sequence: a native tria
 The original change was confined to 18 new research Markdown files; the October 17 follow-up added the Godot community chapter. The current browser-comparison integration updates research routing and selected design owners. No engine or AI-editor tool was installed or tested for these documentation tasks, no game/provider run occurred, and no legal or console qualification is claimed.
 
 The original pinned Prettier check could not run because the formatter was unavailable and package retrieval failed. Do not interpret that historical limitation or this documentation review as a passing formatter/CI result. Content, source scope, relative links, preservation of existing requirements and the final affected diff require review before handoff; runtime testing is not implied by documentation-only changes.
-

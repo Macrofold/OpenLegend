@@ -1,8 +1,8 @@
 # Proposed engine comparison and performance qualification
 
-| Research status                             | Progress                                                                                                                        | Last updated |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Browser comparison selected; not executed | The PlayCanvas/Three.js design applies this protocol; native and other engine trials remain conditional. | 2026-10-31 |
+| Research status                           | Progress                                                                                                 | Last updated |
+| ----------------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------ |
+| Browser comparison selected; not executed | The PlayCanvas/Three.js design applies this protocol; native and other engine trials remain conditional. | 2026-10-31   |
 
 ## 1. Purpose and status
 
@@ -121,4 +121,3 @@ If the server is the bottleneck across clients, optimize its work independently.
 If Godot meets the experience and maintenance targets, its policy-compatible case strengthens. If it needs disproportionate custom work while Unity succeeds, examine Unity's rights option rather than protecting a preference. If Unreal's integrated systems uniquely make the required experience economical, revisit that engine and its legal arrangement explicitly.
 
 A trial can end with staying, switching or an expressly approved requirement change. It should not create several permanently maintained clients or a generic benchmark framework that never answers the selected question. The current browser milestone and broader release requirements remain open until their actual evidence exists.
-

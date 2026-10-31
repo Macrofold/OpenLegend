@@ -2,7 +2,7 @@
 
 ## Scope and status
 
-This inventory owns discretionary constraints for the selected [shared presentation and renderer comparison design](../projects/renderer-comparison-feature-spec.md). The design is under review; these are selected implementation targets, not current runtime capacities or measured optimal values. Existing PlayCanvas behavior is the baseline. [RCP](../maintainers/renderer-comparison.md) owns delivery and evidence.
+This inventory owns discretionary constraints for the selected [shared presentation and renderer comparison design](../projects/renderer-comparison-feature-spec.md). The design is complete; these are selected implementation targets, not current runtime capacities or measured optimal values. Existing PlayCanvas behavior is the baseline. [RCP](../maintainers/renderer-comparison.md) owns delivery and evidence.
 
 Shared art, shadow, asset, network and profiling bounds retain their existing inventories. This file records the consumer choices without creating competing copies. Authorization, permitted knowledge and native authority are correctness requirements, not tunable limits.
 
@@ -107,4 +107,3 @@ No universal FPS, shared-code percentage, crowd capacity or migration winner is 
 ## Review and change triggers
 
 All values above remain explicit in manifests and implementation. A failed required workload calls for fixing incorrect or unnecessary work first; expand a diagnostic allowance only for a named useful comparison and update this inventory with its rationale. There is no current request to populate [Limits to revisit](../maintainers/limits-audit.md) with every default. Broader device targets, new graphics APIs and long-term dual support use their existing product/evidence owners.
-
