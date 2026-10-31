@@ -2,19 +2,19 @@
 
 | Research status                             | Progress                                                                                                                        | Last updated |
 | ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Conditional comparison design; not executed | Defines representative runtime and AI-assisted production evidence without making a native trial precede the browser milestone. | 2026-10-17   |
+| Browser comparison selected; not executed | The PlayCanvas/Three.js design applies this protocol; native and other engine trials remain conditional. | 2026-10-31 |
 
 ## 1. Purpose and status
 
 This is a proposed evaluation protocol, not an implemented benchmark suite, approved hardware specification or claim of measured performance. No engine builds, live AI calls, controller-device tests or console SDK checks were run for this desk-research task.
 
-The [first-player milestone](../../docs/maintainers/first-player-milestone.md) is the selected next delivery. Measure the integrated browser experience first. Invoke the cross-engine protocol when a required capability, actual client bottleneck or credible production-workflow advantage gives the comparison a concrete purpose. Do not launch a port merely because this plan exists or an engine is trending.
+The [first playable](../../docs/maintainers/first-playable-validation.md) remains the product target. The selected [shared presentation feature](../../docs/projects/renderer-comparison-feature-spec.md) and [technical design](../../docs/projects/renderer-comparison-tech-design.md) apply this protocol to PlayCanvas and Three.js: shared behavior, separate native rendering, a visual switcher and bounded permitted-view comparisons. [RCP](../../docs/maintainers/renderer-comparison.md) owns implementation and qualification. This selects design and staged comparison, not a migration, benchmark result or prerequisite to developing playable activities. Other engine/platform trials still require a concrete capability, bottleneck or production-workflow question.
 
 The goal is to determine whether an engine/platform/tooling change improves the required Open Legend experience enough to justify its total future cost—not to maximize cube counts, win a vendor comparison or rationalize a preference.
 
 ## 2. Start with a small shortlist
 
-Use PlayCanvas as the browser baseline and a Godot native candidate when the selected question warrants a policy-compatible native trial. Include Unity native/URP when licensing and implementation authorization permit and it addresses the question. Add Babylon for a concrete browser-tooling/rendering issue; add Unreal for a required high-end feature or direct-action workflow.
+Use PlayCanvas/WebGL2 and Three.js/WebGLRenderer/WebGL2 for the selected browser comparison. The RCP design owns exact workload, lifecycle and effective-API reporting; WebGPU remains a separate integration/experiment. Consider a Godot native candidate only when a selected question warrants a policy-compatible native trial. Include Unity native/URP when licensing and implementation authorization permit and it addresses that question. Add Babylon for a separate concrete browser-tooling/rendering issue; add Unreal for a required high-end feature or direct-action workflow.
 
 This sequencing does not presume the incumbent wins. It avoids building six incomplete ports whose differences mostly reflect implementation quality. A candidate that fails a required capability should be eliminated before extensive optimization. Godot's growing AI ecosystem can justify a specific productivity hypothesis, not an automatic native assignment.
 
@@ -121,3 +121,4 @@ If the server is the bottleneck across clients, optimize its work independently.
 If Godot meets the experience and maintenance targets, its policy-compatible case strengthens. If it needs disproportionate custom work while Unity succeeds, examine Unity's rights option rather than protecting a preference. If Unreal's integrated systems uniquely make the required experience economical, revisit that engine and its legal arrangement explicitly.
 
 A trial can end with staying, switching or an expressly approved requirement change. It should not create several permanently maintained clients or a generic benchmark framework that never answers the selected question. The current browser milestone and broader release requirements remain open until their actual evidence exists.
+

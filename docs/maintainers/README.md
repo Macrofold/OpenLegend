@@ -28,6 +28,8 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 [Using engine research to improve OpenLegend](../engine-research-guide.md) connects the current Unreal/Unity study to player value, existing feature/technical owners and [scoped design questions](needs-design.md#current-engine-research-design-questions-and-existing-owners). It is the reading map; the linked maintainers retain delivery and qualification.
 
+[Shared browser presentation and renderer comparison (RCP)](renderer-comparison.md) owns shared presentation extraction, PlayCanvas/Three.js backends, developer switching and fair measurements. Its [feature specification](../projects/renderer-comparison-feature-spec.md), [technical design](../projects/renderer-comparison-tech-design.md) and [repertoire review](../projects/renderer-comparison-repertoire-review.md) preserve the current art/gameplay target while distinguishing design completion from implementation and evidence. Broader native/offline choices retain their conditional owners.
+
 ## General emotions, bodily reactions and adaptive review
 
 [Emotional physiology (EP00–EP09)](emotional-physiology.md) owns native bodily reactions, source-linked appraisal, derived mechanics and independent emotional review. [Feature](../projects/emotional-physiology-feature-spec.md) and [technical design](../projects/emotional-physiology-tech-design.md) specify the general foundation and four-family authored player profile; implementation/qualification remain open. [SA-D01](decisions/characters-and-evidence.md#sa-d01--psychological-fear-for-controlled-characters) selects authored native interpretation during direct control; EP retains exact profile rules, retained-appraisal integration and qualification.
@@ -224,3 +226,4 @@ Actual evidence: [continuation](../verification/workshop-continuation.md), [tran
 | Integration and art         | [Macrofold handoff](../macrofold-world-agent-handoff.md), [hybrid art methods](../../archive/03-design-proposals/procedural-art-and-animation.md)                                                                                                                                                                               |
 
 Editable knowledge is tracked in [CR13](cognition-redesign.md#cr13--editable-knowledge-documents); bundled naming and recognition in [BW08–BW09](base-world.md).
+

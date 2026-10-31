@@ -75,7 +75,7 @@ Define the actual TypeScript types by extracting the fields consumed in the sour
 
 | Record | Required meaning | Lifetime |
 | --- | --- | --- |
-| `PresentationScope` | Existing world/timeline/controlled-observer identity plus the current disclosure scope used for invalidation | Replaced and cleared on an actual scope change |
+| `PresentationScope` | Separate world identity (`worldId`, save timeline, player ID, private-draft scope), access/control scope and selected presentation release/settings | World replacement clears old state; same-character access renewal reauthorizes without rebuilding still-valid public resources |
 | `RenderImage` | Stable displayed-image ID, represented entity ID when permitted, current/remembered status, supplied appearance/representation, authorized XYZ/support, dimensions/orientation, motion/pose input, selected presentation flags | Controller-owned immutable record per accepted visual revision |
 | `AppearanceBinding` | Exact asset reference or existing procedural/fallback recipe, authored dimensions/material roles and normalization inputs | Shared source descriptor; no native texture, mesh or parser handle |
 | `RenderWorldView` | Current scope, environment/map reference and complete current set of permitted visual records for installation | Reused between updates; not rebuilt per frame |
@@ -97,7 +97,7 @@ interface PresentationBackend {
   readonly info: BackendInfo;
   install(view: RenderWorldView): void;
   apply(changes: PresentationChanges): void;
-  frame(sample: FrameSample): void;
+  start(prepare: (nowMs: number) => FrameSample): void;
   resize(viewport: Viewport): void;
   rayAt(point: ScreenPoint): WorldRay | undefined;
   pickGeometry(ray: WorldRay, candidates: PickCandidates): PickHit | undefined;
@@ -107,9 +107,9 @@ interface PresentationBackend {
 }
 ```
 
-`frame()` applies already-decided display state and renders one frame; it does not advance the world or independently choose animation time. `install()` is for initialization or a real scope reset; ordinary updates use `apply()`. `project()` can write into caller-owned scratch storage to avoid high-frequency allocation. Batch queries only where an actual consumer needs them. A narrow optional study interface may expose art settings, diagnostic presentation and capture readiness; do not expand `WorldRenderer` with every study-only method or expose an engine object.
+`start()` installs exactly one backend-owned scheduler. It calls shared `prepare()` once per rendered frame, applies the returned display state, and renders through the engine's existing cadence. It never advances the world or independently chooses animation time. `install()` is for initialization or a real world reset; ordinary updates use `apply()`. `project()` can write into caller-owned scratch storage to avoid high-frequency allocation. Batch queries only where an actual consumer needs them. A narrow study interface exposes existing art settings, diagnostic presentation and capture readiness; do not expand `WorldRenderer` with every study-only method or expose an engine object.
 
-Factories are asynchronous and own partial initialization. They accept the new canvas, exact backend choice, source services and an abort signal; they return a ready backend or a typed initialization failure. On failure/abort they release partial resources before settling. Invalid/cancelled completion cannot register callbacks, mutate DOM or publish a backend.
+Factories are asynchronous and own partial initialization. They accept the new canvas, exact backend choice, source services and an abort signal; they return a **device-ready** backend or a typed initialization failure. Installing a view starts its scoped asset/pass preparation; it is not yet **scene-ready**. Reuse the existing loading/readiness callbacks, tagged with the active view/backend owner, to report preparing, ready or failed. Scene readiness includes required artwork, visible preparation and a completed first device frame. On factory failure/abort release partial resources before settling. Invalid/cancelled completion cannot register callbacks, mutate DOM or publish a backend.
 
 ### 3.3 Data and resource ownership
 
@@ -125,7 +125,7 @@ Factories are asynchronous and own partial initialization. They accept the new c
 
 ### 4.1 On an admitted `setView`
 
-1. Check actual world/timeline/observer/disclosure identity using the current scene's rules. A scope loss/reset clears old images, pending visual jobs, target/selection references, guide/caption state and backend resources before any replacement becomes visible. Reuse existing public-map disclosure rules; scope is not just a world ID.
+1. Distinguish a changed world/save timeline/player/private-draft identity from access renewal for the same character. A real identity/privacy replacement clears old protected records, visual jobs, target references and associated resources before replacement is visible. On same-character access renewal, retain valid public artwork and camera, clear old transient captions/hover/modifiers, discard ghosts absent from the fresh permitted set and reauthorize selection; do not rebuild the landscape or re-show an entry gate solely for renewal. A presentation-release/settings change invalidates the affected art/preparation. Reuse these current `setView` distinctions rather than combining them into one reset flag.
 2. Reconcile permitted current and remembered records once. Preserve existing unchanged-record identity checks, appearance signatures and dirty/moving sets. Move an appearance signature out of a native entity tag into its shared record.
 3. Apply every meaningful transition: removal, representation change, caption/action event, observer change and support discontinuity. Do not coalesce them away simply because a newer position exists.
 4. Build only the changed visual records and native work descriptors. A full scan of the received permitted view can be appropriate at this boundary; do not repeat it per frame or for each material/pass.
@@ -136,18 +136,18 @@ This local projection does not improve the server's candidate enumeration. Any u
 
 ### 4.2 One frame owner
 
-The shared controller schedules presentation frames. Disable or integrate the PlayCanvas automatic tick so there is exactly one update/draw cadence, and make Three use that same cadence. Preserve existing rendering backpressure where its backend requires it; a GPU fence is not optional profiling work. Do not run an engine's animation loop alongside a second controller `requestAnimationFrame` loop.
+The shared controller owns frame meaning and time; the active backend owns the sole engine scheduler. For PlayCanvas 2.22.2 retain its native application tick and call shared preparation from the existing application update callback, before the native render pass. For Three use one `requestAnimationFrame` loop that calls the same preparation and then renders. Do not add a controller RAF or manually render a second time from the PlayCanvas update callback. Preserve existing rendering backpressure where its backend requires it; a GPU fence is not optional profiling work.
 
 For each active frame:
 
 1. Sample the one presentation clock and current viewport/camera state.
 2. Update only moving/animated/changed entries using existing interpolation, support boundaries and pause/tab-gap behavior.
-3. Evaluate shared desired animation/heading/cloth inputs and current light/overlay descriptors only where invalidated or time-dependent.
-4. Apply those inputs to the active backend and let it evaluate required native poses once, update resources and draw.
+3. Prepare shared desired animation/heading and current light/overlay descriptors only where invalidated or time-dependent.
+4. The backend evaluates each requested native pose once, reads its current bone anchors, invokes the shared numeric cloth step synchronously with those anchors, uploads changed cloth, and draws all required passes/attachments using that pose. Never solve against last frame's anchors or evaluate another skeleton for a shadow/outline.
 5. Project shared caption/status/aim anchors from the same displayed state used for drawing; update DOM directly through existing owners where appropriate.
 6. Record optional measurement only if its existing capture gate is enabled and recording. Ordinary gameplay frame-rate display remains separate.
 
-The source baseline uses scene-owned application ticks and native animation updates. Extraction must trace these callers before changing them. If the engine cannot externally step a needed component without private APIs, keep its frame callback as the sole scheduler behind the backend and invoke the shared frame preparation from it; both designs still have one owner and identical absolute sample semantics. Choose the supported pinned API in RCP05, document the resulting callback placement, and do not add a competing loop. This is an implementation adaptation, not a second game clock.
+The source baseline uses scene-owned application ticks and native animation updates. Keep the current supported controls that prevent an Open Legend-managed animation from independently advancing before its explicit pose update; trace component auto-update, mixer/layer calls and held-pose behavior before extraction. PlayCanvas's application update callback follows its component animation phase, so moving a manually managed actor there must not accidentally re-enable automatic advancement. Document these pinned API calls in RCP05. Engine scheduling differences do not create a second game clock.
 
 ### 4.3 Animation, cloth and discontinuities
 
@@ -181,13 +181,13 @@ Use projected displayed positions for captions/aim/blur, not an independently ad
 
 ### Load and replace
 
-1. Resolve the exact allowed source and choose the existing fallback immediately.
+1. Resolve the exact allowed source and retain its existing readiness/fallback classification. Initial required scene artwork belongs to the existing opaque entry gate; it must prepare successfully or show an explicit retry failure. Do not turn missing required artwork into successful entry with generic fallback. A runtime visual family that already permits fallback can use it while its optional/generated representation loads.
 2. Associate the load with the controller scope, appearance revision and backend instance that requested it.
 3. Use the existing shared transfer owner. Decode through the selected backend with its own parser/decoder dependencies.
 4. Before installation, check that the requesting owner is still active and the exact appearance is still desired. A cancellation signal alone is insufficient for noncancelable local parsing.
 5. Apply normalization and authored fitting in their established order so replacing a fallback preserves dimensions, foot/support, identity and semantic body.
 6. Install atomically for that presentation record, then release superseded native resources when their remaining users are gone.
-7. On failure, retain the usable fallback and accurate load state. A later deliberate retry can start a fresh request; no automatic paid/image-generation retry.
+7. On failure, required-entry artwork keeps the failed entry/retry state; an existing fallback-permitted runtime representation retains its usable fallback and accurate load state. A later deliberate retry can start a fresh request; no automatic paid/image-generation retry.
 
 Decoding a source in the other engine is real work. It cannot share the first engine's material/skeleton/GPU allocation. When a native loader lazily fetches subsidiary buffers/textures/decoders, route them through the same admitted exact asset source or supply pre-resolved bytes; do not create an untracked outbound loading path. Reuse current asset workflow/contracts rather than designing a new storage service.
 
@@ -207,7 +207,7 @@ The existing scene factory returns the stable shared `WorldRenderer` handle imme
 
 Use explicit developer query values `renderer=playcanvas|three` and `graphics=webgl2|webgpu`; the initial supported combinations are both renderers with WebGL2, and absent values select PlayCanvas/WebGL2. A fixed registry lists implemented combinations and their factory, pipeline name and required capabilities. It is not a general plugin system. Only add WebGPU entries when their materials/passes and workload coverage are implemented.
 
-The selector lives in the existing opted-in developer/study surface. It does not add a permanent ordinary-player HUD control or require `profile=1` just to choose a renderer. Reading an engine selection does not start profiling. Query settings describe developer navigation only; never put world views, private IDs or drafts in the URL. No persisted world/save field is added. Unknown values produce a visible developer configuration error with an explicit route to the default; never silently label a fallback as the requested combination.
+Put the selector and requested/effective API/status in `/scene-study.html`'s existing **Measurement and source details** section, beside **Reload renderer**; bind it in `scene-study.ts` through the shared controller. That section already contains shadow/metrics and the short measurement control. The existing profiling controls are an opt-in API/driver, not a player settings panel. The ordinary live page selects a backend through the explicit URL values; no permanent player HUD selector is added. Neither selection path requires `profile=1` or starts collection. Query settings describe developer navigation only; never put world views, private IDs or drafts in the URL. No persisted world/save field is added. Unknown values produce a visible developer configuration error with an explicit route to the default; never silently label a fallback as the requested combination.
 
 ### Serialized replacement sequence
 
@@ -215,11 +215,11 @@ The selector lives in the existing opted-in developer/study surface. It does not
 2. Cancel active world gestures through their owner; retain the valid shared camera/settings/selection and latest permitted view. Clear transient hover/pressed state.
 3. Stop the old backend immediately, remove its canvas from interactive use, and await disposal. Keep the React shell and existing non-canvas inspection available.
 4. Create a fresh canvas for the new backend. This avoids reusing an engine registry/context binding and prevents old callbacks from referring to a replacement's canvas.
-5. Load/initialize the backend, prepare required resources, install the latest permitted visual state and reconstruct current shared motion/pose time.
-6. Register only this backend's current callbacks and activate drawing/input. Announce its actual engine/pipeline/API and ready state through the existing developer controls.
+5. Initialize the device, install the latest permitted visual state, reconstruct current shared motion/pose time and start hidden preparation frames. Preserve the existing selected-play-tab rule: an inactive play tab does not prepare a full scene just for this feature.
+6. Keep the existing opaque world-entry/loading gate and canvas input block until required artwork, visible preparation and the first completed device frame qualify the active view. Register only this backend's current callbacks, then expose drawing/input and actual engine/pipeline/API. A same-character access renewal retains still-valid presentation under the current rules; backend replacement is a fresh canvas preparation, not proof that entry readiness can be skipped.
 7. On abort/failure, dispose partial work, retain an unavailable-canvas state and offer explicit retry or reopening the prior choice. Do not auto-cycle engines or create an endless fallback loop.
 
-Use a monotonically changing local owner token or object identity for stale callbacks; it is a resource generation, not a saved schema version. World/timeline/observer invalidation remains separate from renderer generation. Unmount/logout/scope loss retires both active initialization and disposal callbacks. A completed old cleanup cannot delete a replacement's global profiler API, handlers or canvas.
+Use a monotonically changing local owner token or object identity for stale callbacks; it is a resource generation, not a saved schema version. World/timeline/observer invalidation remains separate from renderer generation. Unmount/logout/scope loss retires publication/UI callbacks, including those attached to initialization/disposal; owned cleanup still drains and settles. A completed old cleanup cannot delete a replacement's global profiler API, handlers or canvas.
 
 A stalled noncancelable parser/cleanup keeps the selector blocked with a truthful status and a reload recovery route; never start an unlimited chain of replacements to hide it. First implementation does not need a watchdog framework or arbitrary forced GPU-resource destruction. A renderer switch does not suspend the authoritative world. Install the latest state, reset discontinuous interpolation and omit expired presentation events; do not replay stale attacks or conversation cues.
 
@@ -287,6 +287,8 @@ The [RCP limits inventory](../limits/renderer-comparison.md) owns the selected e
 Default measurement is 10 seconds of explicit warm-up followed by 60 seconds of steady-state replay, within that total envelope. These are repeatable initial measurement choices, not world limits or proof that 10 seconds warms every shader. Readiness includes required visible assets/shaders; remaining failures and first-use hitches are reported. A warm-up extension or different duration changes the manifest consistently for both engines. Cold-load/first-use runs deliberately retain those costs.
 
 Record only through an explicit developer action. Ordinary play retains no growing presentation history. Reuse one bounded current/final report and explicit local export; no background archive/database/service. Imported serialized size is not a bound on decoded heap overhead. Do not materialize unlimited input before checking length, record counts and references. Existing profiler bounds still apply independently.
+
+Bind a live capture and its unexported replay/report to its current access/private-view owner. Stop capture and clear protected retained inputs on logout, observer replacement or access-scope loss/renewal; another observer cannot replay the previous observer's private views. This capture reset does not require destroying still-permitted public scene resources. Synthetic authored fixtures can explicitly exercise scope transitions without importing a private live capture. Export is explicit and follows existing privacy/storage policy; this feature adds no automatic sharing.
 
 ## 10. Measurement integration
 
