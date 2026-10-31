@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import {
   validateNarration,
+  validateNativeText,
   validEncounterExposure,
   isImmutableData,
   type WorldEvent,
@@ -34,7 +35,14 @@ const eventSchema: z.ZodType<WorldEvent> = z
     sequence: safeInteger,
     at: z.number().finite(),
     type: z.string(),
-    text: z.string(),
+    text: z.custom<WorldEvent['text']>((value) => {
+      try {
+        validateNativeText(value);
+        return true;
+      } catch {
+        return false;
+      }
+    }),
     audience: z.array(z.string()),
     actorId: z.string().optional(),
     targetId: z.string().optional(),
@@ -95,13 +103,14 @@ export interface EncodedJournalTransition {
 const validatedEncodings = new WeakMap<EncodedJournalTransition, JournalTransition>();
 const ownedEncodings = new WeakSet<EncodedJournalTransition>();
 const checksum = (payload: string) => createHash('sha256').update(payload).digest('hex');
+const recordPathSchema = z.array(z.string());
 
 /** Resolve the schema's real logical path, including transparent actor-owned `$` collections. */
 export function journalRecordPath(
   table: string,
   id: string,
 ): { node: RecordNode; parent: string; slot?: string; list: boolean } {
-  const path = z.array(z.string()).parse(JSON.parse(id));
+  const path = recordPathSchema.parse(JSON.parse(id));
   if (JSON.stringify(path) !== id) throw new Error('Invalid journal record identity.');
   let node = WORLD_RECORD_SCHEMA,
     cursor = 0,

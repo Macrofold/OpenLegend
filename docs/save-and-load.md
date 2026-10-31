@@ -238,6 +238,11 @@ An inner atomic operation carries its exact placement membership into its caller
 when installing those entities. Withheld publication proofs do not justify inheriting
 the outer transition's older contents index; unknown replacement rebuilds it.
 
+Restore seals the validated physical snapshot before native account, privacy and
+timeline transitions. Bookkeeping preserves unchanged received sight and its
+original clocks; privacy overlays and actual physical edits retain their normal
+withdrawal and invalidation rules.
+
 Selected activities retain the original actor-reference associations for unexpanded steps as well as their queued steps. Pausing and current-format restoration preserve those associations, prior outputs and original stopping limits; resumption does not recapture an unfamiliar person from a new sighting. [Selected execution](action-experience.md#selected-execution-and-inspection) owns those checks.
 
 Keep relationships independent of display names, memory addresses, UI trees and incidental database row order. The [identity contract](identity-and-references.md) remains authoritative. Reconstruct identities before resolving relationships, including cycles; distinguish legitimately absent references from corrupt required ones.

@@ -3435,6 +3435,10 @@ export class WorldService {
         const baseline = structuredClone(restored.world);
         for (const entity of entityValues(restored.world.entities))
           if (entity.actor) delete entity.actor.inventoryInspection;
+        // The validated save is the physical baseline. Owned privacy/account
+        // transitions need the normal immutable input audit; a mutable builder
+        // would conservatively invalidate sight despite unchanged physical data.
+        freezeWorld(restored.world);
         for (const [actorId, ids] of Object.entries(ledger ?? {}))
           for (const sourceId of ids)
             restored.world = forgetExperience(restored.world, actorId, sourceId).world;
