@@ -2,13 +2,13 @@
 
 | Status      | Current progress                                                                                                                                                                 | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The request audit, general construction and bounded-scope decisions, and benchmark-derived rendering lessons are recorded. Runtime implementation and qualification remain open. | 2026-10-21   |
+| In progress | The request audit, general construction and bounded-scope decisions, and benchmark-derived rendering lessons are recorded. Runtime implementation and qualification remain open. | 2026-10-31   |
 
 ## 1. Purpose and evidence boundaries
 
 This is the durable evidence companion to the [feature specification](situation-aware-cognition-context-feature-spec.md) and [technical design](situation-aware-cognition-context-tech-design.md). It records what Mike asked, what the supplied GPT-5 request actually contains, which earlier explanations were verified or qualified, and why the selected design preserves informed, interesting character choices. Implementation work and acceptance status belong to [the cognition-context maintainer record](../maintainers/cognition-context.md); quantitative constraints belong to [the cognition limits inventory](../limits/cognition.md). This document is neither a second backlog nor evidence that the proposed runtime behavior exists.
 
-Three baselines must remain distinct:
+The original three baselines must remain distinct; the later diagnostic capture in §2.5 is separate evidence:
 
 1. **Supplied artifact:** Mike's `Pasted text(1).txt`, a JSON request export. It identifies `openai/gpt-5`, low reasoning effort and an output allowance of 4,096. Its origin/deployment revision and exact relationship to bytes accepted by a provider are not established by the file alone.
 2. **Inspected source:** `Macrofold/OpenLegend`, `main` at commit `0b1262a597ca718be54c287eea0619b073952f32`. The source findings below describe that revision. They do not assert that it generated the supplied export or that the selected design has been implemented.
@@ -80,6 +80,28 @@ The context supplies Kest's accepted personal history, current conditions, equip
 Some activity details may be irrelevant or unavailable in this captured scene, but that cannot be decided from an activity name alone. The actual request prerequisites, perceived opportunities, current goal/work and actor knowledge govern selection. A missing currently offered fire target can justify omitting detailed fire-watch parameters when no current decision depends on them; it does not establish that no fire exists anywhere or permanently remove the concept of tending a fire.
 
 No expected reply is supplied as part of the proposed context. The same person could inspect, gather, organize, eat, speak, decline an offered activity or continue quietly when supported by the actual situation. Comparisons that demonstrate relief after provisioning must create and retain a real completed-work outcome; they cannot reinterpret this arrival export as that later state.
+
+### 2.5 Additional diagnostic capture: different questions, shared evidence
+
+Mike's `Pasted text(4).txt` (packet `545741396af3914c4650`, SHA-256 `0a28a5785e40ee34f9deed4780a484763631c16ab0a28e1b32f42d5c6a3a339e`) records an October 31, 2026 episode. Its 3,979,148 bytes include snapshots, events, outputs and repeated diagnostics; they are not one model request. The reported source revision `1f78d9a6303a71e57497c284cca2113108171fc8` was unavailable in the connected repository. The packet retains SDK values, explicitly not reconstructed wire bodies, and omits model identity and billing configuration.
+
+The following counts use UTF-8 bytes of decoded instruction/context strings and compact JSON for schemas (`ensure_ascii=False`, separators `,` and `:`). The sum covers only those three fields, not transport size or provider tokens.
+
+| Captured request                      | Question             | Instructions | Context | Schema | Three-field sum |
+| ------------------------------------- | -------------------- | -----------: | ------: | -----: | --------------: |
+| `actualRequestInputs[0]`, sequence 3  | Character response   |        5,092 |  94,833 | 29,089 |         129,014 |
+| `actualRequestInputs[1]`, sequence 6  | Character response   |        5,092 |  94,815 | 29,094 |         129,001 |
+| `actualRequestInputs[2]`, sequence 10 | Native action choice |        4,318 |  95,643 |  1,584 |         101,545 |
+
+Each character-response request includes 35,769 bytes of activity definitions/parameter choices, 49 experiences, 63 references and 50 surroundings. The choice request has 123 alternatives (31,913 bytes) and 81 experiences (35,020 bytes). Complete About me is only 743 bytes in each. These observed counts are not limits or evidence that every member is irrelevant.
+
+Three captured routing calls separately contain 103,852, 103,295 and 105,285 bytes of compact state plus questions. Each repeats one 186-byte selection caveat across 42 activity alternatives (7,812 bytes including the necessary first copy). Ten embedding calls contain 45 text inputs totaling 44,048 UTF-8 bytes. Upstream retrieval estimates differ from final captured request fields; qualify savings and cost across actual call stages, not just the final generation. No new provider calls were made for this analysis; additional and cumulative task Jev/provider spend are $0. Historical costs and token use cannot be inferred from these bytes.
+
+The old favor is present at `character.experience[0]` in all three requests; this is not a demonstrated retrieval miss. Trigger, recall, conversation and appraisal already reference a shared experience table, and the captured response schema already uses sparse payloads and local schema references. Preserve those observed reductions; the capture does not establish their qualification on every installed route. Raw speech records still repeat wording through `segments`, `text`, `content` and `prose`; shared rules and target descriptions repeat across distinct choices. An offered choice should identify its participants through the same permitted references as evidence, without requiring a join on “the person” and distance.
+
+The later generated response repeats both incoming utterances as the deciding person's own speech despite a valid sparse shape. Subsequent records separately show an offered berry, acceptance and transfer; speech alone did not perform that exchange. This motivates attribution and native-outcome comparisons, not a causal claim that large context caused the errors or that compaction fixes them. Grading preconditions remain unverified. The scene, memory age, preferred answer and observed collection sizes must not become selection rules.
+
+These findings refine the existing [question requirements](situation-aware-cognition-context-tech-design.md#51-generic-decision-requirements-and-source-contributions), [meaning projection](situation-aware-cognition-context-tech-design.md#75-model-readable-decision-projection) and [SC01–SC09 work](../maintainers/cognition-context.md); they add no new situation taxonomy or runtime subsystem.
 
 ## 3. Clarifications settled in the conversation
 
