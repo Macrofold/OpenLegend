@@ -28,7 +28,9 @@ PS5 controls: Square attacks, Triangle delivers stronger blows, L1 guards/parrie
 
 The resulting decision is broader than choosing attack or defense. Both compete for capacity, while weapon switching helps maintain pressure. A player who spends aggressively must still read the next threat. A player who only protects themselves can survive ordinary sequences but still needs a way to convert that safety into progress. This is an analysis of the resource relationship, not a claim that every build or difficulty produces the same optimal rhythm.
 
-Blue attacks permit blocking or parrying; red attacks require a perfectly timed dodge. Successful responses enable Ghoststep counters. Screen-darkening attacks heavily drain Sha-Chi. Stronger Sha-Chi combos also spend the resource. Primary weapons have one-handed, two-handed and dual-wield categories. [M02](02-reception.md#m02)
+Blue attacks signal a parry response; red attacks require a perfectly timed dodge. Successful responses enable Ghoststep counters. Screen-darkening attacks heavily drain Sha-Chi; stronger combos also spend it. Main weapons are one-handed, two-handed or dual-wield. [M02](02-reception.md#m02)
+
+**Unsettled detail:** RPGamer permits ordinary blocking of blue attacks; Push Square describes parry/dodge-only defense. This dossier does not resolve that contradiction. [M02](02-reception.md#m02) [M09](#m09)
 
 ### Layered combat resources
 

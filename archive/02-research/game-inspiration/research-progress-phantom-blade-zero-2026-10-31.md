@@ -35,10 +35,10 @@ This documentation-only change requires no runtime, game-stress or provider chec
 
 The million-plus claim is a third-party extrapolation from a Steam/PS5 estimate plus undisclosed WeGame purchases. A million wishlists in fifteen days is a separate 2025 announcement. Actual ad spend, channel conversion, audited net receipts/profit and long-term reception are unavailable. Publisher patch notes do not prove all launch faults fixed; sampled reviews do not establish issue prevalence.
 
-The dossier does not claim personal play, a complete numerical database, independently watched video, a confirmed universal ending count or a sustained popular mod ecosystem. These are explicit research limits, not unfinished work silently moved to another batch.
+The dossier does not claim personal play, a complete numerical database, independently watched video, a confirmed universal ending count or a sustained popular mod ecosystem. A final comparison also preserves contradictory written accounts of whether blue attacks permit ordinary blocking. These are explicit research limits, not unfinished work silently moved to another batch.
 
 ## Commit evidence and disposition
 
-The reviewed dossier content and navigation are recorded in [commit `4eba3ce56e5a54a48b8026737fbf6a42059bf833`](https://github.com/Macrofold/OpenLegend/commit/4eba3ce56e5a54a48b8026737fbf6a42059bf833), following the initial scope and substantive-research checkpoints. This completion record is finalized in the subsequent commit on the same branch.
+The reviewed dossier content and navigation are recorded in [commit `4eba3ce56e5a54a48b8026737fbf6a42059bf833`](https://github.com/Macrofold/OpenLegend/commit/4eba3ce56e5a54a48b8026737fbf6a42059bf833), following the initial scope and substantive-research checkpoints. Subsequent commits on the same branch finalize this completion record, roster presentation and the source-boundary clarification above.
 
 **Remaining requested research work: none.** Private commercial data and future launch outcomes remain unknown. This research selects no new product contract, requests no external campaign and does not merge the branch.
