@@ -2,7 +2,7 @@
 
 | Status           | Current progress                                                                                                         | Last updated |
 | ---------------- | ------------------------------------------------------------------------------------------------------------------------ | ------------ |
-| Working guidance | Player stories and clear explanations serve different roles across videos, articles, storefronts and crowdfunding pages. | 2026-10-26   |
+| Working guidance | Player stories and clear explanations serve different roles across videos, articles, storefronts and crowdfunding pages. | 2026-10-31   |
 
 [Marketing workspace](README.md) · [Selected language](language-and-elevator-pitches.md) · [Positioning and hero demonstration](positioning-and-copy.md#hero-demo-concept) · [Channels and experiments](ideas-channels-and-experiments.md)
 
@@ -56,5 +56,7 @@ A crowdfunding page can benefit from narrative. Someone considering a pledge als
 ## Keep the promise connected to the game
 
 Follow the [public-claim guidance](positioning-and-copy.md#messages-to-keep-precise): distinguish ordinary play from creator authority, demonstrated behavior from concepts, and representative pacing from material edits. A compelling story must preserve actual causes and permitted information. Keep the route from the opening to a featured capability intelligible, including material prerequisites or limits on ordinary use; [Crimson Desert's availability study](../02-research/game-inspiration/dossiers/crimson-desert/05-openlegend-lessons.md#10-market-representative-player-stories) supplies a concrete example.
+
+The [Phantom Blade Zero campaign study](../02-research/game-inspiration/dossiers/phantom-blade-zero/04-marketing-business.md) adds a documented example of repeated public play and increasingly detailed demonstrations used to make a distinctive promise credible. Its [Open Legend applications](../02-research/game-inspiration/dossiers/phantom-blade-zero/05-openlegend-applications.md#1-make-the-distinctive-promise-recognizable-then-prove-it) connect that evidence to existing material and player-validation work. Recorded placements and sales timing do not establish channel-attributed conversions.
 
 Before publishing, ask whether a newcomer can explain what they would do, why the moment appeals to them and how their choices matter. Use the existing [message experiments and measures](ideas-channels-and-experiments.md#message-experiments) to test that understanding. Enjoying a trailer and enjoying the game are separate evidence.
