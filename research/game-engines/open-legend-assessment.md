@@ -1,8 +1,8 @@
 # Engine recommendation for Open Legend
 
-| Research status                                           | Progress                                                                                                                              | Last updated |
-| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| Research recommendation reconciled; no migration selected | Prioritizes a worthwhile browser milestone and retains conditional native comparisons, including Godot's AI-assisted production case. | 2026-10-17   |
+| Research status                                                 | Progress                                                                                                             | Last updated |
+| --------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Browser comparison selected; no migration or comparative result | Retains playable-first delivery and conditional native choices; routes the shared PlayCanvas/Three.js design to RCP. | 2026-10-31   |
 
 ## Recommendation
 
@@ -10,9 +10,11 @@
 
 This reconciles the research with Mike's [October 14 browser-first decision](../../docs/projects/completed/platform-and-offline-decision-brief.md) and the subsequent request to align planning around the playable-first sequence. It supersedes this assessment's October 15 recommendation to make a native-client evaluation the next direction. The engine comparisons remain useful; they did not establish a measured native advantage or approve a migration.
 
+The selected [shared presentation and renderer comparison feature](../../docs/projects/renderer-comparison-feature-spec.md), [technical design](../../docs/projects/renderer-comparison-tech-design.md) and [RCP tracker](../../docs/maintainers/renderer-comparison.md) now specify a bounded PlayCanvas/Three.js browser comparison. Share camera, input, permitted presentation, asset preparation and pose timing while keeping native rendering resources and optimization separate. PlayCanvas remains the default; the second backend, switcher and measurements are not implemented by these documents. This selection answers a concrete architecture/performance question without making two complete engine ecosystems or a native trial prerequisites for playable development.
+
 **Godot is the leading candidate for a policy-compatible native comparison when a specific capability, performance or production advantage justifies one.** Its [AI-development and community research](godot-community-and-ai-2026.md) strengthens the case for measuring agent-assisted production effort, not for assuming an immediate switch. A trial can be warranted by a credible productivity opportunity before the browser reaches an absolute technical wall; popularity alone is insufficient.
 
-With a legally workable proprietary-client arrangement, Unity native with URP remains the preferred balanced alternative in this qualitative assessment. Unreal is strongest when sophisticated close-up presentation, animation and effects are central requirements. PlayCanvas remains a serious browser candidate, with Babylon.js the most relevant direct challenger. These are strategic-fit judgments, not measured speed rankings.
+With a legally workable proprietary-client arrangement, Unity native with URP remains the preferred balanced alternative in this qualitative assessment. Unreal is strongest when sophisticated close-up presentation, animation and effects are central requirements. PlayCanvas remains the browser baseline; Three.js is the selected comparison and Babylon.js remains an integrated-engine alternative for a concrete browser gap. These are strategic-fit judgments, not measured speed rankings.
 
 The implementation and accepted authority boundaries remain unchanged. No recommendation here amends [licensing](../../LICENSING.md), [world boundaries](../../docs/engine-and-world-boundaries.md) or the [performance contract](../../docs/performance.md).
 
@@ -84,7 +86,7 @@ That is a legitimate product and engineering argument, not sunk-cost reasoning. 
 
 The weak version of that argument is “we have already written it” or “server-side simulation means the client cannot be a problem.” Both are inadequate. Judge the browser on measured client performance, reliable loading, production effort and player value. The next milestone collects that evidence rather than treating browser adequacy as proven.
 
-Babylon should be considered when it solves a specific browser production/rendering gap. Three.js is more appropriate when owning a custom presentation architecture is deliberate. Replacing PlayCanvas with another web renderer does not remove browser-platform constraints. Improving the existing agent/browser feedback loop may also address a production problem without changing the renderer.
+Babylon should be considered when it solves a specific browser production/rendering gap. The selected Three.js comparison tests the cost and value of deliberately owning a shared presentation architecture. Both implementations use the GPU; compute is not a PlayCanvas-only advantage. Their native integration and ecosystem costs differ, as the [capability assessment](../../docs/projects/renderer-comparison-tech-design.md#12-engine-capabilities-and-ecosystem-decisions) explains. Replacing PlayCanvas with another web renderer does not remove browser-platform constraints. Improving the existing agent/browser feedback loop may also address a production problem without changing the renderer.
 
 ## 8. Conditions that change the recommendation
 
@@ -95,7 +97,7 @@ Babylon should be considered when it solves a specific browser production/render
 | Native game selected, current open-engine/AGPL policy retained                         | Godot candidate with explicit performance/production gates.                                                              |
 | Broad native platforms and mature production tools, proprietary-client rights resolved | Unity native/URP is the balanced proprietary choice to test.                                                             |
 | High-end close-up animation, lighting and native action stack are central              | Unreal deserves the leading trial.                                                                                       |
-| Local-rendered browser access remains mandatory                                        | PlayCanvas or Babylon; compare the actual required workflow.                                                             |
+| Local-rendered browser access remains mandatory                                        | PlayCanvas default and the selected Three.js comparison; consider Babylon for a specific integrated-tooling gap.         |
 | Need a reduced Godot browser edition alongside native                                  | Qualify Compatibility/web separately; do not promise native parity.                                                      |
 | Main slowdown is server history, interaction density or database work                  | Improve server architecture independently of renderer choice.                                                            |
 | Native benefits are not demonstrated and browser meets targets                         | Stay with the browser without treating this as a failure to progress.                                                    |
@@ -116,8 +118,8 @@ Do not maintain two full primary clients indefinitely simply because the archite
 
 Confidence is high in the distinction between server/client bottlenecks. There are credible adoption and AI-tooling signals for Godot, but the causal claim that AI drives most growth is unestablished. Confidence is moderate in the strategic-fit judgments and low in any Open Legend-specific numerical capacity or comparative productivity claim because no representative engine/tool builds were tested here.
 
-The [benchmark plan](benchmark-plan.md) defines conditional common-feature and best-practical-implementation comparisons, including AI-assisted development effort. It measures client/server/network costs separately and preserves correctness, privacy and useful player interaction. Its existence does not select it ahead of the current browser milestone.
+The [benchmark plan](benchmark-plan.md) defines common-feature and best-practical-implementation comparisons, including AI-assisted development effort. RCP applies that method to the selected browser comparison; broader native/tool trials remain conditional. Measure client/server/network costs separately and preserve correctness, privacy and useful player interaction. The browser design does not establish which renderer is faster or displace the complete playable experience.
 
 **Decision history:** the October 15 native-evaluation-first recommendation was too strong for the evidence and insufficiently reconciled with the existing platform decision. The October 17 update retains its useful alternatives while changing the immediate sequence to integrated browser play, player observation and attributed performance/cost evidence. The new Godot research expands the reasons a later comparison could be worthwhile; it does not reverse that sequence.
 
-**Bottom line:** prove a worthwhile, responsive Open Legend session now. Keep Godot available for a justified native or AI-production comparison, Unity as the balanced proprietary alternative and Unreal for deliberately high-end requirements. Choose the eventual engine on the complete experience and total future effort, not sunk cost or current excitement.
+Prove a worthwhile, responsive Open Legend session and use the bounded browser comparison to assess the presentation architecture. Keep Godot available for a justified native or AI-production comparison, Unity as the balanced proprietary alternative and Unreal for deliberately high-end requirements. Choose the eventual engine on the complete experience and total future effort.

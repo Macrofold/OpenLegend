@@ -1,16 +1,18 @@
 # Game engine and platform research
 
-| Research status                                                        | Progress                                                                                               | Last updated |
-| ---------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ | ------------ |
-| Desk research updated; no migration or comparative benchmark completed | Reconciles browser-first delivery and adds a deep Godot adoption, community and AI-development review. | 2026-10-17   |
+| Research status                                                 | Progress                                                                                                              | Last updated |
+| --------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Browser comparison selected; no migration or comparative result | Routes the shared PlayCanvas/Three.js design while retaining playable-first delivery and conditional native research. | 2026-10-31   |
 
 ## Start here
 
 Read the [Open Legend assessment](open-legend-assessment.md) for the recommendation and strongest counterarguments. The immediate delivery owner is the [first-player milestone](../../docs/maintainers/first-player-milestone.md): finish and observe one worthwhile browser session and measure its actual performance and cost. Native-engine work is conditional, not the next mandatory project.
 
-The new [Godot community and AI-development review](godot-community-and-ai-2026.md) separates adoption evidence, concrete agent/editor integrations, community policy and empirical research. It strengthens the case for evaluating production productivity when appropriate, without claiming that AI caused most adoption or that Godot has won a matched engine test.
+The selected [shared presentation feature](../../docs/projects/renderer-comparison-feature-spec.md), [technical design](../../docs/projects/renderer-comparison-tech-design.md) and [RCP tracker](../../docs/maintainers/renderer-comparison.md) now own a bounded PlayCanvas/Three.js browser comparison, developer switching and fair presentation measurements. PlayCanvas remains the default. The design is not a delivered second backend, a migration decision or evidence of a winner; it does not make complete dual-engine support a prerequisite for playable development.
 
-Use the [comparison matrices](comparison-matrices.md) for route differences and the [benchmark plan](benchmark-plan.md) for a conditional comparison. Godot is a leading policy-compatible native candidate; Unity/URP is the balanced proprietary alternative when rights are resolved; Unreal is strongest for specifically high-end embodied presentation. PlayCanvas/Babylon remain credible browser choices. These are qualitative fit judgments, not capacity results.
+The [Godot community and AI-development review](godot-community-and-ai-2026.md) separates adoption evidence, concrete agent/editor integrations, community policy and empirical research. It strengthens the case for evaluating production productivity when appropriate, without claiming that AI caused most adoption or that Godot has won a matched engine test.
+
+Use the [comparison matrices](comparison-matrices.md) for route differences and the [benchmark plan](benchmark-plan.md) for comparison method and conditional broader trials. Godot is a leading policy-compatible native candidate; Unity/URP is the balanced proprietary alternative when rights are resolved; Unreal is strongest for specifically high-end embodied presentation. PlayCanvas is the browser baseline, Three is the selected comparison and Babylon remains an integrated-engine alternative. These are qualitative fit judgments, not capacity results.
 
 ## Engine dossiers
 
@@ -18,7 +20,7 @@ Use the [comparison matrices](comparison-matrices.md) for route differences and 
 | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------- |
 | [PlayCanvas](engines/playcanvas.md)             | Browser game engine, current integration, modern GPU path and custom-production burden                          |
 | [Babylon.js](engines/babylonjs.md)              | Direct browser challenger, graphics/tooling and separately qualified Native preview                             |
-| [Three.js](engines/threejs.md)                  | Custom rendering-library architecture and the systems the team would need to own                                |
+| [Three.js](engines/threejs.md)                  | Selected browser comparison, shared presentation and the native integration the team would own                  |
 | [Unity](engines/unity.md)                       | Native URP/HDRP, data-oriented execution and materially different current web support                           |
 | [Unreal](engines/unreal.md)                     | High-end native systems, runtime content, authority integration and streaming                                   |
 | [Godot](engines/godot.md)                       | Open native route, renderer choices, runtime assets, AI-production opportunities and web/console qualifications |
@@ -40,9 +42,9 @@ Each main dossier addresses performance/hardware, rendering/effects, gameplay/ne
 
 ## Scope and evidence boundary
 
-The original collection responded to Mike's request for an unbiased engine/platform assessment, with performance as the main emphasis. The October 17 follow-up reconciles next-work priorities and expands Godot research. It changes no runtime code, dependencies, licensing or world rules, and does not establish measured FPS, population capacity or port durations.
+The original collection responded to Mike's request for an unbiased engine/platform assessment, with performance as the main emphasis. The October 17 follow-up reconciled next-work priorities and expanded Godot research. The October 31 integration selects the shared browser-comparison design against repository baseline `7e95b415f18cc58828eacbddc88da8a86693c3d0`; the [technical design](../../docs/projects/renderer-comparison-tech-design.md#12-engine-capabilities-and-ecosystem-decisions) owns the focused GPU/ecosystem source review. These documentation changes supply no runtime code, dependencies, licensing or world rules, measured FPS, population capacity or port durations.
 
-Original repository observations used GitHub `Macrofold/OpenLegend`, `refs/heads/main` at `02faa5f82ecd9357ad4b7c775ed29aab7a346da4`. The seven research commits were replayed without changing their content onto GitHub `main` at `0eb7358f251d1ab706592ccb6e9829e98c729fe9` before this follow-up. Work remains on `research/game-engine-tradeoffs`; no local checkout or worktree was created or modified. This is not a claim about Mike's local `main`.
+Original repository observations used GitHub `Macrofold/OpenLegend`, `refs/heads/main` at `02faa5f82ecd9357ad4b7c775ed29aab7a346da4`. The seven original research commits were replayed without changing their content onto GitHub `main` at `0eb7358f251d1ab706592ccb6e9829e98c729fe9`. Those revisions and the original `research/game-engine-tradeoffs` branch are research provenance, not the current implementation baseline or a claim about Mike's local `main`.
 
 The [architecture](../../docs/architecture.md), [performance contract](../../docs/performance.md), [gameplay priorities](../../docs/repertoires/gameplay-priorities.md), [platform decision](../../docs/projects/completed/platform-and-offline-decision-brief.md) and [licensing guide](../../LICENSING.md) remain canonical. Research recommendations are not separate implementation authorization.
 
@@ -56,6 +58,6 @@ The October 17 review also corrects the recommendation's sequence: a native tria
 
 ## Verification limits
 
-The original change was confined to 18 new research Markdown files. This follow-up adds the Godot community chapter and reconciles selected planning/research owners; actual delivery is distinguishable in the branch diff. No engine or AI-editor tool was installed or tested, no game/provider run occurred, and no legal or console qualification is claimed.
+The original change was confined to 18 new research Markdown files; the October 17 follow-up added the Godot community chapter. The current browser-comparison integration updates research routing and selected design owners. No engine or AI-editor tool was installed or tested for these documentation tasks, no game/provider run occurred, and no legal or console qualification is claimed.
 
 The original pinned Prettier check could not run because the formatter was unavailable and package retrieval failed. Do not interpret that historical limitation or this documentation review as a passing formatter/CI result. Content, source scope, relative links, preservation of existing requirements and the final affected diff require review before handoff; runtime testing is not implied by documentation-only changes.

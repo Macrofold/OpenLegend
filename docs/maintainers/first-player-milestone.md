@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                     | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The next-work sequence is selected; the integrated player journey, unfamiliar-player observations and matched performance/cost evidence remain open. | 2026-10-17   |
+| In progress | The next-work sequence is selected; the integrated player journey, unfamiliar-player observations and matched performance/cost evidence remain open. | 2026-10-31   |
 
 ## Selected direction and ownership
 
@@ -39,6 +39,8 @@ Supervised observation is distinct from hosting an invitation-only service, publ
 Record the initial baseline, improvements, failures, human observations and measurement limitations in an appropriate topic under `docs/verification/` when that work occurs. Do not create a report that implies those runs already happened. Keep detailed remaining work in its existing tracker, with this page coordinating only the milestone.
 
 ## Engine and AI-tooling gate
+
+The selected [shared presentation and renderer comparison design](../projects/renderer-comparison-feature-spec.md) has implementation and evidence open in [RCP](renderer-comparison.md). It supplies a bounded browser comparison without replacing this integrated-session milestone or making complete dual-renderer support its prerequisite.
 
 The current browser/PlayCanvas decision stands. A native comparison may be justified by required visual/device capability, sustained performance, or credible evidence that another engine substantially reduces future authoring and verification work. It need not wait for an absolute browser impossibility, but a popularity spike or an attractive demo alone is insufficient.
 

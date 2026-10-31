@@ -18,6 +18,8 @@ The [stealth and awareness design](../projects/stealth-awareness-feature-spec.md
 
 Use [design foundation](design-foundation.md) for motives, resistance and consequences; [25 worked situations](combinations.md) for connected examples; and the [source atlas](source-atlas.md#catalogue-source-revisions) for research and pinned expansion revisions. The earlier 148-game/28-world foundation corpus is not the whole expanded research set: retained ledgers also include D&D studies and a 29th world dossier. Discovery, mastery, creation, beauty, relationships, ambition, conflict and loss all remain available. [World tone and scope](design-foundation.md#world-tone-and-scope) governs presentation, including mature subjects or a PG audience.
 
+The selected [renderer comparison design](../projects/renderer-comparison-feature-spec.md) uses familiar people, a useful alteration, an outing and a changed return to connect visual quality with play. Its [42-file repertoire review](../projects/renderer-comparison-repertoire-review.md) records file/category and entry ID/title/priority coverage, deeper reading of selected behavior/build gaps, and retained evidence limits. It adds no rows or priority changes, performs no fresh external-source audit and does not treat presentation replay as proof of live invention, independent choice or enjoyment. [RCP](../maintainers/renderer-comparison.md) owns implementation and comparative qualification.
+
 ## Catalogue map
 
 Counts identify rows, not separate runtime systems or obligations to ship them. Priorities belong to the described scope; a category’s position here does not outrank every idea in a lower row.
