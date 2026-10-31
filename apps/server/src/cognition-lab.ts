@@ -194,6 +194,7 @@ export class CognitionLab {
     id: string;
     kind: string;
     name?: string;
+    executionResumed?: boolean;
     temporaryGameSnapshot?: { id: string; worldId: string };
   }>();
 
@@ -454,6 +455,10 @@ export class CognitionLab {
         ),
       enabledCustomInputCount: () => this.enabledCustomFieldCount,
       changed: () => this.changed(),
+      executionResumed: () => {
+        const command = this.commandIdentity.getStore();
+        if (command) command.executionResumed = true;
+      },
       scopeAfterRestore: () => this.currentAuthority().scope,
       supportedModels: () => labModelChoices(this.config),
       resolveSettings: (patch) => resolveLabSettings(this.config, this.settings, patch),
@@ -1216,12 +1221,15 @@ export class CognitionLab {
       const recovered = await this.claimCommand(id, ownedIntention, recovery);
       if (recovered) return recovered;
       let receipt: CognitionLabReceipt;
+      const declared = intention as { kind?: string; name?: string };
+      const command = {
+        id,
+        kind: declared.kind ?? 'operation',
+        name: declared.name,
+        executionResumed: false,
+      };
       try {
-        const declared = intention as { kind?: string; name?: string };
-        receipt = await this.commandIdentity.run(
-          { id, kind: declared.kind ?? 'operation', name: declared.name },
-          work,
-        );
+        receipt = await this.commandIdentity.run(command, work);
       } catch (error) {
         if (error instanceof AppliedLabCommand) {
           receipt = error.receipt;
@@ -1258,6 +1266,10 @@ export class CognitionLab {
         };
       }
       this.changed();
+      // Resumed work is already running against its native deadline. Return
+      // its durable acknowledgement; the normal reader owns the next workspace
+      // projection (docs/projects/cognition-lab-tech-design.md §10.1).
+      if (command.executionResumed) return receipt;
       try {
         await this.refreshAuthority();
         return { ...receipt, workspace: await this.workspace(context) };

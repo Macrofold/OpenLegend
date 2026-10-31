@@ -60,6 +60,10 @@ import {
 } from './cognition-contracts.js';
 import { CognitionRuntimeControl } from './cognition-runtime-control.js';
 import { readGenerationConfig } from './generation-config.js';
+import { preparedResponseInputMeasure } from './prepared-response-questions.js';
+import { preparedResponseDecisionContext } from './prepared-response-context.js';
+import { prepareDecision, fitPreparedChoiceContext } from './decision-context.js';
+import { decisionFeelings } from './appraisal-context.js';
 
 // Approved E01–E37 use real disposable PostgreSQL, native owners and blocked external I/O.
 // These fixtures establish orchestration behavior, never model accuracy or provider latency.
@@ -1110,11 +1114,15 @@ describe('closed structured question contract', () => {
       {
         kind: 'response' as const,
         question: 'Reply.',
-        valueSchema: boundResponseSchema(['me', 'speaker'], ['rest'], {
-          speech: true,
-          expressions: ['smile'],
-          proposals: false,
-        }),
+        valueSchema: boundResponseSchema(
+          ['me', 'speaker'],
+          { known: ['rest'], plan: ['rest'] },
+          {
+            speech: true,
+            expressions: [{ id: 'smile', target: 'optional' }],
+            proposals: false,
+          },
+        ),
       },
       {
         kind: 'appraisal' as const,
@@ -1136,6 +1144,59 @@ describe('closed structured question contract', () => {
     const exact = prepareDecisionTask(questions, 'a'.repeat(padding));
     expect(Buffer.byteLength(exact.instructions) + Buffer.byteLength(exact.context)).toBe(100_000);
     expect(() => prepareDecisionTask(questions, 'a'.repeat(padding + 1))).toThrow(/byte allowance/);
+
+    // Supplied responses consume a different closed state wrapper in two stages.
+    // Its later map belongs in admission before optional evidence fills the limit.
+    const purposes = { purposes: Array.from({ length: 30 }) };
+    const appraisals = { sources: ['A complete personally acquired cause.'] };
+    const projectAppraisals = vi.fn((sources) => {
+      expect(sources).toBe(input.sources.sharedExperiences);
+      return appraisals;
+    });
+    const measure = preparedResponseInputMeasure(purposes, projectAppraisals);
+    const input = {
+      context: {
+        requiredEvidence: 'Preserve this exact complete source.',
+        feelings: 'My current interpretation.',
+        activityRequests: { instructions: 'Generation-only forms are not consumed here.' },
+      } as Record<string, unknown>,
+      offered: [],
+      sourceTime: 0,
+      actionGuidance: stockedCamp().cognitionPolicy.actionGuidance,
+      sources: { evidenceIds: [], sharedExperiences: new Map(), entityReferences: {} },
+      includeActions: false,
+    };
+    const relevance = Object.fromEntries(purposes.purposes.map((_, i) => [`p${i}`, 'irrelevant']));
+    const closedState = (context: Record<string, unknown>) => ({
+      decisionContext: preparedResponseDecisionContext(context),
+      personalChoiceRubric: input.actionGuidance,
+    });
+    const expected = Math.max(
+      Buffer.byteLength(JSON.stringify({ ...closedState(input.context), appraisals })),
+      Buffer.byteLength(
+        JSON.stringify(closedState({ ...input.context, purposeRelevance: relevance })),
+      ),
+    );
+    expect(measure(input)).toBe(expected);
+    expect(projectAppraisals).toHaveBeenCalled();
+    expect(measure({ ...input, context: { ...input.context, purposeRelevance: relevance } })).toBe(
+      expected,
+    );
+    const exactContext: Record<string, unknown> & { optionalEvidence: string } = {
+      ...input.context,
+      optionalEvidence: '',
+    };
+    exactContext.optionalEvidence = 'a'.repeat(
+      100_000 - measure({ ...input, context: exactContext }),
+    );
+    expect(measure({ ...input, context: exactContext })).toBe(100_000);
+    expect(
+      measure({
+        ...input,
+        context: { ...exactContext, optionalEvidence: exactContext.optionalEvidence + 'a' },
+      }),
+    ).toBe(100_001);
+    expect(exactContext['requiredEvidence']).toBe('Preserve this exact complete source.');
   });
   it('rejects out-of-range likelihoods and refuses empty choices/relevance before dispatch', () => {
     const task = prepareDecisionTask(
@@ -1959,6 +2020,111 @@ describe('durable reader publication and bounded scheduling', () => {
     for (const index of [0, 269, 538])
       expect(contextText).toContain(`Required unique constraint ${index}`);
     expect(contextText).toContain('Authored fixture need 19');
+
+    const measure = preparedResponseInputMeasure({ purposes: Array.from({ length: 30 }) });
+    const judge = vi.fn(async () => {
+      throw new Error('The native supplied-context fit cannot buy a model call.');
+    });
+    const supplied = await prepareDecision(
+      h.service,
+      recall,
+      NPC_ID,
+      'fixture-supplied-context',
+      'Consider my complete supplied options.',
+      required,
+      judge,
+      new AbortController().signal,
+      0,
+      false,
+      0,
+      undefined,
+      undefined,
+      'native-only',
+      {
+        candidates: [{ id: 'continue', description: 'Keep current conduct.', command: null }],
+        facts: { instructions: 'Complete fixture choice universe.' },
+        feelings: [],
+      },
+      measure,
+    );
+    expect(supplied.requiredClosure).toBeDefined();
+    expect(supplied.requiredClosure!.omitted.length).toBeGreaterThan(0);
+    const native = commitActorResponse(
+      h.service.world,
+      'fixture-native-feeling-admission',
+      NPC_ID,
+      { operations: [] },
+      {},
+      [],
+      entityGet(h.service.world.entities, NPC_ID)!.actor!.planGeneration,
+    );
+    const updates = {
+      feelings: decisionFeelings(native.world, NPC_ID),
+      admittedInterpretations:
+        native.world.responseReceipts!['fixture-native-feeling-admission']!.components,
+    };
+    const fitted = fitPreparedChoiceContext(supplied, updates);
+    expect(fitted.diagnostics.postAdmissionBudget.requiredClosureUsed).toBe(false);
+    const padded = { ...supplied, context: { ...supplied.context, optionalFixture: '' } };
+    const measurePrepared = (context: Record<string, unknown>) =>
+      measure({
+        context,
+        offered: supplied.offered,
+        sourceTime: supplied.diagnostics.sourceTime,
+        actionGuidance: supplied.actionGuidance,
+        sources: {
+          evidenceIds: supplied.binding.evidenceIds ?? [],
+          sharedExperiences: supplied.sharedExperiences,
+          entityReferences: supplied.entityReferences,
+        },
+        includeActions: true,
+      });
+    padded.context.optionalFixture = 'x'.repeat(100_000 - measurePrepared(padded.context));
+    const fallback = fitPreparedChoiceContext(padded, updates);
+    expect(fallback.diagnostics.postAdmissionBudget.requiredClosureUsed).toBe(true);
+    expect(fallback.diagnostics.inputBytes).toBeLessThanOrEqual(100_000);
+    expect(fallback.context['optionalFixture']).toBeUndefined();
+    expect(fallback.context['admittedInterpretations']).toEqual(updates.admittedInterpretations);
+    expect(fallback.context['feelings']).toBe(updates.feelings);
+    expect(fallback.actionCandidates).toBe(supplied.actionCandidates);
+    expect(fallback.validateEvidence).not.toBe(supplied.validateEvidence);
+    expect(fallback.validateConversation).not.toBe(supplied.validateConversation);
+    expect(supplied.context['admittedInterpretations']).toBeUndefined();
+    expect(supplied.context['optionalFixture']).toBeUndefined();
+    expect(fallback.context['requiredChoices']).toEqual(supplied.context['requiredChoices']);
+    for (const [field, value] of Object.entries(updates)) {
+      const unit = fallback.manifest.units.find((unit) => unit.source.id === field)!;
+      expect(unit.source.revision).toBe(digest(value));
+      expect(fallback.manifest.requiredRoots).toContain(unit.key);
+    }
+    for (const unit of supplied.manifest.units)
+      if (
+        !Object.hasOwn(updates, unit.source.id) &&
+        supplied.manifest.requiredRoots.includes(unit.key)
+      )
+        expect(fallback.manifest.requiredRoots).toContain(unit.key);
+    expect(fallback.entityReferences).toEqual(supplied.requiredClosure!.entityReferences);
+    expect(fallback.binding.evidenceIds).toEqual(supplied.requiredClosure!.evidenceIds);
+    expect(fallback.manifest.sourceKeys).toEqual(supplied.requiredClosure!.manifest.sourceKeys);
+    expect(fallback.diagnostics.preparation.units).toBe(fallback.manifest.units.length);
+    expect(fallback.diagnostics.preparation.roots).toBe(fallback.manifest.requiredRoots.length);
+    const rebuilt = JSON.stringify(fallback.context);
+    for (const index of [0, 269, 538])
+      expect(rebuilt).toContain(`Required unique constraint ${index}`);
+    expect(rebuilt).toContain('Authored fixture need 19');
+    for (const source of fallback.sharedExperiences.values())
+      expect((fallback.context['experience'] as unknown[])[source.index]).toEqual(
+        source.experience,
+      );
+    expect(() =>
+      fitPreparedChoiceContext(padded, {
+        ...updates,
+        admittedInterpretations: { requiredNativeOutcome: 'x'.repeat(100_000) },
+      }),
+    ).toThrow(/required context exceed/);
+    await fallback.validateEvidence();
+    expect(judge).not.toHaveBeenCalled();
+
     const boundary = prepareDecisionTask(prepared.tasks, prepared.context, prepared.instructions);
     const currentBytes =
       Buffer.byteLength(boundary.instructions) + Buffer.byteLength(boundary.context);

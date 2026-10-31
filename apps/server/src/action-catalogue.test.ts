@@ -22,6 +22,7 @@ import { WorldService } from './world-service.js';
 import { readConfig } from '../../../tests/fixtures/database.js';
 
 const stores: SqlGameRepository[] = [];
+const services = new Set<WorldService>();
 async function setup(operator = false) {
   const store = await testRepository(undefined, stockedCamp());
   stores.push(store);
@@ -29,11 +30,14 @@ async function setup(operator = false) {
     store,
     readConfig(operator ? { OPEN_LEGEND_GOD_MODE: 'true' } : {}),
   );
+  services.add(service);
   await enterLocalWorld(service);
   await service.setPresence('fixture', true);
   return { store, service };
 }
 afterEach(async () => {
+  for (const service of services) service.releaseHostWork();
+  services.clear();
   for (const store of stores.splice(0)) await store.close();
 });
 afterAll(closeTestDatabases);
@@ -250,23 +254,30 @@ it('updates contextual food descriptions from the player’s current state witho
 it('persists profile preferences across server restarts and world restoration, independently of another profile', async () => {
   const directory = mkdtempSync(join(tmpdir(), 'open-legend-profile-'));
   const path = directory;
-  let store = await testRepository(path);
+  let store = await testRepository(path, stockedCamp());
+  let service: WorldService | undefined;
   try {
-    const service = new WorldService(store, readConfig({}));
+    service = new WorldService(store, readConfig({}));
+    services.add(service);
     await enterLocalWorld(service);
     const original = (await store.load())!;
     expect(service.profile.preferences.showUnavailableActions).toBe(false);
     await service.setPreferences({ showUnavailableActions: true });
     await store.commit(original.revision, original.state);
     expect((await store.getProfile('someone-else')).preferences.showUnavailableActions).toBe(false);
+    service.releaseHostWork();
+    services.delete(service);
     await store.close();
     store = await testRepository(path);
-    const restarted = new WorldService(store, readConfig({}));
-    await enterLocalWorld(restarted);
-    expect(restarted.profile.preferences.showUnavailableActions).toBe(true);
-    await restarted.setPreferences({ showUnavailableActions: false });
-    expect(restarted.profile.preferences.showUnavailableActions).toBe(false);
+    service = new WorldService(store, readConfig({}));
+    services.add(service);
+    await enterLocalWorld(service);
+    expect(service.profile.preferences.showUnavailableActions).toBe(true);
+    await service.setPreferences({ showUnavailableActions: false });
+    expect(service.profile.preferences.showUnavailableActions).toBe(false);
   } finally {
+    service?.releaseHostWork();
+    if (service) services.delete(service);
     await store.close();
     rmSync(directory, { recursive: true, force: true });
   }
@@ -462,12 +473,16 @@ it('omits uninstalled expressions from ordinary menus and the bound NPC response
       action.id.startsWith('express:'),
     ),
   ).toBe(false);
-  const expressions = selectedExpressions(
-    service.world,
-    entityGet(service.world.entities, NPC_ID),
-  ).map((definition) => definition.id);
-  const schema = boundResponseSchema([NPC_ID, PLAYER_ID], [], { speech: true, expressions });
-  const prompt = readableDecisionContext({ capabilities: { speech: true, expressions } }, []);
+  const expressions = selectedExpressions(service.world, entityGet(service.world.entities, NPC_ID));
+  const schema = boundResponseSchema(
+    [NPC_ID, PLAYER_ID],
+    { known: [], plan: [] },
+    { speech: true, expressions },
+  );
+  const prompt = readableDecisionContext(
+    { capabilities: { speech: true, expressions: expressions.map((definition) => definition.id) } },
+    [],
+  );
   expect(prompt).not.toContain('known|expression|proposal|invoke');
   expect(prompt).not.toContain('for expression, fill verb');
   const response = {

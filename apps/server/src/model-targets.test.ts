@@ -736,10 +736,14 @@ function prepareChatSchema(
 }
 it('preserves the complete current response constraints across compatible serving dialects', async () => {
   const schema = modelJsonSchema(
-    boundResponseSchema(['person', ...Array.from({ length: 32 }, (_, i) => `ref-${i}`)], ['a0'], {
-      speech: true,
-      expressions: ['smile'],
-    }),
+    boundResponseSchema(
+      ['person', ...Array.from({ length: 32 }, (_, i) => `ref-${i}`)],
+      { known: ['a0'], plan: ['a0'] },
+      {
+        speech: true,
+        expressions: [{ id: 'smile', target: 'optional' }],
+      },
+    ),
   );
   expect(JSON.stringify(schema)).toContain('#/$defs/');
   const selected = await prepareChatSchema(schema);

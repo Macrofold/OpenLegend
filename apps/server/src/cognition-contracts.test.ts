@@ -53,7 +53,11 @@ const action = {
   },
 };
 const bound = () =>
-  boundResponseSchema(['actor', 'person'], ['a0'], { speech: true, expressions: [] });
+  boundResponseSchema(
+    ['actor', 'person'],
+    { known: ['a0'], plan: ['a0'] },
+    { speech: true, expressions: [] },
+  );
 
 describe('one sparse response contract', () => {
   it('inherits the same trusted service policy before authored character context', () => {
@@ -119,7 +123,11 @@ describe('one sparse response contract', () => {
       }),
     ).toBeNull();
     expect(
-      boundResponseSchema(['actor'], [], { speech: false, expressions: [] }).safeParse({
+      boundResponseSchema(
+        ['actor'],
+        { known: [], plan: [] },
+        { speech: false, expressions: [] },
+      ).safeParse({
         operations: [talk],
       }).success,
     ).toBe(false);
@@ -290,7 +298,7 @@ describe('sparse nested payloads', () => {
     ];
     const schema = boundResponseSchema(
       ['actor', 'person'],
-      ['a0'],
+      { known: ['a0'], plan: ['a0'] },
       { speech: true, expressions: [] },
       [],
       [],
@@ -301,7 +309,7 @@ describe('sparse nested payloads', () => {
       const refs = Array.from({ length: count }, (_, i) => `ref-${i}`);
       const expanded = boundResponseSchema(
         refs,
-        ['a0'],
+        { known: ['a0'], plan: ['a0'] },
         { speech: true, expressions: [] },
         [],
         [],
@@ -485,11 +493,15 @@ describe('sparse nested payloads', () => {
   });
 
   it('omits unavailable exact choices without invalid empty enums and preserves speech and open actions', () => {
-    const schema = boundResponseSchema(['actor'], [], {
-      speech: true,
-      expressions: [],
-      proposals: false,
-    });
+    const schema = boundResponseSchema(
+      ['actor'],
+      { known: [], plan: [] },
+      {
+        speech: true,
+        expressions: [],
+        proposals: false,
+      },
+    );
     expect(() => compileSchema(modelJsonSchema(schema))).not.toThrow();
     expect(schema.safeParse({ operations: [action] }).success).toBe(false);
     expect(
@@ -562,7 +574,11 @@ it('carries the same sparse contract through the direct provider adapter and nat
 
 it('commits a sparse goal and independent thought once through the native response owner', () => {
   const world = stockedCamp();
-  const parsed = boundResponseSchema([NPC_ID], [], { speech: true, expressions: [] }).parse({
+  const parsed = boundResponseSchema(
+    [NPC_ID],
+    { known: [], plan: [] },
+    { speech: true, expressions: [] },
+  ).parse({
     operations: [
       {
         localId: 'purpose',

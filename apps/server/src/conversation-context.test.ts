@@ -271,16 +271,41 @@ it('reuses exact recent conversation causes while retaining changed projections 
   const bound = await bind();
   expect(cause(bound).experience).toEqual({ reference: `character.experience[${shared.index}]` });
   expect(await bound.current()).toBe(true);
+  const defaultContext = structuredClone(bound.context);
+  const nativeSources = structuredClone([...bound.sources]);
+  const projectedCause = (context: typeof bound.context) =>
+    context.sources.find((source) => source.handle === cause(bound).handle)!;
+  const supplied = bound.projectContext(prepared.sharedExperiences, 'decisionContext.experience');
+  expect(projectedCause(supplied).experience).toEqual({
+    reference: `decisionContext.experience[${shared.index}]`,
+  });
+  expect(supplied.sourceReferences).toContain('decisionContext.experience[index]');
+  expect(supplied.sources.map((source) => source.handle)).toEqual(
+    bound.context.sources.map((source) => source.handle),
+  );
+  expect(bound.projectContext(prepared.sharedExperiences)).toEqual(defaultContext);
+  expect(bound.context).toEqual(defaultContext);
+  expect([...bound.sources]).toEqual(nativeSources);
 
   const changedProjection = new Map(prepared.sharedExperiences);
   const changed = structuredClone(shared);
   changed.experience.value['summary'] = 'A different observer projection.';
   changedProjection.set(key, changed);
-  expect(cause(await bind(changedProjection)).experience).toHaveProperty('value');
+  const changedBound = await bind(changedProjection);
+  expect(cause(changedBound).experience).toHaveProperty('value');
+  expect(
+    projectedCause(bound.projectContext(changedProjection, 'decisionContext.experience'))
+      .experience,
+  ).toEqual(cause(changedBound).experience);
 
   const changedRevision = new Map(prepared.sharedExperiences);
   changedRevision.set(key, { ...shared, revision: 'different-source-revision' });
-  expect(cause(await bind(changedRevision)).experience).toHaveProperty('value');
+  const revisedBound = await bind(changedRevision);
+  expect(cause(revisedBound).experience).toHaveProperty('value');
+  expect(
+    projectedCause(bound.projectContext(changedRevision, 'decisionContext.experience')).experience,
+  ).toEqual(cause(revisedBound).experience);
+  expect([...bound.sources]).toEqual(nativeSources);
 });
 
 it('measures mixed appraisal sources with exact namespaces, ordering and the native source cap', async () => {

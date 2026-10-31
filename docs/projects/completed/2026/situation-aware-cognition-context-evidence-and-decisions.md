@@ -1,7 +1,7 @@
 # Situation-aware cognition context: evidence and decisions
 
-| Status      | Current progress                                                                                                                                                                 | Last updated |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                   | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | The source audit and core delivery are filed; October 31 question-specific design refinements and their qualification remain open. | 2026-10-31   |
 
 ## 1. Purpose and evidence boundaries
@@ -101,7 +101,7 @@ The old favor is present at `character.experience[0]` in all three requests; thi
 
 The later generated response repeats both incoming utterances as the deciding person's own speech despite a valid sparse shape. Subsequent records separately show an offered berry, acceptance and transfer; speech alone did not perform that exchange. This motivates attribution and native-outcome comparisons, not a causal claim that large context caused the errors or that compaction fixes them. Grading preconditions remain unverified. The scene, memory age, preferred answer and observed collection sizes must not become selection rules.
 
-These findings refine the existing [question requirements](situation-aware-cognition-context-tech-design.md#51-generic-decision-requirements-and-source-contributions), [meaning projection](situation-aware-cognition-context-tech-design.md#75-model-readable-decision-projection) and [SC01–SC09 work](../maintainers/cognition-context.md); they add no new situation taxonomy or runtime subsystem.
+These findings refine the existing [question requirements](../../../technical/situation-aware-cognition-context.md#51-generic-decision-requirements-and-source-contributions), [meaning projection](../../../technical/situation-aware-cognition-context.md#75-model-readable-decision-projection) and [SC01–SC09 work](../../../maintainers/cognition-context.md); they add no new situation taxonomy or runtime subsystem.
 
 ## 3. Clarifications settled in the conversation
 

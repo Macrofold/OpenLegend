@@ -63,6 +63,10 @@ Manual save count is unlimited, but reaching this refusal requires extreme susta
 
 ## Change
 
+### C25
+
+**P1. Ordinary staged cognition: an action is chosen but its details cannot start after one second.** The [DE06 proposal](cognition-redesign.md#de06--useful-lifetime-continuation-and-preparation) makes the existing useful-later root lifetime available to first and successor requests, retaining immediate-only expiry, current authority, funding and capacity. It also removes unrelated actor-index readiness from a local recall dependency without weakening complete-search proof. Design is complete; implementation and affected qualification remain open. [DE-L01/DE-L02](../limits/ai-execution.md#de-l01--immediate-and-delayed-deadlines), [MH15](../limits/memory.md#mh15--delayed-lexical-preparation) and PF14 retain numerical bounds and measurement; no full-panel restart or increased deadline is proposed.
+
 ### C18
 
 **P1. Soon: meeting crowds and observing many actors/objects.** Native steps stall; required-work exhaustion can pause the world. Dense cost already measured.

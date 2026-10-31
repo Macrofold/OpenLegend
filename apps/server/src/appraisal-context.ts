@@ -99,13 +99,13 @@ function renderAppraisalContext(
   subjects: Record<string, string>,
   sources: AppraisalContextSource[],
   shared: boolean,
+  experienceRoot = 'character.experience',
 ) {
   const byId = new Map(Object.entries(subjects).map(([handle, id]) => [id, handle]));
   return {
     ...(shared
       ? {
-          sourceReferences:
-            'An experience.reference names the exact complete record at character.experience[index] in this same request. Read that record for the cause; each cause handle keeps its own native binding.',
+          sourceReferences: `An experience.reference names the exact complete record at ${experienceRoot}[index] in this same request. Read that record for the cause; each cause handle keeps its own native binding.`,
         }
       : {}),
     feelings: [...state.records].map(([handle, record]) => ({
@@ -196,7 +196,8 @@ export function captureDecisionAppraisalContext(world: WorldState, actorId: stri
       subjects: Record<string, string>,
       sources: AppraisalContextSource[],
       shared: boolean,
-    ) => renderAppraisalContext(state, subjects, sources, shared),
+      experienceRoot?: string,
+    ) => renderAppraisalContext(state, subjects, sources, shared, experienceRoot),
     current: (current: WorldState) =>
       capturedState === canonicalJson(current.appraisals?.[actorId] ?? {}) &&
       capturedPolicies === canonicalJson(current.moduleManifest.appraisals ?? null),
@@ -376,6 +377,58 @@ async function bindAppraisals(
     }
     return sourcesCurrent();
   };
+  // Bind source identity and complete observer wording once. Different request
+  // consumers can then share their exact selected evidence without a reread or
+  // rebinding the stable cause handles used by native appraisal admission.
+  const contextSources = [...sources].map(([handle, source], index) => {
+    const entry = selected[index]!,
+      experience = experienceForModel(
+        entry.entry,
+        experienceModelBindings(world, actorId, entry.entry, handle),
+      );
+    return {
+      key: experienceEntryKey(entry.entry),
+      revision: entry.revision,
+      rendered: canonicalJson({ ...experience, handle: null }),
+      value: {
+        handle,
+        experience,
+        coverage: source.coverage,
+        subjects: source.subjectIds.flatMap((id) => {
+          const reference = subjectRef(id);
+          return reference ? [reference] : [];
+        }),
+      },
+    };
+  });
+  const renderContext =
+    preparation.contextSnapshot?.render ??
+    ((
+      subjects: Record<string, string>,
+      sources: AppraisalContextSource[],
+      shared: boolean,
+      experienceRoot?: string,
+    ) => renderAppraisalContext(contextState, subjects, sources, shared, experienceRoot));
+  const projectContext = (
+    sharedExperiences?: ReadonlyMap<string, SharedModelExperience>,
+    experienceRoot = 'character.experience',
+  ) =>
+    renderContext(
+      subjects,
+      contextSources.map(({ key, revision, rendered, value }) => {
+        const shared = sharedExperiences?.get(key);
+        // A matching ID/revision cannot replace differently projected wording.
+        const same =
+          shared?.revision === revision &&
+          canonicalJson({ ...shared.experience, handle: null }) === rendered;
+        return {
+          ...value,
+          experience: same ? { reference: `${experienceRoot}[${shared.index}]` } : value.experience,
+        };
+      }),
+      !!sharedExperiences?.size,
+      experienceRoot,
+    );
   return {
     current,
     sourceCurrent,
@@ -395,37 +448,8 @@ async function bindAppraisals(
           })
         : variants[0];
     },
-    context: (
-      preparation.contextSnapshot?.render ??
-      ((subjects, sources, shared) =>
-        renderAppraisalContext(contextState, subjects, sources, shared))
-    )(
-      subjects,
-      [...sources].map(([handle, source], index) => {
-        const entry = selected[index]!,
-          experience = experienceForModel(
-            entry.entry,
-            experienceModelBindings(world, actorId, entry.entry, handle),
-          ),
-          shared = preparation.sharedExperiences?.get(experienceEntryKey(entry.entry));
-        // Exact private identity and revision are necessary but not enough: a
-        // changed observer projection must retain its own complete wording.
-        const same =
-          shared?.revision === entry.revision &&
-          canonicalJson({ ...shared.experience, handle: null }) ===
-            canonicalJson({ ...experience, handle: null });
-        return {
-          handle,
-          experience: same ? { reference: `character.experience[${shared.index}]` } : experience,
-          coverage: source.coverage,
-          subjects: source.subjectIds.flatMap((id) => {
-            const reference = subjectRef(id);
-            return reference ? [reference] : [];
-          }),
-        };
-      }),
-      !!preparation.sharedExperiences?.size,
-    ),
+    context: projectContext(preparation.sharedExperiences),
+    projectContext,
     resolve(proposals: AppraisalProposal[]): AppraisalChange[] {
       const changes: AppraisalChange[] = proposals.map((proposal) => {
         const existing = 'appraisal' in proposal ? records.get(proposal.appraisal) : undefined;

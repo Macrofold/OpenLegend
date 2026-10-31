@@ -1,8 +1,8 @@
 # Cognition Lab — feature specification
 
-| Status      | Current progress                                                                                                                                            | Last updated         |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Shared runtime, desktop workspace and Library implemented; final native behavior qualification is in progress under CL13, with human acceptance still open. | 2026-10-29 22:01 UTC |
+| Status      | Current progress                                                                                                          | Last updated         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Runtime and Library delivered; affected-only experiments are complete, with broader character-quality qualification open. | 2026-10-31 16:50 UTC |
 
 ## 1. Purpose and product outcome
 
@@ -43,7 +43,7 @@ The developer types a sentence and selects **Submit**. The default **One respons
 
 There is no mandatory setup wizard, test rubric, save dialog, configuration form, tree expansion or raw-payload inspection in this journey. Missing AI configuration is an inline, actionable state beside Submit; the text remains editable. No automatic send occurs after configuration becomes available.
 
-The lab holds simulation time while a native decision prepares, waits for its provider and publishes. Real elapsed time, provider deadlines and the active-wall guard continue. This keeps computer or network delay from consuming the simulated response window; ordinary gameplay clock behavior is unchanged.
+The lab holds simulation time while a native decision prepares, waits for its provider and publishes. Real elapsed time, provider deadlines and the active-wall guard continue. This keeps computer or network delay from consuming the simulated response window. Deliberate operator holds suspend pending native decision allowances even during context preparation; they never suspend provider execution deadlines. Ordinary gameplay clock behavior is unchanged.
 
 An explicit Next stage condition can pause every prepared request within One response; Continue sends that exact input once and re-arms inspection until the focal decision reaches its terminal held boundary.
 

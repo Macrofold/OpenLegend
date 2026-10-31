@@ -256,9 +256,9 @@ export function compileDecisionTask(
   // already stringified context can alone exhaust the complete input allowance.
   // docs/memory-architecture.md#3-one-compact-model-facing-context
   const input = JSON.stringify({
-    permittedContext: context,
     installedWorldGuidance: worldInstructions,
     questions,
+    permittedContext: context,
   });
   return {
     instructions,

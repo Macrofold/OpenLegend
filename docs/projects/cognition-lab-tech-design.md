@@ -1,10 +1,10 @@
 # Cognition Lab — technical design
 
-| Status      | Current progress                                                                                                   | Last updated         |
-| ----------- | ------------------------------------------------------------------------------------------------------------------ | -------------------- |
-| In progress | Shared runtime and desktop workspace implemented; final native behavior and startup qualification are in progress. | 2026-10-29 22:01 UTC |
+| Status      | Current progress                                                                                                          | Last updated         |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Runtime and Library delivered; affected-only experiments are complete, with broader character-quality qualification open. | 2026-10-31 16:50 UTC |
 
-Last used for implementation/review: **2026-10-29 22:01 UTC**. The feature specification records the current interaction contract.
+Last used for implementation/review: **2026-10-31 16:50 UTC**. The feature specification records the current interaction contract.
 
 ## 1. Scope, authority and baseline
 
@@ -134,6 +134,10 @@ Manual scenario edits are interventions. Retain their concise structured differe
 | Cancel request              | Cancel the exact admitted request through its owning controller. Already accepted effects and paid/uncertain work remain recorded.                                                                      |
 | Stop run                    | Close further run-scoped admission, drain or explicitly cancel outstanding work as described below, then publish a terminal run result.                                                                 |
 
+A stopped run remains terminal across settings changes and later Hold. Its ending time is stable; a new stimulus starts a new run in the same current scenario. Stop completes terminal cancellation/publication after any earlier Hold settles. Late background errors remain scoped to their original run and interval, never reopening an ended run or changing a newer experiment.
+
+A registered, undispatched decision excludes actual operator-held time, including holds beginning during asynchronous context preparation. The first durable job write measures only its held portion; primary and higher preparation then use one shared nested-hold mechanism. Timing ownership transfers across the committed handoff without an unowned asynchronous gap: retire the old owner's timers, drain its credit, and install the queued/active owner before awaiting its next write. Explicit cancellation still propagates across owners. Before provider entry, resume drains pending clock-credit persistence and rechecks the current source. Unheld preparation and actual provider execution retain their original deadlines; Stop, cancellation and replacement never renew retired work.
+
 The shared runtime's clock driver accepts a lab hold that stops offering new native elapsed time and drops time accumulated while held. It does not change the underlying world's ordinary paused flag, cancel background work through the ordinary pause path, run native ticks at zero time to manufacture opportunities, or accumulate catch-up time for resume.
 
 `WorldService.paused` currently includes manual pause, maintenance/storage holds and absence of a participating connection. Add one narrow runtime-driver liveness input for the authorized lab controller: it satisfies the operational away gate while an explicit finite lab run or prepared hold exists, without synthesizing a browser connection, taking control of a character or changing `pauseWhenHidden`. Gameplay keeps its existing presence behavior. Storage, manual and maintenance holds remain authoritative. First open is a lab-held boundary with no simulation debt; install the lab admission/clock controls before starting its director or host wake so initialization cannot dispatch a paid request before the hold exists.
@@ -200,9 +204,11 @@ Offer a held hook before acquiring the selected call's scarce execution slot or 
 
 Every held gate observes the owning abort signal and runtime generation, including an immediate already-aborted check. Continuation, cancellation or invalidation settles its wait exactly once and removes listeners, held handles and timing state through owner cleanup. Reuse the lifecycle pattern in `AiDirector.awaitResume`; a promise waiting only for a UI Continue would prevent `AiDirector.close()` from draining its pending work. Stop, replacement and disposal cancel the held wait without dispatching it, while ordinary Hold deliberately preserves it.
 
-While that native root has no provider call in flight, awaited lab recording excludes its actual elapsed wait from a still-pending immediate inference opportunity. Nested waits count once and cannot revive an expired opportunity. This exclusion never extends the native useful lifetime, an in-flight provider deadline or the run's active-wall limit. Deliberate prepared-input human waits retain their existing suspension of undispatched timing.
+While that native root has no provider call in flight, awaited lab recording excludes its actual elapsed wait from a still-pending immediate inference opportunity. Measure release credit after acquiring the operational decision row, including that queue/row wait; a later hold fences the previous settling interval so overlap counts once. The final write/commit tail remains charged. Nested waits count once and cannot revive an expired opportunity; cancellation, restored generation and changed experiment epoch prevent queued credit. This exclusion never extends the native useful lifetime, an in-flight provider deadline or the run's active-wall limit. Deliberate prepared-input human waits retain their existing suspension of undispatched timing.
 
 Native capture writes and terminal interval recording/release share one ordered controller owner. Retain interval credit until earlier admitted observations finish writing, even when another root is already held. Capture each event's original run/interval at admission. Native settlement stays outside that recording lane so cancellation and held-input cleanup can complete without waiting on themselves.
+
+The prepared input is already a server-owned snapshot. Continuing it unchanged retains that owned value, as does the unheld path; exact identity skips redundant full-input comparisons. Actual replacements retain independent snapshots and complete comparison. Browser clients receive serialized artifacts, never a writable reference to the owned input.
 
 No debug hook is enabled for the gameplay runtime. With the lab hook disabled, ordinary callers receive the same inputs, route choices and outcomes, without diagnostic deep-copy work.
 
@@ -430,6 +436,8 @@ Retention does not override current source disclosure, forgetting or erasure rul
 Extend the existing authenticated HTTP/protocol conventions. The lab route requires current developer/creator authority and resolves that authority again after an asynchronous read or before a mutation. Reuse the existing human-private inspection checks and generation fences. Imported role labels, model text and client-supplied flags cannot confer authority.
 
 All writes carry an application-issued or client-generated opaque `commandId` and the authority/freshness scope required by their operation below. A repeated accepted command returns its existing receipt/status. Use current native command/request receipts for native work and a small lab operation receipt for setup/control operations; do not build a distributed command framework. A lost HTTP response never licenses a second new command ID automatically. Stop/Hold/cancel remain usable while native updates or authoring revisions arrive; their exact generation/run/attempt checks still prevent control of a replacement scene.
+
+After reopening execution, return the durable operation receipt without rebuilding the workspace in that HTTP response. The shared resume owner covers initial stimuli, prepared submissions, unheld continuation and native resume. The normal scoped reader refreshes the workspace; operations that leave execution held retain their existing projections. Required receipt persistence and authorization remain in place, while optional view preparation no longer competes with the resumed native decision window.
 
 A current read projection has `workspaceId`, `worldId`, `timeline`, `runtimeGeneration`, `scenarioRevision`, its native snapshot/change identity, a projection kind and actual data. Captured records identify their own run/root/stage and source scope rather than inheriting today's scene revision. The server never resolves a historical ID by falling back to today's value with a similar name. A stale read returns a stale result or its explicitly captured historic scope.
 

@@ -1,6 +1,6 @@
 # Situation-aware cognition context: optional refinements
 
-Core SC01–SC11 are implemented and locally qualified; their full [delivery records](completed/2026/cognition-context.md) are filed. The [feature](../features/situation-aware-cognition-context.md), [technical contract](../technical/situation-aware-cognition-context.md) and [qualification evidence](../verification/situation-aware-cognition-context.md) own current behavior and measured limits. The October 31 question-specific design refinements remain open in SC01-SC03 and SC09 below; reuse valid filed implementation and evidence rather than repeat unchanged core work. SC12 remains designed, deferred and unselected; it is not a core completion dependency.
+Core SC01–SC11 are implemented and locally qualified; their full [delivery records](completed/2026/cognition-context.md) are filed. The [feature](../features/situation-aware-cognition-context.md), [technical contract](../technical/situation-aware-cognition-context.md) and [qualification evidence](../verification/situation-aware-cognition-context.md) own current behavior and measured limits. The October 31 question-specific design refinements remain open in SC01-SC03 and SC09 below; reuse valid filed implementation and evidence rather than repeat unchanged core work. SC12 contains implemented local schema factoring qualified on the observed configured routes; its revision/work-mode refinements remain deferred and unselected. It is not a core completion dependency.
 
 ## Maintained records
 
@@ -90,7 +90,7 @@ Core delivery complete; [filed task record](completed/2026/cognition-context.md#
 
 ## SC12 — Bind derivable metadata; optionally factor local schemas
 
-**Status: Local schema factoring implemented; live qualification in progress. Revision/work-mode projection remains deferred, outside core SC delivery.** Current expected revisions and meaningful mode fields remain unchanged. No item in SC12 is required to close SC11.
+**Status: Local schema factoring implemented and qualified on the observed configured routes. Revision/work-mode projection remains deferred, outside core SC delivery.** Current expected revisions and meaningful mode fields remain unchanged. No item in SC12 is required to close SC11.
 
 **Owner:** prepared response bindings, native mutation/receipt owners, installed-request definitions and AI schema validator. **Design:** technical §§9.5–10. **Dependencies if separately selected:** qualified SC04/SC07, followed by affected lifecycle requalification; integrate current callers through SC06/SC10.
 
@@ -107,6 +107,6 @@ Core delivery complete; [filed task record](completed/2026/cognition-context.md#
 
 - [x] Deliver inline sparse definitions first; provider support alone is insufficient to enable local references.
 - [x] Measure remaining duplication after sparsity. Repeated permitted-ID enums across the installed forms justify sharing exact definitions; the current compiler selects the smaller encoding. [Campaign evidence](../verification/cognition-lab/2026/2026-10-29-final-native-panel.md) distinguishes component measurements from full native requests.
-- [ ] Finish configured-route live qualification of the bounded local nonrecursive subset in technical §9.5. Local validation, direct/Macrofold transport and custom-dialect fixtures pass; external/missing/cyclic/dynamic forms and assertion siblings refuse. Preview retains the bound value parser. No external loader is installed.
+- [x] Qualify the bounded local nonrecursive subset in technical §9.5 on the two observed configured routes: 32 Open and 35 Contributor reference-bearing response submissions, with 32 and 33 usable schema/decoder-validated returns. Two original uncertain submissions remain excluded from success counts; [source-separated evidence](../verification/cognition-lab/2026/2026-10-29-final-native-panel.md#busy-controls-schemas-and-follow-through) retains their fences. Local validation, direct/Macrofold transport and custom-dialect fixtures cover the supported subset; external/missing/cyclic/dynamic forms and assertion siblings refuse. Preview retains the bound value parser; no external loader is installed. This does not qualify every provider or character quality.
 
 **Exit:** one current schema generator remains, with proven equivalent allowed meaning and a measured net benefit if references are enabled. A historical size sketch is neither a target nor evidence of compatibility.

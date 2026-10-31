@@ -1,10 +1,10 @@
 # Better decisions without stopping the game — feature specification
 
-| Status      | Current progress                                                                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Higher requests use configured deployments, catalog inference or direct Luna Low; broader release qualification remains open. | 2026-10-26   |
+| Status      | Current progress                                                                                                                        | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Existing escalation is implemented; useful-lifetime continuation is designed but unimplemented, and broader qualification remains open. | 2026-10-31   |
 
-Specification updated **2026-10-26T02:07:26Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
+Specification updated **2026-10-31T17:10:55Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
 
 ## Purpose
 
@@ -16,7 +16,7 @@ The server owns one bounded reconsideration attempt. Both the fast decision mode
 
 Ordinary operation still chooses a generative route when no supplied action is suitable. With fallback disabled, missing or invalid ratings defer without a repair call. Native action admission, protected memory selection, background reflection and durable spending remain the existing authorities.
 
-The implemented capability records why reconsideration is allowed, schedules one stronger-model attempt separately, and saves its final outcome. The immediate coordinator is released after a durable action, continuation or deferral, while a separate execution limit still counts the original remote request. It does not edit personality files, grant new actions, repair missing engine rules or turn a conversation into a mandatory long deliberation.
+The implemented capability records why reconsideration is allowed, schedules one stronger-model attempt separately, and saves its final outcome. A deferred decision retains its admitted pipeline until completion or handoff; recording deferral does not admit another ordinary pipeline. Separate execution limits still count remote requests. It does not edit personality files, grant new actions, repair missing engine rules or turn a conversation into a mandatory long deliberation.
 
 The capability defaults to apply for the configured originating model and existing permitted recovery reasons. An operator can explicitly disable it or override that scope. Existing spending/no-call admission and credentials for the selected route remain required; default standard Luna pricing is supplied unless an operator catalogue overrides it. Existing generation-disabled operation continues to prohibit it. The [technical design](decision-escalation-tech-design.md#adoption-and-current-policy) owns exact configuration and admission contracts.
 
@@ -77,6 +77,18 @@ The game keeps simulation time separate from elapsed real time. A world running 
 
 If the fast model answers after one second, a choice that is still useful may be checked and used as a delayed answer. It is not counted as a split-second decision, and it does not require a second charge simply for arriving late. Immediate-only choices expire instead. An uncertain first execution blocks a second paid call while it is reconciled; the original task deadline bounds that wait.
 
+### Proposed continuation within the original lifetime
+
+**Design complete; not implemented.** An admitted decision that remains useful later should be allowed to finish its existing workflow within its original usefulness deadline. The one-second mark records immediate action, continuation or deferral; it is not a cutoff for every model request in that workflow. This explicitly includes the first request when necessary preparation takes more than one second. The current ordinary route still enforces that cutoff; the selected supplied-response strategy already permits dependent calls within the useful lifetime.
+
+For example, a character may choose to offer food, then choose which possession and how much. Finishing those details is part of the same decision. A character retrieving an old promise before answering should also be able to finish. Neither receives another 31 seconds, a new spending allowance or a guaranteed action. The character may refuse, stay quiet, lose the opportunity, or produce an unusable answer. Existing activities and the world continue normally; no filler speech or gesture is generated to disguise waiting.
+
+"Admitted" means the existing scheduler accepted this actor, cause and authority into its bounded active capacity before preparation. A queued event, a saved task object or an operator inspecting a scenario cannot create that entitlement. Immediate-only tasks retain their earlier expiry. New relevant evidence, changed intent, loss of permission, cancellation or the original real/simulation deadline can end any unfinished decision.
+
+The [technical proposal](decision-escalation-tech-design.md#proposed-useful-lifetime-continuation) also scopes memory-index readiness to the requesting character, bounds preparation waits by the caller's lifetime, and shares unchanged preparation through existing owners. It keeps required evidence, exact request/spending durability and final native validation. No new planner, fallback route, model default, concurrency allowance or world rule is introduced. Longer admitted work can occupy existing capacity and spend more of an already authorized budget; that tradeoff must be measured alongside the additional useful answers.
+
+Delivery is tracked in [DE06](../maintainers/cognition-redesign.md#de06--useful-lifetime-continuation-and-preparation), with shared preparation measurements in [PF14](../maintainers/performance.md#pf14--shared-cognition-preparation-and-complete-path-cost). Design completion does not reopen the completed experiment panel or establish a latency or character-quality pass.
+
 ## What the stronger model receives and returns
 
 Supply a fresh, character-permitted description of the initiating situation, current actions and goals, body and needs, applicable feelings, required memories and commitments, relevant optional evidence, installed rules, and exact available choices. Preserve unknowns, conflicting claims, event times and whether information was observed, heard, remembered or inferred. Include all task-relevant installed restrictions; do not silently drop one because the character has twenty meters or hundreds of memories.
@@ -119,7 +131,7 @@ The authorized cognition inspector links the original decision and its stronger 
 
 ## Delivery and acceptance
 
-Detailed tasks and unchecked gates belong to [DE01–DE05](../maintainers/cognition-redesign.md#decision-escalation), not a second checklist here.
+Detailed tasks and unchecked gates belong to [DE01–DE06](../maintainers/cognition-redesign.md#decision-escalation), not a second checklist here.
 
 1. **Native checks and request meaning:** identify task-specific deterministic facts, supported output shapes, the unresolved decision and its legal alternatives. Preserve source/effect distinctions.
 2. **One asynchronous stronger attempt:** deliver the configured higher route for a bounded existing action-selection case, with shared accounting, fresh admission, cancellation and no shared-slot wait during remote execution.
@@ -138,7 +150,7 @@ Implementation and live Low gameplay checks are complete. A small live policy co
 
 ## Maintained records
 
-- Implementation and acceptance: [DE01–DE05](../maintainers/cognition-redesign.md#decision-escalation).
+- Implementation and acceptance: [DE01–DE06](../maintainers/cognition-redesign.md#decision-escalation).
 - Limits and constraints: [DE-L01–DE-L05](../limits/ai-execution.md#decision-escalation-limits); existing [cognition allowances](../limits/cognition.md#cg08) remain shared owners.
 - Mechanism and verification: [Technical design](decision-escalation-tech-design.md).
 - Existing contracts: [AI providers](../ai-providers.md), [memory and response admission](../memory-architecture.md), [engine/world boundaries](../engine-and-world-boundaries.md).

@@ -46,6 +46,7 @@ import {
   candidateModelSources,
   contextSections,
   modelEvidenceReference,
+  OBSERVER_SPATIAL_PERSPECTIVE,
   type ModelEvidenceSource,
   type SharedModelExperience,
 } from './perceived-context.js';
@@ -79,7 +80,12 @@ import {
 import { domainCommand } from './cognition.js';
 import { candidateSet, gameTime, type AttentionCandidate, type RecallService } from './recall.js';
 import type { WorldService } from './world-service.js';
-import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
+import {
+  COGNITION_VERSION,
+  RESPONSE_INSTRUCTIONS,
+  responseOperationEnabled,
+  type ResponseOperationKind,
+} from './cognition-contracts.js';
 import { preparedResponseDecisionContext } from './prepared-response-context.js';
 import {
   readableDecisionContext,
@@ -120,8 +126,25 @@ import {
   selectDecisionContext,
   type ContextFamily,
   type ContextUnit,
+  type DecisionRequirements,
   type SelectedDecisionContext,
 } from './decision-context-selection.js';
+
+const contextFieldFamilies: Partial<Record<string, ContextFamily>> = {
+  aboutMe: 'identity',
+  identity: 'identity',
+  body: 'body',
+  feelings: 'feeling',
+  admittedInterpretations: 'evidence',
+  agency: 'work',
+  goal: 'work',
+  commitments: 'obligation',
+  triggerFacts: 'evidence',
+  activityRequests: 'capability',
+  references: 'reference',
+  contacts: 'contact',
+  inventoryCoverage: 'coverage',
+};
 
 const sourceSectionFields = {
   memory: 'recall',
@@ -164,10 +187,10 @@ function activityDecisionFacts(
   const selected = observed.inspectedContainer;
   const available = includeRequests ? activityRequestChoices(world, actorId, observed) : undefined;
   const requests = available ? activityRequestDescriptors(world, actorId) : [];
-  const handles = entityHandles(world, actorId);
+  const handles = available ? entityHandles(world, actorId) : undefined;
   let missingChoice = false;
   const choices = (available?.choices ?? []).flatMap(({ id, kind, ...choice }) => {
-    const requires = projectActivityRequestRequirements(requests, choice, (id) => handles.get(id));
+    const requires = projectActivityRequestRequirements(requests, choice, (id) => handles?.get(id));
     if (!requires) {
       missingChoice = true;
       return [];
@@ -690,16 +713,31 @@ export async function prepareDecision(
   mode: 'ordinary' | 'native-only' = 'ordinary',
   requiredChoices?: RequiredDecisionChoices | 'available-native',
   inputMeasure?: DecisionInputMeasure,
+  consumer?: Pick<DecisionRequirements, 'question' | 'enabledSemantics'>,
 ) {
   const preparationWork = new DecisionPreparationWork();
+  const requested = consumer
+    ? { question: consumer.question, enabledSemantics: [...consumer.enabledSemantics] }
+    : undefined;
+  const allows = (operation: ResponseOperationKind) =>
+    responseOperationEnabled(requested?.enabledSemantics, operation);
   // A closed native choice needs its complete alternatives before optional recall.
   // Other responses retain their ordinary optional suggestions.
   const suppliedChoices = typeof requiredChoices === 'object' ? requiredChoices : undefined;
   const closedChoice = requiredChoices !== undefined;
+  const actionsEnabled = closedChoice || allows('act') || allows('plan');
   const inputFormat = closedChoice ? ('closed-choices' as const) : ('response' as const);
-  const projectContext = closedChoice
-    ? preparedResponseDecisionContext
-    : (context: Record<string, unknown>) => context;
+  const projectContext = (context: Record<string, unknown>) => {
+    const projected = closedChoice ? preparedResponseDecisionContext(context) : context;
+    if (!requested) return projected;
+    // Current work, learned facts and inspected contents remain evidence. Only
+    // the unsupported execution interface is absent from this consumer.
+    const { activityRequests: _unoffered, ...facts } = projected;
+    return {
+      ...(actionsEnabled ? projected : facts),
+      decisionRequirements: requested,
+    };
+  };
   await service.flushMemorySources(actorId);
   const world = service.world;
   const generation = service.generation;
@@ -762,7 +800,8 @@ export async function prepareDecision(
           ),
         }
       : undefined;
-  const planning = requiredChoices ? [] : planningCandidates(service, actorId, observed);
+  const planning =
+    requiredChoices || !allows('plan') ? [] : planningCandidates(service, actorId, observed);
   const catalogueIds = acquiredActivities(world, actorId).map((method) => method.id);
   const actionInspection: ActionInspection | undefined =
     inspected && inspection
@@ -781,16 +820,23 @@ export async function prepareDecision(
           catalogueIds,
         }
       : undefined;
-  const requiredActivity = activityDecisionFacts(world, actorId, observed, !closedChoice);
-  const availableActions = suppliedChoices
-    ? distinctActions(suppliedChoices.candidates)
-    : decisionActionCandidates(
-        service,
-        actorId,
-        observed,
-        actionInspection,
-        requiredActivity.activityRequests.requests,
-      );
+  const requiredActivity = activityDecisionFacts(
+    world,
+    actorId,
+    observed,
+    actionsEnabled && !closedChoice,
+  );
+  const availableActions = !actionsEnabled
+    ? []
+    : suppliedChoices
+      ? distinctActions(suppliedChoices.candidates)
+      : decisionActionCandidates(
+          service,
+          actorId,
+          observed,
+          actionInspection,
+          requiredActivity.activityRequests.requests,
+        );
   const measuredOffers =
     inputMeasure && closedChoice
       ? availableActions.map((candidate, index) => candidateOffer(candidate, `a${index}`))
@@ -838,29 +884,29 @@ export async function prepareDecision(
       ...candidate,
       id: `p${index}`,
     }));
-  const intentActions = (requiredChoices ? [] : observed.actor.actor!.agency.attempts).flatMap(
-    (attempt, index) => [
-      {
-        id: `w${index}`,
-        description: `Decline/withdraw pending intent: ${attempt.description}`,
-        command: { type: 'withdraw-attempt' as const, id: jobId, actorId, attemptId: attempt.id },
-      },
-      ...(attempt.alternative
-        ? [
-            {
-              id: `c${index}`,
-              description: `Accept this revised action? ${attempt.alternative.fulfillment.executableDescription}. Not fulfilled: ${attempt.alternative.fulfillment.omitted.map((o) => o.requirement).join('; ')}. ${attempt.alternative.fulfillment.reason}`,
-              command: {
-                type: 'confirm-attempt' as const,
-                id: jobId,
-                actorId,
-                attemptId: attempt.id,
-              },
+  const intentActions = (
+    requiredChoices || !actionsEnabled ? [] : observed.actor.actor!.agency.attempts
+  ).flatMap((attempt, index) => [
+    {
+      id: `w${index}`,
+      description: `Decline/withdraw pending intent: ${attempt.description}`,
+      command: { type: 'withdraw-attempt' as const, id: jobId, actorId, attemptId: attempt.id },
+    },
+    ...(attempt.alternative
+      ? [
+          {
+            id: `c${index}`,
+            description: `Accept this revised action? ${attempt.alternative.fulfillment.executableDescription}. Not fulfilled: ${attempt.alternative.fulfillment.omitted.map((o) => o.requirement).join('; ')}. ${attempt.alternative.fulfillment.reason}`,
+            command: {
+              type: 'confirm-attempt' as const,
+              id: jobId,
+              actorId,
+              attemptId: attempt.id,
             },
-          ]
-        : []),
-    ],
-  );
+          },
+        ]
+      : []),
+  ]);
   // Work results and current causes remain required independently of optional dialogue.
   const recallIds = [...new Set([...evidenceIds, ...outcomeIds])];
   let candidates = await recall.requiredCandidates(
@@ -900,26 +946,28 @@ export async function prepareDecision(
     [],
     activityDecisionReferences(requiredActivity),
   );
+  const requiredExpressions = selectedExpressions(world, observed.actor);
   const requiredContext = projectContext({
     ...requiredActivity,
     ...(supplyOpportunities.length ? { supplyOpportunities } : {}),
-    expressionDescriptions: selectedExpressions(world, observed.actor).map(
-      (d) => `${d.id}: ${d.description}`,
-    ),
+    expressionDescriptions: requiredExpressions.map((d) => `${d.id}: ${d.description}`),
     capabilities: {
       speech: canSpeak(observed.actor),
-      expressions: selectedExpressions(world, observed.actor).map((d) => d.id),
+      expressions: requiredExpressions.map((d) => d.id),
     },
     stimulus,
     notepad: generalKnowledgeContext(world, actorId),
     knowledgeInstructions: world.knowledgePolicy
-      ? knowledgePolicyInstructions(world.knowledgePolicy)
-      : 'Knowledge is unavailable.',
+      ? knowledgePolicyInstructions(world.knowledgePolicy, requested?.enabledSemantics)
+      : '',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
-    navigation: navigationInstructions(world, { includeActivityRequests: false }),
-    namedTimes: namedClockTimes(world),
-    outputFamilies: itemOutputFamilies(world),
+    navigation: actionsEnabled
+      ? navigationInstructions(world, { includeActivityRequests: false })
+      : '',
+    namedTimes: actionsEnabled ? namedClockTimes(world) : [],
+    outputFamilies: allows('plan') ? itemOutputFamilies(world) : [],
     currentPosition: worldPosition(observed.actor),
+    spatialPerspective: OBSERVER_SPATIAL_PERSPECTIVE,
     currentSupport: worldSupport(observed.actor),
     currentFacing: headingFrame(observed.actor.spatial.heading),
     publicSurfaces: decisionPublicSurfaces(world, observed),
@@ -957,8 +1005,9 @@ export async function prepareDecision(
         (memory) =>
           `${memory.summary}${memory.obligation?.dueAt !== undefined ? ` Due in ${Math.max(0, memory.obligation.dueAt - world.simTime)} game seconds.` : ''}`,
       ),
-    activityCoverage:
-      'At most four compatible personally learned activities are offered at once. Other activities can be inspected. An available first step does not promise that later steps can finish.',
+    activityCoverage: actionsEnabled
+      ? 'At most four compatible personally learned activities are offered at once. Other activities can be inspected. An available first step does not promise that later steps can finish.'
+      : '',
     agency: {
       outcomeCoverage,
       goals: snapshotActor.agency.goals,
@@ -997,9 +1046,6 @@ export async function prepareDecision(
       narrationTemplate(carryingConcern.text, { subject: entityGet(world.entities, actorId) }),
       actorId,
     );
-  if (world.innerWorlds?.[actorId]?.reconsiderationRequired)
-    requiredContext['reconsideration'] =
-      'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
   const requiredSourceVersions = new Map(
     [
       ...recall.selectedSources(candidates, candidates),
@@ -1258,35 +1304,36 @@ export async function prepareDecision(
     [...rememberedSubjects].map((id) => [id, world.perceptionEpisodes?.[actorId]?.[id] ?? null]),
   );
   const rememberedReferences = experienceEntityReferences(world, actorId, rememberedSubjects);
-  const validateEvidence = async (flush = true) => {
-    await conversation.validate(flush, sources);
-    // Attention/generation can outlive an unnamed person's observation. Historical
-    // source revisions cannot authorize rebinding that old account to a new exposure.
-    // docs/memory-architecture.md#personal-perspective-and-acquisition
-    const currentReferences = experienceEntityReferences(
-      service.world,
-      actorId,
-      rememberedSubjects,
-    );
-    for (const id of rememberedSubjects) {
-      if (!subjectReferenceCurrent(service.world, actorId, id, rememberedEpisodes.get(id) ?? null))
-        throw new Error('A remembered participant changed observation; discard stale context.');
-      // Recognition can keep the same person valid while changing their model
-      // reference. Already rendered evidence must not bind to a different table.
-      if (currentReferences.get(id) !== rememberedReferences.get(id))
-        throw new Error('A personal evidence reference changed; discard stale context.');
-    }
+  const validationFor = (sourceProofs: typeof sources, subjects: ReadonlySet<string>) => {
+    const validateEvidence = async (flush = true) => {
+      await conversation.validate(flush, sourceProofs);
+      // Attention/generation can outlive an unnamed person's observation. Historical
+      // source revisions cannot authorize rebinding that old account to a new exposure.
+      // docs/memory-architecture.md#personal-perspective-and-acquisition
+      const currentReferences = experienceEntityReferences(service.world, actorId, subjects);
+      for (const id of subjects) {
+        if (
+          !subjectReferenceCurrent(service.world, actorId, id, rememberedEpisodes.get(id) ?? null)
+        )
+          throw new Error('A remembered participant changed observation; discard stale context.');
+        // Recognition may preserve identity while changing the rendered reference.
+        if (currentReferences.get(id) !== rememberedReferences.get(id))
+          throw new Error('A personal evidence reference changed; discard stale context.');
+      }
+    };
+    return {
+      validateEvidence,
+      validateConversation: async (flush = true) => {
+        await validateEvidence(flush);
+        // Newly completed work is material even if selected source records survive.
+        if (outcomeBinding !== JSON.stringify(requiredOutcomeMemoryIds(service.world, actorId)))
+          throw new Error(
+            'Action outcomes changed during the decision; reconsider with current memories.',
+          );
+      },
+    };
   };
-  const validatePrepared = async (flush = true) => {
-    await validateEvidence(flush);
-    // The same fence runs after generation: a newly completed action is material
-    // evidence even when none of the previously selected memory records changed.
-    if (outcomeBinding !== JSON.stringify(requiredOutcomeMemoryIds(service.world, actorId)))
-      throw new Error(
-        'Action outcomes changed during the decision; reconsider with current memories.',
-      );
-  };
-  await validatePrepared(false);
+  await validationFor(sources, rememberedSubjects).validateConversation(false);
   const currentWorld = service.world;
   if (generation !== service.generation)
     throw new Error('World restored during attention; discard this decision.');
@@ -1299,8 +1346,8 @@ export async function prepareDecision(
     });
   if (privacyRevision(world) !== privacyRevision(currentWorld))
     throw new Error('Recall permissions changed during attention; discard this decision.');
-  const currentObserved =
-    currentWorld === world ? observed : decisionObservation(currentWorld, actorId);
+  const sameWorldSnapshot = currentWorld === world;
+  const currentObserved = sameWorldSnapshot ? observed : decisionObservation(currentWorld, actorId);
   if (!currentObserved) throw new Error('Actor unavailable.');
   const actor = currentObserved.actor.actor!;
   const currentFacts = candidateSet(currentWorld, actorId, currentObserved, [], [], [], []);
@@ -1322,12 +1369,19 @@ export async function prepareDecision(
       ].map((candidate) => [candidate.id, candidate]),
     ).values(),
   ];
-  const currentActivity = activityDecisionFacts(
-    currentWorld,
-    actorId,
-    currentObserved,
-    !closedChoice,
-  );
+  // Attention can await providers. Reuse only this exact immutable snapshot;
+  // changed world state still requires fresh capability facts and target bindings.
+  const currentActivity = sameWorldSnapshot
+    ? requiredActivity
+    : activityDecisionFacts(
+        currentWorld,
+        actorId,
+        currentObserved,
+        actionsEnabled && !closedChoice,
+      );
+  const currentExpressions = sameWorldSnapshot
+    ? requiredExpressions
+    : selectedExpressions(currentWorld, currentObserved.actor);
   const currentSupplyOpportunities = renderSupplyOpportunityContext(
     currentObserved.supplyOpportunities,
     knownSupplyPlaces,
@@ -1343,23 +1397,24 @@ export async function prepareDecision(
           inspectedMethods: inspected.methods.map((method) => `${method.text}. ${method.status}`),
         }
       : {}),
-    expressionDescriptions: selectedExpressions(currentWorld, currentObserved.actor).map(
-      (d) => `${d.id}: ${d.description}`,
-    ),
+    expressionDescriptions: currentExpressions.map((d) => `${d.id}: ${d.description}`),
     capabilities: {
       speech: canSpeak(currentObserved.actor),
-      expressions: selectedExpressions(currentWorld, currentObserved.actor).map((d) => d.id),
+      expressions: currentExpressions.map((d) => d.id),
     },
     stimulus,
     notepad: generalKnowledgeContext(currentWorld, actorId),
     knowledgeInstructions: currentWorld.knowledgePolicy
-      ? knowledgePolicyInstructions(currentWorld.knowledgePolicy)
-      : 'Knowledge is unavailable.',
+      ? knowledgePolicyInstructions(currentWorld.knowledgePolicy, requested?.enabledSemantics)
+      : '',
     triggerFacts: responseTriggerContext(service, actorId, triggerEvidenceId, evidence) ?? null,
-    navigation: navigationInstructions(currentWorld, { includeActivityRequests: false }),
-    namedTimes: namedClockTimes(currentWorld),
-    outputFamilies: itemOutputFamilies(currentWorld),
+    navigation: actionsEnabled
+      ? navigationInstructions(currentWorld, { includeActivityRequests: false })
+      : '',
+    namedTimes: actionsEnabled ? namedClockTimes(currentWorld) : [],
+    outputFamilies: allows('plan') ? itemOutputFamilies(currentWorld) : [],
     currentPosition: worldPosition(currentObserved.actor),
+    spatialPerspective: OBSERVER_SPATIAL_PERSPECTIVE,
     currentSupport: worldSupport(currentObserved.actor),
     currentFacing: headingFrame(currentObserved.actor.spatial.heading),
     publicSurfaces: decisionPublicSurfaces(currentWorld, currentObserved),
@@ -1399,9 +1454,6 @@ export async function prepareDecision(
     planOffers: [],
   });
   context['conversation'] = conversation.lines;
-  if (currentWorld.innerWorlds?.[actorId]?.reconsiderationRequired)
-    context['reconsideration'] =
-      'Some remembered evidence was corrected or forgotten. Reconsider affected beliefs; old beliefs may be mistaken.';
   const currentCarryingConcern = bodyPolicy(currentWorld)?.carryingConcern;
   const currentCarryingMeter =
     currentCarryingConcern && attributeDefinition(currentWorld, currentCarryingConcern.attributeId);
@@ -1545,20 +1597,7 @@ export async function prepareDecision(
   };
   // These fields already occupy the measured baseline. Record their source
   // requirements without charging that same encoding a second time.
-  const fieldFamilies: Partial<Record<string, ContextFamily>> = {
-    aboutMe: 'identity',
-    identity: 'identity',
-    body: 'body',
-    feelings: 'feeling',
-    agency: 'work',
-    goal: 'work',
-    commitments: 'obligation',
-    triggerFacts: 'evidence',
-    activityRequests: 'capability',
-    references: 'reference',
-    contacts: 'contact',
-    inventoryCoverage: 'coverage',
-  };
+
   const requiredRoots = new Map<string, readonly string[]>();
   for (const [field, value] of Object.entries(context)) {
     if (
@@ -1568,7 +1607,7 @@ export async function prepareDecision(
     )
       continue;
     const reasons = ['current caller/native source'];
-    const key = putUnit(fieldFamilies[field] ?? 'instruction', field, digest(value), 0, 0, {
+    const key = putUnit(contextFieldFamilies[field] ?? 'instruction', field, digest(value), 0, 0, {
       requiredReasons: reasons,
     });
     requiredRoots.set(key, reasons);
@@ -1691,29 +1730,31 @@ export async function prepareDecision(
     if (mandatory) requiredRoots.set(key, reasons);
   };
   for (const [index, candidate] of requiredSelection.entries()) addCandidate(candidate, index);
-  const requirements = composeDecisionRequirements(stimulus, [
+  const requirements = composeDecisionRequirements(requested?.question ?? stimulus, [
     {
       requiredRoots,
       queryCues: conversation.modelSources.map((source, index) => ({
         source: source.key,
         text: conversation.lines[index] ?? '',
       })),
-      enabledSemantics: closedChoice
-        ? ['native-choice']
-        : [
-            ...(canSpeak(currentObserved.actor) ? ['talk'] : []),
-            'act',
-            'think',
-            'goal',
-            'plan',
-            'note',
-            'name',
-            ...(currentWorld.moduleManifest.appraisals?.definitions.some(
-              (definition) => definition.decision,
-            )
-              ? ['appraise']
-              : []),
-          ],
+      enabledSemantics:
+        requested?.enabledSemantics ??
+        (closedChoice
+          ? ['native-choice']
+          : [
+              ...(canSpeak(currentObserved.actor) ? ['talk'] : []),
+              'act',
+              'think',
+              'goal',
+              'plan',
+              'note',
+              'name',
+              ...(currentWorld.moduleManifest.appraisals?.definitions.some(
+                (definition) => definition.decision,
+              )
+                ? ['appraise']
+                : []),
+            ]),
     },
   ]);
   // The required builder creates every dependency before its root. This is the
@@ -2059,9 +2100,8 @@ export async function prepareDecision(
     };
     attempts.set(JSON.stringify(binding), binding);
   }
-  return {
-    context,
-    manifest: Object.freeze({
+  const manifestFor = (selected: typeof selectedUnits, sourceKeys: Iterable<string>) =>
+    Object.freeze({
       scope: Object.freeze(scope),
       question: requirements.question,
       selectionPolicy: Object.freeze({
@@ -2069,10 +2109,10 @@ export async function prepareDecision(
         identity: digest(currentWorld.cognitionPolicy),
         basis: 'shared-rank' as const,
       }),
-      requiredRoots: Object.freeze([...selectedUnits.requiredRoots]),
-      sourceKeys: Object.freeze([...fitted.evidence.sources.keys()]),
+      requiredRoots: Object.freeze([...selected.requiredRoots]),
+      sourceKeys: Object.freeze([...sourceKeys]),
       units: Object.freeze(
-        selectedUnits.units.map((unit) =>
+        selected.units.map((unit) =>
           Object.freeze({
             key: unit.key,
             family: unit.family,
@@ -2083,7 +2123,60 @@ export async function prepareDecision(
           }),
         ),
       ),
-    }),
+    });
+  // Only this complete supplied consumer updates its native feelings between paid
+  // stages. Retain the already-built required closure; do not reread the world or
+  // guess every possible admission result before optional evidence is selected.
+  const requiredClosure =
+    suppliedChoices && inputMeasure && baseline.sourceView
+      ? {
+          context: baseline.projected,
+          entityReferences: baseline.references.entityReferences,
+          sharedExperiences: new Map(baseline.sourceView.sharedExperiences),
+          evidenceIds: [...baseline.sourceView.evidenceIds],
+          knowledgeReferences: selectedKnowledgeReferences(
+            currentWorld,
+            actorId,
+            requiredSelection,
+          ),
+          watermark: Math.max(
+            conversation.watermark,
+            ...requiredSelection.map((candidate) => candidate.at),
+          ),
+          manifest: manifestFor(baselineUnits, baseline.evidence.sources.keys()),
+          preparation: {
+            units: baselineUnits.units.length,
+            roots: baselineUnits.roots.length,
+            optionalCoverage: 'unavailable' as const,
+            work: preparationWork.used,
+            sourceBindings: [...baseline.evidence.sources].map(([key, source]) => ({
+              key,
+              index: source.index,
+              revision: source.revision,
+            })),
+          },
+          omitted: currentSelection
+            .filter((candidate) => !candidate.required && !candidate.automatic)
+            .map((candidate) => candidate.id),
+          validation: validationFor(
+            [
+              ...recall.selectedSources(candidates, requiredSelection),
+              ...(retainedEvidence ?? []).map(memorySourceProof),
+            ],
+            new Set(
+              requiredSelection
+                .filter(
+                  (candidate) => candidate.kind === 'memory' || candidate.kind === 'conversation',
+                )
+                .flatMap((candidate) => candidate.entityIds),
+            ),
+          ),
+        }
+      : undefined;
+  return {
+    context,
+    manifest: manifestFor(selectedUnits, fitted.evidence.sources.keys()),
+    requiredClosure,
     inputFormat,
     inputMeasure,
     prompt,
@@ -2094,9 +2187,10 @@ export async function prepareDecision(
     // Closed physical choices omit generation-only forms from their model input,
     // but retain the same empty internal collection for downstream consumers.
     // Other responses use the observer references projected above.
-    activityRequests: closedChoice
-      ? currentActivity.activityRequests
-      : (context['activityRequests'] as typeof currentActivity.activityRequests),
+    activityRequests:
+      closedChoice || !actionsEnabled
+        ? currentActivity.activityRequests
+        : (context['activityRequests'] as typeof currentActivity.activityRequests),
     binding,
     choiceWork: currentWorkIdentity(currentWorld, actorId),
     offered,
@@ -2111,8 +2205,7 @@ export async function prepareDecision(
     // while already admitted work finishes. Consumers must separately enforce
     // current life, speaking authority and recipient bindings; action decisions
     // retain the stricter current-outcome fence below.
-    validateEvidence,
-    validateConversation: validatePrepared,
+    ...validationFor(sources, rememberedSubjects),
     attemptBindings: [...attempts.values()],
     entityReferences,
     visibleEntityReferences: entityReferenceMap(
@@ -2212,6 +2305,178 @@ function measuredPreparedInput(
     },
     includeActions: true,
   });
+}
+
+/** A native field update changes its required unit identity, while captured
+ * personal evidence keeps the exact source revision and index already selected. */
+function updatedContextManifest(
+  manifest: Awaited<ReturnType<typeof prepareDecision>>['manifest'],
+  context: Record<string, unknown>,
+  fields: readonly string[],
+) {
+  const units = [...manifest.units];
+  const replacements = new Map<string, string>();
+  const addedRoots: string[] = [];
+  for (const field of fields) {
+    const index = units.findIndex(
+      (unit) => unit.source.id === field && manifest.requiredRoots.includes(unit.key),
+    );
+    const prior = index >= 0 ? units[index] : undefined;
+    const family = prior?.family ?? contextFieldFamilies[field] ?? 'instruction';
+    const source = { id: field, revision: digest(context[field]), view: 'personal' };
+    const key = contextUnitKey(manifest.scope, { family, ...source });
+    const unit = Object.freeze({
+      key,
+      family,
+      source: Object.freeze(source),
+      dependencies: prior?.dependencies ?? Object.freeze([]),
+      requiredReasons: prior?.requiredReasons ?? Object.freeze(['current caller/native source']),
+      coverage: 'complete' as const,
+    });
+    if (prior) {
+      replacements.set(prior.key, key);
+      units[index] = unit;
+    } else {
+      units.push(unit);
+      addedRoots.push(key);
+    }
+  }
+  return Object.freeze({
+    ...manifest,
+    requiredRoots: Object.freeze([
+      ...manifest.requiredRoots.map((key) => replacements.get(key) ?? key),
+      ...addedRoots,
+    ]),
+    units: Object.freeze(
+      units.map((unit) =>
+        unit.dependencies.some((key) => replacements.has(key))
+          ? Object.freeze({
+              ...unit,
+              dependencies: Object.freeze(
+                unit.dependencies.map((key) => replacements.get(key) ?? key),
+              ),
+            })
+          : unit,
+      ),
+    ),
+  });
+}
+
+/** Admit an actual native update between closed supplied stages. Keep the chosen
+ * context when it fits; otherwise use its already-owned complete required closure.
+ * This changes no choices, rereads no sources and purchases no additional judgment. */
+export function fitPreparedChoiceContext(
+  prepared: Awaited<ReturnType<typeof prepareDecision>>,
+  updates: Record<string, unknown>,
+) {
+  if (prepared.inputFormat !== 'closed-choices' || prepared.choiceCoverage !== 'complete-required')
+    throw new Error('Only complete supplied choices retain a required context closure.');
+  let selected = { ...prepared, context: { ...prepared.context, ...updates } };
+  const measured = (value: typeof selected) =>
+    measuredPreparedInput(value, value.offered) ??
+    decisionContextBytes(value.context, value.inputFormat);
+  const selectedBytes = measured(selected);
+  let inputBytes = selectedBytes;
+  let omitted: string[] = [];
+  if (inputBytes > CONTEXT_BYTE_LIMIT) {
+    const required = prepared.requiredClosure;
+    if (!required)
+      throw decisionContextBudgetError(
+        'updated-supplied-context',
+        selected.context,
+        selected.inputFormat,
+        0,
+        inputBytes,
+      );
+    const omittedCandidates = new Set(required.omitted);
+    const retainedEntities = new Set([
+      ...Object.values(required.entityReferences),
+      ...Object.values(prepared.visibleEntityReferences),
+    ]);
+    selected = {
+      ...selected,
+      context: { ...required.context, ...updates },
+      manifest: required.manifest,
+      entityReferences: required.entityReferences,
+      sharedExperiences: required.sharedExperiences,
+      ...required.validation,
+      binding: {
+        ...prepared.binding,
+        watermark: required.watermark,
+        evidenceIds: required.evidenceIds,
+        knowledgeReferences: required.knowledgeReferences,
+        entityIds: Object.values(required.entityReferences),
+        entityEpisodes: Object.fromEntries(
+          Object.entries(prepared.binding.entityEpisodes ?? {}).filter(([id]) =>
+            retainedEntities.has(id),
+          ),
+        ),
+      },
+      diagnostics: {
+        ...prepared.diagnostics,
+        preparation: required.preparation,
+        selection: {
+          ...prepared.diagnostics.selection,
+          ...('candidates' in prepared.diagnostics.selection
+            ? {
+                candidates: prepared.diagnostics.selection.candidates.map((candidate) =>
+                  omittedCandidates.has(candidate.id)
+                    ? {
+                        ...candidate,
+                        selected: false,
+                        reason: 'omitted: updated required context budget',
+                      }
+                    : candidate,
+                ),
+              }
+            : {}),
+        },
+      },
+    };
+    inputBytes = measured(selected);
+    if (inputBytes > CONTEXT_BYTE_LIMIT)
+      throw decisionContextBudgetError(
+        'updated-required-supplied-context',
+        selected.context,
+        selected.inputFormat,
+        0,
+        inputBytes,
+      );
+    // The new artifact owns independent source validators. Retained original
+    // contexts still fence every source they actually exposed.
+    omitted = required.omitted;
+  }
+  const manifest = updatedContextManifest(
+    selected.manifest,
+    selected.context,
+    Object.keys(updates),
+  );
+  return {
+    ...selected,
+    manifest,
+    prompt: JSON.stringify(preparedResponseDecisionContext(selected.context)),
+    diagnostics: {
+      ...selected.diagnostics,
+      preparation: {
+        ...selected.diagnostics.preparation,
+        units: manifest.units.length,
+        roots:
+          selected.diagnostics.preparation.roots +
+          manifest.requiredRoots.length -
+          selected.manifest.requiredRoots.length,
+      },
+      inputBytes,
+      contextTokenEstimate: contextTokenEstimate(inputBytes, !!selected.inputMeasure),
+      sections: contextSectionBytes(selected.context),
+      postAdmissionBudget: {
+        selectedInputBytes: selectedBytes,
+        inputBytes,
+        requiredClosureUsed: selectedBytes > CONTEXT_BYTE_LIMIT,
+        updatedFields: Object.keys(updates),
+        omitted,
+      },
+    },
+  };
 }
 
 function preparedCandidateMeasure(prepared: Awaited<ReturnType<typeof prepareDecision>>) {

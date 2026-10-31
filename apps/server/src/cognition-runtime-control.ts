@@ -49,7 +49,13 @@ export interface CognitionStageContext {
   /** Native owners retain source/authority checks; the lab cannot grant execution. */
   current(): void | Promise<void>;
   /** Suspend only undispatched native decision timers during deliberate human wait. */
-  holdTiming?(): () => void | Promise<void>;
+  holdTiming?(): (() => void | Promise<void>) | undefined;
+  /** Return pending pause-credit persistence, or nothing when clocks are current. */
+  settleTiming?(): Promise<void> | undefined;
+}
+export interface CognitionTimingObservation {
+  settle(): Promise<void> | undefined;
+  close(): Promise<void>;
 }
 export interface PreparedCognitionStage {
   handle: string;
@@ -181,7 +187,10 @@ export class CognitionRuntimeControl {
   private settings: { effort?: GenerationInput['reasoningEffort']; maxOutputTokens?: number } = {};
   private readonly stageChecks = new Map<
     string,
-    { epoch: number } & Pick<CognitionStageContext, 'current' | 'signal' | 'holdTiming'>
+    { epoch: number } & Pick<
+      CognitionStageContext,
+      'current' | 'signal' | 'holdTiming' | 'settleTiming'
+    >
   >();
   private breakpoint?: (stage: PreparedCognitionStage) => boolean;
   private readonly heldStages = new Map<string, HeldStage>();
@@ -201,6 +210,8 @@ export class CognitionRuntimeControl {
   private preparationTotalMs = 0;
   private processingStarted?: number;
   private processingTotalMs = 0;
+  private heldTotal = { wallMs: 0, monotonicMs: 0 };
+  private heldSince: { wallMs: number; monotonicMs: number } | undefined;
   private readonly settledWaiters = new Set<() => void>();
   private readonly listeners = new Set<() => void>();
   private observer?: CognitionRuntimeObserver;
@@ -211,12 +222,79 @@ export class CognitionRuntimeControl {
     input: CognitionStageInput,
   ) => CognitionStageInput;
 
-  constructor(private readonly now = Date.now) {}
+  constructor(private readonly now = Date.now) {
+    this.heldSince = { wallMs: this.now(), monotonicMs: performance.now() };
+  }
   get held(): boolean {
     return !this.admission;
   }
+  /** Cumulative operator-held time, independent of native registration and I/O.
+   * A hold that ends during a write excludes only its actual held portion. */
+  get heldTiming(): { wallMs: number; monotonicMs: number } {
+    return {
+      wallMs:
+        this.heldTotal.wallMs +
+        (this.heldSince ? Math.max(0, this.now() - this.heldSince.wallMs) : 0),
+      monotonicMs:
+        this.heldTotal.monotonicMs +
+        (this.heldSince ? Math.max(0, performance.now() - this.heldSince.monotonicMs) : 0),
+    };
+  }
   get activeCalls(): number {
     return this.dispatched.size;
+  }
+  hasProviderWork(rootId: string): boolean {
+    return this.providerRoots.has(rootId);
+  }
+  /** Native timing owners supply validity and persistence; this observer only
+   * follows operator holds and prevents unpaid credit from crossing provider entry. */
+  observeTiming(
+    rootId: string,
+    owner: {
+      current(): boolean;
+      holdTiming(): (() => void | Promise<void>) | undefined;
+      failed(error: unknown): void;
+    },
+  ): CognitionTimingObservation {
+    const epoch = this.epochValue;
+    const pending = new Set<Promise<void>>();
+    let resume: (() => void | Promise<void>) | undefined;
+    const release = () => {
+      if (!resume) return;
+      const finish = resume;
+      resume = undefined;
+      const work = (async () => {
+        try {
+          await finish();
+        } catch (error: unknown) {
+          if (epoch === this.epochValue && owner.current()) owner.failed(error);
+        }
+      })();
+      pending.add(work);
+      void work.then(() => pending.delete(work));
+    };
+    const changed = () => {
+      if (
+        !this.held ||
+        this.hasProviderWork(rootId) ||
+        epoch !== this.epochValue ||
+        !owner.current()
+      ) {
+        release();
+        return;
+      }
+      resume ??= owner.holdTiming();
+    };
+    changed();
+    const unsubscribe = this.subscribe(changed);
+    return {
+      settle: () => (pending.size ? Promise.all(pending).then(() => undefined) : undefined),
+      close: async () => {
+        unsubscribe();
+        release();
+        await Promise.all(pending);
+      },
+    };
   }
   /** Separate measured preparation from entered provider work. The lab processing
    * boundary holds simulation across both; active-wall and provider deadlines continue. */
@@ -289,6 +367,12 @@ export class CognitionRuntimeControl {
     return () => this.listeners.delete(listener);
   }
   private changed(): void {
+    if (this.held && !this.heldSince)
+      this.heldSince = { wallMs: this.now(), monotonicMs: performance.now() };
+    else if (!this.held && this.heldSince) {
+      this.heldTotal = this.heldTiming;
+      this.heldSince = undefined;
+    }
     if (this.processing && this.processingStarted === undefined)
       this.processingStarted = performance.now();
     else if (!this.processing && this.processingStarted !== undefined) {
@@ -387,7 +471,10 @@ export class CognitionRuntimeControl {
   /** An already admitted native job waits through another root's Lab hold.
    * A hold is not capacity loss; stop, restore and cancellation still retire it. */
   async waitUntilReleased(
-    context: Pick<CognitionStageContext, 'rootId' | 'signal' | 'current' | 'holdTiming'>,
+    context: Pick<
+      CognitionStageContext,
+      'rootId' | 'signal' | 'current' | 'holdTiming' | 'settleTiming'
+    >,
     beforeHold?: () => void,
   ): Promise<void> {
     const epoch = this.epochValue;
@@ -400,6 +487,12 @@ export class CognitionRuntimeControl {
       check();
       await context.current();
       check();
+      const timing = context.settleTiming?.();
+      if (timing) {
+        beforeHold?.();
+        await timing;
+        continue;
+      }
       if (!this.held) return;
       beforeHold?.();
       const releaseNative = this.holdNativeRoot(context.rootId);
@@ -444,6 +537,7 @@ export class CognitionRuntimeControl {
         rootId: stage.rootId,
         signal: check.signal,
         holdTiming: check.holdTiming,
+        settleTiming: check.settleTiming,
         current: async () => {
           this.assertCurrent(check.epoch);
           await check.current();
@@ -548,6 +642,7 @@ export class CognitionRuntimeControl {
       current: context.current,
       signal: context.signal,
       holdTiming: context.holdTiming,
+      settleTiming: context.settleTiming,
     });
     // Keep only live or recent handles; retained experiment evidence belongs to its store.
     while (this.stages.size > 256) {
@@ -576,7 +671,9 @@ export class CognitionRuntimeControl {
               stage.holdMs += this.now() - stage.heldAt!;
               if (replacement) {
                 stage.status = 'submitted';
-                stage.submitted = structuredClone(replacement);
+                // The original is already an owned snapshot. Continue shares it like
+                // the unheld path; an actual replacement keeps its own retained copy.
+                stage.submitted = replacement === input ? input : structuredClone(replacement);
                 resolve(replacement);
               } else {
                 if (stage.status !== 'invalidated') stage.status = 'cancelled';
@@ -638,6 +735,15 @@ export class CognitionRuntimeControl {
         this.assertCurrent(check?.epoch);
         if (check?.signal?.aborted)
           throw new CognitionControlError('The cognition request was cancelled.');
+        // Hold/resume can occur during the source check above. Finish its clock
+        // write before provider entry; otherwise queued credit could include
+        // provider time. No await separates the final empty check from entry.
+        const timing = check?.settleTiming?.();
+        if (timing) {
+          lease?.suspend();
+          await timing;
+          continue;
+        }
         // No await separates slot reacquisition from provider entry. A held,
         // undispatched request neither blocks settle nor pins Main's capacity.
         if (lease && !lease.resume())

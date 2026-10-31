@@ -7,7 +7,12 @@ import { undispatchedReceipt } from './decision-state.js';
 import { playerActionIdentity } from './action-request-recovery.js';
 import { humanRequestId } from './human-request-id.js';
 import { CognitionExecution } from './cognition-execution.js';
-import { CognitionControlError, type CognitionStageInput } from './cognition-runtime-control.js';
+import {
+  CognitionControlError,
+  type CognitionStageInput,
+  type CognitionTimingObservation,
+} from './cognition-runtime-control.js';
+import { acquireDecisionTimingHold, type DecisionTimingHold } from './decision-timing.js';
 import { DecisionEscalator } from './decision-escalator.js';
 import {
   prepareReconsideration,
@@ -41,6 +46,7 @@ import {
   preparedResponseRelevanceRequest,
   preparedResponseRelevance,
   preparedResponseChoiceRequest,
+  preparedResponseInputMeasure,
   preparedResponseVoiceSelected,
 } from './prepared-response-questions.js';
 import { recordDecisionTiming, type DecisionPublication } from './decision-publication.js';
@@ -64,7 +70,7 @@ import {
   chooseActivityRequest,
   activityRequestChoiceFacts,
 } from './activity-request-choice.js';
-import type { RequestScope } from './authority.js';
+import { AuthorityError, type RequestScope } from './authority.js';
 import { NpcReplyPreviews } from './npc-reply-preview.js';
 import {
   observerDescription,
@@ -139,6 +145,7 @@ import { RecallService } from './recall.js';
 import {
   fallbackDecisionActions,
   fitDecisionResponse,
+  fitPreparedChoiceContext,
   prepareDecision,
   refreshDecisionActions,
   selectDecisionActions,
@@ -146,6 +153,7 @@ import {
 } from './decision-context.js';
 import {
   judgmentDecisionContext,
+  readableDecisionContext,
   renderDecisionContext,
   responseTrigger,
 } from './response-context.js';
@@ -154,6 +162,7 @@ import {
   DECISION_INSTRUCTIONS,
   LEVEL_LIMITS,
   boundResponseSchema,
+  responseActionReferences,
   nativeResponse,
   nativeResponseOperation,
   boundSpeechResponseSchema,
@@ -242,12 +251,14 @@ const judgeMeter = (
 interface Running {
   continuation?: ReconstitutedDecision;
   labEpoch?: number;
+  labTiming?: CognitionTimingObservation;
   /** Admission lane, independent of later provider duration or outcome. */
   urgent: boolean;
   immediateTimer?: ReturnType<typeof setTimeout>;
   expiryTimer?: ReturnType<typeof setTimeout>;
-  immediateTimingHold?: { depth: number; wall: number; monotonic: number };
-  lifetimeTimingHold?: { depth: number; wall: number; monotonic: number };
+  timersRetired?: boolean;
+  immediateTimingHold?: DecisionTimingHold;
+  lifetimeTimingHold?: DecisionTimingHold;
   primaryRequestId?: string;
   primaryGeneration?: boolean;
   receipt?: import('@open-legend/ai').AiReceipt;
@@ -1629,8 +1640,9 @@ export class AiDirector {
     const decision = run.job.decision;
     if (
       decision &&
-      (this.now() >= decision.usefulUntilWall ||
-        performance.now() >= decision.usefulUntilMonotonic ||
+      ((!run.lifetimeTimingHold &&
+        (this.now() >= decision.usefulUntilWall ||
+          performance.now() >= decision.usefulUntilMonotonic)) ||
         decision.policyDigest !== decisionPolicyDigest(this.service.config) ||
         decision.timelineId !== this.service.timelineId ||
         (decision.usefulUntilSim !== undefined &&
@@ -1777,6 +1789,8 @@ export class AiDirector {
     if (run.playerSpeechEventId) job.playerSpeechEventId = run.playerSpeechEventId;
     this.immediateRuns.set(job.id, run);
     this.activeRuns.add(run);
+    const control = this.service.cognitionControl;
+    const registrationHold = run.job.decision ? control?.heldTiming : undefined;
     const releaseNative = this.service.cognitionControl?.registerNative(job.id, () => {
       const decision = run.job.decision;
       if (
@@ -1795,6 +1809,44 @@ export class AiDirector {
     });
     try {
       await this.service.store.putJob(job);
+      // The first row must exist before ordinary timing holds can mutate it.
+      // Preserve an operator hold across that write without excluding unheld
+      // database work or renewing stopped work. Native deadlines stay unchanged.
+      if (registrationHold && control) {
+        const held = control.heldTiming;
+        if (
+          held.wallMs > registrationHold.wallMs ||
+          held.monotonicMs > registrationHold.monotonicMs
+        ) {
+          const interrupted = () =>
+            run.controller.signal.aborted ||
+            !!run.cancelReason ||
+            this.stopped ||
+            run.generation !== this.service.generation ||
+            run.labEpoch !== control.epoch;
+          const saved = await this.service.store.mutateDecision(job.id, async (current) => {
+            if (
+              interrupted() ||
+              current.decision?.phase === 'closed' ||
+              current.decision?.generation !== run.generation
+            )
+              return;
+            const elapsed = control.heldTiming;
+            return {
+              ...current,
+              decision: shiftUndispatchedDecision(
+                current.decision,
+                Math.max(0, elapsed.wallMs - registrationHold.wallMs),
+                Math.max(0, elapsed.monotonicMs - registrationHold.monotonicMs),
+              ),
+            };
+          });
+          if (saved) run.job = saved;
+          else if (!interrupted())
+            throw new StopJob('stale', 'The held decision was replaced before registration.');
+        }
+      }
+      if (run.job.decision && control) run.labTiming = this.observeLabTiming(run);
       this.service.notify();
       this.armDecisionTimers(run);
       await this.service.cognitionControl?.emit({
@@ -1831,10 +1883,10 @@ export class AiDirector {
         exchanges: [],
       });
     } catch (error) {
+      await run.labTiming?.close();
       this.activeRuns.delete(run);
       this.releaseImmediate(run);
-      if (run.immediateTimer) clearTimeout(run.immediateTimer);
-      if (run.expiryTimer) clearTimeout(run.expiryTimer);
+      this.retireDecisionTimers(run);
       releaseNative?.();
       await this.update(
         run,
@@ -1908,10 +1960,10 @@ export class AiDirector {
         }),
       )
       .finally(async () => {
+        await run.labTiming?.close();
         releaseNative?.();
         this.activeRuns.delete(run);
-        if (run.immediateTimer) clearTimeout(run.immediateTimer);
-        if (run.expiryTimer) clearTimeout(run.expiryTimer);
+        this.retireDecisionTimers(run);
         this.replyPreviews.end(run.job.id);
         try {
           this.releaseImmediate(run);
@@ -1992,11 +2044,20 @@ export class AiDirector {
         ? (job, signal) => prepareReconsideration(this.service, this.recall, job, signal, retained)
         : undefined,
       { signal: run.controller.signal, labEpoch: run.labEpoch },
+      {
+        held: () => !!run.lifetimeTimingHold,
+        transfer: async (queued) => {
+          if ((queued.decision?.revision ?? 0) > (run.job.decision?.revision ?? 0))
+            run.job = queued;
+          this.retireDecisionTimers(run);
+          // Keep the old owner through enqueue's awaited writes, then drain it
+          // before the queued owner starts measuring the next held interval.
+          await run.labTiming?.close();
+          run.handedOff = true;
+          return run.job;
+        },
+      },
     );
-    if (handedOff) {
-      run.handedOff = true;
-      run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
-    }
     return handedOff;
   }
 
@@ -2017,6 +2078,7 @@ export class AiDirector {
       }))
     ) {
       run.handedOff = true;
+      this.retireDecisionTimers(run);
       run.job = (await this.service.store.getJob(run.job.id)) ?? run.job;
       return true;
     }
@@ -2089,15 +2151,63 @@ export class AiDirector {
         this.current(run);
       },
       holdTiming: () => this.holdDecisionTiming(run),
+      settleTiming: () => run.labTiming?.settle(),
     });
+  }
+
+  private observeLabTiming(run: Running): CognitionTimingObservation {
+    return this.service.cognitionControl!.observeTiming(run.job.id, {
+      current: () =>
+        run.job.decision?.phase !== 'closed' &&
+        !run.handedOff &&
+        !run.receipt?.completionUncertain &&
+        !run.controller.signal.aborted &&
+        !this.stopped,
+      holdTiming: () => {
+        try {
+          return this.holdDecisionTiming(run);
+        } catch (error) {
+          // Its ordinary execution guard reports invalidation; observation
+          // cannot renew a cancelled, expired or unauthorized operation.
+          if (
+            !(
+              error instanceof StopJob ||
+              error instanceof CognitionControlError ||
+              error instanceof AuthorityError
+            )
+          )
+            throw error;
+          return undefined;
+        }
+      },
+      failed: (error) => {
+        this.service.storageError = 'A held decision clock could not be saved.';
+        run.controller.abort(error);
+      },
+    });
+  }
+
+  private retireDecisionTimers(run: Running): void {
+    run.timersRetired = true;
+    if (run.immediateTimer) clearTimeout(run.immediateTimer);
+    if (run.expiryTimer) clearTimeout(run.expiryTimer);
+    delete run.immediateTimer;
+    delete run.expiryTimer;
   }
 
   private armDecisionTimers(run: Running): void {
     if (run.immediateTimer) clearTimeout(run.immediateTimer);
     if (run.expiryTimer) clearTimeout(run.expiryTimer);
     const decision = run.job.decision;
-    if (!decision || run.controller.signal.aborted || this.stopped) return;
-    if (!run.immediateTimingHold)
+    if (
+      !decision ||
+      decision.phase === 'closed' ||
+      run.timersRetired ||
+      run.controller.signal.aborted ||
+      this.stopped
+    )
+      return;
+    if (decision.immediate.kind === 'pending' && !run.immediateTimingHold)
       run.immediateTimer = setTimeout(
         () => {
           if (run.immediateTimingHold) return;
@@ -2137,21 +2247,15 @@ export class AiDirector {
   private holdDecisionTiming(run: Running, lifetime = true): () => Promise<void> {
     this.current(run); // An already expired operation cannot be revived by opening an editor.
     const acquire = (key: 'immediateTimingHold' | 'lifetimeTimingHold') => {
-      const existing = run[key];
-      const hold = existing?.depth
-        ? existing
-        : (run[key] = { depth: 0, wall: this.now(), monotonic: performance.now() });
-      hold.depth++;
+      const { hold, release } = acquireDecisionTimingHold(run[key], this.now(), performance.now());
+      run[key] = hold;
       const timer = key === 'immediateTimingHold' ? run.immediateTimer : run.expiryTimer;
       if (timer) clearTimeout(timer);
-      let released = false;
       return () => {
-        if (released) return;
-        released = true;
-        if (--hold.depth) return;
+        const wait = release();
+        if (!wait) return;
         return {
-          wall: Math.max(0, this.now() - hold.wall),
-          monotonic: Math.max(0, performance.now() - hold.monotonic),
+          elapsed: () => wait.elapsed(this.now(), performance.now()),
           finish: () => {
             if (run[key] === hold) delete run[key];
           },
@@ -2167,50 +2271,57 @@ export class AiDirector {
         ? acquire('immediateTimingHold')
         : undefined;
     const useful = lifetime ? acquire('lifetimeTimingHold') : undefined;
+    const interrupted = () =>
+      run.controller.signal.aborted ||
+      this.stopped ||
+      run.generation !== this.service.generation ||
+      (run.labEpoch !== undefined && run.labEpoch !== this.service.cognitionControl?.epoch);
     return async () => {
       const immediateWait = immediate?.(),
         usefulWait = useful?.();
       if (!immediateWait && !usefulWait) return;
       try {
-        if (
-          run.controller.signal.aborted ||
-          this.stopped ||
-          run.generation !== this.service.generation
-        )
-          return;
+        if (interrupted()) return;
         if (run.job.decision) {
           const saved = await this.service.store.mutateDecision(run.job.id, async (current) => {
             if (
+              interrupted() ||
               current.decision?.phase === 'closed' ||
               current.decision?.generation !== run.generation
             )
               return;
+            // Include row/queue wait in observer credit, without extending a
+            // prior token across the next hold or charging it twice.
+            const usefulElapsed = usefulWait?.elapsed(),
+              immediateElapsed = immediateWait?.elapsed();
             let shifted = current.decision;
             // Human wait extends the lifetime before immediate credit is bounded by it.
-            if (usefulWait)
+            if (usefulElapsed)
               shifted = shiftUndispatchedDecision(
                 shifted,
-                usefulWait.wall,
-                usefulWait.monotonic,
+                usefulElapsed.wall,
+                usefulElapsed.monotonic,
                 'lifetime',
               );
-            if (immediateWait)
+            if (immediateElapsed)
               shifted = shiftUndispatchedDecision(
                 shifted,
-                immediateWait.wall,
-                immediateWait.monotonic,
+                immediateElapsed.wall,
+                immediateElapsed.monotonic,
                 'immediate',
               );
             return { ...current, decision: shifted };
           });
-          if (!saved)
+          if (!saved) {
+            if (interrupted()) return;
             throw new StopJob('stale', 'The held decision was replaced before continuation.');
+          }
           run.job = saved;
         }
       } finally {
         immediateWait?.finish();
         usefulWait?.finish();
-        this.armDecisionTimers(run);
+        if (!interrupted()) this.armDecisionTimers(run);
       }
     };
   }
@@ -2252,6 +2363,8 @@ export class AiDirector {
     dispatch: (requestId: string, input: I) => Promise<AiResult<T>>,
     meter?: Meter,
   ): Promise<T> {
+    const timing = run.labTiming?.settle();
+    if (timing) await timing;
     const sourceActorId = this.current(run);
     const sourceCurrent = this.service.privateReadFence(
       sourceActorId,
@@ -2297,6 +2410,7 @@ export class AiDirector {
               this.current(run);
             },
             holdTiming: () => this.holdDecisionTiming(run),
+            settleTiming: () => run.labTiming?.settle(),
           },
           input,
         )
@@ -2676,11 +2790,15 @@ export class AiDirector {
       undefined,
       'native-only',
       required,
+      preparedResponseInputMeasure(catalogue, interpretations.projectContext),
     );
     const validityFor = (world: WorldState) =>
       preparedResponseValidity(world, actorId, interpretations.scopes);
     run.validityFor = validityFor;
     run.validity = validityFor(this.service.world);
+    // Relevance already depends on every source in this first frame. Reducing
+    // optional context for choice must not weaken that earlier result's fence.
+    const validateRelevanceSources = prepared.validateConversation;
     const current = async () => {
       this.current(run);
       if (
@@ -2694,7 +2812,7 @@ export class AiDirector {
         );
       }
       try {
-        await prepared.validateConversation(false);
+        await validateRelevanceSources(false);
       } catch (error) {
         run.invalidated = true;
         throw error;
@@ -2805,15 +2923,10 @@ export class AiDirector {
         elapsedMs: performance.now() - started,
       },
     );
-    prepared = {
-      ...prepared,
-      context: {
-        ...prepared.context,
-        feelings: decisionFeelings(this.service.world, actorId, interpretations.scopes),
-        admittedInterpretations:
-          this.service.world.responseReceipts?.[appraisalId]?.components ?? {},
-      },
-    };
+    prepared = fitPreparedChoiceContext(prepared, {
+      feelings: decisionFeelings(this.service.world, actorId, interpretations.scopes),
+      admittedInterpretations: this.service.world.responseReceipts?.[appraisalId]?.components ?? {},
+    });
     await current();
     const choice = preparedResponseChoiceRequest(prepared, relevance, voice);
     const answer = await this.judgeIndependentQuestions(
@@ -2859,7 +2972,7 @@ export class AiDirector {
     await this.log.record(
       `${run.job.id}:attempt:${attempt}:threat-choice`,
       'Independent personal choice',
-      { request: choice.request },
+      { preparation: choice.prepared.diagnostics, request: choice.request },
       { ...level1, voiceSelected, elapsedMs: performance.now() - started },
     );
     if (level1.outcome.kind !== 'act' && level1.outcome.kind !== 'continue') {
@@ -2991,6 +3104,7 @@ export class AiDirector {
   ): Promise<void> {
     this.current(run);
     const receiptId = `${run.job.id}:voice`;
+    const instructions = `${DECISION_INSTRUCTIONS}\n\n${voiceInstructions}\nReturn only the supplied JSON. Choose at most one talk operation or {"operations":[]}. Use localId, requiresAccepted:[], and the exact supplied addressee handle (or null). Speech can include brief expressive asides but does not perform physical actions. Context is a captured view; ongoing native work may progress while words form. Do not claim an offered or planned action happened, or that work completed without a supplied actual result.`;
     // Rebuild through the same permitted context owner after native admission.
     // The old complete catalogue must not masquerade as current physical state.
     const prepared = await prepareDecision(
@@ -3010,6 +3124,10 @@ export class AiDirector {
       triggerEvidenceId,
       undefined,
       'native-only',
+      undefined,
+      ({ context }) =>
+        textBytes(instructions) + textBytes(readableDecisionContext(context, [], false)),
+      { question: voiceInstructions, enabledSemantics: ['talk'] },
     );
     const current = async () => {
       this.current(run);
@@ -3025,7 +3143,6 @@ export class AiDirector {
     };
     run.validateJudgmentSource = current;
     const schema = boundSpeechResponseSchema(Object.keys(prepared.entityReferences));
-    const instructions = `${DECISION_INSTRUCTIONS}\n\n${voiceInstructions}\nReturn only the supplied JSON. Choose at most one talk operation or {"operations":[]}. Use localId, requiresAccepted:[], and the exact supplied addressee handle (or null). Speech can include brief expressive asides but does not perform physical actions. Context is a captured view; ongoing native work may progress while words form. Do not claim an offered or planned action happened, or that work completed without a supplied actual result.`;
     const c = this.service.config;
     const limit = levelLimits(c)[2];
     const capturedRequest = finalizeDecisionRequest({
@@ -4126,13 +4243,13 @@ export class AiDirector {
     prepared = fitDecisionResponse(prepared, reservedBytes, selectedHandle);
     const baseSchema = boundResponseSchema(
       Object.keys(prepared.entityReferences),
-      Object.keys(prepared.binding.actions),
+      responseActionReferences(prepared.binding.actions),
       {
         speech: canSpeak(entityGet(this.service.world.entities, actorId)),
         expressions: selectedExpressions(
           this.service.world,
           entityGet(this.service.world.entities, actorId),
-        ).map((d) => d.id),
+        ),
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
       namedClockTimes(this.service.world),

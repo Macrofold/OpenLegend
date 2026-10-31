@@ -12,6 +12,7 @@ import {
 import { bindDecisionAppraisals, captureDecisionAppraisalContext } from './appraisal-context.js';
 import {
   boundResponseSchema,
+  responseActionReferences,
   nativeResponse,
   RESPONSE_OPERATION_GUIDE,
   responseTaskInstructions,
@@ -33,6 +34,7 @@ import { compileDecisionTask, prepareDecisionTask, type DecisionTask } from './d
 import { DECISION_LIMITS } from './decision-state.js';
 import type { WorldService } from './world-service.js';
 import { compactActivityRequests, type ModelActivityRequests } from './response-context.js';
+import { ContextBudgetError } from './context.js';
 
 /** The same response owner handles a supplied action on either model route. */
 export function knownDecisionResponse(
@@ -176,28 +178,8 @@ export async function prepareReconsideration(
     !closedChoice
       ? retained.prepared
       : undefined;
-  // A different renderer may fit the same selected evidence, but its previous
-  // byte count cannot establish that. Rebuild natively only on an actual overfit.
-  const reusable =
-    retainedCandidate &&
-    inputMeasure({
-      context: retainedCandidate.context,
-      offered: [],
-      sourceTime: retainedCandidate.diagnostics.sourceTime,
-      actionGuidance: retainedCandidate.actionGuidance,
-      includeActions: false,
-      sources: {
-        evidenceIds: retainedCandidate.binding.evidenceIds ?? [],
-        sharedExperiences: retainedCandidate.sharedExperiences,
-        entityReferences: retainedCandidate.entityReferences,
-      },
-    }) <= DECISION_LIMITS.inputBytes
-      ? retainedCandidate
-      : undefined;
-  if (reusable) await reusable.validateConversation(false);
-  const base =
-    (reusable ? { ...reusable, inputMeasure } : undefined) ??
-    (await prepareDecision(
+  const prepareNative = () =>
+    prepareDecision(
       service,
       recall,
       actorId,
@@ -216,17 +198,33 @@ export async function prepareReconsideration(
       'native-only',
       closedChoice ? 'available-native' : undefined,
       inputMeasure,
-    ));
-  const sourceTime = base.diagnostics.sourceTime;
-  const rebound = { ...base, binding: { ...base.binding, decisionId: higher.id } };
-  const prepared =
-    base.choiceCoverage === 'complete-required'
+    );
+  const prepareActions = (base: Awaited<ReturnType<typeof prepareDecision>>) => {
+    const rebound = { ...base, binding: { ...base.binding, decisionId: higher.id } };
+    return base.choiceCoverage === 'complete-required'
       ? offerPreparedActions(
           rebound,
           base.actionCandidates,
           'Complete native reconsideration choices',
         )
       : fallbackDecisionActions(rebound, 'Native candidates for one reconsideration');
+  };
+  // Reuse must fit the real consumer, including its mandatory continuation.
+  // Measuring with no offers can spend that space on optional history first.
+  // The existing native fitter reserves that interface before optional sources.
+  // docs/technical/situation-aware-cognition-context.md#61-preparation-sequence
+  const prepared = await (async () => {
+    if (retainedCandidate) {
+      await retainedCandidate.validateConversation(false);
+      try {
+        return prepareActions({ ...retainedCandidate, inputMeasure });
+      } catch (error) {
+        if (!(error instanceof ContextBudgetError)) throw error;
+      }
+    }
+    return prepareActions(await prepareNative());
+  })();
+  const sourceTime = prepared.diagnostics.sourceTime;
   const validity = decisionValidity(service.world, actorId);
   // A closed choice cannot propose feeling changes. Current feeling values and
   // their freshness remain in the shared character context/decision validity;
@@ -249,15 +247,15 @@ export async function prepareReconsideration(
   const responseSchemaFor = (offered: typeof prepared.offered) =>
     boundResponseSchema(
       Object.keys(prepared.entityReferences),
-      Object.keys(prepared.binding.actions).filter(
-        (id) => !/^a\d+$/.test(id) || offered.some((option) => option.id === id),
+      responseActionReferences(
+        prepared.binding.actions,
+        Object.keys(prepared.binding.actions).filter(
+          (id) => !/^a\d+$/.test(id) || offered.some((option) => option.id === id),
+        ),
       ),
       {
         speech: canSpeak(entityGet(service.world.entities, actorId)),
-        expressions: selectedExpressions(
-          service.world,
-          entityGet(service.world.entities, actorId),
-        ).map((d) => d.id),
+        expressions: selectedExpressions(service.world, entityGet(service.world.entities, actorId)),
         proposals: false,
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
@@ -284,6 +282,13 @@ export async function prepareReconsideration(
       addressedAfterCapture()
     )
       return false;
+    // A smaller later projection does not erase sources already used to buy
+    // the routing judgment. Keep that original guard after a native refit.
+    if (
+      retainedCandidate &&
+      retainedCandidate.validateConversation !== prepared.validateConversation
+    )
+      await retainedCandidate.validateConversation(false);
     await prepared.validateConversation(false);
     return (
       (!appraisal || (await appraisal.current())) &&

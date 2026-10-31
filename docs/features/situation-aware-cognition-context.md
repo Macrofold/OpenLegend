@@ -1,7 +1,7 @@
 # Situation-aware cognition context: feature specification
 
-| Status      | Current progress                                                                                    | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                  | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Core context construction is delivered; October 31 question-specific refinements remain designed and unqualified. | 2026-10-31   |
 
 ## 1. Purpose and intended experience

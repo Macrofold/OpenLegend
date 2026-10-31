@@ -6,9 +6,16 @@ import {
 } from './navigation-contracts.js';
 export { navigationInstructions } from './navigation-contracts.js';
 import { z } from 'zod';
-import type { ActorResponse, GoalChange, ResponseOperation } from '@open-legend/domain';
+import { isActivityCommand } from '@open-legend/domain';
+import type {
+  ActorResponse,
+  ActionChoice,
+  ExpressionDefinition,
+  GoalChange,
+  ResponseOperation,
+} from '@open-legend/domain';
 import { CHARACTER_SERVICE_INSTRUCTIONS } from './character-service-instructions.js';
-export const COGNITION_VERSION = 'cognition-v29-local-schema-definitions';
+export const COGNITION_VERSION = 'cognition-v32-plan-action-bindings';
 export const KNOWN_ACTION_MODE_INSTRUCTION =
   'For a known action, copy its offered mode exactly; it specifies how that choice handles current work. Continuing choices use enqueue to preserve current work.';
 /** Both response routes need the same task and operation semantics; a structured
@@ -16,8 +23,43 @@ export const KNOWN_ACTION_MODE_INSTRUCTION =
 export function responseTaskInstructions(addressed: boolean): string {
   return `Decide what to say or do next as this person in response to the supplied Trigger. Use the Context to understand who you are, what you know, what is happening and what you can attempt. Return your chosen response using the supplied JSON schema. Respond as this person, not as an observer reporting the prompt. Do not continue other speakers' turns. Choose only changes warranted now. Every enabled kind is optional and may repeat.${addressed ? ' Speech directed at me normally deserves a natural conversational response, whether a question, statement or greeting.' : ''} Silence is also a valid choice. A small action shortlist does not mean I can only speak.`;
 }
-export const RESPONSE_OPERATION_GUIDE = `Use the supplied JSON schema: give each operation a unique localId, requiresAccepted and only its selected nonnull payload. Return {"operations":[]} to continue without intervention. Independent speech and action can coexist as separate operations; requiresAccepted refers only to earlier localIds and means admission, never physical completion. Do not invent a thought or goal to fill the response.
-${KNOWN_ACTION_MODE_INSTRUCTION} A proposal or descriptive gesture does not perform contact, injury, equipment changes or movement. Only native admitted operations produce their declared effects; unsupported intentions remain unperformed.`;
+const RESPONSE_ENVELOPE_GUIDE =
+  'Use the supplied JSON schema: give each operation a unique localId, requiresAccepted and only its selected nonnull payload. Return {"operations":[]} to continue without intervention.';
+const RESPONSE_DEPENDENCY_GUIDE =
+  'requiresAccepted refers only to earlier localIds and means admission, never physical completion.';
+const RESPONSE_FILLER_GUIDE = 'Do not invent a thought or goal to fill the response.';
+const RESPONSE_EFFECT_GUIDE =
+  'A proposal or descriptive gesture does not perform contact, injury, equipment changes or movement. Only native admitted operations produce their declared effects; unsupported intentions remain unperformed.';
+export const RESPONSE_OPERATION_GUIDE = `${RESPONSE_ENVELOPE_GUIDE} Independent speech and action can coexist as separate operations; ${RESPONSE_DEPENDENCY_GUIDE} ${RESPONSE_FILLER_GUIDE}
+${KNOWN_ACTION_MODE_INSTRUCTION} ${RESPONSE_EFFECT_GUIDE}`;
+
+/** A caller may narrow its output, without narrowing the person's remembered facts. */
+export function responseOperationEnabled(
+  enabledSemantics: readonly string[] | undefined,
+  operation: keyof typeof responsePayloads,
+): boolean {
+  return enabledSemantics === undefined || enabledSemantics.includes(operation);
+}
+
+export function responseOperationGuide(enabledSemantics?: readonly string[]): string {
+  if (enabledSemantics === undefined) return RESPONSE_OPERATION_GUIDE;
+  const allows = (operation: keyof typeof responsePayloads) =>
+    responseOperationEnabled(enabledSemantics, operation);
+  if (Object.keys(responsePayloads).every((kind) => enabledSemantics.includes(kind)))
+    return RESPONSE_OPERATION_GUIDE;
+  const actions = allows('act') || allows('plan');
+  return [
+    RESPONSE_ENVELOPE_GUIDE,
+    actions && allows('talk')
+      ? `Independent speech and action can coexist as separate operations; ${RESPONSE_DEPENDENCY_GUIDE}`
+      : RESPONSE_DEPENDENCY_GUIDE,
+    allows('think') || allows('goal') ? RESPONSE_FILLER_GUIDE : '',
+    actions ? KNOWN_ACTION_MODE_INSTRUCTION : '',
+    RESPONSE_EFFECT_GUIDE,
+  ]
+    .filter(Boolean)
+    .join(' ');
+}
 /** Response-only portrayal policy; closed judgments still require supplied evidence.
  * docs/projects/compelling-characters-feature-spec.md#prompting-behavior */
 export const RESPONSE_PORTRAYAL_GUIDE = `Speech addresses only a supplied reference or explicitly nobody; never inherit a recipient. Whispering is not guaranteed private. Express the person's voice and feelings in their speech; emotional asides need no matching action. A relationship or past playful response is evidence, not permanent permission. Distinguish memory, another person's claim, inference and deliberate deception. You may elaborate a sparse pre-game past consistently with this person's supplied identity; do not contradict established history or present an invented detail as a retrieved memory, shared experience or current fact.`;
@@ -106,7 +148,7 @@ function planSchema(actionId: z.ZodType<string> | null) {
 interface ActionSchemaBindings {
   entityId?: z.ZodType<string>;
   actionId?: z.ZodType<string> | null;
-  expressions?: readonly string[];
+  expressions?: readonly Pick<ExpressionDefinition, 'id' | 'target'>[];
   proposals?: boolean;
   until?: z.ZodType<string | null>;
   requests?: InstalledActivityRequests;
@@ -133,6 +175,25 @@ function actionSchema({
       quantityMode: slots.shape.quantityMode.unwrap(),
     }),
   ]);
+  const expression = (verb: z.ZodType<string>, targetRequired = false) =>
+    z
+      .object({
+        kind: z.literal('expression'),
+        verb,
+        targetEntityId: targetRequired ? entityId : entityId.nullable(),
+      })
+      .strict();
+  // The installed definition owns target requirements; an independent verb enum
+  // and nullable target would advertise combinations native admission cannot use.
+  const expressionVariants =
+    expressions === undefined
+      ? [expression(reference)]
+      : (['optional', 'required'] as const).flatMap((target) => {
+          const verbs = expressions
+            .filter((definition) => definition.target === target)
+            .map((d) => d.id);
+          return verbs.length ? [expression(z.enum(verbs), target === 'required')] : [];
+        });
   const variants = [
     ...(actionId
       ? [z.object({ kind: z.literal('known'), actionId, mode: workMode }).strict()]
@@ -144,17 +205,7 @@ function actionSchema({
         mode: workMode,
       })
       .strict(),
-    ...(expressions?.length === 0
-      ? []
-      : [
-          z
-            .object({
-              kind: z.literal('expression'),
-              verb: expressions ? z.enum([...expressions] as [string, ...string[]]) : reference,
-              targetEntityId: entityId.nullable(),
-            })
-            .strict(),
-        ]),
+    ...expressionVariants,
     ...(proposals
       ? [
           z
@@ -204,6 +255,7 @@ export const responsePayloads = {
     .object({ text: z.string().trim().min(1).max(240), aboutEntityIds: z.array(reference).max(8) })
     .strict(),
 };
+export type ResponseOperationKind = keyof typeof responsePayloads;
 export type ModelResponseOperation = Omit<
   ResponseOperation,
   'act' | 'goal' | 'plan' | 'appraise'
@@ -383,11 +435,31 @@ export const LEVEL_LIMITS = {
   4: { outputTokens: 8192, effort: 'high' as const },
 };
 
+/** Continuing work has no new command to queue. Keep the offered sets aligned
+ * with the native plan owner, never handle spelling or a second command list.
+ * docs/technical/situation-aware-cognition-context.md#93-action-alternatives */
+export function responseActionReferences(
+  actions: Readonly<Record<string, ActionChoice>>,
+  handles = Object.keys(actions),
+) {
+  return {
+    known: handles,
+    plan: handles.filter((handle) => {
+      const command = actions[handle]?.invocation;
+      return !!command && isActivityCommand(command);
+    }),
+  };
+}
+
 /** Provider and local parsing use the identical request-scoped reference contract. */
 export function boundResponseSchema(
   entityIds: string[],
-  actionIds: string[],
-  capabilities: { speech: boolean; expressions: readonly string[]; proposals?: boolean },
+  actionIds: { known: string[]; plan: string[] },
+  capabilities: {
+    speech: boolean;
+    expressions: readonly Pick<ExpressionDefinition, 'id' | 'target'>[];
+    proposals?: boolean;
+  },
   knowledgeReferences: string[] = [],
   namedTimes: string[] = [],
   requests: InstalledActivityRequests = [],
@@ -395,7 +467,8 @@ export function boundResponseSchema(
 ) {
   if (!entityIds.length) throw new Error('A response requires a permitted actor ID.');
   const entityId = z.enum(entityIds as [string, ...string[]]);
-  const actionId = actionIds.length ? z.enum(actionIds) : null;
+  const actionId = actionIds.known.length ? z.enum(actionIds.known) : null;
+  const planActionId = actionIds.plan.length ? z.enum(actionIds.plan) : null;
   const until = namedTimes.length ? z.enum(namedTimes).nullable() : z.null();
   const payloads: Partial<Record<keyof typeof responsePayloads, z.ZodType>> = {
     note: responsePayloads.note.extend({
@@ -414,7 +487,7 @@ export function boundResponseSchema(
       requests,
     }),
     goal: responsePayloads.goal,
-    plan: planSchema(actionId),
+    plan: planSchema(planActionId),
     think: responsePayloads.think.extend({ aboutEntityIds: z.array(entityId).max(8) }),
     ...(capabilities.speech
       ? { talk: responsePayloads.talk.extend({ addresseeEntityId: entityId.nullable() }) }

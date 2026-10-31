@@ -109,6 +109,7 @@ export interface CognitionLabRunOptions {
   privacy?(actorId?: string): import('./cognition-lab-records.js').LabJson;
   enabledCustomInputCount(): number;
   changed(): void;
+  executionResumed?(): void;
   validateAuthority?(scope: RequestScope): void | Promise<void>;
   scopeAfterRestore?(): RequestScope;
   supportedModels?(): Record<string, string[]>;
@@ -220,13 +221,16 @@ export class CognitionLabRunController {
         try {
           await this.observe(event, interval, run);
         } catch (error) {
+          const reason =
+            error instanceof Error ? error.message : 'Experiment evidence could not be retained.';
           if (run) {
             run.completeness = 'partial';
-            run.reason =
-              error instanceof Error ? error.message : 'Experiment evidence could not be retained.';
+            if (run.state !== 'ended' && run.endedAt === undefined) run.reason = reason;
           }
-          this.control.hold();
-          this.options.changed();
+          if (run && this.run === run && this.interval === interval && !this.closed) {
+            if (run.state !== 'ended' && run.endedAt === undefined) this.control.hold();
+            this.options.changed();
+          }
           if (
             event.kind === 'prepared' ||
             event.kind === 'wire' ||
@@ -243,8 +247,7 @@ export class CognitionLabRunController {
               if (capture) {
                 capture.stage.completeness = 'partial';
                 capture.stage.status = 'captureFailed';
-                capture.stage.summary =
-                  run?.reason ?? 'The native result could not be retained completely.';
+                capture.stage.summary = reason;
                 await this.writeCapture(capture).catch(() => undefined);
                 await this.records.release(capture.reservation);
                 this.captures.delete(capture.native.handle);
@@ -345,15 +348,21 @@ export class CognitionLabRunController {
     return jobId ? this.runtime.director.responseRetry(jobId, scope) : undefined;
   }
   private background<T>(work: Promise<T>): void {
+    const run = this.run;
+    const interval = this.interval;
     this.pending.add(work);
     void work
       .catch((error: unknown) => {
-        if (this.run) {
-          this.run.completeness = 'partial';
-          this.run.reason =
-            error instanceof Error ? error.message : 'Experiment evidence could not be saved.';
-          this.control.hold();
-          this.stateValue = this.run.state = 'held';
+        // A late capture failure belongs to its original interval, not a newly
+        // selected experiment. It also cannot reopen an already stopped run.
+        if (run && this.run === run && this.interval === interval && !this.closed) {
+          run.completeness = 'partial';
+          if (run.state !== 'ended' && run.endedAt === undefined) {
+            run.reason =
+              error instanceof Error ? error.message : 'Experiment evidence could not be saved.';
+            this.control.hold();
+            this.stateValue = run.state = 'held';
+          }
           this.options.changed();
           this.signalHeld();
         }
@@ -713,7 +722,7 @@ export class CognitionLabRunController {
     this.runtime.clock.setBlocked(true);
     const focal = input.policy.focalActorId;
     interval.expectedJobId = humanRequestId(scope, input.commandId);
-    this.control.resume(
+    this.resumeExecution(
       input.stagePurpose === undefined
         ? this.stageBoundary(input.policy)
         : (stage) =>
@@ -1011,8 +1020,10 @@ export class CognitionLabRunController {
               : 'The native adapter produced no captured HTTP exchanges.',
       });
       capture.stage.timing!.captureMs += performance.now() - captureStarted;
-      await this.writeCapture(capture);
       if (capture.terminal) {
+        // Settlement publishes early wire metadata with the same stage. Only a
+        // late exchange needs another publication before its credit is released.
+        await this.writeCapture(capture);
         await this.records.release(capture.reservation);
         this.captures.delete(capture.native.handle);
       }
@@ -1437,7 +1448,10 @@ export class CognitionLabRunController {
         native.submitted ?? native.original,
       );
       capture.stage.timing!.operatorHoldMs = native.holdMs;
-      if (JSON.stringify(native.submitted) !== JSON.stringify(native.original)) {
+      if (
+        native.submitted !== native.original &&
+        JSON.stringify(native.submitted) !== JSON.stringify(native.original)
+      ) {
         const submitted = JSON.stringify(native.submitted);
         await this.records.growReservation(capture.reservation, Buffer.byteLength(submitted));
         const artifact = await this.records.putArtifact(submitted, 'application/json', {
@@ -1574,7 +1588,8 @@ export class CognitionLabRunController {
       heldValueCount: this.runtime.service.nativeValueHolds.filter(
         (hold) => hold.entityId === native.actorId,
       ).length,
-      requestOverride: JSON.stringify(input) !== JSON.stringify(native.original),
+      requestOverride:
+        input !== native.original && JSON.stringify(input) !== JSON.stringify(native.original),
       policy: this.interval?.configuration.policy,
     };
   }
@@ -1677,7 +1692,16 @@ export class CognitionLabRunController {
     }
   }
   private finish(reason: string, ended = false, cancel = false): Promise<void> {
-    if (this.finishing) return this.finishing;
+    if (this.finishing) {
+      if (!ended && !cancel) return this.finishing;
+      // Stop still owes terminal publication/cancellation when an earlier Hold
+      // is settling. Preserve its failure after performing that cleanup.
+      const finish = () => this.finish(reason, ended, cancel);
+      return this.finishing.then(finish, async (error: unknown) => {
+        await finish();
+        throw error;
+      });
+    }
     const work = this.finishNow(reason, ended, cancel);
     this.finishing = work;
     void work
@@ -1691,6 +1715,11 @@ export class CognitionLabRunController {
     const run = this.run,
       interval = this.interval;
     if (!run || !interval) return;
+    const wasEnded = run.state === 'ended' || run.endedAt !== undefined;
+    if (wasEnded) {
+      ended = true;
+      reason = run.reason ?? reason;
+    }
     this.control.hold();
     this.stateValue = run.state = 'settling';
     run.status = 'Settling';
@@ -1717,7 +1746,7 @@ export class CognitionLabRunController {
         if (settlementError) throw settlementError;
         if (this.interval !== interval) return;
         run.reason = reason;
-        if (ended) run.endedAt = Date.now();
+        if (ended) run.endedAt ??= Date.now();
         if (interval.completed) {
           // The native interval and its capture are already settled. Its source may
           // since have been forgotten; ending the run needs no historical read or
@@ -1766,7 +1795,7 @@ export class CognitionLabRunController {
         await this.persistRun(interval.reservation, { state, status });
       } catch (error) {
         run.completeness = 'partial';
-        run.reason = `${reason} Terminal evidence could not be fully saved.`;
+        if (!wasEnded) run.reason = `${reason} Terminal evidence could not be fully saved.`;
         throw error;
       } finally {
         if (this.interval === interval) {
@@ -1777,6 +1806,8 @@ export class CognitionLabRunController {
             }
           } finally {
             interval.completed = true;
+            // A failed settlement/capture still publishes a terminal disposition.
+            if (ended) run.endedAt ??= Date.now();
             this.stateValue = run.state = state;
             run.status = status;
             this.options.changed();
@@ -1891,7 +1922,7 @@ export class CognitionLabRunController {
     this.control.submit(handleId, selected);
     // Release this request before arming the next native boundary. Both changes
     // are synchronous, so a fast adapter cannot slip through between them.
-    this.control.resume(step ? () => true : this.stageBoundary(this.interval!.policy));
+    this.resumeExecution(step ? () => true : this.stageBoundary(this.interval!.policy));
     this.refreshPrepared();
     if (this.run!.prepared)
       await this.captureWrite(() => this.persistRun(this.interval!.reservation));
@@ -1902,6 +1933,10 @@ export class CognitionLabRunController {
       runId: this.run?.id,
       message: 'The prepared input was submitted once.',
     };
+  }
+  private resumeExecution(breakpoint?: (stage: PreparedCognitionStage) => boolean): void {
+    this.control.resume(breakpoint);
+    this.options.executionResumed?.();
   }
   async controlRun(
     input: {
@@ -1954,6 +1989,7 @@ export class CognitionLabRunController {
       );
       if (!result.ok) throw new Error(result.message);
       if (input.action === 'pause') await this.finish('Native manual pause applied.');
+      else this.options.executionResumed?.();
     } else if (this.run?.prepared) {
       this.assertAdmission(admission);
       if (input.action === 'advanceTime' || input.action === 'advanceToOutcome')
@@ -2007,7 +2043,7 @@ export class CognitionLabRunController {
               if (this.control.held) interrupted.abort(new Error('The runtime clock is held.'));
             });
             try {
-              this.control.resume(this.stageBoundary(policy));
+              this.resumeExecution(this.stageBoundary(policy));
               await this.runtime.clock.advance(
                 policy.durationSeconds,
                 policy.autonomousActorIds.length > 0,
@@ -2056,7 +2092,7 @@ export class CognitionLabRunController {
           }
         }
       } else {
-        this.control.resume(input.action === 'step' ? () => true : this.stageBoundary(policy));
+        this.resumeExecution(input.action === 'step' ? () => true : this.stageBoundary(policy));
         await this.runtime.director.considerThought();
       }
     }
@@ -2087,7 +2123,7 @@ export class CognitionLabRunController {
     const interval = await this.startInterval({ ...policy, focalActorId: actorId }, scope);
     interval.expectedJobId = humanRequestId(scope, commandId);
     this.runtime.clock.setBlocked(true);
-    this.control.resume(this.stageBoundary(policy));
+    this.resumeExecution(this.stageBoundary(policy));
     try {
       const result = await this.runtime.director.requestMaintenance(commandId, actorId, scope);
       interval.submitted = true;
@@ -2613,7 +2649,7 @@ export class CognitionLabRunController {
     interval.expectedJobId = humanRequestId(scope, operation.commandId);
     interval.sourceIds.add(original.playerSpeechEventId);
     this.runtime.clock.setBlocked(true);
-    this.control.resume();
+    this.resumeExecution();
     try {
       const outcome = await this.runtime.director.submit(
         'chat',
@@ -2709,7 +2745,7 @@ export class CognitionLabRunController {
     interval.expectedJobId = humanRequestId(scope, operation.commandId);
     interval.sourceIds.add(descriptor.sourceId);
     this.runtime.clock.setBlocked(true);
-    this.control.resume(this.stageBoundary(operation.policy));
+    this.resumeExecution(this.stageBoundary(operation.policy));
     try {
       const result = await this.runtime.director.continueDecision(
         operation.commandId,

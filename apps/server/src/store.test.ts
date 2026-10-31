@@ -1,6 +1,6 @@
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { readConfig, testRepository } from '../../../tests/fixtures/database.js';
-import { entityGet, freezeWorld, PLAYER_ID } from '@open-legend/domain';
+import { entityGet, freezeWorld, updateWorld, PLAYER_ID } from '@open-legend/domain';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -33,7 +33,7 @@ function diskPath(): string {
   return directory;
 }
 function save(): SavedWorld {
-  return { world: stockedCamp(73), speed: 1, manuallyPaused: false };
+  return { world: freezeWorld(stockedCamp(73)), speed: 1, manuallyPaused: false };
 }
 function receipt(requestId: string, overrides: Partial<AiReceipt> = {}): AiReceipt {
   return {
@@ -86,7 +86,6 @@ describe('PostgreSQL committed world boundary', () => {
     try {
       await store.ready;
       const initial = save();
-      initial.world = freezeWorld(initial.world);
       const revision = await store.commit(0, initial);
       const records = new CognitionLabRecords(store.operationalDatabase, directory);
       await records.ready;
@@ -201,16 +200,21 @@ describe('PostgreSQL committed world boundary', () => {
     const path = diskPath();
     let store = await open(path);
     const initial = save();
-    entityGet(initial.world.entities, PLAYER_ID)!.actor!.body!.conditions = {
-      wetness: 12.5,
-      burning: 3,
-    };
-    // Persistence coverage must not depend on the bundled world's starting inventory.
-    const foodId = createItemLot(initial.world, PLAYER_ID, 'berries', 3, 'fixture-food');
+    const foodId = 'fixture-food';
+    initial.world = freezeWorld(
+      updateWorld(initial.world, (world) => {
+        entityGet(world.entities, PLAYER_ID)!.actor!.body!.conditions = {
+          wetness: 12.5,
+          burning: 3,
+        };
+        // Persistence coverage must not depend on the bundled world's starting inventory.
+        createItemLot(world, PLAYER_ID, 'berries', 3, foodId);
+      }),
+    );
     expect(await store.load()).toBeNull();
     const revision = await store.commit(0, initial);
     const command = { id: 'eat-once', actorId: PLAYER_ID, type: 'eat' as const, itemId: foodId };
-    const changed = executeCommand(initial.world, command).world;
+    const changed = freezeWorld(executeCommand(initial.world, command).world);
     const savedRevision = await store.commit(revision, { ...initial, world: changed, speed: 3 });
     await close(store);
     store = await open(path);
@@ -324,7 +328,11 @@ describe('durable AI allowances outside simulated time', () => {
     await store.settle('paid', receipt('paid'));
     revision = await store.commit(revision, {
       ...original,
-      world: { ...original.world, simTime: 4000 },
+      world: freezeWorld(
+        updateWorld(original.world, (world) => {
+          world.simTime = 4000;
+        }),
+      ),
     });
     revision = await store.commit(revision, original);
     expect((await store.load())!.state.world.simTime).toBe(0);
@@ -357,7 +365,11 @@ describe('durable AI allowances outside simulated time', () => {
     const finance = await store.attemptReceipt('uncertain-paid');
     const slots = await store.occupiedDecisionSlots();
     const operationalJob = await store.getJob('original-operational-job');
-    const fresh: SavedWorld = { world: stockedCamp(74), speed: 1, manuallyPaused: false };
+    const fresh: SavedWorld = {
+      world: freezeWorld(stockedCamp(74)),
+      speed: 1,
+      manuallyPaused: false,
+    };
     const adopted = (await store.records.head())!;
     await expect(store.replaceDevelopmentWorld(adopted, fresh)).rejects.toThrow(/unopened/);
 
@@ -368,6 +380,7 @@ describe('durable AI allowances outside simulated time', () => {
       ...incompatible.world.moduleManifest.activityHosts[0]!,
       digest: 'incompatible-development-host',
     };
+    freezeWorld(incompatible.world);
     await store.commit(revision, incompatible);
     await close(store);
     store = await open(path);
@@ -381,6 +394,7 @@ describe('durable AI allowances outside simulated time', () => {
       ...invalidFresh.world.moduleManifest.activityHosts[0]!,
       digest: 'invalid-new-host',
     };
+    freezeWorld(invalidFresh.world);
     await expect(store.replaceDevelopmentWorld(head, invalidFresh)).rejects.toThrow(
       /trusted activity host/,
     );

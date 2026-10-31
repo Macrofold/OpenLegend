@@ -509,8 +509,10 @@ export class SqlGameRepository implements GameRepository {
   async putIntelligenceCalls(calls: PreparedDiagnosticRecord[]): Promise<void> {
     await this.ready;
     if (!calls.length) return;
+    // Optional diagnostic upserts cannot require unrelated world-table application.
+    // docs/performance/storage.md#storage-execution
     await insertRows(
-      this.db,
+      this.rawDb,
       'intelligence_calls (id, started_at, payload)',
       calls.map((call) => [call.id, call.startedAt, call.json]),
       'ON CONFLICT(id) DO UPDATE SET payload = excluded.payload',
@@ -519,7 +521,7 @@ export class SqlGameRepository implements GameRepository {
     const previous = this.intelligenceWrites;
     this.intelligenceWrites += calls.length;
     if (Math.floor(previous / 25) !== Math.floor(this.intelligenceWrites / 25))
-      await this.db.exec(
+      await this.rawDb.exec(
         'DELETE FROM intelligence_calls WHERE id IN (SELECT id FROM intelligence_calls ORDER BY started_at DESC, id DESC LIMIT 1000000 OFFSET 1000)',
       );
   }
@@ -635,6 +637,7 @@ export class SqlGameRepository implements GameRepository {
         'meta',
         'jobs',
         'attempts',
+        'cognition_attempt_links',
         'attempt_scopes',
         'attempt_budgets',
         'intelligence_calls',
@@ -644,7 +647,8 @@ export class SqlGameRepository implements GameRepository {
       () => this.journal.writeAligned(),
       () => this.journal.canSkipFlush(),
     );
-    this.integrationValues = new IntegrationValues(this.db);
+    // This owner reads/writes only immediate meta rows and retains transaction hooks.
+    this.integrationValues = new IntegrationValues(this.rawDb);
     this.records = new WorldRecords(this.db);
     this.memories = new MemoryRepository(this.db);
     this.history = new HistoryRepository(this.db);
@@ -1688,8 +1692,13 @@ export class SqlGameRepository implements GameRepository {
     change: (job: JobRecord) => Promise<JobRecord | undefined>,
   ): Promise<JobRecord | undefined> {
     await this.ready;
-    return this.db.transaction(async () => {
-      const row = await this.db.prepare('SELECT payload FROM jobs WHERE id=? FOR UPDATE').get(id);
+    // Job/cursor/attempt mutations are immediate operational work. A canonical
+    // publication caller still owns its enclosing transaction and revision fence.
+    // docs/projects/performance-overhaul/journal-contract.md#reader-revision-and-wait-matrix
+    return this.rawDb.transaction(async () => {
+      const row = await this.rawDb
+        .prepare('SELECT payload FROM jobs WHERE id=? FOR UPDATE')
+        .get(id);
       if (!row) return undefined;
       const current = JSON.parse(String(row['payload'])) as JobRecord;
       if (!current.decision) return undefined;
@@ -1883,7 +1892,7 @@ export class SqlGameRepository implements GameRepository {
       actorId.length > 160
     )
       throw new Error('Invalid spending reservation.');
-    const accepted = await this.db.transaction(async () => {
+    const accepted = await this.rawDb.transaction(async () => {
       const existing = await this.db
         .prepare('SELECT provider,reserved FROM attempts WHERE id = ?')
         .get(id);
@@ -1962,7 +1971,7 @@ export class SqlGameRepository implements GameRepository {
     await this.ready;
     if (receipt.requestId !== id) throw new Error('Spending receipt identity mismatch.');
     receipt = normalizeReceiptCost(receipt);
-    await this.db.transaction(async () => {
+    await this.rawDb.transaction(async () => {
       const row = await this.db
         .prepare('SELECT status,reserved,spent,receipt FROM attempts WHERE id = ?')
         .get(id);

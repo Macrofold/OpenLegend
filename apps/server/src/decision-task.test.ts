@@ -27,11 +27,15 @@ describe('complete structured decision input', () => {
       q0: {
         kind: 'response',
         question: 'Respond to the personally heard question using the permitted evidence.',
-        valueSchema: boundResponseSchema(['me', 'speaker'], ['rest'], {
-          speech: true,
-          expressions: ['smile'],
-          proposals: false,
-        }),
+        valueSchema: boundResponseSchema(
+          ['me', 'speaker'],
+          { known: ['rest'], plan: ['rest'] },
+          {
+            speech: true,
+            expressions: [{ id: 'smile', target: 'optional' }],
+            proposals: false,
+          },
+        ),
       },
     } satisfies Record<string, DecisionTask>;
     // Public synthetic evidence exercises the measured 102,872-byte refusal;

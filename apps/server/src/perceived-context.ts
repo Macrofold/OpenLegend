@@ -458,6 +458,10 @@ export function perceivedEntityText(
   return facts.join(' ');
 }
 
+/** One shared frame explanation serves both structured judgment and prose response inputs. */
+export const OBSERVER_SPATIAL_PERSPECTIVE =
+  "Current position and facing, and I/my in present surroundings, belong to this observing person. Left/right/ahead/behind are relative to this person's facing, never the listener's. Quoted speech retains its speaker's frame; another person's frame needs their own supported position and facing.";
+
 /** Relative geometry is observed location, not proof of a traversable route. */
 export function relativeLocation(observer: Entity, target: Entity): string {
   const dx = worldPosition(target).x - worldPosition(observer).x;
