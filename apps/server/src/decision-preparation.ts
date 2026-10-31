@@ -1,3 +1,4 @@
+import type { MemoryReadControl } from './memory-repository.js';
 import { selectedExpressions } from '@open-legend/domain';
 import {
   entityGet,
@@ -128,6 +129,7 @@ export async function prepareReconsideration(
   job: JobRecord,
   signal: AbortSignal,
   retained?: RetainedDecisionPreparation,
+  readControl?: MemoryReadControl,
 ): Promise<PreparedReconsideration> {
   const state = job.decision;
   if (!state?.higher) throw new Error('Missing admitted reconsideration.');
@@ -198,6 +200,8 @@ export async function prepareReconsideration(
       'native-only',
       closedChoice ? 'available-native' : undefined,
       inputMeasure,
+      undefined,
+      readControl,
     );
   const prepareActions = (base: Awaited<ReturnType<typeof prepareDecision>>) => {
     const rebound = { ...base, binding: { ...base.binding, decisionId: higher.id } };

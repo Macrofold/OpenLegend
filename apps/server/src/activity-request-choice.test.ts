@@ -107,7 +107,7 @@ describe('hierarchical installed activity parameters', () => {
       simTime: 100,
       namedDeadlines: [],
       state: { question: 'Choose a supported combination.' },
-      resolveChoices: async (field, parameters) => {
+      prepareChoices: async () => (field, parameters) => {
         reads.push({ field, parameters: { ...parameters } });
         if (field === 'recipient')
           return [
@@ -146,7 +146,13 @@ describe('hierarchical installed activity parameters', () => {
       },
     });
     expect(questionCounts).toEqual([2, 1]);
-    expect(reads.map((entry) => entry.field)).toEqual(['recipient', 'method', 'output']);
+    expect(reads.map((entry) => entry.field)).toEqual([
+      'recipient',
+      'method',
+      'recipient',
+      'method',
+      'output',
+    ]);
     expect(reads[2]!.parameters).toEqual({ recipient: 'person-handle', method: 'method-a' });
     expect(response?.operations[0]?.act).toEqual({
       kind: 'invoke',
@@ -166,7 +172,7 @@ describe('hierarchical installed activity parameters', () => {
       simTime: 100,
       namedDeadlines: [],
       state: {},
-      resolveChoices: async (field) =>
+      prepareChoices: async () => (field) =>
         field === 'recipient'
           ? [
               {

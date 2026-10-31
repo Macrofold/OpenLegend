@@ -12,7 +12,11 @@ import {
   type CognitionStageInput,
   type CognitionTimingObservation,
 } from './cognition-runtime-control.js';
-import { acquireDecisionTimingHold, type DecisionTimingHold } from './decision-timing.js';
+import {
+  acquireDecisionTimingHold,
+  decisionRequestDeadline,
+  type DecisionTimingHold,
+} from './decision-timing.js';
 import { DecisionEscalator } from './decision-escalator.js';
 import {
   prepareReconsideration,
@@ -427,7 +431,8 @@ export class AiDirector {
       service,
       this.execution,
       log,
-      (job, signal) => prepareReconsideration(service, this.recall, job, signal),
+      (job, signal, readControl) =>
+        prepareReconsideration(service, this.recall, job, signal, undefined, readControl),
       client,
       now,
       this.macrofold,
@@ -2041,7 +2046,8 @@ export class AiDirector {
       reason,
       response,
       retained
-        ? (job, signal) => prepareReconsideration(this.service, this.recall, job, signal, retained)
+        ? (job, signal, readControl) =>
+            prepareReconsideration(this.service, this.recall, job, signal, retained, readControl)
         : undefined,
       { signal: run.controller.signal, labEpoch: run.labEpoch },
       {
@@ -2326,13 +2332,27 @@ export class AiDirector {
     };
   }
 
-  private immediateExpired(run: Running): boolean {
-    const decision = run.job.decision;
-    return (
-      !!decision &&
-      !run.immediateTimingHold &&
-      (this.now() >= decision.fastPublishBy || performance.now() >= decision.fastPublishByMonotonic)
-    );
+  private requestDeadline(run: Running, earlier?: number) {
+    this.current(run);
+    const deadline = run.job.decision
+      ? decisionRequestDeadline(run.job.decision, this.now(), performance.now(), earlier)
+      : earlier;
+    if (deadline !== undefined && deadline <= Date.now())
+      throw new StopJob('failed', 'The decision request deadline passed.', 'expired');
+    return deadline;
+  }
+
+  private memoryReadControl(run: Running) {
+    const now = this.now;
+    return {
+      signal: run.controller.signal,
+      // A Lab hold can shift the native clock while earlier preparation awaits.
+      // Read its current bound when lexical waiting actually begins.
+      get deadlineMs() {
+        const state = run.job.decision;
+        return state ? decisionRequestDeadline(state, now(), performance.now()) : undefined;
+      },
+    };
   }
 
   private async judge(
@@ -2346,9 +2366,15 @@ export class AiDirector {
       'jev',
       purpose,
       { kind: 'judge', request },
-      (requestId, input) =>
-        this.client.judge({ ...input.request, requestId, signal: run.controller.signal }),
+      (requestId, input, deadlineMs) =>
+        this.client.judge({
+          ...input.request,
+          deadlineMs,
+          requestId,
+          signal: run.controller.signal,
+        }),
       meter,
+      request.deadlineMs,
     );
     if (!run.primaryGeneration && !purpose.includes('attention'))
       run.primaryRequestId = `${run.job.id}:${purpose}`;
@@ -2360,8 +2386,9 @@ export class AiDirector {
     provider: 'jev' | 'openai',
     suffix: string,
     input: I,
-    dispatch: (requestId: string, input: I) => Promise<AiResult<T>>,
+    dispatch: (requestId: string, input: I, deadlineMs?: number) => Promise<AiResult<T>>,
     meter?: Meter,
+    earlierDeadline?: number,
   ): Promise<T> {
     const timing = run.labTiming?.settle();
     if (timing) await timing;
@@ -2370,15 +2397,9 @@ export class AiDirector {
       sourceActorId,
       () => this.current(run) === sourceActorId,
     );
-    // This selected strategy declares both dependent calls in advance. Its
-    // original useful lifetime still fences every dispatch/commit via current();
-    // a stage transition neither renews that clock nor funds a fallback.
-    if (run.job.decision && !run.preparedResponse && this.immediateExpired(run))
-      throw new StopJob(
-        'failed',
-        'No new immediate inference was started after the one-second boundary.',
-        'expired',
-      );
+    // The one-second mark records responsiveness. This admitted pipeline may
+    // finish required stages until its original usefulness boundary (current()).
+    // docs/projects/decision-escalation-tech-design.md#one-root-two-timing-meanings
     const control = this.service.cognitionControl;
     const deployment =
       input.kind === 'generate'
@@ -2566,13 +2587,9 @@ export class AiDirector {
               ? 'Generating a new material-and-mechanism definition.'
               : run.job.kind === 'action'
                 ? 'Interpreting the requested action.'
-                : 'Preparing a detailed decision. This may take about a minute.',
+                : 'Preparing a response.',
         );
         this.current(run);
-        if (run.job.decision && !run.preparedResponse) {
-          if (this.immediateExpired(run))
-            throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
-        }
         dispatchIntent = true;
         if (!(await this.service.store.markDecisionDispatch(id))) {
           throw new StopJob(
@@ -2581,6 +2598,11 @@ export class AiDirector {
             'uncertain',
           );
         }
+        const execute = () => {
+          const deadline = this.requestDeadline(run, earlierDeadline);
+          providerStarted = true;
+          return dispatch(id, providerInput, deadline);
+        };
         const result = await this.macrofold.withSourceValidation(
           async () => {
             this.current(run);
@@ -2588,20 +2610,9 @@ export class AiDirector {
             this.current(run);
             if (!sourceCurrent())
               throw new StopJob('stale', 'The character’s evidence changed before dispatch.');
-            if (run.job.decision && !run.preparedResponse && this.immediateExpired(run))
-              throw new StopJob('failed', 'The immediate dispatch deadline passed.', 'expired');
           },
           () =>
-            prepared && control
-              ? control.dispatch(
-                  prepared.stage,
-                  () => {
-                    providerStarted = true;
-                    return dispatch(id, providerInput);
-                  },
-                  lease,
-                )
-              : dispatch(id, providerInput),
+            prepared && control ? control.dispatch(prepared.stage, execute, lease) : execute(),
         );
         const accountingStartedAt = new Date().toISOString();
         result.receipt = normalizeReceiptCost(result.receipt);
@@ -2791,6 +2802,8 @@ export class AiDirector {
       'native-only',
       required,
       preparedResponseInputMeasure(catalogue, interpretations.projectContext),
+      undefined,
+      this.memoryReadControl(run),
     );
     const validityFor = (world: WorldState) =>
       preparedResponseValidity(world, actorId, interpretations.scopes);
@@ -3128,6 +3141,7 @@ export class AiDirector {
       ({ context }) =>
         textBytes(instructions) + textBytes(readableDecisionContext(context, [], false)),
       { question: voiceInstructions, enabledSemantics: ['talk'] },
+      this.memoryReadControl(run),
     );
     const current = async () => {
       this.current(run);
@@ -3193,7 +3207,7 @@ export class AiDirector {
     await current();
     if (request.macrofoldDeployment && c.budgetUsd > 0)
       request = await this.macrofold.prepareDeploymentGeneration(
-        request,
+        { ...request, deadlineMs: this.requestDeadline(run, request.deadlineMs) },
         selected.structuredOutput,
         run.controller.signal,
         current,
@@ -3336,9 +3350,10 @@ export class AiDirector {
             (this.service.config.macrofoldKey ? cognitionOutputTokens(request.execution) : 1800),
         },
       },
-      async (id, input) =>
+      async (id, input, deadlineMs) =>
         await this.client.generate<T>({
           ...input.request,
+          deadlineMs,
           requestId: id,
           signal: run.controller.signal,
         }),
@@ -3353,6 +3368,7 @@ export class AiDirector {
           schema: textBytes(request.schema),
         },
       },
+      request.deadlineMs,
     );
     if (request.task === 'npc_response') {
       run.primaryRequestId = `${run.job.id}:${operation}`;
@@ -3715,6 +3731,8 @@ export class AiDirector {
       run.job.decision ? 'native-only' : 'ordinary',
       undefined,
       inputMeasure,
+      undefined,
+      this.memoryReadControl(run),
     );
     run.validateJudgmentSource = () => prepared.validateConversation();
     this.current(run);
@@ -4029,25 +4047,26 @@ export class AiDirector {
       return;
     let requestedActivity: Awaited<ReturnType<typeof chooseActivityRequest>>;
     if (chosenFamily) {
-      await prepared.validateConversation();
       const selectedWorld = this.service.world;
-      const selectedObservation = decisionObservation(selectedWorld, actorId);
       let parameterRound = 0;
       requestedActivity = await chooseActivityRequest({
         descriptor: chosenFamily,
         choices: prepared.activityRequests.choices,
-        resolveChoices: async (field, parameters) => {
+        prepareChoices: async () => {
           await prepared.validateConversation();
           this.current(run);
-          return activityRequestChoiceFacts(
-            selectedWorld,
-            actorId,
-            chosenFamily,
-            field,
-            parameters,
-            prepared.entityReferences,
-            selectedObservation ?? undefined,
-          );
+          const world = this.service.world;
+          const observation = decisionObservation(world, actorId);
+          return (field, parameters) =>
+            activityRequestChoiceFacts(
+              world,
+              actorId,
+              chosenFamily,
+              field,
+              parameters,
+              prepared.entityReferences,
+              observation ?? undefined,
+            );
         },
         simTime: selectedWorld.simTime,
         namedDeadlines: namedClockTimes(selectedWorld).map((name) => ({
@@ -4404,7 +4423,10 @@ export class AiDirector {
         if (generationRequest.macrofoldDeployment && !c.jevOnly && c.budgetUsd > 0) {
           try {
             generationRequest = await this.macrofold.prepareDeploymentGeneration(
-              generationRequest,
+              {
+                ...generationRequest,
+                deadlineMs: this.requestDeadline(run, generationRequest.deadlineMs),
+              },
               selected.structuredOutput,
               run.controller.signal,
               async () => {

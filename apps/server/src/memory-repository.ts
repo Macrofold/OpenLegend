@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { tableRows } from './record-pages.js';
 import { insertRows, sqlRecordBatches, type SqlWriteBatch } from './sql-rows.js';
-import { LexicalProjection } from './lexical-projection.js';
+import { LexicalProjection, type MemoryReadControl } from './lexical-projection.js';
+export type { MemoryReadControl } from './lexical-projection.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
 import { matchesSearch, scanMatches, searchWords } from './text-search.js';
 // Preparation allowance, not a retained-history or searchable-corpus limit.
@@ -1913,6 +1914,7 @@ export class MemoryRepository {
     scope: MemoryScope,
     query: string | null,
     limit: number,
+    control?: MemoryReadControl,
   ): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 300)
       throw new Error('Invalid context limit.');
@@ -1985,7 +1987,7 @@ export class MemoryRepository {
       }
       return result;
     };
-    return lexicalQuery(terms) ? this.lexical.snapshot(scope, read) : this.snapshot(read);
+    return lexicalQuery(terms) ? this.lexical.snapshot(scope, read, control) : this.snapshot(read);
   }
   /** Both ordinary recall and inspected context use the current indexed source,
    * with exclusions applied before ranking, limits and body hydration. */
@@ -2601,6 +2603,7 @@ export class MemoryRepository {
     query?: MemoryRetrievalQuery,
     excludedIds: string[] = [],
     cache?: MemoryReadCache,
+    control?: MemoryReadControl,
   ): Promise<RetrievedMemory[]> {
     const texts =
       query && 'text' in query ? (typeof query.text === 'string' ? [query.text] : query.text) : [];
@@ -2617,7 +2620,7 @@ export class MemoryRepository {
     const expression = clauses.length ? clauses : undefined;
     const semantic = query && 'query' in query ? query : undefined;
     const read = () => this.readSelection(scope, limit, semantic, excludedIds, cache, expression);
-    return expression ? this.lexical.snapshot(scope, read) : this.snapshot(read);
+    return expression ? this.lexical.snapshot(scope, read, control) : this.snapshot(read);
   }
   private async readSelection(
     scope: MemoryScope,

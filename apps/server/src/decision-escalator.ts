@@ -1,4 +1,9 @@
-import { acquireDecisionTimingHold, type DecisionTimingHold } from './decision-timing.js';
+import type { MemoryReadControl } from './memory-repository.js';
+import {
+  acquireDecisionTimingHold,
+  decisionRequestDeadline,
+  type DecisionTimingHold,
+} from './decision-timing.js';
 import type { CognitionTimingObservation } from './cognition-runtime-control.js';
 import { stageAllowance } from './cognition-stage-budget.js';
 import { entityGet } from '@open-legend/domain';
@@ -57,7 +62,11 @@ export interface PreparedReconsideration {
   current(): Promise<boolean>;
   publish(answers: Record<string, DecisionAnswer>, claim: DecisionPublication): Promise<ApiResult>;
 }
-type Prepare = (job: JobRecord, signal: AbortSignal) => Promise<PreparedReconsideration>;
+type Prepare = (
+  job: JobRecord,
+  signal: AbortSignal,
+  readControl?: MemoryReadControl,
+) => Promise<PreparedReconsideration>;
 interface DecisionLifetime {
   signal?: AbortSignal;
   labEpoch?: number;
@@ -719,7 +728,18 @@ export class DecisionEscalator {
         await this.end(rootId, 'budget-exhausted');
         return;
       }
-      let prepared = await initialPreparation(job, controller.signal);
+      const now = this.now;
+      const readControl: MemoryReadControl = {
+        signal: controller.signal,
+        get deadlineMs() {
+          return Math.min(
+            decisionRequestDeadline(state, now(), performance.now(), undefined, child),
+            Date.now() +
+              Math.min(child.dispatchBy - now(), child.dispatchByMonotonic - performance.now()),
+          );
+        },
+      };
+      let prepared = await initialPreparation(job, controller.signal, readControl);
       await awaitRelease();
       if (!controller.signal.aborted && !(await prepared.current())) {
         const refreshed = await this.service.store.mutateDecision(rootId, async (current) => {
@@ -736,7 +756,7 @@ export class DecisionEscalator {
           return { ...current, decision: { ...live, refreshUsed: true } };
         });
         if (refreshed) {
-          prepared = await this.prepare(refreshed, controller.signal);
+          prepared = await this.prepare(refreshed, controller.signal, readControl);
           await awaitRelease();
         }
       }
@@ -825,15 +845,13 @@ export class DecisionEscalator {
         generationRequest = await backend.prepareDeploymentGeneration(
           {
             ...generationRequest,
-            deadlineMs:
-              Date.now() +
-              Math.max(
-                0,
-                Math.min(
-                  child.publishBy - this.now(),
-                  child.publishByMonotonic - performance.now(),
-                ),
-              ),
+            deadlineMs: decisionRequestDeadline(
+              state,
+              this.now(),
+              performance.now(),
+              generationRequest.deadlineMs,
+              child,
+            ),
           },
           target.structuredOutput,
           controller.signal,
@@ -1029,19 +1047,22 @@ export class DecisionEscalator {
                 throw new Error('The original decision dispatch deadline passed.');
               }
               await validateSource();
+              const deadlineMs = decisionRequestDeadline(
+                state,
+                this.now(),
+                performance.now(),
+                generationRequest.deadlineMs,
+                child,
+              );
+              if (deadlineMs <= Date.now()) {
+                failure = 'expired';
+                throw new Error('The decision request deadline passed.');
+              }
               failure = 'provider-failed';
               providerStarted = true;
               return client.generate<unknown>({
                 ...generationRequest,
-                deadlineMs:
-                  Date.now() +
-                  Math.max(
-                    0,
-                    Math.min(
-                      child.publishBy - this.now(),
-                      child.publishByMonotonic - performance.now(),
-                    ),
-                  ),
+                deadlineMs,
                 requestId: child.id,
                 signal: controller.signal,
                 actorScope: state.actorId,

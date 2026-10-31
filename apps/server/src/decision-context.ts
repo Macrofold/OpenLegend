@@ -15,7 +15,11 @@ import {
 } from '@open-legend/domain';
 import { outingContext } from './outing-view.js';
 import { remainingActivityText, learnedActivityCandidates } from './activity-context.js';
-import { MemoryReadCache, type CognitionPreparation } from './memory-repository.js';
+import {
+  MemoryReadCache,
+  type MemoryReadControl,
+  type CognitionPreparation,
+} from './memory-repository.js';
 import { decisionObservation } from './decision-observation.js';
 import {
   requiredOutcomeMemoryIds,
@@ -714,6 +718,7 @@ export async function prepareDecision(
   requiredChoices?: RequiredDecisionChoices | 'available-native',
   inputMeasure?: DecisionInputMeasure,
   consumer?: Pick<DecisionRequirements, 'question' | 'enabledSemantics'>,
+  readControl?: MemoryReadControl,
 ) {
   const preparationWork = new DecisionPreparationWork();
   const requested = consumer
@@ -1225,6 +1230,7 @@ export async function prepareDecision(
       preparation,
       requiredChoices ? 'native-only' : mode,
       discovery,
+      readControl,
     )
     .catch((error: unknown) => {
       signal.throwIfAborted();

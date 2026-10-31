@@ -18,6 +18,7 @@ import { worldPosition } from '@open-legend/domain';
 import type {
   RetrievedMemory,
   MemoryScope,
+  MemoryReadControl,
   CognitionPreparation,
   CurrentMemorySource,
 } from './memory-repository.js';
@@ -1030,6 +1031,7 @@ export class RecallService {
     preparation?: CognitionPreparation,
     mode: 'ordinary' | 'native-only' = 'ordinary',
     discovery?: RecallDiscoveryCues,
+    readControl: MemoryReadControl = {},
   ): Promise<AttentionCandidate[]> {
     const generation = this.service.generation;
     const repository = this.service.store.memories;
@@ -1145,6 +1147,12 @@ export class RecallService {
           : undefined,
       preparation?.conversation.sources.map((source) => source.id),
       preparation?.bodies,
+      {
+        signal,
+        get deadlineMs() {
+          return readControl.deadlineMs;
+        },
+      },
     );
     signal.throwIfAborted();
     if ((await this.service.store.records?.head())?.generation !== scope.generation)

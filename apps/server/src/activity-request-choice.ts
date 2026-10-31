@@ -119,6 +119,10 @@ export interface NamedActivityDeadline {
   name: string;
   at: number;
 }
+export type ActivityRequestChoiceReader = (
+  field: string,
+  parameters: Readonly<Record<string, Scalar>>,
+) => readonly ActivityRequestChoiceFact[];
 // Choice permits 255 options; abstention occupies two. Eight rounds cover the full
 // safe integer range while bounding dependent judgments; this is not a paid retry.
 // docs/projects/parallel-batch-01-playable-week/camp-activities.md#who-chooses-the-work
@@ -170,6 +174,14 @@ function compatibleChoices(
       ? [{ choice, reference }]
       : [];
   });
+}
+function usesChoiceFacts(field: Field): boolean {
+  return (
+    field.type === 'entity' ||
+    field.type === 'definition' ||
+    (field.type === 'choice' &&
+      (!!field.discovery || !!activityRequestFieldDependencies(field).length))
+  );
 }
 function integerBounds(field: Field): [number, number] | undefined {
   const minimum = field.minimum ?? Number.MIN_SAFE_INTEGER;
@@ -229,11 +241,7 @@ function fieldSelection(
     return bounds && { kind: 'integer', minimum: bounds[0], maximum: bounds[1], offset: 0 };
   }
   let options: Option[];
-  if (
-    field.type === 'choice' &&
-    !field.discovery &&
-    !activityRequestFieldDependencies(field).length
-  )
+  if (field.type === 'choice' && !usesChoiceFacts(field))
     options = field.choices.map((choice) => ({ label: choice.label, result: choice.value }));
   else if (field.type === 'entity' || field.type === 'definition' || field.type === 'choice') {
     options = compatibleChoices(descriptor, name, field, choices, parameters).map(
@@ -321,7 +329,7 @@ export async function chooseActivityRequest({
   namedDeadlines,
   state,
   judge,
-  resolveChoices,
+  prepareChoices,
 }: {
   descriptor: ActivityRequestDescriptor;
   choices: readonly ActivityRequestChoiceFact[];
@@ -329,12 +337,12 @@ export async function chooseActivityRequest({
   namedDeadlines: readonly NamedActivityDeadline[];
   state: unknown;
   judge: (request: Omit<JudgeRequest, 'requestId' | 'signal'>) => Promise<JudgeValue>;
-  /** Scoped native role read; no model call. Returned references must remain within
-   * this decision's captured disclosure and exact binding set. */
-  resolveChoices?: (
-    field: string,
+  /** Validate once after each judgment, then capture a synchronous native reader
+   * for the whole dependency frontier. References and time anchors remain bound
+   * to the original decision; this scope never grants later execution. */
+  prepareChoices?: (
     parameters: Readonly<Record<string, Scalar>>,
-  ) => Promise<readonly ActivityRequestChoiceFact[]>;
+  ) => Promise<ActivityRequestChoiceReader>;
 }): Promise<{ operations: ModelResponseOperation[] } | undefined> {
   if (!isSafeRecordId(descriptor.id) || !Number.isFinite(simTime) || simTime < 0) return;
   const family = descriptor.id;
@@ -342,9 +350,52 @@ export async function chooseActivityRequest({
   const pending: PendingField[] = [];
   const unresolved = new Set(Object.keys(descriptor.fields));
   for (let round = 0; unresolved.size && round < MAX_ROUNDS; round++) {
+    const readChoices = prepareChoices && (await prepareChoices(parameters));
+    // A selected parent can disappear while a dependent judgment is running.
+    // Recheck its exact reference, rather than silently choosing a replacement.
+    if (readChoices)
+      for (const [name, value] of Object.entries(parameters)) {
+        const field = descriptor.fields[name]!;
+        if (
+          usesChoiceFacts(field) &&
+          !compatibleChoices(
+            descriptor,
+            name,
+            field,
+            readChoices(name, parameters),
+            parameters,
+          ).some(({ reference }) => reference === value)
+        )
+          return;
+      }
     for (const name of unresolved) {
-      if (pending.some((field) => field.name === name)) continue;
       const field = descriptor.fields[name]!;
+      const retained = pending.find((entry) => entry.name === name);
+      if (retained) {
+        if (readChoices && usesChoiceFacts(field)) {
+          const fresh = fieldSelection(
+            descriptor,
+            name,
+            field,
+            readChoices(name, parameters),
+            simTime,
+            namedDeadlines,
+            parameters,
+          );
+          if (fresh?.kind !== 'options' || retained.selection.kind !== 'options') return;
+          const current = new Map(fresh.options.map((option) => [option.result, option]));
+          // Narrowing retains the same candidates, but cannot offer a reference
+          // that disappeared during the last judgment or repeat stale facts.
+          const refreshed: Option[] = [];
+          for (const option of retained.selection.options) {
+            const available = current.get(option.result);
+            if (!available) return;
+            refreshed.push(available);
+          }
+          retained.selection = { kind: 'options', options: refreshed };
+        }
+        continue;
+      }
       if (!isSafeRecordId(name)) return;
       if (
         activityRequestFieldDependencies(field).some(
@@ -353,10 +404,7 @@ export async function chooseActivityRequest({
       )
         continue;
       const available =
-        resolveChoices &&
-        (field.type === 'entity' || field.type === 'definition' || field.type === 'choice')
-          ? await resolveChoices(name, parameters)
-          : choices;
+        readChoices && usesChoiceFacts(field) ? readChoices(name, parameters) : choices;
       const selection = fieldSelection(
         descriptor,
         name,
