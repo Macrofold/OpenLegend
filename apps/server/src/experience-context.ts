@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import {
   subjectLabel,
   personalFactAlias,
@@ -823,7 +824,14 @@ export function memoryMeaningForModel(
       ? {
           experience: suppliedFields({
             eventType: evidence.eventType,
-            ...(!evidence.speech ? { text: evidence.text, content: evidence.content } : {}),
+            ...(!evidence.speech
+              ? {
+                  text: nativeText(evidence.text),
+                  ...(evidence.content !== undefined
+                    ? { content: nativeText(evidence.content) }
+                    : {}),
+                }
+              : {}),
             modality: evidence.modality,
             ...(evidence.sound
               ? { sound: soundForModel(frame, evidence.sound, historyHandle) }

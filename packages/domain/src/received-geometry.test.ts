@@ -1,3 +1,4 @@
+import { currentFacetGrant } from './perception-current.js';
 import { temporalChunkReceipts, temporalChunkReferences } from './temporal-frames.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as worldComposition from './world-composition.js';
@@ -1008,13 +1009,18 @@ describe('native received relation producers', () => {
     const interrupted = JSON.parse(JSON.stringify(world)) as WorldState;
     const witness = Object.values(interrupted.perceptionEvidence![PLAYER_ID]!.current).find(
       (lease) =>
-        lease.value.kind === 'body' && lease.exposure === attention.latches[key]!.witnessId,
+        lease.value.kind === 'body' &&
+        currentFacetGrant(interrupted.perceptionEvidence![PLAYER_ID]!, lease).exposure ===
+          attention.latches[key]!.witnessId,
     )!;
     expect(witness).toBeDefined();
     interrupted.simTime = deadline + 15;
     setSpatialPosition(
       interrupted,
-      entityGet(interrupted.entities, witness.subjectId)!,
+      entityGet(
+        interrupted.entities,
+        currentFacetGrant(interrupted.perceptionEvidence![PLAYER_ID]!, witness).subjectId,
+      )!,
       { x: 100, y: 0, z: 2 },
       null,
       { continuity: 'physical' },

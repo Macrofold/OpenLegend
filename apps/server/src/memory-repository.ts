@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import {
   newTemporalSourceWatch,
   temporalWatchChanges,
@@ -12,6 +13,8 @@ import {
   type DerivedMemoryAllowance,
 } from './memory-derivatives.js';
 import { prepareAccountRetention } from './account-retention.js';
+import { accountObservationInputs } from './retention-record-metadata.js';
+import type { RetentionMetadataView } from './retention-metadata.js';
 import { cleanupRetiredIndividuals, releaseUnusedTemporalSupports } from './retention-cleanup.js';
 import {
   prepareSourceVersions,
@@ -397,11 +400,20 @@ export class MemoryRepository {
   stageSourceVersions(world: WorldState, plan: SourceVersionPlan | undefined) {
     if (plan) this.versionPlans.set(world, plan);
   }
+  sourceVersionPlan(world: WorldState): SourceVersionPlan | undefined {
+    return this.versionPlans.get(world);
+  }
   applySourceVersionPlan(worldId: string, revision: number, plan: SourceVersionPlan) {
     return applySourceVersions(this.db, worldId, revision, plan);
   }
-  prepareSourceVersionRetention(state: SavedWorld, changes: RecordChanges) {
-    return this.snapshot(() => prepareSourceVersions(this.db, state, changes));
+  prepareSourceVersionRetention(
+    state: SavedWorld,
+    changes: RecordChanges,
+    metadata?: RetentionMetadataView,
+  ) {
+    metadata ??= this.prepareRetentionMetadata?.(state, changes, false);
+    if (!metadata) throw new Error('Complete personal retention metadata is unavailable.');
+    return prepareSourceVersions(this.db, state, changes, metadata);
   }
   /** Establish the committed SQL source cut before a caller captures a read fence. */
   async synchronizeSources(): Promise<void> {
@@ -649,6 +661,11 @@ export class MemoryRepository {
   constructor(
     private readonly db: SqlDatabase,
     private readonly receivedAllocationBytes?: (worldId: string, id: string) => number,
+    private readonly prepareRetentionMetadata?: (
+      state: SavedWorld,
+      pending: RecordChanges | undefined,
+      complete: boolean,
+    ) => RetentionMetadataView,
   ) {
     this.lexical = new LexicalProjection(db);
     this.lexical.setDerivedAdmission((worldId, actors) => this.trimDerived(worldId, actors));
@@ -908,9 +925,18 @@ export class MemoryRepository {
     complete = false,
     pending?: RecordChanges,
     previous?: WorldState,
+    metadata?: RetentionMetadataView,
   ): Promise<PreparedMemoryRetention> {
-    return this.snapshot(async () => {
-      const accounts = await prepareAccountRetention(this.db, state, complete, pending?.deletes);
+    metadata ??= this.prepareRetentionMetadata?.(state, pending, complete);
+    if (!metadata) throw new Error('Complete personal retention metadata is unavailable.');
+    return (async () => {
+      const accounts = await prepareAccountRetention(
+        this.db,
+        state,
+        complete,
+        pending?.deletes,
+        metadata,
+      );
       const recent = await prepareTemporalRetention(
         this.db,
         accounts.state,
@@ -918,6 +944,7 @@ export class MemoryRepository {
         pending,
         previous,
         this.receivedAllocationBytes,
+        metadata,
       );
       const rows = new Map(accounts.rows);
       for (const [table, ids] of recent.rows) rows.set(table, [...(rows.get(table) ?? []), ...ids]);
@@ -933,11 +960,10 @@ export class MemoryRepository {
         (table) => rows.get(table) ?? [],
       );
       for (const actorId of retiredActors) {
-        const released = await releaseUnusedTemporalSupports(
-          this.db,
+        const released = releaseUnusedTemporalSupports(
           retained,
           actorId,
-          complete,
+          metadata,
           removedAccounts,
         );
         retained = released.state;
@@ -946,7 +972,7 @@ export class MemoryRepository {
             ...new Set([...(rows.get('mind_temporal_supports') ?? []), ...released.ids]),
           ]);
       }
-      const cleaned = await cleanupRetiredIndividuals(this.db, state, retained, rows, complete);
+      const cleaned = cleanupRetiredIndividuals(state, retained, rows, metadata);
       const positions = new Map(accounts.positions);
       for (const [table, ordinals] of recent.positions ?? []) {
         const combined = positions.get(table) ?? new Map<string, number>();
@@ -959,7 +985,7 @@ export class MemoryRepository {
         ...(positions.size ? { positions } : {}),
         ...(recent.previous ? { previous: recent.previous } : {}),
       };
-    });
+    })();
   }
   /** Revalidate selected fields and their exact physical declarations. A baseline
    * is tied to a real retained suffix, never a new observation or an older route. */
@@ -1774,18 +1800,10 @@ export class MemoryRepository {
         kind === 'memory'
           ? (value as unknown as MemoryRecord).evidence
           : (value as unknown as Awareness);
-      const originals =
-        kind === 'summary'
-          ? manifest!.observations
-          : [
-              ...((value as unknown as Awareness).observation
-                ? [(value as unknown as Awareness).observation!]
-                : []),
-              ...((value as unknown as Awareness).observations ?? []),
-              ...(kind === 'memory' && evidence?.observation ? [evidence.observation] : []),
-              ...(kind === 'memory' ? (evidence?.observations ?? []) : []),
-              ...(kind === 'memory' ? (manifest?.observations ?? []) : []),
-            ];
+      const { originals, learning } = accountObservationInputs({
+        source: kind,
+        value,
+      } as unknown as ExperienceEntry);
       const places =
         kind === 'awareness'
           ? exposure?.kind === 'place'
@@ -1819,7 +1837,9 @@ export class MemoryRepository {
         value['kind'] === 'commitment' && !value['resolved'] ? 1 : 0,
         0,
         value['sequence'] ?? 0,
-        value[kind === 'memory' ? 'summary' : 'text'] ?? '',
+        kind === 'awareness'
+          ? nativeText((value as unknown as Awareness).text)
+          : (value[kind === 'memory' ? 'summary' : 'text'] ?? ''),
         kind === 'awareness' && hasLinguisticSpeech(value as unknown as Awareness) ? 1 : 0,
         Buffer.byteLength(row.payload),
         kind === 'awareness' ? value['retentionClass'] : 'memory',
@@ -1841,10 +1861,6 @@ export class MemoryRepository {
           throw new Error('Invalid text memory source projection.');
       }
       if (kind === 'awareness') validateEventEvidence(value);
-      const learning = [
-        ...recognitionSupportSources(evidence?.recognition?.learningSupport ?? []),
-        ...observationLearningSources(originals),
-      ];
       yield {
         row,
         actorId,
@@ -3107,10 +3123,9 @@ export class MemoryRepository {
     });
   }
   private sourceTextSql(alias = 'r'): string {
-    return `COALESCE(NULLIF(${alias}.search_text,''),CASE ${alias}.source_kind
-      WHEN 'memory' THEN (SELECT m.payload::jsonb->>'summary' FROM mind_memories m WHERE m.world_id=${alias}.world_id AND m.actor_id=${alias}.actor_id AND m.id=${alias}.record_id)
-      WHEN 'summary' THEN (SELECT m.payload::jsonb->>'text' FROM mind_summaries m WHERE m.world_id=${alias}.world_id AND m.actor_id=${alias}.actor_id AND m.id=${alias}.record_id)
-      WHEN 'awareness' THEN (SELECT m.payload::jsonb->>'text' FROM mind_awareness m WHERE m.world_id=${alias}.world_id AND m.actor_id=${alias}.actor_id AND m.id=${alias}.record_id) END,'')`;
+    // The canonical source writer prepares the exact displayed text for every kind.
+    // Captured wording is rendered there; re-reading JSON here would expose grammar.
+    return `${alias}.search_text`;
   }
   /** Read-only owner/inspector browse, newest first by (time, id, source kind). A search or
    * the private-thoughts filter examines at most `scan` eligible rows and matches only

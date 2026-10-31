@@ -1,3 +1,4 @@
+import { currentFacetGrant } from './perception-current.js';
 import { temporalChunkReceipts, temporalChunkReferences } from './temporal-frames.js';
 import { expect, it } from 'vitest';
 import { freeze } from 'immer';
@@ -896,8 +897,12 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
   );
   expect(motion.value.kind === 'observed-motion' && motion.value.earlier.confirmedThrough).toBe(3);
   expect(
-    cut.current.find((f) => f.exposure.episodeId === raw.exposure && f.value.kind === 'body')!
-      .valueMeasuredThrough,
+    cut.current.find(
+      (f) =>
+        f.exposure.episodeId ===
+          currentFacetGrant(world.perceptionEvidence![PLAYER_ID]!, raw).exposure &&
+        f.value.kind === 'body',
+    )!.valueMeasuredThrough,
   ).toBe(originalTime);
   world.simTime = 5;
   setSpatialPosition(world, npc, { x: 100, y: 0, z: 2 }, worldSupport(npc), {

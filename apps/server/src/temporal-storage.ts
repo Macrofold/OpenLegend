@@ -34,6 +34,7 @@ import {
   receivedObservationValueReferences,
   receivedFacetValueReferences,
   currentOriginal,
+  currentFacetGrant,
   currentFacetOriginal,
   recordMapChangesBetween,
   referencedReceivedValues,
@@ -56,6 +57,7 @@ import type { SavedWorld, SqlDatabase } from './store.js';
 import type { MemoryScope } from './memory-repository.js';
 import type { SourceVersionPlan } from './source-version-retention.js';
 import type { RecordChanges } from './world-records.js';
+import type { RetentionMetadataView } from './retention-metadata.js';
 import { countMetric } from './performance.js';
 
 const maximumPreparation = 4 * 1024 * 1024;
@@ -219,11 +221,14 @@ export function receivedValueReleaseCandidates(
       if (owner.current !== current?.current)
         for (const [key, lease] of Object.entries(owner.current)) {
           const next = current?.current[key];
-          if (lease.original === next?.original && lease.value === next?.value) continue;
+          const original = currentFacetGrant(owner, lease).original;
+          const nextOriginal =
+            next && current ? currentFacetGrant(current, next).original : undefined;
+          if (original === nextOriginal && lease.value === next?.value) continue;
           const beforeRefs = receivedFacetValueReferences(lease.value),
             afterRefs = next ? receivedFacetValueReferences(next.value) : [];
           if (
-            lease.original !== next?.original ||
+            original !== nextOriginal ||
             beforeRefs.length !== afterRefs.length ||
             beforeRefs.some(
               (reference, index) =>
@@ -579,7 +584,10 @@ export async function prepareTemporalRetention(
   pending?: RecordChanges,
   previous?: WorldState,
   allocationBytes?: (worldId: string, id: string) => number,
+  retainedMetadata?: RetentionMetadataView,
 ): Promise<PreparedMemoryRetention> {
+  if (!retainedMetadata)
+    throw new MemoryRetentionError('Complete personal retention metadata is unavailable.');
   const nominated = nominateReleasedReceivedValues(
     previous,
     state.world,
@@ -624,12 +632,17 @@ export async function prepareTemporalRetention(
     const metadata = new Map<string, ChunkMetadata>();
     for (const row of complete
       ? []
-      : await db
-          .prepare(
-            `SELECT id,position,encoded_bytes,source_id,first_at,last_at,first_order,receipt_epoch,first_ordinal,logical_bytes,receipt_count,source_refs
-      FROM mind_temporal_chunks_read WHERE world_id=? AND actor_id=? ORDER BY first_at,first_order,receipt_epoch,first_ordinal LIMIT ?`,
+      : retainedMetadata
+        ? [...retainedMetadata.rows('mind_temporal_chunks', actorId)].map<Record<string, unknown>>(
+            (row) => ({
+              ...row.columns,
+              id: row.id,
+              position: row.position,
+              encoded_bytes: row.encodedBytes,
+              source_refs: [] as string[],
+            }),
           )
-          .all(state.world.id, actorId, maximumRows + 1))
+        : [])
       metadata.set(String(row['source_id']), {
         id: String(row['id']),
         position: Number(row['position']),
@@ -639,7 +652,7 @@ export async function prepareTemporalRetention(
         through: Number(row['last_at']),
         bytes: Number(row['logical_bytes']),
         count: Number(row['receipt_count']),
-        sources: row['source_refs'] as string[],
+        sources: retainedMetadata ? [] : (row['source_refs'] as string[]),
         order: Number(row['first_order']),
         epoch: String(row['receipt_epoch']),
         ordinal: Number(row['first_ordinal']),
@@ -702,6 +715,10 @@ export async function prepareTemporalRetention(
       removedCount += chunk.count;
       through = Math.max(through, chunk.through);
       for (const source of chunk.sources) possibleSources.add(source);
+      if (retainedMetadata)
+        for (const segment of retainedMetadata.segments(chunk.id))
+          for (const source of segment.columns['source_refs'] as string[])
+            possibleSources.add(source);
     }
     if (
       (bytes > policy.maxBytes || count > policy.maxChanges) &&

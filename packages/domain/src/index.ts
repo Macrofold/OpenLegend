@@ -238,6 +238,10 @@ export {
 } from './worlds/base/fire.js';
 export {
   personalText,
+  nativeText,
+  validateNativeText,
+  type NativeText,
+  type CapturedNarration,
   person,
   presentVerb,
   subjectNarration,

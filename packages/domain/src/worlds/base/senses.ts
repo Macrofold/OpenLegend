@@ -1,4 +1,27 @@
 import type { SenseDefinition } from '../../perception.js';
+import { person, type Narration } from '../../narration.js';
+
+/** Native sight wording stays world-authored; names bind to the received moment. */
+export function sightingNarration(
+  observerId: string,
+  subjectId: string,
+  detail?: string,
+  departed = false,
+): Narration {
+  return {
+    parts: [
+      person(observerId),
+      ' ',
+      departed ? 'lost sight of ' : detail ? 'noticed ' : 'saw ',
+      {
+        entityId: subjectId,
+        role: 'name',
+        article: departed || detail ? 'definite' : 'indefinite',
+      },
+      !departed && detail ? `: ${detail}.` : '.',
+    ],
+  };
+}
 
 export const PERCEPTION_RULES = { sightRadius: 28 } as const;
 /** One aligned ordinary-sight policy keeps broad discovery, detailed sampling and

@@ -10,6 +10,7 @@ import {
   currentFacetOriginal,
   currentFacetTimes,
   currentFacetExposure,
+  currentFacetGrant,
   receivedBodyParts,
   publicAttributeMeanings,
   receivedFacetValue,
@@ -331,11 +332,16 @@ function descriptionInputKey(owner: PerceptionEvidenceOwner, id: string): string
     }),
   );
 }
+interface DescriptionMeaning {
+  next: WeakMap<object, DescriptionMeaning>;
+  value?: string;
+}
+const descriptionMeanings = new WeakMap<object, DescriptionMeaning>();
+const absentDescriptionInput = Object.freeze({});
 function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: string): string {
   // A new receipt can measure the same appearance at another position. Receipt
   // identity is provenance; it must not invent new descriptive novelty.
   const current = readOnlyDraftView(owner.current);
-  countDomainWork('attentionDescriptionPreparations');
 
   const facet = (kind: string) => {
     const lease = current[`${id}:${kind}`];
@@ -350,7 +356,33 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
     appearance = parts && readOnlyDraftView(parts.details);
   const description = facet('description'),
     association = facet('association'),
-    attributes = facet('public-attributes');
+    attributes = facet('public-attributes'),
+    carried = facet('carried');
+  // Source-only pose/receipt changes preserve these actual received fragments.
+  // Share their descriptive meaning across compatible receivers without retaining
+  // a world or treating a comparison cache as a new acquisition or identity grant.
+  const inputs = [description, carried, attributes, association];
+  const reusable =
+    appearance &&
+    isImmutableData(appearance) &&
+    inputs.every((input) => input === undefined || isImmutableData(input));
+  let prepared: DescriptionMeaning | undefined;
+  if (reusable) {
+    let node: DescriptionMeaning = descriptionMeanings.get(appearance) ?? { next: new WeakMap() };
+    descriptionMeanings.set(appearance, node);
+    for (const input of inputs) {
+      const key = input ?? absentDescriptionInput;
+      let next: DescriptionMeaning | undefined = node.next.get(key);
+      if (!next) node.next.set(key, (next = { next: new WeakMap() }));
+      node = next;
+    }
+    prepared = node;
+  }
+  if (prepared?.value !== undefined) {
+    countDomainWork('attentionDescriptionReuses');
+    return prepared.value;
+  }
+  countDomainWork('attentionDescriptionPreparations');
   const value = JSON.stringify(
     [
       appearance
@@ -368,7 +400,7 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
             storage: !!appearance!.storage,
           }
         : null,
-      facet('carried') ?? null,
+      carried ?? null,
       attributes?.kind === 'public-attributes'
         ? { kind: attributes.kind, attributes: publicAttributeMeanings(attributes) }
         : null,
@@ -378,6 +410,7 @@ function descriptions(world: WorldState, owner: PerceptionEvidenceOwner, id: str
     ],
     (_key, value) => (value && typeof value === 'object' ? readOnlyDraftView(value) : value),
   );
+  if (prepared) prepared.value = value;
   return value;
 }
 function rank(a: AttentionCandidate, b: AttentionCandidate) {
@@ -488,7 +521,7 @@ export function updateAttention(
             ...Object.values(readOnlyDraftView(owner.current))
               .map((lease) => readOnlyDraftView(lease))
               .filter((lease) => lease.value.kind === 'body')
-              .map((lease) => lease.subjectId),
+              .map((lease) => currentFacetGrant(owner, lease).subjectId),
             ...Object.values(readOnlyDraftView(state.candidates)).map(
               (candidate) => candidate.sourceId,
             ),

@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import { entityGet, entityHas } from '@open-legend/domain';
 import { accessiblePossession, worldPosition } from '@open-legend/domain';
 import {
@@ -52,7 +53,7 @@ export function responseTrigger(
     if (!aware.speech) throw new Error('Speech is missing its committed listener perspective.');
     return `${triggerKind === 'addressed_speech' ? 'Addressed speech (to me)' : triggerKind === 'self_event' ? 'My own speech' : 'Nearby speech'}: ${speechDescription(aware.speech, { observerId: actorId, targetId: aware.targetId })} ${time}`;
   }
-  return `${triggerKind === 'directed_action' ? 'Action directed at me' : aware.modality === 'internal' ? 'Internal change' : 'World change'}: ${aware.content ?? aware.text} ${time}`;
+  return `${triggerKind === 'directed_action' ? 'Action directed at me' : aware.modality === 'internal' ? 'Internal change' : 'World change'}: ${nativeText(aware.content ?? aware.text)} ${time}`;
 }
 
 /** Present event-time attribution alongside current perception, without filling unknown roles. */

@@ -1,3 +1,4 @@
+import { currentFacetGrant } from '@open-legend/domain';
 import { z } from 'zod';
 import {
   captureEvidenceCut,
@@ -907,12 +908,14 @@ export function captureSituation(
   const salientFacts = new Set<string>();
   const detailIds = new Set(entries.map((entry) => entry.sourceId));
   const owner = world.perceptionEvidence?.[actorId];
-  const sourceByFact = new Map(
-    Object.values(owner?.current ?? {}).map((record) => [record.id, record.subjectId]),
-  );
-  const sourceByExposure = new Map(
-    Object.values(owner?.current ?? {}).map((record) => [record.exposure, record.subjectId]),
-  );
+  const sourceByFact = new Map<string, string>();
+  const sourceByExposure = new Map<string, string>();
+  if (owner)
+    for (const record of Object.values(owner.current)) {
+      const grant = currentFacetGrant(owner, record);
+      sourceByFact.set(record.id, grant.subjectId);
+      sourceByExposure.set(grant.exposure, grant.subjectId);
+    }
   const currentBySource = new Map<string, CapturedCurrentFacet[]>();
   for (const fact of cut.current) {
     // Derived reads retain their real exposure but need no saved duplicate lease.

@@ -1,4 +1,5 @@
 import { equippedItem } from '../../equipment.js';
+import { nativeText } from '../../narration.js';
 import type { WorldEvent, WorldState } from '../../types.js';
 
 /** Bundled playtest goals, not universal world progression. External-world composition
@@ -61,7 +62,8 @@ export function basePlaytestMilestones(
       id: 'eat',
       label: 'Cook and eat a meal',
       done: events.some(
-        (event) => event.type === 'ate' && event.actorId === actorId && /meat/i.test(event.text),
+        (event) =>
+          event.type === 'ate' && event.actorId === actorId && /meat/i.test(nativeText(event.text)),
       ),
     },
     {

@@ -1,3 +1,4 @@
+import { currentFacetGrant } from '@open-legend/domain';
 import { createHmac, randomBytes } from 'node:crypto';
 import {
   accessiblePossession,
@@ -292,6 +293,7 @@ export function physicalContactReference(
 /** Select only this observer's active bodies or learned associations, never all world IDs.
  * Resolving an opaque reference grants its exact role; native admission still checks use. */
 function contactTargetResolver(world: WorldState, scope: RequestScope, communication = false) {
+  const owner = world.perceptionEvidence?.[scope.actorId];
   let bodies: Map<string, string> | undefined,
     parts: Map<string, string> | undefined,
     people: Map<string, string> | undefined;
@@ -301,32 +303,28 @@ function contactTargetResolver(world: WorldState, scope: RequestScope, communica
     if (reference.startsWith('contact-')) {
       if (!bodies) {
         bodies = new Map();
-        for (const lease of Object.values(
-          world.perceptionEvidence?.[scope.actorId]?.current ?? {},
-        )) {
-          if (lease.value.kind !== 'body') continue;
-          const entity = entityGet(world.entities, lease.subjectId);
-          if (entity && currentBodyGrant(world, scope.actorId, entity.id))
-            bodies.set(currentContactReference(world, scope, entity), entity.id);
-        }
+        if (owner)
+          for (const lease of Object.values(owner.current)) {
+            if (lease.value.kind !== 'body') continue;
+            const entity = entityGet(world.entities, currentFacetGrant(owner, lease).subjectId);
+            if (entity && currentBodyGrant(world, scope.actorId, entity.id))
+              bodies.set(currentContactReference(world, scope, entity), entity.id);
+          }
       }
       selected = bodies;
     } else if (reference.startsWith('part-')) {
       if (!parts) {
         parts = new Map();
-        for (const lease of Object.values(
-          world.perceptionEvidence?.[scope.actorId]?.current ?? {},
-        )) {
-          if (
-            lease.value.kind !== 'body' ||
-            !currentBodyGrant(world, scope.actorId, lease.subjectId)
-          )
-            continue;
-          const value = receivedFacetValue(world, lease.value);
-          if (value?.kind !== 'body') continue;
-          for (const part of value.body.assembly?.parts ?? [])
-            parts.set(assemblyPartReference(world, scope, lease.subjectId, part.id), part.id);
-        }
+        if (owner)
+          for (const lease of Object.values(owner.current)) {
+            if (lease.value.kind !== 'body') continue;
+            const subjectId = currentFacetGrant(owner, lease).subjectId;
+            if (!currentBodyGrant(world, scope.actorId, subjectId)) continue;
+            const value = receivedFacetValue(world, lease.value);
+            if (value?.kind !== 'body') continue;
+            for (const part of value.body.assembly?.parts ?? [])
+              parts.set(assemblyPartReference(world, scope, subjectId, part.id), part.id);
+          }
       }
       selected = parts;
     } else if (communication && reference.startsWith('person-')) {

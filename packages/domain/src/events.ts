@@ -1,9 +1,20 @@
 import { acquireNativeResponseEvent, acquireNativeSound } from './native-response-controller.js';
 import { entityGet } from './entity-collection.js';
 import { observeEvent } from './event-observation.js';
-import { acquireAwarenessObservation, acquireOrdinaryWarning } from './perception-evidence.js';
+import {
+  acquireAwarenessObservation,
+  acquireOrdinaryWarning,
+  deferAwarenessObservation,
+} from './perception-evidence.js';
 import { reconcileCoaching } from './coaching.js';
-import { renderNarration, subjectNarration, personalText, type Narration } from './narration.js';
+import {
+  renderNarration,
+  subjectNarration,
+  personalText,
+  capturedNarration,
+  type Narration,
+  type CapturedNarration,
+} from './narration.js';
 import { namePhrase } from '@open-legend/language';
 import { countDomainWork } from './diagnostic-counters.js';
 import { activeActivity } from './action-experience.js';
@@ -12,7 +23,7 @@ import { externalAudience } from './event-audience.js';
 import { worldPosition } from './spatial-state.js';
 import { current, isDraft } from 'immer';
 import {
-  observerDescription,
+  observerName,
   recognizesSubject,
   learnSpeechIntroduction,
 } from './worlds/base/knowledge.js';
@@ -33,7 +44,7 @@ import { recordSpokenPromise, advanceCommitments } from './commitments.js';
 import { nextId } from './data.js';
 import { MIND_LIMITS, byteCount } from './mind.js';
 import { selectedSocialPolicy } from './social-policy.js';
-import { selectedEventDisclosure } from './world-composition.js';
+import { selectedEventDisclosure, selectedSightingNarration } from './world-composition.js';
 import { activelyParticipates } from './participation-state.js';
 import { acquireCombatObservation } from './combat-encounters.js';
 import type {
@@ -286,22 +297,18 @@ export function encounterEmitter(world: WorldState, events: WorldEvent[]) {
       owner = source.id;
     }
     // Describe a departing subject before its episode ends, so recognition is event-time.
-    const subject = observerDescription(
-      world,
-      source.id,
-      targetId,
-      departed || detail ? 'definite' : 'indefinite',
+    const wording = capturedNarration(
+      selectedSightingNarration(world, source.id, targetId, detail, departed),
+      new Map([
+        [source.id, source],
+        [targetId, observerName(world, source.id, targetId)],
+      ]),
     );
-    const observed = departed
-      ? `lost sight of ${subject}.`
-      : detail
-        ? `noticed ${subject}: ${detail}.`
-        : `saw ${subject}.`;
     const event = recordEvent(
       world,
       events,
       'encounter',
-      subjectNarration(source, observed),
+      wording,
       [source.id],
       source,
       targetId,
@@ -327,7 +334,7 @@ function recordEvent(
   world: WorldState,
   events: WorldEvent[],
   type: string,
-  narration: string | Narration,
+  narration: string | Narration | CapturedNarration,
   audience: string[],
   source: Entity | undefined,
   targetId: string | undefined,
@@ -338,7 +345,10 @@ function recordEvent(
   origin?: WorldEvent['origin'],
   receivedPoint?: WorldEvent['origin'],
 ): WorldEvent {
-  const text = typeof narration === 'string' ? narration : renderNarration(world, narration);
+  const text =
+    typeof narration === 'string' || 'kind' in narration
+      ? narration
+      : renderNarration(world, narration);
   const boundedMetric = (value: unknown, fallback: number) =>
     typeof value === 'number' && Number.isFinite(value)
       ? Math.max(0, Math.min(10, value))
@@ -388,7 +398,7 @@ function recordEvent(
     at: world.simTime,
     type,
     text,
-    ...(typeof narration !== 'string' ? { narration } : {}),
+    ...(typeof narration !== 'string' && !('kind' in narration) ? { narration } : {}),
     audience: [...audience],
     importance,
     urgency,
@@ -530,7 +540,8 @@ function recordEvent(
           ? { change: data['change'] }
           : {}),
       };
-      awareness.observation = acquireAwarenessObservation(world, event, awareness, receivedPoint);
+      if (!awarenessBatch || !deferAwarenessObservation(world, event, awareness))
+        awareness.observation = acquireAwarenessObservation(world, event, awareness, receivedPoint);
       acquired.push(awareness);
     }
   }

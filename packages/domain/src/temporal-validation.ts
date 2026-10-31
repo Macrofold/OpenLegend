@@ -104,11 +104,17 @@ function validateFrameEntries(chunk: import('./temporal-evidence.js').TemporalCh
     if (entry.kind === 'dictionary') {
       if (
         !hasRecordFields(entry, ['ordinal', 'kind', 'value']) ||
-        !record(entry.value) ||
-        !hasRecordFields(entry.value, ['kind', 'value']) ||
+        !Array.isArray(entry.value) ||
+        entry.value.length !== 2
+      )
+        throw new Error('Invalid temporal declaration.');
+      const stored = entry.value,
+        value = stored[1];
+      if (
         ![
           'text',
           'identity',
+          'sourceIdentity',
           'source',
           'fact',
           'proof',
@@ -116,33 +122,29 @@ function validateFrameEntries(chunk: import('./temporal-evidence.js').TemporalCh
           'reception',
           'detail',
           'view',
-        ].includes(entry.value.kind)
+        ].includes(stored[0])
       )
-        throw new Error('Invalid temporal declaration.');
-      const stored = entry.value;
+        throw new Error('Invalid temporal declaration kind.');
+      if (['sourceIdentity', 'source', 'fact', 'proof', 'detail'].includes(stored[0])) {
+        if (!Array.isArray(value)) throw new Error('Invalid flat temporal declaration.');
+        const lengths = {
+          sourceIdentity: [2, 3],
+          source: [2, 2],
+          fact: [2, 2],
+          proof: [4, 5],
+          detail: [4, 4],
+        } as const;
+        const bounds = lengths[stored[0] as keyof typeof lengths];
+        if (value.length < bounds[0] || value.length > bounds[1])
+          throw new Error('Invalid flat temporal declaration length.');
+      }
       if (
-        stored.kind === 'fact' &&
-        (!record(stored.value) ||
-          !hasRecordFields(stored.value, ['source', 'ordinal']) ||
-          !ordinal(stored.value.ordinal))
+        stored[0] === 'sourceIdentity' &&
+        (typeof stored[1][0] !== 'string' || typeof stored[1][1] !== 'string' || !stored[1][1])
       )
-        throw new Error('Invalid temporal fact declaration.');
-      if (
-        stored.kind === 'proof' &&
-        (!record(stored.value) ||
-          !hasRecordFields(
-            stored.value,
-            ['original', 'confirmation', 'confirmedFrom', 'confirmedThrough'],
-            ['aliases'],
-          ))
-      )
-        throw new Error('Invalid temporal proof declaration.');
-      if (
-        stored.kind === 'detail' &&
-        (!record(stored.value) ||
-          !hasRecordFields(stored.value, ['proof', 'from', 'through', 'acquiredAt']))
-      )
-        throw new Error('Invalid temporal detail declaration.');
+        throw new Error('Invalid temporal source identity.');
+      if (stored[0] === 'fact' && !ordinal(stored[1][1]))
+        throw new Error('Invalid temporal fact ordinal.');
       for (const dependency of temporalDictionaryDependencies(entry)) {
         if (!ordinal(dependency.ordinal))
           throw new Error('Invalid temporal dictionary dependency.');
@@ -227,53 +229,50 @@ function validateFrameEntries(chunk: import('./temporal-evidence.js').TemporalCh
           ? entry.subjects.flatMap((group) => {
               if (
                 !record(group) ||
-                !hasRecordFields(group, ['subject', 'fields']) ||
+                !hasRecordFields(group, ['subject', 'fields'], ['context']) ||
                 !ordinal(group.subject) ||
                 !Array.isArray(group.fields) ||
                 !group.fields.length
               )
                 throw new Error('Invalid temporal confirmation group.');
               used.add(group.subject);
+              if (group.context) {
+                if (
+                  !Array.isArray(group.context) ||
+                  group.context.length !== 3 ||
+                  group.context.some(
+                    (value, at) => value !== null && (at === 0 ? !ordinal(value) : !finite(value)),
+                  )
+                )
+                  throw new Error('Invalid temporal confirmation context.');
+                if (group.context[0] !== null) used.add(group.context[0]);
+              }
+              if (
+                group.fields.some(
+                  (field) => field[1] == null || (field[2] == null && group.context?.[0] == null),
+                )
+              )
+                throw new Error('Missing actual temporal confirmation binding.');
               return group.fields;
             })
           : entry.facets;
       for (const facet of fields) {
         if (
-          !record(facet) ||
-          !hasRecordFields(
-            facet,
-            entry.kind === 'confirmation' ? ['value', 'original', 'source'] : ['value'],
-            entry.kind === 'confirmation'
-              ? ['pose', 'reception', 'from', 'through', 'details', 'ordinal']
-              : [
-                  'pose',
-                  'poseFrame',
-                  'ordinal',
-                  'role',
-                  'at',
-                  'from',
-                  'through',
-                  'acquired',
-                  'confirmed',
-                  'original',
-                  'source',
-                  'support',
-                  'reception',
-                  'details',
-                ],
-          ) ||
-          (facet.pose !== undefined && facet.reception !== undefined)
+          !Array.isArray(facet) ||
+          facet.length < 1 ||
+          facet.length > 15 ||
+          (facet[4] != null && facet[5] != null)
         )
           throw new Error('Invalid packed temporal field.');
         for (const field of TEMPORAL_FACET_REFERENCE_FIELDS)
-          if (facet[field] !== undefined) {
+          if (facet[field] != null) {
             const reference = facet[field];
             if (!Array.isArray(reference) || reference.length !== 2 || !reference.every(ordinal))
               throw new Error('Invalid temporal value address.');
             used.add(reference[0]);
           }
         for (const field of TEMPORAL_FACET_DICTIONARY_FIELDS)
-          if (facet[field] !== undefined) {
+          if (facet[field] != null) {
             if (!ordinal(facet[field])) throw new Error('Invalid temporal dictionary address.');
             used.add(facet[field]);
           }
@@ -284,7 +283,7 @@ function validateFrameEntries(chunk: import('./temporal-evidence.js').TemporalCh
   for (const entry of chunk.entries)
     for (const dependency of temporalDictionaryDependencies(entry)) {
       const target = entries.get(dependency.ordinal);
-      if (target?.kind !== 'dictionary' || target.value.kind !== dependency.kind)
+      if (target?.kind !== 'dictionary' || target.value[0] !== dependency.kind)
         throw new Error('Invalid typed temporal dictionary dependency.');
     }
   if (

@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import { experienceEntries, type WorldState, type ExperienceEntry } from '@open-legend/domain';
 import type { GodMemoryEditorEntry } from '@open-legend/protocol';
 import { digest } from './store.js';
@@ -68,7 +69,7 @@ export function formatMemoryEntry(entry: ExperienceEntry): GodMemoryEditorEntry 
       ...common,
       source: entry.source,
       label: 'Raw',
-      text: value.text,
+      text: nativeText(value.text),
       tags: [value.modality, ...(value.recognized ? ['recognized'] : []), ...value.entityIds],
       eventType: value.eventType ?? value.modality,
     };

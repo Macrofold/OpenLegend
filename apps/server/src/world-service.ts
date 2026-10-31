@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import {
   retentionNeedsPreparation,
   receivedValueReleaseCandidates,
@@ -6374,7 +6375,7 @@ export class WorldService {
       ).map((event) => ({
         id: event.id,
         type: event.type,
-        text: event.text,
+        text: nativeText(event.text),
         time: event.at,
         actors: [event.actorId, event.targetId].filter((value): value is string => !!value),
         hash: digest(event),

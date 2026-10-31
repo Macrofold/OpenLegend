@@ -1,3 +1,4 @@
+import { currentFacetGrant } from '@open-legend/domain';
 import { entityGet, entityHas } from '@open-legend/domain';
 import {
   activityRequestHost,
@@ -256,15 +257,15 @@ export function activityChoicePage(
   const inspection = currentInventoryInspection(world, scope.actorId);
   // Membership uses small lease proofs; copy exact measured detail only for a
   // returned choice. Selected/owned reads do not enumerate unrelated bodies.
+  const owner = world.perceptionEvidence?.[scope.actorId];
   const observed =
-    source === 'spatial' && !request.selectedId
-      ? Object.values(world.perceptionEvidence?.[scope.actorId]?.current ?? {})
-          .filter(
-            (lease) =>
-              lease.value.kind === 'body' &&
-              currentBodyGrant(world, scope.actorId, lease.subjectId),
-          )
-          .map((lease) => ({ id: lease.subjectId, leaseId: lease.id }))
+    source === 'spatial' && !request.selectedId && owner
+      ? Object.values(owner.current)
+          .flatMap((lease) => {
+            if (lease.value.kind !== 'body') return [];
+            const id = currentFacetGrant(owner, lease).subjectId;
+            return currentBodyGrant(world, scope.actorId, id) ? [{ id, leaseId: lease.id }] : [];
+          })
           .sort((a, b) => a.id.localeCompare(b.id))
       : [];
   const relatedBodies = [request.selectedId, request.sourceId, request.witnessId]

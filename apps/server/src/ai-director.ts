@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import { readableDecisionContext } from './response-context.js';
 import { entityHandle } from './entity-references.js';
 import { situationProposalBinding, situationResponseCapabilities } from './situation-context.js';
@@ -2701,7 +2702,7 @@ export class AiDirector {
         importance: entry.importance,
         urgency: entry.urgency ?? 0,
         triggerKind: entry.triggerKind,
-        text: entry.text,
+        text: nativeText(entry.text),
       });
     }
     return interruptions.reverse();

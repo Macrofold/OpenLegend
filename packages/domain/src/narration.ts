@@ -1,5 +1,5 @@
 import { entityGet } from './entity-collection.js';
-import { isSafeRecordId, hasRecordFields } from './records.js';
+import { isSafeRecordId, hasRecordFields, isImmutableData } from './records.js';
 import {
   namePhrase,
   personPhrase,
@@ -8,6 +8,7 @@ import {
   type PersonRole,
   type Named,
   type NameArticle,
+  validName,
 } from '@open-legend/language';
 import { observerName } from './worlds/base/knowledge.js';
 import type { Entity, WorldState } from './types.js';
@@ -25,6 +26,78 @@ export type NarrationPart =
  * docs/projects/compelling-characters-tech-design.md#shared-personal-presentation */
 export interface Narration {
   parts: NarrationPart[];
+}
+/** Saved event-time grammar and permitted names. Rendering never looks up a later
+ * entity or upgrades an unfamiliar participant with newly learned identity. */
+export interface CapturedNarration {
+  kind: 'captured-narration';
+  narration: Narration;
+  names: Record<string, Named>;
+  selfId?: string;
+  person: 'first' | 'second' | 'third';
+}
+export type NativeText = string | CapturedNarration;
+const renderedNativeText = new WeakMap<CapturedNarration, string>();
+export function nativeText(value: NativeText): string {
+  if (typeof value === 'string') return value;
+  const reusable = isImmutableData(value);
+  const held = reusable && renderedNativeText.get(value);
+  if (held !== false && held !== undefined) return held;
+  const text = renderNarrationParts(
+    value.narration,
+    { selfId: value.selfId, names: new Map(Object.entries(value.names)) },
+    value.person,
+  );
+  if (reusable) renderedNativeText.set(value, text);
+  return text;
+}
+/** Capture permitted names once at the acquisition boundary. Literal strings
+ * and quotations remain literal; this helper never reparses their contents. */
+export function capturedNarration(
+  narration: Narration,
+  names: ReadonlyMap<string, Named>,
+  selfId?: string,
+): CapturedNarration {
+  return {
+    kind: 'captured-narration',
+    narration,
+    names: Object.fromEntries(
+      [...names].map(([id, value]) => [
+        id,
+        {
+          name: value.name,
+          ...(value.nameForm ? { nameForm: value.nameForm } : {}),
+          ...(value.indefiniteArticle ? { indefiniteArticle: value.indefiniteArticle } : {}),
+        },
+      ]),
+    ),
+    ...(selfId ? { selfId } : {}),
+    person: selfId ? 'first' : 'third',
+  };
+}
+export function validateNativeText(value: unknown): asserts value is NativeText {
+  if (typeof value === 'string') return;
+  if (
+    !hasRecordFields(value, ['kind', 'narration', 'names', 'person'], ['selfId']) ||
+    value.kind !== 'captured-narration' ||
+    !['first', 'second', 'third'].includes(String(value.person)) ||
+    (value.selfId !== undefined && !isSafeRecordId(value.selfId)) ||
+    !value.names ||
+    typeof value.names !== 'object' ||
+    Array.isArray(value.names) ||
+    Object.entries(value.names).some(([id, name]) => !isSafeRecordId(id) || !validName(name))
+  )
+    throw new Error('Invalid captured native wording.');
+  validateNarration(value.narration);
+  const names = value.names;
+  if (
+    value.narration.parts.some(
+      (part) =>
+        typeof part !== 'string' &&
+        !Object.hasOwn(names, 'verb' in part ? part.subjectId : part.entityId),
+    )
+  )
+    throw new Error('Captured native wording has no participant.');
 }
 export interface NarrationPerspective {
   selfId?: string;
@@ -159,8 +232,14 @@ export function narrationTemplate(
 
 /** Freeform authored/model text already belongs to its named owner. Do not guess its
  * grammar or rewrite quotations; native producers use structured narration instead. */
-export function personalText(world: WorldState, actorId: string, text: string | Narration): string {
-  return typeof text === 'string' ? text : renderNarration(world, text, actorId);
+export function personalText(
+  world: WorldState,
+  actorId: string,
+  text: NativeText | Narration,
+): string {
+  return typeof text === 'string' || 'kind' in text
+    ? nativeText(text)
+    : renderNarration(world, text, actorId);
 }
 
 /** Saved native structure is untrusted at import; validate before any observer renders it. */

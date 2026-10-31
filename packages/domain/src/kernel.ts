@@ -1,3 +1,4 @@
+import { currentFacetGrant } from './perception-current.js';
 import { effectiveBodyProfile } from './spatial-state.js';
 import type { NativeMechanicsDiscard } from './diagnostic-counters.js';
 import { referencedReceivedValues, type ReceivedValueState } from './received-values.js';
@@ -233,7 +234,7 @@ import {
   castBindingProblem,
   castSourcePin,
 } from './finite-casts.js';
-import { subjectNarration, person, presentVerb } from './narration.js';
+import { subjectNarration, person, presentVerb, nativeText } from './narration.js';
 import { prepareRecipeLearning, readRecipeRecord } from './recipe-records.js';
 import { learnRecipe } from './knowledge.js';
 import { namePhrase } from '@open-legend/language';
@@ -8841,81 +8842,79 @@ export function observeActor(
   // This is a private native menu/admission read. Eligible bodies and their
   // transforms come only from already acquired current evidence; downstream model
   // and player projections consume facets rather than these authority records.
-  const visibleEntities = Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})
-    .filter(
-      (lease) =>
-        lease.value.kind === 'body' &&
-        lease.subjectId !== actorId &&
-        (!options.visibleEntityIds || options.visibleEntityIds.has(lease.subjectId)),
+  const owner = world.perceptionEvidence?.[actorId];
+  const visibleEntities = (owner ? Object.values(owner.current) : []).flatMap((lease) => {
+    if (!owner || lease.value.kind !== 'body') return [];
+    const subjectId = currentFacetGrant(owner, lease).subjectId;
+    if (
+      subjectId === actorId ||
+      (options.visibleEntityIds && !options.visibleEntityIds.has(subjectId))
     )
-    .flatMap((lease) => {
-      const received = currentBodyObservation(world, actorId, lease.subjectId);
-      const entity = entityGet(world.entities, lease.subjectId);
-      if (!received || !entity) return [];
-      // Shape the permitted view before its one final deep copy. Cloning a private plan or
-      // long future route just to erase it wastes work proportional to invisible state.
-      // docs/architecture.md#dependencies-and-authority
-      const copy: Entity = {
-        ...entity,
-        ...observerName(world, actorId, entity.id),
-        spatial: { ...entity.spatial, heading: received.value.body.heading },
-        placement: worldPlacement(
-          received.value.body.position,
-          received.value.body.supportSurfaceId,
-        ),
-        appearance: received.value.body.appearance,
-        ...(entity.actor
-          ? {
-              actor: {
-                ...entity.actor,
-                action: entity.actor.action
-                  ? {
-                      id: entity.actor.action.id,
-                      type: entity.actor.action.type,
-                      stage: entity.actor.action.stage,
-                      strikePhase: entity.actor.action.strikePhase,
-                      remainingSeconds: entity.actor.action.remainingSeconds,
-                      totalSeconds: entity.actor.action.totalSeconds,
-                      path: [],
-                      consumed: [],
-                    }
-                  : null,
-              },
-            }
-          : {}),
-      };
-      // A visible body is evidence of its current activity, not access to its future route.
-      delete copy.spatial.flight;
-      delete copy.statusEffects;
-      delete copy.attributes;
-      delete copy.mechanismFields;
-      delete copy.declaredOwner;
-      // Seeing a bag does not disclose its private contents or packing load.
-      delete copy.container;
-      delete copy.inventoryRevision;
-      if (copy.actor?.action) {
-        delete copy.actor.action.destination;
-        delete copy.actor.action.navigation;
-        delete copy.actor.action.follow;
-      }
-      if (copy.actor) {
-        // Sparse state is owner-private; explicit permitted projections carry public values.
-        delete copy.actor.encounters;
-        delete copy.actor.attributes;
-        delete copy.actor.contacts;
-        delete copy.actor.conditions;
-        delete copy.actor.inventoryInspection;
-        delete copy.actor.combatReadyAt;
-        copy.actor.agency = seedAgency();
-        delete copy.actor.initialGoals;
-        delete copy.actor.personality;
-        delete copy.actor.backstory;
-        delete copy.actor.participation;
-        copy.actor.planGeneration = 0;
-      }
-      if (copy.resource) definitionIds.add(copy.resource.definitionId);
-      return [copy];
-    });
+      return [];
+    const received = currentBodyObservation(world, actorId, subjectId);
+    const entity = entityGet(world.entities, subjectId);
+    if (!received || !entity) return [];
+    // Shape the permitted view before its one final deep copy. Cloning a private plan or
+    // long future route just to erase it wastes work proportional to invisible state.
+    // docs/architecture.md#dependencies-and-authority
+    const copy: Entity = {
+      ...entity,
+      ...observerName(world, actorId, entity.id),
+      spatial: { ...entity.spatial, heading: received.value.body.heading },
+      placement: worldPlacement(received.value.body.position, received.value.body.supportSurfaceId),
+      appearance: received.value.body.appearance,
+      ...(entity.actor
+        ? {
+            actor: {
+              ...entity.actor,
+              action: entity.actor.action
+                ? {
+                    id: entity.actor.action.id,
+                    type: entity.actor.action.type,
+                    stage: entity.actor.action.stage,
+                    strikePhase: entity.actor.action.strikePhase,
+                    remainingSeconds: entity.actor.action.remainingSeconds,
+                    totalSeconds: entity.actor.action.totalSeconds,
+                    path: [],
+                    consumed: [],
+                  }
+                : null,
+            },
+          }
+        : {}),
+    };
+    // A visible body is evidence of its current activity, not access to its future route.
+    delete copy.spatial.flight;
+    delete copy.statusEffects;
+    delete copy.attributes;
+    delete copy.mechanismFields;
+    delete copy.declaredOwner;
+    // Seeing a bag does not disclose its private contents or packing load.
+    delete copy.container;
+    delete copy.inventoryRevision;
+    if (copy.actor?.action) {
+      delete copy.actor.action.destination;
+      delete copy.actor.action.navigation;
+      delete copy.actor.action.follow;
+    }
+    if (copy.actor) {
+      // Sparse state is owner-private; explicit permitted projections carry public values.
+      delete copy.actor.encounters;
+      delete copy.actor.attributes;
+      delete copy.actor.contacts;
+      delete copy.actor.conditions;
+      delete copy.actor.inventoryInspection;
+      delete copy.actor.combatReadyAt;
+      copy.actor.agency = seedAgency();
+      delete copy.actor.initialGoals;
+      delete copy.actor.personality;
+      delete copy.actor.backstory;
+      delete copy.actor.participation;
+      copy.actor.planGeneration = 0;
+    }
+    if (copy.resource) definitionIds.add(copy.resource.definitionId);
+    return [copy];
+  });
   const pileIds = new Set(visibleEntities.filter((e) => e.kind === 'item-pile').map((e) => e.id));
   const groundItems = [...pileIds].flatMap((id) => itemsForOwner(world, id));
   for (const item of groundItems) definitionIds.add(item.definitionId);
@@ -8954,14 +8953,14 @@ export function observeActor(
           sequence: aware.sequence,
           at: aware.at,
           type: aware.eventType ?? aware.modality,
-          text: aware.text,
+          text: nativeText(aware.text),
           audience: [actorId],
           ...(aware.sourceId ? { actorId: aware.sourceId } : {}),
           ...(aware.targetId ? { targetId: aware.targetId } : {}),
           // Actor context is prose-first. Structured event fields stay authoritative in
           // world state; only the event's authored context text crosses this boundary.
           ...(aware.content !== undefined
-            ? { data: { text: aware.speech ? aware.text : aware.content } }
+            ? { data: { text: nativeText(aware.speech ? aware.text : aware.content) } }
             : {}),
         }))
       : [],

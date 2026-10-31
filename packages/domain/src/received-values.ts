@@ -18,7 +18,11 @@ import type {
   ReceivedObservationHeader,
 } from './perception-evidence.js';
 import type { TemporalFragment } from './temporal-evidence.js';
-import { currentOriginal, type CurrentFacetRecord } from './perception-current.js';
+import {
+  currentOriginal,
+  currentFacetGrant,
+  type CurrentFacetRecord,
+} from './perception-current.js';
 
 /** Shared exact payloads are data, never evidence that an actor received them. */
 export type ReceivedValueFragment =
@@ -334,6 +338,7 @@ interface ReferenceOwner {
     originals: PerceptionOwner['originals'];
     received: PerceptionOwner['received'];
     current: PerceptionOwner['current'];
+    grants: PerceptionOwner['grants'];
     motion: PerceptionOwner['motionSamples'];
     frame: readonly [string, number] | undefined;
     receivedOriginals: ReadonlySet<string>;
@@ -467,6 +472,7 @@ function perceptionReferences(
   const received = readOnlyDraftView(owner.received);
   const originals = readOnlyDraftView(owner.originals);
   const current = readOnlyDraftView(owner.current);
+  const grants = readOnlyDraftView(owner.grants);
   const motion = owner.motionSamples && readOnlyDraftView(owner.motionSamples);
   const frame = owner.visualConfirmation && readOnlyDraftView(owner.visualConfirmation.frameRef);
   const old = previous?.perception;
@@ -476,6 +482,7 @@ function perceptionReferences(
     old.originals === originals &&
     old.received === received &&
     old.current === current &&
+    old.grants === grants &&
     old.motion === motion &&
     old.frame?.[0] === frame?.[0] &&
     old.frame?.[1] === frame?.[1]
@@ -483,7 +490,18 @@ function perceptionReferences(
     return { ...previous, identity: owner };
   const currentChanges = old && recordMapChangesBetween(old.current, current),
     originalChanges = old && recordMapChangesBetween(old.originals, originals);
-  const incremental = !!old && !!currentChanges && !!originalChanges && isImmutableData(owner);
+  const grantChanges = old && recordMapChangesBetween(old.grants, grants);
+  const changedGrant =
+    !!old &&
+    (grantChanges === undefined ||
+      [...grantChanges].some(
+        (id) =>
+          old.grants[Number(id)] &&
+          grants[Number(id)] &&
+          old.grants[Number(id)] !== grants[Number(id)],
+      ));
+  const incremental =
+    !!old && !!currentChanges && !!originalChanges && !changedGrant && isImmutableData(owner);
   const delta = referenceDelta(
     incremental ? { counts: old!.counts, references: previous!.references } : undefined,
   );
@@ -506,9 +524,12 @@ function perceptionReferences(
       if (before === after) continue;
       countDomainWork('receivedReferenceCurrentVisited');
       delta.update(before && currentReferences(before), after && currentReferences(after));
-      if (before?.original !== after?.original) {
-        if (before) useOriginal(before.original, -1);
-        if (after) useOriginal(after.original, 1);
+      const beforeOriginal =
+          before && currentFacetGrant(previous!.identity as PerceptionOwner, before).original,
+        afterOriginal = after && currentFacetGrant(owner, after).original;
+      if (beforeOriginal !== afterOriginal) {
+        if (beforeOriginal) useOriginal(beforeOriginal, -1);
+        if (afterOriginal) useOriginal(afterOriginal, 1);
       }
     }
     if (old!.receivedOriginals !== receivedOriginals) {
@@ -538,7 +559,7 @@ function perceptionReferences(
     for (const stored of Object.values(current)) {
       const lease = readOnlyDraftView(stored);
       countDomainWork('receivedReferenceCurrentVisited');
-      useOriginal(lease.original, 1);
+      useOriginal(currentFacetGrant(owner, lease).original, 1);
       delta.update(undefined, currentReferences(lease));
     }
     for (const reference of receivedOriginals) useOriginal(reference, 1);
@@ -580,6 +601,7 @@ function perceptionReferences(
       received,
       originals,
       current,
+      grants,
       motion,
       frame,
       receivedOriginals,

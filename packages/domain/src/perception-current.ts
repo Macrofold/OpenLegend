@@ -24,15 +24,15 @@ type EnvelopeMetadata = Pick<
   | 'confirmedThrough'
   | 'poseSupport'
   | 'descriptionSupport'
+  | 'subjectId'
+  | 'subjectPhysicalLife'
 >;
 
 /** The one native and persisted current representation. Defaults belong to the
  * exact original facet; the current clock never supplies a missing timestamp. */
 export type CurrentFacetRecord = Omit<LiveFacetSupport, keyof EnvelopeMetadata> & {
-  original: string;
+  grant: number;
   originalOrdinal: number;
-  exposure: string;
-  modality: LiveFacetSupport['modality'];
   at?: number;
   from?: number;
   acquiredAt?: number;
@@ -54,6 +54,68 @@ export type CurrentFacetProof = Pick<
   | 'confirmedThrough'
   | 'poseSupport'
 >;
+
+/** One actually acquired routing context shared by this subject's field rows.
+ * Values/timing exceptions stay on the independent field; a grant is not sight. */
+export interface CurrentFacetGrant {
+  subjectId: string;
+  subjectPhysicalLife: number | null;
+  original: string;
+  exposure: string;
+  modality: LiveFacetSupport['modality'];
+}
+export function currentFacetGrant(
+  owner: PerceptionEvidenceOwner,
+  input: CurrentFacetRecord,
+): CurrentFacetGrant {
+  const grant = readOnlyDraftView(readOnlyDraftView(owner).grants)[readOnlyDraftView(input).grant];
+  if (!grant) throw new Error('A current field has no acquired subject grant.');
+  return readOnlyDraftView(grant);
+}
+const grantIndexes = new WeakMap<
+  PerceptionEvidenceOwner,
+  { rows: PerceptionEvidenceOwner['grants']; byOriginal: Map<string, number[]>; last?: number }
+>();
+function retainCurrentGrant(owner: PerceptionEvidenceOwner, value: CurrentFacetGrant): number {
+  const rows = owner.grants;
+  let index = grantIndexes.get(owner);
+  if (!index || index.rows !== rows) {
+    const byOriginal = new Map<string, number[]>();
+    for (const [key, grant] of Object.entries(readOnlyDraftView(rows))) {
+      const ids = byOriginal.get(grant.original) ?? [];
+      ids.push(Number(key));
+      byOriginal.set(grant.original, ids);
+    }
+    index = { rows, byOriginal };
+    grantIndexes.set(owner, index);
+  }
+  const equal = (grant: CurrentFacetGrant | undefined) =>
+    !!grant &&
+    grant.original === value.original &&
+    grant.subjectId === value.subjectId &&
+    grant.subjectPhysicalLife === value.subjectPhysicalLife &&
+    grant.exposure === value.exposure &&
+    grant.modality === value.modality;
+  if (index.last !== undefined && equal(rows[index.last])) return index.last;
+  const candidates = index.byOriginal.get(value.original) ?? [];
+  for (const id of candidates)
+    if (equal(rows[id])) {
+      index.last = id;
+      return id;
+    }
+  // A reused context does not write this map. Detach only the insertion, so
+  // ordinary checks keep the same immutable catalogue and derived reference proof.
+  if (Object.isFrozen(rows)) {
+    owner.grants = { ...rows };
+    index.rows = owner.grants;
+  }
+  const id = owner.nextGrant++;
+  owner.grants[id] = immutableDataSnapshot(value, readOnlyDraftView);
+  candidates.push(id);
+  index.byOriginal.set(value.original, candidates);
+  index.last = id;
+  return id;
+}
 
 const originalKeys = new WeakMap<ReceivedObservation, string>();
 export function currentOriginalKey(input: ReceivedObservation): string {
@@ -83,7 +145,7 @@ export function currentFacetOriginal(
   owner: PerceptionEvidenceOwner,
   record: CurrentFacetRecord,
 ): ReceivedObservation {
-  return currentOriginal(owner, readOnlyDraftView(record).original);
+  return currentOriginal(owner, currentFacetGrant(owner, record).original);
 }
 const exposures = new WeakMap<
   ObserverLife,
@@ -95,7 +157,7 @@ export function currentFacetExposure(
 ): ObservationExposure {
   const observer = currentFacetObserver(owner),
     record = readOnlyDraftView(input),
-    episodeId = record.exposure;
+    episodeId = currentFacetGrant(owner, record).exposure;
   if (!isImmutableData(observer) || !isImmutableData(record)) return { observer, episodeId };
   const source = currentFacetOriginal(owner, record);
   if (!isImmutableData(source)) return { observer, episodeId };
@@ -197,8 +259,7 @@ export function currentFacetSupport(
   proof: CurrentFacetProof = currentFacetProof(owner, input),
 ): LiveFacetSupport {
   const {
-    original: _original,
-    exposure: _exposure,
+    grant: _grant,
     at: _at,
     from: _from,
     acquiredAt: _acquiredAt,
@@ -209,6 +270,7 @@ export function currentFacetSupport(
   const { observer, ...metadata } = proof;
   return {
     ...fields,
+    ...currentFacetGrant(owner, input),
     observer,
     exposure: currentFacetExposure(owner, input),
     ...metadata,
@@ -269,10 +331,27 @@ export function prunePerceptionOriginals(
   candidates: Set<string>,
 ): void {
   if (!candidates.size) return;
+  const grants = new Set<number>();
   for (const reference of readOnlyDraftView(owner.received)) candidates.delete(reference);
-  if (!candidates.size) return;
-  for (const record of Object.values(readOnlyDraftView(owner.current)))
-    candidates.delete(readOnlyDraftView(record).original);
+  for (const record of Object.values(readOnlyDraftView(owner.current))) {
+    grants.add(record.grant);
+    candidates.delete(currentFacetGrant(owner, record).original);
+  }
+  for (const id of Object.keys(readOnlyDraftView(owner.grants)))
+    if (!grants.has(Number(id))) {
+      if (Object.isFrozen(owner.grants)) owner.grants = { ...owner.grants };
+      const removed = owner.grants[Number(id)]!;
+      delete owner.grants[Number(id)];
+      const index = grantIndexes.get(owner);
+      if (index?.rows === owner.grants) {
+        const remaining = index.byOriginal
+          .get(removed.original)
+          ?.filter((value) => value !== Number(id));
+        if (remaining?.length) index.byOriginal.set(removed.original, remaining);
+        else index.byOriginal.delete(removed.original);
+        if (index.last === Number(id)) delete index.last;
+      }
+    }
   if (!candidates.size) return;
   const originals = writableOriginals(owner);
   for (const reference of candidates) delete originals[reference];
@@ -288,6 +367,8 @@ export function compactCurrentFacet(
     original,
     originalOrdinal,
     modality,
+    subjectId,
+    subjectPhysicalLife,
     poseSupport: _poseSupport,
     descriptionSupport: _descriptionSupport,
     valueMeasuredFrom: from,
@@ -309,10 +390,14 @@ export function compactCurrentFacet(
   owner.observer ??= immutableDataSnapshot(observer, readOnlyDraftView);
   return {
     ...fields,
-    original: retainPerceptionOriginal(owner, original),
+    grant: retainCurrentGrant(owner, {
+      subjectId,
+      subjectPhysicalLife,
+      original: retainPerceptionOriginal(owner, original),
+      exposure: exposure.episodeId,
+      modality,
+    }),
     originalOrdinal,
-    exposure: exposure.episodeId,
-    modality,
     ...compactTimes(original, originalOrdinal, {
       valueMeasuredFrom: from,
       valueMeasuredThrough: at,

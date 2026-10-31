@@ -1,6 +1,7 @@
 import { expectCurrentWorldEquivalent } from '../../../tests/assert-current-world.js';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet, entityValues } from './entity-collection.js';
+import { nativeText } from './narration.js';
 import { BASE_BODY_PROFILES } from './worlds/base/spatial-definitions.js';
 import { BASE_RANGED_TEXT } from './worlds/base/ranged-counterplay.js';
 import { cookingChoices } from './food-preparation.js';
@@ -640,7 +641,8 @@ describe('bounded invented mechanisms', () => {
     expect(
       world.events.some(
         (event) =>
-          event.type === 'action-stopped' && event.text.includes(BASE_RANGED_TEXT.rangeLost),
+          event.type === 'action-stopped' &&
+          nativeText(event.text).includes(BASE_RANGED_TEXT.rangeLost),
       ),
     ).toBe(true);
     expect(quantityOf(world, PLAYER_ID, 'stone')).toBe(6);
@@ -671,7 +673,9 @@ describe('perception, survival and continuity', () => {
     ).toBe(false);
     // Seeing a distant speaker is allowed; moving closer must never reveal unheard words.
     expect(
-      observeActor(world, NPC_ID)!.recentEvents.some((event) => event.text.includes('moonflower')),
+      observeActor(world, NPC_ID)!.recentEvents.some((event) =>
+        nativeText(event.text).includes('moonflower'),
+      ),
     ).toBe(false);
     world = command(world, { type: 'say', text: 'I will bring you berries.', targetId: NPC_ID });
     const event = world.events.at(-1)!;

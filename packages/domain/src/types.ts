@@ -464,7 +464,7 @@ export interface WorldEvent {
   sequence: number;
   at: number;
   type: string;
-  text: string;
+  text: import('./narration.js').NativeText;
   actorId?: string;
   targetId?: string;
   audience: string[];

@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import { entityHandle, permittedSourceHandle } from './entity-references.js';
 import { memoryForModel, acceptedMindForModel, eventFieldsForModel } from './experience-context.js';
 import { currentBodyValue, currentObservedFacets, bodyContext } from '@open-legend/domain';
@@ -383,7 +384,7 @@ export function buildContext(
         at: event.at,
         type: event.type,
         text: excerpt(
-          typeof event.data?.['text'] === 'string' ? event.data['text'] : event.text,
+          typeof event.data?.['text'] === 'string' ? event.data['text'] : nativeText(event.text),
           220,
         ),
         ...(event.actorId ? { actorId: participant(event.actorId) } : {}),

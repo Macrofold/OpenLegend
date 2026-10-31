@@ -47,7 +47,7 @@ import {
   mutateExperience,
   type ExperienceMutation,
 } from './experience.js';
-import { personalText } from './narration.js';
+import { personalText, nativeText } from './narration.js';
 import { distance, isWalkable } from './spatial.js';
 import type {
   Entity,
@@ -677,16 +677,18 @@ export function editWorldEvents(
     const previous = eventsById.get(eventId)!;
     const content = previous.data?.['text'];
     if (typeof content !== 'string') continue;
-    const prefix = previous.text.endsWith(content)
-      ? previous.text.slice(0, previous.text.length - content.length)
+    const previousText = nativeText(previous.text);
+    const replacementText = nativeText(change.replacement.text);
+    const prefix = previousText.endsWith(content)
+      ? previousText.slice(0, previousText.length - content.length)
       : '';
-    if (!change.replacement.text.startsWith(prefix))
+    if (!replacementText.startsWith(prefix))
       return reject(
         original,
         'invalid-events',
         'Keep the original speaker prefix when editing attributed event text.',
       );
-    rawContent.set(eventId, change.replacement.text.slice(prefix.length));
+    rawContent.set(eventId, replacementText.slice(prefix.length));
   }
   world.events = world.events.filter((event) => {
     const change = changed.get(event.id);

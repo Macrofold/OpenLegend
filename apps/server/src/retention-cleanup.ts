@@ -10,58 +10,17 @@ import {
   updateWorld,
   type ExperienceEntry,
 } from '@open-legend/domain';
-import type { SavedWorld, SqlDatabase } from './store.js';
-import { receiptLookupBucket, receiptLookupBuckets } from './evidence-segments.js';
-
-/** Resolve a batch as relations, rather than rescanning the same actor rows for
- * every alias. Sparse-proof release deliberately omits recent-history ownership.
- * docs/performance.md#storage-execution */
-async function retainedSourceAliases(
-  db: SqlDatabase,
-  worldId: string,
-  actorId: string,
-  aliases: readonly string[],
-  removedAccounts: readonly string[],
-  removedChunks?: readonly string[],
-): Promise<string[]> {
-  const rows = await db
-    .prepare(
-      `WITH requested AS MATERIALIZED (SELECT * FROM unnest(?::text[],?::smallint[]) AS q(id,lookup_bucket)),
-      retained_accounts AS MATERIALIZED (
-        SELECT world_id,actor_id,id,source_kind,event_id FROM recall_sources
-        WHERE world_id=? AND actor_id=? AND memory_kind IS DISTINCT FROM 'impression' AND record_id<>ALL(?::text[]))
-      ${removedChunks === undefined ? '' : `SELECT q.id FROM requested q WHERE EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=? AND s.actor_id=? AND s.lookup_buckets @> ARRAY[q.lookup_bucket]::smallint[] AND s.source_ids @> ARRAY[q.id]::text[] AND s.parent_id<>ALL(?::text[])) UNION`}
-      SELECT q.id FROM requested q JOIN retained_accounts r ON r.id=q.id
-      UNION SELECT q.id FROM requested q JOIN retained_accounts r ON r.event_id=q.id
-      UNION SELECT q.id FROM requested q JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=? AND d.source_id=q.id
-        JOIN retained_accounts r ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id
-      UNION SELECT q.id FROM requested q JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=? AND d.alias_id=q.id
-        JOIN retained_accounts r ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id`,
-    )
-    .all(
-      aliases,
-      aliases.map((alias) => receiptLookupBucket('sourceIds', alias)),
-      worldId,
-      actorId,
-      removedAccounts,
-      ...(removedChunks === undefined ? [] : [worldId, actorId, removedChunks]),
-      worldId,
-      actorId,
-      worldId,
-      actorId,
-    );
-  return rows.map((row) => String(row['id']));
-}
+import type { SavedWorld } from './store.js';
+import type { RetentionMetadataView } from './retention-metadata.js';
 
 /** Proof is owned by an actual retained name/profile/note/place or mechanical
  * grant. Dropping a profile cannot leave its old sparse proof charged forever. */
-export async function releaseUnusedTemporalSupports(
-  db: SqlDatabase,
+export function releaseUnusedTemporalSupports(
   state: SavedWorld,
   actorId: string,
-  complete = false,
+  metadata: RetentionMetadataView,
   removedAccounts: readonly string[] = [],
-): Promise<{ state: SavedWorld; ids: string[] }> {
+): { state: SavedWorld; ids: string[] } {
   const supports = state.world.experience?.temporal?.actors[actorId]?.supports;
   if (!supports || !Object.keys(supports).length) return { state, ids: [] };
   const keys: string[] = [];
@@ -86,18 +45,16 @@ export async function releaseUnusedTemporalSupports(
   if (!candidates.length) return { state, ids: [] };
   const aliases = [...new Set(candidates.flatMap(({ aliases }) => aliases))];
   const retained = new Set<string>();
-  if (!complete)
-    for (let offset = 0; offset < aliases.length; offset += 800) {
-      const batch = aliases.slice(offset, offset + 800);
-      for (const id of await retainedSourceAliases(
-        db,
-        state.world.id,
-        actorId,
-        batch,
+  {
+    const removed = new Map(
+      ['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => [
+        table,
         removedAccounts,
-      ))
-        retained.add(id);
-    }
+      ]),
+    );
+    const current = metadata.excluding(removed);
+    for (const id of aliases) if (current.hasAlias(actorId, id, false)) retained.add(id);
+  }
   const ids = candidates
     .filter(({ aliases }) => !aliases.some((id) => retained.has(id)))
     .map(({ capsule }) => capsule.receipt.id);
@@ -121,13 +78,12 @@ export async function releaseUnusedTemporalSupports(
 
 /** Only an actual retirement batch pays for these exact reverse-membership reads.
  * Remaining cold accounts and sparse exact proofs can independently retain a person. */
-export async function cleanupRetiredIndividuals(
-  db: SqlDatabase,
+export function cleanupRetiredIndividuals(
   before: SavedWorld,
   after: SavedWorld,
   rows: ReadonlyMap<string, readonly string[]>,
-  complete = false,
-): Promise<SavedWorld> {
+  metadata: RetentionMetadataView,
+): SavedWorld {
   if (!rows.size) return after;
   const affected = new Map<string, { sources: Set<string>; individuals: Set<string> }>();
   const actor = (id: string) => {
@@ -139,16 +95,13 @@ export async function cleanupRetiredIndividuals(
   for (const table of tables) {
     const ids = rows.get(table) ?? [];
     if (!ids.length) continue;
-    if (!complete)
-      for (const row of await db
-        .prepare(
-          `SELECT actor_id,source_id,individual_ids FROM ${table} WHERE world_id=? AND id=ANY(?::text[])`,
-        )
-        .all(before.world.id, ids)) {
-        const value = actor(String(row['actor_id']));
-        value.sources.add(String(row['source_id']));
-        for (const id of row['individual_ids'] as string[]) value.individuals.add(id);
-      }
+    for (const id of ids) {
+      const row = metadata.prior(table, id);
+      if (!row) continue;
+      const value = actor(row.actorId);
+      value.sources.add(String(row.columns['source_id']));
+      for (const id of row.columns['individual_ids'] as string[]) value.individuals.add(id);
+    }
     for (const [actorId, entries] of Object.entries(
       table === 'mind_awareness'
         ? (before.world.experience?.awareness ?? {})
@@ -214,15 +167,12 @@ export async function cleanupRetiredIndividuals(
             value.individuals.add(facet.subject.individualId);
       }
   if (retiredChunks.length) {
-    if (!complete)
-      for (const row of await db
-        .prepare(
-          'SELECT actor_id,source_ids,individual_ids FROM mind_temporal_segments WHERE world_id=? AND parent_id=ANY(?::text[])',
-        )
-        .all(before.world.id, retiredChunks)) {
-        const value = actor(String(row['actor_id']));
-        for (const id of row['source_ids'] as string[]) value.sources.add(id);
-        for (const id of row['individual_ids'] as string[]) value.individuals.add(id);
+    for (const chunkId of retiredChunks)
+      for (const row of metadata.priorSegments(chunkId)) {
+        const value = actor(row.actorId);
+        for (const id of row.columns['occurrence_source_ids'] as string[]) value.sources.add(id);
+        for (const id of row.columns['occurrence_individual_ids'] as string[])
+          value.individuals.add(id);
       }
     const temporal = before.world.experience?.temporal;
     for (const [actorId, history] of Object.entries(temporal?.actors ?? {}))
@@ -247,14 +197,6 @@ export async function cleanupRetiredIndividuals(
       }
   }
   let world = after.world;
-  const removedAccounts = tables.flatMap((table) => rows.get(table) ?? []);
-  const individualTables = [...tables, 'mind_temporal_segments'];
-  const individualMembership = individualTables
-    .map(
-      (table) =>
-        `SELECT individual_ids FROM ${table} WHERE world_id=? AND actor_id=? ${table === 'mind_temporal_segments' ? 'AND lookup_buckets && ?::smallint[]' : ''} AND individual_ids && ?::text[] AND ${table === 'mind_temporal_segments' ? 'parent_id' : 'id'}<>ALL(?::text[])`,
-    )
-    .join(' UNION ALL ');
   for (const [actorId, candidate] of affected) {
     const retained = new Set<string>(),
       individuals = new Set<string>();
@@ -279,32 +221,11 @@ export async function cleanupRetiredIndividuals(
     }
     const aliases = [...candidate.sources],
       ids = [...candidate.individuals];
-    if (!complete && aliases.length) {
-      for (const id of await retainedSourceAliases(
-        db,
-        world.id,
-        actorId,
-        aliases,
-        removedAccounts,
-        retiredChunks,
-      ))
-        retained.add(id);
+    {
+      const kept = metadata.excluding(rows);
+      for (const id of aliases) if (kept.hasAlias(actorId, id, true)) retained.add(id);
+      for (const id of ids) if (kept.hasIndividual(actorId, id)) individuals.add(id);
     }
-    if (!complete && ids.length)
-      for (const row of await db
-        .prepare(individualMembership)
-        .all(
-          ...individualTables.flatMap((table) => [
-            world.id,
-            actorId,
-            ...(table === 'mind_temporal_segments'
-              ? [receiptLookupBuckets('individualIds', ids)]
-              : []),
-            ids,
-            table === 'mind_temporal_segments' ? retiredChunks : (rows.get(table) ?? []),
-          ]),
-        ))
-        for (const id of row['individual_ids'] as string[]) individuals.add(id);
     for (const [source, entries] of [
       ['awareness', world.experience?.awareness[actorId] ?? []],
       ['memory', world.memories[actorId] ?? []],

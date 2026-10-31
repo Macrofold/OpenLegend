@@ -6,6 +6,8 @@ import {
 } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
+import { accountRetentionMetadata } from './retention-record-metadata.js';
+import { receivedRecordReferences } from './received-record-references.js';
 import { encodeEvidenceOwner, decodeEvidenceOwner } from './evidence-segments.js';
 import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
@@ -25,6 +27,7 @@ export interface RecordNode {
     previous?: unknown,
     segmentBytes?: number,
     world?: WorldState,
+    bindLayout?: boolean,
   ) => unknown;
   decode?: (value: unknown) => unknown;
 }
@@ -220,8 +223,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
             'mind_perception_values',
             { values: list('mind_perception_segments', 'start') },
             {
-              encode: (value, previous, bytes) =>
-                encodeEvidenceOwner(value, 'values', previous, bytes!),
+              encode: (value, previous, bytes, world, bindLayout) =>
+                encodeEvidenceOwner(value, 'values', previous, bytes!, world, bindLayout),
               decode: (value) => decodeEvidenceOwner(value, 'values'),
             },
           ),
@@ -229,6 +232,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         },
       }),
       perceptionEvidence: map('mind_perception_owners', {
+        grants: { ...map('mind_perception_grants'), unordered: true, complete: true },
         originals: { ...map('mind_perception_originals'), unordered: true, complete: true },
         // Rolling maps preserve iteration order without renumbering surviving rows.
         current: { ...map('mind_perception_current'), stablePositions: true, complete: true },
@@ -300,8 +304,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
               node: {
                 table: 'mind_temporal_chunks',
                 children: { entries: list('mind_temporal_segments', 'start') },
-                encode: (value, previous, bytes, world) =>
-                  encodeEvidenceOwner(value, 'entries', previous, bytes!, world),
+                encode: (value, previous, bytes, world, bindLayout) =>
+                  encodeEvidenceOwner(value, 'entries', previous, bytes!, world, bindLayout),
                 decode: (value) => decodeEvidenceOwner(value, 'entries'),
               },
             },
@@ -454,6 +458,27 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
             value,
           } as unknown as ExperienceEntry),
       },
+      retention_metadata: {
+        sql: 'JSONB NOT NULL',
+        value: (value) =>
+          accountRetentionMetadata({
+            source:
+              table === 'mind_awareness'
+                ? 'awareness'
+                : table === 'mind_summaries'
+                  ? 'summary'
+                  : 'memory',
+            value,
+          } as unknown as ExperienceEntry),
+      },
+      ...(table !== 'mind_awareness'
+        ? {
+            account_revision: {
+              sql: 'TEXT NOT NULL',
+              value: (value: JsonRecord) => personalAccountRevision(JSON.stringify(value)),
+            },
+          }
+        : {}),
       logical_bytes: {
         sql: 'BIGINT NOT NULL',
         value: (value) => Buffer.byteLength(JSON.stringify(value)),
@@ -514,7 +539,10 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
             unresolved: {
               sql: 'BIGINT NOT NULL',
               value: (value: JsonRecord) =>
-                Number(value['kind'] === 'commitment' && !value['resolved']),
+                Number(
+                  (value['kind'] === 'commitment' && !value['resolved']) ||
+                    (value['obligation'] as JsonRecord | undefined)?.['status'] === 'active',
+                ),
             },
             expires_at: {
               sql: 'DOUBLE PRECISION',
@@ -625,6 +653,14 @@ columns(
       sql: 'TEXT[] NOT NULL',
       value: (value) => segmentReceiptIndex(value).individualIds,
     },
+    occurrence_source_ids: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value) => segmentReceiptIndex(value).occurrenceSourceIds,
+    },
+    occurrence_individual_ids: {
+      sql: 'TEXT[] NOT NULL',
+      value: (value) => segmentReceiptIndex(value).occurrenceIndividualIds,
+    },
     lookup_buckets: {
       sql: 'SMALLINT[] NOT NULL',
       value: (value) => segmentReceiptIndex(value).lookupBuckets,
@@ -666,6 +702,23 @@ columns(
   },
   [['parent_id', 'first_ordinal']],
 );
+for (const table of [
+  'mind_perception_owners',
+  'mind_perception_originals',
+  'mind_perception_current',
+  'mind_perception_motion_samples',
+])
+  columns(
+    table,
+    {
+      actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path[2] },
+      value_refs: {
+        sql: 'JSONB NOT NULL',
+        value: (value) => receivedRecordReferences(table, value),
+      },
+    },
+    [],
+  );
 columns(
   'mind_temporal_supports',
   {

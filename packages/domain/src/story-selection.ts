@@ -238,11 +238,13 @@ export function selectStory(input: StorySelectionInput, p: StoryPolicy): StorySe
     (event.scope === 'private' && !ownAcquisition) ||
     !p.enabled ||
     !evaluators[p.evaluator] ||
-    !input.event.audience.includes(input.viewerId) ||
-    !input.sourceText.trim()
+    !input.event.audience.includes(input.viewerId)
   )
     return silent('Disabled or unavailable evidence.');
-  return evaluators[p.evaluator](input, p);
+  const selected = evaluators[p.evaluator](input, p);
+  return selected.kind === 'candidate' && !input.sourceText.trim()
+    ? silent('Disabled or unavailable evidence.')
+    : selected;
 }
 /** All configuration and field changes share validation and revision invalidation. */
 export function editStoryMechanism(

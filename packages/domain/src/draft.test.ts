@@ -1,3 +1,4 @@
+import { currentFacetGrant } from './perception-current.js';
 import { createDraft, finishDraft } from 'immer';
 import { describe, expect, it } from 'vitest';
 import { cloneValue, readOnlyDraftView } from './draft.js';
@@ -122,16 +123,22 @@ it('seals shared received evidence once while preserving earlier immutable snaps
   const before = JSON.stringify(initial.perceptionEvidence);
   const changed = updateWorld(initial, (world) => {
     const owner = world.perceptionEvidence![PLAYER_ID]!;
-    const lease = Object.values(owner.current).find((value) => value.subjectId === NPC_ID)!;
+    const lease = Object.values(owner.current).find(
+      (value) => currentFacetGrant(owner, value).subjectId === NPC_ID,
+    )!;
     lease.confirmedThrough = currentFacetTimes(owner, lease).confirmedThrough + 1;
   });
   expect(JSON.stringify(initial.perceptionEvidence)).toBe(before);
   expect(changed.perceptionEvidence).not.toBe(initial.perceptionEvidence);
   const owner = changed.perceptionEvidence![PLAYER_ID]!;
   expect(Object.isFrozen(owner)).toBe(true);
-  const leases = Object.values(owner.current).filter((value) => value.subjectId === NPC_ID);
+  const leases = Object.values(owner.current).filter(
+    (value) => currentFacetGrant(owner, value).subjectId === NPC_ID,
+  );
   expect(leases.length).toBeGreaterThan(1);
-  expect(leases[0]!.original).toBe(leases[1]!.original);
+  expect(currentFacetGrant(owner, leases[0]!).original).toBe(
+    currentFacetGrant(owner, leases[1]!).original,
+  );
   expect(currentFacetOriginal(owner, leases[0]!)).toBe(currentFacetOriginal(owner, leases[1]!));
   const nested = draftWorld(changed);
   entityGet(nested.entities, PLAYER_ID)!.actor!.agency.revision++;

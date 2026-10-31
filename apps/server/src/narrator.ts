@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import { z } from 'zod';
 import type { AiClient } from '@open-legend/ai';
 import type { WorldService } from './world-service.js';
@@ -171,7 +172,7 @@ export class Narrator {
             source: source.evidence.modality,
             at: source.time,
             sequence: source.order,
-            summary: source.text,
+            summary: nativeText(source.text),
             importance: source.evidence.importance,
             entityIds: (source.evidence.references ?? []).map((reference) => reference.id),
             evidence: source.evidence,

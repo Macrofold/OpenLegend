@@ -8,15 +8,9 @@ import {
   type ReceivedValueRetirement,
   type WorldState,
 } from '@open-legend/domain';
-import {
-  receiptLookupBuckets,
-  evidenceEncodedBytesSql,
-  restoreEvidenceLayout,
-  snapshotEvidenceOwner,
-} from './evidence-segments.js';
+import { restoreEvidenceLayout, snapshotEvidenceOwner } from './evidence-segments.js';
 import { RECORD_NODES } from './world-record-schema.js';
 import type { RecordChanges } from './world-records.js';
-import type { JournalTransition } from './world-journal-data.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { PreparedMemoryRetention } from './temporal-storage.js';
 
@@ -110,6 +104,10 @@ export class ReceivedValueAllocationCharges {
       if (pending !== undefined) bytes = Math.max(bytes, pending);
     return bytes;
   }
+  physicalBytes(worldId: string, id: string): number {
+    this.assertWorld(worldId);
+    return this.physical.get(id) ?? 0;
+  }
 }
 
 /** Small charged garbage can wait for the next coalesced batch. Real byte
@@ -163,54 +161,7 @@ export function captureReceivedReclamation(
 }
 
 const columns = Object.keys(RECORD_NODES.get('mind_temporal_segments')!.columns!);
-const valueRefsColumn = columns.indexOf('value_refs');
 const sourceRefsColumn = columns.indexOf('source_refs');
-
-/** The accepted suffix replaces affected SQL pages, rather than accumulating old
- * owners from each intermediate revision. Canonical tables may be applying while read. */
-function pendingOwnership(pending: readonly JournalTransition[]) {
-  const segments = new Map<string, { parent: string; refs: Record<string, number[]> }>();
-  const replaced = new Set<string>();
-  const chunks = new Set<string>();
-  const actors = new Set<string>();
-  let allDeleted = false;
-  for (const transition of pending) {
-    for (const [table, ids] of transition.changes.deletes) {
-      if (table === 'mind_temporal_segments')
-        for (const id of ids) {
-          replaced.add(id);
-          segments.delete(id);
-        }
-      if (table === 'mind_temporal_chunks')
-        for (const id of ids) {
-          chunks.add(id);
-          for (const [key, value] of segments) if (value.parent === id) segments.delete(key);
-        }
-      if (table === 'mind_temporal_actors')
-        for (const id of ids) {
-          const actor = (JSON.parse(id) as string[]).at(-1)!;
-          actors.add(actor);
-          for (const [key, value] of segments)
-            if ((JSON.parse(value.parent) as string[])[4] === actor) segments.delete(key);
-        }
-      if (
-        ids.length &&
-        ['mind_temporal_state', 'experience_state', 'world_settings', 'data_world'].includes(table)
-      ) {
-        allDeleted = true;
-        segments.clear();
-      }
-    }
-    for (const row of transition.changes.writes.get('mind_temporal_segments') ?? []) {
-      replaced.add(row.id);
-      segments.set(row.id, {
-        parent: row.parent,
-        refs: row.extra[valueRefsColumn] as Record<string, number[]>,
-      });
-    }
-  }
-  return { segments, replaced, chunks, actors, allDeleted };
-}
 
 export function invalidateReceivedReclamation(
   ticket: Pick<PreparedReceivedReclamation, 'capture' | 'changed'>,
@@ -254,163 +205,68 @@ export function invalidateReceivedReclamation(
   }
 }
 
-/** Run in a bounded raw read snapshot. The supplied pending suffix closes its
- * applied-prefix gap; a ticket observes all later accepted changes. */
+export interface ReceivedReclamationOwnership {
+  appliedRevision: number;
+  sources: ReadonlyMap<string, { bytes: number; ordinals: ReadonlySet<number>; pending: boolean }>;
+}
+
+/** Ownership is already complete before I/O. Whole-block absence needs no reader;
+ * a genuine mixed cold block captures one bounded row, then releases its snapshot
+ * before codec reconstruction. Later accepted changes invalidate the existing ticket. */
 export async function prepareReceivedReclamation(
   db: SqlDatabase,
   capture: ReceivedReclamationCapture,
-  pending: readonly JournalTransition[],
+  ownership: ReceivedReclamationOwnership,
 ): Promise<Omit<PreparedReceivedReclamation, 'changed' | 'release'>> {
-  const head = await db
-    .prepare('SELECT world_id,applied_revision FROM world_head WHERE id=1')
-    .get();
-  if (head?.['world_id'] !== capture.worldId) throw new Error('Received cleanup world changed.');
-  const appliedRevision = Number(head['applied_revision']);
-  const blocks = new Map<string, ReceivedValueBlock>();
-  const pendingValues = new Set(
-    pending
-      .flatMap((transition) => [
-        ...(transition.changes.writes.get('mind_perception_values') ?? []).map((row) => row.id),
-        ...(transition.changes.deletes.get('mind_perception_values') ?? []),
-      ])
-      .map((id) => (JSON.parse(id) as string[]).at(-1)!),
-  );
-  const candidates = capture.candidates.filter(
-    ({ id, candidate }) => candidate.stage === 'candidate' && !pendingValues.has(id),
-  );
-  const ids = candidates.map(({ id }) => id);
-  const overlay = pendingOwnership(pending);
-  const cold = new Map<string, Set<number>>();
-  for (const { refs } of overlay.segments.values())
-    for (const id of ids) {
-      const ordinals = refs[id];
-      if (!ordinals) continue;
-      const kept = cold.get(id) ?? new Set<number>();
-      for (const ordinal of ordinals) kept.add(ordinal);
-      cold.set(id, kept);
+  const blocks = new Map<string, ReceivedValueBlock>(),
+    sizes = new Map<string, number>(),
+    unowned = new Set<string>(),
+    examined = new Set<string>(),
+    cold = new Map<string, Set<number>>();
+  let bytes = 0,
+    ordinals = 0;
+  for (const { id, candidate } of capture.candidates) {
+    const owned = ownership.sources.get(id);
+    if (!owned) throw new Error('Complete received ownership is unavailable.');
+    // Accepted deletion cannot erase the physical prefix's last ownership. Wait
+    // for its real application acknowledgement, rather than finish its candidate.
+    if (candidate.stage !== 'candidate' || owned.pending) continue;
+    if (owned.bytes) sizes.set(id, owned.bytes);
+    const retained = new Set(owned.ordinals);
+    cold.set(id, retained);
+    if (!retained.size && !capture.resident.get(id)?.size) {
+      unowned.add(id);
+      continue;
     }
-  const sizes = new Map<string, number>();
-  const unowned = new Set<string>();
-  let bytes = 0;
-  const selected: string[] = [];
-  if (ids.length) {
-    const headers = await db
-      .prepare(
-        `SELECT p.source_id,${evidenceEncodedBytesSql('p')} AS encoded_bytes
-         FROM mind_perception_values p WHERE p.world_id=? AND p.source_id=ANY(?::text[])`,
-      )
-      .all(capture.worldId, ids);
-    // Most expired blocks have no owner. Prove that directly without reading a
-    // payload or enumerating all witnesses sharing some other candidate block.
-    const owned = new Set(
-      (
-        await db
-          .prepare(
-            `
-      SELECT c.block FROM unnest(?::text[],?::smallint[]) AS c(block,bucket)
-      WHERE EXISTS (SELECT 1 FROM mind_temporal_segments s
-        WHERE NOT ?::boolean AND s.world_id=? AND s.lookup_buckets @> ARRAY[c.bucket]::smallint[]
-          AND s.source_refs @> ARRAY[c.block]::text[]
-          AND s.id<>ALL(?::text[]) AND s.parent_id<>ALL(?::text[]) AND s.actor_id<>ALL(?::text[]))
-    `,
-          )
-          .all(
-            ids,
-            ids.map((id) => receiptLookupBuckets('sourceRefs', [id])[0]!),
-            overlay.allDeleted,
-            capture.worldId,
-            [...overlay.replaced],
-            [...overlay.chunks],
-            [...overlay.actors],
-          )
-      ).map((row) => String(row['block'])),
-    );
-    for (const row of headers) {
-      const id = String(row['source_id']);
-      sizes.set(id, Number(row['encoded_bytes']));
-      if (!owned.has(id) && !cold.get(id)?.size && !capture.resident.get(id)?.size) {
-        unowned.add(id);
-        continue;
-      }
-      const size = Number(row['encoded_bytes']);
-      if (bytes + size > maximumBytes) continue;
-      bytes += size;
-      selected.push(id);
-    }
-    if (selected.length)
-      for (const row of await db
+    if (!owned.bytes) continue; // Native transient source has not been saved yet.
+    if (bytes + owned.bytes > maximumBytes || ordinals + retained.size > maximumOrdinals) continue;
+    bytes += owned.bytes;
+    ordinals += retained.size;
+    const read = () =>
+      db
         .prepare(
-          'SELECT payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
+          'SELECT payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=?',
         )
-        .all(capture.worldId, selected)) {
-        const block = snapshotEvidenceOwner(
-          restoreEvidenceLayout(JSON.parse(String(row['payload'])), 'values', row['segments']),
-          'values',
-        ) as unknown as ReceivedValueBlock;
-        blocks.set(block.id, block);
-      }
-    // A vanished canonical block with no pending value write was already removed.
-    // Its candidate remains generation-fenced through admission like every other.
-    for (const id of ids)
-      if (!sizes.has(id)) {
-        if (owned.has(id) || cold.get(id)?.size)
-          throw new Error('A retained received-value source is unavailable.');
-        // Native progress can nominate a transient block before its first save.
-        // Its current owner is real, but absence from the durable snapshot proves
-        // neither corruption nor retirement. A later accepted write fences this
-        // ticket; otherwise the next bounded pass observes its save or release.
-        if (capture.resident.get(id)?.size) continue;
-        unowned.add(id);
-      }
-  }
-  const examined = new Set<string>();
-  const wantedBlocks: string[] = [],
-    wantedOrdinals: number[] = [],
-    buckets: number[] = [];
-  for (const { id } of candidates) {
-    if (unowned.has(id)) continue;
-    const block = blocks.get(id);
-    if (!block) continue;
-    const unknown = block.values.flatMap((value, ordinal) =>
-      value && !capture.resident.get(id)?.has(ordinal) && !cold.get(id)?.has(ordinal)
-        ? [ordinal]
-        : [],
-    );
-    if (wantedOrdinals.length + unknown.length > maximumOrdinals) continue;
-    const bucket = receiptLookupBuckets('sourceRefs', [id])[0]!;
-    for (const ordinal of unknown) {
-      wantedBlocks.push(id);
-      wantedOrdinals.push(ordinal);
-      buckets.push(bucket);
-    }
+        .get(capture.worldId, id);
+    const row = db.readTransaction ? await db.readTransaction(read) : await db.transaction(read);
+    if (!row) throw new Error('A retained received-value source is unavailable.');
+    const block = snapshotEvidenceOwner(
+      restoreEvidenceLayout(JSON.parse(String(row['payload'])), 'values', row['segments']),
+      'values',
+    ) as unknown as ReceivedValueBlock;
+    if (block.id !== id) throw new Error('Received cleanup source changed.');
+    blocks.set(id, block);
     examined.add(id);
-    // An empty set is also a complete absence proof for this examined block.
-    if (!cold.has(id)) cold.set(id, new Set());
   }
-  if (wantedOrdinals.length)
-    for (const row of await db
-      .prepare(
-        `
-      SELECT c.block,c.ordinal FROM unnest(?::text[],?::bigint[],?::smallint[]) AS c(block,ordinal,bucket)
-      WHERE EXISTS (SELECT 1 FROM mind_temporal_segments s
-        WHERE NOT ?::boolean AND s.world_id=? AND s.lookup_buckets @> ARRAY[c.bucket]::smallint[]
-          AND s.source_refs @> ARRAY[c.block]::text[]
-          AND (s.value_refs -> c.block) @> to_jsonb(ARRAY[c.ordinal])
-          AND s.id<>ALL(?::text[]) AND s.parent_id<>ALL(?::text[]) AND s.actor_id<>ALL(?::text[]))
-    `,
-      )
-      .all(
-        wantedBlocks,
-        wantedOrdinals,
-        buckets,
-        overlay.allDeleted,
-        capture.worldId,
-        [...overlay.replaced],
-        [...overlay.chunks],
-        [...overlay.actors],
-      ))
-      cold.get(String(row['block']))!.add(Number(row['ordinal']));
-  return { capture, appliedRevision, blocks, sizes, unowned, examined, cold };
+  return {
+    capture,
+    appliedRevision: ownership.appliedRevision,
+    blocks,
+    sizes,
+    unowned,
+    examined,
+    cold,
+  };
 }
 
 /** Re-enter the latest semantic owner, never the world captured before SQL. */

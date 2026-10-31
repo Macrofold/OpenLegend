@@ -11,6 +11,7 @@ import {
 import { personalAccountRevision } from './personal-accounts.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { RecordChanges } from './world-records.js';
+import type { RetentionMetadataView } from './retention-metadata.js';
 
 type Category = 'optional' | 'required' | 'speech';
 interface VersionKey {
@@ -145,6 +146,7 @@ export async function prepareSourceVersions(
   db: SqlDatabase,
   state: SavedWorld,
   changes: RecordChanges,
+  metadata: RetentionMetadataView,
 ): Promise<{ state: SavedWorld; plan: SourceVersionPlan }> {
   const actors = new Set<string>(),
     future = new Map<string, Category>(),
@@ -199,43 +201,11 @@ export async function prepareSourceVersions(
   const retained: RetainedSourceVersion[] = [];
   let world = state.world;
   for (const actorId of actors) {
-    const existing = await db
-      .prepare(
-        "SELECT source_kind,source_id,revision,retention_class,logical_bytes FROM mind_source_versions WHERE world_id=? AND actor_id=? AND source_kind IN ('awareness','memory','summary')",
-      )
-      .all(world.id, actorId);
-    // The SELECT envelope keeps this CTE on the existing bounded reader connection.
-    for (const row of await db
-      .prepare(
-        `SELECT * FROM (WITH retained_accounts AS MATERIALIZED (
-        SELECT r.world_id,r.actor_id,r.source_kind,r.id,r.record_id FROM recall_sources r
-        WHERE r.world_id=? AND r.actor_id=? AND r.memory_kind IS DISTINCT FROM 'impression'
-          AND NOT EXISTS (SELECT 1 FROM unnest(?::text[]) changed(id) WHERE changed.id=r.record_id))
-        SELECT d.source_kind,d.source_id,d.source_revision,COALESCE(a.retention_class,m.retention_class,s.retention_class) AS retention_class FROM retained_accounts r JOIN mind_source_dependencies d ON r.world_id=d.world_id AND r.actor_id=d.actor_id AND r.source_kind=d.derived_kind AND r.id=d.derived_id LEFT JOIN mind_awareness a ON r.source_kind='awareness' AND a.world_id=r.world_id AND a.id=r.record_id LEFT JOIN mind_memories m ON r.source_kind='memory' AND m.world_id=r.world_id AND m.id=r.record_id LEFT JOIN mind_summaries s ON r.source_kind='summary' AND s.world_id=r.world_id AND s.id=r.record_id
-        WHERE d.source_kind IN ('awareness','memory','summary')) retained_versions`,
-      )
-      .all(world.id, actorId, changedRecords.get(actorId)?.all ?? []))
-      needed(
-        actorId,
-        {
-          kind: String(row['source_kind']) as PersonalSourceRef['kind'],
-          id: String(row['source_id']),
-          revision: String(row['source_revision']),
-        },
-        row['retention_class'] as Category,
-      );
-    const candidates = new Map<string, RetainedSourceVersion>();
-    for (const row of existing) {
-      const value = {
-        actorId,
-        kind: String(row['source_kind']),
-        id: String(row['source_id']),
-        revision: String(row['revision']),
-        category: row['retention_class'] as Category,
-        bytes: Number(row['logical_bytes']),
-      };
-      candidates.set(key(value), value);
-    }
+    const candidates = new Map(
+      metadata.sourceVersions(actorId).map((value) => [key(value), value]),
+    );
+    for (const { source, category } of metadata.versionDependencies(actorId))
+      needed(actorId, source, category);
     for (const [kind, table] of Object.entries(tables)) {
       const ids = changedRecords.get(actorId)?.previous.get(kind) ?? [];
       if (!ids.length) continue;
@@ -243,14 +213,19 @@ export async function prepareSourceVersions(
       if (!versions.length) continue;
       // Select exact retained versions before reading their bodies. Expiring unrelated
       // accounts from independent pools can exceed one read without retaining a byte.
-      const selected = await db
-        .prepare(
-          `SELECT a.id,octet_length(a.payload) AS bytes FROM ${table} a
-          JOIN recall_sources r ON r.world_id=a.world_id AND r.actor_id=a.actor_id AND r.record_id=a.id AND r.source_kind=?
-          JOIN jsonb_to_recordset(?::jsonb) q("sourceId" text,revision text) ON q."sourceId"=r.id AND q.revision=r.revision
-          WHERE a.world_id=? AND a.actor_id=? AND a.id=ANY(?::text[])`,
-        )
-        .all(kind, JSON.stringify(versions), world.id, actorId, ids);
+      const wanted = new Set(
+        versions.map((value) => JSON.stringify([value.sourceId, value.revision])),
+      );
+      const selected = ids.flatMap((id) => {
+        const row = metadata.prior(
+          table as 'mind_awareness' | 'mind_memories' | 'mind_summaries',
+          id,
+        );
+        return row &&
+          wanted.has(JSON.stringify([row.columns['source_id'], row.columns['account_revision']]))
+          ? [{ id, bytes: row.encodedBytes }]
+          : [];
+      });
       for (let offset = 0; offset < selected.length; ) {
         const batch: string[] = [];
         let bytes = 0;
@@ -279,6 +254,8 @@ export async function prepareSourceVersions(
             category: 'optional' as Category,
             bytes: Buffer.byteLength(payload),
           };
+          if (!wanted.has(JSON.stringify([value.id, value.revision])))
+            throw new Error('Selected exact source changed before retention.');
           candidates.set(key(value), value);
         }
       }

@@ -73,7 +73,7 @@ import {
 } from './draft.js';
 import { byteCount, mindFor, wordCount } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
-import { personalText } from './narration.js';
+import { personalText, nativeText } from './narration.js';
 import type { ExperienceEntry, MemoryRecord, Transition, WorldState, WorldEvent } from './types.js';
 import {
   selectedRecordingReason,
@@ -111,6 +111,7 @@ import { revokeAttentionEvidence } from './attention.js';
 import {
   receivedFacetValue,
   materializeObservation,
+  finishAwarenessObservation,
   currentOriginal,
   currentFacetOriginal,
   removeCurrentFacets,
@@ -146,7 +147,7 @@ export interface Awareness {
   sound?: import('./sound.js').PerceivedSound;
   eventId: string;
   actorId: string;
-  text: string;
+  text: import('./narration.js').NativeText;
   at: number;
   sequence: number;
   modality: 'heard' | 'observed' | 'felt' | 'internal';
@@ -175,7 +176,7 @@ export interface Awareness {
     | 'self_event'
     | 'directed_action'
     | 'observed_event';
-  content?: string;
+  content?: import('./narration.js').NativeText;
   /** Observer-private sighting record kind (EPR03): arrival, outward change or departure. */
   change?: 'onset' | 'detail' | 'end';
 }
@@ -538,9 +539,33 @@ export function admitAutomaticExperience(
             ...(awareness?.exposure ? { exposureKind: awareness.exposure.kind } : {}),
             consequence,
           });
+    if (awareness) finishAwarenessObservation(awareness, reason !== 'none');
+    const renderedAwareness =
+      awareness && reason !== 'none' ? nativeText(awareness.text) : undefined;
     let admittedEntry: ExperienceEntry =
       entry.source === 'awareness'
-        ? { source: 'awareness', value: { ...entry.value } }
+        ? {
+            source: 'awareness',
+            value: {
+              ...entry.value,
+              // A retained personal account is an actual wording consumer. Its
+              // quota keeps charging the same complete text as other accounts;
+              // discarded routine wrappers never pay for rendering it.
+              ...(renderedAwareness !== undefined
+                ? {
+                    text: renderedAwareness,
+                    ...(entry.value.content !== undefined
+                      ? {
+                          content:
+                            entry.value.content === entry.value.text
+                              ? renderedAwareness
+                              : nativeText(entry.value.content),
+                        }
+                      : {}),
+                  }
+                : {}),
+            },
+          }
         : entry.source === 'memory'
           ? { source: 'memory', value: { ...entry.value } }
           : entry;
@@ -556,8 +581,8 @@ export function admitAutomaticExperience(
             : 'consequence',
         ...(reason === 'required' ? { required: true } : {}),
       };
-      if (entry.source === 'awareness')
-        admittedEntry = { source: 'awareness', value: { ...entry.value, retention } };
+      if (admittedEntry.source === 'awareness')
+        admittedEntry = { source: 'awareness', value: { ...admittedEntry.value, retention } };
       else if (entry.source === 'memory')
         admittedEntry = { source: 'memory', value: { ...entry.value, retention } };
     }
@@ -629,11 +654,11 @@ export function admitAutomaticExperience(
                   kind: 'personal-account',
                   source: awareness ? 'awareness' : 'memory',
                   id,
-                  text: awareness?.text ?? memory!.summary,
+                  text: awareness ? nativeText(awareness.text) : memory!.summary,
                   ...((awareness?.eventType ?? memory?.eventType)
                     ? { eventType: awareness?.eventType ?? memory?.eventType }
                     : {}),
-                  ...(awareness?.content ? { content: awareness.content } : {}),
+                  ...(awareness?.content ? { content: nativeText(awareness.content) } : {}),
                   ...(awareness?.eventData ? { data: cloneValue(awareness.eventData) } : {}),
                 },
               },
@@ -1087,7 +1112,7 @@ export function awarenessMemory(entry: Awareness): MemoryRecord {
     sequence: entry.sequence,
     kind: 'episode',
     source: entry.modality,
-    summary: entry.text,
+    summary: nativeText(entry.text),
     entityIds: entry.entityIds,
     importance: entry.importance,
     eventType: entry.eventType,

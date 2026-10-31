@@ -74,6 +74,7 @@ import {
   baseRecordingReason,
 } from './worlds/base/attention.js';
 import type { RecordingInput } from './attention.js';
+import { sightingNarration } from './worlds/base/senses.js';
 import type { ObserverSubject } from './knowledge.js';
 import {
   subjectFamiliarity,
@@ -91,6 +92,16 @@ export function selectedTemporalPolicy(world: WorldState) {
 export function selectedRecordingReason(world: WorldState, input: RecordingInput) {
   selectedCreationProfileForWorld(world);
   return baseRecordingReason(world, input);
+}
+export function selectedSightingNarration(
+  world: WorldState,
+  observerId: string,
+  subjectId: string,
+  detail?: string,
+  departed = false,
+) {
+  selectedCreationProfileForWorld(world);
+  return sightingNarration(observerId, subjectId, detail, departed);
 }
 export function selectedAttentionCapacity(
   world: WorldState,

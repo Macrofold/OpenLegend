@@ -68,6 +68,31 @@ import {
 } from './world-record-schema.js';
 
 type Value = unknown;
+const personalMetadataTables = new Set([
+  'mind_temporal_segments',
+  'mind_awareness',
+  'mind_memories',
+  'mind_summaries',
+  'mind_perception_owners',
+  'mind_perception_originals',
+  'mind_perception_current',
+  'mind_perception_motion_samples',
+]);
+const personalMetadataFields = new Set([
+  'actor_id',
+  'individual_ids',
+  'retention_metadata',
+  'account_revision',
+  'logical_bytes',
+  'unresolved',
+  'value_refs',
+]);
+const personalMetadataColumns = (node: RecordNode) =>
+  personalMetadataTables.has(node.table)
+    ? Object.entries(node.columns ?? {}).filter(
+        ([name]) => node.table === 'mind_temporal_segments' || personalMetadataFields.has(name),
+      )
+    : [];
 export interface RowChange {
   id: string;
   parent: string;
@@ -159,6 +184,7 @@ export const retainedSourceTables: ReadonlySet<string> = new Set([
   'mind_memories',
   'mind_summaries',
   'mind_temporal_chunks',
+  'mind_temporal_segments',
   'mind_perception_values',
   'mind_temporal_supports',
 ]);
@@ -426,8 +452,6 @@ export class WorldRecords {
     return Number(row['revision']);
   }
   /** Establishes derived storage-position metadata on the supplied collections.
-   * A complete reference encoding for diagnostics must use an independent copy:
-   * recapturing an accepted collection can overwrite its live storage ordinals.
    * A selection prepares only those tables, plus ancestor deletions whose foreign
    * keys remove selected records. Unrelated collections are never enumerated. */
   prepare(
@@ -435,10 +459,25 @@ export class WorldRecords {
     after: SavedWorld,
     selectedTables?: ReadonlySet<string>,
   ): RecordChanges {
+    return this.prepareRecords(before, after, selectedTables, false);
+  }
+  /** Captures a complete candidate without rebinding live collection ordinals.
+   * Coverage is checked separately; a rejected resident tail must leave its
+   * accepted placement and staged cold-retirement metadata untouched. */
+  captureMetadataRecords(after: SavedWorld, selectedTables: ReadonlySet<string>): RecordChanges {
+    return this.prepareRecords(undefined, after, selectedTables, true);
+  }
+  private prepareRecords(
+    before: SavedWorld | undefined,
+    after: SavedWorld,
+    selectedTables: ReadonlySet<string> | undefined,
+    readOnlyMetadata: boolean,
+  ): RecordChanges {
     const changes: RecordChanges = { writes: new Map(), deletes: new Map(), rows: 0 };
     let predecessor = before && predecessorTokens.get(before);
-    if (before && !predecessor) predecessorTokens.set(before, (predecessor = {}));
-    const retirement = this.retirements.get(after);
+    if (before && !predecessor && !readOnlyMetadata)
+      predecessorTokens.set(before, (predecessor = {}));
+    const retirement = readOnlyMetadata ? undefined : this.retirements.get(after);
     const ownedAppends = new Set<RowChange>();
     const ownedCreations = new Set<RowChange>();
     const existingParents = new Map<string, Set<string>>();
@@ -494,8 +533,11 @@ export class WorldRecords {
       if (node.encode) {
         const previous = old;
         const bytes = selectedTemporalPolicy(after.world).recent.chunkBytes;
-        old = old === undefined ? undefined : node.encode(old, undefined, bytes, before?.world);
-        next = node.encode(next, previous, bytes, after.world);
+        old =
+          old === undefined
+            ? undefined
+            : node.encode(old, undefined, bytes, before?.world, !readOnlyMetadata);
+        next = node.encode(next, previous, bytes, after.world, !readOnlyMetadata);
       }
       if (!selectedTables || selectedTables.has(node.table)) {
         const payload = encodedBody(node, next);
@@ -607,7 +649,7 @@ export class WorldRecords {
             }
             prior.delete(entryId);
           }
-          if (nextPlacement)
+          if (nextPlacement && !readOnlyMetadata)
             historyPositions.set(b, {
               ...nextPlacement,
               complete: placement?.complete,
@@ -698,7 +740,7 @@ export class WorldRecords {
                   orderedRecordGet(next.values, key)!,
                   orderedRecordGet(positions!.values, key),
                 );
-              entityPositions.set(current as object, next);
+              if (!readOnlyMetadata) entityPositions.set(current as object, next);
               continue;
             }
           }
@@ -799,9 +841,10 @@ export class WorldRecords {
           )
             for (const [key, prior] of oldEntries)
               visit(child.node, prior.entry, undefined, [...childPath, key], id, key, prior.index);
-          if (positions && current && Object.isFrozen(current))
+          if (positions && current && Object.isFrozen(current) && !readOnlyMetadata)
             entityPositions.set(current as object, positions);
-          if (nextPlacement && current) historyMapPositions.set(current as object, nextPlacement);
+          if (nextPlacement && current && !readOnlyMetadata)
+            historyMapPositions.set(current as object, nextPlacement);
         }
       }
     };
@@ -861,7 +904,7 @@ export class WorldRecords {
         ids.add(row.parent);
       }
     }
-    if (Object.isFrozen(after.world))
+    if (Object.isFrozen(after.world) && !readOnlyMetadata)
       preparedRows.set(changes, {
         owner: this,
         predecessor,
@@ -1131,6 +1174,14 @@ export class WorldRecords {
           ? this.currentEntityPredicate(table)
           : '');
       let rows: JsonRecord[] = [];
+      const fields = [
+        'id',
+        'parent_id',
+        'slot',
+        'position',
+        'payload',
+        ...personalMetadataColumns(RECORD_NODES.get(table)!).map(([name]) => name),
+      ];
       if (partial && (table === 'activity_occurrences' || table === 'mind_awareness')) {
         const awareness = table === 'mind_awareness';
         // Seek each owner's bounded tail, union only identities, then hydrate.
@@ -1159,7 +1210,7 @@ export class WorldRecords {
                 ) a WHERE o.world_id=?`
                 : ''
             }
-          ) SELECT t.id,t.parent_id,t.slot,t.position,t.payload
+          ) SELECT ${fields.map((name) => `t.${name}`).join(',')}
           FROM selected s JOIN ${table} t ON t.world_id=? AND t.id=s.id`,
           )
           .all(
@@ -1172,9 +1223,9 @@ export class WorldRecords {
         rows = await this.db
           .prepare(
             `
-          SELECT id,parent_id,slot,position,payload FROM mind_memories WHERE world_id=? AND at>=?
+          SELECT ${fields.join(',')} FROM mind_memories WHERE world_id=? AND at>=?
           UNION ALL
-          SELECT id,parent_id,slot,position,payload FROM mind_memories WHERE world_id=? AND unresolved=1 AND at<?
+          SELECT ${fields.join(',')} FROM mind_memories WHERE world_id=? AND unresolved=1 AND at<?
           ORDER BY parent_id,position`,
           )
           .all(head.worldId, cutoff, head.worldId, cutoff);
@@ -1187,7 +1238,7 @@ export class WorldRecords {
           .prepare(
             table === 'world_hot_events'
               ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
-              : `SELECT id,parent_id,slot,position,payload FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ' AND 1=0' : ''} ORDER BY parent_id,position`,
+              : `SELECT ${fields.join(',')} FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ' AND 1=0' : ''} ORDER BY parent_id,position`,
           )
           .all(head.worldId);
       }
@@ -1841,9 +1892,9 @@ export function assembleWorldRecords(
   const assemble = (node: RecordNode, row: JsonRecord): Value => {
     consumed++;
     const value: Value = JSON.parse(String(row['payload']));
-    if (node.table === 'mind_temporal_segments') {
+    if (personalMetadataTables.has(node.table)) {
       const path = JSON.parse(String(row['id'])) as string[];
-      for (const [name, column] of Object.entries(node.columns ?? {})) {
+      for (const [name, column] of personalMetadataColumns(node)) {
         const expected = column.value(value as JsonRecord, path);
         const actual =
           typeof expected === 'number'
@@ -1852,7 +1903,9 @@ export function assembleWorldRecords(
               ? row[name].map(Number)
               : row[name];
         if (canonicalJson(actual) !== canonicalJson(expected))
-          throw new Error('Receipt page lookup metadata disagrees with its record.');
+          throw new Error(
+            `Personal record ${node.table}.${name} lookup metadata disagrees with its record.`,
+          );
       }
     }
     for (const [field, child] of Object.entries(node.children ?? {})) {

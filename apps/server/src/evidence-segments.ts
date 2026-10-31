@@ -149,8 +149,11 @@ export function encodeEvidenceOwner(
   previous: unknown,
   maxBytes: number,
   world?: WorldState,
+  bindLayout = true,
 ): Owner {
   const owner = value as Owner;
+  // A metadata preview may reuse accepted pages, but only save preparation may
+  // bind new boundaries: its predecessor owns the immutable physical prefix.
   const reusable = isImmutableData(owner);
   const cached = reusable ? encoded.get(owner) : undefined;
   if (cached) return cached;
@@ -236,7 +239,7 @@ export function encodeEvidenceOwner(
         ? appendSnapshot(previousLayout.segments, segments.slice(previousLayout.segments.length))!
         : (Object.freeze(segments) as unknown as EvidenceSegment[]);
     layout = { segments: sealed, start: segments[0]?.start ?? 0, end: segments.at(-1)?.end ?? 0 };
-    if (isImmutableData(values)) layouts.set(values, layout);
+    if (bindLayout && isImmutableData(values)) layouts.set(values, layout);
   }
   if (field === 'entries') {
     const headers = pageHeaders(layout.segments);
@@ -260,7 +263,7 @@ export function encodeEvidenceOwner(
       ...(field === 'entries' ? { index: receiptBounds(layout.segments) } : {}),
     },
   };
-  if (reusable) encoded.set(owner, result);
+  if (bindLayout && reusable) encoded.set(owner, result);
   return result;
 }
 
@@ -323,7 +326,7 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
       const index = segment.index;
       if (
         !index ||
-        receiptHeaders.some(
+        ([...receiptHeaders, 'occurrenceSourceIds', 'occurrenceIndividualIds'] as const).some(
           (key) =>
             !Array.isArray(index[key]) ||
             index[key].some((value) => typeof value !== 'string') ||
@@ -332,6 +335,8 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
       )
         throw new Error('Invalid receipt page index.');
       const {
+        occurrenceSourceIds: _occurrenceSourceIds,
+        occurrenceIndividualIds: _occurrenceIndividualIds,
         sourceIds: _sourceIds,
         individualIds: _individualIds,
         lookupBuckets,
@@ -342,6 +347,8 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
         firstAt: _firstAt,
         lastAt: _lastAt,
         changes: _changes,
+        occurrenceSourceIds: _expectedOccurrenceSourceIds,
+        occurrenceIndividualIds: _expectedOccurrenceIndividualIds,
         sourceIds: _expectedSourceIds,
         individualIds: _expectedIndividualIds,
         spatialContext: receiptSpatialContext,

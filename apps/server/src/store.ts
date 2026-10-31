@@ -37,6 +37,7 @@ import {
 } from './history-residency.js';
 import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
 import { WorldRecords, retainedSourceTables, type RecordChanges } from './world-records.js';
+import { RetentionMetadata, type RetentionMetadataView } from './retention-metadata.js';
 import {
   assertAttemptReceiptContinuity,
   readAttemptBudget,
@@ -167,7 +168,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '38';
+export const DATABASE_SCHEMA = '39';
 
 export interface AttemptBudget {
   id: string;
@@ -471,20 +472,20 @@ export class SqlGameRepository implements GameRepository {
       positions = new Map<string, Map<string, number>>(),
       previous = new Map<string, Map<string, unknown>>();
     for (let round = 0; round < 4; round++) {
-      this.records.stageRetirements(state, rows, positions, previous);
+      if (!complete) this.records.stageRetirements(state, rows, positions, previous);
       // Retention joins only personal source changes. Preparing unrelated physical
       // and current-perception records again in each closure round repeats the save.
-      const changes = this.records.prepare(
-        this.acceptedState ?? undefined,
-        state,
-        retainedSourceTables,
-      );
-      const planned = await this.memories.prepareSourceVersionRetention(state, changes);
+      const changes = complete
+        ? this.records.captureMetadataRecords(state, retainedSourceTables)
+        : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables);
+      const metadata = this.retentionView(state, changes, complete);
+      const planned = await this.memories.prepareSourceVersionRetention(state, changes, metadata);
       const retained = await this.memories.prepareRetention(
         planned.state,
         complete,
         changes,
         this.acceptedState?.world,
+        metadata,
       );
       for (const [table, ids] of retained.rows)
         rows.set(table, [...new Set([...(rows.get(table) ?? []), ...ids])]);
@@ -499,8 +500,10 @@ export class SqlGameRepository implements GameRepository {
         previous.set(table, target);
       }
       state = retained.state;
-      if (state === planned.state)
+      if (state === planned.state) {
+        if (complete) this.records.stageRetirements(state, rows, positions, previous);
         return { state, rows, positions, previous, versions: planned.plan };
+      }
     }
     throw new Error('Exact source closure cannot fit its complete retained account allowance.');
   }
@@ -512,6 +515,27 @@ export class SqlGameRepository implements GameRepository {
   private receivedReclamation?: Pick<PreparedReceivedReclamation, 'capture' | 'changed'>;
   private receivedReclamationDone?: Promise<void>;
   private readonly receivedValueAllocations = new ReceivedValueAllocationCharges();
+  private readonly retentionMetadata = new RetentionMetadata();
+  private retentionView(
+    state: SavedWorld,
+    changes: RecordChanges,
+    complete: boolean,
+  ): RetentionMetadataView {
+    if (complete) {
+      const metadata = new RetentionMetadata();
+      metadata.initializeEmpty(state.world.id);
+      metadata.accepted(
+        state.world.id,
+        1,
+        this.records.captureMetadataRecords(state, retainedSourceTables),
+      );
+      metadata.assertCandidateCoverage(state.world);
+      return metadata.view(state.world.id);
+    }
+    if (!this.acceptedState && this.receivedValueAllocationsEmpty)
+      this.retentionMetadata.initializeEmpty(state.world.id);
+    return this.retentionMetadata.view(state.world.id, changes);
+  }
   private receivedValueAllocationWorld?: string;
   private receivedValueAllocationsEmpty = false;
   private async receivedAllocationHeaders(worldId: string): Promise<Array<[string, number]>> {
@@ -557,18 +581,20 @@ export class SqlGameRepository implements GameRepository {
       completed();
     };
     try {
-      // Snapshot may lag the accepted head; its finite pending suffix is an exact
-      // overlay, and the ticket fences subsequent ownership changes during I/O.
-      const pending = this.journalActive ? await this.journal.pending() : [];
-      for (const transition of pending)
-        for (const row of transition.changes.writes.get('mind_perception_values') ?? []) {
-          const id = (JSON.parse(row.id) as string[]).at(-1)!;
-          if (capture.candidates.some((candidate) => candidate.id === id)) ticket.changed.add(id);
-        }
-      const read = () => prepareReceivedReclamation(this.rawDb, capture, pending);
-      const prepared = this.rawDb.readTransaction
-        ? await this.rawDb.readTransaction(read)
-        : await this.rawDb.transaction(read);
+      const ownership = {
+        appliedRevision: this.retentionMetadata.appliedRevision,
+        sources: new Map(
+          capture.candidates.map(({ id }) => [
+            id,
+            {
+              bytes: this.receivedValueAllocations.physicalBytes(capture.worldId, id),
+              ordinals: this.retentionMetadata.physicalOwned(capture.worldId, id),
+              pending: this.retentionMetadata.ownershipPending(capture.worldId, id),
+            },
+          ]),
+        ),
+      };
+      const prepared = await prepareReceivedReclamation(this.rawDb, capture, ownership);
       return { ...prepared, changed: ticket.changed, release };
     } catch (error) {
       release();
@@ -581,9 +607,17 @@ export class SqlGameRepository implements GameRepository {
     changes: RecordChanges,
     restored = false,
   ): void {
-    if (!this.receivedValueAllocationWorld && this.receivedValueAllocationsEmpty)
+    if (!this.receivedValueAllocationWorld && this.receivedValueAllocationsEmpty) {
       this.initializeReceivedAllocations(worldId, []);
+      this.retentionMetadata.initializeEmpty(worldId);
+    }
     this.receivedValueAllocations.accepted(worldId, revision, changes);
+    this.retentionMetadata.accepted(
+      worldId,
+      revision,
+      changes,
+      this.acceptedState ? this.memories.sourceVersionPlan(this.acceptedState.world) : undefined,
+    );
     if (this.receivedReclamation)
       invalidateReceivedReclamation(this.receivedReclamation, worldId, changes, restored);
   }
@@ -787,8 +821,18 @@ export class SqlGameRepository implements GameRepository {
     );
     this.integrationValues = new IntegrationValues(this.db);
     this.records = new WorldRecords(this.db);
-    this.memories = new MemoryRepository(this.db, (worldId, id) =>
-      this.receivedValueAllocationBytes(worldId, id),
+    this.memories = new MemoryRepository(
+      this.db,
+      (worldId, id) => this.receivedValueAllocationBytes(worldId, id),
+      (state, pending, complete) =>
+        this.retentionView(
+          state,
+          pending ??
+            (complete
+              ? this.records.captureMetadataRecords(state, retainedSourceTables)
+              : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables)),
+          complete,
+        ),
     );
     this.history = new HistoryRepository(this.db);
     this.saves = new GameSaves(this.db, join(dataDirectory, 'saves'), database.checkpointSource);
@@ -910,6 +954,9 @@ export class SqlGameRepository implements GameRepository {
       if (head) {
         const worldId = String(head['world_id']);
         this.initializeReceivedAllocations(worldId, await this.receivedAllocationHeaders(worldId));
+        this.retentionMetadata.initialize(
+          await this.retentionMetadata.capture(this.rawDb, worldId),
+        );
       } else this.receivedValueAllocationsEmpty = true;
     });
     if (this.rawDb.materializationTransaction) {
@@ -1035,13 +1082,14 @@ export class SqlGameRepository implements GameRepository {
       return {
         canonical: loaded,
         receivedHeaders: await this.receivedAllocationHeaders(loaded.state.world.id),
+        retentionMetadata: await this.retentionMetadata.capture(this.rawDb, loaded.state.world.id),
         historyCount: await (active
           ? this.history.retainedEventCount(loaded.state.world.id)
           : this.history.auditEventCount(loaded.state.world.id)),
       };
     });
     if (captured) {
-      const { canonical, historyCount, receivedHeaders } = captured;
+      const { canonical, historyCount, receivedHeaders, retentionMetadata } = captured;
       const state = canonical.state;
       // These independently reconstructed values share one database cut. Heavy
       // synchronous validation needs no SQL and must not occupy its reader lane.
@@ -1060,6 +1108,7 @@ export class SqlGameRepository implements GameRepository {
       // page layouts must survive the next diff, including direct store callers.
       freezeWorld(state.world);
       this.initializeReceivedAllocations(state.world.id, receivedHeaders);
+      this.retentionMetadata.initialize(retentionMetadata);
       this.acceptedState = canonical.state;
       this.acceptedRevision = canonical.revision;
       return { revision: canonical.revision, state };
@@ -1068,6 +1117,7 @@ export class SqlGameRepository implements GameRepository {
     this.acceptedState = null;
     this.acceptedRevision = 0;
     this.receivedValueAllocations.clear();
+    this.retentionMetadata.clear();
     this.receivedValueAllocationWorld = undefined;
     this.receivedValueAllocationsEmpty = true;
     return null;
@@ -1161,9 +1211,11 @@ export class SqlGameRepository implements GameRepository {
       restore: !!historyProjection?.restore,
     };
     let restoredReceivedHeaders: Array<[string, number]> | undefined;
+    let restoredRetentionMetadata: Awaited<ReturnType<RetentionMetadata['capture']>> | undefined;
     const publish = () => {
       if (restoredReceivedHeaders)
         this.initializeReceivedAllocations(state.world.id, restoredReceivedHeaders);
+      if (restoredRetentionMetadata) this.retentionMetadata.initialize(restoredRetentionMetadata);
       this.acceptedReceivedChanges(state.world.id, committedRevision, changes, write.restore);
       this.memories.acceptedSourceChanges(state.world.id, changes, write.restore);
       this.publishWorldTables(write);
@@ -1338,6 +1390,11 @@ export class SqlGameRepository implements GameRepository {
         await this.applyWorldTables(write);
         if (write.restore)
           restoredReceivedHeaders = await this.receivedAllocationHeaders(state.world.id);
+        if (write.restore)
+          restoredRetentionMetadata = await this.retentionMetadata.capture(
+            this.rawDb,
+            state.world.id,
+          );
         // Nested importer/restore transactions may still roll back after this call.
         // Keep their tentative baseline, but publish only after the outer COMMIT.
         this.db.afterRollback?.(() => {
@@ -1422,6 +1479,14 @@ export class SqlGameRepository implements GameRepository {
   ): void {
     const worldId = 'worldId' in write ? write.worldId : write.state.world.id;
     this.receivedValueAllocations.applied(worldId, write.revision, write.changes);
+    this.retentionMetadata.applied(
+      worldId,
+      write.revision,
+      write.changes,
+      'sources' in write
+        ? write.sources?.versions
+        : (write.preparedSources?.versions ?? this.memories.sourceVersionPlan(write.state.world)),
+    );
     this.readyHistoryWorlds.add(worldId);
     this.records.needsHotPrune = false;
     const memoryRevision = this.memories.publicationRevision;
@@ -2405,6 +2470,7 @@ export class SqlGameRepository implements GameRepository {
               await this.db.close();
             } finally {
               this.receivedValueAllocations.clear();
+              this.retentionMetadata.clear();
               this.receivedValueAllocationWorld = undefined;
               this.receivedValueAllocationsEmpty = false;
             }

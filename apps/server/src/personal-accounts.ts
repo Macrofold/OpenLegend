@@ -9,6 +9,7 @@ import {
   TEMPORAL_FACET_DICTIONARY_FIELDS,
   TEMPORAL_FACET_REFERENCE_FIELDS,
   TEMPORAL_DICTIONARY_REFERENCE_FIELDS,
+  TEMPORAL_FIELD,
   canonicalJson,
   type Awareness,
   type EventEvidence,
@@ -185,7 +186,7 @@ export function storyAccountSql(alias = 'p'): string {
   );
   const facets = TEMPORAL_FACET_DICTIONARY_FIELDS.map(
     (field) =>
-      `SELECT (f.value->>'${field}')::bigint AS ordinal FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') f(value)`,
+      `SELECT (f.value->>${field})::bigint AS ordinal FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') f(value)`,
   );
   const references = TEMPORAL_FACET_REFERENCE_FIELDS.map(
     (field) =>
@@ -217,12 +218,12 @@ export function storyAccountSql(alias = 'p'): string {
       ), closure(ordinal) AS (
         SELECT ordinal FROM needed WHERE ordinal IS NOT NULL
         UNION
-        SELECT (e.entry#>>ARRAY['value','value',link.field])::bigint
+        SELECT (e.entry#>>ARRAY['value','1',link.field])::bigint
         FROM closure n JOIN mind_temporal_segments s ON s.world_id=c.world_id AND s.parent_id=c.id
           AND s.first_ordinal<=n.ordinal AND s.last_ordinal>=n.ordinal
         CROSS JOIN LATERAL (SELECT s.payload::json->'values'->(n.ordinal-s.first_ordinal)::int AS entry) e
         JOIN (VALUES ${dictionaryLinks}) link(kind,field)
-          ON e.entry->>'kind'='dictionary' AND e.entry#>>'{value,kind}'=link.kind
+          ON e.entry->>'kind'='dictionary' AND e.entry#>>'{value,0}'=link.kind
       ), dependencies AS MATERIALIZED (
         SELECT s.payload::json->'values'->(n.ordinal-s.first_ordinal)::int AS entry
         FROM closure n JOIN mind_temporal_segments s ON s.world_id=c.world_id AND s.parent_id=c.id
@@ -231,9 +232,9 @@ export function storyAccountSql(alias = 'p'): string {
       ), entries AS (
         SELECT entry FROM dependencies UNION ALL SELECT change AS entry FROM selected
       ), selected_values AS (
-        SELECT f.ordinal,${receivedValueSql('c.world_id', "d.entry#>>'{value,value}'", "(f.value#>>'{value,1}')::bigint")} AS value
+        SELECT f.ordinal,${receivedValueSql('c.world_id', "d.entry#>>'{value,1}'", `(f.value#>>'{${TEMPORAL_FIELD.value},1}')::bigint`)} AS value
         FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') WITH ORDINALITY f(value,ordinal)
-        JOIN dependencies d ON (d.entry->>'ordinal')::bigint=(f.value#>>'{value,0}')::bigint
+        JOIN dependencies d ON (d.entry->>'ordinal')::bigint=(f.value#>>'{${TEMPORAL_FIELD.value},0}')::bigint
       ) SELECT json_build_object('owner',json_build_object(
           'id',c.source_id,'actorId',c.actor_id,'physicalLife',c.physical_life,'epoch',c.receipt_epoch,
           'entries',(SELECT json_agg(entry ORDER BY (entry->>'ordinal')::bigint) FROM entries)),

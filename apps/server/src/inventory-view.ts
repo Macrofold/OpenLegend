@@ -1,3 +1,4 @@
+import { currentFacetGrant } from '@open-legend/domain';
 import {
   offerRecipientProblem,
   itemContainerCapacity,
@@ -773,14 +774,17 @@ export function inventoryDestinationPage(
   )
     throw new HistoryCursorError('Destinations, contents or access changed. Refresh destinations.');
   let observed: { id: string; leaseId: string }[] | undefined;
+  const owner = world.perceptionEvidence?.[scope.actorId];
   const observedBodies = () =>
-    (observed ??= Object.values(world.perceptionEvidence?.[scope.actorId]?.current ?? {})
-      .filter(
-        (lease) =>
-          lease.value.kind === 'body' && currentBodyGrant(world, scope.actorId, lease.subjectId),
-      )
-      .map((lease) => ({ id: lease.subjectId, leaseId: lease.id }))
-      .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0)));
+    (observed ??= owner
+      ? Object.values(owner.current)
+          .flatMap((lease) => {
+            if (lease.value.kind !== 'body') return [];
+            const id = currentFacetGrant(owner, lease).subjectId;
+            return currentBodyGrant(world, scope.actorId, id) ? [{ id, leaseId: lease.id }] : [];
+          })
+          .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0))
+      : []);
   let spatialRevision: string | undefined;
   const spatialMembership = () =>
     (spatialRevision ??= createHash('sha256')

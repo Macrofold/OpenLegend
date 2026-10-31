@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import {
   canSpeak,
   equippedItems,
@@ -226,11 +227,16 @@ function optional<T>(
   return fallback;
 }
 
-function isJournalEvent(event: { type: string; text: string; data?: Record<string, unknown> }) {
+function isJournalEvent(event: {
+  type: string;
+  text: import('@open-legend/domain').NativeText;
+  data?: Record<string, unknown>;
+}) {
   return !(
     event.type === 'action-started' &&
     (event.data?.['actionType'] === 'move' ||
-      (event.data?.['actionType'] === undefined && event.text.endsWith(' started move.')))
+      (event.data?.['actionType'] === undefined &&
+        nativeText(event.text).endsWith(' started move.')))
   );
 }
 
@@ -1628,8 +1634,8 @@ export async function projectView(
           : (event.references?.find((reference) => reference.role === 'actor')?.label ?? 'Someone'),
         text:
           event.speech?.intelligibility === 'none'
-            ? event.text
-            : String(event.data?.['text'] ?? event.text),
+            ? nativeText(event.text)
+            : String(event.data?.['text'] ?? nativeText(event.text)),
         time: event.at,
       };
     }),

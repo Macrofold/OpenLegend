@@ -188,7 +188,8 @@ export function encodeJournalTransition(
       if (minimum > JOURNAL_ENTRY_BYTES) return;
     }
   for (const event of history.changed) {
-    minimum += event.text.length;
+    // Captured grammar is charged by exact encoding below, without rendering prose.
+    minimum += typeof event.text === 'string' ? event.text.length : 0;
     if (minimum > JOURNAL_ENTRY_BYTES) return;
   }
   const payload = JSON.stringify({

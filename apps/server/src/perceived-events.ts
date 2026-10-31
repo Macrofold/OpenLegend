@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import { formatDisplayNumber } from '@open-legend/language';
 import {
   projectEventEvidence,
@@ -172,7 +173,7 @@ export function publicEvent(
     event.actorId === observerId
       ? 'I'
       : references.find((reference) => reference.role === 'actor')?.label;
-  let text = event.text;
+  let text = nativeText(event.text);
   // Only these native movement records have this coordinate suffix. Do not round
   // arbitrary prose, quoted speech, names or IDs by scanning all event text.
   if (
@@ -460,7 +461,7 @@ export async function readPerceivedEvents(
             )
             .all(...args, ...positions(edge), count);
         },
-        (row) => matchesSearch(terms, storySourceRow(row).text),
+        (row) => matchesSearch(terms, nativeText(storySourceRow(row).text)),
         limit,
         SEARCH_SCAN_ROWS,
       ));
@@ -688,7 +689,7 @@ export async function readPerceivedEventSources(
           const corrEvent = JSON.parse(String(corrRow['payload'])) as WorldEvent;
           const corrPerspective = storySourceRow(corrRow, 'perspective');
           const corrProjected = projectEventEvidence(corrEvent, corrPerspective.evidence);
-          correctionNote = `Qualified by later observation: ${corrProjected.text}`;
+          correctionNote = `Qualified by later observation: ${nativeText(corrProjected.text)}`;
         } else {
           correctionNote = 'Qualified by a later observation in retained history.';
         }
@@ -708,7 +709,7 @@ export async function readPerceivedEventSources(
         acquisition,
         acquisitionLabel,
         sourceLabel,
-        text: projected.text,
+        text: nativeText(projected.text),
         ...(exposure?.kind === 'inventory-item' && exposure.inscription
           ? { inscription: exposure.inscription }
           : {}),

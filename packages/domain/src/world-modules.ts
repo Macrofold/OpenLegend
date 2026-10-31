@@ -57,6 +57,7 @@ import {
   subjectNarration,
   presentVerb,
   validateNarration,
+  validateNativeText,
 } from './narration.js';
 import { validName } from '@open-legend/language';
 import { validatePlaces } from './places.js';
@@ -1435,8 +1436,10 @@ export function validateWorldModules(world: WorldState): void {
     }
   validateSocialPolicy(world);
   validateCombatEncounters(world);
-  for (const event of world.events)
+  for (const event of world.events) {
+    validateNativeText(event.text);
     if (event.narration !== undefined) validateNarration(event.narration);
+  }
   const interval = world.nativeInterval;
   if (
     interval !== undefined &&

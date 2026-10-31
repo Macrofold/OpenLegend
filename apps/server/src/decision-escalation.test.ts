@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { randomUUID } from 'node:crypto';
@@ -643,7 +644,10 @@ describe('enabled character decision reconsideration', () => {
     expect(job.decision?.groups['q0']?.state).toBe('resolved');
     expect(
       h.service.world.events.filter(
-        (event) => event.type === 'speech' && event.actorId === NPC_ID && event.text.includes(text),
+        (event) =>
+          event.type === 'speech' &&
+          event.actorId === NPC_ID &&
+          nativeText(event.text).includes(text),
       ),
     ).toHaveLength(1);
     abstain = true;
@@ -665,7 +669,10 @@ describe('enabled character decision reconsideration', () => {
     expect(h.calls.higher).toHaveLength(2);
     expect(
       h.service.world.events.filter(
-        (event) => event.type === 'speech' && event.actorId === NPC_ID && event.text.includes(text),
+        (event) =>
+          event.type === 'speech' &&
+          event.actorId === NPC_ID &&
+          nativeText(event.text).includes(text),
       ),
     ).toHaveLength(1);
   });

@@ -1,3 +1,4 @@
+import { currentFacetGrant } from './perception-current.js';
 import {
   appendTemporalFrameReceipt,
   prepareTemporalFrameReceipt,
@@ -984,11 +985,12 @@ function temporalCheckpointFields(
   const current = world.perceptionEvidence?.[actorId]?.current;
   if (current)
     for (const stored of Object.values(readOnlyDraftView(current))) {
-      const record = readOnlyDraftView(stored);
-      if (!subjects.has(record.exposure)) continue;
+      const record = readOnlyDraftView(stored),
+        grant = currentFacetGrant(world.perceptionEvidence![actorId]!, record);
+      if (!subjects.has(grant.exposure)) continue;
       if (
         record.value.kind === 'location' &&
-        current[`${record.subjectId}:body`] &&
+        current[`${grant.subjectId}:body`] &&
         receivedValueAt(sources, {
           blockId: record.value.reference[0],
           valueOrdinal: record.value.reference[1],
@@ -1009,7 +1011,7 @@ function temporalCheckpointFields(
               confirmedThrough: pose?.confirmedThrough ?? lease.confirmedThrough,
             }
           : undefined;
-      include(record.exposure, {
+      include(grant.exposure, {
         ...metadata,
         ...received.reference,
         ...(received.projection.reception ? { reception: received.projection.reception } : {}),
@@ -1352,7 +1354,9 @@ export function captureTemporalCurrent(
       jsonText(receiverFrame) !== jsonText(owned.actor.lastReceiverFrame));
   const captured: ReturnType<typeof captureTemporalCurrent> = [];
   const bodyRows = new Map(
-    leases.filter((row) => row.value.kind === 'body').map((row) => [row.subjectId, row]),
+    leases
+      .filter((row) => row.value.kind === 'body')
+      .map((row) => [currentFacetGrant(world.perceptionEvidence![actorId]!, row).subjectId, row]),
   );
   const keep = new Set<string>();
   const grouped = new Map<string, LiveFacetSupport[]>();
@@ -1390,7 +1394,7 @@ export function captureTemporalCurrent(
       },
     };
     confirmations.push({
-      subject: record.exposure,
+      subject: currentFacetGrant(world.perceptionEvidence![actorId]!, record).exposure,
       reference,
       ...(reception ? { reception } : {}),
       original: input.original,
@@ -1402,18 +1406,19 @@ export function captureTemporalCurrent(
     confirmedMarks.set(proof.id, confirmedThrough);
   };
   for (const stored of leases) {
-    const record = readOnlyDraftView(stored);
+    const record = readOnlyDraftView(stored),
+      grant = currentFacetGrant(world.perceptionEvidence![actorId]!, record);
     keep.add(record.id);
     // Only the sensory producer supplies this finite set. Focus changes and
     // later readers must not turn held values into another successful check.
     const actuallyChecked =
-      record.modality === 'sight' &&
+      grant.modality === 'sight' &&
       (['description', 'carried', 'pile-contents', 'public-attributes'].includes(record.value.kind)
-        ? checked?.detailed.has(record.subjectId)
-        : checked?.broad.has(record.subjectId));
+        ? checked?.detailed.has(grant.subjectId)
+        : checked?.broad.has(grant.subjectId));
     // Motion is a read of two received samples, not another recorded payload.
     if (record.value.kind === 'location') {
-      const body = bodyRows.get(record.subjectId);
+      const body = bodyRows.get(grant.subjectId);
       if (
         body &&
         receivedValueAt(world.receivedValues?.sources ?? {}, {
@@ -1440,18 +1445,18 @@ export function captureTemporalCurrent(
     }
     if (
       changedSubjects &&
-      !changedSubjects.has(record.subjectId) &&
-      !newlySelected.has(record.subjectId) &&
-      !endingSelection.has(record.subjectId) &&
+      !changedSubjects.has(grant.subjectId) &&
+      !newlySelected.has(grant.subjectId) &&
+      !endingSelection.has(grant.subjectId) &&
       !actuallyChecked &&
-      !(record.value.kind === 'body' && contactSubjects.has(record.subjectId))
+      !(record.value.kind === 'body' && contactSubjects.has(grant.subjectId))
     )
       continue;
     const reference = readOnlyDraftView(owned.actor.captures)[record.id];
     const maySkip =
-      !newlySelected.has(record.subjectId) &&
-      !endingSelection.has(record.subjectId) &&
-      !(record.value.kind === 'body' && contactSubjects.has(record.subjectId));
+      !newlySelected.has(grant.subjectId) &&
+      !endingSelection.has(grant.subjectId) &&
+      !(record.value.kind === 'body' && contactSubjects.has(grant.subjectId));
     if (
       maySkip &&
       reference &&
@@ -1521,14 +1526,18 @@ export function captureTemporalCurrent(
   };
   for (const group of grouped.values()) {
     const association = leases.find(
-      (lease) => lease.subjectId === group[0]!.subjectId && lease.value.kind === 'association',
+      (lease) =>
+        currentFacetGrant(world.perceptionEvidence![actorId]!, lease).subjectId ===
+          group[0]!.subjectId && lease.value.kind === 'association',
     );
     const supported = association && receivedFacetValue(world, association.value);
     const identity =
       supported?.kind === 'association' && supported.strength === 'supported'
         ? supported.subject
         : leases.find(
-            (lease) => lease.subjectId === group[0]!.subjectId && lease.value.kind === 'body',
+            (lease) =>
+              currentFacetGrant(world.perceptionEvidence![actorId]!, lease).subjectId ===
+                group[0]!.subjectId && lease.value.kind === 'body',
           )?.localSubject;
     const locator = appendTemporalReceipt(
       world,
@@ -1575,14 +1584,25 @@ export function captureTemporalCurrent(
   if (
     !frameRecorded &&
     (frameChanged || pendingConfirmations.length > 0) &&
-    leases.some((lease) => !endingSelection.has(lease.subjectId))
+    leases.some(
+      (lease) =>
+        !endingSelection.has(
+          currentFacetGrant(world.perceptionEvidence![actorId]!, lease).subjectId,
+        ),
+    )
   ) {
     frameRecorded = !!appendTemporalReceipt(
       world,
       actorId,
       {
         subject: JSON.stringify(['receiver', owned.actor.physicalLife]),
-        contextSubjects: [...new Set(leases.map((lease) => lease.exposure))],
+        contextSubjects: [
+          ...new Set(
+            leases.map(
+              (lease) => currentFacetGrant(world.perceptionEvidence![actorId]!, lease).exposure,
+            ),
+          ),
+        ],
         change: 'receiver-frame',
         receiverFrame,
         facets: [],

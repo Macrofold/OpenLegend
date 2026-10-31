@@ -1,8 +1,9 @@
 import { entityGet } from './entity-collection.js';
 import { objectAncestors } from './objects.js';
 import { seesEntity } from './perception.js';
-import { renderNarration, type Narration } from './narration.js';
+import { renderNarration, nativeText, type Narration, type NativeText } from './narration.js';
 import { selectedEventDisclosure } from './world-composition.js';
+import { namePhrase } from '@open-legend/language';
 import type { WorldEvent, WorldState } from './types.js';
 
 export interface EventDisclosurePolicy {
@@ -27,16 +28,24 @@ export function observeEvent(
 ) {
   const policy = selectedEventDisclosure(world);
   const owned = event.scope === 'private' || event.actorId === observerId;
+  const capturedName = (id: string): string | undefined => {
+    const named = typeof event.text === 'string' ? undefined : event.text.names[id];
+    if (!named) return;
+    const value = namePhrase(named, 'none');
+    return named.nameForm === 'proper' ? value : value[0]!.toUpperCase() + value.slice(1);
+  };
   const names = (sourceId?: string, targetId?: string) => [
     ...(sourceId
       ? [
           {
             id: sourceId,
-            label: renderNarration(
-              world,
-              { parts: [{ entityId: sourceId, role: 'name', article: 'none' }] },
-              observerId,
-            ),
+            label:
+              capturedName(sourceId) ??
+              renderNarration(
+                world,
+                { parts: [{ entityId: sourceId, role: 'name', article: 'none' }] },
+                observerId,
+              ),
             role: 'actor' as const,
           },
         ]
@@ -45,11 +54,13 @@ export function observeEvent(
       ? [
           {
             id: targetId,
-            label: renderNarration(
-              world,
-              { parts: [{ entityId: targetId, role: 'name', article: 'none' }] },
-              observerId,
-            ),
+            label:
+              capturedName(targetId) ??
+              renderNarration(
+                world,
+                { parts: [{ entityId: targetId, role: 'name', article: 'none' }] },
+                observerId,
+              ),
             role: 'target' as const,
           },
         ]
@@ -57,11 +68,15 @@ export function observeEvent(
   ];
   const complete = () => {
     const eventData = policy.data(event, observerId, true);
-    let text = event.narration ? renderNarration(world, event.narration, observerId) : event.text;
+    let text: NativeText = event.narration
+      ? renderNarration(world, event.narration, observerId)
+      : typeof event.text !== 'string'
+        ? { ...event.text, selfId: observerId, person: 'first' }
+        : event.text;
     // A visible meter change does not expose a private bodily cause. The installed
     // disclosure policy must separately admit the recorded cause before it is narrated.
     if (event.type === 'attribute-changed' && typeof eventData['causeLabel'] === 'string')
-      text = `${text.replace(/[.!?]$/, '')} from ${eventData['causeLabel'].toLowerCase()}.`;
+      text = `${nativeText(text).replace(/[.!?]$/, '')} from ${eventData['causeLabel'].toLowerCase()}.`;
     return {
       sourceId: event.actorId,
       targetId: event.targetId,

@@ -32,7 +32,7 @@ import { isSafeRecordId } from './records.js';
 import { speechPerception } from './perception.js';
 import { contentLabel } from './events.js';
 import type { SpeechVolume } from './acoustics.js';
-import type { NarrationPerspective } from './narration.js';
+import { validateNativeText, type NarrationPerspective } from './narration.js';
 import type { Awareness } from './experience.js';
 import type { Entity, Position, WorldEvent, WorldState } from './types.js';
 
@@ -452,6 +452,8 @@ export function validateEventEvidence(value: unknown): asserts value is EventEvi
   if (!value || typeof value !== 'object' || Array.isArray(value))
     throw new Error('Invalid committed observer facts.');
   const evidence = value as Partial<EventEvidence>;
+  validateNativeText(evidence.text);
+  if (evidence.content !== undefined) validateNativeText(evidence.content);
   if (
     !['memory', 'sensory'].includes(evidence.retentionClass ?? '') ||
     (evidence.retentionClass === 'sensory'

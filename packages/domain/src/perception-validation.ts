@@ -1,3 +1,4 @@
+import { currentFacetGrant } from './perception-current.js';
 import type { WorldState } from './types.js';
 import type {
   ReceivedFacetValue,
@@ -265,6 +266,11 @@ export function validatePerceptionEvidenceState(
       !state.receipts ||
       typeof state.receipts !== 'object' ||
       Array.isArray(state.receipts) ||
+      !state.grants ||
+      typeof state.grants !== 'object' ||
+      Array.isArray(state.grants) ||
+      !Number.isSafeInteger(state.nextGrant) ||
+      state.nextGrant < 0 ||
       !state.current ||
       typeof state.current !== 'object' ||
       Array.isArray(state.current) ||
@@ -315,7 +321,10 @@ export function validatePerceptionEvidenceState(
         const later = captureReceivedLocationSample(world, currentFacetSupport(state, location));
         validateSensoryFacet({
           kind: 'observed-motion',
-          exposure: { observer: state.observer!, episodeId: location.exposure },
+          exposure: {
+            observer: state.observer!,
+            episodeId: currentFacetGrant(state, location).exposure,
+          },
           earlier: { ...proof, location: prior.location, frame: prior.frame },
           later,
           correspondence: 'unambiguous-received-continuity',
@@ -416,22 +425,36 @@ export function validatePerceptionEvidenceState(
       )
         throw new Error('Invalid perception observer life.');
     }
+    for (const [id, grant] of Object.entries(state.grants)) {
+      if (
+        !Number.isSafeInteger(Number(id)) ||
+        Number(id) < 0 ||
+        Number(id) >= state.nextGrant ||
+        !hasRecordFields(grant, [
+          'subjectId',
+          'subjectPhysicalLife',
+          'original',
+          'exposure',
+          'modality',
+        ]) ||
+        !isSafeRecordId(grant.subjectId) ||
+        (grant.subjectPhysicalLife !== null &&
+          (!Number.isSafeInteger(grant.subjectPhysicalLife) || grant.subjectPhysicalLife < 0)) ||
+        typeof grant.exposure !== 'string' ||
+        !grant.exposure ||
+        !['sight', 'hearing', 'touch'].includes(grant.modality) ||
+        typeof grant.original !== 'string' ||
+        !Object.hasOwn(state.originals, grant.original)
+      )
+        throw new Error('Invalid acquired current subject grant.');
+    }
+    const usedGrants = new Set<number>();
     for (const [key, record] of Object.entries(readOnlyDraftView(state.current))) {
       if (
         !record ||
         !hasRecordFields(
           record,
-          [
-            'id',
-            'revision',
-            'subjectId',
-            'subjectPhysicalLife',
-            'value',
-            'original',
-            'originalOrdinal',
-            'exposure',
-            'modality',
-          ],
+          ['id', 'revision', 'grant', 'value', 'originalOrdinal'],
           [
             'bodyLeaseId',
             'localSubject',
@@ -444,16 +467,16 @@ export function validatePerceptionEvidenceState(
             'confirmedThrough',
           ],
         ) ||
-        typeof record.original !== 'string' ||
-        !Object.hasOwn(state.originals, record.original) ||
+        !Number.isSafeInteger(record.grant) ||
+        record.grant < 0 ||
+        !state.grants[record.grant] ||
         !state.observer ||
         state.observer.actorId !== observerId ||
-        state.observer.physicalLife !== state.life ||
-        typeof record.exposure !== 'string' ||
-        !record.exposure
+        state.observer.physicalLife !== state.life
       )
         throw new Error('Invalid current perception facet.');
-      usedOriginals.add(record.original);
+      usedGrants.add(record.grant);
+      usedOriginals.add(currentFacetGrant(state, record).original);
       const lease = currentFacetSupport(state, record);
       validateOriginal(lease.original);
       const header = receivedObservationHeader(world, lease.original);
@@ -533,6 +556,8 @@ export function validatePerceptionEvidenceState(
       )
         throw new Error('Invalid current perception facet.');
     }
+    if (usedGrants.size !== Object.keys(state.grants).length)
+      throw new Error('An unowned current subject grant was retained.');
     if (usedOriginals.size !== Object.keys(state.originals).length)
       throw new Error('An unreferenced current perception original was retained.');
   }

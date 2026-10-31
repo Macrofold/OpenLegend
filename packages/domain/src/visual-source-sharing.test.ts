@@ -1,3 +1,4 @@
+import { currentFacetGrant } from './perception-current.js';
 import { expect, it } from 'vitest';
 import { createWorld, NPC_ID, PLAYER_ID } from './worlds/base/world.js';
 import { entityGet, entitySet } from './entity-collection.js';
@@ -38,7 +39,7 @@ it('shares only complete outward source values while preserving independent rece
   expect(a.value.reference).toEqual(b.value.reference);
   expect(aValue).toBe(receivedFacetValue(world, b.value));
   expect(Object.isFrozen(aValue)).toBe(true);
-  expect(a.original).not.toBe(b.original);
+  expect(currentFacetGrant(aOwner, a).original).not.toBe(currentFacetGrant(bOwner, b).original);
   expect(receivedObservationHeader(world, aOriginal).observer.actorId).toBe(first.id);
   expect(receivedObservationHeader(world, bOriginal).observer.actorId).toBe(second.id);
   const point = (id: string) =>

@@ -25,6 +25,7 @@ import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions } from './history-residency.js';
 import { MemoryRetentionError, type PreparedMemoryRetention } from './temporal-storage.js';
 import { releaseUnusedTemporalSupports } from './retention-cleanup.js';
+import type { RetentionMetadataView } from './retention-metadata.js';
 
 const tables = {
   awareness: 'mind_awareness',
@@ -81,7 +82,10 @@ export async function prepareAccountRetention(
   state: SavedWorld,
   complete = false,
   pendingDeletes?: ReadonlyMap<string, readonly string[]>,
+  retainedMetadata?: RetentionMetadataView,
 ): Promise<PreparedMemoryRetention> {
+  if (!retainedMetadata)
+    throw new MemoryRetentionError('Complete personal retention metadata is unavailable.');
   const policy = selectedTemporalPolicy(state.world),
     now = state.world.simTime;
   const rows = new Map<string, string[]>(),
@@ -90,50 +94,46 @@ export async function prepareAccountRetention(
   for (const actorId of Object.keys(world.experience?.temporal?.actors ?? {})) {
     let accounts = world.experience!.temporal!.actors[actorId]!.accounts;
     if (!accounts) {
-      const totals = complete
-        ? []
-        : await db
-            .prepare(
-              `SELECT category,SUM(bytes) AS bytes,SUM(count) AS count FROM (
-        ${Object.values(tables)
-          .map(
-            (table) =>
-              `SELECT retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM ${table} WHERE world_id=? AND actor_id=? GROUP BY retention_class`,
-          )
-          .join(' UNION ALL ')}
-        UNION ALL SELECT CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? AND actor_id=? GROUP BY required
-        UNION ALL SELECT 'required' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_learned_capabilities WHERE world_id=? AND actor_id=? AND payload::jsonb->>'source'<>'authored'
-        UNION ALL SELECT 'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_knowledge_documents WHERE world_id=? AND actor_id=? AND payload::jsonb->>'origin'='actor-edit'
-        UNION ALL SELECT 'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_recognition WHERE world_id=? AND parent_id=? AND payload::jsonb->>'retained'='true' AND COALESCE(payload::jsonb->>'authored','false')<>'true'
-        UNION ALL SELECT retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') AND actor_id=? GROUP BY retention_class
-      ) totals GROUP BY category`,
-            )
-            .all(
-              ...Object.values(tables).flatMap(() => [world.id, actorId]),
-              world.id,
-              actorId,
-              world.id,
-              actorId,
-              world.id,
-              actorId,
-              world.id,
-              JSON.stringify(['world', 'observerIdentities', actorId]),
-              world.id,
-              actorId,
-            );
+      const totals = new Map<string, { bytes: number; count: number }>();
+      if (retainedMetadata)
+        for (const table of Object.values(tables))
+          for (const row of retainedMetadata.rows(table, actorId)) {
+            const category = String(row.columns['retention_class']);
+            if (category === 'sensory') continue;
+            const total = totals.get(category) ?? { bytes: 0, count: 0 };
+            total.bytes += Number(row.columns['logical_bytes']);
+            total.count++;
+            totals.set(category, total);
+          }
       world = updateWorld(
         world,
         (draft) => {
           ensureExperienceAccounting(draft, actorId);
           const value = draft.experience!.temporal!.actors[actorId]!.accounts!;
-          if (totals.length)
-            for (const category of ['optional', 'required', 'speech'] as const) {
-              const found = totals.find((row) => row['category'] === category);
-              value[category] = {
-                bytes: Number(found?.['bytes'] ?? 0),
-                count: Number(found?.['count'] ?? 0),
-              };
+          if (retainedMetadata) {
+            for (const entry of sourceEntries(world, actorId)) {
+              const total = value[accountClass(entry)];
+              total.bytes -= encodedExperienceBytes(entry);
+              total.count--;
             }
+            for (const category of ['optional', 'required', 'speech'] as const) {
+              const total = totals.get(category);
+              value[category].bytes += total?.bytes ?? 0;
+              value[category].count += total?.count ?? 0;
+            }
+            const archives = {
+              optional: { bytes: 0, count: 0 },
+              required: { bytes: 0, count: 0 },
+              speech: { bytes: 0, count: 0 },
+            };
+            for (const version of retainedMetadata.sourceVersions(actorId)) {
+              archives[version.category].bytes += version.bytes;
+              archives[version.category].count++;
+              value[version.category].bytes += version.bytes;
+              value[version.category].count++;
+            }
+            value.archives = archives;
+          }
           value.nextDue = 0;
         },
         { retainNativeValues: true },
@@ -159,12 +159,7 @@ export async function prepareAccountRetention(
       },
       { retainNativeValues: true },
     );
-    const released = await releaseUnusedTemporalSupports(
-      db,
-      { ...state, world },
-      actorId,
-      complete,
-    );
+    const released = releaseUnusedTemporalSupports({ ...state, world }, actorId, retainedMetadata);
     world = released.state.world;
     if (released.ids.length)
       rows.set('mind_temporal_supports', [
@@ -174,18 +169,26 @@ export async function prepareAccountRetention(
     accounts = world.experience!.temporal!.actors[actorId]!.accounts!;
     const metadata = complete
       ? []
-      : await db
-          .prepare(
-            `SELECT * FROM (
-      ${Object.entries(tables)
-        .map(
-          ([kind, table]) =>
-            `SELECT '${kind}' AS source_kind,id,source_id,at,logical_bytes,retention_class,retention_reason,position,${kind === 'memory' ? 'expires_at,weaken_at,unresolved' : 'NULL::double precision AS expires_at,NULL::double precision AS weaken_at,0::bigint AS unresolved'} FROM ${table} WHERE world_id=? AND actor_id=? AND retention_class<>'sensory'`,
-        )
-        .join(' UNION ALL ')}
-      ) candidates ORDER BY at,source_kind,source_id LIMIT 8193`,
+      : retainedMetadata
+        ? Object.entries(tables).flatMap(([kind, table]) =>
+            [
+              ...retainedMetadata.rows(
+                table as 'mind_awareness' | 'mind_memories' | 'mind_summaries',
+                actorId,
+              ),
+            ]
+              .filter((row) => row.columns['retention_class'] !== 'sensory')
+              .map<Record<string, unknown>>((row) => ({
+                expires_at: null,
+                weaken_at: null,
+                unresolved: 0,
+                ...row.columns,
+                id: row.id,
+                position: row.position,
+                source_kind: kind,
+              })),
           )
-          .all(...Object.values(tables).flatMap(() => [world.id, actorId]));
+        : [];
     if (metadata.length > 8192)
       throw new MemoryRetentionError(
         'Personal memory maintenance exceeds its complete preparation allowance.',
@@ -204,11 +207,11 @@ export async function prepareAccountRetention(
         category: row['retention_class'] as Candidate['category'],
         position: Number(row['position']),
         rank: retentionRank(row['retention_reason']),
-        active: row['unresolved'] === 1,
+        active: Number(row['unresolved']) === 1,
         due:
           row['expires_at'] !== null
             ? Math.min(Number(row['weaken_at'] ?? Infinity), Number(row['expires_at']))
-            : row['retention_class'] === 'speech' || row['unresolved'] === 1
+            : row['retention_class'] === 'speech' || Number(row['unresolved']) === 1
               ? null
               : Number(row['at']) +
                 (row['retention_class'] === 'required'
@@ -292,12 +295,7 @@ export async function prepareAccountRetention(
         const needed = batch.filter((candidate) => candidate.kind === kind && !candidate.value);
         const ids = needed.map((candidate) => candidate.recordId);
         if (!ids.length) continue;
-        const size = await db
-          .prepare(
-            `SELECT SUM(octet_length(payload)) AS bytes FROM ${tables[kind]} WHERE world_id=? AND id=ANY(?::text[])`,
-          )
-          .get(world.id, ids);
-        preparationBytes += Number(size?.['bytes'] ?? 0);
+        preparationBytes += needed.reduce((bytes, candidate) => bytes + candidate.bytes, 0);
         if (preparationBytes > maximumPreparationBytes)
           throw new MemoryRetentionError('Personal memory retention exceeds bounded preparation.');
         for (const row of await db
@@ -490,11 +488,10 @@ export async function prepareAccountRetention(
       },
       { retainNativeValues: true },
     );
-    const finalSupports = await releaseUnusedTemporalSupports(
-      db,
+    const finalSupports = releaseUnusedTemporalSupports(
       { ...state, world },
       actorId,
-      complete,
+      retainedMetadata,
       Object.values(tables).flatMap((table) => rows.get(table) ?? []),
     );
     world = finalSupports.state.world;

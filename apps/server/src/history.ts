@@ -1,3 +1,4 @@
+import { nativeText } from '@open-legend/domain';
 import { temporalChunkReceipts } from '@open-legend/domain';
 import { hasMemory } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
@@ -136,13 +137,13 @@ export type NarratorVoice = 'restrained' | 'lyrical' | 'wry';
 export interface StorySource {
   evidence: EventEvidence;
   id: string;
-  text: string;
+  text: import('@open-legend/domain').NativeText;
   revision: string;
   time: number;
   order: number;
   type: string;
   /** Optional permitted utterance; absence is not permission to join raw event text. */
-  content?: string;
+  content?: import('@open-legend/domain').NativeText;
 }
 export interface StoryJob {
   id: string;
@@ -294,7 +295,9 @@ export class HistoryRepository {
                 viewerId: actorId,
                 exposure: source.evidence.exposure,
                 event: perceived,
-                sourceText: source.text,
+                get sourceText() {
+                  return nativeText(source.text);
+                },
                 source: entityGet(world.entities, perceived.actorId ?? ''),
                 target: entityGet(world.entities, perceived.targetId ?? ''),
               },
@@ -803,7 +806,7 @@ export class HistoryRepository {
     const item: TranscriptItem = {
       id,
       kind: 'narration',
-      text: sources.map((s) => s.text).join(' '),
+      text: sources.map((s) => nativeText(s.text)).join(' '),
       time: anchor.time,
       order: anchor.order,
       sourceIds: sources.map((s) => s.id),
@@ -963,7 +966,7 @@ export class HistoryRepository {
             viewerId: job.actorId,
             exposure: evidence.exposure,
             event,
-            sourceText: job.sources.find((s) => s.id === id)?.text ?? '',
+            sourceText: nativeText(job.sources.find((s) => s.id === id)?.text ?? ''),
             source: entityGet(world.entities, event.actorId ?? ''),
             target: entityGet(world.entities, event.targetId ?? ''),
           },
@@ -1071,7 +1074,7 @@ export class HistoryRepository {
         !text && job.sources.some((source) => source.evidence.exposure)
           ? job.sources
               .filter((source) => job.item.sourceIds.includes(source.id))
-              .map((source) => source.text)
+              .map((source) => nativeText(source.text))
               .join(' ')
           : null;
       job.state = text ? 'completed' : fallback ? 'fallback' : 'failed';
@@ -1316,7 +1319,7 @@ export class HistoryRepository {
           (options.speechOnly || options.participantId) &&
           typeof event.data?.['text'] === 'string'
             ? event.data['text']
-            : event.text,
+            : nativeText(event.text),
         ...(event.speech ? { speech: projectPerceivedSpeech(event.speech) } : {}),
         time: event.at,
         order: Number(row['position']),
