@@ -22,6 +22,8 @@ import {
   navigationCapabilities,
   FOLLOW_RULES,
   normalizeAttempt,
+  responseDependencyFailures,
+  validResponseEnvelope,
   sameAttempt,
   slotsKey,
   unmetSlots,
@@ -105,11 +107,20 @@ export async function groundActionAttempts(
   bindings: AttemptBinding[],
   ports: GroundingPorts,
 ): Promise<AttemptBinding[]> {
+  if (!validResponseEnvelope(response)) return [];
+  const dependencyFailures = responseDependencyFailures(response);
+  // Keep the original response for native receipts. A branch known unable to
+  // reach admission must not consume one of the bounded, potentially paid slots.
+  // docs/technical/situation-aware-cognition-context.md#97-target-and-dependency-admission-refinements
+  const candidates = response.operations.filter(
+    (op) => !dependencyFailures.has(op.localId) && op.act?.kind === 'proposal',
+  );
+  if (!candidates.length) return [];
   const observed = observeActor(world, actorId);
   if (!observed) return [];
   const actor = observed.actor.actor!;
   const entityIds = [actorId, ...observed.visibleEntities.map((e) => e.id)];
-  const proposals = response.operations
+  const proposals = candidates
     .filter(
       (op) =>
         op.act?.kind === 'proposal' &&

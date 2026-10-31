@@ -1,10 +1,11 @@
-import { entityHas } from '@open-legend/domain';
+import { entityHas, responseDependencyFailures } from '@open-legend/domain';
 import type { NameArticle } from '@open-legend/language';
 import { observerDescription, recognizesSubject, canonicalJson } from '@open-legend/domain';
 import type { EncounterPreferenceBinding } from '@open-legend/domain';
 import type { CatalogueAction } from '@open-legend/protocol';
 import type {
   ActorResponse,
+  ActionInvocation,
   ActivityRequestDescriptor,
   Entity,
   WorldState,
@@ -230,107 +231,115 @@ export function resolveResponseEntities(
   knowledgeReferences: Record<string, string> = {},
   activityRequests: ActivityRequestDescriptor[] = [],
 ): ActorResponse {
+  const dependencyFailures = responseDependencyFailures(response);
   const resolve = (handle: string) => {
     if (!Object.hasOwn(references, handle))
       throw new Error(`Unpermitted entity reference: ${handle}`);
     return references[handle]!;
   };
+  const resolveInvocation = (invocation: ActionInvocation): ActionInvocation => {
+    // One installed descriptor owns every parameter's meaning for this invocation.
+    const parameters = invocation.parameters && Object.entries(invocation.parameters);
+    const fields = parameters?.length
+      ? activityRequests.find((request) => request.id === invocation.family)?.fields
+      : undefined;
+    return {
+      ...invocation,
+      targetEntityId: invocation.targetEntityId ? resolve(invocation.targetEntityId) : null,
+      itemId: invocation.itemId ? resolve(invocation.itemId) : null,
+      ...(parameters
+        ? {
+            parameters: Object.fromEntries(
+              parameters.map(([key, value]) => [
+                key,
+                fields?.[key]?.type === 'entity' ? resolve(String(value)) : value,
+              ]),
+            ),
+          }
+        : {}),
+    };
+  };
   return {
-    operations: response.operations.map((op) => ({
-      ...op,
-      ...(op.note
-        ? {
-            note: {
-              ...op.note,
-              subjectId: op.note.subjectId
-                ? Object.hasOwn(knowledgeReferences, op.note.subjectId)
-                  ? op.note.subjectId
-                  : resolve(op.note.subjectId)
-                : null,
-              text: resolveEntityMarkers(op.note.text, references),
-            },
-          }
-        : {}),
-      ...(op.name ? { name: { ...op.name, subjectId: resolve(op.name.subjectId) } } : {}),
-      ...(op.talk
-        ? {
-            talk: {
-              ...op.talk,
-              addresseeEntityId:
-                op.talk.addresseeEntityId === null ? null : resolve(op.talk.addresseeEntityId),
-            },
-          }
-        : {}),
-      ...(op.act
-        ? {
-            act: {
-              ...op.act,
-              ...(op.act.invocation
-                ? {
-                    invocation: {
-                      ...op.act.invocation,
-                      targetEntityId: op.act.invocation.targetEntityId
-                        ? resolve(op.act.invocation.targetEntityId)
-                        : null,
-                      itemId: op.act.invocation.itemId ? resolve(op.act.invocation.itemId) : null,
-                      ...(op.act.invocation.parameters
-                        ? {
-                            parameters: Object.fromEntries(
-                              Object.entries(op.act.invocation.parameters).map(([key, value]) => [
-                                key,
-                                activityRequests.find(
-                                  (request) => request.id === op.act!.invocation!.family,
-                                )?.fields[key]?.type === 'entity'
-                                  ? resolve(String(value))
-                                  : value,
-                              ]),
-                            ),
-                          }
-                        : {}),
-                    },
-                  }
-                : {}),
-              ...(op.act.slots
-                ? {
-                    slots: {
-                      ...op.act.slots,
-                      itemId: op.act.slots.itemId ? resolve(op.act.slots.itemId) : null,
-                      instrumentId: op.act.slots.instrumentId
-                        ? resolve(op.act.slots.instrumentId)
-                        : null,
-                      recipientId: op.act.slots.recipientId
-                        ? resolve(op.act.slots.recipientId)
-                        : null,
-                    },
-                  }
-                : {}),
-              targetEntityId: op.act.targetEntityId ? resolve(op.act.targetEntityId) : null,
-              description: op.act.description
-                ? resolveEntityMarkers(op.act.description, references)
-                : null,
-            },
-          }
-        : {}),
-      ...(op.think
-        ? {
-            think: {
-              ...op.think,
-              text: resolveEntityMarkers(op.think.text, references),
-              aboutEntityIds: op.think.aboutEntityIds.map(resolve),
-            },
-          }
-        : {}),
-      ...(op.goal
-        ? {
-            goal: {
-              ...op.goal,
-              objective: op.goal.objective
-                ? resolveEntityMarkers(op.goal.objective, references)
-                : null,
-            },
-          }
-        : {}),
-    })),
+    // A blocked operation retains its exact payload for receipt identity, but
+    // cannot resolve prose markers or references on the way to native refusal.
+    operations: response.operations.map((op) => {
+      if (dependencyFailures.has(op.localId)) return op;
+      return {
+        ...op,
+        ...(op.note
+          ? {
+              note: {
+                ...op.note,
+                subjectId: op.note.subjectId
+                  ? Object.hasOwn(knowledgeReferences, op.note.subjectId)
+                    ? op.note.subjectId
+                    : resolve(op.note.subjectId)
+                  : null,
+                text: resolveEntityMarkers(op.note.text, references),
+              },
+            }
+          : {}),
+        ...(op.name ? { name: { ...op.name, subjectId: resolve(op.name.subjectId) } } : {}),
+        ...(op.talk
+          ? {
+              talk: {
+                ...op.talk,
+                addresseeEntityId:
+                  op.talk.addresseeEntityId === null ? null : resolve(op.talk.addresseeEntityId),
+              },
+            }
+          : {}),
+        ...(op.act
+          ? {
+              act: {
+                ...op.act,
+                ...(op.act.invocation
+                  ? {
+                      invocation: resolveInvocation(op.act.invocation),
+                    }
+                  : {}),
+                ...(op.act.slots
+                  ? {
+                      slots: {
+                        ...op.act.slots,
+                        itemId: op.act.slots.itemId ? resolve(op.act.slots.itemId) : null,
+                        instrumentId: op.act.slots.instrumentId
+                          ? resolve(op.act.slots.instrumentId)
+                          : null,
+                        recipientId: op.act.slots.recipientId
+                          ? resolve(op.act.slots.recipientId)
+                          : null,
+                      },
+                    }
+                  : {}),
+                targetEntityId: op.act.targetEntityId ? resolve(op.act.targetEntityId) : null,
+                description: op.act.description
+                  ? resolveEntityMarkers(op.act.description, references)
+                  : null,
+              },
+            }
+          : {}),
+        ...(op.think
+          ? {
+              think: {
+                ...op.think,
+                text: resolveEntityMarkers(op.think.text, references),
+                aboutEntityIds: op.think.aboutEntityIds.map(resolve),
+              },
+            }
+          : {}),
+        ...(op.goal
+          ? {
+              goal: {
+                ...op.goal,
+                objective: op.goal.objective
+                  ? resolveEntityMarkers(op.goal.objective, references)
+                  : null,
+              },
+            }
+          : {}),
+      };
+    }),
   };
 }
 

@@ -266,6 +266,7 @@ export async function prepareReconsideration(
       namedClockTimes(service.world),
       activityRequestDescriptors(service.world, actorId),
       appraisal?.schema,
+      prepared.goalIds,
     );
   // Selected history can append without becoming stale. A newly received turn
   // addressed to this person separately supersedes their older paid decision.
@@ -350,6 +351,7 @@ export async function prepareReconsideration(
     context: structuredClone(input.context),
     bindingDigest: digest({
       binding: prepared.binding,
+      goalIds: prepared.goalIds,
       sourceManifest: prepared.manifest,
       appraisals: appraisal?.bindings,
       validity,

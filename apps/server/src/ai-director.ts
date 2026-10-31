@@ -4274,6 +4274,7 @@ export class AiDirector {
       namedClockTimes(this.service.world),
       activityRequestDescriptors(this.service.world, actorId),
       appraisals?.schema,
+      prepared.goalIds,
     );
     const schema = actorInvention.enabled
       ? baseSchema.extend({ invention: actorInvention.schema })
@@ -4538,7 +4539,7 @@ export class AiDirector {
           const native = nativeResponse({ operations });
           if (!validResponseEnvelope(native))
             throw new Error(
-              'Invalid decision envelope: use exactly one non-null operation kind per entry, unique localIds and dependencies on earlier entries only.',
+              'Invalid decision envelope: use exactly one non-null operation kind per entry, unique localIds and bounded dependency lists.',
             );
           return { ...parsed, operations: native.operations };
         },

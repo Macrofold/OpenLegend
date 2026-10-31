@@ -457,7 +457,7 @@ Corrections and contradictory testimony should update later interpretation witho
 
 ## 7. Minimal outputs and independent commits
 
-Offer only the actor's supported speech and expression capabilities in both prose and the request-scoped output schema. Cognition does not grant a new body or gesture family. Validate the complete operation envelope, including mutually exclusive operation kinds within each entry and backward dependencies, before optional interpretation or admission; malformed output is a failed parsing stage with its input preserved, never a successful parse followed by unexplained admission failure.
+Offer only the actor's supported speech and expression capabilities in both prose and the request-scoped output schema. Cognition does not grant a new body or gesture family. Validate the complete structural envelope, including mutually exclusive operation kinds and unique operation identities, before optional interpretation or admission; malformed output is a failed parsing stage with its input preserved. A well-typed unknown, forward, self or repeated dependency instead rejects its operation and blocks dependents while independent valid siblings retain normal admission. The single native response owner supplies that dependency preflight before paid grounding, preserving the original envelope and receipt identity. [Technical §9.7](technical/situation-aware-cognition-context.md#97-target-and-dependency-admission-refinements) owns this implemented boundary; [scoped native qualification](verification/situation-aware-cognition-context.md#october-31--assignment-b-response-admission) records the evidence and limits.
 
 A simple conversation may need only speech or no new response. [Agent agency](agent-agency.md) owns optional repeated operations; its [admission contract](../archive/07-technical-architecture/agent-agency-runtime.md#4-admission-ordering-and-physical-execution) owns independent outcomes, exactly-once private experience and receipts. Current response bounds belong in [Architecture](architecture.md#actor-agency-foundation), not a second target schema here.
 
@@ -471,7 +471,7 @@ The selected [emotional review](projects/emotional-physiology-tech-design.md#ep-
 
 ### Validation and recovery
 
-Provider response schemas bind the supported body/speech capabilities and permitted references. Local validation also checks cross-operation dependencies and current authority. Heard non-speech events remain observations, not quoted speech.
+Provider response schemas bind the supported body/speech capabilities, permitted references and captured actor-owned goal identities or supported same-response goal aliases. Native admission checks each target's current eligibility, cross-operation dependencies and current authority. Schema-invalid targets and ambiguous envelopes remain whole-response failures; dependency-invalid components do not discard independent valid siblings. Heard non-speech events remain observations, not quoted speech.
 
 Validation is deterministic code: check shape and size, the admitted actor/job, relevant revisions, offered action handles, current resources/targets/knowledge and already-committed results. Recheck relevant dependencies rather than rejecting a historical reflection merely because an unrelated world tick advanced. A delayed action must not act on a dead actor, moved target or consumed item.
 

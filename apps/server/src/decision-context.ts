@@ -2198,6 +2198,10 @@ export async function prepareDecision(
         ? currentActivity.activityRequests
         : (context['activityRequests'] as typeof currentActivity.activityRequests),
     binding,
+    // Output targets come from native ownership, never projected labels. Keep
+    // paused/terminal goals: an earlier accepted operation can change eligibility.
+    // docs/technical/situation-aware-cognition-context.md#97-target-and-dependency-admission-refinements
+    goalIds: actor.agency.goals.map((goal) => goal.id),
     choiceWork: currentWorkIdentity(currentWorld, actorId),
     offered,
     actionCandidates: availableActions,

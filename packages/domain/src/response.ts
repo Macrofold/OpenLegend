@@ -131,26 +131,35 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
   if (
     !value ||
     typeof value !== 'object' ||
+    Array.isArray(value) ||
     Object.keys(value).join() !== 'operations' ||
     !Array.isArray(value.operations) ||
     value.operations.length > RESPONSE_LIMITS.operations
   )
     return false;
-  if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes) return false;
+  try {
+    if (new TextEncoder().encode(JSON.stringify(value)).length > RESPONSE_LIMITS.bytes)
+      return false;
+  } catch {
+    // Native callers also cross this boundary; nonserializable input cannot have a receipt.
+    return false;
+  }
   const ids = new Set<string>();
   const fields = ['talk', 'act', 'think', 'goal', 'plan', 'note', 'name', 'appraise'] as const;
   for (const op of value.operations) {
     if (
       !op ||
+      typeof op !== 'object' ||
+      Array.isArray(op) ||
       Object.keys(op).some((key) => !['localId', 'requiresAccepted', ...fields].includes(key)) ||
       Object.keys(op).length !== 3 ||
+      typeof op.localId !== 'string' ||
       !/^[a-z][a-z0-9_]{0,23}$/.test(op.localId) ||
       !isSafeRecordId(op.localId) ||
       ids.has(op.localId) ||
       !Array.isArray(op.requiresAccepted) ||
       op.requiresAccepted.length > 16 ||
-      new Set(op.requiresAccepted).size !== op.requiresAccepted.length ||
-      op.requiresAccepted.some((id) => !ids.has(id)) ||
+      op.requiresAccepted.some((id) => typeof id !== 'string' || id.length > 24) ||
       fields.some(
         (field) =>
           field in op && (!op[field] || typeof op[field] !== 'object' || Array.isArray(op[field])),
@@ -262,6 +271,30 @@ export function validResponseEnvelope(value: ActorResponse): boolean {
   }
   return true;
 }
+
+/** Preflight only: failed dependencies cannot justify paid grounding or effects.
+ * Accept either model or native payloads after structural validation established
+ * unique operation identities. Keep the original envelope for receipts.
+ * docs/technical/situation-aware-cognition-context.md#97-target-and-dependency-admission-refinements
+ */
+export function responseDependencyFailures(response: {
+  operations: readonly Pick<ResponseOperation, 'localId' | 'requiresAccepted'>[];
+}): ReadonlyMap<string, 'invalid-dependency' | 'dependency-rejected'> {
+  const earlier = new Set<string>();
+  const failures = new Map<string, 'invalid-dependency' | 'dependency-rejected'>();
+  for (const operation of response.operations) {
+    const dependencies = operation.requiresAccepted;
+    if (
+      new Set(dependencies).size !== dependencies.length ||
+      dependencies.some((id) => !earlier.has(id))
+    )
+      failures.set(operation.localId, 'invalid-dependency');
+    else if (dependencies.some((id) => failures.has(id)))
+      failures.set(operation.localId, 'dependency-rejected');
+    earlier.add(operation.localId);
+  }
+  return failures;
+}
 export const RESPONSE_RECEIPT_LIMIT = 300;
 
 /** Stopping conditions of a composition, counting a follow's deadline as a time condition. */
@@ -365,7 +398,7 @@ export function commitActorResponse(
     outcome: outcome(false, 'actor-unavailable', message),
   });
   if (!isSafeRecordId(id) || id.length > 100 || !validResponseEnvelope(response))
-    return reject('Malformed decision envelope, aliases, dependencies or aggregate limits.');
+    return reject('Malformed decision envelope, operation identities or aggregate limits.');
   const digest = canonicalJson({
     actorId,
     response,
@@ -602,8 +635,20 @@ export function commitActorResponse(
   let invocationRequests:
     | Map<string, ReturnType<typeof activityRequestDescriptors>[number]>
     | undefined;
+  const dependencyFailures = responseDependencyFailures(response);
   for (const op of response.operations) {
     localId = op.localId;
+    const dependencyFailure = dependencyFailures.get(localId);
+    if (dependencyFailure) {
+      components[localId] = outcome(
+        false,
+        dependencyFailure,
+        dependencyFailure === 'invalid-dependency'
+          ? 'A required response operation is missing, repeated or does not precede this one.'
+          : 'An admission dependency was rejected.',
+      );
+      continue;
+    }
     if (op.requiresAccepted.some((dependency) => !components[dependency]?.ok)) {
       components[localId] = outcome(
         false,

@@ -56,6 +56,15 @@ Closed higher decisions reserve their complete actor-native candidate set before
 
 **Exit:** every enabled current operation passes the real schema/serialization/parser/reference/native path with the intended effects/refusals; the first sparse delivery retains existing revision fields. Provider dialect is qualified separately from local schema calculations. No talk-only shortcut based on a speech trigger removes valid actions.
 
+### October 31 target and dependency refinement
+
+Assignment B is implemented and locally qualified on `codex/cognition-response-admission` from supplied local `codex/cognition-lab` at `dd9e2ecfc39197ded4b52c0c9c699d3c21394705`, independently of the context-pipeline assignment. [Scoped evidence](../../../verification/situation-aware-cognition-context.md#october-31--assignment-b-response-admission) records actual ordinary/higher/supplied consumers, static checks and zero-budget native boundaries. Combined SC09 qualification remains separate.
+
+- [x] Bind existing-goal mutations, parents and plan goals to captured actor-owned native IDs and supported `$localId` results from earlier accepted goal operations. Capture paused/terminal identities without replacing native parent/plan eligibility; preserve null, creation, cancellation, explicit revisions and the repaired immediate/plan-action distinction. No deferred SC12 revision/work-mode projection is enabled.
+- [x] Separate whole-response malformed/schema/ambiguous-identity failures from component-local unknown/forward/self/repeated dependencies. The single native preflight excludes invalid and transitively blocked branches before grounding/reference resolution, retains the full response and receipt digest, and preserves independent admission through ordinary/higher generation, supplied values, entity resolution and private preview. No dependency stripping, output salvage, retry or extra paid call is introduced.
+
+**Exit evidence:** valid create/revise/status aliases and parents work through both response routes; native plan aliases still require explicit acceptance dependencies and an active goal. Independent speech survives invalid dependency branches, downstream operations have no effects, duplicate IDs remain whole-response failures and exact replay produces no new events. Preview stays private and provisional under its existing closed-independent-talk barrier. Automated suites/test authoring remain paused; later assertion maintenance is tracked in SC09. Model quality and combined context qualification remain unclaimed.
+
 ## SC05 — Provide concise capability discovery and usable detail access
 
 **Owner:** installed request/known-method/inspection owners, `navigation-contracts.ts`, action choice/preparation and existing native inspection. **Design:** technical §8, [hierarchical binding](../../../technical/situation-aware-cognition-context.md#hierarchical-capability-discovery-and-binding) and §9.3. **Dependencies:** SC01 exact capture and current source/reference/admission contracts. Integrate the relevant SC02/SC03/SC04 seam when changed; the general dependency compiler and unrelated nested schema changes are not prerequisites.
