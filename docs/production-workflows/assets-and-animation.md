@@ -6,6 +6,10 @@ The purpose is to create recognizable things and expressive people that particip
 
 ## Choose the representation before the tool
 
+For a quick model or form check, use [prototype quality](art-flows/README.md#quality-and-simple-outputs)
+and stop at the requested export/preview. The later rig, motion, integration and family stages
+apply only when their outputs are needed.
+
 | Need                                                     | Useful route                                                                            | Stages that can be omitted                                          |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | An existing thing already has suitable approved art      | Inspect and integrate exact reuse                                                       | New concept, generation and unnecessary source reconstruction       |

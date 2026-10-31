@@ -9,6 +9,10 @@ export route where finishing is needed. Confirm current importer support before 
 game-ready files; label a package for a proposed consumer accordingly. Installing assets,
 changing game code and qualifying the running game remain integration.
 
+Apply the requested [quality](README.md#quality-and-simple-outputs). Prototype quality keeps
+the requested format and applicable consumer requirements while limiting finishing and coverage
+to the stated use; a usable export need not be a polished or reusable character family.
+
 Reuse compatible assets without reconstructing unavailable upstream authoring projects.
 Retain available original inputs and working sources for delivered assets. Require particular
 editable masters only when the agreed deliverable or revision depends on them. Record editing

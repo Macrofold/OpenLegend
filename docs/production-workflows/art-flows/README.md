@@ -33,9 +33,10 @@ Only the wanted result is required. Interpret optional parameters from ordinary 
 | Flow        | `standard`, `higgsfield`, or `both`. “Regular/manual” means Standard. With no preference, use Standard and say so.                                                                                                                     |
 | Purpose     | Infer the matching profile: UI style, general style, asset/icon, character, material/environment, motion, UI system, or custom.                                                                                                        |
 | Finish      | `study`, `production`, or `integrate`, inferred from the requested outcome as described below.                                                                                                                                         |
+| Quality     | `prototype` or `finished`, inferred from the intended use; controls finishing effort independently of file type and stopping point. See [quality and simple outputs](#quality-and-simple-outputs).                                     |
 | References  | Attachments, exact saved study/candidate IDs, existing approved art, and supplied links; identify the role of each.                                                                                                                    |
-| Candidates  | Honor the requested number. For unresolved direction, three distinct candidates is a useful adjustable starting point; an edit or selected-direction expansion normally needs one.                                                     |
-| Selection   | Present alternatives unless Mike delegates choosing. An agent recommendation is not owner approval of the project's permanent direction.                                                                                               |
+| Candidates  | Honor the requested number. Direct model generation, an edit or selected-direction expansion normally needs one; for an exploratory direction comparison, three distinct candidates is an adjustable starting point.                   |
+| Selection   | Present requested alternatives unless Mike delegates choosing. An agent recommendation is not owner approval of the project's permanent direction.                                                                                     |
 | Constraints | Preserve identity/style anchors, output format and scale, supported behavior, deadlines and any “do not” scope.                                                                                                                        |
 | Budget      | Apply the current [spending policy](../../../.agents/rules/verification.md#spending) and task authorization. Both flows, delegates, refinements and upscales share the same task allowance unless Mike explicitly allocates otherwise. |
 | Resume      | An exact study/candidate/revision or handoff link. Reopen that work and continue the requested stage rather than regenerate the whole pipeline.                                                                                        |
@@ -52,12 +53,35 @@ independent preparation and ask the one question that resolves it. Do not silent
 an authorized implementation into a study or turn “looks good” into authorization to build.
 A request for “the best one, choose for me” permits an agent selection within that scope.
 
+### Quality and simple outputs
+
+Infer `prototype` from “quick”, “rough”, “blockout” or a plain model-generation request without
+a finished-asset expectation. Production-ready or polished requests imply `finished` unless
+explicitly qualified as prototypes; established context takes precedence. Quality is a work
+planning choice, not a new provider API or workflow. A prototype model still delivers actual
+model files, preserving required identity, proportions and art direction.
+For a plain model-file request, infer `finish=production` (export only), `quality=prototype`
+and one candidate; game installation requires its own requested integration scope.
+
+For a prototype, use a suitable existing route and normally one candidate. Use simple or existing
+materials; omit turnaround sheets, retopology, rigs, motion, extra variants, custom shaders and
+family qualification unless the stated use needs them. Inspect the actual export for successful
+loading, recognizable form and the dimensions/materials/deformation required by that use. Fix
+blocking defects, record remaining cosmetic limits and stop. No fresh provider contest, broad
+device campaign or polishing every defect is required. Preserve outputs and available sources
+through the existing storage workflow; later refinement continues from the retained candidate.
+
+`finished` still covers only the requested use, not every rig, action or outfit. Integration
+requires its applicable runtime checks at either quality. Existing Constraints, Candidates and
+Budget options cover format, required motion, coverage and spending; no separate toggle set is needed.
+
 Examples:
 
 - “Use the Higgsfield flow for a UI style study: worn borders, dark textured panels and connecting rails. Three directions, study only.”
 - “Use the regular flow to make a coherent production icon family from approved study STD-2.”
 - “Use both flows for a character appearance study, preserving this face and believable proportions.”
 - “Use the Standard flow to refine the selected panel texture; keep its border and palette.”
+- “Use the Standard flow for a quick prototype of this character: one unrigged GLB with simple materials, to inspect its shape.”
 - “Implement candidate HIG-2 from this archived study in the current game.”
 
 These are examples of requests, not reserved commands. New art subjects use the same procedure;
@@ -149,7 +173,7 @@ Checkpoint notes describe current resumable work, not a transcript or revision d
 ### 4. Inspect, revise and develop only the required outputs
 
 Inspect actual generated/exported files, not provider thumbnails or success messages.
-Identify the cause of each material defect and revise that source: prompt/reference,
+Identify defects that prevent the requested use or quality and revise their source: prompt/reference,
 composition, shape, texture, export or implementation. Prefer targeted corrections to
 unrelated full regeneration.
 

@@ -100,7 +100,9 @@ one portrait. Do not change backstory, personality or supported behavior to expl
 
 Production branches by the actual consumer: [portrait](production.md#static-2d-artwork) or
 [sprite family](production.md#sprites-and-frame-animation), [2D rig](production.md#2d-rigs),
-or [3D character](production.md#3d-characters-and-creatures). Follow that finishing recipe.
+[rigid-model export](production.md#rigid-3d-assets) for a static/unrigged person or creature,
+or [3D character](production.md#3d-characters-and-creatures) when articulation or deformation is required.
+Follow that recipe at the requested [quality](README.md#quality-and-simple-outputs).
 Generated views may disagree; identify the accepted construction instead of pretending
 all of them form an internally consistent modeling sheet.
 
