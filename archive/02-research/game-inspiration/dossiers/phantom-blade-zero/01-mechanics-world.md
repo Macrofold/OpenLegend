@@ -115,7 +115,7 @@ The official store also names the Discordance, Transcension, the Lady of the Vei
 
 ## 6. Difficulty, death, endings and replay boundaries
 
-The three initial difficulties are Wayfarer, Pathbreaker and Hellwalker. A launch difficulty assessment describes changes to enemy aggression, damage and defense-breaking pressure. It also reports forgiving checkpoints, no dropped-currency retrieval after death, and ordinary enemies remaining defeated. Multi-phase bosses preserve cleared phases on retry. These provisions remove repeated setup while leaving an opponent's immediate challenge intact. [M09](#m09)
+The three initial difficulties are Wayfarer, Pathbreaker and Hellwalker. A launch difficulty assessment describes changes to enemy aggression, damage and defense-breaking pressure. It also reports forgiving checkpoints, no dropped-currency retrieval after death, and ordinary enemies remaining defeated. [M09](#m09) VGC separately reports that multi-phase bosses preserve cleared phases on retry. [M07](02-reception.md#m07) These provisions remove repeated setup while leaving an opponent's immediate challenge intact.
 
 The developer advertises more adaptive behavior at the higher setting. This does not establish machine learning, unrestricted planning or a general cognition system. [M03](#m03)
 
@@ -141,7 +141,7 @@ Suppose a player facing a group chooses a temporary summon instead of another di
 
 ### 3. Recovery preserves the unsolved problem
 
-A player learns a boss's first phase, reaches the next phase and fails. Resuming from the cleared boundary concentrates the next attempt on what remains unfamiliar. This reduces repetition and can encourage another attempt. It also changes the emotional cost of defeat; someone who enjoys endurance across a complete encounter may value that tradeoff differently. [M09](#m09)
+A player learns a boss's first phase, reaches the next phase and fails. Resuming from the cleared boundary concentrates the next attempt on what remains unfamiliar. This reduces repetition and can encourage another attempt. It also changes the emotional cost of defeat; someone who enjoys endurance across a complete encounter may value that tradeoff differently. [M07](02-reception.md#m07)
 
 ### 4. A flower becomes a reason to remember someone
 
