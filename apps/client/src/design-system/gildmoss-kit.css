@@ -1,0 +1,247 @@
+/* Shared JadeGlass owns seeded material and the continuous glass bevel.
+   Filigree and Crest retain their authored frames; interaction and positioning
+   stay with the existing semantic surface owners. */
+:where(
+  [data-theme='gildmoss']
+    :is(
+      .ol-panel,
+      .ol-card,
+      .ol-picker,
+      .ol-modal,
+      .ol-select-popover,
+      .ol-disclosure-popover,
+      .ol-inventory-popover,
+      .ol-pullout-popover,
+      .ol-hover-label,
+      .ol-pointer-tooltip,
+      .ol-dialog,
+      .ol-tooltip,
+      .ol-pullout,
+      .ol-context-menu,
+      .ol-editor,
+      .ol-json-pullout
+    ):not(.ol-survival)
+) {
+  /* Zero specificity supplies a containing block only to otherwise static
+     surfaces; their fixed/absolute placement rules always take precedence. */
+  position: relative;
+}
+
+[data-theme='gildmoss']
+  :is(
+    .ol-panel,
+    .ol-card,
+    .ol-picker,
+    .ol-modal,
+    .ol-select-popover,
+    .ol-disclosure-popover,
+    .ol-inventory-popover,
+    .ol-pullout-popover,
+    .ol-hover-label,
+    .ol-pointer-tooltip,
+    .ol-dialog,
+    .ol-tooltip,
+    .ol-pullout,
+    .ol-context-menu,
+    .ol-editor,
+    .ol-json-pullout
+  ):not(.ol-survival) {
+  isolation: isolate;
+  background-color: transparent;
+  /* Immediate readable fallback while the native pane prepares. The prepared
+     material reaches under the existing border without changing geometry. */
+  background-image: var(--lantern-light), var(--glass-fill);
+  background-repeat: no-repeat;
+  background-origin: border-box;
+  background-clip: border-box;
+  /* A native shaded edge bends continuously around corners, without repeating
+     raster sections or changing each surface's semantic shadow. */
+  border: 2px solid var(--surface-well);
+  border-color: color-mix(in srgb, var(--ink-silver) 55%, var(--surface-well))
+    color-mix(in srgb, var(--ink-silver) 20%, var(--surface-well)) var(--surface-well)
+    color-mix(in srgb, var(--ink-silver) 36%, var(--surface-well));
+  border-radius: var(--panel-radius);
+  border-image: none;
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+}
+
+[data-theme='gildmoss'] .ol-modal-overlay {
+  /* Keep the entry fade, then release its opacity backdrop root so the modal's
+     glass can blur the actual window behind it after the transition. */
+  animation-fill-mode: backwards;
+}
+
+[data-theme='gildmoss'] :is(.ol-narrator, .ol-opening-information):not(.ol-survival) {
+  border: 0 solid transparent;
+  border-radius: 0;
+  border-image-source: var(--gildmoss-kit-filigree-frame-image, none);
+  border-image-slice: var(--gildmoss-kit-filigree-frame-slice, 0);
+  border-image-width: var(--gildmoss-kit-filigree-frame-width, 0);
+  border-image-outset: var(--gildmoss-kit-filigree-frame-outset, 0);
+  border-image-repeat: round;
+  min-height: var(--gildmoss-kit-filigree-frame-min-height, 64.5px);
+  min-width: var(--gildmoss-kit-filigree-frame-min-width, 60px);
+}
+
+[data-theme='gildmoss'] .ol-opening-information {
+  /* Keep the disclosure and its text clear of Filigree's inward corner leaves. */
+  padding: 16px 32px;
+}
+
+[data-theme='gildmoss'] .ol-btn[data-variant='secondary'] {
+  --gildmoss-kit-button-state: var(--gildmoss-kit-button-normal);
+  --gildmoss-kit-button-slice: var(--gildmoss-kit-button-normal-slice);
+  --gildmoss-kit-button-width: var(--gildmoss-kit-button-normal-width);
+  --gildmoss-kit-button-outset: var(--gildmoss-kit-button-normal-outset);
+  background: transparent;
+  box-shadow: none;
+  border: 0 solid transparent;
+  border-image-source: var(--gildmoss-kit-button-state, none);
+  border-image-slice: var(--gildmoss-kit-button-slice, 0) fill;
+  border-image-width: var(--gildmoss-kit-button-width, 0);
+  border-image-outset: var(--gildmoss-kit-button-outset, 0);
+  border-image-repeat: round stretch;
+}
+[data-theme='gildmoss'] .ol-btn[data-variant='secondary']:is(:hover, [data-hovered]) {
+  --gildmoss-kit-button-state: var(--gildmoss-kit-button-hover);
+  --gildmoss-kit-button-slice: var(--gildmoss-kit-button-hover-slice);
+  --gildmoss-kit-button-width: var(--gildmoss-kit-button-hover-width);
+  --gildmoss-kit-button-outset: var(--gildmoss-kit-button-hover-outset);
+  background: transparent;
+}
+[data-theme='gildmoss'] .ol-btn[data-variant='secondary']:is(:active, [data-pressed]) {
+  --gildmoss-kit-button-state: var(--gildmoss-kit-button-pressed);
+  --gildmoss-kit-button-slice: var(--gildmoss-kit-button-pressed-slice);
+  --gildmoss-kit-button-width: var(--gildmoss-kit-button-pressed-width);
+  --gildmoss-kit-button-outset: var(--gildmoss-kit-button-pressed-outset);
+  background: transparent;
+}
+[data-theme='gildmoss']
+  .ol-btn[data-variant='secondary']:is(:disabled, [aria-disabled='true'], [data-disabled]) {
+  --gildmoss-kit-button-state: var(--gildmoss-kit-button-unavailable);
+  --gildmoss-kit-button-slice: var(--gildmoss-kit-button-unavailable-slice);
+  --gildmoss-kit-button-width: var(--gildmoss-kit-button-unavailable-width);
+  --gildmoss-kit-button-outset: var(--gildmoss-kit-button-unavailable-outset);
+  background: transparent;
+}
+[data-theme='gildmoss']
+  .ol-btn[data-variant='secondary']:is(
+    [aria-selected='true'],
+    [aria-current='true'],
+    [aria-current='page'],
+    [aria-checked='true'],
+    [aria-pressed='true'],
+    [data-selected]
+  ) {
+  /* The opaque exported face must not hide Gildmoss's chosen fill. Keep its
+     bezel, while the original semantic owner supplies selection and glow. */
+  border-image-slice: var(--gildmoss-kit-button-slice, 0);
+  background: var(--surface-selected);
+  box-shadow: var(--selected-glow);
+}
+[data-theme='gildmoss'] .ol-btn-label {
+  position: relative;
+}
+[data-theme='gildmoss']
+  .ol-btn[data-variant='secondary'][data-crest-ornaments='true']
+  > .ol-btn-label::before,
+[data-theme='gildmoss']
+  .ol-btn[data-variant='secondary'][data-crest-ornaments='true']
+  > .ol-btn-label::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: var(--gildmoss-kit-button-ornament-width);
+  height: var(--gildmoss-kit-button-ornament-height);
+  transform: translateY(-50%);
+  background-image: var(--gildmoss-kit-button-ornament);
+  background-size: 100% 100%;
+  pointer-events: none;
+}
+[data-theme='gildmoss'] .ol-btn[data-variant='secondary'] > .ol-btn-label::before {
+  right: calc(100% + 6px);
+}
+[data-theme='gildmoss'] .ol-btn[data-variant='secondary'] > .ol-btn-label::after {
+  left: calc(100% + 6px);
+}
+
+/* Keep the existing viewport gutter, including room for the remaining ornate
+   frames, in logical HUD coordinates. */
+.ol-root[data-theme='gildmoss'][data-narrow='true'] .ol-dock {
+  left: var(--gildmoss-kit-viewport-inset, 0px);
+  right: var(--gildmoss-kit-viewport-inset, 0px);
+}
+.ol-hud[data-theme='gildmoss'][data-narrow='true'] .ol-panel:not(.ol-survival) {
+  /* This sheet floats above the hotbar, exposing its lower corners too. */
+  border-radius: var(--panel-radius);
+}
+[data-theme='gildmoss'] .ol-picker {
+  max-width: calc(100dvw / var(--ui-scale, 1) - 2 * var(--gildmoss-kit-viewport-inset, 0px));
+  max-height: calc(100dvh / var(--ui-scale, 1) - 2 * var(--gildmoss-kit-viewport-inset, 0px));
+}
+[data-theme='gildmoss'] .ol-editor {
+  --editor-width: min(
+    860px,
+    calc(100dvw / var(--ui-scale, 1) - 2 * var(--gildmoss-kit-viewport-inset, 0px))
+  );
+  --editor-height: min(
+    700px,
+    calc(100dvh / var(--ui-scale, 1) - 2 * var(--gildmoss-kit-viewport-inset, 0px))
+  );
+}
+
+/* Select the actual mounted surface rather than a list of screen names. This
+   same swap serves panels, popovers, menus, HUD chrome and character regions.
+   The existing border dimensions reserve layout; the native five-pixel bevel
+   is decorative. Filigree keeps its complete authored border. */
+:is(.ol-root[data-theme='gildmoss'], [data-theme='gildmoss'])
+  :has(> .ol-jade-glass[data-ready='true']) {
+  background: transparent;
+}
+:is(.ol-root[data-theme='gildmoss'], [data-theme='gildmoss'])
+  :has(> .ol-jade-glass[data-ready='true']):not(.ol-narrator, .ol-opening-information) {
+  border-color: transparent;
+  border-image: none;
+}
+
+/* Border images paint before negative child layers. Repaint Filigree above
+   the prepared pane so its complete gold ornaments retain their authored alpha. */
+[data-theme='gildmoss']
+  :is(.ol-narrator, .ol-opening-information):has(> .ol-jade-glass[data-ready='true']) {
+  border-image: none;
+}
+[data-theme='gildmoss']
+  :is(.ol-narrator, .ol-opening-information):has(> .ol-jade-glass[data-ready='true'])::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  border: 0 solid transparent;
+  border-image-source: var(--gildmoss-kit-filigree-frame-image, none);
+  border-image-slice: var(--gildmoss-kit-filigree-frame-slice, 0);
+  border-image-width: var(--gildmoss-kit-filigree-frame-width, 0);
+  border-image-outset: var(--gildmoss-kit-filigree-frame-outset, 0);
+  border-image-repeat: round;
+}
+
+@media (forced-colors: active) {
+  /* Match prepared-pane specificity: system colors must also win after the
+     native material has finished and its decorative layers are suppressed. */
+  :is(.ol-root[data-theme='gildmoss'], [data-theme='gildmoss']) :has(> .ol-jade-glass),
+  :is(.ol-root[data-theme='gildmoss'], [data-theme='gildmoss'])
+    :has(> .ol-jade-glass[data-ready='true']),
+  :is(.ol-root[data-theme='gildmoss'], [data-theme='gildmoss'])
+    :has(> .ol-jade-glass[data-ready='true']):not(.ol-narrator, .ol-opening-information) {
+    background: Canvas;
+    border-color: CanvasText;
+    border-image: none;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  [data-theme='gildmoss']
+    :is(.ol-narrator, .ol-opening-information):has(> .ol-jade-glass[data-ready='true'])::before {
+    content: none;
+  }
+}

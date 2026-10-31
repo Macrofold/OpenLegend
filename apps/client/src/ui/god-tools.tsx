@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import {
   useCallback,
@@ -404,6 +405,7 @@ export function PersonCreationModal({
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
+        <JadeGlass identity="god-tools::modal:1" />
         <LoadingDialog className="ol-person-dialog" aria-label="Create person">
           <form onSubmit={(event) => void submit(event)}>
             <header className="ol-modal-head">

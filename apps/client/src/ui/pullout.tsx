@@ -1,3 +1,5 @@
+import { JadeGlass } from '../design-system/jade-glass';
+import { SearchInput } from '../design-system/search-input';
 import { LoadingDialog } from '../design-system/loading';
 import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Button as AriaButton, ListBox, ListBoxItem, Popover } from 'react-aria-components';
@@ -107,17 +109,14 @@ export function PulloutPicker({
         ))
       ) : (
         <>
-          <div className="ol-search ol-pullout-search">
-            <Icon name="ui.search" size={16} />
-            <input
-              autoFocus
-              type="search"
-              value={query}
-              placeholder={placeholder}
-              aria-label={placeholder}
-              onChange={(event) => setQuery(event.target.value)}
-            />
-          </div>
+          <SearchInput
+            containerClassName="ol-pullout-search"
+            autoFocus
+            value={query}
+            placeholder={placeholder}
+            aria-label={placeholder}
+            onChange={(event) => setQuery(event.target.value)}
+          />
           <ListBox
             className="ol-pullout-list"
             items={filtered}
@@ -240,6 +239,7 @@ export function Pullout({
         placement="right top"
         shouldFlip
       >
+        <JadeGlass identity="pullout::pullout-popover:1" />
         <div
           className="ol-pullout-body ol-portal-content"
           onKeyDown={(event) => {

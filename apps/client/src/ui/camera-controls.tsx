@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { useId, useRef, useState, type ComponentProps } from 'react';
 import { Button as AriaButton } from 'react-aria-components';
 import type { PerceptionOptions } from '../world-renderer';
@@ -39,6 +40,7 @@ export function CameraControls({
       data-embedded={embedded || undefined}
       aria-label="Camera and range guides"
     >
+      <JadeGlass identity="camera-controls:ol-camera:card:1" />
       <CameraButton
         icon="ui.plus"
         label="Zoom in"

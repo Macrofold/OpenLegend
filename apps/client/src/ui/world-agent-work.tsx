@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import type {
@@ -949,6 +950,7 @@ export function WorldAgentWorkView(props: WorldAgentWorkViewProps) {
           }}
         >
           <Modal className="ol-modal">
+            <JadeGlass identity="world-agent-work::modal:1" />
             <LoadingDialog
               ref={switchDialog}
               className="ol-person-dialog ol-creator-confirm"

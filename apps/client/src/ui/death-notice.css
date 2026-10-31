@@ -16,3 +16,22 @@
 .ol-death-notice p {
   margin: 0;
 }
+.ol-death-notice-content {
+  display: contents;
+}
+/* Keep the painted perimeter fixed while the same notice and choices scroll. */
+[data-theme='gildmoss'] .ol-death-notice:has(> .ol-jade-glass) {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  padding: 0;
+  overflow: visible;
+}
+[data-theme='gildmoss'] .ol-death-notice:has(> .ol-jade-glass) > .ol-death-notice-content {
+  display: grid;
+  flex: 0 1 auto;
+  min-height: 0;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  overflow: auto;
+}

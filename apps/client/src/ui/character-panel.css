@@ -1,0 +1,289 @@
+/* The package geometry is logical CSS pixels from the screen corner. Existing
+ * interface zoom scales this one coordinate system, including the status cells. */
+.ol-root[data-theme='gildmoss'][data-gildmoss-layout] .ol-survival.ol-character-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  display: flow-root;
+  grid-area: auto;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  backdrop-filter: none;
+  /* The authored width includes relocated locks. Decorative overflow must not
+   * add a horizontal scrollbar or change the empty header's reading height. */
+  overflow-x: hidden;
+  pointer-events: none;
+}
+.ol-character-panel-clips {
+  position: absolute;
+}
+.ol-character-panel-glass,
+.ol-character-panel-portrait-window,
+.ol-character-panel-plate,
+.ol-character-panel-meter,
+.ol-character-panel-lock {
+  position: absolute;
+}
+.ol-character-panel-glass {
+  z-index: 0;
+  isolation: isolate;
+  background: var(--glass-fill);
+  box-shadow: var(--shadow-plate);
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  backdrop-filter: blur(var(--glass-blur));
+  pointer-events: none;
+}
+/* Clear Slab paints each live glass region; the original plate supplies its
+ * bezel. Blur and shadow belong here, outside the decorative glass layers. */
+.ol-character-panel-glass:has(> .ol-jade-glass[data-ready='true']) {
+  background: none;
+}
+.ol-character-panel-lock-face {
+  border-radius: 50%;
+}
+.ol-character-panel-portrait-window {
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+.ol-root .ol-character-panel .ol-character-panel-portrait {
+  position: absolute;
+  display: block;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  pointer-events: auto;
+}
+.ol-character-panel-portrait > span,
+.ol-character-panel-portrait .ol-portrait,
+.ol-character-panel-portrait .ol-portrait img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none;
+  max-height: none;
+}
+.ol-character-panel-portrait > span {
+  display: block;
+}
+.ol-character-panel-portrait .ol-portrait img {
+  object-fit: cover;
+  image-rendering: auto;
+}
+.ol-character-panel-portrait[data-focus-visible] {
+  outline: 2px solid var(--focus);
+  outline-offset: -3px;
+}
+.ol-character-panel-meter {
+  z-index: 2;
+  pointer-events: auto;
+}
+.ol-root[data-gildmoss-layout] .ol-character-panel-meter .ol-condition {
+  position: absolute;
+  inset: 0;
+  display: block;
+  font-size: 12px;
+}
+.ol-root[data-gildmoss-layout] .ol-character-panel-meter .ol-meter {
+  position: absolute;
+  inset: 0;
+  display: block;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+}
+.ol-root .ol-character-panel-meter .ol-meter > .ol-icon-wrap {
+  position: absolute;
+  left: var(--cp-icon-x);
+  top: var(--cp-icon-y);
+  width: var(--cp-icon-width);
+  height: var(--cp-icon-height);
+  --ol-icon: var(--cp-icon-height) !important;
+}
+.ol-character-panel-meter .ol-icon-wrap svg {
+  width: 100%;
+  height: 100%;
+}
+.ol-root[data-gildmoss-layout] .ol-character-panel-meter .ol-meter-track {
+  position: absolute;
+  left: var(--cp-track-x);
+  top: var(--cp-track-y);
+  width: var(--cp-track-width);
+  height: var(--cp-track-height);
+  border: 0;
+  border-radius: calc(var(--cp-track-height) * var(--gildmoss-need-radius, 0));
+  background: var(--gildmoss-need-background, var(--meter-track));
+  box-shadow: 0 0 0 max(1px, calc(var(--cp-track-height) * var(--gildmoss-need-rim-width, 0)))
+    var(--gildmoss-need-rim, var(--line));
+  overflow: hidden;
+}
+.ol-character-panel-meter .ol-meter-fill {
+  position: absolute;
+  left: calc(var(--cp-track-height) * var(--gildmoss-need-fill-inset, 0) / 2);
+  top: calc(var(--cp-track-height) * var(--gildmoss-need-fill-inset, 0) / 2);
+  bottom: calc(var(--cp-track-height) * var(--gildmoss-need-fill-inset, 0) / 2);
+  width: calc(
+    (100% - var(--cp-track-height) * var(--gildmoss-need-fill-inset, 0)) * var(--v) / 100
+  );
+  border-radius: inherit;
+  background: linear-gradient(
+    to bottom,
+    color-mix(in srgb, var(--c) calc(var(--gildmoss-need-fill-top-shade, 1) * 100%), black),
+    var(--c)
+  );
+  box-shadow: inset 0 -1px 0 color-mix(in srgb, var(--c) 70%, white);
+}
+.ol-root .ol-character-panel-meter .ol-meter-value {
+  position: absolute;
+  left: var(--cp-value-x);
+  top: var(--cp-value-y);
+  width: var(--cp-value-width);
+  transform: translateY(-50%);
+  text-align: var(--cp-value-align);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+}
+.ol-character-panel-body,
+.ol-character-panel-status,
+.ol-character-panel-status-well {
+  position: relative;
+}
+.ol-character-panel-body {
+  padding-top: var(--cp-header-height);
+}
+.ol-character-panel-header-art {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  z-index: 4;
+  pointer-events: none;
+}
+.ol-character-panel-status:not(:has(.ol-condition-status-groups)) {
+  display: none;
+}
+.ol-character-panel-body:not(:has(.ol-condition-status-groups)) {
+  padding-top: var(--cp-header-art-height);
+}
+.ol-character-panel-status-well {
+  box-sizing: border-box;
+  padding: 8px;
+}
+.ol-character-panel-status-well > .ol-character-panel-glass {
+  inset: 0;
+}
+.ol-root .ol-character-panel .ol-condition-status-groups {
+  position: relative;
+  z-index: 3;
+  border: 0;
+  padding: 0;
+  pointer-events: auto;
+}
+.ol-character-panel .ol-condition-status-icon {
+  box-sizing: border-box;
+  pointer-events: auto;
+}
+.ol-character-panel .ol-condition-status-icon .ol-ibtn {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  padding: 4px;
+  color: inherit;
+  background: transparent;
+}
+.ol-character-panel .ol-condition-status-icon .ol-progress-ring {
+  inset: 0;
+}
+.ol-root .ol-character-panel .ol-character-panel-plate {
+  inset: 0;
+  max-width: none;
+  z-index: 4;
+  pointer-events: none;
+}
+.ol-character-panel-lock {
+  z-index: 5;
+  pointer-events: auto;
+}
+.ol-root .ol-character-panel-lock .ol-ibtn {
+  width: 100%;
+  height: 100%;
+  min-width: 24px;
+  min-height: 24px;
+  padding: 4px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  box-shadow: none;
+}
+.ol-character-panel-lock .ol-ibtn:is([data-hovered], [aria-pressed='true']) {
+  background: var(--chosen-fill);
+  color: var(--highlight);
+}
+.ol-character-panel .ol-character-panel-status-overflow {
+  justify-self: start;
+  z-index: 5;
+  pointer-events: auto;
+}
+.ol-character-panel-notices {
+  position: relative;
+  left: 32px;
+  width: min(340px, calc(100vw / var(--ui-scale, 1) - 48px));
+  pointer-events: auto;
+}
+.ol-character-panel-notices:empty {
+  display: none;
+}
+.ol-character-panel-notices:has(> *) {
+  padding: 8px;
+  background: var(--surface-glass-hud);
+}
+/* Preserve the screen-corner art at its authored size. When both corners no
+ * longer fit side by side, one bounded reading area keeps the map reachable. */
+.ol-root[data-gildmoss-layout][data-character-panel-stacked='true'] .ol-gildmoss-overview {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  align-content: start;
+  overflow: auto;
+  overscroll-behavior: contain;
+  pointer-events: none;
+}
+.ol-root[data-character-panel-stacked='true'][data-theme='gildmoss'][data-gildmoss-layout]
+  .ol-character-panel {
+  position: relative;
+  grid-area: auto;
+  /* The stacked overview is the sole bounded reader for both corners. */
+  max-height: none;
+  overflow: visible;
+}
+.ol-root[data-gildmoss-layout][data-character-panel-stacked='true'] .ol-gildmoss-corner {
+  position: relative;
+  top: auto;
+  right: auto;
+  grid-area: auto;
+  justify-self: end;
+  margin: 12px 8px;
+}
+.ol-root[data-character-panel-stacked='true'][data-theme='gildmoss'][data-gildmoss-layout]
+  :is(.ol-subject-picking, .ol-gildmoss-notices) {
+  box-sizing: border-box;
+  position: relative;
+  inset: auto;
+  grid-area: auto;
+  width: calc(100% - 16px);
+  margin: 8px;
+  transform: none;
+}

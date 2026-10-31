@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { formatDisplayNumber } from '@open-legend/language';
 import { LoadingIndicator } from '../design-system/loading';
 import {
@@ -2340,6 +2341,7 @@ function RawJsonPanel({ raw, onClose }: { raw: RawView; onClose(): void }) {
       style={placement}
       aria-label={`${raw.title} JSON`}
     >
+      <JadeGlass identity="diagnostics::json-pullout:1" />
       <header className="ol-portal-content">
         <div>
           <span className="ol-eyebrow">Raw JSON</span>

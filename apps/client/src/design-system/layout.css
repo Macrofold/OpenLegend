@@ -97,7 +97,12 @@ body,
 }
 /* Defaults yield to the input's semantic owner, including inputs inside a field.
    Specificity here must not grow with the number of excluded native types. */
-:where(.ol-root) :where(input:not([type='checkbox']):not([type='radio']), select, textarea) {
+:where(.ol-root)
+  :where(
+    input:not([type='checkbox']):not([type='radio']):not(.ol-field-editor),
+    select,
+    textarea:not(.ol-field-editor)
+  ) {
   box-sizing: border-box;
   width: 100%;
   font: inherit;
@@ -116,7 +121,7 @@ body,
 }
 :where(.ol-root)
   :where(
-    input:not([type='checkbox']):not([type='radio']):not([type='range']),
+    input:not([type='checkbox']):not([type='radio']):not(.ol-field-editor):not([type='range']),
     select,
     .ol-field-control
   ) {
@@ -769,15 +774,8 @@ body,
   min-height: var(--control-md);
   height: auto;
 }
-:is(.ol-picker, .ol-action-browser) .ol-search:focus-within {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--focus);
-}
 :is(.ol-picker, .ol-action-browser) .ol-search input {
   padding: var(--space-1) 0;
-  border: none;
-  font-size: 14px;
-  outline: none;
 }
 .ol-search-invent {
   background: transparent;
@@ -1913,6 +1911,20 @@ body,
   background: var(--surface);
   box-shadow: var(--shadow-float);
   outline: none;
+}
+/* Keep the material at the modal perimeter while its existing focus/reading
+ * dialog owns long content. The modal's width, bounds and padding stay intact. */
+[data-theme='gildmoss'] .ol-modal:has(> .ol-jade-glass) {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+[data-theme='gildmoss']
+  .ol-modal:has(> .ol-jade-glass)
+  > :is(.ol-loading-dialog, [role='dialog'], [role='alertdialog']) {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
 }
 .ol-person-dialog,
 .ol-person-dialog form {
@@ -3414,11 +3426,20 @@ body,
 
 /* First-context information is a dismissible disclosure, not a modal or task. */
 .ol-opening-information {
+  display: flex;
+  flex-direction: column;
   width: min(28rem, calc(100vw - 2 * var(--hud-inset)));
   max-height: 30vh;
-  overflow: auto;
+  overflow: visible;
   margin-top: var(--space-2);
   padding: var(--space-2) var(--space-3);
+}
+/* The frame and material stay fixed while the native disclosure reads inside. */
+.ol-opening-information > details {
+  border: 0;
+  padding: 0;
+  min-height: 0;
+  overflow: auto;
 }
 .ol-opening-information summary {
   cursor: pointer;

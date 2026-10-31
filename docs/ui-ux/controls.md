@@ -48,6 +48,8 @@ The reported nested-typeahead failure is a regression case, not a reason to proh
 
 For the combobox, use one exterior field treatment rather than a complete bordered search field nested inside a second closed-select treatment. For the picker, separate trigger and search appearances are legitimate because they have different jobs. Its modality, initial focus, selection, confirmation and cancellation must be explicit. It may adapt to a sheet/dialog on a small viewport without losing the choice under review.
 
+The [shared UI system](../../apps/client/src/design-system/README.md#owner-editor-components) implements that boundary with `ol-field-editor`: native standalone-field defaults exclude the inner editor, and the composite shell owns its fill, frame and focus treatment. Icon-search rows reuse `SearchInput`, including action menus, catalog pullouts, Map and the Places, Memories and Events readers. Its forwarded native ref and input props preserve caller-owned filtering, explicit form submission, composition handling and clear/focus behavior. `SelectField` and the conversation composer use the same styling boundary while retaining their own selection and multiline sizing behavior.
+
 GitHub Primer documents and implements the second pattern. Its source distinguishes direct anchored selection from an intermediate modal choice. Neither component callbacks nor closing an overlay inherently establish durable game mutation. Retain Open Legend's existing Save/Send/approval boundaries. [S01](research.md#s01)
 
 ### State contract

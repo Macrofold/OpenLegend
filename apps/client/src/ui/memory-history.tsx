@@ -1,7 +1,8 @@
+import { SearchInput } from '../design-system/search-input';
 import { useEffect, useRef, useState } from 'react';
 import type { MemoryEntryView, MemoryHistoryPage } from '@open-legend/protocol';
 import { post } from '../api';
-import { Button, Icon, IconButton } from '../design-system/components';
+import { Button, IconButton } from '../design-system/components';
 import { LoadingIndicator } from '../design-system/loading';
 import { EventTime } from './event-time';
 import { ConversationThread } from './conversation';
@@ -230,26 +231,23 @@ export function MemoryHistory({
           setQuery(draft.trim());
         }}
       >
-        <div className="ol-search">
-          <Icon name="ui.search" size={16} />
-          <input
-            ref={searchInput}
-            type="search"
-            aria-label="Search memories"
-            placeholder="Search memories…"
-            value={draft}
-            maxLength={200}
-            onChange={(event) => setDraft(event.target.value)}
-            onCompositionStart={() => {
-              composing.current = true;
-            }}
-            onCompositionEnd={() => {
-              composing.current = false;
-            }}
-            onBlur={() => {
-              composing.current = false;
-            }}
-          />
+        <SearchInput
+          ref={searchInput}
+          aria-label="Search memories"
+          placeholder="Search memories…"
+          value={draft}
+          maxLength={200}
+          onChange={(event) => setDraft(event.target.value)}
+          onCompositionStart={() => {
+            composing.current = true;
+          }}
+          onCompositionEnd={() => {
+            composing.current = false;
+          }}
+          onBlur={() => {
+            composing.current = false;
+          }}
+        >
           {draft && (
             <IconButton
               icon="ui.close"
@@ -261,7 +259,7 @@ export function MemoryHistory({
               }}
             />
           )}
-        </div>
+        </SearchInput>
         <Button size="sm" type="submit" isPending={busy}>
           Search
         </Button>

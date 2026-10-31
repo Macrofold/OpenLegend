@@ -1,7 +1,9 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { useId, useLayoutEffect, useRef, useState, type PointerEvent, type ReactNode } from 'react';
 import { Modal, ModalOverlay } from 'react-aria-components';
 import { Button, Icon, IconButton, Tag } from '../design-system/components';
+import { gildmossViewportInset } from '../design-system/gildmoss-kit';
 import './creator-workspaces.css';
 
 let topLayer = 1200;
@@ -64,8 +66,9 @@ export function EditorPanel({
     const clamp = () => {
       const bounds = element.getBoundingClientRect();
       const scale = bounds.width / element.offsetWidth || 1;
-      const left = Math.max(8, Math.min(innerWidth - bounds.width - 8, bounds.left));
-      const top = Math.max(8, Math.min(innerHeight - bounds.height - 8, bounds.top));
+      const edge = gildmossViewportInset(element, 8);
+      const left = Math.max(edge, Math.min(innerWidth - bounds.width - edge, bounds.left));
+      const top = Math.max(edge, Math.min(innerHeight - bounds.height - edge, bounds.top));
       if (Math.abs(left - bounds.left) < 0.5 && Math.abs(top - bounds.top) < 0.5) return;
       // Resize and size observation may both run before React paints. Derive one
       // absolute correction from the rendered position, rather than adding it twice.
@@ -112,13 +115,14 @@ export function EditorPanel({
     const bounds = element.getBoundingClientRect();
     const scale = bounds.width / element.offsetWidth || 1;
     const style = getComputedStyle(element);
+    const edge = gildmossViewportInset(element, 8);
     setPosition({
       x:
         Number.parseFloat(style.left) +
-        (Math.max(8, (innerWidth - bounds.width) / 2) - bounds.left) / scale,
+        (Math.max(edge, (innerWidth - bounds.width) / 2) - bounds.left) / scale,
       y:
         Number.parseFloat(style.top) +
-        (Math.max(8, (innerHeight - bounds.height) / 2) - bounds.top) / scale,
+        (Math.max(edge, (innerHeight - bounds.height) / 2) - bounds.top) / scale,
     });
   };
   const requestClose = () => {
@@ -147,17 +151,18 @@ export function EditorPanel({
     if (!element) return;
     const bounds = element.getBoundingClientRect();
     const scale = bounds.width / element.offsetWidth || 1;
+    const edge = gildmossViewportInset(element, 8);
     const left = Math.max(
-      8,
+      edge,
       Math.min(
-        innerWidth - bounds.width - 8,
+        innerWidth - bounds.width - edge,
         drag.current.boundsLeft + event.clientX - drag.current.x,
       ),
     );
     const top = Math.max(
-      8,
+      edge,
       Math.min(
-        innerHeight - bounds.height - 8,
+        innerHeight - bounds.height - edge,
         drag.current.boundsTop + event.clientY - drag.current.y,
       ),
     );
@@ -177,8 +182,8 @@ export function EditorPanel({
       style={{
         // Constrain the painted window during viewport reflow, before a busy React
         // resize callback can run. Keep the preferred desktop coordinates separately.
-        left: `clamp(calc(8px / var(--ui-scale, 1)), ${position.x}px, calc((100dvw - 8px) / var(--ui-scale, 1) - var(--editor-width)))`,
-        top: `clamp(calc(8px / var(--ui-scale, 1)), ${position.y}px, calc((100dvh - 8px) / var(--ui-scale, 1) - var(--editor-height)))`,
+        left: `clamp(max(calc(8px / var(--ui-scale, 1)), var(--gildmoss-kit-viewport-inset, 0px)), ${position.x}px, calc(100dvw / var(--ui-scale, 1) - max(calc(8px / var(--ui-scale, 1)), var(--gildmoss-kit-viewport-inset, 0px)) - var(--editor-width)))`,
+        top: `clamp(max(calc(8px / var(--ui-scale, 1)), var(--gildmoss-kit-viewport-inset, 0px)), ${position.y}px, calc(100dvh / var(--ui-scale, 1) - max(calc(8px / var(--ui-scale, 1)), var(--gildmoss-kit-viewport-inset, 0px)) - var(--editor-height)))`,
         zIndex: layer,
       }}
       onPointerDown={bringForward}
@@ -197,6 +202,7 @@ export function EditorPanel({
         if (!event.repeat) requestClose();
       }}
     >
+      <JadeGlass identity="editor::editor:1" />
       <header
         className="ol-editor-head"
         onPointerDown={startDrag}
@@ -287,6 +293,7 @@ export function EditorPanel({
           onOpenChange={(open) => !open && setConfirmClose(false)}
         >
           <Modal className="ol-modal">
+            <JadeGlass identity="editor::modal:2" />
             <LoadingDialog
               ref={confirmation}
               className="ol-person-dialog ol-creator-confirm"

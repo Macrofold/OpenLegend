@@ -1,3 +1,4 @@
+import { JadeGlass } from './jade-glass';
 import {
   useId,
   useContext,
@@ -38,6 +39,7 @@ import {
 import { PointerTooltip } from './pointer-tooltip';
 import { formatDisplayNumber } from '@open-legend/language';
 import { placeReadingWindow } from './window-placement';
+import { CrestButtonLabel, gildmossViewportInset } from './gildmoss-kit';
 export { Toolbar };
 /** The exact runtime catalog supplies these reviewed definitions once per document. */
 export function IconDefinitions() {
@@ -140,7 +142,7 @@ export function Button({
       aria-busy={pending || undefined}
     >
       {icon && <Icon name={icon} size={16} />}
-      <span>{children}</span>
+      <CrestButtonLabel>{children}</CrestButtonLabel>
       {showBusy && <span className="ol-spinner" aria-hidden="true" />}
     </AriaButton>
   );
@@ -191,6 +193,7 @@ export function DisclosurePopover({
         </Button>
       )}
       <Popover className="ol-root ol-disclosure-popover" placement="bottom end" offset={8}>
+        <JadeGlass identity={`disclosure:${label}`} />
         <LoadingDialog
           aria-label={label}
           className={`ol-portal-content ol-disclosure-content ${contentClassName}`}
@@ -355,7 +358,11 @@ export function SelectField({
       <Label className="ol-select-label">{label}</Label>
       <SelectInputGroup trigger={trigger}>
         {triggerArtwork ?? <Icon name="ui.search" size={16} />}
-        <Input className="ol-select-input" autoFocus={autoFocus} placeholder={placeholder} />
+        <Input
+          className="ol-select-input ol-field-editor"
+          autoFocus={autoFocus}
+          placeholder={placeholder}
+        />
         <AriaButton
           className="ol-select-toggle"
           aria-label={toggleLabel ?? `Show ${label.toLowerCase()} actions`}
@@ -369,6 +376,7 @@ export function SelectField({
         placement={placement}
         style={{ width: popupWidth }}
       >
+        <JadeGlass identity={`select:${label}`} />
         <LoadingRegion>
           <ListBox<SelectOption>
             className="ol-select-list ol-portal-content"
@@ -641,6 +649,7 @@ export function Panel({
         width: number;
         height: number;
         scale: number;
+        inset: number;
         viewport: { left: number; top: number; width: number; height: number };
       }
     | undefined
@@ -687,16 +696,17 @@ export function Panel({
       const bounds = panel.getBoundingClientRect();
       const scale = bounds.width / panel.offsetWidth || 1;
       const available = viewport();
+      const inset = gildmossViewportInset(panel, 8);
       // The layout can reserve measured HUD utilities below a floating window.
       // ResizeObserver already follows that region; no extra geometry loop is needed.
       drag.current = undefined;
       let left = Math.max(
-        available.left + 8,
-        Math.min(available.left + available.width - bounds.width - 8, bounds.left),
+        available.left + inset,
+        Math.min(available.left + available.width - bounds.width - inset, bounds.left),
       );
       let top = Math.max(
-        available.top + 8,
-        Math.min(available.top + available.height - bounds.height - 8, bounds.top),
+        available.top + inset,
+        Math.min(available.top + available.height - bounds.height - inset, bounds.top),
       );
       if (avoidOverlap && !placed.current && bounds.width && bounds.height) {
         placed.current = true;
@@ -719,7 +729,13 @@ export function Panel({
           .filter((other) => other !== panel && !other.closest('[hidden]'))
           .map((other) => other.getBoundingClientRect())
           .filter((other) => other.width && other.height);
-        ({ left, top } = placeReadingWindow(preferred, available, occupied, 8 * scale, 16 * scale));
+        ({ left, top } = placeReadingWindow(
+          preferred,
+          available,
+          occupied,
+          gildmossViewportInset(panel, 8 * scale),
+          16 * scale,
+        ));
         left += bounds.left - preferred.left;
         top += bounds.top - preferred.top;
       }
@@ -765,6 +781,7 @@ export function Panel({
       width: bounds.width,
       height: bounds.height,
       scale: bounds.width / panel.offsetWidth || 1,
+      inset: gildmossViewportInset(panel, 8),
       viewport: viewport(),
     };
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -774,17 +791,19 @@ export function Panel({
     if (!active) return;
     const available = active.viewport;
     const dx = Math.max(
-      available.left + 8 - active.left,
+      available.left + active.inset - active.left,
       Math.min(
-        available.left + available.width - active.width - 8 - active.left,
+        available.left + available.width - active.width - active.inset - active.left,
         event.clientX - active.pointerX,
       ),
     );
     const dy = Math.max(
-      available.top + 8 - active.top,
+      available.top + active.inset - active.top,
       Math.min(
-        Math.max(available.top + 8, available.top + available.height - active.height - 8) -
-          active.top,
+        Math.max(
+          available.top + active.inset,
+          available.top + available.height - active.height - active.inset,
+        ) - active.top,
         event.clientY - active.pointerY,
       ),
     );
@@ -810,6 +829,7 @@ export function Panel({
         } as CSSProperties
       }
     >
+      <JadeGlass identity={`panel:${id ?? title}`} />
       <LoadingScope region={panelElement}>
         <header
           className="ol-panel-head"

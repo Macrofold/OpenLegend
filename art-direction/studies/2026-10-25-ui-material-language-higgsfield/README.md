@@ -72,11 +72,13 @@ switch between. The [production package](#production-package--october-26-2026) i
 technically checked and archived privately; on 2026-10-27 it was revised so the kit keeps the
 study's textures, and Mike chose the kit for every Gildmoss panel
 ([plan decision 21](../../../docs/projects/interface-art-direction-overhaul-plan.md#decisions)).
-On 2026-10-28 the five round 6 styles joined it, making 19, with Jade Monolith the default.
-It is not integrated or selected for the game;
-[UIUX22](../../../docs/maintainers/ui-ux.md#uiux22) tracks integration.
-All rounds are **archived privately** in S3, with retrieval verified (see [Resume](#resume)).
-Nothing is published publicly.
+On 2026-10-28 the five round 6 styles joined it, making 19, with Jade Monolith the selected default.
+The revised 19-style package and approved procedural glass are implemented in the development runtime
+under [UIUX22](../../../docs/maintainers/ui-ux.md#uiux22). The
+[material-kit report](../../../docs/verification/gildmoss-interface.md#jade-cloud-glass-and-nineteen-styles--october-30-2026)
+owns actual qualification and limits. All study rounds and source archives remain **archived privately**
+in S3, with retrieval verified (see [Resume](#resume)); the selected public runtime copies are separate
+from those private archives.
 
 ## Brief
 
@@ -1291,7 +1293,7 @@ shown for all panels, with the panel textures and bezels. Preserve the selected 
 produce usable files with metadata, verify the exports, archive them in S3, and stop before
 integration.
 
-**Consumer contract (proposed; no importer exists yet):** the web client's design system.
+**Consumer contract:** the web client's design system, which reads the selected catalog, layout and plate while native controls supply live content.
 Exports use the repository paths they would take, `apps/client/src/design-system/art/…`, at
 @1x and @2x PNG with straight alpha. Live content stays native: text, numbers, bars, icons,
 statuses, portraits and button states.
@@ -1648,6 +1650,12 @@ statuses, portraits and button states.
   (usage in its header; the versions for rounds 8 to 15 are in their archives); it needs a
   repository checkout with Playwright, named by `OPENLEGEND_CHECKOUT`. The Claude app's preview
   pane shows a local page as a snapshot without its neighbouring image files.
-- **Next stage:** the production kit is complete; [UIUX22](../../../docs/maintainers/ui-ux.md#uiux22)
-  tracks runtime publication and integration of the selected kit and switchable character-panel
-  styles. Public publication needs Mike's separate approval.
+- **Runtime integration:** the 179 revision-4 exports are published in the exact 1,067-path
+  development release and implemented under [UIUX22](../../../docs/maintainers/ui-ux.md#uiux22),
+  including all 19 selectable character-panel styles, the catalog's Jade Monolith default and
+  Mike's approved three-row layout. Clear Slab/Jade Cloud, Small panels too, the glass bevel and
+  soft top glow are native drawing code. The
+  [material-kit report](../../../docs/verification/gildmoss-interface.md#jade-cloud-glass-and-nineteen-styles--october-30-2026)
+  retains actual qualification and remaining limits; this does not close UIUX21's separate
+  World Agent connection gate. Making the private study or source archives public still needs
+  Mike's separate approval.

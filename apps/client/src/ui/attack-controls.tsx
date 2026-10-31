@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { useEffect, useRef } from 'react';
 import type { GameView } from '@open-legend/protocol';
 import { Button } from '../design-system/components';
@@ -132,62 +133,49 @@ export function AttackControls({
       className="ol-card ol-attack-controls"
       aria-label="Attack controls"
     >
-      <strong>
-        {controller.presentation?.label ?? view.player.attackSource?.label ?? 'Attack mode'}
-      </strong>
-      <p className="ol-caption" role="status">
-        {controller.presentation?.status === 'pending'
-          ? 'Requesting preparation…'
-          : recovering
-            ? 'Attack released. Recovering.'
-            : waitingRelease
-              ? 'Release requested.'
-              : action?.execution?.ready
-                ? 'Ready to release.'
-                : active
-                  ? 'Preparing. You can release when you choose.'
-                  : view.player.attackSource?.profile
-                    ? 'Tap for an ordinary attack, or hold to choose a timed release.'
-                    : 'Choose your aim, then Attack for an ordinary attack.'}
-      </p>
-      {reason && (
+      <JadeGlass identity="attack-controls:ol-attack-controls:card:1" />
+      <div className="ol-attack-controls-content">
+        <strong>
+          {controller.presentation?.label ?? view.player.attackSource?.label ?? 'Attack mode'}
+        </strong>
         <p className="ol-caption" role="status">
-          {reason}
+          {controller.presentation?.status === 'pending'
+            ? 'Requesting preparation…'
+            : recovering
+              ? 'Attack released. Recovering.'
+              : waitingRelease
+                ? 'Release requested.'
+                : action?.execution?.ready
+                  ? 'Ready to release.'
+                  : active
+                    ? 'Preparing. You can release when you choose.'
+                    : view.player.attackSource?.profile
+                      ? 'Tap for an ordinary attack, or hold to choose a timed release.'
+                      : 'Choose your aim, then Attack for an ordinary attack.'}
         </p>
-      )}
-      <div className="ol-combat-buttons">
-        <Button
-          size="sm"
-          variant="secondary"
-          disabled={!available || !!controller.pending || waitingRelease || recovering}
-          onPress={inView}
-        >
-          In view
-        </Button>
-        {!active && view.player.attackSource?.profile && (
+        {reason && (
+          <p className="ol-caption" role="status">
+            {reason}
+          </p>
+        )}
+        <div className="ol-combat-buttons">
           <Button
             size="sm"
-            disabled={!available || !!controller.pending || !aimAvailable || recovering}
-            onPress={controller.prepare}
+            variant="secondary"
+            disabled={!available || !!controller.pending || waitingRelease || recovering}
+            onPress={inView}
           >
-            Prepare
+            In view
           </Button>
-        )}
-        <Button
-          size="sm"
-          disabled={
-            !available ||
-            !!controller.pending ||
-            !aimAvailable ||
-            recovering ||
-            waitingRelease ||
-            !releaseAvailable
-          }
-          onPress={controller.attackNormally}
-        >
-          {active ? 'Attack normally' : 'Attack'}
-        </Button>
-        {active && (
+          {!active && view.player.attackSource?.profile && (
+            <Button
+              size="sm"
+              disabled={!available || !!controller.pending || !aimAvailable || recovering}
+              onPress={controller.prepare}
+            >
+              Prepare
+            </Button>
+          )}
           <Button
             size="sm"
             disabled={
@@ -198,41 +186,57 @@ export function AttackControls({
               waitingRelease ||
               !releaseAvailable
             }
-            onPress={controller.release}
+            onPress={controller.attackNormally}
           >
-            Release
+            {active ? 'Attack normally' : 'Attack'}
           </Button>
+          {active && (
+            <Button
+              size="sm"
+              disabled={
+                !available ||
+                !!controller.pending ||
+                !aimAvailable ||
+                recovering ||
+                waitingRelease ||
+                !releaseAvailable
+              }
+              onPress={controller.release}
+            >
+              Release
+            </Button>
+          )}
+          {active && (
+            <Button
+              size="sm"
+              variant="secondary"
+              disabled={!connected || !view.access?.controlling}
+              onPress={controller.cancel}
+            >
+              Cancel
+            </Button>
+          )}
+        </div>
+        {controller.presentation?.profile && (
+          <p className="ol-caption">
+            {controller.profile?.labels?.instruction ?? 'Choose when to release.'}
+          </p>
         )}
-        {active && (
+        {controller.message && (
+          <p className="ol-caption" role="status">
+            {controller.message}
+          </p>
+        )}
+        {controller.pending && (
           <Button
             size="sm"
-            variant="secondary"
-            disabled={!connected || !view.access?.controlling}
-            onPress={controller.cancel}
+            disabled={!connected || controller.pending.status !== 'unknown'}
+            onPress={() => void controller.check()}
           >
-            Cancel
+            Check result
           </Button>
         )}
       </div>
-      {controller.presentation?.profile && (
-        <p className="ol-caption">
-          {controller.profile?.labels?.instruction ?? 'Choose when to release.'}
-        </p>
-      )}
-      {controller.message && (
-        <p className="ol-caption" role="status">
-          {controller.message}
-        </p>
-      )}
-      {controller.pending && (
-        <Button
-          size="sm"
-          disabled={!connected || controller.pending.status !== 'unknown'}
-          onPress={() => void controller.check()}
-        >
-          Check result
-        </Button>
-      )}
     </section>
   );
 }

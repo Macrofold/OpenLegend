@@ -287,6 +287,7 @@ export function ConversationComposer({
           aria-label={inputDisabledReason ?? undefined}
         >
           <AutoTextarea
+            className="ol-field-editor"
             id={textareaId}
             ref={inputRef}
             aria-label={ariaLabel}

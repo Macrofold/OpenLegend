@@ -1,6 +1,6 @@
 # Verification
 
-- [Gildmoss interface](verification/gildmoss-interface.md) — native/private-map/trade/storage review, actual running-game interactions and remaining screen, responsive and performance qualification.
+- [Gildmoss interface](verification/gildmoss-interface.md) — native/private-map/trade/storage review, actual running-game interactions, revision-3 material kit and 14 character-panel styles, and remaining UIUX21 screen, responsive and performance qualification.
 
 - [Character mechanics prototype](verification/character-and-map-additions.md) — separate-branch historical equipment, stat, carrying and native consumer evidence; not current Gildmoss mechanics delivery.
 

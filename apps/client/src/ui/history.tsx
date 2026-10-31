@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import {
   PresentationClock,
   createLifetime,
@@ -279,6 +280,7 @@ export function Narrator({
     return null;
   return (
     <aside key={item.id} ref={caption} className="ol-narrator ol-card" aria-label="Narrator">
+      <JadeGlass identity="history:ol-narrator:card:1" bezel={false} />
       <p role="status" aria-label={item.text}>
         <span aria-hidden="true">
           {item.text.split(/(\s+)/).map((word, index, words) => (

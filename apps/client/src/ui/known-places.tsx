@@ -1,3 +1,4 @@
+import { SearchInput } from '../design-system/search-input';
 import { LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import { formatDisplayNumber } from '@open-legend/language';
@@ -210,17 +211,14 @@ export function KnownPlaces({
           setQuery(draft.trim());
         }}
       >
-        <div className="ol-search">
-          <Icon name="ui.search" size={16} />
-          <input
-            ref={searchInput}
-            type="search"
-            aria-label="Search known places"
-            placeholder="Search known places…"
-            value={draft}
-            maxLength={200}
-            onChange={(event) => setDraft(event.target.value)}
-          />
+        <SearchInput
+          ref={searchInput}
+          aria-label="Search known places"
+          placeholder="Search known places…"
+          value={draft}
+          maxLength={200}
+          onChange={(event) => setDraft(event.target.value)}
+        >
           {draft && (
             <IconButton
               icon="ui.close"
@@ -232,7 +230,7 @@ export function KnownPlaces({
               }}
             />
           )}
-        </div>
+        </SearchInput>
         <Button size="sm" type="submit" isDisabled={busy}>
           Search
         </Button>

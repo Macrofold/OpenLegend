@@ -170,6 +170,11 @@
   flex-direction: column;
   min-inline-size: 0;
 }
+[data-theme='gildmoss'] .ol-modal:has(> .ol-jade-glass) > .ol-agent-work-review > * {
+  /* This review scrolls as one reading task; its body must not shrink behind
+   * the consequences and actions when the native dialog becomes the scroller. */
+  flex-shrink: 0;
+}
 .ol-agent-review-overlay .ol-modal {
   /* One dialog scroller keeps both consequences and actions reachable when
    * short screens or enlarged text leave no room for a separate fixed footer. */

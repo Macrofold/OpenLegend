@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { createPortal } from 'react-dom';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import type {
@@ -502,6 +503,7 @@ function ScopedWorldComposer({
         }
       }}
     >
+      <JadeGlass identity="world-composer:ol-world-composer:card:1" />
       <LoadingScope region={surface}>
         <div className="ol-world-composer-head">
           <strong>

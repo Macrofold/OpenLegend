@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button, Icon, IconButton } from '../design-system/components';
 
@@ -58,6 +59,7 @@ export function CaptionGapNotice({
   return (
     <>
       <div className="ol-caption-gap ol-card" hidden={!shown}>
+        <JadeGlass identity="caption-gap-notice:ol-caption-gap:card:1" />
         <Icon name="ui.speech" size={16} />
         <span>{text}</span>
         <Button size="sm" onPress={onOpen}>

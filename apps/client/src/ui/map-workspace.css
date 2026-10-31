@@ -382,6 +382,11 @@
   margin-top: 7px;
   overflow: visible;
 }
+[data-theme='gildmoss'] .ol-map-workspace--minimap {
+  /* The circular viewport clips the map; its rim shadow and sibling zoom
+     controls need the surrounding space to remain visible. */
+  overflow: visible;
+}
 .ol-map-workspace--minimap .ol-map-body {
   display: block;
   height: 100%;

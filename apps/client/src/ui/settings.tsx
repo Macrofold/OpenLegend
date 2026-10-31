@@ -7,12 +7,15 @@ import { InventionSettings } from './invention-settings';
 import { WorldVisualSettings } from './world-visual-settings';
 import icons from '../design-system/icons/catalog';
 import { THEMES } from '../design-system/themes';
+import { AUTO_UI_SCALE_RANGE, UI_SCALES, type UiScalePreference } from '../design-system/ui-scale';
+import type { CharacterPanelStyle } from './character-panel';
 import {
   DEFAULT_ACTION_INPUT,
   inputPreferenceProblem,
   type ActionInputPreferences,
 } from './action-input';
 import { useState } from 'react';
+import { useLoadingStatus } from '../design-system/loading';
 import './settings.css';
 
 export type SettingsView = Pick<
@@ -25,7 +28,14 @@ export const Settings = memo(function Settings({
   setSection,
   theme,
   setTheme,
+  characterPanelStyles,
+  characterPanelStyle,
+  setCharacterPanelStyle,
+  characterPanelLoading,
+  characterPanelError,
+  retryCharacterPanel,
   scale,
+  scalePreference,
   setScale,
   reduce,
   setReduce,
@@ -47,8 +57,15 @@ export const Settings = memo(function Settings({
   setSection(value: string): void;
   theme: string;
   setTheme(value: string): void;
+  characterPanelStyles: CharacterPanelStyle[];
+  characterPanelStyle: string;
+  setCharacterPanelStyle(value: string): void;
+  characterPanelLoading: boolean;
+  characterPanelError: boolean;
+  retryCharacterPanel(): void;
   scale: number;
-  setScale(value: number): void;
+  scalePreference: UiScalePreference;
+  setScale(value: UiScalePreference): void;
   reduce: boolean;
   setReduce(value: boolean): void;
   captionsPaused: boolean;
@@ -65,6 +82,7 @@ export const Settings = memo(function Settings({
   cameraControls?: ReactNode;
 }) {
   const [inputProblem, setInputProblem] = useState('');
+  const showPanelLoading = useLoadingStatus(characterPanelLoading, 'Character-panel style');
   function inputChange(key: keyof ActionInputPreferences, value: string) {
     const next = { ...actionInput, [key]: value };
     const problem = inputPreferenceProblem(next);
@@ -120,15 +138,60 @@ export const Settings = memo(function Settings({
           <p className="ol-caption">
             Changes the interface colors and type. The world and its rules stay the same.
           </p>
+          {theme === 'gildmoss' && (
+            <>
+              <label>
+                Character-panel style
+                <select
+                  aria-label="Character-panel style"
+                  value={characterPanelStyles.length ? characterPanelStyle : ''}
+                  disabled={!characterPanelStyles.length}
+                  onChange={(event) => setCharacterPanelStyle(event.target.value)}
+                >
+                  {!characterPanelStyles.length && <option value="">Loading styles…</option>}
+                  {characterPanelStyles.map((style) => (
+                    <option key={style.id} value={style.id}>
+                      {style.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p className="ol-caption">
+                Changes the frame around your portrait and condition bars.
+              </p>
+              {showPanelLoading && <p role="status">Loading character-panel style…</p>}
+              {characterPanelError && (
+                <div role="status">
+                  <p>The character-panel artwork couldn’t load.</p>
+                  <Button variant="quiet" onPress={retryCharacterPanel}>
+                    Retry artwork
+                  </Button>
+                </div>
+              )}
+            </>
+          )}
           <SegmentedControl
             label="UI scale"
-            options={[0.9, 1, 1.15, 1.3].map((n) => ({
-              value: String(n),
-              label: `${Math.round(n * 100)}%`,
-            }))}
-            value={String(scale)}
-            onChange={(v) => setScale(Number(v))}
+            options={[
+              { value: 'auto', label: 'Auto' },
+              ...UI_SCALES.map((n) => ({
+                value: String(n),
+                label: `${Math.round(n * 100)}%`,
+              })),
+            ]}
+            value={String(scalePreference)}
+            onChange={(v) => setScale(v === 'auto' ? 'auto' : Number(v))}
           />
+          <p className="ol-caption">
+            {scalePreference === 'auto' ? (
+              <>
+                Auto fits your window, from {AUTO_UI_SCALE_RANGE[0] * 100}% to{' '}
+                {AUTO_UI_SCALE_RANGE[1] * 100}%. Current size: {Math.round(scale * 100)}%.
+              </>
+            ) : (
+              'Keeps this size when your window changes. Choose Auto to adjust it automatically.'
+            )}
+          </p>
           <label>
             <input type="checkbox" checked={reduce} onChange={(e) => setReduce(e.target.checked)} />{' '}
             Reduce motion

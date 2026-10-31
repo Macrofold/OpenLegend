@@ -1,3 +1,4 @@
+import { JadeGlass, configureJadeGlass } from './design-system/jade-glass';
 import { MapWorkspace } from './ui/map-workspace';
 import {
   DaylightDial,
@@ -14,6 +15,13 @@ import {
   TradeCommandStatus,
   type TradeNegotiationTarget,
 } from './ui/item-trade';
+import { CharacterPanel, characterPanelGeometry, useCharacterPanelArt } from './ui/character-panel';
+import { gildmossKitReady } from './design-system/gildmoss-kit';
+import {
+  isUiScalePreference,
+  resolveUiScale,
+  type UiScalePreference,
+} from './design-system/ui-scale';
 import { useInventoryCommand } from './ui/use-inventory-command';
 import { inventoryCommandStorageKey } from './inventory-command-record';
 import { browserSubscription } from './browser-network';
@@ -385,6 +393,11 @@ function App({
     isActionInputPreferences,
   );
   const [theme, setTheme] = useLocal('open-legend:theme', 'gildmoss', isTheme);
+  const [characterPanelStyle, setCharacterPanelStyle] = useLocal(
+    'open-legend:character-panel-style',
+    '',
+    (value): value is string => typeof value === 'string',
+  );
   const [eventsQuick, setEventsQuick] = useState(false);
   const [craftingSection, setCraftingSection] = useState('recipes');
   const [tradeNegotiation, setTradeNegotiation] = useState<TradeNegotiationTarget | null>(null);
@@ -401,9 +414,13 @@ function App({
     setTradeNegotiation(null);
     setBagSheetVisible(false);
   }, [view?.worldId, view?.saveTimeline, view?.player.id, view?.access?.privateDraftScope]);
-  const [scale, setScale] = useLocal('open-legend:ui-scale', 1, (v): v is number =>
-    [0.9, 1, 1.15, 1.3].includes(Number(v)),
+  const [scalePreference, setScalePreference] = useLocal<UiScalePreference>(
+    'open-legend:ui-scale',
+    'auto',
+    isUiScalePreference,
   );
+  const scale = resolveUiScale(scalePreference, width, height);
+  const characterPanel = useCharacterPanelArt(characterPanelStyle, theme === 'gildmoss', scale);
   const [reduce, setReduce] = useLocal(
     'open-legend:reduce-motion',
     false,
@@ -516,6 +533,7 @@ function App({
     return () => clearTimeout(id);
   }, [notice]);
   useEffect(() => {
+    configureJadeGlass({ enabled: theme === 'gildmoss', reduceMotion: reduce });
     document.documentElement.dataset.theme = theme;
     document.documentElement.dataset.reduceMotion = String(reduce);
     document.documentElement.style.setProperty('--ui-scale', String(scale));
@@ -836,8 +854,10 @@ function App({
   // A wide, short window can leave less room than one action button below the
   // condition card. Reuse the existing sheet without shrinking text or drafts.
   // docs/projects/parallel-batch-01-playable-week/camp-activities.md#engineer-3-implementation-plan--october-2-2026
-  const needsSheet = (nextWidth: number, nextHeight: number) =>
-    nextWidth / scale < 720 || nextHeight / scale <= 600;
+  const needsSheet = (nextWidth: number, nextHeight: number) => {
+    const nextScale = resolveUiScale(scalePreference, nextWidth, nextHeight);
+    return nextWidth / nextScale < 720 || nextHeight / nextScale <= 600;
+  };
   const narrow = needsSheet(width, height);
   // Full meters, the clock and useful current-work details need a horizontal
   // launcher strip on short narrow screens; centered rails leave too little room.
@@ -903,7 +923,7 @@ function App({
     };
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
-  }, [scale, narrow]);
+  }, [scalePreference, narrow]);
   const worldVisible = view !== null && sceneReady && (!tabPaused || tab.blocked);
   const aimPanel =
     view?.player.action?.controls &&
@@ -927,6 +947,8 @@ function App({
     !!view?.player.action?.controls,
     !!view?.player.hasWork,
     aimPanel,
+    theme,
+    characterPanel.art,
   ]);
   const workspaceWidth = Math.min(792, Math.max(336, width / scale - 184));
   function toggleWorkspace(id: PanelId) {
@@ -2694,6 +2716,12 @@ function App({
             section={settingsSection}
             setSection={setSettingsSection}
             theme={theme}
+            characterPanelStyles={characterPanel.styles}
+            characterPanelStyle={characterPanel.selectedId}
+            setCharacterPanelStyle={setCharacterPanelStyle}
+            characterPanelLoading={characterPanel.loading}
+            characterPanelError={characterPanel.error}
+            retryCharacterPanel={characterPanel.retry}
             cameraControls={
               <CameraControls
                 embedded
@@ -2708,7 +2736,8 @@ function App({
             }
             setTheme={setTheme}
             scale={scale}
-            setScale={setScale}
+            scalePreference={scalePreference}
+            setScale={setScalePreference}
             reduce={reduce}
             setReduce={setReduce}
             captionsPaused={captionsPaused}
@@ -2741,18 +2770,41 @@ function App({
     />
   );
   const openingOwner = view ? JSON.stringify([view.worldId, view.player.id]) : '';
+  const activeCharacterPanel =
+    theme === 'gildmoss' &&
+    characterPanel.art &&
+    view &&
+    view.player.attributes.length <= characterPanel.art.layout.needs.rows.length
+      ? characterPanel.art
+      : undefined;
+  const conditionNotices = view && (
+    <>
+      {(view.player.participation !== 'active' || !view.player.alive) && (
+        <p className="ol-caption ol-player-state">
+          {view.player.participation === 'inactive'
+            ? 'Away from the world'
+            : view.player.participation === 'exiting'
+              ? 'Preparing to leave'
+              : !view.player.alive
+                ? 'Life has ended'
+                : null}
+        </p>
+      )}
+      {view.persistence.status === 'error' && (
+        <p className="ol-save-failure" role="alert">
+          {view.persistence.message}
+          {view.access?.canManageSaves && (
+            <Button size="sm" onPress={() => show('checkpoints')}>
+              Open recovery
+            </Button>
+          )}
+        </p>
+      )}
+    </>
+  );
   const openingInformation = view?.presentation.introduction && (
-    <details
+    <div
       className="ol-card ol-opening-information"
-      open={openingDisclosure?.owner === openingOwner ? openingDisclosure.expanded : true}
-      onToggle={(event) => {
-        const expanded = event.currentTarget.open;
-        setOpeningDisclosure((current) =>
-          current?.owner === openingOwner && current.expanded === expanded
-            ? current
-            : { owner: openingOwner, expanded },
-        );
-      }}
       hidden={
         open.length > 0 ||
         inspectors.length > 0 ||
@@ -2762,9 +2814,22 @@ function App({
       }
       key={openingOwner}
     >
-      <summary>Arriving here</summary>
-      <p>{view.presentation.introduction}</p>
-    </details>
+      <JadeGlass identity="opening-information" bezel={false} />
+      <details
+        open={openingDisclosure?.owner === openingOwner ? openingDisclosure.expanded : true}
+        onToggle={(event) => {
+          const expanded = event.currentTarget.open;
+          setOpeningDisclosure((current) =>
+            current?.owner === openingOwner && current.expanded === expanded
+              ? current
+              : { owner: openingOwner, expanded },
+          );
+        }}
+      >
+        <summary>Arriving here</summary>
+        <p>{view.presentation.introduction}</p>
+      </details>
+    </div>
   );
   return (
     <WorldClockProvider clock={view?.clock}>
@@ -2785,6 +2850,11 @@ function App({
           view && !sunlightAtHour(view.clock.hour, view.clock.daylight).isDay ? 'night' : 'day'
         }
         data-gildmoss-layout="true"
+        data-character-panel={activeCharacterPanel?.id}
+        data-character-panel-stacked={
+          !!activeCharacterPanel &&
+          width / scale < characterPanelGeometry(activeCharacterPanel).width + 320
+        }
         data-reduce-motion={reduce}
         data-narrow={narrow}
         data-compact={width / scale < 1200}
@@ -2817,57 +2887,59 @@ function App({
           // Actual entry/return failures retain their separate retry screen.
           <div className="ol-play-workspace" hidden={showEntry} inert={tabPaused}>
             <div className="ol-gildmoss-overview">
-              <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
-                <span className="ol-gildmoss-frame" aria-hidden="true" />
-                <div className="ol-survival-name">
-                  <TextTooltip text={`Character (C) · ${view.player.name}`}>
-                    <Button
-                      variant="quiet"
-                      className="ol-character-link"
-                      aria-label={`Character: ${view.player.name} (C)`}
-                      onPress={() => {
-                        setConditionEntry((value) => value + 1);
-                        show('character');
-                      }}
-                    >
-                      <Portrait art={view.player.portrait} size={64} />
-                    </Button>
-                  </TextTooltip>
-                </div>
-                <Condition {...view.player} />
-                <EvasionCooldown evasion={view.player.evasion} />
-                <ConditionStatuses
+              {activeCharacterPanel ? (
+                <CharacterPanel
+                  art={activeCharacterPanel}
                   view={view}
+                  panelRef={survival}
+                  imageFailed={characterPanel.imageFailed}
                   openCondition={() => {
                     setConditionEntry((value) => value + 1);
                     show('character');
                   }}
-                />
-
-                {(view.player.participation !== 'active' || !view.player.alive) && (
-                  <p className="ol-caption ol-player-state">
-                    {view.player.participation === 'inactive'
-                      ? 'Away from the world'
-                      : view.player.participation === 'exiting'
-                        ? 'Preparing to leave'
-                        : !view.player.alive
-                          ? 'Life has ended'
-                          : null}
-                  </p>
-                )}
-                {view.persistence.status === 'error' && (
-                  <p className="ol-save-failure" role="alert">
-                    {view.persistence.message}
-                    {view.access?.canManageSaves && (
-                      <Button size="sm" onPress={() => show('checkpoints')}>
-                        Open recovery
+                  perspectiveLocked={!!cameraView.perspectiveLocked}
+                  togglePerspective={() =>
+                    scene.current?.cameraCommand({ type: 'perspective-lock' })
+                  }
+                >
+                  <EvasionCooldown evasion={view.player.evasion} />
+                  {conditionNotices}
+                </CharacterPanel>
+              ) : (
+                <section ref={survival} className="ol-card ol-survival" aria-label="Your condition">
+                  <JadeGlass identity="main:ol-survival:card:2" />
+                  <span className="ol-gildmoss-frame" aria-hidden="true" />
+                  <div className="ol-survival-name">
+                    <TextTooltip text={`Character (C) · ${view.player.name}`}>
+                      <Button
+                        variant="quiet"
+                        className="ol-character-link"
+                        aria-label={`Character: ${view.player.name} (C)`}
+                        onPress={() => {
+                          setConditionEntry((value) => value + 1);
+                          show('character');
+                        }}
+                      >
+                        <Portrait art={view.player.portrait} size={64} />
                       </Button>
-                    )}
-                  </p>
-                )}
-              </section>
+                    </TextTooltip>
+                  </div>
+                  <Condition {...view.player} />
+                  <EvasionCooldown evasion={view.player.evasion} />
+                  <ConditionStatuses
+                    view={view}
+                    openCondition={() => {
+                      setConditionEntry((value) => value + 1);
+                      show('character');
+                    }}
+                  />
+
+                  {conditionNotices}
+                </section>
+              )}
               {choosingActionSubject && (
                 <section className="ol-card ol-subject-picking" aria-label="Choose action subject">
+                  <JadeGlass identity="main:ol-subject-picking:card:3" />
                   <strong>Choose a subject</strong>
                   <p>
                     Click an object in the world, or choose from In view. Your action will be
@@ -2879,14 +2951,16 @@ function App({
                   </div>
                 </section>
               )}
-              <div className="ol-gildmoss-lock">
-                <IconButton
-                  icon="ui.lock-perspective"
-                  label="Lock perspective"
-                  pressed={!!cameraView.perspectiveLocked}
-                  onPress={() => scene.current?.cameraCommand({ type: 'perspective-lock' })}
-                />
-              </div>
+              {!activeCharacterPanel && (
+                <div className="ol-gildmoss-lock">
+                  <IconButton
+                    icon="ui.lock-perspective"
+                    label="Lock perspective"
+                    pressed={!!cameraView.perspectiveLocked}
+                    onPress={() => scene.current?.cameraCommand({ type: 'perspective-lock' })}
+                  />
+                </div>
+              )}
               <div className="ol-gildmoss-corner">
                 {' '}
                 <DaylightDial clock={view.clock} />
@@ -2929,6 +3003,7 @@ function App({
             <div className="ol-events-quick">
               {eventsQuick ? (
                 <section className="ol-card ol-events-quick-panel" aria-label="Events quick view">
+                  <JadeGlass identity="main:ol-events-quick-panel:card:4" />
                   <header>
                     <strong>Events</strong>
                     <IconButton
@@ -3204,6 +3279,7 @@ function App({
             >
               {view.player.action?.controls && !view.player.action.execution && !aimPanel && (
                 <div className="ol-card ol-aim-status">
+                  <JadeGlass identity="main:ol-aim-status:card:5" />
                   <AimControls
                     action={view.player.action}
                     connected={connected}
@@ -3436,6 +3512,7 @@ function App({
         )}
         {!transportReady && view && !tabPaused && sceneReady && (
           <div id="connection" role="status" className="ol-connection ol-card">
+            <JadeGlass identity="main:ol-connection:card:6" />
             Connection interrupted. Reconnecting to your saved world…
           </div>
         )}
@@ -3574,6 +3651,7 @@ const interfaceFontsReady = new Promise<boolean>((resolve) => {
 });
 await Promise.all([
   iconCatalogReady,
+  gildmossKitReady,
   interfaceFontsReady.then((ready) => {
     document.documentElement.dataset.interfaceFonts = ready ? 'ready' : 'fallback';
   }),

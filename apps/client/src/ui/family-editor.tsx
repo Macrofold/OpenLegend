@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import { Modal, ModalOverlay } from 'react-aria-components';
@@ -213,6 +214,7 @@ export function FamilyEditor({
       }}
     >
       <Modal className="ol-modal">
+        <JadeGlass identity="family-editor::modal:1" />
         <LoadingDialog className="ol-person-dialog ol-family-dialog" aria-label={title}>
           <header className="ol-modal-head">
             <div>

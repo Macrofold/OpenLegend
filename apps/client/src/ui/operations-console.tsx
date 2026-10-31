@@ -1,3 +1,4 @@
+import { JadeGlass, configureJadeGlass } from '../design-system/jade-glass';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import type { AccessCapability, OperationsView, WorldOverview } from '@open-legend/protocol';
 import { ACCESS_CAPABILITY_TEXT, worldClockText } from '@open-legend/protocol';
@@ -29,6 +30,19 @@ const PAUSE_TEXT = {
  * docs/projects/completed/multiplayer-entry-maintenance.md. */
 export function OperationsConsole() {
   const [theme] = useLocal('open-legend:theme', 'gildmoss', isTheme);
+  const [reduceMotion] = useLocal(
+    'open-legend:reduce-motion',
+    false,
+    (value): value is boolean => typeof value === 'boolean',
+  );
+  useEffect(() => {
+    // This route can open without mounting the character application.
+    configureJadeGlass({ enabled: theme === 'gildmoss', reduceMotion });
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.reduceMotion = String(reduceMotion);
+    // This characterless projection carries no authored daylight policy.
+    document.documentElement.dataset.lighting = 'day';
+  }, [theme, reduceMotion]);
   const [view, setView] = useState<OperationsView | null>(null);
   const [error, setError] = useState('');
   const [entry, setEntry] = useState<'signed-out' | 'forbidden' | 'failed'>();
@@ -119,6 +133,7 @@ export function OperationsConsole() {
         )}
         {!view ? (
           <main className="ol-card ol-operations-card ol-operations-entry">
+            <JadeGlass identity="operations-console:ol-operations-card:ol-operations-entry:card:1" />
             <h2 className="ol-heading">
               {entry === 'signed-out'
                 ? 'Sign in to World operations'
@@ -162,6 +177,7 @@ export function OperationsConsole() {
               className="ol-card ol-operations-card ol-operations-summary"
               aria-label="World and account status"
             >
+              <JadeGlass identity="operations-console:ol-operations-card:ol-operations-summary:card:2" />
               <div>
                 <h2 className="ol-heading">World status</h2>
                 <p className="ol-operations-clock">
@@ -227,6 +243,7 @@ export function OperationsConsole() {
               <TabPanel id="overview" className="ol-operations-task-panel" shouldForceMount>
                 <div className="ol-operations-grid">
                   <section className="ol-card ol-operations-card">
+                    <JadeGlass identity="operations-console:ol-operations-card:card:3" />
                     <Section title="Your permitted tasks">
                       <p>
                         These permissions belong to this account in this world. Opening a tab does
@@ -256,6 +273,7 @@ export function OperationsConsole() {
                     className="ol-card ol-operations-card"
                     aria-label="Public world overview"
                   >
+                    <JadeGlass identity="operations-console:ol-operations-card:card:4" />
                     <Section title="Public world overview">
                       <p className="ol-caption">
                         A read-only map of broad categories. It does not show private names,
@@ -279,6 +297,7 @@ export function OperationsConsole() {
                   className="ol-operations-task-panel ol-card ol-operations-card"
                   shouldForceMount
                 >
+                  <JadeGlass identity="operations-console:ol-operations-task-panel:ol-operations-card:card:5" />
                   <AccessSection
                     view={view}
                     access={view.access}
@@ -293,6 +312,7 @@ export function OperationsConsole() {
                   className="ol-operations-task-panel ol-card ol-operations-card"
                   shouldForceMount
                 >
+                  <JadeGlass identity="operations-console:ol-operations-task-panel:ol-operations-card:card:6" />
                   <MaintenanceSection
                     current={
                       view.maintenance?.status === 'scheduled' ||
@@ -311,6 +331,7 @@ export function OperationsConsole() {
                   className="ol-operations-task-panel ol-card ol-operations-card"
                   shouldForceMount
                 >
+                  <JadeGlass identity="operations-console:ol-operations-task-panel:ol-operations-card:card:7" />
                   {view.checkpoint && (
                     <GameSavesPanel
                       key={view.checkpoint.recoveryScope}

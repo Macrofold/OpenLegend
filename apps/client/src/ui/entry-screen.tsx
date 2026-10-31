@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { Button } from '../design-system/components';
 import { LoadingIndicator } from '../design-system/loading';
 import type { WorldCreationHostStatus } from '@open-legend/protocol';
@@ -35,6 +36,7 @@ export function EntryScreen({ status, onRetry }: { status: EntryStatus; onRetry:
   return (
     <main className="ol-entry" aria-labelledby="entry-title">
       <section className="ol-card ol-entry-card">
+        <JadeGlass identity="entry-screen:ol-entry-card:card:1" />
         <header className="ol-entry-brand">
           <p className="ol-entry-eyebrow">Welcome</p>
           <h1 id="entry-title" className="ol-heading">

@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { useState } from 'react';
 import { Button } from '../design-system/components';
 import './operations.css';
@@ -35,6 +36,7 @@ export function EntryNotice() {
   if (!message) return null;
   return (
     <div className="ol-card ol-entry-notice" role="status">
+      <JadeGlass identity="entry-notice:ol-entry-notice:card:1" />
       <div>
         <strong>{message.title}</strong>
         <p>{message.detail}</p>

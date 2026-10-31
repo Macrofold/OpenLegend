@@ -1,3 +1,4 @@
+import { SearchInput } from '../design-system/search-input';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { worldClockText, worldDayText } from '@open-legend/protocol';
 import type {
@@ -937,37 +938,35 @@ function ScopedWorldEvents({
           setQuery(draft.trim());
         }}
       >
-        <div className="ol-search">
-          {layout === 'journal' ? (
-            <button
-              type="submit"
-              className="ol-event-search-submit"
-              aria-label="Search events"
-              disabled={busy}
-            >
-              <Icon name="ui.search" size={16} />
-            </button>
-          ) : (
-            <Icon name="ui.search" size={16} />
-          )}
-          <input
-            ref={searchInput}
-            type="search"
-            aria-label="Search perceived events"
-            placeholder={type === 'speech' ? 'Search speech you heard…' : 'Search events…'}
-            value={draft}
-            maxLength={200}
-            onChange={(event) => setDraft(event.target.value)}
-            onCompositionStart={() => {
-              composing.current = true;
-            }}
-            onCompositionEnd={() => {
-              composing.current = false;
-            }}
-            onBlur={() => {
-              composing.current = false;
-            }}
-          />
+        <SearchInput
+          leading={
+            layout === 'journal' ? (
+              <button
+                type="submit"
+                className="ol-event-search-submit"
+                aria-label="Search events"
+                disabled={busy}
+              >
+                <Icon name="ui.search" size={16} />
+              </button>
+            ) : undefined
+          }
+          ref={searchInput}
+          aria-label="Search perceived events"
+          placeholder={type === 'speech' ? 'Search speech you heard…' : 'Search events…'}
+          value={draft}
+          maxLength={200}
+          onChange={(event) => setDraft(event.target.value)}
+          onCompositionStart={() => {
+            composing.current = true;
+          }}
+          onCompositionEnd={() => {
+            composing.current = false;
+          }}
+          onBlur={() => {
+            composing.current = false;
+          }}
+        >
           <span className="ol-event-loading-slot">
             <LoadingIndicator active={busy} label="Loading events" />
           </span>
@@ -984,7 +983,7 @@ function ScopedWorldEvents({
               }}
             />
           )}
-        </div>
+        </SearchInput>
         {layout !== 'journal' && (
           <Button type="submit" isDisabled={busy}>
             Search

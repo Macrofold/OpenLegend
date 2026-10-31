@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import type {
   WorldAgentReviewView,
@@ -62,7 +63,6 @@ export function WorldAgentReview({
   const readingCreation = useRef(false);
   const working = useRef(false);
   const dialog = useRef<HTMLDivElement>(null);
-  const modal = useRef<HTMLDivElement>(null);
   const readingPosition = useRef(0);
   const restoringReading = useRef(true);
   const audience = privateDraftScope();
@@ -131,7 +131,7 @@ export function WorldAgentReview({
   useEffect(() => {
     if (!review || review.plan.removal || !restoringReading.current) return;
     const frame = requestAnimationFrame(() => {
-      if (modal.current) modal.current.scrollTop = readingPosition.current;
+      if (dialog.current) dialog.current.scrollTop = readingPosition.current;
       restoringReading.current = false;
     });
     return () => cancelAnimationFrame(frame);
@@ -379,18 +379,16 @@ export function WorldAgentReview({
         if (!open) onClose();
       }}
     >
-      <Modal
-        ref={modal}
-        className="ol-modal"
-        onScroll={(event) => {
-          if (!restoringReading.current) {
-            readingPosition.current = event.currentTarget.scrollTop;
-          }
-        }}
-      >
+      <Modal className="ol-modal">
+        <JadeGlass identity="world-agent-review::modal:1" />
         <LoadingDialog
           ref={dialog}
           className="ol-person-dialog ol-agent-work-review"
+          onScroll={(event) => {
+            if (!restoringReading.current) {
+              readingPosition.current = event.currentTarget.scrollTop;
+            }
+          }}
           aria-label={
             review?.plan.creation
               ? 'Review exact new world'
@@ -472,7 +470,7 @@ export function WorldAgentReview({
                       requestAnimationFrame(() => {
                         if (currentScope.current !== requestScope || !restoringReading.current)
                           return;
-                        if (modal.current) modal.current.scrollTop = readingPosition.current;
+                        if (dialog.current) dialog.current.scrollTop = readingPosition.current;
                         restoringReading.current = false;
                       });
                     }}

@@ -12,6 +12,7 @@ import { mapPlaceReader } from './map-place-reader';
 import { assetUrl } from '../asset-files';
 import { post } from '../api';
 import { Button, EmptyState, Icon, IconButton } from '../design-system/components';
+import { SearchInput } from '../design-system/search-input';
 import { Portrait } from '../design-system/portrait';
 import './map-workspace.css';
 
@@ -376,29 +377,28 @@ function OwnedMapWorkspace({
     >
       {!mini && (
         <div ref={searchCard} className="ol-map-search">
-          <div className="ol-search">
-            <IconButton
-              icon="ui.search"
-              label="Browse places and markers"
-              aria-expanded={browsing}
-              aria-controls={resultsId}
-              onPress={() => setBrowsing((value) => !value)}
-            />
-            <label className="ol-sr" htmlFor={searchId}>
-              Search known places, markers and notes
-            </label>
-            <input
-              id={searchId}
-              ref={searchInput}
-              type="search"
-              placeholder="Search places"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setBrowsing(true);
-              }}
-            />
-          </div>
+          <label className="ol-sr" htmlFor={searchId}>
+            Search known places, markers and notes
+          </label>
+          <SearchInput
+            leading={
+              <IconButton
+                icon="ui.search"
+                label="Browse places and markers"
+                aria-expanded={browsing}
+                aria-controls={resultsId}
+                onPress={() => setBrowsing((value) => !value)}
+              />
+            }
+            id={searchId}
+            ref={searchInput}
+            placeholder="Search places"
+            value={query}
+            onChange={(event) => {
+              setQuery(event.target.value);
+              setBrowsing(true);
+            }}
+          />
           <aside
             id={resultsId}
             className="ol-map-results"

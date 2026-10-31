@@ -53,14 +53,20 @@
   bottom: var(--gildmoss-hotbar-inset, 24px);
   transform: translateX(-50%);
   display: flex;
+  /* Once the minimum reading size is reached, wrap controls rather than
+     clipping the row between the desktop and narrow-sheet layouts. */
+  flex-wrap: wrap;
+  justify-content: center;
   align-items: center;
   gap: 12px;
+  width: max-content;
   pointer-events: auto;
   max-width: calc(100vw / var(--ui-scale, 1) - 32px);
 }
 .ol-hotbar-intents,
 .ol-hotbar-panels {
   display: flex;
+  flex-shrink: 0;
   align-items: center;
   gap: 4px;
 }
@@ -95,6 +101,7 @@
 }
 .ol-gildmoss-slots {
   display: flex;
+  flex-shrink: 0;
   gap: 4px;
 }
 .ol-root[data-gildmoss-layout] .ol-gildmoss-hotbar .ol-hotbar-slot {
@@ -544,13 +551,17 @@
 
 .ol-condition-status-groups {
   display: grid;
-  gap: 8px;
   grid-column: 1/-1;
+  border-top: 1px solid var(--line);
+  padding-top: 8px;
 }
 .ol-condition-status-icons {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
+}
+.ol-condition-status-icons + .ol-condition-status-icons {
+  margin-top: 8px;
   border-top: 1px solid var(--line);
   padding-top: 8px;
 }
@@ -558,10 +569,11 @@
   --status-tone: var(--status-neutral);
   position: relative;
   display: inline-flex;
+  flex: none;
   align-items: center;
   justify-content: center;
-  width: 32px;
-  height: 32px;
+  width: var(--ol-condition-status-cell, 32px);
+  height: var(--ol-condition-status-cell, 32px);
   color: var(--status-tone);
   border: 2px solid var(--status-tone);
   border-radius: 6px;

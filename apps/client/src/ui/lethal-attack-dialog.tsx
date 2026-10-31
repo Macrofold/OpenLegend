@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog } from '../design-system/loading';
 import { Modal, ModalOverlay } from 'react-aria-components';
 import type { ApiResult } from '@open-legend/protocol';
@@ -27,6 +28,7 @@ export function LethalAttackDialog({
       }}
     >
       <Modal className="ol-modal ol-tab-resume ol-lethal-review">
+        <JadeGlass identity="lethal-attack-dialog:ol-tab-resume:ol-lethal-review:modal:1" />
         <LoadingDialog
           aria-label={review.title}
           aria-describedby="lethal-review-description"

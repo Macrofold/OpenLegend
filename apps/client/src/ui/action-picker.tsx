@@ -1,3 +1,5 @@
+import { JadeGlass } from '../design-system/jade-glass';
+import { SearchInput } from '../design-system/search-input';
 import { LoadingIndicator, LoadingScope } from '../design-system/loading';
 import { WorldIntentIcon, type WorldIntent } from './world-composer';
 import { formatDisplayNumber, namePhrase } from '@open-legend/language';
@@ -25,6 +27,7 @@ import { playerEntity } from '../entity-view';
 import { Button, Icon, IconButton, symbol } from '../design-system/components';
 import { ItemIllustration } from '../design-system/item-illustration';
 import { Portrait } from '../design-system/portrait';
+import { gildmossViewportInset } from '../design-system/gildmoss-kit';
 import { ActionChoice } from './action-choice';
 import { Pullout, PulloutPicker } from './pullout';
 import { ActivityEntries, type ActivityEntry } from './camp-activity';
@@ -474,12 +477,14 @@ export function ActionPicker({
   useLayoutEffect(() => {
     if (embedded) return;
     const place = () => {
-      const bounds = menu.current?.getBoundingClientRect();
-      if (bounds)
-        setPosition({
-          x: Math.max(12, Math.min(picker.point.x, innerWidth - bounds.width - 12)),
-          y: Math.max(12, Math.min(picker.point.y, innerHeight - bounds.height - 12)),
-        });
+      const element = menu.current;
+      if (!element) return;
+      const bounds = element.getBoundingClientRect();
+      const edge = gildmossViewportInset(element, 12);
+      setPosition({
+        x: Math.max(edge, Math.min(picker.point.x, innerWidth - bounds.width - edge)),
+        y: Math.max(edge, Math.min(picker.point.y, innerHeight - bounds.height - edge)),
+      });
     };
     place();
     window.addEventListener('resize', place);
@@ -555,6 +560,7 @@ export function ActionPicker({
         }
       }}
     >
+      {!embedded && <JadeGlass identity="actions:context-menu" />}
       <LoadingScope region={menu}>
         {embedded ? (
           <h3 className="ol-heading ol-inspector-actions-title">Actions</h3>
@@ -590,18 +596,15 @@ export function ActionPicker({
         {full && (
           <p className="ol-meta">Known actions involving what you can currently see or carry.</p>
         )}
-        <div className="ol-search">
-          <Icon name="ui.search" size={16} />
-          <input
-            type="search"
-            ref={input}
-            id={embedded ? undefined : 'actionSearch'}
-            aria-label="Find an action"
-            placeholder={browsing ? 'Search actions or invent something…' : 'Search actions…'}
-            value={query}
-            onChange={(e) => changeQuery(e.target.value)}
-            maxLength={1000}
-          />
+        <SearchInput
+          ref={input}
+          id={embedded ? undefined : 'actionSearch'}
+          aria-label="Find an action"
+          placeholder={browsing ? 'Search actions or invent something…' : 'Search actions…'}
+          value={query}
+          onChange={(e) => changeQuery(e.target.value)}
+          maxLength={1000}
+        >
           {canInvent && (
             <AriaButton
               className="ol-search-invent"
@@ -622,7 +625,7 @@ export function ActionPicker({
               }}
             />
           )}
-        </div>
+        </SearchInput>
         <div
           className="ol-menu-scroll"
           aria-busy={available && refreshing}

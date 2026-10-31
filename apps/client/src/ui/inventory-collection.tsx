@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { useId, useRef, type DragEvent, type ReactNode } from 'react';
 import { DialogTrigger, Popover } from 'react-aria-components';
@@ -51,6 +52,7 @@ function InventoryTool({
         </Button>
       </TextTooltip>
       <Popover className="ol-root ol-disclosure-popover" placement="bottom end" offset={8}>
+        <JadeGlass identity="inventory-collection::disclosure-popover:1" />
         <LoadingDialog aria-label={label} className="ol-portal-content ol-disclosure-content">
           {children}
         </LoadingDialog>

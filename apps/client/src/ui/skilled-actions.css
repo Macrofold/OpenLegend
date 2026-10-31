@@ -44,6 +44,23 @@
   flex-wrap: wrap;
   gap: var(--space-1);
 }
+.ol-attack-controls-content {
+  display: contents;
+}
+[data-theme='gildmoss'] .ol-attack-controls:has(> .ol-jade-glass) {
+  gap: 0;
+  padding: 0;
+  overflow: visible;
+}
+[data-theme='gildmoss'] .ol-attack-controls:has(> .ol-jade-glass) > .ol-attack-controls-content {
+  display: flex;
+  flex: 0 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  overflow: auto;
+}
 .ol-attack-reticle {
   position: fixed;
   z-index: 15;

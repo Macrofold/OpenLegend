@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { inventoryCommandStorageKey } from '../inventory-command-record';
 import { RecipeDetails } from './recipe-details';
 import { namePhrase } from '@open-legend/language';
@@ -1446,6 +1447,7 @@ const InventoryWorkspace = memo(function InventoryWorkspace({
         placement={narrow ? 'bottom start' : 'right top'}
         shouldFlip
       >
+        <JadeGlass identity="inventory::inventory-popover:1" />
         <div
           ref={detail}
           className="ol-portal-content"

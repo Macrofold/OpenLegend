@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { formatDisplayNumber } from '@open-legend/language';
 import { LoadingDialog, LoadingIndicator } from '../design-system/loading';
 import { useLocal } from './storage';
@@ -809,6 +810,7 @@ export function Inventions({
           }}
         >
           <Modal className="ol-modal">
+            <JadeGlass identity="inventions::modal:1" />
             <LoadingDialog className="ol-invention-choice" aria-label="Similar inventions">
               <header className="ol-modal-head">
                 <h2>Similar inventions</h2>

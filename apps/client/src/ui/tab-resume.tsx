@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog } from '../design-system/loading';
 import { Modal, ModalOverlay } from 'react-aria-components';
 import { Button } from '../design-system/components';
@@ -20,6 +21,7 @@ export function TabResumeDialog({
   return (
     <ModalOverlay className="ol-root ol-modal-overlay" isOpen isKeyboardDismissDisabled>
       <Modal className="ol-modal ol-tab-resume">
+        <JadeGlass identity="tab-resume:ol-tab-resume:modal:1" />
         <LoadingDialog aria-label={title} className="ol-person-dialog">
           <header className="ol-modal-head">
             <h2 className="ol-heading">{title}</h2>

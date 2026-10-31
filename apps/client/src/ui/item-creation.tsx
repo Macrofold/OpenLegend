@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog } from '../design-system/loading';
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { Modal, ModalOverlay } from 'react-aria-components';
@@ -59,6 +60,7 @@ export function ItemCreationModal({
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
+        <JadeGlass identity="item-creation::modal:1" />
         <LoadingDialog className="ol-person-dialog" aria-label="Create item">
           <form onSubmit={(event) => void submit(event)}>
             <header className="ol-modal-head">

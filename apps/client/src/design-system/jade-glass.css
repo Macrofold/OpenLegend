@@ -1,0 +1,113 @@
+/* A dedicated negative layer sits above the host's transparent background and
+ * below native content. Existing positioning and scroll owners keep precedence. */
+:where(:has(> .ol-jade-glass)) {
+  position: relative;
+  isolation: isolate;
+}
+.ol-jade-glass {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+.ol-jade-glass:not([data-ready='true']) {
+  visibility: hidden;
+}
+.ol-jade-glass *,
+.ol-jade-glass-drawing {
+  position: absolute;
+  pointer-events: none;
+}
+.ol-jade-glass-drawing {
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  transform-origin: 0 0;
+}
+.ol-jade-glass-fx {
+  inset: 0;
+  overflow: hidden;
+  border-radius: inherit;
+}
+.ol-jade-glass-pane,
+.ol-jade-glass-light,
+.ol-jade-glass-bezel {
+  inset: 0;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+}
+.ol-jade-glass-pane {
+  background-image: var(--glass-fill);
+  will-change: transform;
+}
+.ol-jade-glass-light {
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+.ol-jade-glass-lamp {
+  left: -5%;
+  width: 110%;
+  top: -40%;
+  height: 82%;
+  background: radial-gradient(
+    ellipse 65.45% 63.41% at 50% 48.78%,
+    rgba(255, 222, 165, 0.2),
+    rgba(255, 222, 165, 0) 72%
+  );
+}
+.ol-jade-glass[data-lighting='night'] .ol-jade-glass-lamp {
+  left: -20%;
+  width: 140%;
+  top: -55%;
+  height: 125%;
+  background: radial-gradient(
+    ellipse 68.571429% 64% at 50% 44%,
+    rgba(255, 186, 120, 0.2),
+    rgba(255, 186, 120, 0) 78%
+  );
+}
+.ol-jade-glass-pool {
+  will-change: transform;
+}
+.ol-jade-glass-halo,
+.ol-jade-glass-shaft {
+  --jade-lamp: 255, 222, 165;
+  --jade-hot: 255, 228, 176;
+  left: 50%;
+  transform: translateX(-50%);
+  mix-blend-mode: screen;
+}
+.ol-jade-glass[data-lighting='night'] :is(.ol-jade-glass-halo, .ol-jade-glass-shaft) {
+  --jade-lamp: 255, 186, 120;
+  --jade-hot: 255, 204, 146;
+}
+.ol-jade-glass-halo {
+  background: radial-gradient(
+    closest-side,
+    rgba(var(--jade-hot), 0.38),
+    rgba(var(--jade-lamp), 0.19) 28%,
+    rgba(var(--jade-lamp), 0.0608) 60%,
+    rgba(var(--jade-lamp), 0.0152) 84%,
+    rgba(var(--jade-lamp), 0)
+  );
+}
+.ol-jade-glass-shaft {
+  top: 1.5px;
+  background: radial-gradient(
+    ellipse 50% 100% at 50% 0%,
+    rgba(var(--jade-lamp), 0.13),
+    rgba(var(--jade-lamp), 0.078) 22%,
+    rgba(var(--jade-lamp), 0.0325) 55%,
+    rgba(var(--jade-lamp), 0.0078) 82%,
+    rgba(var(--jade-lamp), 0)
+  );
+}
+@media (forced-colors: active) {
+  .ol-jade-glass {
+    display: none;
+  }
+}

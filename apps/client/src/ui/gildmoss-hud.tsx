@@ -1,6 +1,7 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { assetUrl } from '../asset-files';
 import { ProgressRing } from '../design-system/progress-ring';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { uiOwnsShortcut } from './keyboard';
 import { composerDraftScope } from '../draft';
 import { Dialog, Modal, ModalOverlay } from 'react-aria-components';
@@ -326,6 +327,7 @@ export function QuickSlots({
           }}
         >
           <Modal className="ol-modal ol-root ol-quick-slot-dialog">
+            <JadeGlass identity="gildmoss-hud:ol-quick-slot-dialog:modal:2" />
             <Dialog aria-label="Choose a quick-slot item">
               <h2>Quick slot {editing === 9 ? 0 : editing + 1}</h2>
               <QuickSlotPicker
@@ -531,12 +533,19 @@ export function GildmossHotbar({
   );
 }
 
+export interface ConditionStatusLayout {
+  cell: number;
+  capacity: number;
+}
+
 export function ConditionStatuses({
   view,
   openCondition,
+  layout,
 }: {
   view: GameView;
   openCondition(): void;
+  layout?: ConditionStatusLayout;
 }) {
   const statuses = [
     ...(view.player.statusEffects ?? []),
@@ -550,60 +559,85 @@ export function ConditionStatuses({
     })),
   ];
   if (!statuses.length) return null;
-  const groups = [
-    { label: 'Lasting effects', effects: statuses.filter((effect) => !effect.timing) },
-    { label: 'Timed statuses', effects: statuses.filter((effect) => effect.timing) },
-  ];
+  const lasting = statuses.filter((effect) => !effect.timing);
+  const timed = statuses.filter((effect) => effect.timing);
+  const capacity = layout?.capacity ?? statuses.length;
+  // Keep both kinds represented when an artwork tray limits the visible list.
+  const lastingLimit = Math.min(lasting.length, capacity - (timed.length ? 1 : 0));
+  const visibleGroups = [
+    { label: 'Lasting effects', effects: lasting.slice(0, lastingLimit) },
+    { label: 'Timed statuses', effects: timed.slice(0, capacity - lastingLimit) },
+  ].filter((group) => group.effects.length > 0);
+  const shown = visibleGroups.reduce((count, group) => count + group.effects.length, 0);
+  const hidden = statuses.length - shown;
+  const cell = layout?.cell ?? 32;
   return (
-    <div className="ol-condition-status-groups" aria-label="Current conditions">
-      {groups.map(
-        (group) =>
-          group.effects.length > 0 && (
-            <div className="ol-condition-status-icons" key={group.label} aria-label={group.label}>
-              {group.effects.map((effect) => {
-                const timing = effect.timing;
-                const remaining = timing
-                  ? Math.max(0, timing.expiresAt - view.clock.seconds)
-                  : undefined;
-                const realSeconds =
-                  remaining === undefined
-                    ? undefined
-                    : Math.ceil(remaining / (view.clock.baseRatio * view.clock.speed));
-                const label = [
-                  effect.label,
-                  effect.explanation,
-                  realSeconds === undefined
-                    ? undefined
-                    : `${view.clock.paused ? 'Paused; ' : ''}${realSeconds} seconds at the current speed`,
-                ]
-                  .filter(Boolean)
-                  .join('. ');
-                return (
-                  <span
-                    key={effect.id}
-                    className="ol-condition-status-icon"
-                    data-timed={!!timing}
-                    data-tone={effect.tone ?? 'neutral'}
-                  >
-                    <IconButton
-                      icon={effect.icon ?? 'ui.condition'}
-                      label={label}
-                      onPress={openCondition}
-                    />
-                    {timing && remaining !== undefined && (
-                      // The board's elapsed gap grows clockwise from 12 o'clock, so the
-                      // remaining arc occupies the counterclockwise side of that origin.
-                      <ProgressRing
-                        size={32}
-                        direction="counterclockwise"
-                        fraction={remaining / timing.durationSeconds}
-                      />
-                    )}
-                  </span>
-                );
-              })}
-            </div>
-          ),
+    <div
+      className="ol-condition-status-groups"
+      role="group"
+      data-groups={visibleGroups.length}
+      aria-label="Current conditions"
+      style={{ '--ol-condition-status-cell': `${cell}px` } as CSSProperties}
+    >
+      {visibleGroups.map((group) => (
+        <div
+          className="ol-condition-status-icons"
+          key={group.label}
+          role="group"
+          aria-label={group.label}
+        >
+          {group.effects.map((effect) => {
+            const timing = effect.timing;
+            const remaining = timing
+              ? Math.max(0, timing.expiresAt - view.clock.seconds)
+              : undefined;
+            const realSeconds =
+              remaining === undefined
+                ? undefined
+                : Math.ceil(remaining / (view.clock.baseRatio * view.clock.speed));
+            const label = [
+              effect.label,
+              effect.explanation,
+              realSeconds === undefined
+                ? undefined
+                : `${view.clock.paused ? 'Paused; ' : ''}${realSeconds} seconds at the current speed`,
+            ]
+              .filter(Boolean)
+              .join('. ');
+            return (
+              <span
+                key={effect.id}
+                className="ol-condition-status-icon"
+                data-timed={!!timing}
+                data-tone={effect.tone ?? 'neutral'}
+              >
+                <IconButton
+                  icon={effect.icon ?? 'ui.condition'}
+                  label={label}
+                  onPress={openCondition}
+                />
+                {timing && remaining !== undefined && (
+                  // The board's elapsed gap grows clockwise from 12 o'clock, so the
+                  // remaining arc occupies the counterclockwise side of that origin.
+                  <ProgressRing
+                    size={cell}
+                    direction="counterclockwise"
+                    fraction={remaining / timing.durationSeconds}
+                  />
+                )}
+              </span>
+            );
+          })}
+        </div>
+      ))}
+      {hidden > 0 && (
+        <Button
+          variant="quiet"
+          className="ol-character-panel-status-overflow"
+          onPress={openCondition}
+        >
+          {hidden} more {hidden === 1 ? 'condition' : 'conditions'}
+        </Button>
       )}
     </div>
   );

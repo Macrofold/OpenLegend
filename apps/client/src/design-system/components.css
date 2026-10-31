@@ -473,6 +473,18 @@
 .ol-disclosure-content > :last-child {
   margin-block-end: 0;
 }
+/* A drawn pane belongs to the fixed popup perimeter. Its existing native
+ * reading node scrolls inside it, so the bezel never travels with the text. */
+[data-theme='gildmoss'] .ol-disclosure-popover:has(> .ol-jade-glass) {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+[data-theme='gildmoss'] .ol-disclosure-popover:has(> .ol-jade-glass) > .ol-portal-content {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
 /* Icon button (close, back, pause, settings) */
 .ol-ibtn {
   display: inline-grid;
@@ -552,21 +564,26 @@
 .ol-select-trigger:has(.ol-select-input[data-focus-visible]) {
   box-shadow: 0 0 0 2px var(--focus);
 }
+.ol-field-editor {
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  outline: 0;
+}
+.ol-root .ol-field-editor:focus-visible {
+  outline: none;
+}
 .ol-select-input {
   width: 100%;
-  min-width: 0;
   padding: 8px 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
   color: var(--ink);
   font: 500 14px/20px var(--font-ui);
 }
 .ol-select-input::placeholder {
   color: var(--ink-faint);
-}
-.ol-root .ol-select-input:focus-visible {
-  outline: none !important;
 }
 .ol-select-toggle {
   display: grid;
@@ -1478,17 +1495,10 @@
   border-color: var(--accent);
   box-shadow: 0 0 0 2px var(--focus);
 }
-.ol-root .ol-search input:focus-visible {
-  outline: none;
-}
 .ol-search input {
   flex: 1;
-  min-width: 0;
-  border: 0;
-  background: transparent;
   color: var(--ink);
   font: 400 14px/20px var(--font-ui);
-  outline: none;
 }
 .ol-search input::placeholder {
   color: var(--ink-faint);
@@ -1607,6 +1617,19 @@
   color: var(--ink);
   overflow-wrap: anywhere;
   pointer-events: auto;
+}
+[data-theme='gildmoss'] .ol-pointer-tooltip:has(> .ol-jade-glass) {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  padding: 0;
+}
+[data-theme='gildmoss'] .ol-pointer-tooltip:has(> .ol-jade-glass) > .ol-portal-content {
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow: auto;
+  /* Portal reading zoom applies here; retain the old physical outer gutter. */
+  padding: calc(var(--space-3) / var(--ui-scale));
 }
 .ol-text-tooltip {
   width: max-content;
@@ -1997,7 +2020,11 @@
   box-shadow: inset 0 0 0 1px var(--danger);
 }
 [data-theme='gildmoss']
-  :where(input:not([type='range']):not([type='checkbox']):not([type='radio']), textarea, select),
+  :where(
+    input:not([type='range']):not([type='checkbox']):not([type='radio']):not(.ol-field-editor),
+    textarea:not(.ol-field-editor),
+    select
+  ),
 [data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input) {
   background: var(--surface-well);
   color: var(--ink);
@@ -2013,8 +2040,8 @@
 }
 [data-theme='gildmoss']
   :where(
-    input:not([type='range']):not([type='checkbox']):not([type='radio']),
-    textarea,
+    input:not([type='range']):not([type='checkbox']):not([type='radio']):not(.ol-field-editor),
+    textarea:not(.ol-field-editor),
     select
   ):focus,
 [data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input):focus-within {
@@ -2022,15 +2049,10 @@
     inset 0 0 0 1px var(--focus),
     var(--field-glow);
 }
-[data-theme='gildmoss'] :is(.ol-select-input, .ol-search input, .ol-composer-input textarea) {
-  min-height: 0;
-  background: transparent;
-  box-shadow: none;
-}
 [data-theme='gildmoss']
   :where(
-    input:not([type='range']):not([type='checkbox']):not([type='radio']),
-    textarea,
+    input:not([type='range']):not([type='checkbox']):not([type='radio']):not(.ol-field-editor),
+    textarea:not(.ol-field-editor),
     select
   ):focus-visible {
   /* The inset ivory edge and halo are the field's focus indicator. */
@@ -2308,50 +2330,6 @@
     linear-gradient(black 0 0) content-box exclude,
     linear-gradient(black 0 0);
 }
-@media (forced-colors: active) {
-  [data-theme='gildmoss']
-    :is(
-      .ol-btn,
-      .ol-ibtn,
-      .ol-filter-button,
-      .ol-row,
-      .ol-tab,
-      .ol-radio,
-      input,
-      textarea,
-      select
-    ) {
-    forced-color-adjust: auto;
-    border: 1px solid ButtonText;
-    box-shadow: none;
-  }
-  [data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-row, .ol-tab, .ol-radio)::before,
-  [data-theme='gildmoss'] :is(.ol-tab, .ol-navigation-tab)::after {
-    display: none;
-  }
-  [data-theme='gildmoss']
-    :is(.ol-tab, .ol-navigation-tab):is(
-      [aria-selected='true'],
-      [aria-current='page'],
-      [aria-pressed='true'],
-      [aria-expanded='true']
-    )
-    > span:not(.ol-icon-wrap) {
-    background: none;
-    color: Highlight;
-    -webkit-text-fill-color: Highlight;
-  }
-  [data-theme='gildmoss']
-    :where(
-      input:not([type='range']):not([type='checkbox']):not([type='radio']),
-      textarea,
-      select
-    ):focus-visible,
-  [data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input):focus-within {
-    outline: 2px solid Highlight;
-    outline-offset: 2px;
-  }
-}
 .ol-icon-definitions {
   position: absolute;
   width: 0;
@@ -2379,18 +2357,21 @@
   color: var(--highlight);
 }
 [data-theme='gildmoss']
-  :where(input:not([type='range']):not([type='checkbox']):not([type='radio']), select) {
+  :where(
+    input:not([type='range']):not([type='checkbox']):not([type='radio']):not(.ol-field-editor),
+    select
+  ) {
   min-height: var(--control-height);
   padding-inline: var(--space-3);
   font-size: var(--text-body-size);
   line-height: var(--text-body-leading);
 }
-[data-theme='gildmoss'] textarea {
+[data-theme='gildmoss'] textarea:not(.ol-field-editor) {
   padding: var(--space-2) var(--space-3);
   font-size: var(--text-body-size);
   line-height: var(--text-body-leading);
 }
-[data-theme='gildmoss'] :is(.ol-select-input, .ol-search input, .ol-composer-input textarea) {
+[data-theme='gildmoss'] .ol-field-editor {
   padding: 0;
 }
 /* A composer is a field plus a separate commitment. Its form is not another
@@ -2420,4 +2401,51 @@
 }
 [data-theme='gildmoss'] .ol-composer > .ol-btn {
   min-height: 40px;
+}
+
+@media (forced-colors: active) {
+  [data-theme='gildmoss']
+    :is(
+      .ol-btn,
+      .ol-ibtn,
+      .ol-filter-button,
+      .ol-row,
+      .ol-tab,
+      .ol-radio,
+      input,
+      textarea:not(.ol-field-editor),
+      select
+    ):not(.ol-field-editor),
+  [data-theme='gildmoss'] .ol-composer .ol-composer-input,
+  [data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input) {
+    forced-color-adjust: auto;
+    border: 1px solid ButtonText;
+    box-shadow: none;
+  }
+  [data-theme='gildmoss'] :is(.ol-btn, .ol-ibtn, .ol-row, .ol-tab, .ol-radio)::before,
+  [data-theme='gildmoss'] :is(.ol-tab, .ol-navigation-tab)::after {
+    display: none;
+  }
+  [data-theme='gildmoss']
+    :is(.ol-tab, .ol-navigation-tab):is(
+      [aria-selected='true'],
+      [aria-current='page'],
+      [aria-pressed='true'],
+      [aria-expanded='true']
+    )
+    > span:not(.ol-icon-wrap) {
+    background: none;
+    color: Highlight;
+    -webkit-text-fill-color: Highlight;
+  }
+  [data-theme='gildmoss']
+    :where(
+      input:not([type='range']):not([type='checkbox']):not([type='radio']):not(.ol-field-editor),
+      textarea:not(.ol-field-editor),
+      select
+    ):focus-visible,
+  [data-theme='gildmoss'] :is(.ol-select-trigger, .ol-search, .ol-composer-input):focus-within {
+    outline: 2px solid Highlight;
+    outline-offset: 2px;
+  }
 }

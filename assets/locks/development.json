@@ -5,8 +5,8 @@
       "id": "openlegend-curated"
     },
     "assetId": "development-runtime",
-    "revisionId": "sha256-b47b5a09e7cecb8f53d7be1c2036cd9efa3db1282c9842e95031c9ffa66546e1",
-    "manifestSha256": "1c34cacb9aad3f2cdef5c18c7e1a95868658744cb505ca6fe9ace093517c3348"
+    "revisionId": "sha256-002e98ac41c0b4439134eec34aa68ff19658193769215cb47868e2d3a5ebad6a",
+    "manifestSha256": "65c7cf24b430128e3cdb16d2fd8f57a279c64ff0af1f28e2159358b872482bb5"
   },
   "files": {
     "apps/client/src/characters/mercenary-assets/mercenary-face.json": {
@@ -6224,6 +6224,1259 @@
       "mediaType": "application/json",
       "boundary": "runtime",
       "accessDomain": "public"
+    },
+    "apps/client/src/design-system/art/character-panels/gold-quartz-slate/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "748e8b96ba10de98c5fe773fd1ed7c1f1e83ee52dfe149895c967e581bd73ce7",
+      "bytes": 19116,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/gold-quartz-slate/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "7f098e1507fb444347d13e718c7cc7614f0e20f552cc971b8136d974b5e3a610",
+      "bytes": 73536,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/gold-quartz-slate/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0c0a3588723dc569f7b114427d9a93c012f0a4f13def8ee1e0288f2b1fe027a7",
+      "bytes": 4407,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/gold-quartz-slate/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "37e1b38bd19f1d6e562c70dcffbe948fe99d19ee8b664a867ba884cd7a0b968d",
+      "bytes": 125502,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/gold-quartz-slate/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "fca5901f28b81d10057a37df775f3ea3dc5b898c4e1fbc22c66da6f85184d154",
+      "bytes": 447368,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-lode/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8cbe8cfecb08f118b50219cf706c8d4924422365cd4670988a3f4f75db9a12f9",
+      "bytes": 18492,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-lode/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "15a7ec0694f633dab5a25b073f0ca5ffe97f3e445929f2d8341e8d6881594794",
+      "bytes": 73492,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-lode/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "dea80f87fe23dbc6ced14f1b1e855823617c1034a6a1dc554ac2b2273bb0f9a4",
+      "bytes": 4304,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-lode/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "cfbbd808a181f31cea8b8c70122df9e3b7df864dee8b798f67248bfcca45bcd4",
+      "bytes": 106882,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-lode/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "58a27f83b367bba12ed983673b9113b8e8c8afd6c9ad741143e9802d144fa022",
+      "bytes": 383915,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-medallion/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "92516f5b2801445bbe05f34580acdbc1d510da481eab4d659b99951cf1c9c322",
+      "bytes": 18667,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-medallion/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "86069b9f641dd848104dacce4abb635f922688899c11a83be20ef2841ad9d0c6",
+      "bytes": 73647,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-medallion/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "884356c88607254959a25314068573805f43f88d2804c9026911d83fa6903407",
+      "bytes": 4262,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-medallion/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8e3e00c64db4965a0f90193e456b2c75989c1b2b08f4b2bacfda0d0366ef697c",
+      "bytes": 68602,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-medallion/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f436343fded8a317b0080d6c5fb5a24f05f8c04f68e9d25d2a796794e55b5e3f",
+      "bytes": 227468,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-set-band/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "ffbd2bb363901e756ff5cb8edd33a30a887a849ec2d4e72f763bcd558e6146f5",
+      "bytes": 19242,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-set-band/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e38f9399222d9f20158df37567852c693c037f2f78c76b8ec7754abb91042144",
+      "bytes": 73486,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-set-band/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "4f5ef1ba57c89c120a460585c23903137b1093ddf391cf8fc16878cbdddb5398",
+      "bytes": 4364,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-set-band/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "44b88146492a668db9b2a45fe5e45b3fe24eaa447fed4f567feb0ff35748177f",
+      "bytes": 108724,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-set-band/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "913ebd5edd5d5848f8070ca140a578bb33823228a058f7956b53bbb8dfc45aa3",
+      "bytes": 388435,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/laurel-ring/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "85a3debe27c14b9106e491ad8ae9486744767f7a89ae9aa47c7e573437f6a217",
+      "bytes": 17992,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/laurel-ring/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "9b330682238d06f26a202edbc211d4e204d93ecb660b2dec5bd90a8764547ff7",
+      "bytes": 73345,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/laurel-ring/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "141cb6d0a384405fa556c7638a7aff50cd4875f7d18751920ab6076e446c3721",
+      "bytes": 4345,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/laurel-ring/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0e3d9dc906335266ba92fcd35a45bb96212ed5c17c9d1dadf72a45a98ede3775",
+      "bytes": 114191,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/laurel-ring/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f5f7d80eb1ff890211691b7f371bdd3d7150e0be9ed712c41711cdf5a81a968f",
+      "bytes": 409888,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/malachite/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "80ad1c12d033c1fc0e8db86bc780db8ca64b3a8be6fdc9c1bf150216fe44ca0f",
+      "bytes": 18609,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/malachite/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e6d6c9f99e59489d368cf092814a98fb8b255597c42363bef899627d3a19da29",
+      "bytes": 73125,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/malachite/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "c8f312eb1a0a74f7c4b2aba6fb1ad66deb23d7fe8ee08f404031c4ee739fc39f",
+      "bytes": 4186,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/malachite/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5c7fd4cde1c0050add91ad0f55546ac4b527dfe521ed8143a6d7e8de8d12296a",
+      "bytes": 97718,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/malachite/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "19096d89c4c21cbfa49a05f03826e15ddc640a515514f1fe4a30ff1e3ada078a",
+      "bytes": 347562,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/mossbound-ruin/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "21fb14cd46f046e6a3480ddb0b9f252c846252246e17d8f390d6e405b8a3d997",
+      "bytes": 16510,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/mossbound-ruin/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "26d85dfb91f4ca78f0a80713e6fe0a08b6f889edbe1f6ec5ffaffe558ca262b8",
+      "bytes": 73720,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/mossbound-ruin/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "947aa2d723101e32e76e8f83816229f1d70a527c6f552060b3b4a64cb9e38182",
+      "bytes": 4415,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/mossbound-ruin/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "4a47f06dd50740482c39846c7fd2b5dc198915f42243bd44abf582569532689f",
+      "bytes": 52583,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/mossbound-ruin/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "38e9f31f3b3bb56e9a6a808d47c416f9c85ef67641a82f3077cc44fde15515b3",
+      "bytes": 174001,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/nacre-shore/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0d7fae6c59bb79977755b8658150daeff0336b1851d6040de860fb1bf72fae5a",
+      "bytes": 17844,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/nacre-shore/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "c512e30ed6546c9148041322c09b10f694971ef53a7334b8f243e06fc993d9ca",
+      "bytes": 73758,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/nacre-shore/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0288a6c917a5d220ef51e79225520a7f0f2abd52856fff1d5325963e92fd8c8b",
+      "bytes": 4200,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/nacre-shore/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "fbc4f0477fbde3f97ec4228143e1a6464241ad91ba799de2cdd396ee645abaa0",
+      "bytes": 68809,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/nacre-shore/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "17c8885d36f0f8cf2fa8a81a7e997eede7764a8523696239502ab94645a265bc",
+      "bytes": 239917,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/overgrown-relic/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "ebc03f0ed62e6d913beb32a0a5b34abf87bc12d497e54ad886949179c31911e9",
+      "bytes": 17795,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/overgrown-relic/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "01aafbe753603cd4792b255c2dd687deb70c805a3014bf97126a526608f6061f",
+      "bytes": 73539,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/overgrown-relic/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "44ee5a84106e3863d14bca3ffd9abbabd203c99164707bd7a3baa4a761765b96",
+      "bytes": 4369,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/overgrown-relic/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "fe231c4610442d3e2d916a936eeea0a8e7c75d6bfa956b3dc43475a84bbf5ec2",
+      "bytes": 86345,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/overgrown-relic/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "bde287bf0c2ee90165168ef1d36cb567b5c4ab6a6601925cff5d5e17c34253e1",
+      "bytes": 307319,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-granite/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "c92a95e3ec200e9668b2569cdb9bb847fb708e87bed8a63f71d7cd632ddf6ef8",
+      "bytes": 18257,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-granite/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5745d74cf7ddbfd2ac4649e73a71dc4f771632664071034cca887d071c9fe098",
+      "bytes": 73396,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-granite/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "d5c19a0b1011168f3a5c6cf31bddfed67a7c87444aa5a01e630ff5ecd3587373",
+      "bytes": 4369,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/river-granite/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "67b05d6cb21f6657e9f985534591aa9936ba528f883ae1bb72a04c5d38e7e83d",
+      "bytes": 99533,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-granite/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8aec4247308399b1b46169d18033ccf6d7de2518393ad8afcc56e18a66d2058b",
+      "bytes": 367902,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-nacre/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0da0d77b0ed2f7c7381e1c49e229b96350f41f58f3ba1701f6687a71dafb2d59",
+      "bytes": 18047,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-nacre/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "cba3b81aeb22c3754f4a828e22527a4104fdad81fca79349dcd0aeff9fcd378c",
+      "bytes": 73867,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-nacre/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "1a28ce581e4dc24e83d56bee73949cc25c9ddec72f1a25fa7bd2c3ff42033164",
+      "bytes": 4323,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/river-nacre/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "ad7ec47312c52735fe9c0c0cb59fcb5b245e53bbb5bbaffe51c3a1f08a638da9",
+      "bytes": 42747,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-nacre/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "1e5a9e79315e3693f7196047b315b05af9a9f9e79d12c7532b337726f2c78274",
+      "bytes": 136705,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/rootbound/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "7c0758b7d52f2568259cf5445b98d763bf4e905eb0a8e73f6cfab9af7dd82d74",
+      "bytes": 16990,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/rootbound/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "737d1667399d9f5cbe79f763b942d85dbe6a0350ebf7042425642b0f19c7169b",
+      "bytes": 73740,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/rootbound/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f9a04ed14bb9b34ca0fb37b6a93ad9bc182ffc7f83803fa25484e30990e717cc",
+      "bytes": 4207,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/rootbound/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "779c3aeb9ab8687697a5fb8222c9be52952aea27332bc4af2006b9b1a402f0e9",
+      "bytes": 45340,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/rootbound/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8b0991c5ee539db1397ef006c555cb7deca199c70aa9b4fbfa7271c83d47fe3f",
+      "bytes": 150315,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/star-iron/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "6c04aa6dd4464387ff57bdb26053252405ca524ab3ff11cc889a23491ac10cc1",
+      "bytes": 18344,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/star-iron/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "d551cf356e7fd77f924b921f68bfb7bcd94645412fa7f9af304f4f04c125fcb4",
+      "bytes": 73401,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/star-iron/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "ae5de08c60ca179c81a4560c57aa3d45b3f61da04b930bd02f648b5f11bc0ddc",
+      "bytes": 4185,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/star-iron/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0c5dfe758c6b29f886bdd38f0af437857f086c0dfecb7b0b33b3e1cab123712e",
+      "bytes": 109481,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/star-iron/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "b1226684b83dd018affa7f53df66f324c7baf46e5d3ce4addf711fc7bb600b76",
+      "bytes": 400133,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/styles.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "a4ec0cb73cf3a10a7a8728f914fcc9c9c4cd78bd52512ebb7a8836a1459dc99d",
+      "bytes": 4281,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/verde-antico/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "dd520f905cd4f16213f2326a3b73abe6975f175b4f4abf498d8fc1dbb36c967a",
+      "bytes": 18388,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/verde-antico/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "102330edc77b0096e080f8387bb25d77e3e978acffdf4a0d81064a32cf760b6e",
+      "bytes": 73644,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/verde-antico/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "d5aef7981cdc4ccf448ae9f673ed0f0bb9395a45d23efbace93e270ea8eb371f",
+      "bytes": 4205,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/verde-antico/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "1e7784e9a6a9ee832750a25134d4ce43f95cb655e1a15d2602ad5cefd6a7f312",
+      "bytes": 73795,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/verde-antico/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "36cbc6ef746585d0296d8c68ccb358436b4bd07dcf63695e6ab113a0bba923a9",
+      "bytes": 251805,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/bend@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8e8e9e7924edb9acd91ca6e62dc1783ae1c06a5175a7aeec2cb3947f0d0d9a52",
+      "bytes": 6859,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/bend@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "155a22d01ca0a509e241c54b7065694c990e035563ed28be1ef85e8ff5a9a3eb",
+      "bytes": 18326,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/bracket@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e3b7f8b35779d4a89234e805ef5bd73c401364476f2bb9ce84e8b4e76a0373ae",
+      "bytes": 8443,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/bracket@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8f61ef98d1bc00dd746f37e1afd6ad7c9b9799ac2836797a71a842f04ae30bde",
+      "bytes": 23166,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/corner@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8ede4c8ef9acbebeadaa2b8c1a9929ecf157d7fe066a96c000e063750d9e7603",
+      "bytes": 9324,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/corner@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "da11caaca2ca5c91eab989807c4dba019c201a9f99c7ba07c253df4b2e317275",
+      "bytes": 26387,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/divider-centre@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5854d4f538a699f7818c631da8634b6dcde0b31d6b029d6021905c18d1e9f4c6",
+      "bytes": 1193,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/divider-centre@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "ff10526260bb2a0964e3d0fdbb959da6fa5a5f812d9edc2642d6f9f3adf81736",
+      "bytes": 3090,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/divider@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "d8a675b3831373669b6ed61f4b6dcb57ea3370801823e9c96d5485ad22d76eb7",
+      "bytes": 3263,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/divider@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "3024fa0b1637b81f96bf8214930ba47509203843620b43a689fc075fc4ef2c49",
+      "bytes": 5860,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/edge-centre@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "b766d003f08c89be386440d6a26605aea90f740761b5067e93d3e42661c6d107",
+      "bytes": 1832,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/edge-centre@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "9e41c25bba24770d7dc6ac9f84528ee5b970256724d8227a4ed2f8c31cc43e9c",
+      "bytes": 4953,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/edge@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "d98cb7e763790fc2c8b5877985d608a8f139d12f7f1cbc4cbfc036a239968b3e",
+      "bytes": 6757,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/edge@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "b01402151156ea063981ba3cfcd3fda26c51e94f9ef30a24983fd8fe50d3bc1f",
+      "bytes": 20285,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/end-cap@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e29718b9c9c8cbb0ae72b714b8cce86d7c594c60fd0e07881b6f7bbeebc4fda9",
+      "bytes": 5817,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/end-cap@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "056b766227b4f857c2d3e17204ea841a49af30d90abd28f5a44a8a7e36b165ae",
+      "bytes": 16482,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/fill-main@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "2e34f309ebd2bbae58ca3892b385927db8c4a05273054f80cc2e71bd382a0d11",
+      "bytes": 53555,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/fill-main@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "59969c5065f7e35825d04ffc9b565fe1ba55859662a62afae5245026041217b3",
+      "bytes": 179848,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/fill-raised@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "9a8648b80d21db52aacf23af9d660a7a175b9afab5b54c1b6d738fce8cc88053",
+      "bytes": 55130,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/fill-raised@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "4237d1ba3026f8c6b94db8d3f82463da7d46830d7e8a8926a60923215d15f7b9",
+      "bytes": 176140,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/fill-recessed@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "9ec68bb86d2344088e828cdb3557af8020ecd30ecacd0d754c82f6d082cec367",
+      "bytes": 52345,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/fill-recessed@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "42e39b5144a8200223c913fd9a93e2f6532bb39aa79966fd577efffb2dc634f1",
+      "bytes": 165046,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/frame@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8f332731eda195284a04a0bba38550ba7158494fbe0320c4afd2eda24024c8ab",
+      "bytes": 6633,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/frame@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "d810ff18c4b8caaa6f351aa623f40b87c1e79f18d2ad0b2dc3ebfa91aad21720",
+      "bytes": 20522,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/lantern-glint@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "cd17d9588aa7092019e484e71de72cc5784076e9c6a03489624ba4fb9d561cca",
+      "bytes": 1969,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/lantern-glint@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "431f00e72ff333d78a2d3b359f8153c29bdb2c732083608ff79a68d1938b18ec",
+      "bytes": 6806,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/lantern-main@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e5c3ceed33bf852f362abfeeab655826099e4e396b1513c3aee702a289c295cc",
+      "bytes": 4933,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/lantern-main@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "50a5acccfa4463a77c923ccf9101a0ab77ba1cfd68838efe299aa4372617f473",
+      "bytes": 4741,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/lantern-raised@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "2a8337971a1d210cea84b50ef38e66af89382f2e4984e5990b24ca0b5ce5e29e",
+      "bytes": 9243,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/lantern-raised@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f23e25b2f57ffb9efc12e26d829d1e0dfa31ec5f55e2e069c5430bae7c0e7a67",
+      "bytes": 6567,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/lantern-recessed@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "afd124511b9b0beb68fcfbefe539e87494439dca7981c9384df50a270473233a",
+      "bytes": 6985,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/lantern-recessed@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "639d14bfd055c1cf24d9fb8124e1351cca1c2fe1ec8489eccc0a07068f1936ad",
+      "bytes": 5797,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/ornament@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "722311530f03c0ab02ce72e22b08c2bb10f0194e5f51f616f2c2d63e7f7ce23f",
+      "bytes": 9195,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/ornament@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "06017b7ab15d50bfdff9231860a1fbc23a55557cc8abd73f95b1c4ff2117c2fe",
+      "bytes": 23982,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/straight@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "2af56a47b9c2dc0c226f48f49fd4c43ac9fa30eaf214fa8c03be8215ce395715",
+      "bytes": 4906,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/straight@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "b6b15a40aa6b6ed19430bf06ac5ac01c1fd13997b0eac010aec0f7cb2a7b84cf",
+      "bytes": 14386,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/t-junction@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e417d79e3bd99194abf59714a5ebabb6286a37b36e205745a8deb9a8016cf3c8",
+      "bytes": 10026,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/t-junction@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "30384d9f79c20065357113dd69d9e8c70e890078136252248050d15432f0662b",
+      "bytes": 26969,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/title-rail-centre@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "1f6fcf452a4fcedc753b238c079149a483a813707abdf0eb956983039959bdd6",
+      "bytes": 545,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/title-rail-centre@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "92b5fe5da4d665c4994a5e3aeaf45becb8f0dba042ff43ea8743718b2c4f3f96",
+      "bytes": 1051,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/title-rail@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0150069f8dc1009425dae327d3faa77228a635f6357390a6ae320fad5eede603",
+      "bytes": 3376,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/bare/title-rail@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "52278cde600efcd74d240d91fcb2a33337562bf2113e0500b5013c84450614a3",
+      "bytes": 8580,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-hover@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "ccac9a19f5349ef834e427dd373f7f16bd58825033f616001d5a757cc6cab607",
+      "bytes": 19832,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-hover@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8cb2cc1a9cdb63599a642ec6a3ca61ec00e9d93f0cb1d80f2ee307fb17b35f0f",
+      "bytes": 61332,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-label-ornament@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "3bb9288c4375b5d7046060a125a2a753938b381d7861eb9ec02a74b30066d95c",
+      "bytes": 566,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-label-ornament@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e7a9c4c38d0deffcb1df6d031c0f81bc23b06f42bda041f44f0e110b608ee119",
+      "bytes": 1538,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-normal@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "4703e39432940014ff765639639f369646c0cba21ccbfcc4b9757d7e3a633a5f",
+      "bytes": 19733,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-normal@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "aa7edac348d032becacbce4334de3362742b1425bc1e92c6611252c025b5fbf2",
+      "bytes": 61294,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-pressed@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "becbccc3b739823c9b06d8024baa0685f913cf3c15916776dbcdc713cc300930",
+      "bytes": 16692,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-pressed@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "647426b67386445ccd09695a299195d3c7c0fc612739e5cfe3ebd48742c8900b",
+      "bytes": 51361,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-unavailable@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "d883d7e9b0dd955d55575e7306798f29f704f8bc7e01178a7a9b5b6553d66307",
+      "bytes": 19943,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/crest/button-unavailable@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5e1d328f5880c48f442694fbffff6f3662e580737fb7dd071688a879520b5823",
+      "bytes": 67490,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/bend@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "03d23be34fba8c99ba84dc89c581f5343448d6f49dd75dbcfb798bbf92c6e219",
+      "bytes": 10193,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/bend@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "05e80094b90b788f9416a10bb650a8883a0391bb52130aa314c67a395752b900",
+      "bytes": 27490,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/bracket@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0934b1e5510f9e4a01a29c9db3a7a699da9950cdd736839e0fa086c82a6388d4",
+      "bytes": 9918,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/bracket@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5fd022d3c5f724202b3945c809ddced68a72a0c1741b2c0fb8efa6c93f1dde5a",
+      "bytes": 28304,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/corner@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "9d91ee8131e468f950d696fcbc1d443c49ca9ac4d731f60de8ac1eee4882b134",
+      "bytes": 12588,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/corner@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "6003cba58afc9b800f3811f983f104c779bda3057e67458432ab208b314ec8a1",
+      "bytes": 34232,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/divider-centre@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "4635dfaea681f59337508f72ca8d0f110f0b52f8e8facb03934e458af298ab22",
+      "bytes": 1102,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/divider-centre@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "4507329b038c8373df75daca3bc5e2b79a374d0c49261a3ab8d6bc2692c89dfd",
+      "bytes": 2571,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/divider@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5c69b9141cf39843bf166fe1b0b80efad571029f770e7e6ca81eb22878414733",
+      "bytes": 2408,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/divider@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "cc0d6a3e09c3b2d0cbe321f0e6f5dd516c768b14b8432de42d79233e8c91c755",
+      "bytes": 3747,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/edge-centre@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "85b07458043a51d9424425d666ae0af51e62270ab80dbc23159c2badd7604632",
+      "bytes": 3376,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/edge-centre@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "a53ee103dd8031c3f6bddabcf8b100a3c9a95cdb7fcf10afa8f60a2e85519113",
+      "bytes": 10049,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/edge@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5aafb8b9f0288e23f81a8a19f1fdd7a2256415482050ac9876de932266ffd2c8",
+      "bytes": 10818,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/edge@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5665912d70c98c92fac3e49abae8f27e20c656a49d89ecfa25df8c7eeee5ff78",
+      "bytes": 30041,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/end-cap@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "12ba5659336af6862d60476d4dbcb8f436f940bdee62ea2378365f857cea18ef",
+      "bytes": 8115,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/end-cap@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "a8296bae10b973921526a7bfd2c85903518fc9ddef739f8d15e35e902704ce23",
+      "bytes": 24217,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/frame@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "d27a05c0b52ead4276f6e9a0f701cf314b1f8b2b3775ddcc74ed1077edd2ad69",
+      "bytes": 11643,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/frame@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "331aa6f4b2a75a857d91ebafc00712af7d433c639db489624d148a22da8b24c0",
+      "bytes": 41412,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/ornament@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "ac6163ff2babdb9b29eb216a85beb5ad5bb894eb1f63d309663930c36e023056",
+      "bytes": 16325,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/ornament@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "8fa1c00d565374211491226998de8f54116dc25a1862de6e97f5a330fcef4715",
+      "bytes": 40280,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/straight-centre@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "67f370aaa9a94c1eb67f30f4a5b88c8902e75f79138dd734bc593b720ed1b1f9",
+      "bytes": 1620,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/straight-centre@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "125f8c85ca1758e8cf83143852432bb6316b0ebda9bbb22c99e990bf914e0b86",
+      "bytes": 4288,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/straight@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5e4a4a6b4f068d77cdd6dee8703f11ff83c2788f41120e1c3e851efbe2ece330",
+      "bytes": 6724,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/straight@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "9a87d4b796afd9ca97562359527a3b60203a68716aa0433edb2bc4e1d181dbec",
+      "bytes": 19038,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/t-junction@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e76e66cafe20022b50c77bead09bbd11a5de34b823226431870a0c4fe943d513",
+      "bytes": 13713,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/t-junction@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "2c4208374c8c91046f3a58152a697566c6e4a809cc988860c374f10e69abd1f9",
+      "bytes": 37801,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/title-rail-centre@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "a541e85937f831bec5325bc8b921305ca96eee0fb2e723c2d275de33b90027ec",
+      "bytes": 2455,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/title-rail-centre@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f1ab088d932ffe9af520ce7101242664979405a79860f5f5278a7217a13238d5",
+      "bytes": 7721,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/title-rail@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5571be6ac661c0318c335832ce5b9ff7b53f8461c8264bfea1aaf9ca437c248b",
+      "bytes": 6909,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/filigree/title-rail@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "98b897050216ccfd5f41921a51697cddeb6c9a28fffca741c97a0e20fcdc4f04",
+      "bytes": 19025,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/gildmoss/gildmoss.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "5eb0562270ba6e2a477c8b9b705396bff285c5b42aac6430877319127675bd6c",
+      "bytes": 35118,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/carved-jade-plinth/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0fde8a53dd35ad01c5c92ef5d21d20ac6710690d9dbeed587a6f7f81cdbb3836",
+      "bytes": 18762,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/carved-jade-plinth/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "1f77f73852dd5a8510820a3d18d2e41637bb204c3f78b29f941bc2bf1e914ad7",
+      "bytes": 73403,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/carved-jade-plinth/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f9fa9d080d7b4bf410ca04c5f1d08904175be99d7abd42f9d83b935bb3713d16",
+      "bytes": 4413,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/carved-jade-plinth/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "d437aec92f7c4b6f24066512fad6a6b1a7230c235a947700f4d1119ba94e9d86",
+      "bytes": 102779,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/carved-jade-plinth/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "2b1023f7f49f1ecd9960683a1cdab3f0d018a93ee05fbd4d89384267df08a574",
+      "bytes": 358279,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-ledge/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "6f6b65b3a95fd9040be72d22b4293ad3377bd77db422946c3b493d44b9176ec9",
+      "bytes": 18082,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-ledge/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "549b1e35b88aac7fd0ea4c521b0d42f1deed35d8f08233b1fd28ec0fa672b453",
+      "bytes": 73659,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-ledge/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "cd997fd0677e4b3f9b82c0e88d20761609c2988adca15fbb734368fe88e5d4df",
+      "bytes": 4211,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-ledge/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "a16cbbc0458e89bdb58fcb573085b66bce732dce0d7139362ab0ec973d0e3f12",
+      "bytes": 122465,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-ledge/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f40601c8bf6019f9212f6b510835d91a10b5d9f171752f0ae7a0af9daa846a8f",
+      "bytes": 432861,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-monolith/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "80ad1c12d033c1fc0e8db86bc780db8ca64b3a8be6fdc9c1bf150216fe44ca0f",
+      "bytes": 18609,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-monolith/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e6d6c9f99e59489d368cf092814a98fb8b255597c42363bef899627d3a19da29",
+      "bytes": 73125,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-monolith/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "e9de13ad4e42a870ee5097d729781276717f6fc7bf128bb05cad1f4fbaa9b658",
+      "bytes": 4235,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-monolith/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "c9ac2fd2f971f5177046a1eb02e649c58bfe2483a5e422ec783e0389641e42b3",
+      "bytes": 104539,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-monolith/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "779ef0dd933b98169da338a0ada44d0ad1ad2f036888c5eb94d2249a7a8e3dbc",
+      "bytes": 364144,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-seam/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "146cb44533ea0422f23f0b4ff76370b520e83135356a7584774345e8c63e92d5",
+      "bytes": 18805,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-seam/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f01f4e6ba2e60214ecd7fd32ab7788e3c558c07cccd085fe15411b5aefacc23b",
+      "bytes": 73419,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-seam/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "af80a722211d00173fa66121a478193977695e34ebdbce846ed8fb0e745ffa22",
+      "bytes": 4191,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-seam/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "0a6ae90794d23748ecdb7c266f65a62634985c4567cd9749f4625b3c55985dce",
+      "bytes": 102363,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/jade-seam/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "4abbbc47c8b63ca3fe99406a97cdf8583f0b9254092b677254eee9cf395cbf7e",
+      "bytes": 356569,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-jade/glass@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "9c9a31ab0a42933da27d4ef7b409dfc13d9c029a154fd2752eb9e886eedeaafa",
+      "bytes": 18845,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-jade/glass@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "9c38cd6cb7e90f67f53f67993a38f7c9a591689311818701e63d895f69f34623",
+      "bytes": 73590,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-jade/layout.json": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "bc2c739ce453607be6f4e617a21a89f7520a821f53ae434520b4397d001694ed",
+      "bytes": 4347,
+      "mediaType": "application/json"
+    },
+    "apps/client/src/design-system/art/character-panels/river-jade/plate@1x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "f2c4536c130603495b6406185acc3fb6dc13bf3512f3eca373650cba80e89fa5",
+      "bytes": 110078,
+      "mediaType": "image/png"
+    },
+    "apps/client/src/design-system/art/character-panels/river-jade/plate@2x.png": {
+      "boundary": "runtime",
+      "accessDomain": "public",
+      "sha256": "b400a36caec32c55fb7a95385deedde4f5bc5454a7e6c09f65823554e6c963df",
+      "bytes": 383794,
+      "mediaType": "image/png"
     }
   }
 }

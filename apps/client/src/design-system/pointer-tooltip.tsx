@@ -1,3 +1,4 @@
+import { JadeGlass } from './jade-glass';
 import {
   useCallback,
   useEffect,
@@ -10,6 +11,7 @@ import {
   isValidElement,
 } from 'react';
 import { Focusable, Tooltip, TooltipTrigger } from 'react-aria-components';
+import { gildmossViewportInset } from './gildmoss-kit';
 
 const EDGE = 8;
 const GAP = 6;
@@ -50,10 +52,11 @@ export function PointerTooltip({
     const source = trigger.current;
     if (!element || !source) return;
     const viewport = window.visualViewport;
-    const left = (viewport?.offsetLeft ?? 0) + EDGE;
-    const top = (viewport?.offsetTop ?? 0) + EDGE;
-    const right = left + (viewport?.width ?? innerWidth) - EDGE * 2;
-    const bottom = top + (viewport?.height ?? innerHeight) - EDGE * 2;
+    const edge = gildmossViewportInset(element, EDGE);
+    const left = (viewport?.offsetLeft ?? 0) + edge;
+    const top = (viewport?.offsetTop ?? 0) + edge;
+    const right = left + (viewport?.width ?? innerWidth) - edge * 2;
+    const bottom = top + (viewport?.height ?? innerHeight) - edge * 2;
     const focus = document.activeElement;
     const anchor =
       focus instanceof HTMLElement && source.contains(focus)
@@ -189,6 +192,7 @@ export function PointerTooltip({
         placement="top"
         style={{ position: 'fixed', left: 0, top: 0, visibility: 'hidden' }}
       >
+        <JadeGlass identity={`tooltip:${className}`} />
         <div className="ol-portal-content">{content}</div>
       </Tooltip>
     </TooltipTrigger>

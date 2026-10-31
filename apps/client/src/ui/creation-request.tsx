@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { LoadingDialog } from '../design-system/loading';
 import { useEffect, useRef, useState } from 'react';
 import { Modal, ModalOverlay } from 'react-aria-components';
@@ -418,6 +419,7 @@ export function CreationRecoveryModal({
       onOpenChange={(open) => !open && close()}
     >
       <Modal className="ol-modal">
+        <JadeGlass identity="creation-request::modal:1" />
         <LoadingDialog className="ol-person-dialog" aria-label="Original creation">
           <header className="ol-modal-head">
             <div>

@@ -1,3 +1,4 @@
+import { JadeGlass } from '../design-system/jade-glass';
 import { useEffect, useState } from 'react';
 import type { MaintenanceWindowView } from '@open-legend/protocol';
 import { Button } from '../design-system/components';
@@ -39,6 +40,7 @@ export function MaintenanceNotice({ maintenance }: { maintenance?: MaintenanceWi
       role={maintenance.status === 'active' ? 'alert' : 'status'}
       aria-label="World maintenance"
     >
+      <JadeGlass identity="maintenance-notice:ol-maintenance-notice:card:1" />
       <strong>{maintenanceHeadline(maintenance, now)}</strong>
       {maintenance.status === 'active' && (
         <span className="ol-caption">

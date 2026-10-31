@@ -581,6 +581,22 @@
   overscroll-behavior: contain;
   z-index: 110;
 }
+[data-theme='gildmoss'] .ol-inventory-popover:not([data-trade]):has(> .ol-jade-glass) {
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+  padding: 0;
+}
+[data-theme='gildmoss']
+  .ol-inventory-popover:not([data-trade]):has(> .ol-jade-glass)
+  > .ol-portal-content {
+  flex: 0 1 auto;
+  min-block-size: 0;
+  overflow: auto;
+  /* Preserve the unscaled popup's sixteen-pixel gutter inside reading zoom. */
+  padding: calc(16px / var(--ui-scale, 1));
+  overscroll-behavior: contain;
+}
 .ol-inventory-detail {
   outline: none;
 }
