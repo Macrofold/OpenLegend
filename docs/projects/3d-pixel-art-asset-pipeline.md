@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                         | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The finite source-based study is implemented and external storage is specified; creator acceptance and the broader pipeline remain open. | 2026-10-17   |
+| In progress | Offline character production feeds the existing source and validation owners; creator acceptance and live publication remain open. | 2026-10-31   |
 
 **Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
 
@@ -177,6 +177,8 @@ Pack export includes permitted runtime bytes, exact manifests/compatible family 
 ## 10. Provider selection and evidence
 
 No provider is selected by this proposal. Start with authored/procedural fixtures and one replaceable production adapter; do not build integrations for many vendors before measuring the first real family. Select a provider using repeatable identity/style output, rigid geometry and part quality, controllable dimensions, compatible export, rig coverage, API task/reconciliation semantics, rights/privacy terms, retention, and total useful-asset cost including correction/rejection.
+
+The [matched character-production comparison](3d-pixel-art-validation.md#matched-character-production-comparison) specifies the existing offline Meshy/Tripo question against an authored/reused baseline. Its source, rough-deformation, finishing and repeat-change evidence can qualify a candidate route without implementing this live service. Preserve the actual operation/model/texture/export revisions, inputs and assembly work; independently generated components are not automatically interchangeable runtime parts. [Current character-production findings](../../art-direction/research/3d-pixel-worlds/character-production-2026-10-31.md#treat-generation-as-one-production-stage) distinguish Tripo Studio tools from the P2 API and retain the unresolved free-output rights evidence. An offline winner still needs the durable admission, validation and publication requirements above.
 
 Official documentation checked September 27, 2026 establishes possibilities, not OpenLegend performance:
 

@@ -29,6 +29,7 @@ The follow-up adds [realtime rendering and lighting](realtime-pixel-rendering.md
 | [Rendering and asset techniques](rendering-techniques.md) | Surface pixels, camera stability, faces, cloth, lighting, foliage, water and bokeh.                   |
 | [OpenLegend adaptation](openlegend-adaptation.md)         | What is feasible with the existing engine and camera, and how to compare it before adoption.          |
 | [Generative art workflow](generative-pipeline.md)         | Which production steps generation can help with and which still need deliberate art correction.       |
+| [Character production and repertoire audit](character-production-2026-10-31.md) | Selective part generation, direct-mesh refinement, professional animation/3D craft and focused coverage of all 42 repertoire files; routes findings into existing production and qualification owners. |
 | [Image provenance](image-manifest.json)                   | Original media URLs, creators, dimensions, hashes and transformations for every saved image.          |
 | [Transcript provenance](transcripts/README.md)            | All seven supplied attachments, the saved scene transcript and the earlier inline camera explanation. |
 
