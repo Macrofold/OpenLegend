@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                                    | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Existing-channel personal-evidence foundation delivered; other runtime modules and integrated qualification remain open. SA-D01 selects authored player psychology. | 2026-10-27   |
+| In progress | Existing-channel personal-evidence foundation delivered; other runtime modules and integrated qualification remain open. SA-D01 selects authored player psychology. | 2026-10-31   |
 
 Design used for scoped implementation and review: **2026-10-25 15:35 UTC**.
 
@@ -183,6 +183,8 @@ type ObservationResult =
 `ExistingEvidenceRevisionByFamily` aliases the exact existing source-adapter revisions in [A's source contract](perspective-perception-tech-design.md#exact-shared-source-revisions). Personal-account revisions are string digests; other adapters retain their own representation, including native string versions where present. Keep underlying memory/summary storage kind in the opaque adapter binding, use local facet ordinals inside a source body, and attach its exact revision outside that body to avoid a self-hash cycle. No coercion, cross-family revision comparison or universal counter is permitted.
 
 `SupportedDetection`, `SupportedSensoryFact`, `Direction` and `SupportedRegion` denote the closed admitted families in A/B/C, not open dictionaries or a universal graph. Different channels need not populate the same detail fields. `Fact` carries semantic freshness/support rather than a universal confidence percentage. A defines each family's explicit certainty/classification discriminant; location uncertainty is spatial precision and does not substitute for recognition confidence. Model confidence, measured signal quality and calibrated correctness must not be conflated.
+
+The selected [shared reception procedure](perspective-perception-runtime-design.md) defines this boundary through typed sample, availability confirmation, availability change and occurrence inputs. Installed channel identity is distinct from a trusted physical/recognition implementation family. Logical field proof shapes here do not require separate per-field current records or confirmations; selected contact/groups supply those read products.
 
 Discrete event evidence carries its original `OccurrenceRef`. Continuous or sampled exposure retains the existing observer exposure identity, evaluated interval and physical/policy dependencies without allocating a synthetic event. Native retained support can reference the existing exposure/controller continuation through the indicated family adapter; it requires neither a human awareness record nor autobiography. A owns the concrete supported family shapes, including two personally received location samples for observed motion and bounded grounded warning testimony. Consumers use those exact payloads; hidden producer identity, velocity or intent is not evidence. `ExistingObserverAcquisitionBoundary` means the actual native acquisition boundary or suitable existing owner revision, with immutable captured membership; it is not a proposed global counter.
 
