@@ -1,8 +1,8 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------- | ------------ |
-| Not started | Design is complete; implementation and operating acceptance remain open under BK01–BK07. | 2026-10-31   |
+| Status      | Current progress                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared implementation on `codex/bookkeeping-runtime-01`; integrated qualification remains open. | 2026-10-31   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. This is a design deliverable, not an implementation or a measured speedup.
 

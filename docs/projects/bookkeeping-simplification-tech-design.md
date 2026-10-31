@@ -1,10 +1,10 @@
 # Simpler saving and personal evidence — technical design
 
-| Status      | Current progress                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------- | ------------ |
-| Not started | Design and removal plan are complete; BK01–BK07 retain implementation and verification. | 2026-10-31   |
+| Status      | Current progress                                                                                | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared implementation on `codex/bookkeeping-runtime-01`; integrated qualification remains open. | 2026-10-31   |
 
-**Design selected 2026-10-31, 05:10 UTC. Architecture inspected at Macrofold/OpenLegend `7a197980a6d65909fd185244c2631b8055faadf0`, local `codex/stealth-runtime-01-evidence`.** The [feature specification](bookkeeping-simplification-feature-spec.md) owns intended play, preserved behavior and consequential choices. This document describes the target, not the current implementation. Concurrent unrelated work is outside this design’s scope.
+**Design selected 2026-10-31, 05:10 UTC. Architecture inspected at Macrofold/OpenLegend `7a197980a6d65909fd185244c2631b8055faadf0`, local `codex/stealth-runtime-01-evidence`.** The [feature specification](bookkeeping-simplification-feature-spec.md) owns intended play, preserved behavior and consequential choices. This document describes the target, not the current implementation. The [branch ownership map](attention-and-scenes-runtime-design.md#139-branch-ownership-and-integration) coordinates native contact/groups, RU consumers and shared qualification; unrelated branch features remain outside this design’s scope.
 
 ## 1. Selected architecture and current baseline
 
