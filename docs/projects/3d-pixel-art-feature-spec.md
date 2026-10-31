@@ -1,7 +1,7 @@
 # Progressive 3D pixel art — feature specification
 
-| Status      | Current progress                                                                                     | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                      | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Offline character production is specified; reusable-family delivery, creator acceptance and broader visual qualification remain open. | 2026-10-31   |
 
 Deer/stag travel uses the correct four-foot sequence, fixed-length leg articulation, distinct front/rear bends and continuous foot velocity through contact. Wolf travel preserves source timing and wrist rotation with fixed foreleg lengths and a neutral toe shape. Source anatomy, sizes, finishes and runtime ownership remain unchanged. The [gait study](https://assets.openlegend.ai/studies/public/viewers/current-ca54817de5bc3f01018bb88a/art-direction/studies/2026-10-17-grounded-animal-gaits/comparison.html) preserves exported/editable sources and moving comparisons; [evidence and limits](../verification/natural-source-replacements.md#deer-stride-and-wolf-forepaws--october-17-2026) remain distinct from creator acceptance and broader action/device qualification.

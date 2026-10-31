@@ -1,7 +1,7 @@
 # Progressive 3D pixel art — generation and publication pipeline
 
-| Status      | Current progress                                                                                                                         | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| Status      | Current progress                                                                                                                   | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------------------------------- | ------------ |
 | In progress | Offline character production feeds the existing source and validation owners; creator acceptance and live publication remain open. | 2026-10-31   |
 
 **Art direction — October 16, 2026:** beautiful dimensional pixel art must retain believable real-world proportions. Visibly low-poly, faceted, blocky/Lego-like, cutesy and big-head/small-body art is rejected under the [current visual requirements](../../art-direction/decisions.md#current-visual-requirements--october-16-2026). This is the bundled world’s artistic target, not a universal engine constraint.
