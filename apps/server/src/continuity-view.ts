@@ -1,4 +1,5 @@
 import { currentFacetValues } from '@open-legend/domain';
+import { acceptedMindText } from '@open-legend/domain';
 import { currentFacetGrant } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import {
@@ -85,7 +86,7 @@ export function continuityView(
     worldId: world.id,
     generation: service.generation,
     revision: world.innerWorlds?.[actorId]?.revision ?? 0,
-    acceptedText: world.innerWorlds?.[actorId]?.text,
+    acceptedText: acceptedMindText(world, actorId),
     documents: [],
     records: [],
     thoughts: [],

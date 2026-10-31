@@ -14,7 +14,7 @@ import { nativeCommandKind } from './native-command-kind.js';
 import { nativeCommandSupported, rangedTargetAllowed, rangedPolicy } from '@open-legend/domain';
 
 import { combatHelpBinding, combatHelpFor, BASE_COMBAT_HELP } from '@open-legend/domain';
-import { domainCommand } from './cognition.js';
+import { domainCommand } from './domain-command.js';
 import { outingActions, cooperationProposals, cooperativePurposeChoice } from './outing-view.js';
 import {
   isEquipped,

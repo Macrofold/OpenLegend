@@ -203,7 +203,6 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         documents: list('mind_documents', 'id'),
         records: list('mind_facets', 'id'),
         thoughts: list('mind_thoughts'),
-        receipts: map('mind_receipts'),
       }),
       knowledge: actorLists('mind_learned_capabilities', 'recipeId'),
       actorKnowledge: actorMaps('mind_knowledge_documents'),
@@ -306,7 +305,7 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           }),
         }),
       }),
-      innerWorlds: map('mind_inner_worlds', { files: list('mind_inner_files', 'path') }),
+      innerWorlds: map('mind_inner_worlds'),
       events: list('world_hot_events', 'id'),
       // Exact command IDs govern replay; insertion order has no gameplay meaning.
       // Canonical row identities/bodies remain independent of the runtime tree.
@@ -317,7 +316,6 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       },
       declarationReceipts: map('declaration_receipts'),
     }),
-    milestones: map('world_milestones'),
     actorMilestones: map('actor_milestones'),
   },
 };
@@ -575,8 +573,20 @@ for (const table of ['mind_memories', 'mind_awareness', 'mind_summaries']) {
 }
 columns(
   'mind_knowledge_documents',
-  { actor_id: actorColumn, subject_id: textColumn('subjectId') },
-  [['actor_id', 'subject_id']],
+  {
+    actor_id: actorColumn,
+    subject_id: textColumn('subjectId'),
+    document_revision: numberColumn('revision'),
+    text_bytes: { sql: 'BIGINT', value: (value) => Buffer.byteLength(String(value['text'] ?? '')) },
+    subject_kind: {
+      sql: 'TEXT',
+      value: (value) => (value['subjectId'] as JsonRecord | null)?.['kind'] ?? null,
+    },
+  },
+  [
+    ['actor_id', 'subject_id'],
+    ['actor_id', 'slot'],
+  ],
 );
 const receiptIndex = (value: JsonRecord) =>
   (

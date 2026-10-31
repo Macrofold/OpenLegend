@@ -14,6 +14,7 @@ import { ActorWorkspaceFiles } from './workspace.js';
 import { COGNITION_PERMISSIONS } from './macrofold-provisioning.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { macrofoldModelParameters, cognitionOutputTokens } from './macrofold-model.js';
+import { LEVEL_LIMITS } from './cognition-contracts.js';
 import {
   ModelTargetPreparation,
   ModelTargetPreparationError,
@@ -1188,9 +1189,19 @@ export class MacrofoldBackend implements AiClient {
     persistent: boolean,
     signal: AbortSignal,
     receipt: AiReceipt,
-    reflection = false,
-    worldAgent?: WorldAgentTurn,
+    execution: {
+      reflection?: boolean;
+      worldAgent?: WorldAgentTurn;
+      reasoningEffort?: GenerateRequest['reasoningEffort'];
+    } = {},
   ): Promise<string> {
+    // Tool access and model effort are separate choices. In particular, memory
+    // authoring must not turn every reflection into maximum-effort reasoning.
+    const { reflection = false, worldAgent, reasoningEffort } = execution;
+    // Include instructions, schema and workspace guidance, not just context.
+    // A UTF-8 byte bound also fits the API's 100,000-character prompt ceiling.
+    if (Buffer.byteLength(prompt) > 100_000)
+      throw new InvalidData('Full native request exceeds the Macrofold prompt limit.');
     if (this.busy.has(name)) throw new Error('This agent already has work in progress.');
     this.busy.add(name);
     let lane: Lane = {};
@@ -1339,15 +1350,16 @@ export class MacrofoldBackend implements AiClient {
                 ...(config.macrofoldProviderConnectionId
                   ? { provider_connection_id: config.macrofoldProviderConnectionId }
                   : {}),
-                model_parameters: worldAgent
-                  ? { reasoning: { effort: 'medium' }, provider: { require_parameters: true } }
-                  : macrofoldModelParameters('full'),
+                model_parameters: macrofoldModelParameters(reasoningEffort),
                 permissions: reflection ? COGNITION_PERMISSIONS : toolPermissions,
                 connection_grants: worldAgent
                   ? [{ connection_id: worldAgent.connectionId, tools: worldAgent.toolNames }]
                   : [],
               }),
           worker_id: workerId,
+          ...(config.macrofoldRunMemoryMiB === undefined
+            ? {}
+            : { memory_mib: config.macrofoldRunMemoryMiB }),
           prompt,
           ...(worldAgent ? { stream: true } : {}),
           // Worker capacity still queues; only same-Worktree follow-ups are refused.
@@ -1511,15 +1523,16 @@ export class MacrofoldBackend implements AiClient {
   }
   async reflect(
     request: GenerateRequest,
-    files: import('@open-legend/domain').InnerWorld['files'],
+    files: import('@open-legend/domain').MindFiles,
   ): Promise<
     AiResult<{
       thoughts: string[];
       appraisalChanges?: import('./cognition-contracts.js').AppraisalProposal[];
+      recordChanges?: import('./cognition-contracts.js').ReflectionRecordChange[];
       goalChanges: import('@open-legend/domain').GoalChange[];
       knowledgeChanges: ReflectionChanges['knowledgeChanges'];
       nameChanges: ReflectionChanges['nameChanges'];
-      files: import('@open-legend/domain').InnerWorld['files'];
+      files: import('@open-legend/domain').MindFiles;
       revision: string;
     }>
   > {
@@ -1577,11 +1590,15 @@ export class MacrofoldBackend implements AiClient {
             false,
             signal,
             receipt,
-            true,
+            {
+              reflection: true,
+              reasoningEffort: request.reasoningEffort ?? LEVEL_LIMITS[5].effort,
+            },
           );
           const value = validateMacrofoldValue<{
             thoughts: string[];
             appraisalChanges?: import('./cognition-contracts.js').AppraisalProposal[];
+            recordChanges?: import('./cognition-contracts.js').ReflectionRecordChange[];
             goalChanges: import('@open-legend/domain').GoalChange[];
             knowledgeChanges: ReflectionChanges['knowledgeChanges'];
             nameChanges: ReflectionChanges['nameChanges'];
@@ -1676,16 +1693,6 @@ export class MacrofoldBackend implements AiClient {
             );
           // Fresh history for each bounded inference; only explicitly permitted context
           // enters the call. Compute is reusable without accumulating private memories.
-          if (
-            Buffer.byteLength(
-              JSON.stringify({
-                instructions: request.instructions,
-                schema: preparedSchema.schema,
-                context: request.context,
-              }),
-            ) > 98000
-          )
-            throw new InvalidData('Full cognition request exceeds the Macrofold prompt limit.');
           const output = await this.native(
             request.actorScope ?? `typed:${request.task}`,
             request.requestId,
@@ -1698,6 +1705,7 @@ export class MacrofoldBackend implements AiClient {
             false,
             operationSignal,
             receipt,
+            { reasoningEffort: request.reasoningEffort },
           );
           const value = validateMacrofoldValue<T>(preparedSchema, JSON.parse(output));
           signal.throwIfAborted();
@@ -1808,7 +1816,7 @@ export class MacrofoldBackend implements AiClient {
           }),
       // Capture the exact chat input before journal I/O, including caller-owned context.
       input: {
-        ...(!target ? macrofoldModelParameters(request.execution) : {}),
+        ...(!target ? macrofoldModelParameters(request.reasoningEffort) : {}),
         ...prepareMacrofoldGenerationInput(
           {
             ...request,
@@ -2292,8 +2300,7 @@ export class MacrofoldBackend implements AiClient {
             true,
             signal,
             receipt,
-            false,
-            worldAgent,
+            { worldAgent, reasoningEffort: worldAgent ? 'medium' : undefined },
           );
           this.service.assertScope(authority, 'play', true);
           return {

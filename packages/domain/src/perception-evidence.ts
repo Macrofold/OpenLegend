@@ -76,6 +76,7 @@ import {
   selectedPruneObserverIndividuals,
   selectedOrdinaryWarning,
   selectedOutwardBodyName,
+  selectedOutwardBodyActivity,
   selectedRecognitionSupportSourceIds,
   validReceivedRecognitionSupportKey,
   selectedRecordingReason,
@@ -242,6 +243,8 @@ export interface ObservedBody {
   height: number;
   supportSurfaceId: string | null;
   outward: [string, string, string, string];
+  /** Received outward activity identity/phase; never a private target or plan. */
+  activity?: string;
   label?: {
     name: string;
     nameForm?: Entity['nameForm'];
@@ -1009,7 +1012,8 @@ function prepareVisualSourceValues(
   }
   countDomainWork('visualSourcePreparations');
   const profile = effectiveBodyProfile(world, subject),
-    placement = subject.placement!;
+    placement = subject.placement!,
+    activity = selectedOutwardBodyActivity(world, subject);
   const pose =
     preparedBody && preparedBody.token === token
       ? preparedBody.values.pose
@@ -1030,6 +1034,7 @@ function prepareVisualSourceValues(
         radius: profile.radius,
         height: profile.height,
         outward: outwardStates(subject),
+        ...(activity ? { activity } : {}),
         ...(subject.actor
           ? {
               animation: observedActionAnimation(world, subject),
@@ -2117,20 +2122,34 @@ function eligibleBodyLease(
 ): CurrentFacetRecord | undefined {
   return bodyReadScope(world, observerId)?.body(subjectId);
 }
-/** Eligible current bodies, without copying their retained fact payloads. */
-export function currentObservedBodyIds(world: WorldState, observerId: string): string[] {
+/** Iterate eligible current bodies once without expanding description or proof payloads. */
+function* observedBodies(world: WorldState, observerId: string) {
   const scope = bodyReadScope(world, observerId);
-  if (!scope) return [];
-  const ids: string[] = [];
+  if (!scope) return;
   for (const held of currentFacetValues(scope.state)) {
     const lease = readOnlyDraftView(held);
-    if (
-      lease.value.kind === 'body' &&
-      currentFacetGrant(scope.state, lease).subjectId !== observerId &&
-      scope.body(currentFacetGrant(scope.state, lease).subjectId)
-    )
-      ids.push(currentFacetGrant(scope.state, lease).subjectId);
+    if (lease.value.kind !== 'body') continue;
+    const id = currentFacetGrant(scope.state, lease).subjectId;
+    if (id !== observerId && scope.body(id)) yield { id, lease };
   }
+}
+/** Scalar acquired classification for intake; never performs sensing or reads hidden definitions. */
+export function currentObservedBodyClassifications(
+  world: WorldState,
+  observerId: string,
+): { id: string; kind: string; subtype?: string }[] {
+  const result: { id: string; kind: string; subtype?: string }[] = [];
+  for (const { id, lease } of observedBodies(world, observerId)) {
+    const body = receivedBodyParts(world, lease.value)?.details;
+    if (body)
+      result.push({ id, kind: body.kind, ...(body.subtype ? { subtype: body.subtype } : {}) });
+  }
+  return result;
+}
+/** Membership consumers do not prepare unused classifications or body values. */
+export function currentObservedBodyIds(world: WorldState, observerId: string): string[] {
+  const ids: string[] = [];
+  for (const { id } of observedBodies(world, observerId)) ids.push(id);
   return ids;
 }
 function refreshMotionExpiry(state: PerceptionEvidenceOwner): void {
@@ -2733,6 +2752,7 @@ function semanticFacetChanged(before: SensoryFacet, after: SensoryFacet): boolea
     return (
       previous.kind !== current.kind ||
       previous.appearance !== current.appearance ||
+      previous.activity !== current.activity ||
       previous.radius !== current.radius ||
       previous.height !== current.height ||
       previous.description !== current.description ||
@@ -2774,6 +2794,7 @@ export function reconcileVisualEvidence(
   sourcePublicAttributes?: (id: string) => readonly AttributeView[],
   measuredSubjects?: ReadonlySet<string>,
   sourceDetailsToken?: (id: string) => object | undefined,
+  onBodyChange?: (id: string, before: ObservedBody, after: ObservedBody) => void,
 ): void {
   const state = owner(world, observer);
   return withCurrentPerceptionBatch(world, observer.id, state, () => {
@@ -3057,6 +3078,8 @@ export function reconcileVisualEvidence(
           )
             geometryChanges.add(subject.id);
         }
+        if (changed && previousValue?.kind === 'body' && facet.kind === 'body')
+          onBodyChange?.(subject.id, previousValue.body, facet.body);
         if (
           prior &&
           priorLease &&
@@ -4610,6 +4633,8 @@ export function validateObservedBodyDetails(body: ObservedBodyDetails): void {
   if (
     (body.quantity !== undefined && (!Number.isFinite(body.quantity) || body.quantity < 0)) ||
     (body.description !== undefined && typeof body.description !== 'string') ||
+    (body.activity !== undefined &&
+      (typeof body.activity !== 'string' || body.activity.length > 2048)) ||
     (body.heatLit !== undefined && typeof body.heatLit !== 'boolean') ||
     (body.remainsPhase !== undefined &&
       !['fresh', 'rotting', 'removed'].includes(body.remainsPhase)) ||

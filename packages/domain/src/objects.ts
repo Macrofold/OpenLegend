@@ -1,3 +1,4 @@
+import { boundActionItemIds } from './action-item-references.js';
 import { CONSTRUCTION_PERMISSION_LIMITS } from './construction-permissions.js';
 import {
   materialContainerAllowed,
@@ -495,11 +496,14 @@ export function itemFor(world: WorldState, id: string): ItemInstance | undefined
     ...(entity.container ? { container: { ...entity.container } } : {}),
   };
 }
-export function itemsForOwner(world: WorldState, ownerId: string): readonly ItemInstance[] {
-  return [...directChildIds(world, ownerId)].flatMap((id) => {
+export function* iterateOwnerItems(world: WorldState, ownerId: string): Generator<ItemInstance> {
+  for (const id of directChildIds(world, ownerId)) {
     const item = itemFor(world, id);
-    return item ? [item] : [];
-  });
+    if (item) yield item;
+  }
+}
+export function itemsForOwner(world: WorldState, ownerId: string): readonly ItemInstance[] {
+  return [...iterateOwnerItems(world, ownerId)];
 }
 /** Legacy creator type totals are a read projection, never an instance replacement. */
 export function inventoryTotals(
@@ -748,13 +752,7 @@ function homogeneousMaterialState(world: WorldState, entity: Entity): string | u
 function identityBound(world: WorldState, id: string): boolean {
   const action = entityGet(world.entities, custodian(world, id))?.actor?.action;
   return (
-    (!!action &&
-      [
-        action.itemId,
-        action.weaponItemId,
-        action.ammoItemId,
-        ...Object.values(action.foodPreparation?.inputs ?? {}),
-      ].includes(id)) ||
+    boundActionItemIds(action).includes(id) ||
     Object.values(entityGet(world.entities, id)?.statusEffects ?? {}).some((state) => state.active)
   );
 }

@@ -1633,7 +1633,9 @@ describe('durable reader publication and bounded scheduling', () => {
           (s: { experience: { reference?: string; value?: { summary?: string } } }) => {
             const reference = s.experience.reference;
             const experience = reference
-              ? context.character.experience[Number(reference.match(/\[(\d+)\]$/)![1])]
+              ? context.character.experience.find(
+                  (entry: { handle: string }) => entry.handle === reference,
+                )
               : s.experience;
             return (
               experience.value.summary ===

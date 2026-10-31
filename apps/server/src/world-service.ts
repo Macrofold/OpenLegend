@@ -1,3 +1,4 @@
+import { entityChangesBetween, recordMapChangesBetween } from '@open-legend/domain';
 import { nativeText } from '@open-legend/domain';
 import {
   retentionNeedsPreparation,
@@ -120,7 +121,7 @@ import {
   currentObservedBodyIds,
   currentBodyGrant,
   worldPosition,
-  worldRootEntities,
+  nativeEntityGroups,
   compileAssemblyRest,
   beginConstructionShower,
   constructionProfile,
@@ -365,26 +366,59 @@ function commandRecoveryFingerprint(input: CommandInput, scope: RequestScope): s
   return digest({ input, scope: commandRecoveryFields(scope) });
 }
 
-function actorMilestones(
+function updateMilestones(
   saved: SavedWorld,
   events: WorldEvent[],
-  actorId: string,
-): Record<string, boolean> {
-  const flags = { ...saved.actorMilestones?.[actorId] };
-  for (const milestone of basePlaytestMilestones(saved.world, actorId, events))
-    if (milestone.done) flags[milestone.id] = true;
-  return flags;
-}
-
-function updateMilestones(saved: SavedWorld, events: WorldEvent[]): SavedWorld {
-  const byActor = { ...saved.actorMilestones };
-  if (saved.milestones) byActor[controlledEntityId(saved.world)] ??= saved.milestones;
-  const source = { ...saved, actorMilestones: byActor };
-  for (const entity of entityValues(saved.world.entities))
-    if (entity.actor?.controller === 'player')
-      byActor[entity.id] = actorMilestones(source, events, entity.id);
-  const { milestones: _legacy, ...current } = saved;
-  return { ...current, actorMilestones: byActor };
+  previous?: WorldState,
+): SavedWorld {
+  const world = saved.world;
+  const players = nativeEntityGroups(world).players;
+  const affected = new Set<string>();
+  if (
+    !previous ||
+    previous.recipes !== world.recipes ||
+    previous.itemDefinitions !== world.itemDefinitions
+  )
+    for (const id of players) affected.add(id);
+  else {
+    const changed = entityChangesBetween(previous.entities, world.entities);
+    if (!changed) for (const id of players) affected.add(id);
+    else
+      for (const id of changed) {
+        const prior = entityGet(previous.entities, id),
+          current = entityGet(world.entities, id);
+        if (
+          current?.actor?.controller === 'player' &&
+          (prior?.actor?.controller !== 'player' ||
+            prior.inventoryRevision !== current.inventoryRevision)
+        )
+          affected.add(id);
+      }
+    if (previous.knowledge !== world.knowledge) {
+      const changed = recordMapChangesBetween(previous.knowledge, world.knowledge);
+      for (const id of changed ?? players)
+        if (entityGet(world.entities, id)?.actor?.controller === 'player') affected.add(id);
+    }
+  }
+  for (const event of events) {
+    if (event.actorId) affected.add(event.actorId);
+    for (const id of event.audience) affected.add(id);
+  }
+  let byActor = saved.actorMilestones;
+  for (const id of affected) {
+    if (entityGet(world.entities, id)?.actor?.controller !== 'player') continue;
+    const flags = byActor?.[id] ?? {};
+    const earned = basePlaytestMilestones(world, id, events).filter(
+      (milestone) => milestone.done && !flags[milestone.id],
+    );
+    if (!earned.length) continue;
+    if (byActor === saved.actorMilestones) byActor = { ...byActor };
+    byActor![id] = {
+      ...flags,
+      ...Object.fromEntries(earned.map((milestone) => [milestone.id, true])),
+    };
+  }
+  return byActor === saved.actorMilestones ? saved : { ...saved, actorMilestones: byActor };
 }
 
 /** The durable receipt replaces this hot duplicate, without settling unrelated
@@ -1648,6 +1682,7 @@ export class WorldService {
         : currentAppendCount
           ? saved.world.events.slice(-currentAppendCount)
           : [],
+      this.saved.world,
     );
     const historyWorld = snapshot.world;
     if (this.store.history) {
@@ -2192,6 +2227,7 @@ export class WorldService {
           : appended
             ? saved.world.events.slice(-appended)
             : [],
+        this.saved.world,
       );
       freezeWorld(next.world);
       if (appended === undefined)
@@ -4869,8 +4905,8 @@ export class WorldService {
   private operationFences(world: WorldState, appendCount: number | undefined) {
     const fences = new Map<string, number>();
     const campAssets = new Map<string, number>();
-    for (const entity of worldRootEntities(world, true)) {
-      const action = entity.actor?.action;
+    for (const id of nativeEntityGroups(world).permissionActions) {
+      const action = entityGet(world.entities, id)?.actor?.action;
       if ((action?.assemblyPhase || action?.hearthWork) && action.constructionGrant)
         fences.set(action.constructionGrant.id, action.constructionGrant.revision);
       if (action?.gateWork)

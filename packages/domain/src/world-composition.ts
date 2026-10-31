@@ -1,3 +1,5 @@
+import { baseOutwardActivity, changedOutwardNotice } from './worlds/base/senses.js';
+import { recognizePromise, COMMITMENT_ADMISSION_LIMIT } from './worlds/base/promises.js';
 import { BASE_WORK_ACTIVITY_HOST } from './worlds/base/work-activity.js';
 import { BASE_MEAL_ACTIVITY_HOST } from './worlds/base/meal-activity.js';
 import { RESERVOIR_ACTIVITY_HOST } from './worlds/reservoir-demo/activity.js';
@@ -422,4 +424,31 @@ export function selectedAssemblyPresentation(world: WorldState, family: Assembly
 export function selectedContextActions(world: WorldState, actorId: string, targetId?: string) {
   selectedCreationProfileForWorld(world);
   return baseContextActions(world, actorId, targetId);
+}
+
+/** Selected speech grammar supplies a proposal; the native obligation owner admits it. */
+export function selectedSpokenPromise(world: WorldState, event: import('./types.js').WorldEvent) {
+  selectedCreationProfileForWorld(world);
+  const promise = recognizePromise(world, event);
+  return promise && { ...promise, limit: COMMITMENT_ADMISSION_LIMIT };
+}
+
+export function selectedOutwardBodyActivity(world: WorldState, entity: Entity) {
+  selectedCreationProfileForWorld(world);
+  return baseOutwardActivity(entity);
+}
+
+export function selectedCommitmentLimit(world: WorldState): number {
+  selectedCreationProfileForWorld(world);
+  return COMMITMENT_ADMISSION_LIMIT;
+}
+
+/** Meaningful notices use the same selected reality as acquired activity details. */
+export function selectedOutwardBodyNotice(
+  world: WorldState,
+  before: import('./perception-evidence.js').ObservedBody,
+  after: import('./perception-evidence.js').ObservedBody,
+) {
+  selectedCreationProfileForWorld(world);
+  return changedOutwardNotice(before, after);
 }

@@ -36,7 +36,7 @@ interface AppraisalPreparation {
   completeSources?: boolean;
   /** Only a closed supplied strategy may restrict its possible writes this way. */
   guard?: 'all' | 'required';
-  /** The caller includes the exact complete character.experience array. */
+  /** The caller includes these exact complete experience records in the request. */
   sharedExperiences?: ReadonlyMap<string, SharedModelExperience>;
   frame?: ModelSpatialFrame;
 }
@@ -317,7 +317,7 @@ async function finishAppraisalBindings(
     ...(sharedExperiences?.size
       ? {
           sourceReferences:
-            'An experience.reference names the exact complete record at character.experience[index] in this same request. Read that record for the cause; each cause handle keeps its own native binding.',
+            'An experience.reference is the handle of an exact complete experience record in this same request. Read that record for the cause; each cause handle keeps its own native binding.',
         }
       : {}),
     feelings: [...records].map(([handle, record]) => ({
@@ -349,7 +349,7 @@ async function finishAppraisalBindings(
       return {
         handle,
         experience: same
-          ? { reference: `character.experience[${shared.index}]` }
+          ? { reference: shared.experience.handle }
           : experienceForModel(
               entry.entry,
               experienceModelBindings(presentation, actorId, entry.entry, handle, frame),
@@ -457,8 +457,18 @@ export function bindReflectionAppraisals(
   jobId: string,
   evidenceIds: string[],
   subjects: Record<string, string>,
+  preparation: AppraisalPreparation,
 ) {
-  return bindAppraisals(service, actorId, jobId, evidenceIds, subjects, 'reflection');
+  return bindAppraisals(
+    service,
+    actorId,
+    jobId,
+    evidenceIds,
+    subjects,
+    'reflection',
+    undefined,
+    preparation,
+  );
 }
 
 export async function bindDecisionAppraisals(

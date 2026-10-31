@@ -1,4 +1,5 @@
 import { currentFacetValues } from './perception-current.js';
+import { selectedCommitmentLimit, selectedOutwardBodyNotice } from './world-composition.js';
 import { currentFacetGrant } from './perception-current.js';
 import { effectiveBodyProfile } from './spatial-state.js';
 import type { NativeMechanicsDiscard } from './diagnostic-counters.js';
@@ -42,7 +43,6 @@ import {
   sightScopeDue,
   type RoutineObservation,
 } from './perception-timing.js';
-import { visibleFeature } from './perception-frame.js';
 import { currentDetailedAttention } from './attention.js';
 import { beginNativeChangeFeed, takeNativeChanges } from './native-change-feed.js';
 import {
@@ -302,7 +302,6 @@ import { SIGHTING_POLICY } from './worlds/base/senses.js';
 import {
   prepareExposure,
   perceptionEpisodeId,
-  recentSightings,
   snapshotEncounters,
   type EncounterBaseline,
 } from './encounter-cache.js';
@@ -420,7 +419,6 @@ import { TIME_EPSILON, normalSpeedSeconds } from './simulation-time.js';
 import { BASE_TIME_POLICY } from './worlds/base/time.js';
 import {
   advanceCommitments,
-  COMMITMENT_ADMISSION_LIMIT,
   unresolvedCommitmentCount,
   retainsCommitmentSchedule,
 } from './commitments.js';
@@ -612,6 +610,24 @@ export const SIMULATION_RULES = {
   ...BASE_ACTION_DEFAULTS,
 } as const;
 
+const recentKnownRecipes = new WeakMap<WorldState['knowledge'][string], readonly string[]>();
+/** One immutable metadata ordering, shared by context selection and hard baselines. */
+export function recentLearnedRecipeIds(
+  world: WorldState,
+  actorId: string,
+  maximum: number,
+): readonly string[] {
+  const records = world.knowledge[actorId];
+  if (!records) return [];
+  let ids = Object.isFrozen(records) ? recentKnownRecipes.get(records) : undefined;
+  if (!ids) {
+    ids = [...records]
+      .sort((a, b) => b.learnedAt - a.learnedAt || a.recipeId.localeCompare(b.recipeId))
+      .map((record) => record.recipeId);
+    if (Object.isFrozen(records)) recentKnownRecipes.set(records, ids);
+  }
+  return ids.slice(0, maximum);
+}
 export function inventoryFor(world: WorldState, actorId: string): ItemInstance[] {
   return [...possessionItems(world, actorId)];
 }
@@ -6033,7 +6049,7 @@ function nativeReservoirResponse(world: WorldState, actor: Entity): void {
     if (!definition.reservoir || !definition.concern) continue;
     const value = readAttribute(world, actor, definition);
     if (typeof value !== 'number' || value >= definition.concern.below) continue;
-    const sources = worldRootEntities(world)
+    const sources = nearbyEntities(world, worldPosition(actor), visionRadius(world, actor))
       .filter(
         (target) =>
           target.replenisher?.attributeId === id &&
@@ -8290,7 +8306,7 @@ function* updateEncounters(
         // of held facts such as priority expiry or relation continuation.
         continuePerceptionWork(world, id);
       }
-    const { changedFeatures, maximumBodyHeight, maximumBodyRadius } = frame;
+    const { maximumBodyHeight, maximumBodyRadius } = frame;
     const nativeSources = prepareNativeDangerSources(world, frame.sourceIds);
     const peoplePrepared = new Map<string, ReturnType<typeof frame.nearby>>();
     const detailedSubjects = new Map<string, Set<string>>();
@@ -8619,27 +8635,6 @@ function* updateEncounters(
           yield;
         }
       }
-      // Arrivals, departures and brief returns (EPR03) read this observer's latest private
-      // sighting records once, and only when its visible people changed.
-      const sightings = samePeople
-        ? undefined
-        : recentSightings(world, actor.id, world.simTime - SIGHTING_POLICY.recordWindowSeconds);
-      if (!samePeople) {
-        const stillSeen = new Set(seen);
-        for (const id of previous) {
-          if (stillSeen.has(id)) continue;
-          countDomainWork('exposureExits');
-          const source = entityGet(world.entities, id);
-          // Death and removal have their own occurrences; one departure per record window.
-          if (
-            source?.actor?.alive &&
-            (hasMemory(source) || SIGHTING_POLICY.retainRoutineOnset) &&
-            sightings!.get(id)?.present !== false
-          )
-            encounter(actor.entity, id, SIGHTING_POLICY.departure, undefined, true);
-          yield;
-        }
-      }
       // Persistent exposure episodes do not imply identity recognition across a disappearance;
       // a return within the linger window is the same episode. docs/knowledge.md#subject-binding
       const lingering = (id: string) => recentExposureEpisode(world, actor.id, id);
@@ -8667,7 +8662,7 @@ function* updateEncounters(
         } else if (Object.isFrozen(priorEpisodes))
           episodeMembership.set(priorEpisodes, { people: seen, objects: objectIds });
       }
-      const previouslySeen = samePeople ? null : new Set(previous);
+      const personallyChangedFeatures = new Map<string, string>();
       const vision = sensesFor(world, actor.entity).find(
         (sense) => sense.implementation === 'vision-geometry-v1',
       );
@@ -8685,84 +8680,29 @@ function* updateEncounters(
           frame.publicAttributes,
           undefined,
           frame.sourceDetailsToken,
+          (id, before, after) => {
+            const detail = selectedOutwardBodyNotice(world, before, after);
+            if (detail) personallyChangedFeatures.set(id, detail);
+          },
         );
-      const newlySeen = samePeople
-        ? []
-        : seen.filter(
-            (id) =>
-              !previouslySeen!.has(id) &&
-              (hasMemory(entityGet(world.entities, id)) || SIGHTING_POLICY.retainRoutineOnset),
-          );
-      if (newlySeen.length) {
-        for (const id of newlySeen) {
-          countDomainWork('exposureEntries');
-          // Sightings are awareness, not memories: one record per subject per window.
-          if (!sightings!.has(id))
-            // Seeing someone is evidence, not an obligation to reason. Ordinary animals
-            // remain visible and interest-matchable without a stored entry on each return.
-            // docs/memory-architecture.md#encounters-sensory-detail-and-reminder-continuity
-            encounter(
-              actor.entity,
-              id,
-              hasMemory(entityGet(world.entities, id))
-                ? SIGHTING_POLICY.social
-                : SIGHTING_POLICY.routine,
-            );
-          yield;
+      for (const id of seen) {
+        const detail = personallyChangedFeatures.get(id);
+        if (detail) {
+          countDomainWork('exposureDetails');
+          encounter(actor.entity, id, SIGHTING_POLICY.changedBeing, detail);
         }
       }
-      let personallyChangedFeatures = changedFeatures;
-      if (timing.sampledSight) {
-        const observer = entityGet(world.entities, actor.id)!,
-          previousFeatures = observer.sensoryProgress?.features ?? {},
-          currentFeatures: Record<string, string> = {};
-        personallyChangedFeatures = new Map();
-        let changed = false;
-        for (const id of [...seen, ...objectIds]) {
-          const source = entityGet(readOnlyDraftView(world.entities), id);
-          if (!source) continue;
-          const feature = visibleFeature(source);
-          currentFeatures[id] = feature.feature;
-          if (previousFeatures[id] !== feature.feature) {
-            changed = true;
-            if (previousFeatures[id] !== undefined)
-              personallyChangedFeatures.set(id, feature.detail);
-          }
-        }
-        if (changed || Object.keys(previousFeatures).length !== Object.keys(currentFeatures).length)
-          observer.sensoryProgress!.features = currentFeatures;
-      }
-      if (personallyChangedFeatures.size)
-        for (const id of seen) {
-          const detail = personallyChangedFeatures.get(id);
-          if (detail && (samePeople || previouslySeen!.has(id))) {
-            countDomainWork('exposureDetails');
-            encounter(actor.entity, id, SIGHTING_POLICY.changedBeing, detail);
-          }
-        }
       if (!original.visiblePeople?.[actor.id] || !samePeople)
         (world.visiblePeople ??= {})[actor.id] = seen;
       reconcileCombatSight(world, entityGet(world.entities, actor.id)!, seen, events);
       if (!sameObjects) {
-        // Unchanged frozen membership needs neither a set rebuild nor another exposure scan.
-        // Captions/speech still resolve event-time evidence independently of this visual cache.
-        if (SIGHTING_POLICY.retainRoutineOnset) {
-          const priorObjects = new Set(previousObjects ?? []);
-          for (const id of objectIds) {
-            if (!priorObjects.has(id)) encounter(actor.entity, id, SIGHTING_POLICY.routine);
-            yield;
-          }
-        }
         (world.visibleObjects ??= {})[actor.id] = objectIds;
       }
-      if (personallyChangedFeatures.size) {
-        const priorObjects = sameObjects ? undefined : new Set(previousObjects);
-        for (const id of objectIds) {
-          const detail = personallyChangedFeatures.get(id);
-          if (detail && (sameObjects || priorObjects!.has(id))) {
-            countDomainWork('exposureDetails');
-            encounter(actor.entity, id, SIGHTING_POLICY.routine, detail);
-          }
+      for (const id of objectIds) {
+        const detail = personallyChangedFeatures.get(id);
+        if (detail) {
+          countDomainWork('exposureDetails');
+          encounter(actor.entity, id, SIGHTING_POLICY.routine, detail);
         }
       }
       encounter.flush();
@@ -8824,12 +8764,23 @@ export function queryMemories(
 export function observeActor(
   world: WorldState,
   actorId: string,
-  options: { includeMemories?: boolean; visibleEntityIds?: ReadonlySet<string> } = {},
+  options: {
+    includeMemories?: boolean;
+    visibleEntityIds?: ReadonlySet<string>;
+    inventoryIds?: ReadonlySet<string>;
+    recipeIds?: ReadonlySet<string>;
+  } = {},
 ): ActorObservation | null {
   const actor = entityOwn(world.entities, actorId);
   if (!actor?.actor) return null;
-  const inventory = inventoryFor(world, actorId);
+  const inventory = options.inventoryIds
+    ? [...options.inventoryIds].flatMap((id) => {
+        const item = itemFor(world, id);
+        return item && accessiblePossession(world, actorId, id) ? [item] : [];
+      })
+    : inventoryFor(world, actorId);
   const knownRecipes = (world.knowledge[actorId] ?? [])
+    .filter((record) => !options.recipeIds || options.recipeIds.has(record.recipeId))
     .map((record) => world.recipes[record.recipeId])
     .filter((recipe) => !!recipe)
     .map((recipe) => ({
@@ -8995,7 +8946,7 @@ export function remember(
   if (
     proposal.kind === 'commitment' &&
     !proposal.resolved &&
-    unresolvedCommitmentCount(original, actorId) >= COMMITMENT_ADMISSION_LIMIT
+    unresolvedCommitmentCount(original, actorId) >= selectedCommitmentLimit(original)
   )
     return {
       world: original,

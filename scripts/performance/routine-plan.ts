@@ -10,7 +10,7 @@ import {
   type Command,
 } from '@open-legend/domain';
 import { planningCandidates } from '../../apps/server/src/context.js';
-import { domainCommand } from '../../apps/server/src/cognition.js';
+import { domainCommand } from '../../apps/server/src/domain-command.js';
 import { decisionObservation } from '../../apps/server/src/decision-observation.js';
 import { statusEffectActions } from '../../apps/server/src/status-effect-actions.js';
 import type { JobRecord } from '../../apps/server/src/store.js';

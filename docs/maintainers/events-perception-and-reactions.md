@@ -1,5 +1,7 @@
 # Events, perception, and reactions — implementation tracker
 
+The selected [RU01–RU03 design](../projects/runtime-unification-tech-design.md#4-ru01--read-acquired-surroundings-once) consolidates acquired-view intake, meaningful outward changes and pending/due scheduling. [RU](runtime-unification.md) owns that concrete conversion; EPR retains broader reaction, restoration and scale acceptance. Routine arrival/departure history is selected for removal, with current visibility, attended chronology and existing perception-gap continuity preserved.
+
 ## Spatial integration dependencies
 
 Use [SW04/SW08/SW09](spatial-world.md) for geometry, height-aware senses and camera exposure. Retain EPR scope, hysteresis, observer detail, coalescing and privacy gates here. The delivered hearing contract preserves listener-specific clear, partial and detected-without-words evidence. Reuse [HE01–HE04](hearing-and-speech.md) rather than recreating auditory contact or broadening exact-word audiences to simulate muffled unidentified sound.

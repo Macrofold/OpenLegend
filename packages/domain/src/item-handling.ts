@@ -8,6 +8,7 @@ import { validateItemOffers } from './handover.js';
 import { accessiblePossession, inventoryWorkReason } from './object-access.js';
 import {
   itemsForOwner,
+  iterateOwnerItems,
   itemFor,
   moveLot,
   validateObjects,
@@ -19,8 +20,9 @@ import {
 import { recordSemanticChange } from './dependencies.js';
 import { WorkBudgetError } from './work-budget.js';
 export { itemsForOwner } from './objects.js';
+import { nearbyEntities } from './spatial.js';
 import { worldPlacement } from './spatial-state.js';
-import { rootMembershipChanged, worldRootEntities } from './entity-index.js';
+import { rootMembershipChanged } from './entity-index.js';
 import { worldSupport, worldPosition } from './spatial-state.js';
 import {
   canStand,
@@ -54,15 +56,37 @@ export function canHandleItems(world: WorldState, actor: Entity): boolean {
     world.itemHandling.actorBodyProfiles.includes(actor.spatial.body.id)
   );
 }
-export function portableItems(world: WorldState, ownerId: string): ItemInstance[] {
-  return itemsForOwner(world, ownerId).filter(
-    (item) => world.itemDefinitions[item.definitionId]?.portable === true,
-  );
+export function portableItems(
+  world: WorldState,
+  ownerId: string,
+  maximum = Infinity,
+): ItemInstance[] {
+  const items: ItemInstance[] = [];
+  if (maximum <= 0) return items;
+  for (const item of iterateOwnerItems(world, ownerId)) {
+    if (world.itemDefinitions[item.definitionId]?.portable !== true) continue;
+    items.push(item);
+    if (items.length >= maximum) break;
+  }
+  return items;
+}
+/** Stop before materializing unrelated pile contents. All owners retain canonical order. */
+export function portableItemIds(
+  world: WorldState,
+  owners: Iterable<string>,
+  maximum: number,
+): string[] {
+  const ids: string[] = [];
+  for (const owner of owners) {
+    if (ids.length >= maximum) break;
+    for (const item of portableItems(world, owner, maximum - ids.length)) ids.push(item.id);
+  }
+  return ids;
 }
 function pileAt(world: WorldState, position: SurfacePoint): Entity {
   // Merge only coincident positions on the same support: nearby floors never share custody.
   // docs/worlds/base/items.md#ground-piles
-  const existing = worldRootEntities(world).find(
+  const existing = nearbyEntities(world, position, 0.01).find(
     (e) =>
       e.kind === 'item-pile' &&
       worldSupport(e) === position.surfaceId &&

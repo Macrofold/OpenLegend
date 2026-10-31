@@ -2,6 +2,15 @@ import { equippedItem } from '../../equipment.js';
 import { nativeText } from '../../narration.js';
 import type { WorldEvent, WorldState } from '../../types.js';
 
+export const BASE_PLAYTEST_MILESTONES = [
+  { id: 'talk', label: 'Talk with Ada' },
+  { id: 'invent', label: 'Invent a sling with live AI' },
+  { id: 'craft', label: 'Craft and equip a ranged weapon' },
+  { id: 'hunt', label: 'Hunt and harvest' },
+  { id: 'eat', label: 'Cook and eat a meal' },
+  { id: 'bow', label: 'Discover bow and arrow' },
+] as const;
+
 /** Bundled playtest goals, not universal world progression. External-world composition
  * must supply its own presentation; this local seam avoids another writable progress owner. */
 export function basePlaytestMilestones(
@@ -18,7 +27,6 @@ export function basePlaytestMilestones(
   return [
     {
       id: 'talk',
-      label: 'Talk with Ada',
       done: events.some(
         (event) =>
           event.type === 'speech' && event.actorId !== actorId && event.audience.includes(actorId),
@@ -26,7 +34,6 @@ export function basePlaytestMilestones(
     },
     {
       id: 'invent',
-      label: 'Invent a sling with live AI',
       // An independent live proposal can reuse a method the actor previously read.
       // Keep its original knowledge evidence; the admitted event credits this experience.
       done:
@@ -50,17 +57,14 @@ export function basePlaytestMilestones(
     },
     {
       id: 'craft',
-      label: 'Craft and equip a ranged weapon',
       done: !!rangedWeapon,
     },
     {
       id: 'hunt',
-      label: 'Hunt and harvest',
       done: events.some((event) => event.type === 'harvested' && event.actorId === actorId),
     },
     {
       id: 'eat',
-      label: 'Cook and eat a meal',
       done: events.some(
         (event) =>
           event.type === 'ate' && event.actorId === actorId && /meat/i.test(nativeText(event.text)),
@@ -68,10 +72,9 @@ export function basePlaytestMilestones(
     },
     {
       id: 'bow',
-      label: 'Discover bow and arrow',
       done:
         known.some((item) => item?.rangedWeapon?.mechanism === 'flex') &&
         known.some((item) => item?.ammunition?.kind === 'arrow'),
     },
-  ];
+  ].map((milestone, index) => ({ ...BASE_PLAYTEST_MILESTONES[index]!, done: milestone.done }));
 }

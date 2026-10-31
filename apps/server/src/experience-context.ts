@@ -940,3 +940,24 @@ export function acceptedMindForModel(world: WorldState, actorId: string) {
     })),
   };
 }
+
+/** Identity follows the observer's retained role, never a raw history entity ID.
+ * A later face/voice recognition cannot retroactively identify an unknown episode. */
+export function retainedMemorySubjects(memory: MemoryRecord): ObserverSubject[] {
+  return [
+    ...(memory.evidence?.sourceSubject ? [memory.evidence.sourceSubject] : []),
+    ...(memory.manifest?.speech.flatMap((group) =>
+      group.sourceSubject ? [group.sourceSubject] : [],
+    ) ?? []),
+    ...[
+      ...(memory.observation ? [memory.observation] : []),
+      ...(memory.manifest?.observations ?? []),
+    ].flatMap((observation) =>
+      observation.facets.flatMap((facet) =>
+        facet.value.kind === 'association' && facet.value.strength === 'supported'
+          ? [facet.value.subject]
+          : [],
+      ),
+    ),
+  ];
+}

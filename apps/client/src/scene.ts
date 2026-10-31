@@ -160,7 +160,6 @@ export class WildernessScene implements WorldRenderer {
   private actors = new Map<string, RenderedEntity>();
   /** Only entries still approaching an accepted pose need interpolation math. */
   private readonly movingEntries = new Set<string>();
-  private knownEvents = new Set<string>();
   private textures: pc.Texture[] = [];
   private materials: pc.StandardMaterial[] = [];
   private cameraSettings = initialCamera();
@@ -826,7 +825,6 @@ export class WildernessScene implements WorldRenderer {
     if (this.worldKey !== worldKey) {
       for (const entry of this.actors.values()) this.releaseEntity(entry);
       this.actors.clear();
-      this.knownEvents.clear();
       this.selected = null;
       this.initialized = false;
       this.worldKey = worldKey;
@@ -872,7 +870,6 @@ export class WildernessScene implements WorldRenderer {
       // Resume retains current public assets/camera, never an old observer's ghosts
       // or transient events. The new snapshot alone establishes current disclosure.
       this.resetTransientCaptions();
-      this.knownEvents = new Set(view.events.map((event) => event.id));
       this.clearHover();
       this.setModifiers(false, false);
       for (const [id, entry] of this.actors)
@@ -885,7 +882,6 @@ export class WildernessScene implements WorldRenderer {
         this.callbacks.select(null);
       }
     }
-    this.knownEvents = new Set(view.events.map((event) => event.id));
     // Omission is not a memory grant. Explicit personal history remains available
     // through its source reader; a removed contact loses all live rendering now.
     for (const [id, entry] of this.actors)

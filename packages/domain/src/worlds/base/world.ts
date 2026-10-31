@@ -279,7 +279,6 @@ export function createFreshBaseWorld(
           }
         : {}),
     },
-    perceptionFeatures: {},
     timePolicy: { normalGameSecondsPerSecond: BASE_TIME_POLICY.normalGameSecondsPerSecond },
     schemaVersion: 10,
     actionExperience: emptyActionExperience(),

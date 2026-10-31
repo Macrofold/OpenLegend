@@ -326,7 +326,6 @@ interface SampleProgress {
 export interface SensoryProgress {
   routineSight?: SampleProgress;
   incidentalContact?: SampleProgress;
-  features?: Record<string, string>;
 }
 export interface RoutineObservation {
   sight: boolean;
@@ -404,7 +403,7 @@ function routineObservation(
     life = observer.actor?.physicalLife ?? 0;
   let changed = false;
   const due = (
-    channel: Exclude<keyof SensoryProgress, 'features'>,
+    channel: keyof SensoryProgress,
     sample: boolean,
     seconds: number | undefined,
     definitions: string | undefined,
@@ -505,19 +504,10 @@ export function validateSensoryProgress(world: WorldState, entity: Entity): void
   if (progress === undefined) return;
   if (
     !entity.actor ||
-    !hasRecordFields(progress, [], ['routineSight', 'incidentalContact', 'features']) ||
+    !hasRecordFields(progress, [], ['routineSight', 'incidentalContact']) ||
     (!progress.routineSight && !progress.incidentalContact)
   )
     throw new Error('Invalid sensory progress.');
-  if (
-    progress.features &&
-    (!hasRecordFields(progress.features, [], Object.keys(progress.features)) ||
-      Object.entries(progress.features).some(
-        ([id, feature]) =>
-          !isSafeRecordId(id) || typeof feature !== 'string' || feature.length > 2048,
-      ))
-  )
-    throw new Error('Invalid personally observed feature baseline.');
   const policy = routineSensePolicy(world, entity);
   for (const [sample, channel] of [
     [progress.routineSight, policy.sight],

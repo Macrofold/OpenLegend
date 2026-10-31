@@ -109,15 +109,21 @@ async function sourceFingerprint() {
       ),
     ].sort();
     const hash = createHash('sha256');
-    for (const path of paths)
-      hash
-        .update(path)
-        .update('\0')
-        .update(
+    for (const path of paths) {
+      hash.update(path).update('\0');
+      try {
+        hash.update(
           createHash('sha256')
             .update(await readFile(join(root, path)))
             .digest(),
         );
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        // Unstaged removals are part of the selected working source, too.
+        hash.update('deleted\0');
+      }
+    }
+
     return {
       status: 'captured' as const,
       capturedAt,

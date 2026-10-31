@@ -60,6 +60,8 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Intelligent individuals and efficient simulation
 
+[Runtime unification (RU01–RU11)](runtime-unification.md) specifies removal of duplicate sensing/preparation, incremental save work, one accepted mind and adoption of useful older capabilities into current owners. The [design pair](../projects/runtime-unification-feature-spec.md) distinguishes selected behavior from proposed implementation.
+
 [The research-to-design map](intelligent-simulation.md) links all nine selected refinements to four feature/technical pairs and existing delivery owners. Design is complete; implementation and behavioral/capacity evidence remain open.
 
 ## Situation-aware cognition context

@@ -86,7 +86,6 @@ import {
   validateConditionEpisodes,
   type ConditionPolicy,
 } from './conditions.js';
-import { validatePerceptionState } from './perception-frame.js';
 import { DEFAULT_ACOUSTICS, validateAcoustics, type AcousticPolicy } from './acoustics.js';
 import { validateSpatialWorld } from './spatial-state.js';
 import { validateInventionAttribution } from './invention-attribution.js';
@@ -1500,7 +1499,6 @@ export function validateWorldModules(world: WorldState): void {
   validateAssemblies(world);
   validateHearthDefinitions(world);
   validateSpatialWorld(world);
-  validatePerceptionState(world);
   validatePlaces(world);
   validateInventionPolicy(world.inventionPolicy);
   validateInventionAttribution(world);

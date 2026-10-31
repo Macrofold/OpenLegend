@@ -556,8 +556,6 @@ export interface WorldState {
   timePolicy?: { normalGameSecondsPerSecond: number };
   itemHandling: import('./item-handling.js').ItemHandlingPolicy;
   statusEffectPolicy: import('./status-effects.js').StatusEffectPolicy;
-  /** Shared outward-feature baseline for the completed perception phase, not private knowledge. */
-  perceptionFeatures: Record<string, string>;
   authorship: import('./invention-attribution.js').WorldAuthorship;
   inventionPolicy: import('./invention-policy.js').InventionPolicy;
   moduleManifest: import('./world-modules.js').WorldModuleManifest;

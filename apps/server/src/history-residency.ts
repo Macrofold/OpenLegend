@@ -1,3 +1,11 @@
+import { isImmutableData } from '@open-legend/domain';
+import {
+  DerivedOwnerIndex,
+  objectIndexSet,
+  objectIndexEntriesAtLeast,
+  objectIndexEntriesAfter,
+  type ObjectIndexNode,
+} from '@open-legend/domain';
 import { cloneEntities, entityDelete, entityGet } from '@open-legend/domain';
 import {
   appendedRecordCount,
@@ -123,11 +131,124 @@ export function compactAppraisalHistory(world: WorldState): WorldState {
   compactedAppraisals.add(appraisals);
   return { ...world, appraisals };
 }
+const noOwners: Record<string, never[]> = Object.freeze({});
+function dueOwners<T>(deadline: (entries: T[]) => number) {
+  return new DerivedOwnerIndex<T[], number, ObjectIndexNode<number> | undefined>(
+    deadline,
+    () => undefined,
+    (tree, id, _before, next) =>
+      objectIndexSet(tree, id, next === undefined || next === Infinity ? undefined : -next),
+  );
+}
+const rawDelay = EXPERIENCE_LIMITS.rawHours * 3600 + 60;
+const memoryDue = dueOwners<WorldState['memories'][string][number]>((entries) => {
+  let at = Infinity;
+  for (const entry of entries)
+    if (entry.kind !== 'commitment' || entry.resolved) at = Math.min(at, entry.at + rawDelay);
+  return at;
+});
+const awarenessDue = dueOwners<NonNullable<WorldState['experience']>['awareness'][string][number]>(
+  (entries) => {
+    if (entries.some((entry) => entry.retentionClass === 'sensory')) return Infinity;
+    if (entries.length > HOT_AWARENESS_ROWS) return -Infinity;
+    let at = Infinity,
+      bytes = 0;
+    for (let i = 0; i < entries.length; i++) {
+      const entry = entries[i]!;
+      let size = recordBytes.get(entry);
+      if (size === undefined) {
+        size = Buffer.byteLength(JSON.stringify(entry));
+        recordBytes.set(entry, size);
+      }
+      bytes += size;
+      if (i < entries.length - 24) at = Math.min(at, entry.at + rawDelay);
+    }
+    return bytes > HOT_AWARENESS_BYTES && entries.length > 24 ? -Infinity : at;
+  },
+);
+const summaryDue = dueOwners<NonNullable<WorldState['experience']>['summaries'][string][number]>(
+  (entries) => (entries.length ? -Infinity : Infinity),
+);
+const occurrenceDue = dueOwners<WorldState['actionExperience']['occurrences'][string][number]>(
+  (entries) =>
+    entries.some((entry, index) => index < entries.length - 128 && entry.status !== 'running')
+      ? -Infinity
+      : Infinity,
+);
+
+type PlacementProjection = Parameters<typeof projectWorldHistory>[1];
+type Placement = {
+  kind: 'memories' | 'awareness' | 'summaries' | 'occurrences';
+  actorId: string;
+  source: unknown[];
+  selected: unknown[];
+};
+interface PlacementPlan {
+  placements: Placement[];
+  at: number;
+  awareness: unknown;
+  summaries: unknown;
+  occurrences: unknown;
+  forgotten: unknown;
+  corrections: unknown;
+  projection: PlacementProjection;
+}
+/** SQL preparation can assign canonical append ordinals after preview selection.
+ * Rebind the selected rows at release, including arrays normalized by publication.
+ * Never let a preview's temporary numbering become a later insertion address. */
+function projectPlacement(
+  world: WorldState,
+  projection: PlacementProjection,
+  placements: Placement[],
+  options: { preview?: boolean },
+) {
+  const projected = projectWorldHistory(world, projection, options);
+  for (const { kind, actorId, source, selected } of placements) {
+    const current =
+      kind === 'memories'
+        ? projected.memories[actorId]
+        : kind === 'occurrences'
+          ? projected.actionExperience.occurrences[actorId]
+          : projected.experience?.[kind][actorId];
+    if (!current) continue;
+    const canonical = historyPositions.get(source),
+      fallback = historyPositions.get(selected);
+    historyPositions.set(current, {
+      positions: new Map(
+        current.map((entry) => {
+          const id = historyKey(entry);
+          return [id, canonical?.positions.get(id) ?? fallback?.positions.get(id)!];
+        }),
+      ),
+      next: canonical?.next ?? fallback?.next ?? source.length,
+    });
+  }
+  return projected;
+}
+const placementPlans = new WeakMap<object, PlacementPlan>();
+const emptyTemporalOwners: NonNullable<
+  NonNullable<WorldState['experience']>['temporal']
+>['actors'] = Object.freeze({});
 export function compactHistory(
   world: WorldState,
   previous?: WorldState,
   options: { preview?: boolean } = {},
 ): WorldState {
+  const reusable = isImmutableData(world);
+  const cached = reusable ? placementPlans.get(world.memories) : undefined;
+  if (
+    cached &&
+    cached.at === world.simTime &&
+    cached.awareness === world.experience?.awareness &&
+    cached.summaries === world.experience?.summaries &&
+    cached.occurrences === world.actionExperience.occurrences &&
+    cached.forgotten === world.experience?.forgotten &&
+    cached.corrections === world.experience?.corrections
+  )
+    return compactTemporalHistory(
+      projectPlacement(world, cached.projection, cached.placements, options),
+      options,
+    );
   const cutoff = world.simTime - EXPERIENCE_LIMITS.rawHours * 3600;
   const compact = <T>(
     entries: T[],
@@ -188,21 +309,29 @@ export function compactHistory(
     historyPositions.set(retained, { positions: selected, next: old?.next ?? entries.length });
     return retained;
   };
-  const memories = { ...world.memories };
-  const awareness = { ...world.experience?.awareness };
-  const summaries = { ...world.experience?.summaries };
+  let memories = world.memories;
+  let awareness = world.experience?.awareness ?? noOwners;
+  let summaries = world.experience?.summaries ?? noOwners;
   let changed = false;
-  for (const [actorId, entries] of Object.entries(memories)) {
-    memories[actorId] = compact(entries, previous?.memories[actorId], (entry) =>
+  const placements: Placement[] = [];
+  for (const [actorId] of objectIndexEntriesAtLeast(memoryDue.read(memories), -world.simTime)) {
+    const entries = memories[actorId]!;
+    const retained = compact(entries, previous?.memories[actorId], (entry) =>
       entry.kind === 'commitment' && !entry.resolved ? Infinity : entry.at,
     );
-    changed ||= memories[actorId] !== entries;
+    if (retained !== entries) {
+      if (memories === world.memories) memories = { ...memories };
+      memories[actorId] = retained;
+      placements.push({ kind: 'memories', actorId, source: entries, selected: retained });
+      changed = true;
+    }
   }
-  for (const [actorId, entries] of Object.entries(awareness)) {
+  for (const [actorId] of objectIndexEntriesAtLeast(awarenessDue.read(awareness), -world.simTime)) {
+    const entries = awareness[actorId]!;
     // Sensory rows must remain resident until their native absolute expiry; evicting
     // them would strand their expiry in SQL. Native operation admission bounds intake.
     if (entries.some((entry) => entry.retentionClass === 'sensory')) continue;
-    awareness[actorId] = compact(
+    const retained = compact(
       entries,
       previous?.experience?.awareness[actorId],
       (entry, index, length) => (index >= length - 24 ? Infinity : entry.at),
@@ -210,14 +339,29 @@ export function compactHistory(
       HOT_AWARENESS_ROWS,
       retainedAgreementEvidence(world, actorId),
     );
-    changed ||= awareness[actorId] !== entries;
+    if (retained !== entries) {
+      if (awareness === world.experience?.awareness) awareness = { ...awareness };
+      awareness[actorId] = retained;
+      placements.push({ kind: 'awareness', actorId, source: entries, selected: retained });
+      changed = true;
+    }
   }
-  for (const [actorId, entries] of Object.entries(summaries)) {
-    summaries[actorId] = compact(entries, undefined, () => -Infinity);
-    changed ||= summaries[actorId] !== entries;
+  for (const [actorId] of objectIndexEntriesAtLeast(summaryDue.read(summaries), -world.simTime)) {
+    const entries = summaries[actorId]!,
+      retained = compact(entries, undefined, () => -Infinity);
+    if (retained !== entries) {
+      if (summaries === world.experience?.summaries) summaries = { ...summaries };
+      summaries[actorId] = retained;
+      placements.push({ kind: 'summaries', actorId, source: entries, selected: retained });
+      changed = true;
+    }
   }
-  const occurrences = { ...world.actionExperience.occurrences };
-  for (const [actorId, entries] of Object.entries(occurrences)) {
+  let occurrences = world.actionExperience.occurrences;
+  for (const [actorId] of objectIndexEntriesAtLeast(
+    occurrenceDue.read(occurrences),
+    -world.simTime,
+  )) {
+    const entries = occurrences[actorId]!;
     if (entries.length <= 128) continue;
     const prior = historyPositions.get(entries);
     const sourcePositions = new Map(entries.map((entry, index) => [entry.id, index]));
@@ -232,25 +376,51 @@ export function compactHistory(
       ]),
     );
     historyPositions.set(retained, { positions, next: prior?.next ?? entries.length });
+    if (occurrences === world.actionExperience.occurrences) occurrences = { ...occurrences };
     occurrences[actorId] = retained;
+    placements.push({ kind: 'occurrences', actorId, source: entries, selected: retained });
     changed = true;
   }
-  const projected = changed
-    ? projectWorldHistory(
-        world,
-        {
-          memories,
-          occurrences,
-          ...(world.experience ? { awareness, summaries } : {}),
-        },
-        options,
-      )
-    : world;
+  const projection: PlacementProjection = changed
+    ? {
+        memories,
+        occurrences,
+        ...(world.experience ? { awareness, summaries } : {}),
+      }
+    : {};
+  if (reusable)
+    placementPlans.set(world.memories, {
+      at: world.simTime,
+      awareness: world.experience?.awareness,
+      summaries: world.experience?.summaries,
+      occurrences: world.actionExperience.occurrences,
+      forgotten: world.experience?.forgotten,
+      corrections: world.experience?.corrections,
+      projection,
+      placements,
+    });
+  const projected = changed ? projectPlacement(world, projection, placements, options) : world;
   return compactTemporalHistory(projected, options);
 }
 
+const temporalOverflow = new DerivedOwnerIndex<
+  NonNullable<NonNullable<WorldState['experience']>['temporal']>['actors'][string],
+  number,
+  ObjectIndexNode<number> | undefined
+>(
+  (actor) => actor.chunks.length,
+  () => undefined,
+  (tree, id, _before, after) => objectIndexSet(tree, id, after),
+);
 /** Placement only. Canonical chunks survive in SQL until the retention owner
  * explicitly releases them, while native capture keeps only its bounded tail. */
+const sourcePlacements = new WeakMap<
+  object,
+  {
+    references: ReturnType<typeof referencedReceivedValues>;
+    sources: NonNullable<WorldState['receivedValues']>['sources'];
+  }
+>();
 export function compactTemporalHistory(
   world: WorldState,
   options: { preview?: boolean } = {},
@@ -259,30 +429,44 @@ export function compactTemporalHistory(
   if (!temporal && !world.receivedValues) return world;
   const maximum = selectedTemporalPolicy(world).recent.residentChunks;
   let changed = false;
-  const actors = { ...temporal?.actors };
-  for (const [actorId, actor] of Object.entries(actors)) {
-    if (actor.chunks.length > maximum) {
-      actors[actorId] = { ...actor, chunks: actor.chunks.slice(-maximum) };
+  let actors = temporal?.actors;
+  for (const [actorId] of objectIndexEntriesAfter(
+    temporalOverflow.read(actors ?? emptyTemporalOwners),
+    maximum,
+  )) {
+    const actor = actors![actorId]!,
+      chunks = actor.chunks;
+    if (chunks.length > maximum) {
+      if (actors === temporal?.actors) actors = { ...actors };
+      // Temporal chunks carry native ordinals; residency must not assign new SQL positions.
+      actors![actorId] = { ...actor, chunks: chunks.slice(-maximum) };
       changed = true;
     }
   }
-  const next = temporal && changed ? { ...temporal, actors } : temporal;
+  const next = temporal && changed ? { ...temporal, actors: actors! } : temporal;
   const scope =
     next && next !== temporal
       ? { ...world, experience: { ...world.experience!, temporal: next } }
       : world;
   const received = world.receivedValues;
-  const retainedSources = new Set(referencedReceivedValues(scope).keys());
-  const entries = Object.entries(received?.sources ?? {});
-  const sources = entries.filter(([id]) => retainedSources.has(id));
-  const receivedChanged = sources.length !== entries.length;
+  const references = referencedReceivedValues(scope);
+  const reusable = received && isImmutableData(world);
+  const cached = reusable ? sourcePlacements.get(received.sources) : undefined;
+  let sources = received?.sources;
+  if (received && cached?.references !== references) {
+    const entries = Object.entries(received.sources);
+    const selected = entries.filter(([id]) => references.has(id));
+    sources = selected.length === entries.length ? received.sources : Object.fromEntries(selected);
+    if (reusable) sourcePlacements.set(received.sources, { references, sources });
+  } else if (cached) sources = cached.sources;
+  const receivedChanged = sources !== received?.sources;
   if (!changed && !receivedChanged) return world;
   const projected = projectWorldHistory(
     world,
     {
       ...(next && next !== temporal ? { temporal: next } : {}),
       ...(received && receivedChanged
-        ? { receivedValues: { ...received, sources: Object.fromEntries(sources) } }
+        ? { receivedValues: { ...received, sources: sources! } }
         : {}),
     },
     options,

@@ -8,28 +8,34 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
-  commitCognition,
+  acceptedMindFiles,
+  publishInnerWorld,
+  dreamStatus,
+  dreamPolicy,
+  currentBodySubject,
   mindFor,
   initializePerception,
   setAttentionFocus,
   setSpatialPosition,
   worldSupport,
   worldPosition,
-  type MindProposal,
 } from '@open-legend/domain';
 import { validateMacrofoldValue, prepareSchema, type AiReceipt } from '@open-legend/ai';
 import { readConfig } from '../../../tests/fixtures/database.js';
 import { SqlGameRepository } from './store.js';
 import { WorldService } from './world-service.js';
 import {
-  cognitionContext,
-  cognitionOpportunity,
-  fullCognitionJsonSchema,
-  COGNITION_INSTRUCTIONS,
-  proposalSchema,
-  thoughtOnlySchema,
-  thoughtProposal,
-} from './cognition.js';
+  responseSchema,
+  boundResponseJsonSchema,
+  RESPONSE_INSTRUCTIONS,
+  reflectionSchema,
+} from './cognition-contracts.js';
+import { prepareDecision } from './decision-context.js';
+import { RecallService } from './recall.js';
+import { IntelligenceLog } from './intelligence-log.js';
+import { offerInterpretationRecords } from './reflection-records.js';
+import { prepareReflectionPublication, reflectionTimeDue } from './reflection-publication.js';
+import { bindReflectionAppraisals } from './appraisal-context.js';
 import { MacrofoldBackend } from './macrofold.js';
 import { inspectGodMind } from './god-mind.js';
 import { projectView } from './view.js';
@@ -37,7 +43,9 @@ import { entityHandle } from './entity-references.js';
 import { starterGroundAt } from '../../../packages/domain/src/worlds/base/landscape.js';
 const opened: SqlGameRepository[] = [];
 const dirs: string[] = [];
+const releases: Array<() => void | Promise<void>> = [];
 afterEach(async () => {
+  for (const release of releases.splice(0).reverse()) await release();
   for (const s of opened.splice(0))
     try {
       await s.close();
@@ -58,61 +66,106 @@ async function service(path: string | undefined = undefined, god = true) {
     OPEN_LEGEND_GOD_MODE: String(god),
   });
   const service = new WorldService(store, config, () => 10000);
+  releases.push(() => service.releaseHostWork());
   await enterLocalWorld(service);
   await service.setPresence('fixture', true, 1);
   await service.control({ paused: false });
   await service.say('fixture-encounter', PLAYER_ID, 'I would like to share berries.', NPC_ID);
   return service;
 }
-function proposal(s: WorldService, id = 'fixture-decision') {
-  const prepared = cognitionContext(s, NPC_ID, id, 'thought', 'full');
-  const e = prepared.context.recall.entries[0]!.id;
-  const subject = entityHandle(s.world, NPC_ID, PLAYER_ID);
-  const p: MindProposal = {
-    policy: 'mind-v1',
-    decisionId: id,
-    expectedRevision: prepared.context.expectedRevision,
-    thought: 'I am cautiously interested.',
-    actionId: null,
-    documents: [
-      {
-        id: 'newcomer',
-        title: 'A possible ally',
-        text: 'I think the newcomer may be helpful.',
-        expectedRevision: 0,
-        evidence: [{ id: e, relation: 'supports' }],
-      },
+async function proposal(s: WorldService, id = 'fixture-decision') {
+  const log = new IntelligenceLog(s.store);
+  const recall = new RecallService(s, log);
+  releases.push(
+    () => log.close(),
+    () => recall.close(),
+  );
+  const evidenceId = [...s.world.events].reverse().find((e) => e.type === 'speech')!.id;
+  const prepared = await prepareDecision(
+    s,
+    recall,
+    NPC_ID,
+    id,
+    'Consider the actual encounter.',
+    [evidenceId],
+    async () => {
+      throw new Error('Native fixture must not call a model.');
+    },
+    new AbortController().signal,
+    0,
+    false,
+    0,
+    evidenceId,
+    undefined,
+    'native-only',
+  );
+  releases.push(prepared.dispose);
+  const subject = currentBodySubject(s.world, NPC_ID, PLAYER_ID)!;
+  offerInterpretationRecords(s.world, NPC_ID, prepared.context, prepared.binding, [subject]);
+  const handle = Object.entries(prepared.binding.identityReferences!).find(
+    ([, value]) => JSON.stringify(value) === JSON.stringify(subject),
+  )![0];
+  const e = Object.entries(prepared.binding.evidenceReferences!).find(
+    ([, value]) => value === evidenceId,
+  )![0];
+  const appraisals = await bindReflectionAppraisals(
+    s,
+    NPC_ID,
+    id,
+    prepared.binding.evidenceIds,
+    prepared.entityReferences,
+    { sharedExperiences: prepared.sharedExperiences, frame: prepared.situation.frame },
+  );
+  const p = {
+    revision: 'fixture-workspace',
+    files: [
+      ...acceptedMindFiles(s.world, NPC_ID),
+      { path: 'newcomer.md', text: 'A possible ally\nI think the newcomer may be helpful.' },
     ],
-    removeDocuments: [],
-    records: [
+    thoughts: ['I am cautiously interested.'],
+    goalChanges: [],
+    knowledgeChanges: [],
+    nameChanges: [],
+    appraisalChanges: [],
+    recordChanges: [
       {
+        operation: 'upsert' as const,
         id: 'relationship',
         expectedRevision: 0,
         documentId: 'newcomer',
-        kind: 'relationship',
-        subjectId: subject,
-        source: 'inferred',
+        kind: 'relationship' as const,
+        subjectId: handle,
+        source: 'inferred' as const,
         confidence: 0.6,
         trust: 0.2,
-        status: 'active',
-        evidence: [{ id: e, relation: 'derived-from' }],
+        status: 'active' as const,
+        evidence: [{ id: e, relation: 'derived-from' as const }],
       },
       {
+        operation: 'upsert' as const,
         id: 'belief',
         expectedRevision: 0,
         documentId: 'newcomer',
-        kind: 'belief',
-        subjectId: subject,
-        source: 'inferred',
+        kind: 'belief' as const,
+        subjectId: handle,
+        source: 'inferred' as const,
         confidence: 0.5,
         trust: null,
-        status: 'active',
-        evidence: [{ id: e, relation: 'supports' }],
+        status: 'active' as const,
+        evidence: [{ id: e, relation: 'supports' as const }],
       },
     ],
-    removeRecords: [],
   };
-  return { prepared, p };
+  const publish = () =>
+    prepareReflectionPublication(
+      prepared,
+      appraisals,
+      p,
+      NPC_ID,
+      id,
+      s.world.innerWorlds![NPC_ID]!.revision,
+    );
+  return { prepared, p, publish };
 }
 describe('fixture: cognition vertical slice', () => {
   it('accepts schema-valid bundles, survives PostgreSQL restart, and supplies accepted mind to later decisions', async () => {
@@ -120,31 +173,26 @@ describe('fixture: cognition vertical slice', () => {
     dirs.push(dir);
     const path = dir;
     const s = await service(path);
-    const { prepared, p } = proposal(s);
-    expect(validateMacrofoldValue(prepareSchema(fullCognitionJsonSchema, 500_000), p)).toEqual(p);
-    expect(
-      (await s.transition((w) => commitCognition(w, prepared.binding, proposalSchema.parse(p)))).ok,
-    ).toBe(true);
+    const { p, publish } = await proposal(s);
+    const { revision: _revision, files: _files, ...response } = p;
+    const schema = (await import('zod')).z.toJSONSchema(reflectionSchema, { target: 'draft-7' });
+    expect(validateMacrofoldValue(prepareSchema(schema, 500_000), response)).toEqual(response);
+    expect((await s.transition(publish())).ok).toBe(true);
     await s.store.close();
     const reopened = await service(path);
-    const next = cognitionContext(reopened, NPC_ID, 'next', 'thought', 'full');
-    expect(next.context.acceptedMind.records.find((r) => r.kind === 'belief')?.documentId).toBe(
-      'newcomer',
-    );
-    expect(next.context.acceptedMind.documents.some((d) => d.text.includes('helpful'))).toBe(true);
-    expect(JSON.stringify(next.context)).not.toContain('I am cautiously interested.');
+    const next = await proposal(reopened, 'next');
+    expect(
+      mindFor(reopened.world, NPC_ID).records.find((r) => r.kind === 'belief')?.documentId,
+    ).toBe('newcomer');
+    expect(String(next.prepared.context.aboutMe)).toContain('helpful');
+    expect(JSON.stringify(next.prepared.context)).not.toContain('I am cautiously interested.');
   }, 60_000);
 
   it('keeps a remembered local person separate from a silently reacquired body in full model input', async () => {
     const s = await service();
-    const { prepared, p } = proposal(s, 'local-relationship');
-    expect(prepared.context.current.nearby.every((entry) => entry.id !== PLAYER_ID)).toBe(true);
-    expect(
-      prepared.context.recall.entries.every((entry) => !entry.entityIds.includes(PLAYER_ID)),
-    ).toBe(true);
-    expect((await s.transition((world) => commitCognition(world, prepared.binding, p))).ok).toBe(
-      true,
-    );
+    const { prepared, publish } = await proposal(s, 'local-relationship');
+    expect(Object.keys(prepared.entityReferences)).not.toContain(PLAYER_ID);
+    expect((await s.transition(publish())).ok).toBe(true);
     const record = mindFor(s.world, NPC_ID).records.find((entry) => entry.kind === 'relationship')!;
     expect(record.subjectId?.kind).toBe('individual');
     const oldBody = entityHandle(s.world, NPC_ID, PLAYER_ID);
@@ -167,24 +215,23 @@ describe('fixture: cognition vertical slice', () => {
       )![0];
       expect(setAttentionFocus(world, NPC_ID, [key])).toBe(true);
     });
-    const next = cognitionContext(s, NPC_ID, 'reacquired-person', 'thought', 'full');
+    const next = await proposal(s, 'reacquired-person');
     const newBody = entityHandle(s.world, NPC_ID, PLAYER_ID);
     expect(newBody).not.toBe(oldBody);
-    const remembered = next.context.acceptedMind.records.find(
+    const remembered = mindFor(s.world, NPC_ID).records.find(
       (entry) => entry.kind === 'relationship',
     )!;
     expect(remembered.subjectId).not.toBe(newBody);
-    expect(next.context.current.nearby.some((entry) => entry.id === newBody)).toBe(true);
-    expect(JSON.stringify(next.context)).not.toContain(`"entityId":"${PLAYER_ID}"`);
+    expect(Object.values(next.prepared.entityReferences)).toContain(PLAYER_ID);
+    expect(JSON.stringify(next.prepared.context)).not.toContain(`"entityId":"${PLAYER_ID}"`);
   });
 
   it('offers reflection after evidence and suppresses it after accepted consolidation', async () => {
     const s = await service();
-    expect(cognitionOpportunity(s, NPC_ID)).toBe('reflection');
-    const { prepared, p } = proposal(s);
-    prepared.binding.purpose = 'reflection';
-    expect((await s.transition((w) => commitCognition(w, prepared.binding, p))).ok).toBe(true);
-    expect(cognitionOpportunity(s, NPC_ID)).toBeNull();
+    expect(reflectionTimeDue(s.world, NPC_ID, true)).toBe(true);
+    const { publish } = await proposal(s);
+    expect((await s.transition(publish())).ok).toBe(true);
+    expect(reflectionTimeDue(s.world, NPC_ID, true)).toBe(false);
   });
   it('offers dream consolidation once and lets rest continue', async () => {
     const s = await service();
@@ -198,43 +245,68 @@ describe('fixture: cognition vertical slice', () => {
       },
       NPC_ID,
     );
-    expect(cognitionOpportunity(s, NPC_ID)).toBe('dream');
-    const prepared = cognitionContext(s, NPC_ID, 'dream', 'dream', 'full');
-    const p = thoughtProposal(
-      prepared.binding,
-      prepared.context.expectedRevision,
-      'An imagined river carries the conversation.',
-      null,
+    const policy = dreamPolicy(s.world)!;
+    await editWorld(s, (world) => {
+      world.simTime += policy.afterSeconds;
+      entityGet(world.entities, NPC_ID)!.statusEffects![policy.statusEffectId]!.elapsedSeconds =
+        policy.afterSeconds;
+    });
+    const episode = dreamStatus(s.world, entityGet(s.world.entities, NPC_ID))!.episode;
+    const result = await s.transition((world) =>
+      publishInnerWorld(
+        world,
+        NPC_ID,
+        world.innerWorlds![NPC_ID]!.revision,
+        'fixture-dream',
+        'workspace',
+        acceptedMindFiles(world, NPC_ID),
+        ['An imagined river carries the conversation.'],
+        [],
+        episode,
+      ),
     );
-    expect((await s.transition((w) => commitCognition(w, prepared.binding, p))).ok).toBe(true);
+    expect(result.ok).toBe(true);
     expect(entityGet(s.world.entities, NPC_ID)!.actor!.action?.type).toBe('status-effect');
-    expect(cognitionOpportunity(s, NPC_ID)).toBeNull();
-    expect(mindFor(s.world, NPC_ID).thoughts[0]?.source).toBe('imagined');
+    expect(mindFor(s.world, NPC_ID).lastDreamEpisode).toBe(episode);
+    const repeated = await s.transition((world) =>
+      publishInnerWorld(
+        world,
+        NPC_ID,
+        world.innerWorlds![NPC_ID]!.revision,
+        'fixture-dream-again',
+        'workspace',
+        acceptedMindFiles(world, NPC_ID),
+        ['Another imagined river.'],
+        [],
+        episode,
+      ),
+    );
+    expect(repeated.ok).toBe(false);
+    expect(mindFor(s.world, NPC_ID).thoughts.at(-1)?.source).toBe('imagined');
   });
   it('enforces backend god access and excludes thoughts from ordinary state', async () => {
     const s = await service();
-    const { prepared, p } = proposal(s);
-    await s.transition((w) => commitCognition(w, prepared.binding, p));
-    expect((await inspectGodMind(s, NPC_ID)).legacyThoughts?.[0]?.text).toBe(p.thought);
-    expect(JSON.stringify(await projectView(s, 'test-fixture'))).not.toContain(p.thought);
+    const { p, publish } = await proposal(s);
+    await s.transition(publish());
+    expect((await inspectGodMind(s, NPC_ID)).thoughts?.at(-1)?.text).toBe(p.thoughts[0]);
+    expect(JSON.stringify(await projectView(s, 'test-fixture'))).not.toContain(p.thoughts[0]);
     const disabled = await service(undefined, false);
     await expect(inspectGodMind(disabled, NPC_ID)).rejects.toThrow('disabled');
   }, 60_000);
   it('rejects covert mind changes in fast schemas', () => {
     expect(
-      thoughtOnlySchema.safeParse({
-        thought: 'hello',
-        actionId: null,
-        needsDeliberation: false,
+      responseSchema.safeParse({
+        operations: [],
         documents: [],
       }).success,
     ).toBe(false);
   });
   it('fresh full harness sessions reuse an actor worktree on the selected Worker and inject current instructions', async () => {
     const s = await service();
+    s.config.macrofoldBillingMode = 'managed';
     const requests: Array<{ path: string; body: Record<string, unknown>; key: string | null }> = [];
     let run = 0;
-    let currentProposal: MindProposal;
+    const currentProposal = { operations: [] };
     vi.stubGlobal(
       'fetch',
       vi.fn(async (input: string, init: RequestInit) => {
@@ -249,16 +321,33 @@ describe('fixture: cognition vertical slice', () => {
                 id: 'meta/muse-spark-1.3-contributor',
                 enabled: true,
                 harnesses: ['opencode'],
-                billing_modes: ['byok'],
+                billing_modes: ['byok', 'managed'],
               },
             ],
+          };
+        else if (path === '/v1/billing/usage')
+          data = {
+            data: [
+              {
+                run_id: `fixture-run-${run}`,
+                kind: 'model',
+                model_usage: {
+                  completeness: 'complete',
+                  provisional: false,
+                  input_tokens: '10',
+                  output_tokens: '1',
+                  reported_micro_usd: '100',
+                },
+              },
+            ],
+            next_cursor: null,
           };
         else if (path === '/v1/workspaces')
           data = { id: 'fixture-workspace', default_worktree_id: 'fixture-worktree' };
         else if (path === '/v1/runs') {
           run++;
           const prompt = JSON.parse(body.prompt);
-          expect(prompt.instructions).toContain(COGNITION_INSTRUCTIONS);
+          expect(prompt.instructions).toContain(RESPONSE_INSTRUCTIONS);
           expect(body.permissions.files.read.include).toEqual([]);
           data = {
             run_id: `fixture-run-${run}`,
@@ -292,30 +381,24 @@ describe('fixture: cognition vertical slice', () => {
     );
     const backend = new MacrofoldBackend(s);
     for (let i = 0; i < 2; i++) {
-      const { prepared, p } = proposal(s, `fixture-${i}`);
-      if (i) {
-        p.documents = [];
-        p.records = [];
-      }
-      currentProposal = p;
       const result = await backend.generate({
         requestId: `fixture-${i}`,
         actorScope: NPC_ID,
         execution: 'full',
         task: 'npc_cognition',
-        instructions: COGNITION_INSTRUCTIONS,
-        context: prepared.context,
-        schema: fullCognitionJsonSchema,
+        instructions: RESPONSE_INSTRUCTIONS,
+        context: { aboutMe: acceptedMindFiles(s.world, NPC_ID) },
+        schema: boundResponseJsonSchema(['myself'], [], {
+          speech: false,
+          expressions: false,
+          proposals: false,
+        }),
       });
-      expect(result.outcome, result.outcome === 'value' ? '' : result.reason).toBe('value');
+      expect(result.outcome, result.outcome === 'value' ? '' : JSON.stringify(result)).toBe(
+        'value',
+      );
       if (result.outcome === 'value')
-        expect(
-          (
-            await s.transition((w) =>
-              commitCognition(w, prepared.binding, proposalSchema.parse(result.value)),
-            )
-          ).ok,
-        ).toBe(true);
+        expect(responseSchema.parse(result.value)).toEqual(currentProposal);
     }
     const native = requests.filter((r) => r.path === '/v1/runs');
     expect(native).toHaveLength(2);

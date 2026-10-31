@@ -131,6 +131,7 @@ export {
   queryMemories,
   remember,
   inventoryFor,
+  recentLearnedRecipeIds,
   quantityOf,
   SIMULATION_RULES,
 } from './kernel.js';
@@ -292,7 +293,14 @@ export {
 } from './worlds/base/shield-defense.js';
 
 export * from './dependencies.js';
-export { worldRootEntities, worldRootEntityIds, worldRootCount } from './entity-index.js';
+export {
+  nativeEntityGroups,
+  npcMemoryActorIds,
+  pendingNavigationEntityIds,
+  worldRootEntities,
+  worldRootEntityIds,
+  worldRootCount,
+} from './entity-index.js';
 export * from './work-budget.js';
 export * from './queries.js';
 export { initializeNativeWork, installedWorkAllocation } from './native-work.js';
@@ -335,7 +343,7 @@ export { availableItemQuantity } from './resource-claims.js';
 export * from './body-policy.js';
 export { baseCognitionPolicy } from './worlds/base/cognition.js';
 
-export { basePlaytestMilestones } from './worlds/base/playtest.js';
+export { BASE_PLAYTEST_MILESTONES, basePlaytestMilestones } from './worlds/base/playtest.js';
 
 export * from './outings.js';
 export { BASE_OUTING, BASE_COMBAT_HELP } from './worlds/base/outing-policy.js';
@@ -516,3 +524,17 @@ export { canSteer } from './player-steering.js';
 export { itemContainerCapacity } from './objects.js';
 
 export * from './cartography.js';
+
+export { DerivedOwnerIndex } from './derived-owner-index.js';
+export {
+  objectIndexGet,
+  objectIndexSet,
+  objectIndexEntries,
+  objectIndexEntriesAtLeast,
+  objectIndexEntriesAfter,
+  type ObjectIndexNode,
+} from './object-index.js';
+
+export { nativeThinkingTimeChanges } from './thinking-inputs.js';
+
+export { boundActionItemIds } from './action-item-references.js';

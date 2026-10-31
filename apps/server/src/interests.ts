@@ -1,3 +1,4 @@
+import { recordMapChangesBetween, nativeThinkingTimeChanges } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import { currentGoal } from '@open-legend/domain';
 import {
@@ -5,13 +6,10 @@ import {
   STIMULUS_POLICY,
   type StimulusPolicy,
   capabilityBlocked,
-  entityVisionQuery,
+  currentObservedBodyClassifications,
   bodyReconsiderationInputs,
   attributeConcernActive,
   readAttribute,
-  spatialQuery,
-  visionRadius,
-  worldPosition,
   hasMemory,
   entityChangesBetween,
   currentAttentionCues,
@@ -44,19 +42,7 @@ const THOUGHT_INPUT_REASONS: readonly IntakeReason[] = [
   'evidence', // newly supported native physical relation generation
   'state', // actual saved free interval, never a recurring thought timer
 ];
-interface ThoughtExposure {
-  people: unknown;
-  objects: unknown;
-  position: unknown;
-  definitions: unknown;
-  map: unknown;
-  body: unknown;
-  footprint: unknown;
-  radius: number;
-  ids: string[];
-}
 interface ThoughtNativeInputs {
-  radius: number;
   protection: string | undefined;
   reconsideration: string;
   actionsBlocked: boolean;
@@ -104,7 +90,6 @@ const activePublicationRoots = new Set([
   'events',
   'archivedEventCount',
   'commandReceipts',
-  'perceptionFeatures',
   'perceptionEpisodes',
   'objectState',
   'actionExperience',
@@ -137,14 +122,15 @@ function ownerThoughtChanges(
   if (!Object.isFrozen(before) || !Object.isFrozen(after) || !sameOutside(before, after, allowed))
     return;
   const population = after.minds ?? {};
-  if (before.minds !== after.minds) {
-    const previous = Object.keys(before.minds ?? {});
-    if (
-      previous.length !== Object.keys(population).length ||
-      previous.some((id) => !Object.hasOwn(population, id))
-    )
-      return;
-  }
+  const mindChanges =
+    before.minds === after.minds
+      ? new Set<string>()
+      : before.minds && after.minds
+        ? recordMapChangesBetween(before.minds, after.minds)
+        : undefined;
+  if (!mindChanges) return;
+  for (const id of mindChanges)
+    if (Object.hasOwn(before.minds ?? {}, id) !== Object.hasOwn(population, id)) return;
   const affected = new Set<string>();
   const changedOwners = (
     previous: Readonly<Record<string, unknown>> | undefined,
@@ -153,7 +139,14 @@ function ownerThoughtChanges(
     if (previous === current) return true;
     if ((previous && !Object.isFrozen(previous)) || (current && !Object.isFrozen(current)))
       return false;
-    for (const id of new Set([...Object.keys(previous ?? {}), ...Object.keys(current ?? {})]))
+    const changed =
+      previous === before.minds && current === after.minds
+        ? mindChanges
+        : previous && current
+          ? recordMapChangesBetween(previous, current)
+          : undefined;
+    for (const id of changed ??
+      new Set([...Object.keys(previous ?? {}), ...Object.keys(current ?? {})]))
       if (previous?.[id] !== current?.[id] && Object.hasOwn(population, id)) affected.add(id);
     return true;
   };
@@ -183,29 +176,23 @@ export function activeIntakeChanges(
   const entities = entityChangesBetween(before.entities, after.entities);
   return entities ? { owners, entities } : undefined;
 }
-/** Change-fed wake inputs for autonomous thought (EPR05). Every input is a cheap identity or
- * value, and each character's visible set is recomputed only when its own native exposure
- * lists, pose, sight geometry/radius or definitions changed. Compact target kinds are read
- * currently. The cache retains IDs and immutable query inputs, never entities, and is
- * discarded with the restore generation.
+/** Thought wake inputs consume current personal reception and native condition
+ * changes. Only acquisition owns sight geometry; reads never measure the world.
  * docs/events-perception-and-reactions.md#extend-actorwork-instead-of-replacing-the-scheduler */
 export class ThoughtIntakeInputs {
   private scope?: string;
-  private readonly exposure = new Map<string, ThoughtExposure>();
   /** Highest awareness sequence already weighed for urgency, per character. Separate from the
-   * visibility cache so an incomplete query cannot reset it. */
+   * native preparation so verification cannot consume urgency. */
   private readonly weighed = new Map<string, number>();
-  private readonly incompleteExposure = new Set<string>();
   private concernDefinitions?: WorldState['moduleManifest']['definitions'];
   private immutableConcerns = false;
   private reconsidered: WorldState['moduleManifest']['definitions'] = [];
   private readonly nativeBaseline = new Map<string, ThoughtNativeInputs>();
   private nativeWorld?: WorldState;
   private readonly preparedNative = new Map<string, ThoughtNativeInputs>();
-  /** Current-predicate probes remain linear during moving/ticking publications. */
+  private populationOrder?: ReadonlyMap<string, number>;
+  /** Diagnostic count of actual native predicate preparations. */
   nativeInputReads = 0;
-  /** Visible-set recomputations, for EPR00 accounting. */
-  visibilityQueries = 0;
   /** World policy for ongoing perceived conditions; fixtures may install a review cadence. */
   stimulusPolicy: StimulusPolicy = STIMULUS_POLICY;
 
@@ -235,44 +222,30 @@ export class ThoughtIntakeInputs {
   reset(scope?: string): void {
     if (scope !== undefined && this.scope === scope) return;
     this.scope = scope;
-    this.exposure.clear();
     this.weighed.clear();
-    this.incompleteExposure.clear();
     this.nativeBaseline.clear();
     this.preparedNative.clear();
     this.nativeWorld = undefined;
+    this.populationOrder = undefined;
     this.concernDefinitions = undefined;
     this.immutableConcerns = false;
     this.reconsidered = [];
   }
-  /** The last complete visible set; undefined while this character's query is incomplete. */
-  visible(id: string): string[] | undefined {
-    return this.exposure.get(id)?.ids;
-  }
-  pendingExposure(): Iterable<string> {
-    return this.incompleteExposure;
-  }
   reconcile(world: WorldState): void {
-    for (const id of new Set([
-      ...this.exposure.keys(),
-      ...this.weighed.keys(),
-      ...this.incompleteExposure,
-      ...this.nativeBaseline.keys(),
-    ]))
+    this.populationOrder = new Map(Object.keys(world.minds ?? {}).map((id, order) => [id, order]));
+    for (const id of new Set([...this.weighed.keys(), ...this.nativeBaseline.keys()]))
       if (!entityGet(world.entities, id)?.actor?.alive || !hasMemory(entityGet(world.entities, id)))
         this.retire(id);
   }
   private retire(id: string): void {
-    this.exposure.delete(id);
     this.weighed.delete(id);
-    this.incompleteExposure.delete(id);
     this.nativeBaseline.delete(id);
     this.preparedNative.delete(id);
   }
   /** Exact narrowing of the existing input reader, not a new observation feed.
    * Comparing the last inspected snapshot with the current one covers skipped
    * publications; missing entity ancestry and unknown roots rebuild completely.
-   * Time/native/source effects still read current predicates for every thinker.
+   * Covered time/native effects read only their affected owners; unknown coverage rebuilds.
    */
   affected(before: WorldState, after: WorldState): Set<string> | undefined {
     const changes = activeIntakeChanges(before, after);
@@ -285,38 +258,35 @@ export class ThoughtIntakeInputs {
       const entity = entityGet(after.entities, id);
       if (!entity?.actor?.alive || !hasMemory(entity)) this.retire(id);
     }
-    const classifications = new Set<string>();
-    for (const id of changed) {
-      const previous = entityGet(before.entities, id),
-        current = entityGet(after.entities, id);
-      if (
-        previous?.kind !== current?.kind ||
-        previous?.resource?.definitionId !== current?.resource?.definitionId
-      )
-        classifications.add(id);
-    }
-    for (const id of Object.keys(after.minds ?? {})) {
+    const timeChanged = nativeThinkingTimeChanges(before, after);
+    for (const id of timeChanged ?? Object.keys(after.minds ?? {})) {
       const entity = entityGet(after.entities, id);
       if (!entity?.actor?.alive || !hasMemory(entity)) continue;
       if (affected.has(id)) continue;
+      if (
+        before.simTime === after.simTime &&
+        before.pendingNativeIntegration === after.pendingNativeIntegration
+      )
+        continue;
       const previous = this.nativeBaseline.get(id),
         current = this.readNative(after, id);
       if (
         !previous ||
-        previous.radius !== current.radius ||
         previous.protection !== current.protection ||
         previous.reconsideration !== current.reconsideration ||
         previous.actionsBlocked !== current.actionsBlocked ||
-        previous.concerns !== current.concerns ||
-        (classifications.size > 0 &&
-          this.exposure.get(id)?.ids.some((sourceId) => classifications.has(sourceId)))
+        previous.concerns !== current.concerns
       )
         affected.add(id);
     }
-    for (const id of this.incompleteExposure) affected.add(id);
     // Preserve the full reader's participant order, including generation
     // allocation when several people change in the same publication.
-    return new Set(Object.keys(after.minds ?? {}).filter((id) => affected.has(id)));
+    const order = (this.populationOrder ??= new Map(
+      Object.keys(after.minds ?? {}).map((id, index) => [id, index]),
+    ));
+    return new Set(
+      [...affected].filter((id) => order.has(id)).sort((a, b) => order.get(a)! - order.get(b)!),
+    );
   }
 
   /** Release operation-owned predicate preparation before any storage/provider
@@ -326,7 +296,7 @@ export class ThoughtIntakeInputs {
     this.preparedNative.clear();
   }
 
-  private readNative(world: WorldState, id: string, radius?: number): ThoughtNativeInputs {
+  private readNative(world: WorldState, id: string): ThoughtNativeInputs {
     const reusable = this.nativeWorld === world;
     const cached = reusable ? this.preparedNative.get(id) : undefined;
     if (cached) return cached;
@@ -348,7 +318,6 @@ export class ThoughtIntakeInputs {
       );
     }
     const prepared = {
-      radius: radius ?? visionRadius(world, entity),
       protection: nativeProtectionReason(world, id),
       reconsideration: JSON.stringify(bodyReconsiderationInputs(world, entity)),
       actionsBlocked: capabilityBlocked(world, entity, 'actions'),
@@ -369,55 +338,15 @@ export class ThoughtIntakeInputs {
   read(world: WorldState, id: string, verify = false): IntakeInputs {
     const entity = entityGet(world.entities, id)!,
       actor = entity.actor!;
-    const position = worldPosition(entity);
     const preparedNative = this.nativeWorld === world ? this.preparedNative.get(id) : undefined;
-    const radius = preparedNative?.radius ?? visionRadius(world, entity);
+    const native = preparedNative ?? this.readNative(world, id);
     const policyToken = installedThinkingToken(world);
-    let seen = this.exposure.get(id);
-    if (
-      !seen ||
-      seen.people !== world.visiblePeople?.[id] ||
-      seen.objects !== world.visibleObjects?.[id] ||
-      seen.position !== position ||
-      seen.map !== world.map ||
-      seen.body !== entity.spatial.body ||
-      seen.footprint !== entity.spatial.softFootprint ||
-      seen.radius !== radius ||
-      seen.definitions !== world.itemDefinitions
-    ) {
-      this.visibilityQueries++;
-      const query = spatialQuery(world, position, radius);
-      if (query.status !== 'complete') {
-        this.exposure.delete(id);
-        this.incompleteExposure.add(id);
-        return { values: [query.status], reasons: ['exposure'] };
-      }
-      this.incompleteExposure.delete(id);
-      const sees = entityVisionQuery(world, entity);
-      const ids = query.values.filter((other) => other.id !== id && sees(other)).map((o) => o.id);
-      seen = {
-        people: world.visiblePeople?.[id],
-        objects: world.visibleObjects?.[id],
-        position,
-        definitions: world.itemDefinitions,
-        map: world.map,
-        body: entity.spatial.body,
-        footprint: entity.spatial.softFootprint,
-        radius,
-        ids,
-      };
-      this.exposure.set(id, seen);
-    }
-    const native = preparedNative ?? this.readNative(world, id, radius);
+    // Read the same eligible received cut as context. No read-triggered sight query,
+    // classification from hidden entities, or parallel geometric visibility cache.
+    const subjects = currentObservedBodyClassifications(world, id);
+    const seen = { ids: subjects.map((subject) => subject.id) };
     if (!verify) this.nativeBaseline.set(id, native);
-    // A resource edit need not change visible membership. Read these compact facts
-    // currently without repeating the geometric query or retaining old entities.
-    const kinds = JSON.stringify(
-      seen.ids.map((id) => {
-        const other = entityGet(world.entities, id);
-        return [other?.kind, other?.resource?.definitionId];
-      }),
-    );
+    const kinds = JSON.stringify(subjects.map(({ kind, subtype }) => [kind, subtype]));
     // Awareness newer than the last weighed sequence orders urgent work first; it never
     // admits anything. Sequences, not array positions, survive consolidation removing entries.
     const entries = world.experience?.awareness[id] ?? [];

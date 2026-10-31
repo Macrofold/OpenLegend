@@ -1,6 +1,5 @@
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from './entity-collection.js';
-import { bindNativeChoice } from './action-capabilities.js';
 import { PLAYER_ID, NPC_ID } from '@open-legend/domain';
 import { setSpatialPosition, worldSupport } from './index.js';
 import { worldPosition } from './spatial-state.js';
@@ -9,14 +8,18 @@ import {
   executeCommand,
   advanceWorld,
   updateWorld,
-  commitCognition,
-  bodyEligibilityRevision,
+  publishInnerWorld,
+  acceptedMindFiles,
+  dreamStatus,
+  dreamPolicy,
+  currentObservedBodyIds,
   mindFor,
   get_memories,
-  MIND_POLICY,
   wordCount,
-  type CognitionBinding,
-  type MindProposal,
+  type WorldState,
+  type MindFiles,
+  type InnerRecordChange,
+  type ObserverSubject,
 } from './index.js';
 import { appendMemory } from './events.js';
 import { currentBodySubject } from './worlds/base/knowledge.js';
@@ -41,49 +44,69 @@ function encounter() {
   }).world;
   return world;
 }
+interface PublicationFixture {
+  jobId: string;
+  expectedRevision: number;
+  files: MindFiles;
+  thoughts: string[];
+  recordChanges: InnerRecordChange[];
+  dreamEpisode: string | null;
+}
+interface FixtureSupport {
+  evidenceIds: string[];
+  subjects: ObserverSubject[];
+}
+function publish(world: WorldState, binding: FixtureSupport, proposal: PublicationFixture) {
+  return publishInnerWorld(
+    world,
+    NPC_ID,
+    proposal.expectedRevision,
+    proposal.jobId,
+    'fixture',
+    proposal.files,
+    proposal.thoughts,
+    binding.evidenceIds,
+    proposal.dreamEpisode,
+    [],
+    [],
+    [],
+    binding.subjects,
+    undefined,
+    {},
+    [],
+    { sources: [], subjects: [], reflection: true },
+    proposal.recordChanges,
+  );
+}
 function setup() {
   const world = encounter();
   const recall = get_memories(world, NPC_ID, { limit: 300 });
-  const evidence = recall.entries[0]!.id;
-  const binding: CognitionBinding = {
-    privacyRevision: world.experience?.privacyRevisions?.[NPC_ID] ?? 0,
-    actorId: NPC_ID,
-    decisionId: 'fixture-decision',
-    policy: MIND_POLICY,
-    tier: 'full',
-    purpose: 'thought',
-    watermark: recall.observationWatermark,
-    evidenceIds: recall.entries.map((e) => e.id),
-    entityIds: [NPC_ID, PLAYER_ID],
-    identityReferences: { newcomer: currentBodySubject(world, NPC_ID, PLAYER_ID)! },
-    expectedPlan: entityGet(world.entities, NPC_ID)!.actor!.planGeneration,
-    actions: { continue: bindNativeChoice(world, NPC_ID, null, 'continue') },
-    restEpisode: null,
-    bodyEligibility: bodyEligibilityRevision(world, entityGet(world.entities, NPC_ID)!),
+  const evidence = recall.entries.find((entry) => entry.eventType === 'speech')!.id;
+  const subject = currentBodySubject(world, NPC_ID, PLAYER_ID)!;
+  const binding: FixtureSupport = {
+    evidenceIds: recall.entries.map((entry) => entry.id),
+    subjects: [subject],
   };
-  const proposal: MindProposal = {
-    decisionId: binding.decisionId,
-    policy: MIND_POLICY,
-    expectedRevision: 0,
-    thought: 'I hope the newcomer means it.',
-    actionId: null,
-    documents: [
+  const proposal: PublicationFixture = {
+    jobId: 'fixture-decision',
+    expectedRevision: world.innerWorlds![NPC_ID]!.revision,
+    thoughts: ['I hope the newcomer means it.'],
+    dreamEpisode: null,
+    files: [
+      ...acceptedMindFiles(world, NPC_ID),
       {
-        id: 'newcomer',
-        expectedRevision: 0,
-        title: 'The newcomer',
-        text: 'They offered to share berries. I tentatively believe they may help me.',
-        evidence: [{ id: evidence, relation: 'supports' }],
+        path: 'newcomer.md',
+        text: 'The newcomer\nThey offered to share berries. I tentatively believe they may help me.',
       },
     ],
-    removeDocuments: [],
-    records: [
+    recordChanges: [
       {
+        operation: 'upsert',
         id: 'newcomer-trust',
         expectedRevision: 0,
         documentId: 'newcomer',
         kind: 'relationship',
-        subjectId: 'newcomer',
+        subjectId: subject,
         source: 'inferred',
         confidence: 0.6,
         trust: 0.2,
@@ -91,11 +114,12 @@ function setup() {
         evidence: [{ id: evidence, relation: 'supports' }],
       },
       {
+        operation: 'upsert',
         id: 'helpful-belief',
         expectedRevision: 0,
         documentId: 'newcomer',
         kind: 'belief',
-        subjectId: 'newcomer',
+        subjectId: subject,
         source: 'inferred',
         confidence: 0.5,
         trust: null,
@@ -103,14 +127,13 @@ function setup() {
         evidence: [{ id: evidence, relation: 'derived-from' }],
       },
     ],
-    removeRecords: [],
   };
   return { world, binding, proposal };
 }
 describe('fixture: bounded authored minds', () => {
   it('commits directional interpretation of an actual engine encounter, not a fabricated fact', () => {
     const { world, binding, proposal } = setup();
-    const result = commitCognition(world, binding, proposal);
+    const result = publish(world, binding, proposal);
     expect(result.outcome.ok).toBe(true);
     expect(mindFor(result.world, NPC_ID).records.find((r) => r.kind === 'belief')?.source).toBe(
       'inferred',
@@ -122,11 +145,11 @@ describe('fixture: bounded authored minds', () => {
   });
   it('is idempotent and rejects identity conflicts', () => {
     const { world, binding, proposal } = setup();
-    const first = commitCognition(world, binding, proposal);
-    expect(commitCognition(first.world, binding, proposal).outcome.code).toBe('duplicate');
-    expect(
-      commitCognition(first.world, binding, { ...proposal, thought: 'changed' }).outcome.ok,
-    ).toBe(false);
+    const first = publish(world, binding, proposal);
+    expect(publish(first.world, binding, proposal).outcome.code).toBe('duplicate');
+    expect(publish(first.world, binding, { ...proposal, thoughts: ['changed'] }).outcome.ok).toBe(
+      false,
+    );
   });
   it('preserves concurrent new experiences', () => {
     const { world: initial, binding, proposal } = setup();
@@ -139,45 +162,41 @@ describe('fixture: bounded authored minds', () => {
         entityIds: [],
       });
     });
-    const result = commitCognition(world, binding, proposal);
+    const result = publish(world, binding, proposal);
     expect(
       get_memories(result.world, NPC_ID, { limit: 300 }).entries.some((m) =>
         m.summary.includes('bird'),
       ),
     ).toBe(true);
-    expect(mindFor(result.world, NPC_ID).processedWatermark).toBe(binding.watermark);
-  });
-  it.each(['fast', 'complex'] as const)('rejects %s writes', (tier) => {
-    const { world, binding, proposal } = setup();
-    expect(commitCognition(world, { ...binding, tier }, proposal).outcome.ok).toBe(false);
+    expect(mindFor(result.world, NPC_ID).records.some((record) => record.kind === 'belief')).toBe(
+      true,
+    );
   });
   it('rejects inaccessible evidence, forged provenance and unknown subjects', () => {
     const { world, binding, proposal } = setup();
     for (const patch of [
       { evidence: [{ id: 'private-other', relation: 'supports' as const }] },
       { source: 'authored' as const },
-      { subjectId: 'unknown' },
+      { subjectId: { kind: 'individual' as const, individualId: 'unknown' } },
     ]) {
       const next = structuredClone(proposal);
-      Object.assign(next.records[0]!, patch);
-      expect(commitCognition(world, binding, next).outcome.ok).toBe(false);
+      Object.assign(next.recordChanges[0]!, patch);
+      expect(publish(world, binding, next).outcome.ok).toBe(false);
     }
   });
   it('requires relevant revisions without treating every simulation tick as a mind conflict', () => {
     const { world, binding, proposal } = setup();
     world.simTime += 1;
-    expect(commitCognition(world, binding, proposal).outcome.ok).toBe(true);
-    expect(commitCognition(world, binding, { ...proposal, expectedRevision: 10 }).outcome.ok).toBe(
-      false,
-    );
+    expect(publish(world, binding, proposal).outcome.ok).toBe(true);
+    expect(publish(world, binding, { ...proposal, expectedRevision: 10 }).outcome.ok).toBe(false);
   });
-  it('rejects quota overflow atomically and counts title words and UTF8 bytes', () => {
+  it('rejects quota overflow atomically and counts filename words and UTF8 bytes', () => {
     const { world, binding, proposal } = setup();
-    proposal.documents[0]!.text = Array(500).fill('word').join(' ');
-    expect(commitCognition(world, binding, proposal).outcome.ok).toBe(false);
-    proposal.documents[0]!.text = '界'.repeat(3000);
-    expect(wordCount(proposal.documents[0]!.text)).toBe(1);
-    expect(commitCognition(world, binding, proposal).outcome.ok).toBe(false);
+    proposal.files[1]!.text = Array(500).fill('word').join(' ');
+    expect(publish(world, binding, proposal).outcome.ok).toBe(false);
+    proposal.files[1]!.text = '界'.repeat(3000);
+    expect(wordCount(proposal.files[1]!.text)).toBe(1);
+    expect(publish(world, binding, proposal).outcome.ok).toBe(false);
     expect(mindFor(world, NPC_ID).documents).toHaveLength(1);
   });
   it('allows atomic remove/add at ten documents, protects identity', () => {
@@ -193,22 +212,20 @@ describe('fixture: bounded authored minds', () => {
         protected: false,
       });
     world.minds = { [NPC_ID]: mind };
-    expect(commitCognition(world, binding, proposal).outcome.ok).toBe(false);
-    proposal.removeDocuments = [{ id: 'old0', expectedRevision: 1 }];
-    expect(commitCognition(world, binding, proposal).outcome.ok).toBe(true);
-    proposal.removeDocuments = [{ id: 'identity', expectedRevision: 1 }];
-    expect(commitCognition(world, binding, proposal).outcome.ok).toBe(false);
-  });
-  it('rejects coupled invalid actions without committing a thought or mind', () => {
-    const { world, binding, proposal } = setup();
-    binding.actions.bad = bindNativeChoice(
-      world,
-      NPC_ID,
-      { id: 'bad', actorId: NPC_ID, type: 'gather', targetId: 'missing' },
-      'replace',
+    proposal.files.push(
+      ...acceptedMindFiles(world, NPC_ID).filter((file) => file.path !== 'identity.md'),
     );
-    proposal.actionId = 'bad';
-    const result = commitCognition(world, binding, proposal);
+    expect(publish(world, binding, proposal).outcome.ok).toBe(false);
+    proposal.files = proposal.files.filter((file) => file.path !== 'old0.md');
+    expect(publish(world, binding, proposal).outcome.ok).toBe(true);
+    proposal.files = proposal.files.filter((file) => file.path !== 'identity.md');
+    expect(publish(world, binding, proposal).outcome.ok).toBe(false);
+  });
+  it('rejects dangling interpretation references without committing a thought or mind', () => {
+    const { world, binding, proposal } = setup();
+    const record = proposal.recordChanges[0]!;
+    if (record.operation === 'upsert') record.documentId = 'missing';
+    const result = publish(world, binding, proposal);
     expect(result.outcome.ok).toBe(false);
     expect(result.world).toBe(world);
     expect(result.events).toEqual([]);
@@ -224,16 +241,21 @@ describe('fixture: bounded authored minds', () => {
       targetId: NPC_ID,
       operation: 'activate',
     }).world;
-    binding.purpose = 'dream';
-    binding.restEpisode = entityGet(resting.entities, NPC_ID)!.actor!.action!.id;
-    proposal.records.forEach((r) => (r.source = 'imagined'));
-    const result = commitCognition(resting, binding, proposal);
-    expect(result.outcome.ok).toBe(true);
+    const policy = dreamPolicy(resting)!;
+    resting.simTime += policy.afterSeconds;
+    entityGet(resting.entities, NPC_ID)!.statusEffects![policy.statusEffectId]!.elapsedSeconds =
+      policy.afterSeconds;
+    proposal.dreamEpisode = dreamStatus(resting, entityGet(resting.entities, NPC_ID))!.episode;
+    proposal.recordChanges.forEach((record) => {
+      if (record.operation === 'upsert') record.source = 'imagined';
+    });
+    const result = publish(resting, binding, proposal);
+    expect(result.outcome.ok, result.outcome.message).toBe(true);
     expect(mindFor(result.world, NPC_ID).thoughts[0]?.source).toBe('imagined');
     expect(result.world.memories[NPC_ID]).toEqual(resting.memories[NPC_ID]);
-    expect(mindFor(result.world, NPC_ID).lastDreamEpisode).toBe(binding.restEpisode);
+    expect(mindFor(result.world, NPC_ID).lastDreamEpisode).toBe(proposal.dreamEpisode);
   });
-  it('records person encounters natively without repeated per-step records', () => {
+  it('preserves current sight without routine person history', () => {
     let world = stockedCamp(4);
     world.paused = false;
     setSpatialPosition(
@@ -251,13 +273,19 @@ describe('fixture: bounded authored minds', () => {
     );
     world = advanceWorld(world, 1).world;
     const initial = (world.experience?.awareness[NPC_ID] ?? []).filter((m) =>
-      world.events.some((event) => event.id === m.eventId && event.type === 'encounter'),
+      world.events.some(
+        (event) => event.id === m.eventId && event.type === 'encounter' && !event.exposure,
+      ),
     ).length;
-    expect(initial).toBeGreaterThan(0);
+    initializePerception(world, []);
+    expect(currentObservedBodyIds(world, NPC_ID)).toContain(PLAYER_ID);
+    expect(initial).toBe(0);
     world = advanceWorld(world, 1).world;
     expect(
       (world.experience?.awareness[NPC_ID] ?? []).filter((m) =>
-        world.events.some((event) => event.id === m.eventId && event.type === 'encounter'),
+        world.events.some(
+          (event) => event.id === m.eventId && event.type === 'encounter' && !event.exposure,
+        ),
       ),
     ).toHaveLength(initial);
   });
@@ -333,8 +361,13 @@ describe('fixture: evidence and forgetting boundaries', () => {
   });
   it('requires actual self-attributed promises and protects accepted obligations', () => {
     const { world, binding, proposal } = setup();
-    proposal.records = [{ ...proposal.records[0]!, kind: 'commitment' }];
-    expect(commitCognition(world, binding, proposal).outcome.ok).toBe(false);
+    proposal.recordChanges = [
+      {
+        ...(proposal.recordChanges[0] as Extract<InnerRecordChange, { operation: 'upsert' }>),
+        kind: 'commitment',
+      },
+    ];
+    expect(publish(world, binding, proposal).outcome.ok).toBe(false);
     const spoken = executeCommand(world, {
       id: 'promise',
       actorId: NPC_ID,
@@ -344,19 +377,18 @@ describe('fixture: evidence and forgetting boundaries', () => {
     }).world;
     const promise = spoken.memories[NPC_ID]!.find((m) => m.speakerId === NPC_ID)!;
     binding.evidenceIds.push(promise.id);
-    proposal.records[0]!.evidence = [{ id: promise.id, relation: 'supports' }];
-    const accepted = commitCognition(spoken, binding, proposal);
+    const record = proposal.recordChanges[0]!;
+    if (record.operation === 'upsert') record.evidence = [{ id: promise.id, relation: 'supports' }];
+    const accepted = publish(spoken, binding, proposal);
     expect(accepted.outcome.ok).toBe(true);
     const next = {
       ...proposal,
-      decisionId: 'compact',
+      jobId: 'compact',
       expectedRevision: 1,
-      documents: [],
-      records: [],
-      removeRecords: [{ id: proposal.records[0]!.id, expectedRevision: 1 }],
+      recordChanges: [
+        { operation: 'remove' as const, id: proposal.recordChanges[0]!.id, expectedRevision: 1 },
+      ],
     };
-    expect(
-      commitCognition(accepted.world, { ...binding, decisionId: 'compact' }, next).outcome.ok,
-    ).toBe(false);
+    expect(publish(accepted.world, binding, next).outcome.ok).toBe(false);
   });
 });

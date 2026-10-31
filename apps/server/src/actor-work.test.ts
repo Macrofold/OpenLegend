@@ -1,5 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { createWorld, freezeWorld, NPC_ID, PLAYER_ID } from '@open-legend/domain';
+import {
+  createWorld,
+  freezeWorld,
+  initializePerception,
+  NPC_ID,
+  PLAYER_ID,
+} from '@open-legend/domain';
 import { ActorWork } from './actor-work.js';
 import {
   installedThinkingToken,
@@ -65,23 +71,26 @@ describe('character work waits for its captured evidence to be saved', () => {
       expect(personalThoughtChanges(world, changed)).toBeUndefined();
   });
 
-  it('refreshes edited sight geometry and reads current resource kinds without another sight query', () => {
-    const world = freezeWorld(createWorld(73));
+  it('reads acquired classifications without resensing edits from thought intake', () => {
+    const source = createWorld(73);
+    initializePerception(source, []);
+    const world = freezeWorld(source);
     const intake = new ThoughtIntakeInputs();
     intake.reset('fixture');
     const before = intake.read(world, NPC_ID);
-    expect(intake.visible(NPC_ID)).toContain('reeds');
-    const queries = intake.visibilityQueries;
+    expect(String(before.values[11]).split('\0')).toContain('reeds');
     const edit = draftWorld(world);
     entityGet(edit.entities, 'reeds')!.resource!.definitionId = 'wood';
     const changed = freezeWorld(finishWorld(edit));
-    const after = intake.read(changed, NPC_ID);
-    expect(after.values[12]).not.toBe(before.values[12]);
-    expect(intake.visibilityQueries).toBe(queries);
-    const geometry = draftWorld(changed);
+    expect(intake.read(changed, NPC_ID).values[12]).toBe(before.values[12]);
+    const acquired = draftWorld(changed);
+    initializePerception(acquired, []);
+    const after = freezeWorld(finishWorld(acquired));
+    expect(intake.read(after, NPC_ID).values[12]).not.toBe(before.values[12]);
+    const geometry = draftWorld(after);
     geometry.map.spatial.revision++;
     intake.read(freezeWorld(finishWorld(geometry)), NPC_ID);
-    expect(intake.visibilityQueries).toBe(queries + 1);
+    expect(intake.read(world, NPC_ID).values[12]).toBe(before.values[12]);
   });
   it('does not cache mutable installed pins merely because their outer manifest is frozen', () => {
     const world = createWorld(73);

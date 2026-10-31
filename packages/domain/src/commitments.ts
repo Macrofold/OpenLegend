@@ -1,3 +1,4 @@
+import { selectedSpokenPromise } from './world-composition.js';
 import { entityGet } from './entity-collection.js';
 import { subjectNarration } from './narration.js';
 import { mutateExperience } from './experience.js';
@@ -87,7 +88,6 @@ export interface Obligation {
 }
 /** Unresolved obligations per actor; further promise speech is still spoken but not
  * recorded. docs/limits/base-world.md#bw04 */
-export const COMMITMENT_ADMISSION_LIMIT = 16;
 /** The count admission checks against the limit: every unresolved commitment record,
  * including forgotten ones and commitments without a native obligation. */
 export function unresolvedCommitmentCount(world: WorldState, actorId: string): number {
@@ -107,26 +107,11 @@ export function openObligations(world: WorldState, actorId: string): MemoryRecor
 }
 /** Only committed, self-attributed explicit promise speech creates an obligation. */
 export function recordSpokenPromise(world: WorldState, event: WorldEvent): void {
-  if (
-    event.type !== 'speech' ||
-    !event.actorId ||
-    !/^I promise to\s+\S/i.test(String(event.data?.['text'] ?? ''))
-  )
-    return;
+  const recognized = selectedSpokenPromise(world, event);
+  if (!recognized || !event.actorId) return;
   const actorId = event.actorId;
-  if (unresolvedCommitmentCount(world, actorId) >= COMMITMENT_ADMISSION_LIMIT) return;
-  const words = String(event.data?.['text'] ?? '')
-    .trim()
-    .replace(/[.!]$/, '');
-  const gather = /^I promise to gather (.+)$/i.exec(words);
-  const named = gather?.[1]?.toLowerCase();
-  const definitions = Object.values(world.itemDefinitions).filter(
-    (d) => d.id.replaceAll('_', ' ').toLowerCase() === named || d.name.toLowerCase() === named,
-  );
-  const completion =
-    definitions.length === 1
-      ? { eventType: 'gathered', definitionId: definitions[0]!.id }
-      : undefined;
+  if (unresolvedCommitmentCount(world, actorId) >= recognized.limit) return;
+  const completion = recognized.completion;
   appendMemory(world, actorId, {
     kind: 'commitment',
     source: 'observed',

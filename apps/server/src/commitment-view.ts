@@ -1,6 +1,6 @@
 import { entityGet } from '@open-legend/domain';
 import {
-  COMMITMENT_ADMISSION_LIMIT,
+  selectedCommitmentLimit,
   observerDescription,
   recognizesSubject,
   openObligations,
@@ -138,7 +138,7 @@ export async function commitmentPage(
     worldId: world.id,
     generation,
     open: open.sort((a, b) => b.at - a.at).map((memory) => promiseView(world, actorId, memory)),
-    openLimit: COMMITMENT_ADMISSION_LIMIT,
+    openLimit: selectedCommitmentLimit(world),
     counted: unresolvedCommitmentCount(world, actorId),
     past: past.map((memory) => promiseView(world, actorId, memory)),
     next: next ? Buffer.from(JSON.stringify({ v: 1, fence, ...next })).toString('base64url') : null,

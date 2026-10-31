@@ -591,14 +591,8 @@ export function editPerson(original: WorldState, draft: GodPersonEdit): Transiti
       (world.minds ??= {})[draft.actorId] = mind;
     }
     const inner = world.innerWorlds?.[draft.actorId];
-    const identityFile = inner?.files.find((file) => file.path === 'identity.md');
-    if (inner && identityFile && identity) {
-      identityFile.text = `${identity.title}\n${identity.text}`;
-      inner.text = inner.files
-        .slice()
-        .sort((a, b) => a.path.localeCompare(b.path, 'en'))
-        .map((file) => `# ${file.path}\n${file.text}`)
-        .join('\n\n');
+    if (inner && identity) {
+      identity.text = `${identity.title}\n${identity.text}`;
       inner.revision++;
       inner.reconsiderationRequired = true;
     }

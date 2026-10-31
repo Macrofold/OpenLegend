@@ -1,8 +1,9 @@
+import { objectIndexGet, objectIndexSet, type ObjectIndexNode } from './object-index.js';
 import { temporalFacetValueReferences } from './temporal-evidence.js';
 import { temporalChunkReferences } from './temporal-frames.js';
 import { nextId } from './data.js';
 import { countDomainWork } from './diagnostic-counters.js';
-import { readOnlyDraftView, touchNativeEvidence } from './draft.js';
+import { readOnlyDraftView, touchNativeEvidence, recordMapChangesBetween } from './draft.js';
 import { immutableDataSnapshot, isImmutableData, jsonEncoding } from './records.js';
 import type { WorldState } from './types.js';
 import type {
@@ -176,7 +177,11 @@ interface ReferenceOwner {
   };
 }
 interface ReferenceIndex {
-  owners: Map<string, ReferenceOwner>;
+  owners: ObjectIndexNode<ReferenceOwner> | undefined;
+  actorKeys: ObjectIndexNode<readonly string[]> | undefined;
+  perceptionRoot: WeakRef<object>;
+  temporalRoot: WeakRef<object>;
+  mode: number;
   counts: ReferenceCounts;
   references: ReceivedValueReferences;
 }
@@ -190,7 +195,7 @@ const observationReferences = new WeakMap<object, ReceivedValueReferences>();
 const contactReferences = new WeakMap<object, ReceivedValueReferences>();
 // A weak last result allows incremental normal execution without retaining prior
 // worlds or an indefinitely growing chain of receipt arrays.
-let previousReferenceIndex: WeakRef<ReferenceIndex> | undefined;
+const previousReferenceIndexes: [WeakRef<ReferenceIndex>?, WeakRef<ReferenceIndex>?] = [];
 
 function collectReferences(values: Iterable<string>): ReceivedValueReferences {
   return new Set(values);
@@ -217,15 +222,23 @@ function referenceDelta(previous?: CountedReferences) {
     },
     finish(): CountedReferences {
       if (!touched.size && previous) return previous;
-      const counts = new Map(previous?.counts),
-        references = new Set(previous?.references);
+      let ownedCounts: Map<string, number> | undefined;
+      let ownedReferences: Set<string> | undefined;
       for (const [id, count] of touched) {
-        if (count) counts.set(id, count);
-        else counts.delete(id);
-        if (count > 0 !== references.has(id)) changedBlocks.add(id);
-        if (count) references.add(id);
-        else references.delete(id);
+        if ((previous?.counts.get(id) ?? 0) !== count) {
+          ownedCounts ??= new Map(previous?.counts);
+          if (count) ownedCounts.set(id, count);
+          else ownedCounts.delete(id);
+        }
+        if (count > 0 !== (previous?.references.has(id) ?? false)) {
+          ownedReferences ??= new Set(previous?.references);
+          if (count) ownedReferences.add(id);
+          else ownedReferences.delete(id);
+          changedBlocks.add(id);
+        }
       }
+      const counts = ownedCounts ?? previous?.counts ?? new Map();
+      const references = ownedReferences ?? previous?.references ?? new Set();
       return { counts, references };
     },
   };
@@ -352,66 +365,94 @@ export function referencedReceivedValues(
   const cached = immutable && referenceIndexes.get(perception)?.get(actors)?.[mode];
   if (cached) {
     countDomainWork('receivedReferenceRootsReused');
-    previousReferenceIndex = new WeakRef(cached);
+    previousReferenceIndexes[mode] = new WeakRef(cached);
     return cached.references;
   }
-  const previous = previousReferenceIndex?.deref();
-  const owners = new Map<string, ReferenceOwner>();
-  for (const [actorId, owner] of Object.entries(perception)) {
-    const key = JSON.stringify(['perception', actorId]);
-    owners.set(key, perceptionReferences(owner, previous?.owners.get(key)));
-  }
-  for (const [actorId, input] of Object.entries(actors)) {
-    const actor = readOnlyDraftView(input);
-    for (const input of readOnlyDraftView(actor.chunks)) {
-      const chunk = readOnlyDraftView(input);
-      const key = JSON.stringify(['temporal', actorId, chunk.id]);
-      const old = previous?.owners.get(key);
-      owners.set(
-        key,
-        old?.identity === chunk.entries
-          ? old
-          : { identity: chunk.entries, references: temporalChunkReferences(chunk) },
-      );
-    }
-    if (mode) {
-      const captures = readOnlyDraftView(actor.captures);
-      const key = JSON.stringify(['capture', actorId]);
-      const old = previous?.owners.get(key);
-      owners.set(
-        key,
-        old?.identity === captures
-          ? old
-          : {
-              identity: captures,
-              references: collectReferences(
-                Object.values(captures).flatMap(temporalFacetValueReferences),
-              ),
-            },
-      );
-    }
-  }
+  let previous = previousReferenceIndexes[mode]?.deref();
+  if (previous?.mode !== mode) previous = undefined;
+  const oldPerception = previous?.perceptionRoot.deref(),
+    oldTemporal = previous?.temporalRoot.deref();
+  const changedPerception = oldPerception
+    ? recordMapChangesBetween(oldPerception, perception)
+    : undefined;
+  const changedTemporal = oldTemporal ? recordMapChangesBetween(oldTemporal, actors) : undefined;
+  if (!changedPerception || !changedTemporal) previous = undefined;
+  let owners = previous?.owners,
+    actorKeys = previous?.actorKeys;
   const delta = referenceDelta(previous);
-  const changedOwners = new Set([...(previous?.owners.keys() ?? []), ...owners.keys()]);
-  for (const key of changedOwners) {
-    const before = previous?.owners.get(key)?.references,
-      after = owners.get(key),
-      changes = after?.referenceChanges;
+  const updateOwner = (key: string, after: ReferenceOwner | undefined) => {
+    const before = objectIndexGet(owners, key);
+    if (before === after) return;
+    const changes = after?.referenceChanges;
     delta.update(
-      before,
+      before?.references,
       after?.references,
-      before && changes?.before.deref() === before ? changes.blocks : undefined,
+      before && changes?.before.deref() === before.references ? changes.blocks : undefined,
     );
+    owners = objectIndexSet(owners, key, after);
+  };
+  for (const actorId of previous ? changedPerception! : Object.keys(perception)) {
+    const key = JSON.stringify(['perception', actorId]);
+    const owner = perception[actorId];
+    updateOwner(key, owner ? perceptionReferences(owner, objectIndexGet(owners, key)) : undefined);
+  }
+  for (const actorId of previous ? changedTemporal! : Object.keys(actors)) {
+    const held = actors[actorId],
+      actor = held && readOnlyDraftView(held);
+    const keys: string[] = [];
+    if (actor) {
+      for (const input of readOnlyDraftView(actor.chunks)) {
+        const chunk = readOnlyDraftView(input);
+        const key = JSON.stringify(['temporal', actorId, chunk.id]),
+          old = objectIndexGet(owners, key);
+        keys.push(key);
+        updateOwner(
+          key,
+          old?.identity === chunk.entries
+            ? old
+            : { identity: chunk.entries, references: temporalChunkReferences(chunk) },
+        );
+      }
+      if (mode) {
+        const captures = readOnlyDraftView(actor.captures),
+          key = JSON.stringify(['capture', actorId]);
+        const old = objectIndexGet(owners, key);
+        keys.push(key);
+        updateOwner(
+          key,
+          old?.identity === captures
+            ? old
+            : {
+                identity: captures,
+                references: collectReferences(
+                  Object.values(captures).flatMap(temporalFacetValueReferences),
+                ),
+              },
+        );
+      }
+    }
+    const present = new Set(keys);
+    for (const key of objectIndexGet(actorKeys, actorId) ?? [])
+      if (!present.has(key)) updateOwner(key, undefined);
+    actorKeys = objectIndexSet(actorKeys, actorId, actor ? keys : undefined);
   }
   const { counts, references } = delta.finish();
-  const index = { owners, counts, references };
+  const index: ReferenceIndex = {
+    owners,
+    actorKeys,
+    counts,
+    references,
+    mode,
+    perceptionRoot: new WeakRef(perception),
+    temporalRoot: new WeakRef(actors),
+  };
   if (immutable) {
     let byTemporal = referenceIndexes.get(perception);
     if (!byTemporal) referenceIndexes.set(perception, (byTemporal = new WeakMap()));
     let modes = byTemporal.get(actors);
     if (!modes) byTemporal.set(actors, (modes = []));
     modes[mode] = index;
-    previousReferenceIndex = new WeakRef(index);
+    previousReferenceIndexes[mode] = new WeakRef(index);
   }
   return references;
 }

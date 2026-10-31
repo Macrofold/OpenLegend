@@ -98,7 +98,7 @@ import {
   type Awareness,
   type PreparedResponseProfile,
 } from '@open-legend/domain';
-import { domainCommand } from './cognition.js';
+import { domainCommand } from './domain-command.js';
 import type { ActorResponse, AttemptBinding, IntentSlots } from '@open-legend/domain';
 import { validIntentSlots } from '@open-legend/domain';
 import type { SpeechVolume } from '@open-legend/domain';
@@ -4083,8 +4083,8 @@ export class AiDirector {
       const worldId = readWorld().id;
       const policy = readWorld().cognitionPolicy;
       const generation = this.service.generation;
-      // One change-fed intake: cheap per-character tokens; visibility reruns only for a
-      // character whose own exposure or position changed (EPR05).
+      // One change-fed intake consumes actual personal reception; only acquisition
+      // performs sight work. Unknown dependency coverage rebuilds native predicates.
       this.thoughtInputs.reset(this.service.generation);
       timedSync('cognition.thoughtRefresh', () => {
         try {
@@ -4094,19 +4094,14 @@ export class AiDirector {
             this.thoughtInputScope === generation &&
             Object.isFrozen(readWorld())
           ) {
-            // A repeat poll of the exact same immutable world cannot acquire new
-            // native evidence. Retained native arithmetic replaces that world even
-            // when actor anchors stay identical, so current meter concerns refresh.
-            // Deferred spatial preparation can complete meanwhile,
-            // so those characters still refresh; deadlines/durability stay live below.
-            this.thoughtWork.refreshAffected(readWorld(), this.thoughtInputs.pendingExposure());
+            // Native acquisition publishes its own changes; a repeated read of the
+            // same accepted world has no input to refresh. Due tickets stay live below.
           } else {
             const affected =
               previous && this.thoughtInputScope === generation
                 ? this.thoughtInputs.affected(previous, readWorld())
                 : undefined;
             if (affected) {
-              for (const id of this.thoughtInputs.pendingExposure()) affected.add(id);
               this.thoughtWork.refreshAffected(readWorld(), affected);
             } else {
               this.thoughtInputs.reconcile(readWorld());
@@ -4130,8 +4125,7 @@ export class AiDirector {
           entityGet(readWorld().entities, id)?.actor?.controller === 'npc' &&
           !this.escalator.hasActor(id) &&
           ![...this.activeRuns].some((run) => run.job.decision?.actorId === id) &&
-          !entityGet(readWorld().entities, id)?.actor?.incapacitated &&
-          this.thoughtInputs.visible(id) !== undefined,
+          !entityGet(readWorld().entities, id)?.actor?.incapacitated,
       );
       const generations = new Map(
         actors.map((id) => [id, this.thoughtWork.capture(readWorld(), id)]),

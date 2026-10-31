@@ -2,6 +2,8 @@ import { entityGet } from '@open-legend/domain';
 import {
   characterCount,
   knowledgeDocument,
+  knowledgeKey,
+  knowledgePage,
   currentCommunicationSubject,
   currentBodySubjects,
   subjectKey,
@@ -61,13 +63,22 @@ export function subjectKnowledgeCandidates(
   world: WorldState,
   actorId: string,
   involved: Set<string>,
+  optionalIds?: readonly string[],
 ): AttentionCandidate[] {
   const involvedSubjects = new Set(
     [...involved].flatMap((entityId) =>
       currentBodySubjects(world, actorId, entityId).map(subjectKey),
     ),
   );
-  return Object.entries(world.actorKnowledge?.[actorId] ?? {}).flatMap(([id, doc]) => {
+  const ids = new Set(
+    optionalIds ?? knowledgePage(world, actorId).values.map((doc) => knowledgeKey(doc.subjectId)),
+  );
+  for (const id of involved) ids.add(knowledgeKey({ kind: 'entity', entityId: id }));
+  for (const id of involved)
+    for (const subject of currentBodySubjects(world, actorId, id)) ids.add(knowledgeKey(subject));
+  return [...ids].flatMap((id) => {
+    const doc = world.actorKnowledge?.[actorId]?.[id];
+    if (!doc) return [];
     if (doc.subjectId === null || !doc.text) return [];
     if (doc.subjectId.kind === 'place' || doc.subjectId.kind === 'map-marker') {
       // Map annotations supply beliefs, never physical targets or model edit handles.

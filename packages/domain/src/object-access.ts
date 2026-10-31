@@ -1,3 +1,4 @@
+import { boundActionItemIds } from './action-item-references.js';
 import { entityGet } from './entity-collection.js';
 import { directChildIds, itemFor, objectAncestors, custodian, mergeCompatible } from './objects.js';
 import { canReachEntity } from './spatial.js';
@@ -64,14 +65,7 @@ export function inventoryWorkReason(world: WorldState, actorId: string, id: stri
   for (const owner of new Set([actorId, custodian(world, id)])) {
     const actor = entityGet(world.entities, owner)?.actor,
       action = actor?.action;
-    for (const reference of [
-      action?.itemId,
-      action?.weaponItemId,
-      action?.ammoItemId,
-      action?.targetId,
-      action?.heatId,
-      ...Object.values(action?.foodPreparation?.inputs ?? {}),
-    ])
+    for (const reference of [...boundActionItemIds(action), action?.targetId, action?.heatId])
       if (reference) referenced.add(reference);
   }
   const visit = (itemId: string): boolean => {

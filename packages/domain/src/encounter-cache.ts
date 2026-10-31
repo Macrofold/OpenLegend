@@ -1,3 +1,4 @@
+import { selectedOutwardBodyActivity } from './world-composition.js';
 import { observedActionAnimation } from './observed-animation.js';
 import { isImmutableData, jsonText, immutableDataSnapshot } from './records.js';
 import { entityGet, entityKeys } from './entity-collection.js';
@@ -10,7 +11,7 @@ import { objectAncestors } from './objects.js';
 import { hasMemory } from './living.js';
 import { nativeSensoryObserver } from './native-response.js';
 import { activelyParticipates } from './participation-state.js';
-import { visibleFeature } from './perception-frame.js';
+import { outwardFeatureSignature } from './perception-frame.js';
 import {
   bodyProfile,
   effectiveBodyProfile,
@@ -70,60 +71,26 @@ export function episodeStartedAt(episode: string | undefined): number | undefine
   const at = episode ? Number(episode.split(':')[1]) : Number.NaN;
   return Number.isFinite(at) ? at : undefined;
 }
-/** Latest private sighting record per subject for one observer (EPR03). */
-export interface SightingRecord {
-  /** False when the latest record is a departure. */
-  present: boolean;
-  at: number;
-  episode?: string;
-}
-/** Read the observer's newest sighting records back to `since`, without copying its
- * resident awareness. Only records still resident are visible: a missing or evicted record
- * can cause an extra record later, never a lost one. Awareness is appended in time order.
- * docs/events-perception-and-reactions.md#hysteresis-and-freshness */
-export function recentSightings(
-  world: WorldState,
-  observerId: string,
-  since: number,
-): Map<string, SightingRecord> {
-  const records = new Map<string, SightingRecord>();
-  const awareness = world.experience ? readOnlyDraftView(world.experience.awareness) : undefined;
-  const entries = readOnlyDraftView(awareness?.[observerId] ?? []);
-  // Presence comes from the newest arrival or departure; an outward-change record only marks
-  // the subject as recently recorded and cannot re-arm a departure.
-  const resolved = new Set<string>();
-  for (let i = entries.length - 1; i >= 0; i--) {
-    const entry = entries[i]!;
-    if (entry.at < since) break;
-    const subject = entry.targetId;
-    if (entry.eventType !== 'encounter' || !subject || resolved.has(subject)) continue;
-    if (entry.change === 'detail') {
-      if (records.has(subject)) continue;
-    } else resolved.add(subject);
-    records.set(subject, {
-      present: entry.change !== 'end',
-      at: entry.at,
-      ...(entry.entityEpisodes?.[subject] ? { episode: entry.entityEpisodes[subject] } : {}),
-    });
-  }
-  return records;
-}
 /** One root's read-only encounter inputs for a phase. */
 export interface ExposureCapture extends ExposureInput {
   entity: Entity;
-  detail: string;
 }
-const captures = new WeakMap<Entity, ExposureCapture | null>();
-/** Every field depends only on the entity record (and constant body profiles), so an
- * immutable record reuses its capture across slices; a live draft is captured afresh.
+const captures = new WeakMap<
+  Entity,
+  { profile: WorldState['profile']; value: ExposureCapture | null }
+>();
+/** Entity facts and the selected reality define the coarse capture; public attributes
+ * are added independently. Immutable inputs reuse across slices; drafts stay fresh.
  * Returns null for a root that does not currently participate. Callers only read it.
  * PF03/09: static roots otherwise rebuilt identical inputs on every slice. */
 export function captureExposure(world: WorldState, entity: Entity): ExposureCapture | null {
   countDomainWork('sensoryCaptures');
-  const frozen = Object.isFrozen(entity) && !entity.spatial.localPose;
+  const selectedProfile = readOnlyDraftView(world.profile);
+  const frozen =
+    Object.isFrozen(entity) && Object.isFrozen(selectedProfile) && !entity.spatial.localPose;
   if (frozen) {
     const cached = captures.get(entity);
-    if (cached !== undefined) return withPublicAttributes(world, cached);
+    if (cached?.profile === selectedProfile) return withPublicAttributes(world, cached.value);
   }
   let capture: ExposureCapture | null = null;
   if (activelyParticipates(entity)) {
@@ -160,10 +127,10 @@ export function captureExposure(world: WorldState, entity: Entity): ExposureCapt
           : null,
       ]),
       poseSignature: JSON.stringify([worldSupport(entity), entity.spatial.heading]),
-      ...visibleFeature(entity),
+      feature: outwardFeatureSignature(entity, selectedOutwardBodyActivity(world, entity)),
     };
   }
-  if (frozen) captures.set(entity, capture);
+  if (frozen) captures.set(entity, { profile: selectedProfile, value: capture });
   return withPublicAttributes(world, capture);
 }
 const itemPresentationKeys = new WeakMap<object, string>();
@@ -245,7 +212,6 @@ function withPublicAttributes(
   };
 }
 type Source = ExposureInput & {
-  detail: string;
   order: number;
   measurementKey: string;
   detailKey: string;
@@ -385,7 +351,6 @@ export function inheritUnchangedExposure(before: WorldState, after: WorldState):
     'visiblePeople',
     'visibleObjects',
     'perceptionEpisodes',
-    'perceptionFeatures',
     'places',
     'visiblePlaces',
   ];
@@ -494,7 +459,6 @@ function* prepareExposurePhase(
   {
     observers: ExposureCapture[];
     affected: Set<string>;
-    changedFeatures: Map<string, string>;
     nearby: (
       position: Position,
       radius: number,
@@ -624,8 +588,7 @@ function* prepareExposurePhase(
       get: (id) =>
         previousPositions.has(id) ? previousPositions.get(id) : prepared.inputs.get(id)?.position,
     };
-  const affected = new Set<string>(),
-    changedFeatures = new Map<string, string>();
+  const affected = new Set<string>();
   const changed: Source[] = [];
   const fullPeople = new Set<string>();
   const peopleChanges = new Map<string, Set<string>>();
@@ -724,11 +687,6 @@ function* prepareExposurePhase(
     prepared.radii.add(source.radius);
     changed.push(source);
     countDomainWork('sensoryEntriesUpdated');
-    if (
-      world.perceptionFeatures[id] !== undefined &&
-      world.perceptionFeatures[id] !== source.feature
-    )
-      changedFeatures.set(id, source.detail);
   };
   if (rebuild) {
     const roots = worldRootEntities(world, true, true);
@@ -958,25 +916,9 @@ function* prepareExposurePhase(
     }));
   countDomainWork('sensoryObserversSelected', affected.size);
   countDomainWork('sensoryObserverCaptures', observers.length);
-  // Maintain the existing saved outward baseline only for sources this phase evaluated.
-  if (rebuild) {
-    const values = Object.fromEntries([...prepared.inputs.values()].map((s) => [s.id, s.feature]));
-    if (
-      Object.keys(values).length !== Object.keys(world.perceptionFeatures).length ||
-      Object.entries(values).some(([id, feature]) => world.perceptionFeatures[id] !== feature)
-    )
-      world.perceptionFeatures = values;
-  } else
-    for (const id of previousPositions.keys()) {
-      const source = prepared.inputs.get(id);
-      if (!source) delete world.perceptionFeatures[id];
-      else if (world.perceptionFeatures[id] !== source.feature)
-        world.perceptionFeatures[id] = source.feature;
-    }
   return {
     observers,
     affected,
-    changedFeatures,
     maximumBodyHeight: prepared.heights.maximum,
     maximumBodyRadius: prepared.radii.maximum,
     objectsChanged: (id) => prepared.observers.get(id)?.objectsDirty ?? true,

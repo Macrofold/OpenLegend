@@ -17,7 +17,11 @@ const node = <T>(key: string, value: T, left: Tree<T>, right: Tree<T>): ObjectIn
   left,
   right,
   height: Math.max(height(left), height(right)) + 1,
-  maximum: Math.max(typeof value === 'number' ? value : 0, left?.maximum ?? 0, right?.maximum ?? 0),
+  maximum: Math.max(
+    typeof value === 'number' ? value : 0,
+    left?.maximum ?? -Infinity,
+    right?.maximum ?? -Infinity,
+  ),
 });
 function rotateLeft<T>(tree: ObjectIndexNode<T>): ObjectIndexNode<T> {
   const right = tree.right!;
@@ -85,4 +89,27 @@ export function* objectIndexEntries<T>(tree: Tree<T>, after?: string): Generator
     yield [tree.key, tree.value];
   }
   yield* objectIndexEntries(tree.right, after);
+}
+
+/** Numeric lower-bound selection; negative deadlines reuse the existing maximum
+ * summary instead of adding metadata to every canonical entity-tree node. */
+export function* objectIndexEntriesAtLeast(
+  tree: Tree<number>,
+  threshold: number,
+): Generator<[string, number]> {
+  if (!tree || tree.maximum < threshold) return;
+  yield* objectIndexEntriesAtLeast(tree.left, threshold);
+  if (tree.value >= threshold) yield [tree.key, tree.value];
+  yield* objectIndexEntriesAtLeast(tree.right, threshold);
+}
+
+/** Numeric revision selection without scanning unchanged owners. */
+export function* objectIndexEntriesAfter(
+  tree: Tree<number>,
+  revision: number,
+): Generator<[string, number]> {
+  if (!tree || tree.maximum <= revision) return;
+  yield* objectIndexEntriesAfter(tree.left, revision);
+  if (tree.value > revision) yield [tree.key, tree.value];
+  yield* objectIndexEntriesAfter(tree.right, revision);
 }

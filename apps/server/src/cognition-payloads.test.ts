@@ -1,3 +1,4 @@
+import { acceptedMindText } from '@open-legend/domain';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet } from '@open-legend/domain';
 import { useNearCampSight } from '../../../tests/fixtures/service.js';
@@ -646,7 +647,7 @@ async function harness(
       return (await store.getJob(result.jobId!))!;
     },
     /** The complete accepted "About me" snapshot every semantic decision includes. */
-    aboutMe: () => service.world.innerWorlds?.[NPC_ID]?.text ?? '',
+    aboutMe: () => acceptedMindText(service.world, NPC_ID) ?? '',
     /** The job's Decision accounting stage, checked entry by entry and group by group against
      * the fake receipts and the requests actually dispatched. `generationLevel` is the level
      * the caller expects for the decision's npc_response generation. Returns request levels
@@ -1370,7 +1371,7 @@ describe(
       const h = await harness({ script: { route: { level2: 0.9 } }, reply });
       // Files at the per-file byte quota; long hyphenated words keep each under 500 words.
       const files = Array.from({ length: MIND_LIMITS.documents }, (_, index) => {
-        const path = `memory-${index}.md`;
+        const path = index === 0 ? 'identity.md' : `memory-${index}.md`;
         const words: string[] = [];
         const word = `long-remembered-riverside-evening-${index}`;
         while (
@@ -1393,12 +1394,17 @@ describe(
         const text = flattenFiles(accepted);
         await editWorld(target.service, (state) => {
           const prior = state.innerWorlds![NPC_ID]!;
-          state.innerWorlds![NPC_ID] = {
-            ...prior,
-            text,
-            files: accepted,
-            revision: prior.revision + 1,
-          };
+          state.innerWorlds![NPC_ID] = { ...prior, revision: prior.revision + 1 };
+          const mind = state.minds![NPC_ID]!;
+          mind.revision = prior.revision + 1;
+          mind.documents = accepted.map((file) => ({
+            id: file.path.slice(0, -3),
+            title: file.path.slice(0, -3),
+            text: file.text,
+            revision: mind.revision,
+            evidence: [],
+            protected: file.path === 'identity.md',
+          }));
         });
         expect(target.aboutMe()).toBe(text);
         const before = await target.store.usage(target.config.budgetUsd, NPC_ID);

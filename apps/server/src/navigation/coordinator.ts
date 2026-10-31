@@ -3,6 +3,7 @@ import { Worker } from 'node:worker_threads';
 import type { BodyProfile, NavigationRequest, NavigationResult } from '@open-legend/spatial';
 import {
   navigationPending,
+  pendingNavigationEntityIds,
   nativeRefugeBatch,
   nativeRefugePreparationReady,
   type NativeRefugeBatch,
@@ -102,6 +103,13 @@ export class NavigationCoordinator {
   private failed = false;
   private retiring?: Promise<number>;
   private completion?: Promise<void>;
+  private lastRead?: {
+    world: WeakRef<WorldState>;
+    active: object | undefined;
+    permissions: unknown;
+    campAssets: unknown;
+    boundaryExits: unknown;
+  };
   private readonly unsubscribe: () => void;
   constructor(
     private readonly service: WorldService,
@@ -121,6 +129,22 @@ export class NavigationCoordinator {
     if (this.closed || this.service.storageError) return;
     const { world, timelineId } = this.service;
     const map = spatialMap(world);
+    const context = this.service.constructionNavigationContext;
+    const priorRead = this.lastRead;
+    // Telemetry can notify without changing game/request inputs. Permission snapshots
+    // and worker completion remain independent invalidators; neither is cached authority.
+    if (
+      priorRead?.world.deref() === world &&
+      priorRead.active === this.active &&
+      priorRead.permissions === context.permissions &&
+      priorRead.campAssets === context.campAssets &&
+      priorRead.boundaryExits === context.boundaryExits &&
+      this.timeline === timelineId
+    ) {
+      this.pump();
+      return;
+    }
+    this.lastRead = { world: new WeakRef(world), active: this.active, ...context };
     if (this.map !== map || this.timeline !== timelineId) {
       this.map = map;
       this.warmBodies = warmupBodies(world);
@@ -133,11 +157,17 @@ export class NavigationCoordinator {
         return;
       }
     }
+    const actors = pendingNavigationEntityIds(world);
+    if (!actors.size && !this.queue.length) {
+      this.pump();
+      return;
+    }
     const previous = new Map(this.queue.map((task) => [taskIdentity(task), task]));
     this.queue = [];
-    const actors = worldRootEntities(world),
-      prepared = this.service.nativeRefugePreparations;
-    for (const actor of actors) {
+    const prepared = this.service.nativeRefugePreparations;
+    for (const id of actors) {
+      const actor = entityGet(world.entities, id);
+      if (!actor) continue;
       const batch =
         actor.animal?.episode?.proposal || actor.animal?.foraging?.proposal
           ? nativeRefugeBatch(world, actor)

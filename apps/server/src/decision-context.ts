@@ -1,3 +1,4 @@
+import { acceptedMindText } from '@open-legend/domain';
 import { currentBodyGrant } from '@open-legend/domain';
 import {
   captureTemporalReceiptPrefix,
@@ -34,7 +35,7 @@ import {
   activityRequestChoices,
   activityRequestDescriptors,
   itemOutputFamilies,
-  portableItems,
+  portableItemIds,
   worldPosition,
   worldSupport,
 } from '@open-legend/domain';
@@ -51,12 +52,10 @@ import {
 } from './entity-references.js';
 import { digest } from './store.js';
 import { contextSections, type SharedModelExperience } from './perceived-context.js';
-import { dreamStatus } from '@open-legend/domain';
 import { type AttemptBinding, currentGoal } from '@open-legend/domain';
 import {
   bodyContext,
   bodyPolicy,
-  bodyEligibilityRevision,
   attributeDefinition,
   readAttribute,
   supportsManualWork,
@@ -64,7 +63,7 @@ import {
 } from '@open-legend/domain';
 import { activeAppraisals } from '@open-legend/domain';
 
-import { type CognitionBinding, MIND_POLICY, mindFor } from '@open-legend/domain';
+import { type CognitionBinding, mindFor } from '@open-legend/domain';
 import type { JudgeRequest, JudgeValue } from '@open-legend/ai';
 import {
   ContextBudgetError,
@@ -74,7 +73,7 @@ import {
   candidateChoice,
   type CandidateAction,
 } from './context.js';
-import { domainCommand } from './cognition.js';
+import { domainCommand } from './domain-command.js';
 import { candidateSet, gameTime, captureRecallSelection, type RecallService } from './recall.js';
 import type { WorldService } from './world-service.js';
 import { COGNITION_VERSION, RESPONSE_INSTRUCTIONS } from './cognition-contracts.js';
@@ -696,7 +695,7 @@ export async function prepareDecision(
       feelings: decisionFeelings(readWorld(), actorId, requiredChoices?.feelings),
       ...(requiredChoices ? { requiredChoices: requiredChoices.facts } : {}),
       aboutMe:
-        readWorld().innerWorlds?.[actorId]?.text ??
+        acceptedMindText(readWorld(), actorId) ??
         mindFor(readWorld(), actorId)
           .documents.map((document) => `${document.title}\n${document.text}`)
           .join('\n'),
@@ -740,6 +739,7 @@ export async function prepareDecision(
       conversation: [],
       surroundings: [],
       possessions: [],
+      ...(observed.methodCoverage.paged ? { methodCoverage: observed.methodCoverage } : {}),
       ...(observed.inventoryCoverage.paged
         ? { inventoryCoverage: observed.inventoryCoverage }
         : {}),
@@ -991,7 +991,18 @@ export async function prepareDecision(
       currentWorld === sourceWorld.deref() ? observed : decisionObservation(currentWorld, actorId);
     if (!currentObserved) throw new Error('Actor unavailable.');
     const actor = currentObserved.actor.actor!;
-    const currentFacts = candidateSet(currentWorld, actorId, currentObserved, [], [], [], []);
+    const currentFacts = candidateSet(
+      currentWorld,
+      actorId,
+      currentObserved,
+      [],
+      [],
+      [],
+      [],
+      selection.selected
+        .filter((candidate) => candidate.id.startsWith('notepad:'))
+        .map((candidate) => candidate.id.slice('notepad:'.length)),
+    );
     const factsById = new Map(currentFacts.map((candidate) => [candidate.id, candidate]));
     const currentSelection = [
       ...new Map(
@@ -1058,7 +1069,7 @@ export async function prepareDecision(
       feelings: decisionFeelings(currentWorld, actorId, requiredChoices?.feelings),
       ...(requiredChoices ? { requiredChoices: requiredChoices.facts } : {}),
       aboutMe:
-        currentWorld.innerWorlds?.[actorId]?.text ??
+        acceptedMindText(currentWorld, actorId) ??
         mindFor(currentWorld, actorId)
           .documents.map((d) => `${d.title}\n${d.text}`)
           .join('\n'),
@@ -1069,6 +1080,9 @@ export async function prepareDecision(
       ),
       body: bodyContext(currentWorld, currentObserved.actor),
       contacts: currentObserved.contacts.map((contact) => contact.text),
+      ...(currentObserved.methodCoverage.paged
+        ? { methodCoverage: currentObserved.methodCoverage }
+        : {}),
       ...(currentObserved.inventoryCoverage.paged
         ? { inventoryCoverage: currentObserved.inventoryCoverage }
         : {}),
@@ -1086,6 +1100,10 @@ export async function prepareDecision(
       planOffers: planOffers.map(({ id, description }) => ({ id, description })),
     };
     context['conversation'] = conversation.lines;
+    context['knowledgeCoverage'] =
+      'knowledgeRetrieval' in selection.diagnostics
+        ? selection.diagnostics.knowledgeRetrieval
+        : { partial: true };
     Object.assign(
       context,
       contextSections(
@@ -1147,10 +1165,13 @@ export async function prepareDecision(
         .filter((candidate) => candidate.kind === 'possession')
         .map((candidate) => candidate.id.slice('item:'.length)),
       // Bounded: pile contents in view are pickup targets, not a whole-inventory dump.
-      currentObserved.visibleEntities
-        .filter((entity) => entity.kind === 'item-pile')
-        .flatMap((pile) => portableItems(currentWorld, pile.id).map((item) => item.id))
-        .slice(0, 16),
+      portableItemIds(
+        currentWorld,
+        currentObserved.visibleEntities
+          .filter((entity) => entity.kind === 'item-pile')
+          .map((pile) => pile.id),
+        16,
+      ),
       activityDecisionReferences(currentActivity),
       currentSelection.flatMap((candidate) => candidate.subjects ?? []),
       capturedSituation.frame,
@@ -1169,11 +1190,6 @@ export async function prepareDecision(
       ...entityReferenceMap(currentWorld, planningTargetIds, actorId),
     };
     const binding: CognitionBinding = {
-      privacyRevision: currentWorld.experience?.privacyRevisions?.[actorId] ?? 0,
-      bodyEligibility: bodyEligibilityRevision(
-        currentWorld,
-        entityGet(currentWorld.entities, actorId)!,
-      ),
       knowledgeReferences: selectedKnowledgeReferences(currentWorld, actorId, currentSelection),
       identityReferences: references.identityReferences,
       physicalEntityReferences: {
@@ -1191,10 +1207,6 @@ export async function prepareDecision(
       },
       actorId,
       decisionId: jobId,
-      policy: MIND_POLICY,
-      tier: 'fast',
-      purpose: 'thought',
-      watermark: Math.max(conversation.watermark, ...selection.selected.map((c) => c.at)),
       evidenceIds: [
         ...new Set([
           ...selection.selected
@@ -1216,8 +1228,6 @@ export async function prepareDecision(
         }),
       ),
       expectedPlan: actor.planGeneration,
-      restEpisode:
-        dreamStatus(currentWorld, entityGet(currentWorld.entities, actorId))?.episode ?? null,
       actions: planActions,
     };
     const experienceSlots = new Map(
@@ -1273,6 +1283,15 @@ export async function prepareDecision(
         key,
         { ...slot, experience: projectedExperiences[slot.index]! },
       ]),
+    );
+    // Interpretations cite the same finite, complete source objects actually supplied.
+    // Historical subject handles still grant no current body/action reference.
+    const allowedEvidence = new Set(binding.evidenceIds);
+    binding.evidenceReferences = Object.fromEntries(
+      [...sharedExperiences].flatMap(([key, shared]) => {
+        const [, id] = JSON.parse(key) as [string, string];
+        return allowedEvidence.has(id) ? [[shared.experience.handle, id]] : [];
+      }),
     );
     const prompt = readableDecisionContext(context, offered, false);
     const bytes = Buffer.byteLength(prompt) + Buffer.byteLength(RESPONSE_INSTRUCTIONS);

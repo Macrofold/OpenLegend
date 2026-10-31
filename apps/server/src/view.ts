@@ -54,7 +54,7 @@ import {
 } from '@open-legend/domain';
 import { effectiveBodyProfile, visionFieldOfView } from '@open-legend/domain';
 import {
-  basePlaytestMilestones,
+  BASE_PLAYTEST_MILESTONES,
   BASE_FAMILY_POLICY,
   preferredTargetEquipment,
 } from '@open-legend/domain';
@@ -1653,9 +1653,9 @@ export async function projectView(
       jobs,
       ...usage,
     },
-    milestones: basePlaytestMilestones(world, scope.actorId, events).map((milestone) => ({
+    milestones: BASE_PLAYTEST_MILESTONES.map((milestone) => ({
       ...milestone,
-      done: milestone.done || milestones[milestone.id] === true,
+      done: milestones[milestone.id] === true,
     })),
     persistence: {
       status: storageError ? 'error' : 'saved',

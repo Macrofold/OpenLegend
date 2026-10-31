@@ -18,7 +18,7 @@ Select performance checks under [Verification](../../rules/verification.md). Dis
 
 Load only the matching detailed contract below. An ordinary feature reads this core, not every performance chapter or historical report. Relevant high-risk behavior still requires its full contract.
 
-- For repeated collection work, caches, retained data or changed prepared reads, read [Preparation, reuse and retained data](../../../docs/performance/preparation.md).
+- For repeated collection work, caches, retained data or changed prepared reads, including candidate selection, paging and hydration, read [Preparation, reuse and retained data](../../../docs/performance/preparation.md).
 - For queues, workers, asynchronous coordination or recurring scheduling, read [Scheduling, admission and fairness](../../../docs/performance/scheduling.md).
 - For database access and its callers, schema/indexes, saved-record codecs/diffs, snapshots or persistence preparation, read [Storage execution and transactional persistence](../../../docs/performance/storage.md).
 - For movement, geometry, navigation preparation or sensory candidate work, read [Spatial, navigation and sensory performance](../../../docs/performance/spatial.md).

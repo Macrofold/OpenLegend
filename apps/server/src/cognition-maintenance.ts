@@ -1,3 +1,10 @@
+import { reflectionTimeDue } from './reflection-publication.js';
+import { prepareReflectionPublication } from './reflection-publication.js';
+import { type InnerRecordChange, type MindFiles } from '@open-legend/domain';
+import { retainedMemorySubjects } from './experience-context.js';
+import { offerInterpretationRecords, resolveInterpretationRecords } from './reflection-records.js';
+import { recordMapChangesBetween, nativeThinkingTimeChanges } from '@open-legend/domain';
+import { acceptedMindFiles } from '@open-legend/domain';
 import { entityGet, experienceEntryKey, experienceReading } from '@open-legend/domain';
 import { undispatchedReceipt } from './decision-state.js';
 import { normalizeReceiptCost } from '@open-legend/ai';
@@ -5,7 +12,6 @@ import { CognitionExecution, type ExecutionLease } from './cognition-execution.j
 import { acquiredActivities, ACTIVITY_SYNTAX } from '@open-legend/domain';
 import type { TypedQuestionMap } from '@open-legend/ai';
 import { bindReflectionAppraisals } from './appraisal-context.js';
-import { resolveResponseEntities, resolveIntentionMarkers } from './entity-references.js';
 import { dreamStatus, dreamPolicy } from '@open-legend/domain';
 import {
   bodyThinkingBlocked,
@@ -34,7 +40,12 @@ import {
   type ObserverSubject,
 } from '@open-legend/domain';
 import type { AiClient, AiResult, GenerateRequest } from '@open-legend/ai';
-import { summarySchema, reflectionSchema, REFLECTION_INSTRUCTIONS } from './cognition-contracts.js';
+import {
+  boundSummarySchema,
+  boundReflectionJsonSchema,
+  LEVEL_LIMITS,
+  REFLECTION_WORKSPACE_INSTRUCTIONS,
+} from './cognition-contracts.js';
 import type { WorldService } from './world-service.js';
 import type { MacrofoldBackend } from './macrofold.js';
 import type { IntelligenceLog } from './intelligence-log.js';
@@ -82,6 +93,9 @@ export class MaintenanceIntakeInputs {
   private readonly prepared = new Map<string, PreparedMaintenanceInputs>();
   private readonly external = new Map<string, readonly unknown[]>();
   private population: string[] = [];
+  private populationOrder = new Map<string, number>();
+  private backlog?: unknown;
+  private hasBacklog = false;
   /** Local aggregate diagnostic, not actor-private data or a scheduling authority. */
   preparations = 0;
   nativeInputReads = 0;
@@ -92,6 +106,8 @@ export class MaintenanceIntakeInputs {
     this.prepared.clear();
     this.external.clear();
     this.population = [];
+    this.populationOrder.clear();
+    this.hasBacklog = false;
   }
 
   reconcile(
@@ -99,6 +115,7 @@ export class MaintenanceIntakeInputs {
     scope: string,
     backlog: unknown,
     sourceRevision: (id: string) => unknown,
+    sourceChanges?: ReadonlySet<string>,
   ): { population: readonly string[]; affected?: ReadonlySet<string> } {
     const reusable = Object.isFrozen(world) && this.scope === scope;
     let affected: Set<string> | undefined = reusable ? new Set() : undefined;
@@ -107,46 +124,48 @@ export class MaintenanceIntakeInputs {
       const changes = reusable && previous ? activeIntakeChanges(previous, world) : undefined;
       affected = changes?.owners;
       const previousLearning = previous?.actionExperience.learning;
-      if (
-        affected &&
-        previousLearning &&
-        (Object.keys(previousLearning).length !==
-          Object.keys(world.actionExperience.learning).length ||
-          Object.keys(world.actionExperience.learning).some(
-            (id) => !Object.hasOwn(previousLearning, id) || !Object.hasOwn(world.minds ?? {}, id),
-          ))
-      )
-        affected = undefined;
+      const learningChanged =
+        previousLearning === world.actionExperience.learning
+          ? new Set<string>()
+          : previousLearning
+            ? recordMapChangesBetween(previousLearning, world.actionExperience.learning)
+            : undefined;
+      if (affected && !learningChanged) affected = undefined;
+      if (affected && learningChanged && previousLearning)
+        for (const id of learningChanged)
+          if (
+            Object.hasOwn(previousLearning, id) !==
+            Object.hasOwn(world.actionExperience.learning, id)
+          ) {
+            affected = undefined;
+            break;
+          }
       // First use, restore, changed population and incomplete producer coverage
       // rebuild through the existing complete-population owner.
-      if (!affected)
+      if (!affected) {
         this.population = [
           ...new Set([
             ...Object.keys(world.minds ?? {}),
             ...Object.keys(world.actionExperience.learning),
           ]),
         ];
-      if (affected && changes) {
-        for (const id of this.population) {
-          const entity = entityGet(world.entities, id),
-            prior = this.prepared.get(id);
+        this.populationOrder = new Map(this.population.map((id, index) => [id, index]));
+      }
+      if (affected && changes && previous) {
+        const timeChanged = nativeThinkingTimeChanges(previous, world);
+        const candidates =
+          timeChanged && learningChanged
+            ? new Set([...changes.entities, ...timeChanged, ...learningChanged])
+            : this.population;
+        for (const id of candidates) {
           if (
-            affected.has(id) ||
+            !this.prepared.has(id) ||
             changes.entities.has(id) ||
-            !prior ||
-            !entity?.actor?.alive ||
-            !hasMemory(entity) ||
-            prior.learning !== world.actionExperience.learning[id]
+            timeChanged?.has(id) ||
+            !timeChanged ||
+            previousLearning?.[id] !== world.actionExperience.learning[id]
           )
             affected.add(id);
-          else {
-            this.nativeInputReads++;
-            if (
-              prior.available !== availableForMaintenance(world, id) ||
-              prior.dreamEpisode !== dreamStatus(world, entity)?.episode
-            )
-              affected.add(id);
-          }
         }
         for (const id of affected) this.prepared.delete(id);
       } else {
@@ -156,15 +175,30 @@ export class MaintenanceIntakeInputs {
       this.world = new WeakRef(world);
       this.scope = scope;
     }
-    if (affected)
-      for (const id of this.population) {
+    if (affected) {
+      if (sourceChanges) for (const id of sourceChanges) affected.add(id);
+      for (const id of sourceChanges ?? this.population) {
         const prior = this.external.get(id);
         if (!prior || prior[0] !== backlog || prior[1] !== sourceRevision(id)) affected.add(id);
       }
+      // Backlog capacity is global; changed admission can wake existing participants.
+      if (!this.hasBacklog || this.backlog !== backlog)
+        for (const id of this.population) affected.add(id);
+    }
+    this.backlog = backlog;
+    this.hasBacklog = true;
     // Match complete refresh's insertion/generation order.
     return {
       population: this.population,
-      ...(affected ? { affected: new Set(this.population.filter((id) => affected.has(id))) } : {}),
+      ...(affected
+        ? {
+            affected: new Set(
+              [...affected]
+                .filter((id) => this.populationOrder.has(id))
+                .sort((a, b) => this.populationOrder.get(a)! - this.populationOrder.get(b)!),
+            ),
+          }
+        : {}),
     };
   }
 
@@ -218,6 +252,7 @@ export class CognitionMaintenance {
   });
   private readonly lastStarted = new Map<string, number>();
   private readonly intakeInputs = new MaintenanceIntakeInputs();
+  private sourceRevision?: number;
   private budgetActor = 'world-agent';
   private active: AbortController | null = null;
   private pending: Promise<void> | null = null;
@@ -368,11 +403,14 @@ export class CognitionMaintenance {
       const readWorld = () => this.service.world;
       const generation = this.service.generation;
       timedSync('cognition.maintenanceRefresh', () => {
+        const sourceChanges = this.service.store.memories?.actorChangesSince(this.sourceRevision);
+        this.sourceRevision = sourceChanges?.revision;
         const { population, affected } = this.intakeInputs.reconcile(
           readWorld(),
           generation,
           this.service.memoryBacklog,
           (id) => this.service.store.memories?.actorRevision(id),
+          sourceChanges?.actors,
         );
         if (affected) this.work.refreshAffected(readWorld(), affected);
         else
@@ -478,14 +516,8 @@ export class CognitionMaintenance {
           dream.elapsedSeconds >= configuredDream.afterSeconds;
         const hasMemories = history.hasMemories;
         const day = Math.floor(readWorld().simTime / 86400);
-        const reflectedToday =
-          mind.lastReflectionAt > 0 && Math.floor(mind.lastReflectionAt / 86400) === day;
         const reflectionDue =
-          reflectionSafe &&
-          !actor.action &&
-          hasMemories &&
-          !reflectedToday &&
-          readWorld().simTime - mind.lastReflectionAt >= 3600;
+          reflectionSafe && reflectionTimeDue(readWorld(), entity.id, hasMemories);
         // No source cleanup, completed dream day, new reflection or executable
         // queued reflection means there is no maintenance metadata to inspect.
         if (
@@ -973,6 +1005,19 @@ export class CognitionMaintenance {
       `native-${batch.mode}`,
       async (job) => {
         const c = this.service.config;
+        const dreamRevision = this.service.world.innerWorlds?.[actorId]?.revision;
+        const dreamEpisode = this.activeAdmission?.dreamEpisode;
+        const dreamFiles =
+          batch.mode === 'daily' ? acceptedMindFiles(this.service.world, actorId) : [];
+        let interpretation:
+          | {
+              files: MindFiles;
+              thoughts: string[];
+              recordChanges: InnerRecordChange[];
+              evidenceIds: string[];
+              subjects: ObserverSubject[];
+            }
+          | undefined;
         const groups = batch.protected.map((source) => ({
           sourceKeys: [experienceEntryKey(source)],
           text: experienceReading(source, actorId).summary,
@@ -983,20 +1028,60 @@ export class CognitionMaintenance {
           );
           const requests = consolidationRequests(batch, this.service.world, actorId);
           for (const [index, { context, handles }] of requests.entries()) {
+            const interpreting =
+              batch.mode === 'daily' &&
+              index === 0 &&
+              dreamEpisode !== this.service.world.minds?.[actorId]?.lastDreamEpisode;
+            const recordBindings = {
+              evidenceReferences: Object.fromEntries(
+                [...handles].map(([handle, source]) => [
+                  handle,
+                  experienceReading(source, actorId).id,
+                ]),
+              ),
+              identityReferences: {} as Record<string, ObserverSubject>,
+            };
+            const suppliedContext: Record<string, unknown> = { ...context };
+            if (interpreting) {
+              suppliedContext['mindFiles'] = dreamFiles;
+              offerInterpretationRecords(
+                this.service.world,
+                actorId,
+                suppliedContext,
+                recordBindings,
+                [...handles.values()].flatMap((source) =>
+                  retainedMemorySubjects(experienceReading(source, actorId)),
+                ),
+              );
+            }
+            const schema = boundSummarySchema(
+              Object.keys(recordBindings.identityReferences),
+              Object.keys(recordBindings.evidenceReferences),
+            );
             const request: GenerateRequest = {
               requestId: `${job.id}:summary:${index}`,
               actorScope: actorId,
               execution: 'fast',
               model: c.macrofoldKey ? c.macrofoldSummaryModel : c.summaryModel,
-              reasoningEffort: 'low',
+              reasoningEffort: interpreting ? LEVEL_LIMITS[5].effort : 'low',
               maxOutputTokens: CONSOLIDATION_OUTPUT_TOKENS,
               task: 'memory_consolidation',
-              instructions: CONSOLIDATION_INSTRUCTIONS,
-              context,
-              schema: z.toJSONSchema(summarySchema, { target: 'draft-7' }),
+              instructions:
+                CONSOLIDATION_INSTRUCTIONS +
+                (interpreting
+                  ? ' Optionally include interpretation to retain a useful imagined dream or private realization. All its upserted records must use source imagined. Link records to existing mind document IDs or return complete files with identity.md preserved exactly. Use only the supplied subject and source handles. Preserve all unchanged records, protected identity and active obligations; omit interpretation when unwarranted. Keep thoughts brief. Never turn dream content into witnessed facts.'
+                  : ' Omit interpretation; this request only consolidates its supplied sources.'),
+              context: suppliedContext,
+              schema: z.toJSONSchema(schema, { target: 'draft-7' }),
               signal: controller.signal,
             };
-            const value = summarySchema.parse(
+            if (
+              Buffer.byteLength(JSON.stringify(request.context)) +
+                Buffer.byteLength(request.instructions) >
+              500000
+            )
+              throw new Error('Consolidation context exceeds its admitted input budget.');
+            const value = schema.parse(
               await this.paid(
                 request.requestId,
                 'openai',
@@ -1004,6 +1089,20 @@ export class CognitionMaintenance {
                 request.model,
               ),
             );
+            if (value.interpretation) {
+              if (!interpreting)
+                throw new Error('This consolidation did not offer an interpretation publication.');
+              interpretation = {
+                files: value.interpretation.files ?? dreamFiles,
+                thoughts: value.interpretation.thoughts,
+                recordChanges: resolveInterpretationRecords(
+                  value.interpretation.recordChanges,
+                  recordBindings,
+                ),
+                evidenceIds: Object.values(recordBindings.evidenceReferences),
+                subjects: Object.values(recordBindings.identityReferences),
+              };
+            }
             if (!value.feasible || !value.groups.length)
               throw new Error(
                 'Model declined faithful consolidation or returned no groups; original memories retained.',
@@ -1061,14 +1160,42 @@ export class CognitionMaintenance {
             throw new Error('Consolidation canceled before publication.');
           return this.service.transition((world) => {
             this.assertAdmission(world);
-            return acceptConsolidation(
-              world,
+            let candidate = world;
+            if (interpretation) {
+              if (dreamRevision === undefined || !dreamEpisode)
+                throw new Error('Dream publication lost its admitted episode.');
+              const published = publishInnerWorld(
+                world,
+                actorId,
+                dreamRevision,
+                `${job.id}:dream`,
+                job.id,
+                interpretation.files,
+                interpretation.thoughts,
+                interpretation.evidenceIds,
+                dreamEpisode,
+                [],
+                [],
+                [],
+                interpretation.subjects,
+                undefined,
+                {},
+                [],
+                { sources: [], subjects: [], reflection: true },
+                interpretation.recordChanges,
+              );
+              if (!published.outcome.ok) return published;
+              candidate = published.world;
+            }
+            const result = acceptConsolidation(
+              candidate,
               actorId,
               job.id,
               batch.sources,
               groups,
               batch.prepared,
             );
+            return result.outcome.ok ? result : { ...result, world, events: [] };
           });
         });
         if (!accepted.ok) throw new Error(accepted.message);
@@ -1212,8 +1339,10 @@ export class CognitionMaintenance {
               ),
             ),
           },
+          { sharedExperiences: prepared.sharedExperiences, frame: prepared.situation.frame },
         );
         prepared.context['feelings'] = appraisals.context;
+        offerInterpretationRecords(this.service.world, actorId, prepared.context, prepared.binding);
         await this.log.record(
           `${job.id}:context`,
           'Reflection context',
@@ -1225,9 +1354,13 @@ export class CognitionMaintenance {
           actorScope: actorId,
           execution: 'full',
           task: 'background_reflection',
-          instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Use appraisalChanges only for supported private interpretations, usually empty. Copy supplied feeling handles/revisions, policy and cause handles, and subject tokens. For create, appraisal and expectedRevision are null; select policy, source and an optional subject. For reframe, select appraisal, expectedRevision and source; policy and subject are null. For resolve, only appraisal and expectedRevision are non-null. Qualitative values are null. Never claim a typed change in prose unless proposing it atomically. Do not echo identity file contents.`,
+          reasoningEffort: LEVEL_LIMITS[5].effort,
+          instructions: REFLECTION_WORKSPACE_INSTRUCTIONS,
           context: prepared.context,
-          schema: z.toJSONSchema(reflectionSchema, { target: 'draft-7' }),
+          schema: boundReflectionJsonSchema(
+            Object.keys(prepared.binding.identityReferences ?? {}),
+            Object.keys(prepared.binding.evidenceReferences ?? {}),
+          ),
           signal: controller.signal,
         };
         if (
@@ -1241,75 +1374,23 @@ export class CognitionMaintenance {
           this.log.run(
             'Reflection harness',
             request,
-            async () => await this.macrofold.reflect(request, snapshot.files),
+            async () =>
+              await this.macrofold.reflect(request, acceptedMindFiles(this.service.world, actorId)),
           ),
         );
-        const parsedReflection = reflectionSchema.parse({
-          appraisalChanges: value.appraisalChanges ?? [],
-          thoughts: value.thoughts,
-          goalChanges: value.goalChanges,
-          knowledgeChanges: value.knowledgeChanges,
-          nameChanges: value.nameChanges,
-        });
-        const edits = resolveResponseEntities(
-          {
-            operations: [
-              ...parsedReflection.nameChanges.map((name, i) => ({
-                localId: `name${i}`,
-                requiresAccepted: [],
-                talk: null,
-                act: null,
-                think: null,
-                goal: null,
-                plan: null,
-                name,
-              })),
-              ...parsedReflection.knowledgeChanges.map((note, i) => ({
-                localId: `note${i}`,
-                requiresAccepted: [],
-                talk: null,
-                act: null,
-                think: null,
-                goal: null,
-                plan: null,
-                note,
-              })),
-            ],
-          },
-          prepared.entityReferences,
-          prepared.intentionReferences,
-          prepared.binding.knowledgeReferences,
-          [],
-          prepared.binding.identityReferences,
-        );
-        const subjectFromReference = (reference: string): ObserverSubject => {
-          const subject =
-            prepared.binding.knowledgeReferences?.[reference] ??
-            prepared.binding.identityReferences?.[reference];
-          if (subject) return subject;
-          if (prepared.binding.entityIds.includes(reference))
-            return { kind: 'entity', entityId: reference };
-          throw new Error('The reflected subject was not supplied.');
-        };
         await this.log.record(`${job.id}:files`, 'Workspace publication proposal', {
           sourceSnapshot: value.revision,
           files: value.files,
           thoughts: value.thoughts,
         });
         controller.signal.throwIfAborted();
-        const appraisalChanges = appraisals.resolve(parsedReflection.appraisalChanges);
-        const goalChanges = parsedReflection.goalChanges.map((goal) => ({
-          ...goal,
-          objective: goal.objective
-            ? resolveIntentionMarkers(
-                goal.objective,
-                prepared.entityReferences,
-                prepared.intentionReferences,
-              )
-            : goal.objective,
-        }));
-        const thoughts = parsedReflection.thoughts.map((thought) =>
-          resolveIntentionMarkers(thought, prepared.entityReferences, prepared.intentionReferences),
+        const publish = prepareReflectionPublication(
+          prepared,
+          appraisals,
+          value,
+          actorId,
+          job.id,
+          snapshot.revision,
         );
         const accepted = await this.service.transition(
           (world) => {
@@ -1328,51 +1409,7 @@ export class CognitionMaintenance {
               )
             )
               throw new Error('Obligations changed during reflection.');
-            return publishInnerWorld(
-              world,
-              actorId,
-              snapshot.revision,
-              job.id,
-              value.revision,
-              value.files,
-              thoughts,
-              prepared.binding.evidenceIds,
-              null,
-              0,
-              goalChanges,
-              edits.operations.flatMap((op) =>
-                op.note
-                  ? [
-                      {
-                        ...op.note,
-                        subjectId:
-                          op.note.subjectId === null
-                            ? null
-                            : subjectFromReference(op.note.subjectId),
-                      },
-                    ]
-                  : [],
-              ),
-              edits.operations.flatMap((op) =>
-                op.name ? [{ ...op.name, subjectId: subjectFromReference(op.name.subjectId) }] : [],
-              ),
-              [
-                ...prepared.binding.entityIds.map((entityId) => ({
-                  kind: 'entity' as const,
-                  entityId,
-                })),
-                ...Object.values(prepared.binding.identityReferences ?? {}),
-              ],
-              prepared.binding.entityEpisodes,
-              Object.fromEntries(
-                Object.values(prepared.binding.knowledgeReferences ?? {}).map((subject) => [
-                  subjectKey(subject),
-                  subject,
-                ]),
-              ),
-              appraisalChanges,
-              appraisals.bindings,
-            );
+            return publish(world);
           },
           undefined,
           undefined,

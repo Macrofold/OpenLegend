@@ -1,5 +1,8 @@
 import { receivedValueAt } from './received-values.js';
 import { currentFacetEntries } from './perception-current.js';
+import { DerivedOwnerIndex } from './derived-owner-index.js';
+import { objectIndexSet, objectIndexEntriesAtLeast, type ObjectIndexNode } from './object-index.js';
+import { applyInnerRecordChanges, type InnerRecordChange } from './mind.js';
 import { temporalChunkReceipts } from './temporal-frames.js';
 import {
   experienceEntryKey,
@@ -73,7 +76,7 @@ import {
   sealAppends,
   readOnlyDraftView,
 } from './draft.js';
-import { byteCount, mindFor, wordCount } from './mind.js';
+import { byteCount, mindFor, wordCount, MIND_LIMITS } from './mind.js';
 import { canonicalJson, finish, outcome } from './events.js';
 import { personalText, nativeText } from './narration.js';
 import type { ExperienceEntry, MemoryRecord, Transition, WorldState, WorldEvent } from './types.js';
@@ -206,10 +209,9 @@ export interface ExperienceState {
   consolidatedAt: Record<string, number>;
   forgotten: Record<string, string[]>;
 }
+export type MindFiles = { path: string; text: string }[];
 export interface InnerWorld {
-  text: string;
   revision: number;
-  files: { path: string; text: string }[];
   sourceSnapshot: string;
   publicationJobId: string;
   publicationBody?: string;
@@ -464,16 +466,30 @@ function sensoryDeadline(entries: Awareness[]): number {
   if (Object.isFrozen(values)) sensoryDeadlines.set(values, deadline);
   return deadline;
 }
+const sensoryOwners = new DerivedOwnerIndex<
+  Awareness[],
+  number,
+  ObjectIndexNode<number> | undefined
+>(
+  sensoryDeadline,
+  () => undefined,
+  (tree, id, _before, after) =>
+    objectIndexSet(tree, id, after !== undefined && Number.isFinite(after) ? -after : undefined),
+);
+const emptyAwareness: Record<string, Awareness[]> = Object.freeze({});
+function sensoryExpiryIndex(world: WorldState) {
+  return sensoryOwners.read(
+    readOnlyDraftView(readOnlyDraftView(world).experience?.awareness ?? emptyAwareness),
+  );
+}
 export function nextSensoryExpiry(world: WorldState): number {
-  let deadline = Infinity;
-  for (const entries of Object.values(world.experience?.awareness ?? {}))
-    deadline = Math.min(deadline, sensoryDeadline(entries));
-  return deadline;
+  const index = sensoryExpiryIndex(world);
+  return index ? -index.maximum : Infinity;
 }
 /** Expiry removes optional sensory evidence, never an admitted controller's cue. */
 export function expireSensoryAwareness(world: WorldState): void {
-  for (const [actorId, entries] of Object.entries(world.experience?.awareness ?? {})) {
-    if (sensoryDeadline(entries) > world.simTime) continue;
+  for (const [actorId] of objectIndexEntriesAtLeast(sensoryExpiryIndex(world), -world.simTime)) {
+    const entries = world.experience!.awareness[actorId]!;
     sealAppends(world);
     trackRecordArray(world, world.experience!.awareness, actorId);
     for (const entry of entries)
@@ -871,6 +887,27 @@ function applyExperienceMutation(
     );
     const inner = world.innerWorlds?.[actorId];
     if (inner) inner.reconsiderationRequired = true;
+    if (replacement.resolved) {
+      const mind = world.minds?.[actorId];
+      if (
+        mind?.records.some(
+          (record) =>
+            record.kind === 'commitment' &&
+            record.status === 'active' &&
+            record.evidence.some((link) => link.id === memory.id || link.id === memory.eventId),
+        )
+      ) {
+        mind.records = mind.records.map((record) =>
+          record.kind === 'commitment' &&
+          record.status === 'active' &&
+          record.evidence.some((link) => link.id === memory.id || link.id === memory.eventId)
+            ? { ...record, status: 'resolved', revision: record.revision + 1 }
+            : record,
+        );
+        mind.revision++;
+        if (inner) inner.revision++;
+      }
+    }
     return [memory.id];
   }
   const mutations = Array.isArray(mutation) ? mutation : [mutation];
@@ -1046,7 +1083,24 @@ function applyExperienceMutation(
       invalidated.add(id);
   return [...invalidated];
 }
-export function flattenFiles(files: InnerWorld['files']): string {
+/** Accepted files and combined context are projections of the canonical documents. */
+export function acceptedMindFiles(world: WorldState, actorId: string): MindFiles {
+  return (world.minds?.[actorId]?.documents ?? []).map((doc) => ({
+    path: `${doc.id}.md`,
+    text: doc.text,
+  }));
+}
+const acceptedTexts = new WeakMap<object, string>();
+export function acceptedMindText(world: WorldState, actorId: string): string | undefined {
+  const documents = world.minds?.[actorId]?.documents;
+  if (!documents?.length) return;
+  const prior = Object.isFrozen(documents) ? acceptedTexts.get(documents) : undefined;
+  if (prior !== undefined) return prior;
+  const text = flattenFiles(acceptedMindFiles(world, actorId));
+  if (Object.isFrozen(documents)) acceptedTexts.set(documents, text);
+  return text;
+}
+export function flattenFiles(files: MindFiles): string {
   const paths = new Set<string>();
   if (!files.length || files.length > 10) throw new Error('The inner world requires 1–10 files.');
   for (const file of files) {
@@ -1085,16 +1139,9 @@ export function migrateCognition(world: WorldState): void {
     }
     if (world.innerWorlds[entity.id]) continue;
     const mind = ((world.minds ??= {})[entity.id] ??= mindFor(world, entity.id));
-    const files = mind.documents.map((doc) => ({
-      path: `${doc.id}.md`,
-      text: `${doc.title}\n\n${doc.text}`,
-    }));
+    // New actors enter the same exact file-body representation used by publication.
+    mind.documents = mind.documents.map((doc) => ({ ...doc, text: `${doc.title}\n\n${doc.text}` }));
     world.innerWorlds[entity.id] = {
-      text: [...files]
-        .sort((a, b) => a.path.localeCompare(b.path, 'en'))
-        .map((file) => `# ${file.path}\n${file.text}`)
-        .join('\n\n'),
-      files,
       revision: mind.revision,
       sourceSnapshot: 'actor-initialization',
       publicationJobId: 'actor-initialization',
@@ -2039,8 +2086,6 @@ export function invalidateExperience(
   mind.revision++;
   (world.minds ??= {})[actorId] = mind;
   if (inner) {
-    inner.files = identity.map((d) => ({ path: `${d.id}.md`, text: `${d.title}\n${d.text}` }));
-    inner.text = flattenFiles(inner.files);
     inner.revision++;
     inner.evidenceIds = [];
     delete inner.publicationBody;
@@ -2057,11 +2102,10 @@ export function publishInnerWorld(
   expectedRevision: number,
   jobId: string,
   snapshot: string,
-  files: InnerWorld['files'],
+  files: MindFiles,
   thoughts: string[],
   evidenceIds: string[],
   dreamEpisode: string | null,
-  _processedThrough = 0,
   goalChanges: GoalChange[] = [],
   knowledgeChanges: KnowledgeEdit[] = [],
   nameChanges: SubjectNameEdit[] = [],
@@ -2070,6 +2114,7 @@ export function publishInnerWorld(
   knowledgeReferences: Record<string, ObserverSubject> = {},
   appraisalChanges: AppraisalChange[] = [],
   appraisalBindings: AppraisalBindings = { sources: [], subjects: [], reflection: true },
+  recordChanges: InnerRecordChange[] = [],
 ): Transition {
   const reject = (message: string) => ({
     world: input,
@@ -2090,6 +2135,7 @@ export function publishInnerWorld(
     knowledgeChanges,
     nameChanges,
     appraisalChanges,
+    recordChanges,
   });
   if (prior?.publicationJobId === jobId)
     return prior.publicationBody === publicationBody
@@ -2099,6 +2145,8 @@ export function publishInnerWorld(
           outcome: outcome(true, 'duplicate', 'Snapshot already published.'),
         }
       : reject('The publication identity was already used or its source was erased.');
+  if (byteCount(publicationBody) > MIND_LIMITS.proposalBytes)
+    return reject('Reflection is too large to save. Existing thoughts and notes were kept.');
   if (
     !prior ||
     prior.revision !== expectedRevision ||
@@ -2122,18 +2170,26 @@ export function publishInnerWorld(
     thoughts.some((t) => wordCount(t) > 20 || !t.trim())
   )
     return reject('Invalid presentation thoughts.');
-  let text: string;
   try {
-    text = flattenFiles(files);
+    flattenFiles(files);
   } catch (error) {
     return reject(error instanceof Error ? error.message : 'Invalid files.');
   }
   const mind = mindFor(input, actorId);
-  for (const document of mind.documents.filter((d) => d.protected)) {
-    const old = prior.files.find((f) => f.path === `${document.id}.md`);
-    if (old && !files.some((f) => f.path === old.path && f.text === old.text))
+  for (const document of mind.documents.filter(
+    (d) =>
+      d.protected ||
+      mind.records.some(
+        (record) =>
+          record.documentId === d.id && record.kind === 'commitment' && record.status === 'active',
+      ),
+  )) {
+    const old = { path: `${document.id}.md`, text: document.text };
+    if (!files.some((f) => f.path === old.path && f.text === old.text))
       return reject('Essential identity must be preserved.');
   }
+  if (dreamEpisode && mind.lastDreamEpisode === dreamEpisode)
+    return reject('This sleep episode was already interpreted.');
   const forgotten = new Set(input.experience?.forgotten[actorId] ?? []);
   if (evidenceIds.some((id) => forgotten.has(id))) return reject('Evidence was forgotten.');
   const world = draftWorld(input);
@@ -2214,8 +2270,6 @@ export function publishInnerWorld(
     if (!result.ok) return reject(result.message);
   }
   world.innerWorlds![actorId] = {
-    text,
-    files: cloneValue(files),
     revision: prior.revision + 1,
     sourceSnapshot: snapshot,
     publicationJobId: jobId,
@@ -2223,19 +2277,63 @@ export function publishInnerWorld(
     evidenceIds,
   };
   mind.revision++;
-  mind.documents = files.map((f) => ({
-    id: f.path.slice(0, -3),
-    title: f.path.slice(0, -3),
-    text: f.text,
-    revision: mind.revision,
-    protected: mind.documents.some((d) => d.protected && `${d.id}.md` === f.path),
-    evidence: [],
-  }));
-  mind.records = mind.records.filter(
-    (r) =>
-      ['identity', 'commitment', 'appraisal'].includes(r.kind) &&
-      mind.documents.some((d) => d.id === r.documentId),
+  mind.documents = files.map((file) => {
+    const id = file.path.slice(0, -3),
+      prior = mind.documents.find((document) => document.id === id);
+    if (prior?.text === file.text) return prior;
+    return {
+      id,
+      title: prior?.title ?? id,
+      text: file.text,
+      revision: (prior?.revision ?? 0) + 1,
+      protected: prior?.protected ?? false,
+      evidence: prior?.evidence ?? [],
+    };
+  });
+  const changedCommitments = recordChanges.filter(
+    (change): change is Extract<InnerRecordChange, { operation: 'upsert' }> =>
+      change.operation === 'upsert' &&
+      change.kind === 'commitment' &&
+      !mind.records.some(
+        (record) =>
+          record.id === change.id &&
+          record.kind === 'commitment' &&
+          record.status === change.status,
+      ),
   );
+  if (changedCommitments.length) {
+    // Promotion or reactivation needs the same native proof as a new facet.
+    // Scan retained promises once, independently of the number of proposed links.
+    const promises = new Set<string>();
+    for (const memory of input.memories[actorId] ?? [])
+      if (
+        memory.kind === 'commitment' &&
+        !memory.resolved &&
+        memory.speakerId === actorId &&
+        memory.eventType === 'speech'
+      ) {
+        promises.add(memory.id);
+        if (memory.eventId) promises.add(memory.eventId);
+      }
+    if (
+      changedCommitments.some(
+        (change) =>
+          change.source !== 'inferred' ||
+          change.status !== 'active' ||
+          !change.evidence.some((link) => promises.has(link.id)),
+      )
+    )
+      return reject('An interpreted commitment requires the actor’s actual promise.');
+  }
+  const recordError = applyInnerRecordChanges(
+    mind,
+    recordChanges,
+    new Set(evidenceIds),
+    permittedSubjects,
+    actorId,
+    dreamEpisode !== null,
+  );
+  if (recordError) return reject(recordError);
   mind.thoughts.push(
     ...thoughts.map((text) => ({
       decisionId: jobId,
@@ -2247,7 +2345,6 @@ export function publishInnerWorld(
   );
   mind.thoughts = mind.thoughts.slice(-100);
   mind.lastReflectionAt = world.simTime;
-  // Reflection revisits memories; the legacy watermark is deliberately not advanced.
   if (dreamEpisode) mind.lastDreamEpisode = dreamEpisode;
   (world.minds ??= {})[actorId] = mind;
   return finish(

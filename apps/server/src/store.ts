@@ -147,7 +147,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '47';
+export const DATABASE_SCHEMA = '48';
 
 export interface AttemptBudget {
   id: string;
@@ -179,7 +179,6 @@ export interface SavedWorld {
   presentationReleaseRevision?: number;
   speed: number;
   manuallyPaused: boolean;
-  milestones?: Record<string, boolean>;
   actorMilestones?: Record<string, Record<string, boolean>>;
 }
 

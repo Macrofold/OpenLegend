@@ -24,7 +24,7 @@ import {
   rangedPolicy,
   rangedTargetAllowed,
 } from '@open-legend/domain';
-import { domainCommand } from './cognition.js';
+import { domainCommand } from './domain-command.js';
 import { bodyPolicy, type WorldState } from '@open-legend/domain';
 import { BASE_DEATH_COMMAND_DESCRIPTIONS } from '@open-legend/domain';
 import { consumptionDescription } from './body-services.js';

@@ -1,23 +1,10 @@
-import {
-  constructionPermissionBatch,
-  absorbConstructionPermissionBatch,
-  finishConstructionPermissionBatch,
-  type NativeExecutionPermissions,
-} from './construction-permissions.js';
 import { entityGet } from './entity-collection.js';
-import { dreamStatus, dreamPolicy } from './cognition-policy.js';
-import { bodyThinkingBlocked, bodyEligibilityRevision } from './body-policy.js';
-import { draftWorld, cloneValue } from './draft.js';
+import { cloneValue } from './draft.js';
 import { experiences } from './experience.js';
-import { validObserverSubject, type ObserverSubject } from './knowledge.js';
-import { getOwn } from './records.js';
-import type { MemoryRecord, Transition, WorldState } from './types.js';
-import { canonicalJson, finish, outcome } from './events.js';
-import { commitActorResponse } from './response.js';
-import { actionTargetsCurrent } from './action-targets.js';
-import { choiceWorkCurrent, type ActionChoice } from './action-capabilities.js';
+import { validObserverSubject, subjectKey, type ObserverSubject } from './knowledge.js';
+import type { MemoryRecord, WorldState } from './types.js';
+import type { ActionChoice } from './action-capabilities.js';
 
-export const MIND_POLICY = 'mind-v1';
 export const MIND_LIMITS = {
   documents: 10,
   words: 500,
@@ -60,6 +47,83 @@ export interface InnerRecord {
   status: 'active' | 'resolved';
   evidence: EvidenceLink[];
 }
+export type InnerRecordChange =
+  | { operation: 'remove'; id: string; expectedRevision: number }
+  | ({ operation: 'upsert'; expectedRevision: number } & Omit<InnerRecord, 'revision'>);
+/** One atomic record editor shared by live reflection and native admission. Prose
+ * is owned by documents; facets grant no native relationship or action effects. */
+export function applyInnerRecordChanges(
+  mind: ActorMind,
+  changes: readonly InnerRecordChange[],
+  allowedEvidence: ReadonlySet<string>,
+  permittedSubjects: readonly ObserverSubject[],
+  actorId: string,
+  dream = false,
+): string | undefined {
+  if (
+    changes.length > MIND_LIMITS.records * 2 ||
+    new Set(changes.map((change) => change.id)).size !== changes.length
+  )
+    return 'Too many or duplicate record operations.';
+  const knownSubjects = new Set(permittedSubjects.map(subjectKey));
+  const known = (subject: ObserverSubject) => knownSubjects.has(subjectKey(subject));
+  const records = new Map(mind.records.map((record) => [record.id, record]));
+  for (const change of changes) {
+    const prior = records.get(change.id);
+    if (
+      !/^[a-zA-Z0-9_-]{1,64}$/.test(change.id) ||
+      ['__proto__', 'constructor', 'prototype'].includes(change.id) ||
+      !Number.isSafeInteger(change.expectedRevision) ||
+      (prior?.revision ?? 0) !== change.expectedRevision
+    )
+      return 'Invalid or stale record identity.';
+    if (prior?.kind === 'identity' || (prior?.kind === 'commitment' && prior.status === 'active'))
+      return 'Protected records cannot be changed.';
+    if (change.operation === 'remove') {
+      if (!prior) return 'Record to remove is missing.';
+      records.delete(change.id);
+      continue;
+    }
+    if (
+      change.source === 'authored' ||
+      change.kind === 'identity' ||
+      !mind.documents.some((document) => document.id === change.documentId) ||
+      !Number.isFinite(change.confidence) ||
+      change.confidence < 0 ||
+      change.confidence > 1 ||
+      (change.trust !== null &&
+        (!Number.isFinite(change.trust) || change.trust < -1 || change.trust > 1)) ||
+      change.evidence.length > 16 ||
+      change.evidence.some(
+        (link) =>
+          !allowedEvidence.has(link.id) ||
+          !['supports', 'contradicts', 'derived-from', 'supersedes'].includes(link.relation),
+      ) ||
+      (change.subjectId && (!validObserverSubject(change.subjectId) || !known(change.subjectId)))
+    )
+      return 'Invalid record values or unoffered support.';
+    if (
+      change.kind === 'relationship' &&
+      (!change.subjectId ||
+        (change.subjectId.kind === 'entity' && change.subjectId.entityId === actorId))
+    )
+      return 'A relationship requires another known subject.';
+    if ((dream || change.kind === 'dream') && change.source !== 'imagined')
+      return 'Dream interpretations must remain imagined.';
+    if (!dream && change.kind !== 'dream' && !change.evidence.length)
+      return 'A lasting interpretation requires supported evidence.';
+    const { operation: _operation, expectedRevision, ...record } = change;
+    records.set(record.id, { ...cloneValue(record), revision: expectedRevision + 1 });
+  }
+  if (
+    records.size > MIND_LIMITS.records ||
+    [...records.values()].some(
+      (record) => !mind.documents.some((document) => document.id === record.documentId),
+    )
+  )
+    return 'Mind capacity or document reference is invalid.';
+  mind.records = [...records.values()];
+}
 export interface PrivateThought {
   decisionId: string;
   at: number;
@@ -72,35 +136,10 @@ export interface ActorMind {
   documents: MindDocument[];
   records: InnerRecord[];
   thoughts: PrivateThought[];
-  processedWatermark: number;
   lastReflectionAt: number;
   lastDreamEpisode: string | null;
-  receipts: Record<string, string>;
-}
-export interface MindProposal {
-  policy: string;
-  decisionId: string;
-  expectedRevision: number;
-  thought: string;
-  actionId: string | null;
-  documents: Array<{
-    id: string;
-    expectedRevision: number;
-    title: string;
-    text: string;
-    evidence: EvidenceLink[];
-  }>;
-  removeDocuments: Array<{ id: string; expectedRevision: number }>;
-  records: Array<
-    Omit<InnerRecord, 'revision' | 'subjectId'> & {
-      subjectId: string | null;
-      expectedRevision: number;
-    }
-  >;
-  removeRecords: Array<{ id: string; expectedRevision: number }>;
 }
 export interface CognitionBinding {
-  privacyRevision: number;
   /** Model callers bind opaque references; native callers can already supply owned IDs. */
   evidenceReferences?: Record<string, string>;
   physicalEntityReferences?: Record<string, string>;
@@ -111,17 +150,11 @@ export interface CognitionBinding {
   identityReferences?: Record<string, import('./knowledge.js').ObserverSubject>;
   actorId: string;
   decisionId: string;
-  policy: string;
-  tier: 'fast' | 'complex' | 'full';
-  purpose: 'thought' | 'reflection' | 'dream';
-  watermark: number;
   evidenceIds: string[];
   entityIds: string[];
   expectedPlan: number;
   entityEpisodes?: Record<string, string>;
   actions: Record<string, ActionChoice>;
-  restEpisode: string | null;
-  bodyEligibility: string;
 }
 export const wordCount = (text: string): number =>
   text.normalize('NFKC').trim().split(/\s+/u).filter(Boolean).length;
@@ -170,10 +203,8 @@ export function mindFor(world: WorldState, actorId: string): ActorMind {
       },
     ],
     thoughts: [],
-    processedWatermark: 0,
     lastReflectionAt: -86400,
     lastDreamEpisode: null,
-    receipts: {},
   };
 }
 export function quotaUsage(mind: ActorMind) {
@@ -188,301 +219,6 @@ export function quotaUsage(mind: ActorMind) {
     })),
   };
 }
-/** Atomic admission against latest world: observations arriving during cognition are retained. */
-export function commitCognition(
-  input: WorldState,
-  binding: CognitionBinding,
-  proposal: MindProposal,
-  permissions: NativeExecutionPermissions = {},
-): Transition {
-  const reject = (message: string) => ({
-    world: input,
-    events: [],
-    outcome: outcome(false, 'mind-rejected', message),
-  });
-  const actor = entityGet(input.entities, binding.actorId)?.actor;
-  if (!actor?.alive || actor.incapacitated || input.paused)
-    return reject('Actor cannot deliberate now.');
-  if (binding.privacyRevision !== (input.experience?.privacyRevisions?.[binding.actorId] ?? 0))
-    return reject('The supplied personal evidence was corrected or forgotten.');
-  const mind = mindFor(input, binding.actorId);
-  const fingerprint = canonicalJson({ binding, proposal });
-  if (Object.hasOwn(mind.receipts, binding.decisionId))
-    return mind.receipts[binding.decisionId] === fingerprint
-      ? { world: input, events: [], outcome: outcome(true, 'duplicate', 'Already committed.') }
-      : reject('Decision identity conflict.');
-  if (
-    byteCount(proposal) > MIND_LIMITS.proposalBytes ||
-    proposal.decisionId !== binding.decisionId ||
-    proposal.policy !== MIND_POLICY ||
-    binding.policy !== MIND_POLICY ||
-    proposal.expectedRevision !== mind.revision
-  )
-    return reject('Stale policy, mind revision or oversized proposal.');
-  const writing =
-    proposal.documents.length +
-      proposal.removeDocuments.length +
-      proposal.records.length +
-      proposal.removeRecords.length >
-    0;
-  if (binding.tier !== 'full' && writing)
-    return reject('This thinking tier cannot change the lasting mind.');
-  if (proposal.thought.length > 2000 || wordCount(proposal.thought) > 250)
-    return reject('Thought exceeds its presentation limit.');
-  if (
-    binding.bodyEligibility !==
-    bodyEligibilityRevision(input, entityGet(input.entities, binding.actorId)!)
-  )
-    return reject('Installed body or thinking policy changed.');
-  if (
-    binding.purpose !== 'thought' &&
-    (bodyThinkingBlocked(input, entityGet(input.entities, binding.actorId)!, 'commit') ||
-      (actor.action && actor.action.type !== 'status-effect'))
-  )
-    return reject('Urgency or active work superseded consolidation.');
-  if (
-    binding.purpose === 'dream' &&
-    (!dreamStatus(input, entityGet(input.entities, binding.actorId)) ||
-      dreamStatus(input, entityGet(input.entities, binding.actorId))?.episode !==
-        binding.restEpisode)
-  )
-    return reject('Rest episode changed.');
-  // Ordinary perceived events live in actor-scoped awareness after the cognition
-  // migration. Native commitments still live in memories, and experiences()
-  // intentionally presents both stores through one evidence boundary.
-  const currentExperiences = experiences(input, binding.actorId, true);
-  const currentEvidence = new Set(currentExperiences.map((memory) => memory.id));
-  const allowed = new Set(binding.evidenceIds);
-  const evidenceId = (id: string) =>
-    binding.evidenceReferences ? getOwn(binding.evidenceReferences, id) : id;
-  const resolvedEvidence = (links: EvidenceLink[]) =>
-    links.map((link) => ({ ...link, id: evidenceId(link.id)! }));
-  const checkEvidence = (links: EvidenceLink[]) =>
-    links.length <= 16 &&
-    links.every((link) => {
-      const id = evidenceId(link.id);
-      return id !== undefined && allowed.has(id) && currentEvidence.has(id);
-    });
-  const identifier = (id: string) =>
-    /^[a-zA-Z0-9_-]{1,64}$/.test(id) && !['__proto__', 'constructor', 'prototype'].includes(id);
-  const changed = [...proposal.documents, ...proposal.removeDocuments];
-  if (new Set(changed.map((d) => d.id)).size !== changed.length)
-    return reject('Duplicate document operations.');
-  for (const removal of proposal.removeDocuments) {
-    const doc = mind.documents.find((d) => d.id === removal.id);
-    if (!doc || doc.revision !== removal.expectedRevision || doc.protected)
-      return reject('Cannot remove protected or stale document.');
-    mind.documents = mind.documents.filter((d) => d.id !== doc.id);
-  }
-  for (const patch of proposal.documents) {
-    const prior = mind.documents.find((d) => d.id === patch.id);
-    if (
-      !identifier(patch.id) ||
-      (prior?.revision ?? 0) !== patch.expectedRevision ||
-      !checkEvidence(patch.evidence) ||
-      wordCount(patch.title + ' ' + patch.text) > MIND_LIMITS.words ||
-      byteCount(patch.title + ' ' + patch.text) > MIND_LIMITS.documentBytes ||
-      patch.title.length > 120 ||
-      !patch.text.trim()
-    )
-      return reject('Document quota, evidence or revision invalid.');
-    if (
-      (prior?.protected ||
-        mind.records.some(
-          (r) => r.documentId === patch.id && r.kind === 'commitment' && r.status === 'active',
-        )) &&
-      (patch.text !== prior?.text || patch.title !== prior?.title)
-    )
-      return reject('Essential identity is protected.');
-    const next = {
-      id: patch.id,
-      title: patch.title,
-      text: patch.text,
-      revision: (prior?.revision ?? 0) + 1,
-      evidence: resolvedEvidence(patch.evidence),
-      protected: prior?.protected ?? false,
-    };
-    mind.documents = mind.documents.filter((d) => d.id !== patch.id);
-    mind.documents.push(next);
-  }
-  const recordChanges = [...proposal.records, ...proposal.removeRecords];
-  if (new Set(recordChanges.map((r) => r.id)).size !== recordChanges.length)
-    return reject('Duplicate record operations.');
-  for (const removal of proposal.removeRecords) {
-    const prior = mind.records.find((r) => r.id === removal.id);
-    if (
-      !prior ||
-      prior.revision !== removal.expectedRevision ||
-      prior.kind === 'identity' ||
-      (prior.kind === 'commitment' && prior.status === 'active')
-    )
-      return reject('Protected or stale record removal.');
-    mind.records = mind.records.filter((r) => r.id !== removal.id);
-  }
-  for (const patch of proposal.records) {
-    const prior = mind.records.find((r) => r.id === patch.id);
-    if (
-      !identifier(patch.id) ||
-      (prior?.revision ?? 0) !== patch.expectedRevision ||
-      !checkEvidence(patch.evidence) ||
-      !mind.documents.some((d) => d.id === patch.documentId) ||
-      patch.confidence < 0 ||
-      patch.confidence > 1 ||
-      !Number.isFinite(patch.confidence) ||
-      (patch.trust !== null &&
-        (!Number.isFinite(patch.trust) || patch.trust < -1 || patch.trust > 1))
-    )
-      return reject('Invalid record envelope.');
-    if (patch.source === 'authored' || patch.kind === 'identity' || prior?.kind === 'identity')
-      return reject(
-        "Generated memories cannot change a character's fixed identity or claim to be part of their authored starting history.",
-      );
-    const subject = patch.subjectId
-      ? getOwn(binding.identityReferences ?? {}, patch.subjectId)
-      : null;
-    if (
-      patch.subjectId &&
-      (!subject ||
-        !validObserverSubject(subject) ||
-        (subject.kind === 'individual' &&
-          !getOwn(input.observerIdentities?.[binding.actorId] ?? {}, subject.individualId)))
-    )
-      return reject('Unknown relationship subject.');
-    if (
-      patch.kind === 'relationship' &&
-      (!subject || (subject.kind === 'entity' && subject.entityId === binding.actorId))
-    )
-      return reject('Relationship requires another known subject.');
-    if ((patch.kind === 'dream' || binding.purpose === 'dream') && patch.source !== 'imagined')
-      return reject('Dream proposals must remain imagined.');
-    if (patch.kind !== 'dream' && patch.evidence.length === 0)
-      return reject('Lasting interpretations require accessible evidence.');
-    // A model cannot invent a debt or dismiss an active obligation. Native speech
-    // commitment records are the only source of mechanically protected promises.
-    if (patch.kind === 'commitment' && !prior) {
-      const promised = patch.evidence.some((link) =>
-        currentExperiences.some(
-          (memory) =>
-            memory.id === evidenceId(link.id) &&
-            memory.eventType === 'speech' &&
-            memory.speakerId === binding.actorId &&
-            /\bI (?:will|promise|agree to)\b/i.test(memory.summary),
-        ),
-      );
-      if (!promised || patch.source !== 'inferred' || patch.status !== 'active')
-        return reject('A commitment requires the actor’s actual attributed promise.');
-    }
-    if (prior?.kind === 'commitment' && prior.status === 'active')
-      return reject('Active obligation cannot be rewritten.');
-    const { expectedRevision, ...rest } = patch;
-    mind.records = mind.records.filter((r) => r.id !== patch.id);
-    mind.records.push({
-      ...rest,
-      evidence: resolvedEvidence(patch.evidence),
-      subjectId: subject ? cloneValue(subject) : null,
-      revision: expectedRevision + 1,
-    });
-  }
-  if (
-    mind.documents.length > MIND_LIMITS.documents ||
-    mind.records.length > MIND_LIMITS.records ||
-    mind.records.some((r) => !mind.documents.some((d) => d.id === r.documentId))
-  )
-    return reject('Mind capacity or document reference invalid.');
-  let world = draftWorld(input);
-  let events: Transition['events'] = [];
-  const construction = constructionPermissionBatch(
-    input.id,
-    permissions.constructionPermissions ?? [],
-    permissions.campAssetPermissions ?? [],
-  );
-  if (proposal.actionId !== null) {
-    if (
-      !Object.hasOwn(binding.actions, proposal.actionId) ||
-      actor.planGeneration !== binding.expectedPlan
-    )
-      return reject('Action candidate or plan is stale.');
-    const choice = binding.actions[proposal.actionId]!;
-    if (!choiceWorkCurrent(input, binding.actorId, choice))
-      return reject('The work affected by this choice changed.');
-    const command = choice.invocation;
-    if (command) {
-      // Unchanged work cannot re-identify a person whose observation ended during thinking.
-      // docs/identity-and-references.md#contract
-      if (!actionTargetsCurrent(input, binding.actorId, [command], binding.entityEpisodes))
-        return reject('The selected action target changed observation.');
-      const transition = commitActorResponse(
-        world,
-        `${binding.decisionId}:action`,
-        binding.actorId,
-        {
-          operations: [
-            {
-              localId: 'choice',
-              requiresAccepted: [],
-              talk: null,
-              act: {
-                kind: 'known',
-                actionId: proposal.actionId,
-                mode: choice.transition === 'continue' ? 'enqueue' : choice.transition,
-                verb: null,
-                targetEntityId: null,
-                description: null,
-              },
-              think: null,
-              goal: null,
-              plan: null,
-            },
-          ],
-        },
-        binding.actions,
-        binding.entityIds,
-        binding.expectedPlan,
-        [],
-        binding.entityEpisodes,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        undefined,
-        permissions,
-      );
-      const result =
-        transition.world.responseReceipts?.[`${binding.decisionId}:action`]?.components['choice'];
-      if (!transition.outcome.ok || !result?.ok)
-        return reject(result?.message ?? transition.outcome.message);
-      world = draftWorld(transition.world);
-      events = transition.events;
-      absorbConstructionPermissionBatch(construction, transition);
-    }
-  }
-  mind.revision++;
-  if (proposal.thought.trim())
-    mind.thoughts.push({
-      decisionId: binding.decisionId,
-      at: world.simTime,
-      text: proposal.thought,
-      kind: binding.purpose,
-      source: binding.purpose === 'dream' ? 'imagined' : 'inferred',
-    });
-  mind.thoughts = mind.thoughts.slice(-MIND_LIMITS.thoughts);
-  if (binding.tier === 'full') {
-    mind.processedWatermark = Math.max(mind.processedWatermark, binding.watermark);
-    mind.lastReflectionAt = world.simTime;
-    if (binding.purpose === 'dream') mind.lastDreamEpisode = binding.restEpisode;
-  }
-  mind.receipts[binding.decisionId] = fingerprint;
-  // Canonical state receipts are bounded; backend durable jobs prevent replay of
-  // older decisions after they fall out of this recent idempotency window.
-  for (const key of Object.keys(mind.receipts).slice(0, -300)) delete mind.receipts[key];
-  (world.minds ??= {})[binding.actorId] = mind;
-  return finishConstructionPermissionBatch(
-    finish(world, events, outcome(true, 'cognition-committed', 'Cognition accepted.')),
-    construction,
-  );
-}
-
 /** Fallible impressions are eligible optional recollections, never exact grant support. */
 export function isRecallableExperience(memory: MemoryRecord): boolean {
   return (

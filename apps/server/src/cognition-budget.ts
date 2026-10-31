@@ -173,9 +173,9 @@ export function levelLimits(config: AppConfig): Record<CognitionLevel, LevelLimi
       executor: 'harness',
       inputSize: CONTEXT_BYTE_LIMIT,
       schemaBytes: 65_536,
-      outputTokens: 16_384,
+      outputTokens: LEVEL_LIMITS[5].outputTokens,
       visibleOutputBytes: MIND_LIMITS.proposalBytes,
-      reasoning: { effort: 'xhigh', allowanceTokens: 16_384 },
+      reasoning: { effort: LEVEL_LIMITS[5].effort, allowanceTokens: 16_384 },
       // Enforced by the reflection harness adapter, which rejects runs above eight tool rounds.
       toolRounds: 8,
       ...requestAllowance(1, config.macrofoldKey ? config.macrofoldRunUsd : llm),

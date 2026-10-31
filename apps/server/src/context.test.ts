@@ -45,7 +45,7 @@ import {
   type CandidateAction,
 } from './context.js';
 import { WorldService } from './world-service.js';
-import { domainCommand } from './cognition.js';
+import { domainCommand } from './domain-command.js';
 
 const cleanup: Array<() => Promise<void>> = [];
 async function setup(): Promise<WorldService> {

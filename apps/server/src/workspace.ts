@@ -1,4 +1,4 @@
-import { flattenFiles, type InnerWorld } from '@open-legend/domain';
+import { flattenFiles, type MindFiles } from '@open-legend/domain';
 import {
   MacrofoldTransport,
   macrofoldObject as object,
@@ -67,7 +67,7 @@ export class ActorWorkspaceFiles {
       await delay(300, undefined, { signal });
     }
   }
-  async seed(worktree: string, files: InnerWorld['files'], jobId: string, signal: AbortSignal) {
+  async seed(worktree: string, files: MindFiles, jobId: string, signal: AbortSignal) {
     flattenFiles(files);
     let list = await this.listing(worktree, signal);
     for (const entry of list.entries) {
@@ -88,9 +88,9 @@ export class ActorWorkspaceFiles {
   async export(
     worktree: string,
     signal: AbortSignal,
-  ): Promise<{ files: InnerWorld['files']; revision: string }> {
+  ): Promise<{ files: MindFiles; revision: string }> {
     const list = await this.listing(worktree, signal);
-    const files: InnerWorld['files'] = [];
+    const files: MindFiles = [];
     for (const entry of list.entries) {
       const path = string(entry['path']);
       if (

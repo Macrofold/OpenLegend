@@ -1,36 +1,81 @@
-import type { WorldState } from '@open-legend/domain';
+import {
+  DerivedOwnerIndex,
+  objectIndexGet,
+  objectIndexSet,
+  objectIndexEntries,
+  type ObjectIndexNode,
+  type WorldState,
+} from '@open-legend/domain';
 
 const RECENT_EVENTS = 512;
 const EVICTION_BATCH = 256;
-
-/** Eviction is storage placement, never forgetting (docs/architecture.md#performance-critical-path). */
+type Counts = ObjectIndexNode<number> | undefined;
+function dependencies<T>(references: (value: T) => Iterable<string>) {
+  return new DerivedOwnerIndex<T, string[], Counts>(
+    (value) => [...references(value)],
+    () => undefined,
+    (tree, _id, before, after) => {
+      for (const [ids, delta] of [
+        [before, -1],
+        [after, 1],
+      ] as const)
+        for (const id of ids ?? []) {
+          const count = (objectIndexGet(tree, id) ?? 0) + delta;
+          tree = objectIndexSet(tree, id, count || undefined);
+        }
+      return tree;
+    },
+  );
+}
+const awareness = dependencies<NonNullable<WorldState['experience']>['awareness'][string]>(
+  function* (rows) {
+    for (const row of rows) yield row.eventId;
+  },
+);
+const memories = dependencies<WorldState['memories'][string]>(function* (rows) {
+  for (const row of rows) {
+    if (row.eventId) yield row.eventId;
+    if (row.obligation) {
+      yield row.obligation.evidenceId;
+      if (row.obligation.fulfilledBy) yield row.obligation.fulfilledBy;
+    }
+  }
+});
+const knowledge = dependencies<WorldState['knowledge'][string]>(function* (rows) {
+  for (const row of rows) yield row.evidenceId;
+});
+const empty = Object.freeze({});
+function pins(world: WorldState) {
+  return [
+    awareness.read(world.experience?.awareness ?? empty),
+    memories.read(world.memories),
+    knowledge.read(world.knowledge),
+  ];
+}
+const checked = new WeakMap<WorldState['events'], Counts[]>();
+/** Placement is never forgetting. Reference counts preserve independent owners. */
 export function retainHotEvents(world: WorldState): WorldState {
   if (world.events.length <= RECENT_EVENTS + EVICTION_BATCH) return world;
-  const retained = hotEventDependencies(world);
-  for (const event of world.events.slice(-RECENT_EVENTS)) retained.add(event.id);
-  const events = world.events.filter((event) => retained.has(event.id));
-  const removed = world.events.length - events.length;
-  if (removed < EVICTION_BATCH) return world;
+  const counts = pins(world),
+    prior = Object.isFrozen(world.events) ? checked.get(world.events) : undefined;
+  if (prior && counts.every((tree, index) => tree === prior[index])) return world;
+  const held = (id: string) => counts.some((tree) => objectIndexGet(tree, id) !== undefined);
+  const tail = world.events.length - RECENT_EVENTS;
+  let removable = 0;
+  for (let i = 0; i < tail && removable < EVICTION_BATCH; i++)
+    if (!held(world.events[i]!.id)) removable++;
+  if (removable < EVICTION_BATCH) {
+    if (Object.isFrozen(world.events)) checked.set(world.events, counts);
+    return world;
+  }
+  const events = world.events.filter((event, index) => index >= tail || held(event.id));
   return {
     ...world,
     events,
-    archivedEventCount: (world.archivedEventCount ?? 0) + removed,
+    archivedEventCount: (world.archivedEventCount ?? 0) + world.events.length - events.length,
   };
 }
-
+/** Full enumeration only for consumers actually requesting every dependency. */
 export function hotEventDependencies(world: WorldState): Set<string> {
-  const retained = new Set<string>();
-  for (const entries of Object.values(world.experience?.awareness ?? {}))
-    for (const entry of entries) retained.add(entry.eventId);
-  for (const entries of Object.values(world.memories))
-    for (const entry of entries) {
-      if (entry.eventId) retained.add(entry.eventId);
-      if (entry.obligation) {
-        retained.add(entry.obligation.evidenceId);
-        if (entry.obligation.fulfilledBy) retained.add(entry.obligation.fulfilledBy);
-      }
-    }
-  for (const entries of Object.values(world.knowledge))
-    for (const entry of entries) retained.add(entry.evidenceId);
-  return retained;
+  return new Set(pins(world).flatMap((tree) => [...objectIndexEntries(tree)].map(([id]) => id)));
 }

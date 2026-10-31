@@ -1,4 +1,11 @@
 import { receivedValueAt } from '@open-legend/domain';
+import { personalVectorScope } from './vector-store.js';
+import {
+  objectIndexGet,
+  objectIndexSet,
+  objectIndexEntriesAfter,
+  type ObjectIndexNode,
+} from '@open-legend/domain';
 import { nativeText } from '@open-legend/domain';
 import {
   newTemporalSourceWatch,
@@ -43,6 +50,7 @@ import { LexicalProjection } from './lexical-projection.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
 import { matchesSearch, scanMatches, searchWords } from './text-search.js';
 // Preparation allowance, not a retained-history or searchable-corpus limit.
+export const CONTEXT_CANDIDATE_LIMIT = 300;
 export const RETRIEVAL_ROWS = PERSONAL_EVIDENCE_PREPARATION.rows;
 export const RETRIEVAL_BYTES = PERSONAL_EVIDENCE_PREPARATION.bytes;
 export class MemoryPreparationError extends Error {
@@ -494,7 +502,8 @@ export class MemoryRepository {
     string,
     { revision: number; reset: number; rows: Record<string, unknown>[] }
   >();
-  private actorRevisions = new Map<string, number>();
+  private actorRevisions: ObjectIndexNode<number> | undefined;
+  private actorRevisionReset = 0;
   private readonly canonicalSourceFences = new Set<CanonicalSourceWatch>();
   /** Watch exact selected account rows during an admitted asynchronous publication.
    * Register before current() validates SQL; this token detects later accepted
@@ -650,7 +659,19 @@ export class MemoryRepository {
     return JSON.stringify([this.placeReadEpoch, this.placeReset, this.actorRevision(actorId)]);
   }
   actorRevision(actorId: string): number {
-    return this.actorRevisions.get(actorId) ?? 0;
+    return objectIndexGet(this.actorRevisions, actorId) ?? 0;
+  }
+  actorChangesSince(revision?: number): { revision: number; actors?: ReadonlySet<string> } {
+    return {
+      revision: this.publicationRevision,
+      ...(revision !== undefined && revision >= this.actorRevisionReset
+        ? {
+            actors: new Set(
+              [...objectIndexEntriesAfter(this.actorRevisions, revision)].map(([id]) => id),
+            ),
+          }
+        : {}),
+    };
   }
   private readonly lexical: LexicalProjection;
   constructor(
@@ -758,7 +779,7 @@ export class MemoryRepository {
       this.resetCaches();
     if (restored) {
       this.lexical.restored();
-      this.actorRevisions.clear();
+      this.actorRevisions = undefined;
     }
     if (restored || unknownScope || changes.deletes.has('experience_state')) {
       this.placeReset++;
@@ -772,7 +793,15 @@ export class MemoryRepository {
     )
       this.publicationRevision++;
     // Other actors' memories cannot invalidate this actor's asynchronous inspection.
-    for (const actor of actors) this.actorRevisions.set(actor, this.publicationRevision);
+    if (
+      restored ||
+      unknownScope ||
+      changes.writes.has('experience_state') ||
+      changes.deletes.has('experience_state')
+    )
+      this.actorRevisionReset = this.publicationRevision;
+    for (const actor of actors)
+      this.actorRevisions = objectIndexSet(this.actorRevisions, actor, this.publicationRevision);
   }
 
   async initialize() {
@@ -2316,7 +2345,7 @@ export class MemoryRepository {
    * the sentinel refuses preparation rather than publishing a truncated index. */
   private retainedPlaces(
     uncorrected = false,
-    range?: { after?: string; placeId?: string; limit?: number },
+    range?: { after?: string; placeId?: string; placeIds?: readonly string[]; limit?: number },
   ) {
     const selection = (
       afterPrevious = false,
@@ -2329,7 +2358,7 @@ export class MemoryRepository {
           WHERE p.owner_kind='support' AND s.world_id=p.world_id AND s.id=p.support_record_id LIMIT 1
       ) admitted
       WHERE admitted.revision=p.owner_revision AND admitted.eligible=1
-        AND p.world_id=? AND p.actor_id=? AND (SELECT generation FROM world_head WHERE id=1)=?${range?.after ? ' AND p.place_id>?' : ''}${range?.placeId ? ' AND p.place_id=?' : ''}
+        AND p.world_id=? AND p.actor_id=? AND (SELECT generation FROM world_head WHERE id=1)=?${range?.after ? ' AND p.place_id>?' : ''}${range?.placeId ? ' AND p.place_id=?' : ''}${range?.placeIds ? ' AND p.place_id=ANY(?::text[])' : ''}
         ${afterPrevious ? ' AND p.place_id>previous.learned_place_id AND previous.place_step<?' : ''}
         AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=p.world_id AND f.actor_id=p.actor_id
           AND f.source_id IN (p.source_event_id,p.native_source_id,p.fact_alias))
@@ -2350,12 +2379,13 @@ export class MemoryRepository {
   }
   private placeParams(
     scope: MemoryScope,
-    range?: { after?: string; placeId?: string; limit?: number },
+    range?: { after?: string; placeId?: string; placeIds?: readonly string[]; limit?: number },
   ) {
     const params = [
       ...this.params(scope),
       ...(range?.after ? [range.after] : []),
       ...(range?.placeId ? [range.placeId] : []),
+      ...(range?.placeIds ? [range.placeIds] : []),
     ];
     return [...params, ...params, range?.limit ?? RETRIEVAL_ROWS + 1];
   }
@@ -2505,11 +2535,58 @@ export class MemoryRepository {
     });
   }
 
+  /** Select current canonical note identities before copying or formatting their text.
+   * Current exact required notes remain available independently of vector coverage. */
+  async knowledgeCandidates(scope: MemoryScope, options: MemoryModel & { query?: number[] }) {
+    return this.snapshot(async () => {
+      const base = `FROM mind_knowledge_documents d WHERE d.world_id=? AND d.actor_id=?
+        AND d.slot<>'general' AND d.text_bytes>0 AND (SELECT generation FROM world_head WHERE id=1)=?`;
+      const rows = options.query
+        ? await this.db
+            .prepare(
+              `SELECT d.slot,d.document_revision
+        FROM mind_knowledge_documents d LEFT JOIN recall_vectors v
+          ON v.scope=? AND v.model=? AND v.dimensions=? AND v.source_id='notepad:'||d.slot
+          AND (CASE WHEN d.subject_kind IN ('place','map-marker') THEN v.revision::jsonb->>1 ELSE v.revision::jsonb->>0 END)=d.document_revision::text
+        WHERE d.world_id=? AND d.actor_id=? AND d.slot<>'general' AND d.text_bytes>0
+          AND (SELECT generation FROM world_head WHERE id=1)=?
+        ORDER BY v.embedding OPERATOR(public.<=>) ?::public.vector NULLS LAST,d.slot LIMIT ${CONTEXT_CANDIDATE_LIMIT + 1}`,
+            )
+            .all(
+              personalVectorScope(scope.worldId, scope.actorId),
+              options.model,
+              options.dimensions,
+              scope.worldId,
+              scope.actorId,
+              scope.generation,
+              JSON.stringify(options.query),
+            )
+        : await this.db
+            .prepare(
+              `SELECT d.slot,d.document_revision ${base} ORDER BY d.slot LIMIT ${CONTEXT_CANDIDATE_LIMIT + 1}`,
+            )
+            .all(scope.worldId, scope.actorId, scope.generation);
+      return {
+        entries: rows
+          .slice(0, CONTEXT_CANDIDATE_LIMIT)
+          .map((row) => ({ id: String(row['slot']), revision: Number(row['document_revision']) })),
+        partial: rows.length > CONTEXT_CANDIDATE_LIMIT,
+      };
+    });
+  }
+
   /** One current retained observation per place. Filter a bounded metadata window before
    * hydration; continuation reaches every known place regardless of total history. */
   async knownPlaces(
     scope: MemoryScope,
-    options: { after?: string; terms?: string[]; placeId?: string; limit: number; scan: number },
+    options: {
+      after?: string;
+      terms?: string[];
+      placeId?: string;
+      placeIds?: readonly string[];
+      limit: number;
+      scan: number;
+    },
   ) {
     type PlaceRow = Record<string, unknown> & {
       capsule: KnownPlaceCapsule;
@@ -2521,7 +2598,7 @@ export class MemoryRepository {
     // Selected correction metadata is reused for body hydration.
     // docs/limits/spatial.md#sp08--static-named-places-and-private-known-places
     const rowsAfter = async (after: string | undefined, count: number): Promise<PlaceRow[]> => {
-      const range = { after, placeId: options.placeId, limit: count };
+      const range = { after, placeId: options.placeId, placeIds: options.placeIds, limit: count };
       const rows = await this.db
         .prepare(
           `${this.retainedPlaces(false, range)} SELECT ${sourceColumns},r.search_text,
@@ -4107,13 +4184,11 @@ export class MemoryRepository {
     for (const row of combined) if (scores.has(row['id'])) row['score'] = scores.get(row['id']);
     return this.hydrate(combined, cache);
   }
-  async pending(scope: MemoryScope, model: MemoryModel, limit = 32): Promise<RetrievedMemory[]> {
-    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
-      throw new Error('Invalid indexing batch size.');
-    if (!this.derivedAllowance || this.derivedAllowance.worldId !== scope.worldId) return [];
+  private async registerIndexModel(scope: MemoryScope, model: MemoryModel): Promise<void> {
     const registration = JSON.stringify([
       scope.worldId,
       scope.actorId,
+      scope.generation,
       model.model,
       model.dimensions,
     ]);
@@ -4141,6 +4216,71 @@ export class MemoryRepository {
       this.registeredModels.set(actorRegistration, registration);
       this.db.afterRollback?.(() => this.registeredModels.delete(actorRegistration));
     }
+  }
+  private registrationWalk?: {
+    worldId: string;
+    generation: string;
+    model: string;
+    dimensions: number;
+    actors: readonly string[];
+    position: number;
+  };
+  /** Durable startup registration is bounded just like ordinary pending pages. */
+  async pendingActors(
+    scope: Omit<MemoryScope, 'actorId'>,
+    model: MemoryModel,
+    actors: readonly string[],
+    after?: string,
+  ) {
+    if (!this.derivedAllowance || this.derivedAllowance.worldId !== scope.worldId || !actors.length)
+      return { actors: [] as string[], registering: false };
+    let walk = this.registrationWalk;
+    if (
+      !walk ||
+      walk.worldId !== scope.worldId ||
+      walk.generation !== scope.generation ||
+      walk.model !== model.model ||
+      walk.dimensions !== model.dimensions ||
+      walk.actors !== actors
+    )
+      walk = this.registrationWalk = {
+        worldId: scope.worldId,
+        generation: scope.generation,
+        ...model,
+        actors,
+        position: 0,
+      };
+    const through = Math.min(actors.length, walk.position + 64);
+    while (walk.position < through) {
+      await this.registerIndexModel({ ...scope, actorId: actors[walk.position]! }, model);
+      walk.position++;
+    }
+    const rows = await this.db
+      .prepare(
+        `SELECT DISTINCT actor_id FROM memory_index_queue
+      WHERE world_id=? AND model=? AND dimensions=? AND actor_id=ANY(?::text[])
+      AND (?::text IS NULL OR actor_id>?) AND (SELECT generation FROM world_head WHERE id=1)=?
+      ORDER BY actor_id LIMIT 65`,
+      )
+      .all(
+        scope.worldId,
+        model.model,
+        model.dimensions,
+        actors,
+        after ?? null,
+        after ?? null,
+        scope.generation,
+      );
+    return {
+      actors: rows.map((row) => String(row['actor_id'])),
+      registering: walk.position < actors.length,
+    };
+  }
+  async pending(scope: MemoryScope, model: MemoryModel, limit = 32): Promise<RetrievedMemory[]> {
+    if (!Number.isSafeInteger(limit) || limit < 1 || limit > 1000)
+      throw new Error('Invalid indexing batch size.');
+    if (!this.derivedAllowance || this.derivedAllowance.worldId !== scope.worldId) return [];
+    await this.registerIndexModel(scope, model);
     const rows = await this.db
       .prepare(
         `WITH pending AS MATERIALIZED (SELECT * FROM memory_index_queue

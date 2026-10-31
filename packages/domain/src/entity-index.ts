@@ -1,9 +1,10 @@
+import { recordMapChangesBetween } from './draft.js';
 import { isImmutableData } from './records.js';
 import { entityGet, entityValues, entityDraftAudit } from './entity-collection.js';
 import { countDomainWork } from './diagnostic-counters.js';
 import { recordSemanticChange } from './dependencies.js';
 import { isDraft, original } from 'immer';
-import { changedDraftEntityIds, readOnlyDraftView } from './draft.js';
+import { changedDraftEntityIds, readOnlyDraftView, entityChangesBetween } from './draft.js';
 import { objectIndexGet, objectIndexSet, type ObjectIndexNode } from './object-index.js';
 import { chargeWork } from './work-budget.js';
 import { activelyParticipates } from './participation-state.js';
@@ -95,6 +96,8 @@ export interface NativeEntityGroups {
   territorial: string[];
   statuses: string[];
   projectileBodies: string[];
+  permissionActions: string[];
+  players: string[];
 }
 const nativeGroupNames = [
   'actors',
@@ -107,6 +110,8 @@ const nativeGroupNames = [
   'territorial',
   'statuses',
   'projectileBodies',
+  'permissionActions',
+  'players',
 ] as const;
 interface NativeMembership {
   manifest: WorldState['moduleManifest'];
@@ -119,6 +124,7 @@ function nativeMask(world: WorldState, entity: Entity | undefined): number {
   if (!physicalRoot(entity)) return 0;
   const root = readOnlyDraftView(entity!);
   const active = activelyParticipates(root) && !!(root.actor || root.animal || root.heat);
+  const action = root.actor?.action;
   return (
     (active && root.actor ? 1 : 0) |
     (active ? 2 : 0) |
@@ -131,7 +137,15 @@ function nativeMask(world: WorldState, entity: Entity | undefined): number {
     (active && root.actor?.agency.plan ? 64 : 0) |
     (active && root.threat ? 128 : 0) |
     (mayAdvanceStatusEffects(world, root) ? 256 : 0) |
-    (activelyParticipates(root) && (root.actor || root.practiceTarget) ? 512 : 0)
+    (activelyParticipates(root) && (root.actor || root.practiceTarget) ? 512 : 0) |
+    (action &&
+    (action.constructionGrant ||
+      action.gateWork ||
+      action.boundaryImpact ||
+      action.materialPermission)
+      ? 1024
+      : 0) |
+    (root.actor?.controller === 'player' ? 2048 : 0)
   );
 }
 function membershipCurrent(world: WorldState, value: NativeMembership): boolean {
@@ -457,4 +471,50 @@ export function captureRootIndex(
     const ids = changedRootIds(base.entities, world.entities, prior, changed);
     if (ids) roots.set(world.entities, ids);
   };
+}
+
+interface MemoryActors {
+  entities: WeakRef<WorldState['entities']>;
+  ids: readonly string[];
+  members: ReadonlySet<string>;
+}
+const memoryActors = new WeakMap<object, MemoryActors>();
+let latestMemoryActors: WeakRef<object> | undefined;
+/** Memory-capable NPC membership; changed personal prose does not rebuild the roster. */
+export function npcMemoryActorIds(world: WorldState): readonly string[] {
+  const minds = world.minds;
+  if (!minds) return [];
+  let cached = Object.isFrozen(minds) ? memoryActors.get(minds) : undefined;
+  const priorRoot = latestMemoryActors?.deref();
+  const mindChanges = cached
+    ? new Set<string>()
+    : priorRoot
+      ? recordMapChangesBetween(priorRoot, minds)
+      : undefined;
+  cached ??= mindChanges && priorRoot ? memoryActors.get(priorRoot) : undefined;
+  const previous = cached?.entities.deref();
+  if (previous === world.entities && mindChanges?.size === 0) return cached!.ids;
+  const changed = previous ? entityChangesBetween(previous, world.entities) : undefined;
+  const eligible = (id: string) =>
+    Object.hasOwn(minds, id) && entityGet(world.entities, id)?.actor?.controller === 'npc';
+  let ids: readonly string[];
+  if (cached && changed && mindChanges) {
+    let selected: Set<string> | undefined;
+    for (const id of new Set([...changed, ...mindChanges]))
+      if (eligible(id) !== cached.members.has(id)) {
+        selected ??= new Set(cached.ids);
+        if (eligible(id)) selected.add(id);
+        else selected.delete(id);
+      }
+    ids = selected ? [...selected].sort() : cached.ids;
+  } else ids = Object.keys(minds).filter(eligible).sort();
+  if (Object.isFrozen(minds) && isImmutableData(world.entities)) {
+    memoryActors.set(minds, {
+      entities: new WeakRef(world.entities),
+      ids,
+      members: ids === cached?.ids ? cached.members : new Set(ids),
+    });
+    latestMemoryActors = new WeakRef(minds);
+  }
+  return ids;
 }

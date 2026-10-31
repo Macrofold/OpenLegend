@@ -95,11 +95,14 @@ export async function prepareSupplyOpportunityContext(
 ): Promise<Map<string, string>> {
   if (!repository || !scope || !candidates.length) return new Map();
   const known = new Map<string, string>();
-  for (const id of new Set(candidates.map((row) => row.placeId))) {
-    const result = await repository.knownPlaces(scope, { placeId: id, limit: 1, scan: 1 });
-    const entry = result.entries[0];
-    if (entry && !entry.correctionId) known.set(id, entry.place.capsule.label);
-  }
+  const placeIds = [...new Set(candidates.map((row) => row.placeId))];
+  const result = await repository.knownPlaces(scope, {
+    placeIds,
+    limit: placeIds.length,
+    scan: placeIds.length,
+  });
+  for (const entry of result.entries)
+    if (!entry.correctionId) known.set(entry.place.capsule.placeId, entry.place.capsule.label);
   return known;
 }
 

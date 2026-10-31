@@ -1,3 +1,4 @@
+import { acceptedMindText } from '@open-legend/domain';
 import { currentStatusInstance, entityGet } from '@open-legend/domain';
 import { acquiredActivities } from '@open-legend/domain';
 import { continuityView } from './continuity-view.js';
@@ -41,7 +42,7 @@ export async function inspectGodMind(
     name: entity.name,
     revision: service.world.innerWorlds?.[actorId]?.revision ?? mind.revision,
     corrections: service.world.experience?.corrections?.[actorId],
-    acceptedText: service.world.innerWorlds?.[actorId]?.text,
+    acceptedText: acceptedMindText(service.world, actorId),
     experiences: history.recent.map((m) => ({
       id: m.id,
       text: m.summary,

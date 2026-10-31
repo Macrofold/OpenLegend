@@ -1,3 +1,5 @@
+import type { Entity } from '../../types.js';
+import type { ObservedBody } from '../../perception-evidence.js';
 import type { SenseDefinition } from '../../perception.js';
 import { person, type Narration } from '../../narration.js';
 
@@ -36,24 +38,29 @@ export const DETECTION_SUPPORT_POLICY = {
   fullStrengthSeconds: 0.25,
   decaySeconds: 0.5,
 } as const;
-/** Mere scenery/animal reappearance belongs to current sight, not durable recollection.
- * Social sightings remain evidence without requiring thought; interests and actual changes
- * still drive attention. Richer salience remains EPR06, not a physical visibility rule.
- * docs/memory-architecture.md#encounters-sensory-detail-and-reminder-continuity */
+/** Routine presence belongs to current sight and attended chronology. Only a
+ * meaningful received outward change produces a narrative notice. */
 export const SIGHTING_POLICY = {
-  retainRoutineOnset: false,
-  social: { importance: 3, urgency: 0, semanticTrigger: false },
-  /** The encounter wrapper has arrival weight; lasting admission remains separate. */
-  departure: { importance: 3, urgency: 0, semanticTrigger: false },
   routine: { importance: 0, urgency: 0, semanticTrigger: false },
   changedBeing: { importance: 6, urgency: 2, semanticTrigger: true },
-  /** Throttle narrative encounter wrappers, independently of actual current facts
-   * and attended chronological capture (docs/limits/cognition.md#cg10). */
-  recordWindowSeconds: 3600,
-  /** A return this soon after actual sensory loss keeps encounter correlation.
-   * Native live body/detail leases still end immediately, independent of story quotas. */
   episodeGraceSeconds: 0.5,
 } as const;
+export function changedOutwardNotice(
+  before: ObservedBody,
+  after: ObservedBody,
+): string | undefined {
+  if (
+    before.kind === after.kind &&
+    before.appearance === after.appearance &&
+    before.activity === after.activity &&
+    before.outward.every((state, index) => state === after.outward[index]) &&
+    (after.outward[0] || before.label?.name === after.label?.name)
+  )
+    return;
+  return [after.outward[0] ? '' : after.label?.name, after.kind, after.appearance, ...after.outward]
+    .filter(Boolean)
+    .join(', ');
+}
 /** Ongoing received-condition relevance (EPR06), separate from native detailed
  * attention. Visible fire, incapacity and death can favor optional context without
  * forcing paid thought. docs/limits/cognition.md#cg11 */
@@ -74,3 +81,10 @@ export const DEFAULT_SENSES: SenseDefinition[] = [
   },
   { id: 'wilderness:hearing', version: 1, implementation: 'hearing-db-v1', hearingFloorDbSpl: 0 },
 ];
+
+export function baseOutwardActivity(entity: Entity): string | undefined {
+  const action = entity.actor?.action;
+  return action && ['strike', 'hunt', 'aim', 'shoot-once'].includes(action.type)
+    ? JSON.stringify([action.id, action.type, action.stage, action.strikePhase ?? 'preparing'])
+    : undefined;
+}

@@ -1,4 +1,12 @@
-import { captureExperienceContext, type CapturedExperienceContext } from './experience-context.js';
+import { personalVectorScope } from './vector-store.js';
+import { npcMemoryActorIds, recentLearnedRecipeIds } from '@open-legend/domain';
+import { acceptedMindText } from '@open-legend/domain';
+import { requiredItemIds, requiredRecipeIds } from './decision-observation.js';
+import {
+  retainedMemorySubjects,
+  captureExperienceContext,
+  type CapturedExperienceContext,
+} from './experience-context.js';
 import { worldClockText } from '@open-legend/protocol';
 import { entityGet, entityValues } from '@open-legend/domain';
 import { isEquipped } from '@open-legend/domain';
@@ -10,6 +18,7 @@ export { experienceManifestForModel } from './experience-context.js';
 import {
   MemoryPreparationError,
   RETRIEVAL_ROWS,
+  CONTEXT_CANDIDATE_LIMIT,
   RETRIEVAL_BYTES,
   memorySourceProof,
 } from './memory-repository.js';
@@ -116,26 +125,6 @@ export const HARD_CONTEXT_LIMITS = {
 /** Calendar labels read the installed world's clock offset and optional unit name. */
 export function gameTime(at: number, offsetHours: number, dayLabel?: string): string {
   return worldClockText(at, offsetHours, dayLabel);
-}
-/** Identity follows the observer's retained role, never a raw history entity ID.
- * A later face/voice recognition cannot retroactively identify an unknown episode. */
-function retainedMemorySubjects(memory: MemoryRecord): ObserverSubject[] {
-  return [
-    ...(memory.evidence?.sourceSubject ? [memory.evidence.sourceSubject] : []),
-    ...(memory.manifest?.speech.flatMap((group) =>
-      group.sourceSubject ? [group.sourceSubject] : [],
-    ) ?? []),
-    ...[
-      ...(memory.observation ? [memory.observation] : []),
-      ...(memory.manifest?.observations ?? []),
-    ].flatMap((observation) =>
-      observation.facets.flatMap((facet) =>
-        facet.value.kind === 'association' && facet.value.strength === 'supported'
-          ? [facet.value.subject]
-          : [],
-      ),
-    ),
-  ];
 }
 function retainedMemoryEntities(
   world: WorldState,
@@ -327,23 +316,15 @@ export function candidateSet(
   automaticIds: string[] = [],
   conversationIds: string[] = [],
   retained?: RetrievedMemory[],
+  optionalKnowledgeIds?: readonly string[],
 ): AttentionCandidate[] {
   // Reject oversized preparation explicitly before formatting thousands of optional
   // bodies; this never narrows SQL recall eligibility or deletes retained sources.
-  const documents = world.actorKnowledge?.[actorId] ?? {};
   if (
-    observed.visibleEntities.length +
-      observed.inventory.length +
-      observed.knownRecipes.length +
-      Object.keys(documents).length >
+    observed.visibleEntities.length + observed.inventory.length + observed.knownRecipes.length >
     RETRIEVAL_ROWS
   )
     throw new MemoryPreparationError();
-  let preparedBytes = 0;
-  for (const doc of Object.values(documents)) {
-    preparedBytes += Buffer.byteLength(doc.text);
-    if (preparedBytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
-  }
   const requiredIdSet = new Set(requiredIds);
   const automaticIdSet = new Set(automaticIds);
   const conversationIdSet = new Set(conversationIds);
@@ -536,27 +517,14 @@ export function candidateSet(
       salience: 3,
     });
   // An explicitly bound tool remains necessary even when a large inventory is ranked.
-  const boundItems = new Set<string>();
-  const actor = observed.actor.actor!;
-  for (const action of [
-    actor.action,
-    ...(actor.agency.plan?.steps ?? [])
-      .filter((step) => ['queued', 'running'].includes(step.status))
-      .map((step) => step.command),
-  ]) {
-    if (!action) continue;
-    for (const field of ['itemId', 'weaponItemId', 'ammoItemId'] as const)
-      if (field in action) {
-        const value = (action as unknown as Record<string, unknown>)[field];
-        if (typeof value === 'string') boundItems.add(value);
-      }
-  }
+  const boundItems = requiredItemIds(world, actorId);
   if (
     observed.inventory.filter((item) => boundItems.has(item.id)).length >
     HARD_CONTEXT_LIMITS.possessions
   )
     throw new Error('Required possession references exceed the decision allowance.');
   const hardIds = new Set([
+    ...[...requiredRecipeIds(world, actorId)].map((id) => `recipe:${id}`),
     ...observed.visibleEntities.map((entity) => `entity:${entity.id}`),
     ...[...observed.inventory]
       .sort(
@@ -567,16 +535,15 @@ export function candidateSet(
       )
       .slice(0, HARD_CONTEXT_LIMITS.possessions)
       .map((i) => `item:${i.id}`),
-    ...[...(world.knowledge[actorId] ?? [])]
-      .sort((a, b) => b.learnedAt - a.learnedAt || a.recipeId.localeCompare(b.recipeId))
-      .slice(0, HARD_CONTEXT_LIMITS.knowledge)
-      .map((k) => `recipe:${k.recipeId}`),
+    ...recentLearnedRecipeIds(world, actorId, HARD_CONTEXT_LIMITS.knowledge).map(
+      (id) => `recipe:${id}`,
+    ),
   ]);
   for (const candidate of candidates) if (hardIds.has(candidate.id)) candidate.required = true;
   const involved = new Set(observed.visibleEntities.map((entity) => entity.id));
   for (const candidate of candidates.filter((c) => c.required || c.automatic))
     for (const id of candidate.entityIds) involved.add(id);
-  candidates.push(...subjectKnowledgeCandidates(world, actorId, involved));
+  candidates.push(...subjectKnowledgeCandidates(world, actorId, involved, optionalKnowledgeIds));
   return candidates;
 }
 interface RecallAuthority {
@@ -603,7 +570,7 @@ export function captureRecallSelection(
     worldId: world.id,
     inner: world.innerWorlds?.[actorId]
       ? {
-          text: world.innerWorlds[actorId]!.text,
+          text: acceptedMindText(world, actorId),
           revision: world.innerWorlds[actorId]!.revision,
         }
       : undefined,
@@ -637,6 +604,9 @@ export class RecallService {
   private indexSlotId?: string;
   private indexActors: string[] = [];
   private indexGeneration?: string;
+  private indexAfter?: string;
+  private indexMore = false;
+  private indexRegistering = false;
   private indexRoundMadeProgress = false;
   private readonly executionOwner = new AsyncLocalStorage<{
     rootId: string;
@@ -823,13 +793,31 @@ export class RecallService {
     if (!repository || !head || generation !== this.service.generation) return false;
     const config = this.service.config;
     const model = { model: config.embeddingModel, dimensions: config.embeddingDimensions };
-    if (!this.indexActors.length || this.indexGeneration !== generation) {
-      this.indexActors = entityValues(this.service.world.entities)
-        .filter((entity) => entity.actor?.controller === 'npc')
-        .map((entity) => entity.id)
-        .sort();
+    if (this.indexGeneration !== generation) {
       this.indexGeneration = generation;
+      this.indexActors = [];
+      this.indexAfter = undefined;
+      this.indexMore = false;
       this.indexRoundMadeProgress = false;
+    }
+    if (!this.indexActors.length) {
+      const pending = await repository.pendingActors(
+        { worldId: head.worldId, generation: head.generation },
+        model,
+        npcMemoryActorIds(this.service.world),
+        this.indexAfter,
+      );
+      if (generation !== this.service.generation) return false;
+      this.indexRegistering = pending.registering;
+      this.indexMore = pending.actors.length > 64;
+      this.indexActors = pending.actors.slice(0, 64);
+      this.indexAfter = this.indexActors.at(-1);
+      if (!this.indexActors.length) {
+        this.indexAfter = undefined;
+        const more = this.indexRoundMadeProgress || this.indexRegistering;
+        this.indexRoundMadeProgress = false;
+        return more;
+      }
     }
     const actors = this.indexActors;
     // One batch per actor per round prevents a long-lived actor monopolizing the index budget.
@@ -911,7 +899,11 @@ export class RecallService {
       this.indexRoundMadeProgress = true;
       return true;
     }
-    return this.indexRoundMadeProgress;
+    if (this.indexMore) return true;
+    this.indexAfter = undefined;
+    const more = this.indexRoundMadeProgress || this.indexRegistering;
+    this.indexRoundMadeProgress = false;
+    return more;
   }
 
   private recallCurrent(
@@ -933,6 +925,10 @@ export class RecallService {
     );
   }
 
+  private readonly noteCoverage = new WeakMap<
+    AttentionCandidate[],
+    { partial: boolean; considered: number }
+  >();
   private readonly retrieval = new WeakMap<
     AttentionCandidate[],
     { eligible: number; indexed: number; missing: number; status: string; generation: string }
@@ -991,8 +987,8 @@ export class RecallService {
     });
     const count = coverage.eligible;
     const inner = readWorld().innerWorlds?.[actorId];
-    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(entityGet(readWorld().entities, actorId)!.actor!), readWorld(), actorId)}\n${inner?.text ?? ''}`;
-    const key = `memory-query:${readWorld().id}:${actorId}`;
+    const query = `${stimulus}\nMy current goal: ${projectEntityMarkers(currentGoal(entityGet(readWorld().entities, actorId)!.actor!), readWorld(), actorId)}\n${acceptedMindText(readWorld(), actorId) ?? ''}`;
+    const key = personalVectorScope(readWorld().id, actorId, 'memory-query');
     const queryKey = digest({ query, generation: scope.generation });
     const cache = (await this.service.store.getIntegration(key)) as
       | { key: string; model: string; dimensions: number; query: number[] }
@@ -1074,6 +1070,17 @@ export class RecallService {
         [...optional, ...required].map((source) => [experienceEntryKey(source.entry), source]),
       ).values(),
     ];
+    const notePage = await repository.knowledgeCandidates(scope, {
+      model: config.embeddingModel,
+      dimensions: config.embeddingDimensions,
+      ...(vector && this.service.store.vectors ? { query: vector } : {}),
+    });
+    signal.throwIfAborted();
+    if (!current()) throw new Error('Recall authority changed during note selection.');
+    const currentNotes = readWorld().actorKnowledge?.[actorId] ?? {};
+    const noteIds = notePage.entries.flatMap((row) =>
+      currentNotes[row.id]?.revision === row.revision ? [row.id] : [],
+    );
     const candidates = candidateSet(
       readWorld(),
       actorId,
@@ -1082,7 +1089,12 @@ export class RecallService {
       automaticIds,
       conversationIds,
       sources,
+      noteIds,
     );
+    this.noteCoverage.set(candidates, {
+      partial: notePage.partial || noteIds.length !== notePage.entries.length,
+      considered: noteIds.length,
+    });
     const scores = new Map(
       sources.map((source) => [experienceEntryKey(source.entry), source.score]),
     );
@@ -1175,17 +1187,18 @@ export class RecallService {
     const sections = new Map(
       sectionKinds.map((kind) => [kind, ranked.filter((candidate) => candidate.kind === kind)]),
     );
-    const sectionLimit = (_kind: AttentionCandidate['kind']) => 300;
+    const sectionLimit = (_kind: AttentionCandidate['kind']) => CONTEXT_CANDIDATE_LIMIT;
     const semanticPool = sectionKinds.flatMap((kind) => {
       const section = sections.get(kind)!;
       return (kind === 'memory' || kind === 'conversation') && this.retrieval.has(candidates)
         ? []
-        : section.length > sectionLimit(kind)
+        : section.length > sectionLimit(kind) ||
+            (kind === 'knowledge' && this.noteCoverage.get(candidates)?.partial)
           ? section
           : [];
     });
     const semanticIds = new Set(semanticPool.map((candidate) => candidate.id));
-    const key = `vectors:${captured.worldId}:${actorId}`;
+    const key = personalVectorScope(captured.worldId, actorId);
     const vectors = this.service.store.vectors;
     let cache = (
       semanticPool.length && vectors ? await this.service.store.getIntegration(key) : undefined
@@ -1407,6 +1420,10 @@ export class RecallService {
       selected,
       diagnostics: {
         memoryRetrieval: { ...this.retrieval.get(candidates), indexFailure: this.indexFailure },
+        knowledgeRetrieval: this.noteCoverage.get(candidates) ?? {
+          partial: true,
+          ranking: 'bounded metadata page',
+        },
         questionVersion: JEV_QUESTIONS_VERSION,
         attentionStatus,
         query,

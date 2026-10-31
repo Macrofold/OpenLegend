@@ -212,6 +212,13 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     ),
     // Selected by the application/world compute owner; never allocated by an actor lane.
     macrofoldWorkerId: env['MACROFOLD_WORKER_ID']?.trim() ?? '',
+    macrofoldRunMemoryMiB: z.coerce
+      .number()
+      .int()
+      .min(128)
+      .max(1_048_576)
+      .optional()
+      .parse(env['MACROFOLD_RUN_MEMORY_MIB']),
     macrofoldTimeoutSeconds: numberSetting(env, 'MACROFOLD_TIMEOUT_SECONDS', 300, 5, 300),
     jevKey: env['TYPESAFE_API_KEY'] ?? env['JEV_API_KEY'] ?? '',
     jevModel,
