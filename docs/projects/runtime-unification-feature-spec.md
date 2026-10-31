@@ -1,8 +1,8 @@
 # Runtime unification and unnecessary-work removal
 
-| Status      | Current progress                                                                                                            | Last updated            |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| In progress | Runtime conversions and effort policy are installed; live deployment acceptance remains open and measurements are deferred. | 2026-10-31 19:58:09 UTC |
+| Status      | Current progress                                                                                       | Last updated            |
+| ----------- | ------------------------------------------------------------------------------------------------------ | ----------------------- |
+| In progress | Runtime conversions and scoped live interpretation checks pass; performance qualification is deferred. | 2026-10-31 20:12:39 UTC |
 
 ## 1. Purpose and baseline
 

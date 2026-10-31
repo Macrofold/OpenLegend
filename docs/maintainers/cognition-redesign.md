@@ -463,7 +463,7 @@ The selected CR12 stale-food caller now rejects the action before creating a pla
 
 ### Contributor effort correction
 
-- [ ] Finish live-route qualification of caller-selected effort. [Native request capture](../verification/performance/2026-10/runtime-unification.md#task-selected-effort-qualification) confirms the [shared helper](../../apps/server/src/macrofold-model.ts) forwards explicit low/medium/high independently of execution mode, with low ordinary generation and medium reflection defaults; live admission confirms medium, but the Worker never executes. Complex-output allowance is separate and unchanged. The creator World Agent retains its medium profile, and continued sessions retain admitted parameters. Keep CR02's route and model-quality qualification separate from request construction/admission evidence.
+- [ ] Finish the complete route/continuation qualification of caller-selected effort. Native capture confirms explicit low/medium/high independently of execution mode. The [complete RU live verifier](../verification/performance/2026-10/runtime-unification.md#dispatcher-recovery-and-complete-live-pass) confirms four fresh native Sessions using medium/low/medium/medium with the selected Contributor model. Complex-output allowance is separate and unchanged. The creator World Agent retains its medium profile, and continued sessions retain admitted parameters. CR02's other routes, continuation behavior and autonomous model quality are not established by these directed jobs.
 
 ### Jev through OpenRouter
 

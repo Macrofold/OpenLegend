@@ -1,10 +1,10 @@
 # Runtime unification: implementation design
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Runtime conversions and effort policy are installed; live deployment acceptance remains open and measurements are deferred. | 2026-10-31   |
+| Status      | Current progress                                                                                       | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------ | ------------ |
+| In progress | Runtime conversions and scoped live interpretation checks pass; performance qualification is deferred. | 2026-10-31   |
 
-Architecture last used: **2026-10-31 19:58:09 UTC**, for implementation and scoped qualification.
+Architecture last used: **2026-10-31 20:12:39 UTC**, for scoped live qualification.
 
 ## 1. Scope and working rules
 
