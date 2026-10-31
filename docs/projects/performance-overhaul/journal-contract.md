@@ -1,8 +1,10 @@
 # Durable saving journal: implementation contract
 
-| Status      | Current progress                                                                                                                                                  | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Compact evidence storage, prepared admission and exact cold recovery are implemented and checked; complete worker-failure and capacity qualification remain open. | 2026-10-29   |
+| Status      | Current progress                                                                                                            | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The journal remains installed; its direct-writer replacement is designed under BK01 and runtime qualification remains open. | 2026-10-31   |
+
+**Selected replacement, not implemented:** [simpler saving and personal evidence](../bookkeeping-simplification-tech-design.md#4-direct-transactional-saving) replaces this experiment with the existing direct transactional writer for all supported changes. [BK01](../../maintainers/production-data.md#bookkeeping-simplification) owns removal of the application worker, dual heads and query alignment. This file describes the installed mechanism until cutover; its privacy, atomicity and failure requirements must survive through their canonical owners.
 
 [Execution plan](execution.md) · [Storage card](storage.md#pf178--a-durable-change-journal-before-table-materialization) · [Results](../../verification/performance/overhaul-storage-implementation.md)
 

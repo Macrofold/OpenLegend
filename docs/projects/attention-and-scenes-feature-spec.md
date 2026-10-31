@@ -372,6 +372,8 @@ Maintain counts and reusable participant/indexed views instead of rebuilding ent
 
 ### 11.7 Proposed simplification of received state
 
+The [selected saving/lifetime project](bookkeeping-simplification-feature-spec.md) integrates this native simplification with direct transactional persistence and simpler shared-value cleanup. It preserves the received behavior below; both designs remain unimplemented targets with separate, linked delivery owners.
+
 **Design proposal, not installed behavior.** [Runtime §13](attention-and-scenes-runtime-design.md#13-proposed-structural-replacement-contacts-and-grouped-receipts) recommends one personal contact with grouped received values/checks, replacing separate writable and persisted records for every field. Details with different evidence or freshness remain independent exceptions. Exact sampled movement, meaningful occurrences, unknown identity, correction, forgetting and cold recovery keep their existing guarantees. Broad crowd visibility and relevant surroundings stay independent of ten detailed slots. No new AI calls, slower clock, retroactive unattended routes or compulsory memory of trivial movement is selected. Existing rates/retention/defaults remain the comparison baseline; [SR08–SR11](../maintainers/product-scalability.md#ps04-a--core-attention-and-recording) track the proposed complete conversion and unmet operating checks.
 
 ## 12. Concrete journeys and failure cases

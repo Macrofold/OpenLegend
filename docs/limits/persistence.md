@@ -1,5 +1,7 @@
 # Persistence, checkpoints and recovery: limits and constraints
 
+The selected [bookkeeping simplification](../projects/bookkeeping-simplification-feature-spec.md) replaces journal and evidence-layout mechanisms only after [BK01–BK07](../maintainers/production-data.md#bookkeeping-simplification). BKS entries below describe that target; current SV/SB/PF17-J01 behavior remains implemented until cutover.
+
 [Feature contract](../save-and-load.md) · [Implementation work](../maintainers/save-and-load.md) · [Tracking rules](README.md) · [Change backlog](../maintainers/limits-audit.md)
 
 Values describe the stated baseline, not approved future targets. **Reported** means the merged implementation report (2026-09-26, `c133000` / `a90d411`); **Historical** means the original audit and needs code recheck. Ratings describe restrictiveness, not correctness or measured capacity. New rationale is an engineering assessment unless an authored decision is explicitly identified.
@@ -497,6 +499,26 @@ Receipt-page lookup uses a [fixed 16,384-key bucket dictionary](../projects/atte
 ## RW-L10 — Growing text and economic qualification
 
 **Proposed consumer exposure · Restrictiveness: unqualified aggregate growth.** DG24's 100 × 24 × 8,000 bytes/minute envelope is 19.2 MB/minute: roughly fourteen real minutes to 256 MiB of raw bodies alone, before world state/encoding/derivatives. This is worst-envelope arithmetic, not demand, exact saved size or capacity. Existing sender/page limits do not prove indefinite saveability. NC/SL/data must qualify a concrete supported accumulated-history envelope or explicit admission policy, with current retention rationale; no silent private expiry, copy-per-utterance or paid reconstruction is selected.
+
+## BKS-L01 — Direct transactional saving target
+
+**Proposed — selected design; Medium.** One ordered PostgreSQL writer, one in-flight batch and one accumulating change buffer. Preserve the existing roughly one-real-second native save opportunity, strict durable command/result confirmation and current queue/age backpressure. Reuse 32 MiB as an initial encoded pending-write target; decoded memory is measured separately. Flush early near it; pressure waits at a coherent boundary. An admitted oversized atomic transition uses bounded SQL groups in one direct transaction while advancement waits. No second durable application queue, mandatory idle-command batching delay or new volatile-command mode. Crash loss includes unsaved progress and actual delay, not a hard one-second guarantee. [Mechanism](../projects/bookkeeping-simplification-tech-design.md#4-direct-transactional-saving).
+
+## BKS-L02 — Explicit evidence layout target
+
+**Proposed — selected design; Medium.** Small changing measurements are inline; stable/richer compatible received values are shared by immutable ID. Keep the world-owned 64 KiB preferred logical chunk, two-chunk resident tail, whole-operation exception and logical memory allowances. Save only new whole-frame suffix batches under existing SQL row/byte/parameter bounds; no per-coordinate SQL row, growing-prefix rewrite or hidden live-object layout cache. Sharing changes physical bytes, never personal access or logical allowance. [Representation](../projects/bookkeeping-simplification-tech-design.md#3-runtime-representation).
+
+## BKS-L03 — Coarse physical expiry target
+
+**Proposed — selected design; Safe.** Logical age expiry remains exact; an intersected oldest chunk can stay physically stored and conservatively charged until its final fact expires. This may shorten optional retained coverage by up to the preferred chunk size, subject to the existing whole-operation oversize exception. Pressure still retires whole oldest chunks. Explicit correction/forgetting remains source-specific; required support has its independent admitted owner. No model work or summary guarantee is added. [Expiry](../projects/bookkeeping-simplification-tech-design.md#61-logical-eligibility-and-accounting).
+
+## BKS-L04 — Background collection target
+
+**Proposed — selected design; Safe per pass, total physical debt unqualified.** At most one queued cleanup slice, initially 256 owner/value candidates and 256 KiB of selected body bytes, counting dependent use-row work and honoring smaller existing statement limits; a whole oversized admitted record is processed alone. Use indexed candidates and one reverse-reference existence check, with no payload hydration just to check ownership. Due cleanup receives turns between foreground batches; no full backlog drain or per-command scan. This bounds work, not physical disk growth: deletion/index reuse must keep up in sustained acceptance; existing storage failure/backpressure remains. No separate gameplay candidate-byte census is added. [Collector](../projects/bookkeeping-simplification-tech-design.md#62-one-background-collector).
+
+## BKS-L05 — Removed bookkeeping and retained boundaries target
+
+**Proposed removal — not yet removed; — (target).** Retire custom journal entry/debt/application limits with that stage, block-slot reclamation generations, temporary storage pins and accepted/applied/pending ownership mirrors. A finite request copy grants no retention extension; expired or corrected support still refuses publication. One transactional owner/value projection, current-format reference validation, exact command receipts, privacy overlays and real spending protection remain. No new lifetime encounter registry or full-history hot cache is allowed. [Safety and removal](../projects/bookkeeping-simplification-tech-design.md#63-why-unsaved-work-and-reads-are-safe-without-pins).
 
 ## PF17-J01 — Experimental deferred saving
 

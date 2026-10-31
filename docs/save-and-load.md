@@ -84,6 +84,8 @@ Browser connection opening and closing join the existing world-mutation queue in
 
 ### Background and synchronous world saves
 
+**Selected replacement, not implemented:** [simpler saving and evidence](projects/bookkeeping-simplification-tech-design.md#4-direct-transactional-saving) removes the custom journal/application stage and hidden evidence-layout caches while retaining the background-native/strict-command split, atomic rows/receipts and existing protected recovery. [BK01–BK07](maintainers/production-data.md#bookkeeping-simplification) owns cutover. The paragraphs below describe current execution until that work completes.
+
 Current evidence storage uses immutable suffix segments, exact changed-owner preparation and compact application inputs through the existing save/journal owners. The [journal contract](projects/performance-overhaul/journal-contract.md#compact-evidence-storage) owns the layout, admission proofs and recovery requirements. [Current-format storage checks](verification/attention-and-memory-core.md#current-format-storage-and-development-readiness--october-29-2026) demonstrate exact retention/restoration and reduced encoded writes; complete-game capacity remains open.
 
 Between checkpoints, the database itself is the save: every change to the world is written to it. All changes to the world take turns in one line (the `WorldService` mutation queue), one at a time. Changes are saved in one of two ways:

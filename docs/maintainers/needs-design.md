@@ -551,6 +551,8 @@ The October 19 [situation-aware context design](../projects/situation-aware-cogn
 
 ## Current engine research: design questions and existing owners
 
+**Bookkeeping simplification — designed October 31, 2026.** The [feature specification](../projects/bookkeeping-simplification-feature-spec.md) and [technical design](../projects/bookkeeping-simplification-tech-design.md) resolve direct saving versus a custom journal, observation sharing/granularity, minimum support, cold ownership, asynchronous deletion and read-only capture. [BK00–BK07](production-data.md#bookkeeping-simplification) separates completed design from implementation and qualification; native contact/group work remains with SR08–SR10. This does not close ND35/ND36’s separately selected replay/product questions below.
+
 The [current Unreal/Unity study](../../research/unity-unreal-runtime/README.md) supplies mechanism evidence; [its application guide](../engine-research-guide.md) connects that evidence to worthwhile play and the existing feature/technical owners. The selected IS, SC, SPK and CTR designs remain designed. Missing implementation, measured responsiveness or player enjoyment stays with their delivery and qualification owners. No new ND identity or generic engine project follows from this research.
 
 Carry these specific questions into the existing remaining scopes:

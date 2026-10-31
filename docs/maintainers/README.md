@@ -28,6 +28,8 @@ The [focused game-reference map](../../archive/02-research/game-inspiration/READ
 
 ## Current engine research
 
+[Simpler saving and evidence lifetimes (BK00–BK07)](production-data.md#bookkeeping-simplification) has a completed [feature/technical design](../projects/bookkeeping-simplification-feature-spec.md). It integrates the contact/group perception proposal with direct database transactions, explicit append batches, stable-value sharing, minimum retained support and background cleanup. Implementation and operating acceptance remain open; current save/privacy/accounting protections stay in force until cutover.
+
 [Using engine research to improve OpenLegend](../engine-research-guide.md) connects the current Unreal/Unity study to player value, existing feature/technical owners and [scoped design questions](needs-design.md#current-engine-research-design-questions-and-existing-owners). It is the reading map; the linked maintainers retain delivery and qualification.
 
 ## General emotions, bodily reactions and adaptive review

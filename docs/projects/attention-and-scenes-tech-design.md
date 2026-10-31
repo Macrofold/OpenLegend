@@ -496,6 +496,8 @@ The [proposed contact/group replacement](attention-and-scenes-runtime-design.md#
 
 ## 8. Verification and completion
 
+The [bookkeeping simplification](bookkeeping-simplification-tech-design.md) owns the integrated direct-save, explicit append-batch and whole-value lifetime target. It replaces the retained journal/segmented-slot machinery after [BK](../maintainers/production-data.md#bookkeeping-simplification) cutover, while native contact/group/attention semantics and their SR08–SR11 acceptance stay here. Use one conversion and shared evidence; existing installed protections remain until their replacement is complete.
+
 ### Core implementation plan
 
 Implement the replacement through the [runtime design's SR01–SR07 sequence](attention-and-scenes-runtime-design.md#9-implementation-order-and-completion-instructions), using the selected [world policy](../worlds/base/attention.md#selected-acquisition-cadence). Convert acquisition, compact current/history, feature context and all consumers together; retain existing justified decisions, selective lasting memory and exact recovery. Do not create a compatibility reader, second scheduler/store or unused new record family. Runtime implementation is authorized and integrated; the tracker retains unfinished acceptance.
