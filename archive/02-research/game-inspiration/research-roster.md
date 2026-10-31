@@ -191,7 +191,9 @@ Read [requirements](research-requirements.md), [earlier research progress](resea
 | G184 | Dark Deity | `dark-deity.md` | Added October 20, 2026: the original game's classes, Grave Wounds, bonds, tactical readability and reception; distinguish paid sales, free reach, sequel and community repairs. |
 | G185 | Crimson Desert | `crimson-desert.md` | Independent full-game pass including released Enhanced updates; October 29 expansion remains announced at the October 26 cutoff. [Scoped record](research-progress-crimson-desert-2026-10-26.md). |
 
-These rows preserve the complete earlier 47-subject commitment and every subsequent requested addition through G185. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each authorized pass; research missing categories rather than duplicating complete existing sections.
+| G186 | Phantom Blade Zero | `phantom-blade-zero.md` | October 31, 2026 full released-game dossier: mechanics, launch criticism/player testimony, S-GAME history, campaign channels and prelaunch commercial evidence. [Scoped record](research-progress-phantom-blade-zero-2026-10-31.md). |
+
+These rows preserve the complete earlier 47-subject commitment and every subsequent requested addition through G186. Incidental inspirations inside a source are not silently counted as completed dossiers or substituted for a requested subject. If recovery identifies another actual requested case, add it explicitly without deleting one of these. Inspect the full earlier material and the applicable mechanics study before each authorized pass; research missing categories rather than duplicating complete existing sections.
 
 ## September 26 mechanics-corpus expansion scope
 
@@ -264,3 +266,7 @@ Mike requested full research into the five games suggested by the supplied RPG v
 ## October 26 Crimson Desert addition
 
 Mike requested a full dossier covering major mechanics, the detailed world and dragon riding, broad professional/player reception, development thinking, marketing and commercial results. G185 applies R01–R14, the economics/enjoyment/lore/creation amendment and the affirmative R15 modding screen. The [dossier](dossiers/crimson-desert.md) and [scoped record](research-progress-crimson-desert-2026-10-26.md) own the output and completion. This addition preserves all earlier identities and does not reopen queued G150–G166 or whole-library gates.
+
+## October 31 Phantom Blade Zero addition
+
+Mike requested a full dossier on the released game, player praise and criticism, S-GAME's history and earlier games, and the campaign behind preorders and launch demand. G186 applies R01–R14, the economics/enjoyment/lore/creation amendment and the conditional R15 screen. The [dossier](dossiers/phantom-blade-zero.md) and [scoped record](research-progress-phantom-blade-zero-2026-10-31.md) own this single-game pass. Reported wishlists, estimated paid preorders, official unit disclosures and postlaunch demand remain separate. This addition does not reopen unrelated subjects or authorize gameplay implementation.

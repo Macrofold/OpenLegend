@@ -4,6 +4,8 @@
 
 ## Start here
 
+- **[Phantom Blade Zero — G186](dossiers/phantom-blade-zero.md):** released combat and world systems, launch critics and players, S-GAME's history, documented advertising and preorder demand; [scoped evidence and completion](research-progress-phantom-blade-zero-2026-10-31.md).
+
 - **[Crimson Desert — G185, including Enhanced](dossiers/crimson-desert.md):** interconnected actions, dragon riding and its limits, world detail and lore, twelve-outlet evidence and a forty-two-review Steam sample, production and marketing, commercial-claim verification, community creation, and [applications through existing Open Legend owners](dossiers/crimson-desert/05-openlegend-lessons.md). The [October 26 scoped record](research-progress-crimson-desert-2026-10-26.md) owns coverage and evidence limits.
 
 - **[Enshrouded — G145, updated for 1.0](dossiers/enshrouded.md#detailed-reading-routes):** building and terrain, inhabited homes, exploration/combat/survival, lore and native creation, the full development path, current and historical player reception, commercial evidence and rented-server governance. The [October 25 scoped record](research-progress-enshrouded-2026-10-25.md) owns coverage and source limitations; [OpenLegend hosted-world ideas](../../../docs/game-ideas/hosted-worlds-and-rule-profiles.md) remain proposals.
