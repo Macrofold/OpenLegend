@@ -201,13 +201,16 @@ when qualifying reuse. A study-only request still stops at the agreed study deli
    body/rig family, scale, rest pose and required attachment conventions before final modeling.
 2. Refine a usable mesh directly, or repair/rebuild the specific topology that fails the needed
    deformation or silhouette. Generate a part separately only when the extra control earns its
-   fitting work. Finish UVs/materials and separate runtime clothing/equipment according to actual
-   use; generator parts need not remain separate draw units. Preserve identity and proportions.
+   fitting work. Use provisional materials and separate runtime clothing/equipment according to
+   actual use; generator parts need not remain separate draw units. Preserve identity and proportions.
 3. Build or adapt the skeleton, skin the body and fit attachments. Test relevant joint extremes,
-   face/expression controls where requested, hands/feet and clothing contact. Matching bone
-   names alone does not establish compatible proportions, rest transforms or weights.
-4. Produce the requested motion through [animation clips](#animation-clips). Correct body,
-   weights and equipment fit before expanding a clip set that depends on them.
+   face/expression controls where requested, hands/feet and clothing contact, then inspect a rough
+   export through the existing consumer before detailed finishing. When game integration is outside
+   the request, use a compatible preview and leave gameplay qualification open. Matching bone names
+   alone does not establish compatible proportions, rest transforms or weights.
+4. After rough fit and export pass, finish UVs/materials and the requested motion through
+   [animation clips](#animation-clips). Correct body, weights and equipment fit before expanding
+   a clip set that depends on them.
 5. Export the body, rig, materials and dependent clips in the supported arrangement. Reopen
    them together and inspect motion, deformation and attachment fit at intended game scale.
    Record compatible rig/body revisions and real limits. A portrait, turntable or one moving
