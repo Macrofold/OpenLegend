@@ -16,6 +16,9 @@ import {
   type NarrationPerspective,
   type ExperienceSourceReference,
   validExperienceSummary,
+  canonicalJson,
+  type AppraisalEvidence,
+  type Awareness,
 } from '@open-legend/domain';
 import { entityLabel, experienceEntityReferences } from './entity-references.js';
 import type { Action, Entity, ItemDefinition, ItemInstance, WorldState } from '@open-legend/domain';
@@ -37,6 +40,10 @@ export interface SharedModelExperience {
   index: number;
   revision: string;
   experience: ReturnType<typeof experienceForModel>;
+  /** Captured native metadata, independent of the readable occurrence shape. */
+  acquisition: AppraisalEvidence['coverage'];
+  subjectIds: readonly string[];
+  occurrence: { id: string; sequence: number } | null;
 }
 
 export interface ModelEvidenceSource {
@@ -44,6 +51,31 @@ export interface ModelEvidenceSource {
   key: string;
   revision: string;
   experience: SharedModelExperience['experience'];
+  acquisition: SharedModelExperience['acquisition'];
+  subjectIds: readonly string[];
+  occurrence: SharedModelExperience['occurrence'];
+}
+
+export function modelEvidenceSource(
+  entry: ExperienceEntry,
+  revision: string,
+  experience: ModelEvidenceSource['experience'],
+): Omit<ModelEvidenceSource, 'key'> {
+  return {
+    revision,
+    experience,
+    acquisition:
+      entry.source === 'awareness'
+        ? entry.value.modality
+        : entry.source === 'memory'
+          ? entry.value.source
+          : 'inferred',
+    subjectIds: [...entry.value.entityIds],
+    occurrence:
+      entry.source === 'awareness'
+        ? { id: entry.value.eventId, sequence: entry.value.sequence }
+        : null,
+  };
 }
 
 /** One complete account per exact occurrence. This does not join similar text or
@@ -58,31 +90,55 @@ export function assembleModelEvidence(entries: Iterable<ModelEvidenceSource>) {
       if (
         previous.revision !== entry.revision ||
         previous.experience.owner !== entry.experience.owner ||
-        previous.experience.source !== entry.experience.source
+        previous.experience.source !== entry.experience.source ||
+        canonicalJson({ ...previous.experience, handle: null }) !==
+          canonicalJson({ ...entry.experience, handle: null }) ||
+        previous.acquisition !== entry.acquisition ||
+        canonicalJson(previous.subjectIds) !== canonicalJson(entry.subjectIds)
       )
         throw new Error('Selected evidence has conflicting source versions or perspectives.');
       continue;
     }
     const index = experience.length;
     experience.push(entry.experience);
-    sources.set(entry.key, { index, revision: entry.revision, experience: entry.experience });
+    const { key: _key, ...source } = entry;
+    sources.set(entry.key, { index, ...source });
   }
   return { experience, sources };
 }
 
 export const modelEvidenceReference = (index: number): string => `character.experience[${index}]`;
 
+/** Shared meaning for every existing reader of the typed occurrence view. */
+export const MODEL_EXPERIENCE_MEANING = `An experience.owner is the experiencer, not necessarily who acted. In speech awareness, sourceId is the acquired speaker and targetId the acquired addressee; speech participant labels are from that occurrence. Read exact heard words once in speech.segments; an unintelligible segment is a gap, and seen-only speech supplies no words. Quoted "I" and "you" belong to that speaker and addressee. Speech establishes what was said, not that its claimed event or announced action occurred. Other eventData keeps its native role names. Acquisition, chronology, uncertainty, summary coverage and observed versus inferred accounts retain their supplied meaning.`;
+
+/** Derived older coverage precedes literal turns; the conversation owner uses
+ * native occurrence sequence and exact ID ties, never rendered time or wording. */
+export function chronologicalModelSources(sources: readonly ModelEvidenceSource[]) {
+  return [...sources].sort((a, b) =>
+    a.occurrence && b.occurrence
+      ? a.occurrence.sequence - b.occurrence.sequence ||
+        a.occurrence.id.localeCompare(b.occurrence.id)
+      : a.occurrence
+        ? 1
+        : b.occurrence
+          ? -1
+          : 0,
+  );
+}
+
 export function candidateModelSources(
   candidates: readonly AttentionCandidate[],
   revisions?: ReadonlyMap<string, string>,
 ): ModelEvidenceSource[] {
-  return candidates.flatMap((candidate) =>
-    (candidate.experience ?? []).map((experience, index) => {
-      const key = candidate.sourceKeys?.[index];
-      if (!key) throw new Error('A complete personal experience has no exact source binding.');
-      return { key, revision: revisions?.get(key) ?? candidate.revision, experience };
-    }),
-  );
+  return candidates.flatMap((candidate) => {
+    if (candidate.experience?.length && !candidate.modelSources?.length)
+      throw new Error('A complete personal experience has no exact source binding.');
+    return (candidate.modelSources ?? []).map((source) => ({
+      ...source,
+      revision: revisions?.get(source.key) ?? source.revision,
+    }));
+  });
 }
 
 // Only typed reference fields are rewritten. Literal notes, labels and quotations
@@ -176,10 +232,10 @@ function experienceModelSources(entry: ExperienceEntry, ownerId: string) {
   );
 }
 
-/** Complete selected observer meaning, without database/receipt authority. No fetching,
- * world lookup, prose replacement or inference occurs in this projector.
- * docs/projects/speech-and-social-perception-tech-design.md#structured-evidence-is-primary-prose-is-a-view */
-export function experienceForModel(entry: ExperienceEntry, bindings: ExperienceModelBindings) {
+/** Source-stable index serializer. Its native field order and wording deliberately
+ * remain independent of task presentation: unchanged source revisions keep their
+ * existing embedding input. This is not a reader for an earlier request format. */
+function experienceIndexRecord(entry: ExperienceEntry, bindings: ExperienceModelBindings) {
   const ref = (id: string): string => {
     const handle = bindings.entities.get(id);
     if (!handle) throw new Error('A selected experience participant has no permitted binding.');
@@ -217,45 +273,8 @@ export function experienceForModel(entry: ExperienceEntry, bindings: ExperienceM
       ...(references
         ? { references: references.map((reference) => ({ ...reference, id: ref(reference.id) })) }
         : {}),
-      ...(eventData
-        ? {
-            eventData: Object.fromEntries(
-              Object.entries(eventData).flatMap(([key, value]) =>
-                eventAuthorityFields.has(key)
-                  ? []
-                  : [
-                      [
-                        key,
-                        eventEntityFields.has(key) && typeof value === 'string'
-                          ? ref(value)
-                          : value,
-                      ],
-                    ],
-              ),
-            ),
-          }
-        : {}),
-      ...(exposure
-        ? {
-            exposure: {
-              ...exposure,
-              ...(exposure.kind === 'place'
-                ? { landmarkId: ref(exposure.landmarkId) }
-                : { id: ref(exposure.id) }),
-              ...(exposure.kind === 'place' && exposure.reportedBy
-                ? { reportedBy: ref(exposure.reportedBy) }
-                : {}),
-              ...(exposure.kind === 'inventory-item' && exposure.observedLocation?.kind === 'world'
-                ? {
-                    observedLocation: {
-                      ...exposure.observedLocation,
-                      containerId: ref(exposure.observedLocation.containerId),
-                    },
-                  }
-                : {}),
-            },
-          }
-        : {}),
+      ...(eventData ? { eventData: modelEventData(eventData, ref) } : {}),
+      ...(exposure ? { exposure: modelExposure(exposure, ref) } : {}),
       ...(entry.value.speech
         ? { prose: speechPresentation(entry.value, bindings.perspective, 'personal')!.personalText }
         : {}),
@@ -335,11 +354,244 @@ export function experienceForModel(entry: ExperienceEntry, bindings: ExperienceM
   return { source: entry.source, handle: bindings.source, owner, timeUnit: 'game seconds', value };
 }
 
+/** Complete permitted occurrence, constructed by source kind rather than spreading
+ * a storage envelope. Field inventory (all source guards stay in native bindings):
+ * awareness: at/sequence/modality/recognized and acquired roles; speech owns exact
+ * segments/acquisition, other events own text/content/eventData/exposure/sound.
+ * memory: complete account, acquisition/time, subjects, resolution and obligation.
+ * summary: complete attributed account, interval, coverage and acquired subjects.
+ * Retention, scheduling scores, receipt IDs and revision authority are not opinions.
+ * docs/technical/situation-aware-cognition-context.md#76-implementing-the-occurrence-projector-and-readable-layout */
+export function experienceForModel(entry: ExperienceEntry, bindings: ExperienceModelBindings) {
+  const ref = (id: string): string => {
+    const handle = bindings.entities.get(id);
+    if (!handle) throw new Error('A selected experience participant has no permitted binding.');
+    return handle;
+  };
+  const owner = ref(bindings.ownerId);
+  const base = { handle: bindings.source, owner, timeUnit: 'game seconds' as const };
+  const entities = entry.value.entityIds.map(ref);
+  if (entry.source === 'awareness') {
+    const native = entry.value;
+    if (native.actorId !== bindings.ownerId)
+      throw new Error('Experience owner disagrees with its binding.');
+    const roles = {
+      ...(native.sourceId ? { sourceId: ref(native.sourceId) } : {}),
+      ...(native.targetId ? { targetId: ref(native.targetId) } : {}),
+      ...(native.references?.length
+        ? {
+            references: native.references.map(({ id, label, role }) => ({
+              id: ref(id),
+              label,
+              role,
+            })),
+          }
+        : {}),
+    };
+    const acquisition = {
+      at: native.at,
+      sequence: native.sequence,
+      modality: native.modality,
+      recognized: native.recognized,
+    };
+    if (native.speech) {
+      const speech = native.speech;
+      const participant = (value: typeof speech.speaker, id: string | undefined) =>
+        value ? { ...value, ...(id ? { reference: ref(id) } : {}) } : null;
+      // No prose/text/content copy accompanies the exact heard segments. Seen-only
+      // speech has no quotation; a gap never becomes a reconstructed complete quote.
+      const common = {
+        ...acquisition,
+        ...roles,
+        // Participant roles already carry their handles; retain only additional
+        // acquired subjects instead of another copy of those same identities.
+        ...(native.entityIds.some((id) => id !== native.sourceId && id !== native.targetId)
+          ? {
+              entityIds: native.entityIds
+                .filter((id) => id !== native.sourceId && id !== native.targetId)
+                .map(ref),
+            }
+          : {}),
+        ...(native.sound ? { sound: soundExperience(native.sound, ref) } : {}),
+      };
+      const speechAcquisition = {
+        speaker: participant(speech.speaker, native.sourceId),
+        delivery: speech.delivery,
+        direction: speech.direction,
+        listenerPosition: { ...speech.listenerPosition },
+      };
+      return speech.perception === 'seen'
+        ? {
+            ...base,
+            source: 'awareness' as const,
+            value: {
+              ...common,
+              speech: {
+                ...speechAcquisition,
+                perception: 'seen' as const,
+                addressing: null,
+                intelligibility: 'none' as const,
+                segments: [],
+                addressee: null,
+              },
+            },
+          }
+        : {
+            ...base,
+            source: 'awareness' as const,
+            value: {
+              ...common,
+              speech: {
+                ...speechAcquisition,
+                perception: speech.perception,
+                addressing: speech.addressing,
+                intelligibility: speech.intelligibility,
+                segments: speech.segments.map((segment) => ({ ...segment })),
+                addressee: participant(speech.addressee, native.targetId),
+              },
+            },
+          };
+    }
+    const eventType = perceivedEventType(native);
+    return {
+      ...base,
+      source: 'awareness' as const,
+      value: {
+        ...acquisition,
+        ...roles,
+        text: native.text,
+        intelligible: native.intelligible,
+        ...(native.content !== undefined && native.content !== native.text
+          ? { content: native.content }
+          : {}),
+        ...(native.change ? { change: native.change } : {}),
+        ...(eventType ? { eventType } : {}),
+        ...(entities.length ? { entityIds: entities } : {}),
+        ...(native.sound ? { sound: soundExperience(native.sound, ref) } : {}),
+        ...(native.eventData ? { eventData: modelEventData(native.eventData, ref) } : {}),
+        ...(native.exposure ? { exposure: modelExposure(native.exposure, ref) } : {}),
+      },
+    };
+  }
+  if (entry.source === 'memory') {
+    const native = entry.value;
+    if (native.actorId !== bindings.ownerId)
+      throw new Error('Experience owner disagrees with its binding.');
+    return {
+      ...base,
+      source: 'memory' as const,
+      value: {
+        kind: native.kind,
+        source: native.source,
+        summary: native.summary,
+        at: native.at,
+        ...(native.sequence !== undefined ? { sequence: native.sequence } : {}),
+        ...(native.eventType ? { eventType: native.eventType } : {}),
+        ...(native.speakerId ? { speakerId: ref(native.speakerId) } : {}),
+        ...(entities.length ? { entityIds: entities } : {}),
+        ...(native.resolved !== undefined ? { resolved: native.resolved } : {}),
+        ...(native.obligation
+          ? {
+              obligation: {
+                status: native.obligation.status,
+                ...(native.obligation.dueAt !== undefined
+                  ? { dueAt: native.obligation.dueAt }
+                  : {}),
+                ...(native.obligation.fulfilledAt !== undefined
+                  ? { fulfilledAt: native.obligation.fulfilledAt }
+                  : {}),
+                ...(native.obligation.completion
+                  ? {
+                      completion: {
+                        ...native.obligation.completion,
+                        ...(native.obligation.completion.targetId
+                          ? { targetId: ref(native.obligation.completion.targetId) }
+                          : {}),
+                      },
+                    }
+                  : {}),
+              },
+            }
+          : {}),
+      },
+    };
+  }
+  if (entry.source === 'summary') {
+    const native = entry.value;
+    if (!validExperienceSummary(native, bindings.ownerId))
+      throw new Error('Selected summary attribution is unavailable.');
+    const source = (reference: ExperienceSourceReference) => {
+      const handle = bindings.sourceReferences.get(sourceReferenceKey(reference));
+      if (!handle) throw new Error('A summary source has no permitted binding.');
+      return { kind: reference.kind, handle };
+    };
+    return {
+      ...base,
+      source: 'summary' as const,
+      value: {
+        text: native.text,
+        from: native.from,
+        to: native.to,
+        sources: native.sources.map(source),
+        ...(entities.length ? { entityIds: entities } : {}),
+        attribution: {
+          version: native.attribution.version,
+          groups: native.attribution.groups.map((group) => ({
+            speakerId: group.speakerId ? ref(group.speakerId) : null,
+            targetId: group.targetId ? ref(group.targetId) : null,
+            addressing: group.addressing,
+            observerRelation: group.observerRelation,
+            acquisition: group.acquisition,
+            intelligibility: group.intelligibility,
+            firstAt: group.firstAt,
+            lastAt: group.lastAt,
+            sourceCount: group.sourceCount,
+            sources: group.sources.map(source),
+          })),
+        },
+      },
+    };
+  }
+  const unsupported: never = entry;
+  throw new Error(`Unsupported personal experience: ${String(unsupported)}`);
+}
+
+/** Event-family scalar facts are owned by the native event, not a new taxonomy. */
+function modelEventData(data: NonNullable<Awareness['eventData']>, ref: (id: string) => string) {
+  return Object.fromEntries(
+    Object.entries(data).flatMap(([key, value]) =>
+      eventAuthorityFields.has(key)
+        ? []
+        : [[key, eventEntityFields.has(key) && typeof value === 'string' ? ref(value) : value]],
+    ),
+  ) as NonNullable<Awareness['eventData']>;
+}
+function modelExposure(exposure: NonNullable<Awareness['exposure']>, ref: (id: string) => string) {
+  return exposure.kind === 'place'
+    ? {
+        ...exposure,
+        landmarkId: ref(exposure.landmarkId),
+        ...(exposure.reportedBy ? { reportedBy: ref(exposure.reportedBy) } : {}),
+      }
+    : {
+        ...exposure,
+        id: ref(exposure.id),
+        ...(exposure.observedLocation?.kind === 'world'
+          ? {
+              observedLocation: {
+                ...exposure.observedLocation,
+                containerId: ref(exposure.observedLocation.containerId),
+              },
+            }
+          : {}),
+      };
+}
+
 /** Index meaning stays source-stable; it never incorporates current location, a
  * later name, or a temporary visible-body reference. */
 export function experienceEmbeddingText(entry: ExperienceEntry, ownerId: string): string {
   return JSON.stringify(
-    experienceForModel(entry, {
+    experienceIndexRecord(entry, {
       source: 'remembered-source',
       ownerId,
       perspective:
@@ -490,6 +742,43 @@ export function relativeLocation(observer: Entity, target: Entity): string {
 }
 
 export { describePossession as possessionText } from '@open-legend/domain';
+
+/** Shared character-view presentation order, independent of the caller's task.
+ * Preserve every field/value and unknown extension order; this selects no evidence.
+ * docs/technical/situation-aware-cognition-context.md#76-implementing-the-occurrence-projector-and-readable-layout */
+export function orderedDecisionContext(context: Record<string, unknown>) {
+  const ordered: Record<string, unknown> = {};
+  for (const key of [
+    'decisionRequirements',
+    'triggerFacts',
+    'stimulus',
+    'identity',
+    'aboutMe',
+    'body',
+    'feelings',
+    'carryingConcern',
+    'capabilities',
+    'now',
+    'simTime',
+    'currentPosition',
+    'currentFacing',
+    'currentSupport',
+    'spatialPerspective',
+    'goal',
+    'agency',
+    'commitments',
+    'outing',
+    'experience',
+    'conversation',
+    'recall',
+  ])
+    if (Object.hasOwn(context, key)) ordered[key] = context[key];
+  // Remaining means, consequences and extension data retain their relative order.
+  for (const [key, value] of Object.entries(context))
+    if (key !== 'references' && !Object.hasOwn(ordered, key)) ordered[key] = value;
+  if (Object.hasOwn(context, 'references')) ordered['references'] = context['references'];
+  return ordered;
+}
 
 /** The same category names reach attention and the final actor context; metadata stays server-side. */
 export function contextSections(

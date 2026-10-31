@@ -41,10 +41,16 @@ import {
   experienceModelBindings,
   experienceEmbeddingText,
   modelEvidenceReference,
+  modelEvidenceSource,
+  chronologicalModelSources,
+  orderedDecisionContext,
   type ModelEvidenceSource,
 } from './perceived-context.js';
 import { recallQueries, type RecallDiscoveryCues } from './recall-query.js';
-import { orderDecisionContextRoots } from './decision-context-selection.js';
+import {
+  orderDecisionContextRoots,
+  type DecisionPreparationWork,
+} from './decision-context-selection.js';
 import { decisionBoundItemIds } from './decision-observation.js';
 import { currentGoal } from '@open-legend/domain';
 import {
@@ -61,6 +67,8 @@ import {
   type WorldState,
   type Awareness,
   type ExperienceEntry,
+  speechPresentation,
+  speechPerspective,
   experienceEntries,
   experienceEntryKey,
 } from '@open-legend/domain';
@@ -86,12 +94,16 @@ export interface AttentionCandidate {
   kind: 'memory' | 'conversation' | 'entity' | 'possession' | 'knowledge' | 'action';
   text: string;
   experience?: ReturnType<typeof experienceForModel>[];
+  /** Complete source rows retain acquisition/subjects outside model presentation. */
+  modelSources?: ModelEvidenceSource[];
   /** Stable semantic content; current spatial details still reach attention and reasoning. */
   embeddingText?: string;
   revision: string;
   required: boolean;
   /** Trigger, commitment or correction evidence, independent of recent-memory coverage. */
   requiredSource?: boolean;
+  /** Native source owner explains protected membership before caller union. */
+  requiredReasons?: string[];
   automatic: boolean;
   entityIds: string[];
   at: number;
@@ -128,6 +140,7 @@ export function memoryCandidate(
   corrections: Record<string, string>,
   correctedIds: Set<string>,
   entry: ExperienceEntry,
+  includeIndex = true,
 ): AttentionCandidate {
   const awareness = entry.source === 'awareness' ? entry.value : undefined;
   const experience = experienceForModel(
@@ -146,7 +159,7 @@ export function memoryCandidate(
   // exposure can bind an unnamed speaker; an old canonical ID cannot identify a new exposure.
   // docs/memory-architecture.md#personal-perspective-and-acquisition
   if (awareness?.speech) {
-    summary = experience.value['prose'] as string;
+    summary = speechPresentation(awareness, speechPerspective(awareness), 'personal')!.personalText;
   } else if (awareness) {
     // Event roles use the retained observation, never inferred causality or a new exposure.
     // A projectile contact's source may be the struck body, not an unseen shooter.
@@ -167,15 +180,27 @@ export function memoryCandidate(
     (memory.kind === 'commitment' && !memory.resolved) ||
     !!corrections[memory.id] ||
     correctedIds.has(memory.id);
+  const revision = awareness ? digest(memory) : digest({ ...memory, summary });
+  const requiredReasons = [
+    ...(matches(requiredIds) ? ['caller-required personal source'] : []),
+    ...(memory.kind === 'commitment' && !memory.resolved ? ['unresolved personal commitment'] : []),
+    ...(corrections[memory.id] ? ['corrected personal source'] : []),
+    ...(correctedIds.has(memory.id) ? ['correction supporting personal source'] : []),
+    ...(matches(automaticIds) ? ['current conversation guarantee'] : []),
+  ];
   return {
     id: experienceEntryKey(entry),
     experience: [experience],
+    modelSources: [
+      { key: experienceEntryKey(entry), ...modelEvidenceSource(entry, revision, experience) },
+    ],
     kind: matches(conversationIds) ? 'conversation' : 'memory',
     text: `${gameTime(memory.at, world.statusEffectPolicy.clockOffsetHours, world.presentation?.calendar?.dayLabel)} [${memory.source}]: ${summary}`,
-    embeddingText: experienceEmbeddingText(entry, actorId),
-    revision: awareness ? digest(memory) : digest({ ...memory, summary }),
+    ...(includeIndex ? { embeddingText: experienceEmbeddingText(entry, actorId) } : {}),
+    revision,
     required,
     requiredSource: required,
+    requiredReasons,
     automatic: matches(automaticIds),
     entityIds: [...new Set(memory.entityIds)].filter(
       (id) =>
@@ -197,7 +222,15 @@ export function candidateSet(
   automaticIds: string[] = [],
   conversationIds: string[] = [],
   retained?: RetrievedMemory[],
+  work?: Pick<DecisionPreparationWork, 'charge'>,
 ): AttentionCandidate[] {
+  work?.charge({
+    candidates:
+      observed.visibleEntities.length +
+      observed.inventory.length +
+      observed.knownRecipes.length +
+      (retained?.length ?? 0),
+  });
   // Reject oversized preparation explicitly before formatting thousands of optional
   // bodies; this never narrows SQL recall eligibility or deletes retained sources.
   const documents = world.actorKnowledge?.[actorId] ?? {};
@@ -260,8 +293,9 @@ export function candidateSet(
       correctedIdSet.has(memory.id);
     if (include && !included.has(memory.id)) recallable.push(memory);
   }
-  const memories = recallable.map((memory) =>
-    memoryCandidate(
+  const memories = recallable.map((memory) => {
+    work?.charge({ candidates: 1, inputBytes: Buffer.byteLength(memory.summary) });
+    const candidate = memoryCandidate(
       memory,
       world,
       actorId,
@@ -271,8 +305,10 @@ export function candidateSet(
       corrections,
       correctedIdSet,
       nativeEntry(memory),
-    ),
-  );
+    );
+    work?.charge({ outputBytes: Buffer.byteLength(JSON.stringify(candidate.experience)) });
+    return candidate;
+  });
   // The recent baseline counts complete individual experiences, before optional
   // repetition grouping. Eight groups can contain an unbounded personal history.
   // docs/memory-architecture.md#4-jev-attention-before-context-inclusion
@@ -301,7 +337,13 @@ export function candidateSet(
       .map((memory) => memory.id),
   );
   for (const memory of memories) {
-    if (recentMemories.has(memory.id)) memory.required = true;
+    if (recentMemories.has(memory.id)) {
+      memory.required = true;
+      memory.requiredReasons = [
+        ...(memory.requiredReasons ?? []),
+        'recent personal-memory baseline',
+      ];
+    }
     // Named others remain individual episodes; generic species recall has no actor handles.
     // The observer's own identity does not prevent grouping encounters with unnamed animals.
     // docs/memory-architecture.md#named-and-generic-memory-subjects
@@ -327,6 +369,7 @@ export function candidateSet(
     existing.sourceIds!.push(...(memory.sourceIds ?? []));
     existing.sourceKeys!.push(...(memory.sourceKeys ?? []));
     existing.experience!.push(...(memory.experience ?? []));
+    existing.modelSources!.push(...(memory.modelSources ?? []));
     existing.entityIds = [...new Set([...existing.entityIds, ...memory.entityIds])];
     existing.salience = Math.max(existing.salience, memory.salience);
     existing.revision = digest([existing.revision, memory.revision].sort());
@@ -983,6 +1026,8 @@ export class RecallService {
         requiredIds,
         automaticIds,
         conversationIds,
+        undefined,
+        preparation?.work,
       ).filter((candidate) => candidate.required || candidate.automatic);
     const scope: MemoryScope = preparation?.scope ?? {
       worldId: world.id,
@@ -994,7 +1039,14 @@ export class RecallService {
       [...requiredIds, ...automaticIds, ...conversationIds],
       preparation?.bodies,
     );
-    const recent = await repository.selectContext(scope, null, HARD_CONTEXT_LIMITS.memories);
+    const recent = await repository.selectContext(
+      scope,
+      null,
+      HARD_CONTEXT_LIMITS.memories,
+      undefined,
+      preparation?.bodies,
+    );
+    preparation?.work?.charge({ candidates: required.length + recent.length });
     const sources = [
       ...new Map(
         [...recent, ...required].map((source) => [experienceEntryKey(source.entry), source]),
@@ -1008,6 +1060,7 @@ export class RecallService {
       automaticIds,
       conversationIds,
       sources,
+      preparation?.work,
     ).filter((candidate) => candidate.required || candidate.automatic);
     this.sourceBindings.set(candidates, {
       scope,
@@ -1037,7 +1090,16 @@ export class RecallService {
     const repository = this.service.store.memories;
     const head = preparation?.scope ?? (await this.service.store.records?.head());
     if (!repository || !head)
-      return candidateSet(world, actorId, observed, requiredIds, automaticIds, conversationIds);
+      return candidateSet(
+        world,
+        actorId,
+        observed,
+        requiredIds,
+        automaticIds,
+        conversationIds,
+        undefined,
+        preparation?.work,
+      );
     const scope: MemoryScope = preparation?.scope ?? {
       worldId: world.id,
       actorId,
@@ -1135,7 +1197,13 @@ export class RecallService {
       [...requiredIds, ...automaticIds, ...conversationIds],
       preparation?.bodies,
     );
-    const recent = await repository.selectContext(scope, null, HARD_CONTEXT_LIMITS.memories);
+    const recent = await repository.selectContext(
+      scope,
+      null,
+      HARD_CONTEXT_LIMITS.memories,
+      undefined,
+      preparation?.bodies,
+    );
     const lexical = !vector ? queries.lexicalSources : undefined;
     const optional = await repository.select(
       scope,
@@ -1154,6 +1222,7 @@ export class RecallService {
         },
       },
     );
+    preparation?.work?.charge({ candidates: required.length + recent.length + optional.length });
     signal.throwIfAborted();
     if ((await this.service.store.records?.head())?.generation !== scope.generation)
       throw new Error('World restored during memory retrieval.');
@@ -1173,6 +1242,7 @@ export class RecallService {
       automaticIds,
       conversationIds,
       sources,
+      preparation?.work,
     );
     const scores = new Map(
       sources.map((source) => [experienceEntryKey(source.entry), source.score]),
@@ -1228,8 +1298,10 @@ export class RecallService {
       discovery?: RecallDiscoveryCues;
       sources?: ModelEvidenceSource[];
       triggerKey?: string;
+      work?: Pick<DecisionPreparationWork, 'charge'>;
     } = {},
   ) {
+    preparationContext.work?.charge({ candidates: candidates.length });
     const config = this.service.config;
     const generation = this.service.generation;
     const inner = world.innerWorlds?.[actorId];
@@ -1255,12 +1327,21 @@ export class RecallService {
       candidate.reason = 'current conversation';
     }
     const searchable = candidates.filter((candidate) => !candidate.automatic);
-    const candidateBytes = (candidate: AttentionCandidate) =>
-      (candidate.experience?.length
-        ? Buffer.byteLength(JSON.stringify(candidate.experience))
-        : Buffer.byteLength(candidate.text.replace(/\n/g, '\n  '))) +
-      Buffer.byteLength(candidate.id) +
-      8;
+    const encodedCandidateBytes = new Map<AttentionCandidate, number>();
+    const candidateBytes = (candidate: AttentionCandidate) => {
+      const previous = encodedCandidateBytes.get(candidate);
+      if (previous !== undefined) return previous;
+      preparationContext.work?.charge({ tests: 1 });
+      const bytes =
+        (candidate.experience?.length
+          ? Buffer.byteLength(JSON.stringify(candidate.experience))
+          : Buffer.byteLength(candidate.text.replace(/\n/g, '\n  '))) +
+        Buffer.byteLength(candidate.id) +
+        8;
+      preparationContext.work?.charge({ outputBytes: bytes });
+      encodedCandidateBytes.set(candidate, bytes);
+      return bytes;
+    };
     const contextBytes = candidateBytes;
     const mandatory = searchable.filter((candidate) => candidate.required);
     for (const candidate of mandatory) {
@@ -1510,9 +1591,25 @@ export class RecallService {
             source.revision,
           ]),
         );
-        const evidence = assembleModelEvidence([
+        const modelSources = [
           ...(preparationContext.sources ?? []),
           ...candidateModelSources([...automatic, ...mandatory], versions),
+        ];
+        const exchangeKeys = new Set([
+          ...(preparationContext.sources ?? []).map((source) => source.key),
+          ...modelSources
+            .filter(
+              (source) =>
+                source.experience.source === 'awareness' && 'speech' in source.experience.value,
+            )
+            .map((source) => source.key),
+        ]);
+        const exchange = chronologicalModelSources(
+          modelSources.filter((source) => exchangeKeys.has(source.key)),
+        );
+        const evidence = assembleModelEvidence([
+          ...exchange,
+          ...modelSources.filter((source) => !exchangeKeys.has(source.key)),
         ]);
         const automaticContext = contextSections([...automatic, ...mandatory], evidence.sources);
         const includedContext: Record<string, unknown> = {
@@ -1524,10 +1621,9 @@ export class RecallService {
           // Deduplicate exact occurrence references, never the words of two turns.
           includedContext['conversation'] = [
             ...new Set([
-              ...preparationContext.sources.map((source) =>
+              ...exchange.map((source) =>
                 modelEvidenceReference(evidence.sources.get(source.key)!.index),
               ),
-              ...((automaticContext['conversation'] ?? []) as string[]),
             ]),
           ];
         else if (Array.isArray(immediateContext['conversation']))
@@ -1554,7 +1650,7 @@ export class RecallService {
               world,
               actorId,
             ),
-            includedContext,
+            includedContext: orderedDecisionContext(includedContext),
             attentionPolicy: CONTEXT_EVIDENCE_POLICY,
           },
           Object.entries(candidateTexts),

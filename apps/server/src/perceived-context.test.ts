@@ -35,7 +35,14 @@ function source(id: string, summary = 'My sister carved the cedar bird.'): Model
       sourceReferences: new Map(),
     },
   );
-  return { key: `memory:${id}`, revision: 'revision', experience };
+  return {
+    key: `memory:${id}`,
+    revision: 'revision',
+    experience,
+    acquisition: 'heard',
+    subjectIds: ['speaker'],
+    occurrence: null,
+  };
 }
 function candidate(
   entry: ModelEvidenceSource,
@@ -46,6 +53,7 @@ function candidate(
     kind,
     text: 'Duplicate narrative must not be supplied.',
     experience: [entry.experience],
+    modelSources: [entry],
     sourceKeys: [entry.key],
     revision: entry.revision,
     required: true,

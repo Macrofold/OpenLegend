@@ -1,15 +1,18 @@
 import { canonicalJson, type compilePreparedResponses } from '@open-legend/domain';
 import type { CandidateAction } from './context.js';
 import type { RequiredDecisionChoices } from './decision-context.js';
+import { orderedDecisionContext } from './perceived-context.js';
 
 /** Closed supplied choices cannot emit freeform operations. Project their actual
  * input before admission as well as dispatch; unused generation forms must not
  * make a complete native choice refuse its context budget. */
 export function preparedResponseDecisionContext(context: Record<string, unknown>) {
-  return Object.fromEntries(
-    Object.entries(context).filter(
-      ([key]) =>
-        !['knowledgeInstructions', 'navigation', 'planOffers', 'activityRequests'].includes(key),
+  return orderedDecisionContext(
+    Object.fromEntries(
+      Object.entries(context).filter(
+        ([key]) =>
+          !['knowledgeInstructions', 'navigation', 'planOffers', 'activityRequests'].includes(key),
+      ),
     ),
   );
 }

@@ -39,6 +39,7 @@ interface AppraisalPreparation {
   sharedExperiences?: ReadonlyMap<string, SharedModelExperience>;
   /** Fixed feeling/policy wording already measured at the decision's source time. */
   contextSnapshot?: ReturnType<typeof captureDecisionAppraisalContext>;
+  experienceRoot?: string;
 }
 
 /** Feelings are the actor's interpretation, not knowledge of somebody else's mind.
@@ -133,8 +134,12 @@ function renderAppraisalContext(
 
 /** Capture fixed interpretation capabilities once. Optional fitting projects only
  * already-selected complete sources; it performs no reads or native effects. */
-export function captureDecisionAppraisalContext(world: WorldState, actorId: string) {
-  const original = appraisalContextState(world, actorId, 'decision');
+export function captureDecisionAppraisalContext(
+  world: WorldState,
+  actorId: string,
+  purpose: 'decision' | 'reflection' = 'decision',
+) {
+  const original = appraisalContextState(world, actorId, purpose);
   const state = {
     ...original,
     records: structuredClone(original.records),
@@ -164,23 +169,22 @@ export function captureDecisionAppraisalContext(world: WorldState, actorId: stri
       })
       .filter(({ id }) => ids.has(id))
       .sort(appraisalSourceOrder);
+    // Match native binding's first exact permitted handle per original subject.
+    // A second directory alias must not create another appraisal subject.
+    const subjectHandles = new Map<string, string>();
+    for (const [handle, id] of Object.entries(input.entityReferences))
+      if (!subjectHandles.has(id)) subjectHandles.set(id, handle);
     const sources: AppraisalContextSource[] = selected.map(({ shared }, index) => {
-      const experience = shared.experience;
-      const coverage =
-        experience.source === 'awareness'
-          ? experience.value['modality']
-          : experience.source === 'memory'
-            ? experience.value['source']
-            : 'inferred';
-      if (typeof coverage !== 'string')
-        throw new Error('A selected appraisal source has no acquisition coverage.');
       return {
         handle: `cause${index + 1}`,
-        experience: { reference: `character.experience[${shared.index}]` },
-        coverage,
-        subjects: (experience.value['entityIds'] as string[]).filter((handle) =>
-          Object.hasOwn(input.entityReferences, handle),
-        ),
+        experience: {
+          reference: `${purpose === 'reflection' ? 'experience' : 'character.experience'}[${shared.index}]`,
+        },
+        coverage: shared.acquisition,
+        subjects: shared.subjectIds.flatMap((id) => {
+          const handle = subjectHandles.get(id);
+          return handle ? [handle] : [];
+        }),
       };
     });
     return renderAppraisalContext(
@@ -188,6 +192,7 @@ export function captureDecisionAppraisalContext(world: WorldState, actorId: stri
       input.entityReferences,
       sources,
       input.sharedExperiences.size > 0,
+      purpose === 'reflection' ? 'experience' : 'character.experience',
     );
   };
   return {
@@ -411,19 +416,24 @@ async function bindAppraisals(
     ) => renderAppraisalContext(contextState, subjects, sources, shared, experienceRoot));
   const projectContext = (
     sharedExperiences?: ReadonlyMap<string, SharedModelExperience>,
-    experienceRoot = 'character.experience',
+    experienceRoot = preparation.experienceRoot ?? 'character.experience',
   ) =>
     renderContext(
       subjects,
       contextSources.map(({ key, revision, rendered, value }) => {
         const shared = sharedExperiences?.get(key);
         // A matching ID/revision cannot replace differently projected wording.
-        const same =
-          shared?.revision === revision &&
-          canonicalJson({ ...shared.experience, handle: null }) === rendered;
+        if (
+          shared &&
+          (shared.revision !== revision ||
+            canonicalJson({ ...shared.experience, handle: null }) !== rendered)
+        )
+          throw new Error('A shared appraisal source changed version or permitted perspective.');
         return {
           ...value,
-          experience: same ? { reference: `${experienceRoot}[${shared.index}]` } : value.experience,
+          experience: shared
+            ? { reference: `${experienceRoot}[${shared.index}]` }
+            : value.experience,
         };
       }),
       !!sharedExperiences?.size,
@@ -448,7 +458,7 @@ async function bindAppraisals(
           })
         : variants[0];
     },
-    context: projectContext(preparation.sharedExperiences),
+    context: projectContext(preparation.sharedExperiences, preparation.experienceRoot),
     projectContext,
     resolve(proposals: AppraisalProposal[]): AppraisalChange[] {
       const changes: AppraisalChange[] = proposals.map((proposal) => {
@@ -511,8 +521,18 @@ export function bindReflectionAppraisals(
   jobId: string,
   evidenceIds: string[],
   subjects: Record<string, string>,
+  preparation: AppraisalPreparation = {},
 ) {
-  return bindAppraisals(service, actorId, jobId, evidenceIds, subjects, 'reflection');
+  return bindAppraisals(
+    service,
+    actorId,
+    jobId,
+    evidenceIds,
+    subjects,
+    'reflection',
+    undefined,
+    preparation,
+  );
 }
 
 export async function bindDecisionAppraisals(

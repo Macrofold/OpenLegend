@@ -6,6 +6,7 @@ import {
   type ActivityRequestChoice,
   type ActivityRequestDescriptor,
   type ActivityRequestObservation,
+  type WorkDemand,
   type WorldState,
 } from '@open-legend/domain';
 import {
@@ -26,6 +27,10 @@ export type ActivityRequestChoiceFact = Omit<ActivityRequestChoice, 'id'> & {
   definitionId?: string;
   value?: string;
 };
+
+/** A dependent role must not silently lose an eligible alternative just because
+ * its identity was absent from the request's frozen reference closure. */
+export class ActivityRequestChoicesUnavailable extends Error {}
 
 /** Parent associations use the same namespace as their declared parameter. Never
  * expose a native entity ID because a custom field name escaped ordinary projection. */
@@ -65,29 +70,58 @@ export function activityRequestChoiceFacts(
   parameters: Readonly<Record<string, string | number | boolean>>,
   entityReferences: Readonly<Record<string, string>>,
   observed?: ActivityRequestObservation,
+  charge: (demand: WorkDemand) => void = () => {},
 ): ActivityRequestChoiceFact[] {
+  charge({ candidates: Object.keys(entityReferences).length });
   const handles = new Map(Object.entries(entityReferences).map(([handle, id]) => [id, handle]));
   const arguments_: Record<string, string | number | boolean> = {};
   for (const [name, value] of Object.entries(parameters)) {
     if (descriptor.fields[name]?.type === 'entity') {
       const id = typeof value === 'string' ? entityReferences[value] : undefined;
-      if (!id) return [];
+      if (!id)
+        throw new ActivityRequestChoicesUnavailable('An activity parent reference is unavailable.');
       arguments_[name] = id;
     } else arguments_[name] = value;
   }
-  return activityRequestChoices(world, actorId, observed, {
+  charge({
+    candidates:
+      (observed?.visibleEntities.length ?? 0) +
+      (observed?.inventory.length ?? 0) +
+      (observed?.inspectedContainer?.items.length ?? 0) +
+      (world.knowledge[actorId]?.length ?? 0),
+    tests: Object.keys(parameters).length + 1,
+  });
+  const selected = activityRequestChoices(world, actorId, observed, {
     family: descriptor.id,
     field,
     arguments: arguments_,
-  }).choices.flatMap(({ id, requires, ...choice }) => {
+  }).choices;
+  charge({
+    candidates: selected.length,
+    inputBytes: selected.reduce(
+      (total, choice) => total + Buffer.byteLength(choice.id) + Buffer.byteLength(choice.label),
+      0,
+    ),
+    tests: selected.reduce(
+      (total, choice) => total + Object.keys(choice.requires ?? {}).length + 1,
+      0,
+    ),
+  });
+  return selected.flatMap(({ id, requires, ...choice }) => {
     const conditions = projectActivityRequestRequirements(
       [descriptor],
       { ...choice, requires },
       (id) => handles.get(id),
     );
-    if (!conditions) return [];
+    if (!conditions)
+      throw new ActivityRequestChoicesUnavailable(
+        'An activity role requires an uncaptured parent reference.',
+      );
     const reference = choice.kind === 'entity' ? handles.get(id) : id;
-    if (reference === undefined) return [];
+    if (reference === undefined)
+      throw new ActivityRequestChoicesUnavailable(
+        'An activity role requires an uncaptured entity reference.',
+      );
     return [
       {
         ...choice,
@@ -225,6 +259,15 @@ export function requestRoutes(
       routes.set(`request_${index}`, descriptor);
   });
   return routes;
+}
+
+/** Discovery preserves every routable family's meaning without invocation fields. */
+export function activityRequestDirectory(requests: readonly ActivityRequestDescriptor[]) {
+  return [...requestRoutes(requests).values()].map(({ id, label, description }) => ({
+    id,
+    label,
+    description,
+  }));
 }
 
 function fieldSelection(

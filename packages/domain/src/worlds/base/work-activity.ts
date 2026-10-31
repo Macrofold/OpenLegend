@@ -304,69 +304,81 @@ export const BASE_WORK_ACTIVITY_HOST: ActivityHostDescriptor = {
       choices: ActivityRequestChoice[] = [],
       warnings: string[] = [];
     if (!observed) return { choices, warnings };
-    for (const source of observed.visibleEntities) {
-      const selected = choice(world, actorId, text.gather.id, 'sourceId', source.id);
-      if (selected) choices.push(selected);
-    }
-    choices.push({
-      id: actorId,
-      label: work.handsLabel,
-      kind: 'entity',
-      roles: ['instrumentId'],
-      requestIds: [text.gather.id],
-      accessible: true,
-    });
-    const selectedSource =
-      query?.field === 'instrumentId' && typeof query.arguments.sourceId === 'string'
-        ? entityGet(world.entities, query.arguments.sourceId)?.resource?.definitionId
-        : undefined;
-    for (const selected of carriedGatheringChoices(
-      world,
-      actorId,
-      selectedSource,
-      undefined,
-      observed.inventory,
-    ))
+    const wants = (family: string, field: string) =>
+      !query || (query.family === family && query.field === field);
+    if (wants(text.gather.id, 'sourceId'))
+      for (const source of observed.visibleEntities) {
+        const selected = choice(world, actorId, text.gather.id, 'sourceId', source.id);
+        if (selected) choices.push(selected);
+      }
+    if (wants(text.gather.id, 'instrumentId')) {
       choices.push({
-        id: selected.item.id,
-        label: `${selected.definition.name} (up to ${selected.quantity} per compatible collection; gathers ${world.itemDefinitions[selected.definition.gatheringTool!.resourceId]?.name ?? selected.definition.gatheringTool!.resourceId})`,
+        id: actorId,
+        label: work.handsLabel,
         kind: 'entity',
         roles: ['instrumentId'],
         requestIds: [text.gather.id],
         accessible: true,
       });
-    const known = world.knowledge[actorId] ?? [],
-      knownIds = new Set(known.map((record) => record.recipeId));
-    for (const id of knownIds) {
-      const selected = choice(world, actorId, text.craft.id, 'recipeId', id, knownIds);
-      if (selected) choices.push(selected);
+      const selectedSource =
+        typeof query?.arguments.sourceId === 'string'
+          ? entityGet(world.entities, query.arguments.sourceId)?.resource?.definitionId
+          : undefined;
+      for (const selected of carriedGatheringChoices(
+        world,
+        actorId,
+        selectedSource,
+        undefined,
+        observed.inventory,
+      ))
+        choices.push({
+          id: selected.item.id,
+          label: `${selected.definition.name} (up to ${selected.quantity} per compatible collection; gathers ${world.itemDefinitions[selected.definition.gatheringTool!.resourceId]?.name ?? selected.definition.gatheringTool!.resourceId})`,
+          kind: 'entity',
+          roles: ['instrumentId'],
+          requestIds: [text.gather.id],
+          accessible: true,
+        });
     }
-    const sources = [actorId, currentInventoryInspection(world, actorId)?.containerId].filter(
-        (id): id is string => !!id,
-      ),
-      admitted = new Set<string>();
-    for (const id of sources) {
-      const selected = choice(world, actorId, text.meal.id, 'sourceId', id);
-      if (selected && !admitted.has(id)) {
-        choices.push(selected);
-        admitted.add(id);
+    if (wants(text.craft.id, 'recipeId')) {
+      const known = world.knowledge[actorId] ?? [],
+        knownIds = new Set(known.map((record) => record.recipeId));
+      for (const id of knownIds) {
+        const selected = choice(world, actorId, text.craft.id, 'recipeId', id, knownIds);
+        if (selected) choices.push(selected);
       }
     }
-    const foods = new Set<string>();
-    for (const item of observed.inventory) {
-      if (!accessiblePossession(world, actorId, item.id)) continue;
-      const selected = choice(world, actorId, text.meal.id, 'definitionId', item.id);
-      if (!selected) continue;
-      // The actor scope includes accessible carried stock. A deliberately inspected
-      // own bag also remains a distinct selectable stock scope under the meal owner.
-      for (const sourceId of [
-        actorId,
-        ...(item.ownerId !== actorId && admitted.has(item.ownerId) ? [item.ownerId] : []),
-      ]) {
-        const key = JSON.stringify([sourceId, selected.id]);
-        if (foods.has(key)) continue;
-        choices.push({ ...selected, requires: { sourceId } });
-        foods.add(key);
+    if (wants(text.meal.id, 'sourceId') || wants(text.meal.id, 'definitionId')) {
+      const sources = [actorId, currentInventoryInspection(world, actorId)?.containerId].filter(
+          (id): id is string => !!id,
+        ),
+        admitted = new Set<string>();
+      for (const id of sources) {
+        const selected = choice(world, actorId, text.meal.id, 'sourceId', id);
+        if (selected && !admitted.has(id)) {
+          if (wants(text.meal.id, 'sourceId')) choices.push(selected);
+          admitted.add(id);
+        }
+      }
+      if (wants(text.meal.id, 'definitionId')) {
+        const foods = new Set<string>();
+        for (const item of observed.inventory) {
+          if (!accessiblePossession(world, actorId, item.id)) continue;
+          const selected = choice(world, actorId, text.meal.id, 'definitionId', item.id);
+          if (!selected) continue;
+          // Preserve distinct known stock scopes. A dependent field reads only
+          // its selected source; metadata discovery never expands source tuples.
+          for (const sourceId of [
+            actorId,
+            ...(item.ownerId !== actorId && admitted.has(item.ownerId) ? [item.ownerId] : []),
+          ]) {
+            if (query && query.arguments.sourceId !== sourceId) continue;
+            const key = JSON.stringify([sourceId, selected.id]);
+            if (foods.has(key)) continue;
+            choices.push({ ...selected, requires: { sourceId } });
+            foods.add(key);
+          }
+        }
       }
     }
     return { choices, warnings };

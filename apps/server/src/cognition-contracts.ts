@@ -263,6 +263,13 @@ export const responsePayloads = {
     .strict(),
 };
 export type ResponseOperationKind = keyof typeof responsePayloads;
+const responseKinds = Object.freeze(Object.keys(responsePayloads));
+const responseKindsWithAppraisal = Object.freeze([...responseKinds, 'appraise']);
+/** Appraisal is installed separately from the ordinary response payloads. The
+ * preparation question must advertise the same available meanings as its schema. */
+export function responseSemantics(appraisalsEnabled: boolean): readonly string[] {
+  return appraisalsEnabled ? responseKindsWithAppraisal : responseKinds;
+}
 export type ModelResponseOperation = Omit<
   ResponseOperation,
   'act' | 'goal' | 'plan' | 'appraise'

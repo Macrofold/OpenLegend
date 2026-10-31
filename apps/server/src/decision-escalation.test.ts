@@ -1163,7 +1163,12 @@ describe('closed structured question contract', () => {
       offered: [],
       sourceTime: 0,
       actionGuidance: stockedCamp().cognitionPolicy.actionGuidance,
-      sources: { evidenceIds: [], sharedExperiences: new Map(), entityReferences: {} },
+      sources: {
+        evidenceIds: [],
+        sharedExperiences: new Map(),
+        entityReferences: {},
+        knowledgeReferences: {},
+      },
       includeActions: false,
     };
     const relevance = Object.fromEntries(purposes.purposes.map((_, i) => [`p${i}`, 'irrelevant']));
@@ -2076,6 +2081,7 @@ describe('durable reader publication and bounded scheduling', () => {
           evidenceIds: supplied.binding.evidenceIds ?? [],
           sharedExperiences: supplied.sharedExperiences,
           entityReferences: supplied.entityReferences,
+          knowledgeReferences: supplied.binding.knowledgeReferences ?? {},
         },
         includeActions: true,
       });

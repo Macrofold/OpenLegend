@@ -28,6 +28,8 @@ Use an isolated checkout, deny edits and paid calls, and start with the relevant
 
 **Scoped routing observation (2026-10-25 UTC):** Codex CLI 0.160.1 explicitly read temporal contracts for root, new-server-file and domain-directory cases; an unrelated prose case read only documentation guidance. All four read-only runs in this checkout exited 0 (`/tmp/ase-guidance-probe-summary.json`). Startup injection, other vendors and the full CG05 matrix remain unqualified.
 
+**Staged preparation (2026-10-31):** Read-only Codex CLI 0.160.1 traces confirm complete root/scoped injection, performance/preparation reads for matching root, new-file and domain-directory tasks, and exclusion for a prose correction mentioning the same terms. All four runs exited 0; two discovery misses recovered. Other CG05 cases/vendors remain unqualified.
+
 | Prompt / starting directory                                                                                  | Relevant context                                                                             | Must not happen                                                                                         |
 | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | “Plan a Jev rubric change; do not edit.” / root                                                              | Root, performance, server, AI, applicable TypeScript and behavior contract                   | Paid calls, implementation, PlayCanvas body                                                             |

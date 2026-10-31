@@ -8,7 +8,7 @@ import { normalizeReceiptCost } from '@open-legend/ai';
 import { CognitionExecution, type ExecutionLease } from './cognition-execution.js';
 import { acquiredActivities, ACTIVITY_SYNTAX } from '@open-legend/domain';
 import type { TypedQuestionMap } from '@open-legend/ai';
-import { bindReflectionAppraisals } from './appraisal-context.js';
+import { bindReflectionAppraisals, captureDecisionAppraisalContext } from './appraisal-context.js';
 import { resolveResponseEntities } from './entity-references.js';
 import { dreamStatus, dreamPolicy } from '@open-legend/domain';
 import {
@@ -47,7 +47,8 @@ import type { MacrofoldBackend } from './macrofold.js';
 import type { IntelligenceLog } from './intelligence-log.js';
 import { digest, type JobRecord } from './store.js';
 import type { RecallService } from './recall.js';
-import { prepareDecision } from './decision-context.js';
+import { prepareDecision, type DecisionInputMeasure } from './decision-context.js';
+import { finalizeDecisionRequest } from './decision-context-selection.js';
 interface ReflectionRequest {
   actorId: string;
   origin: string;
@@ -824,6 +825,7 @@ export class CognitionMaintenance {
     const job: JobRecord = {
       id,
       kind: 'thought',
+      nativeContext: { worldId: this.service.world.id, timelineId: this.service.timelineId },
       status: 'generating',
       message: trigger,
       request: { text: trigger, npcId: actorId },
@@ -1296,6 +1298,26 @@ export class CognitionMaintenance {
           (m) => m.kind === 'commitment' && !m.resolved,
         ),
       );
+      const instructions = `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Use appraisalChanges only for supported private interpretations, usually empty. Copy supplied feeling handles/revisions, policy and cause handles, and subject tokens. For create, select policy, source, subject (null when none) and value. For reframe, select appraisal, expectedRevision, source and value. For resolve, supply only appraisal and expectedRevision. Qualitative values are null. Include only the fields declared for that kind. Never claim a typed change in prose unless proposing it atomically. Do not echo identity file contents.`;
+      const appraisalSnapshot = captureDecisionAppraisalContext(
+        this.service.world,
+        actorId,
+        'reflection',
+      );
+      const inputMeasure: DecisionInputMeasure = (input) =>
+        Buffer.byteLength(instructions) +
+        Buffer.byteLength(
+          JSON.stringify({
+            ...input.context,
+            feelings: appraisalSnapshot.project({
+              ...input.sources,
+              entityReferences: {
+                ...input.sources.entityReferences,
+                ...input.sources.knowledgeReferences,
+              },
+            }),
+          }),
+        );
       const prepared = await prepareDecision(
         this.service,
         this.recall,
@@ -1334,6 +1356,14 @@ export class CognitionMaintenance {
               }),
             request.model ?? this.service.config.llmModel,
           ),
+        'ordinary',
+        undefined,
+        inputMeasure,
+        {
+          question: `Reflect on the admitted concern: ${queued.reason}. Reconsider lasting understanding, goals and supported private feelings while preserving identity and native obligations.`,
+          enabledSemantics: ['think', 'goal', 'note', 'name', 'appraise'],
+          capabilityDetail: 'directory',
+        },
       );
       controller.signal.throwIfAborted();
       if (generation !== this.service.generation)
@@ -1344,22 +1374,38 @@ export class CognitionMaintenance {
         job.id,
         prepared.binding.evidenceIds,
         { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
+        {
+          contextSnapshot: appraisalSnapshot,
+          sharedExperiences: prepared.sharedExperiences,
+          experienceRoot: 'experience',
+        },
       );
-      prepared.context['feelings'] = appraisals.context;
+      const context = { ...prepared.context, feelings: appraisals.context };
+      const finalized = finalizeDecisionRequest({
+        scope: prepared.manifest.scope,
+        instructions,
+        context: JSON.stringify(context),
+        schema: modelJsonSchema(reflectionSchema),
+        sourceKeys: prepared.manifest.units.map((unit) => unit.key),
+        references: { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
+      });
       await this.log.record(
         `${job.id}:context`,
         'Reflection context',
-        prepared.diagnostics,
-        prepared.context,
+        {
+          ...prepared.diagnostics,
+          finalRequest: { digest: finalized.digest, bytes: finalized.bytes },
+        },
+        context,
       );
       const request: GenerateRequest = {
         requestId: `${job.id}:reflection`,
         actorScope: actorId,
         execution: 'full',
         task: 'background_reflection',
-        instructions: `${REFLECTION_INSTRUCTIONS} Reflect using only the supplied context and accepted identity files in mind/*.md. Preserve identity.md exactly. Other mind files describe self-understanding only, within ten files, 500 words and 8000 UTF-8 bytes per file; they must not duplicate external knowledge. Edit knowledge through optional knowledgeChanges, and observer-specific given names through nameChanges in the final JSON; both are usually empty. Use the supplied subject tokens and document revisions. Follow the supplied knowledge policy and character limits. Rewrite or summarize to fit, preserving uncertainty. These pads hold current understanding; experienced events remain in memory. Durable scratch counts. Preserve identity.md exactly and native obligations. Do not read old sessions or other paths. Complete within eight tool operations; stop rather than repair invalid output. Return the specified JSON with one to three presentation thoughts (each at most twenty words) and goalChanges (usually empty). Return full replacement text only for changed knowledge pads. Use appraisalChanges only for supported private interpretations, usually empty. Copy supplied feeling handles/revisions, policy and cause handles, and subject tokens. For create, select policy, source, subject (null when none) and value. For reframe, select appraisal, expectedRevision, source and value. For resolve, supply only appraisal and expectedRevision. Qualitative values are null. Include only the fields declared for that kind. Never claim a typed change in prose unless proposing it atomically. Do not echo identity file contents.`,
-        context: prepared.context,
-        schema: modelJsonSchema(reflectionSchema),
+        instructions,
+        context: JSON.parse(finalized.context) as Record<string, unknown>,
+        schema: finalized.schema,
         signal: controller.signal,
       };
       if (

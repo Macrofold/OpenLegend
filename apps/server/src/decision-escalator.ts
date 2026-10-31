@@ -40,6 +40,7 @@ import {
   decisionFailureReason,
   type DecisionTask,
   type DecisionTaskContext,
+  type DecisionWorldGuidance,
   type DecisionAnswer,
 } from './decision-task.js';
 import { recordDecisionTiming, type DecisionPublication } from './decision-publication.js';
@@ -56,7 +57,7 @@ import { ContextBudgetError } from './context.js';
 export interface PreparedReconsideration {
   tasks: Record<string, DecisionTask>;
   context: DecisionTaskContext;
-  instructions?: string;
+  instructions?: DecisionWorldGuidance;
   bindingDigest: string;
   sourceTime: number;
   current(): Promise<boolean>;

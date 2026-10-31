@@ -1,0 +1,98 @@
+# Integrated cognition context and response admission
+
+October 31, 2026 (UTC). This qualifies the combined context-pipeline and response-admission changes through native consumers and a bounded live comparison. It preserves earlier contrary results. It does not establish reliable psychological use of memories, hallucination-free dialogue, normal Worker reflection or fresh rendered-game acceptance. The [SC tracker](../../../maintainers/cognition-context.md) owns acceptance; the [technical design](../../../technical/situation-aware-cognition-context.md) owns contracts.
+
+## Revision and workload
+
+Repository `https://github.com/Macrofold/OpenLegend.git`, integrating checkout `/Users/mzw/.codex/worktrees/c00b/OpenLegend`, branch `codex/cognition-lab`. Assignment A is supplied at `3533b92ca2df86c088e163e1c84628b633280fc3`; Assignment B is integrated at `e1d6051d80d36a94883df31a091f3065963a6060`. Native manifests identify their exact working-tree source scopes. The frozen final live model-input patch has SHA-256 `d346ddb56ae3c06cd5c706d71f34185146b89d40a77210597a9f24afa6835804`. A subsequent three-file maintenance-provenance fix changes native receipt metadata, not model inputs, and receives its own check below.
+
+Runtime defaults, world policy, relevance thresholds, lifetimes, provider selection and actor permissions remain controlling. The optional SC12 revision/work-mode projection is not implemented by this qualification. Automated suites and test authoring remain paused. Browser verification was disabled; Lab HTTP/native interaction is distinguished from a rendered playthrough.
+
+## Native construction and admission
+
+Eight final-format native walkthroughs capture 17 SDK/backend requests and two earlier recall-attention callbacks. The final supplied-response follow-through contributes three further matching requests after its ordering correction: **20/20 prepared/backend matches, plus two separate pre-SDK callbacks**. Every submitted state/question or instruction/context/schema field agrees with its prepared input. These are actual native owners with controlled callbacks, disabled external transport and outer `AI_BUDGET_USD=0`, not live quality or recovered provider-wire measurements. Actual spend is **$0, including Jev $0**.
+
+Typed reference records and world guidance remain structured until final encoding. Structured callers place identity and selected experience before full activity forms, with references last. Supplied relevance and physical-choice views retain their fields, source bindings and schemas, placing references after late appraisal/relevance facts. Ordinary prose reference lines retain their existing form.
+
+| Native consumer      | Instructions + context bytes | Separate schema bytes |
+| -------------------- | ---------------------------: | --------------------: |
+| Ordinary response    |                       84,918 |                26,747 |
+| Higher closed choice |                       41,740 |                 1,351 |
+| Higher response      |                       88,199 |                25,801 |
+| Independent voice    |                       34,167 |                 1,514 |
+| Reflection           |                       29,361 |                 3,362 |
+| Consolidation        |                        4,399 |                   428 |
+
+Judgment totals use their different `{state, questions}` wrapper. Generation input above excludes the separately counted schema. Native higher-response placement moves the sampled carving account from code-point offset 52,849 to 11,695 and full activity forms from 3,644 to 13,830. These are specimen measurements, not model tokens, a latency benefit or proof of better behavior.
+
+Four integrated response-admission walkthroughs establish a separate comparison: **10/10 prepared/backend requests match**. Ordinary and higher paths bind captured active, paused and completed goal identities. Both accept independent speech, goal creation, revision/status aliases, child creation, captured-goal resumption and cancellation without an active plan. Unknown, self, forward and repeated dependencies refuse their own components; downstream dependents refuse while independent speech/thought commit. Original unresolved markers remain in the receipt and never reach paid grounding. Ordinary exact replay leaves requests 3→3 and events 6→6. A partially resolved higher reply retains accepted speech while its overall job remains failed under existing unresolved-group handling. Native acceptance of a private goal is not a physical achievement.
+
+The native capture collections have no source drift, outbound attempts or cleanup errors. Their manifests retain exact source/index/revision diagnostics; a shared HEAD label alone does not prove identical executed source. Source availability and closure evidence retain their recorded scope rather than becoming a claim about every possible caller or hidden source.
+
+## Scoped preparation work
+
+The retained paired actual `prepareDecision`/source-validation profile has six reads across a small scene and 10,000 other-actor stock rows. All reads retain the same 54,521-byte prompt/digest, 34 references, 113 units, 110 required roots, 72 dependency edges and complete closure. Charged work remains 17,504 candidates, 748 tests, 255,216 input bytes, 222,069 output bytes and 20,393 retained bytes. Setup is outside timing; warm wall samples are 48.55/28.36 ms versus 52.39/47.12 ms.
+
+This establishes unchanged scoped input/work for that recorded source, not a speedup or capacity SLA. Final layout changes serialization/order, not inventory eligibility, indexed ownership access or candidate traversal; reuse is limited to that invariant. Absolute profile bytes/counters are not relabeled final-layout measurements. Actor-owned large inventories, cold histories, dense nearby scenes and full-server throughput retain the [SCX03/PF14 limits](../../../limits/cognition.md). No provider or hosting capacity was used for this profile.
+
+## Live behavior
+
+The first checkpoint runs eight conditions with both Muse Open and Muse Contributor: **16 primary cases**, using canonical character voice examples, low effort, 4,096 output tokens and normal embeddings. A separate initial Open/elder pilot omits examples and is excluded from matched quality claims, while its spending remains included. Seven primary episodes are observed, eight are call-limit censored after actual replies and one stops at an optional reflection prerequisite. Forty selected-model calls comprise 33 response consumers and seven closed choices, not 40 dialogue turns.
+
+Material first-checkpoint observations remain valid:
+
+- Contributor combines shouted elder pain/indignation with a completed evade. Open gives firm normal-volume elder replies without an observed evade. The mercenary sounds gruff and profane with Contributor; Open has an empty opening followed by conditional knife threats. Neither mercenary capture establishes stabbing, brandishing or an evade.
+- Both models receive the complete year-old Ansel/bench/star/cherries account in both response inputs and welcome company. Without that account, Open emits two identical smiles and no dialogue; Contributor speaks warmly and starts following. Generic partner backstory is separate. One observation per arm is a weak causal discriminator, and private remembrance need not be spoken.
+- Contributor selects actual note inspection and later attributes its account to the note. Open only promises/acts out checking in words and claims a pickup “just a moment ago” without supplied acquisition evidence. In the unseen-bag scene, Open reverses the visitor's denial into “You said I took something from a bag,” despite correctly attributed input roles; Contributor clarifies without invented witness knowledge.
+- With only two berries promised elsewhere, Contributor preserves the promise and gathers one fresh berry, stock 2→3. Open preserves the promise verbally but repeats an entire paragraph and never gathers. Neither delivers food in this scarce arm. With surplus stock, both create a real two-berry offer. Contributor separately eats one berry, then ordinary recipient acceptance completes donor 11→9 and visitor 0→2. Open repeats the visitor's sentence as its own speech and stops at reflection readiness before automatic acceptance.
+
+The eight affected final-layout cells then run once with the same canonical settings. They are not a restart of the prior 16 or the historical 122-position panel. All **20 selected-model response calls return values**, including five valid empty contributions. Seventeen generated speech operations and 18 committed focal speech events include one separate native provided utterance. Four whole episodes are observed, three call-limit censored and one incomplete at the reflection prerequisite. Completed reactions remain valid despite whole-episode censoring.
+
+| Model            | Condition          | Actual final-layout behavior                                                                                                                                                                    | Whole episode                      |
+| ---------------- | ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| Muse Open        | B21-unread         | Admits unread contents; actual inspection commits in continuation. Still claims “I just picked it up ... a moment ago” without supplied acquisition evidence and emits an em dash.              | Call-censored                      |
+| Muse Open        | B22-unseen         | Two clarifying replies; the earlier speaker reversal does not recur. “Your bag” is consistent with native visitor possession, not a proven false ownership claim.                               | Observed                           |
+| Muse Contributor | B04                | Shouts “Ow! Get back! ... keep your hands off me!” and completes an actual evade after 5 damage. Later native “Leave me alone” is separate from generated voice.                                | Reflection prerequisite incomplete |
+| Muse Contributor | B06                | Two profane shouted threats, beginning “Fucking hell. That how you say hello?” No physical action is observed.                                                                                  | Call-censored                      |
+| Muse Contributor | B15                | Both responses receive the complete old account and warmly welcome company. No follow or completed walk is observed.                                                                            | Call-censored                      |
+| Muse Contributor | B21-unread         | Chooses actual inspection with speech, then reports “From the note itself ... It says he moved ...” after reading. A later note offer commits.                                                  | Observed                           |
+| Muse Contributor | B22-unseen         | Asks “Which bag do you mean?” and correctly recalls “I asked a plain question,” without invented witness knowledge.                                                                             | Observed                           |
+| Muse Contributor | N02-adequate-stock | Creates a one-berry offer while reserving two for Maren. Separately eats one berry, 12→11. Ordinary recipient acceptance completes donor 11→10 and visitor 0→1, with zero extra provider calls. | Observed                           |
+
+All 17 structured final response inputs contain typed reference objects and object-valued world guidance; three independent physical-response voice inputs use ordinary prose. Actual character fields put identity/experience before activity forms and references last. The complete old account appears once per selected B15 response, at UTF-8 context offsets **10,889/13,061**, before activity forms at **29,336/30,514**. The histories contain an authored year-old timestamp and **200 intervening episodes, including 20 high-importance episodes**, not a simulated year. Delivery and earlier placement do not establish psychological attention or influence; silence and private associations remain valid.
+
+Contributor's written-note text is absent before native inspection and supplied afterward. “I just read it” is supported. An unspecified earlier pickup is plausible but unverified background, distinct from Open dating an unsupported pickup as just now. A note is testimony, not proof its reported bag movement occurred. An offer is not a transfer until native acceptance changes custody. No identical same-response speech repeats in the final eight, but Open fragments its opening note reply across three speech operations and violates the em-dash instruction once. Earlier repetition, visitor-text replay and speaker reversal remain contrary evidence; their absence here does not prove eradication.
+
+No explicit native deadline root, unresolved expiry attribution or artifact-read gap is found in either checkpoint's captured canonical events/receipts. Call limits, operator cancellation and valid empty contributions are distinct from deadline failures. The analysis has no separately acquired full native-job proof for every possible opportunity, so this is not a guarantee that every opportunity ran. Nor do single observations prove causal formatting benefits or a robust model ranking. The prior absent-memory control remains earlier-layout comparison evidence.
+
+For the two conditions run on both final-layout models, six Open responses cost **$0.18241385** provider-reported versus **$0.0252795** for six Contributor responses. Median recorded request latencies are **2,213.5 ms** and **8,302.5 ms**, with ranges 1,825–5,659 ms and 5,783–11,640 ms. Contributor is considerably cheaper in these samples, with slower recorded completion. This is not an isolated provider/CPU benchmark or a balanced general ranking. No default model selection changes; neither model earns a hallucination-free or player-enjoyment claim.
+
+## Worker provenance and receipt recovery
+
+The local Worker API answers requests, but no global dispatcher is available to start queued Worker jobs: the separate ordinary reflection qualification does not reach a working model execution route. The original Run is terminal cancelled, with zero model cost recorded by Macrofold; external BYOK pricing is unavailable. Execution completion is now confirmed while its **$0.25 financial uncertainty remains fenced**, rather than inferred to be real spend or silently released. The borrowed Macrofold service is not modified or restarted, and no replacement paid reflection request is launched.
+
+The general receipt defect was separate: native maintenance jobs lacked their captured world/timeline identity, so receipt ownership checks returned 404. New jobs now retain that native work identity without gaining player/session authority. After the metadata-only fix, an ordinary maintenance check dispatches exactly one real Jev attention request and stops before Worker reflection. Its native world/timeline matches the captured Run; the matching receipt POST returns **200**, a mismatched Run/stage pair returns **404**, and the original 250,000-microdollar unpriced hold remains unchanged. This qualifies the native producer and receipt boundary, not successful reflection or a change to model inputs. The new Jev request costs **$0.000361704**, included below.
+
+## Spending and cleanup
+
+Known reported/estimated spend across both live phases and the final receipt check is approximately **$1.115122996**: **$1.104637616 provider-reported** plus approximately **$0.010485380 usage-estimated embeddings**. This includes the unmatched pilot and supporting work, excluding the unpriced Worker amount. First-phase spend is $0.821916436; final-phase known spend, including the receipt check, is approximately $0.293206560. Jev costs **$0.054558924** in the final phase and **$0.182109690 cumulative**. Analysis/native fixture capture adds $0, including Jev $0.
+
+The closed final ledger has 123 settled attempts, one financially unpriced Worker attempt, **zero reserved**, and dispatch disabled. Its combined conservative control commitment is **$1.421800**, including the fenced $0.25 and conservative accounting differences; it is not the estimate of actual charges. All providers/delegates share the existing assigned $10 task allowance and surviving original $50 campaign ceiling. No hosting capacity was started.
+
+All task-owned live hosts are closed, including the final provenance-check host at 23:12:57 UTC. Private evidence databases remain retained; native disposable walkthrough resources closed without errors. The borrowed local Macrofold service remains untouched. Automated suites were not run and no tests were authored. No fresh browser/rendered-game acceptance is claimed. Broader model quality, normal Worker qualification and scaling retain their existing owners.
+
+## Retained evidence
+
+The following private indexes are relative to `/Users/mzw/.codex/worktrees/c00b/OpenLegend/`. They retain original requests, outputs, source manifests, receipts, native effects, ledger snapshots and per-artifact hashes. Raw private payloads are not committed. They are local evidence, not portable saves or required files for another checkout.
+
+| Evidence                         | Private index                                                                                  | SHA-256                                                            |
+| -------------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| Native 17 + two callbacks        | `.data/cognition-integrated-final-capture-20261031/accepted-summary.json`                      | `69aa4482a4ac09d7edd6886f64714d19576236735970fd547f9e65863bfffdec` |
+| Final supplied three             | `.data/cognition-integrated-final-supplied-20261031/accepted-summary.json`                     | `9ee1a76e7e4661dc1dbaa859198b35c04df2bc0c5c8459469329eb54fe4da188` |
+| Response admission ten           | `.data/cognition-integrated-response-20261031/analysis.json`                                   | `882516f1a9195685c39cd13510cc81d23bbed274a4553258aa95e90b79390263` |
+| Unrelated-stock profile          | `.data/cognition-integrated-capture-20261031/unrelated-stock-profile.json`                     | `d8c6b4037b1a8d3b94a2fe8af135a82491e347cb0e39cc52b75df909cf4f01f0` |
+| Historical comparison index      | `.data/cognition-integration-live-20261031/analysis/retained-comparison.json`                  | `190686c5d27b453d59061e0ae4ad5db198ac84a1ff367facdd1514a11c0f92a0` |
+| First 16 and unmatched pilot     | `.data/cognition-integration-live-20261031/analysis/current-comparison.json`                   | `214421cfe3315803db50d8f7e8e7c7134eeb217b22b81b66479c500365cde1fd` |
+| Final eight                      | `.data/cognition-integration-final-layout-20261031/analysis/final-comparison.json`             | `733f9fdbb7a095fbcd06dbdeac480ec3f7cf30ec95421f064f4aa852f098806c` |
+| Closed financial classification  | `.data/cognition-integration-final-layout-20261031/analysis/final-finance.json`                | `206f7786bef4432cc52f2528c8836dfb131f9d8aaa8f9ddad4ebccc871361d8d` |
+| Native maintenance receipt check | `.data/cognition-integration-final-layout-20261031/runner/native-provenance-check/result.json` | `d7ad395864e2cffb5c1888f6e7e440d346b66b9895ce8521478bd22aa02f7bc5` |

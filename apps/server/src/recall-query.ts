@@ -4,6 +4,8 @@
 export interface RecallDiscoveryCues {
   /** Complete attributed sources, in their existing chronological order. */
   lines: readonly string[];
+  /** Real admitted consumer question; never an inferred scene or preferred answer. */
+  question?: string;
   partial: boolean;
 }
 
@@ -15,7 +17,8 @@ export function recallQueries(input: {
   aboutMe?: string;
   discovery?: RecallDiscoveryCues;
 }) {
-  const base = `${input.stimulus}\nMy current goal: ${input.goal}`;
+  const question = input.discovery?.question;
+  const base = `${question ? `Decision question: ${question}\n` : ''}${input.stimulus}\nMy current goal: ${input.goal}`;
   const lines = input.discovery?.lines ?? [];
   const baseBytes = Buffer.byteLength(base);
   if (baseBytes > MEMORY_QUERY_BYTES)
@@ -52,7 +55,12 @@ export function recallQueries(input: {
     lexical,
     // Keep each complete cue independently meaningful. Flattening unrelated turns
     // into one term set dilutes a specific match in the indexed lexical rank.
-    lexicalSources: [input.stimulus, ...(input.goal ? [input.goal] : []), ...selected],
+    lexicalSources: [
+      ...(question ? [question] : []),
+      input.stimulus,
+      ...(input.goal ? [input.goal] : []),
+      ...selected,
+    ],
     semantic: identityIncluded ? `${lexical}${identity}` : lexical,
     coverage:
       input.discovery?.partial || selected.length < lines.length

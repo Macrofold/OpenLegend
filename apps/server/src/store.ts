@@ -204,6 +204,8 @@ export interface SavedWorld {
 }
 
 export interface JobRecord extends AiJobView {
+  /** Native work identity only; this grants no player/session authority or permissions. */
+  nativeContext?: { worldId: string; timelineId: string };
   /** Creator-authored action keeps the operator's authority separate from its acting body. */
   operatorAuthored?: true;
   decision?: DecisionState;

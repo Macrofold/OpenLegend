@@ -1,4 +1,5 @@
 import { modelJsonSchema } from './ai-schemas.js';
+import type { ActionGuidance } from '@open-legend/domain';
 import { z } from 'zod';
 import {
   DECISION_LIMITS,
@@ -44,6 +45,8 @@ export interface DecisionTask {
 /** Text-only readers supply prose; actor preparations retain their structured
  * evidence and exact appraisal paths until this compiler serializes the request. */
 export type DecisionTaskContext = string | Readonly<Record<string, unknown>>;
+/** Installed guidance is data, not an already encoded JSON document. */
+export type DecisionWorldGuidance = string | Readonly<ActionGuidance>;
 export type DecisionAnswer =
   | { status: 'answered'; value: DecisionValue; reason: null }
   | { status: 'abstained'; value: null; reason: string };
@@ -197,7 +200,7 @@ export function orderedRating(raw: number, categories: Record<string, string>, n
 export function prepareDecisionTask(
   tasks: Record<string, DecisionTask>,
   context: DecisionTaskContext,
-  worldInstructions = '',
+  worldInstructions: DecisionWorldGuidance = '',
 ) {
   const prepared = compileDecisionTask(tasks, context, worldInstructions);
   if (
@@ -215,7 +218,7 @@ export function prepareDecisionTask(
 export function compileDecisionTask(
   tasks: Record<string, DecisionTask>,
   context: DecisionTaskContext,
-  worldInstructions = '',
+  worldInstructions: DecisionWorldGuidance = '',
 ) {
   const keys = Object.keys(tasks);
   if (!keys.length) throw new Error('A decision requires an unresolved question.');

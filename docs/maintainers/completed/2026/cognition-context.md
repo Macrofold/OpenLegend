@@ -117,7 +117,7 @@ Assignment B is implemented and locally qualified on `codex/cognition-response-a
 
 **Owner:** existing CR12/AG12 evaluation mechanisms, with CE05/IS09 retaining broader character/player work. **Design:** feature §12, technical §15 and the benchmark evidence record. **Dependencies:** baseline with SC01; final comparison after core SC02–SC08. No SC12, unimplemented scene or adjacent-project release prerequisite.
 
-**Qualification scope:** Equivalent native/fixture cases qualify shared construction, meaning and admission invariants. Historical B/N panels and matched live portrayal comparisons retain their original scope; the named scenes were not rerun as a fresh same-model/personality or natural old-memory-quality panel. The live smoke's unsupported detail remains contrary evidence in the [qualification record](../../../verification/situation-aware-cognition-context.md).
+**Qualification scope:** Native/fixture evidence qualifies shared construction, meaning and admission invariants. Earlier panels retain their original scope; the [October 31 combined qualification](../../../verification/cognition-context/2026/2026-10-31-integrated-context.md) adds 16 canonical cases and eight affected final-input checks with the same selected characters/models. These samples preserve contrary results and do not prove repeatable portrayal, causal psychological use of old memories or player enjoyment. The earlier live smoke's unsupported detail remains contrary evidence.
 
 - [x] Reuse B04/B06, matched B15/B16/B18 memory controls and N01/N02/N05/N08/N10 from the [native panel](../../../projects/cognition-lab-repertoire-review.md#native-follow-up-situations), plus existing quiet-work/stopping and lifecycle controls. Memory silence is not failure; absent-memory controls must not invent the missing history. Separate acquisition/retrieval/attention/rendering failures from interpretation, output validity and native effects. No new mechanics or evaluation store is required.
 - [x] Use matched permitted snapshots of existing supported decisions with the same identity, model/effort, installed rules and clock conditions. Capture baseline/revised requests, actual evidence availability and complete operating costs. Reuse recorded successful benchmark cases where informative, distinguishing synthetic input from real-source preparation.
@@ -128,6 +128,8 @@ Assignment B is implemented and locally qualified on `codex/cognition-response-a
 **Exit:** generic coverage/meaning invariants pass and revised context preserves known supported decisions with evidence for the enabled scope. Record omissions or material regressions as builder defects. Synthetic successes do not prove real retrieval completeness or player enjoyment. No token/latency/cost benefit is inferred from formatting alone; paid comparisons retain existing account authorization and task ceilings.
 
 ## SC10 — Reconcile current consumers and documentation at each stage
+
+The context/output integration, structured encoders, benchmark callers and native-maintenance receipt consumers have [scoped combined evidence](../../../verification/cognition-context/2026/2026-10-31-integrated-context.md). Paused assertion maintenance remains in the active SC09 owner.
 
 **Owner:** implementation author with canonical CR/CE/IS/action/identity/provider/world owners. **Design:** technical §14.1 and feature §14. **Dependencies:** continuous with each stage; final closure after applicable runtime exits.
 

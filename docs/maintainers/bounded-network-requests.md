@@ -63,6 +63,8 @@ Do not stop after introducing a helper or migrating one provider. Do not mark th
 
 ## NET04 — Migrate all AI/Macrofold and diagnostic consumers
 
+- [ ] Route individual Lab background-attempt cancellation through its registered native owner. `cancelAttempt` currently selects the ordinary director; whole-Run stop is the supported background cancellation path. This pre-existing lifecycle gap is outside the context-builder integration; preserve the exact provider identity and spending hold. See [Worker qualification](../verification/cognition-context/2026/2026-10-31-integrated-context.md).
+
 **Owners:** AI package, server Macrofold/events/logging and injected caller graph. **Depends on:** NET03.
 
 - [x] Migrate direct structured generation, OpenAI decisions, embeddings, Macrofold request/file methods and same-Run lifecycle to the shared operation; thread actual configured deadlines through gameplay/native/creator callers.

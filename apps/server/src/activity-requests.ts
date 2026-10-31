@@ -199,7 +199,7 @@ export function activityChoicePage(
   service.assertScope(scope);
   const world = service.world,
     actor = entityGet(world.entities, scope.actorId)!;
-  const host = activityRequestHost(world, request.family);
+  const host = activityRequestHost(world, request.family, scope.actorId);
   const descriptor =
     host &&
     activityHostRequests(world, host, scope.actorId).find((entry) => entry.id === request.family);

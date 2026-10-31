@@ -1096,7 +1096,11 @@ export function baseNativeRequestSupport(
   types: readonly Command['type'][],
 ): Pick<
   ActivityHostDescriptor,
-  'requestDescriptors' | 'compileRequest' | 'requestChoice' | 'requestChoices'
+  | 'requestDescriptors'
+  | 'compileRequest'
+  | 'requestChoice'
+  | 'requestChoices'
+  | 'requestRoleEntityIds'
 > {
   const staticForms = forms.filter((form) => types.includes(form.type)),
     byId = new Map(staticForms.map((form) => [form.id, form]));

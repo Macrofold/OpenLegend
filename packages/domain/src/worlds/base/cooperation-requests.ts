@@ -312,8 +312,12 @@ export function cooperationRequestChoices(
             observerDescription(world, actorId, quarry.id, 'definite'),
             'entity',
           );
-    if (descriptor.id === COOPERATION_REQUESTS.prepare)
+    if (
+      descriptor.id === COOPERATION_REQUESTS.prepare &&
+      (!query || ['recipeId', 'outputPort'].includes(query.field))
+    )
       for (const recipe of methods(world, actorId)) {
+        if (query?.field === 'outputPort' && query.arguments.recipeId !== recipe.id) continue;
         add(
           descriptor.id,
           'recipeId',

@@ -58,6 +58,23 @@ export interface ContextUnit<T = unknown> {
   relevance?: { source: string; order: number; rank?: number };
 }
 
+/** Frozen metadata describing the exact selected native meaning, never another
+ * source store. Rendered private payloads remain with their existing request owner. */
+export interface DecisionContextManifest {
+  readonly scope: Readonly<DecisionContextScope>;
+  readonly question: string;
+  readonly selectionPolicy: Readonly<{
+    version: string;
+    identity: string;
+    basis: 'shared-rank' | 'source-local';
+  }>;
+  readonly requiredRoots: readonly string[];
+  readonly sourceKeys: readonly string[];
+  readonly units: readonly Readonly<
+    Pick<ContextUnit, 'key' | 'family' | 'source' | 'dependencies' | 'requiredReasons' | 'coverage'>
+  >[];
+}
+
 export interface DecisionRequirements {
   question: string;
   requiredRoots: ReadonlyMap<string, readonly string[]>;
@@ -95,6 +112,7 @@ export function composeDecisionRequirements(
 export class DecisionPreparationWork {
   private consumed = workVector();
   private completion = workVector();
+  private ties = new Map<string, string>();
 
   constructor(private readonly limit: WorkDemand = WORK_LIMITS.group) {}
 
@@ -110,10 +128,44 @@ export class DecisionPreparationWork {
     this.completion = completion;
   }
 
+  /** Spend protected required construction while retaining the unspent final
+   * encoding allowance. A changed required set must still admit its extra work. */
+  complete(demand: WorkDemand): void {
+    const spent = workVector(demand);
+    const completion = workVector(this.completion);
+    for (const unit of Object.keys(completion) as (keyof WorkVector)[])
+      completion[unit] = Math.max(0, completion[unit] - spent[unit]);
+    const next = addWork(this.consumed, spent);
+    requireWork(addWork(next, completion), this.limit);
+    this.consumed = next;
+    this.completion = completion;
+  }
+
   finish<T>(operation: () => T): T {
-    // Reserved credit becomes available only for finalizing the accepted selection.
+    // Consume the promised completion work before final buffers are materialized.
+    // Optional fit trials must run with this credit still reserved.
+    const completion = this.completion;
     this.completion = workVector();
+    this.charge(completion);
     return operation();
+  }
+
+  /** The canonical identity is already owned; hash it once across closure/refit passes. */
+  tieKey(key: string): string {
+    let tie = this.ties.get(key);
+    if (tie === undefined) {
+      const bytes = Buffer.byteLength(key);
+      this.charge({ inputBytes: bytes, outputBytes: 64, retainedBytes: bytes + 64 });
+      tie = digest(key);
+      this.ties.set(key, tie);
+    }
+    return tie;
+  }
+
+  releaseRetained(bytes: number): void {
+    if (!Number.isSafeInteger(bytes) || bytes < 0 || bytes > this.consumed.retainedBytes)
+      throw new Error('Cannot release unowned preparation bytes.');
+    this.consumed.retainedBytes -= bytes;
   }
 
   get used(): Readonly<WorkVector> {
@@ -173,9 +225,9 @@ function compareTie<T extends { key: string }>(
  * breaks ties between current query heads; it preserves each owner's own order. */
 export function orderDecisionContextRoots<
   T extends Pick<ContextUnit, 'key' | 'requiredReasons' | 'relevance'>,
->(units: readonly T[], basis: 'shared-rank' | 'source-local'): T[] {
+>(units: readonly T[], basis: 'shared-rank' | 'source-local', work?: DecisionPreparationWork): T[] {
   const roots = units.filter((unit) => !unit.requiredReasons.length && unit.relevance);
-  const keyed = roots.map((unit) => ({ unit, tie: digest(unit.key) }));
+  const keyed = roots.map((unit) => ({ unit, tie: work?.tieKey(unit.key) ?? digest(unit.key) }));
   if (basis === 'shared-rank') {
     if (keyed.some(({ unit }) => unit.relevance?.rank === undefined))
       throw new Error('A shared context rank must cover every optional root.');
@@ -216,6 +268,8 @@ export interface SelectedDecisionContext<T> {
   omitted: ReadonlyMap<string, 'size' | 'unavailable' | 'preparation'>;
   work: Readonly<WorkVector>;
   optionalCoverage: 'complete' | 'unavailable';
+  /** Incomplete optional construction must finalize the retained required baseline. */
+  exhaustedWork?: WorkBudgetError;
 }
 
 /** Complete roots and their dependencies are selected together. Closure is iterative,
@@ -255,6 +309,7 @@ export function selectDecisionContext<T>(input: {
   let minimumBytes = bytes;
   const omitted = new Map<string, 'size' | 'unavailable' | 'preparation'>();
   let optionalCoverage: 'complete' | 'unavailable' = 'complete';
+  let exhaustedWork: WorkBudgetError | undefined;
   const closure = (root: string) => {
     const visited = new Set<string>();
     const pending = [root];
@@ -294,7 +349,7 @@ export function selectDecisionContext<T>(input: {
       );
     admit(root, value);
   }
-  for (const unit of orderDecisionContextRoots(input.units, input.basis)) {
+  for (const unit of orderDecisionContextRoots(input.units, input.basis, work)) {
     if (chosen.has(unit.key)) continue;
     let value: ReturnType<typeof closure>;
     try {
@@ -303,6 +358,7 @@ export function selectDecisionContext<T>(input: {
       if (!(error instanceof WorkBudgetError)) throw error;
       omitted.set(unit.key, 'preparation');
       optionalCoverage = 'unavailable';
+      exhaustedWork = error;
       break;
     }
     if (!value) {
@@ -322,6 +378,7 @@ export function selectDecisionContext<T>(input: {
     omitted,
     work: work.used,
     optionalCoverage,
+    ...(exhaustedWork ? { exhaustedWork } : {}),
   };
 }
 

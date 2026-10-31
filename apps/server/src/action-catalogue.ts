@@ -1243,7 +1243,7 @@ function* nativeActionCatalogue(
         [],
       );
   }
-  if (!context.itemId && activityRequestHost(world, BASE_OUTING.family)) {
+  if (!context.itemId && activityRequestHost(world, BASE_OUTING.family, actorId)) {
     const cooperativeRequests = activityRequestDescriptors(world, actorId).filter(
       (request) =>
         request.presentation?.kind === 'cooperation-proposal' &&
@@ -1288,7 +1288,7 @@ function* nativeActionCatalogue(
           availability: preview(choice.command),
         });
       const helpRefused = outingInvitationProblem(world, actorId, target.id, 'combat-help');
-      if (activityRequestHost(world, BASE_COMBAT_HELP.family))
+      if (activityRequestHost(world, BASE_COMBAT_HELP.family, actorId))
         actions.push({
           id: `invite-help:${target.id}`,
           label: BASE_COMBAT_HELP.label,

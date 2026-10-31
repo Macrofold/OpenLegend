@@ -180,39 +180,34 @@ export const BASE_OUTING_HOST: ActivityHostDescriptor = {
       return cooperationRequestChoices(world, actorId, observed, query);
     const observation = observed ?? observeActor(world, actorId, { includeMemories: false });
     const choices =
-      observation?.visibleEntities.flatMap((entity) =>
-        [
-          BASE_OUTING_HOST.requestChoice!(
-            world,
-            actorId,
-            BASE_OUTING.family,
-            entity.actor ? 'recipientId' : 'destinationId',
-            entity.id,
-          ),
+      observation?.visibleEntities.flatMap((entity) => {
+        const roles = [
+          { family: BASE_OUTING.family, field: entity.actor ? 'recipientId' : 'destinationId' },
           ...(entity.actor
             ? [
-                BASE_OUTING_HOST.requestChoice!(
-                  world,
-                  actorId,
-                  BASE_COMBAT_HELP.family,
-                  'recipientId',
-                  entity.id,
-                ),
-                BASE_OUTING_HOST.requestChoice!(
-                  world,
-                  actorId,
-                  BASE_COMBAT_HELP.family,
-                  'opponentId',
-                  entity.id,
-                ),
+                { family: BASE_COMBAT_HELP.family, field: 'recipientId' },
+                { family: BASE_COMBAT_HELP.family, field: 'opponentId' },
               ]
             : []),
-        ].filter((choice): choice is NonNullable<typeof choice> => !!choice),
-      ) ?? [];
+        ].filter((role) => !query || (query.family === role.family && query.field === role.field));
+        return roles.flatMap(({ family, field }) => {
+          const choice = BASE_OUTING_HOST.requestChoice!(
+            world,
+            actorId,
+            family,
+            field,
+            entity.id,
+            query?.arguments,
+          );
+          return choice ? [choice] : [];
+        });
+      }) ?? [];
     return {
       choices: [
         ...choices,
-        ...cooperationRequestChoices(world, actorId, observation ?? undefined, query).choices,
+        ...(!query
+          ? cooperationRequestChoices(world, actorId, observation ?? undefined).choices
+          : []),
       ],
       warnings: [],
     };

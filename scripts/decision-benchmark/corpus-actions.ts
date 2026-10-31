@@ -1,6 +1,7 @@
 import {
   actionFulfillmentQuestions,
   actionGroundingQuestions,
+  attentionQuestionPolicy,
   batchedAttentionQuestions,
   decisionQuestions,
 } from '../../apps/server/src/jev-questions.js';
@@ -793,17 +794,15 @@ function values(
   candidates: Record<string, string>,
   labels: boolean[],
 ) {
-  const questions = batchedAttentionQuestions(
-    Object.keys(candidates),
-    'choose-action',
-    baseCognitionPolicy().actionGuidance,
-  );
+  const guidance = baseCognitionPolicy().actionGuidance;
+  const questions = batchedAttentionQuestions(Object.keys(candidates), 'choose-action', guidance);
   return scene(
     id,
     'needs-values-and-enough',
     title,
     {
-      attentionPolicy: baseCognitionPolicy().actionGuidance.reasons,
+      attentionPolicy: guidance.reasons,
+      actionQuestionPolicy: attentionQuestionPolicy('choose-action', guidance),
       candidates,
       ...state,
     },

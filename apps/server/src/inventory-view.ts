@@ -504,9 +504,10 @@ export function activityStorageReader(
   service.assertScope(scope);
   const world = service.world,
     actor = entityGet(world.entities, scope.actorId)!;
-  const host = activityRequestHost(world, activity.family);
+  const host = activityRequestHost(world, activity.family, scope.actorId);
   const field = (
-    host && activityHostRequests(world, host).find((entry) => entry.id === activity.family)
+    host &&
+    activityHostRequests(world, host, scope.actorId).find((entry) => entry.id === activity.family)
   )?.fields[activity.field];
   if (field?.discovery?.source !== 'storage')
     throw new HistoryCursorError('Choose an installed storage field.');

@@ -25,6 +25,8 @@ import {
   experienceForModel,
   experienceModelBindings,
   modelEvidenceReference,
+  MODEL_EXPERIENCE_MEANING,
+  orderedDecisionContext,
 } from './perceived-context.js';
 import type { WorldService } from './world-service.js';
 import type { DecisionActionOffer } from './context.js';
@@ -115,7 +117,7 @@ export function judgmentDecisionContext(context: Record<string, unknown>) {
   // exact handles and costs without presenting planning vocabulary as feasibility.
   if (Array.isArray(context['planOffers']) && context['planOffers'].length)
     projected['planningMeaning'] = KNOWN_PLANNING_MEANING;
-  return projected;
+  return orderedDecisionContext(projected);
 }
 
 /** Attribution comes from event-time awareness, never a name guessed from a quote. */
@@ -162,10 +164,13 @@ export function responseTriggerContext(
       ? entityGet(world.entities, recipientId)
       : undefined;
   const observer = entityGet(world.entities, actorId);
-  const experience = experienceForModel(
+  const bindings = experienceModelBindings(
+    world,
+    actorId,
     { source: 'awareness', value: aware },
-    experienceModelBindings(world, actorId, { source: 'awareness', value: aware }, 'trigger'),
+    'trigger',
   );
+  const experience = experienceForModel({ source: 'awareness', value: aware }, bindings);
   return {
     experience,
     // Awareness.actorId identifies the observer, not necessarily the acting person.
@@ -173,13 +178,15 @@ export function responseTriggerContext(
     participants: aware.speech
       ? {
           observer: experience.owner,
-          speaker: experience.value['sourceId'] ?? null,
-          intendedAddressee: experience.value['targetId'] ?? null,
+          speaker: aware.sourceId ? (bindings.entities.get(aware.sourceId) ?? null) : null,
+          intendedAddressee: aware.targetId
+            ? (bindings.entities.get(aware.targetId) ?? null)
+            : null,
         }
       : {
           observer: experience.owner,
-          perceivedSource: experience.value['sourceId'] ?? null,
-          subject: experience.value['targetId'] ?? null,
+          perceivedSource: aware.sourceId ? (bindings.entities.get(aware.sourceId) ?? null) : null,
+          subject: aware.targetId ? (bindings.entities.get(aware.targetId) ?? null) : null,
         },
     eventTime: gameTime(
       aware.at,
@@ -264,8 +271,6 @@ export function renderDecisionContext(
       ? value.map((line) => `- ${String(line).replace(/\n/g, '\n  ')}`).join('\n')
       : 'None supplied.';
   const triggerFacts = context['triggerFacts'] as Record<string, unknown> | null | undefined;
-  // Organization follows an acquired event role, not a guessed scene or personality.
-  const speechCause = triggerFacts?.['observerRelation'] !== undefined;
   const memories = hasItems(context['recall'])
     ? [
         `## Recalled memories\nReferences into the complete personal evidence array:\n${list(context['recall'])}`,
@@ -279,10 +284,20 @@ export function renderDecisionContext(
   const sections = [
     `## Task\n${requirements?.question ?? responseTaskInstructions(triggerFacts?.['observerRelationship'] === 'addressed_speech')}`,
     '## Context\nMy identity, present state, acquired evidence and available choices follow. These are information for my decision, not a checklist of things to mention or goals to adopt. Keep current facts, memories, claims and interpretations distinct.',
+    ...(triggerFacts
+      ? [
+          `## Current cause\n${JSON.stringify(triggerFacts)}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
+        ]
+      : []),
+    ...(context['stimulus'] ? [`## Trigger\n${context['stimulus']}`] : []),
     `## Me\n${[context['identity'], context['aboutMe'], context['body'], context['feelings'], context['carryingConcern']].filter((value) => typeof value === 'string' && value.length > 0).join('\n')}\n${expressionGuidance}${capabilities?.speech === false ? '\nI cannot speak; do not emit talk operations.' : ''}`,
     ...(hasItems(context['commitments']) || context['activityCoverage']
       ? [`## My commitments\n${list(context['commitments'])}\n${context['activityCoverage'] ?? ''}`]
       : []),
+    `## Private intentions and native work\n${formatIntentions(context['agency'], requirements?.enabledSemantics)}\nThese are intentions and actual step dispositions, never proof that an objective was achieved.${actionsEnabled || allows('goal') ? ' Reconsider an existing purpose when its reason has ended, an opportunity was declined, or an unchanged obstacle prevents progress. Continuing for a remaining reason is legitimate; a trait alone does not require restarting completed work.' : ''}`,
+    `## Complete personal evidence\n${JSON.stringify(context['experience'] ?? [])}\nThis array is character.experience; an index reference is zero-based. ${MODEL_EXPERIENCE_MEANING} Self, addressed, overheard, ambient and seen-only are distinct; none grants consent or forces a reply.`,
+    ...conversation,
+    ...memories,
     ...(Array.isArray(context['planOffers']) && context['planOffers'].length
       ? [
           `## Known planning techniques\n${JSON.stringify(context['planOffers'] ?? [])}\n${KNOWN_PLANNING_MEANING}`,
@@ -293,7 +308,6 @@ export function renderDecisionContext(
           `## Private intent controls\n${JSON.stringify(context['intentActions'] ?? [])}\nUse a known action handle to accept the exact revised action or withdraw an unresolved intent. Withdrawal does not cancel physical work; neither control can be queued in a plan. Never accept for another actor.`,
         ]
       : []),
-    `## Private intentions and native work\n${formatIntentions(context['agency'], requirements?.enabledSemantics)}\nThese are intentions and actual step dispositions, never proof that an objective was achieved.${actionsEnabled || allows('goal') ? ' Reconsider an existing purpose when its reason has ended, an opportunity was declined, or an unchanged obstacle prevents progress. Continuing for a remaining reason is legitimate; a trait alone does not require restarting completed work.' : ''}`,
     ...(Array.isArray(context['supplyOpportunities']) && context['supplyOpportunities'].length
       ? [`## Optional personal supply considerations\n${list(context['supplyOpportunities'])}`]
       : []),
@@ -305,6 +319,11 @@ export function renderDecisionContext(
     ...(context['now'] || typeof context['simTime'] === 'number'
       ? [
           `## Current time\n${context['now'] ?? ''}${typeof context['simTime'] === 'number' ? ` (simulation seconds: ${context['simTime']})` : ''}`,
+        ]
+      : []),
+    ...(hasItems(context['activityDirectory'])
+      ? [
+          `## Supported activity families\n${JSON.stringify(context['activityDirectory'])}\nThese describe supported families for discovery; exact invocation parameters are supplied only by the selected native form.`,
         ]
       : []),
     ...(actionsEnabled && context['activityRequests']
@@ -370,27 +389,36 @@ export function renderDecisionContext(
     .join('\n');
   sections.push(`## References
 Names are display prose, never identifiers. Copy the opaque ID token from (ID:token) into structured entity fields. Never invent a token or use a species name as an ID.${actionsEnabled ? ' Include (ID:token) in an unlisted proposal when identifying its target.' : ''}
-${list(context['references'])}`);
+${list((context['references'] as ResponseReference[] | undefined)?.map(responseReferenceText))}`);
   const responseSupplementOffset = sections.reduce(
     (size, section, index) => size + section.length + (index ? 2 : 0),
     0,
   );
-  sections.push(
-    `## Complete personal evidence\n${JSON.stringify(context['experience'] ?? [])}\nThis array is character.experience; an index reference is zero-based. A record's owner, and value.actorId when present, identify the experiencer, not necessarily who acted. In speech awareness, sourceId is the acquired speaker and targetId the acquired addressee; eventData retains the event's own role names. A perceived source need not be the agent or cause. Source, acquisition, event time, exact heard fragments and uncertainty retain their recorded meaning. Quoted "I" and "you" belong to that speaker and addressee. Self, addressed, overheard, ambient and seen-only are distinct; none grants consent or forces a reply.`,
-    ...(speechCause ? [...memories, ...conversation] : [...conversation, ...memories]),
-    ...(triggerFacts
-      ? [
-          `## Trigger facts\n${JSON.stringify(triggerFacts)}\nEvent-time identity and current visibility are separate. Another nearby individual of the same species is not the speaker. Reconsider whether an older social opportunity still warrants a response; overhearing does not imply an invitation, but deliberate participation is allowed.`,
-        ]
-      : []),
-    ...(context['stimulus'] ? [`## Trigger\n${context['stimulus']}`] : []),
-    responseRules,
-  );
+  sections.push(responseRules);
   return {
     prompt: sections.join('\n\n'),
     responseSupplementOffset,
     actionSectionBytes: Buffer.byteLength(actionSection),
   };
+}
+
+/** Readable permitted directory data; native IDs and authority remain in the binding. */
+export interface ResponseReference {
+  entityId: string | undefined;
+  label: string;
+  relation?: string;
+  species?: string;
+  position?: ReturnType<typeof worldPosition>;
+  noteRevision?: number;
+  noteCharacters?: number;
+  nameRevision?: number;
+  knowledgeBinding?: 'unresolved';
+  triggerRoles?: { evidenceId: string; role: string }[];
+}
+
+/** Prose is the encoding boundary; structured callers retain the original row. */
+export function responseReferenceText(reference: ResponseReference): string {
+  return JSON.stringify(reference);
 }
 
 /** Only visible or explicitly perceived identities enter the reference contract. */
@@ -450,16 +478,16 @@ export function responseReferences(
     (id) => !ids.includes(id) && accessiblePossession(world, actorId, id),
   );
   const piled = pileItemIds.filter((id) => !ids.includes(id) && !possessions.includes(id));
-  const references = ids.map((id) => {
+  const references = ids.map((id): ResponseReference => {
     const entity = entityGet(world.entities, id);
     const rememberedLabel = rememberedLabels.get(id);
     if (!entity)
-      return JSON.stringify({
+      return {
         entityId: handles.get(id),
         label: rememberedLabel ?? 'Remembered individual',
         relation: 'remembered identity; current body and location unavailable',
-      });
-    return JSON.stringify({
+      };
+    return {
       entityId: entityHandles(world, actorId).get(id),
       label: recognizedIds.has(id)
         ? entityLabel(world, entity, actorId)
@@ -477,24 +505,20 @@ export function responseReferences(
           }
         : { knowledgeBinding: 'unresolved' }),
       triggerRoles: roles.get(id) ?? [],
-    });
+    };
   });
   for (const id of possessions)
-    references.push(
-      JSON.stringify({
-        entityId: entityHandles(world, actorId).get(id),
-        label: entityLabel(world, entityGet(world.entities, id)!, actorId),
-        relation: 'my possession',
-      }),
-    );
+    references.push({
+      entityId: entityHandles(world, actorId).get(id),
+      label: entityLabel(world, entityGet(world.entities, id)!, actorId),
+      relation: 'my possession',
+    });
   for (const id of piled)
-    references.push(
-      JSON.stringify({
-        entityId: entityHandles(world, actorId).get(id),
-        label: entityLabel(world, entityGet(world.entities, id)!, actorId),
-        relation: 'lying in a visible pile',
-      }),
-    );
+    references.push({
+      entityId: entityHandles(world, actorId).get(id),
+      label: entityLabel(world, entityGet(world.entities, id)!, actorId),
+      relation: 'lying in a visible pile',
+    });
   const inspected = [...new Set(inspectedIds)].filter(
     (id) =>
       !ids.includes(id) &&
@@ -503,13 +527,11 @@ export function responseReferences(
       entityHas(world.entities, id),
   );
   for (const id of inspected)
-    references.push(
-      JSON.stringify({
-        entityId: entityHandles(world, actorId).get(id),
-        label: entityLabel(world, entityGet(world.entities, id)!, actorId),
-        relation: 'current permitted activity choice or inspected container page',
-      }),
-    );
+    references.push({
+      entityId: entityHandles(world, actorId).get(id),
+      label: entityLabel(world, entityGet(world.entities, id)!, actorId),
+      relation: 'current permitted activity choice or inspected container page',
+    });
   const all = [...ids, ...possessions, ...piled, ...inspected];
   const completeHandles = experienceEntityReferences(world, actorId, all);
   return {

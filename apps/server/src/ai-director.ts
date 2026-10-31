@@ -73,6 +73,7 @@ import {
   requestRoutes,
   chooseActivityRequest,
   activityRequestChoiceFacts,
+  ActivityRequestChoicesUnavailable,
 } from './activity-request-choice.js';
 import { AuthorityError, type RequestScope } from './authority.js';
 import { NpcReplyPreviews } from './npc-reply-preview.js';
@@ -153,6 +154,8 @@ import {
   prepareDecision,
   refreshDecisionActions,
   selectDecisionActions,
+  offerPreparedActions,
+  selectedDecisionActionCandidates,
   type DecisionInputMeasure,
 } from './decision-context.js';
 import {
@@ -163,6 +166,8 @@ import {
 } from './response-context.js';
 import {
   RESPONSE_INSTRUCTIONS,
+  responseSemantics,
+  responseTaskInstructions,
   DECISION_INSTRUCTIONS,
   LEVEL_LIMITS,
   boundResponseSchema,
@@ -192,7 +197,6 @@ import { applyGenerationInput } from './cognition-runtime-control.js';
 import {
   createAiClient,
   InvalidData,
-  validateJudgmentSize,
   batchJudgmentQuestions,
   type AiClient,
   type AiResult,
@@ -2802,7 +2806,11 @@ export class AiDirector {
       'native-only',
       required,
       preparedResponseInputMeasure(catalogue, interpretations.projectContext),
-      undefined,
+      {
+        question: `Evaluate each supplied purpose and supported feeling interpretation independently, then choose among the complete native alternatives or deliberate continuation. ${profile.instructions}`,
+        enabledSemantics: [],
+        capabilityDetail: 'directory',
+      },
       this.memoryReadControl(run),
     );
     const validityFor = (world: WorldState) =>
@@ -3165,7 +3173,7 @@ export class AiDirector {
       instructions,
       schema: modelJsonSchema(schema),
       sourceKeys: prepared.manifest.units.map((unit) => unit.key),
-      references: prepared.entityReferences,
+      references: { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
     });
     const responseSchema = capturedRequest.schema;
     const inputBytes = textBytes(instructions) + textBytes(prepared.prompt);
@@ -3658,54 +3666,28 @@ export class AiDirector {
       !this.service.config.jevOnly &&
       (hasNpcGenerationAccess(this.service.config, 'npc_response_fast') ||
         hasNpcGenerationAccess(this.service.config, 'npc_response_complex'));
-    // Capture late support before optional fitting. The actual dispatch uses the
-    // same renderer; only native source binding/validation waits for selection.
-    const capturedInvention = generationAvailable
-      ? await prepareActorInvention(this.service, actorId)
-      : undefined;
-    const appraisalView =
-      capturedInvention &&
-      this.service.world.moduleManifest.appraisals?.definitions.some(
-        (definition) => definition.decision,
-      )
-        ? captureDecisionAppraisalContext(this.service.world, actorId)
-        : undefined;
-    const renderSupport = (
-      invention: Pick<
-        Awaited<ReturnType<typeof prepareActorInvention>>,
-        'instructions' | 'context'
-      >,
-      appraisalContext?: ReturnType<NonNullable<typeof appraisalView>['project']>,
-    ) => {
-      const support = [
-        invention.context,
-        appraisalContext ? 'Permitted feeling proposals: ' + JSON.stringify(appraisalContext) : '',
-      ]
-        .filter(Boolean)
-        .join('\n');
-      return {
-        instructions: `${RESPONSE_INSTRUCTIONS} ${invention.instructions}`,
-        appendix: support ? `\n\n## Current decision support\n${support}` : '',
-      };
-    };
-    const inputMeasure: DecisionInputMeasure | undefined = capturedInvention
-      ? (input) => {
-          const support = renderSupport(
-            capturedInvention,
-            appraisalView?.project({ ...input.sources, triggerEvidenceId }),
-          );
-          const rendered = renderDecisionContext(
-            input.context,
-            [...input.offered],
-            input.includeActions,
-          );
-          return (
-            Buffer.byteLength(rendered.prompt) +
-            Buffer.byteLength(support.instructions) +
-            Buffer.byteLength(support.appendix)
-          );
-        }
-      : undefined;
+    const policy = this.service.world.cognitionPolicy;
+    const questions = decisionQuestions(
+      addressedSpeech,
+      policy.maxImmediateLevel,
+      speechTrigger,
+      generationAvailable,
+    );
+    const routeQuestion = questions['route'];
+    if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
+    const criteria = routeQuestion.criteria;
+    const capabilityDescriptors = activityRequestDescriptors(this.service.world, actorId);
+    const requestFamilies = requestRoutes(capabilityDescriptors);
+    for (const [key, descriptor] of requestFamilies)
+      criteria[key] = activityRouteCriterion(descriptor);
+    const offeredRoutes = Object.keys(criteria);
+    const routingMeasure: DecisionInputMeasure = ({ context }) =>
+      Buffer.byteLength(
+        JSON.stringify({
+          state: { decisionContext: judgmentDecisionContext(context) },
+          questions,
+        }),
+      );
     let prepared = await prepareDecision(
       this.service,
       this.recall,
@@ -3730,10 +3712,59 @@ export class AiDirector {
         : (request, operation) => this.generate<unknown>(run, request, operation),
       run.job.decision ? 'native-only' : 'ordinary',
       undefined,
-      inputMeasure,
-      undefined,
+      routingMeasure,
+      {
+        question:
+          'Choose the least expensive offered immediate route that can express this person’s response. Independently decide whether the new evidence warrants later reflection and, for speech, whether action options may matter.',
+        enabledSemantics: responseSemantics(
+          this.service.world.moduleManifest.appraisals?.definitions.some(
+            (definition) => definition.decision,
+          ) ?? false,
+        ),
+        capabilityDetail: 'directory',
+        capabilityDescriptors,
+      },
       this.memoryReadControl(run),
     );
+    // Detail expansion reuses positively selected evidence and the same work/lifetime.
+    // Earlier paid decisions keep their source fence even if the final fit is smaller.
+    const prepareConsumer = async (
+      consumer: NonNullable<Parameters<typeof prepareDecision>[16]>,
+      inputMeasure: DecisionInputMeasure,
+    ) => {
+      const prior = prepared;
+      await prior.validateConversation();
+      const next = await prepareDecision(
+        this.service,
+        this.recall,
+        actorId,
+        run.job.id,
+        stimulus,
+        evidenceIds,
+        async () => {
+          throw new Error('Detail preparation cannot buy another judgment.');
+        },
+        run.controller.signal,
+        0,
+        speech,
+        attempt,
+        triggerEvidenceId,
+        undefined,
+        'native-only',
+        undefined,
+        inputMeasure,
+        { ...consumer, capabilityDescriptors },
+        this.memoryReadControl(run),
+        prior.preparationWork,
+        prior.retainedRecall,
+      );
+      const current = next.validateConversation;
+      next.validateConversation = async (...args) => {
+        await prior.validateConversation(...args);
+        await current(...args);
+      };
+      return next;
+    };
     run.validateJudgmentSource = () => prepared.validateConversation();
     this.current(run);
     const validity = run.job.decision ? decisionValidity(this.service.world, actorId) : undefined;
@@ -3818,20 +3849,6 @@ export class AiDirector {
       return true;
     };
     if (await retryForUrgentAwareness()) return;
-    const policy = this.service.world.cognitionPolicy;
-    const questions = decisionQuestions(
-      addressedSpeech,
-      policy.maxImmediateLevel,
-      speechTrigger,
-      generationAvailable,
-    );
-    const routeQuestion = questions['route'];
-    if (!routeQuestion || routeQuestion.type !== 'choice') throw new Error('Missing route rubric.');
-    const criteria = routeQuestion.criteria;
-    const requestFamilies = requestRoutes(prepared.activityRequests.requests);
-    for (const [key, descriptor] of requestFamilies)
-      criteria[key] = activityRouteCriterion(descriptor);
-    const offeredRoutes = Object.keys(criteria);
     const judge =
       (suffix: string) =>
       async (request: Omit<JudgeRequest, 'requestId' | 'signal'>): Promise<JudgeValue> =>
@@ -3893,11 +3910,13 @@ export class AiDirector {
         const selected = await selectDecisionActions(
           bindings.prepared,
           async (request) => {
-            captured.offered = offeredForRating(request);
-            const all = { ...request.questions, ...questions };
-            validateJudgmentSize(request.state, all);
-            const answers = (await judge('route')({ state: request.state, questions: all }))
-              .answers;
+            captured.offered = offeredForRating({
+              ...request,
+              questions: Object.fromEntries(
+                Object.entries(request.questions).filter(([key]) => !Object.hasOwn(questions, key)),
+              ),
+            });
+            const answers = (await judge('route')(request)).answers;
             captured.routing = {
               answers: Object.fromEntries(
                 Object.keys(questions).flatMap((key) => {
@@ -3913,6 +3932,7 @@ export class AiDirector {
             };
           },
           'choose-action',
+          questions,
         );
         if (captured.routing)
           combined = {
@@ -4047,6 +4067,18 @@ export class AiDirector {
       return;
     let requestedActivity: Awaited<ReturnType<typeof chooseActivityRequest>>;
     if (chosenFamily) {
+      prepared = await prepareConsumer(
+        {
+          question: `Choose the parameters for ${chosenFamily.label}. ${chosenFamily.description}`,
+          enabledSemantics: ['act'],
+          capabilityDetail: 'selected',
+          capabilityFamily: chosenFamily.id,
+        },
+        ({ context }) =>
+          Buffer.byteLength(
+            JSON.stringify({ character: preparedResponseDecisionContext(context) }),
+          ),
+      );
       const selectedWorld = this.service.world;
       let parameterRound = 0;
       requestedActivity = await chooseActivityRequest({
@@ -4057,8 +4089,12 @@ export class AiDirector {
           this.current(run);
           const world = this.service.world;
           const observation = decisionObservation(world, actorId);
-          return (field, parameters) =>
-            activityRequestChoiceFacts(
+          const choices = new Map<string, ReturnType<typeof activityRequestChoiceFacts>>();
+          return (field, parameters) => {
+            const key = JSON.stringify([field, parameters]);
+            const cached = choices.get(key);
+            if (cached) return cached;
+            const facts = activityRequestChoiceFacts(
               world,
               actorId,
               chosenFamily,
@@ -4066,7 +4102,11 @@ export class AiDirector {
               parameters,
               prepared.entityReferences,
               observation ?? undefined,
+              (demand) => prepared.preparationWork.charge(demand),
             );
+            choices.set(key, facts);
+            return facts;
+          };
         },
         simTime: selectedWorld.simTime,
         namedDeadlines: namedClockTimes(selectedWorld).map((name) => ({
@@ -4075,6 +4115,14 @@ export class AiDirector {
         })),
         state: { character: preparedResponseDecisionContext(prepared.context) },
         judge: (request) => judge(`activity-parameters:${parameterRound++}`)(request),
+      }).catch(async (error: unknown) => {
+        if (!(error instanceof ActivityRequestChoicesUnavailable)) throw error;
+        await this.log.record(
+          `${run.job.id}:attempt:${attempt}:activity-unavailable`,
+          'Activity parameters unavailable',
+          { family: chosenFamily.id, reason: error.message },
+        );
+        return undefined;
       });
       this.current(run);
       if (!requestedActivity) {
@@ -4097,6 +4145,73 @@ export class AiDirector {
         requestedActivity,
       );
     }
+    let capturedInvention: Awaited<ReturnType<typeof prepareActorInvention>> | undefined;
+    let appraisalView: ReturnType<typeof captureDecisionAppraisalContext> | undefined;
+    const renderSupport = (
+      invention: Pick<
+        Awaited<ReturnType<typeof prepareActorInvention>>,
+        'instructions' | 'context'
+      >,
+      appraisalContext?: ReturnType<NonNullable<typeof appraisalView>['project']>,
+    ) => {
+      const support = [
+        invention.context,
+        appraisalContext ? 'Permitted feeling proposals: ' + JSON.stringify(appraisalContext) : '',
+      ]
+        .filter(Boolean)
+        .join('\n');
+      return {
+        instructions: `${RESPONSE_INSTRUCTIONS} ${invention.instructions}`,
+        appendix: support ? `\n\n## Current decision support\n${support}` : '',
+      };
+    };
+    const responseMeasure: DecisionInputMeasure = (input) => {
+      const support = renderSupport(
+        capturedInvention ?? { instructions: '', context: '' },
+        appraisalView?.project({ ...input.sources, triggerEvidenceId }),
+      );
+      const rendered = renderDecisionContext(
+        input.context,
+        [...input.offered],
+        input.includeActions,
+      );
+      return (
+        Buffer.byteLength(rendered.prompt) +
+        Buffer.byteLength(support.instructions) +
+        Buffer.byteLength(support.appendix)
+      );
+    };
+    let responsePrepared = false;
+    const prepareResponseConsumer = async () => {
+      if (responsePrepared) return;
+      // Establish the complete generative baseline before optional action work.
+      // Its existing no-action view remains usable if that optional work exhausts.
+      capturedInvention = await prepareActorInvention(this.service, actorId);
+      appraisalView = this.service.world.moduleManifest.appraisals?.definitions.some(
+        (definition) => definition.decision,
+      )
+        ? captureDecisionAppraisalContext(this.service.world, actorId)
+        : undefined;
+      const selectedCandidates = selectedDecisionActionCandidates(prepared);
+      const complete = await prepareConsumer(
+        {
+          question: responseTaskInstructions(addressedSpeech),
+          enabledSemantics: responseSemantics(!!appraisalView),
+          capabilityDetail: 'complete',
+        },
+        responseMeasure,
+      );
+      prepared = selectedCandidates.length
+        ? offerPreparedActions(
+            complete,
+            selectedCandidates,
+            'Retained independent action selection',
+          )
+        : complete;
+      responsePrepared = true;
+      run.validateJudgmentSource = () => prepared.validateConversation();
+    };
+    if (route !== 'level1' && !requestedActivity) await prepareResponseConsumer();
     let actionAnswers: Record<string, JudgmentAnswer> = {};
     let offeredForSelection: ReturnType<typeof offeredForRating> = [];
     // Candidates before the level-1 threshold filter, for offering rated actions to generation.
@@ -4107,14 +4222,21 @@ export class AiDirector {
       let retrieval: Awaited<ReturnType<typeof retrieveActions>>;
       if (combined) {
         retrieval = combined.retrieval;
-        ratedBase = combined.base;
+        ratedBase =
+          route === 'level1'
+            ? combined.base
+            : {
+                ...prepared,
+                actionCandidates: combined.base.actionCandidates,
+              };
         offeredForSelection = combined.offered;
         actionAnswers = combined.selected.diagnostics.actionSelection.answers;
         withActions =
-          route === 'level1' ? combined.selected : await offerRated(combined.base, actionAnswers);
+          route === 'level1' ? combined.selected : await offerRated(ratedBase, actionAnswers);
       } else {
         // An oversized combined request already prepared bindings; admission rechecks them.
-        const bindings = earlyBindings ?? (await prepareActionBindings());
+        const bindings =
+          earlyBindings && !responsePrepared ? earlyBindings : await prepareActionBindings();
         retrieval = bindings.retrieval;
         ratedBase = bindings.prepared;
         try {
@@ -4223,6 +4345,7 @@ export class AiDirector {
         if (escalated) await this.log.save({ ...escalated, route: `level1→${executedRoute}` });
       }
     }
+    if (executedRoute !== 'level1' && !requestedActivity) await prepareResponseConsumer();
     const level = executedRoute === 'level4' ? 4 : executedRoute === 'level3' ? 3 : 2;
     const limits = LEVEL_LIMITS[level];
     const c = this.service.config;
@@ -4272,7 +4395,7 @@ export class AiDirector {
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
       namedClockTimes(this.service.world),
-      activityRequestDescriptors(this.service.world, actorId),
+      prepared.completeForms,
       appraisals?.schema,
       prepared.goalIds,
     );
@@ -4337,7 +4460,7 @@ export class AiDirector {
                     },
                     prepared.entityReferences,
                     prepared.binding.knowledgeReferences,
-                    activityRequestDescriptors(this.service.world, actorId),
+                    prepared.completeForms,
                   ).operations[0] ?? null)
                 : null;
             },
@@ -4394,7 +4517,7 @@ export class AiDirector {
                 : []),
             ]),
           ],
-          references: prepared.entityReferences,
+          references: { ...prepared.entityReferences, ...prepared.binding.knowledgeReferences },
         });
         await this.log.record(
           `${run.job.id}:attempt:${attempt}:context-final`,
@@ -4562,7 +4685,7 @@ export class AiDirector {
       { operations: reply.operations },
       prepared.entityReferences,
       prepared.binding.knowledgeReferences,
-      activityRequestDescriptors(this.service.world, actorId),
+      prepared.completeForms,
     );
     const proposedInvention =
       actorInvention.enabled && 'invention' in reply

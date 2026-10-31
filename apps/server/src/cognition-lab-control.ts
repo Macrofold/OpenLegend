@@ -2853,7 +2853,9 @@ export class CognitionLabRunController {
       !receipt ||
       captured['requestId'] !== attemptId ||
       captured['providerRequestId'] !== receipt.providerRequestId ||
-      (job.authority?.worldId ?? job.decision?.worldId) !== run.worldId ||
+      (job.authority?.worldId ?? job.decision?.worldId ?? job.nativeContext?.worldId) !==
+        run.worldId ||
+      (job.nativeContext && job.nativeContext.timelineId !== run.timeline) ||
       (job.authority && job.authority.accountId !== scope.accountId) ||
       record.actorId !== (job.request.npcId ?? job.decision?.actorId)
     )

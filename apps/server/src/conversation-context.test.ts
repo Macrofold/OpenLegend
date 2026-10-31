@@ -25,7 +25,11 @@ import { DecisionPreparationWork } from './decision-context-selection.js';
 import { CONTEXT_BYTE_LIMIT } from './context.js';
 import { entityHandles, experienceEntityReferences } from './entity-references.js';
 import { appendMemory } from '../../../packages/domain/src/events.js';
-import { experienceForModel, experienceModelBindings } from './perceived-context.js';
+import {
+  experienceForModel,
+  experienceModelBindings,
+  modelEvidenceSource,
+} from './perceived-context.js';
 
 const cleanup: Array<() => Promise<void>> = [];
 afterEach(async () => {
@@ -113,7 +117,7 @@ it('preserves literal heard tags and already-bound speakers when native IDs over
   const entry = prepared.sharedExperiences.get(
     experienceSourceKey({ kind: 'awareness', id: sourceId }),
   )!.experience;
-  expect.soft(entry.value['sourceId']).toBe(speaker);
+  expect.soft('sourceId' in entry.value ? entry.value.sourceId : undefined).toBe(speaker);
   expect.soft(JSON.stringify(entry)).toContain(text);
   const references = (prepared.context['references'] as string[]).map(
     (row) => JSON.parse(row) as { entityId: string; label: string },
@@ -205,7 +209,11 @@ it.each([false, true])(
       const entry = prepared.sharedExperiences.get(
         experienceSourceKey({ kind: 'awareness', id: sourceId }),
       )!.experience;
-      expect(prepared.entityReferences[String(entry.value['sourceId'])]).toBe(PLAYER_ID);
+      expect(
+        prepared.entityReferences[
+          String('sourceId' in entry.value ? entry.value.sourceId : undefined)
+        ],
+      ).toBe(PLAYER_ID);
     } finally {
       pending.mockRestore();
     }
@@ -289,7 +297,9 @@ it('reuses exact recent conversation causes while retaining changed projections 
 
   const changedProjection = new Map(prepared.sharedExperiences);
   const changed = structuredClone(shared);
-  changed.experience.value['summary'] = 'A different observer projection.';
+  if (changed.experience.source !== 'awareness')
+    throw new Error('Fixture requires an awareness source.');
+  changed.experience.value.recognized = !changed.experience.value.recognized;
   changedProjection.set(key, changed);
   const changedBound = await bind(changedProjection);
   expect(cause(changedBound).experience).toHaveProperty('value');
@@ -352,10 +362,13 @@ it('measures mixed appraisal sources with exact namespaces, ordering and the nat
       experienceSourceKey({ kind: source.sourceKind, id: source.memory.id }),
       {
         index,
-        revision: source.revision,
-        experience: experienceForModel(
+        ...modelEvidenceSource(
           source.entry,
-          experienceModelBindings(h.service.world, NPC_ID, source.entry, `source-${index}`),
+          source.revision,
+          experienceForModel(
+            source.entry,
+            experienceModelBindings(h.service.world, NPC_ID, source.entry, `source-${index}`),
+          ),
         ),
       },
     ]),

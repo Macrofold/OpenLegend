@@ -33,6 +33,9 @@ interface ReadScope {
 export interface Role {
   /** Discovery stays in the already permitted namespace. Exact binding uses read. */
   ids(scope: ReadScope, args: Arguments): Iterable<string>;
+  /** Candidate identities for a dependent role before its parents are selected.
+   * Parameter-specific availability still belongs to read, never this metadata. */
+  referenceIds?(scope: ReadScope): Iterable<string>;
   read(
     world: WorldState,
     actorId: string,
@@ -113,6 +116,7 @@ export function carried(
   return {
     ids: ({ possessions, world, actorId }, args) =>
       possessions.filter((item) => predicate(world, item, args, actorId)).map((item) => item.id),
+    referenceIds: ({ possessions }) => possessions.map((item) => item.id),
     read(world, actorId, id, args) {
       const item = itemFor(world, id),
         definition = item && world.itemDefinitions[item.definitionId];
@@ -302,7 +306,11 @@ export function nativeRequestSupport(
   find: (world: WorldState, family: string) => Form | undefined,
 ): Pick<
   ActivityHostDescriptor,
-  'requestDescriptors' | 'compileRequest' | 'requestChoice' | 'requestChoices'
+  | 'requestDescriptors'
+  | 'compileRequest'
+  | 'requestChoice'
+  | 'requestChoices'
+  | 'requestRoleEntityIds'
 > {
   return {
     requestDescriptors: (world, actorId) =>
@@ -321,6 +329,22 @@ export function nativeRequestSupport(
       return value
         ? { id: candidateId, ...value, roles: [field], requestIds: [family], accessible: true }
         : undefined;
+    },
+    requestRoleEntityIds(world, actorId, family, prepared) {
+      const form = find(world, family);
+      const observed = prepared ?? observeActor(world, actorId, { includeMemories: false });
+      if (!form || !observed) return [];
+      const descriptor = form.descriptor(world, actorId);
+      const scope = readScope(world, actorId, observed);
+      const ids = new Set<string>();
+      for (const [field, role] of Object.entries(form.roles)) {
+        if (descriptor.fields[field]?.type !== 'entity') continue;
+        const candidates = descriptor.fields[field]?.dependencies?.length
+          ? (role.referenceIds?.(scope) ?? role.ids(scope, {}))
+          : role.ids(scope, {});
+        for (const id of candidates) if (scope.permitted.has(id)) ids.add(id);
+      }
+      return ids;
     },
     requestChoices(world, actorId, prepared, query) {
       const observed = prepared ?? observeActor(world, actorId, { includeMemories: false });

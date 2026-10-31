@@ -1,4 +1,5 @@
 import { randomUUID } from 'node:crypto';
+import type { DecisionPreparationWork } from './decision-context-selection.js';
 import { hasLinguisticSpeech } from './speech-recall.js';
 import { tableRows } from './record-pages.js';
 import { insertRows, sqlRecordBatches, type SqlWriteBatch } from './sql-rows.js';
@@ -124,6 +125,7 @@ export const MEMORY_CACHE_TABLES = ['memory_vector_cache'] as const;
 export class MemoryReadCache {
   private values = new Map<string, { value: RetrievedMemory; bytes: number }>();
   private bytes = 0;
+  constructor(readonly work?: Pick<DecisionPreparationWork, 'charge' | 'releaseRetained'>) {}
   private key(row: Record<string, unknown>): string {
     return JSON.stringify([
       row['world_id'],
@@ -144,10 +146,13 @@ export class MemoryReadCache {
       (this.bytes + bytes > RETRIEVAL_BYTES || this.values.size >= RETRIEVAL_ROWS)
     ) {
       const oldest = this.values.keys().next().value!;
-      this.bytes -= this.values.get(oldest)!.bytes;
+      const dropped = this.values.get(oldest)!.bytes;
+      this.bytes -= dropped;
+      this.work?.releaseRetained(dropped);
       this.values.delete(oldest);
     }
     if (bytes <= RETRIEVAL_BYTES) {
+      this.work?.charge({ retainedBytes: bytes });
       this.values.set(key, { value, bytes });
       this.bytes += bytes;
     }
@@ -155,6 +160,8 @@ export class MemoryReadCache {
 }
 
 export interface CognitionPreparation {
+  /** Shared by required reads, optional discovery and final fitting; never renewed by a refresh. */
+  work?: Pick<DecisionPreparationWork, 'charge'>;
   scope: MemoryScope;
   bodies: MemoryReadCache;
   conversation: Awaited<ReturnType<MemoryRepository['context']>>;
@@ -1354,8 +1361,10 @@ export class MemoryRepository {
     requiredIds: string[],
     includeConversation: boolean,
     maxBytes = RETRIEVAL_BYTES,
+    work?: Pick<DecisionPreparationWork, 'charge'>,
   ) {
     return this.snapshot(async () => {
+      work?.charge({ tests: 1, candidates: requiredIds.length });
       // Reconsideration uses all perceived events, including physical danger. The
       // optional linguistic suffix is not the actor's complete observation frontier.
       const watermark = await this.db
@@ -1364,7 +1373,7 @@ export class MemoryRepository {
         )
         .get(...this.params(scope));
       const selected = includeConversation
-        ? await this.conversationSources(scope, maxBytes)
+        ? await this.conversationSources(scope, maxBytes, work)
         : { sources: [], more: false };
       const required = new Set(requiredIds);
       return {
@@ -1381,12 +1390,14 @@ export class MemoryRepository {
   async conversationSources(
     scope: MemoryScope,
     maxBytes = RETRIEVAL_BYTES,
+    work?: Pick<DecisionPreparationWork, 'charge'>,
   ): Promise<{ sources: ConversationSource[]; more: boolean }> {
     const sources: ConversationSource[] = [];
     let bytes = 0,
       before: { sequence: number; id: string } | undefined;
     for (;;) {
       const limit = Math.min(128, RETRIEVAL_ROWS + 1 - sources.length);
+      work?.charge({ candidates: limit, tests: limit });
       const rows = await this.db
         .prepare(
           `SELECT r.id,r.revision,r.sequence,r.payload_bytes,
@@ -1915,6 +1926,7 @@ export class MemoryRepository {
     query: string | null,
     limit: number,
     control?: MemoryReadControl,
+    bodies?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
     if (!Number.isSafeInteger(limit) || limit < 1 || limit > 300)
       throw new Error('Invalid context limit.');
@@ -1923,6 +1935,7 @@ export class MemoryRepository {
     const cacheable = this.db.transactionActive === false;
     const terms = query === null ? [] : [...new Set(searchWords(query))];
     const read = async () => {
+      bodies?.work?.charge({ candidates: limit, tests: limit });
       if (query === null)
         return this.hydrate(
           await this.db
@@ -1930,6 +1943,7 @@ export class MemoryRepository {
               `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} ORDER BY r.at DESC,r.id LIMIT ?`,
             )
             .all(...this.params(scope), limit),
+          bodies,
         );
       const cacheKey = JSON.stringify([actorScopeKey(scope), terms, limit]);
       const cached = cacheable ? this.textSelection.get(cacheKey) : undefined;
@@ -1951,7 +1965,7 @@ export class MemoryRepository {
         revision === this.actorRevision(scope.actorId) &&
         reset === this.resetEpoch
       )
-        return this.hydrate(cached.rows);
+        return this.hydrate(cached.rows, bodies);
       // Token-prefix search uses the database's inverted index. Substring matching
       // required reparsing every retained JSON body; docs/memory-architecture.md#retrieval-preparation-admission.
       const expression = lexicalQuery(terms);
@@ -1975,7 +1989,7 @@ export class MemoryRepository {
           ].map((row) => [`${row['source_kind']}:${row['id']}`, row]),
         ).values(),
       ].slice(0, limit);
-      const result = await this.hydrate(rows);
+      const result = await this.hydrate(rows, bodies);
       if (
         cacheable &&
         revision === this.actorRevision(scope.actorId) &&
@@ -2091,6 +2105,7 @@ export class MemoryRepository {
     cache?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
     if (rows.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    cache?.work?.charge({ candidates: rows.length, tests: rows.length });
     // Check serialized source bytes in SQL before bringing bodies into the host. One
     // read snapshot binds the check and hydration to the same versions.
     const reused = rows.flatMap((row) => {
@@ -2114,6 +2129,12 @@ export class MemoryRepository {
         if (bytes > RETRIEVAL_BYTES) throw new MemoryPreparationError();
       }
     }
+    const reusedBytes = reused.reduce((sum, entry) => sum + entry.bytes, 0);
+    cache?.work?.charge({
+      inputBytes: bytes,
+      outputBytes: bytes - reusedBytes,
+      tests: missing.length,
+    });
     const result: RetrievedMemory[] = reused.map(({ row, value }) => ({
       ...value,
       ...(row['score'] !== undefined ? { score: Number(row['score']) } : {}),
@@ -2130,7 +2151,10 @@ export class MemoryRepository {
         const byId = new Map(values.map((row) => [row['id'], String(row['payload'])]));
         for (const row of batch) {
           const payload = byId.get(row['record_id']);
-          if (!payload || personalAccountRevision(payload) !== row['revision']) continue;
+          // Eligibility was already admitted in this read snapshot. A missing or
+          // different body is unavailable support, never evidence of an empty query.
+          if (!payload || personalAccountRevision(payload) !== row['revision'])
+            throw new Error('A selected permitted memory source is unavailable or changed.');
           const actorId = String(row['actor_id']);
           const entry = decodeMemorySource(kind, payload, actorId);
           const memory = experienceReading(entry, actorId);
@@ -2180,8 +2204,10 @@ export class MemoryRepository {
     parent: SummarySourceBinding,
     references: ExperienceSourceReference[],
     maxBytes = RETRIEVAL_BYTES,
+    work?: Pick<DecisionPreparationWork, 'charge'>,
   ): Promise<RetrievedMemory[]> {
     return this.snapshot(async () => {
+      work?.charge({ candidates: references.length, tests: references.length });
       if (!(await this.current(scope, [{ ...parent, sourceKind: 'summary' }])))
         throw new Error('The remembered summary changed or is unavailable.');
       const key = (source: ExperienceSourceReference) =>
@@ -2214,6 +2240,7 @@ export class MemoryRepository {
       const bytes = headers.reduce((sum, row) => sum + Number(row['bytes']), 0);
       if (!Number.isSafeInteger(bytes) || bytes > Math.min(maxBytes, RETRIEVAL_BYTES))
         throw new MemoryPreparationError();
+      work?.charge({ inputBytes: bytes, outputBytes: bytes, tests: unique.length });
       const rows = await this.originalRows(scope, unique, true);
       if (rows.length !== unique.length)
         throw new Error('An exact original changed during preparation.');
@@ -2256,7 +2283,9 @@ export class MemoryRepository {
     existing: RetrievedMemory[],
     kinds: readonly SourceKind[] = ['awareness', 'memory'],
     exact?: readonly ExperienceSourceReference[],
+    cache?: MemoryReadCache,
   ): Promise<RetrievedMemory[]> {
+    cache?.work?.charge({ candidates: ids.length, tests: existing.length });
     const present = new Set(
       existing.map((source) => sourceKey(source.sourceKind, source.memory.id)),
     );
@@ -2326,7 +2355,13 @@ export class MemoryRepository {
       RETRIEVAL_BYTES - existing.reduce((sum, source) => sum + source.bodyBytes, 0);
     const retained = [...existing];
     for (const group of parents.values()) {
-      const originals = await this.originals(scope, group.parent, group.references, remainingBytes);
+      const originals = await this.originals(
+        scope,
+        group.parent,
+        group.references,
+        remainingBytes,
+        cache?.work,
+      );
       remainingBytes -= originals.reduce((sum, source) => sum + source.bodyBytes, 0);
       retained.push(...originals);
     }
@@ -2522,7 +2557,14 @@ export class MemoryRepository {
             .all(...this.params(scope), ...batch)),
         );
       }
-      return this.requiredOriginals(scope, unique, await this.hydrate(rows, cache), ['awareness']);
+      return this.requiredOriginals(
+        scope,
+        unique,
+        await this.hydrate(rows, cache),
+        ['awareness'],
+        undefined,
+        cache,
+      );
     });
   }
   /** Exact, bounded sources already selected into one appraisal/reflection context.
@@ -2567,6 +2609,7 @@ export class MemoryRepository {
   ): Promise<RetrievedMemory[]> {
     const unique = [...new Set(ids)];
     if (unique.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
+    cache?.work?.charge({ candidates: RETRIEVAL_ROWS + 1, tests: unique.length });
     const rows = await this.db
       .prepare(
         `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND r.required=1
@@ -2586,6 +2629,7 @@ export class MemoryRepository {
     for (let offset = 0; offset < unique.length; offset += 350) {
       const batch = unique.slice(offset, offset + 350),
         params = batch.map(() => '?').join(',');
+      cache?.work?.charge({ candidates: RETRIEVAL_ROWS + 1, tests: batch.length });
       const matches = await this.db
         .prepare(
           `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND (r.id IN (${params}) OR r.event_id IN (${params})) LIMIT ${RETRIEVAL_ROWS + 1}`,
@@ -2594,7 +2638,14 @@ export class MemoryRepository {
       for (const row of matches) selected.set(`${row['source_kind']}:${row['id']}`, row);
       if (selected.size > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     }
-    return this.requiredOriginals(scope, unique, await this.hydrate([...selected.values()], cache));
+    return this.requiredOriginals(
+      scope,
+      unique,
+      await this.hydrate([...selected.values()], cache),
+      undefined,
+      undefined,
+      cache,
+    );
   }
 
   async select(
@@ -2635,6 +2686,7 @@ export class MemoryRepository {
     if (excludedIds.length > RETRIEVAL_ROWS) throw new MemoryPreparationError();
     // Apply before LIMIT and body hydration; grouping cannot reintroduce covered turns.
     const optional = `NOT (r.id = ANY(?::text[]) OR COALESCE(r.event_id,'') = ANY(?::text[]))`;
+    cache?.work?.charge({ candidates: limit, tests: excludedIds.length });
     const fallback = await this.db
       .prepare(
         `SELECT ${sourceColumns} FROM recall_sources r WHERE ${this.eligible} AND ${optional} ORDER BY r.importance DESC,r.at DESC,r.id LIMIT ?`,

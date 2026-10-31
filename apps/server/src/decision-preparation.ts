@@ -2,7 +2,6 @@ import type { MemoryReadControl } from './memory-repository.js';
 import { selectedExpressions } from '@open-legend/domain';
 import {
   entityGet,
-  activityRequestDescriptors,
   canSpeak,
   commitActorResponse,
   namedClockTimes,
@@ -17,6 +16,7 @@ import {
   nativeResponse,
   RESPONSE_OPERATION_GUIDE,
   responseTaskInstructions,
+  responseSemantics,
   type ModelResponseOperation,
   type DecisionAppraisalProposal,
 } from './cognition-contracts.js';
@@ -118,7 +118,7 @@ function reconsiderationInput(
       ...(kind !== 'choice' ? { appraisals } : {}),
       reconsiderationReason,
     },
-    instructions: JSON.stringify(input.actionGuidance),
+    instructions: input.actionGuidance,
   };
 }
 
@@ -177,6 +177,10 @@ export async function prepareReconsideration(
     retained?.rootId === job.id &&
     retained.generation === generation &&
     retained.validity === decisionValidity(service.world, actorId) &&
+    (!response ||
+      retained.prepared.discoveryDescriptors.every((descriptor) =>
+        retained.prepared.completeForms.some((form) => form.id === descriptor.id),
+      )) &&
     !closedChoice
       ? retained.prepared
       : undefined;
@@ -200,8 +204,28 @@ export async function prepareReconsideration(
       'native-only',
       closedChoice ? 'available-native' : undefined,
       inputMeasure,
-      undefined,
+      {
+        question: `${
+          reconsiderationInput(
+            {
+              context: {},
+              offered: [],
+              sourceTime: service.world.simTime,
+              actionGuidance: service.world.cognitionPolicy.actionGuidance,
+            },
+            reconsiderationReason,
+            kind,
+          ).tasks.q0.question
+        } Reason: ${reconsiderationReason}`,
+        enabledSemantics: response
+          ? responseSemantics(!!appraisalView)
+          : appraisalOnly
+            ? ['appraise']
+            : ['act'],
+        capabilityDetail: response ? 'complete' : 'directory',
+      },
       readControl,
+      retained?.prepared.preparationWork,
     );
   const prepareActions = (base: Awaited<ReturnType<typeof prepareDecision>>) => {
     const rebound = { ...base, binding: { ...base.binding, decisionId: higher.id } };
@@ -264,7 +288,7 @@ export async function prepareReconsideration(
       },
       Object.keys(prepared.binding.knowledgeReferences ?? {}),
       namedClockTimes(service.world),
-      activityRequestDescriptors(service.world, actorId),
+      prepared.completeForms,
       appraisal?.schema,
       prepared.goalIds,
     );
@@ -398,7 +422,7 @@ export async function prepareReconsideration(
           native,
           prepared.entityReferences,
           prepared.binding.knowledgeReferences,
-          activityRequestDescriptors(service.world, actorId),
+          prepared.completeForms,
         );
       }
       if (!(await current()))
