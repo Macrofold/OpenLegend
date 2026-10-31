@@ -316,8 +316,7 @@ never renews. An independent world-profile speech choice may add one bounded
 fast-model request after any selected native conduct commits, with its own response group and
 receipt on the same job. Silence, uncertainty or a selected finite line adds no
 generation; language failure cannot undo or replay native conduct. A failed stage
-buys no higher-model fallback. Ordinary routes retain
-their existing one-second dispatch rule and configured higher-attempt policy. The [proposed shared continuation](projects/decision-escalation-tech-design.md#proposed-useful-lifetime-continuation), tracked by [DE06](maintainers/cognition-redesign.md#de06--useful-lifetime-continuation-and-preparation), lets admitted useful-later roots complete first and successor requests within their original lifetime; it is not implemented and changes no numeric deadline, capacity or higher-attempt allowance.
+buys no higher-model fallback. Ordinary decision roots now share this useful-lifetime timing: after one-second immediate deferral, their first and necessary successor requests may start within the original usefulness deadline. [DE06](maintainers/cognition-redesign.md#de06--useful-lifetime-continuation-and-preparation) records implementation and focused evidence. Native earlier expiry, funding, capacity and higher-attempt policy still apply; rootless requests retain their existing caller limits. Ordinary and higher transport requests inherit their remaining absolute deadline through metadata, journaling and result observation, preserving any earlier prepared limit.
 
 If startup cannot reconstruct occupied executions from storage, this pool closes and cancels queued admission. It never treats missing accounting as free capacity or repeatedly schedules the failed read. Callers retain the original storage failure; a corrected restart must reconstruct capacity before dispatch can resume.
 

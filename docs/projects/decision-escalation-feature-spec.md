@@ -1,10 +1,10 @@
 # Better decisions without stopping the game — feature specification
 
-| Status      | Current progress                                                                                                                        | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Existing escalation is implemented; useful-lifetime continuation is designed but unimplemented, and broader qualification remains open. | 2026-10-31   |
+| Status      | Current progress                                                                                                                 | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Useful-lifetime continuation and scoped preparation pass focused native/live checks; broader release qualification remains open. | 2026-10-31   |
 
-Specification updated **2026-10-31T17:10:55Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
+Specification updated **2026-10-31T18:36:24Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
 
 ## Purpose
 
@@ -77,17 +77,17 @@ The game keeps simulation time separate from elapsed real time. A world running 
 
 If the fast model answers after one second, a choice that is still useful may be checked and used as a delayed answer. It is not counted as a split-second decision, and it does not require a second charge simply for arriving late. Immediate-only choices expire instead. An uncertain first execution blocks a second paid call while it is reconciled; the original task deadline bounds that wait.
 
-### Proposed continuation within the original lifetime
+### Continuation within the original lifetime
 
-**Design complete; not implemented.** An admitted decision that remains useful later should be allowed to finish its existing workflow within its original usefulness deadline. The one-second mark records immediate action, continuation or deferral; it is not a cutoff for every model request in that workflow. This explicitly includes the first request when necessary preparation takes more than one second. The current ordinary route still enforces that cutoff; the selected supplied-response strategy already permits dependent calls within the useful lifetime.
+**Implemented.** An admitted decision that remains useful later may finish its existing workflow within its original usefulness deadline. The one-second mark records immediate action, continuation or deferral; it is not a cutoff for every model request in that workflow. This explicitly includes the first request when necessary preparation takes more than one second. Ordinary and supplied-response decisions share the same lifetime rule. Rootless callers retain their own existing bounds.
 
 For example, a character may choose to offer food, then choose which possession and how much. Finishing those details is part of the same decision. A character retrieving an old promise before answering should also be able to finish. Neither receives another 31 seconds, a new spending allowance or a guaranteed action. The character may refuse, stay quiet, lose the opportunity, or produce an unusable answer. Existing activities and the world continue normally; no filler speech or gesture is generated to disguise waiting.
 
 "Admitted" means the existing scheduler accepted this actor, cause and authority into its bounded active capacity before preparation. A queued event, a saved task object or an operator inspecting a scenario cannot create that entitlement. Immediate-only tasks retain their earlier expiry. New relevant evidence, changed intent, loss of permission, cancellation or the original real/simulation deadline can end any unfinished decision.
 
-The [technical proposal](decision-escalation-tech-design.md#proposed-useful-lifetime-continuation) also scopes memory-index readiness to the requesting character, bounds preparation waits by the caller's lifetime, and shares unchanged preparation through existing owners. It keeps required evidence, exact request/spending durability and final native validation. No new planner, fallback route, model default, concurrency allowance or world rule is introduced. Longer admitted work can occupy existing capacity and spend more of an already authorized budget; that tradeoff must be measured alongside the additional useful answers.
+The [technical design](decision-escalation-tech-design.md#useful-lifetime-continuation) also scopes memory-index readiness to the requesting character, bounds preparation waits by the caller's lifetime, and shares unchanged preparation through existing owners. It keeps required evidence, exact request/spending durability and final native validation. No new planner, fallback route, model default, concurrency allowance or world rule is introduced. Longer admitted work can occupy existing capacity and spend more of an already authorized budget; that tradeoff must be measured alongside the additional useful answers.
 
-Delivery is tracked in [DE06](../maintainers/cognition-redesign.md#de06--useful-lifetime-continuation-and-preparation), with shared preparation measurements in [PF14](../maintainers/performance.md#pf14--shared-cognition-preparation-and-complete-path-cost). Design completion does not reopen the completed experiment panel or establish a latency or character-quality pass.
+Delivery is tracked in [DE06](../maintainers/cognition-redesign.md#de06--useful-lifetime-continuation-and-preparation), with shared preparation measurements in [PF14](../maintainers/performance.md#pf14--shared-cognition-preparation-and-complete-path-cost). Focused qualification does not reopen the completed experiment panel or establish broader latency or character quality.
 
 ## What the stronger model receives and returns
 
