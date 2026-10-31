@@ -94,25 +94,40 @@ Use existing world-coordinate conventions and metres unchanged. Convert native e
 
 ### 3.2 A deliberately small backend interface
 
-The following is a contract sketch; names of existing imported types are retained during implementation rather than duplicated solely to match this example.
+Implement these operations with the existing imported geometry/camera types where suitable. The record meanings and call ordering below are required; do not duplicate an existing type merely to match an example name.
 
 ```ts
+interface PresentationFrameCallbacks {
+  prepare(nowMs: number): FrameSample;
+  afterPose(sample: FrameSample): void;
+  afterFrame(sample: FrameSample): void;
+}
+
 interface PresentationBackend {
   readonly info: BackendInfo;
   install(view: RenderWorldView): void;
   apply(changes: PresentationChanges): void;
-  start(prepare: (nowMs: number) => FrameSample): void;
+  start(callbacks: PresentationFrameCallbacks): void;
   setSuspended(suspended: boolean): void;
-  resize(viewport: Viewport): void;
+  setCamera(camera: CameraPose, viewport: Viewport): void;
   rayAt(point: ScreenPoint): WorldRay | undefined;
   pickGeometry(ray: WorldRay, candidates: PickCandidates): PickHit | undefined;
   project(point: WorldPoint, output: ProjectedPoint): boolean;
+  projectAnchor(
+    imageId: string,
+    role: 'label' | 'status' | 'head' | 'aim',
+    output: ProjectedPoint,
+  ): boolean;
   stop(): void;
   dispose(): Promise<void>;
 }
 ```
 
-`start()` installs exactly one backend-owned scheduler. It calls shared `prepare()` once per presentation tick, applies the returned display state, and renders through the engine's existing draw admission. A tick skipped by GPU backpressure is not a rendered frame; observe actual draws separately. It never advances the world or independently chooses animation time. `install()` is for initialization or a real world reset; ordinary updates use `apply()`. `project()` can write into caller-owned scratch storage to avoid high-frequency allocation. Batch queries only where an actual consumer needs them. A narrow study interface exposes existing art settings, diagnostic presentation and capture readiness; do not expand `WorldRenderer` with every study-only method or expose an engine object.
+`start()` installs exactly one backend-owned scheduler. Each prepared tick calls `prepare()`, applies native camera/transforms/pose/cloth and updates query matrices, calls `afterPose()`, makes the engine's normal draw-admission decision, then calls `afterFrame()` once. Shared DOM anchors and hover/reveal decisions run in `afterPose()` against that tick's native state; any resulting highlight changes do not evaluate animation again. `afterFrame()` lets the study finalize a measurement after the terminal tick. In PlayCanvas it uses `frameend`; in Three it follows submission or the decision to skip it. Both callbacks run for prepared ticks that skip drawing; neither counts as a rendered frame. Actual draws retain their native postrender/collector owner. None of these phases advances the world or chooses a second animation clock.
+
+`install()` replaces complete membership/environment for initialization or a real world reset. `apply()` carries the current scope, complete immutable upsert records, explicit removed IDs and changed environment/settings fields; absent change fields mean unchanged. Remove/revoke invalid images synchronously before asynchronous replacement preparation. Ordinary snapshots keep the backend/scope resource owner and do not restart unchanged loads. Access renewal removes newly invalid data without reinstalling valid public artwork. Source positions are shared-motion inputs: upserting one must not snap an existing native transform ahead of the shared displayed sample.
+
+`setCamera()` synchronously applies the accepted camera/viewport and refreshes native query matrices; resize the backing buffer only when dimensions change. Call it on camera/viewport changes and before synchronous queries if dirty. It does not advance animation, start another loop or force a draw. Frame preparation uses the same camera state. Projection queries write caller-owned scratch results and use the latest camera with the most recently prepared displayed geometry. The finite anchor roles and clipping policy are defined in §5. A narrow study interface exposes art settings, diagnostic presentation and capture readiness; do not expose native engine objects through `WorldRenderer`.
 
 Factories are asynchronous and own partial initialization. They accept the new canvas, exact backend choice, source services and an abort signal; they return a **device-ready** backend or a typed initialization failure. Installing a view starts its scoped asset/pass preparation; it is not yet **scene-ready**. Reuse the existing loading/readiness callbacks, tagged with the active view/backend owner, to report preparing, ready or failed. Scene readiness includes required artwork, visible preparation and a completed first device frame. On factory failure/abort release partial resources before settling. Invalid/cancelled completion cannot register callbacks, mutate DOM or publish a backend.
 
@@ -148,15 +163,17 @@ For each active frame:
 1. Sample the one presentation clock and current viewport/camera state.
 2. Update only moving/animated/changed entries using existing interpolation, support boundaries and pause/tab-gap behavior.
 3. Prepare shared desired animation/heading and current light/overlay descriptors only where invalidated or time-dependent.
-4. The backend evaluates each requested native pose once, reads its current bone anchors, invokes the shared numeric cloth step synchronously with those anchors, uploads changed cloth, and draws all required passes/attachments using that pose. Never solve against last frame's anchors or evaluate another skeleton for a shadow/outline.
-5. Project shared caption/status/aim anchors from the same displayed state used for drawing; update DOM directly through existing owners where appropriate.
-6. Record optional measurement only if its existing capture gate is enabled and recording. Ordinary gameplay frame-rate display remains separate.
+4. The backend evaluates each requested native pose once, reads its current bone anchors, invokes the shared numeric cloth step synchronously with those anchors, uploads changed cloth and updates native query matrices. Never solve against last frame's anchors or evaluate another skeleton for a shadow/outline.
+5. Call shared `afterPose()` to project caption/status/aim anchors and refresh hover from that same displayed state. Existing DOM owners apply their own offsets/content; resulting native highlights use the already-evaluated pose.
+6. Draw all required passes/attachments through native admission, then call `afterFrame()` even when no draw was admitted. Collect optional measurements only while enabled/recording; actual submission counts come from native draw hooks, never these callbacks. Ordinary gameplay frame-rate display remains separate.
 
 The source baseline uses scene-owned application ticks and native animation updates. Keep the current supported controls that prevent an Open Legend-managed animation from independently advancing before its explicit pose update; trace component auto-update, mixer/layer calls and held-pose behavior before extraction. PlayCanvas's application update callback follows its component animation phase, so moving a manually managed actor there must not accidentally re-enable automatic advancement. Document these pinned API calls in RCP05. Engine scheduling differences do not create a second game clock.
 
 ### 4.3 Animation, cloth and discontinuities
 
 The shared motion controller owns desired clip, absolute sample position, heading smoothing, transition intent, pause state and held-8/held-12 cadence when selected by the existing art profile. Backends evaluate that requested pose; an adapter may derive the required native mixer/layer delta from consecutive shared samples, but must not integrate its own wall time and drift. Preserve the existing normal-session blend duration/semantics. On install or seek, reset a transient blend to the currently requested clip/sample; a short blend discontinuity during the already-visible loading gap is accepted. Exact interrupted multi-clip fade reconstruction is not required and cannot be promised from a start timestamp alone.
+
+Each pose request identifies the exact source/clip, absolute sample in seconds, loop/clamp behavior and transition/restart intent. Presentation/replay clocks use milliseconds; convert once at this boundary. Adapters do not select clips from actor names, kinds or action wording. Installation supplies the controller's displayed transform; only its explicit discontinuity/reset decision snaps subsequent motion.
 
 One evaluated skeleton/morph pose supplies color, shadow, outline/read-through, attachments and cloth bindings. A second pass must not cause a second independent animation update. PlayCanvas interrupted-blend reset workarounds stay in its adapter; Three supplies the same clean-idle semantic through its mixer/actions. Skeleton cloning, inverse-bind transforms, animated bounds and equipment offsets are verified on the actual source assets, not assumed from glTF compatibility.
 
@@ -183,6 +200,17 @@ Backend tests/manual checks must include alpha-cutout foliage, sprites and their
 Use projected displayed positions for captions/aim/blur, not an independently advanced transform. Reuse the existing caption/status/blur owners; no React Three Fiber migration is required to keep the React HUD.
 
 Screen-space ray/projection inputs and outputs are canvas-local CSS pixels with top-left origin and positive Y downward. Convert DOM `clientX/clientY` using the current canvas bounding rectangle; native framebuffer pixels/DPR conversion stays in the backend. Existing viewport-client coordinates for menus/hover callbacks remain distinct. Recompute after resize/scroll/canvas replacement; do not apply devicePixelRatio twice.
+
+`ProjectedPoint` supplies CSS `x/y` and signed forward depth in metres. `project()` returns false for an undefined/nonfinite projection, not merely for an offscreen or behind-camera point: speech-direction placement needs those results. Shared callers apply their existing visibility, near/far and viewport rules. `projectAnchor()` additionally returns false when the permitted image or its current representation has no such anchor. It preserves the current representation's apparent-height correction and painted-card transforms, which projecting a nominal world point alone cannot reproduce:
+
+| Role     | Existing geometric meaning                                                                     |
+| -------- | ---------------------------------------------------------------------------------------------- |
+| `label`  | `screenPosition` model anchor or body-top anchor; shared UI applies its existing label offset. |
+| `status` | Painted sprite's projected top edge including padding/tilt; otherwise the label anchor.        |
+| `head`   | Existing status-indicator head point for the current representation.                           |
+| `aim`    | Painted-card/body center from `aimScreenPosition`, with current model image correction.        |
+
+Reuse shared dimension/anchor arithmetic where plain source data suffices. Keep native transform/image-correction queries in the adapter, and identity eligibility, clipping, speech redirection and CSS padding in shared consumers. A synchronous release pick after a camera command must see that updated camera without waiting for another animation frame.
 
 ## 6. Assets, appearance replacement and resource lifetime
 
@@ -250,6 +278,8 @@ In particular:
 - Shadow filtering may share portable depth-comparison math. Depth formats, shadow samplers, bias, native macros, variant compilation/cache keys and filtering paths remain engine-specific.
 - Reveal/outline/preview/perception overlays share eligibility, parameters and source geometry. Native layers/stencil/depth/pass setup remain backend work. Reuse the current animated skin/morph pose in every pass.
 - Retain existing static scenery instancing and calculated bounds where useful; Three can use its own instancing/batching. Do not require equal draw-call counts to establish equivalent work.
+
+Light descriptors identify the selected source, world position or direction-to-source, linear color, range in metres and the shared art-intensity/falloff profile. The current lighting is artist-tuned, not a calibrated photometric contract. Each adapter documents its conversion; copying the same numeric intensity into differently defined engine units does not establish equal illumination. Match the reference scene's material response and shadow coverage before timing.
 
 ### Parity checklist before timing
 
@@ -407,58 +437,19 @@ The supplied Create with Mark material describes browser/Three.js work with AI-a
 
 Unity/Unreal/Godot are not required merely to make modern-looking 3D graphics. Native platforms may offer other production, rendering, tooling or distribution advantages, but a native client would also need UI/input/lifecycle/platform work. The existing [engine assessment](../../research/game-engines/open-legend-assessment.md) and conditional platform/offline owners retain those decisions. This design selects a browser comparison, not a new platform or a Unity/Unreal port.
 
-## 13. Step-by-step implementation and stop conditions
+## 13. Implementation entry point and gates
 
-[RCP01–RCP12](../maintainers/renderer-comparison.md) own checkboxes/dependencies. Each step leaves a usable PlayCanvas client or an explicitly limited developer slice. After the first shared view/input boundary and minimal PlayCanvas adapter work, use a thin W0 Three probe to challenge the real interface before extracting every cloth/effect detail. Full RCP04/RCP05 work still precedes complete RCP07 parity. Update current callers together rather than retaining compatibility aliases. Implementation should use the then-current branch instructions and selected existing checks; this design is not permission to author a new automated test suite.
+The [RCP tracker](../maintainers/renderer-comparison.md) is the single ordered implementation checklist. Each task names dependencies, concrete work and completion evidence; sections above define the contracts those tasks implement. Follow the then-current branch instructions and existing verification policy. This design does not authorize new automated tests.
 
-### A. Establish the baseline — RCP01
+| Stage                              | Tasks and completion boundary                                                                                                                                                                                                                                                                                                          |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Establish the actual baseline      | [RCP01](../maintainers/renderer-comparison.md#rcp01--establish-the-baseline-and-exact-workload): all public/study callers and a small exact workload have named owners and observable activity.                                                                                                                                        |
+| Extract and challenge the boundary | [RCP02–RCP05](../maintainers/renderer-comparison.md#rcp02--extract-permitted-views-and-reconciliation): keep PlayCanvas usable; start the [RCP06 W0 probe](../maintainers/renderer-comparison.md#rcp06--build-the-threejs-vertical-slice) after the narrow view/input/lifecycle boundary, before speculative extraction of every effect. |
+| Complete the declared presentation | [RCP07](../maintainers/renderer-comparison.md#rcp07--complete-current-presentation-parity): finish shared preparation and both native consumers; required visual and interaction coverage works in both.                                                                                                                               |
+| Compare safely and reproducibly    | [RCP08–RCP10](../maintainers/renderer-comparison.md#rcp08--deliver-the-selector-and-replacement-lifecycle): serialized switching, bounded replay and the existing profiler produce valid, attributable results.                                                                                                                        |
+| Qualify and choose                 | [RCP11–RCP12](../maintainers/renderer-comparison.md#rcp11--qualify-the-integrated-comparison): obtain the declared evidence and make an explicit default/support decision; keeping PlayCanvas is a valid outcome.                                                                                                                      |
 
-1. Read `world-renderer.ts`, factory/callers, `scene-study.ts`, current scene lifecycle and profile driver together. Inventory every public and study-only call and both current/remembered data consumers.
-2. Record the actual pinned version, graphics API, current settings and current successful source asset references. Identify the chosen existing W0/W1 scene records; freeze the manifest and coverage table.
-3. Record existing behavior/measurement evidence with its limited scope. Obtain a new baseline only for the exact comparison required; do not claim source inspection measured performance.
-
-**Stop condition:** every downstream caller and required presentation feature has a named owner; the first fixture can be loaded on the existing PlayCanvas client and its actual activity is observable.
-
-### B. Extract one shared implementation — RCP02–RCP05
-
-1. Define client-local records and shared reconciliation around the current scene's decisions. Move scope invalidation/signatures/visibility policy first; leave native object creation behind the initial adapter.
-2. Route camera and DOM projection consumers through the shared owner without changing their math or settings. Extract input gestures and shared picking decisions; retain native ray/hit details.
-   Once this minimal PlayCanvas path remains usable, RCP06's limited W0 probe can expose missing adapter meaning. It does not require premature extraction of all custom materials or cloth and is not a completed backend or a speed claim.
-3. Move motion/pose clocks, source-light selection, reusable geometry and asset lifecycle policy only as their state ownership becomes explicit. Keep source transfers in `asset-files.ts`; keep decoded resources local.
-4. Adapt PlayCanvas ticking, callbacks and cleanup to the single frame/lifecycle contract. Update `main.tsx` and scene-study callers together. Remove superseded mixed ownership after ordinary consumers pass.
-5. Check the real PlayCanvas W0–W4 behavior, current permission/scope resets and loading/removal failure. Compare before/after appearance and captured workload costs; investigate a material new regression before adding Three complexity.
-
-**Stop condition:** shared files import no PlayCanvas/Three runtime types; domain/server/protocol import no client renderer; the current client remains usable. A minimal no-GPU diagnostic sink can exercise shared transitions through existing/ad-hoc checks without becoming a shipping third renderer.
-
-### C. Add the second vertical slice, then parity — RCP06–RCP07
-
-1. Pin Three; lazy-load its factory. Render the exact W0 source data, current camera, one model/pose, one sprite/procedural fallback, terrain and a supported raised surface.
-2. Implement equivalent ray/projection/picking and native asset ownership. Verify source scale, body/depth and support before adding complex effects.
-3. Add shared animation/attachments/cloth consumers, source lights and shadow behavior. Implement current pixel/color composition and read-through/outline/preview/guide passes in explicit dependency order.
-4. Complete the feature coverage matrix, including all supported representation and overlay paths actually used in the current PlayCanvas client. Mark unsupported wider proposals separately.
-5. Compare normal-speed camera/character motion, tiny subjects, day/night, transparency, action release and loaded/fallback replacement. Record meaningful differences; fix parity rather than adjust the baseline to hide them.
-
-**Stop condition:** the currently supported declared scope is functionally and visually comparable. A partially rendered scene remains a useful prototype, not a valid whole-scene speed result.
-
-### D. Integrate switching and replay — RCP08–RCP09
-
-1. Add explicit query selection and existing developer controls. Verify default loading does not initialize the other engine.
-2. Implement serialized stop/disposal/new-canvas initialization with latest-view installation and stale owner rejection.
-3. Exercise pointer-down switch, held action cancellation, scope change/unmount during loading, failed decode, disposal delay and explicit reopening. Preserve non-canvas inspection and current input ownership.
-4. Route existing scene-study through the same controller. Add the bounded manifest/capture/playback cursor and meaningful-work counters.
-5. Confirm replay never dispatches native commands or paid work and cannot use hidden server state. Confirm overflow/mismatch is explicit and invalidates a claimed full run.
-
-**Stop condition:** both interactive comparison and separate clean replay work; replacement is not presented as a timing-equivalent cold launch.
-
-### E. Measure and choose — RCP10–RCP12
-
-1. Extract shared profiler semantics, implement backend collectors and retain off/stopped/destroyed behavior and existing bounds.
-2. Verify actual API/settings/work, timer availability, missing-data meanings and report scope. Exercise a backend switch ending a capture and late GPU/asset results.
-3. Run the controlled matched campaign, unprofiled smoothness observations, cold/startup campaign and normal live journey, with distinct evidence and no invented whole-game claims.
-4. Assess engine-specific best-practical improvements only after the matched baseline. Separate optional GPU experiments.
-5. Record the evidence-based default/ongoing-support decision in existing maintained owners and RCP12. Retire an unsuccessful experiment cleanly if selected; do not preserve it as legacy compatibility. Keeping PlayCanvas is a valid result.
-
-**Stop condition:** the report can explain exactly what ran, what was comparable, what cost what, and which product/engineering benefit justifies the selected next action. Missing human/device evidence remains open in its actual owner.
+A small no-GPU diagnostic sink can exercise shared transitions through existing or disposable checks without becoming a shipping third renderer. It cannot establish native graphics or performance acceptance. Remove superseded mixed ownership as each real consumer moves; retain no compatibility-only implementation.
 
 ## 14. Verification matrix and evidence limits
 

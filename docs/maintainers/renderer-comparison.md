@@ -33,7 +33,7 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 
 **Outcome:** a reproducible statement of what the current PlayCanvas path actually does and the smallest useful comparison input. **Dependencies:** RCP-D01 and executable-work authorization.
 
-- [ ] Inspect the actual current revision and callers, including `world-renderer.ts`, `scene.ts`, `scene-study.ts`, `scene-performance.ts`, current art settings and the pinned dependency. Record changes since the design baseline rather than assuming old source details still hold.
+- [ ] Inspect the actual current revision and callers, including `world-renderer.ts`, `scene.ts`, `scene-study.ts`, `scene-performance.ts`, current art settings and the pinned dependency. Inventory every public and study-only caller, including current/remembered presentation consumers; record source changes since the baseline before extraction.
 - [ ] Select W0 and the available W1–W4 scenarios from the feature specification, plus W5 lifecycle operations. Record exact permitted views, asset references, art/quality choices, camera/projection and required supported cues. Keep absent future gameplay explicit.
 - [ ] Record baseline asset/pose/light/shadow/transparency/UI work and supported conservative versus exact picking behavior. Separate current delivery from V3D/SW acceptance still open.
 - [ ] Distinguish the current source baseline from selected-but-undelivered SPX/stealth controls and perception contracts. Consume any such scope actually integrated by implementation time; keep the remaining [SPX](stealth-player-experience.md) implementation and player acceptance with its owner rather than quietly making it a renderer prerequisite.
@@ -60,9 +60,9 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 **Outcome:** camera, pointer/keyboard gestures and semantic selection behave identically across backends. **Dependencies:** RCP02.
 
 - [ ] Reuse `world-camera.ts` and the current preference owner. Move gesture state, modifiers, drag/click distinction, focus/visibility cancellation and callback dispatch out of PlayCanvas scene ownership.
-- [ ] Define narrow ray/projection/visual-hit bindings; share surface geometry and selection eligibility/order. Keep backend-specific alpha/depth/model geometry queries consistent with what that backend actually draws.
+- [ ] Define narrow ray/projection/visual-hit and representation-anchor bindings under technical design §5; share surface geometry and selection eligibility/order. Synchronize dirty camera/viewport matrices before immediate queries, without advancing animation or forcing a draw.
 - [ ] Wire existing attack, targeting and construction callbacks through one input owner. Preserve surface IDs, body references and native validation; no hit from a renderer becomes authority.
-- [ ] Reconnect DOM captions, status, blur and non-canvas inspection through plain projection results. Keep per-frame motion outside React state updates.
+- [ ] Reconnect DOM captions, status, blur and non-canvas inspection through plain projection results after the current native pose/transforms are applied. Preserve representation-specific anchor correction and caller-specific clipping; keep per-frame motion outside React state updates.
 - [ ] Exercise select, orbit, pan, zoom, targeting, attack cancellation, placement/rotation/cancellation, overlapping targets, changed support, text focus and loss of focus. Confirm cancellation never commits a held action.
 
 **Done evidence:** unchanged ordinary interactions through the current app, shared ownership with no duplicate listeners/callbacks, and explicit limitations for unqualified SW11 device/picking cases.
@@ -86,12 +86,12 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 
 - [ ] Move native entities, camera application, decoder integration, meshes, materials, shadow/reveal layers, render targets and disposal behind the PlayCanvas backend.
 - [ ] Preserve current art treatment, pixel-grid/coverage reconstruction, shadow filtering, sprite virtual depth, read-through, outlines and shader preparation. Share portable kernels only when their language/contracts fit; retain PC bindings and cache details locally.
-- [ ] Retain the PlayCanvas native tick as its sole scheduler and call shared preparation from the existing update callback before native drawing. Prevent automatic and manual animation from advancing the same managed actor twice. Do not add a controller RAF or another render call.
+- [ ] Retain the PlayCanvas native tick as sole scheduler. Implement prepare → native pose/cloth/matrices → shared afterPose → draw admission → afterFrame, including ticks without drawing. Use native postrender for actual submission counts. Prevent automatic/manual double animation; do not add a controller RAF or another render call.
 - [ ] Expose actual API, declared feature coverage, device-ready versus scoped scene-ready, stop-now and disposal-settled states. Initial required artwork keeps the opaque loading/readiness gate; only already-supported runtime families use fallback. Track backend resources using existing ownership.
 - [ ] Preserve suspension separately from world pause and disposal: cancel held input, retain resources, stop recurring draws, allow the existing one-shot fresh-view frame and apply privacy removals while suspended.
-- [ ] Run the RCP01 ordinary journey and lifecycle checks against the extracted backend. Compare the same retained visual profile and investigate a concrete regression before extending parity; an early limited Three probe does not close this task.
+- [ ] Run the RCP01 ordinary journey and lifecycle checks against the extracted backend. Compare before/after extraction appearance and workload costs under the same retained profile; investigate a material regression before extending parity. An early limited Three probe does not close this task.
 
-**Done evidence:** the default PlayCanvas app works through the adapter, with meaningful visual/interaction evidence and applicable local formatting/type/build checks. Existing art approval, wider devices and uninterrupted frame-tail goals remain their owners' acceptance.
+**Done evidence:** the default PlayCanvas app works through the adapter, with meaningful visual/interaction evidence and applicable local formatting/type/build checks. Shared presentation modules import neither renderer SDK; domain/server/protocol import no client renderer modules. Existing art approval, wider devices and uninterrupted frame-tail goals remain their owners' acceptance.
 
 ## RCP06 — Build the Three.js vertical slice
 
