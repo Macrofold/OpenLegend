@@ -1,3 +1,4 @@
+import { setImmediate } from 'node:timers/promises';
 import {
   referencedReceivedValues,
   pruneReceivedValueBlock,
@@ -9,7 +10,6 @@ import {
   type WorldState,
 } from '@open-legend/domain';
 import { restoreEvidenceLayout, snapshotEvidenceOwner } from './evidence-segments.js';
-import { RECORD_NODES } from './world-record-schema.js';
 import type { RecordChanges } from './world-records.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
 import type { PreparedMemoryRetention } from './temporal-storage.js';
@@ -160,29 +160,26 @@ export function captureReceivedReclamation(
   return { worldId: world.id, candidates, resident };
 }
 
-const columns = Object.keys(RECORD_NODES.get('mind_temporal_segments')!.columns!);
-const sourceRefsColumn = columns.indexOf('source_refs');
-
 export function invalidateReceivedReclamation(
   ticket: Pick<PreparedReceivedReclamation, 'capture' | 'changed'>,
   worldId: string,
   changes: RecordChanges,
   restored: boolean,
+  affected: ReadonlySet<string>,
 ): void {
   if (worldId !== ticket.capture.worldId || restored) {
     for (const { id } of ticket.capture.candidates) ticket.changed.add(id);
     return;
   }
   const ids = new Set(ticket.capture.candidates.map(({ id }) => id));
-  // A deleted page may be cold and its source index is intentionally not fetched
-  // on the command lane. Retry this bounded batch instead of querying its old body.
+  // Complete metadata resolves deleted page/chunk ownership before mutation.
+  // Ordinary deletion retries only its own sources; destructive root replacement
+  // retains the broad barrier. Current references use the same exact feed.
   if (
     [...changes.deletes].some(
       ([table, values]) =>
         values.length &&
         [
-          'mind_temporal_segments',
-          'mind_temporal_chunks',
           'mind_temporal_actors',
           'mind_temporal_state',
           'experience_state',
@@ -192,17 +189,7 @@ export function invalidateReceivedReclamation(
     )
   )
     for (const id of ids) ticket.changed.add(id);
-  for (const row of changes.writes.get('mind_temporal_segments') ?? [])
-    for (const id of row.extra[sourceRefsColumn] as string[])
-      if (ids.has(id)) ticket.changed.add(id);
-  for (const row of changes.writes.get('mind_perception_values') ?? []) {
-    const id = (JSON.parse(row.id) as string[]).at(-1)!;
-    if (ids.has(id)) ticket.changed.add(id);
-  }
-  for (const key of changes.deletes.get('mind_perception_values') ?? []) {
-    const id = (JSON.parse(key) as string[]).at(-1)!;
-    if (ids.has(id)) ticket.changed.add(id);
-  }
+  for (const id of affected) if (ids.has(id)) ticket.changed.add(id);
 }
 
 export interface ReceivedReclamationOwnership {
@@ -211,18 +198,23 @@ export interface ReceivedReclamationOwnership {
 }
 
 /** Ownership is already complete before I/O. Whole-block absence needs no reader;
- * a genuine mixed cold block captures one bounded row, then releases its snapshot
- * before codec reconstruction. Later accepted changes invalidate the existing ticket. */
+ * mixed cold blocks share one bounded snapshot, released before reconstruction.
+ * Source rows newer/larger than the captured admission cannot enlarge its read.
+ * Later accepted changes invalidate the existing ticket.
+ * docs/projects/attention-and-scenes-runtime-design.md#122-complete-compact-retention-and-ownership-metadata
+ */
 export async function prepareReceivedReclamation(
   db: SqlDatabase,
   capture: ReceivedReclamationCapture,
   ownership: ReceivedReclamationOwnership,
+  changed: ReadonlySet<string>,
 ): Promise<Omit<PreparedReceivedReclamation, 'changed' | 'release'>> {
   const blocks = new Map<string, ReceivedValueBlock>(),
     sizes = new Map<string, number>(),
     unowned = new Set<string>(),
     examined = new Set<string>(),
     cold = new Map<string, Set<number>>();
+  const selected: Array<{ source_id: string; bytes: number }> = [];
   let bytes = 0,
     ordinals = 0;
   for (const { id, candidate } of capture.candidates) {
@@ -242,21 +234,53 @@ export async function prepareReceivedReclamation(
     if (bytes + owned.bytes > maximumBytes || ordinals + retained.size > maximumOrdinals) continue;
     bytes += owned.bytes;
     ordinals += retained.size;
+    selected.push({ source_id: id, bytes: owned.bytes });
+  }
+  if (selected.length) {
     const read = () =>
       db
         .prepare(
-          'SELECT payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=?',
+          `SELECT b.source_id,p.id AS present,h.world_id AS applied_world,h.applied_revision,
+            CASE WHEN p.world_id=h.world_id AND p.revision<=? AND p.encoded_bytes<=b.bytes THEN p.payload END AS payload,
+            CASE WHEN p.world_id=h.world_id AND p.revision<=? AND p.encoded_bytes<=b.bytes THEN p.segments END AS segments
+          FROM jsonb_to_recordset(?::jsonb) b(source_id TEXT,bytes BIGINT)
+          CROSS JOIN world_head h
+          LEFT JOIN mind_perception_values_read p ON p.world_id=? AND p.source_id=b.source_id
+          WHERE h.id=1`,
         )
-        .get(capture.worldId, id);
-    const row = db.readTransaction ? await db.readTransaction(read) : await db.transaction(read);
-    if (!row) throw new Error('A retained received-value source is unavailable.');
-    const block = snapshotEvidenceOwner(
-      restoreEvidenceLayout(JSON.parse(String(row['payload'])), 'values', row['segments']),
-      'values',
-    ) as unknown as ReceivedValueBlock;
-    if (block.id !== id) throw new Error('Received cleanup source changed.');
-    blocks.set(id, block);
-    examined.add(id);
+        .all(
+          ownership.appliedRevision,
+          ownership.appliedRevision,
+          JSON.stringify(selected),
+          capture.worldId,
+        );
+    const rows = db.readTransaction ? await db.readTransaction(read) : await db.transaction(read);
+    const byId = new Map(rows.map((row) => [String(row['source_id']), row]));
+    for (let index = 0; index < selected.length; index++) {
+      const id = selected[index]!.source_id;
+      if (changed.has(id)) continue;
+      const row = byId.get(id);
+      if (!row) throw new Error('A retained received-value source is unavailable.');
+      if (row['applied_world'] !== capture.worldId) continue;
+      if (row['present'] === null) {
+        // SQL COMMIT can precede its application notification. Absence at a newer
+        // cut is incomplete; absence at the captured cut is an integrity failure.
+        if (Number(row['applied_revision']) > ownership.appliedRevision) continue;
+        throw new Error('A retained received-value source is unavailable.');
+      }
+      // A source changed after admission. Its commit may still be publishing;
+      // leave this candidate incomplete instead of reading outside the budget.
+      if (row['payload'] === null) continue;
+      const block = snapshotEvidenceOwner(
+        restoreEvidenceLayout(JSON.parse(String(row['payload'])), 'values', row['segments']),
+        'values',
+      ) as unknown as ReceivedValueBlock;
+      if (block.id !== id) throw new Error('Received cleanup source changed.');
+      blocks.set(id, block);
+      examined.add(id);
+      // Preserve cooperation between bounded decodes without holding the reader.
+      if (index + 1 < selected.length) await setImmediate();
+    }
   }
   return {
     capture,

@@ -463,9 +463,9 @@ export class RetentionMetadata {
     revision: number,
     changes: RecordChanges,
     versions?: SourceVersionPlan,
-  ): void {
+  ): ReadonlySet<string> {
     this.assertWorld(worldId);
-    if (revision <= this.logicalRevision) return;
+    if (revision <= this.logicalRevision) return new Set();
     const affected = new Set<string>();
     const oldSegments = new Set<RetentionRow>();
     for (const id of [
@@ -511,6 +511,11 @@ export class RetentionMetadata {
       affected.add((JSON.parse(row.id) as string[]).at(-1)!);
     for (const id of changes.deletes.get('mind_perception_values') ?? [])
       affected.add((JSON.parse(id) as string[]).at(-1)!);
+    // A page can be replaced without changing the parent's encoded byte charge.
+    for (const row of changes.writes.get('mind_perception_segments') ?? [])
+      affected.add((JSON.parse(row.parent) as string[]).at(-1)!);
+    for (const id of changes.deletes.get('mind_perception_segments') ?? [])
+      affected.add((JSON.parse(id) as string[])[3]!);
     const refs = new Map<string, Set<number>>();
     for (const [table, rows] of changes.writes)
       if (indexed.has(table))
@@ -543,24 +548,31 @@ export class RetentionMetadata {
         this.setVersion(compact);
       }
     }
+    return affected;
   }
   applied(
     worldId: string,
     revision: number,
     changes: RecordChanges,
     versions?: SourceVersionPlan,
-  ): void {
+  ): ReadonlySet<string> {
     this.assertWorld(worldId);
     this.changed(changes, true);
     this.appliedRevision = Math.max(this.appliedRevision, revision);
     for (const at of this.pendingReferences.keys())
       if (at <= revision) this.pendingReferences.delete(at);
     for (const at of this.pendingBlocks.keys()) if (at <= revision) this.pendingBlocks.delete(at);
-    // Recovery sees application before a live accepted world exists.
-    if (revision > this.logicalRevision) this.accepted(worldId, revision, changes, versions);
+    // Synchronous application/recovery can precede logical publication. Return
+    // its first acceptance's affected sources so an active cleanup is fenced in
+    // either order, without retaining a result for every historical revision.
+    const affected =
+      revision > this.logicalRevision
+        ? this.accepted(worldId, revision, changes, versions)
+        : new Set<string>();
     for (const at of this.pendingReferences.keys())
       if (at <= revision) this.pendingReferences.delete(at);
     for (const at of this.pendingBlocks.keys()) if (at <= revision) this.pendingBlocks.delete(at);
+    return affected;
   }
   physicalOwned(worldId: string, block: string): ReadonlySet<number> {
     this.assertWorld(worldId);

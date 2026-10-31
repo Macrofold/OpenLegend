@@ -594,7 +594,12 @@ export class SqlGameRepository implements GameRepository {
           ]),
         ),
       };
-      const prepared = await prepareReceivedReclamation(this.rawDb, capture, ownership);
+      const prepared = await prepareReceivedReclamation(
+        this.rawDb,
+        capture,
+        ownership,
+        ticket.changed,
+      );
       return { ...prepared, changed: ticket.changed, release };
     } catch (error) {
       release();
@@ -612,14 +617,14 @@ export class SqlGameRepository implements GameRepository {
       this.retentionMetadata.initializeEmpty(worldId);
     }
     this.receivedValueAllocations.accepted(worldId, revision, changes);
-    this.retentionMetadata.accepted(
+    const affected = this.retentionMetadata.accepted(
       worldId,
       revision,
       changes,
       this.acceptedState ? this.memories.sourceVersionPlan(this.acceptedState.world) : undefined,
     );
     if (this.receivedReclamation)
-      invalidateReceivedReclamation(this.receivedReclamation, worldId, changes, restored);
+      invalidateReceivedReclamation(this.receivedReclamation, worldId, changes, restored, affected);
   }
   private readonly settlementListeners = new Set<() => void>();
   onSettlement(listener: () => void): () => void {
@@ -1479,7 +1484,7 @@ export class SqlGameRepository implements GameRepository {
   ): void {
     const worldId = 'worldId' in write ? write.worldId : write.state.world.id;
     this.receivedValueAllocations.applied(worldId, write.revision, write.changes);
-    this.retentionMetadata.applied(
+    const affected = this.retentionMetadata.applied(
       worldId,
       write.revision,
       write.changes,
@@ -1487,6 +1492,14 @@ export class SqlGameRepository implements GameRepository {
         ? write.sources?.versions
         : (write.preparedSources?.versions ?? this.memories.sourceVersionPlan(write.state.world)),
     );
+    if (this.receivedReclamation)
+      invalidateReceivedReclamation(
+        this.receivedReclamation,
+        worldId,
+        write.changes,
+        !!write.restore,
+        affected,
+      );
     this.readyHistoryWorlds.add(worldId);
     this.records.needsHotPrune = false;
     const memoryRevision = this.memories.publicationRevision;
