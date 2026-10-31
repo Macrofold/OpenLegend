@@ -1,3 +1,4 @@
+import { evidenceStorageStats } from './performance/evidence-storage.js';
 import { toolHttp, toolStream } from './network.js';
 import { SSEFramer } from '@open-legend/network';
 import { learnRecipe } from '../packages/domain/src/knowledge.js';
@@ -2072,7 +2073,6 @@ try {
     lossMeasuring = true;
     if (collectNativeCounters) observeDomainCounters(nativeCounters);
     const before = performanceSnapshot();
-    const applicationBefore = store.applicationStatistics;
     const growthSamples: ReturnType<typeof readGrowthSample>[] = [];
     let growthSamplesOmitted = 0,
       previousGrowthCpu = startingCpu,
@@ -2306,7 +2306,6 @@ try {
     const usedCpu = process.cpuUsage(startingCpu);
     const simulatedSeconds = game.service.world.simTime - simStart;
     const after = performanceSnapshot();
-    const applicationAfter = store.applicationStatistics;
     // Pause, GC and final inspection are cleanup, not gameplay publication stalls.
     measuring = false;
     lossMeasuring = false;
@@ -2364,6 +2363,7 @@ try {
     if (!finalResponse.ok) throw new Error('Final scene inspection failed.');
     const finalView = (await finalResponse.json()) as GameView;
     const report = {
+      evidenceStorage: await evidenceStorageStats(store.db, game.service.world.id),
       node: process.version,
       sourceProvenance,
       host: { logicalCpus: availableParallelism(), startingLoad, endingLoad: loadavg() },
@@ -2628,21 +2628,7 @@ try {
           )
         : null,
       instrumentation,
-      sqlScope:
-        'Main-thread adapter statements only; accepted-batch worker SQL is reported separately.',
-      journalApplication: {
-        status: !appProfiling
-          ? 'disabled'
-          : applicationBefore === undefined && applicationAfter === undefined
-            ? 'unavailable'
-            : applicationBefore === undefined || applicationAfter === undefined
-              ? 'missing'
-              : 'collected',
-        before: applicationBefore ?? null,
-        after: applicationAfter ?? null,
-        scope:
-          'Cumulative completed worker-batch counters at measurement boundaries; batches can cross those boundaries. Unobserved batches leave SQL/time coverage incomplete. Whole-process CPU already includes worker threads.',
-      },
+      sqlScope: 'Direct canonical transaction adapter statements.',
       sql: appProfiling ? [...sql].sort((a, b) => b[1].ms - a[1].ms).slice(0, 30) : null,
       slowSql: appProfiling ? slowSql : null,
       commits: appProfiling ? commits : null,

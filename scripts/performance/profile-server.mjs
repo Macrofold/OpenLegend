@@ -1,3 +1,4 @@
+import { evidenceStorageStats } from './evidence-storage.ts';
 import { toolHttp, toolStream } from '../network.ts';
 import { createNetworkOwner } from '@open-legend/network';
 import { profilingOptions } from './profiling-options.ts';
@@ -205,10 +206,6 @@ async function startResidents(service, fixture, phase) {
     speechAccepted: 0,
     speechRejected: 0,
     pressureSamples: 0,
-    optionalRecordingPausedSamples: 0,
-    peakRetirementBytes: 0,
-    peakJournalBytes: 0,
-    peakCombinedDebtBytes: 0,
   };
   const perActor = new Map(
     actors.map((actor) => [actor.id, { commands: 0, work: 0, movement: 0, rejected: 0 }]),
@@ -249,16 +246,7 @@ async function startResidents(service, fixture, phase) {
       ]),
   );
   const sample = () => {
-    const retirement = service.world.receivedValues?.retirement,
-      journal = service.store.receivedReclamationDebt?.journalBytes ?? 0;
     stats.pressureSamples++;
-    if (retirement?.optionalAdmissionBlocked) stats.optionalRecordingPausedSamples++;
-    stats.peakRetirementBytes = Math.max(stats.peakRetirementBytes, retirement?.bytes ?? 0);
-    stats.peakJournalBytes = Math.max(stats.peakJournalBytes, journal);
-    stats.peakCombinedDebtBytes = Math.max(
-      stats.peakCombinedDebtBytes,
-      journal + (retirement?.bytes ?? 0),
-    );
     for (const own of activity.values()) {
       const entity = entityGet(service.world.entities, own.id);
       if (!entity?.actor) continue;
@@ -1459,6 +1447,10 @@ async function main() {
       }
     }
     await saveCpuProfile();
+    report.evidenceStorage = await evidenceStorageStats(
+      game.service.store.db,
+      game.service.world.id,
+    );
     report.finalCounts = {
       entities: entityKeys(game.service.world.entities).length,
       events: game.service.world.events.length,

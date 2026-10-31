@@ -1,3 +1,4 @@
+import { currentFacetValues } from './perception-current.js';
 import { currentFacetGrant } from './perception-current.js';
 import { effectiveBodyProfile } from './spatial-state.js';
 import type { NativeMechanicsDiscard } from './diagnostic-counters.js';
@@ -6412,19 +6413,17 @@ function retainsReceivedValueHistory(
   if (before.sources === after.sources) return true;
   if (
     !retainsHistory(Object.keys(before.sources), Object.keys(after.sources)) ||
-    Object.entries(after.sources).some(([id, block]) => before.sources[id] !== block) ||
-    after.activeSources?.some((id) => !after.sources[id]) ||
-    (after.activeSource !== undefined && !after.sources[after.activeSource])
+    Object.entries(after.sources).some(([id, block]) => before.sources[id] !== block)
   )
     return false;
   const scope =
     temporal === world.experience?.temporal
       ? world
       : { ...world, experience: { ...world.experience!, temporal } };
-  for (const [id, ordinals] of referencedReceivedValues(scope)) {
+  for (const id of referencedReceivedValues(scope)) {
     const block = after.sources[id];
     if (!block) return false;
-    for (const ordinal of ordinals) if (!block.values[ordinal]) return false;
+    if (!block.value) return false;
   }
   return true;
 }
@@ -8843,7 +8842,7 @@ export function observeActor(
   // transforms come only from already acquired current evidence; downstream model
   // and player projections consume facets rather than these authority records.
   const owner = world.perceptionEvidence?.[actorId];
-  const visibleEntities = (owner ? Object.values(owner.current) : []).flatMap((lease) => {
+  const visibleEntities = (owner ? currentFacetValues(owner) : []).flatMap((lease) => {
     if (!owner || lease.value.kind !== 'body') return [];
     const subjectId = currentFacetGrant(owner, lease).subjectId;
     if (

@@ -1,8 +1,8 @@
-import { receiptLookupBucket, restoreEvidenceLayout } from './evidence-segments.js';
+import { receiptLookupBucket } from './evidence-segments.js';
 import type {
   WorldEvent,
   Appraisal,
-  ReceivedValueBlock,
+  ReceivedValue,
   TemporalReceiptLocator,
 } from '@open-legend/domain';
 import { temporalAccountAliasClosure } from '@open-legend/domain';
@@ -200,25 +200,13 @@ export async function prepareHistoryEdit(
         for (const [actorId, rows] of owners) {
           const actor = temporal.actors[actorId];
           if (!actor) throw new Error('Cold personal receipt owner is unavailable.');
-          const placement = historyPositions.get(actor.chunks),
-            positions = new Map(
-              placement?.positions ?? actor.chunks.map((chunk, index) => [chunk.id, index]),
-            );
           const chunks = new Map(actor.chunks.map((chunk) => [chunk.id, chunk]));
           for (const row of rows) {
             const chunk = readTemporalChunkRecord(row);
             chunks.set(chunk.id, chunk);
-            positions.set(chunk.id, Number(row['position']));
             for (const id of chunk.sourceRefs) sources.add(id);
           }
-          const merged = [...chunks.values()].sort(
-            (a, b) => positions.get(a.id)! - positions.get(b.id)!,
-          );
-          historyPositions.set(merged, {
-            positions,
-            next: placement?.next ?? Math.max(...rows.map((row) => Number(row['position']) + 1)),
-            complete: placement?.complete,
-          });
+          const merged = [...chunks.values()].sort((a, b) => a.order - b.order);
           temporal.actors[actorId] = { ...actor, chunks: merged };
         }
         const received = { ...world.receivedValues, sources: { ...world.receivedValues?.sources } };
@@ -226,7 +214,7 @@ export async function prepareHistoryEdit(
         if (missing.length) {
           const size = await db
             .prepare(
-              'SELECT SUM(encoded_bytes) AS bytes FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
+              'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
             )
             .get(worldId, missing);
           sourceBytes += Number(size?.['bytes'] ?? 0);
@@ -234,14 +222,10 @@ export async function prepareHistoryEdit(
             throw new Error('Complete personal source correction exceeds bounded preparation.');
           for (const row of await db
             .prepare(
-              'SELECT payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
+              'SELECT payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
             )
             .all(worldId, missing)) {
-            const source = restoreEvidenceLayout(
-              JSON.parse(String(row['payload'])),
-              'values',
-              row['segments'],
-            ) as unknown as ReceivedValueBlock;
+            const source = JSON.parse(String(row['payload'])) as unknown as ReceivedValue;
             received.sources[source.id] = source;
           }
         }

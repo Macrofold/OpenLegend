@@ -1,3 +1,4 @@
+import { receivedValueAt } from '@open-legend/domain';
 import {
   temporalChunkReceipts,
   receivedEventEvidence,
@@ -101,8 +102,7 @@ export function receivedEventAccounts(
           continue;
         const receipt = temporalChunkReceipts(chunk)[offset]!;
         const values = receipt.facets.flatMap((reference) => {
-          const fragment =
-            world.receivedValues?.sources[reference.blockId]?.values[reference.valueOrdinal];
+          const fragment = receivedValueAt(world.receivedValues?.sources ?? {}, reference);
           if (!fragment || (fragment.kind !== 'event' && fragment.kind !== 'sound')) return [];
           const value = materializeTemporalValue(
             reference,

@@ -38,23 +38,6 @@ export function prepareHistory(
   });
 }
 
-/** Only the durable journal's validated append data may supply this recovery path.
- * Canonical hot membership need not retain every event in the accepted transition.
- * No command, random choice, provider work or old story nomination is replayed. */
-export function prepareJournalHistory(
-  previous: WorldState,
-  world: WorldState,
-  delta: { append: boolean; changed: WorldEvent[]; removed: string[] },
-) {
-  if (
-    !delta.append ||
-    delta.removed.length ||
-    !Object.isFrozen(previous) ||
-    !Object.isFrozen(world)
-  )
-    throw new Error('Recovered history requires an exact immutable append.');
-  return historyInputs(previous, world, true, delta.changed, [], undefined);
-}
 function historyInputs(
   previous: WorldState | undefined,
   world: WorldState,
@@ -101,20 +84,4 @@ function historyInputs(
       return awarenessIndexes.get(actorId)?.get(eventId);
     },
   };
-}
-
-/** Only an admitted append supplies this small cross-thread input. Forgotten
- * audience entries stay omitted and every included account is the exact evidence. */
-export function prepareHistoryAppend(inputs: ReturnType<typeof prepareHistory>) {
-  if (!inputs.fastAppend || inputs.removed.length)
-    throw new Error('Journal history requires an exact append.');
-  return inputs.changed.map((event) => ({
-    event,
-    accounts: [...new Set(event.audience)].flatMap((actor): [string, ReceivedEventAccount][] => {
-      if (inputs.forgotten(actor).has(event.id)) return [];
-      const account = inputs.perspective(actor, event.id);
-      // Current broad reception need not create retained chronology.
-      return account ? [[actor, account]] : [];
-    }),
-  }));
 }

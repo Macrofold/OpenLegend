@@ -7,7 +7,10 @@ import {
 import { createHash } from 'node:crypto';
 import { personalAccountRevision } from './personal-accounts.js';
 import { accountRetentionMetadata } from './retention-record-metadata.js';
-import { receivedRecordReferences } from './received-record-references.js';
+import {
+  receivedRecordReferences,
+  receivedCurrentOwnerTables,
+} from './received-record-references.js';
 import { encodeEvidenceOwner, decodeEvidenceOwner } from './evidence-segments.js';
 import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
@@ -22,13 +25,7 @@ export interface RecordNode {
   uniqueIndexes?: string[][];
   constraints?: string[];
   /** Normalize a shared native value within this same owned record subtree. */
-  encode?: (
-    value: unknown,
-    previous?: unknown,
-    segmentBytes?: number,
-    world?: WorldState,
-    bindLayout?: boolean,
-  ) => unknown;
+  encode?: (value: unknown, previous?: unknown, world?: WorldState) => unknown;
   decode?: (value: unknown) => unknown;
 }
 export type JsonRecord = Record<string, unknown>;
@@ -36,6 +33,8 @@ export interface RecordCollection {
   mode: 'map' | 'list' | 'one' | 'indexed-map' | 'entity-map';
   node: RecordNode;
   key?: string;
+  /** Native semantic ordinal; no process-local array placement binding. */
+  orderKey?: string;
   /** Key lookup only; insertion order is not part of the owned value's meaning. */
   unordered?: boolean;
   /** Ordered rolling maps retain surviving ordinals; genuine reorders renumber. */
@@ -211,31 +210,16 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
       knowledgeRevisions: map('mind_knowledge_revisions'),
       observerIdentities: actorMaps('mind_recognition'),
       receivedValues: one('mind_perception_value_state', {
-        retirement: one('mind_perception_retirement', {
-          pending: {
-            ...map('mind_perception_retirement_candidates'),
-            unordered: true,
-            complete: true,
-          },
-        }),
-        sources: {
-          ...map(
-            'mind_perception_values',
-            { values: list('mind_perception_segments', 'start') },
-            {
-              encode: (value, previous, bytes, world, bindLayout) =>
-                encodeEvidenceOwner(value, 'values', previous, bytes!, world, bindLayout),
-              decode: (value) => decodeEvidenceOwner(value, 'values'),
-            },
-          ),
-          unordered: true,
-        },
+        sources: { ...map('mind_perception_values'), unordered: true },
       }),
       perceptionEvidence: map('mind_perception_owners', {
-        grants: { ...map('mind_perception_grants'), unordered: true, complete: true },
-        originals: { ...map('mind_perception_originals'), unordered: true, complete: true },
         // Rolling maps preserve iteration order without renumbering surviving rows.
-        current: { ...map('mind_perception_current'), stablePositions: true, complete: true },
+        current: {
+          mode: 'indexed-map',
+          node: leaf('mind_perception_current'),
+          unordered: true,
+          complete: true,
+        },
         motionSamples: {
           ...map('mind_perception_motion_samples'),
           unordered: true,
@@ -248,8 +232,8 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           boundaries: { ...list('mind_perception_geometry_boundaries', 'id'), complete: true },
         }),
         attention: one('mind_perception_attention', {
-          candidates: {
-            ...map('mind_perception_attention_candidates'),
+          annotations: {
+            ...map('mind_perception_attention_annotations'),
             stablePositions: true,
             complete: true,
           },
@@ -301,12 +285,20 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           actors: map('mind_temporal_actors', {
             chunks: {
               ...list('mind_temporal_chunks', 'id'),
+              orderKey: 'order',
               node: {
                 table: 'mind_temporal_chunks',
-                children: { entries: list('mind_temporal_segments', 'start') },
-                encode: (value, previous, bytes, world, bindLayout) =>
-                  encodeEvidenceOwner(value, 'entries', previous, bytes!, world, bindLayout),
-                decode: (value) => decodeEvidenceOwner(value, 'entries'),
+                children: {
+                  // Every decoded chunk owns its complete batch collection, even when
+                  // the actor's other chunks are cold. New suffix IDs are absent.
+                  entries: {
+                    ...list('mind_temporal_segments', 'start'),
+                    orderKey: 'start',
+                    complete: true,
+                  },
+                },
+                encode: (value, previous, world) => encodeEvidenceOwner(value, previous, world),
+                decode: (value) => decodeEvidenceOwner(value),
               },
             },
             captures: { ...map('mind_temporal_captures'), unordered: true, complete: true },
@@ -598,6 +590,7 @@ const receiptIndex = (value: JsonRecord) =>
 columns(
   'mind_temporal_chunks',
   {
+    retired_revision: { sql: 'BIGINT', value: () => null },
     actor_id: { sql: 'TEXT NOT NULL', value: (value) => value['actorId'] },
     source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' },
     physical_life: { ...numberColumn('physicalLife'), sql: 'BIGINT NOT NULL' },
@@ -647,7 +640,7 @@ columns(
       sql: 'TEXT[] NOT NULL',
       value: (value) => segmentReceiptIndex(value).sourceRefs,
     },
-    value_refs: { sql: 'JSONB NOT NULL', value: (value) => segmentReceiptIndex(value).references },
+    value_refs: { sql: 'TEXT[] NOT NULL', value: (value) => segmentReceiptIndex(value).references },
     source_ids: { sql: 'TEXT[] NOT NULL', value: (value) => segmentReceiptIndex(value).sourceIds },
     individual_ids: {
       sql: 'TEXT[] NOT NULL',
@@ -691,29 +684,21 @@ columns(
 );
 columns(
   'mind_perception_values',
-  { source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' }, at: numberColumn('at') },
+  {
+    source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' },
+    at: numberColumn('at'),
+    gc_candidate_seq: { sql: 'BIGINT', value: () => null },
+  },
   [['source_id']],
 );
-columns(
-  'mind_perception_segments',
-  {
-    first_ordinal: { sql: 'BIGINT NOT NULL', value: (value) => value['start'] },
-    last_ordinal: { sql: 'BIGINT NOT NULL', value: (value) => Number(value['end']) - 1 },
-  },
-  [['parent_id', 'first_ordinal']],
-);
-for (const table of [
-  'mind_perception_owners',
-  'mind_perception_originals',
-  'mind_perception_current',
-  'mind_perception_motion_samples',
-])
+
+for (const table of receivedCurrentOwnerTables)
   columns(
     table,
     {
       actor_id: { sql: 'TEXT NOT NULL', value: (_value, path) => path[2] },
       value_refs: {
-        sql: 'JSONB NOT NULL',
+        sql: 'TEXT[] NOT NULL',
         value: (value) => receivedRecordReferences(table, value),
       },
     },
@@ -796,3 +781,13 @@ columns(
 RECORD_NODES.get('activity_methods')!.uniqueIndexes = [['signature_key']];
 RECORD_NODES.get('activity_methods')!.constraints = ['CHECK (octet_length(payload)<=32768)'];
 RECORD_NODES.get('activity_occurrences')!.constraints = ['CHECK (octet_length(payload)<=32768)'];
+
+/** Physical debris is never canonical evidence, including checkpoint/startup reads. */
+export function liveEvidenceRowSql(table: string, alias = 't'): string {
+  if (table === 'mind_temporal_chunks') return `${alias}.retired_revision IS NULL`;
+  if (table === 'mind_temporal_segments')
+    return `EXISTS(SELECT 1 FROM mind_temporal_chunks live_parent WHERE live_parent.world_id=${alias}.world_id AND live_parent.id=${alias}.parent_id AND live_parent.retired_revision IS NULL)`;
+  if (table === 'mind_perception_values')
+    return `EXISTS(SELECT 1 FROM received_value_uses live_use WHERE live_use.world_id=${alias}.world_id AND live_use.value_id=${alias}.source_id)`;
+  return '';
+}

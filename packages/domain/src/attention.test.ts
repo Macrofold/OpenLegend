@@ -1,3 +1,6 @@
+import { attentionCandidates } from './attention.js';
+import { currentFacetValues } from './perception-current.js';
+import { currentFacetGet, currentFacetSet } from './perception-current.js';
 import { describe, expect, it, vi } from 'vitest';
 import * as worldComposition from './world-composition.js';
 import { createWorld, NPC_ID, PLAYER_ID } from './worlds/base/world.js';
@@ -67,7 +70,7 @@ function scene(count: number, capacity = 10) {
   const observer = entityGet(world.entities, PLAYER_ID)!;
   observer.actor!.attentionCapacity = capacity;
   const owner = perceptionEvidenceOwner(world, observer);
-  owner.current = {};
+  owner.current = { size: 0 };
   owner.attention = undefined;
   const prototype = entityGet(world.entities, NPC_ID)!;
   const ids: string[] = [];
@@ -150,7 +153,7 @@ function scene(count: number, capacity = 10) {
           ? { localSubject: { kind: 'individual', individualId } as const }
           : {}),
       };
-      owner.current[`${id}:${value.kind}`] = compactCurrentFacet(owner, lease);
+      currentFacetSet(owner, `${id}:${value.kind}`, compactCurrentFacet(owner, lease));
     }
   }
   updateAttention(world, PLAYER_ID);
@@ -198,28 +201,28 @@ describe('received detailed attention', () => {
     initializePerception(world, []);
     const state = world.perceptionEvidence![PLAYER_ID]!.attention!;
     expect(
-      Object.values(state.candidates).filter((candidate) => candidate.urgency >= 8),
+      Object.values(state.annotations).filter((candidate) => candidate.urgency >= 8),
     ).toHaveLength(10);
     expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(10);
     expect(
       currentDetailedAttention(world, PLAYER_ID).find((entry) => entry.sourceId === quiet.id)
         ?.basis,
     ).toBe('discovery');
-    const cue = Object.values(state.candidates).find(
+    const cue = Object.values(state.annotations).find(
       (candidate) => candidate.sourceId === sources[0]!.id,
     )!;
     expect(cue.urgencySource).toBeDefined();
     revokeAttentionEvidence(world, PLAYER_ID, new Set([cue.urgencySource!.source.id]));
     expect(
-      state.candidates[
-        Object.keys(state.candidates).find(
-          (key) => state.candidates[key]!.sourceId === sources[0]!.id,
+      state.annotations[
+        Object.keys(state.annotations).find(
+          (key) => state.annotations[key]!.sourceId === sources[0]!.id,
         )!
       ]!.urgency,
     ).toBe(0);
     world.simTime = 120;
     updateAttention(world, PLAYER_ID, { changedSourceIds: [] });
-    expect(Object.values(state.candidates).every((candidate) => candidate.urgency === 0)).toBe(
+    expect(Object.values(state.annotations).every((candidate) => candidate.urgency === 0)).toBe(
       true,
     );
     expect(JSON.stringify(state)).not.toContain('Private identity');
@@ -232,7 +235,7 @@ describe('received detailed attention', () => {
   it('resolves only the actually accepted native condition generation and withdraws corrected proof', () => {
     let { world, owner } = scene(2, 2);
     const anchor = currentDetailedAttention(world, PLAYER_ID)[0]!,
-      lease = owner.current[`${anchor.sourceId}:body`]!;
+      lease = currentFacetGet(owner, `${anchor.sourceId}:body`)!;
     applyAttentionRelationEvaluations(world, PLAYER_ID, [
       {
         anchorKey: anchor.key,
@@ -291,9 +294,9 @@ describe('received detailed attention', () => {
   it('bounds detail without hiding the other current sources or learning private identities', () => {
     const { world, owner } = scene(15);
     expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(10);
-    expect(
-      Object.values(owner.current).filter((lease) => lease.value.kind === 'body'),
-    ).toHaveLength(15);
+    expect(currentFacetValues(owner).filter((lease) => lease.value.kind === 'body')).toHaveLength(
+      15,
+    );
     expect(
       currentDetailedAttention(world, PLAYER_ID).every(
         (entry) => entry.subject?.kind === 'individual',
@@ -333,15 +336,19 @@ describe('received detailed attention', () => {
     };
     vi.spyOn(worldComposition, 'selectedAttentionPolicy').mockReturnValue(policy);
     const state = owner.attention!;
-    state.explicit = Object.entries(state.candidates)
+    state.explicit = Object.entries(state.annotations)
       .filter(([, candidate]) => ids.slice(4).includes(candidate.sourceId))
       .map(([key]) => key);
     updateAttention(world, PLAYER_ID);
     expect(state.entries.filter((entry) => entry.basis === 'explicit')).toHaveLength(4);
     expect(state.entries.filter((entry) => entry.basis === 'discovery')).toHaveLength(1);
-    expect(Object.values(state.candidates).every((candidate) => candidate.score === 1)).toBe(true);
+    expect(
+      Object.values(attentionCandidates(world, PLAYER_ID)).every(
+        (candidate) => candidate.score === 1,
+      ),
+    ).toBe(true);
     validateAttentionState(state, policy, owner.observer!);
-    Object.values(state.candidates)[0]!.score = 2;
+    Object.values(state.annotations)[0]!.urgency = 11;
     expect(() => validateAttentionState(state, policy, owner.observer!)).toThrow(
       'Invalid attention candidate.',
     );
@@ -382,17 +389,17 @@ describe('received detailed attention', () => {
       expect(discovered.has(discovery.sourceId)).toBe(false);
       // Broad presence/counts provide no individual description to acknowledge.
       acknowledgeAttention(world, PLAYER_ID, []);
-      expect(owner.attention!.candidates[discovery.key]!.presentedDescription).toBeUndefined();
+      expect(owner.attention!.annotations[discovery.key]!.presentedDescription).toBeUndefined();
       const presentation = captureAttentionPresentation(world, PLAYER_ID, [discovery.key]);
       supplied.add(discovery.key);
       discovered.add(discovery.sourceId);
       acknowledgeAttention(world, PLAYER_ID, presentation);
-      for (const [key, candidate] of Object.entries(owner.attention!.candidates))
+      for (const [key, candidate] of Object.entries(owner.attention!.annotations))
         if (!supplied.has(key)) expect(candidate.presentedDescription).toBeUndefined();
       expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(3);
     }
     expect(discovered).toEqual(new Set(older));
-    expect(Object.keys(owner.attention!.candidates)).toHaveLength(24);
+    expect(Object.keys(owner.attention!.annotations)).toHaveLength(24);
     expect(JSON.stringify(owner.attention)).not.toContain('Private unknown identity');
   });
 
@@ -476,7 +483,7 @@ describe('received detailed attention', () => {
       currentDetailedAttention(world, PLAYER_ID).some((entry) => entry.sourceId === challenger),
     ).toBe(true);
     const candidate = Object.values(
-      world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
+      world.perceptionEvidence![PLAYER_ID]!.attention!.annotations,
     ).find((candidate) => candidate.sourceId === challenger)!;
     const deadline = candidate.urgencyThrough;
     world.simTime = 1;
@@ -485,7 +492,7 @@ describe('received detailed attention', () => {
     world.simTime = 120;
     updateAttention(world, PLAYER_ID, { changedSourceIds: [] });
     expect(
-      Object.values(world.perceptionEvidence![PLAYER_ID]!.attention!.candidates).find(
+      Object.values(world.perceptionEvidence![PLAYER_ID]!.attention!.annotations).find(
         (candidate) => candidate.sourceId === challenger,
       )!.urgency,
     ).toBe(0);
@@ -495,27 +502,26 @@ describe('received detailed attention', () => {
     const { world, owner, ids } = scene(2, 2);
     const provided = captureAttentionPresentation(world, PLAYER_ID);
     const id = ids[0]!,
-      location = owner.current[`${id}:location`]!;
+      location = currentFacetGet(owner, `${id}:location`)!;
     world.simTime = 120;
     const value = receivedFacetValue(world, location.value);
     if (value?.kind !== 'location' || value.location.kind !== 'point')
       throw new Error('fixture location');
-    const retained = retainReceivedValue(
-      world,
-      { kind: 'location', location: { ...value.location, point: { x: 10, y: 0, z: 2 } } },
-      selectedAttentionPolicy(world).retention.recent.chunkBytes,
-    );
+    const retained = retainReceivedValue(world, {
+      kind: 'location',
+      location: { ...value.location, point: { x: 10, y: 0, z: 2 } },
+    });
     const updated = currentFacetSupport(owner, location);
     updated.value = {
       ...updated.value,
-      reference: [retained.reference.blockId, retained.reference.valueOrdinal],
+      reference: retained.reference,
     };
     updated.valueMeasuredThrough = 120;
     updated.valueAcquiredAt = 120;
-    owner.current[`${id}:location`] = compactCurrentFacet(owner, updated);
+    currentFacetSet(owner, `${id}:location`, compactCurrentFacet(owner, updated));
     updateAttention(world, PLAYER_ID, { changedSourceIds: [id] });
     acknowledgeAttention(world, PLAYER_ID, provided);
-    const candidate = Object.values(owner.attention!.candidates).find(
+    const candidate = Object.values(attentionCandidates(world, PLAYER_ID)).find(
       (entry) => entry.sourceId === id,
     )!;
     expect(candidate.presentedChange).not.toBe(candidate.changeRevision);
@@ -526,7 +532,7 @@ describe('received detailed attention', () => {
   it('keeps stationary-anchor conditions latched through partial evidence and rotation', () => {
     const { world, owner } = scene(2, 2);
     const anchor = currentDetailedAttention(world, PLAYER_ID)[0]!;
-    const lease = owner.current[`${anchor.sourceId}:body`]!;
+    const lease = currentFacetGet(owner, `${anchor.sourceId}:body`)!;
     const proof = [
       observationFactKey(world, currentFacetOriginal(owner, lease), lease.originalOrdinal),
     ];
@@ -590,8 +596,8 @@ describe('received detailed attention', () => {
   it('does not bridge an all-clear interval across a brief loss of its neighbor', () => {
     const { world, owner } = scene(2, 2),
       [anchor, neighbor] = currentDetailedAttention(world, PLAYER_ID);
-    const body = owner.current[`${neighbor!.sourceId}:body`]!;
-    const location = owner.current[`${neighbor!.sourceId}:location`]!;
+    const body = currentFacetGet(owner, `${neighbor!.sourceId}:body`)!;
+    const location = currentFacetGet(owner, `${neighbor!.sourceId}:location`)!;
     const witness = {
       id: neighbor!.exposure.episodeId,
       distanceLower: 2,
@@ -623,8 +629,8 @@ describe('received detailed attention', () => {
     ]);
     updateAttention(world, PLAYER_ID, { changedSourceIds: [neighbor!.sourceId] });
     world.simTime = 30;
-    owner.current[`${neighbor!.sourceId}:body`] = { ...body, id: `${body.id}-returned` };
-    owner.current[`${neighbor!.sourceId}:location`] = location;
+    currentFacetSet(owner, `${neighbor!.sourceId}:body`, { ...body, id: `${body.id}-returned` });
+    currentFacetSet(owner, `${neighbor!.sourceId}:location`, location);
     updateAttention(world, PLAYER_ID, { changedSourceIds: [neighbor!.sourceId] });
     applyAttentionRelationEvaluations(world, PLAYER_ID, [clear]);
     world.simTime = 130;

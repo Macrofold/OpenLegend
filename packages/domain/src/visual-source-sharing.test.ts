@@ -1,3 +1,4 @@
+import { currentFacetGet, currentFacetSet } from './perception-current.js';
 import { currentFacetGrant } from './perception-current.js';
 import { expect, it } from 'vitest';
 import { createWorld, NPC_ID, PLAYER_ID } from './worlds/base/world.js';
@@ -30,8 +31,8 @@ it('shares only complete outward source values while preserving independent rece
   initializePerception(world, []);
   const aOwner = world.perceptionEvidence![first.id]!,
     bOwner = world.perceptionEvidence![second.id]!,
-    a = aOwner.current[`${source.id}:body`]!,
-    b = bOwner.current[`${source.id}:body`]!;
+    a = currentFacetGet(aOwner, `${source.id}:body`)!,
+    b = currentFacetGet(bOwner, `${source.id}:body`)!;
   const aOriginal = currentFacetOriginal(aOwner, a),
     bOriginal = currentFacetOriginal(bOwner, b),
     aTimes = currentFacetTimes(aOwner, a);
@@ -69,8 +70,8 @@ it('shares only complete outward source values while preserving independent rece
     continuity: 'physical',
   });
   initializePerception(world, []);
-  const movedA = world.perceptionEvidence![first.id]!.current[`${source.id}:body`]!,
-    movedB = world.perceptionEvidence![second.id]!.current[`${source.id}:body`]!;
+  const movedA = currentFacetGet(world.perceptionEvidence![first.id]!, `${source.id}:body`)!,
+    movedB = currentFacetGet(world.perceptionEvidence![second.id]!, `${source.id}:body`)!;
   const movedValue = receivedFacetValue(world, movedA.value)!;
   expect(movedA.value.reference).toEqual(movedB.value.reference);
   expect(movedValue).toBe(receivedFacetValue(world, movedB.value));
@@ -96,7 +97,7 @@ it('shares only complete outward source values while preserving independent rece
   expect(currentBodyObservation(restored, first.id, source.id)!.value.body.position.x).toBe(4);
   const restoredLocation = receivedFacetValue(
     restored,
-    restored.perceptionEvidence![first.id]!.current[`${source.id}:location`]!.value,
+    currentFacetGet(restored.perceptionEvidence![first.id]!, `${source.id}:location`)!.value,
   );
   if (restoredLocation?.kind !== 'location' || restoredLocation.location.kind !== 'point')
     throw new Error('The original received point is required.');

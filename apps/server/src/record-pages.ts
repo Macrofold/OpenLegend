@@ -1,3 +1,4 @@
+import { liveEvidenceRowSql } from './world-record-schema.js';
 import { setImmediate } from 'node:timers/promises';
 import type { SqlDatabase } from './store.js';
 import { CHECKPOINT_LIMITS } from './checkpoint-format.js';
@@ -27,12 +28,13 @@ export async function* tableRows(db: SqlDatabase, table: string, worldId?: strin
   let cursor: unknown[] | undefined;
   for (;;) {
     const predicates = [
+      liveEvidenceRowSql(table),
       worldId !== undefined ? 'world_id=?' : '',
       cursor ? `(${columns.join(',')}) > (${columns.map(() => '?').join(',')})` : '',
     ].filter(Boolean);
     const rows = await db
       .prepare(
-        `SELECT * FROM ${table}${predicates.length ? ` WHERE ${predicates.join(' AND ')}` : ''} ORDER BY ${columns.join(',')} LIMIT ${CHECKPOINT_LIMITS.page}`,
+        `SELECT t.* FROM ${table} t${predicates.length ? ` WHERE ${predicates.join(' AND ')}` : ''} ORDER BY ${columns.join(',')} LIMIT ${CHECKPOINT_LIMITS.page}`,
       )
       .all(...(worldId !== undefined ? [worldId] : []), ...(cursor ?? []));
     for (const row of rows) yield row;

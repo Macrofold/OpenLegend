@@ -623,7 +623,7 @@ describe('level-1 selection with fixture Jev and no external requests', { timeou
           answer(request, { rate: (description) => noul(isEat(description) ? 0.6 : 0.1) }),
       });
       await editWorld(h.service, (world) => {
-        const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates)
+        const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.annotations)
           .filter(([, candidate]) => entityGet(world.entities, candidate.sourceId)?.heat)
           .map(([key]) => key);
         expect(keys.length).toBeGreaterThan(0);

@@ -20,7 +20,7 @@ Load only the matching detailed contract below. An ordinary feature reads this c
 
 - For repeated collection work, caches, retained data or changed prepared reads, read [Preparation, reuse and retained data](../../../docs/performance/preparation.md).
 - For queues, workers, asynchronous coordination or recurring scheduling, read [Scheduling, admission and fairness](../../../docs/performance/scheduling.md).
-- For database access and its callers, schema/indexes, snapshots or persistence preparation, read [Storage execution and transactional persistence](../../../docs/performance/storage.md).
+- For database access and its callers, schema/indexes, saved-record codecs/diffs, snapshots or persistence preparation, read [Storage execution and transactional persistence](../../../docs/performance/storage.md).
 - For movement, geometry, navigation preparation or sensory candidate work, read [Spatial, navigation and sensory performance](../../../docs/performance/spatial.md).
 - For collecting/interpreting performance, optional instrumentation or benchmark drivers, read [Performance measurement and interpretation](../../../docs/performance/measurement.md).
 

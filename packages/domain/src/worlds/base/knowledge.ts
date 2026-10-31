@@ -1,3 +1,5 @@
+import { currentFacetValues } from '../../perception-current.js';
+import { currentFacetGet } from '../../perception-current.js';
 import { entityGet } from '../../entity-collection.js';
 import { hasMemory } from '../../living.js';
 import { accessiblePossession } from '../../object-access.js';
@@ -271,8 +273,8 @@ export function associateBodyFamiliarity(
   sourceId: string,
 ): void {
   const owner = world.perceptionEvidence?.[observerId];
-  const body = owner?.current[`${sourceId}:body`];
-  const association = owner?.current[`${sourceId}:association`];
+  const body = currentFacetGet(owner, `${sourceId}:body`);
+  const association = currentFacetGet(owner, `${sourceId}:association`);
   const local = currentBodyLocalSubject(world, observerId, sourceId);
   const matched = currentBodyAssociation(world, observerId, sourceId);
   if (!owner || !body || !association || association.bodyLeaseId !== body.id || !local || !matched)
@@ -319,7 +321,7 @@ export function pruneObserverIndividuals(
   for (const record of world.minds?.[actorId]?.records ?? [])
     if (record.subjectId?.kind === 'individual') retainedPins.add(record.subjectId.individualId);
   const pinned = new Set(retainedPins);
-  for (const lease of Object.values(world.perceptionEvidence?.[actorId]?.current ?? {})) {
+  for (const lease of currentFacetValues(world.perceptionEvidence?.[actorId])) {
     if (lease.localSubject?.kind === 'individual') pinned.add(lease.localSubject.individualId);
     const association =
       lease.value.kind === 'association' && receivedFacetValue(world, lease.value);

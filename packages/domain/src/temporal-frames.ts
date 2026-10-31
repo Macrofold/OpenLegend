@@ -1,3 +1,4 @@
+import type { CurrentFacetRecord } from './perception-current.js';
 import { appendSnapshot, isAppendBuffer, readOnlyDraftView } from './draft.js';
 import { immutableDataSnapshot, isImmutableData, jsonText } from './records.js';
 import type { WorldState } from './types.js';
@@ -26,7 +27,12 @@ import {
   temporalValueIndividualId,
 } from './temporal-evidence.js';
 import { personalFactAlias } from './experience-source.js';
-import { receivedValueAt, type ReceivedValueLookup } from './received-values.js';
+import {
+  receivedValueAt,
+  type ReceivedValueLookup,
+  type ReceivedValueReference,
+  sameReceivedValueReference,
+} from './received-values.js';
 import type { TemporalReadSource } from './temporal-read-context.js';
 
 /** A chunk is one append collection. Dictionary/frame declarations are written
@@ -39,6 +45,7 @@ interface DictionaryKinds {
     observer?: EvidenceSource['observer'],
   ];
   text: string;
+  received: ReceivedValueReference;
   identity: ObserverSubject;
   source: EvidenceSource;
   fact: ObservationFactKey;
@@ -46,6 +53,14 @@ interface DictionaryKinds {
   origin: ObservationOrigin;
   reception: TemporalReception;
   detail: NonNullable<TemporalFacetReference['detailSupport']>;
+  checkDetail: {
+    original: ObservationFactKey;
+    identity: DictionaryKinds['sourceIdentity'];
+    from: number;
+    through: number;
+    acquiredAt: number;
+    aliases?: string[];
+  };
   view: ObservationFrame;
 }
 type DictionaryValue = {
@@ -54,7 +69,7 @@ type DictionaryValue = {
 /** Fixed tuple slots are the native authority and current JSON format. Rich
  * proof/source objects are selected read products, never a parallel store. */
 interface StoredDictionaryKinds
-  extends Omit<DictionaryKinds, 'source' | 'fact' | 'proof' | 'detail'> {
+  extends Omit<DictionaryKinds, 'source' | 'fact' | 'proof' | 'detail' | 'checkDetail'> {
   sourceIdentity: readonly [
     family: EvidenceSource['family'],
     id: string,
@@ -70,6 +85,14 @@ interface StoredDictionaryKinds
     aliases?: string[],
   ];
   detail: readonly [proof: number, from: number, through: number, acquiredAt: number];
+  checkDetail: readonly [
+    original: number,
+    identity: number,
+    from: number,
+    through: number,
+    acquiredAt: number,
+    aliases?: string[],
+  ];
 }
 type StoredDictionaryValue = {
   [K in keyof StoredDictionaryKinds]: readonly [kind: K, value: StoredDictionaryKinds[K]];
@@ -79,6 +102,7 @@ export const TEMPORAL_DICTIONARY_REFERENCE_FIELDS = {
   fact: { 0: 'source' },
   proof: { 0: 'fact', 1: 'source' },
   detail: { 0: 'proof' },
+  checkDetail: { 0: 'fact', 1: 'sourceIdentity' },
 } as const;
 export const TEMPORAL_FIELD = {
   value: 0,
@@ -100,11 +124,11 @@ export const TEMPORAL_FIELD = {
 /** Null holes preserve fixed slots; trailing defaults are absent. The common
  * value/original/source/detail bindings precede rare timing/reception overrides. */
 export type TemporalPackedFacet = readonly [
-  value: readonly [block: number, ordinal: number],
+  value: number,
   original?: number | null,
   source?: number | null,
   details?: number | null,
-  pose?: readonly [block: number, ordinal: number] | null,
+  pose?: number | null,
   reception?: number | null,
   ordinal?: number | null,
   from?: number | null,
@@ -136,6 +160,21 @@ export interface TemporalConfirmation {
   confirmation: EvidenceSource;
   from: number;
   through: number;
+  detailSupport?: TemporalFacetReference['detailSupport'];
+}
+/** Borrowed current fields for one synchronous write. Common actual checks are
+ * prepared once; no rich per-field confirmation envelopes are retained. */
+export interface TemporalCheckGroup {
+  subject: string;
+  original: EvidenceSource;
+  confirmation: EvidenceSource;
+  from: number;
+  through: number;
+  fields: CurrentFacetRecord[];
+  /** Body pose and independent detail are the sparse shared-template exceptions. */
+  originalOrdinal?: number;
+  sourceId?: string;
+  reception?: TemporalReception;
   detailSupport?: TemporalFacetReference['detailSupport'];
 }
 export interface TemporalConfirmationRead extends TemporalConfirmation {
@@ -171,7 +210,13 @@ export type TemporalFrameEntry =
       order?: number;
       subjects: Array<{
         subject: number;
-        context?: readonly [source: number | null, from: number | null, through: number | null];
+        /** One actual check stamp; member source identities and measured values are stable. */
+        check: readonly [
+          revision: EvidenceSource['revision'],
+          from?: number | null,
+          through?: number | null,
+        ];
+        detail?: readonly [revision: EvidenceSource['revision'], from: number, through: number];
         fields: TemporalPackedConfirmation[];
       }>;
     }
@@ -279,7 +324,7 @@ interface FrameIndex {
   subjects: Set<string>;
   featureScope: boolean;
   confirmations: Map<number, Extract<TemporalFrameEntry, { kind: 'confirmation' }>>;
-  references: Map<string, Set<number>>;
+  references: Set<string>;
 }
 const indexes = new WeakMap<object, FrameIndex>();
 function key(value: StoredDictionaryValue): string {
@@ -326,6 +371,16 @@ function dictionary<K extends keyof DictionaryKinds>(
         from: stored[1][1],
         through: stored[1][2],
         acquiredAt: stored[1][3],
+      };
+      break;
+    case 'checkDetail':
+      value = {
+        original: dictionary(index, stored[1][0], 'fact'),
+        identity: dictionary(index, stored[1][1], 'sourceIdentity'),
+        from: stored[1][2],
+        through: stored[1][3],
+        acquiredAt: stored[1][4],
+        ...(stored[1][5] ? { aliases: stored[1][5] } : {}),
       };
       break;
     default:
@@ -469,11 +524,12 @@ function decodeFacets(
   index: FrameIndex,
 ): TemporalFacetReference[] {
   return facets.map((facet, ordinal): TemporalFacetReference => {
-    const reception: TemporalReception | undefined = facet[4]
-      ? { kind: 'body', poseRef: [dictionary(index, facet[4][0], 'text'), facet[4][1]] }
-      : facet[5] != null
-        ? dictionary(index, facet[5], 'reception')
-        : undefined;
+    const reception: TemporalReception | undefined =
+      facet[4] != null
+        ? { kind: 'body', poseRef: dictionary(index, facet[4]!, 'received') }
+        : facet[5] != null
+          ? dictionary(index, facet[5], 'reception')
+          : undefined;
     const poseFrame =
       facet[14] != null
         ? dictionary(index, facet[14], 'view')
@@ -481,8 +537,7 @@ function decodeFacets(
           ? frame.receiverFrame
           : undefined;
     return {
-      blockId: dictionary(index, facet[0][0], 'text'),
-      valueOrdinal: facet[0][1],
+      valueRef: dictionary(index, facet[0]!, 'received'),
       ordinal: facet[6] ?? ordinal,
       role: facet[9] ?? 'direct',
       asOf: facet[10] ?? frame.at,
@@ -558,7 +613,7 @@ function frameIndex(chunk: TemporalFrameOwner): FrameIndex {
       subjects: new Set(),
       featureScope: false,
       confirmations: new Map(),
-      references: new Map(),
+      references: new Set(),
     };
   for (let at = index.length; at < entries.length; at++) {
     const entry = readOnlyDraftView(entries[at]!);
@@ -598,7 +653,7 @@ function frameIndex(chunk: TemporalFrameOwner): FrameIndex {
         entry.change === 'receiver-frame' ||
         entry.facets.some(
           (facet) =>
-            !!facet[4] ||
+            facet[4] != null ||
             facet[14] != null ||
             (facet[5] != null &&
               ['body', 'location'].includes(dictionary(index, facet[5], 'reception').kind)),
@@ -607,14 +662,12 @@ function frameIndex(chunk: TemporalFrameOwner): FrameIndex {
     for (const facet of packedEntryFields(entry))
       for (const field of TEMPORAL_FACET_REFERENCE_FIELDS) {
         const reference = facet[field];
-        if (!reference) continue;
-        const blockId = dictionary(index, reference[0], 'text');
-        let ordinals = index.references.get(blockId);
-        if (!ordinals) index.references.set(blockId, (ordinals = new Set()));
-        ordinals.add(reference[1]);
+        if (reference == null) continue;
+        const value = dictionary(index, reference, 'received');
+        if (typeof value === 'string') index.references.add(value);
       }
     index.featureScope ||= packedEntryFields(entry).some(
-      (field) => !!field[4] || field[14] != null || field[5] != null,
+      (field) => field[4] != null || field[14] != null || field[5] != null,
     );
   }
   index.length = entries.length;
@@ -656,13 +709,12 @@ export function temporalReceiptValues(
     entry = index.operations.get(ordinal);
   if (!entry) return [];
   return entry.facets.map((facet) => ({
-    blockId: dictionary(index, facet[0][0], 'text'),
-    valueOrdinal: facet[0][1],
-    ...(facet[4]
+    valueRef: dictionary(index, facet[0]!, 'received'),
+    ...(facet[4] != null
       ? {
           reception: {
             kind: 'body' as const,
-            poseRef: [dictionary(index, facet[4][0], 'text'), facet[4][1]] as const,
+            poseRef: dictionary(index, facet[4]!, 'received'),
           },
         }
       : facet[5] != null
@@ -712,22 +764,17 @@ function confirmationHeader(
     order: entry.order ?? frame.order,
   };
 }
-/** Common actual checks belong to their subject/acquisition, never a fabricated
- * field source. Exceptions remain on their own row and captured cuts stay exact. */
-function confirmationContextField(
-  group: Extract<TemporalFrameEntry, { kind: 'confirmation' }>['subjects'][number],
-  field: TemporalPackedConfirmation,
-): TemporalPackedConfirmation {
-  if (!group.context) return field;
-  const next = [...field] as unknown[];
-  for (const [slot, common] of [
-    [2, group.context[0]],
-    [7, group.context[1]],
-    [8, group.context[2]],
-  ] as const)
-    if (next[slot] == null && common != null) next[slot] = common;
-  for (let at = 1; at < next.length; at++) next[at] ??= null;
-  return next as unknown as TemporalPackedConfirmation;
+function checkedSource(
+  index: FrameIndex,
+  identity: DictionaryKinds['sourceIdentity'],
+  revision: EvidenceSource['revision'],
+): EvidenceSource {
+  return {
+    family: identity[0],
+    id: identity[1],
+    revision,
+    observer: identity[2] ?? { actorId: index.actorId, physicalLife: index.physicalLife },
+  } as EvidenceSource;
 }
 export function temporalConfirmationSubject(
   chunk: TemporalFrameOwner,
@@ -753,29 +800,54 @@ function confirmationField(
   position: number,
 ): TemporalConfirmationRead {
   const value = entry.subjects[group],
-    field = value?.fields[position] && confirmationContextField(value, value.fields[position]!);
+    field = value?.fields[position];
   if (!value || !field) throw new Error('Temporal confirmation has no selected field.');
   const header = confirmationHeader(index, entry),
     fieldOrdinal =
       field[6] ??
       entry.subjects.slice(0, group).reduce((sum, value) => sum + value.fields.length, 0) +
         position;
-  const reception: TemporalReception | undefined = field[4]
-    ? { kind: 'body', poseRef: [dictionary(index, field[4][0], 'text'), field[4][1]] }
-    : field[5] != null
-      ? dictionary(index, field[5], 'reception')
-      : undefined;
+  const reception: TemporalReception | undefined =
+    field[4] != null
+      ? { kind: 'body', poseRef: dictionary(index, field[4]!, 'received') }
+      : field[5] != null
+        ? dictionary(index, field[5], 'reception')
+        : undefined;
   return {
     ...header,
     fieldOrdinal,
     subject: dictionary(index, value.subject, 'text'),
-    reference: { blockId: dictionary(index, field[0][0], 'text'), valueOrdinal: field[0][1] },
+    reference: { valueRef: dictionary(index, field[0]!, 'received') },
     ...(reception ? { reception } : {}),
     original: dictionary(index, field[1]!, 'fact'),
-    confirmation: dictionary(index, field[2]!, 'source'),
-    from: field[7] ?? header.at,
-    through: field[8] ?? header.at,
-    ...(field[3] != null ? { detailSupport: dictionary(index, field[3], 'detail') } : {}),
+    confirmation: checkedSource(
+      index,
+      dictionary(index, field[2]!, 'sourceIdentity'),
+      value.check[0],
+    ),
+    from: value.check[1] ?? header.at,
+    through: value.check[2] ?? header.at,
+    ...(field[3] != null ? { detailSupport: checkedDetails(index, field[3], value.detail) } : {}),
+  };
+}
+function checkedDetails(
+  index: FrameIndex,
+  at: number,
+  stamp: Extract<TemporalFrameEntry, { kind: 'confirmation' }>['subjects'][number]['detail'],
+): NonNullable<TemporalFacetReference['detailSupport']> {
+  if (!stamp) throw new Error('A checked detail has no actual check stamp.');
+  const base = dictionary(index, at, 'checkDetail');
+  return {
+    proof: {
+      original: base.original,
+      confirmation: checkedSource(index, base.identity, stamp[0]),
+      confirmedFrom: stamp[1],
+      confirmedThrough: stamp[2],
+      ...(base.aliases ? { aliases: base.aliases } : {}),
+    },
+    from: base.from,
+    through: base.through,
+    acquiredAt: base.acquiredAt,
   };
 }
 export function temporalEntryConfirmations(
@@ -828,8 +900,7 @@ export function temporalConfirmationForFacet(
   for (let index = values.length - 1; index >= 0; index--) {
     const value = values[index]!;
     if (
-      value.reference.blockId === reference.blockId &&
-      value.reference.valueOrdinal === reference.valueOrdinal &&
+      sameReceivedValueReference(value.reference.valueRef, reference.valueRef) &&
       same(value.reception, reference.reception) &&
       same(value.original, reference.original) &&
       same(value.original, support.original) &&
@@ -901,7 +972,7 @@ export interface TemporalEntryMetadata {
   confirmations: number;
   spatialContext: boolean;
   ordinals: number[];
-  references: Record<string, number[]>;
+  references: string[];
   subjects: string[];
   sourceIds: string[];
   individualIds: string[];
@@ -934,7 +1005,7 @@ export function temporalEntryMetadataReader(
       individuals = new Set<string>(),
       occurrenceAliases = new Set<string>(),
       occurrenceIndividuals = new Set<string>(),
-      references = new Map<string, Set<number>>(),
+      references = new Set<string>(),
       ordinals: number[] = [];
     let firstAt: number | undefined,
       lastAt: number | undefined,
@@ -967,12 +1038,9 @@ export function temporalEntryMetadataReader(
       addAlias(source(value[1]));
       for (const alias of value[4] ?? []) addAlias(alias);
     };
-    const reference = (block: string, ordinal: number) => {
-      let values = references.get(block);
-      if (!values) references.set(block, (values = new Set()));
-      values.add(ordinal);
-      const fragment =
-        context && receivedValueAt(context.sources, { blockId: block, valueOrdinal: ordinal });
+    const reference = (block: ReceivedValueReference) => {
+      if (typeof block === 'string') references.add(block);
+      const fragment = context && receivedValueAt(context.sources, block);
       if (context && !fragment)
         throw new Error('Receipt page index requires complete received source support.');
       return fragment;
@@ -982,30 +1050,34 @@ export function temporalEntryMetadataReader(
       receiptId?: string,
       ordinal?: number,
       confirmation = false,
-      sharedSource?: number | null,
     ) => {
-      const fragment = reference(text(value[0][0]), value[0][1]);
+      const fragment = reference(declaration(value[0], 'received'));
       const reception = value[5] == null ? undefined : declaration(value[5], 'reception');
-      if (value[4]) reference(text(value[4][0]), value[4][1]);
-      else if (reception?.kind === 'body' && reception.poseRef)
-        reference(reception.poseRef[0], reception.poseRef[1]);
+      if (value[4] != null) reference(declaration(value[4]!, 'received'));
+      else if (reception?.kind === 'body' && reception.poseRef) reference(reception.poseRef);
       if (receiptId != null && ordinal != null) addAlias(personalFactAlias(receiptId, ordinal));
       if (value[1] != null) fact(value[1]!);
       if (value[13] != null) proof(value[13]);
       // A confirmation's implicit field proof precedes independent detail
       // support. Preserve that canonical alias order without building the proof.
       if (confirmation) {
-        const confirmedBy = value[2] ?? sharedSource;
-        if (confirmedBy != null) addAlias(source(confirmedBy));
+        if (value[2] != null) addAlias(declaration(value[2], 'sourceIdentity')[1]);
       }
-      if (value[3] != null) proof(declaration(value[3], 'detail')[0]);
+      if (value[3] != null) {
+        if (confirmation) {
+          const detail = declaration(value[3], 'checkDetail');
+          fact(detail[0]);
+          addAlias(declaration(detail[1], 'sourceIdentity')[1]);
+          for (const alias of detail[5] ?? []) addAlias(alias);
+        } else proof(declaration(value[3], 'detail')[0]);
+      }
       if (!confirmation && value[2] != null) addAlias(source(value[2]));
       if (fragment && context) {
         spatialContext ||= temporalSpatialContextValue(fragment);
         // Only these complete scalar fragments have value-owned aliases or
         // identity. Geometry reception does not authorize an unrelated value.
         if (
-          !value[4] &&
+          value[4] == null &&
           reception == null &&
           (fragment.kind === 'association' ||
             fragment.kind === 'claim' ||
@@ -1035,9 +1107,9 @@ export function temporalEntryMetadataReader(
           for (const value of group.fields) {
             confirmations++;
             changes++;
-            firstMeasured = Math.min(firstMeasured, value[7] ?? group.context?.[1] ?? frame.at);
-            lastSupported = Math.max(lastSupported, value[8] ?? group.context?.[2] ?? frame.at);
-            field(value, undefined, undefined, true, group.context?.[0]);
+            firstMeasured = Math.min(firstMeasured, group.check[1] ?? frame.at);
+            lastSupported = Math.max(lastSupported, group.check[2] ?? frame.at);
+            field(value, undefined, undefined, true);
           }
         }
         continue;
@@ -1085,9 +1157,7 @@ export function temporalEntryMetadataReader(
       confirmations,
       spatialContext,
       ordinals,
-      references: Object.fromEntries(
-        [...references].map(([block, ordinals]) => [block, [...ordinals].sort((a, b) => a - b)]),
-      ),
+      references: [...references].sort(),
       subjects: [...subjects],
       sourceIds: [...aliases],
       individualIds: [...individuals],
@@ -1148,7 +1218,6 @@ function entryDependencies(
   if (change.kind === 'confirmation')
     for (const group of change.subjects) {
       ordinals.add(group.subject);
-      if (group.context?.[0] != null) ordinals.add(group.context[0]);
     }
   else ordinals.add(change.subject);
   if (change.kind === 'change') {
@@ -1159,7 +1228,7 @@ function entryDependencies(
   }
   for (const facet of packedEntryFields(change)) {
     for (const field of TEMPORAL_FACET_REFERENCE_FIELDS)
-      if (facet[field]) ordinals.add(facet[field][0]);
+      if (facet[field] != null) ordinals.add(facet[field]);
     for (const field of TEMPORAL_FACET_DICTIONARY_FIELDS)
       if (facet[field] != null) ordinals.add(facet[field]);
   }
@@ -1238,12 +1307,12 @@ function packFacets(
 ): TemporalPackedFacet[] {
   return fields.map((facet, at) =>
     compactField([
-      [intern({ kind: 'text', value: facet.blockId }), facet.valueOrdinal],
+      intern({ kind: 'received', value: facet.valueRef }),
       facet.original ? intern({ kind: 'fact', value: facet.original }) : null,
       facet.receivedFrom ? intern({ kind: 'source', value: facet.receivedFrom }) : null,
       facet.detailSupport ? intern({ kind: 'detail', value: facet.detailSupport }) : null,
       facet.reception?.kind === 'body' && facet.reception.poseRef
-        ? [intern({ kind: 'text', value: facet.reception.poseRef[0] }), facet.reception.poseRef[1]]
+        ? intern({ kind: 'received', value: facet.reception.poseRef })
         : null,
       facet.reception && !(facet.reception.kind === 'body' && facet.reception.poseRef)
         ? intern({ kind: 'reception', value: facet.reception })
@@ -1328,6 +1397,18 @@ function dictionaryWriter(base: FrameIndex, start: number) {
           ],
         ];
         break;
+      case 'checkDetail': {
+        const row: StoredDictionaryKinds['checkDetail'] = [
+          intern({ kind: 'fact', value: value.value.original }),
+          intern({ kind: 'sourceIdentity', value: value.value.identity }),
+          value.value.from,
+          value.value.through,
+          value.value.acquiredAt,
+          ...(value.value.aliases ? ([value.value.aliases] as [string[]]) : ([] as [])),
+        ];
+        stored = ['checkDetail', row];
+        break;
+      }
       default:
         stored = [value.kind, value.value] as StoredDictionaryValue;
     }
@@ -1356,6 +1437,7 @@ function packTemporalReceipt(
   operationOrdinal?: number,
   checkpoints: readonly TemporalCheckpointFields[] = [],
   confirmations: readonly TemporalConfirmation[] = [],
+  checks: readonly TemporalCheckGroup[] = [],
 ): TemporalFrameEntry[] {
   const { additions, intern, next } = dictionaryWriter(base, chunk.nextEntryOrdinal);
   let frame = base.frames.get(receipt.acquisition);
@@ -1404,8 +1486,8 @@ function packTemporalReceipt(
       );
     }
   const facets = packFacets(fields, header, intern);
-  if (confirmations.length) {
-    const subjects = packConfirmations(confirmations, header, intern);
+  if (confirmations.length || checks.length) {
+    const subjects = packConfirmations(confirmations, header, intern, checks, chunk);
     additions.push(
       immutableDataSnapshot({
         ordinal: next(),
@@ -1445,52 +1527,126 @@ function packConfirmations(
   confirmations: readonly TemporalConfirmation[],
   header: Extract<TemporalFrameEntry, { kind: 'frame' }>,
   intern: (value: DictionaryValue) => number,
-) {
-  const groups = new Map<number, TemporalPackedConfirmation[]>();
+  checks: readonly TemporalCheckGroup[] = [],
+  scope: Pick<TemporalFrameOwner, 'actorId' | 'physicalLife'>,
+): Extract<TemporalFrameEntry, { kind: 'confirmation' }>['subjects'] {
+  const groups = new Map<
+    string,
+    Extract<TemporalFrameEntry, { kind: 'confirmation' }>['subjects'][number]
+  >();
+  const identity = (source: EvidenceSource): DictionaryKinds['sourceIdentity'] =>
+    source.observer.actorId === scope.actorId && source.observer.physicalLife === scope.physicalLife
+      ? [source.family, source.id]
+      : [source.family, source.id, source.observer];
+  const groupFor = (
+    subject: string,
+    confirmation: EvidenceSource,
+    from: number,
+    through: number,
+    detail?: TemporalConfirmation['detailSupport'],
+  ) => {
+    const detailStamp =
+      detail &&
+      ([
+        detail.proof.confirmation.revision,
+        detail.proof.confirmedFrom,
+        detail.proof.confirmedThrough,
+      ] as const);
+    const key = JSON.stringify([subject, confirmation.revision, from, through, detailStamp]);
+    let group = groups.get(key);
+    if (!group) {
+      const check: Array<EvidenceSource['revision'] | null> = [
+        confirmation.revision,
+        from === header.at ? null : from,
+        through === header.at ? null : through,
+      ];
+      while (check.length > 1 && check.at(-1) === null) check.pop();
+      groups.set(
+        key,
+        (group = {
+          subject: intern({ kind: 'text', value: subject }),
+          check: check as unknown as Extract<
+            TemporalFrameEntry,
+            { kind: 'confirmation' }
+          >['subjects'][number]['check'],
+          ...(detailStamp ? { detail: detailStamp } : {}),
+          fields: [],
+        }),
+      );
+    }
+    return group;
+  };
+  const detailBase = (detail: TemporalConfirmation['detailSupport']) =>
+    detail
+      ? intern({
+          kind: 'checkDetail',
+          value: {
+            original: detail.proof.original,
+            identity: identity(detail.proof.confirmation),
+            from: detail.from,
+            through: detail.through,
+            acquiredAt: detail.acquiredAt,
+            ...(detail.proof.aliases ? { aliases: detail.proof.aliases } : {}),
+          },
+        })
+      : null;
+  const receptionFields = (
+    reception: TemporalReception | undefined,
+  ): [number | null, number | null] =>
+    reception?.kind === 'body' && reception.poseRef
+      ? [intern({ kind: 'received', value: reception.poseRef }), null]
+      : [null, reception ? intern({ kind: 'reception', value: reception }) : null];
   for (const value of confirmations) {
-    const subject = intern({ kind: 'text', value: value.subject }),
-      fields = groups.get(subject) ?? [];
-    if (!groups.has(subject)) groups.set(subject, fields);
-    fields.push(
+    const group = groupFor(
+      value.subject,
+      value.confirmation,
+      value.from,
+      value.through,
+      value.detailSupport,
+    );
+    group.fields.push(
       compactField([
-        [intern({ kind: 'text', value: value.reference.blockId }), value.reference.valueOrdinal],
+        intern({ kind: 'received', value: value.reference.valueRef }),
         intern({ kind: 'fact', value: value.original }),
-        intern({ kind: 'source', value: value.confirmation }),
-        value.detailSupport ? intern({ kind: 'detail', value: value.detailSupport }) : null,
-        value.reception?.kind === 'body' && value.reception.poseRef
-          ? [
-              intern({ kind: 'text', value: value.reception.poseRef[0] }),
-              value.reception.poseRef[1],
-            ]
-          : null,
-        value.reception && !(value.reception.kind === 'body' && value.reception.poseRef)
-          ? intern({ kind: 'reception', value: value.reception })
-          : null,
+        intern({ kind: 'sourceIdentity', value: identity(value.confirmation) }),
+        detailBase(value.detailSupport),
+        ...receptionFields(value.reception),
         'fieldOrdinal' in value ? (value as TemporalConfirmationRead).fieldOrdinal : null,
-        value.from !== header.at ? value.from : null,
-        value.through !== header.at ? value.through : null,
       ]),
     );
   }
-  return [...groups].map(([subject, fields]) => {
-    const common = [2, 7, 8].map((slot) => {
-      const first = fields[0]![slot as 2 | 7 | 8];
-      return first != null && fields.every((field) => field[slot as 2 | 7 | 8] === first)
-        ? first
-        : null;
-    }) as [number | null, number | null, number | null];
-    if (common.every((value) => value === null)) return { subject, fields };
-    return {
-      subject,
-      context: common,
-      fields: fields.map((field) => {
-        const row = [...field];
-        for (let at = 0; at < 3; at++) if (common[at] != null) row[[2, 7, 8][at]!] = null;
-        while (row.length > 1 && row.at(-1) == null) row.pop();
-        return row as unknown as TemporalPackedConfirmation;
-      }),
-    };
-  });
+  for (const value of checks) {
+    const group = groupFor(
+      value.subject,
+      value.confirmation,
+      value.from,
+      value.through,
+      value.detailSupport,
+    );
+    const detail = detailBase(value.detailSupport),
+      reception = receptionFields(value.reception);
+    for (const field of value.fields) {
+      group.fields.push(
+        compactField([
+          intern({ kind: 'received', value: field.value.reference }),
+          intern({
+            kind: 'fact',
+            value: {
+              source: value.original,
+              ordinal: value.originalOrdinal ?? field.originalOrdinal,
+            },
+          }),
+          intern({
+            kind: 'sourceIdentity',
+            value: identity({ ...value.confirmation, id: value.sourceId ?? field.id }),
+          }),
+          detail,
+          ...reception,
+        ]),
+      );
+    }
+  }
+  return [...groups.values()];
 }
 export function prepareTemporalFrameReceipt(
   chunk: TemporalFrameWriter,
@@ -1498,6 +1654,7 @@ export function prepareTemporalFrameReceipt(
   fields: readonly TemporalFacetReference[],
   buildCheckpoints?: TemporalCheckpointBuilder,
   confirmations: readonly TemporalConfirmation[] = [],
+  checks: readonly TemporalCheckGroup[] = [],
 ): {
   entries: TemporalFrameEntry[];
   checkpoints: readonly TemporalCheckpointFields[];
@@ -1509,12 +1666,18 @@ export function prepareTemporalFrameReceipt(
       receipt.subject,
       ...(receipt.contextSubjects ?? []),
       ...confirmations.map((value) => value.subject),
-    ].filter((subject) => !index.subjects.has(subject)),
+      ...checks.map((value) => value.subject),
+    ].filter(
+      (subject) =>
+        !index.subjects.has(subject) &&
+        !(receipt.change === 'baseline' && subject === receipt.subject),
+    ),
   );
   const includeFeatures =
     !index.featureScope &&
     (receipt.spatialContext === true ||
       confirmations.some((value) => value.reception !== undefined) ||
+      checks.some((check) => check.reception !== undefined) ||
       fields.some((facet) => facet.reception !== undefined || facet.poseFrame !== undefined) ||
       !!receipt.contextSubjects?.length ||
       receipt.change === 'receiver-frame');
@@ -1531,14 +1694,13 @@ export function prepareTemporalFrameReceipt(
       undefined,
       checkpoints,
       confirmations,
+      checks,
     ),
     checkpoints,
     confirmations,
   };
 }
-export function temporalChunkReferences(
-  chunk: TemporalFrameOwner,
-): ReadonlyMap<string, ReadonlySet<number>> {
+export function temporalChunkReferences(chunk: TemporalFrameOwner): ReadonlySet<string> {
   return frameIndex(readOnlyDraftView(chunk)).references;
 }
 export function appendTemporalFrameReceipt(
@@ -1577,7 +1739,7 @@ export function appendTemporalFrameReceipt(
           subjects: new Set(base.subjects),
           featureScope: base.featureScope,
           confirmations: new Map(base.confirmations),
-          references: new Map(base.references),
+          references: new Set(base.references),
         };
   for (const entry of additions) {
     index.entries.set(entry.ordinal, entry);
@@ -1604,19 +1766,13 @@ export function appendTemporalFrameReceipt(
     !!receipt.contextSubjects?.length ||
     receipt.change === 'receiver-frame';
   const packedFields = additions.flatMap(packedEntryFields);
-  index.featureScope ||= packedFields.some((field) => !!field[4] || field[5] != null);
+  index.featureScope ||= packedFields.some((field) => field[4] != null || field[5] != null);
   for (const facet of packedFields)
     for (const field of TEMPORAL_FACET_REFERENCE_FIELDS) {
       const packed = facet[field];
-      if (!packed) continue;
-      const reference = { blockId: dictionary(index, packed[0], 'text'), valueOrdinal: packed[1] };
-      let ordinals = index.references.get(reference.blockId);
-      if (!touched.has(reference.blockId)) {
-        ordinals = new Set(ordinals);
-        index.references.set(reference.blockId, ordinals);
-        touched.add(reference.blockId);
-      }
-      ordinals!.add(reference.valueOrdinal);
+      if (packed == null) continue;
+      const value = dictionary(index, packed, 'received');
+      if (typeof value === 'string') index.references.add(value);
     }
   index.length = nextEntries.length;
   if (isImmutableData(nextEntries) || isAppendBuffer(nextEntries)) indexes.set(nextEntries, index);
@@ -1729,7 +1885,7 @@ export function replaceTemporalChunkReceipts(
     const header = index.entries.get(original.frame);
     if (header?.kind !== 'frame') throw new Error('Temporal confirmation has no retained frame.');
     const { additions, intern } = dictionaryWriter(index, nextEntryOrdinal),
-      subjects = packConfirmations(values, header, intern);
+      subjects = packConfirmations(values, header, intern, [], chunk);
     const change: Extract<TemporalFrameEntry, { kind: 'confirmation' }> = { ...original, subjects };
     for (const entry of additions) {
       nextEntryOrdinal = Math.max(nextEntryOrdinal, entry.ordinal + 1);

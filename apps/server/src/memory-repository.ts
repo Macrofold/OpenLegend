@@ -1,3 +1,4 @@
+import { receivedValueAt } from '@open-legend/domain';
 import { nativeText } from '@open-legend/domain';
 import {
   newTemporalSourceWatch,
@@ -406,18 +407,14 @@ export class MemoryRepository {
   applySourceVersionPlan(worldId: string, revision: number, plan: SourceVersionPlan) {
     return applySourceVersions(this.db, worldId, revision, plan);
   }
-  prepareSourceVersionRetention(
+  async prepareSourceVersionRetention(
     state: SavedWorld,
     changes: RecordChanges,
     metadata?: RetentionMetadataView,
   ) {
-    metadata ??= this.prepareRetentionMetadata?.(state, changes, false);
+    metadata ??= await this.prepareRetentionMetadata?.(state, changes, false);
     if (!metadata) throw new Error('Complete personal retention metadata is unavailable.');
     return prepareSourceVersions(this.db, state, changes, metadata);
-  }
-  /** Establish the committed SQL source cut before a caller captures a read fence. */
-  async synchronizeSources(): Promise<void> {
-    await this.db.synchronizeProjection?.();
   }
   private derivedAllowance?: DerivedMemoryAllowance;
   private derivedPolicyDirty = false;
@@ -574,7 +571,6 @@ export class MemoryRepository {
         temporal.pending = [];
         temporal.pendingBytes = 0;
         const work = (async () => {
-          await this.synchronizeSources();
           return (
             fence.valid &&
             (await this.validateTemporalSelections(
@@ -602,10 +598,9 @@ export class MemoryRepository {
       },
     };
   }
-  /** Synchronous accepted-change notification, including journal-first acceptance.
-   * Applied-table notifications repeat safely; matching payloads keep the proof.
-   * No historical revision ledger or source body is retained by these short watches. */
-  acceptedSourceChanges(worldId: string, changes: RecordChanges, restored = false): void {
+  /** Invalidate finite source watches once the canonical transaction commits.
+   * No historical revision ledger or source body is retained by these watches. */
+  private invalidateSourceReads(worldId: string, changes: RecordChanges, restored = false): void {
     if (!this.canonicalSourceFences.size) return;
     for (const fence of this.canonicalSourceFences) {
       if (fence.worldId !== worldId) continue;
@@ -660,12 +655,11 @@ export class MemoryRepository {
   private readonly lexical: LexicalProjection;
   constructor(
     private readonly db: SqlDatabase,
-    private readonly receivedAllocationBytes?: (worldId: string, id: string) => number,
     private readonly prepareRetentionMetadata?: (
       state: SavedWorld,
       pending: RecordChanges | undefined,
       complete: boolean,
-    ) => RetentionMetadataView,
+    ) => Promise<RetentionMetadataView>,
   ) {
     this.lexical = new LexicalProjection(db);
     this.lexical.setDerivedAdmission((worldId, actors) => this.trimDerived(worldId, actors));
@@ -736,7 +730,7 @@ export class MemoryRepository {
       if (epoch.worldId === worldId && changed.has(epoch.actorId)) epoch.token = ++this.vectorToken;
   }
   committed(worldId: string, changes: RecordChanges, restored = false) {
-    this.acceptedSourceChanges(worldId, changes, restored);
+    this.invalidateSourceReads(worldId, changes, restored);
     const actors = new Set<string>();
     let unknownScope = changes.deletes.has('data_world') || changes.deletes.has('world_settings');
     // Current reception and attention are not retained memory. Their own grants
@@ -920,14 +914,14 @@ export class MemoryRepository {
       'worldId' in source ? source : captureTemporalHistoryReadContext(source, scope.actorId);
     return this.snapshot(() => readTemporalHistory(this.db, scope, context, query));
   }
-  prepareRetention(
+  async prepareRetention(
     state: SavedWorld,
     complete = false,
     pending?: RecordChanges,
     previous?: WorldState,
     metadata?: RetentionMetadataView,
   ): Promise<PreparedMemoryRetention> {
-    metadata ??= this.prepareRetentionMetadata?.(state, pending, complete);
+    metadata ??= await this.prepareRetentionMetadata?.(state, pending, complete);
     if (!metadata) throw new Error('Complete personal retention metadata is unavailable.');
     return (async () => {
       const accounts = await prepareAccountRetention(
@@ -943,7 +937,6 @@ export class MemoryRepository {
         complete,
         pending,
         previous,
-        this.receivedAllocationBytes,
         metadata,
       );
       const rows = new Map(accounts.rows);
@@ -1078,7 +1071,7 @@ export class MemoryRepository {
           q(key int,kind text,"actorId" text,"physicalLife" bigint,epoch text,ordinal bigint,at double precision,owner text)
       ) SELECT q.key,'chunk' AS kind,c.id,c.encoded_bytes FROM requested q
         CROSS JOIN LATERAL(SELECT c.id,${evidenceEncodedBytesSql('c')} AS encoded_bytes
-          FROM mind_temporal_chunks c WHERE c.world_id=? AND c.actor_id=q."actorId"
+          FROM mind_temporal_chunks c WHERE c.retired_revision IS NULL AND c.world_id=? AND c.actor_id=q."actorId"
             AND c.physical_life=q."physicalLife" AND c.receipt_epoch=q.epoch
             AND c.first_ordinal<=q.ordinal AND q.at>=? AND(q.owner IS NULL OR c.id=q.owner)
             AND EXISTS(SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id
@@ -1141,7 +1134,7 @@ export class MemoryRepository {
             supported.set(key, String(owner['id']));
           }
         }
-      const references = new Map<string, { block: string; ordinal: number }>();
+      const references = new Set<string>();
       const declarations = new Map<
         string,
         {
@@ -1159,9 +1152,8 @@ export class MemoryRepository {
           fields: Array<{ reference: TemporalFacetReference; value: TemporalValue }>;
         }
       >();
-      const addReference = (block: string, ordinal: number): string => {
-        const id = JSON.stringify([block, ordinal]);
-        references.set(id, { block, ordinal });
+      const addReference = (id: string): string => {
+        references.add(id);
         return id;
       };
       const addDeclarations = (
@@ -1289,7 +1281,7 @@ export class MemoryRepository {
               for (const reference of temporalFacetValueReferences(
                 temporalConfirmationReference(confirmation),
               ))
-                needed.push(addReference(reference.blockId, reference.valueOrdinal));
+                needed.push(addReference(reference));
             }
             if (expected.kind === 'checkpoint') {
               const state = expected.selection.checkpoint.availability?.find((group) =>
@@ -1336,11 +1328,11 @@ export class MemoryRepository {
                   fields,
                 );
                 for (const reference of temporalFacetValueReferences(field))
-                  needed.push(addReference(reference.blockId, reference.valueOrdinal));
+                  needed.push(addReference(reference));
               }
             }
             for (const reference of temporalFacetValueReferences(owned))
-              needed.push(addReference(reference.blockId, reference.valueOrdinal));
+              needed.push(addReference(reference));
             fields.push({ reference: owned, value: expected.values[index]! });
             proofs.push(origin);
           }
@@ -1358,30 +1350,26 @@ export class MemoryRepository {
           chunkSelections.set(key, { ownerId, references: needed, fields });
         }
       const matching = new Map<string, Record<string, unknown>>(),
-        sources: Record<string, { values: Array<TemporalFragment | null | undefined> }> = {};
-      const sourceRows = `FROM jsonb_to_recordset(?::jsonb)q(block text,ordinal bigint)
-        JOIN mind_perception_values p ON p.world_id=? AND p.source_id=q.block
-        JOIN mind_perception_segments s ON s.world_id=p.world_id AND s.parent_id=p.id
-          AND s.first_ordinal<=q.ordinal AND s.last_ordinal>=q.ordinal`;
-      const payload = "s.payload::json->'values'->(q.ordinal-s.first_ordinal)::int";
+        sources: Record<string, { value: TemporalFragment }> = {};
       if (references.size) {
-        const args = [JSON.stringify([...references.values()]), scope.worldId];
+        const args = [scope.worldId, [...references]];
         const sizes = await this.db
-          .prepare(`SELECT SUM(octet_length((${payload})::text)) AS bytes ${sourceRows}`)
+          .prepare(
+            `SELECT SUM(octet_length((payload::json->'value')::text)) AS bytes
+          FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])`,
+          )
           .get(...args);
         if (preparationBytes + Number(sizes?.['bytes'] ?? 0) > RETRIEVAL_BYTES) return false;
         for (const row of await this.db
           .prepare(
-            `SELECT q.block,q.ordinal,p.id AS owner_id,s.id AS segment_id,(${payload})::text AS payload ${sourceRows}`,
+            `SELECT source_id,id AS owner_id,(payload::json->'value')::text AS payload
+          FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])`,
           )
           .all(...args)) {
           if (typeof row['payload'] !== 'string') continue;
-          const block = String(row['block']),
-            ordinal = Number(row['ordinal']),
-            value = JSON.parse(row['payload']) as TemporalFragment;
-          if (!value) continue;
-          (sources[block] ??= { values: [] }).values[ordinal] = value;
-          matching.set(JSON.stringify([block, ordinal]), row);
+          const id = String(row['source_id']);
+          sources[id] = { value: JSON.parse(row['payload']) as TemporalFragment };
+          matching.set(id, row);
         }
       }
       const live = currentWindow();
@@ -1390,7 +1378,7 @@ export class MemoryRepository {
           selected[key]!.at + live.maxAgeSeconds >= live.at &&
           entry.references.every((id) => matching.has(id)) &&
           entry.fields.every(({ reference, value }) => {
-            const fragment = sources[reference.blockId]?.values[reference.valueOrdinal];
+            const fragment = receivedValueAt(sources, reference);
             return (
               fragment !== undefined &&
               fragment !== null &&
@@ -1471,17 +1459,15 @@ export class MemoryRepository {
         [...chunkSelections.values()].flatMap((value) => value.references),
       );
       for (const id of neededReferences) {
-        const reference = references.get(id)!,
-          row = matching.get(id)!;
+        const row = matching.get(id)!;
         addTemporalWitness(rows, 'mind_perception_values', String(row['owner_id']), {
-          header: new Map([['id', canonicalJson(reference.block)]]),
-        });
-        addTemporalWitness(rows, 'mind_perception_segments', String(row['segment_id']), {
-          slots: new Map([
-            [reference.ordinal, canonicalJson(sources[reference.block]!.values[reference.ordinal])],
+          header: new Map([
+            ['id', canonicalJson(id)],
+            ['value', canonicalJson(sources[id]!.value)],
           ]),
         });
       }
+
       const installed = installTemporalWitnesses(watch, rows, RETRIEVAL_BYTES);
       if (installed) {
         watch.deadline = Math.min(
@@ -1515,7 +1501,7 @@ export class MemoryRepository {
       WHERE EXISTS (SELECT 1 FROM world_head WHERE world_id=? AND generation=?) AND (
         EXISTS (SELECT 1 FROM LATERAL (
           SELECT last_ordinal FROM mind_temporal_chunks c
-          WHERE c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
+          WHERE c.retired_revision IS NULL AND c.world_id=? AND c.actor_id=q."actorId" AND c.physical_life=q."physicalLife"
             AND c.receipt_epoch=q.epoch AND c.first_ordinal<=q.ordinal
             AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND s.receipt_ordinals @> ARRAY[q.ordinal])
           ORDER BY c.first_ordinal DESC LIMIT 1
@@ -1751,7 +1737,7 @@ export class MemoryRepository {
   }
   /** Prepare the exact changed source rows once. No world/history enumeration or SQL,
    * and no eligibility/index mutation before the transaction actually applies them.
-   * docs/projects/performance-overhaul/journal-contract.md */
+   * docs/projects/bookkeeping-simplification-tech-design.md#4-direct-transactional-saving */
   prepareSources(
     worldId: string,
     changes: RecordChanges,

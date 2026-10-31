@@ -132,7 +132,7 @@ export function resolveSemanticCause(
   const actor = entityGet(world.entities, actorId),
     state = actor?.actor?.agency.semantic;
   if (!state || !actor) return;
-  const live = world.perceptionEvidence?.[actorId]?.attention?.candidates ?? {};
+  const live = world.perceptionEvidence?.[actorId]?.attention?.annotations ?? {};
   for (const existing of Object.keys(state.resolved)) {
     const anchor = JSON.parse(existing) as [string, string];
     if (!live[anchor[0]]) delete state.resolved[existing];

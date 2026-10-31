@@ -1,8 +1,7 @@
+import { currentFacetEntries, currentFacetGet } from '@open-legend/domain';
 import {
   receiptLookupBuckets,
   restoreEvidenceLayout,
-  snapshotEvidenceOwner,
-  receivedValueRetirementBytes,
   receivedValueSql,
 } from './evidence-segments.js';
 import {
@@ -33,12 +32,10 @@ import {
   selectTemporalReceiptFacets,
   receivedObservationValueReferences,
   receivedFacetValueReferences,
-  currentOriginal,
   currentFacetGrant,
   currentFacetOriginal,
   recordMapChangesBetween,
   referencedReceivedValues,
-  nominateReceivedValueRetirement,
   updateWorld,
   freezeWorld,
   preserveReceivedValuePreparation,
@@ -46,7 +43,7 @@ import {
   type TemporalChunk,
   type TemporalEvidenceState,
   type TemporalHistorySelection,
-  type ReceivedValueBlock,
+  type ReceivedValue,
   type ReceivedValueLookup,
   type ReceivedValueFragment,
   type TemporalReceiptPrefix,
@@ -66,23 +63,15 @@ export const temporalChunkRecordId = (actorId: string, id: string) =>
   JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId, 'chunks', id]);
 /** Exact value membership is a derived column on the existing chunk, not a
  * second owner or one SQL row per received coordinate. */
-export function temporalChunkValueReferences(chunk: TemporalChunk): Record<string, number[]> {
-  return Object.fromEntries(
-    [...temporalChunkReferences(chunk)].map(([id, ordinals]) => [
-      id,
-      [...ordinals].sort((a, b) => a - b),
-    ]),
-  );
+export function temporalChunkValueReferences(chunk: TemporalChunk): string[] {
+  return [...temporalChunkReferences(chunk)].sort();
 }
+
 /** This projection controls payload reclamation, so a malformed saved index
  * must refuse before it can erase a still-owned value. */
 export function readTemporalChunkRecord(row: Record<string, unknown>): TemporalChunk {
   const parsed = JSON.parse(String(row['payload']));
-  const chunk = restoreEvidenceLayout(
-    parsed,
-    'entries',
-    row['segments'],
-  ) as unknown as TemporalChunk;
+  const chunk = restoreEvidenceLayout(parsed, row['segments']) as unknown as TemporalChunk;
   validateTemporalChunkValueReferences(chunk, row['value_refs']);
   return chunk;
 }
@@ -158,15 +147,10 @@ export function captureTemporalHistoryReadContext(
   const chunks = (actor?.chunks ?? []).map((chunk) => immutableDataSnapshot(chunk));
   const sources: Record<string, ReceivedValueLookup[string]> = {};
   for (const chunk of chunks)
-    for (const [id, ordinals] of temporalChunkReferences(chunk)) {
+    for (const id of temporalChunkReferences(chunk)) {
       const source = world.receivedValues?.sources[id];
       if (!source) continue;
-      const values = sources[id]?.values.slice() ?? [];
-      for (const ordinal of ordinals) {
-        const value = source.values[ordinal];
-        if (value) values[ordinal] = immutableDataSnapshot(value);
-      }
-      sources[id] = { values };
+      sources[id] = { value: immutableDataSnapshot(source.value) };
     }
   return {
     worldId: world.id,
@@ -195,32 +179,21 @@ export function receivedValueReleaseCandidates(
   const addObservation = (source: ReceivedObservation) => {
     if (observations.has(source)) return;
     observations.add(source);
-    for (const reference of receivedObservationValueReferences(source))
-      candidates.add(reference.blockId);
+    for (const reference of receivedObservationValueReferences(source)) candidates.add(reference);
   };
   if (before?.perceptionEvidence !== after.perceptionEvidence)
     for (const [actorId, owner] of Object.entries(before?.perceptionEvidence ?? {})) {
       const current = after.perceptionEvidence?.[actorId];
       const frame = owner.visualConfirmation?.frameRef;
       const nextFrame = current?.visualConfirmation?.frameRef;
-      if (frame && (!nextFrame || frame[0] !== nextFrame[0] || frame[1] !== nextFrame[1]))
-        candidates.add(frame[0]);
-      if (owner.originals !== current?.originals) {
-        const changed =
-          current?.originals && recordMapChangesBetween(owner.originals, current.originals);
-        for (const key of changed ?? Object.keys(owner.originals)) {
-          const original = owner.originals[key];
-          if (original && original !== current?.originals[key]) addObservation(original);
-        }
-      }
+      if (typeof frame === 'string' && frame !== nextFrame) candidates.add(frame);
       if (owner.received !== current?.received) {
         const retained = new Set(current?.received);
-        for (const source of owner.received)
-          if (!retained.has(source)) addObservation(currentOriginal(owner, source));
+        for (const source of owner.received) if (!retained.has(source)) addObservation(source);
       }
       if (owner.current !== current?.current)
-        for (const [key, lease] of Object.entries(owner.current)) {
-          const next = current?.current[key];
+        for (const [key, lease] of currentFacetEntries(owner)) {
+          const next = currentFacetGet(current, key);
           const original = currentFacetGrant(owner, lease).original;
           const nextOriginal =
             next && current ? currentFacetGrant(current, next).original : undefined;
@@ -230,13 +203,9 @@ export function receivedValueReleaseCandidates(
           if (
             original !== nextOriginal ||
             beforeRefs.length !== afterRefs.length ||
-            beforeRefs.some(
-              (reference, index) =>
-                reference.blockId !== afterRefs[index]?.blockId ||
-                reference.valueOrdinal !== afterRefs[index]?.valueOrdinal,
-            )
+            beforeRefs.some((reference, index) => reference !== afterRefs[index])
           ) {
-            for (const reference of beforeRefs) candidates.add(reference.blockId);
+            for (const reference of beforeRefs) candidates.add(reference);
             addObservation(currentFacetOriginal(owner, lease));
           }
         }
@@ -267,92 +236,20 @@ export function receivedValueReleaseCandidates(
         const prior = old[id];
         if (
           (!source && prior) ||
-          (source && !prior && id !== after.receivedValues?.activeSource) ||
-          (source &&
-            prior &&
-            source !== prior &&
-            appendedRecordCount(prior.values, source.values) === undefined &&
-            prior.values.some((value, ordinal) => value && !source.values[ordinal]))
+          (source && !prior) ||
+          (source && prior && source !== prior && prior.value !== source.value)
         )
           candidates.add(id);
       }
-    const append = before?.receivedValues?.activeSource;
-    if (append && append !== after.receivedValues?.activeSource) candidates.add(append);
   }
   return candidates;
 }
 
-/** The command path only records release intent; it performs no ownership SQL. */
-export function nominateReleasedReceivedValues(
-  before: Pick<WorldState, 'receivedValues' | 'perceptionEvidence' | 'experience'> | undefined,
-  world: WorldState,
-  candidates: ReadonlySet<string> = receivedValueReleaseCandidates(before, world),
-  allocationBytes?: (worldId: string, id: string) => number,
-): WorldState {
-  const nominations = new Map<string, number>();
-  let resident: ReturnType<typeof referencedReceivedValues> | undefined;
-  for (const id of candidates) {
-    const candidate = world.receivedValues?.retirement?.pending[id];
-    const prior = before?.receivedValues?.retirement?.pending[id];
-    // Closure preparation can revisit this same transition. Its already changed
-    // candidate, including a cleanup proposal, must not be nominated twice.
-    if (
-      candidate &&
-      (!prior ||
-        candidate.generation !== prior.generation ||
-        candidate.releaseRevision !== prior.releaseRevision ||
-        candidate.stage !== prior.stage ||
-        candidate.applicationRevision !== prior.applicationRevision)
-    )
-      continue;
-    const current = world.receivedValues?.sources[id];
-    if (current) {
-      resident ??= referencedReceivedValues(world, { captures: false });
-      const owned = resident.get(id);
-      // A closed shared block is not garbage merely because its append phase
-      // ended. Every live slot already has a complete resident ownership proof;
-      // its actual last-owner release will nominate it again when needed.
-      if (owned && current.values.every((value, ordinal) => !value || owned.has(ordinal))) {
-        countMetric('persistence.receivedRetirementFullyOwned');
-        continue;
-      }
-    }
-    const previous = before?.receivedValues?.sources[id];
-    const allocation = allocationBytes?.(world.id, id);
-    // Complete absence from both resident and durable/pending allocations leaves
-    // no physical payload to reclaim. No guessed chunk-sized debt is invented.
-    if (allocation === 0 && !current && !candidate) continue;
-    const charge = Math.max(
-      allocation ?? 0,
-      current ? receivedValueRetirementBytes(current) : 0,
-      previous ? receivedValueRetirementBytes(previous) : 0,
-      candidate?.bytes ?? 0,
-    );
-    if (allocation === undefined && !current && !previous && !candidate)
-      throw new MemoryRetentionError('Complete received allocation headers are unavailable.');
-    nominations.set(id, charge);
-  }
-  if (nominations.size) countMetric('persistence.receivedRetirementNominations', nominations.size);
-  if (!nominations.size) return world;
-  const next = updateWorld(
-    world,
-    (draft) => {
-      nominateReceivedValueRetirement(draft, nominations);
-      if (world.nativeInterval) draft.nativeInterval = { ...world.nativeInterval };
-    },
-    { retainNativeValues: true },
-  );
-  // This bookkeeping owner has finished its edit. Publish the derived physical
-  // indexes now; a later generic freeze cannot certify this exact write set.
-  return Object.isFrozen(world)
-    ? preserveReceivedValuePreparation(world, freezeWorld(next, { completedTransition: true }))
-    : next;
-}
-
-export function retentionNeedsPreparation(world: WorldState): boolean {
+/** Saved counters select actors before any cold metadata is read. */
+export function* retentionDueActors(world: WorldState): Generator<string> {
   const policy = selectedTemporalPolicy(world);
-  return Object.values(world.experience?.temporal?.actors ?? {}).some(
-    (actor) =>
+  for (const [id, actor] of Object.entries(world.experience?.temporal?.actors ?? {}))
+    if (
       actor.maintenanceDue ||
       actor.bytes > policy.recent.maxBytes ||
       actor.count > policy.recent.maxChanges ||
@@ -363,8 +260,12 @@ export function retentionNeedsPreparation(world: WorldState): boolean {
         (key) =>
           actor.accounts![key].bytes > policy[key].maxBytes ||
           actor.accounts![key].count > policy[key].maxRecords,
-      ),
-  );
+      )
+    )
+      yield id;
+}
+export function retentionNeedsPreparation(world: WorldState): boolean {
+  return !retentionDueActors(world).next().done;
 }
 
 interface ChunkMetadata {
@@ -454,7 +355,7 @@ export async function readTemporalHistory(
     );
   const chunks = new Map<string, TemporalChunk>();
   const selected: string[] = [];
-  const sourceIds = new Map<string, Set<number>>();
+  const sourceIds = new Set<string>();
   const metadataCursor = (row: Record<string, unknown>) => ({
     at: Number(row['first_at']),
     order: Number(row['first_order']),
@@ -514,27 +415,19 @@ export async function readTemporalHistory(
   // A bounded chunk is self-contained: its checkpoints and intervening scalar
   // assignments can support a selected suffix without another chunk chain.
   for (const chunk of chunks.values())
-    for (const [id, ordinals] of temporalChunkReferences(chunk)) {
-      let selected = sourceIds.get(id);
-      if (!selected) sourceIds.set(id, (selected = new Set()));
-      for (const ordinal of ordinals) selected.add(ordinal);
-    }
+    for (const id of temporalChunkReferences(chunk)) sourceIds.add(id);
   preparationBytes = [...chunks.values()].reduce(
     (bytes, chunk) => bytes + Buffer.byteLength(JSON.stringify(chunk)),
     0,
   );
-  const sources: Record<string, { values: Array<ReceivedValueFragment | null | undefined> }> = {},
-    missing: Array<{ block: string; ordinal: number }> = [];
-  for (const [id, ordinals] of sourceIds) {
-    const values: Array<ReceivedValueFragment | null | undefined> = [];
-    for (const ordinal of ordinals) {
-      const value = context.sources[id]?.values[ordinal];
-      if (value) {
-        values[ordinal] = value;
-        preparationBytes += Buffer.byteLength(JSON.stringify(value));
-      } else missing.push({ block: id, ordinal });
-    }
-    sources[id] = { values };
+  const sources: Record<string, { value: ReceivedValueFragment }> = {},
+    missing: string[] = [];
+  for (const id of sourceIds.keys()) {
+    const value = context.sources[id]?.value;
+    if (value) {
+      sources[id] = { value };
+      preparationBytes += Buffer.byteLength(JSON.stringify(value));
+    } else missing.push(id);
   }
   const unavailable = () => ({
     entries: [],
@@ -544,27 +437,28 @@ export async function readTemporalHistory(
   });
   if (preparationBytes > maximumPreparation || missing.length > maximumRows) return unavailable();
   if (missing.length) {
-    const slot = receivedValueSql('?', 'q.block', 'q.ordinal');
+    const args = [scope.worldId, missing];
     const sizes = await db
       .prepare(
-        `SELECT SUM(octet_length((${slot})::text)) AS bytes
-      FROM jsonb_to_recordset(?::jsonb)q(block text,ordinal bigint)`,
+        `SELECT SUM(octet_length((payload::json->'value')::text)) AS bytes
+      FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])`,
       )
-      .get(scope.worldId, JSON.stringify(missing));
+      .get(...args);
     preparationBytes += Number(sizes?.['bytes'] ?? 0);
     if (preparationBytes > maximumPreparation) return unavailable();
     for (const row of await db
       .prepare(
-        `SELECT q.block,q.ordinal,(${slot})::text AS payload
-      FROM jsonb_to_recordset(?::jsonb)q(block text,ordinal bigint)`,
+        `SELECT source_id,(payload::json->'value')::text AS payload
+      FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])`,
       )
-      .all(scope.worldId, JSON.stringify(missing))) {
-      if (typeof row['payload'] !== 'string') continue;
-      sources[String(row['block'])]!.values[Number(row['ordinal'])] = JSON.parse(
-        row['payload'],
-      ) as ReceivedValueFragment;
+      .all(...args)) {
+      if (typeof row['payload'] === 'string')
+        sources[String(row['source_id'])] = {
+          value: JSON.parse(row['payload']) as ReceivedValueFragment,
+        };
     }
   }
+
   const selection = selectCapturedTemporalHistory(
     { ...context, chunks: [...chunks.values()], sources },
     { ...query, from, through, limit, bytes: maxBytes, operations: context.maximumOperations },
@@ -583,18 +477,11 @@ export async function prepareTemporalRetention(
   complete = false,
   pending?: RecordChanges,
   previous?: WorldState,
-  allocationBytes?: (worldId: string, id: string) => number,
   retainedMetadata?: RetentionMetadataView,
 ): Promise<PreparedMemoryRetention> {
   if (!retainedMetadata)
     throw new MemoryRetentionError('Complete personal retention metadata is unavailable.');
-  const nominated = nominateReleasedReceivedValues(
-    previous,
-    state.world,
-    undefined,
-    allocationBytes,
-  );
-  if (nominated !== state.world) state = { ...state, world: nominated };
+
   const temporal = state.world.experience?.temporal;
   const rows = new Map<string, string[]>();
   const positions = new Map<string, Map<string, number>>();
@@ -694,8 +581,8 @@ export async function prepareTemporalRetention(
         chunk.through > cutoff &&
         ((!excessBytes && !excessCount) || index === ordered.length - 1)
       ) {
-        nextDue = chunk.at + policy.maxAgeSeconds;
-        if (chunk.at <= cutoff || excessBytes || excessCount)
+        nextDue = chunk.through + policy.maxAgeSeconds;
+        if (excessBytes || excessCount)
           partials.push({
             actorId,
             metadata: chunk,
@@ -780,7 +667,7 @@ export async function prepareTemporalRetention(
           'SELECT id,payload,segments,value_refs FROM mind_temporal_chunks_read WHERE world_id=? AND id=ANY(?::text[])',
         )
         .all(world.id, coldIds)) {
-        const chunk = snapshotEvidenceOwner(readTemporalChunkRecord(row), 'entries');
+        const chunk = immutableDataSnapshot(readTemporalChunkRecord(row));
         chunks.set(String(row['id']), chunk);
         remember('mind_temporal_chunks', String(row['id']), chunk);
       }
@@ -794,11 +681,11 @@ export async function prepareTemporalRetention(
         if (!world.receivedValues?.sources[id]) missing.add(id);
       }
     }
-    const loaded = new Map<string, ReceivedValueBlock>();
+    const loaded = new Map<string, ReceivedValue>();
     if (missing.size && !complete) {
       const size = await db
         .prepare(
-          'SELECT SUM(encoded_bytes) AS bytes FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
+          'SELECT SUM(octet_length(payload)) AS bytes FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
         )
         .get(world.id, [...missing]);
       preparationBytes += Number(size?.['bytes'] ?? 0);
@@ -806,13 +693,10 @@ export async function prepareTemporalRetention(
         throw new MemoryRetentionError('Recent expiry exceeds bounded preparation.');
       for (const row of await db
         .prepare(
-          'SELECT id,payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
+          'SELECT id,payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
         )
         .all(world.id, [...missing])) {
-        const block = snapshotEvidenceOwner(
-          restoreEvidenceLayout(JSON.parse(String(row['payload'])), 'values', row['segments']),
-          'values',
-        ) as unknown as ReceivedValueBlock;
+        const block = immutableDataSnapshot(JSON.parse(String(row['payload']))) as ReceivedValue;
         loaded.set(block.id, block);
         remember('mind_perception_values', String(row['id']), block);
         let held = positions.get('mind_perception_values');
@@ -920,7 +804,6 @@ export async function prepareTemporalRetention(
     );
   }
   // No cold ownership discovery on this path: only the exact logical release and intent.
-  world = nominateReleasedReceivedValues(state.world, world, possibleSources, allocationBytes);
   return {
     state: world === state.world ? state : { ...state, world },
     rows,

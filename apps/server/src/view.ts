@@ -577,10 +577,10 @@ export async function projectView(
   const attention = world.perceptionEvidence?.[player.id]?.attention;
   const { keys: attentionKeys, preferences: attentionPreferences } = memo(
     'attentionPreferences',
-    [attention?.candidates, attention?.explicit],
+    [attention?.annotations, attention?.explicit],
     () => ({
       keys: new Map(
-        Object.entries(attention?.candidates ?? {}).map(([key, candidate]) => [
+        Object.entries(attention?.annotations ?? {}).map(([key, candidate]) => [
           candidate.sourceId,
           key,
         ]),

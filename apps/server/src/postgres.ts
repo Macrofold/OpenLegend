@@ -15,46 +15,21 @@ export class PostgresDatabase implements SqlDatabase {
   private readReady?: Promise<void>;
   private readonly readLane = new WorkLane('postgres.read', 512);
   private readonly writeLane = new WorkLane('postgres', 512);
-  private readonly materializationLane = new WorkLane('postgres.materialization', 1);
-  private materializer?: pg.Client;
-  private materializerReady?: Promise<void>;
   private transactionContext = new AsyncLocalStorage<{
     active: boolean;
     client: pg.Client;
     readOnly: boolean;
     committed: (() => void)[];
     rolledBack: (() => void)[];
-    projectionRevision?: number;
   }>();
   private failed = false;
-  private sharedLease?: Promise<void>;
-  private materializerClosing?: Promise<void>;
   private fail(): void {
-    if (this.failed) return;
     this.failed = true;
-    // A subordinate holds the same reservation until its server session ends.
-    void this.closeMaterializer().catch(() => undefined);
-    try {
-      this.applicationFailure?.();
-    } catch {
-      /* Failure remains sticky. */
-    }
-  }
-  private closeMaterializer(): Promise<void> {
-    if (this.materializer) {
-      const client = this.materializer;
-      this.materializer = undefined;
-      this.materializerReady = undefined;
-      this.materializerClosing = client.end();
-    }
-    return this.materializerClosing ?? Promise.resolve();
   }
   constructor(
     private readonly connectionString: string,
     private readonly readOnly = false,
     readonly writeGroups = true,
-    private readonly role: 'primary' | 'application' = 'primary',
-    private applicationFailure?: () => void,
   ) {
     this.client = new pg.Client({
       connectionString,
@@ -85,76 +60,12 @@ export class PostgresDatabase implements SqlDatabase {
       );
       return;
     }
-    if (this.role === 'application') {
-      const lock = await this.client.query(
-        'SELECT pg_try_advisory_lock_shared(187114, 1) AS acquired',
-      );
-      if (!lock.rows[0].acquired) throw new Error('The application reservation is unavailable.');
-      await this.client.query('SET search_path TO open_legend');
-      return;
-    }
     const lock = await this.client.query('SELECT pg_try_advisory_lock(187114, 1) AS acquired');
     if (!lock.rows[0].acquired) throw new Error('Another Open Legend writer owns this database.');
     await this.client.query(
       'CREATE SCHEMA IF NOT EXISTS open_legend; SET search_path TO open_legend; CREATE SCHEMA IF NOT EXISTS mind',
     );
   }
-  /** The original game owner first excludes every independent writer, then
-   * retains a shared hold before releasing exclusive. Owned application sessions
-   * share that reservation; every independent startup still needs exclusive. */
-  private shareLease(): Promise<void> {
-    return (this.sharedLease ??= this.serial(async () => {
-      await this.ready;
-      if (this.readOnly || this.role !== 'primary' || this.failed)
-        throw new Error('The primary writer reservation is unavailable.');
-      await this.client.query('SELECT pg_advisory_lock_shared(187114, 1)');
-      await this.client.query('SELECT pg_advisory_unlock(187114, 1)');
-    }));
-  }
-  async shareApplicationLease(
-    onFailure: () => void,
-  ): Promise<{ url: string; writeGroups: boolean }> {
-    if (this.applicationFailure) throw new Error('The application owner is already installed.');
-    this.applicationFailure = onFailure;
-    await this.shareLease();
-    return { url: this.connectionString, writeGroups: this.writeGroups };
-  }
-  /** Must follow the subordinate's shared-hold acknowledgement, before activation.
-   * A ping on this SAME unreconnected primary session proves overlapping ownership. */
-  async confirmApplicationLease(): Promise<void> {
-    await this.serial(async () => {
-      await this.ready;
-      if (this.failed) throw new Error('The original PostgreSQL owner is unavailable.');
-      await this.client.query('SELECT 1');
-      if (this.failed) throw new Error('The original PostgreSQL owner is unavailable.');
-    });
-  }
-  /** Call only after the worker has stopped. Regaining exclusive proves every
-   * subordinate server session has ended, including an ambiguously sent COMMIT.
-   * The existing connection statement timeout bounds the upgrade; failure cannot
-   * authorize replay. Keep the parent's shared hold throughout the inspection. */
-  applicationBarrier<T>(operation: () => Promise<T>): Promise<T> {
-    if (this.transactionActive)
-      return Promise.reject(new Error('Application inspection requires its owned transaction.'));
-    return this.materializationLane.run(async () => {
-      await this.closeMaterializer();
-      this.materializerClosing = undefined;
-      return this.serial(async () => {
-        await this.ready;
-        if (this.readOnly || this.role !== 'primary' || this.failed || !this.sharedLease)
-          throw new Error('The original PostgreSQL owner is unavailable.');
-        let exclusive = false;
-        try {
-          await this.client.query('SELECT pg_advisory_lock(187114, 1)');
-          exclusive = true;
-          return await this.inTransaction(this.client, false, operation);
-        } finally {
-          if (exclusive) await this.client.query('SELECT pg_advisory_unlock(187114, 1)');
-        }
-      });
-    });
-  }
-
   private serial<T>(operation: () => Promise<T>): Promise<T> {
     return this.writeLane.run(operation);
   }
@@ -162,72 +73,6 @@ export class PostgresDatabase implements SqlDatabase {
   get transactionActive(): boolean {
     return this.transactionContext.getStore()?.active ?? false;
   }
-  get projectionRevision(): number | undefined {
-    return this.transactionContext.getStore()?.projectionRevision;
-  }
-  /** Every application connection holds the primary owner's shared reservation.
-   * It applies already accepted entries; independent startup still needs exclusive. */
-  materializationTransaction<T>(
-    revision: number,
-    operation: (useRevision: (revision: number) => void) => Promise<T>,
-  ): Promise<T> {
-    if (this.readOnly || this.transactionActive)
-      return Promise.reject(new Error('Application requires its independent owned transaction.'));
-    return this.materializationLane.run(async () => {
-      await this.ready;
-      if (this.failed) throw new Error('PostgreSQL writer lease is unavailable.');
-      if (this.role === 'application')
-        return this.inTransaction(
-          this.client,
-          false,
-          () => operation(this.revisionScope(this.client, revision)),
-          revision,
-        );
-      await this.shareLease();
-      await this.materializerClosing;
-      this.materializerClosing = undefined;
-      if (!this.materializerReady) {
-        this.materializer = new pg.Client({
-          connectionString: this.connectionString,
-          connectionTimeoutMillis: 5000,
-          statement_timeout: 5000,
-        });
-        this.materializer.on('error', () => {
-          this.fail();
-        });
-        const client = this.materializer;
-        this.materializerReady = client.connect().then(async () => {
-          const lock = await client.query(
-            'SELECT pg_try_advisory_lock_shared(187114, 1) AS acquired',
-          );
-          if (!lock.rows[0].acquired)
-            throw new Error('The application reservation is unavailable.');
-          await client.query('SET search_path TO open_legend');
-          // Do not activate an old connection under a replacement owner's hold.
-          await this.confirmApplicationLease();
-        });
-      }
-      await this.materializerReady;
-      if (this.failed || !this.materializer)
-        throw new Error('PostgreSQL writer lease is unavailable.');
-      return this.inTransaction(
-        this.materializer!,
-        false,
-        () => operation(this.revisionScope(this.materializer!, revision)),
-        revision,
-      );
-    });
-  }
-
-  private revisionScope(client: pg.Client, first: number): (next: number) => void {
-    return (next) => {
-      const scope = this.transactionContext.getStore();
-      if (!scope?.active || scope.client !== client || !Number.isSafeInteger(next) || next < first)
-        throw new Error('Invalid applying revision scope.');
-      scope.projectionRevision = next;
-    };
-  }
-
   afterCommit(callback: () => void) {
     const scope = this.transactionContext.getStore();
     if (scope?.active) scope.committed.push(callback);
@@ -281,7 +126,6 @@ export class PostgresDatabase implements SqlDatabase {
     client: pg.Client,
     readOnly: boolean,
     operation: () => Promise<T>,
-    projectionRevision?: number,
   ): Promise<T> {
     const scope = {
       active: true,
@@ -289,7 +133,6 @@ export class PostgresDatabase implements SqlDatabase {
       readOnly,
       committed: [] as (() => void)[],
       rolledBack: [] as (() => void)[],
-      projectionRevision,
     };
     return this.transactionContext.run(scope, async () => {
       let result: T;
@@ -361,14 +204,9 @@ export class PostgresDatabase implements SqlDatabase {
     };
   }
   async close(): Promise<void> {
-    await Promise.all([
-      this.writeLane.idle(),
-      this.readLane.idle(),
-      this.materializationLane.idle(),
-    ]);
+    await Promise.all([this.writeLane.idle(), this.readLane.idle()]);
     await this.ready.catch(() => undefined);
     this.fail();
-    await this.closeMaterializer();
     await this.client.end();
     if (this.readReady) {
       await this.readReady.catch(() => undefined);

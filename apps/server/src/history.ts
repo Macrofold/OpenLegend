@@ -224,8 +224,7 @@ export class HistoryRepository {
   }
   /** Only called after commit; durable jobs recover a lost notification on restart. */
   committed(changes?: RecordChanges) {
-    // The journal worker has its own repository instance. Invalidate the live
-    // banner cache when its canonical application could have retired sources.
+    // Committed source retirement invalidates cached personal banners.
     if (
       changes &&
       (changes.deletes.get('mind_temporal_chunks')?.length ||
@@ -237,43 +236,7 @@ export class HistoryRepository {
     this.notifiedRevision = this.queuedRevision;
     for (const listener of this.listeners) listener();
   }
-  /** Story nomination has immediate operational dependencies. Until those decisions
-   * are journal data too, retain the ordinary atomic family for any candidate. */
-  canDeferAppend(world: WorldState, inputs: ReturnType<typeof prepareHistory>): boolean {
-    if (!inputs.fastAppend || inputs.removed.length) return false;
-    const principals = this.bindLocalPrincipal
-      ? Object.entries(world.authorship.playerAccountIds).map(([actorId, ownerId]) => ({
-          actorId,
-          ownerId,
-        }))
-      : this.principals;
-    const policy = world.storyPolicy ?? defaultStoryPolicy();
-    for (const event of inputs.changed) {
-      // Missing accounts grant no history access. Sensory accounts carry their
-      // exact temporal receipt through the same append writer and recovery path.
-      for (const principal of principals) {
-        if (
-          inputs.forgotten(principal.actorId).has(event.id) ||
-          !event.audience.includes(principal.actorId)
-        )
-          continue;
-        const account = inputs.perspective(principal.actorId, event.id);
-        if (!account) continue;
-        const evidence = account.evidence;
-        if (
-          this.storySelection(
-            world,
-            event,
-            principal.actorId,
-            { evidence, text: evidence.text },
-            policy,
-          ).selection.kind === 'candidate'
-        )
-          return false;
-      }
-    }
-    return true;
-  }
+
   private storySelection(
     world: WorldState,
     event: WorldEvent,

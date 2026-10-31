@@ -1,3 +1,5 @@
+import { currentFacetValues } from './perception-current.js';
+import { currentFacetGet, currentFacetSet } from './perception-current.js';
 import { currentFacetGrant } from './perception-current.js';
 import { temporalChunkReceipts, temporalChunkReferences } from './temporal-frames.js';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
@@ -36,7 +38,7 @@ import {
   clearTemporalCaptureReferences,
 } from './temporal-evidence.js';
 import { validateTemporalEvidenceState } from './temporal-validation.js';
-import { pruneReceivedValueBlock, referencedReceivedValues } from './received-values.js';
+import { referencedReceivedValues } from './received-values.js';
 import type { WorldState } from './types.js';
 import {
   currentReceivedGeometry,
@@ -345,7 +347,7 @@ describe('native received relation producers', () => {
     });
     expect(spoken.outcome.ok, spoken.outcome.message).toBe(true);
     const owner = spoken.world.perceptionEvidence![PLAYER_ID]!;
-    const body = owner.current[`${people[0]!.id}:body`]!;
+    const body = currentFacetGet(owner, `${people[0]!.id}:body`)!;
     const entry = currentDetailedAttention(spoken.world, PLAYER_ID).find(
       (value) => value.sourceId === people[0]!.id,
     )!;
@@ -403,7 +405,7 @@ describe('native received relation producers', () => {
       map([surface('ground', 0, 4, 0), surface('unseen-upper-face', 0, 4, 10)]),
     );
     const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
-    const anchor = Object.entries(attention.candidates).find(
+    const anchor = Object.entries(attention.annotations).find(
       ([, candidate]) => candidate.sourceId === people[0]!.id,
     )![0];
     expect(setAttentionFocus(world, PLAYER_ID, [anchor])).toBe(true);
@@ -437,20 +439,20 @@ describe('native received relation producers', () => {
       true,
     );
     expect(
-      Object.values(world.perceptionEvidence![PLAYER_ID]!.current).filter(
+      currentFacetValues(world.perceptionEvidence![PLAYER_ID]!).filter(
         (lease) => lease.value.kind === 'body',
       ),
     ).toHaveLength(40);
   });
 
   it('rechecks newly completed physical coverage even when its last bounded pass emits no new fact', () => {
-    const installed = worldComposition.selectedAttentionPolicy;
+    const installed = chronologyAttentionPolicy();
     // The finite shared-feature cursor finishes on a later opportunity; the
     // last page can contain only back faces, without another received fact.
     const bounded = vi
       .spyOn(worldComposition, 'selectedAttentionPolicy')
       .mockImplementation((world) => {
-        const policy = installed(world);
+        const policy = installed;
         return { ...policy, geometry: { ...policy.geometry, visits: 24 } };
       });
     try {
@@ -551,7 +553,8 @@ describe('native received relation producers', () => {
     initializePerception(world, []);
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.episodeId;
-    const oldBlock = world.experience!.temporal!.actors[PLAYER_ID]!.captures[original.id]!.blockId;
+    const oldBlock = world.experience!.temporal!.actors[PLAYER_ID]!.captures[original.id]!
+      .valueRef as string;
     world.simTime = 21610;
     setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
@@ -574,15 +577,11 @@ describe('native received relation producers', () => {
     expect(
       Object.values(temporal.actors)
         .flatMap((actor) => actor.chunks.flatMap((chunk) => temporalChunkReceipts(chunk)))
-        .some((receipt) => receipt.facets.some((facet) => facet.blockId === oldBlock)),
+        .some((receipt) => receipt.facets.some((facet) => facet.valueRef === oldBlock)),
     ).toBe(false);
     clearTemporalCaptureReferences(world, new Set([oldBlock]));
-    const remaining = pruneReceivedValueBlock(
-      world.receivedValues!.sources[oldBlock]!,
-      referencedReceivedValues(world, { captures: false }).get(oldBlock) ?? new Set(),
-    );
-    if (remaining) world.receivedValues!.sources[oldBlock] = remaining;
-    else delete world.receivedValues!.sources[oldBlock];
+    if (!referencedReceivedValues(world, { captures: false }).has(oldBlock))
+      delete world.receivedValues!.sources[oldBlock];
     expect(temporal.actors[PLAYER_ID]!.capturesInvalidated).toBe(true);
     initializePerception(world, []);
     const recent = selectTemporalHistory(world, PLAYER_ID, {
@@ -702,7 +701,7 @@ describe('native received relation producers', () => {
         bytes: 1024 * 1024,
       }).entries.some((entry) => entry.values.some((value) => value.kind === 'surface-patch')),
     ).toBe(false);
-    const key = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.candidates).find(
+    const key = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.annotations).find(
       ([, candidate]) => candidate.sourceId === other.id,
     )![0];
     world.simTime = 1;
@@ -773,8 +772,7 @@ describe('native received relation producers', () => {
       bytes: 1024 * 1024,
       limit: 1000,
     }).entries.find((entry) => entry.values.some((value) => value.kind === 'surface-patch'))!;
-    expect(terrain.receipt.facets[0]!.blockId).toBe(earlier.receipt.facets[0]!.blockId);
-    expect(terrain.receipt.facets[0]!.valueOrdinal).toBe(earlier.receipt.facets[0]!.valueOrdinal);
+    expect(terrain.receipt.facets[0]!.valueRef).toBe(earlier.receipt.facets[0]!.valueRef);
     validateTemporalEvidenceState(world);
     const retired = history.chunks.filter((chunk) => chunk.throughAt === 0);
     retireTemporalChunks(
@@ -846,8 +844,7 @@ describe('native received relation producers', () => {
       measuredThrough: 0,
       acquiredAt: 0,
       confirmedThrough: 2,
-      blockId: first.receipt.facets[0]!.blockId,
-      valueOrdinal: first.receipt.facets[0]!.valueOrdinal,
+      valueRef: first.receipt.facets[0]!.valueRef,
     });
     expect(currentAttentionCues(world, PLAYER_ID)).toHaveLength(0);
     const current = currentReceivedGeometry(world, PLAYER_ID).observations;
@@ -866,13 +863,13 @@ describe('native received relation producers', () => {
     setSpatialPosition(world, daughter, { x: 15, y: 2, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
     const owner = world.perceptionEvidence![PLAYER_ID]!;
-    const anchor = Object.entries(owner.attention!.candidates).find(
+    const anchor = Object.entries(owner.attention!.annotations).find(
       ([, candidate]) => candidate.sourceId === daughter.id,
     )!;
     expect(setAttentionFocus(world, PLAYER_ID, [anchor[0]])).toBe(true);
-    expect(
-      Object.values(owner.current).filter((lease) => lease.value.kind === 'body'),
-    ).toHaveLength(16);
+    expect(currentFacetValues(owner).filter((lease) => lease.value.kind === 'body')).toHaveLength(
+      16,
+    );
     expect(currentDetailedAttention(world, PLAYER_ID)).toHaveLength(10);
     expect(
       currentReceivedGeometry(world, PLAYER_ID).observations.some((observation) =>
@@ -907,7 +904,7 @@ describe('native received relation producers', () => {
     setSpatialPosition(world, anchor, { x: 5, y: 0, z: 2 }, null, { continuity: 'physical' });
     setSpatialPosition(world, neighbor, { x: 11, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
-    const key = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.candidates).find(
+    const key = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.annotations).find(
       ([, candidate]) => candidate.sourceId === anchor.id,
     )![0];
     setAttentionFocus(world, PLAYER_ID, [key]);
@@ -979,7 +976,7 @@ describe('native received relation producers', () => {
       });
     initializePerception(world, []);
     const attention = world.perceptionEvidence![PLAYER_ID]!.attention!;
-    const anchorKey = Object.entries(attention.candidates).find(
+    const anchorKey = Object.entries(attention.annotations).find(
       ([, value]) => value.sourceId === person.id,
     )![0];
     setAttentionFocus(world, PLAYER_ID, [anchorKey]);
@@ -1007,7 +1004,7 @@ describe('native received relation producers', () => {
     expect(currentAttentionCues(world, PLAYER_ID).some((value) => value.id === cue.id)).toBe(true);
 
     const interrupted = JSON.parse(JSON.stringify(world)) as WorldState;
-    const witness = Object.values(interrupted.perceptionEvidence![PLAYER_ID]!.current).find(
+    const witness = currentFacetValues(interrupted.perceptionEvidence![PLAYER_ID]!).find(
       (lease) =>
         lease.value.kind === 'body' &&
         currentFacetGrant(interrupted.perceptionEvidence![PLAYER_ID]!, lease).exposure ===

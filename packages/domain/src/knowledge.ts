@@ -1,3 +1,4 @@
+import { temporalFacetValueReferences } from './temporal-evidence.js';
 import { entityGet } from './entity-collection.js';
 import type { Outcome, WorldState } from './types.js';
 import { recordSemanticChange } from './dependencies.js';
@@ -177,20 +178,12 @@ export function learnRecipe(
     const incoming = prepared.receivedValues;
     if (!incoming) throw new Error('The admitted knowledge has no received value source.');
     const pool = (world.receivedValues ??= { sources: {} });
-    const blocks = new Set(capsule.receipt.facets.map((facet) => facet.blockId));
-    if (incoming.activeSource) blocks.add(incoming.activeSource);
-    for (const id of incoming.activeSources ?? []) if (!pool.sources[id]) blocks.add(id);
+    const blocks = new Set(capsule.receipt.facets.flatMap(temporalFacetValueReferences));
     for (const id of blocks) {
       const block = incoming.sources[id];
       if (!block) throw new Error('The admitted knowledge value is unavailable.');
       if (pool.sources[id] !== block) pool.sources[id] = cloneValue(block);
     }
-    if (incoming.activeAt === undefined) delete pool.activeAt;
-    else pool.activeAt = incoming.activeAt;
-    if (incoming.activeSources === undefined) delete pool.activeSources;
-    else pool.activeSources = [...incoming.activeSources];
-    if (incoming.activeSource === undefined) delete pool.activeSource;
-    else pool.activeSource = incoming.activeSource;
     world.nextId = prepared.nextId;
   }
   (world.knowledge[actorId] ??= []).push(record);

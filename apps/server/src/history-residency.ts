@@ -260,22 +260,9 @@ export function compactTemporalHistory(
   const maximum = selectedTemporalPolicy(world).recent.residentChunks;
   let changed = false;
   const actors = { ...temporal?.actors };
-  const placements = new Map<string, Positions>();
   for (const [actorId, actor] of Object.entries(actors)) {
-    const chunks = actor.chunks;
-    if (chunks.length > maximum) {
-      const old = historyPositions.get(chunks);
-      const tail = chunks.slice(-maximum);
-      placements.set(actorId, {
-        positions: new Map(
-          tail.map((chunk, index) => [
-            chunk.id,
-            old?.positions.get(chunk.id) ?? chunks.length - tail.length + index,
-          ]),
-        ),
-        next: old?.next ?? chunks.length,
-      });
-      actors[actorId] = { ...actor, chunks: tail };
+    if (actor.chunks.length > maximum) {
+      actors[actorId] = { ...actor, chunks: actor.chunks.slice(-maximum) };
       changed = true;
     }
   }
@@ -286,10 +273,6 @@ export function compactTemporalHistory(
       : world;
   const received = world.receivedValues;
   const retainedSources = new Set(referencedReceivedValues(scope).keys());
-  // The saved append group preserves deterministic comparisons outside actor
-  // tails. It does not grant retention ownership or a semantic account.
-  for (const id of received?.activeSources ?? []) retainedSources.add(id);
-  if (received?.activeSource) retainedSources.add(received.activeSource);
   const entries = Object.entries(received?.sources ?? {});
   const sources = entries.filter(([id]) => retainedSources.has(id));
   const receivedChanged = sources.length !== entries.length;
@@ -304,9 +287,5 @@ export function compactTemporalHistory(
     },
     options,
   );
-  // The immutable temporal constructor may replace the newly built tail array.
-  // Storage ordinals belong to that actual returned collection, never its input.
-  for (const [actorId, placement] of placements)
-    historyPositions.set(projected.experience!.temporal!.actors[actorId]!.chunks, placement);
   return projected;
 }

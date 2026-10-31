@@ -1,3 +1,6 @@
+import { attentionCandidates } from './attention.js';
+import { receivedValueAt } from './received-values.js';
+import { currentFacetGet, currentFacetSet } from './perception-current.js';
 import { currentFacetGrant } from './perception-current.js';
 import { temporalChunkReceipts, temporalChunkReferences } from './temporal-frames.js';
 import { expect, it } from 'vitest';
@@ -53,7 +56,7 @@ function scene(seed = 41) {
   setSpatialPosition(world, player, { x: 1, y: 0, z: 2 }, worldSupport(player));
   setSpatialPosition(world, npc, { x: 3, y: 0, z: 2 }, worldSupport(npc));
   initializePerception(world, []);
-  const key = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.candidates).find(
+  const key = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.annotations).find(
     ([, candidate]) => candidate.sourceId === NPC_ID,
   )![0];
   expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
@@ -116,11 +119,15 @@ it('releases stale deduplication references without changing current sensory sup
   const current = currentBodyObservation(world, PLAYER_ID, NPC_ID)!;
   const references = Object.values(actor.captures);
   expect(references.length).toBeGreaterThan(0);
-  const retired = new Set([references[0]!.blockId]);
+  const shared = references.find((reference) => typeof reference.valueRef === 'string')!;
+  expect(shared).toBeDefined();
+  const retired = new Set([shared.valueRef as string]);
   clearTemporalCaptureReferences(world, retired);
-  expect(Object.values(actor.captures).every((reference) => !retired.has(reference.blockId))).toBe(
-    true,
-  );
+  expect(
+    Object.values(actor.captures).every(
+      (reference) => typeof reference.valueRef !== 'string' || !retired.has(reference.valueRef),
+    ),
+  ).toBe(true);
   expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)!.id).toBe(current.id);
 });
 
@@ -356,12 +363,10 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
   const before = append(supplied);
   nested.note = 'After: a longer note about 鹿.';
   const after = append(supplied, before);
-  expect(after.valueOrdinal).not.toBe(before.valueOrdinal);
   const sealed = freeze({ ...supplied, data: { nested: { ...nested } } }, true);
   const repeated = append(sealed, after);
   expect(repeated).toMatchObject({
-    blockId: after.blockId,
-    valueOrdinal: after.valueOrdinal,
+    valueRef: after.valueRef,
   });
   const query = { subject: 'received-note', bytes: 1024 * 1024, limit: 1000 };
   const selected = selectTemporalHistory(world, PLAYER_ID, query);
@@ -381,7 +386,6 @@ it('keeps mutable nested received values fresh while reusing immutable values wi
   });
   const arrayBefore = append(arrayValue);
   child.note = 'After an array edit.';
-  expect(append(arrayValue, arrayBefore).valueOrdinal).not.toBe(arrayBefore.valueOrdinal);
   expect(
     selectTemporalHistory(world, PLAYER_ID, {
       ...query,
@@ -463,10 +467,10 @@ it('records an actually attended resource target and a routine occurrence that d
   acknowledgeAttention(
     world,
     PLAYER_ID,
-    captureAttentionPresentation(world, PLAYER_ID, Object.keys(attention.candidates)),
+    captureAttentionPresentation(world, PLAYER_ID, Object.keys(attention.annotations)),
   );
   const keys = [
-    Object.entries(attention.candidates).find(([, value]) => value.sourceId === branches.id)![0],
+    Object.entries(attention.annotations).find(([, value]) => value.sourceId === branches.id)![0],
   ];
   expect(setAttentionFocus(world, PLAYER_ID, keys)).toBe(true);
   world.simTime = 10;
@@ -483,8 +487,8 @@ it('records an actually attended resource target and a routine occurrence that d
       currentDetailedAttention(world, PLAYER_ID).map((entry) => ({
         source: entry.sourceId,
         basis: entry.basis,
-        score: attention.candidates[entry.key]?.score,
-        urgency: attention.candidates[entry.key]?.urgency,
+        score: attentionCandidates(world, PLAYER_ID, [entry.key])[entry.key]?.score,
+        urgency: attention.annotations[entry.key]?.urgency,
       })),
     ),
   ).toBe(false);
@@ -520,7 +524,7 @@ it('records an actually attended resource target and a routine occurrence that d
     captureAttentionPresentation(
       later,
       PLAYER_ID,
-      Object.keys(later.perceptionEvidence![PLAYER_ID]!.attention!.candidates),
+      Object.keys(later.perceptionEvidence![PLAYER_ID]!.attention!.annotations),
     ),
   );
   expect(currentDetailedAttention(later, PLAYER_ID).map((entry) => entry.sourceId)).toEqual([
@@ -575,11 +579,11 @@ it('captures an attended person recipient while the actually visible speaker is 
   acknowledgeAttention(
     world,
     PLAYER_ID,
-    captureAttentionPresentation(world, PLAYER_ID, Object.keys(attention.candidates)),
+    captureAttentionPresentation(world, PLAYER_ID, Object.keys(attention.annotations)),
   );
   entityGet(world.entities, PLAYER_ID)!.actor!.attentionCapacity = 1;
   expect(setAttentionFocus(world, PLAYER_ID, [])).toBe(true);
-  const recipient = Object.entries(attention.candidates).find(
+  const recipient = Object.entries(attention.annotations).find(
     ([, candidate]) => candidate.sourceId === NPC_ID,
   )![0];
   expect(setAttentionFocus(world, PLAYER_ID, [recipient])).toBe(true);
@@ -710,8 +714,7 @@ it('retains only the exact qualifying contact capsule when familiarity uses a te
     (facet) => !support.receipt.facets.some((held) => held.ordinal === facet.ordinal),
   )!;
   expect(additional).toBeDefined();
-  const additionalKind =
-    world.receivedValues!.sources[additional.blockId]!.values[additional.valueOrdinal]!.kind;
+  const additionalKind = receivedValueAt(world.receivedValues?.sources ?? {}, additional)!.kind;
   const before = { ...actor.accounts!.optional };
   const extended = retainTemporalSupport(world, support.receipt, {
     facetOrdinals: [additional.ordinal],
@@ -739,7 +742,7 @@ it('shares equal received values without granting another observer the earlier h
   player.actor!.attentionCapacity = 5;
   npc.actor!.attentionCapacity = 5;
   const focus = (observer: string, target: string) => {
-    const key = Object.entries(world.perceptionEvidence![observer]!.attention!.candidates).find(
+    const key = Object.entries(world.perceptionEvidence![observer]!.attention!.annotations).find(
       ([, candidate]) => candidate.sourceId === target,
     )![0];
     expect(setAttentionFocus(world, observer, [key])).toBe(true);
@@ -782,7 +785,7 @@ it('shares equal received values without granting another observer the earlier h
       )
       .at(-1)!;
   const bodyValue = (reference: ReturnType<typeof bodyReference>) =>
-    world.receivedValues!.sources[reference.blockId]!.values[reference.valueOrdinal];
+    receivedValueAt(world.receivedValues?.sources ?? {}, reference);
   expect(bodyValue(bodyReference(promoted.entries))).toEqual(
     bodyValue(bodyReference(playerHistory.entries)),
   );
@@ -802,8 +805,7 @@ it('shares equal received values without granting another observer the earlier h
       }).entries,
     );
   expect(currentBodyReference(NPC_ID, exposure)).toMatchObject({
-    blockId: currentBodyReference(PLAYER_ID, playerExposure).blockId,
-    valueOrdinal: currentBodyReference(PLAYER_ID, playerExposure).valueOrdinal,
+    valueRef: currentBodyReference(PLAYER_ID, playerExposure).valueRef,
   });
   const encoded = (value: unknown) => new TextEncoder().encode(JSON.stringify(value)).byteLength;
   const completeValue = (reference: TemporalFacetReference, fragment: ReceivedValueFragment) => {
@@ -820,9 +822,8 @@ it('shares equal received values without granting another observer the earlier h
   for (const actor of Object.values(world.experience!.temporal!.actors)) {
     for (const chunk of actor.chunks) {
       let supportBytes = 0;
-      for (const [blockId, ordinals] of temporalChunkReferences(chunk))
-        for (const ordinal of ordinals)
-          supportBytes += encoded(world.receivedValues!.sources[blockId]!.values[ordinal]);
+      for (const valueRef of temporalChunkReferences(chunk))
+        supportBytes += encoded(world.receivedValues!.sources[valueRef]!.value);
       expect(chunk.bytes).toBe(encoded(chunk) + supportBytes);
     }
     for (const capsule of Object.values(actor.supports ?? {}))
@@ -865,7 +866,7 @@ it('reports an empty change window as unavailable without renewing an older acqu
 it('confirms unchanged sight without rewriting every detail and freezes the last actual sample on loss', () => {
   const world = scene(49);
   const owner = world.perceptionEvidence![PLAYER_ID]!,
-    raw = owner.current[`${NPC_ID}:body`]!;
+    raw = currentFacetGet(owner, `${NPC_ID}:body`)!;
   const originalTime = currentFacetTimes(owner, raw).valueMeasuredThrough;
   for (const at of [1, 2, 3]) {
     world.simTime = at;
@@ -875,9 +876,9 @@ it('confirms unchanged sight without rewriting every detail and freezes the last
     );
     expect(currentBodyObservation(world, PLAYER_ID, NPC_ID)!.confirmedThrough).toBe(at);
   }
-  expect(currentFacetTimes(owner, owner.current[`${NPC_ID}:body`]!).valueMeasuredThrough).toBe(
-    originalTime,
-  );
+  expect(
+    currentFacetTimes(owner, currentFacetGet(owner, `${NPC_ID}:body`)!).valueMeasuredThrough,
+  ).toBe(originalTime);
   const cut = captureEvidenceCut(world, PLAYER_ID);
   const location = currentObservedFacets(world, PLAYER_ID, NPC_ID).find(
     (f) => f.value.kind === 'location',

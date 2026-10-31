@@ -1,20 +1,18 @@
 import {
+  appendedRecordCount,
   temporalReceiptChangeCount,
   temporalEntryMetadataReader,
   type TemporalEntryMetadata,
   temporalConfirmationChangeCount,
   type TemporalFrameEntry,
   type TemporalFrameOwner,
-  appendedRecordCount,
-  appendSnapshot,
   canonicalJson,
   isImmutableData,
   immutableDataSnapshot,
-  jsonText,
   type TemporalChunk,
   type WorldState,
-  type ReceivedValueBlock,
 } from '@open-legend/domain';
+import { countMetric } from './performance.js';
 
 /** Physical append pages belong to the existing record codec, not to character history.
  * A save seals its suffix; later appends never rewrite an earlier page. */
@@ -29,45 +27,11 @@ export interface ReceiptSegmentIndex
   extends Omit<TemporalEntryMetadata, 'firstAt' | 'lastAt' | 'changes'> {
   lookupBuckets: number[];
 }
-interface Layout {
-  segments: EvidenceSegment[];
-  start: number;
-  end: number;
-}
 type Owner = Record<string, unknown>;
-type Field = 'entries' | 'values';
-const layouts = new WeakMap<object, Layout>();
+// Pure immutable memoization only. Read validation never determines write layout.
 const encoded = new WeakMap<object, Owner>();
-const ordinal = (field: Field, value: unknown, index: number) =>
-  field === 'entries' ? Number((value as Owner)['ordinal']) : index;
-
-/** Cold edit preparation retains only a selected immutable predecessor. Keep its
- * verified physical pages attached to the copied logical vector so a later edit
- * compares the actual stored pages instead of inventing new page boundaries. */
-export function snapshotEvidenceOwner<T extends object>(value: T, field: Field): T {
-  const snapshot = immutableDataSnapshot(value);
-  if (snapshot === value) return snapshot;
-  const held = layouts.get((value as Owner)[field] as object);
-  if (!held) return snapshot;
-  const values = (snapshot as Owner)[field] as unknown[];
-  const receipts =
-    field === 'entries'
-      ? new Map(values.map((entry, index) => [ordinal(field, entry, index), entry]))
-      : undefined;
-  const segments = held.segments.map((segment) =>
-    immutableDataSnapshot({
-      ...segment,
-      values: Array.from({ length: segment.end - segment.start }, (_, index) =>
-        receipts ? (receipts.get(segment.start + index) ?? null) : values[segment.start + index],
-      ),
-    }),
-  );
-  layouts.set(values, {
-    ...held,
-    segments: Object.freeze(segments) as unknown as EvidenceSegment[],
-  });
-  return snapshot;
-}
+const decodedSegments = new WeakMap<object, readonly EvidenceSegment[]>();
+const ordinal = (value: unknown) => Number((value as Owner)['ordinal']);
 
 const receiptHeaders = ['subjects', 'sourceIds', 'individualIds', 'sourceRefs'] as const;
 const unique = <T>(values: Iterable<T>): T[] => [...new Set(values)];
@@ -97,13 +61,13 @@ function withLookupBuckets(index: TemporalEntryMetadata): ReceiptSegmentIndex {
 /** Current-format restore has the complete selected source closure. Validate page
  * provenance there, not by trusting a correct parent union with misassigned pages. */
 export function validateReceiptPageSources(chunk: TemporalChunk, world: WorldState): void {
-  const layout = layouts.get(chunk.entries);
-  if (!layout) throw new Error('Missing restored receipt page ownership.');
+  const segments = decodedSegments.get(chunk.entries);
+  if (!segments) throw new Error('Missing restored receipt page ownership.');
   const metadata = temporalEntryMetadataReader(chunk, {
     sources: world.receivedValues?.sources ?? {},
     world,
   });
-  for (const segment of layout.segments)
+  for (const segment of segments)
     if (
       canonicalJson(segment.index) !==
       canonicalJson(
@@ -143,131 +107,100 @@ function sealSegment(segment: EvidenceSegment): void {
   Object.freeze(segment);
 }
 
-export function encodeEvidenceOwner(
-  value: unknown,
-  field: Field,
-  previous: unknown,
-  maxBytes: number,
-  world?: WorldState,
-  bindLayout = true,
-): Owner {
-  const owner = value as Owner;
-  // A metadata preview may reuse accepted pages, but only save preparation may
-  // bind new boundaries: its predecessor owns the immutable physical prefix.
-  const reusable = isImmutableData(owner);
+/** Pure encoding of producer-owned whole operations. A completed acquisition closes an
+ * immutable suffix batch; a later append cannot change an earlier boundary.
+ * docs/projects/bookkeeping-simplification-tech-design.md#33-personal-frames-and-chunks */
+export function encodeEvidenceOwner(value: unknown, previous: unknown, world?: WorldState): Owner {
+  const owner = value as Owner,
+    reusable = isImmutableData(owner);
   const cached = reusable ? encoded.get(owner) : undefined;
   if (cached) return cached;
-  const values = owner[field] as unknown[];
-  let layout = isImmutableData(values) ? layouts.get(values) : undefined;
-  if (!layout) {
-    const prior = previous as Owner | undefined;
-    const old = prior?.[field] as unknown[] | undefined;
-    const heldLayout = old && isImmutableData(old) ? layouts.get(old) : undefined;
-    const appended = old && appendedRecordCount(old, values);
-    const previousLayout =
-      heldLayout &&
-      (field === 'values'
-        ? values.length >= heldLayout.end
-        : // The recording owner preserves surviving storage ordinals and a saved
-          // high-water mark. Even after trailing retirement, no append reuses a
-          // previous physical slot; affected pages can be replaced independently.
-          Number(owner['nextEntryOrdinal']) >= heldLayout.end)
-        ? heldLayout
-        : undefined;
-    const segments: EvidenceSegment[] = [];
-    let start = 0;
-    if (previousLayout && appended !== undefined) {
-      segments.push(...previousLayout.segments);
-      start = old!.length;
-    } else if (previousLayout) {
-      // A correction/prune edits only pages intersecting the changed ordinals.
-      const current = new Map(values.map((entry, index) => [ordinal(field, entry, index), entry]));
-      for (const segment of previousLayout.segments) {
-        const next = segment.values.map(
-          (entry, index) => current.get(segment.start + index) ?? null,
-        );
-        const same = next.every((entry, index) => entry === segment.values[index]);
-        segments.push(same ? segment : { ...segment, values: next });
-      }
-      start = values.findIndex(
-        (entry, index) => ordinal(field, entry, index) >= previousLayout.end,
-      );
-      if (start < 0) start = values.length;
-    }
-    let page: EvidenceSegment | undefined;
-    let bytes = 0;
-    for (let index = start; index < values.length; index++) {
-      const entry = values[index],
-        at = ordinal(field, entry, index);
-      const size = Buffer.byteLength(
-        entry && typeof entry === 'object' ? jsonText(entry) : JSON.stringify(entry),
-      );
-      if (!page || (page.values.length && bytes + size > maxBytes)) {
-        const first = page?.end ?? previousLayout?.end ?? at;
-        page = { start: first, end: first, values: [], bytes: 0 };
-        segments.push(page);
-        bytes = 0;
-      }
-      while (page.end < at) {
-        page.values.push(null);
-        page.end++;
-      }
-      page.values.push(entry);
-      page.end = at + 1;
-      bytes += size + 1;
-    }
-    const metadata =
-      field === 'entries' && world
-        ? temporalEntryMetadataReader(owner as unknown as TemporalFrameOwner, {
-            sources: world.receivedValues?.sources ?? {},
-            world,
-          })
-        : undefined;
-    for (const segment of segments) {
-      if (!Object.isFrozen(segment)) {
-        if (field === 'entries') {
-          if (!metadata) throw new Error('Receipt page preparation requires its world.');
-          segment.index = withLookupBuckets(
-            metadata(segment.values.filter(Boolean) as TemporalFrameEntry[]),
-          );
-        }
-        sealSegment(segment);
-      }
-    }
-    const sealed =
-      previousLayout && appended !== undefined
-        ? appendSnapshot(previousLayout.segments, segments.slice(previousLayout.segments.length))!
-        : (Object.freeze(segments) as unknown as EvidenceSegment[]);
-    layout = { segments: sealed, start: segments[0]?.start ?? 0, end: segments.at(-1)?.end ?? 0 };
-    if (bindLayout && isImmutableData(values)) layouts.set(values, layout);
+  if (!world) throw new Error('Receipt batch preparation requires its world.');
+  const values = owner['entries'] as TemporalFrameEntry[];
+  const prior = previous ? encoded.get(previous as object) : undefined;
+  const priorBatches = (prior?.['entries'] ?? []) as EvidenceSegment[];
+  const appended =
+    prior && appendedRecordCount((previous as Owner)['entries'] as TemporalFrameEntry[], values);
+  let start = appended === undefined ? 0 : values.length - appended;
+  // An append proof certifies content, not a closed acquisition. A caller that
+  // extends an earlier frame must take the complete encoding/correction path.
+  const oldEnd = priorBatches.at(-1)?.end ?? 0;
+  for (let index = start; start && index < values.length; index++) {
+    const entry = values[index]!;
+    if ('frame' in entry && entry.frame < oldEnd) start = 0;
   }
-  if (field === 'entries') {
-    const headers = pageHeaders(layout.segments);
-    if (receiptHeaders.some((key) => canonicalJson(headers[key]) !== canonicalJson(owner[key])))
-      throw new Error('Receipt page indexes disagree with their logical owner.');
+  const prefix = start ? priorBatches : [];
+  const priorSegments = new Map((start ? [] : priorBatches).map((batch) => [batch.start, batch]));
+  // The native append owner already proves every old entry is unchanged. Do not
+  // walk or copy that prefix just to discover the same physical batches again.
+  countMetric('persistence.receiptBatchEntriesEncoded', values.length - start);
+  countMetric('persistence.receiptBatchPrefixEntriesReused', start);
+  const lastInFrame = new Map<number, number>();
+  for (let index = start; index < values.length; index++) {
+    const entry = values[index]!;
+    if (entry.kind === 'change') lastInFrame.set(entry.frame, entry.ordinal);
   }
+  const metadata = temporalEntryMetadataReader(owner as unknown as TemporalFrameOwner, {
+    sources: world.receivedValues?.sources ?? {},
+    world,
+  });
+  const segments: EvidenceSegment[] = [...prefix];
+  let page: EvidenceSegment | undefined,
+    end = prefix.at(-1)?.end ?? values[0]?.ordinal ?? 0;
+  const seal = () => {
+    if (!page) return;
+    const previous = priorSegments.get(page.start);
+    if (
+      previous &&
+      previous.end === page.end &&
+      previous.values.every((entry, at) => entry === page!.values[at])
+    )
+      segments.push(previous);
+    else {
+      page.index = withLookupBuckets(metadata(page.values.filter(Boolean) as TemporalFrameEntry[]));
+      sealSegment(page);
+      segments.push(page);
+    }
+    end = page.end;
+    page = undefined;
+  };
+  for (let index = start; index < values.length; index++) {
+    const entry = values[index]!;
+    page ??= { start: end, end, values: [], bytes: 0 };
+    while (page.end < entry.ordinal) {
+      page.values.push(null);
+      page.end++;
+    }
+    page.values.push(entry);
+    page.end = entry.ordinal + 1;
+    if (entry.kind === 'change' && lastInFrame.get(entry.frame) === entry.ordinal) seal();
+  }
+  seal();
+  const headers = pageHeaders(segments);
+  if (receiptHeaders.some((key) => canonicalJson(headers[key]) !== canonicalJson(owner[key])))
+    throw new Error('Receipt batch indexes disagree with their logical owner.');
   const physical = { ...owner };
-  if (field === 'entries') for (const key of receiptHeaders) delete physical[key];
+  for (const key of receiptHeaders) delete physical[key];
   const result = {
     ...physical,
-    [field]: layout.segments,
+    entries: Object.freeze(segments),
     storage: {
-      start: layout.start,
-      end: layout.end,
-      segmentBytes: layout.segments.reduce((sum, segment) => sum + segment.bytes, 0),
+      start: segments[0]?.start ?? 0,
+      end: segments.at(-1)?.end ?? 0,
+      segmentBytes: segments.reduce((sum, batch) => sum + batch.bytes, 0),
       metadataBytes: Buffer.byteLength(
         JSON.stringify(
-          layout.segments.map(({ values, ...segment }) => ({ ...segment, length: values.length })),
+          segments.map(({ values, ...batch }) => ({ ...batch, length: values.length })),
         ),
       ),
-      ...(field === 'entries' ? { index: receiptBounds(layout.segments) } : {}),
+      index: receiptBounds(segments),
     },
   };
-  if (bindLayout && reusable) encoded.set(owner, result);
+  if (reusable) encoded.set(owner, result);
   return result;
 }
 
-export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
+export function decodeEvidenceOwner(value: unknown): Owner {
   const owner = value as Owner;
   const storage = owner['storage'] as {
     start: number;
@@ -276,7 +209,7 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
     segmentBytes: number;
     metadataBytes: number;
   };
-  const segments = owner[field] as EvidenceSegment[];
+  const segments = owner['entries'] as EvidenceSegment[];
   if (
     !storage ||
     !Array.isArray(segments) ||
@@ -304,11 +237,9 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
       throw new Error('Incomplete evidence segment coverage.');
     for (let index = 0; index < segment.values.length; index++) {
       const entry = segment.values[index];
-      if (field === 'entries') {
-        if (entry === null) continue;
-        if (!entry || ordinal(field, entry, index) !== segment.start + index)
-          throw new Error('Evidence receipt ordinal disagrees with its segment.');
-      }
+      if (entry === null) continue;
+      if (!entry || ordinal(entry) !== segment.start + index)
+        throw new Error('Evidence receipt ordinal disagrees with its segment.');
       values.push(entry);
     }
     next = segment.end;
@@ -320,48 +251,46 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
     epoch: String(owner['epoch']),
     entries: values as TemporalFrameEntry[],
   };
-  if (field === 'entries') {
-    const metadata = temporalEntryMetadataReader(frameOwner);
-    for (const segment of segments) {
-      const index = segment.index;
-      if (
-        !index ||
-        ([...receiptHeaders, 'occurrenceSourceIds', 'occurrenceIndividualIds'] as const).some(
-          (key) =>
-            !Array.isArray(index[key]) ||
-            index[key].some((value) => typeof value !== 'string') ||
-            new Set(index[key]).size !== index[key].length,
-        )
+  const metadata = temporalEntryMetadataReader(frameOwner);
+  for (const segment of segments) {
+    const index = segment.index;
+    if (
+      !index ||
+      ([...receiptHeaders, 'occurrenceSourceIds', 'occurrenceIndividualIds'] as const).some(
+        (key) =>
+          !Array.isArray(index[key]) ||
+          index[key].some((value) => typeof value !== 'string') ||
+          new Set(index[key]).size !== index[key].length,
       )
-        throw new Error('Invalid receipt page index.');
-      const {
-        occurrenceSourceIds: _occurrenceSourceIds,
-        occurrenceIndividualIds: _occurrenceIndividualIds,
-        sourceIds: _sourceIds,
-        individualIds: _individualIds,
-        lookupBuckets,
-        spatialContext,
-        ...stored
-      } = index;
-      const {
-        firstAt: _firstAt,
-        lastAt: _lastAt,
-        changes: _changes,
-        occurrenceSourceIds: _expectedOccurrenceSourceIds,
-        occurrenceIndividualIds: _expectedOccurrenceIndividualIds,
-        sourceIds: _expectedSourceIds,
-        individualIds: _expectedIndividualIds,
-        spatialContext: receiptSpatialContext,
-        ...expected
-      } = metadata(segment.values.filter(Boolean) as TemporalFrameEntry[]);
-      if (
-        canonicalJson(lookupBuckets) !== canonicalJson(pageLookupBuckets(index)) ||
-        typeof spatialContext !== 'boolean' ||
-        (receiptSpatialContext && !spatialContext) ||
-        canonicalJson(stored) !== canonicalJson(expected)
-      )
-        throw new Error('Receipt page index disagrees with its receipts.');
-    }
+    )
+      throw new Error('Invalid receipt page index.');
+    const {
+      occurrenceSourceIds: _occurrenceSourceIds,
+      occurrenceIndividualIds: _occurrenceIndividualIds,
+      sourceIds: _sourceIds,
+      individualIds: _individualIds,
+      lookupBuckets,
+      spatialContext,
+      ...stored
+    } = index;
+    const {
+      firstAt: _firstAt,
+      lastAt: _lastAt,
+      changes: _changes,
+      occurrenceSourceIds: _expectedOccurrenceSourceIds,
+      occurrenceIndividualIds: _expectedOccurrenceIndividualIds,
+      sourceIds: _expectedSourceIds,
+      individualIds: _expectedIndividualIds,
+      spatialContext: receiptSpatialContext,
+      ...expected
+    } = metadata(segment.values.filter(Boolean) as TemporalFrameEntry[]);
+    if (
+      canonicalJson(lookupBuckets) !== canonicalJson(pageLookupBuckets(index)) ||
+      typeof spatialContext !== 'boolean' ||
+      (receiptSpatialContext && !spatialContext) ||
+      canonicalJson(stored) !== canonicalJson(expected)
+    )
+      throw new Error('Receipt page index disagrees with its receipts.');
   }
   if (
     next !== storage.end ||
@@ -371,19 +300,17 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
         JSON.stringify(
           segments.map(({ values, ...segment }) => ({ ...segment, length: values.length })),
         ),
-      ) ||
-    (field === 'values' && storage.start !== 0)
+      )
   )
     throw new Error('Evidence segment range disagrees with its owner.');
   if (
-    field === 'entries' &&
-    (frameOwner.entries.reduce(
+    frameOwner.entries.reduce(
       (sum, entry) => sum + (entry.kind === 'change' ? temporalReceiptChangeCount(entry) : 0),
       0,
     ) +
       temporalConfirmationChangeCount(frameOwner.entries) !==
       owner['count'] ||
-      canonicalJson(receiptBounds(segments)) !== canonicalJson(storage.index))
+    canonicalJson(receiptBounds(segments)) !== canonicalJson(storage.index)
   )
     throw new Error('Evidence segment index disagrees with its receipts.');
   for (const segment of segments) {
@@ -393,21 +320,18 @@ export function decodeEvidenceOwner(value: unknown, field: Field): Owner {
     Object.freeze(segment);
   }
   Object.freeze(segments);
-  layouts.set(values, { segments, start: storage.start, end: storage.end });
+  decodedSegments.set(values, segments);
   const { storage: _storage, ...result } = owner;
-  if (field === 'entries') Object.assign(result, pageHeaders(segments));
-  result[field] = values;
+  Object.assign(result, pageHeaders(segments));
+  result['entries'] = values;
   return result;
 }
 
 /** The scoped SQL view returns logical payload plus layout only to installing readers. */
-export function restoreEvidenceLayout(value: Owner, field: Field, segments: unknown): Owner {
+export function restoreEvidenceLayout(value: Owner, segments: unknown): Owner {
   if (!Array.isArray(segments)) throw new Error('Missing stored evidence segments.');
-  const values = value[field] as unknown[];
-  const receipts =
-    field === 'entries'
-      ? new Map(values.map((entry, index) => [ordinal(field, entry, index), entry]))
-      : undefined;
+  const values = value['entries'] as unknown[];
+  const receipts = new Map(values.map((entry) => [ordinal(entry), entry]));
   const pages = segments.map((stored) => {
     const { length, ...segment } = stored as EvidenceSegment & { length: number };
     if (
@@ -423,68 +347,30 @@ export function restoreEvidenceLayout(value: Owner, field: Field, segments: unkn
       );
     return {
       ...segment,
-      values: receipts
-        ? Array.from(
-            { length: segment.end - segment.start },
-            (_, index) => receipts.get(segment.start + index) ?? null,
-          )
-        : values.slice(segment.start, segment.end),
+      values: Array.from(
+        { length: segment.end - segment.start },
+        (_, index) => receipts.get(segment.start + index) ?? null,
+      ),
     };
   });
-  return decodeEvidenceOwner({ ...value, [field]: pages }, field);
+  return decodeEvidenceOwner({ ...value, entries: pages });
 }
 
 /** Reserve resident physical bytes without preparing or changing its page layout. */
-export function receivedValueRetirementBytes(value: ReceivedValueBlock): number {
-  // Only save preparation knows the accepted predecessor's physical pages.
-  // Preparing an unencoded append here would install a merged replacement page
-  // before that owner can preserve its immutable suffix layout.
-  const prepared = encoded.get(value);
-  if (prepared) {
-    const storage = prepared['storage'] as { segmentBytes: number; metadataBytes: number };
-    return (
-      Buffer.byteLength(JSON.stringify({ ...prepared, values: [] })) +
-      storage.segmentBytes +
-      storage.metadataBytes
-    );
-  }
-  // The native owner already charges the complete exact JSON body. A save can
-  // split it into at most one nonempty page per slot. Reserve that worst-case
-  // wrapper/metadata cost (including their largest valid numeric encodings),
-  // without scanning payloads or treating a known resident body as cold unknown.
-  // The off-lane header read replaces this conservative charge with actual bytes.
-  const length = value.values.length;
-  const maximum = Number.MAX_SAFE_INTEGER;
-  const page = { start: length, end: length, values: [], bytes: maximum };
-  const metadata = { start: length, end: length, bytes: maximum, length };
-  const storage = {
-    storage: { start: 0, end: length, segmentBytes: maximum, metadataBytes: maximum },
-  };
-  return (
-    value.bytes +
-    length *
-      (Buffer.byteLength(JSON.stringify(page)) + Buffer.byteLength(JSON.stringify(metadata)) + 2) +
-    Buffer.byteLength(JSON.stringify(storage)) +
-    2
-  );
-}
 
 export function evidenceEncodedBytesSql(alias: string): string {
   return `octet_length(${alias}.payload)+(${alias}.payload::jsonb#>>'{storage,segmentBytes}')::bigint+(${alias}.payload::jsonb#>>'{storage,metadataBytes}')::bigint`;
 }
 
-/** A selected personal reference authorizes exactly one shared value, not the
- * other values which happen to share its physical append page. */
-export function receivedValueSql(world: string, source: string, ordinal: string): string {
-  return `(SELECT s.payload::json->'values'->((${ordinal})-s.first_ordinal)::int
-    FROM mind_perception_values p JOIN mind_perception_segments s
-      ON s.world_id=p.world_id AND s.parent_id=p.id
-      AND s.first_ordinal<=(${ordinal}) AND s.last_ordinal>=(${ordinal})
-    WHERE p.world_id=${world} AND p.source_id=${source})`;
+/** Read a single immutable value only after selecting its permitted owner. */
+export function receivedValueSql(world: string, reference: string): string {
+  return `(CASE WHEN json_typeof(${reference})='string' THEN
+    (SELECT p.payload::json->'value' FROM mind_perception_values p
+      WHERE p.world_id=${world} AND p.source_id=(${reference}#>>'{}')) ELSE ${reference} END)`;
 }
 
-export function evidenceReadView(table: string, field: Field, columns: string[]): string {
-  const children = field === 'entries' ? 'mind_temporal_segments' : 'mind_perception_segments';
+export function evidenceReadView(table: string, columns: string[]): string {
+  const children = 'mind_temporal_segments';
   // JSON preserves encoded fragment member order. JSONB would reorder nested
   // values and defeat the existing exact-encoding sharing index after active load.
   const union = (column: string) => `ARRAY(SELECT item FROM (
@@ -492,43 +378,34 @@ export function evidenceReadView(table: string, field: Field, columns: string[])
     CROSS JOIN LATERAL unnest(s.${column}) WITH ORDINALITY v(item,ordinality)
     WHERE s.world_id=p.world_id AND s.parent_id=p.id ORDER BY v.item,s.position,v.ordinality
     ) selected ORDER BY position,ordinality)`;
-  const projected =
-    field === 'entries'
-      ? {
-          subjects: union('subjects'),
-          source_refs: union('source_refs'),
-          source_ids: union('source_ids'),
-          individual_ids: union('individual_ids'),
-          receipt_ordinals: `ARRAY(SELECT ordinal FROM ${children} s CROSS JOIN LATERAL unnest(s.receipt_ordinals) ordinal WHERE s.world_id=p.world_id AND s.parent_id=p.id ORDER BY ordinal)`,
-          value_refs: `(SELECT COALESCE(jsonb_object_agg(block,ordinals),'{}'::jsonb) FROM (
-      SELECT refs.key AS block,jsonb_agg(DISTINCT ordinal ORDER BY ordinal) AS ordinals FROM ${children} s
-      CROSS JOIN LATERAL jsonb_each(s.value_refs) refs CROSS JOIN LATERAL jsonb_array_elements(refs.value) ordinal
-      WHERE s.world_id=p.world_id AND s.parent_id=p.id GROUP BY refs.key) refs)`,
-        }
-      : {};
-  const nativeHeaders =
-    field === 'entries'
-      ? ` UNION ALL SELECT key,to_json(value) FROM (VALUES ${receiptHeaders
-          .map((key) => {
-            const column = (
-              {
-                subjects: 'subjects',
-                sourceIds: 'source_ids',
-                individualIds: 'individual_ids',
-                sourceRefs: 'source_refs',
-              } as const
-            )[key];
-            return `('${key}',${projected[column]})`;
-          })
-          .join(',')}) headers(key,value)`
-      : '';
+  const projected = {
+    subjects: union('subjects'),
+    source_refs: union('source_refs'),
+    source_ids: union('source_ids'),
+    individual_ids: union('individual_ids'),
+    receipt_ordinals: `ARRAY(SELECT ordinal FROM ${children} s CROSS JOIN LATERAL unnest(s.receipt_ordinals) ordinal WHERE s.world_id=p.world_id AND s.parent_id=p.id ORDER BY ordinal)`,
+    value_refs: `ARRAY(SELECT DISTINCT v.id FROM ${children} s CROSS JOIN LATERAL unnest(s.value_refs) v(id) WHERE s.world_id=p.world_id AND s.parent_id=p.id ORDER BY v.id)`,
+  };
+  const nativeHeaders = ` UNION ALL SELECT key,to_json(value) FROM (VALUES ${receiptHeaders
+    .map((key) => {
+      const column = (
+        {
+          subjects: 'subjects',
+          sourceIds: 'source_ids',
+          individualIds: 'individual_ids',
+          sourceRefs: 'source_refs',
+        } as const
+      )[key];
+      return `('${key}',${projected[column]})`;
+    })
+    .join(',')}) headers(key,value)`;
   return `CREATE OR REPLACE VIEW ${table}_read AS SELECT
     p.world_id,p.id,p.parent_id,p.slot,p.position,p.revision,
     ${evidenceEncodedBytesSql('p')} AS encoded_bytes,
-    (SELECT json_object_agg(e.key,CASE WHEN e.key='${field}' THEN
+    (SELECT json_object_agg(e.key,CASE WHEN e.key='entries' THEN
       COALESCE((SELECT json_agg(v.value ORDER BY s.position,v.ordinality)
         FROM ${children} s CROSS JOIN LATERAL json_array_elements(s.payload::json->'values') WITH ORDINALITY v(value,ordinality)
-        WHERE s.world_id=p.world_id AND s.parent_id=p.id ${field === 'entries' ? "AND v.value::text<>'null'" : ''}), '[]'::json)
+        WHERE s.world_id=p.world_id AND s.parent_id=p.id AND v.value::text<>'null'), '[]'::json)
       ELSE e.value END)::text FROM (SELECT * FROM json_each(p.payload::json) ${nativeHeaders}) e) AS payload,
     (SELECT COALESCE(jsonb_agg(((s.payload::jsonb-'values') || jsonb_build_object('length',jsonb_array_length(s.payload::jsonb->'values'))) ORDER BY s.position),'[]'::jsonb) FROM ${children} s
       WHERE s.world_id=p.world_id AND s.parent_id=p.id) AS segments${columns.length ? ',' + columns.map((column) => `p.${column}`).join(',') : ''}${Object.entries(
@@ -536,5 +413,5 @@ export function evidenceReadView(table: string, field: Field, columns: string[])
       )
         .map(([column, sql]) => `,${sql} AS ${column}`)
         .join('')}
-    FROM ${table} p`;
+    FROM ${table} p WHERE p.retired_revision IS NULL`;
 }

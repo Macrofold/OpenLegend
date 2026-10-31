@@ -408,7 +408,7 @@ describe('actor-scoped native decision candidates', () => {
     ).toBe(false);
     await editWorld(service, (world) => {
       initializePerception(world, []);
-      const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates)
+      const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.annotations)
         .filter(
           ([, candidate]) =>
             candidate.sourceId === 'hare-1' || entityGet(world.entities, candidate.sourceId)?.heat,

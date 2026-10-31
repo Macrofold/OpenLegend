@@ -1,10 +1,10 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared implementation on `codex/bookkeeping-runtime-01`; integrated qualification remains open. | 2026-10-31   |
+| Status      | Current progress                                                                                   | Last updated |
+| ----------- | -------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Direct saving and compact evidence are implemented; required operating qualification remains open. | 2026-10-31   |
 
-**Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. This is a design deliverable, not an implementation or a measured speedup.
+**Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
 ## 1. Outcome
 
@@ -55,7 +55,9 @@ The durable command path can briefly hold world mutation while the direct transa
 | Lasting knowledge or memory         | A selected account and its minimal exact support or explicitly less precise provenance; no automatic ownership of the entire source chunk                          |
 | Search, display and scheduling aids | Derived from those owners, rebuilt or invalidated as needed; not another writable account of what happened                                                         |
 
-Small changing measurements, including position/heading, stay inline in their personal frame/current record. Stable or richer detail remains shared across compatible recipients and samples. This deliberately trades a little duplicated scalar data for fewer payload rows, references and deletion decisions. A producer family declares its representation once; no runtime size heuristic, global deduplication scan or alternate shadow store is added.
+Saved actor totals/deadlines choose maintenance; compact actor-scoped SQL reads supply retained headers outside simulation steps. No additional resident header catalogue is maintained. This reduces bookkeeping while leaving complete-game query cost as required qualification.
+
+Small changing measurements, including position/heading, stay inline in their personal frame/current record. Stable or richer detail remains shared across compatible recipients and samples. This deliberately trades a little duplicated scalar data for fewer payload rows, references and deletion decisions. The native value owner applies one representation rule: non-body fragments up to 192 encoded bytes stay inline; stable bodies and larger fragments use shared IDs. It reuses encoding already needed for exact equality and charging, without a global deduplication scan or per-producer configuration.
 
 The illustrative body samples discussed in this design were about 298–323 bytes of compact JSON; pose was about 75–78 bytes and stable detail about 221–249 bytes. They included rendering identity, dimensions, outward state and optional visible properties, not just coordinates. These are small source-inspection examples, not a capacity measurement. Richer mechanics can grow details, reinforcing the reason to keep stable-value sharing. Evaluate total benefit using value size, actual compatible recipients, update frequency and retention, including row/index/reference costs.
 

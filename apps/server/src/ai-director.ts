@@ -15,6 +15,7 @@ import {
   settleDiscovery,
   selectedAttentionPolicy,
   currentAttentionCues,
+  attentionCandidates,
   semanticCauseResolved,
 } from '@open-legend/domain';
 import { resolveContactTarget } from './public-contact-references.js';
@@ -4340,9 +4341,9 @@ export class AiDirector {
           !meaningfulChange &&
           !newReview &&
           selectedAttentionPolicy(readWorld()).semantic.discovery &&
-          Object.values(
-            readWorld().perceptionEvidence?.[entity.id]?.attention?.candidates ?? {},
-          ).some((candidate) => candidate.presentedDescription !== candidate.descriptionRevision)
+          Object.values(attentionCandidates(readWorld(), entity.id)).some(
+            (candidate) => candidate.presentedDescription !== candidate.descriptionRevision,
+          )
             ? discoveryInterval(readWorld(), entity.id)
             : undefined;
         const opportunity = digest({

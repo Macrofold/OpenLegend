@@ -1,3 +1,4 @@
+import { currentFacetValues } from '@open-legend/domain';
 import { currentFacetGrant } from '@open-legend/domain';
 import {
   offerRecipientProblem,
@@ -777,7 +778,7 @@ export function inventoryDestinationPage(
   const owner = world.perceptionEvidence?.[scope.actorId];
   const observedBodies = () =>
     (observed ??= owner
-      ? Object.values(owner.current)
+      ? currentFacetValues(owner)
           .flatMap((lease) => {
             if (lease.value.kind !== 'body') return [];
             const id = currentFacetGrant(owner, lease).subjectId;

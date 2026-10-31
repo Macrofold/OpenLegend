@@ -13,7 +13,7 @@ export function setPlayerAttention(
   return service.authorized(scope, 'play', true, () =>
     service.transition((world) => {
       const targetId = target === null ? undefined : resolveContactTarget(world, scope, target);
-      const candidates = world.perceptionEvidence?.[scope.actorId]?.attention?.candidates;
+      const candidates = world.perceptionEvidence?.[scope.actorId]?.attention?.annotations;
       const key =
         targetId === undefined
           ? undefined

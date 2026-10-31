@@ -1,8 +1,10 @@
 import {
-  evidenceReadView,
-  restoreEvidenceLayout,
-  validateReceiptPageSources,
-} from './evidence-segments.js';
+  receivedRecordReferences,
+  receivedCurrentOwnerTables,
+} from './received-record-references.js';
+import { liveEvidenceRowSql } from './world-record-schema.js';
+import { temporalFacetValueReferences } from '@open-legend/domain';
+import { evidenceReadView, validateReceiptPageSources } from './evidence-segments.js';
 import { sqlRecordBatches, SqlWriteBatch } from './sql-rows.js';
 import { tableRows } from './record-pages.js';
 import {
@@ -55,7 +57,7 @@ import {
   type Entity,
   type ItemInstance,
   selectedTemporalPolicy,
-  type ReceivedValueBlock,
+  type ReceivedValue,
   referencedReceivedValues,
 } from '@open-legend/domain';
 import type { SavedWorld, SqlDatabase } from './store.js';
@@ -74,7 +76,6 @@ const personalMetadataTables = new Set([
   'mind_memories',
   'mind_summaries',
   'mind_perception_owners',
-  'mind_perception_originals',
   'mind_perception_current',
   'mind_perception_motion_samples',
 ]);
@@ -101,6 +102,8 @@ export interface RowChange {
   payload: string;
   extra: unknown[];
   create: boolean;
+  /** Prepared metadata delta; unchanged poses must not revisit shared ownership. */
+  receivedUsesChanged?: boolean;
 }
 export interface RecordChanges {
   writes: Map<string, RowChange[]>;
@@ -108,76 +111,6 @@ export interface RecordChanges {
   rows: number;
   /** Actor-permitted semantic expiry, never re-archived as an old source version. */
   expired?: Map<string, string[]>;
-}
-interface PreparedRows {
-  owner: WorldRecords;
-  predecessor: object | undefined;
-  acceptedParents: boolean;
-  writes: Map<string, readonly RowChange[]>;
-  signatures: Map<RowChange, Omit<RowChange, 'extra'> & { extra: string }>;
-  deletes: string;
-  expired: string;
-  rows: number;
-  ownedAppends: Set<RowChange>;
-  ownedCreations: Set<RowChange>;
-  parents: Map<string, Set<string>>;
-  reclaimed: Set<string>;
-}
-const preparedRows = new WeakMap<RecordChanges, PreparedRows>();
-const predecessorTokens = new WeakMap<SavedWorld, object>();
-const rowSignature = (row: RowChange) => ({ ...row, extra: JSON.stringify(row.extra) });
-const sameRow = (row: RowChange, saved: ReturnType<typeof rowSignature> | undefined) =>
-  !!saved &&
-  row.id === saved.id &&
-  row.parent === saved.parent &&
-  row.slot === saved.slot &&
-  row.position === saved.position &&
-  row.payload === saved.payload &&
-  row.create === saved.create &&
-  JSON.stringify(row.extra) === saved.extra;
-/** Proof belongs to an exact record preparation, never to caller-supplied flags. */
-export function preparedRecordChanges(changes: RecordChanges): boolean {
-  const proof = preparedRows.get(changes);
-  return (
-    !!proof &&
-    changes.rows === proof.rows &&
-    changes.writes.size === proof.writes.size &&
-    [...changes.writes].every(
-      ([table, rows]) =>
-        rows.length === proof.writes.get(table)?.length &&
-        rows.every(
-          (row, index) =>
-            row === proof.writes.get(table)?.[index] && sameRow(row, proof.signatures.get(row)),
-        ),
-    ) &&
-    proof.deletes === JSON.stringify([...changes.deletes]) &&
-    proof.expired === JSON.stringify([...(changes.expired ?? [])])
-  );
-}
-export function ownedAppendRow(changes: RecordChanges, row: RowChange): boolean {
-  const proof = preparedRows.get(changes);
-  return !!proof?.ownedAppends.has(row) && sameRow(row, proof.signatures.get(row));
-}
-/** Complete resident membership proves absence only in this exact accepted
- * predecessor. Partial history and caller-invented baselines grant no proof. */
-export function ownedCreationRow(changes: RecordChanges, row: RowChange): boolean {
-  const proof = preparedRows.get(changes);
-  return (
-    !!proof?.acceptedParents &&
-    proof.ownedCreations.has(row) &&
-    sameRow(row, proof.signatures.get(row))
-  );
-}
-/** The store binds preparation to its exact accepted predecessor/head. A visited
- * existing parent is already canonical (possibly in the accepted journal suffix);
- * no world graph is retained by this compact membership proof. */
-export function ownedParentRow(changes: RecordChanges, table: string, id: string): boolean {
-  const proof = preparedRows.get(changes);
-  return !!proof?.acceptedParents && !!proof.parents.get(table)?.has(id);
-}
-/** Only the retention owner can certify complete current/cold dependency closure. */
-export function ownedPhysicalReclamation(changes: RecordChanges, id: string): boolean {
-  return !!preparedRows.get(changes)?.reclaimed.has(id);
 }
 export const retainedSourceTables: ReadonlySet<string> = new Set([
   'mind_awareness',
@@ -300,16 +233,6 @@ export class WorldRecords {
         throw new Error('Unsupported personal-history retirement.');
     this.retirements.set(state, { rows, positions, previous });
   }
-  /** Called by the store only after it has checked the exact accepted baseline.
-   * Frozen but caller-invented predecessors never authorize skipped SQL probes. */
-  bindAcceptedParents(changes: RecordChanges, before: SavedWorld): void {
-    const proof = preparedRows.get(changes);
-    if (!proof) return;
-    proof.acceptedParents =
-      proof.owner === this &&
-      proof.predecessor !== undefined &&
-      proof.predecessor === predecessorTokens.get(before);
-  }
   needsHotPrune = false;
   private currentContributionsPredicate(alias = ''): string {
     const json = (field: string) => `${alias}payload::jsonb ->> '${field}'`;
@@ -376,8 +299,7 @@ export class WorldRecords {
   async initialize() {
     await this.db.exec(`CREATE TABLE IF NOT EXISTS world_head (
       id BIGINT PRIMARY KEY CHECK (id=1), world_id TEXT NOT NULL UNIQUE,
-      revision BIGINT NOT NULL CHECK (revision>=0), generation TEXT NOT NULL,
-      applied_revision BIGINT NOT NULL CHECK (applied_revision>=0 AND applied_revision<=revision)
+      revision BIGINT NOT NULL CHECK (revision>=0), generation TEXT NOT NULL
     )`);
     const create = (node: RecordNode, parent?: RecordNode): string => {
       const extra = Object.entries(node.columns ?? {})
@@ -398,12 +320,19 @@ export class WorldRecords {
         .join('\n')}`;
     };
     await this.db.exec(create(WORLD_RECORD_SCHEMA));
-    for (const [table, field] of [
-      ['mind_temporal_chunks', 'entries'],
-      ['mind_perception_values', 'values'],
-    ] as const)
+    // An immutable ID may be hydrated again, never rebound to different contents.
+    // Enforce this at the one SQL owner without a preceding ownership/read scan.
+    await this.db.exec(`CREATE OR REPLACE FUNCTION reject_received_value_mutation() RETURNS trigger
+      LANGUAGE plpgsql AS $$ BEGIN
+        RAISE EXCEPTION 'An immutable received value cannot change its contents.';
+      END $$;
+      DROP TRIGGER IF EXISTS received_value_immutable ON mind_perception_values;
+      CREATE TRIGGER received_value_immutable BEFORE UPDATE OF payload ON mind_perception_values
+        FOR EACH ROW WHEN (OLD.payload::jsonb IS DISTINCT FROM NEW.payload::jsonb)
+        EXECUTE FUNCTION reject_received_value_mutation()`);
+    for (const table of ['mind_temporal_chunks'])
       await this.db.exec(
-        evidenceReadView(table, field, Object.keys(RECORD_NODES.get(table)!.columns ?? {})),
+        evidenceReadView(table, Object.keys(RECORD_NODES.get(table)!.columns ?? {})),
       );
     const lineageCustodian = "(payload::jsonb ->> 'custodianId')";
     await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
@@ -425,14 +354,13 @@ export class WorldRecords {
   }
   async head() {
     const row = await this.db
-      .prepare('SELECT world_id,revision,generation,applied_revision FROM world_head WHERE id=1')
+      .prepare('SELECT world_id,revision,generation FROM world_head WHERE id=1')
       .get();
     return row
       ? {
           worldId: String(row['world_id']),
           revision: Number(row['revision']),
           generation: String(row['generation']),
-          appliedRevision: Number(row['applied_revision']),
         }
       : null;
   }
@@ -440,12 +368,12 @@ export class WorldRecords {
   async advance(worldId: string, expected: number, restore = false): Promise<number> {
     if (expected === 0)
       await this.db
-        .prepare('INSERT INTO world_head VALUES (1,?,0,?,0) ON CONFLICT(id) DO NOTHING')
+        .prepare('INSERT INTO world_head VALUES (1,?,0,?) ON CONFLICT(id) DO NOTHING')
         .run(worldId, randomUUID());
     const row = await this.db
       .prepare(
-        `UPDATE world_head SET revision=revision+1,applied_revision=revision+1${restore ? ',generation=?' : ''}
-      WHERE id=1 AND world_id=? AND revision=? AND applied_revision=revision RETURNING revision`,
+        `UPDATE world_head SET revision=revision+1${restore ? ',generation=?' : ''}
+      WHERE id=1 AND world_id=? AND revision=? RETURNING revision`,
       )
       .get(...(restore ? [randomUUID()] : []), worldId, expected);
     if (!row) throw new Error('Save conflict: another writer changed this world.');
@@ -474,13 +402,7 @@ export class WorldRecords {
     readOnlyMetadata: boolean,
   ): RecordChanges {
     const changes: RecordChanges = { writes: new Map(), deletes: new Map(), rows: 0 };
-    let predecessor = before && predecessorTokens.get(before);
-    if (before && !predecessor && !readOnlyMetadata)
-      predecessorTokens.set(before, (predecessor = {}));
     const retirement = readOnlyMetadata ? undefined : this.retirements.get(after);
-    const ownedAppends = new Set<RowChange>();
-    const ownedCreations = new Set<RowChange>();
-    const existingParents = new Map<string, Set<string>>();
     const required = selectedTables ? new Set(selectedTables) : undefined;
     if (required)
       for (const table of selectedTables!) {
@@ -518,12 +440,12 @@ export class WorldRecords {
           if (node.table === 'mind_temporal_chunks') slot = String(position);
         }
       }
-      if (old !== undefined && next !== undefined && node.children && before) {
-        let ids = existingParents.get(node.table);
-        if (!ids) existingParents.set(node.table, (ids = new Set()));
-        ids.add(id);
-      }
+      // Absence from a resident tail is not proof of absence from PostgreSQL.
+      // Only a complete predecessor/new parent or a proved append gets INSERT-only.
+      const create = old === undefined && (!before || knownAbsent);
       if (next === undefined) {
+        // Residency eviction is not deletion. The indexed collector owns shared values.
+        if (node.table === 'mind_perception_values') return;
         // Foreign keys remove this owned subtree, never another actor's records.
         const ids = changes.deletes.get(node.table) ?? [];
         ids.push(id);
@@ -532,12 +454,8 @@ export class WorldRecords {
       }
       if (node.encode) {
         const previous = old;
-        const bytes = selectedTemporalPolicy(after.world).recent.chunkBytes;
-        old =
-          old === undefined
-            ? undefined
-            : node.encode(old, undefined, bytes, before?.world, !readOnlyMetadata);
-        next = node.encode(next, previous, bytes, after.world, !readOnlyMetadata);
+        old = old === undefined ? undefined : node.encode(old, undefined, before?.world);
+        next = node.encode(next, previous, after.world);
       }
       if (!selectedTables || selectedTables.has(node.table)) {
         const payload = encodedBody(node, next);
@@ -554,13 +472,26 @@ export class WorldRecords {
             slot,
             position,
             payload,
-            create: old === undefined,
+            create,
             extra: Object.values(node.columns ?? {}).map((column) =>
               column.value(next as JsonRecord, path),
             ),
           };
+          if (
+            old !== undefined &&
+            receivedCurrentOwnerTables.includes(
+              node.table as (typeof receivedCurrentOwnerTables)[number],
+            )
+          ) {
+            const nextRefs = row.extra[
+              Object.keys(node.columns!).indexOf('value_refs')
+            ] as string[];
+            const previousRefs = receivedRecordReferences(node.table, old as JsonRecord);
+            row.receivedUsesChanged =
+              nextRefs.length !== previousRefs.length ||
+              nextRefs.some((id, at) => id !== previousRefs[at]);
+          }
           rows.push(row);
-          if (row.create && knownAbsent) ownedCreations.add(row);
           changes.writes.set(node.table, rows);
           changes.rows++;
         }
@@ -573,9 +504,23 @@ export class WorldRecords {
           continue;
         const childPath = field === '$' ? path : [...path, field];
         const complete =
-          !!before && child.complete && isImmutableData(previous) && isImmutableData(current);
+          !!before &&
+          previous !== undefined &&
+          child.complete &&
+          isImmutableData(previous) &&
+          isImmutableData(current);
         if (child.mode === 'one') {
-          visit(child.node, previous ?? undefined, current ?? undefined, childPath, id, field, 0);
+          visit(
+            child.node,
+            previous ?? undefined,
+            current ?? undefined,
+            childPath,
+            id,
+            field,
+            0,
+            0,
+            create,
+          );
           continue;
         }
         if (child.mode === 'list') {
@@ -587,15 +532,16 @@ export class WorldRecords {
           // cold eviction. Replacing an expired source must not renumber its
           // retained sibling into the position the replacement still owns.
           // docs/performance.md#inactive-history-residency
-          const placement =
-            historyPositions.get(a) ??
-            (HISTORY_TABLES.has(child.node.table)
-              ? {
-                  positions: new Map(a.map((entry, index) => [key(entry, index), index])),
-                  next: a.length,
-                  complete: true,
-                }
-              : undefined);
+          const placement = child.orderKey
+            ? undefined
+            : (historyPositions.get(a) ??
+              (HISTORY_TABLES.has(child.node.table)
+                ? {
+                    positions: new Map(a.map((entry, index) => [key(entry, index), index])),
+                    next: a.length,
+                    complete: true,
+                  }
+                : undefined));
           const appended = appendedRecordCount(a, b);
           const nextPlacement = placement
             ? {
@@ -620,11 +566,17 @@ export class WorldRecords {
               throw new Error(`Duplicate record identity in ${child.node.table}.`);
             seen.add(entryId);
             const previousEntry = prior.get(entryId);
-            const oldIndex = placement?.positions.get(entryId) ?? previousEntry?.index;
-            const position =
-              nextPlacement && !(placement?.complete && child.node.table === 'mind_summaries')
+            const oldIndex =
+              child.orderKey && previousEntry
+                ? Number(own(previousEntry.entry, child.orderKey))
+                : (placement?.positions.get(entryId) ?? previousEntry?.index);
+            const position = child.orderKey
+              ? Number(own(entry, child.orderKey))
+              : nextPlacement && !(placement?.complete && child.node.table === 'mind_summaries')
                 ? (oldIndex ?? nextPlacement.next++)
                 : i;
+            if (!Number.isSafeInteger(position) || position < 0)
+              throw new Error(`Invalid native ordering in ${child.node.table}.`);
             nextPlacement?.positions.set(entryId, position);
             visit(
               child.node,
@@ -635,18 +587,10 @@ export class WorldRecords {
               String(position),
               position,
               oldIndex,
-              !!complete && !previousEntry && !prefixIds?.has(entryId),
+              create ||
+                (!!complete && !previousEntry && !prefixIds?.has(entryId)) ||
+                (!!child.orderKey && appended !== undefined && previous !== undefined),
             );
-            if (
-              (child.node.table === 'mind_temporal_segments' ||
-                child.node.table === 'mind_perception_segments') &&
-              (previous === undefined || appended !== undefined) &&
-              isImmutableData(current)
-            ) {
-              const row = changes.writes.get(child.node.table)?.at(-1);
-              if (row?.create && row.id === recordId([...childPath, entryId]))
-                ownedAppends.add(row);
-            }
             prior.delete(entryId);
           }
           if (nextPlacement && !readOnlyMetadata)
@@ -828,7 +772,7 @@ export class WorldRecords {
               key,
               position,
               oldPosition,
-              !!complete && !prior,
+              create || (!!complete && !prior),
             );
             index++;
             oldEntries.delete(key);
@@ -892,38 +836,6 @@ export class WorldRecords {
         if (deletes.size) changes.deletes.set(table, [...deletes]);
       }
     }
-    const provenParents = new Map<string, Set<string>>();
-    for (const [table, rows] of changes.writes) {
-      const parent = RECORD_PARENTS.get(table);
-      const known = parent && existingParents.get(parent);
-      if (!known) continue;
-      for (const row of rows) {
-        if (!known.has(row.parent)) continue;
-        let ids = provenParents.get(parent!);
-        if (!ids) provenParents.set(parent!, (ids = new Set()));
-        ids.add(row.parent);
-      }
-    }
-    if (Object.isFrozen(after.world) && !readOnlyMetadata)
-      preparedRows.set(changes, {
-        owner: this,
-        predecessor,
-        acceptedParents: false,
-        writes: new Map([...changes.writes].map(([table, rows]) => [table, [...rows]])),
-        signatures: new Map(
-          [...changes.writes.values()].flat().map((row) => [row, rowSignature(row)]),
-        ),
-        deletes: JSON.stringify([...changes.deletes]),
-        expired: JSON.stringify([...(changes.expired ?? [])]),
-        rows: changes.rows,
-        ownedAppends,
-        ownedCreations,
-        parents: provenParents,
-        reclaimed: new Set([
-          ...(retirement?.rows.get('mind_perception_values') ?? []),
-          ...(retirement?.positions.get('mind_perception_values')?.keys() ?? []),
-        ]),
-      });
     return changes;
   }
   async write(
@@ -933,7 +845,7 @@ export class WorldRecords {
     writes = new SqlWriteBatch(this.db),
   ) {
     // This metadata is derived from canonical personal records, inside the same
-    // transaction. Journal replay takes this path too. A new ordinary observation
+    // transaction. A new ordinary observation
     // needs no relationship query; only changed social sources/revocations do.
     const agreementGroups = new Map<string, { actor_id: string; agreement_key: string }>(),
       sourceRefs: Array<{ actor_id: string; source_id: string }> = [];
@@ -1069,7 +981,9 @@ export class WorldRecords {
         const batch = ids.slice(offset, offset + 800);
         await this.db
           .prepare(
-            `DELETE FROM ${table} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
+            table === 'mind_temporal_chunks'
+              ? `UPDATE mind_temporal_chunks SET retired_revision=${revision} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')}) AND retired_revision IS NULL`
+              : `DELETE FROM ${table} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
           )
           .run(worldId, ...batch);
       }
@@ -1117,19 +1031,11 @@ export class WorldRecords {
       ? this.db.readTransaction(() => this.readRecords(active))
       : this.db.transaction(() => this.readRecords(active));
   }
-  /** Journal recovery reads the complete applied prefix inside its owned transaction. */
-  async loadApplied(): Promise<{ revision: number; state: SavedWorld } | null> {
-    if (!this.db.transactionActive) throw new Error('Applied recovery requires its transaction.');
-    return this.readRecords(false, true);
-  }
   private async readRecords(
     active: boolean,
-    applied = false,
   ): Promise<{ revision: number; state: SavedWorld } | null> {
     const head = await this.head();
     if (!head) return null;
-    if (!applied && head.appliedRevision !== head.revision)
-      throw new Error('World tables have not applied the committed revision.');
     const settings = active
       ? await this.db
           .prepare('SELECT payload FROM world_settings WHERE world_id=?')
@@ -1143,12 +1049,7 @@ export class WorldRecords {
     for (const table of RECORD_NODES.keys()) {
       if (
         active &&
-        [
-          'mind_temporal_chunks',
-          'mind_perception_values',
-          'mind_temporal_segments',
-          'mind_perception_segments',
-        ].includes(table)
+        ['mind_temporal_chunks', 'mind_perception_values', 'mind_temporal_segments'].includes(table)
       ) {
         groups.set(table, new Map());
         continue;
@@ -1238,7 +1139,7 @@ export class WorldRecords {
           .prepare(
             table === 'world_hot_events'
               ? `SELECT t.id,t.parent_id,t.slot,t.position,h.payload FROM world_hot_events t LEFT JOIN history_events h ON h.world_id=t.world_id AND h.id=${eventId} WHERE t.world_id=? ORDER BY t.parent_id,t.position`
-              : `SELECT ${fields.join(',')} FROM ${table} t WHERE world_id=?${objectPredicate}${partial ? ' AND 1=0' : ''} ORDER BY parent_id,position`,
+              : `SELECT ${fields.join(',')} FROM ${table} t WHERE world_id=?${liveEvidenceRowSql(table) ? ` AND ${liveEvidenceRowSql(table)}` : ''}${objectPredicate}${partial ? ' AND 1=0' : ''} ORDER BY parent_id,position`,
           )
           .all(head.worldId);
       }
@@ -1282,8 +1183,6 @@ export class WorldRecords {
       // one exact block with the existing batch; a cold pointer is not missing data.
       // docs/save-and-load.md#shared-temporal-evidence-continuation
       const references = new Set(referencedReceivedValues(state.world).keys());
-      for (const id of received.activeSources ?? []) references.add(id);
-      if (received.activeSource) references.add(received.activeSource);
       const chunks = temporal
         ? await this.db
             .prepare(
@@ -1305,27 +1204,17 @@ export class WorldRecords {
       for (const [actorId, actor] of Object.entries(temporal?.actors ?? {})) {
         const selected = byActor.get(actorId) ?? [];
         actor.chunks = selected.map(readTemporalChunkRecord);
-        const parent = JSON.stringify(['world', 'experience', 'temporal', 'actors', actorId]);
-        historyPositions.set(actor.chunks, {
-          positions: new Map(
-            actor.chunks.map((chunk, index) => [chunk.id, Number(selected[index]!['position'])]),
-          ),
-          next: nextPositions.get(`mind_temporal_chunks:${parent}`) ?? actor.chunks.length,
-        });
         for (const chunk of actor.chunks) for (const id of chunk.sourceRefs) references.add(id);
-        for (const reference of Object.values(actor.captures)) references.add(reference.blockId);
+        for (const reference of Object.values(actor.captures))
+          for (const id of temporalFacetValueReferences(reference)) references.add(id);
       }
       for (let offset = 0, ids = [...references]; offset < ids.length; offset += 800)
         for (const row of await this.db
           .prepare(
-            'SELECT payload,segments FROM mind_perception_values_read WHERE world_id=? AND source_id=ANY(?::text[])',
+            'SELECT payload FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[])',
           )
           .all(head.worldId, ids.slice(offset, offset + 800))) {
-          const source = restoreEvidenceLayout(
-            JSON.parse(String(row['payload'])),
-            'values',
-            row['segments'],
-          ) as unknown as ReceivedValueBlock;
+          const source = JSON.parse(String(row['payload'])) as unknown as ReceivedValue;
           received.sources[source.id] = source;
         }
     }
@@ -1367,7 +1256,7 @@ export class WorldRecords {
       this.needsHotPrune ||= removed > 0;
     }
     await this.auditRetentionTotals(state);
-    return { revision: applied ? head.appliedRevision : head.revision, state };
+    return { revision: head.revision, state };
   }
   /** Cold bodies stay cold: independently sum canonical metadata in the same
    * snapshot so a damaged header cannot evade age/space maintenance after load. */
@@ -1385,7 +1274,7 @@ export class WorldRecords {
     const totals = await this.db
       .prepare(
         `SELECT actor_id,category,SUM(bytes) AS bytes,SUM(count) AS count FROM (
-      SELECT actor_id,'recent' AS category,SUM(logical_bytes) AS bytes,SUM(receipt_count) AS count FROM mind_temporal_chunks WHERE world_id=? GROUP BY actor_id
+      SELECT actor_id,'recent' AS category,SUM(logical_bytes) AS bytes,SUM(receipt_count) AS count FROM mind_temporal_chunks WHERE world_id=? AND retired_revision IS NULL GROUP BY actor_id
       ${['mind_awareness', 'mind_memories', 'mind_summaries'].map((table) => `UNION ALL SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM ${table} WHERE world_id=? GROUP BY actor_id,retention_class`).join('\n')}
       UNION ALL SELECT actor_id,CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? GROUP BY actor_id,required
       UNION ALL SELECT actor_id,'required' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_learned_capabilities WHERE world_id=? AND payload::jsonb->>'source'<>'authored' GROUP BY actor_id
@@ -1938,8 +1827,7 @@ export function assembleWorldRecords(
           slots.add(slot);
           const entryValue = assemble(child.node, entry);
           if (
-            (child.node.table === 'mind_temporal_segments' ||
-              child.node.table === 'mind_perception_segments') &&
+            child.node.table === 'mind_temporal_segments' &&
             String((entryValue as JsonRecord)['start']) !==
               (JSON.parse(String(entry['id'])) as string[]).at(-1)
           )
@@ -1958,13 +1846,18 @@ export function assembleWorldRecords(
           }
           put(
             target,
-            HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events'
+            child.orderKey ||
+              HISTORY_TABLES.has(child.node.table) ||
+              child.node.table === 'world_hot_events'
               ? String((target as unknown[]).length)
               : String(entry['slot']),
             entryValue,
           );
         }
-        if (HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events') {
+        if (
+          !child.orderKey &&
+          (HISTORY_TABLES.has(child.node.table) || child.node.table === 'world_hot_events')
+        ) {
           const entries = target as unknown[];
           historyPositions.set(entries, {
             complete: !active,
@@ -1999,6 +1892,15 @@ export function assembleWorldRecords(
         result as unknown as import('@open-legend/domain').TemporalChunk,
         row['value_refs'],
       );
+    if (
+      receivedCurrentOwnerTables.includes(
+        node.table as (typeof receivedCurrentOwnerTables)[number],
+      ) &&
+      row['value_refs'] !== undefined &&
+      canonicalJson(row['value_refs']) !==
+        canonicalJson(receivedRecordReferences(node.table, result as JsonRecord))
+    )
+      throw new Error('Current received-value membership disagrees with its canonical contact.');
     return result;
   };
   const roots = groups.get(schema.table)?.get('') ?? [];

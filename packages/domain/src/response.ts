@@ -1,3 +1,4 @@
+import { attentionCandidates } from './attention.js';
 import {
   constructionPermissionBatch,
   absorbConstructionPermissionBatch,
@@ -1694,7 +1695,8 @@ export function commitActorResponse(
     for (const cause of situationBinding.semanticCauses ?? []) {
       const attention = world.perceptionEvidence?.[actorId]?.attention;
       const latch = attention?.latches[cause.key];
-      const candidate = latch && attention?.candidates[latch.anchorKey];
+      const candidate =
+        latch && attentionCandidates(world, actorId, [latch.anchorKey])[latch.anchorKey];
       if (
         latch?.active &&
         latch.generation === cause.generation &&

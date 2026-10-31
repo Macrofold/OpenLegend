@@ -1,3 +1,4 @@
+import { currentFacetValues } from '@open-legend/domain';
 import { currentFacetGrant } from '@open-legend/domain';
 import { createHmac, randomBytes } from 'node:crypto';
 import {
@@ -304,7 +305,7 @@ function contactTargetResolver(world: WorldState, scope: RequestScope, communica
       if (!bodies) {
         bodies = new Map();
         if (owner)
-          for (const lease of Object.values(owner.current)) {
+          for (const lease of currentFacetValues(owner)) {
             if (lease.value.kind !== 'body') continue;
             const entity = entityGet(world.entities, currentFacetGrant(owner, lease).subjectId);
             if (entity && currentBodyGrant(world, scope.actorId, entity.id))
@@ -316,7 +317,7 @@ function contactTargetResolver(world: WorldState, scope: RequestScope, communica
       if (!parts) {
         parts = new Map();
         if (owner)
-          for (const lease of Object.values(owner.current)) {
+          for (const lease of currentFacetValues(owner)) {
             if (lease.value.kind !== 'body') continue;
             const subjectId = currentFacetGrant(owner, lease).subjectId;
             if (!currentBodyGrant(world, scope.actorId, subjectId)) continue;

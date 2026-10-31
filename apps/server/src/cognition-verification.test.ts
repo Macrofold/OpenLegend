@@ -834,7 +834,7 @@ describe(
       // activity request needs actual offered participants, rather than assuming
       // every broad visible object has been expanded in the character's context.
       await editWorld(h.service, (world) => {
-        const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates)
+        const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.annotations)
           .filter(([, candidate]) => entityGet(world.entities, candidate.sourceId)?.heat)
           .map(([key]) => key);
         expect(keys.length).toBeGreaterThan(0);
@@ -905,7 +905,7 @@ describe(
         client: (config) => directClient(config, jevOnlyTransport.fetch),
       });
       await editWorld(jevOnly.service, (world) => {
-        const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates)
+        const keys = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.annotations)
           .filter(([, candidate]) => entityGet(world.entities, candidate.sourceId)?.heat)
           .map(([key]) => key);
         expect(keys.length).toBeGreaterThan(0);

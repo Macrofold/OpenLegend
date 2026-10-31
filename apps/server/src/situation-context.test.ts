@@ -1,3 +1,4 @@
+import { attentionCandidates } from '@open-legend/domain';
 import { routineSensePolicy } from '../../../packages/domain/src/perception.js';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
@@ -342,7 +343,7 @@ describe('bounded received situation', () => {
     });
     expect(voice.outcome.ok).toBe(true);
     world = updateWorld(voice.world, (draft) => {
-      const key = Object.entries(draft.perceptionEvidence![NPC_ID]!.attention!.candidates).find(
+      const key = Object.entries(draft.perceptionEvidence![NPC_ID]!.attention!.annotations).find(
         ([, candidate]) => candidate.sourceId === 'edge-person-0',
       )![0];
       expect(setAttentionFocus(draft, NPC_ID, [key])).toBe(true);
@@ -412,7 +413,7 @@ describe('bounded received situation', () => {
     expect(captured.packet.coverage.omittedOptionalFacets).toBeGreaterThan(0);
     const suppliedDescriptions = new Set(captured.presented.map((entry) => entry.key));
     expect(captured.packet.coverage.unconsideredDescriptions).toBe(
-      Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates).filter(
+      Object.entries(attentionCandidates(world, NPC_ID)).filter(
         ([key, candidate]) =>
           candidate.presentedDescription !== candidate.descriptionRevision &&
           !suppliedDescriptions.has(key),
@@ -723,7 +724,7 @@ describe('bounded received situation', () => {
     const newlyPresented = captured.presented.filter((entry) => !before.has(entry.key));
     expect(newlyPresented.length).toBeGreaterThan(0);
     expect(newlyPresented.every((entry) => supplied.has(entry.key))).toBe(true);
-    const original = world.perceptionEvidence![PLAYER_ID]!.attention!.candidates;
+    const original = world.perceptionEvidence![PLAYER_ID]!.attention!.annotations;
     const omitted = Object.keys(original).filter((key) => !before.has(key) && !supplied.has(key));
     const result = commitActorResponse(
       world,
@@ -743,7 +744,7 @@ describe('bounded received situation', () => {
       situationProposalBinding(captured),
     );
     expect(result.outcome.ok, result.outcome.message).toBe(true);
-    const current = result.world.perceptionEvidence![PLAYER_ID]!.attention!.candidates;
+    const current = result.world.perceptionEvidence![PLAYER_ID]!.attention!.annotations;
     for (const supplied of newlyPresented)
       expect(current[supplied.key]!.presentedDescription).toBe(supplied.descriptionRevision);
     for (const key of omitted)

@@ -1,3 +1,4 @@
+import { currentFacetValues } from '@open-legend/domain';
 import { currentFacetGrant } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
 import {
@@ -230,7 +231,7 @@ export function continuitySubjects(
   const currentSubjects: ObserverSubject[] = [];
   const owner = world.perceptionEvidence?.[actorId];
   if (owner)
-    for (const lease of Object.values(owner.current)) {
+    for (const lease of currentFacetValues(owner)) {
       if (lease.value.kind !== 'body') continue;
       const subjectId = currentFacetGrant(owner, lease).subjectId;
       const body = currentBodyValue(world, actorId, subjectId);

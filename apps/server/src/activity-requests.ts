@@ -1,3 +1,4 @@
+import { currentFacetValues } from '@open-legend/domain';
 import { currentFacetGrant } from '@open-legend/domain';
 import { entityGet, entityHas } from '@open-legend/domain';
 import {
@@ -260,7 +261,7 @@ export function activityChoicePage(
   const owner = world.perceptionEvidence?.[scope.actorId];
   const observed =
     source === 'spatial' && !request.selectedId && owner
-      ? Object.values(owner.current)
+      ? currentFacetValues(owner)
           .flatMap((lease) => {
             if (lease.value.kind !== 'body') return [];
             const id = currentFacetGrant(owner, lease).subjectId;

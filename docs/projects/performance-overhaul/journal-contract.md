@@ -1,10 +1,10 @@
 # Durable saving journal: implementation contract
 
-| Status      | Current progress                                                                                                            | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The journal remains installed; its direct-writer replacement is designed under BK01 and runtime qualification remains open. | 2026-10-31   |
+| Status     | Current progress                                                                                                | Last updated |
+| ---------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
+| Superseded | The custom journal is removed; direct transactional saving is installed and BK retains operating qualification. | 2026-10-31   |
 
-**Selected replacement, not implemented:** [simpler saving and personal evidence](../bookkeeping-simplification-tech-design.md#4-direct-transactional-saving) replaces this experiment with the existing direct transactional writer for all supported changes. [BK01](../../maintainers/production-data.md#bookkeeping-simplification) owns removal of the application worker, dual heads and query alignment. This file describes the installed mechanism until cutover; its privacy, atomicity and failure requirements must survive through their canonical owners.
+**Historical experiment.** [Direct transactional saving](../bookkeeping-simplification-tech-design.md#4-direct-transactional-saving) replaces this mechanism. The application worker, dual heads and query-alignment waits are removed. The sections below preserve the experiment and its limits as historical evidence; [save/load](../../save-and-load.md#background-and-synchronous-world-saves) owns current behavior.
 
 [Execution plan](execution.md) · [Storage card](storage.md#pf178--a-durable-change-journal-before-table-materialization) · [Results](../../verification/performance/overhaul-storage-implementation.md)
 

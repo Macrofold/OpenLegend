@@ -1,3 +1,11 @@
+import { canonicalJson } from './events.js';
+import {
+  currentFacetGet,
+  currentFacetEntries,
+  currentFacetCheckScope,
+  type CurrentContact,
+} from './perception-current.js';
+import { validateOrderedRecord, orderedRecordEntries } from './ordered-record.js';
 import { currentFacetGrant } from './perception-current.js';
 import type { WorldState } from './types.js';
 import type {
@@ -29,14 +37,16 @@ import { hasRecordFields, isSafeRecordId, jsonEncoding } from './records.js';
 import { validObserverSubject } from './knowledge.js';
 import { readOnlyDraftView } from './draft.js';
 
-function validReceivedReference(value: unknown): value is readonly [string, number] {
+function validReceivedReference(
+  value: unknown,
+): value is import('./received-values.js').ReceivedValueReference {
   return (
-    Array.isArray(value) &&
-    value.length === 2 &&
-    isSafeRecordId(value[0]) &&
-    typeof value[1] === 'number' &&
-    Number.isSafeInteger(value[1]) &&
-    value[1] >= 0
+    isSafeRecordId(value) ||
+    (!!value &&
+      typeof value === 'object' &&
+      !Array.isArray(value) &&
+      'kind' in value &&
+      typeof value.kind === 'string')
   );
 }
 
@@ -49,82 +59,15 @@ export function validateReceivedValueState(
   const state = world.receivedValues;
   if (state === undefined) return;
   if (
-    !hasRecordFields(
-      state,
-      ['sources'],
-      ['activeAt', 'activeSources', 'activeSource', 'retirement'],
-    ) ||
+    !hasRecordFields(state, ['sources']) ||
     !state.sources ||
     typeof state.sources !== 'object' ||
-    Array.isArray(state.sources) ||
-    (state.activeAt !== undefined &&
-      (!Number.isFinite(state.activeAt) || state.activeAt < 0 || state.activeAt > world.simTime)) ||
-    (state.activeSources !== undefined &&
-      (!Array.isArray(state.activeSources) ||
-        !state.activeSources.length ||
-        new Set(state.activeSources).size !== state.activeSources.length ||
-        state.activeSources.some(
-          (id) =>
-            !isSafeRecordId(id) || !state.sources[id] || state.sources[id].at !== state.activeAt,
-        ))) ||
-    (state.activeAt === undefined) !== (state.activeSources === undefined) ||
-    (state.activeSource !== undefined &&
-      (typeof state.activeSource !== 'string' ||
-        !state.sources[state.activeSource] ||
-        state.activeSources?.at(-1) !== state.activeSource))
+    Array.isArray(state.sources)
   )
     throw new Error('Invalid received value owner.');
-  if (state.retirement) {
-    const retirement = state.retirement;
-    if (
-      !hasRecordFields(
-        retirement,
-        ['nextGeneration', 'bytes', 'optionalAdmissionBlocked', 'pending'],
-        ['cursor'],
-      ) ||
-      !Number.isSafeInteger(retirement.nextGeneration) ||
-      retirement.nextGeneration < 0 ||
-      !Number.isSafeInteger(retirement.bytes) ||
-      retirement.bytes < 0 ||
-      typeof retirement.optionalAdmissionBlocked !== 'boolean' ||
-      (retirement.cursor !== undefined && !isSafeRecordId(retirement.cursor)) ||
-      !retirement.pending ||
-      typeof retirement.pending !== 'object' ||
-      Array.isArray(retirement.pending) ||
-      Object.entries(retirement.pending).some(
-        ([id, candidate]) =>
-          !isSafeRecordId(id) ||
-          !hasRecordFields(
-            candidate,
-            ['generation', 'releaseRevision', 'bytes', 'stage'],
-            ['applicationRevision', 'checkedRevision'],
-          ) ||
-          !Number.isSafeInteger(candidate.generation) ||
-          candidate.generation < 1 ||
-          candidate.generation > retirement.nextGeneration ||
-          !Number.isSafeInteger(candidate.releaseRevision) ||
-          candidate.releaseRevision < candidate.generation ||
-          candidate.releaseRevision > retirement.nextGeneration ||
-          !Number.isSafeInteger(candidate.bytes) ||
-          candidate.bytes < 0 ||
-          !['candidate', 'applying'].includes(candidate.stage) ||
-          (candidate.stage === 'applying'
-            ? !Number.isSafeInteger(candidate.applicationRevision) ||
-              candidate.applicationRevision! < 1 ||
-              !Number.isSafeInteger(candidate.checkedRevision) ||
-              candidate.checkedRevision! < candidate.generation ||
-              candidate.checkedRevision! > candidate.releaseRevision
-            : candidate.applicationRevision !== undefined ||
-              candidate.checkedRevision !== undefined),
-      ) ||
-      Object.values(retirement.pending).reduce((sum, candidate) => sum + candidate.bytes, 0) !==
-        retirement.bytes
-    )
-      throw new Error('Invalid received value retirement.');
-  }
   for (const [id, block] of Object.entries(state.sources)) {
     if (
-      !hasRecordFields(block, ['id', 'at', 'sequence', 'values', 'bytes']) ||
+      !hasRecordFields(block, ['id', 'at', 'sequence', 'value', 'bytes']) ||
       !isSafeRecordId(id) ||
       block.id !== id ||
       !Number.isFinite(block.at) ||
@@ -135,13 +78,12 @@ export function validateReceivedValueState(
       block.sequence > world.sequence ||
       !Number.isSafeInteger(block.bytes) ||
       block.bytes < 0 ||
-      !Array.isArray(block.values) ||
-      !block.values.length ||
+      !block.value ||
       block.bytes !== jsonEncoding(block).bytes
     )
       throw new Error('Invalid received value block.');
-    for (const fragment of block.values) {
-      if (fragment === null) continue;
+    {
+      const fragment = block.value;
       if (fragment?.kind === 'observation-header') {
         const header = fragment.header;
         if (
@@ -260,17 +202,11 @@ export function validatePerceptionEvidenceState(
       state.receivedAtSequence < 0 ||
       state.receivedAtSequence > world.sequence ||
       !Array.isArray(state.received) ||
-      !state.originals ||
-      typeof state.originals !== 'object' ||
-      Array.isArray(state.originals) ||
       !state.receipts ||
       typeof state.receipts !== 'object' ||
       Array.isArray(state.receipts) ||
-      !state.grants ||
-      typeof state.grants !== 'object' ||
-      Array.isArray(state.grants) ||
-      !Number.isSafeInteger(state.nextGrant) ||
-      state.nextGrant < 0 ||
+      !Number.isSafeInteger(state.nextContact) ||
+      state.nextContact < 0 ||
       !state.current ||
       typeof state.current !== 'object' ||
       Array.isArray(state.current) ||
@@ -279,6 +215,143 @@ export function validatePerceptionEvidenceState(
       Array.isArray(state.gaps)
     )
       throw new Error('Invalid active perception owner.');
+    const contactOrders = new Set<number>();
+    validateOrderedRecord(state.current, (value): value is CurrentContact => {
+      if (!hasRecordFields(value, ['order', 'content'], ['sight'])) return false;
+      const contact = value as unknown as CurrentContact;
+      if (!hasRecordFields(contact.content, ['fieldOrder', 'originals', 'groups'])) return false;
+      if (
+        !Number.isSafeInteger(contact.order) ||
+        contact.order < 0 ||
+        contact.order >= state.nextContact ||
+        contactOrders.has(contact.order) ||
+        !Array.isArray(contact.content.fieldOrder) ||
+        contact.content.fieldOrder.some((kind) => typeof kind !== 'string') ||
+        new Set(contact.content.fieldOrder).size !== contact.content.fieldOrder.length ||
+        !contact.content.originals ||
+        typeof contact.content.originals !== 'object' ||
+        Array.isArray(contact.content.originals) ||
+        !Array.isArray(contact.content.groups) ||
+        !contact.content.groups.length
+      )
+        return false;
+      contactOrders.add(contact.order);
+      return true;
+    });
+    for (const [subjectId, contact] of orderedRecordEntries(state.current)) {
+      const kinds = new Set<string>(),
+        used = new Set<string>(),
+        contexts = new Set<string>();
+      for (const group of contact.content.groups) {
+        if (
+          !hasRecordFields(group, ['grant', 'times', 'check', 'fields']) ||
+          !hasRecordFields(group.grant, [
+            'subjectId',
+            'subjectPhysicalLife',
+            'original',
+            'exposure',
+            'modality',
+          ]) ||
+          group.grant.subjectId !== subjectId ||
+          !isSafeRecordId(subjectId) ||
+          (group.grant.subjectPhysicalLife !== null &&
+            (!Number.isSafeInteger(group.grant.subjectPhysicalLife) ||
+              group.grant.subjectPhysicalLife < 0)) ||
+          typeof group.grant.exposure !== 'string' ||
+          !group.grant.exposure ||
+          !['sight', 'hearing', 'touch'].includes(group.grant.modality) ||
+          typeof group.grant.original !== 'string' ||
+          !Object.hasOwn(contact.content.originals, group.grant.original) ||
+          !Array.isArray(group.times) ||
+          group.times.length < 1 ||
+          group.times.length > 5 ||
+          group.times[0] === null ||
+          group.times.at(-1) === null ||
+          group.times.some(
+            (value) =>
+              value !== null &&
+              (typeof value !== 'number' ||
+                !Number.isFinite(value) ||
+                value < 0 ||
+                value > world.simTime),
+          ) ||
+          !group.fields ||
+          typeof group.fields !== 'object' ||
+          Array.isArray(group.fields) ||
+          !Object.keys(group.fields).length
+        )
+          throw new Error('Invalid acquired current group.');
+        const context = canonicalJson([group.grant, group.times, group.check]);
+        if (contexts.has(context)) throw new Error('Duplicate current receipt group.');
+        contexts.add(context);
+        used.add(group.grant.original);
+        for (const [kind, field] of Object.entries(group.fields)) {
+          if (
+            kinds.has(kind) ||
+            !hasRecordFields(
+              field,
+              ['id', 'revision', 'value', 'originalOrdinal'],
+              [
+                'bodyLeaseId',
+                'localSubject',
+                'motionContinuityRevision',
+                'sourcePlacementRevision',
+              ],
+            ) ||
+            kind !== field.value.kind ||
+            group.check !== currentFacetCheckScope(kind, group.grant.modality)
+          )
+            throw new Error('Invalid current group membership.');
+          kinds.add(kind);
+        }
+      }
+      if (
+        kinds.size !== contact.content.fieldOrder.length ||
+        contact.content.fieldOrder.some((kind) => !kinds.has(kind)) ||
+        used.size !== Object.keys(contact.content.originals).length
+      )
+        throw new Error('Current contact membership disagrees with its groups.');
+      for (const [key, source] of Object.entries(contact.content.originals)) {
+        validateOriginal(source);
+        const header = receivedObservationHeader(world, source);
+        if (
+          key !== currentOriginalKey(source) ||
+          header.observer.actorId !== observerId ||
+          header.observer.physicalLife !== state.life ||
+          header.acquiredAt > world.simTime
+        )
+          throw new Error('Invalid current group original.');
+      }
+      if (contact.sight) {
+        const check = contact.sight,
+          phase = state.visualConfirmation;
+        if (
+          !phase ||
+          !hasRecordFields(check, ['through', 'revision', 'inputRevision'], ['detail']) ||
+          !Number.isFinite(check.through) ||
+          check.through < 0 ||
+          check.through > phase.through ||
+          !Number.isSafeInteger(check.revision) ||
+          check.revision < 1 ||
+          check.revision > phase.revision ||
+          !Number.isSafeInteger(check.inputRevision) ||
+          check.inputRevision < 0 ||
+          check.inputRevision > (world.sensory?.revision ?? 0) ||
+          (check.detail !== undefined &&
+            (!hasRecordFields(check.detail, ['through', 'revision', 'inputRevision']) ||
+              !Number.isFinite(check.detail.through) ||
+              check.detail.through < 0 ||
+              check.detail.through > check.through ||
+              !Number.isSafeInteger(check.detail.revision) ||
+              check.detail.revision < 1 ||
+              check.detail.revision > check.revision ||
+              !Number.isSafeInteger(check.detail.inputRevision) ||
+              check.detail.inputRevision < 0 ||
+              check.detail.inputRevision > check.inputRevision))
+        )
+          throw new Error('Invalid completed contact check.');
+      }
+    }
     if (
       state.observer &&
       (state.observer.actorId !== observerId || state.observer.physicalLife !== state.life)
@@ -301,7 +374,7 @@ export function validatePerceptionEvidenceState(
         throw new Error('Invalid current motion tracks.');
       let next = Infinity;
       for (const [subjectId, track] of Object.entries(state.motionSamples)) {
-        const location = state.current[`${subjectId}:location`];
+        const location = currentFacetGet(state, `${subjectId}:location`);
         if (
           !location ||
           !hasRecordFields(track, ['earlier', 'through', 'continuityRevision', 'expiresAt']) ||
@@ -351,32 +424,6 @@ export function validatePerceptionEvidenceState(
         !Number.isSafeInteger(state.visualConfirmation.completeInputRevision) ||
         state.visualConfirmation.completeInputRevision < 0 ||
         state.visualConfirmation.completeInputRevision > (world.sensory?.revision ?? 0) ||
-        !state.visualConfirmation.subjects ||
-        Object.entries(state.visualConfirmation.subjects).some(
-          ([id, selected]) =>
-            !isSafeRecordId(id) ||
-            !selected ||
-            !Number.isFinite(selected.through) ||
-            selected.through < state.visualConfirmation!.completeThrough ||
-            selected.through > state.visualConfirmation!.through ||
-            !Number.isSafeInteger(selected.revision) ||
-            selected.revision < state.visualConfirmation!.completeRevision ||
-            selected.revision > state.visualConfirmation!.revision ||
-            !Number.isSafeInteger(selected.inputRevision) ||
-            selected.inputRevision < 0 ||
-            selected.inputRevision > (world.sensory?.revision ?? 0) ||
-            (selected.detail !== undefined &&
-              (!hasRecordFields(selected.detail, ['through', 'revision', 'inputRevision']) ||
-                !Number.isFinite(selected.detail.through) ||
-                selected.detail.through < 0 ||
-                selected.detail.through > selected.through ||
-                !Number.isSafeInteger(selected.detail.revision) ||
-                selected.detail.revision < 1 ||
-                selected.detail.revision > selected.revision ||
-                !Number.isSafeInteger(selected.detail.inputRevision) ||
-                selected.detail.inputRevision < 0 ||
-                selected.detail.inputRevision > selected.inputRevision)),
-        ) ||
         !Number.isSafeInteger(state.visualConfirmation.frameRevision) ||
         state.visualConfirmation.frameRevision < 1 ||
         state.visualConfirmation.frameRevision > state.visualConfirmation.revision ||
@@ -387,20 +434,8 @@ export function validatePerceptionEvidenceState(
     if (state.support) validateDetectionSupportState(world, observerId, state.support, originals);
     if (state.geometry) validateReceivedGeometryState(world, observerId, state.geometry, originals);
     const received = receivedPerceptionObservations(state);
-    const usedOriginals = new Set(state.received);
-    if (usedOriginals.size !== state.received.length)
+    if (new Set(state.received.map(currentOriginalKey)).size !== state.received.length)
       throw new Error('Duplicate current perception reception.');
-    for (const [key, source] of Object.entries(state.originals)) {
-      validateOriginal(source);
-      const header = receivedObservationHeader(world, source);
-      if (
-        key !== currentOriginalKey(source) ||
-        header.observer.actorId !== observerId ||
-        header.observer.physicalLife !== state.life ||
-        header.acquiredAt > world.simTime
-      )
-        throw new Error('Invalid current perception original catalogue.');
-    }
     if (
       Object.entries(state.receipts).some(
         ([key, index]) =>
@@ -425,36 +460,12 @@ export function validatePerceptionEvidenceState(
       )
         throw new Error('Invalid perception observer life.');
     }
-    for (const [id, grant] of Object.entries(state.grants)) {
-      if (
-        !Number.isSafeInteger(Number(id)) ||
-        Number(id) < 0 ||
-        Number(id) >= state.nextGrant ||
-        !hasRecordFields(grant, [
-          'subjectId',
-          'subjectPhysicalLife',
-          'original',
-          'exposure',
-          'modality',
-        ]) ||
-        !isSafeRecordId(grant.subjectId) ||
-        (grant.subjectPhysicalLife !== null &&
-          (!Number.isSafeInteger(grant.subjectPhysicalLife) || grant.subjectPhysicalLife < 0)) ||
-        typeof grant.exposure !== 'string' ||
-        !grant.exposure ||
-        !['sight', 'hearing', 'touch'].includes(grant.modality) ||
-        typeof grant.original !== 'string' ||
-        !Object.hasOwn(state.originals, grant.original)
-      )
-        throw new Error('Invalid acquired current subject grant.');
-    }
-    const usedGrants = new Set<number>();
-    for (const [key, record] of Object.entries(readOnlyDraftView(state.current))) {
+    for (const [key, record] of currentFacetEntries(state)) {
       if (
         !record ||
         !hasRecordFields(
           record,
-          ['id', 'revision', 'grant', 'value', 'originalOrdinal'],
+          ['id', 'revision', 'grant', 'originalSource', 'times', 'value', 'originalOrdinal'],
           [
             'bodyLeaseId',
             'localSubject',
@@ -467,16 +478,11 @@ export function validatePerceptionEvidenceState(
             'confirmedThrough',
           ],
         ) ||
-        !Number.isSafeInteger(record.grant) ||
-        record.grant < 0 ||
-        !state.grants[record.grant] ||
         !state.observer ||
         state.observer.actorId !== observerId ||
         state.observer.physicalLife !== state.life
       )
         throw new Error('Invalid current perception facet.');
-      usedGrants.add(record.grant);
-      usedOriginals.add(currentFacetGrant(state, record).original);
       const lease = currentFacetSupport(state, record);
       validateOriginal(lease.original);
       const header = receivedObservationHeader(world, lease.original);
@@ -529,7 +535,7 @@ export function validatePerceptionEvidenceState(
         ].includes(value.kind) ||
         (value.kind === 'association' &&
           (typeof lease.bodyLeaseId !== 'string' ||
-            state.current[`${lease.subjectId}:body`]?.id !== lease.bodyLeaseId)) ||
+            currentFacetGet(state, `${lease.subjectId}:body`)?.id !== lease.bodyLeaseId)) ||
         header.observer.actorId !== observerId ||
         header.observer.physicalLife !== state.life ||
         !Number.isSafeInteger(lease.originalOrdinal) ||
@@ -556,9 +562,5 @@ export function validatePerceptionEvidenceState(
       )
         throw new Error('Invalid current perception facet.');
     }
-    if (usedGrants.size !== Object.keys(state.grants).length)
-      throw new Error('An unowned current subject grant was retained.');
-    if (usedOriginals.size !== Object.keys(state.originals).length)
-      throw new Error('An unreferenced current perception original was retained.');
   }
 }

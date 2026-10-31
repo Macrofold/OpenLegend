@@ -13,17 +13,9 @@ import {
   entityGet,
   freezeWorld,
   updateWorld,
-  defaultStoryPolicy,
-  advanceWorld,
-  setSpatialPosition,
-  worldPosition,
-  worldSupport,
+  orderedRecordEntries,
 } from '@open-legend/domain';
 import { appendMemory } from '../../../packages/domain/src/events.js';
-import { journalTableFamily } from './journal-admission.js';
-import { RECORD_NODES } from './world-record-schema.js';
-import { WorldJournal } from './world-journal.js';
-import type { SqlDatabase } from './store.js';
 import type { AiReceipt } from '@open-legend/ai';
 import { SqlGameRepository, type JobRecord, type SavedWorld } from './store.js';
 import { DecisionLedger, levelLimits } from './cognition-budget.js';
@@ -48,6 +40,16 @@ function diskPath(): string {
 function save(): SavedWorld {
   return { world: stockedCamp(73), speed: 1, manuallyPaused: false };
 }
+// Database reconstruction preserves every contact value, not its search-tree branches.
+function storedWorldValue(value: { revision: number; state: SavedWorld }) {
+  const copy = JSON.parse(JSON.stringify(value));
+  for (const owner of Object.values(copy.state.world.perceptionEvidence ?? {}) as Array<{
+    current: import('@open-legend/domain').PerceptionEvidenceOwner['current'];
+  }>)
+    Reflect.set(owner, 'current', [...orderedRecordEntries(owner.current)]);
+  return copy;
+}
+
 function receipt(requestId: string, overrides: Partial<AiReceipt> = {}): AiReceipt {
   return {
     requestId,
@@ -85,170 +87,6 @@ afterEach(async () => {
 });
 
 describe('PostgreSQL committed world boundary', () => {
-  it('defers current native movement and personal-source arrays, rejects malformed metadata, and recovers their exact bytes', async () => {
-    const path = diskPath();
-    let store = await open(path);
-    const initial = save();
-    // Story nomination deliberately keeps its synchronous transaction. This
-    // storage fixture selects silent storytelling so only record admission varies.
-    initial.world.storyPolicy = {
-      ...(initial.world.storyPolicy ?? defaultStoryPolicy()),
-      enabled: false,
-    };
-    initial.world.paused = false;
-    const player = entityGet(initial.world.entities, PLAYER_ID)!;
-    setSpatialPosition(
-      initial.world,
-      player,
-      { ...worldPosition(player), x: worldPosition(player).x + 0.1 },
-      worldSupport(player),
-    );
-    const from = { ...worldPosition(player) };
-    createItemLot(initial.world, PLAYER_ID, 'berries', 1, 'journal-array-fixture');
-    // First-use sensing belongs to the initial save; the deferred change then
-    // exercises an ordinary already-running world rather than activation.
-    initial.world = advanceWorld(initial.world, 0.25).world;
-    freezeWorld(initial.world);
-    const revision = await store.commit(0, initial);
-    const inspected = executeCommand(initial.world, {
-      id: 'array-journal-inspection',
-      actorId: PLAYER_ID,
-      type: 'inspect-inventory',
-    });
-    expect(inspected.outcome.ok).toBe(true);
-    const walking = executeCommand(inspected.world, {
-      id: 'placement-journal-walk',
-      actorId: PLAYER_ID,
-      type: 'move',
-      destination: { ...from, x: from.x + 1, surfaceId: worldSupport(player)! },
-    });
-    expect(walking.outcome.ok).toBe(true);
-    const moved = advanceWorld(walking.world, 0.25);
-    expect(moved.outcome.ok).toBe(true);
-    expect(worldPosition(entityGet(moved.world.entities, PLAYER_ID)!)).not.toEqual(from);
-    const world = updateWorld(moved.world, (candidate) => {
-      appendMemory(candidate, PLAYER_ID, {
-        kind: 'episode',
-        source: 'felt',
-        summary: 'I noticed the changed view — a useful detail.',
-        entityIds: [],
-        importance: 4,
-      });
-    });
-    freezeWorld(world);
-    const candidate = { ...initial, world };
-    const prepared = store.prepareCommit(revision, candidate, { after: world });
-    const history = prepared.history!;
-    expect(history).toBeDefined();
-    const placement = entityGet(world.entities, PLAYER_ID)!.placement!;
-    expect(placement.mode).toBe('world');
-    if (placement.mode !== 'world') throw new Error('Expected a world-root placement.');
-    expect(placement.motionContinuityRevision).toBeGreaterThanOrEqual(0);
-    expect(placement.revision).toBeGreaterThan(placement.motionContinuityRevision!);
-    for (const table of [
-      'sim_placements',
-      'mind_temporal_chunks',
-      'mind_awareness',
-      'mind_memories',
-    ])
-      expect(prepared.changes.writes.get(table)?.length).toBeGreaterThan(0);
-    expect(
-      journalTableFamily(initial.world, world, prepared.changes, history.changed),
-      JSON.stringify({
-        rows: prepared.changes.rows,
-        writes: [...prepared.changes.writes].map(([table, rows]) => [table, rows.length]),
-      }),
-    ).toBe(true);
-    for (const invalid of [
-      -1,
-      0.5,
-      NaN,
-      Number.MAX_SAFE_INTEGER + 1,
-      placement.revision + 1,
-      null,
-    ]) {
-      const malformed = structuredClone(world);
-      Reflect.set(
-        entityGet(malformed.entities, PLAYER_ID)!.placement!,
-        'motionContinuityRevision',
-        invalid,
-      );
-      expect(journalTableFamily(initial.world, malformed, prepared.changes, history.changed)).toBe(
-        false,
-      );
-    }
-    expect(store.history.canDeferAppend(world, history)).toBe(true);
-    const columnIndex = (name: string) =>
-      Object.keys(RECORD_NODES.get('mind_temporal_segments')!.columns!).indexOf(name);
-    for (const [column, invalid] of [
-      ['subjects', 'not-an-array'],
-      ['subjects', [42]],
-      ['subjects', ['forbidden\0text']],
-      ['subjects', ['unpaired\ud800']],
-      ['subjects', new Array(1)],
-      ['receipt_ordinals', [1.5]],
-      ['receipt_ordinals', [Number.MAX_SAFE_INTEGER + 1]],
-      ['receipt_ordinals', ['1']],
-      ['receipt_ordinals', new Array(1)],
-      ['lookup_buckets', 'not-an-array'],
-      ['lookup_buckets', [1.5]],
-      ['lookup_buckets', [32768]],
-      ['lookup_buckets', [-32769]],
-      ['lookup_buckets', ['1']],
-      ['lookup_buckets', new Array(1)],
-    ] as const) {
-      const changed = structuredClone(prepared.changes);
-      changed.writes.get('mind_temporal_segments')![0]!.extra[columnIndex(column)] = invalid;
-      expect(journalTableFamily(initial.world, world, changed, history.changed)).toBe(false);
-    }
-    const raw = Reflect.get(store, 'rawDb') as SqlDatabase;
-    const journal = Reflect.get(store, 'journal') as WorldJournal<unknown>;
-    // Hold application only, preserving the actual durable append and admission.
-    const scheduling = vi.spyOn(journal, 'schedule').mockImplementation(() => undefined);
-    try {
-      const nextRevision = await store.commit(revision, candidate, undefined, undefined, {
-        after: world,
-        prepared,
-      });
-      const head = await raw
-        .prepare('SELECT revision,applied_revision FROM world_head WHERE id=1')
-        .get();
-      expect(Number(head!['revision'])).toBe(nextRevision);
-      expect(Number(head!['applied_revision'])).toBe(revision);
-      expect(
-        Number(
-          (await raw.prepare('SELECT COUNT(*)AS count FROM world_change_journal').get())!['count'],
-        ),
-      ).toBe(1);
-      // Losing transient preparation exercises the same decoded reconstruction used
-      // at restart; it cannot rely on a retained world or prepared source objects.
-      (Reflect.get(journal, 'online') as Map<number, unknown>).clear();
-      await journal.flush();
-      for (const table of [
-        'sim_placements',
-        'mind_temporal_chunks',
-        'mind_awareness',
-        'mind_memories',
-      ])
-        for (const row of prepared.changes.writes.get(table)!)
-          expect(
-            (await raw
-              .prepare(`SELECT payload FROM ${table} WHERE world_id=? AND id=?`)
-              .get(world.id, row.id))!['payload'],
-          ).toBe(row.payload);
-      expect(
-        Number(
-          (await raw.prepare('SELECT COUNT(*)AS count FROM world_change_journal').get())!['count'],
-        ),
-      ).toBe(0);
-      await close(store);
-      store = await open(path);
-      expect(await store.load()).toEqual({ revision: nextRevision, state: candidate });
-    } finally {
-      scheduling.mockRestore();
-    }
-  });
-
   it('prepares exact frozen leaf bodies without mutating owners or hiding mutable edits', async () => {
     const store = await open();
     await store.ready;
@@ -300,10 +138,9 @@ describe('PostgreSQL committed world boundary', () => {
     const savedRevision = await store.commit(revision, { ...initial, world: changed, speed: 3 });
     await close(store);
     store = await open(path);
-    expect(await store.load()).toEqual({
-      revision: savedRevision,
-      state: { ...initial, world: changed, speed: 3 },
-    });
+    const loaded = await store.load();
+    const expected = { revision: savedRevision, state: { ...initial, world: changed, speed: 3 } };
+    expect(storedWorldValue(loaded!)).toEqual(storedWorldValue(expected));
     const restored = (await store.load())!.state.world;
     expect(entityGet(restored.entities, PLAYER_ID)!.actor!.body!.conditions).toEqual({
       wetness: 12.5,
@@ -335,7 +172,9 @@ describe('PostgreSQL committed world boundary', () => {
     const winning = { ...save(), speed: 8 };
     const nextRevision = await first.commit(revision, winning);
     await expect(first.commit(revision, { ...winning, speed: 3 })).rejects.toThrow(/conflict/i);
-    expect(await first.load()).toEqual({ revision: nextRevision, state: winning });
+    expect(storedWorldValue((await first.load())!)).toEqual(
+      storedWorldValue({ revision: nextRevision, state: winning }),
+    );
     expect(await first.commit(nextRevision, winning)).toBe(nextRevision + 1);
   });
 });

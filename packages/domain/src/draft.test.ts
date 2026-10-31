@@ -1,3 +1,4 @@
+import { currentFacetValues } from './perception-current.js';
 import { currentFacetGrant } from './perception-current.js';
 import { createDraft, finishDraft } from 'immer';
 import { describe, expect, it } from 'vitest';
@@ -123,7 +124,7 @@ it('seals shared received evidence once while preserving earlier immutable snaps
   const before = JSON.stringify(initial.perceptionEvidence);
   const changed = updateWorld(initial, (world) => {
     const owner = world.perceptionEvidence![PLAYER_ID]!;
-    const lease = Object.values(owner.current).find(
+    const lease = currentFacetValues(owner).find(
       (value) => currentFacetGrant(owner, value).subjectId === NPC_ID,
     )!;
     lease.confirmedThrough = currentFacetTimes(owner, lease).confirmedThrough + 1;
@@ -132,7 +133,7 @@ it('seals shared received evidence once while preserving earlier immutable snaps
   expect(changed.perceptionEvidence).not.toBe(initial.perceptionEvidence);
   const owner = changed.perceptionEvidence![PLAYER_ID]!;
   expect(Object.isFrozen(owner)).toBe(true);
-  const leases = Object.values(owner.current).filter(
+  const leases = currentFacetValues(owner).filter(
     (value) => currentFacetGrant(owner, value).subjectId === NPC_ID,
   );
   expect(leases.length).toBeGreaterThan(1);

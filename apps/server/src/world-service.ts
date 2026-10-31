@@ -2,16 +2,9 @@ import { nativeText } from '@open-legend/domain';
 import {
   retentionNeedsPreparation,
   receivedValueReleaseCandidates,
-  nominateReleasedReceivedValues,
   type PreparedMemoryRetention,
 } from './temporal-storage.js';
-import {
-  captureReceivedReclamation,
-  applyReceivedReclamation,
-  receivedReclamationNeedsPromptWork,
-  type PreparedReceivedReclamation,
-} from './received-value-retirement.js';
-import { updateReceivedRetirementPressure } from '@open-legend/domain';
+
 import {
   sourceVersionPreparationNeeded,
   restoredSourceVersions,
@@ -885,10 +878,6 @@ export class WorldService {
     };
   }
   releaseHostWork(): void {
-    this.receivedCleanupClosed = true;
-    if (this.receivedCleanupTimer) clearTimeout(this.receivedCleanupTimer);
-    this.receivedCleanupTimer = undefined;
-    this.receivedCleanupDueAt = undefined;
     this.assetAuthorityUnsubscribe?.();
     this.assetAuthorityUnsubscribe = undefined;
     this.projectionUnsubscribe?.();
@@ -949,7 +938,6 @@ export class WorldService {
    * background, or synchronously inside the queue) before this method resumes; the caller's
    * deadline bounds it. */
   async settleBackgroundSaves(): Promise<void> {
-    await this.receivedCleanup;
     do {
       await this.backgroundSave?.done;
       await this.mutationLane.idle();
@@ -1192,7 +1180,6 @@ export class WorldService {
     this.assetAuthorityUnsubscribe = store.assets?.subscribeAuthority(() => this.notify(false));
     this.projectionUnsubscribe = store.onProjection((changed) => {
       if (changed !== false) this.notify(false);
-      this.scheduleReceivedCleanup();
     });
     this.viewRevision = this.persistedRevision;
     this.lastProgressSaveAt = this.now();
@@ -1210,7 +1197,6 @@ export class WorldService {
     // restarts retain the ordinary saved-work and participation recovery behavior.
     if (!createdActivation || existing?.revision !== 1)
       await this.reconcileParticipation(!!existing);
-    this.scheduleReceivedCleanup();
   }
 
   get controlledEntityId(): string {
@@ -1614,7 +1600,7 @@ export class WorldService {
       this.transcriptRevision++;
     }
   }
-  /** Presentation changes need the same refresh signal as committed journal sources. */
+  /** Presentation changes need the same refresh signal as committed canonical sources. */
   notifyHistory(): void {
     this.transcriptRevision++;
     this.notify();
@@ -1757,7 +1743,6 @@ export class WorldService {
           'A transition declared unchanged events but replaced the event collection.',
         );
       const retention = await this.prepareRetention(saved, !!restore);
-      if (!cleanup) this.assertReceivedDebt(retention.state.world);
       if (cleanup) {
         for (const [table, ids] of cleanup.rows)
           retention.rows.set(table, [...new Set([...(retention.rows.get(table) ?? []), ...ids])]);
@@ -1817,7 +1802,7 @@ export class WorldService {
       if (restore) this.durableSequence = ++this.snapshotSequence;
       else this.publishDurable(revision, ++this.snapshotSequence, saved.world);
       this.notify(false);
-      this.scheduleReceivedCleanup();
+
       return true;
     } catch (error) {
       allocation?.rollback();
@@ -2022,7 +2007,7 @@ export class WorldService {
       write.snapshot.world,
       write.released.world,
     );
-    // Ordinary expiry is carried by the durable journal with its row changes.
+    // Ordinary expiry shares the direct transaction with its row changes.
     // Only releasing data not yet durable requires this foreground barrier;
     // destructive evidence/authority families retain their own save gates.
     if (unsafe) {
@@ -2162,195 +2147,14 @@ export class WorldService {
     return false;
   }
 
-  private receivedCleanupTimer?: ReturnType<typeof setTimeout>;
-  private receivedCleanupDueAt?: number;
-  private receivedCleanup?: Promise<boolean>;
-  private receivedCleanupClosed = false;
-  private receivedCleanupFailures = 0;
-  private receivedCleanupIdle = false;
-  private receivedErasureWaiting = 0;
-  private refreshReceivedPressure(saved: SavedWorld): SavedWorld {
-    const debt = this.store.receivedReclamationDebt;
-    if (!debt) return saved;
-    const world = updateWorld(
-      saved.world,
-      (draft) => {
-        const changed = updateReceivedRetirementPressure(
-          draft,
-          debt.journalBytes + 4 * 1024 * 1024,
-          debt.maximumBytes,
-        );
-        if (changed && saved.world.nativeInterval)
-          draft.nativeInterval = { ...saved.world.nativeInterval };
-      },
-      { retainNativeValues: true },
-    );
-    if (Object.isFrozen(saved.world)) {
-      freezeWorld(world, { completedTransition: true });
-      preserveReceivedValuePreparation(saved.world, world);
-    }
-    return world === saved.world ? saved : { ...saved, world };
-  }
-  private assertReceivedDebt(world: WorldState): void {
-    const debt = this.store.receivedReclamationDebt;
-    if (
-      debt &&
-      debt.journalBytes + (world.receivedValues?.retirement?.bytes ?? 0) > debt.maximumBytes
-    ) {
-      this.scheduleReceivedCleanup();
-      // No speculative installation or fatal save latch: bounded maintenance
-      // must retain the ability to reduce debt before this intention is retried.
-      throw new OverloadError();
-    }
-  }
-  private scheduleReceivedCleanup(delay?: number): void {
-    if (
-      this.receivedCleanupClosed ||
-      this.receivedCleanup ||
-      this.receivedErasureWaiting ||
-      this.storageError ||
-      !this.store.prepareReceivedReclamation ||
-      !Object.keys(this.world.receivedValues?.retirement?.pending ?? {}).length
-    )
-      return;
-    const debt = this.store.receivedReclamationDebt;
-    // Physical cleanup has no gameplay deadline. Amortize low-debt work rather
-    // than creating another durable save for every handful of released slots.
-    // Real charged byte pressure still wakes promptly; block count is
-    // a preparation bound, not a reason to defeat batching with tiny allocations.
-    delay ??= this.receivedCleanupFailures
-      ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
-      : debt && receivedReclamationNeedsPromptWork(this.world, debt.journalBytes, debt.maximumBytes)
-        ? 0
-        : 1000;
-    const dueAt = performance.now() + delay;
-    if (this.receivedCleanupTimer) {
-      if (this.receivedCleanupDueAt! <= dueAt) return;
-      clearTimeout(this.receivedCleanupTimer);
-    }
-    this.receivedCleanupDueAt = dueAt;
-    // A timer can fire while its scheduling operation still awaits a save. It
-    // must enter as new queue work, never inherit that operation's nested-writer
-    // permission or request authority (the same rule as durable notifications).
-    this.receivedCleanupTimer = this.mutationContext.exit(() =>
-      this.authorityContext.run(undefined, () =>
-        setTimeout(() => {
-          this.receivedCleanupTimer = undefined;
-          this.receivedCleanupDueAt = undefined;
-          const running = this.runReceivedCleanup();
-          this.receivedCleanup = running;
-          void running
-            .finally(() => {
-              if (this.receivedCleanup === running) this.receivedCleanup = undefined;
-              this.scheduleReceivedCleanup(
-                this.receivedCleanupFailures
-                  ? Math.min(5000, 100 * 2 ** Math.min(this.receivedCleanupFailures, 5))
-                  : this.receivedCleanupIdle
-                    ? 250
-                    : undefined,
-              );
-            })
-            .catch(() => undefined);
-        }, delay),
-      ),
-    );
-    this.receivedCleanupTimer.unref();
-  }
-  private async runReceivedCleanup(selection?: ReadonlySet<string>): Promise<boolean> {
-    this.receivedCleanupIdle = true;
-    const capture = captureReceivedReclamation(this.world, selection);
-    if (!capture || !this.store.prepareReceivedReclamation) return true;
-    const generation = this.generation;
-    let prepared: PreparedReceivedReclamation | undefined;
-    try {
-      prepared = await this.store.prepareReceivedReclamation(capture);
-      const proposal = prepared;
-      await this.mutate(async () => {
-        if (this.receivedCleanupClosed || this.generation !== generation || this.storageError)
-          return;
-        const debt = this.store.receivedReclamationDebt!;
-        const retention = applyReceivedReclamation(
-          this.saved,
-          proposal,
-          this.persistedRevision + 1,
-          debt.journalBytes,
-          debt.maximumBytes,
-        );
-        if (retention.state === this.saved) return;
-        this.receivedCleanupIdle = false;
-        await this.commit(
-          retention.state,
-          undefined,
-          'unchanged',
-          undefined,
-          undefined,
-          undefined,
-          undefined,
-          retention,
-        );
-        countMetric('persistence.receivedCleanupCommits');
-      });
-      this.receivedCleanupFailures = 0;
-      return !this.storageError;
-    } catch (error) {
-      this.receivedCleanupFailures++;
-      recordBackgroundFailure('world-commit', error);
-      return false;
-    } finally {
-      prepared?.release();
-    }
-  }
-
-  /** Explicit privacy erasure waits for its own physical obligations, outside
-   * the mutation lane. Ordinary expiry uses the bounded background continuation. */
   private async finishReceivedErasure(ids: ReadonlySet<string>): Promise<void> {
-    if (!ids.size || !this.store.prepareReceivedReclamation) return;
-    const generation = this.generation;
-    const deadline = performance.now() + 5000;
-    if (this.receivedCleanupTimer) clearTimeout(this.receivedCleanupTimer);
-    this.receivedCleanupTimer = undefined;
-    this.receivedCleanupDueAt = undefined;
-    this.receivedErasureWaiting++;
-    try {
-      await this.receivedCleanup;
-      while ([...ids].some((id) => this.world.receivedValues?.retirement?.pending[id])) {
-        if (
-          generation !== this.generation ||
-          this.receivedCleanupClosed ||
-          performance.now() >= deadline
-        )
-          throw new OverloadError();
-        await this.store.memories?.synchronizeSources();
-        if (this.receivedCleanup) {
-          await this.receivedCleanup;
-          continue;
-        }
-        const running = this.runReceivedCleanup(ids);
-        this.receivedCleanup = running;
-        try {
-          if (!(await running)) throw new OverloadError();
-        } finally {
-          if (this.receivedCleanup === running) this.receivedCleanup = undefined;
-        }
-      }
-    } finally {
-      this.receivedErasureWaiting--;
-      this.scheduleReceivedCleanup();
-    }
+    await this.store.eraseReceivedValues?.(this.world.id, [...ids]);
   }
 
   private async prepareRetention(
     saved: SavedWorld,
     complete = false,
   ): Promise<PreparedMemoryRetention> {
-    const nominated = nominateReleasedReceivedValues(
-      this.saved.world,
-      saved.world,
-      undefined,
-      this.store.receivedValueAllocationBytes?.bind(this.store),
-    );
-    if (nominated !== saved.world) saved = { ...saved, world: nominated };
-    saved = this.refreshReceivedPressure(saved);
     const versions = sourceVersionPreparationNeeded(this.persistedMemorySources, saved.world);
     if (!this.store.memories || (!retentionNeedsPreparation(saved.world) && !versions))
       return {
@@ -2366,7 +2170,6 @@ export class WorldService {
         throw new Error('Exact retained source preparation is unavailable.');
       retained = await this.store.prepareRetainedSourceClosure(saved);
     } else retained = await this.store.memories.prepareRetention(saved, complete);
-    retained.state = this.refreshReceivedPressure(retained.state);
     // Account expiry and payload reclamation do not settle physical arithmetic.
     // Their editable intermediate wrappers are complete now; preserve preparation
     // only after the exposure owner proves every actual input stayed identical.
@@ -2380,17 +2183,6 @@ export class WorldService {
       return this.commit(saved, undefined, 'append');
     let allocation: ReturnType<HostWork['reserve']> | undefined;
     try {
-      // Native progress may be published before its durability batch. Charge
-      // released sources at this acceptance boundary too, without a SQL read.
-      const nominated = nominateReleasedReceivedValues(
-        this.saved.world,
-        saved.world,
-        undefined,
-        this.store.receivedValueAllocationBytes?.bind(this.store),
-      );
-      if (nominated !== saved.world) saved = { ...saved, world: nominated };
-      saved = this.refreshReceivedPressure(saved);
-      this.assertReceivedDebt(saved.world);
       allocation = this.hostWork.reserve(saved.world);
       const appended = appendedEventCount(this.saved.world.events, saved.world.events);
       const next = updateMilestones(
@@ -2615,7 +2407,6 @@ export class WorldService {
     operation: () => Promise<T>,
   ): Promise<T> {
     await this.flush();
-    await this.store.memories?.synchronizeSources();
     const original = this.saved;
     const generation = this.generation;
     const { selection } = batch;
@@ -2887,13 +2678,9 @@ export class WorldService {
     if (!this.config.godMode || !this.mayInspectPrivate(actorId, scope))
       throw new Error('Private mind inspection is unavailable.');
     await this.flush();
-    // A durable append can precede its SQL projection. Settle this already
-    // committed cut before capturing the private read fence, not during retrieval.
-    await this.store.memories?.synchronizeSources();
     const worldId = this.world.id,
       generation = this.generation;
-    // Preparing the canonical read can apply already-accepted journal sources
-    // and publish their actor revision. Capture the disclosure fence afterward.
+    // Native progress is durable before selecting this database generation.
     const head = await this.store.records?.head();
     if (
       worldId !== this.world.id ||
@@ -2902,6 +2689,10 @@ export class WorldService {
     )
       throw new Error('Private mind changed during inspection.');
     const world = this.world;
+    const sourceRevision = this.store.memories?.actorRevision(actorId);
+    const stillPrivate = this.privateReadFence(actorId, () =>
+      this.mayInspectPrivate(actorId, scope),
+    );
     const commitments =
       this.store.memories && head
         ? await this.store.memories.commitments({
@@ -2910,13 +2701,8 @@ export class WorldService {
             generation: head.generation,
           })
         : undefined;
-    // The first SQL read may apply already committed source rows. Bind its
-    // publication revision afterward, then validate those exact selected sources
-    // and the original world generation before disclosing the combined result.
-    const sourceRevision = this.store.memories?.actorRevision(actorId);
-    const stillPrivate = this.privateReadFence(actorId, () =>
-      this.mayInspectPrivate(actorId, scope),
-    );
+    // Reads yield to gameplay. Check the selected sources and original disclosure
+    // fence before returning their combined result.
     const recent = await this.memoryContext(actorId, null, 100);
     const current =
       !commitments ||

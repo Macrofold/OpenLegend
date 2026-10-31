@@ -36,7 +36,6 @@ export class HistoryAppendWriter extends HistoryBatch {
     private readonly worldId: string,
   ) {
     super(database);
-    this.accountRevision = database.projectionRevision;
   }
   event(event: WorldEvent, encoded: string) {
     const position = event.order ?? (Number(event.id.split('-').at(-1)) || event.sequence);

@@ -1,3 +1,4 @@
+import { currentFacetGet, currentFacetGrant } from './perception-current.js';
 import { validateCartography } from './cartography.js';
 import { validateItemArt, validatePortraitArt } from './presentation-art.js';
 import { validateAttackExecutions } from './combat-execution.js';
@@ -1369,8 +1370,18 @@ export function validateWorldModules(world: WorldState): void {
     )
       throw new Error('Invalid actor attention capacity.');
   for (const owner of Object.values(world.perceptionEvidence ?? {}))
-    if (owner.attention !== undefined)
+    if (owner.attention !== undefined) {
       validateAttentionState(owner.attention, selectedAttentionPolicy(world), owner.observer!);
+      for (const annotation of Object.values(owner.attention.annotations)) {
+        const body = currentFacetGet(owner, `${annotation.sourceId}:body`);
+        if (
+          !body ||
+          body.id !== annotation.leaseId ||
+          currentFacetGrant(owner, body).exposure !== annotation.exposure.episodeId
+        )
+          throw new Error('Attention annotation has no matching received body.');
+      }
+    }
   for (const [actorId, entries] of Object.entries(world.memories))
     for (const memory of entries) {
       if (memory.retention) validateExperienceRetention(memory.retention, actorId);

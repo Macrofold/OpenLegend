@@ -80,10 +80,9 @@ export class LexicalProjection {
    * Revoke this revision's coverage: saturation may have drained an earlier source
    * batch in the same canonical transaction before this later batch is appended. */
   enqueueSql(source: string, removing: boolean): string {
-    const revision = this.db.projectionRevision ?? 'h.revision';
     return `, queued AS (
       INSERT INTO memory_lexical_pending
-      SELECT s.world_id,s.actor_id,s.id,s.source_kind,s.revision,h.generation,${revision},${removing},
+      SELECT s.world_id,s.actor_id,s.id,s.source_kind,s.revision,h.generation,h.revision,${removing},
         octet_length(s.world_id)+octet_length(s.actor_id)+octet_length(s.id)+octet_length(s.source_kind)+octet_length(s.revision)+octet_length(h.generation)+512
       FROM ${source} s JOIN world_head h ON h.world_id=s.world_id
       ON CONFLICT(world_id,actor_id,id,source_kind) DO UPDATE SET
@@ -156,8 +155,7 @@ export class LexicalProjection {
         if (!this.required && !this.backgroundAllowed()) return;
         more = await this.db.transaction(async () => {
           transactionEntered = true;
-          // The journal fence has settled and the primary writer is now held.
-          // A save or command may have arrived while that fence was awaited.
+          // A save or command may have arrived while this writer slot was awaited.
           if (!this.required && !this.backgroundAllowed()) return false;
           return this.batch();
         });

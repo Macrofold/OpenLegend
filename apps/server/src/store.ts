@@ -1,3 +1,5 @@
+import { receivedCurrentOwnerTables } from './received-record-references.js';
+import { retentionDueActors } from './temporal-storage.js';
 import type { PreparedDiagnosticRecord } from './diagnostic-capture.js';
 import {
   readDecisionState,
@@ -37,7 +39,11 @@ import {
 } from './history-residency.js';
 import { MemoryRepository, type PreparedMemorySources } from './memory-repository.js';
 import { WorldRecords, retainedSourceTables, type RecordChanges } from './world-records.js';
-import { RetentionMetadata, type RetentionMetadataView } from './retention-metadata.js';
+import {
+  RetentionMetadata,
+  retentionChangedActors,
+  type RetentionMetadataView,
+} from './retention-metadata.js';
 import {
   assertAttemptReceiptContinuity,
   readAttemptBudget,
@@ -49,40 +55,13 @@ import { WorldAgentStore } from './world-agent-store.js';
 import { validateCurrentWorldState } from './upgrade-world.js';
 import { CreationTargetRepository } from './creation-target.js';
 import { GameSaves, type RestoreSave } from './game-saves.js';
-import { profilingEnabled, timed, timedSync, countMetric } from './performance.js';
+import { timed, timedSync, countMetric, recordBackgroundFailure } from './performance.js';
 import { HistoryRepository } from './history.js';
-import {
-  prepareHistory,
-  prepareJournalHistory,
-  prepareHistoryAppend,
-} from './history-preparation.js';
+import { prepareHistory } from './history-preparation.js';
 import { insertRows, SqlWriteBatch } from './sql-rows.js';
 import { IntegrationValues } from './integration-values.js';
-import { JournalDatabase } from './journal-database.js';
-import { WorldJournal, PERSISTENCE_DEBT_BYTES, type JournalApplication } from './world-journal.js';
-import {
-  ReceivedValueAllocationCharges,
-  prepareReceivedReclamation,
-  invalidateReceivedReclamation,
-  type ReceivedReclamationCapture,
-  type PreparedReceivedReclamation,
-} from './received-value-retirement.js';
+import { ReceivedValueOwnership } from './received-value-ownership.js';
 import { evidenceEncodedBytesSql } from './evidence-segments.js';
-import { encodeJournalTransition, reconstructJournalWorld } from './world-journal-data.js';
-import {
-  journalTableFamily,
-  journalConstraints,
-  prepareJournalConstraints,
-} from './journal-admission.js';
-import { JournalWorker, type ApplicationStatistics } from './journal-worker-client.js';
-import {
-  applyRecordSources,
-  JournalTableWriter,
-  type JournalRange,
-  type JournalApplied,
-  type JournalTables,
-  type RetainedJournal,
-} from './journal-application.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
 import { VectorStore } from './vector-store.js';
 import type { GameView, IntelligenceCall } from '@open-legend/protocol';
@@ -168,7 +147,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '39';
+export const DATABASE_SCHEMA = '47';
 
 export interface AttemptBudget {
   id: string;
@@ -179,16 +158,6 @@ export interface SqlDatabase {
   readonly writeGroups: boolean;
   /** Undefined adapters cannot prove whether shared committed reads are safe. */
   readonly transactionActive?: boolean;
-  /** Exact canonical revision currently being applied by the owned journal lane. */
-  readonly projectionRevision?: number;
-  materializationTransaction?<T>(
-    revision: number,
-    operation: (useRevision: (revision: number) => void) => Promise<T>,
-  ): Promise<T>;
-  shareApplicationLease?(onFailure: () => void): Promise<{ url: string; writeGroups: boolean }>;
-  confirmApplicationLease?(): Promise<void>;
-  applicationBarrier?<T>(operation: () => Promise<T>): Promise<T>;
-  synchronizeProjection?(): Promise<void>;
   checkpointSource?: import('./checkpoint-worker-client.js').CheckpointSource;
   transaction<T>(operation: () => Promise<T>): Promise<T>;
   readTransaction?<T>(operation: () => Promise<T>): Promise<T>;
@@ -313,20 +282,11 @@ interface TableWrite {
   preparedHistory?: ReturnType<typeof prepareHistory>;
   preparedSources?: PreparedMemorySources;
   restore: boolean;
-  deferred?: true;
-}
-
-interface CompactJournalWrite extends JournalTables {
-  worldId: string;
-  revision: number;
-  restore: false;
-  deferred: true;
-  historyChanged: boolean;
 }
 
 /** Replaceable persistence boundary for committed world state. */
 export interface WorldStore {
-  /** Deferred query tables have caught up after durable acknowledgement. */
+  /** Canonical changes have committed and their derived projections may refresh. */
   onProjection(listener: (changed?: boolean) => void): () => void;
   /** A successful nonnull load is current-format validated and has passed its
    * required history audit. Invalid storage throws before installation. */
@@ -365,11 +325,7 @@ export interface WorldStore {
 
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
-  readonly receivedReclamationDebt?: { journalBytes: number; maximumBytes: number };
-  receivedValueAllocationBytes?(worldId: string, id: string): number;
-  prepareReceivedReclamation?(
-    capture: ReceivedReclamationCapture,
-  ): Promise<PreparedReceivedReclamation>;
+  eraseReceivedValues?(worldId: string, ids: readonly string[]): Promise<void>;
   prepareRetainedSourceClosure?(
     state: SavedWorld,
     complete?: boolean,
@@ -478,7 +434,7 @@ export class SqlGameRepository implements GameRepository {
       const changes = complete
         ? this.records.captureMetadataRecords(state, retainedSourceTables)
         : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables);
-      const metadata = this.retentionView(state, changes, complete);
+      const metadata = await this.retentionView(state, changes, complete);
       const planned = await this.memories.prepareSourceVersionRetention(state, changes, metadata);
       const retained = await this.memories.prepareRetention(
         planned.state,
@@ -512,119 +468,66 @@ export class SqlGameRepository implements GameRepository {
     this.projectionListeners.add(listener);
     return () => this.projectionListeners.delete(listener);
   }
-  private receivedReclamation?: Pick<PreparedReceivedReclamation, 'capture' | 'changed'>;
-  private receivedReclamationDone?: Promise<void>;
-  private readonly receivedValueAllocations = new ReceivedValueAllocationCharges();
-  private readonly retentionMetadata = new RetentionMetadata();
-  private retentionView(
+  private readonly receivedOwnership: ReceivedValueOwnership;
+  private cleanupTimer?: ReturnType<typeof setTimeout>;
+  private cleanupTask?: Promise<void>;
+  private cleanupWorld?: string;
+  private closing = false;
+  private scheduleValueCleanup(worldId: string, delay = 5000): void {
+    this.cleanupWorld = worldId;
+    if (this.closing || this.cleanupTimer || this.cleanupTask) return;
+    this.cleanupTimer = setTimeout(() => {
+      this.cleanupTimer = undefined;
+      const selected = this.cleanupWorld ?? worldId;
+      this.cleanupWorld = undefined;
+      let more = false;
+      this.cleanupTask = this.receivedOwnership
+        .collect(selected)
+        .then((count) => {
+          more = count > 0;
+        })
+        .catch((error) => {
+          recordBackgroundFailure('world-commit', error);
+        })
+        .finally(() => {
+          this.cleanupTask = undefined;
+          const next = this.cleanupWorld ?? (more ? selected : undefined);
+          this.cleanupWorld = undefined;
+          // Yield after every bounded transaction; foreground saves use this same writer.
+          if (next) this.scheduleValueCleanup(next, more ? 0 : 5000);
+        });
+    }, delay);
+    this.cleanupTimer.unref();
+  }
+  async eraseReceivedValues(worldId: string, ids: readonly string[]): Promise<void> {
+    await this.receivedOwnership.erase(worldId, ids);
+  }
+  private async retentionView(
     state: SavedWorld,
     changes: RecordChanges,
     complete: boolean,
-  ): RetentionMetadataView {
+  ): Promise<RetentionMetadataView> {
+    const metadata = new RetentionMetadata();
     if (complete) {
-      const metadata = new RetentionMetadata();
-      metadata.initializeEmpty(state.world.id);
-      metadata.accepted(
+      metadata.fromRecords(
         state.world.id,
-        1,
         this.records.captureMetadataRecords(state, retainedSourceTables),
       );
       metadata.assertCandidateCoverage(state.world);
       return metadata.view(state.world.id);
     }
-    if (!this.acceptedState && this.receivedValueAllocationsEmpty)
-      this.retentionMetadata.initializeEmpty(state.world.id);
-    return this.retentionMetadata.view(state.world.id, changes);
-  }
-  private receivedValueAllocationWorld?: string;
-  private receivedValueAllocationsEmpty = false;
-  private async receivedAllocationHeaders(worldId: string): Promise<Array<[string, number]>> {
-    const rows = await this.rawDb
-      .prepare(
-        `SELECT source_id,${evidenceEncodedBytesSql('p')} AS encoded_bytes
-         FROM mind_perception_values p WHERE world_id=?`,
-      )
-      .all(worldId);
-    return rows.map((row) => [String(row['source_id']), Number(row['encoded_bytes'])]);
-  }
-  private initializeReceivedAllocations(worldId: string, headers: Array<[string, number]>): void {
-    this.receivedValueAllocations.initialize(worldId, headers);
-    this.receivedValueAllocationWorld = worldId;
-    this.receivedValueAllocationsEmpty = false;
-  }
-  receivedValueAllocationBytes(worldId: string, id: string): number {
-    // Startup proves whether a physical world exists. A fresh world's sources
-    // have no cold allocation until its first committed writes create them.
-    if (!this.receivedValueAllocationWorld && this.receivedValueAllocationsEmpty) return 0;
-    return this.receivedValueAllocations.bytes(worldId, id);
-  }
-  private closing = false;
-  get receivedReclamationDebt() {
-    return { journalBytes: this.journal.unappliedBytes, maximumBytes: PERSISTENCE_DEBT_BYTES };
-  }
-  async prepareReceivedReclamation(
-    capture: ReceivedReclamationCapture,
-  ): Promise<PreparedReceivedReclamation> {
-    if (this.closing) throw new Error('The received cleanup owner is closing.');
-    if (this.receivedReclamation) throw new Error('Received cleanup already has an active batch.');
-    const ticket = { capture, changed: new Set<string>() };
-    this.receivedReclamation = ticket;
-    let completed!: () => void;
-    this.receivedReclamationDone = new Promise<void>((resolve) => {
-      completed = resolve;
-    });
-    const release = () => {
-      if (this.receivedReclamation === ticket) {
-        this.receivedReclamation = undefined;
-        this.receivedReclamationDone = undefined;
-      }
-      completed();
-    };
-    try {
-      const ownership = {
-        appliedRevision: this.retentionMetadata.appliedRevision,
-        sources: new Map(
-          capture.candidates.map(({ id }) => [
-            id,
-            {
-              bytes: this.receivedValueAllocations.physicalBytes(capture.worldId, id),
-              ordinals: this.retentionMetadata.physicalOwned(capture.worldId, id),
-              pending: this.retentionMetadata.ownershipPending(capture.worldId, id),
-            },
-          ]),
-        ),
-      };
-      const prepared = await prepareReceivedReclamation(
-        this.rawDb,
-        capture,
-        ownership,
-        ticket.changed,
+    const actors = new Set([
+      ...retentionDueActors(state.world),
+      ...retentionChangedActors(changes, state.world),
+    ]);
+    if (!this.acceptedState || !actors.size) metadata.initializeEmpty(state.world.id);
+    else {
+      const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
+      metadata.initialize(
+        await snapshot(() => metadata.capture(this.db, state.world.id, [...actors])),
       );
-      return { ...prepared, changed: ticket.changed, release };
-    } catch (error) {
-      release();
-      throw error;
     }
-  }
-  private acceptedReceivedChanges(
-    worldId: string,
-    revision: number,
-    changes: RecordChanges,
-    restored = false,
-  ): void {
-    if (!this.receivedValueAllocationWorld && this.receivedValueAllocationsEmpty) {
-      this.initializeReceivedAllocations(worldId, []);
-      this.retentionMetadata.initializeEmpty(worldId);
-    }
-    this.receivedValueAllocations.accepted(worldId, revision, changes);
-    const affected = this.retentionMetadata.accepted(
-      worldId,
-      revision,
-      changes,
-      this.acceptedState ? this.memories.sourceVersionPlan(this.acceptedState.world) : undefined,
-    );
-    if (this.receivedReclamation)
-      invalidateReceivedReclamation(this.receivedReclamation, worldId, changes, restored, affected);
+    return metadata.view(state.world.id, changes);
   }
   private readonly settlementListeners = new Set<() => void>();
   onSettlement(listener: () => void): () => void {
@@ -654,18 +557,6 @@ export class SqlGameRepository implements GameRepository {
   readonly records: WorldRecords;
   readonly memories: MemoryRepository;
   private readonly integrationValues: IntegrationValues;
-  private readonly rawDb: SqlDatabase;
-  private readonly journal: WorldJournal<CompactJournalWrite>;
-  private journalActive = false;
-  private applicationWorker?: JournalWorker;
-  private applicationLeaseShared = false;
-  private applicationFailure?: Error;
-  private applicationMeasurements?: ApplicationStatistics;
-  /** Server-local complete worker work; never a player projection. */
-  get applicationStatistics(): Readonly<ApplicationStatistics> | undefined {
-    return this.applicationMeasurements && { ...this.applicationMeasurements };
-  }
-  private recoveryState?: SavedWorld;
   private acceptedRevision = -1;
   private acceptedState: SavedWorld | null = null;
   /** Set when a commit rolled back after replacing the baseline. The live world may have
@@ -806,54 +697,29 @@ export class SqlGameRepository implements GameRepository {
     database: SqlDatabase,
     private readonly initialization: { preserveSaveStages?: boolean } = {},
   ) {
-    this.rawDb = database;
-    this.db = new JournalDatabase(
-      database,
-      () => this.journal.flush(),
-      () => this.journalActive,
-      new Set([
-        'meta',
-        'jobs',
-        'attempts',
-        'attempt_scopes',
-        'attempt_budgets',
-        'intelligence_calls',
-        'player_profiles',
-        'gameplay_receipts',
-      ]),
-      () => this.journal.writeAligned(),
-      () => this.journal.canSkipFlush(),
-    );
+    this.db = database;
     this.integrationValues = new IntegrationValues(this.db);
     this.records = new WorldRecords(this.db);
-    this.memories = new MemoryRepository(
-      this.db,
-      (worldId, id) => this.receivedValueAllocationBytes(worldId, id),
-      (state, pending, complete) =>
-        this.retentionView(
-          state,
-          pending ??
-            (complete
-              ? this.records.captureMetadataRecords(state, retainedSourceTables)
-              : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables)),
-          complete,
-        ),
+    this.receivedOwnership = new ReceivedValueOwnership(this.db);
+    this.memories = new MemoryRepository(this.db, (state, pending, complete) =>
+      this.retentionView(
+        state,
+        pending ??
+          (complete
+            ? this.records.captureMetadataRecords(state, retainedSourceTables)
+            : this.records.prepare(this.acceptedState ?? undefined, state, retainedSourceTables)),
+        complete,
+      ),
     );
     this.history = new HistoryRepository(this.db);
     this.saves = new GameSaves(this.db, join(dataDirectory, 'saves'), database.checkpointSource);
-    // Revocation, authentication and retry recovery stay immediate even while query
-    // tables trail the durable journal. Their existing transactional fences remain.
+    // Authority and exact retry receipts share the direct transaction owner.
     this.commands = new CommandReceipts(database);
     this.authority = new AuthorityRepository(database);
     this.invites = new InviteRepository(this.db);
     this.maintenance = new MaintenanceRepository(this.db);
     this.assets = new AssetRepository(this.db);
     this.creationTargets = new CreationTargetRepository(this.db);
-    this.journal = new WorldJournal(
-      database,
-      (entry, prepared) => this.applyJournal(entry, prepared),
-      (range, entries) => this.applyOnlineJournal(range, entries),
-    );
     this.ready = this.initialize();
   }
 
@@ -935,6 +801,7 @@ export class SqlGameRepository implements GameRepository {
       await this.vectors.initialize();
 
       await this.records.initialize();
+      await this.receivedOwnership.initialize();
       await this.memories.initialize();
       await new WorldAgentStore(this.db).initialize();
       await this.history.initialize();
@@ -950,53 +817,15 @@ export class SqlGameRepository implements GameRepository {
         .prepare('INSERT INTO meta VALUES (?, ?) ON CONFLICT(key) DO NOTHING')
         .run('schema', DATABASE_SCHEMA);
     });
-    // Recovery applies its pending suffix before ordinary load. Seed only
-    // physical headers here so each recovered COMMIT can update the same index.
-    const snapshot =
-      this.rawDb.readTransaction?.bind(this.rawDb) ?? this.rawDb.transaction.bind(this.rawDb);
+    // Resume persisted cleanup hints without hydrating history or value bodies.
+    const snapshot = this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db);
     await snapshot(async () => {
-      const head = await this.rawDb.prepare('SELECT world_id FROM world_head WHERE id=1').get();
+      const head = await this.db.prepare('SELECT world_id FROM world_head WHERE id=1').get();
       if (head) {
         const worldId = String(head['world_id']);
-        this.initializeReceivedAllocations(worldId, await this.receivedAllocationHeaders(worldId));
-        this.retentionMetadata.initialize(
-          await this.retentionMetadata.capture(this.rawDb, worldId),
-        );
-      } else this.receivedValueAllocationsEmpty = true;
-    });
-    if (this.rawDb.materializationTransaction) {
-      await this.journal.initialize();
-      await this.journal.flush();
-      this.recoveryState = undefined;
-      if (
-        this.rawDb.shareApplicationLease &&
-        this.rawDb.confirmApplicationLease &&
-        this.rawDb.applicationBarrier
-      ) {
-        const source = await this.rawDb.shareApplicationLease(() => {
-          void this.applicationWorker?.close().catch(() => undefined);
-        });
-        this.applicationLeaseShared = true;
-        const worker = (this.applicationWorker = new JournalWorker(
-          source,
-          (error) => {
-            this.applicationFailure ??= error;
-          },
-          { profiling: profilingEnabled() },
-        ));
-        this.applicationMeasurements = worker.statistics;
-        try {
-          await worker.ready;
-          await this.rawDb.confirmApplicationLease();
-          await worker.activate();
-        } catch (error) {
-          await worker.close();
-          this.applicationWorker = undefined;
-          throw error;
-        }
+        this.scheduleValueCleanup(worldId);
       }
-      this.journalActive = true;
-    }
+    });
     // Resume derived search work only after initialization has released the writer.
     this.memories.lexicalCommitted();
   }
@@ -1084,17 +913,16 @@ export class SqlGameRepository implements GameRepository {
     const captured = await snapshot(async () => {
       const loaded = await this.records.load(active);
       if (!loaded) return null;
+      await this.receivedOwnership.validate(loaded.state.world.id);
       return {
         canonical: loaded,
-        receivedHeaders: await this.receivedAllocationHeaders(loaded.state.world.id),
-        retentionMetadata: await this.retentionMetadata.capture(this.rawDb, loaded.state.world.id),
         historyCount: await (active
           ? this.history.retainedEventCount(loaded.state.world.id)
           : this.history.auditEventCount(loaded.state.world.id)),
       };
     });
     if (captured) {
-      const { canonical, historyCount, receivedHeaders, retentionMetadata } = captured;
+      const { canonical, historyCount } = captured;
       const state = canonical.state;
       // These independently reconstructed values share one database cut. Heavy
       // synchronous validation needs no SQL and must not occupy its reader lane.
@@ -1106,14 +934,11 @@ export class SqlGameRepository implements GameRepository {
         throw new Error(
           'Archived history coverage disagrees with the records; restore the complete database.',
         );
-      if (this.journalActive) this.journal.synchronized(state.world.id, canonical.revision);
       // A failed read, audit or validation cannot restore a lost incremental baseline.
       this.baselineLost = false;
       // Accepted canonical records are immutable predecessors. Physical evidence
       // page layouts must survive the next diff, including direct store callers.
       freezeWorld(state.world);
-      this.initializeReceivedAllocations(state.world.id, receivedHeaders);
-      this.retentionMetadata.initialize(retentionMetadata);
       this.acceptedState = canonical.state;
       this.acceptedRevision = canonical.revision;
       return { revision: canonical.revision, state };
@@ -1121,10 +946,6 @@ export class SqlGameRepository implements GameRepository {
     this.baselineLost = false;
     this.acceptedState = null;
     this.acceptedRevision = 0;
-    this.receivedValueAllocations.clear();
-    this.retentionMetadata.clear();
-    this.receivedValueAllocationWorld = undefined;
-    this.receivedValueAllocationsEmpty = true;
     return null;
   }
 
@@ -1160,7 +981,6 @@ export class SqlGameRepository implements GameRepository {
     },
   ): Promise<number> {
     await this.ready;
-    if (this.applicationFailure) throw this.applicationFailure;
     if (this.acceptedRevision !== expectedRevision) {
       if (this.baselineLost)
         throw new Error(
@@ -1205,6 +1025,20 @@ export class SqlGameRepository implements GameRepository {
       timedSync('persistence.prepareRecords', () =>
         this.records.prepare(this.acceptedState ?? undefined, state),
       );
+    if (historyProjection?.restore) {
+      // Installation replaces recent history, including physically retained but
+      // logically retired rows absent from the complete readable predecessor.
+      // Reinsert the checkpoint's complete batches instead of diffing that gap.
+      const tables = new Set(['mind_temporal_chunks', 'mind_temporal_segments']);
+      const replacement = this.records.prepare(undefined, state, tables);
+      for (const table of tables) {
+        changes.rows -= changes.writes.get(table)?.length ?? 0;
+        const rows = replacement.writes.get(table) ?? [];
+        changes.writes.set(table, rows);
+        changes.rows += rows.length;
+        changes.deletes.delete(table);
+      }
+    }
     let committedRevision = expectedRevision;
     const write: TableWrite = {
       before: this.acceptedState,
@@ -1215,17 +1049,7 @@ export class SqlGameRepository implements GameRepository {
       historyAfter: historyProjection?.after ?? state.world,
       restore: !!historyProjection?.restore,
     };
-    let restoredReceivedHeaders: Array<[string, number]> | undefined;
-    let restoredRetentionMetadata: Awaited<ReturnType<RetentionMetadata['capture']>> | undefined;
-    const publish = () => {
-      if (restoredReceivedHeaders)
-        this.initializeReceivedAllocations(state.world.id, restoredReceivedHeaders);
-      if (restoredRetentionMetadata) this.retentionMetadata.initialize(restoredRetentionMetadata);
-      this.acceptedReceivedChanges(state.world.id, committedRevision, changes, write.restore);
-      this.memories.acceptedSourceChanges(state.world.id, changes, write.restore);
-      this.publishWorldTables(write);
-      if (this.journalActive) this.journal.synchronized(state.world.id, committedRevision);
-    };
+    const publish = () => this.publishWorldTables(write);
     let publicationDeferred = false;
     const preparedHistory = prepared
       ? prepared.history
@@ -1236,64 +1060,8 @@ export class SqlGameRepository implements GameRepository {
           !!historyProjection?.restore,
         );
     write.preparedHistory = preparedHistory;
-    if (this.canDeferWorldTables(write, historyProjection, invalidatedMemoryIds)) {
-      const constraints = prepareJournalConstraints(state.world.id, changes);
-      const encoded = constraints && encodeJournalTransition(changes, preparedHistory!);
-      if (!constraints) countMetric('persistence.journalFallback.constraints');
-      else if (!encoded) countMetric('persistence.journalFallback.bytes');
-      if (constraints && encoded) {
-        // Prepare only changed source fields through their actual writer. Full current
-        // validation remains at load/recovery; it is not a per-command history scan.
-        write.preparedSources = this.memories.prepareSources(state.world.id, changes, state.world);
-        write.deferred = true;
-        const compact: CompactJournalWrite = {
-          worldId: state.world.id,
-          revision: write.revision,
-          restore: false,
-          deferred: true,
-          changes,
-          sources: write.preparedSources,
-          history: prepareHistoryAppend(preparedHistory!),
-          historyChanged: !!preparedHistory!.changed.length || !!preparedHistory!.removed.length,
-        };
-        const appended = await timed('persistence.journalAppend', () =>
-          this.journal.append(
-            state.world.id,
-            expectedRevision,
-            encoded,
-            compact,
-            async () => {
-              if (this.applicationFailure) throw this.applicationFailure;
-              if (
-                !(await journalConstraints(this.rawDb, constraints, await this.journal.pending()))
-              )
-                return { kind: 'synchronous' };
-              if (historyProjection?.authority)
-                await this.authority.assertFence(historyProjection.authority);
-              const receipt = historyProjection?.receipt
-                ? this.commands.prepareSave(state.world.id, historyProjection.receipt, 'advanced')
-                : undefined;
-              return { kind: 'admitted', ...(receipt ? { receipt } : {}) };
-            },
-            state.world.receivedValues?.retirement?.bytes ?? 0,
-          ),
-        );
-        if (appended.kind === 'appended') {
-          countMetric('persistence.journalAccepted');
-          this.acceptedRevision = appended.revision;
-          this.acceptedState = state;
-          this.acceptedReceivedChanges(state.world.id, appended.revision, changes);
-          this.memories.acceptedSourceChanges(state.world.id, changes);
-          this.journal.schedule();
-          return appended.revision;
-        }
-        countMetric('persistence.journalFallback.admission');
-        delete write.deferred;
-      }
-    }
     const transaction = timed('persistence.transaction', () =>
       this.db.transaction(async () => {
-        if (this.applicationFailure) throw this.applicationFailure;
         for (const permission of historyProjection?.constructionSeeds ?? [])
           await this.authority.seedConstruction(permission);
         if (historyProjection?.constructionChanges) {
@@ -1393,13 +1161,6 @@ export class SqlGameRepository implements GameRepository {
           await this.putIntegration(`vectors:${state.world.id}:${actorId}`, null);
         }
         await this.applyWorldTables(write);
-        if (write.restore)
-          restoredReceivedHeaders = await this.receivedAllocationHeaders(state.world.id);
-        if (write.restore)
-          restoredRetentionMetadata = await this.retentionMetadata.capture(
-            this.rawDb,
-            state.world.id,
-          );
         // Nested importer/restore transactions may still roll back after this call.
         // Keep their tentative baseline, but publish only after the outer COMMIT.
         this.db.afterRollback?.(() => {
@@ -1429,206 +1190,31 @@ export class SqlGameRepository implements GameRepository {
     return revision;
   }
 
-  private canDeferWorldTables(
-    write: TableWrite,
-    projection: Parameters<WorldStore['commit']>[4],
-    invalidated?: Record<string, string[]>,
-  ): boolean {
-    const { before, state, preparedHistory } = write;
-    // Expiry metadata is part of the exact journal payload. Personal source
-    // edits/privacy still fail the family and immediate-authority gates below.
-    const eligible =
-      this.journalActive &&
-      !this.rawDb.transactionActive &&
-      !!before &&
-      before.world.id === state.world.id &&
-      !this.records.needsHotPrune &&
-      Object.isFrozen(before.world) &&
-      Object.isFrozen(state.world) &&
-      !!preparedHistory &&
-      !!preparedHistory.previous &&
-      preparedHistory.previous.storyPolicyRevision === preparedHistory.world.storyPolicyRevision &&
-      preparedHistory.previous.authorship === preparedHistory.world.authorship &&
-      this.readyHistoryWorlds.has(state.world.id) &&
-      !projection?.restore &&
-      !projection?.bindingChange &&
-      !projection?.controlChange &&
-      !projection?.participationChange &&
-      !projection?.operationalChange &&
-      !projection?.constructionSeeds?.length &&
-      !projection?.constructionChanges &&
-      !projection?.constructionFences?.length &&
-      !projection?.campAssetFences?.length &&
-      !projection?.authorityBindings?.length &&
-      !projection?.authorityOwners?.size &&
-      !Object.values(invalidated ?? {}).some((ids) => ids.length);
-    if (!eligible) {
-      countMetric('persistence.journalFallback.boundary');
-      return false;
-    }
-    this.records.bindAcceptedParents(write.changes, before);
-    if (!journalTableFamily(before.world, state.world, write.changes, preparedHistory.changed)) {
-      countMetric('persistence.journalFallback.family');
-      return false;
-    }
-    if (!this.history.canDeferAppend(write.historyAfter, preparedHistory)) {
-      countMetric('persistence.journalFallback.history');
-      return false;
-    }
-    return true;
-  }
-
-  private publishWorldTables(
-    write: TableWrite | CompactJournalWrite,
-    remoteSources?: PreparedMemorySources,
-  ): void {
-    const worldId = 'worldId' in write ? write.worldId : write.state.world.id;
-    this.receivedValueAllocations.applied(worldId, write.revision, write.changes);
-    const affected = this.retentionMetadata.applied(
-      worldId,
-      write.revision,
-      write.changes,
-      'sources' in write
-        ? write.sources?.versions
-        : (write.preparedSources?.versions ?? this.memories.sourceVersionPlan(write.state.world)),
-    );
-    if (this.receivedReclamation)
-      invalidateReceivedReclamation(
-        this.receivedReclamation,
-        worldId,
-        write.changes,
-        !!write.restore,
-        affected,
-      );
+  private publishWorldTables(write: TableWrite, remoteSources?: PreparedMemorySources): void {
+    const worldId = write.state.world.id;
+    // Wake only for new payloads or actual potential releases, not each save.
+    if (
+      write.restore ||
+      !write.before ||
+      write.changes.writes.get('mind_perception_values')?.length ||
+      write.changes.deletes.get('mind_temporal_chunks')?.length ||
+      receivedCurrentOwnerTables.some(
+        (table) =>
+          write.changes.deletes.get(table)?.length ||
+          write.changes.writes
+            .get(table)
+            ?.some((row) => !row.create && row.receivedUsesChanged !== false),
+      )
+    )
+      this.scheduleValueCleanup(worldId);
     this.readyHistoryWorlds.add(worldId);
     this.records.needsHotPrune = false;
     const memoryRevision = this.memories.publicationRevision;
     this.history.committed(write.changes);
-    this.memories.committed(
-      'worldId' in write ? write.worldId : write.state.world.id,
-      write.changes,
-      write.restore,
-    );
+    this.memories.committed(write.state.world.id, write.changes, write.restore);
     this.memories.lexicalCommitted(remoteSources);
-    // The live world was already published at durable journal acknowledgement.
-    // Its SQL-derived read tokens advance only here; quiet/paused clients need
-    // this second notification rather than waiting for an unrelated world tick.
-    const changed = !!(
-      write.deferred &&
-      (memoryRevision !== this.memories.publicationRevision ||
-        ('historyChanged' in write
-          ? write.historyChanged
-          : !!write.preparedHistory?.changed.length || !!write.preparedHistory?.removed.length))
-    );
-    // The same application notification services bounded cleanup even when
-    // searchable/player projections did not change. It does not await maintenance.
-    for (const listener of this.projectionListeners) listener(changed);
-  }
-  private async applyOnlineJournal(
-    range: JournalRange,
-    retained: ReadonlyMap<number, RetainedJournal<CompactJournalWrite>>,
-  ): Promise<JournalApplied | undefined> {
-    const worker = this.applicationWorker;
-    if (!worker || retained.size !== range.through - range.first + 1) return;
-    const entries: ReadonlyMap<number, RetainedJournal<JournalTables>> = retained;
-    for (const [revision, entry] of retained)
-      if (entry.preparation.revision !== revision || entry.preparation.worldId !== range.worldId)
-        throw new Error('Journal application preparation has a different owner.');
-    let result: JournalApplied;
-    let recovered = false;
-    try {
-      result = await worker.apply(range, entries);
-      if (result.bytes !== [...retained.values()].reduce((sum, entry) => sum + entry.bytes, 0))
-        throw new Error('Journal worker completion has different byte debt.');
-    } catch (error) {
-      this.applicationFailure ??=
-        error instanceof Error ? error : new Error('Journal worker failed.');
-      await worker.close();
-      this.applicationWorker = undefined;
-      // JS exit alone does not prove an already-sent SQL COMMIT has settled.
-      // Exclusive reacquisition also waits for the subordinate database session.
-      result = await this.rawDb.applicationBarrier!(async () => {
-        const head = await this.rawDb
-          .prepare(
-            'SELECT world_id,generation,revision,applied_revision FROM world_head WHERE id=1',
-          )
-          .get();
-        if (
-          !head ||
-          head['world_id'] !== range.worldId ||
-          head['generation'] !== range.generation ||
-          Number(head['revision']) < range.through ||
-          Number(head['applied_revision']) !== range.through
-        )
-          throw error;
-        const rows = await this.rawDb
-          .prepare(
-            'SELECT revision FROM world_change_journal WHERE world_id=? AND generation=? AND revision BETWEEN ? AND ?',
-          )
-          .all(range.worldId, range.generation, range.first, range.through);
-        if (rows.length) throw error;
-        return {
-          ...range,
-          bytes: [...retained.values()].reduce((sum, entry) => sum + entry.bytes, 0),
-        };
-      });
-      recovered = true;
-      countMetric('persistence.worker.recoveredCompletion');
-      console.error('Recovered committed journal application; off-thread application retired.');
-    }
-    // Same exact retained preparations, published ONCE and only after COMMIT (or
-    // exclusive, durable-head proof). Future work uses the same local owner if
-    // the supervised worker had to retire. An unapplied failure never retries.
-    for (const entry of retained.values())
-      this.publishWorldTables(entry.preparation, entry.preparation.sources);
-    if (recovered) this.applicationFailure = undefined;
-    return result;
-  }
-
-  private localJournalWriter?: JournalTableWriter;
-  private async applyJournal(
-    entry: JournalApplication,
-    prepared?: CompactJournalWrite,
-  ): Promise<void> {
-    if (prepared) {
-      if (prepared.revision !== entry.revision || prepared.worldId !== entry.worldId)
-        throw new Error('Journal application preparation has a different owner.');
-      this.localJournalWriter ??= new JournalTableWriter(this.db);
-      await this.localJournalWriter.apply(entry, prepared);
-      this.db.afterCommit?.(() => this.publishWorldTables(prepared, prepared.sources));
-      return;
-    }
-    let write: TableWrite;
-    {
-      this.recoveryState ??= (await this.records.loadApplied())?.state;
-      if (!this.recoveryState) throw new Error('Journal recovery has no applied world.');
-      freezeWorld(this.recoveryState.world);
-      const after = reconstructJournalWorld(this.records, this.recoveryState, entry.transition);
-      freezeWorld(after.world);
-      write = {
-        before: this.recoveryState,
-        state: after,
-        revision: entry.revision,
-        changes: entry.transition.changes,
-        historyBefore: this.recoveryState.world,
-        historyAfter: after.world,
-        preparedHistory: prepareJournalHistory(
-          this.recoveryState.world,
-          after.world,
-          entry.transition.history,
-        ),
-        restore: false,
-        deferred: true,
-      };
-    }
-    if (write.revision !== entry.revision || write.state.world.id !== entry.worldId)
-      throw new Error('Journal application preparation has a different owner.');
-    await this.applyWorldTables(write);
-    const applied = write;
-    this.db.afterCommit?.(() => {
-      this.publishWorldTables(applied);
-      if (!prepared) this.recoveryState = applied.state;
-    });
+    for (const listener of this.projectionListeners)
+      listener(memoryRevision !== this.memories.publicationRevision);
   }
 
   private async applyWorldTables(write: TableWrite): Promise<void> {
@@ -1660,7 +1246,7 @@ export class SqlGameRepository implements GameRepository {
       ),
     );
     if (!historyReady) await this.integrationValues.put(historyKey, 1);
-    if (!write.deferred) {
+    {
       const outcomes = new Map<
         string,
         { ok: boolean; message: string; code: string; recipeId?: string }
@@ -1719,18 +1305,24 @@ export class SqlGameRepository implements GameRepository {
           throw new Error('A request ID cannot be reused with different input.');
       }
     }
-    await applyRecordSources(
-      this.records,
-      this.memories,
-      this.history,
+    this.memories.configureWorld(state.world);
+    const sources = this.memories.prepareSources(state.world.id, changes, state.world);
+    write.preparedSources = sources;
+    const affected = await this.memories.project(
       state.world.id,
-      revision,
       changes,
-      sharedWrites,
       !restore,
-      write.preparedSources,
-      state,
+      sharedWrites,
+      sources.versions,
     );
+    if (sources.versions)
+      await this.memories.applySourceVersionPlan(state.world.id, revision, sources.versions);
+    await this.records.write(state.world.id, revision, changes, sharedWrites);
+    await this.history.retireTemporalAccounts(state.world.id, changes);
+    await this.memories.writeSources(state.world.id, changes, affected, sources);
+    if (this.records.needsHotPrune) await this.records.pruneActiveEvents(state);
+    await this.memories.reconcile(state.world.id, affected);
+    await this.receivedOwnership.project(state.world.id, revision, changes, !!restore);
     if (restore || !before) await this.memories.reuseVectors(state.world.id);
     else {
       const revisedSources = new Map<string, Set<string>>();
@@ -1848,10 +1440,8 @@ export class SqlGameRepository implements GameRepository {
     const status = "jobs.payload::jsonb ->> 'status'";
     // Check identity and preserve completed work in the same statement that writes it;
     // a separate read costs a round trip and races concurrent completions.
-    // This exact immediate operational upsert has no canonical-table dependency.
-    // Keep any enclosing transaction, without the generic SQL classifier treating
-    // ON CONFLICT's UPDATE SET clause as a table and draining unrelated history.
-    const written = await this.rawDb
+    // This operational upsert uses the same adapter and any enclosing transaction.
+    const written = await this.db
       .prepare(
         `INSERT INTO jobs VALUES (?, ?, ?, ?) ON CONFLICT(id) DO UPDATE SET payload=
           CASE WHEN ${status}='completed' AND ?<>'completed' THEN jobs.payload
@@ -1862,7 +1452,7 @@ export class SqlGameRepository implements GameRepository {
           WHERE jobs.fingerprint=excluded.fingerprint RETURNING fingerprint`,
       )
       .get(job.id, job.fingerprint, JSON.stringify(job), job.createdAt, job.status)
-      .finally(() => this.invalidateRead(this.recentJobReads, this.rawDb));
+      .finally(() => this.invalidateRead(this.recentJobReads, this.db));
     if (!written) throw new Error('A request ID cannot be reused with different input.');
   }
 
@@ -2462,33 +2052,15 @@ export class SqlGameRepository implements GameRepository {
     this.projectionListeners.clear();
     this.settlementListeners.clear();
     await this.ready.catch(() => undefined);
-    await this.receivedReclamationDone;
+    if (this.cleanupTimer) clearTimeout(this.cleanupTimer);
+    await this.cleanupTask;
     try {
-      if (this.journalActive) await this.journal.flush();
+      await this.saves.close();
     } finally {
       try {
-        await this.saves.close();
+        await this.memories.closeLexical();
       } finally {
-        try {
-          await this.applicationWorker?.close();
-          // With a healthy original primary, do not release its last reservation
-          // until every subordinate server session is known to have finished.
-          if (this.applicationLeaseShared && this.rawDb.applicationBarrier)
-            await this.rawDb.applicationBarrier(async () => undefined);
-        } finally {
-          try {
-            await this.memories.closeLexical();
-          } finally {
-            try {
-              await this.db.close();
-            } finally {
-              this.receivedValueAllocations.clear();
-              this.retentionMetadata.clear();
-              this.receivedValueAllocationWorld = undefined;
-              this.receivedValueAllocationsEmpty = false;
-            }
-          }
-        }
+        await this.db.close();
       }
     }
   }

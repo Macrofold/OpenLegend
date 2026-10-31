@@ -1,3 +1,4 @@
+import { receivedValueAt } from '@open-legend/domain';
 import { createHash } from 'node:crypto';
 import {
   receivedEventEvidence,
@@ -190,7 +191,7 @@ export function storyAccountSql(alias = 'p'): string {
   );
   const references = TEMPORAL_FACET_REFERENCE_FIELDS.map(
     (field) =>
-      `SELECT (f.value#>>'{${field},0}')::bigint AS ordinal FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') f(value)`,
+      `SELECT (f.value#>>'{${field}}')::bigint AS ordinal FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') f(value)`,
   );
   const dictionaryLinks = Object.entries(TEMPORAL_DICTIONARY_REFERENCE_FIELDS)
     .flatMap(([kind, fields]) => Object.keys(fields).map((field) => `('${kind}','${field}')`))
@@ -232,9 +233,9 @@ export function storyAccountSql(alias = 'p'): string {
       ), entries AS (
         SELECT entry FROM dependencies UNION ALL SELECT change AS entry FROM selected
       ), selected_values AS (
-        SELECT f.ordinal,${receivedValueSql('c.world_id', "d.entry#>>'{value,1}'", `(f.value#>>'{${TEMPORAL_FIELD.value},1}')::bigint`)} AS value
+        SELECT f.ordinal,${receivedValueSql('c.world_id', "d.entry->'value'->1")} AS value
         FROM selected r CROSS JOIN LATERAL json_array_elements(r.change->'facets') WITH ORDINALITY f(value,ordinal)
-        JOIN dependencies d ON (d.entry->>'ordinal')::bigint=(f.value#>>'{${TEMPORAL_FIELD.value},0}')::bigint
+        JOIN dependencies d ON (d.entry->>'ordinal')::bigint=(f.value#>>'{${TEMPORAL_FIELD.value}}')::bigint
       ) SELECT json_build_object('owner',json_build_object(
           'id',c.source_id,'actorId',c.actor_id,'physicalLife',c.physical_life,'epoch',c.receipt_epoch,
           'entries',(SELECT json_agg(entry ORDER BY (entry->>'ordinal')::bigint) FROM entries)),
@@ -378,7 +379,7 @@ export function storedStoryAccount(
   accounts: ReadonlyMap<string, string>,
   temporal?: {
     receipts: ReadonlyMap<string, TemporalReceipt>;
-    sources: Readonly<Record<string, import('@open-legend/domain').ReceivedValueBlock>>;
+    sources: Readonly<Record<string, import('@open-legend/domain').ReceivedValue>>;
   },
 ) {
   const source = JSON.parse(payload) as StoredStorySource;
@@ -392,7 +393,7 @@ export function storedStoryAccount(
       {
         receipt,
         values: receipt.facets
-          .map((ref) => temporal!.sources[ref.blockId]?.values[ref.valueOrdinal])
+          .map((ref) => receivedValueAt(temporal!.sources, ref))
           .flatMap((value) => (value?.kind === 'event' || value?.kind === 'sound' ? [value] : [])),
       },
     );

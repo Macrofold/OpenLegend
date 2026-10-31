@@ -1,3 +1,4 @@
+import { ReceivedValueOwnership } from './received-value-ownership.js';
 import { HISTORY_TABLES, HistoryRepository } from './history.js';
 import { MEMORY_HISTORY_TABLES } from './memory-repository.js';
 import { RECORD_NODES, type JsonRecord } from './world-record-schema.js';
@@ -25,7 +26,6 @@ export async function writeCheckpoint(
     const head = await new WorldRecords(db).head();
     if (
       !head ||
-      head.appliedRevision !== head.revision ||
       head.worldId !== identity.worldId ||
       (options.expectedRevision !== undefined && head.revision !== options.expectedRevision)
     )
@@ -37,6 +37,7 @@ export async function writeCheckpoint(
     const simTime = Number(JSON.parse(String(settings['payload'])).simTime);
     options.captured?.();
     await new HistoryRepository(db).auditEventCount(head.worldId);
+    await new ReceivedValueOwnership(db).validate(head.worldId);
     await files.writeStream(
       { ...identity, createdAt: new Date().toISOString(), simTime, revision: head.revision },
       checkpointLines(db, head.worldId, identity.format, head.revision),

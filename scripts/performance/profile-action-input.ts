@@ -99,7 +99,6 @@ try {
         service!.localScope,
       );
     await service.settleBackgroundSaves();
-    await store.db.synchronizeProjection?.();
     if (!(await steer(scope, 1, { x: 0, z: 1 })).ok) throw new Error('Movement admission failed.');
     let commits = 0;
     const originalCommit = store.commit.bind(store);

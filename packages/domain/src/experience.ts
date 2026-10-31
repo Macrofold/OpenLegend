@@ -1,3 +1,5 @@
+import { receivedValueAt } from './received-values.js';
+import { currentFacetEntries } from './perception-current.js';
 import { temporalChunkReceipts } from './temporal-frames.js';
 import {
   experienceEntryKey,
@@ -112,7 +114,6 @@ import {
   receivedFacetValue,
   materializeObservation,
   finishAwarenessObservation,
-  currentOriginal,
   currentFacetOriginal,
   removeCurrentFacets,
   revokeCurrentMotionEvidence,
@@ -683,8 +684,7 @@ export function admitAutomaticExperience(
         if (receipt) {
           const ordinals = receipt.facets
             .filter((facet) => {
-              const value =
-                world.receivedValues?.sources[facet.blockId]?.values[facet.valueOrdinal];
+              const value = receivedValueAt(world.receivedValues?.sources ?? {}, facet);
               return (
                 value?.kind === 'location' ||
                 (value?.kind === 'encounter-exposure' && value.exposure.kind === 'place')
@@ -1564,15 +1564,7 @@ export function rememberInterpretation(
     const sources: import('./received-values.js').ReceivedValueState['sources'] = {};
     const storedFacets = receipt.facets.map((reference, index) => {
       const { value, reception } = splitTemporalValue(values[index]!);
-      const block = (sources[reference.blockId] ??= {
-        id: reference.blockId,
-        at: receipt.at,
-        sequence: 0,
-        bytes: 0,
-        values: [],
-      });
-      block.values[reference.valueOrdinal] = value;
-      return { ...reference, ...(reception ? { reception } : {}) };
+      return { ...reference, valueRef: value, ...(reception ? { reception } : {}) };
     });
     const source = temporalReceiptSource(receipt);
     dependencies.set(canonicalJson(source), {
@@ -1950,10 +1942,8 @@ export function invalidateExperience(
   const native = world.perceptionEvidence?.[actorId];
   if (native) {
     const remap = new Map<number, number>();
-    const removedOriginals: string[] = [];
     native.received = native.received.filter((reference, index) => {
-      if (affected.has(currentOriginal(native, reference).id)) {
-        removedOriginals.push(reference);
+      if (affected.has(readOnlyDraftView(reference).id)) {
         return false;
       }
       remap.set(index, remap.size);
@@ -1966,7 +1956,7 @@ export function invalidateExperience(
       }),
     );
     const revokedCurrent: string[] = [];
-    for (const [id, lease] of Object.entries(native.current)) {
+    for (const [id, lease] of currentFacetEntries(native)) {
       const original = currentFacetOriginal(native, lease);
       let revoke =
         affected.has(original.id) ||
@@ -1984,7 +1974,7 @@ export function invalidateExperience(
       }
       if (revoke) revokedCurrent.push(id);
     }
-    removeCurrentFacets(world, actorId, revokedCurrent, removedOriginals);
+    removeCurrentFacets(world, actorId, revokedCurrent);
     revokeCurrentMotionEvidence(world, actorId, affected);
   }
   revokeRecognitionEvidence(

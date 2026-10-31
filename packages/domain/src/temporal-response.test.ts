@@ -31,7 +31,7 @@ function setup() {
     setSpatialPosition(world, entity, { x, y: 0, z: 2 }, worldSupport(entity));
   }
   initializePerception(world, []);
-  const candidate = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates).find(
+  const candidate = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.annotations).find(
     ([, value]) => value.sourceId === PLAYER_ID,
   )!;
   const selected = selectTemporalHistory(world, NPC_ID, {
@@ -190,7 +190,7 @@ it('acknowledges only supplied attention on accepted interpretation and fences p
   const cut = captureEvidenceCut(world, NPC_ID);
   const accepted = commit([], 'response-quiet');
   expect(accepted.outcome.ok).toBe(true);
-  const current = accepted.world.perceptionEvidence![NPC_ID]!.attention!.candidates[candidate[0]]!;
+  const current = accepted.world.perceptionEvidence![NPC_ID]!.attention!.annotations[candidate[0]]!;
   expect(current.presentedChange).toBe(binding.presented![0]!.changeRevision);
   const changed = JSON.parse(JSON.stringify(world));
   invalidateExperience(changed, NPC_ID, [cut.acquired[0]!.id], true);

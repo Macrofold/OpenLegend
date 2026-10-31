@@ -162,7 +162,7 @@ describe('fixture: cognition vertical slice', () => {
       const moved = entityGet(world.entities, PLAYER_ID)!;
       setSpatialPosition(world, moved, origin, worldSupport(moved), { continuity: 'physical' });
       initializePerception(world, []);
-      const key = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.candidates).find(
+      const key = Object.entries(world.perceptionEvidence![NPC_ID]!.attention!.annotations).find(
         ([, candidate]) => candidate.sourceId === PLAYER_ID,
       )![0];
       expect(setAttentionFocus(world, NPC_ID, [key])).toBe(true);

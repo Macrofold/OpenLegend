@@ -111,7 +111,7 @@ it('retrieves independent shared terrain from cold storage for both outgoing and
   const previous = currentDetailedAttention(service.world, PLAYER_ID),
     selected = new Set(previous.map((entry) => entry.sourceId)),
     entering = Object.entries(
-      service.world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
+      service.world.perceptionEvidence![PLAYER_ID]!.attention!.annotations,
     ).find(
       ([, candidate]) =>
         candidate.sourceId.startsWith('terrain-context-person-') &&
@@ -209,7 +209,7 @@ it('reads historical native distances through cold actor receipts, including a l
     setSpatialPosition(world, anchor, { x: 42, y: 0, z: 2 }, HISTORY_FLOOR);
     setSpatialPosition(world, other, { x: 44, y: 0, z: 2 }, HISTORY_FLOOR);
     initializePerception(world, []);
-    const keys = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.candidates)
+    const keys = Object.entries(world.perceptionEvidence![PLAYER_ID]!.attention!.annotations)
       .filter(([, candidate]) => [NPC_ID, other.id].includes(candidate.sourceId))
       .map(([key]) => key);
     expect(setAttentionFocus(world, PLAYER_ID, keys)).toBe(true);
@@ -331,12 +331,18 @@ it('reads historical native distances through cold actor receipts, including a l
   // useful, but a movement change requires both retained endpoint measurements.
   if (atTwo.other?.endpointChange)
     expect(atTwo.other.endpointChange.decreaseLower).toBeGreaterThan(0.5);
-  expect(atTwo.support.every((support) => captured.receiptDetails[support.reference])).toBe(true);
+  expect(
+    atTwo.support.every(
+      (support) =>
+        captured.receiptDetails[support.reference] || captured.baselineDetails[support.reference],
+    ),
+  ).toBe(true);
   expect(
     await store.memories.temporalSelectionsCurrent(
       scope,
       Object.values(captured.receiptDetails),
       () => temporalHistoryWindow(service.world),
+      Object.values(captured.baselineDetails),
     ),
   ).toBe(true);
   const { expandedIds: _, ...wire } = response;

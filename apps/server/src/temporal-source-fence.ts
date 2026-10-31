@@ -112,15 +112,13 @@ const SOURCE_CAPTURE_TABLES = new Set([
   'mind_temporal_supports',
   'mind_perception_value_state',
   'mind_perception_values',
-  'mind_perception_segments',
 ]);
 function relevantDuringCapture(table: string, id: string, actorId: string): boolean {
   if (
     table === 'experience_state' ||
     table === 'mind_temporal_state' ||
     table === 'mind_perception_value_state' ||
-    table === 'mind_perception_values' ||
-    table === 'mind_perception_segments'
+    table === 'mind_perception_values'
   )
     return true;
   if (

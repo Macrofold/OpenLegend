@@ -987,9 +987,10 @@ describe('enabled character decision reconsideration', () => {
       ).ok,
     ).toBe(true);
     await editWorld(h.service, (world) => {
-      const key = Object.keys(world.perceptionEvidence![NPC_ID]!.attention!.candidates).find(
+      const key = Object.keys(world.perceptionEvidence![NPC_ID]!.attention!.annotations).find(
         (key) =>
-          world.perceptionEvidence![NPC_ID]!.attention!.candidates[key]!.sourceId === 'charge-bank',
+          world.perceptionEvidence![NPC_ID]!.attention!.annotations[key]!.sourceId ===
+          'charge-bank',
       );
       expect(key).toBeDefined();
       expect(setAttentionFocus(world, NPC_ID, [key!])).toBe(true);

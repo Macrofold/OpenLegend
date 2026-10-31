@@ -1,3 +1,4 @@
+import { receivedValueAt } from '@open-legend/domain';
 import { temporalChunkReceipts, temporalChunkReferences } from '@open-legend/domain';
 import { stockedCamp } from '../../../tests/fixtures/world.js';
 import { entityGet, entityValues } from '@open-legend/domain';
@@ -65,7 +66,7 @@ function arrange(world: WorldState, targetId: string, visible: boolean) {
     seesEntity(world, entityGet(world.entities, NPC_ID)!, entityGet(world.entities, targetId)!),
   ).toBe(visible);
   initializePerception(world, []);
-  const key = Object.entries(world.perceptionEvidence?.[NPC_ID]?.attention?.candidates ?? {}).find(
+  const key = Object.entries(world.perceptionEvidence?.[NPC_ID]?.attention?.annotations ?? {}).find(
     ([, candidate]) => candidate.sourceId === PLAYER_ID,
   )?.[0];
   expect(key).toBeDefined();
@@ -606,13 +607,10 @@ describe('event-time observer facts', () => {
       temporalChunkReceipts(chunk),
     ).find((entry) => entry.origin?.kind === 'occurrence' && entry.origin.eventId === event.id)!;
     const eventValue = receipt.facets
-      .map(
-        (reference) =>
-          missingReceivedFacts.state.world.receivedValues!.sources[reference.blockId]!.values[
-            reference.valueOrdinal
-          ]!,
+      .map((reference) =>
+        receivedValueAt(missingReceivedFacts.state.world.receivedValues?.sources ?? {}, reference),
       )
-      .find((value) => value.kind === 'event')!;
+      .find((value) => value?.kind === 'event')!;
     delete (eventValue as unknown as Record<string, unknown>)['data'];
     expect(() => store.saves.validatePayload(missingReceivedFacts)).toThrow(
       'Invalid received value block.',

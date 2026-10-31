@@ -459,11 +459,7 @@ export class ThoughtIntakeInputs {
         world.innerWorlds?.[id],
         world.cognitionPolicy,
         JSON.stringify(
-          currentAttentionCues(world, id).map((cue) => [
-            cue.id,
-            world.perceptionEvidence?.[id]?.attention?.candidates[cue.anchorKey]
-              ?.descriptionRevision,
-          ]),
+          currentAttentionCues(world, id).map((cue) => [cue.id, cue.descriptionRevision]),
         ),
         JSON.stringify([
           actor.agency.semantic?.interval,

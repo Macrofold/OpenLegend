@@ -18,10 +18,6 @@ export interface CommandEpoch {
   openedAt: number;
   token: string;
 }
-export interface CommandReceiptWrite {
-  readonly sql: string;
-  readonly params: readonly unknown[];
-}
 
 const receiptSchema = z
   .object({
@@ -63,23 +59,12 @@ export class CommandReceipts {
     return row ? receiptSchema.parse(JSON.parse(String(row['payload']))) : undefined;
   }
   async save(worldId: string, receipt: GameplayReceipt): Promise<void> {
-    const write = this.prepareSave(worldId, receipt);
-    await this.db.prepare(write.sql).run(...write.params);
-  }
-  /** The journal's successful head relation gates this same owned insertion.
-   * SQL is trusted server preparation, never persisted or supplied by a client. */
-  prepareSave(
-    worldId: string,
-    receipt: GameplayReceipt,
-    prerequisite?: 'advanced',
-  ): CommandReceiptWrite {
     const current = receiptSchema.parse(receipt);
-    return {
-      sql: `INSERT INTO gameplay_receipts(world_id,id,epoch,expires_at,payload) ${
-        prerequisite ? 'SELECT ?,?,?,?,? FROM advanced' : 'VALUES (?,?,?,?,?)'
-      } RETURNING id`,
-      params: [worldId, current.id, current.epoch, current.expiresAt, JSON.stringify(current)],
-    };
+    await this.db
+      .prepare(
+        'INSERT INTO gameplay_receipts(world_id,id,epoch,expires_at,payload) VALUES (?,?,?,?,?)',
+      )
+      .run(worldId, current.id, current.epoch, current.expiresAt, JSON.stringify(current));
   }
   async prune(worldId: string, epoch: number, now: number): Promise<void> {
     // The new epoch must be durable first. Retired IDs are rejected before domain admission.

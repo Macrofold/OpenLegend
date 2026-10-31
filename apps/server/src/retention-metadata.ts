@@ -1,9 +1,9 @@
 import type { PersonalSourceRef, WorldState } from '@open-legend/domain';
-import { RECORD_NODES, RECORD_PARENTS } from './world-record-schema.js';
+import { RECORD_NODES, RECORD_PARENTS, liveEvidenceRowSql } from './world-record-schema.js';
 import type { RecordChanges, RowChange } from './world-records.js';
 import type { SqlDatabase } from './store.js';
 import type { AccountRetentionMetadata } from './retention-record-metadata.js';
-import type { RetainedSourceVersion, SourceVersionPlan } from './source-version-retention.js';
+import type { RetainedSourceVersion } from './source-version-retention.js';
 
 export const accountTables = ['mind_awareness', 'mind_memories', 'mind_summaries'] as const;
 const indexedTables = [
@@ -11,10 +11,6 @@ const indexedTables = [
   'mind_temporal_chunks',
   'mind_temporal_segments',
   'mind_temporal_supports',
-  'mind_perception_owners',
-  'mind_perception_originals',
-  'mind_perception_current',
-  'mind_perception_motion_samples',
 ] as const;
 const indexed = new Set<string>(indexedTables);
 const accountColumns = [
@@ -55,11 +51,30 @@ const selectedColumns: Record<(typeof indexedTables)[number], readonly string[]>
     'occurrence_individual_ids',
   ],
   mind_temporal_supports: ['actor_id', 'source_id', 'logical_bytes', 'required'],
-  mind_perception_owners: ['actor_id', 'value_refs'],
-  mind_perception_originals: ['actor_id', 'value_refs'],
-  mind_perception_current: ['actor_id', 'value_refs'],
-  mind_perception_motion_samples: ['actor_id', 'value_refs'],
 };
+const related = new Set<string>(indexedTables);
+for (const table of indexedTables) {
+  let parent = RECORD_PARENTS.get(table);
+  while (parent) {
+    related.add(parent);
+    parent = RECORD_PARENTS.get(parent);
+  }
+}
+export function retentionChangedActors(changes: RecordChanges, world: WorldState): Set<string> {
+  const actors = new Set<string>();
+  const include = (table: string, id: string) => {
+    if (!related.has(table)) return;
+    const path = JSON.parse(id) as string[];
+    const actor = path[1] === 'memories' ? path[2] : path[2] === 'temporal' ? path[4] : path[3];
+    if (actor) actors.add(actor);
+    else for (const id of Object.keys(world.experience?.temporal?.actors ?? {})) actors.add(id);
+  };
+  for (const [table, rows] of changes.writes)
+    if (indexed.has(table)) for (const row of rows) include(table, row.id);
+  for (const [table, ids] of changes.deletes) for (const id of ids) include(table, id);
+  return actors;
+}
+
 type Table = (typeof indexedTables)[number];
 export interface RetentionRow {
   table: Table;
@@ -75,19 +90,7 @@ const identity = (table: string, id: string) => JSON.stringify([table, id]);
 const versionKey = (value: Pick<RetainedSourceVersion, 'actorId' | 'kind' | 'id' | 'revision'>) =>
   JSON.stringify([value.actorId, value.kind, value.id, value.revision]);
 const preparedMetadata = new WeakMap<RowChange, RetentionRow>();
-function sameReferences(a: unknown, b: unknown): boolean {
-  const left = (a ?? {}) as Record<string, number[]>,
-    right = (b ?? {}) as Record<string, number[]>;
-  const keys = Object.keys(left);
-  return (
-    keys.length === Object.keys(right).length &&
-    keys.every(
-      (id) =>
-        left[id]!.length === right[id]?.length &&
-        left[id]!.every((ordinal, index) => ordinal === right[id]![index]),
-    )
-  );
-}
+
 type MembershipKind = 'account-alias' | 'recent-alias' | 'individual';
 type Memberships = Map<MembershipKind, Map<string, number>>;
 function rowMembership(row: RetentionRow): Array<[MembershipKind, Iterable<string>]> {
@@ -167,38 +170,25 @@ function deletedBy(
   return false;
 }
 
-/** One scoped derived catalogue from canonical columns. Accepted and physical
- * rows share immutable metadata objects; only changed memberships are updated.
- * No payload, world, historical revision chain or writable gameplay state lives here. */
+/** One finite actor-scoped metadata snapshot for a retention operation. Discarded
+ * after preparation; no complete cold-history mirror lives in the repository. */
 export class RetentionMetadata {
   private worldId?: string;
   private logical = new Map<Table, Records>();
-  private physical = new Map<Table, Records>();
   private actors = new Map<Table, Map<string, Set<string>>>();
   private readonly membership = new Map<string, Memberships>();
   private parents = new Map<string, Set<string>>();
-  private physicalParents = new Map<string, Set<string>>();
-  private readonly physicalReferences = new Map<string, Map<number, number>>();
-  private readonly pendingReferences = new Map<number, ReadonlyMap<string, ReadonlySet<number>>>();
-  private readonly pendingBlocks = new Map<number, ReadonlySet<string>>();
   private readonly versions = new Map<string, Map<string, RetainedSourceVersion>>();
-  private logicalRevision = 0;
-  appliedRevision = 0;
+  revision = 0;
 
   clear(): void {
     this.worldId = undefined;
     this.logical.clear();
-    this.physical.clear();
     this.actors.clear();
     this.membership.clear();
     this.parents.clear();
-    this.physicalParents.clear();
-    this.physicalReferences.clear();
-    this.pendingReferences.clear();
-    this.pendingBlocks.clear();
     this.versions.clear();
-    this.logicalRevision = 0;
-    this.appliedRevision = 0;
+    this.revision = 0;
   }
   assertWorld(worldId: string): void {
     if (this.worldId !== worldId)
@@ -207,46 +197,45 @@ export class RetentionMetadata {
   async capture(
     db: SqlDatabase,
     worldId: string,
+    actorIds: readonly string[],
   ): Promise<{
     worldId: string;
     revision: number;
     rows: RetentionRow[];
     versions: RetainedSourceVersion[];
   }> {
-    const head = await db
-      .prepare('SELECT world_id,applied_revision FROM world_head WHERE id=1')
-      .get();
+    const head = await db.prepare('SELECT world_id,revision FROM world_head WHERE id=1').get();
     if (head?.['world_id'] !== worldId) throw new Error('Retention metadata world changed.');
-    const rows: RetentionRow[] = [];
-    for (const table of indexedTables) {
+    const selection = indexedTables.map((table) => {
       const names = selectedColumns[table];
       const encoded =
         table === 'mind_temporal_chunks'
           ? "octet_length(payload)+COALESCE((payload::jsonb#>>'{storage,segmentBytes}')::bigint,0)+COALESCE((payload::jsonb#>>'{storage,metadataBytes}')::bigint,0)"
           : 'octet_length(payload)';
-      for (const row of await db
-        .prepare(
-          `SELECT id,parent_id,position,${names.join(',')},${encoded} AS encoded_bytes FROM ${table} WHERE world_id=?`,
-        )
-        .all(worldId)) {
-        const columns = Object.fromEntries(names.map((name) => [name, row[name]]));
-        rows.push({
-          table,
-          id: String(row['id']),
-          parent: String(row['parent_id']),
-          position: Number(row['position']),
-          actorId: String(row['actor_id']),
-          columns,
-          encodedBytes: Number(row['encoded_bytes']),
-        });
-      }
-    }
+      return `SELECT '${table}' AS table_name,id,parent_id,position,actor_id,
+        jsonb_build_object(${names.flatMap((name) => [`'${name}'`, name]).join(',')}) AS columns,
+        ${encoded} AS encoded_bytes FROM ${table} t WHERE world_id=? AND actor_id=ANY(?::text[])
+        ${liveEvidenceRowSql(table) ? ` AND ${liveEvidenceRowSql(table)}` : ''}`;
+    });
+    const rows: RetentionRow[] = (
+      await db
+        .prepare(selection.join(' UNION ALL '))
+        .all(...indexedTables.flatMap(() => [worldId, actorIds]))
+    ).map((row) => ({
+      table: String(row['table_name']) as Table,
+      id: String(row['id']),
+      parent: String(row['parent_id']),
+      position: Number(row['position']),
+      actorId: String(row['actor_id']),
+      columns: row['columns'] as RetentionRow['columns'],
+      encodedBytes: Number(row['encoded_bytes']),
+    }));
     const versions = (
       await db
         .prepare(
-          "SELECT actor_id,source_kind,source_id,revision,retention_class,logical_bytes FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') ORDER BY retired_revision,actor_id,source_kind,source_id,revision",
+          "SELECT actor_id,source_kind,source_id,revision,retention_class,logical_bytes FROM mind_source_versions WHERE world_id=? AND actor_id=ANY(?::text[]) AND source_kind IN ('awareness','memory','summary') ORDER BY retired_revision,actor_id,source_kind,source_id,revision",
         )
-        .all(worldId)
+        .all(worldId, actorIds)
     ).map((row) => ({
       actorId: String(row['actor_id']),
       kind: String(row['source_kind']),
@@ -255,15 +244,14 @@ export class RetentionMetadata {
       category: row['retention_class'] as RetainedSourceVersion['category'],
       bytes: Number(row['logical_bytes']),
     }));
-    return { worldId, revision: Number(head['applied_revision']), rows, versions };
+    return { worldId, revision: Number(head['revision']), rows, versions };
   }
   initialize(snapshot: Awaited<ReturnType<RetentionMetadata['capture']>>): void {
     this.clear();
     this.worldId = snapshot.worldId;
-    this.logicalRevision = this.appliedRevision = snapshot.revision;
+    this.revision = snapshot.revision;
     for (const row of snapshot.rows) {
       this.setLogical(row);
-      this.setPhysical(row);
     }
     for (const version of snapshot.versions) this.setVersion(version);
   }
@@ -359,62 +347,14 @@ export class RetentionMetadata {
       if (!siblings?.size) this.parents.delete(row.parent);
     }
   }
-  private references(row: RetentionRow, delta: number): void {
-    if (!row.columns['value_refs']) return;
-    for (const [block, ordinals] of Object.entries(
-      row.columns['value_refs'] as Record<string, number[]>,
-    )) {
-      let counts = this.physicalReferences.get(block);
-      if (!counts) this.physicalReferences.set(block, (counts = new Map()));
-      for (const ordinal of ordinals) {
-        const count = (counts.get(ordinal) ?? 0) + delta;
-        if (count < 0) throw new Error('Physical received ownership underflow.');
-        if (count) counts.set(ordinal, count);
-        else counts.delete(ordinal);
-      }
-      if (!counts.size) this.physicalReferences.delete(block);
-    }
-  }
-  private removePhysical(row: RetentionRow): void {
-    this.references(row, -1);
-    this.physical.get(row.table)?.delete(row.id);
-    if (row.table === 'mind_temporal_segments') {
-      const ids = this.physicalParents.get(row.parent);
-      ids?.delete(row.id);
-      if (!ids?.size) this.physicalParents.delete(row.parent);
-    }
-  }
-  private setPhysical(row: RetentionRow): void {
-    // Accounts and sparse support carry their own bodies. Only actual shared
-    // references need a second (applied, rather than accepted) row membership.
-    if (!row.columns['value_refs']) return;
-    let records = this.physical.get(row.table);
-    if (!records) this.physical.set(row.table, (records = new Map()));
-    const old = records.get(row.id);
-    if (
-      old?.parent === row.parent &&
-      sameReferences(old.columns['value_refs'], row.columns['value_refs'])
-    ) {
-      records.set(row.id, row);
-      return;
-    }
-    if (old) this.removePhysical(old);
-    records.set(row.id, row);
-    this.references(row, 1);
-    if (row.table === 'mind_temporal_segments') {
-      let ids = this.physicalParents.get(row.parent);
-      if (!ids) this.physicalParents.set(row.parent, (ids = new Set()));
-      ids.add(row.id);
-    }
-  }
-  private changed(changes: RecordChanges, physical: boolean): void {
-    const tables = physical ? this.physical : this.logical;
+
+  private changed(changes: RecordChanges): void {
+    const tables = this.logical;
     for (const [table, records] of tables) {
       const direct = new Set(changes.deletes.get(table) ?? []);
       if (table === 'mind_temporal_segments')
         for (const parent of changes.deletes.get('mind_temporal_chunks') ?? [])
-          for (const id of (physical ? this.physicalParents : this.parents).get(parent) ?? [])
-            direct.add(id);
+          for (const id of this.parents.get(parent) ?? []) direct.add(id);
       const ancestorDeletes = [...changes.deletes].some(
         ([ancestor, ids]) => ids.length && ancestor !== table && this.ancestor(table, ancestor),
       );
@@ -431,23 +371,20 @@ export class RetentionMetadata {
       if (otherAncestorDeletes) {
         for (const row of [...records.values()])
           if (deletedBy(changes, table, row.id, row.parent)) {
-            if (physical) this.removePhysical(row);
-            else this.removeLogical(row);
+            this.removeLogical(row);
           }
       } else
         for (const id of direct) {
           const row = records.get(id);
           if (!row) continue;
-          if (physical) this.removePhysical(row);
-          else this.removeLogical(row);
+          this.removeLogical(row);
         }
     }
     for (const [table, rows] of changes.writes)
       if (indexed.has(table))
         for (const row of rows) {
           const value = metadata(table as Table, row);
-          if (physical) this.setPhysical(value);
-          else this.setLogical(value);
+          this.setLogical(value);
         }
   }
   private ancestor(table: string, ancestor: string): boolean {
@@ -458,134 +395,11 @@ export class RetentionMetadata {
     }
     return false;
   }
-  accepted(
-    worldId: string,
-    revision: number,
-    changes: RecordChanges,
-    versions?: SourceVersionPlan,
-  ): ReadonlySet<string> {
-    this.assertWorld(worldId);
-    if (revision <= this.logicalRevision) return new Set();
-    const affected = new Set<string>();
-    const oldSegments = new Set<RetentionRow>();
-    for (const id of [
-      ...(changes.deletes.get('mind_temporal_segments') ?? []),
-      ...(changes.writes.get('mind_temporal_segments') ?? []).map((row) => row.id),
-    ]) {
-      const row = this.logical.get('mind_temporal_segments')?.get(id);
-      if (row) oldSegments.add(row);
-    }
-    for (const id of changes.deletes.get('mind_temporal_chunks') ?? [])
-      for (const row of this.segments(id)) oldSegments.add(row);
-    if (
-      [...changes.deletes].some(
-        ([table, ids]) =>
-          ids.length &&
-          table !== 'mind_temporal_chunks' &&
-          table !== 'mind_temporal_segments' &&
-          this.ancestor('mind_temporal_segments', table),
-      )
-    )
-      for (const row of this.logical.get('mind_temporal_segments')?.values() ?? [])
-        if (deletedBy(changes, row.table, row.id, row.parent)) oldSegments.add(row);
-    for (const row of oldSegments)
-      for (const id of row.columns['source_refs'] as string[]) affected.add(id);
-    for (const row of this.removedRows(changes.deletes))
-      if (row.table !== 'mind_temporal_segments')
-        for (const id of Object.keys((row.columns['value_refs'] as Record<string, number[]>) ?? {}))
-          affected.add(id);
-    for (const [table, rows] of changes.writes)
-      if (indexed.has(table) && table !== 'mind_temporal_segments')
-        for (const row of rows) {
-          const old = this.get(table as Table, row.id),
-            next = metadata(table as Table, row);
-          if (sameReferences(old?.columns['value_refs'], next.columns['value_refs'])) continue;
-          for (const value of [old, next])
-            if (value)
-              for (const id of Object.keys(
-                (value.columns['value_refs'] as Record<string, number[]>) ?? {},
-              ))
-                affected.add(id);
-        }
-    for (const row of changes.writes.get('mind_perception_values') ?? [])
-      affected.add((JSON.parse(row.id) as string[]).at(-1)!);
-    for (const id of changes.deletes.get('mind_perception_values') ?? [])
-      affected.add((JSON.parse(id) as string[]).at(-1)!);
-    // A page can be replaced without changing the parent's encoded byte charge.
-    for (const row of changes.writes.get('mind_perception_segments') ?? [])
-      affected.add((JSON.parse(row.parent) as string[]).at(-1)!);
-    for (const id of changes.deletes.get('mind_perception_segments') ?? [])
-      affected.add((JSON.parse(id) as string[])[3]!);
-    const refs = new Map<string, Set<number>>();
-    for (const [table, rows] of changes.writes)
-      if (indexed.has(table))
-        for (const row of rows) {
-          const value = metadata(table as Table, row);
-          if (
-            sameReferences(
-              this.get(table as Table, row.id)?.columns['value_refs'],
-              value.columns['value_refs'],
-            )
-          )
-            continue;
-          for (const [block, ordinals] of Object.entries(
-            (value.columns['value_refs'] as Record<string, number[]>) ?? {},
-          )) {
-            affected.add(block);
-            let ids = refs.get(block);
-            if (!ids) refs.set(block, (ids = new Set()));
-            for (const ordinal of ordinals) ids.add(ordinal);
-          }
-        }
-    this.changed(changes, false);
-    this.logicalRevision = revision;
-    if (refs.size) this.pendingReferences.set(revision, refs);
-    if (affected.size) this.pendingBlocks.set(revision, affected);
-    if (versions) {
-      for (const actorId of versions.actors) this.versions.delete(actorId);
-      for (const value of versions.retained) {
-        const { payload: _, ...compact } = value;
-        this.setVersion(compact);
-      }
-    }
-    return affected;
+  fromRecords(worldId: string, changes: RecordChanges): void {
+    this.initializeEmpty(worldId);
+    this.changed(changes);
   }
-  applied(
-    worldId: string,
-    revision: number,
-    changes: RecordChanges,
-    versions?: SourceVersionPlan,
-  ): ReadonlySet<string> {
-    this.assertWorld(worldId);
-    this.changed(changes, true);
-    this.appliedRevision = Math.max(this.appliedRevision, revision);
-    for (const at of this.pendingReferences.keys())
-      if (at <= revision) this.pendingReferences.delete(at);
-    for (const at of this.pendingBlocks.keys()) if (at <= revision) this.pendingBlocks.delete(at);
-    // Synchronous application/recovery can precede logical publication. Return
-    // its first acceptance's affected sources so an active cleanup is fenced in
-    // either order, without retaining a result for every historical revision.
-    const affected =
-      revision > this.logicalRevision
-        ? this.accepted(worldId, revision, changes, versions)
-        : new Set<string>();
-    for (const at of this.pendingReferences.keys())
-      if (at <= revision) this.pendingReferences.delete(at);
-    for (const at of this.pendingBlocks.keys()) if (at <= revision) this.pendingBlocks.delete(at);
-    return affected;
-  }
-  physicalOwned(worldId: string, block: string): ReadonlySet<number> {
-    this.assertWorld(worldId);
-    const result = new Set(this.physicalReferences.get(block)?.keys());
-    for (const refs of this.pendingReferences.values())
-      for (const ordinal of refs.get(block) ?? []) result.add(ordinal);
-    return result;
-  }
-  ownershipPending(worldId: string, block: string): boolean {
-    this.assertWorld(worldId);
-    for (const blocks of this.pendingBlocks.values()) if (blocks.has(block)) return true;
-    return false;
-  }
+
   view(
     worldId: string,
     changes?: RecordChanges,

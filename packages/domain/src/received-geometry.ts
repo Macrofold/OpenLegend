@@ -378,7 +378,7 @@ function contextAnchors(
   );
   if (input.observer.actor?.action?.targetId) ids.add(input.observer.actor.action.targetId);
   const attention = world.perceptionEvidence?.[input.observer.id]?.attention;
-  for (const entry of Object.values(attention?.candidates ?? {}))
+  for (const entry of Object.values(attention?.annotations ?? {}))
     if (entry.direct) ids.add(entry.sourceId);
   let visited = 0;
   const add = (id: string) => {

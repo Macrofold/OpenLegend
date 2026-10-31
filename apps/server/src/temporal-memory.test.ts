@@ -132,6 +132,7 @@ describe('bounded personal temporal storage', () => {
   it('reclaims a revoked shared source after its last receipt while preserving another witness and a later append', async () => {
     const { store, service } = await setup();
     await useNearCampSight(service);
+    const witnessId = 'fixture-other-witness';
     await editWorld(service, (world) => {
       for (const entity of entityValues(world.entities))
         if (entity.actor && entity.id !== PLAYER_ID && entity.id !== NPC_ID) {
@@ -150,6 +151,10 @@ describe('bounded personal temporal storage', () => {
         { x: 22, y: 0, z: 5.5 },
         'terrain',
       );
+      const witness = structuredClone(entityGet(world.entities, NPC_ID)!);
+      witness.id = witnessId;
+      entitySet(world.entities, witnessId, witness);
+      setSpatialPosition(world, witness, { x: 20, y: 0, z: 7.5 }, 'terrain');
       initializePerception(world, []);
       world.simTime += 1;
     });
@@ -157,9 +162,9 @@ describe('bounded personal temporal storage', () => {
       (
         await service.say(
           'shared-block-words',
-          PLAYER_ID,
-          'We both heard these exact words.',
           NPC_ID,
+          'We both heard these exact words.',
+          PLAYER_ID,
         )
       ).ok,
     ).toBe(true);
@@ -181,12 +186,12 @@ describe('bounded personal temporal storage', () => {
         .find((receipt) => receipt.epoch === locator.epoch && receipt.ordinal === locator.ordinal)!;
     };
     const own = received(PLAYER_ID),
-      witness = received(NPC_ID);
+      witness = received(witnessId);
     expect(own).toBeDefined();
     expect(witness).toBeDefined();
     const block = own.facets.find((reference) =>
-      witness.facets.some((other) => other.blockId === reference.blockId),
-    )!.blockId;
+      witness.facets.some((other) => other.valueRef === reference.valueRef),
+    )!.valueRef;
     const owners = async () =>
       (
         await store.db
@@ -197,7 +202,7 @@ describe('bounded personal temporal storage', () => {
       ).flatMap((row) => {
         const chunk = JSON.parse(String(row['payload'])) as TemporalChunk;
         return temporalChunkReceipts(chunk).filter((receipt) =>
-          receipt.facets.some((reference) => reference.blockId === block),
+          receipt.facets.some((reference) => reference.valueRef === block),
         );
       });
     const address = (receipt: TemporalReceiptLocator): TemporalReceiptLocator => ({
@@ -207,7 +212,7 @@ describe('bounded personal temporal storage', () => {
       ordinal: receipt.ordinal,
     });
     expect((await service.forgetRecentObservation(address(own))).ok).toBe(true);
-    expect((await owners()).some((receipt) => receipt.actorId === NPC_ID)).toBe(true);
+    expect((await owners()).some((receipt) => receipt.actorId === witnessId)).toBe(true);
     expect(
       await store.db
         .prepare('SELECT source_id FROM mind_perception_values WHERE world_id=? AND source_id=?')
@@ -237,7 +242,7 @@ describe('bounded personal temporal storage', () => {
         .prepare('SELECT source_id FROM mind_perception_values WHERE world_id=? AND source_id=?')
         .get(service.world.id, block),
     ).toBeUndefined();
-    expect(service.world.receivedValues!.sources[block]).toBeUndefined();
+    expect(service.world.receivedValues!.sources[block as string]).toBeUndefined();
     const cold = (await store.records.load(true))!.state.world;
     validateTemporalEvidenceState(cold);
     const remaining = await store.memories.temporalHistory(
@@ -265,7 +270,7 @@ describe('bounded personal temporal storage', () => {
       world.simTime += routineSensePolicy(world, observer).sight?.seconds ?? 0;
       initializePerception(world, []);
       const [key] = Object.entries(
-        world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
+        world.perceptionEvidence![PLAYER_ID]!.attention!.annotations,
       ).find(([, candidate]) => candidate.sourceId === NPC_ID)!;
       expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
     });
@@ -318,7 +323,7 @@ describe('bounded personal temporal storage', () => {
         Number(
           (await store.db
             .prepare(
-              'SELECT COALESCE(SUM(receipt_count),0) AS count FROM mind_temporal_chunks WHERE world_id=? AND actor_id=?',
+              'SELECT COALESCE(SUM(receipt_count),0) AS count FROM mind_temporal_chunks WHERE world_id=? AND actor_id=? AND retired_revision IS NULL',
             )
             .get(service.world.id, PLAYER_ID))!['count'],
         ),
@@ -414,7 +419,7 @@ describe('bounded personal temporal storage', () => {
       initializePerception(world, []);
       for (const observerId of [PLAYER_ID, NPC_ID]) {
         const key = Object.entries(
-          world.perceptionEvidence![observerId]!.attention!.candidates,
+          world.perceptionEvidence![observerId]!.attention!.annotations,
         ).find(([, candidate]) => candidate.sourceId === strangerId)![0];
         expect(setAttentionFocus(world, observerId, [key])).toBe(true);
       }
@@ -990,7 +995,7 @@ describe('bounded personal temporal storage', () => {
     ).toContain(first.epoch);
   });
 
-  it('bounds optional search data without deleting the character account or its literal search fallback', async () => {
+  it('bounds optional search data without deleting the character account or its exact search text', async () => {
     const { store, service } = await setup();
     const id = await editWorld(
       service,
@@ -1034,11 +1039,6 @@ describe('bounded personal temporal storage', () => {
         .prepare('SELECT id FROM mind_memories WHERE world_id=? AND actor_id=? AND source_id=?')
         .get(scope.worldId, PLAYER_ID, id),
     ).toBeDefined();
-    await store.db
-      .prepare(
-        "UPDATE recall_sources SET search_text='' WHERE world_id=? AND actor_id=? AND id=? AND source_kind='memory'",
-      )
-      .run(scope.worldId, PLAYER_ID, id);
     expect(
       (
         await store.memories.browse(scope, { terms: ['zincbell'], limit: 20, scan: 128 })
@@ -1185,7 +1185,7 @@ describe('bounded personal temporal storage', () => {
       const subject = currentBodyLocalSubject(world, PLAYER_ID, visitor.id)!;
       expect(subject.kind).toBe('individual');
       const [key] = Object.entries(
-        world.perceptionEvidence![PLAYER_ID]!.attention!.candidates,
+        world.perceptionEvidence![PLAYER_ID]!.attention!.annotations,
       ).find(([, candidate]) => candidate.sourceId === visitor.id)!;
       expect(setAttentionFocus(world, PLAYER_ID, [key])).toBe(true);
       world.simTime += routineSensePolicy(world, player).sight?.detailSeconds ?? 0;
@@ -1227,6 +1227,11 @@ describe('bounded personal temporal storage', () => {
       world.simTime +=
         routineSensePolicy(world, entityGet(world.entities, PLAYER_ID)!).sight?.seconds ?? 0;
       initializePerception(world, []);
+    });
+    // Losing this still-attended contact creates fresh recent availability
+    // evidence, not lasting familiarity. Let that finite support expire as well.
+    await editWorld(service, (world) => {
+      world.simTime += selectedTemporalPolicy(world).recent.maxAgeSeconds + 2;
     });
     expect(service.world.observerIdentities?.[PLAYER_ID]?.[contact.individualId]).toBeUndefined();
   });
@@ -1350,7 +1355,6 @@ describe('bounded personal temporal storage', () => {
       }
     });
     await service.flush();
-    await store.memories.synchronizeSources();
     const scope = {
       worldId: service.world.id,
       actorId: PLAYER_ID,
@@ -1439,7 +1443,6 @@ describe('bounded personal temporal storage', () => {
       return receipt;
     });
     await service.flush();
-    await store.memories.synchronizeSources();
     const scope = {
       worldId: service.world.id,
       actorId: PLAYER_ID,

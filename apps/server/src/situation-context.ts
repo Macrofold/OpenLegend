@@ -1,3 +1,4 @@
+import { currentFacetValues } from '@open-legend/domain';
 import { currentFacetGrant } from '@open-legend/domain';
 import { z } from 'zod';
 import {
@@ -9,6 +10,7 @@ import {
   evidenceCutEligible,
   currentDetailedAttention,
   currentAttentionCues,
+  attentionCandidates,
   observationFactKey,
   captureAttentionPresentation,
   currentBodyGrant,
@@ -911,7 +913,7 @@ export function captureSituation(
   const sourceByFact = new Map<string, string>();
   const sourceByExposure = new Map<string, string>();
   if (owner)
-    for (const record of Object.values(owner.current)) {
+    for (const record of currentFacetValues(owner)) {
       const grant = currentFacetGrant(owner, record);
       sourceByFact.set(record.id, grant.subjectId);
       sourceByExposure.set(grant.exposure, grant.subjectId);
@@ -926,6 +928,7 @@ export function captureSituation(
       currentBySource.set(source, rows);
     }
   }
+  const candidates = attentionCandidates(world, actorId);
   const bodyRead: SituationBodyRead = {
     actorId,
     frame,
@@ -937,13 +940,13 @@ export function captureSituation(
     salientFacts,
     indexedFrame,
     acquiredAtById: new Map(
-      Object.values(owner?.current ?? {}).map((record) => [
+      currentFacetValues(owner).map((record) => [
         record.id,
         currentFacetTimes(owner!, record).valueAcquiredAt,
       ]),
     ),
     changedCandidates: new Set(
-      Object.entries(owner?.attention?.candidates ?? {})
+      Object.entries(candidates)
         .filter(([, candidate]) => candidate.presentedChange !== candidate.changeRevision)
         .map(([key]) => key),
     ),
@@ -956,7 +959,7 @@ export function captureSituation(
       subject: receivedSubjectHandle(world, actorId, entry.exposure.episodeId),
       facts: bodyFacts(entry.sourceId),
     }));
-  const waiting = Object.entries(world.perceptionEvidence?.[actorId]?.attention?.candidates ?? {})
+  const waiting = Object.entries(candidates)
     .filter(([, candidate]) => candidate.presentedDescription !== candidate.descriptionRevision)
     .sort((a, b) => a[1].order - b[1].order);
   const discovery: Array<{ reference: string; facts: ReturnType<typeof bodyFacts> }> = [];
@@ -974,7 +977,7 @@ export function captureSituation(
     presentedKeys.push(key);
   }
   const allAttentionReferences = Object.fromEntries(
-    Object.entries(world.perceptionEvidence?.[actorId]?.attention?.candidates ?? {})
+    Object.entries(candidates)
       .filter(([, candidate]) => references.has(entityHandle(world, actorId, candidate.sourceId)))
       .map(([key, candidate]) => [entityHandle(world, actorId, candidate.sourceId), key]),
   );
