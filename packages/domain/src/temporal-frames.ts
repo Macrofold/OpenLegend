@@ -1763,6 +1763,30 @@ function packTemporalReceipt(
   return additions;
 }
 const checkMemberships = new WeakMap<object, { chunkId: string; ordinal: number; count: number }>();
+const completeMemberships = new WeakMap<object, number>();
+function completeNativeMembership(entry: TemporalFrameEntry | undefined, count: number): boolean {
+  if (
+    entry?.kind !== 'dictionary' ||
+    entry.value[0] !== 'members' ||
+    entry.value[1].length !== count
+  )
+    return false;
+  let held = completeMemberships.get(entry);
+  if (held === undefined) {
+    held = entry.value[1].every((member) => member !== null) ? count : -1;
+    if (isImmutableData(entry)) completeMemberships.set(entry, held);
+  }
+  return held === count;
+}
+/** An erasure can keep a declaration's native address while removing siblings.
+ * Such a narrowed read product cannot stand for the complete current group. */
+export function temporalCurrentMembershipPresent(
+  chunk: TemporalFrameOwner,
+  ordinal: number,
+  count: number,
+): boolean {
+  return completeNativeMembership(frameIndex(readOnlyDraftView(chunk)).entries.get(ordinal), count);
+}
 export function temporalCheckGroupMembership(
   chunk: TemporalFrameOwner,
   value: TemporalCheckGroup,
@@ -1900,12 +1924,7 @@ function packConfirmations(
     const declaration = existing === undefined ? undefined : index.entries.get(existing);
     let members: number;
     const count = value.count;
-    if (
-      !value.declareOnly &&
-      declaration?.kind === 'dictionary' &&
-      declaration.value[0] === 'members' &&
-      declaration.value[1].length === count
-    ) {
+    if (!value.declareOnly && completeNativeMembership(declaration, count)) {
       members = existing!;
       countDomainWork('temporalMembershipDeclarationsReused');
     } else {

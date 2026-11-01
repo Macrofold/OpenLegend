@@ -1,5 +1,4 @@
 import { objectIndexGet, objectIndexSet, type ObjectIndexNode } from './object-index.js';
-import { temporalFacetValueReferences } from './temporal-evidence.js';
 import { temporalChunkReferences } from './temporal-frames.js';
 import { nextId } from './data.js';
 import { countDomainWork } from './diagnostic-counters.js';
@@ -181,7 +180,6 @@ interface ReferenceIndex {
   actorKeys: ObjectIndexNode<readonly string[]> | undefined;
   perceptionRoot: WeakRef<object>;
   temporalRoot: WeakRef<object>;
-  mode: number;
   counts: ReferenceCounts;
   references: ReceivedValueReferences;
 }
@@ -190,12 +188,12 @@ const emptyPerceptionRoot: NonNullable<WorldState['perceptionEvidence']> = immut
 );
 const emptyTemporalRoot: import('./temporal-evidence.js').TemporalEvidenceState['actors'] =
   immutableDataSnapshot({});
-const referenceIndexes = new WeakMap<object, WeakMap<object, [ReferenceIndex?, ReferenceIndex?]>>();
+const referenceIndexes = new WeakMap<object, WeakMap<object, ReferenceIndex>>();
 const observationReferences = new WeakMap<object, ReceivedValueReferences>();
 const contactReferences = new WeakMap<object, ReceivedValueReferences>();
 // A weak last result allows incremental normal execution without retaining prior
 // worlds or an indefinitely growing chain of receipt arrays.
-const previousReferenceIndexes: [WeakRef<ReferenceIndex>?, WeakRef<ReferenceIndex>?] = [];
+let previousReferenceIndex: WeakRef<ReferenceIndex> | undefined;
 
 function collectReferences(values: Iterable<string>): ReceivedValueReferences {
   return new Set(values);
@@ -346,30 +344,24 @@ function perceptionReferences(
   };
 }
 /** Native rows are resident; the persistence owner adds exact cold receipt
- * references before reclaiming. Capture marks aid residency, but are not an
- * independent retention grant and must be omitted for last-owner deletion.
+ * references before reclaiming. Geometry recording watermarks own no payload.
  * Exact immutable roots reuse one result across retention, residency and kernel
  * checks. Changed owners update the counted union without scanning other receipts.
  * docs/projects/attention-and-scenes-runtime-design.md#52-one-derived-resident-reference-index */
-export function referencedReceivedValues(
-  world: WorldState,
-  options: { captures?: boolean } = {},
-): ReceivedValueReferences {
+export function referencedReceivedValues(world: WorldState): ReceivedValueReferences {
   const perception = world.perceptionEvidence
     ? readOnlyDraftView(world.perceptionEvidence)
     : emptyPerceptionRoot;
   const temporal = world.experience?.temporal?.actors;
   const actors = temporal ? readOnlyDraftView(temporal) : emptyTemporalRoot;
-  const mode = options.captures === false ? 0 : 1;
   const immutable = isImmutableData(perception) && isImmutableData(actors);
-  const cached = immutable && referenceIndexes.get(perception)?.get(actors)?.[mode];
+  const cached = immutable && referenceIndexes.get(perception)?.get(actors);
   if (cached) {
     countDomainWork('receivedReferenceRootsReused');
-    previousReferenceIndexes[mode] = new WeakRef(cached);
+    previousReferenceIndex = new WeakRef(cached);
     return cached.references;
   }
-  let previous = previousReferenceIndexes[mode]?.deref();
-  if (previous?.mode !== mode) previous = undefined;
+  let previous = previousReferenceIndex?.deref();
   const oldPerception = previous?.perceptionRoot.deref(),
     oldTemporal = previous?.temporalRoot.deref();
   const changedPerception = oldPerception
@@ -413,23 +405,6 @@ export function referencedReceivedValues(
             : { identity: chunk.entries, references: temporalChunkReferences(chunk) },
         );
       }
-      if (mode) {
-        const captures = readOnlyDraftView(actor.geometryCaptures),
-          key = JSON.stringify(['capture', actorId]);
-        const old = objectIndexGet(owners, key);
-        keys.push(key);
-        updateOwner(
-          key,
-          old?.identity === captures
-            ? old
-            : {
-                identity: captures,
-                references: collectReferences(
-                  Object.values(captures).flatMap(temporalFacetValueReferences),
-                ),
-              },
-        );
-      }
     }
     const present = new Set(keys);
     for (const key of objectIndexGet(actorKeys, actorId) ?? [])
@@ -442,17 +417,14 @@ export function referencedReceivedValues(
     actorKeys,
     counts,
     references,
-    mode,
     perceptionRoot: new WeakRef(perception),
     temporalRoot: new WeakRef(actors),
   };
   if (immutable) {
     let byTemporal = referenceIndexes.get(perception);
     if (!byTemporal) referenceIndexes.set(perception, (byTemporal = new WeakMap()));
-    let modes = byTemporal.get(actors);
-    if (!modes) byTemporal.set(actors, (modes = []));
-    modes[mode] = index;
-    previousReferenceIndexes[mode] = new WeakRef(index);
+    byTemporal.set(actors, index);
+    previousReferenceIndex = new WeakRef(index);
   }
   return references;
 }

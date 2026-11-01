@@ -823,7 +823,7 @@ export async function prepareTemporalRetention(
               from: actor.recordingGap?.from ?? actual.at(-1)!.at,
               through: draft.simTime,
             };
-            actor.capturesInvalidated = true;
+            actor.geometryCaptureRepairDue = true;
           }
           rows.set('mind_temporal_chunks', [
             ...(rows.get('mind_temporal_chunks') ?? []),

@@ -18,6 +18,7 @@ import type { SqlDatabase } from './store.js';
 import type { AccountRetentionMetadata } from './retention-record-metadata.js';
 import type { RetainedSourceVersion } from './source-version-retention.js';
 import { countMetric } from './performance.js';
+import { receiptLookupBucket } from './evidence-segments.js';
 
 export const accountTables = ['mind_awareness', 'mind_memories', 'mind_summaries'] as const;
 const indexedTables = [
@@ -954,24 +955,40 @@ export class RetentionMetadataView {
             ...(this.removed?.get('mind_temporal_chunks') ?? []),
           ]),
         ];
-        for (const [column, keys, target] of [
-          ['occurrence_source_ids', aliases.filter((id) => !retained.has(id)), retained],
+        for (const [column, lookup, keys, target] of [
+          [
+            'occurrence_source_ids',
+            'sourceIds',
+            aliases.filter((id) => !retained.has(id)),
+            retained,
+          ],
           [
             'occurrence_individual_ids',
+            'individualIds',
             individualIds.filter((id) => !individuals.has(id)),
             individuals,
           ],
         ] as const) {
           if (!keys.length) continue;
+          // Reuse the bounded search vocabulary. A bucket collision selects a
+          // candidate page only; exact occurrence membership proves survival.
           for (const row of await db
             .prepare(
-              `SELECT candidate.id FROM unnest(?::text[]) candidate(id)
+              `SELECT candidate.id FROM unnest(?::text[],?::smallint[]) candidate(id,bucket)
             WHERE EXISTS(SELECT 1 FROM mind_temporal_segments t WHERE t.world_id=? AND t.actor_id=?
+              AND t.lookup_buckets @> ARRAY[candidate.bucket]::smallint[]
               AND t.${column} @> ARRAY[candidate.id]::text[]
               AND NOT(t.id=ANY(?::text[])) AND NOT(t.parent_id=ANY(?::text[]))
               AND ${liveEvidenceRowSql('mind_temporal_segments')})`,
             )
-            .all(keys, worldId, actorId, excluded('mind_temporal_segments'), removedParents)) {
+            .all(
+              keys,
+              keys.map((key) => receiptLookupBucket(lookup, key)),
+              worldId,
+              actorId,
+              excluded('mind_temporal_segments'),
+              removedParents,
+            )) {
             target.add(String(row['id']));
             countMetric('retention.coldSurvivalProofs');
           }

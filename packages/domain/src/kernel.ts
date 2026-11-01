@@ -8286,7 +8286,7 @@ function* updateEncounters(
         const observer = entityGet(readOnlyDraftView(world.entities), id)!;
         const encounterAt = observer.actor?.encounters?.nextAt;
         return (
-          !!world.experience?.temporal?.actors[id]?.capturesInvalidated ||
+          !!world.experience?.temporal?.actors[id]?.geometryCaptureRepairDue ||
           (encounterAt !== undefined && encounterAt <= world.simTime) ||
           (!!observer.animal?.episode && observer.animal.episode.reviewAt <= world.simTime) ||
           Object.values(observer.actor?.contacts ?? {}).some(
@@ -8473,7 +8473,7 @@ function* updateEncounters(
         !(timing.sampledContact && timing.contact) &&
         !movingContacts &&
         !placesChanged &&
-        !world.experience?.temporal?.actors[actor.id]?.capturesInvalidated &&
+        !world.experience?.temporal?.actors[actor.id]?.geometryCaptureRepairDue &&
         !(encounterDue !== undefined && encounterDue <= world.simTime)
       ) {
         countDomainWork('observersSkipped');

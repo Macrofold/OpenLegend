@@ -3,7 +3,6 @@ import {
   receivedCurrentOwnerTables,
 } from './received-record-references.js';
 import { liveEvidenceRowSql } from './world-record-schema.js';
-import { temporalFacetValueReferences } from '@open-legend/domain';
 import { evidenceReadView, validateReceiptPageSources } from './evidence-segments.js';
 import { sqlRecordBatches, SqlWriteBatch } from './sql-rows.js';
 import { tableRows } from './record-pages.js';
@@ -159,6 +158,7 @@ const reusableTables = new Set([
   'mind_perception_owners',
 ]);
 function encodedBody(node: RecordNode, value: Value): string {
+  if (node.serialize) return node.serialize(value);
   // Immutable leaf values have no excluded children; reuse the same encoding
   // that native evidence and its next snapshot already share.
   if (
@@ -337,11 +337,11 @@ export class WorldRecords {
     const lineageCustodian = "(payload::jsonb ->> 'custodianId')";
     await this.db.exec(`CREATE INDEX IF NOT EXISTS sim_object_lineage_custodian
       ON sim_object_lineage(world_id,(${lineageCustodian}),slot)`);
+    // All receipt membership reads use the bounded lookup vocabulary plus exact
+    // array checks; raw receipt/fact keys must not grow another GIN dictionary.
     await this.db.exec(`
-      CREATE INDEX IF NOT EXISTS mind_temporal_segments_occurrence_sources
-        ON mind_temporal_segments USING GIN(occurrence_source_ids);
-      CREATE INDEX IF NOT EXISTS mind_temporal_segments_occurrence_individuals
-        ON mind_temporal_segments USING GIN(occurrence_individual_ids);
+      DROP INDEX IF EXISTS mind_temporal_segments_occurrence_sources;
+      DROP INDEX IF EXISTS mind_temporal_segments_occurrence_individuals;
       CREATE INDEX IF NOT EXISTS mind_memories_recent ON mind_memories(world_id,at);
       CREATE INDEX IF NOT EXISTS mind_memories_unresolved ON mind_memories(world_id,parent_id,position) WHERE unresolved=1;
       CREATE INDEX IF NOT EXISTS mind_corrections_world_source ON mind_corrections(world_id,source_id,actor_id);
@@ -588,9 +588,11 @@ export class WorldRecords {
           const prior = new Map(
             a.slice(start).map((entry, i) => [key(entry, start + i), { entry, index: start + i }]),
           );
-          // An append hint does not by itself prove that a new key is absent
-          // from the retained prefix. Complete collections can check it here.
-          const prefixIds = complete && start ? new Set(a.slice(0, start).map(key)) : undefined;
+          // Complete unordered IDs need prefix membership. Native ordered
+          // appends stay INSERT-only: the database enforces duplicate retained
+          // keys without a redundant prefix scan during preparation.
+          const prefixIds =
+            complete && start && !child.orderKey ? new Set(a.slice(0, start).map(key)) : undefined;
           const seen = new Set<string>();
           for (let i = start; i < b.length; i++) {
             const entry = b[i],
@@ -1238,8 +1240,6 @@ export class WorldRecords {
         const selected = byActor.get(actorId) ?? [];
         actor.chunks = selected.map(readTemporalChunkRecord);
         for (const chunk of actor.chunks) for (const id of chunk.sourceRefs) references.add(id);
-        for (const reference of Object.values(actor.geometryCaptures))
-          for (const id of temporalFacetValueReferences(reference)) references.add(id);
       }
       for (let offset = 0, ids = [...references]; offset < ids.length; offset += 800)
         for (const row of await this.db

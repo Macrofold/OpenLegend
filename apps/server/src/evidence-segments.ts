@@ -1,5 +1,10 @@
 import {
   appendedRecordCount,
+  appendSnapshot,
+  orderedRecordGet,
+  orderedRecordSet,
+  sealImmutableRecord,
+  type OrderedRecord,
   temporalReceiptChangeCount,
   temporalEntryMetadataReader,
   type TemporalEntryMetadata,
@@ -19,7 +24,7 @@ import { countMetric } from './performance.js';
 export interface EvidenceSegment {
   start: number;
   end: number;
-  values: unknown[];
+  values: readonly unknown[];
   bytes: number;
   index?: ReceiptSegmentIndex;
 }
@@ -29,7 +34,12 @@ export interface ReceiptSegmentIndex
 }
 type Owner = Record<string, unknown>;
 // Pure immutable memoization only. Read validation never determines write layout.
-const encoded = new WeakMap<object, Owner>();
+interface EncodedOwner {
+  value: Owner;
+  headers: Record<ReceiptLookup, OrderedRecord<true>>;
+}
+const encoded = new WeakMap<object, EncodedOwner>();
+const segmentEncodings = new WeakMap<object, string>();
 const decodedSegments = new WeakMap<object, readonly EvidenceSegment[]>();
 const ordinal = (value: unknown) => Number((value as Owner)['ordinal']);
 
@@ -96,15 +106,55 @@ function receiptBounds(segments: readonly EvidenceSegment[]) {
     spatialContext: segments.some((segment) => segment.index!.spatialContext),
   };
 }
-function sealSegment(segment: EvidenceSegment): void {
-  if (segment.index) segment.index = immutableDataSnapshot(segment.index);
-  for (let pass = 0; pass < 4; pass++) {
-    const size = Buffer.byteLength(JSON.stringify(segment));
-    if (segment.bytes === size) break;
-    segment.bytes = size;
-  }
-  Object.freeze(segment.values);
-  Object.freeze(segment);
+/** Encode a sealed page once. The byte charge includes its own decimal field;
+ * only that field's digit count can change while finding the exact fixed point. */
+type PendingSegment = Omit<EvidenceSegment, 'bytes' | 'values'> & { values: unknown[] };
+function sealSegment(page: PendingSegment): EvidenceSegment {
+  const body = {
+    start: page.start,
+    end: page.end,
+    values: immutableDataSnapshot(Object.freeze(page.values)),
+    index: immutableDataSnapshot(page.index),
+  };
+  const json = JSON.stringify(body);
+  const base = Buffer.byteLength(json) + ',"bytes":'.length;
+  let bytes = base + 1;
+  while (bytes !== base + String(bytes).length) bytes = base + String(bytes).length;
+  const segment = { ...body, bytes };
+  if (sealImmutableRecord(segment))
+    segmentEncodings.set(segment, `${json.slice(0, -1)},"bytes":${bytes}}`);
+  return segment;
+}
+/** The canonical row writer consumes the exact encoding used for the byte charge.
+ * Unknown or restored values still take the ordinary complete serialization path. */
+export function serializeEvidenceSegment(value: unknown): string {
+  return value && typeof value === 'object'
+    ? (segmentEncodings.get(value) ?? JSON.stringify(value))
+    : JSON.stringify(value);
+}
+
+function addHeaders(
+  headers: Record<ReceiptLookup, OrderedRecord<true>>,
+  pages: readonly EvidenceSegment[],
+): Record<ReceiptLookup, string[]> {
+  const additions = Object.fromEntries(
+    receiptHeaders.map((key) => [key, [] as string[]]),
+  ) as Record<ReceiptLookup, string[]>;
+  for (const page of pages)
+    for (const key of receiptHeaders) {
+      countMetric('persistence.receiptBatchHeaderMembersExamined', page.index![key].length);
+      for (const value of page.index![key])
+        if (orderedRecordGet(headers[key], value) === undefined) {
+          orderedRecordSet(headers[key], value, true);
+          additions[key].push(value);
+        }
+    }
+  return additions;
+}
+function metadataBytes(page: EvidenceSegment): number {
+  countMetric('persistence.receiptBatchMetadataPagesEncoded');
+  const { values, ...header } = page;
+  return Buffer.byteLength(JSON.stringify({ ...header, length: values.length }));
 }
 
 /** Pure encoding of producer-owned whole operations. A completed acquisition closes an
@@ -114,16 +164,33 @@ export function encodeEvidenceOwner(value: unknown, previous: unknown, world?: W
   const owner = value as Owner,
     reusable = isImmutableData(owner);
   const cached = reusable ? encoded.get(owner) : undefined;
-  if (cached) return cached;
+  if (cached) return cached.value;
   if (!world) throw new Error('Receipt batch preparation requires its world.');
   const values = owner['entries'] as TemporalFrameEntry[];
-  const prior = previous ? encoded.get(previous as object) : undefined;
-  const priorBatches = (prior?.['entries'] ?? []) as EvidenceSegment[];
+  const predecessor = previous as Owner | undefined;
+  const sameOwner =
+    predecessor &&
+    ['id', 'actorId', 'physicalLife', 'epoch'].every((key) => predecessor[key] === owner[key]);
+  const prior = sameOwner ? encoded.get(predecessor) : undefined;
+  const priorBatches = (prior?.value['entries'] ?? []) as EvidenceSegment[];
   const appended =
-    prior && appendedRecordCount((previous as Owner)['entries'] as TemporalFrameEntry[], values);
-  let start = appended === undefined ? 0 : values.length - appended;
-  // An append proof certifies content, not a closed acquisition. A caller that
-  // extends an earlier frame must take the complete encoding/correction path.
+    prior && appendedRecordCount(predecessor!['entries'] as TemporalFrameEntry[], values);
+  // Entries and every native header must have the same owned append proof.
+  // An entry append alone cannot certify an independently edited header.
+  const headerAppend =
+    prior &&
+    (Object.fromEntries(
+      receiptHeaders.map((key) => [
+        key,
+        appendedRecordCount(predecessor![key] as string[], owner[key] as string[]),
+      ]),
+    ) as Record<ReceiptLookup, number | undefined> | undefined);
+  let start =
+    appended !== undefined &&
+    headerAppend &&
+    receiptHeaders.every((key) => headerAppend[key] !== undefined)
+      ? values.length - appended
+      : 0;
   const oldEnd = priorBatches.at(-1)?.end ?? 0;
   for (let index = start; start && index < values.length; index++) {
     const entry = values[index]!;
@@ -131,8 +198,6 @@ export function encodeEvidenceOwner(value: unknown, previous: unknown, world?: W
   }
   const prefix = start ? priorBatches : [];
   const priorSegments = new Map((start ? [] : priorBatches).map((batch) => [batch.start, batch]));
-  // The native append owner already proves every old entry is unchanged. Do not
-  // walk or copy that prefix just to discover the same physical batches again.
   countMetric('persistence.receiptBatchEntriesEncoded', values.length - start);
   countMetric('persistence.receiptBatchPrefixEntriesReused', start);
   const lastInFrame = new Map<number, number>();
@@ -144,8 +209,8 @@ export function encodeEvidenceOwner(value: unknown, previous: unknown, world?: W
     sources: world.receivedValues?.sources ?? {},
     world,
   });
-  const segments: EvidenceSegment[] = [...prefix];
-  let page: EvidenceSegment | undefined,
+  const suffix: EvidenceSegment[] = [];
+  let page: PendingSegment | undefined,
     end = prefix.at(-1)?.end ?? values[0]?.ordinal ?? 0;
   const seal = () => {
     if (!page) return;
@@ -155,18 +220,17 @@ export function encodeEvidenceOwner(value: unknown, previous: unknown, world?: W
       previous.end === page.end &&
       previous.values.every((entry, at) => entry === page!.values[at])
     )
-      segments.push(previous);
+      suffix.push(previous);
     else {
       page.index = withLookupBuckets(metadata(page.values.filter(Boolean) as TemporalFrameEntry[]));
-      sealSegment(page);
-      segments.push(page);
+      suffix.push(sealSegment(page));
     }
     end = page.end;
     page = undefined;
   };
   for (let index = start; index < values.length; index++) {
     const entry = values[index]!;
-    page ??= { start: end, end, values: [], bytes: 0 };
+    page ??= { start: end, end, values: [] };
     while (page.end < entry.ordinal) {
       page.values.push(null);
       page.end++;
@@ -176,27 +240,61 @@ export function encodeEvidenceOwner(value: unknown, previous: unknown, world?: W
     if (entry.kind === 'change' && lastInFrame.get(entry.frame) === entry.ordinal) seal();
   }
   seal();
-  const headers = pageHeaders(segments);
-  if (receiptHeaders.some((key) => canonicalJson(headers[key]) !== canonicalJson(owner[key])))
-    throw new Error('Receipt batch indexes disagree with their logical owner.');
+  const headers = Object.fromEntries(
+    receiptHeaders.map((key) => [key, start ? { ...prior!.headers[key] } : { size: 0 }]),
+  ) as Record<ReceiptLookup, OrderedRecord<true>>;
+  const additions = addHeaders(headers, suffix);
+  for (const key of receiptHeaders) {
+    const actual = owner[key] as string[];
+    const expected = additions[key];
+    const offset = start ? (predecessor![key] as string[]).length : 0;
+    if (
+      actual.length !== offset + expected.length ||
+      expected.some((id, at) => actual[offset + at] !== id)
+    )
+      throw new Error('Receipt batch indexes disagree with their logical owner.');
+    Object.freeze(headers[key]);
+  }
+  const segments = start
+    ? suffix.length
+      ? appendSnapshot(prefix, suffix)!
+      : prefix
+    : Object.freeze(suffix);
+  const priorStorage = start
+    ? (prior!.value['storage'] as {
+        segmentBytes: number;
+        metadataBytes: number;
+        index: ReturnType<typeof receiptBounds>;
+      })
+    : undefined;
+  const suffixBounds = receiptBounds(suffix);
+  const index = priorStorage
+    ? {
+        firstOrder: priorStorage.index.firstOrder ?? suffixBounds.firstOrder,
+        lastOrder: suffixBounds.lastOrder ?? priorStorage.index.lastOrder,
+        firstMeasured: Math.min(priorStorage.index.firstMeasured, suffixBounds.firstMeasured),
+        lastSupported: Math.max(priorStorage.index.lastSupported, suffixBounds.lastSupported),
+        spatialContext: priorStorage.index.spatialContext || suffixBounds.spatialContext,
+      }
+    : suffixBounds;
+  sealImmutableRecord(index);
+  const suffixMetadataBytes = suffix.reduce((sum, batch) => sum + metadataBytes(batch), 0);
+  const storage = {
+    start: segments[0]?.start ?? 0,
+    end: segments.at(-1)?.end ?? 0,
+    segmentBytes:
+      (priorStorage?.segmentBytes ?? 0) + suffix.reduce((sum, batch) => sum + batch.bytes, 0),
+    metadataBytes: priorStorage
+      ? priorStorage.metadataBytes + suffixMetadataBytes + suffix.length
+      : 2 + suffixMetadataBytes + Math.max(0, suffix.length - 1),
+    index,
+  };
+  sealImmutableRecord(storage);
   const physical = { ...owner };
   for (const key of receiptHeaders) delete physical[key];
-  const result = {
-    ...physical,
-    entries: Object.freeze(segments),
-    storage: {
-      start: segments[0]?.start ?? 0,
-      end: segments.at(-1)?.end ?? 0,
-      segmentBytes: segments.reduce((sum, batch) => sum + batch.bytes, 0),
-      metadataBytes: Buffer.byteLength(
-        JSON.stringify(
-          segments.map(({ values, ...batch }) => ({ ...batch, length: values.length })),
-        ),
-      ),
-      index: receiptBounds(segments),
-    },
-  };
-  if (reusable) encoded.set(owner, result);
+  const result = { ...physical, entries: segments, storage };
+  const immutable = sealImmutableRecord(result);
+  if (reusable && immutable) encoded.set(owner, { value: result, headers });
   return result;
 }
 

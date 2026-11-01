@@ -1025,6 +1025,11 @@ export function revokeReceivedGeometryEvidence(
   state.boundaryKeys = state.boundaryKeys.filter((_, i) => ids.has(state.boundaries[i]!.id));
   state.boundaries = retained;
   state.fragments = state.fragments.filter((fragment) => !removed.has(fragment.observation.id));
+  reconcileTemporalGeometryCaptures(
+    world,
+    observerId,
+    new Set(geometryObservations(state).map((observation) => observation.id)),
+  );
   state.bytes = geometryObservations(state).reduce(
     (bytes, observation) => bytes + jsonEncoding(observation).bytes,
     0,

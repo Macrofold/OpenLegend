@@ -35,7 +35,6 @@ import {
   selectTemporalHistory,
   retireTemporalChunks,
   retireTemporalReceipts,
-  clearTemporalCaptureReferences,
 } from './temporal-evidence.js';
 import { validateTemporalEvidenceState } from './temporal-validation.js';
 import { referencedReceivedValues } from './received-values.js';
@@ -542,7 +541,7 @@ describe('native received relation producers', () => {
     expect(world.experience!.temporal!.actors[PLAYER_ID]!.count).toBe(count);
     validateTemporalEvidenceState(world);
   });
-  it('rebaselines a still-attended unchanged view after its old recorded support is actually retired', () => {
+  it('records held geometry from its current acquisition after old history is retired', () => {
     const { world, player, people } = nativeScene(1, map());
     people[0]!.actor!.capabilities!.memory = false;
     world.simTime = 15;
@@ -553,8 +552,12 @@ describe('native received relation producers', () => {
     initializePerception(world, []);
     const original = currentReceivedGeometry(world, PLAYER_ID).observations[0]!;
     const subject = currentBodyObservation(world, PLAYER_ID, people[0]!.id)!.exposure.track;
-    const oldBlock = world.experience!.temporal!.actors[PLAYER_ID]!.geometryCaptures[original.id]!
-      .valueRef as string;
+    const oldBlock = world
+      .experience!.temporal!.actors[PLAYER_ID]!.chunks.flatMap((chunk) =>
+        temporalChunkReceipts(chunk),
+      )
+      .flatMap((receipt) => receipt.facets)
+      .find((facet) => facet.original?.source.id === original.id)!.valueRef as string;
     world.simTime = 21610;
     setSpatialPosition(world, people[0]!, { x: 6, y: 0, z: 2 }, null, { continuity: 'physical' });
     initializePerception(world, []);
@@ -579,11 +582,11 @@ describe('native received relation producers', () => {
         .flatMap((actor) => actor.chunks.flatMap((chunk) => temporalChunkReceipts(chunk)))
         .some((receipt) => receipt.facets.some((facet) => facet.valueRef === oldBlock)),
     ).toBe(false);
-    clearTemporalCaptureReferences(world, new Set([oldBlock]));
-    if (!referencedReceivedValues(world, { captures: false }).has(oldBlock))
+    if (!referencedReceivedValues(world).has(oldBlock))
       delete world.receivedValues!.sources[oldBlock];
-    expect(temporal.actors[PLAYER_ID]!.capturesInvalidated).toBe(true);
+    expect(temporal.actors[PLAYER_ID]!.geometryCaptureRepairDue).toBeUndefined();
     initializePerception(world, []);
+    captureCurrentGeometrySupport(world, PLAYER_ID);
     const recent = selectTemporalHistory(world, PLAYER_ID, {
       subject,
       includeGeometry: true,
@@ -607,7 +610,7 @@ describe('native received relation producers', () => {
       confirmedThrough: 21616,
     });
     expect(currentReceivedGeometry(world, PLAYER_ID).observations[0]!.id).toBe(original.id);
-    expect(temporal.actors[PLAYER_ID]!.capturesInvalidated).toBeUndefined();
+    expect(temporal.actors[PLAYER_ID]!.geometryCaptureRepairDue).toBeUndefined();
     validateTemporalEvidenceState(world);
   });
   it('retains contemporaneous received terrain without an alarm and never substitutes a later view', () => {

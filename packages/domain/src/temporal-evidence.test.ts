@@ -37,7 +37,6 @@ import {
   retainedTemporalSupport,
   retainTemporalSupport,
   beginTemporalReceiptEpoch,
-  clearTemporalCaptureReferences,
   captureTemporalReceiptPrefix,
   temporalReceiptWithinPrefix,
   retireTemporalChunks,

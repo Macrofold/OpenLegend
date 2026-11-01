@@ -4192,7 +4192,7 @@ export function reconcileAttendedTemporalEvidence(
   const phase = receivedPhaseDeltas.get(world.perceptionEvidence![observerId]!);
   if (phase) phase.reconciled = true;
   const history = world.experience?.temporal?.actors[observerId];
-  const rebaseline = history?.capturesInvalidated === true;
+  const rebaseline = history?.geometryCaptureRepairDue === true;
   const priorEntries = currentDetailedAttention(world, observerId).filter((entry) =>
     before.has(entry.sourceId),
   );
@@ -4285,7 +4285,7 @@ export function reconcileAttendedTemporalEvidence(
   const geometry = captureReceivedFeatureHistory(world, observerId, newGeometry, {
     rebaselineMissing: rebaseline,
   });
-  if (history) delete history.capturesInvalidated;
+  if (history) delete history.geometryCaptureRepairDue;
   return geometry;
 }
 

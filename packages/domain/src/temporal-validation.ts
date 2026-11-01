@@ -518,7 +518,7 @@ export function validateTemporalEvidenceState(
       !ordinal(actor.count) ||
       !Array.isArray(actor.chunks) ||
       !record(actor.geometryCaptures) ||
-      (actor.capturesInvalidated !== undefined && actor.capturesInvalidated !== true) ||
+      (actor.geometryCaptureRepairDue !== undefined && actor.geometryCaptureRepairDue !== true) ||
       typeof actor.maintenanceDue !== 'boolean' ||
       (actor.nextDue !== null && (!finite(actor.nextDue) || actor.nextDue < 0))
     )
@@ -546,26 +546,16 @@ export function validateTemporalEvidenceState(
       if (!fragment) throw new Error('Unavailable retained temporal fragment.');
       return fragment;
     };
-    for (const reference of Object.values(actor.geometryCaptures)) {
-      const fragment = validateReference(reference);
-      const captured = validateStoredValue(
-        reference,
-        fragment,
-        originals,
-        { actorId, physicalLife: actor.physicalLife },
-        world.simTime,
-        sources,
-      );
-      validateReceiver(captured, { actorId, physicalLife: actor.physicalLife }, world.simTime);
+    for (const [sourceId, capture] of Object.entries(actor.geometryCaptures))
       if (
-        (reference.confirmedThrough !== undefined &&
-          (!finite(reference.confirmedThrough) ||
-            reference.confirmedThrough < 0 ||
-            reference.confirmedThrough > world.simTime)) ||
-        (fragment.kind !== 'surface-patch' && fragment.kind !== 'physical-boundary')
+        !isSafeRecordId(sourceId) ||
+        !record(capture) ||
+        !hasRecordFields(capture, ['confirmedThrough']) ||
+        !finite(capture.confirmedThrough) ||
+        capture.confirmedThrough < 0 ||
+        capture.confirmedThrough > world.simTime
       )
-        throw new Error('Invalid temporal capture coverage.');
-    }
+        throw new Error('Invalid temporal geometry capture coverage.');
     if (
       actor.releasedThrough !== undefined &&
       (!finite(actor.releasedThrough) ||
@@ -1002,52 +992,51 @@ export function validateTemporalEvidenceState(
       )
         throw new Error('Temporal receipt counter precedes its tail.');
     }
-    if (!actor.capturesInvalidated) {
-      const current = world.perceptionEvidence?.[actorId]?.current;
-      if (current)
-        for (const [, contact] of orderedRecordEntries(current))
-          for (const group of contact.content.groups) {
-            const mark = group.recording;
-            if (!mark || mark.epoch !== actor.epoch) continue;
-            const chunk = actor.chunks.find((chunk) => chunk.id === mark.chunkId);
-            // Cold/stale pointers grant nothing. The next append either has this
-            // chunk's declaration or rebuilds from the legitimate current group.
-            if (!chunk) continue;
-            const fields = Object.entries(group.fields);
-            const bindings = temporalMembershipBindings(chunk, mark.entryOrdinal);
-            if (
-              bindings.length !== mark.count ||
-              fields.length !== mark.count ||
-              bindings.some(
-                (binding) =>
-                  binding.original.source.id !==
-                    contact.content.originals[group.grant.original]?.id ||
-                  binding.original.source.revision !==
-                    contact.content.originals[group.grant.original]?.revision ||
-                  !fields.some(
-                    ([, field]) =>
-                      field.id === binding.sourceId &&
-                      field.originalOrdinal === binding.original.ordinal &&
-                      sameReceivedValueReference(field.value.reference, binding.valueRef) &&
-                      (field.value.reception?.kind === 'body'
-                        ? binding.reception?.kind === 'body' &&
-                          !!binding.reception.poseRef &&
-                          sameReceivedValueReference(
-                            field.value.reception.poseRef,
-                            binding.reception.poseRef,
-                          )
-                        : field.value.reception?.kind === 'location'
-                          ? binding.reception?.kind === 'location' &&
-                            JSON.stringify(
-                              receivedObservationFrame(world, field.value.reception.frameRef),
-                            ) === JSON.stringify(binding.reception.frame)
-                          : binding.reception === undefined),
-                  ),
-              )
+    const current = world.perceptionEvidence?.[actorId]?.current;
+    if (current)
+      for (const [, contact] of orderedRecordEntries(current))
+        for (const group of contact.content.groups) {
+          const mark = group.recording;
+          if (!mark || mark.epoch !== actor.epoch) continue;
+          const chunk = actor.chunks.find((chunk) => chunk.id === mark.chunkId);
+          // Cold/stale pointers grant nothing. The next append either has this
+          // chunk's declaration or rebuilds from the legitimate current group.
+          if (!chunk) continue;
+          const fields = Object.entries(group.fields);
+          const bindings = temporalMembershipBindings(chunk, mark.entryOrdinal);
+          if (
+            bindings.length !== mark.count ||
+            fields.length !== mark.count ||
+            bindings.some(
+              (binding) =>
+                binding.original.source.id !==
+                  contact.content.originals[group.grant.original]?.id ||
+                binding.original.source.revision !==
+                  contact.content.originals[group.grant.original]?.revision ||
+                !fields.some(
+                  ([, field]) =>
+                    field.id === binding.sourceId &&
+                    field.originalOrdinal === binding.original.ordinal &&
+                    sameReceivedValueReference(field.value.reference, binding.valueRef) &&
+                    (field.value.reception?.kind === 'body'
+                      ? binding.reception?.kind === 'body' &&
+                        !!binding.reception.poseRef &&
+                        sameReceivedValueReference(
+                          field.value.reception.poseRef,
+                          binding.reception.poseRef,
+                        )
+                      : field.value.reception?.kind === 'location'
+                        ? binding.reception?.kind === 'location' &&
+                          JSON.stringify(
+                            receivedObservationFrame(world, field.value.reception.frameRef),
+                          ) === JSON.stringify(binding.reception.frame)
+                        : binding.reception === undefined),
+                ),
             )
-              throw new Error('Current recording cursor names another native membership.');
-          }
-    }
+          )
+            throw new Error('Current recording cursor names another native membership.');
+        }
+
     if (bytes > actor.bytes || count > actor.count)
       throw new Error('Understated temporal retention counters.');
   }

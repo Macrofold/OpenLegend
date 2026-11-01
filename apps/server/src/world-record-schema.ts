@@ -11,7 +11,11 @@ import {
   receivedRecordReferences,
   receivedCurrentOwnerTables,
 } from './received-record-references.js';
-import { encodeEvidenceOwner, decodeEvidenceOwner } from './evidence-segments.js';
+import {
+  encodeEvidenceOwner,
+  decodeEvidenceOwner,
+  serializeEvidenceSegment,
+} from './evidence-segments.js';
 import { personalAgreementMetadata, type Awareness } from '@open-legend/domain';
 /** Current gameplay record boundaries. JSON is the value of one owned record, never
  * a world/actor history container. New growing collections belong here explicitly.
@@ -27,6 +31,8 @@ export interface RecordNode {
   /** Normalize a shared native value within this same owned record subtree. */
   encode?: (value: unknown, previous?: unknown, world?: WorldState) => unknown;
   decode?: (value: unknown) => unknown;
+  /** A codec may supply its exact already-prepared leaf payload. */
+  serialize?: (value: unknown) => string;
 }
 export type JsonRecord = Record<string, unknown>;
 export interface RecordCollection {
@@ -294,13 +300,13 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
                     ...list('mind_temporal_segments', 'start'),
                     orderKey: 'start',
                     complete: true,
+                    node: { table: 'mind_temporal_segments', serialize: serializeEvidenceSegment },
                   },
                 },
                 encode: (value, previous, world) => encodeEvidenceOwner(value, previous, world),
                 decode: (value) => decodeEvidenceOwner(value),
               },
             },
-            captures: { ...map('mind_temporal_captures'), unordered: true, complete: true },
             supports: map('mind_temporal_supports'),
           }),
         }),

@@ -5,6 +5,7 @@ import {
   currentGroupsSetRecording,
   currentFacetProof,
   currentFacetSupport,
+  currentContactEntries,
 } from './perception-current.js';
 import {
   appendTemporalFrameReceipt,
@@ -29,6 +30,7 @@ import {
   type TemporalConfirmation,
   temporalConfirmationPositions,
   temporalCheckGroupMembership,
+  temporalCurrentMembershipPresent,
   type TemporalCheckGroup,
   temporalEntryCheckpoints,
   temporalEntryConfirmations,
@@ -266,18 +268,11 @@ export interface TemporalActorHistory {
   maintenanceDue: boolean;
   /** Conservative unavailable-prefix coverage, not a ledger of fictional sensory losses. */
   releasedThrough?: number;
-  /** Bounded live-capture watermarks; values remain in their immutable source owner. */
-  geometryCaptures: Record<
-    string,
-    TemporalValueReference & {
-      /** Last compared reception, not another source of knowledge or permission. */
-      reception?: TemporalReception;
-      /** Independently acquired physical-feature support, outside sight check groups. */
-      confirmedThrough?: number;
-    }
-  >;
-  /** Actual payload retirement requires a new baseline at the next receiver phase. */
-  capturesInvalidated?: true;
+  /** Last recorded support of an actual current geometry acquisition. This is
+   * bookkeeping only; its source retains the typed value and original times. */
+  geometryCaptures: Record<string, { confirmedThrough: number }>;
+  /** A recording gap or restored timeline needs repair at its next native phase. */
+  geometryCaptureRepairDue?: true;
   lastReceiverFrame?: ObservationFrame;
   recordingGap?: { from: number; through: number };
   /** Sparse exact qualifying contact support, not an autobiographical archive. */
@@ -615,7 +610,7 @@ export function beginTemporalReceiptEpoch(world: WorldState, namespace: string):
     throw new Error('A receipt timeline requires its admitted namespace.');
   temporal.namespace = namespace;
   for (const actor of Object.values(temporal.actors)) {
-    actor.capturesInvalidated = true;
+    actor.geometryCaptureRepairDue = true;
     actor.epoch = `${temporal.namespace}-${nextId(world, 'receipt-epoch')}`;
     actor.nextOrdinal = 0;
     actor.geometryCaptures = {};
@@ -956,7 +951,7 @@ export function appendTemporalReceipt(
       from: actor.recordingGap?.from ?? world.simTime,
       through: world.simTime,
     };
-    actor.capturesInvalidated = true;
+    actor.geometryCaptureRepairDue = true;
     return;
   }
   if (created) {
@@ -1454,7 +1449,9 @@ export function captureTemporalCurrent(
   const owned = actorHistory(world, actorId),
     owner = world.perceptionEvidence?.[actorId];
   if (!owned || !owner) return [];
-  const rebaseline = owned.actor.capturesInvalidated === true;
+  // A lost recording interval needs a new baseline for every selected group.
+  // Geometry repair alone cannot invalidate unrelated current chronology.
+  const rebaseline = owned.actor.recordingGap !== undefined;
   const frameRef = owner.visualConfirmation?.frameRef;
   const receiverFrame = frameRef ? receivedObservationFrame(world, frameRef) : undefined;
   const frameChanged =
@@ -1661,7 +1658,6 @@ export function captureTemporalObservation(
           ...(options.confirmedThrough === undefined
             ? {}
             : { confirmedThrough: options.confirmedThrough }),
-          ...(previous ? { retainedValue: previous } : {}),
           original: {
             source: {
               family: 'native-exposure',
@@ -1682,10 +1678,7 @@ export function captureTemporalObservation(
       observation.facets[0]!.value.kind === 'physical-boundary')
   ) {
     const actor = world.experience!.temporal!.actors[actorId]!;
-    const facet = temporalReceiptValues(actor.chunks.at(-1)!, locator.ordinal)[0]!;
     actor.geometryCaptures[observation.id] = {
-      valueRef: facet.valueRef,
-      ...(facet.reception ? { reception: facet.reception } : {}),
       confirmedThrough: Math.max(
         previous?.confirmedThrough ?? 0,
         options.confirmedThrough ?? observation.facets[0]!.measuredThrough,
@@ -1731,22 +1724,6 @@ export function reconcileTemporalGeometryCaptures(
   }
 }
 
-/** Capture watermarks grant no retention of shared values. The repository clears
- * them after proving no retained receipt owns those values. */
-export function clearTemporalCaptureReferences(
-  world: WorldState,
-  valueIds: ReadonlySet<string>,
-): void {
-  touchNativeEvidence(world, 'temporal');
-  if (!valueIds.size) return;
-  for (const actor of Object.values(world.experience?.temporal?.actors ?? {}))
-    for (const [key, reference] of Object.entries(actor.geometryCaptures))
-      if (temporalFacetValueReferences(reference).some((value) => valueIds.has(value))) {
-        delete actor.geometryCaptures[key];
-        actor.capturesInvalidated = true;
-      }
-}
-
 /** Server-selected cold retirement totals are applied by this same native semantic owner. */
 export function retireTemporalChunks(
   world: WorldState,
@@ -1766,13 +1743,35 @@ export function retireTemporalChunks(
   actor.nextDue = nextDue;
   if (releasedThrough !== undefined)
     actor.releasedThrough = Math.max(actor.releasedThrough ?? 0, releasedThrough);
-  // Deduplication watermarks are not an owner of expired payloads. Rebuild from
-  // legitimate current reception at the next capture, never a naked cached address.
-  if (ids.length) {
-    actor.geometryCaptures = {};
-    actor.capturesInvalidated = true;
-  }
+  // Cursors belong to current received groups. An unrelated old chunk's removal
+  // changes neither those memberships nor the current geometry acquisition.
+  // The next chunk declares its own exact membership when an actual check arrives.
   actor.maintenanceDue = false;
+}
+
+/** Only a rewritten native declaration can invalidate its current group's
+ * recorder cursor. Missing cold chunks remain hints, never evidence authority. */
+function invalidateChangedRecordingMemberships(
+  world: WorldState,
+  actorId: string,
+  chunk: TemporalChunk,
+): void {
+  const owner = world.perceptionEvidence?.[actorId];
+  if (!owner) return;
+  const updates: Parameters<typeof currentGroupsSetRecording>[1][number][] = [];
+  for (const [subjectId, contact] of currentContactEntries(owner))
+    for (const group of contact.content.groups) {
+      const mark = group.recording;
+      if (
+        mark?.chunkId === chunk.id &&
+        !temporalCurrentMembershipPresent(chunk, mark.entryOrdinal, mark.count)
+      )
+        updates.push({ subjectId, fields: group.fields, recording: undefined });
+    }
+  if (updates.length) {
+    touchNativeEvidence(world, 'perception', actorId);
+    currentGroupsSetRecording(owner, updates);
+  }
 }
 
 type TemporalAvailabilityState = Omit<TemporalCheckpointAvailability, 'fields'>;
@@ -2011,14 +2010,15 @@ export function retireTemporalReceipts(
     remaining: TemporalReceipt[] = [];
   for (const receipt of actual) (ordinals.has(receipt.ordinal) ? removed : remaining).push(receipt);
   if (!removed.length) return;
-  actor.capturesInvalidated = true;
   touchNativeEvidence(world, 'temporal', actorId);
   const oldBytes = chunk.bytes,
     oldCount = chunk.count;
   const checkpoints = checkpointsForRetainedReceipts(world, actorId, chunk, remaining);
   replaceTemporalChunkReceipts(chunk, remaining, world, checkpoints);
-  if (remaining.length) refreshChunk(chunk, world);
-  else {
+  if (remaining.length) {
+    refreshChunk(chunk, world);
+    invalidateChangedRecordingMemberships(world, actorId, chunk);
+  } else {
     actor.chunks = actor.chunks.filter((value) => value.id !== chunkId);
     chunk.count = 0;
     chunk.bytes = 0;
@@ -2635,6 +2635,7 @@ export function invalidateTemporalEvidence(
     // Exact stored byte totals are recomputed only for touched resident chunks; cold rows use repository retirement.
     const previousBytes = chunk.bytes;
     refreshChunk(chunk, world);
+    if (chunk.count) invalidateChangedRecordingMemberships(world, actorId, chunk);
     actor.count -= previousCount - chunk.count;
     actor.bytes -= previousBytes - chunk.bytes;
   }
@@ -2796,12 +2797,11 @@ export function invalidateTemporalFacets(
     if (!changed) continue;
     replaceTemporalChunkReceipts(chunk, retained, world, checkpoints, confirmations);
     refreshChunk(chunk, world);
+    if (chunk.count) invalidateChangedRecordingMemberships(world, actorId, chunk);
     actor.bytes -= previousBytes - chunk.bytes;
     actor.count -= previousCount - chunk.count;
   }
   actor.chunks = actor.chunks.filter((chunk) => chunk.count > 0);
-  actor.geometryCaptures = {};
-  actor.capturesInvalidated = true;
 }
 
 export function temporalSourceIds(receipt: TemporalReceipt): EvidenceSource[] {
