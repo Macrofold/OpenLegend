@@ -87,7 +87,7 @@ The existing provisioner journals the access revision, conditional request and o
 
 ## Shared Worker setup and cutover
 
-Native full cognition, reflection and creator conversations require `MACROFOLD_WORKER_ID`, selected by the application/world compute owner. The caller sends that same top-level `worker_id` with each native Run; actor Worktrees and Sessions remain independent. OpenLegend does not create, discover, resume, pause, replace or destroy Workers. A missing setting disables only native execution, not `/v1/inferences`.
+Native full cognition, reflection and creator conversations require `MACROFOLD_WORKER_ID`, selected by the application/world compute owner. The caller sends that same top-level `worker_id` with each native Run; actor Worktrees and Sessions remain independent. Optional [per-Run memory configuration](live-ai-setup.md#macrofold-embeddings-and-postgresql) applies within the approved offering, separately from Host size. OpenLegend does not create, discover, resume, pause, replace or destroy Workers. A missing setting disables only native execution, not `/v1/inferences`.
 
 ```dotenv
 MACROFOLD_WORKER_ID=<existing-authorized-worker-uuid>

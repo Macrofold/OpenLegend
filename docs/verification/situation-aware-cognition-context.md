@@ -8,7 +8,7 @@ This qualifies construction and admission through current consumers. It does not
 
 ## October 31 — Integrated context and response admission
 
-The [bounded integration record](cognition-context/2026/2026-10-31-integrated-context.md) qualifies the combined changes through 20 matching native requests plus two recall callbacks, ten response-admission captures, 16 primary live cases and eight affected final-layout cases. It preserves the unmatched pilot, contrary behavior and financial uncertainty. Actual inspections, evasion and recipient-accepted transfers are distinguished from dialogue; psychological memory influence, broader model quality and normal Worker reflection remain unproved. The metadata-only maintenance receipt fix has its own successful native check. Automated suites remain paused and no fresh rendered-game acceptance is claimed.
+The [bounded integration record](cognition-context/2026/2026-10-31-integrated-context.md) qualifies the combined changes through 20 matching native requests plus two recall callbacks, ten response-admission captures, 16 primary live cases and eight affected final-layout cases. It also records one successful explicit native reflection with 2 GiB after a per-Run memory failure. It preserves the unmatched pilot, contrary behavior and financial uncertainty. Actual inspections, evasion and recipient-accepted transfers are distinguished from dialogue; reliable memory influence, broader model quality and Worker recovery/capacity remain unproved. The metadata-only maintenance receipt fix has its own successful native check. Automated suites remain paused and no fresh rendered-game acceptance is claimed.
 
 ## October 31 — Shared preparation baseline
 
