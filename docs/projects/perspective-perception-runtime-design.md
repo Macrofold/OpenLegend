@@ -1,8 +1,8 @@
 # Shared reception and change runtime
 
-| Status      | Current progress                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | PP08 and the three bookkeeping removals are installed; integrated operating qualification remains open. | 2026-10-31   |
+| Status      | Current progress                                                                                    | Last updated |
+| ----------- | --------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared reception is installed; retirement preparation and the failed normal-clock gate remain open. | 2026-10-31   |
 
 This is the implementation companion to the [perspective-perception feature specification](perspective-perception-feature-spec.md#shared-reception-and-change) and [technical contract](perspective-perception-tech-design.md). It owns the common receiving procedure, not new physical senses, attention policy, a new context compiler or storage engine. [PP08](../maintainers/perspective-perception.md#pp08--shared-reception-and-change) owns the conversion; [branch integration](attention-and-scenes-runtime-design.md#139-branch-ownership-and-integration) assigns overlapping implementation to BK and RU. Design does not authorize runtime edits.
 

@@ -1,8 +1,8 @@
 # Observer-specific perception, evidence and recognition — technical design
 
-| Status      | Current progress                                                                                        | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared reception is implemented for existing channels; operating and broader qualification remain open. | 2026-10-31   |
+| Status      | Current progress                                                                                           | Last updated |
+| ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Shared reception is implemented for existing channels; retirement and operating qualification remain open. | 2026-10-31   |
 
 Architecture applied to shared reception **2026-10-31 22:44 UTC**; the temporal/familiarity foundation used it **2026-10-27 10:15 UTC**. Combined semantic and capacity qualification remains with PS04-A; future physical producers remain separate.
 
