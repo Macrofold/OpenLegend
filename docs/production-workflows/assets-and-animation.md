@@ -6,6 +6,11 @@ The purpose is to create recognizable things and expressive people that particip
 
 ## Choose the representation before the tool
 
+Model and animation generation default to the [prototype path](art-flows/README.md#prototype-path)
+and stop at the requested usable export/preview. Requested motion includes only the needed rig
+and clips. Later [polish/finalization](art-flows/production.md#polish-or-finalize-a-selected-model)
+resumes that source; integration and family qualification apply only when their outcomes are requested.
+
 | Need                                                     | Useful route                                                                            | Stages that can be omitted                                          |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
 | An existing thing already has suitable approved art      | Inspect and integrate exact reuse                                                       | New concept, generation and unnecessary source reconstruction       |
@@ -105,6 +110,10 @@ A second material, length, ornament or compatible attachment is useful evidence 
 
 The character author and visual contributor work together. Clothing and habitual pose can suggest a person's concerns without requiring a generated biography to become public knowledge. Connect deeper authoring to [characters and play](characters-and-play.md); the art route does not invent personality, remembered events or authoritative anatomy.
 
+In the existing brief, distinguish **features to preserve**, **the requested change**, and **unresolved construction**. Include the real body dimensions, an ordinary-play reference frame, the most useful close view, and the selected action/equipment cases. Mark which face, hair, skin, silhouette, asymmetry and possessions are already authored facts; leave unspecified details as art choices rather than invented history. A repaired coat may be an authored starting detail without a fabricated repair event. Clothing, facial structure or a gait must not become an automatic morality, personality, disability or private-emotion label.
+
+Use anatomy/material reference and a few purposeful silhouettes or poses to settle the question that is actually open. If a generated concept needs reconstruction views, derive matching front/side/back views from the selected design with the same scale and pose; inspect disagreements before modeling. Retain a polished illustration as a mood reference separately from neutral construction information. Do not request a full turnaround when the existing editable model already answers the question.
+
 Use the current mercenary source and [study record](../maintainers/art/mercenary.md) where compatible. Its existence means the next useful question can be motion quality, outfit fit, production effort or another expressive case, rather than another isolated proof that a 3D person can render.
 
 **Useful result:** the character has a recognizable visual promise and a short list of actions needed by the selected play. More cosmetic detail is valuable when it supports that promise at the actual viewing scale.
@@ -117,6 +126,8 @@ Use the current mercenary source and [study record](../maintainers/art/mercenary
 
 A skeleton with familiar joint names is not enough to prove compatible scale, proportions, bind pose or animation. Likewise, a provider's “automatic rigging” label does not establish nonhuman anatomy, garments or usable equipment contacts. The [appearance-family design](../projects/3d-pixel-art-appearance-families.md) and [V3D05–V3D06](../maintainers/3d-pixel-art.md#v3d05--rigged-character-and-equipment-family) own family coverage.
 
+Before detailed finishing, fit a rough body and the most demanding selected garment/tool to the chosen rig, export them through the existing trusted path, and inspect a stand, turn and representative bend in the actual PlayCanvas presentation. This early rehearsal finds bad scale, bind pose, foot anchor, camera readability and material assumptions while they are cheap to change. Use the family's [compatibility record](../projects/3d-pixel-art-appearance-families.md#qualify-the-reusable-fit-envelope); a new generic importer is not a prerequisite for this bounded offline rehearsal.
+
 **Useful result:** the team knows which geometry can share a rig and clips, which pieces are rigid attachments, and which shapes need deliberate deformation. If the intended costume depends on an unavailable fit or cloth solver, simplify that production choice or scope its missing capability explicitly.
 
 ### 3. Build, fit and skin the editable source
@@ -125,9 +136,15 @@ A skeleton with familiar joint names is not enough to prove compatible scale, pr
 
 **Produce:** editable mesh, skeleton, skin weights and fitted parts, with meaningful pivots and attachments. Keep body, garments, hair and rigid equipment separate where their use requires it.
 
-Use conventional modeling, generated candidates and manual repair as appropriate. Inspect deformation at representative joint extremes before creating a long animation set. Check shoulders, elbows, hips, knees, hands and other relevant joints for this anatomy. Test garment contact and silhouette under movement. Do not assume an authoring-tool cloth simulation survives the runtime export; determine which animation or simulation data the selected game path actually consumes.
+Generate separate parts when independent control over an important feature saves more work than fitting and assembly. For example, replace an unsatisfactory head while preserving an approved body and outfit. Keep the same approved proportions, construction views and identity features across requests; check neck dimensions, seam position, surface normals, material continuity and deformation after assembly. A separately generated head may become part of one skinned source. Production parts, exported draw units and gameplay equipment are three different decisions: join or retain parts according to deformation, actual equipment changes and measured rendering cost, not according to how a generator happened to produce them. Separate requests do not establish interchangeable garments or a provider's automatic part-generation capability.
+
+When a directly generated mesh preserves the intended form and supports the required movement, materials and runtime complexity, refine it instead of automatically rebuilding it. Use a high-detail source, rebuilt topology or baked surface detail only when it solves a specific silhouette, deformation, shading or delivery problem. Quad output is an authoring option, not an acceptance criterion: useful joint structure, final exported triangles, vertex splits, skinning and the rendered result matter. A low polygon count does not authorize the rejected visibly low-poly aesthetic.
+
+Inspect deformation at representative joint extremes before creating a long animation set. Check shoulders, elbows, hips, knees, hands and other relevant joints for this anatomy. Test garment contact and silhouette under movement. Do not assume an authoring-tool cloth simulation survives the runtime export; determine which animation or simulation data the selected game path actually consumes. Choose fitted skinning, authored or baked bone motion, or rigid attachment first when those meet the need; add secondary motion only when it improves the visible result without obscuring the action or destabilizing pixels.
 
 This work can run alongside rough action timing on the agreed rig, but changes to the body or skeleton must be communicated before dependent skinning or final clips are treated as complete.
+
+Finish materials after the rough deformation pass. Check eyes/brows/hair, hands, garment closures, boots and equipment at their actual screen size; add detail where it changes recognition or action reading. Keep quiet fabric and skin regions around those accents. Separate base color from strong directional light and highlights, inspect UV seams and texture/material assignments, and check the result under daylight, shade and firelight. A provider's de-lighting option is not evidence that the output is free of painted lighting. Use the established material path before adding an eye shader, extra transparent layer or high-resolution map whose visible benefit has not been demonstrated.
 
 **Useful result:** the source deforms adequately for the supported actions while preserving identity. Repair a bad bend in geometry, weights or rig constraints rather than hiding it with a single camera angle.
 
@@ -141,6 +158,16 @@ Shape anticipation, weight transfer, contact and recovery so the player can read
 
 A video can inspire timing or pose, but it is not a usable skeletal clip unless the selected tool exports the required motion data. Retargeting maps motion; it does not automatically fix contacts or adapt one anatomy's behavior to another.
 
+For a junior contributor, use this order on each needed motion:
+
+1. Observe or record suitable reference, identify the actual action and its native timing, and mark support, grip and contact moments. Establish which expression is authored/selected and which state is only an observer's interpretation.
+2. Block a few timed poses: entry, preparation where the action provides it, useful contact/gesture, and recovery or held state. Review facing, weight and intention at ordinary play size before smoothing curves. Stepped blocking is an authoring aid, not a required playback rate.
+3. Fit the motion to the supported action. A quick attack cannot gain a new wind-up delay for aesthetic reasons; a cancelled attempt cannot play a successful contact effect. Shorten or abbreviate visual motion within the existing timing contract, or return a genuine mismatch to the action owner.
+4. Refine spacing, arcs, weight transfer and contacts. Check the first/last pose of a loop, travel speed versus foot placement, transitions into and out of movement, and interruption before and after the consequential moment. Fix the source clip or retargeting before using IK to conceal a large mismatch.
+5. Add restrained follow-through or secondary hair/cloth motion only after the main action reads. Compare it disabled and enabled, including turning, stopping, pause/resume and the supported reduced-motion behavior. Stop polishing detail that disappears at normal play scale or competes with the action.
+
+Apply the same craft to ordinary work, carrying, rest, greeting, humor and hesitation as to attacks. A selected expressive gesture is optional visual behavior; do not derive it by broadcasting a character's hidden psychological state. Reuse clips by their compatible movement/contact meaning, with deliberate variations where they preserve the person's authored identity.
+
 **Useful result:** actual joints move correctly, the action reads at game scale, and motion can be reconciled with native timing. The wider sound/effect coordination belongs in [audio and feedback](audio-and-feedback.md).
 
 ### 5. Prepare the runtime body and motion together
@@ -150,6 +177,10 @@ A video can inspire timing or pose, but it is not a usable skeletal clip unless 
 **Produce:** the supported runtime artifacts and enough source information to reproduce them. Inspect the exported skeleton and channels, actual non-root joint motion, required clips, hierarchy, bounds and texture/material behavior.
 
 Keep the intended root-motion policy consistent with [world presentation](../world-presentation.md) and the current animation consumer. Animation callbacks cannot inflict damage, transfer an item or move the authoritative body through a separate path. If a visual clip travels, its integration must honor the native movement and support owners rather than allowing two position authorities.
+
+Keep the editable master and prepare an export copy. Use the project's metres/Y-up/declared-forward profile, preserve the foot/support anchor, and resolve scale or mirroring before final binding; changing a bound rig's transforms requires rechecking its dependent skins and clips. Bake required constraints/procedural motion onto supported animated joints when necessary. Export only required meshes, materials/images, skeletons and clips; authoring controls, simulation settings and a successful FBX preview are not GLB playback guarantees.
+
+Reimport the exact final export into a clean scene and load it through the actual project path. Check missing dependencies, material/color-space changes, outward faces, UVs, non-root joint deformation, clip names/durations/loops, attachment transforms and animated bounds. Inspect the exported triangle/vertex/material/skin counts and decoded textures, not just the generator's requested face count or compressed download size. Record unsupported features rather than silently dropping an essential garment, facial movement or state. Structural validation is separate from visual acceptance.
 
 **Useful result:** the actual exported animation deforms the intended body and retains compatible attachments. A running timer, successful import or moving root alone does not pass this stage.
 
@@ -170,6 +201,8 @@ Preserve adequate existing poses and representations when optional polish is una
 When family reuse is the intended benefit, repeat the process on a second compatible outfit, body or equipment case. Record the real adjustments required. A second humanoid does not prove a quadruped route; a motion that fits a bare body may fail with a cape, pack or held tool.
 
 Preserve the source body, rig, material family, clips, export settings and accepted game context. Add the smallest reusable instruction or preparation tool that saves repeated work, improves a meaningful revision, or prevents an observed recurring defect. Keep valuable manual decisions visible rather than claiming a fully automatic pipeline because one candidate happened to work.
+
+Use the [matched character-production comparison](../projects/3d-pixel-art-validation.md#matched-character-production-comparison) when selecting a route for repeat use. It measures the complete accepted result and the next useful revision, including failed attempts and manual finishing. The [professional-practice research and repertoire audit](../../art-direction/research/3d-pixel-worlds/character-production-2026-10-31.md) supply evidence and existing example coverage; they do not make every repertoire entry an asset request.
 
 ## Repair map and downstream effects
 

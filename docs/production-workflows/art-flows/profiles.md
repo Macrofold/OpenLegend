@@ -6,9 +6,10 @@ result useful; they do not prescribe one model or repeat the tool routes. Scale 
 coverage to the requested scope: a broad study may need the whole relevant family, while
 a focused revision delivers only the requested pieces and checks affected dependents.
 Preserve accepted unrelated work instead of rebuilding a full kit for a single texture edit.
-These profiles own the brief and visual coverage. Production reuses any selected inputs and
-follows the common [package procedure](production.md) plus the matching recipes below; it
-does not require a new contender study.
+These profiles own the brief and visual coverage. Model/animation prototypes use the
+[short path](README.md#prototype-path). Other production reuses selected inputs and follows
+the common [package procedure](production.md) plus the matching recipes below; it does not
+require a new contender study.
 
 ## Profile map
 
@@ -98,9 +99,11 @@ small expression/pose range. Only request views that answer the actual design qu
 Inspect identity consistency and ordinary gameplay-scale recognition, not just beauty in
 one portrait. Do not change backstory, personality or supported behavior to explain a look.
 
-Production branches by the actual consumer: [portrait](production.md#static-2d-artwork) or
+Other production branches by the actual consumer: [portrait](production.md#static-2d-artwork) or
 [sprite family](production.md#sprites-and-frame-animation), [2D rig](production.md#2d-rigs),
-or [3D character](production.md#3d-characters-and-creatures). Follow that finishing recipe.
+[rigid-model export](production.md#rigid-3d-assets) for a static/unrigged person or creature,
+or [3D character](production.md#3d-characters-and-creatures) when articulation or deformation is required.
+Follow that recipe at the requested [quality](README.md#quality-and-simple-outputs).
 Generated views may disagree; identify the accepted construction instead of pretending
 all of them form an internally consistent modeling sheet.
 
@@ -124,7 +127,13 @@ Specify the action/emotion, timing, start/end conditions and target representati
 A study may deliver pose keys, a storyboard, animatic, sound candidates or video examples,
 labeled accurately. Review timing, readability, continuity and restraint.
 
-Production follows the [animation](production.md#animation-clips),
+Model/animation generation defaults to the [prototype path](README.md#prototype-path). Target
+the selected body/rig; animation-only work reuses it. The brief records exact clips and the
+resolved [rig, motion, material and format defaults](README.md#quality-and-simple-outputs).
+An existing clip keeps its useful timing; a new game-action clip respects that action's native
+timing. A model containing an animation timer without the required movement is not usable output.
+
+Other production follows the [animation](production.md#animation-clips),
 [sprite](production.md#sprites-and-frame-animation), [VFX](production.md#visual-effects)
 or [audio](production.md#audio) finishing recipe. Integration follows
 [animation](../assets-and-animation.md) or [audio and feedback](../audio-and-feedback.md).

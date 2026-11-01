@@ -1,7 +1,8 @@
 # Production-ready art packages
 
-Use this procedure when the requested finish is **production**, or when **integration**
-requires new or changed assets. Read the common steps and only the matching asset recipes.
+Use this procedure for **production**, or when **integration** requires new or changed assets,
+except model/animation prototypes, which use the [short prototype path](README.md#prototype-path).
+Read the common steps and only the matching asset recipes for the requested scope.
 A study alone still stops at the [study boundary](README.md#request-and-stopping-point).
 
 The result is a usable package for a named consumer, with retained sources and a repeatable
@@ -9,10 +10,30 @@ export route where finishing is needed. Confirm current importer support before 
 game-ready files; label a package for a proposed consumer accordingly. Installing assets,
 changing game code and qualifying the running game remain integration.
 
+Apply the requested [quality](README.md#quality-and-simple-outputs). Prototype quality keeps
+the requested format and applicable consumer requirements while limiting finishing and coverage
+to the stated use; a usable export need not be a polished or reusable character family.
+
 Reuse compatible assets without reconstructing unavailable upstream authoring projects.
 Retain available original inputs and working sources for delivered assets. Require particular
 editable masters only when the agreed deliverable or revision depends on them. Record editing
 limits. A generated image may itself be the source; a prompt is not a substitute for its bytes.
+
+## Polish or finalize a selected model
+
+“Polish/finalize this model” selects `quality=finished`, the selected `resume` source, and
+export-only delivery unless integration was requested. Keep its existing rig, clip coverage and
+adequate materials unless the intended final use requires a change.
+
+1. Reopen the exact prototype and its available editable source, rig, clips and materials. Resolve
+   the target from the current selection or supplied reference; do not start a new concept study.
+2. Inspect gaps against the intended consumer and finish. Preserve approved identity and working
+   components. Identify only needed shape, topology, material, skin/contact or motion repairs;
+   missing source editability is a concrete repair constraint, not permission to replace the identity.
+3. Apply the matching recipes below to those gaps, then export and recheck affected dependencies.
+   Reuse still-valid evidence and preserve the delivered source/output through the shared handoff.
+   Do not regenerate the whole model, add unrequested clips, or expand one asset into a reusable
+   family merely because finishing was requested. Integration, when requested, uses its existing owner.
 
 ## 1. Define the package before finishing
 
@@ -191,15 +212,26 @@ for the source and its native object relationship.
 Follow [articulated entities](../assets-and-animation.md#articulated-people-and-creatures)
 and the selected body's compatibility owner.
 
+Standard and Higgsfield share this finishing route. Either may supply concepts or selected
+parts; neither a generated turnaround nor a motion video establishes rigged output. Use the
+[fit envelope](../../projects/3d-pixel-art-appearance-families.md#qualify-the-reusable-fit-envelope)
+and [matched production evidence](../../projects/3d-pixel-art-validation.md#matched-character-production-comparison)
+when qualifying reuse. A study-only request still stops at the agreed study deliverable.
+
 1. Resolve inconsistent concept views into one accepted construction. Select the supported
    body/rig family, scale, rest pose and required attachment conventions before final modeling.
-2. Finish topology for intended deformation, UVs, materials and separable clothing/equipment.
-   Preserve identity and readable proportions across the required views.
+2. Refine a usable mesh directly, or repair/rebuild the specific topology that fails the needed
+   deformation or silhouette. Generate a part separately only when the extra control earns its
+   fitting work. Use provisional materials and separate runtime clothing/equipment according to
+   actual use; generator parts need not remain separate draw units. Preserve identity and proportions.
 3. Build or adapt the skeleton, skin the body and fit attachments. Test relevant joint extremes,
-   face/expression controls where requested, hands/feet and clothing contact. Matching bone
-   names alone does not establish compatible proportions, rest transforms or weights.
-4. Produce the requested motion through [animation clips](#animation-clips). Correct body,
-   weights and equipment fit before expanding a clip set that depends on them.
+   face/expression controls where requested, hands/feet and clothing contact, then inspect a rough
+   export through the existing consumer before detailed finishing. When game integration is outside
+   the request, use a compatible preview and leave gameplay qualification open. Matching bone names
+   alone does not establish compatible proportions, rest transforms or weights.
+4. After rough fit and export pass, finish UVs/materials and the requested motion through
+   [animation clips](#animation-clips). Correct body, weights and equipment fit before expanding
+   a clip set that depends on them.
 5. Export the body, rig, materials and dependent clips in the supported arrangement. Reopen
    them together and inspect motion, deformation and attachment fit at intended game scale.
    Record compatible rig/body revisions and real limits. A portrait, turntable or one moving
@@ -210,7 +242,8 @@ and the selected body's compatibility owner.
 1. Pin the actual rig/source revision and requested actions. Define clip identity, duration,
    time units, loop behavior, start/end poses, supported blending and root-motion convention.
    Art follows native movement/action timing; it does not become a second gameplay authority.
-2. Author, capture or retarget motion onto that rig. Resolve rest-pose/proportion differences,
+2. Block and review the intended poses/contact at gameplay scale before polishing motion.
+   Author, capture or retarget onto that rig. Resolve rest-pose/proportion differences,
    then repair foot sliding, hand/grip contact, joint limits and unintended root drift.
 3. Review required loops, transitions, interruption/recovery poses and attachments. Include
    presentation markers only as supported metadata tied to existing action semantics.
