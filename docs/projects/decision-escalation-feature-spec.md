@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                 | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Useful-lifetime continuation and scoped preparation pass focused native/live checks; broader release qualification remains open. | 2026-10-31   |
+| In progress | Useful-lifetime continuation and scoped preparation pass focused native/live checks; broader release qualification remains open. | 2026-11-01   |
 
-Specification updated **2026-10-31T18:36:24Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
+Specification updated **2026-11-01T20:30:00Z**. [Technical design](decision-escalation-tech-design.md) defines scheduling, answer formats, saving, spending, freshness and crash handling. Its [concrete acceptance cases](decision-escalation-tech-design.md#deterministic-acceptance-examples) remain delivery criteria. [Verification](../verification/decision-escalation.md) distinguishes implementation checks from broader release qualification.
 
 ## Purpose
 
@@ -96,6 +96,8 @@ Supply a fresh, character-permitted description of the initiating situation, cur
 Prefer preventing an illegal choice from being offered in the first place. Where a previous answer was rejected, the new request can include a short factual explanation such as “that option requires more available energy than this character has.” Explanations must not reveal private facts. Luna receives neither the benchmark answer key nor instructions to agree with the earlier model.
 
 The output remains small and structured: an offered choice, task-specific rating/probability, explicit abstention, a subset of relevant optional memories, or supported response operations. Every requested question must be explicitly answered or declined. An appraisal can mean “propose frustration at this intensity, supported by this permitted event,” through the installed feeling rules. Language is optional unless the task calls for speech. A fluent explanation does not excuse an invalid structured choice, and private model reasoning is never required. The [exact output contract](decision-escalation-tech-design.md#exact-answer-envelope) prevents implementers from inventing their own formats.
+
+Abstention reasons follow the question's meaning: “no suitable option” applies only to an offered choice, while “no change warranted” permits an appraisal to leave feelings unchanged. Missing/conflicting evidence and unsupported judgments remain distinct. Empty relevance selections and deliberate silence are valid answers; a spoken uncertainty or refusal is also a response. New replies may repeat earlier information when appropriate, including to answer a follow-up. Protection against duplicate execution applies to the prior operation, not to saying the same fact again.
 
 No raw whole-world data, unrelated private memories, credentials, extra tools or writable mind workspace are supplied. Context overflow is explicit. A larger context window cannot reconstruct forgotten facts or compensate for facts the server never provided.
 

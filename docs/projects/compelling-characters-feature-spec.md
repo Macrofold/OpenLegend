@@ -1,8 +1,8 @@
 # Compelling characters — integrated product and behavior specification
 
-| Status      | Current progress                                                                                                                    | Last updated         |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | -------------------- |
-| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-10-29 05:04 UTC |
+| Status      | Current progress                                                                                                                    | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Bounded PG02 behavior is delivered; shared stealth/emotion contracts are designed and broader character qualification remains open. | 2026-11-01   |
 
 **Accepted product direction, October 3, 2026; proposed delivery choices.** Mike requires multidimensional characters whose embodied experience, inner life, attention, choices and consequences work together. This is a product-design assignment, not permission to implement or run paid experiments. The authorship clarification is developed in the [scoped technical design](compelling-characters-tech-design.md). [Emotional physiology and adaptive reappraisal](emotional-physiology-feature-spec.md) specifies the selected general emotion system; broader psychological-needs mechanics and automatic personality development remain separately scoped. Existing implemented foundations and their unfinished acceptance retain their recorded status.
 
@@ -166,6 +166,8 @@ This illustrates product intent, not a drop-in replacement for current trusted i
 The desired ordinary voice is an inhabitant's voice: concrete, context-sensitive and particular to the person. A character can be terse, playful, formal, awkward, irritated or quiet when appropriate. Do not force every resident into generic politeness, therapeutic dialogue, constant helpfulness or endlessly renewed greetings.
 
 The generation Task is distinct from character Context, acquired evidence, available capabilities and response rules; judgment questions receive permitted context without generation-only output instructions. Optional activity forms are supported choices, not assignments or incoming requests. Supplied context is information, not a checklist to mention or act on; shared instructions ask for what the person would naturally do now. A memory may remain unspoken. Silence or absence of explicit recollection alone does not establish a behavioral failure or prove that supplied evidence was unused.
+
+A new reply may repeat known or already-spoken information when appropriate, including an answer to a follow-up. That is a new utterance, not a replay of the prior operation. Spoken uncertainty, clarification and refusal remain valid responses; protecting exactly-once effects must not prohibit natural conversational repetition.
 
 Written emotional expression and expressive asides are allowed in character responses. They do not need conversion into an expression or action operation. Text alone produces no movement, contact, injury, item transfer or other mechanical effect; those require the corresponding admitted structured action. Do not infer or execute actions from prose. No additional emotion catalogue, output channel or prose parser is selected for this purpose.
 

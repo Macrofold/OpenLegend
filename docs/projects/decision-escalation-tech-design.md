@@ -2,9 +2,9 @@
 
 | Status      | Current progress                                                                                                                 | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Useful-lifetime continuation and scoped preparation pass focused native/live checks; broader release qualification remains open. | 2026-10-31   |
+| In progress | Useful-lifetime continuation and scoped preparation pass focused native/live checks; broader release qualification remains open. | 2026-11-01   |
 
-Design synchronized **2026-10-31T18:36:24Z**. Existing provider, storage, action and world-boundary architecture used for design **2026-10-31T18:36:24Z**. [Feature specification](decision-escalation-feature-spec.md).
+Design synchronized **2026-11-01T20:30:00Z**. Existing provider, storage, action and world-boundary architecture used for design **2026-10-31T18:36:24Z**. [Feature specification](decision-escalation-feature-spec.md).
 
 ## Adoption and current policy
 
@@ -290,7 +290,7 @@ Use trusted instructions separate from fictional evidence. Proposed core wording
 >
 > Consider the character's current body, feelings, values, intentions and commitments together. They can have mixed feelings, decline, continue or remain uncertain when the task permits it. Do not turn a need or a memory into a universal command. Supplied mechanical checks constrain what can be done; they do not prove which personally meaningful choice is best.
 >
-> Return only the requested structured answer. Choose exact offered handles and use the supplied scale and units. If the supplied information does not support an answer, use the explicit abstention result. Propose only the unresolved operations requested. Do not repeat an already committed action or emotional change. Do not claim execution, another person's consent or access to private knowledge. Include character speech only when requested. Do not include a hidden reasoning transcript.
+> Return only the requested structured answer. Use the question's answer form, exact offered handles, scale and units. If a required judgment cannot be supported, use a reason permitted for that question kind. Propose only new operations requested by this decision; do not resubmit already-committed operations from earlier attempts. A new conversational reply may repeat earlier information when appropriate. Do not claim execution, another person's consent or access to private knowledge. Include character speech only when requested. Do not include a hidden reasoning transcript.
 
 This is an initial prompt for qualification, not measured prompt performance. Bind typed output semantics separately below; do not copy the benchmark instruction that asks models to reconstruct deterministic quantities into the production task.
 
@@ -302,20 +302,31 @@ Use the following shape for every fallback request; build it from the existing s
 
 ```ts
 // Contract notation, not a second implementation or arbitrary model-defined union.
-type Answer<Value> =
+type EvidenceAbstention = 'insufficient-evidence' | 'conflicting-evidence' | 'unsupported';
+type Answer<Value, AllowedReason extends string> =
   | { status: 'answered'; value: Value; reason: null }
   | {
       status: 'abstained';
       value: null;
-      reason:
-        | 'insufficient-evidence'
-        | 'conflicting-evidence'
-        | 'no-suitable-option'
-        | 'unsupported';
+      reason: AllowedReason;
     };
 // Example for a request with exactly one offered-choice question:
-type Output = { answers: { q0: Answer<{ choice: 'a0' | 'a1' }> } };
+type Output = {
+  answers: {
+    q0: Answer<{ choice: 'a0' | 'a1' }, EvidenceAbstention | 'no-suitable-option'>;
+  };
+};
 ```
+
+The shared question compiler derives prompt definitions, per-question reason enums and decoding from one rule set, including custom bound value schemas. `insufficient-evidence` means required facts are missing; `conflicting-evidence` means conflict prevents a supported answer; `unsupported` means the requested judgment cannot be expressed with its supplied rules or answer form. All kinds retain these evidence/contract failures.
+
+| Question kind                           | Additional allowed reason | Meaning                                                    |
+| --------------------------------------- | ------------------------- | ---------------------------------------------------------- |
+| Choice                                  | `no-suitable-option`      | None of the offered alternatives is suitable.              |
+| Appraisal                               | `no-change-warranted`     | No feeling creation, reframing or resolution is justified. |
+| Rating, likelihood, relevance, response | None                      | Use the common evidence/contract reasons only.             |
+
+Selecting no optional memories is an answered `{ keep: [] }`. Deliberately contributing nothing is an answered `{ operations: [] }`; spoken uncertainty, refusal and clarification are also answered responses. Open dialogue is not a choice among prewritten replies. A new reply may repeat known or previously spoken information to answer a follow-up, clarify or remind. This never authorizes replaying a previously committed operation, repeating a physical effect automatically or inventing evidence. No paid repair/retry is added when a provider violates the task-specific envelope.
 
 The provider-facing schema uses two strict `anyOf` alternatives for the legal combinations above, including the exact task value schema only in the answered arm. The shared parser enforces the same combinations; nested `oneOf` is unnecessary. Missing/null answered values, a reason attached to an answered value, extra questions, unoffered handles or an invalid whole envelope end the attempt as unusable. Do not trim prose around malformed JSON, invent an omitted answer, request a repair, or convert abstention to a zero score. Whole-envelope failure yields zero effects; a valid envelope with some abstentions can resolve its independent answered groups.
 

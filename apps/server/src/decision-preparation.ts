@@ -99,7 +99,7 @@ function reconsiderationInput(
               question:
                 kind === 'appraisal'
                   ? 'Propose one supported change to my feelings about the initiating situation, using an installed policy and permitted cause. Abstain if no change is justified.'
-                  : `${responseTaskInstructions((input.context['triggerFacts'] as { observerRelationship?: string } | undefined)?.observerRelationship === 'addressed_speech')} Answer with the still-unresolved response in this question's value, using only supplied operations and handles. ${RESPONSE_OPERATION_GUIDE}`,
+                  : `${responseTaskInstructions((input.context['triggerFacts'] as { observerRelationship?: string } | undefined)?.observerRelationship === 'addressed_speech')} Answer with this decision's new contribution in this question's value, using only supplied operations and handles. ${RESPONSE_OPERATION_GUIDE}`,
               ...(valueSchema ? { valueSchema } : {}),
             },
     } satisfies Record<string, DecisionTask>,
