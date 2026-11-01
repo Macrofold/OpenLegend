@@ -8,9 +8,10 @@ than a new schema invented for these flows.
 
 ### Brief
 
-- Purpose, subject, selected flow/profile and requested finish.
+- Purpose, subject, selected flow/profile, requested finish and quality.
 - Player/visual goal, intended viewing/use conditions and relevant project owners.
 - Required outputs, preserved identity/style constraints and comparison conditions.
+- For models/animation, resolved rig/target, exact clip list, material choice and output format; for finalization, the selected prototype/source and required improvements. Link existing source/export settings instead of copying them.
 - Reference list: exact retained reference, original source/filename, role and use rights.
 - Requested candidate count, selection authority and applicable task budget.
 - Current completion state: distinguish created, reviewed, archived, selected and integrated.

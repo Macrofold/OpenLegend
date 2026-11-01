@@ -1,7 +1,8 @@
 # Production-ready art packages
 
-Use this procedure when the requested finish is **production**, or when **integration**
-requires new or changed assets. Read the common steps and only the matching asset recipes.
+Use this procedure for **production**, or when **integration** requires new or changed assets,
+except model/animation prototypes, which use the [short prototype path](README.md#prototype-path).
+Read the common steps and only the matching asset recipes for the requested scope.
 A study alone still stops at the [study boundary](README.md#request-and-stopping-point).
 
 The result is a usable package for a named consumer, with retained sources and a repeatable
@@ -17,6 +18,22 @@ Reuse compatible assets without reconstructing unavailable upstream authoring pr
 Retain available original inputs and working sources for delivered assets. Require particular
 editable masters only when the agreed deliverable or revision depends on them. Record editing
 limits. A generated image may itself be the source; a prompt is not a substitute for its bytes.
+
+## Polish or finalize a selected model
+
+“Polish/finalize this model” selects `quality=finished`, the selected `resume` source, and
+export-only delivery unless integration was requested. Keep its existing rig, clip coverage and
+adequate materials unless the intended final use requires a change.
+
+1. Reopen the exact prototype and its available editable source, rig, clips and materials. Resolve
+   the target from the current selection or supplied reference; do not start a new concept study.
+2. Inspect gaps against the intended consumer and finish. Preserve approved identity and working
+   components. Identify only needed shape, topology, material, skin/contact or motion repairs;
+   missing source editability is a concrete repair constraint, not permission to replace the identity.
+3. Apply the matching recipes below to those gaps, then export and recheck affected dependencies.
+   Reuse still-valid evidence and preserve the delivered source/output through the shared handoff.
+   Do not regenerate the whole model, add unrequested clips, or expand one asset into a reusable
+   family merely because finishing was requested. Integration, when requested, uses its existing owner.
 
 ## 1. Define the package before finishing
 

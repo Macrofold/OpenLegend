@@ -28,18 +28,18 @@ every production stage for every art request.
 
 Only the wanted result is required. Interpret optional parameters from ordinary language:
 
-| Parameter   | Meaning and default                                                                                                                                                                                                                    |
-| ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Flow        | `standard`, `higgsfield`, or `both`. “Regular/manual” means Standard. With no preference, use Standard and say so.                                                                                                                     |
-| Purpose     | Infer the matching profile: UI style, general style, asset/icon, character, material/environment, motion, UI system, or custom.                                                                                                        |
-| Finish      | `study`, `production`, or `integrate`, inferred from the requested outcome as described below.                                                                                                                                         |
-| Quality     | `prototype` or `finished`, inferred from the intended use; controls finishing effort independently of file type and stopping point. See [quality and simple outputs](#quality-and-simple-outputs).                                     |
-| References  | Attachments, exact saved study/candidate IDs, existing approved art, and supplied links; identify the role of each.                                                                                                                    |
-| Candidates  | Honor the requested number. Direct model generation, an edit or selected-direction expansion normally needs one; for an exploratory direction comparison, three distinct candidates is an adjustable starting point.                   |
-| Selection   | Present requested alternatives unless Mike delegates choosing. An agent recommendation is not owner approval of the project's permanent direction.                                                                                     |
-| Constraints | Preserve identity/style anchors, output format and scale, supported behavior, deadlines and any “do not” scope.                                                                                                                        |
-| Budget      | Apply the current [spending policy](../../../.agents/rules/verification.md#spending) and task authorization. Both flows, delegates, refinements and upscales share the same task allowance unless Mike explicitly allocates otherwise. |
-| Resume      | An exact study/candidate/revision or handoff link. Reopen that work and continue the requested stage rather than regenerate the whole pipeline.                                                                                        |
+| Parameter   | Meaning and default                                                                                                                                                                                                                             |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flow        | `standard`, `higgsfield`, or `both`. “Regular/manual” means Standard. With no preference, use Standard and say so.                                                                                                                              |
+| Purpose     | Infer the matching profile: UI style, general style, asset/icon, character, material/environment, motion, UI system, or custom.                                                                                                                 |
+| Finish      | `study`, `production`, or `integrate`, inferred from the requested outcome as described below.                                                                                                                                                  |
+| Quality     | `prototype` by default for model and animation generation; explicit polish/finalize selects `finished`. Controls finishing effort independently of file type and stopping point. See [quality and simple outputs](#quality-and-simple-outputs). |
+| References  | Attachments, exact saved study/candidate IDs, existing approved art, and supplied links; identify the role of each.                                                                                                                             |
+| Candidates  | Honor the requested number. Direct model or animation generation, an edit or selected-direction expansion normally needs one; for an exploratory direction comparison, three distinct candidates is an adjustable starting point.               |
+| Selection   | Present requested alternatives unless Mike delegates choosing. An agent recommendation is not owner approval of the project's permanent direction.                                                                                              |
+| Constraints | Preserve identity/style anchors, output format and scale, supported behavior, deadlines and any “do not” scope.                                                                                                                                 |
+| Budget      | Apply the current [spending policy](../../../.agents/rules/verification.md#spending) and task authorization. Both flows, delegates, refinements and upscales share the same task allowance unless Mike explicitly allocates otherwise.          |
+| Resume      | An exact study/candidate/revision or handoff link. Reopen that work and continue the requested stage rather than regenerate the whole pipeline.                                                                                                 |
 
 “Style study”, “explore”, “concept” and “compare” end at **study**: reviewable alternatives
 with saved sources and construction notes. “Production kit”, “export these assets” or
@@ -55,25 +55,43 @@ A request for “the best one, choose for me” permits an agent selection withi
 
 ### Quality and simple outputs
 
-Infer `prototype` from “quick”, “rough”, “blockout” or a plain model-generation request without
-a finished-asset expectation. Production-ready or polished requests imply `finished` unless
-explicitly qualified as prototypes; established context takes precedence. Quality is a work
-planning choice, not a new provider API or workflow. A prototype model still delivers actual
-model files, preserving required identity, proportions and art direction.
-For a plain model-file request, infer `finish=production` (export only), `quality=prototype`
-and one candidate; game installation requires its own requested integration scope.
+Model and animation generation default to `quality=prototype`, `finish=production` (exported
+files only) and one candidate. “Quick”, “rough” and “blockout” use this same path. “Polish/finalize
+this model” selects `quality=finished` and the [selected-model finalize path](production.md#polish-or-finalize-a-selected-model).
+A new finished/game-ready asset request also selects `quality=finished` and uses the
+[production procedure](production.md) directly; it does not require a separate prototype request
+first. Existing context and explicit
+constraints take precedence. These are request options interpreted from ordinary language,
+not provider API fields or a new service. Game installation requires requested integration.
 
-For a prototype, use a suitable existing route and normally one candidate. Use simple or existing
-materials; omit turnaround sheets, retopology, rigs, motion, extra variants, custom shaders and
-family qualification unless the stated use needs them. Inspect the actual export for successful
-loading, recognizable form and the dimensions/materials/deformation required by that use. Fix
-blocking defects, record remaining cosmetic limits and stop. No fresh provider contest, broad
-device campaign or polishing every defect is required. Preserve outputs and available sources
-through the existing storage workflow; later refinement continues from the retained candidate.
+Resolve these prototype defaults once in the brief; omitted fields need no questionnaire.
+Finalization inherits the selected model's rig, clips and materials unless the request changes them.
 
-`finished` still covers only the requested use, not every rig, action or outfit. Integration
-requires its applicable runtime checks at either quality. Existing Constraints, Candidates and
-Budget options cover format, required motion, coverage and spending; no separate toggle set is needed.
+| Parameter         | Default and overrides                                                                                                                                                                                                                                                                                                               |
+| ----------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `rig=auto`        | Reuse a compatible existing rig; add one only for required articulation/deformation. Static models and rigid/root-only motion need none. `none` or an exact rig reference can override the choice when compatible with the requested output.                                                                                        |
+| `animations=auto` | Model-only requests get no clips; named motions get exactly those clips. An unspecified animated walking character gets idle + walk when compatible with its body. Other forms get the simplest motion demonstrating their stated use, not a human rig or full action library. `none` or an explicit clip list overrides inference. |
+| `materials=auto`  | Preserve adequate existing materials; use simple materials for new prototypes. Finalization refines only what the intended use needs. “Untextured”, “simple” or “preserve these materials” are explicit constraints.                                                                                                                |
+| `format=auto`     | Use the named consumer's supported format; normally GLB for OpenLegend's 3D model/animation path. Keep available editable sources. Do not create unused format variants.                                                                                                                                                            |
+
+#### Prototype path
+
+1. Reuse or generate one suitable candidate from the brief and selected references. For animation-only
+   work, use the selected model/rig or a compatible existing project target; do not generate a replacement
+   body. Resolve a missing target only when it would change the required motion or compatibility.
+2. Produce only the required geometry, basic materials and clips. Reuse compatible motion before
+   authoring it; use simple clear poses, appropriate timing and necessary contacts. Cyclic motions loop;
+   discrete actions finish once. Deliver real model/animation data, not a video substitute.
+3. Reopen the actual export; inspect form, scale, loading and required materials. Play clips on their
+   target body, checking actual deformation, gross foot/grip errors and relevant loop/start/end behavior.
+   Fix blockers to the stated use, preserve the result and available sources through the shared workflow,
+   record remaining cosmetic limits, and stop. Required identity, proportions and art direction remain.
+
+Skip detailed retopology, turnaround sheets, acting/secondary-motion polish, extra variants, custom
+shaders, family qualification, provider contests and broad device campaigns unless the stated use
+needs them. Prototype export follows this short path, not the full finishing recipe. Integration
+retains its applicable runtime checks at either quality; a prototype does not close general family
+qualification. Finalization resumes the retained candidate and still covers only its selected use.
 
 Examples:
 
@@ -82,6 +100,9 @@ Examples:
 - “Use both flows for a character appearance study, preserving this face and believable proportions.”
 - “Use the Standard flow to refine the selected panel texture; keep its border and palette.”
 - “Use the Standard flow for a quick prototype of this character: one unrigged GLB with simple materials, to inspect its shape.”
+- “Generate this character with idle and walk animations.”
+- “Animate this saved model with a reaching motion; keep its rig and materials.”
+- “Polish and finalize that prototype for its selected gameplay use.”
 - “Implement candidate HIG-2 from this archived study in the current game.”
 
 These are examples of requests, not reserved commands. New art subjects use the same procedure;
@@ -103,7 +124,7 @@ or game mechanics. Attribute sources and known versions; distinguish implemented
 from concepts or promotional art. Reference screenshots remain reference-only unless
 separately licensed.
 
-Write a short brief in the owning study record: purpose, chosen flow/profile/finish, intended
+Write a short brief in the owning study record: purpose, chosen flow/profile/finish/quality, intended
 viewing scale, constraints, references, required outputs, comparison conditions, and useful
 completion. State routine assumptions and continue. Search for existing usable sources and
 narrow missing reference gaps; do not repeat broad research that the request already settles.
@@ -195,8 +216,10 @@ budget before each paid batch; account for outstanding or uncertain work. If bud
 blocks the promised scope, preserve completed work and report the precise shortfall.
 Do not quietly reduce the requested contender count or claim incomplete coverage is complete.
 
-Study runs stop after the requested candidates and review. For production, or integration
-that needs new or changed assets, read and execute [Production-ready art packages](production.md):
+Study runs stop after the requested candidates and review. Model/animation prototypes follow the
+[prototype path](#prototype-path), then shared preservation and handoff; they do not run the full
+finishing procedure. For other production, or integration that needs other new or changed assets,
+execute [Production-ready art packages](production.md) at the requested quality:
 define the consumer contract, choose a finishing method, follow only the matching asset recipes,
 check final exports and preserve the complete package. This procedure owns production finishing;
 the profiles own the subject brief and visual coverage. Integration also follows the existing
@@ -293,8 +316,9 @@ while promoting only the explicitly selected artifacts through the runtime asset
 ## Completion
 
 A completed **study** includes the requested visual candidates, profile coverage, honest
-assessment, preserved outputs and a reusable handoff. A completed **production** request
-also includes the [complete production package](production.md#5-package-preserve-and-hand-off)
+assessment, preserved outputs and a reusable handoff. A completed model/animation **prototype**
+includes the requested usable files, short-path checks, preserved sources and stated limits.
+Other completed **production** requests include the [complete production package](production.md#5-package-preserve-and-hand-off)
 and its relevant technical evidence. A completed **integration**
 request includes the actual working game result and the project's normal verification.
 

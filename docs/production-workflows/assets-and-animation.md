@@ -6,9 +6,10 @@ The purpose is to create recognizable things and expressive people that particip
 
 ## Choose the representation before the tool
 
-For a quick model or form check, use [prototype quality](art-flows/README.md#quality-and-simple-outputs)
-and stop at the requested export/preview. The later rig, motion, integration and family stages
-apply only when their outputs are needed.
+Model and animation generation default to the [prototype path](art-flows/README.md#prototype-path)
+and stop at the requested usable export/preview. Requested motion includes only the needed rig
+and clips. Later [polish/finalization](art-flows/production.md#polish-or-finalize-a-selected-model)
+resumes that source; integration and family qualification apply only when their outcomes are requested.
 
 | Need                                                     | Useful route                                                                            | Stages that can be omitted                                          |
 | -------------------------------------------------------- | --------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
