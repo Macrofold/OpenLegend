@@ -17,6 +17,8 @@
 
 Use ordinary native speech and Library/memory authoring under the [experiment contract](#experiment-contract). No present-day bench or fruit object is invented. Expected answers remain outside model inputs. Inspect actual selected/submitted sources before grading; distinguish correct recall, uncertainty/refusal, compatible but unsourced pre-game elaboration, unsupported current claims and an uninvoked model. Six questions about one episode establish neither broad memory coverage nor spontaneous emotional influence. One separately retained observation covers an initially uninvoked condition; actual-model failures are not retried. Product prompts, defaults and runtime code remain unchanged; automated suites remain paused.
 
+The separately authorized [answer-contract follow-up](../verification/cognition-context/2026/2026-11-01-followup-answer-contract.md) changes shared abstention/repetition semantics and reruns only MR06's six model/arm episodes on the same starts. It preserves the initial failures and reports remaining grounding issues; it does not restart or replace the 36-episode comparison.
+
 ## Decision availability and response contracts — October 30 follow-up
 
 **Completed bounded follow-through, 2026-10-31 06:18 UTC.** The same $50 aggregate allowance covers the implementation diagnostics, reconciled comparison and two corrected-custody supplements; uncertainty is retained and automated suites remain paused. The prior 122-position dataset remains immutable. Diagnose why a decision misses its unchanged one-second dispatch boundary before judging the selected model; distinguish native preparation, diagnostic capture, operational persistence, scheduling, actual database work and delayed JavaScript completion.

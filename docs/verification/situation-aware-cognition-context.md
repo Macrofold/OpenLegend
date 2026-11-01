@@ -14,6 +14,8 @@ The [bounded integration record](cognition-context/2026/2026-10-31-integrated-co
 
 The [prompted-recall panel](cognition-context/2026/2026-11-01-prompted-old-memory.md) adds six conversations with original/absent/changed year-old histories on both Muse models. All 24 source-present primary conditions produce correct details when a model runs, including one separate observation after an original pre-dispatch expiry. Follow-up abstention, excessive appraisals and an unsupported current-state claim remain visible. This establishes specific prompted recall within that specimen, not spontaneous influence, universal retrieval or broader character quality; runtime code is unchanged.
 
+The later [answer-contract follow-through](cognition-context/2026/2026-11-01-followup-answer-contract.md) restricts abstention by question kind and permits new replies to repeat information. All six affected MR06 episodes produce 12 committed spoken responses, including improved Open follow-ups; independent grounding gaps remain. Original predictions and the unresolved higher timing issue stay retained, and automated suites remain paused.
+
 ## October 31 — Shared preparation baseline
 
 Captured October 31, 2026, 19:47–19:55 UTC, from `Macrofold/OpenLegend`, `codex/cognition-lab`, `9c7f9aebe98c006af1292e1f274f1374681b343f`. This is technical §17 step 1's shared preparation checkpoint. Runtime code, defaults and world rules are unchanged. The [starting interfaces and parallel responsibilities](../technical/situation-aware-cognition-context.md#171-shared-preparation-and-parallel-ownership) distinguish this completed preparation from SC01–SC04 implementation and combined SC09 acceptance.
