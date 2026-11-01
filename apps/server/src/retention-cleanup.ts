@@ -10,17 +10,18 @@ import {
   updateWorld,
   type ExperienceEntry,
 } from '@open-legend/domain';
-import type { SavedWorld } from './store.js';
+import type { SavedWorld, SqlDatabase } from './store.js';
 import type { RetentionMetadataView } from './retention-metadata.js';
 
 /** Proof is owned by an actual retained name/profile/note/place or mechanical
  * grant. Dropping a profile cannot leave its old sparse proof charged forever. */
-export function releaseUnusedTemporalSupports(
+export async function releaseUnusedTemporalSupports(
   state: SavedWorld,
   actorId: string,
   metadata: RetentionMetadataView,
+  db: SqlDatabase,
   removedAccounts: readonly string[] = [],
-): { state: SavedWorld; ids: string[] } {
+): Promise<{ state: SavedWorld; ids: string[] }> {
   const supports = state.world.experience?.temporal?.actors[actorId]?.supports;
   if (!supports || !Object.keys(supports).length) return { state, ids: [] };
   const keys: string[] = [];
@@ -53,7 +54,15 @@ export function releaseUnusedTemporalSupports(
       ]),
     );
     const current = metadata.excluding(removed);
-    for (const id of aliases) if (current.hasAlias(actorId, id, false)) retained.add(id);
+    const surviving = await current.survivingMembership(
+      db,
+      state.world.id,
+      actorId,
+      aliases,
+      [],
+      false,
+    );
+    for (const id of surviving.aliases) retained.add(id);
   }
   const ids = candidates
     .filter(({ aliases }) => !aliases.some((id) => retained.has(id)))
@@ -78,12 +87,13 @@ export function releaseUnusedTemporalSupports(
 
 /** Only an actual retirement batch pays for these exact reverse-membership reads.
  * Remaining cold accounts and sparse exact proofs can independently retain a person. */
-export function cleanupRetiredIndividuals(
+export async function cleanupRetiredIndividuals(
   before: SavedWorld,
   after: SavedWorld,
   rows: ReadonlyMap<string, readonly string[]>,
   metadata: RetentionMetadataView,
-): SavedWorld {
+  db: SqlDatabase,
+): Promise<SavedWorld> {
   if (!rows.size) return after;
   const affected = new Map<string, { sources: Set<string>; individuals: Set<string> }>();
   const actor = (id: string) => {
@@ -93,8 +103,8 @@ export function cleanupRetiredIndividuals(
   };
   const tables = ['mind_awareness', 'mind_memories', 'mind_summaries'] as const;
   for (const table of tables) {
-    const ids = rows.get(table) ?? [];
-    if (!ids.length) continue;
+    const ids = new Set(rows.get(table) ?? []);
+    if (!ids.size) continue;
     for (const id of ids) {
       const row = metadata.prior(table, id);
       if (!row) continue;
@@ -125,7 +135,7 @@ export function cleanupRetiredIndividuals(
                 id,
               ],
         );
-        if (!ids.includes(key)) continue;
+        if (!ids.has(key)) continue;
         const selected = actor(actorId);
         selected.sources.add(id);
         const entry = {
@@ -141,7 +151,7 @@ export function cleanupRetiredIndividuals(
           selected.individuals.add(individual);
       }
   }
-  const retiredChunks = rows.get('mind_temporal_chunks') ?? [];
+  const retiredChunks = new Set(rows.get('mind_temporal_chunks') ?? []);
   const retiredSupports = new Set(rows.get('mind_temporal_supports') ?? []);
   for (const [actorId, history] of Object.entries(before.world.experience?.temporal?.actors ?? {}))
     for (const capsule of Object.values(history.supports ?? {}))
@@ -166,7 +176,7 @@ export function cleanupRetiredIndividuals(
           if (facet.kind === 'association' && facet.subject.kind === 'individual')
             value.individuals.add(facet.subject.individualId);
       }
-  if (retiredChunks.length) {
+  if (retiredChunks.size) {
     for (const chunkId of retiredChunks)
       for (const row of metadata.priorSegments(chunkId)) {
         const value = actor(row.actorId);
@@ -178,7 +188,7 @@ export function cleanupRetiredIndividuals(
     for (const [actorId, history] of Object.entries(temporal?.actors ?? {}))
       for (const chunk of history.chunks) {
         if (
-          !retiredChunks.includes(
+          !retiredChunks.has(
             JSON.stringify([
               'world',
               'experience',
@@ -211,21 +221,16 @@ export function cleanupRetiredIndividuals(
           individuals.add(value.subject.individualId);
     }
     for (const chunk of history?.chunks ?? []) {
-      // This membership is owned by actual occurrences. Reconstruction checkpoints
-      // and later confirmations must not prolong an otherwise forgotten person.
+      // Actual occurrences own source membership. A checkpoint's explicit
+      // subject identity also retains that person; carried proof aliases do not.
       const metadata = temporalEntryMetadataReader(chunk, { world, sources })(
-        chunk.entries.filter((entry) => entry.kind === 'change'),
+        chunk.entries.filter((entry) => entry.kind === 'change' || entry.kind === 'checkpoint'),
       );
-      for (const id of metadata.sourceIds) retained.add(id);
-      for (const id of metadata.individualIds) individuals.add(id);
+      for (const id of metadata.occurrenceSourceIds) retained.add(id);
+      for (const id of metadata.occurrenceIndividualIds) individuals.add(id);
     }
     const aliases = [...candidate.sources],
       ids = [...candidate.individuals];
-    {
-      const kept = metadata.excluding(rows);
-      for (const id of aliases) if (kept.hasAlias(actorId, id, true)) retained.add(id);
-      for (const id of ids) if (kept.hasIndividual(actorId, id)) individuals.add(id);
-    }
     for (const [source, entries] of [
       ['awareness', world.experience?.awareness[actorId] ?? []],
       ['memory', world.memories[actorId] ?? []],
@@ -240,6 +245,17 @@ export function cleanupRetiredIndividuals(
             : (value as { id: string }).id,
         );
       }
+    const kept = metadata.excluding(rows);
+    const surviving = await kept.survivingMembership(
+      db,
+      world.id,
+      actorId,
+      aliases.filter((id) => !retained.has(id)),
+      ids.filter((id) => !individuals.has(id)),
+      true,
+    );
+    for (const id of surviving.aliases) retained.add(id);
+    for (const id of surviving.individuals) individuals.add(id);
     const released = aliases.filter((id) => !retained.has(id));
     world = updateWorld(
       world,

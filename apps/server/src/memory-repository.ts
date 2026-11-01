@@ -982,10 +982,11 @@ export class MemoryRepository {
         (table) => rows.get(table) ?? [],
       );
       for (const actorId of retiredActors) {
-        const released = releaseUnusedTemporalSupports(
+        const released = await releaseUnusedTemporalSupports(
           retained,
           actorId,
           metadata,
+          this.db,
           removedAccounts,
         );
         retained = released.state;
@@ -994,7 +995,7 @@ export class MemoryRepository {
             ...new Set([...(rows.get('mind_temporal_supports') ?? []), ...released.ids]),
           ]);
       }
-      const cleaned = cleanupRetiredIndividuals(state, retained, rows, metadata);
+      const cleaned = await cleanupRetiredIndividuals(state, retained, rows, metadata, this.db);
       const positions = new Map(accounts.positions);
       for (const [table, ordinals] of recent.positions ?? []) {
         const combined = positions.get(table) ?? new Map<string, number>();

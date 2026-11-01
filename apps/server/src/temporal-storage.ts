@@ -279,7 +279,7 @@ export function retentionNeedsPreparation(world: WorldState): boolean {
   return !retentionDueActors(world).next().done;
 }
 
-interface ChunkMetadata {
+export interface TemporalRetentionHeader {
   position?: number;
   encodedBytes?: number;
   id: string;
@@ -293,6 +293,61 @@ interface ChunkMetadata {
   epoch: string;
   ordinal: number;
 }
+export const compareTemporalRetentionHeaders = (
+  a: TemporalRetentionHeader,
+  b: TemporalRetentionHeader,
+) => a.at - b.at || a.order - b.order || a.epoch.localeCompare(b.epoch) || a.ordinal - b.ordinal;
+
+/** One selection rule serves cold preparation and actual retirement. A bounded
+ * prefix is not the newest page: only an exhausted source may trim its last page. */
+export function selectTemporalRetirement(
+  world: WorldState,
+  actorId: string,
+  ordered: readonly TemporalRetentionHeader[],
+  complete = true,
+) {
+  const actor = world.experience!.temporal!.actors[actorId]!;
+  const policy = selectedTemporalPolicy(world).recent;
+  const cutoff = world.simTime - policy.maxAgeSeconds;
+  let bytes = actor.bytes,
+    count = actor.count;
+  const retired: TemporalRetentionHeader[] = [];
+  for (let index = 0; index < ordered.length; index++) {
+    const chunk = ordered[index]!;
+    const pressure = bytes > policy.maxBytes || count > policy.maxChanges;
+    if (chunk.through > cutoff && !pressure)
+      return {
+        retired,
+        boundary: chunk,
+        partial: false,
+        nextDue: chunk.through + policy.maxAgeSeconds,
+        needsMore: false,
+      };
+    if (chunk.through > cutoff && index === ordered.length - 1) {
+      if (!complete) return { retired, partial: false, nextDue: null, needsMore: true };
+      return {
+        retired,
+        boundary: chunk,
+        partial: true,
+        nextDue: chunk.through + policy.maxAgeSeconds,
+        needsMore: false,
+      };
+    }
+    if (retired.length >= maximumTemporalPreparationRows)
+      return {
+        retired,
+        boundary: chunk,
+        partial: false,
+        nextDue: chunk.at + policy.maxAgeSeconds,
+        needsMore: false,
+      };
+    retired.push(chunk);
+    bytes -= chunk.bytes;
+    count -= chunk.count;
+  }
+  return { retired, partial: false, nextDue: null, needsMore: !complete };
+}
+type ChunkMetadata = TemporalRetentionHeader;
 export class MemoryRetentionError extends Error {
   override readonly name = 'MemoryRetentionError';
 }
@@ -570,54 +625,23 @@ export async function prepareTemporalRetention(
         epoch: chunk.epoch,
         ordinal: chunk.fromOrdinal,
       });
-    let bytes = actor.bytes,
-      count = actor.count,
-      removedBytes = 0,
-      removedCount = 0,
-      through = 0;
-    const ids: string[] = [],
-      recordIds: string[] = [];
-    let nextDue: number | null = null;
-    const ordered = [...metadata.values()].sort(
-      (a, b) =>
-        a.at - b.at || a.order - b.order || a.epoch.localeCompare(b.epoch) || a.ordinal - b.ordinal,
-    );
-    for (let index = 0; index < ordered.length; index++) {
-      const chunk = ordered[index]!;
-      const excessBytes = Math.max(0, bytes - policy.maxBytes);
-      const excessCount = Math.max(0, count - policy.maxChanges);
-      // Retire completed oldest pages under optional pressure. A current page
-      // may itself exceed an authored count/byte allowance; retain its newest
-      // fitting complete operations through one exact prefix below.
-      if (
-        chunk.through > cutoff &&
-        ((!excessBytes && !excessCount) || index === ordered.length - 1)
-      ) {
-        nextDue = chunk.through + policy.maxAgeSeconds;
-        if (excessBytes || excessCount)
-          partials.push({
-            actorId,
-            metadata: chunk,
-            followingAt: ordered[index + 1]?.at,
-          });
-        break;
-      }
-      if (ids.length >= maximumTemporalPreparationRows) {
-        nextDue = chunk.at + policy.maxAgeSeconds;
-        break;
-      }
-      ids.push(chunk.sourceId);
-      recordIds.push(chunk.id);
-      bytes -= chunk.bytes;
-      count -= chunk.count;
-      removedBytes += chunk.bytes;
-      removedCount += chunk.count;
-      through = Math.max(through, chunk.through);
+    const ordered = [...metadata.values()].sort(compareTemporalRetentionHeaders);
+    const selected = selectTemporalRetirement(state.world, actorId, ordered);
+    const ids = selected.retired.map((chunk) => chunk.sourceId),
+      recordIds = selected.retired.map((chunk) => chunk.id);
+    const removedBytes = selected.retired.reduce((sum, chunk) => sum + chunk.bytes, 0),
+      removedCount = selected.retired.reduce((sum, chunk) => sum + chunk.count, 0),
+      bytes = actor.bytes - removedBytes,
+      count = actor.count - removedCount,
+      through = Math.max(0, ...selected.retired.map((chunk) => chunk.through)),
+      nextDue = selected.nextDue;
+    if (selected.partial && selected.boundary)
+      partials.push({ actorId, metadata: selected.boundary });
+    for (const chunk of selected.retired) {
       for (const source of chunk.sources) possibleSources.add(source);
-      if (retainedMetadata)
-        for (const segment of retainedMetadata.segments(chunk.id))
-          for (const source of segment.columns['source_refs'] as string[])
-            possibleSources.add(source);
+      for (const segment of retainedMetadata.segments(chunk.id))
+        for (const source of segment.columns['source_refs'] as string[])
+          possibleSources.add(source);
     }
     if (
       (bytes > policy.maxBytes || count > policy.maxChanges) &&

@@ -159,7 +159,12 @@ export async function prepareAccountRetention(
       },
       { retainNativeValues: true },
     );
-    const released = releaseUnusedTemporalSupports({ ...state, world }, actorId, retainedMetadata);
+    const released = await releaseUnusedTemporalSupports(
+      { ...state, world },
+      actorId,
+      retainedMetadata,
+      db,
+    );
     world = released.state.world;
     if (released.ids.length)
       rows.set('mind_temporal_supports', [
@@ -488,10 +493,11 @@ export async function prepareAccountRetention(
       },
       { retainNativeValues: true },
     );
-    const finalSupports = releaseUnusedTemporalSupports(
+    const finalSupports = await releaseUnusedTemporalSupports(
       { ...state, world },
       actorId,
       retainedMetadata,
+      db,
       Object.values(tables).flatMap((table) => rows.get(table) ?? []),
     );
     world = finalSupports.state.world;
