@@ -2,7 +2,7 @@
 
 ## Current progress
 
-The selected browser renderer design is complete. The existing client remains PlayCanvas-only; shared extraction, a Three.js backend, a switcher and matched comparative qualification are not delivered. This document owns the remaining implementation, integration and evidence. Documentation completion does not authorize executable work or decide the ordinary renderer default.
+The selected browser renderer design and independent preparation are complete. The [preparation record](../verification/renderer-preparation.md) inventories the PlayCanvas path, qualifies reusable cloth calculations and records current-format capture plus bounded native/app/full-art baseline evidence. The client remains PlayCanvas-only; the shared presentation controller, Three.js, switching, replay and matched comparative qualification are not delivered. This document owns remaining implementation, integration and evidence.
 
 Source baseline: `Macrofold/OpenLegend` at `7e95b415f18cc58828eacbddc88da8a86693c3d0`. PlayCanvas remains the default while this project is implemented and evaluated. No matched Three.js performance result is claimed.
 
@@ -14,6 +14,7 @@ Source baseline: `Macrofold/OpenLegend` at `7e95b415f18cc58828eacbddc88da8a86693
 - Repertoire selection: [whole-library review](../projects/renderer-comparison-repertoire-review.md).
 - Current presentation: [world presentation](../world-presentation.md).
 - Existing collection and interpretation: [browser profiling](performance-profiling.md#browser-frames-and-actual-walking), [measurement contract](../performance/measurement.md) and [OB01](../limits/observability.md#ob01--explicit-browser-performance-capture).
+- Independent source/workload inventory and baseline evidence: [renderer preparation](../verification/renderer-preparation.md).
 
 ## Ownership and dependency order
 
@@ -25,7 +26,7 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 
 ### RCP-D01 — Complete and reconcile the selected design
 
-- [x] Finish the feature specification, technical design, repertoire review, implementation breakdown and limits inventory; review their complete affected diff. Reconcile SW, V3D, profiling, engine research, navigation and selected design dispositions. Record actual open decisions without treating missing runtime evidence as missing design. **Done evidence:** a complete crosslinked design, consistent owners and dispositions, reviewed links/content and committed documentation. All RCP01–RCP12 implementation/evidence checkboxes remain open.
+- [x] Finish the feature specification, technical design, repertoire review, implementation breakdown and limits inventory; review their complete affected diff. Reconcile SW, V3D, profiling, engine research, navigation and selected design dispositions. Record actual open decisions without treating missing runtime evidence as missing design. **Done evidence:** a complete crosslinked design, consistent owners and dispositions, reviewed links/content and committed documentation. Design completion does not close the separately tracked runtime acceptance.
 
 **Design evidence:** The complete design and affected-owner diff were reviewed against the pinned source and current contracts. Prettier 3.6.2 and focused new/changed relative-link and heading checks pass. The 42-file repertoire review records actual coverage; no runtime, benchmark or player result is claimed.
 
@@ -33,14 +34,19 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 
 **Outcome:** a reproducible statement of what the current PlayCanvas path actually does and the smallest useful comparison input. **Dependencies:** RCP-D01 and executable-work authorization.
 
-- [ ] Inspect the actual current revision and callers, including `world-renderer.ts`, `scene.ts`, `scene-study.ts`, `scene-performance.ts`, current art settings and the pinned dependency. Inventory every public and study-only caller, including current/remembered presentation consumers; record source changes since the baseline before extraction.
+- [x] Inspect the actual current revision and callers, including `world-renderer.ts`, `scene.ts`, `scene-study.ts`, `scene-performance.ts`, current art settings and the pinned dependency. Inventory every public and study-only caller, including current/remembered presentation consumers; record source changes since the baseline before extraction. See the [independent inventory](../verification/renderer-preparation.md).
 - [ ] Select W0 and the available W1–W4 scenarios from the feature specification, plus W5 lifecycle operations. Record exact permitted views, asset references, art/quality choices, camera/projection and required supported cues. Keep absent future gameplay explicit.
 - [ ] Record baseline asset/pose/light/shadow/transparency/UI work and supported conservative versus exact picking behavior. Separate current delivery from V3D/SW acceptance still open.
-- [ ] Distinguish the current source baseline from selected-but-undelivered SPX/stealth controls and perception contracts. Consume any such scope actually integrated by implementation time; keep the remaining [SPX](stealth-player-experience.md) implementation and player acceptance with its owner rather than quietly making it a renderer prerequisite.
+- [x] Distinguish the current source baseline from selected-but-undelivered SPX/stealth controls and perception contracts. Consume any such scope actually integrated by implementation time; keep the remaining [SPX](stealth-player-experience.md) implementation and player acceptance with its owner rather than quietly making it a renderer prerequisite. Neither active runtime branch is integrated in the independent preparation.
 - [ ] Observe the current PlayCanvas scene through the ordinary app and study. Retain representative still/moving evidence and meaningful interaction outcomes through existing evidence/asset owners.
 - [ ] Define the comparison manifest and coverage checklist before implementing Three. Use the recording/run envelope in RCP-L03–L05; no arbitrary population requirement or paid generation.
+- [x] Complete the independent preparation: repair the existing current Main capture fixture through its world-owned fresh-startup preparation, add optional camp-only capture while preserving seven-stop defaults, and record a reproducible local PlayCanvas baseline using the existing study/profiler. Both native capture modes, real-garment parity/cost, ordinary-app controls and full-art study/quality/lifecycle checks have [bounded evidence](../verification/renderer-preparation.md#end-of-implementation-evidence). This does not close the broader workload, publication or replay requirements above.
 
 **Done evidence:** exact revision/settings/workload references; a usable baseline journey; declared coverage and known limitations. This is baseline evidence, not proof of scale or of which renderer wins.
+
+**Independent preparation boundary:** refreshed base `origin/main` at `d2f03a1e434e83191620e734351a7edee0e24eae`, without stealth or Cognition Lab runtime integration. The linked preparation record owns the responsibility/consumer inventory and selected existing-study workload. Full W0–W5 manifests, ordinary-app plus study coverage and the replay comparison remain broader RCP work; a ten-second study diagnostic does not close those requirements.
+
+**Current study gap:** the published pinned views omit current required player body dimensions and do not reach scene readiness. The local baseline explicitly selects fresh current views and current UI metadata; publish/reselect through existing asset owners before making that selection the shared comparison workload. Loopback preview needs an explicitly supported public-CDN delivery path. Do not add legacy conversion or silently substitute a release. The ordinary-app check uses native depictions; live full-art, lit-fire, captions, broader W0–W5 and resource/device acceptance remain open.
 
 ## RCP02 — Extract permitted views and reconciliation
 
@@ -75,6 +81,7 @@ Begin RCP01 → RCP02 → RCP03 and the narrow PlayCanvas view/camera/lifecycle 
 - [ ] Extract desired clip/transition, pause behavior, pose cadence, heading and absolute sample-time decisions. Use one shared presentation clock; native deltas derive from requested samples, not another wall clock. Preserve normal-session blending; installation/seek resets transient blending to the current requested clip/sample rather than reconstructing interrupted fade history.
 - [ ] Extract pure scenery/perception/billboard geometry calculations where actually consumed; use stable typed arrays and dirty updates rather than per-vertex command objects.
 - [ ] Extract the existing CPU cloth solver and quality choice where the selected assets need it. Execute native pose → current bone anchors → shared cloth step → changed vertex publication → drawing. Keep required anchor reads and mesh publication in adapters; one evaluated skeleton serves every pass and attachment.
+- [x] Independently extract the useful pure cloth constraint pass, distance and size-tier calculations into `characters/cloth-solver.ts`, keeping the existing PlayCanvas consumer and operation order. Integration, contacts, anchors, clocks and vertex publication remain in `CapeCloth`; the complete solver criterion above stays open.
 - [ ] Extract permitted light-source selection, retention preference, sunlight calculations and profile choices. Preserve current quality budgets through their owning inventory.
 - [ ] Exercise paused/unpaused motion, a long frame gap, changing support, pose changes, late/failed assets, source replacement and light-set changes. Confirm source fetching is reused without sharing disposable native resources.
 

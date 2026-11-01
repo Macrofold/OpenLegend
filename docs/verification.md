@@ -1,5 +1,7 @@
 # Verification
 
+- [Renderer preparation](verification/renderer-preparation.md) — current PlayCanvas responsibility/consumer inventory, exact study assets/settings, independent cloth extraction and bounded baseline evidence; shared-controller and dual-renderer qualification remain separate.
+
 - [Gildmoss interface](verification/gildmoss-interface.md) — native/private-map/trade/storage review, actual running-game interactions, revision-3 material kit and 14 character-panel styles, and remaining UIUX21 screen, responsive and performance qualification.
 
 - [Character mechanics prototype](verification/character-and-map-additions.md) — separate-branch historical equipment, stat, carrying and native consumer evidence; not current Gildmoss mechanics delivery.

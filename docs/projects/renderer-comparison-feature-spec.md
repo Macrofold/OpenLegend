@@ -1,8 +1,8 @@
 # Shared world presentation and renderer comparison
 
-| Status      | Current progress                                                                                                | Last updated |
-| ----------- | --------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Design is complete; shared extraction, the Three.js backend and comparative qualification remain unimplemented. | 2026-10-31   |
+| Status      | Current progress                                                                                                           | Last updated         |
+| ----------- | -------------------------------------------------------------------------------------------------------------------------- | -------------------- |
+| In progress | Independent PlayCanvas preparation is complete; the shared controller, Three.js and comparative qualification remain open. | 2026-10-31 22:26 UTC |
 
 ## 1. Purpose and selected direction
 
@@ -10,7 +10,7 @@ Open Legend needs an attractive, readable and responsive inhabited world: people
 
 Build **one shared presentation implementation with two browser rendering backends**, PlayCanvas and Three.js. Keep the existing authoritative simulation, permitted server projections, React interface and player intentions. Share presentation decisions and calculations; let each backend own its graphics objects and efficient rendering. Provide a developer renderer selector and a repeatable, single-renderer comparison route. PlayCanvas remains the ordinary default while the comparison is built and measured.
 
-This is a selected design, not a migration decision or a claim that Three.js is faster. The task delivering these documents authorizes documentation; executable implementation remains a subsequent authorized task. [RCP](../maintainers/renderer-comparison.md) owns that implementation and evidence.
+This is a selected design, not a migration decision or a claim that Three.js is faster. Independent preparation delivers the workload/consumer/asset inventory, repaired native capture with optional camp-only mode (seven stops remain the default), a local PlayCanvas baseline and pure cloth calculations consumed by the existing path. Its study selection remains unpublished; broader RCP01/RCP04 qualification, the shared controller, Three.js, switching and replay remain open. [RCP](../maintainers/renderer-comparison.md) owns implementation and evidence.
 
 ### Product priorities
 

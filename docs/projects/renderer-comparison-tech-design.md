@@ -1,8 +1,10 @@
 # Shared world presentation and renderer comparison — technical design
 
-| Status      | Current progress                                                              | Last updated |
-| ----------- | ----------------------------------------------------------------------------- | ------------ |
-| In progress | Design is complete; implementation and comparative qualification remain open. | 2026-10-31   |
+| Status      | Current progress                                                                                                          | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Independent baseline and cloth preparation are complete; the shared controller and comparative qualification remain open. | 2026-10-31   |
+
+Architecture last used: **2026-10-31 22:26 UTC**, for independent-preparation reconciliation; architecture unchanged.
 
 ## 1. Contract and architecture
 
@@ -35,6 +37,8 @@ Only one backend is active. Arrows describe ownership and calls, not network ser
 ## 2. Source baseline and extraction map
 
 Baseline: `Macrofold/OpenLegend` commit `7e95b415f18cc58828eacbddc88da8a86693c3d0`. Recheck touched source before implementation if the base advances. PlayCanvas is pinned to 2.22.2; Three.js is not installed. The current scene creates a PlayCanvas application without an explicit WebGPU initialization path. Current upstream capabilities must not be reported as enabled in this client.
+
+Independent preparation uses refreshed `origin/main` at `d2f03a1e434e83191620e734351a7edee0e24eae`; its client source is unchanged from that design baseline. The [preparation inventory and evidence](../verification/renderer-preparation.md) records actual callers, exact study assets/settings and coverage limits. Neither the stealth runtime nor Cognition Lab is integrated for this slice.
 
 Start source inspection at the [public renderer boundary](../../apps/client/src/world-renderer.ts), [current scene](../../apps/client/src/scene.ts), [scene study](../../apps/client/src/scene-study.ts) and [browser profiling driver](../../scripts/performance/profile-browser.mjs). These existing callers determine the extraction and integration steps below.
 
@@ -179,6 +183,8 @@ Each pose request identifies the exact source/clip, absolute sample in seconds, 
 One evaluated skeleton/morph pose supplies color, shadow, outline/read-through, attachments and cloth bindings. A second pass must not cause a second independent animation update. PlayCanvas interrupted-blend reset workarounds stay in its adapter; Three supplies the same clean-idle semantic through its mixer/actions. Skeleton cloning, inverse-bind transforms, animated bounds and equipment offsets are verified on the actual source assets, not assumed from glTF compatibility.
 
 Extract the existing cloth solver's numeric particles/constraints/step policy only where its two consumers need it. The backend supplies bone/world transforms and publishes changed vertices/normals. Preserve pause/tab-gap resets and existing work quality. A future GPU implementation may execute differently while preserving the same declared visual behavior and bounds; a CPU-only common interface must not prohibit that optimization. No new cloth physics or gameplay authority is introduced.
+
+Current independent extraction: `characters/cloth-solver.ts` owns in-place link/tether/seam correction, particle distance and the existing display-size quality hysteresis without a renderer dependency. `CapeCloth` consumes those calculations with the same binary64 buffers and operation order, then applies current-pose collisions after every constraint pass. It retains integration, fixed-step/reset policy, native anchors, contacts and mesh publication. This is reusable arithmetic, not the complete shared solver/clock or completion of RCP04.
 
 Teleports, support/world/observer changes and long gaps use existing explicit motion reset semantics. Do not interpolate through hidden space, catch up thousands of missed cloth steps or replay expired captions when a renderer returns. Camera motion while paused remains usable without advancing the authoritative simulation.
 

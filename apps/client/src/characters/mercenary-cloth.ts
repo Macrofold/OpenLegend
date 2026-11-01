@@ -1,4 +1,12 @@
 import * as pc from 'playcanvas';
+import {
+  clothParticleDistance,
+  solveClothConstraints,
+  type ClothLink,
+  type ClothPasses,
+  type ClothSeam,
+  type ClothTether,
+} from './cloth-solver';
 export interface MercenaryClothData {
   patches: {
     name: string;
@@ -16,18 +24,6 @@ export interface MercenaryClothData {
     depths: (number | null)[];
   };
   bindMatrices: { Spine01: number[]; cape_root: number[] };
-}
-
-export type ClothPasses = 4 | 8;
-/** Display-size hysteresis keeps small cloth cheaper without repeatedly changing
- * quality at one zoom boundary. docs/limits/3d-pixel-art.md#a3d20--experimental-cloth-quality-tiers */
-export function clothPassesForSize(
-  previous: ClothPasses,
-  height: number | undefined,
-  selected: boolean,
-): ClothPasses {
-  if (selected || height === undefined || !Number.isFinite(height) || height <= 0) return 8;
-  return height < 80 ? 4 : height > 100 ? 8 : previous;
 }
 
 function at<T>(values: ArrayLike<T>, index: number): T {
@@ -60,14 +56,7 @@ interface Collider {
   direction: pc.Vec3;
   inverseLengthSquared: number;
 }
-interface Link {
-  p: number;
-  q: number;
-  length: number;
-  stiffness: number;
-  wa: number;
-  wb: number;
-}
+
 function bone(root: pc.Entity, name: string): pc.GraphNode {
   const value = root.findByName(name);
   if (!value) throw new Error('Missing mercenary bone: ' + name);
@@ -98,12 +87,12 @@ export class CapeCloth {
   // their references once; bone transforms and particle positions stay live.
   // A changed garment/pin configuration must construct its own topology.
   // docs/world-presentation.md#animated-character-pixels
-  private readonly links: Link[] = [];
+  private readonly links: ClothLink[] = [];
   readonly patches: Patch[] = [];
   private readonly ownedMeshes = new Set<pc.Mesh>();
   private readonly nodes: pc.Entity[] = [];
-  private readonly seams: Array<[number, number, number, number]> = [];
-  private readonly tethers: Array<[number, number, number]> = [];
+  private readonly seams: ClothSeam[] = [];
+  private readonly tethers: ClothTether[] = [];
   private readonly collisionParticles: Array<{ point: number; front: boolean }> = [];
   private readonly colliders: Collider[];
   private readonly right = new pc.Vec3();
@@ -248,7 +237,7 @@ export class CapeCloth {
         let anchor = yoke.start,
           distance = Infinity;
         for (let j = yoke.start; j < yoke.start + yoke.columns; j++) {
-          const d = this.distance(i * 3, j * 3);
+          const d = clothParticleDistance(this.p, i * 3, j * 3);
           if (d < distance) {
             anchor = j;
             distance = d;
@@ -297,7 +286,12 @@ export class CapeCloth {
     at(this.pinned, index);
     return index * 3;
   }
-  private link(a: number, b: number, stiffness: number, length = this.distance(a * 3, b * 3)) {
+  private link(
+    a: number,
+    b: number,
+    stiffness: number,
+    length = clothParticleDistance(this.p, a * 3, b * 3),
+  ) {
     this.links.push({
       p: a * 3,
       q: b * 3,
@@ -306,14 +300,6 @@ export class CapeCloth {
       wa: at(this.pinned, a) ? 0 : 1,
       wb: at(this.pinned, b) ? 0 : 1,
     });
-  }
-  // Every coordinate offset is derived from the fixed constructed topology;
-  // hot scalar reads use those offsets directly, without a generic checked read per number.
-  private distance(p: number, q: number): number {
-    const x = this.p[p]! - this.p[q]!,
-      y = this.p[p + 1]! - this.p[q + 1]!,
-      z = this.p[p + 2]! - this.p[q + 2]!;
-    return Math.sqrt(x * x + y * y + z * z);
   }
   reset() {
     this.time = 0;
@@ -446,44 +432,7 @@ export class CapeCloth {
       this.previous[i + 2] = z;
     }
     for (let iteration = 0; iteration < this.constraintPasses; iteration++) {
-      for (let i = 0; i < this.links.length; i++) {
-        const { p, q, length, stiffness, wa, wb } = at(this.links, i);
-        const x = positions[q]! - positions[p]!,
-          y = positions[q + 1]! - positions[p + 1]!,
-          z = positions[q + 2]! - positions[p + 2]!,
-          d = Math.sqrt(x * x + y * y + z * z);
-        if (d < 1e-8 || wa + wb === 0) continue;
-        const amount = (((d - length) / d) * stiffness) / (wa + wb);
-        positions[p] = positions[p]! + x * amount * wa;
-        positions[p + 1] = positions[p + 1]! + y * amount * wa;
-        positions[p + 2] = positions[p + 2]! + z * amount * wa;
-        positions[q] = positions[q]! - x * amount * wb;
-        positions[q + 1] = positions[q + 1]! - y * amount * wb;
-        positions[q + 2] = positions[q + 2]! - z * amount * wb;
-      }
-      for (let i = 0; i < this.tethers.length; i++) {
-        const tether = at(this.tethers, i),
-          p = tether[0],
-          a = tether[1],
-          max = tether[2];
-        const d = this.distance(p, a);
-        if (d > max) {
-          const k = max / d;
-          positions[p] = positions[a]! + (positions[p]! - positions[a]!) * k;
-          positions[p + 1] = positions[a + 1]! + (positions[p + 1]! - positions[a + 1]!) * k;
-          positions[p + 2] = positions[a + 2]! + (positions[p + 2]! - positions[a + 2]!) * k;
-        }
-      }
-      for (let i = 0; i < this.seams.length; i++) {
-        const seam = at(this.seams, i),
-          p = seam[0],
-          u = seam[1],
-          v = seam[2],
-          t = seam[3];
-        positions[p] = positions[u]! + (positions[v]! - positions[u]!) * t;
-        positions[p + 1] = positions[u + 1]! + (positions[v + 1]! - positions[u + 1]!) * t;
-        positions[p + 2] = positions[u + 2]! + (positions[v + 2]! - positions[u + 2]!) * t;
-      }
+      solveClothConstraints(positions, this.links, this.tethers, this.seams);
       for (let i = 0; i < this.collisionParticles.length; i++) {
         const particle = at(this.collisionParticles, i);
         this.collide(particle.point, particle.front);

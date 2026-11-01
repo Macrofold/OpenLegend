@@ -2,7 +2,9 @@
 
 ## Scope and status
 
-This inventory owns discretionary constraints for the selected [shared presentation and renderer comparison design](../projects/renderer-comparison-feature-spec.md). The design is complete; these are selected implementation targets, not current runtime capacities or measured optimal values. Existing PlayCanvas behavior is the baseline. [RCP](../maintainers/renderer-comparison.md) owns delivery and evidence.
+This inventory owns discretionary constraints for the selected [shared presentation and renderer comparison design](../projects/renderer-comparison-feature-spec.md). Independent preparation extracts cloth arithmetic without changing its [existing quality limits](3d-pixel-art.md#a3d20--experimental-cloth-quality-tiers), settings or PlayCanvas default. The remaining comparison constraints are selected implementation targets, not current runtime capacities or measured optimal values. [RCP](../maintainers/renderer-comparison.md) owns delivery and evidence.
+
+The [independent baseline](../verification/renderer-preparation.md) is a bounded local PlayCanvas diagnostic using fresh current-format views and exact public art dependencies. Its ten-second study windows are not implementation or qualification of RCP-L03–L05's replay/campaign envelope. Measured costs, unlit-fire coverage and unpublished fixture/delivery limits remain explicit; no limit or performance guarantee is changed.
 
 Shared art, shadow, asset, network and profiling bounds retain their existing inventories. This file records the consumer choices without creating competing copies. Authorization, permitted knowledge and native authority are correctness requirements, not tunable limits.
 
@@ -93,6 +95,8 @@ Initial required artwork retains the opaque loading/readiness gate until require
 **Status:** Proposed — selected architectural constraint. **Restrictiveness:** Medium.
 
 Share presentation decisions, clocks, geometry/math and portable shader kernels where the actual consumers support them. Each backend owns material/pass bindings, shader preparation, animation execution and efficient native rendering. There is no mandatory identical batching, draw-call count, scene graph or GPU resource layout.
+
+The current preparation shares only cloth constraint arithmetic, distance and size-tier calculations through a pure module consumed by PlayCanvas. Native contacts, integration, anchors and vertex publication remain in `CapeCloth`; this partial extraction does not establish cross-backend cloth parity or implement a shared presentation controller.
 
 Feature coverage is explicit. A missing required cue/effect keeps that comparison incomplete; an experimental backend-specific improvement is separately labelled and evaluated in best-practical mode. Do not promise automatic arbitrary GLSL/WGSL interchange or force CPU work solely to increase a shared-code percentage. This balances genuine reuse against engine-specific quality/performance. See RCP05–RCP07 and the [technical design](../projects/renderer-comparison-tech-design.md).
 

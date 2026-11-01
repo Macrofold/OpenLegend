@@ -67,7 +67,7 @@ The native starting-world replay capture also requires an explicit external dest
 pnpm exec tsx scripts/capture-starting-art-study.ts --output /private/tmp/starting-world-study.json
 ```
 
-It requires the explicit disposable-test PostgreSQL configuration from [verification guidance](../.agents/rules/verification.md), uses ordinary authenticated native travel with no paid AI calls, and refuses an existing output. Publish the resulting JSON as study data before updating its selected exact reference. Never use a real player's database to refresh a visual study.
+It requires the explicit disposable-test PostgreSQL configuration from [verification guidance](../.agents/rules/verification.md), uses ordinary authenticated native travel with no paid AI calls, and refuses an existing output. `--camp-only` captures just the initial current Main view for a small renderer baseline; omission retains all seven stops. The disposable world uses the current Main initializer and fresh-startup preparation without an installed-artwork binding, so capture needs no cloud asset-authority catalog; the consuming study selects its exact artwork release separately. Publish the resulting JSON as study data before updating its selected exact reference. Never use a real player's database to refresh a visual study.
 
 ## Publish an exact revision
 

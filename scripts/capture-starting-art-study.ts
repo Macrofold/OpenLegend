@@ -12,6 +12,8 @@ import { localHttpClient } from '../tests/fixtures/http';
 import { initializeCollisionRuntime } from '../packages/spatial/src/rapier';
 import {
   advanceWorld,
+  createWorld,
+  prepareBaseInitialWorldState,
   worldPosition,
   navigationBlocked,
   entityGet,
@@ -21,7 +23,9 @@ import { surfaceContains, surfaceHeight } from '../packages/spatial/src/index';
 import type { GameView } from '../packages/protocol/src/index';
 import { externalAssetPath } from '../apps/server/src/asset-directories.js';
 
-const { values } = parseArgs({ options: { output: { type: 'string' } } });
+const { values } = parseArgs({
+  options: { output: { type: 'string' }, 'camp-only': { type: 'boolean' } },
+});
 if (!values.output)
   throw new Error(
     'Choose --output /absolute/external/starting-world.json; see docs/asset-workflow.md.',
@@ -39,10 +43,15 @@ const exists = await access(destination).then(
 if (exists) throw new Error('Choose a new capture output; existing art is never overwritten.');
 
 await initializeCollisionRuntime();
+const seed = 1086;
 try {
+  const world = createWorld(seed);
+  // Precommit makes the server reopen this world: record fresh Main startup here.
+  // The study selects its artwork, so this fixture needs no deployment catalog.
+  prepareBaseInitialWorldState(world);
   const game = await createGameServer({
-    config: readConfig({ WORLD_SEED: '1086', AI_BUDGET_USD: '0' }),
-    store: await testRepository(),
+    config: readConfig({ WORLD_SEED: String(seed), AI_BUDGET_USD: '0' }),
+    store: await testRepository(undefined, world),
     production: true,
     tick: false,
     now: () => 10_000,
@@ -119,28 +128,32 @@ try {
       presenceSequence: 1,
     });
     await capture('camp', 'Camp · people, fire and shelter');
-    await move(ground(6, 15));
-    await capture('river', 'Riverbank · reeds and stones');
-    await move({ x: 21.5, y: 3, z: 6, surfaceId: 'lookout-deck' });
-    await capture('lookout', 'Lookout · deck, ramp and supplies');
-    await move(ground(11, 18));
-    await capture('mending', 'Mending Clearing · Mara and Tavin');
-    // Stand beside the existing work surface so this view actually exposes it.
-    await move(ground(10, 34));
-    await capture('workshop', 'Riverside workshop');
-    await move(ground(27, 19));
-    await capture('woodland', 'Woodland · animals and overlapping trees');
-    await move(ground(42, 16.5));
-    await move(ground(47, 16.5));
-    await move(ground(47, 19));
-    await capture('watchpost', 'Broken Watchpost · Kest, Orin and cover');
+    if (!values['camp-only']) {
+      await move(ground(6, 15));
+      await capture('river', 'Riverbank · reeds and stones');
+      await move({ x: 21.5, y: 3, z: 6, surfaceId: 'lookout-deck' });
+      await capture('lookout', 'Lookout · deck, ramp and supplies');
+      await move(ground(11, 18));
+      await capture('mending', 'Mending Clearing · Mara and Tavin');
+      // Stand beside the existing work surface so this view actually exposes it.
+      await move(ground(10, 34));
+      await capture('workshop', 'Riverside workshop');
+      await move(ground(27, 19));
+      await capture('woodland', 'Woodland · animals and overlapping trees');
+      await move(ground(42, 16.5));
+      await move(ground(47, 16.5));
+      await move(ground(47, 19));
+      await capture('watchpost', 'Broken Watchpost · Kest, Orin and cover');
+    }
     assert.equal(digest(game.service.world.map), before);
     const first = await read();
     await writeFile(
       destination,
       JSON.stringify({
         source:
-          'Fresh standard seed-1086 world; ordinary authenticated commands and native travel; disposable database; no paid calls. These are permitted player views, with staged light/motion only in the viewer.',
+          `Fresh current Main seed-${seed} world; authenticated permitted views` +
+          (values['camp-only'] ? '; camp only' : ' and ordinary native travel') +
+          '; disposable database without an installed-artwork binding; no paid calls. The viewer selects exact artwork separately; staged light/motion remains presentation-only.',
         capturedAt: new Date().toISOString(),
         mapSha256: before,
         map: first.map,
