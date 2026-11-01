@@ -1,10 +1,12 @@
 # Simpler saving and personal evidence — technical design
 
-| Status      | Current progress                                                                                             | Last updated |
-| ----------- | ------------------------------------------------------------------------------------------------------------ | ------------ |
-| In progress | Direct saving, compact evidence and scoped retirement are implemented; operating qualification remains open. | 2026-11-01   |
+| Status      | Current progress                                                                                                        | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | Baseline implemented; the runtime companion specifies the next storage reduction, with delivery and qualification open. | 2026-11-01   |
 
 **Design selected 2026-10-31, 05:10 UTC. Architecture inspected at Macrofold/OpenLegend `7a197980a6d65909fd185244c2631b8055faadf0`, local `codex/stealth-runtime-01-evidence`.** The [feature specification](bookkeeping-simplification-feature-spec.md) owns intended play, preserved behavior and consequential choices. Architecture used and implementation reconciled 2026-10-31 10:59 UTC on `codex/bookkeeping-runtime-01`, based on `39aa9775a5cf48e4318227410d0ab5625f92db9d`. [BK](../maintainers/production-data.md#bookkeeping-simplification) owns remaining qualification; concurrent unrelated work is outside this project. The [integration contract](attention-and-scenes-runtime-design.md#14-integration-contract-for-the-completed-bk-ru-and-vw-branches) coordinates BK with RU consumers and VW tooling without duplicating this implementation.
+
+**Selected target extension, November 1, 2026:** [Saving and retention without repeated database investigation](bookkeeping-simplification-runtime-design.md) supersedes the installed strict ordinary-command, save-time retirement and eager derivative-check paths when BK09–BK16 is implemented. The sections below describe the installed baseline and its original acceptance; they do not override the companion’s selected target.
 
 ## 1. Selected architecture and current baseline
 
@@ -323,3 +325,7 @@ No blocking product question remains. The selected hybrid and direct writer are 
 - Limits: [BKS-L01–BKS-L05](../limits/persistence.md#bks-l01--direct-transactional-saving-target); current world retention: [attention profile](../worlds/base/attention.md).
 - Preserved contracts: [save/load](../save-and-load.md), [memory](../memory-architecture.md), [identity](../identity-and-references.md), [storage performance](../performance/storage.md), [engine/world boundaries](../engine-and-world-boundaries.md).
 - Earlier architecture and measured limits: [attention runtime](attention-and-scenes-runtime-design.md), [journal experiment](performance-overhaul/journal-contract.md), [complete-game diagnosis](../verification/performance/2026-10/attention-runtime.md).
+
+## 12. Database-work reduction target
+
+[The runtime companion](bookkeeping-simplification-runtime-design.md) is the sole detailed owner of the next conversion: typed mutation intent, metadata-only current writes, independently retained support, prefix expiry outside native advancement, background quota/cleanup, owner-held authority checks, exact banner reuse and ordinary acceptance before saving. Reuse BK/RU/PP08 implementations and remove replaced paths in the same stages. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns tasks, [BKS-L06–BKS-L08](../limits/persistence.md#bks-l06--maintenance-headroom-target) owns constraints, and the existing operating gates remain open. No new journal/application stage or legacy API is selected.

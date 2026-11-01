@@ -83,6 +83,8 @@ Browser connection opening and closing join the existing world-mutation queue in
 
 ### Background and synchronous world saves
 
+**Selected target, not current execution:** [BK08–BK16](maintainers/production-data.md#database-work-reduction) and its [runtime contract](projects/bookkeeping-simplification-runtime-design.md#6-live-acceptance-and-ordered-saving) change ordinary gameplay to live acceptance with one-second save opportunities and five-second unsaved-admission backpressure. Protected operational effects remain durable; pending/cold reads and restart epochs convert together. The paragraphs below describe the installed strict-command baseline until that work lands.
+
 The [bookkeeping implementation](projects/bookkeeping-simplification-tech-design.md#4-direct-transactional-saving) uses one ordered direct PostgreSQL writer. Canonical records, history, exact source plans, reference uses, command results and the durable revision commit together. There is no custom journal, second application stage, dual head or query-alignment wait. [BK](maintainers/production-data.md#bookkeeping-simplification) retains connected operating qualification.
 
 Current evidence uses contact-owned groups, inline small measurements and shared immutable stable values. Each completed receiving acquisition closes an immutable history batch. Native chunk order and batch start ordinals determine persistence order; inspecting a candidate does not bind storage placement to live arrays. Appends write only their new suffix. Corrections may replace affected bounded batches while preserving logical receipt identity.

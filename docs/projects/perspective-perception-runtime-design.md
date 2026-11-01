@@ -23,6 +23,8 @@ Keep the physically different producers: sight tests visibility, hearing determi
 
 The feature specification owns play and remaining product scope. The [grouped representation](attention-and-scenes-runtime-design.md#132-b-data-and-mutation-ownership) owns compact contacts/groups; [bookkeeping](bookkeeping-simplification-tech-design.md) owns direct saves, stable shared values, inline small values and reclamation. This document supplies their shared native contract. There is one current store and one admitted personal chronology.
 
+The selected [BK database-work reduction](bookkeeping-simplification-runtime-design.md) consumes the received-change result and extends existing storage/retention owners. Its future column-specific writes, independent support and async publication do not add a receiving procedure or change the physical channels. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns that unfinished implementation.
+
 ## 2. Owners and extension seam
 
 | Owner                                                         | Responsibility                                                                                                                                                           | Explicit exclusion                                                                                      |
