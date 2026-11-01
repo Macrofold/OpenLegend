@@ -1049,7 +1049,7 @@ export class WorldAuthoringService {
     const c = this.service.config;
     // A changed durable key format must fence old live dispatch, rather than make
     // its retained spending appear to belong to a newly empty session allowance.
-    return `owner-review-v2:${fingerprint([c.macrofoldUrl, c.macrofoldHarness, c.macrofoldModel, c.macrofoldWorldConnectionId, Object.keys(WORLD_AUTHORING_TOOLS), Object.keys(WORLD_READ_TOOLS), sessionBudgetId({ worldId: 'world', id: 'session' }), draftRevisionKey('draft', 1)])}`;
+    return `owner-review-v2:${fingerprint([c.macrofoldUrl, c.macrofoldHarness, c.macrofoldModel, c.macrofoldRunMemoryMib, c.macrofoldWorldConnectionId, Object.keys(WORLD_AUTHORING_TOOLS), Object.keys(WORLD_READ_TOOLS), sessionBudgetId({ worldId: 'world', id: 'session' }), draftRevisionKey('draft', 1)])}`;
   }
   private permitted(s: AgentSession, scope = s.authority) {
     return (

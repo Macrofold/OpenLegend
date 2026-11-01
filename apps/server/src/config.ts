@@ -242,6 +242,15 @@ export function readConfig(env: NodeJS.ProcessEnv = process.env) {
     ),
     // Selected by the application/world compute owner; never allocated by an actor lane.
     macrofoldWorkerId: env['MACROFOLD_WORKER_ID']?.trim() ?? '',
+    // A Run's sandbox allowance is separate from its Worker Host's total memory.
+    // Omission preserves the platform default; see docs/live-ai-setup.md.
+    macrofoldRunMemoryMib: z.coerce
+      .number()
+      .int()
+      .positive()
+      .safe()
+      .optional()
+      .parse(env['MACROFOLD_RUN_MEMORY_MIB']),
     macrofoldTimeoutSeconds: numberSetting(env, 'MACROFOLD_TIMEOUT_SECONDS', 300, 5, 300),
     jevKey: env['TYPESAFE_API_KEY'] ?? env['JEV_API_KEY'] ?? '',
     jevModel,

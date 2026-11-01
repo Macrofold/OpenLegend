@@ -1390,6 +1390,9 @@ export class MacrofoldBackend implements AiClient {
                   : [],
               }),
           worker_id: workerId,
+          ...(config.macrofoldRunMemoryMib === undefined
+            ? {}
+            : { memory_mib: config.macrofoldRunMemoryMib }),
           prompt,
           ...(worldAgent ? { stream: true } : {}),
           // Worker capacity still queues; only same-Worktree follow-ups are refused.
