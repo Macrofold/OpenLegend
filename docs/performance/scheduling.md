@@ -65,6 +65,8 @@ Keep presence heartbeats because they establish liveness, and retain diagnostics
 
 ## Bounded batching, backpressure and publication
 
+**Selected target, not installed:** [BK14](../maintainers/production-data.md#database-work-reduction) changes ordinary commands to live acceptance under the [save contract](../projects/bookkeeping-simplification-runtime-design.md#6-live-acceptance-and-ordered-saving). Ordinary cold preparation stays outside mutation; durability waiters join the scheduled save rather than forcing individual flushes. The strict command behavior below remains the installed baseline until that conversion lands.
+
 A single command on an idle healthy server should not wait for an artificial batch timer. When commands are already queued, a later microbatch can evaluate a bounded group in order against one candidate state and persist all receipts/effects together. Resolve each promise only from the committed batch. Keep one commit in flight; commands arriving during it wait in a bounded intention queue. Rejected, duplicate and conflicting IDs retain their own outcomes. Do not coalesce already-admitted discrete actions or suppress intermediate meaningful events.
 
 Repeated unsent movement destinations may use the existing real-time design's explicit supersession contract when implemented. General action coalescing is unsafe: two eats, a pickup followed by craft, or stop followed by a new task are not interchangeable writes. Preserve fairness between players when adding multiplayer; priority must not silently reorder already-admitted causal work.

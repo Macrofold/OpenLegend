@@ -46,7 +46,9 @@ The [attention feature](attention-and-scenes-feature-spec.md#94-receiving-attend
 
 Target one-second save opportunities. Stop admitting further ordinary progress at five seconds since the oldest unsaved acceptance, or the pending byte ceiling, until storage catches up. This bounds admission, not database outage duration or an indivisible operation's execution time. A failed write preserves the live pending suffix and stops new admission; restart restores the last complete saved cut. Clients never supply authoritative recovery or blindly replay old commands. Real-time storage pressure and ordinary memory consolidation remain distinct.
 
-A personal historical query applies its captured pending changes to the durable snapshot outside mutation. Optional indexing may lag, while required facts remain available through exact readers. Player-only narration never becomes another actor's knowledge. [Persistence limits](../limits/persistence.md#bks-l08--ordinary-live-acceptance-target) own the operational envelope.
+An ordinary action is authorized when it takes effect in the live world. Expiring the player's login afterward cannot undo that accepted action merely because it has not reached disk. Permission changes block subsequent affected actions and disclosures, and settle durably in order with already accepted effects.
+
+A personal historical query applies its captured pending changes to the durable snapshot outside mutation. Thinking that needs saved evidence joins the next scheduled batch; it does not force a separate early save. Optional indexing may lag, while required facts remain available through exact readers. Player-only narration never becomes another actor's knowledge. [Persistence limits](../limits/persistence.md#bks-l08--ordinary-live-acceptance-target) own the operational envelope.
 
 ## 4. What is stored, and why
 
