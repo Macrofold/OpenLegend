@@ -28,7 +28,7 @@ const cursorSchema = z
 const DISCLOSURE_READ = { pageRows: 6, scanRows: 200 } as const;
 
 async function prepare(service: WorldService, actorId: string) {
-  await service.flushMemorySources(actorId);
+  await service.ready;
   const head = await service.store.records!.head();
   if (!head || head.worldId !== service.world.id)
     throw new HistoryCursorError('The remembered trade search changed. Refresh it.');

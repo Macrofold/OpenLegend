@@ -207,6 +207,13 @@ export async function cleanupRetiredIndividuals(
       }
   }
   let world = after.world;
+  const candidates: Array<{
+    actorId: string;
+    aliases: string[];
+    ids: string[];
+    retained: Set<string>;
+    individuals: Set<string>;
+  }> = [];
   for (const [actorId, candidate] of affected) {
     const retained = new Set<string>(),
       individuals = new Set<string>();
@@ -245,17 +252,22 @@ export async function cleanupRetiredIndividuals(
             : (value as { id: string }).id,
         );
       }
-    const kept = metadata.excluding(rows);
-    const surviving = await kept.survivingMembership(
-      db,
-      world.id,
-      actorId,
-      aliases.filter((id) => !retained.has(id)),
-      ids.filter((id) => !individuals.has(id)),
-      true,
-    );
-    for (const id of surviving.aliases) retained.add(id);
-    for (const id of surviving.individuals) individuals.add(id);
+    candidates.push({ actorId, aliases, ids, retained, individuals });
+  }
+  const surviving = await metadata.excluding(rows).survivingMembershipBatch(
+    db,
+    world.id,
+    candidates.map((candidate) => ({
+      actorId: candidate.actorId,
+      aliases: candidate.aliases.filter((id) => !candidate.retained.has(id)),
+      individualIds: candidate.ids.filter((id) => !candidate.individuals.has(id)),
+      includeRecent: true,
+    })),
+  );
+  for (const [index, candidate] of candidates.entries()) {
+    const { actorId, aliases, retained, individuals } = candidate;
+    for (const id of surviving[index]!.aliases) retained.add(id);
+    for (const id of surviving[index]!.individuals) individuals.add(id);
     const released = aliases.filter((id) => !retained.has(id));
     world = updateWorld(
       world,

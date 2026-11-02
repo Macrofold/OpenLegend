@@ -1,3 +1,5 @@
+import { prepareIndividualReferenceRepairs } from './individual-reference-repair.js';
+import type { SourceVersionPlan } from './source-version-retention.js';
 import { personalAccountRevision } from './personal-accounts.js';
 import {
   accountClass,
@@ -16,6 +18,7 @@ import {
   observationDependencies,
   selectedRecognitionMaintenanceDue,
   selectedExpireRecognitionSeeds,
+  invalidateKnownPlaceEvidence,
   type ImpressionDependency,
   type ExperienceEntry,
   type MemoryRecord,
@@ -25,7 +28,10 @@ import type { SavedWorld, SqlDatabase } from './store.js';
 import { historyKey, historyPositions } from './history-residency.js';
 import { MemoryRetentionError, type PreparedMemoryRetention } from './temporal-storage.js';
 import { releaseUnusedTemporalSupports } from './retention-cleanup.js';
-import type { RetentionMetadataView } from './retention-metadata.js';
+import {
+  accountWriteHasRetentionDependencies,
+  type RetentionMetadataView,
+} from './retention-metadata.js';
 
 const tables = {
   awareness: 'mind_awareness',
@@ -517,4 +523,318 @@ export async function prepareAccountRetention(
       ]);
   }
   return { state: world === state.world ? state : { ...state, world }, rows, positions };
+}
+
+export { nextAccountRetentionAt } from './retention-deadlines.js';
+
+type Identity = NonNullable<WorldState['observerIdentities']>[string][string];
+type Support = NonNullable<
+  NonNullable<WorldState['experience']>['temporal']
+>['actors'][string]['supports'];
+interface OwnedChange<T> {
+  id: string;
+  before: T | undefined;
+  after: T | undefined;
+}
+interface AccountActorPlan {
+  actorId: string;
+  epoch: string;
+  life: number;
+  repaired: string[];
+  privacy: number;
+  writes: ExperienceEntry[];
+  deletes: Map<Kind, Set<string>>;
+  identities: OwnedChange<Identity>[];
+  supports: OwnedChange<NonNullable<Support>[string]>[];
+  delta: Record<'optional' | 'required' | 'speech', { bytes: number; count: number }>;
+  nextDue: number | null;
+  archivesBefore?: NonNullable<
+    NonNullable<WorldState['experience']>['temporal']
+  >['actors'][string]['accounts'];
+  archivesAfter?: NonNullable<
+    NonNullable<WorldState['experience']>['temporal']
+  >['actors'][string]['accounts'];
+}
+export interface AccountRetentionPlan {
+  worldId: string;
+  actors: AccountActorPlan[];
+  rows: Map<string, string[]>;
+  positions?: Map<string, Map<string, number>>;
+  versions?: SourceVersionPlan;
+}
+function changedOwnedEntries<T>(
+  before: Readonly<Record<string, T>> | undefined,
+  after: Readonly<Record<string, T>> | undefined,
+): OwnedChange<T>[] {
+  const ids = new Set([...Object.keys(before ?? {}), ...Object.keys(after ?? {})]);
+  return [...ids].flatMap((id) =>
+    before?.[id] === after?.[id] ? [] : [{ id, before: before?.[id], after: after?.[id] }],
+  );
+}
+
+/** Existing account retirement prepares its exact effects outside mutation. The
+ * finite plan holds selected records, not another writable knowledge model. */
+export async function prepareAccountRetentionPlan(
+  db: SqlDatabase,
+  state: SavedWorld,
+  metadata: RetentionMetadataView,
+  pendingDeletes?: ReadonlyMap<string, readonly string[]>,
+  prepareVersions?: (
+    prepared: PreparedMemoryRetention,
+  ) => Promise<{ state: SavedWorld; plan: SourceVersionPlan }>,
+): Promise<AccountRetentionPlan> {
+  const repaired = await prepareIndividualReferenceRepairs(db, state, metadata);
+  const prepared = await prepareAccountRetention(db, repaired, false, pendingDeletes, metadata);
+  const versions = prepareVersions ? await prepareVersions(prepared) : undefined;
+  if (versions) prepared.state = versions.state;
+  const result: AccountRetentionPlan = {
+    worldId: state.world.id,
+    actors: [],
+    rows: prepared.rows,
+    ...(versions ? { versions: versions.plan } : {}),
+    ...(prepared.positions ? { positions: prepared.positions } : {}),
+  };
+  for (const [actorId, after] of Object.entries(
+    prepared.state.world.experience?.temporal?.actors ?? {},
+  )) {
+    const before = state.world.experience?.temporal?.actors[actorId];
+    if (!before || !before.accounts || !after.accounts) continue;
+    const writes: ExperienceEntry[] = [];
+    const deletes = new Map<Kind, Set<string>>();
+    for (const kind of Object.keys(tables) as Kind[]) {
+      const values = (world: WorldState) =>
+        kind === 'memory'
+          ? (world.memories[actorId] ?? [])
+          : kind === 'awareness'
+            ? (world.experience?.awareness[actorId] ?? [])
+            : (world.experience?.summaries[actorId] ?? []);
+      const old = new Map(values(state.world).map((value) => [historyKey(value), value]));
+      for (const value of values(prepared.state.world))
+        if (old.get(historyKey(value)) !== value)
+          writes.push({ source: kind, value } as ExperienceEntry);
+      deletes.set(
+        kind,
+        new Set(
+          (prepared.rows.get(tables[kind]) ?? [])
+            .filter((id) => (JSON.parse(id) as string[])[kind === 'memory' ? 2 : 3] === actorId)
+            .map((id) => (JSON.parse(id) as string[]).at(-1)!),
+        ),
+      );
+    }
+    const identities = changedOwnedEntries(
+      state.world.observerIdentities?.[actorId],
+      prepared.state.world.observerIdentities?.[actorId],
+    );
+    const supports = changedOwnedEntries(before.supports, after.supports);
+    const delta = Object.fromEntries(
+      (['optional', 'required', 'speech'] as const).map((pool) => [
+        pool,
+        {
+          bytes: after.accounts![pool].bytes - before.accounts![pool].bytes,
+          count: after.accounts![pool].count - before.accounts![pool].count,
+        },
+      ]),
+    ) as AccountActorPlan['delta'];
+    if (
+      !writes.length &&
+      ![...deletes.values()].some((ids) => ids.size) &&
+      !identities.length &&
+      !supports.length &&
+      (before.individualRepairs?.length ?? 0) === (after.individualRepairs?.length ?? 0) &&
+      before.accounts.nextDue === after.accounts.nextDue &&
+      !Object.values(delta).some((value) => value.bytes || value.count)
+    )
+      continue;
+    result.actors.push({
+      actorId,
+      epoch: before.epoch,
+      life: before.physicalLife,
+      privacy: state.world.experience?.privacyRevisions?.[actorId] ?? 0,
+      repaired: (before.individualRepairs ?? []).filter(
+        (id) => !after.individualRepairs?.includes(id),
+      ),
+      writes,
+      deletes,
+      identities,
+      supports,
+      delta,
+      nextDue: after.accounts.nextDue,
+      archivesBefore: before.accounts,
+      archivesAfter: after.accounts,
+    });
+  }
+  return result;
+}
+
+/** Apply source-specific effects to the latest accepted state. New unrelated
+ * account suffixes and received chronology survive; selected edits invalidate
+ * only their actor's plan. All installed changes were prepared by this owner. */
+export function applyAccountRetentionPlan(
+  state: SavedWorld,
+  plan: AccountRetentionPlan,
+  changesSinceCapture?: import('./world-records.js').RecordChanges,
+): PreparedMemoryRetention & { stale: boolean } {
+  const rows = new Map<string, string[]>(),
+    positions = new Map<string, Map<string, number>>();
+  if (state.world.id !== plan.worldId) return { state, rows, stale: true };
+  let stale = false;
+  const ready: AccountActorPlan[] = [];
+  for (const actorPlan of plan.actors) {
+    const { actorId } = actorPlan,
+      actor = state.world.experience?.temporal?.actors[actorId];
+    const selected = new Set(
+      [...actorPlan.deletes].flatMap(([kind, ids]) =>
+        [...ids].map((id) => recordId(actorId, kind, id)),
+      ),
+    );
+    for (const entry of actorPlan.writes)
+      selected.add(recordId(actorId, entry.source, entryId(entry)));
+    const newDependency = Object.values(tables).some((table) =>
+      (changesSinceCapture?.writes.get(table) ?? []).some((row) => {
+        const path = JSON.parse(row.id) as string[];
+        return (
+          path[table === 'mind_memories' ? 2 : 3] === actorId &&
+          !selected.has(row.id) &&
+          accountWriteHasRetentionDependencies(table, row)
+        );
+      }),
+    );
+    const changed =
+      newDependency ||
+      Object.values(tables).some(
+        (table) =>
+          (changesSinceCapture?.writes.get(table) ?? []).some((row) => selected.has(row.id)) ||
+          (changesSinceCapture?.deletes.get(table) ?? []).some((id) => selected.has(id)),
+      );
+    if (
+      !actor ||
+      actor.epoch !== actorPlan.epoch ||
+      actor.physicalLife !== actorPlan.life ||
+      changed ||
+      (state.world.experience?.privacyRevisions?.[actorId] ?? 0) !== actorPlan.privacy ||
+      actorPlan.identities.some(
+        (change) => state.world.observerIdentities?.[actorId]?.[change.id] !== change.before,
+      ) ||
+      actorPlan.supports.some((change) => actor.supports?.[change.id] !== change.before) ||
+      actor.accounts?.archives !== actorPlan.archivesBefore?.archives
+    ) {
+      stale = true;
+      continue;
+    }
+    ready.push(actorPlan);
+  }
+  if (!ready.length) return { state, rows, stale };
+  const placements = new Map(
+    ready.flatMap(({ actorId }) =>
+      (Object.keys(tables) as Kind[]).map((kind) => {
+        const values =
+          kind === 'memory'
+            ? state.world.memories[actorId]
+            : kind === 'awareness'
+              ? state.world.experience?.awareness[actorId]
+              : state.world.experience?.summaries[actorId];
+        return [
+          JSON.stringify([actorId, kind]),
+          values ? historyPositions.get(values) : undefined,
+        ] as const;
+      }),
+    ),
+  );
+  const world = updateWorld(
+    state.world,
+    (draft) => {
+      for (const actorPlan of ready) {
+        const { actorId } = actorPlan,
+          actor = draft.experience!.temporal!.actors[actorId]!;
+        for (const kind of Object.keys(tables) as Kind[]) {
+          const current =
+            kind === 'memory'
+              ? (draft.memories[actorId] ?? [])
+              : kind === 'awareness'
+                ? (draft.experience!.awareness[actorId] ?? [])
+                : (draft.experience!.summaries[actorId] ?? []);
+          const placement = placements.get(JSON.stringify([actorId, kind])),
+            values = new Map(current.map((value) => [historyKey(value), value]));
+          const removed = actorPlan.deletes.get(kind)!;
+          for (const id of removed) values.delete(id);
+          for (const entry of actorPlan.writes)
+            if (entry.source === kind)
+              values.set(entryId(entry), entry.value as (typeof current)[number]);
+          const next = [...values.values()];
+          if (placement) historyPositions.set(next, placement);
+          if (kind === 'memory') draft.memories[actorId] = next as (typeof draft.memories)[string];
+          else if (kind === 'awareness')
+            draft.experience!.awareness[actorId] = next as NonNullable<
+              typeof draft.experience
+            >['awareness'][string];
+          else
+            draft.experience!.summaries[actorId] = next as NonNullable<
+              typeof draft.experience
+            >['summaries'][string];
+          const selectedRows = (plan.rows.get(tables[kind]) ?? []).filter(
+            (id) => (JSON.parse(id) as string[])[kind === 'memory' ? 2 : 3] === actorId,
+          );
+          if (selectedRows.length)
+            rows.set(tables[kind], [...(rows.get(tables[kind]) ?? []), ...selectedRows]);
+          const selectedPositions = plan.positions?.get(tables[kind]);
+          if (selectedPositions)
+            for (const id of selectedRows) {
+              const position = selectedPositions.get(id);
+              if (position !== undefined) {
+                let owner = positions.get(tables[kind]);
+                if (!owner) positions.set(tables[kind], (owner = new Map()));
+                owner.set(id, position);
+              }
+            }
+        }
+        for (const change of actorPlan.identities) {
+          const identities = ((draft.observerIdentities ??= {})[actorId] ??= {});
+          if (change.after) identities[change.id] = change.after;
+          else delete identities[change.id];
+        }
+        for (const change of actorPlan.supports) {
+          const supports = (actor.supports ??= {});
+          if (change.after) supports[change.id] = change.after;
+          else delete supports[change.id];
+        }
+        for (const pool of ['optional', 'required', 'speech'] as const) {
+          actor.accounts![pool].bytes += actorPlan.delta[pool].bytes;
+          actor.accounts![pool].count += actorPlan.delta[pool].count;
+          if (actor.accounts![pool].bytes < 0 || actor.accounts![pool].count < 0)
+            throw new MemoryRetentionError(
+              'Account retention counters changed before installation.',
+            );
+        }
+        let nextDue = actorPlan.nextDue;
+        for (const entry of sourceEntries(draft, actorId)) {
+          const due = experienceRetentionDue(draft, entry);
+          if (due !== null) nextDue = Math.min(nextDue ?? Infinity, due);
+        }
+        if (actorPlan.repaired.length) {
+          const completed = new Set(actorPlan.repaired);
+          actor.individualRepairs = actor.individualRepairs?.filter((id) => !completed.has(id));
+          if (!actor.individualRepairs?.length) delete actor.individualRepairs;
+        }
+        actor.accounts!.nextDue = actor.individualRepairs?.length ? draft.simTime : nextDue;
+        actor.accounts!.archives = actorPlan.archivesAfter?.archives;
+        invalidateKnownPlaceEvidence(draft, actorId);
+        for (const id of plan.rows.get('mind_temporal_supports') ?? [])
+          if ((JSON.parse(id) as string[])[4] === actorId)
+            rows.set('mind_temporal_supports', [...(rows.get('mind_temporal_supports') ?? []), id]);
+      }
+    },
+    { retainNativeValues: true },
+  );
+  const acceptedActors = new Set(ready.map((actor) => actor.actorId));
+  const versions = plan.versions && {
+    actors: plan.versions.actors.filter((id) => acceptedActors.has(id)),
+    retained: plan.versions.retained.filter((version) => acceptedActors.has(version.actorId)),
+  };
+  return {
+    state: { ...state, world },
+    rows,
+    ...(positions.size ? { positions } : {}),
+    ...(versions ? { versions } : {}),
+    stale,
+  };
 }

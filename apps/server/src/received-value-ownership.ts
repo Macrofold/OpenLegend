@@ -10,6 +10,22 @@ interface Owner {
   id: string;
   actor: string;
   refs: string[];
+  additions?: readonly string[];
+  removals?: readonly string[];
+}
+
+export function receivedRowOwner(table: string, row: RowChange): Owner {
+  const columns = Object.keys(RECORD_NODES.get(table)!.columns!);
+  const references = row.extra[columns.indexOf('value_refs')] as string[];
+  return {
+    kind: table === 'mind_temporal_segments' ? 'mind_temporal_chunks' : table,
+    id: table === 'mind_temporal_segments' ? row.parent : row.id,
+    actor: String(row.extra[columns.indexOf('actor_id')]),
+    refs: references ?? [],
+    ...(row.receivedValueAdditions
+      ? { additions: row.receivedValueAdditions, removals: row.receivedValueRemovals ?? [] }
+      : {}),
+  };
 }
 
 /** Transactional reverse references derived from canonical owners. Neither this
@@ -61,17 +77,6 @@ export class ReceivedValueOwnership {
       throw new Error('Received evidence ownership disagrees with its canonical records.');
   }
 
-  private owner(table: string, row: RowChange): Owner {
-    const columns = Object.keys(RECORD_NODES.get(table)!.columns!);
-    const references = row.extra[columns.indexOf('value_refs')] as string[];
-    return {
-      kind: table === 'mind_temporal_segments' ? 'mind_temporal_chunks' : table,
-      id: table === 'mind_temporal_segments' ? row.parent : row.id,
-      actor: String(row.extra[columns.indexOf('actor_id')]),
-      refs: references ?? [],
-    };
-  }
-
   /** Canonical writes must finish first, inside the same direct transaction. */
   async project(
     worldId: string,
@@ -101,13 +106,14 @@ export class ReceivedValueOwnership {
     const rebuildChunks = new Set<string>();
     for (const table of currentOwners) {
       for (const row of changes.writes.get(table) ?? [])
-        if (row.receivedUsesChanged !== false) replacements.push(this.owner(table, row));
+        if (row.receivedUsesChanged !== false) replacements.push(receivedRowOwner(table, row));
       for (const id of changes.deletes.get(table) ?? [])
         replacements.push({ kind: table, id, actor: '', refs: [] });
     }
     for (const row of changes.writes.get('mind_temporal_segments') ?? []) {
-      if (!row.create) rebuildChunks.add(row.parent);
-      const value = this.owner('mind_temporal_segments', row);
+      if (!row.create && row.logicalRemoval !== false) rebuildChunks.add(row.parent);
+      const value = receivedRowOwner('mind_temporal_segments', row);
+      if (row.receivedValueAdditions) value.refs = [...row.receivedValueAdditions];
       const prior = appendChunks.get(value.id);
       if (prior) for (const id of value.refs) prior.refs.add(id);
       else appendChunks.set(value.id, { ...value, refs: new Set(value.refs) });
@@ -170,16 +176,16 @@ export class ReceivedValueOwnership {
       await this.db
         .prepare(
           `WITH desired AS MATERIALIZED (
-          SELECT * FROM jsonb_to_recordset(?::jsonb) AS x(kind TEXT,id TEXT,actor TEXT,refs TEXT[])
+          SELECT * FROM jsonb_to_recordset(?::jsonb) AS x(kind TEXT,id TEXT,actor TEXT,refs TEXT[],additions TEXT[],removals TEXT[])
         ), removed AS (
           DELETE FROM received_value_uses u USING desired d
           WHERE u.world_id=? AND u.owner_kind=d.kind AND u.owner_id=d.id
-            AND NOT(u.value_id=ANY(d.refs)) RETURNING u.value_id
+            AND ((d.removals IS NULL AND NOT(u.value_id=ANY(d.refs))) OR u.value_id=ANY(d.removals)) RETURNING u.value_id
         ), nominated AS (
           UPDATE mind_perception_values SET gc_candidate_seq=? WHERE world_id=?
             AND source_id IN(SELECT value_id FROM removed) AND gc_candidate_seq IS NULL
         ) INSERT INTO received_value_uses
-          SELECT ?,d.kind,d.id,d.actor,v.id FROM desired d CROSS JOIN LATERAL unnest(d.refs) v(id)
+          SELECT ?,d.kind,d.id,d.actor,v.id FROM desired d CROSS JOIN LATERAL unnest(COALESCE(d.additions,d.refs)) v(id)
           ON CONFLICT DO NOTHING`,
         )
         .run(JSON.stringify(batch), worldId, revision, worldId, worldId);
@@ -223,15 +229,52 @@ export class ReceivedValueOwnership {
     });
   }
 
+  /** Finite pending writer inputs already retain these owner references. Build
+   * one membership set per collection opportunity, never one scan per candidate. */
+  private readonly pendingReferenceIndexes = new WeakMap<RecordChanges, ReadonlySet<string>>();
+  pendingReferences(changes: RecordChanges): ReadonlySet<string> {
+    const cached = this.pendingReferenceIndexes.get(changes);
+    if (cached) return cached;
+    const retained = new Set<string>();
+    for (const table of [...currentOwners, 'mind_temporal_segments'])
+      for (const row of changes.writes.get(table) ?? [])
+        for (const id of receivedRowOwner(table, row).refs) retained.add(id);
+    for (const row of changes.writes.get('mind_perception_values') ?? [])
+      retained.add((JSON.parse(row.id) as string[]).at(-1)!);
+    this.pendingReferenceIndexes.set(changes, retained);
+    return retained;
+  }
+
   /** One bounded SQL slice handles both candidate kinds. Logical retirement has
    * already released ownership; no command waits for this physical cleanup. */
   private firstCleanupKind = 0;
-  async collect(worldId: string): Promise<number> {
+  private valueCursor?: { worldId: string; sequence: number; id: string };
+  async collect(
+    worldId: string,
+    captureProtection?: () => (id: string) => boolean,
+  ): Promise<number> {
     const mark = beginTiming();
     const first = this.firstCleanupKind;
-    this.firstCleanupKind = 1 - first;
     try {
-      return await this.db.transaction(async () => {
+      const completed = await (
+        this.db.maintenanceTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db)
+      )(async () => {
+        const protects = captureProtection?.() ?? (() => false);
+        const cursor = this.valueCursor?.worldId === worldId ? this.valueCursor : undefined;
+        const candidates = await this.db
+          .prepare(
+            `SELECT source_id,gc_candidate_seq FROM mind_perception_values
+          WHERE world_id=? AND gc_candidate_seq IS NOT NULL ${cursor ? 'AND (gc_candidate_seq,source_id)>(?,?)' : ''}
+          ORDER BY gc_candidate_seq,source_id LIMIT 128`,
+          )
+          .all(worldId, ...(cursor ? [cursor.sequence, cursor.id] : []));
+        const last = candidates.at(-1);
+        const nextCursor =
+          candidates.length === 128 && last
+            ? { worldId, sequence: Number(last['gc_candidate_seq']), id: String(last['source_id']) }
+            : undefined;
+        const selectedIds = candidates.map((row) => String(row['source_id']));
+        const protectedIds = selectedIds.filter(protects);
         const row = await this.db
           .prepare(
             `WITH candidates AS MATERIALIZED (
@@ -241,7 +284,7 @@ export class ReceivedValueOwnership {
             ORDER BY retired_revision,id LIMIT 128)
           UNION ALL
           (SELECT source_id AS id,1 AS kind,gc_candidate_seq AS sequence,octet_length(payload) AS bytes
-            FROM mind_perception_values WHERE world_id=? AND gc_candidate_seq IS NOT NULL
+            FROM mind_perception_values WHERE world_id=? AND source_id=ANY(?::text[]) AND NOT(source_id=ANY(?::text[])) AND gc_candidate_seq IS NOT NULL
             ORDER BY gc_candidate_seq,source_id LIMIT 128)
         ), prioritized AS (
           SELECT *,CASE WHEN kind=? THEN 0 ELSE 1 END AS priority FROM candidates
@@ -260,25 +303,54 @@ export class ReceivedValueOwnership {
             WHERE c.world_id=? AND s.kind=0 AND c.id=s.id RETURNING s.bytes
         ), removed_values AS (
           DELETE FROM mind_perception_values p USING value_candidates v
-            WHERE p.world_id=? AND p.source_id=v.id AND NOT v.owned RETURNING v.bytes
+            WHERE p.world_id=? AND p.source_id=v.id AND NOT v.owned AND NOT(p.source_id=ANY(?::text[])) RETURNING v.bytes
         ), held AS (
           UPDATE mind_perception_values p SET gc_candidate_seq=NULL FROM value_candidates v
-            WHERE p.world_id=? AND p.source_id=v.id AND v.owned
+            WHERE p.world_id=? AND p.source_id=v.id AND v.owned RETURNING 1
+        ), held_protected AS (
+          UPDATE mind_perception_values p SET gc_candidate_seq=NULL
+            WHERE p.world_id=? AND p.source_id=ANY(?::text[]) AND EXISTS (
+              SELECT 1 FROM received_value_uses u WHERE u.world_id=? AND u.value_id=p.source_id)
+          RETURNING 1
         ) SELECT (SELECT count(*) FROM chosen) AS examined,
           (SELECT count(*) FROM value_candidates) AS examined_values,
           (SELECT count(*) FROM removed_chunks) AS chunks,
           (SELECT COALESCE(sum(bytes),0) FROM removed_chunks) AS chunk_bytes,
           (SELECT count(*) FROM removed_values) AS values_deleted,
+          (SELECT count(*) FROM held)+(SELECT count(*) FROM held_protected) AS values_held,
           (SELECT COALESCE(sum(bytes),0) FROM removed_values) AS value_bytes`,
           )
-          .get(worldId, worldId, first, worldId, worldId, worldId, worldId);
-        countMetric('persistence.retiredChunksDeleted', Number(row?.['chunks'] ?? 0));
-        countMetric('persistence.retiredChunkBytesDeleted', Number(row?.['chunk_bytes'] ?? 0));
-        countMetric('persistence.receivedValuesExamined', Number(row?.['examined_values'] ?? 0));
-        countMetric('persistence.receivedValuesDeleted', Number(row?.['values_deleted'] ?? 0));
-        countMetric('persistence.receivedValueBytesDeleted', Number(row?.['value_bytes'] ?? 0));
-        return Number(row?.['examined'] ?? 0);
+          .get(
+            worldId,
+            worldId,
+            selectedIds,
+            protectedIds,
+            first,
+            worldId,
+            worldId,
+            worldId,
+            protectedIds,
+            worldId,
+            worldId,
+            protectedIds,
+            worldId,
+          );
+        return { row, nextCursor };
       });
+      const { row, nextCursor } = completed;
+      this.firstCleanupKind = 1 - first;
+      this.valueCursor = nextCursor;
+      countMetric('persistence.retiredChunksDeleted', Number(row?.['chunks'] ?? 0));
+      countMetric('persistence.retiredChunkBytesDeleted', Number(row?.['chunk_bytes'] ?? 0));
+      countMetric('persistence.receivedValuesExamined', Number(row?.['examined_values'] ?? 0));
+      countMetric('persistence.receivedValuesDeleted', Number(row?.['values_deleted'] ?? 0));
+      countMetric('persistence.receivedValueBytesDeleted', Number(row?.['value_bytes'] ?? 0));
+      return (
+        Number(row?.['chunks'] ?? 0) +
+        Number(row?.['values_deleted'] ?? 0) +
+        Number(row?.['values_held'] ?? 0) +
+        Number(!!nextCursor)
+      );
     } finally {
       endTiming('persistence.evidenceCleanup', mark);
     }

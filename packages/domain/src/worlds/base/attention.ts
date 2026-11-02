@@ -57,6 +57,9 @@ export const BASE_ATTENTION_POLICY: AttentionPolicy = {
     drop: { enter: 20, clear: 25, minimumDrop: 1 },
   },
   retention: {
+    maintenanceHeadroom: 0.25,
+    speechMaintenanceHeadroom: 0.25,
+    derivedLowWater: 0.8,
     recent: {
       maxAgeSeconds: 21_600,
       maxBytes: 8 * 1024 * 1024,

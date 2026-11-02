@@ -22,7 +22,13 @@ export interface ReceivedEventAccount {
   evidence: EventEvidence;
   awareness?: Awareness;
   projected?: Awareness;
-  temporal?: { chunkId: string; receipt: TemporalReceiptLocator; bytes: number };
+  temporal?: {
+    chunkId: string;
+    receipt: TemporalReceiptLocator;
+    receivedAt: number;
+    chunkOrder: number;
+    bytes: number;
+  };
 }
 
 /** One observer reader's last immutable roots provide append lineage. The weak
@@ -134,6 +140,8 @@ export function receivedEventAccounts(
                   ),
                   temporal: {
                     chunkId: chunk.id,
+                    receivedAt: receipt.at,
+                    chunkOrder: chunk.order,
                     bytes: Buffer.byteLength(
                       JSON.stringify({
                         receipt,

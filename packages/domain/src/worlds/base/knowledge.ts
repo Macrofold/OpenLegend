@@ -25,7 +25,7 @@ import {
   type KnowledgePolicy,
 } from '../../knowledge.js';
 import { isImmutableData, isSafeRecordId } from '../../records.js';
-import { cloneValue, readOnlyDraftView } from '../../draft.js';
+import { cloneValue, readOnlyDraftView, touchNativeEvidence } from '../../draft.js';
 import { adjustRetainedKnowledgeAccounting } from '../../remembered-impressions.js';
 import {
   retainTemporalSupport,
@@ -62,6 +62,8 @@ export function startingRecipeKnowledge(
 export const BASE_KNOWLEDGE_POLICY: KnowledgePolicy = config.knowledge;
 
 export interface ObserverIdentity {
+  /** Last actual recent reference. Liveness only; never identity or recognition proof. */
+  recentReference?: { epoch: string; ordinal: number; chunkOrder: number; at: number };
   /** Current body-only local roles need no lasting allocation. */
   retained?: true;
   familiarity?: import('../../attention.js').FamiliarityState;
@@ -78,6 +80,29 @@ export interface ObserverIdentity {
   encounterId: string | null;
   authored: boolean;
 }
+/** One bounded newest-reference locator is retention housekeeping. It neither
+ * consumes learned-fact capacity nor allows a full pool to lose actual liveness. */
+export function observerIdentityKnowledge(
+  identity: ObserverIdentity,
+): Omit<ObserverIdentity, 'recentReference'> {
+  const { recentReference: _recent, ...knowledge } = identity;
+  return knowledge;
+}
+export function adjustObserverIdentityAccounting(
+  world: WorldState,
+  actorId: string,
+  before: ObserverIdentity | undefined,
+  after: ObserverIdentity | undefined,
+  options?: Parameters<typeof adjustRetainedKnowledgeAccounting>[4],
+): boolean {
+  return adjustRetainedKnowledgeAccounting(
+    world,
+    actorId,
+    before && observerIdentityKnowledge(before),
+    after && observerIdentityKnowledge(after),
+    options,
+  );
+}
 /** The existing identity owner installs lasting learning only after its complete
  * encoded record fits the same personal-knowledge pool as notes and accounts. */
 export function commitObserverIdentity(
@@ -90,7 +115,7 @@ export function commitObserverIdentity(
   const previous = records[key];
   const next: ObserverIdentity = candidate.authored ? candidate : { ...candidate, retained: true };
   if (
-    !adjustRetainedKnowledgeAccounting(
+    !adjustObserverIdentityAccounting(
       world,
       actorId,
       previous?.retained && !previous.authored ? previous : undefined,
@@ -368,6 +393,99 @@ export function associateBodyFamiliarity(
   if (candidate.individualId)
     commitObserverIdentity(world, observerId, candidate.individualId, candidate);
 }
+/** Only admission of an actual recent reference updates this small locator. Reads
+ * and unchanged confirmations cannot prolong an otherwise forgotten individual. */
+export function markRecentIndividualReferences(
+  world: WorldState,
+  actorId: string,
+  ids: readonly string[],
+  reference: NonNullable<ObserverIdentity['recentReference']>,
+): void {
+  const records = world.observerIdentities?.[actorId];
+  if (!records) return;
+  for (const id of ids) {
+    const identity = records[id];
+    if (!identity || identity.authored) continue;
+    const previous = identity.recentReference;
+    if (
+      previous &&
+      previous.epoch === reference.epoch &&
+      previous.chunkOrder >= reference.chunkOrder &&
+      previous.ordinal >= reference.ordinal
+    )
+      continue;
+    const next = { ...identity, recentReference: { ...reference } };
+    records[id] = next;
+  }
+}
+
+export function requestRecentIndividualRepair(
+  world: WorldState,
+  actorId: string,
+  chunkOrder: number,
+  ids: readonly string[],
+): void {
+  const actor = world.experience?.temporal?.actors[actorId];
+  if (!actor) return;
+  const pending = new Set(actor.individualRepairs);
+  for (const id of ids)
+    if (world.observerIdentities?.[actorId]?.[id]?.recentReference?.chunkOrder === chunkOrder)
+      pending.add(id);
+  if (pending.size) {
+    actor.individualRepairs = [...pending];
+    if (actor.accounts)
+      actor.accounts.nextDue = Math.min(actor.accounts.nextDue ?? Infinity, world.simTime);
+  }
+}
+export function repairRecentIndividualReferences(
+  world: WorldState,
+  actorId: string,
+  changes: readonly { id: string; reference?: NonNullable<ObserverIdentity['recentReference']> }[],
+): void {
+  const identities = world.observerIdentities?.[actorId],
+    actor = world.experience?.temporal?.actors[actorId];
+  if (!actor) return;
+  touchNativeEvidence(world, 'temporal', actorId);
+  for (const { id, reference } of changes) {
+    const before = identities?.[id];
+    if (!before) continue;
+    const after = { ...before };
+    if (reference) after.recentReference = { ...reference };
+    else delete after.recentReference;
+    // Correcting a prior locator is withdrawal bookkeeping, not new knowledge.
+    if (
+      before.retained &&
+      !adjustObserverIdentityAccounting(world, actorId, before, after, { revocation: true })
+    )
+      throw new Error('Recent individual repair did not fit its prior allocation.');
+    identities![id] = after;
+  }
+  const completed = new Set(changes.map((change) => change.id));
+  actor.individualRepairs = actor.individualRepairs?.filter((id) => !completed.has(id));
+  if (!actor.individualRepairs?.length) delete actor.individualRepairs;
+}
+
+function recentIndividualAvailable(
+  world: WorldState,
+  actorId: string,
+  identity: ObserverIdentity,
+): boolean {
+  const reference = identity.recentReference;
+  const actor = world.experience?.temporal?.actors[actorId];
+  if (
+    !reference ||
+    !actor ||
+    reference.at + BASE_ATTENTION_POLICY.retention.recent.maxAgeSeconds <= world.simTime
+  )
+    return false;
+  const frontier = actor.retiredThrough;
+  return (
+    !frontier ||
+    reference.chunkOrder > frontier.chunkOrder ||
+    (reference.chunkOrder === frontier.chunkOrder && reference.ordinal > frontier.ordinal)
+  );
+}
+
 /** Retention calls once for an actual retirement batch; native loss can supply
  * only its exact old local IDs. Ordinary unseen people do not become a lifetime
  * identity catalogue merely because the observer once received their bodies. */
@@ -382,6 +500,33 @@ export function pruneObserverIndividuals(
 ): number {
   const identities = world.observerIdentities?.[actorId];
   if (!identities) return 0;
+  // Learned profiles/names own their small facts independently. Incidental
+  // contacts do not become a permanent catalogue when their recent prefix ends.
+  const held = new Set(retainedIndividualEvidenceKeys(world, actorId));
+  const actor = world.experience?.temporal?.actors[actorId];
+  const cutoff = world.simTime - BASE_ATTENTION_POLICY.retention.recent.maxAgeSeconds;
+  let faded = false;
+  for (const key of input.candidates ?? Object.keys(identities)) {
+    const identity = identities[key];
+    const roots = identity?.familiarity?.roots;
+    if (!roots?.length) continue;
+    const remaining = roots.filter(
+      (root) =>
+        root.required ||
+        held.has(root.sourceKey) ||
+        (root.at > cutoff &&
+          (actor?.retiredThrough === undefined || root.at >= actor.retiredThrough.at)),
+    );
+    if (remaining.length === roots.length) continue;
+    const next = cloneValue(identity!);
+    next.familiarity!.roots = remaining;
+    next.revision++;
+    if (next.retained && !adjustObserverIdentityAccounting(world, actorId, identity, next))
+      throw new Error('Faded familiarity did not fit its previous allocation.');
+    identities[key] = next;
+    faded = true;
+  }
+  if (faded) advanceKnowledgeRevision(world, actorId);
   if (input.releasedSourceIds.length)
     revokeRecognitionEvidence(world, actorId, new Set(input.releasedSourceIds));
   const retainedPins = new Set(input.retainedIndividualIds);
@@ -426,7 +571,7 @@ export function pruneObserverIndividuals(
       !retainedPins.has(key) &&
       pinned.has(key)
     ) {
-      if (!adjustRetainedKnowledgeAccounting(world, actorId, identity, undefined))
+      if (!adjustObserverIdentityAccounting(world, actorId, identity, undefined))
         throw new Error('Retired identity accounting was not released.');
       const currentOnly = cloneValue(identity);
       delete currentOnly.retained;
@@ -437,6 +582,7 @@ export function pruneObserverIndividuals(
       !identity ||
       identity.authored ||
       pinned.has(key) ||
+      recentIndividualAvailable(world, actorId, identity) ||
       (input.candidates && identity.retained) ||
       identity.nickname ||
       identity.givenName ||
@@ -448,10 +594,7 @@ export function pruneObserverIndividuals(
       identity.familiarity?.roots.length
     )
       continue;
-    if (
-      identity.retained &&
-      !adjustRetainedKnowledgeAccounting(world, actorId, identity, undefined)
-    )
+    if (identity.retained && !adjustObserverIdentityAccounting(world, actorId, identity, undefined))
       throw new Error('Retired identity accounting was not released.');
     delete identities[key];
     removed++;
@@ -1122,6 +1265,16 @@ export function validateObserverIdentities(world: WorldState): void {
         (identity.nameEvidenceIds !== undefined &&
           (!Array.isArray(identity.nameEvidenceIds) ||
             identity.nameEvidenceIds.some((source) => typeof source !== 'string' || !source))) ||
+        (identity.recentReference !== undefined &&
+          (typeof identity.recentReference.epoch !== 'string' ||
+            !identity.recentReference.epoch ||
+            !Number.isSafeInteger(identity.recentReference.ordinal) ||
+            identity.recentReference.ordinal < 0 ||
+            !Number.isSafeInteger(identity.recentReference.chunkOrder) ||
+            identity.recentReference.chunkOrder < 0 ||
+            !Number.isFinite(identity.recentReference.at) ||
+            identity.recentReference.at < 0 ||
+            identity.recentReference.at > world.simTime)) ||
         typeof identity.givenName !== 'string' ||
         (identity.nickname !== undefined &&
           (typeof identity.nickname !== 'string' ||

@@ -1,4 +1,4 @@
-import { nativeText } from '@open-legend/domain';
+import { nativeText, jsonText, temporalRecentAt } from '@open-legend/domain';
 import { temporalChunkReceipts } from '@open-legend/domain';
 import { hasMemory } from '@open-legend/domain';
 import { entityGet } from '@open-legend/domain';
@@ -31,20 +31,27 @@ import {
 import { createHash } from 'node:crypto';
 import type { WorldState, WorldEvent, Awareness, TemporalReceipt } from '@open-legend/domain';
 import { beginTiming, endTiming } from './performance.js';
-import { prepareHistory } from './history-preparation.js';
+import {
+  prepareHistory,
+  captureHistoryAccountCut,
+  historyAccountAtCapturedCut,
+  temporalHistoryAccountAvailable,
+  type HistoryAccountCut,
+} from './history-preparation.js';
 import { HistoryAppendWriter, perspectiveColumns } from './history-append.js';
 import type { SqlWriteBatch } from './sql-rows.js';
 import type { RecordChanges } from './world-records.js';
+import { MemoryPreparationError } from './memory-repository.js';
 import {
   encodeStoryAccount,
   personalAccountKey,
+  storyAccountAvailableSql,
   personalAccountRevision,
   personalEventEvidence as eventEvidence,
   storyAccountSql,
   storySourceRow,
   storedStoryAccount,
-  storyTemporalReceipt,
-  storyTemporalBytes,
+  storyTemporalCut,
   retireTemporalStoryAccounts,
 } from './personal-accounts.js';
 import { temporalChunkSourceId } from './temporal-storage.js';
@@ -77,9 +84,13 @@ export function validateHistoryEvidence(
   const accounts = new Map<string, string>();
   const temporal = world.experience?.temporal;
   const receipts = new Map<string, TemporalReceipt>();
+  const chunkOrders = new Map<string, number>();
   for (const actor of Object.values(temporal?.actors ?? {}))
     for (const chunk of actor.chunks)
-      for (const receipt of temporalChunkReceipts(chunk)) receipts.set(receipt.id, receipt);
+      for (const receipt of temporalChunkReceipts(chunk)) {
+        receipts.set(receipt.id, receipt);
+        chunkOrders.set(receipt.id, chunk.order);
+      }
   for (const [actor, entries] of Object.entries(world.experience?.awareness ?? {}))
     for (const entry of entries) {
       const payload = JSON.stringify(entry);
@@ -115,7 +126,7 @@ export function validateHistoryEvidence(
       world.id,
       String(row['actor_id']),
       accounts,
-      { receipts, sources: world.receivedValues?.sources ?? {} },
+      { receipts, chunkOrders, sources: world.receivedValues?.sources ?? {} },
     );
     if (
       row['world_id'] !== world.id ||
@@ -201,18 +212,94 @@ export class HistoryRepository {
   ) {
     this.bindLocalPrincipal = principals.length === 0;
   }
+  private sourceAccess = (_worldId: string, _actorId: string) => true;
+  private sourceAccessRevision = (_worldId: string, _actorId: string): unknown => 0;
+  private sourceCut = (_worldId: string, _actorId: string): HistoryAccountCut | undefined =>
+    undefined;
+  setSourceAccess(
+    allowed: (worldId: string, actorId: string) => boolean,
+    revision: (worldId: string, actorId: string) => unknown,
+    cut?: (worldId: string, actorId: string) => HistoryAccountCut | undefined,
+  ): void {
+    this.sourceAccess = allowed;
+    this.sourceAccessRevision = revision;
+    if (cut) this.sourceCut = cut;
+  }
+  private sourceAtCurrentCut(worldId: string, actorId: string, payload: string): boolean {
+    const temporal = storyTemporalCut(payload);
+    if (!temporal) return true;
+    const cut = this.sourceCut(worldId, actorId);
+    return !!cut && temporalHistoryAccountAvailable(cut, temporal);
+  }
+  private async readForActor<T>(
+    worldId: string,
+    actorId: string,
+    operation: () => Promise<T>,
+  ): Promise<T> {
+    if (!this.sourceAccess(worldId, actorId)) throw new MemoryPreparationError();
+    const privacy = this.sourceAccessRevision(worldId, actorId);
+    const read = () =>
+      this.db.readTransaction ? this.db.readTransaction(operation) : this.db.transaction(operation);
+    const value = await (this.db.readForActor
+      ? this.db.readForActor(worldId, actorId, read)
+      : read());
+    if (
+      !this.sourceAccess(worldId, actorId) ||
+      privacy !== this.sourceAccessRevision(worldId, actorId)
+    )
+      throw new MemoryPreparationError();
+    return value;
+  }
   private readonly bindLocalPrincipal: boolean;
   private readonly listeners = new Set<() => void>();
   private queuedRevision = 0;
   private notifiedRevision = 0;
   private narrationRevision = 0;
-  get bannerRevision(): number {
-    return this.narrationRevision;
+  private readonly bannerSourceEpochs = new Map<string, number>();
+  private readonly narrationReads = new Map<
+    string,
+    {
+      revision: number;
+      privacy: unknown;
+      eligibility: number | undefined;
+      result?: TranscriptItem | null;
+      oldestTemporalAt?: number;
+      value: Promise<{ status: 'current'; item: TranscriptItem | null } | { status: 'stale' }>;
+    }
+  >();
+  /** Expire only this principal's cached positive at its source deadline. The
+   * player's view memo must observe this before reusing a banner; ordinary clock
+   * changes never create SQL, cache scans or a global invalidation. */
+  bannerRevisionAt(
+    worldId: string,
+    ownerId: string,
+    timing: { at: number; maxAgeSeconds: number },
+  ): string {
+    const actorId = this.principals.find((p) => p.ownerId === ownerId)?.actorId;
+    if (!actorId) return `${this.narrationRevision}:0`;
+    const key = JSON.stringify([worldId, ownerId, actorId]),
+      entry = this.narrationReads.get(key);
+    if (
+      entry &&
+      entry.result !== null &&
+      (!this.sourceAccess(worldId, actorId) ||
+        entry.privacy !== this.sourceAccessRevision(worldId, actorId) ||
+        (entry.oldestTemporalAt !== undefined &&
+          !temporalRecentAt(entry.oldestTemporalAt, timing.at, timing.maxAgeSeconds)))
+    ) {
+      this.narrationReads.delete(key);
+      this.bannerSourceEpochs.set(actorId, (this.bannerSourceEpochs.get(actorId) ?? 0) + 1);
+    }
+    return `${this.narrationRevision}:${this.bannerSourceEpochs.get(actorId) ?? 0}`;
   }
   private bannerChanged() {
     // One scalar stays bounded across replaced worlds. Only committed banner
     // changes expire views; ordinary movement and unrelated telemetry do not.
-    const publish = () => this.narrationRevision++;
+    const publish = () => {
+      this.narrationRevision++;
+      this.narrationReads.clear();
+      this.bannerSourceEpochs.clear();
+    };
     if (this.db.afterCommit) this.db.afterCommit(publish);
     else publish();
   }
@@ -223,18 +310,55 @@ export class HistoryRepository {
     };
   }
   /** Only called after commit; durable jobs recover a lost notification on restart. */
-  committed(changes?: RecordChanges) {
-    // Committed source retirement invalidates cached personal banners.
-    if (
-      changes &&
-      (changes.deletes.get('mind_temporal_chunks')?.length ||
-        changes.deletes.get('mind_temporal_segments')?.length ||
-        changes.writes.get('mind_temporal_segments')?.some((row) => !row.create))
-    )
-      this.bannerChanged();
+  committed(_changes?: RecordChanges) {
     if (this.notifiedRevision === this.queuedRevision) return;
     this.notifiedRevision = this.queuedRevision;
     for (const listener of this.listeners) listener();
+  }
+
+  accepted(changes: RecordChanges): void {
+    const actors = new Set<string>();
+    const mark = (id: string) => {
+      const path = JSON.parse(id) as string[];
+      const actor = path[path[1] === 'experience' ? (path[2] === 'temporal' ? 4 : 3) : 2];
+      if (actor) actors.add(actor);
+    };
+    for (const table of [
+      'mind_temporal_chunks',
+      'mind_temporal_segments',
+      'mind_awareness',
+      'mind_memories',
+      'mind_summaries',
+      'mind_forgotten',
+      'mind_corrections',
+    ]) {
+      for (const id of [
+        ...(changes.deletes.get(table) ?? []),
+        ...(changes.expired?.get(table) ?? []),
+      ])
+        mark(id);
+      for (const row of changes.writes.get(table) ?? [])
+        if (
+          table === 'mind_forgotten' ||
+          table === 'mind_corrections' ||
+          (!row.create && row.logicalRemoval !== false && table === 'mind_temporal_segments')
+        )
+          mark(row.id);
+    }
+    for (const [key, entry] of this.narrationReads) {
+      const [, , actorId] = JSON.parse(key) as string[];
+      if (
+        !actorId ||
+        !actors.has(actorId) ||
+        entry.result === null ||
+        entry.result?.sourceIds.length === 0
+      )
+        continue;
+      // Known absence cannot become a banner through removing a source. Preserve
+      // it while expiring only positive/in-flight results for the affected actor.
+      this.narrationReads.delete(key);
+      this.bannerSourceEpochs.set(actorId, (this.bannerSourceEpochs.get(actorId) ?? 0) + 1);
+    }
   }
 
   private storySelection(
@@ -299,16 +423,20 @@ export class HistoryRepository {
   ): Promise<string[]> {
     if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
       throw new Error('Unsupported history principal.');
-    const rows = await this.db
-      .prepare(
-        `SELECT e.id FROM history_events e JOIN history_perspectives p
+    return this.readForActor(worldId, actorId, async () => {
+      const rows = await this.db
+        .prepare(
+          `SELECT e.id,p.payload FROM history_events e JOIN history_perspectives p
          ON p.world_id=e.world_id AND p.event_id=e.id
          WHERE e.world_id=? AND e.response_id=? AND p.actor_id=?
          AND p.event_type='speech' AND p.source_id=? AND p.target_id=p.actor_id
          AND e.payload::jsonb #>> '{data,utteranceId}'=? ORDER BY e.position,e.id LIMIT 16`,
-      )
-      .all(worldId, responseId, actorId, npcId, `${responseId}:${localId}`);
-    return rows.map((row) => String(row['id']));
+        )
+        .all(worldId, responseId, actorId, npcId, `${responseId}:${localId}`);
+      return rows
+        .filter((row) => this.sourceAtCurrentCut(worldId, actorId, String(row['payload'])))
+        .map((row) => String(row['id']));
+    });
   }
   async retainedEventCount(worldId: string): Promise<number> {
     const row = await this.db
@@ -505,8 +633,9 @@ export class HistoryRepository {
     const batch = new HistoryAppendWriter(this.db, world.id);
     const rewrittenSources = new Map<string, Map<string, StorySource>>();
     const buildStarted = beginTiming();
+    const accountCuts = new Map<string, HistoryAccountCut>();
     for (const event of changed) {
-      const encoded = JSON.stringify(event);
+      const encoded = jsonText(event);
       const eventRevision = revisionOf(encoded);
       const retainedPerspectives = new Map<string, StorySource>();
       const retainedTemporal = new Map<string, NonNullable<ReceivedEventAccount['temporal']>>();
@@ -524,14 +653,12 @@ export class HistoryRepository {
             const actorId = String(row['actor_id']),
               payload = String(row['payload']);
             retainedPerspectives.set(actorId, storySourceRow(row));
-            const receipt = storyTemporalReceipt(payload),
-              bytes = storyTemporalBytes(payload);
+            const temporalCut = storyTemporalCut(payload);
             const chunkId =
               typeof row['temporal_chunk_id'] === 'string'
                 ? temporalChunkSourceId(actorId, row['temporal_chunk_id'])
                 : undefined;
-            if (receipt && bytes !== undefined && chunkId)
-              retainedTemporal.set(actorId, { receipt, bytes, chunkId });
+            if (chunkId && temporalCut) retainedTemporal.set(actorId, { chunkId, ...temporalCut });
           }
         removedEvents += await this.removeEvent(world.id, event.id);
       }
@@ -540,7 +667,17 @@ export class HistoryRepository {
       if (eventFlush) await eventFlush;
       for (const actorId of new Set(event.audience)) {
         if (forgotten(actorId).has(event.id)) continue;
-        const account = perspective(actorId, event.id);
+        const capturedAccount = perspective(actorId, event.id);
+        let accountCut = accountCuts.get(actorId);
+        if (!accountCut)
+          accountCuts.set(actorId, (accountCut = captureHistoryAccountCut(world, actorId)));
+        const account = historyAccountAtCapturedCut(
+          accountCut,
+          sourceChanges,
+          event.id,
+          capturedAccount,
+        );
+        if (capturedAccount && !account) continue;
         const awareness = account?.awareness;
         let evidence = account?.evidence;
         const retained = retainedPerspectives.get(actorId);
@@ -980,25 +1117,46 @@ export class HistoryRepository {
   }
   async sourcesCurrent(worldId: string, job: StoryJob): Promise<boolean> {
     if (!job.sources.length) return true;
-    const rows = await this.db
-      .prepare(
-        `SELECT event_id,payload::jsonb->>'revision' AS revision FROM history_perspectives
+    if (!this.sourceAccess(worldId, job.actorId)) return false;
+    const privacy = this.sourceAccessRevision(worldId, job.actorId);
+    const read = () =>
+      this.db
+        .prepare(
+          `SELECT event_id,payload FROM history_perspectives
         WHERE world_id=? AND actor_id=? AND event_id IN (${job.sources.map(() => '?').join(',')})`,
-      )
-      .all(worldId, job.actorId, ...job.sources.map((source) => source.id));
-    const revisions = new Map(rows.map((row) => [String(row['event_id']), row['revision']]));
-    return job.sources.every((source) => revisions.get(source.id) === source.revision);
+        )
+        .all(worldId, job.actorId, ...job.sources.map((source) => source.id));
+    const rows = await (this.db.readForActor
+      ? this.db.readForActor(worldId, job.actorId, read)
+      : read());
+    if (
+      !this.sourceAccess(worldId, job.actorId) ||
+      privacy !== this.sourceAccessRevision(worldId, job.actorId)
+    )
+      return false;
+    const current = new Map(rows.map((row) => [String(row['event_id']), String(row['payload'])]));
+    return job.sources.every((source) => {
+      const payload = current.get(source.id);
+      return (
+        payload !== undefined &&
+        this.sourceAtCurrentCut(worldId, job.actorId, payload) &&
+        (JSON.parse(payload) as { revision: string }).revision === source.revision
+      );
+    });
   }
   async optionalSources(worldId: string, job: StoryJob): Promise<StorySource[]> {
-    const rows = await this.db
-      .prepare(
-        `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.actor_id=? AND p.position<=? ORDER BY p.position DESC,p.event_id DESC LIMIT 12`,
-      )
-      .all(worldId, job.actorId, job.item.order);
-    return rows
-      .map((row) => storySourceRow(row))
-      .filter((s) => !job.sources.some((m) => m.id === s.id))
-      .slice(0, 8);
+    return this.readForActor(worldId, job.actorId, async () => {
+      const rows = await this.db
+        .prepare(
+          `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.actor_id=? AND p.position<=? ORDER BY p.position DESC,p.event_id DESC LIMIT 12`,
+        )
+        .all(worldId, job.actorId, job.item.order);
+      return rows
+        .filter((row) => this.sourceAtCurrentCut(worldId, job.actorId, String(row['payload'])))
+        .map((row) => storySourceRow(row))
+        .filter((s) => !job.sources.some((m) => m.id === s.id))
+        .slice(0, 8);
+    });
   }
   async publish(
     worldId: string,
@@ -1101,6 +1259,11 @@ export class HistoryRepository {
   }
 
   async eventPage(worldId: string, before = Number.MAX_SAFE_INTEGER, actorId?: string) {
+    return actorId
+      ? this.readForActor(worldId, actorId, () => this.readEventPage(worldId, before, actorId))
+      : this.readEventPage(worldId, before);
+  }
+  private async readEventPage(worldId: string, before: number, actorId?: string) {
     const rows = actorId
       ? await this.db
           .prepare(
@@ -1123,29 +1286,96 @@ export class HistoryRepository {
   async latestNarration(
     worldId: string,
     ownerId: string,
+    timing?: { at: number; maxAgeSeconds: number },
   ): Promise<{ status: 'current'; item: TranscriptItem | null } | { status: 'stale' }> {
     const principal = this.principals.find((p) => p.ownerId === ownerId);
     if (!principal) throw new Error('Unsupported history principal.');
-    const revision = this.bannerRevision;
-    const row = await this.db
-      .prepare(
-        'SELECT payload FROM story_banners WHERE world_id=? AND owner_id=? ORDER BY position DESC,id DESC LIMIT 1',
-      )
-      .get(worldId, ownerId);
-    // A committed source change during this read is normal invalidation. The
-    // projection owner coalesces/retries it without closing a healthy stream.
-    if (revision !== this.bannerRevision) return { status: 'stale' };
-    return {
-      status: 'current',
-      item: row
-        ? publicTranscriptItem(
-            projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem),
-            worldId,
-            principal.actorId,
+    if (timing) this.bannerRevisionAt(worldId, ownerId, timing);
+    if (!this.sourceAccess(worldId, principal.actorId)) return { status: 'stale' };
+    const revision = this.narrationRevision,
+      privacy = this.sourceAccessRevision(worldId, principal.actorId),
+      eligibility = this.bannerSourceEpochs.get(principal.actorId);
+    const key = JSON.stringify([worldId, ownerId, principal.actorId]);
+    const cacheable = this.db.transactionActive === false;
+    const cached = cacheable ? this.narrationReads.get(key) : undefined;
+    if (
+      cached?.revision === revision &&
+      (cached.oldestTemporalAt === undefined || !!timing) &&
+      (cached.result === null || (cached.privacy === privacy && cached.eligibility === eligibility))
+    )
+      return cached.value;
+    let oldestTemporalAt: number | undefined;
+    const value = (async (): Promise<
+      { status: 'current'; item: TranscriptItem | null } | { status: 'stale' }
+    > => {
+      const read = () =>
+        this.db
+          .prepare(
+            `SELECT b.payload,NOT EXISTS (
+        SELECT 1 FROM story_event_sources source WHERE source.world_id=b.world_id AND source.owner_id=b.owner_id AND source.narration_id=b.id
+          AND NOT EXISTS (SELECT 1 FROM history_perspectives p WHERE p.world_id=source.world_id AND p.actor_id=? AND p.event_id=source.event_id AND ${storyAccountAvailableSql()})) AS available,
+        (SELECT min((p.payload::jsonb#>>'{account,receivedAt}')::double precision)
+          FROM story_event_sources source JOIN history_perspectives p ON p.world_id=source.world_id AND p.actor_id=? AND p.event_id=source.event_id
+          WHERE source.world_id=b.world_id AND source.owner_id=b.owner_id AND source.narration_id=b.id AND p.payload::jsonb#>>'{account,kind}'='temporal') AS oldest_temporal_at
+        FROM story_banners b WHERE b.world_id=? AND b.owner_id=? ORDER BY b.position DESC,b.id DESC LIMIT 1`,
           )
-        : null,
-    };
+          .get(principal.actorId, principal.actorId, worldId, ownerId);
+      const row = await (this.db.readForActor
+        ? this.db.readForActor(worldId, principal.actorId, read)
+        : read());
+      if (typeof row?.['oldest_temporal_at'] === 'number')
+        oldestTemporalAt = row['oldest_temporal_at'];
+      if (
+        revision !== this.narrationRevision ||
+        !this.sourceAccess(worldId, principal.actorId) ||
+        privacy !== this.sourceAccessRevision(worldId, principal.actorId) ||
+        eligibility !== this.bannerSourceEpochs.get(principal.actorId)
+      )
+        return { status: 'stale' };
+      return {
+        status: 'current',
+        item:
+          row &&
+          row['available'] === true &&
+          (oldestTemporalAt === undefined ||
+            !timing ||
+            temporalRecentAt(oldestTemporalAt, timing.at, timing.maxAgeSeconds))
+            ? publicTranscriptItem(
+                projectNarration(JSON.parse(String(row['payload'])) as TranscriptItem),
+                worldId,
+                principal.actorId,
+              )
+            : null,
+      };
+    })();
+    if (cacheable) {
+      if (this.narrationReads.size >= 256)
+        this.narrationReads.delete(this.narrationReads.keys().next().value!);
+      const entry: {
+        revision: number;
+        privacy: unknown;
+        eligibility: number | undefined;
+        result?: TranscriptItem | null;
+        oldestTemporalAt?: number;
+        value: typeof value;
+      } = { revision, privacy, eligibility, value };
+      this.narrationReads.set(key, entry);
+      // A transient storage failure must not poison a reusable absent-banner result.
+      void value.then(
+        (result) => {
+          if (result.status === 'current') {
+            entry.result = result.item;
+            entry.oldestTemporalAt = oldestTemporalAt;
+          }
+        },
+        () => {
+          if (this.narrationReads.get(key) === entry) this.narrationReads.delete(key);
+        },
+      );
+    }
+    return value;
   }
+
   async perceivedEvents(
     worldId: string,
     ownerId: string,
@@ -1159,16 +1389,18 @@ export class HistoryRepository {
   ) {
     if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
       throw new Error('Unsupported history principal.');
-    return readPerceivedEvents(
-      this.db,
-      worldId,
-      actorId,
-      JSON.stringify([worldId, ownerId, actorId, epoch]),
-      options,
-      JSON.stringify([worldId, ownerId, actorId, sourceEpoch]),
-      corrections,
-      presentation,
-      currentRoles,
+    return this.readForActor(worldId, actorId, () =>
+      readPerceivedEvents(
+        this.db,
+        worldId,
+        actorId,
+        JSON.stringify([worldId, ownerId, actorId, epoch]),
+        options,
+        JSON.stringify([worldId, ownerId, actorId, sourceEpoch]),
+        corrections,
+        presentation,
+        currentRoles,
+      ),
     );
   }
   async perceivedEventSources(
@@ -1181,16 +1413,35 @@ export class HistoryRepository {
   ) {
     if (!this.principals.some((p) => p.ownerId === ownerId && p.actorId === actorId))
       throw new Error('Unsupported history principal.');
-    return readPerceivedEventSources(
-      this.db,
-      worldId,
-      actorId,
-      JSON.stringify([worldId, ownerId, actorId, sourceEpoch]),
-      references,
-      state,
+    return this.readForActor(worldId, actorId, () =>
+      readPerceivedEventSources(
+        this.db,
+        worldId,
+        actorId,
+        JSON.stringify([worldId, ownerId, actorId, sourceEpoch]),
+        references,
+        state,
+      ),
     );
   }
   async transcript(
+    worldId: string,
+    ownerId: string,
+    actorId: string,
+    options: {
+      participantId?: string;
+      speechOnly?: boolean;
+      responseActions?: boolean;
+      before?: number;
+      watermark?: number;
+      limit?: number;
+    } = {},
+  ): Promise<TranscriptPage> {
+    return this.readForActor(worldId, actorId, () =>
+      this.readTranscript(worldId, ownerId, actorId, options),
+    );
+  }
+  private async readTranscript(
     worldId: string,
     ownerId: string,
     actorId: string,

@@ -106,6 +106,7 @@ import {
   type TemporalValue,
 } from './temporal-evidence.js';
 import {
+  accountClass,
   adjustExperienceAccounting,
   ensureExperienceAccounting,
   impressionFits,
@@ -319,6 +320,11 @@ export interface ExperienceState {
   consolidatedAt: Record<string, number>;
   forgotten: Record<string, string[]>;
 }
+/** Operational privacy survives gameplay rewind without importing later experience. */
+export interface ExperiencePrivacy {
+  forgotten: ExperienceState['forgotten'];
+  corrections: NonNullable<ExperienceState['corrections']>;
+}
 export type MindFiles = { path: string; text: string }[];
 export interface InnerWorld {
   revision: number;
@@ -475,12 +481,91 @@ function containsExperienceKey(world: WorldState, actorId: string, key: string):
   if (source === 'summary') return containsEntryId(world.experience?.summaries[actorId], id, 'id');
   return false;
 }
+function experienceAdditionBudget(
+  world: WorldState,
+  actorId: string,
+  replacing: ReadonlySet<string> = new Set(),
+) {
+  ensureExperienceAccounting(world, actorId);
+  const accounts = world.experience?.temporal?.actors[actorId]?.accounts;
+  if (!accounts) return;
+  const totals = {
+    optional: { ...accounts.optional },
+    required: { ...accounts.required },
+    speech: { ...accounts.speech },
+  };
+  if (replacing.size)
+    for (const entry of experienceEntries(world, actorId).values()) {
+      if (
+        !replacing.has(
+          `${entry.source}:${entry.source === 'awareness' ? entry.value.eventId : entry.value.id}`,
+        )
+      )
+        continue;
+      const pool = totals[accountClass(entry)];
+      pool.bytes -= encodedExperienceBytes(entry);
+      pool.count--;
+    }
+  return totals;
+}
+function reserveExperienceAddition(
+  world: WorldState,
+  entry: ExperienceEntry,
+  totals: NonNullable<ReturnType<typeof experienceAdditionBudget>>,
+): boolean {
+  if (entry.source === 'awareness' && entry.value.retentionClass === 'sensory') return true;
+  const category = accountClass(entry),
+    policy = selectedTemporalPolicy(world),
+    pool = totals[category];
+  const headroom =
+    category === 'optional'
+      ? policy.maintenanceHeadroom
+      : category === 'speech'
+        ? policy.speechMaintenanceHeadroom
+        : 0;
+  const bytes = encodedExperienceBytes(entry);
+  if (
+    pool.bytes + bytes > policy[category].maxBytes * (1 + headroom) ||
+    pool.count + 1 > policy[category].maxRecords * (1 + headroom)
+  )
+    return false;
+  pool.bytes += bytes;
+  pool.count++;
+  return true;
+}
+function boundedAutomaticAccounts(
+  world: WorldState,
+  actorId: string,
+  entries: readonly ExperienceEntry[],
+): ExperienceEntry[] | null {
+  const totals = experienceAdditionBudget(world, actorId);
+  if (!totals) return null;
+  const admitted: ExperienceEntry[] = [];
+  for (const entry of entries) {
+    if (reserveExperienceAddition(world, entry, totals)) {
+      admitted.push(entry);
+      continue;
+    }
+    if (accountClass(entry) !== 'optional') return null;
+    const actor = world.experience!.temporal!.actors[actorId]!;
+    actor.recordingGap = {
+      from: actor.recordingGap?.from ?? world.simTime,
+      through: world.simTime,
+    };
+    actor.accounts!.nextDue = Math.min(actor.accounts!.nextDue ?? Infinity, world.simTime);
+  }
+  return admitted;
+}
+
 function canAddExperience(
   world: WorldState,
   actorId: string,
   entries: readonly ExperienceEntry[],
   replacing: ReadonlySet<string> = new Set(),
 ): boolean {
+  const totals = experienceAdditionBudget(world, actorId, replacing);
+  if (!totals || entries.some((entry) => !reserveExperienceAddition(world, entry, totals)))
+    return false;
   const keys = entries.map((entry) =>
     entry.source === 'awareness'
       ? `awareness:${entry.value.eventId}`
@@ -624,8 +709,11 @@ export function acquireEventAwareness(world: WorldState, entries: Awareness[]): 
         { operation: 'add', entry: { source: 'awareness', value: entry } },
         'transfer',
       );
-    } else if (hasMemory(entityGet(world.entities, entry.actorId)))
-      admitAutomaticExperience(world, entry.actorId, { source: 'awareness', value: entry });
+    } else if (
+      hasMemory(entityGet(world.entities, entry.actorId)) &&
+      admitAutomaticExperience(world, entry.actorId, { source: 'awareness', value: entry }) === null
+    )
+      throw new Error('Personal experience could not be recorded.');
   }
 }
 
@@ -716,6 +804,13 @@ export function admitAutomaticExperience(
     if (reason !== 'none') admitted.push(admittedEntry);
     return { entry: admittedEntry, reason };
   });
+  const bounded = boundedAutomaticAccounts(world, actorId, admitted);
+  if (bounded === null) return null;
+  const optionalAdmissionGap = bounded.length < admitted.length;
+  const admittedSet = new Set(bounded);
+  for (const decision of decisions)
+    if (decision.reason !== 'none' && !admittedSet.has(decision.entry)) decision.reason = 'none';
+  admitted.splice(0, admitted.length, ...bounded);
   if (!canAddExperience(world, actorId, admitted)) return null;
   const policy = selectedTemporalPolicy(world).recent;
   for (const { entry, reason } of decisions) {
@@ -825,6 +920,21 @@ export function admitAutomaticExperience(
       }
     }
   }
+  // Capturing exact minimum support can consume part of the optional pool.
+  // Recheck actual final charges; dropping optional autobiography never rejects
+  // the already valid physical operation. Required/speech admission stays strict.
+  const finalAdmissions = boundedAutomaticAccounts(world, actorId, admitted);
+  // Exact support has already changed this candidate. A mandatory refusal must
+  // abort the enclosing transition rather than publish a half-installed account.
+  if (finalAdmissions === null) throw new Error('Personal experience could not be recorded.');
+  if (optionalAdmissionGap || finalAdmissions.length < admitted.length) {
+    const actor = world.experience!.temporal!.actors[actorId]!;
+    actor.recordingGap = {
+      from: actor.recordingGap?.from ?? world.simTime,
+      through: world.simTime,
+    };
+  }
+  admitted.splice(0, admitted.length, ...finalAdmissions);
   const invalidated = admitted.length
     ? applyExperienceMutation(
         world,
@@ -833,7 +943,7 @@ export function admitAutomaticExperience(
         'transfer',
       )
     : [];
-  if (invalidated === null) return null;
+  if (invalidated === null) throw new Error('Personal experience could not be recorded.');
   for (const entry of admitted)
     if (entry.source === 'awareness') {
       acquireKnownPlaceEvidence(world, entry.value);
@@ -1677,6 +1787,60 @@ export function forgetExperience(input: WorldState, actorId: string, sourceId: s
   };
 }
 
+/** Reapply only accepted privacy constraints. A later correcting occurrence may
+ * be absent from the restored chronology: retain its disputed-source marker,
+ * never manufacture that occurrence or its text. Allocated IDs are not rewound.
+ * docs/save-and-load.md#current-history-capture-boundary */
+export function reapplyExperiencePrivacy(
+  input: WorldState,
+  privacy: ExperiencePrivacy | undefined,
+): WorldState {
+  if (!privacy) return input;
+  let world = input;
+  const pending = new Map<string, Map<string, string[]>>();
+  for (const [actorId, corrections] of Object.entries(privacy.corrections)) {
+    const forgotten = new Set(privacy.forgotten[actorId] ?? []);
+    for (const [sourceId, evidenceId] of Object.entries(corrections)) {
+      if (
+        forgotten.has(sourceId) ||
+        input.experience?.corrections?.[actorId]?.[sourceId] === evidenceId
+      )
+        continue;
+      let targets = pending.get(actorId);
+      if (!targets) pending.set(actorId, (targets = new Map()));
+      const sources = targets.get(evidenceId) ?? [];
+      sources.push(sourceId);
+      targets.set(evidenceId, sources);
+    }
+  }
+  if (pending.size) {
+    const draft = draftWorld(world);
+    migrateCognition(draft);
+    for (const [actorId, targets] of pending)
+      for (const [evidenceId, sources] of targets) {
+        const aliases = temporalAccountAliasClosure(draft, actorId, sources);
+        invalidateExperience(draft, actorId, sources, false, evidenceId);
+        const corrections = ((draft.experience!.corrections ??= {})[actorId] ??= {});
+        for (const alias of aliases) corrections[alias] = evidenceId;
+      }
+    world = finish(
+      draft,
+      [],
+      outcome(true, 'privacy-restored', 'Accepted privacy constraints restored.'),
+    ).world;
+  }
+  // Preserve the native rule that forgetting correcting evidence leaves the
+  // original disputed, and that protected unresolved obligations cannot vanish.
+  for (const [actorId, ids] of Object.entries(privacy.forgotten))
+    for (const sourceId of ids) {
+      if (world.experience?.forgotten[actorId]?.includes(sourceId)) continue;
+      const result = forgetExperience(world, actorId, sourceId);
+      if (!result.outcome.ok) throw new Error(result.outcome.message);
+      world = result.world;
+    }
+  return world;
+}
+
 /** An accepted interpretation remains a fallible account. The captured actor receipts
  * establish its provenance, never an exact knowledge or execution grant. */
 export function rememberInterpretation(
@@ -1764,9 +1928,9 @@ export function rememberInterpretation(
   ensureExperienceAccounting(world, actorId);
   const account = world.experience.temporal!.actors[actorId]!.accounts!.optional;
   if (
-    account.count + 1 > policy.optional.maxRecords ||
+    account.count + 1 > policy.optional.maxRecords * (1 + policy.maintenanceHeadroom) ||
     account.bytes + encodedExperienceBytes({ source: 'memory', value: entry }) >
-      policy.optional.maxBytes
+      policy.optional.maxBytes * (1 + policy.maintenanceHeadroom)
   )
     return false;
   return (
@@ -1801,7 +1965,11 @@ export function reinforceExperience(
     const delta =
       encodedExperienceBytes({ source: 'memory', value: next }) -
       encodedExperienceBytes({ source: 'memory', value: prior });
-    if (delta > 0 && account.bytes + delta > policy.optional.maxBytes) continue;
+    if (
+      delta > 0 &&
+      account.bytes + delta > policy.optional.maxBytes * (1 + policy.maintenanceHeadroom)
+    )
+      continue;
     adjustExperienceAccounting(world, actorId, { source: 'memory', value: prior }, -1);
     adjustExperienceAccounting(world, actorId, { source: 'memory', value: next }, 1);
     trackDetachedRecord(world, next);

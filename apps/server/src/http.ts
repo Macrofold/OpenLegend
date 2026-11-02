@@ -4134,6 +4134,7 @@ async function initializeGameServer(
    * report states whether the final save completed and the last revision confirmed durable. */
   async function shutdownOnce(deadlineMs: number): Promise<ShutdownReport> {
     disposed = true;
+    service.stopAdmission();
     clearInterval(streamHeartbeat);
     creationRecoveryStop.abort();
     maintenance.close();

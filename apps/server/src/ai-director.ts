@@ -2052,7 +2052,29 @@ export class AiDirector {
     dispatch: (requestId: string) => Promise<AiResult<T>>,
     meter?: Meter,
   ): Promise<T> {
+    const evidenceActor = this.current(run);
+    const sourceAccess = this.service.store.memories?.sourceAccessRevision({
+      worldId: this.service.world.id,
+      actorId: evidenceActor,
+    });
+    const evidenceThrough = this.service.durabilityTicket();
+    // Every actual request is already rendered when this boundary is entered.
+    // Join its fixed save prefix before reserving/dispatching; never force a save
+    // or retarget this wait as unrelated physical publications arrive.
+    await this.service.whenDurable(evidenceThrough);
     const sourceActorId = this.current(run);
+    if (
+      sourceAccess !==
+        this.service.store.memories?.sourceAccessRevision({
+          worldId: this.service.world.id,
+          actorId: sourceActorId,
+        }) ||
+      this.service.store.memories?.sourceEditPending({
+        worldId: this.service.world.id,
+        actorId: sourceActorId,
+      })
+    )
+      throw new StopJob('failed', 'The character’s evidence changed before dispatch.', 'stale');
     const sourceCurrent = this.service.privateReadFence(
       sourceActorId,
       () => this.current(run) === sourceActorId,

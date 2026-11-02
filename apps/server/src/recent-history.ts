@@ -135,7 +135,7 @@ export async function recentHistory(
     service.mayInspectPrivate(actorId, scope) &&
     !!entityGet(service.world.entities, actorId)?.actor;
   if (!permitted()) throw new AuthorityError('forbidden');
-  await service.flushMemorySources(actorId);
+  await service.ready;
   const records = service.store.records,
     memories = service.store.memories;
   if (!records || !memories) throw new Error('Recent observations require the history database.');
@@ -181,7 +181,7 @@ export async function recentHistory(
   const receiptsCurrent = await memories.temporalSelectionsCurrent(
     { worldId, actorId, generation: head.generation },
     page.map((row) => row.entry),
-    () => temporalHistoryWindow(service.world),
+    () => temporalHistoryWindow(service.world, actorId),
   );
   if (
     !receiptsCurrent ||

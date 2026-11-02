@@ -356,6 +356,11 @@ export class AuthorityRepository {
   private construction = new Map<string, readonly ConstructionPermission[]>();
   private campAssets = new Map<string, readonly CampAssetPermission[]>();
   private sessions = new Map<string, LoginSession>();
+  private readonly tokenSessions = new Map<string, string>();
+  private readonly authenticationReads = new Map<
+    string,
+    Promise<Record<string, unknown> | undefined>
+  >();
   private publication = {};
   private grants = new Map<string, WorldGrant>();
   private controls = new Map<string, ControlLease>();
@@ -921,22 +926,63 @@ export class AuthorityRepository {
       this.changed(() => {
         for (const [id, old] of this.sessions) if (old.expiresAt <= now) this.sessions.delete(id);
         this.sessions.set(session.id, session);
+        this.rememberToken(hash(token), session, now);
       });
       return { token, session };
     });
   }
+  private rememberToken(tokenHash: string, session: LoginSession, now: number): void {
+    // Session creation is capped by the existing authority owner. This additional
+    // index is bounded independently and never owns credentials or permission.
+    for (const [token, id] of this.tokenSessions) {
+      const value = this.sessions.get(id);
+      if (!value || value.expiresAt <= now) this.tokenSessions.delete(token);
+    }
+    if (this.tokenSessions.size >= 4096)
+      this.tokenSessions.delete(this.tokenSessions.keys().next().value!);
+    this.tokenSessions.set(tokenHash, session.id);
+  }
+  private cachedSession(tokenHash: string, now: number): LoginSession | undefined {
+    const id = this.tokenSessions.get(tokenHash);
+    const session = id ? this.sessions.get(id) : undefined;
+    if (session && session.expiresAt > now) return session;
+    this.tokenSessions.delete(tokenHash);
+    return undefined;
+  }
+  private async authenticationRead(
+    key: string,
+    read: () => Promise<Record<string, unknown> | undefined>,
+  ) {
+    const existing = this.authenticationReads.get(key);
+    if (existing) return existing;
+    if (this.authenticationReads.size >= 4096) throw new AuthorityError('session');
+    const operation = read();
+    this.authenticationReads.set(key, operation);
+    try {
+      return await operation;
+    } finally {
+      if (this.authenticationReads.get(key) === operation) this.authenticationReads.delete(key);
+    }
+  }
   async authenticate(token: string | undefined, now: number): Promise<LoginSession> {
     if (!token || !/^[a-f0-9]{64}$/.test(token)) throw new AuthorityError('session');
+    const tokenHash = hash(token),
+      cached = this.cachedSession(tokenHash, now);
+    if (cached) return cached;
     const publication = this.publication;
-    const row = await this.db
-      .prepare(
-        `SELECT id AS login_id,account_id AS login_account_id,
+    const row = await this.authenticationRead(tokenHash, () =>
+      this.db
+        .prepare(
+          `SELECT id AS login_id,account_id AS login_account_id,
          revision AS login_revision,expires_at AS login_expires_at
          FROM auth_sessions WHERE token_hash=? AND expires_at>?`,
-      )
-      .get(hash(token), now);
-    if (!row) throw new AuthorityError('session');
-    return this.sessionFromRow(row, publication);
+        )
+        .get(tokenHash, now),
+    );
+    if (!row || publication !== this.publication) throw new AuthorityError('session');
+    const session = this.sessionFromRow(row, publication);
+    this.rememberToken(tokenHash, session, now);
+    return session;
   }
   private sessionFromRow(row: Record<string, unknown>, publication: object): LoginSession {
     const session: LoginSession = {
@@ -947,11 +993,12 @@ export class AuthorityRepository {
     };
     // A read begun before logout/account replacement must not revive its cache entry.
     // The returned scope still has the ordinary current and SQL publication fences.
-    if (publication === this.publication) this.sessions.set(session.id, session);
+    if (publication === this.publication && !this.db.transactionActive)
+      this.sessions.set(session.id, session);
     return session;
   }
-  /** Ordinary HTTP admission needs these exact facts together, once per request.
-   * No authority is reused across requests or past the existing commit fence. */
+  /** The sole writer publishes session/grant/control changes into these maps after
+   * commit. Unknown tokens share one cold snapshot; protected SQL fences remain. */
   async authenticateScope(
     token: string | undefined,
     now: number,
@@ -960,10 +1007,17 @@ export class AuthorityRepository {
     connectionId: string,
   ): Promise<RequestScope> {
     if (!token || !/^[a-f0-9]{64}$/.test(token)) throw new AuthorityError('session');
+    const tokenHash = hash(token),
+      session = this.cachedSession(tokenHash, now);
+    const grant = session && this.grants.get(key(worldId, session.accountId));
+    const control = grant?.actorId ? this.controls.get(key(worldId, grant.actorId)) : undefined;
+    if (session && grant && (!grant.actorId || control))
+      return this.scopeFromGrant(session, worldId, timelineId, connectionId, grant, control);
     const publication = this.publication;
-    const row = await this.db
-      .prepare(
-        `SELECT s.id AS login_id,s.account_id AS login_account_id,
+    const row = await this.authenticationRead(JSON.stringify([worldId, tokenHash]), () =>
+      this.db
+        .prepare(
+          `SELECT s.id AS login_id,s.account_id AS login_account_id,
          s.revision AS login_revision,s.expires_at AS login_expires_at,
          g.actor_id,g.revision,g.capabilities,
          c.generation,c.account_id,c.session_id,c.connection_id
@@ -971,11 +1025,14 @@ export class AuthorityRepository {
          LEFT JOIN auth_grants g ON g.world_id=? AND g.account_id=s.account_id
          LEFT JOIN auth_controls c ON c.world_id=g.world_id AND c.actor_id=g.actor_id
          WHERE s.token_hash=? AND s.expires_at>?`,
-      )
-      .get(worldId, hash(token), now);
-    if (!row) throw new AuthorityError('session');
-    const session = this.sessionFromRow(row, publication);
-    return this.scopeFromRow(session, worldId, timelineId, connectionId, row);
+        )
+        .get(worldId, tokenHash, now),
+    );
+    // A logout/control change during a read cannot reintroduce the old snapshot.
+    if (!row || publication !== this.publication) throw new AuthorityError('session');
+    const loaded = this.sessionFromRow(row, publication);
+    this.rememberToken(tokenHash, loaded, now);
+    return this.scopeFromRow(loaded, worldId, timelineId, connectionId, row);
   }
   async revokeSession(sessionId: string, now: number): Promise<void> {
     await this.db.transaction(async () => {
@@ -986,6 +1043,8 @@ export class AuthorityRepository {
     });
   }
   async grant(worldId: string, accountId: string): Promise<WorldGrant | undefined> {
+    const cached = this.grants.get(key(worldId, accountId));
+    if (cached && !this.db.transactionActive) return cached;
     const row = await this.db
       .prepare('SELECT * FROM auth_grants WHERE world_id=? AND account_id=?')
       .get(worldId, accountId);
@@ -1007,11 +1066,13 @@ export class AuthorityRepository {
     // A read can finish after a newer writer has published its authority change.
     // Keep that committed revision; the returned older scope will then fail current().
     const cached = this.grants.get(key(worldId, accountId));
-    if (!cached || cached.revision <= value.revision)
+    if (!this.db.transactionActive && (!cached || cached.revision <= value.revision))
       this.grants.set(key(worldId, accountId), value);
     return value;
   }
   async control(worldId: string, actorId: string): Promise<ControlLease> {
+    const cached = this.controls.get(key(worldId, actorId));
+    if (cached && !this.db.transactionActive) return cached;
     const row = await this.db
       .prepare('SELECT * FROM auth_controls WHERE world_id=? AND actor_id=?')
       .get(worldId, actorId);
@@ -1031,7 +1092,7 @@ export class AuthorityRepository {
       connectionId: String(row?.['connection_id'] ?? ''),
     };
     const cached = this.controls.get(key(worldId, actorId));
-    if (!cached || cached.generation <= value.generation)
+    if (!this.db.transactionActive && (!cached || cached.generation <= value.generation))
       this.controls.set(key(worldId, actorId), value);
     return value;
   }
@@ -1041,6 +1102,10 @@ export class AuthorityRepository {
     timelineId: string,
     connectionId: string,
   ): Promise<RequestScope> {
+    const grant = this.grants.get(key(worldId, session.accountId));
+    const control = grant?.actorId ? this.controls.get(key(worldId, grant.actorId)) : undefined;
+    if (grant && (!grant.actorId || control) && !this.db.transactionActive)
+      return this.scopeFromGrant(session, worldId, timelineId, connectionId, grant, control);
     // These facts describe one requested scope. One statement gives them one SQL
     // snapshot and avoids another read-lane wait for the character's controller.
     const row = await this.db
@@ -1063,6 +1128,17 @@ export class AuthorityRepository {
   ): RequestScope {
     if (!row || row['capabilities'] == null) throw new AuthorityError('forbidden');
     const grant = this.grantFromRow(worldId, session.accountId, row);
+    const control = grant.actorId ? this.controlFromRow(worldId, grant.actorId, row) : undefined;
+    return this.scopeFromGrant(session, worldId, timelineId, connectionId, grant, control);
+  }
+  private scopeFromGrant(
+    session: LoginSession,
+    worldId: string,
+    timelineId: string,
+    connectionId: string,
+    grant: WorldGrant,
+    control?: ControlLease,
+  ): RequestScope {
     if (!grant.actorId && grant.capabilities.length)
       return Object.freeze({
         accountId: session.accountId,
@@ -1078,7 +1154,7 @@ export class AuthorityRepository {
       });
     if (!grant.actorId || !grant.capabilities.includes('play'))
       throw new AuthorityError('forbidden');
-    const control = this.controlFromRow(worldId, grant.actorId, row);
+    control ??= this.controlFromRow(worldId, grant.actorId, undefined);
     return Object.freeze({
       accountId: session.accountId,
       sessionId: session.id,

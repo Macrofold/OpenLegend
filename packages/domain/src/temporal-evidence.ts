@@ -70,6 +70,8 @@ import { personalFactAlias } from './experience-source.js';
 import { immutableDataSnapshot, jsonEncoding, jsonText } from './records.js';
 import {
   selectedRecognitionSupportSourceIds,
+  selectedMarkRecentIndividualReferences,
+  selectedRequestRecentIndividualRepair,
   selectedTemporalPolicy,
   selectedAttentionPolicy,
 } from './world-composition.js';
@@ -268,6 +270,10 @@ export interface TemporalActorHistory {
   maintenanceDue: boolean;
   /** Conservative unavailable-prefix coverage, not a ledger of fictional sensory losses. */
   releasedThrough?: number;
+  /** Exact logical prefix frontier; physical rows may be collected later. */
+  retiredThrough?: { chunkOrder: number; ordinal: number; at: number };
+  /** Finite exceptional sparse-edit work, coalesced by the existing retention owner. */
+  individualRepairs?: string[];
   /** Last recorded support of an actual current geometry acquisition. This is
    * bookkeeping only; its source retains the typed value and original times. */
   geometryCaptures: Record<string, { confirmedThrough: number }>;
@@ -298,6 +304,12 @@ export interface TemporalEvidenceState {
   namespace: string;
   actors: Record<string, TemporalActorHistory>;
 }
+/** A receipt expires at its deadline, independently of physical collection.
+ * Minimum support already owned by another account has its own lifetime. */
+export function temporalRecentAt(at: number, now: number, maxAgeSeconds: number): boolean {
+  return at + maxAgeSeconds > now;
+}
+
 export interface TemporalRetentionPolicy {
   maxAgeSeconds: number;
   maxBytes: number;
@@ -919,6 +931,7 @@ export function appendTemporalReceipt(
   if (
     !chunk ||
     chunk.epoch !== actor.epoch ||
+    !temporalRecentAt(chunk.throughAt, world.simTime, policy.maxAgeSeconds) ||
     (chunk.count > 0 && append && append.bytes > policy.chunkBytes)
   ) {
     const order = world.nextId;
@@ -954,6 +967,20 @@ export function appendTemporalReceipt(
     actor.geometryCaptureRepairDue = true;
     return;
   }
+  const headroom = selectedTemporalPolicy(world).maintenanceHeadroom;
+  if (
+    !input.required &&
+    (actor.bytes + append.bytes - (created ? 0 : chunk.bytes) > policy.maxBytes * (1 + headroom) ||
+      actor.count + changes > policy.maxChanges * (1 + headroom))
+  ) {
+    actor.recordingGap = {
+      from: actor.recordingGap?.from ?? world.simTime,
+      through: world.simTime,
+    };
+    actor.geometryCaptureRepairDue = true;
+    actor.maintenanceDue = true;
+    return;
+  }
   if (created) {
     actor.bytes += chunk.bytes;
     actor.chunks.push(chunk);
@@ -972,6 +999,12 @@ export function appendTemporalReceipt(
   chunk.bytes = append.bytes;
   actor.bytes += append.bytes - previousBytes;
   actor.count += changes;
+  selectedMarkRecentIndividualReferences(world, actorId, headers.individualIds, {
+    epoch: actor.epoch,
+    ordinal: header.ordinal,
+    chunkOrder: chunk.order,
+    at: header.at,
+  });
   countDomainWork('temporalOperationsAppended');
   countDomainWork(
     'temporalFieldsAppended',
@@ -1732,6 +1765,7 @@ export function retireTemporalChunks(
   totals: { bytes: number; count: number },
   nextDue: number | null,
   releasedThrough?: number,
+  frontier?: { chunkOrder: number; ordinal: number },
 ): void {
   touchNativeEvidence(world, 'temporal', actorId);
   const actor = world.experience?.temporal?.actors[actorId];
@@ -1743,6 +1777,14 @@ export function retireTemporalChunks(
   actor.nextDue = nextDue;
   if (releasedThrough !== undefined)
     actor.releasedThrough = Math.max(actor.releasedThrough ?? 0, releasedThrough);
+  if (
+    frontier &&
+    (!actor.retiredThrough ||
+      frontier.chunkOrder > actor.retiredThrough.chunkOrder ||
+      (frontier.chunkOrder === actor.retiredThrough.chunkOrder &&
+        frontier.ordinal > actor.retiredThrough.ordinal))
+  )
+    actor.retiredThrough = { ...frontier, at: releasedThrough ?? world.simTime };
   // Cursors belong to current received groups. An unrelated old chunk's removal
   // changes neither those memberships nor the current geometry acquisition.
   // The next chunk declares its own exact membership when an actual check arrives.
@@ -2029,6 +2071,19 @@ export function retireTemporalReceipts(
     actor.releasedThrough ?? 0,
     ...removed.map((receipt) => receipt.at),
   );
+  if (!remaining.length || removed.every((receipt) => receipt.ordinal < remaining[0]!.ordinal)) {
+    const ordinal = Math.max(...removed.map((receipt) => receipt.ordinal));
+    if (
+      !actor.retiredThrough ||
+      chunk.order > actor.retiredThrough.chunkOrder ||
+      (chunk.order === actor.retiredThrough.chunkOrder && ordinal > actor.retiredThrough.ordinal)
+    )
+      actor.retiredThrough = {
+        chunkOrder: chunk.order,
+        ordinal,
+        at: Math.max(...removed.map((receipt) => receipt.at)),
+      };
+  }
   actor.nextDue = nextDue;
   const policy = selectedTemporalPolicy(world).recent;
   actor.maintenanceDue =
@@ -2121,6 +2176,7 @@ export function selectTemporalHistory(
       actorId,
       chunks: actor.chunks,
       releasedThrough: actor.releasedThrough,
+      retiredThrough: actor.retiredThrough,
       sources: world.receivedValues?.sources ?? {},
       disclosure: captureTemporalReadContext(world, actorId),
       maximumOperations: selectedAttentionPolicy(world).scene.historyReceipts,
@@ -2165,6 +2221,10 @@ export function selectCapturedTemporalHistory(
   const chunks = context.chunks.filter(
     (chunk) =>
       chunk.actorId === actorId &&
+      (!context.retiredThrough ||
+        chunk.order > context.retiredThrough.chunkOrder ||
+        (chunk.order === context.retiredThrough.chunkOrder &&
+          chunk.throughOrdinal > context.retiredThrough.ordinal)) &&
       (!query.epoch || chunk.epoch === query.epoch) &&
       (query.physicalLife === undefined || chunk.physicalLife === query.physicalLife) &&
       (query.from === undefined || chunk.throughAt >= query.from) &&
@@ -2216,6 +2276,13 @@ export function selectCapturedTemporalHistory(
         operation = selected.operations[selected.position--]!;
       selected.header = undefined;
       if (
+        (!context.retiredThrough ||
+          selected.chunk.order > context.retiredThrough.chunkOrder ||
+          (selected.chunk.order === context.retiredThrough.chunkOrder &&
+            header.ordinal > context.retiredThrough.ordinal)) &&
+        (context.at === undefined ||
+          context.maxAgeSeconds === undefined ||
+          temporalRecentAt(header.at, context.at, context.maxAgeSeconds)) &&
         (!query.cut || temporalReceiptWithinPrefix({ ...header, facets: [] }, query.cut)) &&
         (query.from === undefined || header.at >= query.from) &&
         (query.through === undefined || header.at <= query.through) &&
@@ -2621,6 +2688,7 @@ export function invalidateTemporalEvidence(
           )),
     );
     if (!removed.length) continue;
+    selectedRequestRecentIndividualRepair(world, actorId, chunk.order, chunk.individualIds);
     actor.releasedThrough = Math.max(
       actor.releasedThrough ?? 0,
       ...removed.map((receipt) => receipt.at),
@@ -2795,6 +2863,7 @@ export function invalidateTemporalFacets(
       return !remove;
     });
     if (!changed) continue;
+    selectedRequestRecentIndividualRepair(world, actorId, chunk.order, chunk.individualIds);
     replaceTemporalChunkReceipts(chunk, retained, world, checkpoints, confirmations);
     refreshChunk(chunk, world);
     if (chunk.count) invalidateChangedRecordingMemberships(world, actorId, chunk);
@@ -3085,7 +3154,10 @@ export function temporalReceiptForSource(
   const maxAge = selectedTemporalPolicy(world).recent.maxAgeSeconds;
   for (let index = chunks.length - 1; index >= 0; index--)
     for (const receipt of temporalChunkReceipts(chunks[index]!))
-      if (receipt.at + maxAge > world.simTime && receipt.sourceIds.includes(sourceId))
+      if (
+        temporalRecentAt(receipt.at, world.simTime, maxAge) &&
+        receipt.sourceIds.includes(sourceId)
+      )
         return {
           actorId,
           physicalLife: receipt.physicalLife,
@@ -3113,7 +3185,13 @@ export function hasRetainedTemporalSource(
   }) => temporalReceiptAliases(owner, sources, world).includes(sourceId);
   for (const chunk of actor.chunks) {
     if (chunk.throughAt <= cutoff || !chunk.sourceIds.includes(sourceId)) continue;
-    const actual = temporalChunkReceipts(chunk).filter((receipt) => receipt.at > cutoff);
+    const actual = temporalChunkReceipts(chunk).filter((receipt) =>
+      temporalRecentAt(
+        receipt.at,
+        world.simTime,
+        selectedTemporalPolicy(world).recent.maxAgeSeconds,
+      ),
+    );
     if (actual.some(includes)) return true;
     const retained = new Set(actual.map((receipt) => receipt.ordinal));
     for (const confirmation of temporalEntryConfirmations(chunk))
@@ -3216,7 +3294,11 @@ export function retainedTemporalReceipt(
   const heldReceipt = findTemporalReceipt(actor, locator);
   const receipt =
     heldReceipt &&
-    heldReceipt.at + selectedTemporalPolicy(world).recent.maxAgeSeconds > world.simTime
+    temporalRecentAt(
+      heldReceipt.at,
+      world.simTime,
+      selectedTemporalPolicy(world).recent.maxAgeSeconds,
+    )
       ? heldReceipt
       : undefined;
   const selected =
@@ -3285,7 +3367,10 @@ export function retainTemporalSupport(
     return actor.supports![id];
   }
   const receipt = findTemporalReceipt(actor, locator);
-  if (!receipt || receipt.at + selectedTemporalPolicy(world).recent.maxAgeSeconds <= world.simTime)
+  if (
+    !receipt ||
+    !temporalRecentAt(receipt.at, world.simTime, selectedTemporalPolicy(world).recent.maxAgeSeconds)
+  )
     return;
   const selected =
     options.facetOrdinals &&
@@ -3398,7 +3483,11 @@ export function retainTemporalStateSupport(
     !sameReceiptAddress(anchor, baseline.forReceipt) ||
     anchor.at !== baseline.availableAt ||
     anchor.at > world.simTime ||
-    baseline.availableAt + selectedTemporalPolicy(world).recent.maxAgeSeconds <= world.simTime ||
+    !temporalRecentAt(
+      baseline.availableAt,
+      world.simTime,
+      selectedTemporalPolicy(world).recent.maxAgeSeconds,
+    ) ||
     baseline.checkpoint.facets.length !== baseline.values.length ||
     !baseline.values.length ||
     baseline.checkpoint.facets.some(
@@ -3493,7 +3582,7 @@ export function setTemporalSupportRequired(
   const after = actor.accounts![required ? 'required' : 'optional'];
   const replacement = { ...readOnlyDraftView(capsule), required };
   initialBytes(replacement, () => temporalSupportLogicalBytes(replacement));
-  if (after.count >= limits.maxRecords || after.bytes + replacement.bytes > limits.maxBytes)
+  if (after.count + 1 > limits.maxRecords || after.bytes + replacement.bytes > limits.maxBytes)
     return false;
   if (before.bytes < capsule.bytes || before.count < 1)
     throw new Error('Temporal support counters underflowed.');

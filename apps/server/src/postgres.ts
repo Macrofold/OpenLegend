@@ -3,6 +3,14 @@ import { timed, beginTiming, endTiming } from './performance.js';
 import pg from 'pg';
 import { AsyncLocalStorage } from 'node:async_hooks';
 import type { SqlDatabase } from './store.js';
+import {
+  LiveReadOverlay,
+  LiveReadRevisionError,
+  mayReadLiveTables,
+  readsPersonalHistory,
+  type LiveReadCuts,
+  type LiveReadCutsProvider,
+} from './live-read-overlay.js';
 
 /** Independent bounded read and write lanes; a large recall cannot occupy the writer. */
 export class PostgresDatabase implements SqlDatabase {
@@ -21,7 +29,23 @@ export class PostgresDatabase implements SqlDatabase {
     readOnly: boolean;
     committed: (() => void)[];
     rolledBack: (() => void)[];
+    liveCuts?: LiveReadCuts;
+    liveOverlay?: LiveReadOverlay;
+    exactCut?: boolean;
+    actor?: { worldId: string; actorId: string };
   }>();
+  private readonly actorReadScope = new AsyncLocalStorage<{ worldId: string; actorId: string }>();
+  readForActor<T>(worldId: string, actorId: string, operation: () => Promise<T>): Promise<T> {
+    return this.actorReadScope.run({ worldId, actorId }, operation);
+  }
+  private readonly explicitReadCut = new AsyncLocalStorage<LiveReadCuts>();
+  readAtCut<T>(cut: LiveReadCuts, operation: () => Promise<T>): Promise<T> {
+    return this.explicitReadCut.run(cut, operation);
+  }
+  private liveReadCuts?: LiveReadCutsProvider;
+  setLiveReadCuts(provider: LiveReadCutsProvider): void {
+    this.liveReadCuts = provider;
+  }
   private failed = false;
   private fail(): void {
     this.failed = true;
@@ -90,12 +114,28 @@ export class PostgresDatabase implements SqlDatabase {
     }
     return this.serial(() => this.inTransaction(this.client, false, operation));
   }
+  maintenanceTransaction<T>(operation: () => Promise<T>): Promise<T> {
+    if (this.transactionContext.getStore()?.active) return this.transaction(operation);
+    return this.writeLane.run(
+      () => this.inTransaction(this.client, false, operation),
+      this.writeLane.waitMs,
+      true,
+    );
+  }
   readTransaction<T>(operation: () => Promise<T>): Promise<T> {
     if (this.transactionContext.getStore()?.active) return operation();
     return this.read(operation, true);
   }
-  private read<T>(operation: () => Promise<T>, snapshot: boolean): Promise<T> {
+  private read<T>(
+    operation: () => Promise<T>,
+    snapshot: boolean,
+    liveTables = false,
+    personalHistory = false,
+  ): Promise<T> {
     const queuedAt = beginTiming();
+    const explicitCut = this.explicitReadCut.getStore();
+    const actor = this.actorReadScope.getStore();
+    const liveCuts = explicitCut ?? this.liveReadCuts?.(actor);
     return this.readLane.run(async () => {
       endTiming('postgres.readWait', queuedAt);
       this.readReady ??= this.ready.then(async () => {
@@ -105,7 +145,13 @@ export class PostgresDatabase implements SqlDatabase {
         );
       });
       await this.readReady;
-      if (snapshot) return this.inTransaction(this.reader, true, operation);
+      if (
+        snapshot ||
+        explicitCut ||
+        (liveTables &&
+          (liveCuts?.cuts.length || (personalHistory && liveCuts?.historyEligibility?.size)))
+      )
+        return this.inTransaction(this.reader, true, operation, liveCuts, !!explicitCut, actor);
       // A single SELECT already has an atomic PostgreSQL snapshot. It needs neither
       // a writer slot nor BEGIN/COMMIT; explicit multi-query reads still use both.
       const scope = {
@@ -126,6 +172,9 @@ export class PostgresDatabase implements SqlDatabase {
     client: pg.Client,
     readOnly: boolean,
     operation: () => Promise<T>,
+    liveCuts?: LiveReadCuts,
+    exactCut = false,
+    actor?: { worldId: string; actorId: string },
   ): Promise<T> {
     const scope = {
       active: true,
@@ -133,6 +182,9 @@ export class PostgresDatabase implements SqlDatabase {
       readOnly,
       committed: [] as (() => void)[],
       rolledBack: [] as (() => void)[],
+      liveCuts,
+      exactCut,
+      actor,
     };
     return this.transactionContext.run(scope, async () => {
       let result: T;
@@ -167,6 +219,53 @@ export class PostgresDatabase implements SqlDatabase {
       await this.ready;
       if (this.failed)
         throw new Error('PostgreSQL unavailable; restart and reconcile pending writes.');
+      const scope = this.transactionContext.getStore();
+      if (
+        scope?.readOnly &&
+        scope.liveCuts &&
+        (scope.liveCuts.cuts.length ||
+          scope.exactCut ||
+          (scope.liveCuts.historyEligibility?.size && readsPersonalHistory(sql))) &&
+        mayReadLiveTables(sql)
+      ) {
+        if (!scope.liveOverlay) {
+          // The header and all selected durable rows share this repeatable-read
+          // snapshot. A save completing during capture is mapped to its prefix.
+          const head = await this.query(
+            'SELECT world_id,generation,revision FROM world_head WHERE id=1',
+          );
+          const value = head.rows[0];
+          const prepare = (cut: LiveReadCuts) =>
+            new LiveReadOverlay(
+              cut,
+              Number(value?.['revision']),
+              String(value?.['generation']),
+              String(value?.['world_id']),
+              scope.actor,
+            );
+          try {
+            scope.liveOverlay = prepare(scope.liveCuts);
+          } catch (error) {
+            // A current read gets one recapture before any source query runs.
+            // Explicit historical/native cuts never silently move forward.
+            const latest =
+              !scope.exactCut && error instanceof LiveReadRevisionError
+                ? this.liveReadCuts?.(scope.actor)
+                : undefined;
+            if (
+              !latest ||
+              latest.generation !== scope.liveCuts.generation ||
+              latest.timeline !== scope.liveCuts.timeline
+            )
+              throw error;
+            scope.liveOverlay = prepare(latest);
+            scope.liveCuts = latest;
+          }
+        }
+        const rewritten = scope.liveOverlay.rewrite(sql, params);
+        sql = rewritten.sql;
+        params = rewritten.params;
+      }
       let index = 0;
       const translated = sql.replace(/\?/g, () => `$${++index}`);
       try {
@@ -193,9 +292,15 @@ export class PostgresDatabase implements SqlDatabase {
   prepare(sql: string) {
     const select = (...params: unknown[]) =>
       !this.transactionContext.getStore()?.active &&
-      /^\s*SELECT\b/i.test(sql) &&
+      /^\s*(SELECT|WITH)\b/i.test(sql) &&
+      !/\b(?:INSERT|UPDATE|DELETE)\b/i.test(sql) &&
       !/\bFOR\s+(UPDATE|NO\s+KEY\s+UPDATE|SHARE|KEY\s+SHARE)\b/i.test(sql)
-        ? this.read(() => this.query(sql, params), false)
+        ? this.read(
+            () => this.query(sql, params),
+            false,
+            mayReadLiveTables(sql),
+            readsPersonalHistory(sql),
+          )
         : this.query(sql, params);
     return {
       get: async (...params: unknown[]) => (await select(...params)).rows[0],

@@ -22,6 +22,7 @@ export interface CapturedTemporalHistoryContext {
   readonly maxAgeSeconds?: number;
   readonly chunks: readonly TemporalChunk[];
   readonly releasedThrough?: number;
+  readonly retiredThrough?: { readonly chunkOrder: number; readonly ordinal: number };
   readonly recordingGap?: { readonly from: number; readonly through: number };
   readonly sources: ReceivedValueLookup;
   readonly disclosure: TemporalReadContext;

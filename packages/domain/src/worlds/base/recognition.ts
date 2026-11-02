@@ -9,7 +9,12 @@ import {
 } from '../../knowledge.js';
 import { readAttribute, definitionPin } from '../../world-modules.js';
 import type { WorldEvent, WorldState } from '../../types.js';
-import { commitObserverIdentity, identitiesForEntity, type ObserverIdentity } from './knowledge.js';
+import {
+  commitObserverIdentity,
+  identitiesForEntity,
+  adjustObserverIdentityAccounting,
+  type ObserverIdentity,
+} from './knowledge.js';
 import {
   isTemporalReceiptSource,
   setTemporalSupportRequired,
@@ -20,7 +25,6 @@ import {
   temporalReceiptSource,
   retainedTemporalReceipt,
 } from '../../temporal-evidence.js';
-import { adjustRetainedKnowledgeAccounting } from '../../remembered-impressions.js';
 import { BASE_ATTENTION_POLICY } from './attention.js';
 import { normalSpeedSeconds } from '../../simulation-time.js';
 import { isSafeRecordId } from '../../records.js';
@@ -806,7 +810,7 @@ function perceiveIndividual(
       for (const [key, prior] of Object.entries(records))
         if (prior === seed.identity) {
           if (prior.retained && !prior.authored)
-            adjustRetainedKnowledgeAccounting(world, observerId, prior, undefined);
+            adjustObserverIdentityAccounting(world, observerId, prior, undefined);
           delete records[key];
         }
     result.learnedSubject = localSubject(identity);
@@ -859,7 +863,7 @@ export function retireRecognitionIdentity(
   identity: ObserverIdentity,
 ): void {
   if (identity.retained && !identity.authored)
-    adjustRetainedKnowledgeAccounting(world, observerId, identity, undefined);
+    adjustObserverIdentityAccounting(world, observerId, identity, undefined);
   delete world.observerIdentities![observerId]![key];
   for (const source of recognitionSupportSources(identity.nameEvidenceIds ?? []))
     if ('family' in source && isTemporalReceiptSource(source))

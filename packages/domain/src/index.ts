@@ -1,3 +1,8 @@
+export {
+  allocatedIdentityBetween,
+  releaseIdentityAllocationProof,
+  preserveIdentityHighWater,
+} from './identity-allocation.js';
 export * from './observed-animation.js';
 export { inheritUnchangedExposure } from './encounter-cache.js';
 export * from './entity-collection.js';
@@ -437,6 +442,7 @@ export {
   captureTemporalReceiptPrefix,
   temporalReceiptWithinPrefix,
   selectTemporalHistory,
+  temporalRecentAt,
   selectCapturedTemporalHistory,
   invalidateTemporalEvidence,
   invalidateTemporalFacets,

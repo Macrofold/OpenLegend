@@ -1,3 +1,19 @@
+import { nextRecentRetentionAt, nextAccountRetentionAt } from './retention-deadlines.js';
+import { releaseIdentityAllocationProof, preserveIdentityHighWater } from '@open-legend/domain';
+import { applyAccountRetentionPlan } from './account-retention.js';
+import { applyRecentRetention } from './recent-retention.js';
+import { mergeRecordChanges, retainedSourceTables } from './world-records.js';
+import {
+  PendingWorldSave,
+  LIVE_SAVE_INTERVAL_MS,
+  LIVE_SAVE_MAX_AGE_MS,
+  LIVE_SAVE_MAX_BYTES,
+} from './pending-world-save.js';
+import {
+  prepareHistory,
+  captureHistoryRead,
+  captureHistoryAccountCut,
+} from './history-preparation.js';
 import { entityChangesBetween, recordMapChangesBetween } from '@open-legend/domain';
 import { nativeText } from '@open-legend/domain';
 import {
@@ -9,6 +25,7 @@ import {
 import {
   sourceVersionPreparationNeeded,
   restoredSourceVersions,
+  applySourceVersionAccounting,
 } from './source-version-retention.js';
 import { historyKey, historyPositions } from './history-residency.js';
 import { experienceRetentionDue } from '@open-legend/domain';
@@ -21,6 +38,7 @@ import {
 } from './public-contact-references.js';
 import { personalAccountRevision } from './personal-accounts.js';
 import { RETRIEVAL_ROWS, RETRIEVAL_BYTES, memorySourceProof } from './memory-repository.js';
+import { privacyLedgerKey, readPrivacyLedger } from './privacy-ledger.js';
 import {
   captureKnownPlaceEvidence,
   inheritUnchangedExposure,
@@ -184,6 +202,7 @@ import { resolveKnownPlaceMove } from './known-places.js';
 import type { StoryJob } from './history.js';
 import {
   prepareHistoryEdit,
+  mergeHistoryEditResidency,
   type HistoryEditSelection,
   type PreparedHistoryEdit,
 } from './history-edit.js';
@@ -229,7 +248,7 @@ import {
   type ExitAttempt,
   type BindingRequest,
 } from './authority.js';
-import { compactHistory, discardedHistoryRelease } from './history-residency.js';
+import { compactHistory } from './history-residency.js';
 import { consolidationBatch, type ConsolidationBatch } from './memory-consolidation.js';
 import {
   editMapMarker,
@@ -278,6 +297,7 @@ import {
 import {
   recordDuration,
   timed,
+  timedSync,
   countMetric,
   gaugeMetric,
   recordBackgroundFailure,
@@ -311,6 +331,7 @@ import {
   appendedEventCount,
   freezeWorld,
   forgetExperience,
+  reapplyExperiencePrivacy,
   correctExperience,
   retainedExperienceSource,
   experiences,
@@ -446,68 +467,6 @@ export interface DurableMark {
   eventSequence: number;
   simTime: number;
 }
-/** A background save outstanding beyond this age makes the native tick wait for it (SV19). */
-const BACKGROUND_SAVE_BACKPRESSURE_MS = 4000;
-/** A background save refused before BEGIN (writer queue busy) re-submits the same prepared
- * write, up to this many attempts in total (SV20). */
-const BACKGROUND_SAVE_ATTEMPTS = 4;
-/** Waiting commands defer new background saves, but not beyond this unsaved age (SV21). */
-const BACKGROUND_SAVE_DEFERRAL_MS = 5000;
-interface BackgroundSave {
-  snapshot: SavedWorld;
-  historyWorld: WorldState;
-  appendEventCount: number | undefined;
-  currentAppendCount: number | undefined;
-  changes: PreparedCommit;
-  released: SavedWorld;
-  allocation: { commit(): void; rollback(): void };
-  sequence: number;
-}
-/** Undefined when every record this snapshot removes from memory (hot-event trimming and
- * history release) is the exact object the durable baseline holds, so SQL already has that
- * value; otherwise the collection that would lose a not-yet-durable record. */
-function nonDurableEviction(
-  durable: WorldState | undefined,
-  history: WorldState,
-  snapshot: WorldState,
-  released: WorldState,
-): string | undefined {
-  if (!durable) return 'baseline';
-  if (history.events !== snapshot.events) {
-    const kept = new Set(snapshot.events),
-      held = new Set(durable.events);
-    if (history.events.some((event) => !kept.has(event) && !held.has(event))) return 'events';
-  }
-  return evictedFrom(snapshot, released, durable, []);
-}
-function evictedFrom(
-  before: unknown,
-  after: unknown,
-  durable: unknown,
-  path: string[],
-): string | undefined {
-  const where = () => path.slice(0, path[0] === 'experience' ? 2 : 1).join('.') || 'world';
-  if (before === after || before === durable || !before || typeof before !== 'object') return;
-  if (!after || typeof after !== 'object') return where();
-  if (Array.isArray(before)) {
-    if (!Array.isArray(after)) return where();
-    const kept = new Set<unknown>(after),
-      held = new Set<unknown>(Array.isArray(durable) ? durable : []);
-    return before.every((entry) => kept.has(entry) || held.has(entry)) ? undefined : where();
-  }
-  const prior =
-    durable && typeof durable === 'object' ? (durable as Record<string, unknown>) : undefined;
-  for (const [key, value] of Object.entries(before)) {
-    const next = [...path, key];
-    const failed = !Object.hasOwn(after, key)
-      ? prior?.[key] === value
-        ? undefined
-        : next.slice(0, next[0] === 'experience' ? 2 : 1).join('.')
-      : evictedFrom(value, (after as Record<string, unknown>)[key], prior?.[key], next);
-    if (failed) return failed;
-  }
-  return;
-}
 
 /** Application coordination only: pure rules live in domain; all I/O is through a store. */
 interface PresentationReleaseSelection {
@@ -590,6 +549,8 @@ export class WorldService {
   private readonly personMemoryPage = createPersonMemoryPager();
   private worldEventsById = new Map<string, WorldEvent>();
   private persistedRevision = 0;
+  private persistedState?: SavedWorld;
+  private storageGeneration = '';
   private persistedEvents: WorldEvent[] = [];
   private persistedMemorySources?: Pick<
     WorldState,
@@ -599,8 +560,8 @@ export class WorldService {
   get commandEpoch(): string {
     return this.epoch.token;
   }
-  private async refreshCommandEpoch(): Promise<void> {
-    if (this.epoch.token && this.now() - this.epoch.openedAt < COMMAND_RETRY_MS) return;
+  private async refreshCommandEpoch(force = false): Promise<void> {
+    if (!force && this.epoch.token && this.now() - this.epoch.openedAt < COMMAND_RETRY_MS) return;
     const next = {
       generation: this.epoch.generation + 1,
       openedAt: this.now(),
@@ -612,8 +573,9 @@ export class WorldService {
     this.notify(false);
   }
   private viewRevision = 0;
-  private lastProgressSaveAt = 0;
-  private unpersisted = false;
+  private get unpersisted(): boolean {
+    return !!this.pendingSave || !!this.inFlightSave;
+  }
   private readonly listeners = new Set<() => void>();
   private readonly presence = new Map<string, { at: number; scope: RequestScope }>();
   private readonly presenceOrders = new Map<
@@ -911,46 +873,47 @@ export class WorldService {
       failures: this.geometryBatches.failures,
     };
   }
+  private closed = false;
+  stopAdmission(): void {
+    this.closed = true;
+    clearTimeout(this.saveTimer);
+    clearTimeout(this.retentionTimer);
+    // Shutdown is an explicit barrier. Start the captured prefix now so cancelled
+    // paid work waiting for evidence can settle before the later final-save stage.
+    if (this.pendingSave && !this.storageError)
+      void this.mutate(async () => {
+        await this.backgroundSave?.done;
+        await this.saveRequestedProgress();
+      }, true).catch((error) => this.failProgressSave(error));
+  }
   releaseHostWork(): void {
+    this.stopAdmission();
     this.assetAuthorityUnsubscribe?.();
     this.assetAuthorityUnsubscribe = undefined;
     this.projectionUnsubscribe?.();
     this.projectionUnsubscribe = undefined;
+    clearTimeout(this.saveTimer);
+    clearTimeout(this.retentionTimer);
     this.hostWork.close();
     this.geometryBatches.close();
   }
   private readonly mutationLane = new WorkLane('mutation');
   private mutationContext = new AsyncLocalStorage<{ active: boolean }>();
-  /** Run one change to the world in the mutation queue. `progress` marks simulation progress
-   * (ticks, computed routes), whose own saves are background saves; every other operation
-   * (commands, AI results, reads) saves synchronously if it saves at all. */
+  /** One coherent world mutation. Foreground arrivals ask native work to return
+   * at its next boundary; ordinary acceptance never waits for the database. */
   private async mutate<T>(operation: () => Promise<T>, progress = false): Promise<T> {
     if (this.mutationContext.getStore()?.active) return await operation();
     if (progress) return this.runMutation(operation);
-    // Commands and reads should not own the queue while waiting for a background save's I/O;
-    // native ticks and computed-route publication keep running meanwhile. The wait keeps the
-    // queue's admission deadline, so a stalled write still yields a busy result, not a hang.
-    // While this operation is pending no new background save starts; its own synchronous
-    // save, if any, carries the simulation progress.
-    // docs/projects/ordered-async-saves.md#ordering-rules
     this.pendingOperations++;
-    const arrived = performance.now();
     try {
-      if (this.backgroundSave)
-        await timed('persistence.backgroundSaveWait', () =>
-          this.awaitBackgroundSave(this.mutationLane.waitMs),
-        );
-      // One admission budget covers the wait above and the queue.
-      return await this.runMutation(
-        operation,
-        this.mutationLane.waitMs - (performance.now() - arrived),
-      );
+      return await this.runMutation(operation);
     } finally {
-      if (--this.pendingOperations === 0) this.releaseSnapshotRequest();
+      this.pendingOperations--;
     }
   }
-  /** Top-level operations other than simulation progress that are waiting for, or holding,
-   * the queue. While any is pending, no new background save starts (SV21). */
+
+  /** Waiting foreground operations request an earlier coherent native boundary.
+   * They do not defer the scheduled save or hold its ordered database writer. */
   private pendingOperations = 0;
   private runMutation<T>(operation: () => Promise<T>, waitMs?: number): Promise<T> {
     return this.mutationLane.run(() => {
@@ -977,19 +940,6 @@ export class WorldService {
       await this.mutationLane.idle();
     } while (this.backgroundSave);
   }
-  private async awaitBackgroundSave(deadlineMs: number): Promise<void> {
-    const write = this.backgroundSave;
-    if (!write) return;
-    let timer: ReturnType<typeof setTimeout> | undefined;
-    const expired = new Promise<boolean>((resolve) => {
-      timer = setTimeout(() => resolve(true), deadlineMs);
-    });
-    try {
-      if (await Promise.race([write.done.then(() => false), expired])) throw new OverloadError();
-    } finally {
-      clearTimeout(timer);
-    }
-  }
   private debtSeconds = 0;
   private storageFailure: string | null = null;
   /** Latched storage failure. Every assignment, from any caller, rejects durability waiters:
@@ -1000,7 +950,6 @@ export class WorldService {
   set storageError(message: string | null) {
     this.storageFailure = message;
     if (message) {
-      this.snapshotRequested = false;
       this.rejectDurableWaiters(new Error(message));
     }
   }
@@ -1018,8 +967,10 @@ export class WorldService {
       presentationRelease?: AssetRevisionReference;
     } = {},
   ) {
-    this.store.memories?.setBackgroundSearchAdmission(
-      () => this.pendingOperations === 0 && !this.backgroundSave,
+    this.store.memories?.setBackgroundSearchAdmission(() => !this.closed && !this.storageError);
+    this.store.setLiveReadCuts?.((actor) => this.captureLiveReadCuts(actor));
+    this.store.setRetainedValueLookup?.((worldId) =>
+      this.saved?.world.id === worldId ? (this.saved.world.receivedValues?.sources ?? {}) : {},
     );
     this.ready = this.initialize();
   }
@@ -1190,6 +1141,8 @@ export class WorldService {
       throw error;
     }
     if (store.releaseHistory) this.saved = store.releaseHistory(this.saved);
+    this.persistedState = this.saved;
+    this.storageGeneration = (await store.records?.head())?.generation ?? '';
     if (!existing) await store.authority.refreshPermissions(this.saved.world.id);
     freezeWorld(this.saved.world);
     this.rememberPersistedMemorySources();
@@ -1198,7 +1151,7 @@ export class WorldService {
     this.epoch =
       ((await store.getIntegration(`command-epoch:${this.world.id}`)) as CommandEpoch) ??
       this.epoch;
-    await this.refreshCommandEpoch();
+    await this.refreshCommandEpoch(true);
     this.timelineId =
       ((await store.getIntegration(`world-timeline:${this.world.id}`)) as string) ||
       this.timelineId;
@@ -1216,8 +1169,9 @@ export class WorldService {
       if (changed !== false) this.notify(false);
     });
     this.viewRevision = this.persistedRevision;
-    this.lastProgressSaveAt = this.now();
+
     this.publishDurable(this.persistedRevision, this.snapshotSequence, this.saved.world);
+    this.scheduleRetention();
     await store.recoverInterruptedWork();
     this.exits = new Map(
       (await store.authority.exitAttempts(this.world.id)).map((attempt) => [
@@ -1495,6 +1449,8 @@ export class WorldService {
       if (this.maintenanceHeld !== held) {
         this.maintenanceHeld = held;
         this.generation = randomUUID();
+        this.recentCommandResults.clear();
+        this.scheduleRetention();
       }
       await this.syncPause();
     });
@@ -1742,6 +1698,22 @@ export class WorldService {
     },
     cleanup?: PreparedMemoryRetention,
   ): Promise<boolean> {
+    const protectedOperation =
+      !!restore ||
+      !!historyBefore ||
+      eventMode === 'diff' ||
+      !!cleanup ||
+      !!invalidatedMemoryIds ||
+      (!!authorityChanges && Object.keys(authorityChanges).length > 0);
+    if (!protectedOperation)
+      return this.acceptProgress(
+        saved,
+        receipt,
+        undefined,
+        saved.world.paused && !this.world.paused,
+      );
+    // Operational effects and privacy changes remain ordered behind accepted play.
+    await this.flush();
     if (restore) {
       const contributions = constructionPermissionBatch(
         saved.world.id,
@@ -1777,18 +1749,16 @@ export class WorldService {
         throw new Error(
           'A transition declared unchanged events but replaced the event collection.',
         );
-      const retention = await this.prepareRetention(saved, !!restore);
-      if (cleanup) {
-        for (const [table, ids] of cleanup.rows)
-          retention.rows.set(table, [...new Set([...(retention.rows.get(table) ?? []), ...ids])]);
-        for (const field of ['positions', 'previous'] as const)
-          for (const [table, entries] of cleanup[field] ?? []) {
-            const target = (retention[field] ??= new Map());
-            const held = target.get(table) ?? new Map();
-            for (const [id, value] of entries) held.set(id, value);
-            target.set(table, held);
-          }
-      }
+      const retention: PreparedMemoryRetention =
+        cleanup ??
+        (restore
+          ? await this.prepareRetention(saved, true)
+          : {
+              state: saved,
+              rows: new Map<string, string[]>(),
+              positions: undefined,
+              versions: undefined,
+            });
       const prepared = this.prepareSnapshot(retention.state);
       this.store.records?.stageRetirements(
         prepared.snapshot,
@@ -1828,11 +1798,13 @@ export class WorldService {
         this.transcriptEpoch++;
       }
       if (this.store.releaseHistory) saved = this.store.releaseHistory(saved);
+      this.persistedState = saved;
       this.installWorld(saved, historyWorld, currentAppendCount);
+      releaseIdentityAllocationProof(this.world);
+      this.scheduleRetention();
       this.persistedEvents = saved.world.events;
       this.rememberPersistedMemorySources();
-      this.unpersisted = false;
-      this.lastProgressSaveAt = this.now();
+
       // A load publishes its first mark only after the new timeline generation is installed.
       if (restore) this.durableSequence = ++this.snapshotSequence;
       else this.publishDurable(revision, ++this.snapshotSequence, saved.world);
@@ -1860,19 +1832,12 @@ export class WorldService {
     }
   }
 
-  // Saves come in two kinds (docs/save-and-load.md#background-and-synchronous-world-saves):
-  // - Background save: simulation progress (ticks, computed routes) is prepared in the queue,
-  //   then written while the game keeps running (`backgroundSave`, `commitBackgroundSave`).
-  //   It is shown before it is saved, as it always was.
-  // - Synchronous save: commands, AI results, pause/resume, editors and loads hold the queue
-  //   until written and are shown only afterwards (`commit`). Simulation progress is also
-  //   saved synchronously when a background save would drop an unsaved record from memory
-  //   (the synchronous branch of `saveProgress`, SB20).
-  // docs/projects/ordered-async-saves.md#ordered-persistence-design
+  // Accepted world cuts and ordered disk commits have separate sequences.
+  // Ordinary gameplay joins the finite pending suffix; protected effects flush it.
+  // docs/projects/bookkeeping-simplification-runtime-design.md#6-live-acceptance-and-ordered-saving
   private backgroundSave?: { startedAt: number; sequence: number; done: Promise<void> };
   private snapshotSequence = 0;
   private durableSequence = 0;
-  private snapshotRequested = false;
   private durableWaiters: Array<{
     sequence: number;
     resolve: (mark: DurableMark) => void;
@@ -1888,12 +1853,10 @@ export class WorldService {
     eventSequence: 0,
     simTime: 0,
   };
-  /** Collections that forced a synchronous save of simulation progress (SB20), for PF00. */
-  readonly synchronousProgressSaves = new Map<string, number>();
 
   /** Sequence of the first snapshot that will contain the live world as it is now. */
   durabilityTicket(): number {
-    return this.unpersisted ? this.snapshotSequence + 1 : this.snapshotSequence;
+    return this.snapshotSequence;
   }
   isDurable(ticket: number): boolean {
     return this.durableSequence >= ticket;
@@ -1938,235 +1901,300 @@ export class WorldService {
     );
   }
 
-  private releaseSnapshotRequest(): void {
-    if (
-      !this.snapshotRequested ||
-      this.backgroundSave ||
-      this.pendingOperations ||
-      this.storageError
-    )
-      return;
-    this.snapshotRequested = false;
-    void this.mutate(() => this.saveRequestedProgress(), true).catch((error: unknown) =>
-      // A lost follow-up request must not leave callers waiting forever.
-      this.rejectDurableWaiters(error instanceof Error ? error : new Error(String(error))),
-    );
-  }
-
   private rejectDurableWaiters(error: Error): void {
     for (const waiter of this.durableWaiters.splice(0)) waiter.reject(error);
   }
 
-  /** Resolves once the live world as it is now has been durably committed. Outside the
-   * mutation queue this waits without holding it; inside, it commits synchronously.
+  /** Joins the scheduled save for one fixed accepted prefix outside mutation.
+   * Protected callers use flush explicitly rather than silently forcing a save.
    * docs/projects/ordered-async-saves.md#durable-notification-epr05-seam */
-  async whenDurable(): Promise<DurableMark> {
+  async whenDurable(target = this.snapshotSequence): Promise<DurableMark> {
     await this.ready;
-    if (this.mutationContext.getStore()?.active) {
-      await this.flush();
-      return this.durable;
-    }
-    const target = await this.mutate(() => this.requestDurable(), true);
-    if (target === undefined || this.durableSequence >= target) return this.durable;
+    if (this.mutationContext.getStore()?.active)
+      throw new Error(
+        'Durability must be awaited outside world mutation. Use an explicit protected flush.',
+      );
+    if (this.durableSequence >= target) return this.durable;
     if (this.storageError) throw new Error(this.storageError);
+    // A waiter joins the scheduled batch; it never starts an early save.
     return new Promise((resolve, reject) =>
       this.durableWaiters.push({ sequence: target, resolve, reject }),
     );
   }
 
-  /** In the queue: the snapshot sequence that will cover the current live world. */
-  private async requestDurable(): Promise<number | undefined> {
-    if (this.storageError) throw new Error(this.storageError);
-    if (this.backgroundSave) {
-      if (!this.unpersisted) return this.backgroundSave.sequence;
-      this.snapshotRequested = true;
-      return this.snapshotSequence + 1;
+  private pendingSave?: PendingWorldSave;
+  private inFlightSave?: PendingWorldSave;
+  private saveTimer?: ReturnType<typeof setTimeout>;
+  private readonly recentCommandResults = new Map<string, GameplayReceipt>();
+  // A cold receipt miss may precede concurrent acceptance. Keep its eventual
+  // accepted result resident until every preparing duplicate reaches admission.
+  private readonly commandReceiptReaders = new Map<string, number>();
+
+  private liveReadCacheKey?: unknown[];
+  private readonly liveReadCache = new Map<string, import('./live-read-overlay.js').LiveReadCuts>();
+  private readonly pendingSourceReaders = new WeakMap<
+    import('./world-records.js').RecordChanges,
+    (actorId?: string) => import('./memory-repository.js').PreparedMemorySources
+  >();
+  private captureLiveReadCuts(actor?: import('./live-read-overlay.js').LiveReadActorScope) {
+    const key = [
+      this.generation,
+      this.timelineId,
+      this.storageGeneration,
+      this.snapshotSequence,
+      this.durableSequence,
+      this.persistedRevision,
+      this.inFlightSave?.through,
+      this.pendingSave?.through,
+    ];
+    if (!this.liveReadCacheKey || key.some((value, at) => value !== this.liveReadCacheKey![at])) {
+      this.liveReadCache.clear();
+      this.liveReadCacheKey = key;
     }
-    if (!this.unpersisted) return undefined;
-    // A waiting command's synchronous save will cover this; do not make it wait behind a write.
-    if (this.pendingOperations) {
-      this.snapshotRequested = true;
-      return this.snapshotSequence + 1;
-    }
-    if (!(await this.saveProgress(this.saved)))
-      throw new Error(this.storageError ?? 'The pending world changes could not be saved.');
-    // Background save: the write just started. Synchronous fallback: already durable.
-    return this.pendingWriteSequence();
-  }
-  private pendingWriteSequence(): number | undefined {
-    return this.backgroundSave?.sequence;
+    const scope = JSON.stringify([actor?.worldId ?? null, actor?.actorId ?? null]);
+    const held = this.liveReadCache.get(scope);
+    if (held) return held;
+    const historyActors = new Set<string>(actor ? [actor.actorId] : []);
+    const worldId = this.saved?.world.id ?? '';
+    const cut: import('./live-read-overlay.js').LiveReadCuts = {
+      worldId,
+      timeline: this.timelineId,
+      generation: this.generation,
+      storageGeneration: this.storageGeneration,
+      sequence: this.snapshotSequence,
+      durableSequence: this.durableSequence,
+      revision: this.persistedRevision,
+      inFlightThrough: this.inFlightSave?.through,
+      cuts: [this.inFlightSave, this.pendingSave].flatMap((pending) => {
+        if (!pending?.state) return [];
+        // Capture only immutable pending rows and selected received inputs. No
+        // old world/entity/catalogue root leaves the writer with a cold reader.
+        const changes = pending.changes(),
+          versions = pending.versions;
+        const history = pending.history
+          ? captureHistoryRead(pending.history, actor?.actorId)
+          : undefined;
+        if (!actor)
+          for (const event of history?.changed ?? [])
+            for (const id of event.audience) historyActors.add(id);
+        let getSources = this.pendingSourceReaders.get(changes);
+        if (!getSources && this.store.memories) {
+          getSources = this.store.memories.captureSources(worldId, changes, versions);
+          this.pendingSourceReaders.set(changes, getSources);
+        }
+        return [{ through: pending.through, changes, history, versions, getSources }];
+      }),
+      historyEligibility: new Map(),
+    };
+    cut.historyEligibility = new Map(
+      [...historyActors].map((id) => [id, captureHistoryAccountCut(this.world, id)]),
+    );
+    this.liveReadCache.set(scope, cut);
+    return cut;
   }
 
-  /** Save one snapshot of simulation progress: a background save when every record it removes
-   * from memory is already durable; otherwise a synchronous save, as before (SB20).
-   * docs/projects/ordered-async-saves.md#ordering-rules */
-  private async saveProgress(saved: SavedWorld): Promise<boolean> {
-    const { store } = this;
-    if (this.storageError) return false;
-    if (this.backgroundSave) return this.acceptProgress(saved);
-    if (!store.prepareCommit || !store.releasedHistory || !store.adoptHistory)
-      return this.commit(saved, undefined, 'append');
-    let allocation: ReturnType<HostWork['reserve']> | undefined;
-    let write: BackgroundSave;
-    try {
-      freezeWorld(saved.world);
-      allocation = this.hostWork.reserve(saved.world);
-      const retention = await this.prepareRetention(saved);
-      const prepared = this.prepareSnapshot(retention.state);
-      store.records?.stageRetirements(
-        prepared.snapshot,
-        retention.rows,
-        retention.positions,
-        retention.previous,
-      );
-      store.memories?.stageSourceVersions(prepared.snapshot.world, retention.versions);
-      // Preparation assigns canonical record positions; release reuses them.
-      const changes = store.prepareCommit(this.persistedRevision, prepared.snapshot, {
-        after: prepared.historyWorld,
+  private retentionTimer?: ReturnType<typeof setTimeout>;
+  private retentionWakeAt?: number;
+  private retentionTask?: Promise<void>;
+  private scheduleRetention(force = false): void {
+    const deadlines = [
+      nextRecentRetentionAt(this.world),
+      nextAccountRetentionAt(this.world),
+    ].filter((at): at is number => at !== null);
+    const at = deadlines.length ? Math.min(...deadlines) : undefined;
+    if (
+      at === undefined ||
+      this.retentionTask ||
+      this.closed ||
+      this.paused ||
+      !this.store.prepareRecentRetention
+    ) {
+      clearTimeout(this.retentionTimer);
+      this.retentionTimer = undefined;
+      this.retentionWakeAt = undefined;
+      return;
+    }
+    const delay = Math.max(
+      250,
+      ((at - this.world.simTime) * 1000) / (this.config.baseRatio * this.speed),
+    );
+    const wake = performance.now() + delay;
+    // Continuing acquisitions cannot postpone an already due maintenance slice.
+    if (
+      !force &&
+      this.retentionTimer &&
+      this.retentionWakeAt !== undefined &&
+      this.retentionWakeAt <= wake
+    )
+      return;
+    clearTimeout(this.retentionTimer);
+    this.retentionWakeAt = wake;
+    this.retentionTimer = setTimeout(() => {
+      this.retentionTimer = undefined;
+      this.retentionWakeAt = undefined;
+      if (this.paused || this.storageError) return;
+      const captured = this.saved,
+        generation = this.generation;
+      const cut = this.captureLiveReadCuts();
+      const pending = cut.cuts.reduce((all, cut) => mergeRecordChanges(all, cut.changes), {
+        writes: new Map(),
+        deletes: new Map(),
+        rows: 0,
       });
-      const released = store.releasedHistory(prepared.snapshot);
-      freezeWorld(released.world);
-      write = { ...prepared, changes, released, allocation, sequence: 0 };
-    } catch (error) {
-      allocation?.rollback();
-      if (error instanceof WorkBudgetError) {
-        this.storageError = `${error.message} Required native work is paused before publication.`;
-        this.notify(false);
-        return false;
-      }
-      return this.failProgressSave(error);
-    }
-    const unsafe = nonDurableEviction(
-      write.changes.baseline?.world,
-      write.historyWorld,
-      write.snapshot.world,
-      write.released.world,
+      this.retentionTask = (async () => {
+        const [recent, accounts] = await Promise.all([
+          this.store.prepareRecentRetention!(captured, pending, cut),
+          this.store.prepareAccountRetention?.(captured, pending, cut),
+        ]);
+        await this.mutate(async () => {
+          if (this.generation !== generation || !this.pendingAdmissionOpen()) return;
+          const changed = this.store.records!.prepare(captured, this.saved, retainedSourceTables);
+          const retainedAccounts = accounts
+            ? applyAccountRetentionPlan(this.saved, accounts, changed)
+            : undefined;
+          const retained = applyRecentRetention(
+            retainedAccounts?.state ?? this.saved,
+            recent,
+            changed,
+          );
+          if (retainedAccounts) {
+            for (const [table, ids] of retainedAccounts.rows)
+              retained.rows.set(table, [...(retained.rows.get(table) ?? []), ...ids]);
+            retained.positions = retainedAccounts.positions;
+            retained.previous = retainedAccounts.previous;
+            retained.versions = retainedAccounts.versions;
+          }
+          if (retained.state !== this.saved)
+            await this.acceptProgress(retained.state, undefined, retained);
+        }, true);
+      })()
+        .catch((error) => {
+          recordBackgroundFailure('memory-maintenance', error);
+        })
+        .finally(() => {
+          this.retentionTask = undefined;
+          // Dirty changes arriving during preparation remain represented in the index.
+          if (!this.storageError) this.scheduleRetention();
+        });
+    }, delay);
+    this.retentionTimer.unref?.();
+  }
+
+  // Reserve a small operational margin inside the finite ceiling so emergency
+  // Pause can publish even when ordinary admission is under storage pressure.
+  private pendingAdmissionOpen(): boolean {
+    const oldest = this.inFlightSave?.acceptedAt ?? this.pendingSave?.acceptedAt;
+    const age = oldest === undefined ? 0 : performance.now() - oldest;
+    const bytes = (this.inFlightSave?.bytes ?? 0) + (this.pendingSave?.bytes ?? 0);
+    gaugeMetric('persistence.oldestUnsavedMs', age);
+    gaugeMetric('persistence.pendingBytes', bytes);
+    if (age > LIVE_SAVE_MAX_AGE_MS)
+      gaugeMetric('persistence.admissionOverrunMs', age - LIVE_SAVE_MAX_AGE_MS);
+    return (
+      !this.closed &&
+      !this.storageError &&
+      age < LIVE_SAVE_MAX_AGE_MS &&
+      bytes < LIVE_SAVE_MAX_BYTES - 65536
     );
-    // Ordinary expiry shares the direct transaction with its row changes.
-    // Only releasing data not yet durable requires this foreground barrier;
-    // destructive evidence/authority families retain their own save gates.
-    if (unsafe) {
-      // A record created or changed since the last durable save would leave memory before
-      // SQL has it. Keep the invariant with today's order: write, then release (reusing the
-      // same prepared change set and release, which are not idempotent to recompute).
-      countMetric('persistence.synchronousProgressSaves');
-      this.synchronousProgressSaves.set(
-        unsafe,
-        (this.synchronousProgressSaves.get(unsafe) ?? 0) + 1,
+  }
+
+  private scheduleSave(): void {
+    if (
+      this.closed ||
+      this.saveTimer ||
+      this.backgroundSave ||
+      !this.pendingSave ||
+      this.storageError
+    )
+      return;
+    const delay = Math.max(
+      0,
+      LIVE_SAVE_INTERVAL_MS - (performance.now() - this.pendingSave.acceptedAt),
+    );
+    this.saveTimer = setTimeout(() => {
+      this.saveTimer = undefined;
+      void this.mutate(() => this.saveRequestedProgress(), true).catch((error) =>
+        this.failProgressSave(error),
       );
-      let revision: number;
-      try {
-        // One attempt: this path holds the queue, so a refusal is retried by the next tick.
-        revision = await this.commitProgress(write);
-      } catch (error) {
-        write.allocation.rollback();
-        // Nothing was installed or written; the next tick recomputes this progress and release.
-        discardedHistoryRelease(write.snapshot.world);
-        if (error instanceof OverloadError) throw error;
-        return this.failProgressSave(error);
-      }
-      write.allocation.commit();
-      this.installWorld(write.released, write.historyWorld, write.currentAppendCount);
-      this.unpersisted = false;
-      this.publishDurable(revision, ++this.snapshotSequence, write.released.world);
-      this.notify(false);
-      return true;
-    }
-    countMetric('persistence.backgroundSaves');
-    write.allocation.commit();
-    this.installWorld(write.released, write.historyWorld, write.currentAppendCount);
-    this.unpersisted = false;
-    write.sequence = ++this.snapshotSequence;
-    const startedAt = performance.now();
-    const measured = beginTiming(startedAt);
-    gaugeMetric('persistence.backgroundSavesInFlight', 1);
-    // A fresh context: the write outlives this mutation, and its settle hooks must not be
-    // mistaken for nested queue work or inherit a request's authority fence.
-    // Settles without rejecting: a failure is recorded in storageError, never thrown here.
-    // The released world is already live, so this prepared change set is the only valid
-    // successor of the durable baseline: it either commits or latches storageError. A new
-    // snapshot is never diffed against the unreleased baseline, which would delete the
-    // records this release evicted.
-    const done = this.mutationContext.exit(() =>
-      this.authorityContext.run(undefined, async () => {
-        try {
-          const revision = await this.commitBackgroundSave(write);
-          this.backgroundSave = undefined;
-          this.publishDurable(revision, write.sequence, write.released.world);
-          this.notify(false);
-        } catch (error) {
-          this.backgroundSave = undefined;
-          this.failProgressSave(error, false);
-        } finally {
-          gaugeMetric('persistence.backgroundSavesInFlight', 0);
-          endTiming('persistence.backgroundSave', measured);
-        }
-        this.releaseSnapshotRequest();
-      }),
-    );
-    this.backgroundSave = { startedAt, sequence: write.sequence, done };
-    this.notify(false);
-    return true;
+    }, delay);
+    this.saveTimer.unref?.();
+  }
+
+  /** Capture the due accepted prefix for the existing ordered background writer.
+   * Pending rows retain history independently of resident tails; eviction cannot
+   * turn ordinary native advancement into a synchronous disk barrier. */
+  private async saveProgress(saved: SavedWorld): Promise<boolean> {
+    if (saved !== this.saved && !(await this.acceptProgress(saved))) return false;
+    await this.saveRequestedProgress();
+    return !this.storageError;
   }
 
   private async saveRequestedProgress(): Promise<void> {
-    if (this.storageError) return;
-    if (this.backgroundSave || this.pendingOperations) {
-      this.snapshotRequested = true;
-      return;
-    }
-    if (this.unpersisted) await this.saveProgress(this.saved);
-    // Already covered by a later synchronous save.
-    else for (const waiter of this.durableWaiters.splice(0)) waiter.resolve(this.durable);
-  }
+    if (this.storageError || this.backgroundSave || !this.pendingSave) return;
+    const pending = this.pendingSave;
+    const snapshot = pending.state!;
+    const history = pending.history!;
+    this.store.memories?.stageSourceVersions(snapshot.world, pending.versions);
+    const prepared = this.store.prepareCommit?.(
+      this.persistedRevision,
+      snapshot,
+      { after: history.world },
+      { changes: pending.changes(), history },
+    );
+    this.pendingSave = undefined;
+    this.inFlightSave = pending;
+    const startedAt = performance.now();
+    const done = this.mutationContext.exit(() =>
+      this.authorityContext.run(undefined, async () => {
+        try {
+          // Preparation and writes own this captured prefix. New live arrivals use
+          // another pending suffix and cannot reset its acceptance time.
+          await new Promise<void>((resolve) => setImmediate(resolve));
+          const revision = await timed('world.commit', () =>
+            this.store.commit(this.persistedRevision, snapshot, undefined, undefined, {
+              after: history.world,
+              prepared,
+              receipts: [...pending.receipts.values()],
+            }),
+          );
+          this.persistedRevision = revision;
+          this.persistedState = snapshot;
+          this.persistedEvents = snapshot.world.events;
+          this.persistedMemorySources = {
+            memories: snapshot.world.memories,
+            experience: snapshot.world.experience,
+            receivedValues: snapshot.world.receivedValues,
+            perceptionEvidence: snapshot.world.perceptionEvidence,
+          };
 
-  /** A write refused before BEGIN (writer queue full or busy) ran nothing, so the same prepared
-   * change set is re-submitted after a growing pause; a full queue refuses instantly and needs
-   * time to drain. Any other error, or the last refusal, is returned to the caller. */
-  private async commitBackgroundSave(write: BackgroundSave): Promise<number> {
-    for (let attempt = 1; ; attempt++)
-      try {
-        return await this.commitProgress(write);
-      } catch (error) {
-        if (!(error instanceof OverloadError) || attempt >= BACKGROUND_SAVE_ATTEMPTS) throw error;
-        countMetric('persistence.backgroundSaveRetries');
-        await new Promise((resolve) => setTimeout(resolve, 250 * 2 ** attempt));
-      }
-  }
+          this.store.memories?.acceptedSettled(snapshot.world.id, pending.through);
+          this.publishDurable(revision, pending.through, snapshot.world);
+          void this.mutate(async () => {
+            if (this.store.releasedHistory && !this.storageError) {
+              const released = this.store.releasedHistory(this.saved);
+              if (released !== this.saved) this.installWorld(released, this.saved.world, undefined);
+            }
+          }, true).catch((error) => this.failProgressSave(error));
 
-  /** Commit a prepared snapshot of simulation progress (background or synchronous) and adopt
-   * its released form as the durable baseline in the same continuation, before any other
-   * preparation can run. */
-  private async commitProgress(write: BackgroundSave): Promise<number> {
-    const revision = await timed('world.commit', () =>
-      this.store.commit(write.changes.revision, write.snapshot, undefined, write.appendEventCount, {
-        after: write.historyWorld,
-        prepared: write.changes,
+          // Keep a bounded hot retry window across the save completion race. Pending
+          // outcomes are additionally charged to the finite save buffer.
+          for (const id of this.recentCommandResults.keys()) {
+            if (this.recentCommandResults.size <= 1024) break;
+            if (!this.pendingSave?.receipts.has(id) && !this.commandReceiptReaders.has(id))
+              this.recentCommandResults.delete(id);
+          }
+        } catch (error) {
+          this.failProgressSave(error, false);
+        } finally {
+          this.backgroundSave = undefined;
+          // On failure retain accepted work in RAM; no native replay or silent rollback.
+          if (!this.storageError) this.inFlightSave = undefined;
+          this.notify(false);
+          if (!this.storageError) this.scheduleSave();
+        }
       }),
     );
-    this.store.adoptHistory!(write.snapshot, write.released);
-    this.persistedRevision = revision;
-    this.updateHistoryRevision(
-      this.persistedEvents,
-      write.historyWorld.events,
-      write.appendEventCount,
-    );
-    if (
-      write.changes.baseline?.world.experience?.forgotten !==
-      write.snapshot.world.experience?.forgotten
-    ) {
-      this.transcriptRevision++;
-      this.transcriptEpoch++;
-    }
-    this.persistedEvents = write.released.world.events;
-    this.persistedMemorySources = {
-      memories: write.released.world.memories,
-      experience: write.released.world.experience,
-      receivedValues: write.released.world.receivedValues,
-      perceptionEvidence: write.released.world.perceptionEvidence,
-    };
-    this.lastProgressSaveAt = this.now();
-    return revision;
+    this.backgroundSave = { startedAt, sequence: pending.through, done };
   }
 
   private failProgressSave(error: unknown, rethrowAuthority = true): false {
@@ -2174,7 +2202,7 @@ export class WorldService {
     // The snapshot never became durable. Every later commit re-checks this latch, so no
     // newer state is written on top of an unknown baseline; restart reloads the last revision.
     recordBackgroundFailure('world-commit', error);
-    this.unpersisted = true;
+
     this.storageError =
       'The save could not be committed. Simulation is paused; restart after resolving storage access.';
     this.rejectDurableWaiters(new Error(this.storageError));
@@ -2213,32 +2241,71 @@ export class WorldService {
     return retained;
   }
 
-  private async acceptProgress(saved: SavedWorld): Promise<boolean> {
-    if (this.store.memories && retentionNeedsPreparation(saved.world))
-      return this.commit(saved, undefined, 'append');
+  private async acceptProgress(
+    saved: SavedWorld,
+    receipt?: GameplayReceipt,
+    retention?: PreparedMemoryRetention,
+    emergencyPause = false,
+  ): Promise<boolean> {
+    if (!emergencyPause && !this.pendingAdmissionOpen()) return false;
     let allocation: ReturnType<HostWork['reserve']> | undefined;
     try {
+      freezeWorld(saved.world);
       allocation = this.hostWork.reserve(saved.world);
-      const appended = appendedEventCount(this.saved.world.events, saved.world.events);
-      const next = updateMilestones(
-        saved,
-        appended === undefined
-          ? saved.world.events
-          : appended
-            ? saved.world.events.slice(-appended)
-            : [],
-        this.saved.world,
+      const prepared = this.prepareSnapshot(saved);
+      if (retention) {
+        this.store.records?.stageRetirements(
+          prepared.snapshot,
+          retention.rows,
+          retention.positions,
+          retention.previous,
+        );
+        this.store.memories?.stageSourceVersions(prepared.snapshot.world, retention.versions);
+      }
+      const changes = timedSync('persistence.captureDeltas', () =>
+        this.store.records?.prepare(this.saved, prepared.snapshot),
       );
-      freezeWorld(next.world);
-      if (appended === undefined)
-        this.worldEventsById = new Map(next.world.events.map((event) => [event.id, event]));
-      else
-        for (const event of next.world.events.slice(this.worldEventsById.size))
-          this.worldEventsById.set(event.id, event);
-      this.saved = next;
-      if (appended) this.acceptAttackEvents(next.world.events.slice(-appended));
+      if (!changes) throw new Error('Live acceptance requires the canonical record owner.');
+      const history = prepareHistory(
+        this.saved.world,
+        prepared.historyWorld,
+        prepared.currentAppendCount,
+      );
+      const pending = this.pendingSave ?? new PendingWorldSave(performance.now());
+      const sequence = this.snapshotSequence + 1;
+      if (
+        !pending.admit(
+          prepared.snapshot,
+          changes,
+          history,
+          sequence,
+          receipt,
+          LIVE_SAVE_MAX_BYTES - (emergencyPause ? 0 : 65536) - (this.inFlightSave?.bytes ?? 0),
+          retention?.versions,
+        )
+      ) {
+        allocation.rollback();
+        countMetric('persistence.pendingCapacityRefusals');
+        this.scheduleSave();
+        return false;
+      }
+      this.pendingSave = pending;
+      this.store.memories?.accepted(prepared.snapshot.world.id, changes, sequence);
+      this.store.history?.accepted(changes);
+      this.snapshotSequence = sequence;
+      countMetric('persistence.acceptedPublications');
+      if (receipt) this.recentCommandResults.set(receipt.id, receipt);
+      this.updateHistoryRevision(
+        this.saved.world.events,
+        prepared.historyWorld.events,
+        prepared.currentAppendCount,
+      );
+      this.installWorld(prepared.snapshot, prepared.historyWorld, prepared.currentAppendCount);
+      releaseIdentityAllocationProof(this.world);
+      this.scheduleRetention();
       allocation.commit();
-      this.unpersisted = true;
+
+      this.scheduleSave();
       this.notify(false);
       return true;
     } catch (error) {
@@ -2251,15 +2318,47 @@ export class WorldService {
     }
   }
 
-  /** Inside the mutation queue: after this returns, SQL holds the live world and the store
-   * baseline is the live world (hydration, history edits, capture and restore rely on it). */
+  /** Explicit persistence barrier for protected effects/checkpoints/shutdown only. */
   async flush(): Promise<void> {
     await this.mutate(async () => {
       await this.ready;
+      clearTimeout(this.saveTimer);
+      this.saveTimer = undefined;
       await this.backgroundSave?.done;
-      if (this.unpersisted && !(await this.commit(this.saved, undefined, 'append')))
-        throw new Error(this.storageError ?? 'The pending world changes could not be saved.');
-    });
+      if (this.storageError) throw new Error(this.storageError);
+      await this.saveRequestedProgress();
+      await this.backgroundSave?.done;
+      if (this.storageError) throw new Error(this.storageError);
+      // Residency can change while a prefix saves; it is not a new gameplay cut.
+      // Rebind only after every accepted cut is durable and mutation is excluded.
+      if (this.persistedState && this.saved !== this.persistedState)
+        this.adoptDurableHistory(this.saved);
+    }, true);
+  }
+
+  private adoptDurableHistory(prepared: SavedWorld): void {
+    if (this.unpersisted || this.backgroundSave)
+      throw new Error('Unsaved history cannot replace the durable baseline.');
+    this.store.adoptHistory?.(this.persistedState ?? this.saved, prepared);
+    this.persistedState = prepared;
+    this.persistedEvents = prepared.world.events;
+    this.persistedMemorySources = {
+      memories: prepared.world.memories,
+      experience: prepared.world.experience,
+      receivedValues: prepared.world.receivedValues,
+      perceptionEvidence: prepared.world.perceptionEvidence,
+    };
+  }
+
+  private releaseResidentHistory(): void {
+    const original = this.saved;
+    const released = this.store.releasedHistory?.(original) ?? {
+      ...original,
+      world: compactHistory(original.world),
+    };
+    if (!this.storageError && !this.unpersisted && !this.backgroundSave)
+      this.adoptDurableHistory(released);
+    this.installWorld(released, original.world, undefined);
   }
 
   private rememberPersistedMemorySources(): void {
@@ -2336,102 +2435,121 @@ export class WorldService {
     candidate = this.world,
     completeSources = false,
   ): Promise<void> {
-    const actors = Object.keys(candidate.experience?.awareness ?? {}).filter(
-      (actorId) =>
-        !!entityGet(candidate.entities, actorId)?.actor &&
-        !knownPlaceEvidenceReady(candidate, actorId),
-    );
-    if (!actors.length) return;
-    if (candidate === this.world && !completeSources && (this.unpersisted || this.backgroundSave)) {
-      await this.backgroundSave?.done;
-      if (this.unpersisted && !(await this.commit(this.saved, undefined, 'append')))
-        throw new KnownPlacePreparationError();
-      candidate = this.world;
-    }
-    const repository = !completeSources ? this.store.memories : undefined;
-    const head = repository ? await this.store.records?.head() : undefined;
-    if (repository && !head) throw new KnownPlacePreparationError();
-    for (const actorId of actors) {
-      if (knownPlaceEvidenceReady(candidate, actorId)) continue;
-      const index =
-        repository && head
-          ? await repository.prepareKnownPlaceEvidence({
-              worldId: candidate.id,
-              actorId,
-              generation: head.generation,
-            })
-          : (() => {
-              // No-database worlds and complete save candidates already own all originals.
-              // A released resident tail is never enough to establish an empty result.
-              const entries = candidate.experience!.awareness[actorId] ?? [];
-              const memories = candidate.memories[actorId] ?? [];
-              const summaries = candidate.experience!.summaries[actorId] ?? [];
-              for (const values of [entries, memories, summaries]) {
-                const placement = historyPositions.get(values);
-                if (placement && !placement.complete) throw new KnownPlacePreparationError();
-              }
-              const forgotten = new Set(candidate.experience?.forgotten[actorId] ?? []);
-              const corrected = candidate.experience?.corrections?.[actorId] ?? {};
-              const latest = new Map<string, import('@open-legend/domain').KnownPlaceCapsule>();
-              const retain = (capsule: import('@open-legend/domain').KnownPlaceCapsule) => {
-                const aliases = [
-                  capsule.sourceEventId!,
-                  capsule.source.id,
-                  personalFactAlias(capsule.source.id, capsule.facetOrdinal),
-                ];
-                if (aliases.some((id) => forgotten.has(id) || corrected[id])) return;
-                const prior = latest.get(capsule.placeId);
-                if (
-                  !prior ||
-                  capsule.observedAt > prior.observedAt ||
-                  (capsule.observedAt === prior.observedAt &&
-                    capsule.observedOrder >= prior.observedOrder)
-                )
-                  latest.set(capsule.placeId, capsule);
-              };
-              for (const entry of entries) {
-                if (forgotten.has(entry.eventId) || entry.exposure?.kind !== 'place') continue;
-                const capsule = knownPlaceCapsule(entry, {
-                  kind: 'awareness',
-                  id: entry.eventId,
-                  revision: personalAccountRevision(JSON.stringify(entry)),
-                });
-                if (!capsule) throw new KnownPlacePreparationError();
-                retain(capsule);
-              }
-              for (const [kind, values] of [
-                ['memory', memories],
-                ['summary', summaries],
-              ] as const) {
-                for (const value of values) {
-                  if (forgotten.has(value.id) || corrected[value.id]) continue;
-                  const originals = 'manifest' in value ? (value.manifest?.observations ?? []) : [];
-                  const observations = [
-                    ...originals,
-                    ...('observation' in value && value.observation ? [value.observation] : []),
-                    ...('observations' in value ? (value.observations ?? []) : []),
-                    ...('evidence' in value && value.evidence?.observation
-                      ? [value.evidence.observation]
-                      : []),
-                    ...('evidence' in value ? (value.evidence?.observations ?? []) : []),
-                  ];
-                  for (const { capsule } of retainedPlaceObservations(observations, {
-                    kind,
-                    id: value.id,
-                    revision: personalAccountRevision(JSON.stringify(value)),
-                  }))
-                    retain(capsule);
+    const live = candidate === this.world && !completeSources;
+    for (let attempt = 0; attempt < 2; attempt++) {
+      if (live) candidate = this.world;
+      const generation = this.generation;
+      let recapture = false;
+      const actors = Object.keys(candidate.experience?.awareness ?? {}).filter(
+        (actorId) =>
+          !!entityGet(candidate.entities, actorId)?.actor &&
+          !knownPlaceEvidenceReady(candidate, actorId),
+      );
+      if (!actors.length) return;
+      const repository = !completeSources ? this.store.memories : undefined;
+      const head = repository ? await this.store.records?.head() : undefined;
+      if (repository && !head) throw new KnownPlacePreparationError();
+      for (const actorId of actors) {
+        if (knownPlaceEvidenceReady(candidate, actorId)) continue;
+        const sourceRevision = repository?.knownPlacesRevision(actorId);
+        const life = entityGet(candidate.entities, actorId)?.actor?.physicalLife;
+        const privacy = candidate.experience?.privacyRevisions?.[actorId];
+        const index =
+          repository && head
+            ? await repository.prepareNativeKnownPlaceEvidence({
+                worldId: candidate.id,
+                actorId,
+                generation: head.generation,
+              })
+            : (() => {
+                // No-database worlds and complete save candidates already own all originals.
+                // A released resident tail is never enough to establish an empty result.
+                const entries = candidate.experience!.awareness[actorId] ?? [];
+                const memories = candidate.memories[actorId] ?? [];
+                const summaries = candidate.experience!.summaries[actorId] ?? [];
+                for (const values of [entries, memories, summaries]) {
+                  const placement = historyPositions.get(values);
+                  if (placement && !placement.complete) throw new KnownPlacePreparationError();
                 }
-              }
-              for (const support of Object.values(
-                candidate.experience?.temporal?.actors[actorId]?.supports ?? {},
-              ))
-                for (const capsule of temporalKnownPlaceCapsules(actorId, support)) retain(capsule);
-              const result = prepareKnownPlaceEvidence([...latest.values()]);
-              return result;
-            })();
-      installKnownPlaceEvidence(candidate, actorId, index);
+                const forgotten = new Set(candidate.experience?.forgotten[actorId] ?? []);
+                const corrected = candidate.experience?.corrections?.[actorId] ?? {};
+                const latest = new Map<string, import('@open-legend/domain').KnownPlaceCapsule>();
+                const retain = (capsule: import('@open-legend/domain').KnownPlaceCapsule) => {
+                  const aliases = [
+                    capsule.sourceEventId!,
+                    capsule.source.id,
+                    personalFactAlias(capsule.source.id, capsule.facetOrdinal),
+                  ];
+                  if (aliases.some((id) => forgotten.has(id) || corrected[id])) return;
+                  const prior = latest.get(capsule.placeId);
+                  if (
+                    !prior ||
+                    capsule.observedAt > prior.observedAt ||
+                    (capsule.observedAt === prior.observedAt &&
+                      capsule.observedOrder >= prior.observedOrder)
+                  )
+                    latest.set(capsule.placeId, capsule);
+                };
+                for (const entry of entries) {
+                  if (forgotten.has(entry.eventId) || entry.exposure?.kind !== 'place') continue;
+                  const capsule = knownPlaceCapsule(entry, {
+                    kind: 'awareness',
+                    id: entry.eventId,
+                    revision: personalAccountRevision(JSON.stringify(entry)),
+                  });
+                  if (!capsule) throw new KnownPlacePreparationError();
+                  retain(capsule);
+                }
+                for (const [kind, values] of [
+                  ['memory', memories],
+                  ['summary', summaries],
+                ] as const) {
+                  for (const value of values) {
+                    if (forgotten.has(value.id) || corrected[value.id]) continue;
+                    const originals =
+                      'manifest' in value ? (value.manifest?.observations ?? []) : [];
+                    const observations = [
+                      ...originals,
+                      ...('observation' in value && value.observation ? [value.observation] : []),
+                      ...('observations' in value ? (value.observations ?? []) : []),
+                      ...('evidence' in value && value.evidence?.observation
+                        ? [value.evidence.observation]
+                        : []),
+                      ...('evidence' in value ? (value.evidence?.observations ?? []) : []),
+                    ];
+                    for (const { capsule } of retainedPlaceObservations(observations, {
+                      kind,
+                      id: value.id,
+                      revision: personalAccountRevision(JSON.stringify(value)),
+                    }))
+                      retain(capsule);
+                  }
+                }
+                for (const support of Object.values(
+                  candidate.experience?.temporal?.actors[actorId]?.supports ?? {},
+                ))
+                  for (const capsule of temporalKnownPlaceCapsules(actorId, support))
+                    retain(capsule);
+                const result = prepareKnownPlaceEvidence([...latest.values()]);
+                return result;
+              })();
+        const target = live ? this.world : candidate;
+        if (
+          live &&
+          (generation !== this.generation ||
+            candidate.id !== target.id ||
+            sourceRevision !== repository?.knownPlacesRevision(actorId) ||
+            life !== entityGet(target.entities, actorId)?.actor?.physicalLife ||
+            privacy !== target.experience?.privacyRevisions?.[actorId])
+        ) {
+          recapture = true;
+          continue;
+        }
+        installKnownPlaceEvidence(target, actorId, index);
+      }
+      if (!recapture) return;
     }
+    throw new KnownPlacePreparationError();
   }
 
   /** Select cold evidence outside the writer, then merge only those exact sources into
@@ -2442,7 +2560,7 @@ export class WorldService {
     batch: ConsolidationBatch,
     operation: () => Promise<T>,
   ): Promise<T> {
-    await this.flush();
+    await this.whenDurable();
     const original = this.saved;
     const generation = this.generation;
     const { selection } = batch;
@@ -2547,17 +2665,14 @@ export class WorldService {
               },
             },
           };
-          this.store.adoptHistory(this.saved, next);
+          this.adoptDurableHistory(next);
           this.saved = next;
         }
         freezeWorld(this.saved.world);
         try {
           return await operation();
         } finally {
-          if (this.storageError)
-            this.saved = { ...this.saved, world: compactHistory(this.saved.world) };
-          else if (this.store.releaseHistory) this.saved = this.store.releaseHistory(this.saved);
-          freezeWorld(this.saved.world);
+          this.releaseResidentHistory();
         }
       });
     } finally {
@@ -2572,50 +2687,132 @@ export class WorldService {
   async withStatusEffectHistory<T>(operation: (world: WorldState) => Promise<T>): Promise<T> {
     return this.mutate(async () => {
       await this.flush();
-      if (this.store.hydrateStatusEffectHistory)
+      if (this.store.hydrateStatusEffectHistory) {
         this.saved = await this.store.hydrateStatusEffectHistory(this.saved);
+        this.persistedState = this.saved;
+      }
       freezeWorld(this.saved.world);
       try {
         return await operation(this.world);
       } finally {
-        if (this.storageError)
-          this.saved = this.store.releasedHistory?.(this.saved) ?? {
-            ...this.saved,
-            world: compactHistory(this.saved.world),
-          };
-        else if (this.store.releaseHistory) this.saved = this.store.releaseHistory(this.saved);
-        freezeWorld(this.saved.world);
+        this.releaseResidentHistory();
       }
     });
   }
-  private async withHistoryEdit<T extends ApiResult>(
+  private async withHistoryEdit(
     selection: HistoryEditSelection,
-    operation: (prepared?: PreparedHistoryEdit) => Promise<T>,
+    prepare: (
+      world: WorldState,
+      prepared: PreparedHistoryEdit,
+    ) =>
+      | ApiResult
+      | {
+          transition: import('@open-legend/domain').Transition;
+          eventMode: 'unchanged' | 'append' | 'diff';
+          historyBefore?: WorldState;
+        },
     privateActor?: { actorId: string; scope: RequestScope },
-  ): Promise<T | (ApiResult & { revision: number })> {
-    await this.flush();
-    // The flush can settle a queued control rebind. Private dependency preparation
-    // needs current permission before it hydrates any actor-owned body.
+  ): Promise<ApiResult & { revision?: number }> {
+    await this.ready;
     if (privateActor && !this.mayInspectPrivate(privateActor.actorId, privateActor.scope))
       return {
         ok: false,
         code: 'forbidden',
         message: 'Human-private character content is unavailable to this principal.',
-        revision: this.viewRevision,
       };
-    if (!this.store.records || !this.store.adoptHistory) return this.mutate(() => operation());
+    const generation = this.generation,
+      worldId = this.world.id;
+    const actors = new Set(selection.sources?.map((source) => source.actorId));
+    if (privateActor) actors.add(privateActor.actorId);
+    if (selection.eventIds?.length)
+      for (const actor of new Set([
+        ...Object.keys(this.world.memories),
+        ...Object.keys(this.world.experience?.awareness ?? {}),
+        ...Object.keys(this.world.perceptionEvidence ?? {}),
+      ]))
+        actors.add(actor);
+    // Old failed preparations retain denial. A new explicit attempt on the same
+    // selected identity reuses that handle; successful durable completion releases it.
+    for (const [oldKey, release] of this.pendingSourceEdits)
+      if ((JSON.parse(oldKey) as unknown[])[1] !== generation) {
+        release();
+        this.pendingSourceEdits.delete(oldKey);
+      }
+    const key = JSON.stringify([worldId, generation, privateActor?.actorId ?? null, selection]);
+    let release = this.pendingSourceEdits.get(key);
+    const retainedDenial = !!release;
+    if (!release) {
+      if (this.pendingSourceEdits.size >= 64)
+        return {
+          ok: false,
+          code: 'busy',
+          message: 'The world changed while preparing this edit. Refresh and try again.',
+        };
+      release = this.store.memories?.beginSourceEdit(worldId, actors) ?? (() => undefined);
+      this.pendingSourceEdits.set(key, release);
+    }
+    const finish = () => {
+      release!();
+      this.pendingSourceEdits.delete(key);
+    };
+    await this.flush();
+    if (privateActor && !this.mayInspectPrivate(privateActor.actorId, privateActor.scope)) {
+      finish();
+      return {
+        ok: false,
+        code: 'forbidden',
+        message: 'Human-private character content is unavailable to this principal.',
+      };
+    }
     const original = this.saved;
-    const generation = this.generation;
-    const revision = this.persistedRevision;
-    const prepared = await prepareHistoryEdit(this.store.records.db, original, selection);
-    return this.mutate(async () => {
+    const inputs = new Map(
+      [...actors].map((actor) => [
+        actor,
+        {
+          life: entityGet(original.world.entities, actor)?.actor?.physicalLife,
+          privacy: original.world.experience?.privacyRevisions?.[actor],
+        },
+      ]),
+    );
+    const prepared =
+      this.store.records && this.store.adoptHistory
+        ? await prepareHistoryEdit(this.store.records.db, original, selection)
+        : { state: original, events: [], referencedEventIds: new Set<string>() };
+    freezeWorld(prepared.state.world);
+    const proposed = prepare(prepared.state.world, prepared);
+    if (!('transition' in proposed)) {
+      if (!retainedDenial) finish();
+      return proposed;
+    }
+    if (!proposed.transition.outcome.ok) {
+      if (!retainedDenial) finish();
+      return proposed.transition.outcome;
+    }
+    const candidate = { ...prepared.state, world: proposed.transition.world };
+    const cleanup: PreparedMemoryRetention =
+      this.store.prepareSourceEdit &&
+      sourceVersionPreparationNeeded(prepared.state.world, candidate.world)
+        ? await this.store.prepareSourceEdit(candidate, prepared.state)
+        : { state: candidate, rows: new Map() };
+    const invalidations = (result: import('@open-legend/domain').Transition) =>
+      digest(
+        Object.entries(result.invalidatedMemoryIds ?? {})
+          .map(([actor, ids]) => [actor, [...ids].sort()])
+          .sort(),
+      );
+    const expected = invalidations(proposed.transition);
+    let released = new Set<string>();
+    const result = await this.mutate(async () => {
       await this.flush();
-      // A newer world may have added a dependency or changed authority while the read
-      // snapshot was open. Refuse stale preparation instead of dropping that dependency.
       if (
-        original !== this.saved ||
         generation !== this.generation ||
-        revision !== this.persistedRevision
+        worldId !== this.world.id ||
+        [...inputs].some(
+          ([actor, input]) =>
+            input.life !== entityGet(this.world.entities, actor)?.actor?.physicalLife ||
+            input.privacy !== this.world.experience?.privacyRevisions?.[actor],
+        ) ||
+        (privateActor && !this.mayInspectPrivate(privateActor.actorId, privateActor.scope))
       )
         return {
           ok: false,
@@ -2623,22 +2820,51 @@ export class WorldService {
           message: 'The world changed while preparing this edit. Refresh and try again.',
           revision: this.viewRevision,
         };
-      this.store.adoptHistory!(original, prepared.state);
-      this.saved = prepared.state;
-      freezeWorld(this.saved.world);
-      try {
-        const result = await operation(prepared);
-        return result;
-      } finally {
-        if (this.store.releaseHistory && !this.storageError)
-          this.saved = this.store.releaseHistory(this.saved);
-        else this.saved = { ...this.saved, world: compactHistory(this.saved.world) };
-        freezeWorld(this.saved.world);
-      }
+      const merged = mergeHistoryEditResidency(this.saved, prepared, original);
+      freezeWorld(merged.world);
+      const changed = prepare(merged.world, prepared);
+      if (!('transition' in changed)) return changed;
+      if (!changed.transition.outcome.ok) return changed.transition.outcome;
+      if (invalidations(changed.transition) !== expected)
+        return {
+          ok: false,
+          code: 'stale',
+          message: 'The world changed while preparing this edit. Refresh and try again.',
+          revision: this.viewRevision,
+        };
+      released = receivedValueReleaseCandidates(merged.world, changed.transition.world);
+      const world = cleanup.versions
+        ? applySourceVersionAccounting(changed.transition.world, cleanup.versions)
+        : changed.transition.world;
+      this.adoptDurableHistory(merged);
+      this.saved = merged;
+      const saved = { ...merged, world };
+      const ok = await this.commit(
+        saved,
+        changed.transition.invalidatedMemoryIds,
+        changed.eventMode,
+        changed.historyBefore,
+        undefined,
+        undefined,
+        undefined,
+        { ...cleanup, state: saved },
+      );
+      return {
+        ok,
+        code: ok ? changed.transition.outcome.code : 'storage',
+        message: ok ? changed.transition.outcome.message : this.storageError!,
+        revision: this.viewRevision,
+      };
     });
+    if (result.ok) {
+      finish();
+      await this.finishReceivedErasure(released);
+    }
+    return result;
   }
 
   async memoryContext(actorId: string, query: string | null, limit: number) {
+    this.assertSourceReadsAvailable(actorId);
     await this.flushMemorySources(actorId);
     const world = this.world,
       generation = this.generation,
@@ -2654,6 +2880,7 @@ export class WorldService {
       !(await this.store.memories.current(scope, selected.map(memorySourceProof))) ||
       generation !== this.generation ||
       historyEpoch !== this.historyEpoch ||
+      this.store.memories?.sourceEditPending({ worldId: world.id, actorId }) ||
       !entityGet(this.world.entities, actorId)?.actor ||
       world.experience?.forgotten[actorId] !== this.world.experience?.forgotten[actorId] ||
       world.experience?.corrections?.[actorId] !== this.world.experience?.corrections?.[actorId]
@@ -2662,6 +2889,7 @@ export class WorldService {
     return selected.map((entry) => entry.memory);
   }
   async awarenessEvidence(actorId: string, eventIds: string[]) {
+    this.assertSourceReadsAvailable(actorId);
     if (!entityGet(this.world.entities, actorId)?.actor) throw new Error('Actor unavailable.');
     if (!eventIds.length) return [];
     const ids = new Set(eventIds);
@@ -2674,7 +2902,7 @@ export class WorldService {
     // Do not save/reload the world just to recover evidence still resident in it.
     // Missing (cold) sources retain the persisted selection and revision checks below.
     if (recent.length === ids.size) return recent;
-    await this.flush();
+    await this.ready;
     const world = this.world,
       generation = this.generation;
     if (!entityGet(world.entities, actorId)?.actor) throw new Error('Actor unavailable.');
@@ -2702,18 +2930,21 @@ export class WorldService {
   privateReadFence(actorId: string, permitted: () => boolean): () => boolean {
     const worldId = this.world.id,
       generation = this.generation,
-      sourceRevision = this.store.memories?.actorRevision(actorId);
+      sourceRevision = this.store.memories?.actorRevision(actorId),
+      accessRevision = this.store.memories?.sourceAccessRevision({ worldId, actorId });
     return () =>
       worldId === this.world.id &&
       generation === this.generation &&
       sourceRevision === this.store.memories?.actorRevision(actorId) &&
+      accessRevision === this.store.memories?.sourceAccessRevision({ worldId, actorId }) &&
+      !this.store.memories?.sourceEditPending({ worldId, actorId }) &&
       permitted();
   }
 
   async inspectMemoryContext(actorId: string, scope = this.localScope) {
     if (!this.config.godMode || !this.mayInspectPrivate(actorId, scope))
       throw new Error('Private mind inspection is unavailable.');
-    await this.flush();
+    await this.ready;
     const worldId = this.world.id,
       generation = this.generation;
     // Native progress is durable before selecting this database generation.
@@ -2783,7 +3014,7 @@ export class WorldService {
     methodAfter = 0,
   ): Promise<import('@open-legend/protocol').ActivityHistoryPage> {
     const generation = this.generation;
-    await this.flush();
+    await this.ready;
     const rows = this.store.records
       ? await this.store.records.activityPage(this.world.id, actorId, after, undefined, 16)
       : (this.world.actionExperience.occurrences[actorId] ?? [])
@@ -2882,6 +3113,7 @@ export class WorldService {
   /** Close only already-received terrain support before a private decision read.
    * This records the existing interval; it neither looks again nor advances time. */
   async prepareCognitionEvidence(actorId: string): Promise<void> {
+    this.assertSourceReadsAvailable(actorId);
     await this.mutate(async () => {
       await this.ready;
       const world = updateWorld(
@@ -2898,7 +3130,7 @@ export class WorldService {
   }
 
   async prepareActivityLearning(actorId: string) {
-    await this.flush();
+    await this.whenDurable();
     const original = this.saved,
       generation = this.generation;
     const after = original.world.actionExperience.learning[actorId]?.position ?? -1;
@@ -3048,7 +3280,7 @@ export class WorldService {
       }
       if (this.store.records && this.store.adoptHistory) {
         const prepared = this.store.records.withActivityPage(this.saved, batch.actorId, rows);
-        this.store.adoptHistory(this.saved, prepared);
+        this.adoptDurableHistory(prepared);
         this.saved = prepared;
       }
       const world = updateWorld(
@@ -3108,7 +3340,7 @@ export class WorldService {
       after?: { at: number; sequence: number; id: string };
     },
   ): Promise<ConsolidationBatch | null> {
-    await this.flush();
+    await this.whenDurable();
     const world = this.world,
       worldId = world.id,
       generation = this.generation;
@@ -3226,7 +3458,7 @@ export class WorldService {
         // Operational grants outlive rewind. A later native item must never take
         // the identity of a material that was authorized on the abandoned timeline.
         // docs/identity-and-references.md#contract
-        restored.world.nextId = Math.max(restored.world.nextId, this.world.nextId);
+        preserveIdentityHighWater(restored.world, this.world);
         if (restored.presentationRelease)
           await this.assertPresentationRelease(restored.presentationRelease);
         const assetPrincipal = { accountId: scope.accountId };
@@ -3238,10 +3470,10 @@ export class WorldService {
         );
         await this.store.authority!.restoreBindings(restored.world);
         // Current-format validation precedes installation; the current privacy
-        // ledger below still removes experience forgotten after this save.
-        const ledger = (await this.store.getIntegration(`forget-ledger:${this.world.id}`)) as
-          | Record<string, string[]>
-          | undefined;
+        // ledger below still excludes sources corrected or forgotten after this save.
+        const ledger = readPrivacyLedger(
+          await this.store.getIntegration(privacyLedgerKey(this.world.id)),
+        );
         const events = payload.history.history_events.map(
           (row) => JSON.parse(String(row['payload'])) as WorldEvent,
         );
@@ -3261,9 +3493,7 @@ export class WorldService {
         // transitions need the normal immutable input audit; a mutable builder
         // would conservatively invalidate sight despite unchanged physical data.
         freezeWorld(restored.world);
-        for (const [actorId, ids] of Object.entries(ledger ?? {}))
-          for (const sourceId of ids)
-            restored.world = forgetExperience(restored.world, actorId, sourceId).world;
+        restored.world = reapplyExperiencePrivacy(restored.world, ledger);
         restored.world = restoredSourceVersions(
           restored,
           payload.memory?.mind_source_versions ?? [],
@@ -3325,9 +3555,12 @@ export class WorldService {
           }))
         )
           throw new Error(this.storageError ?? 'Load failed.');
+        this.storageGeneration = (await this.store.records?.head())?.generation ?? '';
         this.epoch = epoch;
         this.timelineId = timeline;
         this.generation = randomUUID();
+        this.recentCommandResults.clear();
+        this.scheduleRetention();
         // One mark per revision, only under the new generation; abandoned-timeline waiters fail.
         this.rejectDurableWaiters(new Error('The world timeline was replaced by a load.'));
         this.publishDurable(this.persistedRevision, this.snapshotSequence, this.saved.world);
@@ -3407,7 +3640,11 @@ export class WorldService {
           },
         ))
       )
-        return { ok: false, code: 'storage', message: this.storageError! };
+        return {
+          ok: false,
+          code: this.storageError ? 'storage' : 'busy',
+          message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+        };
       if (attempt) this.exits.set(scope.actorId, attempt);
       else {
         this.exits.delete(scope.actorId);
@@ -3471,7 +3708,11 @@ export class WorldService {
           { bindingChange: { scope, request, now: this.now } },
         ))
       )
-        return { ok: false, code: 'storage', message: this.storageError! };
+        return {
+          ok: false,
+          code: this.storageError ? 'storage' : 'busy',
+          message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+        };
       this.exits.delete(previousActorId);
       this.exits.delete(request.actorId);
       this.humanActorIds = entityValues(this.world.entities)
@@ -3552,7 +3793,11 @@ export class WorldService {
           { operationalChange: persist },
         ))
       )
-        return { ok: false, code: 'storage', message: this.storageError! };
+        return {
+          ok: false,
+          code: this.storageError ? 'storage' : 'busy',
+          message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+        };
       this.exits.delete(actorId);
       this.humanActorIds = entityValues(this.world.entities)
         .filter((entity) => entity.actor?.controller === 'player')
@@ -3852,7 +4097,9 @@ export class WorldService {
       gaugeMetric('clock.pendingSimSeconds', this.debtSeconds);
       const resuming = this.world.paused && !next.world.paused;
       const ok = await this.commit(next, undefined, 'unchanged');
+      if (ok && next.world.paused) void this.flush().catch((error) => this.failProgressSave(error));
       if (ok && resuming) this.clockStartedAt = performance.now();
+      if (ok) this.scheduleRetention(true);
       return {
         ok,
         code: ok ? 'control' : 'storage',
@@ -3906,14 +4153,12 @@ export class WorldService {
         (!Number.isFinite(options.offeredUntil) || options.offeredUntil < 0))
     )
       throw new Error('Tick durations must be finite nonnegative seconds.');
+    await this.prepareNativeKnownPlaces();
     do {
       // Bound unsaved simulation progress: once a background save has been outstanding this
       // long, native time waits for it (outside the queue) instead of accumulating more.
       const outstanding = this.backgroundSave;
-      if (
-        outstanding &&
-        performance.now() - outstanding.startedAt >= BACKGROUND_SAVE_BACKPRESSURE_MS
-      ) {
+      if (outstanding && !this.pendingAdmissionOpen()) {
         countMetric('persistence.backpressureWaits');
         await outstanding.done;
       }
@@ -3949,7 +4194,7 @@ export class WorldService {
   ): Promise<void> {
     return this.mutate(async () => {
       await this.ready;
-      await this.refreshCommandEpoch();
+      if (!this.pendingAdmissionOpen()) return;
 
       await this.reconcileParticipation();
       if (this.world.paused !== this.paused) await this.syncPause();
@@ -3961,7 +4206,6 @@ export class WorldService {
           Math.max(0, (offeredUntil - this.clockStartedAt) / 1000),
         );
       if (this.paused || elapsedRealSeconds < 0) return;
-      await this.prepareNativeKnownPlaces();
       // The host distinguishes missing callbacks from callbacks during a busy batch.
       // Direct callers retain the suspension default (docs/performance.md#simulation-cpu-and-growing-history).
       if (suspendedRealSeconds > 0) {
@@ -4046,7 +4290,7 @@ export class WorldService {
       // Share compatible internal intervals in one owned edit; the generator returns at
       // a coherent boundary for waiting operations or the existing host budget below.
       // Unadvanced time remains debt. docs/projects/performance-overhaul/animal-execution.md
-      while (advancedSeconds < offered) {
+      while (advancedSeconds < offered && this.pendingAdmissionOpen()) {
         if (
           navigationBlocked(world, undefined, this.nativeRefugePreparations, {
             permissions: permissions.permissions,
@@ -4148,12 +4392,10 @@ export class WorldService {
       // Simulation progress is saved about once per real second as a background save, which no
       // longer holds this queue (docs/projects/ordered-async-saves.md#ordering-rules).
       // A wall clock stepped backwards must not suspend these saves (LA171, SV19).
-      const sinceSave = this.now() - this.lastProgressSaveAt;
-      const unsavedMs = sinceSave < 0 ? Number.POSITIVE_INFINITY : sinceSave;
       const due =
         !this.backgroundSave &&
-        unsavedMs >= 1000 &&
-        (!this.pendingOperations || unsavedMs >= BACKGROUND_SAVE_DEFERRAL_MS);
+        !!this.pendingSave &&
+        performance.now() - this.pendingSave.acceptedAt >= LIVE_SAVE_INTERVAL_MS;
       const constructionChanges = permissions.effects.length
         ? {
             effects: permissions.effects,
@@ -4240,7 +4482,11 @@ export class WorldService {
         world !== this.world &&
         !(await this.commit({ ...this.saved, world }, undefined, 'append'))
       )
-        return { ok: false, code: 'storage', message: this.storageError! };
+        return {
+          ok: false,
+          code: this.storageError ? 'storage' : 'busy',
+          message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+        };
       this.notify();
       return {
         ok: true,
@@ -4343,7 +4589,11 @@ export class WorldService {
         world !== this.world &&
         !(await this.commit({ ...this.saved, world }, undefined, 'append'))
       )
-        return { ok: false, code: 'storage', message: this.storageError! };
+        return {
+          ok: false,
+          code: this.storageError ? 'storage' : 'busy',
+          message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+        };
       return {
         ok: true,
         code: 'construction-permission',
@@ -4977,6 +5227,8 @@ export class WorldService {
     decision?: DecisionPublication,
     responseProjection?: (result: Transition) => ApiResult,
   ): Promise<ApiResult> {
+    await this.ready;
+    await this.prepareNativeKnownPlaces();
     try {
       return await this.mutate(async () => {
         await this.ready;
@@ -5024,7 +5276,6 @@ export class WorldService {
         // for holding the writer still apply (docs/ui-ux/world-interaction.md#paused-game-tabs).
         if (this.paused && !this.commandWhileManuallyPaused(command))
           return { ok: false, code: 'paused', message: 'Resume the world before acting.' };
-        await this.prepareNativeKnownPlaces();
         const admissionWorld = this.world;
         const result = operation(admissionWorld);
         const response = responseProjection ? responseProjection(result) : result.outcome;
@@ -5078,7 +5329,11 @@ export class WorldService {
             },
           ))
         )
-          return { ok: false, code: 'storage', message: this.storageError! };
+          return {
+            ok: false,
+            code: this.storageError ? 'storage' : 'busy',
+            message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+          };
         if (decision) {
           decision.deliveredAt = decision.now();
           decision.deliveredElapsedMs = Math.max(0, performance.now() - decision.startedMonotonic!);
@@ -5169,8 +5424,9 @@ export class WorldService {
       // The requests are already durable. All exact answers enter the existing routine-progress
       // buffer together; no simulation or RNG advances between these derived completions.
       // docs/performance.md#navigation-failure-and-shutdown
-      if (world !== this.world) this.acceptProgress({ ...this.saved, world });
-      else if (prepared) this.notify(false);
+      if (world !== this.world) {
+        if (!(await this.acceptProgress({ ...this.saved, world })) && prepared) this.notify(false);
+      } else if (prepared) this.notify(false);
     }, true);
   }
 
@@ -5240,7 +5496,11 @@ export class WorldService {
             receipt,
           ))
         )
-          return { ok: false, code: 'storage', message: this.storageError! };
+          return {
+            ok: false,
+            code: this.storageError ? 'storage' : 'busy',
+            message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+          };
         return result.outcome;
       };
       return preparation === 'status-effect-history'
@@ -5293,7 +5553,11 @@ export class WorldService {
             'append',
           ))
         )
-          return { ok: false, code: 'storage', message: this.storageError! };
+          return {
+            ok: false,
+            code: this.storageError ? 'storage' : 'busy',
+            message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+          };
         return result.outcome;
       });
     });
@@ -5315,7 +5579,11 @@ export class WorldService {
           'append',
         ))
       )
-        return { ok: false, code: 'storage', message: this.storageError! };
+        return {
+          ok: false,
+          code: this.storageError ? 'storage' : 'busy',
+          message: this.storageError ?? 'Saving is catching up. Try again shortly.',
+        };
       return result.outcome;
     });
   }
@@ -5956,7 +6224,7 @@ export class WorldService {
         code: 'forbidden',
         message: 'Human-private character content is unavailable to this principal.',
       };
-    await this.flush();
+    await this.ready;
     const generation = this.generation;
     const actor = entityGet(this.world.entities, actorId);
     if (!actor?.actor || !hasMemory(actor))
@@ -6032,7 +6300,7 @@ export class WorldService {
         code: 'forbidden',
         message: 'Human-private character content is unavailable to this principal.',
       };
-    await this.flush();
+    await this.ready;
     const stillPrivate = this.privateReadFence(actorId, () =>
       this.mayInspectPrivate(actorId, scope),
     );
@@ -6087,8 +6355,7 @@ export class WorldService {
           sourceId: change.entryId.slice(change.entryId.indexOf(':') + 1),
         })),
       },
-      async () => {
-        await this.ready;
+      (world) => {
         if (!this.mayInspectPrivate(actorId, scope))
           return {
             ok: false as const,
@@ -6103,10 +6370,10 @@ export class WorldService {
           };
         if (
           expected.generation !== this.generation ||
-          expected.manifestRevision !== this.world.moduleManifest.revision ||
-          expected.bodyPolicyPin?.id !== this.world.moduleManifest.bodyPolicyPin?.id ||
-          expected.bodyPolicyPin?.version !== this.world.moduleManifest.bodyPolicyPin?.version ||
-          expected.bodyPolicyPin?.digest !== this.world.moduleManifest.bodyPolicyPin?.digest
+          expected.manifestRevision !== world.moduleManifest.revision ||
+          expected.bodyPolicyPin?.id !== world.moduleManifest.bodyPolicyPin?.id ||
+          expected.bodyPolicyPin?.version !== world.moduleManifest.bodyPolicyPin?.version ||
+          expected.bodyPolicyPin?.digest !== world.moduleManifest.bodyPolicyPin?.digest
         )
           return {
             ok: false,
@@ -6115,11 +6382,11 @@ export class WorldService {
               'The installed meter definitions or world timeline changed. Refresh and review the form before saving.',
             revision: this.viewRevision,
           };
-        const entity = entityGet(this.world.entities, actorId);
+        const entity = entityGet(world.entities, actorId);
         if (!entity?.actor || !hasMemory(entity))
           return { ok: false, code: 'actor', message: 'Choose a person.' };
         const currentPerson: GodPersonEditorDraft = {
-          inventory: inventoryTotals(this.world, actorId),
+          inventory: inventoryTotals(world, actorId),
           name: entity.name,
           description:
             entity.actor.description?.trim() || `${entity.name} is a person in the clearing.`,
@@ -6149,7 +6416,7 @@ export class WorldService {
         const mergedPerson = { ...currentPerson };
         for (const key of changedFields)
           Object.assign(mergedPerson, { [key]: structuredClone(person[key]) });
-        const entries = memoryChanges.length ? experienceEntries(this.world, actorId) : undefined;
+        const entries = memoryChanges.length ? experienceEntries(world, actorId) : undefined;
         for (const change of memoryChanges) {
           const entry = entries?.get(change.entryId);
           if (!entry || digest(entry.value) !== change.expectedHash)
@@ -6160,22 +6427,13 @@ export class WorldService {
               revision: this.viewRevision,
             };
         }
-        const result = editPersonState(this.world, {
+        const result = editPersonState(world, {
           actorId,
           person: mergedPerson,
           memoryChanges,
         });
         if (!result.outcome.ok) return result.outcome;
-        if (
-          !(await this.commit(
-            { ...this.saved, world: result.world },
-            result.invalidatedMemoryIds,
-            // Meter edits reconcile through the body/condition owners and may append events.
-            'append',
-          ))
-        )
-          return { ok: false, code: 'storage', message: this.storageError! };
-        return { ...result.outcome, revision: this.viewRevision };
+        return { transition: result, eventMode: 'append' as const };
       },
       { actorId, scope },
     );
@@ -6260,18 +6518,20 @@ export class WorldService {
   ): Promise<ApiResult & { revision?: number }> {
     return this.withHistoryEdit(
       { eventIds: changes.map((change) => change.id) },
-      async (prepared) => {
-        await this.ready;
-        const cold = prepared?.events.filter((event) => !this.worldEventsById.has(event.id)) ?? [];
+      (world, prepared) => {
+        const cold =
+          prepared?.events.filter(
+            (event) => !world.events.some((current) => current.id === event.id),
+          ) ?? [];
         const original = cold.length
           ? {
-              ...this.world,
-              events: [...this.world.events, ...cold].sort(
+              ...world,
+              events: [...world.events, ...cold].sort(
                 (a, b) => (a.order ?? a.sequence) - (b.order ?? b.sequence),
               ),
-              archivedEventCount: (this.world.archivedEventCount ?? 0) - cold.length,
+              archivedEventCount: (world.archivedEventCount ?? 0) - cold.length,
             }
-          : this.world;
+          : world;
         const eventsById = new Map(original.events.map((event) => [event.id, event]));
         for (const change of changes) {
           const event = eventsById.get(change.id);
@@ -6289,16 +6549,7 @@ export class WorldService {
         }
         const result = editWorldEventsState(original, changes, prepared?.referencedEventIds);
         if (!result.outcome.ok) return result.outcome;
-        if (
-          !(await this.commit(
-            { ...this.saved, world: result.world },
-            result.invalidatedMemoryIds,
-            'diff',
-            original,
-          ))
-        )
-          return { ok: false, code: 'storage', message: this.storageError! };
-        return { ...result.outcome, revision: this.viewRevision };
+        return { transition: result, eventMode: 'diff' as const, historyBefore: original };
       },
     );
   }
@@ -6420,155 +6671,181 @@ export class WorldService {
     scope?: RequestScope,
     publicReferences = false,
   ): Promise<ApiResult> {
-    return this.mutate(async () => {
-      await this.ready;
-      if (scope) this.assertScope(scope, 'play', true);
-      const actor = scope?.actorId ?? actorId ?? this.controlledEntityId;
-      if (commandId.startsWith('gameplay:'))
-        return {
-          ok: false,
-          code: 'invalid-command',
-          message: 'Command IDs cannot use the reserved gameplay namespace.',
-        };
-      // Trusted native callers use their admitted command identity; public clients
-      // additionally bind retries to their issued command epoch.
-      if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
-      if (epoch === undefined && input.type === 'say') {
-        const bound = this.bindCommand(commandId, input, actor, true, scope ?? this.localScope);
-        const prior = orderedRecordOwn(this.world.commandReceipts, commandId);
-        if (prior && 'actorId' in bound)
-          return prior.digest === canonicalJson(bound)
-            ? { ...prior.outcome, code: 'duplicate' }
-            : {
-                ok: false,
-                code: 'idempotency-conflict',
-                message: 'That command ID was used for different input.',
-              };
+    await this.ready;
+    if (scope) this.assertScope(scope, 'play', true);
+    const actor = scope?.actorId ?? actorId ?? this.controlledEntityId;
+    if (commandId.startsWith('gameplay:'))
+      return {
+        ok: false,
+        code: 'invalid-command',
+        message: 'Command IDs cannot use the reserved gameplay namespace.',
+      };
+    if (scope && (!epoch || !this.store.commands)) throw new AuthorityError('stale-scope');
+    await this.refreshCommandEpoch();
+    let tradeDisclosures: TradeDisclosureContext | undefined;
+    const prepare = async () => {
+      let currentInput: CommandInput & {
+        targetRole?: import('@open-legend/domain').SpeechTargetRole;
+      } = input;
+      if (scope && publicReferences) {
+        try {
+          currentInput = resolveCommandContactReferences(this.world, scope, input);
+        } catch (error) {
+          if (!(error instanceof ContactReferenceError)) throw error;
+          return { ok: false, code: error.code, message: error.message };
+        }
       }
-      let tradeDisclosures: TradeDisclosureContext | undefined;
-      const prepare = async () => {
-        let currentInput: CommandInput & {
-          targetRole?: import('@open-legend/domain').SpeechTargetRole;
-        } = input;
-        if (scope && publicReferences) {
-          try {
-            currentInput = resolveCommandContactReferences(this.world, scope, input);
-          } catch (error) {
-            if (!(error instanceof ContactReferenceError)) throw error;
-            return { ok: false, code: error.code, message: error.message };
-          }
-        }
-        if (
-          currentInput.type === 'say' &&
-          entityGet(this.world.entities, actor)?.actor?.controller === 'player'
-        ) {
-          const available = await this.playerInteractionAvailability(
-            'speak',
-            currentInput.targetId,
-            scope ?? this.localScope,
-          );
-          if (!available.available)
-            return { ok: false, code: available.code, message: available.reason! };
-        }
-        const refusal = currentInput.primaryAction
-          ? primaryActionRefusal(this, currentInput, scope ?? this.localScope, publicReferences)
-          : undefined;
-        if (refusal) return refusal;
-        if (
-          currentInput.type === 'handover' &&
-          (currentInput.handoverOperation === 'offer' ||
-            currentInput.handoverOperation === 'counter') &&
-          currentInput.targetId &&
-          currentInput.requestedItems?.length
-        ) {
-          // Bound exact historical preparation by the existing native operation
-          // envelope. SQL evidence never becomes client-supplied authority.
-          if (currentInput.requestedItems.length > STOCK_TRANSFER_LIMITS.movedLots)
-            return {
-              ok: false,
-              code: 'invalid-command',
-              message: 'Choose fewer items for one trade.',
-            };
-          const itemIds = currentInput.requestedItems.map((lot) => lot.itemId);
-          const lots = scope
-            ? await retainedTradeDisclosureReferences(this, scope, currentInput.targetId, itemIds)
-            : await retainedNativeTradeDisclosureReferences(
-                this,
-                actor,
-                currentInput.targetId,
-                itemIds,
-              );
-          tradeDisclosures = { actorId: actor, personId: currentInput.targetId, lots };
-        }
-        if (!currentInput.knownPlace) return currentInput;
-        if (currentInput.type !== 'move')
+      if (
+        currentInput.type === 'say' &&
+        entityGet(this.world.entities, actor)?.actor?.controller === 'player'
+      ) {
+        const available = await this.playerInteractionAvailability(
+          'speak',
+          currentInput.targetId,
+          scope ?? this.localScope,
+        );
+        if (!available.available)
+          return { ok: false, code: available.code, message: available.reason! };
+      }
+      const refusal = currentInput.primaryAction
+        ? primaryActionRefusal(this, currentInput, scope ?? this.localScope, publicReferences)
+        : undefined;
+      if (refusal) return refusal;
+      if (
+        currentInput.type === 'handover' &&
+        (currentInput.handoverOperation === 'offer' ||
+          currentInput.handoverOperation === 'counter') &&
+        currentInput.targetId &&
+        currentInput.requestedItems?.length
+      ) {
+        // Bound exact historical preparation by the existing native operation
+        // envelope. SQL evidence never becomes client-supplied authority.
+        if (currentInput.requestedItems.length > STOCK_TRANSFER_LIMITS.movedLots)
           return {
             ok: false,
             code: 'invalid-command',
-            message: 'A remembered place can only select a movement destination.',
+            message: 'Choose fewer items for one trade.',
           };
-        const result = await resolveKnownPlaceMove(this, actor, currentInput.knownPlace);
-        if (!('position' in result)) return result;
-        const { knownPlace: _reference, ...command } = currentInput;
-        return { ...command, position: result.position };
-      };
-      if (epoch === undefined || !this.store.commands) {
-        const resolved = await prepare();
-        return 'type' in resolved
-          ? await this.evaluateCommand(
-              commandId,
-              resolved,
+        const itemIds = currentInput.requestedItems.map((lot) => lot.itemId);
+        const lots = scope
+          ? await retainedTradeDisclosureReferences(this, scope, currentInput.targetId, itemIds)
+          : await retainedNativeTradeDisclosureReferences(
+              this,
               actor,
-              false,
-              undefined,
-              scope ?? this.localScope,
-              true,
-              commandId,
-              tradeDisclosures,
-            )
-          : resolved;
+              currentInput.targetId,
+              itemIds,
+            );
+        tradeDisclosures = { actorId: actor, personId: currentInput.targetId, lots };
       }
-      await this.refreshCommandEpoch();
-      const id = `gameplay:${scope?.accountId ?? 'local-player'}:${epoch}:${digest(commandId)}`;
-      const fingerprint = digest({ actor, input, ...(scope ? { scope } : {}) });
-      const prior = await this.store.commands.get(this.world.id, id);
-      if (prior) {
-        if (this.now() >= prior.expiresAt)
+      if (!currentInput.knownPlace) return currentInput;
+      if (currentInput.type !== 'move')
+        return {
+          ok: false,
+          code: 'invalid-command',
+          message: 'A remembered place can only select a movement destination.',
+        };
+      const result = await resolveKnownPlaceMove(this, actor, currentInput.knownPlace);
+      if (!('position' in result)) return result;
+      const { knownPlace: _reference, ...command } = currentInput;
+      return { ...command, position: result.position };
+    };
+
+    const generation = this.generation,
+      timeline = this.timelineId;
+    const preparedSourcesCurrent = this.privateReadFence(
+      actor,
+      () => !scope || this.currentScope(scope, 'play', true),
+    );
+    const id =
+      epoch === undefined || !this.store.commands
+        ? commandId
+        : `gameplay:${scope?.accountId ?? 'local-player'}:${epoch}:${digest(commandId)}`;
+    const fingerprint = digest({ actor, input, ...(scope ? { scope } : {}) });
+    const readers = this.commandReceiptReaders.get(id) ?? 0;
+    if (!readers && this.commandReceiptReaders.size >= this.config.capacity.requests)
+      throw new OverloadError();
+    this.commandReceiptReaders.set(id, readers + 1);
+    try {
+      const prior =
+        epoch !== undefined && this.store.commands
+          ? (this.recentCommandResults.get(id) ??
+            (await this.store.commands.get(this.world.id, id)))
+          : undefined;
+      const replay = (outcome: GameplayReceipt): ApiResult => {
+        if (this.now() >= outcome.expiresAt)
           return { ok: false, code: 'expired', message: 'This command retry window has expired.' };
-        return prior.fingerprint === fingerprint
-          ? prior.result
+        return outcome.fingerprint === fingerprint
+          ? outcome.result
           : {
               ok: false,
               code: 'idempotency-conflict',
               message: 'That command ID was used for different input.',
             };
-      }
-      if (epoch !== this.commandEpoch)
-        return {
-          ok: false,
-          code: 'expired',
-          message: 'This command epoch has closed. Refresh before issuing a new action.',
-        };
+      };
+      // Recovery precedes today's action preparation: a forgotten destination or
+      // changed inventory cannot turn an already accepted transfer into another one.
+      if (prior)
+        return await this.mutate(async () => {
+          if (scope) this.assertScope(scope, 'play', true);
+          if (generation !== this.generation || timeline !== this.timelineId)
+            throw new AuthorityError('stale-scope');
+          return replay(prior);
+        });
+      await this.prepareNativeKnownPlaces();
       const resolved = await prepare();
       if (!('type' in resolved)) return resolved;
-      return await this.evaluateCommand(
-        id,
-        resolved,
-        actor,
-        false,
-        {
+      return await this.mutate(async () => {
+        if (scope) this.assertScope(scope, 'play', true);
+        if (generation !== this.generation || timeline !== this.timelineId)
+          throw new AuthorityError('stale-scope');
+        const outcome = this.recentCommandResults.get(id) ?? prior;
+        if (outcome) return replay(outcome);
+        if (epoch !== undefined && epoch !== this.commandEpoch)
+          return {
+            ok: false,
+            code: 'expired',
+            message: 'This command epoch has closed. Refresh before issuing a new action.',
+          };
+        if (!this.pendingAdmissionOpen())
+          return { ok: false, code: 'busy', message: 'Saving is catching up. Try again shortly.' };
+        if ((input.knownPlace || tradeDisclosures) && !preparedSourcesCurrent())
+          return {
+            ok: false,
+            code: 'stale-source',
+            message: 'Your remembered information changed. Choose again.',
+          };
+        if (scope && publicReferences) resolveCommandContactReferences(this.world, scope, input);
+        // Native admission below rechecks current mechanics. Preparation grants no
+        // permission; known-place and trade readers retain their exact source cuts.
+        const refusal = resolved.primaryAction
+          ? primaryActionRefusal(this, resolved, scope ?? this.localScope, publicReferences)
+          : undefined;
+        if (refusal) return refusal;
+        return this.evaluateCommand(
           id,
-          epoch: this.epoch.generation,
-          fingerprint,
-          recoveryFingerprint: scope ? commandRecoveryFingerprint(input, scope) : null,
-          expiresAt: this.now() + COMMAND_RETRY_MS,
-        },
-        scope ?? this.localScope,
-        true,
-        commandId,
-        tradeDisclosures,
-      );
-    });
+          resolved,
+          actor,
+          false,
+          epoch !== undefined && this.store.commands
+            ? {
+                id,
+                epoch: this.epoch.generation,
+                fingerprint,
+                recoveryFingerprint: scope ? commandRecoveryFingerprint(input, scope) : null,
+                expiresAt: this.now() + COMMAND_RETRY_MS,
+              }
+            : undefined,
+          scope ?? this.localScope,
+          true,
+          commandId,
+          tradeDisclosures,
+        );
+      });
+    } finally {
+      const remaining = (this.commandReceiptReaders.get(id) ?? 1) - 1;
+      if (remaining) this.commandReceiptReaders.set(id, remaining);
+      else this.commandReceiptReaders.delete(id);
+    }
   }
 
   /** Resolve an original request without re-admitting it under changed control. */
@@ -6578,12 +6855,14 @@ export class WorldService {
     epoch: string,
     scope: RequestScope,
   ): Promise<CommandReceiptResult> {
-    return this.mutate(async () => {
-      await this.ready;
+    await this.ready;
+    return (async () => {
       this.assertScope(scope);
       const audience = scopeKey(scope);
       const id = `gameplay:${scope.accountId}:${epoch}:${digest(commandId)}`;
-      const prior = await this.store.commands?.get(this.world.id, id);
+      const selected =
+        this.recentCommandResults.get(id) ?? (await this.store.commands?.get(this.world.id, id));
+      const prior = this.recentCommandResults.get(id) ?? selected;
       this.assertScope(scope);
       if (!prior)
         return {
@@ -6608,7 +6887,7 @@ export class WorldService {
           message: 'The original result has expired. Its outcome remains unconfirmed.',
         };
       return { ok: true, scope: audience, status: 'resolved', result: prior.result };
-    });
+    })();
   }
 
   /** Run current admission; native pure prerequisites or disposable effects never commit. */
@@ -8021,6 +8300,12 @@ export class WorldService {
     });
   }
 
+  private readonly pendingSourceEdits = new Map<string, () => void>();
+  private assertSourceReadsAvailable(actorId: string): void {
+    if (this.store.memories?.sourceEditPending({ worldId: this.world.id, actorId }))
+      throw new Error('Memory sources changed during publication preparation.');
+  }
+
   async correctMemory(
     actorId: string,
     sourceId: string,
@@ -8028,13 +8313,6 @@ export class WorldService {
     scope = this.localScope,
     receipt?: TemporalReceiptLocator,
   ): Promise<ApiResult> {
-    await this.ready;
-    if (!this.mayInspectPrivate(actorId, scope))
-      return {
-        ok: false,
-        code: 'forbidden',
-        message: 'Human-private character content is unavailable to this principal.',
-      };
     return this.withHistoryEdit(
       {
         ...(receipt ? { receipts: [receipt] } : {}),
@@ -8043,28 +8321,10 @@ export class WorldService {
           { actorId, sourceId: correctionEventId },
         ],
       },
-      async () => {
-        await this.ready;
-        if (!this.mayInspectPrivate(actorId, scope))
-          return {
-            ok: false as const,
-            code: 'forbidden',
-            message: 'Human-private character content is unavailable to this principal.',
-          };
-
-        const corrected = correctExperience(this.world, actorId, sourceId, correctionEventId);
-        if (!corrected.outcome.ok) return corrected.outcome;
-        const ok = await this.commit(
-          { ...this.saved, world: corrected.world },
-          corrected.invalidatedMemoryIds,
-          'unchanged',
-        );
-        return {
-          ok,
-          code: ok ? 'corrected' : 'storage',
-          message: ok ? corrected.outcome.message : this.storageError!,
-        };
-      },
+      (world) => ({
+        transition: correctExperience(world, actorId, sourceId, correctionEventId),
+        eventMode: 'unchanged',
+      }),
       { actorId, scope },
     );
   }
@@ -8075,58 +8335,24 @@ export class WorldService {
     scope = this.localScope,
     receipt?: TemporalReceiptLocator,
   ): Promise<ApiResult> {
-    await this.ready;
-    if (!this.mayInspectPrivate(actorId, scope))
-      return {
-        ok: false,
-        code: 'forbidden',
-        message: 'Human-private character content is unavailable to this principal.',
-      };
-    let released = new Set<string>();
-    const result = await this.withHistoryEdit(
+    return this.withHistoryEdit(
       { sources: [{ actorId, sourceId }], ...(receipt ? { receipts: [receipt] } : {}) },
-      async () => {
-        await this.ready;
-        if (!this.mayInspectPrivate(actorId, scope))
-          return {
-            ok: false as const,
-            code: 'forbidden',
-            message: 'Human-private character content is unavailable to this principal.',
-          };
-
-        if (!entityGet(this.world.entities, actorId)?.actor)
+      (world) => {
+        if (!entityGet(world.entities, actorId)?.actor)
           return { ok: false, code: 'actor', message: 'Unknown actor.' };
-        const recordedAction =
-          this.world.actionExperience.occurrences[actorId]?.some(
-            (entry) => entry.id === sourceId,
-          ) ||
-          (await this.store.records?.activityPage(this.world.id, actorId, -1, [sourceId]))?.length;
-        if (!recordedAction && !retainedExperienceSource(this.world, actorId, sourceId))
+        const recordedAction = world.actionExperience.occurrences[actorId]?.some(
+          (entry) => entry.id === sourceId,
+        );
+        if (!recordedAction && !retainedExperienceSource(world, actorId, sourceId))
           return {
             ok: false,
             code: 'source',
             message: 'That source is not retained for this actor.',
           };
-        const forgotten = forgetExperience(this.world, actorId, sourceId);
-        if (!forgotten.outcome.ok) return forgotten.outcome;
-        released = receivedValueReleaseCandidates(this.world, forgotten.world);
-        const ok = await this.commit(
-          { ...this.saved, world: forgotten.world },
-          forgotten.invalidatedMemoryIds,
-          'unchanged',
-        );
-        return {
-          ok,
-          code: ok ? 'forgotten' : 'storage',
-          message: ok
-            ? 'Recall and derived text invalidated; workspace resets before its next fresh job.'
-            : this.storageError!,
-        };
+        return { transition: forgetExperience(world, actorId, sourceId), eventMode: 'unchanged' };
       },
       { actorId, scope },
     );
-    if (result.ok) await this.finishReceivedErasure(released);
-    return result;
   }
 
   /** Creator edits use the original issued address. Shared fragment IDs and a

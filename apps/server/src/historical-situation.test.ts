@@ -341,7 +341,7 @@ it('reads historical native distances through cold actor receipts, including a l
     await store.memories.temporalSelectionsCurrent(
       scope,
       Object.values(captured.receiptDetails),
-      () => temporalHistoryWindow(service.world),
+      () => temporalHistoryWindow(service.world, scope.actorId),
       Object.values(captured.baselineDetails),
     ),
   ).toBe(true);

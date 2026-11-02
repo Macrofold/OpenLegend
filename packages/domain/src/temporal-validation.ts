@@ -563,6 +563,23 @@ export function validateTemporalEvidenceState(
         actor.releasedThrough > world.simTime)
     )
       throw new Error('Invalid temporal unavailable prefix.');
+    if (
+      actor.individualRepairs !== undefined &&
+      (!Array.isArray(actor.individualRepairs) ||
+        new Set(actor.individualRepairs).size !== actor.individualRepairs.length ||
+        actor.individualRepairs.some((id) => !isSafeRecordId(id)))
+    )
+      throw new Error('Invalid pending individual reference repair.');
+    if (
+      actor.retiredThrough !== undefined &&
+      (!record(actor.retiredThrough) ||
+        !ordinal(actor.retiredThrough.chunkOrder) ||
+        !ordinal(actor.retiredThrough.ordinal) ||
+        !finite(actor.retiredThrough.at) ||
+        actor.retiredThrough.at < 0 ||
+        actor.retiredThrough.at > world.simTime)
+    )
+      throw new Error('Invalid temporal retention frontier.');
     if (actor.accounts !== undefined) {
       if (
         !record(actor.accounts) ||

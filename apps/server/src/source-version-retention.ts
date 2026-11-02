@@ -263,38 +263,55 @@ export async function prepareSourceVersions(
         }
       }
     }
-    const totals = zero();
     for (const value of candidates.values()) {
       const category = future.get(key(value));
       if (!category) continue;
       const charged = { ...value, category };
       retained.push(charged);
-      totals[category].bytes += value.bytes;
-      totals[category].count++;
     }
-    const old = world.experience?.temporal?.actors[actorId]?.accounts?.archives ?? zero();
-    if (JSON.stringify(old) !== JSON.stringify(totals))
-      world = updateWorld(
-        world,
-        (draft) => {
-          ensureExperienceAccounting(draft, actorId);
-          const accounts = draft.experience!.temporal!.actors[actorId]!.accounts!;
-          for (const category of ['optional', 'required', 'speech'] as const) {
-            accounts[category].bytes += totals[category].bytes - old[category].bytes;
-            accounts[category].count += totals[category].count - old[category].count;
-            if (accounts[category].bytes < 0 || accounts[category].count < 0)
-              throw new Error('Exact archived support accounting underflow.');
-          }
-          accounts.archives = totals;
-          accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, draft.simTime);
-        },
-        { retainNativeValues: true },
-      );
   }
+  const plan = { actors: [...actors], retained };
+  world = applySourceVersionAccounting(world, plan);
   return {
     state: world === state.world ? state : { ...state, world },
-    plan: { actors: [...actors], retained },
+    plan,
   };
+}
+
+/** One accounting owner applies a prepared archive set to the latest native
+ * state. Unrelated recent suffix charges are preserved during background work. */
+export function applySourceVersionAccounting(
+  world: WorldState,
+  plan: SourceVersionPlan,
+): WorldState {
+  const totalsByActor = new Map<string, ReturnType<typeof zero>>();
+  for (const value of plan.retained) {
+    let totals = totalsByActor.get(value.actorId);
+    if (!totals) totalsByActor.set(value.actorId, (totals = zero()));
+    totals[value.category].bytes += value.bytes;
+    totals[value.category].count++;
+  }
+  return updateWorld(
+    world,
+    (draft) => {
+      for (const actorId of plan.actors) {
+        const totals = totalsByActor.get(actorId) ?? zero();
+        const old = draft.experience?.temporal?.actors[actorId]?.accounts?.archives ?? zero();
+        if (JSON.stringify(old) === JSON.stringify(totals)) continue;
+        ensureExperienceAccounting(draft, actorId);
+        const accounts = draft.experience!.temporal!.actors[actorId]!.accounts!;
+        for (const category of ['optional', 'required', 'speech'] as const) {
+          accounts[category].bytes += totals[category].bytes - old[category].bytes;
+          accounts[category].count += totals[category].count - old[category].count;
+          if (accounts[category].bytes < 0 || accounts[category].count < 0)
+            throw new Error('Exact archived support accounting underflow.');
+        }
+        accounts.archives = totals;
+        accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, draft.simTime);
+      }
+    },
+    { retainNativeValues: true },
+  );
 }
 
 /** Applied beside canonical records in their existing transaction, never later

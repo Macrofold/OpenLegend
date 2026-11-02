@@ -1,4 +1,4 @@
-import { nativeText } from '@open-legend/domain';
+import { nativeText, selectedTemporalPolicy } from '@open-legend/domain';
 import {
   canSpeak,
   equippedItems,
@@ -1081,12 +1081,20 @@ export async function projectView(
   // Read the indexed latest passage before publishing the view. A temporary null
   // while this refreshes would dismiss and then reannounce the same old narration.
   // Narration completion already calls notifyHistory; unrelated telemetry is not a dependency.
-  const narratorRevision = service.store.history?.bannerRevision;
+  const narratorTiming = {
+    at: world.simTime,
+    maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
+  };
+  const narratorRevision = service.store.history?.bannerRevisionAt(
+    world.id,
+    scope.accountId,
+    narratorTiming,
+  );
   const narration = await memo(
     'narrator',
     [narratorRevision, historyEpoch],
     () =>
-      service.store.history?.latestNarration(world.id, scope.accountId) ??
+      service.store.history?.latestNarration(world.id, scope.accountId, narratorTiming) ??
       Promise.resolve({ status: 'current' as const, item: null }),
   );
   if (narration.status === 'stale') throw new ViewChangedError();
@@ -1667,7 +1675,11 @@ export async function projectView(
   if (
     generation !== service.generation ||
     historyEpoch !== service.historyEpoch ||
-    narratorRevision !== service.store.history?.bannerRevision ||
+    narratorRevision !==
+      service.store.history?.bannerRevisionAt(world.id, scope.accountId, {
+        at: service.world.simTime,
+        maxAgeSeconds: selectedTemporalPolicy(service.world).recent.maxAgeSeconds,
+      }) ||
     assetAuthorityGeneration !== service.assetAuthorityGeneration
   )
     throw new ViewChangedError();

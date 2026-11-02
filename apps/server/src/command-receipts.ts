@@ -51,12 +51,65 @@ export class CommandReceipts {
       expires_at BIGINT NOT NULL, payload TEXT NOT NULL, PRIMARY KEY(world_id,id));
       CREATE INDEX IF NOT EXISTS gameplay_expiry ON gameplay_receipts(world_id,epoch,expires_at);`);
   }
+  private readonly reads = new Map<
+    string,
+    Map<
+      string,
+      Array<{ resolve(value: GameplayReceipt | undefined): void; reject(error: unknown): void }>
+    >
+  >();
+  private readScheduled = false;
   async get(worldId: string, id: string): Promise<GameplayReceipt | undefined> {
-    const row = await this.db
-      .prepare('SELECT payload FROM gameplay_receipts WHERE world_id=? AND id=?')
-      .get(worldId, id);
-    // Current-format only: an older receipt cannot silently acquire recovery permission.
-    return row ? receiptSchema.parse(JSON.parse(String(row['payload']))) : undefined;
+    // Protected enclosing transactions keep their own exact snapshot. Ordinary
+    // request preparation shares one bounded cold lookup outside native mutation.
+    if (this.db.transactionActive) {
+      const row = await this.db
+        .prepare('SELECT payload FROM gameplay_receipts WHERE world_id=? AND id=?')
+        .get(worldId, id);
+      return row ? receiptSchema.parse(JSON.parse(String(row['payload']))) : undefined;
+    }
+    const result = new Promise<GameplayReceipt | undefined>((resolve, reject) => {
+      let world = this.reads.get(worldId);
+      if (!world) this.reads.set(worldId, (world = new Map()));
+      const listeners = world.get(id) ?? [];
+      listeners.push({ resolve, reject });
+      world.set(id, listeners);
+    });
+    if (!this.readScheduled) {
+      this.readScheduled = true;
+      queueMicrotask(() => {
+        void this.readBatch();
+      });
+    }
+    return result;
+  }
+  private async readBatch(): Promise<void> {
+    this.readScheduled = false;
+    const pending = [...this.reads];
+    this.reads.clear();
+    for (const [worldId, entries] of pending) {
+      const ids = [...entries.keys()];
+      for (let start = 0; start < ids.length; start += 128) {
+        const selected = ids.slice(start, start + 128);
+        try {
+          const rows = await this.db
+            .prepare(
+              'SELECT id,payload FROM gameplay_receipts WHERE world_id=? AND id=ANY(?::text[])',
+            )
+            .all(worldId, selected);
+          const values = new Map(
+            rows.map((row) => [
+              String(row['id']),
+              receiptSchema.parse(JSON.parse(String(row['payload']))),
+            ]),
+          );
+          for (const id of selected)
+            for (const waiter of entries.get(id)!) waiter.resolve(values.get(id));
+        } catch (error) {
+          for (const id of selected) for (const waiter of entries.get(id)!) waiter.reject(error);
+        }
+      }
+    }
   }
   async save(worldId: string, receipt: GameplayReceipt): Promise<void> {
     const current = receiptSchema.parse(receipt);
@@ -65,6 +118,28 @@ export class CommandReceipts {
         'INSERT INTO gameplay_receipts(world_id,id,epoch,expires_at,payload) VALUES (?,?,?,?,?)',
       )
       .run(worldId, current.id, current.epoch, current.expiresAt, JSON.stringify(current));
+  }
+  async saveBatch(worldId: string, receipts: readonly GameplayReceipt[]): Promise<void> {
+    // Outcomes share the world's transaction. Bounded chunks preserve exact retry
+    // identity while removing the old one-query-per-command persistence path.
+    for (let start = 0; start < receipts.length; start += 128) {
+      const rows = receipts.slice(start, start + 128).map((value) => {
+        const receipt = receiptSchema.parse(value);
+        return {
+          world_id: worldId,
+          id: receipt.id,
+          epoch: receipt.epoch,
+          expires_at: receipt.expiresAt,
+          payload: JSON.stringify(receipt),
+        };
+      });
+      await this.db
+        .prepare(
+          `INSERT INTO gameplay_receipts
+        SELECT * FROM jsonb_populate_recordset(NULL::gameplay_receipts,?::jsonb)`,
+        )
+        .run(JSON.stringify(rows));
+    }
   }
   async prune(worldId: string, epoch: number, now: number): Promise<void> {
     // The new epoch must be durable first. Retired IDs are rejected before domain admission.

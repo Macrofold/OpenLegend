@@ -77,6 +77,10 @@ export interface RecordingInput {
   consequence: boolean;
 }
 export interface AttentionRetentionPolicy {
+  /** Bounded temporary overshoot while optional maintenance runs. */
+  maintenanceHeadroom: number;
+  speechMaintenanceHeadroom: number;
+  derivedLowWater: number;
   recent: {
     maxAgeSeconds: number;
     maxBytes: number;
@@ -300,6 +304,17 @@ export const attentionSubjectKey = (sourceId: string, exposure: ObservationExpos
 const relationKey = (key: string, family: AttentionRelationFamily) => JSON.stringify([key, family]);
 const owned = (world: WorldState, id: string): PerceptionEvidenceOwner | undefined =>
   world.perceptionEvidence?.[id];
+/** Rebuild derived scheduling once after restoration. Saved scan cursors, latches
+ * and deadlines remain authoritative; this acquires no new sensory evidence. */
+export function rebuildAttentionScheduling(
+  state: Omit<AttentionState, 'relationDirty'>,
+): AttentionState {
+  const relationDirty: AttentionState['relationDirty'] = {};
+  for (const key of new Set([SELF_RELATION_KEY, ...Object.keys(state.annotations ?? {})]))
+    for (const family of ['closing-body', 'closing-drop'] as const)
+      relationDirty[relationKey(key, family)] = state.relationRevision;
+  return { ...state, relationDirty };
+}
 function stateFor(world: WorldState, id: string): AttentionState | undefined {
   touchNativeEvidence(world, 'perception', id);
   const owner = owned(world, id);

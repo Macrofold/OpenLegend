@@ -855,6 +855,28 @@ export class CognitionMaintenance {
     model?: string,
     beforeDispatch?: () => Promise<void>,
   ): Promise<T> {
+    const sourceActor = this.budgetActor;
+    const sourceAccess = sourceActor
+      ? this.service.store.memories?.sourceAccessRevision({
+          worldId: this.service.world.id,
+          actorId: sourceActor,
+        })
+      : undefined;
+    const through = this.service.durabilityTicket();
+    await this.service.whenDurable(through);
+    if (
+      sourceActor &&
+      (sourceAccess !==
+        this.service.store.memories?.sourceAccessRevision({
+          worldId: this.service.world.id,
+          actorId: sourceActor,
+        }) ||
+        this.service.store.memories?.sourceEditPending({
+          worldId: this.service.world.id,
+          actorId: sourceActor,
+        }))
+    )
+      throw new Error('The character’s evidence changed before dispatch.');
     const c = this.service.config;
     const sourceCurrent = this.budgetActor
       ? this.service.privateReadFence(this.budgetActor, () => {

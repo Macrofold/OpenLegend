@@ -41,6 +41,14 @@ interface EncodedOwner {
 const encoded = new WeakMap<object, EncodedOwner>();
 const segmentEncodings = new WeakMap<object, string>();
 const decodedSegments = new WeakMap<object, readonly EvidenceSegment[]>();
+const segmentDeltas = new WeakMap<
+  object,
+  { logicalRemoval: boolean; additions: readonly string[]; previous: object | undefined }
+>();
+/** Pure codec result carried to persistence; never reconstructed from saved rows. */
+export function evidenceSegmentDelta(segment: object) {
+  return segmentDeltas.get(segment);
+}
 const ordinal = (value: unknown) => Number((value as Owner)['ordinal']);
 
 const receiptHeaders = ['subjects', 'sourceIds', 'individualIds', 'sourceRefs'] as const;
@@ -244,6 +252,20 @@ export function encodeEvidenceOwner(value: unknown, previous: unknown, world?: W
     receiptHeaders.map((key) => [key, start ? { ...prior!.headers[key] } : { size: 0 }]),
   ) as Record<ReceiptLookup, OrderedRecord<true>>;
   const additions = addHeaders(headers, suffix);
+  for (const segment of suffix) {
+    const old = start ? undefined : priorSegments.get(segment.start);
+    const appendOnly =
+      !old ||
+      (old.values.length <= segment.values.length &&
+        old.values.every((value, at) => value === segment.values[at]));
+    segmentDeltas.set(segment, {
+      previous: old,
+      logicalRemoval: !!predecessor && (!prior || !appendOnly),
+      additions: segment.index!.sourceRefs.filter(
+        (id) => !prior || orderedRecordGet(prior.headers.sourceRefs, id) === undefined,
+      ),
+    });
+  }
   for (const key of receiptHeaders) {
     const actual = owner[key] as string[];
     const expected = additions[key];
@@ -468,6 +490,10 @@ export function receivedValueSql(world: string, reference: string): string {
 }
 
 export function evidenceReadView(table: string, columns: string[]): string {
+  return `CREATE OR REPLACE VIEW ${table}_read AS ${evidenceReadSelect(table, columns)}`;
+}
+/** Native page hydration shared by durable views and bounded pending read cuts. */
+export function evidenceReadSelect(table: string, columns: string[]): string {
   const children = 'mind_temporal_segments';
   // JSON preserves encoded fragment member order. JSONB would reorder nested
   // values and defeat the existing exact-encoding sharing index after active load.
@@ -497,7 +523,7 @@ export function evidenceReadView(table: string, columns: string[]): string {
       return `('${key}',${projected[column]})`;
     })
     .join(',')}) headers(key,value)`;
-  return `CREATE OR REPLACE VIEW ${table}_read AS SELECT
+  return `SELECT
     p.world_id,p.id,p.parent_id,p.slot,p.position,p.revision,
     ${evidenceEncodedBytesSql('p')} AS encoded_bytes,
     (SELECT json_object_agg(e.key,CASE WHEN e.key='entries' THEN

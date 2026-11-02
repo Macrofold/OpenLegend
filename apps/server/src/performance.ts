@@ -155,6 +155,7 @@ export function gaugeMetric(name: string, value: number): void {
 type BackgroundFailureOperation =
   | 'memory-search'
   | 'memory-index'
+  | 'memory-maintenance'
   | 'intelligence-write'
   | 'navigation-preview'
   | 'simulation-tick'

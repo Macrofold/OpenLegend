@@ -19,6 +19,7 @@ export async function evidenceStorageStats(db: SqlDatabase, worldId: string) {
           .map(
             (table) => `SELECT '${table}' AS name,
       count(*) AS rows, ${table === 'received_value_uses' ? 'NULL' : 'COALESCE(sum(octet_length(payload)),0)'} AS payload_bytes,
+      ${table === 'mind_perception_current' ? 'COALESCE(sum(octet_length(metadata)),0)' : '0::bigint'} AS metadata_bytes,
       pg_relation_size('${table}') AS table_bytes, pg_indexes_size('${table}') AS index_bytes
       FROM ${table} WHERE world_id=?`,
           )

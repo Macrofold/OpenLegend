@@ -52,7 +52,7 @@ export async function memoryHistory(
   const memories = service.store.memories,
     records = service.store.records;
   if (!memories || !records) throw new Error('Memory history requires the history database.');
-  await service.flushMemorySources(actorId);
+  await service.ready;
   const historyEpoch = service.historyEpoch;
   const head = await records.head();
   if (!head) throw new Error('Memory history requires the history database.');

@@ -47,7 +47,7 @@ function placeView(entry: KnownPlaceSource): KnownPlaceView | undefined {
 }
 
 async function prepare(service: WorldService, actorId: string) {
-  await service.flushMemorySources(actorId);
+  await service.ready;
   const repository = service.store.memories,
     head = await service.store.records?.head();
   if (!repository || !head) throw new Error('Known places require the memory repository.');
@@ -153,7 +153,7 @@ export async function selectedPlace(service: WorldService, actorId: string, refe
   return { entry, place };
 }
 
-/** Called under the existing command mutation owner, after authorization and retry lookup. */
+/** Prepare outside mutation; native admission rechecks current permissions before effects. */
 export async function resolveKnownPlaceMove(
   service: WorldService,
   actorId: string,

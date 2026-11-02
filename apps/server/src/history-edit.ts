@@ -5,7 +5,7 @@ import type {
   ReceivedValue,
   TemporalReceiptLocator,
 } from '@open-legend/domain';
-import { temporalAccountAliasClosure } from '@open-legend/domain';
+import { temporalAccountAliasClosure, selectedTemporalPolicy } from '@open-legend/domain';
 import { digest } from './content-digest.js';
 import { readTemporalChunkRecord } from './temporal-storage.js';
 import type { SavedWorld, SqlDatabase } from './store.js';
@@ -348,4 +348,157 @@ export async function prepareHistoryEdit(
     if (world.appraisals || Object.keys(appraisals).length) world.appraisals = appraisals;
     return { state: { ...state, world }, events, referencedEventIds };
   });
+}
+
+/** Install only hydrated cold members into the latest accepted world. Ordinary
+ * physical progress and newly acquired suffixes never belong to this read result. */
+export function mergeHistoryEditResidency(
+  current: SavedWorld,
+  prepared: PreparedHistoryEdit,
+  baseline: SavedWorld,
+): SavedWorld {
+  const neededValues = new Set<string>();
+  const mergeRows = <T>(
+    live: T[] | undefined,
+    cold: T[] | undefined,
+    original: T[] | undefined,
+  ): T[] | undefined => {
+    if (!cold?.length || live === cold) return live;
+    const values = new Map((live ?? []).map((value) => [historyKey(value), value]));
+    const oldPositions = live && historyPositions.get(live);
+    const coldPositions = historyPositions.get(cold);
+    const positions = new Map(
+      oldPositions?.positions ?? (live ?? []).map((value, at) => [historyKey(value), at]),
+    );
+    let changed = false;
+    const resident = new Set((original ?? []).map(historyKey));
+    for (const value of cold) {
+      const key = historyKey(value);
+      if (values.has(key) || resident.has(key)) continue;
+      values.set(key, value);
+      changed = true;
+      const position = coldPositions?.positions.get(key);
+      if (position === undefined)
+        throw new Error('Prepared memory source has no canonical position.');
+      positions.set(key, position);
+    }
+    if (!changed) return live;
+    const result = [...values.values()].sort(
+      (a, b) => positions.get(historyKey(a))! - positions.get(historyKey(b))!,
+    );
+    historyPositions.set(result, {
+      positions,
+      next: Math.max(oldPositions?.next ?? 0, coldPositions?.next ?? 0),
+      complete: oldPositions?.complete ?? false,
+    });
+    return result;
+  };
+  const mergeOwners = <T>(
+    live: Record<string, T[]>,
+    cold: Record<string, T[]> | undefined,
+    original: Record<string, T[]> | undefined,
+  ) => {
+    let result = live;
+    for (const [actor, values] of Object.entries(cold ?? {})) {
+      const rows = mergeRows(live[actor], values, original?.[actor]);
+      if (rows !== live[actor] && rows) {
+        if (result === live) result = { ...live };
+        result[actor] = rows;
+      }
+    }
+    return result;
+  };
+  const world = {
+    ...current.world,
+    memories: mergeOwners(
+      current.world.memories,
+      prepared.state.world.memories,
+      baseline.world.memories,
+    ),
+    actionExperience: {
+      ...current.world.actionExperience,
+      occurrences: mergeOwners(
+        current.world.actionExperience.occurrences,
+        prepared.state.world.actionExperience.occurrences,
+        baseline.world.actionExperience.occurrences,
+      ),
+    },
+  };
+  if (world.experience && prepared.state.world.experience) {
+    world.experience = {
+      ...world.experience,
+      awareness: mergeOwners(
+        world.experience.awareness,
+        prepared.state.world.experience.awareness,
+        baseline.world.experience?.awareness,
+      ),
+      summaries: mergeOwners(
+        world.experience.summaries,
+        prepared.state.world.experience.summaries,
+        baseline.world.experience?.summaries,
+      ),
+    };
+    const temporal = world.experience.temporal;
+    const cold = prepared.state.world.experience.temporal;
+    if (temporal && cold) {
+      const actors = { ...temporal.actors };
+      for (const [actorId, preparedActor] of Object.entries(cold.actors)) {
+        const live = actors[actorId];
+        if (!live || live.chunks === preparedActor.chunks) continue;
+        const chunks = new Map(live.chunks.map((chunk) => [chunk.id, chunk]));
+        const resident = new Set(
+          (baseline.world.experience?.temporal?.actors[actorId]?.chunks ?? []).map(
+            (chunk) => chunk.id,
+          ),
+        );
+        const cutoff = world.simTime - selectedTemporalPolicy(world).recent.maxAgeSeconds;
+        const frontier = live.retiredThrough;
+        for (const chunk of preparedActor.chunks)
+          if (
+            !chunks.has(chunk.id) &&
+            !resident.has(chunk.id) &&
+            chunk.throughAt >= cutoff &&
+            (!frontier ||
+              chunk.order > frontier.chunkOrder ||
+              (chunk.order === frontier.chunkOrder && chunk.throughOrdinal > frontier.ordinal))
+          ) {
+            chunks.set(chunk.id, chunk);
+            for (const id of chunk.sourceRefs) neededValues.add(id);
+          }
+        if (chunks.size !== live.chunks.length)
+          actors[actorId] = {
+            ...live,
+            chunks: [...chunks.values()].sort((a, b) => a.order - b.order),
+          };
+      }
+      world.experience.temporal = { ...temporal, actors };
+    }
+  }
+  if (prepared.state.world.receivedValues) {
+    const sources = { ...world.receivedValues?.sources };
+    for (const id of neededValues)
+      if (prepared.state.world.receivedValues.sources[id])
+        sources[id] ??= prepared.state.world.receivedValues.sources[id]!;
+    world.receivedValues = { ...world.receivedValues, sources };
+  }
+  if (prepared.state.world.appraisals) {
+    world.appraisals = { ...world.appraisals };
+    for (const [actor, values] of Object.entries(prepared.state.world.appraisals)) {
+      const live = world.appraisals[actor] ?? {};
+      const original = baseline.world.appraisals?.[actor] ?? {};
+      const merged = { ...live };
+      for (const [id, value] of Object.entries(values))
+        if (!Object.hasOwn(original, id) && !Object.hasOwn(merged, id)) merged[id] = value;
+      const coldPositions = historyMapPositions.get(values),
+        currentPositions = historyMapPositions.get(live);
+      if (coldPositions)
+        historyMapPositions.set(merged, {
+          positions: new Map([...coldPositions.positions, ...(currentPositions?.positions ?? [])]),
+          next: Math.max(coldPositions.next, currentPositions?.next ?? 0),
+          complete: true,
+        });
+      world.appraisals[actor] = merged;
+    }
+  }
+  return { ...current, world };
 }

@@ -1,3 +1,11 @@
+import {
+  prepareAccountRetentionPlan,
+  nextAccountRetentionAt,
+  type AccountRetentionPlan,
+} from './account-retention.js';
+import { dueAccountRetentionActors } from './retention-deadlines.js';
+import { prepareRecentRetention, type RecentRetentionPlan } from './recent-retention.js';
+import type { LiveReadCuts, LiveReadCutsProvider } from './live-read-overlay.js';
 import { receivedCurrentOwnerTables } from './received-record-references.js';
 import { retentionDueActors, recentRetentionDue } from './temporal-storage.js';
 import type { PreparedDiagnosticRecord } from './diagnostic-capture.js';
@@ -62,6 +70,12 @@ import { HistoryRepository } from './history.js';
 import { prepareHistory } from './history-preparation.js';
 import { insertRows, SqlWriteBatch } from './sql-rows.js';
 import { IntegrationValues } from './integration-values.js';
+import {
+  privacyLedgerKey,
+  readPrivacyLedger,
+  worldPrivacy,
+  assertPrivacyPreserved,
+} from './privacy-ledger.js';
 import { ReceivedValueOwnership } from './received-value-ownership.js';
 import { evidenceEncodedBytesSql } from './evidence-segments.js';
 import { CommandReceipts, type GameplayReceipt } from './command-receipts.js';
@@ -149,7 +163,7 @@ function diagnosticRootSelection(filters: Record<string, string>, access?: Diagn
 import { digest } from './content-digest.js';
 import { randomUUID } from 'node:crypto';
 export { digest } from './content-digest.js';
-export const DATABASE_SCHEMA = '50';
+export const DATABASE_SCHEMA = '51';
 
 export interface AttemptBudget {
   id: string;
@@ -162,7 +176,11 @@ export interface SqlDatabase {
   readonly transactionActive?: boolean;
   checkpointSource?: import('./checkpoint-worker-client.js').CheckpointSource;
   transaction<T>(operation: () => Promise<T>): Promise<T>;
+  setLiveReadCuts?(provider: LiveReadCutsProvider): void;
+  maintenanceTransaction?<T>(operation: () => Promise<T>): Promise<T>;
   readTransaction?<T>(operation: () => Promise<T>): Promise<T>;
+  readForActor?<T>(worldId: string, actorId: string, operation: () => Promise<T>): Promise<T>;
+  readAtCut?<T>(cut: LiveReadCuts, operation: () => Promise<T>): Promise<T>;
   afterCommit?(callback: () => void): void;
   afterRollback?(callback: () => void): void;
   exec(sql: string): Promise<void>;
@@ -301,6 +319,7 @@ export interface WorldStore {
       before?: WorldState;
       after: WorldState;
       receipt?: GameplayReceipt;
+      receipts?: readonly GameplayReceipt[];
       restore?: RestoreSave;
       authority?: AuthorityFence;
       authorityBindings?: readonly AccountBinding[];
@@ -326,7 +345,23 @@ export interface WorldStore {
 
 export interface GameRepository extends WorldStore {
   readonly ready: Promise<void>;
+  setRetainedValueLookup?(provider: (worldId: string) => Readonly<Record<string, unknown>>): void;
+  setLiveReadCuts?(provider: LiveReadCutsProvider): void;
+  prepareRecentRetention?(
+    state: SavedWorld,
+    pending?: RecordChanges,
+    cut?: LiveReadCuts,
+  ): Promise<RecentRetentionPlan>;
+  prepareAccountRetention?(
+    state: SavedWorld,
+    pending: RecordChanges,
+    cut?: LiveReadCuts,
+  ): Promise<AccountRetentionPlan>;
   eraseReceivedValues?(worldId: string, ids: readonly string[]): Promise<void>;
+  prepareSourceEdit?(
+    state: SavedWorld,
+    before: SavedWorld,
+  ): Promise<import('./temporal-storage.js').PreparedMemoryRetention>;
   prepareRetainedSourceClosure?(
     state: SavedWorld,
     complete?: boolean,
@@ -338,6 +373,7 @@ export interface GameRepository extends WorldStore {
     expectedRevision: number,
     state: SavedWorld,
     history: { before?: WorldState; after: WorldState },
+    pending?: { changes: RecordChanges; history?: ReturnType<typeof prepareHistory> },
   ): PreparedCommit;
   adoptHistory?(original: SavedWorld, prepared: SavedWorld): void;
   hydrateHistory?(
@@ -420,6 +456,17 @@ export interface GameRepository extends WorldStore {
  * simulated timeline, so reopening a save cannot repeat or erase provider usage.
  */
 export class SqlGameRepository implements GameRepository {
+  /** Explicit corrections only prepare exact archived support; ordinary pool
+   * eviction belongs to the due/pressure scheduler, not this privacy barrier. */
+  async prepareSourceEdit(
+    state: SavedWorld,
+    before: SavedWorld,
+  ): Promise<import('./temporal-storage.js').PreparedMemoryRetention> {
+    const changes = this.records.prepare(before, state, retainedSourceTables);
+    const metadata = await this.retentionView(state, changes, false);
+    const planned = await this.memories.prepareSourceVersionRetention(state, changes, metadata);
+    return { state: planned.state, rows: new Map(), versions: planned.plan };
+  }
   async prepareRetainedSourceClosure(
     initial: SavedWorld,
     complete = false,
@@ -470,6 +517,22 @@ export class SqlGameRepository implements GameRepository {
     return () => this.projectionListeners.delete(listener);
   }
   private readonly receivedOwnership: ReceivedValueOwnership;
+  private liveReadCuts?: LiveReadCutsProvider;
+  private retainedValueLookup?: (worldId: string) => Readonly<Record<string, unknown>>;
+  setRetainedValueLookup(provider: (worldId: string) => Readonly<Record<string, unknown>>): void {
+    this.retainedValueLookup = provider;
+  }
+  private captureValueProtection(worldId: string): (id: string) => boolean {
+    const native = this.retainedValueLookup?.(worldId) ?? {};
+    const cuts = this.liveReadCuts?.();
+    return (id) => {
+      if (Object.hasOwn(native, id)) return true;
+      if (cuts?.worldId === worldId)
+        for (const cut of cuts.cuts)
+          if (this.receivedOwnership.pendingReferences(cut.changes).has(id)) return true;
+      return false;
+    };
+  }
   private cleanupTimer?: ReturnType<typeof setTimeout>;
   private cleanupTask?: Promise<void>;
   private cleanupWorld?: string;
@@ -483,7 +546,7 @@ export class SqlGameRepository implements GameRepository {
       this.cleanupWorld = undefined;
       let more = false;
       this.cleanupTask = this.receivedOwnership
-        .collect(selected)
+        .collect(selected, () => this.captureValueProtection(selected))
         .then((count) => {
           more = count > 0;
         })
@@ -495,10 +558,66 @@ export class SqlGameRepository implements GameRepository {
           const next = this.cleanupWorld ?? (more ? selected : undefined);
           this.cleanupWorld = undefined;
           // Yield after every bounded transaction; foreground saves use this same writer.
-          if (next) this.scheduleValueCleanup(next, more ? 0 : 5000);
+          if (next) this.scheduleValueCleanup(next, more ? 250 : 5000);
         });
     }, delay);
     this.cleanupTimer.unref();
+  }
+  setLiveReadCuts(provider: LiveReadCutsProvider): void {
+    this.liveReadCuts = provider;
+    this.db.setLiveReadCuts?.(provider);
+  }
+  async prepareAccountRetention(
+    state: SavedWorld,
+    pending: RecordChanges,
+    cut?: LiveReadCuts,
+  ): Promise<AccountRetentionPlan> {
+    const dueAt = nextAccountRetentionAt(state.world);
+    if (dueAt === null || dueAt > state.world.simTime)
+      return { worldId: state.world.id, actors: [], rows: new Map() };
+    const actors = [...dueAccountRetentionActors(state.world)];
+    const metadata = new RetentionMetadata();
+    const baseline = this.acceptedState;
+    const operation = async () => {
+      metadata.initialize(
+        await metadata.capture(this.db, state.world.id, actors, {
+          recentActors: [],
+          changes: pending,
+          world: state.world,
+          previous: baseline?.world,
+        }),
+      );
+      return prepareAccountRetentionPlan(
+        this.db,
+        state,
+        metadata.view(state.world.id, pending),
+        pending.deletes,
+        async (prepared) => {
+          this.records.stageRetirements(prepared.state, prepared.rows, prepared.positions);
+          const changes = this.records.prepare(
+            baseline ?? undefined,
+            prepared.state,
+            new Set(accountTables),
+          );
+          return this.memories.prepareSourceVersionRetention(
+            prepared.state,
+            changes,
+            metadata.view(state.world.id, changes),
+          );
+        },
+      );
+    };
+    return cut && this.db.readAtCut
+      ? this.db.readAtCut(cut, operation)
+      : (this.db.readTransaction?.bind(this.db) ?? this.db.transaction.bind(this.db))(operation);
+  }
+  prepareRecentRetention(
+    state: SavedWorld,
+    pending?: RecordChanges,
+    cut?: LiveReadCuts,
+  ): Promise<RecentRetentionPlan> {
+    const operation = () => prepareRecentRetention(this.db, state, pending);
+    return cut && this.db.readAtCut ? this.db.readAtCut(cut, operation) : operation();
   }
   async eraseReceivedValues(worldId: string, ids: readonly string[]): Promise<void> {
     await this.receivedOwnership.erase(worldId, ids);
@@ -734,6 +853,12 @@ export class SqlGameRepository implements GameRepository {
       ),
     );
     this.history = new HistoryRepository(this.db);
+    this.history.setSourceAccess(
+      (worldId, actorId) => !this.memories.sourceEditPending({ worldId, actorId }),
+      (worldId, actorId) => this.memories.sourceAccessRevision({ worldId, actorId }),
+      (worldId, actorId) =>
+        this.liveReadCuts?.({ worldId, actorId })?.historyEligibility?.get(actorId),
+    );
     this.saves = new GameSaves(this.db, join(dataDirectory, 'saves'), database.checkpointSource);
     // Authority and exact retry receipts share the direct transaction owner.
     this.commands = new CommandReceipts(database);
@@ -873,6 +998,7 @@ export class SqlGameRepository implements GameRepository {
     expectedRevision: number,
     state: SavedWorld,
     history: { before?: WorldState; after: WorldState },
+    pending?: { changes: RecordChanges; history?: ReturnType<typeof prepareHistory> },
   ): PreparedCommit {
     if (this.acceptedRevision !== expectedRevision)
       throw new Error('Save conflict: the committed baseline changed before preparation.');
@@ -882,10 +1008,13 @@ export class SqlGameRepository implements GameRepository {
       baseline,
       revision: expectedRevision,
       state,
-      changes: timedSync('persistence.prepareRecords', () =>
-        this.records.prepare(baseline ?? undefined, state),
+      changes: timedSync(
+        'persistence.prepareRecords',
+        () => pending?.changes ?? this.records.prepare(baseline ?? undefined, state),
       ),
-      history: this.prepareHistoryWrite(state, history.before ?? baseline?.world, history.after),
+      history:
+        pending?.history ??
+        this.prepareHistoryWrite(state, history.before ?? baseline?.world, history.after),
     };
   }
   // The world writer owns this immutable candidate. Do not eagerly encode a second full burst;
@@ -981,6 +1110,7 @@ export class SqlGameRepository implements GameRepository {
       before?: WorldState;
       after: WorldState;
       receipt?: GameplayReceipt;
+      receipts?: readonly GameplayReceipt[];
       restore?: RestoreSave;
       authority?: AuthorityFence;
       authorityBindings?: readonly AccountBinding[];
@@ -1145,23 +1275,18 @@ export class SqlGameRepository implements GameRepository {
         }
         if (historyProjection?.receipt)
           await this.commands.save(state.world.id, historyProjection.receipt);
-        const ledgerKey = `forget-ledger:${state.world.id}`;
-        const forgettingChanged =
+        if (historyProjection?.receipts?.length)
+          await this.commands.saveBatch(state.world.id, historyProjection.receipts);
+        const ledgerKey = privacyLedgerKey(state.world.id);
+        const privacyChanged =
           this.acceptedRevision !== expectedRevision ||
-          this.acceptedState?.world.experience?.forgotten !== state.world.experience?.forgotten;
-        const ledger = (
-          forgettingChanged ? ((await this.getIntegration(ledgerKey)) ?? {}) : {}
-        ) as Record<string, string[]>;
-        for (const [actorId, ids] of Object.entries(ledger))
-          if (ids.some((id) => !state.world.experience?.forgotten[actorId]?.includes(id)))
-            throw new Error(
-              'Restore would resurrect forgotten evidence; reapply the current forgetting ledger first.',
-            );
-        if (
-          state.world.experience &&
-          this.acceptedState?.world.experience?.forgotten !== state.world.experience.forgotten
-        )
-          await this.putIntegration(ledgerKey, state.world.experience.forgotten);
+          this.acceptedState?.world.experience?.forgotten !== state.world.experience?.forgotten ||
+          this.acceptedState?.world.experience?.corrections !== state.world.experience?.corrections;
+        if (privacyChanged || historyProjection?.restore) {
+          const ledger = readPrivacyLedger(await this.getIntegration(ledgerKey));
+          if (ledger) assertPrivacyPreserved(state.world, ledger);
+          if (privacyChanged) await this.putIntegration(ledgerKey, worldPrivacy(state.world));
+        }
         const invalidations: Record<string, string[]> = structuredClone(invalidatedMemoryIds ?? {});
         for (const [actorId, records] of Object.entries(state.world.memories)) {
           const prior = this.acceptedState?.world.memories[actorId];

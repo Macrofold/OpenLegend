@@ -1,3 +1,9 @@
+import { encodeAttentionStorage, decodeAttentionStorage } from './attention-storage.js';
+import {
+  currentContactPayload,
+  currentContactMetadata,
+  decodeCurrentContactRow,
+} from './current-contact-codec.js';
 import {
   accountClass,
   experienceIndividualIds,
@@ -31,6 +37,7 @@ export interface RecordNode {
   /** Normalize a shared native value within this same owned record subtree. */
   encode?: (value: unknown, previous?: unknown, world?: WorldState) => unknown;
   decode?: (value: unknown) => unknown;
+  decodeRow?: (row: JsonRecord) => unknown;
   /** A codec may supply its exact already-prepared leaf payload. */
   serialize?: (value: unknown) => string;
 }
@@ -63,9 +70,13 @@ const list = (table: string, key?: string): RecordCollection => ({
   node: leaf(table),
   key,
 });
-const one = (table: string, children?: RecordNode['children']): RecordCollection => ({
+const one = (
+  table: string,
+  children?: RecordNode['children'],
+  codec?: Pick<RecordNode, 'encode' | 'decode'>,
+): RecordCollection => ({
   mode: 'one',
-  node: { table, children },
+  node: { table, children, ...codec },
 });
 const actorLists = (table: string, key?: string): RecordCollection =>
   map(`${table}_owners`, { $: list(table, key) });
@@ -221,7 +232,12 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
         // Rolling maps preserve iteration order without renumbering surviving rows.
         current: {
           mode: 'indexed-map',
-          node: leaf('mind_perception_current'),
+          node: {
+            table: 'mind_perception_current',
+            serialize: (value) =>
+              currentContactPayload(value as import('@open-legend/domain').CurrentContact),
+            decodeRow: decodeCurrentContactRow,
+          },
           unordered: true,
           complete: true,
         },
@@ -236,28 +252,27 @@ export const WORLD_RECORD_SCHEMA: RecordNode = {
           fragments: { ...list('mind_perception_geometry_fragments', 'key'), complete: true },
           boundaries: { ...list('mind_perception_geometry_boundaries', 'id'), complete: true },
         }),
-        attention: one('mind_perception_attention', {
-          annotations: {
-            ...map('mind_perception_attention_annotations'),
-            stablePositions: true,
-            complete: true,
+        attention: one(
+          'mind_perception_attention',
+          {
+            annotations: {
+              ...map('mind_perception_attention_annotations'),
+              stablePositions: true,
+              complete: true,
+            },
+            latches: {
+              ...map('mind_perception_attention_latches'),
+              stablePositions: true,
+              complete: true,
+            },
+            relationScans: {
+              ...map('mind_perception_attention_scans'),
+              stablePositions: true,
+              complete: true,
+            },
           },
-          latches: {
-            ...map('mind_perception_attention_latches'),
-            stablePositions: true,
-            complete: true,
-          },
-          relationDirty: {
-            ...map('mind_perception_attention_dirty'),
-            stablePositions: true,
-            complete: true,
-          },
-          relationScans: {
-            ...map('mind_perception_attention_scans'),
-            stablePositions: true,
-            complete: true,
-          },
-        }),
+          { encode: encodeAttentionStorage, decode: decodeAttentionStorage },
+        ),
       }),
       mapMarkers: actorMaps('mind_map_markers'),
       // A subject leaving view must not renumber every remaining sight binding.
@@ -606,6 +621,7 @@ const receiptIndex = (value: JsonRecord) =>
 columns(
   'mind_temporal_chunks',
   {
+    chunk_order: { ...numberColumn('order'), sql: 'BIGINT NOT NULL' },
     retired_revision: { sql: 'BIGINT', value: () => null },
     actor_id: { sql: 'TEXT NOT NULL', value: (value) => value['actorId'] },
     source_id: { ...textColumn('id'), sql: 'TEXT NOT NULL' },
@@ -720,6 +736,11 @@ for (const table of receivedCurrentOwnerTables)
     },
     [],
   );
+RECORD_NODES.get('mind_perception_current')!.columns!['metadata'] = {
+  sql: 'TEXT NOT NULL',
+  value: (value) =>
+    currentContactMetadata(value as unknown as import('@open-legend/domain').CurrentContact),
+};
 columns(
   'mind_temporal_supports',
   {

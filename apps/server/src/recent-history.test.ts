@@ -178,7 +178,7 @@ it('persists receipt-only native movement before immediate recent browsing and d
     await store.memories.temporalSelectionsCurrent(
       { worldId: service.world.id, actorId: PLAYER_ID, generation: head!.generation },
       selected.entries,
-      () => temporalHistoryWindow(service.world),
+      () => temporalHistoryWindow(service.world, PLAYER_ID),
     ),
   ).toBe(true);
 });

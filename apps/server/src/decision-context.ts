@@ -444,6 +444,24 @@ export async function prepareDecision(
     await service.flushMemorySources(actorId);
     const readWorld = () => service.world;
     const generation = service.generation;
+    const accessRevision = service.store.memories?.sourceAccessRevision({
+      worldId: service.world.id,
+      actorId,
+    });
+    const awaitEvidenceCut = async (through = service.durabilityTicket()) => {
+      // A finalized request waits for this one accepted prefix; moving actors or
+      // other players cannot turn it into a chase of the latest publication.
+      await service.whenDurable(through);
+      signal.throwIfAborted();
+      if (
+        generation !== service.generation ||
+        accessRevision !==
+          service.store.memories?.sourceAccessRevision({ worldId: service.world.id, actorId }) ||
+        service.store.memories?.sourceEditPending({ worldId: service.world.id, actorId })
+      )
+        throw new Error('Personal evidence changed during context validation.');
+    };
+
     const inspection = readWorld().actionExperience.learning[actorId]?.inspection;
     const inspected =
       inspection && inspection.eventId === triggerEvidenceId
@@ -868,7 +886,14 @@ export async function prepareDecision(
       maxBytes: CONTEXT_BYTE_LIMIT - requiredBytes - actionReserveBytes - mandatoryRecallBytes,
       signal,
       attempt,
-      ...(compact ? { generate: compact } : {}),
+      ...(compact
+        ? {
+            generate: async (...args: Parameters<ConversationGenerate>) => {
+              await awaitEvidenceCut();
+              return compact(...args);
+            },
+          }
+        : {}),
       preparation,
     });
     const awarenessSequence = conversation.awarenessSequence;
@@ -923,7 +948,11 @@ export async function prepareDecision(
         stimulus,
         `${jobId}:attempt:${attempt}`,
         candidates,
-        judge,
+        async (request) => {
+          await awaitEvidenceCut();
+          await validateSituation();
+          return judge(request);
+        },
         signal,
         budgetCeiling,
         CONTEXT_BYTE_LIMIT - requiredBytes - actionReserveBytes,
@@ -975,6 +1004,7 @@ export async function prepareDecision(
     );
     await validatePrepared(false);
     const currentWorld = service.world;
+    const preparedThrough = service.durabilityTicket();
     if (generation !== service.generation)
       throw new Error('World restored during attention; discard this decision.');
     // Optional failure cannot revive evidence forgotten/corrected while the provider was running.
@@ -1350,7 +1380,11 @@ export async function prepareDecision(
       replaceChosenPlan:
         actor.agency.plan?.status === 'blocked' || actor.agency.plan?.status === 'active',
       awarenessSequence,
-      validateConversation: validatePrepared,
+      whenDurable: () => awaitEvidenceCut(preparedThrough),
+      validateConversation: async (flush = true) => {
+        if (flush) await awaitEvidenceCut(preparedThrough);
+        return validatePrepared(false);
+      },
       attemptBindings: [...attempts.values()],
       entityReferences,
       intentionReferences: intentionEntityReferences(currentWorld, actorId, {
@@ -1530,6 +1564,10 @@ export async function selectDecisionActions(
     purpose,
     prepared.actionGuidance,
   );
+  if (Object.keys(request.questions).length) {
+    await prepared.whenDurable();
+    await prepared.validateConversation(false);
+  }
   const judged = Object.keys(request.questions).length ? await judge(request) : { answers: {} };
   const selected = candidates.filter((_, index) => {
     const answer = judged.answers[`a${index}`];
@@ -1610,8 +1648,18 @@ export function refreshDecisionActions(
   const actor = entityGet(service.world.entities, prepared.binding.actorId)?.actor;
   if (!actor) throw new Error('Actor unavailable.');
   const observed = decisionObservation(service.world, prepared.binding.actorId);
+  const through = service.durabilityTicket();
+  const whenDurable = async () => {
+    await service.whenDurable(through);
+    await prepared.whenDurable();
+  };
   return {
     ...prepared,
+    whenDurable,
+    validateConversation: async (flush = true) => {
+      if (flush) await whenDurable();
+      return prepared.validateConversation(false);
+    },
     choiceWork: currentWorkIdentity(service.world, prepared.binding.actorId),
     actionCandidates: decisionActionCandidates(
       service,

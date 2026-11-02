@@ -6,6 +6,7 @@ import {
 } from './evidence-segments.js';
 import {
   selectedTemporalPolicy,
+  temporalRecentAt,
   captureTemporalReadContext,
   type TemporalReadContext,
   canonicalJson,
@@ -121,9 +122,14 @@ export interface TemporalHistoryQuery {
 export interface TemporalHistoryWindow {
   readonly at: number;
   readonly maxAgeSeconds: number;
+  readonly retiredThrough?: { readonly chunkOrder: number; readonly ordinal: number };
 }
-export function temporalHistoryWindow(world: WorldState): TemporalHistoryWindow {
-  return { at: world.simTime, maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds };
+export function temporalHistoryWindow(world: WorldState, actorId: string): TemporalHistoryWindow {
+  return {
+    at: world.simTime,
+    maxAgeSeconds: selectedTemporalPolicy(world).recent.maxAgeSeconds,
+    retiredThrough: world.experience?.temporal?.actors[actorId]?.retiredThrough,
+  };
 }
 export interface TemporalHistoryReadContext {
   readonly worldId: string;
@@ -135,6 +141,7 @@ export interface TemporalHistoryReadContext {
   readonly maximumCandidates: number;
   readonly chunks: readonly TemporalChunk[];
   readonly releasedThrough?: number;
+  readonly retiredThrough?: { readonly chunkOrder: number; readonly ordinal: number };
   readonly recordingGap?: { readonly from: number; readonly through: number };
   readonly sources: ReceivedValueLookup;
   readonly disclosure: TemporalReadContext;
@@ -161,6 +168,7 @@ export function captureTemporalHistoryReadContext(
     maximumOperations: selectedAttentionPolicy(world).scene.historyReceipts,
     maximumCandidates: selectedAttentionPolicy(world).scene.candidateVisits,
     chunks,
+    ...(actor?.retiredThrough ? { retiredThrough: { ...actor.retiredThrough } } : {}),
     ...(actor?.releasedThrough === undefined ? {} : { releasedThrough: actor.releasedThrough }),
     ...(actor?.recordingGap ? { recordingGap: { ...actor.recordingGap } } : {}),
     sources,
@@ -308,14 +316,13 @@ export function selectTemporalRetirement(
 ) {
   const actor = world.experience!.temporal!.actors[actorId]!;
   const policy = selectedTemporalPolicy(world).recent;
-  const cutoff = world.simTime - policy.maxAgeSeconds;
   let bytes = actor.bytes,
     count = actor.count;
   const retired: TemporalRetentionHeader[] = [];
   for (let index = 0; index < ordered.length; index++) {
     const chunk = ordered[index]!;
     const pressure = bytes > policy.maxBytes || count > policy.maxChanges;
-    if (chunk.through > cutoff && !pressure)
+    if (temporalRecentAt(chunk.through, world.simTime, policy.maxAgeSeconds) && !pressure)
       return {
         retired,
         boundary: chunk,
@@ -323,7 +330,10 @@ export function selectTemporalRetirement(
         nextDue: chunk.through + policy.maxAgeSeconds,
         needsMore: false,
       };
-    if (chunk.through > cutoff && index === ordered.length - 1) {
+    if (
+      temporalRecentAt(chunk.through, world.simTime, policy.maxAgeSeconds) &&
+      index === ordered.length - 1
+    ) {
       if (!complete) return { retired, partial: false, nextDue: null, needsMore: true };
       return {
         retired,
@@ -380,7 +390,8 @@ export async function readTemporalHistory(
       `SELECT id,logical_bytes,receipt_count,
       first_at,first_order,receipt_epoch,first_ordinal,
       encoded_bytes FROM mind_temporal_chunks_read c
-    WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=?
+    WHERE world_id=? AND actor_id=? AND last_at>=? AND first_at<=? AND last_at+?>?
+      ${context.retiredThrough ? 'AND (chunk_order>? OR (chunk_order=? AND last_ordinal>?))' : ''}
       ${subjects.length ? `AND EXISTS (SELECT 1 FROM mind_temporal_segments s WHERE s.world_id=c.world_id AND s.parent_id=c.id AND ((s.lookup_buckets && ?::smallint[] AND s.subjects && ?::text[])${query.includeGeometry ? ' OR s.spatial_context=1' : ''}))` : ''}
       ${query.measurements ? 'AND last_supported_at>=? AND first_measured_at<=?' : ''}
       ${query.physicalLife === undefined ? '' : 'AND physical_life=?'}
@@ -394,6 +405,15 @@ export async function readTemporalHistory(
       scope.actorId,
       from,
       through,
+      context.maxAgeSeconds,
+      context.at,
+      ...(context.retiredThrough
+        ? [
+            context.retiredThrough.chunkOrder,
+            context.retiredThrough.chunkOrder,
+            context.retiredThrough.ordinal,
+          ]
+        : []),
       ...(subjects.length ? [receiptLookupBuckets('subjects', subjects), subjects] : []),
       ...(query.measurements ? [query.measurements.from, query.measurements.through] : []),
       ...(query.physicalLife === undefined ? [] : [query.physicalLife]),
@@ -565,7 +585,6 @@ export async function prepareTemporalRetention(
     followingAt?: number;
   }> = [];
   const policy = selectedTemporalPolicy(state.world).recent;
-  const cutoff = state.world.simTime - policy.maxAgeSeconds;
   const retired: Array<{
     actorId: string;
     ids: string[];
@@ -767,7 +786,10 @@ export async function prepareTemporalRetention(
           let releasedCount = 0,
             first: (typeof actual)[number] | undefined;
           for (const receipt of actual) {
-            if (receipt.at > cutoff && releasedCount >= excessCount) {
+            if (
+              temporalRecentAt(receipt.at, world.simTime, policy.maxAgeSeconds) &&
+              releasedCount >= excessCount
+            ) {
               first = receipt;
               break;
             }

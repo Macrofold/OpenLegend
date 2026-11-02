@@ -93,7 +93,7 @@ export async function commitmentPage(
   if (!permitted()) throw new AuthorityError('forbidden');
   const memories = service.store.memories,
     records = service.store.records;
-  await service.flushMemorySources(actorId);
+  await service.ready;
   const head = memories && records ? await records.head() : undefined;
   const world = service.world,
     generation = service.generation;

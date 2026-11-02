@@ -13,7 +13,13 @@ export class OverloadError extends Error {
 /** Admission expires only queued work. Executing mutations always settle normally.
  * docs/performance.md#bounded-admission */
 export class WorkLane {
-  private pending: { start: () => void; expire: () => void }[] = [];
+  private pending: {
+    start: () => void;
+    expire: () => void;
+    maintenance: boolean;
+    queuedAt: number;
+  }[] = [];
+  private foregroundBatches = 0;
   private running = false;
   private waiters: (() => void)[] = [];
   constructor(
@@ -30,7 +36,7 @@ export class WorkLane {
       : Promise.resolve();
   }
   /** `waitMs` narrows the admission deadline for a caller that already waited elsewhere. */
-  run<T>(operation: () => T | Promise<T>, waitMs = this.waitMs): Promise<T> {
+  run<T>(operation: () => T | Promise<T>, waitMs = this.waitMs, maintenance = false): Promise<T> {
     if (this.pending.length >= this.maximum || waitMs <= 0)
       return Promise.reject(new OverloadError());
     const queuedAt = performance.now();
@@ -40,6 +46,8 @@ export class WorkLane {
     const run = AsyncLocalStorage.bind(operation);
     return new Promise<T>((resolve, reject) => {
       const entry = {
+        maintenance,
+        queuedAt,
         start: () => {
           clearTimeout(timer);
           const admittedAt = performance.now();
@@ -72,7 +80,15 @@ export class WorkLane {
   }
   private pump() {
     if (this.running) return;
-    const next = this.pending.shift();
+    const maintenance = this.pending.findIndex((entry) => entry.maintenance);
+    const foreground = this.pending.findIndex((entry) => !entry.maintenance);
+    const due =
+      maintenance >= 0 &&
+      (this.foregroundBatches >= 10 ||
+        performance.now() - this.pending[maintenance]!.queuedAt >= 1000);
+    const index = due ? maintenance : foreground >= 0 ? foreground : maintenance;
+    const next = index < 0 ? undefined : this.pending.splice(index, 1)[0];
+    if (next) this.foregroundBatches = next.maintenance ? 0 : this.foregroundBatches + 1;
     if (next) {
       this.running = true;
       next.start();

@@ -1463,7 +1463,7 @@ describe('bounded personal temporal storage', () => {
     expect(full[0]!.values).toHaveLength(2);
     expect(
       await store.memories.temporalSelectionsCurrent(scope, full, () =>
-        temporalHistoryWindow(service.world),
+        temporalHistoryWindow(service.world, scope.actorId),
       ),
     ).toBe(true);
     let release!: () => void;
@@ -1472,7 +1472,7 @@ describe('bounded personal temporal storage', () => {
     });
     const pending = delayed.then(() =>
       store.memories.temporalSelectionsCurrent(scope, full, () =>
-        temporalHistoryWindow(service.world),
+        temporalHistoryWindow(service.world, scope.actorId),
       ),
     );
     await editWorld(service, (world) => {
@@ -1491,7 +1491,7 @@ describe('bounded personal temporal storage', () => {
             values: [selected.values[0]!],
           },
         ],
-        () => temporalHistoryWindow(service.world),
+        () => temporalHistoryWindow(service.world, scope.actorId),
       ),
     ).toBe(true);
     expect(
@@ -1510,7 +1510,7 @@ describe('bounded personal temporal storage', () => {
             ],
           },
         ],
-        () => temporalHistoryWindow(service.world),
+        () => temporalHistoryWindow(service.world, scope.actorId),
       ),
     ).toBe(false);
   });

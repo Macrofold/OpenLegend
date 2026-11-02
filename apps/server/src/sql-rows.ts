@@ -112,10 +112,10 @@ export function* sqlRowBatches(rows: Iterable<unknown[]>): Generator<unknown[][]
 /** Table-typed JSON transport shares exact value conversion and complete encoded-byte
  * accounting across canonical records and derived source inserts. Keep the original
  * bind-count row ceiling as well, even though each encoded batch uses one parameter. */
-export function* sqlRecordBatches(
+export function* sqlRecordBatchesWithCount(
   columns: readonly string[],
   rows: Iterable<unknown[]>,
-): Generator<string> {
+): Generator<{ payload: string; rows: number }> {
   let batch: string[] = [],
     bytes = 2;
   // Only encoded text escapes; trusted fixed-column rows reuse one transport object.
@@ -133,14 +133,14 @@ export function* sqlRecordBatches(
       batch.length &&
       ((batch.length + 1) * columns.length > parameterBatchLimit || bytes + size + 1 > 262144)
     ) {
-      yield `[${batch.join(',')}]`;
+      yield { payload: `[${batch.join(',')}]`, rows: batch.length };
       batch = [];
       bytes = 2;
     }
     bytes += size + (batch.length ? 1 : 0);
     batch.push(encoded);
   }
-  if (batch.length) yield `[${batch.join(',')}]`;
+  if (batch.length) yield { payload: `[${batch.join(',')}]`, rows: batch.length };
 }
 
 export async function insertRows(
@@ -156,4 +156,12 @@ export async function insertRows(
       )
       .run(...batch.flat());
   }
+}
+
+/** Same encoder, for owners that do not need exact affected-row checks. */
+export function* sqlRecordBatches(
+  columns: readonly string[],
+  rows: Iterable<unknown[]>,
+): Generator<string> {
+  for (const batch of sqlRecordBatchesWithCount(columns, rows)) yield batch.payload;
 }

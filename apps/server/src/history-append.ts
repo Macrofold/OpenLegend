@@ -27,6 +27,63 @@ export function perspectiveColumns(source: StorySource): unknown[] {
   return [source.order, type, sourceId ?? null, targetId ?? null, peer];
 }
 
+export function historyEventRow(worldId: string, event: WorldEvent, encoded: string): unknown[] {
+  const position = event.order ?? (Number(event.id.split('-').at(-1)) || event.sequence);
+  return [
+    worldId,
+    event.id,
+    position,
+    encoded,
+    typeof event.data?.['responseId'] === 'string' ? event.data['responseId'] : null,
+    [
+      ...new Set(
+        Object.values(event.data ?? {}).filter(
+          (value): value is string => typeof value === 'string' && value !== event.id,
+        ),
+      ),
+    ],
+  ];
+}
+export function historyPerspectiveRow(
+  worldId: string,
+  event: WorldEvent,
+  actorId: string,
+  evidence: EventEvidence,
+  awareness: Awareness | undefined,
+  position: number,
+  eventRevision: string,
+  temporal?: ReceivedEventAccount['temporal'],
+) {
+  const source: StorySource = {
+    id: event.id,
+    text: evidence.text,
+    evidence,
+    revision: createHash('sha256')
+      .update(eventRevision + JSON.stringify(evidence))
+      .digest('hex'),
+    time: event.at,
+    order: position,
+    type: evidence.eventType!,
+    ...(evidence.content !== undefined ? { content: evidence.content } : {}),
+  };
+  const account = temporal
+    ? encodeTemporalStoryAccount(source, temporal)
+    : encodeStoryAccount(source, awareness);
+  return {
+    source,
+    account,
+    row: [
+      worldId,
+      event.id,
+      actorId,
+      account.payload,
+      ...perspectiveColumns(source),
+      event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
+      'chunkRecordId' in account ? account.chunkRecordId : null,
+    ],
+  };
+}
+
 /** Shared exact append-row owner. It consumes permitted accounts, never selects a
  * story or reconstructs a world. The ordinary history projector also uses it. */
 export class HistoryAppendWriter extends HistoryBatch {
@@ -38,23 +95,11 @@ export class HistoryAppendWriter extends HistoryBatch {
     super(database);
   }
   event(event: WorldEvent, encoded: string) {
-    const position = event.order ?? (Number(event.id.split('-').at(-1)) || event.sequence);
-    const pending = this.add('history_events', [
-      this.worldId,
-      event.id,
-      position,
-      encoded,
-      typeof event.data?.['responseId'] === 'string' ? event.data['responseId'] : null,
-      [
-        ...new Set(
-          Object.values(event.data ?? {}).filter(
-            (value): value is string => typeof value === 'string' && value !== event.id,
-          ),
-        ),
-      ],
-    ]);
-    return { position, pending };
+    const row = historyEventRow(this.worldId, event, encoded);
+    const pending = this.add('history_events', row);
+    return { position: Number(row[2]), pending };
   }
+
   perspective(
     event: WorldEvent,
     actorId: string,
@@ -64,31 +109,17 @@ export class HistoryAppendWriter extends HistoryBatch {
     eventRevision: string,
     temporal?: ReceivedEventAccount['temporal'],
   ) {
-    const source: StorySource = {
-      id: event.id,
-      text: evidence.text,
+    const { source, account, row } = historyPerspectiveRow(
+      this.worldId,
+      event,
+      actorId,
       evidence,
-      revision: createHash('sha256')
-        .update(eventRevision + JSON.stringify(evidence))
-        .digest('hex'),
-      time: event.at,
-      order: position,
-      type: evidence.eventType!,
-      ...(evidence.content !== undefined ? { content: evidence.content } : {}),
-    };
-    const account = temporal
-      ? encodeTemporalStoryAccount(source, temporal)
-      : encodeStoryAccount(source, awareness);
-    const append = () =>
-      this.add('history_perspectives', [
-        this.worldId,
-        event.id,
-        actorId,
-        account.payload,
-        ...perspectiveColumns(source),
-        event.data?.['responseId'] != null || event.data?.['conversationRelevant'] === true,
-        'chunkRecordId' in account ? account.chunkRecordId : null,
-      ]);
+      awareness,
+      position,
+      eventRevision,
+      temporal,
+    );
+    const append = () => this.add('history_perspectives', row);
     const body = account.body;
     const pending =
       body === undefined

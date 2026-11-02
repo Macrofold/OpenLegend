@@ -1,12 +1,12 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                                                        | Last updated |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Baseline implemented; database-work reduction design is complete, with implementation and operating qualification open. | 2026-11-01   |
+| Status      | Current progress                                                                   | Last updated |
+| ----------- | ---------------------------------------------------------------------------------- | ------------ |
+| In progress | BK09–BK15 is installed under verification; BK16 operating acceptance remains open. | 2026-11-02   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
-**Target extension designed November 1, 2026.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies BK08–BK16. Its live acceptance, independent retention and background-maintenance contracts are selected targets, not installed behavior. The owner approved one-second save targets and backpressure after five seconds of unsaved progress.
+**Current behavior reconciled November 2, 2026, 05:18 UTC.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies the installed BK09–BK15 live acceptance, independent retention and background-maintenance mechanisms. Semantic, storage and operating checks remain under verification; no performance or scale pass is claimed.
 
 ## 1. Outcome
 
@@ -26,7 +26,7 @@ The [contact/group redesign](attention-and-scenes-runtime-design.md#13-proposed-
 - **Broad awareness and finite detail.** Detailed attention does not cap visibility. It automatically retains supported temporal changes while selected; it requires no watch/follow command. Required speech, own effects, knowledge and obligations keep their independent admission.
 - **Useful memory.** Recent detail is reliable at the actual admitted sampling resolution while retained. A useful account may survive; trivial sequences may disappear. Expiry neither guarantees a summary nor purchases an AI call.
 - **Current defaults.** Keep selected-world acquisition periods, Focus/attention allocation, familiarity/recognition, current-detail semantics, recent/lasting/speech allowances and ordinary action timings. The [base-world profile](../worlds/base/attention.md) remains their sole author. This project changes storage granularity and execution, not sensing fidelity to improve a benchmark.
-- **Coherent effects and explicit durability.** Ordinary gameplay is accepted atomically in server memory and saved in ordered batches under the selected target. A crash may lose its unsaved suffix for all participants together. Spending, access-control changes and explicit durable operations retain their protected boundaries; restoring a world never repeats paid work.
+- **Coherent effects and explicit durability.** Ordinary gameplay is accepted atomically in server memory and saved in ordered batches. A crash may lose its unsaved suffix for all participants together. Spending, access-control changes and explicit durable operations retain their protected boundaries; restoring a world never repeats paid work.
 - **Private personal history.** Another observer’s reference to a shared payload does not make it remembered, understood or visible to this observer. Correction, forgetting and current privacy restrictions apply to cold data and restored checkpoints too.
 
 The [attention feature](attention-and-scenes-feature-spec.md#94-receiving-attending-and-remembering-are-separate-decisions) owns the full gameplay contract; this project changes its physical storage and lifetime implementation only. Full vision/acoustics, attention/combat integration, PP07/SAI-A, aggregate crowds and new semantic cognition remain their existing unfinished scopes.
@@ -35,7 +35,7 @@ The [attention feature](attention-and-scenes-feature-spec.md#94-receiving-attend
 
 “A command” means an admitted request such as move to a point, pick up an item, speak or edit a record. A confirmation reports the result of that request; it is not the same event as every later movement update. A “save package” is a coherent captured set of state and dependencies, not an extra game mechanic. The custom journal’s package of changes is removed; manual checkpoint files remain useful.
 
-**Installed baseline:** commands and completed NPC responses still wait for database commit. **Selected target:** ordinary gameplay is accepted in memory; the implementation steps and read/restart mechanics are in [live acceptance and ordered saving](bookkeeping-simplification-runtime-design.md#6-live-acceptance-and-ordered-saving).
+Ordinary gameplay is accepted in memory and enters the ordered save stream. Protected operational effects retain durability; the complete admission, read and restart mechanics are in [live acceptance and ordered saving](bookkeeping-simplification-runtime-design.md#6-live-acceptance-and-ordered-saving).
 
 | Activity                                                                  | Live behavior                                                                                     | Durability and failure                                                                                    |
 | ------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -44,11 +44,11 @@ The [attention feature](attention-and-scenes-feature-spec.md#94-receiving-attend
 | Thinking, optional search preparation and storage maintenance             | Bounded background work, with no native mutation turn held during I/O                             | Late output rechecks actual sources and permissions; it cannot recreate forgotten evidence                |
 | Checkpoint, restore, authoring/installation and explicit durable export   | Establish the requested complete cut                                                              | Report success only after its required persistence; preserve previous usable state on failure             |
 
-Target one-second save opportunities. Stop admitting further ordinary progress at five seconds since the oldest unsaved acceptance, or the pending byte ceiling, until storage catches up. This bounds admission, not database outage duration or an indivisible operation's execution time. A failed write preserves the live pending suffix and stops new admission; restart restores the last complete saved cut. Clients never supply authoritative recovery or blindly replay old commands. Real-time storage pressure and ordinary memory consolidation remain distinct.
+Target one-second save opportunities. Stop admitting further ordinary progress at five seconds since the oldest unsaved acceptance, or the pending byte ceiling, until storage catches up. Reserve 64 KiB inside the 64 MiB combined pending/in-flight ceiling for prompt emergency Pause. This bounds admission, not database outage duration or an indivisible operation's execution time. A failed write preserves the live pending suffix and stops new admission; restart restores the last complete saved cut. Clients never supply authoritative recovery or blindly replay old commands. Real-time storage pressure and ordinary memory consolidation remain distinct.
 
 An ordinary action is authorized when it takes effect in the live world. Expiring the player's login afterward cannot undo that accepted action merely because it has not reached disk. Permission changes block subsequent affected actions and disclosures, and settle durably in order with already accepted effects.
 
-A personal historical query applies its captured pending changes to the durable snapshot outside mutation. Thinking that needs saved evidence joins the next scheduled batch; it does not force a separate early save. Optional indexing may lag, while required facts remain available through exact readers. Player-only narration never becomes another actor's knowledge. [Persistence limits](../limits/persistence.md#bks-l08--ordinary-live-acceptance-target) own the operational envelope.
+A personal historical query applies its captured pending changes to the durable snapshot outside mutation. Thinking that needs saved evidence joins the next scheduled batch for a fixed captured cut; it does not force a separate early save. The wait consumes the existing urgent inference budget and may defer a request without extending its deadline or buying another call. Optional indexing may lag, while required facts remain available through exact readers. Player-only narration never becomes another actor's knowledge. [Persistence limits](../limits/persistence.md#bks-l08--ordinary-live-acceptance-target) own the operational envelope.
 
 ## 4. What is stored, and why
 
@@ -75,7 +75,7 @@ The AI receives selected permitted current information and recent changes, not r
 
 ### BK-J01 — An ordinary shared walk
 
-Under the selected target, a player’s movement command is accepted once in memory and joins the next save batch. The server subsequently advances movement and observation in memory, publishes permitted changes to another connected player, and saves progress in ordered background batches. Updating current position coalesces between saves; admitted attended samples and discrete occurrences retain their order. The second player sees motion before the next routine database flush. A crash restores the last complete saved cut, including its associated personal evidence, without inventing the unsaved route.
+A player’s movement command is accepted once in memory and joins the next save batch. The server subsequently advances movement and observation in memory, publishes permitted changes to another connected player, and saves progress in ordered background batches. Updating current position coalesces between saves; admitted attended samples and discrete occurrences retain their order. The second player sees motion before the next routine database flush. A crash restores the last complete saved cut, including its associated personal evidence, without inventing the unsaved route.
 
 ### BK-J02 — A deer disappears
 

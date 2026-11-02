@@ -1,10 +1,19 @@
 import {
+  currentContactPayload,
+  currentContactMetadata,
+  sameCurrentContactContent,
+} from './current-contact-codec.js';
+import {
   receivedRecordReferences,
   receivedCurrentOwnerTables,
 } from './received-record-references.js';
 import { liveEvidenceRowSql } from './world-record-schema.js';
-import { evidenceReadView, validateReceiptPageSources } from './evidence-segments.js';
-import { sqlRecordBatches, SqlWriteBatch } from './sql-rows.js';
+import {
+  evidenceSegmentDelta,
+  evidenceReadView,
+  validateReceiptPageSources,
+} from './evidence-segments.js';
+import { sqlRecordBatches, sqlRecordBatchesWithCount, SqlWriteBatch } from './sql-rows.js';
 import { tableRows } from './record-pages.js';
 import {
   readTemporalChunkRecord,
@@ -31,6 +40,7 @@ import {
   type OrderedRecord,
   updateWorld,
   appendedRecordCount,
+  allocatedIdentityBetween,
   entityChangesBetween,
   recordMapChangesBetween,
   entityGet,
@@ -56,6 +66,7 @@ import {
   type Entity,
   type ItemInstance,
   selectedTemporalPolicy,
+  selectedObserverIdentityKnowledge,
   type ReceivedValue,
   referencedReceivedValues,
 } from '@open-legend/domain';
@@ -71,6 +82,7 @@ import {
 type Value = unknown;
 const personalMetadataTables = new Set([
   'mind_temporal_segments',
+  'mind_temporal_chunks',
   'mind_awareness',
   'mind_memories',
   'mind_summaries',
@@ -86,6 +98,8 @@ const personalMetadataFields = new Set([
   'logical_bytes',
   'unresolved',
   'value_refs',
+  'metadata',
+  'chunk_order',
 ]);
 const personalMetadataColumns = (node: RecordNode) =>
   personalMetadataTables.has(node.table)
@@ -103,6 +117,13 @@ export interface RowChange {
   create: boolean;
   /** Prepared metadata delta; unchanged poses must not revisit shared ownership. */
   receivedUsesChanged?: boolean;
+  /** Undefined writes the complete row; a mask writes only those owned columns and revision. */
+  writeColumns?: readonly string[];
+  /** Changed page with actual removed/replaced receipt ordinals, not an append. */
+  logicalRemoval?: boolean;
+  /** Proved new references for an append-only page. */
+  receivedValueAdditions?: readonly string[];
+  receivedValueRemovals?: readonly string[];
 }
 export interface RecordChanges {
   writes: Map<string, RowChange[]>;
@@ -110,6 +131,91 @@ export interface RecordChanges {
   rows: number;
   /** Actor-permitted semantic expiry, never re-archived as an old source version. */
   expired?: Map<string, string[]>;
+}
+/** Fold the next accepted delta without losing a pending full-content write or
+ * turning a certified insert into an upsert. Historical rows retain exact IDs. */
+export function mergeRowChange(
+  previous: RowChange | undefined,
+  next: RowChange,
+  table = 'mind_perception_current',
+): RowChange {
+  if (!previous) return next;
+  const fields = Object.keys(RECORD_NODES.get(table)?.columns ?? {});
+  // The caller supplies the table when extra-column reconstruction is needed;
+  // the row carries its mask, so stable extra values survive a metadata-only update.
+  const knownPrevious =
+    previous.receivedUsesChanged === false || previous.receivedValueAdditions !== undefined;
+  const knownNext = next.receivedUsesChanged === false || next.receivedValueAdditions !== undefined;
+  const added = new Set(previous.receivedValueAdditions ?? []);
+  const removed = new Set(previous.receivedValueRemovals ?? []);
+  for (const id of next.receivedValueRemovals ?? []) {
+    if (!added.delete(id)) removed.add(id);
+  }
+  for (const id of next.receivedValueAdditions ?? []) {
+    if (!removed.delete(id)) added.add(id);
+  }
+  return {
+    ...next,
+    create: previous.create || next.create,
+    writeColumns:
+      !previous.writeColumns || !next.writeColumns
+        ? undefined
+        : [...new Set([...previous.writeColumns, ...next.writeColumns])],
+    receivedUsesChanged:
+      previous.receivedUsesChanged !== false || next.receivedUsesChanged !== false,
+    logicalRemoval: previous.logicalRemoval || next.logicalRemoval,
+    receivedValueAdditions: knownPrevious && knownNext ? [...added] : undefined,
+    receivedValueRemovals: knownPrevious && knownNext ? [...removed] : undefined,
+    extra: next.writeColumns
+      ? previous.extra.map((value, at) =>
+          next.writeColumns!.includes(fields[at]!) ? next.extra[at] : value,
+        )
+      : next.extra,
+  };
+}
+export function mergeRecordChanges(previous: RecordChanges, next: RecordChanges): RecordChanges {
+  const writes = new Map(
+    [...previous.writes].map(([table, rows]) => [table, new Map(rows.map((row) => [row.id, row]))]),
+  );
+  const deletes = new Map([...previous.deletes].map(([table, ids]) => [table, new Set(ids)]));
+  for (const [table, ids] of next.deletes) {
+    let removed = deletes.get(table);
+    if (!removed) deletes.set(table, (removed = new Set()));
+    for (const id of ids) {
+      writes.get(table)?.delete(id);
+      removed.add(id);
+    }
+  }
+  for (const [table, rows] of next.writes) {
+    let target = writes.get(table);
+    if (!target) writes.set(table, (target = new Map()));
+    for (const row of rows) {
+      deletes.get(table)?.delete(row.id);
+      target.set(row.id, mergeRowChange(target.get(row.id), row, table));
+    }
+  }
+  const expired = new Map(
+    [...(previous.expired ?? [])].map(([table, ids]) => [table, new Set(ids)]),
+  );
+  for (const [table, ids] of next.expired ?? []) {
+    let selected = expired.get(table);
+    if (!selected) expired.set(table, (selected = new Set()));
+    for (const id of ids) selected.add(id);
+  }
+  return {
+    writes: new Map(
+      [...writes]
+        .filter(([, rows]) => rows.size)
+        .map(([table, rows]) => [table, [...rows.values()]]),
+    ),
+    deletes: new Map(
+      [...deletes].filter(([, ids]) => ids.size).map(([table, ids]) => [table, [...ids]]),
+    ),
+    rows: [...writes.values()].reduce((sum, rows) => sum + rows.size, 0),
+    ...(expired.size
+      ? { expired: new Map([...expired].map(([table, ids]) => [table, [...ids]])) }
+      : {}),
+  };
 }
 export const retainedSourceTables: ReadonlySet<string> = new Set([
   'mind_awareness',
@@ -475,7 +581,12 @@ export class WorldRecords {
       }
       // Absence from a resident tail is not proof of absence from PostgreSQL.
       // Only a complete predecessor/new parent or a proved append gets INSERT-only.
-      const create = old === undefined && (!before || knownAbsent);
+      const create =
+        old === undefined &&
+        (!before ||
+          knownAbsent ||
+          (['mind_memories', 'mind_awareness', 'mind_summaries'].includes(node.table) &&
+            allocatedIdentityBetween(before.world, after.world, path.at(-1)!)));
       if (next === undefined) {
         // Residency eviction is not deletion. The indexed collector owns shared values.
         if (node.table === 'mind_perception_values') return;
@@ -491,11 +602,30 @@ export class WorldRecords {
         next = node.encode(next, previous, after.world);
       }
       if (!selectedTables || selectedTables.has(node.table)) {
-        const payload = encodedBody(node, next);
+        const contactMetadataOnly =
+          node.table === 'mind_perception_current' &&
+          old !== undefined &&
+          sameCurrentContactContent(
+            old as import('@open-legend/domain').CurrentContact,
+            next as import('@open-legend/domain').CurrentContact,
+          );
+        const payload =
+          node.table === 'mind_perception_current'
+            ? currentContactPayload(
+                next as import('@open-legend/domain').CurrentContact,
+                old as import('@open-legend/domain').CurrentContact | undefined,
+              )
+            : encodedBody(node, next);
+        const metadataChanged =
+          node.table === 'mind_perception_current' &&
+          (old === undefined ||
+            currentContactMetadata(next as import('@open-legend/domain').CurrentContact) !==
+              currentContactMetadata(old as import('@open-legend/domain').CurrentContact));
         if (
           old === undefined ||
           (this.needsHotPrune && node.table === 'world_settings') ||
           oldPosition !== position ||
+          metadataChanged ||
           payload !== encodedBody(node, old)
         ) {
           const rows = changes.writes.get(node.table) ?? [];
@@ -506,12 +636,18 @@ export class WorldRecords {
             position,
             payload,
             create,
-            extra: Object.values(node.columns ?? {}).map((column) =>
-              column.value(next as JsonRecord, path),
+            ...(contactMetadataOnly
+              ? { writeColumns: ['metadata'], receivedUsesChanged: false }
+              : {}),
+            extra: Object.entries(node.columns ?? {}).map(([name, column]) =>
+              contactMetadataOnly && name === 'value_refs'
+                ? []
+                : column.value(next as JsonRecord, path),
             ),
           };
           if (
             old !== undefined &&
+            !contactMetadataOnly &&
             receivedCurrentOwnerTables.includes(
               node.table as (typeof receivedCurrentOwnerTables)[number],
             )
@@ -523,6 +659,30 @@ export class WorldRecords {
             row.receivedUsesChanged =
               nextRefs.length !== previousRefs.length ||
               nextRefs.some((id, at) => id !== previousRefs[at]);
+          }
+          if (node.table === 'mind_temporal_segments') {
+            const prepared = evidenceSegmentDelta(next as object);
+            const delta =
+              (old !== undefined || create) && prepared?.previous === old ? prepared : undefined;
+            row.logicalRemoval = delta?.logicalRemoval ?? !create;
+            if (delta) row.receivedValueAdditions = delta.additions;
+          }
+          if (
+            receivedCurrentOwnerTables.includes(
+              node.table as (typeof receivedCurrentOwnerTables)[number],
+            ) &&
+            !contactMetadataOnly
+          ) {
+            const fields = Object.keys(node.columns!);
+            const nextRefs = row.extra[fields.indexOf('value_refs')] as string[];
+            if (old !== undefined || create) {
+              const beforeRefs = new Set(
+                old === undefined ? [] : receivedRecordReferences(node.table, old as JsonRecord),
+              );
+              const afterRefs = new Set(nextRefs);
+              row.receivedValueAdditions = nextRefs.filter((id) => !beforeRefs.has(id));
+              row.receivedValueRemovals = [...beforeRefs].filter((id) => !afterRefs.has(id));
+            }
           }
           rows.push(row);
           changes.writes.set(node.table, rows);
@@ -944,10 +1104,14 @@ export class WorldRecords {
       // Group those operations instead of paying two SQL round trips per observer.
       // Keep insert-only conflict detection, parent-table order, and original row
       // order where a secondary uniqueness constraint can make ordering meaningful.
-      const rows =
-        node.uniqueIndexes?.length || changed.every((row) => row.create === changed[0]!.create)
-          ? changed
-          : [...changed.filter((row) => row.create), ...changed.filter((row) => !row.create)];
+      const shapes = new Map<string, RowChange[]>();
+      for (const row of changed) {
+        const key = JSON.stringify([row.create, row.writeColumns ?? null]);
+        const rows = shapes.get(key) ?? [];
+        rows.push(row);
+        shapes.set(key, rows);
+      }
+      const rows = node.uniqueIndexes?.length ? changed : [...shapes.values()].flat();
       const columns = [
         'world_id',
         'id',
@@ -960,8 +1124,44 @@ export class WorldRecords {
       ];
       for (let offset = 0; offset < rows.length; ) {
         const create = rows[offset]!.create;
+        const mask = rows[offset]!.writeColumns;
+        if (mask) {
+          const selected = ['world_id', 'id', 'revision', ...mask];
+          const values: unknown[][] = [];
+          while (
+            offset < rows.length &&
+            rows[offset]!.create === create &&
+            JSON.stringify(rows[offset]!.writeColumns) === JSON.stringify(mask)
+          ) {
+            const row = rows[offset++]!;
+            const names = Object.keys(node.columns ?? {});
+            values.push([
+              worldId,
+              row.id,
+              revision,
+              ...mask.map((name) => row.extra[names.indexOf(name)]),
+            ]);
+          }
+          for (const batch of sqlRecordBatchesWithCount(selected, values))
+            await writes.add(
+              table,
+              `UPDATE ${table} target SET revision=incoming.revision,${mask.map((column) => `${column}=incoming.${column}`).join(',')}
+              FROM jsonb_populate_recordset(NULL::${table}, ?::jsonb) incoming
+              WHERE target.world_id=incoming.world_id AND target.id=incoming.id RETURNING target.id`,
+              [batch.payload],
+              {
+                rows: batch.rows,
+                message: 'Current-contact metadata update lost its existing owner.',
+              },
+            );
+          continue;
+        }
         function* values() {
-          while (offset < rows.length && rows[offset]!.create === create) {
+          while (
+            offset < rows.length &&
+            rows[offset]!.create === create &&
+            !rows[offset]!.writeColumns
+          ) {
             const row = rows[offset++]!;
             yield [
               worldId,
@@ -1011,17 +1211,47 @@ export class WorldRecords {
         )
         .run(worldId, ...batch);
     }
-    for (const [table, ids] of changes.deletes)
+    const pendingDeletes = new Set<string>();
+    const related = (left: string, right: string) => {
+      for (let parent = RECORD_PARENTS.get(left); parent; parent = RECORD_PARENTS.get(parent))
+        if (parent === right) return true;
+      for (let parent = RECORD_PARENTS.get(right); parent; parent = RECORD_PARENTS.get(parent))
+        if (parent === left) return true;
+      return false;
+    };
+    for (const [table, ids] of changes.deletes) {
+      // Cascade-related or additional foreign-key owners retain explicit order;
+      // independent families can share the existing bounded SQL group.
+      if (
+        [...pendingDeletes].some((prior) => related(prior, table)) ||
+        RECORD_NODES.get(table)?.constraints?.some((constraint) =>
+          constraint.includes('FOREIGN KEY'),
+        )
+      ) {
+        await writes.flush();
+        pendingDeletes.clear();
+      }
       for (let offset = 0; offset < ids.length; offset += 800) {
         const batch = ids.slice(offset, offset + 800);
-        await this.db
-          .prepare(
-            table === 'mind_temporal_chunks'
-              ? `UPDATE mind_temporal_chunks SET retired_revision=${revision} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')}) AND retired_revision IS NULL`
-              : `DELETE FROM ${table} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
-          )
-          .run(worldId, ...batch);
+        await writes.add(
+          table,
+          table === 'mind_temporal_chunks'
+            ? `UPDATE mind_temporal_chunks SET retired_revision=${revision} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')}) AND retired_revision IS NULL`
+            : `DELETE FROM ${table} WHERE world_id=? AND id IN (${batch.map(() => '?').join(',')})`,
+          [worldId, ...batch],
+        );
+        pendingDeletes.add(table);
       }
+      if (
+        RECORD_NODES.get(table)?.constraints?.some((constraint) =>
+          constraint.includes('FOREIGN KEY'),
+        )
+      ) {
+        await writes.flush();
+        pendingDeletes.clear();
+      }
+    }
+    await writes.flush();
     if (sourceRefs.length)
       for (let offset = 0; offset < sourceRefs.length; offset += 800) {
         const rows = await this.db
@@ -1312,14 +1542,36 @@ export class WorldRecords {
       UNION ALL SELECT actor_id,CASE WHEN required=1 THEN 'required' ELSE 'optional' END AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_temporal_supports WHERE world_id=? GROUP BY actor_id,required
       UNION ALL SELECT actor_id,'required' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_learned_capabilities WHERE world_id=? AND payload::jsonb->>'source'<>'authored' GROUP BY actor_id
       UNION ALL SELECT actor_id,'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_knowledge_documents WHERE world_id=? AND payload::jsonb->>'origin'='actor-edit' GROUP BY actor_id
-      UNION ALL SELECT parent_id::jsonb->>2 AS actor_id,'optional' AS category,SUM(octet_length(payload)) AS bytes,COUNT(*) AS count FROM mind_recognition WHERE world_id=? AND payload::jsonb->>'retained'='true' AND COALESCE(payload::jsonb->>'authored','false')<>'true' GROUP BY parent_id
       UNION ALL SELECT actor_id,retention_class AS category,SUM(logical_bytes) AS bytes,COUNT(*) AS count FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') GROUP BY actor_id,retention_class
     ) canonical GROUP BY actor_id,category`,
       )
-      .all(...Array(9).fill(state.world.id));
+      .all(...Array(8).fill(state.world.id));
     const indexed = new Map(
       totals.map((row) => [JSON.stringify([row['actor_id'], row['category']]), row]),
     );
+    // Recognition is fully resident on activation. Its selected-world owner
+    // separates learned facts from the bounded liveness locator; SQL's raw body
+    // length would charge housekeeping as knowledge and disagree with admission.
+    for (const [actorId, identities] of Object.entries(state.world.observerIdentities ?? {})) {
+      let bytes = 0,
+        count = 0;
+      for (const identity of Object.values(identities))
+        if (identity.retained && !identity.authored) {
+          bytes += Buffer.byteLength(
+            JSON.stringify(selectedObserverIdentityKnowledge(state.world, identity)),
+          );
+          count++;
+        }
+      if (!count) continue;
+      const key = JSON.stringify([actorId, 'optional']),
+        before = indexed.get(key);
+      indexed.set(key, {
+        actor_id: actorId,
+        category: 'optional',
+        bytes: Number(before?.['bytes'] ?? 0) + bytes,
+        count: Number(before?.['count'] ?? 0) + count,
+      });
+    }
     const versionTotals = await this.db
       .prepare(
         "SELECT actor_id,retention_class,SUM(logical_bytes) AS bytes,COUNT(*) AS count,COUNT(*) FILTER(WHERE logical_bytes<>octet_length(payload))AS invalid FROM mind_source_versions WHERE world_id=? AND source_kind IN ('awareness','memory','summary') GROUP BY actor_id,retention_class",
@@ -1813,7 +2065,7 @@ export function assembleWorldRecords(
   let consumed = 0;
   const assemble = (node: RecordNode, row: JsonRecord): Value => {
     consumed++;
-    const value: Value = JSON.parse(String(row['payload']));
+    const value: Value = node.decodeRow ? node.decodeRow(row) : JSON.parse(String(row['payload']));
     if (personalMetadataTables.has(node.table)) {
       const path = JSON.parse(String(row['id'])) as string[];
       for (const [name, column] of personalMetadataColumns(node)) {

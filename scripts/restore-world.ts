@@ -28,7 +28,8 @@ import { GameSaves } from '../apps/server/src/game-saves.js';
 import { readConfig } from '../apps/server/src/config.js';
 import { DATABASE_SCHEMA, SqlGameRepository } from '../apps/server/src/store.js';
 import { PostgresDatabase } from '../apps/server/src/postgres.js';
-import { forgetExperience } from '@open-legend/domain';
+import { reapplyExperiencePrivacy, preserveIdentityHighWater } from '@open-legend/domain';
+import { privacyLedgerKey, readPrivacyLedger } from '../apps/server/src/privacy-ledger.js';
 import { validateCurrentWorldState } from '../apps/server/src/upgrade-world.js';
 import { join } from 'node:path';
 import { sameAssetRevision } from '@open-legend/assets';
@@ -44,7 +45,7 @@ await initializeCollisionRuntime();
 const file = process.argv[2];
 if (!file)
   throw new Error(
-    'Usage: restore-world.ts BACKUP_DIRECTORY. Stop the server first. This restores world state while preserving current paid attempts and forgetting records.',
+    'Usage: restore-world.ts BACKUP_DIRECTORY. Stop the server first. This restores world state while preserving current paid attempts and privacy records.',
   );
 if (!statSync(file).isDirectory())
   throw new Error(
@@ -282,12 +283,10 @@ try {
     });
     await restoreBackupSlots(backup, config.dataDirectory, attempt.id, keep);
     validateCurrentWorldState(state.world);
+    preserveIdentityHighWater(state.world, current.state.world);
     await store.authority.restoreBindings(state.world);
-    const ledger = (await store.getIntegration(`forget-ledger:${state.world.id}`)) as
-      | Record<string, string[]>
-      | undefined;
-    for (const [actorId, ids] of Object.entries(ledger ?? {}))
-      for (const id of ids) state.world = forgetExperience(state.world, actorId, id).world;
+    const ledger = readPrivacyLedger(await store.getIntegration(privacyLedgerKey(state.world.id)));
+    state.world = reapplyExperiencePrivacy(state.world, ledger);
     state.manuallyPaused = true;
     state.world.paused = true;
     const before = {

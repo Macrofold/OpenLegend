@@ -1,3 +1,4 @@
+import { captureIdentityAllocations, inheritIdentityAllocations } from './identity-allocation.js';
 import { captureKnownPlaceEvidence } from './known-place-evidence.js';
 import {
   entityDraftAudit,
@@ -745,6 +746,7 @@ export function draftWorld(world: WorldState, options: WorldDraftOptions = {}): 
   // docs/save-and-load.md#continuation-and-identity
   if (!completeObjectHistory(world.entities)) markPartialObjectHistory(base.entities);
   const result = drafts.createDraft(base);
+  if (draft) inheritIdentityAllocations(world, result);
   if (draft && (isImmutableData(original(world)!.entities) || hasPrivateDraftBase(world))) {
     privateSnapshotDrafts.add(result);
     inheritExposureSnapshot(world, result);
@@ -832,6 +834,7 @@ export function finishWorld(
   }
   // current() resolves append-then-edit/delete before certifying its prefix.
   const sealedAppends = sealRecordArrays(world);
+  const publishIdentityAllocations = captureIdentityAllocations(world);
   const publishKnownPlaces = captureKnownPlaceEvidence(world);
   const publishExposure = captureExposureCache(world);
   const publishObjects = captureObjectIndex(world);
@@ -1060,6 +1063,7 @@ export function finishWorld(
       eventLineages.set(result.events, lineage);
     }
   }
+  publishIdentityAllocations(result);
   return result;
 }
 export function updateWorld(

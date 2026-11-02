@@ -1,4 +1,5 @@
 import type { SqlDatabase } from './store.js';
+import { markLexicalIncomplete } from './lexical-coverage.js';
 
 /** A logical charge includes the replaceable value, its exact key and a conservative
  * allowance for row/index references. Shared PostgreSQL page bytes are measured separately. */
@@ -8,6 +9,8 @@ export interface DerivedMemoryAllowance {
   policyId: string;
   policyVersion: number;
   maxBytes: number;
+  hardBytes: number;
+  lowBytes: number;
 }
 interface DerivedRow {
   kind: string;
@@ -25,63 +28,117 @@ const names = {
   queue: 'memory_index_queue',
   annotation: 'mind_source_annotations',
 } as const;
-const scope = (table: string) => `FROM ${table} d WHERE d.world_id=? AND d.actor_id=?`;
-const references = (fields: string[]) =>
-  fields.map((field) => `octet_length(d.${field})`).join('+');
+type DerivedKind = keyof typeof names;
+const definitions: Record<
+  DerivedKind,
+  { keys: string[]; value: string; priority: number; at?: string }
+> = {
+  text: {
+    keys: ['id', 'source_kind'],
+    value: 'octet_length(d.search_text)',
+    priority: 3,
+    at: 'd.at',
+  },
+  lexical: {
+    keys: ['id', 'source_kind'],
+    value: 'octet_length(d.search_vector::text)+octet_length(d.source_revision)',
+    priority: 2,
+  },
+  pending: { keys: ['id', 'source_kind'], value: 'd.bytes', priority: 2 },
+  vector: {
+    keys: ['source_id', 'model', 'dimensions'],
+    value: 'pg_column_size(d.embedding)+octet_length(d.source_revision)+octet_length(d.generation)',
+    priority: 0,
+  },
+  cache: {
+    keys: ['source_id', 'source_revision', 'model', 'dimensions'],
+    value: 'octet_length(d.embedding)',
+    priority: 0,
+  },
+  queue: {
+    keys: ['source_id', 'model', 'dimensions'],
+    value: 'octet_length(d.source_revision)',
+    priority: 1,
+    at: 'd.at',
+  },
+  annotation: {
+    keys: ['source_kind', 'source_id', 'source_revision', 'namespace'],
+    value: 'octet_length(d.payload)',
+    priority: 1,
+  },
+};
+const kinds = Object.keys(names) as DerivedKind[];
+export function derivedChargeSql(kind: DerivedKind, alias = 'd'): string {
+  const { keys, value } = definitions[kind];
+  const reference = ['world_id', 'actor_id', ...keys.filter((key) => key !== 'dimensions')]
+    .map((field) => `octet_length(d.${field})`)
+    .join('+');
+  const charge = `${value}+${reference}+${DERIVED_REFERENCE_BYTES}`;
+  return (
+    kind === 'text' ? `CASE WHEN d.search_text='' THEN 0 ELSE ${charge} END` : charge
+  ).replaceAll('d.', `${alias}.`);
+}
 function candidatesSql() {
-  const core = ['world_id', 'actor_id'];
-  const row = (
-    kind: string,
-    table: string,
-    keys: string[],
-    value: string,
-    priority: number,
-    at = '0::double precision',
-  ) =>
-    `SELECT '${kind}' AS kind,jsonb_build_array(${keys.map((key) => `d.${key}`).join(',')})::text AS key,
-    ${value}+${references([...core, ...keys.filter((key) => !['dimensions'].includes(key))])}+${DERIVED_REFERENCE_BYTES} AS bytes,
-    ${at} AS at,${priority} AS priority ${scope(table)}`;
-  return [
-    row('text', names.text, ['id', 'source_kind'], 'octet_length(d.search_text)', 3, 'd.at') +
-      " AND d.search_text<>''",
-    row(
-      'lexical',
-      names.lexical,
-      ['id', 'source_kind'],
-      'octet_length(d.search_vector::text)+octet_length(d.source_revision)',
-      2,
-    ),
-    row('pending', names.pending, ['id', 'source_kind'], 'd.bytes', 2),
-    row(
-      'vector',
-      names.vector,
-      ['source_id', 'model', 'dimensions'],
-      'pg_column_size(d.embedding)+octet_length(d.source_revision)+octet_length(d.generation)',
-      0,
-    ),
-    row(
-      'cache',
-      names.cache,
-      ['source_id', 'source_revision', 'model', 'dimensions'],
-      'octet_length(d.embedding)',
-      0,
-    ),
-    row(
-      'queue',
-      names.queue,
-      ['source_id', 'model', 'dimensions'],
-      'octet_length(d.source_revision)',
-      1,
-      'd.at',
-    ),
-    row(
-      'annotation',
-      names.annotation,
-      ['source_kind', 'source_id', 'source_revision', 'namespace'],
-      'octet_length(d.payload)',
-      1,
-    ),
-  ].join(' UNION ALL ');
+  return kinds
+    .map((kind) => {
+      const { keys, priority, at = '0::double precision' } = definitions[kind];
+      return `SELECT '${kind}' AS kind,jsonb_build_array(${keys.map((key) => `d.${key}`).join(',')})::text AS key,
+      ${derivedChargeSql(kind)} AS bytes,${at} AS at,${priority} AS priority
+      FROM ${names[kind]} d WHERE d.world_id=? AND d.actor_id=?${kind === 'text' ? " AND d.search_text<>''" : ''}`;
+    })
+    .join(' UNION ALL ');
+}
+/** Rebuildable accounting, not a memory authority. Statement transition tables
+ * aggregate actual changed rows once, including conflict-update and rollback, so
+ * every existing writer shares the same charge owner without repeated SUM scans.
+ * docs/projects/bookkeeping-simplification-runtime-design.md#51-search-and-derived-storage */
+export async function initializeMemoryDerivatives(db: SqlDatabase): Promise<void> {
+  await db.exec(`CREATE TABLE IF NOT EXISTS memory_derived_usage (
+    world_id TEXT NOT NULL,actor_id TEXT NOT NULL,bytes BIGINT NOT NULL,
+    PRIMARY KEY(world_id,actor_id));`);
+  for (const kind of kinds) {
+    const table = names[kind];
+    const sum = `SELECT d.world_id,d.actor_id,sum(${derivedChargeSql(kind)})::bigint AS bytes
+      FROM changed_rows d GROUP BY d.world_id,d.actor_id`;
+    for (const operation of ['insert', 'delete', 'update'] as const) {
+      const delta =
+        operation === 'insert'
+          ? sum
+          : operation === 'delete'
+            ? `SELECT world_id,actor_id,-bytes AS bytes FROM (${sum}) old_charge`
+            : `SELECT world_id,actor_id,sum(bytes)::bigint AS bytes FROM (
+          ${sum.replaceAll('changed_rows', 'new_rows')}
+          UNION ALL SELECT world_id,actor_id,-bytes AS bytes FROM (${sum.replaceAll('changed_rows', 'old_rows')}) old_charge
+        ) changes GROUP BY world_id,actor_id HAVING sum(bytes)<>0`;
+      const name = `memory_derived_${kind}_${operation}`;
+      const relations =
+        operation === 'update'
+          ? 'OLD TABLE AS old_rows NEW TABLE AS new_rows'
+          : operation === 'insert'
+            ? 'NEW TABLE AS changed_rows'
+            : 'OLD TABLE AS changed_rows';
+      await db.exec(`CREATE OR REPLACE FUNCTION ${name}() RETURNS trigger LANGUAGE plpgsql AS $$
+        BEGIN
+          INSERT INTO memory_derived_usage SELECT world_id,actor_id,bytes FROM (${delta}) delta
+          WHERE bytes<>0 ON CONFLICT(world_id,actor_id) DO UPDATE
+          SET bytes=memory_derived_usage.bytes+excluded.bytes;
+          RETURN NULL;
+        END $$;
+        DROP TRIGGER IF EXISTS ${name} ON ${table};
+        CREATE TRIGGER ${name} AFTER ${operation.toUpperCase()} ON ${table}
+          REFERENCING ${relations} FOR EACH STATEMENT EXECUTE FUNCTION ${name}();`);
+    }
+  }
+  // Initialization/restore rebuilds the projection as one aggregate, not one
+  // eviction-candidate transfer per actor. Subsequent changes use only deltas.
+  const all = kinds
+    .map(
+      (kind) =>
+        `SELECT d.world_id,d.actor_id,${derivedChargeSql(kind)} AS bytes FROM ${names[kind]} d`,
+    )
+    .join(' UNION ALL ');
+  await db.exec(`DELETE FROM memory_derived_usage;
+    INSERT INTO memory_derived_usage SELECT world_id,actor_id,sum(bytes)::bigint FROM (${all}) charges GROUP BY world_id,actor_id;`);
 }
 export async function derivedMemoryUsage(
   db: SqlDatabase,
@@ -89,8 +146,8 @@ export async function derivedMemoryUsage(
   actorId: string,
 ): Promise<number> {
   const row = await db
-    .prepare(`SELECT COALESCE(SUM(bytes),0) AS bytes FROM (${candidatesSql()}) candidates`)
-    .get(...Object.keys(names).flatMap(() => [worldId, actorId]));
+    .prepare('SELECT bytes FROM memory_derived_usage WHERE world_id=? AND actor_id=?')
+    .get(worldId, actorId);
   return Number(row?.['bytes'] ?? 0);
 }
 
@@ -101,14 +158,14 @@ export async function trimMemoryDerivatives(
   policy: DerivedMemoryAllowance,
   actorId: string,
 ): Promise<number> {
-  const metadata = await db
-    .prepare(`SELECT * FROM (${candidatesSql()}) candidates ORDER BY priority,at,key`)
-    .all(...Object.keys(names).flatMap(() => [policy.worldId, actorId]));
-  let bytes = metadata.reduce((sum, row) => sum + Number(row['bytes']), 0);
+  let bytes = await derivedMemoryUsage(db, policy.worldId, actorId);
   if (bytes <= policy.maxBytes) return bytes;
+  const metadata = await db
+    .prepare(`SELECT * FROM (${candidatesSql()}) candidates ORDER BY priority,at,key LIMIT 128`)
+    .all(...Object.keys(names).flatMap(() => [policy.worldId, actorId]));
   const released: DerivedRow[] = [];
   for (const row of metadata) {
-    if (bytes <= policy.maxBytes) break;
+    if (bytes <= policy.lowBytes) break;
     const value = {
       kind: String(row['kind']),
       key: JSON.parse(String(row['key'])) as string[],
@@ -159,8 +216,12 @@ export async function trimMemoryDerivatives(
         )
         .run(JSON.stringify(keys), policy.worldId, actorId);
   }
-  // Abandoned lexical work counts as considered optional indexing. Exact retrieval
-  // uses native sources; no later background sweep silently recreates evicted work.
+  if (
+    released.some((row) => row.kind === 'text' || row.kind === 'lexical' || row.kind === 'pending')
+  )
+    await markLexicalIncomplete(db, policy.worldId, [actorId]);
+  // Retiring optional queue keys releases their pressure, but never establishes
+  // complete search coverage. Exact accounts and literal browse remain available.
   if (pendingCount)
     await db
       .prepare(
@@ -170,5 +231,5 @@ export async function trimMemoryDerivatives(
    WHERE p.world_id=?`,
       )
       .run(pendingCount, pendingBytes, policy.worldId);
-  return bytes;
+  return derivedMemoryUsage(db, policy.worldId, actorId);
 }

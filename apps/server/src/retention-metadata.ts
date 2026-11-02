@@ -1,5 +1,6 @@
 import {
   selectedTemporalPolicy,
+  selectedObserverIdentityKnowledge,
   temporalChunkOperations,
   temporalOperationHeader,
   type PersonalSourceRef,
@@ -592,7 +593,8 @@ export class RetentionMetadata {
       for (const value of Object.values(world.actorKnowledge?.[actorId] ?? {}))
         if (value.origin === 'actor-edit') add('optional', value);
       for (const value of Object.values(world.observerIdentities?.[actorId] ?? {}))
-        if ('retained' in value && value.retained && !value.authored) add('optional', value);
+        if ('retained' in value && value.retained && !value.authored)
+          add('optional', selectedObserverIdentityKnowledge(world, value));
       for (const category of ['optional', 'required', 'speech'] as const) {
         const total = totals[category],
           saved = actor.accounts?.[category],
@@ -856,146 +858,182 @@ export class RetentionMetadataView {
     individualIds: readonly string[],
     includeRecent: boolean,
   ): Promise<{ aliases: Set<string>; individuals: Set<string> }> {
-    const retained = new Set(aliases.filter((id) => this.hasAlias(actorId, id, includeRecent)));
-    const individuals = new Set(individualIds.filter((id) => this.hasIndividual(actorId, id)));
-    if (
-      !aliases.some((id) => !retained.has(id)) &&
-      !individualIds.some((id) => !individuals.has(id))
-    )
-      return { aliases: retained, individuals };
-    const coldAccounts = accountTables.filter((table) =>
-      this.owner.needsColdMembership(table, actorId),
-    );
-    const coldRecent =
-      includeRecent && this.owner.needsColdMembership('mind_temporal_segments', actorId);
-    if (!coldAccounts.length && !coldRecent) return { aliases: retained, individuals };
-    const excluded = (table: Table) => [
-      ...new Set([
-        ...[...this.owner.records(table, actorId)].map((row) => row.id),
-        ...[...(this.writes.get(table)?.values() ?? [])]
-          .filter((row) => row.actorId === actorId)
-          .map((row) => row.id),
-        ...(this.changes?.deletes.get(table) ?? []),
-        ...(this.removed?.get(table) ?? []),
-      ]),
-    ];
-    const parent = (table: Table) =>
-      JSON.stringify(
-        table === 'mind_memories'
-          ? ['world', 'memories', actorId]
-          : [
-              'world',
-              'experience',
-              table === 'mind_awareness'
-                ? 'awareness'
-                : table === 'mind_summaries'
-                  ? 'summaries'
-                  : 'temporal',
-              ...(table === 'mind_temporal_segments' ? ['actors', actorId, 'chunks'] : [actorId]),
-            ],
-      );
-    const scopeRemoved = (table: Table) =>
-      [this.changes, this.removed && { deletes: this.removed }].some(
-        (changes) => changes && deletedAncestor(changes, table, parent(table)),
-      );
-    const read = db.readTransaction?.bind(db) ?? db.transaction.bind(db);
-    countMetric('retention.survivalCandidates', aliases.length + individualIds.length);
-    await read(async () => {
-      const head = await db.prepare('SELECT world_id,revision FROM world_head WHERE id=1').get();
-      if (head?.['world_id'] !== worldId || Number(head['revision']) !== this.owner.revision)
-        throw new Error('Personal retention membership snapshot changed.');
-      for (const table of coldAccounts) {
-        if (scopeRemoved(table)) continue;
-        const pendingAliases = aliases.filter((id) => !retained.has(id));
-        const pendingIndividuals = individualIds.filter((id) => !individuals.has(id));
-        const wantedAliases = new Set(pendingAliases),
-          wantedIndividuals = new Set(pendingIndividuals);
-        if (!pendingAliases.length && !pendingIndividuals.length) break;
-        // One actor-scoped pass returns matching metadata only. A recent quota
-        // eviction does not hydrate every lasting account or source version.
-        for (const row of await db
-          .prepare(
-            `SELECT t.source_id,t.event_id,t.kind,t.individual_ids,t.retention_metadata->'aliases' AS aliases
-          FROM ${table} t WHERE t.world_id=? AND t.actor_id=? AND NOT(t.id=ANY(?::text[]))
-          AND (t.source_id=ANY(?::text[]) OR t.event_id=ANY(?::text[])
-            OR jsonb_exists_any(t.retention_metadata->'aliases',?::text[]) OR t.individual_ids && ?::text[])`,
-          )
-          .all(
-            worldId,
-            actorId,
-            excluded(table),
-            pendingAliases,
-            pendingAliases,
-            pendingAliases,
-            pendingIndividuals,
-          )) {
-          if (row['kind'] !== 'impression') {
-            const support = row['aliases'] as string[];
-            for (const id of [
-              String(row['source_id']),
-              ...(row['event_id'] ? [String(row['event_id'])] : []),
-              ...support,
-            ])
-              if (wantedAliases.has(id) && !retained.has(id)) {
-                retained.add(id);
-                countMetric('retention.coldSurvivalProofs');
-              }
-          }
-          for (const id of row['individual_ids'] as string[])
-            if (wantedIndividuals.has(id) && !individuals.has(id)) {
-              individuals.add(id);
-              countMetric('retention.coldSurvivalProofs');
-            }
-        }
-      }
-      if (coldRecent && !scopeRemoved('mind_temporal_segments')) {
-        const removedParents = [
-          ...new Set([
-            ...(this.changes?.deletes.get('mind_temporal_chunks') ?? []),
-            ...(this.removed?.get('mind_temporal_chunks') ?? []),
-          ]),
-        ];
-        for (const [column, lookup, keys, target] of [
-          [
-            'occurrence_source_ids',
-            'sourceIds',
-            aliases.filter((id) => !retained.has(id)),
-            retained,
+    return (
+      await this.survivingMembershipBatch(db, worldId, [
+        { actorId, aliases, individualIds, includeRecent },
+      ])
+    )[0]!;
+  }
+
+  /** Exceptional edits ask every actor/source question in one statement snapshot.
+   * The head is returned even for zero matches; helper-owned transactions and
+   * candidate-by-all-pages subplans are unnecessary. */
+  async survivingMembershipBatch(
+    db: SqlDatabase,
+    worldId: string,
+    requests: readonly {
+      actorId: string;
+      aliases: readonly string[];
+      individualIds: readonly string[];
+      includeRecent: boolean;
+    }[],
+  ): Promise<Array<{ aliases: Set<string>; individuals: Set<string> }>> {
+    const results = requests.map((request) => ({
+      aliases: new Set(
+        request.aliases.filter((id) => this.hasAlias(request.actorId, id, request.includeRecent)),
+      ),
+      individuals: new Set(
+        request.individualIds.filter((id) => this.hasIndividual(request.actorId, id)),
+      ),
+    }));
+    const inputs = requests.flatMap((request, key) => {
+      const { actorId, includeRecent } = request,
+        result = results[key]!;
+      const aliases = [...new Set(request.aliases.filter((id) => !result.aliases.has(id)))];
+      const individuals = [
+        ...new Set(request.individualIds.filter((id) => !result.individuals.has(id))),
+      ];
+      if (!aliases.length && !individuals.length) return [];
+      const parent = (table: Table) =>
+        JSON.stringify(
+          table === 'mind_memories'
+            ? ['world', 'memories', actorId]
+            : [
+                'world',
+                'experience',
+                table === 'mind_awareness'
+                  ? 'awareness'
+                  : table === 'mind_summaries'
+                    ? 'summaries'
+                    : 'temporal',
+                ...(table === 'mind_temporal_segments' ? ['actors', actorId, 'chunks'] : [actorId]),
+              ],
+        );
+      const scopeRemoved = (table: Table) =>
+        [this.changes, this.removed && { deletes: this.removed }].some(
+          (changes) => changes && deletedAncestor(changes, table, parent(table)),
+        );
+      const excluded = (table: Table) => [
+        ...new Set([
+          ...[...this.owner.records(table, actorId)].map((row) => row.id),
+          ...[...(this.writes.get(table)?.values() ?? [])]
+            .filter((row) => row.actorId === actorId)
+            .map((row) => row.id),
+          ...(this.changes?.deletes.get(table) ?? []),
+          ...(this.removed?.get(table) ?? []),
+        ]),
+      ];
+      const cold = (table: Table) =>
+        !scopeRemoved(table) && this.owner.needsColdMembership(table, actorId);
+      const awareness = cold('mind_awareness'),
+        memories = cold('mind_memories'),
+        summaries = cold('mind_summaries');
+      const recent = includeRecent && cold('mind_temporal_segments');
+      if (!awareness && !memories && !summaries && !recent) return [];
+      return [
+        {
+          key,
+          actor_id: actorId,
+          aliases,
+          individuals,
+          awareness,
+          memories,
+          summaries,
+          recent,
+          excluded_awareness: excluded('mind_awareness'),
+          excluded_memories: excluded('mind_memories'),
+          excluded_summaries: excluded('mind_summaries'),
+          excluded_segments: excluded('mind_temporal_segments'),
+          excluded_parents: [
+            ...new Set([
+              ...(this.changes?.deletes.get('mind_temporal_chunks') ?? []),
+              ...(this.removed?.get('mind_temporal_chunks') ?? []),
+            ]),
           ],
-          [
-            'occurrence_individual_ids',
-            'individualIds',
-            individualIds.filter((id) => !individuals.has(id)),
-            individuals,
+          buckets: [
+            ...new Set([
+              ...aliases.map((id) => receiptLookupBucket('sourceIds', id)),
+              ...individuals.map((id) => receiptLookupBucket('individualIds', id)),
+            ]),
           ],
-        ] as const) {
-          if (!keys.length) continue;
-          // Reuse the bounded search vocabulary. A bucket collision selects a
-          // candidate page only; exact occurrence membership proves survival.
-          for (const row of await db
-            .prepare(
-              `SELECT candidate.id FROM unnest(?::text[],?::smallint[]) candidate(id,bucket)
-            WHERE EXISTS(SELECT 1 FROM mind_temporal_segments t WHERE t.world_id=? AND t.actor_id=?
-              AND t.lookup_buckets @> ARRAY[candidate.bucket]::smallint[]
-              AND t.${column} @> ARRAY[candidate.id]::text[]
-              AND NOT(t.id=ANY(?::text[])) AND NOT(t.parent_id=ANY(?::text[]))
-              AND ${liveEvidenceRowSql('mind_temporal_segments')})`,
-            )
-            .all(
-              keys,
-              keys.map((key) => receiptLookupBucket(lookup, key)),
-              worldId,
-              actorId,
-              excluded('mind_temporal_segments'),
-              removedParents,
-            )) {
-            target.add(String(row['id']));
-            countMetric('retention.coldSurvivalProofs');
-          }
-        }
-      }
+        },
+      ];
     });
-    return { aliases: retained, individuals };
+    // Keep each statement finite, while preserving a single query snapshot for
+    // each bounded actor-tagged group. The complete save checks its head once.
+    for (let start = 0; start < inputs.length; start += 32) {
+      const batch = inputs.slice(start, start + 32);
+      const encoded = JSON.stringify(batch);
+      if (
+        Buffer.byteLength(encoded) > 4 * 1024 * 1024 ||
+        batch.reduce((sum, value) => sum + value.aliases.length + value.individuals.length, 0) >
+          maximumTemporalPreparationRows
+      )
+        throw new Error('Personal retention membership exceeds bounded preparation.');
+      countMetric(
+        'retention.survivalCandidates',
+        batch.reduce((sum, value) => sum + value.aliases.length + value.individuals.length, 0),
+      );
+      const accountQueries = accountTables.map((table) => {
+        const suffix =
+          table === 'mind_awareness'
+            ? 'awareness'
+            : table === 'mind_memories'
+              ? 'memories'
+              : 'summaries';
+        return `SELECT q.key,
+          ARRAY(SELECT id FROM unnest(q.aliases) id WHERE t.kind<>'impression' AND
+            (id=t.source_id OR id=t.event_id OR jsonb_exists(t.retention_metadata->'aliases',id))) AS aliases,
+          ARRAY(SELECT id FROM unnest(q.individuals) id WHERE id=ANY(t.individual_ids)) AS individuals
+          FROM requested q JOIN ${table} t ON t.world_id=? AND t.actor_id=q.actor_id
+          WHERE q.${suffix} AND NOT(t.id=ANY(q.excluded_${suffix})) AND
+            (t.source_id=ANY(q.aliases) OR t.event_id=ANY(q.aliases) OR
+              jsonb_exists_any(t.retention_metadata->'aliases',q.aliases) OR t.individual_ids && q.individuals)`;
+      });
+      const rows = await db
+        .prepare(
+          `WITH requested AS MATERIALIZED (
+          SELECT * FROM jsonb_to_recordset(?::jsonb) q(key int,actor_id text,aliases text[],individuals text[],
+            awareness boolean,memories boolean,summaries boolean,recent boolean,
+            excluded_awareness text[],excluded_memories text[],excluded_summaries text[],excluded_segments text[],excluded_parents text[],buckets smallint[])
+        ), recent_pages AS MATERIALIZED (
+          SELECT q.key,q.aliases,q.individuals,t.occurrence_source_ids,t.occurrence_individual_ids
+          FROM requested q JOIN mind_temporal_segments t ON t.world_id=? AND t.actor_id=q.actor_id
+          WHERE q.recent AND t.lookup_buckets && q.buckets
+            AND (t.occurrence_source_ids && q.aliases OR t.occurrence_individual_ids && q.individuals)
+            AND NOT(t.id=ANY(q.excluded_segments)) AND NOT(t.parent_id=ANY(q.excluded_parents))
+            AND ${liveEvidenceRowSql('mind_temporal_segments')}
+        ), proofs AS (
+          ${accountQueries.join(' UNION ALL ')}
+          UNION ALL SELECT key,
+            ARRAY(SELECT id FROM unnest(aliases) id WHERE id=ANY(occurrence_source_ids)),
+            ARRAY(SELECT id FROM unnest(individuals) id WHERE id=ANY(occurrence_individual_ids))
+          FROM recent_pages
+        ) SELECT h.world_id,h.revision,p.key,p.aliases,p.individuals
+          FROM world_head h LEFT JOIN proofs p ON true WHERE h.id=1`,
+        )
+        .all(encoded, worldId, ...accountTables.map(() => worldId));
+      if (
+        !rows.length ||
+        rows.some(
+          (row) => row['world_id'] !== worldId || Number(row['revision']) !== this.owner.revision,
+        )
+      )
+        throw new Error('Personal retention membership snapshot changed.');
+      for (const row of rows) {
+        if (row['key'] === null) continue;
+        const result = results[Number(row['key'])]!;
+        for (const id of (row['aliases'] as string[] | null) ?? []) {
+          if (!result.aliases.has(id)) countMetric('retention.coldSurvivalProofs');
+          result.aliases.add(id);
+        }
+        for (const id of (row['individuals'] as string[] | null) ?? []) {
+          if (!result.individuals.has(id)) countMetric('retention.coldSurvivalProofs');
+          result.individuals.add(id);
+        }
+      }
+    }
+    return results;
   }
   versionDependencies(
     actorId: string,
