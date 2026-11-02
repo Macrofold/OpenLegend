@@ -1713,7 +1713,7 @@ export class WorldService {
         saved.world.paused && !this.world.paused,
       );
     // Operational effects and privacy changes remain ordered behind accepted play.
-    await this.flush();
+    await this.flushAcceptedProgress();
     if (restore) {
       const contributions = constructionPermissionBatch(
         saved.world.id,
@@ -2033,15 +2033,19 @@ export class WorldService {
       this.retentionTimer = undefined;
       this.retentionWakeAt = undefined;
       if (this.paused || this.storageError) return;
-      const captured = this.saved,
-        generation = this.generation;
-      const cut = this.captureLiveReadCuts();
-      const pending = cut.cuts.reduce((all, cut) => mergeRecordChanges(all, cut.changes), {
-        writes: new Map(),
-        deletes: new Map(),
-        rows: 0,
-      });
       this.retentionTask = (async () => {
+        // Startup may already have due history, but its protected initialization
+        // still owns the world. Wait outside mutation before capturing that cut.
+        await this.ready;
+        if (this.closed || this.paused || this.storageError) return;
+        const captured = this.saved,
+          generation = this.generation;
+        const cut = this.captureLiveReadCuts();
+        const pending = cut.cuts.reduce((all, cut) => mergeRecordChanges(all, cut.changes), {
+          writes: new Map(),
+          deletes: new Map(),
+          rows: 0,
+        });
         const [recent, accounts] = await Promise.all([
           this.store.prepareRecentRetention!(captured, pending, cut),
           this.store.prepareAccountRetention?.(captured, pending, cut),
@@ -2111,13 +2115,22 @@ export class WorldService {
       0,
       LIVE_SAVE_INTERVAL_MS - (performance.now() - this.pendingSave.acceptedAt),
     );
-    this.saveTimer = setTimeout(() => {
-      this.saveTimer = undefined;
-      void this.mutate(() => this.saveRequestedProgress(), true).catch((error) =>
-        this.failProgressSave(error),
-      );
+    const timer = setTimeout(() => {
+      void this.ready
+        .then(() => {
+          if (this.saveTimer !== timer || this.closed) return;
+          return this.mutate(async () => {
+            // A protected flush may cancel this timer while it waits for ready
+            // or mutation ownership. It cannot consume a newer batch's timer.
+            if (this.saveTimer !== timer || this.closed) return;
+            this.saveTimer = undefined;
+            await this.saveRequestedProgress();
+          }, true);
+        })
+        .catch((error) => this.failProgressSave(error));
     }, delay);
-    this.saveTimer.unref?.();
+    this.saveTimer = timer;
+    timer.unref?.();
   }
 
   /** Capture the due accepted prefix for the existing ordered background writer.
@@ -2320,20 +2333,24 @@ export class WorldService {
 
   /** Explicit persistence barrier for protected effects/checkpoints/shutdown only. */
   async flush(): Promise<void> {
-    await this.mutate(async () => {
-      await this.ready;
-      clearTimeout(this.saveTimer);
-      this.saveTimer = undefined;
-      await this.backgroundSave?.done;
-      if (this.storageError) throw new Error(this.storageError);
-      await this.saveRequestedProgress();
-      await this.backgroundSave?.done;
-      if (this.storageError) throw new Error(this.storageError);
-      // Residency can change while a prefix saves; it is not a new gameplay cut.
-      // Rebind only after every accepted cut is durable and mutation is excluded.
-      if (this.persistedState && this.saved !== this.persistedState)
-        this.adoptDurableHistory(this.saved);
-    }, true);
+    await this.ready;
+    await this.mutate(() => this.flushAcceptedProgress(), true);
+  }
+
+  /** Startup owns the world before ready resolves. Its protected participation
+   * commit must use the same save barrier without waiting on its own readiness. */
+  private async flushAcceptedProgress(): Promise<void> {
+    clearTimeout(this.saveTimer);
+    this.saveTimer = undefined;
+    await this.backgroundSave?.done;
+    if (this.storageError) throw new Error(this.storageError);
+    await this.saveRequestedProgress();
+    await this.backgroundSave?.done;
+    if (this.storageError) throw new Error(this.storageError);
+    // Residency can change while a prefix saves; it is not a new gameplay cut.
+    // Rebind only after every accepted cut is durable and mutation is excluded.
+    if (this.persistedState && this.saved !== this.persistedState)
+      this.adoptDurableHistory(this.saved);
   }
 
   private adoptDurableHistory(prepared: SavedWorld): void {
