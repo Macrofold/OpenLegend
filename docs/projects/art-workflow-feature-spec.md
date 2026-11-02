@@ -1,8 +1,8 @@
 # Art workflow — feature specification
 
-| Status      | Current progress                                                                                                                                                                                                                                           | Last updated |
-| ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The workflow pages, skills, art-direction seam, art tool and local model preview are delivered. The first proof run took Mike's five character sheets to rigged, animated models, not yet accepted; the wrapped-family test and a state-sheet prop remain. | 2026-11-01   |
+| Status      | Current progress                                                                                                                                                                                                                                                                                            | Last updated |
+| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
+| In progress | The workflow pages, with simple and full paths and step options, the skills, art-direction seam, art tool and local model preview are delivered. The first proof run took Mike's five character sheets to rigged, animated models, not yet accepted; the wrapped-family test and a state-sheet prop remain. | 2026-11-01   |
 
 This project redesigns how OpenLegend makes art: one procedure that turns a request such as "turn this character sheet into a rigged model for the game" into finished, reviewed, preserved files, with explicit tool defaults, explicit artistic latitude and no built-in look. Mike asks; an agent, or a junior artist following the pages, does the work; Mike decides at most three things per request.
 
@@ -23,7 +23,7 @@ The previous workflow pages were sound in principle but abstract: no tool was na
 The redesigned workflow is:
 
 - **Concrete:** every stage names its default tool, command, output, check and stop, with costs.
-- **Adjustable:** tools, fidelity, candidate counts and the stopping point are request settings with defaults.
+- **Adjustable:** a simple or full path, per-step options, tools, fidelity, candidate counts and the stopping point are request settings with defaults, and supplied material skips the steps it already answers.
 - **Look-neutral:** the look comes from the art direction through one stable entry point.
 - **Play-first:** acceptance happens in the game's own view, against checks that matter to play.
 
@@ -54,7 +54,9 @@ The pipeline should spend effort where OpenLegend differs from ordinary survival
 
 **Deliberately not now** (over-engineering at zero players): paid generation during play, a universal clothing system or many-slot equipment figure before clothing is scheduled, per-object history art, live footprints and wound decals, seasonal growth, face-landmark exports before NPC face recognition exists, and any automated multi-provider fan-out service.
 
-## 3. Decisions from the October 31, 2026 discussion
+## 3. Decisions
+
+Sections 3.1–3.5 come from the October 31, 2026 discussion and 3.6 from November 1.
 
 ### 3.1 The outdated "artgen" skills
 
@@ -69,7 +71,7 @@ Mike asked what the claude.ai-synced skill `/anthropic-skills:openlegend-art-pip
 | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | A clean-reference-views step (A-pose front plus left, back, right) before any 3D spend | **Adopted** as [Stage 3](../production-workflows/art-flows/3d-models.md#step-3--make-clean-reference-views), with view rules and an agreement check.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Concrete default tools and candidate counts                                            | **Adopted** as the [default roster](../production-workflows/art-flows/tools.md#default-roster) and the candidate defaults in the request settings.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                |
-| Spreading one prepared input across several 3D providers, then picking                 | **Adopted** as three candidates by default: two Meshy and one Tripo, both reachable through the already-connected Higgsfield account. Further providers are [OD2](#od2--a-second-3d-provider).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| Spreading one prepared input across several 3D providers, then picking                 | **Adopted** as three candidates by default on the full path: two Meshy and one Tripo, both reachable through the already-connected Higgsfield account. Further providers are [OD2](#od2--a-second-3d-provider).                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | Outside models (MakeHuman/MPFB bodies, hand-made, CC0) as equal candidates             | **Adopted**: library and family-body fits compete with generated candidates.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      |
 | A real height in metres in the brief                                                   | **Adopted** as a required game fact.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              |
 | Estimates before paid steps, a cost cap, no automatic paid retry                       | **Kept** (already policy); made concrete with per-tool estimate commands.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -110,20 +112,32 @@ Mike's direction: "We shouldn't hardcode any specific artistic interpretation in
 - **One procedure.** The separate Standard and Higgsfield pages are gone: their procedure folded into the shared README, and their tool facts into [tools](../production-workflows/art-flows/tools.md).
 - **A dedicated 3D route.** [3D models](../production-workflows/art-flows/3d-models.md) is the step-by-step route for props, characters and creatures; the production page keeps the package rules and the other recipes.
 - **One skill body.** `/ol-design` is an alias of `openlegend-art`.
-- **Three decision points.** Mike picks a direction, picks a candidate and accepts. Everything else is the agent's job, and technical checks never stand in for acceptance.
+- **Three decision points on the full path.** Mike picks a direction, picks a candidate and accepts; the simple path makes one result for him to review. Everything else is the agent's job, and technical checks never stand in for acceptance.
 - **Naming and working folders.**
   - Study IDs: `YYYY-MM-DD-<subject>[-<purpose>]`.
   - Candidate IDs: `c`, `v`, `m`, `k`, `f` plus two digits.
   - Working folder: `~/Documents/ChatGPT/OpenLegend-art/<study-id>/study/` with stage folders.
   - Default storage: study material to `art-studies` / `curated-private`, editable sources and packages to `art-library` / `curated-private`, the domains every archived study already uses. Every meaningful output is uploaded as soon as its batch finishes, and only the exact references are kept locally; only very likely temporary scratch stays local (Mike, October 31).
 
+### 3.6 Simple and full paths (November 1, 2026)
+
+Two requests met on November 1. The prototype work merged into `main` made model and animation generation default to one usable prototype export, with automatic rig, clip, material and format settings, and added a path to finalize a selected model. Mike then asked for a path for simple art generation and a path for full art generation, with options for each variation (a polished animation or not, a cleaned-up model or not, ideation and concept steps or not, steps skipped because of what is supplied), and for prototype or full art to be easy to ask for. **Decision:**
+
+- **Two paths, one setting.** `quality=prototype` is the simple path and `quality=finished` the full path, chosen in ordinary words ("quick", "rough", "prototype"; "finished", "polished", "game-ready"). A quality word decides; a destination such as "for the game" does not, and asking to pick gives that step the full path's candidates. Model and animation generation default to the simple path; finished or game-ready assets and every other request default to the full path; "polish/finalize" moves a prototype to the full path at Finish.
+- **Step options.** Concepts, views, candidates, cleanup, rig, clips, motion polish, materials, format and critique each have a default per path, and naming one changes that step only, as in "a prototype, but with a polished walk".
+- **Supplied material skips what it answers.** A sheet or concept skips concepts, clean sheet views are cropped, a saved model starts at Finish, and a compatible rig and adequate materials are kept.
+- **Default clips.** An animated walking character gets `Idle`, `Walk` and `Run`: the prototype work's idle and walk plus the `Run` the game's loader requires, with named motions added. Mike confirmed on November 3 that a walk is expected by default.
+- **What no option removes.** A model the game will load keeps the file check, an animated character always carries the `Idle` and `Run` the game's loader requires, every 3D model gets one look in the game's renderer, and both paths preserve every meaningful output.
+
+Most requests want either a quick usable look or finished art, and neither Mike nor a junior should decide every step. The simple path keeps a rigged person to about $1.75; the full path keeps the review points that caught the rejected mercenary iterations and the flattened Gildmoss export. The tradeoff: a prototype skips the fidelity sheet and the critique, so it is never evidence of acceptance or of family qualification. The step options are request words read by the agent, not provider settings or a service.
+
 ## 4. Scenarios
 
 Each scenario names its trigger, what Mike sees, the decision points and a meaningful failure.
 
-1. **Concept study.** _"Concept art for Tavin Vale, three directions."_ The agent reads the look and Tavin's facts, states the plan line (about $0.30), generates three distinct directions, fixes anatomy and placeholder defects with targeted edits, and shows one labelled sheet. Mike picks c02 or asks for another round. The study ends archived. _Failure:_ the default model keeps producing the same face; the agent audits a second model on the same brief and says so.
-2. **Character sheet to game model.** _"Turn this sheet into a rigged model; keep the face and coat exactly."_
-   - **Plan.** `faithful`, with locks on face and coat; reference views, then three candidates (two Meshy, one Tripo) through Higgsfield, and a rig with `Idle` and `Run`; about $4–5.50 in all.
+1. **Concept study.** _"Concept art for Tavin Vale, three directions."_ The agent reads the look and Tavin's facts, states the plan line (about $0.35), generates three distinct directions, fixes anatomy and placeholder defects with targeted edits, and shows one labelled sheet. Mike picks c02 or asks for another round. The study ends archived. _Failure:_ the default model keeps producing the same face; the agent audits a second model on the same brief and says so.
+2. **Character sheet to game model.** _"Turn this sheet into a finished, rigged model; keep the face and coat exactly."_
+   - **Plan.** `faithful`, with locks on face and coat; reference views, then three candidates (two Meshy, one Tripo) through Higgsfield, and a rig with `Idle`, `Walk` and `Run`; about $3.70–5.40 in all.
    - **Pick.** The agent shows the views with a turntable sheet of the three candidates beside the reference figure, and each candidate in the game's own look beside the cast through the study viewer's local preview. Mike picks m02.
    - **Finish.** The agent cleans m02 in Blender, fits it to the shared body family or rigs it, adds the required clips, checks budgets and play checks, gets a critique, and shows a matched-scale sheet.
    - **Accept.** Mike accepts and the package is archived. Integration is a separate request.
@@ -133,12 +147,13 @@ Each scenario names its trigger, what Mike sees, the decision points and a meani
 5. **Resume.** A new thread receives `2026-11-02-mara-reed-3d/m02`. It reads the record's Resume section, recovers any outstanding job, fetches the archived files and continues at Stage 5 without regenerating.
 6. **Comparison.** _"Use both flows for a character appearance study."_ Shared inputs are frozen once; Standard and Higgsfield run independently with distinct IDs; one index compares coverage, quality, cost and Mike's involvement.
 7. **Creature.** _"A wolf for the game."_ A library or specialist source fitted to a nonhuman rig, with stalking, bite wind-up and recovery clips authored before idles; the threat check reads the bite from three sides.
+8. **Quick prototype.** _"A quick model of Tavin from this sheet."_ The plan line states the simple path: one Meshy candidate from the sheet's front view, the automatic rig with `Idle`, `Walk` and `Run`, the short check, about $1.75. The agent crops the front view, generates one candidate, rigs it once and adds the cast's `Walk` and `Run` with `clips`, reads the file report, looks at it beside the cast in the study viewer, uploads everything and stops; Mike sees the result, not a candidate sheet. _Failure:_ the coat splits with each stride in `Walk` and `Run`; the agent records it as a known limit of the prototype rather than reweighting, and a later "polish/finalize" takes it to the full path.
 
 ## 5. Behaviour
 
 The workflow pages own the procedure; in summary:
 
-- **Settings** ([README §2](../production-workflows/art-flows/README.md#2-request-settings)): result, profile, finish (study, production or integrate), fidelity with locks and free areas, tools, candidates, references, selection, stop, budget and resume, all inferred with defaults and stated in one plan line before spending.
+- **Settings** ([README §2](../production-workflows/art-flows/README.md#2-request-settings)): result, profile, finish (study, production or integrate), quality (the [simple or full path](../production-workflows/art-flows/README.md#quality-the-simple-and-full-paths)) with its [step options](../production-workflows/art-flows/README.md#step-options), fidelity with locks and free areas, tools, candidates, references, selection, stop, budget and resume, all inferred with defaults and stated in one plan line before spending.
 - **Look** ([README §3](../production-workflows/art-flows/README.md#3-read-the-look-from-the-art-direction)): read through the stable art-direction entry point into the brief's Look block.
 - **Stages** ([README §4](../production-workflows/art-flows/README.md#4-the-seven-stages)): Brief, Explore, Prepare, Make, Finish, Check, Preserve, with decision points after Explore, Make and Check.
 - **Tools** ([tools](../production-workflows/art-flows/tools.md)): a dated default roster per stage, presets, overrides, how to estimate cost, and how to recover jobs.
@@ -178,6 +193,7 @@ In scope: every offline art request, from concepts to production packages and th
 4. Every study record shows fidelity, locks, interpretations, decisions and costs.
 5. Candidates are reviewed in the game's own look at the default camera before acceptance, and the profile's play checks are recorded.
 6. The guidance checker passes and no link to the removed pages remains.
+7. A request chooses the simple or the full path in ordinary words and changes any single step (concepts, views, candidates, cleanup, rig, clips, motion polish, materials, format, critique) without restating the rest; supplied material skips the steps it already answers.
 
 ## 9. Delivery stages
 
@@ -187,6 +203,7 @@ In scope: every offline art request, from concepts to production packages and th
 4. **Proof run:** one first-playable person without accepted art, plus one state-sheet prop, taken end to end with measured cost, time, correction effort and Mike's decisions; then update the default roster from the evidence.
 5. **Proposed, after the proof run:** the people family kit (AF10).
 6. **Proposed:** kit-character batches (AF11).
+7. **Simple and full paths (November 1):** the quality setting's two paths, the step options and what supplied material skips, reconciled with the prototype and finalize paths.
 
 ## 10. Open decisions and questions
 

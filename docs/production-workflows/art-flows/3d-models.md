@@ -2,7 +2,25 @@
 
 This page takes an approved concept, a supplied character sheet or a written brief to a finished, checked GLB for a prop, structure, person or creature. It is the 3D route of the [art workflow](README.md): the steps below fill its stages, and its settings, decision points, spending and preservation rules apply throughout. Commands and models come from [tools and defaults](tools.md); exporting and inspecting assets also follows the [PlayCanvas guidance](../../../.agents/skills/openlegend-playcanvas/SKILL.md). Nothing here sets a look: whatever the current look needs from a model comes from its [production notes](../../../art-direction/decisions.md#how-the-current-look-changes-production).
 
-Steps 1–3 belong to Brief and Prepare, 4–6 to Make, 7–9 to Finish, 10 to Check and 11 to Preserve. These steps are the `finished` route. A model or animation request at `prototype` quality takes the shorter [prototype path](README.md#prototype-path) instead, and "polish/finalize" resumes a selected prototype from Step 7 through the [finalize path](production.md#polish-or-finalize-a-selected-model), repairing only what its final use needs.
+Steps 1–3 belong to Brief and Prepare, 4–6 to Make, 7–9 to Finish, 10 to Check and 11 to Preserve. These steps are the full path. The [simple path](#simple-and-full-paths) runs only part of them, and "polish/finalize" resumes a selected prototype at Finish through the [finalize path](production.md#polish-or-finalize-a-selected-model): it repairs only what the final use needs (a body rigged through Higgsfield takes only weight-safe local fixes) and then gets Step 10 in full and Mike's acceptance.
+
+## Simple and full paths
+
+The [quality setting](README.md#quality-the-simple-and-full-paths) picks the path; [step options](README.md#step-options) change one step at a time, and [supplied material](README.md#what-supplied-material-skips) skips the steps it already answers. On the simple path the [prototype path](README.md#prototype-path) uses these steps:
+
+| Step           | Simple path (`prototype`)                                                                                                                                                                                       | Full path (`finished`)                                    |
+| -------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| 1 Route        | The cheapest route that keeps the identity, usually image to 3D                                                                                                                                                 | As written                                                |
+| 2 3D facts     | Real size and the clips, asking once for a size that no owner defines; the rest only where the stated use needs it                                                                                              | All of them                                               |
+| 3 Views        | One front view: the sheet's or the supplied image's, cropped, when it meets the view rules in Step 3; otherwise one generated from it or, with no image at all, from the brief (that image is also the concept) | Clean views and the agreement check                       |
+| 4–6 Candidates | One Meshy candidate from that image, with a quick look at the file; no sheet and no pick                                                                                                                        | Three candidates, the turntable sheet and Mike's pick     |
+| 7 Clean        | `normalize` (with `--profile prop` for a prop) for a static model; a model rigged through Higgsfield comes back at its height with feet at 0 and skips cleanup                                                  | All of Step 7                                             |
+| 8 Rig          | The automatic rig when a two-legged humanoid needs clips, with one bend checked in the look check; other bodies need an authored rig                                                                            | The rig route, skinning checks and the rough export first |
+| 9 Clips        | Library clips combined with `clips`: `Idle`, `Walk` and `Run` for a walking character; rough motion                                                                                                             | The motion order, in-place clips, gait strides measured   |
+| 10 Check       | `report` (`--profile prop` for a static prop), then the look check in the study viewer                                                                                                                          | All six points                                            |
+| 11 Preserve    | The same                                                                                                                                                                                                        | The same                                                  |
+
+So a static prototype prop goes from one image and one candidate (Steps 1–6, briefly) to `normalize`, the check and preservation (Steps 7, 10 and 11); an animated prototype person replaces `normalize` with the automatic rig and its clips (Steps 8 and 9).
 
 ## Consumer contract and budgets
 
@@ -78,7 +96,7 @@ On top of the shared [brief](README.md#stage-1--brief-no-spending), record:
 - **Size:** the height or dimensions to model at, in metres, from the look's scale rules in the [production notes](../../../art-direction/decisions.md#how-the-current-look-changes-production) and, for objects, the subject's game definition. Never guess. A person's physical body in the world definitions can differ from the modelled height, because presentation fits the model to the body's extent; the production notes say which height to model at.
 - **Handedness and carried things:** which hand holds what; which items are separate assets (held tools, removable packs, weapons) and which are part of the body or garment.
 - **States:** the visible states the game records for this subject, each to be delivered from one source ([state sheets](profiles.md#assets-and-icons)).
-- **Clips:** the clips the consumer requires today (`Idle`, `Run`), plus any clips the requested scope adds. For anything that attacks, the wind-up, contact and recovery come first ([creatures](profiles.md#creatures)).
+- **Clips:** `Idle`, `Walk` and `Run` for a walking character ([how `auto` decides](README.md#step-options); the consumer requires `Idle` and `Run`), plus any clips the requested scope adds. For anything that attacks, the wind-up, contact and recovery come first ([creatures](profiles.md#creatures)).
 - **Parts and points:** pivots, grips and attachment points the game uses, and parts that must move or come apart.
 - **Signature and locks:** the identity features to keep, and their sides.
 
@@ -128,7 +146,7 @@ Mirrored left/right mistakes are the most common error. Name the canonical view 
 ## Step 4 — Generate model candidates
 
 1. **Estimate** the batch ([how](tools.md#estimate-and-record-cost)) and add it to the running total.
-2. **Generate three candidates** from the same view set with the default routes: two from one model with different seeds and one from a second model, so their mistakes differ. The exact commands and settings are in [tools](tools.md#image-to-3d). Request texture and, for bodies, the A-pose and the triangle budget; leave rigging until a candidate is picked (Step 8). A body that will be rigged through Higgsfield must come back as a GLB facing the front, since the rigger takes the raw candidate ([rigging](tools.md#rigging-and-clips)).
+2. **Generate three candidates** from the same view set with the default routes: two from one model with different seeds and one from a second model, so their mistakes differ. The exact commands and settings are in [tools](tools.md#image-to-3d). Request texture and, for bodies, the A-pose; ask for the triangle budget of the subject's kind (20,000 for a rigid prop, 40,000 for a body; [polycount settings](tools.md#image-to-3d)); leave rigging until a candidate is picked (Step 8). A body that will be rigged through Higgsfield must come back as a GLB facing the front, since the rigger takes the raw candidate ([rigging](tools.md#rigging-and-clips)).
 3. **Add outside candidates** when they apply: a family-fit body dressed to the concept, a library model, or a quick hand-blocked form. They are compared like any generated candidate.
 4. **Save each raw output** as `models/m0N-<subject>.glb`, unchanged, with its job ID and settings in the record. Upload the batch, including rejected candidates, to the private study collection as soon as it finishes ([preserve as you go](README.md#9-preserve-and-resume)), because provider links expire.
 
@@ -160,7 +178,7 @@ REF=<reference figure height from the production notes>
   --label "m01 Meshy" --label "m02 Meshy" --label "m03 Tripo" "$S"/models/m0[1-3]*.glb
 ```
 
-The report reads the file's bytes, so an FBX saved under a `.glb` name is measured correctly. Record each candidate's pass or fail per row and an estimate of the cleanup each needs; a candidate that fails a lock is rejected even if it is the most attractive.
+Use `--profile prop` for rigid models and `--profile creature` for animals: `character` applies the body budget and also requires `Idle` and `Run`. The report reads the file's bytes, so an FBX saved under a `.glb` name is measured correctly. Record each candidate's pass or fail per row and an estimate of the cleanup each needs; a candidate that fails a lock is rejected even if it is the most attractive.
 
 If every candidate fails the same way, the input is the problem. Return to Step 3 and change the views (separate the prop, open the arm gap, simplify a cape) rather than rerolling.
 
@@ -172,7 +190,7 @@ Present the sheet with a short recommendation and the cleanup estimates ([review
 
 Work in a copy saved as `work/f01-<subject>.blend`; the raw candidate never changes. Use Blender 5.2.2 ([tools](tools.md#blender)). Put any fix you would repeat into a small script beside the work.
 
-For an unrigged model, `normalize` does points 1–3 and the texture resize in one command and reports the result; `--blend` also saves the editable scene:
+For an unrigged model, `normalize` does points 1–3 and the texture resize in one command and reports the result (add `--profile prop` for a prop, as for `report`); `--blend` also saves the editable scene:
 
 ```sh
 "${B[@]}" normalize --in "$S/models/m01-<subject>.glb" --out "$S/export/normalized/m01-<subject>.glb" \
@@ -225,7 +243,7 @@ Check shoulders, armpits, hips, hems and anything worn over the body; garments m
 
 ## Step 9 — Make the clips
 
-1. **List the clips:** `Idle` and `Run` for any animated character today, plus the requested scope. Fix the body, weights and equipment fit before making a set of clips that depends on them. For attackers, the wind-up, contact and recovery for each weapon or bite come before idle polish.
+1. **List the clips:** `Idle`, `Walk` and `Run` for a walking character (the game requires `Idle` and `Run` in every animated character), plus the requested scope. Fix the body, weights and equipment fit before making a set of clips that depends on them. For attackers, the wind-up, contact and recovery for each weapon or bite come before idle polish.
 2. **Choose a source** for each clip, in this order:
    - existing family clips: the fitted MPFB study people carry the [character motion study](../../../art-direction/studies/2026-10-31-character-motion/README.md#library-people)'s eight library clips, retargeted with `--bones` (below), in place of the procedural `Idle` and `Run` from [`study_human_motion.py`](../../../scripts/study_human_motion.py);
    - a clip library offered by the rigging route (a single library clip by ID per rigging job; [tools](tools.md#rigging-and-clips)), retargeted in Blender;
@@ -234,11 +252,12 @@ Check shoulders, armpits, hips, hems and anything worn over the body; garments m
 
    Generated video is motion reference only.
 
-   **For an automatically rigged humanoid** (Meshy's skeleton, one library clip per rigging job): run the rigging job twice on the same candidate, once with `Idle` (ID 0) and once with a run such as `Run_02` (ID 14) ([commands](tools.md#rigging-and-clips)), then combine them:
+   **For an automatically rigged humanoid** (Meshy's skeleton, one library clip per rigging job): run the rigging job once, with `Idle` (ID 0) ([commands](tools.md#rigging-and-clips)), then add the cast's `Walk` (`walking_2`, ID 566) and `Run` (`Run_02`, ID 14) from the files the [character motion study](../../../art-direction/studies/2026-10-31-character-motion/README.md#resume) used (its Resume names the archive holding each); `CLIPS` below is a folder holding those two files:
 
    ```sh
    "${B[@]}" clips --model "$S/models/f01-<subject>-rig.glb" \
-     --clip Idle="$S/models/f01-<subject>-rig.glb" --clip Run="$S/models/f01-<subject>-run.glb" \
+     --clip Idle="$S/models/f01-<subject>-rig.glb" --clip Walk="$CLIPS/k02-walking-2.glb" \
+     --clip Run="$CLIPS/f06-orin-run.glb" --stride Walk --stride Run \
      --out "$S/export/f01-<subject>.glb"
    ```
 
@@ -248,11 +267,22 @@ Check shoulders, armpits, hips, hems and anything worn over the body; garments m
    - **A rig of another family** takes `--bones` with a map naming the clip bone each of its bones follows, plus the limbs whose rest pose differs from the clip rig's; [`mpfb-meshy.json`](../../../scripts/art/bone-maps/mpfb-meshy.json) puts Meshy's clips on the MPFB family rig ([tech design](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)).
    - **A model that loads its motion separately**, like the mercenary, takes `--motion-only` to export just the skeleton and clips.
 
-   Otherwise hand-key the two clips on that rig, adapting the bone names in `study_human_motion.py`.
+   Otherwise hand-key them on that rig: adapt the bone names in `study_human_motion.py` for `Idle` and `Run`, and key `Walk` in Blender.
 
-3. **Block first, then author in place:** review the key poses and contacts at play distance before polishing the motion. The game moves the body, so clips must not travel. Loop `Idle` and `Run` seamlessly; check feet planting, hand contact and held items on every frame that matters.
+3. **Block first, then author in place:** review the key poses and contacts at play distance before polishing the motion; polished clips follow the [motion order](../assets-and-animation.md#4-produce-motion-that-serves-an-action) for each needed motion. The game moves the body, so clips must not travel. Loop `Idle` and `Run` seamlessly; check feet planting, hand contact and held items on every frame that matters.
 4. **Timing:** follow the look's production notes on how poses are held.
 5. **Name** each action exactly as the consumer expects and push it to its own NLA track, so the glTF exporter writes one clip per action.
+
+### Animate a saved model
+
+A model kept in the archive has no live provider job, and the Higgsfield CLI cannot upload models, so a new library clip from a rigging job is possible only while a candidate job's `result_url` still works ([rigging](tools.md#rigging-and-clips)). Otherwise:
+
+- retarget an existing clip with `clips` from any file that holds it on a compatible skeleton, with `--bones` for another family's rig;
+- use the family clips when the model is on the family rig;
+- ask Mike to fetch a clip from Mixamo ([manual](tools.md#other-platforms-opt-in));
+- or hand-key it in Blender.
+
+Keep the model's existing clips by naming each one, `--clip Idle="$MODEL#Idle"`, beside the new one. The study viewer's Motion menu plays only Idle, Walk, Run, Sprint, Attack, Punch, Dodge and Wave; check any other clip in Blender's viewport.
 
 ## Step 10 — Export and check in the game's look
 
@@ -263,7 +293,7 @@ Check shoulders, armpits, hips, hems and anything worn over the body; garments m
    "${B[@]}" report --out "$S/review/reports" --profile character --strict "$S/export/f01-<subject>.glb"
    ```
 
-   It records height, lowest point, triangles, materials, texture sizes and total texture area, joints, maximum influences and clip names against the [budgets](#consumer-contract-and-budgets) and the required clips; `--strict` exits with code 2 when one fails. Check openings, pivots and attachment points by eye.
+   Use the subject's profile here too (`prop` for a rigid model). It records height, lowest point, triangles, materials, texture sizes and total texture area, joints, maximum influences and clip names against the [budgets](#consumer-contract-and-budgets) and the required clips; `--strict` exits with code 2 when one fails. Check openings, pivots and attachment points by eye.
 
 3. **Look check:** start the [study viewer](../../asset-workflow.md#inspect-in-a-browser-and-use-files-in-the-game) (`pnpm assets serve --page /art-study.html`; it needs the asset authority and the AWS sign-in to show the published cast), choose **All seven people**, then **Compare a local model** and pick the GLB, or drop it on the view. It joins the cast in the game's own renderer without being uploaded (up to 16 MiB), and its card shows the measured height, triangles, texture sizes and clips. Rotate the camera and set **Motion** to Run and Idle. Normalized candidates can be compared the same way before the pick.
    - Check that it faces the camera like the cast: a model showing its back here faces the wrong way.
