@@ -25,6 +25,10 @@
       "url": "https://static.makehumancommunity.org/assets/assetpacks/suits02.html",
       "license": "CC0",
       "archiveSha256": "437f4d7ab92b698c1fb1047e7d62b22c11f195b2473e936118661dc8e6b7eb7a"
+    },
+    {
+      "url": "https://higgsfield.ai/terms-of-use-agreement",
+      "license": "Higgsfield 3D Rigging clip library (Meshy animations): the account holder owns outputs; commercial use unrestricted"
     }
   ],
   "assets": [
@@ -54,7 +58,24 @@
       "sha256": "5120f5d87a6dee7bb4f5704f68160b25adec4612efcedaf44c71ef472c8d8159",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "mike-field-tunic-motion.glb",
-      "animatedSha256": "d9ebfa5170a3d995acd52368c77b39502d9b62c016a9896e8972bb177d3873af"
+      "animatedSha256": "0c6eb7ce72dc13790a0b833f09b451d05ba2390b30245ee0e1517c74ba9137af",
+      "strides": [
+        {
+          "name": "Walk",
+          "groundSpeed": 1.226,
+          "seconds": 1.167
+        },
+        {
+          "name": "Run",
+          "groundSpeed": 5.385,
+          "seconds": 0.7
+        },
+        {
+          "name": "Sprint",
+          "groundSpeed": 11.352,
+          "seconds": 0.5
+        }
+      ]
     },
     {
       "id": "mike-work-vest",
@@ -82,7 +103,24 @@
       "sha256": "a9bb95bb8b421206f2533b587f6e631689f94838b9f7a3a21c5b926ea241f031",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "mike-work-vest-motion.glb",
-      "animatedSha256": "50d673151f6243f56e097ccd859d15fd239731fecec8d68ddcdc70ca7f5504ee"
+      "animatedSha256": "0f4492568b573afa3fdb5e0cc1a0c1d698d647dd8022fc0aff7975d53bc3be39",
+      "strides": [
+        {
+          "name": "Walk",
+          "groundSpeed": 1.184,
+          "seconds": 1.167
+        },
+        {
+          "name": "Run",
+          "groundSpeed": 5.431,
+          "seconds": 0.7
+        },
+        {
+          "name": "Sprint",
+          "groundSpeed": 11.45,
+          "seconds": 0.5
+        }
+      ]
     },
     {
       "id": "mike-travel-coat",
@@ -110,7 +148,24 @@
       "sha256": "7f924d5d894ab199f96e128d35aa0952e38478d33d9f2ee029f2508a7a72f504",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "mike-travel-coat-motion.glb",
-      "animatedSha256": "7ad51f82dcc9904022c296e2f9d826638893af088cdce89bbf7be1bb732a8442"
+      "animatedSha256": "b4e4320ea3eb51247ad575e1483c9ecf23c494d0566036379b320565cd9aaefa",
+      "strides": [
+        {
+          "name": "Walk",
+          "groundSpeed": 1.179,
+          "seconds": 1.167
+        },
+        {
+          "name": "Run",
+          "groundSpeed": 5.409,
+          "seconds": 0.7
+        },
+        {
+          "name": "Sprint",
+          "groundSpeed": 11.404,
+          "seconds": 0.5
+        }
+      ]
     }
   ],
   "controls": [
@@ -143,5 +198,14 @@
   "controlRecipe": {
     "path": "scripts/prepare-study-controls.py",
     "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
+  },
+  "motionRecipe": {
+    "path": "scripts/art/art-tool.py",
+    "sha256": "086a37b8af96f7f9cb23f0e973340efa393ed5eed742df069f5419f0471e5874",
+    "boneMap": {
+      "path": "scripts/art/bone-maps/mpfb-meshy.json",
+      "sha256": "9c3a342e17fb41fa089a5fcf504e58a1ac00d1ed69f0153387c23791b2738cd0"
+    },
+    "study": "art-direction/studies/2026-10-31-character-motion/README.md"
   }
 }

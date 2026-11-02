@@ -1,7 +1,7 @@
 import { assetUrl, readAssetJson } from '../asset-files';
 import * as pc from 'playcanvas';
 import { BundledModels, type BundledModel } from '../bundled-models';
-import { MercenaryMotion } from './mercenary-motion';
+import { CharacterMotion, type CharacterClips } from './character-motion';
 import { MercenaryFaceResources } from './mercenary-face';
 import { ArtMaterials, type ArtTreatment, baselineArt } from '../art-treatment';
 import { intersectBox } from '@open-legend/spatial';
@@ -13,6 +13,16 @@ import { clothPassesForSize } from './cloth-solver';
 import { MercenaryMaterials } from './mercenary-materials';
 const mercenaryUrl = assetUrl('apps/client/src/characters/mercenary-assets/mercenary.glb');
 const motionUrl = assetUrl('apps/client/src/characters/mercenary-assets/mercenary-motion.glb');
+// The stride clips in mercenary-motion.glb with the ground speeds `art-tool.py clips` measured
+// on that file; re-measure when the clips change. docs/maintainers/art/mercenary.md
+const clips: CharacterClips = {
+  strides: [
+    { name: 'Walk', groundSpeed: 1.286, seconds: 1.167 },
+    { name: 'Run', groundSpeed: 5.124, seconds: 0.7 },
+    { name: 'Sprint', groundSpeed: 9.531, seconds: 0.5 },
+  ],
+  fixtures: { smooth: 'SharpFixtureSmooth', held: 'SharpFixtureHeld' },
+};
 
 type LoadedModel = {
   resource: BundledModel;
@@ -103,7 +113,7 @@ export class MercenaryModels {
 const displayScale = 1.1;
 
 export class MercenaryActor {
-  /** Committed strikes play its own clips; see MercenaryMotion. */
+  /** Committed strikes play its own clips; see CharacterMotion. */
   readonly animatesStrikes = true;
   readonly ready: Promise<boolean>;
   private node?: pc.Entity;
@@ -114,7 +124,7 @@ export class MercenaryActor {
   private meshes: pc.MeshInstance[] = [];
   private disposed = false;
   private wanted = false;
-  private motion?: MercenaryMotion;
+  private motion?: CharacterMotion;
   private resetCloth = true;
   private settling = 0;
   private yaw?: number;
@@ -181,7 +191,7 @@ export class MercenaryActor {
     const anim = node.anim;
     if (!anim) throw new Error('Mercenary animation component missing');
     node.enabled = true;
-    this.motion = new MercenaryMotion(anim, tracks, displayScale);
+    this.motion = new CharacterMotion(anim, tracks, clips, displayScale);
     this.faces.attach(node);
     this.faces.preparePose(node);
     this.cloth = new CapeCloth(this.app, node, displayScale, cloth);

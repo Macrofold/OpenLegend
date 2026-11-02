@@ -25,6 +25,10 @@
       "url": "https://static.makehumancommunity.org/assets/assetpacks/suits02.html",
       "license": "CC0",
       "archiveSha256": "437f4d7ab92b698c1fb1047e7d62b22c11f195b2473e936118661dc8e6b7eb7a"
+    },
+    {
+      "url": "https://higgsfield.ai/terms-of-use-agreement",
+      "license": "Higgsfield 3D Rigging clip library (Meshy animations): the account holder owns outputs; commercial use unrestricted"
     }
   ],
   "assets": [
@@ -54,7 +58,24 @@
       "sha256": "77f2f777eee76903132c1fe948a03a00e529af9687056410d48865c3ef5dc6ce",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "tavin-field-tunic-motion.glb",
-      "animatedSha256": "9f71b31170c3fae291fdba356be62d4d6d867b3953939bd3e606394548bbaea9"
+      "animatedSha256": "15ee259176daf2b85926a24020cd1f20761c57f64131b6d8ff559fe4660d74f8",
+      "strides": [
+        {
+          "name": "Walk",
+          "groundSpeed": 1.262,
+          "seconds": 1.167
+        },
+        {
+          "name": "Run",
+          "groundSpeed": 5.564,
+          "seconds": 0.7
+        },
+        {
+          "name": "Sprint",
+          "groundSpeed": 11.945,
+          "seconds": 0.5
+        }
+      ]
     },
     {
       "id": "tavin-work-vest",
@@ -82,7 +103,24 @@
       "sha256": "1b73386b865757b6e5a0fb6345866de8c5ff80ff1292c46bfd713e0653642cf2",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "tavin-work-vest-motion.glb",
-      "animatedSha256": "c0cf785a804ebd1cd3c91aa9a979ab91780149571077d718260a51b14ac0897b"
+      "animatedSha256": "c6ffe9699e41b16be8965a0bbe8cfb0d22efdd2273dbe7e0548057ad5262dcba",
+      "strides": [
+        {
+          "name": "Walk",
+          "groundSpeed": 1.264,
+          "seconds": 1.167
+        },
+        {
+          "name": "Run",
+          "groundSpeed": 5.572,
+          "seconds": 0.7
+        },
+        {
+          "name": "Sprint",
+          "groundSpeed": 11.961,
+          "seconds": 0.5
+        }
+      ]
     },
     {
       "id": "tavin-travel-coat",
@@ -110,7 +148,24 @@
       "sha256": "d4cb14683639942a3083cc631954b3d3465f4c775da13f04c79359dd9fec0ea1",
       "source": "MakeHuman/MPFB core anatomy, eyes, hair and Rehman Polanski Viking garments: CC0. OpenLegend tailoring and painting: AGPL-3.0-only. Appearance is a study proposal.",
       "animatedFile": "tavin-travel-coat-motion.glb",
-      "animatedSha256": "6ddeb3c4ececca253bdeb0d62f7713895b0d8dd5e57170910fd904c8007ad4c0"
+      "animatedSha256": "342e4fbba7924b33fe463434728a938e5d7bd6aedfacda8f564a01939a5c9e5f",
+      "strides": [
+        {
+          "name": "Walk",
+          "groundSpeed": 1.246,
+          "seconds": 1.167
+        },
+        {
+          "name": "Run",
+          "groundSpeed": 5.492,
+          "seconds": 0.7
+        },
+        {
+          "name": "Sprint",
+          "groundSpeed": 11.788,
+          "seconds": 0.5
+        }
+      ]
     }
   ],
   "controls": [
@@ -143,5 +198,14 @@
   "controlRecipe": {
     "path": "scripts/prepare-study-controls.py",
     "sha256": "5b16232aabfa4ed836a02b2cb4d10baa172f4961f8574c6eca88b60352bf7999"
+  },
+  "motionRecipe": {
+    "path": "scripts/art/art-tool.py",
+    "sha256": "086a37b8af96f7f9cb23f0e973340efa393ed5eed742df069f5419f0471e5874",
+    "boneMap": {
+      "path": "scripts/art/bone-maps/mpfb-meshy.json",
+      "sha256": "9c3a342e17fb41fa089a5fcf504e58a1ac00d1ed69f0153387c23791b2738cd0"
+    },
+    "study": "art-direction/studies/2026-10-31-character-motion/README.md"
   }
 }

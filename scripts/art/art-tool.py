@@ -5,7 +5,7 @@ Run from Blender --background --factory-startup --disable-autoexec:
   Blender ... --python scripts/art/art-tool.py -- report --out DIR [--profile P] MODEL...
   Blender ... --python scripts/art/art-tool.py -- sheet models --out PNG --reference-height M MODEL...
   Blender ... --python scripts/art/art-tool.py -- normalize --in MODEL --out GLB --height M [--rotate-deg N]
-  Blender ... --python scripts/art/art-tool.py -- clips --model RIGGED --clip Idle=FILE --clip Run=FILE --out GLB
+  Blender ... --python scripts/art/art-tool.py -- clips --model RIGGED --clip Idle=FILE --clip Run=FILE [--bones MAP] --out GLB
 
 Reads models and writes reports or sheets outside Git. It never calls a provider,
 opens a world or publishes anything. Design:
@@ -541,21 +541,66 @@ def world_rotation(matrix):
     return matrix.decompose()[1]
 
 
-def retarget(source, target, name, frames):
+def bone_map(path):
+    """Read `--bones FILE`, for a model rig of another family than the clips' (MPFB's against
+    Meshy's): `bones` maps model bone names to the clip bones they follow, several to one if
+    needed (MPFB's five toes follow Meshy's one); unlisted bones follow their parents. `alignRest`
+    lists model limbs that rest in a different pose (MPFB's arms hang 47° below horizontal,
+    Meshy's 67°; MPFB's knees are straight, Meshy's slightly bent), with the hands they carry.
+    Spine, neck, head and feet are left out because their rest differences are anatomy, which
+    turning them would distort (Meshy's foot points 51° down to its toes, MPFB's 20°)."""
+    if not path:
+        return {}, []
+    spec = json.loads(Path(path).expanduser().read_text())
+    return spec['bones'], spec.get('alignRest', [])
+
+
+def followers(rig, names):
+    """Each clip bone name and the first model bone, parents first, that follows it."""
+    found = {}
+    for bone in bone_order(rig):
+        found.setdefault(names.get(bone.name, bone.name), bone.name)
+    return found
+
+
+def retarget(source, target, name, frames, names, align):
     """Key `target` with the motion of `source`'s current action. Each bone turns in world space
     by the same rotation from its own rest pose, so rigs whose bone axes, rest proportions or
     extra bones differ (the mercenary's rig against Meshy's) share a clip; copying joint angles
     would twist them. The root travels by the source root's displacement scaled by hip height.
-    Bones the source lacks (the mercenary's cape) stay at rest."""
+    Bones the source lacks (the mercenary's cape) stay at rest. `names` and `align` come from
+    bone_map: an aligned limb first turns to the direction its clip bone rests in, so the
+    clip's limb directions carry over rather than turns from a different rest pose."""
     order = bone_order(target)
-    shared = {bone.name for bone in order if bone.name in source.pose.bones}
+    clip = {bone.name: names.get(bone.name, bone.name) for bone in order}
+    shared = {n for n, c in clip.items() if c in source.pose.bones}
     if not shared:
         raise ValueError(f'{name}: no bone names in common with the model.')
     sw, tw = source.matrix_world, target.matrix_world
-    source_rest = {n: world_rotation(sw @ source.data.bones[n].matrix_local) for n in shared}
+    source_rest = {n: world_rotation(sw @ source.data.bones[clip[n]].matrix_local) for n in shared}
     target_rest = {n: world_rotation(tw @ target.data.bones[n].matrix_local) for n in shared}
+    followed = {clip[n] for n in shared}
+    turned = {}  # each aligned limb's turn to its clip bone's rest direction
+    for bone in order:
+        n = bone.name
+        if n not in align:
+            continue
+        # A limb's direction runs from its joint to the next followed joint down the chain;
+        # a limb with none below (a hand) turns with the aligned limb above it.
+        below = [c.name for c in source.data.bones[clip[n]].children if c.name in followed]
+        above = next((p.name for p in bone.parent_recursive if p.name in turned), None)
+        if len(below) == 1:
+            ends = [tw @ target.data.bones[m].head_local for m, c in clip.items() if c == below[0]]
+            model_dir = sum(ends, Vector()) / len(ends) - tw @ target.data.bones[n].head_local
+            clip_dir = sw @ source.data.bones[below[0]].head_local - sw @ source.data.bones[clip[n]].head_local
+            turned[n] = clip_dir.rotation_difference(model_dir).inverted()
+        elif not below and above:
+            turned[n] = turned[above]
+        else:
+            raise ValueError(f'{name}: {n} needs one followed bone below {clip[n]} or an aligned one above.')
+        target_rest[n] = turned[n] @ target_rest[n]
     root = next(bone for bone in order if bone.name in shared)
-    source_root = (sw @ source.data.bones[root.name].matrix_local).translation
+    source_root = (sw @ source.data.bones[clip[root.name]].matrix_local).translation
     target_root = (tw @ root.matrix_local).translation
     scale = target_root.z / source_root.z  # hip heights; both rigs stand on z = 0
     to_armature = world_rotation(tw).inverted()
@@ -574,7 +619,7 @@ def retarget(source, target, name, frames):
             if bone.name not in shared:
                 posed[bone.name] = inherited
                 continue
-            turn = world_rotation(sw @ source.pose.bones[bone.name].matrix) @ \
+            turn = world_rotation(sw @ source.pose.bones[clip[bone.name]].matrix) @ \
                 source_rest[bone.name].inverted()
             posed[bone.name] = to_armature @ turn @ target_rest[bone.name]
             basis = inherited.inverted() @ posed[bone.name]
@@ -582,7 +627,7 @@ def retarget(source, target, name, frames):
             pose.rotation_mode = 'QUATERNION'
             pose.rotation_quaternion = basis
             pose.keyframe_insert('rotation_quaternion', frame=frame, group=bone.name)
-        travel = (sw @ source.pose.bones[root.name].matrix).translation - source_root
+        travel = (sw @ source.pose.bones[clip[root.name]].matrix).translation - source_root
         head = tw.inverted() @ (target_root + travel * scale)
         pose = target.pose.bones[root.name]
         pose.location = root.matrix_local.inverted() @ head
@@ -591,11 +636,17 @@ def retarget(source, target, name, frames):
     return action, root.name
 
 
-def ground_speed(rig, action, frames, fps, root):
-    """The travel speed a looping gait implies: how fast a planted foot slides back under the
-    hips. The game scales playback by displayed speed over this to stop the feet sliding."""
-    feet = [n for n in ('LeftToeBase', 'RightToeBase') if n in rig.pose.bones] or \
-        [n for n in ('LeftFoot', 'RightFoot') if n in rig.pose.bones]
+def ground_speed(rig, action, frames, fps, root, follows):
+    """The travel speed a looping gait implies: how fast a foot slides back under the hips as it
+    touches down, over the frames within 1.5 cm of its lowest reach. The game scales playback by
+    displayed speed over this, so a foot stays put where it visibly meets the ground. These
+    clips' feet speed up under the hips through each stance, so a whole-stance average left
+    them sliding forward as they landed (about 40% of body speed at 6.6 m/s). Each speed spans the
+    frames either side, so a sprint's single contact frame still counts (frame pairs in a 3 cm
+    band left one push-off sample, 14 m/s on MPFB people), and only a foot moving back counts,
+    because a low swing passes forward through the band (the mercenary's walk clears 6 cm)."""
+    feet = [follows[n] for n in ('LeftToeBase', 'RightToeBase') if n in follows] or \
+        [follows[n] for n in ('LeftFoot', 'RightFoot') if n in follows]
     rig.animation_data.action = action
     rig.animation_data.action_slot = action.slots[0]  # Blender 5 plays an action through its slot
     samples = {foot: [] for foot in feet}
@@ -608,11 +659,13 @@ def ground_speed(rig, action, frames, fps, root):
     rig.animation_data.action = None
     speeds = []
     for track in samples.values():
-        low = min(z for z, _, _ in track)
-        for (z0, x0, y0), (z1, x1, y1) in zip(track, track[1:]):
-            if max(z0, z1) <= low + 0.03:  # planted: within 3 cm of the lowest reach
-                speeds.append(math.hypot(x1 - x0, y1 - y0) * fps)
-    return sorted(speeds)[len(speeds) // 2] if speeds else 0.0
+        loop = track[:-1]  # a stride's last frame repeats its first
+        low = min(z for z, _, _ in loop)
+        for i, (z, _, _) in enumerate(loop):
+            (_, x0, y0), (_, x1, y1) = loop[i - 1], loop[(i + 1) % len(loop)]
+            if z <= low + 0.015 and y1 > y0:  # models face -Y, so back is +Y
+                speeds.append(math.hypot(x1 - x0, y1 - y0) * fps / 2)
+    return sum(speeds) / len(speeds) if speeds else 0.0
 
 
 def foot_reach(rig, action, frames, foot, root):
@@ -628,13 +681,13 @@ def foot_reach(rig, action, frames, foot, root):
     return reach
 
 
-def one_cycle(rig, action, frames, root):
+def one_cycle(rig, action, frames, root, follows):
     """Make a gait clip one stride that starts at left heel strike (the left foot at its farthest
     ahead), so the game can blend walk, run and sprint phase-aligned; feet otherwise cross
     mid-blend. Heel strike is a single clear peak, unlike toe height, which a rolling foot
     lifts mid-stance. A closed single-stride loop is rotated; a longer clip keeps its first
     whole stride."""
-    foot = 'LeftFoot' if 'LeftFoot' in rig.pose.bones else 'LeftToeBase'
+    foot = follows.get('LeftFoot') or follows['LeftToeBase']
     reach = foot_reach(rig, action, frames, foot, root)
     middle = (max(reach) + min(reach)) / 2
     peaks = [i for i in range(len(reach))
@@ -685,6 +738,8 @@ def clips(args):
         rig.animation_data.nla_tracks.remove(track)
     own_actions = set(bpy.data.actions)
     strides = set(args.stride or [])
+    names, align = bone_map(args.bones)
+    follows = followers(rig, names)
     named, facts, removed = {}, {}, {}
     for spec in args.clip:
         name, _, source = spec.partition('=')
@@ -703,7 +758,7 @@ def clips(args):
         clip_rig.animation_data.action = found[0]
         low, high = found[0].frame_range
         frames = range(math.floor(low), math.ceil(high) + 1)
-        named[name], root = retarget(clip_rig, rig, name, frames)
+        named[name], root = retarget(clip_rig, rig, name, frames, names, align)
         named[name].use_fake_user = True
         for obj in set(bpy.data.objects) - objects:
             bpy.data.objects.remove(obj, do_unlink=True)
@@ -713,9 +768,9 @@ def clips(args):
             # Remove the source loop's travel before trimming too: rotating a closed loop that
             # still travels would leave a jump back at its old seam, invisible to a later pass.
             removed[name] = without_drift(named[name], root)
-            frames = one_cycle(rig, named[name], frames, root)
+            frames = one_cycle(rig, named[name], frames, root, follows)
         facts[name] = {'seconds': round((frames[-1] - frames[0]) / fps, 3),
-                       'groundSpeed': round(ground_speed(rig, named[name], frames, fps, root), 3)}
+                       'groundSpeed': round(ground_speed(rig, named[name], frames, fps, root, follows), 3)}
     # Strides always loop on the spot: the game moves the body and paces the legs to it.
     # docs/projects/3d-pixel-art-tech-design.md#7-animation-attachments-and-time
     for name in sorted(strides | set(args.in_place or [])):
@@ -792,6 +847,9 @@ def main():
     # Not --cycle: Blender's Cycles add-on claims abbreviations of its --cycles-* options.
     clip.add_argument('--stride', action='append', metavar='NAME',
                       help='Make that gait clip one stride starting at left heel strike, on the spot.')
+    clip.add_argument('--bones', metavar='FILE',
+                      help="JSON naming the clip bone each model bone follows, for a rig of another "
+                           "family (scripts/art/bone-maps/).")
     clip.add_argument('--out', required=True)
     clip.add_argument('--motion-only', action='store_true',
                       help='Export only the skeleton and clips, for a model that loads its motion separately.')

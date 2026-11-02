@@ -1,36 +1,35 @@
 import * as pc from 'playcanvas';
 import type { ActionAnimation } from '@open-legend/protocol';
+import type { ArtTreatment } from '../art-treatment';
 import { Gait, gaitStateGraph, type Stride } from './gait';
 
-export type MercenaryTiming = 'smooth' | 'held8' | 'held12';
-
-// The stride clips in mercenary-motion.glb with the ground speeds `art-tool.py clips` measured
-// on that file; re-measure when the clips change. docs/maintainers/art/mercenary.md
-const STRIDES: readonly Stride[] = [
-  { name: 'Walk', groundSpeed: 1.286, seconds: 1.167 },
-  { name: 'Run', groundSpeed: 5.124, seconds: 0.7 },
-  { name: 'Sprint', groundSpeed: 9.531, seconds: 0.5 },
-];
 // Committed strikes play the matching clip with its pose taken from the native progress: the
-// windup ends, and the blow lands, at `contact` of the clip. docs/targeted-actions.md#presentation
+// windup ends, and the blow lands, at `contact` of the clip. Every rig that animates strikes
+// carries the same two library clips from the character motion study, so they share this
+// timing. docs/targeted-actions.md#presentation
 const STRIKES: Record<ActionAnimation['kind'], { clip: string; contact: number }> = {
   melee: { clip: 'Attack', contact: 0.5 },
   punch: { clip: 'Punch', contact: 0.36 },
 };
-const FIXTURES = ['SharpFixtureSmooth', 'SharpFixtureHeld'] as const;
 // Stopping crossfades into Idle over little clip time, played slowly. The fading stride and
 // the crossfade share one clock, so this keeps the legs from stepping on the spot after the
 // body halts while the settle still takes about a quarter-second. No authored stop clip exists.
 const SETTLE_SECONDS = 0.1;
 const SETTLE_PACE = 0.4;
-const clipNames = ['Idle', ...STRIDES.map((s) => s.name), 'Attack', 'Punch', ...FIXTURES] as const;
 
-/** One evaluated pose feeds color, shadows, equipment and continuous fabric.
+/** A character's measured strides and, optionally, the looping comparison clips that replace
+ * its motion while the staged-motion fixture is on (the mercenary's sharpness study). */
+export interface CharacterClips {
+  readonly strides: readonly Stride[];
+  readonly fixtures?: { readonly smooth: string; readonly held: string };
+}
+
+/** One evaluated pose from Idle, a speed-paced stride blend and the strikes.
  * Travel and heading remain owned by the scene; these clips never move it.
  * docs/projects/3d-pixel-art-tech-design.md#7-animation-attachments-and-time */
-export class MercenaryMotion {
+export class CharacterMotion {
   private clip = 'Idle';
-  private timing: MercenaryTiming = 'smooth';
+  private timing: ArtTreatment['motion'] = 'smooth';
   private readonly gait: Gait;
   private readonly durations = new Map<string, number>();
   /** Pose time owed to the stepped (held) cadence, and what has been sampled of it. */
@@ -39,33 +38,36 @@ export class MercenaryMotion {
   constructor(
     private readonly anim: pc.AnimComponent,
     tracks: readonly pc.AnimTrack[],
-    displayScale: number,
+    private readonly clips: CharacterClips,
+    displayScale = 1,
   ) {
     const track = (name: string) => {
       const found = tracks.find((candidate) => candidate.name === name);
-      if (!found) throw new Error('Mercenary motion clip missing: ' + name);
+      if (!found) throw new Error('Character motion clip missing: ' + name);
       this.durations.set(name, found.duration);
       return found;
     };
+    const fixtures = clips.fixtures ? [clips.fixtures.smooth, clips.fixtures.held] : [];
     anim.loadStateGraph(
-      gaitStateGraph(STRIDES, [
+      gaitStateGraph(clips.strides, [
         // Strike poses follow native progress, so their own playback stays still.
         ...Object.values(STRIKES).map(({ clip }) => ({ name: clip, loop: false, speed: 0 })),
-        ...FIXTURES.map((name) => ({ name, loop: true })),
+        ...fixtures.map((name) => ({ name, loop: true })),
       ]),
     );
-    for (const name of clipNames) {
+    const strides = clips.strides.map((s) => s.name);
+    for (const name of ['Idle', ...strides, 'Attack', 'Punch', ...fixtures]) {
       // Assigning resets a state's speed and looping, so strikes restate theirs.
       const held = Object.values(STRIKES).some((strike) => strike.clip === name);
       anim.assignAnimation(
-        STRIDES.some((s) => s.name === name) ? 'Move.' + name : name,
+        strides.includes(name) ? 'Move.' + name : name,
         track(name),
         undefined,
         held ? 0 : 1,
         !held,
       );
     }
-    if (!anim.baseLayer) throw new Error('Mercenary motion layer missing');
+    if (!anim.baseLayer) throw new Error('Character motion layer missing');
     // The scene evaluates once before its cloth update. The engine's earlier
     // automatic animation phase would otherwise advance again or lag a pause.
     anim.playing = false;
@@ -73,7 +75,7 @@ export class MercenaryMotion {
     anim.baseLayer.play('Idle');
     anim.update(0);
     // Clips are measured on the source rig; the display scale lengthens every stride.
-    this.gait = new Gait(STRIDES, displayScale);
+    this.gait = new Gait(clips.strides, displayScale);
   }
   rest(): void {
     // A visibility/position discontinuity cancels the whole blend. In the
@@ -90,7 +92,7 @@ export class MercenaryMotion {
     dt: number,
     speed: number,
     paused: boolean,
-    timing: MercenaryTiming,
+    timing: ArtTreatment['motion'],
     actionFixture: boolean,
     action?: ActionAnimation | null,
   ): void {
@@ -99,17 +101,16 @@ export class MercenaryMotion {
     const step = paused ? 0 : Math.min(dt, 0.1);
     this.gait.update(step, paused ? 0 : speed);
     const strike = action ? STRIKES[action.kind] : undefined;
-    const next = actionFixture
-      ? timing === 'smooth'
-        ? 'SharpFixtureSmooth'
-        : 'SharpFixtureHeld'
-      : (strike?.clip ?? (this.gait.moving ? 'Move' : 'Idle'));
+    const fixture = actionFixture
+      ? this.clips.fixtures?.[timing === 'smooth' ? 'smooth' : 'held']
+      : undefined;
+    const next = fixture ?? strike?.clip ?? (this.gait.moving ? 'Move' : 'Idle');
     const layer = this.anim.baseLayer;
     const changed = next !== this.clip;
     if (changed) {
       layer?.transition(
         next,
-        strike || next.startsWith('Sharp')
+        strike || fixture
           ? 0.06
           : next === 'Move'
             ? 0.18

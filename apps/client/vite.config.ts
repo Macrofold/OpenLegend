@@ -109,6 +109,7 @@ function deliveryProjection(
                 id: asset.id,
                 file: asset.file,
                 animatedFile: asset.animatedFile,
+                strides: asset.strides,
                 depletedFile: asset.depletedFile,
                 bounds: asset.bounds,
               };
