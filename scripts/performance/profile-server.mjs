@@ -912,6 +912,10 @@ async function main() {
     OPEN_LEGEND_DATA_DIR: dir,
     OPEN_LEGEND_PROFILING: appProfiling ? 'on' : 'off',
     OPEN_LEGEND_DATABASE_URL: process.env.OPEN_LEGEND_PROFILE_POSTGRES_URL,
+    // This owned loopback workload uses local cookies, never a developer's
+    // federated-login configuration or identity-provider credentials.
+    OPEN_LEGEND_AUTH_MODE: 'local',
+    OPEN_LEGEND_HOST: '127.0.0.1',
     AI_BUDGET_USD: '0',
     DECISION_ESCALATION_JSON: '{"mode":"off","origins":[],"reasons":[]}',
     OPENAI_API_KEY: '',
