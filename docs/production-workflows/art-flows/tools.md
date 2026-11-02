@@ -212,7 +212,7 @@ higgsfield generate create 3d_rigging --model_url "$URL" --height_meters "$H" \
 - **Fallbacks** when a model cannot be rigged this way: rig in the generation call (`--enable_rigging true --rigging_height_meters H`, Meshy candidates only), Mixamo or AccuRIG (manual, opt-in), or a rig built in Blender.
 - **Direct Meshy** (opt-in) merges up to 10 clips per request.
 - **Nonhumans:** Blender's bundled Rigify (0.6.10 in Blender 5.2.2; enable it first, [Blender](#blender)) includes basic quadruped, horse, cat, wolf, bird and shark templates. Fit one, generate the rig, then weight-paint; export deform bones only. A humanoid rig is never renamed onto an animal.
-- **Retargeting** shared clips onto a different skeleton has no built-in one-click tool in Blender 5.2. Use bone constraints in a small script, or an opt-in add-on (the free Rokoko plugin, compatibility with 5.2 unverified, or the paid Auto-Rig Pro Remap). [OD7](../../projects/art-workflow-feature-spec.md#od7--motion-source-for-shared-clips) decides the long-term clip source.
+- **Retargeting** shared clips onto a different skeleton has no built-in one-click tool in Blender 5.2. Between humanoid rigs that share bone names, `art-tool.py clips` retargets in world space ([tech design](../../projects/art-workflow-tech-design.md#44-clips-give-a-rig-the-clips-the-game-plays)); it moved Meshy's library clips onto the mercenary's differently oriented rig. Other skeletons need bone constraints in a small script or an opt-in add-on (the free Rokoko plugin, compatibility with 5.2 unverified, or the paid Auto-Rig Pro Remap). [OD7](../../projects/art-workflow-feature-spec.md#od7--motion-source-for-shared-clips) decides the long-term clip source.
 
 ## OpenAI Images API
 
@@ -242,7 +242,7 @@ Blender 5.2.2 LTS at `/Applications/Blender.app/Contents/MacOS/Blender`; it is n
   - `export_def_bones` exports deform bones only, which keeps Rigify's many control bones out of the game.
   - The exporter's default of 4 influences matches the budget.
   - **Leave Draco and meshopt compression off.** The game configures no decoder for either, and the pinned PlayCanvas 2.22.2 cannot read meshopt.
-  - **Animated exports need two more things,** both built into `art-tool.py`'s exports. Import provider clips at their own frame rate (30 fps for Meshy's library), because resampling at Blender's default 24 fps shortened a 0.7 s run loop to 0.67 s. And keep each rotation track's quaternion signs continuous: the exporter picks every key's sign separately, and PlayCanvas blends keys component by component, so a sign change plays as a one-frame twist. Near-180° joints such as the upper legs flipped four times per clip before the fix.
+  - **Animated exports need the provider's own frame rate,** as `art-tool.py`'s exports do: import clips at 30 fps for Meshy's library, because resampling at Blender's default 24 fps shortened a 0.7 s run loop to 0.67 s. Rotation keys need no sign repair; the pinned PlayCanvas makes each track continuous when it loads a clip.
 
 - **Useful repair tools:** Voxel and QuadriFlow remesh, Decimate, Merge by Distance and weight painting. LoopTools is an online extension, not bundled, so it is unavailable in `--offline-mode`.
 - **Interactive work** in the Blender interface is fine for an artist; record repeatable fixes as scripts.

@@ -78,9 +78,9 @@
         >
         <label
           >Pose timing<select id="world-motion">
+            <option value="smooth">Smooth motion</option>
             <option value="held12">Held · 12 poses/second</option>
             <option value="held8">Held · 8 poses/second</option>
-            <option value="smooth">Smooth motion</option>
           </select></label
         >
         <label
@@ -94,6 +94,13 @@
         ><button id="turn-left" type="button">Turn left</button
         ><button id="turn-right" type="button">Turn right</button>
         <button id="orbit" type="button" aria-pressed="false">Slow orbit</button>
+        <label
+          >Staged travel<select id="world-travel">
+            <option value="game">Game travel · 6.6 m/s, uneven updates</option>
+            <option value="strikes">Mercenary strikes · club and fist, others travel</option>
+            <option value="sway">Short sway · earlier fixture</option>
+          </select></label
+        >
         <button id="motion" type="button" aria-pressed="false">Staged walking</button
         ><button id="fire" type="button" aria-pressed="true">Fire on</button>
         <button id="action" type="button" aria-pressed="false">Mercenary arm-pose fixture</button>

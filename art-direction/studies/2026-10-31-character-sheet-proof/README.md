@@ -91,7 +91,7 @@ An earlier attempt to rig m10's FBX directly (job `be0374a4…`) failed and was 
 - **Ada and Mara read as the same person** at play distance: same rust overdress, grey skirt and build. This fails the "same thing" check between two named people. Making Mara distinct (a different dominant colour, her mending gear, a hood) is Mike's call.
 - **Long garments split with the stride** in `Run` on all five (skirts, surcoat, cloak), because automatic weights bind them to the legs. They need hem reweighting or skirt bones before acceptance.
 - **Budgets:** the Meshy models are 7–14% over the 40,000-triangle body budget (Meshy's 20,000 target counts quads; ask for 17,000). Orin is within every budget.
-- **Rig and clips:** every rig is a correct 24-bone humanoid with the face toward glTF +Z, except the rejected f05; all clips keep their 30 fps keys with continuous rotations.
+- **Rig and clips:** every rig is a correct 24-bone humanoid with the face toward glTF +Z, except the rejected f05; all clips keep their 30 fps keys (an earlier note credited the tool with continuous rotation signs; the pinned PlayCanvas already makes them continuous when it loads a clip, so that pass was removed).
 - **Clean views beat cropped sheet views** (m04 against m11, m05 against m12) for 11 credits per person.
 
 **Not done:** the formal play checks, independent critique and matched-scale fidelity comparison; Mike's acceptance; game integration; the wrapped-family test and the state-sheet prop that AF07 also names.

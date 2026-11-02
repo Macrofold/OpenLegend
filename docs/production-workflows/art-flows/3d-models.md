@@ -243,7 +243,10 @@ Check shoulders, armpits, hips, hems and anything worn over the body; garments m
      --out "$S/export/f01-<subject>.glb"
    ```
 
-   It keeps the first file's skeleton and mesh, takes the single clip from each named file, names the clips as the game expects, keeps the provider's frame rate and continuous rotations, exports with the recipe's settings and reports the result. Add `--in-place Run` for a clip that travels: it removes the root's net travel over each loop. `Run_02` is already in place.
+   It keeps the first file's skeleton and mesh, takes the single clip from each named file, retargets it onto that skeleton (so a clip from another rig with the same bone names fits), names the clips as the game expects, keeps the provider's frame rate, exports with the recipe's settings and reports the result.
+   - **Gait clips** that the game paces to travel speed (`Walk`, `Run`, `Sprint`) take `--stride NAME`: each becomes one in-place stride from left heel strike, and its measured ground speed goes in `<out>.clips.json` for the game's [gait](../../../apps/client/src/characters/gait.ts).
+   - **Other clips that travel** take `--in-place NAME`.
+   - **A model that loads its motion separately**, like the mercenary, takes `--motion-only` to export just the skeleton and clips.
 
    Otherwise hand-key the two clips on that rig, adapting the bone names in `study_human_motion.py`.
 

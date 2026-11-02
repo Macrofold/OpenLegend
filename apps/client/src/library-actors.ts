@@ -1,7 +1,6 @@
 import { assetUrl } from './asset-files';
 import * as pc from 'playcanvas';
 import { BundledModels, type BundledModel } from './bundled-models';
-import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
 import { ArtMaterials, type ArtTreatment } from './art-treatment';
 import { WorldPresentation, type RevealBinding } from './world-presentation';
@@ -9,6 +8,8 @@ import { ShadowMaterial } from './shadow-material';
 import { personStencil, setVisibilityStencil } from './visibility-stencil';
 import { studyAssets } from './study-assets';
 import { installLocomotion } from './model-animation';
+import { Gait } from './characters/gait';
+import type { MotionCue } from './world-motion';
 import { markPixelDetail, needsFinePixels } from './scene-pixels';
 const fieldUrl = assetUrl('apps/client/src/props/library-animals/hare-field.glb');
 const russetUrl = assetUrl('apps/client/src/props/library-animals/hare-russet.glb');
@@ -97,6 +98,8 @@ export class LibraryActors {
 }
 
 export class LibraryActor {
+  /** Prepared people have no strike clips; their sprite shows strikes. */
+  readonly animatesStrikes = false;
   readonly ready: Promise<boolean>;
   state: 'loading' | 'ready' | 'failed' = 'loading';
   visible = false;
@@ -115,6 +118,10 @@ export class LibraryActor {
   private disposed = false;
   private yaw?: number;
   private clip: 'Idle' | 'Run' = 'Idle';
+  // The study people's procedural Run barely moves its feet (0.27 m/s, measured with the art
+  // tool's ground-speed method on kest-travel-coat-motion.glb), so its playback is not scaled to
+  // travel; the gait only decides, with a dead band, when they are moving.
+  private readonly gait = new Gait([{ name: 'Run', groundSpeed: 0.272, seconds: 1 }]);
   private elapsed = 0;
   private sampled = 0;
   private selected = false;
@@ -205,9 +212,9 @@ export class LibraryActor {
       );
   }
   update(
-    view: EntityView,
+    cue: Readonly<Pick<MotionCue, 'heading'>>,
     dt: number,
-    moving: boolean,
+    speed: number,
     paused: boolean,
     reveal: number,
     selected: boolean,
@@ -217,16 +224,17 @@ export class LibraryActor {
     if (!this.visible || !node?.anim || !this.binding || !this.material) return;
     this.selected = selected;
     const step = Math.min(dt, 0.1);
-    const target = view.heading * pc.math.RAD_TO_DEG;
+    const target = cue.heading * pc.math.RAD_TO_DEG;
     this.yaw =
       this.yaw === undefined
         ? target
         : pc.math.lerpAngle(this.yaw, target, 1 - Math.exp(-step * 12));
     node.setLocalEulerAngles(0, this.yaw, 0);
-    const next = moving ? 'Run' : 'Idle';
+    this.gait.update(paused ? 0 : step, paused ? 0 : speed);
+    const next = this.gait.moving ? 'Run' : 'Idle';
     const changed = next !== this.clip;
     if (changed) {
-      node.anim.baseLayer?.transition(next, 0.08);
+      node.anim.baseLayer?.transition(next, 0.2);
       this.clip = next;
       this.elapsed = this.sampled = 0;
     }
@@ -286,6 +294,9 @@ export class LibraryActor {
     return nearest === null
       ? null
       : { fraction: nearest, point: new pc.Vec3().lerp(from, to, nearest) };
+  }
+  motionDiagnostics() {
+    return { visible: this.visible, clip: this.clip, moving: this.gait.moving };
   }
   diagnostics() {
     return {

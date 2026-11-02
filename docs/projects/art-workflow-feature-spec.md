@@ -279,7 +279,7 @@ Blender 5.2 has no built-in retargeting, so any shared-clip source also needs a 
 
 **Recommendation:** decide after the proof run shows which source survives retargeting onto the chosen rig with the least repair; start with Meshy's library because it is already connected.
 
-**Proof-run evidence (October 31):** Meshy's library `Idle` (ID 0) and `Run_02` (ID 14) played correctly on all five automatic rigs, already in place, at one clip per 8-credit job, combined by `art-tool.py clips`. Long skirts and cloaks split with the stride under automatic weights. Retargeting onto a family rig is still untested.
+**Proof-run evidence (October 31):** Meshy's library `Idle` (ID 0) and `Run_02` (ID 14) played correctly on all five automatic rigs, already in place, at one clip per 8-credit job, combined by `art-tool.py clips`. The [character motion study](../../art-direction/studies/2026-10-31-character-motion/README.md) then retargeted eight library clips (idle, walk, run, sprint, attack, punch, dodge, wave) onto those rigs and onto the mercenary's differently oriented rig with the same tool. Long skirts and cloaks split with the stride under automatic weights. Retargeting onto a family rig is still untested.
 
 ### OD8 — Training on uploaded art
 

@@ -92,10 +92,13 @@ export const candidateArt: Readonly<ArtTreatment> = Object.freeze({
   atmosphere: 'survival',
   subjectDetail: 'balanced',
   foliageLight: 'diffuse',
-  motion: 'held12',
+  // Smooth poses and a simulated cape: held poses slide planted feet by a whole pose's travel
+  // at walking-to-running speeds, and a cape carried rigidly tilts with every lean.
+  // art-direction/studies/2026-10-31-character-motion/README.md
+  motion: 'smooth',
   prop: 'grounded',
   surfaceArt: 'rigid',
-  cloth: 'settled',
+  cloth: 'flowing',
   surfaceEdges: 'filtered',
   coverage: 'msaa4',
   characterFiltering: 'mip',

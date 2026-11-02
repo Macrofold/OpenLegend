@@ -239,6 +239,9 @@ export class ArtStudy {
     on(element('light'), 'change', () => this.light());
     on(element('projection'), 'change', () => this.placeCamera());
     on(element('shading'), 'change', () => this.shading());
+    // A page restored from history keeps form state but no local model.
+    element<HTMLInputElement>('local-model').value = '';
+    element('local-model-remove').hidden = true;
     on(element('local-model'), 'change', () => {
       const file = element<HTMLInputElement>('local-model').files?.[0];
       if (file) void this.chooseLocal(file);
@@ -350,16 +353,19 @@ export class ArtStudy {
       const pose = element<HTMLSelectElement>('pose').value;
       if (pose !== 'still' && this.motionAllowed && this.animations.length) {
         for (const anim of this.animations) {
-          if (anim.baseLayer?.activeState !== pose) anim.baseLayer?.play(pose);
+          // A model without the chosen clip stands in Idle beside those that have it.
+          const state = anim.baseLayer?.states.includes(pose) ? pose : 'Idle';
+          if (anim.baseLayer?.activeState !== state) anim.baseLayer?.play(state);
           anim.update(Math.min(dt, 0.1));
         }
         this.invalidate();
       }
+      const playing = this.animations.filter((anim) => anim.baseLayer?.activeState === pose);
       const motionEvidence = !this.motionAllowed
         ? 'Motion paused by your reduced-motion preference.'
         : pose === 'still'
           ? 'Pose held for comparison.'
-          : `${this.animations.length} animated models · ${pose === 'Run' ? 'Movement' : 'Idle'} · ${(this.animations[0]?.baseLayer?.activeStateCurrentTime ?? 0).toFixed(1)} s`;
+          : `${playing.length} of ${this.animations.length} animated models · ${pose} · ${(playing[0]?.baseLayer?.activeStateCurrentTime ?? 0).toFixed(1)} s`;
       if (element('motion-evidence').textContent !== motionEvidence)
         element('motion-evidence').textContent = motionEvidence;
       if (this.labelsDirty) {
@@ -461,7 +467,11 @@ export class ArtStudy {
           : selected.slice(Number(version), Number(version) + 1);
     if (this.local) selected = [...selected, this.local];
     if (!selected.length) {
+      // Removing the only shown model must not leave it on screen untracked.
+      this.clearDisplayed();
+      this.cards([]);
       element('status').textContent = 'No exported assets are available for this subject yet.';
+      this.canvas.dataset.ready = 'true';
       return;
     }
     if (
@@ -480,12 +490,17 @@ export class ArtStudy {
     const models = (this.pendingModels = new BundledModels(this.app));
     const materials = new Map<pc.StandardMaterial, pc.StandardMaterial>();
     let installed = false;
+    let failed: Choice | undefined;
     try {
       const resources = await Promise.all(
         selected.map((asset) =>
-          asset.localBytes
+          (asset.localBytes
             ? models.loadBytes(asset.label, asset.file, asset.localBytes)
-            : models.load(asset.label, asset.motionUrl ?? asset.url),
+            : models.load(asset.label, asset.motionUrl ?? asset.url)
+          ).catch((error: unknown) => {
+            failed ??= asset;
+            throw error;
+          }),
         ),
       );
       if (this.disposed || epoch !== this.epoch) return;
@@ -513,18 +528,13 @@ export class ArtStudy {
         for (const root of fresh) root.destroy();
         throw error;
       }
-      for (const root of this.roots) root.destroy();
-      for (const material of this.materials.values()) material.destroy();
-      this.releaseModels(this.models);
+      this.clearDisplayed();
       this.models = models;
       this.materials = materials;
       installed = true;
       this.roots = fresh;
       this.animations = animations;
-      this.bounds.length = 0;
       this.displayed = selected;
-      element('labels').replaceChildren();
-      this.anchors = [];
       const largest = Math.max(
         ...selected.map((asset) =>
           Math.max(
@@ -584,8 +594,10 @@ export class ArtStudy {
       console.error(error);
       element('status').textContent =
         'This comparison could not load. The previous displayed assets are retained; choose another subject or reload.';
-      if (selected.some((asset) => asset.localBytes)) {
-        this.removeLocal(false);
+      if (failed?.localBytes) {
+        // Keep tracking whichever local model the retained comparison still shows.
+        this.local = this.displayed.find((asset) => asset.localBytes);
+        element('local-model-remove').hidden = !this.local;
         element('status').textContent =
           'That file could not be read as a GLB model. The previous comparison is retained.';
       }
@@ -607,6 +619,8 @@ export class ArtStudy {
       return;
     }
     const bytes = await file.arrayBuffer();
+    // Without a reset, choosing the same (re-exported) file again sends no change event.
+    element<HTMLInputElement>('local-model').value = '';
     if (this.disposed) return;
     this.local = {
       id: 'local-model',
@@ -633,6 +647,20 @@ export class ArtStudy {
     element<HTMLInputElement>('local-model').value = '';
     element('local-model-remove').hidden = true;
     if (redisplay) void this.show();
+  }
+  /** Remove the displayed comparison and release what it owns. */
+  private clearDisplayed(): void {
+    for (const root of this.roots) root.destroy();
+    for (const material of this.materials.values()) material.destroy();
+    this.releaseModels(this.models);
+    this.models = new BundledModels(this.app);
+    this.materials = new Map();
+    this.roots = [];
+    this.animations = [];
+    this.displayed = [];
+    this.bounds.length = 0;
+    element('labels').replaceChildren();
+    this.anchors = [];
   }
   private releaseModels(models: BundledModels): void {
     const pending = models.destroy();

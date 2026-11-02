@@ -56,7 +56,7 @@ The server projects an active strike's animation kind, progress and horizontal d
 
 Equipped strikes project their tool and authoritative wind-up/recovery phase. Recovery uses the attacker’s public heading rather than tracking an unseen escaping target. The same cached arm frames show the swing and return; bespoke knife artwork remains outside this slice.
 
-The renderer uses cached pixel-sprite frames that replace the character's hanging arm with a bent guard, extension and contact pose. It faces the sprite toward the target's screen direction and uses a 180ms visual recovery to return to idle after the authoritative descriptor clears. Pausing freezes presentation. There are no separate arm/fist meshes. Rendering never applies damage, predicts success or controls completion.
+A model with strike clips plays them: the mercenary's Attack and Punch poses follow the descriptor's progress, replayed on the same delayed clock as his displayed travel and facing its direction ([presentation](world-presentation.md#motion-and-depth)). Other characters use cached pixel-sprite frames that replace the hanging arm with a bent guard, extension and contact pose. The sprite faces the target's screen direction and uses a 180ms visual recovery to return to idle after the descriptor clears. Pausing freezes presentation. There are no separate arm/fist meshes. Rendering never applies damage, predicts success or controls completion.
 
 ## Discovery
 

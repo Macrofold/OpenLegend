@@ -4,9 +4,9 @@ import { BundledModels, type BundledModel } from '../bundled-models';
 import { MercenaryMotion } from './mercenary-motion';
 import { MercenaryFaceResources } from './mercenary-face';
 import { ArtMaterials, type ArtTreatment, baselineArt } from '../art-treatment';
-import type { EntityView } from '@open-legend/protocol';
 import { intersectBox } from '@open-legend/spatial';
 import { WorldPresentation } from '../world-presentation';
+import type { MotionCue } from '../world-motion';
 import { PixelCharacter } from './pixel-character';
 import { CapeCloth, type MercenaryClothData } from './mercenary-cloth';
 import { clothPassesForSize } from './cloth-solver';
@@ -74,7 +74,8 @@ export class MercenaryModels {
       .then(([resource, motion, cloth]) => ({
         resource,
         cloth,
-        tracks: [...resource.animations, ...motion.animations]
+        // The motion file's clips replace any the model file still embeds.
+        tracks: [...motion.animations, ...resource.animations]
           .map((a) => a.resource)
           .filter((track): track is pc.AnimTrack => track instanceof pc.AnimTrack),
       }))
@@ -102,6 +103,8 @@ export class MercenaryModels {
 const displayScale = 1.1;
 
 export class MercenaryActor {
+  /** Committed strikes play its own clips; see MercenaryMotion. */
+  readonly animatesStrikes = true;
   readonly ready: Promise<boolean>;
   private node?: pc.Entity;
   private cloth?: CapeCloth;
@@ -178,7 +181,7 @@ export class MercenaryActor {
     const anim = node.anim;
     if (!anim) throw new Error('Mercenary animation component missing');
     node.enabled = true;
-    this.motion = new MercenaryMotion(anim, tracks);
+    this.motion = new MercenaryMotion(anim, tracks, displayScale);
     this.faces.attach(node);
     this.faces.preparePose(node);
     this.cloth = new CapeCloth(this.app, node, displayScale, cloth);
@@ -241,9 +244,9 @@ export class MercenaryActor {
     }
   }
   update(
-    view: EntityView,
+    cue: Readonly<Pick<MotionCue, 'heading' | 'action'>>,
     dt: number,
-    moving: boolean,
+    speed: number,
     paused: boolean,
     reveal: number,
     selected: boolean,
@@ -263,11 +266,16 @@ export class MercenaryActor {
       // Decorative pose, cloth and shadows sleep. Current positions/intentions still
       // update in the scene; return settles under the present pose with sprite fallback.
       // docs/verification/performance/overhaul-presentation-implementation.md#offscreen-detailed-model-trial--october17-2026
-      anim.speed = 0;
+      // The pose waits because motion advances it explicitly below; scaling the engine's own
+      // speed to zero here once froze it for good after waking.
       this.projectedHeight = undefined;
       return;
     }
-    const target = view.heading * pc.math.RAD_TO_DEG;
+    // A strike faces its own direction, as the sprite's arm frames do, not the travel heading.
+    const strike = cue.action?.direction;
+    const target =
+      (strike && (strike.x || strike.z) ? Math.atan2(strike.x, strike.z) : cue.heading) *
+      pc.math.RAD_TO_DEG;
     this.yaw =
       this.yaw === undefined
         ? target
@@ -317,7 +325,7 @@ export class MercenaryActor {
       this.pixels?.prepareNeutralPose();
       this.setVisible(this.wanted);
     }
-    this.motion?.update(dt, moving, paused, art.motion, art.actionFixture);
+    this.motion?.update(dt, speed, paused, art.motion, art.actionFixture, cue.action);
     this.faces.preparePose(node);
     this.cloth.update(dt, !paused, art.cloth);
     this.pixels?.setTreatment(
@@ -362,6 +370,9 @@ export class MercenaryActor {
     return nearest === null
       ? null
       : { fraction: nearest, point: new pc.Vec3().lerp(ray.from, ray.to, nearest) };
+  }
+  motionDiagnostics() {
+    return { visible: this.visible, motion: this.motion?.diagnostics() };
   }
   diagnostics() {
     return {

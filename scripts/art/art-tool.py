@@ -73,7 +73,7 @@ def import_model(path):
     if suffix in ('.glb', '.gltf'):
         bpy.ops.import_scene.gltf(filepath=str(path))
     elif suffix == '.fbx':
-        bpy.ops.import_scene.fbx(filepath=str(path))
+        bpy.ops.import_scene.fbx(filepath=str(path), anim_offset=0)
     elif suffix == '.obj':
         bpy.ops.wm.obj_import(filepath=str(path))
     else:
@@ -160,9 +160,15 @@ def measure(path, profile, expect_height):
     clips = [{'name': a.name, 'frames': [round(a.frame_range[0], 2), round(a.frame_range[1], 2)],
               'seconds': round((a.frame_range[1] - a.frame_range[0]) / fps, 3)}
              for a in bpy.data.actions]
-    unapplied = [o.name for o in meshes
-                 if any(abs(s - 1) > 1e-4 for s in o.scale)
-                 or any(abs(r) > 1e-4 for r in o.rotation_euler)]
+    # Read the final world transform: glTF stores rotation as a quaternion, and a parent can
+    # carry the scale. Skinned meshes are placed by their joints instead.
+    unapplied = []
+    for o in content():
+        if o.type == 'MESH' and any(m.type == 'ARMATURE' for m in o.modifiers):
+            continue
+        _, rotation, scale = o.matrix_world.decompose()
+        if rotation.angle > 1e-3 or any(abs(v - 1) > 1e-4 for v in scale):
+            unapplied.append(o.name)
 
     tri_limit = BUDGETS['triangles'][profile]
     edge = max((max(i['size']) for i in images.values()), default=0)
@@ -215,10 +221,15 @@ def report(args):
     out = external_output(args.out)
     out.mkdir(parents=True, exist_ok=True)
     failed = False
+    used = set()
     for model in args.models:
         path = Path(model).expanduser().resolve()
         result = measure(path, args.profile, args.expect_height)
-        (out / (path.stem + '.report.json')).write_text(json.dumps(result, indent=2) + '\n')
+        name, n = path.stem, 2
+        while name in used:  # a.glb and b/a.glb, or m01.glb and m01.fbx, keep both reports
+            name, n = f'{path.stem}-{n}', n + 1
+        used.add(name)
+        (out / (name + '.report.json')).write_text(json.dumps(result, indent=2) + '\n')
         over = [b['check'] for b in result['budgets'] if b['status'] == 'over']
         problems = over + [f"missing clip {c}" for c in result['motion']['missingRequired']]
         problems += [f"mesh named like bone {n}" for n in result['rig']['meshNamedLikeBone']]
@@ -396,37 +407,12 @@ def sheet_models(args):
     return 0
 
 
-def continuous_rotations(path):
-    """Keep each exported rotation track in one hemisphere. The exporter picks each key's
-    quaternion sign alone, and PlayCanvas blends keys component by component, so a sign
-    change between keys plays as a one-frame twist (seen near 180-degree leg joints)."""
-    data = bytearray(path.read_bytes())
-    length = int.from_bytes(data[12:16], 'little')
-    gltf = json.loads(data[20:20 + length])
-    binary = 20 + length + 8  # the binary chunk follows the JSON chunk and its own header
-    for animation in gltf.get('animations', []):
-        for channel in animation['channels']:
-            accessor = gltf['accessors'][animation['samplers'][channel['sampler']]['output']]
-            view = gltf['bufferViews'][accessor['bufferView']]
-            if channel['target']['path'] != 'rotation' or accessor['componentType'] != 5126 \
-                    or view.get('byteStride', 16) != 16:
-                continue
-            start = binary + view.get('byteOffset', 0) + accessor.get('byteOffset', 0)
-            keys = np.frombuffer(data, np.float32, accessor['count'] * 4, start).reshape(-1, 4).copy()
-            for i in range(1, len(keys)):
-                if np.dot(keys[i], keys[i - 1]) < 0:
-                    keys[i] = -keys[i]
-            data[start:start + keys.nbytes] = keys.tobytes()
-    path.write_bytes(bytes(data))
-
-
 def export_glb(out):
     """Export the selection with the working human recipe's settings (scripts/study_human_motion.py)."""
     bpy.ops.export_scene.gltf(filepath=str(out), export_format='GLB', use_selection=True,
                               export_apply=True, export_animations=True,
                               export_animation_mode='NLA_TRACKS', export_yup=True,
                               export_skins=True, export_def_bones=True, export_force_sampling=True)
-    continuous_rotations(out)
 
 
 def normalize(args):
@@ -436,6 +422,11 @@ def normalize(args):
     out.parent.mkdir(parents=True, exist_ok=True)
     clear_scene()
     import_model(source)
+    if content('ARMATURE') or bpy.data.actions:
+        # Rescaling a rig would leave its bone keys at the old scale, and the import shows
+        # the rest pose, so its clips would export frozen.
+        raise ValueError(f'{source.name} is rigged or animated; normalize takes unrigged models. '
+                         'Give a rigged model its clips with the clips command instead.')
     scene = bpy.context.scene
     meshes = content('MESH')
     low, high = world_bounds(meshes)
@@ -468,7 +459,6 @@ def normalize(args):
         obj.select_set(True)
     bpy.context.view_layer.objects.active = meshes[0]
     bpy.ops.object.transform_apply(location=True, rotation=True, scale=True)
-    bone_names = {b.name for a in content('ARMATURE') for b in a.data.bones}
     for obj in meshes:
         bm = bmesh.new()
         bm.from_mesh(obj.data)
@@ -478,8 +468,6 @@ def normalize(args):
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
         bm.to_mesh(obj.data)
         bm.free()
-        if obj.name in bone_names:  # PlayCanvas would resolve the mesh as the joint
-            obj.name = 'Mesh ' + obj.name
     if args.max_texture:
         for image in bpy.data.images:
             w, h = image.size
@@ -520,57 +508,220 @@ def native_fps(path):
 
 
 def without_drift(action, bone):
-    """Remove one loop's net travel from the root bone, so the clip plays on the spot."""
+    """Remove one loop's net travel from the root bone, so the clip plays on the spot.
+    Returns the travel removed, in the bone's local units."""
+    removed = 0.0
     for curve in action_curves(action):
         points = curve.keyframe_points
         if curve.data_path != f'pose.bones["{bone}"].location' or len(points) < 2:
             continue
         x0, y0 = points[0].co.x, points[0].co.y
         span, drift = points[-1].co.x - x0, points[-1].co.y - y0
+        removed = math.hypot(removed, drift)
         for point in points:
             offset = drift * (point.co.x - x0) / span
             point.co.y -= offset
             point.handle_left.y -= offset
             point.handle_right.y -= offset
         curve.update()
+    return removed
+
+
+def bone_order(rig):
+    """Every bone of a rig, parents before children."""
+    order, pending = [], [bone for bone in rig.data.bones if bone.parent is None]
+    while pending:
+        bone = pending.pop(0)
+        order.append(bone)
+        pending.extend(bone.children)
+    return order
+
+
+def world_rotation(matrix):
+    return matrix.decompose()[1]
+
+
+def retarget(source, target, name, frames):
+    """Key `target` with the motion of `source`'s current action. Each bone turns in world space
+    by the same rotation from its own rest pose, so rigs whose bone axes, rest proportions or
+    extra bones differ (the mercenary's rig against Meshy's) share a clip; copying joint angles
+    would twist them. The root travels by the source root's displacement scaled by hip height.
+    Bones the source lacks (the mercenary's cape) stay at rest."""
+    order = bone_order(target)
+    shared = {bone.name for bone in order if bone.name in source.pose.bones}
+    if not shared:
+        raise ValueError(f'{name}: no bone names in common with the model.')
+    sw, tw = source.matrix_world, target.matrix_world
+    source_rest = {n: world_rotation(sw @ source.data.bones[n].matrix_local) for n in shared}
+    target_rest = {n: world_rotation(tw @ target.data.bones[n].matrix_local) for n in shared}
+    root = next(bone for bone in order if bone.name in shared)
+    source_root = (sw @ source.data.bones[root.name].matrix_local).translation
+    target_root = (tw @ root.matrix_local).translation
+    scale = target_root.z / source_root.z  # hip heights; both rigs stand on z = 0
+    to_armature = world_rotation(tw).inverted()
+    target.animation_data_create()
+    action = target.animation_data.action = bpy.data.actions.new(name)
+    for frame in frames:
+        bpy.context.scene.frame_set(frame)
+        posed = {}  # each target bone's armature-space rotation this frame
+        for bone in order:
+            rest = bone.matrix_local.to_quaternion()
+            if bone.parent:
+                inherited = posed[bone.parent.name] @ (
+                    bone.parent.matrix_local.inverted() @ bone.matrix_local).to_quaternion()
+            else:
+                inherited = rest
+            if bone.name not in shared:
+                posed[bone.name] = inherited
+                continue
+            turn = world_rotation(sw @ source.pose.bones[bone.name].matrix) @ \
+                source_rest[bone.name].inverted()
+            posed[bone.name] = to_armature @ turn @ target_rest[bone.name]
+            basis = inherited.inverted() @ posed[bone.name]
+            pose = target.pose.bones[bone.name]
+            pose.rotation_mode = 'QUATERNION'
+            pose.rotation_quaternion = basis
+            pose.keyframe_insert('rotation_quaternion', frame=frame, group=bone.name)
+        travel = (sw @ source.pose.bones[root.name].matrix).translation - source_root
+        head = tw.inverted() @ (target_root + travel * scale)
+        pose = target.pose.bones[root.name]
+        pose.location = root.matrix_local.inverted() @ head
+        pose.keyframe_insert('location', frame=frame, group=root.name)
+    target.animation_data.action = None
+    return action, root.name
+
+
+def ground_speed(rig, action, frames, fps, root):
+    """The travel speed a looping gait implies: how fast a planted foot slides back under the
+    hips. The game scales playback by displayed speed over this to stop the feet sliding."""
+    feet = [n for n in ('LeftToeBase', 'RightToeBase') if n in rig.pose.bones] or \
+        [n for n in ('LeftFoot', 'RightFoot') if n in rig.pose.bones]
+    rig.animation_data.action = action
+    rig.animation_data.action_slot = action.slots[0]  # Blender 5 plays an action through its slot
+    samples = {foot: [] for foot in feet}
+    for frame in frames:
+        bpy.context.scene.frame_set(frame)
+        hips = (rig.matrix_world @ rig.pose.bones[root].matrix).translation
+        for foot in feet:
+            point = (rig.matrix_world @ rig.pose.bones[foot].matrix).translation
+            samples[foot].append((point.z, point.x - hips.x, point.y - hips.y))
+    rig.animation_data.action = None
+    speeds = []
+    for track in samples.values():
+        low = min(z for z, _, _ in track)
+        for (z0, x0, y0), (z1, x1, y1) in zip(track, track[1:]):
+            if max(z0, z1) <= low + 0.03:  # planted: within 3 cm of the lowest reach
+                speeds.append(math.hypot(x1 - x0, y1 - y0) * fps)
+    return sorted(speeds)[len(speeds) // 2] if speeds else 0.0
+
+
+def foot_reach(rig, action, frames, foot, root):
+    """How far ahead of the hips a foot is on each frame; models face -Y (glTF +Z)."""
+    rig.animation_data.action = action
+    rig.animation_data.action_slot = action.slots[0]
+    reach = []
+    for frame in frames:
+        bpy.context.scene.frame_set(frame)
+        hips = (rig.matrix_world @ rig.pose.bones[root].matrix).translation
+        reach.append(hips.y - (rig.matrix_world @ rig.pose.bones[foot].matrix).translation.y)
+    rig.animation_data.action = None
+    return reach
+
+
+def one_cycle(rig, action, frames, root):
+    """Make a gait clip one stride that starts at left heel strike (the left foot at its farthest
+    ahead), so the game can blend walk, run and sprint phase-aligned; feet otherwise cross
+    mid-blend. Heel strike is a single clear peak, unlike toe height, which a rolling foot
+    lifts mid-stance. A closed single-stride loop is rotated; a longer clip keeps its first
+    whole stride."""
+    foot = 'LeftFoot' if 'LeftFoot' in rig.pose.bones else 'LeftToeBase'
+    reach = foot_reach(rig, action, frames, foot, root)
+    middle = (max(reach) + min(reach)) / 2
+    peaks = [i for i in range(len(reach))
+             if reach[i] > middle and reach[i] >= reach[i - 1] and reach[i] > reach[(i + 1) % len(reach)]]
+    if not peaks:
+        raise ValueError(f'{action.name}: no left heel strike found for --stride.')
+    onsets = peaks
+    first = frames[0]
+    curves = [(curve, {round(p.co.x): p.co.y for p in curve.keyframe_points}) for curve in action_curves(action)]
+    if len(onsets) == 1:  # a closed loop holding one stride: rotate it to start at the contact
+        span = len(frames) - 1
+        order = [frames[(onsets[0] + i) % span] for i in range(span)] + [frames[onsets[0]]]
+    else:
+        order = list(range(frames[onsets[0]], frames[onsets[1]] + 1))
+    for curve, values in curves:
+        points = curve.keyframe_points
+        points.clear()
+        points.add(len(order))
+        for i, frame in enumerate(order):
+            points[i].co = (first + i, values[frame])
+            points[i].interpolation = 'LINEAR'
+        curve.update()
+    return range(first, first + len(order))
 
 
 def clips(args):
-    """Give one rigged model the clips the game plays, each taken from a rigging output."""
+    """Give one rigged model the clips the game plays, retargeted from rigging outputs."""
     out = external_output(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
-    # Import at the clips' own rate (providers use 30 fps), so every key lands on a whole
-    # frame and exports unchanged: resampling shortens loops and flips quaternion signs,
-    # which PlayCanvas blends component by component into one-frame twists.
-    fps = native_fps(Path(args.clip[0].partition('=')[2]).expanduser().resolve())
+    # Work at the first clip's own rate (providers use 30 fps), so its keys land on whole
+    # frames and export unchanged; resampling at Blender's 24 fps shortened a 0.7 s run loop.
+    # A glTF clip at another rate keeps its timing and is resampled to this one.
+    first = args.clip[0].partition('=')[2].partition('#')[0]
+    fps = native_fps(Path(first).expanduser().resolve())
     clear_scene()
-    bpy.context.scene.render.fps = fps
+    scene = bpy.context.scene
+    scene.render.fps = fps
     import_model(Path(args.model).expanduser().resolve())
+    scene.render.fps = fps  # the FBX importer adopts the file's rate
     rigs = content('ARMATURE')
     if len(rigs) != 1:
         raise ValueError(f'Expected one armature in {args.model}, found {len(rigs)}.')
     rig = rigs[0]
-    own_actions = set(bpy.data.actions)
-    named = {}
-    for spec in args.clip:
-        name, _, source = spec.partition('=')
-        objects, actions = set(bpy.data.objects), set(bpy.data.actions)
-        import_model(Path(source).expanduser().resolve())
-        found = [a for a in bpy.data.actions if a not in actions]
-        if len(found) != 1:
-            raise ValueError(f'{source} holds {len(found)} clips {[a.name for a in found]}; expected one.')
-        for obj in set(bpy.data.objects) - objects:
-            bpy.data.objects.remove(obj, do_unlink=True)
-        found[0].name = name
-        found[0].use_fake_user = True
-        named[name] = found[0]
-    root = next(bone.name for bone in rig.data.bones if bone.parent is None)
-    for name in args.in_place or []:
-        without_drift(named[name], root)
+    rig.data.pose_position = 'POSE'  # import_model shows the rest pose; retargeting reads poses
     rig.animation_data_create()
     rig.animation_data.action = None
     for track in list(rig.animation_data.nla_tracks):
         rig.animation_data.nla_tracks.remove(track)
+    own_actions = set(bpy.data.actions)
+    strides = set(args.stride or [])
+    named, facts, removed = {}, {}, {}
+    for spec in args.clip:
+        name, _, source = spec.partition('=')
+        source, _, wanted = source.partition('#')
+        objects, actions = set(bpy.data.objects), set(bpy.data.actions)
+        import_model(Path(source).expanduser().resolve())
+        if scene.render.fps != fps:
+            # The FBX importer keyed this clip at its own rate; restoring ours would re-time it.
+            raise ValueError(f'{source} is at {scene.render.fps} fps; clips here are {fps} fps. '
+                             'Export it as glTF, which keeps its timing.')
+        found = [a for a in bpy.data.actions if a not in actions and (not wanted or a.name == wanted)]
+        if len(found) != 1:
+            raise ValueError(f'{source} holds {len(found)} matching clips; name one with FILE#ACTION.')
+        clip_rig = next(o for o in set(bpy.data.objects) - objects if o.type == 'ARMATURE')
+        clip_rig.data.pose_position = rig.data.pose_position = 'POSE'  # import_model rests every rig
+        clip_rig.animation_data.action = found[0]
+        low, high = found[0].frame_range
+        frames = range(math.floor(low), math.ceil(high) + 1)
+        named[name], root = retarget(clip_rig, rig, name, frames)
+        named[name].use_fake_user = True
+        for obj in set(bpy.data.objects) - objects:
+            bpy.data.objects.remove(obj, do_unlink=True)
+        for action in set(bpy.data.actions) - actions - {named[name]}:
+            bpy.data.actions.remove(action)
+        if name in strides:
+            # Remove the source loop's travel before trimming too: rotating a closed loop that
+            # still travels would leave a jump back at its old seam, invisible to a later pass.
+            removed[name] = without_drift(named[name], root)
+            frames = one_cycle(rig, named[name], frames, root)
+        facts[name] = {'seconds': round((frames[-1] - frames[0]) / fps, 3),
+                       'groundSpeed': round(ground_speed(rig, named[name], frames, fps, root), 3)}
+    # Strides always loop on the spot: the game moves the body and paces the legs to it.
+    # docs/projects/3d-pixel-art-tech-design.md#7-animation-attachments-and-time
+    for name in sorted(strides | set(args.in_place or [])):
+        # The travelling root, not the first parentless bone (the mercenary's cape root is one).
+        travel = math.hypot(removed.get(name, 0.0), without_drift(named[name], root))
+        print(f'{name}: removed {travel:.3f} of travel per loop from {root}, in its own units')
     for action in own_actions:
         bpy.data.actions.remove(action)
     # Tracks export by name, as in the working human recipe (scripts/study_human_motion.py).
@@ -578,22 +729,27 @@ def clips(args):
         track = rig.animation_data.nla_tracks.new()
         track.name = name
         strip = track.strips.new(name, int(action.frame_range[0]), action)
-        if strip.action_slot is None:  # keyed for the clip file's armature; the bone names match
-            strip.action_slot = action.slots[0]
+        if strip.action_slot is None:  # bind the rig's own slot, the one holding bone curves
+            strip.action_slot = next((slot for slot in action.slots
+                                      if slot.identifier == 'OB' + rig.name), action.slots[0])
         track.mute = True
-    rig.data.pose_position = 'POSE'  # import_model shows the rest pose; the export samples poses
     bpy.ops.object.select_all(action='DESELECT')
-    for obj in content():
+    # A motion file holds only the skeleton and clips; the game merges them onto the model.
+    for obj in [rig] if args.motion_only else content():
         obj.select_set(True)
     bpy.context.view_layer.objects.active = rig
     export_glb(out)
+    out.with_suffix('.clips.json').write_text(json.dumps(facts, indent=1) + '\n')
+    if args.motion_only:
+        print(f'Motion {out.name}: {facts}, {out.stat().st_size} bytes')
+        return 0
     result = measure(out, args.profile, None)
     over = [b['check'] for b in result['budgets'] if b['status'] == 'over'] + \
         [f'missing clip {c}' for c in result['motion']['missingRequired']]
-    print(f"Clips {out.name}: {[c['name'] for c in result['motion']['clips']]}, "
-          f"{result['rig']['deformBones']} deform bones, height {result['size']['height']} m"
-          + (f" | over or missing: {', '.join(over)}" if over else ''))
+    print(f"Clips {out.name}: {facts}, {result['rig']['deformBones']} deform bones, "
+          f"height {result['size']['height']} m" + (f" | over or missing: {', '.join(over)}" if over else ''))
     return 0
+
 
 def main():
     argv = sys.argv[sys.argv.index('--') + 1:] if '--' in sys.argv else []
@@ -628,11 +784,17 @@ def main():
     norm.add_argument('--profile', choices=['character', 'creature', 'prop'], default='character')
     clip = commands.add_parser('clips', help='Give a rigged model the named clips the game plays.')
     clip.add_argument('--model', required=True, help='The rigged model whose skeleton and mesh are kept.')
-    clip.add_argument('--clip', action='append', required=True, metavar='NAME=FILE',
-                      help='A clip name the game plays and a rigging output that holds that one clip.')
+    clip.add_argument('--clip', action='append', required=True, metavar='NAME=FILE[#ACTION]',
+                      help='A clip name the game plays and a file holding that clip; #ACTION picks one '
+                           'of several.')
     clip.add_argument('--in-place', action='append', metavar='NAME',
                       help="Remove that clip's net travel, so it loops on the spot.")
+    # Not --cycle: Blender's Cycles add-on claims abbreviations of its --cycles-* options.
+    clip.add_argument('--stride', action='append', metavar='NAME',
+                      help='Make that gait clip one stride starting at left heel strike, on the spot.')
     clip.add_argument('--out', required=True)
+    clip.add_argument('--motion-only', action='store_true',
+                      help='Export only the skeleton and clips, for a model that loads its motion separately.')
     clip.add_argument('--profile', choices=['character', 'creature', 'prop'], default='character')
     args = parser.parse_args(argv)
     code = {'report': report, 'sheet': sheet_models, 'normalize': normalize, 'clips': clips}[args.command](args)
