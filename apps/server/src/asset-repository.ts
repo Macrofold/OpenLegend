@@ -71,7 +71,6 @@ export interface AssetSelectionRequest {
   expectedRevision: number;
 }
 export interface AssetRetentionLimits {
-  maxRetainedBytes: number;
   maxRetainedFiles: number;
   maxPublicationOperations: number;
 }
@@ -1375,7 +1374,8 @@ export class AssetRepository {
       }
       // Claims remain after success/cancellation: unselected uploaded files still
       // consume storage until a separately qualified collector proves deletion.
-      // Bound metadata rows first, so the subsequent deduplicated sum is bounded.
+      // Official storage has no byte cap; these row counts stay within what one
+      // recovery checkpoint captures (docs/limits/game-asset-storage.md#ast08).
       const counts = await this.db
         .prepare(
           `SELECT
@@ -1390,18 +1390,6 @@ export class AssetRepository {
         throw new AssetAccessError(
           'unavailable',
           'Retained publication metadata has reached its operating allowance.',
-        );
-      const retained = await this.db
-        .prepare(
-          `SELECT COALESCE(SUM(bytes),0) AS bytes FROM (
-        SELECT artifact_key,MAX(CAST(CAST(payload AS JSONB)->>'bytes' AS BIGINT)) AS bytes
-        FROM asset_claims GROUP BY artifact_key) objects`,
-        )
-        .get();
-      if (Number(retained?.['bytes']) > limits.maxRetainedBytes)
-        throw new AssetAccessError(
-          'unavailable',
-          'Retained and reserved asset bytes have reached their operating allowance.',
         );
       return operation;
     });

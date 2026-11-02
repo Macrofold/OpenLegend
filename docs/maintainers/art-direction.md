@@ -55,8 +55,8 @@ The [art-workflow project](../projects/art-workflow-feature-spec.md) redesigned 
   - shared clips.
     Exit: every kit piece fits every body it can meet, at the extremes, and the first-playable people are rebuilt from it. Not authorized.
 - [ ] **AF12 — Character motion follow-through.** Delivered October 31, 2026 ([study record](../../art-direction/studies/2026-10-31-character-motion/README.md)): eased travel playback, a speed-matched Walk/Run/Sprint gait, strikes on the mercenary's own model, a capture window that follows the pose, smooth poses with the simulated cape as the working look, and the same eight clips for the five proof-run people. Remaining:
-  - publish `mercenary-motion.glb` with the new clips to the development runtime release and update `assets/locks/development.json`, which needs Mike's permission because that release is public; until then this client cannot load the mercenary's clips;
-  - archive the final batch (rebuilt motion files and final captures, 72.1 MB new) once Mike raises the 10 GiB archive allowance ([A3D10](../limits/3d-pixel-art.md#a3d10--durable-storage-and-quarantine)) or clears stored material; the first batch is archived;
+  - publish `mercenary-motion.glb` with the new clips to the development runtime release and update `assets/locks/development.json`; Mike permitted this on November 1, and it waits on a renewed AWS sign-in. Until then this client cannot load the mercenary's clips;
+  - archive the final batch (rebuilt motion files and final captures, 72.1 MB new); official storage has had no cap since November 1 ([A3D10](../limits/3d-pixel-art.md#a3d10--durable-storage-and-quarantine)), so it waits only on a renewed AWS sign-in; the first batch is archived;
   - Mike's review of the motion and of the working-look change from held poses and the settled cape;
   - proposed: give the prepared library people stride clips on their own rig, since their single run clip does not match travel speed;
   - open question for Mike: Dodge and Wave have no game event, so they appear only in the art study until a gameplay design adds one.
