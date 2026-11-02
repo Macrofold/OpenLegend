@@ -1,12 +1,12 @@
 # Simpler saving and personal evidence — feature specification
 
-| Status      | Current progress                                                                   | Last updated |
-| ----------- | ---------------------------------------------------------------------------------- | ------------ |
-| In progress | BK09–BK15 is installed under verification; BK16 operating acceptance remains open. | 2026-11-02   |
+| Status      | Current progress                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK09–BK15 implementation and connected checks pass; BK16 operating acceptance remains open. | 2026-11-02   |
 
 **Design selected 2026-10-31, 05:10 UTC.** This project replaces unnecessary persistence and evidence-lifetime machinery while preserving the game’s current sensory, attention, memory and action behavior. Its [technical counterpart](bookkeeping-simplification-tech-design.md) specifies the replacement and removal order. Implementation reconciled 2026-10-31 10:59 UTC; [BK](../maintainers/production-data.md#bookkeeping-simplification) and its evidence distinguish delivered code from unmet operating gates.
 
-**Current behavior reconciled November 2, 2026, 05:18 UTC.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies the installed BK09–BK15 live acceptance, independent retention and background-maintenance mechanisms. Semantic, storage and operating checks remain under verification; no performance or scale pass is claimed.
+**Current behavior reconciled November 2, 2026, 06:49 UTC.** The [runtime companion](bookkeeping-simplification-runtime-design.md) specifies the installed BK09–BK15 live acceptance, independent retention and background-maintenance mechanisms. Connected semantic/storage checks pass; operating qualification remains open and no scale pass is claimed.
 
 ## 1. Outcome
 

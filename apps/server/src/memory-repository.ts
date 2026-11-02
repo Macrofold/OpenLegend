@@ -4239,6 +4239,9 @@ export class MemoryRepository {
     }
     return rows;
   }
+  /** Check exact source content and retention, not truth. A corrected original
+   * may remain disputed chronology; fact grants and new narration still apply
+   * its correction status through their own semantic owners. */
   async current(scope: MemoryScope, sources: CurrentMemorySource[]): Promise<boolean> {
     if (this.sourceEditPending(scope)) return false;
     const inherited = sources.filter((source) => source.through);

@@ -46,6 +46,7 @@ import {
   encodeStoryAccount,
   personalAccountKey,
   storyAccountAvailableSql,
+  narrationSourceUnrevokedSql,
   personalAccountRevision,
   personalEventEvidence as eventEvidence,
   storyAccountSql,
@@ -230,6 +231,12 @@ export class HistoryRepository {
     if (!temporal) return true;
     const cut = this.sourceCut(worldId, actorId);
     return !!cut && temporalHistoryAccountAvailable(cut, temporal);
+  }
+  /** A corrected original remains readable history, but cannot support new
+   * unqualified narrator prose. Keep that restriction out of ordinary recall. */
+  private narrationSourceAtCurrentCut(worldId: string, actorId: string, sourceId: string): boolean {
+    const cut = this.sourceCut(worldId, actorId);
+    return !cut || (!cut.forgotten.has(sourceId) && !cut.corrected.has(sourceId));
   }
   private async readForActor<T>(
     worldId: string,
@@ -1122,8 +1129,9 @@ export class HistoryRepository {
     const read = () =>
       this.db
         .prepare(
-          `SELECT event_id,payload FROM history_perspectives
-        WHERE world_id=? AND actor_id=? AND event_id IN (${job.sources.map(() => '?').join(',')})`,
+          `SELECT p.event_id,p.payload FROM history_perspectives p
+        WHERE p.world_id=? AND p.actor_id=? AND p.event_id IN (${job.sources.map(() => '?').join(',')})
+          AND ${narrationSourceUnrevokedSql()}`,
         )
         .all(worldId, job.actorId, ...job.sources.map((source) => source.id));
     const rows = await (this.db.readForActor
@@ -1139,6 +1147,7 @@ export class HistoryRepository {
       const payload = current.get(source.id);
       return (
         payload !== undefined &&
+        this.narrationSourceAtCurrentCut(worldId, job.actorId, source.id) &&
         this.sourceAtCurrentCut(worldId, job.actorId, payload) &&
         (JSON.parse(payload) as { revision: string }).revision === source.revision
       );
@@ -1148,12 +1157,14 @@ export class HistoryRepository {
     return this.readForActor(worldId, job.actorId, async () => {
       const rows = await this.db
         .prepare(
-          `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.actor_id=? AND p.position<=? ORDER BY p.position DESC,p.event_id DESC LIMIT 12`,
+          `SELECT p.payload,${storyAccountSql()} AS account_payload FROM history_perspectives p WHERE p.world_id=? AND p.actor_id=? AND p.position<=?
+          AND ${narrationSourceUnrevokedSql()} ORDER BY p.position DESC,p.event_id DESC LIMIT 12`,
         )
         .all(worldId, job.actorId, job.item.order);
       return rows
         .filter((row) => this.sourceAtCurrentCut(worldId, job.actorId, String(row['payload'])))
         .map((row) => storySourceRow(row))
+        .filter((source) => this.narrationSourceAtCurrentCut(worldId, job.actorId, source.id))
         .filter((s) => !job.sources.some((m) => m.id === s.id))
         .slice(0, 8);
     });

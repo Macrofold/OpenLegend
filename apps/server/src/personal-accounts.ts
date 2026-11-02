@@ -190,23 +190,31 @@ export function encodeTemporalStoryAccount(
   };
 }
 
-/** One correlated indexed body lookup per already-selected perspective. Exact actor,
- * source family and revision prevent two witnesses or record kinds sharing a body.
- * New/current rows and archived versions are disjointly addressed by the same hash. */
+/** Narration cannot present a disputed original as established fact. Historical
+ * reading and personal recall retain their separate correction-warning behavior. */
+export function narrationSourceUnrevokedSql(alias = 'p'): string {
+  return `NOT EXISTS(SELECT 1 FROM mind_forgotten f WHERE f.world_id=${alias}.world_id
+    AND f.actor_id=${alias}.actor_id AND f.source_id=${alias}.event_id)
+    AND NOT EXISTS(SELECT 1 FROM mind_corrections c WHERE c.world_id=${alias}.world_id
+      AND c.actor_id=${alias}.actor_id AND c.source_id=${alias}.event_id)`;
+}
 /** The same exact account keys as body hydration, without reconstructing a
  * temporal dictionary merely to ask whether a banner still has its source. */
 export function storyAccountAvailableSql(alias = 'p'): string {
   const kind = `${alias}.payload::jsonb#>>'{account,kind}'`,
     revision = `${alias}.payload::jsonb#>>'{account,revision}'`;
-  return `(EXISTS (SELECT 1 FROM mind_awareness a WHERE ${kind}='awareness' AND a.world_id=${alias}.world_id AND a.actor_id=${alias}.actor_id AND a.source_id=${alias}.event_id AND a.account_revision=${revision})
+  return `(${narrationSourceUnrevokedSql(alias)} AND (EXISTS (SELECT 1 FROM mind_awareness a WHERE ${kind}='awareness' AND a.world_id=${alias}.world_id AND a.actor_id=${alias}.actor_id AND a.source_id=${alias}.event_id AND a.account_revision=${revision})
     OR EXISTS (SELECT 1 FROM mind_source_versions v WHERE v.world_id=${alias}.world_id AND v.actor_id=${alias}.actor_id AND v.source_kind=${kind} AND v.source_id=${alias}.event_id AND v.revision=${revision})
     OR EXISTS (SELECT 1 FROM mind_temporal_chunks c JOIN mind_temporal_segments s ON s.world_id=c.world_id AND s.parent_id=c.id
       WHERE ${kind}='temporal' AND c.world_id=${alias}.world_id AND c.id=${alias}.temporal_chunk_id AND c.retired_revision IS NULL
         AND c.actor_id=${alias}.actor_id AND c.physical_life=(${alias}.payload::jsonb#>>'{account,receipt,physicalLife}')::bigint
         AND c.receipt_epoch=${alias}.payload::jsonb#>>'{account,receipt,epoch}'
-        AND s.receipt_ordinals @> ARRAY[(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint]))`;
+        AND s.receipt_ordinals @> ARRAY[(${alias}.payload::jsonb#>>'{account,receipt,ordinal}')::bigint])))`;
 }
 
+/** One correlated indexed body lookup per already-selected perspective. Exact actor,
+ * source family and revision prevent two witnesses or record kinds sharing a body.
+ * New/current rows and archived versions are disjointly addressed by the same hash. */
 export function storyAccountSql(alias = 'p'): string {
   const revision = `${alias}.payload::jsonb #>> '{account,revision}'`;
   const kind = `${alias}.payload::jsonb #>> '{account,kind}'`;

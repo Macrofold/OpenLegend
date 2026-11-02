@@ -1,10 +1,10 @@
 # Saving and retention without repeated database investigation
 
-| Status      | Current progress                                                                   | Last updated |
-| ----------- | ---------------------------------------------------------------------------------- | ------------ |
-| In progress | BK09–BK15 is installed under verification; BK16 operating acceptance remains open. | 2026-11-02   |
+| Status      | Current progress                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK09–BK15 implementation and connected checks pass; BK16 operating acceptance remains open. | 2026-11-02   |
 
-Technical companion to the [feature specification](bookkeeping-simplification-feature-spec.md) and [installed architecture](bookkeeping-simplification-tech-design.md). **Design baseline inspected November 1, 2026, 23:21 UTC:** Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, `a2967555f6ae977d8bfe0ad880710815b9116681`. This is the current implementation contract; semantic/storage verification and operating acceptance remain open. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns implementation; BK07/SR11/RU11 retain their operating gates. Earlier BK/RU/PP08 work remains the starting implementation, not work to repeat.
+Technical companion to the [feature specification](bookkeeping-simplification-feature-spec.md) and [installed architecture](bookkeeping-simplification-tech-design.md). **Design baseline inspected November 1, 2026, 23:21 UTC:** Macrofold/OpenLegend, local `codex/stealth-runtime-01-evidence`, `a2967555f6ae977d8bfe0ad880710815b9116681`. This is the current implementation contract; connected semantic/storage checks pass, while operating acceptance remains open. [BK08–BK16](../maintainers/production-data.md#database-work-reduction) owns implementation; BK07/SR11/RU11 retain their operating gates. Earlier BK/RU/PP08 work remains the starting implementation, not work to repeat.
 
 ## 1. Intended play and evidence
 

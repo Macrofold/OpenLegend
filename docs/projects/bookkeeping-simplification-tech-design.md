@@ -1,12 +1,12 @@
 # Simpler saving and personal evidence — technical design
 
-| Status      | Current progress                                                                   | Last updated |
-| ----------- | ---------------------------------------------------------------------------------- | ------------ |
-| In progress | BK09–BK15 is installed under verification; BK16 operating acceptance remains open. | 2026-11-02   |
+| Status      | Current progress                                                                            | Last updated |
+| ----------- | ------------------------------------------------------------------------------------------- | ------------ |
+| In progress | BK09–BK15 implementation and connected checks pass; BK16 operating acceptance remains open. | 2026-11-02   |
 
 **Design selected 2026-10-31, 05:10 UTC. Architecture inspected at Macrofold/OpenLegend `7a197980a6d65909fd185244c2631b8055faadf0`, local `codex/stealth-runtime-01-evidence`.** The [feature specification](bookkeeping-simplification-feature-spec.md) owns intended play, preserved behavior and consequential choices. Architecture used and implementation reconciled 2026-10-31 10:59 UTC on `codex/bookkeeping-runtime-01`, based on `39aa9775a5cf48e4318227410d0ab5625f92db9d`. [BK](../maintainers/production-data.md#bookkeeping-simplification) owns remaining qualification; concurrent unrelated work is outside this project. The [integration contract](attention-and-scenes-runtime-design.md#14-integration-contract-for-the-completed-bk-ru-and-vw-branches) coordinates BK with RU consumers and VW tooling without duplicating this implementation.
 
-The [runtime companion](bookkeeping-simplification-runtime-design.md) is the current BK09–BK15 contract for live acceptance, independent support, due/pressure retention, precise row writes and captured pending reads. The implementation is under verification; its operating gate remains open. The sections below retain the direct-writer and evidence semantics, with execution following that companion.
+**Architecture used for BK09–BK15 November 2, 2026, 06:49 UTC.** The [runtime companion](bookkeeping-simplification-runtime-design.md) is the current BK09–BK15 contract for live acceptance, independent support, due/pressure retention, precise row writes and captured pending reads. Connected implementation checks pass; its operating gate remains open. The sections below retain the direct-writer and evidence semantics, with execution following that companion.
 
 ## 1. Selected architecture and current baseline
 
