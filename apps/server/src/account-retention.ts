@@ -6,6 +6,7 @@ import {
   encodedExperienceBytes,
   ensureExperienceAccounting,
   experienceRetentionDue,
+  experienceMaintenanceTarget,
   createRememberedImpression,
   weakenImpression,
   awarenessMemory,
@@ -40,6 +41,7 @@ const tables = {
 } as const;
 type Kind = keyof typeof tables;
 const maximumPreparationBytes = 4 * 1024 * 1024;
+export const maximumAccountRetentionActors = 32;
 interface Candidate {
   kind: Kind;
   id: string;
@@ -89,6 +91,7 @@ export async function prepareAccountRetention(
   complete = false,
   pendingDeletes?: ReadonlyMap<string, readonly string[]>,
   retainedMetadata?: RetentionMetadataView,
+  actorIds: readonly string[] = Object.keys(state.world.experience?.temporal?.actors ?? {}),
 ): Promise<PreparedMemoryRetention> {
   if (!retainedMetadata)
     throw new MemoryRetentionError('Complete personal retention metadata is unavailable.');
@@ -97,7 +100,7 @@ export async function prepareAccountRetention(
   const rows = new Map<string, string[]>(),
     positions = new Map<string, Map<string, number>>();
   let world = state.world;
-  for (const actorId of Object.keys(world.experience?.temporal?.actors ?? {})) {
+  for (const actorId of actorIds) {
     let accounts = world.experience!.temporal!.actors[actorId]!.accounts;
     if (!accounts) {
       const totals = new Map<string, { bytes: number; count: number }>();
@@ -264,7 +267,7 @@ export async function prepareAccountRetention(
     );
     let nextDue: number | null = selectedRecognitionMaintenanceDue(world, actorId);
     for (const candidate of ordered) {
-      const budget = policy[candidate.category],
+      const budget = experienceMaintenanceTarget(world, candidate.category),
         pressure =
           projected[candidate.category].bytes > budget.maxBytes ||
           projected[candidate.category].count > budget.maxRecords;
@@ -578,13 +581,14 @@ export async function prepareAccountRetentionPlan(
   db: SqlDatabase,
   state: SavedWorld,
   metadata: RetentionMetadataView,
+  actorIds: readonly string[],
   pendingDeletes?: ReadonlyMap<string, readonly string[]>,
   prepareVersions?: (
     prepared: PreparedMemoryRetention,
   ) => Promise<{ state: SavedWorld; plan: SourceVersionPlan }>,
 ): Promise<AccountRetentionPlan> {
-  const repaired = await prepareIndividualReferenceRepairs(db, state, metadata);
-  const prepared = await prepareAccountRetention(db, repaired, false, pendingDeletes, metadata);
+  const repaired = await prepareIndividualReferenceRepairs(db, state, metadata, actorIds);
+  const prepared = await prepareAccountRetention(db, repaired, false, pendingDeletes, metadata, actorIds);
   const versions = prepareVersions ? await prepareVersions(prepared) : undefined;
   if (versions) prepared.state = versions.state;
   const result: AccountRetentionPlan = {
@@ -594,9 +598,8 @@ export async function prepareAccountRetentionPlan(
     ...(versions ? { versions: versions.plan } : {}),
     ...(prepared.positions ? { positions: prepared.positions } : {}),
   };
-  for (const [actorId, after] of Object.entries(
-    prepared.state.world.experience?.temporal?.actors ?? {},
-  )) {
+  for (const actorId of actorIds) {
+    const after = prepared.state.world.experience!.temporal!.actors[actorId]!;
     const before = state.world.experience?.temporal?.actors[actorId];
     if (!before || !before.accounts || !after.accounts) continue;
     const writes: ExperienceEntry[] = [];

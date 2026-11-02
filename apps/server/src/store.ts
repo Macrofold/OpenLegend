@@ -1,5 +1,6 @@
 import {
   prepareAccountRetentionPlan,
+  maximumAccountRetentionActors,
   nextAccountRetentionAt,
   type AccountRetentionPlan,
 } from './account-retention.js';
@@ -575,7 +576,11 @@ export class SqlGameRepository implements GameRepository {
     const dueAt = nextAccountRetentionAt(state.world);
     if (dueAt === null || dueAt > state.world.simTime)
       return { worldId: state.world.id, actors: [], rows: new Map() };
-    const actors = [...dueAccountRetentionActors(state.world)];
+    const actors: string[] = [];
+    for (const actorId of dueAccountRetentionActors(state.world)) {
+      actors.push(actorId);
+      if (actors.length === maximumAccountRetentionActors) break;
+    }
     const metadata = new RetentionMetadata();
     const baseline = this.acceptedState;
     const operation = async () => {
@@ -591,6 +596,7 @@ export class SqlGameRepository implements GameRepository {
         this.db,
         state,
         metadata.view(state.world.id, pending),
+        actors,
         pending.deletes,
         async (prepared) => {
           this.records.stageRetirements(prepared.state, prepared.rows, prepared.positions);

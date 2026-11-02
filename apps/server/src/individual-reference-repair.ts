@@ -26,6 +26,7 @@ export async function prepareIndividualReferenceRepairs(
   db: SqlDatabase,
   state: SavedWorld,
   metadata: RetentionMetadataView,
+  actorIds: readonly string[],
 ): Promise<SavedWorld> {
   const world = state.world,
     requested: Array<{
@@ -35,7 +36,9 @@ export async function prepareIndividualReferenceRepairs(
       frontier_order: number | null;
       frontier_ordinal: number | null;
     }> = [];
-  for (const [actorId, actor] of Object.entries(world.experience?.temporal?.actors ?? {})) {
+  for (const actorId of actorIds) {
+    const actor = world.experience?.temporal?.actors[actorId];
+    if (!actor) continue;
     for (const id of actor.individualRepairs ?? []) {
       requested.push({
         actor_id: actorId,

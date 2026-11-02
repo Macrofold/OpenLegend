@@ -84,6 +84,24 @@ export function encodedExperienceBytes(entry: ExperienceEntry): number {
   return encoder.encode(JSON.stringify(entry.value)).byteLength;
 }
 
+/** Mandatory native outcomes cannot overshoot their hard envelope. Retire
+ * replaceable aftermath early enough to leave the world's maintenance share
+ * available for the next admitted batch; active owners remain protected. */
+export function experienceMaintenanceTarget(world: WorldState, pool: ExperienceAccountClass) {
+  const policy = selectedTemporalPolicy(world), hard = policy[pool];
+  return pool === 'required' ? {
+    maxBytes: Math.floor(hard.maxBytes * (1 - policy.maintenanceHeadroom)),
+    maxRecords: Math.floor(hard.maxRecords * (1 - policy.maintenanceHeadroom)),
+  } : hard;
+}
+export function markRequiredExperienceMaintenance(world: WorldState, actorId: string): void {
+  const accounts = world.experience?.temporal?.actors[actorId]?.accounts;
+  if (!accounts) return;
+  const target = experienceMaintenanceTarget(world, 'required');
+  if (accounts.required.bytes > target.maxBytes || accounts.required.count > target.maxRecords)
+    accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, world.simTime);
+}
+
 /** Bootstrap authored resident accounts once, before the first source mutation.
  * A cold repository load installs complete totals before trimming resident tails. */
 export function ensureExperienceAccounting(world: WorldState, actorId: string): void {
@@ -129,6 +147,7 @@ export function ensureExperienceAccounting(world: WorldState, actorId: string): 
       actor.accounts.required.bytes += encoder.encode(JSON.stringify(value)).byteLength;
       actor.accounts.required.count++;
     }
+  markRequiredExperienceMaintenance(world, actorId);
 }
 
 export function adjustExperienceAccounting(
@@ -141,7 +160,7 @@ export function adjustExperienceAccounting(
   ensureExperienceAccounting(world, actorId);
   const accounts = world.experience?.temporal?.actors[actorId]?.accounts;
   if (!accounts) return;
-  const account = accounts[accountClass(entry)];
+  const category = accountClass(entry), account = accounts[category];
   const bytes = account.bytes + delta * encodedExperienceBytes(entry),
     count = account.count + delta;
   if (bytes < 0 || count < 0) throw new Error('Personal account retention counters underflowed.');
@@ -149,6 +168,7 @@ export function adjustExperienceAccounting(
   account.count = count;
   const due = delta === 1 ? experienceRetentionDue(world, entry) : null;
   if (due !== null) accounts.nextDue = Math.min(accounts.nextDue ?? Infinity, due);
+  if (delta === 1 && category === 'required') markRequiredExperienceMaintenance(world, actorId);
 }
 
 /** Lasting notes and identities share the optional allowance; executable grants
@@ -180,6 +200,7 @@ export function adjustRetainedKnowledgeAccounting(
     return false;
   account.bytes = bytes;
   account.count = count;
+  if (options?.required && after !== undefined) markRequiredExperienceMaintenance(world, actorId);
   return true;
 }
 

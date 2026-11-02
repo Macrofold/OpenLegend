@@ -1361,14 +1361,9 @@ export class AuthorityRepository {
   }
   async worldGrants(worldId: string): Promise<WorldGrant[]> {
     const rows = await this.db
-      .prepare('SELECT account_id FROM auth_grants WHERE world_id=?')
+      .prepare('SELECT * FROM auth_grants WHERE world_id=?')
       .all(worldId);
-    const grants: WorldGrant[] = [];
-    for (const row of rows) {
-      const grant = await this.grant(worldId, String(row['account_id']));
-      if (grant) grants.push(grant);
-    }
-    return grants;
+    return rows.map(row => this.grantFromRow(worldId, String(row['account_id']), row));
   }
   /** Historical human privacy is independent of the currently selected embodiment.
    * Rebinding never transfers another human's notes or makes an abandoned character an NPC.
