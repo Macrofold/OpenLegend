@@ -1,75 +1,63 @@
 # Study record and handoff
 
-Use one record at `art-direction/studies/<study-id>/README.md`. Adapt the outline below;
-omit irrelevant fields. Exact asset catalogs remain in the existing storage system rather
-than a new schema invented for these flows.
+Use one record at `art-direction/studies/<study-id>/README.md` ([naming](README.md#7-working-files-ids-and-records)) and link it from the [study index](../../../art-direction/studies/README.md). Adapt the outline below and omit fields that do not apply. Exact asset inventories stay in the existing storage catalogs and indexes; the record links them rather than inventing another schema.
+
+The record holds current state, not a diary: replace stale lines as the study moves on, and keep Mike's decisions and words.
 
 ## Record outline
 
+### State
+
+One line: the current stage and what is true now, using the separate facts **created**, **checked for the named consumer**, **archived**, **owner-selected** and **integrated**. For example: _"Stage 5. m02 owner-selected; f01 exported and checked; not archived; not integrated."_
+
 ### Brief
 
-- Purpose, subject, selected flow/profile, requested finish and quality.
-- Player/visual goal, intended viewing/use conditions and relevant project owners.
-- Required outputs, preserved identity/style constraints and comparison conditions.
-- For models/animation, resolved rig/target, exact clip list, material choice and output format; for finalization, the selected prototype/source and required improvements. Link existing source/export settings instead of copying them.
-- Reference list: exact retained reference, original source/filename, role and use rights.
-- Requested candidate count, selection authority and applicable task budget.
-- Current completion state: distinguish created, reviewed, archived, selected and integrated.
+- **Purpose:** the subject, the play moment it serves, and the requested finish and quality.
+- **Settings:** profile, finish, quality, fidelity with its locks and free areas, tools (preset and any per-stage overrides), candidate counts, selection authority, stop point and budget.
+- **Look:** what the [current art direction](README.md#3-read-the-look-from-the-art-direction) requires for this subject: target and rejects, proportion and scale rules, production notes, review conditions. Link the owners rather than copying long passages.
+- **Game facts:** real size in metres, handedness and carried things, supported actions, the visible states the simulation records, and the consumer that will use the files. Link each fact's owner.
+- **Model and motion:** for models and animation, the resolved rig or target, the exact clip list, the material choice and the output format; for finalization, the selected prototype or source and the required improvements. Link existing source and export settings instead of copying them.
+- **Signature:** for a person or creature, the two or three features that must identify it at play distance.
+- **References:** each exact retained reference with its original source or filename, role, rights, and whether it may be uploaded to a generator.
+- **Required outputs** and the [play checks](profiles.md#play-checks) that apply.
+- **Plan line** as stated before spending.
 
 ### Candidates
 
-| ID / original name     | Direction and useful differences | Exact preview/source references                        | Coverage and limitations                  | Selection                                       |
-| ---------------------- | -------------------------------- | ------------------------------------------------------ | ----------------------------------------- | ----------------------------------------------- |
-| Stable study-scoped ID | Short description                | Verified manifest/revision and durable access location | What actually exists and what was checked | Unselected, agent-recommended or owner-selected |
+| ID  | Stage and parent      | Direction and useful differences | Exact preview and source references                | Coverage and limits                       | Selection                                       |
+| --- | --------------------- | -------------------------------- | -------------------------------------------------- | ----------------------------------------- | ----------------------------------------------- |
+| m02 | Model, from v01 (c03) | Short description                | Verified manifest/revision and durable access path | What actually exists and what was checked | Unselected, agent-recommended or owner-selected |
 
-Keep every requested contender. For comparisons, record shared inputs once and link the
-Standard and Higgsfield results. Do not renumber old candidates after one is removed from
-consideration; a new revision retains its lineage.
+Keep every candidate, including rejected ones. Do not renumber after one is dropped; a revision gets a new ID naming its parent. Keep provider filenames and job IDs. For comparisons, record the shared inputs once and link both routes' results.
+
+### Decisions
+
+One line per decision point (A direction, B candidate, C acceptance) and per consequential correction: the date, what was chosen or sent back, by whom, and Mike's words when he gave them.
+
+### Interpretations
+
+Each consequential judgment the workflow made rather than copied: which view was canonical when views disagreed, how a hidden surface was invented, the chosen body and rig family, material interpretations, simplifications made for budget or readability. Under `exact`, list every remaining visible difference from the source.
 
 ### Construction and sources
 
-Record available sources, actual formats, exports, dimensions/scale and assembly/playback
-information, including editing limits. For production, identify the named consumer and
-applicable [export contract](production.md#1-define-the-package-before-finishing), linking
-existing catalog/manifests for exact inventory and dependencies.
+Available sources, actual formats, exports, dimensions or height, triangle and texture counts, joints and clips, and assembly or playback information, with editing limits. For production, name the consumer and the applicable [package contract](production.md#1-define-the-package-before-finishing), linking the catalogs and manifests for exact inventory.
 
-For a UI style, include surfaces, fixed corners, repeated edges, joins, accents,
-text-safe regions and demonstrated state treatment. Record promises such as seamless tiling
-or clean alpha only after checking actual exported bytes.
+For a UI kit with sliced raster parts, record fixed corners, repeated edges, joins, accents, text-safe regions and demonstrated states; record tiling or clean alpha only after checking the actual exported bytes. For native CSS or vector UI, record the tokens and components instead.
 
-Keep reproducible prompts/recipes, input revisions, actual tool/model/mode and useful settings.
-Separate observable metadata from inferred details. Store proprietary/private source payloads
-and operational receipts in their permitted external locations, never credentials in Git.
-An export with reconstructed layers must not be described as an original layered source.
+Keep prompts and recipes, input revisions, the exact tool, model, mode and settings, and repeatable scripts. Separate observed metadata from inference. Proprietary or private source payloads and receipts stay in their permitted external locations; credentials never enter Git. A reconstructed layer is never described as an original layered source.
 
 ### Review and remaining gaps
 
-State observed strengths, defects, fit with the brief, and specific checks performed.
-For production checks, identify the export revision, inspection tool/recipe and conditions.
-Distinguish visual judgment, export checks and runtime evidence. Record measured cost/time
-and Mike's manual involvement when available and label unknowns. Preserve current feedback and decisions without narrating
-every editing pass.
+Observed strengths and defects, fit with the brief and look, play-check results, critique findings and what was fixed. For production checks, name the export revision, tool or viewer, and conditions. Keep visual judgment, export checks and runtime evidence distinct.
+
+**Cost:** balance before and after each paid batch, exact model IDs, request counts, dollar values (with the conversion used) and the running task total; mark unknowns. Note use of Mike's plan quotas (for example Claude Design) and his manual involvement.
 
 ### Resume
 
-Name the exact candidate/revision, available files, unresolved choice and next requested
-stage. For interrupted work, retain the current working location, completed/remaining outputs
-and a permitted reference to outstanding operations and spending commitments; recover them
-before starting replacement work. Record the shared input/code/world baseline when relevant.
-Include the instructions needed to retrieve the private/public files through existing
-tooling. A temporary workstation path may help locate unsaved work but cannot stand in for
-the archive. Do not store expiring signed URLs as permanent references.
+The exact candidate or revision, available files, open decision and next stage. While a batch runs: its job IDs, status and committed cost, so a new thread recovers them before submitting anything new. The exact S3 references of every uploaded file, and how to fetch them into a working folder through existing tooling. Local copies are caches, not records. A temporary path can help find unsaved work but is never the archive, and expiring signed URLs are never stored.
 
 ## Final message from a run
 
-Give Mike a visible comparison or direct preview links, candidate IDs, a concise recommendation
-when helpful, genuine gaps, and **one commit-pinned study README link**. A new thread can read
-that record and fetch the files without copying the previous conversation.
+Give Mike the comparison sheet or direct previews, candidate IDs, a short recommendation when useful, the cost, genuine gaps, and **one commit-pinned study record link** that a new thread can resume from. A local commit alone does not make a reachable link: push under existing authorization, or say plainly that the link is local only. For a two-route comparison, return one shared index link when a coordinator owns it; otherwise each route's record link.
 
-For a two-flow comparison, return one shared index link when a coordinator owns it; otherwise
-return each flow's pinned record link. Shared storage is not an assumption that separate AI
-threads share local files or Git checkouts.
-
-For incomplete publication, explicitly say “not yet archived” and identify the exact preserved
-working files/access blocker. For a study-only request, end with the saved study; selecting or
-implementing it is a separate requested continuation.
+If publication is incomplete, say "not yet archived" and name the preserved working files and the access blocker. A study-only request ends with the saved study; selecting or implementing it is a separate requested continuation.

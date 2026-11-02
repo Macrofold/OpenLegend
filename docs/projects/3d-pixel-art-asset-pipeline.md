@@ -20,7 +20,7 @@ The preserved [MER09 mercenary sculpture](../maintainers/art/mercenary.md#reject
 - Capacity and staged-work limits: [A3D inventory](../limits/3d-pixel-art.md). Shared [AI execution](../limits/ai-execution.md), [invention](../limits/inventions.md), and [persistence](../limits/persistence.md) limits remain controlling.
 - Existing policy: [runtime art and publication](../invention-art-pipeline.md), [shared episode funding](../invention-budgets.md), [INV workflow](../maintainers/inventions-and-world-evolution.md), and [AI/provider boundary](../ai-providers.md). The [original visual direction](../../archive/03-design-proposals/visual-direction.md#art-generated-during-play) retains artistic intent, not a competing publication or spending contract.
 - Visual coverage: [appearance families](3d-pixel-art-appearance-families.md). Evidence: [qualification](3d-pixel-art-validation.md).
-- Offline production: [workflow handbook](../production-workflows/README.md), [asset/animation route](../production-workflows/assets-and-animation.md), and [source-to-export handoff](3d-pixel-art-tech-design.md#editable-source-handoff-and-reviewed-runtime-export).
+- Offline production: [art workflow](../production-workflows/art-flows/README.md) and its [3D route](../production-workflows/art-flows/3d-models.md), [workflow handbook](../production-workflows/README.md), [asset/animation route](../production-workflows/assets-and-animation.md), and [source-to-export handoff](3d-pixel-art-tech-design.md#editable-source-handoff-and-reviewed-runtime-export). Offline study records capture the useful-asset rate, rejected candidates, correction time and cost that [provider selection](#10-provider-selection-and-evidence) asks for.
 
 ## Connection to development production
 

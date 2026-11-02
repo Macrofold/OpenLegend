@@ -41,9 +41,11 @@ pnpm assets workspace --public --prefix apps/client/src/props/art-study/source-w
 
 Choose a new external output directory. Authenticated workspace creation requires current offline permission; `--public` uses the public download rules above. Both modes copy files independently from the cache and refuse overwrites. For editable library originals, supply their published source-bundle index with `--index`; the default runtime list contains the game's selected exports. Changes in this workspace are unsaved authoring work until published; they cannot modify the selected immutable release or another worktree's cache files.
 
+For art studies and production art, the deliberately named workspace is `~/Documents/ChatGPT/OpenLegend-art/<study-id>/study/`; the [art workflow](production-workflows/art-flows/README.md#7-working-files-ids-and-records) names its stage folders. Upload every meaningful output to S3 as soon as its batch finishes and keep only the exact references locally; local files are working caches that `pnpm assets workspace` can restore. Only files very likely to be temporary stay local without upload. The `/private/tmp` paths in the generic examples on this page are illustrations for disposable checks.
+
 For new work, save directly to a deliberately named external workspace. Keep provenance beside the output: source URL/package and license, original hashes, creator, tool/version, prompt or recipe when applicable, input revisions and known verification limits. Do not include credentials, provider job records or unrelated private files in a source bundle or public study.
 
-Follow the relevant [visual requirements](../art-direction/decisions.md#current-visual-requirements--october-16-2026), [creative brief](../art-direction/final-board/creative-brief.md) and [scene/tool workflow](../.agents/skills/openlegend-playcanvas/SKILL.md). Storage approval does not establish visual quality, geometry correctness or runtime behavior. Retain requested iterations as exact external source/export/capture references rather than overwriting their only copies.
+Follow the [current art direction](../art-direction/decisions.md#current-direction-at-a-glance), the [art workflow](production-workflows/art-flows/README.md) and the [scene/tool workflow](../.agents/skills/openlegend-playcanvas/SKILL.md). Storage approval does not establish visual quality, geometry correctness or runtime behavior. Retain requested iterations as exact external source/export/capture references rather than overwriting their only copies.
 
 ### Run the existing offline recipes
 
@@ -91,6 +93,17 @@ pnpm assets publish --manifest /private/tmp/doe-source.manifest.json --boundary 
 For public studies, select `art-studies/public`, approve `public-study` and source access as applicable, review the public projection, and pass `--public-reviewed` to publication. Runtime use has its own `private-runtime` or `public-runtime` approval. These are decisions about the intended collection, not permission to turn an arbitrary private source bundle into public game output. `grant`, `withdraw` and `authority-export` administer current access and restrictions through the same authority. Withdrawal cannot retract already downloaded files.
 
 `withdraw` removes the selected revision's current access, removes its recorded hosted copies where they are no longer shared by an allowed revision, and waits for the exact public cache invalidation. For a file that must be prohibited across revisions, add `--prohibit-bytes`; `--path MANIFEST_PATH` narrows that prohibition to one exact file while still withdrawing the selected revision. Supply frozen `--source-config` files when its recorded copies span trusted environments. Keep the same operation ID and exact request when resuming interrupted removal. Protected historical S3 versions remain available only through the separate recovery rules; a completed removal cannot recall copies already downloaded by someone else.
+
+### Common publishing problems
+
+These were found while archiving real studies; check them before and during publication.
+
+- **Use the main checkout's asset authority.** The publication database is the one named by `OPEN_LEGEND_DATABASE_URL` in the main checkout's `.env`, not a worktree's game database. Export the value into the publishing shell without printing it.
+- **Check the AWS sign-in immediately before `approve` and `publish`.** The `openlegend` profile's session expires overnight and has lapsed within an hour of a successful check. Run `"$HOME/.local/bin/aws" sts get-caller-identity --profile openlegend --region us-east-2` (the [AWS rules](../.agents/rules/aws.md) explain why the explicit executable); if it fails, finish other work and ask Mike to renew the sign-in. Never request or handle his credentials.
+- **Split large manifests.** A manifest of about 450 KB (roughly 2,000 files) fails with "Asset metadata exceeds the recoverable SQL record allowance"; a 141 KB manifest succeeds. Split with `splitMigrationManifest` from [the migration tools](../scripts/assets/migration.ts) (a `maxManifestBytes` of 196608 worked), publish the parts first, then a parent that pins them.
+- **Freeze the folder first.** The manifest hashes files when it is built; any edit during publication leaves the working copy different from the archive. Make every edit, then build the manifest, then publish.
+- **Resume, do not restart.** After a network failure or a transient "non-retryable streaming request" message, rerun the same `publish` with the same operation ID and exact request, then `verify`.
+- **Shell loops in zsh:** never name a loop variable `status` (read-only) or `path` (it is `$PATH`).
 
 ### Select development or production runtime storage
 

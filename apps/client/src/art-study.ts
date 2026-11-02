@@ -1,7 +1,7 @@
 import * as pc from 'playcanvas';
 import { ArtMaterials, candidateArt } from './art-treatment';
 import { isFoliageMaterialName, prepareFoliageLight } from './environment-art';
-import { BundledModels, destroyModelApplication } from './bundled-models';
+import { BundledModels, destroyModelApplication, type BundledModel } from './bundled-models';
 import { CAMERA_FOV_DEGREES, initialCamera } from './world-camera';
 import { installLocomotion } from './model-animation';
 import { StudyCapture } from './study-capture';
@@ -16,6 +16,8 @@ import './art-study.css';
 type Choice = StudyCatalogAsset & {
   url: string;
   motionUrl?: string;
+  /** A developer-chosen local file shown beside the catalog subjects; never uploaded. */
+  localBytes?: ArrayBuffer;
   sourceUrl?: string;
   historical: boolean;
   sourceControl?: boolean;
@@ -42,6 +44,49 @@ const retainedFamilies = new Set(
   choices.filter((asset) => replacedIds.has('study:' + asset.id)).map((asset) => asset.family),
 );
 const layout: Record<string, { label: string; position: readonly number[] }> = studyLayout;
+// The game's runtime payload bound (docs/limits/3d-pixel-art.md#a3d02--encoded-intake-and-runtime-payload):
+// a larger local candidate would not load in play either, so it is reduced first.
+const LOCAL_MODEL_BYTES = 16 * 1024 * 1024;
+const clipNames = (resource: BundledModel) =>
+  resource.animations.flatMap((asset) =>
+    asset.resource instanceof pc.AnimTrack ? [asset.resource.name] : [],
+  );
+const hasLocomotion = (resource: BundledModel) =>
+  ['Idle', 'Run'].every((name) => clipNames(resource).includes(name));
+/** Measure a local model once it is parsed; catalog subjects carry these facts already. */
+function describeLocal(asset: Choice, artwork: pc.Entity, resource: BundledModel): void {
+  const box = new pc.BoundingBox();
+  const part = new pc.BoundingBox();
+  const textures = new Set<pc.Texture>();
+  let first = true,
+    triangles = 0;
+  for (const component of artwork.findComponents('render')) {
+    if (!(component instanceof pc.RenderComponent)) continue;
+    for (const mesh of component.meshInstances) {
+      // Joints place a skinned mesh, and its inverse bind matrices cancel the node scale
+      // (providers export a 0.01-scaled armature), so its bind pose is already in model space.
+      if (mesh.skinInstance) part.copy(mesh.mesh.aabb);
+      else part.setFromTransformedAabb(mesh.mesh.aabb, mesh.node.getWorldTransform());
+      if (first) box.copy(part);
+      else box.add(part);
+      first = false;
+      triangles += Math.floor((mesh.mesh.primitive[0]?.count ?? 0) / 3);
+      const material = mesh.material;
+      if (material instanceof pc.StandardMaterial)
+        for (const texture of [material.diffuseMap, material.normalMap, material.opacityMap])
+          if (texture) textures.add(texture);
+    }
+  }
+  const min = box.getMin(),
+    max = box.getMax();
+  asset.bounds = { min: [min.x, min.y, min.z], max: [max.x, max.y, max.z] };
+  asset.triangles = triangles;
+  asset.textureSizes = [...textures].map((texture) => [texture.width, texture.height]);
+  const clips = clipNames(resource);
+  asset.description =
+    `Clips: ${clips.length ? clips.join(', ') : 'none'}` +
+    (hasLocomotion(resource) ? '' : ' · Idle and Run are needed for motion');
+}
 function element<T extends HTMLElement>(id: string): T {
   return document.getElementById(id) as T;
 }
@@ -80,6 +125,7 @@ export class ArtStudy {
   private animations: pc.AnimComponent[] = [];
   private readonly bounds: pc.Vec3[] = [];
   private displayed: Choice[] = [];
+  private local?: Choice;
   private anchors: { node: pc.Entity; label: HTMLElement; height: number }[] = [];
   private epoch = 0;
   private disposed = false;
@@ -193,6 +239,17 @@ export class ArtStudy {
     on(element('light'), 'change', () => this.light());
     on(element('projection'), 'change', () => this.placeCamera());
     on(element('shading'), 'change', () => this.shading());
+    on(element('local-model'), 'change', () => {
+      const file = element<HTMLInputElement>('local-model').files?.[0];
+      if (file) void this.chooseLocal(file);
+    });
+    on(element('local-model-remove'), 'click', () => this.removeLocal());
+    on(canvas.parentElement!, 'dragover', (event) => event.preventDefault());
+    on(canvas.parentElement!, 'drop', (event) => {
+      event.preventDefault();
+      const file = (event as DragEvent).dataTransfer?.files[0];
+      if (file) void this.chooseLocal(file);
+    });
     on(element('pixel-treatment'), 'change', () => this.placeCamera());
     for (const [id, yaw] of [
       ['front', 0],
@@ -402,6 +459,7 @@ export class ArtStudy {
         version === 'selected'
           ? selected.filter((asset) => asset.recommended)
           : selected.slice(Number(version), Number(version) + 1);
+    if (this.local) selected = [...selected, this.local];
     if (!selected.length) {
       element('status').textContent = 'No exported assets are available for this subject yet.';
       return;
@@ -424,7 +482,11 @@ export class ArtStudy {
     let installed = false;
     try {
       const resources = await Promise.all(
-        selected.map((asset) => models.load(asset.label, asset.motionUrl ?? asset.url)),
+        selected.map((asset) =>
+          asset.localBytes
+            ? models.loadBytes(asset.label, asset.file, asset.localBytes)
+            : models.load(asset.label, asset.motionUrl ?? asset.url),
+        ),
       );
       if (this.disposed || epoch !== this.epoch) return;
       const animations: pc.AnimComponent[] = [];
@@ -436,8 +498,11 @@ export class ArtStudy {
             receiveShadows: true,
           });
           fresh.push(artwork);
-          this.prepare(artwork, materials, selected[index]!);
-          if (selected[index]!.motionUrl) animations.push(installLocomotion(artwork, resource));
+          const asset = selected[index]!;
+          if (asset.localBytes) describeLocal(asset, artwork, resource);
+          this.prepare(artwork, materials, asset);
+          if (asset.motionUrl || (asset.localBytes && hasLocomotion(resource)))
+            animations.push(installLocomotion(artwork, resource));
           // A single exported mesh may carry its own origin offset. Position a
           // parent so its original model transform (and ground contact) survives.
           const placement = new pc.Entity(selected[index]!.id, this.app);
@@ -519,6 +584,11 @@ export class ArtStudy {
       console.error(error);
       element('status').textContent =
         'This comparison could not load. The previous displayed assets are retained; choose another subject or reload.';
+      if (selected.some((asset) => asset.localBytes)) {
+        this.removeLocal(false);
+        element('status').textContent =
+          'That file could not be read as a GLB model. The previous comparison is retained.';
+      }
       this.canvas.dataset.ready = String(this.roots.length > 0);
     } finally {
       if (this.pendingModels === models) this.pendingModels = undefined;
@@ -527,6 +597,42 @@ export class ArtStudy {
         this.releaseModels(models);
       }
     }
+  }
+  /** Show a local GLB beside the current comparison, in the game's own look. */
+  private async chooseLocal(file: File): Promise<void> {
+    if (file.size > LOCAL_MODEL_BYTES) {
+      element('status').textContent =
+        `${file.name} is larger than the game's 16 MiB model limit. Reduce its textures or geometry first.`;
+      element<HTMLInputElement>('local-model').value = '';
+      return;
+    }
+    const bytes = await file.arrayBuffer();
+    if (this.disposed) return;
+    this.local = {
+      id: 'local-model',
+      file: file.name,
+      family: 'local-model',
+      label: file.name,
+      variant: 'local file',
+      description: 'Loading…',
+      recommended: false,
+      triangles: 0,
+      vertices: 0,
+      textureSizes: [],
+      source: 'Opened from this computer only; not uploaded, cached or published.',
+      bounds: { min: [-0.5, 0, -0.5], max: [0.5, 1.8, 0.5] },
+      url: '',
+      historical: false,
+      localBytes: bytes,
+    };
+    element('local-model-remove').hidden = false;
+    await this.show();
+  }
+  private removeLocal(redisplay = true): void {
+    this.local = undefined;
+    element<HTMLInputElement>('local-model').value = '';
+    element('local-model-remove').hidden = true;
+    if (redisplay) void this.show();
   }
   private releaseModels(models: BundledModels): void {
     const pending = models.destroy();
@@ -561,6 +667,7 @@ export class ArtStudy {
         const facts = document.createElement('small');
         facts.textContent = `${(asset.bounds.max[1]! - asset.bounds.min[1]!).toFixed(2)} m tall · ${asset.triangles.toLocaleString()} triangles · ${asset.textureSizes.map((size) => size.join('×')).join(', ')} fixed paint`;
         card.append(facts);
+        if (!asset.url) return card; // A local file is already on this computer.
         const download = document.createElement('p');
         const model = document.createElement('a');
         model.href = asset.url;

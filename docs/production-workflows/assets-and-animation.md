@@ -2,7 +2,9 @@
 
 **Status:** proposed offline production procedures. The [shared workflow](README.md) owns briefs, handoffs, revision and tool-selection methods. The current mercenary is a delivered fixed-asset pilot; general imported/generated families, rig coverage and runtime appearance publication remain open in [V3D](../maintainers/3d-pixel-art.md).
 
-The purpose is to create recognizable things and expressive people that participate in the game. A carried tool should look related to its inventory image. A body should communicate intention before contact and visibly recover afterward. Clothing and possessions should help identify a person at the camera distance where play happens. These aims follow the [creative brief](../../art-direction/final-board/creative-brief.md); no new style or character anatomy is selected here.
+For the tool-by-tool execution of these stages (reference views, generation or library fitting, cleanup, rigging, clips, export and in-game review), follow [3D models](art-flows/3d-models.md) in the [art workflow](art-flows/README.md); this chapter keeps the game purpose, behavior and integration.
+
+The purpose is to create recognizable things and expressive people that participate in the game. A carried tool should look related to its inventory image. A body should communicate intention before contact and visibly recover afterward. Clothing and possessions should help identify a person at the camera distance where play happens. These aims follow the [current art direction](../../art-direction/decisions.md#current-direction-at-a-glance); no new style or character anatomy is selected here.
 
 ## Choose the representation before the tool
 
@@ -52,7 +54,7 @@ Inspect silhouette at gameplay size before surface detail. Include another objec
 
 **Produce:** an editable source containing correctly separated important parts, usable geometry, explicit pivots/anchors, UVs or other supported material mapping, and the required exported texture channels. Preserve the selected reference and source-to-output relationship.
 
-Blender or another already selected authoring tool can construct and repair the source. Procedural tools are useful for repeated forms, proportion controls or material families. Specialist generators such as the inspected Tripo/Meshy routes supply candidates when they remove work. The [asset-model dossier](../../archive/02-research/ai-game-development/07-image-3d-and-audio-models.md) records dated capabilities; generated output still needs full-object inspection and finishing.
+Blender or another already selected authoring tool can construct and repair the source. Procedural tools are useful for repeated forms, proportion controls or material families. Image-to-3D generators from the [default tool roster](art-flows/tools.md#default-roster) supply candidates when they remove work; generated output still needs full-object inspection and finishing.
 
 Check backs, undersides, handles, holes and contact surfaces. Remove accidental fused parts and surface features that imply a different function. Check whether texture highlights are baked into base color and whether they conflict with the game's lighting. Keep source geometry simple enough for the intended use, but preserve meaningful silhouette and openings rather than optimizing an arbitrary polygon number.
 
@@ -104,7 +106,7 @@ A second material, length, ornament or compatible attachment is useful evidence 
 
 ### 1. Connect visible identity to character purpose
 
-**Consume:** the selected character/body direction, permitted authored facts, actual supported behavior, equipment needs and the [creative brief](../../art-direction/final-board/creative-brief.md).
+**Consume:** the selected character/body direction, permitted authored facts, actual supported behavior, equipment needs and the [current art direction](../../art-direction/decisions.md#current-direction-at-a-glance).
 
 **Produce:** a visual identity brief with silhouette, posture, body shape, clothing, hair, skin/material identity, carried possessions and the actions that matter first. Define what distinguishes this person at gameplay distance and what a portrait or close view adds.
 

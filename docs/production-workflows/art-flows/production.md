@@ -1,9 +1,11 @@
 # Production-ready art packages
 
-Use this procedure for **production**, or when **integration** requires new or changed assets,
-except model/animation prototypes, which use the [short prototype path](README.md#prototype-path).
-Read the common steps and only the matching asset recipes for the requested scope.
-A study alone still stops at the [study boundary](README.md#request-and-stopping-point).
+Use this procedure when the requested finish is **production**, or when **integration**
+requires new or changed assets, except model and animation prototypes, which use the
+[short prototype path](README.md#prototype-path). Read the common steps and only the matching
+asset recipes for the requested scope. A study alone still stops at the
+[study boundary](README.md#2-request-settings). Props, characters and creatures follow
+[3D models](3d-models.md), which applies these package rules.
 
 The result is a usable package for a named consumer, with retained sources and a repeatable
 export route where finishing is needed. Confirm current importer support before promising
@@ -30,7 +32,8 @@ adequate materials unless the intended final use requires a change.
 2. Inspect gaps against the intended consumer and finish. Preserve approved identity and working
    components. Identify only needed shape, topology, material, skin/contact or motion repairs;
    missing source editability is a concrete repair constraint, not permission to replace the identity.
-3. Apply the matching recipes below to those gaps, then export and recheck affected dependencies.
+3. Apply the matching recipes below, or the [3D models](3d-models.md) steps for a model, to those
+   gaps, then export and recheck affected dependencies.
    Reuse still-valid evidence and preserve the delivered source/output through the shared handoff.
    Do not regenerate the whole model, add unrequested clips, or expand one asset into a reusable
    family merely because finishing was requested. Integration, when requested, uses its existing owner.
@@ -103,7 +106,7 @@ Use the applicable recipes and skip steps already satisfied by the selected asse
 Finalize changed geometry, rigs, textures and other inputs before qualifying their dependent
 final exports. Preliminary assembly,
 lighting and motion previews may proceed with clearly identified unfinished inputs.
-Independent pieces can proceed in parallel under the [shared coordination rules](README.md#2-prepare-access-and-the-working-location).
+Independent pieces can proceed in parallel under the [shared working-file rules](README.md#7-working-files-ids-and-records).
 
 | Deliverable                                                  | Finishing recipe                                                  |
 | ------------------------------------------------------------ | ----------------------------------------------------------------- |
@@ -111,8 +114,8 @@ Independent pieces can proceed in parallel under the [shared coordination rules]
 | Icons, portraits, illustrations or static backgrounds        | [Static 2D artwork](#static-2d-artwork)                           |
 | Directional sprites or frame animation                       | [Sprites and frame animation](#sprites-and-frame-animation)       |
 | Deformable or articulated 2D characters                      | [2D rigs](#2d-rigs)                                               |
-| Props, items, equipment or modular rigid geometry            | [Rigid 3D assets](#rigid-3d-assets)                               |
-| Rigged people, creatures, clothing or body families          | [3D characters and creatures](#3d-characters-and-creatures)       |
+| Props, items, equipment or modular rigid geometry            | [3D models](3d-models.md) (rigid route)                           |
+| Rigged people, creatures, clothing or body families          | [3D models](3d-models.md) (character and creature routes)         |
 | Skeletal or other rig-based motion                           | [Animation clips](#animation-clips)                               |
 | Textures, decals or reusable surface recipes                 | [Materials and textures](#materials-and-textures)                 |
 | Environment kits, assembled places or lighting setups        | [Environment and scene packages](#environment-and-scene-packages) |
@@ -129,7 +132,9 @@ Independent pieces can proceed in parallel under the [shared coordination rules]
    frame, choose supported slicing, separate pieces or vector construction; not every
    element needs nine-slicing. Make repeated edges/fills seamless and independently placed
    ornaments complete. Remove baked backgrounds and repair edge fringes without losing
-   intended translucency.
+   intended translucency. Under `exact` or `faithful` fidelity, keep the source's own pixels:
+   make resizing parts repeat real textured spans rather than averaged or flattened strips,
+   and measure glass, colour and texture against the study's own surfaces.
 3. **Specify assembly.** Record source dimensions, slice boundaries where used, repeat versus
    stretch behavior, scale, anchor/pivot positions, overlaps, minimum valid sizes and content
    insets. Declare source-pixel versus layout-unit measurements. Preserve consistent texture
@@ -190,52 +195,11 @@ Independent pieces can proceed in parallel under the [shared coordination rules]
    Supply rig/version dependencies, part names, attachment conventions and sources. A layered
    character image alone is not a usable rig.
 
-### Rigid 3D assets
+### 3D props, characters and creatures
 
-Follow the [rigid-object pipeline](../assets-and-animation.md#rigid-objects-and-equipment)
-for the source and its native object relationship.
-
-1. Build or clean geometry from the accepted design, inspecting every relevant side,
-   opening, contact surface and movable part. Separate parts that need independent motion
-   or attachments; repair topology, normals and material assignments.
-2. Normalize units, orientation, root transforms, pivots and bounds to the selected consumer.
-   Author UVs/materials and required attachment locations; reconcile collision references
-   with their existing gameplay owner rather than deriving new authority from appearance.
-3. Create only required resource variants or levels of detail. Apply the consumer's export
-   settings; bake unsupported authoring features only when the result meets the contract.
-4. Reimport the final model and its dependencies. Check scale beside a known reference,
-   materials, openings, pivots and attachments, and inspect actual geometry/material counts
-   against relevant budgets. Deliver the sources used, textures, exports and assembly data.
-
-### 3D characters and creatures
-
-Follow [articulated entities](../assets-and-animation.md#articulated-people-and-creatures)
-and the selected body's compatibility owner.
-
-Standard and Higgsfield share this finishing route. Either may supply concepts or selected
-parts; neither a generated turnaround nor a motion video establishes rigged output. Use the
-[fit envelope](../../projects/3d-pixel-art-appearance-families.md#qualify-the-reusable-fit-envelope)
-and [matched production evidence](../../projects/3d-pixel-art-validation.md#matched-character-production-comparison)
-when qualifying reuse. A study-only request still stops at the agreed study deliverable.
-
-1. Resolve inconsistent concept views into one accepted construction. Select the supported
-   body/rig family, scale, rest pose and required attachment conventions before final modeling.
-2. Refine a usable mesh directly, or repair/rebuild the specific topology that fails the needed
-   deformation or silhouette. Generate a part separately only when the extra control earns its
-   fitting work. Use provisional materials and separate runtime clothing/equipment according to
-   actual use; generator parts need not remain separate draw units. Preserve identity and proportions.
-3. Build or adapt the skeleton, skin the body and fit attachments. Test relevant joint extremes,
-   face/expression controls where requested, hands/feet and clothing contact, then inspect a rough
-   export through the existing consumer before detailed finishing. When game integration is outside
-   the request, use a compatible preview and leave gameplay qualification open. Matching bone names
-   alone does not establish compatible proportions, rest transforms or weights.
-4. After rough fit and export pass, finish UVs/materials and the requested motion through
-   [animation clips](#animation-clips). Correct body, weights and equipment fit before expanding
-   a clip set that depends on them.
-5. Export the body, rig, materials and dependent clips in the supported arrangement. Reopen
-   them together and inspect motion, deformation and attachment fit at intended game scale.
-   Record compatible rig/body revisions and real limits. A portrait, turntable or one moving
-   bone does not establish a complete animated character package.
+[3D models](3d-models.md) owns these recipes step by step: reference views, generation or
+library fitting, candidate checks, Blender cleanup, rigging, clips, export and in-game
+review. Apply its consumer contract and budgets together with the package rules on this page.
 
 ### Animation clips
 
@@ -257,8 +221,8 @@ when qualifying reuse. A study-only request still stops at the agreed study deli
 ### Materials and textures
 
 1. Pin the intended geometry/surface, physical texture scale, UV or procedural mapping,
-   tiling axes and supported material model. Decide whether lighting belongs in the artwork
-   or is supplied by the renderer.
+   tiling axes and supported material model. Whether lighting belongs in the artwork or is
+   supplied by the renderer comes from the look's [production notes](../../../art-direction/decisions.md#how-the-current-look-changes-production).
 2. Finish editable paint/graphs and required maps. Remove unintended baked light from maps
    used as surface data; derive or author meaningful normal, roughness, height and other
    channels instead of relabeling a color image.
@@ -338,9 +302,13 @@ and resource budgets from the actual files. Check each export for completeness a
 representative assembled cases for behavior that spans a family. A source change invalidates
 only its affected exports/evidence; rebuild and inspect those dependents before packaging.
 
+For a supplied or selected source, build the [matched-scale comparison](README.md#matched-scale-comparison)
+from the final exports drawn as their consumer draws them, and list every remaining visible
+difference before reporting fidelity.
+
 Preserve useful previews and the exact settings or recipe needed to reproduce inspection.
 Record the inspected export revision, tool/consumer, conditions, outcomes and concrete gaps
-in the study record. Apply the [shared independent critique](README.md#4-inspect-revise-and-develop-only-the-required-outputs)
+in the study record. Apply the [independent critique](README.md#independent-critique)
 to substantial packages. A viewer check establishes the demonstrated conditions, not game
 performance, gameplay correctness or broad device qualification. An unavailable required
 check stays unverified; do not label its dependent deliverable production-ready.
@@ -367,7 +335,7 @@ A complete package contains, as applicable:
 - **Inspection and handoff:** representative previews, checked conditions/results and limits,
   loading/assembly instructions, and specific remaining integration or approval dependencies.
 
-Publish through [preserve and resume](README.md#preserve-and-resume) and
+Publish through [preserve and resume](README.md#9-preserve-and-resume) and
 [Working with game assets](../../asset-workflow.md); retrieve and verify the exact package
 and dependencies before marking it archived. Keep all payloads, including editable sources,
 SVGs, model/animation data and preview bundles, outside Git. Public study/source access and

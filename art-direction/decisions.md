@@ -1,5 +1,35 @@
 # Art-direction decisions
 
+## Current direction at a glance
+
+This is the stable entry point for every art request. The [art workflow](../docs/production-workflows/art-flows/README.md) and the root art routes link here rather than to a dated section, so that the look can change without editing the workflow. When Mike changes the direction, update this section and the sections it names; superseded dated sections stay below as history.
+
+| Art                                                    | Read                                                                                                                                                                 |
+| ------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| World art: people, creatures, objects, plants, places  | [Current visual requirements](#current-visual-requirements--october-16-2026) and the [creative brief](final-board/creative-brief.md)                                  |
+| Interface art: panels, menus, icons, HUD pieces, maps  | [Interface look and feel](#interface-look-and-feel--accepted-october-26-2026) and the [Gildmoss design system](../apps/client/src/design-system/gildmoss/README.md) |
+| Concept art                                            | [Concept art with Midjourney](#concept-art-with-midjourney--september-27-2026): concepts are painted designs; the game's look is produced separately               |
+| Production consequences of the current look            | [How the current look changes production](#how-the-current-look-changes-production), below                                                                           |
+
+### How the current look changes production
+
+The art workflow carries no look of its own. These notes are what it applies for the current direction; rewrite them when the look changes.
+
+1. **The renderer applies the final pixel look; surfaces are prepared for it.** The game's shared pixel pass produces the final pixels, light bands and edges; its current densities are owned by [world presentation](../docs/world-presentation.md#animated-character-pixels) and the [first-scene profile](../docs/limits/3d-pixel-art.md#a3d19--first-scene-experiment-profiles). Deliver shaped, believable geometry, clear material regions and sensible normals.
+   - **Surface colour** follows the existing source-study recipes: deliberately painted fixed-pixel textures with chosen palettes on rigid surfaces (`pixel_material` in [`scripts/art_study_common.py`](../scripts/art_study_common.py)), and prepared limited-colour paint on people (the working mercenary's clothing uses 29 colours).
+   - **Never bake lighting or shading into colour.**
+   - **No automatic model-wide pixelation or decimation pass** like the outdated `artgen` one; a new surface treatment is a compared study, not a default.
+
+   The [generative-art assessment](research/3d-pixel-worlds/generative-pipeline.md#3-prepare-deliberate-materials-and-pixel-rendering) explains the division between authored surfaces and the renderer.
+2. **Author the identity details the renderer cannot infer.** Eyes, brows and distinctive garment marks are small deliberate accents fitted to the actual surface; the mercenary's fitted eye accents are the working example.
+3. **Concepts may be painted or illustrated.** They are design sources. Judge the finished asset in the game's look, never the concept's finish.
+4. **Interface art is never pixel-styled.** Menus, buttons, icons and lettering follow Gildmoss; items, portraits, creatures and structures use the world's look.
+5. **Reject unsuitable forms at the source.** Visibly low-poly or faceted, blocky, toy-like, chibi and big-head forms are rejected in library sources and generated candidates alike. The pixel pass does not repair them, so reject them before spending on finishing.
+6. **Keep real proportions and sizes.** Model ordinary adults at 1.85 m and the mercenary at 2.035 m, the heights of the fitted study cast ([world presentation](../docs/world-presentation.md#animated-character-pixels)). In a running world, presentation fits each model to its body's actual extent; the base world's physical person is 1.75 m, so the authored height sets proportions rather than in-game size. Items and small animals keep their real dimensions, and nothing is enlarged for readability.
+7. **Review under the look's own conditions:** the game's default camera, daylight and firelight, a rotating camera (watch for shimmer) and walking motion, beside an existing person for scale. Sheets and turntables use a 1.85 m ordinary adult as the reference figure. A still close-up is not acceptance. For apparent height, count opaque pixel rows against a neighbouring person in the same capture; the mercenary's size was settled that way at 94 rows beside 86 ([mercenary record](../docs/maintainers/art/mercenary.md)).
+8. **Animation timing.** Author ordinary smooth clips; the existing recipes key at 24 frames per second. For the current look the renderer holds poses, sampling clips 12 times a second (`held12` in [`library-actors.ts`](../apps/client/src/library-actors.ts), chosen in the [source-based study](../docs/verification/source-based-starting-study.md)). Design key poses so they read when held, as the [animation research](research/3d-pixel-worlds/animation-tools-and-techniques.md) describes.
+9. **Starting sources.** Poly Haven is endorsed for natural objects and materials. The fitted study people use CC0 MakeHuman/MPFB anatomy ([source study](assets/source-study/README.md)), but Mike judged their stock look not good enough on October 31, 2026; the Peacock Mercenary sets the bar for people. New people take their look from their own concepts. MakeHuman/MPFB may serve only as a hidden base for skeleton and mesh layout. Real anatomy and construction come first, so library and specialist sources usually beat generation for ordinary wildlife and plants. The creator styles rejected in the current requirements stay rejected.
+
 ## Current visual requirements — October 16, 2026
 
 **Owner clarification recorded 2026-10-16 23:12 UTC.** These requirements govern new art research, sourcing, concepts, modeling, pixel finishing and review for the bundled OpenLegend world. They supersede earlier broad permission for cartoon styling and recommendations to use visibly low-poly asset families. Earlier feedback, source credits and technical observations remain historical evidence.

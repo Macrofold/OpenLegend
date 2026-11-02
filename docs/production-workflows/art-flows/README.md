@@ -1,66 +1,89 @@
-# Reusable art flows
+# Art workflow
 
-Use **“Use the Higgsfield flow for…”** or **“Use the Standard flow for…”**, followed by
-the wanted result and any references. The agent owns the entire authorized route, including
-moving files between tools. Mike does not need to read these documents, rewrite stage prompts,
-or manually pass outputs between model conversations.
+One procedure for every art request: concept studies, character sheets, UI kits, props, 3D characters and creatures, materials, motion and production files. Mike says what he wants; an agent (or an artist following these pages) does the brief, tool work, file handling, review sheets and preservation. Mike decides at three points: which direction, which candidate, and whether the result is accepted. Under `exact` fidelity he also approves the reference views before any 3D spend. The aim is exceptional craft and originality, not merely a finished file.
 
-These are agent-operated procedures, not a newly installed automation service or a claim
-that a provider is connected. Existing tool access, project permissions and actual output
-checks still determine what can run. The [art skill](../../../.agents/skills/openlegend-art/SKILL.md)
-and root routing make this procedure discoverable in a checkout containing these files.
+**The workflow has no look of its own.** It never decides style, palette, proportions, pixel treatment or interface character. It reads those from the selected world's art direction ([§3](#3-read-the-look-from-the-art-direction)), so the look can change without editing these pages. This also lets another authored world bring its own direction to the same procedure.
+
+The [feature specification](../../projects/art-workflow-feature-spec.md) records why it works this way and what remains open; these pages own the procedure itself.
 
 ## Contents
 
-- [Request and stopping point](#request-and-stopping-point)
-- [Shared execution](#shared-execution)
-- [Production packages](production.md)
-- [Compare both flows](#compare-both-flows)
-- [Preserve and resume](#preserve-and-resume)
-- [Completion](#completion)
+1. [Ask for art](#1-ask-for-art)
+2. [Request settings](#2-request-settings)
+3. [Read the look from the art direction](#3-read-the-look-from-the-art-direction)
+4. [The seven stages](#4-the-seven-stages)
+5. [Review with Mike](#5-review-with-mike)
+6. [Spending](#6-spending)
+7. [Working files, IDs and records](#7-working-files-ids-and-records)
+8. [Compare tools or methods](#8-compare-tools-or-methods)
+9. [Preserve and resume](#9-preserve-and-resume)
+10. [Completion](#10-completion)
 
-Read this common procedure, one [tool route](#request-and-stopping-point), and the applicable
-[profile](profiles.md). The broader [production handbook](../README.md) owns transitions
-into playable objects, characters, scenes and interfaces; it is not a requirement to execute
-every production stage for every art request.
+Companion pages: [Tools and defaults](tools.md) (which platform and model each stage uses, with commands and costs) · [Deliverable profiles](profiles.md) (what a good result covers for each kind of subject) · [3D models](3d-models.md) (concept or character sheet → finished prop, character or creature) · [Production packages](production.md) (finishing and packaging other assets) · [Study record](study-record.md) (what to write down).
 
-## Request and stopping point
+## 1. Ask for art
 
-Only the wanted result is required. Interpret optional parameters from ordinary language:
+Only the wanted result is required. Everything else has a default.
 
-| Parameter   | Meaning and default                                                                                                                                                                                                                             |
-| ----------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Flow        | `standard`, `higgsfield`, or `both`. “Regular/manual” means Standard. With no preference, use Standard and say so.                                                                                                                              |
-| Purpose     | Infer the matching profile: UI style, general style, asset/icon, character, material/environment, motion, UI system, or custom.                                                                                                                 |
-| Finish      | `study`, `production`, or `integrate`, inferred from the requested outcome as described below.                                                                                                                                                  |
-| Quality     | `prototype` by default for model and animation generation; explicit polish/finalize selects `finished`. Controls finishing effort independently of file type and stopping point. See [quality and simple outputs](#quality-and-simple-outputs). |
-| References  | Attachments, exact saved study/candidate IDs, existing approved art, and supplied links; identify the role of each.                                                                                                                             |
-| Candidates  | Honor the requested number. Direct model or animation generation, an edit or selected-direction expansion normally needs one; for an exploratory direction comparison, three distinct candidates is an adjustable starting point.               |
-| Selection   | Present requested alternatives unless Mike delegates choosing. An agent recommendation is not owner approval of the project's permanent direction.                                                                                              |
-| Constraints | Preserve identity/style anchors, output format and scale, supported behavior, deadlines and any “do not” scope.                                                                                                                                 |
-| Budget      | Apply the current [spending policy](../../../.agents/rules/verification.md#spending) and task authorization. Both flows, delegates, refinements and upscales share the same task allowance unless Mike explicitly allocates otherwise.          |
-| Resume      | An exact study/candidate/revision or handoff link. Reopen that work and continue the requested stage rather than regenerate the whole pipeline.                                                                                                 |
+- "Make concept art for Tavin Vale. Three directions."
+- "Turn this character sheet into a rigged 3D model for the game. Keep the face and the coat exactly."
+- "Use the Standard flow for a quick prototype of this character: one unrigged GLB with simple materials, to inspect its shape."
+- "Generate this character with idle and walk animations."
+- "Animate this saved model with a reaching motion; keep its rig and materials."
+- "Polish and finalize that prototype for its selected gameplay use."
+- "Use the Higgsfield flow for a UI style study: three directions, study only."
+- "Make production-ready models of the wattle wall panels, intact and damaged."
+- "Concepts with Nano Banana Pro, then 3D with Meshy; stop after I pick a model."
+- "Refine the selected chest material; keep its shape and colours."
+- "Resume study `2026-11-02-mara-reed-3d` from candidate m02."
 
-“Style study”, “explore”, “concept” and “compare” end at **study**: reviewable alternatives
-with saved sources and construction notes. “Production kit”, “export these assets” or
-“game-ready files” require **production** checks and actual usable exports, without installing
-them in the game. “Implement this in the game” requires **integrate**, including actual
-runtime work and its normal verification. A UI-system **design** covers tokens, components,
-states and representative compositions; it is not automatically a UI-system implementation.
+These are examples, not reserved commands; an earlier example never prescribes the medium, content, composition or scope of a later request. "Regular", "manual" and "standard" all mean the default tools; "Higgs field" means Higgsfield; `/ol-design` uses this same workflow.
 
-Use explicit context before defaults. If a consequential ambiguity remains, finish the
-independent preparation and ask the one question that resolves it. Do not silently turn
-an authorized implementation into a study or turn “looks good” into authorization to build.
-A request for “the best one, choose for me” permits an agent selection within that scope.
+## 2. Request settings
+
+Infer every setting from the request and conversation; ask only when a consequential choice cannot be inferred ([§5](#ask-only-what-changes-the-work)).
+
+| Setting    | Meaning                                                                                                                                                   | Default when not given                                                                                                                                                    |
+| ---------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Result     | The subject and what should exist at the end.                                                                                                             | Required.                                                                                                                                                                 |
+| Profile    | The kind of subject: UI style, general style, asset/icon, character, creature, material/environment, motion, UI system, custom.                           | Inferred; see [profiles](profiles.md).                                                                                                                                    |
+| Finish     | `study`, `production` or `integrate` (below).                                                                                                             | Inferred from the wording.                                                                                                                                                |
+| Quality    | How much finishing the result gets, independent of the file type and the stop: `prototype` or `finished` ([below](#quality-and-simple-outputs)).          | `prototype` for model and animation generation; `finished` for a finished or game-ready asset, or "polish/finalize".                                                      |
+| Fidelity   | How closely to follow a supplied or selected source: `exact`, `faithful` or `interpretive`, plus named **locks** and **free** areas ([below](#fidelity)). | `faithful` when a source is supplied or selected; otherwise not applicable.                                                                                               |
+| Tools      | Platform and model per stage, or a preset: `standard`, `higgsfield`, `both` ([tools](tools.md#presets-and-overrides)).                                    | `standard`: the default roster in [tools](tools.md#default-roster). A named tool replaces the default for its stage only.                                                 |
+| Candidates | How many alternatives each stage produces.                                                                                                                | 3 concept directions; 1 reference set per picked concept; 3 model candidates at `finished` quality and 1 at `prototype`; 1 of everything else. A focused edit produces 1. |
+| References | Supplied images, saved candidate IDs or approved art, each with a stated role (identity, material, palette, construction, composition, example to avoid). | Approved art for the same subject, if any.                                                                                                                                |
+| Selection  | Who decides at each decision point.                                                                                                                       | Mike. "Choose for me" or "pick the best" delegates the choice within the request's scope.                                                                                 |
+| Stop       | The last stage to complete.                                                                                                                               | The end of the inferred finish.                                                                                                                                           |
+| Budget     | The task's spending ceiling ([§6](#6-spending)).                                                                                                          | $10 per task under the [spending policy](../../../.agents/rules/verification.md#spending).                                                                                |
+| Resume     | An exact study, candidate or revision to continue.                                                                                                        | A new study.                                                                                                                                                              |
+
+**Finish.** "Study", "explore", "concept" and "compare" end at **study**: reviewable alternatives with saved sources and construction notes. "Production-ready", "export", "game-ready files" and "a model for the game" mean **production**: the actual usable files, checked against their consumer, without installing them in the game. "Implement in the game", "put it in the world" or "use it" means **integrate**: production plus the game change and its normal verification. A UI-system design covers tokens, components, states and representative screens; it is not an implementation. Do not silently turn an implementation request into a study, or "looks good" into permission to build.
+
+**Plan line.** Before the first paid step, state the resolved settings in one or two lines, with the estimate and the next decision point, then continue without waiting. For example: _"Mara Reed → 3D production, faithful (locks: face, hair, outfit colours; her bag made as a separate asset). Default tools: reference views with GPT Image 2.5, then two Meshy and one Tripo candidate through Higgsfield. About $5 of $10. Next stop: you pick a model."_ Mike can redirect at any time; silence is not a new approval for anything outside the stated plan.
+
+### Fidelity
+
+Every conversion from one form to another needs judgment: a character sheet never shows everything a model needs. Fidelity says how much of that judgment the workflow may exercise, and where.
+
+| Level          | Locked                                                                                                                                                     | Free                                                                                                                                                  | Typical request                                  |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| `exact`        | Everything visible in the source: shapes, colours, textures, marks and their sides. Reuse the source's own pixels or texture wherever the consumer allows. | Only what the source cannot show, continued from the visible design without new motifs.                                                               | "Exactly as shown", "production of this design". |
+| `faithful`     | Identity: silhouette, proportions, face and hair, palette, key garments and equipment and which side they are on, distinctive marks, plus any named locks. | Hidden and ambiguous construction, surface detail density, simplification for readability or budget, material interpretation within the current look. | The default for a supplied or selected source.   |
+| `interpretive` | Only the named locks.                                                                                                                                      | Everything else, including redesign for quality, readability and play. Offer alternatives when changing an identity feature.                          | "Use this as inspiration", "make it better".     |
+
+Judgment enters in predictable places: resolving views that disagree, inventing hidden surfaces (backs, undersides, under a cape), choosing a body and rig family, interpreting materials for the current look, deciding topology, repairing generated defects, and acting in animation. Record each consequential interpretation in the study record's **Interpretations** list, so Mike can see what was decided rather than copied. Under `exact`, list every visible difference that remains, and verify it on a [matched-scale comparison sheet](#matched-scale-comparison).
+
+The levels use the same vocabulary as the [runtime presentation contract](../../invention-art-pipeline.md#2-the-shared-presentation-contract): locks are its pinned features and free areas its cosmetic freedom; `exact` and `faithful` refine rendering, `interpretive` may redesign appearance.
 
 ### Quality and simple outputs
 
 Model and animation generation default to `quality=prototype`, `finish=production` (exported
 files only) and one candidate. “Quick”, “rough” and “blockout” use this same path. “Polish/finalize
 this model” selects `quality=finished` and the [selected-model finalize path](production.md#polish-or-finalize-a-selected-model).
-A new finished/game-ready asset request also selects `quality=finished` and uses the
-[production procedure](production.md) directly; it does not require a separate prototype request
-first. Existing context and explicit
+A new finished/game-ready asset request also selects `quality=finished` and uses the full route
+([3D models](3d-models.md) for props, characters and creatures, otherwise the [production procedure](production.md))
+directly; it does not require a separate prototype request first. Existing context and explicit
 constraints take precedence. These are request options interpreted from ordinary language,
 not provider API fields or a new service. Game installation requires requested integration.
 
@@ -93,235 +116,191 @@ needs them. Prototype export follows this short path, not the full finishing rec
 retains its applicable runtime checks at either quality; a prototype does not close general family
 qualification. Finalization resumes the retained candidate and still covers only its selected use.
 
-Examples:
+## 3. Read the look from the art direction
 
-- “Use the Higgsfield flow for a UI style study: worn borders, dark textured panels and connecting rails. Three directions, study only.”
-- “Use the regular flow to make a coherent production icon family from approved study STD-2.”
-- “Use both flows for a character appearance study, preserving this face and believable proportions.”
-- “Use the Standard flow to refine the selected panel texture; keep its border and palette.”
-- “Use the Standard flow for a quick prototype of this character: one unrigged GLB with simple materials, to inspect its shape.”
-- “Generate this character with idle and walk animations.”
-- “Animate this saved model with a reaching motion; keep its rig and materials.”
-- “Polish and finalize that prototype for its selected gameplay use.”
-- “Implement candidate HIG-2 from this archived study in the current game.”
+Before writing a brief, read the selected world's current art direction. For the bundled world that is [Current direction at a glance](../../../art-direction/decisions.md#current-direction-at-a-glance), which names the current world-art requirements, the interface direction, the concept-art decision and **how the current look changes production**. Read the creative brief or design system it links only for the subject at hand.
 
-These are examples of requests, not reserved commands. New art subjects use the same procedure;
-add a profile only when their production or evaluation needs actually differ.
+Copy what the subject needs into the brief's **Look** block:
 
-## Shared execution
+- the target look and what it rejects;
+- the proportion and scale rules that apply to this subject;
+- the references to use, with their roles and whether each may be uploaded to a generator;
+- the production notes that change what you deliver (for example, whether the renderer applies the look or the asset must carry it);
+- the review conditions the look depends on (camera, lighting, motion).
 
-### 1. Establish the brief and available inputs
+If the request conflicts with the current direction, do the independent preparation and ask Mike which applies before generating; a deliberate exception for one study does not change the direction. Never write a new style rule into these workflow pages; record accepted direction changes in the art-direction owner.
 
-Read root/path guidance, the [current visual requirements](../../../art-direction/decisions.md#current-visual-requirements--october-16-2026)
-and [creative brief](../../../art-direction/final-board/creative-brief.md). For UI work, also
-read the UI essentials and relevant [UI brief](../../ui-design-brief.md) sections. Read only
-needed profile and production chapters, not the entire research archive.
+## 4. The seven stages
 
-Inspect the supplied images themselves. Describe what each reference contributes: material,
-shape, edge treatment, color, lighting, composition, identity or an example to avoid.
-A reference's attractive border does not require its inventory layout, genre, rarity colors
-or game mechanics. Attribute sources and known versions; distinguish implemented screens
-from concepts or promotional art. Reference screenshots remain reference-only unless
-separately licensed.
+Each stage lists what to do, what it produces, how to check it, and where it stops. Skip stages the request does not need: a supplied character sheet skips Explore; a focused edit may need only Make, Check and Preserve. A model or animation request at `prototype` quality takes the [prototype path](#prototype-path) through Make, a short Check and Preserve instead of the full Finish and Check. At either quality, fix the defects that prevent the requested use or quality at their source, and record the rest. [The streamlined path](#the-streamlined-path) says what can be skipped, shortened or delegated, and what cannot. The route-specific detail lives in [3D models](3d-models.md) for props, characters and creatures and in [production](production.md) for everything else; the tools for each stage are in [tools](tools.md#default-roster).
 
-Write a short brief in the owning study record: purpose, chosen flow/profile/finish/quality, intended
-viewing scale, constraints, references, required outputs, comparison conditions, and useful
-completion. State routine assumptions and continue. Search for existing usable sources and
-narrow missing reference gaps; do not repeat broad research that the request already settles.
+```mermaid
+flowchart LR
+    B["1 Brief"] --> E["2 Explore"]
+    E --> A{"Mike picks<br/>a direction"}
+    A --> P["3 Prepare"]
+    P --> M["4 Make"]
+    M --> C{"Mike picks<br/>a candidate"}
+    C --> F["5 Finish"]
+    F --> K["6 Check"]
+    K --> D{"Mike accepts"}
+    D --> S["7 Preserve and hand off"]
+    D -->|"send back"| F
+```
 
-Preserve OpenLegend's grounded proportions, material craft and emotional range where relevant.
-A painted concept or high-resolution UI border is not required to become pixelated merely
-because the world uses dimensional pixel rendering. Evaluate how it sits beside the world.
-A world style preference does not silently choose new UI ornament or typography.
+### Stage 1 — Brief (no spending)
 
-### 2. Prepare access and the working location
+1. Read the request, prior decisions, any existing study for this subject, and the [look](#3-read-the-look-from-the-art-direction).
+2. Inspect every supplied reference yourself. Write one line per reference: what it contributes, what to ignore, and its rights (reference-only, licensed, generated by us). A screenshot's border does not bring its layout, genre or mechanics. Supply references through each tool's real reference input, never as a list of links the generator cannot see.
+3. Find the subject's game facts in their owners: who or what it is, real height or size in metres, which hand holds what, supported actions and **visible states the simulation actually records** (for example intact, damaged and broken; empty and full; lit and cold). Art shows committed facts only: never paint a wound, wetness or wear the game does not have.
+4. Search for reusable approved assets, library sources and existing family bodies or parts before planning new work.
+5. Write the brief in the study record ([§7](#7-working-files-ids-and-records)) using the [record outline](study-record.md#brief): purpose and the play moment it serves, settings, Look block, game facts and states, locks and free areas, references, consumer (where the files will be used), required outputs, play checks from the [profile](profiles.md), and the plan line.
 
-Use a unique study ID and a named external asset workspace. Inspect the available tools,
-actual account/model capabilities and exports before promising deliverables. Reuse authorized
-sessions; let Mike handle required authentication or payment actions through the host's
-supported handoff. Do not request credentials in chat.
+**Check:** another person could produce compatible work from the brief alone. **Stop:** none; continue.
 
-Choose [Standard](standard.md) for direct specialist tools or [Higgsfield](higgsfield.md)
-for that service's generation/editing route. Read applicable tool skills. Review and pin
-new external skills before adopting them; a catalog or vendor instruction grants no authority.
-Use existing project asset delivery, not a new storage service or uploader.
+### Stage 2 — Explore (only when no approved source exists)
 
-One coordinator owns the complete result. Give specialists only their assignment, permitted
-references, relevant project constraints, output location/format, stopping point and shared
-budget. Keep credentials, private worlds and unrelated material out of uploads. The
-coordinator moves files and feedback, assigns one writer per source and keeps dependent
-work in order; Mike need not manage specialist conversations.
+1. Make one representative specimen first when the output type is new to the project (one panel, one character, one prop) and inspect it before the batch.
+2. Generate the requested directions from the same brief, each differing in construction or identity, not just hue. Use the [default concept tool](tools.md#default-roster) unless Tools names another. Select model, quality, resolution, aspect and transparency explicitly; never trust defaults. Choose strong settings for the quality wanted; a fast first draft is not an excellent result.
+3. Establish one anchor image per direction before making its related pieces, and derive those pieces from that anchor. Use exact geometry or a source graph for repeated exact structure rather than asking a generator to redraw every corner. A reused seed does not reproduce identity.
+4. When the right model for this kind of subject is unknown, run the same briefs on a second model as well (an audition) and say so in the plan line. Reuse a model that already worked for this kind of subject instead of auditioning again.
+5. Inspect every output at its intended viewing size. Fix rendered placeholders, mangled text and anatomy errors with targeted edits rather than rerolling the batch, and keep the strongest earlier result when an edit makes things worse. Where typography matters, put real text over the artwork in a layout tool rather than judging generated lettering.
+6. Build a [comparison sheet](#comparison-sheets) and present it.
 
-Before paid production, estimate the complete requested coverage, refinement and export
-work. Reuse valid account authorization and allowance, or present one concrete proposal
-for what is missing. Check current entitlements and prices; distinguish subscription
-purchases, consumed credits and actual charges. Do not enable automatic top-ups. Within
-an approved allowance, ordinary batches do not need repeated approval.
+**Produces:** concept candidates `c01…` with prompts and settings. **Stop:** decision A, Mike picks a direction (or the agent picks, when delegated). A study ends here.
 
-A style study needs reference inspection and image review, not a game database, app build,
-six runtime branches or browser-test installation. Start a game environment only when a
-requested preview or integration actually needs it. Respect another task's running services.
+### Stage 3 — Prepare
 
-### 3. Make a representative sample, then develop coherent alternatives
+Turn the picked concept or supplied source into exactly the input the making route needs:
 
-Choose the most decision-relevant sample before an expensive batch. For UI style, this can
-be one panel, frame corner and connector. For a character, test identity and proportions.
-For a material, test the intended surface and scale.
+- **3D:** clean reconstruction views, normally front (in the A-pose for bodies), back, left and right, made to the [view rules](3d-models.md#step-3--make-clean-reference-views) and checked for agreement.
+- **UI kit:** the fixed specimen arrangement and the parts list from the profile.
+- **Sprites:** the direction and pose list from the consumer.
+- **Materials:** the target surface, scale and lighting context.
 
-Prepare each specialist prompt from the actual subject, reference roles, preserved features,
-composition/view, materials/light, intended display size, crop/padding and required format.
-Select model mode, quality, resolution/aspect and transparency explicitly when supported;
-inspect defaults rather than assume they match the target. Choose strong tools and settings
-for the requested quality within the allowance, including sustained specialist work when
-useful. A first draft or an efficient toolchain does not establish an excellent result.
+**Check:** the inputs agree with each other and with the locks. If views disagree, name the canonical one and correct the others. **Stop:** under `exact`, Mike approves the views before Stage 4. Otherwise there is no stop; for a named character, show the views beside the model sheet.
 
-Use the requested route to obtain an actual visual result; prompts alone do not complete an
-art-generation request. Judge source/reference adherence and the intended viewing context.
-Develop candidates that differ in construction or visual identity, not merely hue. Preserve
-a candidate's own anchor image, palette, shape and material rules across related outputs.
+### Stage 4 — Make
 
-Create the complete requested comparison before asking Mike to select a direction. Agents
-can choose intermediate anchors and repair routine defects without requiring a decision at
-every stage. Honor an already selected direction instead of reopening alternatives.
+Produce candidates by the chosen route: generate 3D candidates, compose library parts, model by hand, generate a UI kit, paint frames. Estimate first, then run the batch. Keep every original output with its job ID and settings.
 
-Preserve originals and meaningful completed batches during the run, with their prompts,
-input revisions and settings. Keep current stage, remaining outputs and outstanding provider
-operation IDs/status in the study's appropriate working record, with private receipts kept
-private. After interruption or timeout, inspect/rejoin submitted operations and retrieve their
-results before considering a replacement; uncertainty is not proof of failure or zero cost.
-Checkpoint notes describe current resumable work, not a transcript or revision diary.
+**Produces:** candidates `m01…` (models) or `k01…` (kits and other assets). **Check:** inspect each candidate's actual files, not provider thumbnails; for 3D use the [candidate checks](3d-models.md#step-5--inspect-and-compare-candidates). **Stop:** decision B, Mike picks a candidate when there is more than one.
 
-### 4. Inspect, revise and develop only the required outputs
+### Stage 5 — Finish
 
-Inspect actual generated/exported files, not provider thumbnails or success messages.
-Identify defects that prevent the requested use or quality and revise their source: prompt/reference,
-composition, shape, texture, export or implementation. Prefer targeted corrections to
-unrelated full regeneration.
+Bring the picked candidate to the consumer's contract: clean, scale, separate parts, materials per the look's production notes, rig, animate, export. Follow [3D models](3d-models.md#step-7--clean-and-normalize-in-blender) or the matching [production recipe](production.md#3-finish-the-relevant-asset-types) at the requested quality; "polish/finalize" of a selected prototype follows the [finalize path](production.md#polish-or-finalize-a-selected-model). Fix the source, not the export; repeatable fixes go in a script beside the work.
 
-Use the selected profile's checks. Keep visible evaluation conditions comparable: subject,
-sample arrangement, scale, backgrounds and required states. Review at actual intended size.
-A polished oversized illustration can conceal unreadable detail, weak silhouettes, broken
-joins or texture noise. Preserve aspect ratio in exported and assembled previews.
+**Produces:** finished revisions `f01…` with their editable sources.
 
-For a substantial study, production kit or implementation, obtain a fresh independent
-critique when available. Supply the brief, actual artifacts and intended viewing conditions;
-for implementation include the selected target and running result. Ask for findings on
-appeal, originality, project fit, consistency and fidelity, with no editing or paid-work
-authority. Fix concrete findings and recheck affected outputs. Keep screenshot judgment,
-file inspection and live interaction evidence distinct; a small focused revision needs only
-proportionate review.
+### Stage 6 — Check
 
-Refinements are deliberate new operations, not blind paid retries. Check the existing task
-budget before each paid batch; account for outstanding or uncertain work. If budget/access
-blocks the promised scope, preserve completed work and report the precise shortfall.
-Do not quietly reduce the requested contender count or claim incomplete coverage is complete.
+1. Inspect the final consumer files after all conversion: dimensions or height, counts against [budgets](3d-models.md#consumer-contract-and-budgets), clips, alpha, seams.
+2. Look at the result **the way the game shows it**: in the game's renderer or study viewer, at the default camera, beside an existing person for scale, under the look's review conditions. Run the profile's [play checks](profiles.md#play-checks).
+3. For a supplied or selected source, make a [matched-scale comparison sheet](#matched-scale-comparison) and list remaining differences.
+4. For production packages and every new character or creature, get an [independent critique](#independent-critique) and fix concrete findings.
 
-Study runs stop after the requested candidates and review. Model/animation prototypes follow the
-[prototype path](#prototype-path), then shared preservation and handoff; they do not run the full
-finishing procedure. For other production, or integration that needs other new or changed assets,
-execute [Production-ready art packages](production.md) at the requested quality:
-define the consumer contract, choose a finishing method, follow only the matching asset recipes,
-check final exports and preserve the complete package. This procedure owns production finishing;
-the profiles own the subject brief and visual coverage. Integration also follows the existing
-semantic owners, native behavior, browser/runtime review and documentation rules. Read
-[scenes and interfaces](../scenes-and-interfaces.md), [assets and animation](../assets-and-animation.md)
-or [audio and feedback](../audio-and-feedback.md) only for the work actually required.
+**Stop:** decision C, Mike accepts or sends it back with reasons. Technical passes never stand in for acceptance: two mercenary iterations passed every check and were still rejected.
 
-### 5. Package, preserve and deliver
+### Stage 7 — Preserve and hand off
 
-Use the [study-record template](study-record.md) and the preservation procedure below.
-Preserve the meaningful iterations requested by Mike, including alternatives not selected.
-Give stable candidate IDs, keep original names, and distinguish conceptual, exported,
-technically checked, owner-selected and integrated results.
+Archive the study and package ([§9](#9-preserve-and-resume)), finish the study record, and report: what exists, where, its state (created, checked, archived, owner-selected, integrated), cost, and remaining gaps. Ask any choice needed for later work only after the study is saved, and never start implementation as part of that question; when the request already authorized the next stage, continue without asking again. Integration, when requested, continues through the normal development workflow and the existing component, renderer, appearance and world owners; [assets and animation](../assets-and-animation.md) covers putting an object or character into play.
 
-Deliver previews, a concise assessment, exact archive references, and material gaps.
-If a choice is needed for later work, ask it after saving the complete study. Do not launch
-implementation as part of that question. If the original request already authorized the
-next stage and its dependencies are resolved, continue without asking again.
+### The streamlined path
 
-## Compare both flows
+With a supplied character sheet or approved concept, the route shortens on its own:
 
-Freeze a common brief, reference set, output purpose, specimen arrangement, required coverage
-and review criteria before either route begins. Save those inputs once and give both routes
-the exact same revision. Neither route depends on the other finishing or copying its designs.
+| Stage           | What happens                                                                                                                                                                                                            |
+| --------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Brief           | Never skipped, but the agent fills it from the sheet and the game's own facts in a few minutes, without asking unless something consequential is missing (for example who the character is, if the sheet does not say). |
+| Explore         | Skipped: the sheet is the direction.                                                                                                                                                                                    |
+| Prepare         | If the sheet already has clean views that meet the [view rules](3d-models.md#step-3--make-clean-reference-views), they are cropped and used directly; only missing or unusable views are generated.                     |
+| Make, Finish    | As usual; these are where the model is actually made.                                                                                                                                                                   |
+| Check, Preserve | Shortened as below.                                                                                                                                                                                                     |
 
-Optimize each route using its own tools; equal treatment does not require identical prompts,
-models or operation counts. Label whether this is a workflow-quality comparison or a
-controlled model comparison. A workflow result cannot establish that one underlying model
-alone is better.
+A request can shorten it further with ordinary words:
 
-Use distinct IDs and output locations for Standard and Higgsfield. Share source references,
-not writable working files. Independent generation may run in parallel within tool/session
-limits; serialize operations that share a browser session, file owner or asset publication
-writer. One coordinator owns any shared index.
+| Say                      | Effect                                                                                                               |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------- |
+| "Pick the best yourself" | The agent makes decisions B (and C, if asked) and records them as agent-selected, not owner-approved                 |
+| "Just one candidate"     | One model instead of three, so a lock failure costs a rerun instead of a fallback                                    |
+| "Skip the critique"      | No independent critique                                                                                              |
+| "This is scratch"        | Files very likely to be temporary (test renders, failed exports, throwaway trials) stay local and are never uploaded |
+| "Stop after the model"   | Ends at decision B with the candidates, before finishing                                                             |
 
-If the comparison explicitly includes two implementations, also pin the same code commit,
-representative native world/content, camera and evaluation tasks. Use the existing startup
-and save/restore procedures to provide isolated checkouts, databases, data directories, ports
-and browser sessions; different ports alone do not isolate cookies. Preserve unrelated work,
-private backups and real accounting, and use native no-spend checks under the verification
-policy unless live work is separately authorized. Freeze shared inputs while keeping each
-method's artwork and implementation independent. These preparations are conditional on
-runtime work, not prerequisites to a study.
+**What Check must keep.** Anything going into the game needs the technical file check (height, feet at 0, facing, budgets, the required `Idle` and `Run` clips, no mesh named like a bone). Without it the game fails to load the model or shows it wrong. It also needs one look in the game's own renderer, because the look is applied there and a Blender view can mislead. The play checks take a minute and stay. The matched-scale fidelity sheet applies only to `exact` and `faithful` work. The independent critique is the only part that is fully optional. A study that ends at concepts needs only inspection at viewing size.
 
-Compare equivalent coverage, visual quality, coherence, practical reuse, correction effort,
-Mike's manual involvement, elapsed time and measured cost. Where cost or timing is unavailable, mark it unknown. Unequal
-coverage or budgets must be visible. Do not expand a design comparison into two complete game
-implementations unless that is explicitly requested.
+**What Preserve must keep.** Everything except very likely temporary scratch. Each meaningful output (concepts, views, every model candidate, sheets, captures, editable sources, finished files) is uploaded to S3 as soon as its batch finishes. The study record and any other local notes keep only the exact S3 references. Asset files can never go into Git, provider links expire (Meshy deletes its outputs after three days), and a local folder is not durable.
 
-## Preserve and resume
+## 5. Review with Mike
 
-The project [storage decisions](../../projects/game-asset-storage-feature-spec.md#2-agreed-product-decisions)
-and [URL contract](../../projects/game-asset-storage-tech-design.md#5-url-and-repository-contract)
-own asset identity and preservation. Use the operational
-[asset workflow](../../asset-workflow.md) and the matching installed CLI/configuration.
-The design documentation alone does not establish that an executing checkout contains
-the current tooling.
+### Comparison sheets
 
-**All new images and asset payloads stay out of Git, regardless of size.** Preserve them in
-the existing S3 library/study collections. Git keeps the brief, source attribution, prompts,
-recipes, small catalogs, exact revisions and verified links. Editable exports, standalone
-SVGs, fonts, model/animation files, screenshots and bundled study payloads are external too.
-Native application code is still code; embedding exported image/vector data in it is not a
-storage workaround. This implements Mike's explicit S3 requirement for these flows.
+Present choices as one sheet per decision: every candidate labelled with its ID, the same background, scale and viewing angle, aspect ratios preserved, and the concept or source beside them. For 3D, show the [turntable sheet](3d-models.md#step-5--inspect-and-compare-candidates) and a capture in the game's look. Show the sheet directly in the conversation (or a review page when the host offers one), with a short recommendation and the reason. Record Mike's choice and his words in the study record.
 
-Use `pnpm assets help` in an authorized checkout containing the current tooling, then the
-documented prepare/approve/publish/retrieve process with actual manifests and rights evidence.
-Do not invent bucket names, object paths, permissions, public URLs or command flags.
-Follow the AWS rules before AWS access. Coordinate the exclusive publication writer rather
-than stopping another contributor's game unilaterally.
+### Matched-scale comparison
 
-Save editable originals privately and study previews under the approved visibility. Permission
-to save to S3 is not permission to publish a new collection publicly. Keep credentials and
-private provider receipts out of public Git and source bundles. Third-party reference use
-remains separate from production rights.
+When fidelity matters, draw the export the way its consumer draws it and place it beside the corresponding part of the source at the same scale and background. Compare texture, colour, edges and proportions side by side; never report fidelity from memory or from separate screenshots. The first Gildmoss production pass flattened textured edges and dimmed the glass to about 60% of the study's brightness; Mike caught it by asking, and matched-scale sheets are the method that now prevents it.
 
-Verify the actual uploaded files, hashes and dependent assets through retrieval before calling
-the archive complete. A provider URL, local directory or expiring signed link is not the
-durable reference. Keep originals until verified preservation succeeds. If storage tooling or
-access is unavailable, save the work safely in the external workspace, record publication as
-blocked and request only the specific access needed; do not invent a successful archive.
+### Independent critique
 
-Use `art-direction/studies/<study-id>/README.md` for one study's brief, candidate table,
-decisions and handoff. Put exact small catalog/manifest references beside it or in the existing
-asset-index owner. Link it from the existing study index after the record exists. Do not build
-a parallel art database or duplicate the same workflow in each study.
+For a substantial study, a production package or a new character or creature, ask a fresh reviewer (a separate agent or person with no editing authority) to critique the actual files against the brief and the look, at intended viewing conditions: appeal, originality, fit, consistency and fidelity. Turn each confirmed finding into a fix and, where it can recur, into a check in the recipe.
 
-A fresh thread receives one commit-pinned study README link or stable study ID resolvable in
-the repository. It reads the exact source references and retrieves files itself. When records
-live on separate branches, copy only the relevant documentation/catalogs to the work branch;
-do not merge experimental application changes to obtain images. Preserve all alternatives
-while promoting only the explicitly selected artifacts through the runtime asset process.
+### Ask only what changes the work
 
-## Completion
+Resolve what the request, conversation, records and references already settle. Ask before dependent work only when the answer is consequential and cannot be inferred: what to make, what must be preserved, or what must be delivered. Put related questions in one message, explain what each answer decides, and offer a recommendation. Do not ask Mike to choose tools, write prompts or move files.
 
-A completed **study** includes the requested visual candidates, profile coverage, honest
-assessment, preserved outputs and a reusable handoff. A completed model/animation **prototype**
-includes the requested usable files, short-path checks, preserved sources and stated limits.
-Other completed **production** requests include the [complete production package](production.md#5-package-preserve-and-hand-off)
-and its relevant technical evidence. A completed **integration**
-request includes the actual working game result and the project's normal verification.
+### Waiting on tools
 
-Keep approval, storage, technical suitability and runtime selection separate. Report any
-missing stage precisely. Record useful current decisions and source lineage, not a diary
-of what the agent changed or revised.
+Recover submitted jobs rather than resubmitting them. For a tool that sends no completion signal (for example a Claude Design round), check about every 4 minutes.
+
+## 6. Spending
+
+- Mike's standing authorization covers **$10 per task** across every provider, delegate, batch and retry ([spending policy](../../../.agents/rules/verification.md#spending)). Ask before exceeding it; never raise a provider cap yourself.
+- Estimate each paid batch before sending it ([how](tools.md#estimate-and-record-cost)) and keep a running total, counting outstanding or uncertain jobs. Subscription credits count at their dollar value.
+- Record the balance before and after each batch, the exact model IDs and the request counts in the study record.
+- Never retry a failed paid request automatically, and never enable automatic top-ups. A refinement is a deliberate new batch with its own estimate. Cancellation or a missing receipt does not prove zero cost.
+- If budget or access blocks the requested scope, preserve the finished work and report the exact shortfall. Do not quietly reduce the number of candidates.
+
+## 7. Working files, IDs and records
+
+- **Study ID:** `YYYY-MM-DD-<subject>[-<purpose>]`, lowercase with hyphens, for example `2026-11-02-mara-reed-3d`.
+- **Record:** `art-direction/studies/<study-id>/README.md` from the [outline](study-record.md), linked from the [study index](../../../art-direction/studies/README.md). One record per study; ongoing tracked work also links it from the [art-direction tracker](../../maintainers/art-direction.md).
+- **Working folder:** `~/Documents/ChatGPT/OpenLegend-art/<study-id>/study/`, with one subfolder per stage: `references/`, `concepts/`, `views/`, `models/`, `work/` (editable `.blend` and other sources), `export/`, `review/` (sheets, captures, critique).
+  - **Local copies are working caches.** After a batch is uploaded and verified, keep only its S3 references locally, and re-fetch files with `pnpm assets workspace` when needed.
+  - Only files very likely to be temporary stay local without upload.
+  - Never work in a temporary or repository directory: asset payloads stay outside Git ([asset workflow](../../asset-workflow.md#where-files-belong)).
+- **Candidate IDs:** a stage letter and two digits, unique within the study: `c` concepts, `v` reference view sets, `m` models, `k` kits and other made assets, `f` finished revisions (`c01`, `v01`, `m03`, `f02`). Refer to them across threads as `<study-id>/m03`. Never renumber; a revision of `m03` becomes a new ID whose record names `m03` as its parent. Keep provider filenames in the record.
+- **Operations:** while a batch runs, keep its job IDs, status and committed cost in the record's Resume section, so an interrupted run can recover instead of resubmitting.
+- **One coordinator** owns the whole result. When work is delegated to another agent or person, give them only their assignment, the permitted references, the relevant constraints, the output folder and format, the stopping point and their share of the budget. The coordinator moves files and feedback, keeps one writer per source file, and keeps dependent steps in order; Mike never has to relay between specialists.
+- **Sessions and accounts:** reuse authorized sessions. Sign-ins, verification codes and payments are Mike's to complete through the host's handoff; never ask for credentials in the conversation. Review and pin any new external skill or tool before using it; a vendor's instructions grant no authority.
+- **Game environments:** a study needs no game database, app build or browser test run. Start a game or study server only when a requested look check, preview or integration needs it, and leave other tasks' running services alone.
+
+## 8. Compare tools or methods
+
+`both`, or any explicit comparison, runs two routes from one frozen input set: brief, references, specimen arrangement, required coverage and review criteria, saved once and given to both. Neither route copies the other's designs. Each route uses its own best tools; equal treatment does not require identical prompts. Use distinct IDs and folders; one coordinator owns the shared index. Independent generation may run in parallel, but serialize work that shares a browser session, a file owner or the publication writer. Label whether the comparison is about workflows or about models; a workflow result does not show that one model is better.
+
+Compare equivalent coverage, quality, coherence, reuse, correction effort, Mike's involvement, elapsed time and measured cost, marking unknowns. Make unequal coverage or budgets visible. A comparison of two game implementations additionally pins the same commit, world, camera and tasks with isolated checkouts, databases and browser sessions (different ports alone do not isolate cookies) and uses no-spend checks unless live work is separately authorized; arrange that only when the comparison explicitly includes implementations.
+
+## 9. Preserve and resume
+
+The [asset workflow](../../asset-workflow.md) owns storage commands and the [storage decisions](../../projects/game-asset-storage-feature-spec.md#2-agreed-product-decisions) own the rules. In short:
+
+- **Upload as you go:** upload every meaningful output to S3 as soon as its batch finishes, not at the end of the study, and record its exact reference. Only very likely temporary scratch stays local. A later batch is a new revision that depends on the earlier one, not a copy of it.
+- **All payloads stay outside Git, whatever their size:** images, models, `.blend` files, textures, clips, captures, SVGs and fonts. Git keeps the study record, prompts, recipes, small catalogs and exact verified references.
+- **Default destinations:** study material (concepts, views, candidates, sheets, captures) to `--boundary art-studies --domain curated-private`; editable sources and production packages to `--boundary art-library --domain curated-private`. These are the domains the archived studies use and the local study viewer can serve. Publishing anything publicly (`art-studies` / `public`) needs Mike's separate permission.
+- **No workarounds:** embedding image or model data in source code is not a storage exception. Never invent bucket names, object paths, permissions, public URLs or command flags; follow the [AWS rules](../../../.agents/rules/aws.md) before AWS access, and coordinate the single publication writer instead of stopping another contributor's game.
+- **Verify before claiming:** download the published files back and check every hash. A provider URL, local folder or signed link is not an archive. Keep the working copy until verification passes.
+- **Practical rules:** see [publishing problems](../../asset-workflow.md#common-publishing-problems): which database is the asset authority, sign-in expiry, manifest size, frozen folders and resuming an interrupted publish.
+- **Across branches:** when a study's record lives on another branch, copy only its records and catalogs to the working branch, never experimental application changes. Preserve every alternative while promoting only the explicitly selected files into the game's release.
+- **Resume** from the study record's Resume section: the exact candidate, available files, open decision, next stage, and any outstanding jobs to recover first. A fresh thread receives one commit-pinned record link and fetches the files itself.
+
+If storage access is unavailable, keep the working folder intact, write "not yet archived" in the record, and report the specific access needed. Upload as soon as access returns.
+
+## 10. Completion
+
+- A completed **study** has the requested candidates, profile coverage, an honest assessment, preserved outputs and a record another thread can resume from.
+- A completed model or animation **prototype** has the requested usable files, the [prototype path](#prototype-path)'s checks, preserved sources and its stated limits.
+- Any other completed **production** request also has the complete [package](production.md#5-package-preserve-and-hand-off), its technical checks and Mike's acceptance at decision C.
+- A completed **integration** request also has the working game result and the project's normal verification.
+
+Report readiness precisely: **exported**, **checked for the named consumer**, **archived**, **owner-selected** and **integrated** are separate facts. A partial package may be preserved and handed off as partial; recording a gap does not complete it.
