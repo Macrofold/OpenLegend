@@ -8,6 +8,8 @@ import type { WorldState } from './types.js';
 import type {
   SensoryFacet,
   ObservationFrame,
+  ReceivedFacetValue,
+  ReceivedObservation,
   ReceivedObservationHeader,
 } from './perception-evidence.js';
 import type { TemporalFragment } from './temporal-evidence.js';
@@ -132,10 +134,16 @@ export function retainReceivedValue(
   return { reference, addedBytes: record.bytes, valueBytes: encoded.bytes };
 }
 
-export function receivedFacetValueReferences(
-  value: import('./perception-evidence.js').ReceivedFacetValue,
-): string[] {
-  return [
+// Membership belongs to the acquired descriptor/original, not its changing
+// contact/check wrapper. Only immutable data can lend the same frozen result;
+// decoded builders and edited draft views always rediscover their current IDs.
+const facetReferences = new WeakMap<object, readonly string[]>();
+const observationReferences = new WeakMap<object, readonly string[]>();
+export function receivedFacetValueReferences(input: ReceivedFacetValue): readonly string[] {
+  const value = readOnlyDraftView(input),
+    cached = facetReferences.get(value);
+  if (cached) return cached;
+  const references = [
     value.reference,
     ...(value.reception?.kind === 'body'
       ? [value.reception.poseRef]
@@ -143,14 +151,19 @@ export function receivedFacetValueReferences(
         ? [value.reception.frameRef]
         : []),
   ].filter((reference): reference is string => typeof reference === 'string');
+  if (isImmutableData(value)) facetReferences.set(value, Object.freeze(references));
+  return references;
 }
-export function receivedObservationValueReferences(
-  source: import('./perception-evidence.js').ReceivedObservation,
-): string[] {
-  return [
+export function receivedObservationValueReferences(input: ReceivedObservation): readonly string[] {
+  const source = readOnlyDraftView(input),
+    cached = observationReferences.get(source);
+  if (cached) return cached;
+  const references = [
     source.headerRef,
     ...source.facets.flatMap(({ value }) => receivedFacetValueReferences(value)),
   ].filter((reference): reference is string => typeof reference === 'string');
+  if (isImmutableData(source)) observationReferences.set(source, Object.freeze(references));
+  return references;
 }
 
 export type ReceivedValueReferences = ReadonlySet<string>;
@@ -189,7 +202,6 @@ const emptyPerceptionRoot: NonNullable<WorldState['perceptionEvidence']> = immut
 const emptyTemporalRoot: import('./temporal-evidence.js').TemporalEvidenceState['actors'] =
   immutableDataSnapshot({});
 const referenceIndexes = new WeakMap<object, WeakMap<object, ReferenceIndex>>();
-const observationReferences = new WeakMap<object, ReceivedValueReferences>();
 const contactReferences = new WeakMap<object, ReceivedValueReferences>();
 // A weak last result allows incremental normal execution without retaining prior
 // worlds or an indefinitely growing chain of receipt arrays.
@@ -240,16 +252,6 @@ function referenceDelta(previous?: CountedReferences) {
       return { counts, references };
     },
   };
-}
-function originalReferences(
-  input: import('./perception-evidence.js').ReceivedObservation,
-): ReceivedValueReferences {
-  const source = readOnlyDraftView(input);
-  const cached = observationReferences.get(source);
-  if (cached) return cached;
-  const references = collectReferences(receivedObservationValueReferences(source));
-  if (isImmutableData(source)) observationReferences.set(source, references);
-  return references;
 }
 /** One current contact owns only its held groups and their acquired originals. */
 export function receivedContactValueReferences(input: CurrentContact): ReceivedValueReferences {

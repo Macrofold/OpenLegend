@@ -95,6 +95,7 @@ const personalMetadataFields = new Set([
   'individual_ids',
   'retention_metadata',
   'account_revision',
+  'retention_class',
   'logical_bytes',
   'unresolved',
   'value_refs',

@@ -18,7 +18,7 @@ export const receivedCurrentOwnerTables = [
  * optional resident membership, a stored original remains physically readable
  * until that particular row's replacement/deletion actually commits. */
 export function receivedRecordReferences(table: string, value: Record<string, unknown>): string[] {
-  let references: ReceivedValueReference[] = [];
+  let references: readonly ReceivedValueReference[] = [];
   if (table === 'mind_perception_current')
     return [...receivedContactValueReferences(value as unknown as CurrentContact)].sort();
   if (table === 'mind_perception_motion_samples')

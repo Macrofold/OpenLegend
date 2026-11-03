@@ -47,7 +47,7 @@ import {
   type TemporalHistoryQuery,
   type PreparedMemoryRetention,
 } from './temporal-storage.js';
-import { insertRows, sqlRecordBatches, type SqlWriteBatch } from './sql-rows.js';
+import { insertRows, sqlRecordBatches, sqlRowBatches, SqlWriteBatch } from './sql-rows.js';
 import { LexicalProjection } from './lexical-projection.js';
 import { recordBackgroundFailure } from './performance.js';
 import type { ConsolidationBatch } from './memory-consolidation.js';
@@ -134,6 +134,7 @@ import {
 import { z } from 'zod';
 import type { SqlDatabase, SavedWorld } from './store.js';
 import type { RecordChanges, RowChange } from './world-records.js';
+import { RECORD_ACTOR_PATHS } from './world-record-schema.js';
 
 export const MEMORY_SOURCE_ELIGIBILITY = `r.retention_class='memory' AND NOT EXISTS (SELECT 1 FROM mind_forgotten f WHERE f.world_id=r.world_id AND f.actor_id=r.actor_id AND (f.source_id=r.id OR f.source_id=r.event_id))
     AND (r.source_kind<>'memory' OR ((r.memory_kind='impression' OR r.memory_kind='commitment' OR (r.memory_kind='episode' AND r.acquisition<>'inferred'))
@@ -2024,6 +2025,13 @@ export class MemoryRepository {
       )
     )
       throw new Error('Exact source closure must be prepared before retaining a derivation.');
+    const cleanup = sharedWrites ?? new SqlWriteBatch(this.db);
+    let queuedInvalidation = false;
+    const invalidate = (table: string, sql: string, params: unknown[]) => {
+      queuedInvalidation = true;
+      return cleanup.add(table, sql, params);
+    };
+    const preparedActors = new Set(versions?.actors ?? []);
     const affected: MemoryChanges = new Map();
     affected.newSources = new Map();
     const erased = (changes.writes.get('mind_forgotten') ?? []).map((row) => ({
@@ -2032,7 +2040,7 @@ export class MemoryRepository {
     }));
     const erasedKeys = new Set(erased.map((row) => JSON.stringify([row.actor_id, row.source_id])));
     if (erased.length) {
-      await sharedWrites?.flush();
+      await cleanup.flush();
       const keys = JSON.stringify(erased);
       for (const table of [
         'mind_source_versions',
@@ -2041,18 +2049,18 @@ export class MemoryRepository {
         'memory_vector_cache',
         'memory_vectors',
       ])
-        await this.db
-          .prepare(
-            `DELETE FROM ${table} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+        await invalidate(
+          table,
+          `DELETE FROM ${table} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
           WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`,
-          )
-          .run(keys, worldId);
-      await this.db
-        .prepare(
-          `DELETE FROM history_perspectives t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+          [keys, worldId],
+        );
+      await invalidate(
+        'history_perspectives',
+        `DELETE FROM history_perspectives t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
         WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.event_id=q.source_id`,
-        )
-        .run(keys, worldId);
+        [keys, worldId],
+      );
     }
     const invalidateConversations = new Set<string>();
     const touch = (actor: string, id: string) => {
@@ -2063,8 +2071,9 @@ export class MemoryRepository {
     };
     for (const [kind, table] of Object.entries(sourceTables)) {
       const writes = changes.writes.get(table) ?? [];
-      const next = new Map(writes.map((row) => [row.id, row.payload]));
+      const replacementIds = new Set(writes.map((row) => row.id));
       const direct = changes.deletes.get(table) ?? [];
+      const directIds = new Set(direct);
       const parents = new Set([
         'data_world',
         'world_settings',
@@ -2077,7 +2086,7 @@ export class MemoryRepository {
       const ids = new Set([...direct, ...writes.filter((row) => !row.create).map((row) => row.id)]);
       // Only deletion needs ancestor matching; ordinary appends inspect their own IDs.
       for (const ancestor of ancestors) {
-        await sharedWrites?.flush();
+        await cleanup.flush();
         // Deleting an actor-owned list has an exact structural parent. Root/world/
         // experience deletion intentionally affects every source in that world.
         const path = JSON.parse(ancestor) as string[];
@@ -2091,36 +2100,38 @@ export class MemoryRepository {
       }
       const expired = new Set(changes.expired?.get(table) ?? []);
       const allIds = [...ids];
-      if (allIds.length) await sharedWrites?.flush();
       for (let offset = 0; offset < allIds.length; offset += 800) {
         const batch = allIds.slice(offset, offset + 800);
         const placeholders = batch.map(() => '?').join(',');
-        const old = await this.db
-          .prepare(
-            `SELECT id,actor_id,source_id,payload FROM ${table} WHERE world_id=? AND id IN (${placeholders})`,
-          )
-          .all(worldId, ...batch);
+        const old: Record<string, unknown>[] = [];
+        const lookup: string[] = [];
+        for (const id of batch) {
+          // A prepared version set plus explicit semantic expiry proves this
+          // native deletion's identity. Placement-only cold writes and unknown
+          // edits still need the previous canonical metadata below.
+          if (versions && directIds.has(id) && expired.has(id) && !replacementIds.has(id)) {
+            const path = JSON.parse(id) as string[],
+              actorId = path[RECORD_ACTOR_PATHS.get(table)!]!;
+            if (preparedActors.has(actorId)) {
+              old.push({ id, actor_id: actorId, source_id: path.at(-1)! });
+              continue;
+            }
+          }
+          lookup.push(id);
+        }
+        if (lookup.length) {
+          await cleanup.flush();
+          const metadata = await this.db
+            .prepare(
+              `SELECT id,actor_id,source_id,retention_class,account_revision FROM ${table}
+              WHERE world_id=? AND id IN (${lookup.map(() => '?').join(',')})`,
+            )
+            .all(worldId, ...lookup);
+          old.push(...metadata);
+        }
         for (const row of old)
           if (erasedKeys.has(JSON.stringify([row['actor_id'], row['source_id']])))
             expired.add(String(row['id']));
-        const expiredSensory =
-          kind === 'awareness'
-            ? old
-                .filter(
-                  (row) =>
-                    JSON.parse(String(row['payload']))['retentionClass'] === 'sensory' &&
-                    !next.has(String(row['id'])),
-                )
-                .map((row) => row['id'])
-            : [];
-        if (expiredSensory.length)
-          await this.db
-            .prepare(
-              `DELETE FROM history_perspectives p USING mind_awareness a
-            WHERE a.world_id=? AND a.id IN (${expiredSensory.map(() => '?').join(',')})
-              AND p.world_id=a.world_id AND p.actor_id=a.actor_id AND p.event_id=a.source_id`,
-            )
-            .run(worldId, ...expiredSensory);
         for (const row of old) {
           touch(String(row['actor_id']), String(row['source_id']));
           if (kind === 'awareness') invalidateConversations.add(String(row['actor_id']));
@@ -2129,8 +2140,9 @@ export class MemoryRepository {
           const candidates = old.map((row) => ({
             actor_id: String(row['actor_id']),
             id: String(row['source_id']),
-            revision: personalAccountRevision(String(row['payload'])),
+            revision: String(row['account_revision']),
           }));
+          await cleanup.flush();
           const required = await this.db
             .prepare(
               `SELECT 1 AS required FROM jsonb_to_recordset(?::jsonb)q(actor_id text,id text,revision text) JOIN mind_source_dependencies d ON d.world_id=? AND d.actor_id=q.actor_id AND d.source_kind=? AND d.source_id=q.id AND d.source_revision=q.revision LIMIT 1`,
@@ -2142,52 +2154,76 @@ export class MemoryRepository {
             );
         }
         const released = old.filter((row) => expired.has(String(row['id'])));
+        const keys = JSON.stringify(
+          released.map((row) => ({
+            actor_id: String(row['actor_id']),
+            source_id: String(row['source_id']),
+          })),
+        );
         if (released.length) {
-          const keys = JSON.stringify(
-            released.map((row) => ({
-              actor_id: String(row['actor_id']),
-              source_id: String(row['source_id']),
-            })),
-          );
           for (const dependent of [
             ...(versions ? [] : ['mind_source_versions']),
             'mind_source_annotations',
           ])
-            await this.db
-              .prepare(
-                `DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+            await invalidate(
+              dependent,
+              `DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
               WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id AND (t.source_kind=? OR (?='awareness' AND t.source_kind='perspective'))`,
-              )
-              .run(keys, worldId, kind, kind);
+              [keys, worldId, kind, kind],
+            );
           for (const dependent of ['memory_index_queue', 'memory_vectors', 'memory_vector_cache'])
-            await this.db
-              .prepare(
-                `DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+            await invalidate(
+              dependent,
+              `DELETE FROM ${dependent} t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
               WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.source_id=q.source_id`,
-              )
-              .run(keys, worldId);
-          await this.db
-            .prepare(
-              `DELETE FROM mind_source_dependencies t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
-            WHERE t.world_id=? AND t.actor_id=q.actor_id AND
-              t.derived_kind=? AND t.derived_id=q.source_id`,
-            )
-            .run(keys, worldId, kind);
-          if (kind === 'awareness')
-            await this.db
-              .prepare(
-                `DELETE FROM history_perspectives t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+              [keys, worldId],
+            );
+        }
+        if (kind === 'awareness') {
+          // Semantic expiry and an otherwise deleted sensory account revoke the
+          // same personal grant. One exact-key deletion covers their union.
+          const historyKeys = old.filter(
+            (row) =>
+              expired.has(String(row['id'])) ||
+              (row['retention_class'] === 'sensory' && !replacementIds.has(String(row['id']))),
+          );
+          if (historyKeys.length)
+            await invalidate(
+              'history_perspectives',
+              `DELETE FROM history_perspectives t USING jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
               WHERE t.world_id=? AND t.actor_id=q.actor_id AND t.event_id=q.source_id`,
-              )
-              .run(keys, worldId);
+              [
+                JSON.stringify(
+                  historyKeys.map((row) => ({
+                    actor_id: String(row['actor_id']),
+                    source_id: String(row['source_id']),
+                  })),
+                ),
+                worldId,
+              ],
+            );
         }
-        {
-          await this.db
-            .prepare(
-              `DELETE FROM mind_source_dependencies WHERE world_id=? AND EXISTS (SELECT 1 FROM recall_sources r WHERE r.world_id=mind_source_dependencies.world_id AND r.actor_id=mind_source_dependencies.actor_id AND r.id=mind_source_dependencies.derived_id AND r.source_kind=mind_source_dependencies.derived_kind AND r.record_id IN (${placeholders}))`,
-            )
-            .run(worldId, ...batch);
-        }
+        // Both explicit released identities and ordinary replacement records
+        // lose their owned dependency edges. The fallback keeps unknown/cold
+        // record edits exact even when no canonical row was found above.
+        await invalidate(
+          'mind_source_dependencies',
+          `DELETE FROM mind_source_dependencies d WHERE d.world_id=? AND (
+            ${
+              released.length
+                ? `d.derived_kind=? AND EXISTS (
+              SELECT 1 FROM jsonb_to_recordset(?::jsonb) q(actor_id text,source_id text)
+              WHERE d.actor_id=q.actor_id AND d.derived_id=q.source_id) OR`
+                : ''
+            }
+            EXISTS (SELECT 1 FROM recall_sources r WHERE r.world_id=d.world_id
+              AND r.actor_id=d.actor_id AND r.id=d.derived_id AND r.source_kind=d.derived_kind
+              AND r.record_id IN (${placeholders})))`,
+          [worldId, ...(released.length ? [kind, keys] : []), ...batch],
+        );
+        // The returning source deletion drives lexical admission. Its source
+        // reads must observe the completed independent invalidations above.
+        await cleanup.flush();
         const pending = await this.db
           .prepare(
             `WITH changed AS (DELETE FROM recall_sources WHERE world_id=? AND source_kind=? AND record_id IN (${placeholders})
@@ -2212,10 +2248,16 @@ export class MemoryRepository {
         invalidateConversations.add((JSON.parse(id) as string[])[3]!);
       }
     }
-    if (invalidateConversations.size || changes.deletes.has('experience_state'))
-      await sharedWrites?.flush();
-    for (const actorId of invalidateConversations)
-      await this.invalidateConversationCompactions(worldId, actorId);
+    const allConversations = ['data_world', 'world_settings', 'experience_state'].some((table) =>
+      changes.deletes.has(table),
+    );
+    // Settle this owner's invalidations before the caller applies the new exact
+    // source-version plan. An untouched caller batch can still join later writes.
+    if (queuedInvalidation || !sharedWrites || invalidateConversations.size || allConversations)
+      await cleanup.flush();
+    if (allConversations) await this.invalidateConversationCompactions(worldId);
+    else if (invalidateConversations.size)
+      await this.invalidateConversationCompactions(worldId, [...invalidateConversations]);
     if (changes.deletes.has('experience_state'))
       for (const row of await this.db
         .prepare('SELECT DISTINCT actor_id FROM recall_sources WHERE world_id=?')
@@ -3407,8 +3449,21 @@ export class MemoryRepository {
       assertCurrent();
     });
   }
-  async invalidateConversationCompactions(worldId: string, actorId?: string): Promise<void> {
-    const prefix = `integration:conversation-compaction:${JSON.stringify(actorId ? [worldId, actorId] : [worldId]).slice(0, -1)}${actorId ? ']' : ','}`;
+  async invalidateConversationCompactions(
+    worldId: string,
+    actorIds?: readonly string[],
+  ): Promise<void> {
+    if (actorIds !== undefined) {
+      const keys = [...new Set(actorIds)].map(
+        (actor) => `integration:${conversationCompactionKey(worldId, actor)}`,
+      );
+      for (const batch of sqlRowBatches(keys.map((key) => [key])))
+        await this.db
+          .prepare('DELETE FROM meta WHERE key=ANY(?::text[])')
+          .run(batch.map(([key]) => key));
+      return;
+    }
+    const prefix = `integration:conversation-compaction:${JSON.stringify([worldId]).slice(0, -1)},`;
     await this.db
       .prepare('DELETE FROM meta WHERE substr(key,1,?)=?')
       .run([...prefix].length, prefix);
