@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                            | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-10-24   |
+| In progress | Contact, personal danger evidence and prospective work transitions are in progress; complete combat delivery and qualification remain open. | 2026-11-03   |
 
 ## Design baseline and integration
 
@@ -797,7 +797,7 @@ Native/fixture qualification also covers private known/unknown target attributio
 
 ## Open decisions and intentional limits
 
-The first implementation has no unanswered product question that blocks these modules. The separate SA-D01 choice about longer-lasting interpreted emotions in directly controlled characters remains unresolved; it does not block native bodily reactions, NPC appraisal or the declared combat consumers. Numerical animal/response/UI values are selected initial world tuning and must be evaluated, not rediscovered by an implementer. Reliability, latency, scale and fun remain unperformed acceptance work, not unspecified design choices.
+The first implementation has no unanswered product question that blocks these modules. SA-D01 selects authored controlled-character psychology; its native producers, compatible retained feelings and feedback remain delivery work under EP and SPX alongside the declared combat consumers. Numerical animal/response/UI values are selected initial world tuning and must be evaluated, not rediscovered by an implementer. Reliability, latency, scale and fun remain unperformed acceptance work, not unspecified design choices.
 
 Later owner decisions remain explicit and do not block this slice: richer material destruction/penetration; additional animal ecology/cognition; long-term relationship and legal consequences; broader indirect hazards/background conflict fairness; explicit repeat-attack or team tactics; and any expansion of the initial perception or locomotion capabilities. The selected no-PvP-enrollment rule is settled for this world, not deferred back to those later questions.
 

@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                           | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | The integrated player-experience design is specified; implementation and player qualification remain open. | 2026-10-24   |
+| In progress | The integrated player-experience design is specified; implementation and player qualification remain open. | 2026-11-03   |
 
 ## Purpose and authority
 
@@ -226,7 +226,7 @@ The target blocks, evades or is hit according to native resolution. Present only
 
 After an eligible sudden attack, own status shows **Startled** and the actual consequences, such as less steady aim and a shorter available evade, with remaining normal-play time. It does not disable WASD, Stop, speech or ordinary flight merely for drama.
 
-An already admitted evade keeps its frozen path and duration; a newly chosen endpoint must satisfy the current allowed range. A too-distant request refuses before cost and refreshes the offered choice. At pause, mechanical recovery stops. At debug 3×/8× all simulation work and recovery accelerate together; reading aids may remain readable without extending the effect. When finite startle ends, remove only that effect's claim: another authorized contribution can still affect aim or evasion. Do not announce calm, safety or full mechanical recovery, or invent a timer for a persistent effect. Longer-term appraisal applicability and disclosure remain conditional on SA-D01.
+An already admitted evade keeps its frozen path and duration; a newly chosen endpoint must satisfy the current allowed range. A too-distant request refuses before cost and refreshes the offered choice. At pause, mechanical recovery stops. At debug 3×/8× all simulation work and recovery accelerate together; reading aids may remain readable without extending the effect. When finite startle ends, remove only that effect's claim: another authorized contribution can still affect aim or evasion. Do not announce calm, safety or full mechanical recovery, or invent a timer for a persistent effect. Under SA-D01, authored fear and compatible retained feelings remain applicable; show their permitted causes and actual consequences through existing owner inspection and action feedback.
 
 ### G-J09 — Lose visual contact
 
@@ -264,10 +264,10 @@ The catalogue audit covers the scope and entry inventory of all 28 canonical cat
 
 The worthwhile additions are small and reusable: a clear historical inspection route, a sensory cue with an explicit next action, a finite watch that can end, and a control profile that leaves speech/crafting usable. Richer investigations, social deception, alarm networks and authored sensor devices can build on those seams when selected; they are not required new systems here.
 
-## Open decisions and evidence limits
+## Selected policy and evidence limits
 
-- **SA-D01 remains open:** the controlled-character fear producer, whether retained appraisals mechanically apply during direct control, disclosure, revocation and control-transfer behavior. D recommends native-body-only initial control (mask interpreted appraisal mechanics while preserving records/lifetimes), with deterministic interpretation if persistent player fear is desired; neither is adopted. This design specifies native startle and already authorized own feedback. It does not choose active versus masked prior fear, schedule AI for a human-controlled character or disclose a former controller's private thoughts.
-- **Implementation and qualification remain open:** use the [integrated owner contracts](stealth-player-experience-tech-design.md#integrated-dependencies-and-remaining-decision) for exact evidence references, sampled visual values, preparation timing and control admission. Runtime help must continue describing shipped controls until the new controls are implemented.
+- **SA-D01 selects authored rules:** events affect the fictional character through D's [world-owned policy](../worlds/base/psychological-reactions.md#directly-controlled-characters). Taking control preserves compatible feelings and their naturally progressed effects; autonomous model creation/review stops. Explain permitted causes, remaining native lifetime and useful mechanical consequences without a mandatory emotion dashboard or disclosure of a former controller's private thoughts. Ordinary controls do not directly set or clear feelings.
+- **Implementation and qualification remain open:** use the [integrated owner contracts](stealth-player-experience-tech-design.md#integrated-dependencies-and-selected-player-policy) for exact evidence references, sampled visual values, preparation timing and control admission. Runtime help must continue describing shipped controls until the new controls are implemented.
 - Numerical presentation/input defaults are selected starting proposals in the limits inventory, not measured optimums. Human understanding, enjoyment, accessibility, latency, graphics and load acceptance remain unchecked in the tracker.
 
 ## Maintained records

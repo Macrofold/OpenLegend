@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                              | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-10-24   |
+| In progress | Integrated design and preparation interfaces are complete; ATI01–ATI08 implementation and gameplay qualification remain open. | 2026-11-03   |
 
 ## 1. Authority, baseline and dependency reads
 
@@ -594,14 +594,14 @@ Paper traces must cover AJ01–AJ13 and these precise cuts:
 
 Source/document review can establish contract coherence only. Later fixture/native/database/browser/live-model evidence must be labeled separately. Real autonomous alternatives and useful uncoached play remain required; a forced action cannot establish character judgment, and scripted correctness cannot establish fun.
 
-## 11. Implementation dependencies and open player choice
+## 11. Implementation dependencies and selected player policy
 
 **The selected attention semantics and shared technical choices are settled.** Runtime delivery depends on the following existing-owner extensions:
 
 1. **Exact evidence revisions.** SC02 preserves each source family's exact numeric native or string personal-source revision. E compares that tagged value without digest coercion or another attention-wide counter; SA-D02 is resolved.
 2. **Physical composition.** B's orientation and C's posture/motion accounting supply actual compatible movement, costs and view. Unsupported combinations refuse through ordinary admission.
 3. **Preparation capture.** Section 7 supplies all six actual physical families, including `currentMethodStartedAt`. F owns matching, lead, warning continuation and surprise. SA-D03 is resolved; these adapters remain unimplemented.
-4. **Controlled-player interpreted emotion.** SA-D01 remains open for creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control transfer. E reads only effects authorized by the eventually selected policy. Native body effects, NPC choice and this design proceed independently.
+4. **Controlled-player interpreted emotion.** SA-D01 selects authored native interpretation and continuing compatible retained feelings. E reads D's complete authorized effects without an independent emotion writer; the policy does not select the player's actions. EP and SPX retain implementation and qualification.
 5. **Observable preparation and flight.** B measures actual visible pose/motion and A records acquired support. Their physical details, never private action-stage labels, feed the world's danger adapter.
 6. **Ordinary surfaces.** G presents accepted/pending/refused combined work, actual scope/time and permitted findings across full views, patches and history. Camera/selection callbacks create no sensing or commitment.
 7. **Listening and animals.** Listening retains C's provider fidelity. E's opt-in ground curiosity shares C's existing pattern/presence owner with independent alarm and curiosity slots; alarm eligibility has priority. No additional sensing gain or controller is implied.

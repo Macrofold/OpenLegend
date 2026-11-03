@@ -121,7 +121,7 @@ Dependencies: ATI01–ATI07 and the required A/B/C/D/F/G slices; complete runtim
 
 ## Bounded external gates
 
-[Technical §11](../projects/attention-and-investigation-tech-design.md#11-implementation-dependencies-and-open-player-choice) owns the required implementation dependencies. ATI01–ATI08 retains runtime and qualification work. SA-D02/SA-D03 are settled technical contracts; SA-D01 alone remains the separate controlled-player interpreted-emotion product choice.
+[Technical §11](../projects/attention-and-investigation-tech-design.md#11-implementation-dependencies-and-selected-player-policy) owns the required implementation dependencies. ATI01–ATI08 retains runtime and qualification work. SA-D02/SA-D03 are settled technical contracts; SA-D01 selects authored controlled-player psychology, with delivery owned by EP and SPX.
 
 ## Maintained records
 

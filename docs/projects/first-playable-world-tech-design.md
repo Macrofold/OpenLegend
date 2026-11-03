@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                          | Last updated |
 | ----------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared contracts and one sequential combat, speech and world delivery are designed; runtime delivery and integrated evidence remain open. | 2026-10-24   |
+| In progress | Shared contracts and one sequential combat, speech and world delivery are designed; runtime delivery and integrated evidence remain open. | 2026-11-03   |
 
 ## Scope and current source baseline
 
@@ -271,7 +271,7 @@ claiming that fixtures or AI browser operation establish it.
 
 The selected combined assignment uses one AI and one implementation branch, in the order **combat → speech → complete first-playable world**. CTR and SPK are work inside that assignment, not missing external deliveries to wait for or duplicate. Their existing trackers remain the detailed owners. Phase completion is a checkpoint within the full assignment, not permission to stop with later agreed implementation unfinished.
 
-The [integrated SA contract and dependency map](stealth-awareness-tech-design.md#ownership-and-dependencies) govern the overlapping sensing/reaction work inside these phases. Establish exact evidence/reference and native pose foundations before their consumers; coordinate A/B/C acquisition, D/E/F reaction/preparation and G publication/control through their existing owners. Source revisions and actual method-start timing are settled contracts. SA-D01 blocks only its dependent controlled-player appraisal behavior, not the rest of the opening. Do not qualify an earlier phase against superseded full-entity disclosure or duplicate the same sense/controller for combat, speech and roaming.
+The [integrated SA contract and dependency map](stealth-awareness-tech-design.md#ownership-and-dependencies) govern the overlapping sensing/reaction work inside these phases. Establish exact evidence/reference and native pose foundations before their consumers; coordinate A/B/C acquisition, D/E/F reaction/preparation and G publication/control through their existing owners. Source revisions and actual method-start timing are settled contracts. SA-D01 selects authored controlled-player psychology; EP and SPX own its implementation and qualification within the opening. Do not qualify an earlier phase against superseded full-entity disclosure or duplicate the same sense/controller for combat, speech and roaming.
 
 Keep the current supplied Main opening selected until FPW02 can construct and validate the complete replacement. FPW01 proves the configuration/authority interfaces with a deliberately scoped resource-to-tool candidate; that fixture is not the final Main bundle and grants no first-playable acceptance. Add typed family registration and authored rows in coherent stages on the same branch. The complete bundle must pass all required-reference, source, family and physical checks before the ordinary Main selector changes. Do not solve staging dependencies by allowing missing required rows, importing old generated data, silently skipping an unimplemented family or publishing a partial replacement world.
 

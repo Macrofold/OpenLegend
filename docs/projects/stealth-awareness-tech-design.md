@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                        | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Shared and specialist designs are integrated; runtime delivery and qualification remain open. Controlled-character psychological policy remains SA-D01. | 2026-10-24   |
+| In progress | Shared and specialist designs, including authored player emotion, are integrated; runtime delivery and qualification remain open. | 2026-11-03   |
 
 ## Authority and scope
 
@@ -303,7 +303,7 @@ The current decaying-appraisal reframe refuses changed values. The required nume
 
 At provider absence, insufficient funds, no change, cancellation or stale output: native startle/recovery and existing emotion lifetime continue; no fabricated fear/calm, new cause, chosen movement or paid retry appears. Optional interpretation never blocks physical sensing/combat. After any wait, recheck actor/life/controller/authority, policy, appraisal revision and complete eligible source support before publication. Charge an already admitted external attempt according to its real result even when its gameplay proposal becomes stale.
 
-Player psychological acquisition, retained-appraisal applicability during direct control, disclosure, revocation and control transfer remain [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters). These shared input/effect/lifecycle contracts and NPC/native design can proceed without selecting that player policy. Controller identity alone grants no background AI permission over a human-controlled character. Until SA-D01 is selected, keep the new retained-appraisal/direct-control composition disabled before profile/feature admission. This product gate is not transient incomplete mechanics that can pause native combat indefinitely. Existing physical behavior and independently complete native-body paths remain available, but an inherited active appraisal cannot silently be treated as absent. [D's implementation gate](emotional-physiology-feature-spec.md#implementation-gate) owns the exact enablement boundary.
+[SA-D01 selects authored interpretation](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) for directly controlled characters through D's existing appraisal owner. Consume the [selected world rules](../worlds/base/psychological-reactions.md#directly-controlled-characters), personally admitted evidence and complete applicable mechanical set. Compatible retained appraisals remain active at naturally progressed values; suspend autonomous model creation/review and invalidate stale pending authority on transfer. Control changes grant no new evidence, lifetime or review allowance. [D's implementation gate](emotional-physiology-feature-spec.md#implementation-gate) requires the actual producer, transfer, disclosure and acceptance paths before claiming delivery; it is no longer a pending product choice or an indefinite combat hold.
 
 ## Attention, investigation and active preparation
 
@@ -456,11 +456,9 @@ The feature specification's J01–J11 and [A–U complete scenario traces](steal
 
 The [implementation dependency graph](../maintainers/stealth-awareness.md#future-implementation-dependency-graph) separates shared evidence/pose foundations, parallel physical and emotional work, preparation/combat consumers and complete player/lifecycle qualification. Detailed source areas, mutation rules, bounds and positive/negative cases remain in each focused pair and tracker. Current-format consumers change together; no compatibility adapter between development iterations is selected.
 
-## Open product choice
+## Selected player policy
 
-**SA-D01 remains open:** controlled-character psychological creation/review, applicability of retained appraisals during direct control, disclosure, revocation and control transfer. Recommend native-body-only initial player scope (alternative A), preserving appraisal records and lifetimes while masking their psychological mechanics during direct control. If persistent interpreted player fear is wanted, deterministic authored interpretation (B) is the preferred alternative; model interpretation (C) requires explicit bounded opt-in. No recommendation is adopted by this design.
-
-Only that dependent player policy and its acceptance are blocked. NPC emotion, native bodily startle, perception, chosen actions, preparedness/surprise mechanics and ordinary information disclosure have complete contracts. SA-D02's exact source revisions and SA-D03's physical method start are resolved in SC02 and SC10/SC11; neither remains a technical decision gate.
+**SA-D01 is resolved as B: authored player interpretation.** D owns its [selected policy and implementation gate](emotional-physiology-feature-spec.md#directly-controlled-characters-sa-d01); EP06–EP09 and SPX04 retain actual implementation and qualification. NPC emotion, native bodily startle, perception, chosen actions and preparedness/surprise keep their independent contracts. SA-D02's exact source revisions and SA-D03's physical method start remain resolved in SC02 and SC10/SC11.
 
 ## Maintained records
 

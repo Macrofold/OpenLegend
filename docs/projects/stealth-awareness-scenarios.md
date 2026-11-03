@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                             | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design traces reviewed; runtime, performance and player qualification remain open. SA-D01 remains an explicit product dependency. | 2026-10-24   |
+| In progress | Integrated design traces include authored player emotion; runtime, performance and player qualification remain open. | 2026-11-03   |
 
 ## Authority and reading rules
 
@@ -12,7 +12,7 @@ A is evidence/recognition; B vision/gaze; C posture/acoustics; D bodily effects/
 
 Let τ denote elapsed **normal-speed seconds**, converted once to simulation time (60 simulation seconds per τ in the base world). B's canonical dynamic visual cells are 0.05 τ with fixed epoch; actual native changes split cells without rephasing. Capture/view requests introduce no extra sensing samples. A held value keeps its actual measurement and acquisition times; availability is separate. Every attack uses already acquired evidence, actual work and complete mechanics at its own immutable cut. Unknown, unsupported and incomplete are distinct; required incomplete work holds the coherent native prefix before an outcome.
 
-A fixture that states a cue was acquired must satisfy its installed physical policy; the scenario does not grant that result from prose. Check both the stated positive condition and its specified negative contrast. Ordinary player interpretation never selects an SA-D01 alternative by implication.
+A fixture that states a cue was acquired must satisfy its installed physical policy; the scenario does not grant that result from prose. Check both the stated positive condition and its specified negative contrast. Controlled-character emotion follows SA-D01's selected authored rules; a scenario cannot invent an additional producer.
 
 ## A — Quietly approaching a hare
 
@@ -83,7 +83,7 @@ A fixture that states a cue was acquired must satisfy its installed physical pol
 5. **Preparedness:** Recognition alone establishes no threat or preparation. An actually understood, timely grounded danger clause can independently enter F's warning registration.
 6. **Choices:** Reply, call her name if known, ask for clarification, approach a known place or continue work. No response is compulsory.
 7. **Admission:** Speech and movement use ordinary authority and physical checks. A hidden Ada reference permits remembered discussion, not exact live targeting or following.
-8. **Emotion/body:** NPC interpretation may use the actual recognized voice; affection, fear or relief remains private supported appraisal. SA-D01 controls any player psychological policy.
+8. **Emotion/body:** NPC interpretation may use the actual recognized voice; affection, fear or relief remains private supported appraisal. SA-D01's selected authored rules govern player psychology.
 9. **Combat:** Familiarity neither prevents betrayal surprise nor proves hostility. Only independently qualifying warning or actual preparation changes F's result.
 10. **Player:** G may label the heard speaker with the permitted remembered identity/name while keeping unseen pose, equipment and exact position absent.
 11. **Persistence:** Keep per-listener source revisions, original word gaps, acquired association and familiarity support. Replay/recall cannot manufacture extra meetings or learning.
@@ -235,7 +235,7 @@ A fixture that states a cue was acquired must satisfy its installed physical pol
 7. **Admission:** D samples supported physiology/Composure and commits its bodily contribution once. Existing admitted paths retain speed/duration; later actions consume current eligible modifiers.
 8. **Emotion/body:** The unmodified startle has a three-τ curve. A later supported fear appraisal can outlast it; effective mechanics use D's maximum applicable normalized contribution, not a duplicate-cause sum.
 9. **Combat:** Accuracy is sampled at the declared melee-attempt/ranged-release boundary and evasion reach at new admission. Fear adds no second surprise multiplier or automatic running penalty.
-10. **Player:** Show own bodily feedback without narrating the human's feelings. Persistent interpreted player mechanics/disclosure remain blocked by SA-D01; NPC interpretation has its selected policy.
+10. **Player:** Show the character's own bodily effects and authored fear with permitted causes and actual consequences. Retained compatible fear remains active through takeover; autonomous model writes stop. A loud cue alone establishes no interpreted threat, and feedback describes the fictional character rather than the human.
 11. **Persistence:** Retain cause/no-effect receipts, admitted curve and clock conversion, appraisal source/revision/lifetime and review allowance. Duplicate delivery or reload cannot restart them.
 12. **Play value:** Immediate shock and lasting interpretation produce different aftermaths. Composure can matter while the player retains action choice and understandable recovery.
 
@@ -293,7 +293,7 @@ A fixture that states a cue was acquired must satisfy its installed physical pol
 5. **Preparedness:** The character can guard a known approach or act on an actual warning. Camera visibility supplies neither warning nor deliberate physical fulfillment.
 6. **Choices:** Orbit, inspect historical information, look physically, investigate a permitted region or continue work. Creator inspection requires a separate authorized audience.
 7. **Admission:** Scene picking and commands accept only current permitted action references. Selecting a historical marker cannot invoke attack/follow through its internal source identity.
-8. **Emotion/body:** Ordinary projection exposes no attacker fear, private appraisal or intent. Own bodily feedback remains available; player psychological scope still follows SA-D01.
+8. **Emotion/body:** Ordinary projection exposes no attacker fear, private appraisal or intent. Own bodily and authored-emotion feedback follows SA-D01 and current private disclosure authority.
 9. **Combat:** Physical attacks can collide with hidden bodies through admitted world rules, but an outcome/refusal discloses only what its observer account permits.
 10. **Player:** Full snapshots, patches, audio, shadows, lights, reflections, names, tooltips and late assets all enforce the same scope. Other-subject current samples are frozen, not extrapolated.
 11. **Persistence:** Retain canonical personal history, not a client memory authority. Clear revoked/future/other-character caches on control, life, source, timeline and creator-audience change.

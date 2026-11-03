@@ -122,7 +122,7 @@ The technical design records the integrated A–E contracts and existing-owner e
 
 ## Explicit decisions and integration gates
 
-- **SA-D01 open:** controlled-character interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior; native warning/surprise/startle remains independent.
+- **SA-D01 selected:** authored controlled-character psychology and continuing compatible retained feelings, with implementation and feedback qualification under EP and SPX; native warning/surprise/startle remains independent.
 - **SA-D02 resolved:** [exact evidence-family revisions](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation); implement the owning family's exact numeric or string representation.
 - **SA-D03 resolved:** [actual method-start exposure](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition); implement the field across all applicable existing owners. Do not infer starts from action age or charge guard preparation twice.
 - **Required producers/integration:** B/A incoming flight, A/SPK ordinary current scoped warning, E complete methods, D complete mechanics/terminal receipts and local contact publication fencing.

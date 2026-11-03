@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                              | Last updated |
 | ----------- | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design is complete; runtime delivery and play qualification remain open. Controlled-character psychological policy remains SA-D01. | 2026-10-24   |
+| In progress | Integrated design, including authored player emotion, is complete; runtime delivery and play qualification remain open. | 2026-11-03   |
 
 ## Purpose and selected scope
 
@@ -20,7 +20,7 @@ Source inspection uses `Macrofold/OpenLegend` at `86a21ce50aa0633d81b38a430b7727
 
 The existing game has authoritative spatial bodies and movement, range/obstruction-based sight, listener-specific speech, private event evidence, continuous sighting associations, personal combat encounters, native animal response machinery, interpreted appraisals, status effects, prepared responses and observer-scoped player views. These are useful foundations. They do not establish delivered facing/light/concealment sensing, general non-speech acoustics, persistent learned voice recognition, mechanical surprise, native startle, adaptive emotional reconsideration, or complete historical-character disclosure. Current appraisal/contribution mechanisms also need explicit extensions before they can supply the selected accuracy/evasion effects.
 
-All behavior below is an **accepted shared target**, except the explicitly open controlled-character psychological policy. D's [general emotion feature](emotional-physiology-feature-spec.md), [technical design](emotional-physiology-tech-design.md) and [EP tracker](../maintainers/emotional-physiology.md) specify native bodily reactions, interpreted fear/joy/anger and persistent grief, maximum effective mechanics and bounded independent review; their numerical policy is owned by [base psychological reactions](../worlds/base/psychological-reactions.md). [The player-experience design](stealth-player-experience-feature-spec.md) and [SPX tracker](../maintainers/stealth-player-experience.md) own selected controls and permitted presentation. This is a design-only project stage: no new runtime feature, executable test, deployment, measured performance improvement or player-enjoyment result is claimed.
+All behavior below is an **accepted shared target**, including the selected authored controlled-character policy. D's [general emotion feature](emotional-physiology-feature-spec.md), [technical design](emotional-physiology-tech-design.md) and [EP tracker](../maintainers/emotional-physiology.md) specify native bodily reactions, interpreted fear/joy/anger and persistent grief, maximum effective mechanics and bounded independent review; their numerical policy is owned by [base psychological reactions](../worlds/base/psychological-reactions.md). [The player-experience design](stealth-player-experience-feature-spec.md) and [SPX tracker](../maintainers/stealth-player-experience.md) own selected controls and permitted presentation. This is a design-only project stage: no new runtime feature, executable test, deployment, measured performance improvement or player-enjoyment result is claimed.
 
 ## Gameplay goals
 
@@ -63,7 +63,7 @@ Startle is an immediate native bodily response to an eligible sudden cue. It req
 
 Interpreted fear can outlast startle. It is a character's appraisal of supported causes, not an automatic assertion that an external situation is objectively dangerous. Compatible cognition may reconsider it without a new external event, including without a visible verbal thought. Reconsideration remains causally tied to the existing episode and cannot invent another frightening event or endlessly renew an unchanged feeling.
 
-Effective mechanical fear can include immediate and persistent contributions. In the selected base world it affects accuracy and evasion; fear does not automatically slow running or fleeing. Its ownership and combination must prevent one cause being counted twice. Emotional state does not silently seize a directly controlled character's movement, select an attack, or narrate the human user's actual feelings. The longer-term acquisition and retained-appraisal applicability policy for controlled characters remains [SA-D01](#player-fear-decision).
+Effective mechanical fear can include immediate and persistent contributions. In the selected base world it affects accuracy and evasion; fear does not automatically slow running or fleeing. Its ownership and combination must prevent one cause being counted twice. Emotional state does not silently seize a directly controlled character's movement, select an attack, or narrate the human user's actual feelings. Controlled characters acquire authored fear from their own evidence, and retained compatible appraisals remain applicable under [SA-D01](#player-fear-decision).
 
 ### Preparedness and surprise
 
@@ -131,7 +131,7 @@ If the pursuit genuinely ends, knowledge becomes historical and active preparati
 
 At normal speed, an eligible three-second startle subsides after three elapsed real seconds at 1×, corresponding to 180 simulation seconds at the selected 60:1 ratio. At 3× it takes one wall second; at 8×, 0.375 wall seconds. A pause partway through preserves the remaining simulation progress. Save/reopen resumes the same episode and never reapplies its onset.
 
-Supported longer-term fear may remain mechanically relevant after startle. The person can continue to flee at the applicable ordinary movement speed. A later private reconsideration can soften or otherwise validly alter their interpretation without inventing a new external cause; repeated unchanged reconsideration reaches a bounded native outcome rather than renewing fear forever. Unavailable AI leaves coherent native effects and the existing feeling's defined continuation. Controlled-player psychological creation/review, retained-appraisal applicability, disclosure, revocation and control transfer follow only the eventual SA-D01 selection.
+Supported longer-term fear may remain mechanically relevant after startle. The person can continue to flee at the applicable ordinary movement speed. A later private reconsideration can soften or otherwise validly alter their interpretation without inventing a new external cause; repeated unchanged reconsideration reaches a bounded native outcome rather than renewing fear forever. Unavailable AI leaves coherent native effects and the existing feeling's defined continuation. Directly controlled characters use SA-D01's authored event rules and native lifetime, with autonomous model creation/review suspended.
 
 ### J09 — Hand off a watch and share incomplete information
 
@@ -153,11 +153,11 @@ The engine still separates physical signal, observer evidence, remembered knowle
 
 ## Player fear decision
 
-**SA-D01 remains open:** how directly controlled characters acquire longer-term psychologically interpreted fear, whether existing interpreted appraisals remain mechanically applicable during direct control, and the associated disclosure, revocation and control-transfer behavior, separate from universal eligible native startle. The [decision record](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) owns the alternatives, recommendation and adoption gate.
+**SA-D01 selects B: deterministic authored interpretation.** Events affect the fictional player character's psychology through explicit world rules and the character's own admitted evidence. The initial producer creates fear through the existing appraisal owner; [base psychological reactions](../worlds/base/psychological-reactions.md#directly-controlled-characters) owns its causes and tuning. The [decision record](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) and [emotion feature](emotional-physiology-feature-spec.md#directly-controlled-characters-sa-d01) own the selected authority and player consequences.
 
-The viable choices are deterministic authored appraisal from the character's permitted evidence, opt-in bounded AI interpretation, or native-body-only initial player scope that explicitly masks interpreted effects while preserving retained appraisal records and their lifetimes. Recommend native-body-only initial player scope. If persistent interpreted fear should affect ordinary players, prefer deterministic authored appraisal for predictable mechanics without a paid real-time dependency. That is a recommendation, not an accepted acquisition policy. All alternatives use the same appraisal/effect owners and preserve direct movement control.
+Compatible retained feelings remain active at their naturally progressed values when control changes. Autonomous model creation/review stops during direct control; control changes do not erase feelings, renew lifetimes or grant fresh review allowances. The player retains movement, speech and goal choice, and sees permitted causes and actual mechanical consequences. These are fictional character conditions, not claims about the real human's feelings.
 
-Only controlled-player behavior dependent on that psychological policy and its specific acceptance journeys depend on this choice. Stopping new appraisal production alone does not settle the effect of retained appraisals. Native startle, NPC emotions, sensing, preparedness, surprise and ordinary player disclosure can be fully designed independently. No model may infer the real human's psychological condition from the fictional character's state.
+Implementation and qualification remain open in EP06–EP09 and SPX04. Native startle, NPC emotions, sensing, preparedness and surprise retain their existing owners.
 
 ## Cross-project acceptance
 

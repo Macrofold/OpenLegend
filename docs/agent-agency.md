@@ -204,7 +204,7 @@ The [attention and investigation design](projects/attention-and-investigation-fe
 
 The [emotional-review contract](projects/emotional-physiology-tech-design.md#ep-c08--independently-selectable-emotional-review) uses existing appraisal deadlines and one coalesced `ActorWork` ticket. It acknowledges only its own captured opportunities, preserving pending replies, threats and ordinary evidence watermarks. Harmless progress does not cancel review or ongoing work. Finite attempts, material support, dormant no-change outcomes and shared admission bound optional reasoning; native effects and appraisal lifetimes continue when it is unavailable. Emotional intensity alone grants no threat-reserved execution slot.
 
-[Time and lifecycle](projects/stealth-awareness-tech-design.md#time-and-lifecycle) govern saved simulation progress. [SA-D01](../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) remains open for interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior during direct control; bodily effects do not confer autonomous authority over the human player's subjective choices.
+[Time and lifecycle](projects/stealth-awareness-tech-design.md#time-and-lifecycle) govern saved simulation progress. [SA-D01](../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) selects authored event-based psychology during direct control, retaining compatible feelings without autonomous AI creation/review. These fictional conditions grant no forced movement, speech or goals and make no claim about the human player's psychology; implementation remains open.
 
 ## 9. The intended 80/20
 

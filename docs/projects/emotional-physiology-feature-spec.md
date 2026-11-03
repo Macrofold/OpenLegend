@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                          | Last updated |
 | ----------- | ------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design is complete; EP01–EP09 implementation and qualification remain open, with SA-D01 explicitly unapproved. | 2026-10-24   |
+| In progress | Integrated design includes authored player emotions; EP01–EP09 implementation and qualification remain open. | 2026-11-03   |
 
 ## Purpose and scope
 
@@ -224,43 +224,31 @@ Unconscious review needs no animation, thought bubble, speech turn or public act
 
 ## Directly controlled characters: SA-D01
 
-**Unresolved; requires Mike's product decision.** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) covers interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior during direct human control; the same authority question applies to fear and other interpreted feelings. No option is adopted here.
+**Selected B: deterministic authored interpretation.** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) makes events affect the fictional player character's psychology through native world rules and the shared appraisal owner. The first [base-world rule](../worlds/base/psychological-reactions.md#directly-controlled-characters) creates fear from an attack the character actually perceives, including a miss or block without injury. An unexplained noise may cause bodily startle without proving a psychological threat. These are selected targets, not delivered runtime behavior.
 
-Native bodily startle and physical conditions apply equally to controlled and autonomous characters. A background model must not silently decide the human player's subjective fear, joy, anger, grief, desire or roleplay.
+Only personally admitted evidence can supply a cause or identify an attacker. The rule cannot read hidden intent, infer the human's feelings or turn personality prose into coefficients. Authored creation initially covers fear; other newly generated feelings need their own explicit world rules. Existing compatible feelings retain their distinct meanings. The common emotion owner is reusable without a player-specific mood store or general rule language.
 
-### Alternatives and recommended initial choice
-
-| Alternative                                 | Conditional product and tradeoff                                                                                                                                                                                                                                                                                                                                         |
-| ------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| A. Native body only during direct control   | Native effects apply; autonomous interpreted-emotion creation/review is disabled and appraised-emotion mechanics are masked. This preserves subjective freedom with little extra interface/model burden, but player/NPC interpretation differs and retained-state transitions need truthful feedback. It supplies no persistent interpreted player fear.                 |
-| B. Deterministic authored interpretation    | Explicit native world rules create/reassess selected emotions from the character's own admitted evidence through existing appraisal authority. This supplies predictable persistent player mechanics without paid interpretation, but imposes a fictional condition that must be explained. Exact rules cannot be replaced by a label or freeform personality inference. |
-| C. Explicitly opted-in model interpretation | The active player grants bounded interpretation for named families/consequences, using the same source, budget, lifetime and publication rules. This supports contextual roleplay, with explicit private-context consent, cost/uncertainty, revocation and transfer requirements. Movement, dialogue or unrelated AI assistance is not opt-in.                           |
-
-**Recommend A initially**, pending approval. If persistent interpreted fear is selected for ordinary player mechanics, **prefer B over silent autonomous model appraisal**. C is an explicit alternative, not a fallback for a missing native rule. Choosing fear does not authorize joy, grief, anger or a needs simulation; selected families, consequences and grants must be explicit. Fictional conditions are not claims about the real human's psychology.
+Fear has the already selected accuracy/evasion consequences, while movement, speech, goals and expressions remain the player's choices. Running/fleeing is not slowed. Native bodily reactions and physical conditions continue independently. The player can inspect the admitted feeling, permitted cause, current consequence and lifetime through existing authorized surfaces; no emotion-management dashboard is required.
 
 ### Control transfer and retained state
 
-Transfer invalidates private operations with stale actor/control authority. Same-life native bodily effects continue without erasing injury, replaying shock or altering completed outcomes.
+Taking control preserves compatible NPC appraisals and their mechanical applicability at naturally progressed values. It does not mask, resolve, recast, recreate or extend them. Autonomous model creation/review stops, including pending work whose control authority is stale; authored event rules and native lifetimes continue. A feeling accepted before takeover remains valid even if the later action stage fails.
 
-Under conditional A, preceding NPC appraisals retain identity, provenance, history and native lifetime, while their emotional mechanics are masked and autonomous review stops. Authorized inspection may identify them as preceding appraisals, not new human-selected feelings. Masking/unmasking may immediately change effective fear and requires truthful visible feedback; it does not resolve, renew, recreate or extend the records.
+On return to autonomy, surviving records remain applicable and only existing lawful review eligibility resumes. Transfers supply no new evidence, support epoch, paid attempt or longer horizon. Reconnect/restore and repeated toggling cannot replay prior events. A new physical life follows the existing body and appraisal lifetime owners.
 
-On return to autonomy, surviving records apply at their naturally progressed values; ended records stay ended. Only a policy-permitted materially supported current opportunity can justify review. Transfers grant no fresh allowance or extended horizon, and repeated control toggling cannot buy indefinite reassessment.
-
-Under B, declare the permitted native producer/families and how compatible retained appraisals apply without recasting their meaning or lifetime. Under C, consent belongs to the active controller and does not transfer automatically. Loss/revocation refuses pending publication; the selected post-revocation policy determines mechanical projection while preserving record integrity.
+Ordinary control does not grant the human a direct set/clear-emotion operation. Existing authorized character/world authoring remains separate. B requires no model opt-in or consent-revocation interface; account/control changes still fence pending operations and private disclosure. Feedback explains current feelings and consequences without inventing a new emotion merely because the controller changed.
 
 ### Implementation gate
 
-The decision must settle producer authority, families, mechanical application, human authorship, display, revocation and transfer together. Player interpretation remains blocked or available only under an explicitly selected authorized policy; omitted policy, prompts, fallback and restoration adopt no option.
+The product choice is resolved. [EP06–EP09](../maintainers/emotional-physiology.md#ep06--authored-emotion-profiles-and-meaningful-character-context) and [SPX04](../maintainers/stealth-player-experience.md#spx04--combat-surprise-and-recovery-feedback) must implement and qualify the authored producer, retained applicability, authority and feedback together. Enable the profile only with those actual supported paths; missing implementation is not a reason to silently substitute masking, model interpretation or an indefinite combat hold.
 
-Until SA-D01 is selected, keep the new retained-appraisal/direct-control composition path disabled at profile or feature enablement. An unresolved applicability policy is not a transient native preparation failure: do not enable that policy and hold physical combat waiting for the product decision. Disabling interpretation does not authorize masking inherited active appraisals or treating them as absent. Existing physical combat and independently complete native-body paths remain available. Before selection, qualify controlled-character paths only on profiles or cases without that unresolved retained-appraisal component; a transfer that requires deciding its mechanical applicability remains outside the enabled and qualified slice.
-
-Native body mechanics, autonomous interpretations, animals, maximum fear composition, time rules and bounded review can proceed independently. SA-D01 does not reopen those contracts.
+Native body mechanics, autonomous interpretations, animals, maximum fear composition, time rules and bounded NPC review retain their existing independent contracts.
 
 ## Six complete experience scenarios
 
 These scenarios specify observable target behavior. Their physical and social activities must use actually admitted capabilities in the selected world. They are design acceptance material, not evidence that every illustrated capability or model response is implemented.
 
-Unless an approved SA-D01 profile is explicitly under evaluation, interpreted emotions in these scenarios belong to eligible autonomous characters. Grief is an already lawfully admitted record: experience-linked grief uses the supported reflection path, and authored grief uses its authorized authoring path. Independent review revises only an existing definition-permitted record; it does not create grief or modify authored-grief. Descriptions such as relief, worry and exclusion express personal meaning without installing an additional emotion definition or producer.
+The interpreted-emotion scenarios use eligible autonomous characters except where direct control is explicit; controlled characters use the selected authored policy. Grief is an already lawfully admitted record: experience-linked grief uses the supported reflection path, and authored grief uses its authorized authoring path. Independent review revises only an existing definition-permitted record; it does not create grief or modify authored-grief. Descriptions such as relief, worry and exclusion express personal meaning without installing an additional emotion definition or producer.
 
 ### 1. Bring someone home while still afraid
 
@@ -409,7 +397,7 @@ The retained “same event, two appraisals” worked example in psychology suppl
 
 These are future acceptance requirements as design. They have not been executed. The [technical design](emotional-physiology-tech-design.md) owns the EP-C11 lower-level race, source, timing, capability, persistence and scheduling cases; the [maintainer tracker](../maintainers/emotional-physiology.md) owns implementation work and evidence.
 
-Use the scenarios' same producer and permission preconditions: autonomous eligible interpreters, lawfully admitted existing grief and no authored-grief AI review. The two explicitly controlled-character rows remain conditional on an approved SA-D01 policy; they cannot be used to select one implicitly.
+Use the scenarios' same producer and permission preconditions: autonomous eligible interpreters, lawfully admitted existing grief and no authored-grief AI review. The controlled-character rows require selected SA-D01 B through the actual authored producer and player surfaces.
 
 | Case                                                | Observable required result                                                                                                                                                                     |
 | --------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -432,8 +420,8 @@ Use the scenarios' same producer and permission preconditions: autonomous eligib
 | Correction, forgetting and reopen                   | Current authority and evidence rules apply; no reconstructed private source, fresh allowance, revived terminal record or offline wall-time catch-up                                            |
 | Three-second normal-play example                    | Speed and pause preserve the authored duration meaning, and save/load resumes the same remaining native contribution                                                                           |
 | Native hare and synthetic character                 | Memoryless native reaction and existing animal escape need no AI; a synthetic interpreter can fear without an uninstalled mammalian reflex                                                     |
-| Direct human control                                | Native effects apply; player interpreted production/projection follows an approved explicit policy and transfer invalidates stale private authority                                            |
-| Controlled-character transition under conditional A | Masking/unmasking has truthful visible mechanical feedback, preserves records and native time, and grants no free review epoch                                                                 |
+| Direct human control                                | Native effects and authored fear apply from actual personal evidence; harmless abrupt sound alone grants no interpreted fear                                            |
+| Controlled-character transition under B | Existing feelings remain active with truthful feedback; model writes stop, stale results refuse, and control changes renew no record or review allowance                                                                 |
 | Whole playable continuation                         | A complete supported danger-and-return scene is understandable and worth choosing without a mandatory emotion-management chore                                                                 |
 
 Native deterministic acceptance establishes actual state, ordering and effects. Bound provider fixtures establish request/admission behavior, not natural interpretation quality. Controlled live evidence must establish that different characters select coherent different meanings and can continue useful activity without scripted outcomes. Human play evidence must separately establish understandable controls, worthwhile choices and acceptable interruption/operating burden. None is substituted by fluent narration.
@@ -448,7 +436,7 @@ Keep authored normal-play duration and unrestricted running speed. [EP-C06](emot
 
 The integrated world policy, implementation tasks and cognition/continuing-life/threat consumers preserve one private appraisal owner, one actor-work owner and one threat decision pipeline. New reassessment reuses exact sources, existing operations and durable authority.
 
-A later action-stage failure must preserve accepted emotion; emotion-only completion must preserve unrelated work. Keep SA-D01 blocked or explicitly selected and authorized through control transfer and restore. The producer-independent foundation can proceed separately. Detailed consumer responsibilities belong to [EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-responsibilities).
+A later action-stage failure must preserve accepted emotion; emotion-only completion must preserve unrelated work. Apply selected SA-D01 B consistently through control transfer and restore. The producer-independent foundation can proceed separately. Detailed consumer responsibilities belong to [EP-C12](emotional-physiology-tech-design.md#ep-c12--implementation-responsibilities).
 
 ### Maintained records and scope completion
 
@@ -460,4 +448,4 @@ A later action-stage failure must preserve accepted emotion; emotion-only comple
 - Related owners: [agent agency](../agent-agency.md), [compelling characters](compelling-characters-feature-spec.md), [continuing lives](continuing-lives-tech-design.md) and [combat/threat responses](combat-and-threat-responses-tech-design.md).
 - Cross-specialist integration: [stealth-awareness tracker](../maintainers/stealth-awareness.md) and [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters).
 
-The selected general-emotion design is complete; broader needs-design items retain their unrelated scope. The project remains In progress while implementation, executable/performance qualification and player evidence are outstanding. SA-D01 remains open until Mike selects the player interpretation policy.
+The selected general-emotion design is complete; broader needs-design items retain their unrelated scope. The project remains In progress while implementation, executable/performance qualification and player evidence are outstanding. SA-D01 B is selected; its authored player reactions and acceptance remain implementation work.

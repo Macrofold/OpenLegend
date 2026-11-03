@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                                                                           | Last updated |
 | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Continuation and compact reaction contracts include the shared stealth/emotion extension; broader implementation and behavioral qualification remain open. | 2026-10-20   |
+| In progress | Continuation and compact reaction contracts include the shared stealth/emotion extension; broader implementation and behavioral qualification remain open. | 2026-11-03   |
 
 [Feature specification](continuing-lives-feature-spec.md) · [Research design follow-up](../maintainers/needs-design.md#intelligent-individuals-and-efficient-simulation-research-derived-design-follow-up) · [Design/delivery mapping](../maintainers/intelligent-simulation.md).
 
@@ -196,7 +196,7 @@ Save current pinned meanings, cause/source versions and ownership, numerical val
 
 For continuing activity, a review can finish without a thought, speech, goal change or action interruption. Harmless progress does not stale its captured relevant context. Existing cognition may include an eligible review; standalone completion acknowledges only review work and cannot consume a pending reply, ordinary evidence or threat decision. Finite eligibility and no-change dormancy use existing appraisal deadlines and one actor ticket, with no third mandatory threat call or AppraisalProcess enrollment.
 
-[EP-C02](emotional-physiology-tech-design.md#ep-c02--time-native-lifetime-and-psychological-change), [EP-C08](emotional-physiology-tech-design.md#ep-c08--independently-selectable-emotional-review) and [EP-C09](emotional-physiology-tech-design.md#ep-c09--persistence-recovery-and-correction) own conversion, source/horizon checks, accounting and restoration. Native effects and the last accepted appraisal continue under their own lifetimes when review is unavailable. [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) remains open for directly controlled interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior; bodily effects do not depend on that selection.
+[EP-C02](emotional-physiology-tech-design.md#ep-c02--time-native-lifetime-and-psychological-change), [EP-C08](emotional-physiology-tech-design.md#ep-c08--independently-selectable-emotional-review) and [EP-C09](emotional-physiology-tech-design.md#ep-c09--persistence-recovery-and-correction) own conversion, source/horizon checks, accounting and restoration. Native effects and the last accepted appraisal continue under their own lifetimes when review is unavailable. [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) selects authored native rules during direct control and continuing compatible retained feelings, with autonomous AI creation/review disabled. Bodily effects retain their independent policy; implementation and qualification remain open.
 
 ## 6. Persistence, failure and lifetime
 

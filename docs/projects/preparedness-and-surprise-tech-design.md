@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                               | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-10-24   |
+| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-11-03   |
 
 ## Authority and delivery boundary
 
@@ -784,9 +784,9 @@ Unknown words, an ambiguous/unlearned place, ungrounded “there”/“behind yo
 
 [SUR01–SUR09](../maintainers/preparedness-and-surprise.md) owns all task bodies, dependencies and exit criteria. Deliver one complete melee interaction, then the actual ranged/warning path, before wider qualification. Each includes acquisition, preparation, permission, contact, native startle, current-format save and permitted feedback. Complete installed inputs before enabling a path; stages do not waive scope.
 
-Apply D's [SA-D01 implementation gate](emotional-physiology-feature-spec.md#implementation-gate) before enabling a controlled-character path. Unresolved retained-appraisal/direct-control composition stays disabled at profile or feature enablement; F's transient incomplete-preparation hold cannot wait on that product decision. Existing physical combat and independently complete native-body paths remain available, with qualification restricted to the profiles and cases permitted by that gate.
+Apply D's [selected SA-D01 policy and implementation gate](emotional-physiology-feature-spec.md#implementation-gate) to controlled-character paths, including complete retained-appraisal mechanics. F consumes those results through D's existing owner; a missing implementation is not permission to mask fear or hold combat indefinitely. Qualify the actual enabled profile and its player feedback together.
 
-Recheck affected owners on the implementation base before coding. No unresolved F product choice remains. SA-D01 is D's separate controlled-character psychological choice. SA-D02/SA-D03 are resolved: source revisions retain their family-owned exact values, and E captures the actual current-method start. Their runtime adapters remain required implementation work. Tuning and enjoyment remain open qualification work.
+Recheck affected owners on the implementation base before coding. No unresolved F product choice remains. SA-D01 selects D's authored controlled-character psychology. SA-D02/SA-D03 are resolved: source revisions retain their family-owned exact values, and E captures the actual current-method start. Their runtime adapters remain required implementation work. Tuning and enjoyment remain open qualification work.
 
 ## Maintained records
 
@@ -795,4 +795,4 @@ Recheck affected owners on the implementation base before coding. No unresolved 
 - Authored values and policy: [Base combat](../worlds/base/combat.md#preparedness-policy).
 - Limits and adjustment tradeoffs: [Preparedness inventory](../limits/preparedness-and-surprise.md).
 - Cross-project integration: [SA/SAD-F/SAI-F](../maintainers/stealth-awareness.md), [CTR](../maintainers/combat-and-threat-responses.md).
-- Open player decision and resolved technical decisions: [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters), [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation), [SA-D03](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition).
+- Selected player policy and resolved technical decisions: [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters), [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation), [SA-D03](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition).

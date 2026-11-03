@@ -59,7 +59,7 @@ Each SAI row consumes its focused owner's specified work/state bounds and overfl
 
 ## SA-L08 — Controlled-player psychological acquisition
 
-**Status: Proposed — decision open. Restrictiveness: Not yet rated.** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) owns authored native interpretation, opt-in AI interpretation and native-startle-only initial scope. No option is assumed. The choice bounds the controlled-player interpreted-emotion producer/application policy, retained-appraisal treatment during direct control and its specific acceptance; native startle, NPC emotion, effective mechanics and other shared contracts have integrated contracts and remain independently implementable.
+**Status: Selected B — implementation open. Restrictiveness: Medium.** [SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) selects authored event-based player psychology, initially fear from personal attack evidence, with compatible retained feelings still applicable during control. [FL32](feelings.md#fl32--direct-player-interpretation-authority) owns the authority limit and tradeoff. EP06–EP09/SPX04 retain actual delivery and qualification; native startle, NPC review and other shared contracts keep their separate owners.
 
 ## Shared inventories
 

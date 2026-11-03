@@ -2,7 +2,7 @@
 
 | Status      | Current progress                                                                                               | Last updated |
 | ----------- | -------------------------------------------------------------------------------------------------------------- | ------------ |
-| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-10-24   |
+| In progress | Integrated design is complete; SUR01–SUR09 implementation, performance and gameplay qualification remain open. | 2026-11-03   |
 
 ## Purpose and scope
 
@@ -141,7 +141,7 @@ The player-experience design consumes the [semantic disclosure contract](prepare
 
 A supplies exact acquired facts/correction; B/C actual physical cues/coverage; E complete current preparation; D native reactions and effective parameters. CTR retains encounters, contact, permissions and independent-character acceptance. Current readers/writers must agree before enabling the policy. Required B/A incoming-flight and A/SPK ordinary understood-warning producers need real end-to-end qualification.
 
-[SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) remains open for controlled-character interpreted-emotion creation/review, retained-appraisal mechanical applicability, disclosure, revocation and control-transfer behavior. Native surprise/startle is independent. [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation) preserves exact family-owned evidence revisions, and [SA-D03](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition) preserves actual physical-method starts. These technical choices are settled; their adapters, tuning and enjoyment remain unqualified implementation work.
+[SA-D01](../../archive/05-project/open-decisions.md#sa-d01--psychological-fear-for-controlled-characters) selects authored controlled-character psychology and continuing compatible retained feelings, with implementation and feedback qualification owned by EP and SPX. Native surprise/startle is independent. [SA-D02](../../archive/05-project/open-decisions.md#sa-d02--evidence-source-revision-representation) preserves exact family-owned evidence revisions, and [SA-D03](../../archive/05-project/open-decisions.md#sa-d03--preparation-lead-after-native-phase-transition) preserves actual physical-method starts. These technical choices are settled; their adapters, tuning and enjoyment remain unqualified implementation work.
 
 ## Maintained records
 
